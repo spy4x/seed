@@ -7,5 +7,24 @@
     "tslint.json": "*",
     "nx.json": "*"
   },
-  "projects": {}
+  "projects": {
+    "client-e2e": {
+      "tags": []
+    },
+    "client": {
+      "tags": ["client"]
+    },
+    "admin-e2e": {
+      "tags": []
+    },
+    "admin": {
+      "tags": ["admin"]
+    },
+    "types": {
+      "tags": ["shared"]
+    },
+    "shared-components": {
+      "tags": ["shared"]
+    }
+  }
 }
