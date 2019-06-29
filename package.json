@@ -43,6 +43,8 @@
     "@angular/router": "^8.0.0",
     "@nrwl/schematics": "^8.1.0",
     "core-js": "^2.5.4",
+    "firebase-admin": "^8.2.0",
+    "firebase-functions": "^3.0.2",
     "ng-cli-pug-loader": "^0.2.0",
     "rxjs": "~6.4.0",
     "zone.js": "^0.9.1"
