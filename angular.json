@@ -284,6 +284,60 @@
           "styleext": "sass"
         }
       }
+    },
+    "firebase-functions": {
+      "root": "apps/firebase-functions",
+      "sourceRoot": "apps/firebase-functions/src",
+      "projectType": "application",
+      "prefix": "firebase-functions",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "apps/firebase-functions/dist",
+            "main": "apps/firebase-functions/src/main.ts",
+            "tsConfig": "apps/firebase-functions/tsconfig.app.json",
+            "assets": ["apps/firebase-functions/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/firebase-functions/src/environments/environment.ts",
+                  "with": "apps/firebase-functions/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "firebase-functions:build"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "apps/firebase-functions/tsconfig.app.json",
+              "apps/firebase-functions/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/firebase-functions/jest.config.js",
+            "tsConfig": "apps/firebase-functions/tsconfig.spec.json"
+          }
+        }
+      }
     }
   },
   "cli": {

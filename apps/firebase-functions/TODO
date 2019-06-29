@@ -1,0 +1,1 @@
+TODO: Refactor "apps/firebase-functions" so it doesn't have separate "package.json", "node_modules", "dist". https://github.com/nrwl/nx/issues/836

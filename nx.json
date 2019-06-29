@@ -25,6 +25,9 @@
     },
     "shared-components": {
       "tags": ["shared"]
+    },
+    "firebase-functions": {
+      "tags": ["firebase-functions"]
     }
   }
 }

@@ -2,11 +2,13 @@
 
 # compiled output
 /dist
+dist/
 /tmp
 /out-tsc
 
 # dependencies
 /node_modules
+node_modules/
 
 # IDEs and editors
 /.idea
@@ -31,9 +33,17 @@
 /libpeerconnection.log
 npm-debug.log
 yarn-error.log
+firebase-debug.log
 testem.log
 /typings
+
+# dotenv environment variables file
+.env
 
 # System Files
 .DS_Store
 Thumbs.db
+
+# Firebase
+.firebase/
+.firebaserc

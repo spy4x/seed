@@ -25,7 +25,11 @@
     "workspace-schematic": "nx workspace-schematic",
     "dep-graph": "nx dep-graph",
     "help": "nx help",
-    "postinstall": "node ./ng-add-pug-loader.js"
+    "postinstall": "node ./ng-add-pug-loader.js && yarn install-other-deps",
+    "firebase:functions:serve": "concurrently --kill-others \"yarn run build firebase-functions --watch\" \"firebase serve --only functions\"",
+    "firebase:functions:shell": "concurrently --kill-others \"yarn run build firebase-functions --watch\" \"firebase functions:shell\" --raw",
+    "deploy": "firebase deploy",
+    "install-other-deps": "yarn --cwd apps/firebase-functions"
   },
   "private": true,
   "dependencies": {
@@ -50,11 +54,13 @@
     "@angular/language-service": "^8.0.0",
     "@nrwl/cypress": "8.1.0",
     "@nrwl/jest": "8.1.0",
+    "@nrwl/node": "8.1.0",
     "@nrwl/workspace": "8.1.0",
     "@types/jest": "24.0.9",
     "@types/node": "~8.9.4",
     "apply-loader": "^2.0.0",
     "codelyzer": "~5.0.1",
+    "concurrently": "^4.1.1",
     "cypress": "~3.3.1",
     "dotenv": "6.2.0",
     "jest": "24.1.0",

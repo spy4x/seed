@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "predeploy": [
+      "ng lint firebase-functions",
+      "ng build firebase-functions --prod"
+    ],
+    "source": "apps/firebase-functions"
+  }
+}
