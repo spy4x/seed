@@ -1,4 +1,4 @@
-import { User } from '@afs/types';
+import { createUser, User } from '@afs/types';
 
 const user: User = {
   id: '1',
@@ -10,5 +10,11 @@ const user: User = {
 describe('User interface', () => {
   it('user has name', () => {
     expect(user.name).toBe('1');
+  });
+});
+
+describe('createUser()', () => {
+  it('default user has name', () => {
+    expect(createUser({}).name).toBe('Anton');
   });
 });
