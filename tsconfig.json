@@ -18,7 +18,16 @@
     "paths": {
       "@afs/types": ["libs/types/src/index.ts"],
       "@afs/shared-components": ["libs/shared-components/src/index.ts"]
-    }
+    },
+    /* Strict Type-Checking Options */
+    /*
+    Enabling "strict":true enables "noImplicitAny", "noImplicitThis", "alwaysStrict", "strictBindCallApply",
+    "strictNullChecks", "strictFunctionTypes" and "strictPropertyInitialization".
+    */
+    "strict": true,
+    "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true
   },
   "exclude": ["node_modules", "tmp"]
 }

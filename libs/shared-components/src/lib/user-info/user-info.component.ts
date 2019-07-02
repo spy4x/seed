@@ -14,5 +14,5 @@ import { User } from '@afs/types';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UserInfoComponent {
-  @Input() user: User;
+  @Input() user: User | null = null;
 }
