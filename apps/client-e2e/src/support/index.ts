@@ -14,4 +14,5 @@
 // ***********************************************************
 
 // Import commands.js using ES2015 syntax:
+/* tslint:disable:no-import-side-effect */
 import './commands';

@@ -1,9 +1,12 @@
 import { createUser, User } from '@afs/types';
 
+/**
+ * Fake user to run checks against
+ */
 const user: User = {
+  email: '2',
   id: '1',
   name: '1',
-  email: '2',
   photoUrl: '3'
 };
 

@@ -5,14 +5,17 @@ import { AppComponent } from './app.component';
 import { RouterModule } from '@angular/router';
 import { SharedComponentsModule } from '@afs/shared-components';
 
+/**
+ * Root module of the app. Imports non-lazy modules and dependencies
+ */
 @NgModule({
+  bootstrap: [AppComponent],
   declarations: [AppComponent],
   imports: [
     BrowserModule,
     RouterModule.forRoot([], { initialNavigation: 'enabled' }),
     SharedComponentsModule
   ],
-  providers: [],
-  bootstrap: [AppComponent]
+  providers: []
 })
 export class AppModule {}

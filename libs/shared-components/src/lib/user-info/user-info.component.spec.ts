@@ -6,8 +6,8 @@ describe('UserInfoComponent', () => {
   let component: UserInfoComponent;
   let fixture: ComponentFixture<UserInfoComponent>;
 
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async(async () => {
+    await TestBed.configureTestingModule({
       declarations: [UserInfoComponent]
     }).compileComponents();
   }));
@@ -16,9 +16,9 @@ describe('UserInfoComponent', () => {
     fixture = TestBed.createComponent(UserInfoComponent);
     component = fixture.componentInstance;
     component.user = {
+      email: 'user@email.com',
       id: '2',
       name: 'User',
-      email: 'user@email.com',
       photoUrl: 'https://atlassian.design/server/images/avatars/project-128.png'
     };
     fixture.detectChanges();

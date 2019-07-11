@@ -4,10 +4,10 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('AppComponent', () => {
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      imports: [RouterTestingModule],
+  beforeEach(async(async () => {
+    await TestBed.configureTestingModule({
       declarations: [AppComponent],
+      imports: [RouterTestingModule],
       // Tells the compiler not to error on unknown elements and attributes
       schemas: [NO_ERRORS_SCHEMA]
     }).compileComponents();
@@ -21,16 +21,19 @@ describe('AppComponent', () => {
 
   it(`should have as title 'admin'`, () => {
     const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
+    const app = fixture.debugElement.componentInstance as AppComponent;
     expect(app.title).toEqual('admin');
   });
 
   it('should render title in a h1 tag', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.debugElement.nativeElement;
-    expect(compiled.querySelector('h1').textContent).toContain(
-      'Welcome to admin!'
-    );
+    const compiled = fixture.debugElement.nativeElement as HTMLElement;
+    const greetingElement = compiled.querySelector('h1');
+    expect(greetingElement).toBeTruthy();
+    if (!greetingElement) {
+      return;
+    }
+    expect(greetingElement.textContent).toContain('Welcome to admin!');
   });
 });

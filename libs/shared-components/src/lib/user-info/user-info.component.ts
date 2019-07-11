@@ -6,13 +6,19 @@ import {
 } from '@angular/core';
 import { User } from '@afs/types';
 
+/**
+ * UI component that displays currently authenticated user
+ */
 @Component({
-  selector: 'afs-user-info',
-  templateUrl: './user-info.component.pug',
-  styleUrls: ['./user-info.component.sass'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'afs-user-info',
+  styleUrls: ['./user-info.component.sass'],
+  templateUrl: './user-info.component.pug'
 })
 export class UserInfoComponent {
+  /**
+   * Authenticated user. Could be "null"
+   */
   @Input() user: User | null = null;
 }

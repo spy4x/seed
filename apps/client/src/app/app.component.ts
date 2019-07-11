@@ -1,17 +1,27 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { createUser, User } from '@afs/types';
 
+/**
+ * Root component of the application
+ */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'afs-root',
-  templateUrl: './app.component.pug',
-  styleUrls: ['./app.component.sass']
+  styleUrls: ['./app.component.sass'],
+  templateUrl: './app.component.pug'
 })
 export class AppComponent {
+  /**
+   * Title is displayed in template as a static text
+   */
   title = 'client';
+  /**
+   * Currently authenticated user
+   */
   user: User = createUser({
+    email: 'user@email.com',
     id: '2',
     name: 'User',
-    email: 'user@email.com',
     photoUrl: 'https://atlassian.design/server/images/avatars/project-128.png'
   });
 }

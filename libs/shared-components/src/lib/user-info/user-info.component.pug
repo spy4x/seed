@@ -2,5 +2,5 @@ ng-container('*ngIf'="user; else noUser")
   h2 {{user.name}}
   p {{user.email}}
   img('[src]'="user.photoUrl")
-ng-template(#noUser)
+ng-template(#noUser='')
   h2 No user presented

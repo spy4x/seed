@@ -1,3 +1,4 @@
+/* tslint:disable:no-console */
 import { enableProdMode, ViewEncapsulation } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 
@@ -12,4 +13,4 @@ platformBrowserDynamic()
   .bootstrapModule(AppModule, {
     defaultEncapsulation: ViewEncapsulation.None
   })
-  .catch(err => console.error(err));
+  .catch((err: Error) => console.error(err));
