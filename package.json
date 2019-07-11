@@ -75,7 +75,8 @@
     "pug-loader": "^2.4.0",
     "ts-jest": "24.0.0",
     "ts-node": "~7.0.0",
-    "tslint": "~5.11.0",
+    "tslint": "~5.18.0",
+    "tslint-config-prettier": "^1.18.0",
     "typescript": "~3.4.5"
   },
   "husky": {

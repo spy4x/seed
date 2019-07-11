@@ -1,69 +1,73 @@
 {
+  "nx-enforce-module-boundaries": [
+    true,
+    {
+      "allow": [],
+      "depConstraints": [
+        {
+          "sourceTag": "*",
+          "onlyDependOnLibsWithTags": ["*"]
+        }
+      ]
+    }
+  ],
+  "directive-selector": [true, "attribute", "app", "camelCase"],
+  "component-selector": [true, "element", "app", "kebab-case"],
+
   "rulesDirectory": [
     "node_modules/@nrwl/workspace/src/tslint",
     "node_modules/codelyzer"
   ],
+  "extends": ["tslint:all", "tslint-config-prettier"],
+
   "rules": {
-    "arrow-return-shorthand": true,
-    "callable-types": true,
-    "class-name": true,
-    "deprecation": {
-      "severity": "warn"
-    },
-    "forin": true,
+    "comment-format": [true, "check-space"],
+    "completed-docs": [
+      true,
+      "classes",
+      "enums",
+      "enum-members",
+      "functions",
+      "interfaces",
+      "methods",
+      "namespaces",
+      "properties",
+      "types",
+      "variables"
+    ],
+    "file-name-casing": false,
     "import-blacklist": [true, "rxjs/Rx"],
-    "interface-over-type-literal": true,
+    "interface-name": [true, "never-prefix"],
     "member-access": false,
-    "member-ordering": [
-      true,
-      {
-        "order": [
-          "static-field",
-          "instance-field",
-          "static-method",
-          "instance-method"
-        ]
-      }
-    ],
-    "no-arg": true,
-    "no-bitwise": true,
-    "no-console": [true, "debug", "info", "time", "timeEnd", "trace"],
-    "no-construct": true,
-    "no-debugger": true,
-    "no-duplicate-super": true,
-    "no-empty": false,
-    "no-empty-interface": true,
-    "no-eval": true,
-    "no-inferrable-types": [true, "ignore-params"],
-    "no-misused-new": true,
-    "no-non-null-assertion": true,
-    "no-shadowed-variable": true,
-    "no-string-literal": false,
-    "no-string-throw": true,
+    "no-implicit-dependencies": false,
+    "no-null-keyword": false,
     "no-switch-case-fall-through": true,
-    "no-unnecessary-initializer": true,
-    "no-unused-expression": true,
-    "no-var-keyword": true,
-    "object-literal-sort-keys": false,
-    "prefer-const": true,
-    "radix": true,
-    "triple-equals": [true, "allow-null-check"],
-    "unified-signatures": true,
-    "variable-name": false,
-    "nx-enforce-module-boundaries": [
+    "no-submodule-imports": false,
+    "no-unused-variable": false,
+    "no-void-expression": false,
+    "no-use-before-declare": false,
+    "ordered-imports": false,
+    "typedef": [
       true,
-      {
-        "allow": [],
-        "depConstraints": [
-          {
-            "sourceTag": "*",
-            "onlyDependOnLibsWithTags": ["*"]
-          }
-        ]
-      }
+      "call-signature",
+      "arrow-call-signature",
+      "parameter",
+      "arrow-parameter",
+      "property-declaration",
+      "object-destructuring",
+      "array-destructuring"
     ],
-    "directive-selector": [true, "attribute", "app", "camelCase"],
-    "component-selector": [true, "element", "app", "kebab-case"],
+    "trailing-comma": false,
+    "strict-boolean-expressions": false,
+    "quotemark": [true, "single"],
+
+    // Angular - https://github.com/mgechev/codelyzer
+    "contextual-decorator": true,
+    "contextual-lifecycle": true,
+    "import-destructuring-spacing": true,
+    "no-attribute-decorator": true,
+    "no-lifecycle-call": true,
+    "no-pipe-impure": true,
     "no-conflicting-lifecycle": true,
     "no-host-metadata-property": true,
     "no-input-rename": true,
@@ -72,9 +76,24 @@
     "no-output-on-prefix": true,
     "no-output-rename": true,
     "no-outputs-metadata-property": true,
+    "no-queries-metadata-property": true,
+    "no-forward-ref": true,
+    "no-unused-css": true,
+    "prefer-on-push-component-change-detection": true,
+    "template-accessibility-label-for": true,
+    "template-accessibility-tabindex-no-positive": true,
+    "template-click-events-have-key-events": true,
+    "template-mouse-events-have-key-events": true,
+    "template-no-any": true,
     "template-banana-in-box": true,
     "template-no-negated-async": true,
+    "template-conditional-complexity": [true, 4],
+    "template-cyclomatic-complexity": [true, 6],
+    "template-no-call-expression": true,
+    "template-use-track-by-function": true,
     "use-lifecycle-interface": true,
-    "use-pipe-transform-interface": true
+    "use-pipe-transform-interface": true,
+    "use-pipe-decorator": true,
+    "prefer-inline-decorator": true
   }
 }
