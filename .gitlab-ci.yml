@@ -1,0 +1,60 @@
+image: node:10
+
+stages:
+  - setup
+  - test
+  - deploy
+
+# to cache both npm modules and Cypress binary we use environment variables
+# to point at the folders we can list as paths in "cache" job settings
+variables:
+  YARN_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/.yarn"
+  CYPRESS_CACHE_FOLDER: "$CI_PROJECT_DIR/.cache/Cypress"
+
+cache: &cache-global
+  paths:
+    - .cache/
+    - node_modules/
+
+.cache-pull: &cache-pull
+  cache:
+    policy: pull
+    <<: *cache-global
+
+.test-job: &test-job
+  stage: test
+  <<: *cache-pull
+
+before_script:
+  - git pull origin master
+
+yarn:
+  stage: setup
+  script: yarn
+
+lint:
+  <<: *test-job
+  script: yarn affected:lint --parallel --base=origin/master
+
+format:
+  <<: *test-job
+  script: yarn format:check --base=origin/master
+
+unit-tests:
+  <<: *test-job
+  script: yarn affected:test --parallel --base=origin/master
+
+e2e-tests:
+  <<: *test-job
+  image: cypress/base:10
+  script:
+    - yarn cypress verify
+    - yarn affected:e2e --base=origin/master
+
+build:
+  <<: *test-job
+  script: yarn affected:build --parallel --base=origin/master
+  artifacts:
+    paths:
+      - dist/
+      - apps/firebase-functions/dist/
