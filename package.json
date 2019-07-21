@@ -29,6 +29,7 @@
     "firebase:functions:serve": "concurrently --kill-others \"yarn run build firebase-functions --watch\" \"firebase serve --only functions\"",
     "firebase:functions:shell": "concurrently --kill-others \"yarn run build firebase-functions --watch\" \"firebase functions:shell\" --raw",
     "deploy": "firebase deploy",
+    "deploy:ci": "firebase deploy --project $(echo $FIREBASE_PROJECT_NAME | base64 --decode) --token $FIREBASE_DEPLOY_TOKEN",
     "install-other-deps": "yarn --cwd apps/firebase-functions"
   },
   "private": true,
@@ -65,6 +66,7 @@
     "concurrently": "^4.1.1",
     "cypress": "~3.3.1",
     "dotenv": "6.2.0",
+    "firebase-tools": "^7.1.1",
     "husky": "^2.7.0",
     "jest": "24.1.0",
     "jest-preset-angular": "7.0.0",

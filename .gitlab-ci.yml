@@ -24,9 +24,8 @@ cache: &cache-global
 .test-job: &test-job
   stage: test
   <<: *cache-pull
-
-before_script:
-  - git pull origin master
+  before_script:
+    - git pull origin master
 
 yarn:
   stage: setup
@@ -47,14 +46,23 @@ unit-tests:
 e2e-tests:
   <<: *test-job
   image: cypress/base:10
-  script:
-    - yarn cypress verify
-    - yarn affected:e2e --base=origin/master
+  script: yarn affected:e2e --base=origin/master
 
 build:
   <<: *test-job
-  script: yarn affected:build --parallel --base=origin/master
+  script: yarn affected:build --prod --parallel --base=origin/master
   artifacts:
+    name: "$CI_COMMIT_REF_SLUG"
     paths:
       - dist/
       - apps/firebase-functions/dist/
+    expire_in: 1 week
+
+deploy:
+  only:
+    - master
+  stage: deploy
+  <<: *cache-pull
+  dependencies:
+    - build
+  script: yarn deploy:ci
