@@ -13,7 +13,7 @@ export const applyHostingTargets = (affectedApps: string[]): void => {
     const target = map[appName];
     if (target) {
       const applyTargetCommand = `firebase target:apply hosting ${appName} ${target} ${auth}`;
-      console.log(exec(applyTargetCommand));
+      exec(applyTargetCommand);
     }
   });
 };

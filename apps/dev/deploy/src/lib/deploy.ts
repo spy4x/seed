@@ -11,5 +11,5 @@ export const deploy = (deployOnlyArray: string[]): void => {
   const only = deployOnlyArray.join(',');
   const auth = getFirebaseDeployAuthParams();
   const deployCommand = `firebase deploy ${auth} --only ${only}`;
-  console.log(exec(deployCommand));
+  exec(deployCommand);
 };
