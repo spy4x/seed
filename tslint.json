@@ -14,10 +14,7 @@
   "directive-selector": [true, "attribute", "app", "camelCase"],
   "component-selector": [true, "element", "app", "kebab-case"],
 
-  "rulesDirectory": [
-    "node_modules/@nrwl/workspace/src/tslint",
-    "node_modules/codelyzer"
-  ],
+  "rulesDirectory": ["node_modules/@nrwl/workspace/src/tslint", "node_modules/codelyzer"],
   "extends": ["tslint:all", "tslint-config-prettier"],
 
   "rules": {
@@ -32,13 +29,13 @@
       "methods",
       "namespaces",
       "properties",
-      "types",
-      "variables"
+      "types"
     ],
     "file-name-casing": false,
     "import-blacklist": [true, "rxjs/Rx"],
     "interface-name": [true, "never-prefix"],
     "member-access": false,
+    "no-dynamic-delete": false,
     "no-implicit-dependencies": false,
     "no-null-keyword": false,
     "no-switch-case-fall-through": true,
@@ -46,6 +43,7 @@
     "no-unused-variable": false,
     "no-void-expression": false,
     "no-use-before-declare": false,
+    "no-unnecessary-callback-wrapper": false,
     "ordered-imports": false,
     "typedef": [
       true,
