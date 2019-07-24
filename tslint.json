@@ -46,16 +46,7 @@
     "no-use-before-declare": false,
     "no-unnecessary-callback-wrapper": false,
     "ordered-imports": false,
-    "typedef": [
-      true,
-      "call-signature",
-      "arrow-call-signature",
-      "parameter",
-      "arrow-parameter",
-      "property-declaration",
-      "object-destructuring",
-      "array-destructuring"
-    ],
+    "typedef": [true, "call-signature", "arrow-call-signature"],
     "trailing-comma": false,
     "strict-boolean-expressions": false,
     "quotemark": [true, "single"],
