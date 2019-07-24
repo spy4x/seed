@@ -71,7 +71,6 @@
     "husky": "^2.7.0",
     "jest": "24.1.0",
     "jest-preset-angular": "7.0.0",
-    "precise-commits": "^1.0.2",
     "prettier": "1.16.4",
     "pug": "^2.0.3",
     "pug-jest": "^1.0.1",
@@ -84,7 +83,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn precise-commits && yarn affected:lint --parallel --fix"
+      "pre-commit": "yarn node precommit-format.js && yarn affected:lint --parallel --fix"
     }
   }
 }
