@@ -11,11 +11,7 @@ import { SharedComponentsModule } from '@afs/shared-components';
 @NgModule({
   bootstrap: [AppComponent],
   declarations: [AppComponent],
-  imports: [
-    BrowserModule,
-    RouterModule.forRoot([], { initialNavigation: 'enabled' }),
-    SharedComponentsModule
-  ],
+  imports: [BrowserModule, RouterModule.forRoot([], { initialNavigation: 'enabled' }), SharedComponentsModule],
   providers: []
 })
 export class AppModule {}

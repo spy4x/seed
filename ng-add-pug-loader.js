@@ -19,17 +19,10 @@ fs.readFile(commonCliConfig, (err, data) => {
 
   // Insert the pug webpack rule
   const position = configText.indexOf('rules: [') + 8;
-  const output = [
-    configText.slice(0, position),
-    pugRules,
-    configText.slice(position)
-  ].join('');
+  const output = [configText.slice(0, position), pugRules, configText.slice(position)].join('');
   const file = fs.openSync(commonCliConfig, 'r+');
   fs.writeFile(file, output, error => {
-    if (error)
-      console.error(
-        "An error occurred while overwriting Angular CLI's Webpack config"
-      );
+    if (error) console.error("An error occurred while overwriting Angular CLI's Webpack config");
 
     fs.close(file, () => {});
   });
@@ -58,18 +51,12 @@ fs.readFile(typescriptCliConfig, (err, data) => {
   }
 
   // update the setting
-  const output = typescriptText.replace(
-    'directTemplateLoading: true,',
-    'directTemplateLoading: false,'
-  );
+  const output = typescriptText.replace('directTemplateLoading: true,', 'directTemplateLoading: false,');
 
   // rewrite the file
   const file2 = fs.openSync(typescriptCliConfig, 'r+');
   fs.writeFile(file2, output, error => {
-    if (error)
-      console.error(
-        "An error occurred while overwriting Angular CLI's Webpack config"
-      );
+    if (error) console.error("An error occurred while overwriting Angular CLI's Webpack config");
 
     fs.close(file2, () => {});
   });
