@@ -48,6 +48,7 @@ e2e-tests:
   <<: *test-job
   image: cypress/base:10
   script: yarn affected:e2e --base=origin/master
+  retry: 2
 
 build:
   <<: *test-job
