@@ -83,7 +83,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn node precommit-format.js && yarn affected:lint --parallel --fix"
+      "pre-commit": "yarn node precommit-format.js && yarn affected:lint --parallel --fix && yarn affected:test --parallel"
     }
   }
 }
