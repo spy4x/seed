@@ -73,10 +73,7 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [
-              "apps/client/tsconfig.app.json",
-              "apps/client/tsconfig.spec.json"
-            ],
+            "tsConfig": ["apps/client/tsconfig.app.json", "apps/client/tsconfig.spec.json"],
             "exclude": ["**/node_modules/**"]
           }
         },
@@ -186,10 +183,7 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [
-              "apps/admin/tsconfig.app.json",
-              "apps/admin/tsconfig.spec.json"
-            ],
+            "tsConfig": ["apps/admin/tsconfig.app.json", "apps/admin/tsconfig.spec.json"],
             "exclude": ["**/node_modules/**"]
           }
         },
@@ -238,10 +232,7 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [
-              "libs/types/tsconfig.lib.json",
-              "libs/types/tsconfig.spec.json"
-            ],
+            "tsConfig": ["libs/types/tsconfig.lib.json", "libs/types/tsconfig.spec.json"],
             "exclude": ["**/node_modules/**"]
           }
         },
@@ -263,10 +254,7 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [
-              "libs/shared-components/tsconfig.lib.json",
-              "libs/shared-components/tsconfig.spec.json"
-            ],
+            "tsConfig": ["libs/shared-components/tsconfig.lib.json", "libs/shared-components/tsconfig.spec.json"],
             "exclude": ["**/node_modules/**"]
           }
         },
@@ -323,10 +311,7 @@
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [
-              "apps/firebase-functions/tsconfig.app.json",
-              "apps/firebase-functions/tsconfig.spec.json"
-            ],
+            "tsConfig": ["apps/firebase-functions/tsconfig.app.json", "apps/firebase-functions/tsconfig.spec.json"],
             "exclude": ["**/node_modules/**"]
           }
         },
@@ -335,6 +320,74 @@
           "options": {
             "jestConfig": "apps/firebase-functions/jest.config.js",
             "tsConfig": "apps/firebase-functions/tsconfig.spec.json"
+          }
+        }
+      }
+    },
+    "dev-deploy": {
+      "root": "apps/dev/deploy",
+      "sourceRoot": "apps/dev/deploy/src",
+      "projectType": "application",
+      "prefix": "dev-deploy",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/dev/deploy",
+            "main": "apps/dev/deploy/src/main.ts",
+            "tsConfig": "apps/dev/deploy/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "dev-deploy:build"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/dev/deploy/tsconfig.app.json", "apps/dev/deploy/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/dev/deploy/jest.config.js",
+            "tsConfig": "apps/dev/deploy/tsconfig.spec.json"
+          }
+        }
+      }
+    },
+    "dev-utils": {
+      "root": "libs/dev/utils",
+      "sourceRoot": "libs/dev/utils/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["libs/dev/utils/tsconfig.lib.json", "libs/dev/utils/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/dev/utils/jest.config.js",
+            "tsConfig": "libs/dev/utils/tsconfig.spec.json"
           }
         }
       }

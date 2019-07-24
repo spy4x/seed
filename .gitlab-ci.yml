@@ -24,8 +24,9 @@ cache: &cache-global
 .test-job: &test-job
   stage: test
   <<: *cache-pull
-  before_script:
-    - git pull origin master
+
+before_script:
+  - git pull origin master
 
 yarn:
   stage: setup

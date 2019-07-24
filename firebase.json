@@ -1,5 +1,37 @@
 {
   "functions": {
     "source": "apps/firebase-functions"
-  }
+  },
+  "hosting": [
+    {
+      "target": "client",
+      "public": "dist/apps/client",
+      "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "/api/**",
+          "function": "api"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "target": "admin",
+      "public": "dist/apps/admin",
+      "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "/api/**",
+          "function": "api"
+        },
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
 }

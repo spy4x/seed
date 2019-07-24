@@ -28,6 +28,12 @@
     },
     "firebase-functions": {
       "tags": ["firebase-functions"]
+    },
+    "dev-deploy": {
+      "tags": ["dev", "root"]
+    },
+    "dev-utils": {
+      "tags": ["dev"]
     }
   }
 }
