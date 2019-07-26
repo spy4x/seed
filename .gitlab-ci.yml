@@ -26,7 +26,7 @@ cache: &cache-global
   <<: *cache-pull
 
 before_script:
-  - git pull origin master
+  - git fetch origin master
 
 yarn:
   stage: setup
