@@ -16,19 +16,20 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@afs/types": ["libs/types/src/index.ts"],
-      "@afs/shared-components": ["libs/shared-components/src/index.ts"],
-      "@afs/dev/utils": ["libs/dev/utils/src/index.ts"]
+      "@afs/front/client/core": ["libs/front/client/core/src/index.ts"],
+      "@afs/front/admin/core": ["libs/front/admin/core/src/index.ts"],
+      "@afs/dev/utils": ["libs/dev/utils/src/index.ts"],
+      "@afs/back/functions/users": ["libs/back/functions/users/src/index.ts"]
     },
-    /* Strict Type-Checking Options */
-    /*
-    Enabling "strict":true enables "noImplicitAny", "noImplicitThis", "alwaysStrict", "strictBindCallApply",
-    "strictNullChecks", "strictFunctionTypes" and "strictPropertyInitialization".
-    */
     "strict": true,
-    "noImplicitReturns": true /* Report error when not all code paths in function return a value. */,
+    "noImplicitReturns": true,
     "noUnusedParameters": true,
     "noUnusedLocals": true
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": ["node_modules", "tmp"],
+  "angularCompilerOptions": {
+    "fullTemplateTypeCheck": true,
+    "strictInjectionParameters": true,
+    "strictTemplates": true
+  }
 }

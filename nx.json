@@ -1,39 +1,55 @@
 {
   "npmScope": "afs",
   "implicitDependencies": {
-    "angular.json": "*",
-    "package.json": "*",
+    "workspace.json": "*",
+    "package.json": {
+      "dependencies": "*",
+      "devDependencies": "*"
+    },
     "tsconfig.json": "*",
     "tslint.json": "*",
     "nx.json": "*"
   },
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "@nrwl/workspace/tasks-runners/default",
+      "options": {
+        "cacheableOperations": ["build", "lint", "test", "e2e"]
+      }
+    }
+  },
   "projects": {
-    "client-e2e": {
+    "front-client": {
       "tags": []
     },
-    "client": {
-      "tags": ["client"]
+    "e2e-client": {
+      "tags": [],
+      "implicitDependencies": ["front-client"]
     },
-    "admin-e2e": {
+    "front-admin": {
       "tags": []
     },
-    "admin": {
-      "tags": ["admin"]
+    "e2e-admin": {
+      "tags": [],
+      "implicitDependencies": ["front-admin"]
     },
-    "types": {
-      "tags": ["shared"]
+    "front-client-core": {
+      "tags": []
     },
-    "shared-components": {
-      "tags": ["shared"]
-    },
-    "firebase-functions": {
-      "tags": ["firebase-functions"]
+    "front-admin-core": {
+      "tags": []
     },
     "dev-deploy": {
       "tags": ["dev", "root"]
     },
     "dev-utils": {
       "tags": ["dev"]
+    },
+    "back-functions": {
+      "tags": []
+    },
+    "back-functions-users": {
+      "tags": []
     }
   }
 }

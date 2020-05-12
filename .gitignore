@@ -47,3 +47,4 @@ Thumbs.db
 # Firebase
 .firebase/
 .firebaserc
+.runtimeconfig.json

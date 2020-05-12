@@ -4,8 +4,23 @@ import { exec } from './exec';
 jest.mock('./exec');
 
 const mockedExec: jest.Mock<string> = ((exec as unknown) = jest.fn());
-const getNxOutput = (input: string): string =>
-  `yarn run v1.16.0\n$ nx affected:apps --base=origin/master\n${input}\n✨  Done in 1.13s.`;
+const getNxOutput = (input: string): string => {
+  let string = input
+    ? input
+        .split(' ')
+        .map(i => `\n  - ${i}`)
+        .join('')
+    : 'No projects affected';
+  const result = `
+$ nx affected:apps '--base=origin/master~1' --head=origin/master
+
+>  NX  Affected apps:
+
+${string}
+
+✨  Done in 1.89s.`;
+  return result;
+};
 const test = (input: string): void => {
   const expectedOutput = input ? input.split(' ') : [];
   mockedExec.mockReturnValue(getNxOutput(input));
@@ -24,14 +39,14 @@ describe('getAffectedApps', () => {
   });
 
   it('should return array with one app in case of one affected app', () => {
-    test('client');
+    test('front-client');
   });
 
   it('should return array with two apps in case of two affected apps', () => {
-    test('client admin');
+    test('front-client front-admin');
   });
 
   it('should return array with three apps in case of three affected apps', () => {
-    test('client admin firebase-functions');
+    test('front-client front-admin back-functions');
   });
 });

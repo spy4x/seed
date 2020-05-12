@@ -1,11 +1,13 @@
 {
   "functions": {
-    "source": "apps/firebase-functions"
+    "source": "dist/apps/back/functions",
+    "predeploy": ["yarn build back-functions --prod", "node tools/scripts/build-firebase-functions-package-json.js"]
   },
   "hosting": [
     {
-      "target": "client",
-      "public": "dist/apps/client",
+      "target": "front-client",
+      "public": "dist/apps/front/client",
+      "predeploy": ["yarn build front-client --prod"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
@@ -16,11 +18,36 @@
           "source": "**",
           "destination": "/index.html"
         }
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(js|css|jpg|jpeg|gif|png|svg|ico|eot|ttf|woff|woff2|txt)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=31536000"
+            },
+            {
+              "key": "Content-Encoding",
+              "value": "gzip"
+            }
+          ]
+        },
+        {
+          "source": "/@(ngsw-worker.js|ngsw.json)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        }
       ]
     },
     {
-      "target": "admin",
-      "public": "dist/apps/admin",
+      "target": "front-admin",
+      "public": "dist/apps/front/admin",
+      "predeploy": ["yarn build front-admin --prod"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
@@ -30,6 +57,30 @@
         {
           "source": "**",
           "destination": "/index.html"
+        }
+      ],
+      "headers": [
+        {
+          "source": "**/*.@(js|css|jpg|jpeg|gif|png|svg|ico|eot|ttf|woff|woff2|txt)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "max-age=31536000"
+            },
+            {
+              "key": "Content-Encoding",
+              "value": "gzip"
+            }
+          ]
+        },
+        {
+          "source": "/@(ngsw-worker.js|ngsw.json)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
         }
       ]
     }

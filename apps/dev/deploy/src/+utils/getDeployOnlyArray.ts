@@ -1,8 +1,8 @@
 export const getDeployOnlyArray = (affectedApps: string[]): string[] => {
   const map: { [key: string]: string } = {
-    admin: 'hosting:admin',
-    client: 'hosting:client',
-    'firebase-functions': 'functions'
+    'front-admin': 'hosting:front-admin',
+    'front-client': 'hosting:front-client',
+    'back-functions': 'functions',
   };
   const initialValue: string[] = [];
 

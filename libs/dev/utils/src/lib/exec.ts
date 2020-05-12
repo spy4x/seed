@@ -5,13 +5,20 @@ export const exec = (command: string, shouldLogCommand: boolean = true, shouldLo
   if (shouldLogCommand) {
     console.log(chalk.cyan(`\n$ ${command}`));
   }
-  // tslint:disable-next-line:no-unsafe-any
-  const result = execSync(command).toString();
+  try {
+    // tslint:disable-next-line:no-unsafe-any
+    const result = execSync(command).toString();
 
-  if (shouldLogResult) {
-    console.log(result);
+    if (shouldLogResult) {
+      console.log(result);
+    }
+
+    // tslint:disable-next-line:no-unsafe-any
+    return result;
+  } catch (error) {
+    if (error.stdout) {
+      throw new Error(error.stdout.toString());
+    }
+    throw error;
   }
-
-  // tslint:disable-next-line:no-unsafe-any
-  return result;
 };

@@ -1,0 +1,21 @@
+{
+  "singleQuote": true,
+  "printWidth": 120,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "arrowParens": "avoid",
+  "overrides": [
+    {
+      "files": "*.pug",
+      "options": {
+        "parser": "pug",
+        "singleQuote": false,
+        "attributeSeparator": "always",
+        "commentPreserveSpaces": "trim-all"
+      }
+    }
+  ]
+}

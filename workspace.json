@@ -1,0 +1,520 @@
+{
+  "version": 1,
+  "projects": {
+    "front-client": {
+      "projectType": "application",
+      "root": "apps/front/client",
+      "sourceRoot": "apps/front/client/src",
+      "prefix": "afsc",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/apps/front/client",
+            "index": "apps/front/client/src/index.html",
+            "main": "apps/front/client/src/main.ts",
+            "polyfills": "apps/front/client/src/polyfills.ts",
+            "tsConfig": "apps/front/client/tsconfig.app.json",
+            "aot": true,
+            "assets": ["apps/front/client/src/favicon.ico", "apps/front/client/src/assets"],
+            "styles": ["apps/front/client/src/styles/index.sass"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["apps/front/client/web/src/styles"]
+            },
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/front/client/src/environments/environment.ts",
+                  "with": "apps/front/client/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "front-client:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "front-client:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "front-client:build"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/front/client/tsconfig.app.json", "apps/front/client/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/front/client/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/front/client/jest.config.js",
+            "tsConfig": "apps/front/client/tsconfig.spec.json",
+            "passWithNoTests": true,
+            "setupFile": "apps/front/client/src/test-setup.ts"
+          }
+        }
+      }
+    },
+    "e2e-client": {
+      "root": "apps/e2e/client",
+      "sourceRoot": "apps/e2e/client/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/e2e/client/cypress.json",
+            "tsConfig": "apps/e2e/client/tsconfig.e2e.json",
+            "devServerTarget": "front-client:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "front-client:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/e2e/client/tsconfig.e2e.json"],
+            "exclude": ["**/node_modules/**", "!apps/e2e/client/**"]
+          }
+        }
+      }
+    },
+    "front-admin": {
+      "projectType": "application",
+      "root": "apps/front/admin",
+      "sourceRoot": "apps/front/admin/src",
+      "prefix": "afsc",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/apps/front/admin",
+            "index": "apps/front/admin/src/index.html",
+            "main": "apps/front/admin/src/main.ts",
+            "polyfills": "apps/front/admin/src/polyfills.ts",
+            "tsConfig": "apps/front/admin/tsconfig.app.json",
+            "aot": true,
+            "assets": ["apps/front/admin/src/favicon.ico", "apps/front/admin/src/assets"],
+            "styles": ["apps/front/admin/src/styles/index.sass"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["apps/front/admin/src/styles"]
+            },
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/front/admin/src/environments/environment.ts",
+                  "with": "apps/front/admin/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "front-admin:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "front-admin:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "front-admin:build"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/front/admin/tsconfig.app.json", "apps/front/admin/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/front/admin/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/front/admin/jest.config.js",
+            "tsConfig": "apps/front/admin/tsconfig.spec.json",
+            "passWithNoTests": true,
+            "setupFile": "apps/front/admin/src/test-setup.ts"
+          }
+        }
+      }
+    },
+    "e2e-admin": {
+      "root": "apps/e2e/admin",
+      "sourceRoot": "apps/e2e/admin/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/e2e/admin/cypress.json",
+            "tsConfig": "apps/e2e/admin/tsconfig.e2e.json",
+            "devServerTarget": "front-admin:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "front-admin:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/e2e/admin/tsconfig.e2e.json"],
+            "exclude": ["**/node_modules/**", "!apps/e2e/admin/**"]
+          }
+        }
+      }
+    },
+    "front-client-core": {
+      "projectType": "library",
+      "root": "libs/front/client/core",
+      "sourceRoot": "libs/front/client/core/src",
+      "prefix": "afsc",
+      "architect": {
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["libs/front/client/core/tsconfig.lib.json", "libs/front/client/core/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!libs/front/client/core/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/front/client/core/jest.config.js",
+            "tsConfig": "libs/front/client/core/tsconfig.spec.json",
+            "passWithNoTests": true,
+            "setupFile": "libs/front/client/core/src/test-setup.ts"
+          }
+        }
+      },
+      "schematics": {
+        "@nrwl/angular:component": {
+          "style": "scss"
+        }
+      }
+    },
+    "front-admin-core": {
+      "projectType": "library",
+      "root": "libs/front/admin/core",
+      "sourceRoot": "libs/front/admin/core/src",
+      "prefix": "afsa",
+      "architect": {
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["libs/front/admin/core/tsconfig.lib.json", "libs/front/admin/core/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!libs/front/admin/core/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/front/admin/core/jest.config.js",
+            "tsConfig": "libs/front/admin/core/tsconfig.spec.json",
+            "passWithNoTests": true,
+            "setupFile": "libs/front/admin/core/src/test-setup.ts"
+          }
+        }
+      },
+      "schematics": {
+        "@nrwl/angular:component": {
+          "style": "scss"
+        }
+      }
+    },
+    "dev-deploy": {
+      "root": "apps/dev/deploy",
+      "sourceRoot": "apps/dev/deploy/src",
+      "projectType": "application",
+      "prefix": "dev-deploy",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/dev/deploy",
+            "main": "apps/dev/deploy/src/main.ts",
+            "tsConfig": "apps/dev/deploy/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": []
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "dev-deploy:build"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/dev/deploy/tsconfig.app.json", "apps/dev/deploy/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/dev/deploy/jest.config.js",
+            "tsConfig": "apps/dev/deploy/tsconfig.spec.json"
+          }
+        }
+      }
+    },
+    "dev-utils": {
+      "root": "libs/dev/utils",
+      "sourceRoot": "libs/dev/utils/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["libs/dev/utils/tsconfig.lib.json", "libs/dev/utils/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/dev/utils/jest.config.js",
+            "tsConfig": "libs/dev/utils/tsconfig.spec.json"
+          }
+        }
+      }
+    },
+    "back-functions": {
+      "root": "apps/back/functions",
+      "sourceRoot": "apps/back/functions/src",
+      "projectType": "application",
+      "prefix": "back-functions",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/back/functions",
+            "main": "apps/back/functions/src/main.ts",
+            "tsConfig": "apps/back/functions/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/back/functions/src/environments/environment.ts",
+                  "with": "apps/back/functions/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "back-functions:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "config": "apps/back/functions/.eslintrc",
+            "tsConfig": ["apps/back/functions/tsconfig.app.json", "apps/back/functions/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/back/functions/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/back/functions/jest.config.js",
+            "tsConfig": "apps/back/functions/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "back-functions-users": {
+      "root": "libs/back/functions/users",
+      "sourceRoot": "libs/back/functions/users/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "config": "libs/back/functions/users/.eslintrc",
+            "tsConfig": ["libs/back/functions/users/tsconfig.lib.json", "libs/back/functions/users/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!libs/back/functions/users/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/back/functions/users/jest.config.js",
+            "tsConfig": "libs/back/functions/users/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "defaultCollection": "@nrwl/angular"
+  },
+  "schematics": {
+    "@nrwl/workspace": {
+      "library": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/cypress": {
+      "cypress-project": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/react": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/next": {
+      "application": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/web": {
+      "application": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/node": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/nx-plugin": {
+      "plugin": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/nest": {
+      "application": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/express": {
+      "application": {
+        "linter": "eslint"
+      },
+      "library": {
+        "linter": "eslint"
+      }
+    },
+    "@nrwl/schematics:component": {
+      "styleext": "sass",
+      "spec": true,
+      "flat": true,
+      "changeDetection": "OnPush"
+    },
+    "@nrwl/angular:component": {
+      "inlineStyle": true,
+      "spec": true,
+      "flat": true,
+      "style": "sass",
+      "changeDetection": "OnPush"
+    },
+    "@nrwl/angular:application": {
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "cypress"
+    },
+    "@nrwl/angular:library": {
+      "unitTestRunner": "jest"
+    }
+  },
+  "defaultProject": "front-client"
+}

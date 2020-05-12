@@ -1,15 +1,11 @@
 import { exec } from './exec';
 
-const line2Index = 1;
-const line3Index = 2;
-
-export const getAffectedAppsNamesCommand = 'yarn affected:apps --base=origin/master';
+export const getAffectedAppsNamesCommand = 'yarn affected:apps --base=origin/master~1 --head=origin/master';
 
 export const getAffectedApps = (): string[] => {
   const stdout = exec(getAffectedAppsNamesCommand, true, false);
-  const resultLines = stdout.split('\n');
-  const secondLine = resultLines[line2Index].trim();
-  const affectedAppsString = secondLine.startsWith('$') ? resultLines[line3Index].trim() : secondLine;
-
-  return affectedAppsString ? affectedAppsString.split(' ') : [];
+  return stdout
+    .split('\n')
+    .filter(line => line.startsWith('  - '))
+    .map(line => line.replace('  - ', ''));
 };

@@ -4,22 +4,22 @@ import * as utils from '@afs/dev/utils';
 const mockedExec: jest.Mock<string> = ((utils.exec as unknown) = jest.fn((str: string) => str));
 
 const vars: utils.TestingEnvironmentVariables = {
-  admin: {
+  'front-admin': {
     title: 'FIREBASE_HOSTING_TARGET_ADMIN',
-    value: 'TEST_FIREBASE_HOSTING_TARGET_ADMIN'
+    value: 'TEST_FIREBASE_HOSTING_TARGET_ADMIN',
   },
-  client: {
+  'front-client': {
     title: 'FIREBASE_HOSTING_TARGET_CLIENT',
-    value: 'TEST_FIREBASE_HOSTING_TARGET_CLIENT'
+    value: 'TEST_FIREBASE_HOSTING_TARGET_CLIENT',
   },
   project: {
     title: 'FIREBASE_PROJECT_NAME',
-    value: 'TEST_FIREBASE_PROJECT_NAME'
+    value: 'TEST_FIREBASE_PROJECT_NAME',
   },
   token: {
     title: 'FIREBASE_DEPLOY_TOKEN',
-    value: 'TEST_FIREBASE_DEPLOY_TOKEN'
-  }
+    value: 'TEST_FIREBASE_DEPLOY_TOKEN',
+  },
 };
 
 describe('applyHostingTargets', () => {
@@ -32,7 +32,7 @@ describe('applyHostingTargets', () => {
 
   beforeAll(() => {
     Object.values(vars).forEach(
-      (variable: utils.TestingEnvironmentVariable) => (process.env[variable.title] = variable.value)
+      (variable: utils.TestingEnvironmentVariable) => (process.env[variable.title] = variable.value),
     );
   });
 
@@ -44,7 +44,7 @@ describe('applyHostingTargets', () => {
   });
 
   it('should call exec with admin when admin is an affected app', () => {
-    const input = ['admin'];
+    const input = ['front-admin'];
     const output = `${command} ${getAlias(input, 0)} ${project} ${token}`;
     applyHostingTargets(input);
     expect(mockedExec.mock.calls.length).toBe(1);
@@ -52,7 +52,7 @@ describe('applyHostingTargets', () => {
   });
 
   it('should call exec with client and admin when client and admin are affected apps', () => {
-    const input = ['client', 'admin'];
+    const input = ['front-client', 'front-admin'];
     const output1 = `${command} ${getAlias(input, 0)} ${project} ${token}`;
     const output2 = `${command} ${getAlias(input, 1)} ${project} ${token}`;
     applyHostingTargets(input);
