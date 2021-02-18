@@ -25,3 +25,7 @@ Looking for answers of your technical questions? [Check it out here](docs/how-to
 This project was generated using [Nx](https://nx.dev).
 
 [Check out instruction for developers here](docs/nx.md)
+
+
+[Custom commands and info](docs/custom.md)
+

@@ -1,5 +1,5 @@
 {
-  "npmScope": "afs",
+  "npmScope": "seed",
   "implicitDependencies": {
     "workspace.json": "*",
     "package.json": {
@@ -40,7 +40,10 @@
       "tags": []
     },
     "dev-deploy": {
-      "tags": ["dev", "root"]
+      "tags": ["dev"]
+    },
+    "dev-sandbox": {
+      "tags": ["dev"]
     },
     "dev-utils": {
       "tags": ["dev"]
@@ -49,6 +52,12 @@
       "tags": []
     },
     "back-functions-users": {
+      "tags": []
+    },
+    "back-functions-core": {
+      "tags": []
+    },
+    "back-functions-shared": {
       "tags": []
     }
   }

@@ -7,5 +7,6 @@ export const getAffectedApps = (): string[] => {
   return stdout
     .split('\n')
     .filter(line => line.startsWith('  - '))
-    .map(line => line.replace('  - ', ''));
+    .map(line => line.replace('  - ', ''))
+    .sort();
 };

@@ -1,4 +1,4 @@
-import { checkParam, ensureParam } from '@afs/dev/utils';
+import { checkParam, ensureParam } from '@seed/dev/utils';
 const param = 'aaa';
 const errorMessage = `Parameter "${param}" is not specified`;
 

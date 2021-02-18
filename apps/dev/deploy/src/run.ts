@@ -1,5 +1,5 @@
 import { getDeployOnlyArray } from './+utils/getDeployOnlyArray';
-import { getAffectedApps } from '@afs/dev/utils';
+import { getAffectedApps } from '@seed/dev/utils';
 import chalk from 'chalk';
 import { applyHostingTargets } from './lib/applyHostingTargets';
 import { deploy } from './lib/deploy';

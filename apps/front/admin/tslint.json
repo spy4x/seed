@@ -1,8 +1,8 @@
 {
   "extends": "../../../tslint.json",
   "rules": {
-    "directive-selector": [true, "attribute", "afsa", "camelCase"],
-    "component-selector": [true, "element", "afsa", "kebab-case"]
+    "directive-selector": [true, "attribute", "seed-admin", "camelCase"],
+    "component-selector": [true, "element", "seed-admin", "kebab-case"]
   },
   "linterOptions": {
     "exclude": ["!**/*"]

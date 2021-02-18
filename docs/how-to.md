@@ -62,7 +62,6 @@ Here you'll find answers for variety of technical questions.
 * How to make Progressive Web Application (PWA)?
 * How to make SafePipe to manage sanitized content? (HTML insert, etc, GoPingu SafePipe)
 * CI - Angular - Build once, use bundle for every environment
-* Unsubscribe from Firestore Observables on page exit
 
 ## Firebase:
 
@@ -80,14 +79,5 @@ Here you'll find answers for variety of technical questions.
 * How to log errors?
 * How to manage environment variables/config? Per module? (Module Payments needs Stripe secret key, how to manage it so module could be add/removed together with all related secret keys/configs?)
 * How to manage counters?
-* How to handle Firestore transactions properly?
 * How to send emails with SendGrid?
 * How to manage Service layer to do CRUD operations, file uploads, etc? (DatabaseService)
-
-## Firestore:
-* How to store, build, test & deploy Firestore indexes?
-* How to store, build, test & deploy Firestore security rules?
-* How to configure backups of Firestore database?
-* How to migrate Firestore database?
-Storage:
-* How to manage Firebase Cloud Storage security rules?

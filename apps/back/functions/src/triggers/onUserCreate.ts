@@ -1,17 +1,18 @@
 import * as functions from 'firebase-functions';
-import { NestApp } from '../nest/app';
-import { UsersController } from '@afs/back/functions/users';
+import { UsersController } from '@seed/back/functions/users';
+import { NestApp } from '@seed/back/functions/core';
 
-let athletesController: UsersController;
+let usersController: UsersController;
 
 export const onUserCreate = functions.auth.user().onCreate(async user => {
   try {
-    if (!athletesController) {
+    if (!usersController) {
       const { nestApp } = await NestApp.getInstance(false);
-      athletesController = nestApp.get(UsersController);
+      usersController = nestApp.get(UsersController);
+      // TODO: use CQRS command/event
     }
 
-    return athletesController.onUserCreate(user);
+    return usersController.onUserCreate(user);
   } catch (e) {
     console.error('Failed to handle user creation', e);
   }

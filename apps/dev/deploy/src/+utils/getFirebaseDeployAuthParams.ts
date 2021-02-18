@@ -1,4 +1,4 @@
-import { ensureParam } from '@afs/dev/utils';
+import { ensureParam } from '@seed/dev/utils';
 
 export const getFirebaseDeployAuthParams = (): string => {
   const project = ensureParam('FIREBASE_PROJECT_NAME', process.env.FIREBASE_PROJECT_NAME);

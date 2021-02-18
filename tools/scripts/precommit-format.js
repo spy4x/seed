@@ -17,6 +17,7 @@ const formatAndStage = () => {
   }
 
   execSync(`yarn prettier --write ${files.join(' ')}`);
+  execSync(`yarn format:check --base=origin/master`);
   execSync(`git add ${files.join(' ')}`);
 };
 

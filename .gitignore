@@ -30,11 +30,7 @@ node_modules/
 /.sass-cache
 /connect.lock
 /coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-firebase-debug.log
-testem.log
+*.log
 /typings
 
 # dotenv environment variables file

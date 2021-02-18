@@ -1,13 +1,13 @@
 {
   "functions": {
     "source": "dist/apps/back/functions",
-    "predeploy": ["yarn build back-functions --prod", "node tools/scripts/build-firebase-functions-package-json.js"]
+    "predeploy": ["yarn predeploy:functions"]
   },
   "hosting": [
     {
       "target": "front-client",
       "public": "dist/apps/front/client",
-      "predeploy": ["yarn build front-client --prod"],
+      "predeploy": ["yarn predeploy:hosting:front-client"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
@@ -47,7 +47,7 @@
     {
       "target": "front-admin",
       "public": "dist/apps/front/admin",
-      "predeploy": ["yarn build front-admin --prod"],
+      "predeploy": ["yarn predeploy:hosting:front-admin"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {

@@ -1,5 +1,5 @@
 import { getFirebaseDeployAuthParams } from '../+utils/getFirebaseDeployAuthParams';
-import { exec } from '@afs/dev/utils';
+import { exec } from '@seed/dev/utils';
 import chalk from 'chalk';
 
 export const deploy = (deployOnlyArray: string[]): void => {

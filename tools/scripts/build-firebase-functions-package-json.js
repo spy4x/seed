@@ -5,7 +5,7 @@ const fs = require('fs');
 const deps = packageJson['firebase-functions-dependencies'];
 // Template of new package.json
 const newPackageJson = {
-  engines: { node: '8' },
+  engines: { node: '10' },
   main: 'main.js',
   dependencies: deps.reduce((acc, cur) => {
     acc[cur] = packageJson.dependencies[cur];
@@ -13,7 +13,7 @@ const newPackageJson = {
   }, {}),
 };
 
-console.log(JSON.stringify(newPackageJson, null, 2));
+// console.log(JSON.stringify(newPackageJson, null, 2)); // Uncomment for debug purposes only
 let path = 'dist/apps/back/functions/package.json';
 
 fs.writeFileSync(path, JSON.stringify(newPackageJson));

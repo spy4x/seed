@@ -21,6 +21,9 @@
     "@typescript-eslint/no-parameter-properties": "off",
     "@typescript-eslint/ban-ts-ignore": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-use-before-define": "off",
     "@nrwl/nx/enforce-module-boundaries": [
       "error",
       {
@@ -28,7 +31,8 @@
         "allow": [],
         "depConstraints": [{ "sourceTag": "*", "onlyDependOnLibsWithTags": ["*"] }]
       }
-    ]
+    ],
+    "prefer-inline-decorator": "off"
   },
   "overrides": [
     {

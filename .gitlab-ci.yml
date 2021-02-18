@@ -44,7 +44,7 @@ format:
 
 unit-tests:
   <<: *test-job
-  script: yarn affected:test --parallel --base=origin/master
+  script: yarn test:ci
 
 e2e-tests:
   <<: *test-job
@@ -69,3 +69,4 @@ deploy:
   dependencies:
     - build
   script: yarn deploy:ci
+  retry: 2

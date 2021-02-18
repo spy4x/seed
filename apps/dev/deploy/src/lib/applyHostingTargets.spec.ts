@@ -1,5 +1,5 @@
 import { applyHostingTargets } from './applyHostingTargets';
-import * as utils from '@afs/dev/utils';
+import * as utils from '@seed/dev/utils';
 
 const mockedExec: jest.Mock<string> = ((utils.exec as unknown) = jest.fn((str: string) => str));
 
@@ -23,8 +23,6 @@ const vars: utils.TestingEnvironmentVariables = {
 };
 
 describe('applyHostingTargets', () => {
-  utils.silenceConsole('log');
-
   const project = `--project ${vars.project.value}`;
   const token = `--token ${vars.token.value}`;
   const command = `firebase target:apply hosting`;

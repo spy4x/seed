@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 @Component({
-  selector: 'afsc-root',
+  selector: 'seed-client-root',
   template: '<router-outlet></router-outlet>',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

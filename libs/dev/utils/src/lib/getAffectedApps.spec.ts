@@ -22,7 +22,7 @@ ${string}
   return result;
 };
 const test = (input: string): void => {
-  const expectedOutput = input ? input.split(' ') : [];
+  const expectedOutput = input ? input.split(' ').sort() : [];
   mockedExec.mockReturnValue(getNxOutput(input));
   const output = getAffectedApps();
   expect(mockedExec.mock.calls.length).toBe(1);

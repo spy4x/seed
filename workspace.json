@@ -5,7 +5,7 @@
       "projectType": "application",
       "root": "apps/front/client",
       "sourceRoot": "apps/front/client/src",
-      "prefix": "afsc",
+      "prefix": "seed-client",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -120,7 +120,7 @@
       "projectType": "application",
       "root": "apps/front/admin",
       "sourceRoot": "apps/front/admin/src",
-      "prefix": "afsc",
+      "prefix": "seed-client",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -235,7 +235,7 @@
       "projectType": "library",
       "root": "libs/front/client/core",
       "sourceRoot": "libs/front/client/core/src",
-      "prefix": "afsc",
+      "prefix": "seed-client",
       "architect": {
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
@@ -264,7 +264,7 @@
       "projectType": "library",
       "root": "libs/front/admin/core",
       "sourceRoot": "libs/front/admin/core/src",
-      "prefix": "afsa",
+      "prefix": "seed-admin",
       "architect": {
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
@@ -357,6 +357,79 @@
         }
       }
     },
+    "dev-sandbox": {
+      "root": "apps/dev/sandbox",
+      "sourceRoot": "apps/dev/sandbox/src",
+      "projectType": "application",
+      "prefix": "dev-sandbox",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/dev/sandbox",
+            "main": "apps/dev/sandbox/src/main.ts",
+            "tsConfig": "apps/dev/sandbox/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "dev-sandbox:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "config": "apps/dev/sandbox/.eslintrc",
+            "tsConfig": ["apps/dev/sandbox/tsconfig.app.json", "apps/dev/sandbox/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/dev/sandbox/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/dev/sandbox/jest.config.js",
+            "tsConfig": "apps/dev/sandbox/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "back-functions-core": {
+      "root": "libs/back/functions/core",
+      "sourceRoot": "libs/back/functions/core/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "config": "libs/back/functions/core/.eslintrc",
+            "tsConfig": ["libs/back/functions/core/tsconfig.lib.json", "libs/back/functions/core/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!libs/back/functions/core/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/back/functions/core/jest.config.js",
+            "tsConfig": "libs/back/functions/core/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
     "back-functions": {
       "root": "apps/back/functions",
       "sourceRoot": "apps/back/functions/src",
@@ -376,13 +449,7 @@
             "production": {
               "optimization": true,
               "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": [
-                {
-                  "replace": "apps/back/functions/src/environments/environment.ts",
-                  "with": "apps/back/functions/src/environments/environment.prod.ts"
-                }
-              ]
+              "inspect": false
             }
           }
         },
@@ -431,6 +498,34 @@
           "options": {
             "jestConfig": "libs/back/functions/users/jest.config.js",
             "tsConfig": "libs/back/functions/users/tsconfig.spec.json",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "back-functions-shared": {
+      "root": "libs/back/functions/shared",
+      "sourceRoot": "libs/back/functions/shared/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:lint",
+          "options": {
+            "linter": "eslint",
+            "config": "libs/back/functions/shared/.eslintrc",
+            "tsConfig": [
+              "libs/back/functions/shared/tsconfig.lib.json",
+              "libs/back/functions/shared/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!libs/back/functions/shared/**"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/back/functions/shared/jest.config.js",
+            "tsConfig": "libs/back/functions/shared/tsconfig.spec.json",
             "passWithNoTests": true
           }
         }

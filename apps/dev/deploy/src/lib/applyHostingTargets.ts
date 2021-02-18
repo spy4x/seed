@@ -1,4 +1,4 @@
-import { ensureParam, exec } from '@afs/dev/utils';
+import { ensureParam, exec } from '@seed/dev/utils';
 import { getFirebaseDeployAuthParams } from '../+utils/getFirebaseDeployAuthParams';
 
 export const applyHostingTargets = (affectedApps: string[]): void => {
