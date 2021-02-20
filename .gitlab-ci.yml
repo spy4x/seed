@@ -36,25 +36,25 @@ yarn:
 
 lint:
   <<: *test-job
-  script: yarn affected:lint --parallel --base=origin/master
+  script: yarn ci:lint
 
 format:
   <<: *test-job
-  script: yarn format:check --base=origin/master
+  script: yarn ci:format
 
 unit-tests:
   <<: *test-job
-  script: yarn test:ci
+  script: yarn ci:test
 
 e2e-tests:
   <<: *test-job
   image: cypress/base:10
-  script: yarn affected:e2e --base=origin/master
+  script: yarn ci:e2e
   retry: 2
 
 build:
   <<: *test-job
-  script: yarn affected:build --prod --parallel --base=origin/master
+  script: yarn ci:build
   artifacts:
     name: "$CI_COMMIT_REF_SLUG"
     paths:
@@ -68,5 +68,5 @@ deploy:
   <<: *cache-pull
   dependencies:
     - build
-  script: yarn deploy:ci
+  script: yarn ci:deploy
   retry: 2
