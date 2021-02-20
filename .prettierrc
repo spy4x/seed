@@ -6,16 +6,5 @@
   "semi": true,
   "trailingComma": "all",
   "bracketSpacing": true,
-  "arrowParens": "avoid",
-  "overrides": [
-    {
-      "files": "*.pug",
-      "options": {
-        "parser": "pug",
-        "singleQuote": false,
-        "attributeSeparator": "always",
-        "commentPreserveSpaces": "trim-all"
-      }
-    }
-  ]
+  "arrowParens": "avoid"
 }

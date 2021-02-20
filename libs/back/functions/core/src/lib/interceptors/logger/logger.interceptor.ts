@@ -5,9 +5,7 @@ import * as Sentry from '@sentry/node';
 
 @Injectable()
 export class LoggerInterceptor implements NestInterceptor {
-  // @ts-ignore
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
       catchError(event => {
         if (!event.status) {

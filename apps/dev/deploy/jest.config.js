@@ -1,5 +1,6 @@
 module.exports = {
-  name: 'dev-deploy',
-  preset: '../../../jest.config.js',
-  coverageDirectory: '../../../coverage/apps/dev/deploy'
+  preset: '../../../jest.preset.js',
+  coverageDirectory: '../../../coverage/apps/dev/deploy',
+  globals: { 'ts-jest': { tsConfig: '<rootDir>/tsconfig.spec.json' } },
+  displayName: 'dev-deploy',
 };

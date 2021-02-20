@@ -1,6 +1,6 @@
 import { getDeployOnlyArray } from './+utils/getDeployOnlyArray';
 import { getAffectedApps } from '@seed/dev/utils';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { applyHostingTargets } from './lib/applyHostingTargets';
 import { deploy } from './lib/deploy';
 

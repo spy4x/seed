@@ -51,7 +51,7 @@ export class FirebaseAuthService {
     await this.getAuth().updateUser(userId, { disabled: false });
   }
 
-  async updateCustomClaims(userId: string, customClaims: { [field: string]: any }): Promise<void> {
+  async updateCustomClaims(userId: string, customClaims: { [field: string]: unknown }): Promise<void> {
     const userRecord = await this.getAuth().getUser(userId);
     const oldClaims = userRecord.customClaims;
     const newClaims = { ...oldClaims, ...customClaims };

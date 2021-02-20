@@ -16,6 +16,7 @@ export const API_CONFIG = {
       : process.env.NODE_ENV === 'test'
       ? Environment.test
       : Environment.local,
+  apiPrefix: 'api',
   // Note: you can use "firebaseConfig.some.key" here
 };
 firebaseConfig.toString(); // TODO: remove when "firebaseConfig" is used somewhere here

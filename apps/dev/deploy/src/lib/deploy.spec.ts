@@ -2,7 +2,7 @@
 
 import { deploy } from './deploy';
 import * as utils from '@seed/dev/utils';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 
 const mockedExec: jest.Mock<string> = ((utils.exec as unknown) = jest.fn((str: string) => str));
 

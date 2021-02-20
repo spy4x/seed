@@ -31,7 +31,6 @@ Here you'll find answers for variety of technical questions.
 * How to setup and write E2E-tests with Cypress?
 * How to setup and write Unit-tests with Jest?
 * How to log errors?
-* How to use Pug.js instead of HTML for components?
 * How to record user session on frontend?
 * How to manage authentication on frontend?
 * How to create NgRx-architecture? (ngrx folder, use NgRx Entity and other modern tools, ListState<T>, check both FoodRazor & GoPingu. Can we do self-registered Effects?)

@@ -1,5 +1,5 @@
 import { exec } from './exec';
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 
 const consoleLogAmount = {
   default: 2,
@@ -24,8 +24,8 @@ describe('exec', () => {
     expect(exec(defaultTestCommand)).toBe(defaultTestOutput);
   });
 
-  it('should show proper results of "$ git remote" command', () => {
-    expect(exec('git remote')).toBe('origin\n');
+  it('should show proper results of "$ echo qwerty" command', () => {
+    expect(exec('echo qwerty')).toBe('qwerty\n');
   });
 
   it('by default should call console.log for command and for result', () => {

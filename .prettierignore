@@ -3,3 +3,5 @@
 yarn.lock
 *.log
 *.md
+/dist
+/coverage

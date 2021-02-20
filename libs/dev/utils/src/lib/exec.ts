@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import * as chalk from 'chalk';
 import { execSync } from 'child_process';
 
 export const exec = (command: string, shouldLogCommand: boolean = true, shouldLogResult: boolean = true): string => {

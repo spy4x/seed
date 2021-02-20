@@ -1,15 +1,14 @@
-import { NestApp } from './app';
+import { getApp } from './app';
 
 describe('NestApp', () => {
   it('should return a singleton instance', async () => {
-    const nestApp = await NestApp.getInstance(true);
+    const nestApp = await getApp();
     expect(nestApp).toBeDefined();
-    expect(nestApp).toBeInstanceOf(NestApp);
-    expect(nestApp).toBe(await NestApp.getInstance(true));
+    expect(nestApp).toBe(await getApp());
   });
   it('should return expressApp & nestApp', async () => {
-    const { expressApp, nestApp } = await NestApp.getInstance(true);
-    expect(expressApp).toBeDefined();
-    expect(nestApp).toBeDefined();
+    const { express, nest } = await getApp();
+    expect(express).toBeDefined();
+    expect(nest).toBeDefined();
   });
 });

@@ -10,7 +10,7 @@ describe('LoggerInterceptor', () => {
       getRequest: () => null,
     }),
   }));
-  const status = { status: 'test' };
+  const status: { status?: string } = { status: 'test' };
   const nextMock = jest.fn().mockImplementation(() => {
     return {
       handle: () => {

@@ -1,21 +1,14 @@
-import { NestApp } from '@seed/back/functions/core';
 import { INestApplication } from '@nestjs/common/interfaces';
+import { getApp } from '@seed/back/functions/core';
+import { LogService } from '@seed/back/functions/shared';
 
-export async function scriptWrapper(fn: (nestApp: INestApplication) => Promise<void>) {
-  const start = new Date();
+export async function scriptWrapper(fn: (nest: INestApplication) => Promise<void>) {
+  const logSegment = new LogService().startSegment(fn.name || 'Anonymous function');
   try {
-    console.log(`▶️  Starting "${fn.name}" at ${start.toISOString()}`);
-    const { nestApp } = await NestApp.getInstance(false);
-    await fn(nestApp);
-    const finish = new Date();
-    console.log(
-      `✅ Done with "${fn.name}" at ${finish.toISOString()}. Duration: ${finish.getTime() - start.getTime()}ms`,
-    );
+    const { nest } = await getApp();
+    await fn(nest);
+    logSegment.endWithSuccess();
   } catch (error) {
-    const finish = new Date();
-    console.error(
-      `⛔️ ${fn.name} failed at ${finish.toISOString()}. Duration: ${finish.getTime() - start.getTime()}ms`,
-      error,
-    );
+    logSegment.endWithFail(error);
   }
 }

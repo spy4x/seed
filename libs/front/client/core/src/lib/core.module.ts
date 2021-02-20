@@ -3,7 +3,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 
 @NgModule({
-  imports: [BrowserModule, RouterModule.forRoot([], { initialNavigation: 'enabled' })],
+  imports: [BrowserModule, RouterModule.forRoot([], { initialNavigation: 'enabledNonBlocking' })],
   exports: [RouterModule],
 })
 export class CoreModule {}
