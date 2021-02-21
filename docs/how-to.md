@@ -68,15 +68,11 @@ Here you'll find answers for variety of technical questions.
 * How to manage firebase.json configuration?
 * How to store and insert demo data?
 
-## Functions:
-* How to manage architecture? (Nest.js?)
+## Cloud Functions:
+* How to manage architecture? (Nest.js)
 * How to manage file uploads and trigger functions for it?
 * How to watch over execution of serverless functions?
-* How to restart serverless function?
-* How to have background tasks and watch their status?
-* How to setup and write Unit-tests with Jest?
+* How to write Unit-tests with Jest?
+* How to write E2E-tests?
 * How to log errors?
 * How to manage environment variables/config? Per module? (Module Payments needs Stripe secret key, how to manage it so module could be add/removed together with all related secret keys/configs?)
-* How to manage counters?
-* How to send emails with SendGrid?
-* How to manage Service layer to do CRUD operations, file uploads, etc? (DatabaseService)

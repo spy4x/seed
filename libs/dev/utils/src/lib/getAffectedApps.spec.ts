@@ -47,6 +47,6 @@ describe('getAffectedApps', () => {
   });
 
   it('should return array with three apps in case of three affected apps', () => {
-    test('front-client front-admin back-functions');
+    test('front-client front-admin back-cloud-functions');
   });
 });

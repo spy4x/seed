@@ -8,7 +8,7 @@ module.exports = {
     '<rootDir>/libs/dev/utils',
     '<rootDir>/apps/dev/sandbox',
     '<rootDir>/libs/back/functions/core',
-    '<rootDir>/apps/back/functions',
+    '<rootDir>/apps/back/cloud-functions',
     '<rootDir>/libs/back/functions/users',
     '<rootDir>/libs/back/functions/shared',
   ],

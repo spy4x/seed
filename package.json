@@ -27,7 +27,6 @@
     "help": "nx help",
     "----------Firebase-Emulator----------": "------------------------------",
     "serve:emulator": "pgrep -f firebase/emulators/pubsub-emulator | xargs kill -9 && pgrep -f firebase/emulators/ui | xargs kill -9 && firebase emulators:start",
-    "serve:functions": "yarn build back-functions --watch",
     "----------Post-Install----------": "------------------------------",
     "postinstall": "yarn ngcc && node ./decorate-angular-cli.js",
     "ngcc": "ngcc --properties es2015 browser module main --first-only --create-ivy-entry-points",
@@ -43,7 +42,7 @@
     "ci:deploy": "yarn build dev-deploy && node dist/apps/dev/deploy/main.js",
     "----------Deploy----------": "------------------------------",
     "deploy": "firebase deploy",
-    "predeploy:functions": "yarn build back-functions --prod && node tools/scripts/build-firebase-functions-package-json.js",
+    "predeploy:functions": "yarn build back-cloud-functions --prod && node tools/scripts/build-firebase-functions-package-json.js",
     "predeploy:hosting:front-client": "yarn build front-client --prod && yarn fix-ngsw client",
     "predeploy:hosting:front-admin": "yarn build front-admin --prod && yarn fix-ngsw admin",
     "fix-ngsw": "node tools/scripts/fix-ngsw.js"

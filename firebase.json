@@ -1,6 +1,6 @@
 {
   "functions": {
-    "source": "dist/apps/back/functions",
+    "source": "dist/apps/back/cloud-functions",
     "predeploy": ["yarn predeploy:functions"]
   },
   "hosting": [

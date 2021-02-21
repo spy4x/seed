@@ -119,7 +119,7 @@
       "projectType": "application",
       "root": "apps/front/admin",
       "sourceRoot": "apps/front/admin/src",
-      "prefix": "seed-client",
+      "prefix": "seed-admin-panel",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -233,7 +233,7 @@
       "projectType": "library",
       "root": "libs/front/client/core",
       "sourceRoot": "libs/front/client/core/src",
-      "prefix": "seed-client",
+      "prefix": "seed-client-core",
       "architect": {
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
@@ -261,7 +261,7 @@
       "projectType": "library",
       "root": "libs/front/admin/core",
       "sourceRoot": "libs/front/admin/core/src",
-      "prefix": "seed-admin",
+      "prefix": "seed-admin-panel-core",
       "architect": {
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
@@ -433,56 +433,6 @@
         }
       }
     },
-    "back-functions": {
-      "root": "apps/back/functions",
-      "sourceRoot": "apps/back/functions/src",
-      "projectType": "application",
-      "prefix": "back-functions",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "outputPath": "dist/apps/back/functions",
-            "main": "apps/back/functions/src/main.ts",
-            "tsConfig": "apps/back/functions/tsconfig.app.json",
-            "assets": []
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false
-            }
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "back-functions:build"
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "apps/back/functions/**/*.ts",
-              "apps/back/functions/**/*.spec.ts",
-              "apps/back/functions/**/*.d.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/back/functions/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/apps/back/functions"]
-        }
-      }
-    },
     "back-functions-users": {
       "root": "libs/back/functions/users",
       "sourceRoot": "libs/back/functions/users/src",
@@ -538,6 +488,56 @@
             "passWithNoTests": true
           },
           "outputs": ["coverage/libs/back/functions/shared"]
+        }
+      }
+    },
+    "back-cloud-functions": {
+      "root": "apps/back/cloud-functions",
+      "sourceRoot": "apps/back/cloud-functions/src",
+      "projectType": "application",
+      "prefix": "back-cloud-functions",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "options": {
+            "outputPath": "dist/apps/back/cloud-functions",
+            "main": "apps/back/cloud-functions/src/main.ts",
+            "tsConfig": "apps/back/cloud-functions/tsconfig.app.json",
+            "assets": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false
+            }
+          },
+          "outputs": ["{options.outputPath}"]
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "back-cloud-functions:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "apps/back/cloud-functions/**/*.ts",
+              "apps/back/cloud-functions/**/*.spec.ts",
+              "apps/back/cloud-functions/**/*.d.ts"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/back/cloud-functions/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/apps/back/cloud-functions"]
         }
       }
     }

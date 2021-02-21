@@ -14,7 +14,7 @@ const newPackageJson = {
 };
 
 // console.log(JSON.stringify(newPackageJson, null, 2)); // Uncomment for debug purposes only
-let path = 'dist/apps/back/functions/package.json';
+let path = 'dist/apps/back/cloud-functions/package.json';
 
 fs.writeFileSync(path, JSON.stringify(newPackageJson));
 console.log(`${path} written successfully.`);

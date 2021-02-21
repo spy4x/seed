@@ -6,13 +6,13 @@ describe('getDeployOnlyArray', () => {
     const output = ['hosting:front-client', 'hosting:front-admin'];
     expect(getDeployOnlyArray(input)).toEqual(output);
   });
-  it('return "hosting:admin, functions" for "front-admin back-functions"', () => {
-    const input = ['front-admin', 'back-functions'];
+  it('return "hosting:admin, functions" for "front-admin back-cloud-functions"', () => {
+    const input = ['front-admin', 'back-cloud-functions'];
     const output = ['hosting:front-admin', 'functions'];
     expect(getDeployOnlyArray(input)).toEqual(output);
   });
-  it('return "hosting:client, hosting:admin, functions" for "front-client front-admin back-functions"', () => {
-    const input = ['front-client', 'front-admin', 'back-functions'];
+  it('return "hosting:client, hosting:admin, functions" for "front-client front-admin back-cloud-functions"', () => {
+    const input = ['front-client', 'front-admin', 'back-cloud-functions'];
     const output = ['hosting:front-client', 'hosting:front-admin', 'functions'];
     expect(getDeployOnlyArray(input)).toEqual(output);
   });
