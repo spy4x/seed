@@ -1,6 +1,6 @@
 import * as functions from 'firebase-functions';
-import { UsersController } from '@seed/back/functions/users';
-import { getApp } from '@seed/back/functions/core';
+import { UsersController } from '@seed/back/api/users';
+import { getApp } from '@seed/back/api/core';
 
 let usersController: UsersController;
 

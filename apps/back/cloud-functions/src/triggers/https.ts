@@ -1,6 +1,6 @@
 import * as functions from 'firebase-functions';
-import { getApp } from '@seed/back/functions/core';
-import { API_CONFIG } from '@seed/back/functions/shared';
+import { getApp } from '@seed/back/api/core';
+import { API_CONFIG } from '@seed/back/api/shared';
 
 export const api = functions.https.onRequest(async (req, res) => {
   const { express } = await getApp();

@@ -5,7 +5,7 @@ import * as morgan from 'morgan';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { API_CONFIG, LogSegment, LogService } from '@seed/back/functions/shared';
+import { API_CONFIG, LogSegment, LogService } from '@seed/back/api/shared';
 
 import * as cors from 'cors';
 

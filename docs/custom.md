@@ -3,9 +3,8 @@
 
 ### Local development:
 - `$ yarn serve:emulator # Launch all: Firebase Emulator with local Cloud Functions, Auth, Hosting and PubSub`
-- `$ yarn serve:cloud-functions # Launch Cloud Functions only`
-- `$ yarn start front-admin # Launch Admin Panel app only`
-2. optional: `$ yarn test front-admin --watch`
+- `$ yarn start <appName> # Serve that app, example: "$ yarn start back-cloud-functions"`
+- `$ yarn build <appName> # Build that app, example: "$ yarn build back-cloud-functions --watch"`
 
 ### Tests (use "--watch" option if needed):
 - `$ yarn test <app/library name> # Examples: "back-cloud-functions", "front-admin", "back-api-users", etc`

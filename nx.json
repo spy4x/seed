@@ -52,16 +52,16 @@
     "dev-utils": {
       "tags": ["dev"]
     },
-    "back-functions-users": {
-      "tags": []
-    },
-    "back-functions-core": {
-      "tags": []
-    },
-    "back-functions-shared": {
-      "tags": []
-    },
     "back-cloud-functions": {
+      "tags": []
+    },
+    "back-api-core": {
+      "tags": []
+    },
+    "back-api-users": {
+      "tags": []
+    },
+    "back-api-shared": {
       "tags": []
     }
   }

@@ -80,7 +80,7 @@
     "sharp": "^0.27.1",
     "zone.js": "^0.10.2"
   },
-  "firebase-functions-dependencies": [
+  "cloud-functions-dependencies": [
     "@nestjs/common",
     "@nestjs/core",
     "@nestjs/cqrs",

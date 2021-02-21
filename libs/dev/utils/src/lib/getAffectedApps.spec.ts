@@ -1,11 +1,10 @@
+const mockedExec = jest.fn();
+jest.mock('./exec', () => ({ exec: mockedExec }));
+
 import { getAffectedApps, getAffectedAppsNamesCommand } from './getAffectedApps';
-import { exec } from './exec';
 
-jest.mock('./exec');
-
-const mockedExec: jest.Mock<string> = ((exec as unknown) = jest.fn());
 const getNxOutput = (input: string): string => {
-  let string = input
+  const string = input
     ? input
         .split(' ')
         .map(i => `\n  - ${i}`)

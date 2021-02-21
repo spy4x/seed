@@ -317,10 +317,9 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": ["apps/dev/deploy/tsconfig.app.json", "apps/dev/deploy/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**"]
+            "lintFilePatterns": ["apps/dev/deploy/**/*.ts", "apps/dev/deploy/**/*.spec.ts", "apps/dev/deploy/**/*.d.ts"]
           }
         },
         "test": {
@@ -339,10 +338,9 @@
       "schematics": {},
       "architect": {
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": ["libs/dev/utils/tsconfig.lib.json", "libs/dev/utils/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**"]
+            "lintFilePatterns": ["libs/dev/utils/**/*.ts", "libs/dev/utils/**/*.spec.ts", "libs/dev/utils/**/*.d.ts"]
           }
         },
         "test": {
@@ -404,93 +402,6 @@
         }
       }
     },
-    "back-functions-core": {
-      "root": "libs/back/functions/core",
-      "sourceRoot": "libs/back/functions/core/src",
-      "projectType": "library",
-      "schematics": {},
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "libs/back/functions/core/**/*.ts",
-              "libs/back/functions/core/**/*.spec.ts",
-              "libs/back/functions/core/**/*.spec.tsx",
-              "libs/back/functions/core/**/*.spec.js",
-              "libs/back/functions/core/**/*.spec.jsx",
-              "libs/back/functions/core/**/*.d.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/back/functions/core/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/libs/back/functions/core"]
-        }
-      }
-    },
-    "back-functions-users": {
-      "root": "libs/back/functions/users",
-      "sourceRoot": "libs/back/functions/users/src",
-      "projectType": "library",
-      "schematics": {},
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "libs/back/functions/users/**/*.ts",
-              "libs/back/functions/users/**/*.spec.ts",
-              "libs/back/functions/users/**/*.spec.tsx",
-              "libs/back/functions/users/**/*.spec.js",
-              "libs/back/functions/users/**/*.spec.jsx",
-              "libs/back/functions/users/**/*.d.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/back/functions/users/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/libs/back/functions/users"]
-        }
-      }
-    },
-    "back-functions-shared": {
-      "root": "libs/back/functions/shared",
-      "sourceRoot": "libs/back/functions/shared/src",
-      "projectType": "library",
-      "schematics": {},
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "libs/back/functions/shared/**/*.ts",
-              "libs/back/functions/shared/**/*.spec.ts",
-              "libs/back/functions/shared/**/*.spec.tsx",
-              "libs/back/functions/shared/**/*.spec.js",
-              "libs/back/functions/shared/**/*.spec.jsx",
-              "libs/back/functions/shared/**/*.d.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/back/functions/shared/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/libs/back/functions/shared"]
-        }
-      }
-    },
     "back-cloud-functions": {
       "root": "apps/back/cloud-functions",
       "sourceRoot": "apps/back/cloud-functions/src",
@@ -538,6 +449,93 @@
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/back/cloud-functions"]
+        }
+      }
+    },
+    "back-api-core": {
+      "root": "libs/back/api/core",
+      "sourceRoot": "libs/back/api/core/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/back/api/core/**/*.ts",
+              "libs/back/api/core/**/*.spec.ts",
+              "libs/back/api/core/**/*.spec.tsx",
+              "libs/back/api/core/**/*.spec.js",
+              "libs/back/api/core/**/*.spec.jsx",
+              "libs/back/api/core/**/*.d.ts"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/back/api/core/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/libs/back/api/core"]
+        }
+      }
+    },
+    "back-api-users": {
+      "root": "libs/back/api/users",
+      "sourceRoot": "libs/back/api/users/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/back/api/users/**/*.ts",
+              "libs/back/api/users/**/*.spec.ts",
+              "libs/back/api/users/**/*.spec.tsx",
+              "libs/back/api/users/**/*.spec.js",
+              "libs/back/api/users/**/*.spec.jsx",
+              "libs/back/api/users/**/*.d.ts"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/back/api/users/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/libs/back/api/users"]
+        }
+      }
+    },
+    "back-api-shared": {
+      "root": "libs/back/api/shared",
+      "sourceRoot": "libs/back/api/shared/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/back/api/shared/**/*.ts",
+              "libs/back/api/shared/**/*.spec.ts",
+              "libs/back/api/shared/**/*.spec.tsx",
+              "libs/back/api/shared/**/*.spec.js",
+              "libs/back/api/shared/**/*.spec.jsx",
+              "libs/back/api/shared/**/*.d.ts"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/back/api/shared/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/libs/back/api/shared"]
         }
       }
     }

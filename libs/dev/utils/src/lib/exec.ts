@@ -1,7 +1,7 @@
 import * as chalk from 'chalk';
 import { execSync } from 'child_process';
 
-export const exec = (command: string, shouldLogCommand: boolean = true, shouldLogResult: boolean = true): string => {
+export const exec = (command: string, shouldLogCommand = true, shouldLogResult = true): string => {
   if (shouldLogCommand) {
     console.log(chalk.cyan(`\n$ ${command}`));
   }

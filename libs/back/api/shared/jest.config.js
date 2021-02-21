@@ -5,7 +5,7 @@ module.exports = {
     '^.+\\.[tj]sx?$': 'ts-jest',
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'html'],
-  coverageDirectory: '../../../../coverage/libs/back/functions/shared',
+  coverageDirectory: '../../../../coverage/libs/back/api/shared',
   globals: { 'ts-jest': { tsConfig: '<rootDir>/tsconfig.spec.json' } },
-  displayName: 'back-functions-shared',
+  displayName: 'back-api-shared',
 };

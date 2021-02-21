@@ -2,7 +2,7 @@ const packageJson = require('../../package.json');
 // fs is for reading and writing files
 const fs = require('fs');
 // Refers to package.json
-const deps = packageJson['firebase-functions-dependencies'];
+const deps = packageJson['cloud-functions-dependencies'];
 // Template of new package.json
 const newPackageJson = {
   engines: { node: '10' },
