@@ -1,8 +1,8 @@
 {
   "extends": "../../../tslint.json",
   "rules": {
-    "directive-selector": [true, "attribute", "seed-client", "camelCase"],
-    "component-selector": [true, "element", "seed-client", "kebab-case"]
+    "directive-selector": [true, "attribute", "seed-web-client", "camelCase"],
+    "component-selector": [true, "element", "seed-web-client", "kebab-case"]
   },
   "linterOptions": {
     "exclude": ["!**/*"]

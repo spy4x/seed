@@ -6,7 +6,6 @@ import { CoreModule } from '@seed/front/web-client/core';
 @NgModule({
   declarations: [AppComponent],
   imports: [CoreModule],
-  providers: [],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

@@ -23,16 +23,6 @@
     }
   },
   "projects": {
-    "front-admin": {
-      "tags": []
-    },
-    "e2e-admin": {
-      "tags": [],
-      "implicitDependencies": ["front-admin"]
-    },
-    "front-admin-core": {
-      "tags": []
-    },
     "dev-deploy": {
       "tags": ["dev"]
     },
@@ -63,6 +53,16 @@
     "e2e-web-client": {
       "tags": [],
       "implicitDependencies": ["front-web-client"]
+    },
+    "front-admin-panel": {
+      "tags": []
+    },
+    "e2e-admin-panel": {
+      "tags": [],
+      "implicitDependencies": ["front-admin-panel"]
+    },
+    "front-admin-panel-core": {
+      "tags": []
     }
   }
 }

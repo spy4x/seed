@@ -7,8 +7,8 @@
 - `$ yarn build <appName> # Build that app, example: "$ yarn build back-cloud-functions --watch"`
 
 ### Tests (use "--watch" option if needed):
-- `$ yarn test <app/library name> # Examples: "back-cloud-functions", "front-admin", "back-api-users", etc`
-- `$ yarn e2e e2e-admin`
+- `$ yarn test <app/library name> # Examples: "back-cloud-functions", "front-admin-panel", "back-api-users", etc`
+- `$ yarn e2e e2e-admin-panel`
 - `$ yarn e2e e2e-web-client`
 
 ## Scripts Sandbox

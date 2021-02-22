@@ -44,7 +44,7 @@
     "deploy": "firebase deploy",
     "predeploy:functions": "yarn build back-cloud-functions --prod && node tools/scripts/build-firebase-functions-package-json.js",
     "predeploy:hosting:front-web-client": "yarn build front-web-client --prod",
-    "predeploy:hosting:front-admin": "yarn build front-admin --prod"
+    "predeploy:hosting:front-admin-panel": "yarn build front-admin-panel --prod"
   },
   "private": true,
   "dependencies": {

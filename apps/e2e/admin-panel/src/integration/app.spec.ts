@@ -1,4 +1,4 @@
-describe('admin', () => {
+describe('admin-panel', () => {
   beforeEach(() => cy.visit('/'));
 
   it('should display welcome message', () => {

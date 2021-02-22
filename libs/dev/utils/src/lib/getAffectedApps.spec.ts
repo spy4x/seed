@@ -42,10 +42,10 @@ describe('getAffectedApps', () => {
   });
 
   it('should return array with two apps in case of two affected apps', () => {
-    test('front-web-client front-admin');
+    test('front-web-client front-admin-panel');
   });
 
   it('should return array with three apps in case of three affected apps', () => {
-    test('front-web-client front-admin back-cloud-functions');
+    test('front-web-client front-admin-panel back-cloud-functions');
   });
 });

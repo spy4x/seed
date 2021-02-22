@@ -1,6 +1,6 @@
 module.exports = {
-  preset: '../../../../jest.preset.js',
-  coverageDirectory: '../../../coverage/libs/front/admin/core',
+  preset: '../../../jest.preset.js',
+  coverageDirectory: '../../coverage/apps/front/admin-panel',
   snapshotSerializers: [
     'jest-preset-angular/build/AngularNoNgAttributesSnapshotSerializer.js',
     'jest-preset-angular/build/AngularSnapshotSerializer.js',
@@ -17,5 +17,5 @@ module.exports = {
       ],
     },
   },
-  displayName: 'front-admin-core',
+  displayName: 'front-admin-panel',
 };

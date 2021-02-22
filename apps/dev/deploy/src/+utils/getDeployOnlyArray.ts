@@ -1,6 +1,6 @@
 export const getDeployOnlyArray = (affectedApps: string[]): string[] => {
   const map: { [key: string]: string } = {
-    'front-admin': 'hosting:front-admin',
+    'front-admin-panel': 'hosting:front-admin-panel',
     'front-web-client': 'hosting:front-web-client',
     'back-cloud-functions': 'functions',
   };

@@ -3,7 +3,10 @@ import { getFirebaseDeployAuthParams } from '../+utils/getFirebaseDeployAuthPara
 
 export const applyHostingTargets = (affectedApps: string[]): void => {
   const map: { [key: string]: string } = {
-    'front-admin': ensureParam('FIREBASE_HOSTING_TARGET_ADMIN', process.env.FIREBASE_HOSTING_TARGET_ADMIN),
+    'front-admin-panel': ensureParam(
+      'FIREBASE_HOSTING_TARGET_ADMIN_PANEL',
+      process.env.FIREBASE_HOSTING_TARGET_ADMIN_PANEL,
+    ),
     'front-web-client': ensureParam(
       'FIREBASE_HOSTING_TARGET_WEB_CLIENT',
       process.env.FIREBASE_HOSTING_TARGET_WEB_CLIENT,

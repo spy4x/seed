@@ -81,148 +81,6 @@
     }
   },
   "projects": {
-    "front-admin": {
-      "projectType": "application",
-      "root": "apps/front/admin",
-      "sourceRoot": "apps/front/admin/src",
-      "prefix": "seed-admin-panel",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:browser",
-          "options": {
-            "outputPath": "dist/apps/front/admin",
-            "index": "apps/front/admin/src/index.html",
-            "main": "apps/front/admin/src/main.ts",
-            "polyfills": "apps/front/admin/src/polyfills.ts",
-            "tsConfig": "apps/front/admin/tsconfig.app.json",
-            "aot": true,
-            "assets": ["apps/front/admin/src/favicon.ico", "apps/front/admin/src/assets"],
-            "styles": ["apps/front/admin/src/styles/index.sass"],
-            "stylePreprocessorOptions": {
-              "includePaths": ["apps/front/admin/src/styles"]
-            },
-            "scripts": []
-          },
-          "configurations": {
-            "production": {
-              "fileReplacements": [
-                {
-                  "replace": "apps/front/admin/src/environments/environment.ts",
-                  "with": "apps/front/admin/src/environments/environment.prod.ts"
-                }
-              ],
-              "optimization": true,
-              "outputHashing": "all",
-              "sourceMap": false,
-              "namedChunks": false,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
-                }
-              ]
-            }
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            "browserTarget": "front-admin:build"
-          },
-          "configurations": {
-            "production": {
-              "browserTarget": "front-admin:build:production"
-            }
-          }
-        },
-        "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
-          "options": {
-            "browserTarget": "front-admin:build"
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": ["apps/front/admin/tsconfig.app.json", "apps/front/admin/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/front/admin/**/*"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/front/admin/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/apps/front/admin"]
-        }
-      }
-    },
-    "e2e-admin": {
-      "root": "apps/e2e/admin",
-      "sourceRoot": "apps/e2e/admin/src",
-      "projectType": "application",
-      "architect": {
-        "e2e": {
-          "builder": "@nrwl/cypress:cypress",
-          "options": {
-            "cypressConfig": "apps/e2e/admin/cypress.json",
-            "tsConfig": "apps/e2e/admin/tsconfig.e2e.json",
-            "devServerTarget": "front-admin:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "front-admin:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": ["apps/e2e/admin/tsconfig.e2e.json"],
-            "exclude": ["**/node_modules/**", "!apps/e2e/admin/**/*"]
-          }
-        }
-      }
-    },
-    "front-admin-core": {
-      "projectType": "library",
-      "root": "libs/front/admin/core",
-      "sourceRoot": "libs/front/admin/core/src",
-      "prefix": "seed-admin-panel-core",
-      "architect": {
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": ["libs/front/admin/core/tsconfig.lib.json", "libs/front/admin/core/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!libs/front/admin/core/**/*"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/front/admin/core/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/libs/front/admin/core"]
-        }
-      },
-      "schematics": {
-        "@nrwl/angular:component": {
-          "style": "scss"
-        }
-      }
-    },
     "dev-deploy": {
       "root": "apps/dev/deploy",
       "sourceRoot": "apps/dev/deploy/src",
@@ -619,6 +477,151 @@
             "tsConfig": ["apps/e2e/web-client/tsconfig.e2e.json"],
             "exclude": ["**/node_modules/**", "!apps/e2e/web-client/**/*"]
           }
+        }
+      }
+    },
+    "front-admin-panel": {
+      "projectType": "application",
+      "root": "apps/front/admin-panel",
+      "sourceRoot": "apps/front/admin-panel/src",
+      "prefix": "seed-admin-panel",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/apps/front/admin-panel",
+            "index": "apps/front/admin-panel/src/index.html",
+            "main": "apps/front/admin-panel/src/main.ts",
+            "polyfills": "apps/front/admin-panel/src/polyfills.ts",
+            "tsConfig": "apps/front/admin-panel/tsconfig.app.json",
+            "aot": true,
+            "assets": ["apps/front/admin-panel/src/favicon.ico", "apps/front/admin-panel/src/assets"],
+            "styles": ["apps/front/admin-panel/src/styles/index.sass"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["apps/front/admin-panel/src/styles"]
+            },
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/front/admin-panel/src/environments/environment.ts",
+                  "with": "apps/front/admin-panel/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ]
+            }
+          },
+          "outputs": ["{options.outputPath}"]
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "front-admin-panel:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "front-admin-panel:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "front-admin-panel:build"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/front/admin-panel/tsconfig.app.json", "apps/front/admin-panel/tsconfig.spec.json"],
+            "exclude": ["**/node_modules/**", "!apps/front/admin-panel/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/front/admin-panel/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/apps/front/admin-panel"]
+        }
+      }
+    },
+    "e2e-admin-panel": {
+      "root": "apps/e2e/admin-panel",
+      "sourceRoot": "apps/e2e/admin-panel/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/e2e/admin-panel/cypress.json",
+            "tsConfig": "apps/e2e/admin-panel/tsconfig.e2e.json",
+            "devServerTarget": "front-admin-panel:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "front-admin-panel:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/e2e/admin-panel/tsconfig.e2e.json"],
+            "exclude": ["**/node_modules/**", "!apps/e2e/admin-panel/**/*"]
+          }
+        }
+      }
+    },
+    "front-admin-panel-core": {
+      "projectType": "library",
+      "root": "libs/front/admin-panel/core",
+      "sourceRoot": "libs/front/admin-panel/core/src",
+      "prefix": "seed-admin-panel-core",
+      "architect": {
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "libs/front/admin-panel/core/tsconfig.lib.json",
+              "libs/front/admin-panel/core/tsconfig.spec.json"
+            ],
+            "exclude": ["**/node_modules/**", "!libs/front/admin-panel/core/**/*"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/front/admin-panel/core/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/libs/front/admin-panel/core"]
+        }
+      },
+      "schematics": {
+        "@nrwl/angular:component": {
+          "style": "scss"
         }
       }
     }

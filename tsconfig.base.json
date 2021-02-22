@@ -16,12 +16,12 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@seed/front/admin/core": ["libs/front/admin/core/src/index.ts"],
       "@seed/dev/utils": ["libs/dev/utils/src/index.ts"],
       "@seed/back/api/core": ["libs/back/api/core/src/index.ts"],
       "@seed/back/api/users": ["libs/back/api/users/src/index.ts"],
       "@seed/back/api/shared": ["libs/back/api/shared/src/index.ts"],
-      "@seed/front/web-client/core": ["libs/front/web-client/core/src/index.ts"]
+      "@seed/front/web-client/core": ["libs/front/web-client/core/src/index.ts"],
+      "@seed/front/admin-panel/core": ["libs/front/admin-panel/core/src/index.ts"]
     },
     "strict": true,
     "strictBindCallApply": true,

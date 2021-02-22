@@ -45,9 +45,9 @@
       ]
     },
     {
-      "target": "front-admin",
-      "public": "dist/apps/front/admin",
-      "predeploy": ["yarn predeploy:hosting:front-admin"],
+      "target": "front-admin-panel",
+      "public": "dist/apps/front/admin-panel",
+      "predeploy": ["yarn predeploy:hosting:front-admin-panel"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {

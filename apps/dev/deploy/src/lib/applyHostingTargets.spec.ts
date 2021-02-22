@@ -4,9 +4,9 @@ import * as utils from '@seed/dev/utils';
 const mockedExec: jest.Mock<string> = ((utils.exec as unknown) = jest.fn((str: string) => str));
 
 const vars: utils.TestingEnvironmentVariables = {
-  'front-admin': {
-    title: 'FIREBASE_HOSTING_TARGET_ADMIN',
-    value: 'TEST_FIREBASE_HOSTING_TARGET_ADMIN',
+  'front-admin-panel': {
+    title: 'FIREBASE_HOSTING_TARGET_ADMIN_PANEL',
+    value: 'TEST_FIREBASE_HOSTING_TARGET_ADMIN_PANEL',
   },
   'front-web-client': {
     title: 'FIREBASE_HOSTING_TARGET_WEB_CLIENT',
@@ -41,16 +41,16 @@ describe('applyHostingTargets', () => {
     expect(mockedExec.mock.calls.length).toBe(0);
   });
 
-  it('should call exec with admin when admin is an affected app', () => {
-    const input = ['front-admin'];
+  it('should call exec with front-admin-panel when front-admin-panel is an affected app', () => {
+    const input = ['front-admin-panel'];
     const output = `${command} ${getAlias(input, 0)} ${project} ${token}`;
     applyHostingTargets(input);
     expect(mockedExec.mock.calls.length).toBe(1);
     expect(mockedExec.mock.results[0].value).toBe(output);
   });
 
-  it('should call exec with web-client and admin when web-client and admin are affected apps', () => {
-    const input = ['front-web-client', 'front-admin'];
+  it('should call exec with web-client and admin-panel when web-client and admin-panel are affected apps', () => {
+    const input = ['front-web-client', 'front-admin-panel'];
     const output1 = `${command} ${getAlias(input, 0)} ${project} ${token}`;
     const output2 = `${command} ${getAlias(input, 1)} ${project} ${token}`;
     applyHostingTargets(input);
