@@ -10,7 +10,7 @@ jest.mock('./lib/deploy');
 jest.mock('./lib/applyHostingTargets');
 jest.mock('./+utils/getDeployOnlyArray');
 
-const affectedApps = ['client, firebase-functions'];
+const affectedApps = ['web-client, firebase-functions'];
 const deployOnlyArray = getDeployOnlyArray(affectedApps);
 const mockedGetAffectedApps: jest.Mock<string[], string[]> = ((utils.getAffectedApps as unknown) = jest.fn(
   () => affectedApps,

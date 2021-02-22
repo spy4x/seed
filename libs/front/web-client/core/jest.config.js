@@ -1,6 +1,6 @@
 module.exports = {
   preset: '../../../../jest.preset.js',
-  coverageDirectory: '../../../coverage/libs/front/client/core',
+  coverageDirectory: '../../../coverage/libs/front/web-client/core',
   snapshotSerializers: [
     'jest-preset-angular/build/AngularNoNgAttributesSnapshotSerializer.js',
     'jest-preset-angular/build/AngularSnapshotSerializer.js',
@@ -17,5 +17,5 @@ module.exports = {
       ],
     },
   },
-  displayName: 'front-client-core',
+  displayName: 'front-web-client-core',
 };

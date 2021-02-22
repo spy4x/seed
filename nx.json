@@ -1,8 +1,4 @@
 {
-  "npmScope": "seed",
-  "affected": {
-    "defaultBase": "master"
-  },
   "implicitDependencies": {
     "workspace.json": "*",
     "package.json": {
@@ -14,6 +10,10 @@
     ".eslintrc.json": "*",
     "nx.json": "*"
   },
+  "affected": {
+    "defaultBase": "master"
+  },
+  "npmScope": "seed",
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/workspace/tasks-runners/default",
@@ -23,22 +23,12 @@
     }
   },
   "projects": {
-    "front-client": {
-      "tags": []
-    },
-    "e2e-client": {
-      "tags": [],
-      "implicitDependencies": ["front-client"]
-    },
     "front-admin": {
       "tags": []
     },
     "e2e-admin": {
       "tags": [],
       "implicitDependencies": ["front-admin"]
-    },
-    "front-client-core": {
-      "tags": []
     },
     "front-admin-core": {
       "tags": []
@@ -63,6 +53,16 @@
     },
     "back-api-shared": {
       "tags": []
+    },
+    "front-web-client": {
+      "tags": []
+    },
+    "front-web-client-core": {
+      "tags": []
+    },
+    "e2e-web-client": {
+      "tags": [],
+      "implicitDependencies": ["front-web-client"]
     }
   }
 }

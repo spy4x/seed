@@ -9,7 +9,7 @@
 ### Tests (use "--watch" option if needed):
 - `$ yarn test <app/library name> # Examples: "back-cloud-functions", "front-admin", "back-api-users", etc`
 - `$ yarn e2e e2e-admin`
-- `$ yarn e2e e2e-client`
+- `$ yarn e2e e2e-web-client`
 
 ## Scripts Sandbox
 

@@ -8,9 +8,9 @@ const vars: utils.TestingEnvironmentVariables = {
     title: 'FIREBASE_HOSTING_TARGET_ADMIN',
     value: 'TEST_FIREBASE_HOSTING_TARGET_ADMIN',
   },
-  'front-client': {
-    title: 'FIREBASE_HOSTING_TARGET_CLIENT',
-    value: 'TEST_FIREBASE_HOSTING_TARGET_CLIENT',
+  'front-web-client': {
+    title: 'FIREBASE_HOSTING_TARGET_WEB_CLIENT',
+    value: 'TEST_FIREBASE_HOSTING_TARGET_WEB_CLIENT',
   },
   project: {
     title: 'FIREBASE_PROJECT_NAME',
@@ -49,8 +49,8 @@ describe('applyHostingTargets', () => {
     expect(mockedExec.mock.results[0].value).toBe(output);
   });
 
-  it('should call exec with client and admin when client and admin are affected apps', () => {
-    const input = ['front-client', 'front-admin'];
+  it('should call exec with web-client and admin when web-client and admin are affected apps', () => {
+    const input = ['front-web-client', 'front-admin'];
     const output1 = `${command} ${getAlias(input, 0)} ${project} ${token}`;
     const output2 = `${command} ${getAlias(input, 1)} ${project} ${token}`;
     applyHostingTargets(input);

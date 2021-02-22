@@ -5,9 +5,9 @@
   },
   "hosting": [
     {
-      "target": "front-client",
-      "public": "dist/apps/front/client",
-      "predeploy": ["yarn predeploy:hosting:front-client"],
+      "target": "front-web-client",
+      "public": "dist/apps/front/web-client",
+      "predeploy": ["yarn predeploy:hosting:front-web-client"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
