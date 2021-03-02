@@ -31,8 +31,8 @@ describe('exec', () => {
   it('by default should call console.log for command and for result', () => {
     expect(exec(defaultTestCommand)).toBe(defaultTestOutput); // returned output
     expect(mock).toHaveBeenCalledTimes(consoleLogAmount.default);
-    expect(mock.mock.calls[0][0]).toBe(chalk.cyan(`\n$ ${defaultTestCommand}`)); // logged command
-    expect(mock.mock.calls[1][0]).toBe(defaultTestOutput); // logged result
+    expect(mock).toHaveBeenCalledWith(chalk.cyan(`\n$ ${defaultTestCommand}`)); // logged command
+    expect(mock).toHaveBeenCalledWith(defaultTestOutput); // logged result
   });
 
   it('should call console.log only for command if turned off for result', () => {

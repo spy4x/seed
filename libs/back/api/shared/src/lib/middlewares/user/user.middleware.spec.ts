@@ -4,7 +4,7 @@ import { Request } from 'express';
 
 describe('UserMiddleware', () => {
   const getFirebaseServiceMock = (result: null | string) => ({
-    validateJWT: jest.fn().mockImplementation(() => Promise.resolve(result)),
+    validateJWT: jest.fn().mockImplementation(async () => Promise.resolve(result)),
   });
   const getRequestMock = (token?: string): RequestExtended =>
     (({ headers: { authorization: token } } as unknown) as Request);

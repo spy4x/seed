@@ -1,10 +1,9 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { inspect } from 'util';
+import { inspect as utilInspect } from 'util';
 import * as chalk from 'chalk';
 import { format } from 'date-fns';
-import { API_CONFIG, Environment } from '../../constants/config.constant';
+import { Environment, isEnv } from '../../constants/config.constant';
 
-const isProduction = API_CONFIG.environment === Environment.production;
 export enum LogSeverity {
   log = 'log',
   error = 'error',
@@ -12,6 +11,25 @@ export enum LogSeverity {
 export enum LogContext {
   startSegment = 'startSegment',
   finishSegment = 'finishSegment',
+}
+type Params = unknown;
+enum LogArgType {
+  regular = 'regular',
+  subCaller = 'subCaller',
+  inspect = 'inspect',
+}
+interface LogArg {
+  type: LogArgType;
+  value: unknown;
+}
+
+const IS_PRODUCTION = isEnv(Environment.production);
+
+export function chalkify(str: string, chalkModifier: chalk.Chalk): string {
+  if (IS_PRODUCTION) {
+    return str;
+  }
+  return chalkModifier(` ${str} `);
 }
 
 export class LogSegment {
@@ -50,7 +68,7 @@ export class LogSegment {
     if (params) {
       args.push({ type: LogArgType.inspect, value: params });
     }
-    this.logger.write(LogSeverity.log, args, context);
+    this.logger.write(LogSeverity.error, args, context);
     return this;
   }
 
@@ -58,41 +76,49 @@ export class LogSegment {
     const finish = new Date();
     const durationMs = finish.getTime() - this.startDate.getTime();
     const durationStr = `${durationMs}ms`;
-    return this.log(
-      `Completed in ${LogService.chalkify(durationStr, chalk.bgWhite.black)}`,
-      params,
-      LogContext.finishSegment,
-    );
+    return this.log(`Completed in ${chalkify(durationStr, chalk.bgWhite.black)}`, params, LogContext.finishSegment);
   }
 
   endWithFail(error: Error, params?: Params): this {
     const finish = new Date();
+    const durationMs = finish.getTime() - this.startDate.getTime();
+    const paramsObj: { durationMs: number; params?: Params } = { durationMs };
+    if (params) {
+      paramsObj.params = params;
+    }
     return this.error({
       message: `Error`,
       error,
-      params: { durationMs: finish.getTime() - this.startDate.getTime(), params },
+      params: paramsObj,
       context: LogContext.finishSegment,
     });
   }
 }
 
-type Params = unknown;
-enum LogArgType {
-  regular = 'regular',
-  subCaller = 'subCaller',
-  inspect = 'inspect',
-}
-type LogArg = { type: LogArgType; value: unknown };
-
 @Injectable({ scope: Scope.TRANSIENT })
 export class LogService {
   constructor(public caller: string) {}
 
-  static inspect(object: unknown): string {
-    return inspect(object, {
+  public static inspect(object: unknown): string {
+    return utilInspect(object, {
       depth: 15, // deep nesting, but avoid infinity for security reasons
-      colors: !isProduction, // Google Cloud Logger shows colors as special symbols, like "[32m", instead of coloring text
+      colors: !IS_PRODUCTION, // Google Cloud Logger shows colors as special symbols, like "[32m", instead of coloring text
     });
+  }
+
+  private static getIcon(severity: LogSeverity, context?: LogContext): string {
+    if (severity === LogSeverity.error) {
+      return '⛔️';
+    }
+    switch (context) {
+      case LogContext.startSegment:
+        return '▶️ ';
+      case LogContext.finishSegment:
+        return '✅';
+      case undefined:
+        return '🔷';
+    }
+    return '❓';
   }
 
   setCaller(caller: string): this {
@@ -113,8 +139,10 @@ export class LogService {
       const result = await fn(segment);
       segment.endWithSuccess();
       return result;
-    } catch (error) {
-      segment.endWithFail(error);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        segment.endWithFail(error);
+      }
       throw error;
     }
   }
@@ -147,15 +175,21 @@ export class LogService {
   write(severity: LogSeverity, args: LogArg[], context?: LogContext): this {
     let logArgs: unknown[] = [];
 
-    if (!isProduction) {
+    if (!IS_PRODUCTION) {
       const timestamp = format(new Date(), 'HH:mm:ss.SSS');
-      logArgs.push(LogService.chalkify(timestamp, chalk.grey));
+      logArgs.push(chalkify(timestamp, chalk.grey));
     }
 
-    let callerStr = LogService.chalkify(this.caller.padStart(20, ' '), chalk.rgb(180, 150, 100));
+    const maxLength = 20;
+    const brown = { r: 180, g: 150, b: 100 };
+    const purple = { r: 150, g: 125, b: 210 };
+    let callerStr = chalkify(this.caller.padStart(maxLength, ' '), chalk.rgb(brown.r, brown.g, brown.b));
     const subCaller = args.find(i => i.type === 'subCaller');
     if (subCaller) {
-      callerStr += `>${LogService.chalkify((subCaller.value as string).padEnd(20, ' '), chalk.rgb(150, 125, 210))}`;
+      callerStr += `>${chalkify(
+        (subCaller.value as string).padEnd(maxLength, ' '),
+        chalk.rgb(purple.r, purple.g, purple.b),
+      )}`;
     }
     logArgs.push(callerStr);
 
@@ -176,30 +210,9 @@ export class LogService {
           }
         }),
     ];
+
+    // eslint-disable-next-line no-console
     console[severity](...logArgs);
     return this;
-  }
-
-  static chalkify(str: string, chalkModifier: chalk.Chalk): string {
-    if (isProduction) {
-      return str;
-    }
-    return chalkModifier(` ${str} `);
-  }
-
-  private static getIcon(severity: LogSeverity, context?: LogContext): string {
-    if (severity === LogSeverity.error) {
-      return '⛔️';
-    }
-    if (!context) {
-      return '🔷';
-    }
-    if (context === LogContext.startSegment) {
-      return '▶️ ';
-    }
-    if (context === LogContext.finishSegment) {
-      return '✅';
-    }
-    return '❓';
   }
 }

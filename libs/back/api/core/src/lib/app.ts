@@ -7,18 +7,21 @@ import { json } from 'body-parser';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { API_CONFIG, LogService } from '@seed/back/api/shared';
+import { API_CONFIG, chalkify, Environment, isEnv, LogService } from '@seed/back/api/shared';
 
 import * as cors from 'cors';
 
-let nest: INestApplication;
-let express: expressLib.Application;
-type Output = { nest: INestApplication; express: expressLib.Application };
-let instance: null | Output;
+let nest: null | INestApplication = null;
+let express: null | expressLib.Application = null;
+interface Output {
+  nest: INestApplication;
+  express: expressLib.Application;
+}
+let instance: null | Output = null;
 
 export async function getApp(): Promise<Output> {
   if (!instance) {
-    const initInstance = async () => {
+    const initInstance = async (): Promise<Output> => {
       express = expressLib();
 
       // TODO: Add Sentry // Sentry.init({ dsn: environment.sentry.dsn });
@@ -27,7 +30,7 @@ export async function getApp(): Promise<Output> {
       express.use(
         morgan(
           (_tokens, req) =>
-            `${LogService.chalkify('REQ', chalk.bgCyan.black)} ${req.method} ${req.url} ${
+            `${chalkify('REQ', chalk.bgCyan.black)} ${req.method} ${req.url} ${
               req.body ? LogService.inspect(req.body) : ''
             }`,
           {
@@ -35,11 +38,9 @@ export async function getApp(): Promise<Output> {
           },
         ),
       );
-      express.use(
-        morgan(`${LogService.chalkify('RES', chalk.bgMagenta.black)} :method :url :status :response-time ms`),
-      );
+      express.use(morgan(`${chalkify('RES', chalk.bgMagenta.black)} :method :url :status :response-time ms`));
 
-      if (process.env.NODE_ENV !== 'production') {
+      if (!isEnv(Environment.production)) {
         express.use(cors());
       }
 

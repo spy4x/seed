@@ -3,14 +3,21 @@ import { getAffectedApps } from '@seed/dev/utils';
 import * as chalk from 'chalk';
 import { applyHostingTargets } from './lib/applyHostingTargets';
 import { deploy } from './lib/deploy';
+import { LogService } from '@seed/back/api/shared';
 
-export const run = (): void => {
-  const affectedApps = getAffectedApps();
-  const deployOnlyArray = getDeployOnlyArray(affectedApps);
+const logPrefix = 'DEV:DEPLOY';
 
-  console.log(chalk.yellow(`Affected apps:`), affectedApps);
-  console.log(chalk.yellow(`Deploy only:`), deployOnlyArray);
+export async function run(): Promise<void> {
+  const logService = new LogService(logPrefix);
+  await logService.trackSegment(run.name, async topLogSegment => {
+    const affectedApps = getAffectedApps();
+    const deployOnlyArray = getDeployOnlyArray(affectedApps);
 
-  applyHostingTargets(affectedApps);
-  deploy(deployOnlyArray);
-};
+    topLogSegment.log(chalk.yellow(`Affected apps:`), affectedApps);
+    topLogSegment.log(chalk.yellow(`Deploy only:`), deployOnlyArray);
+
+    /* eslint-disable @typescript-eslint/require-await */
+    await logService.trackSegment<void>(applyHostingTargets.name, async () => applyHostingTargets(affectedApps));
+    await logService.trackSegment<void>(deploy.name, async logSegment => deploy(deployOnlyArray, logSegment));
+  });
+}

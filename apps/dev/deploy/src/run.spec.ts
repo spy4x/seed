@@ -1,5 +1,3 @@
-// tslint:disable:no-unsafe-any
-
 import { run } from './run';
 import { deploy } from './lib/deploy';
 import { applyHostingTargets } from './lib/applyHostingTargets';
@@ -10,7 +8,7 @@ jest.mock('./lib/deploy');
 jest.mock('./lib/applyHostingTargets');
 jest.mock('./+utils/getDeployOnlyArray');
 
-const affectedApps = ['web-client, firebase-functions'];
+const affectedApps = ['front-web-client, back-cloud-functions'];
 const deployOnlyArray = getDeployOnlyArray(affectedApps);
 const mockedGetAffectedApps: jest.Mock<string[], string[]> = ((utils.getAffectedApps as unknown) = jest.fn(
   () => affectedApps,
@@ -20,14 +18,15 @@ const mockedApplyHostingTargets: jest.Mock<typeof applyHostingTargets> = ((apply
 const mockedDeploy: jest.Mock<typeof deploy> = ((deploy as unknown) = jest.fn());
 
 describe('run', () => {
-  it(`should call all inner mocks properly`, () => {
-    run();
-    expect(mockedGetAffectedApps.mock.calls.length).toBe(1);
-    expect(mockedGetDeployOnlyArray.mock.calls.length).toBe(1);
-    expect(mockedGetDeployOnlyArray.mock.calls[0][0]).toBe(affectedApps);
-    expect(mockedApplyHostingTargets.mock.calls.length).toBe(1);
-    expect(mockedApplyHostingTargets.mock.calls[0][0]).toBe(affectedApps);
-    expect(mockedDeploy.mock.calls.length).toBe(1);
+  it(`should call all inner mocks properly`, async () => {
+    await run();
+    console.log({ deployOnlyArray });
+    expect(mockedGetAffectedApps).toHaveBeenCalledTimes(1);
+    expect(mockedGetDeployOnlyArray).toHaveBeenCalledTimes(1);
+    expect(mockedGetDeployOnlyArray).toHaveBeenCalledWith(affectedApps);
+    expect(mockedApplyHostingTargets).toHaveBeenCalledTimes(1);
+    expect(mockedApplyHostingTargets).toHaveBeenCalledWith(affectedApps);
+    expect(mockedDeploy).toHaveBeenCalledTimes(1);
     expect(mockedDeploy.mock.calls[0][0]).toBe(deployOnlyArray);
   });
 });

@@ -1,7 +1,9 @@
 import { CanActivate, ExecutionContext } from '@nestjs/common';
+import { RequestExtended } from '../../middlewares/user/user.middleware';
 
 export class IsAuthenticatedGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
-    return !!context.switchToHttp().getRequest().userId;
+    const request: RequestExtended = context.switchToHttp().getRequest();
+    return !!request.userId;
   }
 }

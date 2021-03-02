@@ -1,5 +1,3 @@
-// tslint:disable:no-unsafe-any
-
 import { deploy } from './deploy';
 import * as utils from '@seed/dev/utils';
 import * as chalk from 'chalk';
@@ -18,8 +16,6 @@ const vars: utils.TestingEnvironmentVariables = {
 };
 
 describe('deploy', () => {
-  // tslint:disable-next-line:no-console no-unbound-method
-  const consoleLog = console.log;
   const mockedConsoleLog = (console.log = jest.fn() as jest.Mock<string>);
   const project = `--project ${vars.project.value}`;
   const token = `--token ${vars.token.value}`;
@@ -36,12 +32,8 @@ describe('deploy', () => {
     mockedConsoleLog.mockClear();
   });
 
-  afterAll(() => {
-    console.log = consoleLog;
-  });
-
   it(`shouldn't call exec with zero targets for deploy`, () => {
-    deploy([]);
+    deploy([], { log: mockedConsoleLog } as any);
     expect(mockedExec).toHaveBeenCalledTimes(0);
     expect(mockedConsoleLog).toHaveBeenCalledWith(chalk.yellow('Nothing to deploy'));
   });
@@ -49,7 +41,7 @@ describe('deploy', () => {
   it('should call exec once with a provided target', () => {
     const input = ['target1'];
     const output = `yarn deploy --force ${project} ${token} ${getOnly(input)}`;
-    deploy(input);
+    deploy(input, { log: mockedConsoleLog } as any);
     expect(mockedExec).toHaveBeenCalledTimes(1);
     expect(mockedExec.mock.results[0].value).toContain(output);
   });
@@ -57,7 +49,7 @@ describe('deploy', () => {
   it('should call exec once with two provided targets', () => {
     const input = ['target1', 'target2'];
     const output = `yarn deploy --force ${project} ${token} ${getOnly(input)}`;
-    deploy(input);
+    deploy(input, { log: mockedConsoleLog } as any);
     expect(mockedExec).toHaveBeenCalledTimes(1);
     expect(mockedExec.mock.results[0].value).toBe(output);
   });

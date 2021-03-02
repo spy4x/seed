@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
+import { FirebaseError } from 'firebase-admin/lib/firebase-namespace-api';
+import { LogService } from '../log/log.service';
 
 @Injectable()
 export class FirebaseAuthService {
+  logService = new LogService(FirebaseAuthService.name);
+
   constructor() {
     if (!admin.apps.length) {
       admin.initializeApp();
@@ -11,13 +15,13 @@ export class FirebaseAuthService {
 
   async getUser(userId: string): Promise<null | admin.auth.UserRecord> {
     try {
-      return this.getAuth().getUser(userId);
-    } catch (error) {
-      if (error.code === `auth/user-not-found`) {
+      return await this.getAuth().getUser(userId);
+    } catch (error: unknown) {
+      const firebaseError = error as FirebaseError;
+      if (firebaseError.code && firebaseError.code === `auth/user-not-found`) {
         return null;
-      } else {
-        throw error;
       }
+      throw error;
     }
   }
 
@@ -26,21 +30,20 @@ export class FirebaseAuthService {
    * @param token JWT
    */
   async validateJWT(token: string): Promise<null | string> {
-    const logPrefix = `FirebaseAuthService.validateJWT()`;
+    const logSegment = this.logService.startSegment(this.validateJWT.name);
     try {
       const decodedToken = await this.getAuth().verifyIdToken(token, true);
-      return decodedToken?.uid || null;
-    } catch (error) {
-      console.log(logPrefix, `Parsing JWT failed`, {
-        token,
-        error,
-      });
+      const result = decodedToken.uid || null;
+      logSegment.endWithSuccess({ result });
+      return result;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        logSegment.endWithFail(error, {
+          token,
+        });
+      }
       return null;
     }
-  }
-
-  private getAuth(): admin.auth.Auth {
-    return admin.auth();
   }
 
   async blockUser(userId: string): Promise<void> {
@@ -52,10 +55,16 @@ export class FirebaseAuthService {
   }
 
   async updateCustomClaims(userId: string, customClaims: { [field: string]: unknown }): Promise<void> {
-    const userRecord = await this.getAuth().getUser(userId);
-    const oldClaims = userRecord.customClaims;
-    const newClaims = { ...oldClaims, ...customClaims };
-    console.log({ oldClaims, newClaims });
-    return this.getAuth().setCustomUserClaims(userId, newClaims);
+    return this.logService.trackSegment<void>(this.updateCustomClaims.name, async logSegment => {
+      const userRecord = await this.getAuth().getUser(userId);
+      const oldClaims = userRecord.customClaims;
+      const newClaims = { ...oldClaims, ...customClaims };
+      logSegment.log(`Intermediate log`, { oldClaims, newClaims });
+      return this.getAuth().setCustomUserClaims(userId, newClaims);
+    });
+  }
+
+  private getAuth(): admin.auth.Auth {
+    return admin.auth();
   }
 }

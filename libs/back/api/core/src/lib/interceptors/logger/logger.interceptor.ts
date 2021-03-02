@@ -7,7 +7,7 @@ import * as Sentry from '@sentry/node';
 export class LoggerInterceptor implements NestInterceptor {
   intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
-      catchError(event => {
+      catchError((event: Error & { status?: number }) => {
         if (!event.status) {
           // error wasn't handled before
           Sentry.captureException(event);

@@ -3,12 +3,12 @@ import { getFirebaseDeployAuthParams } from './getFirebaseDeployAuthParams';
 const vars = {
   project: {
     title: 'FIREBASE_PROJECT_NAME',
-    value: 'TEST_FIREBASE_PROJECT_NAME'
+    value: 'TEST_FIREBASE_PROJECT_NAME',
   },
   token: {
     title: 'FIREBASE_DEPLOY_TOKEN',
-    value: 'TEST_FIREBASE_DEPLOY_TOKEN'
-  }
+    value: 'TEST_FIREBASE_DEPLOY_TOKEN',
+  },
 };
 
 describe('getFirebaseDeployAuthParams', () => {

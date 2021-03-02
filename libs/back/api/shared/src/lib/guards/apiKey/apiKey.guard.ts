@@ -1,11 +1,14 @@
-import { CanActivate, ExecutionContext, Injectable, SetMetadata } from '@nestjs/common';
+import { CanActivate, CustomDecorator, ExecutionContext, Injectable, SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 
 export const API_KEY_QUERY_SEGMENT_NAME = 'API_KEY';
 export const API_KEY_GUARD_TRUE_VALUE = 'API_KEY_GUARD_TRUE_VALUE';
 type TrueValue = string;
-export const ApiKeyGuardSetTrueValue = (value: TrueValue) => SetMetadata(API_KEY_GUARD_TRUE_VALUE, value);
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const ApiKeyGuardSetTrueValue = (value: TrueValue): CustomDecorator =>
+  SetMetadata(API_KEY_GUARD_TRUE_VALUE, value);
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {

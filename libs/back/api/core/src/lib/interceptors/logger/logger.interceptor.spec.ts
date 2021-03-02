@@ -51,7 +51,7 @@ describe('LoggerInterceptor', () => {
     const sentrySpy = jest.spyOn(Sentry, 'captureException');
     try {
       await loggerInterceptor.intercept(new contextMock(), new nextMock()).toPromise();
-    } catch (err) {
+    } catch {
       expect(sentrySpy).toBeCalled();
     }
   });

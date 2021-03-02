@@ -3,13 +3,13 @@ import { IsAuthenticatedGuard } from './isAuthenticated.guard';
 describe('IsAuthenticatedGuard', () => {
   let userId: null | string = null;
 
-  const GetRequestMock = jest.fn().mockImplementation(() => ({
+  const getRequestMock = jest.fn().mockImplementation(() => ({
     userId,
   }));
 
   const contextMock = jest.fn().mockImplementation(() => ({
     switchToHttp: () => ({
-      getRequest: GetRequestMock,
+      getRequest: getRequestMock,
     }),
   }));
   it('should return false if userId is null', () => {

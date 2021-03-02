@@ -1,12 +1,10 @@
-import { config } from 'firebase-functions';
+// Use "import { config } from 'firebase-functions';" here when it's time
 
 export enum Environment {
   local = 'local',
   test = 'test',
   production = 'production',
 }
-
-const firebaseConfig = config();
 
 export const API_CONFIG = {
   projectId: process.env.GCLOUD_PROJECT,
@@ -19,4 +17,7 @@ export const API_CONFIG = {
   apiPrefix: 'api',
   // Note: you can use "firebaseConfig.some.key" here
 };
-firebaseConfig.toString(); // TODO: remove when "firebaseConfig" is used somewhere here
+
+export function isEnv(env: Environment): boolean {
+  return env === API_CONFIG.environment;
+}

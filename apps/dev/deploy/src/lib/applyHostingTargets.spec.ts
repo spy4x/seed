@@ -38,15 +38,15 @@ describe('applyHostingTargets', () => {
 
   it(`shouldn't call exec with zero affected apps`, () => {
     applyHostingTargets([]);
-    expect(mockedExec.mock.calls.length).toBe(0);
+    expect(mockedExec).toHaveBeenCalledTimes(0);
   });
 
   it('should call exec with front-admin-panel when front-admin-panel is an affected app', () => {
     const input = ['front-admin-panel'];
     const output = `${command} ${getAlias(input, 0)} ${project} ${token}`;
     applyHostingTargets(input);
-    expect(mockedExec.mock.calls.length).toBe(1);
-    expect(mockedExec.mock.results[0].value).toBe(output);
+    expect(mockedExec).toHaveBeenCalledTimes(1);
+    expect(mockedExec).toHaveBeenCalledWith(output);
   });
 
   it('should call exec with web-client and admin-panel when web-client and admin-panel are affected apps', () => {
@@ -54,8 +54,8 @@ describe('applyHostingTargets', () => {
     const output1 = `${command} ${getAlias(input, 0)} ${project} ${token}`;
     const output2 = `${command} ${getAlias(input, 1)} ${project} ${token}`;
     applyHostingTargets(input);
-    expect(mockedExec.mock.calls.length).toBe(input.length);
-    expect(mockedExec.mock.results[0].value).toBe(output1);
-    expect(mockedExec.mock.results[1].value).toBe(output2);
+    expect(mockedExec).toHaveBeenCalledTimes(input.length);
+    expect(mockedExec).toHaveBeenCalledWith(output1);
+    expect(mockedExec).toHaveBeenCalledWith(output2);
   });
 });

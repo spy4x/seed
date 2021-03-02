@@ -24,9 +24,8 @@ const test = (input: string): void => {
   const expectedOutput = input ? input.split(' ').sort() : [];
   mockedExec.mockReturnValue(getNxOutput(input));
   const output = getAffectedApps();
-  expect(mockedExec.mock.calls.length).toBe(1);
-  // tslint:disable-next-line:no-unsafe-any
-  expect(mockedExec.mock.calls[0][0]).toBe(getAffectedAppsNamesCommand);
+  expect(mockedExec).toHaveBeenCalledTimes(1);
+  expect(mockedExec).toHaveBeenCalledWith(getAffectedAppsNamesCommand, true, false);
   expect(output).toEqual(expectedOutput);
 };
 

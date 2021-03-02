@@ -2,6 +2,10 @@ import { ensureParam, exec } from '@seed/dev/utils';
 import { getFirebaseDeployAuthParams } from '../+utils/getFirebaseDeployAuthParams';
 
 export const applyHostingTargets = (affectedApps: string[]): void => {
+  if (!affectedApps.length) {
+    return;
+  }
+
   const map: { [key: string]: string } = {
     'front-admin-panel': ensureParam(
       'FIREBASE_HOSTING_TARGET_ADMIN_PANEL',

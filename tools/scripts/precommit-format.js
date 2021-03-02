@@ -1,4 +1,5 @@
 const { execSync } = require('child_process');
+const { green } = require('chalk');
 
 const formatAndStage = () => {
   /**
@@ -19,6 +20,7 @@ const formatAndStage = () => {
   execSync(`yarn prettier --write ${files.join(' ')}`);
   execSync(`yarn format:check --base=origin/master`);
   execSync(`git add ${files.join(' ')}`);
+  console.log(green('✅ All files were formatted'));
 };
 
 formatAndStage();
