@@ -1,9 +1,11 @@
-# Angular Firebase Seed
+# Seed
+
+[![CI](https://github.com/36Team/seed/actions/workflows/ci.yml/badge.svg)](https://github.com/36Team/seed/actions/workflows/ci.yml)
 
 
 ## Purpose
 
-After working on several Angular + Firebase projects I've got some experience of how to properly structure such a project. All pain, wasted hours and broken keyboards as well as best practices and reusable components and modules are concentrated in this repo.
+After working on multiple startup projects we've got some experience of how to properly structure such a project. All pain, wasted hours and broken keyboards as well as best practices and reusable components and modules are concentrated in this repo.
 
 Idea is to clone this project when we need to work on our next project/hackathon/pet project/anything. This repo contains minimum of features, but most of reusable stuff from project to project.
 

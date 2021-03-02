@@ -1,0 +1,45 @@
+name: CI
+
+on: push
+
+env:
+  CI: true
+
+jobs:
+
+  flow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Checkout origin master for "Nx Affected" commands
+        run: git fetch --no-tags --prune --depth=5 origin master
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+
+      - name: Configure Yarn cache
+        uses: c-hive/gha-yarn-cache@v1
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Check files formatting
+        run: yarn ci:format
+
+      - name: Linting files
+        run: yarn ci:lint
+
+      - name: Unit-tests
+        run: yarn ci:test
+
+      - name: Build apps
+        run: yarn ci:build
+
+      - name: E2E-tests
+        run: yarn ci:e2e
