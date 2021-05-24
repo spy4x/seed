@@ -27,7 +27,7 @@ jobs:
         uses: c-hive/gha-yarn-cache@v1
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile && yarn prisma generate
 
       - name: Check files formatting
         run: yarn ci:format

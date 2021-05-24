@@ -1,7 +1,8 @@
 {
   "functions": {
     "source": "dist/apps/back/cloud-functions",
-    "predeploy": ["yarn predeploy:functions"]
+    "predeploy": ["yarn predeploy:functions"],
+    "runtime": "nodejs12"
   },
   "hosting": [
     {

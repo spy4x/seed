@@ -1,21 +1,19 @@
 import * as functions from 'firebase-functions';
-import { UsersController } from '@seed/back/api/users';
 import { getApp } from '@seed/back/api/core';
 import { UserRecord } from 'firebase-functions/lib/providers/auth';
-import { LogService } from '@seed/back/api/shared';
+import { GetUserQuery, LogSegment, LogService, UserDetailsDto } from '@seed/back/api/shared';
+import { QueryBus } from '@nestjs/cqrs';
 
-let usersController: null | UsersController = null;
-
-async function handler(user: UserRecord): Promise<void> {
-  if (!usersController) {
-    const { nest } = await getApp();
-    usersController = nest.get<UsersController>(UsersController);
-  }
-  await usersController.onUserCreate(user); // TODO: use CQRS command/event instead of calling controller method
+async function handler(logSegment: LogSegment, user: UserRecord): Promise<void> {
+  logSegment.log(`userFromFirebase`, user);
+  const { nest } = await getApp();
+  const queryBus = nest.get(QueryBus);
+  const userInDB = await queryBus.execute<GetUserQuery, null | UserDetailsDto>(new GetUserQuery(user.uid));
+  logSegment.log(`userInDB`, userInDB || 'not yet created');
 }
 
 export const onUserCreate = functions.auth
   .user()
   .onCreate(async user =>
-    new LogService(onUserCreate.name).trackSegment<void>(handler.name, async () => handler(user)),
+    new LogService(onUserCreate.name).trackSegment<void>(handler.name, async logSegment => handler(logSegment, user)),
   );

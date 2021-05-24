@@ -1,15 +1,20 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import * as Sentry from '@sentry/node';
+import { LogService } from '@seed/back/api/shared';
 
 @Injectable()
 export class LoggerInterceptor implements NestInterceptor {
+  private readonly _logger = new LogService(LoggerInterceptor.name);
+
   intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
       catchError((event: Error & { status?: number }) => {
-        if (!event.status) {
+        if (!event.status || event.status === HttpStatus.INTERNAL_SERVER_ERROR) {
           // error wasn't handled before
+          this._logger.error({ message: event.message });
+
           Sentry.captureException(event);
         }
         // Next line with "throw event" does:

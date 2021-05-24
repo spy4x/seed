@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/naming-convention
+jest.mock('./app.module', () => ({ AppModule: jest.fn() }));
 import { getApp } from './app';
 
 describe('NestApp', () => {

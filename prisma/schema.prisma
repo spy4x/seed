@@ -1,0 +1,62 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_CONNECTION_STRING")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ----------------------------------------------------- ENUMS ----------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+enum NotificationType {
+  WELCOME
+}
+
+// ----------------------------------------------------- MODELS -----------------------------------------------------------
+
+model User {
+  @@map(name: "users")
+  id                String                    @id @db.VarChar(28)
+  userName          String                    @unique @db.VarChar(25)
+  firstName         String                    @db.VarChar(50)
+  lastName          String                    @db.VarChar(50)
+  role              Role                      @default(USER)
+  photoURL          String?                   @db.VarChar(300)
+  userDevices       UserDevice[]
+  notifications     Notification[]
+  isPushNotificationsEnabled Boolean          @default(false)
+  lastTimeSignedIn  DateTime?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt @default(now())
+}
+
+model UserDevice {
+  @@map(name: "userDevices")
+  id                String                       @id @default(dbgenerated("gen_random_uuid()"))
+  userId            String                    @db.VarChar(28)
+  user              User                      @relation(fields: [userId], references: [id])
+  fcmToken          String                    @db.VarChar(256)
+  deviceId          String?                   @db.VarChar(50)
+  deviceName        String?                   @db.VarChar(50)
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt @default(now())
+  @@unique([fcmToken, userId])
+}
+
+model Notification {
+  @@map(name: "notifications")
+  id                String                       @id @default(dbgenerated("gen_random_uuid()"))
+  type              NotificationType
+  isRead            Boolean                   @default(false)
+  userId            String                    @db.VarChar(28)
+  user              User                      @relation(fields: [userId], references: [id])
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt @default(now())
+}
+

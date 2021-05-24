@@ -18,10 +18,13 @@
     "paths": {
       "@seed/dev/utils": ["libs/dev/utils/src/index.ts"],
       "@seed/back/api/core": ["libs/back/api/core/src/index.ts"],
-      "@seed/back/api/users": ["libs/back/api/users/src/index.ts"],
       "@seed/back/api/shared": ["libs/back/api/shared/src/index.ts"],
+      "@seed/back/api/users": ["libs/back/api/users/src/index.ts"],
       "@seed/front/web-client/core": ["libs/front/web-client/core/src/index.ts"],
-      "@seed/front/admin-panel/core": ["libs/front/admin-panel/core/src/index.ts"]
+      "@seed/front/admin-panel/core": ["libs/front/admin-panel/core/src/index.ts"],
+      "@seed/shared/helpers": ["libs/shared/helpers/src/index.ts"],
+      "@seed/shared/constants": ["libs/shared/constants/src/index.ts"],
+      "@seed/shared/mock-data": ["libs/shared/mock-data/src/index.ts"]
     },
     "strict": true,
     "strictBindCallApply": true,

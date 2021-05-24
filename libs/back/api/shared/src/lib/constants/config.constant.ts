@@ -1,21 +1,20 @@
-// Use "import { config } from 'firebase-functions';" here when it's time
-
 export enum Environment {
   local = 'local',
   test = 'test',
+  staging = 'staging',
   production = 'production',
 }
 
 export const API_CONFIG = {
-  projectId: process.env.GCLOUD_PROJECT,
-  environment:
-    process.env.NODE_ENV === 'production'
-      ? Environment.production
-      : process.env.NODE_ENV === 'test'
-      ? Environment.test
-      : Environment.local,
+  projectName: `Seed`,
+  projectDescription: `Yet another typical startup project template.`,
+  projectVersion: `1.0`,
   apiPrefix: 'api',
-  // Note: you can use "firebaseConfig.some.key" here
+  projectId: process.env.GCLOUD_PROJECT as string,
+  environment: Environment[process.env.NODE_ENV as Environment] || Environment.local,
+  dataCenterLocation: process.env.DATA_CENTER_LOCATION as string,
+  apiURL: process.env.API_URL as string,
+  sentryDSN: process.env.SENTRY_DSN as string,
 };
 
 export function isEnv(env: Environment): boolean {
