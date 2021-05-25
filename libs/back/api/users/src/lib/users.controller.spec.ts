@@ -1,6 +1,6 @@
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test } from '@nestjs/testing';
-import { FindUsersQuery, SharedModule } from '@seed/back/api/shared';
+import { UsersFindQuery, SharedModule } from '@seed/back/api/shared';
 import { UsersController } from './users.controller';
 
 describe('UsersController', () => {
@@ -31,7 +31,7 @@ describe('UsersController', () => {
   });
   describe('get', () => {
     it('should be called with provided parameters', async () => {
-      const query = new FindUsersQuery(1, 20);
+      const query = new UsersFindQuery(1, 20);
       await controller.find(query, currentUserId);
     });
   });

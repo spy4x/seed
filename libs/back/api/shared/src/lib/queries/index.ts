@@ -1,2 +1,2 @@
-export * from './users';
-export * from './notifications';
+export * from './user';
+export * from './notification';

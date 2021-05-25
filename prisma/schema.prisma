@@ -31,7 +31,7 @@ model User {
   userDevices       UserDevice[]
   notifications     Notification[]
   isPushNotificationsEnabled Boolean          @default(false)
-  lastTimeSignedIn  DateTime?
+  lastTimeSignedIn  DateTime?                 @default(now())
   createdAt         DateTime                  @default(now())
   updatedAt         DateTime                  @updatedAt @default(now())
 }

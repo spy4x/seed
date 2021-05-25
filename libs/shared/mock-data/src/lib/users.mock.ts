@@ -1,6 +1,6 @@
 import { User, UserDevice } from '@prisma/client';
 
-export const usersMock: (User & {
+export const mockUsers: (User & {
   userDevices: UserDevice[];
 })[] = [
   {

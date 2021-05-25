@@ -15,5 +15,6 @@ module.exports = {
     '<rootDir>/libs/shared/helpers',
     '<rootDir>/libs/shared/constants',
     '<rootDir>/libs/shared/mock-data',
+    '<rootDir>/libs/shared/types',
   ],
 };

@@ -1,12 +1,12 @@
 import { UserDevice } from '@prisma/client';
-import { usersMock } from './users.mock';
+import { mockUsers } from './users.mock';
 import { getUUID } from '@seed/shared/helpers';
 import { ONE, ZERO } from '@seed/shared/constants';
 
-const firstUserId = usersMock[ZERO].id;
-const secondUserId = usersMock[ONE].id;
+const firstUserId = mockUsers[ZERO].id;
+const secondUserId = mockUsers[ONE].id;
 
-export const userDevices: UserDevice[] = [
+export const mockUserDevices: UserDevice[] = [
   {
     id: getUUID(),
     userId: firstUserId,

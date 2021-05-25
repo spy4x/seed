@@ -1,3 +1,3 @@
-export * from './users';
-export * from './notifications';
-export * from './cloud-tasks';
+export * from './user';
+export * from './notification';
+export * from './cloudTask';

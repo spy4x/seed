@@ -1,21 +1,20 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import {
-  CreateUserCommand,
-  CurrentUserDetailsDto,
-  FindUsersQuery,
-  GetCurrentUserQuery,
-  GetUserQuery,
+  UserCreateCommand,
+  UserMeDTO,
+  UsersFindQuery,
+  UserGetMeQuery,
+  UserGetQuery,
   IsAuthenticatedGuard,
-  IsUsernameFreeQuery,
+  UserIsUsernameFreeQuery,
   LogService,
   NotFoundInterceptor,
-  Pagination,
-  SignInUserCommand,
-  UpdateUserCommand,
-  UserDetailsDto,
-  UserDto,
+  PaginationResponseDTO,
+  UserUpdateLastSignedInCommand,
+  UserUpdateCommand,
+  UserDTO,
   UserId,
-  UsernameFreeDto,
+  UserIsUsernameFreeDTO,
 } from '@seed/back/api/shared';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -32,34 +31,37 @@ export class UsersController {
   @UseGuards(IsAuthenticatedGuard)
   @ApiResponse({
     status: 200,
-    type: Pagination,
+    type: PaginationResponseDTO,
   })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 403 })
-  public async find(@Query() query: FindUsersQuery, @UserId() currentUserId: string): Promise<Pagination<UserDto>> {
+  public async find(
+    @Query() query: UsersFindQuery,
+    @UserId() currentUserId: string,
+  ): Promise<PaginationResponseDTO<UserDTO>> {
     query.currentUserId = currentUserId;
 
-    return this.logger.trackSegment<Pagination<UserDto>>(this.find.name, async () => this.queryBus.execute(query));
+    return this.logger.trackSegment<PaginationResponseDTO<UserDTO>>(this.find.name, () => this.queryBus.execute(query));
   }
 
   @Get('me')
   @UseGuards(IsAuthenticatedGuard)
   @UseInterceptors(NotFoundInterceptor)
-  @ApiResponse({ status: 200, type: UserDetailsDto })
+  @ApiResponse({ status: 200, type: UserMeDTO })
   @ApiResponse({ status: 403 })
-  public async getMe(@UserId() currentUserId: string): Promise<CurrentUserDetailsDto> {
-    return this.logger.trackSegment<CurrentUserDetailsDto>(this.getMe.name, async () =>
-      this.queryBus.execute(new GetCurrentUserQuery(currentUserId)),
+  public async getMe(@UserId() currentUserId: string): Promise<UserMeDTO> {
+    return this.logger.trackSegment<UserMeDTO>(this.getMe.name, () =>
+      this.queryBus.execute(new UserGetMeQuery(currentUserId)),
     );
   }
 
   @Get('is-username-free/:userName')
   @UseGuards(IsAuthenticatedGuard)
-  @ApiResponse({ status: 200, type: UsernameFreeDto })
+  @ApiResponse({ status: 200, type: UserIsUsernameFreeDTO })
   @ApiResponse({ status: 403 })
-  public async isUsernameFree(@Param() query: IsUsernameFreeQuery): Promise<UsernameFreeDto> {
-    return this.logger.trackSegment<UsernameFreeDto>(this.isUsernameFree.name, async () => {
-      const isFree = await this.queryBus.execute<IsUsernameFreeQuery, boolean>(query);
+  public async isUsernameFree(@Param() query: UserIsUsernameFreeQuery): Promise<UserIsUsernameFreeDTO> {
+    return this.logger.trackSegment<UserIsUsernameFreeDTO>(this.isUsernameFree.name, async () => {
+      const isFree = await this.queryBus.execute<UserIsUsernameFreeQuery, boolean>(query);
       return { isFree };
     });
   }
@@ -67,51 +69,52 @@ export class UsersController {
   @Get(':id')
   @UseGuards(IsAuthenticatedGuard)
   @UseInterceptors(NotFoundInterceptor)
-  @ApiResponse({ status: 200, type: UserDetailsDto })
+  @ApiResponse({ status: 200, type: UserDTO })
   @ApiResponse({ status: 403 })
   @ApiResponse({ status: 404 })
   @ApiParam({ name: 'id', type: String })
-  public async get(@Param('id') id: string, @UserId() currentUserId: string): Promise<UserDetailsDto> {
-    const query = new GetUserQuery(id);
+  public async get(@Param('id') id: string, @UserId() currentUserId: string): Promise<UserDTO> {
+    const query = new UserGetQuery(id);
     query.currentUserId = currentUserId;
 
-    return this.logger.trackSegment<UserDetailsDto>(this.get.name, async () => this.queryBus.execute(query));
+    return this.logger.trackSegment<UserDTO>(this.get.name, () => this.queryBus.execute(query));
   }
 
   @Post()
   @UseGuards(IsAuthenticatedGuard)
-  @ApiResponse({ status: 201, type: UserDetailsDto })
+  @ApiResponse({ status: 201, type: UserMeDTO })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 403 })
-  public async create(@Body() command: CreateUserCommand, @UserId() currentUserId: string): Promise<UserDetailsDto> {
+  public async create(@Body() command: UserCreateCommand, @UserId() currentUserId: string): Promise<UserMeDTO> {
     command.id = currentUserId;
-    return this.logger.trackSegment<UserDetailsDto>(
+    return this.logger.trackSegment<UserMeDTO>(
       this.create.name,
-      async () => this.commandBus.execute(command) as Promise<UserDetailsDto>,
+      () => this.commandBus.execute(command) as Promise<UserMeDTO>,
     );
   }
 
   @Patch('me')
   @UseGuards(IsAuthenticatedGuard)
   @UseInterceptors(NotFoundInterceptor)
-  @ApiResponse({ status: 200, type: UserDetailsDto })
+  @ApiResponse({ status: 200, type: UserMeDTO })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 403 })
-  public async update(@Body() command: UpdateUserCommand, @UserId() currentUserId: string): Promise<UserDetailsDto> {
+  public async update(@Body() command: UserUpdateCommand, @UserId() currentUserId: string): Promise<UserMeDTO> {
     command.id = currentUserId;
-    return this.logger.trackSegment<UserDetailsDto>(
+    return this.logger.trackSegment<UserMeDTO>(
       this.update.name,
-      async () => this.commandBus.execute(command) as Promise<UserDetailsDto>,
+      () => this.commandBus.execute(command) as Promise<UserMeDTO>,
     );
   }
 
   @Patch('me/last-signin')
   @UseGuards(IsAuthenticatedGuard)
-  public async updateLastSignedIn(@UserId() currentUserId: string): Promise<Date> {
-    const command = new SignInUserCommand(currentUserId);
-    return this.logger.trackSegment<Date>(
+  @ApiResponse({ status: 200, type: UserMeDTO })
+  public async updateLastSignedIn(@UserId() currentUserId: string): Promise<UserMeDTO> {
+    const command = new UserUpdateLastSignedInCommand(currentUserId);
+    return this.logger.trackSegment<UserMeDTO>(
       this.updateLastSignedIn.name,
-      async () => this.commandBus.execute(command) as Promise<Date>,
+      () => this.commandBus.execute(command) as Promise<UserMeDTO>,
     );
   }
 }

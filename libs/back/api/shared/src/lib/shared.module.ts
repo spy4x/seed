@@ -2,11 +2,11 @@ import { Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { CloudTasksService, FirebaseAuthService, PrismaService } from './services';
 import { ApiKeyGuard, IsAuthenticatedGuard } from './guards';
-import { CloudTasksCreateCommandHandler } from './command-handlers';
+import { CloudTaskCreateCommandHandler } from './commandHandlers';
 
 const guards = [ApiKeyGuard, IsAuthenticatedGuard];
 const services = [FirebaseAuthService, PrismaService, CloudTasksService];
-const commandHandlers = [CloudTasksCreateCommandHandler];
+const commandHandlers = [CloudTaskCreateCommandHandler];
 
 const providers = [...guards, ...services];
 

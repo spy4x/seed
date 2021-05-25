@@ -1,22 +1,29 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import * as faker from 'faker';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // const john = await prisma.user.upsert({
-  //   where: {
-  //     userName: 'JohnDoe',
-  //   },
-  //   update: {},
-  //   create: {
-  //     id: '1234567891234567891234567898',
-  //     firstName: 'John',
-  //     lastName: 'Doe',
-  //     bio: 'BEIOPAJE AE',
-  //     phone: '+212747738322',
-  //     userName: 'JohnDoe',
-  //   },
-  // });
+  await createFakeUsers();
+}
+
+async function createFakeUsers(): Promise<void> {
+  const start = new Date();
+  const fakeUsersAmount = 100;
+  console.log(`Creating ${fakeUsersAmount} fake users...`);
+  const fakeUsers = Array.from({ length: fakeUsersAmount }).map(() => {
+    const user: Prisma.UserCreateInput = {
+      id: faker.random.alphaNumeric(28),
+      userName: faker.internet.userName(),
+      firstName: faker.name.firstName(),
+      lastName: faker.name.lastName(),
+      photoURL: faker.internet.avatar(),
+      isPushNotificationsEnabled: faker.datatype.boolean(),
+    };
+    return user;
+  });
+  await prisma.user.createMany({ data: fakeUsers });
+  console.log(`Done in ${new Date().getTime() - start.getTime()}ms`);
 }
 
 main()

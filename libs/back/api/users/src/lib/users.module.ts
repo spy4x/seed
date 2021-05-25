@@ -1,14 +1,34 @@
 import { Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
-import { UserSaga } from './user-saga/user.saga';
-import { CreateUserHandler, DeleteUserHandler, SignInUserHandler, UpdateUserHandler } from './command-handlers';
-import { FindUsersHandler, GetCurrentUserHandler, GetUserHandler, IsUsernameFreeHandler } from './query-handlers';
+import { UserCreatedSaga } from './sagas/userCreated.saga';
+import {
+  UserCreateCommandHandler,
+  UserDeleteCommandHandler,
+  UserUpdateLastSignedInCommandHandler,
+  UserUpdateCommandHandler,
+} from './commandHandlers';
+import {
+  UsersFindQueryHandler,
+  UserGetMeQueryHandler,
+  UserGetQueryHandler,
+  UserIsUsernameFreeQueryHandler,
+} from './queryHandlers';
 
-const queryHandlers = [FindUsersHandler, GetUserHandler, GetCurrentUserHandler, IsUsernameFreeHandler];
-const commandHandlers = [CreateUserHandler, DeleteUserHandler, UpdateUserHandler, SignInUserHandler];
+const queryHandlers = [
+  UsersFindQueryHandler,
+  UserGetQueryHandler,
+  UserGetMeQueryHandler,
+  UserIsUsernameFreeQueryHandler,
+];
+const commandHandlers = [
+  UserCreateCommandHandler,
+  UserDeleteCommandHandler,
+  UserUpdateCommandHandler,
+  UserUpdateLastSignedInCommandHandler,
+];
 
 @Module({
   controllers: [UsersController],
-  providers: [UserSaga, ...queryHandlers, ...commandHandlers],
+  providers: [UserCreatedSaga, ...queryHandlers, ...commandHandlers],
 })
 export class UsersModule {}

@@ -32,6 +32,7 @@
     "back-api": { "tags": [] },
     "shared-helpers": { "tags": [] },
     "shared-constants": { "tags": [] },
-    "shared-mock-data": { "tags": [] }
+    "shared-mock-data": { "tags": [] },
+    "shared-types": { "tags": [] }
   }
 }

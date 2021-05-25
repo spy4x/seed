@@ -1,8 +1,7 @@
-import { Injectable, Scope } from '@nestjs/common';
 import { inspect as utilInspect } from 'util';
 import * as chalk from 'chalk';
 import { format } from 'date-fns';
-import { Environment, isEnv } from '../../constants/config.constant';
+import { Environment, isEnv } from '../../constants';
 
 export enum LogSeverity {
   log = 'log',
@@ -95,7 +94,6 @@ export class LogSegment {
   }
 }
 
-@Injectable({ scope: Scope.TRANSIENT })
 export class LogService {
   constructor(public caller: string) {}
 
