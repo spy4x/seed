@@ -46,9 +46,9 @@
     "predeploy:hosting:front-web-client": "yarn build front-web-client --prod",
     "predeploy:hosting:front-admin-panel": "yarn build front-admin-panel --prod",
     "----------Docker-Build-&-Deploy----------": "------------------------------",
-    "api:container:build": "yarn build back-api --prod && docker build . --tag gcr.io/corecircle/rest-api",
+    "api:container:build": "yarn build back-api --prod && docker build . --tag gcr.io/seed-anton/rest-api",
     "api:container:run": "yarn build back-api --prod && docker run --rm -it -p 8080:8080 --env-file .env $(docker build -q .)",
-    "api:container:deploy": "yarn api:container:build && docker push gcr.io/corecircle/rest-api"
+    "api:container:deploy": "yarn api:container:build && docker push gcr.io/seed-anton/rest-api"
   },
   "private": true,
   "dependencies": {

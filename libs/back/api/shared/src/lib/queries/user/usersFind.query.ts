@@ -12,10 +12,8 @@ export class UsersFindQuery extends PaginationRequestDTO {
 
   public currentUserId?: string;
 
-  constructor(page = PAGINATION_DEFAULTS.page, limit = PAGINATION_DEFAULTS.limit) {
+  constructor(page = PAGINATION_DEFAULTS.page, limit = PAGINATION_DEFAULTS.limit, search?: string) {
     super(page, limit);
-
-    this.page = page;
-    this.limit = limit;
+    this.search = search;
   }
 }

@@ -14,11 +14,10 @@ export class NotificationTriggeredEvent extends NotificationEvent {
     let title = '';
     let body = '';
 
-    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (this.type) {
       case NotificationType.WELCOME:
         title = `Have you worked out today?`;
-        body = `If you have, post the workout on Corecircle to track your progress 💪`;
+        body = `If you have, post the workout to track your progress 💪`;
         break;
       default:
         throw new Error("Notification type doesn't exist");

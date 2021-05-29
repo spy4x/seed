@@ -2,17 +2,17 @@ import { INestApplication } from '@nestjs/common/interfaces';
 import * as Sentry from '@sentry/node';
 import * as expressLib from 'express';
 import * as morgan from 'morgan';
-import * as chalk from 'chalk';
 import { json } from 'body-parser';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { API_CONFIG, chalkify, Environment, isEnv, LogService } from '@seed/back/api/shared';
+import { API_CONFIG, isEnv, LogContext, LogSegment, LogService, LogSeverity } from '@seed/back/api/shared';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
 import * as cors from 'cors';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
+import { ZERO } from '@seed/shared/constants';
+import { Environment } from '@seed/shared/types';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 // Mark some deps to be used explicitly. Workaround, because "generatePackageJson" from Nx doesn't detect them automatically.
@@ -36,7 +36,7 @@ function validationExceptionFactory(errors: ValidationError[]): Error {
       const messages: string[] = [];
 
       for (const constraintKey in err.constraints) {
-        if (constraintKey) {
+        if (Object.prototype.hasOwnProperty.call(err.constraints, constraintKey) && constraintKey) {
           messages.push(err.constraints[constraintKey]);
         }
       }
@@ -57,27 +57,34 @@ function configureSwagger(nestApp: INestApplication): void {
   SwaggerModule.setup('api', nestApp, document);
 }
 
+function configureMorgan(expressApp: expressLib.Application): void {
+  expressApp.use(
+    morgan(
+      (_tokens, req) => {
+        const body = Object.keys(req.body).length === ZERO ? '' : LogService.inspect(req.body);
+        return `${LogService.getIcon(LogSeverity.log, LogContext.startSegment)} ${req.method} ${req.url} ${body}`;
+      },
+      {
+        immediate: true,
+      },
+    ),
+  );
+  expressApp.use(
+    morgan(`${LogService.getIcon(LogSeverity.log, LogContext.finishSegment)} :method :url :status :response-time ms`),
+  );
+}
+
 export async function getApp(): Promise<Output> {
   if (!instance) {
-    const initInstance = async (): Promise<Output> => {
+    const initInstance = async (logSegment: LogSegment): Promise<Output> => {
+      logSegment.log(`API_CONFIG:`, API_CONFIG);
       express = expressLib();
 
       Sentry.init({ dsn: API_CONFIG.sentryDSN });
       express.use(Sentry.Handlers.requestHandler());
 
       express.use(json());
-      express.use(
-        morgan(
-          (_tokens, req) =>
-            `${chalkify('REQ', chalk.bgCyan.black)} ${req.method} ${req.url} ${
-              req.body ? LogService.inspect(req.body) : ''
-            }`,
-          {
-            immediate: true,
-          },
-        ),
-      );
-      express.use(morgan(`${chalkify('RES', chalk.bgMagenta.black)} :method :url :status :response-time ms`));
+      configureMorgan(express);
 
       if (!isEnv(Environment.production)) {
         express.use(cors());

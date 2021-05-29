@@ -1,1 +1,1 @@
-export * from './notFound/notFound.interceptor'
+export * from './notFound/notFound.interceptor';

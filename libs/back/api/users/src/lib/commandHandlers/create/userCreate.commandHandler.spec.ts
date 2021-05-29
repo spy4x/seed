@@ -22,15 +22,14 @@ describe('UserCreateCommandHandler', () => {
   }));
 
   let userCreateCommandHandler: UserCreateCommandHandler;
-  const device: UserDeviceCreateDTO | null = null;
+  const device: UserDeviceCreateDTO | undefined = undefined;
 
   const command = new UserCreateCommand(
     user.id,
     user.userName,
     user.firstName,
     user.lastName,
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    device || undefined,
+    device,
     user.photoURL as string,
     user.isPushNotificationsEnabled,
   );

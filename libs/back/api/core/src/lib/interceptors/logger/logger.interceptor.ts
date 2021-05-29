@@ -10,17 +10,17 @@ export class LoggerInterceptor implements NestInterceptor {
 
   intercept(_context: ExecutionContext, next: CallHandler): Observable<unknown> {
     return next.handle().pipe(
-      catchError((event: Error & { status?: number }) => {
-        if (!event.status || event.status === HttpStatus.INTERNAL_SERVER_ERROR) {
+      catchError((error: Error & { status?: number }) => {
+        if (!error.status || error.status === HttpStatus.INTERNAL_SERVER_ERROR) {
           // error wasn't handled before
-          this._logger.error({ message: event.message });
+          this._logger.error({ message: `Unhandled Exception`, error });
 
-          Sentry.captureException(event);
+          Sentry.captureException(error);
         }
-        // Next line with "throw event" does:
+        // Next line with "throw error" does:
         // if error was handled (has HTTP status, like 400) - sends response as it is (like ValidationError details)
         // if error wasn't handled (has no HTTP status) - sends status 500, Internal Server Error
-        throw event;
+        throw error;
       }),
     );
   }

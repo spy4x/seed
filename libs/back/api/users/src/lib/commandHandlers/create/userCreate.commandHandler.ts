@@ -19,7 +19,6 @@ export class UserCreateCommandHandler implements ICommandHandler<UserCreateComma
 
     const foundUser = await this.prisma.user.findFirst({
       where: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         OR: [{ userName }, { id }],
       },
     });

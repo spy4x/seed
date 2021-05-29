@@ -16,8 +16,7 @@ export async function run(): Promise<void> {
     topLogSegment.log(chalk.yellow(`Affected apps:`), affectedApps);
     topLogSegment.log(chalk.yellow(`Deploy only:`), deployOnlyArray);
 
-    /* eslint-disable @typescript-eslint/require-await */
-    await logService.trackSegment<void>(applyHostingTargets.name, async () => applyHostingTargets(affectedApps));
-    await logService.trackSegment<void>(deploy.name, async logSegment => deploy(deployOnlyArray, logSegment));
+    await logService.trackSegment<void>(applyHostingTargets.name, () => applyHostingTargets(affectedApps));
+    await logService.trackSegment<void>(deploy.name, logSegment => deploy(deployOnlyArray, logSegment));
   });
 }

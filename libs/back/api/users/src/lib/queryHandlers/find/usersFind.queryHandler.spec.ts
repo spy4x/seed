@@ -1,20 +1,25 @@
 import { Test } from '@nestjs/testing';
-import { UsersFindQuery, PaginationResponseDTO, PrismaService, UserDTO } from '@seed/back/api/shared';
+import { PaginationResponseDTO, PrismaService, UserDTO, UsersFindQuery } from '@seed/back/api/shared';
 import { UsersFindQueryHandler } from './usersFind.queryHandler';
 import { mockUsers } from '@seed/shared/mock-data';
+import { ONE, PAGINATION_DEFAULTS } from '@seed/shared/constants';
 
 describe('UsersFindQueryHandler', () => {
   let getUsersHandler: UsersFindQueryHandler;
-  let query: UsersFindQuery;
-
-  const findManyMock = jest.fn().mockImplementation(() => []);
-  const countMock = jest.fn();
+  const page = 3;
+  const limit = 50;
+  const findManyMockResult = mockUsers;
+  const countMockResult = mockUsers.length;
+  const findManyMock = jest.fn().mockReturnValue(findManyMockResult);
+  const countMock = jest.fn().mockReturnValue(countMockResult);
+  const transactionMock = jest.fn().mockReturnValue([findManyMockResult, countMockResult]);
 
   const prismaServiceMock = jest.fn().mockImplementation(() => ({
     user: {
       findMany: findManyMock,
       count: countMock,
     },
+    $transaction: transactionMock,
   }));
 
   beforeEach(async () => {
@@ -28,89 +33,119 @@ describe('UsersFindQueryHandler', () => {
       ],
     }).compile();
     getUsersHandler = moduleRef.get(UsersFindQueryHandler);
+    findManyMock.mockClear();
+    countMock.mockClear();
+    transactionMock.mockClear();
   });
 
-  it('should call prisma.user.findMany with expected arguments', async () => {
-    query = new UsersFindQuery(1, 20);
+  function getQuery(
+    pageArg = PAGINATION_DEFAULTS.page,
+    limitArg = PAGINATION_DEFAULTS.limit,
+    search?: string,
+  ): UsersFindQuery {
+    const query = new UsersFindQuery(pageArg, limitArg, search);
     query.currentUserId = '123';
+    return query;
+  }
 
-    const expected = {
-      skip: (query.page - 1) * query.limit,
-      take: query.limit,
-    };
-    await getUsersHandler.execute(query);
-    expect(findManyMock).toBeCalledWith(expected);
+  it('should call prisma.user.findMany(), prisma.user.count(), prisma.$transaction() with basic params when no search query is provided', async () => {
+    const result = await getUsersHandler.execute(getQuery(page, limit));
+
+    expect(findManyMock).toBeCalledWith({
+      skip: (page - ONE) * limit,
+      take: limit,
+    });
+    expect(countMock).toHaveBeenCalledWith(undefined);
+    expect(transactionMock).toHaveBeenCalledWith([findManyMockResult, countMockResult]);
+
+    expect(result).toEqual(new PaginationResponseDTO<UserDTO>(findManyMockResult, page, limit, countMockResult));
   });
 
-  it('should call prisma.findMany with search query condition when provided in arguments', async () => {
-    query = new UsersFindQuery(1, 20);
-    query.currentUserId = '123';
-    query.search = 'JohnDoe';
-
-    const expected = {
-      skip: (query.page - 1) * query.limit,
-      take: query.limit,
-      where: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        OR: [
-          {
-            userName: {
-              contains: query.search,
-            },
-            firstName: {
-              contains: query.search,
-            },
-            lastName: {
-              contains: query.search,
-            },
-          },
-        ],
-      },
-    };
-    await getUsersHandler.execute(query);
-    expect(findManyMock).toBeCalledWith(expected);
-  });
-  it('should call prisma.findMany with username split by space when username value has multiple words', async () => {
-    query = new UsersFindQuery(1, 20);
-    query.currentUserId = '123';
-    query.search = 'John Doe Doeson';
-    const qSplit = query.search.split(' ');
-
-    const expected = {
-      skip: (query.page - 1) * query.limit,
-      take: query.limit,
-      where: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        OR: qSplit.map(word => ({
-          userName: {
-            contains: word,
-          },
-          firstName: {
-            contains: word,
-          },
-          lastName: {
-            contains: word,
-          },
-        })),
-      },
-    };
-    await getUsersHandler.execute(query);
-    expect(findManyMock).toBeCalledWith(expected);
-  });
-  it('should return UserDto', async () => {
-    countMock.mockImplementation(() => 20);
-    const page = 1;
-    const limit = 20;
-
-    query = new UsersFindQuery(page, limit);
-    query.currentUserId = '123';
+  it('should call prisma.user.findMany(), prisma.user.count() with basic params + search query condition for single word', async () => {
+    const query = getQuery(page, limit);
     query.search = 'John';
-
-    findManyMock.mockImplementation(() => mockUsers);
-
-    const expected = new PaginationResponseDTO<UserDTO>(mockUsers, page, limit, 20);
-
     const result = await getUsersHandler.execute(query);
-    expect(result).toStrictEqual(expected);
+    const where = {
+      OR: [
+        {
+          userName: {
+            contains: 'John',
+            mode: 'insensitive',
+          },
+        },
+        {
+          firstName: {
+            contains: 'John',
+            mode: 'insensitive',
+          },
+        },
+        {
+          lastName: {
+            contains: 'John',
+            mode: 'insensitive',
+          },
+        },
+      ],
+    };
+    expect(findManyMock).toBeCalledWith({
+      skip: (page - ONE) * limit,
+      take: limit,
+      where,
+    });
+    expect(countMock).toHaveBeenCalledWith({ where });
+    expect(result).toEqual(new PaginationResponseDTO<UserDTO>(findManyMockResult, page, limit, countMockResult));
+  });
+
+  it('should call prisma.user.findMany(), prisma.user.count() with basic params + search query condition for multiple words', async () => {
+    const query = getQuery(page, limit);
+    query.search = 'John Wick';
+    const result = await getUsersHandler.execute(query);
+    const where = {
+      OR: [
+        {
+          userName: {
+            contains: 'John',
+            mode: 'insensitive',
+          },
+        },
+        {
+          firstName: {
+            contains: 'John',
+            mode: 'insensitive',
+          },
+        },
+        {
+          lastName: {
+            contains: 'John',
+            mode: 'insensitive',
+          },
+        },
+        {
+          userName: {
+            contains: 'Wick',
+            mode: 'insensitive',
+          },
+        },
+        {
+          firstName: {
+            contains: 'Wick',
+            mode: 'insensitive',
+          },
+        },
+        {
+          lastName: {
+            contains: 'Wick',
+            mode: 'insensitive',
+          },
+        },
+      ],
+    };
+    expect(findManyMock).toBeCalledWith({
+      skip: (page - ONE) * limit,
+      take: limit,
+      where,
+    });
+    expect(countMock).toHaveBeenCalledWith({ where });
+    expect(result).toEqual(new PaginationResponseDTO<UserDTO>(findManyMockResult, page, limit, countMockResult));
   });
 });

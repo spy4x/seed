@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NotificationType } from '.prisma/client';
 import { IEvent } from '@nestjs/cqrs';
 import { UserDTO } from '../dtos';

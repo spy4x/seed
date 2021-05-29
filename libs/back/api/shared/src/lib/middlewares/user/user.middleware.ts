@@ -1,9 +1,9 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Request, Response } from 'express';
 import * as Sentry from '@sentry/node';
-import { FirebaseAuthService } from '../../services/firebaseAuth/firebaseAuth.service';
-import { LogService } from '../../services/log/log.service';
-import { Environment, isEnv } from '../../constants/config.constant';
+import { FirebaseAuthService, LogService } from '../../services';
+import { isEnv } from '../../constants';
+import { Environment } from '@seed/shared/types';
 
 export type RequestExtended = Request & { userId?: string };
 
@@ -22,18 +22,18 @@ export class UserMiddleware implements NestMiddleware {
     await this.logService.trackSegment(this.use.name, async logSegment => {
       const { authorization } = req.headers;
 
-      logSegment.log(`Token: ${authorization}`);
-
       if (!authorization || Array.isArray(authorization)) {
         logSegment.log(`Token is not presented`);
         Sentry.setUser(null);
         next();
         return;
       }
+
+      logSegment.log(`Token: ${authorization}`);
       const token = authorization.replace('Bearer ', '');
 
-      const userId = isEnv(Environment.local) ? token : await this.firebaseAuthService.validateJWT(token);
-      logSegment.log(userId ? `Token is valid. User Id: ${userId}.` : 'Token is not valid.');
+      const userId = isEnv(Environment.development) ? token : await this.firebaseAuthService.validateJWT(token);
+      logSegment.log(userId ? `User Id: ${userId}` : 'Token is not valid.');
       req.userId = userId || undefined;
 
       Sentry.setUser(userId ? { id: userId } : null);

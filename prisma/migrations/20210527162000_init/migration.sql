@@ -13,7 +13,7 @@ CREATE TABLE "users" (
     "role" "Role" NOT NULL DEFAULT E'USER',
     "photoURL" VARCHAR(300),
     "isPushNotificationsEnabled" BOOLEAN NOT NULL DEFAULT false,
-    "lastTimeSignedIn" TIMESTAMP(3),
+    "lastTimeSignedIn" TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

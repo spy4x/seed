@@ -29,7 +29,6 @@ export class UserUpdateCommandHandler implements ICommandHandler<UserUpdateComma
                 ...userDevice,
               },
               where: {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
                 fcmToken_userId: {
                   fcmToken: userDevice.fcmToken,
                   userId: id,

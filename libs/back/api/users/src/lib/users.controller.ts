@@ -1,32 +1,27 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import {
-  UserCreateCommand,
-  UserMeDTO,
-  UsersFindQuery,
-  UserGetMeQuery,
-  UserGetQuery,
+  BaseController,
   IsAuthenticatedGuard,
-  UserIsUsernameFreeQuery,
-  LogService,
   NotFoundInterceptor,
   PaginationResponseDTO,
-  UserUpdateLastSignedInCommand,
-  UserUpdateCommand,
+  UserCreateCommand,
   UserDTO,
+  UserGetMeQuery,
+  UserGetQuery,
   UserId,
   UserIsUsernameFreeDTO,
+  UserIsUsernameFreeQuery,
+  UserMeDTO,
+  UsersFindQuery,
+  UserUpdateCommand,
+  UserUpdateLastSignedInCommand,
 } from '@seed/back/api/shared';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiBearerAuth, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('users')
 @ApiBearerAuth()
 @Controller('users')
-export class UsersController {
-  logger = new LogService(UsersController.name);
-
-  constructor(private readonly queryBus: QueryBus, private readonly commandBus: CommandBus) {}
-
+export class UsersController extends BaseController {
   @Get()
   @UseGuards(IsAuthenticatedGuard)
   @ApiResponse({
@@ -41,7 +36,9 @@ export class UsersController {
   ): Promise<PaginationResponseDTO<UserDTO>> {
     query.currentUserId = currentUserId;
 
-    return this.logger.trackSegment<PaginationResponseDTO<UserDTO>>(this.find.name, () => this.queryBus.execute(query));
+    return this.logger.trackSegment<PaginationResponseDTO<UserDTO>>(this.find.name, async () =>
+      this.queryBus.execute(query),
+    );
   }
 
   @Get('me')
@@ -50,7 +47,7 @@ export class UsersController {
   @ApiResponse({ status: 200, type: UserMeDTO })
   @ApiResponse({ status: 403 })
   public async getMe(@UserId() currentUserId: string): Promise<UserMeDTO> {
-    return this.logger.trackSegment<UserMeDTO>(this.getMe.name, () =>
+    return this.logger.trackSegment<UserMeDTO>(this.getMe.name, async () =>
       this.queryBus.execute(new UserGetMeQuery(currentUserId)),
     );
   }
@@ -76,8 +73,7 @@ export class UsersController {
   public async get(@Param('id') id: string, @UserId() currentUserId: string): Promise<UserDTO> {
     const query = new UserGetQuery(id);
     query.currentUserId = currentUserId;
-
-    return this.logger.trackSegment<UserDTO>(this.get.name, () => this.queryBus.execute(query));
+    return this.logger.trackSegment<UserDTO>(this.get.name, async () => this.queryBus.execute(query));
   }
 
   @Post()
@@ -89,7 +85,7 @@ export class UsersController {
     command.id = currentUserId;
     return this.logger.trackSegment<UserMeDTO>(
       this.create.name,
-      () => this.commandBus.execute(command) as Promise<UserMeDTO>,
+      async () => this.commandBus.execute(command) as Promise<UserMeDTO>,
     );
   }
 
@@ -103,7 +99,7 @@ export class UsersController {
     command.id = currentUserId;
     return this.logger.trackSegment<UserMeDTO>(
       this.update.name,
-      () => this.commandBus.execute(command) as Promise<UserMeDTO>,
+      async () => this.commandBus.execute(command) as Promise<UserMeDTO>,
     );
   }
 
@@ -114,7 +110,7 @@ export class UsersController {
     const command = new UserUpdateLastSignedInCommand(currentUserId);
     return this.logger.trackSegment<UserMeDTO>(
       this.updateLastSignedIn.name,
-      () => this.commandBus.execute(command) as Promise<UserMeDTO>,
+      async () => this.commandBus.execute(command) as Promise<UserMeDTO>,
     );
   }
 }

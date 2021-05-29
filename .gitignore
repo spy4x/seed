@@ -33,8 +33,10 @@ node_modules/
 *.log
 /typings
 
-# dotenv environment variables file
-.env
+# environment files
+*.env
+environment.ts
+environment.*.ts
 
 # System Files
 .DS_Store
