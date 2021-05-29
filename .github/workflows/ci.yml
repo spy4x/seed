@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check ENV VARS
-        run: echo GITHUB_RUN_ID=$GITHUB_RUN_ID && echo ENVIRONMENT=${{secrets.ENVIRONMENT}} && echo FIREBASE_API_KEY=$FIREBASE_API_KEY
+        run: echo GITHUB_RUN_ID=$GITHUB_RUN_ID > test.txt && echo ENVIRONMENT=${{secrets.ENVIRONMENT}} > test.txt && echo FIREBASE_API_KEY=$FIREBASE_API_KEY > test.txt && cat test.txt
 
       - name: Checkout code
         uses: actions/checkout@v2
