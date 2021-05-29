@@ -8,6 +8,7 @@ env:
 jobs:
 
   flow:
+    environment: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -27,7 +28,7 @@ jobs:
         uses: c-hive/gha-yarn-cache@v1
 
       - name: Check ENV VARS
-        run: echo $ENVIRONMENT && echo $FIREBASE_API_KEY
+        run: echo GITHUB_RUN_ID=$GITHUB_RUN_ID && echo ENVIRONMENT=$ENVIRONMENT && echo FIREBASE_API_KEY=$FIREBASE_API_KEY
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile && yarn prisma generate
