@@ -26,6 +26,9 @@ jobs:
       - name: Configure Yarn cache
         uses: c-hive/gha-yarn-cache@v1
 
+      - name: Check ENV VARS
+        run: echo $ENVIRONMENT && echo $FIREBASE_API_KEY
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile && yarn prisma generate
 
