@@ -1,8 +1,8 @@
-import { Injectable, Scope } from '@nestjs/common';
 import { inspect as utilInspect } from 'util';
 import * as chalk from 'chalk';
 import { format } from 'date-fns';
-import { Environment, isEnv } from '../../constants/config.constant';
+import { isEnv } from '../../constants';
+import { Environment } from '@seed/shared/types';
 
 export enum LogSeverity {
   log = 'log',
@@ -95,7 +95,6 @@ export class LogSegment {
   }
 }
 
-@Injectable({ scope: Scope.TRANSIENT })
 export class LogService {
   constructor(public caller: string) {}
 
@@ -106,7 +105,7 @@ export class LogService {
     });
   }
 
-  private static getIcon(severity: LogSeverity, context?: LogContext): string {
+  public static getIcon(severity: LogSeverity, context?: LogContext): string {
     if (severity === LogSeverity.error) {
       return '⛔️';
     }
@@ -132,7 +131,7 @@ export class LogService {
     return segment;
   }
 
-  async trackSegment<R>(name: string, fn: (logSegment: LogSegment) => Promise<R>, params?: Params): Promise<R> {
+  async trackSegment<R>(name: string, fn: (logSegment: LogSegment) => R | Promise<R>, params?: Params): Promise<R> {
     const segment = new LogSegment(name, new Date(), this);
     segment.log(`Started`, params, LogContext.startSegment);
     try {

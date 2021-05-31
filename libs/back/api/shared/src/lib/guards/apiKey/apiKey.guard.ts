@@ -6,7 +6,6 @@ export const API_KEY_QUERY_SEGMENT_NAME = 'API_KEY';
 export const API_KEY_GUARD_TRUE_VALUE = 'API_KEY_GUARD_TRUE_VALUE';
 type TrueValue = string;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ApiKeyGuardSetTrueValue = (value: TrueValue): CustomDecorator =>
   SetMetadata(API_KEY_GUARD_TRUE_VALUE, value);
 

@@ -1,8 +1,15 @@
-import { deploy } from './deploy';
-import * as utils from '@seed/dev/utils';
-import * as chalk from 'chalk';
+// THIS SHOULD BE BEFORE IMPORTING THE TESTED FUNCTION - BEGIN
+const mockedExec = jest.fn((str: string) => str);
+const actualUtils = jest.requireActual('@seed/dev/utils');
+jest.mock('@seed/dev/utils', () => ({
+  ...actualUtils,
+  exec: mockedExec,
+}));
+// THIS SHOULD BE BEFORE IMPORTING THE TESTED FUNCTION - END
 
-const mockedExec: jest.Mock<string> = ((utils.exec as unknown) = jest.fn((str: string) => str));
+import { deploy } from './deploy';
+import * as chalk from 'chalk';
+import * as utils from '@seed/dev/utils';
 
 const vars: utils.TestingEnvironmentVariables = {
   project: {

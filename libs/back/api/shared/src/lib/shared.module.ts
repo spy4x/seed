@@ -1,12 +1,19 @@
-import { Module } from '@nestjs/common';
-import { ApiKeyGuard } from './guards/apiKey/apiKey.guard';
-import { IsAuthenticatedGuard } from './guards/isAuthenticated/isAuthenticated.guard';
-import { FirebaseAuthService } from './services/firebaseAuth/firebaseAuth.service';
-import { LogService } from './services/log/log.service';
+import { Global, Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
+import { CloudTasksService, FirebaseAuthService, PrismaService } from './services';
+import { ApiKeyGuard, IsAuthenticatedGuard } from './guards';
+import { CloudTaskCreateCommandHandler } from './commandHandlers';
 
-const providers = [ApiKeyGuard, IsAuthenticatedGuard, FirebaseAuthService, LogService];
+const guards = [ApiKeyGuard, IsAuthenticatedGuard];
+const services = [FirebaseAuthService, PrismaService, CloudTasksService];
+const commandHandlers = [CloudTaskCreateCommandHandler];
+
+const providers = [...guards, ...services];
+
+@Global()
 @Module({
-  providers,
-  exports: providers,
+  imports: [CqrsModule],
+  providers: [...providers, ...commandHandlers],
+  exports: [...providers, CqrsModule],
 })
 export class SharedModule {}

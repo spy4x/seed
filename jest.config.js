@@ -11,5 +11,10 @@ module.exports = {
     '<rootDir>/libs/back/api/users',
     '<rootDir>/libs/back/api/shared',
     '<rootDir>/libs/dev/utils',
+    '<rootDir>/apps/back/api',
+    '<rootDir>/libs/shared/helpers',
+    '<rootDir>/libs/shared/constants',
+    '<rootDir>/libs/shared/mock-data',
+    '<rootDir>/libs/shared/types',
   ],
 };

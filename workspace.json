@@ -217,7 +217,8 @@
             "production": {
               "optimization": true,
               "extractLicenses": true,
-              "inspect": false
+              "inspect": false,
+              "generatePackageJson": true
             }
           },
           "outputs": ["{options.outputPath}"]
@@ -245,6 +246,51 @@
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/back/cloud-functions"]
+        }
+      }
+    },
+    "back-api": {
+      "root": "apps/back/api",
+      "sourceRoot": "apps/back/api/src",
+      "projectType": "application",
+      "prefix": "back-api",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/node:build",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "outputPath": "dist/apps/back/api",
+            "main": "apps/back/api/src/main.ts",
+            "tsConfig": "apps/back/api/tsconfig.app.json"
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "generatePackageJson": true
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/node:execute",
+          "options": {
+            "buildTarget": "back-api:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/back/api/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/back/api"],
+          "options": {
+            "jestConfig": "apps/back/api/jest.config.js",
+            "passWithNoTests": true
+          }
         }
       }
     },
@@ -453,33 +499,6 @@
         }
       }
     },
-    "e2e-web-client": {
-      "root": "apps/e2e/web-client",
-      "sourceRoot": "apps/e2e/web-client/src",
-      "projectType": "application",
-      "architect": {
-        "e2e": {
-          "builder": "@nrwl/cypress:cypress",
-          "options": {
-            "cypressConfig": "apps/e2e/web-client/cypress.json",
-            "tsConfig": "apps/e2e/web-client/tsconfig.e2e.json",
-            "devServerTarget": "front-web-client:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "front-web-client:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": ["apps/e2e/web-client/tsconfig.e2e.json"],
-            "exclude": ["**/node_modules/**", "!apps/e2e/web-client/**/*"]
-          }
-        }
-      }
-    },
     "front-admin-panel": {
       "projectType": "application",
       "root": "apps/front/admin-panel",
@@ -567,33 +586,6 @@
         }
       }
     },
-    "e2e-admin-panel": {
-      "root": "apps/e2e/admin-panel",
-      "sourceRoot": "apps/e2e/admin-panel/src",
-      "projectType": "application",
-      "architect": {
-        "e2e": {
-          "builder": "@nrwl/cypress:cypress",
-          "options": {
-            "cypressConfig": "apps/e2e/admin-panel/cypress.json",
-            "tsConfig": "apps/e2e/admin-panel/tsconfig.e2e.json",
-            "devServerTarget": "front-admin-panel:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "front-admin-panel:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": ["apps/e2e/admin-panel/tsconfig.e2e.json"],
-            "exclude": ["**/node_modules/**", "!apps/e2e/admin-panel/**/*"]
-          }
-        }
-      }
-    },
     "front-admin-panel-core": {
       "projectType": "library",
       "root": "libs/front/admin-panel/core",
@@ -622,6 +614,144 @@
       "schematics": {
         "@nrwl/angular:component": {
           "style": "scss"
+        }
+      }
+    },
+    "e2e-web-client": {
+      "root": "apps/e2e/web-client",
+      "sourceRoot": "apps/e2e/web-client/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/e2e/web-client/cypress.json",
+            "tsConfig": "apps/e2e/web-client/tsconfig.e2e.json",
+            "devServerTarget": "front-web-client:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "front-web-client:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/e2e/web-client/tsconfig.e2e.json"],
+            "exclude": ["**/node_modules/**", "!apps/e2e/web-client/**/*"]
+          }
+        }
+      }
+    },
+    "e2e-admin-panel": {
+      "root": "apps/e2e/admin-panel",
+      "sourceRoot": "apps/e2e/admin-panel/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/e2e/admin-panel/cypress.json",
+            "tsConfig": "apps/e2e/admin-panel/tsconfig.e2e.json",
+            "devServerTarget": "front-admin-panel:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "front-admin-panel:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": ["apps/e2e/admin-panel/tsconfig.e2e.json"],
+            "exclude": ["**/node_modules/**", "!apps/e2e/admin-panel/**/*"]
+          }
+        }
+      }
+    },
+    "shared-helpers": {
+      "root": "libs/shared/helpers",
+      "sourceRoot": "libs/shared/helpers/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/shared/helpers/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared/helpers"],
+          "options": {
+            "jestConfig": "libs/shared/helpers/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "shared-constants": {
+      "root": "libs/shared/constants",
+      "sourceRoot": "libs/shared/constants/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/shared/constants/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared/constants"],
+          "options": {
+            "jestConfig": "libs/shared/constants/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "shared-mock-data": {
+      "root": "libs/shared/mock-data",
+      "sourceRoot": "libs/shared/mock-data/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/shared/mock-data/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared/mock-data"],
+          "options": {
+            "jestConfig": "libs/shared/mock-data/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "shared-types": {
+      "root": "libs/shared/types",
+      "sourceRoot": "libs/shared/types/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/shared/types/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared/types"],
+          "options": {
+            "jestConfig": "libs/shared/types/jest.config.js",
+            "passWithNoTests": true
+          }
         }
       }
     }

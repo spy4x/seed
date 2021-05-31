@@ -1,3 +1,4 @@
+jest.mock('./app.module', () => ({ AppModule: jest.fn() }));
 import { getApp } from './app';
 
 describe('NestApp', () => {

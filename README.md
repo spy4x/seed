@@ -1,6 +1,6 @@
 # Seed
 
-[![CI](https://github.com/36Team/seed/actions/workflows/ci.yml/badge.svg)](https://github.com/36Team/seed/actions/workflows/ci.yml)
+[![CI](https://github.com/spy4x/seed/actions/workflows/ci.yml/badge.svg)](https://github.com/spy4x/seed/actions/workflows/ci.yml)
 
 
 ## Purpose
@@ -31,3 +31,19 @@ This project was generated using [Nx](https://nx.dev).
 
 [Custom commands and info](docs/custom.md)
 
+
+Follow links below for more information.
+
+## Index
+
+0. [How to launch apps on your local](docs/launch-locally.md)
+0. [How to deploy apps to the cloud](docs/deploy.md)
+0. [How does it work - Infrastructure](docs/infrastructure.md)
+0. [Monorepo and dev tools](docs/monorepo-and-dev-tools.md)
+0. [Backend app - Nest.js, Prisma, etc](docs/backend-app.md)
+
+## Credits
+Created by [Anton Shubin](mailto:2spy4x@gmail.com) aka [@spy4x](https://github.com/spy4x)
+
+Special thanks to people who helped me:
+Backend developer: [Mehdi Diabi](mailto:diabi.elmehdi@gmail.com) aka [@MehdiDi](https://github.com/MehdiDi)

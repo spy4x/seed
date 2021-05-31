@@ -1,7 +1,9 @@
 import { INestApplication } from '@nestjs/common/interfaces';
-import { UsersService } from '@seed/back/api/users';
-import { auth } from 'firebase-admin';
+import { UsersController } from '@seed/back/api/users';
+import { UsersFindQuery } from '@seed/back/api/shared';
 
 export async function actionExample(nestApp: INestApplication): Promise<void> {
-  await nestApp.get(UsersService).onCreated(({ test: true } as unknown) as auth.UserRecord);
+  const page = 1;
+  const limit = 3;
+  await nestApp.get(UsersController).find(new UsersFindQuery(page, limit), '');
 }
