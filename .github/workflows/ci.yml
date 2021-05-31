@@ -4,17 +4,12 @@ on: push
 
 env:
   CI: true
-  FIREBASE_API_KEY: ${{secrets.FIREBASE_API_KEY}}
 
 jobs:
 
   flow:
-    environment: test
     runs-on: ubuntu-latest
     steps:
-      - name: Check ENV VARS
-        run: echo GITHUB_RUN_ID=$GITHUB_RUN_ID > test.txt && echo ENVIRONMENT=${{secrets.ENVIRONMENT}} > test.txt && echo FIREBASE_API_KEY=$FIREBASE_API_KEY > test.txt && cat test.txt
-
       - name: Checkout code
         uses: actions/checkout@v2
         with:
@@ -32,7 +27,7 @@ jobs:
         uses: c-hive/gha-yarn-cache@v1
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile && yarn prisma generate
+        run: yarn install --frozen-lockfile
 
       - name: Check files formatting
         run: yarn ci:format

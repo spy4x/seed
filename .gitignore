@@ -35,8 +35,6 @@ node_modules/
 
 # environment files
 *.env
-environment.ts
-environment.*.ts
 
 # System Files
 .DS_Store

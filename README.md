@@ -1,6 +1,6 @@
 # Seed
 
-[![CI](https://github.com/36Team/seed/actions/workflows/ci.yml/badge.svg)](https://github.com/36Team/seed/actions/workflows/ci.yml)
+[![CI](https://github.com/spy4x/seed/actions/workflows/ci.yml/badge.svg)](https://github.com/spy4x/seed/actions/workflows/ci.yml)
 
 
 ## Purpose
