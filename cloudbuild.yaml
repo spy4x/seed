@@ -11,7 +11,7 @@ steps:
     entrypoint: bash
     args: ['-c', 'git --no-pager log --oneline -n 10']
 
-  - id: test
+  - id: test2
     name: node
     entrypoint: bash
     args: ['-c', 'git --no-pager log --oneline -n 10 master']
