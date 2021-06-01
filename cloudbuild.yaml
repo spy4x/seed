@@ -1,25 +1,40 @@
 steps:
 
 # Checkout origin master for "Nx Affected" commands
-  - name: node
+#  - id: fetch_master
+#    name: node
+#    entrypoint: bash
+#    args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
+  -
+  - id: fetch_master
+    name: node
     entrypoint: bash
-    args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
+    args:
+      - -c
+      - |-
+      # get the .git directory only
+      git clone --branch $BRANCH_NAME git@github.com:<USER_NAME>/$REPO_NAME /tmp/repo ;
+      # move it to the workspace
+      mv /tmp/repo/.git .
 
 # Install dependencies
-  - name: node
+  - id: install_deps
+    name: node
     entrypoint: bash
     args: ['-c', 'yarn install --frozen-lockfile']
-    id: deps
+
 
 # Check formatting
-  - name: node
+  - id: ci_format
+    name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:format']
-    waitFor: [deps]
+    waitFor: [install_deps]
 
 
 # Lint
-  - name: node
+  - id: ci_lint
+    name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:lint']
-    waitFor: [deps]
+    waitFor: [install_deps]
