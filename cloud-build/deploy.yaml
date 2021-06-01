@@ -1,14 +1,9 @@
 steps:
-
-  - id: fetch_master_for_affected_commands
-    name: node
-    entrypoint: bash
-    args: ['-c', 'git fetch --unshallow']
-
+  -
   - id: install_deps
     name: node
     entrypoint: bash
-    args: ['-c', 'yarn install --frozen-lockfile']
+    args: ['-c', 'yarn ci:install-deps']
 
   - id: deploy
     name: node
