@@ -33,4 +33,4 @@ steps:
   - id: e2e
     name: node
     entrypoint: bash
-    args: ['-c', 'apt-get install xvfb && yarn ci:e2e']
+    args: ['-c', 'apt-get -qq update && apt-get -qq install xvfb && yarn ci:e2e']

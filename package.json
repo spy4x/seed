@@ -36,7 +36,7 @@
     "----------CI----------": "------------------------------",
     "ci:lint": "yarn affected:lint --parallel --base=origin/master",
     "ci:test": "yarn affected:test --base=origin/master",
-    "ci:format": "yarn format:check",
+    "ci:format": "yarn format:check --base=origin/master",
     "ci:e2e": "yarn affected:e2e --base=origin/master",
     "ci:build": "yarn affected:build --prod --parallel --base=origin/master",
     "ci:deploy": "yarn affected:deploy"
