@@ -6,10 +6,8 @@ steps:
 
 
   - name: gcr.io/cloud-builders/git
-    entrypoint: git
-    args: [
-      fetch --no-tags --prune --depth=5 origin master
-    ]
+    entrypoint: bash
+    args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
 
   - name: node
     entrypoint: npm
@@ -22,6 +20,7 @@ steps:
     entrypoint: yarn
     args: ['install --frozen-lockfile']
     id: deps
+    waitFor: [-]
 
 # Check formatting
   - name: node
