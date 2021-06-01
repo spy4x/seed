@@ -5,13 +5,13 @@ steps:
 #    args: [git fetch --no-tags --prune --depth=5 origin master]
 
 
-  - name: git
+  - name: gcr.io/cloud-builders/git
     args: ['git --no-pager log --oneline -n 10']
 
   - name: node
     entrypoint: npm
     args: ['install']
-    
+
 # Install dependencies
   - name: node
     entrypoint: yarn
