@@ -11,8 +11,8 @@ steps:
     args:
       - -c
       - |-
-      git clone --branch $BRANCH_NAME git@github.com:<USER_NAME>/$REPO_NAME /tmp/repo ;
-      mv /tmp/repo/.git .
+        git clone --branch $BRANCH_NAME git@github.com:<USER_NAME>/$REPO_NAME /tmp/repo ;
+        mv /tmp/repo/.git .
 
 # Install dependencies
   - id: install_deps
