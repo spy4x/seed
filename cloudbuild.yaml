@@ -7,11 +7,19 @@ steps:
 
   - name: gcr.io/cloud-builders/git
     entrypoint: git
-    args: ['--no-pager log --oneline -n 10']
+    args: [
+      --no-pager
+      log
+      --oneline
+      -n
+      10
+    ]
 
   - name: node
     entrypoint: npm
-    args: ['install']
+    args: [
+      install
+    ]
 
 # Install dependencies
   - name: node
