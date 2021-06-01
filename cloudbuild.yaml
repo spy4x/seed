@@ -4,7 +4,7 @@ steps:
   - id: fetch_master
     name: node
     entrypoint: bash
-    args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
+    args: ['-c', 'git fetch --unshallow']
 
   - id: test
     name: node
