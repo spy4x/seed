@@ -6,16 +6,19 @@ steps:
 
 # Install dependencies
   - name: node
+    entrypoint: yarn
     args: [yarn install --frozen-lockfile]
     id: deps
 
 # Check formatting
   - name: node
-    args: [yarn ci:format]
+    entrypoint: yarn
+    args: [ci:format]
     waitFor: [deps]
 
 
 # Lint
   - name: node
+    entrypoint: yarn
     args: [yarn ci:lint]
     waitFor: [deps]
