@@ -6,7 +6,7 @@ steps:
 
 
   - name: gcr.io/cloud-builders/git
-    args: ['git --no-pager log --oneline -n 10']
+    args: ['--no-pager log --oneline -n 10']
 
   - name: node
     entrypoint: npm
