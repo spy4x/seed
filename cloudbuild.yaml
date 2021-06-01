@@ -7,7 +7,7 @@ steps:
 # Install dependencies
   - name: node
     entrypoint: yarn
-    args: [yarn install --frozen-lockfile]
+    args: [install --frozen-lockfile]
     id: deps
 
 # Check formatting
