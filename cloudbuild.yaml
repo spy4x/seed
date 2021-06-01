@@ -1,39 +1,41 @@
 steps:
 
-# Checkout origin master for "Nx Affected" commands
-  - id: fetch_master
+  - id: fetch_master_for_affected_commands
     name: node
     entrypoint: bash
     args: ['-c', 'git fetch --unshallow']
 
-  - id: test
-    name: node
-    entrypoint: bash
-    args: ['-c', 'git --no-pager log --oneline -n 10']
-
-  - id: test2
-    name: node
-    entrypoint: bash
-    args: ['-c', 'git --no-pager log --oneline -n 10 master']
-
-# Install dependencies
   - id: install_deps
     name: node
     entrypoint: bash
     args: ['-c', 'yarn install --frozen-lockfile']
 
-
-# Check formatting
-  - id: ci_format
+  - id: format
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:format']
     waitFor: [install_deps]
 
-
-# Lint
-  - id: ci_lint
+  - id: lint
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:lint']
+    waitFor: [install_deps]
+
+  - id: test
+    name: node
+    entrypoint: bash
+    args: ['-c', 'yarn ci:test']
+    waitFor: [install_deps]
+
+  - id: build
+    name: node
+    entrypoint: bash
+    args: ['-c', 'yarn ci:build']
+    waitFor: [install_deps]
+
+  - id: e2e
+    name: node
+    entrypoint: bash
+    args: ['-c', 'yarn ci:e2e']
     waitFor: [install_deps]
