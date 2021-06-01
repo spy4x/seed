@@ -10,7 +10,6 @@ steps:
     entrypoint: bash
     args: ['-c', 'yarn install --frozen-lockfile']
     id: deps
-    waitFor: [-]
 
 # Check formatting
   - name: node:14-alpine
