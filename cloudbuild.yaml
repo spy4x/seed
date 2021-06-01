@@ -1,18 +1,20 @@
 steps:
 
 # Checkout origin master for "Nx Affected" commands
-#  - id: fetch_master
-#    name: node
-#    entrypoint: bash
-#    args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
   - id: fetch_master
     name: node
     entrypoint: bash
-    args:
-      - -c
-      - |-
-        git clone --branch master git@github.com:spy4x/seed.git /tmp/repo ;
-        mv /tmp/repo/.git .
+    args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
+
+  - id: test
+    name: node
+    entrypoint: bash
+    args: ['-c', 'git --no-pager log --oneline -n 10']
+
+  - id: test
+    name: node
+    entrypoint: bash
+    args: ['-c', 'git --no-pager log --oneline -n 10 master']
 
 # Install dependencies
   - id: install_deps
