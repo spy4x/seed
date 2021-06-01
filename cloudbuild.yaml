@@ -1,13 +1,15 @@
 steps:
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args:
-      - 'run'
-      - 'deploy'
-      - 'test2'
-      - '--image'
-      - 'us-docker.pkg.dev/cloudrun/container/hello'
-      - '--region'
-      - 'us-central1'
-      - '--platform'
-      - 'managed'
-      - '--allow-unauthenticated'
+
+# Checkout origin master for "Nx Affected" commands
+  - name: git
+    args: git fetch --no-tags --prune --depth=5 origin master
+
+# Install dependencies
+  - name: node
+    args: yarn install --frozen-lockfile
+    id: deps
+
+# Check files formatting
+  - name: node
+    args: yarn ci:format
+    waitFor: deps
