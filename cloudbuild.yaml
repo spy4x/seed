@@ -2,17 +2,13 @@ steps:
 
 # Checkout origin master for "Nx Affected" commands
 #  - name: git
-#    args: [git fetch --no-tags --prune --depth=5 origin master]
+#    args: [fetch --no-tags --prune --depth=5 origin master]
 
 
   - name: gcr.io/cloud-builders/git
     entrypoint: git
     args: [
-      --no-pager
-      log
-      --oneline
-      -n
-      10
+      fetch --no-tags --prune --depth=5 origin master
     ]
 
   - name: node
