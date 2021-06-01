@@ -1,25 +1,25 @@
 steps:
 
 # Checkout origin master for "Nx Affected" commands
-  - name: node:14-alpine
+  - name: node
     entrypoint: bash
     args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
 
 # Install dependencies
-  - name: node:14-alpine
+  - name: node
     entrypoint: bash
     args: ['-c', 'yarn install --frozen-lockfile']
     id: deps
 
 # Check formatting
-  - name: node:14-alpine
+  - name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:format']
     waitFor: [deps]
 
 
 # Lint
-  - name: node:14-alpine
+  - name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:lint']
     waitFor: [deps]
