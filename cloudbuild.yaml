@@ -5,7 +5,6 @@ steps:
 #    name: node
 #    entrypoint: bash
 #    args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
-  -
   - id: fetch_master
     name: node
     entrypoint: bash
