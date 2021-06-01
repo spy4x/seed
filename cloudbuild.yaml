@@ -11,7 +11,7 @@ steps:
     args:
       - -c
       - |-
-        git clone --branch master git@github.com:spy4x/seed /tmp/repo ;
+        git clone --branch master git@github.com:spy4x/seed.git /tmp/repo ;
         mv /tmp/repo/.git .
 
 # Install dependencies
