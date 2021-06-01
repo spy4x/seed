@@ -14,28 +14,23 @@ steps:
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:format']
-    waitFor: [install_deps]
 
   - id: lint
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:lint']
-    waitFor: [install_deps]
 
   - id: test
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:test']
-    waitFor: [install_deps]
 
   - id: build
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:build']
-    waitFor: [install_deps]
 
   - id: e2e
     name: node
     entrypoint: bash
-    args: ['-c', 'yarn ci:e2e']
-    waitFor: [install_deps]
+    args: ['-c', 'apt-get install xvfb && yarn ci:e2e']

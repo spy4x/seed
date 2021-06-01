@@ -22,7 +22,6 @@ steps:
     FRONT_ADMIN_PANEL_HOSTING_TARGET=$$FRONT_ADMIN_PANEL_HOSTING_TARGET \
     FRONT_WEB_CLIENT_HOSTING_TARGET=$$FRONT_WEB_CLIENT_HOSTING_TARGET \
     yarn ci:deploy']
-    waitFor: [install_deps]
     secretEnv: [
         REGION,
         CLOUD_RUN_API_APP_NAME,
