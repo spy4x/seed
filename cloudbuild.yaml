@@ -9,28 +9,22 @@ steps:
     entrypoint: bash
     args: ['-c', 'git fetch --no-tags --prune --depth=5 origin master']
 
-  - name: node
-    entrypoint: npm
-    args: [
-      install
-    ]
-
 # Install dependencies
   - name: node
-    entrypoint: yarn
-    args: ['install --frozen-lockfile']
+    entrypoint: bash
+    args: ['-c', 'yarn install --frozen-lockfile']
     id: deps
     waitFor: [-]
 
 # Check formatting
   - name: node
-    entrypoint: yarn
-    args: ['ci:format']
+    entrypoint: bash
+    args: ['-c', 'yarn ci:format']
     waitFor: [deps]
 
 
 # Lint
   - name: node
-    entrypoint: yarn
-    args: [ci:lint]
+    entrypoint: bash
+    args: ['-c', 'yarn ci:lint']
     waitFor: [deps]
