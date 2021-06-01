@@ -31,8 +31,8 @@ steps:
 #    args: ['-c', 'yarn ci:build']
 
   - id: e2e
-    name: node
+    name: cypress/base
     entrypoint: bash
-    args: ['-c', 'apt-get -qq update && apt-get -qq install xvfb && yarn ci:e2e']
+    args: ['-c', 'yarn ci:e2e']
 
 timeout: 1200s
