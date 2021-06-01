@@ -10,27 +10,29 @@ steps:
     entrypoint: bash
     args: ['-c', 'yarn install --frozen-lockfile']
 
-  - id: format
-    name: node
-    entrypoint: bash
-    args: ['-c', 'yarn ci:format']
-
-  - id: lint
-    name: node
-    entrypoint: bash
-    args: ['-c', 'yarn ci:lint']
-
-  - id: test
-    name: node
-    entrypoint: bash
-    args: ['-c', 'yarn ci:test']
-
-  - id: build
-    name: node
-    entrypoint: bash
-    args: ['-c', 'yarn ci:build']
+#  - id: format
+#    name: node
+#    entrypoint: bash
+#    args: ['-c', 'yarn ci:format']
+#
+#  - id: lint
+#    name: node
+#    entrypoint: bash
+#    args: ['-c', 'yarn ci:lint']
+#
+#  - id: test
+#    name: node
+#    entrypoint: bash
+#    args: ['-c', 'yarn ci:test']
+#
+#  - id: build
+#    name: node
+#    entrypoint: bash
+#    args: ['-c', 'yarn ci:build']
 
   - id: e2e
     name: node
     entrypoint: bash
     args: ['-c', 'apt-get -qq update && apt-get -qq install xvfb && yarn ci:e2e']
+
+timeout: 1200s

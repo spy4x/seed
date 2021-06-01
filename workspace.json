@@ -235,7 +235,8 @@
               "docker push $IMAGE_PATH",
               "gcloud run deploy $CLOUD_RUN_API_APP_NAME --image $IMAGE_PATH --add-cloudsql-instances $INSTANCE_CONNECTION_NAME --update-env-vars DB_CONNECTION_STRING=$DB_CONNECTION_STRING,API_URL=$API_URL,REGION=$REGION,PROJECT_ID=$PROJECT_ID --platform managed --region $REGION --allow-unauthenticated --project=$PROJECT_ID"
             ],
-            "parallel": false
+            "parallel": false,
+            "color": true
           }
         }
       }
@@ -420,7 +421,8 @@
               "yarn firebase target:apply hosting front-web-client $FRONT_WEB_CLIENT_HOSTING_TARGET",
               "yarn firebase deploy --only hosting:front-web-client"
             ],
-            "parallel": false
+            "parallel": false,
+            "color": true
           }
         }
       }
@@ -549,7 +551,8 @@
               "yarn firebase target:apply hosting front-admin-panel $FRONT_ADMIN_PANEL_HOSTING_TARGET",
               "yarn firebase deploy --only hosting:front-admin-panel"
             ],
-            "parallel": false
+            "parallel": false,
+            "color": true
           }
         }
       }

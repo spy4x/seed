@@ -48,3 +48,5 @@ availableSecrets:
       env: FRONT_ADMIN_PANEL_HOSTING_TARGET
     - versionName: projects/$PROJECT_ID/secrets/FRONT_WEB_CLIENT_HOSTING_TARGET/versions/latest
       env: FRONT_WEB_CLIENT_HOSTING_TARGET
+
+timeout: 1200s
