@@ -1,15 +1,21 @@
 steps:
 
 # Checkout origin master for "Nx Affected" commands
-  - name: git
-    args: [git fetch --no-tags --prune --depth=5 origin master]
+#  - name: git
+#    args: [git fetch --no-tags --prune --depth=5 origin master]
 
 # Install dependencies
   - name: node
     args: [yarn install --frozen-lockfile]
     id: deps
 
-# Check files formatting
+# Check formatting
   - name: node
     args: [yarn ci:format]
+    waitFor: [deps]
+
+
+# Lint
+  - name: node
+    args: [yarn ci:lint]
     waitFor: [deps]
