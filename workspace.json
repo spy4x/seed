@@ -81,73 +81,6 @@
     }
   },
   "projects": {
-    "dev-deploy": {
-      "root": "apps/dev/deploy",
-      "sourceRoot": "apps/dev/deploy/src",
-      "projectType": "application",
-      "prefix": "dev-deploy",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "outputPath": "dist/apps/dev/deploy",
-            "main": "apps/dev/deploy/src/main.ts",
-            "tsConfig": "apps/dev/deploy/tsconfig.app.json",
-            "assets": []
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "fileReplacements": []
-            }
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "dev-deploy:build"
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/dev/deploy/**/*.ts", "apps/dev/deploy/**/*.spec.ts", "apps/dev/deploy/**/*.d.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/dev/deploy/jest.config.js"
-          },
-          "outputs": ["coverage/apps/dev/deploy"]
-        }
-      }
-    },
-    "dev-utils": {
-      "root": "libs/dev/utils",
-      "sourceRoot": "libs/dev/utils/src",
-      "projectType": "library",
-      "schematics": {},
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/dev/utils/**/*.ts", "libs/dev/utils/**/*.spec.ts", "libs/dev/utils/**/*.d.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/dev/utils/jest.config.js"
-          },
-          "outputs": ["coverage/libs/dev/utils"]
-        }
-      }
-    },
     "dev-sandbox": {
       "root": "apps/dev/sandbox",
       "sourceRoot": "apps/dev/sandbox/src",
@@ -290,6 +223,19 @@
           "options": {
             "jestConfig": "apps/back/api/jest.config.js",
             "passWithNoTests": true
+          }
+        },
+        "deploy": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "yarn build back-api --prod",
+              "docker build . -t gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME -f back-api.dockerfile",
+              "docker push gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME",
+              "gcloud run deploy $CLOUD_RUN_API_APP_NAME --image gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME --add-cloudsql-instances $INSTANCE_CONNECTION_NAME --update-env-vars DB_CONNECTION_STRING=$DB_CONNECTION_STRING,API_URL=$API_URL,REGION=$REGION,PROJECT_ID=$PROJECT_ID --platform managed --region $REGION --allow-unauthenticated --project=$PROJECT_ID"
+            ],
+            "parallel": false,
+            "color": true
           }
         }
       }
@@ -465,6 +411,18 @@
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/front/web-client"]
+        },
+        "deploy": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "yarn build front-web-client --prod",
+              "yarn firebase target:apply hosting front-web-client $FRONT_WEB_CLIENT_HOSTING_TARGET --project=$PROJECT_ID",
+              "yarn firebase deploy --only hosting:front-web-client --project=$PROJECT_ID"
+            ],
+            "parallel": false,
+            "color": true
+          }
         }
       }
     },
@@ -583,6 +541,18 @@
             "passWithNoTests": true
           },
           "outputs": ["coverage/apps/front/admin-panel"]
+        },
+        "deploy": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "yarn build front-admin-panel --prod",
+              "yarn firebase target:apply hosting front-admin-panel $FRONT_ADMIN_PANEL_HOSTING_TARGET --project=$PROJECT_ID",
+              "yarn firebase deploy --only hosting:front-admin-panel --project=$PROJECT_ID"
+            ],
+            "parallel": false,
+            "color": true
+          }
         }
       }
     },

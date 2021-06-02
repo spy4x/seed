@@ -16,9 +16,7 @@
     }
   },
   "projects": {
-    "dev-deploy": { "tags": ["dev"] },
     "dev-sandbox": { "tags": ["dev"] },
-    "dev-utils": { "tags": ["dev"] },
     "back-cloud-functions": { "tags": [] },
     "back-api-core": { "tags": [] },
     "back-api-users": { "tags": [] },

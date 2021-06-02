@@ -27,7 +27,7 @@ export class CloudTasksService {
 
     const handler = async (logSegment: LogSegment): Promise<void> => {
       const client = new CloudTasksClient();
-      const parent = client.queuePath(API_CONFIG.projectId, API_CONFIG.dataCenterLocation, queueName);
+      const parent = client.queuePath(API_CONFIG.projectId, API_CONFIG.dataCenterRegion, queueName);
       const task: ITask = {
         httpRequest: {
           httpMethod: 'POST',
@@ -37,7 +37,7 @@ export class CloudTasksService {
           },
           body: payload ? Buffer.from(JSON.stringify(payload)).toString('base64') : undefined,
         },
-        name: `projects/${API_CONFIG.projectId}/locations/${API_CONFIG.dataCenterLocation}/queues/${queueName}/tasks/${taskId}`,
+        name: `projects/${API_CONFIG.projectId}/locations/${API_CONFIG.dataCenterRegion}/queues/${queueName}/tasks/${taskId}`,
         scheduleTime: {
           seconds: whenToTrigger.getTime() / MILLISECONDS_IN_SECOND,
         },

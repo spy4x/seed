@@ -1,14 +1,12 @@
 {
   "functions": {
     "source": "dist/apps/back/cloud-functions",
-    "predeploy": ["yarn predeploy:functions"],
     "runtime": "nodejs12"
   },
   "hosting": [
     {
       "target": "front-web-client",
       "public": "dist/apps/front/web-client",
-      "predeploy": ["yarn predeploy:hosting:front-web-client"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
@@ -48,7 +46,6 @@
     {
       "target": "front-admin-panel",
       "public": "dist/apps/front/admin-panel",
-      "predeploy": ["yarn predeploy:hosting:front-admin-panel"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {

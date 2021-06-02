@@ -1,0 +1,33 @@
+steps:
+
+  - id: install_deps
+    name: node
+    entrypoint: bash
+    args: ['-c', 'yarn ci:install-deps']
+
+  - id: format
+    name: node
+    entrypoint: bash
+    args: ['-c', 'yarn ci:format']
+
+  - id: lint
+    name: node
+    entrypoint: bash
+    args: ['-c', 'yarn ci:lint']
+
+  - id: test
+    name: node
+    entrypoint: bash
+    args: ['-c', 'yarn ci:test']
+
+  - id: build
+    name: node
+    entrypoint: bash
+    args: ['-c', 'yarn ci:build']
+
+  - id: e2e
+    name: cypress/base
+    entrypoint: bash
+    args: ['-c', 'yarn ci:e2e']
+
+timeout: 1800s
