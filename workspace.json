@@ -341,13 +341,18 @@
             "main": "apps/front/web-client/src/main.ts",
             "polyfills": "apps/front/web-client/src/polyfills.ts",
             "tsConfig": "apps/front/web-client/tsconfig.app.json",
-            "aot": true,
             "assets": ["apps/front/web-client/src/favicon.ico", "apps/front/web-client/src/assets"],
             "styles": ["apps/front/web-client/src/styles/index.sass"],
             "stylePreprocessorOptions": {
               "includePaths": ["apps/front/web-client/web/src/styles"]
             },
-            "scripts": []
+            "scripts": [],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -378,7 +383,8 @@
               ]
             }
           },
-          "outputs": ["{options.outputPath}"]
+          "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": ""
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
@@ -471,13 +477,18 @@
             "main": "apps/front/admin-panel/src/main.ts",
             "polyfills": "apps/front/admin-panel/src/polyfills.ts",
             "tsConfig": "apps/front/admin-panel/tsconfig.app.json",
-            "aot": true,
             "assets": ["apps/front/admin-panel/src/favicon.ico", "apps/front/admin-panel/src/assets"],
             "styles": ["apps/front/admin-panel/src/styles/index.sass"],
             "stylePreprocessorOptions": {
               "includePaths": ["apps/front/admin-panel/src/styles"]
             },
-            "scripts": []
+            "scripts": [],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -508,7 +519,8 @@
               ]
             }
           },
-          "outputs": ["{options.outputPath}"]
+          "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": ""
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",

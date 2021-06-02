@@ -5,11 +5,7 @@
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-      "parserOptions": {
-        "project": "./tsconfig.*?.json"
-      },
       "rules": {
-        // turned off in favor of @typescript-eslint/* rule
         "brace-style": 0,
         "comma-dangle": 0,
         "comma-spacing": 0,
@@ -41,8 +37,6 @@
         "quotes": 0,
         "require-await": 0,
         "semi": 0,
-
-        // turned off because do not much sense (imho)
         "for-direction": 0,
         "no-await-in-loop": 0,
         "no-compare-neg-zero": 0,
@@ -86,7 +80,7 @@
         "sort-imports": 0,
         "@typescript-eslint/class-literal-property-style": 0,
         "@typescript-eslint/consistent-type-imports": 0,
-        "@typescript-eslint/indent": 0, // disabled until https://github.com/typescript-eslint/typescript-eslint/issues/1824 is solved
+        "@typescript-eslint/indent": 0,
         "@typescript-eslint/no-invalid-void-type": 0,
         "@typescript-eslint/no-empty-interface": 0,
         "@typescript-eslint/no-parameter-properties": 0,
@@ -103,8 +97,6 @@
         "@typescript-eslint/space-before-function-paren": 0,
         "@typescript-eslint/strict-boolean-expressions": 0,
         "@typescript-eslint/typedef": 0,
-
-        // turned on
         "getter-return": 2,
         "no-async-promise-executor": 2,
         "no-console": 2,
@@ -145,7 +137,12 @@
         "accessor-pairs": 2,
         "array-callback-return": 2,
         "block-scoped-var": 2,
-        "complexity": [2, { "max": 10 }],
+        "complexity": [
+          2,
+          {
+            "max": 10
+          }
+        ],
         "curly": 2,
         "eqeqeq": 2,
         "guard-for-in": 2,
@@ -251,7 +248,13 @@
         "@typescript-eslint/no-invalid-this": 2,
         "@typescript-eslint/no-loop-func": 2,
         "@typescript-eslint/no-loss-of-precision": 2,
-        "@typescript-eslint/no-magic-numbers": [2, { "ignoreEnums": true, "ignoreReadonlyClassProperties": true }],
+        "@typescript-eslint/no-magic-numbers": [
+          2,
+          {
+            "ignoreEnums": true,
+            "ignoreReadonlyClassProperties": true
+          }
+        ],
         "@typescript-eslint/no-misused-new": 2,
         "@typescript-eslint/no-misused-promises": 2,
         "@typescript-eslint/no-namespace": 2,
@@ -328,9 +331,6 @@
     {
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nrwl/nx/typescript"],
-      "parserOptions": {
-        "project": "./tsconfig.*?.json"
-      },
       "rules": {
         "@typescript-eslint/explicit-function-return-type": 2
       }
@@ -339,11 +339,11 @@
       "files": ["*.js", "*.jsx"],
       "extends": ["plugin:@nrwl/nx/javascript"],
       "rules": {
-        "@typescript-eslint/explicit-function-return-type": 0 // enabled only for .ts/.tsx files
+        "@typescript-eslint/explicit-function-return-type": 0
       }
     },
     {
-      "files": ["*.spec.ts", "*.spec.tsx"], // makes writing tests easier
+      "files": ["*.spec.ts", "*.spec.tsx"],
       "rules": {
         "no-console": 0,
         "max-lines-per-function": 0,

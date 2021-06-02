@@ -1,5 +1,5 @@
 import { RequestExtended, UserMiddleware } from './user.middleware';
-import { FirebaseAuthService } from '@seed/back/api/shared';
+import { FirebaseAuthService } from '../../services';
 import { Request } from 'express';
 
 describe('UserMiddleware', () => {
