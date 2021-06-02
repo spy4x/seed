@@ -1,36 +1,77 @@
 {
   "implicitDependencies": {
     "workspace.json": "*",
-    "package.json": { "dependencies": "*", "devDependencies": "*" },
+    "package.json": {
+      "dependencies": "*",
+      "devDependencies": "*"
+    },
     "tsconfig.base.json": "*",
     "tslint.json": "*",
     ".eslintrc.json": "*",
     "nx.json": "*"
   },
-  "affected": { "defaultBase": "master" },
+  "affected": {
+    "defaultBase": "master"
+  },
   "npmScope": "seed",
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/workspace/tasks-runners/default",
-      "options": { "cacheableOperations": ["build", "lint", "test", "e2e"] }
+      "options": {
+        "cacheableOperations": ["build", "lint", "test", "e2e"]
+      }
     }
   },
   "projects": {
-    "dev-sandbox": { "tags": ["dev"] },
-    "back-cloud-functions": { "tags": [] },
-    "back-api-core": { "tags": [] },
-    "back-api-users": { "tags": [] },
-    "back-api-shared": { "tags": [] },
-    "front-web-client": { "tags": [] },
-    "front-web-client-core": { "tags": [] },
-    "e2e-web-client": { "tags": [], "implicitDependencies": ["front-web-client"] },
-    "front-admin-panel": { "tags": [] },
-    "e2e-admin-panel": { "tags": [], "implicitDependencies": ["front-admin-panel"] },
-    "front-admin-panel-core": { "tags": [] },
-    "back-api": { "tags": [] },
-    "shared-helpers": { "tags": [] },
-    "shared-constants": { "tags": [] },
-    "shared-mock-data": { "tags": [] },
-    "shared-types": { "tags": [] }
+    "dev-sandbox": {
+      "tags": ["dev"]
+    },
+    "back-cloud-functions": {
+      "tags": []
+    },
+    "back-api-core": {
+      "tags": []
+    },
+    "back-api-users": {
+      "tags": []
+    },
+    "back-api-shared": {
+      "tags": []
+    },
+    "front-web-client": {
+      "tags": []
+    },
+    "front-web-client-core": {
+      "tags": []
+    },
+    "e2e-web-client": {
+      "tags": [],
+      "implicitDependencies": ["front-web-client"]
+    },
+    "front-admin-panel": {
+      "tags": []
+    },
+    "e2e-admin-panel": {
+      "tags": [],
+      "implicitDependencies": ["front-admin-panel"]
+    },
+    "front-admin-panel-core": {
+      "tags": []
+    },
+    "back-api": {
+      "tags": []
+    },
+    "shared-helpers": {
+      "tags": []
+    },
+    "shared-constants": {
+      "tags": []
+    },
+    "shared-mock-data": {
+      "tags": []
+    },
+    "shared-types": {
+      "tags": []
+    }
   }
 }
