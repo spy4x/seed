@@ -1,10 +1,12 @@
-import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { PrismaService, UserUpdateCommand } from '@seed/back/api/shared';
+import { CommandHandler } from '@nestjs/cqrs';
+import { BaseCommandHandler, PrismaService, UserUpdateCommand } from '@seed/back/api/shared';
 import { User } from '@prisma/client';
 
 @CommandHandler(UserUpdateCommand)
-export class UserUpdateCommandHandler implements ICommandHandler<UserUpdateCommand> {
-  constructor(private readonly prisma: PrismaService) {}
+export class UserUpdateCommandHandler extends BaseCommandHandler<UserUpdateCommand> {
+  constructor(readonly prisma: PrismaService) {
+    super();
+  }
 
   async execute(command: UserUpdateCommand): Promise<User> {
     const { id, firstName, lastName, userName, photoURL, userDevice, isPushNotificationsEnabled } = command;

@@ -1,12 +1,12 @@
 import { CommandHandler } from '@nestjs/cqrs';
 import { CloudTaskCreateCommand } from '../commands';
-import { CloudTasksService, PrismaService } from '../services';
+import { CloudTasksService } from '../services';
 import { BaseCommandHandler } from '../baseClasses';
 
 @CommandHandler(CloudTaskCreateCommand)
 export class CloudTaskCreateCommandHandler extends BaseCommandHandler<CloudTaskCreateCommand> {
-  constructor(protected readonly prisma: PrismaService, protected readonly cloudTasksService: CloudTasksService) {
-    super(prisma);
+  constructor(readonly cloudTasksService: CloudTasksService) {
+    super();
   }
 
   async execute(command: CloudTaskCreateCommand): Promise<void> {
