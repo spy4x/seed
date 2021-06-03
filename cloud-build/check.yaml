@@ -1,8 +1,17 @@
 steps:
+  - id: restore_cache
+    name: 'gcr.io/$PROJECT_ID/restore_cache'
+    args:
+      - '--bucket=gs://${PROJECT_ID}_cloudbuild_cache'
+      - '--key=cache-$( checksum yarn.lock )'
+      - '--key_fallback=cache-'
+
   - id: install_deps
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:install-deps']
+    env:
+      - 'YARN_CACHE_FOLDER=/workspace/.cache/.yarn'
 
   - id: format
     name: node

@@ -1,8 +1,25 @@
 steps:
+  - id: restore_cache
+    name: 'gcr.io/$PROJECT_ID/restore_cache'
+    args:
+      - '--bucket=gs://${PROJECT_ID}_cloudbuild_cache'
+      - '--key=cache-$( checksum yarn.lock )'
+      - '--key_fallback=cache-'
+
   - id: install_deps
     name: gcr.io/seed-anton/builder
     entrypoint: bash
     args: ['-c', 'yarn ci:install-deps']
+    env:
+      - 'YARN_CACHE_FOLDER=/workspace/.cache/.yarn'
+
+  - id: save_cache
+    name: 'gcr.io/$PROJECT_ID/save_cache'
+    args:
+      - '--bucket=gs://${PROJECT_ID}_cloudbuild_cache'
+      - '--key=cache-$( checksum yarn.lock )'
+      - '--path=.cache'
+      - '--no-clobber'
 
   - id: deploy
     name: gcr.io/seed-anton/builder
@@ -52,4 +69,4 @@ availableSecrets:
     - versionName: projects/$PROJECT_ID/secrets/NX_CLOUD_AUTH_TOKEN/versions/latest
       env: NX_CLOUD_AUTH_TOKEN
 
-timeout: 1200s
+timeout: 1800s
