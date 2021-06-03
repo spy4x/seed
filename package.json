@@ -63,6 +63,7 @@
     "@nestjs/platform-express": "7.6.17",
     "@nestjs/swagger": "^4.8.0",
     "@ngrx/component-store": "12.0.0",
+    "@nrwl/nx-cloud": "^12.1.7",
     "@prisma/client": "^2.24.0",
     "@sentry/browser": "^6.5.1",
     "@sentry/node": "^6.5.1",

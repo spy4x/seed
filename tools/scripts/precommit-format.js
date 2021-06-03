@@ -7,7 +7,7 @@ const formatAndStage = () => {
    */
   const command = `git diff --name-only --staged`;
   const result = execSync(command).toString();
-  const supportedFileExtensions = ['ts', 'js', 'css', 'scss', 'html', 'json'];
+  const supportedFileExtensions = ['ts', 'js', 'css', 'scss', 'html', 'json', 'yaml'];
   const files = result
     .split('\n')
     .filter(file => !!file && supportedFileExtensions.some(ext => file.endsWith('.' + ext)));
