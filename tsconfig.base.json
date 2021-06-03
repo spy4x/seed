@@ -25,7 +25,8 @@
       "@seed/shared/helpers": ["libs/shared/helpers/src/index.ts"],
       "@seed/shared/constants": ["libs/shared/constants/src/index.ts"],
       "@seed/shared/mock-data": ["libs/shared/mock-data/src/index.ts"],
-      "@seed/shared/types": ["libs/shared/types/src/index.ts"]
+      "@seed/shared/types": ["libs/shared/types/src/index.ts"],
+      "@seed/front/shared/types": ["libs/front/shared/types/src/index.ts"]
     },
     "strict": true,
     "strictBindCallApply": true,

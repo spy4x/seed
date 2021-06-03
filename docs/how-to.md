@@ -13,7 +13,7 @@ Here you'll find answers for variety of technical questions.
 * How to configure .gitignore?
 * How to configure package.json?
 * How to configure TypeScript?
-* How to configure TSLint?
+* How to configure ESLint?
 * How to configure Prettier?
 * How to configure all dependencies properly? Lerna/Yarn?
 * How to control code quality? (git hooks)

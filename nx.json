@@ -6,7 +6,6 @@
       "devDependencies": "*"
     },
     "tsconfig.base.json": "*",
-    "tslint.json": "*",
     ".eslintrc.json": "*",
     "nx.json": "*"
   },
@@ -73,6 +72,9 @@
       "tags": []
     },
     "shared-types": {
+      "tags": []
+    },
+    "front-shared-types": {
       "tags": []
     }
   }

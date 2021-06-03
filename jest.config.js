@@ -16,5 +16,6 @@ module.exports = {
     '<rootDir>/libs/shared/constants',
     '<rootDir>/libs/shared/mock-data',
     '<rootDir>/libs/shared/types',
+    '<rootDir>/libs/front/shared/types',
   ],
 };

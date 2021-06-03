@@ -5,60 +5,6 @@
   },
   "defaultProject": "front-web-client",
   "schematics": {
-    "@nrwl/workspace": {
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/cypress": {
-      "cypress-project": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/react": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/next": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/web": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/node": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/nx-plugin": {
-      "plugin": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/nest": {
-      "application": {
-        "linter": "eslint"
-      }
-    },
-    "@nrwl/express": {
-      "application": {
-        "linter": "eslint"
-      },
-      "library": {
-        "linter": "eslint"
-      }
-    },
     "@nrwl/schematics:component": {
       "styleext": "sass",
       "spec": true,
@@ -331,7 +277,7 @@
       "projectType": "application",
       "root": "apps/front/web-client",
       "sourceRoot": "apps/front/web-client/src",
-      "prefix": "seed-client",
+      "prefix": "seed-web-client",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -404,10 +350,9 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": ["apps/front/web-client/tsconfig.app.json", "apps/front/web-client/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/front/web-client/**/*"]
+            "lintFilePatterns": ["apps/front/web-client/src/**/*.ts", "apps/front/web-client/src/**/*.html"]
           }
         },
         "test": {
@@ -436,16 +381,12 @@
       "projectType": "library",
       "root": "libs/front/web-client/core",
       "sourceRoot": "libs/front/web-client/core/src",
-      "prefix": "seed-client-core",
+      "prefix": "seed-web-client-core",
       "architect": {
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": [
-              "libs/front/web-client/core/tsconfig.lib.json",
-              "libs/front/web-client/core/tsconfig.spec.json"
-            ],
-            "exclude": ["**/node_modules/**", "!libs/front/web-client/core/**/*"]
+            "lintFilePatterns": ["libs/front/web-client/core/src/**/*.ts", "libs/front/web-client/core/src/**/*.html"]
           }
         },
         "test": {
@@ -540,10 +481,9 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": ["apps/front/admin-panel/tsconfig.app.json", "apps/front/admin-panel/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**", "!apps/front/admin-panel/**/*"]
+            "lintFilePatterns": ["apps/front/admin-panel/src/**/*.ts", "apps/front/admin-panel/src/**/*.html"]
           }
         },
         "test": {
@@ -575,13 +515,9 @@
       "prefix": "seed-admin-panel-core",
       "architect": {
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": [
-              "libs/front/admin-panel/core/tsconfig.lib.json",
-              "libs/front/admin-panel/core/tsconfig.spec.json"
-            ],
-            "exclude": ["**/node_modules/**", "!libs/front/admin-panel/core/**/*"]
+            "lintFilePatterns": ["libs/front/admin-panel/core/src/**/*.ts", "libs/front/admin-panel/core/src/**/*.html"]
           }
         },
         "test": {
@@ -618,10 +554,9 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": ["apps/e2e/web-client/tsconfig.e2e.json"],
-            "exclude": ["**/node_modules/**", "!apps/e2e/web-client/**/*"]
+            "lintFilePatterns": ["apps/e2e/web-client/**/*.{js,ts}"]
           }
         }
       }
@@ -645,10 +580,9 @@
           }
         },
         "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
+          "builder": "@nrwl/linter:eslint",
           "options": {
-            "tsConfig": ["apps/e2e/admin-panel/tsconfig.e2e.json"],
-            "exclude": ["**/node_modules/**", "!apps/e2e/admin-panel/**/*"]
+            "lintFilePatterns": ["apps/e2e/admin-panel/**/*.{js,ts}"]
           }
         }
       }
@@ -732,6 +666,27 @@
           "outputs": ["coverage/libs/shared/types"],
           "options": {
             "jestConfig": "libs/shared/types/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "front-shared-types": {
+      "root": "libs/front/shared/types",
+      "sourceRoot": "libs/front/shared/types/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/shared/types/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/types"],
+          "options": {
+            "jestConfig": "libs/front/shared/types/jest.config.js",
             "passWithNoTests": true
           }
         }
