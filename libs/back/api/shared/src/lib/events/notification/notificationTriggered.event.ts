@@ -1,4 +1,4 @@
-import { NotificationType } from '.prisma/client';
+import { NotificationType } from '@prisma/client';
 import { NotificationEvent } from '../../baseClasses';
 
 export class NotificationTriggeredEvent extends NotificationEvent {

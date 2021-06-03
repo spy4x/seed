@@ -1,4 +1,4 @@
-import { NotificationType } from '.prisma/client';
+import { NotificationType } from '@prisma/client';
 import { IEvent } from '@nestjs/cqrs';
 import { UserDTO } from '../dtos';
 

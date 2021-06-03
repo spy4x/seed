@@ -1,4 +1,4 @@
-import { Notification } from '.prisma/client';
+import { Notification } from '@prisma/client';
 import { NotificationBaseDto } from './notification-base.dto';
 
 export class NotificationMapper {
