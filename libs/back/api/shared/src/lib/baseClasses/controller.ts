@@ -4,7 +4,7 @@ import { LogService } from '../services';
 
 @Injectable()
 export class BaseController {
-  protected readonly logger = new LogService(this.constructor.name);
+  readonly logger = new LogService(this.constructor.name);
 
-  constructor(protected readonly commandBus: CommandBus, protected readonly queryBus: QueryBus) {}
+  constructor(readonly commandBus: CommandBus, readonly queryBus: QueryBus) {}
 }

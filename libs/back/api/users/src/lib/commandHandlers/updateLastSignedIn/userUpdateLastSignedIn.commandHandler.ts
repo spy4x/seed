@@ -1,10 +1,17 @@
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
-import { PrismaService, UserUpdateLastSignedInCommand, UserLastSignedInUpdatedEvent } from '@seed/back/api/shared';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
+import {
+  BaseCommandHandler,
+  PrismaService,
+  UserLastSignedInUpdatedEvent,
+  UserUpdateLastSignedInCommand,
+} from '@seed/back/api/shared';
 import { User } from '@prisma/client';
 
 @CommandHandler(UserUpdateLastSignedInCommand)
-export class UserUpdateLastSignedInCommandHandler implements ICommandHandler<UserUpdateLastSignedInCommand> {
-  constructor(private readonly prisma: PrismaService, private readonly eventBus: EventBus) {}
+export class UserUpdateLastSignedInCommandHandler extends BaseCommandHandler<UserUpdateLastSignedInCommand> {
+  constructor(readonly prisma: PrismaService, readonly eventBus: EventBus) {
+    super();
+  }
 
   async execute(command: UserUpdateLastSignedInCommand): Promise<User> {
     const nowDate = new Date();

@@ -1,11 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
-import { PrismaService, UserCreateCommand, UserCreatedEvent } from '@seed/back/api/shared';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
+import { BaseCommandHandler, PrismaService, UserCreateCommand, UserCreatedEvent } from '@seed/back/api/shared';
 import { User } from '@prisma/client';
 
 @CommandHandler(UserCreateCommand)
-export class UserCreateCommandHandler implements ICommandHandler<UserCreateCommand> {
-  constructor(private readonly prisma: PrismaService, private readonly eventBus: EventBus) {}
+export class UserCreateCommandHandler extends BaseCommandHandler<UserCreateCommand> {
+  constructor(readonly prisma: PrismaService, readonly eventBus: EventBus) {
+    super();
+  }
 
   async execute(command: UserCreateCommand): Promise<User> {
     const { id, firstName, lastName, userName, userDevice, photoURL, isPushNotificationsEnabled } = command;
