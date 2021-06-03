@@ -5,6 +5,7 @@ import { GetJwtComponent } from './get-jwt/get-jwt.component';
 import { AngularFireModule, FIREBASE_OPTIONS } from '@angular/fire';
 import { AngularFireAuthModule } from '@angular/fire/auth';
 import { FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN, FrontWebClientConfig } from './config';
+import { FrontFirebaseConfig } from '@seed/front/shared/types';
 
 @NgModule({
   imports: [
@@ -25,7 +26,7 @@ import { FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN, FrontWebClientConfig } from '.
   providers: [
     {
       provide: FIREBASE_OPTIONS,
-      useFactory: (config: FrontWebClientConfig) => config.firebase,
+      useFactory: (config: FrontWebClientConfig): FrontFirebaseConfig => config.firebase,
       deps: [FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN],
     },
   ],

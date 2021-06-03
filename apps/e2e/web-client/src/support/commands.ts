@@ -8,15 +8,17 @@
 // https://on.cypress.io/custom-commands
 // ***********************************************
 // eslint-disable-next-line @typescript-eslint/no-namespace
-// tslint:disable-next-line:no-namespace
 declare namespace Cypress {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface Chainable<Subject> {
+    // eslint-disable-next-line @typescript-eslint/method-signature-style
     login(email: string, password: string): void;
   }
 }
 //
 // -- This is a parent command --
 Cypress.Commands.add('login', (email, password) => {
+  // eslint-disable-next-line no-console
   console.log('Custom command example: Login', email, password);
 });
 //

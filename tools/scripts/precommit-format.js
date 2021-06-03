@@ -5,7 +5,7 @@ const formatAndStage = () => {
   /**
    * returns list of staged files (regex mask "*")
    */
-  const command = `git diff --name-only --staged`;
+  const command = `git diff --name-only --staged --diff-filter=AM`;
   const result = execSync(command).toString();
   const supportedFileExtensions = ['ts', 'js', 'css', 'scss', 'html', 'json', 'yaml'];
   const files = result
@@ -17,7 +17,7 @@ const formatAndStage = () => {
   }
 
   execSync(`yarn prettier --write ${files.join(' ')}`);
-  execSync(`yarn format:check --base=origin/master`);
+  execSync(`yarn ci:format`);
   execSync(`git add ${files.join(' ')}`);
   console.log(green('✅ All files were formatted'));
 };
