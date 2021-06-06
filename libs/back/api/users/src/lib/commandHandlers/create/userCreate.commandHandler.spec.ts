@@ -1,35 +1,33 @@
-import { BadRequestException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { EventBus } from '@nestjs/cqrs';
 import { Test } from '@nestjs/testing';
-import { UserDeviceCreateDTO, UserCreateCommand, PrismaService } from '@seed/back/api/shared';
+import { PrismaService, UserCreateCommand, UserCreatedEvent } from '@seed/back/api/shared';
 import { UserCreateCommandHandler } from './userCreate.commandHandler';
-import { mockUsers, mockUserDevices } from '@seed/shared/mock-data';
+import { mockUsers } from '@seed/shared/mock-data';
+import { User, UserRole } from '@prisma/client';
 
 describe('UserCreateCommandHandler', () => {
-  const [user] = mockUsers;
-
-  const createMock = jest.fn(() => user);
-  const findFirstMock = jest.fn();
-
+  const prismaUserCreateMock = jest.fn();
+  const prismaUserFindFirstMock = jest.fn();
+  const eventBusPublishMock = jest.fn();
   const prismaServiceMock = jest.fn().mockImplementation(() => ({
     user: {
-      create: createMock,
-      findFirst: findFirstMock,
+      create: prismaUserCreateMock,
+      findFirst: prismaUserFindFirstMock,
     },
   }));
   const eventBusMock = jest.fn().mockImplementation(() => ({
-    publish: jest.fn(),
+    publish: eventBusPublishMock,
   }));
 
   let userCreateCommandHandler: UserCreateCommandHandler;
-  const device: UserDeviceCreateDTO | undefined = undefined;
 
+  const [user] = mockUsers;
   const command = new UserCreateCommand(
     user.id,
     user.userName,
     user.firstName,
     user.lastName,
-    device,
     user.photoURL as string,
     user.isPushNotificationsEnabled,
   );
@@ -47,63 +45,31 @@ describe('UserCreateCommandHandler', () => {
   });
 
   describe('execute', () => {
-    it('should be defined', () => {
-      expect(userCreateCommandHandler).toBeDefined();
+    it('should throw ConflictException when prisma.user.findFirst returns a value', async () => {
+      prismaUserFindFirstMock.mockReturnValueOnce(user);
+      await expect(userCreateCommandHandler.execute(command)).rejects.toThrow(ConflictException);
     });
 
-    it('should call prisma.user.create with expected arguments', async () => {
-      const { id, firstName, lastName, userName, photoURL, isPushNotificationsEnabled } = command;
+    it('should call prisma.user.create with expected arguments and publish event', async () => {
+      prismaUserFindFirstMock.mockReturnValueOnce(null);
+      const now = new Date();
+      const createdUser: User = {
+        ...command,
+        lastTimeSignedIn: now,
+        createdAt: now,
+        updatedAt: now,
+        role: UserRole.USER,
+      };
+      prismaUserCreateMock.mockReturnValueOnce(createdUser);
       await userCreateCommandHandler.execute(command);
-
-      const data = {
-        id,
-        firstName,
-        lastName,
-        userName,
-        photoURL,
-        isPushNotificationsEnabled,
-      };
-      expect(createMock).toBeCalledWith({ data });
+      expect(prismaUserCreateMock).toBeCalledWith({ data: { ...command } });
+      expect(eventBusPublishMock).toBeCalledWith(new UserCreatedEvent(createdUser));
     });
 
-    it('should prisma.user.create with userDevice if userDevice is defined', async () => {
-      command.userDevice = {
-        fcmToken: mockUserDevices[0].fcmToken,
-        deviceId: mockUserDevices[0].deviceId as string,
-        deviceName: mockUserDevices[0].deviceName as string,
-      };
-
-      const { id, firstName, lastName, userName, userDevice, photoURL, isPushNotificationsEnabled } = command;
-      await userCreateCommandHandler.execute(command);
-      const createUserDevice = {
-        userDevices: {
-          create: {
-            ...userDevice,
-          },
-        },
-      };
-
-      const data = {
-        id,
-        firstName,
-        lastName,
-        userName,
-        photoURL,
-        isPushNotificationsEnabled,
-        ...createUserDevice,
-      };
-      expect(createMock).toBeCalledWith({ data });
-    });
-
-    it('should throw BadRequestException when prisma.findFirst returns a value', async () => {
-      findFirstMock.mockImplementation(() => mockUsers[1]);
-      await expect(userCreateCommandHandler.execute(command)).rejects.toThrow(BadRequestException);
-    });
-
-    it('should return UserDetailsDto', async () => {
-      findFirstMock.mockImplementation(() => null);
-      const createdUser = await userCreateCommandHandler.execute(command);
-      expect(createdUser).toStrictEqual(mockUsers[0]);
+    it('should return created User', async () => {
+      prismaUserFindFirstMock.mockReturnValueOnce(null);
+      prismaUserCreateMock.mockReturnValueOnce(user);
+      expect(await userCreateCommandHandler.execute(command)).toStrictEqual(user);
     });
   });
 });

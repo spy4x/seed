@@ -9,7 +9,7 @@ export class UserUpdateCommandHandler extends BaseCommandHandler<UserUpdateComma
   }
 
   async execute(command: UserUpdateCommand): Promise<User> {
-    const { id, firstName, lastName, userName, photoURL, userDevice, isPushNotificationsEnabled } = command;
+    const { id, firstName, lastName, userName, photoURL, isPushNotificationsEnabled } = command;
 
     return this.prisma.user.update({
       where: {
@@ -21,24 +21,6 @@ export class UserUpdateCommandHandler extends BaseCommandHandler<UserUpdateComma
         lastName,
         photoURL,
         isPushNotificationsEnabled,
-        ...(!!userDevice && {
-          userDevices: {
-            upsert: {
-              create: {
-                ...userDevice,
-              },
-              update: {
-                ...userDevice,
-              },
-              where: {
-                fcmToken_userId: {
-                  fcmToken: userDevice.fcmToken,
-                  userId: id,
-                },
-              },
-            },
-          },
-        }),
       },
     });
   }

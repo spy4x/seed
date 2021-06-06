@@ -43,9 +43,7 @@ describe('UsersFindQueryHandler', () => {
     limitArg = PAGINATION_DEFAULTS.limit,
     search?: string,
   ): UsersFindQuery {
-    const query = new UsersFindQuery(pageArg, limitArg, search);
-    query.currentUserId = '123';
-    return query;
+    return new UsersFindQuery(pageArg, limitArg, search);
   }
 
   it('should call prisma.user.findMany(), prisma.user.count(), prisma.$transaction() with basic params when no search query is provided', async () => {

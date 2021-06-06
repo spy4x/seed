@@ -100,6 +100,7 @@ export async function getApp(): Promise<Output> {
       nest.useGlobalPipes(
         new ValidationPipe({
           transform: true,
+          whitelist: true, // prevents extra properties to be attached to Request Body object that are not defined in DTOs
           exceptionFactory: validationExceptionFactory,
         }),
       );

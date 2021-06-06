@@ -1,56 +1,46 @@
 import { IsBoolean, IsOptional, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserDeviceCreateDTO } from '../../dtos';
 import { Type } from 'class-transformer';
 import { USERNAME_RULES } from '@seed/shared/constants';
 
 export class UserUpdateCommand {
-  @IsOptional()
+  @ApiProperty({ type: String, required: false })
   @Length(USERNAME_RULES.minLength, USERNAME_RULES.maxLength, {
     message: `Username should be between ${USERNAME_RULES.minLength} and ${USERNAME_RULES.maxLength} characters`,
   })
-  @ApiProperty()
+  @IsOptional()
   public userName?: string;
 
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
-  @ApiProperty()
   public firstName?: string;
 
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
-  @ApiProperty()
   public lastName?: string;
 
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
-  @ApiProperty()
   public photoURL?: string;
 
-  @IsOptional()
-  @ApiProperty()
-  public userDevice?: UserDeviceCreateDTO;
-
-  @ApiProperty()
-  @IsOptional()
+  @ApiProperty({ type: Boolean, required: false })
   @IsBoolean()
   @Type(() => Boolean)
+  @IsOptional()
   public isPushNotificationsEnabled?: boolean;
 
-  public id: string;
-
   constructor(
-    id: string,
+    public id: string,
     userName?: string,
     firstName?: string,
     lastName?: string,
     photoURL?: string,
-    userDevice?: UserDeviceCreateDTO,
     isPushNotificationsEnabled?: boolean,
   ) {
-    this.id = id;
     this.userName = userName;
     this.firstName = firstName;
     this.lastName = lastName;
     this.photoURL = photoURL;
-    this.userDevice = userDevice;
     this.isPushNotificationsEnabled = isPushNotificationsEnabled;
   }
 }

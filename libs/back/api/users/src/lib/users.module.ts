@@ -26,9 +26,10 @@ const commandHandlers = [
   UserUpdateCommandHandler,
   UserUpdateLastSignedInCommandHandler,
 ];
+const sagas = [UserCreatedSaga];
 
 @Module({
   controllers: [UsersController],
-  providers: [UserCreatedSaga, ...queryHandlers, ...commandHandlers],
+  providers: [...queryHandlers, ...commandHandlers, ...sagas],
 })
 export class UsersModule {}

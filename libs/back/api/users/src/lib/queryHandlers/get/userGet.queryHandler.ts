@@ -7,13 +7,6 @@ export class UserGetQueryHandler implements IQueryHandler<UserGetQuery> {
 
   async execute(query: UserGetQuery): Promise<UserDTO | null> {
     const user = await this.prisma.user.findUnique({
-      select: {
-        id: true,
-        userName: true,
-        firstName: true,
-        lastName: true,
-        photoURL: true,
-      },
       where: {
         id: query.id,
       },

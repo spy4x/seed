@@ -1,13 +1,12 @@
 import { Test } from '@nestjs/testing';
-import { UserDeviceCreateDTO, UserUpdateCommand, PrismaService } from '@seed/back/api/shared';
+import { PrismaService, UserUpdateCommand } from '@seed/back/api/shared';
 import { UserUpdateCommandHandler } from './userUpdate.commandHandler';
-import { mockUsers, mockUserDevices } from '@seed/shared/mock-data';
+import { mockUsers } from '@seed/shared/mock-data';
+import { User, UserRole } from '@prisma/client';
 
-describe('UpdateUserHandler', () => {
+describe('UserUpdateCommandHandler', () => {
   const [user] = mockUsers;
-  const updateMock = jest.fn(() => user);
-  let updateUserHandler: UserUpdateCommandHandler;
-  const devices: UserDeviceCreateDTO | undefined = undefined;
+  const updateMock = jest.fn();
   const prismaServiceMock = jest.fn().mockImplementation(() => ({
     user: {
       update: updateMock,
@@ -20,26 +19,37 @@ describe('UpdateUserHandler', () => {
     user.firstName,
     user.lastName,
     user.photoURL as string,
-    devices,
     true,
   );
+  let userUpdateCommandHandler: UserUpdateCommandHandler;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [UserUpdateCommandHandler, { provide: PrismaService, useClass: prismaServiceMock }],
     }).compile();
 
-    updateUserHandler = moduleRef.get(UserUpdateCommandHandler);
+    userUpdateCommandHandler = moduleRef.get(UserUpdateCommandHandler);
   });
 
   describe('execute', () => {
-    it('should be defined', () => {
-      expect(updateUserHandler).toBeDefined();
-    });
-    it('should call prism.user.update with expected arguments', async () => {
+    it('should call prisma.user.update with expected arguments and return updatedUser', async () => {
       const { id, firstName, lastName, userName, photoURL, isPushNotificationsEnabled } = command;
-      await updateUserHandler.execute(command);
-      const expected = {
+      const now = new Date();
+      const updatedUser: User = {
+        id,
+        userName: userName || user.userName,
+        firstName: firstName || user.firstName,
+        lastName: lastName || user.lastName,
+        photoURL: photoURL || user.photoURL,
+        isPushNotificationsEnabled: isPushNotificationsEnabled || user.isPushNotificationsEnabled,
+        role: UserRole.USER,
+        createdAt: now,
+        updatedAt: now,
+        lastTimeSignedIn: now,
+      };
+      updateMock.mockReturnValueOnce(updatedUser);
+      expect(await userUpdateCommandHandler.execute(command)).toEqual(updatedUser);
+      expect(updateMock).toBeCalledWith({
         where: {
           id,
         },
@@ -50,51 +60,7 @@ describe('UpdateUserHandler', () => {
           photoURL,
           isPushNotificationsEnabled,
         },
-      };
-      expect(updateMock).toBeCalledWith(expected);
-    });
-
-    it('should add create user device when userDevice object is defined', async () => {
-      const _userDevice: UserDeviceCreateDTO = {
-        fcmToken: mockUserDevices[0].fcmToken,
-        deviceId: mockUserDevices[0].deviceId as string,
-        deviceName: mockUserDevices[0].deviceName as string,
-      };
-      command.userDevice = _userDevice;
-
-      await updateUserHandler.execute(command);
-
-      const { id, firstName, lastName, userName, photoURL, userDevice, isPushNotificationsEnabled } = command;
-
-      const expected = {
-        where: {
-          id,
-        },
-        data: {
-          userName,
-          firstName,
-          lastName,
-          photoURL,
-          isPushNotificationsEnabled,
-          userDevices: {
-            upsert: {
-              create: {
-                ...userDevice,
-              },
-              update: {
-                ...userDevice,
-              },
-              where: {
-                fcmToken_userId: {
-                  fcmToken: userDevice.fcmToken,
-                  userId: id,
-                },
-              },
-            },
-          },
-        },
-      };
-      expect(updateMock).toBeCalledWith(expected);
+      });
     });
   });
 });
