@@ -691,6 +691,27 @@
           }
         }
       }
+    },
+    "back-api-user-devices": {
+      "root": "libs/back/api/user-devices",
+      "sourceRoot": "libs/back/api/user-devices/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/back/api/user-devices/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/back/api/user-devices"],
+          "options": {
+            "jestConfig": "libs/back/api/user-devices/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   }
 }

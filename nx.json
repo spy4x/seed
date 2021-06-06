@@ -76,6 +76,9 @@
     },
     "front-shared-types": {
       "tags": []
+    },
+    "back-api-user-devices": {
+      "tags": []
     }
   }
 }

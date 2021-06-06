@@ -14,7 +14,7 @@ describe('UserDeleteCommandHandler', () => {
     },
   }));
 
-  let deleteUserHandler: UserDeleteCommandHandler;
+  let userDeleteCommandHandler: UserDeleteCommandHandler;
 
   const command = new UserDeleteCommand(user.id);
 
@@ -23,20 +23,17 @@ describe('UserDeleteCommandHandler', () => {
       providers: [UserDeleteCommandHandler, { provide: PrismaService, useClass: prismaServiceMock }],
     }).compile();
 
-    deleteUserHandler = moduleRef.get(UserDeleteCommandHandler);
+    userDeleteCommandHandler = moduleRef.get(UserDeleteCommandHandler);
   });
 
   describe('execute', () => {
-    it('should be defined', () => {
-      expect(deleteUserHandler).toBeDefined();
-    });
-    it('should execute delete with expected arguments', async () => {
+    it('should execute delete with expected arguments and return deleted userDevice', async () => {
       const expected = {
         where: {
           id: command.id,
         },
       };
-      await deleteUserHandler.execute(command);
+      expect(await userDeleteCommandHandler.execute(command)).toEqual(user);
       expect(deleteMock).toBeCalledWith(expected);
     });
   });

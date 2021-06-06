@@ -29,19 +29,11 @@ describe('UserGetQueryHandler', () => {
 
     it('should execute findUnique with expected arguments', async () => {
       await findCurrentUserHandler.execute(query);
-      const expected = {
-        select: {
-          id: true,
-          userName: true,
-          firstName: true,
-          lastName: true,
-          photoURL: true,
-        },
+      expect(findUniqueMock).toBeCalledWith({
         where: {
           id: query.id,
         },
-      };
-      expect(findUniqueMock).toBeCalledWith(expected);
+      });
     });
 
     it('should return null when findUnique returns null', async () => {

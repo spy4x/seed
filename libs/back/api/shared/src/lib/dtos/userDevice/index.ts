@@ -1,1 +1,1 @@
-export * from './userDeviceCreate.dto';
+export * from './userDevice.dto';

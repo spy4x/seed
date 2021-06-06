@@ -1,6 +1,5 @@
 import { IsBoolean, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserDeviceCreateDTO } from '../../dtos';
 import { Type } from 'class-transformer';
 import { USERNAME_RULES } from '@seed/shared/constants';
 
@@ -29,38 +28,29 @@ export class UserCreateCommand {
   @IsString()
   public readonly lastName: string;
 
-  @ApiProperty()
+  @ApiProperty({ type: String, required: false })
   @IsOptional()
   @IsString()
-  public readonly photoURL?: string;
+  public readonly photoURL: null | string;
 
-  @ApiProperty()
-  @IsOptional()
-  public userDevice?: UserDeviceCreateDTO;
-
-  @ApiProperty()
+  @ApiProperty({ type: Boolean, required: false })
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
-  public readonly isPushNotificationsEnabled?: boolean;
-
-  public id: string;
+  public readonly isPushNotificationsEnabled: boolean;
 
   constructor(
-    id: string,
+    public id: string,
     userName: string,
     firstName: string,
     lastName: string,
-    userDevice?: UserDeviceCreateDTO,
     photoURL?: string,
     isPushNotificationsEnabled?: boolean,
   ) {
-    this.id = id;
     this.userName = userName;
     this.firstName = firstName;
     this.lastName = lastName;
-    this.userDevice = userDevice;
-    this.photoURL = photoURL;
-    this.isPushNotificationsEnabled = isPushNotificationsEnabled;
+    this.photoURL = photoURL || null;
+    this.isPushNotificationsEnabled = isPushNotificationsEnabled || false;
   }
 }

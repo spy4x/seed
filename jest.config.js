@@ -17,5 +17,6 @@ module.exports = {
     '<rootDir>/libs/shared/mock-data',
     '<rootDir>/libs/shared/types',
     '<rootDir>/libs/front/shared/types',
+    '<rootDir>/libs/back/api/user-devices',
   ],
 };

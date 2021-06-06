@@ -1,8 +1,6 @@
-import { User, UserDevice } from '@prisma/client';
+import { User } from '@prisma/client';
 
-export const mockUsers: (User & {
-  userDevices: UserDevice[];
-})[] = [
+export const mockUsers: User[] = [
   {
     id: '123456',
     userName: 'JohnDoe',
@@ -10,7 +8,6 @@ export const mockUsers: (User & {
     firstName: 'John',
     lastName: 'Doe',
     photoURL: null,
-    userDevices: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     isPushNotificationsEnabled: false,
@@ -25,7 +22,6 @@ export const mockUsers: (User & {
     photoURL: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    userDevices: [],
     isPushNotificationsEnabled: false,
     lastTimeSignedIn: new Date(),
   },
@@ -38,7 +34,6 @@ export const mockUsers: (User & {
     photoURL: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    userDevices: [],
     isPushNotificationsEnabled: true,
     lastTimeSignedIn: new Date(),
   },

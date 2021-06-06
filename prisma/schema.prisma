@@ -9,7 +9,7 @@ generator client {
 
 // ----------------------------------------------------- ENUMS ----------------------------------------------------------------
 
-enum Role {
+enum UserRole {
   USER
   ADMIN
   MODERATOR
@@ -26,19 +26,19 @@ model User {
   userName          String                    @unique @db.VarChar(25)
   firstName         String                    @db.VarChar(50)
   lastName          String                    @db.VarChar(50)
-  role              Role                      @default(USER)
+  role              UserRole                  @default(USER)
   photoURL          String?                   @db.VarChar(300)
   userDevices       UserDevice[]
   notifications     Notification[]
   isPushNotificationsEnabled Boolean          @default(false)
-  lastTimeSignedIn  DateTime?                 @default(now())
+  lastTimeSignedIn  DateTime                  @default(now())
   createdAt         DateTime                  @default(now())
   updatedAt         DateTime                  @updatedAt @default(now())
 }
 
 model UserDevice {
   @@map(name: "userDevices")
-  id                String                       @id @default(dbgenerated("gen_random_uuid()"))
+  id                String                    @id @default(dbgenerated("gen_random_uuid()"))
   userId            String                    @db.VarChar(28)
   user              User                      @relation(fields: [userId], references: [id])
   fcmToken          String                    @db.VarChar(256)
@@ -51,7 +51,7 @@ model UserDevice {
 
 model Notification {
   @@map(name: "notifications")
-  id                String                       @id @default(dbgenerated("gen_random_uuid()"))
+  id                String                    @id @default(dbgenerated("gen_random_uuid()"))
   type              NotificationType
   isRead            Boolean                   @default(false)
   userId            String                    @db.VarChar(28)

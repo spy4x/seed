@@ -11,7 +11,6 @@ describe('UsersController', () => {
     execute: executeMock,
   }));
   const commandBusMock = jest.fn();
-  const currentUserId = '123';
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -32,7 +31,7 @@ describe('UsersController', () => {
   describe('get', () => {
     it('should be called with provided parameters', async () => {
       const query = new UsersFindQuery(1, 20);
-      await controller.find(query, currentUserId);
+      await controller.find(query);
     });
   });
 });

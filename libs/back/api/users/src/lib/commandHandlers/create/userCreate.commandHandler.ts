@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { ConflictException } from '@nestjs/common';
 import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import { BaseCommandHandler, PrismaService, UserCreateCommand, UserCreatedEvent } from '@seed/back/api/shared';
 import { User } from '@prisma/client';
@@ -10,14 +10,7 @@ export class UserCreateCommandHandler extends BaseCommandHandler<UserCreateComma
   }
 
   async execute(command: UserCreateCommand): Promise<User> {
-    const { id, firstName, lastName, userName, userDevice, photoURL, isPushNotificationsEnabled } = command;
-    const createUserDevice = userDevice && {
-      userDevices: {
-        create: {
-          ...userDevice,
-        },
-      },
-    };
+    const { id, firstName, lastName, userName, photoURL, isPushNotificationsEnabled } = command;
 
     const foundUser = await this.prisma.user.findFirst({
       where: {
@@ -32,7 +25,7 @@ export class UserCreateCommandHandler extends BaseCommandHandler<UserCreateComma
       if (foundUser.userName === userName) {
         message.push('Username already in use');
       }
-      throw new BadRequestException(message.join(', '));
+      throw new ConflictException(message.join(', '));
     }
 
     const user: User = await this.prisma.user.create({
@@ -43,7 +36,6 @@ export class UserCreateCommandHandler extends BaseCommandHandler<UserCreateComma
         userName,
         photoURL,
         isPushNotificationsEnabled,
-        ...createUserDevice,
       },
     });
 

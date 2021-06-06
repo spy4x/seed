@@ -1,4 +1,5 @@
 import { IsAuthenticatedGuard } from './isAuthenticated.guard';
+import { UnauthorizedException } from '@nestjs/common';
 
 describe('IsAuthenticatedGuard', () => {
   let userId: null | string = null;
@@ -12,10 +13,10 @@ describe('IsAuthenticatedGuard', () => {
       getRequest: getRequestMock,
     }),
   }));
-  it('should return false if userId is null', () => {
+  it('should throw UnauthorizedException if userId is null', () => {
+    userId = null;
     const isAuthenticatedGuard = new IsAuthenticatedGuard();
-    const value = isAuthenticatedGuard.canActivate(new contextMock());
-    expect(value).toBeFalsy();
+    expect(() => isAuthenticatedGuard.canActivate(new contextMock())).toThrow(UnauthorizedException);
   });
   it('should return true if userId is not null', () => {
     userId = '123';
