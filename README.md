@@ -18,89 +18,58 @@
 
 ## Tools used ❤️
 
+<a href="https://cloud.google.com/">  
+  <img src="https://cdn.iconscout.com/icon/free/png-256/google-cloud-2038785-1721675.png" width="50" />
+</a>
+<a href="https://firebase.google.com/">  
+  <img src="https://cdn.iconscout.com/icon/free/png-256/firebase-1-282796.png" width="50" />
+</a>
 <a href="https://nx.dev">  
   <img src="https://images.opencollective.com/nx/0efbe42/logo/256.png" width="50" />
-  <span>Nrwl Nx</span>
 </a>
-<br/>
-
-<a href="https://prisma.io/">  
+<a href="https://www.cypress.io/">  
   <img src="https://iconape.com/wp-content/files/gj/370774/svg/370774.svg" width="50" />
-  <span>Cypress</span>
 </a>
-<br/>
 
-<a href="https://prisma.io/">  
+<a href="https://jestjs.io/">  
   <img src="https://d2eip9sf3oo6c2.cloudfront.net/tags/images/000/000/940/square_256/jestlogo.png" width="50" />
-  <span>Jest</span>
 </a>
-<br/>
 
-<a href="https://prisma.io/">  
+<a href="https://eslint.org/">  
   <img src="https://d33wubrfki0l68.cloudfront.net/204482ca413433c80cd14fe369e2181dd97a2a40/092e2/assets/img/logo.svg" width="50" />
-  <span>ESLint</span>
 </a>
-<br/>
 
-<a href="https://prisma.io/">  
+<a href="https://prettier.io/">  
   <img src="https://prettier.io/icon.png" width="50" />
-  <span>Prettier</span>
 </a>
-<br/>
 
 <a href="https://www.typescriptlang.org/">  
   <img src="https://d2zv2ciw0ln4h1.cloudfront.net/uploads/Typescript_logo_2020_0b0c45c9b6.svg" width="50" />
-  <span>TypeScript</span>
 </a>
-<br/>
 
 <a href="https://nestjs.com/">  
   <img src="https://docs.nestjs.com/assets/logo-small.svg" width="50" />
-  <span>Nest.js</span>
 </a>
-<br/>
 
-<a href="https://prisma.io/">  
+<a href="https://www.docker.com/">  
   <img src="https://codeopolis.com/wp-content/uploads/2020/04/dockericon-e1587222605149.png" width="50" />
-  <span>Docker</span>
 </a>
-<br/>
 
 <a href="https://prisma.io/">  
   <img src="https://images.tute.io/tute/topic/prisma.png" width="50" />
-  <span>Prisma</span>
 </a>
-<br/>
 
-<a href="https://prisma.io/">  
+<a href="https://swagger.io/">  
   <img src="https://camo.githubusercontent.com/96e43701d83561899724a89d71187445b7b8f4fe84518a3ea5bec8f85bd207bf/68747470733a2f2f63646e2e737667706f726e2e636f6d2f6c6f676f732f737761676765722e737667" width="50" />
-  <span>Swagger</span>
 </a>
-<br/>
-
-<a href="https://cloud.google.com/">  
-  <img src="https://cdn.iconscout.com/icon/free/png-256/google-cloud-2038785-1721675.png" width="50" />
-  <span>Google Cloud</span>
-</a>
-<br/>
-
-<a href="https://firebase.google.com/">  
-  <img src="https://cdn.iconscout.com/icon/free/png-256/firebase-1-282796.png" width="50" />
-  <span>Firebase</span>
-</a>
-<br/>
 
 <a href="https://angular.io/">  
   <img src="https://creativo-websolutions.com/my_files/2020/04/angular-logo.png" width="50" />
-  <span>Angular</span>
 </a>
-<br/>
 
-<a href="https://prisma.io/">  
+<a href="https://getbootstrap.com/">  
   <img src="https://www.svgrepo.com/show/303293/bootstrap-4-logo.svg" width="50" />
-  <span>Bootstrap</span>
 </a>
-<br/>
 
 
 ## Roadmap
