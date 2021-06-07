@@ -17,63 +17,94 @@
 
 
 ## Tools used ❤️
-| [![Google Cloud](https://cloud.google.com/_static/cloud/images/social-icon-google-cloud-1200-630.png)](https://cloud.google.com/)  | [![Firebase](https://firebase.google.com/downloads/brand-guidelines/PNG/logo-vertical.png)](https://firebase.google.com/) | [![Nrwl Nx](https://raw.githubusercontent.com/nrwl/nx/master/nx-logo.png)](https://nx.dev) |
-|:---:|:---:|:---:|
-| [Google Cloud](https://cloud.google.com/) | [Firebase](https://firebase.google.com/) | [Nrwl Nx](https://nx.dev) |
-| [![TypeScript](https://raw.githubusercontent.com/nrwl/nx/master/nx-logo.png)](https://nx.dev)  | [![Nest.js](https://docs.nestjs.com/assets/logo-small.svg)](https://nestjs.com/) | [![Angular](https://angular.io/assets/images/logos/angular/angular.png)](https://angular.io/) |
-| [TypeScript](https://nx.dev) | [Nest.js](https://nestjs.com/) | [Angular](https://angular.io/) |
 
-<div style="display: flex; text-align: center;">
-  <a href="https://cloud.google.com/" target="_blank">  
-    <img src="https://cloud.google.com/_static/cloud/images/social-icon-google-cloud-1200-630.png" width="250" />
-    <span>Google Cloud</span>
-  </a>
-  <a href="https://cloud.google.com/" target="_blank">  
-    <img src="https://cloud.google.com/_static/cloud/images/social-icon-google-cloud-1200-630.png" width="250" />
-    <span>Google Cloud</span>
-  </a>
-  <a href="https://cloud.google.com/" target="_blank">  
-    <img src="https://cloud.google.com/_static/cloud/images/social-icon-google-cloud-1200-630.png" width="250" />
-    <span>Google Cloud</span>
-  </a>
-</div>
+<a href="https://nx.dev">  
+  <img src="https://images.opencollective.com/nx/0efbe42/logo/256.png" width="50" />
+  <span>Nrwl Nx</span>
+</a>
+<br/>
 
+<a href="https://prisma.io/">  
+  <img src="https://iconape.com/wp-content/files/gj/370774/svg/370774.svg" width="50" />
+  <span>Cypress</span>
+</a>
+<br/>
 
-<p float="left">
-  <a href="https://cloud.google.com/" target="_blank">  
-    <img src="https://cloud.google.com/_static/cloud/images/social-icon-google-cloud-1200-630.png" width="250" />
-    <span>Google Cloud</span>
-  </a>
-  <a href="https://cloud.google.com/" target="_blank">  
-    <img src="https://cloud.google.com/_static/cloud/images/social-icon-google-cloud-1200-630.png" width="250" />
-    <span>Google Cloud</span>
-  </a>
-  <a href="https://cloud.google.com/" target="_blank">  
-    <img src="https://cloud.google.com/_static/cloud/images/social-icon-google-cloud-1200-630.png" width="250" />
-    <span>Google Cloud</span>
-  </a>
-</p>
+<a href="https://prisma.io/">  
+  <img src="https://d2eip9sf3oo6c2.cloudfront.net/tags/images/000/000/940/square_256/jestlogo.png" width="50" />
+  <span>Jest</span>
+</a>
+<br/>
 
-[Nrwl Nx](https://nx.dev) https://raw.githubusercontent.com/nrwl/nx/master/nx-logo.png     
-[Nest.js](https://nestjs.com/) https://docs.nestjs.com/assets/logo-small.svg  
-[Angular](https://angular.io/) https://angular.io/assets/images/logos/angular/angular.png
-[Google Cloud](https://cloud.google.com/) https://cloud.google.com/_static/cloud/images/social-icon-google-cloud-1200-630.png
-[Firebase](https://firebase.google.com/) https://firebase.google.com/downloads/brand-guidelines/PNG/logo-vertical.png  
+<a href="https://prisma.io/">  
+  <img src="https://d33wubrfki0l68.cloudfront.net/204482ca413433c80cd14fe369e2181dd97a2a40/092e2/assets/img/logo.svg" width="50" />
+  <span>ESLint</span>
+</a>
+<br/>
 
-[Prisma](https://prisma.io/) https://seeklogo.com/images/P/prisma-logo-3805665B69-seeklogo.com.png  
-TypeScript  
-Cypress  
-Jest  
-ESLint  
-Prettier  
-Docker  
-Swagger https://habrastorage.org/webt/s2/12/rf/s212rfhzbzzt4n_cwpezjqr9we8.png  
-Bootstrap https://raboj.su/images/items/2019/01/Bootstrap-Logo.png  
+<a href="https://prisma.io/">  
+  <img src="https://prettier.io/icon.png" width="50" />
+  <span>Prettier</span>
+</a>
+<br/>
+
+<a href="https://www.typescriptlang.org/">  
+  <img src="https://d2zv2ciw0ln4h1.cloudfront.net/uploads/Typescript_logo_2020_0b0c45c9b6.svg" width="50" />
+  <span>TypeScript</span>
+</a>
+<br/>
+
+<a href="https://nestjs.com/">  
+  <img src="https://docs.nestjs.com/assets/logo-small.svg" width="50" />
+  <span>Nest.js</span>
+</a>
+<br/>
+
+<a href="https://prisma.io/">  
+  <img src="https://codeopolis.com/wp-content/uploads/2020/04/dockericon-e1587222605149.png" width="50" />
+  <span>Docker</span>
+</a>
+<br/>
+
+<a href="https://prisma.io/">  
+  <img src="https://images.tute.io/tute/topic/prisma.png" width="50" />
+  <span>Prisma</span>
+</a>
+<br/>
+
+<a href="https://prisma.io/">  
+  <img src="https://camo.githubusercontent.com/96e43701d83561899724a89d71187445b7b8f4fe84518a3ea5bec8f85bd207bf/68747470733a2f2f63646e2e737667706f726e2e636f6d2f6c6f676f732f737761676765722e737667" width="50" />
+  <span>Swagger</span>
+</a>
+<br/>
+
+<a href="https://cloud.google.com/">  
+  <img src="https://cdn.iconscout.com/icon/free/png-256/google-cloud-2038785-1721675.png" width="50" />
+  <span>Google Cloud</span>
+</a>
+<br/>
+
+<a href="https://firebase.google.com/">  
+  <img src="https://cdn.iconscout.com/icon/free/png-256/firebase-1-282796.png" width="50" />
+  <span>Firebase</span>
+</a>
+<br/>
+
+<a href="https://angular.io/">  
+  <img src="https://creativo-websolutions.com/my_files/2020/04/angular-logo.png" width="50" />
+  <span>Angular</span>
+</a>
+<br/>
+
+<a href="https://prisma.io/">  
+  <img src="https://www.svgrepo.com/show/303293/bootstrap-4-logo.svg" width="50" />
+  <span>Bootstrap</span>
+</a>
+<br/>
 
 
 ## Roadmap
 TODOs:
-- Fill in "Tools used" section
 - Refactor lines below
 - Write /docs/backend/cqrs.md
 
@@ -179,21 +210,7 @@ TODOs:
 
 
 ## Credits
-### Created by
-<div style="width: 100px; text-align: center; margin-right: 10px;">
-  <img src="https://avatars.githubusercontent.com/u/4995814?v=4" style="border-radius: 50%">
-  <a href="https://github.com/spy4x" target="_blank">Anton Shubin</a>
-</div>
-
+### Created by [Anton Shubin](https://github.com/spy4x)
 ### Special thanks to contributors:
-<div style="display: flex;">
-  <div style="width: 100px; text-align: center; margin-right: 10px;">
-    <img src="https://avatars.githubusercontent.com/u/26252043?v=4" style="border-radius: 50%">
-    <a href="https://github.com/MehdiDi" target="_blank">Mehdi Diabi</a>
-  </div>
-  
-  <div style="width: 100px; text-align: center;">
-    <img src="https://avatars.githubusercontent.com/u/7656366?v=4" style="border-radius: 50%">
-    <a href="https://github.com/urnix" target="_blank">Artem</a>
-  </div>
-</div>
+- [Mehdi Diabi](https://github.com/MehdiDi)
+- [Artem](https://github.com/urnix)
