@@ -1,5 +1,6 @@
 # Seed
 
+
 ## Motivation. Why Seed❓
 💡 After working on dozens of startup projects, I realised a pattern of applications/code/infrastructure that every startup needs.  
 👨‍💻 Instead of repeating myself from project to project I decided to extract a project template into this seed.  
@@ -10,14 +11,12 @@
 ## Where to start? ▶️
 0. Check README file (this one) to understand more about project structure and goals
 0. Clone this repo and run init script (WIP) to configure your cloud & local environment
-0. Launch it locally and start development
-0. Deploy
+0. [Launch it locally and start development](docs/code-organisation/start-development.md)
+0. [Deploy](cloud-build/deploy.yaml)
 0. Profit 🌟
 
 
-
 ## Tools used ❤️
-
 <a href="https://cloud.google.com/">  
   <img src="https://cdn.iconscout.com/icon/free/png-256/google-cloud-2038785-1721675.png" width="50" />
 </a>
@@ -30,54 +29,39 @@
 <a href="https://www.cypress.io/">  
   <img src="https://iconape.com/wp-content/files/gj/370774/svg/370774.svg" width="50" />
 </a>
-
 <a href="https://jestjs.io/">  
   <img src="https://d2eip9sf3oo6c2.cloudfront.net/tags/images/000/000/940/square_256/jestlogo.png" width="50" />
 </a>
-
 <a href="https://eslint.org/">  
   <img src="https://d33wubrfki0l68.cloudfront.net/204482ca413433c80cd14fe369e2181dd97a2a40/092e2/assets/img/logo.svg" width="50" />
 </a>
-
 <a href="https://prettier.io/">  
   <img src="https://prettier.io/icon.png" width="50" />
 </a>
-
 <a href="https://www.typescriptlang.org/">  
   <img src="https://d2zv2ciw0ln4h1.cloudfront.net/uploads/Typescript_logo_2020_0b0c45c9b6.svg" width="50" />
 </a>
-
 <a href="https://nestjs.com/">  
   <img src="https://docs.nestjs.com/assets/logo-small.svg" width="50" />
 </a>
-
 <a href="https://www.docker.com/">  
   <img src="https://codeopolis.com/wp-content/uploads/2020/04/dockericon-e1587222605149.png" width="50" />
 </a>
-
 <a href="https://prisma.io/">  
   <img src="https://images.tute.io/tute/topic/prisma.png" width="50" />
 </a>
-
 <a href="https://swagger.io/">  
   <img src="https://camo.githubusercontent.com/96e43701d83561899724a89d71187445b7b8f4fe84518a3ea5bec8f85bd207bf/68747470733a2f2f63646e2e737667706f726e2e636f6d2f6c6f676f732f737761676765722e737667" width="50" />
 </a>
-
 <a href="https://angular.io/">  
   <img src="https://creativo-websolutions.com/my_files/2020/04/angular-logo.png" width="50" />
 </a>
-
 <a href="https://getbootstrap.com/">  
   <img src="https://www.svgrepo.com/show/303293/bootstrap-4-logo.svg" width="50" />
 </a>
 
 
 ## Roadmap
-TODOs:
-- Refactor lines below
-- Write /docs/backend/cqrs.md
-
-
 ### Environment and code organisation
 ✅ [Manage monorepo with multiple front-, back- and dev- projects](docs/code-organisation/nx.md)  
 ✅ [Launching apps on localhost](docs/code-organisation/start-development.md)  
@@ -110,7 +94,8 @@ TODOs:
 ✅ [Unit-testing query handler](libs/back/api/users/src/lib/queryHandlers/find/usersFind.queryHandler.spec.ts)  
 🕑 [Unit-testing saga](libs/back/api/users/src/lib/sagas/userCreated.saga.spec.ts)  
 🕑 E2E-testing endpoints  
-✅ Logging  
+✅ [Logging](libs/back/api/shared/src/lib/services/log/log.service.ts)  
+🕑 Sentry integration  
 ✅ [Schedule tasks](libs/back/api/shared/src/lib/services/cloudTasks/cloudTasks.service.ts)  
 ✅ [Users management](libs/back/api/users/src/lib/users.controller.ts)  
 ✅ [REST API](libs/back/api/users/src/lib/users.controller.ts)  
@@ -131,55 +116,64 @@ TODOs:
 🕑 Resize uploaded file  
 
 ### Frontend
-🕑 Admin Panel  
-🕑 Web Client  
+#### Shared
 🕑 Authentication  
 🕑 NgRx  
-  * How to create NgRx-architecture? (ngrx folder, use NgRx Entity and other modern tools, ListState<T>, check both FoodRazor & GoPingu. Can we do self-registered Effects?)
-  * Add "ngrx-store-freeze" for dev and test environment
-  * How to rehydrate NgRx-state?
-  * How to manage Reactive Forms and NgRx?
+🕑 Sentry integration  
 🕑 E2E-testing  
 🕑 Unit-testing  
 🕑 File upload  
-🕑 Logging (Sentry or GCP Logging?)
+🕑 Logging (Sentry or GCP Logging?)  
 🕑 Provide environment variables from secret manager  
-🕑 Build once, use bundle for every environment
-🕑 Bootstrap & own styles library
-  - mobile-first, responsive
-  - How to manage styles? (SASS, no component-level styles)
-  - How to show nice initial loader on app start? (index.html)
-🕑 Forms & "Editor" component  
-  1. Handle input & output better (prevent infinite cycle and dirty hacks to avoid it)
-  2. Keep form state in store to be able to disable buttons based on form validity
-  3. Understand form state (validation, submit, onBlur & submit)
-* How to manage Service layer to do CRUD operations, file uploads, etc? (DatabaseService)
-* How to manage multiple file upload with dropzone? (copy from FoodRazor Upload invoice)
-* How to implement server-side rendering?
-* How to manage user config? (organisations, currency settings, etc)
-
-* How to implement Google auth?
-* How to implement Password auth?
-* How to implement "user password change"?
-* How to implement "user forgot password"?
-* How to implement "user verify email"?
-
-* Realtime lists of todos - like Google Keep
-* Group access - invite your friends and cowork on your lists together
-* Share a list of todos to a person outside of your group or make it public
-* Transfer ownership of a personal list to a group and visa versa
-* Upload a txt/csv file with a list of todos
-* Manage your personal account - avatar, email, oAuth providers, groups memberships
-* Manage group account - avatar, members, accesses
-* How to manage multiple Angular applications and shared modules?
-#### PWA  
+🕑 Build once, use bundle for every environment  
+#### Styles
+✅ Bootstrap  
+🕑 own styles library  
+🕑 mobile-first, responsive  
+🕑 How to manage styles on component level? (no component-level styles)  
+🕑 How to show nice initial loader on app start? (index.html)
+#### Forms & "Editor" component
+🕑 Handle input & output better (prevent infinite cycle and dirty hacks to avoid it)  
+🕑 Keep form state in store to be able to disable buttons based on form validity  
+🕑 Understand form state (validation, submit, onBlur & submit)  
+#### PWA
 🕑 Offline work  
 🕑 Push Notifications  
 🕑 Auto-update
+#### Admin Panel
+🕑 Users management  
+🕑 Groups management  
+🕑 Reset user's password  
+🕑 Sign in as a user  
+#### Web Client
+🕑 Multiple file upload with dropzone? (copy from FoodRazor Upload invoice)  
+🕑 Server-side rendering  
+🕑 User config management (organisations, currency settings, etc)  
+🕑 Realtime update of data from backend  
+🕑 Group access to data  
+🕑 Manage your personal account - avatar, email, oAuth providers, groups memberships  
+🕑 Manage group account - avatar, members, accesses  
+🕑 Invite person to your group by email  
+🕑 Transfer ownership of a group
 
 
 ## Credits
-### Created by [Anton Shubin](https://github.com/spy4x)
+### Created by
+
+<a href="https://github.com/spy4x">  
+  <img src="https://avatars.githubusercontent.com/u/4995814?v=4" width="100" />
+  <div>Anton Shubin</div>
+</a>
+
 ### Special thanks to contributors:
-- [Mehdi Diabi](https://github.com/MehdiDi)
-- [Artem](https://github.com/urnix)
+<a href="https://github.com/MehdiDi">  
+  <img src="https://avatars.githubusercontent.com/u/26252043?v=4" width="100" />
+  <div>Mehdi Diabi</div>
+</a>
+<br/>
+
+<a href="https://github.com/urnix">  
+  <img src="https://avatars.githubusercontent.com/u/7656366?v=4" width="100" />
+  <div>Artem</div>
+</a>
+<br/>
