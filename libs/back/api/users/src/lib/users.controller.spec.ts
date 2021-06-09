@@ -1,6 +1,5 @@
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { Test } from '@nestjs/testing';
-import { UsersFindQuery, SharedModule } from '@seed/back/api/shared';
+import { UsersFindQuery, SharedModule, QueryBusExt, CommandBusExt } from '@seed/back/api/shared';
 import { UsersController } from './users.controller';
 
 describe('UsersController', () => {
@@ -17,8 +16,8 @@ describe('UsersController', () => {
       imports: [SharedModule],
       controllers: [UsersController],
       providers: [
-        { provide: QueryBus, useClass: queryBusMock },
-        { provide: CommandBus, useClass: commandBusMock },
+        { provide: QueryBusExt, useClass: queryBusMock },
+        { provide: CommandBusExt, useClass: commandBusMock },
       ],
     }).compile();
 

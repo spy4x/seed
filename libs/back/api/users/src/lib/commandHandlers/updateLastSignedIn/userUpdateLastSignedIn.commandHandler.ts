@@ -1,6 +1,7 @@
-import { CommandHandler, EventBus } from '@nestjs/cqrs';
+import { CommandHandler } from '@nestjs/cqrs';
 import {
   BaseCommandHandler,
+  EventBusExt,
   PrismaService,
   UserLastSignedInUpdatedEvent,
   UserUpdateLastSignedInCommand,
@@ -9,7 +10,7 @@ import { User } from '@prisma/client';
 
 @CommandHandler(UserUpdateLastSignedInCommand)
 export class UserUpdateLastSignedInCommandHandler extends BaseCommandHandler<UserUpdateLastSignedInCommand> {
-  constructor(readonly prisma: PrismaService, readonly eventBus: EventBus) {
+  constructor(readonly prisma: PrismaService, readonly eventBus: EventBusExt) {
     super();
   }
 

@@ -179,7 +179,7 @@ export class LogService {
       logArgs.push(chalkify(timestamp, chalk.grey));
     }
 
-    const maxLength = 20;
+    const maxLength = 30;
     const brown = { r: 180, g: 150, b: 100 };
     const purple = { r: 150, g: 125, b: 210 };
     let callerStr = chalkify(this.caller.padStart(maxLength, ' '), chalk.rgb(brown.r, brown.g, brown.b));

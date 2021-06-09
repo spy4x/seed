@@ -7,7 +7,7 @@ steps:
       - '--key_fallback=cache-'
 
   - id: install_deps
-    name: gcr.io/seed-anton/builder
+    name: gcr.io/$PROJECT_ID/builder
     entrypoint: bash
     args: ['-c', 'yarn ci:install-deps']
     env:
@@ -22,7 +22,7 @@ steps:
       - '--no-clobber'
 
   - id: deploy
-    name: gcr.io/seed-anton/builder
+    name: gcr.io/$PROJECT_ID/builder
     entrypoint: bash
     args:
       - -c
