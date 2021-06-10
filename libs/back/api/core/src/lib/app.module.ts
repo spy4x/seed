@@ -3,13 +3,14 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { SharedModule, UserMiddleware } from '@seed/back/api/shared';
 import { UsersModule } from '@seed/back/api/users';
 import { UserDevicesModule } from '@seed/back/api/user-devices';
+import { NotificationsModule } from '@seed/back/api/notifications';
 import { CoreController } from './core.controller';
 import { LoggerInterceptor } from './interceptors/logger/logger.interceptor';
 
 Logger.overrideLogger(['warn', 'error']); // for DEBUG: replace with ['warn','error','debug','log','verbose']
 
 const systemModules = [SharedModule];
-const featureModules = [UsersModule, UserDevicesModule];
+const featureModules = [UsersModule, UserDevicesModule, NotificationsModule];
 
 @Module({
   imports: [...systemModules, ...featureModules],

@@ -1,2 +1,2 @@
-export * from './notification-base.dto';
-export * from './notification-mapper';
+export * from './notification.dto';
+export * from './notificationsMarkAsRead.dto';

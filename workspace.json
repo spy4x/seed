@@ -712,6 +712,27 @@
           }
         }
       }
+    },
+    "back-api-notifications": {
+      "root": "libs/back/api/notifications",
+      "sourceRoot": "libs/back/api/notifications/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/back/api/notifications/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/back/api/notifications"],
+          "options": {
+            "jestConfig": "libs/back/api/notifications/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   }
 }
