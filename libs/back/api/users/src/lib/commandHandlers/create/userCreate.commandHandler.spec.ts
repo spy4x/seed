@@ -1,7 +1,6 @@
 import { ConflictException } from '@nestjs/common';
-import { EventBus } from '@nestjs/cqrs';
 import { Test } from '@nestjs/testing';
-import { PrismaService, UserCreateCommand, UserCreatedEvent } from '@seed/back/api/shared';
+import { EventBusExt, PrismaService, UserCreateCommand, UserCreatedEvent } from '@seed/back/api/shared';
 import { UserCreateCommandHandler } from './userCreate.commandHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 import { User, UserRole } from '@prisma/client';
@@ -37,7 +36,7 @@ describe('UserCreateCommandHandler', () => {
       providers: [
         UserCreateCommandHandler,
         { provide: PrismaService, useClass: prismaServiceMock },
-        { provide: EventBus, useClass: eventBusMock },
+        { provide: EventBusExt, useClass: eventBusMock },
       ],
     }).compile();
 

@@ -1,11 +1,17 @@
 import { ConflictException } from '@nestjs/common';
-import { CommandHandler, EventBus } from '@nestjs/cqrs';
-import { BaseCommandHandler, PrismaService, UserCreateCommand, UserCreatedEvent } from '@seed/back/api/shared';
+import { CommandHandler } from '@nestjs/cqrs';
+import {
+  BaseCommandHandler,
+  EventBusExt,
+  PrismaService,
+  UserCreateCommand,
+  UserCreatedEvent,
+} from '@seed/back/api/shared';
 import { User } from '@prisma/client';
 
 @CommandHandler(UserCreateCommand)
 export class UserCreateCommandHandler extends BaseCommandHandler<UserCreateCommand> {
-  constructor(readonly prisma: PrismaService, readonly eventBus: EventBus) {
+  constructor(readonly prisma: PrismaService, readonly eventBus: EventBusExt) {
     super();
   }
 

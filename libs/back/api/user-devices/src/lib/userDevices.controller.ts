@@ -44,9 +44,7 @@ export class UserDevicesController extends BaseController {
     @UserId() currentUserId: string,
   ): Promise<PaginationResponseDTO<UserDeviceDTO>> {
     query.currentUserId = currentUserId;
-    return this.logger.trackSegment<PaginationResponseDTO<UserDeviceDTO>>(this.findMy.name, async () =>
-      this.queryBus.execute(query),
-    );
+    return this.logger.trackSegment(this.findMy.name, async () => this.queryBus.execute(query));
   }
 
   @Post()
@@ -60,10 +58,7 @@ export class UserDevicesController extends BaseController {
     @UserId() currentUserId: string,
   ): Promise<UserDeviceDTO> {
     command.userId = currentUserId;
-    return this.logger.trackSegment<UserDeviceDTO>(
-      this.create.name,
-      async () => this.commandBus.execute(command) as Promise<UserDeviceDTO>,
-    );
+    return this.logger.trackSegment(this.create.name, async () => this.commandBus.execute(command));
   }
 
   @Patch(':id')
@@ -81,9 +76,8 @@ export class UserDevicesController extends BaseController {
   ): Promise<UserDeviceDTO> {
     command.id = id;
     command.currentUserId = currentUserId;
-    const updatedUserDevice = await this.logger.trackSegment<null | UserDeviceDTO>(
-      this.update.name,
-      async () => this.commandBus.execute(command) as Promise<null | UserDeviceDTO>,
+    const updatedUserDevice = await this.logger.trackSegment(this.update.name, async () =>
+      this.commandBus.execute<null | UserDeviceDTO>(command),
     );
     if (!updatedUserDevice) {
       throw new NotFoundException(`UserDevice with id ${id} and owner userId ${currentUserId} doesn't exist.`);
@@ -107,9 +101,8 @@ export class UserDevicesController extends BaseController {
   ): Promise<UserDeviceDTO> {
     command.id = id;
     command.currentUserId = currentUserId;
-    const deletedUserDevice = await this.logger.trackSegment<null | UserDeviceDTO>(
-      this.delete.name,
-      async () => this.commandBus.execute(command) as Promise<null | UserDeviceDTO>,
+    const deletedUserDevice = await this.logger.trackSegment(this.delete.name, async () =>
+      this.commandBus.execute<null | UserDeviceDTO>(command),
     );
     if (!deletedUserDevice) {
       throw new NotFoundException(`UserDevice with {id: ${id}, userId: ${currentUserId}} doesn't exist.`);
