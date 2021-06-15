@@ -1,35 +1,25 @@
 import { Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
-import { UserCreatedSaga } from './sagas/userCreated.saga';
 import {
   UserCreateCommandHandler,
   UserDeleteCommandHandler,
-  UserUpdateLastSignedInCommandHandler,
   UserUpdateCommandHandler,
+  UserUpdateLastSignedInCommandHandler,
 } from './commandHandlers';
-import {
-  UsersFindQueryHandler,
-  UserGetMeQueryHandler,
-  UserGetQueryHandler,
-  UserIsUsernameFreeQueryHandler,
-} from './queryHandlers';
+import { UserGetQueryHandler, UserIsUsernameFreeQueryHandler, UsersFindQueryHandler } from './queryHandlers';
+import { UserCreatedEventHandler } from './eventHandlers/userCreated.eventHandler';
 
-const queryHandlers = [
-  UsersFindQueryHandler,
-  UserGetQueryHandler,
-  UserGetMeQueryHandler,
-  UserIsUsernameFreeQueryHandler,
-];
+const queryHandlers = [UsersFindQueryHandler, UserGetQueryHandler, UserIsUsernameFreeQueryHandler];
 const commandHandlers = [
   UserCreateCommandHandler,
   UserDeleteCommandHandler,
   UserUpdateCommandHandler,
   UserUpdateLastSignedInCommandHandler,
 ];
-const sagas = [UserCreatedSaga];
+const eventHandlers = [UserCreatedEventHandler];
 
 @Module({
   controllers: [UsersController],
-  providers: [...queryHandlers, ...commandHandlers, ...sagas],
+  providers: [...queryHandlers, ...commandHandlers, ...eventHandlers],
 })
 export class UsersModule {}

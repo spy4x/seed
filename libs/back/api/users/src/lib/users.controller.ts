@@ -16,7 +16,6 @@ import {
   NotFoundInterceptor,
   PaginationResponseDTO,
   UserCreateCommand,
-  UserGetMeQuery,
   UserGetQuery,
   UserId,
   UserIsUsernameFreeDTO,
@@ -51,7 +50,7 @@ export class UsersController extends BaseController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public async getMe(@UserId() currentUserId: string): Promise<UserDTO> {
     return this.logger.trackSegment(this.getMe.name, async () =>
-      this.queryBus.execute(new UserGetMeQuery(currentUserId)),
+      this.queryBus.execute(new UserGetQuery(currentUserId)),
     );
   }
 
@@ -73,10 +72,8 @@ export class UsersController extends BaseController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   @ApiResponse({ status: HttpStatus.NOT_FOUND })
   @ApiParam({ name: 'id', type: String })
-  public async get(@Param('id') id: string, @UserId() currentUserId: string): Promise<UserDTO> {
-    const query = new UserGetQuery(id);
-    query.currentUserId = currentUserId;
-    return this.logger.trackSegment(this.get.name, async () => this.queryBus.execute(query));
+  public async get(@Param('id') id: string): Promise<UserDTO> {
+    return this.logger.trackSegment(this.get.name, async () => this.queryBus.execute(new UserGetQuery(id)));
   }
 
   @Post()

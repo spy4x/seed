@@ -5,36 +5,32 @@ import { mockUsers } from '@seed/shared/mock-data';
 
 describe('UserDeleteCommandHandler', () => {
   const [user] = mockUsers;
-
   const deleteMock = jest.fn(() => user);
-
   const prismaServiceMock = jest.fn().mockImplementation(() => ({
     user: {
       delete: deleteMock,
     },
   }));
-
-  let userDeleteCommandHandler: UserDeleteCommandHandler;
-
+  let handler: UserDeleteCommandHandler;
   const command = new UserDeleteCommand(user.id);
+  //endregion
 
-  beforeEach(async () => {
+  //region SETUP
+  beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [UserDeleteCommandHandler, { provide: PrismaService, useClass: prismaServiceMock }],
     }).compile();
-
-    userDeleteCommandHandler = moduleRef.get(UserDeleteCommandHandler);
+    handler = moduleRef.get(UserDeleteCommandHandler);
   });
+  //endregion
 
-  describe('execute', () => {
-    it('should execute delete with expected arguments and return deleted userDevice', async () => {
-      const expected = {
-        where: {
-          id: command.id,
-        },
-      };
-      expect(await userDeleteCommandHandler.execute(command)).toEqual(user);
-      expect(deleteMock).toBeCalledWith(expected);
-    });
+  it('should execute delete with expected arguments and return deleted userDevice', async () => {
+    const expected = {
+      where: {
+        id: command.id,
+      },
+    };
+    expect(await handler.execute(command)).toEqual(user);
+    expect(deleteMock).toBeCalledWith(expected);
   });
 });
