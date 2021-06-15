@@ -18,7 +18,7 @@ export const mockNotifications: Notification[] = [
   {
     id: getUUID(),
     userId: firstUserId,
-    type: NotificationType.WELCOME,
+    type: NotificationType.TEST,
     isRead: false,
     createdAt: new Date(),
     updatedAt: new Date(),
