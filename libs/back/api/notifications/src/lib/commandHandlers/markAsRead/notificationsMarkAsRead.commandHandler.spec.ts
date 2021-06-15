@@ -6,72 +6,75 @@ import { ZERO } from '@seed/shared/constants';
 import { Prisma } from '@prisma/client';
 
 describe('NotificationsMarkAsReadCommandHandler', () => {
+  // region VARIABLES
   const updateManyMock = jest.fn();
   const prismaServiceMock = jest.fn().mockImplementation(() => ({
     notification: {
       updateMany: updateManyMock,
     },
   }));
-  let notificationsMarkAsReadCommandHandler: NotificationsMarkAsReadCommandHandler;
+  let handler: NotificationsMarkAsReadCommandHandler;
+  // endregion
 
-  beforeEach(async () => {
+  //region SETUP
+  beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [NotificationsMarkAsReadCommandHandler, { provide: PrismaService, useClass: prismaServiceMock }],
     }).compile();
-
-    notificationsMarkAsReadCommandHandler = moduleRef.get(NotificationsMarkAsReadCommandHandler);
+    handler = moduleRef.get(NotificationsMarkAsReadCommandHandler);
+  });
+  beforeEach(() => {
     updateManyMock.mockClear();
   });
-
   function mockUpdate(command: NotificationsMarkAsReadCommand): Prisma.BatchPayload {
     const updatedRowsNumber = mockNotifications.filter(n => n.userId === command.currentUserId).length;
     const result = { count: updatedRowsNumber };
     updateManyMock.mockReturnValueOnce(result);
     return result;
   }
+  function runTest(options: { testName: string; userId: string; notificationsIds?: string[] }): void {
+    it(options.testName, async () => {
+      const command = new NotificationsMarkAsReadCommand(options.userId, options.notificationsIds);
+      const updatedRowsNumber = mockUpdate(command);
+      expect(await handler.execute(command)).toEqual(updatedRowsNumber);
+      const idsIn =
+        options.notificationsIds && options.notificationsIds.length
+          ? {
+              id: {
+                in: options.notificationsIds,
+              },
+            }
+          : {};
+      expect(updateManyMock).toBeCalledWith({
+        where: {
+          ...idsIn,
+          userId: command.currentUserId,
+          isRead: false,
+        },
+        data: { isRead: true },
+      });
+    });
+  }
+  //endregion
 
-  describe('execute', () => {
-    it('should updateMany notifications where userId = command.currentUserId and id in ids, when ids.length > 0, and return updated count', async () => {
-      const command = new NotificationsMarkAsReadCommand(
-        mockNotifications[ZERO].userId,
-        mockNotifications.map(n => n.id),
-      );
-      const updatedRowsNumber = mockUpdate(command);
-      expect(await notificationsMarkAsReadCommandHandler.execute(command)).toEqual(updatedRowsNumber);
-      expect(updateManyMock).toBeCalledWith({
-        where: {
-          id: {
-            in: command.ids,
-          },
-          userId: command.currentUserId,
-          isRead: false,
-        },
-        data: { isRead: true },
-      });
-    });
-    it('should updateMany notifications where userId = command.currentUserId, when ids.length === 0, and return updated count', async () => {
-      const command = new NotificationsMarkAsReadCommand(mockNotifications[ZERO].userId, []);
-      const updatedRowsNumber = mockUpdate(command);
-      expect(await notificationsMarkAsReadCommandHandler.execute(command)).toEqual(updatedRowsNumber);
-      expect(updateManyMock).toBeCalledWith({
-        where: {
-          userId: command.currentUserId,
-          isRead: false,
-        },
-        data: { isRead: true },
-      });
-    });
-    it('should updateMany notifications where userId = command.currentUserId, when ids === undefined, and return updated count', async () => {
-      const command = new NotificationsMarkAsReadCommand(mockNotifications[ZERO].userId, undefined);
-      const updatedRowsNumber = mockUpdate(command);
-      expect(await notificationsMarkAsReadCommandHandler.execute(command)).toEqual(updatedRowsNumber);
-      expect(updateManyMock).toBeCalledWith({
-        where: {
-          userId: command.currentUserId,
-          isRead: false,
-        },
-        data: { isRead: true },
-      });
-    });
+  runTest({
+    testName:
+      'should mark notifications as read where userId = command.currentUserId and id in ids, and return updated count',
+    userId: mockNotifications[ZERO].userId,
+    notificationsIds: mockNotifications.map(n => n.id),
+  });
+
+  runTest({
+    testName:
+      'should mark all notifications as read where userId = command.currentUserId, when ids.length === 0, and return updated count',
+    userId: mockNotifications[ZERO].userId,
+    notificationsIds: [],
+  });
+
+  runTest({
+    testName:
+      'should mark all notifications as read where userId = command.currentUserId, when ids === undefined, and return updated count',
+    userId: mockNotifications[ZERO].userId,
+    notificationsIds: undefined,
   });
 });

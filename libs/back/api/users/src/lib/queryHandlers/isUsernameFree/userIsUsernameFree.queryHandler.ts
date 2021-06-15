@@ -1,20 +1,24 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { UserIsUsernameFreeQuery, PrismaService } from '@seed/back/api/shared';
+import { UserIsUsernameFreeQuery, PrismaService, LogService } from '@seed/back/api/shared';
 
 @QueryHandler(UserIsUsernameFreeQuery)
 export class UserIsUsernameFreeQueryHandler implements IQueryHandler<UserIsUsernameFreeQuery> {
+  readonly logger = new LogService(UserIsUsernameFreeQueryHandler.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(query: UserIsUsernameFreeQuery): Promise<boolean> {
-    const u = await this.prisma.user.findUnique({
-      where: {
-        userName: query.userName,
-      },
-      select: {
-        id: true,
-      },
+    return this.logger.trackSegment(this.execute.name, async logSegment => {
+      const user = await this.prisma.user.findUnique({
+        where: {
+          userName: query.userName,
+        },
+        select: {
+          id: true,
+        },
+      });
+      logSegment.log('User with such username:', user);
+      return !user;
     });
-
-    return !u;
   }
 }

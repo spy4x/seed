@@ -1,11 +1,13 @@
 import { Test } from '@nestjs/testing';
-import { PaginationResponseDTO, PrismaService, UserDTO, UsersFindQuery } from '@seed/back/api/shared';
+import { PaginationResponseDTO, PrismaService, UsersFindQuery } from '@seed/back/api/shared';
 import { UsersFindQueryHandler } from './usersFind.queryHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 import { ONE, PAGINATION_DEFAULTS } from '@seed/shared/constants';
+import { User } from '@prisma/client';
 
 describe('UsersFindQueryHandler', () => {
-  let getUsersHandler: UsersFindQueryHandler;
+  //region VARIABLES
+  let handler: UsersFindQueryHandler;
   const page = 3;
   const limit = 50;
   const findManyMockResult = mockUsers;
@@ -13,7 +15,6 @@ describe('UsersFindQueryHandler', () => {
   const findManyMock = jest.fn().mockReturnValue(findManyMockResult);
   const countMock = jest.fn().mockReturnValue(countMockResult);
   const transactionMock = jest.fn().mockReturnValue([findManyMockResult, countMockResult]);
-
   const prismaServiceMock = jest.fn().mockImplementation(() => ({
     user: {
       findMany: findManyMock,
@@ -21,8 +22,10 @@ describe('UsersFindQueryHandler', () => {
     },
     $transaction: transactionMock,
   }));
+  //endregion
 
-  beforeEach(async () => {
+  //region SETUP
+  beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         UsersFindQueryHandler,
@@ -32,12 +35,13 @@ describe('UsersFindQueryHandler', () => {
         },
       ],
     }).compile();
-    getUsersHandler = moduleRef.get(UsersFindQueryHandler);
+    handler = moduleRef.get(UsersFindQueryHandler);
+  });
+  beforeEach(() => {
     findManyMock.mockClear();
     countMock.mockClear();
     transactionMock.mockClear();
   });
-
   function getQuery(
     pageArg = PAGINATION_DEFAULTS.page,
     limitArg = PAGINATION_DEFAULTS.limit,
@@ -45,9 +49,10 @@ describe('UsersFindQueryHandler', () => {
   ): UsersFindQuery {
     return new UsersFindQuery(pageArg, limitArg, search);
   }
+  //endregion
 
   it('should call prisma.user.findMany(), prisma.user.count(), prisma.$transaction() with basic params when no search query is provided', async () => {
-    const result = await getUsersHandler.execute(getQuery(page, limit));
+    const result = await handler.execute(getQuery(page, limit));
 
     expect(findManyMock).toBeCalledWith({
       skip: (page - ONE) * limit,
@@ -55,14 +60,13 @@ describe('UsersFindQueryHandler', () => {
     });
     expect(countMock).toHaveBeenCalledWith(undefined);
     expect(transactionMock).toHaveBeenCalledWith([findManyMockResult, countMockResult]);
-
-    expect(result).toEqual(new PaginationResponseDTO<UserDTO>(findManyMockResult, page, limit, countMockResult));
+    expect(result).toEqual(new PaginationResponseDTO<User>(findManyMockResult, page, limit, countMockResult));
   });
 
   it('should call prisma.user.findMany(), prisma.user.count() with basic params + search query condition for single word', async () => {
     const query = getQuery(page, limit);
     query.search = 'John';
-    const result = await getUsersHandler.execute(query);
+    const result = await handler.execute(query);
     const where = {
       OR: [
         {
@@ -91,13 +95,14 @@ describe('UsersFindQueryHandler', () => {
       where,
     });
     expect(countMock).toHaveBeenCalledWith({ where });
-    expect(result).toEqual(new PaginationResponseDTO<UserDTO>(findManyMockResult, page, limit, countMockResult));
+    expect(transactionMock).toHaveBeenCalledWith([findManyMockResult, countMockResult]);
+    expect(result).toEqual(new PaginationResponseDTO<User>(findManyMockResult, page, limit, countMockResult));
   });
 
   it('should call prisma.user.findMany(), prisma.user.count() with basic params + search query condition for multiple words', async () => {
     const query = getQuery(page, limit);
     query.search = 'John Wick';
-    const result = await getUsersHandler.execute(query);
+    const result = await handler.execute(query);
     const where = {
       OR: [
         {
@@ -144,6 +149,7 @@ describe('UsersFindQueryHandler', () => {
       where,
     });
     expect(countMock).toHaveBeenCalledWith({ where });
-    expect(result).toEqual(new PaginationResponseDTO<UserDTO>(findManyMockResult, page, limit, countMockResult));
+    expect(transactionMock).toHaveBeenCalledWith([findManyMockResult, countMockResult]);
+    expect(result).toEqual(new PaginationResponseDTO<User>(findManyMockResult, page, limit, countMockResult));
   });
 });

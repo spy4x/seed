@@ -22,7 +22,7 @@ describe('NotificationCreatedEventHandler', () => {
   const queryBusMock = jest.fn().mockImplementation(() => ({
     execute: queryBusExecuteMock,
   }));
-  let notificationCreatedEventHandler: NotificationCreatedEventHandler;
+  let handler: NotificationCreatedEventHandler;
   const [notification] = mockNotifications;
   const event = new NotificationCreatedEvent(notification);
   // endregion
@@ -37,7 +37,7 @@ describe('NotificationCreatedEventHandler', () => {
       ],
     }).compile();
 
-    notificationCreatedEventHandler = moduleRef.get(NotificationCreatedEventHandler);
+    handler = moduleRef.get(NotificationCreatedEventHandler);
   });
 
   beforeEach(() => {
@@ -61,7 +61,7 @@ describe('NotificationCreatedEventHandler', () => {
         }
         throw new Error('Unknown Query');
       });
-      await notificationCreatedEventHandler.handle(event);
+      await handler.handle(event);
       let queryBusCalledTimes = 1;
       expect(queryBusExecuteMock).toBeCalledWith(new UserGetQuery(notification.userId));
       if (options.user && options.user.isPushNotificationsEnabled) {
