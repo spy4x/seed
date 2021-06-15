@@ -79,6 +79,9 @@
     },
     "back-api-user-devices": {
       "tags": []
+    },
+    "back-api-notifications": {
+      "tags": []
     }
   }
 }

@@ -100,7 +100,7 @@
 ✅ [Users management](libs/back/api/users/src/lib/users.controller.ts)  
 ✅ [REST API](libs/back/api/users/src/lib/users.controller.ts)  
 🕑 GraphQL  
-🕑 Send Push notifications  
+✅ Send Push notifications  
 🕑 Http caching  
 🕑 Redis caching  
 🕑 How to integrate Stripe subscriptions/payments?  

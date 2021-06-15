@@ -1,1 +1,1 @@
-export * from './notificationsFind.query';
+export * from './notificationsFindMy.query';
