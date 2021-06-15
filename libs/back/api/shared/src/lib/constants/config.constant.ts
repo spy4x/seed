@@ -10,6 +10,9 @@ export const API_CONFIG = {
   projectDescription: `Yet another typical startup project template.`,
   projectVersion: `1.0`,
   sentryDSN: process.env.SENTRY_DSN as string,
+  apiKeys: {
+    cloudTasks: process.env.API_KEY_CLOUD_TASKS as string,
+  },
 };
 
 export function isEnv(env: Environment): boolean {
