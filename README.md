@@ -17,51 +17,103 @@
 
 
 ## Tools used ❤️
-<a href="https://cloud.google.com/">  
-  <img src="https://cdn.iconscout.com/icon/free/png-256/google-cloud-2038785-1721675.png" width="50" />
-</a>
-<a href="https://firebase.google.com/">  
-  <img src="https://cdn.iconscout.com/icon/free/png-256/firebase-1-282796.png" width="50" />
-</a>
-<a href="https://nx.dev">  
-  <img src="https://images.opencollective.com/nx/0efbe42/logo/256.png" width="50" />
-</a>
-<a href="https://www.cypress.io/">  
-  <img src="https://iconape.com/wp-content/files/gj/370774/svg/370774.svg" width="50" />
-</a>
-<a href="https://jestjs.io/">  
-  <img src="https://d2eip9sf3oo6c2.cloudfront.net/tags/images/000/000/940/square_256/jestlogo.png" width="50" />
-</a>
-<a href="https://eslint.org/">  
-  <img src="https://d33wubrfki0l68.cloudfront.net/204482ca413433c80cd14fe369e2181dd97a2a40/092e2/assets/img/logo.svg" width="50" />
-</a>
-<a href="https://prettier.io/">  
-  <img src="https://prettier.io/icon.png" width="50" />
-</a>
-<a href="https://www.typescriptlang.org/">  
-  <img src="https://d2zv2ciw0ln4h1.cloudfront.net/uploads/Typescript_logo_2020_0b0c45c9b6.svg" width="50" />
-</a>
-<a href="https://nestjs.com/">  
-  <img src="https://docs.nestjs.com/assets/logo-small.svg" width="50" />
-</a>
-<a href="https://www.docker.com/">  
-  <img src="https://codeopolis.com/wp-content/uploads/2020/04/dockericon-e1587222605149.png" width="50" />
-</a>
-<a href="https://prisma.io/">  
-  <img src="https://images.tute.io/tute/topic/prisma.png" width="50" />
-</a>
-<a href="https://swagger.io/">  
-  <img src="https://camo.githubusercontent.com/96e43701d83561899724a89d71187445b7b8f4fe84518a3ea5bec8f85bd207bf/68747470733a2f2f63646e2e737667706f726e2e636f6d2f6c6f676f732f737761676765722e737667" width="50" />
-</a>
+
+### Frontend:
 <a href="https://angular.io/">  
   <img src="https://creativo-websolutions.com/my_files/2020/04/angular-logo.png" width="50" />
+  <span>Angular</span>
 </a>
+<br/>
+
 <a href="https://getbootstrap.com/">  
   <img src="https://www.svgrepo.com/show/303293/bootstrap-4-logo.svg" width="50" />
+  <span>Bootstrap</span>
 </a>
+<br/>
+
+### Backend:
+<a href="https://nestjs.com/">  
+  <img src="https://docs.nestjs.com/assets/logo-small.svg" width="50" />
+  <span>Nest.js</span>
+</a>
+<br/>
+
+<a href="https://www.postgresql.org/">  
+  <img src="https://www.postgresql.org/media/img/about/press/elephant.png" width="50" />
+  <span>PostgreSQL</span>
+</a>
+<br/>
+
+<a href="https://www.docker.com/">  
+  <img src="https://codeopolis.com/wp-content/uploads/2020/04/dockericon-e1587222605149.png" width="50" />
+  <span>Docker</span>
+</a>
+<br/>
+
+<a href="https://prisma.io/">  
+  <img src="https://images.tute.io/tute/topic/prisma.png" width="50" />
+  <span>Prisma</span>
+</a>
+<br/>
+
+<a href="https://swagger.io/">  
+  <img src="https://camo.githubusercontent.com/96e43701d83561899724a89d71187445b7b8f4fe84518a3ea5bec8f85bd207bf/68747470733a2f2f63646e2e737667706f726e2e636f6d2f6c6f676f732f737761676765722e737667" width="50" />
+  <span>Swagger</span>
+</a>
+<br/>
+
+### Clouds:
+<a href="https://cloud.google.com/">  
+  <img src="https://cdn.iconscout.com/icon/free/png-256/google-cloud-2038785-1721675.png" width="50" />
+  <span>Google Cloud</span>
+</a>
+<br/>
+
+<a href="https://firebase.google.com/">  
+  <img src="https://cdn.iconscout.com/icon/free/png-256/firebase-1-282796.png" width="50" />
+  <span>Firebase</span>
+</a>
+<br/>
+
+### Environment and code organisation:
+<a href="https://nx.dev">  
+  <img src="https://images.opencollective.com/nx/0efbe42/logo/256.png" width="50" />
+  <span>Nrwl Nx</span>
+</a>
+<br/>
+
+<a href="https://www.cypress.io/">  
+  <img src="https://iconape.com/wp-content/files/gj/370774/svg/370774.svg" width="50" />
+  <span>Cypress</span>
+</a>
+<br/>
+
+<a href="https://jestjs.io/">  
+  <img src="https://d2eip9sf3oo6c2.cloudfront.net/tags/images/000/000/940/square_256/jestlogo.png" width="50" />
+  <span>Jest</span>
+</a>
+<br/>
+
+<a href="https://eslint.org/">  
+  <img src="https://d33wubrfki0l68.cloudfront.net/204482ca413433c80cd14fe369e2181dd97a2a40/092e2/assets/img/logo.svg" width="50" />
+  <span>ESLint</span>
+</a>
+<br/>
+
+<a href="https://prettier.io/">  
+  <img src="https://prettier.io/icon.png" width="50" />
+  <span>Prettier</span>
+</a>
+<br/>
+
+<a href="https://www.typescriptlang.org/">  
+  <img src="https://d2zv2ciw0ln4h1.cloudfront.net/uploads/Typescript_logo_2020_0b0c45c9b6.svg" width="50" />
+  <span>TypeScript</span>
+</a>
+<br/>
 
 
-## Roadmap
+## Roadmap (What is implemented and what is not yet)
 ### Environment and code organisation
 ✅ [Manage monorepo with multiple front-, back- and dev- projects](docs/code-organisation/nx.md)  
 ✅ [Launching apps on localhost](docs/code-organisation/start-development.md)  
@@ -76,7 +128,7 @@
 🕑 Calculate affected apps based on latest release tag  
 🕑 Staging environment  
 🕑 E2E environment  
-🕑 Manage commits (https://commitizen.github.io/cz-cli/)  
+🕑 Manage commits (https://commitizen.github.io/cz-cli/ & https://brayanarrieta.hashnode.dev/integrate-commitizen-with-your-nodejs-project & https://brayanarrieta.hashnode.dev/how-to-automatically-generate-changelog-for-your-nodejs-projects-step-by-step  )  
 🕑 Update versions (https://github.com/jscutlery/semver) & Build numbers  
 🕑 Add Stylelint (https://github.com/Phillip9587/nx-stylelint)  
 
@@ -151,6 +203,7 @@
 🕑 User config management (organisations, currency settings, etc)  
 🕑 Realtime update of data from backend  
 🕑 Group access to data  
+🕑 Different roles & permissions inside group users  
 🕑 Manage your personal account - avatar, email, oAuth providers, groups memberships  
 🕑 Manage group account - avatar, members, accesses  
 🕑 Invite person to your group by email  
