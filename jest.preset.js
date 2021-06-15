@@ -10,4 +10,7 @@ module.exports = {
   coverageReporters: ['html'],
   silent: true, // prevents console.log/error/warn to appear during tests run. To debug run `$ yarn test xxxx --silent=false`
   testTimeout: 10000,
+  moduleNameMapper: {
+    '^lodash-es$': 'lodash',
+  },
 };
