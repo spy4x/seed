@@ -1,8 +1,10 @@
-import { Body, Controller, Get, HttpStatus, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { NotificationType } from '@prisma/client';
 import {
   BaseController,
   IsAuthenticatedGuard,
+  NotificationCreateCommand,
   NotificationDTO,
   NotificationsFindMyQuery,
   NotificationsMarkAsReadCommand,
@@ -42,5 +44,15 @@ export class NotificationsController extends BaseController {
   ): Promise<NotificationsMarkAsReadDTO> {
     command.currentUserId = currentUserId;
     return this.logger.trackSegment(this.markAsRead.name, async () => this.commandBus.execute(command));
+  }
+
+  @Post('/test')
+  @UseGuards(IsAuthenticatedGuard)
+  @ApiResponse({ status: HttpStatus.OK })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
+  public async test(@UserId() currentUserId: string): Promise<void> {
+    return this.logger.trackSegment(this.markAsRead.name, async () =>
+      this.commandBus.execute(new NotificationCreateCommand(currentUserId, NotificationType.TEST)),
+    );
   }
 }

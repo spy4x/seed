@@ -85,6 +85,11 @@ export class NotificationCreatedEventHandler implements IEventHandler<Notificati
             title: 'Welcome to the app 🙂',
             body: 'Feel free to contact us with any question or share your feedback!',
           };
+        case NotificationType.TEST:
+          return {
+            title: 'Ping Ping 👻',
+            body: 'Are you receiving it?',
+          };
         default:
           throw new Error(
             `${this.getNotificationTexts.name}(): Unknown NotificationType "${notification.type as unknown as string}"`,
