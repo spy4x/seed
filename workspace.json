@@ -12,17 +12,19 @@
       "changeDetection": "OnPush"
     },
     "@nrwl/angular:component": {
+      "style": "sass",
       "inlineStyle": true,
       "spec": true,
       "flat": true,
-      "style": "sass",
       "changeDetection": "OnPush"
     },
     "@nrwl/angular:application": {
+      "linter": "eslint",
       "unitTestRunner": "jest",
       "e2eTestRunner": "cypress"
     },
     "@nrwl/angular:library": {
+      "linter": "eslint",
       "unitTestRunner": "jest"
     }
   },
@@ -287,7 +289,11 @@
             "main": "apps/front/web-client/src/main.ts",
             "polyfills": "apps/front/web-client/src/polyfills.ts",
             "tsConfig": "apps/front/web-client/tsconfig.app.json",
-            "assets": ["apps/front/web-client/src/favicon.ico", "apps/front/web-client/src/assets"],
+            "assets": [
+              "apps/front/web-client/src/favicon.ico",
+              "apps/front/web-client/src/assets",
+              "apps/front/web-client/src/firebase-messaging-sw.js"
+            ],
             "styles": ["apps/front/web-client/src/styles/index.sass"],
             "stylePreprocessorOptions": {
               "includePaths": ["apps/front/web-client/web/src/styles"]
@@ -730,6 +736,28 @@
           "options": {
             "jestConfig": "libs/back/api/notifications/jest.config.js",
             "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "front-shared-auth": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth",
+      "sourceRoot": "libs/front/shared/auth/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/shared/auth/src/**/*.ts", "libs/front/shared/auth/src/**/*.html"]
           }
         }
       }

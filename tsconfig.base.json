@@ -28,7 +28,8 @@
       "@seed/shared/types": ["libs/shared/types/src/index.ts"],
       "@seed/front/shared/types": ["libs/front/shared/types/src/index.ts"],
       "@seed/back/api/user-devices": ["libs/back/api/user-devices/src/index.ts"],
-      "@seed/back/api/notifications": ["libs/back/api/notifications/src/index.ts"]
+      "@seed/back/api/notifications": ["libs/back/api/notifications/src/index.ts"],
+      "@seed/front/shared/auth": ["libs/front/shared/auth/src/index.ts"]
     },
     "strict": true,
     "strictBindCallApply": true,

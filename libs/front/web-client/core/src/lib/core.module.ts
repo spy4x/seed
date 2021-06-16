@@ -4,14 +4,16 @@ import { RouterModule } from '@angular/router';
 import { GetJwtComponent } from './get-jwt/get-jwt.component';
 import { AngularFireModule, FIREBASE_OPTIONS } from '@angular/fire';
 import { AngularFireAuthModule } from '@angular/fire/auth';
-import { FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN, FrontWebClientConfig } from './config';
+import { FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN, FrontWebClientConfig } from './config.interface';
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
+import { AngularFireMessagingModule } from '@angular/fire/messaging';
 
 @NgModule({
   imports: [
     BrowserModule,
     AngularFireModule,
     AngularFireAuthModule,
+    AngularFireMessagingModule,
     RouterModule.forRoot(
       [
         {

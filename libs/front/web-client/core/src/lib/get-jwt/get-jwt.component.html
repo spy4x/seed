@@ -14,7 +14,13 @@
       <tr>
         <td>JWT:</td>
         <td>
-          <div class="badge badge-info p-2 d-block text-break text-wrap text-left">{{ token$ | async }}</div>
+          <div class="badge badge-info p-2 d-block text-break text-wrap text-left">{{ jwtToken$ | async }}</div>
+        </td>
+      </tr>
+      <tr>
+        <td>FCM Token:</td>
+        <td>
+          <div class="badge badge-info p-2 d-block text-break text-wrap text-left">{{ fcmToken$ | async }}</div>
         </td>
       </tr>
     </table>

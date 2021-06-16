@@ -82,6 +82,9 @@
     },
     "back-api-notifications": {
       "tags": []
+    },
+    "front-shared-auth": {
+      "tags": []
     }
   }
 }
