@@ -85,6 +85,9 @@
     },
     "front-shared-auth": {
       "tags": []
+    },
+    "front-shared-styles": {
+      "tags": []
     }
   }
 }

@@ -296,7 +296,7 @@
             ],
             "styles": ["apps/front/web-client/src/styles/index.sass"],
             "stylePreprocessorOptions": {
-              "includePaths": ["apps/front/web-client/web/src/styles"]
+              "includePaths": ["apps/front/web-client/web/src/styles", "libs/front/shared/styles/src"]
             },
             "scripts": [],
             "vendorChunk": true,
@@ -341,7 +341,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "front-web-client:build"
+            "browserTarget": "front-web-client:build",
+            "port": 4200
           },
           "configurations": {
             "production": {
@@ -427,7 +428,7 @@
             "assets": ["apps/front/admin-panel/src/favicon.ico", "apps/front/admin-panel/src/assets"],
             "styles": ["apps/front/admin-panel/src/styles/index.sass"],
             "stylePreprocessorOptions": {
-              "includePaths": ["apps/front/admin-panel/src/styles"]
+              "includePaths": ["apps/front/admin-panel/src/styles", "libs/front/shared/styles/src"]
             },
             "scripts": [],
             "vendorChunk": true,
@@ -472,7 +473,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "front-admin-panel:build"
+            "browserTarget": "front-admin-panel:build",
+            "port": 4201
           },
           "configurations": {
             "production": {
@@ -761,6 +763,12 @@
           }
         }
       }
+    },
+    "front-shared-styles": {
+      "root": "libs/front/shared/styles",
+      "sourceRoot": "libs/front/shared/styles/src",
+      "projectType": "library",
+      "architect": {}
     }
   }
 }
