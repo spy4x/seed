@@ -1,16 +1,18 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
-import { GetJwtComponent } from './get-jwt/get-jwt.component';
 import { AngularFireModule, FIREBASE_OPTIONS } from '@angular/fire';
 import { AngularFireAuthModule } from '@angular/fire/auth';
 import { FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN, FrontWebClientConfig } from './config.interface';
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
 import { AngularFireMessagingModule } from '@angular/fire/messaging';
+import { AuthModule } from '@seed/front/shared/auth';
+import { SignInComponent } from '../../../../shared/auth/src/lib/sign-in/sign-in.component';
 
 @NgModule({
   imports: [
     BrowserModule,
+    AuthModule,
     AngularFireModule,
     AngularFireAuthModule,
     AngularFireMessagingModule,
@@ -18,13 +20,12 @@ import { AngularFireMessagingModule } from '@angular/fire/messaging';
       [
         {
           path: '',
-          component: GetJwtComponent,
+          component: SignInComponent,
         },
       ],
       { initialNavigation: 'enabledNonBlocking' },
     ),
   ],
-  declarations: [GetJwtComponent],
   providers: [
     {
       provide: FIREBASE_OPTIONS,
