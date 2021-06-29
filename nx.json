@@ -83,20 +83,17 @@
     "back-api-notifications": {
       "tags": []
     },
-    "front-shared-auth": {
-      "tags": []
-    },
     "front-shared-styles": {
       "tags": []
     },
-    "front-shared-state-auth": {
-      "tags": ["frontend", "state"]
+    "front-shared-auth-state": {
+      "tags": []
     },
-    "front-shared-ui-auth": {
-      "tags": ["frontend", "ui"]
+    "front-shared-auth-ui": {
+      "tags": []
     },
-    "front-shared-containers-auth": {
-      "tags": ["frontend", "container"]
+    "front-shared-auth-container": {
+      "tags": []
     }
   }
 }

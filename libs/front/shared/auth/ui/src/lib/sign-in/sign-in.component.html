@@ -1,0 +1,33 @@
+<div
+  class="container-fluid"
+  style="background: url('https://picsum.photos/1440/900') center no-repeat; background-size: cover"
+>
+  <div class="d-flex align-items-center justify-content-center min-vh-100">
+    <ng-container *ngIf="isIsAuthenticating; else authentication">
+      <h1 class="text-warning">Authenticating...</h1>
+    </ng-container>
+
+    <ng-template #authentication>
+      <ng-container *ngIf="isIsAuthenticated; else signInMethods">
+        <div class="w-50 shadow-sm p-5 rounded bg-white-75">
+          <h2 class="mb-3">Welcome back!</h2>
+          <button class="btn btn-outline-secondary mt-4 ms-auto" (click)="signOut.emit()">
+            <i class="feather-log-out"></i>
+            <span>Sign out</span>
+          </button>
+        </div>
+      </ng-container>
+    </ng-template>
+
+    <ng-template #signInMethods>
+      <div class="w-25 shadow-sm p-5 rounded bg-white-75">
+        <h2 class="mb-3">Welcome!</h2>
+        <p>Please use one of sign in methods below.</p>
+        <button data-cy="anonymous" (click)="signIn.emit(authMethods.anonymous)" class="btn btn-primary w-100">
+          <i class="feather-log-in"></i>
+          <span>Sign in anonymously</span>
+        </button>
+      </div>
+    </ng-template>
+  </div>
+</div>

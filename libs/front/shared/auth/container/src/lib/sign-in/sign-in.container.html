@@ -1,0 +1,6 @@
+<seed-shared-auth-ui-sign-in
+  [isIsAuthenticating]="isIsAuthenticating$ | async"
+  [isIsAuthenticated]="isIsAuthenticated$ | async"
+  (signIn)="signIn($event)"
+  (signOut)="signOut()"
+></seed-shared-auth-ui-sign-in>

@@ -6,21 +6,19 @@ import { AngularFireAuthModule } from '@angular/fire/auth';
 import { FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN, FrontWebClientConfig } from './config.interface';
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
 import { AngularFireMessagingModule } from '@angular/fire/messaging';
-import { AuthModule } from '@seed/front/shared/auth';
-import { SharedContainerAuthModule, SignInContainer } from '@seed/front/shared/containers/auth';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { StoreRouterConnectingModule } from '@ngrx/router-store';
+import { SharedAuthContainerModule, SignInContainer } from '@seed/front/shared/auth/container';
 
 @NgModule({
   imports: [
     BrowserModule,
-    AuthModule,
     AngularFireModule,
     AngularFireAuthModule,
     AngularFireMessagingModule,
-    SharedContainerAuthModule,
+    SharedAuthContainerModule,
     RouterModule.forRoot(
       [
         {
@@ -34,12 +32,12 @@ import { StoreRouterConnectingModule } from '@ngrx/router-store';
       {},
       {
         runtimeChecks: {
-          // strictStateImmutability: true,
-          // strictActionImmutability: true,
-          // strictStateSerializability: true,
-          // strictActionSerializability: true,
-          // strictActionWithinNgZone: true,
-          // strictActionTypeUniqueness: true,
+          strictStateImmutability: true,
+          strictActionImmutability: true,
+          strictStateSerializability: true,
+          strictActionSerializability: true,
+          strictActionWithinNgZone: true,
+          strictActionTypeUniqueness: true,
         },
       },
     ),

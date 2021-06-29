@@ -742,45 +742,23 @@
         }
       }
     },
-    "front-shared-auth": {
-      "projectType": "library",
-      "root": "libs/front/shared/auth",
-      "sourceRoot": "libs/front/shared/auth/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/auth"],
-          "options": {
-            "jestConfig": "libs/front/shared/auth/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/front/shared/auth/src/**/*.ts", "libs/front/shared/auth/src/**/*.html"]
-          }
-        }
-      }
-    },
     "front-shared-styles": {
       "root": "libs/front/shared/styles",
       "sourceRoot": "libs/front/shared/styles/src",
       "projectType": "library",
       "architect": {}
     },
-    "front-shared-state-auth": {
+    "front-shared-auth-state": {
       "projectType": "library",
-      "root": "libs/front/shared/state/auth",
-      "sourceRoot": "libs/front/shared/state/auth/src",
+      "root": "libs/front/shared/auth/state",
+      "sourceRoot": "libs/front/shared/auth/state/src",
       "prefix": "seed",
       "architect": {
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/state/auth"],
+          "outputs": ["coverage/libs/front/shared/auth/state"],
           "options": {
-            "jestConfig": "libs/front/shared/state/auth/jest.config.js",
+            "jestConfig": "libs/front/shared/auth/state/jest.config.js",
             "passWithNoTests": true
           }
         },
@@ -788,46 +766,46 @@
           "builder": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": [
-              "libs/front/shared/state/auth/src/**/*.ts",
-              "libs/front/shared/state/auth/src/**/*.html"
+              "libs/front/shared/auth/state/src/**/*.ts",
+              "libs/front/shared/auth/state/src/**/*.html"
             ]
           }
         }
       }
     },
-    "front-shared-ui-auth": {
+    "front-shared-auth-ui": {
       "projectType": "library",
-      "root": "libs/front/shared/ui/auth",
-      "sourceRoot": "libs/front/shared/ui/auth/src",
-      "prefix": "seed-shared-ui-auth",
+      "root": "libs/front/shared/auth/ui",
+      "sourceRoot": "libs/front/shared/auth/ui/src",
+      "prefix": "seed",
       "architect": {
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/ui/auth"],
+          "outputs": ["coverage/libs/front/shared/auth/ui"],
           "options": {
-            "jestConfig": "libs/front/shared/ui/auth/jest.config.js",
+            "jestConfig": "libs/front/shared/auth/ui/jest.config.js",
             "passWithNoTests": true
           }
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": ["libs/front/shared/ui/auth/src/**/*.ts", "libs/front/shared/ui/auth/src/**/*.html"]
+            "lintFilePatterns": ["libs/front/shared/auth/ui/src/**/*.ts", "libs/front/shared/auth/ui/src/**/*.html"]
           }
         }
       }
     },
-    "front-shared-containers-auth": {
+    "front-shared-auth-container": {
       "projectType": "library",
-      "root": "libs/front/shared/containers/auth",
-      "sourceRoot": "libs/front/shared/containers/auth/src",
+      "root": "libs/front/shared/auth/container",
+      "sourceRoot": "libs/front/shared/auth/container/src",
       "prefix": "seed",
       "architect": {
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/containers/auth"],
+          "outputs": ["coverage/libs/front/shared/auth/container"],
           "options": {
-            "jestConfig": "libs/front/shared/containers/auth/jest.config.js",
+            "jestConfig": "libs/front/shared/auth/container/jest.config.js",
             "passWithNoTests": true
           }
         },
@@ -835,8 +813,8 @@
           "builder": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": [
-              "libs/front/shared/containers/auth/src/**/*.ts",
-              "libs/front/shared/containers/auth/src/**/*.html"
+              "libs/front/shared/auth/container/src/**/*.ts",
+              "libs/front/shared/auth/container/src/**/*.html"
             ]
           }
         }
