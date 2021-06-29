@@ -7,7 +7,11 @@ import { FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN, FrontWebClientConfig } from '.
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
 import { AngularFireMessagingModule } from '@angular/fire/messaging';
 import { AuthModule } from '@seed/front/shared/auth';
-import { SignInComponent } from '@seed/front/shared/ui/auth';
+import { SharedContainerAuthModule, SignInContainer } from '@seed/front/shared/containers/auth';
+import { StoreModule } from '@ngrx/store';
+import { EffectsModule } from '@ngrx/effects';
+import { StoreDevtoolsModule } from '@ngrx/store-devtools';
+import { StoreRouterConnectingModule } from '@ngrx/router-store';
 
 @NgModule({
   imports: [
@@ -16,15 +20,32 @@ import { SignInComponent } from '@seed/front/shared/ui/auth';
     AngularFireModule,
     AngularFireAuthModule,
     AngularFireMessagingModule,
+    SharedContainerAuthModule,
     RouterModule.forRoot(
       [
         {
           path: '',
-          component: SignInComponent,
+          component: SignInContainer,
         },
       ],
       { initialNavigation: 'enabledNonBlocking' },
     ),
+    StoreModule.forRoot(
+      {},
+      {
+        runtimeChecks: {
+          // strictStateImmutability: true,
+          // strictActionImmutability: true,
+          // strictStateSerializability: true,
+          // strictActionSerializability: true,
+          // strictActionWithinNgZone: true,
+          // strictActionTypeUniqueness: true,
+        },
+      },
+    ),
+    EffectsModule.forRoot([]),
+    StoreDevtoolsModule.instrument(), // TODO: remove for production
+    StoreRouterConnectingModule.forRoot(),
   ],
   providers: [
     {

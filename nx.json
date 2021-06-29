@@ -94,6 +94,9 @@
     },
     "front-shared-ui-auth": {
       "tags": ["frontend", "ui"]
+    },
+    "front-shared-containers-auth": {
+      "tags": ["frontend", "container"]
     }
   }
 }

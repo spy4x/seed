@@ -1,8 +1,9 @@
 import { createAction, props } from '@ngrx/store';
-import { AuthEntity } from './auth.models';
 
-export const init = createAction('[Auth Page] Init');
+export const authenticateAnonymously = createAction('[Auth/UI] Authenticate anonymously');
 
-export const loadAuthSuccess = createAction('[Auth/API] Load Auth Success', props<{ auth: AuthEntity[] }>());
+export const authenticated = createAction('[Auth/API] Authenticated', props<{ userId: string }>());
 
-export const loadAuthFailure = createAction('[Auth/API] Load Auth Failure', props<{ error: any }>());
+export const notAuthenticated = createAction('[Auth/API] Not authenticated');
+
+export const signOut = createAction('[Auth/UI] Sign out');

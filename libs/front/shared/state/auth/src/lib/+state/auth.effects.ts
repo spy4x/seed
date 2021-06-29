@@ -1,28 +1,35 @@
 import { Injectable } from '@angular/core';
-import { createEffect, Actions, ofType } from '@ngrx/effects';
-import { fetch } from '@nrwl/angular';
+import { Actions, createEffect, ofType } from '@ngrx/effects';
 
-import * as AuthFeature from './auth.reducer';
 import * as AuthActions from './auth.actions';
+import { AngularFireAuth } from '@angular/fire/auth';
+import { exhaustMap, map } from 'rxjs/operators';
 
 @Injectable()
 export class AuthEffects {
-  init$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(AuthActions.init),
-      fetch({
-        run: action => {
-          // Your custom service 'load' logic goes here. For now just return a success action...
-          return AuthActions.loadAuthSuccess({ auth: [] });
-        },
-
-        onError: (action, error) => {
-          console.error('Error', error);
-          return AuthActions.loadAuthFailure({ error });
-        },
-      }),
+  authenticatedStateSub$ = createEffect(() =>
+    this.fireAuth.user.pipe(
+      map(user => (user ? AuthActions.authenticated({ userId: user.uid }) : AuthActions.notAuthenticated())),
     ),
   );
 
-  constructor(private actions$: Actions) {}
+  authenticate$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.authenticateAnonymously),
+        exhaustMap(() => this.fireAuth.signInAnonymously()),
+      ),
+    { dispatch: false },
+  );
+
+  signOut$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(AuthActions.signOut),
+        exhaustMap(() => this.fireAuth.signOut()),
+      ),
+    { dispatch: false },
+  );
+
+  constructor(private actions$: Actions, private fireAuth: AngularFireAuth) {}
 }

@@ -1,10 +1,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SignInComponent } from './sign-in/sign-in.component';
-import { ClipboardModule } from '@angular/cdk/clipboard';
 
 @NgModule({
-  imports: [CommonModule, ClipboardModule],
+  imports: [CommonModule],
   declarations: [SignInComponent],
   exports: [SignInComponent],
 })

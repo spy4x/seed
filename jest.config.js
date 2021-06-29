@@ -23,5 +23,6 @@ module.exports = {
     '<rootDir>/libs/front/shared/styles',
     '<rootDir>/libs/front/shared/state/auth',
     '<rootDir>/libs/front/shared/ui/auth',
+    '<rootDir>/libs/front/shared/containers/auth',
   ],
 };

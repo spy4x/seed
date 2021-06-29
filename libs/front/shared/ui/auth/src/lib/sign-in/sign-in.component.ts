@@ -1,9 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import { User } from '@prisma/client';
-
-export enum SignInMethods {
-  anonymous = 'anonymous',
-}
+import { AuthMethods } from '@seed/front/shared/types';
 
 @Component({
   selector: 'seed-shared-ui-auth-sign-in',
@@ -13,21 +9,13 @@ export enum SignInMethods {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignInComponent {
-  @Input() user?: User;
+  @Input() isIsAuthenticated?: null | boolean;
 
-  @Input() jwt?: string;
+  @Input() isIsAuthenticating?: null | boolean;
 
-  @Input() fcm?: string;
-
-  @Output() signIn = new EventEmitter<SignInMethods>();
+  @Output() signIn = new EventEmitter<AuthMethods>();
 
   @Output() signOut = new EventEmitter();
 
-  copyStatus = {
-    userId: false,
-    jwt: false,
-    fcm: false,
-  };
-
-  SignInMethods = SignInMethods;
+  authMethods = AuthMethods;
 }

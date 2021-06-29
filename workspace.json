@@ -816,6 +816,31 @@
           }
         }
       }
+    },
+    "front-shared-containers-auth": {
+      "projectType": "library",
+      "root": "libs/front/shared/containers/auth",
+      "sourceRoot": "libs/front/shared/containers/auth/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/containers/auth"],
+          "options": {
+            "jestConfig": "libs/front/shared/containers/auth/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/shared/containers/auth/src/**/*.ts",
+              "libs/front/shared/containers/auth/src/**/*.html"
+            ]
+          }
+        }
+      }
     }
   }
 }
