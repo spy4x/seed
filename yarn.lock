@@ -3064,6 +3064,46 @@
   dependencies:
     tslib "^2.0.0"
 
+"@ngrx/effects@^12.0.0":
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/effects/-/effects-12.1.0.tgz#316e60950a5e2c8ca2ecb3119397281affe3a286"
+  integrity sha512-DcVovaJB9hZ8qo5UNjRS0KqLaMX8YreuR3EtRPUysB0aePBuoWQiN8HUic8DgmI2cN3KcZxOsRKj/1VaVArLJw==
+  dependencies:
+    tslib "^2.0.0"
+
+"@ngrx/entity@^12.0.0":
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/entity/-/entity-12.1.0.tgz#01c76487ab6043aea21d9d787ead238107ff45e8"
+  integrity sha512-2EsWBMUyXsdXqFsB3kwtr+i2aSwbXKjdao7fLh9337Zzfx/LF7FDcqS+CU0aN0dJzTluJV+HbH7W7e88dS1c3Q==
+  dependencies:
+    tslib "^2.0.0"
+
+"@ngrx/router-store@^12.0.0":
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/router-store/-/router-store-12.1.0.tgz#926707e39dd8007d277af187e34b45e906c94a7c"
+  integrity sha512-VjuDJDU2w2TlJUp82snjvgIPEHZO4q4BfOLLVEzWEME1q71VNSxx6eArW6Wk1PGWRqQ48YAI11pXC9PUi8ZI8A==
+  dependencies:
+    tslib "^2.0.0"
+
+"@ngrx/schematics@^12.0.0":
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/schematics/-/schematics-12.1.0.tgz#6478fc376840a9f9c4d44a40d513e8aa3463779c"
+  integrity sha512-cUL+pzy5jtFUq81B+kETJmca9/KqWatMxNXofdML2dyGGpk/yfs6bV8L/NQWyUxsyc01J+WswocWmFjNde0FYQ==
+
+"@ngrx/store-devtools@^12.0.0":
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/store-devtools/-/store-devtools-12.1.0.tgz#b547edb6ff9fd3ade4fd303088dbed627484b41d"
+  integrity sha512-O+GfUsYPUrlbGHHcCH0WNkfnWD2TLQmXm2xhR1CkMTr+7YkdOKUZ1a0RwPM4VWuCu5QNVHS8bRS5V3IviiP9tQ==
+  dependencies:
+    tslib "^2.0.0"
+
+"@ngrx/store@^12.0.0":
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/store/-/store-12.1.0.tgz#5e3516f0e6333c7ef49a560df786d4aa87b44a22"
+  integrity sha512-HrNs7bs/MNkLxFnvGx7uPIvEP3RWqGMewVaFjqUxq6sDefn6D6TQ/Sv/8KsNNxuG7r7pKGw+U/tClunJhmRfpw==
+  dependencies:
+    tslib "^2.0.0"
+
 "@ngtools/webpack@12.0.3":
   version "12.0.3"
   resolved "https://registry.yarnpkg.com/@ngtools/webpack/-/webpack-12.0.3.tgz#47fd9abffe96d554edf063eb252d4f2c06d834e1"

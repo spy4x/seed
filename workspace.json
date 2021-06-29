@@ -769,6 +769,31 @@
       "sourceRoot": "libs/front/shared/styles/src",
       "projectType": "library",
       "architect": {}
+    },
+    "front-shared-state-auth": {
+      "projectType": "library",
+      "root": "libs/front/shared/state/auth",
+      "sourceRoot": "libs/front/shared/state/auth/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/state/auth"],
+          "options": {
+            "jestConfig": "libs/front/shared/state/auth/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/shared/state/auth/src/**/*.ts",
+              "libs/front/shared/state/auth/src/**/*.html"
+            ]
+          }
+        }
+      }
     }
   }
 }

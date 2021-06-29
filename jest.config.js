@@ -21,5 +21,6 @@ module.exports = {
     '<rootDir>/libs/back/api/notifications',
     '<rootDir>/libs/front/shared/auth',
     '<rootDir>/libs/front/shared/styles',
+    '<rootDir>/libs/front/shared/state/auth',
   ],
 };
