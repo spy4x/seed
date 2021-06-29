@@ -1,0 +1,43 @@
+<ng-container *ngIf="user; else signInMethods">
+  <h1 class="text-success">Welcome back, {{ user.firstName }}!</h1>
+
+  <div class="input-group">
+    <span class="input-group-text fixed">UserId:</span>
+    <span class="input-group-text text-truncate">{{ user.id }}</span>
+    <button
+      class="btn btn-secondary"
+      [cdkCopyToClipboard]="user.id"
+      (cdkCopyToClipboardCopied)="copyStatus.userId = $event"
+    >
+      <i *ngIf="copyStatus.userId" class="fa fa-check-circle"></i>
+      <i *ngIf="!copyStatus.userId" class="fa fa-copy"></i>
+    </button>
+  </div>
+
+  <div *ngIf="jwt" class="input-group">
+    <span class="input-group-text fixed">JWT:</span>
+    <span class="input-group-text text-truncate">{{ jwt }}</span>
+    <button class="btn btn-secondary" [cdkCopyToClipboard]="jwt" (cdkCopyToClipboardCopied)="copyStatus.jwt = $event">
+      <i *ngIf="copyStatus.jwt" class="fa fa-check-circle text-success"></i>
+      <i *ngIf="!copyStatus.jwt" class="fa fa-copy"></i>
+    </button>
+  </div>
+
+  <div *ngIf="fcm" class="input-group">
+    <span class="input-group-text fixed">FCM:</span>
+    <span class="input-group-text text-truncate">{{ fcm }}</span>
+    <button class="btn btn-secondary" [cdkCopyToClipboard]="fcm" (cdkCopyToClipboardCopied)="copyStatus.fcm = $event">
+      <i *ngIf="copyStatus.fcm" class="fa fa-check-circle text-success"></i>
+      <i *ngIf="!copyStatus.fcm" class="fa fa-copy"></i>
+    </button>
+  </div>
+
+  <button class="btn btn-secondary" (click)="signOut.emit()">Sign out</button>
+</ng-container>
+
+<ng-template #signInMethods>
+  <h1>Welcome! Please use one of sign in methods below.</h1>
+  <button data-cy="anonymous" (click)="signIn.emit(SignInMethods.anonymous)" class="btn btn-primary">
+    Sign in anonymously
+  </button>
+</ng-template>

@@ -7,7 +7,7 @@ import { FRONT_WEB_CLIENT_CONFIG_INJECTION_TOKEN, FrontWebClientConfig } from '.
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
 import { AngularFireMessagingModule } from '@angular/fire/messaging';
 import { AuthModule } from '@seed/front/shared/auth';
-import { SignInComponent } from '../../../../shared/auth/src/lib/sign-in/sign-in.component';
+import { SignInComponent } from '@seed/front/shared/ui/auth';
 
 @NgModule({
   imports: [
