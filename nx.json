@@ -91,6 +91,9 @@
     },
     "front-shared-state-auth": {
       "tags": ["frontend", "state"]
+    },
+    "front-shared-ui-auth": {
+      "tags": ["frontend", "ui"]
     }
   }
 }

@@ -794,6 +794,28 @@
           }
         }
       }
+    },
+    "front-shared-ui-auth": {
+      "projectType": "library",
+      "root": "libs/front/shared/ui/auth",
+      "sourceRoot": "libs/front/shared/ui/auth/src",
+      "prefix": "seed-shared-ui-auth",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/ui/auth"],
+          "options": {
+            "jestConfig": "libs/front/shared/ui/auth/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/shared/ui/auth/src/**/*.ts", "libs/front/shared/ui/auth/src/**/*.html"]
+          }
+        }
+      }
     }
   }
 }
