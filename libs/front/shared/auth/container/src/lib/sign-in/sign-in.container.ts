@@ -6,7 +6,6 @@ import { AuthActions, AuthSelectors } from '@seed/front/shared/auth/state';
 @Component({
   selector: 'seed-shared-auth-container-sign-in',
   templateUrl: './sign-in.container.html',
-  styleUrls: ['./sign-in.container.sass'],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
