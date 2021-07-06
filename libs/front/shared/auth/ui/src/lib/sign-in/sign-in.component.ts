@@ -8,10 +8,10 @@ import { AuthMethods } from '@seed/front/shared/types';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SignInComponent {
-  @Input() isIsAuthenticated?: null | boolean;
+export class SignInUIComponent {
+  @Input() isAuthenticated?: null | boolean;
 
-  @Input() isIsAuthenticating?: null | boolean;
+  @Input() isAuthenticating?: null | boolean;
 
   @Output() signIn = new EventEmitter<AuthMethods>();
 

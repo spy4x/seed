@@ -40,7 +40,8 @@
       "tags": []
     },
     "front-web-client": {
-      "tags": []
+      "tags": [],
+      "implicitDependencies": ["front-shared-styles"]
     },
     "front-web-client-core": {
       "tags": []
@@ -50,7 +51,8 @@
       "implicitDependencies": ["front-web-client"]
     },
     "front-admin-panel": {
-      "tags": []
+      "tags": [],
+      "implicitDependencies": ["front-shared-styles"]
     },
     "e2e-admin-panel": {
       "tags": [],

@@ -13,11 +13,11 @@ export class AuthEffects {
     ),
   );
 
-  authenticate$ = createEffect(
+  authenticateAnonymously$ = createEffect(
     () =>
       this.actions$.pipe(
         ofType(AuthActions.authenticateAnonymously),
-        exhaustMap(() => this.fireAuth.signInAnonymously()),
+        exhaustMap(async () => this.fireAuth.signInAnonymously()),
       ),
     { dispatch: false },
   );
@@ -26,10 +26,10 @@ export class AuthEffects {
     () =>
       this.actions$.pipe(
         ofType(AuthActions.signOut),
-        exhaustMap(() => this.fireAuth.signOut()),
+        exhaustMap(async () => this.fireAuth.signOut()),
       ),
     { dispatch: false },
   );
 
-  constructor(private actions$: Actions, private fireAuth: AngularFireAuth) {}
+  constructor(readonly actions$: Actions, readonly fireAuth: AngularFireAuth) {}
 }

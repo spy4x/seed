@@ -10,7 +10,7 @@ import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { StoreRouterConnectingModule } from '@ngrx/router-store';
-import { SharedAuthContainerModule, SignInContainer } from '@seed/front/shared/auth/container';
+import { SharedAuthContainerModule, SignInContainerComponent } from '@seed/front/shared/auth/container';
 
 @NgModule({
   imports: [
@@ -23,7 +23,7 @@ import { SharedAuthContainerModule, SignInContainer } from '@seed/front/shared/a
       [
         {
           path: '',
-          component: SignInContainer,
+          component: SignInContainerComponent,
         },
       ],
       { initialNavigation: 'enabledNonBlocking' },

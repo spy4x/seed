@@ -10,11 +10,12 @@ import { AuthActions, AuthSelectors } from '@seed/front/shared/auth/state';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SignInContainer {
-  isIsAuthenticating$ = this.store.select(AuthSelectors.getIsAuthenticating);
-  isIsAuthenticated$ = this.store.select(AuthSelectors.getIsAuthenticated);
+export class SignInContainerComponent {
+  isAuthenticating$ = this.store.select(AuthSelectors.getIsAuthenticating);
 
-  constructor(private store: Store) {}
+  isAuthenticated$ = this.store.select(AuthSelectors.getIsAuthenticated);
+
+  constructor(readonly store: Store) {}
 
   signIn(method: AuthMethods): void {
     switch (method) {
@@ -22,8 +23,8 @@ export class SignInContainer {
         return this.store.dispatch(AuthActions.authenticateAnonymously());
       }
       default: {
-        console.log(`Auth method ${method} is not supported yet.`);
-        return;
+        /* eslint-disable-next-line no-console */
+        console.error(`Auth method ${method} is not supported yet.`);
       }
     }
   }

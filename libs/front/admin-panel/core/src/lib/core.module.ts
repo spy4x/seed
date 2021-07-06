@@ -6,7 +6,7 @@ import { AngularFireAuthModule } from '@angular/fire/auth';
 import { AngularFireMessagingModule } from '@angular/fire/messaging';
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
 import { FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN, FrontAdminPanelConfig } from './config.interface';
-import { SharedAuthContainerModule, SignInContainer } from '@seed/front/shared/auth/container';
+import { SharedAuthContainerModule, SignInContainerComponent } from '@seed/front/shared/auth/container';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
@@ -23,7 +23,7 @@ import { StoreRouterConnectingModule } from '@ngrx/router-store';
       [
         {
           path: '',
-          component: SignInContainer,
+          component: SignInContainerComponent,
         },
       ],
       { initialNavigation: 'enabledNonBlocking' },

@@ -3,11 +3,11 @@ export enum SignInMethods {
 }
 
 export class SignInComponentPO {
-  readonly selector = 'seed-auth-sign-in';
+  readonly selector = 'seed-shared-auth-container-sign-in';
 
   readonly texts = {
     messages: {
-      welcome: 'Welcome! Please use one of sign in methods below.',
+      welcome: 'Welcome!',
       welcomeBack: 'Welcome back!',
     },
     buttons: {
@@ -19,11 +19,15 @@ export class SignInComponentPO {
     return cy.get(this.selector);
   }
 
-  getButton(method: SignInMethods): Cypress.Chainable {
-    return cy.get(this.selector).get(`button[data-cy=${method}]`);
+  getSignInButton(method: SignInMethods): Cypress.Chainable {
+    return cy.get(this.selector).get(`button[data-e2e=${method}]`);
   }
 
   signIn(method: SignInMethods): void {
-    this.getButton(method).click();
+    this.getSignInButton(method).click();
+  }
+
+  signOut(): void {
+    cy.get(this.selector).get(`button[data-e2e=signOut]`).click();
   }
 }

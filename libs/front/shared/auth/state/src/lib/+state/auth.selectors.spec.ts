@@ -1,58 +1,51 @@
-import { AuthEntity } from './auth.models';
-import { authAdapter, AuthPartialState, initialState } from './auth.reducer';
+import { AUTH_FEATURE_KEY, AuthPartialState, initialState, State } from './auth.reducer';
 import * as AuthSelectors from './auth.selectors';
 
 describe('Auth Selectors', () => {
-  const ERROR_MSG = 'No Error Available';
-  const getAuthId = (it: AuthEntity) => it.id;
-  const createAuthEntity = (id: string, name = '') =>
-    ({
-      id,
-      name: name || `name-${id}`,
-    } as AuthEntity);
-
   let state: AuthPartialState;
 
-  beforeEach(() => {
-    state = {
-      auth: authAdapter.setAll(
-        [createAuthEntity('PRODUCT-AAA'), createAuthEntity('PRODUCT-BBB'), createAuthEntity('PRODUCT-CCC')],
-        {
-          ...initialState,
-          selectedId: 'PRODUCT-BBB',
-          error: ERROR_MSG,
-          loaded: true,
-        },
-      ),
-    };
+  beforeEach(() => (state = { auth: initialState }));
+
+  function setState(partialNewState: Partial<State>): void {
+    state = { [AUTH_FEATURE_KEY]: { ...state[AUTH_FEATURE_KEY], ...partialNewState } };
+  }
+
+  describe('getAuthState()', () => {
+    it('getAuthState() should return AuthState', () => {
+      expect(AuthSelectors.getAuthState(state)).toBe(state[AUTH_FEATURE_KEY]);
+    });
   });
 
-  describe('Auth Selectors', () => {
-    it('getAllAuth() should return the list of Auth', () => {
-      const results = AuthSelectors.getAllAuth(state);
-      const selId = getAuthId(results[1]);
-
-      expect(results.length).toBe(3);
-      expect(selId).toBe('PRODUCT-BBB');
+  describe('getIsAuthenticating()', () => {
+    it('getIsAuthenticating() should return state.auth.isAuthenticating true', () => {
+      setState({ isAuthenticating: true });
+      expect(AuthSelectors.getIsAuthenticating(state)).toBe(true);
     });
-
-    it('getSelected() should return the selected Entity', () => {
-      const result = AuthSelectors.getSelected(state) as AuthEntity;
-      const selId = getAuthId(result);
-
-      expect(selId).toBe('PRODUCT-BBB');
+    it('getIsAuthenticating() should return state.auth.isAuthenticating false', () => {
+      setState({ isAuthenticating: false });
+      expect(AuthSelectors.getIsAuthenticating(state)).toBe(false);
     });
+  });
 
-    it("getAuthLoaded() should return the current 'loaded' status", () => {
-      const result = AuthSelectors.getAuthLoaded(state);
-
-      expect(result).toBe(true);
+  describe('getIsAuthenticated()', () => {
+    it('getIsAuthenticated() should return true if state.auth.userId is set', () => {
+      setState({ userId: '123' });
+      expect(AuthSelectors.getIsAuthenticated(state)).toBe(true);
     });
+    it('getIsAuthenticated() should return false if state.auth.userId is not set', () => {
+      setState({ userId: undefined });
+      expect(AuthSelectors.getIsAuthenticated(state)).toBe(false);
+    });
+  });
 
-    it("getAuthError() should return the current 'error' state", () => {
-      const result = AuthSelectors.getAuthError(state);
-
-      expect(result).toBe(ERROR_MSG);
+  describe('getUserId()', () => {
+    it('getUserId() should return userId if state.auth.userId is set', () => {
+      setState({ userId: '123' });
+      expect(AuthSelectors.getUserId(state)).toBe('123');
+    });
+    it('getUserId() should return userId if state.auth.userId is not set', () => {
+      setState({ userId: undefined });
+      expect(AuthSelectors.getUserId(state)).toBe(undefined);
     });
   });
 });

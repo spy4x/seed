@@ -1,32 +1,30 @@
-import { AuthEntity } from './auth.models';
 import * as AuthActions from './auth.actions';
-import { State, initialState, reducer } from './auth.reducer';
+import { initialState, reducer } from './auth.reducer';
 
 describe('Auth Reducer', () => {
-  const createAuthEntity = (id: string, name = ''): AuthEntity => ({
-    id,
-    name: name || `name-${id}`,
+  it('should return the previous state in case of unknown action', () => {
+    expect(reducer(initialState, {} as any)).toBe(initialState);
   });
 
-  describe('valid Auth actions', () => {
-    it('loadAuthSuccess should return set the list of known Auth', () => {
-      const auth = [createAuthEntity('PRODUCT-AAA'), createAuthEntity('PRODUCT-zzz')];
-      const action = AuthActions.loadAuthSuccess({ auth });
-
-      const result: State = reducer(initialState, action);
-
-      expect(result.loaded).toBe(true);
-      expect(result.ids.length).toBe(2);
-    });
+  it('authenticated', () => {
+    const result = reducer(initialState, AuthActions.authenticated({ userId: '123' }));
+    expect(result.isAuthenticating).toBe(false);
+    expect(result.userId).toBe('123');
   });
 
-  describe('unknown action', () => {
-    it('should return the previous state', () => {
-      const action = {} as any;
+  it('notAuthenticated', () => {
+    const result = reducer(initialState, AuthActions.notAuthenticated());
+    expect(result.isAuthenticating).toBe(false);
+    expect(result.userId).toBe(undefined);
+  });
 
-      const result = reducer(initialState, action);
+  it('authenticateAnonymously', () => {
+    const result = reducer({ ...initialState, isAuthenticating: false }, AuthActions.authenticateAnonymously());
+    expect(result.isAuthenticating).toBe(true);
+  });
 
-      expect(result).toBe(initialState);
-    });
+  it('signOut', () => {
+    const state = { ...initialState, isAuthenticating: false, userId: '123' };
+    expect(reducer(state, AuthActions.signOut())).toBe(state);
   });
 });

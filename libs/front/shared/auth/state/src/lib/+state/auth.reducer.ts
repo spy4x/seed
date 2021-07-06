@@ -28,6 +28,6 @@ const authReducer = createReducer<State>(
   on(AuthActions.authenticateAnonymously, (state: State) => ({ ...state, isAuthenticating: true })),
 );
 
-export function reducer(state: State | undefined, action: Action) {
+export function reducer(state: State | undefined, action: Action): State {
   return authReducer(state, action);
 }

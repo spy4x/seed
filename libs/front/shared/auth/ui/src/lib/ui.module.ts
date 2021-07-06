@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SignInComponent } from './sign-in/sign-in.component';
+import { SignInUIComponent } from './sign-in/sign-in.component';
 
 @NgModule({
   imports: [CommonModule],
-  declarations: [SignInComponent],
-  exports: [SignInComponent],
+  declarations: [SignInUIComponent],
+  exports: [SignInUIComponent],
 })
 export class SharedAuthUIModule {}
