@@ -819,6 +819,27 @@
           }
         }
       }
+    },
+    "e2e-shared-auth": {
+      "root": "libs/e2e/shared/auth",
+      "sourceRoot": "libs/e2e/shared/auth/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/e2e/shared/auth/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/e2e/shared/auth"],
+          "options": {
+            "jestConfig": "libs/e2e/shared/auth/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
     }
   }
 }

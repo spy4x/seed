@@ -1,8 +1,6 @@
-export enum SignInMethods {
-  anonymous = 'anonymous',
-}
+import { AuthMethods } from '@seed/front/shared/types';
 
-export class SignInComponentPO {
+export class SignInPO {
   readonly selector = 'seed-shared-auth-container-sign-in';
 
   readonly texts = {
@@ -19,11 +17,11 @@ export class SignInComponentPO {
     return cy.get(this.selector);
   }
 
-  getSignInButton(method: SignInMethods): Cypress.Chainable {
+  getSignInButton(method: AuthMethods): Cypress.Chainable {
     return cy.get(this.selector).get(`button[data-e2e=${method}]`);
   }
 
-  signIn(method: SignInMethods): void {
+  signIn(method: AuthMethods): void {
     this.getSignInButton(method).click();
   }
 
