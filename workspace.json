@@ -12,17 +12,19 @@
       "changeDetection": "OnPush"
     },
     "@nrwl/angular:component": {
+      "style": "sass",
       "inlineStyle": true,
       "spec": true,
       "flat": true,
-      "style": "sass",
       "changeDetection": "OnPush"
     },
     "@nrwl/angular:application": {
+      "linter": "eslint",
       "unitTestRunner": "jest",
       "e2eTestRunner": "cypress"
     },
     "@nrwl/angular:library": {
+      "linter": "eslint",
       "unitTestRunner": "jest"
     }
   },
@@ -287,10 +289,14 @@
             "main": "apps/front/web-client/src/main.ts",
             "polyfills": "apps/front/web-client/src/polyfills.ts",
             "tsConfig": "apps/front/web-client/tsconfig.app.json",
-            "assets": ["apps/front/web-client/src/favicon.ico", "apps/front/web-client/src/assets"],
+            "assets": [
+              "apps/front/web-client/src/favicon.ico",
+              "apps/front/web-client/src/assets",
+              "apps/front/web-client/src/firebase-messaging-sw.js"
+            ],
             "styles": ["apps/front/web-client/src/styles/index.sass"],
             "stylePreprocessorOptions": {
-              "includePaths": ["apps/front/web-client/web/src/styles"]
+              "includePaths": ["apps/front/web-client/web/src/styles", "libs/front/shared/styles/src"]
             },
             "scripts": [],
             "vendorChunk": true,
@@ -335,7 +341,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "front-web-client:build"
+            "browserTarget": "front-web-client:build",
+            "port": 4200
           },
           "configurations": {
             "production": {
@@ -421,7 +428,7 @@
             "assets": ["apps/front/admin-panel/src/favicon.ico", "apps/front/admin-panel/src/assets"],
             "styles": ["apps/front/admin-panel/src/styles/index.sass"],
             "stylePreprocessorOptions": {
-              "includePaths": ["apps/front/admin-panel/src/styles"]
+              "includePaths": ["apps/front/admin-panel/src/styles", "libs/front/shared/styles/src"]
             },
             "scripts": [],
             "vendorChunk": true,
@@ -466,7 +473,8 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "front-admin-panel:build"
+            "browserTarget": "front-admin-panel:build",
+            "port": 4201
           },
           "configurations": {
             "production": {
@@ -729,6 +737,105 @@
           "outputs": ["coverage/libs/back/api/notifications"],
           "options": {
             "jestConfig": "libs/back/api/notifications/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      }
+    },
+    "front-shared-styles": {
+      "root": "libs/front/shared/styles",
+      "sourceRoot": "libs/front/shared/styles/src",
+      "projectType": "library",
+      "architect": {}
+    },
+    "front-shared-auth-state": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth/state",
+      "sourceRoot": "libs/front/shared/auth/state/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth/state"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/state/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/shared/auth/state/src/**/*.ts",
+              "libs/front/shared/auth/state/src/**/*.html"
+            ]
+          }
+        }
+      }
+    },
+    "front-shared-auth-ui": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth/ui",
+      "sourceRoot": "libs/front/shared/auth/ui/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth/ui"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/ui/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/shared/auth/ui/src/**/*.ts", "libs/front/shared/auth/ui/src/**/*.html"]
+          }
+        }
+      }
+    },
+    "front-shared-auth-container": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth/container",
+      "sourceRoot": "libs/front/shared/auth/container/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth/container"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/container/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/shared/auth/container/src/**/*.ts",
+              "libs/front/shared/auth/container/src/**/*.html"
+            ]
+          }
+        }
+      }
+    },
+    "e2e-shared-auth": {
+      "root": "libs/e2e/shared/auth",
+      "sourceRoot": "libs/e2e/shared/auth/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/e2e/shared/auth/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/e2e/shared/auth"],
+          "options": {
+            "jestConfig": "libs/e2e/shared/auth/jest.config.js",
             "passWithNoTests": true
           }
         }

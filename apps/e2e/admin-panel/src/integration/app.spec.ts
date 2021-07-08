@@ -1,8 +1,3 @@
-describe('admin-panel', () => {
-  beforeEach(() => cy.visit('/'));
+import { runTest as testSignIn } from '@seed/e2e/shared/auth';
 
-  it('should display welcome message', () => {
-    cy.login('my-email@something.com', 'myPassword');
-    cy.get('router-outlet').should('be.empty');
-  });
-});
+testSignIn();

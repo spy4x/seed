@@ -28,7 +28,12 @@
       "@seed/shared/types": ["libs/shared/types/src/index.ts"],
       "@seed/front/shared/types": ["libs/front/shared/types/src/index.ts"],
       "@seed/back/api/user-devices": ["libs/back/api/user-devices/src/index.ts"],
-      "@seed/back/api/notifications": ["libs/back/api/notifications/src/index.ts"]
+      "@seed/back/api/notifications": ["libs/back/api/notifications/src/index.ts"],
+      "@seed/front/shared/styles": ["libs/front/shared/styles/src/index.ts"],
+      "@seed/front/shared/auth/state": ["libs/front/shared/auth/state/src/index.ts"],
+      "@seed/front/shared/auth/ui": ["libs/front/shared/auth/ui/src/index.ts"],
+      "@seed/front/shared/auth/container": ["libs/front/shared/auth/container/src/index.ts"],
+      "@seed/e2e/shared/auth": ["libs/e2e/shared/auth/src/index.ts"]
     },
     "strict": true,
     "strictBindCallApply": true,

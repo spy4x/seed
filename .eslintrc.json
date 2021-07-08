@@ -347,6 +347,7 @@
       "rules": {
         "no-console": 0,
         "max-lines-per-function": 0,
+        "@typescript-eslint/no-unsafe-call": 0,
         "@typescript-eslint/no-explicit-any": 0,
         "@typescript-eslint/explicit-function-return-type": 0,
         "@typescript-eslint/no-dynamic-delete": 0,
