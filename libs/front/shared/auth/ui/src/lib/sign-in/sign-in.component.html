@@ -8,7 +8,7 @@ background-size: cover"-->
 
     <ng-template #authentication>
       <ng-container *ngIf="isAuthenticated; else signInMethods">
-        <div class="w-50 shadow-sm p-5 rounded bg-white-75">
+        <div class="auth-container shadow-sm p-4 p-sm-5 rounded bg-white-75">
           <h2 class="mb-3">Welcome back!</h2>
           <button
             data-e2e="signOut"
@@ -23,36 +23,34 @@ background-size: cover"-->
     </ng-template>
 
     <ng-template #signInMethods>
-      <div class="shadow-sm p-5 rounded bg-white">
+      <div class="auth-container shadow-sm p-5 rounded bg-white">
         <h2 class="mb-3">Welcome!</h2>
         <p>Sign in or Sign up with</p>
-        <div class="container px-4">
-          <div class="mb-3 row">
-            <div class="col">
-              <button
-                [attr.data-e2e]="authMethods.google"
-                (click)="signIn.emit(authMethods.google)"
-                class="btn btn-outline-danger"
-              >
-                <b class="me-2">G</b>Google
-              </button>
-            </div>
+        <div class="row mb-3">
+          <div class="col-6">
+            <button
+              [attr.data-e2e]="authMethods.google"
+              (click)="signIn.emit(authMethods.google)"
+              class="btn btn-outline-danger w-100"
+            >
+              <b class="me-2">G</b>Google
+            </button>
+          </div>
 
-            <div class="col">
-              <button
-                [attr.data-e2e]="authMethods.github"
-                (click)="signIn.emit(authMethods.github)"
-                class="btn btn-outline-dark"
-              >
-                <i class="feather-github me-2"></i>Github
-              </button>
-            </div>
+          <div class="col-6">
+            <button
+              [attr.data-e2e]="authMethods.github"
+              (click)="signIn.emit(authMethods.github)"
+              class="btn btn-outline-dark w-100"
+            >
+              <i class="feather-github me-2"></i>Github
+            </button>
           </div>
         </div>
 
-        <div class="my-5">
+        <div class="my-4">
           <div class="position-relative border-top">
-            <div class="badge bg-white text-dark fw-normal position-absolute top-50 start-50 translate-middle">or</div>
+            <div class="badge bg-white text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
           </div>
         </div>
         <button
@@ -64,9 +62,9 @@ background-size: cover"-->
           <span>Try app anonymously</span>
         </button>
 
-        <div class="my-5">
+        <div class="my-4">
           <div class="position-relative border-top">
-            <div class="badge bg-white text-dark fw-normal position-absolute top-50 start-50 translate-middle">or</div>
+            <div class="badge bg-white text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
           </div>
         </div>
 

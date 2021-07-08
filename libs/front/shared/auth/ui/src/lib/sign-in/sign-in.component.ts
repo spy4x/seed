@@ -4,6 +4,7 @@ import { AuthMethods } from '@seed/front/shared/types';
 @Component({
   selector: 'seed-shared-auth-ui-sign-in',
   templateUrl: './sign-in.component.html',
+  styleUrls: ['./sign-in.component.sass'],
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
