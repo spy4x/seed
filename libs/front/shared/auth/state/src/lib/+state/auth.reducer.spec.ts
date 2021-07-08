@@ -1,30 +1,82 @@
 import * as AuthActions from './auth.actions';
 import { initialState, reducer } from './auth.reducer';
+import { AuthMethods } from '@seed/front/shared/types';
 
 describe('Auth Reducer', () => {
   it('should return the previous state in case of unknown action', () => {
     expect(reducer(initialState, {} as any)).toBe(initialState);
   });
 
-  it('authenticated', () => {
-    const result = reducer(initialState, AuthActions.authenticated({ userId: '123' }));
+  it('init', () => {
+    const result = reducer(initialState, AuthActions.init());
+    expect(result.isAuthenticating).toBe(true);
+    expect(result.userId).toBe(undefined);
+    expect(result.methodInProgress).toBe(AuthMethods.init);
+    expect(result.errorMessage).toBe(undefined);
+  });
+
+  it('authenticatedAfterInit', () => {
+    const result = reducer(initialState, AuthActions.authenticatedAfterInit({ userId: '123' }));
     expect(result.isAuthenticating).toBe(false);
     expect(result.userId).toBe('123');
+    expect(result.methodInProgress).toBe(undefined);
+    expect(result.errorMessage).toBe(undefined);
+  });
+
+  it('authenticatedAfterUserAction', () => {
+    const result = reducer(initialState, AuthActions.authenticatedAfterUserAction({ userId: '123' }));
+    expect(result.isAuthenticating).toBe(false);
+    expect(result.userId).toBe('123');
+    expect(result.methodInProgress).toBe(undefined);
+    expect(result.errorMessage).toBe(undefined);
   });
 
   it('notAuthenticated', () => {
     const result = reducer(initialState, AuthActions.notAuthenticated());
     expect(result.isAuthenticating).toBe(false);
     expect(result.userId).toBe(undefined);
+    expect(result.methodInProgress).toBe(undefined);
+    expect(result.errorMessage).toBe(undefined);
   });
 
   it('authenticateAnonymously', () => {
     const result = reducer({ ...initialState, isAuthenticating: false }, AuthActions.authenticateAnonymously());
     expect(result.isAuthenticating).toBe(true);
+    expect(result.methodInProgress).toBe(AuthMethods.anonymous);
+    expect(result.errorMessage).toBe(undefined);
+  });
+
+  it('authenticateWithGoogle', () => {
+    const result = reducer({ ...initialState, isAuthenticating: false }, AuthActions.authenticateWithGoogle());
+    expect(result.isAuthenticating).toBe(true);
+    expect(result.methodInProgress).toBe(AuthMethods.google);
+    expect(result.errorMessage).toBe(undefined);
+  });
+
+  it('authenticateWithGitHub', () => {
+    const result = reducer({ ...initialState, isAuthenticating: false }, AuthActions.authenticateWithGitHub());
+    expect(result.isAuthenticating).toBe(true);
+    expect(result.methodInProgress).toBe(AuthMethods.github);
+    expect(result.errorMessage).toBe(undefined);
+  });
+
+  it('authenticationFailed', () => {
+    const errorMessage = 'Wrong password';
+    const result = reducer(initialState, AuthActions.authenticationFailed({ errorMessage }));
+    expect(result.isAuthenticating).toBe(false);
+    expect(result.userId).toBe(undefined);
+    expect(result.methodInProgress).toBe(undefined);
+    expect(result.errorMessage).toBe(errorMessage);
   });
 
   it('signOut', () => {
-    const state = { ...initialState, isAuthenticating: false, userId: '123' };
+    const state = { ...initialState, userId: '123' };
     expect(reducer(state, AuthActions.signOut())).toBe(state);
+  });
+
+  it('signedOut', () => {
+    const state = { ...initialState, userId: '123' };
+    const result = reducer(state, AuthActions.signedOut());
+    expect(result.userId).toBe(undefined);
   });
 });

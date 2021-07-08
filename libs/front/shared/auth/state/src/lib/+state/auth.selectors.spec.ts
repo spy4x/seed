@@ -1,5 +1,6 @@
 import { AUTH_FEATURE_KEY, AuthPartialState, initialState, State } from './auth.reducer';
 import * as AuthSelectors from './auth.selectors';
+import { AuthMethods } from '@seed/front/shared/types';
 
 describe('Auth Selectors', () => {
   let state: AuthPartialState;
@@ -46,6 +47,29 @@ describe('Auth Selectors', () => {
     it('getUserId() should return userId if state.auth.userId is not set', () => {
       setState({ userId: undefined });
       expect(AuthSelectors.getUserId(state)).toBe(undefined);
+    });
+  });
+
+  describe('getMethodInProgress()', () => {
+    it('getMethodInProgress() should return methodInProgress if state.auth.methodInProgress is set', () => {
+      setState({ methodInProgress: AuthMethods.anonymous });
+      expect(AuthSelectors.getMethodInProgress(state)).toBe(AuthMethods.anonymous);
+    });
+    it('getMethodInProgress() should return undefined if state.auth.userId is not set', () => {
+      setState({ methodInProgress: undefined });
+      expect(AuthSelectors.getMethodInProgress(state)).toBe(undefined);
+    });
+  });
+
+  describe('getErrorMessage()', () => {
+    it('getErrorMessage() should return errorMessage if state.auth.errorMessage is set', () => {
+      const errorMessage = 'Wrong password';
+      setState({ errorMessage });
+      expect(AuthSelectors.getErrorMessage(state)).toBe(errorMessage);
+    });
+    it('getErrorMessage() should return undefined if state.auth.errorMessage is not set', () => {
+      setState({ errorMessage: undefined });
+      expect(AuthSelectors.getErrorMessage(state)).toBe(undefined);
     });
   });
 });

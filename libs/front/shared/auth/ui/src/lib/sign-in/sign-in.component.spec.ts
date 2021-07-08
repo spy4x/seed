@@ -29,6 +29,9 @@ describe(SignInUIComponent.name, () => {
   function getSignOutButton(): DebugElement {
     return fixture.debugElement.query(By.css(`button[data-e2e="signOut"]`));
   }
+  function getErrorMessageElement(): DebugElement {
+    return fixture.debugElement.query(By.css(`[data-e2e="errorMessage"]`));
+  }
 
   it('shows loading animation when isAuthenticating == true', () => {
     component.isAuthenticating = true;
@@ -50,12 +53,41 @@ describe(SignInUIComponent.name, () => {
     expect(getSignInButton(AuthMethods.anonymous).nativeElement.textContent).toContain('Try app anonymously');
   });
 
-  it('emits "signIn" on "Sign in" button click', done => {
+  it('shows error message on Sign In screen when errorMessage is set', () => {
+    component.isAuthenticating = false;
+    const errorMessage = 'Wrong password';
+    component.errorMessage = errorMessage;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Welcome!');
+    expect(getErrorMessageElement().nativeElement.textContent).toContain(errorMessage);
+
+    component.errorMessage = undefined;
+    fixture.detectChanges();
+    expect(getErrorMessageElement()).toBeFalsy();
+  });
+
+  it('emits "signIn(AuthMethods.anonymous)" on "Try app anonymously" button click', done => {
     component.signIn.pipe(first()).subscribe((method: AuthMethods) => {
       expect(method).toEqual(AuthMethods.anonymous);
       done();
     });
     getSignInButton(AuthMethods.anonymous).nativeElement.click();
+  });
+
+  it('emits "signIn(AuthMethods.google)" on "Google" button click', done => {
+    component.signIn.pipe(first()).subscribe((method: AuthMethods) => {
+      expect(method).toEqual(AuthMethods.google);
+      done();
+    });
+    getSignInButton(AuthMethods.google).nativeElement.click();
+  });
+
+  it('emits "signIn(AuthMethods.github)" on "GitHub" button click', done => {
+    component.signIn.pipe(first()).subscribe((method: AuthMethods) => {
+      expect(method).toEqual(AuthMethods.github);
+      done();
+    });
+    getSignInButton(AuthMethods.github).nativeElement.click();
   });
 
   it('emits "signOut" on "Sign out" button click', done => {

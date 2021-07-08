@@ -6,3 +6,5 @@ export const getAuthState = createFeatureSelector<State>(AUTH_FEATURE_KEY);
 export const getIsAuthenticating = createSelector(getAuthState, (state: State) => state.isAuthenticating);
 export const getIsAuthenticated = createSelector(getAuthState, (state: State) => !!state.userId);
 export const getUserId = createSelector(getAuthState, (state: State) => state.userId);
+export const getMethodInProgress = createSelector(getAuthState, (state: State) => state.methodInProgress);
+export const getErrorMessage = createSelector(getAuthState, (state: State) => state.errorMessage);

@@ -1,8 +1,9 @@
 import { NgModule } from '@angular/core';
-import { StoreModule } from '@ngrx/store';
+import { Store, StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import * as fromAuth from './+state/auth.reducer';
 import { AuthEffects } from './+state/auth.effects';
+import { AuthActions } from '../index';
 
 @NgModule({
   imports: [
@@ -10,4 +11,8 @@ import { AuthEffects } from './+state/auth.effects';
     EffectsModule.forFeature([AuthEffects]),
   ],
 })
-export class SharedAuthStateModule {}
+export class SharedAuthStateModule {
+  constructor(store: Store) {
+    store.dispatch(AuthActions.init());
+  }
+}
