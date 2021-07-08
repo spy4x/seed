@@ -9,7 +9,7 @@ export class SignInPO {
       welcomeBack: 'Welcome back!',
     },
     buttons: {
-      anonymously: 'Sign in anonymously',
+      anonymously: 'Try app anonymously',
     },
   };
 

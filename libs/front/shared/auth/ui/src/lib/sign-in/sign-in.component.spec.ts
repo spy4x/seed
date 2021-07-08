@@ -47,7 +47,7 @@ describe(SignInUIComponent.name, () => {
     component.isAuthenticated = false;
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Welcome!');
-    expect(getSignInButton(AuthMethods.anonymous).nativeElement.textContent).toContain('Sign in anonymously');
+    expect(getSignInButton(AuthMethods.anonymous).nativeElement.textContent).toContain('Try app anonymously');
   });
 
   it('emits "signIn" on "Sign in" button click', done => {
