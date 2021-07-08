@@ -12,6 +12,8 @@ export class SignInUIComponent {
 
   @Input() isAuthenticating?: null | boolean;
 
+  @Input() errorMessage?: null | string;
+
   @Output() signIn = new EventEmitter<AuthMethods>();
 
   @Output() signOut = new EventEmitter();

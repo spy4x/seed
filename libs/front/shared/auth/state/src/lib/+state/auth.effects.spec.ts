@@ -1,17 +1,20 @@
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, ReplaySubject } from 'rxjs';
+import { Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { provideMockStore } from '@ngrx/store/testing';
 import { AuthEffects } from './auth.effects';
 import * as AuthActions from './auth.actions';
 import { AngularFireAuth } from '@angular/fire/auth';
 import { hot } from '@nrwl/angular/testing';
+import { Action } from '@ngrx/store';
+import firebase from 'firebase/app';
 
 describe(AuthEffects.name, () => {
-  let actions$: Observable<any>;
+  let actions$ = new Observable<Action>();
   let effects: AuthEffects;
   let user$: ReplaySubject<null | { uid: string }>;
   const signInAnonymouslyMock = jest.fn();
+  const signInWithPopupMock = jest.fn();
   const signOutMock = jest.fn();
 
   beforeEach(() => {
@@ -26,6 +29,7 @@ describe(AuthEffects.name, () => {
           useValue: {
             user: user$,
             signInAnonymously: signInAnonymouslyMock,
+            signInWithPopup: signInWithPopupMock,
             signOut: signOutMock,
           },
         },
@@ -34,27 +38,103 @@ describe(AuthEffects.name, () => {
     effects = TestBed.inject(AuthEffects);
   });
 
-  it('authenticatedStateSub$', () => {
-    user$.next(null);
+  it('init$ success', () => {
+    const action = AuthActions.init();
+    const completion = AuthActions.authenticatedAfterInit({ userId: '123' });
     user$.next({ uid: '123' });
-    user$.next(null);
-    const expected = hot('(abc)', {
-      a: AuthActions.notAuthenticated(),
-      b: AuthActions.authenticated({ userId: '123' }),
-      c: AuthActions.notAuthenticated(),
-    });
-    expect(effects.authenticatedStateSub$).toBeObservable(expected);
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.init$).toBeObservable(expected);
   });
 
-  it('authenticateAnonymously$', () => {
-    actions$ = of(AuthActions.authenticateAnonymously());
-    effects.authenticateAnonymously$.subscribe();
+  it('init$ fail', () => {
+    const action = AuthActions.init();
+    const completion = AuthActions.notAuthenticated();
+    user$.next(null);
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.init$).toBeObservable(expected);
+  });
+
+  it('authenticateAnonymously$ success', () => {
+    const action = AuthActions.authenticateAnonymously();
+    const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
+    signInAnonymouslyMock.mockReturnValue(
+      of({
+        user: { uid: '123' },
+      }),
+    );
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.authenticateAnonymously$).toBeObservable(expected);
     expect(signInAnonymouslyMock).toHaveBeenCalled();
   });
 
+  it('authenticateAnonymously$ fail', () => {
+    const action = AuthActions.authenticateAnonymously();
+    const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    signInAnonymouslyMock.mockReturnValue(throwError(new Error('Auth failed')));
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.authenticateAnonymously$).toBeObservable(expected);
+    expect(signInAnonymouslyMock).toHaveBeenCalled();
+  });
+
+  it('authenticateWithGoogle$ success', () => {
+    const action = AuthActions.authenticateWithGoogle();
+    const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
+    signInWithPopupMock.mockReturnValue(
+      of({
+        user: { uid: '123' },
+      }),
+    );
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.authenticateWithGoogle$).toBeObservable(expected);
+    expect(signInWithPopupMock).toHaveBeenCalledWith(new firebase.auth.GoogleAuthProvider());
+  });
+
+  it('authenticateWithGoogle$ fail', () => {
+    const action = AuthActions.authenticateWithGoogle();
+    const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    signInWithPopupMock.mockReturnValue(throwError(new Error('Auth failed')));
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.authenticateWithGoogle$).toBeObservable(expected);
+    expect(signInWithPopupMock).toHaveBeenCalledWith(new firebase.auth.GoogleAuthProvider());
+  });
+
+  it('authenticateWithGitHub$ success', () => {
+    const action = AuthActions.authenticateWithGitHub();
+    const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
+    signInWithPopupMock.mockReturnValue(
+      of({
+        user: { uid: '123' },
+      }),
+    );
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.authenticateWithGitHub$).toBeObservable(expected);
+    expect(signInWithPopupMock).toHaveBeenCalledWith(new firebase.auth.GithubAuthProvider());
+  });
+
+  it('authenticateWithGitHub$ fail', () => {
+    const action = AuthActions.authenticateWithGitHub();
+    const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    signInWithPopupMock.mockReturnValue(throwError(new Error('Auth failed')));
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.authenticateWithGitHub$).toBeObservable(expected);
+    expect(signInWithPopupMock).toHaveBeenCalledWith(new firebase.auth.GithubAuthProvider());
+  });
+
   it('signOut$', () => {
-    actions$ = of(AuthActions.signOut());
-    effects.signOut$.subscribe();
+    const action = AuthActions.signOut();
+    const completion = AuthActions.signedOut();
+    signOutMock.mockReturnValue(of(undefined));
+    actions$ = hot('a', { a: action });
+    const expected = hot('b', { b: completion });
+    expect(effects.signOut$).toBeObservable(expected);
     expect(signOutMock).toHaveBeenCalled();
   });
 });

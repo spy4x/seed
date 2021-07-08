@@ -47,10 +47,18 @@ describe(SignInContainerComponent.name, () => {
   });
 
   it('links state.auth.isAuthenticating with UI component', async () => {
-    expect(component.isAuthenticating).toBe(true);
-    await updateState({ isAuthenticating: false });
-    fixture.detectChanges();
     expect(component.isAuthenticating).toBe(false);
+    await updateState({ isAuthenticating: true });
+    fixture.detectChanges();
+    expect(component.isAuthenticating).toBe(true);
+  });
+
+  it('links state.auth.errorMessage with UI component', async () => {
+    const errorMessage = 'Wrong password';
+    expect(component.errorMessage).toBe(undefined);
+    await updateState({ errorMessage });
+    fixture.detectChanges();
+    expect(component.errorMessage).toBe(errorMessage);
   });
 
   it('links isAuthenticated with UI component', async () => {
@@ -65,10 +73,20 @@ describe(SignInContainerComponent.name, () => {
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateAnonymously());
   });
 
+  it('dispatches action "authenticateWithGoogle" when AuthMethods.google is emitted from component with through signIn emitter', () => {
+    component.signIn.next(AuthMethods.google);
+    expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithGoogle());
+  });
+
+  it('dispatches action "authenticateWithGitHub" when AuthMethods.github is emitted from component with through signIn emitter', () => {
+    component.signIn.next(AuthMethods.github);
+    expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithGitHub());
+  });
+
   it('throws error when unknown AuthMethod is emitted from component with through signIn emitter', () => {
     const originalConsoleError = console.error;
     console.error = jest.fn();
-    const method = AuthMethods.github;
+    const method = AuthMethods.facebook;
     component.signIn.next(method);
     expect(console.error).toHaveBeenCalledWith(`Auth method ${method} is not supported yet.`);
     console.error = originalConsoleError;

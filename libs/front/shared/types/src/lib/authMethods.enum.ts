@@ -5,4 +5,8 @@ export enum AuthMethods {
   github = 'github',
   password = 'password',
   link = 'link',
+  /**
+   * System method for initial check of user state on app start
+   */
+  init = 'init',
 }

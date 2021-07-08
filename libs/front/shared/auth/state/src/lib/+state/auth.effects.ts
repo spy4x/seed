@@ -3,32 +3,83 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 
 import * as AuthActions from './auth.actions';
 import { AngularFireAuth } from '@angular/fire/auth';
-import { exhaustMap, map } from 'rxjs/operators';
+import { catchError, exhaustMap, map, take } from 'rxjs/operators';
+import firebase from 'firebase/app';
+import { from, of } from 'rxjs';
+import { ONE } from '@seed/shared/constants';
 
 @Injectable()
 export class AuthEffects {
-  authenticatedStateSub$ = createEffect(() =>
-    this.fireAuth.user.pipe(
-      map(user => (user ? AuthActions.authenticated({ userId: user.uid }) : AuthActions.notAuthenticated())),
+  init$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.init),
+      exhaustMap(() =>
+        this.fireAuth.user.pipe(
+          take(ONE),
+          map(user =>
+            user ? AuthActions.authenticatedAfterInit({ userId: user.uid }) : AuthActions.notAuthenticated(),
+          ),
+        ),
+      ),
     ),
   );
 
-  authenticateAnonymously$ = createEffect(
-    () =>
-      this.actions$.pipe(
-        ofType(AuthActions.authenticateAnonymously),
-        exhaustMap(async () => this.fireAuth.signInAnonymously()),
+  authenticateAnonymously$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.authenticateAnonymously),
+      exhaustMap(() =>
+        from(this.fireAuth.signInAnonymously()).pipe(
+          map(credential => {
+            if (!credential.user) {
+              throw new Error('User is not defined.');
+            }
+            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+          }),
+          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+        ),
       ),
-    { dispatch: false },
+    ),
   );
 
-  signOut$ = createEffect(
-    () =>
-      this.actions$.pipe(
-        ofType(AuthActions.signOut),
-        exhaustMap(async () => this.fireAuth.signOut()),
+  authenticateWithGoogle$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.authenticateWithGoogle),
+      exhaustMap(() =>
+        from(this.fireAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())).pipe(
+          map(credential => {
+            if (!credential.user) {
+              throw new Error('User is not defined.');
+            }
+            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+          }),
+          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+        ),
       ),
-    { dispatch: false },
+    ),
+  );
+
+  authenticateWithGitHub$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.authenticateWithGitHub),
+      exhaustMap(() =>
+        from(this.fireAuth.signInWithPopup(new firebase.auth.GithubAuthProvider())).pipe(
+          map(credential => {
+            if (!credential.user) {
+              throw new Error('User is not defined.');
+            }
+            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+          }),
+          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+        ),
+      ),
+    ),
+  );
+
+  signOut$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.signOut),
+      exhaustMap(() => from(this.fireAuth.signOut()).pipe(map(() => AuthActions.signedOut()))),
+    ),
   );
 
   constructor(readonly actions$: Actions, readonly fireAuth: AngularFireAuth) {}

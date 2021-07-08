@@ -14,12 +14,20 @@ export class SignInContainerComponent {
 
   isAuthenticated$ = this.store.select(AuthSelectors.getIsAuthenticated);
 
+  errorMessage$ = this.store.select(AuthSelectors.getErrorMessage);
+
   constructor(readonly store: Store) {}
 
   signIn(method: AuthMethods): void {
     switch (method) {
       case AuthMethods.anonymous: {
         return this.store.dispatch(AuthActions.authenticateAnonymously());
+      }
+      case AuthMethods.google: {
+        return this.store.dispatch(AuthActions.authenticateWithGoogle());
+      }
+      case AuthMethods.github: {
+        return this.store.dispatch(AuthActions.authenticateWithGitHub());
       }
       default: {
         /* eslint-disable-next-line no-console */
