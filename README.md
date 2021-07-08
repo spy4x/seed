@@ -10,7 +10,7 @@
 
 ## Where to start? ▶️
 0. Check README file (this one) to understand more about project structure and goals
-0. Clone this repo and run init script (WIP) to configure your cloud & local environment
+0. Clone this repo and [init cloud infrastructure (WIP instruction)](docs/how-to-init-cloud-infrastructure.md) to configure your cloud & local environment
 0. [Launch it locally and start development](docs/code-organisation/start-development.md)
 0. [Deploy](cloud-build/deploy.yaml)
 0. Profit 🌟
@@ -228,5 +228,11 @@
 <a href="https://github.com/urnix">  
   <img src="https://avatars.githubusercontent.com/u/7656366?v=4" width="100" />
   <div>Artem</div>
+</a>
+<br/>
+
+<a href="https://github.com/Eirene">  
+  <img src="https://avatars.githubusercontent.com/u/1826433?v=4" width="100" />
+  <div>Irina</div>
 </a>
 <br/>
