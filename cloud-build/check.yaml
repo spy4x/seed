@@ -17,35 +17,30 @@ steps:
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:format']
-    waitFor: ['install_deps']
 
   - id: lint
     name: node
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:lint']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['install_deps']
 
   - id: test
     name: node
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:test']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['install_deps']
 
   - id: build
     name: node
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:build']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['install_deps']
 
   - id: e2e
     name: cypress/base
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:e2e']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['install_deps']
 
 availableSecrets:
   secretManager:
