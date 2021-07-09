@@ -75,6 +75,40 @@ export class AuthEffects {
     ),
   );
 
+  authenticateWithEmailAndPassword$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.authenticateWithEmailAndPassword),
+      exhaustMap(action =>
+        from(this.fireAuth.signInWithEmailAndPassword(action.email, action.password)).pipe(
+          map(credential => {
+            if (!credential.user) {
+              throw new Error('User is not defined.');
+            }
+            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+          }),
+          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+        ),
+      ),
+    ),
+  );
+
+  signUpWithEmailAndPassword$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.signUpWithEmailAndPassword),
+      exhaustMap(action =>
+        from(this.fireAuth.createUserWithEmailAndPassword(action.email, action.password)).pipe(
+          map(credential => {
+            if (!credential.user) {
+              throw new Error('User is not defined.');
+            }
+            return AuthActions.signedUp({ userId: credential.user.uid });
+          }),
+          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+        ),
+      ),
+    ),
+  );
+
   signOut$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.signOut),

@@ -1,6 +1,7 @@
 import * as AuthActions from './auth.actions';
 import { initialState, reducer } from './auth.reducer';
 import { AuthMethods } from '@seed/front/shared/types';
+import { testEmail, testPassword } from '@seed/shared/mock-data';
 
 describe('Auth Reducer', () => {
   it('should return the previous state in case of unknown action', () => {
@@ -25,6 +26,14 @@ describe('Auth Reducer', () => {
 
   it('authenticatedAfterUserAction', () => {
     const result = reducer(initialState, AuthActions.authenticatedAfterUserAction({ userId: '123' }));
+    expect(result.isAuthenticating).toBe(false);
+    expect(result.userId).toBe('123');
+    expect(result.methodInProgress).toBe(undefined);
+    expect(result.errorMessage).toBe(undefined);
+  });
+
+  it('signedUp', () => {
+    const result = reducer(initialState, AuthActions.signedUp({ userId: '123' }));
     expect(result.isAuthenticating).toBe(false);
     expect(result.userId).toBe('123');
     expect(result.methodInProgress).toBe(undefined);
@@ -57,6 +66,26 @@ describe('Auth Reducer', () => {
     const result = reducer({ ...initialState, isAuthenticating: false }, AuthActions.authenticateWithGitHub());
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.github);
+    expect(result.errorMessage).toBe(undefined);
+  });
+
+  it('authenticateWithEmailAndPassword', () => {
+    const result = reducer(
+      { ...initialState, isAuthenticating: false },
+      AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: testPassword }),
+    );
+    expect(result.isAuthenticating).toBe(true);
+    expect(result.methodInProgress).toBe(AuthMethods.password);
+    expect(result.errorMessage).toBe(undefined);
+  });
+
+  it('signUpWithEmailAndPassword', () => {
+    const result = reducer(
+      { ...initialState, isAuthenticating: false },
+      AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: testPassword }),
+    );
+    expect(result.isAuthenticating).toBe(true);
+    expect(result.methodInProgress).toBe(AuthMethods.password);
     expect(result.errorMessage).toBe(undefined);
   });
 

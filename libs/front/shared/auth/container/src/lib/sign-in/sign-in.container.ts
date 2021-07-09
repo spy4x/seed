@@ -18,7 +18,7 @@ export class SignInContainerComponent {
 
   constructor(readonly store: Store) {}
 
-  signIn(method: AuthMethods): void {
+  signIn({ method, email, password }: { method: AuthMethods; email?: string; password?: string }): void {
     switch (method) {
       case AuthMethods.anonymous: {
         return this.store.dispatch(AuthActions.authenticateAnonymously());
@@ -29,11 +29,22 @@ export class SignInContainerComponent {
       case AuthMethods.github: {
         return this.store.dispatch(AuthActions.authenticateWithGitHub());
       }
+      case AuthMethods.password: {
+        return this.store.dispatch(
+          AuthActions.authenticateWithEmailAndPassword({ email: email || '', password: password || '' }),
+        );
+      }
       default: {
         /* eslint-disable-next-line no-console */
         console.error(`Auth method ${method} is not supported yet.`);
       }
     }
+  }
+
+  signUp({ email, password }: { email: string; password: string }): void {
+    return this.store.dispatch(
+      AuthActions.signUpWithEmailAndPassword({ email: email || '', password: password || '' }),
+    );
   }
 
   signOut(): void {
