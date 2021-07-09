@@ -830,14 +830,6 @@
           "options": {
             "lintFilePatterns": ["libs/e2e/shared/auth/**/*.ts"]
           }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/e2e/shared/auth"],
-          "options": {
-            "jestConfig": "libs/e2e/shared/auth/jest.config.js",
-            "passWithNoTests": true
-          }
         }
       }
     }
