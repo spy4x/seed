@@ -109,6 +109,18 @@ export class AuthEffects {
     ),
   );
 
+  restorePassword$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.restorePasswordAttempt),
+      exhaustMap(action =>
+        from(this.fireAuth.sendPasswordResetEmail(action.email)).pipe(
+          map(() => AuthActions.restorePasswordRequestSent()),
+          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+        ),
+      ),
+    ),
+  );
+
   signOut$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthActions.signOut),

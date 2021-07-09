@@ -15,11 +15,15 @@ export class SignInUIComponent {
 
   @Input() errorMessage?: null | string;
 
+  @Input() successMessage?: null | string;
+
   @Output() signIn = new EventEmitter<{ method: AuthMethods; email?: string; password?: string }>();
 
   @Output() signUp = new EventEmitter<{ email: string; password: string }>();
 
   @Output() signOut = new EventEmitter();
+
+  @Output() restorePassword = new EventEmitter<{ email: string }>();
 
   authMethods = AuthMethods;
 }

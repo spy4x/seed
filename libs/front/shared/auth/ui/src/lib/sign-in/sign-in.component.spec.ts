@@ -33,8 +33,14 @@ describe(SignInUIComponent.name, () => {
   function getSignOutButton(): DebugElement {
     return fixture.debugElement.query(By.css(`button[data-e2e="signOut"]`));
   }
+  function getRestorePasswordButton(): DebugElement {
+    return fixture.debugElement.query(By.css(`button[data-e2e="restorePassword"]`));
+  }
   function getErrorMessageElement(): DebugElement {
     return fixture.debugElement.query(By.css(`[data-e2e="errorMessage"]`));
+  }
+  function getSuccessMessageElement(): DebugElement {
+    return fixture.debugElement.query(By.css(`[data-e2e="successMessage"]`));
   }
 
   it('shows loading animation when isAuthenticating == true', () => {
@@ -68,6 +74,19 @@ describe(SignInUIComponent.name, () => {
     component.errorMessage = undefined;
     fixture.detectChanges();
     expect(getErrorMessageElement()).toBeFalsy();
+  });
+
+  it('shows success message on Sign In screen when successMessage is set', () => {
+    component.isAuthenticating = false;
+    const successMessage = 'Password reset!';
+    component.successMessage = successMessage;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Welcome!');
+    expect(getSuccessMessageElement().nativeElement.textContent).toContain(successMessage);
+
+    component.successMessage = undefined;
+    fixture.detectChanges();
+    expect(getSuccessMessageElement()).toBeFalsy();
   });
 
   it('emits "signIn(AuthMethods.anonymous)" on "Try app anonymously" button click', done => {
@@ -115,6 +134,15 @@ describe(SignInUIComponent.name, () => {
     fixture.debugElement.query(By.css(`input[data-e2e="email"]`)).nativeElement.value = testEmail;
     fixture.debugElement.query(By.css(`input[data-e2e="password"]`)).nativeElement.value = testPassword;
     getSignUpButton().nativeElement.click();
+  });
+
+  it('emits "restorePassword(email)" on "Restore" button click', done => {
+    component.restorePassword.pipe(first()).subscribe(({ email }) => {
+      expect(email).toEqual(testEmail);
+      done();
+    });
+    fixture.debugElement.query(By.css(`input[data-e2e="email"]`)).nativeElement.value = testEmail;
+    getRestorePasswordButton().nativeElement.click();
   });
 
   it('emits "signOut" on "Sign out" button click', done => {

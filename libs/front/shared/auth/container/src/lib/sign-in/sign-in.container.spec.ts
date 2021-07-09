@@ -62,6 +62,14 @@ describe(SignInContainerComponent.name, () => {
     expect(component.errorMessage).toBe(errorMessage);
   });
 
+  it('links state.auth.successMessage with UI component', async () => {
+    const successMessage = 'Password reset!';
+    expect(component.successMessage).toBe(undefined);
+    await updateState({ successMessage });
+    fixture.detectChanges();
+    expect(component.successMessage).toBe(successMessage);
+  });
+
   it('links isAuthenticated with UI component', async () => {
     expect(component.isAuthenticated).toBe(false);
     await updateState({ userId: '123', isAuthenticating: false });
@@ -110,6 +118,11 @@ describe(SignInContainerComponent.name, () => {
     const password = '';
     component.signUp.next({ email, password });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signUpWithEmailAndPassword({ email, password }));
+  });
+
+  it('dispatches action "restorePasswordAttempt" when component emit restorePassword emitter', () => {
+    component.restorePassword.next({ email: testEmail });
+    expect(store.dispatch).toHaveBeenCalledWith(AuthActions.restorePasswordAttempt({ email: testEmail }));
   });
 
   it('throws error when unknown AuthMethod is emitted from component with through signIn emitter', () => {

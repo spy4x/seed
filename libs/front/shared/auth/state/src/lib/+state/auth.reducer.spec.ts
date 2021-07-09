@@ -14,6 +14,7 @@ describe('Auth Reducer', () => {
     expect(result.userId).toBe(undefined);
     expect(result.methodInProgress).toBe(AuthMethods.init);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('authenticatedAfterInit', () => {
@@ -22,6 +23,7 @@ describe('Auth Reducer', () => {
     expect(result.userId).toBe('123');
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('authenticatedAfterUserAction', () => {
@@ -30,6 +32,7 @@ describe('Auth Reducer', () => {
     expect(result.userId).toBe('123');
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('signedUp', () => {
@@ -38,6 +41,7 @@ describe('Auth Reducer', () => {
     expect(result.userId).toBe('123');
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('notAuthenticated', () => {
@@ -46,6 +50,7 @@ describe('Auth Reducer', () => {
     expect(result.userId).toBe(undefined);
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('authenticateAnonymously', () => {
@@ -53,6 +58,7 @@ describe('Auth Reducer', () => {
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.anonymous);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('authenticateWithGoogle', () => {
@@ -60,6 +66,7 @@ describe('Auth Reducer', () => {
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.google);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('authenticateWithGitHub', () => {
@@ -67,6 +74,7 @@ describe('Auth Reducer', () => {
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.github);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('authenticateWithEmailAndPassword', () => {
@@ -77,6 +85,7 @@ describe('Auth Reducer', () => {
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.password);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('signUpWithEmailAndPassword', () => {
@@ -87,6 +96,7 @@ describe('Auth Reducer', () => {
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.password);
     expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
   });
 
   it('authenticationFailed', () => {
@@ -96,6 +106,25 @@ describe('Auth Reducer', () => {
     expect(result.userId).toBe(undefined);
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(errorMessage);
+    expect(result.successMessage).toBe(undefined);
+  });
+
+  it('restorePasswordAttempt', () => {
+    const result = reducer(initialState, AuthActions.restorePasswordAttempt({ email: testEmail }));
+    expect(result.isAuthenticating).toBe(true);
+    expect(result.userId).toBe(undefined);
+    expect(result.methodInProgress).toBe(AuthMethods.password);
+    expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
+  });
+
+  it('restorePasswordRequestSent', () => {
+    const result = reducer(initialState, AuthActions.restorePasswordRequestSent());
+    expect(result.isAuthenticating).toBe(false);
+    expect(result.userId).toBe(undefined);
+    expect(result.methodInProgress).toBe(undefined);
+    expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe('Check your email for password reset instructions.');
   });
 
   it('signOut', () => {

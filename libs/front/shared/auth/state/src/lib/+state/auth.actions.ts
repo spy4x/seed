@@ -23,10 +23,15 @@ export const authenticateWithEmailAndPassword = createAction(
   '[Auth/UI] Authenticate with Email and Password',
   props<{ email: string; password: string }>(),
 );
+
 export const signUpWithEmailAndPassword = createAction(
   '[Auth/UI] Sign up with Email and Password',
   props<{ email: string; password: string }>(),
 );
+
+export const restorePasswordAttempt = createAction('[Auth/UI] Restore password attempt', props<{ email: string }>());
+
+export const restorePasswordRequestSent = createAction('[Auth/API] Restore password request sent');
 
 export const authenticationFailed = createAction('[Auth/API] Authentication failed', props<{ errorMessage: string }>());
 

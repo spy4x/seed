@@ -16,6 +16,8 @@ export class SignInContainerComponent {
 
   errorMessage$ = this.store.select(AuthSelectors.getErrorMessage);
 
+  successMessage$ = this.store.select(AuthSelectors.getSuccessMessage);
+
   constructor(readonly store: Store) {}
 
   signIn({ method, email, password }: { method: AuthMethods; email?: string; password?: string }): void {
@@ -45,6 +47,10 @@ export class SignInContainerComponent {
     return this.store.dispatch(
       AuthActions.signUpWithEmailAndPassword({ email: email || '', password: password || '' }),
     );
+  }
+
+  restorePassword({ email }: { email: string }): void {
+    return this.store.dispatch(AuthActions.restorePasswordAttempt({ email }));
   }
 
   signOut(): void {
