@@ -19,6 +19,7 @@ describe(AuthEffects.name, () => {
   const signOutMock = jest.fn();
   const signInWithEmailAndPasswordMock = jest.fn();
   const createUserWithEmailAndPasswordMock = jest.fn();
+  const sendPasswordResetEmailMock = jest.fn();
 
   beforeEach(() => {
     user$ = new ReplaySubject<null | { uid: string }>();
@@ -35,6 +36,7 @@ describe(AuthEffects.name, () => {
             signInWithPopup: signInWithPopupMock,
             signInWithEmailAndPassword: signInWithEmailAndPasswordMock,
             createUserWithEmailAndPassword: createUserWithEmailAndPasswordMock,
+            sendPasswordResetEmail: sendPasswordResetEmailMock,
             signOut: signOutMock,
           },
         },
@@ -200,6 +202,28 @@ describe(AuthEffects.name, () => {
       const expected = hot('b', { b: completion });
       expect(effects.signUpWithEmailAndPassword$).toBeObservable(expected);
       expect(createUserWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+    });
+  });
+
+  describe('restorePassword$', () => {
+    it('success', () => {
+      const action = AuthActions.restorePasswordAttempt({ email: testEmail });
+      const completion = AuthActions.restorePasswordRequestSent();
+      sendPasswordResetEmailMock.mockReturnValue(of(undefined));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.restorePassword$).toBeObservable(expected);
+      expect(sendPasswordResetEmailMock).toHaveBeenCalledWith(testEmail);
+    });
+
+    it('fail', () => {
+      const action = AuthActions.restorePasswordAttempt({ email: testEmail });
+      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      sendPasswordResetEmailMock.mockReturnValue(throwError(new Error('Auth failed')));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.restorePassword$).toBeObservable(expected);
+      expect(sendPasswordResetEmailMock).toHaveBeenCalledWith(testEmail);
     });
   });
 });
