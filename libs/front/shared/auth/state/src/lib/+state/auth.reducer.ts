@@ -27,13 +27,18 @@ const authReducer = createReducer<State>(
     isAuthenticating: true,
     methodInProgress: AuthMethods.init,
   })),
-  on(AuthActions.authenticatedAfterInit, AuthActions.authenticatedAfterUserAction, (state: State, { userId }) => ({
-    ...state,
-    userId,
-    isAuthenticating: false,
-    errorMessage: undefined,
-    methodInProgress: undefined,
-  })),
+  on(
+    AuthActions.authenticatedAfterInit,
+    AuthActions.authenticatedAfterUserAction,
+    AuthActions.signedUp,
+    (state: State, { userId }) => ({
+      ...state,
+      userId,
+      isAuthenticating: false,
+      errorMessage: undefined,
+      methodInProgress: undefined,
+    }),
+  ),
   on(AuthActions.notAuthenticated, (state: State) => ({
     ...state,
     userId: undefined,
@@ -58,6 +63,12 @@ const authReducer = createReducer<State>(
     isAuthenticating: true,
     errorMessage: undefined,
     methodInProgress: AuthMethods.github,
+  })),
+  on(AuthActions.authenticateWithEmailAndPassword, AuthActions.signUpWithEmailAndPassword, (state: State) => ({
+    ...state,
+    isAuthenticating: true,
+    errorMessage: undefined,
+    methodInProgress: AuthMethods.password,
   })),
   on(AuthActions.authenticationFailed, (state: State, { errorMessage }) => ({
     ...state,

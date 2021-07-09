@@ -11,11 +11,22 @@ export const authenticatedAfterUserAction = createAction(
   props<{ userId: string }>(),
 );
 
+export const signedUp = createAction('[Auth/API] Signed up', props<{ userId: string }>());
+
 export const authenticateAnonymously = createAction('[Auth/UI] Authenticate anonymously');
 
 export const authenticateWithGoogle = createAction('[Auth/UI] Authenticate with Google');
 
 export const authenticateWithGitHub = createAction('[Auth/UI] Authenticate with GitHub');
+
+export const authenticateWithEmailAndPassword = createAction(
+  '[Auth/UI] Authenticate with Email and Password',
+  props<{ email: string; password: string }>(),
+);
+export const signUpWithEmailAndPassword = createAction(
+  '[Auth/UI] Sign up with Email and Password',
+  props<{ email: string; password: string }>(),
+);
 
 export const authenticationFailed = createAction('[Auth/API] Authentication failed', props<{ errorMessage: string }>());
 

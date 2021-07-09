@@ -30,7 +30,7 @@ background-size: cover"-->
           <div class="col-6">
             <button
               [attr.data-e2e]="authMethods.google"
-              (click)="signIn.emit(authMethods.google)"
+              (click)="signIn.emit({ method: authMethods.google })"
               class="btn btn-outline-danger w-100"
             >
               <b class="me-2">G</b>Google
@@ -40,7 +40,7 @@ background-size: cover"-->
           <div class="col-6">
             <button
               [attr.data-e2e]="authMethods.github"
-              (click)="signIn.emit(authMethods.github)"
+              (click)="signIn.emit({ method: authMethods.github })"
               class="btn btn-outline-dark w-100"
             >
               <i class="feather-github me-2"></i>Github
@@ -55,7 +55,7 @@ background-size: cover"-->
         </div>
         <button
           [attr.data-e2e]="authMethods.anonymous"
-          (click)="signIn.emit(authMethods.anonymous)"
+          (click)="signIn.emit({ method: authMethods.anonymous })"
           class="btn btn-outline-primary w-100 d-flex justify-content-center align-items-center"
         >
           <i class="feather-log-in me-2"></i>
@@ -76,7 +76,14 @@ background-size: cover"-->
                 <button class="btn btn-link btn-sm text-secondary">Send link</button>
               </div>
             </label>
-            <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" />
+            <input
+              data-e2e="email"
+              type="email"
+              #emailEl
+              class="form-control"
+              id="exampleInputEmail1"
+              aria-describedby="emailHelp"
+            />
           </div>
           <div class="mb-3">
             <label for="exampleInputPassword1" class="form-label d-block">
@@ -85,14 +92,28 @@ background-size: cover"-->
                 <button class="btn btn-link btn-sm text-secondary">Restore</button>
               </div>
             </label>
-            <input type="password" class="form-control" id="exampleInputPassword1" />
+            <input data-e2e="password" type="password" #passwordEl class="form-control" id="exampleInputPassword1" />
           </div>
           <div class="d-flex justify-content-center align-items-center">
             <span>
-              <button class="btn btn-light">Sign Up</button>
+              <button
+                data-e2e="signUp"
+                type="button"
+                (click)="signUp.emit({ email: emailEl.value, password: passwordEl.value })"
+                class="btn btn-light"
+              >
+                Sign Up
+              </button>
             </span>
             <span class="ms-auto">
-              <button class="btn btn-primary d-flex justify-content-center align-items-center">
+              <button
+                [attr.data-e2e]="authMethods.password"
+                class="btn btn-primary d-flex justify-content-center align-items-center"
+                type="button"
+                (click)="
+                  signIn.emit({ method: authMethods.password, email: emailEl.value, password: passwordEl.value })
+                "
+              >
                 <i class="feather-log-in me-2"></i>
                 <span>Sign in</span>
               </button>

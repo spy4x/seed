@@ -15,7 +15,9 @@ export class SignInUIComponent {
 
   @Input() errorMessage?: null | string;
 
-  @Output() signIn = new EventEmitter<AuthMethods>();
+  @Output() signIn = new EventEmitter<{ method: AuthMethods; email?: string; password?: string }>();
+
+  @Output() signUp = new EventEmitter<{ email: string; password: string }>();
 
   @Output() signOut = new EventEmitter();
 

@@ -3,5 +3,6 @@
   [isAuthenticated]="isAuthenticated$ | async"
   [errorMessage]="errorMessage$ | async"
   (signIn)="signIn($event)"
+  (signUp)="signUp($event)"
   (signOut)="signOut()"
 ></seed-shared-auth-ui-sign-in>
