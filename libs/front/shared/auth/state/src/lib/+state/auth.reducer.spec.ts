@@ -54,7 +54,7 @@ describe('Auth Reducer', () => {
   });
 
   it('authenticateAnonymously', () => {
-    const result = reducer({ ...initialState, isAuthenticating: false }, AuthActions.authenticateAnonymously());
+    const result = reducer(initialState, AuthActions.authenticateAnonymously());
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.anonymous);
     expect(result.errorMessage).toBe(undefined);
@@ -62,7 +62,7 @@ describe('Auth Reducer', () => {
   });
 
   it('authenticateWithGoogle', () => {
-    const result = reducer({ ...initialState, isAuthenticating: false }, AuthActions.authenticateWithGoogle());
+    const result = reducer(initialState, AuthActions.authenticateWithGoogle());
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.google);
     expect(result.errorMessage).toBe(undefined);
@@ -70,7 +70,7 @@ describe('Auth Reducer', () => {
   });
 
   it('authenticateWithGitHub', () => {
-    const result = reducer({ ...initialState, isAuthenticating: false }, AuthActions.authenticateWithGitHub());
+    const result = reducer(initialState, AuthActions.authenticateWithGitHub());
     expect(result.isAuthenticating).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethods.github);
     expect(result.errorMessage).toBe(undefined);
@@ -79,7 +79,7 @@ describe('Auth Reducer', () => {
 
   it('authenticateWithEmailAndPassword', () => {
     const result = reducer(
-      { ...initialState, isAuthenticating: false },
+      initialState,
       AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: testPassword }),
     );
     expect(result.isAuthenticating).toBe(true);
@@ -88,9 +88,25 @@ describe('Auth Reducer', () => {
     expect(result.successMessage).toBe(undefined);
   });
 
+  it('authenticateWithEmailLink', () => {
+    const result = reducer(initialState, AuthActions.authenticateWithEmailLink({ email: testEmail }));
+    expect(result.isAuthenticating).toBe(true);
+    expect(result.methodInProgress).toBe(AuthMethods.link);
+    expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe(undefined);
+  });
+
+  it('authenticateWithEmailLinkRequestSent', () => {
+    const result = reducer(initialState, AuthActions.authenticateWithEmailLinkRequestSent());
+    expect(result.isAuthenticating).toBe(false);
+    expect(result.methodInProgress).toBe(undefined);
+    expect(result.errorMessage).toBe(undefined);
+    expect(result.successMessage).toBe('Magic link has been sent to your email. Follow it to proceed.');
+  });
+
   it('signUpWithEmailAndPassword', () => {
     const result = reducer(
-      { ...initialState, isAuthenticating: false },
+      initialState,
       AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: testPassword }),
     );
     expect(result.isAuthenticating).toBe(true);

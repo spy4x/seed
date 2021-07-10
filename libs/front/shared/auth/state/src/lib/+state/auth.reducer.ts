@@ -79,6 +79,20 @@ const authReducer = createReducer<State>(
     errorMessage: undefined,
     successMessage: undefined,
   })),
+  on(AuthActions.authenticateWithEmailLink, (state: State) => ({
+    ...state,
+    isAuthenticating: true,
+    methodInProgress: AuthMethods.link,
+    errorMessage: undefined,
+    successMessage: undefined,
+  })),
+  on(AuthActions.authenticateWithEmailLinkRequestSent, (state: State) => ({
+    ...state,
+    isAuthenticating: false,
+    methodInProgress: undefined,
+    errorMessage: undefined,
+    successMessage: 'Magic link has been sent to your email. Follow it to proceed.',
+  })),
   on(AuthActions.restorePasswordAttempt, (state: State) => ({
     ...state,
     isAuthenticating: true,

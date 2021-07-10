@@ -3,10 +3,12 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 
 import * as AuthActions from './auth.actions';
 import { AngularFireAuth } from '@angular/fire/auth';
-import { catchError, exhaustMap, map, take } from 'rxjs/operators';
+import { catchError, exhaustMap, map, take, tap } from 'rxjs/operators';
 import firebase from 'firebase/app';
 import { from, of } from 'rxjs';
 import { ONE } from '@seed/shared/constants';
+
+export const AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY = 'emailForLinkAuth';
 
 @Injectable()
 export class AuthEffects {
@@ -16,9 +18,20 @@ export class AuthEffects {
       exhaustMap(() =>
         this.fireAuth.user.pipe(
           take(ONE),
-          map(user =>
-            user ? AuthActions.authenticatedAfterInit({ userId: user.uid }) : AuthActions.notAuthenticated(),
-          ),
+          exhaustMap(user => {
+            if (user) {
+              return of(AuthActions.authenticatedAfterInit({ userId: user.uid }));
+            }
+            return from(this.fireAuth.isSignInWithEmailLink(window.location.href)).pipe(
+              map(isSignInWithEmailLink => {
+                if (isSignInWithEmailLink) {
+                  return AuthActions.authenticateWithEmailLinkFinish();
+                }
+                return AuthActions.notAuthenticated();
+              }),
+              catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+            );
+          }),
         ),
       ),
     ),
@@ -89,6 +102,42 @@ export class AuthEffects {
           catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
         ),
       ),
+    ),
+  );
+
+  authenticateWithEmailLink$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.authenticateWithEmailLink),
+      exhaustMap(action =>
+        from(this.fireAuth.sendSignInLinkToEmail(action.email, { url: location.href, handleCodeInApp: true })).pipe(
+          map(() => AuthActions.authenticateWithEmailLinkRequestSent()),
+          tap(() => (localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = action.email)),
+          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+        ),
+      ),
+    ),
+  );
+
+  authenticateWithEmailLinkFinish$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthActions.authenticateWithEmailLinkFinish),
+      exhaustMap(() => {
+        const email = localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] as string;
+        if (!email || email === 'undefined') {
+          const errorMessage = 'No email was provided for link authentication. Try again.';
+          return of(AuthActions.authenticationFailed({ errorMessage }));
+        }
+
+        return from(this.fireAuth.signInWithEmailLink(email, window.location.href)).pipe(
+          map(credential => {
+            if (!credential.user) {
+              throw new Error('User is not defined.');
+            }
+            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+          }),
+          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+        );
+      }),
     ),
   );
 

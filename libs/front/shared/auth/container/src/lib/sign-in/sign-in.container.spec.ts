@@ -106,6 +106,12 @@ describe(SignInContainerComponent.name, () => {
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithEmailAndPassword({ email, password }));
   });
 
+  it('dispatches action "authenticateWithEmailLink" when AuthMethods.link is emitted from component with through signIn emitter', () => {
+    const email = testEmail;
+    component.signIn.next({ method: AuthMethods.link, email });
+    expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithEmailLink({ email }));
+  });
+
   it('dispatches action "signUpWithEmailAndPassword" when component emit signUp emitter', () => {
     const email = testEmail;
     const password = testPassword;

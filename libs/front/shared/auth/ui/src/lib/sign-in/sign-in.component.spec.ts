@@ -125,6 +125,16 @@ describe(SignInUIComponent.name, () => {
     getSignInButton(AuthMethods.password).nativeElement.click();
   });
 
+  it('emits "signIn(AuthMethods.link, email)" on "Send link" button click', done => {
+    component.signIn.pipe(first()).subscribe(({ method, email }) => {
+      expect(method).toEqual(AuthMethods.link);
+      expect(email).toEqual(testEmail);
+      done();
+    });
+    fixture.debugElement.query(By.css(`input[data-e2e="email"]`)).nativeElement.value = testEmail;
+    getSignInButton(AuthMethods.link).nativeElement.click();
+  });
+
   it('emits "signUp(email, password)" on "Sign Un" button click', done => {
     component.signUp.pipe(first()).subscribe(({ email, password }) => {
       expect(email).toEqual(testEmail);
