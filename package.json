@@ -6,6 +6,7 @@
     "----------Nx----------": "------------------------------",
     "nx": "nx",
     "start": "nx serve",
+    "start:mobile": "nx serve --host=0.0.0.0",
     "build": "nx build",
     "test": "nx test",
     "lint": "nx workspace-lint && nx lint",
