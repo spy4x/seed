@@ -2,6 +2,9 @@
   [isAuthenticating]="isAuthenticating$ | async"
   [isAuthenticated]="isAuthenticated$ | async"
   [errorMessage]="errorMessage$ | async"
+  [successMessage]="successMessage$ | async"
   (signIn)="signIn($event)"
+  (signUp)="signUp($event)"
   (signOut)="signOut()"
+  (restorePassword)="restorePassword($event)"
 ></seed-shared-auth-ui-sign-in>

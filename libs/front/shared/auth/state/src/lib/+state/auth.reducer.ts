@@ -10,6 +10,7 @@ export interface State {
   isAuthenticating: boolean;
   methodInProgress?: AuthMethods;
   errorMessage?: string;
+  successMessage?: string;
 }
 
 export interface AuthPartialState {
@@ -26,48 +27,97 @@ const authReducer = createReducer<State>(
     ...state,
     isAuthenticating: true,
     methodInProgress: AuthMethods.init,
-  })),
-  on(AuthActions.authenticatedAfterInit, AuthActions.authenticatedAfterUserAction, (state: State, { userId }) => ({
-    ...state,
-    userId,
-    isAuthenticating: false,
     errorMessage: undefined,
-    methodInProgress: undefined,
+    successMessage: undefined,
   })),
+  on(
+    AuthActions.authenticatedAfterInit,
+    AuthActions.authenticatedAfterUserAction,
+    AuthActions.signedUp,
+    (state: State, { userId }) => ({
+      ...state,
+      userId,
+      isAuthenticating: false,
+      methodInProgress: undefined,
+      errorMessage: undefined,
+      successMessage: undefined,
+    }),
+  ),
   on(AuthActions.notAuthenticated, (state: State) => ({
     ...state,
     userId: undefined,
     isAuthenticating: false,
-    errorMessage: undefined,
     methodInProgress: undefined,
+    errorMessage: undefined,
+    successMessage: undefined,
   })),
   on(AuthActions.authenticateAnonymously, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    errorMessage: undefined,
     methodInProgress: AuthMethods.anonymous,
+    errorMessage: undefined,
+    successMessage: undefined,
   })),
   on(AuthActions.authenticateWithGoogle, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    errorMessage: undefined,
     methodInProgress: AuthMethods.google,
+    errorMessage: undefined,
+    successMessage: undefined,
   })),
   on(AuthActions.authenticateWithGitHub, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    errorMessage: undefined,
     methodInProgress: AuthMethods.github,
+    errorMessage: undefined,
+    successMessage: undefined,
+  })),
+  on(AuthActions.authenticateWithEmailAndPassword, AuthActions.signUpWithEmailAndPassword, (state: State) => ({
+    ...state,
+    isAuthenticating: true,
+    methodInProgress: AuthMethods.password,
+    errorMessage: undefined,
+    successMessage: undefined,
+  })),
+  on(AuthActions.authenticateWithEmailLink, (state: State) => ({
+    ...state,
+    isAuthenticating: true,
+    methodInProgress: AuthMethods.link,
+    errorMessage: undefined,
+    successMessage: undefined,
+  })),
+  on(AuthActions.authenticateWithEmailLinkRequestSent, (state: State) => ({
+    ...state,
+    isAuthenticating: false,
+    methodInProgress: undefined,
+    errorMessage: undefined,
+    successMessage: 'Magic link has been sent to your email. Follow it to proceed.',
+  })),
+  on(AuthActions.restorePasswordAttempt, (state: State) => ({
+    ...state,
+    isAuthenticating: true,
+    methodInProgress: AuthMethods.password,
+    errorMessage: undefined,
+    successMessage: undefined,
+  })),
+  on(AuthActions.restorePasswordRequestSent, (state: State) => ({
+    ...state,
+    isAuthenticating: false,
+    methodInProgress: undefined,
+    errorMessage: undefined,
+    successMessage: 'Check your email for password reset instructions.',
   })),
   on(AuthActions.authenticationFailed, (state: State, { errorMessage }) => ({
     ...state,
     isAuthenticating: false,
-    errorMessage,
     methodInProgress: undefined,
+    errorMessage,
+    successMessage: undefined,
   })),
   on(AuthActions.signedOut, (state: State) => ({
     ...state,
     userId: undefined,
+    successMessage: undefined,
   })),
 );
 

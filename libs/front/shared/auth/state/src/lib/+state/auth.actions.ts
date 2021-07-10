@@ -11,11 +11,38 @@ export const authenticatedAfterUserAction = createAction(
   props<{ userId: string }>(),
 );
 
+export const signedUp = createAction('[Auth/API] Signed up', props<{ userId: string }>());
+
 export const authenticateAnonymously = createAction('[Auth/UI] Authenticate anonymously');
 
 export const authenticateWithGoogle = createAction('[Auth/UI] Authenticate with Google');
 
 export const authenticateWithGitHub = createAction('[Auth/UI] Authenticate with GitHub');
+
+export const authenticateWithEmailAndPassword = createAction(
+  '[Auth/UI] Authenticate with Email and Password',
+  props<{ email: string; password: string }>(),
+);
+
+export const authenticateWithEmailLink = createAction(
+  '[Auth/UI] Authenticate with Email Link',
+  props<{ email: string }>(),
+);
+
+export const authenticateWithEmailLinkRequestSent = createAction(
+  '[Auth/API] Authenticate with Email Link request sent',
+);
+
+export const authenticateWithEmailLinkFinish = createAction('[Auth/API] Authenticate with Email Link finish');
+
+export const signUpWithEmailAndPassword = createAction(
+  '[Auth/UI] Sign up with Email and Password',
+  props<{ email: string; password: string }>(),
+);
+
+export const restorePasswordAttempt = createAction('[Auth/UI] Restore password attempt', props<{ email: string }>());
+
+export const restorePasswordRequestSent = createAction('[Auth/API] Restore password request sent');
 
 export const authenticationFailed = createAction('[Auth/API] Authentication failed', props<{ errorMessage: string }>());
 

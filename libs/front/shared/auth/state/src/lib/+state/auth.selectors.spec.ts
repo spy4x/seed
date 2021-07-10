@@ -12,64 +12,76 @@ describe('Auth Selectors', () => {
   }
 
   describe('getAuthState()', () => {
-    it('getAuthState() should return AuthState', () => {
+    it('returns AuthState', () => {
       expect(AuthSelectors.getAuthState(state)).toBe(state[AUTH_FEATURE_KEY]);
     });
   });
 
   describe('getIsAuthenticating()', () => {
-    it('getIsAuthenticating() should return state.auth.isAuthenticating true', () => {
+    it('returns state.auth.isAuthenticating true', () => {
       setState({ isAuthenticating: true });
       expect(AuthSelectors.getIsAuthenticating(state)).toBe(true);
     });
-    it('getIsAuthenticating() should return state.auth.isAuthenticating false', () => {
+    it('returns state.auth.isAuthenticating false', () => {
       setState({ isAuthenticating: false });
       expect(AuthSelectors.getIsAuthenticating(state)).toBe(false);
     });
   });
 
   describe('getIsAuthenticated()', () => {
-    it('getIsAuthenticated() should return true if state.auth.userId is set', () => {
+    it('returns true if state.auth.userId is set', () => {
       setState({ userId: '123' });
       expect(AuthSelectors.getIsAuthenticated(state)).toBe(true);
     });
-    it('getIsAuthenticated() should return false if state.auth.userId is not set', () => {
+    it('returns false if state.auth.userId is not set', () => {
       setState({ userId: undefined });
       expect(AuthSelectors.getIsAuthenticated(state)).toBe(false);
     });
   });
 
   describe('getUserId()', () => {
-    it('getUserId() should return userId if state.auth.userId is set', () => {
+    it('returns userId if state.auth.userId is set', () => {
       setState({ userId: '123' });
       expect(AuthSelectors.getUserId(state)).toBe('123');
     });
-    it('getUserId() should return userId if state.auth.userId is not set', () => {
+    it('returns userId if state.auth.userId is not set', () => {
       setState({ userId: undefined });
       expect(AuthSelectors.getUserId(state)).toBe(undefined);
     });
   });
 
   describe('getMethodInProgress()', () => {
-    it('getMethodInProgress() should return methodInProgress if state.auth.methodInProgress is set', () => {
+    it('returns methodInProgress if state.auth.methodInProgress is set', () => {
       setState({ methodInProgress: AuthMethods.anonymous });
       expect(AuthSelectors.getMethodInProgress(state)).toBe(AuthMethods.anonymous);
     });
-    it('getMethodInProgress() should return undefined if state.auth.userId is not set', () => {
+    it('returns undefined if state.auth.userId is not set', () => {
       setState({ methodInProgress: undefined });
       expect(AuthSelectors.getMethodInProgress(state)).toBe(undefined);
     });
   });
 
   describe('getErrorMessage()', () => {
-    it('getErrorMessage() should return errorMessage if state.auth.errorMessage is set', () => {
+    it('returns errorMessage if state.auth.errorMessage is set', () => {
       const errorMessage = 'Wrong password';
       setState({ errorMessage });
       expect(AuthSelectors.getErrorMessage(state)).toBe(errorMessage);
     });
-    it('getErrorMessage() should return undefined if state.auth.errorMessage is not set', () => {
+    it('returns undefined if state.auth.errorMessage is not set', () => {
       setState({ errorMessage: undefined });
       expect(AuthSelectors.getErrorMessage(state)).toBe(undefined);
+    });
+  });
+
+  describe('getSuccessMessage()', () => {
+    it('returns successMessage if state.auth.successMessage is set', () => {
+      const successMessage = 'Password reset!';
+      setState({ successMessage });
+      expect(AuthSelectors.getSuccessMessage(state)).toBe(successMessage);
+    });
+    it('returns undefined if state.auth.successMessage is not set', () => {
+      setState({ successMessage: undefined });
+      expect(AuthSelectors.getSuccessMessage(state)).toBe(undefined);
     });
   });
 });
