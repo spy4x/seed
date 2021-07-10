@@ -24,6 +24,17 @@ export const authenticateWithEmailAndPassword = createAction(
   props<{ email: string; password: string }>(),
 );
 
+export const authenticateWithEmailLink = createAction(
+  '[Auth/UI] Authenticate with Email Link',
+  props<{ email: string }>(),
+);
+
+export const authenticateWithEmailLinkRequestSent = createAction(
+  '[Auth/API] Authenticate with Email Link request sent',
+);
+
+export const authenticateWithEmailLinkFinish = createAction('[Auth/API] Authenticate with Email Link finish');
+
 export const signUpWithEmailAndPassword = createAction(
   '[Auth/UI] Sign up with Email and Password',
   props<{ email: string; password: string }>(),

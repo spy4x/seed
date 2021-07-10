@@ -36,6 +36,9 @@ export class SignInContainerComponent {
           AuthActions.authenticateWithEmailAndPassword({ email: email || '', password: password || '' }),
         );
       }
+      case AuthMethods.link: {
+        return this.store.dispatch(AuthActions.authenticateWithEmailLink({ email: email || '' }));
+      }
       default: {
         /* eslint-disable-next-line no-console */
         console.error(`Auth method ${method} is not supported yet.`);
