@@ -1,4 +1,4 @@
-import { AuthMethods } from '@seed/front/shared/types';
+import { AuthMethod } from '@seed/front/shared/types';
 import { SignInPO } from './signIn.po';
 
 export function runTest(): void {
@@ -14,8 +14,8 @@ export function runTest(): void {
       cmp.get().should('not.contain.text', cmp.texts.messages.welcomeBack);
     });
 
-    describe(`Method: ${AuthMethods.anonymous}`, () => {
-      const method = AuthMethods.anonymous;
+    describe(`Method: ${AuthMethod.anonymous}`, () => {
+      const method = AuthMethod.anonymous;
       it('signs user in anonymously, displays welcome back text and signs out', () => {
         // sign in
         cmp.getSignInButton(method).contains(cmp.texts.buttons.anonymously);

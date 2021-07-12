@@ -12,5 +12,7 @@ module.exports = {
   testTimeout: 10000,
   moduleNameMapper: {
     '^lodash-es$': 'lodash',
+    '^validator/es/lib/isEmail$': 'validator/lib/isEmail',
+    '^validator/es/lib/isMobilePhone$': 'validator/lib/isMobilePhone',
   },
 };

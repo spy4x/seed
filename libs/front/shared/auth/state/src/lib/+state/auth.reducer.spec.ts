@@ -1,6 +1,6 @@
 import * as AuthActions from './auth.actions';
 import { initialState, reducer } from './auth.reducer';
-import { AuthMethods } from '@seed/front/shared/types';
+import { AuthMethod } from '@seed/front/shared/types';
 import { testEmail, testPassword } from '@seed/shared/mock-data';
 
 describe('Auth Reducer', () => {
@@ -12,7 +12,7 @@ describe('Auth Reducer', () => {
     const result = reducer(initialState, AuthActions.init());
     expect(result.isAuthenticating).toBe(true);
     expect(result.userId).toBe(undefined);
-    expect(result.methodInProgress).toBe(AuthMethods.init);
+    expect(result.methodInProgress).toBe(AuthMethod.init);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });
@@ -56,7 +56,7 @@ describe('Auth Reducer', () => {
   it('authenticateAnonymously', () => {
     const result = reducer(initialState, AuthActions.authenticateAnonymously());
     expect(result.isAuthenticating).toBe(true);
-    expect(result.methodInProgress).toBe(AuthMethods.anonymous);
+    expect(result.methodInProgress).toBe(AuthMethod.anonymous);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });
@@ -64,7 +64,7 @@ describe('Auth Reducer', () => {
   it('authenticateWithGoogle', () => {
     const result = reducer(initialState, AuthActions.authenticateWithGoogle());
     expect(result.isAuthenticating).toBe(true);
-    expect(result.methodInProgress).toBe(AuthMethods.google);
+    expect(result.methodInProgress).toBe(AuthMethod.google);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });
@@ -72,7 +72,7 @@ describe('Auth Reducer', () => {
   it('authenticateWithGitHub', () => {
     const result = reducer(initialState, AuthActions.authenticateWithGitHub());
     expect(result.isAuthenticating).toBe(true);
-    expect(result.methodInProgress).toBe(AuthMethods.github);
+    expect(result.methodInProgress).toBe(AuthMethod.github);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });
@@ -83,7 +83,7 @@ describe('Auth Reducer', () => {
       AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: testPassword }),
     );
     expect(result.isAuthenticating).toBe(true);
-    expect(result.methodInProgress).toBe(AuthMethods.password);
+    expect(result.methodInProgress).toBe(AuthMethod.password);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });
@@ -91,7 +91,7 @@ describe('Auth Reducer', () => {
   it('authenticateWithEmailLink', () => {
     const result = reducer(initialState, AuthActions.authenticateWithEmailLink({ email: testEmail }));
     expect(result.isAuthenticating).toBe(true);
-    expect(result.methodInProgress).toBe(AuthMethods.link);
+    expect(result.methodInProgress).toBe(AuthMethod.link);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });
@@ -110,7 +110,7 @@ describe('Auth Reducer', () => {
       AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: testPassword }),
     );
     expect(result.isAuthenticating).toBe(true);
-    expect(result.methodInProgress).toBe(AuthMethods.password);
+    expect(result.methodInProgress).toBe(AuthMethod.password);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });
@@ -129,7 +129,7 @@ describe('Auth Reducer', () => {
     const result = reducer(initialState, AuthActions.restorePasswordAttempt({ email: testEmail }));
     expect(result.isAuthenticating).toBe(true);
     expect(result.userId).toBe(undefined);
-    expect(result.methodInProgress).toBe(AuthMethods.password);
+    expect(result.methodInProgress).toBe(AuthMethod.password);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });

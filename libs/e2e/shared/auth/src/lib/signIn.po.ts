@@ -1,4 +1,4 @@
-import { AuthMethods } from '@seed/front/shared/types';
+import { AuthMethod } from '@seed/front/shared/types';
 
 export class SignInPO {
   readonly selector = 'seed-shared-auth-container-sign-in';
@@ -17,11 +17,11 @@ export class SignInPO {
     return cy.get(this.selector);
   }
 
-  getSignInButton(method: AuthMethods): Cypress.Chainable {
+  getSignInButton(method: AuthMethod): Cypress.Chainable {
     return cy.get(this.selector).get(`button[data-e2e=${method}]`);
   }
 
-  signIn(method: AuthMethods): void {
+  signIn(method: AuthMethod): void {
     this.getSignInButton(method).click();
   }
 

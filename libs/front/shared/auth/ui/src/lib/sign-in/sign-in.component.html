@@ -1,142 +1,149 @@
 <div class="d-flex align-items-center justify-content-center min-h-100 bg-light py-5">
-  <ng-container *ngIf="isAuthenticating; else authentication">
-    <h1 class="text-warning">Authenticating...</h1>
-  </ng-container>
-
-  <ng-template #authentication>
-    <ng-container *ngIf="isAuthenticated; else signInMethods">
-      <div class="auth-container">
-        <h2 class="mb-3">Welcome back!</h2>
-        <button
-          data-e2e="signOut"
-          class="btn btn-outline-primary mt-3 d-flex justify-content-center align-items-center"
-          (click)="signOut.emit()"
-        >
-          <i class="feather-log-out me-2"></i>
-          <span>Sign out</span>
-        </button>
-      </div>
-    </ng-container>
-  </ng-template>
-
-  <ng-template #signInMethods>
-    <div class="auth-container">
-      <h2 class="mb-3">Welcome!</h2>
-      <p>Sign in or Sign up with</p>
-      <div class="row mb-3">
-        <div class="col-6">
-          <button
-            [attr.data-e2e]="authMethods.google"
-            (click)="signIn.emit({ method: authMethods.google })"
-            class="btn btn-outline-danger w-100"
-          >
-            <b class="me-2">G</b>Google
-          </button>
+  <div class="auth-container">
+    <ng-container [ngSwitch]="true">
+      <ng-container *ngSwitchCase="stage === authStages.init">
+        <div class="text-center">
+          <div data-e2e="loading" class="spinner-border text-primary" role="status"></div>
         </div>
+      </ng-container>
 
-        <div class="col-6">
-          <button
-            [attr.data-e2e]="authMethods.github"
-            (click)="signIn.emit({ method: authMethods.github })"
-            class="btn btn-outline-dark w-100"
-          >
-            <i class="feather-github me-2"></i>Github
-          </button>
-        </div>
-      </div>
-
-      <div class="my-4">
-        <div class="position-relative border-top">
-          <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
-        </div>
-      </div>
-      <button
-        [attr.data-e2e]="authMethods.anonymous"
-        (click)="signIn.emit({ method: authMethods.anonymous })"
-        class="btn btn-outline-primary w-100 d-flex justify-content-center align-items-center"
+      <ng-container
+        *ngSwitchCase="
+          stage === authStages.enterEmail ||
+          stage === authStages.fetchProviders ||
+          stage === authStages.authenticateAnonymously
+        "
       >
-        <i class="feather-log-in me-2"></i>
-        <span>Try app anonymously</span>
-      </button>
+        <h2>Welcome!</h2>
+        <p>Please enter your email to continue.</p>
 
-      <div class="my-4">
-        <div class="position-relative border-top">
+        <seed-shared-auth-ui-enter-email
+          [email]="email"
+          [inProgress]="inProgress"
+          [isActiveStage]="stage === authStages.enterEmail || stage === authStages.fetchProviders"
+          (enterEmail)="enterEmail.emit($event)"
+        ></seed-shared-auth-ui-enter-email>
+
+        <div class="my-4 position-relative border-top">
           <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
         </div>
-      </div>
 
-      <form class="mb-3">
-        <div class="mb-3">
-          <label for="exampleInputEmail1" class="form-label d-block">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>Email address</span>
-              <button
-                [attr.data-e2e]="authMethods.link"
-                type="button"
-                (click)="signIn.emit({ method: authMethods.link, email: emailEl.value })"
-                class="btn btn-link btn-sm text-secondary"
-              >
-                Send link
-              </button>
-            </div>
-          </label>
-          <input
-            data-e2e="email"
-            type="email"
-            #emailEl
-            class="form-control"
-            id="exampleInputEmail1"
-            aria-describedby="emailHelp"
-          />
-        </div>
-        <div class="mb-3">
-          <label for="exampleInputPassword1" class="form-label d-block">
-            <div class="d-flex justify-content-between align-items-center">
-              <span>Password</span>
-              <button
-                data-e2e="restorePassword"
-                type="button"
-                (click)="restorePassword.emit({ email: emailEl.value })"
-                class="btn btn-link btn-sm text-secondary"
-              >
-                Restore
-              </button>
-            </div>
-          </label>
-          <input data-e2e="password" type="password" #passwordEl class="form-control" id="exampleInputPassword1" />
-        </div>
-        <div class="d-flex justify-content-center align-items-center">
-          <span>
-            <button
-              data-e2e="signUp"
-              type="button"
-              (click)="signUp.emit({ email: emailEl.value, password: passwordEl.value })"
-              class="btn btn-outline-primary"
-            >
-              Sign Up
-            </button>
-          </span>
-          <span class="ms-auto">
-            <button
-              [attr.data-e2e]="authMethods.password"
-              class="btn btn-primary d-flex justify-content-center align-items-center"
-              type="button"
-              (click)="signIn.emit({ method: authMethods.password, email: emailEl.value, password: passwordEl.value })"
-            >
-              <i class="feather-log-in me-2"></i>
-              <span>Sign in</span>
-            </button>
-          </span>
-        </div>
-      </form>
+        <button
+          [attr.data-e2e]="authMethods.anonymous"
+          (click)="signIn.emit({ method: authMethods.anonymous })"
+          [disabled]="inProgress"
+          class="btn btn-outline-primary w-100 d-flex justify-content-center align-items-center"
+        >
+          <ng-container
+            *ngIf="stage === authStages.authenticateAnonymously && inProgress; else authenticateAnonymously"
+          >
+            <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
+            <span>Loading</span>
+          </ng-container>
+          <ng-template #authenticateAnonymously>
+            <i class="feather-log-in me-2"></i>
+            <span>Try app anonymously</span>
+          </ng-template>
+        </button>
+      </ng-container>
 
+      <ng-container
+        *ngSwitchCase="
+          stage === authStages.chooseProvider ||
+          stage === authStages.authenticateWithGitHub ||
+          stage === authStages.authenticateWithGoogle ||
+          stage === authStages.sendEmailLink
+        "
+      >
+        <h1>Previously you used these methods:</h1>
+        <seed-shared-auth-ui-providers-list
+          [providers]="providers"
+          [selectedProvider]="selectedProvider"
+          (select)="onProviderClick($event)"
+        ></seed-shared-auth-ui-providers-list>
+      </ng-container>
+
+      <ng-container
+        *ngSwitchCase="stage === authStages.authenticateWithEmailAndPassword || stage === authStages.restorePassword"
+      >
+        <h1>Please enter your password:</h1>
+        <seed-shared-auth-ui-enter-password
+          [inProgress]="inProgress"
+          [isActiveStage]="stage === authStages.authenticateWithEmailAndPassword"
+          (enterPassword)="signIn.emit({ method: authMethods.password, password: $event.password })"
+        ></seed-shared-auth-ui-enter-password>
+
+        <div class="my-4 position-relative border-top">
+          <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
+        </div>
+
+        <button
+          data-e2e="restorePassword"
+          (click)="restorePassword.emit()"
+          [disabled]="inProgress"
+          class="btn btn-outline-dark w-100 d-flex justify-content-center align-items-center"
+        >
+          <ng-container *ngIf="stage === authStages.restorePassword && inProgress; else forgotPasswordButton">
+            <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
+            <span>Loading</span>
+          </ng-container>
+          <ng-template #forgotPasswordButton>
+            <i class="feather-help-circle me-2"></i>
+            <span>Forgot password</span>
+          </ng-template>
+        </button>
+
+        <ng-container *ngIf="providers.length > 1">
+          <div class="my-4 position-relative border-top">
+            <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
+          </div>
+
+          <button
+            data-e2e="deselectProvider"
+            (click)="deselectProvider.emit()"
+            [disabled]="inProgress"
+            class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center"
+          >
+            <i class="feather-arrow-left me-2"></i>
+            <span>Go back to other options</span>
+          </button>
+        </ng-container>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="stage === authStages.authenticateWithPhoneNumber">
+        <h1>Please enter your phone number:</h1>
+        <seed-shared-auth-ui-enter-phone-number
+          [inProgress]="inProgress"
+          (enterPhoneNumber)="signIn.emit({ method: authMethods.phone, phoneNumber: $event.phoneNumber })"
+        ></seed-shared-auth-ui-enter-phone-number>
+
+        <ng-container *ngIf="providers.length > 1">
+          <div class="my-4 position-relative border-top">
+            <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
+          </div>
+
+          <button
+            data-e2e="deselectProvider"
+            (click)="deselectProvider.emit()"
+            [disabled]="inProgress"
+            class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center"
+          >
+            <i class="feather-arrow-left me-2"></i>
+            <span>Go back to other options</span>
+          </button>
+        </ng-container>
+      </ng-container>
+    </ng-container>
+
+    <div class="my-3">
       <div *ngIf="errorMessage" data-e2e="errorMessage" class="alert alert-warning" role="alert">
         {{ errorMessage }}
       </div>
 
-      <div *ngIf="successMessage" data-e2e="successMessage" class="alert alert-info" role="alert">
-        {{ successMessage }}
+      <div *ngIf="successMessage" data-e2e="successMessage" class="alert alert-success" role="alert">
+        <i class="feather-check-circle me-2"></i>
+        <span>{{ successMessage }}</span>
       </div>
     </div>
-  </ng-template>
+  </div>
 </div>

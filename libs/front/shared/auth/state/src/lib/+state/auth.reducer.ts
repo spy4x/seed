@@ -1,14 +1,14 @@
 import { Action, createReducer, on } from '@ngrx/store';
 
 import * as AuthActions from './auth.actions';
-import { AuthMethods } from '@seed/front/shared/types';
+import { AuthMethod } from '@seed/front/shared/types';
 
 export const AUTH_FEATURE_KEY = 'auth';
 
 export interface State {
   userId?: string;
   isAuthenticating: boolean;
-  methodInProgress?: AuthMethods;
+  methodInProgress?: AuthMethod;
   errorMessage?: string;
   successMessage?: string;
 }
@@ -26,7 +26,7 @@ const authReducer = createReducer<State>(
   on(AuthActions.init, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    methodInProgress: AuthMethods.init,
+    methodInProgress: AuthMethod.github,
     errorMessage: undefined,
     successMessage: undefined,
   })),
@@ -54,35 +54,35 @@ const authReducer = createReducer<State>(
   on(AuthActions.authenticateAnonymously, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    methodInProgress: AuthMethods.anonymous,
+    methodInProgress: AuthMethod.anonymous,
     errorMessage: undefined,
     successMessage: undefined,
   })),
   on(AuthActions.authenticateWithGoogle, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    methodInProgress: AuthMethods.google,
+    methodInProgress: AuthMethod.google,
     errorMessage: undefined,
     successMessage: undefined,
   })),
   on(AuthActions.authenticateWithGitHub, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    methodInProgress: AuthMethods.github,
+    methodInProgress: AuthMethod.github,
     errorMessage: undefined,
     successMessage: undefined,
   })),
   on(AuthActions.authenticateWithEmailAndPassword, AuthActions.signUpWithEmailAndPassword, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    methodInProgress: AuthMethods.password,
+    methodInProgress: AuthMethod.password,
     errorMessage: undefined,
     successMessage: undefined,
   })),
   on(AuthActions.authenticateWithEmailLink, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    methodInProgress: AuthMethods.link,
+    methodInProgress: AuthMethod.link,
     errorMessage: undefined,
     successMessage: undefined,
   })),
@@ -96,7 +96,7 @@ const authReducer = createReducer<State>(
   on(AuthActions.restorePasswordAttempt, (state: State) => ({
     ...state,
     isAuthenticating: true,
-    methodInProgress: AuthMethods.password,
+    methodInProgress: AuthMethod.password,
     errorMessage: undefined,
     successMessage: undefined,
   })),

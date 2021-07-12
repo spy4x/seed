@@ -8,7 +8,7 @@ import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { AuthActions, AuthFeature } from '@seed/front/shared/auth/state';
 import { Store } from '@ngrx/store';
 import { first } from 'rxjs/operators';
-import { AuthMethods } from '@seed/front/shared/types';
+import { AuthMethod } from '@seed/front/shared/types';
 import { testEmail, testPassword } from '@seed/shared/mock-data';
 
 describe(SignInContainerComponent.name, () => {
@@ -48,10 +48,10 @@ describe(SignInContainerComponent.name, () => {
   });
 
   it('links state.auth.isAuthenticating with UI component', async () => {
-    expect(component.isAuthenticating).toBe(false);
+    expect(component.inProgress).toBe(false);
     await updateState({ isAuthenticating: true });
     fixture.detectChanges();
-    expect(component.isAuthenticating).toBe(true);
+    expect(component.inProgress).toBe(true);
   });
 
   it('links state.auth.errorMessage with UI component', async () => {
@@ -78,64 +78,64 @@ describe(SignInContainerComponent.name, () => {
   });
 
   it('dispatches action "authenticateAnonymously" when AuthMethods.anonymous is emitted from component with through signIn emitter', () => {
-    component.signIn.next({ method: AuthMethods.anonymous });
+    component.signIn.next({ method: AuthMethod.anonymous });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateAnonymously());
   });
 
   it('dispatches action "authenticateWithGoogle" when AuthMethods.google is emitted from component with through signIn emitter', () => {
-    component.signIn.next({ method: AuthMethods.google });
+    component.signIn.next({ method: AuthMethod.google });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithGoogle());
   });
 
   it('dispatches action "authenticateWithGitHub" when AuthMethods.github is emitted from component with through signIn emitter', () => {
-    component.signIn.next({ method: AuthMethods.github });
+    component.signIn.next({ method: AuthMethod.github });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithGitHub());
   });
 
   it('dispatches action "authenticateWithEmailAndPassword" when AuthMethods.password is emitted from component with through signIn emitter', () => {
     const email = testEmail;
     const password = testPassword;
-    component.signIn.next({ method: AuthMethods.password, email, password });
+    component.signIn.next({ method: AuthMethod.password, email, password });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithEmailAndPassword({ email, password }));
   });
 
   it('dispatches action "authenticateWithEmailAndPassword" when AuthMethods.password is emitted from component with through signIn emitter, even with empty email & password', () => {
     const email = '';
     const password = '';
-    component.signIn.next({ method: AuthMethods.password, email, password });
+    component.signIn.next({ method: AuthMethod.password, email, password });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithEmailAndPassword({ email, password }));
   });
 
   it('dispatches action "authenticateWithEmailLink" when AuthMethods.link is emitted from component with through signIn emitter', () => {
     const email = testEmail;
-    component.signIn.next({ method: AuthMethods.link, email });
+    component.signIn.next({ method: AuthMethod.link, email });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.authenticateWithEmailLink({ email }));
   });
 
   it('dispatches action "signUpWithEmailAndPassword" when component emit signUp emitter', () => {
     const email = testEmail;
     const password = testPassword;
-    component.signUp.next({ email, password });
+    component.signUp.next({ password });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signUpWithEmailAndPassword({ email, password }));
   });
 
   it('dispatches action "signUpWithEmailAndPassword" when component emit signUp emitter, even with empty email & password', () => {
     const email = '';
     const password = '';
-    component.signUp.next({ email, password });
+    component.signUp.next({ password });
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.signUpWithEmailAndPassword({ email, password }));
   });
 
   it('dispatches action "restorePasswordAttempt" when component emit restorePassword emitter', () => {
-    component.restorePassword.next({ email: testEmail });
+    component.restorePassword.next();
     expect(store.dispatch).toHaveBeenCalledWith(AuthActions.restorePasswordAttempt({ email: testEmail }));
   });
 
   it('throws error when unknown AuthMethod is emitted from component with through signIn emitter', () => {
     const originalConsoleError = console.error;
     console.error = jest.fn();
-    const method = AuthMethods.facebook;
-    component.signIn.next({ method });
+    const method = 'test';
+    component.signIn.next({ method: method as any });
     expect(console.error).toHaveBeenCalledWith(`Auth method ${method} is not supported yet.`);
     console.error = originalConsoleError;
     expect(store.dispatch).not.toHaveBeenCalled();

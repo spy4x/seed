@@ -1,12 +1,13 @@
-export enum AuthMethods {
-  anonymous = 'anonymous',
+export enum AuthMethod {
+  // oAuth
   google = 'google',
-  facebook = 'facebook',
   github = 'github',
+
+  // email-based
   password = 'password',
   link = 'link',
-  /**
-   * System method for initial check of user state on app start
-   */
-  init = 'init',
+
+  // other
+  anonymous = 'anonymous',
+  phone = 'phone',
 }

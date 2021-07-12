@@ -1,0 +1,33 @@
+<form class="mb-3" [formGroup]="form" #formComponent="ngForm" (ngSubmit)="submit()">
+  <input
+    data-e2e="email"
+    type="email"
+    formControlName="email"
+    class="form-control mb-3"
+    placeholder="Email"
+    autofocus
+    [class.is-valid]="form.valid"
+    [class.is-invalid]="formComponent.submitted && form.invalid"
+    [readonly]="inProgress"
+  />
+
+  <div class="d-flex justify-content-center align-items-center">
+    <div *ngIf="formComponent.submitted && form.invalid" class="text-danger">Make sure email is valid.</div>
+    <span class="ms-auto">
+      <button
+        data-e2e="enterEmail"
+        [disabled]="inProgress"
+        class="btn btn-primary d-flex justify-content-center align-items-center"
+      >
+        <ng-container *ngIf="isActiveStage && inProgress; else continueButton">
+          <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
+          <span>Loading</span>
+        </ng-container>
+        <ng-template #continueButton>
+          <i class="feather-log-in me-2"></i>
+          <span>Continue</span>
+        </ng-template>
+      </button>
+    </span>
+  </div>
+</form>

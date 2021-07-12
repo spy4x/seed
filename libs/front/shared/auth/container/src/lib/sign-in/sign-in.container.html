@@ -1,10 +1,13 @@
 <seed-shared-auth-ui-sign-in
-  [isAuthenticating]="isAuthenticating$ | async"
-  [isAuthenticated]="isAuthenticated$ | async"
-  [errorMessage]="errorMessage$ | async"
-  [successMessage]="successMessage$ | async"
+  [stage]="authStages.authenticateWithEmailAndPassword"
+  [inProgress]="false"
+  [errorMessage]="(errorMessage$ | async) || undefined"
+  [successMessage]="(successMessage$ | async) || undefined"
+  [providers]="[authMethods.phone, authMethods.github, authMethods.google, authMethods.link, authMethods.password]"
+  [selectedProvider]="authMethods.password"
   (signIn)="signIn($event)"
   (signUp)="signUp($event)"
-  (signOut)="signOut()"
-  (restorePassword)="restorePassword($event)"
+  (enterEmail)="enterEmail($event)"
+  (restorePassword)="restorePassword()"
 ></seed-shared-auth-ui-sign-in>
+<!--  [inProgress]="(inProgress$ | async) || false"-->

@@ -1,6 +1,6 @@
 import { AUTH_FEATURE_KEY, AuthPartialState, initialState, State } from './auth.reducer';
 import * as AuthSelectors from './auth.selectors';
-import { AuthMethods } from '@seed/front/shared/types';
+import { AuthMethod } from '@seed/front/shared/types';
 
 describe('Auth Selectors', () => {
   let state: AuthPartialState;
@@ -52,8 +52,8 @@ describe('Auth Selectors', () => {
 
   describe('getMethodInProgress()', () => {
     it('returns methodInProgress if state.auth.methodInProgress is set', () => {
-      setState({ methodInProgress: AuthMethods.anonymous });
-      expect(AuthSelectors.getMethodInProgress(state)).toBe(AuthMethods.anonymous);
+      setState({ methodInProgress: AuthMethod.anonymous });
+      expect(AuthSelectors.getMethodInProgress(state)).toBe(AuthMethod.anonymous);
     });
     it('returns undefined if state.auth.userId is not set', () => {
       setState({ methodInProgress: undefined });

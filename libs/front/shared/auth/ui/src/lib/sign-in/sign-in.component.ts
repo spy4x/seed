@@ -1,29 +1,60 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
-import { AuthMethods } from '@seed/front/shared/types';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { AuthMethod, AuthStage } from '@seed/front/shared/types';
 
 @Component({
   selector: 'seed-shared-auth-ui-sign-in',
   templateUrl: './sign-in.component.html',
-  styleUrls: ['./sign-in.component.sass'],
-  encapsulation: ViewEncapsulation.None,
+  styles: [
+    `
+      .auth-container {
+        width: 320px;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignInUIComponent {
-  @Input() isAuthenticated?: null | boolean;
+  @Input() stage = AuthStage.init;
 
-  @Input() isAuthenticating?: null | boolean;
+  @Input() inProgress = false;
 
-  @Input() errorMessage?: null | string;
+  @Input() email?: string = undefined;
 
-  @Input() successMessage?: null | string;
+  @Input() errorMessage?: string = undefined;
 
-  @Output() signIn = new EventEmitter<{ method: AuthMethods; email?: string; password?: string }>();
+  @Input() successMessage?: string = undefined;
 
-  @Output() signUp = new EventEmitter<{ email: string; password: string }>();
+  @Input() providers: AuthMethod[] = [];
 
-  @Output() signOut = new EventEmitter();
+  @Input() selectedProvider?: AuthMethod = undefined;
 
-  @Output() restorePassword = new EventEmitter<{ email: string }>();
+  @Output() selectProvider = new EventEmitter<{ method: AuthMethod.password | AuthMethod.phone }>();
 
-  authMethods = AuthMethods;
+  @Output() enterEmail = new EventEmitter<{ email: string }>();
+
+  @Output() signIn = new EventEmitter<{ method: AuthMethod; password?: string; phoneNumber?: string }>();
+
+  @Output() signUp = new EventEmitter<{ method: AuthMethod; password?: string; phoneNumber?: string }>();
+
+  @Output() restorePassword = new EventEmitter<void>();
+
+  @Output() deselectProvider = new EventEmitter<void>();
+
+  authMethods = AuthMethod;
+
+  authStages = AuthStage;
+
+  onProviderClick(provider: AuthMethod): void {
+    switch (provider) {
+      case AuthMethod.google:
+      case AuthMethod.github:
+      case AuthMethod.link:
+        return this.signIn.emit({ method: provider });
+      case AuthMethod.password:
+      case AuthMethod.phone:
+        return this.selectProvider.emit({ method: provider });
+      default:
+        throw new Error('Not implemented');
+    }
+  }
 }

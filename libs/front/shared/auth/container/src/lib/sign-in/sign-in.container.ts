@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AuthMethods } from '@seed/front/shared/types';
+import { AuthMethod, AuthStage } from '@seed/front/shared/types';
 import { AuthActions, AuthSelectors } from '@seed/front/shared/auth/state';
 
 @Component({
@@ -10,7 +10,7 @@ import { AuthActions, AuthSelectors } from '@seed/front/shared/auth/state';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignInContainerComponent {
-  isAuthenticating$ = this.store.select(AuthSelectors.getIsAuthenticating);
+  inProgress$ = this.store.select(AuthSelectors.getIsAuthenticating);
 
   isAuthenticated$ = this.store.select(AuthSelectors.getIsAuthenticated);
 
@@ -18,25 +18,29 @@ export class SignInContainerComponent {
 
   successMessage$ = this.store.select(AuthSelectors.getSuccessMessage);
 
+  authStages = AuthStage;
+
+  authMethods = AuthMethod;
+
   constructor(readonly store: Store) {}
 
-  signIn({ method, email, password }: { method: AuthMethods; email?: string; password?: string }): void {
+  signIn({ method, email, password }: { method: AuthMethod; email?: string; password?: string }): void {
     switch (method) {
-      case AuthMethods.anonymous: {
+      case AuthMethod.anonymous: {
         return this.store.dispatch(AuthActions.authenticateAnonymously());
       }
-      case AuthMethods.google: {
+      case AuthMethod.google: {
         return this.store.dispatch(AuthActions.authenticateWithGoogle());
       }
-      case AuthMethods.github: {
+      case AuthMethod.github: {
         return this.store.dispatch(AuthActions.authenticateWithGitHub());
       }
-      case AuthMethods.password: {
+      case AuthMethod.password: {
         return this.store.dispatch(
           AuthActions.authenticateWithEmailAndPassword({ email: email || '', password: password || '' }),
         );
       }
-      case AuthMethods.link: {
+      case AuthMethod.link: {
         return this.store.dispatch(AuthActions.authenticateWithEmailLink({ email: email || '' }));
       }
       default: {
@@ -46,14 +50,18 @@ export class SignInContainerComponent {
     }
   }
 
-  signUp({ email, password }: { email: string; password: string }): void {
-    return this.store.dispatch(
-      AuthActions.signUpWithEmailAndPassword({ email: email || '', password: password || '' }),
-    );
+  signUp({ method, password }: { method: AuthMethod; password?: string }): void {
+    method;
+    return this.store.dispatch(AuthActions.signUpWithEmailAndPassword({ email: 'qqq', password: password || '' }));
   }
 
-  restorePassword({ email }: { email: string }): void {
-    return this.store.dispatch(AuthActions.restorePasswordAttempt({ email }));
+  enterEmail({ email }: { email: string }): void {
+    email;
+    // return this.store.dispatch(AuthActions.enterEmail({ email }));
+  }
+
+  restorePassword(): void {
+    return this.store.dispatch(AuthActions.restorePasswordAttempt({ email: 'qqqq' }));
   }
 
   signOut(): void {

@@ -1,0 +1,69 @@
+<button
+  *ngIf="providers.includes(authMethods.google)"
+  [attr.data-e2e]="authMethods.google"
+  (click)="select.emit(authMethods.google)"
+  [disabled]="selectedProvider"
+  class="btn btn-outline-danger d-flex justify-content-center align-items-center w-100 mb-2"
+>
+  <ng-container *ngIf="selectedProvider === authMethods.google; else googleIcon">
+    <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
+    <span>Loading</span>
+  </ng-container>
+  <ng-template #googleIcon> <b class="me-2">G</b>Google </ng-template>
+</button>
+
+<button
+  *ngIf="providers.includes(authMethods.github)"
+  [attr.data-e2e]="authMethods.github"
+  (click)="select.emit(authMethods.github)"
+  [disabled]="selectedProvider"
+  class="btn btn-outline-dark d-flex justify-content-center align-items-center w-100 mb-2"
+>
+  <ng-container *ngIf="selectedProvider === authMethods.github; else githubIcon">
+    <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
+    <span>Loading</span>
+  </ng-container>
+  <ng-template #githubIcon> <i class="feather-github me-2"></i>Github </ng-template>
+</button>
+
+<button
+  *ngIf="providers.includes(authMethods.link)"
+  [attr.data-e2e]="authMethods.link"
+  (click)="select.emit(authMethods.link)"
+  [disabled]="selectedProvider"
+  class="btn btn-outline-primary d-flex justify-content-center align-items-center w-100 mb-2"
+>
+  <ng-container *ngIf="selectedProvider === authMethods.link; else linkIcon">
+    <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
+    <span>Loading</span>
+  </ng-container>
+  <ng-template #linkIcon> <i class="feather-link me-2"></i>Magic link </ng-template>
+</button>
+
+<button
+  *ngIf="providers.includes(authMethods.phone)"
+  [attr.data-e2e]="authMethods.phone"
+  (click)="select.emit(authMethods.phone)"
+  [disabled]="selectedProvider"
+  class="btn btn-outline-info d-flex justify-content-center align-items-center w-100 mb-2"
+>
+  <ng-container *ngIf="selectedProvider === authMethods.phone; else phoneIcon">
+    <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
+    <span>Loading</span>
+  </ng-container>
+  <ng-template #phoneIcon> <i class="feather-phone me-2"></i>SMS </ng-template>
+</button>
+
+<button
+  *ngIf="providers.includes(authMethods.password)"
+  [attr.data-e2e]="authMethods.password"
+  (click)="select.emit(authMethods.password)"
+  [disabled]="selectedProvider"
+  class="btn btn-outline-secondary d-flex justify-content-center align-items-center w-100"
+>
+  <ng-container *ngIf="selectedProvider === authMethods.password; else passwordIcon">
+    <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
+    <span>Loading</span>
+  </ng-container>
+  <ng-template #passwordIcon> <i class="feather-lock me-2"></i>Password </ng-template>
+</button>
