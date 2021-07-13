@@ -10,16 +10,16 @@ describe('Auth Reducer', () => {
 
   it('init', () => {
     const result = reducer(initialState, AuthActions.init());
-    expect(result.isAuthenticating).toBe(true);
+    expect(result.inProgress).toBe(true);
     expect(result.userId).toBe(undefined);
-    expect(result.methodInProgress).toBe(AuthMethod.init);
+    expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
   });
 
   it('authenticatedAfterInit', () => {
     const result = reducer(initialState, AuthActions.authenticatedAfterInit({ userId: '123' }));
-    expect(result.isAuthenticating).toBe(false);
+    expect(result.inProgress).toBe(false);
     expect(result.userId).toBe('123');
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
@@ -28,7 +28,7 @@ describe('Auth Reducer', () => {
 
   it('authenticatedAfterUserAction', () => {
     const result = reducer(initialState, AuthActions.authenticatedAfterUserAction({ userId: '123' }));
-    expect(result.isAuthenticating).toBe(false);
+    expect(result.inProgress).toBe(false);
     expect(result.userId).toBe('123');
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
@@ -37,7 +37,7 @@ describe('Auth Reducer', () => {
 
   it('signedUp', () => {
     const result = reducer(initialState, AuthActions.signedUp({ userId: '123' }));
-    expect(result.isAuthenticating).toBe(false);
+    expect(result.inProgress).toBe(false);
     expect(result.userId).toBe('123');
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
@@ -46,7 +46,7 @@ describe('Auth Reducer', () => {
 
   it('notAuthenticated', () => {
     const result = reducer(initialState, AuthActions.notAuthenticated());
-    expect(result.isAuthenticating).toBe(false);
+    expect(result.inProgress).toBe(false);
     expect(result.userId).toBe(undefined);
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
@@ -55,7 +55,7 @@ describe('Auth Reducer', () => {
 
   it('authenticateAnonymously', () => {
     const result = reducer(initialState, AuthActions.authenticateAnonymously());
-    expect(result.isAuthenticating).toBe(true);
+    expect(result.inProgress).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethod.anonymous);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
@@ -63,7 +63,7 @@ describe('Auth Reducer', () => {
 
   it('authenticateWithGoogle', () => {
     const result = reducer(initialState, AuthActions.authenticateWithGoogle());
-    expect(result.isAuthenticating).toBe(true);
+    expect(result.inProgress).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethod.google);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
@@ -71,7 +71,7 @@ describe('Auth Reducer', () => {
 
   it('authenticateWithGitHub', () => {
     const result = reducer(initialState, AuthActions.authenticateWithGitHub());
-    expect(result.isAuthenticating).toBe(true);
+    expect(result.inProgress).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethod.github);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
@@ -82,7 +82,7 @@ describe('Auth Reducer', () => {
       initialState,
       AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: testPassword }),
     );
-    expect(result.isAuthenticating).toBe(true);
+    expect(result.inProgress).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethod.password);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
@@ -90,7 +90,7 @@ describe('Auth Reducer', () => {
 
   it('authenticateWithEmailLink', () => {
     const result = reducer(initialState, AuthActions.authenticateWithEmailLink({ email: testEmail }));
-    expect(result.isAuthenticating).toBe(true);
+    expect(result.inProgress).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethod.link);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
@@ -98,7 +98,7 @@ describe('Auth Reducer', () => {
 
   it('authenticateWithEmailLinkRequestSent', () => {
     const result = reducer(initialState, AuthActions.authenticateWithEmailLinkRequestSent());
-    expect(result.isAuthenticating).toBe(false);
+    expect(result.inProgress).toBe(false);
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe('Magic link has been sent to your email. Follow it to proceed.');
@@ -109,7 +109,7 @@ describe('Auth Reducer', () => {
       initialState,
       AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: testPassword }),
     );
-    expect(result.isAuthenticating).toBe(true);
+    expect(result.inProgress).toBe(true);
     expect(result.methodInProgress).toBe(AuthMethod.password);
     expect(result.errorMessage).toBe(undefined);
     expect(result.successMessage).toBe(undefined);
@@ -118,7 +118,7 @@ describe('Auth Reducer', () => {
   it('authenticationFailed', () => {
     const errorMessage = 'Wrong password';
     const result = reducer(initialState, AuthActions.authenticationFailed({ errorMessage }));
-    expect(result.isAuthenticating).toBe(false);
+    expect(result.inProgress).toBe(false);
     expect(result.userId).toBe(undefined);
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(errorMessage);
@@ -127,7 +127,7 @@ describe('Auth Reducer', () => {
 
   it('restorePasswordAttempt', () => {
     const result = reducer(initialState, AuthActions.restorePasswordAttempt({ email: testEmail }));
-    expect(result.isAuthenticating).toBe(true);
+    expect(result.inProgress).toBe(true);
     expect(result.userId).toBe(undefined);
     expect(result.methodInProgress).toBe(AuthMethod.password);
     expect(result.errorMessage).toBe(undefined);
@@ -136,7 +136,7 @@ describe('Auth Reducer', () => {
 
   it('restorePasswordRequestSent', () => {
     const result = reducer(initialState, AuthActions.restorePasswordRequestSent());
-    expect(result.isAuthenticating).toBe(false);
+    expect(result.inProgress).toBe(false);
     expect(result.userId).toBe(undefined);
     expect(result.methodInProgress).toBe(undefined);
     expect(result.errorMessage).toBe(undefined);

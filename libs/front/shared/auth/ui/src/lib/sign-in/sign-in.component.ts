@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { AuthMethod, AuthStage, UserStatus } from '@seed/front/shared/types';
-import { SharedAuthUIPrevUser } from '../prevUser.interface';
+import { AuthMethod, AuthStage, PreviouslyAuthenticatedUser, UserStatus } from '@seed/front/shared/types';
 
 @Component({
   selector: 'seed-shared-auth-ui-sign-in',
@@ -31,7 +30,7 @@ export class SignInUIComponent {
 
   @Input() userStatus?: UserStatus = undefined;
 
-  @Input() prevUser?: SharedAuthUIPrevUser = undefined;
+  @Input() prevUser?: PreviouslyAuthenticatedUser = undefined;
 
   @Output() selectProvider = new EventEmitter<{ method: AuthMethod.password | AuthMethod.phone }>();
 

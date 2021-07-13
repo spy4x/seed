@@ -44,7 +44,10 @@ export const restorePasswordAttempt = createAction('[Auth/UI] Restore password a
 
 export const restorePasswordRequestSent = createAction('[Auth/API] Restore password request sent');
 
-export const authenticationFailed = createAction('[Auth/API] Authentication failed', props<{ errorMessage: string }>());
+export const authenticationFailed = createAction(
+  '[Auth/API] Authentication failed',
+  props<{ message: string; code?: string }>(),
+);
 
 export const signOut = createAction('[Auth/UI] Sign out');
 

@@ -199,7 +199,7 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: 'test1234' });
+      const action = AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: testPassword });
       const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
       signInWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
@@ -288,7 +288,7 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: 'test1234' });
+      const action = AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: testPassword });
       const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
       createUserWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });

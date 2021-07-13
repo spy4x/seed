@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AuthMethod, AuthStage, UserStatus } from '@seed/front/shared/types';
+import { AuthMethod, AuthStage, PreviouslyAuthenticatedUser, UserStatus } from '@seed/front/shared/types';
 import { AuthActions, AuthSelectors } from '@seed/front/shared/auth/state';
-import { SharedAuthUIPrevUser } from '@seed/front/shared/auth/ui';
 
 @Component({
   selector: 'seed-shared-auth-container-sign-in',
@@ -11,7 +10,7 @@ import { SharedAuthUIPrevUser } from '@seed/front/shared/auth/ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignInContainerComponent {
-  inProgress$ = this.store.select(AuthSelectors.getIsAuthenticating);
+  inProgress$ = this.store.select(AuthSelectors.getInProgress);
 
   isAuthenticated$ = this.store.select(AuthSelectors.getIsAuthenticated);
 
@@ -25,9 +24,9 @@ export class SignInContainerComponent {
 
   userStatuses = UserStatus;
 
-  prevUser?: SharedAuthUIPrevUser = {
+  prevUser?: PreviouslyAuthenticatedUser = {
     displayName: 'Anton Shubin',
-    // phoneNumber: '+79802453603',
+    phoneNumber: '+79802453603',
     photoURL: 'https://avatars.githubusercontent.com/u/4995814?v=4',
     email: '2spy4x@gmail.com',
   };

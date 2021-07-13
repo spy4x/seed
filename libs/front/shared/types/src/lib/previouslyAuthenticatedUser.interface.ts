@@ -1,4 +1,4 @@
-export interface SharedAuthUIPrevUser {
+export interface PreviouslyAuthenticatedUser {
   displayName?: string;
   email?: string;
   phoneNumber?: string;

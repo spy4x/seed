@@ -47,9 +47,9 @@ describe(SignInContainerComponent.name, () => {
     fixture.detectChanges();
   });
 
-  it('links state.auth.isAuthenticating with UI component', async () => {
+  it('links state.auth.inProgress with UI component', async () => {
     expect(component.inProgress).toBe(false);
-    await updateState({ isAuthenticating: true });
+    await updateState({ inProgress: true });
     fixture.detectChanges();
     expect(component.inProgress).toBe(true);
   });
@@ -72,7 +72,7 @@ describe(SignInContainerComponent.name, () => {
 
   it('links isAuthenticated with UI component', async () => {
     expect(component.isAuthenticated).toBe(false);
-    await updateState({ userId: '123', isAuthenticating: false });
+    await updateState({ userId: '123', inProgress: false });
     fixture.detectChanges();
     expect(component.isAuthenticated).toBe(true);
   });

@@ -17,14 +17,14 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getIsAuthenticating()', () => {
-    it('returns state.auth.isAuthenticating true', () => {
-      setState({ isAuthenticating: true });
-      expect(AuthSelectors.getIsAuthenticating(state)).toBe(true);
+  describe('getInProgress()', () => {
+    it('returns state.auth.inProgress true', () => {
+      setState({ inProgress: true });
+      expect(AuthSelectors.getInProgress(state)).toBe(true);
     });
-    it('returns state.auth.isAuthenticating false', () => {
-      setState({ isAuthenticating: false });
-      expect(AuthSelectors.getIsAuthenticating(state)).toBe(false);
+    it('returns state.auth.inProgress false', () => {
+      setState({ inProgress: false });
+      expect(AuthSelectors.getInProgress(state)).toBe(false);
     });
   });
 
