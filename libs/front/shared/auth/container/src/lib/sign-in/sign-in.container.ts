@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AuthMethod, AuthStage } from '@seed/front/shared/types';
+import { AuthMethod, AuthStage, UserStatus } from '@seed/front/shared/types';
 import { AuthActions, AuthSelectors } from '@seed/front/shared/auth/state';
 
 @Component({
@@ -21,6 +21,8 @@ export class SignInContainerComponent {
   authStages = AuthStage;
 
   authMethods = AuthMethod;
+
+  userStatuses = UserStatus;
 
   constructor(readonly store: Store) {}
 

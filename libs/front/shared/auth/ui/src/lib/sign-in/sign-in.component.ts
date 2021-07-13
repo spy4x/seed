@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { AuthMethod, AuthStage } from '@seed/front/shared/types';
+import { AuthMethod, AuthStage, UserStatus } from '@seed/front/shared/types';
 
 @Component({
   selector: 'seed-shared-auth-ui-sign-in',
@@ -28,6 +28,8 @@ export class SignInUIComponent {
 
   @Input() selectedProvider?: AuthMethod = undefined;
 
+  @Input() userStatus?: UserStatus = undefined;
+
   @Output() selectProvider = new EventEmitter<{ method: AuthMethod.password | AuthMethod.phone }>();
 
   @Output() enterEmail = new EventEmitter<{ email: string }>();
@@ -43,6 +45,8 @@ export class SignInUIComponent {
   authMethods = AuthMethod;
 
   authStages = AuthStage;
+
+  userStatuses = UserStatus;
 
   onProviderClick(provider: AuthMethod): void {
     switch (provider) {

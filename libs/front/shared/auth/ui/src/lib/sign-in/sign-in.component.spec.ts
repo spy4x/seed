@@ -4,7 +4,7 @@ import { SignInUIComponent } from './sign-in.component';
 import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { first } from 'rxjs/operators';
-import { AuthMethod, AuthStage } from '@seed/front/shared/types';
+import { AuthMethod, AuthStage, UserStatus } from '@seed/front/shared/types';
 import { testEmail, testPassword, testPhoneNumber } from '@seed/shared/mock-data';
 import { ProvidersListComponent } from '../providers-list/providers-list.component';
 import { EnterEmailComponent } from '../enter-email/enter-email.component';
@@ -235,11 +235,34 @@ describe(SignInUIComponent.name, () => {
       expect(providersListComponent.selectedProvider).toEqual(AuthMethod.link);
     });
 
+    it(`links inProgress to ProvidersList component`, () => {
+      component.inProgress = true;
+      fixture.detectChanges();
+      expect(providersListComponent.inProgress).toEqual(true);
+      // change
+      component.inProgress = false;
+      fixture.detectChanges();
+      expect(providersListComponent.inProgress).toEqual(false);
+    });
+
     subscribesAndEmitsSignInTest(AuthMethod.google);
     subscribesAndEmitsSignInTest(AuthMethod.github);
     subscribesAndEmitsSignInTest(AuthMethod.link);
     subscribesAndEmitsSelectProviderTest(AuthMethod.password);
     subscribesAndEmitsSelectProviderTest(AuthMethod.phone);
+
+    it(`shows welcome message for a signingUp user and welcome back for existing one`, () => {
+      component.userStatus = UserStatus.signingUp;
+      fixture.detectChanges();
+      expect(fixture.debugElement.query(By.css(`[data-e2e="welcomeNewUser"]`)).nativeElement.textContent).toBe(
+        'Welcome to the app!Use any sign up method below.',
+      );
+      component.userStatus = UserStatus.existing;
+      fixture.detectChanges();
+      expect(fixture.debugElement.query(By.css(`[data-e2e="welcomeExistingUser"]`)).nativeElement.textContent).toBe(
+        'Welcome back!Previously you used these sign in methods:',
+      );
+    });
   });
 
   describe(`Stage: ${AuthStage.authenticateWithEmailAndPassword}`, () => {
@@ -402,14 +425,5 @@ describe(SignInUIComponent.name, () => {
         getDeselectProviderButton().nativeElement.click();
       });
     });
-  });
-
-  describe(`Stage: ${AuthStage.signUp}`, () => {
-    beforeEach(() => {
-      component.stage = AuthStage.signUp;
-      fixture.detectChanges();
-    });
-
-    it.todo(`should show all possible providers`);
   });
 });

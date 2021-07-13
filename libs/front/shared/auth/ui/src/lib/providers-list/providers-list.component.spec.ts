@@ -55,11 +55,13 @@ describe(ProvidersListComponent.name, () => {
       component.providers = ALL_PROVIDERS;
       component.selectedProvider = provider;
       fixture.detectChanges();
+      expect(getProviderButton(provider).nativeElement.textContent).not.toContain('Loading');
+      ALL_PROVIDERS.forEach(p => expect(getProviderButton(p).nativeElement.disabled).toBe(false));
+      // change
+      component.inProgress = true;
+      fixture.detectChanges();
       expect(getProviderButton(provider).nativeElement.textContent).toContain('Loading');
-      expect(getProviderButton(provider).nativeElement.disabled).toBe(true);
-      ALL_PROVIDERS.filter(p => p !== provider).forEach(p =>
-        expect(getProviderButton(p).nativeElement.disabled).toBe(true),
-      );
+      ALL_PROVIDERS.forEach(p => expect(getProviderButton(p).nativeElement.disabled).toBe(true));
     });
   }
   // endregion

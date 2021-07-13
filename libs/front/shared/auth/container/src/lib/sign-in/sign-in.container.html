@@ -1,10 +1,11 @@
 <seed-shared-auth-ui-sign-in
-  [stage]="authStages.authenticateWithEmailAndPassword"
+  [stage]="authStages.chooseProvider"
   [inProgress]="false"
   [errorMessage]="(errorMessage$ | async) || undefined"
   [successMessage]="(successMessage$ | async) || undefined"
   [providers]="[authMethods.phone, authMethods.github, authMethods.google, authMethods.link, authMethods.password]"
-  [selectedProvider]="authMethods.password"
+  [selectedProvider]="authMethods.link"
+  [userStatus]="userStatuses.existing"
   (signIn)="signIn($event)"
   (signUp)="signUp($event)"
   (enterEmail)="enterEmail($event)"
