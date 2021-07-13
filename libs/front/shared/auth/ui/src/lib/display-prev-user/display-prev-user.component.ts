@@ -1,4 +1,8 @@
 import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter } from '@angular/core';
+import { SharedAuthUIPrevUser } from '../prevUser.interface';
+
+export const DisplayPrevUserComponent_PHOTO_URL_PLACEHOLDER =
+  'https://i.pinimg.com/originals/0c/3b/3a/0c3b3adb1a7530892e55ef36d3be6cb8.png';
 
 @Component({
   selector: 'seed-shared-auth-ui-display-prev-user',
@@ -6,13 +10,9 @@ import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter } from 
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DisplayPrevUserComponent {
-  @Input() displayName?: string = undefined;
-
-  @Input() email?: string = undefined;
-
-  @Input() phoneNumber?: string = undefined;
-
-  @Input() photoURL?: string = undefined;
+  @Input() user?: SharedAuthUIPrevUser = undefined;
 
   @Output() changeUser = new EventEmitter<void>();
+
+  photoURLPlaceholder = DisplayPrevUserComponent_PHOTO_URL_PLACEHOLDER;
 }

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
 import { Store } from '@ngrx/store';
 import { AuthMethod, AuthStage, UserStatus } from '@seed/front/shared/types';
 import { AuthActions, AuthSelectors } from '@seed/front/shared/auth/state';
+import { SharedAuthUIPrevUser } from '@seed/front/shared/auth/ui';
 
 @Component({
   selector: 'seed-shared-auth-container-sign-in',
@@ -23,6 +24,13 @@ export class SignInContainerComponent {
   authMethods = AuthMethod;
 
   userStatuses = UserStatus;
+
+  prevUser?: SharedAuthUIPrevUser = {
+    displayName: 'Anton Shubin',
+    // phoneNumber: '+79802453603',
+    photoURL: 'https://avatars.githubusercontent.com/u/4995814?v=4',
+    email: '2spy4x@gmail.com',
+  };
 
   constructor(readonly store: Store) {}
 

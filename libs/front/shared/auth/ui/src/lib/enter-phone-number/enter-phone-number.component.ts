@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 import isMobilePhone from 'validator/es/lib/isMobilePhone';
-import { testPhoneNumber } from '@seed/shared/mock-data';
 
 @Component({
   selector: 'seed-shared-auth-ui-enter-phone-number',
@@ -13,7 +12,7 @@ export class EnterPhoneNumberComponent {
 
   @Output() enterPhoneNumber = new EventEmitter<{ phoneNumber: string }>();
 
-  placeholder = testPhoneNumber;
+  placeholder = '+1-234-567-8901';
 
   form = new FormGroup({
     phoneNumber: new FormControl('', [this.validateEmail()]),

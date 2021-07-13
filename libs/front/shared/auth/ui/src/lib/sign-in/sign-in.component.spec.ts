@@ -5,17 +5,19 @@ import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { first } from 'rxjs/operators';
 import { AuthMethod, AuthStage, UserStatus } from '@seed/front/shared/types';
-import { testEmail, testPassword, testPhoneNumber } from '@seed/shared/mock-data';
+import { testDisplayName, testEmail, testPassword, testPhoneNumber } from '@seed/shared/mock-data';
 import { ProvidersListComponent } from '../providers-list/providers-list.component';
 import { EnterEmailComponent } from '../enter-email/enter-email.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { EnterPasswordComponent } from '../enter-password/enter-password.component';
 import { EnterPhoneNumberComponent } from '../enter-phone-number/enter-phone-number.component';
+import { DisplayPrevUserComponent } from '../display-prev-user/display-prev-user.component';
 
 describe(SignInUIComponent.name, () => {
   // region SETUP
   let component: SignInUIComponent;
   let fixture: ComponentFixture<SignInUIComponent>;
+  let displayPrevUserComponent: DisplayPrevUserComponent;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -25,6 +27,7 @@ describe(SignInUIComponent.name, () => {
         EnterEmailComponent,
         EnterPasswordComponent,
         EnterPhoneNumberComponent,
+        DisplayPrevUserComponent,
       ],
       imports: [ReactiveFormsModule],
     })
@@ -34,6 +37,7 @@ describe(SignInUIComponent.name, () => {
       .compileComponents();
     fixture = TestBed.createComponent(SignInUIComponent);
     component = fixture.componentInstance;
+    displayPrevUserComponent = fixture.debugElement.query(By.directive(DisplayPrevUserComponent)).componentInstance;
     fixture.detectChanges();
   });
 
@@ -82,6 +86,23 @@ describe(SignInUIComponent.name, () => {
       component.successMessage = undefined;
       fixture.detectChanges();
       expect(getSuccessMessageElement()).toBeFalsy();
+    });
+
+    it('link previous user to DisplayPrevUserComponent', () => {
+      //show
+      const prevUser = { displayName: testDisplayName };
+      component.prevUser = prevUser;
+      fixture.detectChanges();
+      expect(displayPrevUserComponent.user).toBe(prevUser);
+      //hide
+      component.prevUser = undefined;
+      fixture.detectChanges();
+      expect(displayPrevUserComponent.user).toBe(undefined);
+    });
+
+    it('subscribes to DisplayPrevUserComponent.changeUser event', done => {
+      component.changeUser.pipe(first()).subscribe(() => done());
+      displayPrevUserComponent.changeUser.emit();
     });
   });
 
