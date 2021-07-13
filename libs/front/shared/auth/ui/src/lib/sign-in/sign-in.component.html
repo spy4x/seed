@@ -1,5 +1,7 @@
 <div class="d-flex align-items-center justify-content-center min-h-100 bg-light py-5">
   <div class="auth-container">
+    <seed-shared-auth-ui-display-prev-user></seed-shared-auth-ui-display-prev-user>
+
     <ng-container [ngSwitch]="true">
       <ng-container *ngSwitchCase="stage === authStages.init">
         <div class="text-center">
