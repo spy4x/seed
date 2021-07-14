@@ -1,6 +1,5 @@
 import { AUTH_FEATURE_KEY, AuthPartialState, initialState, State } from './auth.reducer';
 import * as AuthSelectors from './auth.selectors';
-import { AuthMethod } from '@seed/front/shared/types';
 
 describe('Auth Selectors', () => {
   let state: AuthPartialState;
@@ -50,25 +49,14 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getMethodInProgress()', () => {
-    it('returns methodInProgress if state.auth.methodInProgress is set', () => {
-      setState({ methodInProgress: AuthMethod.anonymous });
-      expect(AuthSelectors.getMethodInProgress(state)).toBe(AuthMethod.anonymous);
-    });
-    it('returns undefined if state.auth.userId is not set', () => {
-      setState({ methodInProgress: undefined });
-      expect(AuthSelectors.getMethodInProgress(state)).toBe(undefined);
-    });
-  });
-
   describe('getErrorMessage()', () => {
     it('returns errorMessage if state.auth.errorMessage is set', () => {
       const errorMessage = 'Wrong password';
-      setState({ errorMessage });
+      setState({ error: { message: errorMessage } });
       expect(AuthSelectors.getErrorMessage(state)).toBe(errorMessage);
     });
     it('returns undefined if state.auth.errorMessage is not set', () => {
-      setState({ errorMessage: undefined });
+      setState({ error: undefined });
       expect(AuthSelectors.getErrorMessage(state)).toBe(undefined);
     });
   });

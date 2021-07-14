@@ -3,7 +3,7 @@ export enum AuthStage {
   enterEmail = 'enterEmail',
   fetchProviders = 'fetchProviders',
   chooseProvider = 'chooseProvider',
-  authenticateAnonymously = 'authenticateAnonymously',
+  signUpAnonymously = 'signUpAnonymously',
   authenticateWithGoogle = 'authenticateWithGoogle',
   authenticateWithGitHub = 'authenticateWithGitHub',
   authenticateWithEmailAndPassword = 'authenticateWithEmailAndPassword',

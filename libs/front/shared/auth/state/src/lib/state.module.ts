@@ -3,7 +3,7 @@ import { Store, StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import * as fromAuth from './+state/auth.reducer';
 import { AuthEffects } from './+state/auth.effects';
-import { AuthActions } from '../index';
+import * as AuthAPIActions from './+state/actions/api.actions';
 
 @NgModule({
   imports: [
@@ -13,6 +13,6 @@ import { AuthActions } from '../index';
 })
 export class SharedAuthStateModule {
   constructor(store: Store) {
-    store.dispatch(AuthActions.init());
+    store.dispatch(AuthAPIActions.init());
   }
 }

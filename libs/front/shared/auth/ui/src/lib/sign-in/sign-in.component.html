@@ -17,7 +17,7 @@
         *ngSwitchCase="
           stage === authStages.enterEmail ||
           stage === authStages.fetchProviders ||
-          stage === authStages.authenticateAnonymously
+          stage === authStages.signUpAnonymously
         "
       >
         <h2>Welcome!</h2>
@@ -40,9 +40,7 @@
           [disabled]="inProgress"
           class="btn btn-outline-primary w-100 d-flex justify-content-center align-items-center"
         >
-          <ng-container
-            *ngIf="stage === authStages.authenticateAnonymously && inProgress; else authenticateAnonymously"
-          >
+          <ng-container *ngIf="stage === authStages.signUpAnonymously && inProgress; else authenticateAnonymously">
             <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
             <span>Loading</span>
           </ng-container>

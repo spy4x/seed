@@ -164,7 +164,7 @@ describe(SignInUIComponent.name, () => {
       fixture.detectChanges();
       expect(enterEmailComponent.isActiveStage).toEqual(true);
       // change
-      component.stage = AuthStage.authenticateAnonymously;
+      component.stage = AuthStage.signUpAnonymously;
       fixture.detectChanges();
       expect(enterEmailComponent.isActiveStage).toEqual(false);
       // change
@@ -188,7 +188,7 @@ describe(SignInUIComponent.name, () => {
       expect(getSignInButton(AuthMethod.anonymous).nativeElement.disabled).toBe(true);
       expect(getSignInButton(AuthMethod.anonymous).nativeElement.textContent).toContain('Try app anonymously');
       // change stage
-      component.stage = AuthStage.authenticateAnonymously;
+      component.stage = AuthStage.signUpAnonymously;
       fixture.detectChanges();
       expect(getSignInButton(AuthMethod.anonymous).nativeElement.disabled).toBe(true);
       expect(getSignInButton(AuthMethod.anonymous).nativeElement.textContent).toContain('Loading');

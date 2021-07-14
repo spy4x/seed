@@ -1,6 +1,6 @@
 import { Action, createReducer, on } from '@ngrx/store';
-
-import * as AuthActions from './auth.actions';
+import * as AuthUIActions from './actions/ui.actions';
+import * as AuthAPIActions from './actions/api.actions';
 import { AuthMethod, AuthStage, PreviouslyAuthenticatedUser } from '@seed/front/shared/types';
 
 export const AUTH_FEATURE_KEY = 'auth';
@@ -26,147 +26,170 @@ export interface AuthPartialState {
 
 export const initialState: State = {
   stage: AuthStage.init,
+  prevUser: undefined,
+  email: undefined,
+  userId: undefined,
   inProgress: false,
   providers: [],
+  selectedProvider: undefined,
+  error: undefined,
+  successMessage: undefined,
+};
+
+const resetErrorAndSuccess = {
+  error: undefined,
+  successMessage: undefined,
 };
 
 const authReducer = createReducer<State>(
   initialState,
+
+  // region UI Actions
   on(
-    AuthActions.init,
+    AuthUIActions.enterEmail,
+    (state: State, { email }): State => ({
+      ...state,
+      email,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.changeUser,
+    (state: State): State => ({
+      ...state,
+      stage: AuthStage.enterEmail,
+      prevUser: undefined,
+      email: undefined,
+      providers: [],
+      selectedProvider: undefined,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  // endregion
+
+  // region API Actions
+  on(
+    AuthAPIActions.init,
     (state: State): State => ({
       ...state,
       inProgress: true,
       stage: AuthStage.init,
-      error: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
+  // endregion
+
+  // region OLD BELOW
+
   on(
-    AuthActions.authenticatedAfterInit,
-    AuthActions.authenticatedAfterUserAction,
-    AuthActions.signedUp,
+    AuthAPIActions.initAuthenticated,
+    AuthAPIActions.authenticated,
+    AuthAPIActions.signedUp,
     (state: State, { userId }): State => ({
       ...state,
       userId,
       inProgress: false,
-
-      error: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthActions.notAuthenticated,
+    AuthAPIActions.initNotAuthenticated,
     (state: State): State => ({
       ...state,
       userId: undefined,
       inProgress: false,
-
-      error: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthActions.authenticateAnonymously,
+    AuthUIActions.signUpAnonymously,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      methodInProgress: AuthMethod.anonymous,
-      error: undefined,
-      successMessage: undefined,
+      selectedProvider: AuthMethod.anonymous,
+      ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthActions.authenticateWithGoogle,
+    AuthUIActions.authenticateWithGoogle,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      methodInProgress: AuthMethod.google,
-      error: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthActions.authenticateWithGitHub,
+    AuthUIActions.authenticateWithGitHub,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      methodInProgress: AuthMethod.github,
-      error: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthActions.authenticateWithEmailAndPassword,
-    AuthActions.signUpWithEmailAndPassword,
+    AuthUIActions.signInWithEmailAndPassword,
+    AuthUIActions.signUpWithEmailAndPassword,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      methodInProgress: AuthMethod.password,
-      error: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthActions.authenticateWithEmailLink,
+    AuthUIActions.authenticateWithEmailLink,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      methodInProgress: AuthMethod.link,
-      error: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthActions.authenticateWithEmailLinkRequestSent,
+    AuthAPIActions.authenticateWithEmailLinkRequestSent,
     (state: State): State => ({
       ...state,
       inProgress: false,
-
-      error: undefined,
+      ...resetErrorAndSuccess,
       successMessage: 'Magic link has been sent to your email. Follow it to proceed.',
     }),
   ),
   on(
-    AuthActions.restorePasswordAttempt,
+    AuthUIActions.restorePassword,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      error: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthActions.restorePasswordRequestSent,
+    AuthAPIActions.restorePasswordSuccess,
     (state: State): State => ({
       ...state,
       inProgress: false,
-
-      error: undefined,
+      ...resetErrorAndSuccess,
       successMessage: 'Check your email for password reset instructions.',
     }),
   ),
   on(
-    AuthActions.authenticationFailed,
-    (state: State, { errorMessage }): State => ({
+    AuthAPIActions.actionFailed,
+    (state: State, { message, code }): State => ({
       ...state,
       inProgress: false,
-
+      ...resetErrorAndSuccess,
       error: {
         message: message,
         code: code,
       },
-      successMessage: undefined,
     }),
   ),
   on(
-    AuthActions.signedOut,
+    AuthAPIActions.signedOut,
     (state: State): State => ({
       ...state,
       userId: undefined,
-      successMessage: undefined,
+      ...resetErrorAndSuccess,
     }),
   ),
+  // endregion
 );
 
 export function reducer(state: State | undefined, action: Action): State {

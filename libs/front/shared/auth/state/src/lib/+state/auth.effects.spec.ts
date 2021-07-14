@@ -3,7 +3,8 @@ import { Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { provideMockActions } from '@ngrx/effects/testing';
 import { provideMockStore } from '@ngrx/store/testing';
 import { AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY, AuthEffects } from './auth.effects';
-import * as AuthActions from './auth.actions';
+import * as AuthUIActions from './actions/ui.actions';
+import * as AuthAPIActions from './actions/api.actions';
 import { AngularFireAuth } from '@angular/fire/auth';
 import { hot } from '@nrwl/angular/testing';
 import { Action } from '@ngrx/store';
@@ -62,8 +63,8 @@ describe(AuthEffects.name, () => {
 
   describe('init$', () => {
     it('success', () => {
-      const action = AuthActions.init();
-      const completion = AuthActions.authenticatedAfterInit({ userId: '123' });
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.initAuthenticated({ userId: '123' });
       user$.next({ uid: '123' });
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -71,8 +72,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.init();
-      const completion = AuthActions.notAuthenticated();
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.initNotAuthenticated();
       user$.next(null);
       isSignInWithEmailLinkMock.mockReturnValue(of(false));
       actions$ = hot('a', { a: action });
@@ -81,8 +82,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('proceed with email link', () => {
-      const action = AuthActions.init();
-      const completion = AuthActions.authenticateWithEmailLinkFinish();
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.authenticateWithEmailLinkFinish();
       const url = 'https://seed.web.app/auth-link';
       delete (window as any).location;
       (window.location as any) = new URL(url);
@@ -97,8 +98,8 @@ describe(AuthEffects.name, () => {
 
   describe('authenticateAnonymously$', () => {
     it('success', () => {
-      const action = AuthActions.authenticateAnonymously();
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
+      const action = AuthUIActions.signUpAnonymously();
+      const completion = AuthAPIActions.authenticated({ userId: '123' });
       signInAnonymouslyMock.mockReturnValue(
         of({
           user: { uid: '123' },
@@ -111,8 +112,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.authenticateAnonymously();
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      const action = AuthUIActions.signUpAnonymously();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInAnonymouslyMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -123,8 +124,8 @@ describe(AuthEffects.name, () => {
 
   describe('authenticateWithGoogle$', () => {
     it('success', () => {
-      const action = AuthActions.authenticateWithGoogle();
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
+      const action = AuthUIActions.authenticateWithGoogle();
+      const completion = AuthAPIActions.authenticated({ userId: '123' });
       signInWithPopupMock.mockReturnValue(
         of({
           user: { uid: '123' },
@@ -137,8 +138,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.authenticateWithGoogle();
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      const action = AuthUIActions.authenticateWithGoogle();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithPopupMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -149,8 +150,8 @@ describe(AuthEffects.name, () => {
 
   describe('authenticateWithGitHub$', () => {
     it('success', () => {
-      const action = AuthActions.authenticateWithGitHub();
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
+      const action = AuthUIActions.authenticateWithGitHub();
+      const completion = AuthAPIActions.authenticated({ userId: '123' });
       signInWithPopupMock.mockReturnValue(
         of({
           user: { uid: '123' },
@@ -163,8 +164,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.authenticateWithGitHub();
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      const action = AuthUIActions.authenticateWithGitHub();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithPopupMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -174,8 +175,8 @@ describe(AuthEffects.name, () => {
   });
 
   it('signOut$', () => {
-    const action = AuthActions.signOut();
-    const completion = AuthActions.signedOut();
+    const action = AuthUIActions.signOut();
+    const completion = AuthAPIActions.signedOut();
     signOutMock.mockReturnValue(of(undefined));
     actions$ = hot('a', { a: action });
     const expected = hot('b', { b: completion });
@@ -185,8 +186,8 @@ describe(AuthEffects.name, () => {
 
   describe('authenticateWithEmailAndPassword$', () => {
     it('success', () => {
-      const action = AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: testPassword });
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
+      const action = AuthUIActions.signInWithEmailAndPassword({ password: testPassword });
+      const completion = AuthAPIActions.authenticated({ userId: '123' });
       signInWithEmailAndPasswordMock.mockReturnValue(
         of({
           user: { uid: '123' },
@@ -194,25 +195,25 @@ describe(AuthEffects.name, () => {
       );
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailAndPassword$).toBeObservable(expected);
+      expect(effects.signInWithEmailAndPassword$).toBeObservable(expected);
       expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
     });
 
     it('fail', () => {
-      const action = AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: testPassword });
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      const action = AuthUIActions.signInWithEmailAndPassword({ password: testPassword });
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailAndPassword$).toBeObservable(expected);
+      expect(effects.signInWithEmailAndPassword$).toBeObservable(expected);
       expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
     });
   });
 
   describe('authenticateWithEmailLink$', () => {
     it('success', () => {
-      const action = AuthActions.authenticateWithEmailLink({ email: testEmail });
-      const completion = AuthActions.authenticateWithEmailLinkRequestSent();
+      const action = AuthUIActions.authenticateWithEmailLink();
+      const completion = AuthAPIActions.authenticateWithEmailLinkRequestSent();
       sendSignInLinkToEmailMock.mockReturnValue(of(undefined));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -222,8 +223,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.authenticateWithEmailLink({ email: testEmail });
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      const action = AuthUIActions.authenticateWithEmailLink();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       sendSignInLinkToEmailMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -234,8 +235,8 @@ describe(AuthEffects.name, () => {
 
   describe('authenticateWithEmailLinkFinish$', () => {
     it('success', () => {
-      const action = AuthActions.authenticateWithEmailLinkFinish();
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
+      const action = AuthAPIActions.authenticateWithEmailLinkFinish();
+      const completion = AuthAPIActions.authenticated({ userId: '123' });
       localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = testEmail;
       signInWithEmailLinkMock.mockReturnValue(
         of({
@@ -249,9 +250,9 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail with no email provided', () => {
-      const action = AuthActions.authenticateWithEmailLinkFinish();
-      const completion = AuthActions.authenticationFailed({
-        errorMessage: 'No email was provided for link authentication. Try again.',
+      const action = AuthAPIActions.authenticateWithEmailLinkFinish();
+      const completion = AuthAPIActions.actionFailed({
+        message: 'No email was provided for link authentication. Try again.',
       });
       localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = undefined;
       actions$ = hot('a', { a: action });
@@ -261,8 +262,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail because of firebase auth error', () => {
-      const action = AuthActions.authenticateWithEmailLinkFinish();
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      const action = AuthAPIActions.authenticateWithEmailLinkFinish();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithEmailLinkMock.mockReturnValue(throwError(new Error('Auth failed')));
       localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = testEmail;
       actions$ = hot('a', { a: action });
@@ -274,8 +275,8 @@ describe(AuthEffects.name, () => {
 
   describe('signUpWithEmailAndPassword$', () => {
     it('success', () => {
-      const action = AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: testPassword });
-      const completion = AuthActions.signedUp({ userId: '123' });
+      const action = AuthUIActions.signUpWithEmailAndPassword({ password: testPassword });
+      const completion = AuthAPIActions.signedUp({ userId: '123' });
       createUserWithEmailAndPasswordMock.mockReturnValue(
         of({
           user: { uid: '123' },
@@ -288,8 +289,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: testPassword });
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      const action = AuthUIActions.signUpWithEmailAndPassword({ password: testPassword });
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       createUserWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -300,8 +301,8 @@ describe(AuthEffects.name, () => {
 
   describe('restorePassword$', () => {
     it('success', () => {
-      const action = AuthActions.restorePasswordAttempt({ email: testEmail });
-      const completion = AuthActions.restorePasswordRequestSent();
+      const action = AuthUIActions.restorePassword();
+      const completion = AuthAPIActions.restorePasswordSuccess();
       sendPasswordResetEmailMock.mockReturnValue(of(undefined));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -310,8 +311,8 @@ describe(AuthEffects.name, () => {
     });
 
     it('fail', () => {
-      const action = AuthActions.restorePasswordAttempt({ email: testEmail });
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+      const action = AuthUIActions.restorePassword();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       sendPasswordResetEmailMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });

@@ -1,35 +1,41 @@
 import { Injectable } from '@angular/core';
-import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 
-import * as AuthActions from './auth.actions';
+import * as AuthUIActions from './actions/ui.actions';
+import * as AuthAPIActions from './actions/api.actions';
 import { AngularFireAuth } from '@angular/fire/auth';
-import { catchError, exhaustMap, map, take, tap } from 'rxjs/operators';
+import { catchError, exhaustMap, filter, map, take, tap } from 'rxjs/operators';
 import firebase from 'firebase/app';
 import { from, of } from 'rxjs';
 import { ONE } from '@seed/shared/constants';
+import { Store } from '@ngrx/store';
+import * as AuthSelectors from './auth.selectors';
 
 export const AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY = 'emailForLinkAuth';
+export type FirebaseError = Error & { code?: string };
 
 @Injectable()
 export class AuthEffects {
   init$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.init),
+      ofType(AuthAPIActions.init),
       exhaustMap(() =>
         this.fireAuth.user.pipe(
           take(ONE),
           exhaustMap(user => {
             if (user) {
-              return of(AuthActions.authenticatedAfterInit({ userId: user.uid }));
+              return of(AuthAPIActions.initAuthenticated({ userId: user.uid }));
             }
             return from(this.fireAuth.isSignInWithEmailLink(window.location.href)).pipe(
               map(isSignInWithEmailLink => {
                 if (isSignInWithEmailLink) {
-                  return AuthActions.authenticateWithEmailLinkFinish();
+                  return AuthAPIActions.authenticateWithEmailLinkFinish();
                 }
-                return AuthActions.notAuthenticated();
+                return AuthAPIActions.initNotAuthenticated();
               }),
-              catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+              catchError((error: FirebaseError) =>
+                of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+              ),
             );
           }),
         ),
@@ -39,16 +45,18 @@ export class AuthEffects {
 
   authenticateAnonymously$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.authenticateAnonymously),
+      ofType(AuthUIActions.signUpAnonymously),
       exhaustMap(() =>
         from(this.fireAuth.signInAnonymously()).pipe(
           map(credential => {
             if (!credential.user) {
               throw new Error('User is not defined.');
             }
-            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+            return AuthAPIActions.authenticated({ userId: credential.user.uid });
           }),
-          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
         ),
       ),
     ),
@@ -56,16 +64,18 @@ export class AuthEffects {
 
   authenticateWithGoogle$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.authenticateWithGoogle),
+      ofType(AuthUIActions.authenticateWithGoogle),
       exhaustMap(() =>
         from(this.fireAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())).pipe(
           map(credential => {
             if (!credential.user) {
               throw new Error('User is not defined.');
             }
-            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+            return AuthAPIActions.authenticated({ userId: credential.user.uid });
           }),
-          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
         ),
       ),
     ),
@@ -73,33 +83,40 @@ export class AuthEffects {
 
   authenticateWithGitHub$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.authenticateWithGitHub),
+      ofType(AuthUIActions.authenticateWithGitHub),
       exhaustMap(() =>
         from(this.fireAuth.signInWithPopup(new firebase.auth.GithubAuthProvider())).pipe(
           map(credential => {
             if (!credential.user) {
               throw new Error('User is not defined.');
             }
-            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+            return AuthAPIActions.authenticated({ userId: credential.user.uid });
           }),
-          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
         ),
       ),
     ),
   );
 
-  authenticateWithEmailAndPassword$ = createEffect(() =>
+  signInWithEmailAndPassword$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.authenticateWithEmailAndPassword),
-      exhaustMap(action =>
-        from(this.fireAuth.signInWithEmailAndPassword(action.email, action.password)).pipe(
+      ofType(AuthUIActions.signInWithEmailAndPassword),
+      concatLatestFrom(() =>
+        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
+      ),
+      exhaustMap(([action, email]) =>
+        from(this.fireAuth.signInWithEmailAndPassword(email, action.password)).pipe(
           map(credential => {
             if (!credential.user) {
               throw new Error('User is not defined.');
             }
-            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+            return AuthAPIActions.authenticated({ userId: credential.user.uid });
           }),
-          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
         ),
       ),
     ),
@@ -107,12 +124,17 @@ export class AuthEffects {
 
   authenticateWithEmailLink$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.authenticateWithEmailLink),
-      exhaustMap(action =>
-        from(this.fireAuth.sendSignInLinkToEmail(action.email, { url: location.href, handleCodeInApp: true })).pipe(
-          map(() => AuthActions.authenticateWithEmailLinkRequestSent()),
-          tap(() => (localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = action.email)),
-          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+      ofType(AuthUIActions.authenticateWithEmailLink),
+      concatLatestFrom(() =>
+        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
+      ),
+      exhaustMap(([, email]) =>
+        from(this.fireAuth.sendSignInLinkToEmail(email, { url: location.href, handleCodeInApp: true })).pipe(
+          map(() => AuthAPIActions.authenticateWithEmailLinkRequestSent()),
+          tap(() => (localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = email)),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
         ),
       ),
     ),
@@ -120,12 +142,12 @@ export class AuthEffects {
 
   authenticateWithEmailLinkFinish$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.authenticateWithEmailLinkFinish),
+      ofType(AuthAPIActions.authenticateWithEmailLinkFinish),
       exhaustMap(() => {
         const email = localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] as string;
         if (!email || email === 'undefined') {
           const errorMessage = 'No email was provided for link authentication. Try again.';
-          return of(AuthActions.authenticationFailed({ errorMessage }));
+          return of(AuthAPIActions.actionFailed({ message: errorMessage }));
         }
 
         return from(this.fireAuth.signInWithEmailLink(email, window.location.href)).pipe(
@@ -133,9 +155,11 @@ export class AuthEffects {
             if (!credential.user) {
               throw new Error('User is not defined.');
             }
-            return AuthActions.authenticatedAfterUserAction({ userId: credential.user.uid });
+            return AuthAPIActions.authenticated({ userId: credential.user.uid });
           }),
-          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
         );
       }),
     ),
@@ -143,16 +167,21 @@ export class AuthEffects {
 
   signUpWithEmailAndPassword$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.signUpWithEmailAndPassword),
-      exhaustMap(action =>
-        from(this.fireAuth.createUserWithEmailAndPassword(action.email, action.password)).pipe(
+      ofType(AuthUIActions.signUpWithEmailAndPassword),
+      concatLatestFrom(() =>
+        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
+      ),
+      exhaustMap(([action, email]) =>
+        from(this.fireAuth.createUserWithEmailAndPassword(email, action.password)).pipe(
           map(credential => {
             if (!credential.user) {
               throw new Error('User is not defined.');
             }
-            return AuthActions.signedUp({ userId: credential.user.uid });
+            return AuthAPIActions.signedUp({ userId: credential.user.uid });
           }),
-          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
         ),
       ),
     ),
@@ -160,11 +189,16 @@ export class AuthEffects {
 
   restorePassword$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.restorePasswordAttempt),
-      exhaustMap(action =>
-        from(this.fireAuth.sendPasswordResetEmail(action.email)).pipe(
-          map(() => AuthActions.restorePasswordRequestSent()),
-          catchError((error: Error) => of(AuthActions.authenticationFailed({ errorMessage: error.message }))),
+      ofType(AuthUIActions.restorePassword),
+      concatLatestFrom(() =>
+        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
+      ),
+      exhaustMap(([, email]) =>
+        from(this.fireAuth.sendPasswordResetEmail(email)).pipe(
+          map(() => AuthAPIActions.restorePasswordSuccess()),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
         ),
       ),
     ),
@@ -172,10 +206,10 @@ export class AuthEffects {
 
   signOut$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(AuthActions.signOut),
-      exhaustMap(() => from(this.fireAuth.signOut()).pipe(map(() => AuthActions.signedOut()))),
+      ofType(AuthUIActions.signOut),
+      exhaustMap(() => from(this.fireAuth.signOut()).pipe(map(() => AuthAPIActions.signedOut()))),
     ),
   );
 
-  constructor(readonly actions$: Actions, readonly fireAuth: AngularFireAuth) {}
+  constructor(readonly actions$: Actions, readonly fireAuth: AngularFireAuth, readonly store: Store) {}
 }

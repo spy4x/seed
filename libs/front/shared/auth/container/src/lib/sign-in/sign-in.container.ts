@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AuthMethod, AuthStage, PreviouslyAuthenticatedUser, UserStatus } from '@seed/front/shared/types';
-import { AuthActions, AuthSelectors } from '@seed/front/shared/auth/state';
+import { AuthUIActions, AuthSelectors } from '@seed/front/shared/auth/state';
 
 @Component({
   selector: 'seed-shared-auth-container-sign-in',
@@ -36,21 +36,21 @@ export class SignInContainerComponent {
   signIn({ method, email, password }: { method: AuthMethod; email?: string; password?: string }): void {
     switch (method) {
       case AuthMethod.anonymous: {
-        return this.store.dispatch(AuthActions.authenticateAnonymously());
+        return this.store.dispatch(AuthUIActions.signUpAnonymously());
       }
       case AuthMethod.google: {
-        return this.store.dispatch(AuthActions.authenticateWithGoogle());
+        return this.store.dispatch(AuthUIActions.authenticateWithGoogle());
       }
       case AuthMethod.github: {
-        return this.store.dispatch(AuthActions.authenticateWithGitHub());
+        return this.store.dispatch(AuthUIActions.authenticateWithGitHub());
       }
       case AuthMethod.password: {
         return this.store.dispatch(
-          AuthActions.authenticateWithEmailAndPassword({ email: email || '', password: password || '' }),
+          AuthUIActions.signInWithEmailAndPassword({ email: email || '', password: password || '' }),
         );
       }
       case AuthMethod.link: {
-        return this.store.dispatch(AuthActions.authenticateWithEmailLink({ email: email || '' }));
+        return this.store.dispatch(AuthUIActions.authenticateWithEmailLink({ email: email || '' }));
       }
       default: {
         /* eslint-disable-next-line no-console */
@@ -61,19 +61,19 @@ export class SignInContainerComponent {
 
   signUp({ method, password }: { method: AuthMethod; password?: string }): void {
     method;
-    return this.store.dispatch(AuthActions.signUpWithEmailAndPassword({ email: 'qqq', password: password || '' }));
+    return this.store.dispatch(AuthUIActions.signUpWithEmailAndPassword({ email: 'qqq', password: password || '' }));
   }
 
   enterEmail({ email }: { email: string }): void {
     email;
-    // return this.store.dispatch(AuthActions.enterEmail({ email }));
+    // return this.store.dispatch(AuthUIActions.enterEmail({ email }));
   }
 
   restorePassword(): void {
-    return this.store.dispatch(AuthActions.restorePasswordAttempt({ email: 'qqqq' }));
+    return this.store.dispatch(AuthUIActions.restorePassword({ email: 'qqqq' }));
   }
 
   signOut(): void {
-    this.store.dispatch(AuthActions.signOut());
+    this.store.dispatch(AuthUIActions.signOut());
   }
 }
