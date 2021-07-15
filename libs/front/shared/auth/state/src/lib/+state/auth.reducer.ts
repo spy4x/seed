@@ -1,23 +1,23 @@
 import { Action, createReducer, on } from '@ngrx/store';
 import * as AuthUIActions from './actions/ui.actions';
 import * as AuthAPIActions from './actions/api.actions';
-import { AuthMethod, AuthStage, PreviouslyAuthenticatedUser } from '@seed/front/shared/types';
+import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 
 export const AUTH_FEATURE_KEY = 'auth';
 
 export interface State {
   stage: AuthStage;
-  prevUser?: PreviouslyAuthenticatedUser;
-  email?: string;
-  userId?: string;
   inProgress: boolean;
-  providers: AuthMethod[];
-  selectedProvider?: AuthMethod;
+  successMessage?: string;
   error?: {
     message: string;
     code?: string;
   };
-  successMessage?: string;
+
+  email?: string;
+  providers: AuthProvider[];
+  selectedProvider?: AuthProvider;
+  userId?: string;
 }
 
 export interface AuthPartialState {
@@ -25,15 +25,15 @@ export interface AuthPartialState {
 }
 
 export const initialState: State = {
-  stage: AuthStage.init,
-  prevUser: undefined,
-  email: undefined,
-  userId: undefined,
+  stage: AuthStage.initialization,
   inProgress: false,
+  successMessage: undefined,
+  error: undefined,
+
+  email: undefined,
   providers: [],
   selectedProvider: undefined,
-  error: undefined,
-  successMessage: undefined,
+  userId: undefined,
 };
 
 const resetErrorAndSuccess = {
@@ -46,6 +46,16 @@ const authReducer = createReducer<State>(
 
   // region UI Actions
   on(
+    AuthUIActions.signUpAnonymously,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.authenticatingAnonymously,
+      selectedProvider: AuthProvider.anonymous,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
     AuthUIActions.enterEmail,
     (state: State, { email }): State => ({
       ...state,
@@ -57,11 +67,73 @@ const authReducer = createReducer<State>(
     AuthUIActions.changeUser,
     (state: State): State => ({
       ...state,
-      stage: AuthStage.enterEmail,
-      prevUser: undefined,
+      stage: AuthStage.enteringEmail,
       email: undefined,
       providers: [],
       selectedProvider: undefined,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.chooseProvider,
+    (state: State, { provider }): State => ({
+      ...state,
+      selectedProvider: provider,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.authenticateWithGoogle,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.authenticatingWithGoogle,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.authenticateWithGitHub,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.authenticatingWithGitHub,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.signInWithEmailAndPassword,
+    AuthUIActions.signUpWithEmailAndPassword,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.authenticatingWithEmailAndPassword,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.authenticateWithEmailLink,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.authenticatingWithEmailLink,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.restorePassword,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.restoringPassword,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.signOut,
+    (state: State): State => ({
+      ...state,
+      stage: AuthStage.signingOut,
+      inProgress: true,
       ...resetErrorAndSuccess,
     }),
   ),
@@ -73,14 +145,10 @@ const authReducer = createReducer<State>(
     (state: State): State => ({
       ...state,
       inProgress: true,
-      stage: AuthStage.init,
+      stage: AuthStage.initialization,
       ...resetErrorAndSuccess,
     }),
   ),
-  // endregion
-
-  // region OLD BELOW
-
   on(
     AuthAPIActions.initAuthenticated,
     AuthAPIActions.authenticated,
@@ -88,6 +156,7 @@ const authReducer = createReducer<State>(
     (state: State, { userId }): State => ({
       ...state,
       userId,
+      stage: AuthStage.signedIn,
       inProgress: false,
       ...resetErrorAndSuccess,
     }),
@@ -96,50 +165,27 @@ const authReducer = createReducer<State>(
     AuthAPIActions.initNotAuthenticated,
     (state: State): State => ({
       ...state,
-      userId: undefined,
       inProgress: false,
+      stage: AuthStage.enteringEmail,
       ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthUIActions.signUpAnonymously,
+    AuthAPIActions.fetchProviders,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      selectedProvider: AuthMethod.anonymous,
+      stage: AuthStage.fetchingProviders,
       ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthUIActions.authenticateWithGoogle,
-    (state: State): State => ({
+    AuthAPIActions.fetchProvidersSuccess,
+    (state: State, { providers }): State => ({
       ...state,
-      inProgress: true,
-      ...resetErrorAndSuccess,
-    }),
-  ),
-  on(
-    AuthUIActions.authenticateWithGitHub,
-    (state: State): State => ({
-      ...state,
-      inProgress: true,
-      ...resetErrorAndSuccess,
-    }),
-  ),
-  on(
-    AuthUIActions.signInWithEmailAndPassword,
-    AuthUIActions.signUpWithEmailAndPassword,
-    (state: State): State => ({
-      ...state,
-      inProgress: true,
-      ...resetErrorAndSuccess,
-    }),
-  ),
-  on(
-    AuthUIActions.authenticateWithEmailLink,
-    (state: State): State => ({
-      ...state,
-      inProgress: true,
+      inProgress: false,
+      stage: AuthStage.choosingProvider,
+      providers,
       ...resetErrorAndSuccess,
     }),
   ),
@@ -153,10 +199,12 @@ const authReducer = createReducer<State>(
     }),
   ),
   on(
-    AuthUIActions.restorePassword,
+    AuthAPIActions.authenticateWithEmailLinkFinish,
     (state: State): State => ({
       ...state,
       inProgress: true,
+      stage: AuthStage.authenticatingWithEmailLink,
+      selectedProvider: AuthProvider.link,
       ...resetErrorAndSuccess,
     }),
   ),
@@ -185,7 +233,12 @@ const authReducer = createReducer<State>(
     AuthAPIActions.signedOut,
     (state: State): State => ({
       ...state,
+      stage: AuthStage.enteringEmail,
+      inProgress: false,
       userId: undefined,
+      providers: [],
+      selectedProvider: undefined,
+      email: undefined,
       ...resetErrorAndSuccess,
     }),
   ),

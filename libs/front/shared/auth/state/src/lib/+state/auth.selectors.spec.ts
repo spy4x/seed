@@ -1,5 +1,6 @@
 import { AUTH_FEATURE_KEY, AuthPartialState, initialState, State } from './auth.reducer';
 import * as AuthSelectors from './auth.selectors';
+import { AuthStage } from '@seed/front/shared/types';
 
 describe('Auth Selectors', () => {
   let state: AuthPartialState;
@@ -16,6 +17,17 @@ describe('Auth Selectors', () => {
     });
   });
 
+  describe('getStage()', () => {
+    it('returns state.auth.stage', () => {
+      setState({ stage: AuthStage.authenticatingWithGoogle });
+      expect(AuthSelectors.getStage(state)).toBe(AuthStage.authenticatingWithGoogle);
+    });
+    it('returns state.auth.stage', () => {
+      setState({ stage: AuthStage.restoringPassword });
+      expect(AuthSelectors.getStage(state)).toBe(AuthStage.restoringPassword);
+    });
+  });
+
   describe('getInProgress()', () => {
     it('returns state.auth.inProgress true', () => {
       setState({ inProgress: true });
@@ -28,12 +40,12 @@ describe('Auth Selectors', () => {
   });
 
   describe('getIsAuthenticated()', () => {
-    it('returns true if state.auth.userId is set', () => {
-      setState({ userId: '123' });
+    it(`returns true if state.auth.stage === ${AuthStage.signedIn}`, () => {
+      setState({ stage: AuthStage.signedIn });
       expect(AuthSelectors.getIsAuthenticated(state)).toBe(true);
     });
-    it('returns false if state.auth.userId is not set', () => {
-      setState({ userId: undefined });
+    it(`returns false if state.auth.stage !== ${AuthStage.signedIn}`, () => {
+      setState({ stage: AuthStage.authenticatingWithEmailAndPassword });
       expect(AuthSelectors.getIsAuthenticated(state)).toBe(false);
     });
   });

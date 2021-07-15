@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { AuthMethod } from '@seed/front/shared/types';
+import { AuthProvider } from '@seed/front/shared/types';
 
 const prefix = `[Auth/UI]`;
 
@@ -9,7 +9,10 @@ export const enterEmail = createAction(`${prefix} Enter email`, props<{ email: s
 
 export const changeUser = createAction(`${prefix} Change user`);
 
-export const chooseProvider = createAction(`${prefix} Choose provider`, props<{ provider: AuthMethod }>());
+export const chooseProvider = createAction(
+  `${prefix} Choose provider`,
+  props<{ provider: undefined | AuthProvider }>(),
+);
 
 export const authenticateWithGoogle = createAction(`${prefix} Authenticate with Google`);
 

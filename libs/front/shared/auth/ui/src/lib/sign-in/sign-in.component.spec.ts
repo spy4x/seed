@@ -4,7 +4,7 @@ import { SignInUIComponent } from './sign-in.component';
 import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { first } from 'rxjs/operators';
-import { AuthMethod, AuthStage, UserStatus } from '@seed/front/shared/types';
+import { AuthProvider, AuthStage, UserStatus } from '@seed/front/shared/types';
 import { testDisplayName, testEmail, testPassword, testPhoneNumber } from '@seed/shared/mock-data';
 import { ProvidersListComponent } from '../providers-list/providers-list.component';
 import { EnterEmailComponent } from '../enter-email/enter-email.component';
@@ -41,7 +41,7 @@ describe(SignInUIComponent.name, () => {
     fixture.detectChanges();
   });
 
-  function getSignInButton(method: AuthMethod): DebugElement {
+  function getSignInButton(method: AuthProvider): DebugElement {
     return fixture.debugElement.query(By.css(`button[data-e2e="${method}"]`));
   }
 
@@ -106,9 +106,9 @@ describe(SignInUIComponent.name, () => {
     });
   });
 
-  describe(`Stage: ${AuthStage.init}`, () => {
+  describe(`Stage: ${AuthStage.initialization}`, () => {
     beforeEach(() => {
-      component.stage = AuthStage.init;
+      component.stage = AuthStage.initialization;
       fixture.detectChanges();
     });
     it(`shows loading animation`, () => {
@@ -117,10 +117,10 @@ describe(SignInUIComponent.name, () => {
     });
   });
 
-  describe(`Stage: ${AuthStage.enterEmail}`, () => {
+  describe(`Stage: ${AuthStage.enteringEmail}`, () => {
     let enterEmailComponent: EnterEmailComponent;
     beforeEach(() => {
-      component.stage = AuthStage.enterEmail;
+      component.stage = AuthStage.enteringEmail;
       fixture.detectChanges();
       enterEmailComponent = fixture.debugElement.query(By.directive(EnterEmailComponent)).componentInstance;
     });
@@ -128,15 +128,15 @@ describe(SignInUIComponent.name, () => {
     it(`shows welcome message, EnterEmailComponent and "Try app anonymously"`, () => {
       expect(fixture.nativeElement.textContent).toContain('Welcome!Please enter your email to continue.');
       expect(fixture.debugElement.query(By.directive(EnterEmailComponent))).toBeTruthy();
-      expect(getSignInButton(AuthMethod.anonymous).nativeElement.textContent).toContain('Try app anonymously');
+      expect(getSignInButton(AuthProvider.anonymous).nativeElement.textContent).toContain('Try app anonymously');
     });
 
     it('emits "signIn(AuthMethods.anonymous)" on "Try app anonymously" button click', done => {
       component.signIn.pipe(first()).subscribe(({ method }) => {
-        expect(method).toEqual(AuthMethod.anonymous);
+        expect(method).toEqual(AuthProvider.anonymous);
         done();
       });
-      getSignInButton(AuthMethod.anonymous).nativeElement.click();
+      getSignInButton(AuthProvider.anonymous).nativeElement.click();
     });
 
     it(`links email to EnterEmailComponent`, () => {
@@ -160,15 +160,15 @@ describe(SignInUIComponent.name, () => {
     });
 
     it(`links isActiveStage to EnterEmailComponent`, () => {
-      component.stage = AuthStage.enterEmail;
+      component.stage = AuthStage.enteringEmail;
       fixture.detectChanges();
       expect(enterEmailComponent.isActiveStage).toEqual(true);
       // change
-      component.stage = AuthStage.signUpAnonymously;
+      component.stage = AuthStage.authenticatingAnonymously;
       fixture.detectChanges();
       expect(enterEmailComponent.isActiveStage).toEqual(false);
       // change
-      component.stage = AuthStage.fetchProviders;
+      component.stage = AuthStage.fetchingProviders;
       fixture.detectChanges();
       expect(enterEmailComponent.isActiveStage).toEqual(true);
     });
@@ -183,40 +183,40 @@ describe(SignInUIComponent.name, () => {
 
     it('disables "Try app anonymously" inProgress == true and shows "loading" when stage === authenticateAnonymously', () => {
       component.inProgress = true;
-      component.stage = AuthStage.fetchProviders;
+      component.stage = AuthStage.fetchingProviders;
       fixture.detectChanges();
-      expect(getSignInButton(AuthMethod.anonymous).nativeElement.disabled).toBe(true);
-      expect(getSignInButton(AuthMethod.anonymous).nativeElement.textContent).toContain('Try app anonymously');
+      expect(getSignInButton(AuthProvider.anonymous).nativeElement.disabled).toBe(true);
+      expect(getSignInButton(AuthProvider.anonymous).nativeElement.textContent).toContain('Try app anonymously');
       // change stage
-      component.stage = AuthStage.signUpAnonymously;
+      component.stage = AuthStage.authenticatingAnonymously;
       fixture.detectChanges();
-      expect(getSignInButton(AuthMethod.anonymous).nativeElement.disabled).toBe(true);
-      expect(getSignInButton(AuthMethod.anonymous).nativeElement.textContent).toContain('Loading');
+      expect(getSignInButton(AuthProvider.anonymous).nativeElement.disabled).toBe(true);
+      expect(getSignInButton(AuthProvider.anonymous).nativeElement.textContent).toContain('Loading');
     });
   });
 
-  describe(`Stage: ${AuthStage.fetchProviders}`, () => {
+  describe(`Stage: ${AuthStage.fetchingProviders}`, () => {
     beforeEach(() => {
-      component.stage = AuthStage.fetchProviders;
+      component.stage = AuthStage.fetchingProviders;
       fixture.detectChanges();
     });
 
     it(`still shows EnterEmailComponent and "Try app anonymously" button`, () => {
       expect(fixture.nativeElement.textContent).toContain('Welcome!Please enter your email to continue.');
       expect(fixture.debugElement.query(By.directive(EnterEmailComponent))).toBeTruthy();
-      expect(getSignInButton(AuthMethod.anonymous).nativeElement.textContent).toContain('Try app anonymously');
+      expect(getSignInButton(AuthProvider.anonymous).nativeElement.textContent).toContain('Try app anonymously');
     });
   });
 
-  describe(`Stage: ${AuthStage.chooseProvider}`, () => {
+  describe(`Stage: ${AuthStage.choosingProvider}`, () => {
     let providersListComponent: ProvidersListComponent;
     beforeEach(() => {
-      component.stage = AuthStage.chooseProvider;
+      component.stage = AuthStage.choosingProvider;
       fixture.detectChanges();
       providersListComponent = fixture.debugElement.query(By.directive(ProvidersListComponent)).componentInstance;
     });
 
-    function subscribesAndEmitsSignInTest(provider: AuthMethod): void {
+    function subscribesAndEmitsSignInTest(provider: AuthProvider): void {
       it(`subscribes to ProvidersList component "select" event and emits "signIn" for "${provider}" provider`, done => {
         component.signIn.pipe(first()).subscribe(({ method }) => {
           expect(method).toEqual(provider);
@@ -226,7 +226,7 @@ describe(SignInUIComponent.name, () => {
       });
     }
 
-    function subscribesAndEmitsSelectProviderTest(provider: AuthMethod): void {
+    function subscribesAndEmitsSelectProviderTest(provider: AuthProvider): void {
       it(`subscribes to ProvidersList component "select" event and emits "signIn" for "${provider}" provider`, done => {
         component.selectProvider.pipe(first()).subscribe(({ method }) => {
           expect(method).toEqual(provider);
@@ -237,23 +237,23 @@ describe(SignInUIComponent.name, () => {
     }
 
     it(`links providers to ProvidersList component`, () => {
-      component.providers = [AuthMethod.github, AuthMethod.google];
+      component.providers = [AuthProvider.github, AuthProvider.google];
       fixture.detectChanges();
-      expect(providersListComponent.providers).toEqual([AuthMethod.github, AuthMethod.google]);
+      expect(providersListComponent.providers).toEqual([AuthProvider.github, AuthProvider.google]);
       // change
-      component.providers = [AuthMethod.phone, AuthMethod.link];
+      component.providers = [AuthProvider.phone, AuthProvider.link];
       fixture.detectChanges();
-      expect(providersListComponent.providers).toEqual([AuthMethod.phone, AuthMethod.link]);
+      expect(providersListComponent.providers).toEqual([AuthProvider.phone, AuthProvider.link]);
     });
 
     it(`links selectedProvider to ProvidersList component`, () => {
-      component.selectedProvider = AuthMethod.github;
+      component.selectedProvider = AuthProvider.github;
       fixture.detectChanges();
-      expect(providersListComponent.selectedProvider).toEqual(AuthMethod.github);
+      expect(providersListComponent.selectedProvider).toEqual(AuthProvider.github);
       // change
-      component.selectedProvider = AuthMethod.link;
+      component.selectedProvider = AuthProvider.link;
       fixture.detectChanges();
-      expect(providersListComponent.selectedProvider).toEqual(AuthMethod.link);
+      expect(providersListComponent.selectedProvider).toEqual(AuthProvider.link);
     });
 
     it(`links inProgress to ProvidersList component`, () => {
@@ -266,11 +266,11 @@ describe(SignInUIComponent.name, () => {
       expect(providersListComponent.inProgress).toEqual(false);
     });
 
-    subscribesAndEmitsSignInTest(AuthMethod.google);
-    subscribesAndEmitsSignInTest(AuthMethod.github);
-    subscribesAndEmitsSignInTest(AuthMethod.link);
-    subscribesAndEmitsSelectProviderTest(AuthMethod.password);
-    subscribesAndEmitsSelectProviderTest(AuthMethod.phone);
+    subscribesAndEmitsSignInTest(AuthProvider.google);
+    subscribesAndEmitsSignInTest(AuthProvider.github);
+    subscribesAndEmitsSignInTest(AuthProvider.link);
+    subscribesAndEmitsSelectProviderTest(AuthProvider.password);
+    subscribesAndEmitsSelectProviderTest(AuthProvider.phone);
 
     it(`shows welcome message for a signingUp user and welcome back for existing one`, () => {
       component.userStatus = UserStatus.signingUp;
@@ -286,10 +286,10 @@ describe(SignInUIComponent.name, () => {
     });
   });
 
-  describe(`Stage: ${AuthStage.authenticateWithEmailAndPassword}`, () => {
+  describe(`Stage: ${AuthStage.authenticatingWithEmailAndPassword}`, () => {
     let enterPasswordComponent: EnterPasswordComponent;
     beforeEach(() => {
-      component.stage = AuthStage.authenticateWithEmailAndPassword;
+      component.stage = AuthStage.authenticatingWithEmailAndPassword;
       fixture.detectChanges();
       enterPasswordComponent = fixture.debugElement.query(By.directive(EnterPasswordComponent)).componentInstance;
     });
@@ -306,18 +306,18 @@ describe(SignInUIComponent.name, () => {
       });
 
       it(`links isActiveStage`, () => {
-        component.stage = AuthStage.authenticateWithEmailAndPassword;
+        component.stage = AuthStage.authenticatingWithEmailAndPassword;
         fixture.detectChanges();
         expect(enterPasswordComponent.isActiveStage).toEqual(true);
         // change
-        component.stage = AuthStage.restorePassword;
+        component.stage = AuthStage.restoringPassword;
         fixture.detectChanges();
         expect(enterPasswordComponent.isActiveStage).toEqual(false);
       });
 
       it(`subscribes to EnterPasswordComponent "enterPassword" event and emits "signIn(method:Password, password:string)" event`, done => {
         component.signIn.pipe(first()).subscribe(({ method, password }) => {
-          expect(method).toEqual(AuthMethod.password);
+          expect(method).toEqual(AuthProvider.password);
           expect(password).toEqual(testPassword);
           done();
         });
@@ -328,17 +328,17 @@ describe(SignInUIComponent.name, () => {
     describe(`DeselectProviderButton`, () => {
       it(`shows button (if multiple providers)`, () => {
         // hide
-        component.providers = [AuthMethod.password];
+        component.providers = [AuthProvider.password];
         fixture.detectChanges();
         expect(getDeselectProviderButton()).toBeFalsy();
         // show
-        component.providers = [AuthMethod.password, AuthMethod.phone];
+        component.providers = [AuthProvider.password, AuthProvider.phone];
         fixture.detectChanges();
         expect(getDeselectProviderButton()).toBeTruthy();
       });
 
       it(`disables button when inProgress == true`, () => {
-        component.providers = [AuthMethod.password, AuthMethod.phone];
+        component.providers = [AuthProvider.password, AuthProvider.phone];
         component.inProgress = true;
         fixture.detectChanges();
         expect(getDeselectProviderButton().nativeElement.disabled).toBe(true);
@@ -349,7 +349,7 @@ describe(SignInUIComponent.name, () => {
       });
 
       it(`emits "deselectProvider" event when the button is clicked`, done => {
-        component.providers = [AuthMethod.password, AuthMethod.phone];
+        component.providers = [AuthProvider.password, AuthProvider.phone];
         fixture.detectChanges();
         component.deselectProvider.pipe(first()).subscribe(() => done());
         getDeselectProviderButton().nativeElement.click();
@@ -369,9 +369,9 @@ describe(SignInUIComponent.name, () => {
     });
   });
 
-  describe(`Stage: ${AuthStage.restorePassword}`, () => {
+  describe(`Stage: ${AuthStage.restoringPassword}`, () => {
     beforeEach(() => {
-      component.stage = AuthStage.restorePassword;
+      component.stage = AuthStage.restoringPassword;
       fixture.detectChanges();
     });
 
@@ -387,10 +387,10 @@ describe(SignInUIComponent.name, () => {
     });
   });
 
-  describe(`Stage: ${AuthStage.authenticateWithPhoneNumber}`, () => {
+  describe(`Stage: ${AuthStage.authenticatingWithPhoneNumber}`, () => {
     let enterPhoneNumberComponent: EnterPhoneNumberComponent;
     beforeEach(() => {
-      component.stage = AuthStage.authenticateWithPhoneNumber;
+      component.stage = AuthStage.authenticatingWithPhoneNumber;
       fixture.detectChanges();
       enterPhoneNumberComponent = fixture.debugElement.query(By.directive(EnterPhoneNumberComponent)).componentInstance;
     });
@@ -408,7 +408,7 @@ describe(SignInUIComponent.name, () => {
 
       it(`subscribes to EnterPhoneNumberComponent "enterPhoneNumber" event and emits "signIn(method:phone, password:string)" event`, done => {
         component.signIn.pipe(first()).subscribe(({ method, phoneNumber }) => {
-          expect(method).toEqual(AuthMethod.phone);
+          expect(method).toEqual(AuthProvider.phone);
           expect(phoneNumber).toEqual(testPhoneNumber);
           done();
         });
@@ -419,17 +419,17 @@ describe(SignInUIComponent.name, () => {
     describe(`DeselectProviderButton`, () => {
       it(`shows button (if multiple providers)`, () => {
         // hide
-        component.providers = [AuthMethod.phone];
+        component.providers = [AuthProvider.phone];
         fixture.detectChanges();
         expect(getDeselectProviderButton()).toBeFalsy();
         // show
-        component.providers = [AuthMethod.password, AuthMethod.phone];
+        component.providers = [AuthProvider.password, AuthProvider.phone];
         fixture.detectChanges();
         expect(getDeselectProviderButton()).toBeTruthy();
       });
 
       it(`disables button when inProgress == true`, () => {
-        component.providers = [AuthMethod.password, AuthMethod.phone];
+        component.providers = [AuthProvider.password, AuthProvider.phone];
         component.inProgress = true;
         fixture.detectChanges();
         expect(getDeselectProviderButton().nativeElement.disabled).toBe(true);
@@ -440,7 +440,7 @@ describe(SignInUIComponent.name, () => {
       });
 
       it(`emits "deselectProvider" event when the button is clicked`, done => {
-        component.providers = [AuthMethod.password, AuthMethod.phone];
+        component.providers = [AuthProvider.password, AuthProvider.phone];
         fixture.detectChanges();
         component.deselectProvider.pipe(first()).subscribe(() => done());
         getDeselectProviderButton().nativeElement.click();

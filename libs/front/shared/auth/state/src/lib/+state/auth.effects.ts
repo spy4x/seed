@@ -10,6 +10,7 @@ import { from, of } from 'rxjs';
 import { ONE } from '@seed/shared/constants';
 import { Store } from '@ngrx/store';
 import * as AuthSelectors from './auth.selectors';
+import { AuthProvider } from '@seed/front/shared/types';
 
 export const AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY = 'emailForLinkAuth';
 export type FirebaseError = Error & { code?: string };
@@ -43,7 +44,53 @@ export class AuthEffects {
     ),
   );
 
-  authenticateAnonymously$ = createEffect(() =>
+  enterEmail$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthUIActions.enterEmail),
+      map(() => AuthAPIActions.fetchProviders()),
+    ),
+  );
+  fetchProviders$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthAPIActions.fetchProviders),
+      concatLatestFrom(() =>
+        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
+      ),
+      exhaustMap(([, email]) =>
+        from(this.fireAuth.fetchSignInMethodsForEmail(email)).pipe(
+          map(providers => {
+            console.log({ providers });
+            return AuthAPIActions.fetchProvidersSuccess({ providers: providers as any });
+          }),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  chooseProvider$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthUIActions.chooseProvider),
+      map(({ provider }) => {
+        switch (provider) {
+          case AuthProvider.google:
+            return AuthUIActions.authenticateWithGoogle();
+          case AuthProvider.github:
+            return AuthUIActions.authenticateWithGitHub();
+          case AuthProvider.link:
+            return AuthUIActions.authenticateWithEmailLink();
+          case AuthProvider.anonymous:
+            return AuthUIActions.signUpAnonymously();
+          default:
+            return { type: 'noop' };
+        }
+      }),
+    ),
+  );
+
+  signUpAnonymously$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.signUpAnonymously),
       exhaustMap(() =>
@@ -144,6 +191,10 @@ export class AuthEffects {
     this.actions$.pipe(
       ofType(AuthAPIActions.authenticateWithEmailLinkFinish),
       exhaustMap(() => {
+        // TODO: use URL ?email param instead of localstorage
+        // var actionCodeSettings = {
+        //   url: 'localhost/?email=user@example.com',
+        // }
         const email = localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] as string;
         if (!email || email === 'undefined') {
           const errorMessage = 'No email was provided for link authentication. Try again.';

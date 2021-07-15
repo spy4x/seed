@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { AuthMethod } from '@seed/front/shared/types';
+import { AuthProvider } from '@seed/front/shared/types';
 
 const prefix = `[Auth/API]`;
 export const init = createAction(`${prefix} Init`);
@@ -8,11 +8,11 @@ export const initAuthenticated = createAction(`${prefix} Init - Authenticated`, 
 
 export const initNotAuthenticated = createAction(`${prefix} Init - Not authenticated`);
 
-export const fetchingProviders = createAction(`${prefix} Fetching providers`);
+export const fetchProviders = createAction(`${prefix} Fetch providers`);
 
-export const fetchingProvidersSuccess = createAction(
+export const fetchProvidersSuccess = createAction(
   `${prefix} Fetching providers - Success`,
-  props<{ providers: AuthMethod[] }>(),
+  props<{ providers: AuthProvider[] }>(),
 );
 
 export const signedUp = createAction(`${prefix} Signed up`, props<{ userId: string }>());

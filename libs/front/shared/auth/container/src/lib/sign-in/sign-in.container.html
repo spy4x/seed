@@ -1,15 +1,20 @@
 <seed-shared-auth-ui-sign-in
-  [stage]="authStages.chooseProvider"
-  [inProgress]="false"
+  [stage]="(stage$ | async) || authStages.initialization"
+  [inProgress]="(inProgress$ | async) || false"
+  [email]="(email$ | async) || undefined"
   [errorMessage]="(errorMessage$ | async) || undefined"
   [successMessage]="(successMessage$ | async) || undefined"
-  [providers]="[authMethods.google, authMethods.link]"
-  [selectedProvider]="authMethods.link"
+  [providers]="(providers$ | async) || []"
+  [selectedProvider]="(selectedProvider$ | async) || undefined"
   [userStatus]="userStatuses.existing"
   [prevUser]="prevUser"
   (signIn)="signIn($event)"
   (signUp)="signUp($event)"
+  (changeUser)="changeUser()"
+  (selectProvider)="chooseProvider($event.method)"
+  (deselectProvider)="chooseProvider(undefined)"
   (enterEmail)="enterEmail($event)"
   (restorePassword)="restorePassword()"
 ></seed-shared-auth-ui-sign-in>
-<!--  [inProgress]="(inProgress$ | async) || false"-->
+
+<!-- TODO: userStatus?? -->

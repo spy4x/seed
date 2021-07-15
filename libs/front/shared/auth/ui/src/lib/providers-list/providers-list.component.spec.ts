@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProvidersListComponent } from './providers-list.component';
-import { AuthMethod } from '@seed/front/shared/types';
+import { AuthProvider } from '@seed/front/shared/types';
 import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { difference } from 'lodash-es';
@@ -10,7 +10,7 @@ describe(ProvidersListComponent.name, () => {
   // region SETUP
   let component: ProvidersListComponent;
   let fixture: ComponentFixture<ProvidersListComponent>;
-  const ALL_PROVIDERS = (Object.keys(AuthMethod) as AuthMethod[]).filter(am => am !== AuthMethod.anonymous);
+  const ALL_PROVIDERS = (Object.keys(AuthProvider) as AuthProvider[]).filter(am => am !== AuthProvider.anonymous);
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -25,11 +25,11 @@ describe(ProvidersListComponent.name, () => {
     fixture.detectChanges();
   });
 
-  function getProviderButton(method: AuthMethod): DebugElement {
+  function getProviderButton(method: AuthProvider): DebugElement {
     return fixture.debugElement.query(By.css(`button[data-e2e="${method}"]`));
   }
 
-  function renderTest(providers: AuthMethod[]): void {
+  function renderTest(providers: AuthProvider[]): void {
     it(`shows providers: ${providers.join(', ')}`, () => {
       component.providers = providers;
       fixture.detectChanges();
@@ -38,7 +38,7 @@ describe(ProvidersListComponent.name, () => {
     });
   }
 
-  function emitTest(provider: AuthMethod): void {
+  function emitTest(provider: AuthProvider): void {
     it(`emits "select" event on click on "${provider}" button`, done => {
       component.providers = ALL_PROVIDERS;
       fixture.detectChanges();
@@ -50,7 +50,7 @@ describe(ProvidersListComponent.name, () => {
     });
   }
 
-  function loadingTest(provider: AuthMethod): void {
+  function loadingTest(provider: AuthProvider): void {
     it(`shows loading on "${provider}" button and disables other buttons`, () => {
       component.providers = ALL_PROVIDERS;
       component.selectedProvider = provider;
@@ -66,9 +66,9 @@ describe(ProvidersListComponent.name, () => {
   }
   // endregion
 
-  renderTest([AuthMethod.link, AuthMethod.password]);
-  renderTest([AuthMethod.github, AuthMethod.google, AuthMethod.phone]);
+  renderTest([AuthProvider.link, AuthProvider.password]);
+  renderTest([AuthProvider.github, AuthProvider.google, AuthProvider.phone]);
   renderTest(ALL_PROVIDERS);
   ALL_PROVIDERS.forEach(p => emitTest(p));
-  [AuthMethod.github, AuthMethod.google, AuthMethod.link].forEach(p => loadingTest(p));
+  [AuthProvider.github, AuthProvider.google, AuthProvider.link].forEach(p => loadingTest(p));
 });

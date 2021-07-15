@@ -2,12 +2,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SignInContainerComponent } from './sign-in.container';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { SignInUIComponent } from '@seed/front/shared/auth/ui';
+import { SharedAuthUIModule, SignInUIComponent } from '@seed/front/shared/auth/ui';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
-import { AuthUIActions, AuthFeature } from '@seed/front/shared/auth/state';
+import { AuthFeature, AuthUIActions } from '@seed/front/shared/auth/state';
 import { Store } from '@ngrx/store';
 import { first } from 'rxjs/operators';
-import { AuthMethod } from '@seed/front/shared/types';
+import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 import { testEmail, testPassword } from '@seed/shared/mock-data';
 
 describe(SignInContainerComponent.name, () => {
@@ -32,7 +32,8 @@ describe(SignInContainerComponent.name, () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [SignInContainerComponent, SignInUIComponent],
+      imports: [SharedAuthUIModule],
+      declarations: [SignInContainerComponent],
       providers: [provideMockStore({ initialState })],
     })
       .overrideComponent(SignInContainerComponent, {
@@ -46,6 +47,20 @@ describe(SignInContainerComponent.name, () => {
     fixture.detectChanges();
   });
 
+  it('links state.auth.stage with UI component', async () => {
+    expect(component.stage).toBe(AuthStage.initialization);
+    await updateState({ stage: AuthStage.signingOut });
+    fixture.detectChanges();
+    expect(component.stage).toBe(AuthStage.signingOut);
+  });
+
+  it('links state.auth.email with UI component', async () => {
+    expect(component.email).toBe(undefined);
+    await updateState({ email: testEmail });
+    fixture.detectChanges();
+    expect(component.email).toBe(testEmail);
+  });
+
   it('links state.auth.inProgress with UI component', async () => {
     expect(component.inProgress).toBe(false);
     await updateState({ inProgress: true });
@@ -56,7 +71,7 @@ describe(SignInContainerComponent.name, () => {
   it('links state.auth.errorMessage with UI component', async () => {
     const errorMessage = 'Wrong password';
     expect(component.errorMessage).toBe(undefined);
-    await updateState({ errorMessage });
+    await updateState({ error: { message: errorMessage, code: '123' } });
     fixture.detectChanges();
     expect(component.errorMessage).toBe(errorMessage);
   });
@@ -69,65 +84,79 @@ describe(SignInContainerComponent.name, () => {
     expect(component.successMessage).toBe(successMessage);
   });
 
-  it('links isAuthenticated with UI component', async () => {
-    expect(component.isAuthenticated).toBe(false);
-    await updateState({ userId: '123', inProgress: false });
+  it('links state.auth.providers with UI component', async () => {
+    const providers = [AuthProvider.link, AuthProvider.github];
+    expect(component.providers).toEqual([]);
+    await updateState({ providers });
     fixture.detectChanges();
-    expect(component.isAuthenticated).toBe(true);
+    expect(component.providers).toEqual(providers);
   });
 
-  it('dispatches action "authenticateAnonymously" when AuthMethods.anonymous is emitted from component with through signIn emitter', () => {
-    component.signIn.next({ method: AuthMethod.anonymous });
+  it('links state.auth.providers with UI component', async () => {
+    const provider = AuthProvider.link;
+    expect(component.selectedProvider).toBe(undefined);
+    await updateState({ selectedProvider: provider });
+    fixture.detectChanges();
+    expect(component.selectedProvider).toBe(provider);
+  });
+
+  it(`dispatches action "${AuthUIActions.chooseProvider.type}" when component emits "selectProvider"`, () => {
+    const provider = AuthProvider.password;
+    component.selectProvider.next({ method: provider });
+    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.chooseProvider({ provider }));
+  });
+
+  it(`dispatches action "${AuthUIActions.enterEmail.type}" when component emits "enterEmail"`, () => {
+    component.enterEmail.next({ email: testEmail });
+    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.enterEmail({ email: testEmail }));
+  });
+
+  it(`dispatches action "${AuthUIActions.chooseProvider.type}" when component emits "deselectProvider"`, () => {
+    component.deselectProvider.next();
+    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.chooseProvider({ provider: undefined }));
+  });
+
+  it(`dispatches action "${AuthUIActions.changeUser.type}" when component emits "changeUser"`, () => {
+    component.changeUser.next();
+    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.changeUser());
+  });
+
+  it(`dispatches action "${AuthUIActions.signUpAnonymously.type}" when component emits "signIn" event with ${AuthProvider.anonymous} provider`, () => {
+    component.signIn.next({ method: AuthProvider.anonymous });
     expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.signUpAnonymously());
   });
 
-  it('dispatches action "authenticateWithGoogle" when AuthMethods.google is emitted from component with through signIn emitter', () => {
-    component.signIn.next({ method: AuthMethod.google });
+  it(`dispatches action "${AuthUIActions.authenticateWithGoogle.type}" when component emits "signIn" event with ${AuthProvider.google} provider`, () => {
+    component.signIn.next({ method: AuthProvider.google });
     expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.authenticateWithGoogle());
   });
 
-  it('dispatches action "authenticateWithGitHub" when AuthMethods.github is emitted from component with through signIn emitter', () => {
-    component.signIn.next({ method: AuthMethod.github });
+  it(`dispatches action "${AuthUIActions.authenticateWithGitHub.type}" when component emits "signIn" event with ${AuthProvider.github} provider`, () => {
+    component.signIn.next({ method: AuthProvider.github });
     expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.authenticateWithGitHub());
   });
 
-  it('dispatches action "authenticateWithEmailAndPassword" when AuthMethods.password is emitted from component with through signIn emitter', () => {
-    const email = testEmail;
+  it(`dispatches action "${AuthUIActions.signInWithEmailAndPassword.type}" when component emits "signIn" event with ${AuthProvider.password} provider`, () => {
     const password = testPassword;
-    component.signIn.next({ method: AuthMethod.password, email, password });
-    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.signInWithEmailAndPassword({ email, password }));
+    component.signIn.next({ method: AuthProvider.password, password });
+    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.signInWithEmailAndPassword({ password }));
   });
 
-  it('dispatches action "authenticateWithEmailAndPassword" when AuthMethods.password is emitted from component with through signIn emitter, even with empty email & password', () => {
-    const email = '';
-    const password = '';
-    component.signIn.next({ method: AuthMethod.password, email, password });
-    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.signInWithEmailAndPassword({ email, password }));
+  it(`dispatches action "${AuthUIActions.authenticateWithEmailLink.type}" when component emits "signIn" event with ${AuthProvider.link} provider`, () => {
+    component.signIn.next({ method: AuthProvider.link });
+    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.authenticateWithEmailLink());
   });
 
-  it('dispatches action "authenticateWithEmailLink" when AuthMethods.link is emitted from component with through signIn emitter', () => {
-    const email = testEmail;
-    component.signIn.next({ method: AuthMethod.link, email });
-    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.authenticateWithEmailLink({ email }));
-  });
-
-  it('dispatches action "signUpWithEmailAndPassword" when component emit signUp emitter', () => {
-    const email = testEmail;
+  it(`dispatches action "${AuthUIActions.signUpWithEmailAndPassword.type}" when component emits "signUp" event with ${AuthProvider.password} provider`, () => {
+    const provider = AuthProvider.password;
     const password = testPassword;
-    component.signUp.next({ password });
-    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.signUpWithEmailAndPassword({ email, password }));
+    component.signUp.next({ method: provider, password });
+    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.signUpWithEmailAndPassword({ password }));
   });
 
-  it('dispatches action "signUpWithEmailAndPassword" when component emit signUp emitter, even with empty email & password', () => {
-    const email = '';
-    const password = '';
-    component.signUp.next({ password });
-    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.signUpWithEmailAndPassword({ email, password }));
-  });
-
-  it('dispatches action "restorePasswordAttempt" when component emit restorePassword emitter', () => {
+  it(`dispatches action "${AuthUIActions.restorePassword.type}" when component emits "restorePassword" event`, () => {
     component.restorePassword.next();
-    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.restorePassword({ email: testEmail }));
+    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.restorePassword());
   });
 
   it('throws error when unknown AuthMethod is emitted from component with through signIn emitter', () => {
@@ -138,10 +167,5 @@ describe(SignInContainerComponent.name, () => {
     expect(console.error).toHaveBeenCalledWith(`Auth method ${method} is not supported yet.`);
     console.error = originalConsoleError;
     expect(store.dispatch).not.toHaveBeenCalled();
-  });
-
-  it('dispatches action "signOut" when event signOut emitted from component', () => {
-    component.signOut.next();
-    expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.signOut());
   });
 });

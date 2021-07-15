@@ -7,7 +7,7 @@
     ></seed-shared-auth-ui-display-prev-user>
 
     <ng-container [ngSwitch]="true">
-      <ng-container *ngSwitchCase="stage === authStages.init">
+      <ng-container *ngSwitchCase="stage === authStages.initialization">
         <div class="text-center">
           <div data-e2e="loading" class="spinner-border text-primary" role="status"></div>
         </div>
@@ -15,9 +15,9 @@
 
       <ng-container
         *ngSwitchCase="
-          stage === authStages.enterEmail ||
-          stage === authStages.fetchProviders ||
-          stage === authStages.signUpAnonymously
+          stage === authStages.enteringEmail ||
+          stage === authStages.fetchingProviders ||
+          stage === authStages.authenticatingAnonymously
         "
       >
         <h2>Welcome!</h2>
@@ -26,7 +26,7 @@
         <seed-shared-auth-ui-enter-email
           [email]="email"
           [inProgress]="inProgress"
-          [isActiveStage]="stage === authStages.enterEmail || stage === authStages.fetchProviders"
+          [isActiveStage]="stage === authStages.enteringEmail || stage === authStages.fetchingProviders"
           (enterEmail)="enterEmail.emit($event)"
         ></seed-shared-auth-ui-enter-email>
 
@@ -40,7 +40,9 @@
           [disabled]="inProgress"
           class="btn btn-outline-primary w-100 d-flex justify-content-center align-items-center"
         >
-          <ng-container *ngIf="stage === authStages.signUpAnonymously && inProgress; else authenticateAnonymously">
+          <ng-container
+            *ngIf="stage === authStages.authenticatingAnonymously && inProgress; else authenticateAnonymously"
+          >
             <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
             <span>Loading</span>
           </ng-container>
@@ -53,10 +55,10 @@
 
       <ng-container
         *ngSwitchCase="
-          stage === authStages.chooseProvider ||
-          stage === authStages.authenticateWithGitHub ||
-          stage === authStages.authenticateWithGoogle ||
-          stage === authStages.sendEmailLink
+          stage === authStages.choosingProvider ||
+          stage === authStages.authenticatingWithGitHub ||
+          stage === authStages.authenticatingWithGoogle ||
+          stage === authStages.authenticatingWithEmailLink
         "
       >
         <ng-container *ngIf="userStatus === userStatuses.existing; else newUser">
@@ -80,12 +82,14 @@
       </ng-container>
 
       <ng-container
-        *ngSwitchCase="stage === authStages.authenticateWithEmailAndPassword || stage === authStages.restorePassword"
+        *ngSwitchCase="
+          stage === authStages.authenticatingWithEmailAndPassword || stage === authStages.restoringPassword
+        "
       >
         <h1>Please enter your password:</h1>
         <seed-shared-auth-ui-enter-password
           [inProgress]="inProgress"
-          [isActiveStage]="stage === authStages.authenticateWithEmailAndPassword"
+          [isActiveStage]="stage === authStages.authenticatingWithEmailAndPassword"
           (enterPassword)="signIn.emit({ method: authMethods.password, password: $event.password })"
         ></seed-shared-auth-ui-enter-password>
 
@@ -99,7 +103,7 @@
           [disabled]="inProgress"
           class="btn btn-outline-dark w-100 d-flex justify-content-center align-items-center"
         >
-          <ng-container *ngIf="stage === authStages.restorePassword && inProgress; else forgotPasswordButton">
+          <ng-container *ngIf="stage === authStages.restoringPassword && inProgress; else forgotPasswordButton">
             <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
             <span>Loading</span>
           </ng-container>
@@ -126,7 +130,7 @@
         </ng-container>
       </ng-container>
 
-      <ng-container *ngSwitchCase="stage === authStages.authenticateWithPhoneNumber">
+      <ng-container *ngSwitchCase="stage === authStages.authenticatingWithPhoneNumber">
         <h1>Please enter your phone number:</h1>
         <seed-shared-auth-ui-enter-phone-number
           [inProgress]="inProgress"
