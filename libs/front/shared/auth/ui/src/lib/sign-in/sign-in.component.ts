@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { AuthProvider, AuthStage, PreviouslyAuthenticatedUser, UserStatus } from '@seed/front/shared/types';
+import { AuthProvider, AuthStage, PreviouslyAuthenticatedUser } from '@seed/front/shared/types';
 
 @Component({
   selector: 'seed-shared-auth-ui-sign-in',
@@ -28,7 +28,7 @@ export class SignInUIComponent {
 
   @Input() selectedProvider?: AuthProvider = undefined;
 
-  @Input() userStatus?: UserStatus = undefined;
+  @Input() didUserSignUpEver: boolean = false;
 
   @Input() prevUser?: PreviouslyAuthenticatedUser = undefined;
 
@@ -50,7 +50,7 @@ export class SignInUIComponent {
 
   authStages = AuthStage;
 
-  userStatuses = UserStatus;
+  allProviders = (Object.keys(AuthProvider) as AuthProvider[]).filter(p => p !== AuthProvider.anonymous);
 
   onProviderClick(provider: AuthProvider): void {
     switch (provider) {

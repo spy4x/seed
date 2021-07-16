@@ -6,8 +6,8 @@
   [successMessage]="(successMessage$ | async) || undefined"
   [providers]="(providers$ | async) || []"
   [selectedProvider]="(selectedProvider$ | async) || undefined"
-  [userStatus]="userStatuses.existing"
   [prevUser]="prevUser"
+  [didUserSignUpEver]="(didUserSignUpEver$ | async) || false"
   (signIn)="signIn($event)"
   (signUp)="signUp($event)"
   (changeUser)="changeUser()"
@@ -16,5 +16,3 @@
   (enterEmail)="enterEmail($event)"
   (restorePassword)="restorePassword()"
 ></seed-shared-auth-ui-sign-in>
-
-<!-- TODO: userStatus?? -->

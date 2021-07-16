@@ -245,13 +245,30 @@ describe('Auth Reducer', () => {
       });
     });
 
-    it(AuthAPIActions.fetchProvidersSuccess.type, () => {
+    it(`"${AuthAPIActions.fetchProvidersSuccess.type}": saves multiple providers (user exists in Auth DB)"`, () => {
       const providers = [AuthProvider.password, AuthProvider.google];
       reducerTest(
         {
           email: testEmail,
           stage: AuthStage.fetchingProviders,
+          providers: undefined,
+          inProgress: true,
+        },
+        AuthAPIActions.fetchProvidersSuccess({ providers }),
+        {
+          inProgress: false,
+          stage: AuthStage.choosingProvider,
+          providers,
+        },
+      );
+    });
 
+    it(`"${AuthAPIActions.fetchProvidersSuccess.type}": saves zero providers (user doesn't exist in Auth DB)`, () => {
+      const providers = [AuthProvider.password, AuthProvider.google];
+      reducerTest(
+        {
+          email: testEmail,
+          stage: AuthStage.fetchingProviders,
           providers: [],
           inProgress: true,
         },

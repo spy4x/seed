@@ -50,6 +50,7 @@ export class AuthEffects {
       map(() => AuthAPIActions.fetchProviders()),
     ),
   );
+
   fetchProviders$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthAPIActions.fetchProviders),
@@ -60,13 +61,46 @@ export class AuthEffects {
         from(this.fireAuth.fetchSignInMethodsForEmail(email)).pipe(
           map(providers => {
             console.log({ providers });
-            return AuthAPIActions.fetchProvidersSuccess({ providers: providers as any });
+            const map: { [key: string]: AuthProvider } = {
+              'google.com': AuthProvider.google,
+              password: AuthProvider.password,
+              emailLink: AuthProvider.link,
+            };
+            const mappedProviders = providers.map(p => map[p]);
+            console.log({ mappedProviders });
+            return AuthAPIActions.fetchProvidersSuccess({ providers: mappedProviders });
           }),
           catchError((error: FirebaseError) =>
             of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
           ),
         ),
       ),
+    ),
+  );
+  fetchProvidersSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthAPIActions.fetchProvidersSuccess),
+      // concatLatestFrom(() =>
+      //   this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
+      // ),
+      // exhaustMap(([, email]) =>
+      //   from(this.fireAuth.fetchSignInMethodsForEmail(email)).pipe(
+      //     map(providers => {
+      //       console.log({ providers });
+      //       const map: { [key: string]: AuthProvider } = {
+      //         'google.com': AuthProvider.google,
+      //         password: AuthProvider.password,
+      //         emailLink: AuthProvider.link,
+      //       };
+      //       const mappedProviders = providers.map(p => map[p]);
+      //       console.log({ mappedProviders });
+      //       return AuthAPIActions.fetchProvidersSuccess({ providers: mappedProviders });
+      //     }),
+      //     catchError((error: FirebaseError) =>
+      //       of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+      //     ),
+      //   ),
+      // ),
     ),
   );
 

@@ -61,24 +61,30 @@
           stage === authStages.authenticatingWithEmailLink
         "
       >
-        <ng-container *ngIf="userStatus === userStatuses.existing; else newUser">
+        <ng-container *ngIf="didUserSignUpEver; else newUser">
           <div data-e2e="welcomeExistingUser">
             <h2>Welcome back!</h2>
             <p>Previously you used these sign in methods:</p>
+            <seed-shared-auth-ui-providers-list
+              [providers]="providers"
+              [selectedProvider]="selectedProvider"
+              [inProgress]="inProgress"
+              (select)="onProviderClick($event)"
+            ></seed-shared-auth-ui-providers-list>
           </div>
         </ng-container>
         <ng-template #newUser>
           <div data-e2e="welcomeNewUser">
             <h2>Welcome to the app!</h2>
             <p>Use any sign up method below.</p>
+            <seed-shared-auth-ui-providers-list
+              [providers]="allProviders"
+              [selectedProvider]="selectedProvider"
+              [inProgress]="inProgress"
+              (select)="onProviderClick($event)"
+            ></seed-shared-auth-ui-providers-list>
           </div>
         </ng-template>
-        <seed-shared-auth-ui-providers-list
-          [providers]="providers"
-          [selectedProvider]="selectedProvider"
-          [inProgress]="inProgress"
-          (select)="onProviderClick($event)"
-        ></seed-shared-auth-ui-providers-list>
       </ng-container>
 
       <ng-container

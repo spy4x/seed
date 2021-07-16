@@ -8,8 +8,13 @@ export const getStage = createSelector(getAuthState, (state: State) => state.sta
 export const getInProgress = createSelector(getAuthState, (state: State) => state.inProgress);
 export const getEmail = createSelector(getAuthState, (state: State) => state.email);
 export const getProviders = createSelector(getAuthState, (state: State) => state.providers);
+export const getDidUserSignUpEver = createSelector(getAuthState, (state: State) => {
+  if (!state.providers) {
+    return undefined;
+  }
+  return state.providers.length > 0;
+});
 export const getSelectedProvider = createSelector(getAuthState, (state: State) => state.selectedProvider);
-
 export const getIsAuthenticated = createSelector(getAuthState, (state: State) => state.stage === AuthStage.signedIn);
 export const getUserId = createSelector(getAuthState, (state: State) => state.userId);
 export const getErrorMessage = createSelector(getAuthState, (state: State) => state.error?.message);

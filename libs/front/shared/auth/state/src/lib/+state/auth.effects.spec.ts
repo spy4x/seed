@@ -122,9 +122,21 @@ describe(AuthEffects.name, () => {
   describe('fetchProviders$', () => {
     it(`dispatches "${AuthAPIActions.fetchProvidersSuccess.type}" if fireAuth.fetchSignInMethodsForEmail() returns providers`, () => {
       const action = AuthAPIActions.fetchProviders();
-      const providers = [AuthProvider.link, AuthProvider.google]; // TODO map with Firebase Auth Providers string[]
-      const completion = AuthAPIActions.fetchProvidersSuccess({ providers });
-      fetchSignInMethodsForEmailMock.mockReturnValue(of(providers));
+      const firebaseProviders = ['google.com', 'password', 'emailLink'];
+      const authProviders = [AuthProvider.google, AuthProvider.password, AuthProvider.link];
+      const completion = AuthAPIActions.fetchProvidersSuccess({ providers: authProviders });
+      fetchSignInMethodsForEmailMock.mockReturnValue(of(firebaseProviders));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.fetchProviders$).toBeObservable(expected);
+      expect(fetchSignInMethodsForEmailMock).toHaveBeenCalled();
+    });
+    it(`dispatches "${AuthAPIActions.fetchProvidersSuccess.type}" if fireAuth.fetchSignInMethodsForEmail() returns empty providers`, () => {
+      const action = AuthAPIActions.fetchProviders();
+      const firebaseProviders: string[] = [];
+      const authProviders: AuthProvider[] = [];
+      const completion = AuthAPIActions.fetchProvidersSuccess({ providers: authProviders });
+      fetchSignInMethodsForEmailMock.mockReturnValue(of(firebaseProviders));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.fetchProviders$).toBeObservable(expected);
@@ -139,6 +151,34 @@ describe(AuthEffects.name, () => {
       const expected = hot('b', { b: completion });
       expect(effects.fetchProviders$).toBeObservable(expected);
       expect(fetchSignInMethodsForEmailMock).toHaveBeenCalled();
+    });
+  });
+
+  describe('fetchProvidersSuccess$', () => {
+    it(`dispatches "${AuthUIActions.chooseProvider}" if only one provider`, () => {
+      const provider = AuthProvider.github;
+      const action = AuthAPIActions.fetchProvidersSuccess({ providers: [provider] });
+      const completion = AuthUIActions.chooseProvider({ provider });
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.fetchProvidersSuccess$).toBeObservable(expected);
+    });
+
+    it(`dispatches "NoopAction" if no providers`, () => {
+      const action = AuthAPIActions.fetchProvidersSuccess({ providers: [] });
+      const completion = { type: 'noop' };
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.fetchProvidersSuccess$).toBeObservable(expected);
+    });
+
+    it(`dispatches "NoopAction" if multiple providers`, () => {
+      const providers = [AuthProvider.github, AuthProvider.google];
+      const action = AuthAPIActions.fetchProvidersSuccess({ providers });
+      const completion = { type: 'noop' };
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.fetchProvidersSuccess$).toBeObservable(expected);
     });
   });
 

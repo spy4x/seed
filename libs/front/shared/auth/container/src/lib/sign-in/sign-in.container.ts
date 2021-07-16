@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AuthProvider, AuthStage, PreviouslyAuthenticatedUser, UserStatus } from '@seed/front/shared/types';
+import { AuthProvider, AuthStage, PreviouslyAuthenticatedUser } from '@seed/front/shared/types';
 import { AuthUIActions, AuthSelectors } from '@seed/front/shared/auth/state';
 
 @Component({
@@ -18,6 +18,8 @@ export class SignInContainerComponent {
 
   providers$ = this.store.select(AuthSelectors.getProviders);
 
+  didUserSignUpEver$ = this.store.select(AuthSelectors.getDidUserSignUpEver);
+
   selectedProvider$ = this.store.select(AuthSelectors.getSelectedProvider);
 
   errorMessage$ = this.store.select(AuthSelectors.getErrorMessage);
@@ -27,8 +29,6 @@ export class SignInContainerComponent {
   authStages = AuthStage;
 
   authMethods = AuthProvider;
-
-  userStatuses = UserStatus;
 
   prevUser?: PreviouslyAuthenticatedUser = {
     displayName: 'Anton Shubin',

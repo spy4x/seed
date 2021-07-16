@@ -1,6 +1,6 @@
 import { AUTH_FEATURE_KEY, AuthPartialState, initialState, State } from './auth.reducer';
 import * as AuthSelectors from './auth.selectors';
-import { AuthStage } from '@seed/front/shared/types';
+import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 
 describe('Auth Selectors', () => {
   let state: AuthPartialState;
@@ -36,6 +36,21 @@ describe('Auth Selectors', () => {
     it('returns state.auth.inProgress false', () => {
       setState({ inProgress: false });
       expect(AuthSelectors.getInProgress(state)).toBe(false);
+    });
+  });
+
+  describe('getDidUserSignUpEver()', () => {
+    it(`returns undefined if state.auth.providers === undefined`, () => {
+      setState({ providers: undefined });
+      expect(AuthSelectors.getDidUserSignUpEver(state)).toBe(undefined);
+    });
+    it(`returns true if state.auth.providers.length > 0`, () => {
+      setState({ providers: [AuthProvider.google] });
+      expect(AuthSelectors.getDidUserSignUpEver(state)).toBe(true);
+    });
+    it(`returns false if state.auth.providers.length === 0`, () => {
+      setState({ providers: [] });
+      expect(AuthSelectors.getDidUserSignUpEver(state)).toBe(false);
     });
   });
 

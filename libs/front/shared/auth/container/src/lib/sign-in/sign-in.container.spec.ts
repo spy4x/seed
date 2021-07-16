@@ -68,6 +68,16 @@ describe(SignInContainerComponent.name, () => {
     expect(component.inProgress).toBe(true);
   });
 
+  it('links state.auth.didUserSignUpEver with UI component', async () => {
+    expect(component.didUserSignUpEver).toBe(false);
+    await updateState({ providers: [AuthProvider.password] });
+    fixture.detectChanges();
+    expect(component.didUserSignUpEver).toBe(true);
+    await updateState({ providers: [] });
+    fixture.detectChanges();
+    expect(component.didUserSignUpEver).toBe(false);
+  });
+
   it('links state.auth.errorMessage with UI component', async () => {
     const errorMessage = 'Wrong password';
     expect(component.errorMessage).toBe(undefined);

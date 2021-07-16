@@ -4,7 +4,7 @@ import { SignInUIComponent } from './sign-in.component';
 import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { first } from 'rxjs/operators';
-import { AuthProvider, AuthStage, UserStatus } from '@seed/front/shared/types';
+import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 import { testDisplayName, testEmail, testPassword, testPhoneNumber } from '@seed/shared/mock-data';
 import { ProvidersListComponent } from '../providers-list/providers-list.component';
 import { EnterEmailComponent } from '../enter-email/enter-email.component';
@@ -272,13 +272,13 @@ describe(SignInUIComponent.name, () => {
     subscribesAndEmitsSelectProviderTest(AuthProvider.password);
     subscribesAndEmitsSelectProviderTest(AuthProvider.phone);
 
-    it(`shows welcome message for a signingUp user and welcome back for existing one`, () => {
-      component.userStatus = UserStatus.signingUp;
+    it(`shows "welcome" message for a user who didn't sign up and "welcome back" in other case`, () => {
+      component.didUserSignUpEver = false;
       fixture.detectChanges();
       expect(fixture.debugElement.query(By.css(`[data-e2e="welcomeNewUser"]`)).nativeElement.textContent).toBe(
         'Welcome to the app!Use any sign up method below.',
       );
-      component.userStatus = UserStatus.existing;
+      component.didUserSignUpEver = true;
       fixture.detectChanges();
       expect(fixture.debugElement.query(By.css(`[data-e2e="welcomeExistingUser"]`)).nativeElement.textContent).toBe(
         'Welcome back!Previously you used these sign in methods:',

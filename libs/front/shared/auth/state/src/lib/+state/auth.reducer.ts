@@ -15,7 +15,13 @@ export interface State {
   };
 
   email?: string;
-  providers: AuthProvider[];
+  /**
+   * Values meaning:
+   * undefined - we don't know yet if user exist in Firebase Authentication DB. We need to fetch providers by email.
+   * [] (empty array) - user with the email doesn't exist in Firebase Authentication DB (not signed up yet).
+   * [...] (array with list of providers) - user with the email exists in Firebase Authentication DB.
+   */
+  providers?: AuthProvider[];
   selectedProvider?: AuthProvider;
   userId?: string;
 }
@@ -31,7 +37,7 @@ export const initialState: State = {
   error: undefined,
 
   email: undefined,
-  providers: [],
+  providers: undefined,
   selectedProvider: undefined,
   userId: undefined,
 };
