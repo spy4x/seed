@@ -1,0 +1,23 @@
+<ng-container *ngIf="userId || email">
+  <div data-e2e="wrapper" class="d-flex align-items-center">
+    <img
+      data-e2e="photoURL"
+      [src]="photoURL || photoURLPlaceholder"
+      alt="User photo"
+      class="img-thumbnail rounded-circle w-25 me-2"
+    />
+    <div class="text-start flex-grow-1">
+      <div data-e2e="displayName" *ngIf="displayName">{{ displayName }}</div>
+      <div data-e2e="identification" *ngIf="email || userId" class="text-sm text-muted">
+        {{ email }} {{ email || displayName ? '' : 'User: ' + userId }}
+      </div>
+
+      <ng-container *ngIf="userId; else changeUserButton">
+        <a data-e2e="signOut" (click)="signOut.emit()" href="javascript:;">Sign out</a>
+      </ng-container>
+      <ng-template #changeUserButton>
+        <a data-e2e="changeUser" (click)="changeUser.emit()" href="javascript:;">Not you?</a>
+      </ng-template>
+    </div>
+  </div>
+</ng-container>

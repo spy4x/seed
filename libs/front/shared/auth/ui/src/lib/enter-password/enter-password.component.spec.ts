@@ -43,7 +43,7 @@ describe(EnterPasswordComponent.name, () => {
     });
 
     // CASE: invalid
-    component.form.patchValue({ password: '123' });
+    component.form.patchValue({ password: '0000' });
     getEnterPasswordButton().nativeElement.click();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Min length is 10.');

@@ -23,7 +23,10 @@ export interface State {
    */
   providers?: AuthProvider[];
   selectedProvider?: AuthProvider;
+  isNewUser?: boolean;
   userId?: string;
+  displayName?: string;
+  photoURL?: string;
 }
 
 export interface AuthPartialState {
@@ -39,7 +42,10 @@ export const initialState: State = {
   email: undefined,
   providers: undefined,
   selectedProvider: undefined,
+  isNewUser: undefined,
   userId: undefined,
+  displayName: undefined,
+  photoURL: undefined,
 };
 
 const resetErrorAndSuccess = {
@@ -52,11 +58,11 @@ const authReducer = createReducer<State>(
 
   // region UI Actions
   on(
-    AuthUIActions.signUpAnonymously,
+    AuthUIActions.signAnonymously,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      stage: AuthStage.authenticatingAnonymously,
+      stage: AuthStage.signingAnonymously,
       selectedProvider: AuthProvider.anonymous,
       ...resetErrorAndSuccess,
     }),
@@ -75,53 +81,73 @@ const authReducer = createReducer<State>(
       ...state,
       stage: AuthStage.enteringEmail,
       email: undefined,
+      displayName: undefined,
+      photoURL: undefined,
       providers: [],
       selectedProvider: undefined,
       ...resetErrorAndSuccess,
     }),
   ),
-  on(
-    AuthUIActions.chooseProvider,
-    (state: State, { provider }): State => ({
+  on(AuthUIActions.selectProvider, (state: State, { provider }): State => {
+    const stageUpdate: Partial<State> = {};
+    if (provider === AuthProvider.password) {
+      stageUpdate.stage = AuthStage.signingEmailAndPassword;
+    }
+    if (provider === AuthProvider.phone) {
+      stageUpdate.stage = AuthStage.signingPhoneNumber;
+    }
+    return {
       ...state,
       selectedProvider: provider,
+      ...stageUpdate,
+      ...resetErrorAndSuccess,
+    };
+  }),
+  on(AuthUIActions.deselectProvider, (state: State): State => {
+    const stageUpdate: Partial<State> = {};
+    if (state.stage === AuthStage.signingEmailAndPassword || state.stage === AuthStage.signingPhoneNumber) {
+      stageUpdate.stage = AuthStage.choosingProvider;
+    }
+    return {
+      ...state,
+      selectedProvider: undefined,
+      ...stageUpdate,
+      ...resetErrorAndSuccess,
+    };
+  }),
+  on(
+    AuthUIActions.signGoogle,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.signingGoogle,
       ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthUIActions.authenticateWithGoogle,
+    AuthUIActions.signGitHub,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      stage: AuthStage.authenticatingWithGoogle,
+      stage: AuthStage.signingGitHub,
       ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthUIActions.authenticateWithGitHub,
+    AuthUIActions.signEmailPassword,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      stage: AuthStage.authenticatingWithGitHub,
+      stage: AuthStage.signingEmailAndPassword,
       ...resetErrorAndSuccess,
     }),
   ),
   on(
-    AuthUIActions.signInWithEmailAndPassword,
-    AuthUIActions.signUpWithEmailAndPassword,
+    AuthUIActions.signEmailLink,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      stage: AuthStage.authenticatingWithEmailAndPassword,
-      ...resetErrorAndSuccess,
-    }),
-  ),
-  on(
-    AuthUIActions.authenticateWithEmailLink,
-    (state: State): State => ({
-      ...state,
-      inProgress: true,
-      stage: AuthStage.authenticatingWithEmailLink,
+      stage: AuthStage.signingEmailLink,
       ...resetErrorAndSuccess,
     }),
   ),
@@ -156,13 +182,16 @@ const authReducer = createReducer<State>(
     }),
   ),
   on(
-    AuthAPIActions.initAuthenticated,
-    AuthAPIActions.authenticated,
+    AuthAPIActions.initSignedIn,
+    AuthAPIActions.signedIn,
     AuthAPIActions.signedUp,
-    (state: State, { userId }): State => ({
+    (state: State, { userId, email, displayName, photoURL }): State => ({
       ...state,
       userId,
-      stage: AuthStage.signedIn,
+      email,
+      displayName,
+      photoURL,
+      stage: AuthStage.authenticated,
       inProgress: false,
       ...resetErrorAndSuccess,
     }),
@@ -173,6 +202,18 @@ const authReducer = createReducer<State>(
       ...state,
       inProgress: false,
       stage: AuthStage.enteringEmail,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.initNotAuthenticatedButRehydrateState,
+    (state: State, { email, displayName, photoURL }): State => ({
+      ...state,
+      inProgress: false,
+      stage: AuthStage.enteringEmail,
+      email,
+      displayName,
+      photoURL,
       ...resetErrorAndSuccess,
     }),
   ),
@@ -196,7 +237,7 @@ const authReducer = createReducer<State>(
     }),
   ),
   on(
-    AuthAPIActions.authenticateWithEmailLinkRequestSent,
+    AuthAPIActions.signEmailLinkRequestSent,
     (state: State): State => ({
       ...state,
       inProgress: false,
@@ -205,11 +246,11 @@ const authReducer = createReducer<State>(
     }),
   ),
   on(
-    AuthAPIActions.authenticateWithEmailLinkFinish,
+    AuthAPIActions.signEmailLinkFinish,
     (state: State): State => ({
       ...state,
       inProgress: true,
-      stage: AuthStage.authenticatingWithEmailLink,
+      stage: AuthStage.signingEmailLink,
       selectedProvider: AuthProvider.link,
       ...resetErrorAndSuccess,
     }),
@@ -230,8 +271,8 @@ const authReducer = createReducer<State>(
       inProgress: false,
       ...resetErrorAndSuccess,
       error: {
-        message: message,
-        code: code,
+        message,
+        code,
       },
     }),
   ),
@@ -242,6 +283,8 @@ const authReducer = createReducer<State>(
       stage: AuthStage.enteringEmail,
       inProgress: false,
       userId: undefined,
+      displayName: undefined,
+      photoURL: undefined,
       providers: [],
       selectedProvider: undefined,
       email: undefined,

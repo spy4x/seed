@@ -15,7 +15,7 @@ export class ProvidersListComponent {
 
   @Output() select = new EventEmitter<AuthProvider>();
 
-  authMethods = AuthProvider;
+  authProviders = AuthProvider;
 
   isVisible(provider: AuthProvider): boolean {
     return this.providers.includes(provider);

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AuthProvider, AuthStage, PreviouslyAuthenticatedUser } from '@seed/front/shared/types';
-import { AuthUIActions, AuthSelectors } from '@seed/front/shared/auth/state';
+import { AuthProvider, AuthStage } from '@seed/front/shared/types';
+import { AuthSelectors, AuthUIActions } from '@seed/front/shared/auth/state';
 
 @Component({
   selector: 'seed-shared-auth-container-sign-in',
@@ -16,9 +16,15 @@ export class SignInContainerComponent {
 
   email$ = this.store.select(AuthSelectors.getEmail);
 
+  displayName$ = this.store.select(AuthSelectors.getDisplayName);
+
+  photoURL$ = this.store.select(AuthSelectors.getPhotoURL);
+
+  userId$ = this.store.select(AuthSelectors.getUserId);
+
   providers$ = this.store.select(AuthSelectors.getProviders);
 
-  didUserSignUpEver$ = this.store.select(AuthSelectors.getDidUserSignUpEver);
+  isNewUser$ = this.store.select(AuthSelectors.getIsNewUser);
 
   selectedProvider$ = this.store.select(AuthSelectors.getSelectedProvider);
 
@@ -28,44 +34,32 @@ export class SignInContainerComponent {
 
   authStages = AuthStage;
 
-  authMethods = AuthProvider;
-
-  prevUser?: PreviouslyAuthenticatedUser = {
-    displayName: 'Anton Shubin',
-    phoneNumber: '+79802453603',
-    photoURL: 'https://avatars.githubusercontent.com/u/4995814?v=4',
-    email: '2spy4x@gmail.com',
-  };
+  authProviders = AuthProvider;
 
   constructor(readonly store: Store) {}
 
-  signIn({ method, password }: { method: AuthProvider; password?: string }): void {
-    switch (method) {
+  signIn({ provider, password }: { provider: AuthProvider; password?: string }): void {
+    switch (provider) {
       case AuthProvider.anonymous: {
-        return this.store.dispatch(AuthUIActions.signUpAnonymously());
+        return this.store.dispatch(AuthUIActions.signAnonymously());
       }
       case AuthProvider.google: {
-        return this.store.dispatch(AuthUIActions.authenticateWithGoogle());
+        return this.store.dispatch(AuthUIActions.signGoogle());
       }
       case AuthProvider.github: {
-        return this.store.dispatch(AuthUIActions.authenticateWithGitHub());
+        return this.store.dispatch(AuthUIActions.signGitHub());
       }
       case AuthProvider.password: {
-        return this.store.dispatch(AuthUIActions.signInWithEmailAndPassword({ password: password || '' }));
+        return this.store.dispatch(AuthUIActions.signEmailPassword({ password: password || '' }));
       }
       case AuthProvider.link: {
-        return this.store.dispatch(AuthUIActions.authenticateWithEmailLink());
+        return this.store.dispatch(AuthUIActions.signEmailLink());
       }
       default: {
         /* eslint-disable-next-line no-console */
-        console.error(`Auth method ${method} is not supported yet.`);
+        console.error(`Auth provider ${provider} is not supported yet.`);
       }
     }
-  }
-
-  signUp({ method, password }: { method: AuthProvider; password?: string }): void {
-    method;
-    return this.store.dispatch(AuthUIActions.signUpWithEmailAndPassword({ password: password || '' }));
   }
 
   enterEmail({ email }: { email: string }): void {
@@ -84,7 +78,11 @@ export class SignInContainerComponent {
     this.store.dispatch(AuthUIActions.changeUser());
   }
 
-  chooseProvider(provider?: AuthProvider): void {
-    this.store.dispatch(AuthUIActions.chooseProvider({ provider }));
+  selectProvider(provider: AuthProvider): void {
+    this.store.dispatch(AuthUIActions.selectProvider({ provider }));
+  }
+
+  deselectProvider(): void {
+    this.store.dispatch(AuthUIActions.deselectProvider());
   }
 }

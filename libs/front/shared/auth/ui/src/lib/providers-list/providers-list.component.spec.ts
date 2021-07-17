@@ -25,8 +25,8 @@ describe(ProvidersListComponent.name, () => {
     fixture.detectChanges();
   });
 
-  function getProviderButton(method: AuthProvider): DebugElement {
-    return fixture.debugElement.query(By.css(`button[data-e2e="${method}"]`));
+  function getProviderButton(provider: AuthProvider): DebugElement {
+    return fixture.debugElement.query(By.css(`button[data-e2e="${provider}"]`));
   }
 
   function renderTest(providers: AuthProvider[]): void {
@@ -42,8 +42,8 @@ describe(ProvidersListComponent.name, () => {
     it(`emits "select" event on click on "${provider}" button`, done => {
       component.providers = ALL_PROVIDERS;
       fixture.detectChanges();
-      component.select.pipe(first()).subscribe(method => {
-        expect(method).toEqual(provider);
+      component.select.pipe(first()).subscribe(provider => {
+        expect(provider).toEqual(provider);
         done();
       });
       getProviderButton(provider).nativeElement.click();

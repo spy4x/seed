@@ -1,4 +1,4 @@
-<ng-container *ngIf="authMethods.google as provider">
+<ng-container *ngIf="authProviders.google as provider">
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
@@ -14,7 +14,7 @@
   </button>
 </ng-container>
 
-<ng-container *ngIf="authMethods.github as provider">
+<ng-container *ngIf="authProviders.github as provider">
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
@@ -30,7 +30,7 @@
   </button>
 </ng-container>
 
-<ng-container *ngIf="authMethods.link as provider">
+<ng-container *ngIf="authProviders.link as provider">
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
@@ -46,7 +46,7 @@
   </button>
 </ng-container>
 
-<ng-container *ngIf="authMethods.phone as provider">
+<ng-container *ngIf="authProviders.phone as provider">
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
@@ -62,7 +62,7 @@
   </button>
 </ng-container>
 
-<ng-container *ngIf="authMethods.password as provider">
+<ng-container *ngIf="authProviders.password as provider">
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"

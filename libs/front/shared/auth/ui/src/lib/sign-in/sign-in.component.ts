@@ -1,5 +1,14 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { AuthProvider, AuthStage, PreviouslyAuthenticatedUser } from '@seed/front/shared/types';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
+import { AuthProvider, AuthStage } from '@seed/front/shared/types';
+import { difference } from 'lodash-es';
 
 @Component({
   selector: 'seed-shared-auth-ui-sign-in',
@@ -13,12 +22,18 @@ import { AuthProvider, AuthStage, PreviouslyAuthenticatedUser } from '@seed/fron
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SignInUIComponent {
+export class SignInUIComponent implements OnChanges {
   @Input() stage = AuthStage.initialization;
 
   @Input() inProgress = false;
 
+  @Input() userId?: string = undefined;
+
   @Input() email?: string = undefined;
+
+  @Input() displayName?: string = undefined;
+
+  @Input() photoURL?: string = undefined;
 
   @Input() errorMessage?: string = undefined;
 
@@ -28,17 +43,13 @@ export class SignInUIComponent {
 
   @Input() selectedProvider?: AuthProvider = undefined;
 
-  @Input() didUserSignUpEver: boolean = false;
+  @Input() isNewUser: boolean = false;
 
-  @Input() prevUser?: PreviouslyAuthenticatedUser = undefined;
-
-  @Output() selectProvider = new EventEmitter<{ method: AuthProvider }>();
+  @Output() selectProvider = new EventEmitter<{ provider: AuthProvider }>();
 
   @Output() enterEmail = new EventEmitter<{ email: string }>();
 
-  @Output() signIn = new EventEmitter<{ method: AuthProvider; password?: string; phoneNumber?: string }>();
-
-  @Output() signUp = new EventEmitter<{ method: AuthProvider; password?: string; phoneNumber?: string }>();
+  @Output() sign = new EventEmitter<{ provider: AuthProvider; password?: string; phoneNumber?: string }>();
 
   @Output() restorePassword = new EventEmitter<void>();
 
@@ -46,23 +57,41 @@ export class SignInUIComponent {
 
   @Output() changeUser = new EventEmitter<void>();
 
-  authMethods = AuthProvider;
+  @Output() signOut = new EventEmitter<void>();
+
+  authProviders = AuthProvider;
 
   authStages = AuthStage;
 
   allProviders = (Object.keys(AuthProvider) as AuthProvider[]).filter(p => p !== AuthProvider.anonymous);
+
+  alternativeProviders: AuthProvider[] = [];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.providers) {
+      const providersThatCantBeEasilyLinked = [AuthProvider.phone, AuthProvider.github];
+      this.alternativeProviders = difference(this.allProviders, [
+        ...this.providers,
+        ...providersThatCantBeEasilyLinked,
+      ]);
+    }
+  }
 
   onProviderClick(provider: AuthProvider): void {
     switch (provider) {
       case AuthProvider.google:
       case AuthProvider.github:
       case AuthProvider.link:
-        return this.signIn.emit({ method: provider });
+        return this.sign.emit({ provider: provider });
       case AuthProvider.password:
       case AuthProvider.phone:
-        return this.selectProvider.emit({ method: provider });
+        return this.selectProvider.emit({ provider: provider });
       default:
         throw new Error('Not implemented');
     }
+  }
+
+  enterPassword(password: string): void {
+    this.sign.emit({ provider: AuthProvider.password, password });
   }
 }

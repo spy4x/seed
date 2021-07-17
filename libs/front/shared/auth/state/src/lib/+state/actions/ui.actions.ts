@@ -3,32 +3,23 @@ import { AuthProvider } from '@seed/front/shared/types';
 
 const prefix = `[Auth/UI]`;
 
-export const signUpAnonymously = createAction(`${prefix} Sign up anonymously`);
-
 export const enterEmail = createAction(`${prefix} Enter email`, props<{ email: string }>());
 
 export const changeUser = createAction(`${prefix} Change user`);
 
-export const chooseProvider = createAction(
-  `${prefix} Choose provider`,
-  props<{ provider: undefined | AuthProvider }>(),
-);
+export const selectProvider = createAction(`${prefix} Select provider`, props<{ provider: AuthProvider }>());
 
-export const authenticateWithGoogle = createAction(`${prefix} Authenticate with Google`);
+export const deselectProvider = createAction(`${prefix} Deselect provider`);
 
-export const authenticateWithGitHub = createAction(`${prefix} Authenticate with GitHub`);
+export const signAnonymously = createAction(`${prefix} Sign up anonymously`);
 
-export const authenticateWithEmailLink = createAction(`${prefix} Authenticate with Email Link`);
+export const signGoogle = createAction(`${prefix} Authenticate with Google`);
 
-export const signInWithEmailAndPassword = createAction(
-  `${prefix} Sign in with Email and Password`,
-  props<{ password: string }>(),
-);
+export const signGitHub = createAction(`${prefix} Authenticate with GitHub`);
 
-export const signUpWithEmailAndPassword = createAction(
-  `${prefix} Sign up with Email and Password`,
-  props<{ password: string }>(),
-);
+export const signEmailLink = createAction(`${prefix} Authenticate with Email Link`);
+
+export const signEmailPassword = createAction(`${prefix} Sign with Email and Password`, props<{ password: string }>());
 
 export const restorePassword = createAction(`${prefix} Restore password`);
 
