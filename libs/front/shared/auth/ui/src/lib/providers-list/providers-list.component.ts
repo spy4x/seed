@@ -9,11 +9,11 @@ import { AuthProvider } from '@seed/front/shared/types';
 export class ProvidersListComponent {
   @Input() providers: AuthProvider[] = [];
 
-  @Input() inProgress: boolean = false;
+  @Input() inProgress = false;
 
   @Input() selectedProvider?: AuthProvider = undefined;
 
-  @Output() select = new EventEmitter<AuthProvider>();
+  @Output() selectProvider = new EventEmitter<AuthProvider>();
 
   authProviders = AuthProvider;
 

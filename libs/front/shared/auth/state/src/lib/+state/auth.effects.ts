@@ -1,12 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
-
 import * as AuthUIActions from './actions/ui.actions';
 import * as AuthAPIActions from './actions/api.actions';
 import { AngularFireAuth } from '@angular/fire/auth';
 import { catchError, exhaustMap, filter, map, take, tap } from 'rxjs/operators';
 import firebase from 'firebase/app';
-import { from, of, zip } from 'rxjs';
+import { from, merge, of } from 'rxjs';
 import { ONE } from '@seed/shared/constants';
 import { Action, Store } from '@ngrx/store';
 import * as AuthSelectors from './auth.selectors';
@@ -15,10 +14,18 @@ import { AuthProvider } from '@seed/front/shared/types';
 export const AUTH_REHYDRATION_KEY_EMAIL = 'authEmail';
 export const AUTH_REHYDRATION_KEY_DISPLAY_NAME = 'authDisplayName';
 export const AUTH_REHYDRATION_KEY_PHOTO_URL = 'authPhotoURL';
+export const AUTH_URL_SEGMENT_FOR_LINK_AUTH = 'email';
 export type FirebaseError = Error & { code?: string };
 
 @Injectable()
 export class AuthEffects {
+  readonly mapProviders: { [key: string]: AuthProvider } = {
+    'google.com': AuthProvider.google,
+    'github.com': AuthProvider.github,
+    password: AuthProvider.password,
+    emailLink: AuthProvider.link,
+  };
+
   init$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthAPIActions.init),
@@ -27,19 +34,8 @@ export class AuthEffects {
           take(ONE),
           exhaustMap(user => {
             if (user) {
-              return of(
-                AuthAPIActions.initSignedIn({
-                  userId: user.uid,
-                  email: user.email || undefined,
-                  displayName: user.displayName || undefined,
-                  photoURL: user.photoURL || undefined,
-                  isEmailVerified: user.emailVerified,
-                  createdAt: user.metadata.creationTime ? Date.parse(user.metadata.creationTime) : new Date().getTime(),
-                  isNewUser: false,
-                }),
-              );
+              return of(this.onUserAuthenticationWithUserOnly(user, false, true));
             }
-
             return from(this.fireAuth.isSignInWithEmailLink(window.location.href)).pipe(
               map(isSignInWithEmailLink => {
                 if (isSignInWithEmailLink) {
@@ -71,34 +67,6 @@ export class AuthEffects {
     ),
   );
 
-  fetchProviders$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(AuthAPIActions.fetchProviders),
-      concatLatestFrom(() =>
-        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
-      ),
-      exhaustMap(([, email]) =>
-        from(this.fireAuth.fetchSignInMethodsForEmail(email)).pipe(
-          map(providers => {
-            console.log({ providers });
-            const mapProviders: { [key: string]: AuthProvider } = {
-              'google.com': AuthProvider.google,
-              'github.com': AuthProvider.github,
-              password: AuthProvider.password,
-              emailLink: AuthProvider.link,
-            };
-            const mappedProviders = providers.map(p => mapProviders[p]);
-            console.log({ mappedProviders });
-            return AuthAPIActions.fetchProvidersSuccess({ providers: mappedProviders });
-          }),
-          catchError((error: FirebaseError) =>
-            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
-          ),
-        ),
-      ),
-    ),
-  );
-
   selectProvider$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.selectProvider),
@@ -118,23 +86,7 @@ export class AuthEffects {
       }),
     ),
   );
-  signEmailLink$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(AuthUIActions.signEmailLink),
-      concatLatestFrom(() =>
-        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
-      ),
-      exhaustMap(([, email]) =>
-        from(this.fireAuth.sendSignInLinkToEmail(email, { url: location.href, handleCodeInApp: true })).pipe(
-          map(() => AuthAPIActions.signEmailLinkRequestSent()),
-          tap(() => (localStorage[AUTH_REHYDRATION_KEY_EMAIL] = email)),
-          catchError((error: FirebaseError) =>
-            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
-          ),
-        ),
-      ),
-    ),
-  );
+
   restorePassword$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.restorePassword),
@@ -151,12 +103,14 @@ export class AuthEffects {
       ),
     ),
   );
+
   signOut$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.signOut),
       exhaustMap(() => from(this.fireAuth.signOut()).pipe(map(() => AuthAPIActions.signedOut()))),
     ),
   );
+
   hydrateState$ = createEffect(
     () =>
       this.actions$.pipe(
@@ -183,6 +137,7 @@ export class AuthEffects {
       ),
     { dispatch: false },
   );
+
   dehydrateState$ = createEffect(
     () =>
       this.actions$.pipe(
@@ -196,37 +151,32 @@ export class AuthEffects {
     { dispatch: false },
   );
 
-  constructor(readonly actions$: Actions, readonly fireAuth: AngularFireAuth, readonly store: Store) {}
-
-  onUserAuthentication = (credential: firebase.auth.UserCredential): Action => {
-    if (!credential.additionalUserInfo || !credential.user) {
-      return AuthAPIActions.actionFailed({ message: `Credential is not a complete object.` });
-    }
-
-    const isNewUser = credential.additionalUserInfo.isNewUser;
-    const { uid: userId, email, displayName, photoURL, emailVerified, metadata } = credential.user;
-    const authenticationData = {
-      userId,
-      email: email || undefined,
-      displayName: displayName || undefined,
-      photoURL: photoURL || undefined,
-      isEmailVerified: emailVerified,
-      createdAt: metadata.creationTime ? Date.parse(metadata.creationTime) : new Date().getTime(),
-      isNewUser,
-    };
-
-    if (isNewUser) {
-      return AuthAPIActions.signedUp(authenticationData);
-    }
-    return AuthAPIActions.signedIn(authenticationData);
-  };
+  fetchProviders$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthAPIActions.fetchProviders),
+      concatLatestFrom(() =>
+        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
+      ),
+      exhaustMap(([, email]) =>
+        from(this.fireAuth.fetchSignInMethodsForEmail(email)).pipe(
+          map(providers => {
+            const mappedProviders = providers.map(p => this.mapProviders[p]);
+            return AuthAPIActions.fetchProvidersSuccess({ providers: mappedProviders });
+          }),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
+        ),
+      ),
+    ),
+  );
 
   signAnonymously$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.signAnonymously),
       exhaustMap(() =>
         from(this.fireAuth.signInAnonymously()).pipe(
-          map(credential => this.onUserAuthentication(credential)),
+          map(credential => this.onUserAuthenticationWithCredentials(credential)),
           catchError((error: FirebaseError) =>
             of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
           ),
@@ -234,12 +184,13 @@ export class AuthEffects {
       ),
     ),
   );
+
   signGoogle$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.signGoogle),
       exhaustMap(() =>
         from(this.fireAuth.signInWithPopup(new firebase.auth.GoogleAuthProvider())).pipe(
-          map(credential => this.onUserAuthentication(credential)),
+          map(credential => this.onUserAuthenticationWithCredentials(credential)),
           catchError((error: FirebaseError) =>
             of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
           ),
@@ -247,12 +198,13 @@ export class AuthEffects {
       ),
     ),
   );
+
   signGitHub$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.signGitHub),
       exhaustMap(() =>
         from(this.fireAuth.signInWithPopup(new firebase.auth.GithubAuthProvider())).pipe(
-          map(credential => this.onUserAuthentication(credential)),
+          map(credential => this.onUserAuthenticationWithCredentials(credential)),
           catchError((error: FirebaseError) =>
             of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
           ),
@@ -260,45 +212,18 @@ export class AuthEffects {
       ),
     ),
   );
-  signEmailLinkFinish$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(AuthAPIActions.signEmailLinkFinish),
-      exhaustMap(() => {
-        // TODO: use URL ?email param instead of localstorage
-        // var actionCodeSettings = {
-        //   url: 'localhost/?email=user@example.com',
-        // }
-        const email = localStorage[AUTH_REHYDRATION_KEY_EMAIL] as string;
-        if (!email || email === 'undefined') {
-          const errorMessage = 'No email was provided for link authentication. Try again.';
-          return of(AuthAPIActions.actionFailed({ message: errorMessage }));
-        }
 
-        return from(this.fireAuth.signInWithEmailLink(email, window.location.href)).pipe(
-          map(credential => this.onUserAuthentication(credential)),
-          catchError((error: FirebaseError) =>
-            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
-          ),
-        );
-      }),
-    ),
-  );
   signEmailPassword$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.signEmailPassword),
-      concatLatestFrom(() =>
-        zip(
-          this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
-          this.store.select(AuthSelectors.getIsNewUser).pipe(filter((isNewUser): isNewUser is boolean => !!isNewUser)),
-        ),
-      ),
-      exhaustMap(([action, [email, isNewUser]]) =>
+      concatLatestFrom(() => this.store.select(AuthSelectors.getEmailPasswordPayload)),
+      exhaustMap(([action, { email, isNewUser }]) =>
         from(
           isNewUser
             ? this.fireAuth.createUserWithEmailAndPassword(email, action.password)
             : this.fireAuth.signInWithEmailAndPassword(email, action.password),
         ).pipe(
-          map(credential => this.onUserAuthentication(credential)),
+          map(credential => this.onUserAuthenticationWithCredentials(credential)),
           catchError((error: FirebaseError) =>
             of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
           ),
@@ -306,4 +231,85 @@ export class AuthEffects {
       ),
     ),
   );
+
+  signEmailLink$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthUIActions.signEmailLink),
+      concatLatestFrom(() =>
+        this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
+      ),
+      exhaustMap(([, email]) =>
+        from(
+          this.fireAuth.sendSignInLinkToEmail(email, {
+            url: `${location.href}?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${email}`,
+            handleCodeInApp: true,
+          }),
+        ).pipe(
+          map(() => AuthAPIActions.signEmailLinkRequestSent()),
+          catchError((error: FirebaseError) =>
+            of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  signEmailLinkFinish$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthAPIActions.signEmailLinkFinish),
+      exhaustMap(() => {
+        const email = new URL(location.href).searchParams.get(AUTH_URL_SEGMENT_FOR_LINK_AUTH);
+        if (!email) {
+          const errorMessage = 'No email was provided for link authentication. Try again.';
+          return of(AuthAPIActions.actionFailed({ message: errorMessage }));
+        }
+
+        return from(this.fireAuth.signInWithEmailLink(email, window.location.href)).pipe(
+          map(credential => this.onUserAuthenticationWithCredentials(credential)),
+          catchError((error: FirebaseError) =>
+            merge(
+              of(AuthAPIActions.enterEmail({ email })),
+              of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
+            ),
+          ),
+        );
+      }),
+    ),
+  );
+
+  constructor(readonly actions$: Actions, readonly fireAuth: AngularFireAuth, readonly store: Store) {}
+
+  onUserAuthenticationWithCredentials = (credential: firebase.auth.UserCredential): Action => {
+    if (!credential.additionalUserInfo || !credential.user) {
+      return AuthAPIActions.actionFailed({ message: `Credential is not a complete object.` });
+    }
+    const { isNewUser } = credential.additionalUserInfo;
+    return this.onUserAuthenticationWithUserOnly(credential.user, isNewUser);
+  };
+
+  onUserAuthenticationWithUserOnly = (user: firebase.User, isNewUser: boolean, isInit?: boolean): Action => {
+    const { uid: userId, email, displayName, photoURL, emailVerified, metadata, providerData } = user;
+    const createdAt: number = metadata.creationTime ? Date.parse(metadata.creationTime) : new Date().getTime();
+
+    const authenticationData = {
+      userId,
+      email: email || undefined,
+      displayName: displayName || undefined,
+      photoURL: photoURL || undefined,
+      isEmailVerified: emailVerified,
+      createdAt,
+      isNewUser,
+      providers: providerData
+        .filter((pd): pd is firebase.UserInfo => pd !== null)
+        .map(pd => this.mapProviders[pd.providerId]),
+    };
+
+    if (isNewUser) {
+      return AuthAPIActions.signedUp(authenticationData);
+    }
+    if (isInit) {
+      return AuthAPIActions.initSignedIn(authenticationData);
+    }
+    return AuthAPIActions.signedIn(authenticationData);
+  };
 }

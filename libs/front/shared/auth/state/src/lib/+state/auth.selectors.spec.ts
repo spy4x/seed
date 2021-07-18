@@ -86,13 +86,32 @@ describe('Auth Selectors', () => {
       setState({ isNewUser: false });
       expect(AuthSelectors.getIsNewUser(state)).toBe(false);
     });
-    it(`returns true if providers.length > 0`, () => {
+    it(`returns false if providers.length > 0`, () => {
       setState({ isNewUser: undefined, providers: [AuthProvider.google] });
+      expect(AuthSelectors.getIsNewUser(state)).toBe(false);
+    });
+    it(`returns true if state.auth.providers.length === 0`, () => {
+      setState({ isNewUser: undefined, providers: [] });
       expect(AuthSelectors.getIsNewUser(state)).toBe(true);
     });
-    it(`returns false if state.auth.providers.length === 0`, () => {
-      setState({ isNewUser: undefined, providers: [] });
-      expect(AuthSelectors.getIsNewUser(state)).toBe(false);
+  });
+
+  describe('getEmailPasswordPayload()', () => {
+    it(`returns {email: '', isNewUser: false} if both email & isNewUser are undefined`, () => {
+      setState({ email: undefined, isNewUser: undefined });
+      expect(AuthSelectors.getEmailPasswordPayload(state)).toEqual({ email: '', isNewUser: false });
+    });
+    it(`returns {email: value, isNewUser: false} if email is set, but isNewUser is undefined`, () => {
+      setState({ email: testEmail, isNewUser: undefined });
+      expect(AuthSelectors.getEmailPasswordPayload(state)).toEqual({ email: testEmail, isNewUser: false });
+    });
+    it(`returns {email: value, isNewUser: false} if email is set & isNewUser is false`, () => {
+      setState({ email: testEmail, isNewUser: false });
+      expect(AuthSelectors.getEmailPasswordPayload(state)).toEqual({ email: testEmail, isNewUser: false });
+    });
+    it(`returns {email: value, isNewUser: true} if email is set & isNewUser is true`, () => {
+      setState({ email: testEmail, isNewUser: true });
+      expect(AuthSelectors.getEmailPasswordPayload(state)).toEqual({ email: testEmail, isNewUser: true });
     });
   });
 

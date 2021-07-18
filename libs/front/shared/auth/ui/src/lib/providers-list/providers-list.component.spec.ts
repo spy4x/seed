@@ -42,8 +42,8 @@ describe(ProvidersListComponent.name, () => {
     it(`emits "select" event on click on "${provider}" button`, done => {
       component.providers = ALL_PROVIDERS;
       fixture.detectChanges();
-      component.select.pipe(first()).subscribe(provider => {
-        expect(provider).toEqual(provider);
+      component.selectProvider.pipe(first()).subscribe(p => {
+        expect(p).toEqual(provider);
         done();
       });
       getProviderButton(provider).nativeElement.click();

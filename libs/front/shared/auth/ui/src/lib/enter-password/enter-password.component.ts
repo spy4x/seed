@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 
+const minLength = 10;
+
 @Component({
   selector: 'seed-shared-auth-ui-enter-password',
   templateUrl: './enter-password.component.html',
@@ -14,13 +16,15 @@ export class EnterPasswordComponent {
   @Output() enterPassword = new EventEmitter<{ password: string }>();
 
   form = new FormGroup({
-    password: new FormControl('', [Validators.required, Validators.minLength(10)]),
+    /* eslint-disable-next-line @typescript-eslint/unbound-method */
+    password: new FormControl('', [Validators.required, Validators.minLength(minLength)]),
   });
 
   submit(): void {
     if (this.form.invalid) {
       return;
     }
-    this.enterPassword.emit({ password: this.form.value.password });
+    const { password } = this.form.value as { password: string };
+    this.enterPassword.emit({ password });
   }
 }

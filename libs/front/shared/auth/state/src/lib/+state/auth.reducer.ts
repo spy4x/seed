@@ -24,9 +24,11 @@ export interface State {
   providers?: AuthProvider[];
   selectedProvider?: AuthProvider;
   isNewUser?: boolean;
+  isEmailVerified?: boolean;
   userId?: string;
   displayName?: string;
   photoURL?: string;
+  createdAt?: number;
 }
 
 export interface AuthPartialState {
@@ -43,9 +45,11 @@ export const initialState: State = {
   providers: undefined,
   selectedProvider: undefined,
   isNewUser: undefined,
+  isEmailVerified: undefined,
   userId: undefined,
   displayName: undefined,
   photoURL: undefined,
+  createdAt: undefined,
 };
 
 const resetErrorAndSuccess = {
@@ -69,6 +73,7 @@ const authReducer = createReducer<State>(
   ),
   on(
     AuthUIActions.enterEmail,
+    AuthAPIActions.enterEmail,
     (state: State, { email }): State => ({
       ...state,
       email,
@@ -185,15 +190,30 @@ const authReducer = createReducer<State>(
     AuthAPIActions.initSignedIn,
     AuthAPIActions.signedIn,
     AuthAPIActions.signedUp,
-    (state: State, { userId, email, displayName, photoURL }): State => ({
+    (
+      state: State,
+      { userId, email, displayName, photoURL, isNewUser, createdAt, isEmailVerified, providers },
+    ): State => ({
       ...state,
+      stage: AuthStage.authenticated,
+      inProgress: false,
       userId,
       email,
       displayName,
       photoURL,
-      stage: AuthStage.authenticated,
-      inProgress: false,
+      isNewUser,
+      isEmailVerified,
+      createdAt,
+      providers,
       ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.signedUp,
+    (state: State): State => ({
+      ...state,
+      ...resetErrorAndSuccess,
+      successMessage: `You've successfully signed up! Feel free to explore the app 🎉`,
     }),
   ),
   on(
@@ -280,14 +300,9 @@ const authReducer = createReducer<State>(
     AuthAPIActions.signedOut,
     (state: State): State => ({
       ...state,
+      ...initialState,
       stage: AuthStage.enteringEmail,
       inProgress: false,
-      userId: undefined,
-      displayName: undefined,
-      photoURL: undefined,
-      providers: [],
-      selectedProvider: undefined,
-      email: undefined,
       ...resetErrorAndSuccess,
     }),
   ),

@@ -4,6 +4,7 @@ import { initialState, reducer, State } from './auth.reducer';
 import { testDisplayName, testEmail, testPassword, testPhotoURL, testUserId } from '@seed/shared/mock-data';
 import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 import { Action } from '@ngrx/store';
+import { mockExpectedActionPayload } from './mocks';
 
 describe('Auth Reducer', () => {
   // region SETUP
@@ -15,8 +16,8 @@ describe('Auth Reducer', () => {
   ): void {
     const setErrorAndSuccess: Partial<State> = checkErrorAndSuccess
       ? {
-          error: state?.error || { message: 'error' },
-          successMessage: state?.successMessage || 'success',
+          error: state.error || { message: 'error' },
+          successMessage: state.successMessage || 'success',
         }
       : {};
     const prevStateFull = { ...initialState, ...state, ...setErrorAndSuccess };
@@ -55,6 +56,14 @@ describe('Auth Reducer', () => {
       reducerTest(
         { stage: AuthStage.enteringEmail, inProgress: false },
         AuthUIActions.enterEmail({ email: testEmail }),
+        { email: testEmail },
+      );
+    });
+
+    it(AuthAPIActions.enterEmail.type, () => {
+      reducerTest(
+        { stage: AuthStage.signingEmailLink, inProgress: true },
+        AuthAPIActions.enterEmail({ email: testEmail }),
         { email: testEmail },
       );
     });
@@ -290,7 +299,7 @@ describe('Auth Reducer', () => {
       );
     });
 
-    it(AuthUIActions.signUpWithEmailAndPassword.type, () => {
+    it(AuthUIActions.signEmailPassword.type, () => {
       reducerTest(
         {
           stage: AuthStage.signingEmailAndPassword,
@@ -299,7 +308,7 @@ describe('Auth Reducer', () => {
           inProgress: false,
           selectedProvider: AuthProvider.password,
         },
-        AuthUIActions.signUpWithEmailAndPassword({ password: testPassword }),
+        AuthUIActions.signEmailPassword({ password: testPassword }),
         {
           inProgress: true,
         },
@@ -355,19 +364,11 @@ describe('Auth Reducer', () => {
     it(AuthAPIActions.initSignedIn.type, () => {
       reducerTest(
         { stage: AuthStage.initialization, inProgress: true },
-        AuthAPIActions.initSignedIn({
-          userId: testUserId,
-          email: testEmail,
-          displayName: testDisplayName,
-          photoURL: testPhotoURL,
-        }),
+        AuthAPIActions.initSignedIn(mockExpectedActionPayload),
         {
           inProgress: false,
           stage: AuthStage.authenticated,
-          userId: testUserId,
-          email: testEmail,
-          displayName: testDisplayName,
-          photoURL: testPhotoURL,
+          ...mockExpectedActionPayload,
         },
       );
     });
@@ -444,24 +445,18 @@ describe('Auth Reducer', () => {
       reducerTest(
         {
           stage: AuthStage.signingEmailAndPassword,
-          email: testEmail,
-          providers: [AuthProvider.password],
-          inProgress: true,
-          selectedProvider: AuthProvider.password,
-        },
-        AuthAPIActions.signedUp({
-          userId: testUserId,
           email: testEmail.repeat(2),
-          displayName: testDisplayName,
-          photoURL: testPhotoURL,
-        }),
+          providers: [AuthProvider.google],
+          inProgress: true,
+          selectedProvider: AuthProvider.google,
+        },
+        AuthAPIActions.signedUp({ ...mockExpectedActionPayload, isNewUser: true }),
         {
           inProgress: false,
           stage: AuthStage.authenticated,
-          userId: testUserId,
-          email: testEmail.repeat(2),
-          displayName: testDisplayName,
-          photoURL: testPhotoURL,
+          ...mockExpectedActionPayload,
+          isNewUser: true,
+          successMessage: `You've successfully signed up! Feel free to explore the app 🎉`,
         },
       );
     });
@@ -519,24 +514,16 @@ describe('Auth Reducer', () => {
       reducerTest(
         {
           stage: AuthStage.signingGoogle,
-          email: testEmail,
+          email: testEmail.repeat(2),
           providers: [AuthProvider.google],
           selectedProvider: AuthProvider.google,
           inProgress: true,
         },
-        AuthAPIActions.signedIn({
-          userId: testUserId,
-          email: testEmail.repeat(2),
-          displayName: testDisplayName,
-          photoURL: testPhotoURL,
-        }),
+        AuthAPIActions.signedIn(mockExpectedActionPayload),
         {
           inProgress: false,
-          userId: testUserId,
-          email: testEmail.repeat(2),
-          displayName: testDisplayName,
-          photoURL: testPhotoURL,
           stage: AuthStage.authenticated,
+          ...mockExpectedActionPayload,
         },
       );
     });
@@ -561,25 +548,31 @@ describe('Auth Reducer', () => {
     it(AuthAPIActions.signedOut.type, () => {
       reducerTest(
         {
-          selectedProvider: AuthProvider.google,
+          stage: AuthStage.signingOut,
+          inProgress: true,
           email: testEmail,
           providers: [AuthProvider.google],
+          selectedProvider: AuthProvider.google,
           userId: testUserId,
           displayName: testDisplayName,
           photoURL: testPhotoURL,
-          stage: AuthStage.signingOut,
-          inProgress: true,
+          isNewUser: true,
+          isEmailVerified: true,
+          createdAt: 123567890,
         },
         AuthAPIActions.signedOut(),
         {
-          userId: undefined,
-          selectedProvider: undefined,
-          email: undefined,
-          displayName: undefined,
-          photoURL: undefined,
-          providers: [],
           stage: AuthStage.enteringEmail,
           inProgress: false,
+          email: undefined,
+          providers: undefined,
+          selectedProvider: undefined,
+          userId: undefined,
+          displayName: undefined,
+          photoURL: undefined,
+          isNewUser: undefined,
+          isEmailVerified: undefined,
+          createdAt: undefined,
         },
       );
     });

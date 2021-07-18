@@ -6,6 +6,7 @@ import {
   AUTH_REHYDRATION_KEY_DISPLAY_NAME,
   AUTH_REHYDRATION_KEY_EMAIL,
   AUTH_REHYDRATION_KEY_PHOTO_URL,
+  AUTH_URL_SEGMENT_FOR_LINK_AUTH,
   AuthEffects,
 } from './auth.effects';
 import * as AuthUIActions from './actions/ui.actions';
@@ -17,7 +18,8 @@ import firebase from 'firebase/app';
 import { testDisplayName, testEmail, testPassword, testPhotoURL, testUserId } from '@seed/shared/mock-data';
 import * as AuthSelectors from './auth.selectors';
 import { AuthProvider } from '@seed/front/shared/types';
-import { AuthenticationActionPayload } from './actions/authenticationActionPayload.interface';
+import { mockAuthCredentials, mockExpectedActionPayload } from './mocks';
+import { setMilliseconds, subMinutes } from 'date-fns';
 
 describe(AuthEffects.name, () => {
   // region SETUP
@@ -35,27 +37,6 @@ describe(AuthEffects.name, () => {
   const isSignInWithEmailLinkMock = jest.fn();
   const signInWithEmailLinkMock = jest.fn();
   const fetchSignInMethodsForEmailMock = jest.fn();
-  const credential = {
-    user: {
-      uid: testUserId,
-      email: testEmail,
-      photoURL: testPhotoURL,
-      displayName: testDisplayName,
-      emailVerified: true,
-      metadata: { creationTime: '1626532429609' },
-    },
-    credential: {},
-    additionalUserInfo: { isNewUser: false },
-  };
-  const expectedActionPayload: AuthenticationActionPayload = {
-    userId: credential.user.uid,
-    email: credential.user.email,
-    displayName: credential.user.displayName,
-    photoURL: credential.user.photoURL,
-    isEmailVerified: credential.user.emailVerified,
-    createdAt: Date.parse(credential.user.metadata.creationTime),
-    isNewUser: credential.additionalUserInfo.isNewUser,
-  };
 
   beforeEach(() => {
     user$ = new ReplaySubject<null | { uid: string }>();
@@ -106,8 +87,8 @@ describe(AuthEffects.name, () => {
   describe('init$', () => {
     it(`dispatches "${AuthAPIActions.initSignedIn.type}" if fireAuth.user emits User`, () => {
       const action = AuthAPIActions.init();
-      const completion = AuthAPIActions.initSignedIn(expectedActionPayload);
-      user$.next(credential.user);
+      const completion = AuthAPIActions.initSignedIn(mockExpectedActionPayload);
+      user$.next(mockAuthCredentials.user);
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.init$).toBeObservable(expected);
@@ -116,7 +97,7 @@ describe(AuthEffects.name, () => {
     it(`dispatches "${AuthAPIActions.signEmailLinkFinish.type}" if fireAuth.user emits null, but Location URL contains SignInWithEmailLink code`, () => {
       const action = AuthAPIActions.init();
       const completion = AuthAPIActions.signEmailLinkFinish();
-      const url = 'https://seed.web.app/auth-link';
+      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
       delete (window as any).location;
       (window.location as any) = new URL(url);
       isSignInWithEmailLinkMock.mockReturnValue(of(true));
@@ -130,7 +111,7 @@ describe(AuthEffects.name, () => {
     it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.isSignInWithEmailLink() throws an error`, () => {
       const action = AuthAPIActions.init();
       const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
-      const url = 'https://seed.web.app/auth-link';
+      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
       delete (window as any).location;
       (window.location as any) = new URL(url);
       isSignInWithEmailLinkMock.mockReturnValue(throwError(new Error('Auth failed')));
@@ -208,6 +189,7 @@ describe(AuthEffects.name, () => {
       expect(effects.fetchProviders$).toBeObservable(expected);
       expect(fetchSignInMethodsForEmailMock).toHaveBeenCalled();
     });
+
     it(`dispatches "${AuthAPIActions.fetchProvidersSuccess.type}" if fireAuth.fetchSignInMethodsForEmail() returns empty providers`, () => {
       const action = AuthAPIActions.fetchProviders();
       const firebaseProviders: string[] = [];
@@ -290,8 +272,8 @@ describe(AuthEffects.name, () => {
   describe(`signAnonymously$`, () => {
     it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInAnonymously() returns User`, () => {
       const action = AuthUIActions.signAnonymously();
-      const completion = AuthAPIActions.signedIn(expectedActionPayload);
-      signInAnonymouslyMock.mockReturnValue(of(credential));
+      const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+      signInAnonymouslyMock.mockReturnValue(of(mockAuthCredentials));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signAnonymously$).toBeObservable(expected);
@@ -312,8 +294,8 @@ describe(AuthEffects.name, () => {
   describe('signGoogle$', () => {
     it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithPopup() returns User`, () => {
       const action = AuthUIActions.signGoogle();
-      const completion = AuthAPIActions.signedIn(expectedActionPayload);
-      signInWithPopupMock.mockReturnValue(of(credential));
+      const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+      signInWithPopupMock.mockReturnValue(of(mockAuthCredentials));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signGoogle$).toBeObservable(expected);
@@ -334,8 +316,8 @@ describe(AuthEffects.name, () => {
   describe('signGitHub$', () => {
     it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithPopup() returns User`, () => {
       const action = AuthUIActions.signGitHub();
-      const completion = AuthAPIActions.signedIn(expectedActionPayload);
-      signInWithPopupMock.mockReturnValue(of(credential));
+      const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+      signInWithPopupMock.mockReturnValue(of(mockAuthCredentials));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signGitHub$).toBeObservable(expected);
@@ -371,33 +353,9 @@ describe(AuthEffects.name, () => {
       store.overrideSelector(AuthSelectors.getEmail, testEmail);
     });
 
-    describe(`signIn`, () => {
-      beforeEach(() => {
-        store.overrideSelector(AuthSelectors.getIsNewUser, false);
-      });
-
-      it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithEmailAndPassword() returns User`, () => {
-        const completion = AuthAPIActions.signedIn(expectedActionPayload);
-        signInWithEmailAndPasswordMock.mockReturnValue(of(credential));
-        actions$ = hot('a', { a: action });
-        const expected = hot('b', { b: completion });
-        expect(effects.signEmailPassword$).toBeObservable(expected);
-        expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
-      });
-
-      it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInWithEmailAndPassword() throws an error`, () => {
-        const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
-        signInWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
-        actions$ = hot('a', { a: action });
-        const expected = hot('b', { b: completion });
-        expect(effects.signEmailPassword$).toBeObservable(expected);
-        expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
-      });
-    });
-
     describe(`signUp`, () => {
-      const signUpCredential = { ...credential, additionalUserInfo: { isNewUser: true } };
-      const signUpExpectedActionPayload = { ...expectedActionPayload, isNewUser: true };
+      const signUpCredential = { ...mockAuthCredentials, additionalUserInfo: { isNewUser: true } };
+      const signUpExpectedActionPayload = { ...mockExpectedActionPayload, isNewUser: true };
       beforeEach(() => {
         store.overrideSelector(AuthSelectors.getIsNewUser, true);
       });
@@ -420,6 +378,30 @@ describe(AuthEffects.name, () => {
         expect(createUserWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
       });
     });
+
+    describe(`signIn`, () => {
+      beforeEach(() => {
+        store.overrideSelector(AuthSelectors.getIsNewUser, false);
+      });
+
+      it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithEmailAndPassword() returns User`, () => {
+        const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+        signInWithEmailAndPasswordMock.mockReturnValue(of(mockAuthCredentials));
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.signEmailPassword$).toBeObservable(expected);
+        expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+      });
+
+      it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInWithEmailAndPassword() throws an error`, () => {
+        const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
+        signInWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.signEmailPassword$).toBeObservable(expected);
+        expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+      });
+    });
   });
 
   describe('signEmailLink$', () => {
@@ -430,8 +412,10 @@ describe(AuthEffects.name, () => {
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signEmailLink$).toBeObservable(expected);
-      expect(localStorage[AUTH_REHYDRATION_KEY_EMAIL]).toBe(testEmail);
-      expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, { url: location.href, handleCodeInApp: true });
+      expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, {
+        url: `${location.href}?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`,
+        handleCodeInApp: true,
+      });
     });
 
     it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.sendSignInLinkToEmail() throws an error`, () => {
@@ -441,20 +425,25 @@ describe(AuthEffects.name, () => {
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signEmailLink$).toBeObservable(expected);
-      expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, { url: location.href, handleCodeInApp: true });
+      expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, {
+        url: `${location.href}?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`,
+        handleCodeInApp: true,
+      });
     });
   });
 
   describe('signEmailLinkFinish$', () => {
     it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithEmailLink() returns User`, () => {
       const action = AuthAPIActions.signEmailLinkFinish();
-      const completion = AuthAPIActions.signedIn(expectedActionPayload);
-      localStorage[AUTH_REHYDRATION_KEY_EMAIL] = testEmail;
-      signInWithEmailLinkMock.mockReturnValue(of(credential));
+      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
+      delete (window as any).location;
+      (window.location as any) = new URL(url);
+      const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+      signInWithEmailLinkMock.mockReturnValue(of(mockAuthCredentials));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signEmailLinkFinish$).toBeObservable(expected);
-      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, location.href);
+      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, url);
     });
 
     it(`dispatches "${AuthAPIActions.actionFailed.type}" if no email is provided`, () => {
@@ -462,7 +451,9 @@ describe(AuthEffects.name, () => {
       const completion = AuthAPIActions.actionFailed({
         message: 'No email was provided for link authentication. Try again.',
       });
-      localStorage[AUTH_REHYDRATION_KEY_EMAIL] = undefined;
+      const url = `https://seed.web.app/auth-link`;
+      delete (window as any).location;
+      (window.location as any) = new URL(url);
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signEmailLinkFinish$).toBeObservable(expected);
@@ -471,13 +462,17 @@ describe(AuthEffects.name, () => {
 
     it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInWithEmailLink() throws an error`, () => {
       const action = AuthAPIActions.signEmailLinkFinish();
-      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
+      const completion1 = AuthAPIActions.enterEmail({ email: testEmail });
+      const completion2 = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithEmailLinkMock.mockReturnValue(throwError(new Error('Auth failed')));
+      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
+      delete (window as any).location;
+      (window.location as any) = new URL(url);
       localStorage[AUTH_REHYDRATION_KEY_EMAIL] = testEmail;
       actions$ = hot('a', { a: action });
-      const expected = hot('b', { b: completion });
+      const expected = hot('(bc)', { b: completion1, c: completion2 });
       expect(effects.signEmailLinkFinish$).toBeObservable(expected);
-      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, location.href);
+      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, url);
     });
   });
 
@@ -573,25 +568,90 @@ describe(AuthEffects.name, () => {
     actionTest(AuthUIActions.changeUser);
   });
 
-  describe('onUserAuthentication()', () => {
+  describe('onUserAuthenticationWithCredentials()', () => {
     it(`returns "${AuthAPIActions.actionFailed.type}" if not full credential object provided`, () => {
-      const result = effects.onUserAuthentication({} as any);
+      const result = effects.onUserAuthenticationWithCredentials({} as any);
       expect(result).toEqual(AuthAPIActions.actionFailed({ message: `Credential is not a complete object.` }));
     });
 
     it(`returns "${AuthAPIActions.signedIn.type}" action for existing user`, () => {
       const isNewUser = false;
-      const result = effects.onUserAuthentication({ user: credential.user, additionalUserInfo: { isNewUser } } as any);
-      expect(result).toEqual(AuthAPIActions.signedIn({ ...expectedActionPayload, isNewUser }));
+      const result = effects.onUserAuthenticationWithCredentials({
+        user: mockAuthCredentials.user,
+        additionalUserInfo: { isNewUser },
+      } as any);
+      expect(result).toEqual(AuthAPIActions.signedIn({ ...mockExpectedActionPayload, isNewUser }));
     });
 
     it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user`, () => {
       const isNewUser = true;
-      const result = effects.onUserAuthentication({ user: credential.user, additionalUserInfo: { isNewUser } } as any);
+      const result = effects.onUserAuthenticationWithCredentials({
+        user: mockAuthCredentials.user,
+        additionalUserInfo: { isNewUser },
+      } as any);
       expect(result).toEqual(
         AuthAPIActions.signedUp({
-          ...expectedActionPayload,
+          ...mockExpectedActionPayload,
           isNewUser,
+        }),
+      );
+    });
+  });
+
+  describe('onUserAuthenticationWithUserOnly()', () => {
+    it(`returns "${AuthAPIActions.signedIn.type}" action for existing user`, () => {
+      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false);
+      expect(result).toEqual(AuthAPIActions.signedIn(mockExpectedActionPayload));
+    });
+
+    it(`returns "${AuthAPIActions.initSignedIn.type}" action for existing user & init time`, () => {
+      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false, true);
+      expect(result).toEqual(AuthAPIActions.initSignedIn(mockExpectedActionPayload));
+    });
+
+    it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user`, () => {
+      const isNewUser = true;
+      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, isNewUser);
+      expect(result).toEqual(
+        AuthAPIActions.signedUp({
+          ...mockExpectedActionPayload,
+          isNewUser,
+        }),
+      );
+    });
+
+    it(`returns "${AuthAPIActions.signedIn.type}" action for just signed up user (but without defined "isNewUser" property)`, () => {
+      const creationTime = setMilliseconds(subMinutes(new Date(), 60), 0); // 60 minutes ago
+      const result = effects.onUserAuthenticationWithUserOnly(
+        {
+          ...mockAuthCredentials.user,
+          ...{ metadata: { creationTime: creationTime.toString() } },
+        } as any,
+        false,
+      );
+      expect(result).toEqual(
+        AuthAPIActions.signedIn({
+          ...mockExpectedActionPayload,
+          createdAt: creationTime.getTime(),
+          isNewUser: false,
+        }),
+      );
+    });
+
+    it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user (but without defined "isNewUser" property)`, () => {
+      const creationTime = subMinutes(setMilliseconds(new Date(), 0), 3); // 3 minutes ago
+      const result = effects.onUserAuthenticationWithUserOnly(
+        {
+          ...mockAuthCredentials.user,
+          ...{ metadata: { creationTime: creationTime.toString() } },
+        } as any,
+        true,
+      );
+      expect(result).toEqual(
+        AuthAPIActions.signedUp({
+          ...mockExpectedActionPayload,
+          createdAt: creationTime.getTime(),
+          isNewUser: true,
         }),
       );
     });

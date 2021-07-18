@@ -32,7 +32,7 @@ export class EnterEmailComponent implements OnChanges {
   });
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.email && this.email) {
+    if (Object.keys(changes).includes('email') && !!this.email) {
       this.form.patchValue({ email: this.email });
     }
   }
@@ -41,12 +41,13 @@ export class EnterEmailComponent implements OnChanges {
     if (this.form.invalid) {
       return;
     }
-    this.enterEmail.emit({ email: this.form.value.email });
+    const { email } = this.form.value as { email: string };
+    this.enterEmail.emit({ email });
   }
 
   validateEmail(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const valid = control.value && isEmail(control.value);
+      const valid = (control.value as string) && isEmail(control.value as string);
       return valid ? null : { email: true };
     };
   }

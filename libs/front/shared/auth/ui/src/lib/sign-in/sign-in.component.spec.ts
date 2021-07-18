@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SignInUIComponent } from './sign-in.component';
+import { SignInUIComponent, SignInUIComponentProvidersList } from './sign-in.component';
 import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { first } from 'rxjs/operators';
@@ -253,87 +253,140 @@ describe(SignInUIComponent.name, () => {
   });
 
   describe(`Stage: ${AuthStage.choosingProvider}`, () => {
-    let providersListComponent: ProvidersListComponent;
+    // region SETUP
     beforeEach(() => {
       component.stage = AuthStage.choosingProvider;
       fixture.detectChanges();
-      providersListComponent = fixture.debugElement.query(By.directive(ProvidersListComponent)).componentInstance;
     });
+    function getProvidersListComponent(list: SignInUIComponentProvidersList): ProvidersListComponent {
+      return fixture.debugElement.query(By.css(`[data-e2e="${list}"]`)).componentInstance;
+    }
 
-    function subscribesAndEmitsSignInTest(p: AuthProvider): void {
+    function testLinksSelectedProvider(list: SignInUIComponentProvidersList): void {
+      it(`links selectedProvider to "${list}" ProvidersList component`, () => {
+        component.selectedProvider = AuthProvider.github;
+        fixture.detectChanges();
+        expect(getProvidersListComponent(list).selectedProvider).toEqual(AuthProvider.github);
+        // change
+        component.selectedProvider = AuthProvider.link;
+        fixture.detectChanges();
+        expect(getProvidersListComponent(list).selectedProvider).toEqual(AuthProvider.link);
+      });
+    }
+
+    function testLinksInProgress(list: SignInUIComponentProvidersList): void {
+      it(`links inProgress to "${list}" ProvidersList component`, () => {
+        component.inProgress = true;
+        fixture.detectChanges();
+        expect(getProvidersListComponent(list).inProgress).toEqual(true);
+        // change
+        component.inProgress = false;
+        fixture.detectChanges();
+        expect(getProvidersListComponent(list).inProgress).toEqual(false);
+      });
+    }
+
+    function testSubscribesAndEmitsSignIn(p: AuthProvider, list: SignInUIComponentProvidersList): void {
       it(`subscribes to ProvidersList component "select" event and emits "signIn" for "${p}" provider`, done => {
         component.sign.pipe(first()).subscribe(({ provider }) => {
           expect(provider).toEqual(p);
           done();
         });
-        providersListComponent.select.next(p);
+        getProvidersListComponent(list).selectProvider.next(p);
       });
     }
 
-    function subscribesAndEmitsSelectProviderTest(provider: AuthProvider): void {
+    function testSubscribesAndEmitsSelectProvider(provider: AuthProvider, list: SignInUIComponentProvidersList): void {
       it(`subscribes to ProvidersList component "select" event and emits "signIn" for "${provider}" provider`, done => {
-        component.selectProvider.pipe(first()).subscribe(({ provider: provider }) => {
-          expect(provider).toEqual(provider);
+        component.selectProvider.pipe(first()).subscribe(({ provider: p }) => {
+          expect(p).toEqual(provider);
           done();
         });
-        providersListComponent.select.next(provider);
+        getProvidersListComponent(list).selectProvider.next(provider);
       });
     }
+    // endregion
 
-    it(`links providers to ProvidersList component if !"isNewUser"`, () => {
-      component.isNewUser = false;
-      component.providers = [AuthProvider.github, AuthProvider.google];
-      fixture.detectChanges();
-      expect(providersListComponent.providers).toEqual([AuthProvider.github, AuthProvider.google]);
-      // change
-      component.providers = [AuthProvider.phone, AuthProvider.link];
-      fixture.detectChanges();
-      expect(providersListComponent.providers).toEqual([AuthProvider.phone, AuthProvider.link]);
+    describe('Existing user', () => {
+      beforeEach(() => {
+        component.isNewUser = false;
+        fixture.detectChanges();
+      });
+
+      it(`shows "welcome back" message`, () => {
+        expect(
+          fixture.debugElement.query(By.css(`[data-e2e="welcomeExistingUser"]`)).nativeElement.textContent,
+        ).toContain('Welcome back!Please finish your sign in with one of previously used options:');
+      });
+
+      describe(`${SignInUIComponentProvidersList.used} ProvidersList`, () => {
+        const list = SignInUIComponentProvidersList.used;
+        it(`links providers to "${list}" ProvidersList`, () => {
+          component.providers = [AuthProvider.github, AuthProvider.google];
+          fixture.detectChanges();
+          expect(getProvidersListComponent(list).providers).toEqual([AuthProvider.github, AuthProvider.google]);
+          // change
+          component.providers = [AuthProvider.phone, AuthProvider.link];
+          fixture.detectChanges();
+          expect(getProvidersListComponent(list).providers).toEqual([AuthProvider.phone, AuthProvider.link]);
+        });
+
+        testLinksSelectedProvider(list);
+        testLinksInProgress(list);
+        testSubscribesAndEmitsSignIn(AuthProvider.google, list);
+        testSubscribesAndEmitsSignIn(AuthProvider.github, list);
+        testSubscribesAndEmitsSignIn(AuthProvider.link, list);
+        testSubscribesAndEmitsSelectProvider(AuthProvider.password, list);
+        testSubscribesAndEmitsSelectProvider(AuthProvider.phone, list);
+      });
+
+      describe(`${SignInUIComponentProvidersList.alternative} ProvidersList`, () => {
+        const list = SignInUIComponentProvidersList.alternative;
+        beforeEach(() => {
+          component.providers = [AuthProvider.google, AuthProvider.phone];
+          component.ngOnChanges({ providers: true } as any);
+          fixture.detectChanges();
+        });
+
+        it(`links alternativeProviders to  ProvidersList component`, () => {
+          expect(component.alternativeProviders).toEqual([AuthProvider.password, AuthProvider.link]);
+          expect(getProvidersListComponent(list).providers).toEqual(component.alternativeProviders);
+        });
+
+        testLinksSelectedProvider(list);
+        testLinksInProgress(list);
+        testSubscribesAndEmitsSignIn(AuthProvider.google, list);
+        testSubscribesAndEmitsSignIn(AuthProvider.github, list);
+        testSubscribesAndEmitsSignIn(AuthProvider.link, list);
+        testSubscribesAndEmitsSelectProvider(AuthProvider.password, list);
+        testSubscribesAndEmitsSelectProvider(AuthProvider.phone, list);
+      });
     });
 
-    it(`links allProviders to ProvidersList component if "isNewUser"`, () => {
-      component.isNewUser = true;
-      fixture.detectChanges();
-      expect(providersListComponent.providers).toEqual(component.allProviders);
-    });
+    describe('New user', () => {
+      const list = SignInUIComponentProvidersList.all;
+      beforeEach(() => {
+        component.isNewUser = true;
+        fixture.detectChanges();
+      });
 
-    it(`links selectedProvider to ProvidersList component`, () => {
-      component.selectedProvider = AuthProvider.github;
-      fixture.detectChanges();
-      expect(providersListComponent.selectedProvider).toEqual(AuthProvider.github);
-      // change
-      component.selectedProvider = AuthProvider.link;
-      fixture.detectChanges();
-      expect(providersListComponent.selectedProvider).toEqual(AuthProvider.link);
-    });
+      it(`shows "welcome" message`, () => {
+        expect(fixture.debugElement.query(By.css(`[data-e2e="welcomeNewUser"]`)).nativeElement.textContent).toContain(
+          `It seems that we don't know each other yet.Choose a way to finish sign up:`,
+        );
+      });
 
-    it(`links inProgress to ProvidersList component`, () => {
-      component.inProgress = true;
-      fixture.detectChanges();
-      expect(providersListComponent.inProgress).toEqual(true);
-      // change
-      component.inProgress = false;
-      fixture.detectChanges();
-      expect(providersListComponent.inProgress).toEqual(false);
-    });
+      it(`links allProviders to "all" ProvidersList`, () => {
+        expect(getProvidersListComponent(list).providers).toEqual(component.allProviders);
+      });
 
-    subscribesAndEmitsSignInTest(AuthProvider.google);
-    subscribesAndEmitsSignInTest(AuthProvider.github);
-    subscribesAndEmitsSignInTest(AuthProvider.link);
-    subscribesAndEmitsSelectProviderTest(AuthProvider.password);
-    subscribesAndEmitsSelectProviderTest(AuthProvider.phone);
-
-    it(`shows "welcome back" message for an existing user and "welcome" for a new one`, () => {
-      component.isNewUser = false;
-      fixture.detectChanges();
-      expect(
-        fixture.debugElement.query(By.css(`[data-e2e="welcomeExistingUser"]`)).nativeElement.textContent,
-      ).toContain('Welcome back!Please finish your sign in with one of previously used options:');
-      component.isNewUser = true;
-      fixture.detectChanges();
-      expect(fixture.debugElement.query(By.css(`[data-e2e="welcomeNewUser"]`)).nativeElement.textContent).toContain(
-        `It seems that we don't know each other yet.Choose a way to finish sign up:`,
-      );
+      testLinksSelectedProvider(list);
+      testLinksInProgress(list);
+      testSubscribesAndEmitsSignIn(AuthProvider.google, list);
+      testSubscribesAndEmitsSignIn(AuthProvider.github, list);
+      testSubscribesAndEmitsSignIn(AuthProvider.link, list);
+      testSubscribesAndEmitsSelectProvider(AuthProvider.password, list);
+      testSubscribesAndEmitsSelectProvider(AuthProvider.phone, list);
     });
   });
 
@@ -417,7 +470,7 @@ describe(SignInUIComponent.name, () => {
       fixture.detectChanges();
     });
 
-    it('still shows ${EnterPasswordComponent.name}', () => {
+    it(`still shows ${EnterPasswordComponent.name}`, () => {
       expect(fixture.debugElement.query(By.directive(EnterPasswordComponent))).toBeTruthy();
     });
 

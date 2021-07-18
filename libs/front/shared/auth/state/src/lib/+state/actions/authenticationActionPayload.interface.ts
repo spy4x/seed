@@ -1,3 +1,5 @@
+import { AuthProvider } from '@seed/front/shared/types';
+
 export interface AuthenticationActionPayload {
   userId: string;
   email?: string;
@@ -6,4 +8,5 @@ export interface AuthenticationActionPayload {
   isEmailVerified: boolean;
   createdAt: number;
   isNewUser: boolean;
+  providers: AuthProvider[];
 }

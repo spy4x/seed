@@ -10,6 +10,12 @@ import {
 import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 import { difference } from 'lodash-es';
 
+export enum SignInUIComponentProvidersList {
+  all = 'all',
+  used = 'used',
+  alternative = 'alternative',
+}
+
 @Component({
   selector: 'seed-shared-auth-ui-sign-in',
   templateUrl: './sign-in.component.html',
@@ -43,7 +49,7 @@ export class SignInUIComponent implements OnChanges {
 
   @Input() selectedProvider?: AuthProvider = undefined;
 
-  @Input() isNewUser: boolean = false;
+  @Input() isNewUser = false;
 
   @Output() selectProvider = new EventEmitter<{ provider: AuthProvider }>();
 
@@ -63,12 +69,14 @@ export class SignInUIComponent implements OnChanges {
 
   authStages = AuthStage;
 
+  providersLists = SignInUIComponentProvidersList;
+
   allProviders = (Object.keys(AuthProvider) as AuthProvider[]).filter(p => p !== AuthProvider.anonymous);
 
   alternativeProviders: AuthProvider[] = [];
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.providers) {
+    if (Object.keys(changes).includes('providers')) {
       const providersThatCantBeEasilyLinked = [AuthProvider.phone, AuthProvider.github];
       this.alternativeProviders = difference(this.allProviders, [
         ...this.providers,
@@ -82,10 +90,10 @@ export class SignInUIComponent implements OnChanges {
       case AuthProvider.google:
       case AuthProvider.github:
       case AuthProvider.link:
-        return this.sign.emit({ provider: provider });
+        return this.sign.emit({ provider });
       case AuthProvider.password:
       case AuthProvider.phone:
-        return this.selectProvider.emit({ provider: provider });
+        return this.selectProvider.emit({ provider });
       default:
         throw new Error('Not implemented');
     }

@@ -21,8 +21,12 @@ export const getIsNewUser = createSelector(getAuthState, (state: State) => {
   if (!state.providers) {
     return undefined;
   }
-  return state.providers.length > ZERO;
+  return state.providers.length === ZERO;
 });
+export const getEmailPasswordPayload = createSelector(getEmail, getIsNewUser, (email, isNewUser) => ({
+  email: email ? email : '',
+  isNewUser: !!isNewUser,
+}));
 export const getSelectedProvider = createSelector(getAuthState, (state: State) => state.selectedProvider);
 export const getIsAuthenticated = createSelector(
   getAuthState,

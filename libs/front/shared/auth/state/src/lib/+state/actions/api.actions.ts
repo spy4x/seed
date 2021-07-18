@@ -18,6 +18,8 @@ export const initNotAuthenticatedButRehydrateState = createAction(
   }>(),
 );
 
+export const enterEmail = createAction(`${prefix} Enter email`, props<{ email: string }>());
+
 export const fetchProviders = createAction(`${prefix} Fetch providers`);
 
 export const fetchProvidersSuccess = createAction(

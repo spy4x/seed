@@ -90,12 +90,12 @@ describe(SignInContainerComponent.name, () => {
       expect(component.inProgress).toBe(true);
     });
 
-    it('state.auth.didUserSignUpEver', async () => {
+    it('state.auth.isNewUser', async () => {
       expect(component.isNewUser).toBe(false);
-      await updateState({ providers: [AuthProvider.password] });
+      await updateState({ providers: [] });
       fixture.detectChanges();
       expect(component.isNewUser).toBe(true);
-      await updateState({ providers: [] });
+      await updateState({ providers: [AuthProvider.password] });
       fixture.detectChanges();
       expect(component.isNewUser).toBe(false);
     });
@@ -141,7 +141,7 @@ describe(SignInContainerComponent.name, () => {
 
     it(`"selectProvider" -> "${AuthUIActions.selectProvider.type}"`, () => {
       const provider = AuthProvider.password;
-      component.selectProvider.next({ provider: provider });
+      component.selectProvider.next({ provider });
       expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.selectProvider({ provider }));
     });
 

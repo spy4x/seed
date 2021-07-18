@@ -2,7 +2,7 @@
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
-    (click)="select.emit(provider)"
+    (click)="selectProvider.emit(provider)"
     [disabled]="isDisabled()"
     class="btn btn-outline-danger d-flex justify-content-center align-items-center w-100 mb-2"
   >
@@ -18,7 +18,7 @@
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
-    (click)="select.emit(provider)"
+    (click)="selectProvider.emit(provider)"
     [disabled]="isDisabled()"
     class="btn btn-outline-dark d-flex justify-content-center align-items-center w-100 mb-2"
   >
@@ -34,7 +34,7 @@
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
-    (click)="select.emit(provider)"
+    (click)="selectProvider.emit(provider)"
     [disabled]="isDisabled()"
     class="btn btn-outline-primary d-flex justify-content-center align-items-center w-100 mb-2"
   >
@@ -50,7 +50,7 @@
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
-    (click)="select.emit(provider)"
+    (click)="selectProvider.emit(provider)"
     [disabled]="isDisabled()"
     class="btn btn-outline-info d-flex justify-content-center align-items-center w-100 mb-2"
   >
@@ -66,7 +66,7 @@
   <button
     *ngIf="isVisible(provider)"
     [attr.data-e2e]="provider"
-    (click)="select.emit(provider)"
+    (click)="selectProvider.emit(provider)"
     [disabled]="isDisabled()"
     class="btn btn-outline-secondary d-flex justify-content-center align-items-center w-100"
   >

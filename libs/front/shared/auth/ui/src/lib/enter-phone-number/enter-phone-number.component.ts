@@ -22,12 +22,14 @@ export class EnterPhoneNumberComponent {
     if (this.form.invalid) {
       return;
     }
-    this.enterPhoneNumber.emit({ phoneNumber: this.form.value.phoneNumber });
+    const { phoneNumber } = this.form.value as { phoneNumber: string };
+    this.enterPhoneNumber.emit({ phoneNumber });
   }
 
   validateEmail(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const valid = control.value && isMobilePhone(control.value, undefined, { strictMode: true });
+      const valid =
+        (control.value as string) && isMobilePhone(control.value as string, undefined, { strictMode: true });
       return valid ? null : { phoneNumber: true };
     };
   }

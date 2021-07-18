@@ -68,10 +68,11 @@
             <h2>It seems that we don't know each other yet.</h2>
             <p>Choose a way to finish sign up:</p>
             <seed-shared-auth-ui-providers-list
+              [attr.data-e2e]="providersLists.all"
               [providers]="allProviders"
               [selectedProvider]="selectedProvider"
               [inProgress]="inProgress"
-              (select)="onProviderClick($event)"
+              (selectProvider)="onProviderClick($event)"
             ></seed-shared-auth-ui-providers-list>
           </div>
         </ng-container>
@@ -81,10 +82,11 @@
             <h2>Welcome back!</h2>
             <p>Please finish your sign in with one of previously used options:</p>
             <seed-shared-auth-ui-providers-list
+              [attr.data-e2e]="providersLists.used"
               [providers]="providers"
               [selectedProvider]="selectedProvider"
               [inProgress]="inProgress"
-              (select)="onProviderClick($event)"
+              (selectProvider)="onProviderClick($event)"
             ></seed-shared-auth-ui-providers-list>
 
             <ng-container *ngIf="alternativeProviders.length > 0">
@@ -95,10 +97,11 @@
               </div>
 
               <seed-shared-auth-ui-providers-list
+                [attr.data-e2e]="providersLists.alternative"
                 [providers]="alternativeProviders"
                 [selectedProvider]="selectedProvider"
                 [inProgress]="inProgress"
-                (select)="onProviderClick($event)"
+                (selectProvider)="onProviderClick($event)"
               ></seed-shared-auth-ui-providers-list>
             </ng-container>
           </div>
@@ -108,7 +111,7 @@
       <ng-container
         *ngSwitchCase="stage === authStages.signingEmailAndPassword || stage === authStages.restoringPassword"
       >
-        <h1>Please enter your password:</h1>
+        <h2>Please enter password:</h2>
         <seed-shared-auth-ui-enter-password
           [inProgress]="inProgress"
           [isActiveStage]="stage === authStages.signingEmailAndPassword"
@@ -147,7 +150,7 @@
       </ng-container>
 
       <ng-container *ngSwitchCase="stage === authStages.signingPhoneNumber">
-        <h1>Please enter your phone number:</h1>
+        <h2>Please enter phone number:</h2>
         <seed-shared-auth-ui-enter-phone-number
           [inProgress]="inProgress"
           (enterPhoneNumber)="sign.emit({ provider: authProviders.phone, phoneNumber: $event.phoneNumber })"
