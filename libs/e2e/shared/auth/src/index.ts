@@ -1,1 +1,1 @@
-export * from './lib/signIn';
+export * from './lib/signIn.spec';
