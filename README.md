@@ -169,11 +169,13 @@
 
 ### Frontend
 #### Shared
-🕑 Authentication  
-🕑 NgRx  
+✅ [Authentication](libs/front/shared/auth)  
+✅ [NgRx](libs/front/shared/auth/state)  
 🕑 Sentry integration  
-🕑 E2E-testing  
-🕑 Unit-testing  
+✅ [E2E-testing](libs/e2e/shared/auth/src/lib)  
+✅ [Unit-testing UI components](libs/front/shared/auth/ui/src/lib)  
+✅ [Unit-testing NgRx State](libs/front/shared/auth/state/src/lib/+state)  
+✅ [Unit-testing Container component](libs/front/shared/auth/container/src/lib/sign-in)  
 🕑 File upload  
 🕑 Logging (Sentry or GCP Logging?)  
 🕑 Provide environment variables from secret manager  
@@ -183,7 +185,6 @@
 🕑 own styles library  
 🕑 mobile-first, responsive  
 🕑 How to manage styles on component level? (no component-level styles)  
-🕑 How to show nice initial loader on app start? (index.html)
 #### Forms & "Editor" component
 🕑 Handle input & output better (prevent infinite cycle and dirty hacks to avoid it)  
 🕑 Keep form state in store to be able to disable buttons based on form validity  
