@@ -7,6 +7,8 @@ MANUALLY:
 ```
 firebase hosting:sites:create SITE_ID
 ```
+3. Add created sites to the list of trusted domains for Firebase Authentication.
+
    
 FOR SCRIPT:
 ```

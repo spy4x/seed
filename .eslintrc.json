@@ -346,6 +346,7 @@
       "files": ["*.spec.ts", "*.spec.tsx"],
       "rules": {
         "no-console": 0,
+        "no-proto": 0,
         "max-lines-per-function": 0,
         "@typescript-eslint/no-unsafe-call": 0,
         "@typescript-eslint/no-explicit-any": 0,

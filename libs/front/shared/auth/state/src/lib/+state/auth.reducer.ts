@@ -1,16 +1,34 @@
 import { Action, createReducer, on } from '@ngrx/store';
-
-import * as AuthActions from './auth.actions';
-import { AuthMethods } from '@seed/front/shared/types';
+import * as AuthUIActions from './actions/ui.actions';
+import * as AuthAPIActions from './actions/api.actions';
+import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 
 export const AUTH_FEATURE_KEY = 'auth';
 
 export interface State {
-  userId?: string;
-  isAuthenticating: boolean;
-  methodInProgress?: AuthMethods;
-  errorMessage?: string;
+  stage: AuthStage;
+  inProgress: boolean;
   successMessage?: string;
+  error?: {
+    message: string;
+    code?: string;
+  };
+
+  email?: string;
+  /**
+   * Values meaning:
+   * undefined - we don't know yet if user exist in Firebase Authentication DB. We need to fetch providers by email.
+   * [] (empty array) - user with the email doesn't exist in Firebase Authentication DB (not signed up yet).
+   * [...] (array with list of providers) - user with the email exists in Firebase Authentication DB.
+   */
+  providers?: AuthProvider[];
+  selectedProvider?: AuthProvider;
+  isNewUser?: boolean;
+  isEmailVerified?: boolean;
+  userId?: string;
+  displayName?: string;
+  photoURL?: string;
+  createdAt?: number;
 }
 
 export interface AuthPartialState {
@@ -18,107 +36,277 @@ export interface AuthPartialState {
 }
 
 export const initialState: State = {
-  isAuthenticating: false,
+  stage: AuthStage.initialization,
+  inProgress: false,
+  successMessage: undefined,
+  error: undefined,
+
+  email: undefined,
+  providers: undefined,
+  selectedProvider: undefined,
+  isNewUser: undefined,
+  isEmailVerified: undefined,
+  userId: undefined,
+  displayName: undefined,
+  photoURL: undefined,
+  createdAt: undefined,
+};
+
+const resetErrorAndSuccess = {
+  error: undefined,
+  successMessage: undefined,
 };
 
 const authReducer = createReducer<State>(
   initialState,
-  on(AuthActions.init, (state: State) => ({
-    ...state,
-    isAuthenticating: true,
-    methodInProgress: AuthMethods.init,
-    errorMessage: undefined,
-    successMessage: undefined,
-  })),
+
+  // region UI Actions
   on(
-    AuthActions.authenticatedAfterInit,
-    AuthActions.authenticatedAfterUserAction,
-    AuthActions.signedUp,
-    (state: State, { userId }) => ({
+    AuthUIActions.signAnonymously,
+    (state: State): State => ({
       ...state,
-      userId,
-      isAuthenticating: false,
-      methodInProgress: undefined,
-      errorMessage: undefined,
-      successMessage: undefined,
+      inProgress: true,
+      stage: AuthStage.signingAnonymously,
+      selectedProvider: AuthProvider.anonymous,
+      ...resetErrorAndSuccess,
     }),
   ),
-  on(AuthActions.notAuthenticated, (state: State) => ({
-    ...state,
-    userId: undefined,
-    isAuthenticating: false,
-    methodInProgress: undefined,
-    errorMessage: undefined,
-    successMessage: undefined,
-  })),
-  on(AuthActions.authenticateAnonymously, (state: State) => ({
-    ...state,
-    isAuthenticating: true,
-    methodInProgress: AuthMethods.anonymous,
-    errorMessage: undefined,
-    successMessage: undefined,
-  })),
-  on(AuthActions.authenticateWithGoogle, (state: State) => ({
-    ...state,
-    isAuthenticating: true,
-    methodInProgress: AuthMethods.google,
-    errorMessage: undefined,
-    successMessage: undefined,
-  })),
-  on(AuthActions.authenticateWithGitHub, (state: State) => ({
-    ...state,
-    isAuthenticating: true,
-    methodInProgress: AuthMethods.github,
-    errorMessage: undefined,
-    successMessage: undefined,
-  })),
-  on(AuthActions.authenticateWithEmailAndPassword, AuthActions.signUpWithEmailAndPassword, (state: State) => ({
-    ...state,
-    isAuthenticating: true,
-    methodInProgress: AuthMethods.password,
-    errorMessage: undefined,
-    successMessage: undefined,
-  })),
-  on(AuthActions.authenticateWithEmailLink, (state: State) => ({
-    ...state,
-    isAuthenticating: true,
-    methodInProgress: AuthMethods.link,
-    errorMessage: undefined,
-    successMessage: undefined,
-  })),
-  on(AuthActions.authenticateWithEmailLinkRequestSent, (state: State) => ({
-    ...state,
-    isAuthenticating: false,
-    methodInProgress: undefined,
-    errorMessage: undefined,
-    successMessage: 'Magic link has been sent to your email. Follow it to proceed.',
-  })),
-  on(AuthActions.restorePasswordAttempt, (state: State) => ({
-    ...state,
-    isAuthenticating: true,
-    methodInProgress: AuthMethods.password,
-    errorMessage: undefined,
-    successMessage: undefined,
-  })),
-  on(AuthActions.restorePasswordRequestSent, (state: State) => ({
-    ...state,
-    isAuthenticating: false,
-    methodInProgress: undefined,
-    errorMessage: undefined,
-    successMessage: 'Check your email for password reset instructions.',
-  })),
-  on(AuthActions.authenticationFailed, (state: State, { errorMessage }) => ({
-    ...state,
-    isAuthenticating: false,
-    methodInProgress: undefined,
-    errorMessage,
-    successMessage: undefined,
-  })),
-  on(AuthActions.signedOut, (state: State) => ({
-    ...state,
-    userId: undefined,
-    successMessage: undefined,
-  })),
+  on(
+    AuthUIActions.enterEmail,
+    AuthAPIActions.enterEmail,
+    (state: State, { email }): State => ({
+      ...state,
+      email,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.changeUser,
+    (state: State): State => ({
+      ...state,
+      stage: AuthStage.enteringEmail,
+      email: undefined,
+      displayName: undefined,
+      photoURL: undefined,
+      providers: [],
+      selectedProvider: undefined,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(AuthUIActions.selectProvider, (state: State, { provider }): State => {
+    const stageUpdate: Partial<State> = {};
+    if (provider === AuthProvider.password) {
+      stageUpdate.stage = AuthStage.signingEmailAndPassword;
+    }
+    if (provider === AuthProvider.phone) {
+      stageUpdate.stage = AuthStage.signingPhoneNumber;
+    }
+    return {
+      ...state,
+      selectedProvider: provider,
+      ...stageUpdate,
+      ...resetErrorAndSuccess,
+    };
+  }),
+  on(AuthUIActions.deselectProvider, (state: State): State => {
+    const stageUpdate: Partial<State> = {};
+    if (state.stage === AuthStage.signingEmailAndPassword || state.stage === AuthStage.signingPhoneNumber) {
+      stageUpdate.stage = AuthStage.choosingProvider;
+    }
+    return {
+      ...state,
+      selectedProvider: undefined,
+      ...stageUpdate,
+      ...resetErrorAndSuccess,
+    };
+  }),
+  on(
+    AuthUIActions.signGoogle,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.signingGoogle,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.signGitHub,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.signingGitHub,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.signEmailPassword,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.signingEmailAndPassword,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.signEmailLink,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.signingEmailLink,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.restorePassword,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.restoringPassword,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthUIActions.signOut,
+    (state: State): State => ({
+      ...state,
+      stage: AuthStage.signingOut,
+      inProgress: true,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  // endregion
+
+  // region API Actions
+  on(
+    AuthAPIActions.init,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.initialization,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.initSignedIn,
+    AuthAPIActions.signedIn,
+    AuthAPIActions.signedUp,
+    (
+      state: State,
+      { userId, email, displayName, photoURL, isNewUser, createdAt, isEmailVerified, providers },
+    ): State => ({
+      ...state,
+      stage: AuthStage.authenticated,
+      inProgress: false,
+      userId,
+      email,
+      displayName,
+      photoURL,
+      isNewUser,
+      isEmailVerified,
+      createdAt,
+      providers,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.signedUp,
+    (state: State): State => ({
+      ...state,
+      ...resetErrorAndSuccess,
+      successMessage: `You've successfully signed up! Feel free to explore the app 🎉`,
+    }),
+  ),
+  on(
+    AuthAPIActions.initNotAuthenticated,
+    (state: State): State => ({
+      ...state,
+      inProgress: false,
+      stage: AuthStage.enteringEmail,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.initNotAuthenticatedButRehydrateState,
+    (state: State, { email, displayName, photoURL }): State => ({
+      ...state,
+      inProgress: false,
+      stage: AuthStage.enteringEmail,
+      email,
+      displayName,
+      photoURL,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.fetchProviders,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.fetchingProviders,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.fetchProvidersSuccess,
+    (state: State, { providers }): State => ({
+      ...state,
+      inProgress: false,
+      stage: AuthStage.choosingProvider,
+      providers,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.signEmailLinkRequestSent,
+    (state: State): State => ({
+      ...state,
+      inProgress: false,
+      ...resetErrorAndSuccess,
+      successMessage: 'Magic link has been sent to your email. Follow it to proceed.',
+    }),
+  ),
+  on(
+    AuthAPIActions.signEmailLinkFinish,
+    (state: State): State => ({
+      ...state,
+      inProgress: true,
+      stage: AuthStage.signingEmailLink,
+      selectedProvider: AuthProvider.link,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.restorePasswordSuccess,
+    (state: State): State => ({
+      ...state,
+      inProgress: false,
+      ...resetErrorAndSuccess,
+      successMessage: 'Check your email for password reset instructions.',
+    }),
+  ),
+  on(
+    AuthAPIActions.actionFailed,
+    (state: State, { message, code }): State => ({
+      ...state,
+      inProgress: false,
+      ...resetErrorAndSuccess,
+      error: {
+        message,
+        code,
+      },
+    }),
+  ),
+  on(
+    AuthAPIActions.signedOut,
+    (state: State): State => ({
+      ...state,
+      ...initialState,
+      stage: AuthStage.enteringEmail,
+      inProgress: false,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  // endregion
 );
 
 export function reducer(state: State | undefined, action: Action): State {

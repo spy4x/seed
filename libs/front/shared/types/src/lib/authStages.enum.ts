@@ -1,0 +1,15 @@
+export enum AuthStage {
+  initialization = 'initialization',
+  enteringEmail = 'enteringEmail',
+  fetchingProviders = 'fetchingProviders',
+  choosingProvider = 'choosingProvider',
+  signingAnonymously = 'signingAnonymously',
+  signingGoogle = 'signingGoogle',
+  signingGitHub = 'signingGitHub',
+  signingPhoneNumber = 'signingPhoneNumber',
+  signingEmailAndPassword = 'signingEmailAndPassword',
+  signingEmailLink = 'signingEmailLink',
+  restoringPassword = 'restoringPassword',
+  signingOut = 'signingOut',
+  authenticated = 'authenticated',
+}

@@ -1,19 +1,32 @@
 import { TestBed } from '@angular/core/testing';
 import { Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { provideMockActions } from '@ngrx/effects/testing';
-import { provideMockStore } from '@ngrx/store/testing';
-import { AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY, AuthEffects } from './auth.effects';
-import * as AuthActions from './auth.actions';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import {
+  AUTH_REHYDRATION_KEY_DISPLAY_NAME,
+  AUTH_REHYDRATION_KEY_EMAIL,
+  AUTH_REHYDRATION_KEY_PHOTO_URL,
+  AUTH_URL_SEGMENT_FOR_LINK_AUTH,
+  AuthEffects,
+} from './auth.effects';
+import * as AuthUIActions from './actions/ui.actions';
+import * as AuthAPIActions from './actions/api.actions';
 import { AngularFireAuth } from '@angular/fire/auth';
 import { hot } from '@nrwl/angular/testing';
 import { Action } from '@ngrx/store';
 import firebase from 'firebase/app';
-import { testEmail, testPassword } from '@seed/shared/mock-data';
+import { testDisplayName, testEmail, testPassword, testPhotoURL, testUserId } from '@seed/shared/mock-data';
+import * as AuthSelectors from './auth.selectors';
+import { AuthProvider } from '@seed/front/shared/types';
+import { mockAuthCredentials, mockExpectedActionPayload } from './mocks';
+import { setMilliseconds, subMinutes } from 'date-fns';
 
 describe(AuthEffects.name, () => {
+  // region SETUP
+  let store: MockStore;
   let actions$ = new Observable<Action>();
   let effects: AuthEffects;
-  let user$: ReplaySubject<null | { uid: string }>;
+  let user$: ReplaySubject<null | { uid: string; email?: string; displayName?: string; photoURL?: string }>;
   const signInAnonymouslyMock = jest.fn();
   const signInWithPopupMock = jest.fn();
   const signOutMock = jest.fn();
@@ -23,6 +36,7 @@ describe(AuthEffects.name, () => {
   const sendSignInLinkToEmailMock = jest.fn();
   const isSignInWithEmailLinkMock = jest.fn();
   const signInWithEmailLinkMock = jest.fn();
+  const fetchSignInMethodsForEmailMock = jest.fn();
 
   beforeEach(() => {
     user$ = new ReplaySubject<null | { uid: string }>();
@@ -30,7 +44,14 @@ describe(AuthEffects.name, () => {
       providers: [
         AuthEffects,
         provideMockActions(() => actions$),
-        provideMockStore(),
+        provideMockStore({
+          selectors: [
+            {
+              selector: AuthSelectors.getEmail,
+              value: testEmail,
+            },
+          ],
+        }),
         {
           provide: AngularFireAuth,
           useValue: {
@@ -43,11 +64,13 @@ describe(AuthEffects.name, () => {
             sendSignInLinkToEmail: sendSignInLinkToEmailMock,
             isSignInWithEmailLink: isSignInWithEmailLinkMock,
             signInWithEmailLink: signInWithEmailLinkMock,
+            fetchSignInMethodsForEmail: fetchSignInMethodsForEmailMock,
             signOut: signOutMock,
           },
         },
       ],
     });
+    store = TestBed.inject(MockStore);
     effects = TestBed.inject(AuthEffects);
     signInAnonymouslyMock.mockReset();
     signInWithPopupMock.mockReset();
@@ -59,31 +82,22 @@ describe(AuthEffects.name, () => {
     isSignInWithEmailLinkMock.mockReset();
     signInWithEmailLinkMock.mockReset();
   });
+  // endregion
 
   describe('init$', () => {
-    it('success', () => {
-      const action = AuthActions.init();
-      const completion = AuthActions.authenticatedAfterInit({ userId: '123' });
-      user$.next({ uid: '123' });
+    it(`dispatches "${AuthAPIActions.initSignedIn.type}" if fireAuth.user emits User`, () => {
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.initSignedIn(mockExpectedActionPayload);
+      user$.next(mockAuthCredentials.user);
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.init$).toBeObservable(expected);
     });
 
-    it('fail', () => {
-      const action = AuthActions.init();
-      const completion = AuthActions.notAuthenticated();
-      user$.next(null);
-      isSignInWithEmailLinkMock.mockReturnValue(of(false));
-      actions$ = hot('a', { a: action });
-      const expected = hot('b', { b: completion });
-      expect(effects.init$).toBeObservable(expected);
-    });
-
-    it('proceed with email link', () => {
-      const action = AuthActions.init();
-      const completion = AuthActions.authenticateWithEmailLinkFinish();
-      const url = 'https://seed.web.app/auth-link';
+    it(`dispatches "${AuthAPIActions.signEmailLinkFinish.type}" if fireAuth.user emits null, but Location URL contains SignInWithEmailLink code`, () => {
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.signEmailLinkFinish();
+      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
       delete (window as any).location;
       (window.location as any) = new URL(url);
       isSignInWithEmailLinkMock.mockReturnValue(of(true));
@@ -93,215 +107,379 @@ describe(AuthEffects.name, () => {
       expect(effects.init$).toBeObservable(expected);
       expect(isSignInWithEmailLinkMock).toHaveBeenCalledWith(url);
     });
-  });
 
-  describe('authenticateAnonymously$', () => {
-    it('success', () => {
-      const action = AuthActions.authenticateAnonymously();
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
-      signInAnonymouslyMock.mockReturnValue(
-        of({
-          user: { uid: '123' },
-        }),
-      );
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.isSignInWithEmailLink() throws an error`, () => {
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
+      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
+      delete (window as any).location;
+      (window.location as any) = new URL(url);
+      isSignInWithEmailLinkMock.mockReturnValue(throwError(new Error('Auth failed')));
+      user$.next(null);
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateAnonymously$).toBeObservable(expected);
+      expect(effects.init$).toBeObservable(expected);
+      expect(isSignInWithEmailLinkMock).toHaveBeenCalledWith(url);
+    });
+
+    it(`dispatches "${AuthAPIActions.initNotAuthenticated.type}" if fireAuth.user emits null, no signInEmailLink and no email in localStorage`, () => {
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.initNotAuthenticated();
+      localStorage.removeItem(AUTH_REHYDRATION_KEY_EMAIL);
+      const localStorageGetItemSpy = jest.spyOn(window.localStorage.__proto__, 'getItem'); // https://stackoverflow.com/a/54157998/9967802
+      user$.next(null);
+      isSignInWithEmailLinkMock.mockReturnValue(of(false));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.init$).toBeObservable(expected);
+      expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL);
+    });
+
+    it(`dispatches "${AuthAPIActions.initNotAuthenticatedButRehydrateState.type}" if fireAuth.user emits null, no signInEmailLink, with user data in localStorage`, () => {
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.initNotAuthenticatedButRehydrateState({
+        email: testEmail,
+        displayName: testDisplayName,
+        photoURL: testPhotoURL,
+      });
+      localStorage.setItem(AUTH_REHYDRATION_KEY_EMAIL, testEmail);
+      localStorage.setItem(AUTH_REHYDRATION_KEY_DISPLAY_NAME, testDisplayName);
+      localStorage.setItem(AUTH_REHYDRATION_KEY_PHOTO_URL, testPhotoURL);
+      const localStorageGetItemSpy = jest.spyOn(window.localStorage.__proto__, 'getItem'); // https://stackoverflow.com/a/54157998/9967802
+      user$.next(null);
+      isSignInWithEmailLinkMock.mockReturnValue(of(false));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.init$).toBeObservable(expected);
+      expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL);
+      expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_DISPLAY_NAME);
+      expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_PHOTO_URL);
+    });
+  });
+
+  describe('enterEmail$', () => {
+    it(`dispatches "${AuthAPIActions.fetchProviders.type}" on "enterEmail" and saves email to localStorage`, () => {
+      const action = AuthUIActions.enterEmail({ email: testEmail });
+      const completion = AuthAPIActions.fetchProviders();
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      const localStorageSetItemSpy = jest.spyOn(window.localStorage.__proto__, 'setItem'); // https://stackoverflow.com/a/54157998/9967802
+      expect(effects.enterEmail$).toBeObservable(expected);
+      expect(localStorageSetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL, testEmail);
+      expect(localStorage.getItem(AUTH_REHYDRATION_KEY_EMAIL)).toBe(testEmail);
+    });
+    it(`dispatches "${AuthAPIActions.fetchProviders.type}" on "initNotAuthenticatedButRehydrateEmail"`, () => {
+      const action = AuthAPIActions.initNotAuthenticatedButRehydrateState({ email: testEmail });
+      const completion = AuthAPIActions.fetchProviders();
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.enterEmail$).toBeObservable(expected);
+    });
+  });
+
+  describe('fetchProviders$', () => {
+    it(`dispatches "${AuthAPIActions.fetchProvidersSuccess.type}" if fireAuth.fetchSignInMethodsForEmail() returns providers`, () => {
+      const action = AuthAPIActions.fetchProviders();
+      const firebaseProviders = ['google.com', 'github.com', 'password', 'emailLink'];
+      const authProviders = [AuthProvider.google, AuthProvider.github, AuthProvider.password, AuthProvider.link];
+      const completion = AuthAPIActions.fetchProvidersSuccess({ providers: authProviders });
+      fetchSignInMethodsForEmailMock.mockReturnValue(of(firebaseProviders));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.fetchProviders$).toBeObservable(expected);
+      expect(fetchSignInMethodsForEmailMock).toHaveBeenCalled();
+    });
+
+    it(`dispatches "${AuthAPIActions.fetchProvidersSuccess.type}" if fireAuth.fetchSignInMethodsForEmail() returns empty providers`, () => {
+      const action = AuthAPIActions.fetchProviders();
+      const firebaseProviders: string[] = [];
+      const authProviders: AuthProvider[] = [];
+      const completion = AuthAPIActions.fetchProvidersSuccess({ providers: authProviders });
+      fetchSignInMethodsForEmailMock.mockReturnValue(of(firebaseProviders));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.fetchProviders$).toBeObservable(expected);
+      expect(fetchSignInMethodsForEmailMock).toHaveBeenCalled();
+    });
+
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.fetchSignInMethodsForEmail() throws an error`, () => {
+      const action = AuthAPIActions.fetchProviders();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
+      fetchSignInMethodsForEmailMock.mockReturnValue(throwError(new Error('Auth failed')));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.fetchProviders$).toBeObservable(expected);
+      expect(fetchSignInMethodsForEmailMock).toHaveBeenCalled();
+    });
+  });
+
+  describe('selectProvider$', () => {
+    describe(`dispatches authenticate/signIn action for simple providers`, () => {
+      it(`"${AuthUIActions.signGoogle.type}" for "${AuthProvider.google}" provider`, () => {
+        const action = AuthUIActions.selectProvider({ provider: AuthProvider.google });
+        const completion = AuthUIActions.signGoogle();
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.selectProvider$).toBeObservable(expected);
+      });
+
+      it(`"${AuthUIActions.signGitHub.type}" for "${AuthProvider.github}" provider`, () => {
+        const action = AuthUIActions.selectProvider({ provider: AuthProvider.github });
+        const completion = AuthUIActions.signGitHub();
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.selectProvider$).toBeObservable(expected);
+      });
+
+      it(`"${AuthUIActions.signEmailLink.type}" for "${AuthProvider.link}" provider`, () => {
+        const action = AuthUIActions.selectProvider({ provider: AuthProvider.link });
+        const completion = AuthUIActions.signEmailLink();
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.selectProvider$).toBeObservable(expected);
+      });
+
+      it(`"${AuthUIActions.signAnonymously.type}" for "${AuthProvider.anonymous}" provider`, () => {
+        const action = AuthUIActions.selectProvider({ provider: AuthProvider.anonymous });
+        const completion = AuthUIActions.signAnonymously();
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.selectProvider$).toBeObservable(expected);
+      });
+    });
+
+    describe(`dispatches NoOp Action for more complicated providers`, () => {
+      const noopAction = { type: 'noop' };
+
+      it(`for "${AuthProvider.password}" provider`, () => {
+        const action = AuthUIActions.selectProvider({ provider: AuthProvider.password });
+        const completion = noopAction;
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.selectProvider$).toBeObservable(expected);
+      });
+
+      it(`for "${AuthProvider.phone}" provider`, () => {
+        const action = AuthUIActions.selectProvider({ provider: AuthProvider.phone });
+        const completion = noopAction;
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.selectProvider$).toBeObservable(expected);
+      });
+    });
+  });
+
+  describe(`signAnonymously$`, () => {
+    it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInAnonymously() returns User`, () => {
+      const action = AuthUIActions.signAnonymously();
+      const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+      signInAnonymouslyMock.mockReturnValue(of(mockAuthCredentials));
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.signAnonymously$).toBeObservable(expected);
       expect(signInAnonymouslyMock).toHaveBeenCalled();
     });
 
-    it('fail', () => {
-      const action = AuthActions.authenticateAnonymously();
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInAnonymously() throws an error`, () => {
+      const action = AuthUIActions.signAnonymously();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInAnonymouslyMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateAnonymously$).toBeObservable(expected);
+      expect(effects.signAnonymously$).toBeObservable(expected);
       expect(signInAnonymouslyMock).toHaveBeenCalled();
     });
   });
 
-  describe('authenticateWithGoogle$', () => {
-    it('success', () => {
-      const action = AuthActions.authenticateWithGoogle();
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
-      signInWithPopupMock.mockReturnValue(
-        of({
-          user: { uid: '123' },
-        }),
-      );
+  describe('signGoogle$', () => {
+    it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithPopup() returns User`, () => {
+      const action = AuthUIActions.signGoogle();
+      const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+      signInWithPopupMock.mockReturnValue(of(mockAuthCredentials));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithGoogle$).toBeObservable(expected);
+      expect(effects.signGoogle$).toBeObservable(expected);
       expect(signInWithPopupMock).toHaveBeenCalledWith(new firebase.auth.GoogleAuthProvider());
     });
 
-    it('fail', () => {
-      const action = AuthActions.authenticateWithGoogle();
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInWithPopup() throws an error`, () => {
+      const action = AuthUIActions.signGoogle();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithPopupMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithGoogle$).toBeObservable(expected);
+      expect(effects.signGoogle$).toBeObservable(expected);
       expect(signInWithPopupMock).toHaveBeenCalledWith(new firebase.auth.GoogleAuthProvider());
     });
   });
 
-  describe('authenticateWithGitHub$', () => {
-    it('success', () => {
-      const action = AuthActions.authenticateWithGitHub();
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
-      signInWithPopupMock.mockReturnValue(
-        of({
-          user: { uid: '123' },
-        }),
-      );
+  describe('signGitHub$', () => {
+    it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithPopup() returns User`, () => {
+      const action = AuthUIActions.signGitHub();
+      const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+      signInWithPopupMock.mockReturnValue(of(mockAuthCredentials));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithGitHub$).toBeObservable(expected);
+      expect(effects.signGitHub$).toBeObservable(expected);
       expect(signInWithPopupMock).toHaveBeenCalledWith(new firebase.auth.GithubAuthProvider());
     });
 
-    it('fail', () => {
-      const action = AuthActions.authenticateWithGitHub();
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInWithPopup() throws an error`, () => {
+      const action = AuthUIActions.signGitHub();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithPopupMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithGitHub$).toBeObservable(expected);
+      expect(effects.signGitHub$).toBeObservable(expected);
       expect(signInWithPopupMock).toHaveBeenCalledWith(new firebase.auth.GithubAuthProvider());
     });
   });
 
-  it('signOut$', () => {
-    const action = AuthActions.signOut();
-    const completion = AuthActions.signedOut();
-    signOutMock.mockReturnValue(of(undefined));
-    actions$ = hot('a', { a: action });
-    const expected = hot('b', { b: completion });
-    expect(effects.signOut$).toBeObservable(expected);
-    expect(signOutMock).toHaveBeenCalled();
-  });
-
-  describe('authenticateWithEmailAndPassword$', () => {
-    it('success', () => {
-      const action = AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: testPassword });
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
-      signInWithEmailAndPasswordMock.mockReturnValue(
-        of({
-          user: { uid: '123' },
-        }),
-      );
+  describe('signOut$', () => {
+    it(`dispatches "${AuthAPIActions.signedOut.type}" after calling fireAuth.signOut()`, () => {
+      const action = AuthUIActions.signOut();
+      const completion = AuthAPIActions.signedOut();
+      signOutMock.mockReturnValue(of(undefined));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailAndPassword$).toBeObservable(expected);
-      expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
-    });
-
-    it('fail', () => {
-      const action = AuthActions.authenticateWithEmailAndPassword({ email: testEmail, password: 'test1234' });
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
-      signInWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
-      actions$ = hot('a', { a: action });
-      const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailAndPassword$).toBeObservable(expected);
-      expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+      expect(effects.signOut$).toBeObservable(expected);
+      expect(signOutMock).toHaveBeenCalled();
     });
   });
 
-  describe('authenticateWithEmailLink$', () => {
-    it('success', () => {
-      const action = AuthActions.authenticateWithEmailLink({ email: testEmail });
-      const completion = AuthActions.authenticateWithEmailLinkRequestSent();
+  describe('signEmailPassword$', () => {
+    const action = AuthUIActions.signEmailPassword({ password: testPassword });
+    beforeEach(() => {
+      store.overrideSelector(AuthSelectors.getEmail, testEmail);
+    });
+
+    describe(`signUp`, () => {
+      const signUpCredential = { ...mockAuthCredentials, additionalUserInfo: { isNewUser: true } };
+      const signUpExpectedActionPayload = { ...mockExpectedActionPayload, isNewUser: true };
+      beforeEach(() => {
+        store.overrideSelector(AuthSelectors.getIsNewUser, true);
+      });
+
+      it(`dispatches "${AuthAPIActions.signedUp.type}" if fireAuth.createUserWithEmailAndPassword() returns User`, () => {
+        const completion = AuthAPIActions.signedUp(signUpExpectedActionPayload);
+        createUserWithEmailAndPasswordMock.mockReturnValue(of(signUpCredential));
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.signEmailPassword$).toBeObservable(expected);
+        expect(createUserWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+      });
+
+      it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.createUserWithEmailAndPassword() throws an error`, () => {
+        const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
+        createUserWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.signEmailPassword$).toBeObservable(expected);
+        expect(createUserWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+      });
+    });
+
+    describe(`signIn`, () => {
+      beforeEach(() => {
+        store.overrideSelector(AuthSelectors.getIsNewUser, false);
+      });
+
+      it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithEmailAndPassword() returns User`, () => {
+        const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+        signInWithEmailAndPasswordMock.mockReturnValue(of(mockAuthCredentials));
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.signEmailPassword$).toBeObservable(expected);
+        expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+      });
+
+      it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInWithEmailAndPassword() throws an error`, () => {
+        const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
+        signInWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
+        actions$ = hot('a', { a: action });
+        const expected = hot('b', { b: completion });
+        expect(effects.signEmailPassword$).toBeObservable(expected);
+        expect(signInWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+      });
+    });
+  });
+
+  describe('signEmailLink$', () => {
+    it(`dispatches "${AuthAPIActions.signEmailLinkRequestSent.type}" if fireAuth.sendSignInLinkToEmail() succeeds`, () => {
+      const action = AuthUIActions.signEmailLink();
+      const completion = AuthAPIActions.signEmailLinkRequestSent();
       sendSignInLinkToEmailMock.mockReturnValue(of(undefined));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailLink$).toBeObservable(expected);
-      expect(localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY]).toBe(testEmail);
-      expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, { url: location.href, handleCodeInApp: true });
+      expect(effects.signEmailLink$).toBeObservable(expected);
+      expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, {
+        url: `${location.href}?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`,
+        handleCodeInApp: true,
+      });
     });
 
-    it('fail', () => {
-      const action = AuthActions.authenticateWithEmailLink({ email: testEmail });
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.sendSignInLinkToEmail() throws an error`, () => {
+      const action = AuthUIActions.signEmailLink();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       sendSignInLinkToEmailMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailLink$).toBeObservable(expected);
-      expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, { url: location.href, handleCodeInApp: true });
+      expect(effects.signEmailLink$).toBeObservable(expected);
+      expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, {
+        url: `${location.href}?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`,
+        handleCodeInApp: true,
+      });
     });
   });
 
-  describe('authenticateWithEmailLinkFinish$', () => {
-    it('success', () => {
-      const action = AuthActions.authenticateWithEmailLinkFinish();
-      const completion = AuthActions.authenticatedAfterUserAction({ userId: '123' });
-      localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = testEmail;
-      signInWithEmailLinkMock.mockReturnValue(
-        of({
-          user: { uid: '123' },
-        }),
-      );
+  describe('signEmailLinkFinish$', () => {
+    it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithEmailLink() returns User`, () => {
+      const action = AuthAPIActions.signEmailLinkFinish();
+      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
+      delete (window as any).location;
+      (window.location as any) = new URL(url);
+      const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
+      signInWithEmailLinkMock.mockReturnValue(of(mockAuthCredentials));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailLinkFinish$).toBeObservable(expected);
-      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, location.href);
+      expect(effects.signEmailLinkFinish$).toBeObservable(expected);
+      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, url);
     });
 
-    it('fail with no email provided', () => {
-      const action = AuthActions.authenticateWithEmailLinkFinish();
-      const completion = AuthActions.authenticationFailed({
-        errorMessage: 'No email was provided for link authentication. Try again.',
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if no email is provided`, () => {
+      const action = AuthAPIActions.signEmailLinkFinish();
+      const completion = AuthAPIActions.actionFailed({
+        message: 'No email was provided for link authentication. Try again.',
       });
-      localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = undefined;
+      const url = `https://seed.web.app/auth-link`;
+      delete (window as any).location;
+      (window.location as any) = new URL(url);
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailLinkFinish$).toBeObservable(expected);
+      expect(effects.signEmailLinkFinish$).toBeObservable(expected);
       expect(signInWithEmailLinkMock).not.toHaveBeenCalledWith();
     });
 
-    it('fail because of firebase auth error', () => {
-      const action = AuthActions.authenticateWithEmailLinkFinish();
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInWithEmailLink() throws an error`, () => {
+      const action = AuthAPIActions.signEmailLinkFinish();
+      const completion1 = AuthAPIActions.enterEmail({ email: testEmail });
+      const completion2 = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithEmailLinkMock.mockReturnValue(throwError(new Error('Auth failed')));
-      localStorage[AUTH_EFFECTS_EMAIL_LINK_LOCAL_STORAGE_KEY] = testEmail;
+      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
+      delete (window as any).location;
+      (window.location as any) = new URL(url);
+      localStorage[AUTH_REHYDRATION_KEY_EMAIL] = testEmail;
       actions$ = hot('a', { a: action });
-      const expected = hot('b', { b: completion });
-      expect(effects.authenticateWithEmailLinkFinish$).toBeObservable(expected);
-      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, location.href);
-    });
-  });
-
-  describe('signUpWithEmailAndPassword$', () => {
-    it('success', () => {
-      const action = AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: testPassword });
-      const completion = AuthActions.signedUp({ userId: '123' });
-      createUserWithEmailAndPasswordMock.mockReturnValue(
-        of({
-          user: { uid: '123' },
-        }),
-      );
-      actions$ = hot('a', { a: action });
-      const expected = hot('b', { b: completion });
-      expect(effects.signUpWithEmailAndPassword$).toBeObservable(expected);
-      expect(createUserWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
-    });
-
-    it('fail', () => {
-      const action = AuthActions.signUpWithEmailAndPassword({ email: testEmail, password: 'test1234' });
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
-      createUserWithEmailAndPasswordMock.mockReturnValue(throwError(new Error('Auth failed')));
-      actions$ = hot('a', { a: action });
-      const expected = hot('b', { b: completion });
-      expect(effects.signUpWithEmailAndPassword$).toBeObservable(expected);
-      expect(createUserWithEmailAndPasswordMock).toHaveBeenCalledWith(testEmail, testPassword);
+      const expected = hot('(bc)', { b: completion1, c: completion2 });
+      expect(effects.signEmailLinkFinish$).toBeObservable(expected);
+      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, url);
     });
   });
 
   describe('restorePassword$', () => {
-    it('success', () => {
-      const action = AuthActions.restorePasswordAttempt({ email: testEmail });
-      const completion = AuthActions.restorePasswordRequestSent();
+    it(`dispatches "${AuthAPIActions.restorePasswordSuccess.type}" if fireAuth.sendPasswordResetEmail() returns providers`, () => {
+      const action = AuthUIActions.restorePassword();
+      const completion = AuthAPIActions.restorePasswordSuccess();
       sendPasswordResetEmailMock.mockReturnValue(of(undefined));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
@@ -309,14 +487,173 @@ describe(AuthEffects.name, () => {
       expect(sendPasswordResetEmailMock).toHaveBeenCalledWith(testEmail);
     });
 
-    it('fail', () => {
-      const action = AuthActions.restorePasswordAttempt({ email: testEmail });
-      const completion = AuthActions.authenticationFailed({ errorMessage: 'Auth failed' });
+    it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.sendPasswordResetEmail() throws an error`, () => {
+      const action = AuthUIActions.restorePassword();
+      const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       sendPasswordResetEmailMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.restorePassword$).toBeObservable(expected);
       expect(sendPasswordResetEmailMock).toHaveBeenCalledWith(testEmail);
+    });
+  });
+
+  describe('hydrateState$', () => {
+    // region SETUP
+    const localStorageSetItemSpy = jest.spyOn(window.localStorage.__proto__, 'setItem'); // https://stackoverflow.com/a/54157998/9967802
+    const localStorageRemoveItemSpy = jest.spyOn(window.localStorage.__proto__, 'removeItem'); // https://stackoverflow.com/a/54157998/9967802
+    beforeEach(() => {
+      localStorageSetItemSpy.mockReset();
+      localStorageRemoveItemSpy.mockReset();
+    });
+
+    function actionTest(action: any): void {
+      describe(action.type, () => {
+        it(`saves state to localStorage when email, display name and photoURL are provided"`, () => {
+          const input = action({
+            userId: testUserId,
+            email: testEmail,
+            displayName: testDisplayName,
+            photoURL: testPhotoURL,
+          });
+          actions$ = of(input);
+          effects.hydrateState$.subscribe();
+          expect(localStorageSetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL, testEmail);
+          expect(localStorageSetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_DISPLAY_NAME, testDisplayName);
+          expect(localStorageSetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_PHOTO_URL, testPhotoURL);
+        });
+
+        it(`removes state from localStorage when email, display name and photoURL are not provided`, () => {
+          const input = action({
+            userId: testUserId,
+          });
+          actions$ = of(input);
+          effects.hydrateState$.subscribe();
+          expect(localStorageRemoveItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL);
+          expect(localStorageRemoveItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_DISPLAY_NAME);
+          expect(localStorageRemoveItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_PHOTO_URL);
+        });
+      });
+    }
+
+    // endregion
+
+    actionTest(AuthAPIActions.signedIn);
+    actionTest(AuthAPIActions.initSignedIn);
+    actionTest(AuthAPIActions.signedUp);
+  });
+
+  describe('dehydrateState$', () => {
+    // region SETUP
+    const localStorageRemoveItemSpy = jest.spyOn(window.localStorage.__proto__, 'removeItem'); // https://stackoverflow.com/a/54157998/9967802
+    beforeEach(() => {
+      localStorageRemoveItemSpy.mockReset();
+    });
+
+    function actionTest(action: Action): void {
+      describe(action.type, () => {
+        it(`removes state from localStorage`, () => {
+          actions$ = of(action);
+          effects.dehydrateState$.subscribe();
+          expect(localStorageRemoveItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL);
+          expect(localStorageRemoveItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_DISPLAY_NAME);
+          expect(localStorageRemoveItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_PHOTO_URL);
+        });
+      });
+    }
+
+    // endregion
+
+    actionTest(AuthAPIActions.signedOut);
+    actionTest(AuthUIActions.changeUser);
+  });
+
+  describe('onUserAuthenticationWithCredentials()', () => {
+    it(`returns "${AuthAPIActions.actionFailed.type}" if not full credential object provided`, () => {
+      const result = effects.onUserAuthenticationWithCredentials({} as any);
+      expect(result).toEqual(AuthAPIActions.actionFailed({ message: `Credential is not a complete object.` }));
+    });
+
+    it(`returns "${AuthAPIActions.signedIn.type}" action for existing user`, () => {
+      const isNewUser = false;
+      const result = effects.onUserAuthenticationWithCredentials({
+        user: mockAuthCredentials.user,
+        additionalUserInfo: { isNewUser },
+      } as any);
+      expect(result).toEqual(AuthAPIActions.signedIn({ ...mockExpectedActionPayload, isNewUser }));
+    });
+
+    it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user`, () => {
+      const isNewUser = true;
+      const result = effects.onUserAuthenticationWithCredentials({
+        user: mockAuthCredentials.user,
+        additionalUserInfo: { isNewUser },
+      } as any);
+      expect(result).toEqual(
+        AuthAPIActions.signedUp({
+          ...mockExpectedActionPayload,
+          isNewUser,
+        }),
+      );
+    });
+  });
+
+  describe('onUserAuthenticationWithUserOnly()', () => {
+    it(`returns "${AuthAPIActions.signedIn.type}" action for existing user`, () => {
+      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false);
+      expect(result).toEqual(AuthAPIActions.signedIn(mockExpectedActionPayload));
+    });
+
+    it(`returns "${AuthAPIActions.initSignedIn.type}" action for existing user & init time`, () => {
+      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false, true);
+      expect(result).toEqual(AuthAPIActions.initSignedIn(mockExpectedActionPayload));
+    });
+
+    it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user`, () => {
+      const isNewUser = true;
+      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, isNewUser);
+      expect(result).toEqual(
+        AuthAPIActions.signedUp({
+          ...mockExpectedActionPayload,
+          isNewUser,
+        }),
+      );
+    });
+
+    it(`returns "${AuthAPIActions.signedIn.type}" action for just signed up user (but without defined "isNewUser" property)`, () => {
+      const creationTime = setMilliseconds(subMinutes(new Date(), 60), 0); // 60 minutes ago
+      const result = effects.onUserAuthenticationWithUserOnly(
+        {
+          ...mockAuthCredentials.user,
+          ...{ metadata: { creationTime: creationTime.toString() } },
+        } as any,
+        false,
+      );
+      expect(result).toEqual(
+        AuthAPIActions.signedIn({
+          ...mockExpectedActionPayload,
+          createdAt: creationTime.getTime(),
+          isNewUser: false,
+        }),
+      );
+    });
+
+    it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user (but without defined "isNewUser" property)`, () => {
+      const creationTime = subMinutes(setMilliseconds(new Date(), 0), 3); // 3 minutes ago
+      const result = effects.onUserAuthenticationWithUserOnly(
+        {
+          ...mockAuthCredentials.user,
+          ...{ metadata: { creationTime: creationTime.toString() } },
+        } as any,
+        true,
+      );
+      expect(result).toEqual(
+        AuthAPIActions.signedUp({
+          ...mockExpectedActionPayload,
+          createdAt: creationTime.getTime(),
+          isNewUser: true,
+        }),
+      );
     });
   });
 });
