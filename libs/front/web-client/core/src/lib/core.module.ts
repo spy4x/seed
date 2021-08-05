@@ -25,8 +25,13 @@ import { StoreRouterConnectingModule } from '@ngrx/router-store';
           loadChildren: async () => import('@seed/front/web-client/auth').then(m => m.AuthModule),
         },
         {
+          path: 'profile',
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          loadChildren: async () => import('@seed/front/web-client/profile').then(m => m.ProfileModule),
+        },
+        {
           path: '**',
-          redirectTo: 'auth',
+          redirectTo: 'profile',
         },
       ],
       { initialNavigation: 'enabledNonBlocking' },

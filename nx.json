@@ -105,6 +105,15 @@
     },
     "front-admin-panel-auth": {
       "tags": []
+    },
+    "front-admin-panel-profile": {
+      "tags": []
+    },
+    "front-admin-panel-users": {
+      "tags": []
+    },
+    "front-web-client-profile": {
+      "tags": []
     }
   }
 }

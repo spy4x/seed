@@ -25,8 +25,18 @@ import { StoreRouterConnectingModule } from '@ngrx/router-store';
           loadChildren: async () => import('@seed/front/admin-panel/auth').then(m => m.AuthModule),
         },
         {
+          path: 'profile',
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          loadChildren: async () => import('@seed/front/admin-panel/profile').then(m => m.ProfileModule),
+        },
+        {
+          path: 'users',
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          loadChildren: async () => import('@seed/front/admin-panel/users').then(m => m.UsersModule),
+        },
+        {
           path: '**',
-          redirectTo: 'auth',
+          redirectTo: 'users',
         },
       ],
       { initialNavigation: 'enabledNonBlocking' },
