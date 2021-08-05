@@ -38,16 +38,13 @@ export function runTest(): void {
 
     describe(`Method: ${AuthProvider.anonymous}`, () => {
       const method = AuthProvider.anonymous;
-      it('signs user in anonymously, displays "SignedUp" text and signs out', () => {
+      it('signs user in anonymously and displays "Create Profile" page', () => {
         // sign in
         cmp.getSignInButton(method).contains(SignInPO.texts.buttons.anonymously);
         cmp.signIn(method);
         cmp.getSignInButton(method).should('not.exist');
         cmp.get().should('not.contain.text', SignInPO.texts.messages.enterEmail);
-        cmp.get().should('contain.text', SignInPO.texts.messages.signedUp);
-        // sign out
-        cmp.signOut();
-        cmp.get().should('contain.text', SignInPO.texts.messages.enterEmail);
+        cy.get(SignInPO.selectors.signOut).click();
       });
     });
 

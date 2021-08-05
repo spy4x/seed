@@ -6,7 +6,6 @@ import { AngularFireAuthModule } from '@angular/fire/auth';
 import { AngularFireMessagingModule } from '@angular/fire/messaging';
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
 import { FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN, FrontAdminPanelConfig } from './config.interface';
-import { SignInContainerComponent } from '@seed/front/shared/auth/container';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
@@ -21,8 +20,13 @@ import { StoreRouterConnectingModule } from '@ngrx/router-store';
     RouterModule.forRoot(
       [
         {
-          path: '',
-          component: SignInContainerComponent,
+          path: 'auth',
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          loadChildren: async () => import('@seed/front/admin-panel/auth').then(m => m.AuthModule),
+        },
+        {
+          path: '**',
+          redirectTo: 'auth',
         },
       ],
       { initialNavigation: 'enabledNonBlocking' },

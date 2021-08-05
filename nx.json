@@ -102,6 +102,9 @@
     },
     "front-web-client-auth": {
       "tags": []
+    },
+    "front-admin-panel-auth": {
+      "tags": []
     }
   }
 }

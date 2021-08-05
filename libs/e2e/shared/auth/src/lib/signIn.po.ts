@@ -1,4 +1,5 @@
 import { AuthProvider } from '@seed/front/shared/types';
+import { ZERO } from '@seed/shared/constants';
 
 export class SignInPO {
   static readonly texts = {
@@ -71,7 +72,7 @@ export class SignInPO {
 
       const signOutEls = $document.querySelectorAll(SignInPO.selectors.signOut);
       if (signOutEls.length) {
-        this.signOut();
+        (signOutEls[ZERO] as HTMLButtonElement).click();
       }
     });
   }

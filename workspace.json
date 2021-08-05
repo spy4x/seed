@@ -475,7 +475,8 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "browserTarget": "front-admin-panel:build",
-            "port": 4201
+            "port": 4201,
+            "proxyConfig": "proxy.conf.json"
           },
           "configurations": {
             "production": {
@@ -852,6 +853,28 @@
           "builder": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": ["libs/front/web-client/auth/src/**/*.ts", "libs/front/web-client/auth/src/**/*.html"]
+          }
+        }
+      }
+    },
+    "front-admin-panel-auth": {
+      "projectType": "library",
+      "root": "libs/front/admin-panel/auth",
+      "sourceRoot": "libs/front/admin-panel/auth/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/admin-panel/auth"],
+          "options": {
+            "jestConfig": "libs/front/admin-panel/auth/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/admin-panel/auth/src/**/*.ts", "libs/front/admin-panel/auth/src/**/*.html"]
           }
         }
       }

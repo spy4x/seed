@@ -355,11 +355,14 @@ const authReducer = createReducer<State>(
   ),
   on(
     AuthAPIActions.notAuthorized,
-    (state: State): State => ({
+    (state: State, { reason }): State => ({
       ...state,
       ...resetErrorAndSuccess,
       stage: AuthStage.notAuthorized,
       inProgress: false,
+      error: {
+        message: reason,
+      },
     }),
   ),
   on(

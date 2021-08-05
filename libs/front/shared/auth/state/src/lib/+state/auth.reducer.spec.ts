@@ -673,6 +673,7 @@ describe('Auth Reducer', () => {
     });
 
     it(AuthAPIActions.notAuthorized.type, () => {
+      const reason = 'You are banned';
       reducerTest(
         {
           stage: AuthStage.authorizing,
@@ -688,10 +689,11 @@ describe('Auth Reducer', () => {
           createdAt: 123567890,
           user: mockUsers[0],
         },
-        AuthAPIActions.notAuthorized(),
+        AuthAPIActions.notAuthorized({ reason }),
         {
           stage: AuthStage.notAuthorized,
           inProgress: false,
+          error: { message: reason },
         },
       );
     });

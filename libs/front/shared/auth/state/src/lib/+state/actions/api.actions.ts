@@ -54,6 +54,6 @@ export const authorize = createAction(`${prefix} Authorize`);
 
 export const authorized = createAction(`${prefix} Authorized`);
 
-export const notAuthorized = createAction(`${prefix} Not authorized`);
+export const notAuthorized = createAction(`${prefix} Not authorized`, props<{ reason: string }>());
 
 export const setJWT = createAction(`${prefix} Set JWT`, props<{ jwt?: string }>());

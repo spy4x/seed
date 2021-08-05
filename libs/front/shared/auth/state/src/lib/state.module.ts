@@ -6,12 +6,12 @@ import { AuthenticationEffects } from './+state/effects/authentication.effects';
 import { AuthorizationEffects } from './+state/effects/authorization.effects';
 import { init } from './+state/actions/api.actions';
 import {
+  AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN,
+  AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT,
   AUTH_ROUTE_URL_FOR_CREATING_PROFILE_DEFAULT,
   AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN,
   AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_DEFAULT,
   AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
-  AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_DEFAULT,
-  AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_TOKEN,
 } from './routeURLs';
 import { RouterModule } from '@angular/router';
 import { AUTH_IS_AUTHORIZED_HANDLER_DEFAULT, AUTH_IS_AUTHORIZED_HANDLER_TOKEN } from './isAuthorized';
@@ -26,9 +26,9 @@ import { HttpClientModule } from '@angular/common/http';
     HttpClientModule,
   ],
   providers: [
+    { provide: AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN, useValue: AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT },
     { provide: AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN, useValue: AUTH_ROUTE_URL_FOR_CREATING_PROFILE_DEFAULT },
     { provide: AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN, useValue: AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_DEFAULT },
-    { provide: AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_TOKEN, useValue: AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_DEFAULT },
     { provide: AUTH_IS_AUTHORIZED_HANDLER_TOKEN, useValue: AUTH_IS_AUTHORIZED_HANDLER_DEFAULT },
     UserService,
   ],

@@ -23,5 +23,6 @@ module.exports = {
     '<rootDir>/libs/front/shared/auth/container',
     '<rootDir>/libs/e2e/shared/auth',
     '<rootDir>/libs/front/web-client/auth',
+    '<rootDir>/libs/front/admin-panel/auth',
   ],
 };

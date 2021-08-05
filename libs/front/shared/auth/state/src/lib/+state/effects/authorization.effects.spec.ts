@@ -6,10 +6,10 @@ import * as AuthAPIActions from '../actions/api.actions';
 import { Action } from '@ngrx/store';
 import { Router } from '@angular/router';
 import {
+  AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN,
+  AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT,
   AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN,
   AUTH_ROUTE_URL_FOR_CREATING_PROFILE_DEFAULT,
-  AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_TOKEN,
-  AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_DEFAULT,
   AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
   AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_DEFAULT,
 } from '../../routeURLs';
@@ -49,6 +49,10 @@ describe(AuthorizationEffects.name, () => {
           },
         },
         {
+          provide: AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN,
+          useValue: AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT,
+        },
+        {
           provide: AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN,
           useValue: AUTH_ROUTE_URL_FOR_CREATING_PROFILE_DEFAULT,
         },
@@ -59,10 +63,6 @@ describe(AuthorizationEffects.name, () => {
         {
           provide: AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
           useValue: AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_DEFAULT,
-        },
-        {
-          provide: AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_TOKEN,
-          useValue: AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_DEFAULT,
         },
       ],
     });
@@ -213,10 +213,11 @@ describe(AuthorizationEffects.name, () => {
           expect(isAuthorizedHandlerMock).toHaveBeenCalledWith(user);
         });
 
-        it(`dispatches "${AuthAPIActions.profileLoadSuccessNoProfileYet.type}" if isAuthorizedHandler() returns false`, () => {
+        it(`dispatches "${AuthAPIActions.notAuthorized.type}" if isAuthorizedHandler() returns string`, () => {
+          const reason = 'You are banned';
           const action = actionCreator({ user });
-          const completion = AuthAPIActions.notAuthorized();
-          isAuthorizedHandlerMock.mockReturnValue(of(false));
+          const completion = AuthAPIActions.notAuthorized({ reason });
+          isAuthorizedHandlerMock.mockReturnValue(of(reason));
           actions$ = hot('a', { a: action });
           const expected = hot('b', { b: completion });
           expect(getEffects().authorize$).toBeObservable(expected);
@@ -248,8 +249,8 @@ describe(AuthorizationEffects.name, () => {
 
   testRedirect(
     'redirectToNotAuthorizedPage$',
-    AuthAPIActions.notAuthorized(),
-    AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_TOKEN,
-    AUTH_ROUTE_URL_FOR_NOT_AUTHORIZED_PAGE_DEFAULT,
+    AuthAPIActions.notAuthorized({ reason: '' }),
+    AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN,
+    AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT,
   );
 });

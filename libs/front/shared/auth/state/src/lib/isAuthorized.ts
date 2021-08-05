@@ -1,7 +1,10 @@
 import { InjectionToken } from '@angular/core';
 import { User } from '@prisma/client';
 
-export type IsAuthorizedHandler = (user: User) => Promise<boolean>;
+/**
+ * @returns TRUE if user is authorized, STRING (reason) if user is not authorized.
+ */
+export type IsAuthorizedHandler = (user: User) => Promise<true | string>;
 
 export const AUTH_IS_AUTHORIZED_HANDLER_TOKEN = new InjectionToken<IsAuthorizedHandler>('AUTH_IS_AUTHORIZED_HANDLER');
 
