@@ -4,6 +4,7 @@ import * as Sentry from '@sentry/node';
 import { FirebaseAuthService, LogService } from '../../../services';
 import { isEnv } from '../../../constants';
 import { Environment } from '@seed/shared/types';
+import { FIREBASE_AUTH_UID_LENGTH } from '@seed/shared/constants';
 
 export type RequestExtended = Request & { userId?: string };
 
@@ -32,7 +33,10 @@ export class UserMiddleware implements NestMiddleware {
       logSegment.log(`Token: ${authorization}`);
       const token = authorization.replace('Bearer ', '');
 
-      const userId = isEnv(Environment.development) ? token : await this.firebaseAuthService.validateJWT(token);
+      const userId =
+        isEnv(Environment.development) && token.length <= FIREBASE_AUTH_UID_LENGTH
+          ? token
+          : await this.firebaseAuthService.validateJWT(token);
       logSegment.log(userId ? `User Id: ${userId}` : 'Token is not valid.');
       req.userId = userId || undefined;
 

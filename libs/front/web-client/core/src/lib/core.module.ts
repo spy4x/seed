@@ -10,7 +10,6 @@ import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { StoreRouterConnectingModule } from '@ngrx/router-store';
-import { SharedAuthContainerModule, SignInContainerComponent } from '@seed/front/shared/auth/container';
 
 @NgModule({
   imports: [
@@ -18,12 +17,16 @@ import { SharedAuthContainerModule, SignInContainerComponent } from '@seed/front
     AngularFireModule,
     AngularFireAuthModule,
     AngularFireMessagingModule,
-    SharedAuthContainerModule,
     RouterModule.forRoot(
       [
         {
-          path: '',
-          component: SignInContainerComponent,
+          path: 'auth',
+          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+          loadChildren: async () => import('@seed/front/web-client/auth').then(m => m.AuthModule),
+        },
+        {
+          path: '**',
+          redirectTo: 'auth',
         },
       ],
       { initialNavigation: 'enabledNonBlocking' },

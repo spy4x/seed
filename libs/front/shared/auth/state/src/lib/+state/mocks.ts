@@ -1,7 +1,8 @@
-import { testDisplayName, testEmail, testPhotoURL, testUserId } from '@seed/shared/mock-data';
+import { testDisplayName, testEmail, testJWT, testPhotoURL, testUserId } from '@seed/shared/mock-data';
 import { AuthenticationActionPayload } from './actions/authenticationActionPayload.interface';
 import { AuthProvider } from '@seed/front/shared/types';
 import { MILLISECONDS_IN_SECOND, SECONDS_IN_MINUTE } from '@seed/shared/constants';
+import { Observable, of } from 'rxjs';
 
 const thirtyMinutes = 30;
 export const mockAuthCredentials = {
@@ -17,6 +18,8 @@ export const mockAuthCredentials = {
       ).toString(),
     },
     providerData: [{ providerId: 'google.com' }, null],
+    getIdToken: (): Observable<string> => of(testJWT),
+    jwt: testJWT,
   },
   credential: {},
   additionalUserInfo: { isNewUser: false },
@@ -30,4 +33,5 @@ export const mockExpectedActionPayload: AuthenticationActionPayload = {
   createdAt: Date.parse(mockAuthCredentials.user.metadata.creationTime),
   isNewUser: mockAuthCredentials.additionalUserInfo.isNewUser,
   providers: [AuthProvider.google],
+  jwt: mockAuthCredentials.user.jwt,
 };

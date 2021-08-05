@@ -9,4 +9,5 @@ export interface AuthenticationActionPayload {
   createdAt: number;
   isNewUser: boolean;
   providers: AuthProvider[];
+  jwt: string;
 }

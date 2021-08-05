@@ -1,6 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { AUTH_FEATURE_KEY, State } from './auth.reducer';
-import { AuthStage } from '@seed/front/shared/types';
 import { ZERO } from '@seed/shared/constants';
 
 export const getAuthState = createFeatureSelector<State>(AUTH_FEATURE_KEY); // Lookup the 'Auth' feature state managed by NgRx
@@ -28,10 +27,7 @@ export const getEmailPasswordPayload = createSelector(getEmail, getIsNewUser, (e
   isNewUser: !!isNewUser,
 }));
 export const getSelectedProvider = createSelector(getAuthState, (state: State) => state.selectedProvider);
-export const getIsAuthenticated = createSelector(
-  getAuthState,
-  (state: State) => state.stage === AuthStage.authenticated,
-);
 export const getUserId = createSelector(getAuthState, (state: State) => state.userId);
 export const getErrorMessage = createSelector(getAuthState, (state: State) => state.error?.message);
 export const getSuccessMessage = createSelector(getAuthState, (state: State) => state.successMessage);
+export const getJWT = createSelector(getAuthState, (state: State) => state.jwt);

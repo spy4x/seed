@@ -115,17 +115,6 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getIsAuthenticated()', () => {
-    it(`returns true if state.auth.stage === ${AuthStage.authenticated}`, () => {
-      setState({ stage: AuthStage.authenticated });
-      expect(AuthSelectors.getIsAuthenticated(state)).toBe(true);
-    });
-    it(`returns false if state.auth.stage !== ${AuthStage.authenticated}`, () => {
-      setState({ stage: AuthStage.signingEmailAndPassword });
-      expect(AuthSelectors.getIsAuthenticated(state)).toBe(false);
-    });
-  });
-
   describe('getUserId()', () => {
     it('returns userId if state.auth.userId is set', () => {
       setState({ userId: testUserId });
@@ -158,6 +147,18 @@ describe('Auth Selectors', () => {
     it('returns undefined if state.auth.successMessage is not set', () => {
       setState({ successMessage: undefined });
       expect(AuthSelectors.getSuccessMessage(state)).toBe(undefined);
+    });
+  });
+
+  describe('getJWT()', () => {
+    it('returns string if state.auth.jwt is set', () => {
+      const jwt = 'jwt';
+      setState({ jwt });
+      expect(AuthSelectors.getJWT(state)).toBe(jwt);
+    });
+    it('returns undefined if state.auth.jwt is not set', () => {
+      setState({ jwt: undefined });
+      expect(AuthSelectors.getJWT(state)).toBe(undefined);
     });
   });
 });

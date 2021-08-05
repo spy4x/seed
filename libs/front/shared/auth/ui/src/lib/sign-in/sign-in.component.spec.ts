@@ -48,6 +48,10 @@ describe(SignInUIComponent.name, () => {
     fixture.detectChanges();
   });
 
+  function getLoadingElement(): DebugElement {
+    return fixture.debugElement.query(By.css(`[data-e2e="loading"]`));
+  }
+
   function getSignInButton(provider: AuthProvider): DebugElement {
     return fixture.debugElement.query(By.css(`button[data-e2e="${provider}"]`));
   }
@@ -67,7 +71,6 @@ describe(SignInUIComponent.name, () => {
   function getSuccessMessageElement(): DebugElement {
     return fixture.debugElement.query(By.css(`[data-e2e="successMessage"]`));
   }
-
   // endregion
 
   describe('General', () => {
@@ -156,8 +159,7 @@ describe(SignInUIComponent.name, () => {
       fixture.detectChanges();
     });
     it(`shows loading animation`, () => {
-      const loadingEl = fixture.debugElement.query(By.css(`[data-e2e="loading"]`)).nativeElement;
-      expect(loadingEl instanceof HTMLElement).toBe(true);
+      expect(getLoadingElement().nativeElement instanceof HTMLElement).toBe(true);
     });
   });
 
@@ -530,6 +532,40 @@ describe(SignInUIComponent.name, () => {
         component.deselectProvider.pipe(first()).subscribe(() => done());
         getDeselectProviderButton().nativeElement.click();
       });
+    });
+  });
+
+  describe(`Stage: ${AuthStage.loadingProfile}`, () => {
+    beforeEach(() => {
+      component.stage = AuthStage.loadingProfile;
+      fixture.detectChanges();
+    });
+
+    it(`shows loading animation`, () => {
+      expect(getLoadingElement().nativeElement instanceof HTMLElement).toBe(true);
+    });
+  });
+
+  describe(`Stage: ${AuthStage.authorizing}`, () => {
+    beforeEach(() => {
+      component.stage = AuthStage.authorizing;
+      fixture.detectChanges();
+    });
+
+    it(`shows loading animation`, () => {
+      expect(getLoadingElement().nativeElement instanceof HTMLElement).toBe(true);
+    });
+  });
+
+  describe(`Stage: ${AuthStage.notAuthorized}`, () => {
+    beforeEach(() => {
+      component.stage = AuthStage.notAuthorized;
+      component.errorMessage = 'You were banned';
+      fixture.detectChanges();
+    });
+
+    it(`shows reason`, () => {
+      expect(getErrorMessageElement().nativeElement.textContent).toContain(component.errorMessage);
     });
   });
 });

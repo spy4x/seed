@@ -170,6 +170,18 @@
           <span>Use other options</span>
         </button>
       </ng-container>
+
+      <ng-container *ngSwitchCase="stage === authStages.loadingProfile">
+        <div class="text-center">
+          <div data-e2e="loading" class="spinner-border text-primary" role="status"></div>
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="stage === authStages.authorizing">
+        <div class="text-center">
+          <div data-e2e="loading" class="spinner-border text-primary" role="status"></div>
+        </div>
+      </ng-container>
     </ng-container>
 
     <div class="my-3">
