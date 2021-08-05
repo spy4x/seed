@@ -99,6 +99,9 @@
     },
     "e2e-shared-auth": {
       "tags": []
+    },
+    "front-web-client-auth": {
+      "tags": []
     }
   }
 }

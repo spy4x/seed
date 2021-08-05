@@ -10,8 +10,11 @@
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
-          "source": "/api/**",
-          "function": "api"
+          "source": "/api{,/**}",
+          "run": {
+            "serviceId": "api",
+            "region": "us-central1"
+          }
         },
         {
           "source": "**",
@@ -19,6 +22,15 @@
         }
       ],
       "headers": [
+        {
+          "source": "/api{,/**}",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            }
+          ]
+        },
         {
           "source": "**/*.@(js|css|jpg|jpeg|gif|png|svg|ico|eot|ttf|woff|woff2|txt)",
           "headers": [
@@ -49,8 +61,11 @@
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
-          "source": "/api/**",
-          "function": "api"
+          "source": "/api{,/**}",
+          "run": {
+            "serviceId": "api",
+            "region": "us-central1"
+          }
         },
         {
           "source": "**",
@@ -58,6 +73,15 @@
         }
       ],
       "headers": [
+        {
+          "source": "/api{,/**}",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-store"
+            }
+          ]
+        },
         {
           "source": "**/*.@(js|css|jpg|jpeg|gif|png|svg|ico|eot|ttf|woff|woff2|txt)",
           "headers": [

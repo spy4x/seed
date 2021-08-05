@@ -7,26 +7,27 @@ import {
   AUTH_REHYDRATION_KEY_EMAIL,
   AUTH_REHYDRATION_KEY_PHOTO_URL,
   AUTH_URL_SEGMENT_FOR_LINK_AUTH,
-  AuthEffects,
-} from './auth.effects';
-import * as AuthUIActions from './actions/ui.actions';
-import * as AuthAPIActions from './actions/api.actions';
+  AuthenticationEffects,
+} from './authentication.effects';
+import * as AuthUIActions from '../actions/ui.actions';
+import * as AuthAPIActions from '../actions/api.actions';
 import { AngularFireAuth } from '@angular/fire/auth';
 import { hot } from '@nrwl/angular/testing';
 import { Action } from '@ngrx/store';
 import firebase from 'firebase/app';
 import { testDisplayName, testEmail, testPassword, testPhotoURL, testUserId } from '@seed/shared/mock-data';
-import * as AuthSelectors from './auth.selectors';
+import * as AuthSelectors from '../auth.selectors';
 import { AuthProvider } from '@seed/front/shared/types';
-import { mockAuthCredentials, mockExpectedActionPayload } from './mocks';
+import { mockAuthCredentials, mockExpectedActionPayload } from '../mocks';
 import { setMilliseconds, subMinutes } from 'date-fns';
 
-describe(AuthEffects.name, () => {
+describe(AuthenticationEffects.name, () => {
   // region SETUP
   let store: MockStore;
   let actions$ = new Observable<Action>();
-  let effects: AuthEffects;
+  let effects: AuthenticationEffects;
   let user$: ReplaySubject<null | { uid: string; email?: string; displayName?: string; photoURL?: string }>;
+  let idToken$: ReplaySubject<null | string>;
   const signInAnonymouslyMock = jest.fn();
   const signInWithPopupMock = jest.fn();
   const signOutMock = jest.fn();
@@ -40,9 +41,10 @@ describe(AuthEffects.name, () => {
 
   beforeEach(() => {
     user$ = new ReplaySubject<null | { uid: string }>();
+    idToken$ = new ReplaySubject<null | string>();
     TestBed.configureTestingModule({
       providers: [
-        AuthEffects,
+        AuthenticationEffects,
         provideMockActions(() => actions$),
         provideMockStore({
           selectors: [
@@ -66,12 +68,13 @@ describe(AuthEffects.name, () => {
             signInWithEmailLink: signInWithEmailLinkMock,
             fetchSignInMethodsForEmail: fetchSignInMethodsForEmailMock,
             signOut: signOutMock,
+            idToken: idToken$,
           },
         },
       ],
     });
     store = TestBed.inject(MockStore);
-    effects = TestBed.inject(AuthEffects);
+    effects = TestBed.inject(AuthenticationEffects);
     signInAnonymouslyMock.mockReset();
     signInWithPopupMock.mockReset();
     signOutMock.mockReset();
@@ -568,92 +571,109 @@ describe(AuthEffects.name, () => {
     actionTest(AuthUIActions.changeUser);
   });
 
+  describe('setJWT$', () => {
+    it(`dispatches "${AuthAPIActions.setJWT.type}" if when fireAuth.idToken emits null`, () => {
+      const completion = AuthAPIActions.setJWT({ jwt: undefined });
+      idToken$.next(null);
+      const expected = hot('b', { b: completion });
+      expect(effects.setJWT$).toBeObservable(expected);
+    });
+
+    it(`dispatches "${AuthAPIActions.setJWT.type}" if when fireAuth.idToken emits string`, () => {
+      const jwt = 'jwt';
+      const completion = AuthAPIActions.setJWT({ jwt });
+      idToken$.next(jwt);
+      const expected = hot('b', { b: completion });
+      expect(effects.setJWT$).toBeObservable(expected);
+    });
+  });
+
   describe('onUserAuthenticationWithCredentials()', () => {
     it(`returns "${AuthAPIActions.actionFailed.type}" if not full credential object provided`, () => {
-      const result = effects.onUserAuthenticationWithCredentials({} as any);
-      expect(result).toEqual(AuthAPIActions.actionFailed({ message: `Credential is not a complete object.` }));
+      const result$ = effects.onUserAuthenticationWithCredentials({} as any);
+      const expected = hot('(a|)', {
+        a: AuthAPIActions.actionFailed({ message: `Credential is not a complete object.` }),
+      });
+      expect(result$).toBeObservable(expected);
     });
 
     it(`returns "${AuthAPIActions.signedIn.type}" action for existing user`, () => {
       const isNewUser = false;
-      const result = effects.onUserAuthenticationWithCredentials({
+      const result$ = effects.onUserAuthenticationWithCredentials({
         user: mockAuthCredentials.user,
         additionalUserInfo: { isNewUser },
       } as any);
-      expect(result).toEqual(AuthAPIActions.signedIn({ ...mockExpectedActionPayload, isNewUser }));
+      const expected = hot('(a|)', { a: AuthAPIActions.signedIn({ ...mockExpectedActionPayload, isNewUser }) });
+      expect(result$).toBeObservable(expected);
     });
 
     it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user`, () => {
       const isNewUser = true;
-      const result = effects.onUserAuthenticationWithCredentials({
+      const result$ = effects.onUserAuthenticationWithCredentials({
         user: mockAuthCredentials.user,
         additionalUserInfo: { isNewUser },
       } as any);
-      expect(result).toEqual(
-        AuthAPIActions.signedUp({
-          ...mockExpectedActionPayload,
-          isNewUser,
-        }),
-      );
+      const expected = hot('(a|)', { a: AuthAPIActions.signedUp({ ...mockExpectedActionPayload, isNewUser }) });
+      expect(result$).toBeObservable(expected);
     });
   });
 
   describe('onUserAuthenticationWithUserOnly()', () => {
     it(`returns "${AuthAPIActions.signedIn.type}" action for existing user`, () => {
-      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false);
-      expect(result).toEqual(AuthAPIActions.signedIn(mockExpectedActionPayload));
+      const result$ = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false);
+      const expected = hot('(a|)', { a: AuthAPIActions.signedIn(mockExpectedActionPayload) });
+      expect(result$).toBeObservable(expected);
     });
 
     it(`returns "${AuthAPIActions.initSignedIn.type}" action for existing user & init time`, () => {
-      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false, true);
-      expect(result).toEqual(AuthAPIActions.initSignedIn(mockExpectedActionPayload));
+      const result$ = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false, true);
+      const expected = hot('(a|)', { a: AuthAPIActions.initSignedIn(mockExpectedActionPayload) });
+      expect(result$).toBeObservable(expected);
     });
 
     it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user`, () => {
       const isNewUser = true;
-      const result = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, isNewUser);
-      expect(result).toEqual(
-        AuthAPIActions.signedUp({
-          ...mockExpectedActionPayload,
-          isNewUser,
-        }),
-      );
+      const result$ = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, isNewUser);
+      const expected = hot('(a|)', { a: AuthAPIActions.signedUp({ ...mockExpectedActionPayload, isNewUser }) });
+      expect(result$).toBeObservable(expected);
     });
 
     it(`returns "${AuthAPIActions.signedIn.type}" action for just signed up user (but without defined "isNewUser" property)`, () => {
       const creationTime = setMilliseconds(subMinutes(new Date(), 60), 0); // 60 minutes ago
-      const result = effects.onUserAuthenticationWithUserOnly(
+      const result$ = effects.onUserAuthenticationWithUserOnly(
         {
           ...mockAuthCredentials.user,
           ...{ metadata: { creationTime: creationTime.toString() } },
         } as any,
         false,
       );
-      expect(result).toEqual(
-        AuthAPIActions.signedIn({
+      const expected = hot('(a|)', {
+        a: AuthAPIActions.signedIn({
           ...mockExpectedActionPayload,
           createdAt: creationTime.getTime(),
           isNewUser: false,
         }),
-      );
+      });
+      expect(result$).toBeObservable(expected);
     });
 
     it(`returns "${AuthAPIActions.signedUp.type}" action for just signed up user (but without defined "isNewUser" property)`, () => {
       const creationTime = subMinutes(setMilliseconds(new Date(), 0), 3); // 3 minutes ago
-      const result = effects.onUserAuthenticationWithUserOnly(
+      const result$ = effects.onUserAuthenticationWithUserOnly(
         {
           ...mockAuthCredentials.user,
           ...{ metadata: { creationTime: creationTime.toString() } },
         } as any,
         true,
       );
-      expect(result).toEqual(
-        AuthAPIActions.signedUp({
+      const expected = hot('(a|)', {
+        a: AuthAPIActions.signedUp({
           ...mockExpectedActionPayload,
           createdAt: creationTime.getTime(),
           isNewUser: true,
         }),
-      );
+      });
+      expect(result$).toBeObservable(expected);
     });
   });
 });

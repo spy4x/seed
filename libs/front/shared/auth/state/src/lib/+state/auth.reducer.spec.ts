@@ -1,7 +1,7 @@
 import * as AuthUIActions from './actions/ui.actions';
 import * as AuthAPIActions from './actions/api.actions';
 import { initialState, reducer, State } from './auth.reducer';
-import { testDisplayName, testEmail, testPassword, testPhotoURL, testUserId } from '@seed/shared/mock-data';
+import { mockUsers, testDisplayName, testEmail, testPassword, testPhotoURL, testUserId } from '@seed/shared/mock-data';
 import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 import { Action } from '@ngrx/store';
 import { mockExpectedActionPayload } from './mocks';
@@ -335,7 +335,7 @@ describe('Auth Reducer', () => {
     it(AuthUIActions.signOut.type, () => {
       reducerTest(
         {
-          stage: AuthStage.authenticated,
+          stage: AuthStage.loadingProfile,
           email: testEmail,
           userId: testUserId,
           displayName: testDisplayName,
@@ -367,7 +367,7 @@ describe('Auth Reducer', () => {
         AuthAPIActions.initSignedIn(mockExpectedActionPayload),
         {
           inProgress: false,
-          stage: AuthStage.authenticated,
+          stage: AuthStage.loadingProfile,
           ...mockExpectedActionPayload,
         },
       );
@@ -453,7 +453,7 @@ describe('Auth Reducer', () => {
         AuthAPIActions.signedUp({ ...mockExpectedActionPayload, isNewUser: true }),
         {
           inProgress: false,
-          stage: AuthStage.authenticated,
+          stage: AuthStage.creatingProfile,
           ...mockExpectedActionPayload,
           isNewUser: true,
           successMessage: `You've successfully signed up! Feel free to explore the app 🎉`,
@@ -522,7 +522,7 @@ describe('Auth Reducer', () => {
         AuthAPIActions.signedIn(mockExpectedActionPayload),
         {
           inProgress: false,
-          stage: AuthStage.authenticated,
+          stage: AuthStage.loadingProfile,
           ...mockExpectedActionPayload,
         },
       );
@@ -574,6 +574,151 @@ describe('Auth Reducer', () => {
           isEmailVerified: undefined,
           createdAt: undefined,
         },
+      );
+    });
+
+    it(AuthAPIActions.profileLoadSuccessNoProfileYet.type, () => {
+      reducerTest(
+        {
+          stage: AuthStage.loadingProfile,
+          inProgress: true,
+          email: testEmail,
+          providers: [AuthProvider.google],
+          selectedProvider: AuthProvider.google,
+          userId: testUserId,
+          displayName: testDisplayName,
+          photoURL: testPhotoURL,
+          isNewUser: false,
+          isEmailVerified: true,
+          createdAt: 123567890,
+        },
+        AuthAPIActions.profileLoadSuccessNoProfileYet(),
+        {
+          stage: AuthStage.creatingProfile,
+          inProgress: false,
+        },
+      );
+    });
+
+    it(AuthAPIActions.profileLoadSuccess.type, () => {
+      reducerTest(
+        {
+          stage: AuthStage.loadingProfile,
+          inProgress: true,
+          email: testEmail,
+          providers: [AuthProvider.google],
+          selectedProvider: AuthProvider.google,
+          userId: testUserId,
+          displayName: testDisplayName,
+          photoURL: testPhotoURL,
+          isNewUser: false,
+          isEmailVerified: true,
+          createdAt: 123567890,
+        },
+        AuthAPIActions.profileLoadSuccess({ user: mockUsers[0] }),
+        {
+          stage: AuthStage.authorizing,
+          inProgress: true,
+          user: mockUsers[0],
+        },
+      );
+    });
+
+    it(AuthAPIActions.profileCreateSuccess.type, () => {
+      reducerTest(
+        {
+          stage: AuthStage.creatingProfile,
+          inProgress: true,
+          email: testEmail,
+          providers: [AuthProvider.google],
+          selectedProvider: AuthProvider.google,
+          userId: testUserId,
+          displayName: testDisplayName,
+          photoURL: testPhotoURL,
+          isNewUser: false,
+          isEmailVerified: true,
+          createdAt: 123567890,
+        },
+        AuthAPIActions.profileCreateSuccess({ user: mockUsers[0] }),
+        {
+          stage: AuthStage.authorizing,
+          inProgress: true,
+          user: mockUsers[0],
+        },
+      );
+    });
+
+    it(AuthAPIActions.authorized.type, () => {
+      reducerTest(
+        {
+          stage: AuthStage.authorizing,
+          inProgress: true,
+          email: testEmail,
+          providers: [AuthProvider.google],
+          selectedProvider: AuthProvider.google,
+          userId: testUserId,
+          displayName: testDisplayName,
+          photoURL: testPhotoURL,
+          isNewUser: false,
+          isEmailVerified: true,
+          createdAt: 123567890,
+          user: mockUsers[0],
+        },
+        AuthAPIActions.authorized(),
+        {
+          stage: AuthStage.authorized,
+          inProgress: false,
+        },
+      );
+    });
+
+    it(AuthAPIActions.notAuthorized.type, () => {
+      reducerTest(
+        {
+          stage: AuthStage.authorizing,
+          inProgress: true,
+          email: testEmail,
+          providers: [AuthProvider.google],
+          selectedProvider: AuthProvider.google,
+          userId: testUserId,
+          displayName: testDisplayName,
+          photoURL: testPhotoURL,
+          isNewUser: false,
+          isEmailVerified: true,
+          createdAt: 123567890,
+          user: mockUsers[0],
+        },
+        AuthAPIActions.notAuthorized(),
+        {
+          stage: AuthStage.notAuthorized,
+          inProgress: false,
+        },
+      );
+    });
+
+    it(AuthAPIActions.setJWT.type, () => {
+      reducerTest(
+        {
+          stage: AuthStage.signingAnonymously,
+          inProgress: true,
+        },
+        AuthAPIActions.setJWT({ jwt: 'jwt' }),
+        {
+          jwt: 'jwt',
+        },
+        false,
+      );
+      reducerTest(
+        {
+          stage: AuthStage.signingOut,
+          inProgress: true,
+          jwt: 'jwt',
+        },
+        AuthAPIActions.setJWT({}),
+        {
+          jwt: undefined,
+        },
+        false,
       );
     });
   });

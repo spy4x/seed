@@ -22,5 +22,6 @@ module.exports = {
     '<rootDir>/libs/front/shared/auth/ui',
     '<rootDir>/libs/front/shared/auth/container',
     '<rootDir>/libs/e2e/shared/auth',
+    '<rootDir>/libs/front/web-client/auth',
   ],
 };

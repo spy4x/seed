@@ -1,4 +1,5 @@
 import { createAction, props } from '@ngrx/store';
+import { User } from '@prisma/client';
 import { AuthProvider } from '@seed/front/shared/types';
 import { AuthenticationActionPayload } from './authenticationActionPayload.interface';
 
@@ -40,3 +41,19 @@ export const signEmailLinkFinish = createAction(`${prefix} Authenticate with Ema
 export const restorePasswordSuccess = createAction(`${prefix} Restore password - Success`);
 
 export const actionFailed = createAction(`${prefix} Action failed`, props<{ message: string; code?: string }>());
+
+export const profileLoadSuccess = createAction(`${prefix} Profile - Load - Success`, props<{ user: User }>());
+
+export const profileLoadSuccessNoProfileYet = createAction(
+  `${prefix} Profile - Load - Success - No profile exists yet`,
+);
+
+export const profileCreateSuccess = createAction(`${prefix} Profile - Create - Success`, props<{ user: User }>());
+
+export const authorize = createAction(`${prefix} Authorize`);
+
+export const authorized = createAction(`${prefix} Authorized`);
+
+export const notAuthorized = createAction(`${prefix} Not authorized`);
+
+export const setJWT = createAction(`${prefix} Set JWT`, props<{ jwt?: string }>());

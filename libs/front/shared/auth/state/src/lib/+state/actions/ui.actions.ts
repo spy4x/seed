@@ -1,4 +1,5 @@
 import { createAction, props } from '@ngrx/store';
+import { Prisma } from '@prisma/client';
 import { AuthProvider } from '@seed/front/shared/types';
 
 const prefix = `[Auth/UI]`;
@@ -24,3 +25,5 @@ export const signEmailPassword = createAction(`${prefix} Sign with Email and Pas
 export const restorePassword = createAction(`${prefix} Restore password`);
 
 export const signOut = createAction(`${prefix} Sign out`);
+
+export const profileCreate = createAction(`${prefix} Profile - Create`, props<{ user: Prisma.UserCreateInput }>());

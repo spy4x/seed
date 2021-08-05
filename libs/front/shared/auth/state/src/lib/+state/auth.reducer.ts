@@ -2,6 +2,7 @@ import { Action, createReducer, on } from '@ngrx/store';
 import * as AuthUIActions from './actions/ui.actions';
 import * as AuthAPIActions from './actions/api.actions';
 import { AuthProvider, AuthStage } from '@seed/front/shared/types';
+import { User } from '@prisma/client';
 
 export const AUTH_FEATURE_KEY = 'auth';
 
@@ -29,6 +30,9 @@ export interface State {
   displayName?: string;
   photoURL?: string;
   createdAt?: number;
+  jwt?: string;
+
+  user?: User;
 }
 
 export interface AuthPartialState {
@@ -50,6 +54,9 @@ export const initialState: State = {
   displayName: undefined,
   photoURL: undefined,
   createdAt: undefined,
+  jwt: undefined,
+
+  user: undefined,
 };
 
 const resetErrorAndSuccess = {
@@ -192,10 +199,10 @@ const authReducer = createReducer<State>(
     AuthAPIActions.signedUp,
     (
       state: State,
-      { userId, email, displayName, photoURL, isNewUser, createdAt, isEmailVerified, providers },
+      { userId, email, displayName, photoURL, isNewUser, createdAt, isEmailVerified, providers, jwt },
     ): State => ({
       ...state,
-      stage: AuthStage.authenticated,
+      stage: AuthStage.loadingProfile,
       inProgress: false,
       userId,
       email,
@@ -205,6 +212,7 @@ const authReducer = createReducer<State>(
       isEmailVerified,
       createdAt,
       providers,
+      jwt,
       ...resetErrorAndSuccess,
     }),
   ),
@@ -213,6 +221,7 @@ const authReducer = createReducer<State>(
     (state: State): State => ({
       ...state,
       ...resetErrorAndSuccess,
+      stage: AuthStage.creatingProfile,
       successMessage: `You've successfully signed up! Feel free to explore the app 🎉`,
     }),
   ),
@@ -304,6 +313,60 @@ const authReducer = createReducer<State>(
       stage: AuthStage.enteringEmail,
       inProgress: false,
       ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.profileLoadSuccessNoProfileYet,
+    (state: State): State => ({
+      ...state,
+      ...resetErrorAndSuccess,
+      stage: AuthStage.creatingProfile,
+      inProgress: false,
+    }),
+  ),
+  on(
+    AuthAPIActions.profileLoadSuccess,
+    (state: State, { user }): State => ({
+      ...state,
+      ...resetErrorAndSuccess,
+      stage: AuthStage.authorizing,
+      inProgress: true,
+      user,
+    }),
+  ),
+  on(
+    AuthAPIActions.profileCreateSuccess,
+    (state: State, { user }): State => ({
+      ...state,
+      ...resetErrorAndSuccess,
+      stage: AuthStage.authorizing,
+      inProgress: true,
+      user,
+    }),
+  ),
+  on(
+    AuthAPIActions.authorized,
+    (state: State): State => ({
+      ...state,
+      ...resetErrorAndSuccess,
+      stage: AuthStage.authorized,
+      inProgress: false,
+    }),
+  ),
+  on(
+    AuthAPIActions.notAuthorized,
+    (state: State): State => ({
+      ...state,
+      ...resetErrorAndSuccess,
+      stage: AuthStage.notAuthorized,
+      inProgress: false,
+    }),
+  ),
+  on(
+    AuthAPIActions.setJWT,
+    (state: State, { jwt }): State => ({
+      ...state,
+      jwt,
     }),
   ),
   // endregion

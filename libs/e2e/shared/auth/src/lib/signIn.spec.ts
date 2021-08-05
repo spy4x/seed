@@ -1,6 +1,12 @@
 import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 import { SignInPO } from './signIn.po';
 
+describe('Make it have at least one test', () => {
+  it('has one test', () => {
+    assert(true);
+  });
+});
+
 export function runTest(): void {
   describe('Sign in', () => {
     // region SETUP

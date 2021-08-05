@@ -11,5 +11,9 @@ export enum AuthStage {
   signingEmailLink = 'signingEmailLink',
   restoringPassword = 'restoringPassword',
   signingOut = 'signingOut',
-  authenticated = 'authenticated',
+  creatingProfile = 'creatingProfile',
+  loadingProfile = 'loadingProfile',
+  authorizing = 'authorizing',
+  authorized = 'authorized',
+  notAuthorized = 'notAuthorized',
 }
