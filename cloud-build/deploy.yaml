@@ -37,6 +37,7 @@ steps:
         FRONT_ADMIN_PANEL_HOSTING_TARGET=$$FRONT_ADMIN_PANEL_HOSTING_TARGET \
         FRONT_WEB_CLIENT_HOSTING_TARGET=$$FRONT_WEB_CLIENT_HOSTING_TARGET \
         NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN \
+        API_KEY_CLOUD_TASKS=$$API_KEY_CLOUD_TASKS \
         && yarn ci:deploy
     secretEnv:
       [
@@ -68,5 +69,7 @@ availableSecrets:
       env: FRONT_WEB_CLIENT_HOSTING_TARGET
     - versionName: projects/$PROJECT_ID/secrets/NX_CLOUD_AUTH_TOKEN/versions/latest
       env: NX_CLOUD_AUTH_TOKEN
+    - versionName: projects/$PROJECT_ID/secrets/API_KEY_CLOUD_TASKS/versions/latest
+      env: API_KEY_CLOUD_TASKS
 
 timeout: 1800s

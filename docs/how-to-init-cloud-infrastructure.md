@@ -19,6 +19,7 @@ CLOUD_RUN_API_APP_NAME=api
 REGION=us-central1
 FRONT_WEB_CLIENT_HOSTING_TARGET=seed-web-client
 FRONT_ADMIN_PANEL_HOSTING_TARGET=seed-admin-panel
+API_KEY_CLOUD_TASKS=$(uuidgen)
 ```
 
 ```
@@ -71,6 +72,27 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member=serviceAccount:$PROJECT_NUMBER@cloudbuild.gserviceaccount.com \
     --role=roles/secretmanager.secretAccessor
+
+# Create a separate service account for Cloud Run "api" service
+gcloud iam service-accounts create cloud-run-api \
+    --description="API backend Node application" \
+    --display-name="cloud-run-api"
+# Grant role to create Cloud Tasks
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudtasks.enqueuer"
+# Grant role to delete Cloud Tasks
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudtasks.taskDeleter"
+# Grant role to access Firebase Admin SDK
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/firebase.sdkAdminServiceAgent"
+# Grant role to connect to Cloud SQL
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudsql.client"
 ```
     
 ```
@@ -106,6 +128,9 @@ echo -n $FRONT_WEB_CLIENT_HOSTING_TARGET | \
 
 echo -n $FRONT_ADMIN_PANEL_HOSTING_TARGET | \
     gcloud secrets create FRONT_ADMIN_PANEL_HOSTING_TARGET --data-file=-
+    
+echo -n $API_KEY_CLOUD_TASKS | \
+    gcloud secrets create API_KEY_CLOUD_TASKS --data-file=-
 ```
 
 # TODO: generate .envs/* files

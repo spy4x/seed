@@ -22,18 +22,25 @@ export class UserCreatedEventHandler implements IEventHandler<UserCreatedEvent> 
       const executeInHours = 6;
       const whenToTrigger = addHours(new Date(), executeInHours);
       logSegment.log(`Creating cloud task for invoking Welcome notification in ${executeInHours} hours...`);
-      await this.commandBus.execute(
-        new CloudTaskCreateCommand(
-          CloudTasksQueues.welcome,
-          userId,
-          `${API_CONFIG.apiURL}/notifications/invoke`,
-          whenToTrigger,
-          {
-            type: NotificationType.WELCOME,
+      try {
+        await this.commandBus.execute(
+          new CloudTaskCreateCommand(
+            CloudTasksQueues.welcome,
             userId,
-          },
-        ),
-      );
+            `${API_CONFIG.apiURL}/notifications/invoke`,
+            whenToTrigger,
+            {
+              type: NotificationType.WELCOME,
+              userId,
+            },
+          ),
+        );
+      } catch (error: unknown) {
+        logSegment.error({
+          message: `CloudTask creation failed`,
+          error: error as Error,
+        });
+      }
     });
   }
 }

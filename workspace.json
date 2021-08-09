@@ -180,7 +180,7 @@
               "yarn build back-api --prod",
               "docker build . -t gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME -f back-api.dockerfile",
               "docker push gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME",
-              "gcloud run deploy $CLOUD_RUN_API_APP_NAME --image gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME --add-cloudsql-instances $INSTANCE_CONNECTION_NAME --update-env-vars DB_CONNECTION_STRING=$DB_CONNECTION_STRING,API_URL=$API_URL,REGION=$REGION,PROJECT_ID=$PROJECT_ID --platform managed --region $REGION --allow-unauthenticated --project=$PROJECT_ID"
+              "gcloud run deploy $CLOUD_RUN_API_APP_NAME --image gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME --add-cloudsql-instances $INSTANCE_CONNECTION_NAME --update-env-vars DB_CONNECTION_STRING=$DB_CONNECTION_STRING,API_URL=$API_URL,REGION=$REGION,PROJECT_ID=$PROJECT_ID,API_KEY_CLOUD_TASKS=$API_KEY_CLOUD_TASKS --platform managed --region $REGION --allow-unauthenticated --project=$PROJECT_ID --service-account=cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com"
             ],
             "parallel": false,
             "color": true
