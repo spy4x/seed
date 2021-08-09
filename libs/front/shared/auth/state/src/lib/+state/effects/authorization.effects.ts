@@ -98,7 +98,7 @@ export class AuthorizationEffects {
   redirectToNotAuthorizedPage$ = createEffect(
     () =>
       this.actions$.pipe(
-        ofType(AuthAPIActions.notAuthorized),
+        ofType(AuthAPIActions.notAuthorized, AuthAPIActions.signedOut),
         exhaustMap(() =>
           from(this.router.navigateByUrl(this.authenticationURL)).pipe(
             // eslint-disable-next-line no-console

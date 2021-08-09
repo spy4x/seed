@@ -27,5 +27,6 @@ module.exports = {
     '<rootDir>/libs/front/admin-panel/profile',
     '<rootDir>/libs/front/admin-panel/users',
     '<rootDir>/libs/front/web-client/profile',
+    '<rootDir>/libs/front/shared/auth/guards',
   ],
 };

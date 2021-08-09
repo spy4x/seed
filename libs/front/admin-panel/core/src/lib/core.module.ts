@@ -10,6 +10,8 @@ import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { StoreRouterConnectingModule } from '@ngrx/router-store';
+import { IsAuthorizedGuard, IsNotAuthorizedGuard } from '@seed/front/shared/auth/guards';
+import { SharedAuthStateModule } from '@seed/front/shared/auth/state';
 
 @NgModule({
   imports: [
@@ -17,22 +19,26 @@ import { StoreRouterConnectingModule } from '@ngrx/router-store';
     AngularFireModule,
     AngularFireAuthModule,
     AngularFireMessagingModule,
+    SharedAuthStateModule,
     RouterModule.forRoot(
       [
         {
           path: 'auth',
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
           loadChildren: async () => import('@seed/front/admin-panel/auth').then(m => m.AuthModule),
+          canActivate: [IsNotAuthorizedGuard],
         },
         {
           path: 'profile',
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
           loadChildren: async () => import('@seed/front/admin-panel/profile').then(m => m.ProfileModule),
+          canActivate: [IsAuthorizedGuard],
         },
         {
           path: 'users',
           // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
           loadChildren: async () => import('@seed/front/admin-panel/users').then(m => m.UsersModule),
+          canActivate: [IsAuthorizedGuard],
         },
         {
           path: '**',

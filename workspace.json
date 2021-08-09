@@ -953,6 +953,31 @@
           }
         }
       }
+    },
+    "front-shared-auth-guards": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth/guards",
+      "sourceRoot": "libs/front/shared/auth/guards/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth/guards"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/guards/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/shared/auth/guards/src/**/*.ts",
+              "libs/front/shared/auth/guards/src/**/*.html"
+            ]
+          }
+        }
+      }
     }
   }
 }

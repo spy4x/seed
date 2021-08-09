@@ -114,6 +114,9 @@
     },
     "front-web-client-profile": {
       "tags": []
+    },
+    "front-shared-auth-guards": {
+      "tags": []
     }
   }
 }

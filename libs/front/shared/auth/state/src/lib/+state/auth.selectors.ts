@@ -1,6 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { AUTH_FEATURE_KEY, State } from './auth.reducer';
 import { ZERO } from '@seed/shared/constants';
+import { AuthStage } from '@seed/front/shared/types';
 
 export const getAuthState = createFeatureSelector<State>(AUTH_FEATURE_KEY); // Lookup the 'Auth' feature state managed by NgRx
 
@@ -31,3 +32,4 @@ export const getUserId = createSelector(getAuthState, (state: State) => state.us
 export const getErrorMessage = createSelector(getAuthState, (state: State) => state.error?.message);
 export const getSuccessMessage = createSelector(getAuthState, (state: State) => state.successMessage);
 export const getJWT = createSelector(getAuthState, (state: State) => state.jwt);
+export const getIsAuthorized = createSelector(getAuthState, (state: State) => state.stage === AuthStage.authorized);
