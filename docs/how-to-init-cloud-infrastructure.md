@@ -19,6 +19,7 @@ CLOUD_RUN_API_APP_NAME=api
 REGION=us-central1
 FRONT_WEB_CLIENT_HOSTING_TARGET=seed-web-client
 FRONT_ADMIN_PANEL_HOSTING_TARGET=seed-admin-panel
+API_KEY_CLOUD_TASKS=$(uuidgen)
 ```
 
 ```
@@ -127,6 +128,9 @@ echo -n $FRONT_WEB_CLIENT_HOSTING_TARGET | \
 
 echo -n $FRONT_ADMIN_PANEL_HOSTING_TARGET | \
     gcloud secrets create FRONT_ADMIN_PANEL_HOSTING_TARGET --data-file=-
+    
+echo -n $API_KEY_CLOUD_TASKS | \
+    gcloud secrets create API_KEY_CLOUD_TASKS --data-file=-
 ```
 
 # TODO: generate .envs/* files
