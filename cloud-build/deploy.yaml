@@ -49,6 +49,7 @@ steps:
         FRONT_ADMIN_PANEL_HOSTING_TARGET,
         FRONT_WEB_CLIENT_HOSTING_TARGET,
         NX_CLOUD_AUTH_TOKEN,
+        API_KEY_CLOUD_TASKS,
       ]
 
 availableSecrets:
