@@ -71,6 +71,27 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member=serviceAccount:$PROJECT_NUMBER@cloudbuild.gserviceaccount.com \
     --role=roles/secretmanager.secretAccessor
+
+# Create a separate service account for Cloud Run "api" service
+gcloud iam service-accounts create cloud-run-api \
+    --description="API backend Node application" \
+    --display-name="cloud-run-api"
+# Grant role to create Cloud Tasks
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudtasks.enqueuer"
+# Grant role to delete Cloud Tasks
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudtasks.taskDeleter"
+# Grant role to access Firebase Admin SDK
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/firebase.sdkAdminServiceAgent"
+# Grant role to connect to Cloud SQL
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com" \
+    --role="roles/cloudsql.client"
 ```
     
 ```
