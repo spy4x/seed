@@ -161,4 +161,17 @@ describe('Auth Selectors', () => {
       expect(AuthSelectors.getJWT(state)).toBe(undefined);
     });
   });
+
+  describe('getIsAuthorized()', () => {
+    it('returns true if state.auth.stage is AuthStage.authorized', () => {
+      const stage = AuthStage.authorized;
+      setState({ stage });
+      expect(AuthSelectors.getIsAuthorized(state)).toBe(true);
+    });
+    it('returns true if state.auth.stage is not AuthStage.authorized', () => {
+      const stage = AuthStage.authorizing;
+      setState({ stage });
+      expect(AuthSelectors.getIsAuthorized(state)).toBe(false);
+    });
+  });
 });

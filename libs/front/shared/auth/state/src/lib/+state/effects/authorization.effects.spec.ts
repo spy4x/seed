@@ -253,4 +253,11 @@ describe(AuthorizationEffects.name, () => {
     AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN,
     AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT,
   );
+
+  testRedirect(
+    'redirectToNotAuthorizedPage$',
+    AuthAPIActions.signedOut(),
+    AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN,
+    AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT,
+  );
 });
