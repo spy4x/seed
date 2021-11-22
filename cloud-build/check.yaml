@@ -1,10 +1,18 @@
 steps:
-  - id: restore_cache
-    name: 'gcr.io/$PROJECT_ID/restore_cache'
+  - id: Save ssh key
+    name: gcr.io/cloud-builders/git
     args:
-      - '--bucket=gs://${PROJECT_ID}_cloudbuild_cache'
-      - '--key=cache-$( checksum yarn.lock )'
-      - '--key_fallback=cache-'
+      - '-c'
+      - |
+        echo "$$GITHUB_DEPLOY_KEY" > /root/.ssh/id_ed25519
+        chmod 400 /root/.ssh/id_ed25519
+        ssh-keyscan github.com > /root/.ssh/known_hosts
+    entrypoint: bash
+    secretEnv:
+      - GITHUB_DEPLOY_KEY
+    volumes:
+      - name: ssh
+        path: /root/.ssh
 
   - id: install_deps
     name: node
@@ -49,6 +57,8 @@ steps:
 
 availableSecrets:
   secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/GITHUB_DEPLOY_KEY/versions/latest
+      env: GITHUB_DEPLOY_KEY
     - versionName: projects/$PROJECT_ID/secrets/NX_CLOUD_AUTH_TOKEN/versions/latest
       env: NX_CLOUD_AUTH_TOKEN
 
