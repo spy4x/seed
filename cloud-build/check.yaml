@@ -17,7 +17,7 @@ steps:
   - id: Delete existing folder
     name: node
     entrypoint: bash
-    args: ['-c', 'rm -rf .']
+    args: ['-c', 'find . -delete']
 
   - id: Clone the repo
     name: gcr.io/cloud-builders/git
