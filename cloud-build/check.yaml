@@ -17,7 +17,7 @@ steps:
   - id: Delete existing folder
     name: node
     entrypoint: bash
-    args: ['-c', 'find . -delete && printenv']
+    args: ['-c', 'find . -delete && echo COMMIT_SHA=$COMMIT_SHA']
 
   - id: Clone the repo
     name: gcr.io/cloud-builders/git
@@ -33,7 +33,7 @@ steps:
     name: gcr.io/cloud-builders/git
     args:
       - checkout
-      - $_COMMIT_SHA
+      - $COMMIT_SHA
 
   - id: Install dependencies
     name: node
