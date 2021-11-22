@@ -14,6 +14,22 @@ steps:
       - name: ssh
         path: /root/.ssh
 
+  - id: Clone the repo
+    name: gcr.io/cloud-builders/git
+    args:
+      - clone
+      - 'git@github.com:spy4x/seed.git'
+      - .
+    volumes:
+      - name: ssh
+        path: /root/.ssh
+
+  - id: Checkout the branch
+    name: gcr.io/cloud-builders/git
+    args:
+      - checkout
+      - $_COMMIT_SHA
+
   - id: install_deps
     name: node
     entrypoint: bash
