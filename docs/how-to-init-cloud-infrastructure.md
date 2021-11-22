@@ -134,6 +134,8 @@ echo -n $API_KEY_CLOUD_TASKS | \
 ```
 
 # TODO: generate .envs/* files
+# TODO: generate ssh key and add it to GitHub deploy keys
+ssh-keygen -t ed25519 -C "your_email@example.com"
 
 OPTIONAL:
 - How to init Nx Cloud accessToken private key
