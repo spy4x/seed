@@ -30,7 +30,6 @@ describe(IsAuthorizedGuard.name, () => {
       ],
     });
     guard = TestBed.inject(IsAuthorizedGuard);
-    // console.log(guard.urlTree);
     store = TestBed.inject(MockStore);
     expect(parseUrlMock).toHaveBeenCalledWith(redirectUrl);
   });

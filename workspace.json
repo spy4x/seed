@@ -978,6 +978,28 @@
           }
         }
       }
+    },
+    "front-shared-router": {
+      "projectType": "library",
+      "root": "libs/front/shared/router",
+      "sourceRoot": "libs/front/shared/router/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/router"],
+          "options": {
+            "jestConfig": "libs/front/shared/router/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/shared/router/src/**/*.ts", "libs/front/shared/router/src/**/*.html"]
+          }
+        }
+      }
     }
   }
 }

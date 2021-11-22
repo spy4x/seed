@@ -20,6 +20,7 @@ import * as AuthSelectors from '../auth.selectors';
 import { AuthProvider } from '@seed/front/shared/types';
 import { mockAuthCredentials, mockExpectedActionPayload } from '../mocks';
 import { setMilliseconds, subMinutes } from 'date-fns';
+import { RouterSelectors } from '@seed/front/shared/router';
 
 describe(AuthenticationEffects.name, () => {
   // region SETUP
@@ -157,6 +158,18 @@ describe(AuthenticationEffects.name, () => {
       expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL);
       expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_DISPLAY_NAME);
       expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_PHOTO_URL);
+    });
+  });
+
+  describe('saveOriginalURL$', () => {
+    it(`dispatches "${AuthAPIActions.saveOriginalURL.type}" with current url`, () => {
+      const url = '/my-url';
+      store.overrideSelector(RouterSelectors.getUrl, url);
+      const action = AuthAPIActions.init();
+      const completion = AuthAPIActions.saveOriginalURL({ url });
+      actions$ = hot('a', { a: action });
+      const expected = hot('b', { b: completion });
+      expect(effects.saveOriginalURL$).toBeObservable(expected);
     });
   });
 

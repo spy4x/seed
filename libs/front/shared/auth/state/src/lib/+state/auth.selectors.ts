@@ -7,6 +7,7 @@ export const getAuthState = createFeatureSelector<State>(AUTH_FEATURE_KEY); // L
 
 export const getStage = createSelector(getAuthState, (state: State) => state.stage);
 export const getInProgress = createSelector(getAuthState, (state: State) => state.inProgress);
+export const getOriginalUrl = createSelector(getAuthState, (state: State) => state.originalURL);
 export const getEmail = createSelector(getAuthState, (state: State) => state.email);
 export const getDisplayName = createSelector(getAuthState, (state: State) => state.displayName);
 export const getPhotoURL = createSelector(getAuthState, (state: State) => state.photoURL);

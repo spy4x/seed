@@ -9,9 +9,9 @@ import { FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN, FrontAdminPanelConfig } from 
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
-import { StoreRouterConnectingModule } from '@ngrx/router-store';
 import { IsAuthorizedGuard, IsNotAuthorizedGuard } from '@seed/front/shared/auth/guards';
 import { SharedAuthStateModule } from '@seed/front/shared/auth/state';
+import { SharedRouterModule } from '@seed/front/shared/router';
 
 @NgModule({
   imports: [
@@ -45,7 +45,7 @@ import { SharedAuthStateModule } from '@seed/front/shared/auth/state';
           redirectTo: 'users',
         },
       ],
-      { initialNavigation: 'enabledNonBlocking' },
+      { initialNavigation: 'enabled' },
     ),
     StoreModule.forRoot(
       {},
@@ -62,7 +62,7 @@ import { SharedAuthStateModule } from '@seed/front/shared/auth/state';
     ),
     EffectsModule.forRoot([]),
     StoreDevtoolsModule.instrument(), // TODO: remove for production
-    StoreRouterConnectingModule.forRoot(),
+    SharedRouterModule,
   ],
   providers: [
     {

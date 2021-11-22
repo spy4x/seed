@@ -10,6 +10,7 @@ import { ONE } from '@seed/shared/constants';
 import { Action, Store } from '@ngrx/store';
 import * as AuthSelectors from '../auth.selectors';
 import { AuthProvider } from '@seed/front/shared/types';
+import { RouterSelectors } from '@seed/front/shared/router';
 
 export const AUTH_REHYDRATION_KEY_EMAIL = 'authEmail';
 export const AUTH_REHYDRATION_KEY_DISPLAY_NAME = 'authDisplayName';
@@ -56,6 +57,16 @@ export class AuthenticationEffects {
           }),
         ),
       ),
+    ),
+  );
+
+  saveOriginalURL$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(AuthAPIActions.init),
+      concatLatestFrom(() => this.store.select(RouterSelectors.getUrl)),
+      map(([, url]) => {
+        return AuthAPIActions.saveOriginalURL({ url });
+      }),
     ),
   );
 
