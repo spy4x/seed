@@ -6,12 +6,12 @@ import * as AuthAPIActions from '../actions/api.actions';
 import { Action } from '@ngrx/store';
 import { Router } from '@angular/router';
 import {
-  AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN,
   AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT,
-  AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN,
-  AUTH_ROUTE_URL_FOR_CREATING_PROFILE_DEFAULT,
-  AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
+  AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN,
   AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_DEFAULT,
+  AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
+  AUTH_ROUTE_URL_FOR_CREATING_PROFILE_DEFAULT,
+  AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN,
 } from '../../routeURLs';
 import * as AuthUIActions from '../actions/ui.actions';
 import { hot } from '@nrwl/angular/testing';
@@ -19,9 +19,12 @@ import { mockUsers, testUserId } from '@seed/shared/mock-data';
 import { InjectionToken } from '@angular/core';
 import { AUTH_IS_AUTHORIZED_HANDLER_TOKEN } from '../../isAuthorized';
 import { UserService } from '../../userService/user.service';
+import * as AuthSelectors from '../auth.selectors';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
 
 describe(AuthorizationEffects.name, () => {
   // region SETUP
+  let store: MockStore;
   let actions$ = new Observable<Action>();
   const navigateByUrlMock = jest.fn();
   const userCreateMock = jest.fn();
@@ -34,6 +37,7 @@ describe(AuthorizationEffects.name, () => {
       providers: [
         AuthorizationEffects,
         provideMockActions(() => actions$),
+        provideMockStore(),
         {
           provide: Router,
           useValue: {
@@ -77,13 +81,30 @@ describe(AuthorizationEffects.name, () => {
     return TestBed.inject(AuthorizationEffects);
   }
 
-  function testRedirect(effectName: string, action: Action, token: InjectionToken<string>, defaultURL: string): void {
+  function testRedirect(
+    effectName: string,
+    action: Action,
+    token: InjectionToken<string>,
+    defaultURL: string,
+    rewriteStoreSelectors?: [unknown, unknown][],
+  ): void {
     function getEffect() {
       return (getEffects() as any)[effectName] as Observable<unknown>;
     }
 
+    function rewriteSelectors() {
+      if (!rewriteStoreSelectors) {
+        return;
+      }
+      store = TestBed.inject(MockStore);
+      for (const selector of rewriteStoreSelectors) {
+        store.overrideSelector(selector[0] as string, selector[1]);
+      }
+    }
+
     describe(effectName, () => {
       it(`navigates user to ${token.toString()} URL (default value)`, () => {
+        rewriteSelectors();
         actions$ = of(action);
         getEffect().subscribe();
         expect(navigateByUrlMock).toHaveBeenCalledWith(defaultURL);
@@ -92,21 +113,24 @@ describe(AuthorizationEffects.name, () => {
       it(`navigates user to ${token.toString()} URL (configured value)`, () => {
         const customURL = '/custom';
         TestBed.overrideProvider(token, { useValue: customURL });
+        rewriteSelectors();
         actions$ = of(action);
         getEffect().subscribe();
         expect(navigateByUrlMock).toHaveBeenCalledWith(customURL);
       });
 
       it(`logs error if navigation didn't happen`, () => {
+        rewriteSelectors();
         actions$ = of(action);
         navigateByUrlMock.mockReturnValue(of(false));
         spyOn(console, 'error');
         getEffect().subscribe();
         expect(navigateByUrlMock).toHaveBeenCalledWith(defaultURL);
-        expect(console.error).toHaveBeenCalledWith(`${effectName} failed to navigate`);
+        expect(console.error).toHaveBeenCalledWith(`${effectName} failed to navigate to "${defaultURL}"`);
       });
 
       it(`logs error if navigation failed`, () => {
+        rewriteSelectors();
         actions$ = of(action);
         const error = new Error('error');
         navigateByUrlMock.mockReturnValue(throwError(error));
@@ -199,6 +223,7 @@ describe(AuthorizationEffects.name, () => {
 
   describe('authorize$', () => {
     const [user] = mockUsers;
+
     function runTest(
       actionCreator: typeof AuthAPIActions.profileCreateSuccess | typeof AuthAPIActions.profileLoadSuccess,
     ) {
@@ -240,12 +265,36 @@ describe(AuthorizationEffects.name, () => {
     runTest(AuthAPIActions.profileLoadSuccess);
   });
 
-  testRedirect(
-    'redirectToAuthorizedPage$',
-    AuthAPIActions.authorized(),
-    AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
-    AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_DEFAULT,
-  );
+  describe('redirectToAuthorizedPage$', () => {
+    describe(`with originalURL equals "/"`, () => {
+      testRedirect(
+        'redirectToAuthorizedPage$',
+        AuthAPIActions.authorized(),
+        AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
+        AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_DEFAULT,
+        [[AuthSelectors.getOriginalUrl, '/']],
+      );
+    });
+    describe(`with originalURL starts with ${AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN.toString()} value`, () => {
+      testRedirect(
+        'redirectToAuthorizedPage$',
+        AuthAPIActions.authorized(),
+        AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
+        AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_DEFAULT,
+        [[AuthSelectors.getOriginalUrl, AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_DEFAULT]],
+      );
+    });
+    describe(`with custom originalURL`, () => {
+      it(`redirects to originalURL`, () => {
+        const originalURL = '/my-url';
+        store = TestBed.inject(MockStore);
+        store.overrideSelector(AuthSelectors.getOriginalUrl, originalURL);
+        actions$ = of(AuthAPIActions.authorized);
+        getEffects().redirectToAuthorizedPage$.subscribe();
+        expect(navigateByUrlMock).toHaveBeenCalledWith(originalURL);
+      });
+    });
+  });
 
   testRedirect(
     'redirectToNotAuthorizedPage$',

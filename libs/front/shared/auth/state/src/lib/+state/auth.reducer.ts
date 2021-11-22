@@ -14,6 +14,7 @@ export interface State {
     message: string;
     code?: string;
   };
+  originalURL?: string;
 
   email?: string;
   /**
@@ -44,6 +45,7 @@ export const initialState: State = {
   inProgress: false,
   successMessage: undefined,
   error: undefined,
+  originalURL: undefined,
 
   email: undefined,
   providers: undefined,
@@ -190,6 +192,14 @@ const authReducer = createReducer<State>(
       ...state,
       inProgress: true,
       stage: AuthStage.initialization,
+      ...resetErrorAndSuccess,
+    }),
+  ),
+  on(
+    AuthAPIActions.saveOriginalURL,
+    (state: State, { url }): State => ({
+      ...state,
+      originalURL: url,
       ...resetErrorAndSuccess,
     }),
   ),

@@ -398,6 +398,13 @@ describe('Auth Reducer', () => {
       );
     });
 
+    it(AuthAPIActions.saveOriginalURL.type, () => {
+      const url = '/my-url';
+      reducerTest({}, AuthAPIActions.saveOriginalURL({ url }), {
+        originalURL: url,
+      });
+    });
+
     it(AuthAPIActions.fetchProviders.type, () => {
       reducerTest({ stage: AuthStage.enteringEmail, email: testEmail }, AuthAPIActions.fetchProviders(), {
         inProgress: true,

@@ -4,26 +4,34 @@ import { AuthProvider } from '@seed/front/shared/types';
 
 const prefix = `[Auth/UI]`;
 
-export const enterEmail = createAction(`${prefix} Enter email`, props<{ email: string }>());
+/**
+ * Generates action name as using prefix
+ * @param actionDescription
+ */
+function n(actionDescription: string): string {
+  return `${prefix} ${actionDescription}`;
+}
 
-export const changeUser = createAction(`${prefix} Change user`);
+export const enterEmail = createAction(n(`Enter email`), props<{ email: string }>());
 
-export const selectProvider = createAction(`${prefix} Select provider`, props<{ provider: AuthProvider }>());
+export const changeUser = createAction(n(`Change user`));
 
-export const deselectProvider = createAction(`${prefix} Deselect provider`);
+export const selectProvider = createAction(n(`Select provider`), props<{ provider: AuthProvider }>());
 
-export const signAnonymously = createAction(`${prefix} Sign up anonymously`);
+export const deselectProvider = createAction(n(`Deselect provider`));
 
-export const signGoogle = createAction(`${prefix} Authenticate with Google`);
+export const signAnonymously = createAction(n(`Sign up anonymously`));
 
-export const signGitHub = createAction(`${prefix} Authenticate with GitHub`);
+export const signGoogle = createAction(n(`Authenticate with Google`));
 
-export const signEmailLink = createAction(`${prefix} Authenticate with Email Link`);
+export const signGitHub = createAction(n(`Authenticate with GitHub`));
 
-export const signEmailPassword = createAction(`${prefix} Sign with Email and Password`, props<{ password: string }>());
+export const signEmailLink = createAction(n(`Authenticate with Email Link`));
 
-export const restorePassword = createAction(`${prefix} Restore password`);
+export const signEmailPassword = createAction(n(`Sign with Email and Password`), props<{ password: string }>());
 
-export const signOut = createAction(`${prefix} Sign out`);
+export const restorePassword = createAction(n(`Restore password`));
 
-export const profileCreate = createAction(`${prefix} Profile - Create`, props<{ user: Prisma.UserCreateInput }>());
+export const signOut = createAction(n(`Sign out`));
+
+export const profileCreate = createAction(n(`Profile - Create`), props<{ user: Prisma.UserCreateInput }>());

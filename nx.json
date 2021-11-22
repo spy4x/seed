@@ -117,6 +117,9 @@
     },
     "front-shared-auth-guards": {
       "tags": []
+    },
+    "front-shared-router": {
+      "tags": []
     }
   }
 }

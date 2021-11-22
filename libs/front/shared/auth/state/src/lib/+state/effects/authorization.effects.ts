@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
-import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import * as AuthUIActions from '../actions/ui.actions';
 import * as AuthAPIActions from '../actions/api.actions';
 import { catchError, exhaustMap, map, tap } from 'rxjs/operators';
@@ -12,6 +12,8 @@ import {
 import { from, of } from 'rxjs';
 import { UserService } from '../../userService/user.service';
 import { AUTH_IS_AUTHORIZED_HANDLER_TOKEN, IsAuthorizedHandler } from '../../isAuthorized';
+import * as AuthSelectors from '../auth.selectors';
+import { Store } from '@ngrx/store';
 
 @Injectable()
 export class AuthorizationEffects {
@@ -35,8 +37,12 @@ export class AuthorizationEffects {
         ofType(AuthAPIActions.signedUp, AuthAPIActions.profileLoadSuccessNoProfileYet),
         exhaustMap(() =>
           from(this.router.navigateByUrl(this.createProfileURL)).pipe(
-            // eslint-disable-next-line no-console
-            tap(hasNavigated => !hasNavigated && console.error(`redirectToCreateProfile$ failed to navigate`)),
+            tap(
+              hasNavigated =>
+                !hasNavigated &&
+                // eslint-disable-next-line no-console
+                console.error(`redirectToCreateProfile$ failed to navigate to "${this.createProfileURL}"`),
+            ),
             catchError(error => {
               // eslint-disable-next-line no-console
               console.error(`redirectToCreateProfile$`, error);
@@ -80,17 +86,25 @@ export class AuthorizationEffects {
     () =>
       this.actions$.pipe(
         ofType(AuthAPIActions.authorized),
-        exhaustMap(() =>
-          from(this.router.navigateByUrl(this.authorizedURL)).pipe(
-            // eslint-disable-next-line no-console
-            tap(hasNavigated => !hasNavigated && console.error(`redirectToAuthorizedPage$ failed to navigate`)),
+        concatLatestFrom(() => this.store.select(AuthSelectors.getOriginalUrl)),
+        exhaustMap(([, originalURL]) => {
+          let redirectToURL = this.authorizedURL;
+          if (originalURL && originalURL !== '/' && !originalURL.startsWith(this.authenticationURL)) {
+            redirectToURL = originalURL;
+          }
+          return from(this.router.navigateByUrl(redirectToURL)).pipe(
+            tap(
+              hasNavigated =>
+                // eslint-disable-next-line no-console
+                !hasNavigated && console.error(`redirectToAuthorizedPage$ failed to navigate to "${redirectToURL}"`),
+            ),
             catchError(error => {
               // eslint-disable-next-line no-console
               console.error(`redirectToAuthorizedPage$`, error);
               return of(null);
             }),
-          ),
-        ),
+          );
+        }),
       ),
     { dispatch: false },
   );
@@ -101,8 +115,12 @@ export class AuthorizationEffects {
         ofType(AuthAPIActions.notAuthorized, AuthAPIActions.signedOut),
         exhaustMap(() =>
           from(this.router.navigateByUrl(this.authenticationURL)).pipe(
-            // eslint-disable-next-line no-console
-            tap(hasNavigated => !hasNavigated && console.error(`redirectToNotAuthorizedPage$ failed to navigate`)),
+            tap(
+              hasNavigated =>
+                !hasNavigated &&
+                // eslint-disable-next-line no-console
+                console.error(`redirectToNotAuthorizedPage$ failed to navigate to "${this.authenticationURL}"`),
+            ),
             catchError(error => {
               // eslint-disable-next-line no-console
               console.error(`redirectToNotAuthorizedPage$`, error);
@@ -116,6 +134,7 @@ export class AuthorizationEffects {
 
   constructor(
     readonly actions$: Actions,
+    readonly store: Store,
     readonly router: Router,
     readonly userService: UserService,
     @Inject(AUTH_ROUTE_URL_FOR_AUTHENTICATION_PAGE_TOKEN) readonly authenticationURL: string,
