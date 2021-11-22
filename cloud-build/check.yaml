@@ -20,6 +20,9 @@ steps:
     args: ['-c', 'yarn ci:install-deps']
     env:
       - 'YARN_CACHE_FOLDER=/workspace/.cache/.yarn'
+    volumes:
+      - name: ssh
+        path: /root/.ssh
 
   - id: format
     name: node
