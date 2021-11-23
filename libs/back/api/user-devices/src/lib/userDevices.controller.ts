@@ -16,7 +16,7 @@ import {
 import { ApiBearerAuth, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   BaseController,
-  IsAuthenticatedGuard,
+  DoesUserExistGuard,
   NotFoundInterceptor,
   PaginationResponseDTO,
   UserDeviceCreateCommand,
@@ -32,7 +32,7 @@ import {
 @Controller('user-devices')
 export class UserDevicesController extends BaseController {
   @Get('/my')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({
     status: HttpStatus.OK,
     type: [UserDeviceDTO],
@@ -48,7 +48,7 @@ export class UserDevicesController extends BaseController {
   }
 
   @Post()
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({ status: HttpStatus.CREATED, type: UserDeviceDTO })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
@@ -62,7 +62,7 @@ export class UserDevicesController extends BaseController {
   }
 
   @Patch(':id')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @UseInterceptors(NotFoundInterceptor)
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.OK, type: UserDeviceDTO })
@@ -86,7 +86,7 @@ export class UserDevicesController extends BaseController {
   }
 
   @Delete(':id')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @UseInterceptors(NotFoundInterceptor)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiParam({ name: 'id', type: String })

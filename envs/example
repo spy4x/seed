@@ -1,0 +1,9 @@
+DB_CONNECTION_STRING=postgresql://username:password@localhost:5432/dbname?connection_limit=20
+API_URL=http://localhost:8080/api
+CLOUD_RUN_API_APP_NAME=api
+REGION=us-central1
+PROJECT_ID=your-google-cloud-project-id
+SENTRY_DSN=
+REDIS_HOST=localhost
+WEBSITE_URL=https://corecircle.com
+NX_CLOUD_AUTH_TOKEN=

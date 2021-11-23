@@ -1,3 +1,4 @@
+import { Injectable, Scope } from '@nestjs/common';
 import { inspect as utilInspect } from 'util';
 import * as chalk from 'chalk';
 import { format } from 'date-fns';
@@ -6,18 +7,23 @@ import { Environment } from '@seed/shared/types';
 
 export enum LogSeverity {
   log = 'log',
+  warn = 'warn',
   error = 'error',
 }
+
 export enum LogContext {
   startSegment = 'startSegment',
   finishSegment = 'finishSegment',
 }
+
 type Params = unknown;
+
 enum LogArgType {
   regular = 'regular',
   subCaller = 'subCaller',
   inspect = 'inspect',
 }
+
 interface LogArg {
   type: LogArgType;
   value: unknown;
@@ -43,6 +49,17 @@ export class LogSegment {
       args.push({ type: LogArgType.inspect, value: params });
     }
     this.logger.write(LogSeverity.log, args, context);
+    return this;
+  }
+
+  warn(message: string, params?: Params, context?: LogContext): this {
+    const args: LogArg[] = [];
+    args.push({ type: LogArgType.subCaller, value: this.caller });
+    args.push({ type: LogArgType.regular, value: message });
+    if (params) {
+      args.push({ type: LogArgType.inspect, value: params });
+    }
+    this.logger.write(LogSeverity.warn, args, context);
     return this;
   }
 
@@ -102,12 +119,16 @@ export class LogService {
     return utilInspect(object, {
       depth: 15, // deep nesting, but avoid infinity for security reasons
       colors: !IS_PRODUCTION, // Google Cloud Logger shows colors as special symbols, like "[32m", instead of coloring text
+      breakLength: IS_PRODUCTION ? Infinity : 120,
     });
   }
 
   public static getIcon(severity: LogSeverity, context?: LogContext): string {
     if (severity === LogSeverity.error) {
       return '⛔️';
+    }
+    if (severity === LogSeverity.warn) {
+      return '⚠️ ';
     }
     switch (context) {
       case LogContext.startSegment:
@@ -131,12 +152,40 @@ export class LogService {
     return segment;
   }
 
-  async trackSegment<R>(name: string, fn: (logSegment: LogSegment) => R | Promise<R>, params?: Params): Promise<R> {
+  async trackSegment<R>(
+    name: string,
+    fn: (logSegment: LogSegment) => Promise<R>,
+    params?: Params,
+    shouldLogResult?: boolean,
+  ): Promise<R> {
     const segment = new LogSegment(name, new Date(), this);
     segment.log(`Started`, params, LogContext.startSegment);
     try {
       const result = await fn(segment);
-      segment.endWithSuccess();
+      if (shouldLogResult) {
+        segment.endWithSuccess(result);
+      } else {
+        segment.endWithSuccess();
+      }
+      return result;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        segment.endWithFail(error);
+      }
+      throw error;
+    }
+  }
+
+  trackSegmentSync<R>(name: string, fn: (logSegment: LogSegment) => R, params?: Params, shouldLogResult?: boolean): R {
+    const segment = new LogSegment(name, new Date(), this);
+    segment.log(`Started`, params, LogContext.startSegment);
+    try {
+      const result = fn(segment);
+      if (shouldLogResult) {
+        segment.endWithSuccess(result);
+      } else {
+        segment.endWithSuccess();
+      }
       return result;
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -155,6 +204,17 @@ export class LogService {
       args.push({ type: LogArgType.inspect, value: params });
     }
     return this.write(LogSeverity.log, args);
+  }
+
+  warn(message?: string, params?: Params): this {
+    const args: LogArg[] = [];
+    if (message) {
+      args.push({ type: LogArgType.regular, value: message });
+    }
+    if (params) {
+      args.push({ type: LogArgType.inspect, value: params });
+    }
+    return this.write(LogSeverity.warn, args);
   }
 
   error({ message, error, params }: { message?: string; error?: Error; params?: Params }): this {
@@ -179,14 +239,15 @@ export class LogService {
       logArgs.push(chalkify(timestamp, chalk.grey));
     }
 
-    const maxLength = 30;
+    const maxLength = 20;
     const brown = { r: 180, g: 150, b: 100 };
     const purple = { r: 150, g: 125, b: 210 };
-    let callerStr = chalkify(this.caller.padStart(maxLength, ' '), chalk.rgb(brown.r, brown.g, brown.b));
+    const spaceCharacter = IS_PRODUCTION ? '_' : ' ';
+    let callerStr = chalkify(this.caller.padStart(maxLength, spaceCharacter), chalk.rgb(brown.r, brown.g, brown.b));
     const subCaller = args.find(i => i.type === 'subCaller');
     if (subCaller) {
-      callerStr += `>${chalkify(
-        (subCaller.value as string).padEnd(maxLength, ' '),
+      callerStr += ` > ${chalkify(
+        (subCaller.value as string).padEnd(maxLength, spaceCharacter),
         chalk.rgb(purple.r, purple.g, purple.b),
       )}`;
     }

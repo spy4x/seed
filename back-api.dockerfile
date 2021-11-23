@@ -6,8 +6,6 @@ COPY dist/apps/back/api/package.json ./package.json
 
 RUN yarn --production --no-lockfile --non-interactive
 
-RUN yarn add -D prisma
-
 COPY prisma/* ./prisma/
 
 RUN yarn prisma generate

@@ -7,25 +7,30 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
   BaseController,
+  CacheAccess,
+  CacheTTL,
+  DoesUserExistGuard,
   IsAuthenticatedGuard,
   NotFoundInterceptor,
   PaginationResponseDTO,
   UserCreateCommand,
+  UserDTO,
   UserGetQuery,
   UserId,
   UserIsUsernameFreeDTO,
   UserIsUsernameFreeQuery,
-  UserDTO,
   UsersFindQuery,
   UserUpdateCommand,
   UserUpdateLastSignedInCommand,
 } from '@seed/back/api/shared';
 import { ApiBearerAuth, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 
 @ApiTags('users')
 @ApiBearerAuth()
@@ -45,13 +50,21 @@ export class UsersController extends BaseController {
 
   @Get('me')
   @UseGuards(IsAuthenticatedGuard)
-  @UseInterceptors(NotFoundInterceptor)
+  // No need for NotFoundInterceptor
   @ApiResponse({ status: HttpStatus.OK, type: UserDTO })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT }) // No user
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
-  public async getMe(@UserId() currentUserId: string): Promise<UserDTO> {
-    return this.logger.trackSegment(this.getMe.name, async () =>
-      this.queryBus.execute(new UserGetQuery(currentUserId)),
-    );
+  public async getMe(
+    @Res({ passthrough: true }) res: Response,
+    @UserId() currentUserId: string,
+  ): Promise<null | UserDTO> {
+    return this.logger.trackSegment(this.getMe.name, async () => {
+      const user = await this.queryBus.execute<null | UserDTO>(new UserGetQuery(currentUserId));
+      if (!user) {
+        res.status(HttpStatus.NO_CONTENT);
+      }
+      return user;
+    });
   }
 
   @Get('is-username-free/:userName')
@@ -66,7 +79,8 @@ export class UsersController extends BaseController {
   }
 
   @Get(':id')
-  @UseGuards(IsAuthenticatedGuard)
+  @Cache(CacheAccess.shared, CacheTTL.week)
+  @UseGuards(DoesUserExistGuard)
   @UseInterceptors(NotFoundInterceptor)
   @ApiResponse({ status: HttpStatus.OK, type: UserDTO })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
@@ -88,7 +102,7 @@ export class UsersController extends BaseController {
   }
 
   @Patch('me')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @UseInterceptors(NotFoundInterceptor)
   @ApiResponse({ status: HttpStatus.OK, type: UserDTO })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST })
@@ -99,7 +113,7 @@ export class UsersController extends BaseController {
   }
 
   @Patch('me/last-signin')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({ status: HttpStatus.OK, type: UserDTO })
   public async updateLastSignedIn(@UserId() currentUserId: string): Promise<UserDTO> {
     const command = new UserUpdateLastSignedInCommand(currentUserId);

@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common/interfaces';
 import * as Sentry from '@sentry/node';
+import * as Tracing from '@sentry/tracing';
 import * as expressLib from 'express';
 import * as morgan from 'morgan';
 import { json } from 'body-parser';
@@ -78,10 +79,21 @@ export async function getApp(): Promise<Output> {
   if (!instance) {
     const initInstance = async (logSegment: LogSegment): Promise<Output> => {
       logSegment.log(`API_CONFIG:`, API_CONFIG);
+
       express = expressLib();
 
-      Sentry.init({ dsn: API_CONFIG.sentryDSN });
+      Sentry.init({
+        dsn: API_CONFIG.sentryDSN,
+        integrations: [
+          new Sentry.Integrations.Http({ tracing: true }), // enable HTTP calls tracing
+          new Tracing.Integrations.Express({ app: express }), // enable Express.js middleware tracing
+        ],
+        // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
+        // We recommend adjusting this value in production
+        tracesSampleRate: 1.0,
+      });
       express.use(Sentry.Handlers.requestHandler());
+      express.use(Sentry.Handlers.tracingHandler());
 
       express.use(json());
       configureMorgan(express);

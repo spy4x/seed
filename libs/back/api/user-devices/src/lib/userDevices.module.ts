@@ -7,16 +7,18 @@ import {
   UserDeviceDeleteCommandHandler,
   UserDeviceUpdateCommandHandler,
 } from './commandHandlers';
+import { NotificationSendPushInvalidTokensEventHandler } from './eventHandlers/notification-send-push-invalid-tokens.event-handlers';
 
-const queryHandlers = [UserDevicesFindMyQueryHandler];
 const commandHandlers = [
   UserDeviceCreateCommandHandler,
   UserDeviceUpdateCommandHandler,
   UserDeviceDeleteCommandHandler,
 ];
+const eventHandlers = [NotificationSendPushInvalidTokensEventHandler];
+const queryHandlers = [UserDevicesFindMyQueryHandler];
 
 @Module({
   controllers: [UserDevicesController],
-  providers: [...queryHandlers, ...commandHandlers],
+  providers: [...commandHandlers, ...eventHandlers, ...queryHandlers],
 })
 export class UserDevicesModule {}

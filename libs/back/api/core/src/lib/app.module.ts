@@ -1,11 +1,10 @@
 import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { SharedModule, UserMiddleware } from '@seed/back/api/shared';
+import { DefaultHeadersInterceptor, LoggerInterceptor, SharedModule, UserMiddleware } from '@seed/back/api/shared';
 import { UsersModule } from '@seed/back/api/users';
 import { UserDevicesModule } from '@seed/back/api/user-devices';
 import { NotificationsModule } from '@seed/back/api/notifications';
 import { CoreController } from './core.controller';
-import { LoggerInterceptor } from './interceptors/logger/logger.interceptor';
 
 Logger.overrideLogger(['warn', 'error']); // for DEBUG: replace with ['warn','error','debug','log','verbose']
 
@@ -18,6 +17,10 @@ const featureModules = [UsersModule, UserDevicesModule, NotificationsModule];
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggerInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DefaultHeadersInterceptor,
     },
   ],
   controllers: [CoreController],

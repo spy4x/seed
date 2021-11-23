@@ -33,9 +33,9 @@ export class FirebaseAuthService {
     const logSegment = this.logService.startSegment(this.validateJWT.name);
     try {
       const decodedToken = await this.getAuth().verifyIdToken(token, true);
-      const result = decodedToken.uid || null;
-      logSegment.endWithSuccess({ result });
-      return result;
+      const userId = decodedToken.uid || null;
+      logSegment.endWithSuccess();
+      return userId;
     } catch (error: unknown) {
       if (error instanceof Error) {
         logSegment.endWithFail(error, {

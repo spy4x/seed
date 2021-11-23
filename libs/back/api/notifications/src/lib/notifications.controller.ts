@@ -7,7 +7,7 @@ import {
   ApiKeyGuard,
   ApiKeyGuardSetTrueValue,
   BaseController,
-  IsAuthenticatedGuard,
+  DoesUserExistGuard,
   NotificationCreateCommand,
   NotificationDTO,
   NotificationsFindMyQuery,
@@ -23,7 +23,7 @@ import { ApiOperation } from '@nestjs/swagger/dist/decorators/api-operation.deco
 @Controller('notifications')
 export class NotificationsController extends BaseController {
   @Get('/my')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({
     status: HttpStatus.OK,
     type: [NotificationDTO],
@@ -39,7 +39,7 @@ export class NotificationsController extends BaseController {
   }
 
   @Patch('/mark-as-read')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({ status: HttpStatus.OK, type: NotificationsMarkAsReadDTO })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
@@ -55,7 +55,7 @@ export class NotificationsController extends BaseController {
   @ApiOperation({
     description: `Endpoint for testing Push Notifications.`,
   })
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({ status: HttpStatus.OK })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public async test(@UserId() currentUserId: string): Promise<void> {
