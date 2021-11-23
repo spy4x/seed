@@ -1,58 +1,99 @@
 steps:
-  - id: restore_cache
+  - id: Save ssh key
+    name: gcr.io/cloud-builders/git
+    args:
+      - '-c'
+      - |
+        echo "$$GITHUB_DEPLOY_KEY" > /root/.ssh/id_ed25519
+        chmod 400 /root/.ssh/id_ed25519
+        ssh-keyscan github.com > /root/.ssh/known_hosts
+    entrypoint: bash
+    secretEnv:
+      - GITHUB_DEPLOY_KEY
+    volumes:
+      - name: ssh
+        path: /root/.ssh
+
+  - id: Delete existing folder
+    name: node
+    entrypoint: bash
+    args: ['-c', 'find . -delete']
+
+  - id: Clone the repo
+    name: gcr.io/cloud-builders/git
+    args:
+      - clone
+      - 'git@github.com:spy4x/seed.git'
+      - .
+    volumes:
+      - name: ssh
+        path: /root/.ssh
+
+  - id: Checkout the branch
+    name: gcr.io/cloud-builders/git
+    args:
+      - checkout
+      - $COMMIT_SHA
+
+  - id: Restore cache
     name: 'gcr.io/$PROJECT_ID/restore_cache'
     args:
       - '--bucket=gs://${PROJECT_ID}_cloudbuild_cache'
       - '--key=cache-$( checksum yarn.lock )'
       - '--key_fallback=cache-'
 
-  - id: install_deps
+  - id: Install dependencies
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:install-deps']
     env:
       - 'YARN_CACHE_FOLDER=/workspace/.cache/.yarn'
+    volumes:
+      - name: ssh
+        path: /root/.ssh
 
-  - id: format
+  - id: Check code format
     name: node
     entrypoint: bash
     args: ['-c', 'yarn ci:format']
-    waitFor: ['install_deps']
+    waitFor: ['Install dependencies']
 
-  - id: lint
+  - id: Lint code
     name: node
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:lint']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['install_deps']
+    waitFor: ['Install dependencies']
 
-  - id: test
+  - id: Run unit-tests
     name: node
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:test']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['install_deps']
+    waitFor: ['Install dependencies']
 
-  - id: build
+  - id: Build affected apps
     name: node
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:build']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['install_deps']
+    waitFor: ['Install dependencies']
 
-  - id: e2e
+  - id: Run e2e-tests
     name: cypress/base
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:e2e']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['install_deps']
+    waitFor: ['Install dependencies']
 
 availableSecrets:
   secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/GITHUB_DEPLOY_KEY/versions/latest
+      env: GITHUB_DEPLOY_KEY
     - versionName: projects/$PROJECT_ID/secrets/NX_CLOUD_AUTH_TOKEN/versions/latest
       env: NX_CLOUD_AUTH_TOKEN
 
-timeout: 1800s
+timeout: 900s
 
 options:
   machineType: 'N1_HIGHCPU_8'
