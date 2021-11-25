@@ -1,34 +1,55 @@
-import { RequestExtended, UserMiddleware } from './user.middleware';
-import { FirebaseAuthService } from '../../../services';
-import { Request } from 'express';
+// region MUST GO BEFORE IMPORTS
+const setUser = jest.fn();
+jest.mock('@sentry/node', () => ({ setUser }));
+// endregion
 
-describe('UserMiddleware', () => {
-  const getFirebaseServiceMock = (result: null | string) => ({
-    validateJWT: jest.fn().mockImplementation(async () => Promise.resolve(result)),
-  });
-  const getRequestMock = (token?: string): RequestExtended =>
-    ({ headers: { authorization: token } } as unknown as Request);
-  const nextMock = new (jest.fn().mockImplementation(() => () => null))();
-  const responseMock = new (jest.fn())();
+import { RequestExtended, UserGetQuery } from '@seed/back/api/shared';
+import { UserMiddleware } from './user.middleware';
 
-  it('should add user to request object when token is provided', async () => {
-    const req = getRequestMock('token1');
-    const resultUserId = 'user1';
-    const firebaseService = getFirebaseServiceMock(resultUserId) as unknown as FirebaseAuthService;
-    await new UserMiddleware(firebaseService).use(req, responseMock, nextMock);
-    expect(req.userId).toEqual(resultUserId);
+describe(UserMiddleware.name, () => {
+  // region SETUP
+  const queryBus = { execute: jest.fn() };
+  const getReq = (userId?: string): RequestExtended => ({ userId } as any);
+  const res = {} as any;
+  const next = jest.fn();
+  const userMiddleware = new UserMiddleware(queryBus as any);
+  beforeEach(() => {
+    queryBus.execute.mockClear();
+    next.mockClear();
+    setUser.mockClear();
   });
-  it('should call firebaseService.validateJWT with request token', async () => {
-    const token = 'token1';
-    const firebaseService = getFirebaseServiceMock('user1') as unknown as FirebaseAuthService;
-    await new UserMiddleware(firebaseService).use(getRequestMock(token), responseMock, nextMock);
-    expect(firebaseService.validateJWT).toBeCalledTimes(1);
-    expect(firebaseService.validateJWT).toBeCalledWith(token);
+  // endregion
+
+  it('if "!req.userId" - just calls "next()"', async () => {
+    const req = getReq();
+    queryBus.execute.mockReturnValue(null);
+    await userMiddleware.use(req, res, next);
+    expect(req.user).toEqual(undefined);
+    expect(queryBus.execute).not.toBeCalled();
+    expect(setUser).not.toBeCalled();
+    expect(next).toBeCalled();
   });
-  it('should not add user to request object when token not provided', async () => {
-    const req = getRequestMock();
-    const firebaseService = getFirebaseServiceMock(null) as unknown as FirebaseAuthService;
-    await new UserMiddleware(firebaseService).use(req, responseMock, nextMock);
-    expect(req.userId).toBeUndefined();
+
+  it('if "req.userId", but !"db.user" - just calls "next()"', async () => {
+    const userId = '123';
+    const req = getReq(userId);
+    queryBus.execute.mockReturnValue(null);
+    await userMiddleware.use(req, res, next);
+    expect(queryBus.execute).toBeCalledWith(new UserGetQuery(userId));
+    expect(req.user).toEqual(undefined);
+    expect(setUser).not.toBeCalled();
+    expect(next).toBeCalled();
+  });
+
+  it('if "req.userId" and "db.user" - saves it to "req.user"', async () => {
+    const userId = '123';
+    const req = getReq(userId);
+    const user = {};
+    queryBus.execute.mockReturnValue(user);
+    await userMiddleware.use(req, res, next);
+    expect(queryBus.execute).toBeCalledWith(new UserGetQuery(userId));
+    expect(req.user).toEqual(user);
+    expect(setUser).toBeCalledWith(user);
+    expect(next).toBeCalled();
   });
 });

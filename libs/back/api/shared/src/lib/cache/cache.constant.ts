@@ -10,6 +10,7 @@ export enum CacheAccess {
  */
 /* eslint-disable @typescript-eslint/prefer-literal-enum-member */
 export enum CacheTTL {
+  /* eslint-disable-next-line @typescript-eslint/no-magic-numbers */
   threeMin = 3 * SECONDS_IN_MINUTE,
   oneHour = MINUTES_IN_HOUR * SECONDS_IN_MINUTE,
   day = HOURS_IN_DAY * MINUTES_IN_HOUR * SECONDS_IN_MINUTE,

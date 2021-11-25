@@ -14,7 +14,7 @@ import {
   NotificationsMarkAsReadCommand,
   NotificationsMarkAsReadDTO,
   PaginationResponseDTO,
-  UserId,
+  ReqUserId,
 } from '@seed/back/api/shared';
 import { ApiOperation } from '@nestjs/swagger/dist/decorators/api-operation.decorator';
 
@@ -32,7 +32,7 @@ export class NotificationsController extends BaseController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public async findMy(
     @Query() query: NotificationsFindMyQuery,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<PaginationResponseDTO<NotificationDTO>> {
     query.currentUserId = currentUserId;
     return this.logger.trackSegment(this.findMy.name, async () => this.queryBus.execute(query));
@@ -45,7 +45,7 @@ export class NotificationsController extends BaseController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public async markAsRead(
     @Body() command: NotificationsMarkAsReadCommand,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<NotificationsMarkAsReadDTO> {
     command.currentUserId = currentUserId;
     return this.logger.trackSegment(this.markAsRead.name, async () => this.commandBus.execute(command));
@@ -58,7 +58,7 @@ export class NotificationsController extends BaseController {
   @UseGuards(DoesUserExistGuard)
   @ApiResponse({ status: HttpStatus.OK })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
-  public async test(@UserId() currentUserId: string): Promise<void> {
+  public async test(@ReqUserId() currentUserId: string): Promise<void> {
     return this.logger.trackSegment(this.test.name, async () =>
       this.commandBus.execute(new NotificationCreateCommand(currentUserId, NotificationType.TEST)),
     );

@@ -1,5 +1,5 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { LogService } from '../log/log.service';
 
 @Injectable()
@@ -19,7 +19,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     this.$on('query', (e: Prisma.QueryEvent) => {
-      this.logService.log(`Query. Duration: ${e.duration / 1000}s`, { query: e.query, params: e.params });
+      this.logService.log(`Query. Duration: ${e.duration}ms`, {
+        query: e.query,
+        params: e.params,
+      });
     });
   }
 

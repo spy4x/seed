@@ -6,7 +6,8 @@ import * as redisStore from 'cache-manager-redis-store';
 import { CloudTasksService, FirebaseAuthService, PrismaService } from './services';
 import { ApiKeyGuard, DoesUserExistGuard, IsAuthenticatedGuard } from './nestjs';
 import { CloudTaskCreateCommandHandler, CommandBusExt, EventBusExt, QueryBusExt } from './cqrs';
-import { API_CONFIG, CacheTTL } from './constants';
+import { API_CONFIG } from './constants';
+import { CacheTTL } from './cache';
 
 const guards = [ApiKeyGuard, IsAuthenticatedGuard, DoesUserExistGuard];
 const services = [FirebaseAuthService, PrismaService, CloudTasksService, CommandBusExt, QueryBusExt, EventBusExt];

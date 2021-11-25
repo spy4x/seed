@@ -1,12 +1,9 @@
-import { CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
-import { RequestExtended } from '../../middlewares';
+import { CanActivate, ExecutionContext } from '@nestjs/common';
+import { RequestExtended } from '../../baseClasses';
 
 export class IsAuthenticatedGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request: RequestExtended = context.switchToHttp().getRequest();
-    if (!request.userId) {
-      throw new UnauthorizedException();
-    }
-    return true;
+    return !!request.userId;
   }
 }

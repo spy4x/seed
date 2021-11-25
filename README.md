@@ -140,7 +140,7 @@
 ✅ [Prisma](prisma/schema.prisma)  
 ✅ [Configure Swagger integration with Nest.js](libs/back/api/core/src/lib/app.ts)  
 ✅ [CQRS architecture](docs/backend/cqrs.md)  
-✅ [Verify user JWT authentication](libs/back/api/shared/src/lib/nestjs/middlewares/user/user.middleware.ts)  
+✅ [Verify user JWT authentication](libs/back/api/shared/src/lib/nestjs/middlewares/user-id/user.middleware.ts)  
 🕑 [Unit-testing controller](libs/back/api/users/src/lib/users.controller.spec.ts)  
 ✅ [Unit-testing command handler](libs/back/api/users/src/lib/commandHandlers/create/userCreate.commandHandler.spec.ts)  
 ✅ [Unit-testing query handler](libs/back/api/users/src/lib/queryHandlers/find/usersFind.queryHandler.spec.ts)  

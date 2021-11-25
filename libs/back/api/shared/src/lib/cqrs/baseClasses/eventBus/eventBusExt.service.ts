@@ -11,7 +11,7 @@ export class EventBusExt {
   publish(event: IEvent): void {
     /* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access,@typescript-eslint/no-unsafe-assignment */
     const eventName = Object.getPrototypeOf(event)?.constructor?.name;
-    void this.logger.trackSegment(
+    void this.logger.trackSegmentSync(
       eventName || 'UnknownEvent',
       () => {
         this.eventBus.publish(event);

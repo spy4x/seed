@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import { Prisma, User } from '@prisma/client';
+import type { Prisma, User } from '@prisma/client';
 import { Observable, of, throwError } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AuthSelectors } from '../../index';

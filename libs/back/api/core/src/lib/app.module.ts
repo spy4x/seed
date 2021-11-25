@@ -1,6 +1,12 @@
 import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { DefaultHeadersInterceptor, LoggerInterceptor, SharedModule, UserMiddleware } from '@seed/back/api/shared';
+import {
+  DefaultHeadersInterceptor,
+  LoggerInterceptor,
+  SharedModule,
+  UserIdMiddleware,
+  UserMiddleware,
+} from '@seed/back/api/shared';
 import { UsersModule } from '@seed/back/api/users';
 import { UserDevicesModule } from '@seed/back/api/user-devices';
 import { NotificationsModule } from '@seed/back/api/notifications';
@@ -27,6 +33,6 @@ const featureModules = [UsersModule, UserDevicesModule, NotificationsModule];
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): MiddlewareConsumer {
-    return consumer.apply(UserMiddleware).forRoutes('*');
+    return consumer.apply(UserIdMiddleware).forRoutes('*').apply(UserMiddleware).forRoutes('*');
   }
 }

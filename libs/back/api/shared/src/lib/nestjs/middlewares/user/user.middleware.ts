@@ -1,74 +1,40 @@
-import { CACHE_MANAGER, Inject, Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Response } from 'express';
 import * as Sentry from '@sentry/node';
-import { Cache } from 'cache-manager';
-import { FirebaseAuthService, LogService, LogSegment } from '../../../services';
-import { isEnv } from '../../../constants';
-import { Environment } from '@seed/shared/types';
-import { FIREBASE_AUTH_UID_LENGTH, MINUTES_IN_HOUR, ONE, SECONDS_IN_MINUTE } from '@seed/shared/constants';
-import { cacheKeys } from '../../common';
-
-export type RequestExtended = Request & { userId?: string };
+import { LogService } from '../../../services';
+import { User } from '@prisma/client';
+import { QueryBusExt, UserGetQuery } from '../../../cqrs';
+import { RequestExtended } from '../../baseClasses';
 
 /**
- * The UserMiddleware takes an authorization token from the request
- * Gets the userId related to the current token
- * Attaches the userId to the request
+ * Uses "req.userId" to get related User and save it to "req.user".
  */
 @Injectable()
 export class UserMiddleware implements NestMiddleware {
   logService = new LogService(UserMiddleware.name);
 
-  constructor(
-    private readonly firebaseAuthService: FirebaseAuthService,
-    @Inject(CACHE_MANAGER) private readonly cache: Cache,
-  ) {}
+  constructor(private readonly queryBus: QueryBusExt) {}
 
   async use(req: RequestExtended, _res: Response, next: () => void): Promise<void> {
     await this.logService.trackSegment(this.use.name, async logSegment => {
-      const { authorization } = req.headers;
+      const { userId } = req;
 
-      if (!authorization || Array.isArray(authorization)) {
-        logSegment.log(`Token is not presented`);
-        Sentry.setUser(null);
+      if (!userId) {
+        logSegment.log(`req.userId is not presented`);
         next();
         return;
       }
 
-      const token = authorization.replace('Bearer ', '');
+      const user = await this.queryBus.execute<null | User>(new UserGetQuery(userId));
+      req.user = user || undefined;
 
-      const userId = await this.getUserIdFromToken(token, logSegment);
-      logSegment.log(`Token is ${userId ? '' : 'in'}valid.`, { userId, token });
-      req.userId = userId || undefined;
+      logSegment.log(`User`, { userId, user });
 
-      Sentry.setUser(userId ? { id: userId } : null);
+      if (user) {
+        Sentry.setUser(user);
+      }
+
       next();
     });
-  }
-
-  async getUserIdFromToken(token: string, logSegment: LogSegment): Promise<null | string> {
-    // Check if token is userId for dev purposes
-    const isDevelopment = isEnv(Environment.development) && token.length <= FIREBASE_AUTH_UID_LENGTH;
-    if (isDevelopment) {
-      logSegment.warn('Development environment detected.');
-      return token;
-    }
-
-    // Check cached value
-    let userId: undefined | null | string = await this.cache.get<string>(cacheKeys.jwt(token));
-    if (userId) {
-      logSegment.log('Cached value found.');
-      return userId;
-    }
-
-    // Get actual value from Firebase Authentication
-    logSegment.log('Using Firebase Auth to parse JWT...');
-    userId = await this.firebaseAuthService.validateJWT(token);
-    if (userId) {
-      // Cache value
-      const oneHourInSeconds = ONE * MINUTES_IN_HOUR * SECONDS_IN_MINUTE;
-      await this.cache.set(cacheKeys.jwt(token), userId, { ttl: oneHourInSeconds });
-    }
-    return userId;
   }
 }

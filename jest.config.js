@@ -2,8 +2,6 @@ module.exports = {
   projects: [
     '<rootDir>/apps/front/web-client',
     '<rootDir>/apps/front/admin-panel',
-    '<rootDir>/apps/back/cloud-functions',
-    '<rootDir>/apps/dev/sandbox',
     '<rootDir>/libs/front/web-client/core',
     '<rootDir>/libs/front/admin-panel/core',
     '<rootDir>/libs/back/api/core',

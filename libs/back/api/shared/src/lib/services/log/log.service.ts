@@ -1,4 +1,3 @@
-import { Injectable, Scope } from '@nestjs/common';
 import { inspect as utilInspect } from 'util';
 import * as chalk from 'chalk';
 import { format } from 'date-fns';
@@ -116,10 +115,11 @@ export class LogService {
   constructor(public caller: string) {}
 
   public static inspect(object: unknown): string {
+    const MAX_LINE_WIDTH = 120;
     return utilInspect(object, {
       depth: 15, // deep nesting, but avoid infinity for security reasons
       colors: !IS_PRODUCTION, // Google Cloud Logger shows colors as special symbols, like "[32m", instead of coloring text
-      breakLength: IS_PRODUCTION ? Infinity : 120,
+      breakLength: IS_PRODUCTION ? Infinity : MAX_LINE_WIDTH,
     });
   }
 

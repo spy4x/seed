@@ -2,7 +2,7 @@ import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor 
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import * as Sentry from '@sentry/node';
-import { LogService } from '@seed/back/api/shared';
+import { LogService } from '../../../services';
 
 @Injectable()
 export class LoggerInterceptor implements NestInterceptor {

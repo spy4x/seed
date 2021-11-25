@@ -24,7 +24,7 @@ import {
   UserDeviceDTO,
   UserDevicesFindMyQuery,
   UserDeviceUpdateCommand,
-  UserId,
+  ReqUserId,
 } from '@seed/back/api/shared';
 
 @ApiTags('user-devices')
@@ -41,7 +41,7 @@ export class UserDevicesController extends BaseController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public async findMy(
     @Query() query: UserDevicesFindMyQuery,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<PaginationResponseDTO<UserDeviceDTO>> {
     query.currentUserId = currentUserId;
     return this.logger.trackSegment(this.findMy.name, async () => this.queryBus.execute(query));
@@ -55,7 +55,7 @@ export class UserDevicesController extends BaseController {
   @ApiResponse({ status: HttpStatus.CONFLICT })
   public async create(
     @Body() command: UserDeviceCreateCommand,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<UserDeviceDTO> {
     command.userId = currentUserId;
     return this.logger.trackSegment(this.create.name, async () => this.commandBus.execute(command));
@@ -71,7 +71,7 @@ export class UserDevicesController extends BaseController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND })
   public async update(
     @Body() command: UserDeviceUpdateCommand,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
     @Param('id') id: string,
   ): Promise<UserDeviceDTO> {
     command.id = id;
@@ -97,7 +97,7 @@ export class UserDevicesController extends BaseController {
   public async delete(
     @Body() command: UserDeviceDeleteCommand,
     @Param('id') id: string,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<UserDeviceDTO> {
     command.id = id;
     command.currentUserId = currentUserId;
