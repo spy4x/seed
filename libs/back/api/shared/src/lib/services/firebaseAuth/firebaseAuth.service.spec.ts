@@ -1,13 +1,12 @@
 // region MUST GO BEFORE IMPORTS
 const isEnv = jest.fn();
-jest.mock('../../constants', () => ({ ...(jest.requireActual('../../constants') as {}), isEnv }));
+jest.mock('../../constants', () => ({ ...(jest.requireActual('../../constants') as any), isEnv }));
 const verifyIdToken = jest.fn();
 const getUser = jest.fn();
 const updateUser = jest.fn();
 const setCustomUserClaims = jest.fn();
 jest.mock('firebase-admin', () => ({
-  apps: [],
-  initializeApp: () => {},
+  apps: [1],
   auth: () => ({ verifyIdToken, getUser, updateUser, setCustomUserClaims }),
 }));
 // endregion
@@ -35,7 +34,7 @@ describe(FirebaseAuthService.name, () => {
       const userId = 'user1';
       const error = new Error('bla bla');
       getUser.mockRejectedValueOnce(error);
-      await expect(() => service.getUser(userId)).rejects.toThrow(error);
+      await expect(async () => service.getUser(userId)).rejects.toThrow(error);
       expect(getUser).toHaveBeenCalledWith(userId);
     });
 

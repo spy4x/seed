@@ -3,7 +3,7 @@ const setUser = jest.fn();
 jest.mock('@sentry/node', () => ({ setUser }));
 // endregion
 
-import { RequestExtended } from '@seed/back/api/shared';
+import { RequestExtended } from '../../baseClasses';
 import { UserIdMiddleware } from './user-id.middleware';
 
 describe(UserIdMiddleware.name, () => {

@@ -46,7 +46,7 @@ export class FirebaseAuthService {
       let fromCache = true;
       const cacheKey = CACHE_KEYS.jwt(token);
       const cacheOptions = { ttl: CacheTTL.oneHour };
-      const cacheFunction = async () => {
+      const cacheFunction = async (): null | string => {
         fromCache = false;
         const decodedToken = await this.getAuth().verifyIdToken(token, true);
         return decodedToken.uid || null;

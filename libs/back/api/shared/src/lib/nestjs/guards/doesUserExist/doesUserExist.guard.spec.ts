@@ -13,14 +13,14 @@ describe(DoesUserExistGuard.name, () => {
   beforeEach(() => getReq.mockClear());
   // endregion
 
-  it('throws error if no req.user', async () => {
+  it('throws error if no req.user', () => {
     getReq.mockReturnValueOnce({});
     expect(() => guard.canActivate(context)).toThrow(
       new ForbiddenException("User doesn't exist in DB. Create user first"),
     );
   });
 
-  it('returns true if req.user', async () => {
+  it('returns true if req.user', () => {
     getReq.mockReturnValueOnce({ user: {} });
     expect(guard.canActivate(context)).toBe(true);
   });

@@ -1,5 +1,5 @@
 import { applyDecorators, Header } from '@nestjs/common';
-import { CacheAccess, CacheTTL } from '../../../constants';
+import { CacheAccess, CacheTTL } from '../../../cache';
 
 /* eslint-enable @typescript-eslint/prefer-literal-enum-member */
 
