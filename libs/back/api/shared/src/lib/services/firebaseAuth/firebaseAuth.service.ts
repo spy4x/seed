@@ -39,14 +39,17 @@ export class FirebaseAuthService {
     try {
       const isDevelopment = isEnv(Environment.development) && token.length <= FIREBASE_AUTH_UID_LENGTH;
       if (isDevelopment) {
-        logSegment.warn('Development environment detected. Using token as userId');
+        logSegment.endWithSuccess({
+          message: 'Development environment detected. Using token as userId',
+          userId: token,
+        });
         return token;
       }
 
       let fromCache = true;
       const cacheKey = CACHE_KEYS.jwt(token);
       const cacheOptions = { ttl: CacheTTL.oneHour };
-      const cacheFunction = async (): null | string => {
+      const cacheFunction = async (): Promise<null | string> => {
         fromCache = false;
         const decodedToken = await this.getAuth().verifyIdToken(token, true);
         return decodedToken.uid || null;

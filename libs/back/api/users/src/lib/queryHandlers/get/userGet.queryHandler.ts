@@ -15,7 +15,7 @@ export class UserGetQueryHandler implements IQueryHandler<UserGetQuery> {
           id: query.id,
         },
       });
-      logSegment.log('Fetched user:', user);
+      logSegment.log('Fetched user:', user || 'NULL');
       return user;
     });
   }

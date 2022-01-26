@@ -59,7 +59,7 @@ export class UsersController extends BaseController {
   @ApiResponse({ status: HttpStatus.OK, type: UserDTO })
   @ApiResponse({ status: HttpStatus.NO_CONTENT }) // No user
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
-  public async getMe(@Res({ passthrough: true }) res: Response, @ReqUser() user: null | User): Promise<null | UserDTO> {
+  public getMe(@Res({ passthrough: true }) res: Response, @ReqUser() user: null | User): null | UserDTO {
     return this.logger.trackSegmentSync(this.getMe.name, () => {
       if (!user) {
         res.status(HttpStatus.NO_CONTENT);

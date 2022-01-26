@@ -34,6 +34,7 @@
     "precommit": "yarn precommit:format && yarn ci:lint && yarn ci:test",
     "precommit:format": "node tools/scripts/precommit-format.js",
     "----------CI----------": "------------------------------",
+    "ci": "yarn ci:install-deps && yarn ci:format && yarn ci:lint && yarn ci:test && yarn ci:e2e && yarn ci:build && yarn ci:deploy",
     "ci:install-deps": "yarn install --frozen-lockfile --non-interactive && rm -f node_modules/@angular/compiler-cli/ngcc/__ngcc_lock_file__",
     "ci:format": "yarn format:check --base=origin/master",
     "ci:lint": "yarn affected:lint --base=origin/master",

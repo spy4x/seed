@@ -1,5 +1,6 @@
 // region MUST GO BEFORE IMPORTS
 const isEnv = jest.fn();
+/* eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion */
 jest.mock('../../constants', () => ({ ...(jest.requireActual('../../constants') as any), isEnv }));
 const verifyIdToken = jest.fn();
 const getUser = jest.fn();

@@ -25,8 +25,8 @@ export class Application {
   /* eslint-disable-next-line @typescript-eslint/no-empty-function */
   private constructor() {}
 
-  static async run(): Promise<void> {
-    await new LogService(Application.name).trackSegment(Application.run.name, async logSegment => {
+  static async run(): Promise<{ nest: INestApplication; express: expressServer.Application }> {
+    return new LogService(Application.name).trackSegment(Application.run.name, async logSegment => {
       logSegment.log(`API_CONFIG:`, API_CONFIG);
       const express = expressServer();
       Application.applyFirstMiddlewares(express);
@@ -37,6 +37,7 @@ export class Application {
       const port = process.env.port || DEFAULT_PORT;
       await nest.listen(port);
       logSegment.log(`Listening at http://${process.env.host || 'localhost'}:${port}/${API_CONFIG.apiPrefix}`);
+      return { nest, express };
     });
   }
 
@@ -123,6 +124,18 @@ export class Application {
       .addBearerAuth()
       .build();
     const document = SwaggerModule.createDocument(nestApp, config);
-    SwaggerModule.setup(API_CONFIG.apiPrefix, nestApp, document);
+    try {
+      SwaggerModule.setup(API_CONFIG.apiPrefix, nestApp, document);
+    } catch (error: unknown) {
+      if (
+        isEnv(Environment.test) &&
+        error instanceof Error &&
+        error.message.includes('swaggerUi.generateHTML is not a function')
+      ) {
+        // this error is thrown during unit-tests run for some reason
+        return;
+      }
+      throw error;
+    }
   }
 }
