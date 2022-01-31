@@ -123,7 +123,7 @@
 ✅ [Prettier config](.prettierrc)  
 ✅ Code quality control: [Pre-commit hook](package.json) and [CI/CD](cloud-build/check.yaml)  
 🕑 Init whole project via script  
-🕑 Keep secret keys safe in Google Cloud Secret Manager  
+✅ Keep secret keys safe in Google Cloud Secret Manager  
 🕑 Keep secret keys safe on localhost  
 🕑 Calculate affected apps based on latest release tag  
 🕑 Staging environment  
@@ -181,9 +181,8 @@
 🕑 Provide environment variables from secret manager  
 🕑 Build once, use bundle for every environment  
 #### Styles
-✅ Bootstrap  
-🕑 own styles library  
-🕑 mobile-first, responsive  
+✅ Bootstrap + Mobile-first responsive design
+✅ [Styles shared between frontend apps](libs/front/shared/styles)
 🕑 How to manage styles on component level? (no component-level styles)  
 #### Forms & "Editor" component
 🕑 Handle input & output better (prevent infinite cycle and dirty hacks to avoid it)  
