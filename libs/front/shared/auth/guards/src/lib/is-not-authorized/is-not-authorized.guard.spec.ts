@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { hot } from '@nrwl/angular/testing';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
 import { Router } from '@angular/router';
 import { AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN, AuthSelectors } from '@seed/front/shared/auth/state';
 import { IsNotAuthorizedGuard } from './is-not-authorized.guard';
+import { hot } from 'jasmine-marbles';
 
 describe(IsNotAuthorizedGuard.name, () => {
   // region SETUP

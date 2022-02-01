@@ -1,33 +1,5 @@
 {
   "version": 1,
-  "cli": {
-    "defaultCollection": "@nrwl/angular"
-  },
-  "defaultProject": "front-web-client",
-  "schematics": {
-    "@nrwl/schematics:component": {
-      "styleext": "sass",
-      "spec": true,
-      "flat": true,
-      "changeDetection": "OnPush"
-    },
-    "@nrwl/angular:component": {
-      "style": "sass",
-      "inlineStyle": true,
-      "spec": true,
-      "flat": true,
-      "changeDetection": "OnPush"
-    },
-    "@nrwl/angular:application": {
-      "linter": "eslint",
-      "unitTestRunner": "jest",
-      "e2eTestRunner": "cypress"
-    },
-    "@nrwl/angular:library": {
-      "linter": "eslint",
-      "unitTestRunner": "jest"
-    }
-  },
   "projects": {
     "back-api": {
       "root": "apps/back/api",
@@ -85,7 +57,8 @@
             "color": true
           }
         }
-      }
+      },
+      "tags": []
     },
     "back-api-core": {
       "root": "libs/back/api/core",
@@ -114,36 +87,30 @@
           },
           "outputs": ["coverage/libs/back/api/core"]
         }
-      }
+      },
+      "tags": []
     },
-    "back-api-users": {
-      "root": "libs/back/api/users",
-      "sourceRoot": "libs/back/api/users/src",
+    "back-api-notifications": {
+      "root": "libs/back/api/notifications",
+      "sourceRoot": "libs/back/api/notifications/src",
       "projectType": "library",
-      "schematics": {},
       "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "libs/back/api/users/**/*.ts",
-              "libs/back/api/users/**/*.spec.ts",
-              "libs/back/api/users/**/*.spec.tsx",
-              "libs/back/api/users/**/*.spec.js",
-              "libs/back/api/users/**/*.spec.jsx",
-              "libs/back/api/users/**/*.d.ts"
-            ]
+            "lintFilePatterns": ["libs/back/api/notifications/**/*.ts"]
           }
         },
         "test": {
           "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/back/api/notifications"],
           "options": {
-            "jestConfig": "libs/back/api/users/jest.config.js",
+            "jestConfig": "libs/back/api/notifications/jest.config.js",
             "passWithNoTests": true
-          },
-          "outputs": ["coverage/libs/back/api/users"]
+          }
         }
-      }
+      },
+      "tags": []
     },
     "back-api-shared": {
       "root": "libs/back/api/shared",
@@ -172,7 +139,493 @@
           },
           "outputs": ["coverage/libs/back/api/shared"]
         }
-      }
+      },
+      "tags": []
+    },
+    "back-api-user-devices": {
+      "root": "libs/back/api/user-devices",
+      "sourceRoot": "libs/back/api/user-devices/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/back/api/user-devices/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/back/api/user-devices"],
+          "options": {
+            "jestConfig": "libs/back/api/user-devices/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "back-api-users": {
+      "root": "libs/back/api/users",
+      "sourceRoot": "libs/back/api/users/src",
+      "projectType": "library",
+      "schematics": {},
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/back/api/users/**/*.ts",
+              "libs/back/api/users/**/*.spec.ts",
+              "libs/back/api/users/**/*.spec.tsx",
+              "libs/back/api/users/**/*.spec.js",
+              "libs/back/api/users/**/*.spec.jsx",
+              "libs/back/api/users/**/*.d.ts"
+            ]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/back/api/users/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/libs/back/api/users"]
+        }
+      },
+      "tags": []
+    },
+    "e2e-admin-panel": {
+      "root": "apps/e2e/admin-panel",
+      "sourceRoot": "apps/e2e/admin-panel/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/e2e/admin-panel/cypress.json",
+            "tsConfig": "apps/e2e/admin-panel/tsconfig.e2e.json",
+            "devServerTarget": "front-admin-panel:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "front-admin-panel:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/e2e/admin-panel/**/*.{js,ts}"]
+          }
+        }
+      },
+      "tags": [],
+      "implicitDependencies": ["front-admin-panel"]
+    },
+    "e2e-shared-auth": {
+      "root": "libs/e2e/shared/auth",
+      "sourceRoot": "libs/e2e/shared/auth/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/e2e/shared/auth/**/*.ts"]
+          }
+        }
+      },
+      "tags": []
+    },
+    "e2e-web-client": {
+      "root": "apps/e2e/web-client",
+      "sourceRoot": "apps/e2e/web-client/src",
+      "projectType": "application",
+      "architect": {
+        "e2e": {
+          "builder": "@nrwl/cypress:cypress",
+          "options": {
+            "cypressConfig": "apps/e2e/web-client/cypress.json",
+            "tsConfig": "apps/e2e/web-client/tsconfig.e2e.json",
+            "devServerTarget": "front-web-client:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "front-web-client:serve:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/e2e/web-client/**/*.{js,ts}"]
+          }
+        }
+      },
+      "tags": [],
+      "implicitDependencies": ["front-web-client"]
+    },
+    "front-admin-panel": {
+      "projectType": "application",
+      "root": "apps/front/admin-panel",
+      "sourceRoot": "apps/front/admin-panel/src",
+      "prefix": "seed-admin-panel",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/apps/front/admin-panel",
+            "index": "apps/front/admin-panel/src/index.html",
+            "main": "apps/front/admin-panel/src/main.ts",
+            "polyfills": "apps/front/admin-panel/src/polyfills.ts",
+            "tsConfig": "apps/front/admin-panel/tsconfig.app.json",
+            "assets": ["apps/front/admin-panel/src/favicon.ico", "apps/front/admin-panel/src/assets"],
+            "styles": ["apps/front/admin-panel/src/styles/index.sass"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["apps/front/admin-panel/src/styles", "libs/front/shared/styles/src"]
+            },
+            "scripts": [],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "apps/front/admin-panel/src/environments/environment.ts",
+                  "with": "apps/front/admin-panel/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ]
+            }
+          },
+          "outputs": ["{options.outputPath}"],
+          "defaultConfiguration": ""
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "front-admin-panel:build",
+            "port": 4201,
+            "proxyConfig": "proxy.conf.json"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "front-admin-panel:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "front-admin-panel:build"
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["apps/front/admin-panel/src/**/*.ts", "apps/front/admin-panel/src/**/*.html"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "apps/front/admin-panel/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/apps/front/admin-panel"]
+        },
+        "deploy": {
+          "builder": "@nrwl/workspace:run-commands",
+          "options": {
+            "commands": [
+              "yarn firebase target:apply hosting front-admin-panel $FRONT_ADMIN_PANEL_HOSTING_TARGET --project=$PROJECT_ID",
+              "yarn firebase deploy --only hosting:front-admin-panel --project=$PROJECT_ID"
+            ],
+            "parallel": false,
+            "color": true
+          }
+        }
+      },
+      "tags": [],
+      "implicitDependencies": ["front-shared-styles"]
+    },
+    "front-admin-panel-auth": {
+      "projectType": "library",
+      "root": "libs/front/admin-panel/auth",
+      "sourceRoot": "libs/front/admin-panel/auth/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/admin-panel/auth"],
+          "options": {
+            "jestConfig": "libs/front/admin-panel/auth/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/admin-panel/auth/src/**/*.ts", "libs/front/admin-panel/auth/src/**/*.html"]
+          }
+        }
+      },
+      "tags": []
+    },
+    "front-admin-panel-core": {
+      "projectType": "library",
+      "root": "libs/front/admin-panel/core",
+      "sourceRoot": "libs/front/admin-panel/core/src",
+      "prefix": "seed-admin-panel-core",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/admin-panel/core/src/**/*.ts", "libs/front/admin-panel/core/src/**/*.html"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "options": {
+            "jestConfig": "libs/front/admin-panel/core/jest.config.js",
+            "passWithNoTests": true
+          },
+          "outputs": ["coverage/libs/front/admin-panel/core"]
+        }
+      },
+      "schematics": {
+        "@nrwl/angular:component": {
+          "style": "scss"
+        }
+      },
+      "tags": []
+    },
+    "front-admin-panel-profile": {
+      "projectType": "library",
+      "root": "libs/front/admin-panel/profile",
+      "sourceRoot": "libs/front/admin-panel/profile/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/admin-panel/profile"],
+          "options": {
+            "jestConfig": "libs/front/admin-panel/profile/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/admin-panel/profile/src/**/*.ts",
+              "libs/front/admin-panel/profile/src/**/*.html"
+            ]
+          }
+        }
+      },
+      "tags": []
+    },
+    "front-admin-panel-users": {
+      "projectType": "library",
+      "root": "libs/front/admin-panel/users",
+      "sourceRoot": "libs/front/admin-panel/users/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/admin-panel/users"],
+          "options": {
+            "jestConfig": "libs/front/admin-panel/users/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/admin-panel/users/src/**/*.ts",
+              "libs/front/admin-panel/users/src/**/*.html"
+            ]
+          }
+        }
+      },
+      "tags": []
+    },
+    "front-shared-auth-container": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth/container",
+      "sourceRoot": "libs/front/shared/auth/container/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth/container"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/container/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/shared/auth/container/src/**/*.ts",
+              "libs/front/shared/auth/container/src/**/*.html"
+            ]
+          }
+        }
+      },
+      "tags": []
+    },
+    "front-shared-auth-guards": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth/guards",
+      "sourceRoot": "libs/front/shared/auth/guards/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth/guards"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/guards/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/shared/auth/guards/src/**/*.ts",
+              "libs/front/shared/auth/guards/src/**/*.html"
+            ]
+          }
+        }
+      },
+      "tags": []
+    },
+    "front-shared-auth-state": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth/state",
+      "sourceRoot": "libs/front/shared/auth/state/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth/state"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/state/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/front/shared/auth/state/src/**/*.ts",
+              "libs/front/shared/auth/state/src/**/*.html"
+            ]
+          }
+        }
+      },
+      "tags": []
+    },
+    "front-shared-auth-ui": {
+      "projectType": "library",
+      "root": "libs/front/shared/auth/ui",
+      "sourceRoot": "libs/front/shared/auth/ui/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/auth/ui"],
+          "options": {
+            "jestConfig": "libs/front/shared/auth/ui/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/shared/auth/ui/src/**/*.ts", "libs/front/shared/auth/ui/src/**/*.html"]
+          }
+        }
+      },
+      "tags": []
+    },
+    "front-shared-router": {
+      "projectType": "library",
+      "root": "libs/front/shared/router",
+      "sourceRoot": "libs/front/shared/router/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/router"],
+          "options": {
+            "jestConfig": "libs/front/shared/router/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/shared/router/src/**/*.ts", "libs/front/shared/router/src/**/*.html"]
+          }
+        }
+      },
+      "tags": []
+    },
+    "front-shared-styles": {
+      "root": "libs/front/shared/styles",
+      "sourceRoot": "libs/front/shared/styles/src",
+      "projectType": "library",
+      "architect": {},
+      "tags": []
+    },
+    "front-shared-types": {
+      "root": "libs/front/shared/types",
+      "sourceRoot": "libs/front/shared/types/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/shared/types/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/shared/types"],
+          "options": {
+            "jestConfig": "libs/front/shared/types/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     },
     "front-web-client": {
       "projectType": "application",
@@ -281,7 +734,32 @@
             "color": true
           }
         }
-      }
+      },
+      "tags": [],
+      "implicitDependencies": ["front-shared-styles"]
+    },
+    "front-web-client-auth": {
+      "projectType": "library",
+      "root": "libs/front/web-client/auth",
+      "sourceRoot": "libs/front/web-client/auth/src",
+      "prefix": "seed",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/front/web-client/auth"],
+          "options": {
+            "jestConfig": "libs/front/web-client/auth/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/front/web-client/auth/src/**/*.ts", "libs/front/web-client/auth/src/**/*.html"]
+          }
+        }
+      },
+      "tags": []
     },
     "front-web-client-core": {
       "projectType": "library",
@@ -308,523 +786,8 @@
         "@nrwl/angular:component": {
           "style": "scss"
         }
-      }
-    },
-    "front-admin-panel": {
-      "projectType": "application",
-      "root": "apps/front/admin-panel",
-      "sourceRoot": "apps/front/admin-panel/src",
-      "prefix": "seed-admin-panel",
-      "architect": {
-        "build": {
-          "builder": "@angular-devkit/build-angular:browser",
-          "options": {
-            "outputPath": "dist/apps/front/admin-panel",
-            "index": "apps/front/admin-panel/src/index.html",
-            "main": "apps/front/admin-panel/src/main.ts",
-            "polyfills": "apps/front/admin-panel/src/polyfills.ts",
-            "tsConfig": "apps/front/admin-panel/tsconfig.app.json",
-            "assets": ["apps/front/admin-panel/src/favicon.ico", "apps/front/admin-panel/src/assets"],
-            "styles": ["apps/front/admin-panel/src/styles/index.sass"],
-            "stylePreprocessorOptions": {
-              "includePaths": ["apps/front/admin-panel/src/styles", "libs/front/shared/styles/src"]
-            },
-            "scripts": [],
-            "vendorChunk": true,
-            "extractLicenses": false,
-            "buildOptimizer": false,
-            "sourceMap": true,
-            "optimization": false,
-            "namedChunks": true
-          },
-          "configurations": {
-            "production": {
-              "fileReplacements": [
-                {
-                  "replace": "apps/front/admin-panel/src/environments/environment.ts",
-                  "with": "apps/front/admin-panel/src/environments/environment.prod.ts"
-                }
-              ],
-              "optimization": true,
-              "outputHashing": "all",
-              "sourceMap": false,
-              "namedChunks": false,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true,
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kb",
-                  "maximumError": "1mb"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "2kb",
-                  "maximumError": "4kb"
-                }
-              ]
-            }
-          },
-          "outputs": ["{options.outputPath}"],
-          "defaultConfiguration": ""
-        },
-        "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            "browserTarget": "front-admin-panel:build",
-            "port": 4201,
-            "proxyConfig": "proxy.conf.json"
-          },
-          "configurations": {
-            "production": {
-              "browserTarget": "front-admin-panel:build:production"
-            }
-          }
-        },
-        "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
-          "options": {
-            "browserTarget": "front-admin-panel:build"
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/front/admin-panel/src/**/*.ts", "apps/front/admin-panel/src/**/*.html"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/front/admin-panel/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/apps/front/admin-panel"]
-        },
-        "deploy": {
-          "builder": "@nrwl/workspace:run-commands",
-          "options": {
-            "commands": [
-              "yarn firebase target:apply hosting front-admin-panel $FRONT_ADMIN_PANEL_HOSTING_TARGET --project=$PROJECT_ID",
-              "yarn firebase deploy --only hosting:front-admin-panel --project=$PROJECT_ID"
-            ],
-            "parallel": false,
-            "color": true
-          }
-        }
-      }
-    },
-    "front-admin-panel-core": {
-      "projectType": "library",
-      "root": "libs/front/admin-panel/core",
-      "sourceRoot": "libs/front/admin-panel/core/src",
-      "prefix": "seed-admin-panel-core",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/front/admin-panel/core/src/**/*.ts", "libs/front/admin-panel/core/src/**/*.html"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "libs/front/admin-panel/core/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/libs/front/admin-panel/core"]
-        }
       },
-      "schematics": {
-        "@nrwl/angular:component": {
-          "style": "scss"
-        }
-      }
-    },
-    "e2e-web-client": {
-      "root": "apps/e2e/web-client",
-      "sourceRoot": "apps/e2e/web-client/src",
-      "projectType": "application",
-      "architect": {
-        "e2e": {
-          "builder": "@nrwl/cypress:cypress",
-          "options": {
-            "cypressConfig": "apps/e2e/web-client/cypress.json",
-            "tsConfig": "apps/e2e/web-client/tsconfig.e2e.json",
-            "devServerTarget": "front-web-client:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "front-web-client:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/e2e/web-client/**/*.{js,ts}"]
-          }
-        }
-      }
-    },
-    "e2e-admin-panel": {
-      "root": "apps/e2e/admin-panel",
-      "sourceRoot": "apps/e2e/admin-panel/src",
-      "projectType": "application",
-      "architect": {
-        "e2e": {
-          "builder": "@nrwl/cypress:cypress",
-          "options": {
-            "cypressConfig": "apps/e2e/admin-panel/cypress.json",
-            "tsConfig": "apps/e2e/admin-panel/tsconfig.e2e.json",
-            "devServerTarget": "front-admin-panel:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "front-admin-panel:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["apps/e2e/admin-panel/**/*.{js,ts}"]
-          }
-        }
-      }
-    },
-    "shared-helpers": {
-      "root": "libs/shared/helpers",
-      "sourceRoot": "libs/shared/helpers/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/shared/helpers/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/shared/helpers"],
-          "options": {
-            "jestConfig": "libs/shared/helpers/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "shared-constants": {
-      "root": "libs/shared/constants",
-      "sourceRoot": "libs/shared/constants/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/shared/constants/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/shared/constants"],
-          "options": {
-            "jestConfig": "libs/shared/constants/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "shared-mock-data": {
-      "root": "libs/shared/mock-data",
-      "sourceRoot": "libs/shared/mock-data/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/shared/mock-data/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/shared/mock-data"],
-          "options": {
-            "jestConfig": "libs/shared/mock-data/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "shared-types": {
-      "root": "libs/shared/types",
-      "sourceRoot": "libs/shared/types/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/shared/types/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/shared/types"],
-          "options": {
-            "jestConfig": "libs/shared/types/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "front-shared-types": {
-      "root": "libs/front/shared/types",
-      "sourceRoot": "libs/front/shared/types/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/front/shared/types/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/types"],
-          "options": {
-            "jestConfig": "libs/front/shared/types/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "back-api-user-devices": {
-      "root": "libs/back/api/user-devices",
-      "sourceRoot": "libs/back/api/user-devices/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/back/api/user-devices/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/back/api/user-devices"],
-          "options": {
-            "jestConfig": "libs/back/api/user-devices/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "back-api-notifications": {
-      "root": "libs/back/api/notifications",
-      "sourceRoot": "libs/back/api/notifications/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/back/api/notifications/**/*.ts"]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/back/api/notifications"],
-          "options": {
-            "jestConfig": "libs/back/api/notifications/jest.config.js",
-            "passWithNoTests": true
-          }
-        }
-      }
-    },
-    "front-shared-styles": {
-      "root": "libs/front/shared/styles",
-      "sourceRoot": "libs/front/shared/styles/src",
-      "projectType": "library",
-      "architect": {}
-    },
-    "front-shared-auth-state": {
-      "projectType": "library",
-      "root": "libs/front/shared/auth/state",
-      "sourceRoot": "libs/front/shared/auth/state/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/auth/state"],
-          "options": {
-            "jestConfig": "libs/front/shared/auth/state/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "libs/front/shared/auth/state/src/**/*.ts",
-              "libs/front/shared/auth/state/src/**/*.html"
-            ]
-          }
-        }
-      }
-    },
-    "front-shared-auth-ui": {
-      "projectType": "library",
-      "root": "libs/front/shared/auth/ui",
-      "sourceRoot": "libs/front/shared/auth/ui/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/auth/ui"],
-          "options": {
-            "jestConfig": "libs/front/shared/auth/ui/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/front/shared/auth/ui/src/**/*.ts", "libs/front/shared/auth/ui/src/**/*.html"]
-          }
-        }
-      }
-    },
-    "front-shared-auth-container": {
-      "projectType": "library",
-      "root": "libs/front/shared/auth/container",
-      "sourceRoot": "libs/front/shared/auth/container/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/auth/container"],
-          "options": {
-            "jestConfig": "libs/front/shared/auth/container/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "libs/front/shared/auth/container/src/**/*.ts",
-              "libs/front/shared/auth/container/src/**/*.html"
-            ]
-          }
-        }
-      }
-    },
-    "e2e-shared-auth": {
-      "root": "libs/e2e/shared/auth",
-      "sourceRoot": "libs/e2e/shared/auth/src",
-      "projectType": "library",
-      "architect": {
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/e2e/shared/auth/**/*.ts"]
-          }
-        }
-      }
-    },
-    "front-web-client-auth": {
-      "projectType": "library",
-      "root": "libs/front/web-client/auth",
-      "sourceRoot": "libs/front/web-client/auth/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/web-client/auth"],
-          "options": {
-            "jestConfig": "libs/front/web-client/auth/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/front/web-client/auth/src/**/*.ts", "libs/front/web-client/auth/src/**/*.html"]
-          }
-        }
-      }
-    },
-    "front-admin-panel-auth": {
-      "projectType": "library",
-      "root": "libs/front/admin-panel/auth",
-      "sourceRoot": "libs/front/admin-panel/auth/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/admin-panel/auth"],
-          "options": {
-            "jestConfig": "libs/front/admin-panel/auth/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": ["libs/front/admin-panel/auth/src/**/*.ts", "libs/front/admin-panel/auth/src/**/*.html"]
-          }
-        }
-      }
-    },
-    "front-admin-panel-profile": {
-      "projectType": "library",
-      "root": "libs/front/admin-panel/profile",
-      "sourceRoot": "libs/front/admin-panel/profile/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/admin-panel/profile"],
-          "options": {
-            "jestConfig": "libs/front/admin-panel/profile/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "libs/front/admin-panel/profile/src/**/*.ts",
-              "libs/front/admin-panel/profile/src/**/*.html"
-            ]
-          }
-        }
-      }
-    },
-    "front-admin-panel-users": {
-      "projectType": "library",
-      "root": "libs/front/admin-panel/users",
-      "sourceRoot": "libs/front/admin-panel/users/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/admin-panel/users"],
-          "options": {
-            "jestConfig": "libs/front/admin-panel/users/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "libs/front/admin-panel/users/src/**/*.ts",
-              "libs/front/admin-panel/users/src/**/*.html"
-            ]
-          }
-        }
-      }
+      "tags": []
     },
     "front-web-client-profile": {
       "projectType": "library",
@@ -849,54 +812,96 @@
             ]
           }
         }
-      }
+      },
+      "tags": []
     },
-    "front-shared-auth-guards": {
+    "shared-constants": {
+      "root": "libs/shared/constants",
+      "sourceRoot": "libs/shared/constants/src",
       "projectType": "library",
-      "root": "libs/front/shared/auth/guards",
-      "sourceRoot": "libs/front/shared/auth/guards/src",
-      "prefix": "seed",
       "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/auth/guards"],
-          "options": {
-            "jestConfig": "libs/front/shared/auth/guards/jest.config.js",
-            "passWithNoTests": true
-          }
-        },
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "libs/front/shared/auth/guards/src/**/*.ts",
-              "libs/front/shared/auth/guards/src/**/*.html"
-            ]
-          }
-        }
-      }
-    },
-    "front-shared-router": {
-      "projectType": "library",
-      "root": "libs/front/shared/router",
-      "sourceRoot": "libs/front/shared/router/src",
-      "prefix": "seed",
-      "architect": {
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/front/shared/router"],
-          "options": {
-            "jestConfig": "libs/front/shared/router/jest.config.js",
-            "passWithNoTests": true
+            "lintFilePatterns": ["libs/shared/constants/**/*.ts"]
           }
         },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared/constants"],
+          "options": {
+            "jestConfig": "libs/shared/constants/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "shared-helpers": {
+      "root": "libs/shared/helpers",
+      "sourceRoot": "libs/shared/helpers/src",
+      "projectType": "library",
+      "architect": {
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": ["libs/front/shared/router/src/**/*.ts", "libs/front/shared/router/src/**/*.html"]
+            "lintFilePatterns": ["libs/shared/helpers/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared/helpers"],
+          "options": {
+            "jestConfig": "libs/shared/helpers/jest.config.js",
+            "passWithNoTests": true
           }
         }
-      }
+      },
+      "tags": []
+    },
+    "shared-mock-data": {
+      "root": "libs/shared/mock-data",
+      "sourceRoot": "libs/shared/mock-data/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/shared/mock-data/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared/mock-data"],
+          "options": {
+            "jestConfig": "libs/shared/mock-data/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
+    "shared-types": {
+      "root": "libs/shared/types",
+      "sourceRoot": "libs/shared/types/src",
+      "projectType": "library",
+      "architect": {
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": ["libs/shared/types/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/shared/types"],
+          "options": {
+            "jestConfig": "libs/shared/types/jest.config.js",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
     }
   }
 }

@@ -19,101 +19,45 @@
       "options": {
         "cacheableOperations": ["build", "lint", "test", "e2e"],
         "canTrackAnalytics": false,
-        "showUsageWarnings": true
+        "showUsageWarnings": true,
+        "parallel": 1
       }
     }
   },
-  "projects": {
-    "back-api-core": {
-      "tags": []
+  "targetDependencies": {
+    "build": [
+      {
+        "target": "build",
+        "projects": "dependencies"
+      }
+    ]
+  },
+  "cli": {
+    "defaultCollection": "@nrwl/angular"
+  },
+  "defaultProject": "front-web-client",
+  "generators": {
+    "@nrwl/schematics:component": {
+      "styleext": "sass",
+      "spec": true,
+      "flat": true,
+      "changeDetection": "OnPush"
     },
-    "back-api-users": {
-      "tags": []
+    "@nrwl/angular:component": {
+      "style": "sass",
+      "inlineStyle": true,
+      "spec": true,
+      "flat": true,
+      "changeDetection": "OnPush"
     },
-    "back-api-shared": {
-      "tags": []
+    "@nrwl/angular:application": {
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "cypress"
     },
-    "front-web-client": {
-      "tags": [],
-      "implicitDependencies": ["front-shared-styles"]
-    },
-    "front-web-client-core": {
-      "tags": []
-    },
-    "e2e-web-client": {
-      "tags": [],
-      "implicitDependencies": ["front-web-client"]
-    },
-    "front-admin-panel": {
-      "tags": [],
-      "implicitDependencies": ["front-shared-styles"]
-    },
-    "e2e-admin-panel": {
-      "tags": [],
-      "implicitDependencies": ["front-admin-panel"]
-    },
-    "front-admin-panel-core": {
-      "tags": []
-    },
-    "back-api": {
-      "tags": []
-    },
-    "shared-helpers": {
-      "tags": []
-    },
-    "shared-constants": {
-      "tags": []
-    },
-    "shared-mock-data": {
-      "tags": []
-    },
-    "shared-types": {
-      "tags": []
-    },
-    "front-shared-types": {
-      "tags": []
-    },
-    "back-api-user-devices": {
-      "tags": []
-    },
-    "back-api-notifications": {
-      "tags": []
-    },
-    "front-shared-styles": {
-      "tags": []
-    },
-    "front-shared-auth-state": {
-      "tags": []
-    },
-    "front-shared-auth-ui": {
-      "tags": []
-    },
-    "front-shared-auth-container": {
-      "tags": []
-    },
-    "e2e-shared-auth": {
-      "tags": []
-    },
-    "front-web-client-auth": {
-      "tags": []
-    },
-    "front-admin-panel-auth": {
-      "tags": []
-    },
-    "front-admin-panel-profile": {
-      "tags": []
-    },
-    "front-admin-panel-users": {
-      "tags": []
-    },
-    "front-web-client-profile": {
-      "tags": []
-    },
-    "front-shared-auth-guards": {
-      "tags": []
-    },
-    "front-shared-router": {
-      "tags": []
+    "@nrwl/angular:library": {
+      "linter": "eslint",
+      "unitTestRunner": "jest"
     }
   }
 }
