@@ -24,12 +24,6 @@
     }
   },
   "projects": {
-    "dev-sandbox": {
-      "tags": ["dev"]
-    },
-    "back-cloud-functions": {
-      "tags": []
-    },
     "back-api-core": {
       "tags": []
     },

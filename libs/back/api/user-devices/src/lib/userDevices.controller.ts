@@ -16,7 +16,7 @@ import {
 import { ApiBearerAuth, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import {
   BaseController,
-  IsAuthenticatedGuard,
+  DoesUserExistGuard,
   NotFoundInterceptor,
   PaginationResponseDTO,
   UserDeviceCreateCommand,
@@ -24,7 +24,7 @@ import {
   UserDeviceDTO,
   UserDevicesFindMyQuery,
   UserDeviceUpdateCommand,
-  UserId,
+  ReqUserId,
 } from '@seed/back/api/shared';
 
 @ApiTags('user-devices')
@@ -32,7 +32,7 @@ import {
 @Controller('user-devices')
 export class UserDevicesController extends BaseController {
   @Get('/my')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({
     status: HttpStatus.OK,
     type: [UserDeviceDTO],
@@ -41,28 +41,28 @@ export class UserDevicesController extends BaseController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public async findMy(
     @Query() query: UserDevicesFindMyQuery,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<PaginationResponseDTO<UserDeviceDTO>> {
     query.currentUserId = currentUserId;
     return this.logger.trackSegment(this.findMy.name, async () => this.queryBus.execute(query));
   }
 
   @Post()
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({ status: HttpStatus.CREATED, type: UserDeviceDTO })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   @ApiResponse({ status: HttpStatus.CONFLICT })
   public async create(
     @Body() command: UserDeviceCreateCommand,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<UserDeviceDTO> {
     command.userId = currentUserId;
     return this.logger.trackSegment(this.create.name, async () => this.commandBus.execute(command));
   }
 
   @Patch(':id')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @UseInterceptors(NotFoundInterceptor)
   @ApiParam({ name: 'id', type: String })
   @ApiResponse({ status: HttpStatus.OK, type: UserDeviceDTO })
@@ -71,7 +71,7 @@ export class UserDevicesController extends BaseController {
   @ApiResponse({ status: HttpStatus.NOT_FOUND })
   public async update(
     @Body() command: UserDeviceUpdateCommand,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
     @Param('id') id: string,
   ): Promise<UserDeviceDTO> {
     command.id = id;
@@ -86,7 +86,7 @@ export class UserDevicesController extends BaseController {
   }
 
   @Delete(':id')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @UseInterceptors(NotFoundInterceptor)
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiParam({ name: 'id', type: String })
@@ -97,7 +97,7 @@ export class UserDevicesController extends BaseController {
   public async delete(
     @Body() command: UserDeviceDeleteCommand,
     @Param('id') id: string,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<UserDeviceDTO> {
     command.id = id;
     command.currentUserId = currentUserId;

@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import { User } from '@prisma/client';
+import type { User } from '@prisma/client';
 
 /**
  * @returns TRUE if user is authorized, STRING (reason) if user is not authorized.

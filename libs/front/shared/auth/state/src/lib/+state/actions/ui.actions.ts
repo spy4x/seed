@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { AuthProvider } from '@seed/front/shared/types';
 
 const prefix = `[Auth/UI]`;

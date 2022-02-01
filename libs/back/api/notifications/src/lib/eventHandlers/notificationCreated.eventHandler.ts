@@ -38,7 +38,7 @@ export class NotificationCreatedEventHandler implements IEventHandler<Notificati
         return;
       }
 
-      const { title, body } = await this.getNotificationTexts(notification);
+      const { title, body } = this.getNotificationTexts(notification);
 
       await this.commandBus.execute(
         new NotificationSendPushCommand(
@@ -77,8 +77,8 @@ export class NotificationCreatedEventHandler implements IEventHandler<Notificati
     );
   }
 
-  async getNotificationTexts(notification: Notification): Promise<{ title: string; body: string }> {
-    return this.logger.trackSegment(this.fetchUserDevices.name, () => {
+  getNotificationTexts(notification: Notification): { title: string; body: string } {
+    return this.logger.trackSegmentSync(this.fetchUserDevices.name, () => {
       switch (notification.type) {
         case NotificationType.WELCOME:
           return {

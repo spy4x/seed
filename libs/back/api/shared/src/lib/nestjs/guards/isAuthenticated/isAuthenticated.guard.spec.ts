@@ -1,27 +1,24 @@
 import { IsAuthenticatedGuard } from './isAuthenticated.guard';
-import { UnauthorizedException } from '@nestjs/common';
 
-describe('IsAuthenticatedGuard', () => {
-  let userId: null | string = null;
-
-  const getRequestMock = jest.fn().mockImplementation(() => ({
-    userId,
-  }));
-
-  const contextMock = jest.fn().mockImplementation(() => ({
+describe(IsAuthenticatedGuard.name, () => {
+  // region SETUP
+  const isAuthenticatedGuard = new IsAuthenticatedGuard();
+  const getReq = jest.fn();
+  const context = {
     switchToHttp: () => ({
-      getRequest: getRequestMock,
+      getRequest: getReq,
     }),
-  }));
-  it('should throw UnauthorizedException if userId is null', () => {
-    userId = null;
-    const isAuthenticatedGuard = new IsAuthenticatedGuard();
-    expect(() => isAuthenticatedGuard.canActivate(new contextMock())).toThrow(UnauthorizedException);
+  } as any;
+  beforeEach(() => getReq.mockClear());
+  // endregion
+
+  it('throws UnauthorizedException if req.userId is null', () => {
+    getReq.mockReturnValue({ userId: undefined });
+    expect(isAuthenticatedGuard.canActivate(context)).toBe(false);
   });
-  it('should return true if userId is not null', () => {
-    userId = '123';
-    const isAuthenticatedGuard = new IsAuthenticatedGuard();
-    const value = isAuthenticatedGuard.canActivate(new contextMock());
-    expect(value).toBeTruthy();
+
+  it('returns true if req.userId is defined', () => {
+    getReq.mockReturnValue({ userId: '123' });
+    expect(isAuthenticatedGuard.canActivate(context)).toBe(true);
   });
 });

@@ -1,46 +1,39 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import * as Sentry from '@sentry/node';
-import { FirebaseAuthService, LogService } from '../../../services';
-import { isEnv } from '../../../constants';
-import { Environment } from '@seed/shared/types';
-import { FIREBASE_AUTH_UID_LENGTH } from '@seed/shared/constants';
-
-export type RequestExtended = Request & { userId?: string };
+import { LogService } from '../../../services';
+import { User } from '@prisma/client';
+import { QueryBusExt, UserGetQuery } from '../../../cqrs';
+import { RequestExtended } from '../../baseClasses';
 
 /**
- * The UserMiddleware takes a token from the request
- * Gets the userId attached to the current token
- * Attaches the userId to the request
+ * Uses "req.userId" to get related User and save it to "req.user".
  */
 @Injectable()
 export class UserMiddleware implements NestMiddleware {
   logService = new LogService(UserMiddleware.name);
 
-  constructor(private readonly firebaseAuthService: FirebaseAuthService) {}
+  constructor(private readonly queryBus: QueryBusExt) {}
 
   async use(req: RequestExtended, _res: Response, next: () => void): Promise<void> {
     await this.logService.trackSegment(this.use.name, async logSegment => {
-      const { authorization } = req.headers;
+      const { userId } = req;
 
-      if (!authorization || Array.isArray(authorization)) {
-        logSegment.log(`Token is not presented`);
-        Sentry.setUser(null);
+      if (!userId) {
+        logSegment.log(`req.userId is not presented`);
         next();
         return;
       }
 
-      logSegment.log(`Token: ${authorization}`);
-      const token = authorization.replace('Bearer ', '');
+      const user = await this.queryBus.execute<null | User>(new UserGetQuery(userId));
+      req.user = user || undefined;
 
-      const userId =
-        isEnv(Environment.development) && token.length <= FIREBASE_AUTH_UID_LENGTH
-          ? token
-          : await this.firebaseAuthService.validateJWT(token);
-      logSegment.log(userId ? `User Id: ${userId}` : 'Token is not valid.');
-      req.userId = userId || undefined;
+      logSegment.log(`User`, { userId, user });
 
-      Sentry.setUser(userId ? { id: userId } : null);
+      if (user) {
+        Sentry.setUser(user);
+      }
+
       next();
     });
   }

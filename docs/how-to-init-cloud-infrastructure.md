@@ -2,12 +2,21 @@
 Project initialization (for new users)
 
 MANUALLY:
-1. Install [Google Cloud CLI](https://cloud.google.com/sdk/docs/install) and [Firebase CLI](https://firebase.google.com/docs/cli)
-2. Create Firebase Hosting Sites for Admin Panel & Web Client:
+1. Install [Google Cloud CLI](https://cloud.google.com/sdk/docs/install)
+2. Authenticate in Google Cloud CLI:
+```
+gcloud auth login
+```
+3. Install [Firebase CLI](https://firebase.google.com/docs/cli)
+4. Authenticate in Firebase CLI:
+```
+firebase login
+```
+5. Create Firebase Hosting Sites for Admin Panel & Web Client:
 ```
 firebase hosting:sites:create SITE_ID
 ```
-3. Add created sites to the list of trusted domains for Firebase Authentication.
+6. Add created sites to the list of trusted domains for Firebase Authentication.
 
    
 FOR SCRIPT:

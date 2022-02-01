@@ -2,7 +2,7 @@ import { Action, createReducer, on } from '@ngrx/store';
 import * as AuthUIActions from './actions/ui.actions';
 import * as AuthAPIActions from './actions/api.actions';
 import { AuthProvider, AuthStage } from '@seed/front/shared/types';
-import { User } from '@prisma/client';
+import type { User } from '@prisma/client';
 
 export const AUTH_FEATURE_KEY = 'auth';
 

@@ -1,5 +1,3 @@
-[![Wallaby.js](https://img.shields.io/badge/wallaby.js-powered-blue.svg?style=flat&logo=github)](https://wallabyjs.com/oss/)
-
 #Seed
 
 
@@ -125,7 +123,7 @@
 ✅ [Prettier config](.prettierrc)  
 ✅ Code quality control: [Pre-commit hook](package.json) and [CI/CD](cloud-build/check.yaml)  
 🕑 Init whole project via script  
-🕑 Keep secret keys safe in Google Cloud Secret Manager  
+✅ Keep secret keys safe in Google Cloud Secret Manager  
 🕑 Keep secret keys safe on localhost  
 🕑 Calculate affected apps based on latest release tag  
 🕑 Staging environment  
@@ -142,7 +140,7 @@
 ✅ [Prisma](prisma/schema.prisma)  
 ✅ [Configure Swagger integration with Nest.js](libs/back/api/core/src/lib/app.ts)  
 ✅ [CQRS architecture](docs/backend/cqrs.md)  
-✅ [Verify user JWT authentication](libs/back/api/shared/src/lib/nestjs/middlewares/user/user.middleware.ts)  
+✅ [Verify user JWT authentication](libs/back/api/shared/src/lib/nestjs/middlewares/user-id/user.middleware.ts)  
 🕑 [Unit-testing controller](libs/back/api/users/src/lib/users.controller.spec.ts)  
 ✅ [Unit-testing command handler](libs/back/api/users/src/lib/commandHandlers/create/userCreate.commandHandler.spec.ts)  
 ✅ [Unit-testing query handler](libs/back/api/users/src/lib/queryHandlers/find/usersFind.queryHandler.spec.ts)  
@@ -183,9 +181,8 @@
 🕑 Provide environment variables from secret manager  
 🕑 Build once, use bundle for every environment  
 #### Styles
-✅ Bootstrap  
-🕑 own styles library  
-🕑 mobile-first, responsive  
+✅ Bootstrap + Mobile-first responsive design
+✅ [Styles shared between frontend apps](libs/front/shared/styles)
 🕑 How to manage styles on component level? (no component-level styles)  
 #### Forms & "Editor" component
 🕑 Handle input & output better (prevent infinite cycle and dirty hacks to avoid it)  

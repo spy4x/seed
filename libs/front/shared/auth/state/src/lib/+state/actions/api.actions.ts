@@ -1,5 +1,5 @@
 import { createAction, props } from '@ngrx/store';
-import { User } from '@prisma/client';
+import type { User } from '@prisma/client';
 import { AuthProvider } from '@seed/front/shared/types';
 import { AuthenticationActionPayload } from './authenticationActionPayload.interface';
 

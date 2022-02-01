@@ -29,107 +29,6 @@
     }
   },
   "projects": {
-    "dev-sandbox": {
-      "root": "apps/dev/sandbox",
-      "sourceRoot": "apps/dev/sandbox/src",
-      "projectType": "application",
-      "prefix": "dev-sandbox",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "outputPath": "dist/apps/dev/sandbox",
-            "main": "apps/dev/sandbox/src/main.ts",
-            "tsConfig": "apps/dev/sandbox/tsconfig.app.json",
-            "assets": []
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false
-            }
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "dev-sandbox:build"
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "apps/dev/sandbox/**/*.ts",
-              "apps/dev/sandbox/**/*.spec.ts",
-              "apps/dev/sandbox/**/*.d.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/dev/sandbox/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/apps/dev/sandbox"]
-        }
-      }
-    },
-    "back-cloud-functions": {
-      "root": "apps/back/cloud-functions",
-      "sourceRoot": "apps/back/cloud-functions/src",
-      "projectType": "application",
-      "prefix": "back-cloud-functions",
-      "schematics": {},
-      "architect": {
-        "build": {
-          "builder": "@nrwl/node:build",
-          "options": {
-            "outputPath": "dist/apps/back/cloud-functions",
-            "main": "apps/back/cloud-functions/src/main.ts",
-            "tsConfig": "apps/back/cloud-functions/tsconfig.app.json",
-            "assets": []
-          },
-          "configurations": {
-            "production": {
-              "optimization": true,
-              "extractLicenses": true,
-              "inspect": false,
-              "generatePackageJson": true
-            }
-          },
-          "outputs": ["{options.outputPath}"]
-        },
-        "serve": {
-          "builder": "@nrwl/node:execute",
-          "options": {
-            "buildTarget": "back-cloud-functions:build"
-          }
-        },
-        "lint": {
-          "builder": "@nrwl/linter:eslint",
-          "options": {
-            "lintFilePatterns": [
-              "apps/back/cloud-functions/**/*.ts",
-              "apps/back/cloud-functions/**/*.spec.ts",
-              "apps/back/cloud-functions/**/*.d.ts"
-            ]
-          }
-        },
-        "test": {
-          "builder": "@nrwl/jest:jest",
-          "options": {
-            "jestConfig": "apps/back/cloud-functions/jest.config.js",
-            "passWithNoTests": true
-          },
-          "outputs": ["coverage/apps/back/cloud-functions"]
-        }
-      }
-    },
     "back-api": {
       "root": "apps/back/api",
       "sourceRoot": "apps/back/api/src",
@@ -180,7 +79,7 @@
               "yarn build back-api --prod",
               "docker build . -t gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME -f back-api.dockerfile",
               "docker push gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME",
-              "gcloud run deploy $CLOUD_RUN_API_APP_NAME --image gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME --add-cloudsql-instances $INSTANCE_CONNECTION_NAME --update-env-vars DB_CONNECTION_STRING=$DB_CONNECTION_STRING,API_URL=$API_URL,REGION=$REGION,PROJECT_ID=$PROJECT_ID,API_KEY_CLOUD_TASKS=$API_KEY_CLOUD_TASKS --platform managed --region $REGION --allow-unauthenticated --project=$PROJECT_ID --service-account=cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com"
+              "gcloud run deploy $CLOUD_RUN_API_APP_NAME --image gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME --update-env-vars PROJECT_ID=$PROJECT_ID,REGION=$REGION,DB_CONNECTION_STRING=$DB_CONNECTION_STRING,REDIS_HOST=$REDIS_HOST,WEBSITE_URL=$WEBSITE_URL,SENTRY_DSN=$SENTRY_DSN,API_KEY_CLOUD_TASKS=$API_KEY_CLOUD_TASKS --platform managed --region $REGION --allow-unauthenticated --project=$PROJECT_ID --service-account=cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com"
             ],
             "parallel": false,
             "color": true
@@ -375,7 +274,6 @@
           "builder": "@nrwl/workspace:run-commands",
           "options": {
             "commands": [
-              "yarn build front-web-client --prod",
               "yarn firebase target:apply hosting front-web-client $FRONT_WEB_CLIENT_HOSTING_TARGET --project=$PROJECT_ID",
               "yarn firebase deploy --only hosting:front-web-client --project=$PROJECT_ID"
             ],
@@ -508,7 +406,6 @@
           "builder": "@nrwl/workspace:run-commands",
           "options": {
             "commands": [
-              "yarn build front-admin-panel --prod",
               "yarn firebase target:apply hosting front-admin-panel $FRONT_ADMIN_PANEL_HOSTING_TARGET --project=$PROJECT_ID",
               "yarn firebase deploy --only hosting:front-admin-panel --project=$PROJECT_ID"
             ],

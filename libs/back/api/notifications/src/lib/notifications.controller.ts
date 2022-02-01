@@ -7,14 +7,14 @@ import {
   ApiKeyGuard,
   ApiKeyGuardSetTrueValue,
   BaseController,
-  IsAuthenticatedGuard,
+  DoesUserExistGuard,
   NotificationCreateCommand,
   NotificationDTO,
   NotificationsFindMyQuery,
   NotificationsMarkAsReadCommand,
   NotificationsMarkAsReadDTO,
   PaginationResponseDTO,
-  UserId,
+  ReqUserId,
 } from '@seed/back/api/shared';
 import { ApiOperation } from '@nestjs/swagger/dist/decorators/api-operation.decorator';
 
@@ -23,7 +23,7 @@ import { ApiOperation } from '@nestjs/swagger/dist/decorators/api-operation.deco
 @Controller('notifications')
 export class NotificationsController extends BaseController {
   @Get('/my')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({
     status: HttpStatus.OK,
     type: [NotificationDTO],
@@ -32,20 +32,20 @@ export class NotificationsController extends BaseController {
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public async findMy(
     @Query() query: NotificationsFindMyQuery,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<PaginationResponseDTO<NotificationDTO>> {
     query.currentUserId = currentUserId;
     return this.logger.trackSegment(this.findMy.name, async () => this.queryBus.execute(query));
   }
 
   @Patch('/mark-as-read')
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({ status: HttpStatus.OK, type: NotificationsMarkAsReadDTO })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public async markAsRead(
     @Body() command: NotificationsMarkAsReadCommand,
-    @UserId() currentUserId: string,
+    @ReqUserId() currentUserId: string,
   ): Promise<NotificationsMarkAsReadDTO> {
     command.currentUserId = currentUserId;
     return this.logger.trackSegment(this.markAsRead.name, async () => this.commandBus.execute(command));
@@ -55,10 +55,10 @@ export class NotificationsController extends BaseController {
   @ApiOperation({
     description: `Endpoint for testing Push Notifications.`,
   })
-  @UseGuards(IsAuthenticatedGuard)
+  @UseGuards(DoesUserExistGuard)
   @ApiResponse({ status: HttpStatus.OK })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
-  public async test(@UserId() currentUserId: string): Promise<void> {
+  public async test(@ReqUserId() currentUserId: string): Promise<void> {
     return this.logger.trackSegment(this.test.name, async () =>
       this.commandBus.execute(new NotificationCreateCommand(currentUserId, NotificationType.TEST)),
     );

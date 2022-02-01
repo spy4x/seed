@@ -1,12 +1,9 @@
 {
-  "functions": {
-    "source": "dist/apps/back/cloud-functions",
-    "runtime": "nodejs12"
-  },
   "hosting": [
     {
       "target": "front-web-client",
       "public": "dist/apps/front/web-client",
+      "predeploy": ["yarn build front-web-client --prod"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
