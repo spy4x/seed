@@ -123,7 +123,7 @@ describe(AuthorizationEffects.name, () => {
         rewriteSelectors();
         actions$ = of(action);
         navigateByUrlMock.mockReturnValue(of(false));
-        spyOn(console, 'error');
+        jest.spyOn(console, 'error');
         getEffect().subscribe();
         expect(navigateByUrlMock).toHaveBeenCalledWith(defaultURL);
         expect(console.error).toHaveBeenCalledWith(`${effectName} failed to navigate to "${defaultURL}"`);
@@ -134,7 +134,7 @@ describe(AuthorizationEffects.name, () => {
         actions$ = of(action);
         const error = new Error('error');
         navigateByUrlMock.mockReturnValue(throwError(error));
-        spyOn(console, 'error');
+        jest.spyOn(console, 'error');
         getEffect().subscribe();
         expect(navigateByUrlMock).toHaveBeenCalledWith(defaultURL);
         expect(console.error).toHaveBeenCalledWith(effectName, error);

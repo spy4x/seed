@@ -14,7 +14,7 @@ export class CommandBusExt {
     return this.logger.trackSegment<R>(
       commandName || 'UnknownCommand',
       async () => {
-        return this.commandBus.execute(command) as Promise<R>;
+        return this.commandBus.execute(command);
       },
       commandName ? { ...command } : command,
     );

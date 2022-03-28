@@ -11,9 +11,9 @@ import {
 } from './authentication.effects';
 import * as AuthUIActions from '../actions/ui.actions';
 import * as AuthAPIActions from '../actions/api.actions';
-import { AngularFireAuth } from '@angular/fire/auth';
+import { AngularFireAuth } from '@angular/fire/compat/auth';
 import { Action } from '@ngrx/store';
-import firebase from 'firebase/app';
+import firebase from 'firebase/compat/app';
 import { testDisplayName, testEmail, testPassword, testPhotoURL, testUserId } from '@seed/shared/mock-data';
 import * as AuthSelectors from '../auth.selectors';
 import { AuthProvider } from '@seed/front/shared/types';

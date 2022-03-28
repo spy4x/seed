@@ -1,9 +1,9 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
-import { AngularFireModule, FIREBASE_OPTIONS } from '@angular/fire';
-import { AngularFireAuthModule } from '@angular/fire/auth';
-import { AngularFireMessagingModule } from '@angular/fire/messaging';
+import { AngularFireModule, FIREBASE_OPTIONS } from '@angular/fire/compat';
+import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+import { AngularFireMessagingModule } from '@angular/fire/compat/messaging';
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
 import { FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN, FrontAdminPanelConfig } from './config.interface';
 import { StoreModule } from '@ngrx/store';

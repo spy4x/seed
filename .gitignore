@@ -28,11 +28,13 @@ node_modules/
 
 # misc
 /.angular/cache
+.angular
 /.sass-cache
 /connect.lock
 /coverage
 *.log
 /typings
+
 
 # environment files
 *.env
