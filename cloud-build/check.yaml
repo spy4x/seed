@@ -15,7 +15,7 @@ steps:
         path: /root/.ssh
 
   - id: Delete existing folder
-    name: node:16.13.2
+    name: gcr.io/cloud-builders/git
     entrypoint: bash
     args: ['-c', 'find . -delete']
 
@@ -56,35 +56,30 @@ steps:
     name: node:16.13.2
     entrypoint: bash
     args: ['-c', 'yarn ci:format']
-    waitFor: ['Install dependencies']
 
   - id: Lint code
     name: node:16.13.2
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:lint']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['Install dependencies']
 
   - id: Run unit-tests
     name: node:16.13.2
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:test']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['Install dependencies']
 
   - id: Build affected apps
     name: node:16.13.2
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:build']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['Install dependencies']
 
   - id: Run e2e-tests
-    name: cypress/base
+    name: cypress/base:16.13.2
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:e2e']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
-    waitFor: ['Install dependencies']
 
 availableSecrets:
   secretManager:

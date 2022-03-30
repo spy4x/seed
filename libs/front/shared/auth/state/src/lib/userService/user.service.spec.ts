@@ -4,8 +4,8 @@ import { provideMockStore } from '@ngrx/store/testing';
 import { mockUsers, testJWT } from '@seed/shared/mock-data';
 import { AUTH_FEATURE_KEY } from '../+state/auth.reducer';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { hot } from '@nrwl/angular/testing';
 import { throwError } from 'rxjs';
+import { hot } from 'jasmine-marbles';
 
 describe(UserService.name, () => {
   // region SETUP

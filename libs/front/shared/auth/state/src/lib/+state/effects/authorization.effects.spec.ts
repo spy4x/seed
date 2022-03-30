@@ -14,13 +14,13 @@ import {
   AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN,
 } from '../../routeURLs';
 import * as AuthUIActions from '../actions/ui.actions';
-import { hot } from '@nrwl/angular/testing';
 import { mockUsers, testUserId } from '@seed/shared/mock-data';
 import { InjectionToken } from '@angular/core';
 import { AUTH_IS_AUTHORIZED_HANDLER_TOKEN } from '../../isAuthorized';
 import { UserService } from '../../userService/user.service';
 import * as AuthSelectors from '../auth.selectors';
 import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import { hot } from 'jasmine-marbles';
 
 describe(AuthorizationEffects.name, () => {
   // region SETUP
@@ -123,7 +123,7 @@ describe(AuthorizationEffects.name, () => {
         rewriteSelectors();
         actions$ = of(action);
         navigateByUrlMock.mockReturnValue(of(false));
-        spyOn(console, 'error');
+        jest.spyOn(console, 'error');
         getEffect().subscribe();
         expect(navigateByUrlMock).toHaveBeenCalledWith(defaultURL);
         expect(console.error).toHaveBeenCalledWith(`${effectName} failed to navigate to "${defaultURL}"`);
@@ -134,7 +134,7 @@ describe(AuthorizationEffects.name, () => {
         actions$ = of(action);
         const error = new Error('error');
         navigateByUrlMock.mockReturnValue(throwError(error));
-        spyOn(console, 'error');
+        jest.spyOn(console, 'error');
         getEffect().subscribe();
         expect(navigateByUrlMock).toHaveBeenCalledWith(defaultURL);
         expect(console.error).toHaveBeenCalledWith(effectName, error);

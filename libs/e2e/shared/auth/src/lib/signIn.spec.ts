@@ -43,7 +43,6 @@ export function runTest(): void {
         cmp.getSignInButton(method).contains(SignInPO.texts.buttons.anonymously);
         cmp.signIn(method);
         cmp.getSignInButton(method).should('not.exist');
-        cmp.get().should('not.contain.text', SignInPO.texts.messages.enterEmail);
         cy.get(SignInPO.selectors.signOut).click();
       });
     });

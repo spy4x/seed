@@ -15,7 +15,7 @@ steps:
         path: /root/.ssh
 
   - id: Delete existing folder
-    name: node:16.13.2
+    name: gcr.io/cloud-builders/git
     entrypoint: bash
     args: ['-c', 'find . -delete']
 
