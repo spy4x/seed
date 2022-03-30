@@ -8,7 +8,7 @@
       "prefix": "back-api",
       "architect": {
         "build": {
-          "builder": "@nrwl/node:build",
+          "builder": "@nrwl/node:webpack",
           "outputs": ["{options.outputPath}"],
           "options": {
             "outputPath": "dist/apps/back/api",
@@ -25,7 +25,7 @@
           }
         },
         "serve": {
-          "builder": "@nrwl/node:execute",
+          "builder": "@nrwl/node:node",
           "options": {
             "buildTarget": "back-api:build"
           }
