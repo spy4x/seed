@@ -62,7 +62,7 @@ export class SignInPO {
   }
 
   signOutIfSignedIn(): void {
-    const waitTime = 1000;
+    const waitTime = 1500;
     cy.wait(waitTime);
     cy.document().then($document => {
       const loadingEls = $document.querySelectorAll(SignInPO.selectors.loading);
