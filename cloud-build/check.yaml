@@ -76,7 +76,7 @@ steps:
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
 
   - id: Run e2e-tests
-    name: cypress/base:9.4.0
+    name: cypress/base:16.13.2
     entrypoint: bash
     args: ['-c', 'NX_CLOUD_AUTH_TOKEN=$$NX_CLOUD_AUTH_TOKEN yarn ci:e2e']
     secretEnv: [NX_CLOUD_AUTH_TOKEN]
