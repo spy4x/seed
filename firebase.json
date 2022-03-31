@@ -55,6 +55,7 @@
     {
       "target": "front-admin-panel",
       "public": "dist/apps/front/admin-panel",
+      "predeploy": ["yarn build front-admin-panel --prod"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
