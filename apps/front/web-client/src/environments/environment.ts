@@ -2,7 +2,7 @@ import { FrontWebClientConfig } from '@seed/front/web-client/core';
 import { Environment } from '@seed/shared/types';
 
 export const config: FrontWebClientConfig = {
-  environment: Environment.development,
+  environment: Environment.dev,
   firebase: {
     apiKey: 'AIzaSyCz4j1dhRj5rt-hJvUdvqXXJAKmIryvVCg',
     authDomain: 'seed-anton.firebaseapp.com',

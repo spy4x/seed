@@ -1,12 +1,10 @@
-import { CacheModule, CacheStoreFactory, Global, Module } from '@nestjs/common';
+import { CacheModule, Global, Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { CqrsModule } from '@nestjs/cqrs';
-import * as redisStore from 'cache-manager-redis-store';
 
 import { CloudTasksService, FirebaseAuthService, PrismaService } from './services';
 import { ApiKeyGuard, DoesUserExistGuard, IsAuthenticatedGuard } from './nestjs';
 import { CloudTaskCreateCommandHandler, CommandBusExt, EventBusExt, QueryBusExt } from './cqrs';
-import { API_CONFIG } from './constants';
 import { CacheTTL } from './cache';
 
 const guards = [ApiKeyGuard, IsAuthenticatedGuard, DoesUserExistGuard];
@@ -14,12 +12,7 @@ const services = [FirebaseAuthService, PrismaService, CloudTasksService, Command
 const commandHandlers = [CloudTaskCreateCommandHandler];
 const providers = [...guards, ...services];
 
-const cacheModule = CacheModule.register({
-  store: redisStore as unknown as CacheStoreFactory,
-  port: 6379,
-  host: API_CONFIG.redisHost,
-  ttl: CacheTTL.week,
-});
+const cacheModule = CacheModule.register({ ttl: CacheTTL.week });
 
 @Global()
 @Module({

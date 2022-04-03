@@ -2,7 +2,7 @@ import { FrontAdminPanelConfig } from '@seed/front/admin-panel/core';
 import { Environment } from '@seed/shared/types';
 
 export const config: FrontAdminPanelConfig = {
-  environment: Environment.development,
+  environment: Environment.dev,
   firebase: {
     apiKey: 'AIzaSyCz4j1dhRj5rt-hJvUdvqXXJAKmIryvVCg',
     authDomain: 'seed-anton.firebaseapp.com',

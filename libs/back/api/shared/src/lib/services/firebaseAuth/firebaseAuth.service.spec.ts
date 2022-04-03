@@ -12,8 +12,6 @@ jest.mock('firebase-admin', () => ({
 }));
 // endregion
 
-import { Environment } from '@seed/shared/types';
-import { FIREBASE_AUTH_UID_LENGTH } from '@seed/shared/constants';
 import { FirebaseAuthService } from './firebaseAuth.service';
 import { CACHE_KEYS, CacheTTL } from '../../cache';
 
@@ -56,20 +54,6 @@ describe(FirebaseAuthService.name, () => {
   });
 
   describe(service.validateJWT.name, () => {
-    it(`if env == dev and token.length <= ${FIREBASE_AUTH_UID_LENGTH} - takes token as user id`, async () => {
-      const token = 'USER_ID_123';
-      isEnv.mockReturnValueOnce(true);
-      expect(await service.validateJWT(token)).toBe(token);
-      expect(isEnv).toHaveBeenCalledWith(Environment.development);
-    });
-
-    it(`if env == dev and token.length > ${FIREBASE_AUTH_UID_LENGTH} - does whole validation logic`, async () => {
-      const token = 'JWT'.repeat(100);
-      isEnv.mockReturnValueOnce(true);
-      expect(await service.validateJWT(token)).not.toBe(token);
-      expect(isEnv).toHaveBeenCalledWith(Environment.development);
-    });
-
     it(`if jwt is in cache - returns it and doesn't call "getAuth().verifyIdToken()"`, async () => {
       const userId = '123';
       const jwt = 'token';

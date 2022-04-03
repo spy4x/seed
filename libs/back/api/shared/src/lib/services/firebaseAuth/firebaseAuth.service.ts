@@ -2,9 +2,6 @@ import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { FirebaseError } from 'firebase-admin/lib/firebase-namespace-api';
 import { LogService } from '../log/log.service';
-import { isEnv } from '../../constants';
-import { Environment } from '@seed/shared/types';
-import { FIREBASE_AUTH_UID_LENGTH } from '@seed/shared/constants';
 import { CACHE_KEYS, CacheTTL } from '../../cache';
 import { Cache } from 'cache-manager';
 
@@ -37,15 +34,6 @@ export class FirebaseAuthService {
   async validateJWT(token: string): Promise<null | string> {
     const logSegment = this.logService.startSegment(this.validateJWT.name, { token });
     try {
-      const isDevelopment = isEnv(Environment.development) && token.length <= FIREBASE_AUTH_UID_LENGTH;
-      if (isDevelopment) {
-        logSegment.endWithSuccess({
-          message: 'Development environment detected. Using token as userId',
-          userId: token,
-        });
-        return token;
-      }
-
       let fromCache = true;
       const cacheKey = CACHE_KEYS.jwt(token);
       const cacheOptions = { ttl: CacheTTL.oneHour };
