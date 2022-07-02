@@ -34,6 +34,7 @@ node_modules/
 /coverage
 *.log
 /typings
+.terraform
 
 
 # environment files
@@ -47,3 +48,6 @@ Thumbs.db
 .firebase/
 .firebaserc
 .runtimeconfig.json
+
+# Secrets
+service-keys
