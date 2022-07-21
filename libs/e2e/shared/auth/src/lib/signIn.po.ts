@@ -16,7 +16,7 @@ export class SignInPO {
   };
 
   static readonly selectors = {
-    cmp: 'seed-shared-auth-container-sign-in',
+    cmp: 'shared-auth-container-sign-in',
     signOut: `[data-e2e="signOut"]`,
     signIn: (provider: AuthProvider): string => `button[data-e2e=${provider}]`,
     loading: `[data-e2e="loading"]`,
@@ -61,20 +61,10 @@ export class SignInPO {
     return this.get(SignInPO.selectors.loading);
   }
 
-  signOutIfSignedIn(): void {
-    const waitTime = 1500;
-    cy.wait(waitTime);
-    cy.document().then($document => {
-      const loadingEls = $document.querySelectorAll(SignInPO.selectors.loading);
-      if (loadingEls.length) {
-        throw new Error(`Loading is not complete yet. Is wait time of ${waitTime}ms too small?`);
-      }
-
-      const signOutEls = $document.querySelectorAll(SignInPO.selectors.signOut);
-      if (signOutEls.length) {
-        (signOutEls[ZERO] as HTMLButtonElement).click();
-      }
-    });
+  signOutByForce(): void {
+    localStorage.clear();
+    indexedDB.deleteDatabase('firebaseLocalStorageDb');
+    indexedDB.deleteDatabase('firebase-heartbeat-database');
   }
 
   enterEmail(email: string): void {

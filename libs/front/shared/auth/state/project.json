@@ -1,0 +1,22 @@
+{
+  "projectType": "library",
+  "sourceRoot": "libs/front/shared/auth/state/src",
+  "prefix": "shared-auth-state",
+  "targets": {
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/front/shared/auth/state"],
+      "options": {
+        "jestConfig": "libs/front/shared/auth/state/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/front/shared/auth/state/**/*.ts", "libs/front/shared/auth/state/**/*.html"]
+      }
+    }
+  },
+  "tags": []
+}

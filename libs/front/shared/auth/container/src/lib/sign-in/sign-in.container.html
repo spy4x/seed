@@ -1,4 +1,4 @@
-<seed-shared-auth-ui-sign-in
+<shared-auth-ui-sign-in
   [stage]="(stage$ | async) || authStages.initialization"
   [inProgress]="(inProgress$ | async) || false"
   [userId]="(userId$ | async) || undefined"
@@ -17,4 +17,4 @@
   (deselectProvider)="deselectProvider()"
   (enterEmail)="enterEmail($event)"
   (restorePassword)="restorePassword()"
-></seed-shared-auth-ui-sign-in>
+></shared-auth-ui-sign-in>

@@ -14,7 +14,7 @@ export function runTest(): void {
 
     before(() => {
       cy.visit('/');
-      cmp.signOutIfSignedIn();
+      cmp.signOutByForce();
     });
 
     beforeEach(() => cy.visit('/'));

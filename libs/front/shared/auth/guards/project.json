@@ -1,0 +1,22 @@
+{
+  "projectType": "library",
+  "sourceRoot": "libs/front/shared/auth/guards/src",
+  "prefix": "shared-auth-guards",
+  "targets": {
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/front/shared/auth/guards"],
+      "options": {
+        "jestConfig": "libs/front/shared/auth/guards/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/front/shared/auth/guards/**/*.ts", "libs/front/shared/auth/guards/**/*.html"]
+      }
+    }
+  },
+  "tags": []
+}

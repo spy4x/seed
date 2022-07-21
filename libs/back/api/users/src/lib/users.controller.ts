@@ -57,7 +57,10 @@ export class UsersController extends BaseController {
   @UseGuards(IsAuthenticatedGuard)
   // No need for NotFoundInterceptor
   @ApiResponse({ status: HttpStatus.OK, type: UserDTO })
-  @ApiResponse({ status: HttpStatus.NO_CONTENT }) // No user
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: `User doesn't exist in database yet. Create it using "POST /users" request.`,
+  })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
   public getMe(@Res({ passthrough: true }) res: Response, @ReqUser() user: null | User): null | UserDTO {
     return this.logger.trackSegmentSync(this.getMe.name, () => {

@@ -1,0 +1,7 @@
+{
+  "projectType": "library",
+  "sourceRoot": "libs/front/shared/styles/src",
+  "prefix": "shared-auth-styles",
+  "targets": {},
+  "tags": []
+}

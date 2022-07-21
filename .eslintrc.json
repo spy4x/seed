@@ -80,6 +80,7 @@
         "sort-imports": 0,
         "@typescript-eslint/class-literal-property-style": 0,
         "@typescript-eslint/consistent-type-imports": 0,
+        "@typescript-eslint/dot-notation": 0,
         "@typescript-eslint/indent": 0,
         "@typescript-eslint/no-invalid-void-type": 0,
         "@typescript-eslint/no-empty-interface": 0,
@@ -218,7 +219,6 @@
         "@typescript-eslint/consistent-type-assertions": 2,
         "@typescript-eslint/consistent-type-definitions": [2, "interface"],
         "@typescript-eslint/default-param-last": 2,
-        "@typescript-eslint/dot-notation": 2,
         "@typescript-eslint/explicit-member-accessibility": 2,
         "@typescript-eslint/explicit-module-boundary-types": 2,
         "@typescript-eslint/func-call-spacing": 2,
@@ -335,6 +335,9 @@
             ]
           }
         ]
+      },
+      "parserOptions": {
+        "project": ["tsconfig.*?.json"]
       }
     },
     {

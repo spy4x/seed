@@ -8,11 +8,11 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { AuthStage } from '@seed/front/shared/types';
-import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 import isEmail from 'validator/es/lib/isEmail';
 
 @Component({
-  selector: 'seed-shared-auth-ui-enter-email',
+  selector: 'shared-auth-ui-enter-email',
   templateUrl: './enter-email.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -27,8 +27,8 @@ export class EnterEmailComponent implements OnChanges {
 
   authStages = AuthStage;
 
-  form = new FormGroup({
-    email: new FormControl(this.email, [this.validateEmail()]),
+  form = new UntypedFormGroup({
+    email: new UntypedFormControl(this.email, [this.validateEmail()]),
   });
 
   ngOnChanges(changes: SimpleChanges): void {

@@ -1,0 +1,22 @@
+{
+  "projectType": "library",
+  "sourceRoot": "libs/front/web/auth/src",
+  "prefix": "web-auth",
+  "targets": {
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/front/web/auth"],
+      "options": {
+        "jestConfig": "libs/front/web/auth/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/front/web/auth/**/*.ts", "libs/front/web/auth/**/*.html"]
+      }
+    }
+  },
+  "tags": []
+}

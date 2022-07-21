@@ -1,13 +1,15 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "module": "commonjs",
     "outDir": "../../../../dist/out-tsc",
     "declaration": true,
-    "rootDir": "./src",
-    "types": ["node"]
+    "types": [],
+    "target": "es6",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
   },
-  "exclude": ["**/*.spec.ts", "**/*.test.ts"],
   "include": ["**/*.ts"],
-  "files": []
+  "exclude": ["jest.config.ts", "**/*.spec.ts", "**/*.test.ts"]
 }

@@ -10,7 +10,7 @@
           "error",
           {
             "type": "attribute",
-            "prefix": "seed",
+            "prefix": "sharedAuthUI",
             "style": "camelCase"
           }
         ],
@@ -18,13 +18,10 @@
           "error",
           {
             "type": "element",
-            "prefix": "seed",
+            "prefix": "shared-auth-ui",
             "style": "kebab-case"
           }
         ]
-      },
-      "parserOptions": {
-        "project": ["libs/front/shared/auth/ui/tsconfig.*?.json"]
       }
     },
     {

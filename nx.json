@@ -1,56 +1,36 @@
 {
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "npmScope": "seed",
+  "affected": {
+    "defaultBase": "master"
+  },
+  "cli": {
+    "packageManager": "yarn"
+  },
   "implicitDependencies": {
-    "workspace.json": "*",
     "package.json": {
       "dependencies": "*",
       "devDependencies": "*"
     },
-    "tsconfig.base.json": "*",
-    ".eslintrc.json": "*",
-    "nx.json": "*"
+    ".eslintrc.json": "*"
   },
-  "affected": {
-    "defaultBase": "master"
-  },
-  "npmScope": "seed",
   "tasksRunnerOptions": {
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
         "cacheableOperations": ["build", "lint", "test", "e2e"],
-        "canTrackAnalytics": false,
-        "showUsageWarnings": true,
-        "parallel": 1
+        "accessToken": "YWVlYTk3ODgtZWY3OC00MGFhLWEyNTUtOWE0NTI3ODBmMWE3fHJlYWQtd3JpdGU="
       }
     }
   },
-  "targetDependencies": {
-    "build": [
-      {
-        "target": "build",
-        "projects": "dependencies"
-      }
-    ]
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"]
+    }
   },
-  "cli": {
-    "defaultCollection": "@nrwl/angular"
-  },
-  "defaultProject": "front-web-client",
   "generators": {
-    "@nrwl/schematics:component": {
-      "styleext": "sass",
-      "spec": true,
-      "flat": true,
-      "changeDetection": "OnPush"
-    },
-    "@nrwl/angular:component": {
-      "style": "sass",
-      "inlineStyle": true,
-      "spec": true,
-      "flat": true,
-      "changeDetection": "OnPush"
-    },
     "@nrwl/angular:application": {
+      "style": "sass",
       "linter": "eslint",
       "unitTestRunner": "jest",
       "e2eTestRunner": "cypress"
@@ -58,6 +38,14 @@
     "@nrwl/angular:library": {
       "linter": "eslint",
       "unitTestRunner": "jest"
+    },
+    "@nrwl/angular:component": {
+      "style": "sass",
+      "inlineStyle": true,
+      "spec": true,
+      "flat": true,
+      "changeDetection": "OnPush"
     }
-  }
+  },
+  "defaultProject": "front-web"
 }

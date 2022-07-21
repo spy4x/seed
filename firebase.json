@@ -1,9 +1,9 @@
 {
   "hosting": [
     {
-      "target": "front-web-client",
-      "public": "dist/apps/front/web-client",
-      "predeploy": ["yarn build front-web-client --prod"],
+      "target": "front-web",
+      "public": "dist/apps/front/web",
+      "predeploy": ["yarn build front-web --prod"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
@@ -53,9 +53,9 @@
       ]
     },
     {
-      "target": "front-admin-panel",
-      "public": "dist/apps/front/admin-panel",
-      "predeploy": ["yarn build front-admin-panel --prod"],
+      "target": "front-admin",
+      "public": "dist/apps/front/admin",
+      "predeploy": ["yarn build front-admin --prod"],
       "ignore": ["firebase.json", "**/.*", "**/*.map", "**/node_modules/**"],
       "rewrites": [
         {
