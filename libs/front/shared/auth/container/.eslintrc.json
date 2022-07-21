@@ -10,7 +10,7 @@
           "error",
           {
             "type": "attribute",
-            "prefix": "adminAuth",
+            "prefix": "sharedAuthContainer",
             "style": "camelCase"
           }
         ],
