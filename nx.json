@@ -2,7 +2,7 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "npmScope": "seed",
   "affected": {
-    "defaultBase": "main"
+    "defaultBase": "master"
   },
   "cli": {
     "packageManager": "yarn"

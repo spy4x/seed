@@ -1,5 +1,5 @@
 {
-  "name": "seed-new",
+  "name": "seed",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -9,6 +9,7 @@
     "build": "nx build",
     "test": "nx test",
     "lint": "nx lint",
+    "e2e": "nx e2e",
     "deploy": "nx deploy",
     "affected:deploy": "nx affected --target=deploy",
     "update": "nx migrate latest",
@@ -20,12 +21,12 @@
     "----------CI----------": "-",
     "ci": "yarn ci:install-deps && yarn ci:format && yarn ci:lint && yarn ci:test && yarn ci:e2e && yarn ci:build && yarn ci:deploy",
     "ci:install-deps": "yarn install --frozen-lockfile --non-interactive && rm -f node_modules/@angular/compiler-cli/ngcc/__ngcc_lock_file__",
-    "ci:format": "npx nx format:check --base=origin/master",
-    "ci:lint": "npx nx affected:lint --base=origin/master",
-    "ci:test": "npx nx affected:test --base=origin/master",
-    "ci:e2e": "npx nx affected:e2e --base=origin/master",
-    "ci:build": "npx nx affected:build --prod --base=origin/master",
-    "ci:deploy": "npx nx affected:deploy --base=origin/master~1 --head=origin/master",
+    "ci:format": "yarn nx format:check --base=origin/master",
+    "ci:lint": "yarn nx affected:lint --base=origin/master",
+    "ci:test": "yarn nx affected:test --base=origin/master",
+    "ci:e2e": "yarn nx affected:e2e --base=origin/master",
+    "ci:build": "yarn nx affected:build --prod --base=origin/master",
+    "ci:deploy": "yarn nx affected --target=deploy --base=origin/master~1 --head=origin/master",
     "postinstall": "ngcc --properties es2020 browser module main"
   },
   "private": true,
