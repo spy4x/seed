@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 import isMobilePhone from 'validator/es/lib/isMobilePhone';
 
 @Component({
-  selector: 'seed-shared-auth-ui-enter-phone-number',
+  selector: 'shared-auth-ui-enter-phone-number',
   templateUrl: './enter-phone-number.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -14,8 +14,8 @@ export class EnterPhoneNumberComponent {
 
   placeholder = '+1-234-567-8901';
 
-  form = new FormGroup({
-    phoneNumber: new FormControl('', [this.validateEmail()]),
+  form = new UntypedFormGroup({
+    phoneNumber: new UntypedFormControl('', [this.validateEmail()]),
   });
 
   submit(): void {

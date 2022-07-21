@@ -17,7 +17,7 @@ export enum SignInUIComponentProvidersList {
 }
 
 @Component({
-  selector: 'seed-shared-auth-ui-sign-in',
+  selector: 'shared-auth-ui-sign-in',
   templateUrl: './sign-in.component.html',
   styles: [
     `

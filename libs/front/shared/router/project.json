@@ -1,0 +1,22 @@
+{
+  "projectType": "library",
+  "sourceRoot": "libs/front/shared/router/src",
+  "prefix": "shared-auth-router",
+  "targets": {
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/front/shared/router"],
+      "options": {
+        "jestConfig": "libs/front/shared/router/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/front/shared/router/**/*.ts", "libs/front/shared/router/**/*.html"]
+      }
+    }
+  },
+  "tags": []
+}

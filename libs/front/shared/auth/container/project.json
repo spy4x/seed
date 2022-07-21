@@ -1,0 +1,22 @@
+{
+  "projectType": "library",
+  "sourceRoot": "libs/front/shared/auth/container/src",
+  "prefix": "shared-auth-container",
+  "targets": {
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/front/shared/auth/container"],
+      "options": {
+        "jestConfig": "libs/front/shared/auth/container/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/front/shared/auth/container/**/*.ts", "libs/front/shared/auth/container/**/*.html"]
+      }
+    }
+  },
+  "tags": []
+}

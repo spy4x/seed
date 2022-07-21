@@ -26,8 +26,8 @@ PROJECT_ID=FILL_WITH_YOUR_VALUE
 PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
 CLOUD_RUN_API_APP_NAME=api
 REGION=us-central1
-FRONT_WEB_CLIENT_HOSTING_TARGET=seed-web-client
-FRONT_ADMIN_PANEL_HOSTING_TARGET=seed-admin-panel
+FRONT_WEB_CLIENT_HOSTING_TARGET=seed-web
+FRONT_ADMIN_PANEL_HOSTING_TARGET=seed-admin
 API_KEY_CLOUD_TASKS=$(uuidgen)
 ```
 

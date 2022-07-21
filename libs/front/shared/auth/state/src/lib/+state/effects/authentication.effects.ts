@@ -21,8 +21,8 @@ export type FirebaseError = Error & { code?: string };
 @Injectable()
 export class AuthenticationEffects {
   readonly mapProviders: { [key: string]: AuthProvider } = {
-    'google.com': AuthProvider.google,
-    'github.com': AuthProvider.github,
+    'google.com': AuthProvider.google, // eslint-disable-line @typescript-eslint/naming-convention
+    'github.com': AuthProvider.github, // eslint-disable-line @typescript-eslint/naming-convention
     password: AuthProvider.password,
     emailLink: AuthProvider.link,
   };

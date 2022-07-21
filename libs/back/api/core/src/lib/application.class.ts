@@ -9,7 +9,6 @@ import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { API_CONFIG, isEnv, LogContext, LogService, LogSeverity } from '@seed/back/api/shared';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as cors from 'cors';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { ZERO } from '@seed/shared/constants';
@@ -34,9 +33,9 @@ export class Application {
       Application.applyLastMiddlewares(express, nest);
       await nest.init();
       const DEFAULT_PORT = 8080;
-      const port = process.env.port || DEFAULT_PORT;
+      const port = process.env['port'] || DEFAULT_PORT;
       await nest.listen(port);
-      logSegment.log(`Listening at http://${process.env.host || 'localhost'}:${port}/${API_CONFIG.apiPrefix}`);
+      logSegment.log(`Listening at http://${process.env['host'] || 'localhost'}:${port}/${API_CONFIG.apiPrefix}`);
       return { nest, express };
     });
   }
@@ -45,9 +44,6 @@ export class Application {
     Application.configureSentry(express);
     Application.configureMorgan(express);
     express.use(json());
-    if (!isEnv(Environment.production)) {
-      express.use(cors());
-    }
   }
 
   private static configureSentry(express: expressServer.Application): void {

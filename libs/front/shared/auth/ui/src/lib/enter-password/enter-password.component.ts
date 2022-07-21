@@ -4,7 +4,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 const minLength = 10;
 
 @Component({
-  selector: 'seed-shared-auth-ui-enter-password',
+  selector: 'shared-auth-ui-enter-password',
   templateUrl: './enter-password.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

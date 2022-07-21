@@ -130,7 +130,7 @@ describe(AuthenticationEffects.name, () => {
       const action = AuthAPIActions.init();
       const completion = AuthAPIActions.initNotAuthenticated();
       localStorage.removeItem(AUTH_REHYDRATION_KEY_EMAIL);
-      const localStorageGetItemSpy = jest.spyOn(window.localStorage.__proto__, 'getItem'); // https://stackoverflow.com/a/54157998/9967802
+      const localStorageGetItemSpy = jest.spyOn(window.localStorage['__proto__'], 'getItem'); // https://stackoverflow.com/a/54157998/9967802
       user$.next(null);
       isSignInWithEmailLinkMock.mockReturnValue(of(false));
       actions$ = hot('a', { a: action });
@@ -149,7 +149,7 @@ describe(AuthenticationEffects.name, () => {
       localStorage.setItem(AUTH_REHYDRATION_KEY_EMAIL, testEmail);
       localStorage.setItem(AUTH_REHYDRATION_KEY_DISPLAY_NAME, testDisplayName);
       localStorage.setItem(AUTH_REHYDRATION_KEY_PHOTO_URL, testPhotoURL);
-      const localStorageGetItemSpy = jest.spyOn(window.localStorage.__proto__, 'getItem'); // https://stackoverflow.com/a/54157998/9967802
+      const localStorageGetItemSpy = jest.spyOn(window.localStorage['__proto__'], 'getItem'); // https://stackoverflow.com/a/54157998/9967802
       user$.next(null);
       isSignInWithEmailLinkMock.mockReturnValue(of(false));
       actions$ = hot('a', { a: action });
@@ -179,7 +179,7 @@ describe(AuthenticationEffects.name, () => {
       const completion = AuthAPIActions.fetchProviders();
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
-      const localStorageSetItemSpy = jest.spyOn(window.localStorage.__proto__, 'setItem'); // https://stackoverflow.com/a/54157998/9967802
+      const localStorageSetItemSpy = jest.spyOn(window.localStorage['__proto__'], 'setItem'); // https://stackoverflow.com/a/54157998/9967802
       expect(effects.enterEmail$).toBeObservable(expected);
       expect(localStorageSetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL, testEmail);
       expect(localStorage.getItem(AUTH_REHYDRATION_KEY_EMAIL)).toBe(testEmail);
@@ -516,8 +516,8 @@ describe(AuthenticationEffects.name, () => {
 
   describe('hydrateState$', () => {
     // region SETUP
-    const localStorageSetItemSpy = jest.spyOn(window.localStorage.__proto__, 'setItem'); // https://stackoverflow.com/a/54157998/9967802
-    const localStorageRemoveItemSpy = jest.spyOn(window.localStorage.__proto__, 'removeItem'); // https://stackoverflow.com/a/54157998/9967802
+    const localStorageSetItemSpy = jest.spyOn(window.localStorage['__proto__'], 'setItem'); // https://stackoverflow.com/a/54157998/9967802
+    const localStorageRemoveItemSpy = jest.spyOn(window.localStorage['__proto__'], 'removeItem'); // https://stackoverflow.com/a/54157998/9967802
     beforeEach(() => {
       localStorageSetItemSpy.mockReset();
       localStorageRemoveItemSpy.mockReset();
@@ -561,7 +561,7 @@ describe(AuthenticationEffects.name, () => {
 
   describe('dehydrateState$', () => {
     // region SETUP
-    const localStorageRemoveItemSpy = jest.spyOn(window.localStorage.__proto__, 'removeItem'); // https://stackoverflow.com/a/54157998/9967802
+    const localStorageRemoveItemSpy = jest.spyOn(window.localStorage['__proto__'], 'removeItem'); // https://stackoverflow.com/a/54157998/9967802
     beforeEach(() => {
       localStorageRemoveItemSpy.mockReset();
     });

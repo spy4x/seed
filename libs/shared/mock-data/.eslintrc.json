@@ -1,13 +1,9 @@
 {
   "extends": ["../../../.eslintrc.json"],
   "ignorePatterns": ["!**/*"],
-  "rules": {},
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-      "parserOptions": {
-        "project": ["libs/shared/mock-data/tsconfig.*?.json"]
-      },
       "rules": {}
     },
     {

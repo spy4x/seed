@@ -1,6 +1,6 @@
 <div class="d-flex align-items-center justify-content-center min-h-100 bg-light py-5">
   <div class="auth-container">
-    <seed-shared-auth-ui-display-user
+    <shared-auth-ui-display-user
       [userId]="userId"
       [email]="email"
       [displayName]="displayName"
@@ -8,7 +8,7 @@
       (signOut)="signOut.emit()"
       (changeUser)="changeUser.emit()"
       class="d-block mb-4"
-    ></seed-shared-auth-ui-display-user>
+    ></shared-auth-ui-display-user>
 
     <ng-container [ngSwitch]="true">
       <ng-container *ngSwitchCase="stage === authStages.initialization">
@@ -27,12 +27,12 @@
         <h2>Welcome!</h2>
         <p>Please enter your email to continue.</p>
 
-        <seed-shared-auth-ui-enter-email
+        <shared-auth-ui-enter-email
           [email]="email"
           [inProgress]="inProgress"
           [isActiveStage]="stage === authStages.enteringEmail || stage === authStages.fetchingProviders"
           (enterEmail)="enterEmail.emit($event)"
-        ></seed-shared-auth-ui-enter-email>
+        ></shared-auth-ui-enter-email>
 
         <div class="my-4 position-relative border-top">
           <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
@@ -67,13 +67,13 @@
           <div data-e2e="welcomeNewUser">
             <h2>It seems that we don't know each other yet.</h2>
             <p>Choose a way to finish sign up:</p>
-            <seed-shared-auth-ui-providers-list
+            <shared-auth-ui-providers-list
               [attr.data-e2e]="providersLists.all"
               [providers]="allProviders"
               [selectedProvider]="selectedProvider"
               [inProgress]="inProgress"
               (selectProvider)="onProviderClick($event)"
-            ></seed-shared-auth-ui-providers-list>
+            ></shared-auth-ui-providers-list>
           </div>
         </ng-container>
 
@@ -81,13 +81,13 @@
           <div data-e2e="welcomeExistingUser">
             <h2>Welcome back!</h2>
             <p>Please finish your sign in with one of previously used options:</p>
-            <seed-shared-auth-ui-providers-list
+            <shared-auth-ui-providers-list
               [attr.data-e2e]="providersLists.used"
               [providers]="providers"
               [selectedProvider]="selectedProvider"
               [inProgress]="inProgress"
               (selectProvider)="onProviderClick($event)"
-            ></seed-shared-auth-ui-providers-list>
+            ></shared-auth-ui-providers-list>
 
             <ng-container *ngIf="alternativeProviders.length > 0">
               <div class="my-4 position-relative border-top">
@@ -96,13 +96,13 @@
                 </div>
               </div>
 
-              <seed-shared-auth-ui-providers-list
+              <shared-auth-ui-providers-list
                 [attr.data-e2e]="providersLists.alternative"
                 [providers]="alternativeProviders"
                 [selectedProvider]="selectedProvider"
                 [inProgress]="inProgress"
                 (selectProvider)="onProviderClick($event)"
-              ></seed-shared-auth-ui-providers-list>
+              ></shared-auth-ui-providers-list>
             </ng-container>
           </div>
         </ng-template>
@@ -112,11 +112,11 @@
         *ngSwitchCase="stage === authStages.signingEmailAndPassword || stage === authStages.restoringPassword"
       >
         <h2>Please enter password:</h2>
-        <seed-shared-auth-ui-enter-password
+        <shared-auth-ui-enter-password
           [inProgress]="inProgress"
           [isActiveStage]="stage === authStages.signingEmailAndPassword"
           (enterPassword)="enterPassword($event.password)"
-        ></seed-shared-auth-ui-enter-password>
+        ></shared-auth-ui-enter-password>
 
         <div class="my-4 position-relative border-top">
           <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
@@ -151,10 +151,10 @@
 
       <ng-container *ngSwitchCase="stage === authStages.signingPhoneNumber">
         <h2>Please enter phone number:</h2>
-        <seed-shared-auth-ui-enter-phone-number
+        <shared-auth-ui-enter-phone-number
           [inProgress]="inProgress"
           (enterPhoneNumber)="sign.emit({ provider: authProviders.phone, phoneNumber: $event.phoneNumber })"
-        ></seed-shared-auth-ui-enter-phone-number>
+        ></shared-auth-ui-enter-phone-number>
 
         <div class="my-4 position-relative border-top">
           <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>

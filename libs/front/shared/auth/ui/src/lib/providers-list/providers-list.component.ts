@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 import { AuthProvider } from '@seed/front/shared/types';
 
 @Component({
-  selector: 'seed-shared-auth-ui-providers-list',
+  selector: 'shared-auth-ui-providers-list',
   templateUrl: './providers-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

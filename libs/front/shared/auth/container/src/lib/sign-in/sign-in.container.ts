@@ -4,7 +4,7 @@ import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 import { AuthSelectors, AuthUIActions } from '@seed/front/shared/auth/state';
 
 @Component({
-  selector: 'seed-shared-auth-container-sign-in',
+  selector: 'shared-auth-container-sign-in',
   templateUrl: './sign-in.container.html',
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,

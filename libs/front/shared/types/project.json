@@ -1,0 +1,14 @@
+{
+  "projectType": "library",
+  "sourceRoot": "libs/front/shared/types/src",
+  "prefix": "shared-auth-types",
+  "targets": {
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/front/shared/types/**/*.ts", "libs/front/shared/types/**/*.html"]
+      }
+    }
+  },
+  "tags": []
+}

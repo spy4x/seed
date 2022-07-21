@@ -1,0 +1,108 @@
+{
+  "projectType": "application",
+  "sourceRoot": "apps/front/web/src",
+  "prefix": "web",
+  "targets": {
+    "build": {
+      "executor": "@angular-devkit/build-angular:browser",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/front/web",
+        "index": "apps/front/web/src/index.html",
+        "main": "apps/front/web/src/main.ts",
+        "polyfills": "apps/front/web/src/polyfills.ts",
+        "tsConfig": "apps/front/web/tsconfig.app.json",
+        "assets": [
+          "apps/front/web/src/favicon.ico",
+          "apps/front/web/src/assets",
+          "apps/front/web/src/firebase-messaging-sw.js"
+        ],
+        "styles": ["apps/front/web/src/styles/index.sass"],
+        "stylePreprocessorOptions": {
+          "includePaths": ["apps/front/web/web/src/styles", "libs/front/shared/styles/src"]
+        },
+        "scripts": []
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "2kb",
+              "maximumError": "4kb"
+            }
+          ],
+          "fileReplacements": [
+            {
+              "replace": "apps/front/web/src/environments/environment.ts",
+              "with": "apps/front/web/src/environments/environment.prod.ts"
+            }
+          ],
+          "outputHashing": "all"
+        },
+        "development": {
+          "buildOptimizer": false,
+          "optimization": false,
+          "vendorChunk": true,
+          "extractLicenses": false,
+          "sourceMap": true,
+          "namedChunks": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular-devkit/build-angular:dev-server",
+      "configurations": {
+        "production": {
+          "browserTarget": "front-web:build:production"
+        },
+        "development": {
+          "browserTarget": "front-web:build:development"
+        }
+      },
+      "defaultConfiguration": "development",
+      "options": {
+        "proxyConfig": "apps/front/web/proxy.conf.json"
+      }
+    },
+    "extract-i18n": {
+      "executor": "@angular-devkit/build-angular:extract-i18n",
+      "options": {
+        "browserTarget": "front-web:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["apps/front/web/**/*.ts", "apps/front/web/**/*.html"]
+      }
+    },
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/apps/front/web"],
+      "options": {
+        "jestConfig": "apps/front/web/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "deploy": {
+      "executor": "@nrwl/workspace:run-commands",
+      "options": {
+        "commands": [
+          "yarn firebase target:apply hosting front-web $FRONT_WEB_HOSTING_TARGET --project=$PROJECT_ID",
+          "yarn firebase deploy --only hosting:front-web --project=$PROJECT_ID"
+        ],
+        "parallel": false,
+        "color": true
+      }
+    }
+  },
+  "tags": [],
+  "implicitDependencies": ["front-shared-styles"]
+}

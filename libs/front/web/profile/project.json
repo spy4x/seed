@@ -1,0 +1,22 @@
+{
+  "projectType": "library",
+  "sourceRoot": "libs/front/web/profile/src",
+  "prefix": "web-profile",
+  "targets": {
+    "test": {
+      "executor": "@nrwl/jest:jest",
+      "outputs": ["coverage/libs/front/web/profile"],
+      "options": {
+        "jestConfig": "libs/front/web/profile/jest.config.ts",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "options": {
+        "lintFilePatterns": ["libs/front/web/profile/**/*.ts", "libs/front/web/profile/**/*.html"]
+      }
+    }
+  },
+  "tags": []
+}
