@@ -35,13 +35,6 @@ steps:
       - checkout
       - $COMMIT_SHA
 
-  - id: Restore cache
-    name: 'gcr.io/$PROJECT_ID/restore_cache'
-    args:
-      - '--bucket=gs://${PROJECT_ID}_cloudbuild_cache'
-      - '--key=cache-$( checksum yarn.lock )'
-      - '--key_fallback=cache-'
-
   - id: Install dependencies
     name: node:16.13.2
     entrypoint: bash

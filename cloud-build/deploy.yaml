@@ -35,27 +35,12 @@ steps:
       - checkout
       - $COMMIT_SHA
 
-  - id: Restore cache
-    name: 'gcr.io/$PROJECT_ID/restore_cache'
-    args:
-      - '--bucket=gs://${PROJECT_ID}_cloudbuild_cache'
-      - '--key=cache-$( checksum yarn.lock )'
-      - '--key_fallback=cache-'
-
   - id: Install dependencies
     name: gcr.io/$PROJECT_ID/builder
     entrypoint: bash
     args: ['-c', 'yarn ci:install-deps']
     env:
       - 'YARN_CACHE_FOLDER=/workspace/.cache/.yarn'
-
-  - id: Save cache
-    name: 'gcr.io/$PROJECT_ID/save_cache'
-    args:
-      - '--bucket=gs://${PROJECT_ID}_cloudbuild_cache'
-      - '--key=cache-$( checksum yarn.lock )'
-      - '--path=.cache'
-      - '--no-clobber'
 
   - id: deploy
     name: gcr.io/$PROJECT_ID/builder
