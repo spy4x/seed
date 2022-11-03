@@ -1,0 +1,81 @@
+version: '3.9'
+
+volumes:
+  mono-node-modules: null
+  postgres-data: null
+  firebase-emulator-data: null
+
+
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=seed
+      - POSTGRES_PASSWORD=localPassword
+      - POSTGRES_DB=seed
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - 6379:6379
+
+  firebase-emulator:
+    build:
+      context: .
+      dockerfile: firebase-emulator.dockerfile
+    volumes:
+      - ./firebase.json:/src/firebase.json
+      - firebase-emulator-data:/data
+    ports:
+      - 4000:4000 # UI
+      - 9099:9099 # Auth
+    command: firebase emulators:start --import=/data/export --export-on-exit  --only auth --project=$PROJECT_ID
+
+
+  back-api:
+    extends:
+      file: docker-compose.base.yml
+      service: base
+    command: yarn migrate:run:back-api
+    ports:
+      - 8080:8080 # API Entry port
+      - 4311:4311 # Debugging port
+    env_file:
+      - apps/back/api/.env.dev
+    environment:
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
+    depends_on:
+      - postgres
+      - redis
+
+  front-web:
+    extends:
+      file: docker-compose.base.yml
+      service: base
+    depends_on:
+      - back-api
+    command: yarn serve front-web --host=0.0.0.0 --disable-host-check
+    ports:
+      - 4200:4200
+    env_file:
+      - apps/front/web/.env.dev
+
+  front-admin:
+    extends:
+      file: docker-compose.base.yml
+      service: base
+    depends_on:
+      - back-api
+    command: yarn serve front-admin --host=0.0.0.0 --disable-host-check
+    ports:
+      - 4201:4201
+    env_file:
+      - apps/front/admin/.env.dev
+

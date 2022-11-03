@@ -39,6 +39,7 @@ node_modules/
 
 # environment files
 *.env
+.env.*
 
 # System Files
 .DS_Store

@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  base:
+    restart: always
+    build:
+      context: .
+      dockerfile: base.dockerfile
+    volumes:
+      - ./:/app # Mount the entire monorepo directory
+      - mono-node-modules:/app/node_modules # Share node_modules between containers

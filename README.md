@@ -1,22 +1,29 @@
 #Seed
 
 
-## Motivation. Why Seed❓
+## 🤔 Motivation. Why Seed?
 💡 After working on dozens of startup projects, I realised a pattern of applications/code/infrastructure that every startup needs.  
 👨‍💻 Instead of repeating myself from project to project I decided to extract a project template into this seed.  
 🏆 Now anyone can clone this repo and get all it's benefits for their startup.   
 🌟 More about benefits in the Roadmap section.  
 
+## 👨‍💻 Prerequisites
+ You need to have next things:
+1. [Docker](https://www.docker.com/get-started/) (tip: `$ brew cask install docker`)
+2. [Node.js](https://github.com/nvm-sh/nvm) (tip: `$ brew install nvm && nvm install 18`)
+3. [Yarn](https://classic.yarnpkg.com/lang/en/) (tip: `$ npm i -g yarn`)
+4. Clone this repo (tip: `$ git clone git@github.com:spy4x/seed.git`)
+5. Install dependencies (tip: `$ yarn`)
 
-## Where to start? ▶️
-0. Check README file (this one) to understand more about project structure and goals
-0. Clone this repo and [init cloud infrastructure (WIP instruction)](docs/how-to-init-cloud-infrastructure.md) to configure your cloud & local environment
-0. [Launch it locally and start development](docs/code-organisation/start-development.md)
-0. [Deploy](cloud-build/deploy.yaml)
-0. Profit 🌟
+## ▶️ Start development
+1. Start all apps and local infrastructure with a single command - `$ yarn`. On first run it will download all dependencies, so grab your favourite coffee or tea while initialization magic happens ☕ 
+2. Open in your browser:
+   - Frontend: http://localhost:4200
+   - Admin Panel: http://localhost:4201
+   - Backend Swagger: http://localhost:8080/api
+3. Profit 🌟
 
-
-## Tools used ❤️
+## ❤️ Tools used 
 
 ### Frontend:
 <a href="https://angular.io/">  
@@ -116,15 +123,16 @@
 ## Roadmap (What is implemented and what is not yet)
 ### Environment and code organisation
 ✅ [Manage monorepo with multiple front-, back- and dev- projects](docs/code-organisation/nx.md)  
-✅ [Launching apps on localhost](docs/code-organisation/start-development.md)  
+✅ Running everything local with a single command  
 ✅ [Deploying apps to the cloud](cloud-build/deploy.yaml)  
 ✅ [TypeScript config (strict rules)](tsconfig.base.json)  
 ✅ [ESLint config (strict rules)](.eslintrc.json)  
 ✅ [Prettier config](.prettierrc)  
 ✅ Code quality control: [Pre-commit hook](package.json) and [CI/CD](cloud-build/check.yaml)  
-🕑 Init whole project via script  
-✅ Keep secret keys safe in Google Cloud Secret Manager  
-🕑 Keep secret keys safe on localhost  
+✅ Run development environment locally with a single command
+🕑 Deploy to Google Cloud with a single command
+🕑 ? Keep secret keys safe on localhost  
+🕑 Follow [12 Factor App](https://12factor.net/)  
 🕑 Calculate affected apps based on latest release tag  
 🕑 Staging environment  
 🕑 E2E environment  
@@ -147,7 +155,6 @@
 🕑 [Unit-testing saga](libs/back/api/users/src/lib/sagas/userCreated.saga.spec.ts)  
 🕑 E2E-testing endpoints  
 ✅ [Logging](libs/back/api/shared/src/lib/services/log/log.service.ts)  
-🕑 Sentry integration  
 ✅ [Schedule tasks](libs/back/api/shared/src/lib/services/cloudTasks/cloudTasks.service.ts)  
 ✅ [Users management](libs/back/api/users/src/lib/users.controller.ts)  
 ✅ [REST API](libs/back/api/users/src/lib/users.controller.ts)  
@@ -156,11 +163,13 @@
 🕑 Http caching  
 🕑 Redis caching  
 🕑 How to integrate Stripe subscriptions/payments?  
+
 #### Database
 ✅ [Automatic backups](https://cloud.google.com/sql/docs/postgres/backup-recovery/backups)  
 ✅ [Restore backup](https://cloud.google.com/sql/docs/postgres/backup-recovery/restoring)  
 ✅ [Read replicas](https://cloud.google.com/sql/docs/postgres/replication)  
-🕑 When and how to migrate DB schema?  
+🕑 When and how to migrate DB schema?
+
 #### Files upload
 🕑 Cloud Storage security rules  
 🕑 Handle upload  
@@ -171,13 +180,12 @@
 #### Shared
 ✅ [Authentication](libs/front/shared/auth)  
 ✅ [NgRx](libs/front/shared/auth/state)  
-🕑 Sentry integration  
 ✅ [E2E-testing](libs/e2e/shared/auth/src/lib)  
 ✅ [Unit-testing UI components](libs/front/shared/auth/ui/src/lib)  
 ✅ [Unit-testing NgRx State](libs/front/shared/auth/state/src/lib/+state)  
 ✅ [Unit-testing Container component](libs/front/shared/auth/container/src/lib/sign-in)  
 🕑 File upload  
-🕑 Logging (Sentry or GCP Logging?)  
+🕑 Logging (Sentry/GCP Logging?)  
 🕑 Provide environment variables from secret manager  
 🕑 Build once, use bundle for every environment  
 #### Styles
