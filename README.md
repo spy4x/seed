@@ -9,7 +9,7 @@
 
 ## 👨‍💻 Prerequisites
  You need to have next things:
-1. [Docker](https://www.docker.com/get-started/) (tip: `$ brew cask install docker`)
+1. [Docker](https://www.docker.com/get-started/) (tip: `$ brew install --cask docker`)
 2. [Node.js](https://github.com/nvm-sh/nvm) (tip: `$ brew install nvm && nvm install 18`)
 3. [Yarn](https://classic.yarnpkg.com/lang/en/) (tip: `$ npm i -g yarn`)
 4. Clone this repo (tip: `$ git clone git@github.com:spy4x/seed.git`)

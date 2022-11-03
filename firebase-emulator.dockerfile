@@ -1,4 +1,4 @@
-FROM node:${NODE_VERSION?error}
+FROM node:18
 
 WORKDIR /src
 # Install OpenJDK-11

@@ -2,7 +2,9 @@ const glob = require('glob');
 const path = require('path');
 const fs = require('fs');
 
-glob('./{apps,envs}/**/.env_example', function (err, files) {
+const exampleFileName = '.env_example';
+const envFileName = '.env';
+glob(`{apps/**/${exampleFileName},${exampleFileName}}`, function (err, files) {
   if (err) {
     console.error(err);
   }
@@ -14,10 +16,10 @@ glob('./{apps,envs}/**/.env_example', function (err, files) {
 
   files.forEach(file => {
     const parentPath = path.dirname(file);
-    const envDevPath = path.join(parentPath, '.env.dev');
-    if (!fs.existsSync(envDevPath)) {
-      console.log(`📝Creating env file "${envDevPath}"`);
-      fs.copyFileSync(file, envDevPath);
+    const envPath = path.join(parentPath, envFileName);
+    if (!fs.existsSync(envPath)) {
+      console.log(`📝Creating env file "${envPath}"`);
+      fs.copyFileSync(file, envPath);
       wasCreated = true;
     }
   });

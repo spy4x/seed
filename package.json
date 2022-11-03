@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "yarn create-envs && export $(cat envs/.env.dev | xargs) && yarn -s up && yarn -s start:done",
-    "start:prepare-envs": "",
+    "start": "yarn create-envs && yarn -s up && yarn -s start:done",
     "start:done": "echo \"✅ All services are up. Check Docker for details.\n⏹️To stop: $ yarn stop\"",
     "up": "docker compose up -d",
     "stop": "docker compose down",
