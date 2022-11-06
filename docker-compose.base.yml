@@ -5,7 +5,8 @@ services:
     restart: always
     build:
       context: .
-      dockerfile: base.dockerfile
+      dockerfile: docker/base.dockerfile
     volumes:
       - ./:/app # Mount the entire monorepo directory
-      - mono-node-modules:/app/node_modules # Share node_modules between containers
+      - node-modules:/app/node_modules # Share node_modules between containers
+    platform: linux/amd64

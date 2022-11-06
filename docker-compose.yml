@@ -1,9 +1,9 @@
 version: '3.9'
 
 volumes:
-  mono-node-modules: null
+  node-modules: null
   postgres-data: null
-  firebase-emulator-data: null
+  firebase-data: null
 
 
 services:
@@ -20,19 +20,21 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
+
   redis:
     image: redis:alpine
     restart: always
     ports:
       - 6379:6379
 
-  firebase-emulator:
+
+  firebase:
     build:
       context: .
-      dockerfile: firebase-emulator.dockerfile
+      dockerfile: docker/firebase.dockerfile
     volumes:
       - ./firebase.json:/src/firebase.json
-      - firebase-emulator-data:/data
+      - firebase-data:/data
     ports:
       - 4000:4000 # UI
       - 9099:9099 # Auth
@@ -40,42 +42,45 @@ services:
 
 
   back-api:
+    depends_on:
+      - postgres
+      - redis
+      - firebase
     extends:
       file: docker-compose.base.yml
       service: base
-    command: yarn migrate:run:back-api
     ports:
       - 8080:8080 # API Entry port
       - 4311:4311 # Debugging port
     env_file:
-      - apps/back/api/.env.dev
+      - apps/back/api/.env
     environment:
-      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
-    depends_on:
-      - postgres
-      - redis
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+    command: yarn migrate:run:back-api
+
 
   front-web:
+    depends_on:
+      - back-api
     extends:
       file: docker-compose.base.yml
       service: base
-    depends_on:
-      - back-api
-    command: yarn serve front-web --host=0.0.0.0 --disable-host-check
     ports:
       - 4200:4200
     env_file:
-      - apps/front/web/.env.dev
+      - apps/front/web/.env
+    command: yarn serve front-web --host=0.0.0.0 --disable-host-check
+
 
   front-admin:
+    depends_on:
+      - back-api
     extends:
       file: docker-compose.base.yml
       service: base
-    depends_on:
-      - back-api
-    command: yarn serve front-admin --host=0.0.0.0 --disable-host-check
     ports:
       - 4201:4201
     env_file:
-      - apps/front/admin/.env.dev
+      - apps/front/admin/.env
+    command: yarn serve front-admin --host=0.0.0.0 --disable-host-check
 
