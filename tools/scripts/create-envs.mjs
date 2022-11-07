@@ -1,17 +1,18 @@
-import { dirname, join } from "path";
-import { copyFileSync, existsSync, lstatSync, readdirSync } from "fs";
+import { dirname, join } from 'path';
+import { copyFileSync, existsSync, lstatSync, readdirSync } from 'fs';
 
-const exampleFileName = ".env_example";
-const envFileName = ".env";
+const exampleFileName = '.env_example';
+const envFileName = '.env';
 let wasCreated = false;
 
 function createEnvs(startPath = `.`, level = 0) {
-  if (level >= 10) { // max depth
+  if (level >= 10) {
+    // max depth
     return;
   }
 
   if (!existsSync(startPath)) {
-    console.error("No such directory:", startPath);
+    console.error('No such directory:', startPath);
     return;
   }
 
@@ -36,5 +37,5 @@ function createEnvs(startPath = `.`, level = 0) {
 createEnvs();
 
 if (wasCreated) {
-  console.log("✅ Env files created");
+  console.log('✅ Env files created');
 }
