@@ -7,8 +7,8 @@ export class UserCreatedEventHandler implements IEventHandler<UserCreatedEvent> 
 
   constructor(readonly _commandBus: CommandBusExt) {}
 
-  async handle(_event: UserCreatedEvent): Promise<void> {
-    await this.logger.trackSegment(this.handle.name, async logSegment => {
+  handle(_event: UserCreatedEvent): void {
+    this.logger.trackSegmentSync(this.handle.name, logSegment => {
       logSegment.log('To be deleted soon');
       // const userId = event.user.id;
       // const executeInHours = 6;
