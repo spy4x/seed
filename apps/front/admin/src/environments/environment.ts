@@ -4,6 +4,7 @@ import { Environment } from '@seed/shared/types';
 export const config: FrontAdminPanelConfig = {
   environment: Environment.dev,
   firebase: {
+    useEmulator: true,
     apiKey: 'AIzaSyCz4j1dhRj5rt-hJvUdvqXXJAKmIryvVCg',
     authDomain: 'seed-anton.firebaseapp.com',
     projectId: 'seed-anton',

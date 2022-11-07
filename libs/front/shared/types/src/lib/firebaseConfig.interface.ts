@@ -1,4 +1,5 @@
 export interface FrontFirebaseConfig {
+  useEmulator: boolean;
   apiKey: string;
   authDomain: string;
   projectId: string;

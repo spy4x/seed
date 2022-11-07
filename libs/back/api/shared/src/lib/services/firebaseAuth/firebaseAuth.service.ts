@@ -4,6 +4,8 @@ import { FirebaseError } from 'firebase-admin/lib/firebase-namespace-api';
 import { LogService } from '../log/log.service';
 import { CACHE_KEYS, CacheTTL } from '../../cache';
 import { Cache } from 'cache-manager';
+import { API_CONFIG } from '../../constants';
+import { Environment } from '@seed/shared/types';
 
 @Injectable()
 export class FirebaseAuthService {
@@ -11,7 +13,9 @@ export class FirebaseAuthService {
 
   constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {
     if (!admin.apps.length) {
-      admin.initializeApp();
+      admin.initializeApp(
+        API_CONFIG.environment === Environment.production ? undefined : { projectId: API_CONFIG.projectId },
+      );
     }
   }
 

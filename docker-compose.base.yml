@@ -1,0 +1,9 @@
+version: '3.9'
+
+services:
+  base:
+    restart: always
+    image: seed_base
+    volumes:
+      - ./:/app # Mount the entire monorepo directory
+      - node-modules:/app/node_modules # Share node_modules between containers

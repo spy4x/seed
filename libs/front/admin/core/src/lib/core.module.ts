@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 import { AngularFireModule, FIREBASE_OPTIONS } from '@angular/fire/compat';
-import { AngularFireAuthModule } from '@angular/fire/compat/auth';
+import { AngularFireAuthModule, USE_EMULATOR as USE_AUTH_EMULATOR } from '@angular/fire/compat/auth';
 import { AngularFireMessagingModule } from '@angular/fire/compat/messaging';
 import { FrontFirebaseConfig } from '@seed/front/shared/types';
 import { FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN, FrontAdminPanelConfig } from './config.interface';
@@ -65,6 +65,12 @@ import { SharedRouterModule } from '@seed/front/shared/router';
     SharedRouterModule,
   ],
   providers: [
+    {
+      provide: USE_AUTH_EMULATOR,
+      useFactory: (config: FrontAdminPanelConfig): undefined | string[] =>
+        config.firebase.useEmulator ? ['http://localhost:9099'] : undefined,
+      deps: [FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN],
+    },
     {
       provide: FIREBASE_OPTIONS,
       useFactory: (config: FrontAdminPanelConfig): FrontFirebaseConfig => config.firebase,

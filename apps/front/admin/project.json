@@ -65,7 +65,8 @@
       },
       "defaultConfiguration": "development",
       "options": {
-        "proxyConfig": "apps/front/admin/proxy.conf.json"
+        "proxyConfig": "apps/front/admin/proxy.conf.json",
+        "hmr": true
       }
     },
     "extract-i18n": {
