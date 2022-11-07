@@ -1,5 +1,5 @@
-node_modules/
-.angular/
+node_modules
+.angular
 *.log
-dist/
-.idea/
+dist
+.idea

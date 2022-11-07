@@ -29,9 +29,7 @@ services:
 
 
   firebase:
-    build:
-      context: .
-      dockerfile: docker/firebase.dockerfile
+    image: seed_firebase
     volumes:
       - ./firebase.json:/src/firebase.json
       - firebase-data:/data
@@ -83,4 +81,3 @@ services:
     env_file:
       - apps/front/admin/.env
     command: yarn serve front-admin --host=0.0.0.0 --disable-host-check
-

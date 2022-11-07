@@ -9,14 +9,14 @@
 
 ## 👨‍💻 Prerequisites
  You need to have next things:
-1. [Docker](https://www.docker.com/get-started/) (tip: `$ brew install --cask docker`)
-2. [Node.js](https://github.com/nvm-sh/nvm) (tip: `$ brew install nvm && nvm install 18`)
-3. [Yarn](https://classic.yarnpkg.com/lang/en/) (tip: `$ npm i -g yarn`)
-4. Clone this repo (tip: `$ git clone git@github.com:spy4x/seed.git`)
-5. Install dependencies (tip: `$ yarn`)
+1. [Docker](https://www.docker.com/get-started/) (tip: `brew install --cask docker`)
+2. [Node.js](https://github.com/nvm-sh/nvm) (tip: `brew install nvm && nvm install 18`)
+3. [Yarn](https://classic.yarnpkg.com/lang/en/) (tip: `npm i -g yarn`)
+4. Clone this repo (tip: `git clone git@github.com:spy4x/seed.git`)
+5. Install dependencies `yarn` and build essential docker images `yarn init`. On first run it will download all dependencies, so grab your favourite coffee or tea while initialization magic happens ☕
 
 ## ▶️ Start development
-1. Start all apps and local infrastructure with a single command - `$ yarn`. On first run it will download all dependencies, so grab your favourite coffee or tea while initialization magic happens ☕ 
+1. Start all apps and local infrastructure with `yarn start`. 
 2. Open in your browser:
    - Frontend: http://localhost:4200
    - Admin Panel: http://localhost:4201
