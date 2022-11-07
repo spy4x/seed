@@ -3,7 +3,7 @@ import { BaseCommandHandler, LogService, PrismaService, UserDeviceUpdateCommand 
 import { Prisma, UserDevice } from '@prisma/client';
 
 @CommandHandler(UserDeviceUpdateCommand)
-export class UserDeviceUpdateCommandHandler extends BaseCommandHandler<UserDeviceUpdateCommand> {
+export class UserDeviceUpdateCommandHandler extends BaseCommandHandler<UserDeviceUpdateCommand, null | UserDevice> {
   readonly logger = new LogService(UserDeviceUpdateCommandHandler.name);
 
   constructor(readonly prisma: PrismaService) {

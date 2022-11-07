@@ -5,7 +5,7 @@
   "targets": {
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/libs/front/shared/auth/guards"],
+      "outputs": ["{workspaceRoot}/coverage/libs/front/shared/auth/guards"],
       "options": {
         "jestConfig": "libs/front/shared/auth/guards/jest.config.ts",
         "passWithNoTests": true

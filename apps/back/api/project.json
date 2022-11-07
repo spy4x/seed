@@ -4,12 +4,14 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nrwl/node:webpack",
+      "executor": "@nrwl/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/back/api",
         "main": "apps/back/api/src/main.ts",
-        "tsConfig": "apps/back/api/tsconfig.app.json"
+        "tsConfig": "apps/back/api/tsconfig.app.json",
+        "target": "node",
+        "compiler": "tsc"
       },
       "configurations": {
         "production": {
@@ -35,14 +37,14 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/back/api"],
+      "outputs": ["{workspaceRoot}/coverage/apps/back/api"],
       "options": {
         "jestConfig": "apps/back/api/jest.config.ts",
         "passWithNoTests": true
       }
     },
     "deploy": {
-      "executor": "@nrwl/workspace:run-commands",
+      "executor": "nx:run-commands",
       "options": {
         "commands": [
           "yarn build back-api --prod",

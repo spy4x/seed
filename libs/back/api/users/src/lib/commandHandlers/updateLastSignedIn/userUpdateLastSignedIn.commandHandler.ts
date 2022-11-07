@@ -10,7 +10,7 @@ import {
 import { User } from '@prisma/client';
 
 @CommandHandler(UserUpdateLastSignedInCommand)
-export class UserUpdateLastSignedInCommandHandler extends BaseCommandHandler<UserUpdateLastSignedInCommand> {
+export class UserUpdateLastSignedInCommandHandler extends BaseCommandHandler<UserUpdateLastSignedInCommand, User> {
   readonly logger = new LogService(UserUpdateLastSignedInCommandHandler.name);
 
   constructor(readonly prisma: PrismaService, readonly eventBus: EventBusExt) {

@@ -86,14 +86,14 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/front/web"],
+      "outputs": ["{workspaceRoot}/coverage/apps/front/web"],
       "options": {
         "jestConfig": "apps/front/web/jest.config.ts",
         "passWithNoTests": true
       }
     },
     "deploy": {
-      "executor": "@nrwl/workspace:run-commands",
+      "executor": "nx:run-commands",
       "options": {
         "commands": [
           "yarn firebase target:apply hosting front-web $FRONT_WEB_HOSTING_TARGET --project=$PROJECT_ID",

@@ -27,7 +27,9 @@ describe('UserCreatedEventHandler', () => {
 
   it(`should execute command`, () => {
     const mockDate = new Date();
-    jest.useFakeTimers('modern').setSystemTime(mockDate);
+    jest.useFakeTimers({
+      now: mockDate,
+    });
     userCreatedEventHandler.handle(event);
     // expect(commandBusExecuteMock).toBeCalledWith(
     //   new CloudTaskCreateCommand(

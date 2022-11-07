@@ -39,7 +39,9 @@ describe('UserUpdateCommandHandler', () => {
 
   it('should update user.lastTimeSignedIn in DB, publish UserLastSignedInUpdatedEvent, and return updatedUser', async () => {
     const mockDate = new Date();
-    jest.useFakeTimers('modern').setSystemTime(mockDate);
+    jest.useFakeTimers({
+      now: mockDate,
+    });
     const updatedUser = user;
     updateMock.mockReturnValueOnce(updatedUser);
     expect(await handler.execute(new UserUpdateLastSignedInCommand(user.id))).toEqual(updatedUser);
