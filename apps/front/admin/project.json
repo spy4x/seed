@@ -93,7 +93,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "yarn firebase target:apply hosting front-admin $FRONT_ADMIN_HOSTING_TARGET --project=$PROJECT_ID",
+          "yarn firebase target:apply hosting front-admin $FRONT_ADMIN_HOSTING_TARGET --project=$PROJECT_ID ",
           "yarn firebase deploy --only hosting:front-admin --project=$PROJECT_ID"
         ],
         "parallel": false,

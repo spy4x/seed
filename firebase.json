@@ -9,8 +9,8 @@
         {
           "source": "/api{,/**}",
           "run": {
-            "serviceId": "api",
-            "region": "us-central1"
+            "serviceId": "public-api",
+            "region": "asia-southeast1"
           }
         },
         {
@@ -61,8 +61,8 @@
         {
           "source": "/api{,/**}",
           "run": {
-            "serviceId": "api",
-            "region": "us-central1"
+            "serviceId": "public-api",
+            "region": "asia-southeast1"
           }
         },
         {

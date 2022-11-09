@@ -50,7 +50,7 @@
           "yarn build back-api --prod",
           "docker build . -t gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME -f apps/back/api/Dockerfile --platform linux/amd64",
           "docker push gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME",
-          "gcloud run deploy $CLOUD_RUN_API_APP_NAME --image gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME --update-env-vars PROJECT_ID=$PROJECT_ID,REGION=$REGION,DB_CONNECTION_STRING=$DB_CONNECTION_STRING,WEBSITE_URL=$WEBSITE_URL,API_KEY_CLOUD_TASKS=$API_KEY_CLOUD_TASKS --platform managed --region $REGION --allow-unauthenticated --project=$PROJECT_ID --service-account=cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com"
+          "gcloud run deploy $CLOUD_RUN_API_APP_NAME --image gcr.io/$PROJECT_ID/$CLOUD_RUN_API_APP_NAME --update-env-vars PROJECT_ID=$PROJECT_ID,REGION=$REGION,DB_CONNECTION_STRING=$DB_CONNECTION_STRING,WEBSITE_URL=$WEBSITE_URL,API_KEY_CLOUD_TASKS=$API_KEY_CLOUD_TASKS --platform managed --region $REGION --allow-unauthenticated --project=$PROJECT_ID --service-account=cloud-run-api@$PROJECT_ID.iam.gserviceaccount.com --set-cloudsql-instances=$PROJECT_ID:$REGION:$CLOUD_SQL_INSTANCE_NAME --max-instances=5 --memory=512Mb --cpu=1 --timeout=5s --concurrency=100"
         ],
         "parallel": false,
         "color": true
