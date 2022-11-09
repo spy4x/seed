@@ -5,3 +5,5 @@ yarn.lock
 *.md
 /dist
 /coverage
+*.tfstate*
+*.yaml
