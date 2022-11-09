@@ -1,6 +1,5 @@
 import { LoggerInterceptor } from './logger.interceptor';
 import { throwError } from 'rxjs';
-import * as Sentry from '@sentry/node';
 
 describe('LoggerInterceptor', () => {
   const loggerInterceptor = new LoggerInterceptor();
@@ -41,18 +40,5 @@ describe('LoggerInterceptor', () => {
       expect(error.status).toBeUndefined();
       done();
     });
-  });
-  it('should call Sentry.captureException when error without status was thrown', async () => {
-    jest.mock('@sentry/node', () => {
-      return {
-        captureException: jest.fn(),
-      };
-    });
-    const sentrySpy = jest.spyOn(Sentry, 'captureException');
-    try {
-      await loggerInterceptor.intercept(new contextMock(), new nextMock()).toPromise();
-    } catch {
-      expect(sentrySpy).toBeCalled();
-    }
   });
 });

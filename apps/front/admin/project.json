@@ -83,14 +83,14 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/apps/front/admin"],
+      "outputs": ["{workspaceRoot}/coverage/apps/front/admin"],
       "options": {
         "jestConfig": "apps/front/admin/jest.config.ts",
         "passWithNoTests": true
       }
     },
     "deploy": {
-      "executor": "@nrwl/workspace:run-commands",
+      "executor": "nx:run-commands",
       "options": {
         "commands": [
           "yarn firebase target:apply hosting front-admin $FRONT_ADMIN_HOSTING_TARGET --project=$PROJECT_ID",

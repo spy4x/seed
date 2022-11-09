@@ -16,7 +16,7 @@ export const FCM_INVALID_TOKENS_ERROR = [
 ];
 
 @CommandHandler(NotificationSendPushCommand)
-export class NotificationSendPushCommandHandler extends BaseCommandHandler<NotificationSendPushCommand> {
+export class NotificationSendPushCommandHandler extends BaseCommandHandler<NotificationSendPushCommand, void> {
   readonly messaging = messaging();
 
   readonly logger = new LogService(NotificationSendPushCommandHandler.name);

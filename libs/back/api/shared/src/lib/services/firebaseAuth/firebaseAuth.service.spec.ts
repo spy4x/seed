@@ -60,7 +60,7 @@ describe(FirebaseAuthService.name, () => {
       cache.wrap.mockReturnValueOnce(userId);
       expect(await service.validateJWT(jwt)).toBe(userId);
       expect(cache.wrap.mock.calls[0][0]).toBe(CACHE_KEYS.jwt(jwt));
-      expect(cache.wrap.mock.calls[0][2]).toEqual({ ttl: CacheTTL.oneHour });
+      expect(cache.wrap.mock.calls[0][2]).toEqual(CacheTTL.oneHour);
       expect(verifyIdToken).not.toHaveBeenCalled();
     });
 

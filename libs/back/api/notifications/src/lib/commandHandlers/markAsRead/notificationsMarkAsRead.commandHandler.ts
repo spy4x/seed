@@ -9,7 +9,10 @@ import {
 import { Prisma } from '@prisma/client';
 
 @CommandHandler(NotificationsMarkAsReadCommand)
-export class NotificationsMarkAsReadCommandHandler extends BaseCommandHandler<NotificationsMarkAsReadCommand> {
+export class NotificationsMarkAsReadCommandHandler extends BaseCommandHandler<
+  NotificationsMarkAsReadCommand,
+  NotificationsMarkAsReadDTO
+> {
   readonly logger = new LogService(NotificationsMarkAsReadCommandHandler.name);
 
   constructor(readonly prisma: PrismaService) {

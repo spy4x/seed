@@ -3,7 +3,7 @@ import { BaseCommandHandler, LogService, PrismaService, UserDeviceDeleteCommand 
 import { Prisma, UserDevice } from '@prisma/client';
 
 @CommandHandler(UserDeviceDeleteCommand)
-export class UserDeviceDeleteCommandHandler extends BaseCommandHandler<UserDeviceDeleteCommand> {
+export class UserDeviceDeleteCommandHandler extends BaseCommandHandler<UserDeviceDeleteCommand, null | UserDevice> {
   readonly logger = new LogService(UserDeviceDeleteCommandHandler.name);
 
   constructor(readonly prisma: PrismaService) {

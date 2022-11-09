@@ -1,6 +1,5 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Response } from 'express';
-import { setUser } from '@sentry/node';
 import { FirebaseAuthService, LogService } from '../../../services';
 import { RequestExtended } from '../../baseClasses';
 
@@ -19,7 +18,7 @@ export class UserIdMiddleware implements NestMiddleware {
 
       if (!authorization) {
         logSegment.log(`Token is not presented`);
-        setUser(null);
+        // TODO: context.setUser(null);
         next();
         return;
       }
@@ -32,9 +31,9 @@ export class UserIdMiddleware implements NestMiddleware {
       logSegment.log(`Token is ${userId ? '' : 'in'}valid.`, { userId, token });
 
       if (userId) {
-        setUser({ id: userId });
+        // TODO: context.setUser({ id: userId });
       } else {
-        setUser(null);
+        // TODO: context.setUser(null);
       }
 
       next();

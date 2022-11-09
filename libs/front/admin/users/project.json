@@ -5,7 +5,7 @@
   "targets": {
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/libs/front/admin/users"],
+      "outputs": ["{workspaceRoot}/coverage/libs/front/admin/users"],
       "options": {
         "jestConfig": "libs/front/admin/users/jest.config.ts",
         "passWithNoTests": true

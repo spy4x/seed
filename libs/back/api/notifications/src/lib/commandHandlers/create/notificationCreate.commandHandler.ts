@@ -10,7 +10,7 @@ import {
 import { Notification } from '@prisma/client';
 
 @CommandHandler(NotificationCreateCommand)
-export class NotificationCreateCommandHandler extends BaseCommandHandler<NotificationCreateCommand> {
+export class NotificationCreateCommandHandler extends BaseCommandHandler<NotificationCreateCommand, Notification> {
   readonly logger = new LogService(NotificationCreateCommandHandler.name);
 
   constructor(readonly prisma: PrismaService, readonly eventBus: EventBusExt) {

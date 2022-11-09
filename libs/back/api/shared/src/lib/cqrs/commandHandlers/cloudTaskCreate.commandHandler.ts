@@ -4,7 +4,7 @@ import { CloudTasksService } from '../../services';
 import { BaseCommandHandler } from '../baseClasses';
 
 @CommandHandler(CloudTaskCreateCommand)
-export class CloudTaskCreateCommandHandler extends BaseCommandHandler<CloudTaskCreateCommand> {
+export class CloudTaskCreateCommandHandler extends BaseCommandHandler<CloudTaskCreateCommand, void> {
   constructor(readonly cloudTasksService: CloudTasksService) {
     super();
   }

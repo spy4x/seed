@@ -1,5 +1,4 @@
 import { AuthProvider } from '@seed/front/shared/types';
-import { ZERO } from '@seed/shared/constants';
 
 export class SignInPO {
   static readonly texts = {

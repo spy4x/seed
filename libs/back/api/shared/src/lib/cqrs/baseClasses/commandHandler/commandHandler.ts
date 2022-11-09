@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { ICommandHandler } from '@nestjs/cqrs';
+import { ICommandHandler, ICommand } from '@nestjs/cqrs';
 
 @Injectable()
-export abstract class BaseCommandHandler<T> implements ICommandHandler<T> {
-  abstract execute(command: T): Promise<unknown>;
+export abstract class BaseCommandHandler<T extends ICommand, R> implements ICommandHandler<T, R> {
+  abstract execute(command: T): Promise<R>;
 }

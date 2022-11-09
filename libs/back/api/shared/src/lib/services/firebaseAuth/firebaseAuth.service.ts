@@ -40,13 +40,13 @@ export class FirebaseAuthService {
     try {
       let fromCache = true;
       const cacheKey = CACHE_KEYS.jwt(token);
-      const cacheOptions = { ttl: CacheTTL.oneHour };
+      const ttl = CacheTTL.oneHour;
       const cacheFunction = async (): Promise<null | string> => {
         fromCache = false;
         const decodedToken = await this.getAuth().verifyIdToken(token, true);
         return decodedToken.uid || null;
       };
-      const userId = await this.cache.wrap<null | string>(cacheKey, cacheFunction, cacheOptions);
+      const userId = await this.cache.wrap<null | string>(cacheKey, cacheFunction, ttl);
 
       logSegment.endWithSuccess({
         fromCache,

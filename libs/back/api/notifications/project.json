@@ -12,7 +12,7 @@
     },
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/libs/back/api/notifications"],
+      "outputs": ["{workspaceRoot}/coverage/libs/back/api/notifications"],
       "options": {
         "jestConfig": "libs/back/api/notifications/jest.config.ts",
         "passWithNoTests": true

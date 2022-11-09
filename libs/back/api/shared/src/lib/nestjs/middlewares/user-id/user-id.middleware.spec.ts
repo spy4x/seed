@@ -1,8 +1,3 @@
-// region MUST GO BEFORE IMPORTS
-const setUser = jest.fn();
-jest.mock('@sentry/node', () => ({ setUser }));
-// endregion
-
 import { RequestExtended } from '../../baseClasses';
 import { UserIdMiddleware } from './user-id.middleware';
 
@@ -24,7 +19,6 @@ describe(UserIdMiddleware.name, () => {
     await userMiddleware.use(req, res, next);
     expect(firebaseAuth.validateJWT).not.toBeCalled();
     expect(req.userId).toBeUndefined();
-    expect(setUser).toHaveBeenCalledWith(null);
     expect(next).toBeCalled();
   });
 
@@ -35,7 +29,6 @@ describe(UserIdMiddleware.name, () => {
     firebaseAuth.validateJWT.mockReturnValueOnce(resultUserId);
     await userMiddleware.use(req, res, next);
     expect(req.userId).toEqual(resultUserId);
-    expect(setUser).toHaveBeenCalledWith({ id: resultUserId });
     expect(next).toBeCalled();
   });
 
@@ -46,7 +39,6 @@ describe(UserIdMiddleware.name, () => {
     await userMiddleware.use(req, res, next);
     expect(firebaseAuth.validateJWT).toBeCalledWith(token);
     expect(req.userId).toBeUndefined();
-    expect(setUser).toHaveBeenCalledWith(null);
     expect(next).toBeCalled();
   });
 });

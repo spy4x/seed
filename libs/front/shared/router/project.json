@@ -5,7 +5,7 @@
   "targets": {
     "test": {
       "executor": "@nrwl/jest:jest",
-      "outputs": ["coverage/libs/front/shared/router"],
+      "outputs": ["{workspaceRoot}/coverage/libs/front/shared/router"],
       "options": {
         "jestConfig": "libs/front/shared/router/jest.config.ts",
         "passWithNoTests": true
