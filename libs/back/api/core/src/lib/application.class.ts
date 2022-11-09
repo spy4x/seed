@@ -1,6 +1,4 @@
 import { INestApplication } from '@nestjs/common/interfaces';
-import * as Sentry from '@sentry/node';
-import * as Tracing from '@sentry/tracing';
 import * as expressServer from 'express';
 import * as morgan from 'morgan';
 import { json } from 'body-parser';
@@ -41,24 +39,8 @@ export class Application {
   }
 
   private static applyFirstMiddlewares(express: expressServer.Application): void {
-    Application.configureSentry(express);
     Application.configureMorgan(express);
     express.use(json());
-  }
-
-  private static configureSentry(express: expressServer.Application): void {
-    Sentry.init({
-      dsn: API_CONFIG.sentryDSN,
-      integrations: [
-        new Sentry.Integrations.Http({ tracing: true }), // enable HTTP calls tracing
-        new Tracing.Integrations.Express({ app: express }), // enable Express.js middleware tracing
-      ],
-      // Set tracesSampleRate to 1.0 to capture 100% of transactions for performance monitoring.
-      // We recommend adjusting this value in production
-      tracesSampleRate: 1.0,
-    });
-    express.use(Sentry.Handlers.requestHandler());
-    express.use(Sentry.Handlers.tracingHandler());
   }
 
   private static configureMorgan(express: expressServer.Application): void {
@@ -107,8 +89,7 @@ export class Application {
     );
   }
 
-  private static applyLastMiddlewares(express: expressServer.Application, nest: INestApplication): void {
-    express.use(Sentry.Handlers.errorHandler()); // The error handler must be before any other error middleware and after all controllers
+  private static applyLastMiddlewares(_express: expressServer.Application, nest: INestApplication): void {
     Application.configureSwagger(nest);
   }
 

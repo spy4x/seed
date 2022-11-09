@@ -1,8 +1,3 @@
-// region MUST GO BEFORE IMPORTS
-const setUser = jest.fn();
-jest.mock('@sentry/node', () => ({ setUser }));
-// endregion
-
 import { UserGetQuery } from '../../../cqrs';
 import { RequestExtended } from '../../baseClasses';
 import { UserMiddleware } from './user.middleware';
@@ -17,7 +12,6 @@ describe(UserMiddleware.name, () => {
   beforeEach(() => {
     queryBus.execute.mockClear();
     next.mockClear();
-    setUser.mockClear();
   });
   // endregion
 
@@ -27,7 +21,6 @@ describe(UserMiddleware.name, () => {
     await userMiddleware.use(req, res, next);
     expect(req.user).toEqual(undefined);
     expect(queryBus.execute).not.toBeCalled();
-    expect(setUser).not.toBeCalled();
     expect(next).toBeCalled();
   });
 
@@ -38,7 +31,6 @@ describe(UserMiddleware.name, () => {
     await userMiddleware.use(req, res, next);
     expect(queryBus.execute).toBeCalledWith(new UserGetQuery(userId));
     expect(req.user).toEqual(undefined);
-    expect(setUser).not.toBeCalled();
     expect(next).toBeCalled();
   });
 
@@ -50,7 +42,6 @@ describe(UserMiddleware.name, () => {
     await userMiddleware.use(req, res, next);
     expect(queryBus.execute).toBeCalledWith(new UserGetQuery(userId));
     expect(req.user).toEqual(user);
-    expect(setUser).toBeCalledWith(user);
     expect(next).toBeCalled();
   });
 });

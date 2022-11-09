@@ -27,12 +27,12 @@ services:
   firebase:
     image: seed_firebase
     volumes:
-      - ./firebase.json:/src/firebase.json
-      - firebase-data:/data
+      - ./firebase.json:/app/firebase.json
+      - firebase-data:/app
     ports:
       - 4000:4000 # UI
       - 9099:9099 # Auth
-    command: firebase emulators:start --import=/data/export --export-on-exit  --only auth --project=$PROJECT_ID
+    command: firebase emulators:start --import=./export --export-on-exit  --only auth --project=$PROJECT_ID
 
   back-api:
     depends_on:

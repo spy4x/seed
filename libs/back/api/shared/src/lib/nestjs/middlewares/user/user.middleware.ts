@@ -1,6 +1,5 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Response } from 'express';
-import * as Sentry from '@sentry/node';
 import { LogService } from '../../../services';
 import { User } from '@prisma/client';
 import { QueryBusExt, UserGetQuery } from '../../../cqrs';
@@ -31,7 +30,7 @@ export class UserMiddleware implements NestMiddleware {
       logSegment.log(`User`, { userId, user });
 
       if (user) {
-        Sentry.setUser(user);
+        // TODO: context.setUser(user);
       }
 
       next();

@@ -7,3 +7,5 @@ services:
     volumes:
       - ./:/app # Mount the entire monorepo directory
       - node-modules:/app/node_modules # Share node_modules between containers
+    environment:
+      - BAZEL_TARGET=true # Hack around parallel build of "ngcc": https://stackoverflow.com/a/73429959
