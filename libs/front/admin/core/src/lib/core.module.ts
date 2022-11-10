@@ -12,6 +12,7 @@ import { StoreDevtoolsModule } from '@ngrx/store-devtools';
 import { IsAuthorizedGuard, IsNotAuthorizedGuard } from '@seed/front/shared/auth/guards';
 import { SharedAuthStateModule } from '@seed/front/shared/auth/state';
 import { SharedRouterModule } from '@seed/front/shared/router';
+import { authProviders } from '@seed/front/admin/auth';
 
 @NgModule({
   imports: [
@@ -76,6 +77,7 @@ import { SharedRouterModule } from '@seed/front/shared/router';
       useFactory: (config: FrontAdminPanelConfig): FrontFirebaseConfig => config.firebase,
       deps: [FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN],
     },
+    ...authProviders,
   ],
   exports: [RouterModule],
 })
