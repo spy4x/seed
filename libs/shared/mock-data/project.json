@@ -1,4 +1,5 @@
 {
+  "name": "shared-mock-data",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/mock-data/src",
   "projectType": "library",

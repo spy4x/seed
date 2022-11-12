@@ -1,4 +1,5 @@
 {
+  "name": "shared-helpers",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/helpers/src",
   "projectType": "library",

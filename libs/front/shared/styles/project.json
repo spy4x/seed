@@ -1,4 +1,5 @@
 {
+  "name": "front-shared-styles",
   "projectType": "library",
   "sourceRoot": "libs/front/shared/styles/src",
   "prefix": "shared-auth-styles",

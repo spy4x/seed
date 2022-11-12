@@ -1,4 +1,5 @@
 {
+  "name": "front-web-profile",
   "projectType": "library",
   "sourceRoot": "libs/front/web/profile/src",
   "prefix": "web-profile",

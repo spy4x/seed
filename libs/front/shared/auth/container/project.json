@@ -1,4 +1,5 @@
 {
+  "name": "front-shared-auth-container",
   "projectType": "library",
   "sourceRoot": "libs/front/shared/auth/container/src",
   "prefix": "shared-auth-container",

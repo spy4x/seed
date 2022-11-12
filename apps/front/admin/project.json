@@ -1,4 +1,5 @@
 {
+  "name": "front-admin",
   "projectType": "application",
   "sourceRoot": "apps/front/admin/src",
   "prefix": "admin",
@@ -13,9 +14,9 @@
         "polyfills": "apps/front/admin/src/polyfills.ts",
         "tsConfig": "apps/front/admin/tsconfig.app.json",
         "assets": ["apps/front/admin/src/favicon.ico", "apps/front/admin/src/assets"],
-        "styles": ["apps/front/admin/src/styles/index.sass"],
+        "styles": ["apps/front/admin/src/style.sass"],
         "stylePreprocessorOptions": {
-          "includePaths": ["apps/front/admin/src/styles", "libs/front/shared/styles/src"]
+          "includePaths": ["libs/front/shared/styles/src"]
         },
         "scripts": []
       },

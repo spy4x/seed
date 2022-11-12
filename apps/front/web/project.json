@@ -1,4 +1,5 @@
 {
+  "name": "front-web",
   "projectType": "application",
   "sourceRoot": "apps/front/web/src",
   "prefix": "web",
@@ -17,9 +18,9 @@
           "apps/front/web/src/assets",
           "apps/front/web/src/firebase-messaging-sw.js"
         ],
-        "styles": ["apps/front/web/src/styles/index.sass"],
+        "styles": ["apps/front/web/src/style.sass"],
         "stylePreprocessorOptions": {
-          "includePaths": ["apps/front/web/web/src/styles", "libs/front/shared/styles/src"]
+          "includePaths": ["libs/front/shared/styles/src"]
         },
         "scripts": []
       },

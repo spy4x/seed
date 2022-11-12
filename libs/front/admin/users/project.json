@@ -1,4 +1,5 @@
 {
+  "name": "front-admin-users",
   "projectType": "library",
   "sourceRoot": "libs/front/admin/users/src",
   "prefix": "admin-users",

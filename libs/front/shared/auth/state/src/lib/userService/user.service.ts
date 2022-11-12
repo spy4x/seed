@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import type { Prisma, User } from '@prisma/client';
+import type { User } from '@prisma/client';
 import { Observable, of, throwError } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AuthSelectors } from '../../index';
@@ -25,8 +25,17 @@ export class UserService {
     );
   }
 
-  create(input: Prisma.UserCreateInput): Observable<User> {
-    return this.http.post<User>(this.baseUrl, input, { headers: { ...this.getAuthHeader() } });
+  create(user: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    photoURL: undefined | null | string;
+  }): Observable<User> {
+    return this.http.post<User>(
+      this.baseUrl,
+      { ...user, userName: Date.now().toString() },
+      { headers: { ...this.getAuthHeader() } },
+    );
   }
 
   private getAuthHeader(): { authorization?: string } {

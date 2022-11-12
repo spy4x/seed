@@ -22,6 +22,7 @@
     "front-shared-router": "libs/front/shared/router",
     "front-shared-styles": "libs/front/shared/styles",
     "front-shared-types": "libs/front/shared/types",
+    "front-shared-ui": "libs/front/shared/ui",
     "front-web": "apps/front/web",
     "front-web-auth": "libs/front/web/auth",
     "front-web-core": "libs/front/web/core",

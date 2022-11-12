@@ -45,8 +45,6 @@
     "@nrwl/angular:component": {
       "style": "sass",
       "inlineStyle": true,
-      "spec": true,
-      "flat": true,
       "changeDetection": "OnPush"
     }
   },

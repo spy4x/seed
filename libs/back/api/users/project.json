@@ -1,4 +1,5 @@
 {
+  "name": "back-api-users",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/back/api/users/src",
   "projectType": "library",

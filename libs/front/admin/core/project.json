@@ -1,4 +1,5 @@
 {
+  "name": "front-admin-core",
   "projectType": "library",
   "sourceRoot": "libs/front/admin/core/src",
   "prefix": "admin-core",

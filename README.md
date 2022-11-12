@@ -32,9 +32,9 @@
 </a>
 <br/>
 
-<a href="https://getbootstrap.com/">  
-  <img src="https://www.svgrepo.com/show/303293/bootstrap-4-logo.svg" width="50" />
-  <span>Bootstrap</span>
+<a href="https://tailwindcss.com/">  
+  <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg" width="50" />
+  <span>TailwindCSS</span>
 </a>
 <br/>
 
@@ -189,7 +189,7 @@
 🕑 Provide environment variables from secret manager  
 🕑 Build once, use bundle for every environment  
 #### Styles
-✅ Bootstrap + Mobile-first responsive design
+✅ TailwindCSS + Mobile-first responsive design
 ✅ [Styles shared between frontend apps](libs/front/shared/styles)
 🕑 How to manage styles on component level? (no component-level styles)  
 #### Forms & "Editor" component

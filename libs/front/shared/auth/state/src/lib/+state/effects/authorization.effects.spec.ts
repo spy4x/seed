@@ -190,27 +190,29 @@ describe(AuthorizationEffects.name, () => {
     AuthAPIActions.signedUp({} as any),
     AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN,
     AUTH_ROUTE_URL_FOR_CREATING_PROFILE_DEFAULT,
+    [[AuthSelectors.getOriginalUrl, '/original']],
   );
 
   describe('profileCreate$', () => {
+    const user = { email: 'test@test.com', ...mockUsers[0] };
     it(`dispatches "${AuthAPIActions.profileCreateSuccess.type}" if userService.create() returns User`, () => {
-      const action = AuthUIActions.profileCreate({ user: mockUsers[0] });
-      const completion = AuthAPIActions.profileCreateSuccess({ user: mockUsers[0] });
-      userCreateMock.mockReturnValue(of(mockUsers[0]));
+      const action = AuthUIActions.profileCreate({ user });
+      const completion = AuthAPIActions.profileCreateSuccess({ user });
+      userCreateMock.mockReturnValue(of(user));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(getEffects().profileCreate$).toBeObservable(expected);
-      expect(userCreateMock).toHaveBeenCalledWith(mockUsers[0]);
+      expect(userCreateMock).toHaveBeenCalledWith(user);
     });
 
     it(`dispatches "${AuthAPIActions.actionFailed.type}" if userService.create() throws an error`, () => {
-      const action = AuthUIActions.profileCreate({ user: mockUsers[0] });
+      const action = AuthUIActions.profileCreate({ user });
       const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       userCreateMock.mockReturnValue(throwError(new Error('Auth failed')));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(getEffects().profileCreate$).toBeObservable(expected);
-      expect(userCreateMock).toHaveBeenCalledWith(mockUsers[0]);
+      expect(userCreateMock).toHaveBeenCalledWith(user);
     });
   });
 

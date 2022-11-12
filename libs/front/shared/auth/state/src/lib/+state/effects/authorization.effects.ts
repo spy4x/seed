@@ -35,8 +35,12 @@ export class AuthorizationEffects {
     () =>
       this.actions$.pipe(
         ofType(AuthAPIActions.signedUp, AuthAPIActions.profileLoadSuccessNoProfileYet),
-        exhaustMap(() =>
-          from(this.router.navigateByUrl(this.createProfileURL)).pipe(
+        concatLatestFrom(() => this.store.select(AuthSelectors.getOriginalUrl)),
+        exhaustMap(([, originalURL]) => {
+          if (this.createProfileURL === originalURL) {
+            return of(null);
+          }
+          return from(this.router.navigateByUrl(this.createProfileURL)).pipe(
             tap(
               hasNavigated =>
                 !hasNavigated &&
@@ -48,8 +52,8 @@ export class AuthorizationEffects {
               console.error(`redirectToCreateProfile$`, error);
               return of(null);
             }),
-          ),
-        ),
+          );
+        }),
       ),
     { dispatch: false },
   );

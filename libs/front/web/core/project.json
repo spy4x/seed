@@ -1,4 +1,5 @@
 {
+  "name": "front-web-core",
   "projectType": "library",
   "sourceRoot": "libs/front/web/core/src",
   "prefix": "web-core",

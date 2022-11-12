@@ -1,4 +1,5 @@
 {
+  "name": "front-admin-profile",
   "projectType": "library",
   "sourceRoot": "libs/front/admin/profile/src",
   "prefix": "admin-profile",

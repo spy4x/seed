@@ -1,0 +1,31 @@
+<label for="first-name" class="text-sm font-medium block mb-1">
+  <span [class.text-gray-700]="isValid()" [class.text-red-600]="isInvalid()">{{ label }}</span>
+  <span *ngIf="_isRequired" class="text-red-600 ml-1">*</span>
+</label>
+
+<div class="relative w-full">
+  <input
+    #input
+    [value]="_value"
+    (focus)="onTouch(input.value)"
+    (keyup)="value = input.value"
+    [disabled]="_isDisabled"
+    type="text"
+    id="first-name"
+    autocomplete="given-name"
+    class="block w-full rounded-md pr-10 focus:outline-none sm:text-sm border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+    [ngClass]="{
+      'focus:ring-red-500 border-red-300 text-red-900 placeholder-red-300 focus:border-red-500': this.isInvalid()
+    }"
+  />
+  <div *ngIf="this.isInvalid()" class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+    <i class="text-red-500 text-xl feather feather-alert-circle"></i>
+  </div>
+  <div *ngIf="this.isValid()" class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+    <i class="text-green-600 font-bold text-xl feather feather-check"></i>
+  </div>
+</div>
+
+<p [class.invisible]="!this.isInvalid()" class="my-1 text-sm text-red-600">
+  {{ this.getErrorMessage() }}
+</p>

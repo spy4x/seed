@@ -8,6 +8,8 @@ import {
   AUTH_ROUTE_URL_FOR_AUTHORIZED_PAGE_TOKEN,
   AUTH_ROUTE_URL_FOR_CREATING_PROFILE_TOKEN,
 } from '@seed/front/shared/auth/state';
+import { ReactiveFormsModule } from '@angular/forms';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 export const routes: Route[] = [
   {
@@ -25,7 +27,13 @@ export const routes: Route[] = [
 ];
 
 @NgModule({
-  imports: [CommonModule, RouterModule.forChild(routes), SharedAuthContainerModule],
+  imports: [
+    CommonModule,
+    RouterModule.forChild(routes),
+    SharedAuthContainerModule,
+    ReactiveFormsModule,
+    SharedUIModule,
+  ],
   declarations: [CreateProfileComponent],
   providers: [
     {
