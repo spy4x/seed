@@ -1,54 +1,36 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  SimpleChanges,
-} from '@angular/core';
-import { AuthStage } from '@seed/front/shared/types';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
-import isEmail from 'validator/es/lib/isEmail';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'shared-auth-ui-enter-email',
   templateUrl: './enter-email.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [
+    `
+      :host {
+        display: block;
+        width: 100%;
+      }
+    `,
+  ],
 })
-export class EnterEmailComponent implements OnChanges {
-  @Input() email?: string = undefined;
-
+export class EnterEmailComponent {
   @Input() inProgress = false;
 
   @Input() isActiveStage = true;
 
-  @Output() enterEmail = new EventEmitter<{ email: string }>();
+  @Output() email = new EventEmitter<string>();
 
-  authStages = AuthStage;
-
-  form = new UntypedFormGroup({
-    email: new UntypedFormControl(this.email, [this.validateEmail()]),
+  form = new FormGroup({
+    /* eslint-disable-next-line @typescript-eslint/unbound-method */
+    email: new FormControl<string>('', [Validators.required, Validators.email]),
   });
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (Object.keys(changes).includes('email') && !!this.email) {
-      this.form.patchValue({ email: this.email });
-    }
-  }
 
   submit(): void {
     if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
-    const { email } = this.form.value as { email: string };
-    this.enterEmail.emit({ email });
-  }
-
-  validateEmail(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const valid = (control.value as string) && isEmail(control.value as string);
-      return valid ? null : { email: true };
-    };
+    this.email.emit(this.form.value.email as string);
   }
 }

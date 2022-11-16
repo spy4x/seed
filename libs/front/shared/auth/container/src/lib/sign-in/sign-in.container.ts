@@ -62,7 +62,7 @@ export class SignInContainerComponent {
     }
   }
 
-  enterEmail({ email }: { email: string }): void {
+  enterEmail(email: string): void {
     return this.store.dispatch(AuthUIActions.enterEmail({ email }));
   }
 

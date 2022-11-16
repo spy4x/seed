@@ -1,5 +1,4 @@
-#Seed
-
+# Seed
 
 ## 🤔 Motivation. Why Seed?
 💡 After working on dozens of startup projects, I realised a pattern of applications/code/infrastructure that every startup needs.  

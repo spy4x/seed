@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { testEmail } from '@seed/shared/mock-data';
 import { first } from 'rxjs/operators';
 import { ReactiveFormsModule } from '@angular/forms';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 describe(EnterEmailComponent.name, () => {
   // region SETUP
@@ -14,7 +15,7 @@ describe(EnterEmailComponent.name, () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [EnterEmailComponent],
-      imports: [ReactiveFormsModule],
+      imports: [ReactiveFormsModule, SharedUIModule],
     })
       .overrideComponent(EnterEmailComponent, {
         set: { changeDetection: ChangeDetectionStrategy.Default }, // To make fixture.detectChanges() work
@@ -37,25 +38,23 @@ describe(EnterEmailComponent.name, () => {
   it(`shows validation error if wrong email is entered and form submitted`, done => {
     const validEmail = testEmail;
     // SETUP: only valid email should come
-    component.enterEmail.pipe(first()).subscribe(({ email }) => {
+    component.email.pipe(first()).subscribe(email => {
       expect(email).toEqual(validEmail);
       done();
     });
 
     // CASE: invalid email
-    component.email = 'invalid email';
-    component.ngOnChanges({ email: true } as any);
+    component.form.setValue({ email: 'invalid email' });
     getEnterEmailButton().nativeElement.click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Make sure email is valid.');
-    expect(getEmailInput().nativeElement.classList.contains('is-invalid')).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Invalid email');
+    expect(component.form.controls.email.valid).toBe(false);
 
     // CASE: valid email
-    component.email = validEmail;
-    component.ngOnChanges({ email: true } as any);
+    component.form.setValue({ email: validEmail });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Make sure email is valid.');
-    expect(getEmailInput().nativeElement.classList.contains('is-valid')).toBe(true);
+    expect(fixture.nativeElement.textContent).not.toContain('Invalid email');
+    expect(component.form.controls.email.valid).toBe(true);
     getEnterEmailButton().nativeElement.click();
   });
 

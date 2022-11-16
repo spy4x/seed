@@ -13,11 +13,7 @@
         "main": "apps/front/web/src/main.ts",
         "polyfills": "apps/front/web/src/polyfills.ts",
         "tsConfig": "apps/front/web/tsconfig.app.json",
-        "assets": [
-          "apps/front/web/src/favicon.ico",
-          "apps/front/web/src/assets",
-          "apps/front/web/src/firebase-messaging-sw.js"
-        ],
+        "assets": ["apps/front/web/src/assets", "apps/front/web/src/firebase-messaging-sw.js"],
         "styles": ["apps/front/web/src/style.sass"],
         "stylePreprocessorOptions": {
           "includePaths": ["libs/front/shared/styles/src"]

@@ -6,6 +6,7 @@ import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { testPassword } from '@seed/shared/mock-data';
 import { first } from 'rxjs/operators';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 describe(EnterPasswordComponent.name, () => {
   // region SETUP
@@ -15,7 +16,7 @@ describe(EnterPasswordComponent.name, () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [EnterPasswordComponent],
-      imports: [ReactiveFormsModule],
+      imports: [ReactiveFormsModule, SharedUIModule],
     })
       .overrideComponent(EnterPasswordComponent, {
         set: { changeDetection: ChangeDetectionStrategy.Default }, // To make fixture.detectChanges() work
@@ -37,7 +38,7 @@ describe(EnterPasswordComponent.name, () => {
   it(`shows validation error if wrong password is entered and form submitted`, done => {
     const validPassword = testPassword;
     // SETUP: only valid password should come
-    component.enterPassword.pipe(first()).subscribe(({ password }) => {
+    component.password.pipe(first()).subscribe(password => {
       expect(password).toEqual(validPassword);
       done();
     });
@@ -46,14 +47,14 @@ describe(EnterPasswordComponent.name, () => {
     component.form.patchValue({ password: '0000' });
     getEnterPasswordButton().nativeElement.click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Min length is 10.');
-    expect(getPasswordInput().nativeElement.classList.contains('is-invalid')).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Min 10 characters long');
+    expect(component.form.controls.password.valid).toBe(false);
 
     // CASE: valid
     component.form.patchValue({ password: validPassword });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Min length is 10.');
-    expect(getPasswordInput().nativeElement.classList.contains('is-valid')).toBe(true);
+    expect(fixture.nativeElement.textContent).not.toContain('Min 10 characters long');
+    expect(component.form.controls.password.valid).toBe(true);
     getEnterPasswordButton().nativeElement.click();
   });
 

@@ -1,0 +1,24 @@
+<div class="rounded-md p-4" [ngClass]="getBackgroundColor()" [attr.data-e2e]="e2e">
+  <div class="flex">
+    <div class="flex-shrink-0">
+      <i [ngClass]="getIconClass()"></i>
+    </div>
+    <div class="ml-3" [ngClass]="getTextColor()">
+      <h3 *ngIf="title" class="text-sm font-medium">{{ title }}</h3>
+      <div *ngIf="text" class="text-sm" [class.mt-2]="title">
+        <p>
+          {{ text }}
+        </p>
+        <ng-content></ng-content>
+      </div>
+    </div>
+    <div *ngIf="closeable" class="ml-auto pl-3">
+      <div class="-mx-1.5 -my-1.5">
+        <seed-button (click)="closed.emit()" color="transparent" [isIcon]="true" [classes]="getTextColor()">
+          <span class="sr-only">Dismiss</span>
+          <i class="feather-x"></i>
+        </seed-button>
+      </div>
+    </div>
+  </div>
+</div>

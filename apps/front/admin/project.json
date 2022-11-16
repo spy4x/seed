@@ -13,7 +13,7 @@
         "main": "apps/front/admin/src/main.ts",
         "polyfills": "apps/front/admin/src/polyfills.ts",
         "tsConfig": "apps/front/admin/tsconfig.app.json",
-        "assets": ["apps/front/admin/src/favicon.ico", "apps/front/admin/src/assets"],
+        "assets": ["apps/front/admin/src/assets"],
         "styles": ["apps/front/admin/src/style.sass"],
         "stylePreprocessorOptions": {
           "includePaths": ["libs/front/shared/styles/src"]

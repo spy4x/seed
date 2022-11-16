@@ -10,6 +10,8 @@ import {
 } from '@seed/front/shared/auth/state';
 import { CreateProfileComponent } from './create-profile/create-profile.component';
 import { isAuthorized } from './isAuthorized/isAuthorized.handler';
+import { SharedAuthUIModule } from '@seed/front/shared/auth/ui';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 export const routes: Route[] = [
   {
@@ -46,7 +48,7 @@ export const authProviders = [
 ];
 
 @NgModule({
-  imports: [CommonModule, RouterModule.forChild(routes), SharedAuthContainerModule],
+  imports: [CommonModule, RouterModule.forChild(routes), SharedAuthContainerModule, SharedAuthUIModule, SharedUIModule],
   declarations: [CreateProfileComponent],
 })
 export class AuthModule {}

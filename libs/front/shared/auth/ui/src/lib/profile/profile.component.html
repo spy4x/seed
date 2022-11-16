@@ -1,0 +1,21 @@
+<div *ngIf="user" data-e2e="profile" class="flex justify-center gap-2">
+  <img
+    data-e2e="photoURL"
+    alt="Your photo"
+    [src]="user.photoURL || 'assets/placeholders/avatar.svg'"
+    class="h-14 w-auto rounded-full border border-gray-300"
+  />
+  <div class="flex flex-col items-center justify-center">
+    <div *ngIf="user.firstName || user.lastName" data-e2e="displayName" class="font-semibold text-gray-900">
+      {{ user.firstName + ' ' + user.lastName }}
+    </div>
+    <!-- TODO: Add field User.email & display here -->
+    <!--    <div *ngIf="user.email" data-e2e="identification" class="text-sm text-slate-500">-->
+    <!--      {{ user.email }}-->
+    <!--    </div>-->
+
+    <div class="flex justify-center">
+      <seed-button e2e="signOut" (click)="signOut.emit()" color="link">Sign out</seed-button>
+    </div>
+  </div>
+</div>

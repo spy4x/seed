@@ -19,14 +19,16 @@ export enum SignInUIComponentProvidersList {
 @Component({
   selector: 'shared-auth-ui-sign-in',
   templateUrl: './sign-in.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [
     `
-      .auth-container {
-        width: 320px;
+      :host {
+        display: block;
+        width: 100%;
+        height: 100%;
       }
     `,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignInUIComponent implements OnChanges {
   @Input() stage = AuthStage.initialization;
@@ -53,7 +55,7 @@ export class SignInUIComponent implements OnChanges {
 
   @Output() selectProvider = new EventEmitter<{ provider: AuthProvider }>();
 
-  @Output() enterEmail = new EventEmitter<{ email: string }>();
+  @Output() enterEmail = new EventEmitter<string>();
 
   @Output() sign = new EventEmitter<{ provider: AuthProvider; password?: string; phoneNumber?: string }>();
 

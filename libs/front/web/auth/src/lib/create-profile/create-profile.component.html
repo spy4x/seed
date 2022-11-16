@@ -1,5 +1,5 @@
 <div class="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-  <form [formGroup]="form" class="w-full max-w-xs flex flex-col gap-10">
+  <form [formGroup]="form" class="flex w-full max-w-xs flex-col gap-10">
     <!-- region Header / Photo and Title -->
     <div class="flex flex-col gap-4">
       <img
@@ -15,24 +15,20 @@
     <div>
       <seed-input label="First name" formControlName="firstName" autocomplete="given-name"></seed-input>
       <seed-input label="Last name" formControlName="lastName" autocomplete="family-name"></seed-input>
-      <seed-input label="Email" formControlName="email" autocomplete="email"></seed-input>
+      <seed-input label="Email" formControlName="email" autocomplete="email" inputType="email"></seed-input>
     </div>
     <!-- endregion -->
 
     <!-- region Footer / Submit button and Sign out -->
     <div class="flex justify-between">
-      <span class="text-gray-400 text-sm flex items-center gap-1">
+      <span class="flex items-center gap-1 text-sm text-gray-400">
         <i class="feather feather-arrow-left"></i>
         <a data-e2e="signOut" href="javascript:;" (click)="signOut()">Sign out</a>
       </span>
-      <button
-        type="submit"
-        class="group relative flex items-center gap-1 rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        (click)="createProfile()"
-      >
+      <seed-button bType="submit" (click)="createProfile()">
         Submit
         <i class="feather feather-arrow-right"></i>
-      </button>
+      </seed-button>
     </div>
     <!-- endregion -->
   </form>

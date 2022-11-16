@@ -1,79 +1,14 @@
-<ng-container *ngIf="authProviders.google as provider">
-  <button
-    *ngIf="isVisible(provider)"
-    [attr.data-e2e]="provider"
-    (click)="selectProvider.emit(provider)"
-    [disabled]="isDisabled()"
-    class="btn btn-outline-danger d-flex justify-content-center align-items-center w-100 mb-2"
+<div class="mx-auto flex w-36 flex-col items-stretch gap-3">
+  <seed-button
+    *ngFor="let p of getProviders()"
+    (click)="provider.emit(p.id)"
+    [e2e]="p.id"
+    color="white"
+    classes="w-full"
+    alignment="items-center justify-start"
   >
-    <ng-container *ngIf="isLoading(provider); else googleIcon">
-      <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
-      <span>Loading</span>
-    </ng-container>
-    <ng-template #googleIcon> <b class="me-2">G</b>Google </ng-template>
-  </button>
-</ng-container>
-
-<ng-container *ngIf="authProviders.github as provider">
-  <button
-    *ngIf="isVisible(provider)"
-    [attr.data-e2e]="provider"
-    (click)="selectProvider.emit(provider)"
-    [disabled]="isDisabled()"
-    class="btn btn-outline-dark d-flex justify-content-center align-items-center w-100 mb-2"
-  >
-    <ng-container *ngIf="isLoading(provider); else githubIcon">
-      <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
-      <span>Loading</span>
-    </ng-container>
-    <ng-template #githubIcon> <i class="feather-github me-2"></i>Github </ng-template>
-  </button>
-</ng-container>
-
-<ng-container *ngIf="authProviders.link as provider">
-  <button
-    *ngIf="isVisible(provider)"
-    [attr.data-e2e]="provider"
-    (click)="selectProvider.emit(provider)"
-    [disabled]="isDisabled()"
-    class="btn btn-outline-primary d-flex justify-content-center align-items-center w-100 mb-2"
-  >
-    <ng-container *ngIf="isLoading(provider); else linkIcon">
-      <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
-      <span>Loading</span>
-    </ng-container>
-    <ng-template #linkIcon> <i class="feather-link me-2"></i>Magic link </ng-template>
-  </button>
-</ng-container>
-
-<ng-container *ngIf="authProviders.phone as provider">
-  <button
-    *ngIf="isVisible(provider)"
-    [attr.data-e2e]="provider"
-    (click)="selectProvider.emit(provider)"
-    [disabled]="isDisabled()"
-    class="btn btn-outline-info d-flex justify-content-center align-items-center w-100 mb-2"
-  >
-    <ng-container *ngIf="isLoading(provider); else phoneIcon">
-      <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
-      <span>Loading</span>
-    </ng-container>
-    <ng-template #phoneIcon> <i class="feather-phone me-2"></i>SMS </ng-template>
-  </button>
-</ng-container>
-
-<ng-container *ngIf="authProviders.password as provider">
-  <button
-    *ngIf="isVisible(provider)"
-    [attr.data-e2e]="provider"
-    (click)="selectProvider.emit(provider)"
-    [disabled]="isDisabled()"
-    class="btn btn-outline-secondary d-flex justify-content-center align-items-center w-100"
-  >
-    <ng-container *ngIf="isLoading(provider); else passwordIcon">
-      <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
-      <span>Loading</span>
-    </ng-container>
-    <ng-template #passwordIcon> <i class="feather-lock me-2"></i>Password </ng-template>
-  </button>
-</ng-container>
+    <i *ngIf="p.iconClasses" class="flex h-6 w-6 items-center justify-center text-lg" [ngClass]="p.iconClasses"></i>
+    <div [innerHTML]="p.iconSVG"></div>
+    <span>{{ p.title }}</span>
+  </seed-button>
+</div>

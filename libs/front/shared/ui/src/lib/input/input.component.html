@@ -1,28 +1,32 @@
-<label for="first-name" class="text-sm font-medium block mb-1">
+<label *ngIf="label" [for]="id" class="mb-1 block text-sm font-medium">
   <span [class.text-gray-700]="isValid()" [class.text-red-600]="isInvalid()">{{ label }}</span>
-  <span *ngIf="_isRequired" class="text-red-600 ml-1">*</span>
+  <span *ngIf="_isRequired" class="ml-1 text-red-600">*</span>
 </label>
 
 <div class="relative w-full">
   <input
     #input
+    [id]="id"
+    [type]="inputType"
     [value]="_value"
-    (focus)="onTouch(input.value)"
-    (keyup)="value = input.value"
     [disabled]="_isDisabled"
-    type="text"
-    id="first-name"
-    autocomplete="given-name"
-    class="block w-full rounded-md pr-10 focus:outline-none sm:text-sm border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+    [autocomplete]="autocomplete"
+    [attr.data-e2e]="e2e"
+    [autofocus]="autofocus"
+    [readonly]="readonly"
+    [placeholder]="placeholder"
+    (keyup)="value = input.value"
+    (blur)="onTouch(input.value)"
+    class="block w-full rounded-md border-gray-300 pr-10 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
     [ngClass]="{
-      'focus:ring-red-500 border-red-300 text-red-900 placeholder-red-300 focus:border-red-500': this.isInvalid()
+      'border-red-300 text-red-900 placeholder-red-300 focus:border-red-500 focus:ring-red-500': this.isInvalid()
     }"
   />
   <div *ngIf="this.isInvalid()" class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-    <i class="text-red-500 text-xl feather feather-alert-circle"></i>
+    <i class="feather feather-alert-circle text-xl text-red-500"></i>
   </div>
   <div *ngIf="this.isValid()" class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-    <i class="text-green-600 font-bold text-xl feather feather-check"></i>
+    <i class="feather feather-check text-xl font-bold text-green-600"></i>
   </div>
 </div>
 

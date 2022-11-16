@@ -19,6 +19,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { EnterPasswordComponent } from '../enter-password/enter-password.component';
 import { EnterPhoneNumberComponent } from '../enter-phone-number/enter-phone-number.component';
 import { DisplayUserComponent } from '../display-prev-user/display-user.component';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 describe(SignInUIComponent.name, () => {
   // region SETUP
@@ -36,7 +37,7 @@ describe(SignInUIComponent.name, () => {
         EnterPhoneNumberComponent,
         DisplayUserComponent,
       ],
-      imports: [ReactiveFormsModule],
+      imports: [ReactiveFormsModule, SharedUIModule],
     })
       .overrideComponent(SignInUIComponent, {
         set: { changeDetection: ChangeDetectionStrategy.Default }, // To make fixture.detectChanges() work
@@ -172,7 +173,7 @@ describe(SignInUIComponent.name, () => {
     });
 
     it(`shows welcome message, EnterEmailComponent and "Try app anonymously"`, () => {
-      expect(fixture.nativeElement.textContent).toContain('Welcome!Please enter your email to continue.');
+      expect(fixture.nativeElement.textContent).toContain('Welcome!Try app anonymouslyOr continue with');
       expect(fixture.debugElement.query(By.directive(EnterEmailComponent))).toBeTruthy();
       expect(getSignInButton(AuthProvider.anonymous).nativeElement.textContent).toContain('Try app anonymously');
     });
@@ -183,16 +184,6 @@ describe(SignInUIComponent.name, () => {
         done();
       });
       getSignInButton(AuthProvider.anonymous).nativeElement.click();
-    });
-
-    it(`links email to EnterEmailComponent`, () => {
-      component.email = testEmail;
-      fixture.detectChanges();
-      expect(enterEmailComponent.email).toEqual(testEmail);
-      // change
-      component.email = 'fake';
-      fixture.detectChanges();
-      expect(enterEmailComponent.email).toEqual('fake');
     });
 
     it(`links inProgress to EnterEmailComponent`, () => {
@@ -220,11 +211,11 @@ describe(SignInUIComponent.name, () => {
     });
 
     it(`subscribes to EnterEmailComponent "enterEmail" event and emits own "enterEmail" event`, done => {
-      component.enterEmail.pipe(first()).subscribe(({ email }) => {
+      component.enterEmail.pipe(first()).subscribe(email => {
         expect(email).toEqual(testEmail);
         done();
       });
-      enterEmailComponent.enterEmail.next({ email: testEmail });
+      enterEmailComponent.email.next(testEmail);
     });
 
     it('disables "Try app anonymously" inProgress == true and shows "loading" when stage === authenticateAnonymously', () => {
@@ -248,7 +239,7 @@ describe(SignInUIComponent.name, () => {
     });
 
     it(`still shows EnterEmailComponent and "Try app anonymously" button`, () => {
-      expect(fixture.nativeElement.textContent).toContain('Welcome!Please enter your email to continue.');
+      expect(fixture.nativeElement.textContent).toContain('Welcome!Try app anonymouslyOr continue with');
       expect(fixture.debugElement.query(By.directive(EnterEmailComponent))).toBeTruthy();
       expect(getSignInButton(AuthProvider.anonymous).nativeElement.textContent).toContain('Try app anonymously');
     });
@@ -268,11 +259,11 @@ describe(SignInUIComponent.name, () => {
       it(`links selectedProvider to "${list}" ProvidersList component`, () => {
         component.selectedProvider = AuthProvider.github;
         fixture.detectChanges();
-        expect(getProvidersListComponent(list).selectedProvider).toEqual(AuthProvider.github);
+        expect(getProvidersListComponent(list).selected).toEqual(AuthProvider.github);
         // change
         component.selectedProvider = AuthProvider.link;
         fixture.detectChanges();
-        expect(getProvidersListComponent(list).selectedProvider).toEqual(AuthProvider.link);
+        expect(getProvidersListComponent(list).selected).toEqual(AuthProvider.link);
       });
     }
 
@@ -294,7 +285,7 @@ describe(SignInUIComponent.name, () => {
           expect(provider).toEqual(p);
           done();
         });
-        getProvidersListComponent(list).selectProvider.next(p);
+        getProvidersListComponent(list).provider.next(p);
       });
     }
 
@@ -304,7 +295,7 @@ describe(SignInUIComponent.name, () => {
           expect(p).toEqual(provider);
           done();
         });
-        getProvidersListComponent(list).selectProvider.next(provider);
+        getProvidersListComponent(list).provider.next(provider);
       });
     }
     // endregion
@@ -318,7 +309,7 @@ describe(SignInUIComponent.name, () => {
       it(`shows "welcome back" message`, () => {
         expect(
           fixture.debugElement.query(By.css(`[data-e2e="welcomeExistingUser"]`)).nativeElement.textContent,
-        ).toContain('Welcome back!Please finish your sign in with one of previously used options:');
+        ).toContain('Sign in with:');
       });
 
       describe(`${SignInUIComponentProvidersList.used} ProvidersList`, () => {
@@ -374,7 +365,7 @@ describe(SignInUIComponent.name, () => {
 
       it(`shows "welcome" message`, () => {
         expect(fixture.debugElement.query(By.css(`[data-e2e="welcomeNewUser"]`)).nativeElement.textContent).toContain(
-          `It seems that we don't know each other yet.Choose a way to finish sign up:`,
+          `Use one of options to sign up:`,
         );
       });
 
@@ -428,7 +419,7 @@ describe(SignInUIComponent.name, () => {
           expect(password).toEqual(testPassword);
           done();
         });
-        enterPasswordComponent.enterPassword.next({ password: testPassword });
+        enterPasswordComponent.password.next(testPassword);
       });
     });
 
