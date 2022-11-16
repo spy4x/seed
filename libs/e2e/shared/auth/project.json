@@ -1,4 +1,5 @@
 {
+  "name": "e2e-shared-auth",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/e2e/shared/auth/src",
   "projectType": "library",

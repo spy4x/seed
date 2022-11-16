@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngrx/store';
-import { AuthUIActions } from '@seed/front/shared/auth/state';
+import { AuthSelectors, AuthUIActions } from '@seed/front/shared/auth/state';
+import { map } from 'rxjs';
+import { User } from '@prisma/client';
 
 @Component({
   selector: 'admin-profile',
@@ -8,6 +10,8 @@ import { AuthUIActions } from '@seed/front/shared/auth/state';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent {
+  user$ = this.store.select(AuthSelectors.getUser).pipe(map(u => u as User));
+
   constructor(readonly store: Store) {}
 
   signOut(): void {

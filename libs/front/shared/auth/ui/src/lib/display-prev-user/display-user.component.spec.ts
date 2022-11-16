@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DisplayUserComponent_PHOTO_URL_PLACEHOLDER, DisplayUserComponent } from './display-user.component';
+import { DisplayUserComponent } from './display-user.component';
 import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { testDisplayName, testEmail, testPhotoURL, testUserId } from '@seed/shared/mock-data';
 import { first } from 'rxjs/operators';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 describe(DisplayUserComponent.name, () => {
   // region SETUP
@@ -13,6 +14,7 @@ describe(DisplayUserComponent.name, () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [DisplayUserComponent],
+      imports: [SharedUIModule],
     })
       .overrideComponent(DisplayUserComponent, {
         set: { changeDetection: ChangeDetectionStrategy.Default }, // To make fixture.detectChanges() work
@@ -91,7 +93,7 @@ describe(DisplayUserComponent.name, () => {
       expect(getPhotoURLEl().nativeElement.src).toBe(testPhotoURL);
       component.photoURL = undefined;
       fixture.detectChanges();
-      expect(getPhotoURLEl().nativeElement.src).toBe(DisplayUserComponent_PHOTO_URL_PLACEHOLDER);
+      expect(getPhotoURLEl().nativeElement.src).toContain('assets/placeholders/avatar.svg');
     });
 
     it(`shows ChangeUserButton if no userId`, () => {

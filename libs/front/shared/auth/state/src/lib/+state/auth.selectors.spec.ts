@@ -1,10 +1,11 @@
 import { AUTH_FEATURE_KEY, AuthPartialState, initialState, State } from './auth.reducer';
 import * as AuthSelectors from './auth.selectors';
 import { AuthProvider, AuthStage } from '@seed/front/shared/types';
-import { testDisplayName, testEmail, testPhotoURL, testUserId } from '@seed/shared/mock-data';
+import { mockUsers, testDisplayName, testEmail, testPhotoURL, testUserId } from '@seed/shared/mock-data';
 
 describe('Auth Selectors', () => {
   let state: AuthPartialState;
+  const [testUser] = mockUsers;
 
   beforeEach(() => (state = { [AUTH_FEATURE_KEY]: initialState }));
 
@@ -128,7 +129,18 @@ describe('Auth Selectors', () => {
       patchState({ userId: testUserId });
       expect(AuthSelectors.getUserId(state)).toBe(testUserId);
     });
-    it('returns userId if state.auth.userId is not set', () => {
+    it('returns undefined if state.auth.userId is not set', () => {
+      patchState({ userId: undefined });
+      expect(AuthSelectors.getUserId(state)).toBe(undefined);
+    });
+  });
+
+  describe('getUser()', () => {
+    it('returns user if state.auth.user is set', () => {
+      patchState({ user: testUser });
+      expect(AuthSelectors.getUser(state)).toBe(testUser);
+    });
+    it('returns undefined if state.auth.userId is not set', () => {
       patchState({ userId: undefined });
       expect(AuthSelectors.getUserId(state)).toBe(undefined);
     });

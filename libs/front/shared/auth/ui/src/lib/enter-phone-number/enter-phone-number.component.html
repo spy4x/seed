@@ -1,33 +1,24 @@
-<form class="mb-3" [formGroup]="form" #formComponent="ngForm" (ngSubmit)="submit()">
-  <input
-    data-e2e="phoneNumber"
-    type="tel"
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <seed-input
     formControlName="phoneNumber"
-    class="form-control mb-3"
-    [placeholder]="placeholder"
-    autofocus
-    [class.is-valid]="form.valid"
-    [class.is-invalid]="formComponent.submitted && form.invalid"
+    label="Phone number"
+    e2e="phoneNumber"
+    inputType="tel"
+    autocomplete="tel"
+    [autofocus]="true"
     [readonly]="inProgress"
-  />
+    [placeholder]="placeholder"
+    [validationMessages]="validationMessages"
+  ></seed-input>
 
-  <div class="d-flex justify-content-center align-items-center">
-    <div *ngIf="formComponent.submitted && form.invalid" class="text-danger">Phone number is not valid.</div>
-    <span class="ms-auto">
-      <button
-        data-e2e="enterPhoneNumber"
-        [disabled]="inProgress"
-        class="btn btn-primary d-flex justify-content-center align-items-center"
-      >
-        <ng-container *ngIf="inProgress; else submitButton">
-          <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
-          <span>Loading</span>
-        </ng-container>
-        <ng-template #submitButton>
-          <i class="feather-log-in me-2"></i>
-          <span>Submit</span>
-        </ng-template>
-      </button>
-    </span>
-  </div>
+  <seed-button bType="submit" e2e="enterPhoneNumber" [disabled]="inProgress" classes="w-full">
+    <ng-container *ngIf="inProgress; else submitButton">
+      <i data-e2e="loading" class="feather-loader animate-spin"></i>
+      <span>Loading</span>
+    </ng-container>
+    <ng-template #submitButton>
+      <span>Submit</span>
+      <i class="feather-log-in"></i>
+    </ng-template>
+  </seed-button>
 </form>

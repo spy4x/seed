@@ -1,5 +1,5 @@
-<div class="d-flex align-items-center justify-content-center min-h-100 bg-light py-5">
-  <div class="auth-container">
+<div class="flex h-full w-full items-center justify-center p-5">
+  <div class="w-72 rounded-xl bg-white p-8 shadow">
     <shared-auth-ui-display-user
       [userId]="userId"
       [email]="email"
@@ -12,9 +12,7 @@
 
     <ng-container [ngSwitch]="true">
       <ng-container *ngSwitchCase="stage === authStages.initialization">
-        <div class="text-center">
-          <div data-e2e="loading" class="spinner-border text-primary" role="status"></div>
-        </div>
+        <i data-e2e="loading" class="feather feather-loader animate-spin"></i>
       </ng-container>
 
       <ng-container
@@ -24,35 +22,37 @@
           stage === authStages.signingAnonymously
         "
       >
-        <h2>Welcome!</h2>
-        <p>Please enter your email to continue.</p>
+        <div class="flex flex-col items-stretch gap-6">
+          <div class="flex flex-col items-center gap-4">
+            <img class="mb-5 h-20 w-20" [src]="'assets/images/logo.svg'" alt="Logo" />
+            <h2 class="text-3xl font-bold text-gray-900">Welcome!</h2>
+          </div>
 
-        <shared-auth-ui-enter-email
-          [email]="email"
-          [inProgress]="inProgress"
-          [isActiveStage]="stage === authStages.enteringEmail || stage === authStages.fetchingProviders"
-          (enterEmail)="enterEmail.emit($event)"
-        ></shared-auth-ui-enter-email>
+          <seed-button
+            (click)="sign.emit({ provider: authProviders.anonymous })"
+            [e2e]="authProviders.anonymous"
+            [disabled]="inProgress"
+            color="light"
+            classes="w-full"
+          >
+            <ng-container *ngIf="stage === authStages.signingAnonymously && inProgress; else authenticateAnonymously">
+              <i class="feather-loader animate-spin"></i>
+              <span>Loading</span>
+            </ng-container>
+            <ng-template #authenticateAnonymously>
+              <span>Try app anonymously</span>
+              <i class="feather-log-in"></i>
+            </ng-template>
+          </seed-button>
 
-        <div class="my-4 position-relative border-top">
-          <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
+          <seed-separator text="Or continue with"></seed-separator>
+
+          <shared-auth-ui-enter-email
+            [inProgress]="inProgress"
+            [isActiveStage]="stage === authStages.enteringEmail || stage === authStages.fetchingProviders"
+            (email)="enterEmail.emit($event)"
+          ></shared-auth-ui-enter-email>
         </div>
-
-        <button
-          [attr.data-e2e]="authProviders.anonymous"
-          (click)="sign.emit({ provider: authProviders.anonymous })"
-          [disabled]="inProgress"
-          class="btn btn-outline-primary w-100 d-flex justify-content-center align-items-center"
-        >
-          <ng-container *ngIf="stage === authStages.signingAnonymously && inProgress; else authenticateAnonymously">
-            <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
-            <span>Loading</span>
-          </ng-container>
-          <ng-template #authenticateAnonymously>
-            <i class="feather-log-in me-2"></i>
-            <span>Try app anonymously</span>
-          </ng-template>
-        </button>
       </ng-container>
 
       <ng-container
@@ -64,44 +64,38 @@
         "
       >
         <ng-container *ngIf="isNewUser; else existingUserTemplate">
-          <div data-e2e="welcomeNewUser">
-            <h2>It seems that we don't know each other yet.</h2>
-            <p>Choose a way to finish sign up:</p>
+          <div data-e2e="welcomeNewUser" class="flex flex-col gap-3">
+            <p class="text-center text-slate-600">Use one of options to sign up:</p>
             <shared-auth-ui-providers-list
               [attr.data-e2e]="providersLists.all"
               [providers]="allProviders"
-              [selectedProvider]="selectedProvider"
+              [selected]="selectedProvider"
               [inProgress]="inProgress"
-              (selectProvider)="onProviderClick($event)"
+              (provider)="onProviderClick($event)"
             ></shared-auth-ui-providers-list>
           </div>
         </ng-container>
 
         <ng-template #existingUserTemplate>
-          <div data-e2e="welcomeExistingUser">
-            <h2>Welcome back!</h2>
-            <p>Please finish your sign in with one of previously used options:</p>
+          <div data-e2e="welcomeExistingUser" class="flex flex-col gap-3">
+            <p class="text-center text-slate-600">Sign in with:</p>
             <shared-auth-ui-providers-list
               [attr.data-e2e]="providersLists.used"
               [providers]="providers"
-              [selectedProvider]="selectedProvider"
+              [selected]="selectedProvider"
               [inProgress]="inProgress"
-              (selectProvider)="onProviderClick($event)"
+              (provider)="onProviderClick($event)"
             ></shared-auth-ui-providers-list>
 
             <ng-container *ngIf="alternativeProviders.length > 0">
-              <div class="my-4 position-relative border-top">
-                <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">
-                  or
-                </div>
-              </div>
+              <seed-separator></seed-separator>
 
               <shared-auth-ui-providers-list
                 [attr.data-e2e]="providersLists.alternative"
                 [providers]="alternativeProviders"
-                [selectedProvider]="selectedProvider"
+                [selected]="selectedProvider"
                 [inProgress]="inProgress"
-                (selectProvider)="onProviderClick($event)"
+                (provider)="onProviderClick($event)"
               ></shared-auth-ui-providers-list>
             </ng-container>
           </div>
@@ -111,88 +105,85 @@
       <ng-container
         *ngSwitchCase="stage === authStages.signingEmailAndPassword || stage === authStages.restoringPassword"
       >
-        <h2>Please enter password:</h2>
-        <shared-auth-ui-enter-password
-          [inProgress]="inProgress"
-          [isActiveStage]="stage === authStages.signingEmailAndPassword"
-          (enterPassword)="enterPassword($event.password)"
-        ></shared-auth-ui-enter-password>
+        <div class="flex flex-col items-stretch gap-3">
+          <shared-auth-ui-enter-password
+            [inProgress]="inProgress"
+            [isActiveStage]="stage === authStages.signingEmailAndPassword"
+            (password)="enterPassword($event)"
+          ></shared-auth-ui-enter-password>
 
-        <div class="my-4 position-relative border-top">
-          <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
+          <seed-separator></seed-separator>
+
+          <seed-button
+            *ngIf="!isNewUser"
+            (click)="restorePassword.emit()"
+            e2e="restorePassword"
+            [disabled]="inProgress"
+            color="secondary"
+            classes="w-full"
+          >
+            <ng-container *ngIf="stage === authStages.restoringPassword && inProgress; else forgotPasswordButton">
+              <i data-e2e="loading" class="feather-loader animate-spin"></i>
+              <span>Loading</span>
+            </ng-container>
+            <ng-template #forgotPasswordButton>
+              <i class="feather-lock"></i>
+              <span>Forgot password</span>
+            </ng-template>
+          </seed-button>
+
+          <seed-button
+            e2e="deselectProvider"
+            (click)="deselectProvider.emit()"
+            [disabled]="inProgress"
+            classes="w-full"
+            color="white"
+          >
+            <i class="feather-arrow-left"></i>
+            <span>Use other options</span>
+          </seed-button>
         </div>
-
-        <button
-          data-e2e="restorePassword"
-          (click)="restorePassword.emit()"
-          [disabled]="inProgress"
-          class="btn btn-outline-dark w-100 d-flex justify-content-center align-items-center mb-3"
-        >
-          <ng-container *ngIf="stage === authStages.restoringPassword && inProgress; else forgotPasswordButton">
-            <div class="spinner-border spinner-border-sm m-1 me-2" role="status"></div>
-            <span>Loading</span>
-          </ng-container>
-          <ng-template #forgotPasswordButton>
-            <i class="feather-help-circle me-2"></i>
-            <span>Forgot password</span>
-          </ng-template>
-        </button>
-
-        <button
-          data-e2e="deselectProvider"
-          (click)="deselectProvider.emit()"
-          [disabled]="inProgress"
-          class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center"
-        >
-          <i class="feather-arrow-left me-2"></i>
-          <span>Use other options</span>
-        </button>
       </ng-container>
 
       <ng-container *ngSwitchCase="stage === authStages.signingPhoneNumber">
-        <h2>Please enter phone number:</h2>
-        <shared-auth-ui-enter-phone-number
-          [inProgress]="inProgress"
-          (enterPhoneNumber)="sign.emit({ provider: authProviders.phone, phoneNumber: $event.phoneNumber })"
-        ></shared-auth-ui-enter-phone-number>
+        <div class="flex flex-col gap-3">
+          <shared-auth-ui-enter-phone-number
+            [inProgress]="inProgress"
+            (enterPhoneNumber)="sign.emit({ provider: authProviders.phone, phoneNumber: $event.phoneNumber })"
+          ></shared-auth-ui-enter-phone-number>
 
-        <div class="my-4 position-relative border-top">
-          <div class="badge bg-light text-muted fw-normal position-absolute top-50 start-50 translate-middle">or</div>
-        </div>
+          <seed-separator></seed-separator>
 
-        <button
-          data-e2e="deselectProvider"
-          (click)="deselectProvider.emit()"
-          [disabled]="inProgress"
-          class="btn btn-outline-secondary w-100 d-flex justify-content-center align-items-center"
-        >
-          <i class="feather-arrow-left me-2"></i>
-          <span>Use other options</span>
-        </button>
-      </ng-container>
-
-      <ng-container *ngSwitchCase="stage === authStages.loadingProfile">
-        <div class="text-center">
-          <div data-e2e="loading" class="spinner-border text-primary" role="status"></div>
+          <seed-button
+            e2e="deselectProvider"
+            (click)="deselectProvider.emit()"
+            [disabled]="inProgress"
+            classes="w-full"
+            color="white"
+          >
+            <i class="feather-arrow-left"></i>
+            <span>Use other options</span>
+          </seed-button>
         </div>
       </ng-container>
 
-      <ng-container *ngSwitchCase="stage === authStages.authorizing">
-        <div class="text-center">
-          <div data-e2e="loading" class="spinner-border text-primary" role="status"></div>
+      <ng-container *ngSwitchCase="stage === authStages.loadingProfile || stage === authStages.authorizing">
+        <div class="flex flex-col items-center justify-center">
+          <i data-e2e="loading" class="feather-loader animate-spin"></i>
+          <h2>Loading...</h2>
         </div>
       </ng-container>
     </ng-container>
 
-    <div class="my-3">
-      <div *ngIf="errorMessage" data-e2e="errorMessage" class="alert alert-warning" role="alert">
-        {{ errorMessage }}
-      </div>
-
-      <div *ngIf="successMessage" data-e2e="successMessage" class="alert alert-success" role="alert">
-        <i class="feather-check-circle me-2"></i>
-        <span>{{ successMessage }}</span>
-      </div>
+    <div>
+      <seed-alert *ngIf="errorMessage" [text]="errorMessage" data-e2e="errorMessage" class="mt-6"></seed-alert>
+      <seed-alert
+        *ngIf="successMessage"
+        [text]="successMessage"
+        color="success"
+        e2e="successMessage"
+        class="mt-6"
+      ></seed-alert>
     </div>
   </div>
 </div>

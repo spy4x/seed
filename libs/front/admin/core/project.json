@@ -1,7 +1,8 @@
 {
+  "name": "front-admin-core",
   "projectType": "library",
   "sourceRoot": "libs/front/admin/core/src",
-  "prefix": "admin-core",
+  "prefix": "seed-admin-core",
   "targets": {
     "test": {
       "executor": "@nrwl/jest:jest",

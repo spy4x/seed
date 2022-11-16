@@ -26,6 +26,7 @@ services:
 
   firebase:
     image: seed_firebase
+    restart: always
     volumes:
       - ./firebase.json:/app/firebase.json
       - firebase-data:/app
@@ -44,7 +45,9 @@ services:
       service: base
     ports:
       - 8080:8080 # API Entry port
+      - 5555:5555 # Prisma Studio
       - 4311:4311 # Debugging port
+      - 9229:9229 # Debugging port
     env_file:
       - apps/back/api/.env
     environment:
@@ -61,7 +64,7 @@ services:
       - 4200:4200
     env_file:
       - apps/front/web/.env
-    command: yarn serve front-web --host=0.0.0.0 --disable-host-check
+    command: yarn serve front-web --host=0.0.0.0
 
   front-admin:
     depends_on:
@@ -73,4 +76,4 @@ services:
       - 4201:4201
     env_file:
       - apps/front/admin/.env
-    command: yarn serve front-admin --host=0.0.0.0 --disable-host-check
+    command: yarn serve front-admin --host=0.0.0.0

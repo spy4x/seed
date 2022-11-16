@@ -1,4 +1,5 @@
 {
+  "name": "front-web-auth",
   "projectType": "library",
   "sourceRoot": "libs/front/web/auth/src",
   "prefix": "web-auth",

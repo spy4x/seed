@@ -7,9 +7,11 @@ import { EnterEmailComponent } from './enter-email/enter-email.component';
 import { EnterPasswordComponent } from './enter-password/enter-password.component';
 import { EnterPhoneNumberComponent } from './enter-phone-number/enter-phone-number.component';
 import { DisplayUserComponent } from './display-prev-user/display-user.component';
+import { SharedUIModule } from '@seed/front/shared/ui';
+import { ProfileComponent } from './profile/profile.component';
 
 @NgModule({
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, SharedUIModule],
   declarations: [
     SignInUIComponent,
     ProvidersListComponent,
@@ -17,7 +19,8 @@ import { DisplayUserComponent } from './display-prev-user/display-user.component
     EnterPasswordComponent,
     EnterPhoneNumberComponent,
     DisplayUserComponent,
+    ProfileComponent,
   ],
-  exports: [SignInUIComponent],
+  exports: [SignInUIComponent, ProfileComponent],
 })
 export class SharedAuthUIModule {}

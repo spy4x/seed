@@ -1,4 +1,5 @@
 {
+  "name": "front-shared-auth-guards",
   "projectType": "library",
   "sourceRoot": "libs/front/shared/auth/guards/src",
   "prefix": "shared-auth-guards",

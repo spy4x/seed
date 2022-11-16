@@ -32,6 +32,7 @@
       "@seed/front/shared/router": ["libs/front/shared/router/src/index.ts"],
       "@seed/front/shared/styles": ["libs/front/shared/styles/src/index.ts"],
       "@seed/front/shared/types": ["libs/front/shared/types/src/index.ts"],
+      "@seed/front/shared/ui": ["libs/front/shared/ui/src/index.ts"],
       "@seed/front/web/auth": ["libs/front/web/auth/src/index.ts"],
       "@seed/front/web/core": ["libs/front/web/core/src/index.ts"],
       "@seed/front/web/profile": ["libs/front/web/profile/src/index.ts"],

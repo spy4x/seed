@@ -1,5 +1,4 @@
 import { createAction, props } from '@ngrx/store';
-import type { Prisma } from '@prisma/client';
 import { AuthProvider } from '@seed/front/shared/types';
 
 const prefix = `[Auth/UI]`;
@@ -34,4 +33,14 @@ export const restorePassword = createAction(n(`Restore password`));
 
 export const signOut = createAction(n(`Sign out`));
 
-export const profileCreate = createAction(n(`Profile - Create`), props<{ user: Prisma.UserCreateInput }>());
+export const profileCreate = createAction(
+  n(`Profile - Create`),
+  props<{
+    user: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      photoURL: undefined | null | string;
+    };
+  }>(),
+);

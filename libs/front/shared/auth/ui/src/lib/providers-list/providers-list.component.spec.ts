@@ -5,6 +5,7 @@ import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { difference } from 'lodash-es';
 import { first } from 'rxjs/operators';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 describe(ProvidersListComponent.name, () => {
   // region SETUP
@@ -15,6 +16,7 @@ describe(ProvidersListComponent.name, () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ProvidersListComponent],
+      imports: [SharedUIModule],
     })
       .overrideComponent(ProvidersListComponent, {
         set: { changeDetection: ChangeDetectionStrategy.Default }, // To make fixture.detectChanges() work
@@ -42,26 +44,11 @@ describe(ProvidersListComponent.name, () => {
     it(`emits "select" event on click on "${provider}" button`, done => {
       component.providers = ALL_PROVIDERS;
       fixture.detectChanges();
-      component.selectProvider.pipe(first()).subscribe(p => {
+      component.provider.pipe(first()).subscribe(p => {
         expect(p).toEqual(provider);
         done();
       });
       getProviderButton(provider).nativeElement.click();
-    });
-  }
-
-  function loadingTest(provider: AuthProvider): void {
-    it(`shows loading on "${provider}" button and disables other buttons`, () => {
-      component.providers = ALL_PROVIDERS;
-      component.selectedProvider = provider;
-      fixture.detectChanges();
-      expect(getProviderButton(provider).nativeElement.textContent).not.toContain('Loading');
-      ALL_PROVIDERS.forEach(p => expect(getProviderButton(p).nativeElement.disabled).toBe(false));
-      // change
-      component.inProgress = true;
-      fixture.detectChanges();
-      expect(getProviderButton(provider).nativeElement.textContent).toContain('Loading');
-      ALL_PROVIDERS.forEach(p => expect(getProviderButton(p).nativeElement.disabled).toBe(true));
     });
   }
   // endregion
@@ -70,5 +57,4 @@ describe(ProvidersListComponent.name, () => {
   renderTest([AuthProvider.github, AuthProvider.google, AuthProvider.phone]);
   renderTest(ALL_PROVIDERS);
   ALL_PROVIDERS.forEach(p => emitTest(p));
-  [AuthProvider.github, AuthProvider.google, AuthProvider.link].forEach(p => loadingTest(p));
 });

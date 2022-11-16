@@ -6,6 +6,8 @@ import { AUTH_FEATURE_KEY } from '../+state/auth.reducer';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { throwError } from 'rxjs';
 import { hot } from 'jasmine-marbles';
+import { ZERO } from '@seed/shared/constants';
+import { User } from '@prisma/client';
 
 describe(UserService.name, () => {
   // region SETUP
@@ -13,7 +15,7 @@ describe(UserService.name, () => {
   const jwt = testJWT;
   const getMock = jest.fn();
   const postMock = jest.fn();
-  const [user] = mockUsers;
+  const user: User & { email: string } = { ...mockUsers[ZERO], email: 'test@test.com' };
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -88,8 +90,16 @@ describe(UserService.name, () => {
     it('executes POST /api/users', () => {
       const expected$ = hot('a', { a: user });
       postMock.mockReturnValue(hot('a', { a: user }));
+      const mockDate = new Date();
+      jest.useFakeTimers({
+        now: mockDate,
+      });
       expect(service.create(user)).toBeObservable(expected$);
-      expect(postMock).toHaveBeenCalledWith(`/api/users`, user, getExpectedOptions());
+      expect(postMock).toHaveBeenCalledWith(
+        `/api/users`,
+        { ...user, userName: mockDate.getTime().toString() },
+        getExpectedOptions(),
+      );
     });
   });
 });

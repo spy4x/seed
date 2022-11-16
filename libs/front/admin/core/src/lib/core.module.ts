@@ -13,6 +13,8 @@ import { IsAuthorizedGuard, IsNotAuthorizedGuard } from '@seed/front/shared/auth
 import { SharedAuthStateModule } from '@seed/front/shared/auth/state';
 import { SharedRouterModule } from '@seed/front/shared/router';
 import { authProviders } from '@seed/front/admin/auth';
+import { ProtectedComponent } from './protected/protected.component';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 @NgModule({
   imports: [
@@ -30,16 +32,25 @@ import { authProviders } from '@seed/front/admin/auth';
           canActivate: [IsNotAuthorizedGuard],
         },
         {
-          path: 'profile',
-          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type,@typescript-eslint/promise-function-async
-          loadChildren: () => import('@seed/front/admin/profile').then(m => m.ProfileModule),
+          path: '',
+          component: ProtectedComponent,
           canActivate: [IsAuthorizedGuard],
-        },
-        {
-          path: 'users',
-          // eslint-disable-next-line @typescript-eslint/explicit-function-return-type,@typescript-eslint/promise-function-async
-          loadChildren: () => import('@seed/front/admin/users').then(m => m.UsersModule),
-          canActivate: [IsAuthorizedGuard],
+          children: [
+            {
+              path: 'profile',
+              // eslint-disable-next-line @typescript-eslint/explicit-function-return-type,@typescript-eslint/promise-function-async
+              loadChildren: () => import('@seed/front/admin/profile').then(m => m.ProfileModule),
+            },
+            {
+              path: 'users',
+              // eslint-disable-next-line @typescript-eslint/explicit-function-return-type,@typescript-eslint/promise-function-async
+              loadChildren: () => import('@seed/front/admin/users').then(m => m.UsersModule),
+            },
+            {
+              path: '**',
+              redirectTo: 'users',
+            },
+          ],
         },
         {
           path: '**',
@@ -64,6 +75,7 @@ import { authProviders } from '@seed/front/admin/auth';
     EffectsModule.forRoot([]),
     StoreDevtoolsModule.instrument(), // TODO: remove for production
     SharedRouterModule,
+    SharedUIModule,
   ],
   providers: [
     {
@@ -79,6 +91,7 @@ import { authProviders } from '@seed/front/admin/auth';
     },
     ...authProviders,
   ],
+  declarations: [ProtectedComponent],
   exports: [RouterModule],
 })
 export class CoreModule {}

@@ -1,5 +1,4 @@
-#Seed
-
+# Seed
 
 ## 🤔 Motivation. Why Seed?
 💡 After working on dozens of startup projects, I realised a pattern of applications/code/infrastructure that every startup needs.  
@@ -13,7 +12,7 @@
 2. [Node.js](https://github.com/nvm-sh/nvm) (tip: `brew install nvm && nvm install 18`)
 3. [Yarn](https://classic.yarnpkg.com/lang/en/) (tip: `npm i -g yarn`)
 4. Clone this repo (tip: `git clone git@github.com:spy4x/seed.git`)
-5. Install dependencies `yarn` and build essential docker images `yarn build-docker`. On first run it will download all dependencies, so grab your favourite coffee or tea while initialization magic happens ☕
+5. Install dependencies `yarn` and build essential docker images `yarn docker:init`. On first run it will download all dependencies, so grab your favourite coffee or tea while initialization magic happens ☕
 
 ## ▶️ Start development
 1. Start all apps and local infrastructure with `yarn start`. 
@@ -32,9 +31,9 @@
 </a>
 <br/>
 
-<a href="https://getbootstrap.com/">  
-  <img src="https://www.svgrepo.com/show/303293/bootstrap-4-logo.svg" width="50" />
-  <span>Bootstrap</span>
+<a href="https://tailwindcss.com/">  
+  <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg" width="50" />
+  <span>TailwindCSS</span>
 </a>
 <br/>
 
@@ -189,7 +188,7 @@
 🕑 Provide environment variables from secret manager  
 🕑 Build once, use bundle for every environment  
 #### Styles
-✅ Bootstrap + Mobile-first responsive design
+✅ TailwindCSS + Mobile-first responsive design
 ✅ [Styles shared between frontend apps](libs/front/shared/styles)
 🕑 How to manage styles on component level? (no component-level styles)  
 #### Forms & "Editor" component

@@ -1,4 +1,5 @@
 {
+  "name": "front-shared-router",
   "projectType": "library",
   "sourceRoot": "libs/front/shared/router/src",
   "prefix": "shared-auth-router",

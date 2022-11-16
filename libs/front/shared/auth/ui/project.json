@@ -1,4 +1,5 @@
 {
+  "name": "front-shared-auth-ui",
   "projectType": "library",
   "sourceRoot": "libs/front/shared/auth/ui/src",
   "prefix": "shared-auth-ui",

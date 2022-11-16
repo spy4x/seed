@@ -30,6 +30,7 @@ export const getEmailPasswordPayload = createSelector(getEmail, getIsNewUser, (e
 }));
 export const getSelectedProvider = createSelector(getAuthState, (state: State) => state.selectedProvider);
 export const getUserId = createSelector(getAuthState, (state: State) => state.userId);
+export const getUser = createSelector(getAuthState, (state: State) => state.user);
 export const getErrorMessage = createSelector(getAuthState, (state: State) => state.error?.message);
 export const getSuccessMessage = createSelector(getAuthState, (state: State) => state.successMessage);
 export const getJWT = createSelector(getAuthState, (state: State) => state.jwt);

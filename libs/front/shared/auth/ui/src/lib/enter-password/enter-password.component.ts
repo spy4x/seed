@@ -7,13 +7,21 @@ const minLength = 10;
   selector: 'shared-auth-ui-enter-password',
   templateUrl: './enter-password.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: [
+    `
+      :host {
+        display: block;
+        width: 100%;
+      }
+    `,
+  ],
 })
 export class EnterPasswordComponent {
   @Input() inProgress = false;
 
   @Input() isActiveStage = true;
 
-  @Output() enterPassword = new EventEmitter<{ password: string }>();
+  @Output() password = new EventEmitter<string>();
 
   form = new FormGroup({
     /* eslint-disable-next-line @typescript-eslint/unbound-method */
@@ -22,9 +30,9 @@ export class EnterPasswordComponent {
 
   submit(): void {
     if (this.form.invalid) {
+      this.form.markAllAsTouched();
       return;
     }
-    const { password } = this.form.value as { password: string };
-    this.enterPassword.emit({ password });
+    this.password.emit(this.form.value.password as string);
   }
 }

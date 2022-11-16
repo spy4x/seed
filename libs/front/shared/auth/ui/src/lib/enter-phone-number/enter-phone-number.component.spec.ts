@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { testPhoneNumber } from '@seed/shared/mock-data';
 import { first } from 'rxjs/operators';
 import { EnterPhoneNumberComponent } from './enter-phone-number.component';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 describe(EnterPhoneNumberComponent.name, () => {
   // region SETUP
@@ -14,7 +15,7 @@ describe(EnterPhoneNumberComponent.name, () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [EnterPhoneNumberComponent],
-      imports: [ReactiveFormsModule],
+      imports: [ReactiveFormsModule, SharedUIModule],
     })
       .overrideComponent(EnterPhoneNumberComponent, {
         set: { changeDetection: ChangeDetectionStrategy.Default }, // To make fixture.detectChanges() work
@@ -42,17 +43,17 @@ describe(EnterPhoneNumberComponent.name, () => {
     });
 
     // CASE: invalid
-    component.form.patchValue({ phoneNumber: 'abc' });
+    component.form.setValue({ phoneNumber: 'abc' });
     getEnterPhoneNumberButton().nativeElement.click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).toContain('Phone number is not valid.');
-    expect(getPhoneNumberInput().nativeElement.classList.contains('is-invalid')).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Phone number is not valid');
+    expect(component.form.controls.phoneNumber.valid).toBe(false);
 
     // CASE: valid
-    component.form.patchValue({ phoneNumber: validPhoneNumber });
+    component.form.setValue({ phoneNumber: validPhoneNumber });
     fixture.detectChanges();
-    expect(fixture.nativeElement.textContent).not.toContain('Phone number is not valid.');
-    expect(getPhoneNumberInput().nativeElement.classList.contains('is-valid')).toBe(true);
+    expect(fixture.nativeElement.textContent).not.toContain('Phone number is not valid');
+    expect(component.form.controls.phoneNumber.valid).toBe(true);
     getEnterPhoneNumberButton().nativeElement.click();
   });
 

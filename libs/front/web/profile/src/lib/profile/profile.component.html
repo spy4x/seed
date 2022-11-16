@@ -1,2 +1,5 @@
-<h3>This is a placeholder for ProfileComponent</h3>
-<button data-e2e="signOut" class="btn btn-secondary" (click)="signOut()">Sign out</button>
+<div *ngIf="user$ | async as user" class="flex h-full w-full items-center justify-center">
+  <div class="w-72 rounded-xl bg-white p-8 shadow">
+    <shared-auth-ui-profile [user]="user" (signOut)="signOut()"></shared-auth-ui-profile>
+  </div>
+</div>

@@ -1,23 +1,21 @@
 <ng-container *ngIf="userId || email">
-  <div data-e2e="wrapper" class="d-flex align-items-center">
+  <div data-e2e="wrapper" class="flex justify-center gap-2">
     <img
       data-e2e="photoURL"
-      [src]="photoURL || photoURLPlaceholder"
-      alt="User photo"
-      class="img-thumbnail rounded-circle w-25 me-2"
+      alt="Your photo"
+      [src]="photoURL || 'assets/placeholders/avatar.svg'"
+      class="h-14 w-auto rounded-full border border-gray-300"
     />
-    <div class="text-start flex-grow-1">
-      <div data-e2e="displayName" *ngIf="displayName">{{ displayName }}</div>
-      <div data-e2e="identification" *ngIf="email || userId" class="text-sm text-muted">
+    <div class="flex flex-col items-center justify-center">
+      <div data-e2e="displayName" *ngIf="displayName" class="font-semibold text-gray-900">{{ displayName }}</div>
+      <div data-e2e="identification" *ngIf="email || userId" class="text-sm text-slate-500">
         {{ email }} {{ email || displayName ? '' : 'User: ' + userId }}
       </div>
 
-      <ng-container *ngIf="userId; else changeUserButton">
-        <a data-e2e="signOut" (click)="signOut.emit()" href="javascript:;">Sign out</a>
-      </ng-container>
-      <ng-template #changeUserButton>
-        <a data-e2e="changeUser" (click)="changeUser.emit()" href="javascript:;">Not you?</a>
-      </ng-template>
+      <div class="flex justify-center">
+        <seed-button *ngIf="userId" e2e="signOut" (click)="signOut.emit()" color="link">Sign out</seed-button>
+        <seed-button *ngIf="!userId" e2e="changeUser" (click)="changeUser.emit()" color="link">Not you?</seed-button>
+      </div>
     </div>
   </div>
 </ng-container>

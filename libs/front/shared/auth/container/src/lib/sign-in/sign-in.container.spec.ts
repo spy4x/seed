@@ -135,7 +135,7 @@ describe(SignInContainerComponent.name, () => {
 
   describe('dispatches action when an event fire from UI component', function () {
     it(`"enterEmail" -> "${AuthUIActions.enterEmail.type}"`, () => {
-      component.enterEmail.next({ email: testEmail });
+      component.enterEmail.next(testEmail);
       expect(store.dispatch).toHaveBeenCalledWith(AuthUIActions.enterEmail({ email: testEmail }));
     });
 
