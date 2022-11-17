@@ -26,7 +26,7 @@
 
 ### Frontend:
 <a href="https://angular.io/">  
-  <img src="https://upload.wikimedia.org/wikipedia/commons/c/cf/Angular_full_color_logo.svg" width="50" />
+  <img src="https://angular.io/assets/images/logos/angular/angular.svg" width="50" />
   <span>Angular</span>
 </a>
 <br/>
