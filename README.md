@@ -57,7 +57,7 @@
 <br/>
 
 <a href="https://prisma.io/">  
-  <img src="https://seeklogo.com/images/P/prisma-logo-3805665B69-seeklogo.com.png" width="50" />
+  <img src="https://www.svgrepo.com/show/327488/prism.svg" width="50" />
   <span>Prisma</span>
 </a>
 <br/>
