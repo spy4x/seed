@@ -26,7 +26,7 @@
 
 ### Frontend:
 <a href="https://angular.io/">  
-  <img src="https://creativo-websolutions.com/my_files/2020/04/angular-logo.png" width="50" />
+  <img src="https://angular.io/assets/images/logos/angular/angular.svg" width="50" />
   <span>Angular</span>
 </a>
 <br/>
@@ -57,7 +57,7 @@
 <br/>
 
 <a href="https://prisma.io/">  
-  <img src="https://images.tute.io/tute/topic/prisma.png" width="50" />
+  <img src="https://seeklogo.com/images/P/prisma-logo-3805665B69-seeklogo.com.png" width="50" />
   <span>Prisma</span>
 </a>
 <br/>
