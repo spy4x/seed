@@ -24,98 +24,148 @@
 
 ## ❤️ Tools used 
 
-### Frontend:
-<a href="https://angular.io/">  
-  <img src="https://angular.io/assets/images/logos/angular/angular.svg" width="50" />
-  <span>Angular</span>
-</a>
-<br/>
+<table style="text-align: center">
+  <tr>
+    <td>
+      <a href="https://angular.io/" target="_blank"
+        ><img
+          src="https://angular.io/assets/images/logos/angular/angular.svg"
+          width="75"
+          alt="Angular"
+          valign="middle"
+        />
+      </a>
+    </td>
+    <td>
+      <a href="https://tailwindcss.com/" target="_blank"
+        ><img
+          src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg"
+          width="75"
+          alt="TailwindCSS"
+          valign="middle"
+      /></a>
+    </td>
+    <td>
+      <a href="https://nestjs.com/" target="_blank"
+        ><img src="https://docs.nestjs.com/assets/logo-small.svg" width="75" alt="Nest.js" valign="middle" />
+      </a>
+    </td>
+    <td>
+      <a href="https://www.postgresql.org/" target="_blank"
+        ><img
+          src="https://www.postgresql.org/media/img/about/press/elephant.png"
+          width="75"
+          alt="PostgreSQL"
+          valign="middle"
+        />
+      </a>
+    </td>
+    <td>
+      <a href="https://www.docker.com/" target="_blank"
+        ><img
+          src="https://codeopolis.com/wp-content/uploads/2020/04/dockericon-e1587222605149.png"
+          width="75"
+          alt="Docker"
+          valign="middle"
+        />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="https://prisma.io/" target="_blank"
+        ><img src="https://www.svgrepo.com/show/327488/prism.svg" width="75" alt="Prisma" valign="middle" />
+      </a>
+    </td>
+    <td>
+      <a href="https://swagger.io/" target="_blank"
+        ><img
+          src="https://camo.githubusercontent.com/96e43701d83561899724a89d71187445b7b8f4fe84518a3ea5bec8f85bd207bf/68747470733a2f2f63646e2e737667706f726e2e636f6d2f6c6f676f732f737761676765722e737667"
+          width="75"
+          alt="Swagger"
+          valign="middle"
+      /></a>
+    </td>
+    <td>
+      <a href="https://cloud.google.com/" target="_blank"
+        ><img
+          src="https://cdn.iconscout.com/icon/free/png-256/google-cloud-2038785-1721675.png"
+          width="75"
+          alt="Google Cloud"
+          valign="middle"
+        />
+      </a>
+    </td>
+    <td>
+      <a href="https://firebase.google.com/" target="_blank"
+        ><img
+          src="https://cdn.iconscout.com/icon/free/png-256/firebase-1-282796.png"
+          width="75"
+          alt="Firebase"
+          valign="middle"
+        />
+      </a>
+    </td>
+    <td>
+      <a href="https://nx.dev" target="_blank"
+        ><img
+          src="https://images.opencollective.com/nx/0efbe42/logo/256.png"
+          width="75"
+          alt="Nrwl Nx"
+          valign="middle"
+        />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href="https://www.cypress.io/" target="_blank"
+        ><img
+          src="https://iconape.com/wp-content/files/gj/370774/svg/370774.svg"
+          width="75"
+          alt="Cypress"
+          valign="middle"
+        />
+      </a>
+    </td>
+    <td>
+      <a href="https://jestjs.io/" target="_blank"
+        ><img
+          src="https://d2eip9sf3oo6c2.cloudfront.net/tags/images/000/000/940/square_256/jestlogo.png"
+          width="75"
+          alt="Jest"
+          valign="middle"
+      /></a>
+    </td>
+    <td>
+      <a href="https://eslint.org/" target="_blank"
+        ><img
+          src="https://d33wubrfki0l68.cloudfront.net/204482ca413433c80cd14fe369e2181dd97a2a40/092e2/assets/img/logo.svg"
+          width="75"
+          alt="ESLint"
+          valign="middle"
+        />
+      </a>
+    </td>
+    <td>
+      <a href="https://prettier.io/" target="_blank"
+        ><img src="https://prettier.io/icon.png" width="75" alt="Prettier" valign="middle" />
+      </a>
+    </td>
+    <td>
+      <a href="https://www.typescriptlang.org/" target="_blank"
+        ><img
+          src="https://d2zv2ciw0ln4h1.cloudfront.net/uploads/Typescript_logo_2020_0b0c45c9b6.svg"
+          width="75"
+          alt="TypeScript"
+          valign="middle"
+        />
+      </a>
+    </td>
+  </tr>
+</table>
 
-<a href="https://tailwindcss.com/">  
-  <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg" width="50" />
-  <span>TailwindCSS</span>
-</a>
-<br/>
 
-### Backend:
-<a href="https://nestjs.com/">  
-  <img src="https://docs.nestjs.com/assets/logo-small.svg" width="50" />
-  <span>Nest.js</span>
-</a>
-<br/>
-
-<a href="https://www.postgresql.org/">  
-  <img src="https://www.postgresql.org/media/img/about/press/elephant.png" width="50" />
-  <span>PostgreSQL</span>
-</a>
-<br/>
-
-<a href="https://www.docker.com/">  
-  <img src="https://codeopolis.com/wp-content/uploads/2020/04/dockericon-e1587222605149.png" width="50" />
-  <span>Docker</span>
-</a>
-<br/>
-
-<a href="https://prisma.io/">  
-  <img src="https://www.svgrepo.com/show/327488/prism.svg" width="50" />
-  <span>Prisma</span>
-</a>
-<br/>
-
-<a href="https://swagger.io/">  
-  <img src="https://camo.githubusercontent.com/96e43701d83561899724a89d71187445b7b8f4fe84518a3ea5bec8f85bd207bf/68747470733a2f2f63646e2e737667706f726e2e636f6d2f6c6f676f732f737761676765722e737667" width="50" />
-  <span>Swagger</span>
-</a>
-<br/>
-
-### Clouds:
-<a href="https://cloud.google.com/">  
-  <img src="https://cdn.iconscout.com/icon/free/png-256/google-cloud-2038785-1721675.png" width="50" />
-  <span>Google Cloud</span>
-</a>
-<br/>
-
-<a href="https://firebase.google.com/">  
-  <img src="https://cdn.iconscout.com/icon/free/png-256/firebase-1-282796.png" width="50" />
-  <span>Firebase</span>
-</a>
-<br/>
-
-### Environment and code organisation:
-<a href="https://nx.dev">  
-  <img src="https://images.opencollective.com/nx/0efbe42/logo/256.png" width="50" />
-  <span>Nrwl Nx</span>
-</a>
-<br/>
-
-<a href="https://www.cypress.io/">  
-  <img src="https://iconape.com/wp-content/files/gj/370774/svg/370774.svg" width="50" />
-  <span>Cypress</span>
-</a>
-<br/>
-
-<a href="https://jestjs.io/">  
-  <img src="https://d2eip9sf3oo6c2.cloudfront.net/tags/images/000/000/940/square_256/jestlogo.png" width="50" />
-  <span>Jest</span>
-</a>
-<br/>
-
-<a href="https://eslint.org/">  
-  <img src="https://d33wubrfki0l68.cloudfront.net/204482ca413433c80cd14fe369e2181dd97a2a40/092e2/assets/img/logo.svg" width="50" />
-  <span>ESLint</span>
-</a>
-<br/>
-
-<a href="https://prettier.io/">  
-  <img src="https://prettier.io/icon.png" width="50" />
-  <span>Prettier</span>
-</a>
-<br/>
-
-<a href="https://www.typescriptlang.org/">  
-  <img src="https://d2zv2ciw0ln4h1.cloudfront.net/uploads/Typescript_logo_2020_0b0c45c9b6.svg" width="50" />
-  <span>TypeScript</span>
-</a>
 <br/>
 
 
