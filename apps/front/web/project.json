@@ -65,7 +65,7 @@
       },
       "defaultConfiguration": "development",
       "options": {
-        "proxyConfig": "apps/front/web/proxy.conf.json",
+        "proxyConfig": "apps/front/web/proxy.conf.js",
         "hmr": true
       }
     },

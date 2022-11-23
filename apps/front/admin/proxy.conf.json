@@ -1,6 +1,0 @@
-{
-  "/api": {
-    "target": "http://back-api:8080",
-    "secure": false
-  }
-}

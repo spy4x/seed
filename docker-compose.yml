@@ -52,6 +52,7 @@ services:
       - apps/back/api/.env
     environment:
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - DB_CONNECTION_STRING=postgresql://seed:localPassword@postgres:5432/seed?connection_limit=20
     command: yarn migrate:run:back-api
 
   front-web:
@@ -64,6 +65,8 @@ services:
       - 4200:4200
     env_file:
       - apps/front/web/.env
+    environment:
+      - FRONT_WEB_API_URL=http://back-api:8080
     command: yarn serve front-web --host=0.0.0.0
 
   front-admin:
@@ -76,4 +79,6 @@ services:
       - 4201:4201
     env_file:
       - apps/front/admin/.env
+    environment:
+      - FRONT_ADMIN_API_URL=http://back-api:8080
     command: yarn serve front-admin --host=0.0.0.0
