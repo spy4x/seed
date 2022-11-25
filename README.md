@@ -12,11 +12,11 @@
 1. [Run it locally](#run-it-locally)  
 1. [Tools used](#tools)  
 1. [Roadmap](#roadmap)  
+1. [Contribution](#contribution)  
 1. [Credits](#credits)  
 
-<a name="prerequisites"/>
 
-## ☝️ Prerequisites
+## <a name="prerequisites"></a> ☝️ Prerequisites
  You need to have next things:
 1. [Docker](https://www.docker.com/get-started/) (tip: `brew install --cask docker`)
 2. [Node.js](https://github.com/nvm-sh/nvm) (tip: `brew install nvm && nvm install 18`)
@@ -25,9 +25,7 @@
 5. Install dependencies `yarn` and build essential docker images `yarn docker:init`. On first run it will download all dependencies, so grab your favourite coffee or tea while initialization magic happens ☕
 
 
-<a name="run-it-locally"/>
-
-## ▶️ Run it locally
+## <a name="run-it-locally"></a> ▶️ Run it locally
 1. Start all apps and local infrastructure with `yarn start`. 
 2. Open in your browser:
    - Frontend: http://localhost:4200
@@ -35,9 +33,7 @@
    - Backend Swagger: http://localhost:8080/api
 
 
-<a name="tools"/>
-
-## ⚡ Tools used
+## <a name="tools"></a> ⚡ Tools used
 <table style="text-align: center">
   <tr>
     <td>
@@ -180,9 +176,7 @@
 </table>
 
 
-<a name="roadmap"/>
-
-## 🎯 Roadmap
+## <a name="roadmap"></a> 🎯 Roadmap
 What is implemented and what is planned.
 
 ### Environment and code organisation
@@ -267,9 +261,12 @@ What is implemented and what is planned.
 🕑 [Transfer ownership of a group](https://github.com/spy4x/seed/issues/159)
 
 
-<a name="credits"/>
+## <a name="contribution"></a> ➕ Contribution
+Contributions are welcome, either it is a typo fix, bug fix, feature proposal, a pull request or anything else!  
+For more info follow [contributing guidelines](CONTRIBUTING.md).
 
-## Credits
+
+## <a name="credits"></a> Credits
 ### 👻 Created by [Anton Shubin](https://github.com/spy4x)
 <a href="https://github.com/spy4x">  
   <img src="https://avatars.githubusercontent.com/u/4995814?v=4" width="100" style="border-radius: 50%" />
