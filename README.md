@@ -1,12 +1,14 @@
 # Seed
 
+
 ## 🤔 Motivation. Why Seed?
 💡 After working on dozens of startup projects, I realised a pattern of applications/code/infrastructure that every startup needs.  
 👨‍💻 Instead of repeating myself from project to project I decided to extract a project template into this seed.  
 🏆 Now anyone can clone this repo and get all it's benefits for their startup.   
 🌟 More about benefits in the Roadmap section.  
 
-## 👨‍💻 Prerequisites
+
+## ☝️ Prerequisites
  You need to have next things:
 1. [Docker](https://www.docker.com/get-started/) (tip: `brew install --cask docker`)
 2. [Node.js](https://github.com/nvm-sh/nvm) (tip: `brew install nvm && nvm install 18`)
@@ -14,16 +16,16 @@
 4. Clone this repo (tip: `git clone git@github.com:spy4x/seed.git`)
 5. Install dependencies `yarn` and build essential docker images `yarn docker:init`. On first run it will download all dependencies, so grab your favourite coffee or tea while initialization magic happens ☕
 
+
 ## ▶️ Start development
 1. Start all apps and local infrastructure with `yarn start`. 
 2. Open in your browser:
    - Frontend: http://localhost:4200
    - Admin Panel: http://localhost:4201
    - Backend Swagger: http://localhost:8080/api
-3. Profit 🌟
 
-## ❤️ Tools used 
 
+## ⚡ Tools used
 <table style="text-align: center">
   <tr>
     <td>
@@ -166,64 +168,58 @@
 </table>
 
 
-<br/>
+## 🎯 Roadmap
+What is implemented and what is planned.
 
-
-## Roadmap (What is implemented and what is not yet)
 ### Environment and code organisation
-✅ [Manage monorepo with multiple front-, back- and dev- projects](docs/code-organisation/nx.md)  
-✅ Running everything local with a single command  
+✅ [Manage monorepo with multiple frontend and backend projects](docs/code-organisation/nx.md)  
+✅ Running everything locally with a single command - `$ yarn start`  
 ✅ [Deploying apps to the cloud](cloud-build/deploy.yaml)  
 ✅ [TypeScript config (strict rules)](tsconfig.base.json)  
 ✅ [ESLint config (strict rules)](.eslintrc.json)  
 ✅ [Prettier config](.prettierrc)  
-✅ Code quality control: [Pre-commit hook](package.json) and [CI/CD](cloud-build/check.yaml)  
-✅ Run development environment locally with a single command
-🕑 Deploy to Google Cloud with a single command
-🕑 ? Keep secret keys safe on localhost  
-🕑 Follow [12 Factor App](https://12factor.net/)  
-🕑 Calculate affected apps based on latest release tag  
-🕑 Staging environment  
-🕑 E2E environment  
-🕑 Manage commits (https://commitizen.github.io/cz-cli/ & https://brayanarrieta.hashnode.dev/integrate-commitizen-with-your-nodejs-project & https://brayanarrieta.hashnode.dev/how-to-automatically-generate-changelog-for-your-nodejs-projects-step-by-step  )  
-🕑 Update versions (https://github.com/jscutlery/semver) & Build numbers  
-🕑 Add Stylelint (https://github.com/Phillip9587/nx-stylelint)  
+✅ [Pre-commit hook](package.json) for code quality control  
+✅ Deploy to production with a single command - `$ yarn deploy:all`  
+🕑 [CI/CD](https://github.com/spy4x/seed/issues/143)  
+🕑 [Manage environments on local machine](https://github.com/spy4x/seed/issues/99)  
+🕑 [Follows "12 Factor App"](https://github.com/spy4x/seed/issues/156)
+🕑 [Calculate affected apps based on latest release tag](https://github.com/spy4x/seed/issues/153)  
+🕑 Staging environment    
+🕑 [Manage commits](https://github.com/spy4x/seed/issues/154)  
+🕑 [Update versions](https://github.com/spy4x/seed/issues/155) 
 
 ### Backend
 ✅ [Backend infrastructure diagram](docs/backend/infrastructure.md)  
 ✅ [Cloud Run](apps/back/api)  
-✅ [Cloud Functions](apps/back/cloud-functions)  
 ✅ [Nest.js](libs/back/api/core/src/lib/app.ts)  
 ✅ [Prisma](prisma/schema.prisma)  
 ✅ [Configure Swagger integration with Nest.js](libs/back/api/core/src/lib/app.ts)  
 ✅ [CQRS architecture](docs/backend/cqrs.md)  
-✅ [Verify user JWT authentication](libs/back/api/shared/src/lib/nestjs/middlewares/user-id/user.middleware.ts)  
-🕑 [Unit-testing controller](libs/back/api/users/src/lib/users.controller.spec.ts)  
+✅ [Verify user JWT authentication](libs/back/api/shared/src/lib/nestjs/middlewares/user-id/user-id.middleware.ts)  
+🕑 [Unit-testing controller](https://github.com/spy4x/seed/issues/157)  
 ✅ [Unit-testing command handler](libs/back/api/users/src/lib/commandHandlers/create/userCreate.commandHandler.spec.ts)  
 ✅ [Unit-testing query handler](libs/back/api/users/src/lib/queryHandlers/find/usersFind.queryHandler.spec.ts)  
-🕑 [Unit-testing saga](libs/back/api/users/src/lib/sagas/userCreated.saga.spec.ts)  
-🕑 E2E-testing endpoints  
+🕑 [Unit-testing event handler](libs/back/api/notifications/src/lib/eventHandlers/notificationCreated.eventHandler.spec.ts)  
+🕑 [Load-testing](https://github.com/spy4x/seed/issues/119)  
 ✅ [Logging](libs/back/api/shared/src/lib/services/log/log.service.ts)  
 ✅ [Schedule tasks](libs/back/api/shared/src/lib/services/cloudTasks/cloudTasks.service.ts)  
 ✅ [Users management](libs/back/api/users/src/lib/users.controller.ts)  
 ✅ [REST API](libs/back/api/users/src/lib/users.controller.ts)  
-🕑 GraphQL  
 ✅ Send Push notifications  
-🕑 Http caching  
-🕑 Redis caching  
-🕑 How to integrate Stripe subscriptions/payments?  
+🕑 [Http and Redis caching](https://github.com/spy4x/seed/issues/151)  
+🕑 [Stripe subscriptions and payments](https://github.com/spy4x/seed/issues/158)  
 
 #### Database
 ✅ [Automatic backups](https://cloud.google.com/sql/docs/postgres/backup-recovery/backups)  
 ✅ [Restore backup](https://cloud.google.com/sql/docs/postgres/backup-recovery/restoring)  
 ✅ [Read replicas](https://cloud.google.com/sql/docs/postgres/replication)  
-🕑 When and how to migrate DB schema?
+🕑 [Automatic database migrations](https://github.com/spy4x/seed/issues/113)
 
 #### Files upload
-🕑 Cloud Storage security rules  
-🕑 Handle upload  
-🕑 Keep track of files  
-🕑 Resize uploaded file  
+🕑 [Cloud Storage security rules](https://github.com/spy4x/seed/issues/58)  
+🕑 [Handle upload](https://github.com/spy4x/seed/issues/58)  
+🕑 [Keep track of files](https://github.com/spy4x/seed/issues/58)  
+🕑 [Resize uploaded file](https://github.com/spy4x/seed/issues/58)  
 
 ### Frontend
 #### Shared
@@ -233,63 +229,71 @@
 ✅ [Unit-testing UI components](libs/front/shared/auth/ui/src/lib)  
 ✅ [Unit-testing NgRx State](libs/front/shared/auth/state/src/lib/+state)  
 ✅ [Unit-testing Container component](libs/front/shared/auth/container/src/lib/sign-in)  
-🕑 File upload  
-🕑 Logging (Sentry/GCP Logging?)  
-🕑 Provide environment variables from secret manager  
-🕑 Build once, use bundle for every environment  
+🕑 [File upload](https://github.com/spy4x/seed/issues/58)  
+🕑 [Logging](https://github.com/spy4x/seed/issues/146)  
+🕑 [Build once, use bundle for every environment](https://github.com/spy4x/seed/issues/141)  
 #### Styles
 ✅ TailwindCSS + Mobile-first responsive design
-✅ [Styles shared between frontend apps](libs/front/shared/styles)
-🕑 How to manage styles on component level? (no component-level styles)  
-#### Forms & "Editor" component
-🕑 Handle input & output better (prevent infinite cycle and dirty hacks to avoid it)  
-🕑 Keep form state in store to be able to disable buttons based on form validity  
-🕑 Understand form state (validation, submit, onBlur & submit)  
+✅ [Styles shared between frontend apps](libs/front/shared/styles)  
 #### PWA
-🕑 Offline work  
-🕑 Push Notifications  
-🕑 Auto-update
+🕑 [Offline work](https://github.com/spy4x/seed/issues/147)  
+🕑 [Push Notifications](https://github.com/spy4x/seed/issues/147)  
+🕑 [Auto-update](https://github.com/spy4x/seed/issues/147)
+🕑 [Installable](https://github.com/spy4x/seed/issues/147)
 #### Admin Panel
-🕑 Users management  
-🕑 Groups management  
-🕑 Reset user's password  
-🕑 Sign in as a user  
+🕑 [Users management](https://github.com/spy4x/seed/issues/131)  
+🕑 [Groups management](https://github.com/spy4x/seed/issues/159)  
+🕑 [Reset user's password](https://github.com/spy4x/seed/issues/134)   
 #### Web Client
-🕑 Multiple file upload with dropzone? (copy from FoodRazor Upload invoice)  
-🕑 Server-side rendering  
-🕑 User config management (organisations, currency settings, etc)  
-🕑 Realtime update of data from backend  
-🕑 Group access to data  
-🕑 Different roles & permissions inside group users  
-🕑 Manage your personal account - avatar, email, oAuth providers, groups memberships  
-🕑 Manage group account - avatar, members, accesses  
-🕑 Invite person to your group by email  
-🕑 Transfer ownership of a group
+🕑 [Realtime update of data from backend](https://github.com/spy4x/seed/issues/160)  
+🕑 [Group access to data](https://github.com/spy4x/seed/issues/159)  
+🕑 [Manage your personal account - avatar, email, oAuth providers, groups memberships](https://github.com/spy4x/seed/issues/104)  
+🕑 [Manage group account - avatar, members, accesses](https://github.com/spy4x/seed/issues/159)  
+🕑 [Invite person to your group by email](https://github.com/spy4x/seed/issues/159)  
+🕑 [Transfer ownership of a group](https://github.com/spy4x/seed/issues/159)
 
 
 ## Credits
-### Created by
-
+### 👻 Created by [Anton Shubin](https://github.com/spy4x)
 <a href="https://github.com/spy4x">  
-  <img src="https://avatars.githubusercontent.com/u/4995814?v=4" width="100" />
-  <div>Anton Shubin</div>
+  <img src="https://avatars.githubusercontent.com/u/4995814?v=4" width="100" style="border-radius: 50%" />
 </a>
 
-### Special thanks to contributors:
-<a href="https://github.com/MehdiDi">  
-  <img src="https://avatars.githubusercontent.com/u/26252043?v=4" width="100" />
-  <div>Mehdi Diabi</div>
-</a>
-<br/>
-
-<a href="https://github.com/urnix">  
-  <img src="https://avatars.githubusercontent.com/u/7656366?v=4" width="100" />
-  <div>Artem</div>
-</a>
-<br/>
-
-<a href="https://github.com/Eirene">  
-  <img src="https://avatars.githubusercontent.com/u/1826433?v=4" width="100" />
-  <div>Irina</div>
-</a>
-<br/>
+### ❤️ Special thanks to contributors:
+<table style="text-align: center">
+  <tr>
+    <td>
+      <a href="https://github.com/MehdiDi" target="_blank"
+        ><img
+          src="https://avatars.githubusercontent.com/u/26252043?v=4"
+          width="75"
+          alt="Mehdi"
+          valign="middle"
+          style="border-radius: 50%"
+        />
+      </a>
+    </td>
+    <td>
+      <a href="https://github.com/urnix" target="_blank"
+        ><img
+          src="https://avatars.githubusercontent.com/u/7656366?v=4"
+          width="75"
+          alt="Artem Ischenko"
+          valign="middle"
+          style="border-radius: 50%"
+        />
+      </a>
+    </td>
+    <td>
+      <a href="https://github.com/Eirene" target="_blank"
+        ><img
+          src="https://avatars.githubusercontent.com/u/1826433?v=4"
+          width="75"
+          alt="Irina Sorokina"
+          valign="middle"
+          style="border-radius: 50%"
+        />
+      </a>
+    </td>
+  </tr>
+</table>
