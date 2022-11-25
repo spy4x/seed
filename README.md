@@ -1,12 +1,20 @@
 # Seed
-
+**Full-stack startup monorepo template. Build your next startup idea with best practices from day 1!**
 
 ## 🤔 Motivation. Why Seed?
 💡 After working on dozens of startup projects, I realised a pattern of applications/code/infrastructure that every startup needs.  
 👨‍💻 Instead of repeating myself from project to project I decided to extract a project template into this seed.  
 🏆 Now anyone can clone this repo and get all it's benefits for their startup.   
-🌟 More about benefits in the Roadmap section.  
+🌟 More about benefits in the [Roadmap section](#roadmap).  
 
+## 📗 Table of Contents
+1. [Prerequisites](#prerequisites)  
+1. [Run it locally](#run-it-locally)  
+1. [Tools used](#tools)  
+1. [Roadmap](#roadmap)  
+1. [Credits](#credits)  
+
+<a name="prerequisites"/>
 
 ## ☝️ Prerequisites
  You need to have next things:
@@ -17,13 +25,17 @@
 5. Install dependencies `yarn` and build essential docker images `yarn docker:init`. On first run it will download all dependencies, so grab your favourite coffee or tea while initialization magic happens ☕
 
 
-## ▶️ Start development
+<a name="run-it-locally"/>
+
+## ▶️ Run it locally
 1. Start all apps and local infrastructure with `yarn start`. 
 2. Open in your browser:
    - Frontend: http://localhost:4200
    - Admin Panel: http://localhost:4201
    - Backend Swagger: http://localhost:8080/api
 
+
+<a name="tools"/>
 
 ## ⚡ Tools used
 <table style="text-align: center">
@@ -168,6 +180,8 @@
 </table>
 
 
+<a name="roadmap"/>
+
 ## 🎯 Roadmap
 What is implemented and what is planned.
 
@@ -252,6 +266,8 @@ What is implemented and what is planned.
 🕑 [Invite person to your group by email](https://github.com/spy4x/seed/issues/159)  
 🕑 [Transfer ownership of a group](https://github.com/spy4x/seed/issues/159)
 
+
+<a name="credits"/>
 
 ## Credits
 ### 👻 Created by [Anton Shubin](https://github.com/spy4x)
