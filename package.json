@@ -19,7 +19,8 @@
     "lint": "nx lint",
     "e2e": "nx e2e",
     "deploy": "nx deploy",
-    "affected:deploy": "nx affected --target=deploy",
+    "deploy:all": "nx run-many --target=deploy",
+    "deploy:affected": "nx affected --target=deploy",
     "update": "nx migrate latest",
     "format": "nx format:write",
     "dep-graph": "nx dep-graph",
@@ -34,7 +35,7 @@
     "ci:test": "yarn nx affected:test --base=origin/master",
     "ci:e2e": "yarn nx affected:e2e --base=origin/master",
     "ci:build": "yarn nx affected:build --prod --base=origin/master",
-    "ci:deploy": "yarn nx affected --target=deploy --base=origin/master~1 --head=origin/master"
+    "ci:deploy": "yarn deploy:affected --base=origin/master~1 --head=origin/master"
   },
   "private": true,
   "dependencies": {
