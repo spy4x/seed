@@ -8,17 +8,21 @@ export class UserIsUsernameFreeQueryHandler implements IQueryHandler<UserIsUsern
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(query: UserIsUsernameFreeQuery): Promise<boolean> {
-    return this.logger.trackSegment(this.execute.name, async logSegment => {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          userName: query.userName,
-        },
-        select: {
-          id: true,
-        },
-      });
-      logSegment.log('User with such username:', user);
-      return !user;
-    });
+    return this.logger.trackSegment(
+      this.execute.name,
+      async logSegment => {
+        const user = await this.prisma.user.findFirst({
+          where: {
+            userName: query.userName,
+          },
+          select: {
+            id: true,
+          },
+        });
+        logSegment.log('User with such username:', user);
+        return !user;
+      },
+      query,
+    );
   }
 }

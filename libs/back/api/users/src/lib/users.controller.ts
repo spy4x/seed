@@ -75,8 +75,9 @@ export class UsersController extends BaseController {
   @UseGuards(IsAuthenticatedGuard)
   @ApiResponse({ status: HttpStatus.OK, type: UserIsUsernameFreeDTO })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
-  public async isUsernameFree(@Param() query: UserIsUsernameFreeQuery): Promise<UserIsUsernameFreeDTO> {
+  public async isUsernameFree(@Param('userName') userName: string): Promise<UserIsUsernameFreeDTO> {
     return this.logger.trackSegment(this.isUsernameFree.name, async () => {
+      const query = new UserIsUsernameFreeQuery(userName);
       const isFree = await this.queryBus.execute<boolean>(query);
       return { isFree };
     });

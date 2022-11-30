@@ -3,13 +3,13 @@ import { PrismaService, UserIsUsernameFreeQuery } from '@seed/back/api/shared';
 import { mockUsers } from '@seed/shared/mock-data';
 import { UserIsUsernameFreeQueryHandler } from './userIsUsernameFree.queryHandler';
 
-describe('UserIsUsernameFreeQueryHandler', () => {
+describe(UserIsUsernameFreeQueryHandler.name, () => {
   //region VARIABLES
-  const findUniqueMock = jest.fn(filter => mockUsers.find(u => u.userName === filter.where.userName) || null);
+  const findFirstMock = jest.fn(filter => mockUsers.find(u => u.userName === filter.where.userName) || null);
   let handler: UserIsUsernameFreeQueryHandler;
   const prismaServiceMock = jest.fn().mockImplementation(() => ({
     user: {
-      findUnique: findUniqueMock,
+      findFirst: findFirstMock,
     },
   }));
   //endregion
@@ -25,7 +25,7 @@ describe('UserIsUsernameFreeQueryHandler', () => {
   function runTest(options: { testName: string; userName: string; result: boolean }): void {
     it(options.testName, async () => {
       expect(await handler.execute(new UserIsUsernameFreeQuery(options.userName))).toEqual(options.result);
-      expect(findUniqueMock).toBeCalledWith({
+      expect(findFirstMock).toBeCalledWith({
         where: {
           userName: options.userName,
         },
