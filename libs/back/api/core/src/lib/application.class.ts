@@ -5,7 +5,15 @@ import { json } from 'body-parser';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { API_CONFIG, isEnv, LogContext, LogService, LogSeverity } from '@seed/back/api/shared';
+import {
+  API_CONFIG,
+  isEnv,
+  LogContext,
+  LogSegment,
+  LogService,
+  LogSeverity,
+  PrismaService,
+} from '@seed/back/api/shared';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
@@ -32,6 +40,7 @@ export class Application {
       const nest = await this.configureNest(express);
       Application.applyLastMiddlewares(express, nest);
       await nest.init();
+      await Application.initPrisma(nest, logSegment);
       const DEFAULT_PORT = 8080;
       const port = process.env['port'] || DEFAULT_PORT;
       await nest.listen(port);
@@ -120,6 +129,18 @@ export class Application {
         return;
       }
       throw error;
+    }
+  }
+
+  private static async initPrisma(nest: INestApplication, logSegment: LogSegment): Promise<void> {
+    // https://docs.nestjs.com/recipes/prisma#issues-with-enableshutdownhooks
+    try {
+      const prismaService = await nest.resolve(PrismaService);
+      prismaService.enableShutdownHooks(nest);
+    } catch (error: unknown) {
+      if (isEnv(Environment.production)) {
+        logSegment.error({ message: 'PrismaService was not found in Nest application.', error: error as Error });
+      }
     }
   }
 }
