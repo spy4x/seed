@@ -53,7 +53,7 @@ services:
     environment:
       - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
       - DB_CONNECTION_STRING=postgresql://seed:localPassword@postgres:5432/seed?connection_limit=20
-    command: yarn migrate:run:back-api
+    command: yarn serve:back-api
 
   front-web:
     depends_on:

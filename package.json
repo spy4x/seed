@@ -13,7 +13,7 @@
     "-----Nx": "-",
     "serve": "nx serve",
     "serve:mobile": "nx serve --host=0.0.0.0",
-    "migrate:run:back-api": "yarn prisma migrate deploy && yarn prisma generate && yarn serve back-api",
+    "serve:back-api": "yarn prisma migrate deploy && yarn prisma generate && yarn prisma studio & yarn serve back-api",
     "build": "nx build",
     "test": "nx test",
     "lint": "nx lint",
