@@ -11,6 +11,7 @@ import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ValidationError } from 'class-validator';
 import { ZERO } from '@seed/shared/constants';
 import { Environment } from '@seed/shared/types';
+import * as compression from 'compression';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 // Mark some deps to be used explicitly. Workaround, because "generatePackageJson" from Nx doesn't detect them automatically.
@@ -27,6 +28,7 @@ export class Application {
       logSegment.log(`API_CONFIG:`, API_CONFIG);
       const express = expressServer();
       Application.applyFirstMiddlewares(express);
+      express.use(compression());
       const nest = await this.configureNest(express);
       Application.applyLastMiddlewares(express, nest);
       await nest.init();
