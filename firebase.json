@@ -29,7 +29,7 @@
           ]
         },
         {
-          "source": "**/*.@(js|css|jpg|jpeg|gif|png|svg|ico|eot|ttf|woff|woff2|txt)",
+          "source": "**/*.@(js|css|webp|jpg|jpeg|gif|png|svg|ico|eot|ttf|woff|woff2|txt)",
           "headers": [
             {
               "key": "Cache-Control",
@@ -81,7 +81,7 @@
           ]
         },
         {
-          "source": "**/*.@(js|css|jpg|jpeg|gif|png|svg|ico|eot|ttf|woff|woff2|txt)",
+          "source": "**/*.@(js|css|webp|jpg|jpeg|gif|png|svg|ico|eot|ttf|woff|woff2|txt)",
           "headers": [
             {
               "key": "Cache-Control",
