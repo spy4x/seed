@@ -25,7 +25,7 @@ export class UserCreateCommandHandler extends BaseCommandHandler<UserCreateComma
       const where: Prisma.UserWhereInput = {
         OR: [{ userName }, { id }],
       };
-      logSegment.log('Checking for existing user with filter:', where);
+      logSegment.log('Checking for existing user:', where);
       const foundUser = await this.prisma.user.findFirst({
         where,
       });

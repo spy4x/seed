@@ -1,7 +1,7 @@
 import { LoggerInterceptor } from './logger.interceptor';
 import { throwError } from 'rxjs';
 
-describe('LoggerInterceptor', () => {
+describe(LoggerInterceptor.name, () => {
   const loggerInterceptor = new LoggerInterceptor();
 
   const contextMock = jest.fn().mockImplementation(() => ({

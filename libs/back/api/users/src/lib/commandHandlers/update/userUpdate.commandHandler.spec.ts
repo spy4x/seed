@@ -4,7 +4,7 @@ import { UserUpdateCommandHandler } from './userUpdate.commandHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 import { User, UserRole } from '@prisma/client';
 
-describe('UserUpdateCommandHandler', () => {
+describe(UserUpdateCommandHandler.name, () => {
   //region VARIABLES
   const [user] = mockUsers;
   const updateMock = jest.fn();

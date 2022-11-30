@@ -4,7 +4,7 @@ import { EventBusExt, PrismaService, UserCreateCommand, UserCreatedEvent } from 
 import { UserCreateCommandHandler } from './userCreate.commandHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 
-describe('UserCreateCommandHandler', () => {
+describe(UserCreateCommandHandler.name, () => {
   //region VARIABLES
   const prismaUserCreateMock = jest.fn();
   const prismaUserFindFirstMock = jest.fn();

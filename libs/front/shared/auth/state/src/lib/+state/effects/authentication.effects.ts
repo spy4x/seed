@@ -294,19 +294,15 @@ export class AuthenticationEffects {
 
   constructor(readonly actions$: Actions, readonly fireAuth: AngularFireAuth, readonly store: Store) {}
 
-  onUserAuthenticationWithCredentials = (credential: firebase.auth.UserCredential): Observable<Action> => {
+  onUserAuthenticationWithCredentials(credential: firebase.auth.UserCredential): Observable<Action> {
     if (!credential.additionalUserInfo || !credential.user) {
       return of(AuthAPIActions.actionFailed({ message: `Credential is not a complete object.` }));
     }
     const { isNewUser } = credential.additionalUserInfo;
     return this.onUserAuthenticationWithUserOnly(credential.user, isNewUser);
-  };
+  }
 
-  onUserAuthenticationWithUserOnly = (
-    user: firebase.User,
-    isNewUser: boolean,
-    isInit?: boolean,
-  ): Observable<Action> => {
+  onUserAuthenticationWithUserOnly(user: firebase.User, isNewUser: boolean, isInit?: boolean): Observable<Action> {
     const { uid: userId, email, displayName, photoURL, emailVerified, metadata, providerData } = user;
     const createdAt: number = metadata.creationTime ? Date.parse(metadata.creationTime) : new Date().getTime();
 
@@ -335,5 +331,5 @@ export class AuthenticationEffects {
         return AuthAPIActions.signedIn(authenticationData);
       }),
     );
-  };
+  }
 }

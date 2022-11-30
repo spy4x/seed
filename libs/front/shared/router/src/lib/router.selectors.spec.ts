@@ -17,13 +17,13 @@ describe('Router Selectors', () => {
     };
   }
 
-  describe('getRouterState()', () => {
+  describe(RouterSelectors.getRouterState.name, () => {
     it('returns RouterState', () => {
       expect(RouterSelectors.getRouterState(state)).toBe(state[ROUTER_STATE_FEATURE_KEY]);
     });
   });
 
-  describe('getUrl()', () => {
+  describe(RouterSelectors.getUrl.name, () => {
     it('returns state.state.url', () => {
       const url = '/my-url';
       patchState({ url });
@@ -36,7 +36,7 @@ describe('Router Selectors', () => {
     });
   });
 
-  describe('getParams()', () => {
+  describe(RouterSelectors.getParams.name, () => {
     it('returns state.state.params', () => {
       const params = { p1: 1, p2: '2' };
       patchState({ params });
@@ -49,7 +49,7 @@ describe('Router Selectors', () => {
     });
   });
 
-  describe('getQueryParams()', () => {
+  describe(RouterSelectors.getQueryParams.name, () => {
     it('returns state.state.queryParams', () => {
       const queryParams = { p1: 1, p2: '2' };
       patchState({ queryParams });

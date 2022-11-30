@@ -13,13 +13,13 @@ describe('Auth Selectors', () => {
     state = { [AUTH_FEATURE_KEY]: { ...state[AUTH_FEATURE_KEY], ...partialNewState } };
   }
 
-  describe('getAuthState()', () => {
+  describe(AuthSelectors.getAuthState.name, () => {
     it('returns AuthState', () => {
       expect(AuthSelectors.getAuthState(state)).toBe(state[AUTH_FEATURE_KEY]);
     });
   });
 
-  describe('getStage()', () => {
+  describe(AuthSelectors.getStage.name, () => {
     it('returns state.auth.stage', () => {
       patchState({ stage: AuthStage.signingGoogle });
       expect(AuthSelectors.getStage(state)).toBe(AuthStage.signingGoogle);
@@ -30,7 +30,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getInProgress()', () => {
+  describe(AuthSelectors.getInProgress.name, () => {
     it('returns state.auth.inProgress true', () => {
       patchState({ inProgress: true });
       expect(AuthSelectors.getInProgress(state)).toBe(true);
@@ -41,7 +41,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getOriginalUrl()', () => {
+  describe(AuthSelectors.getOriginalUrl.name, () => {
     it('returns state.auth.originalURL', () => {
       const originalURL = '/my-url';
       patchState({ originalURL });
@@ -49,7 +49,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getEmail()', () => {
+  describe(AuthSelectors.getEmail.name, () => {
     it('returns state.auth.email undefined', () => {
       patchState({ email: undefined });
       expect(AuthSelectors.getEmail(state)).toBe(undefined);
@@ -60,7 +60,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getDisplayName()', () => {
+  describe(AuthSelectors.getDisplayName.name, () => {
     it('returns state.auth.displayName undefined', () => {
       patchState({ displayName: undefined });
       expect(AuthSelectors.getDisplayName(state)).toBe(undefined);
@@ -71,7 +71,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getPhotoURL()', () => {
+  describe(AuthSelectors.getPhotoURL.name, () => {
     it('returns state.auth.photoURL undefined', () => {
       patchState({ photoURL: undefined });
       expect(AuthSelectors.getPhotoURL(state)).toBe(undefined);
@@ -82,7 +82,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getIsNewUser()', () => {
+  describe(AuthSelectors.getIsNewUser.name, () => {
     it(`returns undefined if (isNewUser && providers) === undefined`, () => {
       patchState({ isNewUser: undefined, providers: undefined });
       expect(AuthSelectors.getIsNewUser(state)).toBe(undefined);
@@ -105,7 +105,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getEmailPasswordPayload()', () => {
+  describe(AuthSelectors.getEmailPasswordPayload.name, () => {
     it(`returns {email: '', isNewUser: false} if both email & isNewUser are undefined`, () => {
       patchState({ email: undefined, isNewUser: undefined });
       expect(AuthSelectors.getEmailPasswordPayload(state)).toEqual({ email: '', isNewUser: false });
@@ -124,7 +124,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getUserId()', () => {
+  describe(AuthSelectors.getUserId.name, () => {
     it('returns userId if state.auth.userId is set', () => {
       patchState({ userId: testUserId });
       expect(AuthSelectors.getUserId(state)).toBe(testUserId);
@@ -135,7 +135,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getUser()', () => {
+  describe(AuthSelectors.getUser.name, () => {
     it('returns user if state.auth.user is set', () => {
       patchState({ user: testUser });
       expect(AuthSelectors.getUser(state)).toBe(testUser);
@@ -146,7 +146,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getErrorMessage()', () => {
+  describe(AuthSelectors.getErrorMessage.name, () => {
     it('returns errorMessage if state.auth.errorMessage is set', () => {
       const errorMessage = 'Wrong password';
       patchState({ error: { message: errorMessage } });
@@ -158,7 +158,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getSuccessMessage()', () => {
+  describe(AuthSelectors.getSuccessMessage.name, () => {
     it('returns successMessage if state.auth.successMessage is set', () => {
       const successMessage = 'Password reset!';
       patchState({ successMessage });
@@ -170,7 +170,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getJWT()', () => {
+  describe(AuthSelectors.getJWT.name, () => {
     it('returns string if state.auth.jwt is set', () => {
       const jwt = 'jwt';
       patchState({ jwt });
@@ -182,7 +182,7 @@ describe('Auth Selectors', () => {
     });
   });
 
-  describe('getIsAuthorized()', () => {
+  describe(AuthSelectors.getIsAuthorized.name, () => {
     it('returns true if state.auth.stage is AuthStage.authorized', () => {
       const stage = AuthStage.authorized;
       patchState({ stage });

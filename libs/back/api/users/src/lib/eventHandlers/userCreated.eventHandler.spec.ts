@@ -3,7 +3,7 @@ import { CommandBusExt, UserCreatedEvent } from '@seed/back/api/shared';
 import { UserCreatedEventHandler } from './userCreated.eventHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 
-describe('UserCreatedEventHandler', () => {
+describe(UserCreatedEventHandler.name, () => {
   // region VARIABLES
   const commandBusExecuteMock = jest.fn();
   const commandBusMock = jest.fn().mockImplementation(() => ({

@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { UserDevicesController } from './userDevices.controller';
 import { CommandBusExt, QueryBusExt, SharedModule } from '@seed/back/api/shared';
 
-describe('UserDevicesController', () => {
+describe(UserDevicesController.name, () => {
   let controller: UserDevicesController;
   const queryBusMock = jest.fn();
   const commandBusMock = jest.fn();

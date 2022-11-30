@@ -3,7 +3,7 @@ import { UserDeleteCommand, PrismaService } from '@seed/back/api/shared';
 import { UserDeleteCommandHandler } from './userDelete.commandHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 
-describe('UserDeleteCommandHandler', () => {
+describe(UserDeleteCommandHandler.name, () => {
   const [user] = mockUsers;
   const deleteMock = jest.fn(() => user);
   const prismaServiceMock = jest.fn().mockImplementation(() => ({

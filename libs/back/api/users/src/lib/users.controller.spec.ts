@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { UsersFindQuery, SharedModule, QueryBusExt, CommandBusExt } from '@seed/back/api/shared';
 import { UsersController } from './users.controller';
 
-describe('UsersController', () => {
+describe(UsersController.name, () => {
   let controller: UsersController;
 
   const executeMock = jest.fn();
@@ -27,7 +27,7 @@ describe('UsersController', () => {
   it('should be defined', () => {
     expect(controller).toBeTruthy();
   });
-  describe('get', () => {
+  describe(UsersController.prototype.get.name, () => {
     it('should be called with provided parameters', async () => {
       const query = new UsersFindQuery(1, 20);
       await controller.find(query);

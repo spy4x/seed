@@ -601,7 +601,7 @@ describe(AuthenticationEffects.name, () => {
     });
   });
 
-  describe('onUserAuthenticationWithCredentials()', () => {
+  describe(AuthenticationEffects.prototype.onUserAuthenticationWithCredentials.name, () => {
     it(`returns "${AuthAPIActions.actionFailed.type}" if not full credential object provided`, () => {
       const result$ = effects.onUserAuthenticationWithCredentials({} as any);
       const expected = hot('(a|)', {
@@ -631,7 +631,7 @@ describe(AuthenticationEffects.name, () => {
     });
   });
 
-  describe('onUserAuthenticationWithUserOnly()', () => {
+  describe(AuthenticationEffects.prototype.onUserAuthenticationWithUserOnly.name, () => {
     it(`returns "${AuthAPIActions.signedIn.type}" action for existing user`, () => {
       const result$ = effects.onUserAuthenticationWithUserOnly(mockAuthCredentials.user as any, false);
       const expected = hot('(a|)', { a: AuthAPIActions.signedIn(mockExpectedActionPayload) });

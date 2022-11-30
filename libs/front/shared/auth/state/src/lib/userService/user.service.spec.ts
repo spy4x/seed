@@ -44,7 +44,7 @@ describe(UserService.name, () => {
 
   // endregion
 
-  describe('get(id: string)', () => {
+  describe(UserService.prototype.get.name, () => {
     it('executes GET /api/users/:id and returns User if 200', () => {
       const expected$ = hot('a', { a: user });
       getMock.mockReturnValue(hot('a', { a: user }));
@@ -65,7 +65,7 @@ describe(UserService.name, () => {
     });
   });
 
-  describe('getMe()', () => {
+  describe(UserService.prototype.getMe.name, () => {
     it('executes GET /api/users/me and returns User if 200', () => {
       const expected$ = hot('a', { a: user });
       getMock.mockReturnValue(hot('a', { a: user }));
@@ -86,7 +86,7 @@ describe(UserService.name, () => {
     });
   });
 
-  describe('create(input)', () => {
+  describe(UserService.prototype.create.name, () => {
     it('executes POST /api/users', () => {
       const expected$ = hot('a', { a: user });
       postMock.mockReturnValue(hot('a', { a: user }));

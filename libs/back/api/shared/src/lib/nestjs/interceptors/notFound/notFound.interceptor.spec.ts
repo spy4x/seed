@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 import { NotFoundInterceptor } from './notFound.interceptor';
 import { NotFoundException } from '@nestjs/common';
 
-describe('NotFoundInterceptor', () => {
+describe(NotFoundInterceptor.name, () => {
   const notFoundInterceptor = new NotFoundInterceptor();
 
   const contextMock = jest.fn().mockImplementation(() => ({

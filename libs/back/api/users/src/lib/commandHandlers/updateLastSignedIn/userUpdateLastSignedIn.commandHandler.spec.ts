@@ -8,7 +8,7 @@ import {
 import { UserUpdateLastSignedInCommandHandler } from './userUpdateLastSignedIn.commandHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 
-describe('UserUpdateCommandHandler', () => {
+describe(UserUpdateLastSignedInCommandHandler.name, () => {
   //region VARIABLES
   const [user] = mockUsers;
   const updateMock = jest.fn();

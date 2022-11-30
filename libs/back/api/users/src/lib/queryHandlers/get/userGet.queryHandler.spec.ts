@@ -4,7 +4,7 @@ import { UserGetQueryHandler } from './userGet.queryHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 import { User } from '@prisma/client';
 
-describe('UserGetQueryHandler', () => {
+describe(UserGetQueryHandler.name, () => {
   //region VARIABLES
   const findUniqueMock = jest.fn(filter => mockUsers.find(u => u.id === filter.where.id) || null);
   let handler: UserGetQueryHandler;
