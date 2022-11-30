@@ -2767,38 +2767,38 @@
   dependencies:
     tslib "2.4.1"
 
-"@ngrx/effects@^14.3.2":
-  version "14.3.2"
-  resolved "https://registry.yarnpkg.com/@ngrx/effects/-/effects-14.3.2.tgz#a5cc62e78cec2f5ccce810b8d27a58cc91e72c4f"
-  integrity sha512-6bpGfA44jzwhBcmNaTwVgnFmYOX9iKPFpXyetDe41tVESo1CsNhUBPTmISDXKN9Mx2mwGbsMxrn6QFRypSsKAQ==
+"@ngrx/effects@^15.0.0":
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/effects/-/effects-15.0.0.tgz#9d4ab000ca8af8fa9012e4586425541de8b79ec4"
+  integrity sha512-EfYmGYFF1bNLPCRPnfAZnppT47RPwpprZK6HSQQ1fvV0sA0FYKQilg93ictNhDv+0IhMBZJEbR/hBMYyi4rkBg==
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/entity@^14.3.2":
-  version "14.3.2"
-  resolved "https://registry.yarnpkg.com/@ngrx/entity/-/entity-14.3.2.tgz#160dbc6d4d8329e05135a7b352156ff5ee6d8103"
-  integrity sha512-Uyb36oVEiTbBJcb6TJ3OTseJdeamNKSxkvqw/uLHt+My87QaRaTEQceDWCsVCBEO4Q4Vgf2g0vbdPZdtGUZcbg==
+"@ngrx/entity@^15.0.0":
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/entity/-/entity-15.0.0.tgz#d91b41ffa6cdf6a95f4592f854c143685ca5972e"
+  integrity sha512-hzturyYclwDazAVc9HzLcQw03uSql7HkwLJDMhivUIal27BDcALM0554szzhWW4M/pn43FWX9lAiW0s7zysD+w==
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/router-store@^14.3.2":
-  version "14.3.2"
-  resolved "https://registry.yarnpkg.com/@ngrx/router-store/-/router-store-14.3.2.tgz#3f684b38d550b711094ab1fcc7edf2d1b536c039"
-  integrity sha512-3FU/fADoMCLjv9vFXp1Xq+W1JGVQbfPDp8gzzsuBoQSXlh3MnUbXJdeODzt0h6GDk4FtpeJnsR1R9x+Fh2cFZg==
+"@ngrx/router-store@^15.0.0":
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/router-store/-/router-store-15.0.0.tgz#6f132798a421631f9b2015d5273f95a0cc2658d3"
+  integrity sha512-WBgT2uI/CejfYfdi3cjDsp9Q5UZTFnTcTGMTDFT8HujrCD75PxVw8ad9k2GMqp7j96qE13xi+8VRknQyUPx3HA==
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/store-devtools@^14.3.2":
-  version "14.3.2"
-  resolved "https://registry.yarnpkg.com/@ngrx/store-devtools/-/store-devtools-14.3.2.tgz#046e53a8e342251ff12606375166833d148ffa5e"
-  integrity sha512-lm1BobiHXzBC3tqYNAghCRNfBdIbs4JyfaTO9wqOEoDCh6COvzGLi7tAo9Zjls1REZC1NiIwSw4vKK8OMc+tfA==
+"@ngrx/store-devtools@^15.0.0":
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/store-devtools/-/store-devtools-15.0.0.tgz#5286bd4b08589292b88533389d27fa654df3093e"
+  integrity sha512-qvMFjPR9joQWN7Z+zhP03TCb4aCVt2l0wuJkZfhwmeaE1f4d5ms8FuOJh1lNEZg7ZyEfVP+XQ737kl59hEQMUA==
   dependencies:
     tslib "^2.0.0"
 
-"@ngrx/store@^14.3.2":
-  version "14.3.2"
-  resolved "https://registry.yarnpkg.com/@ngrx/store/-/store-14.3.2.tgz#91333c9c4d7b54bf98d842cb94e6afa3a6ea8df2"
-  integrity sha512-XGHjr0arh6gClo8Ce+xqJLvW9PkeXPW2tCo9Z5qMtHFI/z5dUppLVKGmMgD/fQBDyoqWTK5xu+89tDkdeZfRjQ==
+"@ngrx/store@^15.0.0":
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/@ngrx/store/-/store-15.0.0.tgz#aec52a4139f6bb11e71752630e437001a77f5dd6"
+  integrity sha512-zGEK7pgL9X1M2d+tF5tJRjN9dUibfPnyAFcI0+375gBkUSU2gJxuphB0NoGPVJMtLFsW+5yI4+kjui7M6nsaYQ==
   dependencies:
     tslib "^2.0.0"
 
@@ -3297,36 +3297,36 @@
     "@angular-devkit/schematics" "14.0.6"
     jsonc-parser "3.0.0"
 
-"@sentry/browser@^7.21.1":
-  version "7.21.1"
-  resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-7.21.1.tgz#bffa3ea19050c06400107d2297b9802f9719f98b"
-  integrity sha512-cS2Jz2+fs9+4pJqLJPtYqGyY97ywJDWAWIR1Yla3hs1QQuH6m0Nz3ojZD1gE2eKH9mHwkGbnNAh+hHcrYrfGzw==
+"@sentry/browser@^7.22.0":
+  version "7.22.0"
+  resolved "https://registry.yarnpkg.com/@sentry/browser/-/browser-7.22.0.tgz#c4f283cd7825db0db59ac97c3334c939982ace94"
+  integrity sha512-8MA+f46+T3G7fb4BYYX9Wl3bMDloG5a3Ng0GWdBeq6DE2tXVHeCvba8Yrrcnn1qFHpmnOn5Nz4xWBUDs3uBFxA==
   dependencies:
-    "@sentry/core" "7.21.1"
-    "@sentry/types" "7.21.1"
-    "@sentry/utils" "7.21.1"
+    "@sentry/core" "7.22.0"
+    "@sentry/types" "7.22.0"
+    "@sentry/utils" "7.22.0"
     tslib "^1.9.3"
 
-"@sentry/core@7.21.1":
-  version "7.21.1"
-  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-7.21.1.tgz#d0423282d90875625802dfe380f9657e9242b72b"
-  integrity sha512-Og5wEEsy24fNvT/T7IKjcV4EvVK5ryY2kxbJzKY6GU2eX+i+aBl+n/vp7U0Es351C/AlTkS+0NOUsp2TQQFxZA==
+"@sentry/core@7.22.0":
+  version "7.22.0"
+  resolved "https://registry.yarnpkg.com/@sentry/core/-/core-7.22.0.tgz#8e50f288e5e8fcaa2774daffd2487e042a392893"
+  integrity sha512-qYJiJrL1mfQQln84mNunBRUkXq7xDGQQoNh4Sz9VYP5698va51zmS5BLYRCZ5CkPwRYNuhUqlUXN7bpYGYOOIA==
   dependencies:
-    "@sentry/types" "7.21.1"
-    "@sentry/utils" "7.21.1"
+    "@sentry/types" "7.22.0"
+    "@sentry/utils" "7.22.0"
     tslib "^1.9.3"
 
-"@sentry/types@7.21.1":
-  version "7.21.1"
-  resolved "https://registry.yarnpkg.com/@sentry/types/-/types-7.21.1.tgz#408a7b95a66ddc30c4359979594e03bee8f9fbdc"
-  integrity sha512-3/IKnd52Ol21amQvI+kz+WB76s8/LR5YvFJzMgIoI2S8d82smIr253zGijRXxHPEif8kMLX4Yt+36VzrLxg6+A==
+"@sentry/types@7.22.0":
+  version "7.22.0"
+  resolved "https://registry.yarnpkg.com/@sentry/types/-/types-7.22.0.tgz#58e4ce77b523048e0f31e2ea4b597946d76f6079"
+  integrity sha512-LhCL+wb1Jch+OesB2CIt6xpfO1Ab6CRvoNYRRzVumWPLns1T3ZJkarYfhbLaOEIb38EIbPgREdxn2AJT560U4Q==
 
-"@sentry/utils@7.21.1":
-  version "7.21.1"
-  resolved "https://registry.yarnpkg.com/@sentry/utils/-/utils-7.21.1.tgz#96582345178015fd32fe9159c25c44ccf2f99d2a"
-  integrity sha512-F0W0AAi8tgtTx6ApZRI2S9HbXEA9ENX1phTZgdNNWcMFm1BNbc21XEwLqwXBNjub5nlA6CE8xnjXRgdZKx4kzQ==
+"@sentry/utils@7.22.0":
+  version "7.22.0"
+  resolved "https://registry.yarnpkg.com/@sentry/utils/-/utils-7.22.0.tgz#fb46dc2761e2d44cf70bc3e1fba61d55852904b5"
+  integrity sha512-1GiNw1opIngxg0nktCTc9wibh4/LV12kclrnB9dAOHrqazZXHXZRAkjqrhQphKcMpT+3By91W6EofjaDt5a/hg==
   dependencies:
-    "@sentry/types" "7.21.1"
+    "@sentry/types" "7.22.0"
     tslib "^1.9.3"
 
 "@sinclair/typebox@^0.24.1":
@@ -3764,10 +3764,10 @@
   resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.2.tgz#6286b4c7228d58ab7866d19716f3696e03a09397"
   integrity sha512-Q5vtl1W5ue16D+nIaW8JWebSSraJVlK+EthKn7e7UcD4KWsaSJ8BqGPXNaPghgtcn/fhvrN17Tv8ksUsQpiplw==
 
-"@types/uuid@^8.3.4":
-  version "8.3.4"
-  resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-8.3.4.tgz#bd86a43617df0594787d38b735f55c805becf1bc"
-  integrity sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==
+"@types/uuid@^9.0.0":
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/@types/uuid/-/uuid-9.0.0.tgz#53ef263e5239728b56096b0a869595135b7952d2"
+  integrity sha512-kr90f+ERiQtKWMz5rP32ltJ/BtULDI5RVO0uavn1HQUOwjx0R1h0rnDYNL0CepF1zL5bSY6FISAfd9tOdDhU5Q==
 
 "@types/validator@^13.7.10":
   version "13.7.10"
@@ -11387,10 +11387,10 @@ prepend-http@^2.0.0:
   resolved "https://registry.yarnpkg.com/prepend-http/-/prepend-http-2.0.0.tgz#e92434bfa5ea8c19f41cdfd401d741a3c819d897"
   integrity sha512-ravE6m9Atw9Z/jjttRUZ+clIXogdghyZAuWJ3qEzjT+jI/dL1ifAqhZeC5VHzQp1MSt1+jxKkFNemj/iO7tVUA==
 
-prettier-plugin-tailwindcss@^0.1.13:
-  version "0.1.13"
-  resolved "https://registry.yarnpkg.com/prettier-plugin-tailwindcss/-/prettier-plugin-tailwindcss-0.1.13.tgz#ca1071361dc7e2ed5d95a2ee36825ce45f814942"
-  integrity sha512-/EKQURUrxLu66CMUg4+1LwGdxnz8of7IDvrSLqEtDqhLH61SAlNNUSr90UTvZaemujgl3OH/VHg+fyGltrNixw==
+prettier-plugin-tailwindcss@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/prettier-plugin-tailwindcss/-/prettier-plugin-tailwindcss-0.2.0.tgz#5d6823ef8356103fd0aa19d1e08cb49534100464"
+  integrity sha512-Ruqig/mdWCSpqdq9WK44nrmqM4BFWTzBPhPGwC5NK3coV9eZntEQPB84MGZbjAg0XQU02jVRHXNRPREBzxvM+A==
 
 prettier@^2.8.0:
   version "2.8.0"
