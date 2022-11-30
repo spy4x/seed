@@ -104,7 +104,12 @@ export class Application {
       .build();
     const document = SwaggerModule.createDocument(nestApp, config);
     try {
-      SwaggerModule.setup(API_CONFIG.apiPrefix, nestApp, document);
+      SwaggerModule.setup(API_CONFIG.apiPrefix, nestApp, document, {
+        customSiteTitle: `${API_CONFIG.projectName} - Swagger`,
+        swaggerOptions: {
+          tryItOutEnabled: true,
+        },
+      });
     } catch (error: unknown) {
       if (
         isEnv(Environment.test) &&
