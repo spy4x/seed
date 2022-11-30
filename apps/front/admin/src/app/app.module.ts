@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
-import { CoreModule, FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN } from '@seed/front/admin/core';
+import { CoreModule, FRONT_ADMIN_CONFIG_TOKEN } from '@seed/front/admin/core';
 import { config } from '../environments/environment';
 
 @NgModule({
@@ -9,7 +9,7 @@ import { config } from '../environments/environment';
   imports: [CoreModule],
   providers: [
     {
-      provide: FRONT_ADMIN_PANEL_CONFIG_INJECTION_TOKEN,
+      provide: FRONT_ADMIN_CONFIG_TOKEN,
       useValue: config,
     },
   ],

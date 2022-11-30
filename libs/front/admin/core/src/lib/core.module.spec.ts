@@ -1,7 +1,7 @@
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { CoreModule } from './core.module';
 
-describe('CoreModule', () => {
+describe(CoreModule.name, () => {
   beforeEach(waitForAsync(async () => {
     await TestBed.configureTestingModule({
       imports: [CoreModule],
