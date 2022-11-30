@@ -49,6 +49,7 @@
         "default-case-last": 0,
         "dot-location": 0,
         "grouped-accessor-pairs": 0,
+        "max-classes-per-file": 0,
         "no-implicit-coercion": 0,
         "no-implicit-globals": 0,
         "no-iterator": 0,
@@ -97,6 +98,7 @@
         "@typescript-eslint/space-before-function-paren": 0,
         "@typescript-eslint/strict-boolean-expressions": 0,
         "@typescript-eslint/typedef": 0,
+        "@typescript-eslint/unified-signatures": 0,
         "getter-return": 2,
         "no-async-promise-executor": 2,
         "no-console": 2,
@@ -146,7 +148,6 @@
         "curly": 2,
         "eqeqeq": 2,
         "guard-for-in": 2,
-        "max-classes-per-file": [2, 2],
         "no-alert": 2,
         "no-caller": 2,
         "no-case-declarations": 2,
@@ -321,7 +322,6 @@
         "@typescript-eslint/triple-slash-reference": 2,
         "@typescript-eslint/type-annotation-spacing": 2,
         "@typescript-eslint/unbound-method": 2,
-        "@typescript-eslint/unified-signatures": 2,
         "@nrwl/nx/enforce-module-boundaries": [
           "error",
           {
