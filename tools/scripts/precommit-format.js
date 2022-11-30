@@ -11,9 +11,14 @@ const formatAndStage = () => {
   const files = result
     .split('\n')
     .filter(file => !!file && supportedFileExtensions.some(ext => file.endsWith('.' + ext)));
+
   if (!files.length) {
     console.log('No changed files');
     return;
+  }
+
+  if (result.includes('prisma/schema.prisma')) {
+    execSync(`yarn prisma format`);
   }
 
   execSync(`yarn prettier --write ${files.join(' ')}`);
