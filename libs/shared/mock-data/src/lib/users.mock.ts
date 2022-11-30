@@ -1,4 +1,5 @@
 import { User } from '@prisma/client';
+import { nowMock } from './time.mock';
 
 export const mockUsers: User[] = [
   {
@@ -8,10 +9,10 @@ export const mockUsers: User[] = [
     firstName: 'John',
     lastName: 'Doe',
     photoURL: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: nowMock,
+    updatedAt: nowMock,
     isPushNotificationsEnabled: false,
-    lastTimeSignedIn: new Date(),
+    lastTimeSignedIn: nowMock,
   },
   {
     id: '456123',
@@ -20,10 +21,10 @@ export const mockUsers: User[] = [
     firstName: 'Jane',
     lastName: 'Doe',
     photoURL: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: nowMock,
+    updatedAt: nowMock,
     isPushNotificationsEnabled: false,
-    lastTimeSignedIn: new Date(),
+    lastTimeSignedIn: nowMock,
   },
   {
     id: '456123',
@@ -32,9 +33,9 @@ export const mockUsers: User[] = [
     firstName: 'Jack',
     lastName: 'Smith',
     photoURL: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: nowMock,
+    updatedAt: nowMock,
     isPushNotificationsEnabled: true,
-    lastTimeSignedIn: new Date(),
+    lastTimeSignedIn: nowMock,
   },
 ];
