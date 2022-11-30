@@ -1,35 +1,35 @@
-import { Test } from '@nestjs/testing';
-import { PrismaService, UserDeviceUpdateCommand } from '@seed/back/api/shared';
+import { UserDeviceUpdateCommand, UserDeviceUpdatedEvent } from '@seed/back/api/shared';
 import { UserDeviceUpdateCommandHandler } from './userDeviceUpdate.commandHandler';
 import { mockUserDevices } from '@seed/shared/mock-data';
 import { UserDevice } from '@prisma/client';
 
-describe('UserDeviceUpdateCommandHandler', () => {
-  //region VARIABLES
+describe(UserDeviceUpdateCommandHandler.name, () => {
+  //region SETUP
   const [userDevice] = mockUserDevices;
   const findFirstMock = jest.fn();
   const updateMock = jest.fn();
-  const prismaServiceMock = jest.fn().mockImplementation(() => ({
-    userDevice: {
-      findFirst: findFirstMock,
-      update: updateMock,
-    },
-  }));
+  const publishMock = jest.fn();
   const command = new UserDeviceUpdateCommand(
     userDevice.id,
     userDevice.userId,
     userDevice.deviceId || undefined,
     userDevice.deviceName || undefined,
   );
-  let handler: UserDeviceUpdateCommandHandler;
-  //endregion
-
-  //region SETUP
-  beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      providers: [UserDeviceUpdateCommandHandler, { provide: PrismaService, useClass: prismaServiceMock }],
-    }).compile();
-    handler = moduleRef.get(UserDeviceUpdateCommandHandler);
+  const handler = new UserDeviceUpdateCommandHandler(
+    {
+      userDevice: {
+        findFirst: findFirstMock,
+        update: updateMock,
+      },
+    } as any,
+    {
+      publish: publishMock,
+    } as any,
+  );
+  beforeEach(() => {
+    findFirstMock.mockClear();
+    updateMock.mockClear();
+    publishMock.mockClear();
   });
   //endregion
 
@@ -69,5 +69,6 @@ describe('UserDeviceUpdateCommandHandler', () => {
       },
       data: { deviceId, deviceName },
     });
+    expect(publishMock).toBeCalledWith(new UserDeviceUpdatedEvent(updatedUserDevice));
   });
 });

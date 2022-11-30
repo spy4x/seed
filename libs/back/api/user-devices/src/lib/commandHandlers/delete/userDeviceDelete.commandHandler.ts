@@ -1,12 +1,19 @@
 import { CommandHandler } from '@nestjs/cqrs';
-import { BaseCommandHandler, LogService, PrismaService, UserDeviceDeleteCommand } from '@seed/back/api/shared';
+import {
+  BaseCommandHandler,
+  EventBusExt,
+  LogService,
+  PrismaService,
+  UserDeviceDeleteCommand,
+  UserDeviceDeletedEvent,
+} from '@seed/back/api/shared';
 import { Prisma, UserDevice } from '@prisma/client';
 
 @CommandHandler(UserDeviceDeleteCommand)
 export class UserDeviceDeleteCommandHandler extends BaseCommandHandler<UserDeviceDeleteCommand, null | UserDevice> {
   readonly logger = new LogService(UserDeviceDeleteCommandHandler.name);
 
-  constructor(readonly prisma: PrismaService) {
+  constructor(private readonly prisma: PrismaService, private readonly eventBus: EventBusExt) {
     super();
   }
 
@@ -32,6 +39,7 @@ export class UserDeviceDeleteCommandHandler extends BaseCommandHandler<UserDevic
         },
       });
       logSegment.log('Deleted userDevice:', deletedUserDevice);
+      this.eventBus.publish(new UserDeviceDeletedEvent(deletedUserDevice));
       return deletedUserDevice;
     });
   }

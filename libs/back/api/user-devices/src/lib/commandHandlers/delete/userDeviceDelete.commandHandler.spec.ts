@@ -1,29 +1,29 @@
-import { Test } from '@nestjs/testing';
-import { PrismaService, UserDeviceDeleteCommand } from '@seed/back/api/shared';
+import { UserDeviceDeleteCommand, UserDeviceDeletedEvent } from '@seed/back/api/shared';
 import { UserDeviceDeleteCommandHandler } from './userDeviceDelete.commandHandler';
 import { mockUserDevices } from '@seed/shared/mock-data';
 
-describe('UserDeviceDeleteCommandHandler', () => {
-  //region VARIABLES
+describe(UserDeviceDeleteCommandHandler.name, () => {
+  //region SETUP
   const [userDevice] = mockUserDevices;
   const findFirstMock = jest.fn();
   const deleteMock = jest.fn(() => userDevice);
-  const prismaServiceMock = jest.fn().mockImplementation(() => ({
+  const prismaServiceMock = {
     userDevice: {
       findFirst: findFirstMock,
       delete: deleteMock,
     },
-  }));
-  let handler: UserDeviceDeleteCommandHandler;
+  };
+  const publishMock = jest.fn();
+  const eventBusMock = {
+    publish: publishMock,
+  };
   const command = new UserDeviceDeleteCommand(userDevice.id, '123');
-  //endregion
+  const handler = new UserDeviceDeleteCommandHandler(prismaServiceMock as any, eventBusMock as any);
 
-  //region SETUP
-  beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      providers: [UserDeviceDeleteCommandHandler, { provide: PrismaService, useClass: prismaServiceMock }],
-    }).compile();
-    handler = moduleRef.get(UserDeviceDeleteCommandHandler);
+  afterEach(() => {
+    findFirstMock.mockClear();
+    deleteMock.mockClear();
+    findFirstMock.mockClear();
   });
   //endregion
 
@@ -53,5 +53,6 @@ describe('UserDeviceDeleteCommandHandler', () => {
         id: command.id,
       },
     });
+    expect(publishMock).toBeCalledWith(new UserDeviceDeletedEvent(userDevice));
   });
 });

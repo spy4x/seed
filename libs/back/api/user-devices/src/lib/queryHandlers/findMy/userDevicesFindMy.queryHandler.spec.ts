@@ -4,7 +4,7 @@ import { UserDevicesFindMyQueryHandler } from './userDevicesFindMy.queryHandler'
 import { mockUserDevices } from '@seed/shared/mock-data';
 import { UserDevice } from '@prisma/client';
 
-describe('UserDevicesFindMyQueryHandler', () => {
+describe(UserDevicesFindMyQueryHandler.name, () => {
   //region VARIABLES
   let handler: UserDevicesFindMyQueryHandler;
   const page = 3;

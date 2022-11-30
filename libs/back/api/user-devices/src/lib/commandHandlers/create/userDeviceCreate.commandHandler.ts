@@ -1,13 +1,20 @@
 import { ConflictException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
-import { BaseCommandHandler, LogService, PrismaService, UserDeviceCreateCommand } from '@seed/back/api/shared';
+import {
+  BaseCommandHandler,
+  EventBusExt,
+  LogService,
+  PrismaService,
+  UserDeviceCreateCommand,
+  UserDeviceCreatedEvent,
+} from '@seed/back/api/shared';
 import { Prisma, UserDevice } from '@prisma/client';
 
 @CommandHandler(UserDeviceCreateCommand)
 export class UserDeviceCreateCommandHandler extends BaseCommandHandler<UserDeviceCreateCommand, UserDevice> {
   readonly logger = new LogService(UserDeviceCreateCommandHandler.name);
 
-  constructor(readonly prisma: PrismaService) {
+  constructor(private readonly prisma: PrismaService, private readonly eventBus: EventBusExt) {
     super();
   }
 
@@ -32,6 +39,7 @@ export class UserDeviceCreateCommandHandler extends BaseCommandHandler<UserDevic
         data: command,
       });
       logSegment.log('Created userDevice:', createdUserDevice);
+      this.eventBus.publish(new UserDeviceCreatedEvent(createdUserDevice));
       return createdUserDevice;
     });
   }

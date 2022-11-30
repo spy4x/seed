@@ -1,12 +1,19 @@
 import { CommandHandler } from '@nestjs/cqrs';
-import { BaseCommandHandler, LogService, PrismaService, UserDeviceUpdateCommand } from '@seed/back/api/shared';
+import {
+  BaseCommandHandler,
+  EventBusExt,
+  LogService,
+  PrismaService,
+  UserDeviceUpdateCommand,
+  UserDeviceUpdatedEvent,
+} from '@seed/back/api/shared';
 import { Prisma, UserDevice } from '@prisma/client';
 
 @CommandHandler(UserDeviceUpdateCommand)
 export class UserDeviceUpdateCommandHandler extends BaseCommandHandler<UserDeviceUpdateCommand, null | UserDevice> {
   readonly logger = new LogService(UserDeviceUpdateCommandHandler.name);
 
-  constructor(readonly prisma: PrismaService) {
+  constructor(private readonly prisma: PrismaService, private readonly eventBus: EventBusExt) {
     super();
   }
 
@@ -34,6 +41,7 @@ export class UserDeviceUpdateCommandHandler extends BaseCommandHandler<UserDevic
         data: updateData,
       });
       logSegment.log('Updated userDevice:', updatedUserDevice);
+      this.eventBus.publish(new UserDeviceUpdatedEvent(updatedUserDevice));
       return updatedUserDevice;
     });
   }
