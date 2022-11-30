@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { UsersFindQuery, SharedModule, QueryBusExt, CommandBusExt } from '@seed/back/api/shared';
+import { CommandBusExt, QueryBusExt, UsersFindQuery } from '@seed/back/api/shared';
 import { UsersController } from './users.controller';
 
 describe(UsersController.name, () => {
@@ -13,7 +13,6 @@ describe(UsersController.name, () => {
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
-      imports: [SharedModule],
       controllers: [UsersController],
       providers: [
         { provide: QueryBusExt, useClass: queryBusMock },

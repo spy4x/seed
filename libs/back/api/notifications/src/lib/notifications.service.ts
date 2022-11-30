@@ -1,4 +1,3 @@
-import * as admin from 'firebase-admin';
 import { messaging } from 'firebase-admin';
 import { LogService } from '@seed/back/api/shared';
 import { NotificationType } from '@prisma/client';
@@ -24,9 +23,6 @@ export class NotificationsService {
   private readonly logService = new LogService(NotificationsService.name);
 
   constructor() {
-    if (!admin.apps.length) {
-      admin.initializeApp();
-    }
     this.messaging = messaging();
   }
 

@@ -1,25 +1,17 @@
 import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
-import * as admin from 'firebase-admin';
+import { auth } from 'firebase-admin';
 import { FirebaseError } from 'firebase-admin/lib/firebase-namespace-api';
 import { LogService } from '../log/log.service';
 import { CACHE_KEYS, CacheTTL } from '../../cache';
 import { Cache } from 'cache-manager';
-import { API_CONFIG } from '../../constants';
-import { Environment } from '@seed/shared/types';
 
 @Injectable()
 export class FirebaseAuthService {
   logService = new LogService(FirebaseAuthService.name);
 
-  constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {
-    if (!admin.apps.length) {
-      admin.initializeApp(
-        API_CONFIG.environment === Environment.production ? undefined : { projectId: API_CONFIG.projectId },
-      );
-    }
-  }
+  constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
 
-  async getUser(userId: string): Promise<null | admin.auth.UserRecord> {
+  async getUser(userId: string): Promise<null | auth.UserRecord> {
     try {
       return await this.getAuth().getUser(userId);
     } catch (error: unknown) {
@@ -81,7 +73,7 @@ export class FirebaseAuthService {
     });
   }
 
-  private getAuth(): admin.auth.Auth {
-    return admin.auth();
+  private getAuth(): auth.Auth {
+    return auth();
   }
 }
