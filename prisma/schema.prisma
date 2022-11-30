@@ -4,7 +4,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
 }
 
 // ---------------------- ENUMS
@@ -23,44 +24,47 @@ enum NotificationType {
 // ---------------------- MODELS
 
 model User {
-  id                         String         @id @db.VarChar(28)
-  userName                   String         @unique @db.VarChar(25)
-  firstName                  String         @db.VarChar(50)
-  lastName                   String         @db.VarChar(50)
-  role                       UserRole       @default(USER)
-  photoURL                   String?        @db.VarChar(300)
-  userDevices                UserDevice[]
-  notifications              Notification[]
-  isPushNotificationsEnabled Boolean        @default(false)
-  lastTimeSignedIn           DateTime       @default(now())
-  createdAt                  DateTime       @default(now())
-  updatedAt                  DateTime       @default(now()) @updatedAt
+  id                         String   @id @db.VarChar(28)
+  userName                   String   @unique @map("user_name") @db.VarChar(25)
+  firstName                  String   @map("first_name") @db.VarChar(50)
+  lastName                   String   @map("last_name") @db.VarChar(50)
+  role                       UserRole @default(USER)
+  photoURL                   String?  @map("photo_url") @db.VarChar(300)
+  isPushNotificationsEnabled Boolean  @default(false) @map("is_push_notifications_enabled")
+  lastTimeSignedIn           DateTime @default(now()) @map("last_time_signed_in")
+  createdAt                  DateTime @default(now()) @map("created_at")
+  updatedAt                  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  userDevices   UserDevice[]
+  notifications Notification[]
 
   @@map(name: "users")
 }
 
 model UserDevice {
-  id         String   @id @default(dbgenerated("gen_random_uuid()"))
-  userId     String   @db.VarChar(28)
-  user       User     @relation(fields: [userId], references: [id])
-  fcmToken   String   @db.VarChar(256)
-  deviceId   String?  @db.VarChar(50)
-  deviceName String?  @db.VarChar(50)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar(36)
+  userId     String   @map("user_id") @db.VarChar(28)
+  fcmToken   String   @map("fcm_token") @db.VarChar(256)
+  deviceId   String?  @map("device_id") @db.VarChar(50)
+  deviceName String?  @map("device_name") @db.VarChar(50)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@unique([fcmToken, userId])
-  @@map(name: "userDevices")
+  @@map(name: "user_devices")
 }
 
 model Notification {
-  id        String           @id @default(dbgenerated("gen_random_uuid()"))
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.VarChar(36)
   type      NotificationType
-  isRead    Boolean          @default(false)
-  userId    String           @db.VarChar(28)
-  user      User             @relation(fields: [userId], references: [id])
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @default(now()) @updatedAt
+  isRead    Boolean          @default(false) @map("is_read")
+  userId    String           @map("user_id") @db.VarChar(28)
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @default(now()) @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map(name: "notifications")
 }
