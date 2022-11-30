@@ -7,6 +7,7 @@ import {
   NotificationsMarkAsReadCommandHandler,
 } from './commandHandlers';
 import { NotificationCreatedEventHandler } from './eventHandlers/notificationCreated.eventHandler';
+import { NotificationsService } from './notifications.service';
 
 const queryHandlers = [NotificationsFindMyQueryHandler];
 const commandHandlers = [
@@ -18,6 +19,6 @@ const eventHandlers = [NotificationCreatedEventHandler];
 
 @Module({
   controllers: [NotificationsController],
-  providers: [...queryHandlers, ...commandHandlers, ...eventHandlers],
+  providers: [...queryHandlers, ...commandHandlers, ...eventHandlers, NotificationsService],
 })
 export class NotificationsModule {}
