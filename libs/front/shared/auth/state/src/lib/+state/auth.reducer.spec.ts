@@ -122,6 +122,22 @@ describe('Auth Reducer', () => {
         );
       });
 
+      it(`if stage was "${AuthStage.restoringPassword}" - changes it to ${AuthStage.choosingProvider}`, () => {
+        reducerTest(
+          {
+            stage: AuthStage.restoringPassword,
+            email: testEmail,
+            providers: [AuthProvider.password, AuthProvider.link],
+            selectedProvider: AuthProvider.password,
+          },
+          AuthUIActions.deselectProvider(),
+          {
+            selectedProvider: undefined,
+            stage: AuthStage.choosingProvider,
+          },
+        );
+      });
+
       it(`if stage was "${AuthStage.signingPhoneNumber}" - changes it to ${AuthStage.choosingProvider}`, () => {
         reducerTest(
           {
@@ -511,6 +527,7 @@ describe('Auth Reducer', () => {
         },
         AuthAPIActions.restorePasswordSuccess(),
         {
+          stage: AuthStage.signingEmailAndPassword,
           inProgress: false,
           successMessage: 'Check your email for password reset instructions.',
         },

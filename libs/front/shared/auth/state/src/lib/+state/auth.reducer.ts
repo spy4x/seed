@@ -119,7 +119,11 @@ const authReducer = createReducer<State>(
   }),
   on(AuthUIActions.deselectProvider, (state: State): State => {
     const stageUpdate: Partial<State> = {};
-    if (state.stage === AuthStage.signingEmailAndPassword || state.stage === AuthStage.signingPhoneNumber) {
+    if (
+      state.stage === AuthStage.signingEmailAndPassword ||
+      state.stage === AuthStage.restoringPassword ||
+      state.stage === AuthStage.signingPhoneNumber
+    ) {
       stageUpdate.stage = AuthStage.choosingProvider;
     }
     return {
@@ -298,6 +302,7 @@ const authReducer = createReducer<State>(
     AuthAPIActions.restorePasswordSuccess,
     (state: State): State => ({
       ...state,
+      stage: AuthStage.signingEmailAndPassword,
       inProgress: false,
       ...resetErrorAndSuccess,
       successMessage: 'Check your email for password reset instructions.',
