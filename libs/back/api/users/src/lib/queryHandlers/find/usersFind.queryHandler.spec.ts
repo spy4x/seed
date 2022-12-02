@@ -5,7 +5,7 @@ import { mockUsers } from '@seed/shared/mock-data';
 import { ONE, PAGINATION_DEFAULTS } from '@seed/shared/constants';
 import { User } from '@prisma/client';
 
-describe('UsersFindQueryHandler', () => {
+describe(UsersFindQueryHandler.name, () => {
   //region VARIABLES
   let handler: UsersFindQueryHandler;
   const page = 3;

@@ -4,7 +4,7 @@ import { NotificationCreateCommandHandler } from './notificationCreate.commandHa
 import { mockNotifications } from '@seed/shared/mock-data';
 import { Notification } from '@prisma/client';
 
-describe('NotificationCreateCommandHandler', () => {
+describe(NotificationCreateCommandHandler.name, () => {
   // region VARIABLES
   const createMock = jest.fn();
   const eventBusPublishMock = jest.fn();

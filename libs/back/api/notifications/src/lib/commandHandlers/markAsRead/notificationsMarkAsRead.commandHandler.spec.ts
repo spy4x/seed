@@ -5,7 +5,7 @@ import { mockNotifications } from '@seed/shared/mock-data';
 import { ZERO } from '@seed/shared/constants';
 import { Prisma } from '@prisma/client';
 
-describe('NotificationsMarkAsReadCommandHandler', () => {
+describe(NotificationsMarkAsReadCommandHandler.name, () => {
   // region VARIABLES
   const updateManyMock = jest.fn();
   const prismaServiceMock = jest.fn().mockImplementation(() => ({

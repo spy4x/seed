@@ -4,7 +4,7 @@ import { NotificationsFindMyQueryHandler } from './notificationsFindMy.queryHand
 import { mockNotifications } from '@seed/shared/mock-data';
 import { Notification } from '@prisma/client';
 
-describe('NotificationsFindMyQueryHandler', () => {
+describe(NotificationsFindMyQueryHandler.name, () => {
   //region VARIABLES
   let handler: NotificationsFindMyQueryHandler;
   const page = 3;

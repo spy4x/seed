@@ -12,7 +12,7 @@ import { NotificationCreatedEventHandler } from './notificationCreated.eventHand
 import { mockNotifications, mockUserDevices } from '@seed/shared/mock-data';
 import { User, UserDevice } from '@prisma/client';
 
-describe('NotificationCreatedEventHandler', () => {
+describe(NotificationCreatedEventHandler.name, () => {
   // region VARIABLES
   const commandBusExecuteMock = jest.fn();
   const commandBusMock = jest.fn().mockImplementation(() => ({

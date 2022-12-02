@@ -17,7 +17,7 @@ import {
 import { mockNotifications } from '@seed/shared/mock-data';
 import { FCM_INVALID_TOKENS_ERROR, NotificationSendPushCommandHandler } from './notificationSendPush.commandHandler';
 
-describe('NotificationSendPushCommandHandler', () => {
+describe(NotificationSendPushCommandHandler.name, () => {
   //region VARIABLES
   const createMock = jest.fn();
   const eventBusPublishMock = jest.fn();

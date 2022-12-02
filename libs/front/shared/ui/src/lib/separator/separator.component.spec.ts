@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SeparatorComponent } from './separator.component';
 import { NgControl } from '@angular/forms';
 
-describe('InputComponent', () => {
+describe(SeparatorComponent.name, () => {
   let component: SeparatorComponent;
   let fixture: ComponentFixture<SeparatorComponent>;
 

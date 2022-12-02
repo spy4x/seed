@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { InputComponent } from './input.component';
 import { NgControl } from '@angular/forms';
 
-describe('InputComponent', () => {
+describe(InputComponent.name, () => {
   let component: InputComponent;
   let fixture: ComponentFixture<InputComponent>;
 

@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { NotificationsController } from './notifications.controller';
 import { CommandBusExt, QueryBusExt } from '@seed/back/api/shared';
 
-describe('NotificationsController', () => {
+describe(NotificationsController.name, () => {
   let controller: NotificationsController;
   const queryBusMock = jest.fn();
   const commandBusMock = jest.fn();

@@ -3,7 +3,7 @@ import { ProtectedComponent } from './protected.component';
 import { NgControl } from '@angular/forms';
 import { provideMockStore } from '@ngrx/store/testing';
 
-describe('InputComponent', () => {
+describe(ProtectedComponent.name, () => {
   let component: ProtectedComponent;
   let fixture: ComponentFixture<ProtectedComponent>;
 

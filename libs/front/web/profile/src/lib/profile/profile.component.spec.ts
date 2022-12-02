@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileComponent } from './profile.component';
 import { provideMockStore } from '@ngrx/store/testing';
 
-describe('ProfileComponent', () => {
+describe(ProfileComponent.name, () => {
   let component: ProfileComponent;
   let fixture: ComponentFixture<ProfileComponent>;
 
