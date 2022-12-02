@@ -190,7 +190,7 @@ What is implemented and what is planned.
 ✅ Deploy to production with a single command - `$ yarn deploy:all`  
 🕑 [CI/CD](https://github.com/spy4x/seed/issues/143)  
 🕑 [Manage environments on local machine](https://github.com/spy4x/seed/issues/99)  
-🕑 [Follows "12 Factor App"](https://github.com/spy4x/seed/issues/156)
+🕑 [Follows "12 Factor App"](https://github.com/spy4x/seed/issues/156)  
 🕑 [Calculate affected apps based on latest release tag](https://github.com/spy4x/seed/issues/153)  
 🕑 Staging environment    
 🕑 [Manage commits](https://github.com/spy4x/seed/issues/154)  
@@ -246,7 +246,7 @@ What is implemented and what is planned.
 #### PWA
 🕑 [Offline work](https://github.com/spy4x/seed/issues/147)  
 🕑 [Push Notifications](https://github.com/spy4x/seed/issues/147)  
-🕑 [Auto-update](https://github.com/spy4x/seed/issues/147)
+🕑 [Auto-update](https://github.com/spy4x/seed/issues/147)  
 🕑 [Installable](https://github.com/spy4x/seed/issues/147)
 #### Admin Panel
 🕑 [Users management](https://github.com/spy4x/seed/issues/131)  
