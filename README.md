@@ -241,7 +241,7 @@ What is implemented and what is planned.
 🕑 [Logging](https://github.com/spy4x/seed/issues/146)  
 🕑 [Build once, use bundle for every environment](https://github.com/spy4x/seed/issues/141)  
 #### Styles
-✅ TailwindCSS + Mobile-first responsive design
+✅ TailwindCSS + Mobile-first responsive design  
 ✅ [Styles shared between frontend apps](libs/front/shared/styles)  
 #### PWA
 🕑 [Offline work](https://github.com/spy4x/seed/issues/147)  
