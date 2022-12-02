@@ -1,1 +1,2 @@
-export * from './lib/uuid';
+export * from './lib/nameof/nameof.helper';
+export * from './lib/uuid/uuid.helper';
