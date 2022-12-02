@@ -14,7 +14,7 @@ export interface State {
     message: string;
     code?: string;
   };
-  originalURL?: string;
+  originalURL: string;
 
   email?: string;
   /**
@@ -45,7 +45,7 @@ export const initialState: State = {
   inProgress: false,
   successMessage: undefined,
   error: undefined,
-  originalURL: undefined,
+  originalURL: '/',
 
   email: undefined,
   providers: undefined,

@@ -15,7 +15,6 @@ import { RouterSelectors } from '@seed/front/shared/router';
 export const AUTH_REHYDRATION_KEY_EMAIL = 'authEmail';
 export const AUTH_REHYDRATION_KEY_DISPLAY_NAME = 'authDisplayName';
 export const AUTH_REHYDRATION_KEY_PHOTO_URL = 'authPhotoURL';
-export const AUTH_URL_SEGMENT_FOR_LINK_AUTH = 'email';
 export type FirebaseError = Error & { code?: string };
 
 @Injectable()
@@ -30,14 +29,15 @@ export class AuthenticationEffects {
   init$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthAPIActions.init),
-      exhaustMap(() =>
+      concatLatestFrom(() => this.store.select(RouterSelectors.getUrl)),
+      exhaustMap(([, originalURL]) =>
         this.fireAuth.user.pipe(
           take(ONE),
           exhaustMap(user => {
             if (user) {
               return from(this.onUserAuthenticationWithUserOnly(user, false, true));
             }
-            return from(this.fireAuth.isSignInWithEmailLink(window.location.href)).pipe(
+            return from(this.fireAuth.isSignInWithEmailLink(originalURL)).pipe(
               map(isSignInWithEmailLink => {
                 if (isSignInWithEmailLink) {
                   return AuthAPIActions.signEmailLinkFinish();
@@ -246,17 +246,21 @@ export class AuthenticationEffects {
   signEmailLink$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthUIActions.signEmailLink),
-      concatLatestFrom(() =>
+      concatLatestFrom(() => [
         this.store.select(AuthSelectors.getEmail).pipe(filter((email): email is string => !!email)),
-      ),
-      exhaustMap(([, email]) =>
+        this.store.select(AuthSelectors.getOriginalUrl),
+      ]),
+      exhaustMap(([, email, originalURL]) =>
         from(
           this.fireAuth.sendSignInLinkToEmail(email, {
-            url: `${location.href}?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${email}`,
+            url: window.location.origin + originalURL,
             handleCodeInApp: true,
           }),
         ).pipe(
-          map(() => AuthAPIActions.signEmailLinkRequestSent()),
+          map(() => {
+            localStorage.setItem(AUTH_REHYDRATION_KEY_EMAIL, email);
+            return AuthAPIActions.signEmailLinkRequestSent();
+          }),
           catchError((error: FirebaseError) =>
             of(AuthAPIActions.actionFailed({ message: error.message, code: error.code })),
           ),
@@ -268,14 +272,15 @@ export class AuthenticationEffects {
   signEmailLinkFinish$ = createEffect(() =>
     this.actions$.pipe(
       ofType(AuthAPIActions.signEmailLinkFinish),
-      exhaustMap(() => {
-        const email = new URL(location.href).searchParams.get(AUTH_URL_SEGMENT_FOR_LINK_AUTH);
-        if (!email) {
-          const errorMessage = 'No email was provided for link authentication. Try again.';
-          return of(AuthAPIActions.actionFailed({ message: errorMessage }));
-        }
-
-        return from(this.fireAuth.signInWithEmailLink(email, window.location.href)).pipe(
+      concatLatestFrom(() => this.store.select(AuthSelectors.getOriginalUrl)),
+      exhaustMap(([, originalURL]) => {
+        const email =
+          localStorage.getItem(AUTH_REHYDRATION_KEY_EMAIL) ||
+          /* eslint-disable-next-line no-alert */
+          (window.prompt('Please provide your email for confirmation') as string) ||
+          'fake-value';
+        const url = originalURL ? window.location.origin + originalURL : window.location.href;
+        return from(this.fireAuth.signInWithEmailLink(email, url)).pipe(
           exhaustMap(credential => this.onUserAuthenticationWithCredentials(credential)),
           catchError((error: FirebaseError) =>
             merge(

@@ -6,7 +6,6 @@ import {
   AUTH_REHYDRATION_KEY_DISPLAY_NAME,
   AUTH_REHYDRATION_KEY_EMAIL,
   AUTH_REHYDRATION_KEY_PHOTO_URL,
-  AUTH_URL_SEGMENT_FOR_LINK_AUTH,
   AuthenticationEffects,
 } from './authentication.effects';
 import * as AuthUIActions from '../actions/ui.actions';
@@ -29,6 +28,7 @@ describe(AuthenticationEffects.name, () => {
   let effects: AuthenticationEffects;
   let user$: ReplaySubject<null | { uid: string; email?: string; displayName?: string; photoURL?: string }>;
   let idToken$: ReplaySubject<null | string>;
+  const url = `/auth-link`;
   const signInAnonymouslyMock = jest.fn();
   const signInWithPopupMock = jest.fn();
   const signOutMock = jest.fn();
@@ -76,6 +76,9 @@ describe(AuthenticationEffects.name, () => {
     });
     store = TestBed.inject(MockStore);
     effects = TestBed.inject(AuthenticationEffects);
+    store.overrideSelector(RouterSelectors.getUrl, url);
+    store.overrideSelector(AuthSelectors.getOriginalUrl, url);
+
     signInAnonymouslyMock.mockReset();
     signInWithPopupMock.mockReset();
     signOutMock.mockReset();
@@ -101,9 +104,6 @@ describe(AuthenticationEffects.name, () => {
     it(`dispatches "${AuthAPIActions.signEmailLinkFinish.type}" if fireAuth.user emits null, but Location URL contains SignInWithEmailLink code`, () => {
       const action = AuthAPIActions.init();
       const completion = AuthAPIActions.signEmailLinkFinish();
-      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
-      delete (window as any).location;
-      (window.location as any) = new URL(url);
       isSignInWithEmailLinkMock.mockReturnValue(of(true));
       user$.next(null);
       actions$ = hot('a', { a: action });
@@ -115,9 +115,6 @@ describe(AuthenticationEffects.name, () => {
     it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.isSignInWithEmailLink() throws an error`, () => {
       const action = AuthAPIActions.init();
       const completion = AuthAPIActions.actionFailed({ message: 'Auth failed' });
-      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
-      delete (window as any).location;
-      (window.location as any) = new URL(url);
       isSignInWithEmailLinkMock.mockReturnValue(throwError(new Error('Auth failed')));
       user$.next(null);
       actions$ = hot('a', { a: action });
@@ -163,8 +160,6 @@ describe(AuthenticationEffects.name, () => {
 
   describe('saveOriginalURL$', () => {
     it(`dispatches "${AuthAPIActions.saveOriginalURL.type}" with current url`, () => {
-      const url = '/my-url';
-      store.overrideSelector(RouterSelectors.getUrl, url);
       const action = AuthAPIActions.init();
       const completion = AuthAPIActions.saveOriginalURL({ url });
       actions$ = hot('a', { a: action });
@@ -421,6 +416,11 @@ describe(AuthenticationEffects.name, () => {
   });
 
   describe('signEmailLink$', () => {
+    const localStorageSetItemSpy = jest.spyOn(window.localStorage['__proto__'], 'setItem'); // https://stackoverflow.com/a/54157998/9967802
+    beforeEach(() => {
+      localStorageSetItemSpy.mockReset();
+    });
+
     it(`dispatches "${AuthAPIActions.signEmailLinkRequestSent.type}" if fireAuth.sendSignInLinkToEmail() succeeds`, () => {
       const action = AuthUIActions.signEmailLink();
       const completion = AuthAPIActions.signEmailLinkRequestSent();
@@ -428,8 +428,9 @@ describe(AuthenticationEffects.name, () => {
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signEmailLink$).toBeObservable(expected);
+      expect(localStorageSetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL, testEmail);
       expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, {
-        url: `${location.href}?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`,
+        url: window.location.origin + url,
         handleCodeInApp: true,
       });
     });
@@ -441,54 +442,45 @@ describe(AuthenticationEffects.name, () => {
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signEmailLink$).toBeObservable(expected);
+      expect(localStorageSetItemSpy).not.toHaveBeenCalled();
       expect(sendSignInLinkToEmailMock).toHaveBeenCalledWith(testEmail, {
-        url: `${location.href}?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`,
+        url: window.location.origin + url,
         handleCodeInApp: true,
       });
     });
   });
 
   describe('signEmailLinkFinish$', () => {
+    const originalPrompt = window.prompt;
+    window.prompt = jest.fn().mockReturnValue('');
+    const localStorageGetItemSpy = jest.spyOn(window.localStorage['__proto__'], 'getItem'); // https://stackoverflow.com/a/54157998/9967802
+    afterAll(() => {
+      window.prompt = originalPrompt;
+    });
+
     it(`dispatches "${AuthAPIActions.signedIn.type}" if fireAuth.signInWithEmailLink() returns User`, () => {
+      localStorage.setItem(AUTH_REHYDRATION_KEY_EMAIL, testEmail);
       const action = AuthAPIActions.signEmailLinkFinish();
-      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
-      delete (window as any).location;
-      (window.location as any) = new URL(url);
       const completion = AuthAPIActions.signedIn(mockExpectedActionPayload);
       signInWithEmailLinkMock.mockReturnValue(of(mockAuthCredentials));
       actions$ = hot('a', { a: action });
       const expected = hot('b', { b: completion });
       expect(effects.signEmailLinkFinish$).toBeObservable(expected);
-      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, url);
-    });
-
-    it(`dispatches "${AuthAPIActions.actionFailed.type}" if no email is provided`, () => {
-      const action = AuthAPIActions.signEmailLinkFinish();
-      const completion = AuthAPIActions.actionFailed({
-        message: 'No email was provided for link authentication. Try again.',
-      });
-      const url = `https://seed.web.app/auth-link`;
-      delete (window as any).location;
-      (window.location as any) = new URL(url);
-      actions$ = hot('a', { a: action });
-      const expected = hot('b', { b: completion });
-      expect(effects.signEmailLinkFinish$).toBeObservable(expected);
-      expect(signInWithEmailLinkMock).not.toHaveBeenCalledWith();
+      expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL);
+      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, window.location.origin + url);
     });
 
     it(`dispatches "${AuthAPIActions.actionFailed.type}" if fireAuth.signInWithEmailLink() throws an error`, () => {
+      localStorage.setItem(AUTH_REHYDRATION_KEY_EMAIL, testEmail);
       const action = AuthAPIActions.signEmailLinkFinish();
       const completion1 = AuthAPIActions.enterEmail({ email: testEmail });
       const completion2 = AuthAPIActions.actionFailed({ message: 'Auth failed' });
       signInWithEmailLinkMock.mockReturnValue(throwError(new Error('Auth failed')));
-      const url = `https://seed.web.app/auth-link?${AUTH_URL_SEGMENT_FOR_LINK_AUTH}=${testEmail}`;
-      delete (window as any).location;
-      (window.location as any) = new URL(url);
-      localStorage[AUTH_REHYDRATION_KEY_EMAIL] = testEmail;
       actions$ = hot('a', { a: action });
       const expected = hot('(bc)', { b: completion1, c: completion2 });
       expect(effects.signEmailLinkFinish$).toBeObservable(expected);
-      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, url);
+      expect(localStorageGetItemSpy).toHaveBeenCalledWith(AUTH_REHYDRATION_KEY_EMAIL);
+      expect(signInWithEmailLinkMock).toHaveBeenCalledWith(testEmail, window.location.origin + url);
     });
   });
 

@@ -4,7 +4,7 @@ import { RouterReducerState } from '@ngrx/router-store';
 export const ROUTER_STATE_FEATURE_KEY = 'router';
 export const initialState: RouterReducerState<RouterState> = {
   state: {
-    url: window.location.pathname,
+    url: window.location.pathname + window.location.search,
     params: {},
     queryParams: {},
   },
