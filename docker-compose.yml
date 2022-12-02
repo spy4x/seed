@@ -3,6 +3,7 @@ version: '3.9'
 volumes:
   node-modules: null
   postgres-data: null
+  redis-data: null
   firebase-data: null
 
 services:
@@ -23,6 +24,8 @@ services:
     restart: always
     ports:
       - 6379:6379
+    volumes:
+      - redis-data:/data
 
   firebase:
     image: seed_firebase
