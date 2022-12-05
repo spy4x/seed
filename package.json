@@ -48,6 +48,7 @@
     "@angular/platform-browser": "15.0.1",
     "@angular/platform-browser-dynamic": "15.0.1",
     "@angular/router": "15.0.1",
+    "@google-cloud/logging-winston": "^5.2.3",
     "@google-cloud/tasks": "^3.0.5",
     "@nestjs/axios": "^1.0.0",
     "@nestjs/common": "9.1.6",
@@ -83,6 +84,7 @@
     "tslib": "^2.3.0",
     "uuid": "^9.0.0",
     "validator": "^13.7.0",
+    "winston": "^3.8.2",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {

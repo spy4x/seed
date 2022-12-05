@@ -71,6 +71,19 @@ export class UsersController extends BaseController {
     });
   }
 
+  @Get('fail')
+  @ApiResponse({ status: HttpStatus.OK, type: UserDTO })
+  @ApiResponse({
+    status: HttpStatus.NO_CONTENT,
+    description: `User doesn't exist in database yet. Create it using "POST /users" request.`,
+  })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED })
+  public fail(): string {
+    return this.logger.trackSegmentSync(this.fail.name, () => {
+      throw new Error('This is my custom error');
+    });
+  }
+
   @Get('is-username-free/:userName')
   @UseGuards(IsAuthenticatedGuard)
   @ApiResponse({ status: HttpStatus.OK, type: UserIsUsernameFreeDTO })

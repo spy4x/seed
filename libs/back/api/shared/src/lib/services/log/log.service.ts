@@ -3,6 +3,8 @@ import * as chalk from 'chalk';
 import { format } from 'date-fns';
 import { isEnv } from '../../constants';
 import { Environment } from '@seed/shared/types';
+import { LoggingWinston } from '@google-cloud/logging-winston';
+import * as winston from 'winston';
 
 export enum LogSeverity {
   log = 'log',
@@ -17,18 +19,22 @@ export enum LogContext {
 
 type Params = unknown;
 
-enum LogArgType {
-  regular = 'regular',
-  subCaller = 'subCaller',
-  inspect = 'inspect',
-}
-
-interface LogArg {
-  type: LogArgType;
-  value: unknown;
-}
-
 const IS_PRODUCTION = isEnv(Environment.production);
+
+const loggingWinston = new LoggingWinston();
+
+// Create a Winston logger that streams to Cloud Logging
+// Logs will be written to: "projects/YOUR_PROJECT_ID/logs/winston_log"
+const logger = winston.createLogger({
+  level: 'info',
+  transports: [
+    IS_PRODUCTION
+      ? loggingWinston
+      : new winston.transports.Console({
+          format: winston.format.simple(),
+        }),
+  ],
+});
 
 export function chalkify(str: string, chalkModifier: chalk.Chalk): string {
   if (IS_PRODUCTION) {
@@ -41,24 +47,7 @@ export class LogSegment {
   constructor(public caller: string, public startDate: Date, private readonly logger: LogService) {}
 
   log(message: string, params?: Params, context?: LogContext): this {
-    const args: LogArg[] = [];
-    args.push({ type: LogArgType.subCaller, value: this.caller });
-    args.push({ type: LogArgType.regular, value: message });
-    if (params) {
-      args.push({ type: LogArgType.inspect, value: params });
-    }
-    this.logger.write(LogSeverity.log, args, context);
-    return this;
-  }
-
-  warn(message: string, params?: Params, context?: LogContext): this {
-    const args: LogArg[] = [];
-    args.push({ type: LogArgType.subCaller, value: this.caller });
-    args.push({ type: LogArgType.regular, value: message });
-    if (params) {
-      args.push({ type: LogArgType.inspect, value: params });
-    }
-    this.logger.write(LogSeverity.warn, args, context);
+    this.logger.write(LogSeverity.log, message, params, this.caller, context);
     return this;
   }
 
@@ -73,18 +62,13 @@ export class LogSegment {
     params?: Params;
     context?: LogContext;
   }): this {
-    const args: LogArg[] = [];
-    args.push({ type: LogArgType.subCaller, value: this.caller });
-    if (message) {
-      args.push({ type: LogArgType.regular, value: message });
-    }
-    if (error) {
-      args.push({ type: LogArgType.regular, value: error });
-    }
-    if (params) {
-      args.push({ type: LogArgType.inspect, value: params });
-    }
-    this.logger.write(LogSeverity.error, args, context);
+    this.logger.write(
+      LogSeverity.error,
+      (message || error?.message) as string,
+      { ...(params || {}), error },
+      this.caller,
+      context,
+    );
     return this;
   }
 
@@ -141,11 +125,6 @@ export class LogService {
     return '❓';
   }
 
-  setCaller(caller: string): this {
-    this.caller = caller;
-    return this;
-  }
-
   startSegment(name: string, params?: Params): LogSegment {
     const segment = new LogSegment(name, new Date(), this);
     segment.log(`Started`, params, LogContext.startSegment);
@@ -195,84 +174,38 @@ export class LogService {
     }
   }
 
-  log(message?: string, params?: Params): this {
-    const args: LogArg[] = [];
-    if (message) {
-      args.push({ type: LogArgType.regular, value: message });
-    }
-    if (params) {
-      args.push({ type: LogArgType.inspect, value: params });
-    }
-    return this.write(LogSeverity.log, args);
-  }
-
-  warn(message?: string, params?: Params): this {
-    const args: LogArg[] = [];
-    if (message) {
-      args.push({ type: LogArgType.regular, value: message });
-    }
-    if (params) {
-      args.push({ type: LogArgType.inspect, value: params });
-    }
-    return this.write(LogSeverity.warn, args);
+  log(message: string, params?: Params): this {
+    return this.write(LogSeverity.log, message, params);
   }
 
   error({ message, error, params }: { message?: string; error?: Error; params?: Params }): this {
-    const args: LogArg[] = [];
-    if (message) {
-      args.push({ type: LogArgType.regular, value: message });
-    }
-    if (error) {
-      args.push({ type: LogArgType.regular, value: error });
-    }
-    if (params) {
-      args.push({ type: LogArgType.inspect, value: params });
-    }
-    return this.write(LogSeverity.error, args);
+    return this.write(LogSeverity.error, (message || error?.message) as string, { ...(params || {}), error });
   }
 
-  write(severity: LogSeverity, args: LogArg[], context?: LogContext): this {
-    let logArgs: unknown[] = [];
-
-    if (!IS_PRODUCTION) {
-      const timestamp = format(new Date(), 'HH:mm:ss.SSS');
-      logArgs.push(chalkify(timestamp, chalk.grey));
-    }
-
+  write(severity: LogSeverity, message: string, data?: Params, subCaller?: string, context?: LogContext): this {
     const maxLength = 20;
     const brown = { r: 180, g: 150, b: 100 };
     const purple = { r: 150, g: 125, b: 210 };
     const spaceCharacter = IS_PRODUCTION ? '_' : ' ';
     let callerStr = chalkify(this.caller.padStart(maxLength, spaceCharacter), chalk.rgb(brown.r, brown.g, brown.b));
-    const subCaller = args.find(i => i.type === 'subCaller');
     if (subCaller) {
       callerStr += ` > ${chalkify(
-        (subCaller.value as string).padEnd(maxLength, spaceCharacter),
+        subCaller.padEnd(maxLength, spaceCharacter),
         chalk.rgb(purple.r, purple.g, purple.b),
       )}`;
     }
-    logArgs.push(callerStr);
 
-    logArgs.push(LogService.getIcon(severity, context));
+    const timestamp = IS_PRODUCTION ? '' : chalkify(format(new Date(), 'HH:mm:ss.SSS'), chalk.grey) + ' ';
+    message =
+      timestamp +
+      callerStr +
+      ' ' +
+      LogService.getIcon(severity, context) +
+      '  ' +
+      message +
+      (data ? ` ${LogService.inspect(data)}` : '');
 
-    logArgs = [
-      ...logArgs,
-      ...args
-        .filter(i => i.type !== 'subCaller')
-        .map(arg => {
-          switch (arg.type) {
-            case 'regular':
-              return arg.value;
-            case 'inspect':
-              return LogService.inspect(arg.value);
-            default:
-              throw new Error(`LogService.write(): Unknown argument type ${arg.type}`);
-          }
-        }),
-    ];
-
-    // eslint-disable-next-line no-console
-    console[severity](...logArgs);
+    logger[severity](message, data);
     return this;
   }
 }

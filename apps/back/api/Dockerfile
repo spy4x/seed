@@ -8,7 +8,11 @@ RUN yarn --production --no-lockfile --non-interactive
 
 COPY prisma/* ./prisma/
 
+RUN yarn add prisma
+
 RUN yarn prisma generate
+
+RUN yarn remove prisma
 
 COPY dist/apps/back/api/* ./
 
