@@ -10,7 +10,7 @@
           "error",
           {
             "type": "attribute",
-            "prefix": "adminUsers",
+            "prefix": "seedAdminUsers",
             "style": "camelCase"
           }
         ],
@@ -18,7 +18,7 @@
           "error",
           {
             "type": "element",
-            "prefix": "admin-users",
+            "prefix": "seed-admin-users",
             "style": "kebab-case"
           }
         ]
