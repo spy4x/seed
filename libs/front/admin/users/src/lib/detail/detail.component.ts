@@ -2,9 +2,8 @@ import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/
 
 @Component({
   selector: 'seed-admin-users-details',
-  templateUrl: './user-details.component.html',
-  styles: [],
+  templateUrl: './detail.component.html',
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserDetailsComponent {}
+export class DetailComponent {}

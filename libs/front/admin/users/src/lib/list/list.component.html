@@ -1,0 +1,25 @@
+<div class="flex h-full max-h-full flex-col justify-start overflow-hidden">
+  <seed-admin-users-filters
+    [role]="(role$ | async)!"
+    [isLoading]="(isLoading$ | async)!"
+    [total]="(total$ | async)!"
+    (roleChange)="onRoleChange($event)"
+  ></seed-admin-users-filters>
+  <div class="relative flex flex-1 overflow-auto">
+    <seed-admin-users-table
+      [users]="(users$ | async)!"
+      [isLoading]="(isLoading$ | async)!"
+      class="flex-1"
+    ></seed-admin-users-table>
+    <div seed-loading *ngIf="isLoading$ | async" class="absolute"></div>
+  </div>
+  <ng-container *ngIf="(total$ | async)! > (limit$ | async)!">
+    <seed-pagination
+      [total]="(total$ | async)!"
+      [page]="(page$ | async)!"
+      [limit]="(limit$ | async)!"
+      [isLoading]="(isLoading$ | async)!"
+      (pageChange)="onPageChange($event)"
+    ></seed-pagination>
+  </ng-container>
+</div>

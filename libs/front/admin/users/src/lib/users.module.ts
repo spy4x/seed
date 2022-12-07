@@ -1,17 +1,20 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Route, RouterModule } from '@angular/router';
-import { UsersListComponent } from './users-list/users-list.component';
-import { UserDetailsComponent } from './user-details/user-details.component';
+import { ListComponent } from './list/list.component';
+import { DetailComponent } from './detail/detail.component';
+import { TableComponent } from './list/table/table.component';
+import { FiltersComponent } from './list/filters/filters.component';
+import { SharedUIModule } from '@seed/front/shared/ui';
 
 export const routes: Route[] = [
   {
     path: '',
-    component: UsersListComponent,
+    component: ListComponent,
   },
   {
     path: ':id',
-    component: UserDetailsComponent,
+    component: DetailComponent,
   },
   {
     path: '**',
@@ -19,7 +22,7 @@ export const routes: Route[] = [
   },
 ];
 @NgModule({
-  imports: [CommonModule, RouterModule.forChild(routes)],
-  declarations: [UsersListComponent, UserDetailsComponent],
+  imports: [CommonModule, RouterModule.forChild(routes), SharedUIModule],
+  declarations: [ListComponent, DetailComponent, TableComponent, FiltersComponent],
 })
 export class UsersModule {}
