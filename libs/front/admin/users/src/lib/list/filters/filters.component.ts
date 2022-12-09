@@ -45,7 +45,7 @@ export class FiltersComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['role'].currentValue !== changes['role'].previousValue) {
+    if (changes['role'] && changes['role'].currentValue !== changes['role'].previousValue) {
       this.tabControl.setValue(this.role);
     }
   }
