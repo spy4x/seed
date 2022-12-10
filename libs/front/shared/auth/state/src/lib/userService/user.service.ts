@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
-import type { User } from '@prisma/client';
+import type { User, UserRole } from '@prisma/client';
 import { Observable, of, throwError } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AuthSelectors } from '../../index';
 import { catchError, take } from 'rxjs/operators';
-import { ONE } from '@seed/shared/constants';
+import { ONE, PAGINATION_DEFAULTS } from '@seed/shared/constants';
+
+type PaginatedResponse = { data: User[]; page: number; limit: number; total: number };
 
 @Injectable()
 export class UserService {
@@ -36,6 +38,16 @@ export class UserService {
       { ...user, userName: Date.now().toString() },
       { headers: { ...this.getAuthHeader() } },
     );
+  }
+
+  find(page = ONE, limit = PAGINATION_DEFAULTS.limit, filter?: { role?: UserRole }): Observable<PaginatedResponse> {
+    const params: { [key: string]: string | number } = { page, limit, ...filter };
+    Object.keys(params).forEach(key => params[key] === undefined && delete params[key]); // remove any undefined values from params
+
+    return this.http.get<PaginatedResponse>(this.baseUrl, {
+      params,
+      headers: { ...this.getAuthHeader() },
+    });
   }
 
   private getAuthHeader(): { authorization?: string } {

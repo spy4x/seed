@@ -1,24 +1,24 @@
-<div class="flex h-full max-h-full flex-col justify-start overflow-hidden">
+<div *ngIf="page$ | async as page" class="flex h-full max-h-full flex-col justify-start overflow-hidden">
   <seed-admin-users-filters
     [role]="(role$ | async)!"
-    [isLoading]="(isLoading$ | async)!"
-    [total]="(total$ | async)!"
+    [isLoading]="page.isLoading"
+    [total]="page.total!"
     (roleChange)="onRoleChange($event)"
   ></seed-admin-users-filters>
   <div class="relative flex flex-1 overflow-auto">
     <seed-admin-users-table
-      [users]="(users$ | async)!"
-      [isLoading]="(isLoading$ | async)!"
+      [users]="page.entities"
+      [isLoading]="page.isLoading"
       class="flex-1"
     ></seed-admin-users-table>
-    <div seed-loading *ngIf="isLoading$ | async" class="absolute"></div>
+    <div seed-loading *ngIf="page.isLoading" class="absolute"></div>
   </div>
-  <ng-container *ngIf="(total$ | async)! > (limit$ | async)!">
+  <ng-container *ngIf="page.total! > limit">
     <seed-pagination
-      [total]="(total$ | async)!"
-      [page]="(page$ | async)!"
-      [limit]="(limit$ | async)!"
-      [isLoading]="(isLoading$ | async)!"
+      [total]="page.total!"
+      [page]="page.pageIndex + 1"
+      [limit]="limit"
+      [isLoading]="page.isLoading"
       (pageChange)="onPageChange($event)"
     ></seed-pagination>
   </ng-container>

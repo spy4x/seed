@@ -332,6 +332,13 @@
   dependencies:
     tslib "^2.3.0"
 
+"@angular/router@^14.0.0":
+  version "14.2.12"
+  resolved "https://registry.yarnpkg.com/@angular/router/-/router-14.2.12.tgz#f5b2c9ced3337e4a7af1905b861b114ac80a8482"
+  integrity sha512-r5tVus5RJDNc4U2v0jMtjPiAS1xDsVsJ70lS313DgZmBDHIVZP1cWIehdxwgNlGwQQtAA36eG7toBwqUU3gb/A==
+  dependencies:
+    tslib "^2.3.0"
+
 "@apidevtools/json-schema-ref-parser@^9.0.3":
   version "9.0.9"
   resolved "https://registry.yarnpkg.com/@apidevtools/json-schema-ref-parser/-/json-schema-ref-parser-9.0.9.tgz#d720f9256e3609621280584f2b47ae165359268b"
@@ -2771,6 +2778,22 @@
   version "9.2.2"
   resolved "https://registry.yarnpkg.com/@ngneat/until-destroy/-/until-destroy-9.2.2.tgz#ac6f954610fc7ea5d4a094ed4de9db59513b810f"
   integrity sha512-pD5idTgUdF0XZMuaV1n0BZTnE2BvxymutoXhwfZbO3uxjh63wS6Pzzzwv+pkXalKhuSwdf6uA1gRx7DOvlj/Kw==
+  dependencies:
+    tslib "^2.3.0"
+
+"@ngrx-traits/common@^14.2.0-beta.1":
+  version "14.2.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@ngrx-traits/common/-/common-14.2.0-beta.1.tgz#0967d44318d179aca1b7da8cc9feebc12fc056c7"
+  integrity sha512-cbYbDSH/Lka2MMjGnUQQ+XMRtE3XlJzGUy1f++7IUx6H1Xrr7b42DX7f3PZ7AC0fGnMBJ3fEV5UZiUNEOh77ug==
+  dependencies:
+    tslib "^2.3.0"
+  optionalDependencies:
+    "@angular/router" "^14.0.0"
+
+"@ngrx-traits/core@^14.2.0-beta.1":
+  version "14.2.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@ngrx-traits/core/-/core-14.2.0-beta.1.tgz#2aa3432226d6199c7b2815db4d100f76b223139f"
+  integrity sha512-s4S6NS3V3I1ewzzQSOnrmQAroB8a08m9sEtGYVIYiKw1CMQdz9EoTxlILRrlpNgmL/98/2V3CO2xJAax0fZz4w==
   dependencies:
     tslib "^2.3.0"
 

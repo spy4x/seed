@@ -3,13 +3,14 @@ import { PaginationResponseDTO, PrismaService, UsersFindQuery } from '@seed/back
 import { UsersFindQueryHandler } from './usersFind.queryHandler';
 import { mockUsers } from '@seed/shared/mock-data';
 import { ONE, PAGINATION_DEFAULTS } from '@seed/shared/constants';
-import { User } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
 
 describe(UsersFindQueryHandler.name, () => {
   //region VARIABLES
   let handler: UsersFindQueryHandler;
   const page = 3;
   const limit = 50;
+  const role = UserRole.ADMIN;
   const findManyMockResult = mockUsers;
   const countMockResult = mockUsers.length;
   const findManyMock = jest.fn().mockReturnValue(findManyMockResult);
@@ -46,8 +47,9 @@ describe(UsersFindQueryHandler.name, () => {
     pageArg = PAGINATION_DEFAULTS.page,
     limitArg = PAGINATION_DEFAULTS.limit,
     search?: string,
+    role?: UserRole,
   ): UsersFindQuery {
-    return new UsersFindQuery(pageArg, limitArg, search);
+    return new UsersFindQuery(pageArg, limitArg, search, role);
   }
   //endregion
 
@@ -63,29 +65,35 @@ describe(UsersFindQueryHandler.name, () => {
     expect(result).toEqual(new PaginationResponseDTO<User>(findManyMockResult, page, limit, countMockResult));
   });
 
-  it('should call prisma.user.findMany(), prisma.user.count() with basic params + search query condition for single word', async () => {
-    const query = getQuery(page, limit);
-    query.search = 'John';
+  it('should call prisma.user.findMany(), prisma.user.count() with basic params + search query condition for single word + role', async () => {
+    const query = getQuery(page, limit, 'John', role);
     const result = await handler.execute(query);
     const where = {
-      OR: [
+      AND: [
         {
-          userName: {
-            contains: 'John',
-            mode: 'insensitive',
-          },
+          OR: [
+            {
+              userName: {
+                contains: 'John',
+                mode: 'insensitive',
+              },
+            },
+            {
+              firstName: {
+                contains: 'John',
+                mode: 'insensitive',
+              },
+            },
+            {
+              lastName: {
+                contains: 'John',
+                mode: 'insensitive',
+              },
+            },
+          ],
         },
         {
-          firstName: {
-            contains: 'John',
-            mode: 'insensitive',
-          },
-        },
-        {
-          lastName: {
-            contains: 'John',
-            mode: 'insensitive',
-          },
+          role,
         },
       ],
     };
@@ -104,43 +112,48 @@ describe(UsersFindQueryHandler.name, () => {
     query.search = 'John Wick';
     const result = await handler.execute(query);
     const where = {
-      OR: [
+      AND: [
         {
-          userName: {
-            contains: 'John',
-            mode: 'insensitive',
-          },
+          OR: [
+            {
+              userName: {
+                contains: 'John',
+                mode: 'insensitive',
+              },
+            },
+            {
+              firstName: {
+                contains: 'John',
+                mode: 'insensitive',
+              },
+            },
+            {
+              lastName: {
+                contains: 'John',
+                mode: 'insensitive',
+              },
+            },
+            {
+              userName: {
+                contains: 'Wick',
+                mode: 'insensitive',
+              },
+            },
+            {
+              firstName: {
+                contains: 'Wick',
+                mode: 'insensitive',
+              },
+            },
+            {
+              lastName: {
+                contains: 'Wick',
+                mode: 'insensitive',
+              },
+            },
+          ],
         },
-        {
-          firstName: {
-            contains: 'John',
-            mode: 'insensitive',
-          },
-        },
-        {
-          lastName: {
-            contains: 'John',
-            mode: 'insensitive',
-          },
-        },
-        {
-          userName: {
-            contains: 'Wick',
-            mode: 'insensitive',
-          },
-        },
-        {
-          firstName: {
-            contains: 'Wick',
-            mode: 'insensitive',
-          },
-        },
-        {
-          lastName: {
-            contains: 'Wick',
-            mode: 'insensitive',
-          },
-        },
+        { role: undefined },
       ],
     };
     expect(findManyMock).toBeCalledWith({

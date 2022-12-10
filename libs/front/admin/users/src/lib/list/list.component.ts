@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { User, UserRole } from '@prisma/client';
-import { BehaviorSubject } from 'rxjs';
-import { mockUsers } from '@seed/shared/mock-data';
-import { ONE, PAGINATION_DEFAULTS, THOUSAND, ZERO } from '@seed/shared/constants';
+import { UserRole } from '@prisma/client';
+import { first } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { UsersActions, UsersSelectors } from './list.state';
+import { PAGINATION_DEFAULTS } from '@seed/shared/constants';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'seed-admin-users-list',
@@ -11,56 +13,26 @@ import { ONE, PAGINATION_DEFAULTS, THOUSAND, ZERO } from '@seed/shared/constants
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListComponent implements OnInit {
-  users$ = new BehaviorSubject<User[]>([]);
+  page$ = this.store.select(UsersSelectors.selectUsersCurrentPage);
 
-  isLoading$ = new BehaviorSubject<boolean>(true);
+  role$ = this.store.select(UsersSelectors.selectUsersFilter).pipe(map(filter => filter?.role));
 
-  page$ = new BehaviorSubject<number>(ONE);
+  limit = PAGINATION_DEFAULTS.limit;
 
-  total$ = new BehaviorSubject<number>(ZERO);
-
-  limit$ = new BehaviorSubject<number>(PAGINATION_DEFAULTS.limit);
-
-  role$ = new BehaviorSubject<UserRole>(UserRole.USER);
+  constructor(private store: Store) {}
 
   ngOnInit(): void {
-    setTimeout(() => {
-      const allUsersOfThisRole = mockUsers.filter(user => user.role === this.role$.value);
-      const users = allUsersOfThisRole.slice(
-        (this.page$.value - ONE) * this.limit$.value,
-        this.page$.value * this.limit$.value,
-      );
-      this.users$.next(users);
-      this.isLoading$.next(false);
-      this.page$.next(ONE);
-      this.total$.next(allUsersOfThisRole.length);
-    }, THOUSAND);
+    this.store
+      .select(UsersSelectors.isUsersLoadingSuccess)
+      .pipe(first())
+      .subscribe(loaded => !loaded && this.store.dispatch(UsersActions.loadUsers()));
   }
 
   onPageChange(page: number): void {
-    this.isLoading$.next(true);
-    setTimeout(() => {
-      const allUsersOfThisRole = mockUsers.filter(user => user.role === this.role$.value);
-      const users = allUsersOfThisRole.slice((page - ONE) * this.limit$.value, page * this.limit$.value);
-      this.page$.next(page);
-      this.users$.next(users);
-      this.isLoading$.next(false);
-    }, THOUSAND);
+    this.store.dispatch(UsersActions.loadUsersPage({ index: page - 1 }));
   }
 
-  onRoleChange(role: UserRole): void {
-    this.isLoading$.next(true);
-    this.role$.next(role);
-    setTimeout(() => {
-      this.page$.next(ONE);
-      const allUsersOfThisRole = mockUsers.filter(user => user.role === this.role$.value);
-      const users = allUsersOfThisRole.slice(
-        (this.page$.value - ONE) * this.limit$.value,
-        this.page$.value * this.limit$.value,
-      );
-      this.users$.next(users);
-      this.total$.next(allUsersOfThisRole.length);
-      this.isLoading$.next(false);
-    }, THOUSAND);
+  onRoleChange(role?: UserRole): void {
+    this.store.dispatch(UsersActions.filterUsers({ filters: { role }, patch: true }));
   }
 }

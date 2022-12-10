@@ -23,6 +23,7 @@ export class FiltersComponent implements OnInit, OnChanges {
   UserRole = UserRole;
 
   roleTitles = [
+    { value: undefined, title: 'All' },
     { value: UserRole.USER, title: 'Users' },
     { value: UserRole.ADMIN, title: 'Admins' },
     { value: UserRole.MODERATOR, title: 'Moderators' },
@@ -30,13 +31,13 @@ export class FiltersComponent implements OnInit, OnChanges {
 
   @Input() isLoading = true;
 
-  @Input() role: UserRole = UserRole.USER;
+  @Input() role?: UserRole;
 
   @Input() total = ZERO;
 
   @Output() roleChange = new EventEmitter<UserRole>();
 
-  tabControl = new FormControl<UserRole>(this.role);
+  tabControl = new FormControl<undefined | UserRole>(this.role);
 
   ngOnInit(): void {
     this.tabControl.valueChanges.pipe(untilDestroyed(this)).subscribe(role => {
@@ -50,7 +51,7 @@ export class FiltersComponent implements OnInit, OnChanges {
     }
   }
 
-  changeRole(role: UserRole): void {
+  changeRole(role?: UserRole): void {
     if (role !== this.role) {
       this.roleChange.emit(role);
     }
