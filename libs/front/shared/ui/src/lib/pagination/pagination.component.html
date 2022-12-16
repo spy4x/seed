@@ -38,10 +38,20 @@
         'border-purple-500 text-purple-600': page === p,
         'border-transparent text-gray-500 hover:border-gray-200 hover:text-gray-700': page !== p
       }"
-      >{{ p }}</a
     >
+      {{ p }}
+    </a>
   </div>
   <div class="-mt-px flex w-0 flex-1 justify-end">
+    <!-- select element for selecting limit -->
+    <!--    <select-->
+    <!--      class="form-select block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"-->
+    <!--      aria-label="Select limit"-->
+    <!--      (change)="limitChange.emit($event.target.value)"-->
+    <!--    >-->
+    <!--      <option *ngFor="let l of limits" [value]="l" [selected]="l === limit">{{ l }}</option>-->
+    <!--    </select>-->
+
     <a
       *ngIf="page < getTotalPages()"
       (click)="nextPage()"

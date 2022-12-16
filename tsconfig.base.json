@@ -30,6 +30,7 @@
       "@seed/front/shared/auth/state": ["libs/front/shared/auth/state/src/index.ts"],
       "@seed/front/shared/auth/ui": ["libs/front/shared/auth/ui/src/index.ts"],
       "@seed/front/shared/router": ["libs/front/shared/router/src/index.ts"],
+      "@seed/front/shared/state": ["libs/front/shared/state/src/index.ts"],
       "@seed/front/shared/styles": ["libs/front/shared/styles/src/index.ts"],
       "@seed/front/shared/types": ["libs/front/shared/types/src/index.ts"],
       "@seed/front/shared/ui": ["libs/front/shared/ui/src/index.ts"],

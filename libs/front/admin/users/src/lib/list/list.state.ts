@@ -1,13 +1,13 @@
-import { addEntitiesPaginationTrait, addFilterEntitiesTrait, addLoadEntitiesTrait } from '@ngrx-traits/common';
 import { createEntityFeatureFactory } from '@ngrx-traits/core';
 import { User, UserRole } from '@prisma/client';
-import { PAGINATION_DEFAULTS, ZERO } from '@seed/shared/constants';
+import { addEntitiesTrait } from '@seed/front/shared/state';
 
 export const usersFeature = createEntityFeatureFactory(
   { entityName: 'user' },
-  addLoadEntitiesTrait<User>(),
-  addEntitiesPaginationTrait<User>({ pageSize: PAGINATION_DEFAULTS.limit, pagesToCache: 1, cacheType: 'partial' }),
-  addFilterEntitiesTrait<User, { role: UserRole }>({ defaultDebounceTime: ZERO }),
+  addEntitiesTrait<User, { role?: UserRole }>({
+    defaultSort: { field: 'createdAt', direction: 'desc' },
+    routeParamsPath: '/users',
+  }),
 )({
   actionsGroupKey: '[Users]',
   featureSelector: 'users',

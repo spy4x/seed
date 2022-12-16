@@ -31,7 +31,7 @@ export const routes: Route[] = [
     RouterModule.forChild(routes),
     SharedUIModule,
     StoreModule.forFeature('users', usersFeature.reducer),
-    EffectsModule.forFeature([UsersEffects, ...usersFeature.effects]),
+    EffectsModule.forFeature([...usersFeature.effects, UsersEffects]),
   ],
   declarations: [ListComponent, DetailComponent, TableComponent, FiltersComponent],
 })

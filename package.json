@@ -77,6 +77,8 @@
     "firebase-admin": "^11.3.0",
     "lodash-es": "^4.17.21",
     "morgan": "^1.10.0",
+    "ngrx-child-selectors": "^12.0.0",
+    "ngrx-handlers": "^12.0.1",
     "prisma": "^4.7.0",
     "prisma-error-enum": "^0.1.3",
     "reflect-metadata": "^0.1.13",

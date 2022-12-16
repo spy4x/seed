@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { AuthSelectors } from '@seed/front/shared/auth/state';
-import { map } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { User } from '@prisma/client';
 import { Store } from '@ngrx/store';
 

@@ -1,10 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
 import { UserRole } from '@prisma/client';
-import { first } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { UsersActions, UsersSelectors } from './list.state';
-import { PAGINATION_DEFAULTS } from '@seed/shared/constants';
-import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'seed-admin-users-list',
@@ -12,27 +9,18 @@ import { map } from 'rxjs/operators';
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ListComponent implements OnInit {
-  page$ = this.store.select(UsersSelectors.selectUsersCurrentPage);
+export class ListComponent {
+  vm$ = this.store.select(UsersSelectors.state);
 
-  role$ = this.store.select(UsersSelectors.selectUsersFilter).pipe(map(filter => filter?.role));
-
-  limit = PAGINATION_DEFAULTS.limit;
+  users$ = this.store.select(UsersSelectors.array);
 
   constructor(private store: Store) {}
 
-  ngOnInit(): void {
-    this.store
-      .select(UsersSelectors.isUsersLoadingSuccess)
-      .pipe(first())
-      .subscribe(loaded => !loaded && this.store.dispatch(UsersActions.loadUsers()));
-  }
-
   onPageChange(page: number): void {
-    this.store.dispatch(UsersActions.loadUsersPage({ index: page - 1 }));
+    this.store.dispatch(UsersActions.setPage({ page }));
   }
 
   onRoleChange(role?: UserRole): void {
-    this.store.dispatch(UsersActions.filterUsers({ filters: { role }, patch: true }));
+    this.store.dispatch(UsersActions.patchFilter({ filter: { role } }));
   }
 }

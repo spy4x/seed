@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { User } from '@prisma/client';
 import { dateFormat, dateTimeFormat } from '@seed/shared/constants';
 
@@ -7,7 +7,7 @@ import { dateFormat, dateTimeFormat } from '@seed/shared/constants';
   templateUrl: './table.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TableComponent implements OnChanges {
+export class TableComponent {
   @Input() users: User[] = [];
 
   @Input() isLoading = true;
@@ -18,11 +18,5 @@ export class TableComponent implements OnChanges {
 
   trackByFn(_index: number, item: User): string {
     return item.id;
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['users']) {
-      console.log('users', this.users);
-    }
   }
 }

@@ -18,6 +18,8 @@ export class PaginationComponent {
 
   @Output() pageChange = new EventEmitter<number>();
 
+  @Output() limitChange = new EventEmitter<number>();
+
   getTotalPages(): number {
     return Math.ceil(this.total / this.limit);
   }

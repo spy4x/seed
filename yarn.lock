@@ -10326,6 +10326,20 @@ netmask@^2.0.2:
   resolved "https://registry.yarnpkg.com/netmask/-/netmask-2.0.2.tgz#8b01a07644065d536383835823bc52004ebac5e7"
   integrity sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==
 
+ngrx-child-selectors@^12.0.0:
+  version "12.0.0"
+  resolved "https://registry.yarnpkg.com/ngrx-child-selectors/-/ngrx-child-selectors-12.0.0.tgz#605fb0a1b0447410e06601a06b340314615416ac"
+  integrity sha512-dAK17LNsAkXqoo9qTx5genZds4KZR19CYmqlQSZcKgO+NSOqIgNtgueh2pI/roiT/+PV8FPda1itWDNnQrxTuw==
+  dependencies:
+    tslib "^2.1.0"
+
+ngrx-handlers@^12.0.1:
+  version "12.0.1"
+  resolved "https://registry.yarnpkg.com/ngrx-handlers/-/ngrx-handlers-12.0.1.tgz#4a1706201776927c84f3337ee166d8465688e6e0"
+  integrity sha512-bKhgEYwMMf55gsOW3MR2QjWUm2OPLCWaGn4DFJgoYqyl7+56UfOIGni24zEg2qoI/quNarA942XG/QQ4umrCpg==
+  dependencies:
+    tslib "^2.1.0"
+
 nice-napi@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/nice-napi/-/nice-napi-1.0.2.tgz#dc0ab5a1eac20ce548802fc5686eaa6bc654927b"
