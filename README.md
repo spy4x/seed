@@ -308,5 +308,16 @@ For more info follow [contributing guidelines](CONTRIBUTING.md).
         />
       </a>
     </td>
+        <td>
+      <a href="https://en.wikipedia.org/wiki/Cat" target="_blank"
+        ><img
+          src="https://en.wikipedia.org/wiki/Cat#/media/File:Sheba1.JPG"
+          width="75"
+          alt="Cats! They hate us but we love them"
+          valign="middle"
+          style="border-radius: 50%"
+        />
+      </a>
+    </td>
   </tr>
 </table>
