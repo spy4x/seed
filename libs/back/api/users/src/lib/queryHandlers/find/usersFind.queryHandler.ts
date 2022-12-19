@@ -13,7 +13,7 @@ export class UsersFindQueryHandler extends ListHandler implements IQueryHandler<
 
   async execute(query: UsersFindQuery): Promise<PaginationResponseDTO<User>> {
     return this.logger.trackSegment(this.execute.name, async logSegment => {
-      const { search } = query;
+      const { search, role } = query;
       const { page, limit } = this.getPaginationData(query);
       const usernameSplit = search?.split(' ');
 
@@ -40,8 +40,15 @@ export class UsersFindQueryHandler extends ListHandler implements IQueryHandler<
 
           return acc;
         }, new Array<Prisma.UserWhereInput>()) || [];
-      const where: { OR: Prisma.UserWhereInput[] } = {
-        OR: [...conditions],
+      const where: Prisma.UserWhereInput = {
+        AND: [
+          {
+            OR: [...conditions],
+          },
+          {
+            role,
+          },
+        ],
       };
 
       logSegment.log('Searching for users with filter:', where);
@@ -61,6 +68,6 @@ export class UsersFindQueryHandler extends ListHandler implements IQueryHandler<
   }
 
   hasCondition = (query: UsersFindQuery): boolean => {
-    return !!query.search;
+    return !!query.search || !!query.role;
   };
 }

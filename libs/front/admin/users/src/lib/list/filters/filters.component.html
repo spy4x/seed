@@ -1,0 +1,44 @@
+<!-- Tabs -->
+<div [ngClass]="{ 'pointer-events-none opacity-50': isLoading }">
+  <!-- Mobile -->
+  <div class="p-4 sm:hidden">
+    <label for="tabs" class="sr-only">Select a tab</label>
+    <select
+      id="tabs"
+      name="tabs"
+      class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
+      [formControl]="tabControl"
+    >
+      <option *ngFor="let r of roleTitles" [ngValue]="r.value">
+        {{ r.title }} {{ !isLoading && r.value === role ? '(' + total + ')' : '' }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Desktop -->
+  <div class="hidden sm:block">
+    <div class="border-b border-gray-200">
+      <nav class="-mb-px flex space-x-8 px-4" aria-label="Tabs">
+        <a
+          *ngFor="let r of roleTitles"
+          (click)="changeRole(r.value)"
+          href="javascript:;"
+          class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium"
+          [ngClass]="{
+            'border-purple-500 text-purple-600': r.value === role,
+            'border-transparent text-gray-500 hover:border-gray-200 hover:text-gray-700': r.value !== role
+          }"
+        >
+          {{ r.title }}
+          <span
+            *ngIf="r.value === role"
+            class="ml-2 inline-flex rounded-full bg-purple-100 py-0.5 px-2.5 text-xs font-medium text-purple-600"
+          >
+            <i *ngIf="isLoading" class="feather-loader animate-spin"></i>
+            <span *ngIf="!isLoading">{{ total }}</span>
+          </span>
+        </a>
+      </nav>
+    </div>
+  </div>
+</div>

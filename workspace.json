@@ -20,6 +20,7 @@
     "front-shared-auth-state": "libs/front/shared/auth/state",
     "front-shared-auth-ui": "libs/front/shared/auth/ui",
     "front-shared-router": "libs/front/shared/router",
+    "front-shared-state": "libs/front/shared/state",
     "front-shared-styles": "libs/front/shared/styles",
     "front-shared-types": "libs/front/shared/types",
     "front-shared-ui": "libs/front/shared/ui",
