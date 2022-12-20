@@ -1,12 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  SimpleChanges,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { User } from '@prisma/client';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { USER_NAME_RULES } from '@seed/shared/constants';
@@ -24,14 +16,19 @@ import { USER_NAME_RULES } from '@seed/shared/constants';
     `,
   ],
 })
-export class ProfileComponent implements OnChanges {
-  ngOnChanges(changes: SimpleChanges): void {
-    console.log(this.user);
-    if (changes['user'].previousValue !== changes['user'].currentValue && this.user !== undefined) {
-      this.form.patchValue(this.user);
+export class ProfileComponent {
+  _user: undefined | User;
+
+  get user(): undefined | User {
+    return this._user;
+  }
+
+  @Input() set user(value: undefined | User) {
+    this._user = value;
+    if (value) {
+      this.form.patchValue(value);
     }
   }
-  @Input() user?: User;
 
   @Output() signOut = new EventEmitter<void>();
 
@@ -51,7 +48,7 @@ export class ProfileComponent implements OnChanges {
     const firstName = this.form.controls.firstName.value || '';
     const lastName = this.form.controls.lastName.value || '';
     const photoURL = this.form.controls.photoURL.value || '';
-    /* eslint-disable-next-line */
+    /* eslint-disable-next-line no-console*/
     console.log(firstName, lastName, photoURL);
     // this.store.dispatch(
     //   AuthUIActions.profileCreate({ user: { firstName, lastName, email, photoURL: this.photoURL$.value } }),
