@@ -40,6 +40,9 @@ describe(ProfileComponent.name, () => {
     const firstNameValue = firstNameInput.nativeElement.value;
     expect(firstNameValue).toEqual(testUser.firstName);
     // TODO: expect an input with e2e attribute = lastName and value = testUser.lastName
+    const lastNameInput = getElementByE2EAttribute('lastName');
+    const lastNameValue = lastNameInput.nativeElement.value;
+    expect(lastNameValue).toEqual(testUser.lastName);
     // TODO: expect an input with e2e attribute = photoURL and value = testUser.photoURL
   });
 
