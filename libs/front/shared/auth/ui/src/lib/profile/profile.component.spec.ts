@@ -5,6 +5,7 @@ import { By } from '@angular/platform-browser';
 import { mockUsers, testPhotoURL } from '@seed/shared/mock-data';
 import { first } from 'rxjs/operators';
 import { SharedUIModule } from '@seed/front/shared/ui';
+import { ReactiveFormsModule } from '@angular/forms';
 
 describe(ProfileComponent.name, () => {
   // region SETUP
@@ -15,7 +16,7 @@ describe(ProfileComponent.name, () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ProfileComponent],
-      imports: [SharedUIModule],
+      imports: [SharedUIModule, ReactiveFormsModule],
     })
       .overrideComponent(ProfileComponent, {
         set: { changeDetection: ChangeDetectionStrategy.Default }, // To make fixture.detectChanges() work
@@ -30,8 +31,12 @@ describe(ProfileComponent.name, () => {
     return fixture.debugElement.query(By.css(`[data-e2e="profile"]`));
   }
 
-  function getDisplayNameEl(): DebugElement {
-    return fixture.debugElement.query(By.css(`[data-e2e="displayName"]`));
+  // function getDisplayNameEl(): DebugElement {
+  //   return fixture.debugElement.query(By.css(`[data-e2e="displayName"]`));
+  // }
+
+  function getElementByE2EAttribute(e2eValue: string): DebugElement {
+    return fixture.debugElement.query(By.css(`[data-e2e="${e2eValue}"]`));
   }
 
   // function getIdentificationEl(): DebugElement {
@@ -60,10 +65,16 @@ describe(ProfileComponent.name, () => {
       fixture.detectChanges();
     });
 
-    it(`shows firstName or lastName if they are set`, () => {
+    it.only(`shows firstName, lastName and photoURL as inputs`, () => {
       component.user = testUser;
       fixture.detectChanges();
-      expect(getDisplayNameEl().nativeElement.textContent).toContain(`${testUser.firstName} ${testUser.lastName}`);
+      // expect an input with e2e attribute = firstName and value = testUser.firstName
+      const firstNameInput = getElementByE2EAttribute('firstName');
+      const firstNameValue = firstNameInput.nativeElement.value;
+      expect(firstNameValue).toEqual(testUser.firstName);
+      // expect an input with e2e attribute = lastName and value = testUser.lastName
+      // expect an input with e2e attribute = photoURL and value = testUser.photoURL
+      // expect(getDisplayNameEl().nativeElement.textContent).toContain(`${testUser.firstName} ${testUser.lastName}`);
     });
 
     it.todo(`shows email`);
