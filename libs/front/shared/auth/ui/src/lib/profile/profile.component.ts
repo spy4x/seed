@@ -44,7 +44,7 @@ export class ProfileComponent {
   });
   /* eslint-enable @typescript-eslint/unbound-method */
 
-  createProfile(): void {
+  updateProfile(): void {
     if (!this.form.valid) {
       this.form.markAllAsTouched();
       return;

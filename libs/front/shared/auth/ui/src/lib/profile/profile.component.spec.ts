@@ -55,4 +55,24 @@ describe(ProfileComponent.name, () => {
     component.signOut.pipe(first()).subscribe(() => done());
     getElementByE2EAttribute('signOut').nativeElement.click();
   });
+
+  it(`should not emit "update" event on SubmitButton click, if form is invalid`, done => {
+    component.user = { ...testUser, firstName: '', lastName: 'def', photoURL: 'ghi' };
+    component.update.pipe(first()).subscribe(() => {
+      done.fail(new Error(`“update” output should not emit a value if form is invalid`));
+    });
+    getElementByE2EAttribute('update').nativeElement.click();
+    setTimeout(() => done(), 100);
+  });
+
+  it(`emits "update" event on SubmitButton click, if form is valid`, done => {
+    component.user = { ...testUser, firstName: 'abc', lastName: 'def', photoURL: 'ghi' };
+    component.update.pipe(first()).subscribe(user => {
+      expect(user.firstName).toEqual('abc');
+      expect(user.lastName).toEqual('def');
+      expect(user.photoURL).toEqual('ghi');
+      done();
+    });
+    getElementByE2EAttribute('update').nativeElement.click();
+  });
 });
