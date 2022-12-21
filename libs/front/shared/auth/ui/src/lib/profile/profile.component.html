@@ -1,21 +1,39 @@
-<div *ngIf="user" data-e2e="profile" class="flex justify-center gap-2">
-  <img
-    data-e2e="photoURL"
-    alt="Your photo"
-    [src]="user.photoURL || 'assets/placeholders/avatar.svg'"
-    class="h-14 w-auto rounded-full border border-gray-300"
-  />
-  <div class="flex flex-col items-center justify-center">
-    <div *ngIf="user.firstName || user.lastName" data-e2e="displayName" class="font-semibold text-gray-900">
-      {{ user.firstName + ' ' + user.lastName }}
+<div *ngIf="user" class="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+  <form [formGroup]="form" class="flex w-full max-w-xs flex-col gap-10">
+    <!-- region Header / Photo and Title -->
+    <div class="flex flex-col gap-4">
+      <img
+        class="mx-auto h-14 w-14 rounded-full border border-gray-300"
+        [src]="user.photoURL || 'assets/placeholders/avatar.svg'"
+        alt="Your photo"
+      />
+      <h2 class="text-center text-3xl font-bold text-gray-900">Edit your account</h2>
+      <seed-button e2e="signOut" (click)="signOut.emit()">
+        Sign out
+        <i class="feather-log-out"></i>
+      </seed-button>
     </div>
-    <!-- TODO: Add field User.email & display here -->
-    <!--    <div *ngIf="user.email" data-e2e="identification" class="text-sm text-slate-500">-->
-    <!--      {{ user.email }}-->
-    <!--    </div>-->
+    <!-- endregion -->
 
-    <div class="flex justify-center">
-      <seed-button e2e="signOut" (click)="signOut.emit()" color="link">Sign out</seed-button>
+    <!-- region Body / Form inputs -->
+    <div>
+      <seed-input label="First name" e2e="firstName" formControlName="firstName" autocomplete="given-name"></seed-input>
+      <seed-input label="Last name" e2e="lastName" formControlName="lastName" autocomplete="family-name"></seed-input>
+      <seed-input label="Photo" e2e="photoURL" formControlName="photoURL"></seed-input>
     </div>
-  </div>
+    <!-- endregion -->
+
+    <!-- region Footer / Submit button and Sign out -->
+    <div class="flex justify-between">
+      <span class="flex items-center gap-1 text-sm text-gray-400">
+        <i class="feather feather-arrow-left"></i>
+        <a data-e2e="signOut" href="javascript:;" (click)="signOut.emit()">Sign out</a>
+      </span>
+      <seed-button bType="submit" e2e="update" (click)="updateProfile()">
+        Submit
+        <i class="feather feather-arrow-right"></i>
+      </seed-button>
+    </div>
+    <!-- endregion -->
+  </form>
 </div>

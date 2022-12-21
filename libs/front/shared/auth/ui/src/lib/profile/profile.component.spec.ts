@@ -2,9 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileComponent } from './profile.component';
 import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { mockUsers, testPhotoURL } from '@seed/shared/mock-data';
+import { mockUsers } from '@seed/shared/mock-data';
 import { first } from 'rxjs/operators';
 import { SharedUIModule } from '@seed/front/shared/ui';
+import { ReactiveFormsModule } from '@angular/forms';
 
 describe(ProfileComponent.name, () => {
   // region SETUP
@@ -15,7 +16,7 @@ describe(ProfileComponent.name, () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [ProfileComponent],
-      imports: [SharedUIModule],
+      imports: [SharedUIModule, ReactiveFormsModule],
     })
       .overrideComponent(ProfileComponent, {
         set: { changeDetection: ChangeDetectionStrategy.Default }, // To make fixture.detectChanges() work
@@ -23,63 +24,55 @@ describe(ProfileComponent.name, () => {
       .compileComponents();
     fixture = TestBed.createComponent(ProfileComponent);
     component = fixture.componentInstance;
+    component.user = testUser;
     fixture.detectChanges();
   });
 
-  function getWrapperEl(): DebugElement {
-    return fixture.debugElement.query(By.css(`[data-e2e="profile"]`));
-  }
-
-  function getDisplayNameEl(): DebugElement {
-    return fixture.debugElement.query(By.css(`[data-e2e="displayName"]`));
-  }
-
-  // function getIdentificationEl(): DebugElement {
-  //   return fixture.debugElement.query(By.css(`[data-e2e="identification"]`));
-  // }
-
-  function getPhotoURLEl(): DebugElement {
-    return fixture.debugElement.query(By.css(`img[data-e2e="photoURL"]`));
-  }
-
-  function getSignOutButton(): DebugElement {
-    return fixture.debugElement.query(By.css(`[data-e2e="signOut"]`));
+  function getElementByE2EAttribute(e2eValue: string): DebugElement {
+    return fixture.debugElement.query(By.css(`[data-e2e="${e2eValue}"]`));
   }
 
   // endregion
 
-  it(`hides everything when no user`, () => {
-    component.user = undefined;
-    fixture.detectChanges();
-    expect(getWrapperEl()).toBeFalsy();
+  it(`shows firstName, lastName and photoURL as inputs`, () => {
+    // expect an input with e2e attribute = firstName and value = testUser.firstName
+    const firstNameInput = getElementByE2EAttribute('firstName');
+    const firstNameValue = firstNameInput.nativeElement.value;
+    expect(firstNameValue).toEqual(testUser.firstName);
+    // TODO: expect an input with e2e attribute = lastName and value = testUser.lastName
+    const lastNameInput = getElementByE2EAttribute('lastName');
+    const lastNameValue = lastNameInput.nativeElement.value;
+    expect(lastNameValue).toEqual(testUser.lastName);
+    // TODO: expect an input with e2e attribute = photoURL and value = testUser.photoURL
+    const photoURLInput = getElementByE2EAttribute('photoURL');
+    const photoURLValue = photoURLInput.nativeElement.value;
+    expect(photoURLValue).toEqual(testUser.photoURL);
   });
 
-  describe('User provided', () => {
-    beforeEach(() => {
-      component.user = testUser;
-      fixture.detectChanges();
-    });
+  it.todo(`shows email`);
 
-    it(`shows firstName or lastName if they are set`, () => {
-      component.user = testUser;
-      fixture.detectChanges();
-      expect(getDisplayNameEl().nativeElement.textContent).toContain(`${testUser.firstName} ${testUser.lastName}`);
-    });
+  it(`emits "signOut" event on SignOutButton click`, done => {
+    component.signOut.pipe(first()).subscribe(() => done());
+    getElementByE2EAttribute('signOut').nativeElement.click();
+  });
 
-    it.todo(`shows email`);
-
-    it(`shows photoURL image or a placeholder`, () => {
-      component.user = { ...testUser, photoURL: testPhotoURL };
-      fixture.detectChanges();
-      expect(getPhotoURLEl().nativeElement.src).toBe(testPhotoURL);
-      component.user = { ...testUser, photoURL: '' };
-      fixture.detectChanges();
-      expect(getPhotoURLEl().nativeElement.src).toContain('assets/placeholders/avatar.svg');
+  it(`should not emit "update" event on SubmitButton click, if form is invalid`, done => {
+    component.user = { ...testUser, firstName: '', lastName: 'def', photoURL: 'ghi' };
+    component.update.pipe(first()).subscribe(() => {
+      done.fail(new Error(`“update” output should not emit a value if form is invalid`));
     });
+    getElementByE2EAttribute('update').nativeElement.click();
+    setTimeout(() => done(), 100);
+  });
 
-    it(`emits "signOut" event on SignOutButton click`, done => {
-      component.signOut.pipe(first()).subscribe(() => done());
-      getSignOutButton().nativeElement.click();
+  it(`emits "update" event on SubmitButton click, if form is valid`, done => {
+    component.user = { ...testUser, firstName: 'abc', lastName: 'def', photoURL: 'ghi' };
+    component.update.pipe(first()).subscribe(user => {
+      expect(user.firstName).toEqual('abc');
+      expect(user.lastName).toEqual('def');
+      expect(user.photoURL).toEqual('ghi');
+      done();
     });
+    getElementByE2EAttribute('update').nativeElement.click();
   });
 });
