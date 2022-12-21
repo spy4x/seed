@@ -8,7 +8,7 @@ RUN yarn --production --no-lockfile --non-interactive
 
 COPY prisma/* ./prisma/
 
-RUN yarn prisma generate
+RUN npx prisma generate
 
 COPY dist/apps/back/api/* ./
 

@@ -1,0 +1,52 @@
+<div *ngIf="!isLoading && !users.length" class="flex h-full w-full items-center justify-center">
+  <div class="rounded-md p-6 text-center text-gray-400 shadow-md">
+    <i class="feather-users mx-auto text-3xl"></i>
+    <h3 class="mt-2 font-medium">No users yet.</h3>
+  </div>
+</div>
+
+<ul role="list" class="divide-y divide-gray-200">
+  <li *ngFor="let user of users; trackBy: trackByFn" class="odd:bg-gray-100">
+    <a [routerLink]="'/users/' + user.id" class="block hover:bg-gray-50">
+      <div class="flex items-center px-4 py-4 sm:px-6">
+        <div class="flex min-w-0 flex-1 items-center text-sm">
+          <div class="flex-shrink-0">
+            <img
+              class="h-12 w-12 rounded-full border border-gray-300"
+              [src]="user.photoURL || 'assets/placeholders/avatar.svg'"
+              [alt]="user.firstName + ' ' + user.lastName"
+            />
+          </div>
+          <div class="min-w-0 flex-1 px-4 md:grid md:grid-cols-2 md:gap-4">
+            <div>
+              <p class="truncate font-medium text-indigo-600">{{ user.firstName + ' ' + user.lastName }}</p>
+              <p class="mt-2 text-gray-500">
+                <span class="truncate">ricardo.cooper@example.com</span>
+                <!-- TODO: <span class="truncate">{{user.email}}</span> -->
+              </p>
+            </div>
+            <div class="hidden text-center md:block">
+              <p
+                class="truncate text-gray-600"
+                [attr.title]="'Signed in on ' + (user.lastTimeSignedIn | date : dateTimeFormat)"
+              >
+                <i class="feather-log-in mr-1"></i>
+                <time [attr.datetime]="user.lastTimeSignedIn">{{ user.lastTimeSignedIn | date : dateFormat }}</time>
+              </p>
+              <p
+                class="mt-2 truncate text-gray-500"
+                [attr.title]="'Signed up on ' + (user.createdAt | date : dateTimeFormat)"
+              >
+                <i class="feather-user-plus mr-1"></i>
+                <time [attr.datetime]="user.createdAt">{{ user.createdAt | date : dateFormat }}</time>
+              </p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <i class="feather-chevron-right"></i>
+        </div>
+      </div>
+    </a>
+  </li>
+</ul>

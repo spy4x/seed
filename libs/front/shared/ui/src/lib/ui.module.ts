@@ -5,10 +5,27 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ButtonComponent } from './button/button.component';
 import { SeparatorComponent } from './separator/separator.component';
 import { AlertComponent } from './alert/alert.component';
+import { PaginationComponent } from './pagination/pagination.component';
+import { LoadingComponent } from './loading/loading.component';
 
 @NgModule({
   imports: [CommonModule, ReactiveFormsModule],
-  declarations: [InputComponent, ButtonComponent, SeparatorComponent, AlertComponent],
-  exports: [InputComponent, ButtonComponent, SeparatorComponent, AlertComponent],
+  declarations: [
+    InputComponent,
+    ButtonComponent,
+    SeparatorComponent,
+    AlertComponent,
+    PaginationComponent,
+    LoadingComponent,
+  ],
+  exports: [
+    ReactiveFormsModule,
+    InputComponent,
+    ButtonComponent,
+    SeparatorComponent,
+    AlertComponent,
+    PaginationComponent,
+    LoadingComponent,
+  ],
 })
 export class SharedUIModule {}

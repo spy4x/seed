@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AuthSelectors, AuthUIActions } from '@seed/front/shared/auth/state';
-import { map } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { User } from '@prisma/client';
 
 @Component({

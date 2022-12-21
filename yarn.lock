@@ -332,6 +332,13 @@
   dependencies:
     tslib "^2.3.0"
 
+"@angular/router@^14.0.0":
+  version "14.2.12"
+  resolved "https://registry.yarnpkg.com/@angular/router/-/router-14.2.12.tgz#f5b2c9ced3337e4a7af1905b861b114ac80a8482"
+  integrity sha512-r5tVus5RJDNc4U2v0jMtjPiAS1xDsVsJ70lS313DgZmBDHIVZP1cWIehdxwgNlGwQQtAA36eG7toBwqUU3gb/A==
+  dependencies:
+    tslib "^2.3.0"
+
 "@apidevtools/json-schema-ref-parser@^9.0.3":
   version "9.0.9"
   resolved "https://registry.yarnpkg.com/@apidevtools/json-schema-ref-parser/-/json-schema-ref-parser-9.0.9.tgz#d720f9256e3609621280584f2b47ae165359268b"
@@ -2766,6 +2773,29 @@
   integrity sha512-Lj6UXmBJKcXB16bZzu0IG7GpH7hl5Cn71OcPSrVVuPrFd5kDYqFbodfE9OkAKaHjEhOvZ2ynoo/i6cyfX4yOvQ==
   dependencies:
     tslib "2.4.1"
+
+"@ngneat/until-destroy@^9.2.2":
+  version "9.2.2"
+  resolved "https://registry.yarnpkg.com/@ngneat/until-destroy/-/until-destroy-9.2.2.tgz#ac6f954610fc7ea5d4a094ed4de9db59513b810f"
+  integrity sha512-pD5idTgUdF0XZMuaV1n0BZTnE2BvxymutoXhwfZbO3uxjh63wS6Pzzzwv+pkXalKhuSwdf6uA1gRx7DOvlj/Kw==
+  dependencies:
+    tslib "^2.3.0"
+
+"@ngrx-traits/common@^14.2.0-beta.1":
+  version "14.2.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@ngrx-traits/common/-/common-14.2.0-beta.1.tgz#0967d44318d179aca1b7da8cc9feebc12fc056c7"
+  integrity sha512-cbYbDSH/Lka2MMjGnUQQ+XMRtE3XlJzGUy1f++7IUx6H1Xrr7b42DX7f3PZ7AC0fGnMBJ3fEV5UZiUNEOh77ug==
+  dependencies:
+    tslib "^2.3.0"
+  optionalDependencies:
+    "@angular/router" "^14.0.0"
+
+"@ngrx-traits/core@^14.2.0-beta.1":
+  version "14.2.0-beta.1"
+  resolved "https://registry.yarnpkg.com/@ngrx-traits/core/-/core-14.2.0-beta.1.tgz#2aa3432226d6199c7b2815db4d100f76b223139f"
+  integrity sha512-s4S6NS3V3I1ewzzQSOnrmQAroB8a08m9sEtGYVIYiKw1CMQdz9EoTxlILRrlpNgmL/98/2V3CO2xJAax0fZz4w==
+  dependencies:
+    tslib "^2.3.0"
 
 "@ngrx/effects@^15.0.0":
   version "15.0.0"
@@ -10295,6 +10325,20 @@ netmask@^2.0.2:
   version "2.0.2"
   resolved "https://registry.yarnpkg.com/netmask/-/netmask-2.0.2.tgz#8b01a07644065d536383835823bc52004ebac5e7"
   integrity sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==
+
+ngrx-child-selectors@^12.0.0:
+  version "12.0.0"
+  resolved "https://registry.yarnpkg.com/ngrx-child-selectors/-/ngrx-child-selectors-12.0.0.tgz#605fb0a1b0447410e06601a06b340314615416ac"
+  integrity sha512-dAK17LNsAkXqoo9qTx5genZds4KZR19CYmqlQSZcKgO+NSOqIgNtgueh2pI/roiT/+PV8FPda1itWDNnQrxTuw==
+  dependencies:
+    tslib "^2.1.0"
+
+ngrx-handlers@^12.0.1:
+  version "12.0.1"
+  resolved "https://registry.yarnpkg.com/ngrx-handlers/-/ngrx-handlers-12.0.1.tgz#4a1706201776927c84f3337ee166d8465688e6e0"
+  integrity sha512-bKhgEYwMMf55gsOW3MR2QjWUm2OPLCWaGn4DFJgoYqyl7+56UfOIGni24zEg2qoI/quNarA942XG/QQ4umrCpg==
+  dependencies:
+    tslib "^2.1.0"
 
 nice-napi@^1.0.2:
   version "1.0.2"
