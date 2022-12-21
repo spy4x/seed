@@ -44,6 +44,9 @@ describe(ProfileComponent.name, () => {
     const lastNameValue = lastNameInput.nativeElement.value;
     expect(lastNameValue).toEqual(testUser.lastName);
     // TODO: expect an input with e2e attribute = photoURL and value = testUser.photoURL
+    const photoURLInput = getElementByE2EAttribute('photoURL');
+    const photoURLValue = photoURLInput.nativeElement.value;
+    expect(photoURLValue).toEqual(testUser.photoURL);
   });
 
   it.todo(`shows email`);

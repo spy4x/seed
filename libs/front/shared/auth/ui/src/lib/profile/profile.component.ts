@@ -30,7 +30,11 @@ export class ProfileComponent {
     }
   }
 
+  @Input() isSaving = false;
+
   @Output() signOut = new EventEmitter<void>();
+
+  @Output() update = new EventEmitter<Partial<User>>();
 
   /* eslint-disable @typescript-eslint/unbound-method */
   form = new FormGroup({
@@ -48,10 +52,6 @@ export class ProfileComponent {
     const firstName = this.form.controls.firstName.value || '';
     const lastName = this.form.controls.lastName.value || '';
     const photoURL = this.form.controls.photoURL.value || '';
-    /* eslint-disable-next-line no-console*/
-    console.log(firstName, lastName, photoURL);
-    // this.store.dispatch(
-    //   AuthUIActions.profileCreate({ user: { firstName, lastName, email, photoURL: this.photoURL$.value } }),
-    // );
+    this.update.emit({ firstName, lastName, photoURL });
   }
 }
