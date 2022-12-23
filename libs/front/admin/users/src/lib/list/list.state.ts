@@ -1,12 +1,16 @@
 import { createEntityFeatureFactory } from '@ngrx-traits/core';
 import { User, UserRole } from '@prisma/client';
-import { addEntitiesTrait } from '@seed/front/shared/state';
+import { addEntitiesTrait, DefaultFilterSerializer } from '@seed/front/shared/state';
 
 export const usersFeature = createEntityFeatureFactory(
   { entityName: 'user' },
   addEntitiesTrait<User, { role?: UserRole }>({
     defaultSort: { field: 'createdAt', direction: 'desc' },
-    routeParamsPath: '/users',
+    routeParams: {
+      path: '/users',
+      filterDeserializer: ({ role }) => ({ role: role as UserRole }),
+      filterSerializer: DefaultFilterSerializer,
+    },
   }),
 )({
   actionsGroupKey: '[Users]',

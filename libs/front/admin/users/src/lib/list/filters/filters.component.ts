@@ -45,9 +45,12 @@ export class FiltersComponent implements OnInit, OnChanges {
     });
   }
 
-  ngOnChanges({ role }: SimpleChanges): void {
-    if (role.currentValue !== role.previousValue) {
-      this.tabControl.setValue(this.role);
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('role' in changes) {
+      const { role } = changes;
+      if (role.currentValue !== role.previousValue) {
+        this.tabControl.setValue(this.role);
+      }
     }
   }
 

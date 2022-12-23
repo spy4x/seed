@@ -1,6 +1,7 @@
 import { TraitEffect, Type } from '@ngrx-traits/core';
 import {
   EntitiesActions,
+  EntitiesFilter,
   EntitiesSelectors,
   EntitiesState,
   EntitiesTraitKeyedConfig,
@@ -16,7 +17,7 @@ import { Store } from '@ngrx/store';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
 /* eslint-disable-next-line max-lines-per-function */
-export function createEntitiesTraitEffects<T, TFilter>(
+export function createEntitiesTraitEffects<T, TFilter extends EntitiesFilter>(
   allActions: EntitiesActions<T, TFilter>,
   allConfigs: EntitiesTraitKeyedConfig<T, TFilter>,
   allSelectors: EntitiesSelectors<T, TFilter>,
@@ -44,14 +45,14 @@ export function createEntitiesTraitEffects<T, TFilter>(
     );
 
     routeParams$ =
-      !!allConfigs.entities?.routeParamsPath &&
+      !!allConfigs.entities?.routeParams &&
       createEffect(() =>
         this.actions$.pipe(
           ofType(routerNavigatedAction),
           filter(action => {
             // console.log({ path: allConfigs.entities!.routeParamsPath!, url: action.payload.routerState.url });
             /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-            return action.payload.routerState.url.startsWith(allConfigs.entities!.routeParamsPath!);
+            return action.payload.routerState.url.startsWith(allConfigs.entities!.routeParams!.path);
           }),
           concatLatestFrom(() => [this.store.select(RouterSelectors.getState), this.store.select(allSelectors.state)]),
           filter(([, routerState, state]) => {
@@ -88,12 +89,15 @@ export function createEntitiesTraitEffects<T, TFilter>(
 
     getParamsFromURL(routerState: RouterState, state: EntitiesState<T, TFilter>): SetParamsArgs<T, TFilter> {
       const params: SetParamsArgs<T, TFilter> = {};
+
       if (routerState.queryParams['page'] && +routerState.queryParams['page']) {
         params.page = +routerState.queryParams['page'];
       }
+
       if (routerState.queryParams['limit'] && +routerState.queryParams['limit']) {
         params.limit = +routerState.queryParams['limit'];
       }
+
       const paramSortField = routerState.queryParams['sortField'] as string | undefined;
       const paramSortDirection = routerState.queryParams['sortDirection'] as string | undefined;
       if (paramSortField) {
@@ -110,18 +114,23 @@ export function createEntitiesTraitEffects<T, TFilter>(
           direction: state.sort.direction,
         };
       }
-      // TODO: parse filter
-      // console.log({ ...params });
+
+      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+      const { filterDeserializer } = allConfigs.entities!.routeParams!;
+      params.filter = filterDeserializer(routerState.queryParams);
+
       return params;
     }
 
     getQueryParamsFromState(state: EntitiesState<T, TFilter>): Params {
+      /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+      const { filterSerializer } = allConfigs.entities!.routeParams!;
       return {
         page: state.page,
         limit: state.limit,
         sortField: state.sort?.field,
         sortDirection: state.sort?.direction,
-        // TODO: parse filter
+        ...filterSerializer(state.filter),
       };
     }
 

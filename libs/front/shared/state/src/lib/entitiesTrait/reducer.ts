@@ -1,9 +1,9 @@
-import { EntitiesActions, EntitiesState, EntitiesTraitKeyedConfig } from './model';
+import { EntitiesActions, EntitiesFilter, EntitiesState, EntitiesTraitKeyedConfig } from './model';
 import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { PAGINATION_DEFAULTS } from '@seed/shared/constants';
 
 /* eslint-disable-next-line max-lines-per-function */
-export function createEntitiesTraitReducer<T, TFilter>(
+export function createEntitiesTraitReducer<T, TFilter extends EntitiesFilter>(
   initialState: EntitiesState<T, TFilter>,
   actions: EntitiesActions<T, TFilter>,
   allConfigs: EntitiesTraitKeyedConfig<T, TFilter>,

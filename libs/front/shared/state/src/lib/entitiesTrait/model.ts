@@ -1,8 +1,7 @@
 import { Comparer, Dictionary, EntityAdapter, EntityState, IdSelector } from '@ngrx/entity';
 import { KeyedConfig, TraitActions, TraitSelectors } from '@ngrx-traits/core';
 import { ActionCreator, TypedAction } from '@ngrx/store/src/models';
-import { Observable } from 'rxjs';
-import { State } from '@ngrx/store';
+import { Params } from '@angular/router';
 
 export const entitiesTraitKey = 'entities';
 
@@ -11,17 +10,26 @@ export interface LoadSuccess<T> {
   total: number;
 }
 
-export type EntitiesLoadHandler<T> = (state: State<unknown>) => Observable<EntitiesError | LoadSuccess<T>>;
+/* eslint-disable-next-line @typescript-eslint/no-empty-interface */
+export interface EntitiesFilter {}
+
+export const DefaultFilterSerializer = <TFilter>(filter: TFilter): Params => {
+  return { ...filter } as Params;
+};
 
 export interface EntitiesTraitConfig<T, TFilter> {
   limit?: number;
   defaultFilter?: TFilter;
   defaultSort?: Sort<T>;
   /**
-   * Path to watch for changes.
-   * Example: "/users" - will watch for filter, sort, page changes in the url, like "/users?page=2&limit=25&sortField=firstName&sortDirection=desc&role=ADMIN"
+   * URL params to watch for changes.
+   * Example: {path:"/users", filterDeserializer: ({role}) => ({ role: role as UserRole }), filterSerializer: DefaultFilterSerializer} - will watch for filter, sort, page changes in the url, like "/users?page=2&limit=25&sortField=firstName&sortDirection=desc&role=ADMIN"
    */
-  routeParamsPath?: string;
+  routeParams?: {
+    path: string;
+    filterDeserializer: (params: Params) => TFilter;
+    filterSerializer: (filter: TFilter) => Params;
+  };
   /**
    * Function that returns the id of an entity if not set it attempts to return the values
    * of a property call id, this is pass to @ngrx/entity EntityAdapter
@@ -55,6 +63,7 @@ export interface EntitiesStateExtra<T, TFilter> {
 }
 
 export interface EntitiesState<T, TFilter> extends EntityState<T>, EntitiesStateExtra<T, TFilter> {}
+
 export interface EntitiesError {
   message: string;
   code?: string;
@@ -133,14 +142,14 @@ export interface EntitiesSelectors<T, TFilter> extends TraitSelectors<EntitiesSt
   isLoadingFail: (state: EntitiesState<T, TFilter>) => boolean;
 }
 
-export interface SetParamsArgs<T, TFilter> {
+export interface SetParamsArgs<T, TFilter extends EntitiesFilter> {
   page?: number;
   limit?: number;
   filter?: TFilter;
   sort?: null | Sort<T>;
 }
 
-export interface EntitiesActions<T, TFilter> extends TraitActions {
+export interface EntitiesActions<T, TFilter extends EntitiesFilter> extends TraitActions {
   setPage: ActionCreator<string, (props: { page: number }) => { page: number } & TypedAction<string>>;
   patchFilter: ActionCreator<
     string,
