@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { UserRole } from '@prisma/client';
 import { Store } from '@ngrx/store';
 import { UsersActions, UsersSelectors } from './list.state';
@@ -6,7 +6,6 @@ import { UsersActions, UsersSelectors } from './list.state';
 @Component({
   selector: 'seed-admin-users-list',
   templateUrl: './list.component.html',
-  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ListComponent {

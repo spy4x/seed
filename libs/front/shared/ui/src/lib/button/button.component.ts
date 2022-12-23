@@ -1,4 +1,4 @@
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'seed-button',
@@ -7,7 +7,6 @@ import { Component, Input, ViewEncapsulation } from '@angular/core';
       <ng-content></ng-content>
     </button>
   `,
-  encapsulation: ViewEncapsulation.None,
 })
 export class ButtonComponent {
   @Input() text = '';

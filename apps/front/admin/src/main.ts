@@ -1,4 +1,4 @@
-import { enableProdMode, ViewEncapsulation } from '@angular/core';
+import { enableProdMode } from '@angular/core';
 import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
 import { AppModule } from './app/app.module';
 import { config } from './environments/environment';
@@ -9,8 +9,6 @@ if (config.environment === Environment.production) {
 }
 
 platformBrowserDynamic()
-  .bootstrapModule(AppModule, {
-    defaultEncapsulation: ViewEncapsulation.None,
-  })
+  .bootstrapModule(AppModule)
   // eslint-disable-next-line no-console
   .catch(err => console.error(err));

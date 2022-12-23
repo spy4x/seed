@@ -1,4 +1,4 @@
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'seed-separator',
@@ -12,7 +12,6 @@ import { Component, Input, ViewEncapsulation } from '@angular/core';
       </div>
     </div>
   `,
-  encapsulation: ViewEncapsulation.None,
 })
 export class SeparatorComponent {
   @Input() text = 'Or';

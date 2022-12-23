@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { AuthSelectors } from '@seed/front/shared/auth/state';
 import { map } from 'rxjs/operators';
 import { User } from '@prisma/client';
@@ -13,7 +13,6 @@ interface Link {
 @Component({
   selector: 'seed-admin-core-protected',
   templateUrl: `protected.component.html`,
-  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProtectedComponent {

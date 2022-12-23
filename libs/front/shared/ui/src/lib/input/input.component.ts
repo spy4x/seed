@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NgControl, Validators } from '@angular/forms';
 import { ZERO } from '@seed/shared/constants';
 
@@ -19,7 +19,6 @@ interface LengthValidationError {
       }
     `,
   ],
-  encapsulation: ViewEncapsulation.None,
 })
 export class InputComponent implements OnInit, ControlValueAccessor {
   @Input() id = '';

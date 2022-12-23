@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AuthProvider, AuthStage } from '@seed/front/shared/types';
 import { AuthSelectors, AuthUIActions } from '@seed/front/shared/auth/state';
@@ -6,7 +6,6 @@ import { AuthSelectors, AuthUIActions } from '@seed/front/shared/auth/state';
 @Component({
   selector: 'shared-auth-container-sign-in',
   templateUrl: './sign-in.container.html',
-  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignInContainerComponent {
