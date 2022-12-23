@@ -1,34 +1,23 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { User } from '@prisma/client';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { USER_NAME_RULES } from '@seed/shared/constants';
 
 @Component({
-  selector: 'shared-auth-ui-profile',
+  selector: 'shared-auth-ui-profile[user]',
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styles: [
-    `
-      :host {
-        display: block;
-        width: 100%;
-      }
-    `,
-  ],
 })
-export class ProfileComponent {
-  _user: undefined | User;
-
-  get user(): undefined | User {
-    return this._user;
-  }
-
-  @Input() set user(value: undefined | User) {
-    this._user = value;
-    if (value) {
-      this.form.patchValue(value);
-    }
-  }
+export class ProfileComponent implements OnChanges {
+  @Input() user!: User;
 
   @Input() isSaving = false;
 
@@ -43,6 +32,12 @@ export class ProfileComponent {
     photoURL: new FormControl<string>('', []),
   });
   /* eslint-enable @typescript-eslint/unbound-method */
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('user' in changes && changes['user'].currentValue !== changes['user'].previousValue) {
+      this.form.patchValue(this.user);
+    }
+  }
 
   updateProfile(): void {
     if (!this.form.valid) {
