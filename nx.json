@@ -36,16 +36,22 @@
       "style": "sass",
       "linter": "eslint",
       "unitTestRunner": "jest",
-      "e2eTestRunner": "cypress"
+      "e2eTestRunner": "cypress",
+      "standalone": true
     },
     "@nrwl/angular:library": {
       "linter": "eslint",
-      "unitTestRunner": "jest"
+      "unitTestRunner": "jest",
+      "style": "sass",
+      "inlineStyle": true,
+      "changeDetection": "OnPush",
+      "standalone": true
     },
     "@nrwl/angular:component": {
       "style": "sass",
       "inlineStyle": true,
-      "changeDetection": "OnPush"
+      "changeDetection": "OnPush",
+      "standalone": true
     }
   },
   "defaultProject": "front-web",
