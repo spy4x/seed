@@ -5,8 +5,6 @@ import { of } from 'rxjs';
 import { UsersActions, UsersSelectors } from './list.state';
 import { UserService } from '@seed/front/shared/auth/state';
 import { Store } from '@ngrx/store';
-// import { routerNavigatedAction } from '@ngrx/router-store';
-// import { ONE } from '@seed/shared/constants';
 
 @Injectable()
 export class UsersEffects {
@@ -22,15 +20,6 @@ export class UsersEffects {
       ),
     ),
   );
-  //
-  // routeParams$ = createEffect(() =>
-  //   this.actions$.pipe(
-  //     ofType(routerNavigatedAction),
-  //     filter(action => action.payload.routerState.url.startsWith('/users')),
-  //     take(ONE),
-  //     map(() => UsersActions.load()),
-  //   ),
-  // );
 
   constructor(
     private readonly actions$: Actions,

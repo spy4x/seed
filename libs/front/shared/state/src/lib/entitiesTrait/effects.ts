@@ -53,10 +53,7 @@ export function createEntitiesTraitEffects<T, TFilter>(
             /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
             return action.payload.routerState.url.startsWith(allConfigs.entities!.routeParamsPath!);
           }),
-          concatLatestFrom(() => [
-            this.store.select(RouterSelectors.getRouterState),
-            this.store.select(allSelectors.state),
-          ]),
+          concatLatestFrom(() => [this.store.select(RouterSelectors.getState), this.store.select(allSelectors.state)]),
           filter(([, routerState, state]) => {
             if (!this.wasLoadedEver) {
               this.wasLoadedEver = true;

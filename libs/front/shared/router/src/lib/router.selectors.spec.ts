@@ -17,9 +17,9 @@ describe('Router Selectors', () => {
     };
   }
 
-  describe(RouterSelectors.getRouterState.name, () => {
+  describe(RouterSelectors.getFeatureState.name, () => {
     it('returns RouterState', () => {
-      expect(RouterSelectors.getRouterState(state)).toBe(state[ROUTER_STATE_FEATURE_KEY]);
+      expect(RouterSelectors.getFeatureState(state)).toBe(state[ROUTER_STATE_FEATURE_KEY]);
     });
   });
 
