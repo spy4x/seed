@@ -1,5 +1,5 @@
 <div *ngIf="user$ | async as user" class="flex h-full w-full items-center justify-center">
-  <div class="w-72 rounded-xl bg-white p-8 shadow">
+  <div class="w-72 rounded-xl bg-white shadow">
     <shared-auth-ui-profile [user]="user" (signOut)="signOut()"></shared-auth-ui-profile>
   </div>
 </div>
