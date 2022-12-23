@@ -47,9 +47,9 @@ describe(UsersFindQueryHandler.name, () => {
     pageArg = PAGINATION_DEFAULTS.page,
     limitArg = PAGINATION_DEFAULTS.limit,
     search?: string,
-    role?: UserRole,
+    roleFilter?: UserRole,
   ): UsersFindQuery {
-    return new UsersFindQuery(pageArg, limitArg, search, role);
+    return new UsersFindQuery(pageArg, limitArg, search, roleFilter);
   }
   //endregion
 

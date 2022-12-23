@@ -81,6 +81,7 @@ import { createEntitiesTraitEffects } from './effects';
  * traits.selectors.isLoadingSuccess()
  * traits.selectors.isLoadingFail()
  */
+/* eslint-disable-next-line @typescript-eslint/explicit-function-return-type */
 export function addEntitiesTrait<T, TFilter>(config: EntitiesTraitConfigWithoutAdapter<T, TFilter>) {
   const adapter: EntityAdapter<T> = createEntityAdapter(config);
   const configFull: EntitiesTraitConfig<T, TFilter> = { adapter, ...config };
@@ -93,7 +94,7 @@ export function addEntitiesTrait<T, TFilter>(config: EntitiesTraitConfigWithoutA
     selectors: ({ allConfigs }: TraitSelectorsFactoryConfig) =>
       createEntitiesTraitSelectors<T, TFilter>(allConfigs as EntitiesTraitKeyedConfig<T, TFilter>),
     initialState: ({ previousInitialState, allConfigs }: TraitInitialStateFactoryConfig) =>
-      createEntitiesInitialState<T, TFilter>(previousInitialState, allConfigs),
+      createEntitiesInitialState<T, TFilter>(allConfigs, previousInitialState),
     reducer: ({ initialState, allActions, allConfigs }) =>
       createEntitiesTraitReducer<T, TFilter>(
         initialState,

@@ -14,7 +14,7 @@ export class ListComponent {
 
   users$ = this.store.select(UsersSelectors.array);
 
-  constructor(private store: Store) {}
+  constructor(private readonly store: Store) {}
 
   onPageChange(page: number): void {
     this.store.dispatch(UsersActions.setPage({ page }));

@@ -1,14 +1,21 @@
 import { TraitEffect, Type } from '@ngrx-traits/core';
-import { EntitiesActions, EntitiesSelectors, EntitiesState, EntitiesTraitKeyedConfig, SetParamsArgs } from './model';
+import {
+  EntitiesActions,
+  EntitiesSelectors,
+  EntitiesState,
+  EntitiesTraitKeyedConfig,
+  SetParamsArgs,
+  SortDirection,
+} from './model';
 import { Injectable } from '@angular/core';
 import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import { filter, map, tap } from 'rxjs/operators';
 import { routerNavigatedAction } from '@ngrx/router-store';
-import { RouterSelectors } from '@seed/front/shared/router';
-import { RouterState } from '../../../../router/src/lib/router.state';
+import { RouterSelectors, RouterState } from '@seed/front/shared/router';
 import { Store } from '@ngrx/store';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
+/* eslint-disable-next-line max-lines-per-function */
 export function createEntitiesTraitEffects<T, TFilter>(
   allActions: EntitiesActions<T, TFilter>,
   allConfigs: EntitiesTraitKeyedConfig<T, TFilter>,
@@ -42,7 +49,8 @@ export function createEntitiesTraitEffects<T, TFilter>(
         this.actions$.pipe(
           ofType(routerNavigatedAction),
           filter(action => {
-            console.log({ path: allConfigs.entities!.routeParamsPath!, url: action.payload.routerState.url });
+            // console.log({ path: allConfigs.entities!.routeParamsPath!, url: action.payload.routerState.url });
+            /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
             return action.payload.routerState.url.startsWith(allConfigs.entities!.routeParamsPath!);
           }),
           concatLatestFrom(() => [
@@ -71,8 +79,8 @@ export function createEntitiesTraitEffects<T, TFilter>(
       super();
     }
 
-    updateURL(queryParams: Params) {
-      this.router.navigate([], {
+    updateURL(queryParams: Params): void {
+      void this.router.navigate([], {
         relativeTo: this.activatedRoute,
         queryParams,
         queryParamsHandling: 'merge', // remove to replace all query params by provided
@@ -82,16 +90,31 @@ export function createEntitiesTraitEffects<T, TFilter>(
     }
 
     getParamsFromURL(routerState: RouterState, state: EntitiesState<T, TFilter>): SetParamsArgs<T, TFilter> {
-      const params: SetParamsArgs<T, TFilter> = {
-        page: routerState?.queryParams?.['page'] || state.page,
-        limit: routerState?.queryParams?.['limit'] || state.limit,
-        sort: {
-          field: routerState.queryParams?.['sortField'] || state.sort?.field,
-          direction: routerState.queryParams?.['sortDirection'] || state.sort?.direction,
-        },
-      };
+      const params: SetParamsArgs<T, TFilter> = {};
+      if (routerState.queryParams['page'] && +routerState.queryParams['page']) {
+        params.page = +routerState.queryParams['page'];
+      }
+      if (routerState.queryParams['limit'] && +routerState.queryParams['limit']) {
+        params.limit = +routerState.queryParams['limit'];
+      }
+      const paramSortField = routerState.queryParams['sortField'] as string | undefined;
+      const paramSortDirection = routerState.queryParams['sortDirection'] as string | undefined;
+      if (paramSortField) {
+        params.sort = {
+          field: paramSortField as keyof T,
+          direction:
+            paramSortDirection && ['asc', 'desc'].includes(paramSortDirection)
+              ? (paramSortDirection as SortDirection)
+              : 'asc',
+        };
+      } else if (state.sort) {
+        params.sort = {
+          field: state.sort.field,
+          direction: state.sort.direction,
+        };
+      }
       // TODO: parse filter
-      console.log({ ...params });
+      // console.log({ ...params });
       return params;
     }
 

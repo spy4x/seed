@@ -9,7 +9,7 @@
       class="block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
       [formControl]="tabControl"
     >
-      <option *ngFor="let r of roleTitles" [ngValue]="r.value">
+      <option *ngFor="let r of roleTitles" [value]="r.value">
         {{ r.title }} {{ !isLoading && r.value === role ? '(' + total + ')' : '' }}
       </option>
     </select>

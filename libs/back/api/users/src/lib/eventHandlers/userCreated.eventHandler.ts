@@ -1,13 +1,11 @@
 import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
-import { CommandBusExt, LogService, UserCreatedEvent } from '@seed/back/api/shared';
+import { LogService, UserCreatedEvent } from '@seed/back/api/shared';
 
 @EventsHandler(UserCreatedEvent)
 export class UserCreatedEventHandler implements IEventHandler<UserCreatedEvent> {
   readonly logger = new LogService(UserCreatedEventHandler.name);
 
-  constructor(readonly _commandBus: CommandBusExt) {}
-
-  handle(_event: UserCreatedEvent): void {
+  handle(/*_event: UserCreatedEvent*/): void {
     this.logger.trackSegmentSync(this.handle.name, logSegment => {
       logSegment.log('To be deleted soon');
       // const userId = event.user.id;

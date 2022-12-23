@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { ListHandler, LogService, PaginationResponseDTO, PrismaService, UsersFindQuery } from '@seed/back/api/shared';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, User, UserRole } from '@prisma/client';
 import { ONE } from '@seed/shared/constants';
 
 @QueryHandler(UsersFindQuery)
@@ -15,41 +15,8 @@ export class UsersFindQueryHandler extends ListHandler implements IQueryHandler<
     return this.logger.trackSegment(this.execute.name, async logSegment => {
       const { search, role } = query;
       const { page, limit } = this.getPaginationData(query);
-      const usernameSplit = search?.split(' ');
 
-      const conditions =
-        usernameSplit?.reduce((acc, _usernamePart) => {
-          acc.push({
-            userName: {
-              contains: _usernamePart,
-              mode: 'insensitive',
-            },
-          });
-          acc.push({
-            firstName: {
-              contains: _usernamePart,
-              mode: 'insensitive',
-            },
-          });
-          acc.push({
-            lastName: {
-              contains: _usernamePart,
-              mode: 'insensitive',
-            },
-          });
-
-          return acc;
-        }, new Array<Prisma.UserWhereInput>()) || [];
-      const where: Prisma.UserWhereInput = {
-        AND: [
-          {
-            OR: [...conditions],
-          },
-          {
-            role,
-          },
-        ],
-      };
+      const where = this.getFilter(search, role);
 
       logSegment.log('Searching for users with filter:', where);
       const findPromise = this.prisma.user.findMany({
@@ -67,7 +34,44 @@ export class UsersFindQueryHandler extends ListHandler implements IQueryHandler<
     });
   }
 
-  hasCondition = (query: UsersFindQuery): boolean => {
+  private hasCondition(query: UsersFindQuery): boolean {
     return !!query.search || !!query.role;
-  };
+  }
+
+  private getFilter(search?: string, role?: UserRole): Prisma.UserWhereInput {
+    const usernameSplit = search?.split(' ');
+    const conditions =
+      usernameSplit?.reduce((acc, _usernamePart) => {
+        acc.push({
+          userName: {
+            contains: _usernamePart,
+            mode: 'insensitive',
+          },
+        });
+        acc.push({
+          firstName: {
+            contains: _usernamePart,
+            mode: 'insensitive',
+          },
+        });
+        acc.push({
+          lastName: {
+            contains: _usernamePart,
+            mode: 'insensitive',
+          },
+        });
+
+        return acc;
+      }, new Array<Prisma.UserWhereInput>()) || [];
+    return {
+      AND: [
+        {
+          OR: [...conditions],
+        },
+        {
+          role,
+        },
+      ],
+    };
+  }
 }

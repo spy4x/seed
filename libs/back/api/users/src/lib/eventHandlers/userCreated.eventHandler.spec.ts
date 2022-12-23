@@ -1,7 +1,6 @@
 import { Test } from '@nestjs/testing';
-import { CommandBusExt, UserCreatedEvent } from '@seed/back/api/shared';
+import { CommandBusExt } from '@seed/back/api/shared';
 import { UserCreatedEventHandler } from './userCreated.eventHandler';
-import { mockUsers } from '@seed/shared/mock-data';
 
 describe(UserCreatedEventHandler.name, () => {
   // region VARIABLES
@@ -10,9 +9,9 @@ describe(UserCreatedEventHandler.name, () => {
     execute: commandBusExecuteMock,
   }));
   let userCreatedEventHandler: UserCreatedEventHandler;
-  const [user] = mockUsers;
+  // const [user] = mockUsers;
   // const userId = user.id;
-  const event = new UserCreatedEvent(user);
+  // const event = new UserCreatedEvent(user);
   // endregion
 
   // region SETUP
@@ -30,7 +29,7 @@ describe(UserCreatedEventHandler.name, () => {
     jest.useFakeTimers({
       now: mockDate,
     });
-    userCreatedEventHandler.handle(event);
+    userCreatedEventHandler.handle();
     // expect(commandBusExecuteMock).toBeCalledWith(
     //   new CloudTaskCreateCommand(
     //     CloudTasksQueues.welcome,

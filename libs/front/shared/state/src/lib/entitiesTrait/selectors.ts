@@ -4,10 +4,11 @@ import { EntitiesSelectors, EntitiesState, EntitiesTraitKeyedConfig } from './mo
 export function createEntitiesTraitSelectors<T, TFilter>(
   allConfigs: EntitiesTraitKeyedConfig<T, TFilter>,
 ): EntitiesSelectors<T, TFilter> {
-  const adapter = allConfigs.entities?.adapter;
-  const entitySelectors = adapter!.getSelectors();
+  /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+  const { adapter } = allConfigs.entities!;
+  const entitySelectors = adapter.getSelectors();
 
-  function selectState(state: EntitiesState<T, TFilter>) {
+  function selectState(state: EntitiesState<T, TFilter>): EntitiesState<T, TFilter> {
     return state;
   }
 

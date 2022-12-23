@@ -32,5 +32,9 @@ export class UsersEffects {
   //   ),
   // );
 
-  constructor(private actions$: Actions, private usersService: UserService, private store: Store) {}
+  constructor(
+    private readonly actions$: Actions,
+    private readonly usersService: UserService,
+    private readonly store: Store,
+  ) {}
 }

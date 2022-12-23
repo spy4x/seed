@@ -1,5 +1,5 @@
 import { Comparer, Dictionary, EntityAdapter, EntityState, IdSelector } from '@ngrx/entity';
-import { KeyedConfig } from '@ngrx-traits/core';
+import { KeyedConfig, TraitActions, TraitSelectors } from '@ngrx-traits/core';
 import { ActionCreator, TypedAction } from '@ngrx/store/src/models';
 import { Observable } from 'rxjs';
 import { State } from '@ngrx/store';
@@ -69,7 +69,7 @@ export interface Sort<T> {
   direction: SortDirection;
 }
 
-export type EntitiesSelectors<T, TFilter> = {
+export interface EntitiesSelectors<T, TFilter> extends TraitSelectors<EntitiesState<T, TFilter>> {
   state: (state: EntitiesState<T, TFilter>) => EntitiesState<T, TFilter>;
   /**
    * returns all ids of the entities in an array
@@ -131,7 +131,7 @@ export type EntitiesSelectors<T, TFilter> = {
    * @param state
    */
   isLoadingFail: (state: EntitiesState<T, TFilter>) => boolean;
-};
+}
 
 export interface SetParamsArgs<T, TFilter> {
   page?: number;
@@ -140,7 +140,7 @@ export interface SetParamsArgs<T, TFilter> {
   sort?: null | Sort<T>;
 }
 
-export type EntitiesActions<T, TFilter> = {
+export interface EntitiesActions<T, TFilter> extends TraitActions {
   setPage: ActionCreator<string, (props: { page: number }) => { page: number } & TypedAction<string>>;
   patchFilter: ActionCreator<
     string,
@@ -156,4 +156,4 @@ export type EntitiesActions<T, TFilter> = {
   load: ActionCreator<string, () => TypedAction<string>>;
   loadSuccess: ActionCreator<string, (props: LoadSuccess<T>) => LoadSuccess<T> & TypedAction<string>>;
   loadFail: ActionCreator<string, (props: EntitiesError) => EntitiesError & TypedAction<string>>;
-};
+}

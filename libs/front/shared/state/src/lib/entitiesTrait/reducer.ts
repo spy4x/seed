@@ -1,14 +1,16 @@
 import { EntitiesActions, EntitiesState, EntitiesTraitKeyedConfig } from './model';
-import { Action, ActionReducer, createReducer, on } from '@ngrx/store';
+import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { PAGINATION_DEFAULTS } from '@seed/shared/constants';
 
+/* eslint-disable-next-line max-lines-per-function */
 export function createEntitiesTraitReducer<T, TFilter>(
   initialState: EntitiesState<T, TFilter>,
   actions: EntitiesActions<T, TFilter>,
   allConfigs: EntitiesTraitKeyedConfig<T, TFilter>,
-): ActionReducer<EntitiesState<T, TFilter>, Action> {
-  const adapter = allConfigs.entities?.adapter!;
-  return createReducer<EntitiesState<T, TFilter>, Action>(
+): ActionReducer<EntitiesState<T, TFilter>> {
+  /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
+  const { adapter } = allConfigs.entities!;
+  return createReducer<EntitiesState<T, TFilter>>(
     initialState,
     on(actions.load, state => ({
       ...state,

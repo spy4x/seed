@@ -7,7 +7,16 @@ import { AuthSelectors } from '../../index';
 import { catchError, take } from 'rxjs/operators';
 import { ONE, PAGINATION_DEFAULTS } from '@seed/shared/constants';
 
-type PaginatedResponse = { data: User[]; page: number; limit: number; total: number };
+interface PaginatedResponse {
+  data: User[];
+  page: number;
+  limit: number;
+  total: number;
+}
+
+interface Filter {
+  role?: UserRole;
+}
 
 @Injectable()
 export class UserService {
@@ -40,12 +49,13 @@ export class UserService {
     );
   }
 
-  find(page = ONE, limit = PAGINATION_DEFAULTS.limit, filter?: { role?: UserRole }): Observable<PaginatedResponse> {
-    const params: { [key: string]: string | number } = { page, limit, ...filter };
-    Object.keys(params).forEach(key => params[key] === undefined && delete params[key]); // remove any undefined values from params
+  find(page = ONE, limit = PAGINATION_DEFAULTS.limit, filter?: Filter): Observable<PaginatedResponse> {
+    const cleanedFilter = Object.fromEntries(
+      Object.entries(filter || {}).filter(([_key, value]) => value !== undefined),
+    );
 
     return this.http.get<PaginatedResponse>(this.baseUrl, {
-      params,
+      params: { page, limit, ...cleanedFilter },
       headers: { ...this.getAuthHeader() },
     });
   }

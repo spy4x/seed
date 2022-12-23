@@ -2,15 +2,16 @@ import { EntitiesState, EntitiesTraitKeyedConfig } from './model';
 import { PAGINATION_DEFAULTS, ZERO } from '@seed/shared/constants';
 
 export function createEntitiesInitialState<T, TFilter>(
-  previousInitialState = {},
   allConfigs: EntitiesTraitKeyedConfig<T, TFilter>,
+  previousInitialState = {},
 ): EntitiesState<T, TFilter> {
+  /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
   const traitConfig = allConfigs.entities!;
-  const adapter = traitConfig.adapter;
+  const { adapter } = traitConfig;
 
   return {
     ...previousInitialState,
-    ...adapter!.getInitialState(),
+    ...adapter.getInitialState(),
     total: ZERO,
     isLoading: false,
     error: null,
