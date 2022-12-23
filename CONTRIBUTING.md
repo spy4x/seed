@@ -74,7 +74,7 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 
 7. Run the checks and ensure that all of them pass.
     ```shell
-    yarn precommit
+    yarn pre-commit:check
     ```
 
 9. Commit your changes using a descriptive commit message that follows our [commit message conventions](#commit).
