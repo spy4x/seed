@@ -7,7 +7,7 @@ import {
   EntitiesTraitKeyedConfig,
   SetParamsArgs,
   SortDirection,
-} from './model';
+} from './+model';
 import { Injectable } from '@angular/core';
 import { Actions, concatLatestFrom, createEffect, ofType } from '@ngrx/effects';
 import { filter, map, tap } from 'rxjs/operators';
@@ -50,7 +50,6 @@ export function createEntitiesTraitEffects<T, TFilter extends EntitiesFilter>(
         this.actions$.pipe(
           ofType(routerNavigatedAction),
           filter(action => {
-            // console.log({ path: allConfigs.entities!.routeParamsPath!, url: action.payload.routerState.url });
             /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
             return action.payload.routerState.url.startsWith(allConfigs.entities!.routeParams!.path);
           }),
@@ -82,7 +81,6 @@ export function createEntitiesTraitEffects<T, TFilter extends EntitiesFilter>(
         relativeTo: this.activatedRoute,
         queryParams,
         queryParamsHandling: 'merge', // remove to replace all query params by provided
-        // skipLocationChange: true,
         replaceUrl: true,
       });
     }

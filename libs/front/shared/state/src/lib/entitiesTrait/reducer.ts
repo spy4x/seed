@@ -1,4 +1,4 @@
-import { EntitiesActions, EntitiesFilter, EntitiesState, EntitiesTraitKeyedConfig } from './model';
+import { EntitiesActions, EntitiesFilter, EntitiesState, EntitiesTraitKeyedConfig } from './+model';
 import { ActionReducer, createReducer, on } from '@ngrx/store';
 import { PAGINATION_DEFAULTS } from '@seed/shared/constants';
 

@@ -49,6 +49,10 @@ export class UserService {
     );
   }
 
+  update(user: { firstName?: string; lastName?: string; email?: string; photoURL?: null | string }): Observable<User> {
+    return this.http.patch<User>(this.baseUrl, user, { headers: { ...this.getAuthHeader() } });
+  }
+
   find(page = ONE, limit = PAGINATION_DEFAULTS.limit, filter?: Filter): Observable<PaginatedResponse> {
     const cleanedFilter = Object.fromEntries(
       Object.entries(filter || {}).filter(([_key, value]) => value !== undefined),

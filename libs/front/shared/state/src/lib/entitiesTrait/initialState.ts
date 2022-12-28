@@ -1,4 +1,4 @@
-import { EntitiesState, EntitiesTraitKeyedConfig } from './model';
+import { EntitiesState, EntitiesTraitKeyedConfig } from './+model';
 import { PAGINATION_DEFAULTS, ZERO } from '@seed/shared/constants';
 
 export function createEntitiesInitialState<T, TFilter>(

@@ -4,7 +4,7 @@ import {
   EntitiesTraitConfigWithoutAdapter,
   entitiesTraitKey,
   EntitiesTraitKeyedConfig,
-} from './model';
+} from './+model';
 import {
   createTraitFactory,
   TraitActionsFactoryConfig,
@@ -92,12 +92,12 @@ export function addEntitiesTrait<T, TFilter extends EntitiesFilter>(
   return createTraitFactory({
     key: entitiesTraitKey,
     config: configFull,
-    actions: ({ actionsGroupKey, entitiesName }: TraitActionsFactoryConfig) =>
-      createEntitiesTraitActions<T, TFilter>(actionsGroupKey, entitiesName),
-    selectors: ({ allConfigs }: TraitSelectorsFactoryConfig) =>
-      createEntitiesTraitSelectors<T, TFilter>(allConfigs as EntitiesTraitKeyedConfig<T, TFilter>),
     initialState: ({ previousInitialState, allConfigs }: TraitInitialStateFactoryConfig) =>
       createEntitiesInitialState<T, TFilter>(allConfigs, previousInitialState),
+    selectors: ({ allConfigs }: TraitSelectorsFactoryConfig) =>
+      createEntitiesTraitSelectors<T, TFilter>(allConfigs as EntitiesTraitKeyedConfig<T, TFilter>),
+    actions: ({ actionsGroupKey, entitiesName }: TraitActionsFactoryConfig) =>
+      createEntitiesTraitActions<T, TFilter>(actionsGroupKey, entitiesName),
     reducer: ({ initialState, allActions, allConfigs }) =>
       createEntitiesTraitReducer<T, TFilter>(
         initialState,

@@ -8,7 +8,7 @@ import { FiltersComponent } from './list/filters/filters.component';
 import { SharedUIModule } from '@seed/front/shared/ui';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreModule } from '@ngrx/store';
-import { usersFeature } from './list/list.state';
+import { usersState } from './list/list.state';
 import { UsersEffects } from './list/list.effects';
 
 export const routes: Route[] = [
@@ -30,8 +30,8 @@ export const routes: Route[] = [
     CommonModule,
     RouterModule.forChild(routes),
     SharedUIModule,
-    StoreModule.forFeature('users', usersFeature.reducer),
-    EffectsModule.forFeature([...usersFeature.effects, UsersEffects]),
+    StoreModule.forFeature('users', usersState.reducer),
+    EffectsModule.forFeature([...usersState.effects, UsersEffects]),
   ],
   declarations: [ListComponent, DetailComponent, TableComponent, FiltersComponent],
 })

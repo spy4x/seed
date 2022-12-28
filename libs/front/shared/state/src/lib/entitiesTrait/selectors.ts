@@ -1,5 +1,5 @@
 import { createSelector } from '@ngrx/store';
-import { EntitiesSelectors, EntitiesState, EntitiesTraitKeyedConfig } from './model';
+import { EntitiesSelectors, EntitiesState, EntitiesTraitKeyedConfig } from './+model';
 
 export function createEntitiesTraitSelectors<T, TFilter>(
   allConfigs: EntitiesTraitKeyedConfig<T, TFilter>,

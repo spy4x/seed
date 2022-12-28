@@ -1,4 +1,4 @@
-import { EntitiesActions, EntitiesError, EntitiesFilter, SetParamsArgs, Sort } from './model';
+import { EntitiesActions, EntitiesError, EntitiesFilter, SetParamsArgs, Sort } from './+model';
 import { createAction, props } from '@ngrx/store';
 
 export function createEntitiesTraitActions<T, TFilter extends EntitiesFilter>(
