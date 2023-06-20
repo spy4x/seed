@@ -2,6 +2,7 @@ import { Comparer, Dictionary, EntityAdapter, EntityState, IdSelector } from '@n
 import { KeyedConfig, TraitActions, TraitSelectors } from '@ngrx-traits/core';
 import { ActionCreator, TypedAction } from '@ngrx/store/src/models';
 import { Params } from '@angular/router';
+import { ErrorDetails } from '@seed/shared/types';
 
 export const entitiesTraitKey = 'entities';
 
@@ -64,10 +65,7 @@ export interface EntitiesStateExtra<T, TFilter> {
 
 export interface EntitiesState<T, TFilter> extends EntityState<T>, EntitiesStateExtra<T, TFilter> {}
 
-export interface EntitiesError {
-  message: string;
-  code?: string;
-}
+export type EntitiesError = ErrorDetails;
 
 export declare type SortDirection = 'asc' | 'desc';
 

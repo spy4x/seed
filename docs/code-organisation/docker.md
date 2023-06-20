@@ -8,12 +8,12 @@ Docker Compose is used to run multiple containers at once. It is used to run the
 ## Initial setup
 Run next command to prepare required docker images:
 ```sh
-yarn docker:init
+./tools/scripts/+init.sh
 ```
 
 ## After installing dependencies
 Every time after you change dependencies in `package.json` you need to run:
 ```sh
-yarn docker:postinstall
+./tools/scripts/docker-postinstall.sh
 ```
 That will rebuild the image with updated dependencies are remove cache volume.

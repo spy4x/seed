@@ -157,6 +157,7 @@ export class LogService {
     fn: (logSegment: LogSegment) => Promise<R>,
     params?: Params,
     shouldLogResult?: boolean,
+    shouldThrowError = true,
   ): Promise<R> {
     const segment = new LogSegment(name, new Date(), this);
     segment.log(`Started`, params, LogContext.startSegment);
@@ -172,7 +173,10 @@ export class LogService {
       if (error instanceof Error) {
         segment.endWithFail(error);
       }
-      throw error;
+      if (shouldThrowError) {
+        throw error;
+      }
+      return error as R;
     }
   }
 

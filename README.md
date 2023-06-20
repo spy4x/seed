@@ -16,6 +16,8 @@
 1. [Credits](#credits)  
 
 
+
+// TODO: add sections "if node@18 installed - run yarn bla-bla, else run "./tools/scripts/+init.sh""
 ## <a name="prerequisites"></a> ☝️ Prerequisites
  You need to have next things:
 1. [Docker](https://www.docker.com/get-started/) (tip: `brew install --cask docker`)

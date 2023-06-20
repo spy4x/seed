@@ -3,6 +3,7 @@ import { Store } from '@ngrx/store';
 import { AuthSelectors, AuthUIActions } from '@seed/front/shared/auth/state';
 import { map } from 'rxjs/operators';
 import { User } from '@prisma/client';
+import { ProfileActions } from '../profile.state';
 
 @Component({
   selector: 'admin-profile',
@@ -16,5 +17,9 @@ export class ProfileComponent {
 
   signOut(): void {
     this.store.dispatch(AuthUIActions.signOut());
+  }
+
+  update(profile: Partial<User>) {
+    this.store.dispatch(ProfileActions.start(profile));
   }
 }

@@ -4,6 +4,8 @@ import { Route, RouterModule } from '@angular/router';
 import { ProfileComponent } from './profile/profile.component';
 import { SharedAuthUIModule } from '@seed/front/shared/auth/ui';
 import { SharedUIModule } from '@seed/front/shared/ui';
+import { StoreModule } from '@ngrx/store';
+import { profileFeature } from './profile.state';
 
 export const routes: Route[] = [
   {
@@ -17,7 +19,13 @@ export const routes: Route[] = [
 ];
 
 @NgModule({
-  imports: [CommonModule, RouterModule.forChild(routes), SharedAuthUIModule, SharedUIModule],
+  imports: [
+    CommonModule,
+    RouterModule.forChild(routes),
+    SharedAuthUIModule,
+    SharedUIModule,
+    StoreModule.forFeature('profile', profileFeature.reducer),
+  ],
   declarations: [ProfileComponent],
 })
 export class ProfileModule {}
