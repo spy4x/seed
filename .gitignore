@@ -20,6 +20,7 @@ dist
 package
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+apps/spa/security-headers.conf
 .volumes
 e2e/results
 e2e/report

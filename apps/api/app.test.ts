@@ -9,9 +9,9 @@ import type { APIContext } from "./_types.ts"
 type Auth = APIContext["Variables"]["auth"]
 
 /** The API's app with the notes route and one plain route, signed in as user 7 unless told. */
-function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
+async function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
   const reads: string[] = []
-  const app = createApiApp({
+  const app = await createApiApp({
     write: () => {},
     parseAuth: async (c, next) => {
       c.set("auth", auth)
@@ -43,6 +43,12 @@ function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
       return c.json({ notifications: [] })
     }),
   )
+  app.route(
+    "/broken",
+    new Hono<APIContext>().get("/", () => {
+      throw new Error("a route failed")
+    }),
+  )
   const get = (path: string, pageUser?: string) =>
     app.request(`http://local/api${path}`, {
       headers: pageUser === undefined ? {} : { "x-realtime-user": pageUser },
@@ -56,9 +62,14 @@ const READS = [
   "/notifications",
 ]
 
+/** The library's policy with nothing added: the API answers JSON and loads nothing. */
+const POLICY = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; " +
+  "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; " +
+  "frame-ancestors 'none'"
+
 describe("the API's app", () => {
   it("refuses every read whose page names another user than the session's, and reads nothing", async () => {
-    const { get, reads } = buildApp()
+    const { get, reads } = await buildApp()
 
     const responses = await Promise.all(READS.map((path) => get(path, "8")))
 
@@ -68,7 +79,7 @@ describe("the API's app", () => {
   })
 
   it("serves a page that names the session's user, and a caller that names nobody", async () => {
-    const { get, reads } = buildApp()
+    const { get, reads } = await buildApp()
 
     const named = await get("/notifications", "7")
     const unnamed = await get("/groups/7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002/notes?limit=10")
@@ -78,7 +89,7 @@ describe("the API's app", () => {
   })
 
   it("leaves a request without a session to the route, whoever its page names", async () => {
-    const { get, reads } = buildApp(null)
+    const { get, reads } = await buildApp(null)
 
     const signedOut = await get("/groups/7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002/notes", "8")
     const open = await get("/notifications", "8")
@@ -86,5 +97,27 @@ describe("the API's app", () => {
     expect((await signedOut.json()).error.code).toBe("AUTH_REQUIRED")
     expect(open.status).toBe(200)
     expect(reads).toEqual(["notifications"])
+  })
+
+  it("sends the security headers with a route's answer, a refusal, an unknown address and an error", async () => {
+    const { get } = await buildApp()
+
+    const responses = [
+      await get("/notifications"),
+      await get("/notifications", "8"),
+      await get("/no-such-route"),
+      await get("/broken"),
+    ]
+
+    expect(responses.map((response) => response.status)).toEqual([200, 401, 404, 500])
+    for (const response of responses) {
+      expect(response.headers.get("content-security-policy")).toBe(POLICY)
+      expect(response.headers.get("x-content-type-options")).toBe("nosniff")
+      expect(response.headers.get("referrer-policy")).toBe("no-referrer")
+      expect(response.headers.get("x-frame-options")).toBe("DENY")
+      expect(response.headers.get("strict-transport-security")).toBe(
+        "max-age=15552000; includeSubDomains",
+      )
+    }
   })
 })

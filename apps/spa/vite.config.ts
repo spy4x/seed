@@ -12,8 +12,33 @@ import {
   serviceWorker,
   webManifest,
 } from "@spy4x/preact-theme/vite"
+import { nginxAddHeaders, securityHeaderList } from "@spy4x/server/http/security-headers"
 
 const SW_ENTRY = fromFileUrl(new URL("./src/sw.ts", import.meta.url))
+const BUILT_PAGE = fromFileUrl(new URL("./dist/index.html", import.meta.url))
+const SECURITY_HEADERS = fromFileUrl(new URL("./security-headers.conf", import.meta.url))
+
+/**
+ * The nginx variable that holds the origin of the error tracker, or nothing. The container sets it
+ * when it starts (`csp-connect.sh`), because the tracker differs per deployment and the image is
+ * built once.
+ */
+const ERROR_TRACKER_VARIABLE = "$csp_error_tracker"
+
+/**
+ * What the SPA loads from another origin, added to the defaults of the library's policy:
+ *
+ * - the Google Fonts stylesheet `index.html` links, and the font files that stylesheet names;
+ * - the error tracker the reporter posts to, when the deployment has one.
+ *
+ * The API and its WebSocket are on the SPA's own origin (the proxy routes `/api` and `/ws`), so
+ * `'self'` covers them, as it covers the service worker and the web manifest.
+ */
+const EXTRA_SOURCES = {
+  styleSrc: ["https://fonts.googleapis.com"],
+  fontSrc: ["https://fonts.gstatic.com"],
+  connectSrc: [ERROR_TRACKER_VARIABLE],
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -75,6 +100,26 @@ export default defineConfig({
         children: themeBootstrapScript(),
         injectTo: "head-prepend" as const,
       }],
+    },
+    {
+      // nginx serves the built page, so it sends the security headers: the ones `securityHeaders`
+      // of @spy4x/server sends, as one `add_header … always;` line each. The policy holds the hash
+      // of each inline block of the built `index.html`, so the file nginx includes is written from
+      // that page after every build, next to `dist` (`nginx.conf` says where it goes). The hook
+      // is the one that runs once the page is written and never after a failed build, whose own
+      // error it would otherwise hide.
+      name: "nginx-security-headers",
+      apply: "build" as const,
+      writeBundle: async () => {
+        const page = await Deno.readTextFile(BUILT_PAGE)
+        const headers = await securityHeaderList({ shellHtml: page, extraSources: EXTRA_SOURCES })
+        await Deno.writeTextFile(
+          SECURITY_HEADERS,
+          "# Written by the SPA's build (apps/spa/vite.config.ts) from the built index.html.\n" +
+            "# Do not edit: change EXTRA_SOURCES in apps/spa/vite.config.ts and build again.\n" +
+            nginxAddHeaders(headers, { allowedVariables: [ERROR_TRACKER_VARIABLE] }),
+        )
+      },
     },
   ],
   resolve: {

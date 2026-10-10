@@ -80,8 +80,9 @@ const errorReporter = createErrorReporter({
   maxPerSession: 100,
   windowMs: 60 * 60 * 1000,
 })
-// Every route stands behind the base middleware and the page-user check (`./app.ts`).
-const app = createApiApp({
+// Every route stands behind the security headers, the base middleware and the page-user check
+// (`./app.ts`).
+const app = await createApiApp({
   write: log,
   skipLogPaths: ["/api/health"],
   parseAuth,

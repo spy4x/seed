@@ -138,3 +138,76 @@ Deno.test("the last allow list line counts without a trailing newline", async ()
     await Deno.remove(dir, { recursive: true })
   }
 })
+
+/**
+ * `apps/spa/csp-connect.sh` writes, at container start, the one part of the content security
+ * policy that differs per deployment: the nginx variable holding the origin the app may post error
+ * reports to. Its value lands inside nginx configuration, so nothing but an origin may get there.
+ */
+const CSP_SCRIPT = fromFileUrl(new URL("../apps/spa/csp-connect.sh", import.meta.url))
+
+/** Runs the script with exactly these variables; `conf` is the file it wrote, if any. */
+async function runCspScript(
+  env: Record<string, string>,
+): Promise<{ code: number; stderr: string; conf?: string }> {
+  const dir = await tempDir()
+  try {
+    const out = `${dir}/csp-connect.conf`
+    const result = await new Deno.Command("sh", {
+      args: [CSP_SCRIPT],
+      clearEnv: true,
+      env: { PATH: "/usr/bin:/bin", OUT_FILE: out, ...env },
+    }).output()
+    const stderr = new TextDecoder().decode(result.stderr)
+    if (result.code !== 0) {
+      // A refusal leaves no file behind, so nginx cannot start on a half-written one.
+      await expect(Deno.stat(out)).rejects.toThrow(Deno.errors.NotFound)
+      return { code: result.code, stderr }
+    }
+    return { code: 0, stderr, conf: await Deno.readTextFile(out) }
+  } finally {
+    await Deno.remove(dir, { recursive: true })
+  }
+}
+
+Deno.test("without a tracker the policy's variable is empty", async () => {
+  const result = await runCspScript({})
+
+  expect(result.conf).toBe(`set $csp_error_tracker "";\n`)
+})
+
+for (
+  const [dsn, origin] of [
+    ["https://0123abcd@errors.example.com/7", "https://errors.example.com"],
+    ["https://errors.example.com/7", "https://errors.example.com"],
+    ["http://key@tracker.test:8000/prefix/3", "http://tracker.test:8000"],
+  ]
+) {
+  Deno.test(`the tracker ${dsn} is allowed as the origin ${origin}, without its key or path`, async () => {
+    const result = await runCspScript({ SPA_ERROR_REPORT_DSN: dsn })
+
+    expect(result.conf).toBe(`set $csp_error_tracker "${origin}";\n`)
+  })
+}
+
+for (
+  const [label, dsn] of [
+    ["a quote that would end the nginx string", `https://k@a.example/1"; add_header x-evil "1`],
+    ["a dollar sign that would name an nginx variable", "https://k@$host/1"],
+    ["a second line", "https://k@a.example/1\nhttps://k@evil.example/2"],
+    ["a space that would add a second source", "https://k@a.example/1 https://evil.example"],
+    ["a wildcard host", "https://k@*.example/1"],
+    ["a scheme other than http or https", "ftp://k@a.example/1"],
+    ["no host", "https://k@/1"],
+  ]
+) {
+  Deno.test(`a tracker address with ${label} stops the script and names the variable, not the value`, async () => {
+    const result = await runCspScript({ SPA_ERROR_REPORT_DSN: dsn })
+
+    expect(result.code).not.toBe(0)
+    expect(result.conf).toBeUndefined()
+    expect(result.stderr).toContain("SPA_ERROR_REPORT_DSN")
+    // Every address above carries the key `k`.
+    expect(result.stderr).not.toContain("k@")
+  })
+}

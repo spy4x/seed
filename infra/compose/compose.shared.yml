@@ -435,6 +435,8 @@ services:
       - ENV=${ENV}
       - ERROR_REPORT_DSN=${ERROR_REPORT_DSN:-}
       - DENO_DIR=/tmp/deno-cache
+      # The port apps/healthcheck.ts probes.
+      - HEALTHCHECK_PORT=${API_PORT}
       - DENO_LOG=${DENO_LOG}
       - DB_HOST=db
       - DB_PORT=5432
@@ -482,8 +484,9 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
+      # Answers once the API's port accepts a connection (apps/healthcheck.ts).
       test:
-        [ 'CMD', 'wget', '--spider', 'http://127.0.0.1:${API_PORT}/api/health' ]
+        [ 'CMD', 'deno', 'run', '--allow-net=127.0.0.1', '--allow-env=HEALTHCHECK_PORT,PORT', 'apps/healthcheck.ts' ]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -619,6 +622,7 @@ services:
       - default
       - proxy
     healthcheck:
+      # nginx's image has no Deno, so this one check stays on the image's own wget.
       test: ["CMD", "wget", "--spider", "http://127.0.0.1:8080"]
       interval: 10s
       timeout: 5s
@@ -644,6 +648,8 @@ services:
       - MPA_DOMAIN=${MPA_DOMAIN:-}
       - API_URL=http://api:${API_PORT}
       - DENO_LOG=${DENO_LOG}
+      # The port apps/healthcheck.ts probes: the one the image's CMD serves.
+      - HEALTHCHECK_PORT=8080
     user: "1000:1000"
     deploy:
       resources:
@@ -670,7 +676,9 @@ services:
       - default
       - proxy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://127.0.0.1:8080/health"]
+      # Answers once the MPA's port accepts a connection (apps/healthcheck.ts).
+      test:
+        [ 'CMD', 'deno', 'run', '--allow-net=127.0.0.1', '--allow-env=HEALTHCHECK_PORT,PORT', 'apps/healthcheck.ts' ]
       interval: 10s
       timeout: 5s
       retries: 5

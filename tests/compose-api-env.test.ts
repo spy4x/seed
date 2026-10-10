@@ -63,3 +63,45 @@ for (const service of ["api", "worker"]) {
 Deno.test("the api container receives the error tracker's DSN", async () => {
   expect(await environmentOf("api")).toContain("ERROR_REPORT_DSN")
 })
+
+/** The check of every service that runs on Deno: `apps/healthcheck.ts`, which probes one port. */
+const DENO_HEALTHCHECK = [
+  "CMD",
+  "deno",
+  "run",
+  "--allow-net=127.0.0.1",
+  "--allow-env=HEALTHCHECK_PORT,PORT",
+  "apps/healthcheck.ts",
+]
+
+interface CheckedService {
+  environment?: string[]
+  healthcheck?: { test?: string[] }
+}
+
+async function checkedService(file: string, name: string): Promise<CheckedService> {
+  const path = fromFileUrl(new URL(`../infra/compose/${file}`, import.meta.url))
+  const compose = parse(await Deno.readTextFile(path)) as {
+    services?: Record<string, CheckedService>
+  }
+  const service = compose.services?.[name]
+  if (!service) throw new Error(`${file} has no ${name} service`)
+  return service
+}
+
+// The script reads its port from HEALTHCHECK_PORT and falls back to 3000, which no service uses:
+// a service that runs the script without naming its port would never turn healthy.
+Deno.test("each Deno service checks its health with the Deno script and names its own port", async () => {
+  const services: [file: string, name: string, port: string][] = [
+    ["compose.shared.yml", "api", "${API_PORT}"],
+    ["compose.shared.yml", "mpa", "8080"],
+    ["compose.dev.yml", "spa", "5173"],
+  ]
+
+  for (const [file, name, port] of services) {
+    const service = await checkedService(file, name)
+
+    expect(service.healthcheck?.test, `${name} in ${file}`).toEqual(DENO_HEALTHCHECK)
+    expect(service.environment, `${name} in ${file}`).toContain(`HEALTHCHECK_PORT=${port}`)
+  }
+})

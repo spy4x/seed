@@ -120,6 +120,9 @@ baked into the build; the container writes them to `/config.json` when it starts
   and a console warning, never a blank page.
 - **Offline:** the service worker stores `/config.json` with the app shell and answers from that
   copy when the network fails (`docs/offline.md`, "The app shell").
+- **The content security policy:** the same start-up runs `apps/spa/csp-connect.sh`, which lets the
+  page post to the origin of `SPA_ERROR_REPORT_DSN` and to no other site
+  ([security-headers.md](security-headers.md)).
 - **Adding a setting:** add a line to the allow list, a key to the schema, and pass the variable to
   the `spa` service in `infra/compose/compose.shared.yml`. Changing a value needs a container
   restart, not a rebuild.

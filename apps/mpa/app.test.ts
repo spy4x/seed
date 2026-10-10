@@ -4,7 +4,7 @@ import { App } from "fresh"
 import { handler as subscribe } from "./routes/subscribe/index.ts"
 import { handler as subscriptionConfirm } from "./routes/subscribe/confirm.ts"
 import { handler as unsubscribe } from "./routes/unsubscribe.ts"
-import { pageMiddleware } from "./middleware.ts"
+import { pageMiddleware, securityHeadersMiddleware } from "./middleware.ts"
 import type { State } from "./utils.ts"
 
 const config = {
@@ -103,14 +103,102 @@ describe("pageMiddleware", () => {
     expect(calls).toEqual([])
   })
 
-  it("forbids other sites to frame a page and keeps it out of every cache", async () => {
+  it("keeps a page out of every cache", async () => {
     const { fetch } = fakeApi(() => Response.json({}))
 
     const response = await appWith(fetch)(new Request(`${config.webAppOrigin}/page`), info)
 
-    expect(response.headers.get("x-frame-options")).toBe("DENY")
-    expect(response.headers.get("content-security-policy")).toBe("frame-ancestors 'none'")
     expect(response.headers.get("cache-control")).toBe("no-store")
+  })
+})
+
+describe("securityHeadersMiddleware", () => {
+  /** The app as `main.ts` builds it: the security headers first, then the page middleware. */
+  async function securedApp(appConfig = config) {
+    const { fetch } = fakeApi(() => Response.json({}))
+    return new App<State>()
+      .use(await securityHeadersMiddleware(appConfig))
+      .use(pageMiddleware(appConfig, fetch))
+      .get("/page", (ctx) => ctx.html("<p>page</p>"))
+      .get("/broken", () => {
+        throw new Error("a route failed")
+      })
+      .post("/subscribe", subscribe.POST!)
+      .handler()
+  }
+
+  const policy = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; " +
+    "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; " +
+    "frame-ancestors 'none'"
+
+  function expectSecurityHeaders(response: Response) {
+    expect(response.headers.get("content-security-policy")).toBe(policy)
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff")
+    expect(response.headers.get("referrer-policy")).toBe("no-referrer")
+    expect(response.headers.get("x-frame-options")).toBe("DENY")
+    expect(response.headers.get("strict-transport-security")).toBe(
+      "max-age=15552000; includeSubDomains",
+    )
+  }
+
+  it("sends the policy, nosniff, no-referrer, the frame ban and HSTS with a page", async () => {
+    const response = await (await securedApp())(new Request(`${config.webAppOrigin}/page`), info)
+
+    expect(response.status).toBe(200)
+    expectSecurityHeaders(response)
+    expect(response.headers.get("cache-control")).toBe("no-store")
+  })
+
+  it("sends them with the 404 of an unknown address", async () => {
+    const response = await (await securedApp())(new Request(`${config.webAppOrigin}/nope`), info)
+
+    expect(response.status).toBe(404)
+    expectSecurityHeaders(response)
+  })
+
+  it("sends them with the 500 of a route that throws, and logs the error", async () => {
+    const logged: unknown[] = []
+    const original = console.error
+    console.error = (...args: unknown[]) => logged.push(...args)
+    try {
+      const response = await (await securedApp())(
+        new Request(`${config.webAppOrigin}/broken`),
+        info,
+      )
+
+      expect(response.status).toBe(500)
+      expect(await response.text()).toBe("Internal server error")
+      expectSecurityHeaders(response)
+    } finally {
+      console.error = original
+    }
+    expect(String(logged[0])).toContain("a route failed")
+  })
+
+  it("sends them with the refusal of a post from another site", async () => {
+    const response = await (await securedApp())(
+      formPost("/subscribe", { email: "ada@example.com", list: "news" }, {
+        origin: "https://attacker.example",
+        "sec-fetch-site": "cross-site",
+      }),
+      info,
+    )
+
+    expect(response.status).toBe(403)
+    expectSecurityHeaders(response)
+  })
+
+  it("lets a form on a website with its own domain redirect to the SPA, and nowhere else", async () => {
+    const website = { ...config, webAppOrigin: "https://www.example.com" }
+
+    const response = await (await securedApp(website))(
+      new Request(`${website.webAppOrigin}/page`),
+      info,
+    )
+
+    expect(response.headers.get("content-security-policy")).toBe(
+      policy.replace("form-action 'self'", "form-action 'self' https://app.example.com"),
+    )
   })
 })
 

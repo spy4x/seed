@@ -130,6 +130,58 @@ steps:
       - e2e/mpa/run.sh
     depends_on: [check]
 
+  e2e-spa:
+    # The SPA behind nginx, as production serves it: the security headers nginx.conf adds, and a
+    # signed-in walk that fails on anything the content security policy refuses. Vite, which the
+    # other e2e steps use, sends no such headers. Steps have no container tool, so e2e/spa/run.sh
+    # installs the built SPA into this container's own nginx (`SPA_SERVER=nginx`) instead of
+    # building the image. It creates its own database (`template_e2e_spa`).
+    image: mcr.microsoft.com/playwright:v1.57.0-noble
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: tester
+      DB_PASS: ci-throwaway
+      DB_NAME: template_test
+      KV_HOSTNAME: valkey
+      KV_PORT: "6379"
+      KV_PASSWORD: ci-throwaway
+    commands:
+      # npm's newest `deno` package lags the binary, so take the pinned release itself.
+      - |
+          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
+          unzip -q -o /tmp/deno.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/deno
+      - deno --version
+      - deno install --frozen
+      # Postgres first runs a temporary server that listens on a unix socket only, so a TCP
+      # connection means the real one is up (docs/handoff.md, trap 3). Valkey has no such phase.
+      - |
+          deno eval '
+          for (const [hostname, port] of [["postgres", 5432], ["valkey", 6379]]) {
+            for (let i = 0; ; i++) {
+              try {
+                (await Deno.connect({ hostname, port })).close()
+                break
+              } catch {
+                if (i >= 120) {
+                  console.error(`$${hostname} did not accept connections within 60 s`)
+                  Deno.exit(1)
+                }
+                await new Promise((resolve) => setTimeout(resolve, 500))
+              }
+            }
+          }
+          '
+      - apt-get install -y -qq --no-install-recommends nginx
+      - SPA_SERVER=nginx e2e/spa/run.sh
+    # The steps share one checkout. This one builds the SPA into apps/spa/dist, as `build` does,
+    # and both run scripts keep the API's vapid.json in the repository root while they run, so it
+    # waits for those two steps instead of running beside them.
+    depends_on: [build, e2e-mpa]
+
 services:
   postgres:
     image: postgres:16-alpine

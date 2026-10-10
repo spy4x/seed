@@ -9,6 +9,8 @@ COPY --chown=1000:1000 . .
 USER 1000:1000
 
 RUN deno task mpa:build
+# The container healthcheck runs this file; cached here so it never downloads at run time.
+RUN deno cache apps/healthcheck.ts
 
 EXPOSE 8080
 CMD ["deno", "serve", "--allow-all", "--port", "8080", "apps/mpa/_fresh/server.js"]

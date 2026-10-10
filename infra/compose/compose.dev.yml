@@ -33,6 +33,8 @@ services:
     user: "0:0"  # Run as root in dev mode for Podman compatibility
     environment:
       - VITE_ENV=dev
+      # The port apps/healthcheck.ts probes: Vite's.
+      - HEALTHCHECK_PORT=5173
     build:
       dockerfile: apps/spa/dockerfile.dev
       args:
@@ -50,7 +52,9 @@ services:
       - default
       - proxy
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://127.0.0.1:5173"]
+      # The dev image runs Deno, not nginx, so it takes the check the API uses.
+      test:
+        [ 'CMD', 'deno', 'run', '--allow-net=127.0.0.1', '--allow-env=HEALTHCHECK_PORT,PORT', 'apps/healthcheck.ts' ]
       interval: 3s
 
 networks:

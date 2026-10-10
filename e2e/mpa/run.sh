@@ -16,7 +16,9 @@ set -euo pipefail
 FRONT_PORT=${FRONT_PORT:-8080}
 API_PORT=${API_PORT:-8000}
 MPA_PORT=${MPA_PORT:-8001}
-export FRONT_PORT API_PORT MPA_PORT
+# The proxy sends everything but /api to SITE_PORT.
+SITE_PORT=$MPA_PORT
+export FRONT_PORT API_PORT MPA_PORT SITE_PORT
 
 # The API reads vapid.json from its working directory. Reuse existing keys; never replace them, and
 # never leave a file in infra/configs/ that was not there. Checked before the trap below, which

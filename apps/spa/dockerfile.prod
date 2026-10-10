@@ -14,7 +14,8 @@ ENV VITE_ENV=${VITE_ENV}
 RUN deno task spa:build
 
 # Production stage with nginx
-FROM nginxinc/nginx-unprivileged:stable-alpine
+# The registry is named: podman refuses a short name when it has no terminal to ask on.
+FROM docker.io/nginxinc/nginx-unprivileged:stable-alpine
 WORKDIR /app
 COPY --from=build /app/apps/spa/dist /usr/share/nginx/html
 COPY --from=build /app/apps/spa/nginx.conf /etc/nginx/conf.d/default.conf
@@ -23,6 +24,10 @@ COPY --from=build /app/apps/spa/nginx.conf /etc/nginx/conf.d/default.conf
 # user, so the served file is a link to /tmp, which every user can write.
 COPY --from=build /app/apps/spa/public-env.allow /etc/spa/public-env.allow
 COPY --from=build --chmod=755 /app/apps/spa/runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
+# The security headers nginx.conf includes: the build writes the first file from the built page, and
+# the script writes /tmp/csp-connect.conf at start, the one part that differs per deployment.
+COPY --from=build /app/apps/spa/security-headers.conf /etc/nginx/spa/security-headers.conf
+COPY --from=build --chmod=755 /app/apps/spa/csp-connect.sh /docker-entrypoint.d/41-csp-connect.sh
 USER root
 RUN rm -f /usr/share/nginx/html/config.json && ln -s /tmp/config.json /usr/share/nginx/html/config.json
 USER 101

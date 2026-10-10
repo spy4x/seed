@@ -166,7 +166,7 @@ image, so there is no worker image. How to cut a release: [README](../README.md#
 ### Modify the Deno version
 
 Change the tag in every `image: denoland/deno:<version>` line of `ci.yml`, and the release URL and
-SHA-256 in the two Playwright steps (`e2e`, `e2e-mpa`). Keep them equal to `DENO_VERSION` in
+SHA-256 in the three Playwright steps (`e2e`, `e2e-mpa`, `e2e-spa`). Keep them equal to `DENO_VERSION` in
 `infra/envs/.env.example` and
 `Dockerfile.base`.
 
