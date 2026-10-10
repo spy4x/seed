@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test"
+import { playwrightBaseConfig } from "@jsr/spy4x__preact-system/playwright"
 
 /**
  * Playwright configuration for the SPA as production serves it: the built files in the nginx
@@ -11,19 +12,14 @@ const baseURL = Deno.env.get("SPA_BASE_URL")
 if (!baseURL) throw new Error("SPA_BASE_URL is required: run these specs through e2e/spa/run.sh")
 
 export default defineConfig({
+  ...playwrightBaseConfig({
+    baseURL,
+    ci: !!Deno.env.get("CI"),
+    chromium: devices["Desktop Chrome"],
+  }),
   testDir: ".",
   testMatch: /.*\.spa\.ts/,
   outputDir: "../results/spa",
-  forbidOnly: !!Deno.env.get("CI"),
-  retries: Deno.env.get("CI") ? 2 : 0,
-  fullyParallel: false,
-  workers: 1,
   timeout: 60_000,
   reporter: [["list"]],
-  use: {
-    baseURL,
-    actionTimeout: 10_000,
-    navigationTimeout: 10_000,
-  },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 })

@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test"
+import { playwrightBaseConfig } from "@jsr/spy4x__preact-system/playwright"
 
 /**
  * Playwright configuration for the MPA (`apps/mpa`), apart from the SPA's: the root configuration
@@ -8,19 +9,13 @@ import { defineConfig, devices } from "@playwright/test"
  * Run from `apps/mpa`: `deno task e2e`.
  */
 export default defineConfig({
+  ...playwrightBaseConfig({
+    baseURL: Deno.env.get("MPA_BASE_URL") ?? "http://app.localhost",
+    ci: !!Deno.env.get("CI"),
+    chromium: devices["Desktop Chrome"],
+  }),
   testDir: ".",
   testMatch: /.*\.mpa\.ts/,
   outputDir: "../results/mpa",
-  forbidOnly: !!Deno.env.get("CI"),
-  retries: Deno.env.get("CI") ? 2 : 0,
-  fullyParallel: false,
-  workers: 1,
-  timeout: 30_000,
   reporter: [["list"]],
-  use: {
-    baseURL: Deno.env.get("MPA_BASE_URL") ?? "http://app.localhost",
-    actionTimeout: 10_000,
-    navigationTimeout: 10_000,
-  },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
 })
