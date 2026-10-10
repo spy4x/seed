@@ -8,6 +8,7 @@ import {
   type InvitationPreviewRow,
   type InvitationRow,
 } from "@ui/group-invitations.tsx"
+import { fetchRead } from "./realtime-call.ts"
 
 /** `fetch`, or a test's stand-in for it. */
 export type InvitationFetch = (url: string, init?: RequestInit) => Promise<Response>
@@ -52,12 +53,14 @@ export function createInvitationsStore(
   async function call<T>(method: string, url: string, body?: unknown): Promise<Outcome<T>> {
     let response: Response
     try {
-      response = await fetch(url, {
+      const init: RequestInit = {
         method,
         credentials: "include",
         headers: { "content-type": "application/json" },
         body: body === undefined ? undefined : JSON.stringify(body),
-      })
+      }
+      // A read names the page's user, and a 401 signs the page out, as every read does.
+      response = method === "GET" ? await fetchRead(url, init, fetch) : await fetch(url, init)
     } catch (_unreachable) {
       return { ok: false, failure: { message: OFFLINE, code: null, plan: null } }
     }

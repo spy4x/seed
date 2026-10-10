@@ -6,7 +6,7 @@ import { groupsStore } from "../state/groups.ts"
 import { notesStore } from "../state/notes.ts"
 import { selectionStore } from "../state/selection.ts"
 import { useUndoToast } from "./use-undo-toast.ts"
-import { OfflineStatus } from "../offline/OfflineStatus.tsx"
+import { OfflineStatus } from "../modules.ts"
 
 /**
  * Wires the notes list to the notes store for `/notes`. The notes are those of the person's

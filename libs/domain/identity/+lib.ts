@@ -344,3 +344,10 @@ export class AccessError extends Error {
     this.name = "AccessError"
   }
 }
+
+/**
+ * The prefix of the WebSocket subprotocol that names the user a page was started for: the page
+ * offers `user.<id>` (a browser cannot set a header on a socket), and the API refuses the upgrade
+ * unless the session is that user's, and answers with the same subprotocol.
+ */
+export const SOCKET_USER_PROTOCOL = "user."

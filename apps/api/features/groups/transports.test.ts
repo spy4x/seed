@@ -24,7 +24,14 @@ import { buildAuthData } from "../../_testing/fake-auth.ts"
 import { MemoryGroupRepository } from "../../_testing/memory-groups.ts"
 import type { APIContext } from "../../_types.ts"
 import { createGroupsRoute, type GroupsRouteDependencies } from "../../routes/groups.ts"
-import { Realtime } from "../../services/realtime.ts"
+import { createCallRoute } from "../../routes/call.ts"
+import {
+  API_URL,
+  mountRoute,
+  sameOriginHeaders,
+  WEB_APP_URL,
+} from "../../_testing/mutation-requests.ts"
+import { Realtime, toRequestError } from "../../services/realtime.ts"
 import {
   createGroupDeletedListHandler,
   createGroupDeleteHandler,
@@ -37,7 +44,7 @@ import {
   createGroupTransferHandler,
   createGroupUpdateDetailsHandler,
 } from "./handlers.ts"
-import { createGroupSocketRequests } from "./socket.ts"
+import { createGroupOperations } from "./operations.ts"
 
 /**
  * Rename, delete, restore and the member commands over both transports, on one pair of buses as the API wires them:
@@ -154,7 +161,7 @@ function socket(buses: GroupsRouteDependencies, userId: number) {
     clock: new FakeClock(),
     entitledSession: () => Promise.resolve(auth),
     memberUserIds: () => Promise.resolve([]),
-    requests: createGroupSocketRequests(buses),
+    operations: createGroupOperations(buses),
     log: () => {},
   })
   const ws = new FakeSocket("wss://app.example.com/api/ws")
@@ -180,6 +187,39 @@ function socket(buses: GroupsRouteDependencies, userId: number) {
     shutdown: () => realtime.shutdown(),
   }
 }
+
+/** `POST /api/call/<name>`, as the page's HTTP calls module sends it, answering as a frame. */
+function callRoute(buses: GroupsRouteDependencies, userId: number) {
+  const app = mountRoute(
+    "/call",
+    createCallRoute({
+      operations: createGroupOperations(buses),
+      mapError: toRequestError,
+      log: () => {},
+      expectedOrigin: WEB_APP_URL,
+    }),
+    buildAuthData({ user: { id: userId }, session: { id: userId * 10, userId } }),
+  )
+  const send = async (name: string, payload: unknown, headers: Record<string, string>) => {
+    const response = await app.request(`${API_URL}/call/${name}`, {
+      method: "POST",
+      headers: { ...sameOriginHeaders, "x-realtime-user": String(userId), ...headers },
+      body: payload === undefined ? undefined : JSON.stringify(payload),
+    })
+    const body = await response.json()
+    if (response.ok) return { kind: "server.result", payload: body.result }
+    return { kind: "server.error", ...body.error }
+  }
+  return {
+    command: (name: string, payload: unknown) =>
+      send(name, payload, { "idempotency-key": `key-${name}` }),
+    query: (name: string, payload?: unknown) => send(name, payload, {}),
+    shutdown: () => {},
+  }
+}
+
+/** The two adapters of the operations list; a scenario run over both must answer the same. */
+const CALL_TRANSPORTS = [["the socket", socket], ["the call route", callRoute]] as const
 
 /** Who may do what: the user, whether they may rename, and whether they may delete or restore. */
 const PEOPLE = [
@@ -376,110 +416,112 @@ describe("the request id of a group change", () => {
   })
 })
 
-describe("changing a group over the socket", () => {
-  for (const person of PEOPLE) {
-    it(`${person.rename ? "lets" : "refuses"} ${person.name} rename it`, async () => {
-      const { groups, buses } = stack()
-      const ws = socket(buses, person.user)
+for (const [via, open] of CALL_TRANSPORTS) {
+  describe(`changing a group over ${via}`, () => {
+    for (const person of PEOPLE) {
+      it(`${person.rename ? "lets" : "refuses"} ${person.name} rename it`, async () => {
+        const { groups, buses } = stack()
+        const ws = open(buses, person.user)
 
-      const frame = await ws.command("group.rename", { groupId, name: "Trip" })
+        const frame = await ws.command("group.rename", { groupId, name: "Trip" })
 
-      if (person.rename) {
-        expect(frame).toMatchObject({
-          kind: "server.result",
-          payload: { group: { name: "Trip" } },
-        })
-        expect(groups.name).toBe("Trip")
-      } else {
-        expect(frame).toMatchObject({
-          kind: "server.error",
-          code: "forbidden",
-          details: { code: "ROLE_INSUFFICIENT" },
-        })
-        expect(groups.writes).toBe(0)
-      }
-      ws.shutdown()
-    })
-
-    it(`${person.owner ? "lets" : "refuses"} ${person.name} delete and restore it`, async () => {
-      const { groups, buses } = stack()
-      const ws = socket(buses, person.user)
-
-      const deleted = await ws.command("group.delete", { groupId })
-      groups.deleted = true
-      const restored = await ws.command("group.restore", { groupId })
-
-      if (person.owner) {
-        expect(deleted).toMatchObject({ kind: "server.result" })
-        expect(restored).toMatchObject({ kind: "server.result" })
-        // The delete went through; the test then marked it deleted again, and restore undid that.
-        expect(groups.writes).toBe(2)
-      } else {
-        for (const frame of [deleted, restored]) {
+        if (person.rename) {
+          expect(frame).toMatchObject({
+            kind: "server.result",
+            payload: { group: { name: "Trip" } },
+          })
+          expect(groups.name).toBe("Trip")
+        } else {
           expect(frame).toMatchObject({
             kind: "server.error",
             code: "forbidden",
             details: { code: "ROLE_INSUFFICIENT" },
           })
+          expect(groups.writes).toBe(0)
         }
-        expect(groups.writes).toBe(0)
-      }
-      ws.shutdown()
-    })
-  }
+        ws.shutdown()
+      })
 
-  it("answers a conflict with the code LAST_GROUP when it is the only group", async () => {
-    const { groups, buses } = stack()
-    groups.lastGroup = true
-    const ws = socket(buses, OWNER)
+      it(`${person.owner ? "lets" : "refuses"} ${person.name} delete and restore it`, async () => {
+        const { groups, buses } = stack()
+        const ws = open(buses, person.user)
 
-    const frame = await ws.command("group.delete", { groupId })
+        const deleted = await ws.command("group.delete", { groupId })
+        groups.deleted = true
+        const restored = await ws.command("group.restore", { groupId })
 
-    expect(frame).toMatchObject({
-      kind: "server.error",
-      code: "conflict",
-      details: { code: "LAST_GROUP" },
-    })
-    ws.shutdown()
-  })
-
-  it("tells a non-member the group does not exist for rename, delete and restore", async () => {
-    const { groups, buses } = stack()
-    const ws = socket(buses, STRANGER)
-
-    const live = [
-      await ws.command("group.rename", { groupId, name: "Trip" }),
-      await ws.command("group.delete", { groupId }),
-    ]
-    groups.deleted = true
-    const gone = await ws.command("group.restore", { groupId })
-
-    for (const frame of [...live, gone]) {
-      expect(frame).toMatchObject({
-        kind: "server.error",
-        code: "not_found",
-        details: { code: "GROUP_NOT_FOUND" },
+        if (person.owner) {
+          expect(deleted).toMatchObject({ kind: "server.result" })
+          expect(restored).toMatchObject({ kind: "server.result" })
+          // The delete went through; the test then marked it deleted again, and restore undid that.
+          expect(groups.writes).toBe(2)
+        } else {
+          for (const frame of [deleted, restored]) {
+            expect(frame).toMatchObject({
+              kind: "server.error",
+              code: "forbidden",
+              details: { code: "ROLE_INSUFFICIENT" },
+            })
+          }
+          expect(groups.writes).toBe(0)
+        }
+        ws.shutdown()
       })
     }
-    expect(groups.writes).toBe(0)
-    ws.shutdown()
+
+    it("answers a conflict with the code LAST_GROUP when it is the only group", async () => {
+      const { groups, buses } = stack()
+      groups.lastGroup = true
+      const ws = open(buses, OWNER)
+
+      const frame = await ws.command("group.delete", { groupId })
+
+      expect(frame).toMatchObject({
+        kind: "server.error",
+        code: "conflict",
+        details: { code: "LAST_GROUP" },
+      })
+      ws.shutdown()
+    })
+
+    it("tells a non-member the group does not exist for rename, delete and restore", async () => {
+      const { groups, buses } = stack()
+      const ws = open(buses, STRANGER)
+
+      const live = [
+        await ws.command("group.rename", { groupId, name: "Trip" }),
+        await ws.command("group.delete", { groupId }),
+      ]
+      groups.deleted = true
+      const gone = await ws.command("group.restore", { groupId })
+
+      for (const frame of [...live, gone]) {
+        expect(frame).toMatchObject({
+          kind: "server.error",
+          code: "not_found",
+          details: { code: "GROUP_NOT_FOUND" },
+        })
+      }
+      expect(groups.writes).toBe(0)
+      ws.shutdown()
+    })
+
+    it("lists the deleted groups for the owner only", async () => {
+      const { groups, buses } = stack()
+      groups.deleted = true
+      const owner = open(buses, OWNER)
+      const admin = open(buses, ADMIN)
+
+      const ownerFrame = await owner.query("group.deleted")
+      const adminFrame = await admin.query("group.deleted")
+
+      expect(ownerFrame).toMatchObject({ payload: { groups: [{ id: groupId }] } })
+      expect(adminFrame).toMatchObject({ payload: { groups: [] } })
+      owner.shutdown()
+      admin.shutdown()
+    })
   })
-
-  it("lists the deleted groups for the owner only", async () => {
-    const { groups, buses } = stack()
-    groups.deleted = true
-    const owner = socket(buses, OWNER)
-    const admin = socket(buses, ADMIN)
-
-    const ownerFrame = await owner.query("group.deleted")
-    const adminFrame = await admin.query("group.deleted")
-
-    expect(ownerFrame).toMatchObject({ payload: { groups: [{ id: groupId }] } })
-    expect(adminFrame).toMatchObject({ payload: { groups: [] } })
-    owner.shutdown()
-    admin.shutdown()
-  })
-})
+}
 
 describe("a write from another site", () => {
   const crossSite = { origin: "https://evil.example.net", "sec-fetch-site": "cross-site" }

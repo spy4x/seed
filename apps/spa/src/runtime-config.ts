@@ -5,10 +5,16 @@ import { loadRuntimeConfig as loadConfigFile } from "@spy4x/platform/browser/run
  * What the SPA reads from `/config.json` before it renders. The container writes the file at
  * start-up from `apps/spa/public-env.allow`, so one built image serves any environment. Every key
  * is optional: a missing one means "the default". A key not named here is dropped.
+ *
+ * `realtime` and `offline` switch the WebSocket module and the local-data module off when they are
+ * `false` (`apps/spa/src/modules.ts`, ADR 003); both run by default.
  */
 const RuntimeConfigSchema = type({
   "env?": "string",
   "errorReportDsn?": "string",
+  // The container writes every value as text, so a switch is read as `false` or `"false"`.
+  "realtime?": "boolean | 'true' | 'false'",
+  "offline?": "boolean | 'true' | 'false'",
 }).onUndeclaredKey("delete")
 
 export type RuntimeConfig = typeof RuntimeConfigSchema.infer

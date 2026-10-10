@@ -2,7 +2,7 @@ import { signal } from "@preact/signals"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import type { PushSubscribeRequest } from "@spy4x/platform/model"
 import type { User, UserPushTokenPublic } from "@domain/identity"
-import { realtimeCommand, realtimeQuery } from "./realtime.ts"
+import { callCommand, callQuery } from "../modules.ts"
 import { sessionState } from "./session.ts"
 
 /** What the profile store needs from the outside. Injected so tests need no socket. */
@@ -105,6 +105,6 @@ export function createProfileStore(dependencies: ProfileDependencies) {
 
 /** The page's own store, over the socket. */
 export const profileStore = createProfileStore({
-  query: (name) => realtimeQuery(name),
-  command: (name, payload) => realtimeCommand(name, payload),
+  query: (name) => callQuery(name),
+  command: (name, payload) => callCommand(name, payload),
 })

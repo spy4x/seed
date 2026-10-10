@@ -358,6 +358,43 @@ describe("outbox when the server answers", () => {
   })
 })
 
+describe("outbox when the session ended under it", () => {
+  /** The server's answer to a call without a session, as another user, or with a second factor owed. */
+  const unauthorized = () => {
+    throw new RealtimeRequestError("unauthorized", "The session belongs to another user")
+  }
+
+  it("keeps a queued note pending when the server answers that the session ended", async () => {
+    const { outbox, state, offline } = harness()
+    offline()
+    await outbox.submit({
+      kind: "create",
+      entityId: "n-new",
+      payload: { groupId, title: "Written offline", body: "text" },
+    })
+    state.online = true
+    state.server = unauthorized
+    await outbox.flush().catch(() => {})
+    expect(outbox.entries().map((entry) => [entry.payload.title, entry.status])).toEqual([
+      ["Written offline", "pending"],
+    ])
+  })
+
+  it("queues a note saved at the moment the server answers that the session ended", async () => {
+    const { outbox, state } = harness()
+    state.server = unauthorized
+    const outcome = await outbox.submit({
+      kind: "create",
+      entityId: "n-new",
+      payload: { groupId, title: "Saved as the session ended", body: "text" },
+    })
+    expect([outcome.kind, outbox.entries().map((entry) => entry.status)]).toEqual([
+      "queued",
+      ["pending"],
+    ])
+  })
+})
+
 describe("outbox conflicts found after a reconnect", () => {
   async function staleUpdate() {
     const h = harness()

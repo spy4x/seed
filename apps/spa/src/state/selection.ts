@@ -1,8 +1,8 @@
 import { signal } from "@preact/signals"
 import type { SelectedGroup } from "@domain/groups"
-import { apiFetch } from "./api.ts"
-import { realtimeCommand } from "./realtime.ts"
-import { isRetryable } from "./realtime-call.ts"
+import { apiRead } from "./realtime-call.ts"
+import { callCommand } from "../modules.ts"
+import { isRetryable } from "@spy4x/realtime/calls"
 
 /** What this device keeps of the selection, so the app opens on the right group with no network. */
 export interface SelectionCache {
@@ -163,11 +163,11 @@ function writeBrowserCache(userId: number, cache: SelectionCache | null): void {
 
 const onlineSelection: SelectionDependencies = {
   async fetch() {
-    const result = await apiFetch<SelectedGroup>("/api/groups/selected")
+    const result = await apiRead<SelectedGroup>("/api/groups/selected")
     if (!result.ok) throw new Error(result.error.message)
     return result.data
   },
-  send: (groupId) => realtimeCommand("group.select", { groupId }, { attempts: 1 }),
+  send: (groupId) => callCommand("group.select", { groupId }, { attempts: 1 }),
   readCache: readBrowserCache,
   writeCache: writeBrowserCache,
 }

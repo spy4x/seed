@@ -8,8 +8,8 @@ import {
   type ManagedSocket,
   NotifyStatus,
   RealtimeRequestError,
-  type RequestContext,
 } from "@spy4x/realtime"
+import { createOperationDispatcher, type Operations } from "@spy4x/realtime/operations"
 import { GROUP_AGGREGATE, GroupError } from "@domain/groups"
 import { AccessError, type Actor, userChangeGroupId } from "@domain/identity"
 import { NoteError, NoteVersionConflictError } from "@domain/notes"
@@ -26,26 +26,6 @@ export const USER_AGGREGATE = "user"
 
 const REVOKED_REASON = "session is no longer valid"
 
-/** What a socket handler is given for one request. */
-export interface SocketCall {
-  /** Built from the session as it is now, not as it was when the socket opened. */
-  actor: Actor
-  requestId: string
-  payload: unknown
-  /** Present on every command: the socket refuses a command without one. */
-  idempotencyKey?: string
-  signal: AbortSignal
-}
-
-/** One request name the socket serves. It parses its own payload and dispatches on a CQRS bus. */
-export interface SocketRequest {
-  kind: "command" | "query"
-  handle(call: SocketCall): Promise<unknown>
-}
-
-/** The requests the socket serves, by name (`group.create`). */
-export type SocketRequests = Readonly<Record<string, SocketRequest>>
-
 export interface RealtimeOptions {
   /** The session and user as they are now, or `null` when the session may no longer act. */
   entitledSession(sessionId: number): Promise<AppAuthState | null>
@@ -55,7 +35,8 @@ export interface RealtimeOptions {
    * access stops getting the group's hints.
    */
   memberUserIds(groupId: string): Promise<readonly number[]>
-  requests: SocketRequests
+  /** The table the socket serves; the call route is given the same object. */
+  operations: Operations<Actor>
   /** Called with every failure the socket hides from the client. */
   log(...data: unknown[]): void
   clock?: Clock
@@ -179,7 +160,13 @@ export class Realtime {
         options.log(`error: socket request ${context.name} failed`, error),
       ...options.registry,
     })
-    this.registry.onRequest((context) => this.#dispatch(context))
+    // The library's dispatcher is the socket adapter of the operations table. It refuses a request
+    // whose session now belongs to anyone but the user the socket was attached for.
+    this.registry.onRequest(createOperationDispatcher(options.operations, {
+      authenticate: (context) => this.#actorOf(context.socketId),
+      userIdOf: (actor) => actor.userId,
+      mapError: toRequestError,
+    }))
     this.registry.onClose((handle) => this.#live.delete(handle.id))
     // The client's handshake carries its cursors. The pull, not this answer, brings it up to date;
     // the acknowledgement only tells it the server heard.
@@ -319,32 +306,19 @@ export class Realtime {
     this.registry.shutdown()
   }
 
-  async #dispatch(context: RequestContext): Promise<unknown> {
-    const live = this.#live.get(context.socketId)
-    if (!live) throw new RealtimeRequestError("unauthorized", "the socket is not open")
-    const request = this.#options.requests[context.name]
-    if (!request || request.kind !== context.kind) {
-      throw new RealtimeRequestError("not_found", `unknown ${context.kind}: ${context.name}`)
-    }
-    if (request.kind === "command" && context.idempotencyKey === undefined) {
-      throw new RealtimeRequestError("bad_request", "a command needs an idempotency key")
-    }
+  /**
+   * The actor of a socket's session as it is now, or `null` when the session may no longer act.
+   * A socket whose session ended is closed after the answer: closed first, it would drop the
+   * `unauthorized` the client should read.
+   */
+  async #actorOf(socketId: string): Promise<Actor | null> {
+    const live = this.#live.get(socketId)
+    if (!live) return null
     const auth = await this.#options.entitledSession(live.sessionId)
     if (!auth) {
-      // After the answer: a socket closed first would drop the error the client should read.
       this.#clock.setTimeout(() => live.socket.close(POLICY_CLOSE_CODE, REVOKED_REASON), 0)
-      throw new RealtimeRequestError("unauthorized", "the session is no longer valid")
+      return null
     }
-    try {
-      return await request.handle({
-        actor: actorFromAuth(auth),
-        requestId: context.requestId,
-        payload: context.payload,
-        idempotencyKey: context.idempotencyKey,
-        signal: context.signal,
-      })
-    } catch (error) {
-      throw toRequestError(error) ?? error
-    }
+    return actorFromAuth(auth)
   }
 }

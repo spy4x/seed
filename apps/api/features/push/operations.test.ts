@@ -5,7 +5,7 @@ import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { UserMFAStatus } from "@domain/identity"
 import type { PushRegisterCommand, PushRemoveCommand } from "../../cqrs/commands.ts"
 import type { PushListQuery } from "../../cqrs/queries.ts"
-import { createPushSocketRequests } from "./socket.ts"
+import { createPushOperations } from "./operations.ts"
 
 const actor = {
   userId: 7,
@@ -32,7 +32,7 @@ function harness() {
     remove: PushRemoveCommand | null
     list: PushListQuery | null
   } = { register: null, remove: null, list: null }
-  const requests = createPushSocketRequests({
+  const requests = createPushOperations({
     register(command) {
       seen.register = command
       return Promise.resolve({ userPushToken: device })
@@ -82,13 +82,13 @@ describe("push socket requests", () => {
   it("refuses a register without a subscription as bad_request and does not dispatch it", async () => {
     const { requests, seen } = harness()
 
-    const failure = await requests["push.register"].handle({
+    const failure = await Promise.resolve(requests["push.register"].handle({
       actor,
       requestId: "req-1",
       signal,
       idempotencyKey: "key-1",
       payload: { deviceId: "device-1" },
-    }).catch((error) => error)
+    })).catch((error) => error)
 
     expect(failure).toBeInstanceOf(RealtimeRequestError)
     expect((failure as RealtimeRequestError).code).toBe("bad_request")
@@ -118,13 +118,13 @@ describe("push socket requests", () => {
   it("refuses a remove that names another field", async () => {
     const { requests, seen } = harness()
 
-    const failure = await requests["push.remove"].handle({
+    const failure = await Promise.resolve(requests["push.remove"].handle({
       actor,
       requestId: "req-2",
       signal,
       idempotencyKey: "key-2",
       payload: { deviceId: "device-1", userId: 8 },
-    }).catch((error) => error)
+    })).catch((error) => error)
 
     expect(failure).toBeInstanceOf(RealtimeRequestError)
     expect(seen.remove).toBe(null)

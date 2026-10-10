@@ -72,7 +72,7 @@ Deno.test("members of both groups hear that a note moved", async () => {
       clock,
       entitledSession: () => Promise.resolve(null),
       memberUserIds: (groupId) => groups.listMemberUserIds(groupId),
-      requests: {},
+      operations: {},
       log: () => {},
     })
     const sockets = new Map<number, FakeSocket>()

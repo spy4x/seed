@@ -1,18 +1,23 @@
 import { expect } from "@std/expect"
-import { describe, it } from "@std/testing/bdd"
+import { afterEach, describe, it } from "@std/testing/bdd"
+import type { User } from "@domain/identity"
 import { GroupRole } from "@domain/groups"
 import { EMPTY_INVITATION_DRAFT } from "@ui/group-invitations.tsx"
 import { createInvitationsStore, type InvitationFetch } from "./invitations.ts"
+import { sessionState } from "./session.ts"
 
 const token = "A".repeat(43)
 
 /** A fake API answering `routes["METHOD url"]` with a status and a JSON body; calls recorded. */
 function harness(routes: Record<string, [number, unknown]>) {
   const calls: { method: string; url: string; body: unknown }[] = []
+  /** The user each request named in `X-Realtime-User`, in order; `null` when it named nobody. */
+  const pageUsers: (string | null)[] = []
   let offline = false
   const fetch: InvitationFetch = (url, init) => {
     const method = init?.method ?? "GET"
     calls.push({ method, url, body: init?.body ? JSON.parse(String(init.body)) : undefined })
+    pageUsers.push(new Headers(init?.headers).get("x-realtime-user"))
     if (offline) return Promise.reject(new TypeError("Failed to fetch"))
     const [status, body] = routes[`${method} ${url}`] ?? [404, { error: { message: "No route" } }]
     return Promise.resolve(new Response(JSON.stringify(body), { status }))
@@ -20,6 +25,7 @@ function harness(routes: Record<string, [number, unknown]>) {
   return {
     store: createInvitationsStore({ fetch, origin: () => "https://app.example.com" }),
     calls,
+    pageUsers,
     goOffline: () => (offline = true),
   }
 }
@@ -170,5 +176,26 @@ describe("invitations store", () => {
 
     expect(store.answerError.value).toMatchObject({ ref: token, message: /out of reach/ })
     expect(store.answering.value).toBeNull()
+  })
+})
+
+describe("invitations store on a signed-in page", () => {
+  afterEach(() => {
+    sessionState.value = { ...sessionState.value, user: null, isMfaRequired: false }
+  })
+
+  it("reads as the page's user, and is signed out when the read is refused with 401", async () => {
+    sessionState.value = { ...sessionState.value, user: { id: 7 } as User, isMfaRequired: false }
+    const { store, pageUsers } = harness({
+      "GET /api/groups/g-1/invitations": [200, { invitations: [row] }],
+      "GET /api/groups/g-2/invitations": [401, { error: { code: "unauthorized", message: "No" } }],
+    })
+
+    await store.open("g-1")
+    const stillSignedIn = sessionState.value.user?.id
+    await store.open("g-2")
+
+    expect(pageUsers).toEqual(["7", "7"])
+    expect([stillSignedIn, sessionState.value.user]).toEqual([7, null])
   })
 })

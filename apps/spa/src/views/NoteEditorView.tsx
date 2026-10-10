@@ -7,7 +7,7 @@ import { NOTE_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
 import { notesStore } from "../state/notes.ts"
 import { selectionStore } from "../state/selection.ts"
-import { OfflineStatus } from "../offline/OfflineStatus.tsx"
+import { OfflineStatus } from "../modules.ts"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { isSpaPath } from "./spa-paths.ts"
 

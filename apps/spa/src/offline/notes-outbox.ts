@@ -1,4 +1,5 @@
 import { RealtimeRequestError } from "@spy4x/realtime"
+import { isRetryable } from "@spy4x/realtime/calls"
 import {
   createOutbox,
   type Outbox,
@@ -7,7 +8,6 @@ import {
   type SendFailure,
 } from "@spy4x/realtime/outbox"
 import type { NoteItem } from "../state/notes.ts"
-import { isRetryable } from "../state/realtime-call.ts"
 import type { LocalStore, NoteEntry, NotePayload } from "./local-store.ts"
 
 /** The offline outbox as the notes use it: a note is the entity, its text the payload. */
@@ -16,7 +16,7 @@ export type NotesOutbox = Outbox<NotePayload, NoteItem>
 /** What the notes outbox needs from the outside. Injected so tests need no network or IndexedDB. */
 export interface NotesOutboxPorts {
   store: LocalStore
-  /** Sends one note command over the socket with the idempotency key. One try. */
+  /** Sends one note command through the calls port with the idempotency key. One try. */
   send(
     name: `note.${OutboxCommand<NotePayload>["kind"]}`,
     payload: Record<string, unknown>,
@@ -25,7 +25,7 @@ export interface NotesOutboxPorts {
   /** The server's note as it is now, or `null` when it is gone. Rejects when unreachable. */
   fetchNote(groupId: string, noteId: string): Promise<NoteItem | null>
   lock: OutboxLock
-  /** Whether the socket is open and the page is signed in as the queue's user. */
+  /** Whether the calls port is reachable and the page is signed in as the queue's user. */
   isOnline(): boolean
   newKey?(): string
   now?(): string
@@ -39,6 +39,9 @@ function codeOf(error: RealtimeRequestError): string | null {
 /** Reads a failed note command: unreachable (try later) or the server's refusal and its code. */
 export function classifyNoteError(error: unknown): SendFailure {
   if (!(error instanceof RealtimeRequestError) || isRetryable(error)) return { kind: "unreachable" }
+  // The session ended, belongs to someone else or owes a second factor (the server answers all
+  // three as `unauthorized`): the write was not judged, so it stays queued for its owner.
+  if (error.code === "unauthorized") return { kind: "unreachable" }
   switch (codeOf(error)) {
     case "VERSION_CONFLICT":
       return { kind: "version" }

@@ -33,11 +33,12 @@ import type {
   GroupSummary,
   SelectedGroup,
 } from "@domain/groups"
-import type { SocketRequests } from "../../services/realtime.ts"
+import type { Actor } from "@domain/identity"
+import type { Operations } from "@spy4x/realtime/operations"
 import { type GroupListDependencies, listGroupsPage, parseListPayload } from "./list.ts"
 
 /** What the group socket requests need from the app. */
-export interface GroupSocketDependencies extends GroupListDependencies {
+export interface GroupOperationDependencies extends GroupListDependencies {
   create(command: GroupCreateCommand): Promise<GroupCreateResult>
   get(query: GroupGetQuery): Promise<GroupGetResult>
   select(command: GroupSelectCommand): Promise<SelectedGroup>
@@ -59,7 +60,7 @@ export interface GroupSocketDependencies extends GroupListDependencies {
  * REST route uses and dispatches on the same bus; none holds a business rule or an authorization
  * check of its own.
  */
-export function createGroupSocketRequests(dependencies: GroupSocketDependencies): SocketRequests {
+export function createGroupOperations(dependencies: GroupOperationDependencies): Operations<Actor> {
   return {
     "group.create": {
       kind: "command",

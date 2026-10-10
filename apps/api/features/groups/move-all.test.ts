@@ -19,7 +19,7 @@ import type { APIContext } from "../../_types.ts"
 import { createGroupsRoute, type GroupsRouteDependencies } from "../../routes/groups.ts"
 import { Realtime } from "../../services/realtime.ts"
 import { createGroupMoveAllHandler } from "./handlers.ts"
-import { createGroupSocketRequests } from "./socket.ts"
+import { createGroupOperations } from "./operations.ts"
 
 /**
  * Moving all of a group's data over both transports, on the bus as the API wires it (session gate,
@@ -126,7 +126,7 @@ function socket(buses: GroupsRouteDependencies, userId: number) {
     clock: new FakeClock(),
     entitledSession: () => Promise.resolve(auth),
     memberUserIds: () => Promise.resolve([]),
-    requests: createGroupSocketRequests(buses),
+    operations: createGroupOperations(buses),
     log: () => {},
   })
   const ws = new FakeSocket("wss://app.example.com/api/ws")

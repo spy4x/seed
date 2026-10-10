@@ -1,77 +1,118 @@
-import { ConnectionLostError, RealtimeRequestError, RequestTimeoutError } from "@spy4x/realtime"
-
-/** The two calls a socket offers. `ClientTransport` satisfies it. */
-export interface CallPort {
-  command(name: string, payload?: unknown, options?: { idempotencyKey?: string }): Promise<unknown>
-  query(name: string, payload?: unknown): Promise<unknown>
-}
-
-export interface RetryOptions {
-  /** Total tries, including the first. */
-  attempts?: number
-  /** Wait before try `n` is `delayMs * n`. */
-  delayMs?: number
-  sleep?: (ms: number) => Promise<void>
-  /** Makes the key a command is sent with; called once per command, never per try. */
-  newKey?: () => string
-}
-
-const DEFAULT_ATTEMPTS = 4
-const DEFAULT_DELAY_MS = 1_000
+import { REALTIME_USER_HEADER } from "@spy4x/realtime/operations"
+import {
+  type AvailableCallPort,
+  type CallPort,
+  createComposedCallPort,
+  createHttpCallPort,
+  withUnauthorizedHook,
+} from "@spy4x/realtime/calls"
+import { apiFetch as send } from "@spy4x/platform/api"
+import { sessionState } from "./session.ts"
 
 /**
- * Whether the outcome of a call is unknown or the server was busy, so trying again can help: the
- * answer did not arrive in time, the socket dropped, the server gave up, or it is still running
- * the first try of the same command.
+ * What is this app's about the calls port (ADR 003): where the call route is, which user a call is
+ * sent as, and what an `unauthorized` answer does to the page. The port itself, its retries and its
+ * errors are the library's (`@spy4x/realtime/calls`).
  */
-export function isRetryable(error: unknown): boolean {
-  if (error instanceof RequestTimeoutError || error instanceof ConnectionLostError) return true
-  if (error instanceof RealtimeRequestError) {
-    if (error.code === "timeout") return true
-    const details = error.details as { code?: unknown } | undefined
-    return error.code === "conflict" && details?.code === "IN_PROGRESS"
-  }
-  return false
+
+/** Where the API serves `POST <base>/<name>` (`apps/api/routes/call.ts`). */
+export const CALL_BASE_URL = "/api/call"
+
+/**
+ * Signs the page out, as an answer of `unauthorized` must: the session ended, or the cookie now
+ * belongs to somebody else. The app then drops the socket, the cursors and the data it holds.
+ */
+export function signOutPage(): void {
+  if (sessionState.value.user === null && !sessionState.value.isMfaRequired) return
+  sessionState.value = { ...sessionState.value, user: null, isMfaRequired: false }
 }
 
-async function withRetry<T>(run: () => Promise<T>, options: RetryOptions): Promise<T> {
-  const attempts = options.attempts ?? DEFAULT_ATTEMPTS
-  const delayMs = options.delayMs ?? DEFAULT_DELAY_MS
-  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)))
-  for (let attempt = 1;; attempt++) {
-    try {
-      return await run()
-    } catch (error) {
-      if (attempt >= attempts || !isRetryable(error)) throw error
-      await sleep(delayMs * attempt)
-    }
-  }
+/** What {@link createAppCallPort} is built from. */
+export interface AppCallPortOptions {
+  /** The user the page was started for; every call names them. */
+  userId: number
+  /** The socket module's port, when the product has one: preferred while its socket is open. */
+  socket?: AvailableCallPort
+  /**
+   * The socket's first open while it is pending, or `null`. A call made meanwhile waits for it
+   * (the library's `firstOpenWait`), so the page's first reads do not go over HTTP beside a
+   * socket that is about to open.
+   */
+  socketFirstOpen?: () => Promise<void> | null
+  /** Defaults to {@link signOutPage}. */
+  onUnauthorized?: () => void
+  /** Defaults to the global `fetch`; a test passes its own. */
+  fetch?: typeof fetch
 }
 
 /**
- * Sends a command with a fresh idempotency key and, when the outcome is unknown, sends it again
- * with the same key. The server runs a command once per key and answers a repeat with the first
- * result, so a retry cannot create a second group.
+ * The calls port of one signed-in user: HTTP always, the socket in front of it when there is one.
+ * An `unauthorized` answer over either signs the page out, which is how a page with no socket
+ * learns that its session ended.
  */
-export function sendCommand<T>(
-  port: CallPort,
-  name: string,
-  payload: unknown,
-  options: RetryOptions = {},
-): Promise<T> {
-  const idempotencyKey = (options.newKey ?? (() => crypto.randomUUID()))()
-  return withRetry(
-    async () => await port.command(name, payload, { idempotencyKey }) as T,
-    options,
-  )
+export function createAppCallPort(options: AppCallPortOptions): CallPort {
+  const http = createHttpCallPort({
+    baseUrl: CALL_BASE_URL,
+    userId: String(options.userId),
+    fetch: options.fetch,
+  })
+  const { socket, socketFirstOpen } = options
+  const port = socket
+    ? createComposedCallPort({
+      socket,
+      http,
+      firstOpenWait: socketFirstOpen && { pending: socketFirstOpen },
+    })
+    : http
+  return withUnauthorizedHook(port, options.onUnauthorized ?? signOutPage)
 }
 
-/** Sends a query, trying again when the socket is down or the answer is late. */
-export function sendQuery<T>(
-  port: CallPort,
-  name: string,
-  payload?: unknown,
-  options: RetryOptions = {},
-): Promise<T> {
-  return withRetry(async () => await port.query(name, payload) as T, options)
+/**
+ * Whether a call made now reaches the server as `userId`: the page is still signed in as them and
+ * the browser has a network. The outbox sends only while this holds (`canSend`), so one person's
+ * queue is never sent as another, over the socket or over HTTP.
+ */
+export function canCallAs(
+  userId: number,
+  isOnline: () => boolean = () => globalThis.navigator?.onLine !== false,
+): boolean {
+  return sessionState.value.user?.id === userId && !sessionState.value.isMfaRequired && isOnline()
+}
+
+/**
+ * A read (`GET`) of a REST route. It names the user the page was started for, as a call does, and
+ * an `unauthorized` answer signs the page out: the session ended, or the cookie now belongs to
+ * somebody else. The caller sees a failed read and so writes nothing to a device copy.
+ *
+ * A page with nobody signed in names nobody and is never signed out by an answer: the start-up
+ * read of `/api/auth/me` and the second-factor step read as they always did.
+ */
+export async function apiRead<T>(path: string, init?: RequestInit, fetcher: typeof send = send) {
+  const userId = sessionState.value.user?.id
+  if (userId === undefined) return await fetcher<T>(path, init)
+  const result = await fetcher<T>(path, { ...init, headers: asUser(userId, init?.headers) })
+  if (!result.ok && result.status === 401) signOutPage()
+  return result
+}
+
+/**
+ * {@link apiRead} for a store that reads the answer itself, such as the invitations store, which
+ * needs more of a refusal than `apiFetch` keeps. Same rule: the read names the page's user, and a
+ * 401 signs the page out.
+ */
+export async function fetchRead(
+  url: string,
+  init?: RequestInit,
+  fetcher: (url: string, init?: RequestInit) => Promise<Response> = globalThis.fetch,
+): Promise<Response> {
+  const userId = sessionState.value.user?.id
+  if (userId === undefined) return await fetcher(url, init)
+  const response = await fetcher(url, { ...init, headers: asUser(userId, init?.headers) })
+  if (response.status === 401) signOutPage()
+  return response
+}
+
+/** The caller's headers with the page's user named beside them. */
+function asUser(userId: number, given?: HeadersInit): Record<string, string> {
+  return { ...Object.fromEntries(new Headers(given)), [REALTIME_USER_HEADER]: String(userId) }
 }

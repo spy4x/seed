@@ -107,7 +107,9 @@ One built SPA image serves every environment. Settings that differ between envir
 baked into the build; the container writes them to `/config.json` when it starts.
 
 - **The allow list:** `apps/spa/public-env.allow` names the only container variables that reach the
-  file (`SPA_ENV` as `env`, `SPA_ERROR_REPORT_DSN` as `errorReportDsn`). Anything else in the
+  file (`SPA_ENV` as `env`, `SPA_ERROR_REPORT_DSN` as `errorReportDsn`, and the module switches
+  `SPA_REALTIME` as `realtime` and `SPA_OFFLINE` as `offline`; `docs/offline.md`, "Switching a
+  module off"). Anything else in the
   container's environment is ignored. The file goes to every visitor's browser, so list a public
   value only; `tests/spa-runtime-config.test.ts` fails if a name looks like a secret.
 - **Start-up:** nginx's entrypoint runs `apps/spa/runtime-config.sh`, which writes `/tmp/config.json`

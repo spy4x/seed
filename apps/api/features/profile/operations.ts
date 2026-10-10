@@ -4,11 +4,12 @@ import { UserProfileUpdateCommand } from "../../cqrs/commands.ts"
 import type { UserProfileUpdateResult } from "../../cqrs/commands.ts"
 import { UserProfileGetQuery } from "../../cqrs/queries.ts"
 import type { UserProfileGetResult } from "../../cqrs/queries.ts"
-import type { SocketRequests } from "../../services/realtime.ts"
+import type { Actor } from "@domain/identity"
+import type { Operations } from "@spy4x/realtime/operations"
 import { expectNoPayload, parsePayload } from "../../services/socket-payload.ts"
 
 /** What the profile socket requests need from the app. */
-export interface ProfileSocketDependencies {
+export interface ProfileOperationDependencies {
   get(query: UserProfileGetQuery): Promise<UserProfileGetResult>
   update(command: UserProfileUpdateCommand): Promise<UserProfileUpdateResult>
 }
@@ -18,9 +19,9 @@ export interface ProfileSocketDependencies {
  * schema and dispatch on the same bus; the person is always the session's, never named in the
  * payload.
  */
-export function createProfileSocketRequests(
-  dependencies: ProfileSocketDependencies,
-): SocketRequests {
+export function createProfileOperations(
+  dependencies: ProfileOperationDependencies,
+): Operations<Actor> {
   return {
     "profile.get": {
       kind: "query",

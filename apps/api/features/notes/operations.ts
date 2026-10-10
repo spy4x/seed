@@ -20,11 +20,12 @@ import {
   parseNoteMoveRequest,
   parseNoteRequest,
 } from "@domain/notes"
-import type { SocketRequests } from "../../services/realtime.ts"
+import type { Actor } from "@domain/identity"
+import type { Operations } from "@spy4x/realtime/operations"
 import { DEFAULT_NOTE_LIST_LIMIT, listNotesPage, type NoteListDependencies } from "./list.ts"
 
 /** What the note socket requests need from the app: the buses, and the list cursor. */
-export interface NoteSocketDependencies extends NoteListDependencies {
+export interface NoteOperationDependencies extends NoteListDependencies {
   create(command: NoteCreateCommand): Promise<NoteWriteResult>
   update(command: NoteUpdateCommand): Promise<{ note: Note }>
   delete(command: NoteDeleteCommand): Promise<{ note: DeletedNote }>
@@ -38,7 +39,7 @@ export interface NoteSocketDependencies extends NoteListDependencies {
  * The note commands and queries the socket serves. Each parses its payload with the schemas the
  * REST route uses and dispatches on the same bus; who may do what is decided in the handlers.
  */
-export function createNoteSocketRequests(dependencies: NoteSocketDependencies): SocketRequests {
+export function createNoteOperations(dependencies: NoteOperationDependencies): Operations<Actor> {
   return {
     "note.create": {
       kind: "command",

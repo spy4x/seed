@@ -10,7 +10,7 @@ import type {
 } from "@domain/groups"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { UserMFAStatus } from "@domain/identity"
-import { createGroupSocketRequests } from "./socket.ts"
+import { createGroupOperations } from "./operations.ts"
 import { createGroupGetHandler } from "./handlers.ts"
 import { toRequestError } from "../../services/realtime.ts"
 import { DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT, parseListPayload } from "./list.ts"
@@ -52,7 +52,7 @@ function harness() {
     select: null,
     selected: null,
   }
-  const requests = createGroupSocketRequests({
+  const requests = createGroupOperations({
     create(command) {
       seen.command = command
       return Promise.resolve({
@@ -199,7 +199,7 @@ describe("group socket requests", () => {
             : null,
         ),
     } as GroupRepository)
-    const requests = createGroupSocketRequests({
+    const requests = createGroupOperations({
       create: () => Promise.reject(new Error("not used")),
       list: () => Promise.reject(new Error("not used")),
       get: handler,
@@ -357,7 +357,7 @@ describe("group changes over the socket", () => {
         },
       })
     }
-    const requests = createGroupSocketRequests({
+    const requests = createGroupOperations({
       create: () => Promise.reject(new Error("not used")),
       list: () => Promise.reject(new Error("not used")),
       get: () => Promise.reject(new Error("not used")),

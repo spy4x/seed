@@ -63,6 +63,14 @@ describe("the SPA's runtime configuration", () => {
     }
   })
 
+  it("reads the module switches, written as booleans or as the container's text", async () => {
+    const asBooleans = await loadRuntimeConfig(serving(`{"realtime":false,"offline":true}`).fetcher)
+    const asText = await loadRuntimeConfig(serving(`{"realtime":"false","offline":"true"}`).fetcher)
+
+    expect(asBooleans).toEqual({ realtime: false, offline: true })
+    expect(asText).toEqual({ realtime: "false", offline: "true" })
+  })
+
   it("falls back to the defaults when the network fails", async () => {
     const fetcher = (() => Promise.reject(new TypeError("offline"))) as unknown as typeof fetch
 

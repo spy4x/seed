@@ -1,11 +1,8 @@
 import { computed, signal } from "@preact/signals"
 import { ConnectionLostError, RealtimeRequestError } from "@spy4x/realtime"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
-import { apiFetch } from "./api.ts"
-import { realtimeCommand, realtimeQuery } from "./realtime.ts"
-import { sessionState } from "./session.ts"
-import { currentLayer } from "../offline/index.ts"
-import { offlineNotes } from "../offline/notes-offline.ts"
+import { apiRead } from "./realtime-call.ts"
+import { callCommand, callQuery, canCall, currentLayer, offlineNotes } from "../modules.ts"
 
 /** A note as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface NoteItem {
@@ -641,41 +638,42 @@ function toEdit(note: NoteItem): Edit {
 }
 
 /**
- * Restores over the socket, or refuses at once when it is not open. A restore is never queued, and
- * the call's own retries would keep the person waiting about six seconds for the same answer.
+ * Restores through the calls port, or refuses at once when the server cannot be reached. A restore
+ * is never queued, and the call's own retries would keep the person waiting about six seconds for
+ * the same answer.
  */
-export function restoreOverSocket(
+export function restoreWhileReachable(
   input: { groupId: string; id: string },
-  isOpen: () => boolean = () => sessionState.value.wsStatus === "open",
+  isOpen: () => boolean = canCall,
   send: (input: { groupId: string; id: string }) => Promise<{ note: NoteItem }> = (value) =>
-    realtimeCommand("note.restore", value),
+    callCommand("note.restore", value),
 ): Promise<{ note: NoteItem }> {
-  if (!isOpen()) return Promise.reject(new ConnectionLostError("the socket is not open"))
+  if (!isOpen()) return Promise.reject(new ConnectionLostError("the server cannot be reached"))
   return send(input)
 }
 
-/** The notes as the server serves them: reads over REST, writes over the socket. */
+/** The notes as the server serves them: reads over REST, writes through the calls port. */
 const onlineNotes: NotesDependencies = {
   async fetchPage(groupId, cursor, deleted = false) {
     const query = new URLSearchParams({ limit: String(PAGE_LIMIT) })
     if (cursor) query.set("cursor", cursor)
     if (deleted) query.set("deleted", "true")
-    const result = await apiFetch<NotePage>(`/api/groups/${groupId}/notes?${query}`)
+    const result = await apiRead<NotePage>(`/api/groups/${groupId}/notes?${query}`)
     if (!result.ok) throw new Error(result.error.message)
     return result.data
   },
-  get: (groupId, id) => realtimeQuery("note.get", { groupId, id }),
-  locate: (id) => realtimeQuery("note.locate", { id }),
-  create: (input) => realtimeCommand("note.create", input),
-  update: (input) => realtimeCommand("note.update", input),
-  delete: (input) => realtimeCommand("note.delete", input),
-  restore: (input) => restoreOverSocket(input),
-  move: (input) => realtimeCommand("note.move", input),
+  get: (groupId, id) => callQuery("note.get", { groupId, id }),
+  locate: (id) => callQuery("note.locate", { id }),
+  create: (input) => callCommand("note.create", input),
+  update: (input) => callCommand("note.update", input),
+  delete: (input) => callCommand("note.delete", input),
+  restore: (input) => restoreWhileReachable(input),
+  move: (input) => callCommand("note.move", input),
   newId: () => crypto.randomUUID(),
 }
 
 /**
- * The page's own store: reads over REST (start-up and after a push), writes over the socket, and
+ * The page's own store: reads over REST (start-up and after a push), writes through the calls port, and
  * with the offline layer running, served from the device first and queued while offline.
  */
 export const notesStore = createNotesStore(offlineNotes(onlineNotes, currentLayer))

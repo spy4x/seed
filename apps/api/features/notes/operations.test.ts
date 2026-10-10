@@ -10,7 +10,7 @@ import {
   type NoteMoveCommand,
   type NoteRestoreCommand,
 } from "@domain/notes"
-import { createNoteSocketRequests } from "./socket.ts"
+import { createNoteOperations } from "./operations.ts"
 import { DEFAULT_NOTE_LIST_LIMIT } from "./list.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
@@ -31,7 +31,7 @@ function harness() {
     restore: NoteRestoreCommand | null
   } = { create: null, list: null, locate: null, move: null, restore: null }
   const unused = () => Promise.reject(new Error("not used"))
-  const requests = createNoteSocketRequests({
+  const requests = createNoteOperations({
     create(command) {
       seen.create = command
       return unused()
@@ -80,13 +80,13 @@ describe("note socket requests", () => {
   it("dispatches a create with the socket's actor, request id and idempotency key", async () => {
     const { requests, seen } = harness()
 
-    await requests["note.create"].handle({
+    await Promise.resolve(requests["note.create"].handle({
       actor,
       requestId: "req-1",
       signal,
       idempotencyKey: "key-1",
       payload: { groupId, id, title: " Plan ", body: "b" },
-    }).catch(() => {})
+    })).catch(() => {})
 
     expect(seen.create?.data).toEqual({
       actor,
@@ -102,13 +102,13 @@ describe("note socket requests", () => {
   it("dispatches a restore with the socket's actor, the note, the request id and the key", async () => {
     const { requests, seen } = harness()
 
-    await requests["note.restore"].handle({
+    await Promise.resolve(requests["note.restore"].handle({
       actor,
       requestId: "req-8",
       signal,
       idempotencyKey: "key-8",
       payload: { groupId, id },
-    }).catch(() => {})
+    })).catch(() => {})
 
     expect(seen.restore?.data).toEqual({
       actor,
@@ -123,13 +123,13 @@ describe("note socket requests", () => {
     const { requests, seen } = harness()
     const toGroupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111003"
 
-    await requests["note.move"].handle({
+    await Promise.resolve(requests["note.move"].handle({
       actor,
       requestId: "req-9",
       signal,
       idempotencyKey: "key-9",
       payload: { groupId, toGroupId, noteIds: [id] },
-    }).catch(() => {})
+    })).catch(() => {})
 
     expect(seen.move?.data).toEqual({
       actor,

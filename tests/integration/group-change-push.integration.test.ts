@@ -163,7 +163,7 @@ Deno.test("a committed group change reaches its members' sockets as a hint", asy
         clock,
         entitledSession: () => Promise.resolve(null),
         memberUserIds: (groupId) => new PostgresGroupRepository(sql).listMemberUserIds(groupId),
-        requests: {},
+        operations: {},
         log: () => {},
       })
       const ownerSocket = new FakeSocket("wss://app.example.com/api/ws")
@@ -217,7 +217,7 @@ Deno.test("a member who loses a group keeps the socket and gets no hint for it a
       clock: new FakeClock(),
       entitledSession: () => Promise.resolve(null),
       memberUserIds: (id) => new PostgresGroupRepository(sql).listMemberUserIds(id),
-      requests: {},
+      operations: {},
       log: () => {},
     })
     const memberSocket = new FakeSocket("wss://app.example.com/api/ws")

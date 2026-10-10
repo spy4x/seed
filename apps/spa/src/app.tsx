@@ -10,13 +10,20 @@ import { bootstrapSession, settleOwedSignOut } from "./state/auth.ts"
 import { groupsStore } from "./state/groups.ts"
 import { notesStore } from "./state/notes.ts"
 import { selectionStore } from "./state/selection.ts"
-import { connectionDisplay, connectRealtime, disconnectRealtime } from "./state/realtime.ts"
 import { profileStore } from "./state/profile.ts"
 import { membersStore } from "./state/members.ts"
-import { createPull } from "./state/pull.ts"
+import { createChangeCheck, createPull } from "./state/pull.ts"
 import { emailStore } from "./state/email.ts"
-import { flushOutbox, startOffline, stopOffline } from "./offline/index.ts"
-import { forgetUser, recallUser, rememberUser } from "./offline/session-cache.ts"
+import {
+  connectionDisplay,
+  flushOutbox,
+  forgetModules,
+  forgetUser,
+  recallUser,
+  rememberUser,
+  startModules,
+  stopChanges,
+} from "./modules.ts"
 import { toasts } from "./state/toasts.ts"
 import { install } from "./install.ts"
 import { AuthView } from "./views/AuthView.tsx"
@@ -172,8 +179,7 @@ export function App() {
     const userId = sessionState.value.user?.id
     if (userId === undefined || sessionState.value.isMfaRequired) {
       // Signed out, or the second factor is still owed: drop the socket, the cursors and the data.
-      disconnectRealtime({ forget: true })
-      void stopOffline({ forget: true })
+      forgetModules()
       groupsStore.reset()
       membersStore.reset()
       notesStore.reset()
@@ -188,7 +194,7 @@ export function App() {
     // The REST read is the pull: it runs at start-up, after every reconnect and for every push
     // that is news, so a missed frame costs one read and never leaves the list wrong. A note
     // change moves its group's sequence, so the open group's notes are read again too.
-    const pull = createPull({
+    const reads = {
       userId,
       flushOutbox,
       profile: profileStore,
@@ -197,14 +203,14 @@ export function App() {
       notes: notesStore,
       members: membersStore,
       notifications: notificationsStore,
-    })
-    startOffline(userId)
+    }
     selectionStore.start(userId)
     // The banner asks for a code while the address waits for one.
     void emailStore.refresh()
-    void pull().catch(() => {})
-    connectRealtime(userId, pull)
-    return () => disconnectRealtime()
+    // The calls port, the device copy, and what triggers the pull: the socket's hints, or without
+    // the socket the page's own events and a timer (`modules.ts`).
+    startModules(userId, { pull: createPull(reads), check: createChangeCheck(reads) })
+    return () => stopChanges()
   }, [
     sessionState.value.user?.id,
     sessionState.value.isMfaRequired,

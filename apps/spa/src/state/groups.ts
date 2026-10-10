@@ -2,10 +2,14 @@ import { signal } from "@preact/signals"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import type { GroupColor, GroupDetails, GroupMoveAllResult, GroupRole } from "@domain/groups"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
-import { apiFetch } from "./api.ts"
-import { advanceGroupCursor, realtimeCommand, realtimeQuery } from "./realtime.ts"
-import { offlineGroups } from "../offline/groups-offline.ts"
-import { currentLayer } from "../offline/index.ts"
+import { apiRead } from "./realtime-call.ts"
+import {
+  advanceGroupCursor,
+  callCommand,
+  callQuery,
+  currentLayer,
+  offlineGroups,
+} from "../modules.ts"
 
 /** A group as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface GroupItem {
@@ -323,31 +327,31 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
 const onlineGroups: GroupsDependencies = {
   async fetchPage(cursor, via) {
     if (via === "socket") {
-      return await realtimeQuery<GroupPage>("group.list", {
+      return await callQuery<GroupPage>("group.list", {
         limit: PAGE_LIMIT,
         ...(cursor ? { cursor } : {}),
       })
     }
     const query = new URLSearchParams({ limit: String(PAGE_LIMIT) })
     if (cursor) query.set("cursor", cursor)
-    const result = await apiFetch<GroupPage>(`/api/groups?${query}`)
+    const result = await apiRead<GroupPage>(`/api/groups?${query}`)
     if (!result.ok) throw new Error(result.error.message)
     return result.data
   },
   async fetchDeleted(via) {
     if (via === "socket") {
-      return await realtimeQuery<{ groups: DeletedGroupItem[] }>("group.deleted")
+      return await callQuery<{ groups: DeletedGroupItem[] }>("group.deleted")
     }
-    const result = await apiFetch<{ groups: DeletedGroupItem[] }>("/api/groups/deleted")
+    const result = await apiRead<{ groups: DeletedGroupItem[] }>("/api/groups/deleted")
     if (!result.ok) throw new Error(result.error.message)
     return result.data
   },
-  create: (input) => realtimeCommand("group.create", input),
-  rename: (input) => realtimeCommand("group.rename", input),
-  updateDetails: (input) => realtimeCommand("group.updateDetails", input),
-  remove: (input) => realtimeCommand("group.delete", input),
-  restore: (input) => realtimeCommand("group.restore", input),
-  moveAll: (input) => realtimeCommand("group.moveAll", input),
+  create: (input) => callCommand("group.create", input),
+  rename: (input) => callCommand("group.rename", input),
+  updateDetails: (input) => callCommand("group.updateDetails", input),
+  remove: (input) => callCommand("group.delete", input),
+  restore: (input) => callCommand("group.restore", input),
+  moveAll: (input) => callCommand("group.moveAll", input),
   advance: advanceGroupCursor,
   newId: () => crypto.randomUUID(),
 }

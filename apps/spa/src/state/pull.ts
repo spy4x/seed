@@ -55,3 +55,55 @@ export function createPull(dependencies: PullDependencies) {
     ])
   }
 }
+
+/** What {@link createChangeCheck} reads beside the pull: each group's change sequence. */
+export interface ChangeCheckDependencies extends PullDependencies {
+  groups: {
+    refresh(): Promise<void>
+    groups: ReadonlySignal<readonly { id: string; changeSequence: string }[]>
+  }
+}
+
+/**
+ * What a page with no socket runs in place of hints (ADR 003, "Changes"). `full` is the pull
+ * itself: the start, the browser back online, the tab shown again. Otherwise it is the cheap check
+ * the timer and the page's own write run: it reads the groups list, which carries every group's
+ * change sequence, and reads the open group's notes (and the members of the group whose settings
+ * are open) again only when that group's sequence is not the one they were last read at.
+ *
+ * The sequence kept is the list's, read before the notes: a change that lands between the two
+ * reads moves the sequence again, so the next check reads the notes once more and never skips it.
+ */
+export function createChangeCheck(dependencies: ChangeCheckDependencies) {
+  const { groups, notes, members } = dependencies
+  const pull = createPull(dependencies)
+  const stores = [["notes", notes], ["members", members]] as const
+  /** The group and the sequence each list was last read at. */
+  const held = new Map<string, { groupId: string; sequence: string }>()
+  const sequenceOf = (id: string) => groups.groups.value.find((g) => g.id === id)?.changeSequence
+
+  return async (full: boolean): Promise<void> => {
+    if (full) {
+      await pull()
+      for (const [kind, store] of stores) {
+        const groupId = store.groupId.value
+        const sequence = groupId === null ? undefined : sequenceOf(groupId)
+        if (groupId === null || sequence === undefined) held.delete(kind)
+        else held.set(kind, { groupId, sequence })
+      }
+      return
+    }
+    await dependencies.flushOutbox()
+    await groups.refresh()
+    await Promise.all(stores.map(async ([kind, store]) => {
+      const groupId = store.groupId.value
+      // A group that is gone from the list is never asked for, as in the pull.
+      const sequence = groupId === null ? undefined : sequenceOf(groupId)
+      if (groupId === null || sequence === undefined) return
+      const last = held.get(kind)
+      if (last?.groupId === groupId && last.sequence === sequence) return
+      await store.refresh()
+      held.set(kind, { groupId, sequence })
+    }))
+  }
+}

@@ -81,17 +81,28 @@ checked the session's strength.
 the bus. The idempotency middleware on the command bus needs nothing from you: a command whose data
 carries an `idempotencyKey` runs once per user and key.
 
-### 5. Transports: the socket for the SPA, REST beside it
+### 5. Transports: operations listed once, reached over the socket and the call route
 
 | File                                    | What it holds                                                                                                                                               |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/api/features/notes/list.ts`       | One page of the list, with its cursor. Both transports call it, so they cannot drift apart.                                                                 |
-| `apps/api/features/notes/socket.ts`     | The socket requests `note.create`, `note.update`, `note.delete`, `note.restore`, `note.move` (commands) and `note.list`, `note.get`, `note.locate` (queries): parse the payload, dispatch. `note.locate` finds the group of a note by its id alone, for a link to a note of another of the person's groups: it answers only a member, and `NOTE_NOT_FOUND` otherwise. |
+| `apps/api/features/notes/operations.ts`     | The operations `note.create`, `note.update`, `note.delete`, `note.restore`, `note.move` (commands) and `note.list`, `note.get`, `note.locate` (queries): parse the payload, dispatch. `note.locate` finds the group of a note by its id alone, for a link to a note of another of the person's groups: it answers only a member, and `NOTE_NOT_FOUND` otherwise. |
 | `apps/api/features/notes/errors.ts`     | REST error codes and statuses. A version conflict answers 409 with `currentVersion`.                                                                        |
 | `apps/api/routes/notes.ts`              | `GET`, `POST`, `PATCH`, `DELETE` and `POST /:noteId/restore` under `/api/groups/:groupId/notes`, with the same-origin guard on writes and an optional `Idempotency-Key` header.         |
 | `apps/api/services/note-list-cursor.ts` | The cursor codec, keyed from the cookie secret.                                                                                                             |
 
-Then wire them: mount the route in `apps/api/index.ts` (before `/groups`), add the socket requests
+An aggregate lists its operations once, in `operations.ts`. Both transports serve that one list
+through one dispatcher: the socket (`/api/ws`) and the call route, `POST /api/call/<name>`
+(`apps/api/routes/call.ts`), which takes the payload as the JSON body and a command's key in the
+`Idempotency-Key` header. Both refuse a call whose session is not the user the page names. A new
+aggregate therefore writes no per-command REST route: it needs only its list (`GET`) route. Every
+route under `/api` stands behind one check (`createApiApp` in `apps/api/app.ts`) that refuses a
+request whose page names another user, and the SPA names its user on every read: its one REST
+function, `apiFetch` in `apps/spa/src/state/api.ts`, sends each `GET` through `apiRead`
+(`tests/spa-reads.test.ts` fails when a store reads another way). The per-command routes of notes and groups in the table above are
+older than the call route and are still used by the e2e specs to seed data; do not copy them.
+
+Then wire them: mount the route in `apps/api/index.ts` (before `/groups`), add the operations
 to the `Realtime` in `apps/api/services/realtimeHub.ts`, and map `NoteError` in `toRequestError`
 (`apps/api/services/realtime.ts`), so the client gets `forbidden`, `not_found` or `conflict` with
 the domain code (and the current version) in `details`.
@@ -129,12 +140,13 @@ an id is taken.
 
 | File                       | What it holds                                                                                                                                                                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `state/notes.ts`           | The store: reads a group's notes over REST, writes over the socket with `realtimeCommand` (which adds the idempotency key), and turns a version conflict into the conflict UI.                                                              |
+| `state/notes.ts` | The store: reads a group's notes with `apiRead`, writes with `callCommand` from `modules.ts` (which adds the idempotency key and picks the socket or `POST /api/call/<name>`), and turns a version conflict into the conflict UI. |
 | `state/notes.test.ts`      | The store against fake calls.                                                                                                                                                                                                               |
 | `views/NotesView.tsx`      | Passes the store and the group's role to `NotesScreen`.                                                                                                                                                                                     |
 | `views/NoteEditorView.tsx` | Passes the store and the group's role to `NoteEditorScreen` for `/notes/new` and `/notes/:id`, with the offline conflict state above it.                                                                                                    |
 | `views/spa-paths.ts`       | Lists the paths the router owns, for preact-components' `UnsavedGuard` in `NoteEditorView.tsx`, which asks before the person leaves the editor page with text that is not saved: on closing the tab, and on a click on any link in the app. |
 | `app.tsx`                  | The routes, and the pull: a hint for the open group reads its notes again.                                                                                                                                                                  |
+| `modules.ts` | The composition root: the only file that imports the WebSocket module and the offline layer. Stores import their ports from it ([offline.md](offline.md), "The modules and their switches"). |
 
 The store does not move the group's cursor on its own writes: another member's change may have
 taken the sequence just before, and moving past it would drop that change's hint. Its own hint costs
@@ -144,8 +156,8 @@ one extra read instead.
 
 | File                                                             | What it proves                                                                                                                                            |
 | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/api/features/notes/transports.test.ts`                     | Both transports on real buses and handlers: a viewer's writes are refused; a stale version conflicts.                                                     |
-| `apps/api/features/notes/socket.test.ts`, `routes/notes.test.ts` | Parsing and dispatch of each transport.                                                                                                                   |
+| `apps/api/features/notes/transports.test.ts`                     | Every scenario through the socket and through the call route, on real buses and handlers, and the REST list reads: a viewer's writes are refused; a stale version conflicts.                                                     |
+| `apps/api/features/notes/operations.test.ts`, `routes/notes.test.ts`, `routes/call.test.ts` | Parsing and dispatch of each transport.                                                                                                                   |
 | `tests/integration/notes.integration.test.ts`                    | Postgres: one sequence step and one outbox row per write, conflicts, viewers, paging.                                                                     |
 | `e2e/notes.e2e.ts`                                               | Two members: one creates, edits and deletes on the note pages; the other's open tab follows without a reload; a viewer sees a note without edit controls. |
 | `e2e/notes-restore.e2e.ts`                                       | Delete then Undo, delete then Show deleted notes and Restore, with the other member's open tab following. |

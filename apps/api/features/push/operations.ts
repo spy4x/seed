@@ -4,11 +4,12 @@ import { PushRegisterCommand, PushRemoveCommand } from "../../cqrs/commands.ts"
 import type { PushRegisterResult, PushRemoveResult } from "../../cqrs/commands.ts"
 import { PushListQuery } from "../../cqrs/queries.ts"
 import type { PushListResult } from "../../cqrs/queries.ts"
-import type { SocketRequests } from "../../services/realtime.ts"
+import type { Actor } from "@domain/identity"
+import type { Operations } from "@spy4x/realtime/operations"
 import { expectNoPayload, parsePayload } from "../../services/socket-payload.ts"
 
 /** What the push socket requests need from the app. */
-export interface PushSocketDependencies {
+export interface PushOperationDependencies {
   register(command: PushRegisterCommand): Promise<PushRegisterResult>
   remove(command: PushRemoveCommand): Promise<PushRemoveResult>
   list(query: PushListQuery): Promise<PushListResult>
@@ -19,7 +20,7 @@ export interface PushSocketDependencies {
  * the schemas the REST route uses, and the commands run on the same bus, so a retry with the same
  * idempotency key registers or removes a device once.
  */
-export function createPushSocketRequests(dependencies: PushSocketDependencies): SocketRequests {
+export function createPushOperations(dependencies: PushOperationDependencies): Operations<Actor> {
   return {
     "push.register": {
       kind: "command",

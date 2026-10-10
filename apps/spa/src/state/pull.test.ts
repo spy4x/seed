@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { signal } from "@preact/signals"
 import { userChangeGroupId } from "@domain/identity"
-import { createPull } from "./pull.ts"
+import { createChangeCheck, createPull } from "./pull.ts"
 
 const USER = 7
 
@@ -115,5 +115,95 @@ describe("the pull after a hint", () => {
     await pull({ groupId: "team" })
 
     expect(inbox).toEqual([])
+  })
+})
+
+/** A change check over fakes; `sequences` is what the next read of the groups list answers. */
+function checkHarness(open: string | null, settings: string | null = null) {
+  const calls: string[] = []
+  const sequences: Record<string, string> = { home: "1", team: "5" }
+  const groups = signal<readonly { id: string; changeSequence: string }[]>([])
+  const check = createChangeCheck({
+    userId: USER,
+    flushOutbox: () => Promise.resolve(void calls.push("flush")),
+    profile: { refresh: () => Promise.resolve(void calls.push("profile")) },
+    selection: { refresh: () => Promise.resolve(void calls.push("selection")) },
+    groups: {
+      groups,
+      refresh: () => {
+        calls.push("groups")
+        groups.value = Object.entries(sequences).map(([id, changeSequence]) => ({
+          id,
+          changeSequence,
+        }))
+        return Promise.resolve()
+      },
+    },
+    notes: { groupId: signal(open), refresh: () => Promise.resolve(void calls.push("notes")) },
+    members: {
+      groupId: signal(settings),
+      refresh: () => Promise.resolve(void calls.push("members")),
+    },
+    notifications: { refresh: () => Promise.resolve(void calls.push("notifications")) },
+  })
+  /** Runs one check and returns only what that check read. */
+  const run = async (full: boolean) => {
+    calls.length = 0
+    await check(full)
+    return [...calls]
+  }
+  return { run, sequences }
+}
+
+describe("the change check of a page with no socket", () => {
+  it("runs the whole pull when it is a full one", async () => {
+    const { run } = checkHarness("team")
+
+    const read = await run(true)
+
+    expect(read).toEqual(["flush", "notifications", "selection", "groups", "notes"])
+  })
+
+  it("reads only the groups list while the open group's sequence has not moved", async () => {
+    const { run } = checkHarness("team", "team")
+    await run(true)
+
+    const read = await run(false)
+
+    expect(read).toEqual(["flush", "groups"])
+  })
+
+  it("reads the open group's notes and members again once its sequence moved, and once only", async () => {
+    const { run, sequences } = checkHarness("team", "team")
+    await run(true)
+    sequences.team = "6"
+
+    const moved = await run(false)
+    const settled = await run(false)
+
+    expect(moved).toEqual(["flush", "groups", "notes", "members"])
+    expect(settled).toEqual(["flush", "groups"])
+  })
+
+  it("leaves the notes alone when another group's sequence moved", async () => {
+    const { run, sequences } = checkHarness("team")
+    await run(true)
+    sequences.home = "2"
+
+    expect(await run(false)).toEqual(["flush", "groups"])
+  })
+
+  it("never asks for the notes of a group that is gone from the list", async () => {
+    const { run, sequences } = checkHarness("team")
+    await run(true)
+    delete sequences.team
+
+    expect(await run(false)).toEqual(["flush", "groups"])
+  })
+
+  it("reads the notes on the first check when no full pull came before it", async () => {
+    const { run } = checkHarness("team")
+
+    expect(await run(false)).toEqual(["flush", "groups", "notes"])
   })
 })

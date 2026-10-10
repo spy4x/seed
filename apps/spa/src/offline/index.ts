@@ -7,16 +7,24 @@ import {
   type SyncRunner,
 } from "@spy4x/realtime/sync-runner"
 import { createPromiseLock, createWebLock, type OutboxLock } from "@spy4x/realtime/outbox"
-import { isRealtimeOpen, realtimeCommand, realtimeQuery } from "../state/realtime.ts"
+import { type CallPort, sendCommand, sendQuery } from "@spy4x/realtime/calls"
 import type { NoteItem } from "../state/notes.ts"
 import { type LocalStore, type NoteEntry, openLocalStore } from "./local-store.ts"
 import { startRunnerWhileCurrent } from "./start-runner.ts"
 import { createNotesOutbox, type NotesOutbox } from "./notes-outbox.ts"
 
 /**
- * The offline layer's entry point: what the rest of the SPA imports. `docs/offline.md` lists every
- * import of this folder, which is also the list of what to remove to build without it.
+ * The offline layer's entry point. Only `apps/spa/src/modules.ts` imports this folder; the rest of
+ * the SPA takes the layer from there. `docs/offline.md` lists what to remove to build without it.
  */
+
+/** How the layer reaches the server: the calls port, and whether it may send now. */
+export interface OfflineTransport {
+  /** The calls port of the signed-in user (ADR 003); the queue is sent through it. */
+  calls: CallPort
+  /** Whether the port is reachable as the queue's user. The queue is sent only while it is. */
+  canSend(): boolean
+}
 
 /** The local store and the queue of one signed-in user. */
 export interface OfflineLayer {
@@ -47,21 +55,24 @@ export function currentLayer(): OfflineLayer | null {
 }
 
 /** Opens the user's local store and queue. Calling it again for the same user does nothing. */
-export function startOffline(userId: number): OfflineLayer {
+export function startOffline(userId: number, transport: OfflineTransport): OfflineLayer {
   if (layer?.userId === userId) return layer
   stopOffline()
   const store = openLocalStore(userId)
   const outbox = createNotesOutbox({
     store,
     lock: withBrowserLock(userId),
-    isOnline: () => isRealtimeOpen(userId),
+    isOnline: () => transport.canSend(),
     send: (name, payload, key) =>
-      realtimeCommand(name, payload, { attempts: 1, newKey: () => key }),
+      sendCommand(transport.calls, name, payload, { attempts: 1, newKey: () => key }),
     async fetchNote(groupId, id) {
       try {
-        const { note } = await realtimeQuery<{ note: NoteItem }>("note.get", { groupId, id }, {
-          attempts: 1,
-        })
+        const { note } = await sendQuery<{ note: NoteItem }>(
+          transport.calls,
+          "note.get",
+          { groupId, id },
+          { attempts: 1 },
+        )
         return note
       } catch (error) {
         const code = error instanceof RealtimeRequestError

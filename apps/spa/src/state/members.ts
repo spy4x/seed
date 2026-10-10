@@ -8,8 +8,8 @@ import {
   type TransferError,
   transferErrorField,
 } from "@ui/group-transfer.tsx"
-import { apiFetch } from "./api.ts"
-import { realtimeCommand } from "./realtime.ts"
+import { apiRead } from "./realtime-call.ts"
+import { callCommand } from "../modules.ts"
 
 /** A member as the API sends them: `joinedAt` is an ISO string. */
 export interface MemberItem {
@@ -234,15 +234,15 @@ export function createMembersStore(dependencies: MembersDependencies) {
  */
 export const membersStore = createMembersStore({
   async list({ groupId }) {
-    const result = await apiFetch<{ members: MemberItem[]; memberCount: number }>(
+    const result = await apiRead<{ members: MemberItem[]; memberCount: number }>(
       `/api/groups/${encodeURIComponent(groupId)}/members`,
     )
     if (!result.ok) throw new Error(result.error.message)
     return result.data
   },
-  setRole: (input) => realtimeCommand("group.setRole", input),
-  removeMember: (input) => realtimeCommand("group.removeMember", input),
-  leave: (input) => realtimeCommand("group.leave", input),
+  setRole: (input) => callCommand("group.setRole", input),
+  removeMember: (input) => callCommand("group.removeMember", input),
+  leave: (input) => callCommand("group.leave", input),
   // Over REST, not the socket: the password goes in this one request.
   transfer: async ({ groupId, ...body }) => {
     let response: Response

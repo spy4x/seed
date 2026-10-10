@@ -21,8 +21,15 @@ import { ENTITLEMENT_NEEDS } from "../../cqrs/entitlement-needs.ts"
 import { buildAuthData } from "../../_testing/fake-auth.ts"
 import { MemoryNoteRepository, roles } from "../../_testing/memory-notes.ts"
 import type { APIContext } from "../../_types.ts"
+import {
+  API_URL,
+  mountRoute,
+  sameOriginHeaders,
+  WEB_APP_URL,
+} from "../../_testing/mutation-requests.ts"
+import { createCallRoute } from "../../routes/call.ts"
 import { createNotesRoute } from "../../routes/notes.ts"
-import { Realtime } from "../../services/realtime.ts"
+import { Realtime, toRequestError } from "../../services/realtime.ts"
 import {
   createNoteCreateHandler,
   createNoteDeleteHandler,
@@ -33,10 +40,12 @@ import {
   createNoteRestoreHandler,
   createNoteUpdateHandler,
 } from "./handlers.ts"
-import { createNoteSocketRequests } from "./socket.ts"
+import { createNoteOperations } from "./operations.ts"
 
 /**
- * Both transports over one pair of buses, as the API wires them: the REST route and the socket
+ * Every transport over one pair of buses, as the API wires them. The socket and the call route
+ * (`POST /api/call/<name>`) are two adapters of one operations table, so every scenario runs
+ * through both and expects the same answer; the REST route keeps the list and read. The adapters
  * parse, and the gates and handlers on the buses decide who may do what. Nothing here stubs the
  * handlers, so a transport that skipped the buses, or a handler that skipped the check, fails these
  * tests. The group is on `plan` (the free plan unless a test says otherwise), with billing on.
@@ -122,6 +131,14 @@ async function fillFreePlan(notes: MemoryNoteRepository) {
   notes.writes = 0
 }
 
+/** REST, for the list and read routes: the only note routes the session API keeps (ADR 003). */
+/** The owner deletes the seeded note (version 2), leaving it at version 3, deleted. */
+async function seedDeleted(notes: MemoryNoteRepository) {
+  await seedNote(notes)
+  await notes.delete({ groupId, id: noteId, expectedVersion: 2 }, OWNER)
+  notes.writes = 0
+}
+
 function rest(buses: ReturnType<typeof stack>["buses"], userId: number) {
   const app = new Hono<APIContext>()
   app.use("*", async (c, next) => {
@@ -130,645 +147,768 @@ function rest(buses: ReturnType<typeof stack>["buses"], userId: number) {
     await next()
   })
   app.route("/groups/:groupId/notes", createNotesRoute(buses))
-  return (method: string, path: string, body: unknown) =>
+  return (path: string) =>
     app.request(`http://local/groups/${groupId}/notes${path}`, {
-      method,
-      headers: {
-        "content-type": "application/json",
-        cookie: "sessionIdToken=1:token",
-        origin: "http://local",
-        "sec-fetch-site": "same-origin",
-      },
-      body: JSON.stringify(body),
+      headers: { cookie: "sessionIdToken=1:token", "sec-fetch-site": "same-origin" },
     })
 }
 
-function socket(buses: ReturnType<typeof stack>["buses"], userId: number) {
+/** An answer in the socket's frame shape, whichever adapter carried the call. */
+type Answer =
+  | { kind: "server.result"; payload: unknown }
+  | { kind: "server.error"; code: string; message: string; details?: unknown }
+  | undefined
+
+/** One adapter of the operations table, signed in as one user. */
+interface Transport {
+  command(name: string, payload: unknown): Promise<Answer>
+  query(name: string, payload: unknown): Promise<Answer>
+  shutdown(): void
+}
+
+function socket(buses: ReturnType<typeof stack>["buses"], userId: number): Transport {
   const auth = buildAuthData({ user: { id: userId }, session: { id: userId * 10, userId } })
   const realtime = new Realtime({
     clock: new FakeClock(),
     entitledSession: () => Promise.resolve(auth),
     memberUserIds: () => Promise.resolve([]),
-    requests: createNoteSocketRequests(buses),
+    operations: createNoteOperations(buses),
     log: () => {},
   })
   const ws = new FakeSocket("wss://app.example.com/api/ws")
   ws.openFromPeer()
   realtime.attach(ws, auth)
-  const command = async (name: string, payload: unknown) => {
-    ws.receive(JSON.stringify({
-      kind: "client.command",
-      id: name,
-      name,
-      payload,
-      idempotencyKey: `key-${name}`,
-    }))
-    await drainMicrotasks()
-    return ws.frames().find((frame) => (frame as { requestId?: string }).requestId === name)
+  let sent = 0
+  const send = async (frame: Record<string, unknown>) => {
+    const id = `request-${++sent}`
+    ws.receive(JSON.stringify({ ...frame, id }))
+    // A handler awaits more than one drain covers; the bound keeps a missing answer a failure.
+    let answer: Record<string, unknown> | undefined
+    for (let drains = 0; !answer && drains < 10; drains++) {
+      await drainMicrotasks()
+      answer = ws.frames().find((candidate) =>
+        (candidate as { requestId?: string }).requestId === id
+      ) as Record<string, unknown> | undefined
+    }
+    if (!answer) return undefined
+    // The request id is the socket's own; the scenarios compare what both adapters answer.
+    const { requestId: _requestId, ...rest } = answer
+    return rest as Answer
   }
-  const query = async (name: string, payload: unknown) => {
-    ws.receive(JSON.stringify({ kind: "client.query", id: name, name, payload }))
-    await drainMicrotasks()
-    return ws.frames().find((frame) => (frame as { requestId?: string }).requestId === name)
+  return {
+    command: (name, payload) =>
+      send({ kind: "client.command", name, payload, idempotencyKey: `key-${name}` }),
+    query: (name, payload) => send({ kind: "client.query", name, payload }),
+    shutdown: () => realtime.shutdown(),
   }
-  return { command, query, shutdown: () => realtime.shutdown() }
 }
 
-describe("notes over both transports", () => {
-  it("refuses every write of a viewer over REST and changes nothing", async () => {
-    const { notes, buses } = stack()
-    await seedNote(notes)
-    const send = rest(buses, VIEWER)
+/** `POST /api/call/<name>`, as the page's HTTP calls module sends it. */
+function callRoute(buses: ReturnType<typeof stack>["buses"], userId: number): Transport {
+  const app = mountRoute(
+    "/call",
+    createCallRoute({
+      operations: createNoteOperations(buses),
+      mapError: toRequestError,
+      log: () => {},
+      expectedOrigin: WEB_APP_URL,
+    }),
+    buildAuthData({ user: { id: userId }, session: { id: userId * 10, userId } }),
+  )
+  const send = async (name: string, payload: unknown, headers: Record<string, string>) => {
+    const response = await app.request(`${API_URL}/call/${name}`, {
+      method: "POST",
+      headers: { ...sameOriginHeaders, "x-realtime-user": String(userId), ...headers },
+      body: JSON.stringify(payload),
+    })
+    const body = await response.json()
+    if (response.ok) return { kind: "server.result", payload: body.result } as Answer
+    return { kind: "server.error", ...body.error } as Answer
+  }
+  return {
+    command: (name, payload) => send(name, payload, { "idempotency-key": `key-${name}` }),
+    query: (name, payload) => send(name, payload, {}),
+    shutdown: () => {},
+  }
+}
 
-    const responses = [
-      await send("POST", "", { id: crypto.randomUUID(), title: "Mine", body: "" }),
-      await send("PATCH", `/${noteId}`, { title: "Changed", body: "", version: 2 }),
-      await send("DELETE", `/${noteId}`, { version: 2 }),
-    ]
+const TRANSPORTS = [["the socket", socket], ["the call route", callRoute]] as const
 
-    for (const response of responses) {
-      expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
-    }
-    expect(notes.writes).toBe(0)
+for (const [via, open] of TRANSPORTS) {
+  describe(`notes over ${via}`, () => {
+    it("refuses every write of a viewer and changes nothing", async () => {
+      const { notes, buses } = stack()
+      await seedNote(notes)
+      const as = open(buses, VIEWER)
+
+      const answers = [
+        await as.command("note.create", {
+          groupId,
+          id: crypto.randomUUID(),
+          title: "Mine",
+          body: "",
+        }),
+        await as.command("note.update", { groupId, id: noteId, title: "x", body: "", version: 2 }),
+        await as.command("note.delete", { groupId, id: noteId, version: 2 }),
+      ]
+
+      for (const answer of answers) {
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "forbidden",
+          details: { code: "ROLE_INSUFFICIENT" },
+        })
+      }
+      expect(notes.writes).toBe(0)
+      as.shutdown()
+    })
+
+    it("lets a viewer read a note", async () => {
+      const { notes, buses } = stack()
+      await seedNote(notes)
+      const as = open(buses, VIEWER)
+
+      const answer = await as.query("note.get", { groupId, id: noteId })
+
+      expect(answer).toMatchObject({
+        kind: "server.result",
+        payload: { note: { title: "Plan v2" } },
+      })
+      as.shutdown()
+    })
+
+    it("answers a stale update with a conflict and the current version", async () => {
+      const { notes, buses } = stack()
+      await seedNote(notes)
+      const as = open(buses, OWNER)
+
+      const answer = await as.command("note.update", {
+        groupId,
+        id: noteId,
+        title: "From version 1",
+        body: "",
+        version: 1,
+      })
+
+      expect(answer).toMatchObject({
+        kind: "server.error",
+        code: "conflict",
+        details: { code: "VERSION_CONFLICT", currentVersion: 2 },
+      })
+      expect(notes.notes.get(noteId)?.title).toBe("Plan v2")
+      as.shutdown()
+    })
+
+    it("answers a stale delete with a conflict and the current version", async () => {
+      const { notes, buses } = stack()
+      await seedNote(notes)
+      const as = open(buses, OWNER)
+
+      const answer = await as.command("note.delete", { groupId, id: noteId, version: 1 })
+
+      expect(answer).toMatchObject({
+        kind: "server.error",
+        code: "conflict",
+        details: { code: "VERSION_CONFLICT", currentVersion: 2 },
+      })
+      expect(notes.notes.has(noteId)).toBe(true)
+      as.shutdown()
+    })
+
+    it("lets an owner create, update and delete", async () => {
+      const { notes, buses } = stack()
+      const as = open(buses, OWNER)
+
+      const created = await as.command("note.create", {
+        groupId,
+        id: noteId,
+        title: "A",
+        body: "",
+      })
+      const updated = await as.command("note.update", {
+        groupId,
+        id: noteId,
+        title: "B",
+        body: "b",
+        version: 1,
+      })
+      const deleted = await as.command("note.delete", { groupId, id: noteId, version: 2 })
+
+      expect(created).toMatchObject({ kind: "server.result", payload: { created: true } })
+      expect(updated).toMatchObject({ kind: "server.result", payload: { note: { version: 2 } } })
+      expect(deleted).toMatchObject({ kind: "server.result", payload: { note: { version: 3 } } })
+      expect(notes.writes).toBe(3)
+      as.shutdown()
+    })
+
+    it("refuses a note over the free plan's cap, and tells the owner to upgrade", async () => {
+      const { notes, buses } = stack()
+      await fillFreePlan(notes)
+      const as = open(buses, OWNER)
+
+      const answer = await as.command("note.create", {
+        groupId,
+        id: crypto.randomUUID(),
+        title: "Eleventh",
+        body: "",
+      })
+
+      expect(answer).toMatchObject({
+        kind: "server.error",
+        code: "forbidden",
+        details: {
+          code: "PLAN_LIMIT_REACHED",
+          entitlement: "maxNotes",
+          limit: 10,
+          canUpgrade: true,
+        },
+      })
+      expect(notes.writes).toBe(0)
+      as.shutdown()
+    })
+
+    it("lets a group on Pro add notes past the free plan's cap", async () => {
+      const { notes, buses } = stack(PRO_PLAN_ID)
+      await fillFreePlan(notes)
+      const as = open(buses, OWNER)
+
+      const answer = await as.command("note.create", {
+        groupId,
+        id: crypto.randomUUID(),
+        title: "Eleventh",
+        body: "",
+      })
+
+      expect(answer).toMatchObject({ kind: "server.result", payload: { created: true } })
+      expect(notes.writes).toBe(1)
+      as.shutdown()
+    })
+
+    it("lets a group over its cap read, edit and delete what it has", async () => {
+      const { notes, buses } = stack()
+      await fillFreePlan(notes)
+      await seedNote(notes)
+      const as = open(buses, OWNER)
+
+      const answers = [
+        await as.query("note.get", { groupId, id: noteId }),
+        await as.command("note.update", {
+          groupId,
+          id: noteId,
+          title: "Kept",
+          body: "",
+          version: 2,
+        }),
+        await as.command("note.delete", { groupId, id: noteId, version: 3 }),
+      ]
+
+      expect(answers.map((answer) => answer?.kind)).toEqual([
+        "server.result",
+        "server.result",
+        "server.result",
+      ])
+      as.shutdown()
+    })
+
+    describe("moving notes to another group", () => {
+      const second = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111006"
+
+      async function seedTwo(notes: MemoryNoteRepository) {
+        await seedNote(notes)
+        await notes.create({ groupId, id: second, title: "Other", body: "" }, OWNER, null)
+        notes.writes = 0
+      }
+
+      /** Fills the target group with `count` notes of its own. */
+      async function fillTarget(notes: MemoryNoteRepository, count: number) {
+        for (let i = 0; i < count; i++) {
+          await notes.create(
+            { groupId: editableGroupId, id: crypto.randomUUID(), title: `T${i}`, body: "" },
+            OWNER,
+            null,
+          )
+        }
+        notes.writes = 0
+      }
+
+      function groupsOf(notes: MemoryNoteRepository) {
+        return [...notes.notes.values()].map((note) => [note.id, note.groupId])
+      }
+
+      it("moves the notes, keeping their ids and raising their versions", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId, second],
+        })
+
+        expect(answer).toMatchObject({
+          kind: "server.result",
+          payload: {
+            notes: [{ id: noteId, groupId: editableGroupId, version: 3 }, { id: second }],
+          },
+        })
+        expect(groupsOf(notes)).toEqual([[noteId, editableGroupId], [second, editableGroupId]])
+        as.shutdown()
+      })
+
+      it("moves only the notes it was given", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId],
+        })
+
+        expect(answer).toMatchObject({
+          kind: "server.result",
+          payload: { notes: [{ id: noteId }] },
+        })
+        expect(groupsOf(notes)).toEqual([[noteId, editableGroupId], [second, groupId]])
+        as.shutdown()
+      })
+
+      it("refuses a viewer of the source group and moves nothing", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        const as = open(buses, VIEWER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId],
+        })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "forbidden",
+          details: { code: "ROLE_INSUFFICIENT" },
+        })
+        expect(notes.writes).toBe(0)
+        as.shutdown()
+      })
+
+      it("refuses a move to a group where the person only reads or is no member", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        const as = open(buses, OWNER)
+
+        const viewerTarget = await as.command("note.move", {
+          groupId,
+          toGroupId: readOnlyGroupId,
+          noteIds: [noteId],
+        })
+        const strangerTarget = await as.command("note.move", {
+          groupId,
+          toGroupId: strangerGroupId,
+          noteIds: [noteId],
+        })
+
+        expect(viewerTarget).toMatchObject({
+          kind: "server.error",
+          code: "forbidden",
+          details: { code: "ROLE_INSUFFICIENT" },
+        })
+        expect(strangerTarget).toMatchObject({ kind: "server.error", code: "not_found" })
+        expect(notes.writes).toBe(0)
+        as.shutdown()
+      })
+
+      it("refuses a move into the same group, and an empty or repeating list", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        const as = open(buses, OWNER)
+
+        const same = await as.command("note.move", {
+          groupId,
+          toGroupId: groupId,
+          noteIds: [noteId],
+        })
+        const empty = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [],
+        })
+        const twice = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId, noteId],
+        })
+
+        expect(same).toMatchObject({
+          kind: "server.error",
+          code: "bad_request",
+          details: { code: "SAME_GROUP" },
+        })
+        expect(empty).toMatchObject({ kind: "server.error", code: "bad_request" })
+        expect(twice).toMatchObject({ kind: "server.error", code: "bad_request" })
+        expect(notes.writes).toBe(0)
+        as.shutdown()
+      })
+
+      it("moves none when one of the notes is not in the source group", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId, crypto.randomUUID()],
+        })
+
+        expect(answer).toMatchObject({ kind: "server.error", code: "not_found" })
+        expect(groupsOf(notes)).toEqual([[noteId, groupId], [second, groupId]])
+        as.shutdown()
+      })
+
+      it("lets a move into a group on Pro past the free source group's cap", async () => {
+        const { notes, buses } = stack(FREE_PLAN_ID, { [editableGroupId]: PRO_PLAN_ID })
+        await fillFreePlan(notes)
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [(await notes.list(groupId, { limit: 1 })).notes[0].id],
+        })
+
+        expect(answer).toMatchObject({ kind: "server.result" })
+        as.shutdown()
+      })
+
+      it("refuses a move into a full free group when the source group is on Pro", async () => {
+        const { notes, buses } = stack(FREE_PLAN_ID, { [groupId]: PRO_PLAN_ID })
+        await seedTwo(notes)
+        await fillTarget(notes, 10)
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId],
+        })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "forbidden",
+          details: { code: "PLAN_LIMIT_REACHED" },
+        })
+        expect(notes.writes).toBe(0)
+        as.shutdown()
+      })
+
+      it("tells a viewer of the source group they cannot write there, even when the target is full", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        await fillTarget(notes, 10)
+        const as = open(buses, VIEWER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId],
+        })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "forbidden",
+          details: { code: "ROLE_INSUFFICIENT" },
+        })
+        expect(notes.writes).toBe(0)
+        as.shutdown()
+      })
+
+      it("refuses a move that would take the target group over the free plan's cap", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        await fillTarget(notes, 9)
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId, second],
+        })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "forbidden",
+          details: { code: "PLAN_LIMIT_REACHED" },
+        })
+        expect(notes.writes).toBe(0)
+        as.shutdown()
+      })
+    })
+
+    describe("finding the group of a note by its id", () => {
+      it("tells a member the group of a note in any of their groups", async () => {
+        const { notes, buses } = stack()
+        await seedNote(notes)
+        const as = open(buses, VIEWER)
+
+        const answer = await as.query("note.locate", { id: noteId })
+
+        expect(answer).toMatchObject({ kind: "server.result", payload: { groupId } })
+        as.shutdown()
+      })
+
+      it("answers a note in a group the person is not in exactly as a note that does not exist", async () => {
+        const { notes, buses } = stack()
+        await seedNote(notes)
+        // OWNER is in `groupId` only through the roles above; this note is in a group nobody is in.
+        const foreignId = crypto.randomUUID()
+        await notes.create(
+          { groupId: strangerGroupId, id: foreignId, title: "Secret", body: "" },
+          OWNER,
+          null,
+        )
+        const as = open(buses, OWNER)
+
+        const foreign = await as.query("note.locate", { id: foreignId })
+        const missing = await as.query("note.locate", { id: crypto.randomUUID() })
+
+        expect(foreign).toMatchObject({
+          kind: "server.error",
+          code: "not_found",
+          details: { code: "NOTE_NOT_FOUND" },
+        })
+        expect(JSON.stringify(foreign)).toBe(JSON.stringify(missing))
+        expect(JSON.stringify(foreign)).not.toContain(strangerGroupId)
+        as.shutdown()
+      })
+
+      it("answers a note that was deleted as not found", async () => {
+        const { notes, buses } = stack()
+        await seedNote(notes)
+        await notes.delete({ groupId, id: noteId, expectedVersion: 2 }, OWNER)
+        const as = open(buses, OWNER)
+
+        const answer = await as.query("note.locate", { id: noteId })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "not_found",
+          details: { code: "NOTE_NOT_FOUND" },
+        })
+        as.shutdown()
+      })
+    })
+
+    describe("deleting and restoring a note", () => {
+      for (
+        const [name, userId] of [["an owner", OWNER], ["an admin", ADMIN], [
+          "an editor",
+          EDITOR,
+        ]] as const
+      ) {
+        it(`lets ${name} restore a deleted note, at the next version`, async () => {
+          const { notes, buses } = stack()
+          await seedDeleted(notes)
+          const as = open(buses, userId)
+
+          const answer = await as.command("note.restore", { groupId, id: noteId })
+
+          expect(answer).toMatchObject({
+            kind: "server.result",
+            payload: { note: { id: noteId, version: 4 } },
+          })
+          expect(notes.notes.get(noteId)?.version).toBe(4)
+          expect(notes.deleted.size).toBe(0)
+          as.shutdown()
+        })
+      }
+
+      it("refuses a viewer's restore, and the note stays deleted", async () => {
+        const { notes, buses } = stack()
+        await seedDeleted(notes)
+        const as = open(buses, VIEWER)
+
+        const answer = await as.command("note.restore", { groupId, id: noteId })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "forbidden",
+          details: { code: "ROLE_INSUFFICIENT" },
+        })
+        expect(notes.writes).toBe(0)
+        expect(notes.deleted.has(noteId)).toBe(true)
+        as.shutdown()
+      })
+
+      it("answers a stranger's restore as an unknown group, never as a missing note", async () => {
+        const { notes, buses } = stack()
+        await seedDeleted(notes)
+        const as = open(buses, STRANGER)
+
+        const answer = await as.command("note.restore", { groupId, id: noteId })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "not_found",
+          details: { code: "GROUP_NOT_FOUND" },
+        })
+        expect(notes.writes).toBe(0)
+        as.shutdown()
+      })
+
+      it("refuses a stranger's list of deleted notes as an unknown group, with no title", async () => {
+        const { notes, buses } = stack()
+        await seedDeleted(notes)
+        const as = open(buses, STRANGER)
+
+        const answer = await as.query("note.list", { groupId, deleted: true })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "not_found",
+          details: { code: "GROUP_NOT_FOUND" },
+        })
+        expect(JSON.stringify(answer)).not.toContain(noteId)
+        as.shutdown()
+      })
+
+      it("restores a note and lists it again", async () => {
+        const { notes, buses } = stack()
+        await seedDeleted(notes)
+        const as = open(buses, EDITOR)
+
+        const restored = await as.command("note.restore", { groupId, id: noteId })
+        const listed = await as.query("note.list", { groupId })
+
+        expect(restored).toMatchObject({
+          kind: "server.result",
+          payload: { note: { id: noteId, version: 4 } },
+        })
+        expect(listed).toMatchObject({
+          kind: "server.result",
+          payload: { notes: [{ id: noteId }] },
+        })
+        as.shutdown()
+      })
+
+      it("lists deleted notes only when asked", async () => {
+        const { notes, buses } = stack()
+        await seedDeleted(notes)
+        const as = open(buses, VIEWER)
+
+        const live = await as.query("note.list", { groupId })
+        const gone = await as.query("note.list", { groupId, deleted: true })
+        const invalid = await as.query("note.list", { groupId, deleted: "maybe" })
+
+        expect(live).toMatchObject({ kind: "server.result", payload: { notes: [] } })
+        expect(gone).toMatchObject({
+          kind: "server.result",
+          payload: { notes: [{ id: noteId }] },
+        })
+        expect(invalid).toMatchObject({ kind: "server.error", code: "bad_request" })
+        as.shutdown()
+      })
+
+      it("answers a restore of a note that is not deleted as not found", async () => {
+        const { notes, buses } = stack()
+        await seedNote(notes)
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.restore", { groupId, id: noteId })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "not_found",
+          details: { code: "NOTE_NOT_FOUND" },
+        })
+        as.shutdown()
+      })
+
+      it("refuses a restore into a group at the free plan's cap, and keeps the note deleted", async () => {
+        const { notes, buses } = stack()
+        await seedDeleted(notes)
+        await fillFreePlan(notes)
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.restore", { groupId, id: noteId })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "forbidden",
+          details: {
+            code: "PLAN_LIMIT_REACHED",
+            entitlement: "maxNotes",
+            limit: 10,
+            canUpgrade: true,
+          },
+        })
+        expect(notes.writes).toBe(0)
+        expect(notes.deleted.has(noteId)).toBe(true)
+        as.shutdown()
+      })
+
+      it("restores into a full group once a live note makes room, and on Pro past the cap", async () => {
+        const full = stack()
+        await seedDeleted(full.notes)
+        await fillFreePlan(full.notes)
+        const [live] = [...full.notes.notes.keys()]
+        await full.notes.delete({ groupId, id: live, expectedVersion: 1 }, OWNER)
+        const pro = stack(PRO_PLAN_ID)
+        await seedDeleted(pro.notes)
+        await fillFreePlan(pro.notes)
+        const withRoom = open(full.buses, OWNER)
+        const onPro = open(pro.buses, OWNER)
+
+        const answers = [
+          await withRoom.command("note.restore", { groupId, id: noteId }),
+          await onPro.command("note.restore", { groupId, id: noteId }),
+        ]
+
+        expect(answers.map((answer) => answer?.kind)).toEqual(["server.result", "server.result"])
+        withRoom.shutdown()
+        onPro.shutdown()
+      })
+    })
   })
+}
 
-  it("lets a viewer read over REST", async () => {
+describe("notes over the REST reads", () => {
+  it("lets a viewer read a note", async () => {
     const { notes, buses } = stack()
     await seedNote(notes)
 
-    const response = await rest(buses, VIEWER)("GET", `/${noteId}`, undefined)
+    const response = await rest(buses, VIEWER)(`/${noteId}`)
 
     expect(response.status).toBe(200)
     expect((await response.json()).note.title).toBe("Plan v2")
   })
 
-  it("refuses every write of a viewer over the socket and changes nothing", async () => {
+  it("lists deleted notes only when asked, and refuses a flag it cannot read", async () => {
     const { notes, buses } = stack()
-    await seedNote(notes)
-    const ws = socket(buses, VIEWER)
+    await seedDeleted(notes)
+    const read = rest(buses, VIEWER)
 
-    const frames = [
-      await ws.command("note.create", {
-        groupId,
-        id: crypto.randomUUID(),
-        title: "Mine",
-        body: "",
-      }),
-      await ws.command("note.update", { groupId, id: noteId, title: "x", body: "", version: 2 }),
-      await ws.command("note.delete", { groupId, id: noteId, version: 2 }),
-    ]
+    const live = await (await read("")).json()
+    const gone = await (await read("?deleted=true")).json()
+    const invalid = await read("?deleted=maybe")
 
-    for (const frame of frames) {
-      expect(frame).toMatchObject({
-        kind: "server.error",
-        code: "forbidden",
-        details: { code: "ROLE_INSUFFICIENT" },
-      })
-    }
-    expect(notes.writes).toBe(0)
-    ws.shutdown()
+    expect(live.notes).toEqual([])
+    expect(gone.notes.map((note: { id: string }) => note.id)).toEqual([noteId])
+    expect(invalid.status).toBe(400)
   })
 
-  it("answers a stale update with 409 and the current version over REST", async () => {
+  it("refuses a stranger's list of deleted notes as an unknown group, with no title", async () => {
     const { notes, buses } = stack()
-    await seedNote(notes)
+    await seedDeleted(notes)
 
-    const response = await rest(buses, OWNER)("PATCH", `/${noteId}`, {
-      title: "From version 1",
-      body: "",
-      version: 1,
-    })
+    const response = await rest(buses, STRANGER)("?deleted=true")
+    const text = await response.text()
 
-    expect(response.status).toBe(409)
-    expect((await response.json()).error).toMatchObject({
-      code: "VERSION_CONFLICT",
-      currentVersion: 2,
-    })
-    expect(notes.notes.get(noteId)?.title).toBe("Plan v2")
-  })
-
-  it("answers a stale delete with a conflict and the current version over the socket", async () => {
-    const { notes, buses } = stack()
-    await seedNote(notes)
-    const ws = socket(buses, OWNER)
-
-    const frame = await ws.command("note.delete", { groupId, id: noteId, version: 1 })
-
-    expect(frame).toMatchObject({
-      kind: "server.error",
-      code: "conflict",
-      details: { code: "VERSION_CONFLICT", currentVersion: 2 },
-    })
-    expect(notes.notes.has(noteId)).toBe(true)
-    ws.shutdown()
-  })
-
-  it("lets an owner create, update and delete over the socket", async () => {
-    const { notes, buses } = stack()
-    const ws = socket(buses, OWNER)
-
-    const created = await ws.command("note.create", { groupId, id: noteId, title: "A", body: "" })
-    const updated = await ws.command("note.update", {
-      groupId,
-      id: noteId,
-      title: "B",
-      body: "b",
-      version: 1,
-    })
-    const deleted = await ws.command("note.delete", { groupId, id: noteId, version: 2 })
-
-    expect(created).toMatchObject({ kind: "server.result", payload: { created: true } })
-    expect(updated).toMatchObject({ kind: "server.result", payload: { note: { version: 2 } } })
-    expect(deleted).toMatchObject({ kind: "server.result", payload: { note: { version: 3 } } })
-    expect(notes.writes).toBe(3)
-    ws.shutdown()
-  })
-
-  it("refuses a note over the free plan's cap with 402 over REST, and tells the owner to upgrade", async () => {
-    const { notes, buses } = stack()
-    await fillFreePlan(notes)
-
-    const response = await rest(buses, OWNER)("POST", "", {
-      id: crypto.randomUUID(),
-      title: "Eleventh",
-      body: "",
-    })
-
-    expect(response.status).toBe(402)
-    expect((await response.json()).error).toMatchObject({
-      code: "PLAN_LIMIT_REACHED",
-      entitlement: "maxNotes",
-      limit: 10,
-      canUpgrade: true,
-    })
-    expect(notes.writes).toBe(0)
-  })
-
-  it("refuses a note over the free plan's cap over the socket, naming the cap in the details", async () => {
-    const { notes, buses } = stack()
-    await fillFreePlan(notes)
-    const ws = socket(buses, OWNER)
-
-    const frame = await ws.command("note.create", {
-      groupId,
-      id: crypto.randomUUID(),
-      title: "Eleventh",
-      body: "",
-    })
-
-    expect(frame).toMatchObject({
-      kind: "server.error",
-      code: "forbidden",
-      details: { code: "PLAN_LIMIT_REACHED", entitlement: "maxNotes", limit: 10 },
-    })
-    expect(notes.writes).toBe(0)
-    ws.shutdown()
-  })
-
-  it("lets a group on Pro add notes past the free plan's cap", async () => {
-    const { notes, buses } = stack(PRO_PLAN_ID)
-    await fillFreePlan(notes)
-
-    const response = await rest(buses, OWNER)("POST", "", {
-      id: crypto.randomUUID(),
-      title: "Eleventh",
-      body: "",
-    })
-
-    expect(response.status).toBe(201)
-    expect(notes.writes).toBe(1)
-  })
-
-  it("lets a group over its cap read, edit and delete what it has", async () => {
-    const { notes, buses } = stack()
-    await fillFreePlan(notes)
-    await seedNote(notes)
-    const send = rest(buses, OWNER)
-
-    const read = await send("GET", `/${noteId}`, undefined)
-    const edited = await send("PATCH", `/${noteId}`, { title: "Kept", body: "", version: 2 })
-    const deleted = await send("DELETE", `/${noteId}`, { version: 3 })
-
-    expect([read.status, edited.status, deleted.status]).toEqual([200, 200, 200])
-  })
-
-  describe("moving notes to another group", () => {
-    const second = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111006"
-
-    async function seedTwo(notes: MemoryNoteRepository) {
-      await seedNote(notes)
-      await notes.create({ groupId, id: second, title: "Other", body: "" }, OWNER, null)
-      notes.writes = 0
-    }
-
-    function groupsOf(notes: MemoryNoteRepository) {
-      return [...notes.notes.values()].map((note) => [note.id, note.groupId])
-    }
-
-    it("moves the notes over REST, keeping their ids and raising their versions", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-
-      const response = await rest(buses, OWNER)("POST", "/move", {
-        toGroupId: editableGroupId,
-        noteIds: [noteId, second],
-      })
-
-      expect(response.status).toBe(200)
-      const body = await response.json()
-      expect(body.notes.map((note: { id: string }) => note.id)).toEqual([noteId, second])
-      expect(body.notes[0]).toMatchObject({ groupId: editableGroupId, version: 3 })
-      expect(groupsOf(notes)).toEqual([[noteId, editableGroupId], [second, editableGroupId]])
-    })
-
-    it("moves the notes over the socket", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-      const ws = socket(buses, OWNER)
-
-      const frame = await ws.command("note.move", {
-        groupId,
-        toGroupId: editableGroupId,
-        noteIds: [noteId],
-      })
-
-      expect(frame).toMatchObject({ kind: "server.result", payload: { notes: [{ id: noteId }] } })
-      expect(groupsOf(notes)).toEqual([[noteId, editableGroupId], [second, groupId]])
-      ws.shutdown()
-    })
-
-    it("refuses a viewer of the source group and moves nothing", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-
-      const response = await rest(buses, VIEWER)("POST", "/move", {
-        toGroupId: editableGroupId,
-        noteIds: [noteId],
-      })
-
-      expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
-      expect(notes.writes).toBe(0)
-    })
-
-    it("refuses a move to a group where the person only reads or is no member", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-      const send = rest(buses, OWNER)
-
-      const viewerTarget = await send("POST", "/move", {
-        toGroupId: readOnlyGroupId,
-        noteIds: [noteId],
-      })
-      const strangerTarget = await send("POST", "/move", {
-        toGroupId: strangerGroupId,
-        noteIds: [noteId],
-      })
-
-      expect(viewerTarget.status).toBe(403)
-      expect((await viewerTarget.json()).error.code).toBe("ROLE_INSUFFICIENT")
-      expect(strangerTarget.status).toBe(404)
-      expect(notes.writes).toBe(0)
-    })
-
-    it("refuses a move into the same group, and an empty or repeating list", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-      const send = rest(buses, OWNER)
-
-      const same = await send("POST", "/move", { toGroupId: groupId, noteIds: [noteId] })
-      const empty = await send("POST", "/move", { toGroupId: editableGroupId, noteIds: [] })
-      const twice = await send("POST", "/move", {
-        toGroupId: editableGroupId,
-        noteIds: [noteId, noteId],
-      })
-
-      expect((await same.json()).error.code).toBe("SAME_GROUP")
-      expect([same.status, empty.status, twice.status]).toEqual([400, 400, 400])
-      expect(notes.writes).toBe(0)
-    })
-
-    it("refuses a move into the same group over the socket", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-      const ws = socket(buses, OWNER)
-
-      const frame = await ws.command("note.move", {
-        groupId,
-        toGroupId: groupId,
-        noteIds: [noteId],
-      })
-
-      expect(frame).toMatchObject({
-        kind: "server.error",
-        code: "bad_request",
-        details: { code: "SAME_GROUP" },
-      })
-      expect(notes.writes).toBe(0)
-      ws.shutdown()
-    })
-
-    it("moves none when one of the notes is not in the source group", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-
-      const response = await rest(buses, OWNER)("POST", "/move", {
-        toGroupId: editableGroupId,
-        noteIds: [noteId, crypto.randomUUID()],
-      })
-
-      expect(response.status).toBe(404)
-      expect(groupsOf(notes)).toEqual([[noteId, groupId], [second, groupId]])
-    })
-
-    it("lets a move into a group on Pro past the free source group's cap", async () => {
-      const { notes, buses } = stack(FREE_PLAN_ID, { [editableGroupId]: PRO_PLAN_ID })
-      await fillFreePlan(notes)
-
-      const response = await rest(buses, OWNER)("POST", "/move", {
-        toGroupId: editableGroupId,
-        noteIds: [(await notes.list(groupId, { limit: 1 })).notes[0].id],
-      })
-
-      expect(response.status).toBe(200)
-    })
-
-    it("refuses a move into a full free group when the source group is on Pro", async () => {
-      const { notes, buses } = stack(FREE_PLAN_ID, { [groupId]: PRO_PLAN_ID })
-      await seedTwo(notes)
-      for (let i = 0; i < 10; i++) {
-        await notes.create(
-          { groupId: editableGroupId, id: crypto.randomUUID(), title: `T${i}`, body: "" },
-          OWNER,
-          null,
-        )
-      }
-      notes.writes = 0
-
-      const response = await rest(buses, OWNER)("POST", "/move", {
-        toGroupId: editableGroupId,
-        noteIds: [noteId],
-      })
-
-      expect(response.status).toBe(402)
-      expect(notes.writes).toBe(0)
-    })
-
-    it("tells a viewer of the source group they cannot write there, even when the target is full", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-      for (let i = 0; i < 10; i++) {
-        await notes.create(
-          { groupId: editableGroupId, id: crypto.randomUUID(), title: `T${i}`, body: "" },
-          OWNER,
-          null,
-        )
-      }
-      notes.writes = 0
-
-      const response = await rest(buses, VIEWER)("POST", "/move", {
-        toGroupId: editableGroupId,
-        noteIds: [noteId],
-      })
-
-      expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
-      expect(notes.writes).toBe(0)
-    })
-
-    it("refuses a move that would take the target group over the free plan's cap", async () => {
-      const { notes, buses } = stack()
-      await seedTwo(notes)
-      for (let i = 0; i < 9; i++) {
-        await notes.create(
-          { groupId: editableGroupId, id: crypto.randomUUID(), title: `T${i}`, body: "" },
-          OWNER,
-          null,
-        )
-      }
-      notes.writes = 0
-
-      const response = await rest(buses, OWNER)("POST", "/move", {
-        toGroupId: editableGroupId,
-        noteIds: [noteId, second],
-      })
-
-      expect(response.status).toBe(402)
-      expect((await response.json()).error.code).toBe("PLAN_LIMIT_REACHED")
-      expect(notes.writes).toBe(0)
-    })
-  })
-
-  describe("finding the group of a note by its id", () => {
-    it("tells a member the group of a note in any of their groups", async () => {
-      const { notes, buses } = stack()
-      await seedNote(notes)
-      const ws = socket(buses, VIEWER)
-
-      const frame = await ws.query("note.locate", { id: noteId })
-
-      expect(frame).toMatchObject({ kind: "server.result", payload: { groupId } })
-      ws.shutdown()
-    })
-
-    it("answers a note in a group the person is not in exactly as a note that does not exist", async () => {
-      const { notes, buses } = stack()
-      await seedNote(notes)
-      // OWNER is in `groupId` only through the roles above; this note is in a group nobody is in.
-      const foreignId = crypto.randomUUID()
-      await notes.create(
-        { groupId: strangerGroupId, id: foreignId, title: "Secret", body: "" },
-        OWNER,
-        null,
-      )
-      const ws = socket(buses, OWNER)
-
-      const foreign = await ws.query("note.locate", { id: foreignId })
-      const missing = await ws.query("note.locate", { id: crypto.randomUUID() })
-
-      expect(foreign).toMatchObject({
-        kind: "server.error",
-        code: "not_found",
-        details: { code: "NOTE_NOT_FOUND" },
-      })
-      // Same frame but for the request id, which is the call's name in both.
-      expect(JSON.stringify(foreign)).toBe(JSON.stringify(missing))
-      expect(JSON.stringify(foreign)).not.toContain(strangerGroupId)
-      ws.shutdown()
-    })
-
-    it("answers a note that was deleted as not found", async () => {
-      const { notes, buses } = stack()
-      await seedNote(notes)
-      await notes.delete({ groupId, id: noteId, expectedVersion: 2 }, OWNER)
-      const ws = socket(buses, OWNER)
-
-      const frame = await ws.query("note.locate", { id: noteId })
-
-      expect(frame).toMatchObject({ kind: "server.error", details: { code: "NOTE_NOT_FOUND" } })
-      ws.shutdown()
-    })
-  })
-  describe("deleting and restoring a note", () => {
-    /** The owner deletes the seeded note (version 2), leaving it at version 3, deleted. */
-    async function seedDeleted(notes: MemoryNoteRepository) {
-      await seedNote(notes)
-      await notes.delete({ groupId, id: noteId, expectedVersion: 2 }, OWNER)
-      notes.writes = 0
-    }
-
-    for (
-      const [name, userId] of [["an owner", OWNER], ["an admin", ADMIN], [
-        "an editor",
-        EDITOR,
-      ]] as const
-    ) {
-      it(`lets ${name} restore a deleted note over REST, at the next version`, async () => {
-        const { notes, buses } = stack()
-        await seedDeleted(notes)
-
-        const response = await rest(buses, userId)("POST", `/${noteId}/restore`, {})
-
-        expect(response.status).toBe(200)
-        expect((await response.json()).note).toMatchObject({ id: noteId, version: 4 })
-        expect(notes.notes.get(noteId)?.version).toBe(4)
-        expect(notes.deleted.size).toBe(0)
-      })
-    }
-
-    it("refuses a viewer's restore over REST and the socket, and the note stays deleted", async () => {
-      const { notes, buses } = stack()
-      await seedDeleted(notes)
-
-      const response = await rest(buses, VIEWER)("POST", `/${noteId}/restore`, {})
-      const ws = socket(buses, VIEWER)
-      const frame = await ws.command("note.restore", { groupId, id: noteId })
-
-      expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
-      expect(frame).toMatchObject({
-        kind: "server.error",
-        code: "forbidden",
-        details: { code: "ROLE_INSUFFICIENT" },
-      })
-      expect(notes.writes).toBe(0)
-      expect(notes.deleted.has(noteId)).toBe(true)
-      ws.shutdown()
-    })
-
-    it("answers a stranger's restore as an unknown group, never as a missing note", async () => {
-      const { notes, buses } = stack()
-      await seedDeleted(notes)
-
-      const response = await rest(buses, STRANGER)("POST", `/${noteId}/restore`, {})
-
-      expect(response.status).toBe(404)
-      expect((await response.json()).error.code).toBe("GROUP_NOT_FOUND")
-      expect(notes.writes).toBe(0)
-    })
-
-    it("refuses a stranger's list of deleted notes as an unknown group, with no title", async () => {
-      const { notes, buses } = stack()
-      await seedDeleted(notes)
-
-      const response = await rest(buses, STRANGER)("GET", "?deleted=true", undefined)
-      const text = await response.text()
-
-      expect(response.status).toBe(404)
-      expect(JSON.parse(text).error.code).toBe("GROUP_NOT_FOUND")
-      expect(text).not.toContain(noteId)
-    })
-
-    it("restores over the socket and lists the note again", async () => {
-      const { notes, buses } = stack()
-      await seedDeleted(notes)
-      const ws = socket(buses, EDITOR)
-
-      const restored = await ws.command("note.restore", { groupId, id: noteId })
-      const listed = await ws.query("note.list", { groupId })
-
-      expect(restored).toMatchObject({
-        kind: "server.result",
-        payload: { note: { id: noteId, version: 4 } },
-      })
-      expect(listed).toMatchObject({
-        kind: "server.result",
-        payload: { notes: [{ id: noteId }] },
-      })
-      ws.shutdown()
-    })
-
-    it("lists deleted notes only when asked, over REST and the socket", async () => {
-      const { notes, buses } = stack()
-      await seedDeleted(notes)
-      const ws = socket(buses, VIEWER)
-
-      const live = await (await rest(buses, VIEWER)("GET", "", undefined)).json()
-      const gone = await (await rest(buses, VIEWER)("GET", "?deleted=true", undefined)).json()
-      const goneOverSocket = await ws.query("note.list", { groupId, deleted: true })
-      const invalid = await rest(buses, VIEWER)("GET", "?deleted=maybe", undefined)
-
-      expect(live.notes).toEqual([])
-      expect(gone.notes.map((note: { id: string }) => note.id)).toEqual([noteId])
-      expect(goneOverSocket).toMatchObject({
-        kind: "server.result",
-        payload: { notes: [{ id: noteId }] },
-      })
-      expect(invalid.status).toBe(400)
-      ws.shutdown()
-    })
-
-    it("answers a restore of a note that is not deleted as not found", async () => {
-      const { notes, buses } = stack()
-      await seedNote(notes)
-
-      const response = await rest(buses, OWNER)("POST", `/${noteId}/restore`, {})
-
-      expect(response.status).toBe(404)
-      expect((await response.json()).error.code).toBe("NOTE_NOT_FOUND")
-    })
-
-    it("refuses a restore into a group at the free plan's cap with 402, and keeps the note deleted", async () => {
-      const { notes, buses } = stack()
-      await seedDeleted(notes)
-      await fillFreePlan(notes)
-
-      const response = await rest(buses, OWNER)("POST", `/${noteId}/restore`, {})
-      const ws = socket(buses, OWNER)
-      const frame = await ws.command("note.restore", { groupId, id: noteId })
-
-      expect(response.status).toBe(402)
-      expect((await response.json()).error).toMatchObject({
-        code: "PLAN_LIMIT_REACHED",
-        entitlement: "maxNotes",
-        limit: 10,
-        canUpgrade: true,
-      })
-      expect(frame).toMatchObject({
-        kind: "server.error",
-        code: "forbidden",
-        details: { code: "PLAN_LIMIT_REACHED", entitlement: "maxNotes", limit: 10 },
-      })
-      expect(notes.writes).toBe(0)
-      expect(notes.deleted.has(noteId)).toBe(true)
-      ws.shutdown()
-    })
-
-    it("restores into a full group once a live note makes room, and on Pro past the cap", async () => {
-      const full = stack()
-      await seedDeleted(full.notes)
-      await fillFreePlan(full.notes)
-      const [live] = [...full.notes.notes.keys()]
-      await full.notes.delete({ groupId, id: live, expectedVersion: 1 }, OWNER)
-      const pro = stack(PRO_PLAN_ID)
-      await seedDeleted(pro.notes)
-      await fillFreePlan(pro.notes)
-
-      const withRoom = await rest(full.buses, OWNER)("POST", `/${noteId}/restore`, {})
-      const onPro = await rest(pro.buses, OWNER)("POST", `/${noteId}/restore`, {})
-
-      expect([withRoom.status, onPro.status]).toEqual([200, 200])
-    })
+    expect(response.status).toBe(404)
+    expect(JSON.parse(text).error.code).toBe("GROUP_NOT_FOUND")
+    expect(text).not.toContain(noteId)
   })
 })

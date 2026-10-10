@@ -1,7 +1,8 @@
 # ADR 002: Realtime transport and sync protocol
 
-- Status: accepted; "Transport per app" and the consequence "The SPA is not usable with the socket
-  blocked" are amended by [ADR 003](003-swappable-transport-and-local-data.md)
+- Status: accepted; superseded in part by [ADR 003](003-swappable-transport-and-local-data.md),
+  which replaces "Transport per app" and the consequence "The SPA is not usable with the socket
+  blocked"
 - Date: 2026-08-19
 - Maintainer: architecture owners
 - Location: `docs/decisions/002-realtime-transport-and-sync.md`

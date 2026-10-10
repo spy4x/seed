@@ -4,3 +4,6 @@
 # look like secrets. See docs/stack.md, "Runtime configuration".
 SPA_ENV env
 SPA_ERROR_REPORT_DSN errorReportDsn
+# Module switches (apps/spa/src/modules.ts, ADR 003). Unset means on; `false` turns one off.
+SPA_REALTIME realtime
+SPA_OFFLINE offline

@@ -17,7 +17,7 @@ the SPA works without them ([how to remove the layer](#removing-the-layer)).
 | `offline/OfflineStatus.tsx`                 | Binds the queue to `SyncStatus` (offline, waiting, syncing, failed with Retry) and `ConflictChooser` (each conflict, with "Keep mine" and "Use the server's"), both from `@spy4x/preact-system`. |
 | `install.ts`                                | `createInstallPrompt` from `@spy4x/preact-signals`; `app.tsx` renders `InstallPrompt` from `@spy4x/preact-system` for it.     |
 | `offline/session-cache.ts`                  | Remembers who was signed in, so an offline start does not show the sign-in page.                                          |
-| `offline/index.ts`                          | Starts and stops the layer for a user; the one place that touches the socket.                                             |
+| `offline/index.ts`                          | Starts and stops the layer for a user. It is given the calls port and sends the queue through it.                         |
 | `sw.ts`, `sw-options.ts`                    | The service worker: the app's page, scripts and styles cached by `installOfflineShell`, and the push handlers.            |
 
 ### Reads: the device first
@@ -50,7 +50,7 @@ sent are kept by `createDataCache` from `@spy4x/platform/browser/data-cache`
 old `offline:user:<id>` database, which is no longer read: a write still queued there is not sent.
 
 A note create, update or delete is saved in the outbox, in IndexedDB, then sent at once if the
-socket is open. If it is not, the entry waits, and the person sees the change in the list with a
+server can be reached as its user, over the socket or over HTTP. If it cannot, the entry waits, and the person sees the change in the list with a
 "waiting to sync" line. The sync runner (`createSyncRunner` from `@spy4x/realtime/sync-runner`) sends the queue when the layer
 starts, when the browser comes back online, when the tab becomes visible or the window gains focus, and
 again after a failed run, waiting longer each time. `App` also sends the queue in order before every read, and the read runs after
@@ -92,7 +92,7 @@ the notes screen shows both sides:
 | The server refused the write (role) | **Discard mine**.                                            |
 
 **Moving notes is never queued.** A move names two groups and needs edit rights in both, which the
-device cannot know, so it is sent only while the socket is open; offline, the person sees "Moving
+device cannot know, so it is sent only while the server can be reached; offline, the person sees "Moving
 notes needs a connection". A write queued for a note that someone moves meanwhile does **not**
 follow it: the entry names the old group, the server answers "not found" there, and it becomes a
 conflict instead of silently editing the note in a group the person never chose. The person's text
@@ -158,15 +158,69 @@ Creating a group, the profile, two-factor set-up and sign-in need the server. Ev
 sending one entry) holds a `navigator.locks` lock named for the user, so tabs take turns. After a
 send, the entry is removed, or marked a conflict, only if it still carries the key that was sent;
 an edit another tab made meanwhile has a new key and stays queued. The queue sends only while the
-socket is open and the page is signed in as the queue's user: the socket's reconnect check
-refuses a cookie that now belongs to someone else.
+browser has a network and the page is signed in as the queue's user. Every send names that user, so
+the server refuses one whose cookie now belongs to someone else, and a refused entry stays queued
+for its owner's next sign-in.
+
+## The modules and their switches
+
+Two parts of the SPA are optional modules
+([ADR 003](decisions/003-swappable-transport-and-local-data.md)): the WebSocket module
+(`apps/spa/src/realtime/`) and this offline layer (`apps/spa/src/offline/`). One file,
+`apps/spa/src/modules.ts`, imports them and decides which run. Every store and view imports its
+ports from that file and never from a module's folder; two guard tests,
+`tests/realtime-removal.test.ts` and `tests/offline-removal.test.ts`, fail when another file does.
+
+`modules.ts` offers three things:
+
+- **Calls:** `callCommand` and `callQuery`. A call is a name and a payload (`note.create`). It goes
+  to `POST /api/call/<name>` over HTTP, or over the socket while the WebSocket module runs and its
+  socket is open; a socket that drops under a call is answered by sending the call over HTTP with
+  the same idempotency key. Every call names the user the page was started for, and an
+  `unauthorized` answer over either signs the page out.
+- **Changes:** `startModules` starts what triggers the pull: the start, the browser back online,
+  the tab shown again, the page's own write, and a timer every 30 seconds while the tab is visible.
+  An open socket replaces those with its hints and reconnects, so the timer runs whenever the
+  socket is not open: the module is off, or its socket is blocked or has dropped. The timer and the
+  page's own write run the cheap check (`createChangeCheck` in `apps/spa/src/state/pull.ts`): it reads the groups
+  list and reads the open group's notes again only when that group's change sequence moved.
+- **Local data:** the device copy, the queue and the offline status line. The queue is sent only
+  while the calls port is reachable as its user (`canCallAs`): the page is signed in as them and
+  the browser has a network.
+
+### Switching a module off
+
+`/config.json` carries two switches, `realtime` and `offline`. Both modules run unless the file
+says `false`. In a deployment set `SPA_REALTIME=false` or `SPA_OFFLINE=false` for the `spa`
+container (`infra/envs/.env.example`) and restart it; in development edit
+`apps/spa/public/config.json`.
+
+With `realtime: false` the page opens no socket: it writes and reads over HTTP and sees another
+person's change within about 30 seconds instead of at once. The e2e spec
+`e2e/realtime-off.e2e.ts` runs the core flows this way and fails if a socket is opened. With
+`offline: false` nothing is written to the device and every screen needs the network.
+
+### Removing the WebSocket module
+
+A product that never wants the socket deletes it:
+
+1. Delete the folder `apps/spa/src/realtime/`.
+2. In `apps/spa/src/modules.ts`, delete the `./realtime/index.ts` import and its uses: the
+   `socket` option of `createAppCallPort`, the `if (switches.realtime)` branch of `startModules`,
+   the `disconnectRealtime` calls, and the `realtime` switch. `advanceGroupCursor` becomes an empty
+   function and `connectionDisplay` always answers `"idle"`.
+3. Delete `tests/realtime-removal.test.ts` with its clause in the `test` task in `deno.jsonc`, and
+   the e2e specs that test the socket itself (`e2e/groups-socket.e2e.ts`,
+   `e2e/realtime-resume.e2e.ts`).
+
+The API's socket route (`/api/ws`) can stay: a server with no socket clients sends its hints to
+nobody.
 
 ## Removing the layer
 
 A product that does not want offline deletes the layer and keeps an online SPA that still gets live
 updates. Do these steps. The guard test `tests/offline-removal.test.ts` fails when a file that imports the
-layer is missing from this list. Following them on this repository ends with `deno task check` and
-`deno task spa:build` passing.
+layer is missing from this list.
 
 1. Delete the folder `apps/spa/src/offline/`, and the files `apps/spa/src/sw-options.ts` and
    `apps/spa/src/sw-options.test.ts`.
@@ -174,20 +228,20 @@ layer is missing from this list. Following them on this repository ends with `de
    imports and the `installOfflineShell(...)` call, and add back the one listener `SWUpdater` needs:
    `scope.addEventListener("message", (event) => { if (event.data?.action === "skipWaiting") scope.skipWaiting() })`.
    The push handlers stay.
-3. In `apps/spa/src/app.tsx`, delete the two `./offline/` imports and their uses:
-   `bootstrapSession(recallUser)` becomes `bootstrapSession()`; drop the effect that remembers the
-   user, the `stopOffline` line, the `flushOutbox()` line in `pull` and the `startOffline(userId)`
-   line.
-4. In `apps/spa/src/state/notes.ts` and `apps/spa/src/state/groups.ts`, delete the `./offline/`
-   imports, and export the store built from `onlineNotes` and `onlineGroups` directly:
-   `createNotesStore(onlineNotes)`, `createGroupsStore(onlineGroups)`. The optional `readLocal`
-   dependency and its `showLocal` call can go with them.
-5. In `apps/spa/src/state/realtime.ts`, delete `isRealtimeOpen`.
+3. In `apps/spa/src/modules.ts`, delete the `./offline/` imports and the "Local data" part of the
+   file, the `startOfflineLayer` call in `startModules`, the `stopOfflineLayer` call in
+   `forgetModules`, and the `offline` switch.
+4. In `apps/spa/src/app.tsx`, delete what came from that part: `bootstrapSession(recallUser)`
+   becomes `bootstrapSession()`; drop the effect that remembers the user and the `flushOutbox`
+   line of `reads`.
+5. In `apps/spa/src/state/notes.ts` and `apps/spa/src/state/groups.ts`, delete the `currentLayer`,
+   `offlineNotes` and `offlineGroups` imports, and export the store built from `onlineNotes` and
+   `onlineGroups` directly: `createNotesStore(onlineNotes)`, `createGroupsStore(onlineGroups)`. The
+   optional `readLocal` dependency and its `showLocal` call can go with them.
 6. In `apps/spa/src/views/NotesView.tsx` and `apps/spa/src/views/NoteEditorView.tsx`, delete the
    `OfflineStatus` import and element.
-7. Delete the spec `e2e/offline.e2e.ts`, and this guard test with its clause at the end of the
-   `test` task in `deno.jsonc`: `tests/offline-removal.test.ts`. The unit tests lived in the
-   folder and went with it.
+7. Delete the spec `e2e/offline.e2e.ts`, and this guard test with its clause in the `test` task in
+   `deno.jsonc`: `tests/offline-removal.test.ts`. The unit tests lived in the folder and went with
+   it.
 
-`deno task check` and `deno task spa:build` then pass, and the app behaves as it did before the
-layer existed: reads and writes over the network only.
+The app then behaves as it did before the layer existed: reads and writes over the network only.

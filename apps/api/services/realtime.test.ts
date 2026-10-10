@@ -4,16 +4,11 @@ import { drainMicrotasks, FakeClock, FakeSocket } from "@spy4x/realtime/testing"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { GroupError } from "@domain/groups"
 import { NoteError, NoteVersionConflictError } from "@domain/notes"
-import { AccessError, UserMFAStatus } from "@domain/identity"
+import { AccessError, type Actor, UserMFAStatus } from "@domain/identity"
+import type { OperationCall } from "@spy4x/realtime/operations"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { buildAuthData } from "../_testing/fake-auth.ts"
-import {
-  POLICY_CLOSE_CODE,
-  Realtime,
-  type RealtimeOptions,
-  type SocketCall,
-  toRequestError,
-} from "./realtime.ts"
+import { POLICY_CLOSE_CODE, Realtime, type RealtimeOptions, toRequestError } from "./realtime.ts"
 import type { AppAuthState } from "./sign-in.ts"
 
 interface Harness {
@@ -21,20 +16,20 @@ interface Harness {
   clock: FakeClock
   /** Sessions that may still act, by id. Delete one to revoke it. */
   sessions: Map<number, AppAuthState>
-  calls: SocketCall[]
+  calls: OperationCall<Actor>[]
   logged: unknown[][]
 }
 
 function harness(overrides: Partial<RealtimeOptions> = {}, members: number[] = []): Harness {
   const clock = new FakeClock()
   const sessions = new Map<number, AppAuthState>()
-  const calls: SocketCall[] = []
+  const calls: OperationCall<Actor>[] = []
   const logged: unknown[][] = []
   const realtime = new Realtime({
     clock,
     entitledSession: (sessionId) => Promise.resolve(sessions.get(sessionId) ?? null),
     memberUserIds: () => Promise.resolve(members),
-    requests: {
+    operations: {
       "group.create": {
         kind: "command",
         handle: (call) => {
@@ -137,7 +132,7 @@ describe("realtime socket service", () => {
     h.sessions.set(10, buildAuthData({ user: { id: 1, mfa: UserMFAStatus.CONFIGURED } }))
     await send(socket, create("r2"))
 
-    expect(h.calls.map((call: SocketCall) => call.actor.userMfa)).toEqual([
+    expect(h.calls.map((call: OperationCall<Actor>) => call.actor.userMfa)).toEqual([
       UserMFAStatus.NOT_CONFIGURED,
       UserMFAStatus.CONFIGURED,
     ])
@@ -157,7 +152,7 @@ describe("realtime socket service", () => {
         kind: "server.error",
         requestId: "r1",
         code: "unauthorized",
-        message: "the session is no longer valid",
+        message: "not signed in",
       },
     ])
     expect(h.calls).toEqual([])
@@ -168,13 +163,40 @@ describe("realtime socket service", () => {
     h.realtime.shutdown()
   })
 
+  it("refuses a request whose session now belongs to another user, and runs nothing", async () => {
+    const h = harness()
+    const socket = connect(h, 1, 10)
+    // The socket was attached for user 1; its session now answers as user 2.
+    h.sessions.set(10, buildAuthData({ user: { id: 2 }, session: { id: 10, userId: 2 } }))
+
+    await send(socket, create("r1"))
+    await send(socket, { kind: "client.query", id: "r2", name: "group.list" })
+
+    expect(socket.frames()).toEqual([
+      {
+        kind: "server.error",
+        requestId: "r1",
+        code: "unauthorized",
+        message: "the session belongs to another user",
+      },
+      {
+        kind: "server.error",
+        requestId: "r2",
+        code: "unauthorized",
+        message: "the session belongs to another user",
+      },
+    ])
+    expect(h.calls).toEqual([])
+    h.realtime.shutdown()
+  })
+
   it("answers a domain error with its typed code and hides any other failure", async () => {
     const failures = [
       new GroupError("ID_ALREADY_EXISTS", "Group id is already in use"),
       new Error("connection to 10.0.0.5 refused"),
     ]
     const h = harness({
-      requests: {
+      operations: {
         "group.create": { kind: "command", handle: () => Promise.reject(failures.shift()) },
       },
     })

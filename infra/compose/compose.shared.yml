@@ -588,6 +588,8 @@ services:
       # Read at container start into /config.json (apps/spa/public-env.allow lists them all).
       - SPA_ENV=${ENV}
       - SPA_ERROR_REPORT_DSN=${SPA_ERROR_REPORT_DSN:-}
+      - SPA_REALTIME=${SPA_REALTIME:-}
+      - SPA_OFFLINE=${SPA_OFFLINE:-}
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z

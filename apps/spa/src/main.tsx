@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@spy4x/preact-ui/error-boundary"
 import { reportCaughtError, startErrorReporting } from "./error-reporting.ts"
 import { loadRuntimeConfig } from "./runtime-config.ts"
 import { install } from "./install.ts"
+import { configureModules } from "./modules.ts"
 
 // Follows the system light/dark setting. `index.html` paints the stored choice before this runs.
 createThemeStore().attach()
@@ -20,6 +21,9 @@ install.watch()
 // Settings that differ per environment come from `/config.json`, written when the container
 // starts, so one image serves any of them. The service worker keeps a copy for an offline start.
 const config = await loadRuntimeConfig()
+
+// Which optional modules run: the socket and the device copy, both on unless the file says no.
+configureModules(config)
 
 // Without a DSN this does nothing and the page makes no request to any tracker.
 startErrorReporting(

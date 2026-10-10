@@ -5,7 +5,7 @@ import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { type User, UserMFAStatus } from "@domain/identity"
 import type { UserProfileUpdateCommand } from "../../cqrs/commands.ts"
 import type { UserProfileGetQuery } from "../../cqrs/queries.ts"
-import { createProfileSocketRequests } from "./socket.ts"
+import { createProfileOperations } from "./operations.ts"
 
 const actor = {
   userId: 7,
@@ -20,7 +20,7 @@ function harness() {
     update: null,
     get: null,
   }
-  const requests = createProfileSocketRequests({
+  const requests = createProfileOperations({
     get(query) {
       seen.get = query
       return Promise.resolve({ user })
@@ -65,13 +65,13 @@ describe("profile socket requests", () => {
   it("refuses an update with an empty name as bad_request and does not dispatch it", async () => {
     const { requests, seen } = harness()
 
-    const failure = await requests["profile.update"].handle({
+    const failure = await Promise.resolve(requests["profile.update"].handle({
       actor,
       requestId: "req-1",
       signal,
       idempotencyKey: "key-1",
       payload: { firstName: "", lastName: "Lovelace" },
-    }).catch((error) => error)
+    })).catch((error) => error)
 
     expect(failure).toBeInstanceOf(RealtimeRequestError)
     expect((failure as RealtimeRequestError).code).toBe("bad_request")
@@ -95,12 +95,12 @@ describe("profile socket requests", () => {
   it("refuses a get that names a payload", async () => {
     const { requests, seen } = harness()
 
-    const failure = await requests["profile.get"].handle({
+    const failure = await Promise.resolve(requests["profile.get"].handle({
       actor,
       requestId: "req-2",
       signal,
       payload: { userId: 8 },
-    }).catch((error) => error)
+    })).catch((error) => error)
 
     expect(failure).toBeInstanceOf(RealtimeRequestError)
     expect(seen.get).toBe(null)

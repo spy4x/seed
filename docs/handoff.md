@@ -347,7 +347,7 @@ start it with `deno run --allow-sys -E -N apps/worker/+main.ts` and the API's `D
 ## How a profile or push call travels
 
 `profile.get`, `profile.update`, `push.register`, `push.remove` and `push.list` are served from
-`apps/api/features/profile/socket.ts` and `features/push/socket.ts` and dispatched on the same buses
+`apps/api/features/profile/operations.ts` and `features/push/operations.ts` and dispatched on the same buses
 as the REST routes (`/api/users/me`, `/api/push`). The two commands that
 change devices carry an idempotency key. Every change emits `UserProfileUpdatedEvent` or
 `PushDevicesUpdatedEvent`, whether it came over REST or the socket, and an event handler calls
@@ -357,11 +357,11 @@ hint with `profileStore.refresh()`, so a second tab follows without a reload.
 
 ## How a group call travels
 
-1. `apps/spa/src/state/realtime.ts` opens `/api/ws`. The upgrade runs the same session gate as
+1. `apps/spa/src/realtime/index.ts` opens `/api/ws`. The upgrade runs the same session gate as
    REST and the `Origin` check, then `apps/api/services/realtime.ts` remembers which session each
    socket belongs to.
 2. `group.create`, `group.list`, `group.get`, `group.select` and `group.selected` are dispatched on the same command and query buses REST uses,
-   from `apps/api/features/groups/socket.ts`. Each frame reads the session again from the database,
+   from `apps/api/features/groups/operations.ts`. Each frame reads the session again from the database,
    so a signed-out or expired session is refused. Authorization stays in the buses.
 3. A command needs an idempotency key. `@spy4x/server/idempotency` (ts-libs) stores it for 7 days
    per user and runs the command once; a repeat returns the first result, and a repeat while the

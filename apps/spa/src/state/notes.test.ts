@@ -6,7 +6,7 @@ import {
   NOTE_MESSAGES,
   type NoteItem,
   type NotePage,
-  restoreOverSocket,
+  restoreWhileReachable,
 } from "./notes.ts"
 
 const groupId = "g-1"
@@ -784,21 +784,21 @@ describe("notes store", () => {
   })
 })
 
-describe("restoreOverSocket", () => {
-  it("refuses at once, without sending, when the socket is not open", async () => {
+describe("restoreWhileReachable", () => {
+  it("refuses at once, without sending, when the server cannot be reached", async () => {
     let sent = 0
     const send = () => {
       sent++
       return Promise.resolve({ note: item("a") })
     }
-    await expect(restoreOverSocket({ groupId, id: "a" }, () => false, send)).rejects.toThrow(
-      "the socket is not open",
+    await expect(restoreWhileReachable({ groupId, id: "a" }, () => false, send)).rejects.toThrow(
+      "the server cannot be reached",
     )
     expect(sent).toBe(0)
   })
 
-  it("sends the restore when the socket is open", async () => {
-    const result = await restoreOverSocket(
+  it("sends the restore when the server can be reached", async () => {
+    const result = await restoreWhileReachable(
       { groupId, id: "a" },
       () => true,
       () => Promise.resolve({ note: item("a") }),
