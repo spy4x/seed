@@ -202,7 +202,7 @@ export function createNotificationsStore(
 }
 
 async function unwrap<T>(result: Awaited<ReturnType<typeof apiFetch<T>>>): Promise<T> {
-  if (!result.ok) throw new ReadRefused(result.error.message, result.status)
+  if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
   return result.data
 }
 

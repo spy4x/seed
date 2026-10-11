@@ -107,7 +107,7 @@ export const activityHttp: ActivityDependencies = {
     const result = await apiFetch<ActivityPageResult>(
       `/api/groups/${encodeURIComponent(groupId)}/activity${query}`,
     )
-    if (!result.ok) throw new ReadRefused(result.error.message, result.status)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
     return result.data
   },
 }

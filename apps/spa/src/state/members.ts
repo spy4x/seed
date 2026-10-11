@@ -253,7 +253,7 @@ export const membersHttp: MembersDependencies = {
     const result = await apiAsUser<{ members: MemberItem[]; memberCount: number }>(
       `/api/groups/${encodeURIComponent(groupId)}/members`,
     )
-    if (!result.ok) throw new ReadRefused(result.error.message, result.status)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
     return result.data
   },
   setRole: (input) => callCommand("group.setRole", input),

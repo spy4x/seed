@@ -144,18 +144,18 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.62.0 (idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
+    // spy4x/ts-libs 1.63.0 (idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
     // the redirect-path check of sign-in's `next`, the password check without a session, billing).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
-    "@spy4x/validation": "jsr:@spy4x/validation@1.62.0",
-    "@spy4x/platform": "jsr:@spy4x/platform@1.62.0",
-    "@spy4x/server": "jsr:@spy4x/server@1.62.0",
-    "@spy4x/realtime": "jsr:@spy4x/realtime@1.62.0",
-    "@spy4x/integrations": "jsr:@spy4x/integrations@1.62.0",
-    "@spy4x/email": "jsr:@spy4x/email@1.62.0",
-    "@spy4x/net": "jsr:@spy4x/net@1.62.0",
-    "@spy4x/billing": "jsr:@spy4x/billing@1.62.0",
+    "@spy4x/validation": "jsr:@spy4x/validation@1.63.0",
+    "@spy4x/platform": "jsr:@spy4x/platform@1.63.0",
+    "@spy4x/server": "jsr:@spy4x/server@1.63.0",
+    "@spy4x/realtime": "jsr:@spy4x/realtime@1.63.0",
+    "@spy4x/integrations": "jsr:@spy4x/integrations@1.63.0",
+    "@spy4x/email": "jsr:@spy4x/email@1.63.0",
+    "@spy4x/net": "jsr:@spy4x/net@1.63.0",
+    "@spy4x/billing": "jsr:@spy4x/billing@1.63.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",

@@ -247,10 +247,22 @@ export async function changePassword(
 
 /** The devices the person is signed in on, this one first. */
 export async function listSessions(): Promise<
-  { ok: true; sessions: SignedInDevice[] } | { ok: false; error: string; status?: number }
+  { ok: true; sessions: SignedInDevice[] } | {
+    ok: false
+    error: string
+    status?: number
+    code?: string
+  }
 > {
   const result = await apiFetch<SignedInDevicesResponse>("/api/auth/sessions")
-  if (!result.ok) return { ok: false, error: result.error.message, status: result.status }
+  if (!result.ok) {
+    return {
+      ok: false,
+      error: result.error.message,
+      status: result.status,
+      code: result.error.code,
+    }
+  }
   return { ok: true, sessions: result.data.sessions }
 }
 

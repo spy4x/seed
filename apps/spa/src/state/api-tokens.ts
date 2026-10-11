@@ -22,6 +22,8 @@ export type ApiTokensResult<T> = { ok: true; data: T } | {
   ok: false
   error: string
   status?: number
+  /** The API's error code; absent when the answer carried none, as a proxy's does. */
+  code?: string
 }
 
 /** What the store calls. Injected so tests need no network. */
@@ -51,7 +53,7 @@ async function call<T>(
   const result = await request
   return result.ok
     ? { ok: true, data: result.data }
-    : { ok: false, error: result.error.message, status: result.status }
+    : { ok: false, error: result.error.message, status: result.status, code: result.error.code }
 }
 
 /** The create form as it opens: the first group, read only, the default lifetime. */
@@ -105,7 +107,7 @@ export function createApiTokensStore(
         READ_KEYS.apiTokens,
         async () => {
           const result = await dependencies.list()
-          if (!result.ok) throw new ReadRefused(result.error, result.status ?? 0)
+          if (!result.ok) throw new ReadRefused(result.error, result.status ?? 0, result.code)
           return result.data.tokens
         },
         (copy) => {

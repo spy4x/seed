@@ -36,7 +36,7 @@ export function createDevicesStore(
         READ_KEYS.devices,
         async () => {
           const result = await list()
-          if (!result.ok) throw new ReadRefused(result.error, result.status ?? 0)
+          if (!result.ok) throw new ReadRefused(result.error, result.status ?? 0, result.code)
           return result.sessions
         },
         (copy) => {
