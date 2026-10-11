@@ -149,11 +149,10 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
-    labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.minio-${PROJECT}.rule=Host(`minio.${DOMAIN}`)'
-      - 'traefik.http.routers.minio-${PROJECT}.entrypoints=web'
-      - 'traefik.http.services.minio-${PROJECT}.loadbalancer.server.port=9001'
+    ports:
+      # The admin console, on this machine only and never behind the proxy: from elsewhere, open
+      # it through an SSH tunnel (README, "Admin consoles").
+      - ${MINIO_CONSOLE_HOST_PORT:-127.0.0.1:9001}:9001
 
   minio-configure:
     container_name: ${PROJECT}-minio-configure
@@ -278,7 +277,6 @@ services:
       - ../../.volumes/grafana:/var/lib/grafana:Z
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS}
-      - GF_SERVER_ROOT_URL=https://grafana.${DOMAIN}
     deploy:
       resources:
         limits:
@@ -298,11 +296,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.grafana-${PROJECT}.rule=Host(`grafana.${DOMAIN}`)'
-      - 'traefik.http.routers.grafana-${PROJECT}.entrypoints=web'
-      - 'traefik.http.services.grafana-${PROJECT}.loadbalancer.server.port=3000'
+    ports:
+      # As for the MinIO console: this machine only, never behind the proxy.
+      - ${GRAFANA_HOST_PORT:-127.0.0.1:3000}:3000
 
   nodeexporter:
     container_name: ${PROJECT}-nodeexporter

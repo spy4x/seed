@@ -11,26 +11,6 @@ services:
       retries: 5
       start_period: 40s
   
-  minio:
-    networks:
-      - proxy
-      - default
-    labels:
-      - "traefik.docker.network=proxy"
-      - 'traefik.http.routers.minio-${PROJECT}.entrypoints=websecure'
-      - 'traefik.http.routers.minio-${PROJECT}.tls=true'
-      - 'traefik.http.routers.minio-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}'
-
-  grafana:
-    networks:
-      - proxy
-      - default
-    labels:
-      - "traefik.docker.network=proxy"
-      - 'traefik.http.routers.grafana-${PROJECT}.entrypoints=websecure'
-      - 'traefik.http.routers.grafana-${PROJECT}.tls=true'
-      - 'traefik.http.routers.grafana-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}'
-
   api:
     networks:
       - proxy
@@ -41,7 +21,8 @@ services:
       # These override compose.shared.yml's api-${PROJECT} router by name, so this stays one
       # router (rule from compose.shared.yml, transport from here) instead of a second router
       # that never matches. Overriding `entrypoints` from `web` to `websecure` drops the plain
-      # HTTP listener for this router, same as the pre-existing minio/grafana routers below.
+      # HTTP listener for this router; the `http-${PROJECT}` router on the spa service redirects
+      # plain HTTP for the whole host instead.
       - "traefik.docker.network=proxy"
       - 'traefik.http.routers.api-${PROJECT}.entrypoints=websecure'
       - 'traefik.http.routers.api-${PROJECT}.tls=true'
@@ -62,6 +43,16 @@ services:
       - "traefik.http.routers.spa-${PROJECT}.entrypoints=websecure"
       - "traefik.http.routers.spa-${PROJECT}.tls=true"
       - "traefik.http.routers.spa-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      # Plain HTTP for DOMAIN answers a permanent redirect to HTTPS. A router of its own on the
+      # `web` entry point, because the proxy also serves development hosts over plain HTTP and so
+      # cannot redirect the whole entry point. Let's Encrypt's HTTP challenge still gets through:
+      # Traefik's own challenge router outranks every other.
+      - "traefik.http.middlewares.https-redirect-${PROJECT}.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect-${PROJECT}.redirectscheme.permanent=true"
+      - "traefik.http.routers.http-${PROJECT}.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.http-${PROJECT}.entrypoints=web"
+      - "traefik.http.routers.http-${PROJECT}.middlewares=https-redirect-${PROJECT}"
+      - "traefik.http.routers.http-${PROJECT}.service=noop@internal"
 
   # Only with COMPOSE_PROFILES=mpa. Overrides compose.shared.yml's mpa-${PROJECT} router by name.
   mpa:
@@ -70,3 +61,8 @@ services:
       - "traefik.http.routers.mpa-${PROJECT}.entrypoints=websecure"
       - "traefik.http.routers.mpa-${PROJECT}.tls=true"
       - "traefik.http.routers.mpa-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      # The same redirect for the website's host; the middleware is the SPA's.
+      - "traefik.http.routers.http-mpa-${PROJECT}.rule=Host(`${MPA_DOMAIN:-}`)"
+      - "traefik.http.routers.http-mpa-${PROJECT}.entrypoints=web"
+      - "traefik.http.routers.http-mpa-${PROJECT}.middlewares=https-redirect-${PROJECT}"
+      - "traefik.http.routers.http-mpa-${PROJECT}.service=noop@internal"

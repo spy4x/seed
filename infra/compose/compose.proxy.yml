@@ -7,7 +7,6 @@ services:
     restart: unless-stopped
     command:
       - '--log.level=${PROXY_LOG_LEVEL}'
-      - '--api.insecure=true'
       - '--providers.docker=true'
       - '--providers.docker.exposedbydefault=false'
       - '--entrypoints.websecure.address=:443'
@@ -38,9 +37,8 @@ services:
           memory: ${PROXY_MEM_LIMIT}
     labels:
       - 'traefik.enable=true'
-      - 'traefik.http.routers.proxy.rule=Host(`proxy.${DOMAIN}`)'
-      - 'traefik.http.routers.proxy.entrypoints=web'
-      - 'traefik.http.services.proxy.loadbalancer.server.port=8080'
+      # No router for Traefik's own dashboard or API, and no `--api.insecure`: they list every
+      # router and backend address of every project behind this proxy (spy4x/template#353).
       - 'traefik.http.routers.pingweb.rule=PathPrefix(`/ping`)'
       - 'traefik.http.routers.pingweb.service=ping@internal'
       - 'traefik.http.routers.pingweb.entrypoints=web'

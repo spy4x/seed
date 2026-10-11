@@ -16,6 +16,10 @@
  * rsync as a destination, the second runs unquoted in the remote shell (so `~/bin/deno` works).
  * `PATH_ON_SERVER` is quoted.
  *
+ * Before anything is sent, the deploy stops when a password or secret in the env file equals one
+ * that `infra/envs/.env.example` prints, or when one that the example file sets is empty or left
+ * out. The message names each such variable and never prints a value.
+ *
  * Four steps, each stopping the deploy when it fails: rsync the files that
  * `infra/deploy/include.txt` names, leaving out every env file (any `.env*` or `*.env`, anywhere,
  * and the chosen env file itself) and the web push keys, and deleting server files under those
@@ -38,6 +42,96 @@ export const DEFAULT_ENV_FILE = "infra/envs/.env.prod"
 
 /** Where the API's web push keys live, relative to the app's directory. */
 export const VAPID_PATH = "infra/configs/vapid.json"
+
+/** The file whose secret values are public, so none of them may reach a server. */
+export const EXAMPLE_ENV_FILE = "infra/envs/.env.example"
+
+/** Names of variables that hold a password, secret or key. */
+const SECRET_NAME = /PASS|SECRET|PEPPER|TOTP|KEY|TOKEN/
+
+/** One secret a deploy must not go ahead with, and why. */
+export interface UnsafeSecret {
+  name: string
+  /** `example`: its value is one the example file prints. `empty`: it has no value. */
+  reason: "example" | "empty"
+}
+
+/**
+ * The secrets of `values` that are not safe to deploy, in the example file's order first.
+ *
+ * A variable is a secret when its name says so. Every secret the example gives a value is public,
+ * so a secret of `values` that equals any of those values is unsafe, whichever variable holds it
+ * (`DB_PASS=change-me` too). A secret the example gives a value must also have one here: left empty
+ * or out, its service starts with no password or its built-in one. A secret the example leaves
+ * empty is optional and may stay empty. The list follows `.env.example` and needs no copy here.
+ */
+export function unsafeSecretsIn(
+  values: Record<string, string>,
+  example: Record<string, string>,
+): UnsafeSecret[] {
+  const required = Object.keys(example).filter((name) =>
+    SECRET_NAME.test(name) && example[name] !== ""
+  )
+  const published = new Set(required.map((name) => example[name]))
+  const names = new Set([...required, ...Object.keys(values).filter((n) => SECRET_NAME.test(n))])
+  const unsafe: UnsafeSecret[] = []
+  for (const name of names) {
+    const value = values[name] ?? ""
+    if (published.has(value)) unsafe.push({ name, reason: "example" })
+    else if (value === "" && required.includes(name)) unsafe.push({ name, reason: "empty" })
+  }
+  return unsafe
+}
+
+/**
+ * Stops a deploy whose env file holds an example secret or leaves a required one empty.
+ *
+ * @throws {Error} Naming the env file and each such variable, never a value.
+ */
+export function refuseExampleSecrets(
+  values: Record<string, string>,
+  example: Record<string, string>,
+  envFilePath: string,
+): void {
+  const unsafe = unsafeSecretsIn(values, example)
+  if (unsafe.length === 0) return
+  const named = (reason: UnsafeSecret["reason"]) =>
+    unsafe.filter((secret) => secret.reason === reason).map((secret) => secret.name).join(", ")
+  const problems = [
+    named("example") &&
+    `holds a value from ${EXAMPLE_ENV_FILE}, which is public, in ${named("example")}`,
+    named("empty") && `has no value for ${named("empty")}`,
+  ].filter(Boolean)
+  throw new Error(
+    `${envFilePath} ${problems.join(" and ")}. Set a real value for each before deploying.`,
+  )
+}
+
+/**
+ * Reads the env file at `envFilePath`, refuses it when a secret is unsafe, and plans the deploy.
+ * Every deploy goes through here, so no step is planned for a refused file.
+ *
+ * @param read Reads one env file; replaced in tests.
+ * @throws {Error} When the example file is missing, a secret is unsafe or a variable is missing.
+ */
+export async function planFromEnvFile(
+  envFilePath: string,
+  read: (path: string) => Promise<Record<string, string>> = readEnvFile,
+): Promise<DeployStep[]> {
+  const values = await read(envFilePath)
+  let example: Record<string, string>
+  try {
+    example = await read(EXAMPLE_ENV_FILE)
+  } catch (err) {
+    if (!(err instanceof Deno.errors.NotFound)) throw err
+    throw new Error(
+      `${EXAMPLE_ENV_FILE} is missing. The deploy reads it to refuse the passwords it prints; ` +
+        `restore it before deploying.`,
+    )
+  }
+  refuseExampleSecrets(values, example, envFilePath)
+  return planDeploy(values, envFilePath)
+}
 
 /** One program to run, with its arguments, and what to call it in the log. */
 export interface DeployStep {
@@ -130,7 +224,7 @@ async function main(): Promise<void> {
   const envFilePath = Deno.args[0] ?? DEFAULT_ENV_FILE
   let steps: DeployStep[]
   try {
-    steps = planDeploy(await readEnvFile(envFilePath), envFilePath)
+    steps = await planFromEnvFile(envFilePath)
   } catch (err) {
     error(describeEnvFileError(err, envFilePath))
     Deno.exit(1)

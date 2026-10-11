@@ -1,7 +1,16 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
 import { basename, globToRegExp } from "@std/path"
-import { planDeploy, shellQuote, VAPID_PATH } from "./deploy.ts"
+import {
+  EXAMPLE_ENV_FILE,
+  planDeploy,
+  planFromEnvFile,
+  refuseExampleSecrets,
+  shellQuote,
+  unsafeSecretsIn,
+  VAPID_PATH,
+} from "./deploy.ts"
+import { readEnvFile } from "./env-file.ts"
 import { MissingEnvError } from "@spy4x/server/config"
 
 const ENV_FILE = "infra/envs/.env.home"
@@ -127,4 +136,112 @@ Deno.test("planDeploy runs the key step with the configured Deno", () => {
     ENV_FILE,
   )
   expect(steps[2].args[1]).toContain(`/opt/deno/deno task vapid-key:create`)
+})
+
+/** Every secret the shipped example file gives a value: all of them are public. */
+const EXAMPLE_SECRETS = [
+  "DB_PASS",
+  "KV_PASSWORD",
+  "MINIO_PASS",
+  "GRAFANA_PASS",
+  "AUTH_COOKIE_SECRET",
+  "AUTH_PEPPER",
+  "AUTH_TOTP",
+]
+
+/** The shipped example with a value of its own for every secret: a file that may deploy. */
+async function safeValues(): Promise<Record<string, string>> {
+  const values = { ...await readEnvFile(EXAMPLE_ENV_FILE) }
+  for (const name of EXAMPLE_SECRETS) values[name] = `real-${name}`
+  return { ...values, SSH_TO_SERVER: "deploy@home.example.net", PATH_ON_SERVER: "/srv/app" }
+}
+
+/** What `refuseExampleSecrets` says about `values`, or "" when it lets them through. */
+async function refusal(values: Record<string, string>): Promise<string> {
+  try {
+    refuseExampleSecrets(values, await readEnvFile(EXAMPLE_ENV_FILE), ENV_FILE)
+    return ""
+  } catch (err) {
+    return (err as Error).message
+  }
+}
+
+Deno.test("an env file copied from the shipped example is refused for each of its secrets", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  expect(unsafeSecretsIn({ ...example }, example)).toEqual(
+    EXAMPLE_SECRETS.map((name) => ({ name, reason: "example" })),
+  )
+})
+
+Deno.test("a deploy with one example password left stops and names that variable, not its value", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  const message = await refusal({ ...await safeValues(), GRAFANA_PASS: example.GRAFANA_PASS })
+
+  expect(message).toContain(ENV_FILE)
+  expect(message).toContain("GRAFANA_PASS")
+  expect(message).not.toContain("MINIO_PASS")
+  expect(message).not.toContain(example.GRAFANA_PASS)
+})
+
+Deno.test("a deploy whose secrets all differ from the example goes ahead, example limits and all", async () => {
+  expect(await refusal(await safeValues())).toBe("")
+})
+
+Deno.test("a secret set to another variable's example value is refused", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  expect(example.DB_PASS).not.toBe(example.KV_PASSWORD)
+  const values = { ...await safeValues(), DB_PASS: example.KV_PASSWORD, SMTP_PASS: example.DB_PASS }
+
+  expect(unsafeSecretsIn(values, example)).toEqual([
+    { name: "DB_PASS", reason: "example" },
+    { name: "SMTP_PASS", reason: "example" },
+  ])
+})
+
+Deno.test("a secret the example sets is refused when the env file leaves it empty", async () => {
+  const message = await refusal({ ...await safeValues(), GRAFANA_PASS: "" })
+
+  expect(message).toContain("has no value for GRAFANA_PASS")
+  expect(message).not.toContain("MINIO_PASS")
+})
+
+Deno.test("a secret the example sets is refused when the env file leaves it out", async () => {
+  const { GRAFANA_PASS: _, ...values } = await safeValues()
+
+  expect(await refusal(values)).toContain("has no value for GRAFANA_PASS")
+})
+
+Deno.test("a secret the example leaves empty may stay empty or be left out", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  expect(example.SMTP_PASS).toBe("")
+  const values: Record<string, string> = { ...await safeValues(), SMTP_PASS: "" }
+  delete values.STRIPE_SECRET_KEY
+
+  expect(unsafeSecretsIn(values, example)).toEqual([])
+})
+
+/** Reads env files from `files` instead of the disk; a path it lacks is a missing file. */
+function reader(files: Record<string, Record<string, string>>) {
+  return (path: string): Promise<Record<string, string>> => {
+    if (!(path in files)) return Promise.reject(new Deno.errors.NotFound(`readfile '${path}'`))
+    return Promise.resolve(files[path])
+  }
+}
+
+Deno.test("no deploy step is planned for an env file that holds an example password", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  const safe = await safeValues()
+  const files = { [EXAMPLE_ENV_FILE]: example, [ENV_FILE]: safe }
+  expect((await planFromEnvFile(ENV_FILE, reader(files))).length).toBe(4)
+
+  files[ENV_FILE] = { ...safe, KV_PASSWORD: example.KV_PASSWORD }
+  await expect(planFromEnvFile(ENV_FILE, reader(files))).rejects.toThrow("KV_PASSWORD")
+})
+
+Deno.test("a deploy without the example file stops and says the file is missing", async () => {
+  const files = { [ENV_FILE]: await safeValues() }
+
+  await expect(planFromEnvFile(ENV_FILE, reader(files))).rejects.toThrow(
+    `${EXAMPLE_ENV_FILE} is missing`,
+  )
 })
