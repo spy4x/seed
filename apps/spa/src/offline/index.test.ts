@@ -11,6 +11,7 @@ import {
   stopChanges,
 } from "../modules.ts"
 import type { NoteItem } from "../state/notes.ts"
+import type { TagItem } from "../state/tags.ts"
 import { sessionState, type SessionUser } from "../state/session.ts"
 import { currentLayer, forgetDeviceCopy, startOffline, stopOffline } from "./index.ts"
 import { installLocalStorage } from "../state/memory-local-storage.ts"
@@ -29,6 +30,22 @@ function note(id: string, version = 1, title = id): NoteItem {
     groupId: "g-1",
     title,
     body: "",
+    tagIds: [],
+    version,
+    changeSequence: "1",
+    createdByUserId: 7,
+    updatedByUserId: 7,
+    createdAt: "2026-10-02T00:00:00.000Z",
+    updatedAt: "2026-10-02T00:00:00.000Z",
+  }
+}
+
+function tagItem(id: string, version = 1, name = id): TagItem {
+  return {
+    id,
+    groupId: "g-1",
+    name,
+    color: "red",
     version,
     changeSequence: "1",
     createdByUserId: 7,
@@ -68,7 +85,11 @@ function server(): Call[] {
       key: new Headers(init.headers).get("Idempotency-Key"),
       body: JSON.parse(String(init.body)),
     })
-    return Promise.resolve(Response.json({ result: { note: note("n-1", 4, "Written offline") } }))
+    const body = JSON.parse(String(init.body)) as { id?: string }
+    const result = String(url).includes("/tag.")
+      ? { tag: tagItem(String(body.id), 1, "Urgent") }
+      : { note: note("n-1", 4, "Written offline") }
+    return Promise.resolve(Response.json({ result }))
   }) as unknown as typeof fetch
   return calls
 }
@@ -215,6 +236,17 @@ describe("what the device keeps", () => {
     device.reads.set("groups", { value: [{ id: "g-1" }], savedAt: 1 })
     await device.notes.putNote(note("n-9"))
     await device.queue.putEntry({ ...QUEUED_BY_AN_EARLIER_VERSION, status: "conflict" })
+    await device.tags.putTag(tagItem("t-9"))
+    await device.tagsQueue.putEntry({
+      key: "tag-key",
+      entityId: "t-1",
+      kind: "create",
+      baseVersion: 0,
+      payload: { groupId: "g-1", name: "Urgent", color: "red" },
+      attempted: false,
+      status: "pending",
+      queuedAt: "2026-10-01T08:00:00.000Z",
+    })
     return { storage, device }
   }
 
@@ -245,6 +277,49 @@ describe("what the device keeps", () => {
 
     expect(currentLayer()).toBeNull()
     expect([...storage.of(7).reads.keys()]).toEqual([])
+  })
+
+  it("deletes the tags on sign-out, and keeps the queued tag writes", async () => {
+    const { storage, device } = await deviceInUse()
+    startPage(7, storage)
+    await settle()
+
+    forgetModules()
+    await settle()
+
+    expect(await device.tags.readTags("g-1")).toEqual([])
+    expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
+  })
+
+  it("sends a tag queued on the device before the note that names it", async () => {
+    const storage = createMemoryStorage()
+    const device = storage.of(7)
+    await device.queue.putEntry({
+      key: "note-key",
+      entityId: "n-1",
+      kind: "create",
+      baseVersion: 0,
+      payload: { groupId: "g-1", title: "Plan", body: "", tagIds: ["t-1"] },
+      attempted: false,
+      status: "pending",
+      queuedAt: "2026-10-01T08:00:00.000Z",
+    })
+    await device.tagsQueue.putEntry({
+      key: "tag-key",
+      entityId: "t-1",
+      kind: "create",
+      baseVersion: 0,
+      payload: { groupId: "g-1", name: "Urgent", color: "red" },
+      attempted: false,
+      status: "pending",
+      queuedAt: "2026-10-01T08:00:01.000Z",
+    })
+    const calls = server()
+
+    startPage(7, storage)
+    await settle()
+
+    expect(calls.map((call) => call.url)).toEqual(["/api/call/tag.create", "/api/call/note.create"])
   })
 
   it("deletes the read copies and the notes on sign-out, and keeps the queued writes", async () => {
@@ -318,6 +393,8 @@ describe("what the device keeps", () => {
     expect([...device.reads.keys()]).toEqual([])
     expect(await device.notes.readNotes("g-1")).toEqual([])
     expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect(await device.tags.readTags("g-1")).toEqual([])
+    expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
   })
 
   it("remembers the signed-in user under the key a device already holds, and nobody when what is stored there is not a user", () => {
@@ -416,6 +493,7 @@ describe("what the device keeps", () => {
 
     expect([...device.reads.keys()]).toEqual([])
     expect(await device.notes.readNotes("g-1")).toEqual([])
+    expect(await device.tags.readTags("g-1")).toEqual([])
     expect(kept.getItem(OWED)).toBeNull()
   })
 
@@ -510,6 +588,7 @@ describe("what the device keeps", () => {
 
     expect(currentLayer()).toBeNull()
     expect([...device.reads.keys()]).toEqual([])
+    expect(await device.tags.readTags("g-1")).toEqual([])
   })
 
   it("deletes what the module kept for the remembered person once it is switched off", async () => {

@@ -42,6 +42,67 @@ interface DeletedRow extends postgres.Row {
 }
 
 /**
+ * Sets the tags of a note to those of `tagIds` that exist in the note's group. An id the group has
+ * no tag for (unknown, in another group, already deleted) is ignored, never an error: a client
+ * may have queued a note naming a tag that is gone (ADR 003, section 5, rule 4).
+ */
+async function setNoteTags(
+  transaction: postgres.TransactionSql,
+  groupId: string,
+  noteId: string,
+  tagIds: readonly string[],
+): Promise<void> {
+  await transaction`DELETE FROM note_tags WHERE note_id = ${noteId}`
+  if (tagIds.length === 0) return
+  await transaction`
+    INSERT INTO note_tags (note_id, tag_id)
+    SELECT ${noteId}, id FROM tags WHERE group_id = ${groupId} AND id IN ${transaction(tagIds)}
+    ON CONFLICT DO NOTHING
+  `
+}
+
+/**
+ * Gives the notes that just moved to `toGroupId` the tags of the same names there, creating the
+ * ones the target lacks, and drops their links to the source group's tags. Names are compared
+ * without regard to case, as the group's unique index does. The source group's tags stay.
+ */
+async function mapTagsOnMove(
+  transaction: postgres.TransactionSql,
+  input: MoveNoteRowsInput,
+  noteIds: readonly string[],
+): Promise<void> {
+  if (noteIds.length === 0) return
+  await transaction`
+    INSERT INTO tags (
+      id, group_id, name, color, change_sequence, created_by_user_id, updated_by_user_id
+    )
+    SELECT gen_random_uuid(), ${input.toGroupId}, source.name, source.color,
+           ${input.changeSequence}::bigint, ${input.actorId}, ${input.actorId}
+    FROM tags source
+    WHERE source.group_id = ${input.fromGroupId}
+      AND source.id IN (SELECT tag_id FROM note_tags WHERE note_id IN ${transaction(noteIds)})
+    ON CONFLICT (group_id, lower(name)) DO NOTHING
+  `
+  await transaction`
+    INSERT INTO note_tags (note_id, tag_id)
+    SELECT links.note_id, target.id
+    FROM note_tags links
+    INNER JOIN tags source ON source.id = links.tag_id AND source.group_id = ${input.fromGroupId}
+    INNER JOIN tags target
+      ON target.group_id = ${input.toGroupId} AND lower(target.name) = lower(source.name)
+    WHERE links.note_id IN ${transaction(noteIds)}
+    ON CONFLICT DO NOTHING
+  `
+  await transaction`
+    DELETE FROM note_tags
+    USING tags
+    WHERE note_tags.tag_id = tags.id
+      AND tags.group_id = ${input.fromGroupId}
+      AND note_tags.note_id IN ${transaction(noteIds)}
+  `
+}
+
+/**
  * Records a note's change on its group. A group deleted since the role check is answered as a
  * missing group, and the note write rolls back with it.
  */
@@ -102,7 +163,7 @@ export interface MoveNoteRowsInput {
  * The part of a move that moving chosen notes and moving a whole group share, in the caller's
  * transaction (which has locked both groups and checked the roles): the notes change group, their
  * version grows by one so an edit made on the old version conflicts, and the target's cap is
- * counted after the update. Throws `NOTE_NOT_FOUND` when a named note is not live in the source,
+ * counted after the update. The notes' tags follow by name (`mapTagsOnMove`). Throws `NOTE_NOT_FOUND` when a named note is not live in the source,
  * and a `PlanError` when the target would pass its cap; the caller's transaction takes the move
  * back. Returns how many notes moved.
  */
@@ -128,6 +189,7 @@ export async function moveNoteRows(
   if (input.noteIds !== null && moved.length !== input.noteIds.length) {
     throw new NoteError("NOTE_NOT_FOUND", "Note not found")
   }
+  await mapTagsOnMove(transaction, input, moved.map((row) => row.id))
   if (moved.length > 0 && input.allowance !== null) {
     const used = await new PostgresNoteRepository(transaction).count(input.toGroupId) - 1
     assertRoomFor("maxNotes", input.allowance, used, input.targetRole)
@@ -232,6 +294,7 @@ export class PostgresNoteRepository implements NoteRepository {
         `
       )[0]
       if (inserted) {
+        await setNoteTags(transaction, input.groupId, input.id, input.tagIds ?? [])
         if (allowance !== null) {
           const used = await repository.count(input.groupId) - 1
           assertRoomFor("maxNotes", allowance, used, role)
@@ -287,6 +350,9 @@ export class PostgresNoteRepository implements NoteRepository {
         RETURNING id
       `
       if (updated.length === 0) return await repository.refuseStaleWrite(input.groupId, input.id)
+      if (input.tagIds !== undefined) {
+        await setNoteTags(transaction, input.groupId, input.id, input.tagIds)
+      }
       return await repository.stamp(
         transaction,
         input.groupId,
@@ -495,6 +561,11 @@ export class PostgresNoteRepository implements NoteRepository {
       group_id,
       title,
       body,
+      COALESCE(
+        (SELECT array_agg(note_tags.tag_id::text ORDER BY note_tags.tag_id)
+         FROM note_tags WHERE note_tags.note_id = notes.id),
+        '{}'
+      ) AS tag_ids,
       version,
       change_sequence::text AS change_sequence,
       created_by_user_id,
@@ -511,6 +582,7 @@ function toNote(row: NoteRow): Note {
     groupId: row.groupId,
     title: row.title,
     body: row.body,
+    tagIds: row.tagIds,
     version: row.version,
     changeSequence: row.changeSequence,
     createdByUserId: row.createdByUserId,

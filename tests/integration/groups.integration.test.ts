@@ -81,6 +81,7 @@ Deno.test({
       await applyMigration(sql, "2026_10_24_0001_users_last_seen.sql")
       await applyMigration(sql, "2026_10_25_0001_api_tokens.sql")
       await applyMigration(sql, "2026_10_26_0001_starter_data.sql")
+      await applyMigration(sql, "2026_10_27_0001_tags.sql")
 
       await t.step("backfill is rerunnable and covers only active users", async () => {
         await applyMigration(sql, "2026_08_18_0002_personal_group_backfill.sql")
@@ -517,6 +518,8 @@ const SNAPSHOT_TABLES = [
   "auth_challenges",
   "idempotency_keys",
   "notes",
+  "tags",
+  "note_tags",
   "user_settings",
   "password_reset_requests",
   "dev_mail",

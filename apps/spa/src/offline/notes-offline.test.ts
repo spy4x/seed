@@ -9,6 +9,9 @@ import { signal } from "@preact/signals"
 import { createMemoryNotesCache } from "./memory-notes-cache.ts"
 import type { NoteEntry, NotePayload } from "./notes-cache.ts"
 import { notesCollection, offlineNotes } from "./notes-collection.ts"
+import { createMemoryTagsCache } from "./memory-tags-cache.ts"
+import { createMemoryOutboxStore as memoryQueue } from "@spy4x/realtime/outbox"
+import { tagsCollection } from "./tags-collection.ts"
 
 const groupId = "g-1"
 
@@ -18,6 +21,7 @@ function note(id: string, version = 1, title = id): NoteItem {
     groupId,
     title,
     body: "",
+    tagIds: [],
     version,
     changeSequence: "1",
     createdByUserId: 1,
@@ -40,8 +44,13 @@ function layerWith(online: { socket: boolean }) {
     cache,
     store: createMemoryOutboxStore<NotePayload, NoteItem>(),
   })
+  const tags = tagsCollection({
+    userId: 1,
+    cache: createMemoryTagsCache(),
+    store: memoryQueue(),
+  })
   const collections = createCollections({
-    collections: [definition],
+    collections: [tags, definition],
     calls,
     canSend: () => online.socket,
     now: () => "2026-10-03T00:00:00.000Z",
@@ -102,7 +111,7 @@ describe("offline notes reads", () => {
     const deps = offlineNotes(online, () => layer)
     await deps.fetchPage(groupId, null)
     state.up = false
-    await deps.create({ groupId, id: "mine", title: "Offline note", body: "" })
+    await deps.create({ groupId, id: "mine", title: "Offline note", body: "", tagIds: [] })
     const page = await deps.fetchPage(groupId, null)
     expect(page.notes.map((n) => n.title)).toEqual(["Offline note", "a"])
   })
@@ -111,7 +120,13 @@ describe("offline notes reads", () => {
     const layer = layerWith({ socket: false })
     const { online } = network([[note("a")]])
     const deps = offlineNotes(online, () => layer)
-    await deps.create({ groupId: "g-2", id: "elsewhere", title: "In the other group", body: "" })
+    await deps.create({
+      groupId: "g-2",
+      id: "elsewhere",
+      title: "In the other group",
+      body: "",
+      tagIds: [],
+    })
     const page = await deps.fetchPage(groupId, null)
     expect(page.notes.map((n) => n.title)).toEqual(["a"])
   })
@@ -121,7 +136,7 @@ describe("offline notes reads", () => {
     const { online } = network([[]])
     const notFound = new RealtimeRequestError("not_found", "Note not found")
     const deps = offlineNotes({ ...online, get: () => Promise.reject(notFound) }, () => layer)
-    await deps.create({ groupId, id: "mine", title: "Offline note", body: "" })
+    await deps.create({ groupId, id: "mine", title: "Offline note", body: "", tagIds: [] })
     expect((await deps.get(groupId, "mine")).note.title).toBe("Offline note")
   })
 
@@ -159,6 +174,7 @@ describe("offline notes writes", () => {
       id: "n",
       title: "T",
       body: "",
+      tagIds: [],
     })
     expect(created.title).toBe("sent")
   })
@@ -171,6 +187,7 @@ describe("offline notes writes", () => {
       id: "n",
       title: "T",
       body: "",
+      tagIds: [],
     })
     expect(created.title).toBe("T")
     expect(layer.entries.value.length).toBe(1)

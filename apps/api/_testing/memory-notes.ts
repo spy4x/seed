@@ -27,6 +27,11 @@ export class MemoryNoteRepository implements NoteRepository {
   readonly deleted = new Map<string, Note>()
   writes = 0
   #sequence = 1
+  /**
+   * Whether the group has a tag with this id: what the Postgres repository reads from `tags`.
+   * Without it no tag is known, so every tag id is ignored, as for an id the group never had.
+   */
+  knowsTag: (groupId: string, tagId: string) => boolean = () => false
 
   /** Who is in which group, for `groupIdOfForMember`; without it no one is a member. */
   constructor(private readonly groups?: GroupRoleLookup) {}
@@ -50,6 +55,21 @@ export class MemoryNoteRepository implements NoteRepository {
     return await this.groups.roleOf(groupId, userId) === null ? null : groupId
   }
 
+  /** Drops a deleted tag from every note, as the foreign key does; no note's version moves. */
+  forgetTag(tagId: string): void {
+    for (const notes of [this.notes, this.deleted]) {
+      for (const [id, note] of notes) {
+        if (note.tagIds.includes(tagId)) {
+          notes.set(id, { ...note, tagIds: note.tagIds.filter((existing) => existing !== tagId) })
+        }
+      }
+    }
+  }
+
+  #real(groupId: string, tagIds: readonly string[] | undefined): string[] {
+    return [...new Set(tagIds ?? [])].filter((id) => this.knowsTag(groupId, id)).sort()
+  }
+
   create(
     input: NoteCreateInput,
     actorId: number,
@@ -61,6 +81,7 @@ export class MemoryNoteRepository implements NoteRepository {
     const at = new Date("2026-10-02T10:00:00.000Z")
     const note: Note = {
       ...input,
+      tagIds: this.#real(input.groupId, input.tagIds),
       version: 1,
       changeSequence: String(this.#sequence++),
       createdByUserId: actorId,
@@ -79,6 +100,7 @@ export class MemoryNoteRepository implements NoteRepository {
       ...note,
       title: input.title,
       body: input.body,
+      tagIds: input.tagIds === undefined ? note.tagIds : this.#real(note.groupId, input.tagIds),
       version: note.version + 1,
       changeSequence: String(this.#sequence++),
       updatedByUserId: actorId,

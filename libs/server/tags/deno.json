@@ -1,0 +1,5 @@
+{
+  "tasks": {
+    "check": "deno check postgres-tag-repository.ts"
+  }
+}

@@ -6,6 +6,7 @@ import { moveTargetsOf } from "@ui/notes-screen.tsx"
 import { NOTE_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
 import { notesStore } from "../state/notes.ts"
+import { tagsStore } from "../state/tags.ts"
 import { selectionStore } from "../state/selection.ts"
 import { OfflineStatus } from "../modules.ts"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
@@ -25,7 +26,10 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   const store = notesStore
   const groupId = selectionStore.groupId.value
   useEffect(() => {
-    if (groupId) void store.open(groupId, noteId)
+    if (groupId) {
+      void store.open(groupId, noteId)
+      void tagsStore.open(groupId)
+    }
   }, [groupId, noteId])
 
   const membership = groupId
@@ -61,9 +65,11 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
         switching={selectionStore.pending.value}
         note={editing && { id: editing.id, version: editing.version, conflict: editing.conflict }}
         value={editing ?? store.draft.value}
+        tags={tagsStore.tags.value}
         onChange={(value) => {
-          if (editing) store.editing.value = { ...editing, ...value }
-          else store.draft.value = value
+          const next = { ...value, tagIds: [...(value.tagIds ?? [])] }
+          if (editing) store.editing.value = { ...editing, ...next }
+          else store.draft.value = next
         }}
         errors={{ title: errors.title, form: errors.form ?? listError, plan: errors.plan }}
         saving={creating ? store.creating.value : store.saving.value}

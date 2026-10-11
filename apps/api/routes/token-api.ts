@@ -57,7 +57,7 @@ const TOKEN_ERRORS: Record<ApiTokenErrorCode, { status: ContentfulStatusCode; me
  *
  * - `GET /groups/:groupId/notes` lists the group's notes: `?limit=1..100&cursor=…`.
  * - `GET /groups/:groupId/notes/:noteId` reads one note.
- * - `POST /groups/:groupId/notes` creates `{ id, title, body }`: 201, or 200 for a retry of the
+ * - `POST /groups/:groupId/notes` creates `{ id, title, body, tagIds? }` (tag ids the group does not have are ignored): 201, or 200 for a retry of the
  *   same create. Accepts an `Idempotency-Key` header.
  *
  * Each request dispatches the same messages the SPA's do, with an actor that carries the token's

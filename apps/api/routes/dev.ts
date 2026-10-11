@@ -182,6 +182,8 @@ async function deleteUser(sql: Sql, userId: number): Promise<void> {
       WHERE created_by_user_id = ${userId} OR updated_by_user_id = ${userId}
         OR group_id IN (${owned()})
     `
+    // Tags of the user's groups go with the groups (ON DELETE CASCADE), and with them their links;
+    // tags the user wrote in other people's groups keep a null author. Nothing to delete by hand.
     await tx`DELETE FROM audit_events WHERE actor_user_id = ${userId} OR group_id IN (${owned()})`
     await tx`DELETE FROM outbox_events WHERE actor_user_id = ${userId} OR group_id IN (${owned()})`
     await tx`

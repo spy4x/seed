@@ -29,6 +29,9 @@ export const NOTE_EVENTS = {
   movedIn: "note.moved_in",
 } as const
 
+/** The most tags one note carries: a request for more is refused, not cut short. */
+export const NOTE_TAG_MAX = 20
+
 /**
  * How long a deleted note waits to be restored: the worker removes it for good once it has been
  * deleted for more days than this.
@@ -75,6 +78,8 @@ export interface Note {
   groupId: string
   title: string
   body: string
+  /** The ids of the group's tags the note carries, in id order. Only tags that exist appear. */
+  tagIds: string[]
   /** Starts at 1 and grows by one with every update; an update or delete must name it. */
   version: number
   /** The group's change sequence this note was last written at, as a decimal string (BIGINT). */
@@ -99,10 +104,17 @@ export interface DeletedNote {
 // The bodies of the REST requests and the fields of the forms that post without JavaScript. The
 // group and the note are named by the path; the socket payloads add them as `groupId` and `id`.
 
-const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+/** The shape of every id: a lowercase UUID v4. */
+export const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 // Lengths are checked in characters by `parseNoteRequest`, not here: arktype counts UTF-16 units.
-const noteFields = { title: "string", body: "string" } as const
+const noteFields = {
+  title: "string",
+  body: "string",
+  // The note's tags. Left out on an update, the tags stay; given, the set is replaced. Ids the
+  // group has no tag for are ignored (ADR 003, section 5, rule 4).
+  "tagIds?": type(UUID_V4).array(),
+} as const
 
 const versionField = { version: "number.integer >= 1" } as const
 
@@ -198,7 +210,10 @@ export function parseNoteRequest<S extends Type<object>>(schema: S, value: unkno
   if (result instanceof type.errors) {
     throw new NoteError("INVALID_REQUEST", result.summary)
   }
-  const parsed = result as S["infer"] & { title?: string; body?: string }
+  const parsed = result as S["infer"] & { title?: string; body?: string; tagIds?: string[] }
+  if (parsed.tagIds !== undefined && new Set(parsed.tagIds).size > NOTE_TAG_MAX) {
+    throw new NoteError("INVALID_REQUEST", `A note can carry at most ${NOTE_TAG_MAX} tags`)
+  }
   if (parsed.title === undefined) return parsed
   const title = parsed.title.trim()
   const titleLength = Array.from(title).length
@@ -214,7 +229,7 @@ export function parseNoteRequest<S extends Type<object>>(schema: S, value: unkno
       `Note body must contain at most ${NOTE_BODY_MAX_LENGTH} characters`,
     )
   }
-  return { ...parsed, title }
+  return { ...parsed, title, ...(parsed.tagIds && { tagIds: [...new Set(parsed.tagIds)] }) }
 }
 
 /**
@@ -270,6 +285,8 @@ export interface NoteCreatePayload {
   id: string
   title: string
   body: string
+  /** The tags to attach; ids the group has no tag for are ignored. */
+  tagIds?: string[]
   /** The request's id, kept on the audit event. */
   requestId?: string
   /** Makes a retry of this command safe; see the idempotency middleware on the command bus. */
@@ -299,6 +316,8 @@ export interface NoteUpdatePayload {
   id: string
   title: string
   body: string
+  /** The new set of tags; left out, the note keeps its tags. Unknown ids are ignored. */
+  tagIds?: string[]
   /** The version the person edited; a note at any other version is not changed. */
   version: number
   idempotencyKey?: string
@@ -430,6 +449,7 @@ export interface NoteCreateInput {
   id: string
   title: string
   body: string
+  tagIds?: string[]
   requestId?: string
 }
 
@@ -438,6 +458,7 @@ export interface NoteUpdateInput {
   id: string
   title: string
   body: string
+  tagIds?: string[]
   expectedVersion: number
 }
 

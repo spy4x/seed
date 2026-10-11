@@ -13,6 +13,10 @@ import {
 import { createMemoryNotesCache } from "./memory-notes-cache.ts"
 import type { NoteEntry, NotePayload, NotesCache } from "./notes-cache.ts"
 import { notesCollection } from "./notes-collection.ts"
+import { createMemoryTagsCache } from "./memory-tags-cache.ts"
+import { tagsCollection } from "./tags-collection.ts"
+import type { TagPayload } from "./tags-cache.ts"
+import type { TagItem } from "../state/tags.ts"
 
 const groupId = "g-1"
 
@@ -22,6 +26,7 @@ function note(id: string, version = 1, title = id, body = ""): NoteItem {
     groupId,
     title,
     body,
+    tagIds: [],
     version,
     changeSequence: "1",
     createdByUserId: 1,
@@ -67,9 +72,15 @@ function notesOver(ports: Ports) {
       return { note: found }
     },
   }
+  const tags = tagsCollection({
+    userId: 1,
+    cache: createMemoryTagsCache(),
+    store: createMemoryOutboxStore<TagPayload, TagItem>(),
+  })
   const definition = notesCollection({ userId: 1, cache: ports.store, store: ports.store })
   const collections = createCollections({
-    collections: [definition],
+    // The tags are the notes' parent, so they are registered first (ADR 003, section 5).
+    collections: [tags, definition],
     calls,
     canSend: ports.isOnline,
     lock: ports.lock,
@@ -717,6 +728,36 @@ describe("notes outbox wiring", () => {
       name: "note.update",
       payload: { groupId, id: "n", title: "T", body: "B", version: 4 },
     })
+  })
+
+  it("sends the tags of a note in its create and its update", async () => {
+    const { outbox, sent } = harness()
+    await outbox.submit({
+      kind: "create",
+      entityId: "c",
+      payload: { groupId, title: "T", body: "", tagIds: ["t-1", "t-2"] },
+    })
+    await outbox.submit({
+      kind: "update",
+      entityId: "u",
+      payload: { groupId, title: "T", body: "", tagIds: [] },
+      version: 2,
+    })
+    expect(sent.map((call) => [call.name, call.payload.tagIds])).toEqual([
+      ["note.create", ["t-1", "t-2"]],
+      ["note.update", []],
+    ])
+  })
+
+  it("leaves a note's tags alone when an update queued by an older version names none", async () => {
+    const { outbox, sent } = harness()
+    await outbox.submit({
+      kind: "update",
+      entityId: "u",
+      payload: { groupId, title: "T", body: "" },
+      version: 2,
+    })
+    expect("tagIds" in sent[0].payload).toBe(false)
   })
 
   it("asks the server for the note in the group the queued write names", async () => {

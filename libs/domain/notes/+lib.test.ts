@@ -6,6 +6,7 @@ import {
   assertCanWriteNotes,
   NOTE_BODY_MAX_LENGTH,
   NOTE_MOVE_MAX,
+  NOTE_TAG_MAX,
   NOTE_TITLE_MAX_LENGTH,
   noteCreatePayloadSchema,
   noteCreateRequestSchema,
@@ -105,6 +106,45 @@ describe("note requests", () => {
     const title = "😀".repeat(NOTE_TITLE_MAX_LENGTH)
     expect(parseNoteRequest(noteCreateRequestSchema, { id, title, body: "" }).title)
       .toBe(title)
+  })
+})
+
+describe("note tags", () => {
+  const tagId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d112001"
+
+  it("accepts tag ids on a create and an update, and drops a repeated id", () => {
+    const created = parseNoteRequest(
+      noteCreateRequestSchema,
+      { id, title: "a", body: "", tagIds: [tagId, tagId] },
+    )
+    const updated = parseNoteRequest(
+      noteUpdateRequestSchema,
+      { title: "a", body: "", tagIds: [tagId], version: 1 },
+    )
+
+    expect(created.tagIds).toEqual([tagId])
+    expect(updated.tagIds).toEqual([tagId])
+  })
+
+  it("leaves tag ids out when the request names none, so an update keeps the tags", () => {
+    const parsed = parseNoteRequest(noteUpdateRequestSchema, { title: "a", body: "", version: 1 })
+
+    expect("tagIds" in parsed).toBe(false)
+  })
+
+  it("refuses a tag id that is not a UUID v4 and more tags than a note may carry", () => {
+    const tooMany = Array.from({ length: NOTE_TAG_MAX + 1 }, () => crypto.randomUUID())
+
+    expect(
+      codeOf(() =>
+        parseNoteRequest(noteCreateRequestSchema, { id, title: "a", body: "", tagIds: ["nope"] })
+      ),
+    ).toBe("INVALID_REQUEST")
+    expect(
+      codeOf(() =>
+        parseNoteRequest(noteCreateRequestSchema, { id, title: "a", body: "", tagIds: tooMany })
+      ),
+    ).toBe("INVALID_REQUEST")
   })
 })
 

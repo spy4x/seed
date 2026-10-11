@@ -10,6 +10,7 @@ import { PostgresGroupActivityRepository } from "@server/groups/postgres-activit
 import { PostgresGroupDataMover } from "@server/groups/postgres-group-data-mover.ts"
 import type { MovableAggregate } from "@server/groups/movable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
+import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresBillingRepository } from "@server/billing/postgres-billing-repository.ts"
 import { emailChanges } from "@server/auth/email-verification.ts"
@@ -110,6 +111,11 @@ export class AppDbBase extends DbServiceBase {
   /** The notes repository. Built per access, like `group`, so inside `begin()` it uses the transaction. */
   get note(): PostgresNoteRepository {
     return new PostgresNoteRepository(this.sql)
+  }
+
+  /** The tags repository. Built per access, like `note`. */
+  get tag(): PostgresTagRepository {
+    return new PostgresTagRepository(this.sql)
   }
 
   /** Each group's subscription and customer. Built per access, like `group`. */

@@ -7,6 +7,8 @@ export interface NotePayload {
   groupId: string
   title: string
   body: string
+  /** The tags on the note. A queued write from before tags existed has none: read as empty. */
+  tagIds?: string[]
 }
 
 /** One queued note write, as the outbox from `@spy4x/realtime/outbox` keeps it. */
@@ -40,7 +42,9 @@ export function openNotesCache(userId: number): NotesCache {
     getId: (note) => note.id,
   })
   return {
-    readNotes: (groupId) => notes.read(groupId),
+    // A copy kept before tags existed has no `tagIds`: the note then has no tags.
+    readNotes: async (groupId) =>
+      (await notes.read(groupId)).map((note) => ({ ...note, tagIds: note.tagIds ?? [] })),
     replaceNotes: (groupId, next) => notes.replace(groupId, next),
     async putNote(note) {
       // A moved note changes scope: drop it from every other group's copy in the same step.

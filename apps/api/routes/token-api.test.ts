@@ -174,6 +174,24 @@ describe("token API", () => {
     expect(note.title).toBe("From a script")
   })
 
+  it("accepts tag ids on a created note and ignores the ones the group does not have", async () => {
+    const { app, notes } = buildApp()
+    const response = await app.request(`${API}/groups/${groupId}/notes`, {
+      method: "POST",
+      headers: headers(WRITER),
+      body: JSON.stringify({
+        id: crypto.randomUUID(),
+        title: "Tagged",
+        body: "",
+        tagIds: [crypto.randomUUID()],
+      }),
+    })
+
+    expect(response.status).toBe(201)
+    expect(((await response.json()) as { note: { tagIds: string[] } }).note.tagIds).toEqual([])
+    expect([...notes.notes.values()].map((note) => note.title)).toEqual(["Tagged"])
+  })
+
   it("refuses a write with a read-only token and writes nothing", async () => {
     const { app, notes } = buildApp()
     const response = await createNote(app, READER)

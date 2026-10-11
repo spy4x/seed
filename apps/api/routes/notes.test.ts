@@ -20,6 +20,7 @@ const note = {
   groupId,
   title: "Plan",
   body: "",
+  tagIds: [],
   version: 1,
   changeSequence: "2",
   createdByUserId: 7,

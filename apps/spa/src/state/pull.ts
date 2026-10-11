@@ -9,6 +9,8 @@ export interface PullDependencies {
   selection: { refresh(): Promise<void> }
   groups: { refresh(): Promise<void>; groups: ReadonlySignal<readonly { id: string }[]> }
   notes: { refresh(): Promise<void>; groupId: ReadonlySignal<string | null> }
+  /** The open group's tags, which the notes name; read with the notes. */
+  tags?: { refresh(): Promise<void>; groupId: ReadonlySignal<string | null> }
   /** The members of the group whose settings are open. */
   members: { refresh(): Promise<void>; groupId: ReadonlySignal<string | null> }
   /** The inbox: its unread count, and its list while the page is open. */
@@ -32,7 +34,7 @@ export interface PullDependencies {
  * removed never asks for the members of a group they left.
  */
 export function createPull(dependencies: PullDependencies) {
-  const { userId, profile, selection, groups, notes, members, notifications } = dependencies
+  const { userId, profile, selection, groups, notes, tags, members, notifications } = dependencies
   return async (gap?: { groupId: string }): Promise<void> => {
     // The hint for this person's own changes (profile, push devices, selected group, inbox), sent
     // after a change in another tab or a new notification.
@@ -44,6 +46,7 @@ export function createPull(dependencies: PullDependencies) {
     await dependencies.flushOutbox()
     const openGroup = notes.groupId.value
     const membersGroup = members.groupId.value
+    const tagsGroup = tags?.groupId.value ?? null
     // A group hint is not about the inbox; a start-up or a reconnect may have missed one.
     if (!gap) void notifications.refresh()
     await Promise.all([selection.refresh(), groups.refresh()])
@@ -51,6 +54,7 @@ export function createPull(dependencies: PullDependencies) {
       id !== null && groups.groups.value.some((g) => g.id === id) && (!gap || gap.groupId === id)
     await Promise.all([
       due(openGroup) ? notes.refresh() : undefined,
+      due(tagsGroup) ? tags?.refresh() : undefined,
       due(membersGroup) ? members.refresh() : undefined,
     ])
   }
@@ -75,9 +79,13 @@ export interface ChangeCheckDependencies extends PullDependencies {
  * reads moves the sequence again, so the next check reads the notes once more and never skips it.
  */
 export function createChangeCheck(dependencies: ChangeCheckDependencies) {
-  const { groups, notes, members } = dependencies
+  const { groups, notes, tags, members } = dependencies
   const pull = createPull(dependencies)
-  const stores = [["notes", notes], ["members", members]] as const
+  const stores = [
+    ["notes", notes],
+    ...(tags ? [["tags", tags] as const] : []),
+    ["members", members],
+  ] as const
   /** The group and the sequence each list was last read at. */
   const held = new Map<string, { groupId: string; sequence: string }>()
   const sequenceOf = (id: string) => groups.groups.value.find((g) => g.id === id)?.changeSequence

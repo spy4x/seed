@@ -10,6 +10,8 @@ export interface NoteItem {
   groupId: string
   title: string
   body: string
+  /** The ids of the group's tags on this note. */
+  tagIds: string[]
   version: number
   changeSequence: string
   createdByUserId: number | null
@@ -47,11 +49,20 @@ export interface NotesDependencies {
    * selected group.
    */
   locate?(id: string): Promise<{ groupId: string }>
-  create(input: { groupId: string; id: string; title: string; body: string }): Promise<
+  create(
+    input: { groupId: string; id: string; title: string; body: string; tagIds: string[] },
+  ): Promise<
     { note: NoteItem }
   >
   update(
-    input: { groupId: string; id: string; title: string; body: string; version: number },
+    input: {
+      groupId: string
+      id: string
+      title: string
+      body: string
+      tagIds: string[]
+      version: number
+    },
   ): Promise<{ note: NoteItem }>
   delete(input: { groupId: string; id: string; version: number }): Promise<unknown>
   /** Brings a deleted note back. Needs the server: it is never queued. */
@@ -68,6 +79,7 @@ export interface NotesDependencies {
 interface Draft {
   title: string
   body: string
+  tagIds: string[]
 }
 
 interface FormErrors {
@@ -86,7 +98,7 @@ interface Edit extends Draft {
 }
 
 const NO_ERRORS: FormErrors = { title: null, form: null }
-const EMPTY_DRAFT: Draft = { title: "", body: "" }
+const EMPTY_DRAFT: Draft = { title: "", body: "", tagIds: [] }
 const PAGE_LIMIT = 100
 /** More pages than a group has notes in this template: a stop for a cursor loop. */
 const MAX_PAGES = 20
@@ -180,9 +192,10 @@ export function createNotesStore(dependencies: NotesDependencies) {
   const unsaved = computed(() => {
     const edit = editing.value
     if (edit) {
-      return edit.conflict || edit.title !== edit.base.title || edit.body !== edit.base.body
+      return edit.conflict || edit.title !== edit.base.title || edit.body !== edit.base.body ||
+        !sameIds(edit.tagIds, edit.base.tagIds)
     }
-    return draft.value.title !== "" || draft.value.body !== ""
+    return draft.value.title !== "" || draft.value.body !== "" || draft.value.tagIds.length > 0
   })
   let inFlight: Promise<void> | null = null
   let queued: Promise<void> | null = null
@@ -354,6 +367,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
         id: draftId.value,
         title,
         body: draft.value.body,
+        tagIds: draft.value.tagIds,
       })
       notes.value = [note, ...notes.value.filter((existing) => existing.id !== note.id)]
       draft.value = EMPTY_DRAFT
@@ -389,6 +403,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
         id: edit.id,
         title,
         body: edit.body,
+        tagIds: edit.tagIds,
         version: edit.version,
       })
       notes.value = notes.value.map((existing) => existing.id === note.id ? note : existing)
@@ -631,10 +646,16 @@ function toEdit(note: NoteItem): Edit {
     id: note.id,
     title: note.title,
     body: note.body,
+    tagIds: note.tagIds,
     version: note.version,
     conflict: false,
-    base: { title: note.title, body: note.body },
+    base: { title: note.title, body: note.body, tagIds: note.tagIds },
   }
+}
+
+/** Whether two tag lists hold the same ids, whatever their order. */
+function sameIds(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((id) => b.includes(id))
 }
 
 /**

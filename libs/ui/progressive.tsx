@@ -32,6 +32,12 @@ export const NOTE_PATHS = {
   note: (noteId: string) => `/notes/${noteId}`,
 } as const
 
+/** Where the tags page lives. Tags are the SPA's: the website has no session. */
+export const TAG_PATHS = {
+  /** A group's tags: create, rename, recolour, delete. */
+  list: "/tags",
+} as const
+
 /** The pages these screens link to. */
 export const SCREEN_PATHS = {
   signIn: "/sign-in",

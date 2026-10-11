@@ -94,6 +94,18 @@ import {
   NoteRestoreCommand,
   NoteUpdateCommand,
 } from "@domain/notes"
+import {
+  TagCreateCommand,
+  TagDeleteCommand,
+  TagGetQuery,
+  TagListQuery,
+  TagUpdateCommand,
+} from "@domain/tags"
+import { tagCreateHandler } from "@api/cqrs/command-handlers/tag-create.ts"
+import { tagUpdateHandler } from "@api/cqrs/command-handlers/tag-update.ts"
+import { tagDeleteHandler } from "@api/cqrs/command-handlers/tag-delete.ts"
+import { tagListHandler } from "@api/cqrs/query-handlers/tag-list.ts"
+import { tagGetHandler } from "@api/cqrs/query-handlers/tag-get.ts"
 import { noteCreateHandler } from "@api/cqrs/command-handlers/note-create.ts"
 import { noteUpdateHandler } from "@api/cqrs/command-handlers/note-update.ts"
 import { noteDeleteHandler } from "@api/cqrs/command-handlers/note-delete.ts"
@@ -185,6 +197,9 @@ commandBus.register(NoteUpdateCommand, noteUpdateHandler)
 commandBus.register(NoteDeleteCommand, noteDeleteHandler)
 commandBus.register(NoteRestoreCommand, noteRestoreHandler)
 commandBus.register(NoteMoveCommand, noteMoveHandler)
+commandBus.register(TagCreateCommand, tagCreateHandler)
+commandBus.register(TagUpdateCommand, tagUpdateHandler)
+commandBus.register(TagDeleteCommand, tagDeleteHandler)
 commandBus.register(BillingCheckoutCommand, billingCheckoutHandler)
 commandBus.register(BillingPortalCommand, billingPortalHandler)
 queryBus.register(UserProfileGetQuery, userProfileGetHandler)
@@ -201,6 +216,8 @@ queryBus.register(MyInvitationsQuery, createMyInvitationsHandler(invitationDepen
 queryBus.register(NoteListQuery, noteListHandler)
 queryBus.register(NoteGetQuery, noteGetHandler)
 queryBus.register(NoteLocateQuery, noteLocateHandler)
+queryBus.register(TagListQuery, tagListHandler)
+queryBus.register(TagGetQuery, tagGetHandler)
 queryBus.register(BillingGetQuery, billingGetHandler)
 queryBus.register(NotificationListQuery, notificationListHandler)
 queryBus.register(NotificationUnreadCountQuery, notificationUnreadCountHandler)

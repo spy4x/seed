@@ -13,6 +13,7 @@ import { createOperationDispatcher, type Operations } from "@spy4x/realtime/oper
 import { GROUP_AGGREGATE, GroupError } from "@domain/groups"
 import { AccessError, type Actor, userChangeGroupId } from "@domain/identity"
 import { NoteError, NoteVersionConflictError } from "@domain/notes"
+import { TagError, TagVersionConflictError } from "@domain/tags"
 import { PlanError, toPlanRefusal } from "@domain/billing"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { actorFromAuth } from "../cqrs/actor.ts"
@@ -70,6 +71,12 @@ export function toRequestError(error: unknown): RealtimeRequestError | null {
       : { code: error.code }
     return new RealtimeRequestError(NOTE_ERROR_CODES[error.code], error.message, details)
   }
+  if (error instanceof TagError) {
+    const details = error instanceof TagVersionConflictError
+      ? { code: error.code, currentVersion: error.currentVersion }
+      : { code: error.code }
+    return new RealtimeRequestError(TAG_ERROR_CODES[error.code], error.message, details)
+  }
   if (error instanceof PlanError) {
     // The socket's codes are closed, so a plan refusal is `forbidden` and names itself in details.
     return new RealtimeRequestError("forbidden", error.message, toPlanRefusal(error))
@@ -118,6 +125,19 @@ const NOTE_ERROR_CODES: Record<
   NOTE_NOT_FOUND: "not_found",
   ROLE_INSUFFICIENT: "forbidden",
   SAME_GROUP: "bad_request",
+  VERSION_CONFLICT: "conflict",
+}
+
+const TAG_ERROR_CODES: Record<
+  TagError["code"],
+  "bad_request" | "forbidden" | "not_found" | "conflict"
+> = {
+  GROUP_NOT_FOUND: "not_found",
+  ID_ALREADY_EXISTS: "conflict",
+  INVALID_REQUEST: "bad_request",
+  ROLE_INSUFFICIENT: "forbidden",
+  TAG_NAME_TAKEN: "conflict",
+  TAG_NOT_FOUND: "not_found",
   VERSION_CONFLICT: "conflict",
 }
 

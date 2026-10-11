@@ -3,6 +3,7 @@ import type { Operations } from "@spy4x/realtime/operations"
 import { createGroupOperations } from "../features/groups/operations.ts"
 import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
+import { createTagOperations } from "../features/tags/operations.ts"
 import { createNoteOperations } from "../features/notes/operations.ts"
 import { signIn } from "./auth.ts"
 import { commandBus } from "./commandBus.ts"
@@ -56,6 +57,13 @@ export const operations: Operations<Actor> = {
     get: (query) => queryBus.execute(query),
     locate: (query) => queryBus.execute(query),
     cursor: noteListCursor,
+  }),
+  ...createTagOperations({
+    create: (command) => commandBus.execute(command),
+    update: (command) => commandBus.execute(command),
+    delete: (command) => commandBus.execute(command),
+    list: (query) => queryBus.execute(query),
+    get: (query) => queryBus.execute(query),
   }),
 }
 

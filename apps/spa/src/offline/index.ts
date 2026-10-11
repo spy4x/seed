@@ -20,18 +20,22 @@ import {
   openNotesCache,
 } from "./notes-cache.ts"
 import { type NotesCollection, notesCollection } from "./notes-collection.ts"
+import { openTagsCache, type TagEntry, type TagPayload, type TagsCache } from "./tags-cache.ts"
+import { type TagsCollection, tagsCollection } from "./tags-collection.ts"
+import type { TagItem } from "../state/tags.ts"
 
 /**
  * The local-data module's entry point (ADR 003). Only `apps/spa/src/modules.ts` imports this
  * folder; the rest of the SPA takes the layer from there. `docs/offline.md` lists what to remove to
  * build without it.
  *
- * One signed-in user has three things on the device, each its own IndexedDB database:
+ * One signed-in user has these things on the device, each its own IndexedDB database:
  * - the read copies (`reads:<id>`): the last answer of every offline-readable list;
  * - the notes (`offline:user:<id>:notes`): the copy the queue keeps in step;
- * - the queue of note writes (`offline:user:<id>:outbox`).
+ * - the queue of note writes (`offline:user:<id>:outbox`);
+ * - the tags (`offline:user:<id>:tags`) and their queue (`offline:user:<id>:tags-outbox`).
  *
- * Signing out deletes the first two. The queue stays: it is the person's unsent work.
+ * Signing out deletes the read copies, the notes and the tags. The queues stay: it is the person's unsent work.
  */
 
 /** How the layer reaches the server: the calls port, and whether it may send now. */
@@ -48,6 +52,10 @@ export interface OfflineStorage {
   openReads(userId: number): ReadCache
   /** The device's copy of one user's notes. */
   openNotes(userId: number): NotesCache
+  /** The device's copy of one user's tags. */
+  openTags(userId: number): TagsCache
+  /** The tags queue of one user, when it is not the IndexedDB one the collection opens itself. */
+  openTagsQueue?(userId: number): OutboxStore<TagPayload, TagItem>
   /** The notes queue of one user, when it is not the IndexedDB one the collection opens itself. */
   openQueue?(userId: number): OutboxStore<NotePayload, NoteItem>
 }
@@ -59,12 +67,23 @@ export interface OfflineLayer {
   reads: ReadCache
   /** The device's copy of the notes. */
   cache: NotesCache
-  /** Every offline-writable collection behind one ordered flush. Notes are the only one. */
+  /** The device's copy of the tags. */
+  tagsCache: TagsCache
+  /** Every offline-writable collection behind one ordered flush: tags first, then notes. */
   collections: Collections
   /** The notes queue and its overlay. */
   notes: NotesCollection
-  /** The queued writes, for the screen: refreshed after every change to the queue. */
+  /** The tags queue and its overlay. */
+  tags: TagsCollection
+  /** The queued note writes, for the screen: refreshed after every change to the queue. */
   entries: Signal<readonly NoteEntry[]>
+  /** The queued tag writes, for the screen. */
+  tagEntries: Signal<readonly TagEntry[]>
+  /**
+   * What the layer did without asking: a tag that will never exist was taken off queued notes.
+   * The screen shows each message until the person dismisses it.
+   */
+  notices: Signal<readonly string[]>
   /** Sends the queue on start, reconnect, visibility and focus, retrying with backoff. */
   runner: SyncRunner
 }
@@ -115,6 +134,7 @@ export const browserStorage: OfflineStorage = {
     return after(retireGroupsDatabase(userId, reads), reads)
   },
   openNotes: openNotesCache,
+  openTags: openTagsCache,
 }
 
 let layer: OfflineLayer | null = null
@@ -143,24 +163,48 @@ export function startOffline(
   if (layer?.userId === userId) return layer
   void stopOffline()
   const cache = storage.openNotes(userId)
+  const tagsCache = storage.openTags(userId)
+  const notices = signal<readonly string[]>([])
+  const tagsDefinition = tagsCollection({
+    userId,
+    cache: tagsCache,
+    store: storage.openTagsQueue?.(userId),
+  })
   const definition = notesCollection({ userId, cache, store: storage.openQueue?.(userId) })
   const collections = createCollections({
-    collections: [definition],
+    // Parents first (ADR 003, section 5): a note names tags, so tags go out before notes.
+    collections: [tagsDefinition, definition],
     calls: transport.calls,
     canSend: () => transport.canSend(),
     lock: withBrowserLock(userId),
+    onReferenceRemoved({ children }) {
+      const count = children.length
+      notices.value = [
+        ...notices.value,
+        `A tag you created offline could not be saved, so it was taken off ${count} ${
+          count === 1 ? "note" : "notes"
+        }. The ${count === 1 ? "note is" : "notes are"} saved without it.`,
+      ]
+    },
   })
+  const tags = collections.get(tagsDefinition)
   const notes = collections.get(definition)
   const entries = signal<readonly NoteEntry[]>([])
+  const tagEntries = signal<readonly TagEntry[]>([])
   notes.outbox.subscribe((all) => entries.value = all)
+  tags.outbox.subscribe((all) => tagEntries.value = all)
   const runner = createSyncRunner({ flush: collections.syncFlush })
   const started: OfflineLayer = {
     userId,
     reads: storage.openReads(userId),
     cache,
+    tagsCache,
     collections,
+    tags,
     notes,
     entries,
+    tagEntries,
+    notices,
     runner,
   }
   layer = started
@@ -189,14 +233,19 @@ export async function stopOffline({ forget = false } = {}): Promise<void> {
   if (!closing) return
   closing.runner.stop()
   closing.entries.value = []
-  if (forget) await forgetCopies(closing.reads, closing.cache)
+  closing.tagEntries.value = []
+  closing.notices.value = []
+  if (forget) await forgetCopies(closing.reads, closing.cache, closing.tagsCache)
 }
 
-/** Deletes both copies. Each is tried even when the other fails; a failure rejects. */
-async function forgetCopies(reads: ReadCache, cache: NotesCache): Promise<void> {
-  const [readsGone, notesGone] = await Promise.allSettled([reads.clear(), cache.clear()])
-  if (readsGone.status === "rejected") throw readsGone.reason
-  if (notesGone.status === "rejected") throw notesGone.reason
+/** Deletes every copy. Each is tried even when another fails; the first failure rejects. */
+async function forgetCopies(
+  reads: ReadCache,
+  cache: NotesCache,
+  tagsCache: TagsCache,
+): Promise<void> {
+  const results = await Promise.allSettled([reads.clear(), cache.clear(), tagsCache.clear()])
+  for (const result of results) if (result.status === "rejected") throw result.reason
 }
 
 /**
@@ -208,7 +257,11 @@ export async function forgetDeviceCopy(
   storage: OfflineStorage = browserStorage,
 ): Promise<void> {
   if (layer?.userId === userId) return await stopOffline({ forget: true })
-  await forgetCopies(storage.openReads(userId), storage.openNotes(userId))
+  await forgetCopies(
+    storage.openReads(userId),
+    storage.openNotes(userId),
+    storage.openTags(userId),
+  )
 }
 
 /** Sends the queued writes. Never rejects: what could not be sent stays queued. */

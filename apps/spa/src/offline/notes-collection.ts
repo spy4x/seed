@@ -8,6 +8,8 @@ import {
 import type { OutboxStore } from "@spy4x/realtime/outbox"
 import { isUnreachable } from "@spy4x/realtime/read-cache"
 import type { NoteItem, NotePage, NotesDependencies } from "../state/notes.ts"
+import { keepQueuedWhenUnauthorized } from "./classify.ts"
+import { TAGS_COLLECTION } from "./tags-collection.ts"
 import { databasePrefix, type NoteEntry, type NotePayload, type NotesCache } from "./notes-cache.ts"
 
 /**
@@ -40,14 +42,7 @@ const byCode = classifyByCode({
 })
 
 /** Reads a failed note call: unreachable (try later) or the server's refusal and its code. */
-export function classifyNoteError(error: unknown): ReturnType<typeof byCode> {
-  // The session ended, belongs to someone else or owes a second factor (the server answers all
-  // three as `unauthorized`): the write was not judged, so it stays queued for its owner.
-  if (error instanceof RealtimeRequestError && error.code === "unauthorized") {
-    return { kind: "unreachable" }
-  }
-  return byCode(error)
-}
+export const classifyNoteError = keepQueuedWhenUnauthorized(byCode)
 
 /**
  * The notes of one user as an offline-writable collection. The queue lives in
@@ -67,9 +62,11 @@ export function notesCollection(
         return { name: "note.delete", payload: { ...base, version: baseVersion } }
       }
       const text = { title: payload.title, body: payload.body }
+      // A note queued before tags existed has no `tagIds`; sending none leaves its tags alone.
+      const tags = payload.tagIds === undefined ? {} : { tagIds: payload.tagIds }
       return kind === "create"
-        ? { name: "note.create", payload: { ...base, ...text } }
-        : { name: "note.update", payload: { ...base, ...text, version: baseVersion } }
+        ? { name: "note.create", payload: { ...base, ...text, tagIds: payload.tagIds ?? [] } }
+        : { name: "note.update", payload: { ...base, ...text, ...tags, version: baseVersion } }
     },
     // The queued entry knows the note's group, which the read needs.
     toQuery: (id, payload) => ({ name: "note.get", payload: { groupId: payload.groupId, id } }),
@@ -90,6 +87,7 @@ export function notesCollection(
       groupId: entry.payload.groupId,
       title: entry.payload.title,
       body: entry.payload.body,
+      tagIds: entry.payload.tagIds ?? [],
       version: 0,
       changeSequence: "0",
       createdByUserId: userId,
@@ -97,7 +95,26 @@ export function notesCollection(
       createdAt: entry.queuedAt,
       updatedAt: entry.queuedAt,
     }),
-    applyEdit: (note, entry) => ({ ...note, title: entry.payload.title, body: entry.payload.body }),
+    applyEdit: (note, entry) => ({
+      ...note,
+      title: entry.payload.title,
+      body: entry.payload.body,
+      tagIds: entry.payload.tagIds ?? note.tagIds,
+    }),
+    // A note names its tags (ADR 003, section 5): it waits for a tag still in the queue, and loses
+    // the reference when that tag will never exist. A delete names none.
+    dependencies: {
+      parents: [TAGS_COLLECTION],
+      on: (entry) =>
+        entry.kind === "delete" ? [] : (entry.payload.tagIds ?? []).map((entityId) => ({
+          collection: TAGS_COLLECTION,
+          entityId,
+        })),
+      without: (payload, parent) =>
+        payload.tagIds === undefined
+          ? payload
+          : { ...payload, tagIds: payload.tagIds.filter((id) => id !== parent.entityId) },
+    },
     inScope: (entry, groupId) => entry.payload.groupId === groupId,
   })
 }
@@ -175,7 +192,12 @@ export function offlineNotes(
       const outcome = await layer.notes.outbox.submit({
         kind: "create",
         entityId: input.id,
-        payload: { groupId: input.groupId, title: input.title, body: input.body },
+        payload: {
+          groupId: input.groupId,
+          title: input.title,
+          body: input.body,
+          tagIds: input.tagIds,
+        },
       })
       return await answer(layer, outcome, input.groupId, input.id)
     },
@@ -185,7 +207,12 @@ export function offlineNotes(
       const outcome = await layer.notes.outbox.submit({
         kind: "update",
         entityId: input.id,
-        payload: { groupId: input.groupId, title: input.title, body: input.body },
+        payload: {
+          groupId: input.groupId,
+          title: input.title,
+          body: input.body,
+          tagIds: input.tagIds,
+        },
         version: input.version,
       })
       return await answer(layer, outcome, input.groupId, input.id)

@@ -206,6 +206,39 @@ The product cannot add a member yet, so tests seed one: the integration test ins
 the e2e spec calls `POST /api/test/add-member` (`apps/api/routes/dev.ts`, mounted only in
 development). Teach `POST /api/test/cleanup-user` to delete the new table's rows too.
 
+## Relations between aggregates
+
+Tags are the worked example: a note names tags by id (`tagIds`), and a tag knows nothing of notes.
+Copy these choices:
+
+- **The link is its own table** (`note_tags`, with the group's change log recording every change),
+  and it has no foreign key to the child on the parent's side. Deleting the parent removes its
+  links and never touches the child's row or version, so a delete of a tag moves no note.
+- **The child's write carries the ids; the server ignores unknown ones** and answers with the
+  links the child really has. A client never needs to know whether the parent still exists.
+- **Moving the child maps the parent by name:** a moved note keeps its tags by name, and the target
+  group gets any tag it lacks.
+- **Offline, the parent's collection is declared first** in `offline/index.ts` and named in the
+  child's `dependencies` (`parents`, `on`, `without`). The four rules are in
+  [offline.md](offline.md#tags-the-second-offline-writable-aggregate-and-what-a-parent-means).
+- **The child's screens read the parent's store** (`state/tags.ts`) for their picker, labels and
+  filter; the filter lives in the address (`useUrlFilters`) and runs over the local list.
+
+The tag files, in the order of this document:
+
+| Step | Files |
+| --- | --- |
+| 1. Domain | `libs/domain/tags/+lib.ts`, `+lib.test.ts`, `deno.json` |
+| 2. Database | `libs/server/db/migrations/2026_10_27_0001_tags.sql`, `schema.sql` |
+| 3. Repository | `libs/server/tags/postgres-tag-repository.ts`, and `setNoteTags` and the move mapping in `libs/server/notes/postgres-note-repository.ts` |
+| 4. Handlers | `apps/api/features/tags/handlers.ts`, `apps/api/cqrs/` (dependencies, command and query handlers, `+init.ts`) |
+| 5. Transports | `apps/api/features/tags/operations.ts`, `errors.ts`, `apps/api/routes/tags.ts`, `realtimeHub.ts` |
+| 6. Screens | `libs/ui/tags-screen.tsx`, `tag-parts.tsx`, the tag parts of `notes-screen.tsx` and `note-editor-screen.tsx`, `tags.test.tsx` |
+| 7. SPA wiring | `state/tags.ts`, `offline/tags-collection.ts`, `tags-cache.ts`, `views/TagsView.tsx`, the tag parts of `NotesView.tsx`, `NoteEditorView.tsx`, `pull.ts`, `OfflineStatus.tsx` |
+| 8. Tests | `apps/api/features/tags/transports.test.ts`, `tests/integration/tags.integration.test.ts`, `state/tags.test.ts`, `offline/tags-collection.test.ts`, `e2e/tags.e2e.ts`, `e2e/tags-realtime-off.e2e.ts` |
+
+The MPA has no session, so tags exist in the SPA only.
+
 ## Delete, restore and purge
 
 A delete keeps the row (`deleted_at`), so it can come back. An aggregate follows the notes files that

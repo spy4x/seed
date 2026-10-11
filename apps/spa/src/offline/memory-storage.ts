@@ -1,9 +1,12 @@
 import { createMemoryOutboxStore, type OutboxStore } from "@spy4x/realtime/outbox"
 import { createMemoryReadCache } from "../state/memory-reads.ts"
 import type { NoteItem } from "../state/notes.ts"
+import type { TagItem } from "../state/tags.ts"
 import type { OfflineStorage } from "./index.ts"
 import { createMemoryNotesCache } from "./memory-notes-cache.ts"
+import { createMemoryTagsCache } from "./memory-tags-cache.ts"
 import type { NotePayload, NotesCache } from "./notes-cache.ts"
+import type { TagPayload, TagsCache } from "./tags-cache.ts"
 
 /** What one user has on a device in memory. */
 export interface MemoryDevice {
@@ -11,6 +14,8 @@ export interface MemoryDevice {
   reads: Map<string, { value: unknown; savedAt: number }>
   notes: NotesCache
   queue: OutboxStore<NotePayload, NoteItem>
+  tags: TagsCache
+  tagsQueue: OutboxStore<TagPayload, TagItem>
 }
 
 /**
@@ -29,6 +34,8 @@ export function createMemoryStorage(): OfflineStorage & {
         reads: new Map(),
         notes: createMemoryNotesCache(),
         queue: createMemoryOutboxStore<NotePayload, NoteItem>(),
+        tags: createMemoryTagsCache(),
+        tagsQueue: createMemoryOutboxStore<TagPayload, TagItem>(),
       }
       devices.set(userId, device)
     }
@@ -39,5 +46,7 @@ export function createMemoryStorage(): OfflineStorage & {
     openReads: (userId) => createMemoryReadCache(() => 0, of(userId).reads),
     openNotes: (userId) => of(userId).notes,
     openQueue: (userId) => of(userId).queue,
+    openTags: (userId) => of(userId).tags,
+    openTagsQueue: (userId) => of(userId).tagsQueue,
   }
 }

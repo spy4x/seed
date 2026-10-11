@@ -23,6 +23,7 @@ import {
   stopOffline as stopOfflineLayer,
 } from "./offline/index.ts"
 import { offlineNotes as notesOverLayer } from "./offline/notes-collection.ts"
+import { offlineTags as tagsOverLayer } from "./offline/tags-collection.ts"
 import { OfflineStatus as OfflineStatusLine } from "./offline/OfflineStatus.tsx"
 import type { RuntimeConfig } from "./runtime-config.ts"
 import { canCallAs, createAppCallPort } from "./state/realtime-call.ts"
@@ -372,6 +373,9 @@ export const localReads: LocalReads = createLocalReads(() => offlineLayer()?.rea
 
 /** The notes store's server dependencies with the device copy and the queue in front of them. */
 export const offlineNotes = notesOverLayer
+
+/** The tags store's server dependencies with the device copy and the queue in front of them. */
+export const offlineTags = tagsOverLayer
 
 /** The offline status line and the conflict screen. */
 export const OfflineStatus = OfflineStatusLine

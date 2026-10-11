@@ -16,7 +16,8 @@ import { canMutateNotes, type GroupRole } from "@domain/groups"
 import { NOTE_RESTORE_DAYS } from "@domain/notes"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
-import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { NoteTags, TagChips, type TagRow } from "./tag-parts.tsx"
+import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
 
 /**
  * Where focus goes once the list changes: after the row of note `id` (at `index`) leaves, the row
@@ -35,12 +36,16 @@ export interface NoteRow {
   version: number
   /** When the note last changed, as an ISO timestamp; the row shows it as "3 hours ago". */
   updatedAt?: string
+  /** The ids of the tags on the note. */
+  tagIds?: readonly string[]
 }
 
 /** What the person has typed into a note form. */
 export interface NoteDraft {
   title: string
   body: string
+  /** The ids of the tags on the note. */
+  tagIds?: readonly string[]
 }
 
 /** The errors of one note form: on the title field, and for the form as a whole. */
@@ -139,6 +144,14 @@ export interface NotesScreenProps {
   undoOutcome?: { id: string; restored: boolean } | null
   /** Called once focus has moved after an Undo, so the app forgets the outcome. */
   onUndoFocused?: () => void
+  /** The group's tags: shown on the rows and offered as a filter. Left out, notes show no tags. */
+  tags?: readonly TagRow[]
+  /**
+   * The tags the list is narrowed to: a note shows only when it has all of them. The app keeps
+   * them in the address, and the screen filters the list it was given, so it works offline.
+   */
+  tagFilter?: readonly string[]
+  onTagFilterChange?: (ids: string[]) => void
   navigate?: Navigate
 }
 
@@ -150,7 +163,16 @@ export interface NotesScreenProps {
  * notes" in the same menu swaps the list for the deleted notes, which an editor can restore.
  */
 export function NotesScreen(props: NotesScreenProps): JSX.Element {
-  const { group, notes, loading, navigate } = props
+  const { group, loading, navigate } = props
+  const allNotes = props.notes
+  const tags = props.tags ?? []
+  // A filter that names a tag now gone would hide every note: it only counts tags that exist.
+  const activeFilter = tags.length === 0
+    ? []
+    : (props.tagFilter ?? []).filter((id) => tags.some((tag) => tag.id === id))
+  const notes = activeFilter.length === 0
+    ? allNotes
+    : allNotes.filter((note) => activeFilter.every((id) => note.tagIds?.includes(id)))
   const moveTargets = group?.canWrite && props.onMove ? props.moveTargets ?? [] : []
   const onDelete = group?.canWrite ? props.onDelete : undefined
   const deletedMode = Boolean(props.showDeleted && props.onShowDeletedChange)
@@ -240,6 +262,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
         <NoteItem
           key={note.id}
           note={note}
+          tags={tags}
           navigate={navigate}
           selecting={selecting}
           ticked={shown.includes(note.id)}
@@ -336,6 +359,9 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
                 Select notes to move
               </DropdownItem>
             )}
+            <NavigateItem href={TAG_PATHS.list} navigate={navigate} dataE2E="notes-tags">
+              Manage tags
+            </NavigateItem>
             <NavigateItem href={SCREEN_PATHS.groups} navigate={navigate} dataE2E="notes-groups">
               All groups
             </NavigateItem>
@@ -349,6 +375,15 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
       )}
       <ErrorState message={props.listError} />
       {!selecting && !deletedMode && <ErrorState message={props.moveError ?? null} />}
+      {!deletedMode && !selecting && tags.length > 0 && props.onTagFilterChange && (
+        <TagChips
+          tags={tags}
+          value={activeFilter}
+          onChange={props.onTagFilterChange}
+          label="Filter by tag"
+          dataE2E="notes-tag-filter"
+        />
+      )}
       {deletedMode && (
         <div
           class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-subtle bg-surface p-3"
@@ -386,6 +421,23 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             />
           )
           : deletedList
+        : allNotes.length > 0 && notes.length === 0
+        ? (
+          <EmptyState
+            headingLevel={2}
+            title="No notes have all these tags."
+            action={
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => props.onTagFilterChange?.([])}
+                data-e2e="notes-tag-filter-clear"
+              >
+                Clear the filter
+              </Button>
+            }
+          />
+        )
         : notes.length === 0
         ? (
           <EmptyState
@@ -514,8 +566,9 @@ function SelectionBar(
 
 /** One note's row: its title, the first of its text, when it changed, and its menu. */
 function NoteItem(
-  { note, navigate, selecting, ticked, onTick, menu }: {
+  { note, tags, navigate, selecting, ticked, onTick, menu }: {
     note: NoteRow
+    tags: readonly TagRow[]
     navigate?: Navigate
     selecting: boolean
     ticked: boolean
@@ -546,6 +599,7 @@ function NoteItem(
       {note.body && (
         <p class="truncate text-sm font-normal text-muted" data-e2e="note-item-body">{note.body}</p>
       )}
+      <NoteTags tagIds={note.tagIds} tags={tags} />
     </div>
   )
   return (

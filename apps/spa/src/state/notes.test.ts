@@ -17,6 +17,7 @@ function item(id: string, version = 1, title = id): NoteItem {
     groupId,
     title,
     body: "",
+    tagIds: [],
     version,
     changeSequence: "1",
     createdByUserId: 1,
@@ -141,34 +142,34 @@ describe("notes store", () => {
     const { store, calls } = harness()
     await store.open(groupId, null)
     const firstId = store.draftId.value
-    store.draft.value = { title: "  Plan  ", body: "b" }
+    store.draft.value = { title: "  Plan  ", body: "b", tagIds: [] }
 
     await store.create()
 
     expect(calls).toEqual([
-      { name: "create", input: { groupId, id: firstId, title: "Plan", body: "b" } },
+      { name: "create", input: { groupId, id: firstId, title: "Plan", body: "b", tagIds: [] } },
     ])
     expect(store.notes.value.map((note) => note.title)).toEqual(["Plan"])
-    expect(store.draft.value).toEqual({ title: "", body: "" })
+    expect(store.draft.value).toEqual({ title: "", body: "", tagIds: [] })
     expect(store.draftId.value).not.toBe(firstId)
   })
 
   it("gives back the note it created, and nothing when the title is missing", async () => {
     const { store } = harness()
     await store.open(groupId, null)
-    store.draft.value = { title: "Plan", body: "" }
+    store.draft.value = { title: "Plan", body: "", tagIds: [] }
     const id = store.draftId.value
 
     expect((await store.create())?.id).toBe(id)
 
-    store.draft.value = { title: " ", body: "" }
+    store.draft.value = { title: " ", body: "", tagIds: [] }
     expect(await store.create()).toBe(null)
   })
 
   it("puts a missing title error on the title and sends nothing", async () => {
     const { store, calls } = harness()
     await store.open(groupId, null)
-    store.draft.value = { title: "   ", body: "b" }
+    store.draft.value = { title: "   ", body: "b", tagIds: [] }
 
     await store.create()
 
@@ -188,7 +189,7 @@ describe("notes store", () => {
         Promise.reject(new RealtimeRequestError("forbidden", "The note limit is reached", refusal)),
     })
     await store.open(groupId, null)
-    store.draft.value = { title: "Eleventh", body: "" }
+    store.draft.value = { title: "Eleventh", body: "", tagIds: [] }
 
     expect(await store.create()).toBe(null)
 
@@ -208,7 +209,10 @@ describe("notes store", () => {
     expect(await store.save()).toBe(true)
 
     expect(calls).toEqual([
-      { name: "update", input: { groupId, id: "a", title: "New title", body: "", version: 4 } },
+      {
+        name: "update",
+        input: { groupId, id: "a", title: "New title", body: "", tagIds: [], version: 4 },
+      },
     ])
     expect(store.editing.value).toBe(null)
     expect(store.notes.value[0].version).toBe(5)
@@ -243,9 +247,10 @@ describe("notes store", () => {
       id: "a",
       title: "Theirs",
       body: "",
+      tagIds: [],
       version: 2,
       conflict: false,
-      base: { title: "Theirs", body: "" },
+      base: { title: "Theirs", body: "", tagIds: [] },
     })
     expect(store.editErrors.value).toEqual({ title: null, form: null })
   })
@@ -407,7 +412,7 @@ describe("notes store", () => {
     const { store } = harness({ pages: [{ notes: [item("a", 4)], nextCursor: null }] })
     await store.open(groupId, null)
     expect(store.unsaved.value).toBe(false)
-    store.draft.value = { title: "Half", body: "" }
+    store.draft.value = { title: "Half", body: "", tagIds: [] }
     expect(store.unsaved.value).toBe(true)
     store.discardDraft()
     expect(store.unsaved.value).toBe(false)
@@ -423,6 +428,21 @@ describe("notes store", () => {
     store.editing.value = { ...store.editing.value!, body: "" }
     store.editing.value = { ...store.editing.value!, title: "Changed" }
     await store.save()
+    expect(store.unsaved.value).toBe(false)
+  })
+
+  it("counts a changed tag choice as unsaved, on a new note and on an open one", async () => {
+    const { store } = harness({ pages: [{ notes: [item("a", 4)], nextCursor: null }] })
+    await store.open(groupId, null)
+    store.draft.value = { title: "", body: "", tagIds: ["t-1"] }
+    expect(store.unsaved.value).toBe(true)
+    store.discardDraft()
+
+    await store.open(groupId, "a")
+    expect(store.unsaved.value).toBe(false)
+    store.editing.value = { ...store.editing.value!, tagIds: ["t-1"] }
+    expect(store.unsaved.value).toBe(true)
+    store.editing.value = { ...store.editing.value!, tagIds: [] }
     expect(store.unsaved.value).toBe(false)
   })
 
@@ -453,12 +473,12 @@ describe("notes store", () => {
   it("forgets the previous group's notes and draft when another group opens", async () => {
     const { store, reads } = harness({ pages: [{ notes: [item("a")], nextCursor: null }] })
     await store.open(groupId, null)
-    store.draft.value = { title: "Half typed", body: "" }
+    store.draft.value = { title: "Half typed", body: "", tagIds: [] }
 
     await store.open("g-2", null)
 
     expect(store.notes.value).toEqual([])
-    expect(store.draft.value).toEqual({ title: "", body: "" })
+    expect(store.draft.value).toEqual({ title: "", body: "", tagIds: [] })
     expect(reads.map((read) => read.groupId)).toEqual([groupId, "g-2"])
   })
 

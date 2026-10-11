@@ -16,6 +16,7 @@ import { notificationCursor } from "./services/notification-cursor.ts"
 import { createGroupActivityRoute } from "./routes/group-activity.ts"
 import { createGroupsRoute } from "./routes/groups.ts"
 import { createNotesRoute } from "./routes/notes.ts"
+import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
 import { createTokenApiRoute } from "./routes/token-api.ts"
 import { createApiTokens } from "./services/api-tokens.ts"
@@ -193,6 +194,10 @@ app.route(
     cursor: noteListCursor,
     expectedOrigin,
   }),
+)
+app.route(
+  "/groups/:groupId/tags",
+  createTagsRoute({ list: (query) => queryBus.execute(query) }),
 )
 // Before "/groups" too, for the same reason.
 app.route(

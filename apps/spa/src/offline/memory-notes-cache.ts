@@ -9,7 +9,12 @@ export function createMemoryNotesCache(): NotesCache {
   let notes: NoteItem[] = []
   return {
     readNotes: (groupId) =>
-      Promise.resolve(notes.filter((note) => note.groupId === groupId).map((n) => ({ ...n }))),
+      Promise.resolve(
+        notes.filter((note) => note.groupId === groupId).map((n) => ({
+          ...n,
+          tagIds: n.tagIds ?? [],
+        })),
+      ),
     replaceNotes(groupId, next) {
       notes = [...notes.filter((note) => note.groupId !== groupId), ...next.map((n) => ({ ...n }))]
       return Promise.resolve()

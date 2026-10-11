@@ -9,6 +9,7 @@ import { canSignOut, sessionState } from "./state/session.ts"
 import { bootstrapSession, settleOwedSignOut } from "./state/auth.ts"
 import { groupsStore } from "./state/groups.ts"
 import { notesStore } from "./state/notes.ts"
+import { tagsStore } from "./state/tags.ts"
 import { selectionStore } from "./state/selection.ts"
 import { profileStore } from "./state/profile.ts"
 import { membersStore } from "./state/members.ts"
@@ -41,6 +42,7 @@ import { PricingView } from "./views/BillingViews.tsx"
 import { billingStore } from "./state/billing.ts"
 import { NoteEditorView } from "./views/NoteEditorView.tsx"
 import { NotesView } from "./views/NotesView.tsx"
+import { TagsView } from "./views/TagsView.tsx"
 import { ProfileView } from "./views/ProfileView.tsx"
 import { AppShell, PublicFrame } from "./views/AppShell.tsx"
 import { signInRedirect } from "./views/sign-in-gate.ts"
@@ -101,6 +103,7 @@ function Routes() {
         {(params) => <InvitationView key={params.token} token={params.token} />}
       </Route>
       <Route path="/notifications" component={NotificationsView} />
+      <Route path="/tags" component={TagsView} />
       <Route path="/notes" component={NotesView} />
       <Route path="/notes/new">{() => <NoteEditorView key="new" />}</Route>
       <Route path="/notes/:noteId">
@@ -187,6 +190,7 @@ export function App() {
       groupsStore.reset()
       membersStore.reset()
       notesStore.reset()
+      tagsStore.reset()
       profileStore.reset()
       selectionStore.reset()
       emailStore.reset()
@@ -205,6 +209,7 @@ export function App() {
       selection: selectionStore,
       groups: groupsStore,
       notes: notesStore,
+      tags: tagsStore,
       members: membersStore,
       notifications: notificationsStore,
     }

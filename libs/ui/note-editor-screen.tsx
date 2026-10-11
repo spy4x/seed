@@ -18,6 +18,7 @@ import {
 } from "./notes-screen.tsx"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
+import { NoteTags, TagChips, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 
 /** The note a page edits: its id, the version the edit started from, and whether it moved on. */
@@ -71,6 +72,8 @@ export interface NoteEditorScreenProps {
   moving?: boolean
   /** The refusal of the last move, shown under the form. */
   moveError?: string | null
+  /** The group's tags, offered as a picker under the text. Left out or empty, there is none. */
+  tags?: readonly TagRow[]
   navigate?: Navigate
 }
 
@@ -163,7 +166,9 @@ function EditorPage({ children }: { children?: ComponentChildren }): JSX.Element
 const BACK = { href: NOTE_PATHS.list, label: "Back to notes" }
 
 /** A viewer's page: the note as text, with nothing to change. */
-function ReadOnlyNote({ note, value, group, navigate }: NoteEditorScreenProps): JSX.Element {
+function ReadOnlyNote(
+  { note, value, group, navigate, tags }: NoteEditorScreenProps,
+): JSX.Element {
   return (
     <EditorPage>
       <PageHeader
@@ -184,6 +189,7 @@ function ReadOnlyNote({ note, value, group, navigate }: NoteEditorScreenProps): 
           {value.body}
         </p>
       )}
+      {note && <NoteTags tagIds={value.tagIds} tags={tags ?? []} />}
     </EditorPage>
   )
 }
@@ -239,6 +245,7 @@ function Editor(props: WithGroup): JSX.Element {
             value={value}
             onChange={onChange}
             errors={errors}
+            tags={props.tags ?? []}
             navigate={navigate}
           />
           {note?.conflict && (
@@ -303,11 +310,12 @@ function Editor(props: WithGroup): JSX.Element {
  * to it, so a keyboard or screen reader user lands on what to fix.
  */
 function NoteFields(
-  { groupId, value, onChange, errors, navigate }: {
+  { groupId, value, onChange, errors, tags, navigate }: {
     groupId: string
     value: NoteDraft
     onChange?: (value: NoteDraft) => void
     errors: NoteFormErrors
+    tags: readonly TagRow[]
     navigate?: Navigate
   },
 ): JSX.Element {
@@ -342,6 +350,15 @@ function NoteFields(
           onInput={(e) => onChange?.({ ...value, body: e.currentTarget.value })}
         />
       </Field>
+      {tags.length > 0 && (
+        <TagChips
+          tags={tags}
+          value={value.tagIds ?? []}
+          onChange={(tagIds) => onChange?.({ ...value, tagIds })}
+          label="Tags"
+          dataE2E="note-tags-picker"
+        />
+      )}
       {errors.plan
         ? <PlanRefusalNotice groupId={groupId} refusal={errors.plan} navigate={navigate} />
         : <ErrorState message={errors.form} />}
