@@ -2,7 +2,7 @@ import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
 import { canMutateNotes, canRead, GroupRole } from "@domain/groups"
-import { UUID_V4 } from "@domain/notes"
+import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 
 /**
  * Tags: the second reference aggregate, and the parent of notes. A tag belongs to one group, has a
@@ -92,8 +92,8 @@ export interface DeletedTag {
 const colorField = type.enumerated(...TAG_COLORS)
 const versionField = { version: "number.integer >= 1" } as const
 const tagFields = { name: "string", color: colorField } as const
-const groupIdField = { groupId: UUID_V4 } as const
-const tagIdField = { id: UUID_V4 } as const
+const groupIdField = { groupId: UUID_PATTERN } as const
+const tagIdField = { id: UUID_PATTERN } as const
 
 /** The `tag.create` payload: a client-made id, so a retry cannot create a second tag. */
 export const tagCreatePayloadSchema = type({

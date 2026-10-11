@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -28,7 +29,7 @@ const bell = (page: Page) => page.locator("[data-e2e=shell-bell]")
 
 test.describe("notifications inbox", () => {
   test("the bell counts a role change and a removal live, the page lists them, and only their owner can read them", async ({ page, browser, request }) => {
-    const id = crypto.randomUUID().slice(0, 8)
+    const id = uuidV7().slice(-8)
     const owner = `e2e-inbox-owner-${id}@example.com`
     const member = `e2e-inbox-member-${id}@example.com`
     for (const email of [owner, member]) await cleanup(request, email)
@@ -36,7 +37,7 @@ test.describe("notifications inbox", () => {
     const ownerApi = ownerContext.request
     try {
       await signUp(ownerApi, owner)
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const created = await ownerApi.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: groupId, name: "Team" },
@@ -124,7 +125,7 @@ test.describe("notifications inbox", () => {
   })
 
   test("a person with no notifications sees an empty inbox and a bell without a badge", async ({ page, request }) => {
-    const email = `e2e-inbox-empty-${crypto.randomUUID().slice(0, 8)}@example.com`
+    const email = `e2e-inbox-empty-${uuidV7().slice(-8)}@example.com`
     await cleanup(request, email)
     try {
       await signUp(request, email)

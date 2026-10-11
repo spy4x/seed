@@ -14,6 +14,8 @@ import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.
 import { purgeOldAuditEvents } from "@server/groups/purge-audit-events.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { team, withSchema } from "./group-team.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * A group's activity log against a real Postgres built from schema.sql: every command of the group
@@ -47,6 +49,7 @@ async function invite(
     actorId,
     NO_LIMITS,
   )
+  expectVersion7Ids([created!.invitation])
   return { invitation: created!.invitation, lookup: await invitationLookup({ token }) }
 }
 
@@ -98,12 +101,12 @@ Deno.test("activity: every command of a group writes the event its log shows", a
     const bound = await invite(invitations, groupId, admin, "sam@example.com")
     await sql`INSERT INTO auth_email_owners (email, user_id) VALUES ('sam@example.com', ${stranger})`
     await invitations.decline(bound.lookup, stranger)
-    const noteA = crypto.randomUUID()
-    const noteB = crypto.randomUUID()
-    const noteC = crypto.randomUUID()
+    const noteA = uuidV7()
+    const noteB = uuidV7()
+    const noteC = uuidV7()
     for (const id of [noteA, noteB, noteC]) {
       await notes.create(
-        { groupId, id, title: `Note ${id.slice(0, 4)}`, body: "private text" },
+        { groupId, id, title: `Note ${id.slice(-4)}`, body: "private text" },
         owner,
         null,
       )
@@ -177,7 +180,7 @@ Deno.test("activity: a move says how many notes arrived in the group they came t
     const homeId = await homeOf(repository, owner)
     const notes = new PostgresNoteRepository(sql)
     await nameUser(sql, owner, "Olga")
-    const ids = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()]
+    const ids = [uuidV7(), uuidV7(), uuidV7()]
     for (const id of ids) {
       await notes.create({ groupId, id, title: "Plan", body: "" }, owner, null)
     }
@@ -222,9 +225,9 @@ Deno.test("activity: a note links only while it is still in the group", async ()
     const homeId = await homeOf(repository, owner)
     const activity = new PostgresGroupActivityRepository(sql)
     const notes = new PostgresNoteRepository(sql)
-    const kept = crypto.randomUUID()
-    const deleted = crypto.randomUUID()
-    const moved = crypto.randomUUID()
+    const kept = uuidV7()
+    const deleted = uuidV7()
+    const moved = uuidV7()
     for (const id of [kept, deleted, moved]) {
       await notes.create({ groupId, id, title: "Plan", body: "private text" }, owner, null)
     }

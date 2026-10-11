@@ -8,6 +8,7 @@ import type { MovableAggregate } from "@server/groups/movable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { insertUser, runBlockedOnLock, withSchema } from "./group-team.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * Moving all of a group's data against a real Postgres: one transaction, rights in both groups on
@@ -22,8 +23,8 @@ async function seed(sql: postgres.Sql, titles: string[]) {
   const notes = new PostgresNoteRepository(sql)
   const owner = await insertUser(sql)
   const editor = await insertUser(sql)
-  const from = crypto.randomUUID()
-  const to = crypto.randomUUID()
+  const from = uuidV7()
+  const to = uuidV7()
   await groups.create({ id: from, name: "Source" }, owner)
   await groups.create({ id: to, name: "Target" }, owner)
   for (const groupId of [from, to]) {
@@ -34,7 +35,7 @@ async function seed(sql: postgres.Sql, titles: string[]) {
   }
   const ids: string[] = []
   for (const title of titles) {
-    const id = crypto.randomUUID()
+    const id = uuidV7()
     await notes.create({ groupId: from, id, title, body: "" }, editor, null)
     ids.push(id)
   }
@@ -76,7 +77,7 @@ Deno.test("moving all of a group's data", async (t) => {
         // stamped with the wrong group's number shows.
         for (const title of ["x", "y"]) {
           await notes.create(
-            { groupId: to, id: crypto.randomUUID(), title, body: "" },
+            { groupId: to, id: uuidV7(), title, body: "" },
             editor,
             null,
           )
@@ -171,7 +172,7 @@ Deno.test("moving all of a group's data", async (t) => {
       expect(await attempt(viewer)).toMatchObject({ code: "ROLE_INSUFFICIENT" })
       expect(await attempt(readsTarget)).toMatchObject({ code: "ROLE_INSUFFICIENT" })
       expect(await attempt(stranger)).toMatchObject({ code: "GROUP_NOT_FOUND" })
-      expect(await attempt(editor, from, crypto.randomUUID())).toMatchObject({
+      expect(await attempt(editor, from, uuidV7())).toMatchObject({
         code: "GROUP_NOT_FOUND",
       })
       const notes = new PostgresNoteRepository(sql)
@@ -197,7 +198,7 @@ Deno.test("moving all of a group's data", async (t) => {
       async () => {
         const { owner, editor, from, to, notes } = await seed(sql, ["a", "b"])
         await notes.create(
-          { groupId: to, id: crypto.randomUUID(), title: "x", body: "" },
+          { groupId: to, id: uuidV7(), title: "x", body: "" },
           owner,
           null,
         )
@@ -219,7 +220,7 @@ Deno.test("moving all of a group's data", async (t) => {
     await t.step("two moves in opposite directions both finish, none deadlocks", async () => {
       const { editor, from, to, notes } = await seed(sql, ["a"])
       await notes.create(
-        { groupId: to, id: crypto.randomUUID(), title: "b", body: "" },
+        { groupId: to, id: uuidV7(), title: "b", body: "" },
         editor,
         null,
       )

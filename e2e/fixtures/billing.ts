@@ -1,3 +1,4 @@
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 /**
  * Signed Stripe webhooks for the tests, made without the network. The event below is Stripe's
  * recorded `customer.subscription.created` (as in spy4x/ts-libs `billing/fixtures/stripe`), trimmed
@@ -41,7 +42,7 @@ export function subscriptionEvent(input: SubscriptionEventInput): string {
   const priceId = input.priceId ?? DEV_PRO_PRICE_ID
   const created = input.createdAt ?? 1679609768
   return JSON.stringify({
-    id: input.eventId ?? `evt_${crypto.randomUUID().replace(/-/g, "")}`,
+    id: input.eventId ?? `evt_${uuidV7().replace(/-/g, "")}`,
     object: "event",
     api_version: "2026-09-30.endive",
     created,
@@ -115,7 +116,7 @@ export async function stripeSignature(
 export async function proWebhook(
   groupId: string,
 ): Promise<{ headers: Record<string, string>; data: string }> {
-  const id = crypto.randomUUID().replace(/-/g, "")
+  const id = uuidV7().replace(/-/g, "")
   const data = subscriptionEvent({
     reference: groupId,
     subscriptionId: `sub_${id}`,

@@ -3,10 +3,11 @@ import { expect } from "@std/expect"
 import postgres from "postgres"
 import { recreateDatabase } from "../../infra/scripts/db-reset.ts"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 Deno.test("recreateDatabase empties an existing database and keeps its name", async () => {
   const { connection: c } = requireDbConnection()
-  const name = `reset_${crypto.randomUUID().replaceAll("-", "").slice(0, 12)}`
+  const name = `reset_${uuidV7().replaceAll("-", "").slice(-12)}`
   const env = {
     DB_HOST: c.host,
     DB_PORT: String(c.port),

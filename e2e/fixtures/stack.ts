@@ -1,5 +1,6 @@
 import { type APIRequestContext, type Browser, expect, test as base } from "@playwright/test"
 import { gotoApp, signIn, withoutGoogleFonts } from "./app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const WARM_PASSWORD = "Passw0rd!"
 
@@ -31,7 +32,7 @@ async function warmUp(browser: Browser, api: APIRequestContext, baseURL: string,
     const selected = await page.request.get("/api/groups/selected")
     const { groupId } = await selected.json()
     if (!groupId) throw new Error(`warm-up found no selected group: ${selected.status()}`)
-    const noteId = crypto.randomUUID()
+    const noteId = uuidV7()
     const note = await page.request.post(`/api/groups/${groupId}/notes`, {
       headers,
       data: { id: noteId, title: "Warm-up", body: "" },

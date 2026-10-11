@@ -11,6 +11,7 @@ import {
   type LocalReads,
   localReads,
 } from "../modules.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** A group as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface GroupItem {
@@ -350,7 +351,7 @@ export const onlineGroups: GroupsDependencies = {
   restore: (input) => callCommand("group.restore", input),
   moveAll: (input) => callCommand("group.moveAll", input),
   advance: advanceGroupCursor,
-  newId: () => crypto.randomUUID(),
+  newId: () => uuidV7(),
 }
 
 /**

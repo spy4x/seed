@@ -24,6 +24,7 @@ import {
   recordGroupChange,
 } from "@server/groups/group-change-log.ts"
 import { writeAuditEvent } from "@server/groups/audit.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The longest note title an audit event keeps, so the log never holds more than a line of text. */
 const AUDIT_TITLE_MAX = 100
@@ -72,17 +73,29 @@ async function mapTagsOnMove(
   noteIds: readonly string[],
 ): Promise<void> {
   if (noteIds.length === 0) return
-  await transaction`
-    INSERT INTO tags (
-      id, group_id, name, color, change_sequence, created_by_user_id, updated_by_user_id
-    )
-    SELECT gen_random_uuid(), ${input.toGroupId}, source.name, source.color,
-           ${input.changeSequence}::bigint, ${input.actorId}, ${input.actorId}
+  // Postgres 16 cannot make a version 7 id, so every copy gets its id here (docs/ids.md). A tag
+  // the target already has keeps its own row and id: the conflict drops the copy.
+  const carried = await transaction<{ name: string; color: string }[]>`
+    SELECT source.name, source.color
     FROM tags source
     WHERE source.group_id = ${input.fromGroupId}
       AND source.id IN (SELECT tag_id FROM note_tags WHERE note_id IN ${transaction(noteIds)})
-    ON CONFLICT (group_id, lower(name)) DO NOTHING
   `
+  if (carried.length > 0) {
+    const copies = carried.map((tag) => ({
+      id: uuidV7(),
+      group_id: input.toGroupId,
+      name: tag.name,
+      color: tag.color,
+      change_sequence: input.changeSequence,
+      created_by_user_id: input.actorId,
+      updated_by_user_id: input.actorId,
+    }))
+    await transaction`
+      INSERT INTO tags ${transaction(copies)}
+      ON CONFLICT (group_id, lower(name)) DO NOTHING
+    `
+  }
   await transaction`
     INSERT INTO note_tags (note_id, tag_id)
     SELECT links.note_id, target.id

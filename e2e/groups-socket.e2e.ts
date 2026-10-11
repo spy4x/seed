@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -67,7 +68,7 @@ test.describe("groups over the socket", () => {
       expect(closed.status(), await closed.text()).toBe(200)
       const behindItsBack = await page.request.post(`${apiBase}/api/groups`, {
         headers,
-        data: { id: crypto.randomUUID(), name: "Made while offline" },
+        data: { id: uuidV7(), name: "Made while offline" },
       })
       expect(behindItsBack.status()).toBe(201)
       await expect(names.filter({ hasText: "Made while offline" })).toHaveCount(0)

@@ -7,6 +7,7 @@ import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { purgeDeletedNotes } from "@server/notes/purge-deleted-notes.ts"
 import { team, withSchema } from "./group-team.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 const DAY = 24 * 60 * 60 * 1000
 
@@ -22,7 +23,7 @@ Deno.test("the purge of deleted notes against Postgres", async (t) => {
     async function seed() {
       const { groupId, owner } = await team(sql)
       const make = async (title: string) =>
-        (await notes.create({ groupId, id: crypto.randomUUID(), title, body: "" }, owner, null))
+        (await notes.create({ groupId, id: uuidV7(), title, body: "" }, owner, null))
           .note
       const live = await make("live")
       const old = await make("old")
@@ -62,7 +63,7 @@ Deno.test("the purge of deleted notes against Postgres", async (t) => {
     await t.step("a restored note is never purged, however much time has passed", async () => {
       const { groupId, owner } = await team(sql)
       const { note } = await notes.create(
-        { groupId, id: crypto.randomUUID(), title: "back", body: "" },
+        { groupId, id: uuidV7(), title: "back", body: "" },
         owner,
         null,
       )

@@ -9,6 +9,7 @@ import { NoteCreateCommand } from "@domain/notes"
 import { useCommandMiddleware } from "./command-middleware.ts"
 import { createEntitlementGate } from "./entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "./entitlement-needs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111003"
 const FREE_NOTES = 10
@@ -50,7 +51,7 @@ const create = (id: string, idempotencyKey: string) =>
 describe("the command bus's middleware", () => {
   it("answers a group at its cap that retries a create which already landed with the first result", async () => {
     const { commands, group } = bus(FREE_NOTES - 1)
-    const id = crypto.randomUUID()
+    const id = uuidV7()
 
     const first = await commands.execute(create(id, "create-last"))
     expect(group.notes).toBe(FREE_NOTES)
@@ -59,7 +60,7 @@ describe("the command bus's middleware", () => {
     expect(retried).toEqual(first)
     expect(group.writes).toBe(1)
     // A new create at the cap is still refused: the gate is on this bus.
-    await expect(commands.execute(create(crypto.randomUUID(), "create-next")))
+    await expect(commands.execute(create(uuidV7(), "create-next")))
       .rejects.toThrow(PlanError)
   })
 })

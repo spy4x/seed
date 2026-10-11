@@ -3,6 +3,7 @@ import { ConnectionLostError, describeError, RealtimeRequestError } from "@spy4x
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiAsUser } from "./realtime-call.ts"
 import { callCommand, callQuery, canCall, currentLayer, offlineNotes } from "../modules.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** A note as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface NoteItem {
@@ -670,7 +671,7 @@ export function restoreWhileReachable(
 }
 
 /** The notes as the server serves them: reads over REST, writes through the calls port. */
-const onlineNotes: NotesDependencies = {
+export const onlineNotes: NotesDependencies = {
   async fetchPage(groupId, cursor, deleted = false) {
     const query = new URLSearchParams({ limit: String(PAGE_LIMIT) })
     if (cursor) query.set("cursor", cursor)
@@ -686,7 +687,7 @@ const onlineNotes: NotesDependencies = {
   delete: (input) => callCommand("note.delete", input),
   restore: (input) => restoreWhileReachable(input),
   move: (input) => callCommand("note.move", input),
-  newId: () => crypto.randomUUID(),
+  newId: () => uuidV7(),
 }
 
 /**

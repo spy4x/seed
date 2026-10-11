@@ -1,6 +1,7 @@
 /// <reference lib="es2022.intl" />
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import { isRecord } from "@spy4x/platform/universal/is-record"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 import type { Actor } from "@domain/identity"
 
 export * from "./activity.ts"
@@ -591,8 +592,6 @@ export interface GroupRepository {
   ): Promise<boolean>
 }
 
-/** The shape of every id (group, note, tag): a lowercase UUID v4. */
-export const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 const GROUP_ID_KEYS = ["groupId"]
 const CREATE_KEYS = ["id", "name"]
 const RENAME_BODY_KEYS = ["name"]
@@ -723,7 +722,7 @@ export function parseGroupDetailsRequest(value: unknown): GroupDetails & { group
 
 /**
  * The body of a request that names one group (select, delete, restore): exactly `{ groupId }`, a
- * lowercase UUID v4.
+ * lowercase UUID.
  */
 export function parseGroupIdRequest(value: unknown): { groupId: string } {
   if (!hasExactKeys(value, GROUP_ID_KEYS)) {
@@ -802,15 +801,10 @@ export function parseTransferBody(
   return { userId: parseMemberUserId(value.userId), name: value.name, password: value.password }
 }
 
-/** Whether `value` is a lowercase UUID v4, the shape of every group and note id. */
-export function isUuidV4(value: unknown): value is string {
-  return typeof value === "string" && UUID_V4.test(value)
-}
-
-/** A group id from a request: a lowercase UUID v4, or `INVALID_REQUEST`. */
+/** A group id from a request: a lowercase UUID of any version, or `INVALID_REQUEST`. */
 export function parseGroupId(value: unknown): string {
-  if (!isUuidV4(value)) {
-    throw new GroupError("INVALID_REQUEST", "Group id must be a lowercase UUID v4")
+  if (!isUuid(value)) {
+    throw new GroupError("INVALID_REQUEST", "Group id must be a lowercase UUID")
   }
   return value
 }

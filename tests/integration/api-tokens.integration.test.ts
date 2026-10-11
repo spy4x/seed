@@ -30,6 +30,8 @@ import { createTokenApiRoute } from "../../apps/api/routes/token-api.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * Personal API tokens (#167) against a real Postgres, through the real sign-in, the real token
@@ -51,7 +53,7 @@ const API = "http://app.example.com/api"
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
-  const schema = `api_tokens_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `api_tokens_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...settings,
     max: 10,
@@ -136,7 +138,7 @@ async function buildApp(sql: postgres.Sql) {
 
   const app = new Hono<APIContext>().basePath("/api")
   app.use("*", async (c, next) => {
-    c.set("requestId", crypto.randomUUID())
+    c.set("requestId", uuidV7())
     await next()
   })
   app.use("*", signIn.auth.parseAuth)
@@ -196,7 +198,7 @@ interface Person {
 }
 
 async function signUp(app: App, email: string): Promise<Person> {
-  const groupId = crypto.randomUUID()
+  const groupId = uuidV7()
   const response = await app.app.request(`${API}/sign-up`, {
     method: "POST",
     headers: { "content-type": "application/json", "x-real-ip": "203.0.113.42" },
@@ -243,6 +245,7 @@ async function createToken(
   })
   expect(response.status).toBe(201)
   const body = await response.json() as { token: { id: string }; secret: string }
+  expectVersion7Ids([body.token])
   return { id: body.token.id, secret: body.secret }
 }
 
@@ -284,7 +287,7 @@ Deno.test("a token works in its own group only, and a read-only one cannot write
   await withSchema(async (sql) => {
     const app = await buildApp(sql)
     const ada = await signUp(app, "ada@example.com")
-    const otherGroup = crypto.randomUUID()
+    const otherGroup = uuidV7()
     await app.groups.create({ id: otherGroup, name: "Side project" }, ada.userId)
     const writer = await createToken(app, ada)
     const reader = await createToken(app, ada, { access: ApiTokenAccess.READ })
@@ -292,7 +295,7 @@ Deno.test("a token works in its own group only, and a read-only one cannot write
     const created = await app.app.request(`${API}/v1/groups/${ada.groupId}/notes`, {
       method: "POST",
       headers: bearer(writer.secret),
-      body: JSON.stringify({ id: crypto.randomUUID(), title: "From a script", body: "" }),
+      body: JSON.stringify({ id: uuidV7(), title: "From a script", body: "" }),
     })
     expect(created.status).toBe(201)
     expect((await listNotes(app, ada.groupId, reader.secret)).status).toBe(200)
@@ -301,7 +304,7 @@ Deno.test("a token works in its own group only, and a read-only one cannot write
     const refused = await app.app.request(`${API}/v1/groups/${ada.groupId}/notes`, {
       method: "POST",
       headers: bearer(reader.secret),
-      body: JSON.stringify({ id: crypto.randomUUID(), title: "Not allowed", body: "" }),
+      body: JSON.stringify({ id: uuidV7(), title: "Not allowed", body: "" }),
     })
     expect(refused.status).toBe(403)
     const notes = await sql<{ title: string; groupId: string }[]>`SELECT title, group_id FROM notes`
@@ -485,7 +488,7 @@ Deno.test("tokens of a deleted group are neither listed nor counted, and come ba
   await withSchema(async (sql) => {
     const app = await buildApp(sql)
     const ada = await signUp(app, "ada@example.com")
-    const side = crypto.randomUUID()
+    const side = uuidV7()
     await app.groups.create({ id: side, name: "Side project" }, ada.userId)
     for (let i = 0; i < API_TOKENS_MAX; i++) await createToken(app, ada, { groupId: side })
     expect(await createStatus(app, ada, ada.groupId)).toBe(409)

@@ -2,6 +2,7 @@ import { Hono } from "hono"
 import type { Context } from "hono"
 import { APIContext } from "../_types.ts"
 import { validate } from "@spy4x/validation"
+import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { normalizeEmail } from "@spy4x/server/auth"
 import { authEmailSchema, authLoginSchema } from "@domain/identity"
@@ -142,7 +143,7 @@ function findPasswordKey(deps: DevRouteDeps, login: string) {
 
 /** The body of `POST /add-member`. Owner is left out: a group has one, and it is not moved here. */
 const addMemberSchema = authLoginSchema.and({
-  groupId: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+  groupId: UUID_PATTERN,
   role: type.enumerated(GroupRole.VIEWER, GroupRole.EDITOR, GroupRole.ADMIN),
 })
 

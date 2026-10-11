@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Browser, type BrowserContext } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -35,7 +36,7 @@ async function signUp(request: APIRequestContext, email: string) {
 
 /** A fresh address per run, so a rerun never meets the previous run's account. */
 function address(name: string): string {
-  return `e2e-sessions-${name}-${crypto.randomUUID().slice(0, 8)}@example.com`
+  return `e2e-sessions-${name}-${uuidV7().slice(-8)}@example.com`
 }
 
 /**

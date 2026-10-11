@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -35,7 +36,7 @@ async function sharedGroup(
   name: string,
   member: string,
 ): Promise<string> {
-  const groupId = crypto.randomUUID()
+  const groupId = uuidV7()
   const created = await owner.request.post(`${apiBase}/api/groups`, {
     headers,
     data: { id: groupId, name },
@@ -164,7 +165,7 @@ test.describe("notes in a shared group", () => {
       await signInOnline(ownerPage, owner)
       const groupId = await sharedGroup(ownerPage, request, "Read only", member)
       const notes = `${apiBase}/api/groups/${groupId}/notes`
-      const noteId = crypto.randomUUID()
+      const noteId = uuidV7()
       const created = await ownerPage.request.post(notes, {
         headers,
         data: { id: noteId, title: "Owner's note", body: "" },
@@ -176,7 +177,7 @@ test.describe("notes in a shared group", () => {
       const refused = [
         await memberPage.request.post(notes, {
           headers,
-          data: { id: crypto.randomUUID(), title: "Mine", body: "" },
+          data: { id: uuidV7(), title: "Mine", body: "" },
         }),
         await memberPage.request.patch(`${notes}/${noteId}`, {
           headers,
@@ -214,7 +215,7 @@ test.describe("notes in a shared group", () => {
       const groupId = await sharedGroup(ownerPage, request, "Viewer team", member)
       const created = await ownerPage.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
         headers,
-        data: { id: crypto.randomUUID(), title: "Owner's note", body: "Read me" },
+        data: { id: uuidV7(), title: "Owner's note", body: "Read me" },
       })
       expect(created.status(), await created.text()).toBe(201)
 
@@ -250,13 +251,13 @@ test.describe("notes in a shared group", () => {
       const page = await context.newPage()
       await signInOnline(page, owner)
       const selectedBefore = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
-      const otherGroup = crypto.randomUUID()
+      const otherGroup = uuidV7()
       const created = await page.request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: otherGroup, name: "Other team" },
       })
       expect(created.status(), await created.text()).toBe(201)
-      const noteId = crypto.randomUUID()
+      const noteId = uuidV7()
       const note = await page.request.post(`${apiBase}/api/groups/${otherGroup}/notes`, {
         headers,
         data: { id: noteId, title: "Elsewhere", body: "" },
@@ -297,13 +298,13 @@ test.describe("notes in a shared group", () => {
       await signUp(request, stranger)
       const strangerPage = await strangerContext.newPage()
       await signInOnline(strangerPage, stranger)
-      const theirGroup = crypto.randomUUID()
+      const theirGroup = uuidV7()
       const created = await strangerPage.request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: theirGroup, name: "Their secret group" },
       })
       expect(created.status(), await created.text()).toBe(201)
-      const theirNote = crypto.randomUUID()
+      const theirNote = uuidV7()
       const note = await strangerPage.request.post(`${apiBase}/api/groups/${theirGroup}/notes`, {
         headers,
         data: { id: theirNote, title: "Theirs", body: "" },
@@ -323,7 +324,7 @@ test.describe("notes in a shared group", () => {
         return await page.locator("main").innerText()
       }
       const foreign = await pageOf(theirNote)
-      const missing = await pageOf(crypto.randomUUID())
+      const missing = await pageOf(uuidV7())
 
       expect(foreign).toBe(missing)
       expect(foreign).not.toContain("Their secret group")
@@ -393,7 +394,7 @@ test.describe("notes in a shared group", () => {
       const page = await context.newPage()
       await signInOnline(page, owner)
       const { groupId } = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
-      const noteId = crypto.randomUUID()
+      const noteId = uuidV7()
       const created = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
         headers,
         data: { id: noteId, title: "Original", body: "" },

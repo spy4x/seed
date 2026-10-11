@@ -25,6 +25,7 @@ import {
 import { sha256Hex } from "@spy4x/platform/tokens"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * Sign-up, sign-in, sign-out and the authenticator app against a real Postgres, through the exact
@@ -73,7 +74,7 @@ async function withSchema(
 ): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1 })
-  const schema = `auth_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `auth_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...settings,
     max: 25,
@@ -239,7 +240,7 @@ interface TableShapes {
  */
 async function shapesOf(statements: string[], tables?: string[]): Promise<TableShapes> {
   const settings = buildPostgresOptions(requireDbConnection())
-  const schema = `auth_shape_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `auth_shape_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({ ...settings, max: 1, onnotice: () => {} })
   const unqualified = (definition: string) => definition.replaceAll(`${schema}.`, "")
   try {

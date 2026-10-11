@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -77,7 +78,7 @@ test.describe("group list and settings pages", () => {
       const longName = "A group with a very long name that must wrap and never push the page wider"
       const created = await page.request.post(`${apiBase}/api/groups`, {
         headers,
-        data: { id: crypto.randomUUID(), name: longName },
+        data: { id: uuidV7(), name: longName },
       })
       expect(created.status(), await created.text()).toBe(201)
 

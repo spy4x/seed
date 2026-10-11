@@ -21,6 +21,8 @@ import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 const JOB = {
   eventKind: OUTBOX_CLEANUP_JOB,
@@ -32,7 +34,7 @@ const JOB = {
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const connection = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...connection, max: 1 })
-  const schema = `jobs_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `jobs_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...connection,
     max: 5,
@@ -104,6 +106,7 @@ Deno.test("password reset mails go through the worker's queue", async (t) => {
         const processor = createOutboxProcessor(sql, { store, sender, brand: BRAND, log: () => {} })
         await enqueuePasswordResetMail(sql, "ann@example.com")
         await enqueuePasswordResetMail(sql, "nobody@example.com")
+        expectVersion7Ids(await sql<{ id: string }[]>`SELECT id FROM password_reset_requests`)
 
         const result = await processor.drainOnce()
 
@@ -161,8 +164,8 @@ Deno.test("password reset mails go through the worker's queue", async (t) => {
     await t.step("a request older than a day is removed by the cleanup", async () => {
       await sql`
         INSERT INTO password_reset_requests (id, email, created_at) VALUES
-          (${crypto.randomUUID()}, 'old@example.com', now() - interval '25 hours'),
-          (${crypto.randomUUID()}, 'new@example.com', now() - interval '23 hours')
+          (${uuidV7()}, 'old@example.com', now() - interval '25 hours'),
+          (${uuidV7()}, 'new@example.com', now() - interval '23 hours')
       `
 
       expect(await removeStalePasswordResetRequests(sql)).toBe(1)
@@ -189,6 +192,7 @@ Deno.test("e-mail code mails go through the worker's queue", async (t) => {
       const sender = recordingSender()
       const processor = createOutboxProcessor(sql, { store, sender, brand: BRAND, log: () => {} })
       await enqueueEmailCodeMail(sql, user.id, "ann@example.com")
+      expectVersion7Ids(await sql<{ id: string }[]>`SELECT id FROM email_code_requests`)
 
       expect((await processor.drainOnce()).published).toBe(1)
 
@@ -256,8 +260,8 @@ Deno.test("e-mail code mails go through the worker's queue", async (t) => {
     await t.step("a request older than a day is removed by the cleanup", async () => {
       await sql`
         INSERT INTO email_code_requests (id, user_id, email, created_at) VALUES
-          (${crypto.randomUUID()}, ${user.id}, 'old@example.com', now() - interval '25 hours'),
-          (${crypto.randomUUID()}, ${user.id}, 'new@example.com', now() - interval '23 hours')
+          (${uuidV7()}, ${user.id}, 'old@example.com', now() - interval '25 hours'),
+          (${uuidV7()}, ${user.id}, 'new@example.com', now() - interval '23 hours')
       `
 
       expect(await removeStaleEmailCodeRequests(sql)).toBe(1)
@@ -332,7 +336,7 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
         const group = await sql<{ id: string; userId: number }[]>`
         WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id),
         u AS (INSERT INTO users (id) SELECT id FROM auth_user RETURNING id)
-        SELECT u.id AS user_id, gen_random_uuid() AS id FROM u
+        SELECT u.id AS user_id, ${uuidV7()}::uuid AS id FROM u
       `
         const { id: groupId, userId } = group[0]
         await sql`
@@ -345,7 +349,7 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
             id, event_kind, aggregate_type, aggregate_id, aggregate_version, group_id,
             actor_user_id, processed_at
           ) VALUES (
-            ${crypto.randomUUID()}, 'group.created', 'group', ${groupId}, ${version}, ${groupId},
+            ${uuidV7()}, 'group.created', 'group', ${groupId}, ${version}, ${groupId},
             ${userId}, ${processed === null ? null : sql`now() - ${processed}::interval`}
           )
         `
@@ -388,7 +392,7 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
           INSERT INTO users (id) SELECT id FROM auth_user RETURNING id AS user_id
         `
         const insertDeleted = async (name: string, days: number) => {
-          const id = crypto.randomUUID()
+          const id = uuidV7()
           await sql`
             INSERT INTO groups (id, name, owner_user_id, created_by_user_id, deleted_at)
             VALUES (${id}, ${name}, ${userId}, ${userId}, now() - make_interval(days => ${days}))
@@ -416,13 +420,13 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
           WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id)
           INSERT INTO users (id) SELECT id FROM auth_user RETURNING id AS user_id
         `
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         await sql`
           INSERT INTO groups (id, name, owner_user_id, created_by_user_id)
           VALUES (${groupId}, 'invitation fixture', ${userId}, ${userId})
         `
         const insertExpired = async (days: number) => {
-          const id = crypto.randomUUID()
+          const id = uuidV7()
           await sql`
             INSERT INTO group_invitations (id, group_id, token_hash, role, created_by_user_id, expires_at)
             VALUES (${id}, ${groupId}, ${id.replaceAll("-", "").repeat(2)}, 1, ${userId},
@@ -446,7 +450,7 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
       const [{ groupId, userId }] = await sql<{ groupId: string; userId: number }[]>`
         WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id),
         u AS (INSERT INTO users (id) SELECT id FROM auth_user RETURNING id)
-        SELECT u.id AS user_id, gen_random_uuid() AS group_id FROM u
+        SELECT u.id AS user_id, ${uuidV7()}::uuid AS group_id FROM u
       `
       await sql`
         INSERT INTO groups (id, name, owner_user_id, created_by_user_id)
@@ -458,7 +462,7 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
             id, event_kind, aggregate_type, aggregate_id, aggregate_version, group_id,
             actor_user_id
           ) VALUES (
-            ${crypto.randomUUID()}, 'group.created', 'group', ${groupId}, ${version}, ${group},
+            ${uuidV7()}, 'group.created', 'group', ${groupId}, ${version}, ${group},
             ${actor}
           )
         `

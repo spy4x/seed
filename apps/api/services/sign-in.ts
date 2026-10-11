@@ -101,6 +101,7 @@ import {
 import type { AppDbBase } from "./db-base.ts"
 import { consumePasswordReset } from "@server/auth/password-reset.ts"
 import { passwordKeyOf, proveEmailCode, readEmailStatus } from "@server/auth/email-verification.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** Longest username, in characters (code points), after normalisation. */
 export const USERNAME_MAX_LENGTH = 50
@@ -350,7 +351,7 @@ export function createSignIn(options: SignInOptions): SignIn {
     // session owes that code and reaches nothing else (`hasSecondFactor` is true for it).
     if (!user) return await waitingForCode(userId)
     try {
-      await db.group.ensureFirst({ id: crypto.randomUUID(), name: "Personal" }, user.id)
+      await db.group.ensureFirst({ id: uuidV7(), name: "Personal" }, user.id)
     } catch (error) {
       if (error instanceof GroupError && error.code === "USER_NOT_ACTIVE") return null
       throw error
@@ -475,7 +476,7 @@ export function createSignIn(options: SignInOptions): SignIn {
   return {
     auth,
 
-    async signUp(c, rawEmail, password, firstGroupId = crypto.randomUUID()) {
+    async signUp(c, rawEmail, password, firstGroupId = uuidV7()) {
       // Checked here too, so a refused address opens no transaction and makes no provider.
       if (normalizeEmail(rawEmail) === null) return null
       // Hashed before `db.begin()`, as before the package provider, so no pool connection is held

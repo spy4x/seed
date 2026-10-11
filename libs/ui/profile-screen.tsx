@@ -396,7 +396,7 @@ export function ProfileScreen(
                   <SettingRow
                     key={device.id}
                     dataE2E={`push-device-${device.deviceId}`}
-                    label={`Device ${device.deviceId.slice(0, 8)}`}
+                    label={`Device ${device.deviceId.slice(-8)}`}
                     value={`Added ${new Date(device.createdAt).toLocaleString()}`}
                     action={
                       <ScreenForm
@@ -411,7 +411,7 @@ export function ProfileScreen(
                           data-e2e={`push-remove-${device.deviceId}`}
                           disabled={pending.push}
                         >
-                          Remove <span class="sr-only">device {device.deviceId.slice(0, 8)}</span>
+                          Remove <span class="sr-only">device {device.deviceId.slice(-8)}</span>
                         </Button>
                       </ScreenForm>
                     }

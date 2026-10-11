@@ -9,6 +9,7 @@ import {
 } from "../auth/password-reset.ts"
 import { type MailBrand, passwordResetMail } from "../mail/mail.ts"
 import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The job that mails one password reset link. */
 export const PASSWORD_RESET_MAIL_JOB = "auth.password-reset-mail"
@@ -25,7 +26,7 @@ export const PASSWORD_RESET_REQUEST_RETENTION_HOURS = 24
  * job's write fails, the caller gets the error and the row is left for the nightly cleanup.
  */
 export async function enqueuePasswordResetMail(sql: postgres.Sql, email: string): Promise<void> {
-  const id = crypto.randomUUID()
+  const id = uuidV7()
   await sql`INSERT INTO password_reset_requests (id, email) VALUES (${id}, ${email})`
   await scheduleOutboxEvent(
     sql,

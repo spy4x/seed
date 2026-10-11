@@ -11,6 +11,7 @@ import { type GroupNewsTarget, listenForGroupNews } from "../../apps/api/service
 import { buildAuthData } from "../../apps/api/_testing/fake-auth.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 interface IdRow extends postgres.Row {
   id: number
@@ -51,7 +52,7 @@ function onlyGroup(realtime: Realtime, groupId: string) {
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const connection = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...connection, max: 1, onnotice: () => {} })
-  const schema = `push_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `push_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...connection,
     max: 10,
@@ -111,7 +112,7 @@ Deno.test("a committed group change reaches its members' sockets as a hint", asy
     const stranger = await insertUser(sql)
 
     await t.step("the worker's publish reaches the API's listener with the sequence", async () => {
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const heard = next<{ groupId: string; sequence: number }>()
       const stop = await listenForGroupChanges(sql, (change) => {
         if (change.groupId === groupId) heard.push(change)
@@ -129,7 +130,7 @@ Deno.test("a committed group change reaches its members' sockets as a hint", asy
 
     await t.step("a change that rolled back is never announced", async () => {
       await processor.drainOnce()
-      const rolledBackId = crypto.randomUUID()
+      const rolledBackId = uuidV7()
       const announced: unknown[] = []
       const stop = await listenForGroupChanges(sql, (change) => {
         if (change.groupId === rolledBackId) announced.push(change)
@@ -156,7 +157,7 @@ Deno.test("a committed group change reaches its members' sockets as a hint", asy
     await t.step("the hint goes to the owner's socket and to nobody else's", async () => {
       // The stranger belongs to a group of their own, so "not a member of this group" is what
       // keeps the owner's hint from them, not "not a member of any group".
-      await repository.create({ id: crypto.randomUUID(), name: "Not shared" }, stranger)
+      await repository.create({ id: uuidV7(), name: "Not shared" }, stranger)
       await processor.drainOnce()
       const clock = new FakeClock()
       const realtime = new Realtime({
@@ -172,7 +173,7 @@ Deno.test("a committed group change reaches its members' sockets as a hint", asy
         socket.openFromPeer()
         realtime.attach(socket, buildAuthData({ user: { id: userId } }))
       }
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const news = onlyGroup(realtime, groupId)
       const stop = await listenForGroupNews(sql, news.target, () => {})
       try {
@@ -203,9 +204,9 @@ Deno.test("a member who loses a group keeps the socket and gets no hint for it a
     const owner = await insertUser(sql)
     const member = await insertUser(sql)
     // Both keep a group of their own, so the delete leaves neither without one.
-    await repository.create({ id: crypto.randomUUID(), name: "Owner's own" }, owner)
-    await repository.create({ id: crypto.randomUUID(), name: "Member's own" }, member)
-    const groupId = crypto.randomUUID()
+    await repository.create({ id: uuidV7(), name: "Owner's own" }, owner)
+    await repository.create({ id: uuidV7(), name: "Member's own" }, member)
+    const groupId = uuidV7()
     await repository.create({ id: groupId, name: "Shared" }, owner)
     await sql`
       INSERT INTO group_members (group_id, user_id, role, added_by_user_id)

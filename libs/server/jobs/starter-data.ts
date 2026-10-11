@@ -5,6 +5,7 @@ import { NoteError } from "@domain/notes"
 import { PostgresBillingRepository } from "../billing/postgres-billing-repository.ts"
 import { PostgresNoteRepository } from "../notes/postgres-note-repository.ts"
 import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The job that gives a new account its starter data. Its aggregate id is the request's id. */
 export const STARTER_DATA_JOB = "onboarding.starter-data"
@@ -27,7 +28,7 @@ export const WELCOME_NOTE_BODY = [
  * row rather than at the user.
  */
 export async function scheduleStarterData(tx: postgres.Sql, userId: number): Promise<void> {
-  const id = crypto.randomUUID()
+  const id = uuidV7()
   await tx`INSERT INTO starter_data_requests (id, user_id) VALUES (${id}, ${userId})`
   await scheduleOutboxEvent(
     tx,

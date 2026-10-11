@@ -7,6 +7,7 @@ import {
   type AuthRateLimits,
   createAuthRateLimits,
 } from "../../apps/api/middlewares/auth-rate-limits.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * The auth rate limits over a real Valkey, through the same `createRedisRateLimitStore` the API
@@ -86,7 +87,7 @@ const cases: Case[] = [
 
 for (const { name, budget, pick } of cases) {
   Deno.test(`a ${name} spent before an API restart is still spent after it`, async () => {
-    const prefix = `it-auth-rate-limits-${crypto.randomUUID()}`
+    const prefix = `it-auth-rate-limits-${uuidV7()}`
     const before = await startApi(prefix)
     let after: Awaited<ReturnType<typeof startApi>> | undefined
     try {

@@ -22,6 +22,7 @@ import {
 } from "../features/notes/handlers.ts"
 import { createTokenRateLimits } from "../middlewares/token-rate-limits.ts"
 import { createTokenApiRoute } from "./token-api.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * The token API over real buses, the real session gate and the real note handlers, with notes in
@@ -140,7 +141,7 @@ function createNote(app: Hono<APIContext>, token: string | undefined, group = gr
   return app.request(`${API}/groups/${group}/notes`, {
     method: "POST",
     headers: headers(token),
-    body: JSON.stringify({ id: crypto.randomUUID(), title: "From a script", body: "" }),
+    body: JSON.stringify({ id: uuidV7(), title: "From a script", body: "" }),
   })
 }
 
@@ -197,10 +198,10 @@ describe("token API", () => {
       method: "POST",
       headers: headers(WRITER),
       body: JSON.stringify({
-        id: crypto.randomUUID(),
+        id: uuidV7(),
         title: "Tagged",
         body: "",
-        tagIds: [crypto.randomUUID()],
+        tagIds: [uuidV7()],
       }),
     })
 

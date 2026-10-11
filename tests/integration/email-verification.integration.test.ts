@@ -18,6 +18,7 @@ import { issuePasswordReset } from "../../libs/server/auth/password-reset.ts"
 import { sendEmailCode } from "../../libs/server/auth/email-verification.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * Proving an address with a code (#140), through the exact `createSignIn` and `AppDbBase` the API
@@ -34,7 +35,7 @@ const PASSWORD = "Passw0rd!"
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1 })
-  const schema = `email_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `email_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...settings,
     max: 10,

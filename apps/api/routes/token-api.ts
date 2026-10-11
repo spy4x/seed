@@ -1,4 +1,5 @@
 import { Hono } from "hono"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 import type { Context, MiddlewareHandler } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { bearerTokenFromHeaders } from "@spy4x/server/http/bearer-auth"
@@ -6,7 +7,6 @@ import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { ApiTokenAccess, ApiTokenError, type ApiTokenErrorCode } from "@domain/api-tokens"
 import type { Actor } from "@domain/identity"
 import {
-  isUuidV4,
   type Note,
   NoteCreateCommand,
   noteCreateRequestSchema,
@@ -91,7 +91,7 @@ export function createTokenApiRoute(dependencies: TokenApiDependencies): Hono<To
     })
     .get("/groups/:groupId/notes/:noteId", async (c) => {
       const noteId = c.req.param("noteId")
-      if (!isUuidV4(noteId)) throw new NoteFeatureError("INVALID_REQUEST", "Note id is invalid")
+      if (!isUuid(noteId)) throw new NoteFeatureError("INVALID_REQUEST", "Note id is invalid")
       return c.json(
         await dependencies.get(
           new NoteGetQuery({ actor: actorOf(c), groupId: groupIdOf(c), id: noteId }),
@@ -152,7 +152,7 @@ function tokenApiErrorResponse(c: Context<TokenApiContext>, error: unknown): Res
 
 function groupIdOf(c: Context<TokenApiContext>): string {
   const groupId = c.req.param("groupId")
-  if (!groupId || !isUuidV4(groupId)) {
+  if (!groupId || !isUuid(groupId)) {
     throw new NoteFeatureError("INVALID_REQUEST", "Group id is invalid")
   }
   return groupId

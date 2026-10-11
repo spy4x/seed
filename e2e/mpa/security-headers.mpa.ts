@@ -1,5 +1,6 @@
 import { type APIResponse, expect, test } from "@playwright/test"
 import { watchCspViolations } from "../fixtures/csp.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 function expectSecurityHeaders(response: APIResponse) {
   const headers = response.headers()
@@ -48,7 +49,7 @@ test("a visitor walks the website and its forms without a refusal under the cont
   await page.getByRole("button", { name: "Try Pro in the demo" }).click()
   await expect(page).toHaveURL(/\/sign-up$/)
 
-  const email = `mpa-csp-${crypto.randomUUID().slice(0, 8)}@example.com`
+  const email = `mpa-csp-${uuidV7().slice(-8)}@example.com`
   await page.goto("/privacy")
   await page.locator("[data-e2e=footer-subscribe-email]").fill(email)
   await page.locator("[data-e2e=footer-subscribe-submit]").click()

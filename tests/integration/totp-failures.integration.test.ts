@@ -4,6 +4,7 @@ import postgres from "postgres"
 import { createTotpFailures } from "../../apps/api/services/totp-failures.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 interface IdRow extends postgres.Row {
   id: number
@@ -15,7 +16,7 @@ async function withSchema(
 ): Promise<void> {
   const connection = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...connection, max: 1 })
-  const schema = `totp_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `totp_test_${uuidV7().replaceAll("-", "")}`
   const clients: postgres.Sql[] = []
   const open = () => {
     const client = postgres({

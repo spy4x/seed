@@ -20,6 +20,7 @@ import {
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * Per-member billing (#205) against a real Postgres built from schema.sql, with the worker's outbox
@@ -156,6 +157,12 @@ Deno.test("seats of a group billed per member follow its members", async (t) => 
 
     await t.step("a seat change for a group already in step calls no provider", async () => {
       await queueSeatSync(sql, groupId)
+      expectVersion7Ids(
+        await sql<{ id: string }[]>`
+          SELECT id FROM outbox_events
+          WHERE event_kind = ${SEAT_SYNC_JOB} AND aggregate_id = ${groupId}
+        `,
+      )
 
       expect(await drain(processor)).toBe(0)
       expect(calls).toEqual([])

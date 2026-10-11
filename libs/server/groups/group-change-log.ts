@@ -2,6 +2,7 @@ import type postgres from "postgres"
 import { GROUP_AGGREGATE, type GroupRole } from "@domain/groups"
 import { announceJson } from "@spy4x/server/db/notify"
 import { GROUP_ACCESS_LOST_CHANNEL, type GroupAccessLoss } from "./group-change-notify.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The group is missing or deleted, so nothing may be written inside it. */
 export class GroupNotActiveError extends Error {
@@ -94,7 +95,7 @@ export async function recordGroupChange(
       group_id,
       actor_user_id
     ) VALUES (
-      ${crypto.randomUUID()},
+      ${uuidV7()},
       ${eventKind},
       ${GROUP_AGGREGATE},
       ${groupId},

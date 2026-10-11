@@ -25,6 +25,8 @@ import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * Webhook events applied to a real Postgres built from the migrations. Needs `DB_HOST`, `DB_USER`,
@@ -37,7 +39,7 @@ const MIGRATIONS_DIR = "libs/server/db/migrations"
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
-  const schema = `billing_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `billing_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...settings,
     max: 10,
@@ -65,7 +67,7 @@ async function seedGroup(sql: postgres.Sql): Promise<{ groupId: string; owner: n
     WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id)
     INSERT INTO users (id) SELECT id FROM auth_user RETURNING id
   `)[0].id
-  const groupId = crypto.randomUUID()
+  const groupId = uuidV7()
   await new PostgresGroupRepository(sql).create({ id: groupId, name: "Team" }, owner)
   return { groupId, owner }
 }
@@ -273,7 +275,7 @@ Deno.test("billing events against Postgres", async (t) => {
 
     await t.step("an event that names no group of this app is kept and ignored", async () => {
       const outcome = await billing.applyEvent(
-        event({ id: "evt_g1", reference: crypto.randomUUID(), customerId: "cus_unknown" }),
+        event({ id: "evt_g1", reference: uuidV7(), customerId: "cus_unknown" }),
       )
       const payment: BillingEvent = {
         id: "evt_g2",
@@ -439,7 +441,7 @@ Deno.test("billing events against Postgres", async (t) => {
       async () => {
         const { groupId, owner } = await seedGroup(sql)
         const groups = new PostgresGroupRepository(sql)
-        await groups.create({ id: crypto.randomUUID(), name: "Other" }, owner)
+        await groups.create({ id: uuidV7(), name: "Other" }, owner)
         await billing.applyEvent(event({ id: "evt_l1", reference: groupId, customerId: "cus_l" }))
 
         const refused = await groups.softDelete(groupId, owner).catch((error) => error)
@@ -961,6 +963,12 @@ Deno.test("billing events against Postgres", async (t) => {
           WHERE aggregate_id = ${groupId} AND aggregate_type = ${JOB_AGGREGATE}
           ORDER BY available_at
         `
+        expectVersion7Ids(
+          await sql<{ id: string }[]>`
+            SELECT id FROM outbox_events
+            WHERE aggregate_id = ${groupId} AND aggregate_type = ${JOB_AGGREGATE}
+          `,
+        )
         expect(jobs).toEqual([
           {
             eventKind: BILLING_NOTICE_JOBS[BillingNoticeKind.PaymentFailed],

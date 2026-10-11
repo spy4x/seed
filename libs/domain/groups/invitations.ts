@@ -1,7 +1,8 @@
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import { isRecord } from "@spy4x/platform/universal/is-record"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 import type { Actor } from "@domain/identity"
-import { canManageMember, GroupError, GroupRole, isUuidV4, type SelectedGroup } from "./+lib.ts"
+import { canManageMember, GroupError, GroupRole, type SelectedGroup } from "./+lib.ts"
 
 /** How long an invitation works when its creator picks nothing else. */
 export const INVITATION_DEFAULT_DAYS = 7
@@ -318,10 +319,10 @@ export function parseInvitationCreateBody(value: unknown): InvitationCreateInput
   return { role, expiresInDays, maxUses, email, sendEmail, acceptSeatPrice }
 }
 
-/** An invitation's id from a request: a lowercase UUID v4, or `INVALID_REQUEST`. */
+/** An invitation's id from a request: a lowercase UUID of any version, or `INVALID_REQUEST`. */
 export function parseInvitationId(value: unknown): string {
-  if (!isUuidV4(value)) {
-    throw invalid("Invitation id must be a lowercase UUID v4")
+  if (!isUuid(value)) {
+    throw invalid("Invitation id must be a lowercase UUID")
   }
   return value
 }

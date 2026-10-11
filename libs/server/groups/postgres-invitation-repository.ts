@@ -21,6 +21,7 @@ import { type AuditEventInput, writeAuditEvent } from "./audit.ts"
 import { notifyInvitationReceived } from "./group-notifications.ts"
 import { INVITATION_EVENTS } from "./invitation-revocation.ts"
 import { storeSelection } from "./postgres-group-repository.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 export { INVITATION_EVENTS } from "./invitation-revocation.ts"
 
@@ -144,7 +145,7 @@ export class PostgresInvitationRepository {
           actorRole!,
         )
       }
-      const id = crypto.randomUUID()
+      const id = uuidV7()
       await tx`
         INSERT INTO group_invitations (
           id, group_id, token_hash, role, email, max_uses, created_by_user_id, expires_at

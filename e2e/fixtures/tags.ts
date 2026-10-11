@@ -1,5 +1,6 @@
 import { type APIRequestContext, expect, type Locator, type Page, test } from "@playwright/test"
 import { gotoApp } from "./app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /** Page objects and API helpers for the tag specs. */
 
@@ -48,7 +49,7 @@ export async function signUp(request: APIRequestContext, email: string): Promise
 
 /** Makes a group for the signed-in page's user and selects it. */
 export async function selectedGroup(page: Page, name: string): Promise<string> {
-  const groupId = crypto.randomUUID()
+  const groupId = uuidV7()
   const group = await page.request.post(`${origin()}/api/groups`, {
     headers: headers(),
     data: { id: groupId, name },

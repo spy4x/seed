@@ -6,6 +6,7 @@ import {
   GroupChangeNotifier,
   groupChangeSchema,
 } from "./group-change-notify.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 const GROUP_ID = "0b1f3c58-7f55-4a5d-8f6e-6a3a5a9d1a01"
 
@@ -63,7 +64,7 @@ describe("GroupChangeNotifier", () => {
     return new GroupChangeNotifier(sql)
   }
   const event = (aggregateType: string, aggregateVersion: string) => ({
-    id: crypto.randomUUID(),
+    id: uuidV7(),
     eventKind: "group.created",
     aggregateType,
     aggregateId: GROUP_ID,

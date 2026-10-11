@@ -7,6 +7,7 @@ import { browserKeys, fakePushService } from "../../apps/api/_testing/web-push.t
 import { generateVapidKeyPair } from "@spy4x/integrations/push"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 interface IdRow extends postgres.Row {
   id: number
@@ -46,7 +47,7 @@ Deno.test({
   async fn(t) {
     const connection = buildPostgresOptions(requireDbConnection())
     const admin = postgres({ ...connection, max: 1 })
-    const schema = `web_push_test_${crypto.randomUUID().replace(/-/g, "")}`
+    const schema = `web_push_test_${uuidV7().replace(/-/g, "")}`
     const open = () =>
       postgres({
         ...connection,

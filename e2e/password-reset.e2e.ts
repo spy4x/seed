@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -39,7 +40,7 @@ async function trySignIn(page: Page, email: string, secret: string): Promise<voi
 
 test("a forgotten password is reset through the mailed link, which works once", async ({ page, request }) => {
   // A fresh address each run: the per-address limit allows three requests an hour.
-  const email = `e2e-reset-${crypto.randomUUID().slice(0, 8)}@example.com`
+  const email = `e2e-reset-${uuidV7().slice(-8)}@example.com`
   await cleanup(request, email)
   try {
     const signUp = await request.post(`${apiBase}/api/auth/password/sign-up`, {
@@ -82,7 +83,7 @@ test("a forgotten password is reset through the mailed link, which works once", 
 test("asking for a link answers the same for an address no account uses", async ({ page }) => {
   await gotoApp(page, "/forgot-password", page.locator("[data-e2e=forgot-password-email]"))
   await page.locator("[data-e2e=forgot-password-email]").fill(
-    `e2e-nobody-${crypto.randomUUID().slice(0, 8)}@example.com`,
+    `e2e-nobody-${uuidV7().slice(-8)}@example.com`,
   )
   await page.locator("[data-e2e=forgot-password-submit]").click()
   await expect(page.locator("[data-e2e=forgot-password-sent]")).toContainText(

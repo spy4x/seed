@@ -1,6 +1,7 @@
 import type { APIRequestContext } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 
@@ -20,7 +21,7 @@ async function mailedLink(request: APIRequestContext, email: string, subject: st
 
 test("a visitor subscribes, confirms through the mailed link and unsubscribes from the welcome", async ({ page, request }) => {
   // A fresh address each run: the per-address limit allows three confirm mails an hour.
-  const email = `e2e-subscribe-${crypto.randomUUID().slice(0, 8)}@example.com`
+  const email = `e2e-subscribe-${uuidV7().slice(-8)}@example.com`
 
   await gotoApp(page, "/subscribe", page.locator("[data-e2e=subscribe-email]"))
   await page.locator("[data-e2e=subscribe-email]").fill(email)

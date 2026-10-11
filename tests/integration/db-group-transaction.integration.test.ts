@@ -4,6 +4,7 @@ import postgres from "postgres"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * Proves docs/handoff.md trap 5 against the real class `apps/api/services/db.ts`'s `DbService`
@@ -50,7 +51,7 @@ Deno.test({
   async fn() {
     const connection = buildPostgresOptions(requireDbConnection())
     const admin = postgres({ ...connection, max: 1 })
-    const schema = `db_group_tx_test_${crypto.randomUUID().replace(/-/g, "")}`
+    const schema = `db_group_tx_test_${uuidV7().replace(/-/g, "")}`
     const sql = postgres({
       ...connection,
       max: 5,
@@ -65,7 +66,7 @@ Deno.test({
       }
 
       const userId = (await sql<IdRow[]>`INSERT INTO users DEFAULT VALUES RETURNING id`)[0].id
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const db = new AppDbBase({ sql })
 
       await expect(

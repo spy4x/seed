@@ -1,6 +1,7 @@
 import { type APIRequestContext, type BrowserContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -24,7 +25,7 @@ async function signUp(request: APIRequestContext, email: string) {
 
 /** A fresh address per run, so a rerun never meets the previous run's account. */
 function address(name: string): string {
-  return `e2e-delete-${name}-${crypto.randomUUID().slice(0, 8)}@example.com`
+  return `e2e-delete-${name}-${uuidV7().slice(-8)}@example.com`
 }
 
 /** Opens the profile's danger zone and its deletion dialog. */
@@ -85,7 +86,7 @@ test("a group other people still use stops the deletion and links to that group"
     await signUp(request, owner)
     await signUp(request, member)
     await signIn(page, owner, password)
-    const groupId = crypto.randomUUID()
+    const groupId = uuidV7()
     const created = await page.request.post(`${apiBase}/api/groups`, {
       headers,
       data: { id: groupId, name: "Shared team" },

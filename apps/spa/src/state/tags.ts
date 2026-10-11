@@ -3,6 +3,7 @@ import { describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { DEFAULT_TAG_COLOR, TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
 import { apiAsUser } from "./realtime-call.ts"
 import { callCommand, currentLayer, offlineTags } from "../modules.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** A tag as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface TagItem {
@@ -277,7 +278,7 @@ function sorted(all: TagItem[]): TagItem[] {
 }
 
 /** The tags as the server serves them: reads over REST, writes through the calls port. */
-const onlineTags: TagsDependencies = {
+export const onlineTags: TagsDependencies = {
   async fetchList(groupId) {
     const result = await apiAsUser<{ tags: TagItem[] }>(`/api/groups/${groupId}/tags`)
     if (!result.ok) throw new Error(result.error.message)
@@ -286,7 +287,7 @@ const onlineTags: TagsDependencies = {
   create: (input) => callCommand("tag.create", input),
   update: (input) => callCommand("tag.update", input),
   delete: (input) => callCommand("tag.delete", input),
-  newId: () => crypto.randomUUID(),
+  newId: () => uuidV7(),
 }
 
 /** The page's own store: with the offline layer running, served from the device and queued offline. */

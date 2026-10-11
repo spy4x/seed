@@ -14,6 +14,7 @@ import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import type { MailBrand } from "../mail/mail.ts"
 import { JOB_AGGREGATE } from "./jobs.ts"
 import { SUBSCRIBER_SEND_ISSUE_JOB } from "./subscriber-mail.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * One issue as `deno task subscribers:send` reads it from JSON. `id` names the issue in the send
@@ -76,7 +77,7 @@ export async function queueSubscriberIssue(
   const [row] = await sql<{ id: string }[]>`
     INSERT INTO subscriber_issue_content (id, list_id, issue_id, subject, html, text)
     VALUES (
-      ${crypto.randomUUID()}, ${list}, ${issue.id}, ${issue.subject}, ${issue.letter.html},
+      ${uuidV7()}, ${list}, ${issue.id}, ${issue.subject}, ${issue.letter.html},
       ${issue.letter.text}
     )
     ON CONFLICT (list_id, issue_id) DO UPDATE

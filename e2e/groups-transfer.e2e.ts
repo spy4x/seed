@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -26,14 +27,14 @@ const settingsReady = (page: Page) => page.locator("[data-e2e=group-general-name
 
 test.describe("group ownership transfer", () => {
   test("the owner hands the group to a member after a wrong password is refused, and stays as an admin", async ({ page, browser, request }) => {
-    const id = crypto.randomUUID().slice(0, 8)
+    const id = uuidV7().slice(-8)
     const owner = `e2e-transfer-owner-${id}@example.com`
     const member = `e2e-transfer-member-${id}@example.com`
     for (const email of [owner, member]) await cleanup(request, email)
     let memberPage: Page | null = null
     try {
       await signUp(request, owner)
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const created = await request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: groupId, name: "Team" },

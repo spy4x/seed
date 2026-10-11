@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -30,7 +31,7 @@ async function signInOnline(page: Page, email: string) {
 
 test.describe("moving all of a group's data", () => {
   test("moves every note to a group the person can edit, offers no group they only read, shows it live to the target's members, then deletes the emptied group", async ({ browser, request }) => {
-    const id = crypto.randomUUID().slice(0, 8)
+    const id = uuidV7().slice(-8)
     const owner = `e2e-move-all-owner-${id}@example.com`
     const watcher = `e2e-move-all-watcher-${id}@example.com`
     const stranger = `e2e-move-all-stranger-${id}@example.com`
@@ -46,7 +47,7 @@ test.describe("moving all of a group's data", () => {
       await signInOnline(ownerPage, owner)
       await signInOnline(strangerPage, stranger)
 
-      const groups = { Source: crypto.randomUUID(), Target: crypto.randomUUID() }
+      const groups = { Source: uuidV7(), Target: uuidV7() }
       for (const [name, groupId] of Object.entries(groups)) {
         const created = await ownerPage.request.post(`${apiBase}/api/groups`, {
           headers,
@@ -55,7 +56,7 @@ test.describe("moving all of a group's data", () => {
         expect(created.status(), await created.text()).toBe(201)
       }
       // A group the owner can only read: it must not be offered.
-      const readOnly = crypto.randomUUID()
+      const readOnly = uuidV7()
       const made = await strangerPage.request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: readOnly, name: "Read only" },
@@ -70,7 +71,7 @@ test.describe("moving all of a group's data", () => {
       for (const title of ["One", "Two", "Three"]) {
         const note = await ownerPage.request.post(
           `${apiBase}/api/groups/${groups.Source}/notes`,
-          { headers, data: { id: crypto.randomUUID(), title, body: "" } },
+          { headers, data: { id: uuidV7(), title, body: "" } },
         )
         expect(note.status(), await note.text()).toBe(201)
       }

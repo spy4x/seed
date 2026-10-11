@@ -1,6 +1,7 @@
 import type postgres from "postgres"
 import { BillingNoticeKind, TRIAL_NOTICE_DAYS } from "@domain/billing"
 import { JOB_AGGREGATE } from "@server/jobs/jobs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The worker's job that mails each billing notice to the group's owner. */
 export const BILLING_NOTICE_JOBS: Readonly<Record<BillingNoticeKind, string>> = {
@@ -32,7 +33,7 @@ export async function scheduleBillingNotice(
     INSERT INTO outbox_events (
       id, event_kind, aggregate_type, aggregate_id, aggregate_version, available_at
     ) VALUES (
-      ${crypto.randomUUID()}, ${BILLING_NOTICE_JOBS[kind]}, ${JOB_AGGREGATE}, ${groupId},
+      ${uuidV7()}, ${BILLING_NOTICE_JOBS[kind]}, ${JOB_AGGREGATE}, ${groupId},
       ${at.getTime()}, ${at}
     )
     ON CONFLICT (aggregate_type, aggregate_id, aggregate_version, event_kind) DO NOTHING

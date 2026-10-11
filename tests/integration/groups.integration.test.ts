@@ -5,6 +5,7 @@ import { GroupError, GroupListPageKey, GroupRole } from "@domain/groups"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 interface IdRow extends postgres.Row {
   id: number
@@ -23,7 +24,7 @@ Deno.test({
   async fn(t) {
     const connection = buildPostgresOptions(requireDbConnection())
     const admin = postgres({ ...connection, max: 1 })
-    const schema = `groups_test_${crypto.randomUUID().replace(/-/g, "")}`
+    const schema = `groups_test_${uuidV7().replace(/-/g, "")}`
     const snapshotSchema = `${schema}_snapshot`
     const sql = postgres({
       ...connection,
@@ -82,6 +83,8 @@ Deno.test({
       await applyMigration(sql, "2026_10_25_0001_api_tokens.sql")
       await applyMigration(sql, "2026_10_26_0001_starter_data.sql")
       await applyMigration(sql, "2026_10_27_0001_tags.sql")
+      await applyMigration(sql, "2026_10_28_0001_api_tokens_purged_audit.sql")
+      await applyMigration(sql, "2026_10_29_0001_idempotency_claim_token_no_default.sql")
 
       await t.step("backfill is rerunnable and covers only active users", async () => {
         await applyMigration(sql, "2026_08_18_0002_personal_group_backfill.sql")
@@ -110,7 +113,7 @@ Deno.test({
         "dropping the personal kind keeps every group, membership and owner, and removes the column",
         async () => {
           // A shared group with a second member and a note, beside the two backfilled personal ones.
-          const shared = crypto.randomUUID()
+          const shared = uuidV7()
           await sql`
             INSERT INTO groups (id, kind, name, owner_user_id, created_by_user_id)
             VALUES (${shared}, 2, 'Kept team', ${activeUserOne}, ${activeUserOne})
@@ -122,7 +125,7 @@ Deno.test({
           `
           await sql`
             INSERT INTO notes (id, group_id, title, change_sequence, created_by_user_id, updated_by_user_id)
-            VALUES (${crypto.randomUUID()}, ${shared}, 'Kept note', 1, ${activeUserOne}, ${activeUserOne})
+            VALUES (${uuidV7()}, ${shared}, 'Kept note', 1, ${activeUserOne}, ${activeUserOne})
           `
           const before = await sql`
             SELECT groups.id, groups.name, groups.owner_user_id, group_members.user_id, group_members.role
@@ -159,7 +162,7 @@ Deno.test({
       await t.step("an audit row outlives its group, with the group id emptied", async () => {
         await applyMigration(sql, "2026_10_08_0001_audit_outlives_group.sql")
         const userId = await insertUser(sql)
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         await sql`
           INSERT INTO groups (id, name, owner_user_id, created_by_user_id)
           VALUES (${groupId}, 'audited', ${userId}, ${userId})
@@ -213,15 +216,15 @@ Deno.test({
       await t.step("an existing user with no group gets one, once", async () => {
         const userId = await insertUser(sql)
         const repository = new PostgresGroupRepository(sql)
-        await repository.ensureFirst({ id: crypto.randomUUID(), name: "Personal" }, userId)
-        await repository.ensureFirst({ id: crypto.randomUUID(), name: "Personal" }, userId)
+        await repository.ensureFirst({ id: uuidV7(), name: "Personal" }, userId)
+        await repository.ensureFirst({ id: uuidV7(), name: "Personal" }, userId)
         // The second call finds the first group and makes no other.
         expect((await repository.listForUser(userId, { limit: 10 })).groups.length).toBe(1)
       })
 
       await t.step("concurrent exact shared create emits audit and outbox once", async () => {
         const repository = new PostgresGroupRepository(sql)
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         const gate = deferred<void>()
         const requests = Array.from({ length: 20 }, async () => {
           await gate.promise
@@ -241,7 +244,7 @@ Deno.test({
         "concurrent changed intent yields one winner without duplicate effects",
         async () => {
           const repository = new PostgresGroupRepository(sql)
-          const groupId = crypto.randomUUID()
+          const groupId = uuidV7()
           const gate = deferred<void>()
           const requests = Array.from({ length: 20 }, async (_, index) => {
             await gate.promise
@@ -267,7 +270,7 @@ Deno.test({
         const repository = new PostgresGroupRepository(sql)
         await sql.begin(async (transaction: postgres.TransactionSql) => {
           for (let index = 0; index < 55; index += 1) {
-            const groupId = crypto.randomUUID()
+            const groupId = uuidV7()
             await transaction`
               INSERT INTO groups (id, name, owner_user_id, created_by_user_id)
               VALUES (${groupId}, ${`Page ${index}`}, ${activeUserOne}, ${activeUserOne})
@@ -298,7 +301,7 @@ Deno.test({
           const owner = await insertUser(sql)
           const ids: string[] = []
           for (const name of ["a", "b", "c"]) {
-            const id = crypto.randomUUID()
+            const id = uuidV7()
             await repository.create({ id, name }, owner)
             ids.push(id)
           }
@@ -336,20 +339,20 @@ Deno.test({
           const repository = new PostgresGroupRepository(sql)
           const owner = await insertUser(sql)
           const stranger = await insertUser(sql)
-          const groupId = crypto.randomUUID()
+          const groupId = uuidV7()
           await repository.create({ id: groupId, name: "Private" }, owner)
 
           const read = await repository.getSummaryForMember(groupId, owner)
           expect(read).toMatchObject({ id: groupId, name: "Private", role: GroupRole.OWNER })
           expect(await repository.getSummaryForMember(groupId, stranger)).toBe(null)
-          expect(await repository.getSummaryForMember(crypto.randomUUID(), owner)).toBe(null)
+          expect(await repository.getSummaryForMember(uuidV7(), owner)).toBe(null)
         },
       )
 
       await t.step("a soft-deleted group is not read, even by its former owner", async () => {
         const repository = new PostgresGroupRepository(sql)
         const owner = await insertUser(sql)
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         await repository.create({ id: groupId, name: "Gone" }, owner)
         expect(await repository.getSummaryForMember(groupId, owner)).not.toBe(null)
 
@@ -360,7 +363,7 @@ Deno.test({
 
       await t.step("a committed create takes the group's first sequence", async () => {
         const repository = new PostgresGroupRepository(sql)
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         const created = await repository.create(
           { id: groupId, name: "Sequenced" },
           activeUserOne,
@@ -374,7 +377,7 @@ Deno.test({
 
       await t.step("a replayed create does not take another sequence", async () => {
         const repository = new PostgresGroupRepository(sql)
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         await repository.create({ id: groupId, name: "Replayed" }, activeUserOne)
         const replay = await repository.create(
           { id: groupId, name: "Replayed" },
@@ -387,7 +390,7 @@ Deno.test({
 
       await t.step("a sign-up that rolls back leaves no outbox row to push", async () => {
         const userId = await insertUser(sql)
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         await expect(sql.begin(async (transaction: postgres.TransactionSql) => {
           await new PostgresGroupRepository(transaction).createFirst(
             { id: groupId, name: "Personal" },
@@ -400,7 +403,7 @@ Deno.test({
 
       await t.step("a first group is stamped when it is created", async () => {
         const userId = await insertUser(sql)
-        const id = crypto.randomUUID()
+        const id = uuidV7()
         await new PostgresGroupRepository(sql).ensureFirst({ id, name: "Personal" }, userId)
         expect(await groupSequences(sql, id)).toEqual({ next: "2", outbox: ["1"] })
       })
@@ -409,7 +412,7 @@ Deno.test({
         "member ids name only active users, and a deleted group has none",
         async () => {
           const repository = new PostgresGroupRepository(sql)
-          const groupId = crypto.randomUUID()
+          const groupId = uuidV7()
           await repository.create({ id: groupId, name: "Members" }, activeUserOne)
           const gone = await insertUser(sql, new Date())
           await sql`
@@ -421,7 +424,7 @@ Deno.test({
             activeUserOne,
             activeUserTwo,
           ])
-          expect(await repository.listMemberUserIds(crypto.randomUUID())).toEqual([])
+          expect(await repository.listMemberUserIds(uuidV7())).toEqual([])
           await sql`UPDATE groups SET deleted_at = NOW() WHERE id = ${groupId}`
           expect(await repository.listMemberUserIds(groupId)).toEqual([])
         },
@@ -429,7 +432,7 @@ Deno.test({
 
       await t.step("shared creation rejects soft-deleted actors", async () => {
         const actor = await insertUser(sql, new Date())
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         await expect(new PostgresGroupRepository(sql).create(
           { id: groupId, name: "Denied" },
           actor,

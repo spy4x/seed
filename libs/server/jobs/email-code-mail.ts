@@ -11,6 +11,7 @@ import {
 } from "../auth/email-verification.ts"
 import { emailCodeMail, type MailBrand } from "../mail/mail.ts"
 import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The job that mails one code that proves an e-mail address. */
 export const EMAIL_CODE_MAIL_JOB = "auth.email-code-mail"
@@ -28,7 +29,7 @@ export async function enqueueEmailCodeMail(
   userId: number,
   email: string,
 ): Promise<void> {
-  const id = crypto.randomUUID()
+  const id = uuidV7()
   await sql`INSERT INTO email_code_requests (id, user_id, email) VALUES (${id}, ${userId}, ${email})`
   await scheduleOutboxEvent(
     sql,

@@ -9,7 +9,7 @@ import {
   type BillingRedirect,
   type GroupBilling,
 } from "@domain/billing"
-import { isUuidV4 } from "@domain/notes"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import type { APIContext } from "../_types.ts"
@@ -94,7 +94,7 @@ function actorOf(c: Context<APIContext>) {
 
 function groupIdOf(c: Context<APIContext>): string {
   const groupId = c.req.param("groupId")
-  if (!isUuidV4(groupId)) throw new BillingFeatureError("INVALID_REQUEST", "Group id is invalid")
+  if (!isUuid(groupId)) throw new BillingFeatureError("INVALID_REQUEST", "Group id is invalid")
   return groupId
 }
 

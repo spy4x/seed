@@ -12,6 +12,7 @@ import { NoteCreateCommand } from "@domain/notes"
 import { UserMFAStatus } from "@domain/identity"
 import { createEntitlementGate, type EntitlementGateDependencies } from "./entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "./entitlement-needs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const actor = (userId: number) => ({ userId, userMfa: UserMFAStatus.NOT_CONFIGURED })
@@ -57,7 +58,7 @@ const createNote = (userId: number) =>
   new NoteCreateCommand({
     actor: actor(userId) as never,
     groupId,
-    id: crypto.randomUUID(),
+    id: uuidV7(),
     title: "A",
     body: "",
   })

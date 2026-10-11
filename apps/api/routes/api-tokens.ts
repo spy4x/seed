@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import type { MiddlewareHandler } from "hono"
 import { ApiTokenError, parseApiTokenCreateRequest } from "@domain/api-tokens"
-import { isUuidV4 } from "@domain/notes"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
@@ -58,7 +58,7 @@ export function createApiTokensRoute(dependencies: ApiTokensRouteDependencies): 
     })
     .delete(`/:id`, async (c) => {
       const id = c.req.param("id")
-      const revoked = isUuidV4(id) &&
+      const revoked = isUuid(id) &&
         await dependencies.tokens.revoke(c, c.get("auth")!.user.id, id)
       if (!revoked) throw new ApiTokenError("TOKEN_NOT_FOUND", "Token not found")
       return c.json({ success: true })

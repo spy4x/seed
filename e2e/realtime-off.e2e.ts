@@ -6,6 +6,7 @@ import {
 } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, submitAuthForm } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /**
  * The core flows on a page whose `/config.json` says `realtime: false` (ADR 003, "the proof of the
@@ -172,7 +173,7 @@ test.describe("the app with the WebSocket module switched off", () => {
         expect(response.ok(), await response.text()).toBe(true)
       }
       await signInBrowser(first.page, owner)
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const created = await first.page.request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: groupId, name: "Polling team" },

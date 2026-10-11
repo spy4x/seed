@@ -1,4 +1,5 @@
 import { type APIRequestContext, expect, test } from "@playwright/test"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /** The path and query of the first link in the newest mail to `email` whose subject starts so. */
 async function mailedLink(request: APIRequestContext, email: string, subject: string) {
@@ -19,7 +20,7 @@ test.use({ javaScriptEnabled: false })
 
 test("a visitor without JavaScript subscribes, confirms and unsubscribes through the mailed links", async ({ page, request }) => {
   // A fresh address each run: the per-address limit allows three confirm mails an hour.
-  const email = `mpa-subscribe-${crypto.randomUUID().slice(0, 8)}@example.com`
+  const email = `mpa-subscribe-${uuidV7().slice(-8)}@example.com`
 
   await page.goto("/subscribe")
   await page.locator("[data-e2e=subscribe-email]").fill(email)

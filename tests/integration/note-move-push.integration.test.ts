@@ -12,6 +12,7 @@ import { Realtime } from "../../apps/api/services/realtime.ts"
 import { type GroupNewsTarget, listenForGroupNews } from "../../apps/api/services/group-news.ts"
 import { buildAuthData } from "../../apps/api/_testing/fake-auth.ts"
 import { insertUser, withSchema } from "./group-team.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 const SETTLE_MS = 5_000
 
@@ -53,17 +54,17 @@ Deno.test("members of both groups hear that a note moved", async () => {
     const inSource = await insertUser(sql)
     const inTarget = await insertUser(sql)
     const stranger = await insertUser(sql)
-    const source = crypto.randomUUID()
-    const target = crypto.randomUUID()
+    const source = uuidV7()
+    const target = uuidV7()
     await groups.create({ id: source, name: "Source" }, editor)
     await groups.create({ id: target, name: "Target" }, editor)
-    await groups.create({ id: crypto.randomUUID(), name: "Not shared" }, stranger)
+    await groups.create({ id: uuidV7(), name: "Not shared" }, stranger)
     await sql`
       INSERT INTO group_members (group_id, user_id, role, added_by_user_id) VALUES
         (${source}, ${inSource}, ${GroupRole.VIEWER}, ${editor}),
         (${target}, ${inTarget}, ${GroupRole.VIEWER}, ${editor})
     `
-    const noteId = crypto.randomUUID()
+    const noteId = uuidV7()
     await notes.create({ groupId: source, id: noteId, title: "Plan", body: "" }, editor, null)
     // What was written so far was announced before anyone listened.
     await processor.drainOnce()

@@ -41,6 +41,7 @@ import {
   createNoteUpdateHandler,
 } from "./handlers.ts"
 import { createNoteOperations } from "./operations.ts"
+import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * Every transport over one pair of buses, as the API wires them. The socket and the call route
@@ -126,7 +127,7 @@ async function seedNote(notes: MemoryNoteRepository) {
 /** Fills the group up to the free plan's cap of 10 notes. */
 async function fillFreePlan(notes: MemoryNoteRepository) {
   for (let i = 0; i < 10; i++) {
-    await notes.create({ groupId, id: crypto.randomUUID(), title: `Note ${i}`, body: "" }, 1, null)
+    await notes.create({ groupId, id: uuidV7(), title: `Note ${i}`, body: "" }, 1, null)
   }
   notes.writes = 0
 }
@@ -244,7 +245,7 @@ for (const [via, open] of TRANSPORTS) {
       const answers = [
         await as.command("note.create", {
           groupId,
-          id: crypto.randomUUID(),
+          id: uuidV7(),
           title: "Mine",
           body: "",
         }),
@@ -273,6 +274,29 @@ for (const [via, open] of TRANSPORTS) {
       expect(answer).toMatchObject({
         kind: "server.result",
         payload: { note: { title: "Plan v2" } },
+      })
+      as.shutdown()
+    })
+
+    it("reads and changes a note whose id and group id are UUID version 4, made before ids became version 7", async () => {
+      expect([isUuid(groupId, 4), isUuid(noteId, 4)]).toEqual([true, true])
+      const { notes, buses } = stack()
+      await seedNote(notes)
+      const as = open(buses, OWNER)
+
+      const read = await as.query("note.get", { groupId, id: noteId })
+      const updated = await as.command("note.update", {
+        groupId,
+        id: noteId,
+        title: "Still mine",
+        body: "",
+        version: 2,
+      })
+
+      expect(read).toMatchObject({ kind: "server.result", payload: { note: { id: noteId } } })
+      expect(updated).toMatchObject({
+        kind: "server.result",
+        payload: { note: { id: noteId, title: "Still mine", version: 3 } },
       })
       as.shutdown()
     })
@@ -348,7 +372,7 @@ for (const [via, open] of TRANSPORTS) {
 
       const answer = await as.command("note.create", {
         groupId,
-        id: crypto.randomUUID(),
+        id: uuidV7(),
         title: "Eleventh",
         body: "",
       })
@@ -374,7 +398,7 @@ for (const [via, open] of TRANSPORTS) {
 
       const answer = await as.command("note.create", {
         groupId,
-        id: crypto.randomUUID(),
+        id: uuidV7(),
         title: "Eleventh",
         body: "",
       })
@@ -423,7 +447,7 @@ for (const [via, open] of TRANSPORTS) {
       async function fillTarget(notes: MemoryNoteRepository, count: number) {
         for (let i = 0; i < count; i++) {
           await notes.create(
-            { groupId: editableGroupId, id: crypto.randomUUID(), title: `T${i}`, body: "" },
+            { groupId: editableGroupId, id: uuidV7(), title: `T${i}`, body: "" },
             OWNER,
             null,
           )
@@ -561,7 +585,7 @@ for (const [via, open] of TRANSPORTS) {
         const answer = await as.command("note.move", {
           groupId,
           toGroupId: editableGroupId,
-          noteIds: [noteId, crypto.randomUUID()],
+          noteIds: [noteId, uuidV7()],
         })
 
         expect(answer).toMatchObject({ kind: "server.error", code: "not_found" })
@@ -664,7 +688,7 @@ for (const [via, open] of TRANSPORTS) {
         const { notes, buses } = stack()
         await seedNote(notes)
         // OWNER is in `groupId` only through the roles above; this note is in a group nobody is in.
-        const foreignId = crypto.randomUUID()
+        const foreignId = uuidV7()
         await notes.create(
           { groupId: strangerGroupId, id: foreignId, title: "Secret", body: "" },
           OWNER,
@@ -673,7 +697,7 @@ for (const [via, open] of TRANSPORTS) {
         const as = open(buses, OWNER)
 
         const foreign = await as.query("note.locate", { id: foreignId })
-        const missing = await as.query("note.locate", { id: crypto.randomUUID() })
+        const missing = await as.query("note.locate", { id: uuidV7() })
 
         expect(foreign).toMatchObject({
           kind: "server.error",

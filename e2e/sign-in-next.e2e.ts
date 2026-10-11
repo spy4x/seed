@@ -2,6 +2,7 @@ import type { APIRequestContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp } from "./fixtures/app.ts"
 import { currentStep, enrolTotp, totpCode } from "./fixtures/totp.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -22,7 +23,7 @@ async function accountWithNote(api: APIRequestContext, email: string): Promise<s
   })
   expect(signUp.ok(), await signUp.text()).toBe(true)
   const { groupId } = await (await api.get(`${apiBase}/api/groups/selected`)).json()
-  const noteId = crypto.randomUUID()
+  const noteId = uuidV7()
   const note = await api.post(`${apiBase}/api/groups/${groupId}/notes`, {
     headers,
     data: { id: noteId, title: "Shared link", body: "" },
@@ -52,7 +53,7 @@ async function submitTo(page: Page, path: string, ready: string): Promise<void> 
 
 test.describe("returning to the requested page after sign-in", () => {
   test("a signed-out person who opens a note signs in and lands on that note", async ({ page, request }) => {
-    const email = `e2e-next-${crypto.randomUUID().slice(0, 8)}@example.com`
+    const email = `e2e-next-${uuidV7().slice(-8)}@example.com`
     await cleanup(request, email)
     try {
       const noteId = await accountWithNote(request, email)
@@ -66,7 +67,7 @@ test.describe("returning to the requested page after sign-in", () => {
   })
 
   test("a signed-out person with a one-time code lands on the note after the code", async ({ page, request }) => {
-    const email = `e2e-next-2fa-${crypto.randomUUID().slice(0, 8)}@example.com`
+    const email = `e2e-next-2fa-${uuidV7().slice(-8)}@example.com`
     await cleanup(request, email)
     try {
       const noteId = await accountWithNote(request, email)
@@ -85,7 +86,7 @@ test.describe("returning to the requested page after sign-in", () => {
   })
 
   test("a link that names another site lands on the notes after sign-in", async ({ page, request }) => {
-    const email = `e2e-next-evil-${crypto.randomUUID().slice(0, 8)}@example.com`
+    const email = `e2e-next-evil-${uuidV7().slice(-8)}@example.com`
     await cleanup(request, email)
     try {
       await accountWithNote(request, email)

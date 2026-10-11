@@ -1,8 +1,8 @@
 import { Hono } from "hono"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 import type { Context, MiddlewareHandler } from "hono"
 import {
   type DeletedNote,
-  isUuidV4,
   type Note,
   NoteCreateCommand,
   noteCreateRequestSchema,
@@ -177,13 +177,13 @@ function actorOf(c: Context<APIContext>) {
 
 function groupIdOf(c: Context<APIContext>): string {
   const groupId = c.req.param("groupId")
-  if (!isUuidV4(groupId)) throw new NoteFeatureError("INVALID_REQUEST", "Group id is invalid")
+  if (!isUuid(groupId)) throw new NoteFeatureError("INVALID_REQUEST", "Group id is invalid")
   return groupId
 }
 
 function noteIdOf(c: Context<APIContext>): string {
   const noteId = c.req.param("noteId")
-  if (!isUuidV4(noteId)) throw new NoteFeatureError("INVALID_REQUEST", "Note id is invalid")
+  if (!isUuid(noteId)) throw new NoteFeatureError("INVALID_REQUEST", "Note id is invalid")
   return noteId
 }
 

@@ -8,6 +8,7 @@ import {
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * What the group integration tests share: a schema of their own built from schema.sql, users, a
@@ -21,7 +22,7 @@ export interface IdRow extends postgres.Row {
 export async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const connection = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...connection, max: 1, onnotice: () => {} })
-  const schema = `lifecycle_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `lifecycle_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...connection,
     max: 10,
@@ -55,8 +56,8 @@ export async function insertUser(sql: postgres.Sql): Promise<number> {
 export async function team(sql: postgres.Sql) {
   const repository = new PostgresGroupRepository(sql)
   const owner = await insertUser(sql)
-  await repository.ensureFirst({ id: crypto.randomUUID(), name: "Home" }, owner)
-  const created = await repository.create({ id: crypto.randomUUID(), name: "Team" }, owner)
+  await repository.ensureFirst({ id: uuidV7(), name: "Home" }, owner)
+  const created = await repository.create({ id: uuidV7(), name: "Team" }, owner)
   const groupId = created.group.id
   const admin = await insertUser(sql)
   const editor = await insertUser(sql)
@@ -64,7 +65,7 @@ export async function team(sql: postgres.Sql) {
   const onlyHere = await insertUser(sql)
   const stranger = await insertUser(sql)
   for (const user of [admin, editor, viewer, stranger]) {
-    await repository.ensureFirst({ id: crypto.randomUUID(), name: "Own" }, user)
+    await repository.ensureFirst({ id: uuidV7(), name: "Own" }, user)
   }
   await sql`
     INSERT INTO group_members (group_id, user_id, role, added_by_user_id) VALUES

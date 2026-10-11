@@ -498,6 +498,17 @@ describe("ProfileScreen", () => {
     expect(focused()).toBe("BODY")
   })
 
+  it("labels two devices added in the same minute differently", async () => {
+    // Version 7 ids made close together start with the same time, so the label is their end.
+    const first = { ...device, id: 1, deviceId: "0199d1c2-5a10-7b3c-8f21-6d0e4a9b1c35" }
+    const second = { ...device, id: 2, deviceId: "0199d1c2-5a11-7e4d-9a32-0c7f5b8e2d46" }
+    await mount(<ProfileScreen {...profileDefaults} pushDevices={[first, second]} />)
+
+    const text = (id: string) => find(`[data-e2e=push-device-${id}]`).textContent
+    expect(text(first.deviceId)).toContain("Device 4a9b1c35")
+    expect(text(second.deviceId)).toContain("Device 5b8e2d46")
+  })
+
   it("offers Add this device in an empty list, and removes a device with its id", async () => {
     const remove = spy<[string]>()
     await mount(<ProfileScreen {...profileDefaults} onRemovePush={remove.fn} />)

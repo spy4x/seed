@@ -42,6 +42,7 @@ import { apiTokensHttp, createApiTokensStore } from "../state/api-tokens.ts"
 import { createDevicesStore } from "../state/devices.ts"
 import { localReads } from "../modules.ts"
 import { groupsStore } from "../state/groups.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 const NO_DELETE_VALUES: AccountDeleteValues = { password: "", otp: "" }
 const NO_DELETE_ERRORS: AccountDeleteErrors = { form: null }
@@ -224,7 +225,7 @@ export function ProfileView() {
         applicationServerKey: decodeBase64Url(pushPublicKey),
       })
       const result = await profileStore.registerPush(
-        crypto.randomUUID(),
+        uuidV7(),
         subscriptionToPayload(subscription),
       )
       if (!result.ok) setPushError(result.error || PROFILE_FAILURES.push)

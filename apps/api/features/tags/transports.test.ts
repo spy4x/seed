@@ -57,6 +57,7 @@ import {
   createTagUpdateHandler,
 } from "./handlers.ts"
 import { createTagOperations } from "./operations.ts"
+import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * Tags over every transport, as the API wires them: one pair of buses, the gates and the real
@@ -252,7 +253,7 @@ for (const [via, open] of TRANSPORTS) {
       await s.tags.create({ groupId, id: tagId, name: "Home", color: "blue" }, OWNER)
       await s.tags.create({
         groupId: otherGroupId,
-        id: crypto.randomUUID(),
+        id: uuidV7(),
         name: "Other",
         color: "gray",
       }, OWNER)
@@ -306,6 +307,21 @@ for (const [via, open] of TRANSPORTS) {
         payload: { tag: { id: tagId, version: 2 } },
       })
       expect(s.tags.tags.size).toBe(0)
+      as.shutdown()
+    })
+
+    it("renames a tag whose id and group id are UUID version 4, made before ids became version 7", async () => {
+      expect([isUuid(groupId, 4), isUuid(tagId, 4)]).toEqual([true, true])
+      const s = stack()
+      await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+      const as = open(s, OWNER)
+
+      const updated = await as.command("tag.update", { ...create, name: "Job", version: 1 })
+
+      expect(updated).toMatchObject({
+        kind: "server.result",
+        payload: { tag: { id: tagId, name: "Job", version: 2 } },
+      })
       as.shutdown()
     })
 
@@ -485,6 +501,17 @@ describe("tags over the REST list", () => {
 
     expect(response.status).toBe(200)
     expect((await response.json()).tags).toMatchObject([{ id: tagId, name: "Work" }])
+  })
+
+  it("lists the tags of a group whose id is a UUID version 4", async () => {
+    expect(isUuid(groupId, 4)).toBe(true)
+    const s = stack()
+    await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+
+    const response = await rest(s, OWNER)(groupId)
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).tags).toMatchObject([{ id: tagId }])
   })
 
   it("answers a stranger as an unknown group, with no tag", async () => {

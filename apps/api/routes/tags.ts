@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import type { Context, MiddlewareHandler } from "hono"
-import { isUuidV4 } from "@domain/notes"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 import { type Tag, TagListQuery } from "@domain/tags"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import type { APIContext } from "../_types.ts"
@@ -38,6 +38,6 @@ const requireAuthentication: MiddlewareHandler<APIContext> = async (c, next) => 
 
 function groupIdOf(c: Context<APIContext>): string {
   const groupId = c.req.param("groupId")
-  if (!isUuidV4(groupId)) throw new TagFeatureError("INVALID_REQUEST", "Group id is invalid")
+  if (!isUuid(groupId)) throw new TagFeatureError("INVALID_REQUEST", "Group id is invalid")
   return groupId
 }

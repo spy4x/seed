@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Browser, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -46,7 +47,7 @@ test.describe("group details", () => {
       await signIn(page, owner, password)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const created = await page.request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: groupId, name: "Flat" },
@@ -111,7 +112,7 @@ test.describe("group details", () => {
 
       // The same edit, made through the API by a viewer, is refused.
       const refused = await memberPage.request.put(`${apiBase}/api/groups/${groupId}/details`, {
-        headers: { ...headers, "idempotency-key": crypto.randomUUID() },
+        headers: { ...headers, "idempotency-key": uuidV7() },
         data: { description: "Mine", color: "red", emoji: null },
       })
       expect(refused.status()).toBe(403)

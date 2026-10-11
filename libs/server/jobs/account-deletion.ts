@@ -8,6 +8,7 @@ import {
 } from "../auth/account-deletion.ts"
 import { accountDeletionMail, accountRestoredMail, type MailBrand } from "../mail/mail.ts"
 import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The job that deletes one account for good once its wait is over. */
 export const ACCOUNT_HARD_DELETE_JOB = "account.hard-delete"
@@ -107,7 +108,7 @@ export function accountDeletionMailJob(deps: AccountDeletionMailDeps): JobHandle
  * at this row rather than at the user.
  */
 export async function scheduleAccountRestoredMail(tx: postgres.Sql, userId: number): Promise<void> {
-  const id = crypto.randomUUID()
+  const id = uuidV7()
   await tx`INSERT INTO account_restorations (id, user_id) VALUES (${id}, ${userId})`
   await scheduleOutboxEvent(
     tx,

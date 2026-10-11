@@ -2,6 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { BILLING_WEBHOOK_PATH, proWebhook } from "./fixtures/billing.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -27,7 +28,7 @@ const settingsReady = (page: Page) => page.locator("[data-e2e=group-general-name
 
 test.describe("group invitations", () => {
   test("an admin creates a link that a signed-out person follows, signs in and accepts with its role", async ({ page, browser, request }) => {
-    const id = crypto.randomUUID().slice(0, 8)
+    const id = uuidV7().slice(-8)
     const owner = `e2e-invite-owner-${id}@example.com`
     const admin = `e2e-invite-admin-${id}@example.com`
     const invitee = `e2e-invite-guest-${id}@example.com`
@@ -36,7 +37,7 @@ test.describe("group invitations", () => {
     try {
       // The owner makes the group through the API; the admin is the one who invites.
       await signUp(request, owner)
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const created = await request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: groupId, name: "Team" },

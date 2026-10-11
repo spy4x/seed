@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /** The sync line while changes wait or the device is offline; absent once everything is sent. */
 const WAITING = "[data-e2e=offline-status] [data-sync-state]:not([data-sync-state=synced])"
@@ -50,7 +51,7 @@ test.describe("restoring deleted notes", () => {
       for (const email of [owner, member]) await signUp(request, email)
       const ownerPage = await ownerContext.newPage()
       await signInOnline(ownerPage, owner)
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const created = await ownerPage.request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: groupId, name: "Restore team" },
@@ -60,7 +61,7 @@ test.describe("restoring deleted notes", () => {
         data: { login: member, groupId, role: VIEWER },
       })
       expect(added.status(), await added.text()).toBe(200)
-      const noteId = crypto.randomUUID()
+      const noteId = uuidV7()
       const note = await ownerPage.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
         headers,
         data: { id: noteId, title: "Trip", body: "passport" },

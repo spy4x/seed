@@ -1,6 +1,7 @@
 import { type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -89,7 +90,7 @@ test.describe("realtime when the app returns", () => {
       await dropSockets()
       const behindItsBack = await page.request.post(`${apiBase}/api/groups`, {
         headers,
-        data: { id: crypto.randomUUID(), name: "Made while away" },
+        data: { id: uuidV7(), name: "Made while away" },
       })
       expect(behindItsBack.status()).toBe(201)
       await page.waitForTimeout(12_000)

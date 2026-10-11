@@ -6,6 +6,7 @@ import { NoteError } from "@domain/notes"
 import { lockActorRole, recordAccessChange } from "@server/groups/group-change-log.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { team, withSchema } from "./group-team.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * A write that passed the handler's role check, racing the owner who removes or demotes the
@@ -70,7 +71,7 @@ for (const change of ["removal", "demotion"] as const) {
       await withSchema(async (sql) => {
         const { groupId, owner, editor } = await team(sql)
         const notes = new PostgresNoteRepository(sql)
-        const id = crypto.randomUUID()
+        const id = uuidV7()
         if (write !== "create") {
           await notes.create({ groupId, id, title: "First", body: "" }, editor, null)
         }

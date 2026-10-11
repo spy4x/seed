@@ -4,6 +4,7 @@ import postgres from "postgres"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * The selected group against a real Postgres built from schema.sql. Needs `DB_HOST`, `DB_USER`,
@@ -17,7 +18,7 @@ interface IdRow extends postgres.Row {
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const connection = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...connection, max: 1, onnotice: () => {} })
-  const schema = `selection_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `selection_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...connection,
     max: 10,
@@ -48,12 +49,12 @@ async function insertUser(sql: postgres.Sql): Promise<number> {
 async function personWithTwoGroups(sql: postgres.Sql) {
   const repository = new PostgresGroupRepository(sql)
   const userId = await insertUser(sql)
-  const personal = crypto.randomUUID()
+  const personal = uuidV7()
   await repository.ensureFirst({ id: personal, name: "Me" }, userId)
   // The two groups are made within one millisecond, so say which is older: the fallback is the
   // oldest group, and two equal creation times would leave the choice to the ids.
   await sql`UPDATE groups SET created_at = created_at - interval '1 hour' WHERE id = ${personal}`
-  const shared = await repository.create({ id: crypto.randomUUID(), name: "Team" }, userId)
+  const shared = await repository.create({ id: uuidV7(), name: "Team" }, userId)
   return { repository, userId, personal, shared: shared.group.id }
 }
 
@@ -102,7 +103,7 @@ Deno.test("the selected group is stored per user and checked against membership"
       await repository.getSelected(userId)
 
       expect(await repository.select(userId, stranger.shared)).toBeNull()
-      expect(await repository.select(userId, crypto.randomUUID())).toBeNull()
+      expect(await repository.select(userId, uuidV7())).toBeNull()
       expect(await repository.getSelected(userId)).toEqual({ groupId: personal, version: 0 })
     })
 
@@ -124,7 +125,7 @@ Deno.test("the selected group is stored per user and checked against membership"
         const { repository, userId, personal } = await personWithTwoGroups(sql)
         const other = await insertUser(sql)
         const sharedByOther = await repository.create(
-          { id: crypto.randomUUID(), name: "Theirs" },
+          { id: uuidV7(), name: "Theirs" },
           other,
         )
         await sql`

@@ -27,6 +27,8 @@ import {
 } from "../../libs/server/jobs/account-deletion.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * Deleting one's own account (#144) against a real Postgres: the request, the refusal while a group
@@ -60,7 +62,7 @@ function totpCode(timestamp: number): string {
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
-  const schema = `account_deletion_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `account_deletion_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...settings,
     max: 10,
@@ -177,6 +179,7 @@ async function requestDeletion(
   const [row] = await sql<{ id: string }[]>`
     SELECT id FROM account_deletions WHERE user_id = ${user.id}
   `
+  expectVersion7Ids([row])
   return { id: row.id, deleteAfter: body.deleteAfter! }
 }
 
@@ -248,7 +251,7 @@ Deno.test("deleting one's own account", async (t) => {
         const ann = await signUp(app, "ann")
         const bob = await signUp(app, "bob")
         // Ann works in Bob's group: a note, an audit row, a member she added, an invitation.
-        const shared = crypto.randomUUID()
+        const shared = uuidV7()
         await app.db.group.create({ id: shared, name: "Bob's team" }, bob.id)
         const carl = await signUp(app, "carl")
         await sql`
@@ -256,18 +259,18 @@ Deno.test("deleting one's own account", async (t) => {
           VALUES (${shared}, ${ann.id}, 3, ${bob.id}), (${shared}, ${carl.id}, 1, ${ann.id})
         `
         const note = await app.db.note.create(
-          { groupId: shared, id: crypto.randomUUID(), title: "Ann's note", body: "" },
+          { groupId: shared, id: uuidV7(), title: "Ann's note", body: "" },
           ann.id,
           null,
         )
         await sql`
           INSERT INTO group_invitations (id, group_id, token_hash, role, created_by_user_id,
             expires_at)
-          VALUES (${crypto.randomUUID()}, ${shared}, ${"a".repeat(64)}, 1, ${ann.id},
+          VALUES (${uuidV7()}, ${shared}, ${"a".repeat(64)}, 1, ${ann.id},
             now() + INTERVAL '1 day')
         `
         // And she has her own: a second group, a push device and settings.
-        await app.db.group.create({ id: crypto.randomUUID(), name: "Ann's own" }, ann.id)
+        await app.db.group.create({ id: uuidV7(), name: "Ann's own" }, ann.id)
         await sql`
           INSERT INTO user_push_tokens (user_id, device_id, endpoint, auth, p256dh)
           VALUES (${ann.id}, 'device', 'https://push.example.com/1', 'auth', 'key')
@@ -463,7 +466,7 @@ Deno.test("deleting one's own account", async (t) => {
       async () => {
         const hal = await signUp(app, "hal")
         const ivy = await signUp(app, "ivy")
-        const groupId = crypto.randomUUID()
+        const groupId = uuidV7()
         await app.db.group.create({ id: groupId, name: "Hal's club" }, hal.id)
         await sql`
           INSERT INTO group_members (group_id, user_id, role, added_by_user_id)
@@ -488,7 +491,7 @@ Deno.test("deleting one's own account", async (t) => {
     await t.step("a member who is waiting to be deleted stops the owner too", async () => {
       const jay = await signUp(app, "jay")
       const kim = await signUp(app, "kim")
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       await app.db.group.create({ id: groupId, name: "Jay's club" }, jay.id)
       await sql`
         INSERT INTO group_members (group_id, user_id, role, added_by_user_id)
@@ -587,9 +590,9 @@ Deno.test("deleting one's own account", async (t) => {
       async () => {
         const ned = await signUp(app, "ned")
         const oli = await signUp(app, "oli")
-        const nedsGroup = crypto.randomUUID()
+        const nedsGroup = uuidV7()
         await app.db.group.create({ id: nedsGroup, name: "Ned's club" }, ned.id)
-        const olisGroup = crypto.randomUUID()
+        const olisGroup = uuidV7()
         await app.db.group.create({ id: olisGroup, name: "Oli's club" }, oli.id)
         await sql`
           INSERT INTO group_members (group_id, user_id, role, added_by_user_id)
@@ -598,9 +601,9 @@ Deno.test("deleting one's own account", async (t) => {
         // One into Ned's group made by someone who left it, one Ned made into Oli's group, and
         // Oli's own, which stays.
         const [intoHis, byHim, untouched] = [
-          crypto.randomUUID(),
-          crypto.randomUUID(),
-          crypto.randomUUID(),
+          uuidV7(),
+          uuidV7(),
+          uuidV7(),
         ]
         await sql`
           INSERT INTO group_invitations (id, group_id, token_hash, role, created_by_user_id,
@@ -687,6 +690,7 @@ Deno.test("deleting one's own account", async (t) => {
       expect((await signIn(app, "sam")).status).toBe(200)
       const [raeRestore] = await restoresOf(rae.id)
       const [samRestore] = await restoresOf(sam.id)
+      expectVersion7Ids([raeRestore, samRestore])
       const [queued] = await sql<{ count: number }[]>`
         SELECT count(*)::int AS count FROM outbox_events
         WHERE event_kind = ${ACCOUNT_RESTORED_MAIL_JOB}

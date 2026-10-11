@@ -14,12 +14,14 @@ import type { OutboxEvent } from "@spy4x/server/outbox"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 /** Runs `body` on a fresh schema built from schema.sql. */
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const connection = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...connection, max: 1 })
-  const schema = `starter_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `starter_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...connection,
     max: 5,
@@ -45,7 +47,7 @@ async function signedUpPerson(sql: postgres.Sql, groupName = "Personal") {
     u AS (INSERT INTO users (id) SELECT id FROM auth_user RETURNING id)
     SELECT id AS user_id FROM u
   `
-  const groupId = crypto.randomUUID()
+  const groupId = uuidV7()
   await sql.begin((tx) =>
     new PostgresGroupRepository(tx).createFirst({ id: groupId, name: groupName }, row.userId)
   )
@@ -74,6 +76,7 @@ Deno.test("a new account gets one welcome note from the worker, however often th
       "the sign-up's transaction writes no note, only the request and the job",
       async () => {
         expect(await notesOf(sql, groupId)).toEqual([])
+        expectVersion7Ids([request])
         const [job] = await sql<{ eventKind: string }[]>`SELECT event_kind FROM outbox_events
         WHERE aggregate_type = ${JOB_AGGREGATE} AND aggregate_id = ${request.id}`
         expect(job.eventKind).toBe("onboarding.starter-data")
@@ -120,7 +123,7 @@ Deno.test("the welcome note goes in the person's first group, and a request with
   await withSchema(async (sql) => {
     await t.step("with two groups, the older one gets it", async () => {
       const first = await signedUpPerson(sql, "Personal")
-      const second = crypto.randomUUID()
+      const second = uuidV7()
       await new PostgresGroupRepository(sql).create({ id: second, name: "Team" }, first.userId)
       await sql.begin((tx) => scheduleStarterData(tx, first.userId))
       await createOutboxProcessor(sql, mailOff(sql)).drainOnce()
@@ -203,7 +206,7 @@ Deno.test("the welcome note respects the group's plan cap", async (t) => {
         await sql`
           INSERT INTO notes (id, group_id, title, body, change_sequence, created_by_user_id,
             updated_by_user_id)
-          VALUES (${crypto.randomUUID()}, ${groupId}, ${`Note ${index}`}, '', 1, ${userId}, ${userId})`
+          VALUES (${uuidV7()}, ${groupId}, ${`Note ${index}`}, '', 1, ${userId}, ${userId})`
       }
     }
 

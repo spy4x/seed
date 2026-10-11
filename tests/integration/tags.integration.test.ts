@@ -33,6 +33,8 @@ import {
 } from "../../apps/api/features/tags/handlers.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * Tags and the notes that carry them against a real Postgres built from the migrations, through
@@ -45,7 +47,7 @@ const MIGRATIONS_DIR = "libs/server/db/migrations"
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
-  const schema = `tags_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `tags_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...settings,
     max: 10,
@@ -140,8 +142,8 @@ Deno.test("tags against Postgres", async (t) => {
     async function seed() {
       const owner = await insertUser(sql)
       const viewer = await insertUser(sql)
-      const groupId = crypto.randomUUID()
-      const otherGroupId = crypto.randomUUID()
+      const groupId = uuidV7()
+      const otherGroupId = uuidV7()
       await groups.create({ id: groupId, name: "Team" }, owner)
       await groups.create({ id: otherGroupId, name: "Elsewhere" }, owner)
       await sql`
@@ -151,7 +153,7 @@ Deno.test("tags against Postgres", async (t) => {
       return { owner, viewer, groupId, otherGroupId }
     }
 
-    const createTag = (userId: number, groupId: string, name: string, id = crypto.randomUUID()) =>
+    const createTag = (userId: number, groupId: string, name: string, id = uuidV7()) =>
       commands.execute(
         new TagCreateCommand({ actor: actor(userId), groupId, id, name, color: "blue" }),
       )
@@ -160,7 +162,7 @@ Deno.test("tags against Postgres", async (t) => {
       userId: number,
       groupId: string,
       tagIds: string[] | undefined,
-      id = crypto.randomUUID(),
+      id = uuidV7(),
     ) =>
       commands.execute(
         new NoteCreateCommand({
@@ -251,7 +253,7 @@ Deno.test("tags against Postgres", async (t) => {
       async () => {
         const { owner, groupId } = await seed()
         const stranger = await insertUser(sql)
-        const strangerGroupId = crypto.randomUUID()
+        const strangerGroupId = uuidV7()
         await groups.create({ id: strangerGroupId, name: "Theirs" }, stranger)
         const { tag } = await createTag(owner, groupId, "Work")
 
@@ -291,7 +293,7 @@ Deno.test("tags against Postgres", async (t) => {
         const repository = new PostgresTagRepository(sql)
 
         const create = await refusal(repository.create(
-          { groupId, id: crypto.randomUUID(), name: "New", color: "blue" },
+          { groupId, id: uuidV7(), name: "New", color: "blue" },
           viewer,
         ))
         const update = await refusal(repository.update(
@@ -316,7 +318,7 @@ Deno.test("tags against Postgres", async (t) => {
         const { owner, groupId, otherGroupId } = await seed()
         const { tag } = await createTag(owner, groupId, "Work")
         const { tag: foreign } = await createTag(owner, otherGroupId, "Elsewhere")
-        const unknown = crypto.randomUUID()
+        const unknown = uuidV7()
 
         const created = await createNote(owner, groupId, [unknown, tag.id, foreign.id])
         const updated = await commands.execute(
@@ -404,6 +406,7 @@ Deno.test("tags against Postgres", async (t) => {
         const home2 = targetTags.tags.find((tag) => tag.name === "Home")!
         expect(targetTags.tags.map((tag) => tag.name)).toEqual(["Home", "work"])
         expect(home2.id).not.toBe(home.id)
+        expectVersion7Ids([home2])
         expect(home2.color).toBe("blue")
         expect([...notes[0].tagIds].sort()).toEqual([existing.id, home2.id].sort())
         const sourceTags = await queries.execute(new TagListQuery({ actor: actor(owner), groupId }))

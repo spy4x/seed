@@ -2,6 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { BILLING_WEBHOOK_PATH, proWebhook } from "./fixtures/billing.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -35,7 +36,7 @@ async function upgrade(request: APIRequestContext, groupId: string): Promise<voi
 async function addNote(page: Page, groupId: string, title: string): Promise<number> {
   const response = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
     headers,
-    data: { id: crypto.randomUUID(), title, body: "" },
+    data: { id: uuidV7(), title, body: "" },
   })
   return response.status()
 }
@@ -92,7 +93,7 @@ test.describe("plan limits", () => {
       await signUp(request, member)
       await signIn(page, owner, password)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       const created = await page.request.post(`${apiBase}/api/groups`, {
         headers,
         data: { id: groupId, name: "Team" },

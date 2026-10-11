@@ -1,6 +1,7 @@
 import { type APIRequestContext, type BrowserContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /** The sync line while changes wait or the device is offline; absent once everything is sent. */
 const WAITING = "[data-e2e=offline-status] [data-sync-state]:not([data-sync-state=synced])"
@@ -30,8 +31,8 @@ async function signInOnline(page: Page, email: string): Promise<void> {
 
 /** The user's own group with one note in it. */
 async function groupWithNote(page: Page, name: string, title: string) {
-  const groupId = crypto.randomUUID()
-  const noteId = crypto.randomUUID()
+  const groupId = uuidV7()
+  const noteId = uuidV7()
   const group = await page.request.post(`${apiBase}/api/groups`, {
     headers,
     data: { id: groupId, name },
@@ -149,7 +150,7 @@ test.describe("offline notes", () => {
       for (const title of ["Edit me", "Delete me", "Undo me"]) {
         const created = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
           headers,
-          data: { id: crypto.randomUUID(), title, body: "" },
+          data: { id: uuidV7(), title, body: "" },
         })
         expect(created.status(), await created.text()).toBe(201)
       }

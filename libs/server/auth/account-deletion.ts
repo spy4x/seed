@@ -30,6 +30,7 @@ import {
   AccountDeletionBlockReason,
 } from "@domain/identity"
 import { INVITATION_EVENTS } from "../groups/invitation-revocation.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** One waiting request, as {@link recordAccountDeletion} wrote it. */
 export interface AccountDeletionRequest {
@@ -135,7 +136,7 @@ export async function recordAccountDeletion(
   const [request] = await tx<AccountDeletionRequest[]>`
     INSERT INTO account_deletions (id, user_id, delete_after)
     VALUES (
-      ${crypto.randomUUID()}, ${userId},
+      ${uuidV7()}, ${userId},
       now() + make_interval(days => ${ACCOUNT_DELETION_GRACE_DAYS})
     )
     RETURNING id, delete_after AS "deleteAfter"

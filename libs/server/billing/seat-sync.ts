@@ -7,6 +7,7 @@ import {
   PostgresInvitationRepository,
 } from "@server/groups/postgres-invitation-repository.ts"
 import { JOB_AGGREGATE, type JobHandler } from "@server/jobs/jobs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The worker's job that sets a per-member subscription's quantity to the group's member count. */
 export const SEAT_SYNC_JOB = "billing.seat-sync"
@@ -51,7 +52,7 @@ export async function queueSeatSync(
     INSERT INTO outbox_events (
       id, event_kind, aggregate_type, aggregate_id, aggregate_version, available_at
     ) VALUES (
-      ${crypto.randomUUID()}, ${SEAT_SYNC_JOB}, ${JOB_AGGREGATE}, ${groupId}, ${at.getTime()}, ${at}
+      ${uuidV7()}, ${SEAT_SYNC_JOB}, ${JOB_AGGREGATE}, ${groupId}, ${at.getTime()}, ${at}
     )
     ON CONFLICT (aggregate_type, aggregate_id, aggregate_version, event_kind) DO NOTHING
   `

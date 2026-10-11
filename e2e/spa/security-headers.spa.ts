@@ -1,6 +1,7 @@
 import { type APIResponse, expect, test } from "@playwright/test"
 import { gotoApp, signIn } from "../fixtures/app.ts"
 import { refusalSource, watchCspViolations } from "../fixtures/csp.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const TRACKER = Deno.env.get("ERROR_TRACKER_ORIGIN")
 if (!TRACKER) throw new Error("ERROR_TRACKER_ORIGIN is required: e2e/spa/run.sh sets it")
@@ -125,7 +126,7 @@ test("a signed-in walk through the app meets no refusal under the content securi
     await route.fulfill({ status: 404, contentType: "font/woff2", body: "" })
   })
 
-  const email = `e2e-csp-${crypto.randomUUID().slice(0, 8)}@example.com`
+  const email = `e2e-csp-${uuidV7().slice(-8)}@example.com`
   const password = "Passw0rd!"
   const headers = { origin: new URL(baseURL!).origin, "sec-fetch-site": "same-origin" }
   const cleanup = async ({ soft = false } = {}) => {
@@ -153,7 +154,7 @@ test("a signed-in walk through the app meets no refusal under the content securi
     // Every screen of the signed-in app, as the dev stack's warm-up visits them.
     const selected = await page.request.get("/api/groups/selected")
     const { groupId } = await selected.json()
-    const noteId = crypto.randomUUID()
+    const noteId = uuidV7()
     const note = await page.request.post(`/api/groups/${groupId}/notes`, {
       headers,
       data: { id: noteId, title: "Under the policy", body: "" },

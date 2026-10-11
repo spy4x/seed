@@ -9,6 +9,7 @@ import { createSignIn, type SignIn } from "../../apps/api/services/sign-in.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * Signed-in devices (#151) against a real Postgres: what a session remembers about its device, the
@@ -35,7 +36,7 @@ const SAFARI_IPHONE =
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
-  const schema = `sessions_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `sessions_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...settings,
     max: 10,

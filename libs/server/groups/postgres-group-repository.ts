@@ -38,6 +38,7 @@ import {
 import { type AuditEventInput, writeAuditEvent } from "./audit.ts"
 import { notifyOwnershipReceived, notifyRemoved, notifyRoleChanged } from "./group-notifications.ts"
 import { revokeInvitationsOf } from "./invitation-revocation.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 interface GroupRow extends postgres.Row {
   id: string
@@ -600,7 +601,7 @@ export class PostgresGroupRepository implements GroupRepository {
       `
       for (const { userId } of stranded) {
         await repository.insertFirst(
-          { id: crypto.randomUUID(), name: REPLACEMENT_GROUP_NAME },
+          { id: uuidV7(), name: REPLACEMENT_GROUP_NAME },
           userId,
         )
       }
@@ -934,7 +935,7 @@ export class PostgresGroupRepository implements GroupRepository {
   private async dropMember(groupId: string, userId: number): Promise<void> {
     await this.sql`DELETE FROM group_members WHERE group_id = ${groupId} AND user_id = ${userId}`
     if (!await this.hasActiveGroup(userId)) {
-      await this.insertFirst({ id: crypto.randomUUID(), name: REPLACEMENT_GROUP_NAME }, userId)
+      await this.insertFirst({ id: uuidV7(), name: REPLACEMENT_GROUP_NAME }, userId)
     }
   }
 

@@ -4,6 +4,7 @@ import postgres from "postgres"
 import { type OutboxEvent, OutboxProcessor, PostgresOutboxRepository } from "@spy4x/server/outbox"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 interface CountRow extends postgres.Row {
   count: number
@@ -33,7 +34,7 @@ Deno.test({
   async fn(t) {
     const connection = buildPostgresOptions(requireDbConnection())
     const admin = postgres({ ...connection, max: 1 })
-    const schema = `outbox_test_${crypto.randomUUID().replace(/-/g, "")}`
+    const schema = `outbox_test_${uuidV7().replace(/-/g, "")}`
     const sql = postgres({
       ...connection,
       max: 5,
@@ -175,7 +176,7 @@ async function seedUser(sql: postgres.Sql): Promise<number> {
 }
 
 async function seedGroup(sql: postgres.Sql, userId: number): Promise<string> {
-  const id = crypto.randomUUID()
+  const id = uuidV7()
   await sql`
     INSERT INTO groups (id, name, owner_user_id, created_by_user_id)
     VALUES (${id}, 'outbox fixture', ${userId}, ${userId})
@@ -193,7 +194,7 @@ async function seedOutboxEvent(
   userId: number,
   version: number,
 ): Promise<string> {
-  const id = crypto.randomUUID()
+  const id = uuidV7()
   await sql`
     INSERT INTO outbox_events (
       id, event_kind, aggregate_type, aggregate_id, aggregate_version, group_id, actor_user_id

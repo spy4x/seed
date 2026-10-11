@@ -7,6 +7,7 @@ import {
   SubscriptionStatus,
 } from "@spy4x/billing"
 import { DEFAULT_GRACE_DAYS, PRO_PLAN_ID } from "@domain/billing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * The webhook signing secret of the development provider. It is public on purpose: the e2e tests
@@ -177,7 +178,7 @@ export function createFakeBilling(proPriceId: string): BillingProvider {
       }
       return Promise.resolve({
         ok: true,
-        value: { id: `cs_fake_${crypto.randomUUID()}`, url: request.successUrl },
+        value: { id: `cs_fake_${uuidV7()}`, url: request.successUrl },
       })
     },
     // Nothing is billed in development, so the change is only answered: the subscription as it
@@ -202,7 +203,7 @@ export function createFakeBilling(proPriceId: string): BillingProvider {
     createPortalSession(request) {
       return Promise.resolve({
         ok: true,
-        value: { id: `bps_fake_${crypto.randomUUID()}`, url: request.returnUrl },
+        value: { id: `bps_fake_${uuidV7()}`, url: request.returnUrl },
       })
     },
     parseEvent: (rawBody, headers) => stripe.parseEvent(rawBody, headers),

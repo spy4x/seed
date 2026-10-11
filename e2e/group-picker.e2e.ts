@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -41,13 +42,13 @@ async function welcomeNoteIn(page: Page, groupId: string): Promise<void> {
 async function noteIn(page: Page, groupId: string, title: string): Promise<void> {
   const note = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
     headers,
-    data: { id: crypto.randomUUID(), title, body: "" },
+    data: { id: uuidV7(), title, body: "" },
   })
   expect(note.status(), await note.text()).toBe(201)
 }
 
 async function sharedGroup(page: Page, name: string): Promise<string> {
-  const id = crypto.randomUUID()
+  const id = uuidV7()
   const created = await page.request.post(`${apiBase}/api/groups`, {
     headers,
     data: { id, name },
@@ -202,7 +203,7 @@ test.describe("notes at /notes with a group picker", () => {
 
       const refused = await page.request.put(`${apiBase}/api/groups/selected`, {
         headers,
-        data: { groupId: crypto.randomUUID() },
+        data: { groupId: uuidV7() },
       })
       expect(refused.status()).toBe(404)
       const selected = await page.request.get(`${apiBase}/api/groups/selected`)

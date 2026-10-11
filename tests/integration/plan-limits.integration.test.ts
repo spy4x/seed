@@ -26,6 +26,7 @@ import {
   createNoteUpdateHandler,
 } from "../../apps/api/features/notes/handlers.ts"
 import { team, withSchema } from "./group-team.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * The free plan's cap on notes, enforced by the command bus's entitlement gate and the note
@@ -70,7 +71,7 @@ const actor = (userId: number) => ({
 })
 
 const createNote = (groupId: string, userId: number, title: string) =>
-  new NoteCreateCommand({ actor: actor(userId), groupId, id: crypto.randomUUID(), title, body: "" })
+  new NoteCreateCommand({ actor: actor(userId), groupId, id: uuidV7(), title, body: "" })
 
 function subscription(
   groupId: string,

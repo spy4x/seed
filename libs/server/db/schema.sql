@@ -258,9 +258,9 @@ CREATE INDEX idx_outbox_events_actor_user_id ON outbox_events (actor_user_id);
 -- `status` is 1 while the first run is in flight and 2 once its result is stored. `updated_at`
 -- is when the row was claimed or finished; a claim that stays at 1 past its lease belongs to a
 -- run that died, and the next retry takes it over under a new `claim_token`; `complete` and
--- `release` change only the row whose token they hold. The token's default serves only the previous
--- API during a deploy (see migration 2026_10_03_0001). Rows older than seven days are removed by
--- the worker's sweep and are ignored by readers before that.
+-- `release` change only the row whose token they hold. The store makes the token, a version 7
+-- UUID; the column has no default. Rows older than seven days are removed by the worker's sweep
+-- and are ignored by readers before that.
 --
 -- The key is scoped to the user, so one user cannot replay or block another user's key.
 -- `request_hash` fingerprints the command's input: the same key with different input is refused
@@ -274,7 +274,7 @@ CREATE TABLE idempotency_keys (
     result JSONB,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    claim_token UUID NOT NULL DEFAULT gen_random_uuid(),
+    claim_token UUID NOT NULL,
     PRIMARY KEY (user_id, key),
     CONSTRAINT idempotency_keys_key_check CHECK (length(key) BETWEEN 1 AND 128),
     CONSTRAINT idempotency_keys_status_check CHECK (status = ANY (ARRAY[1, 2])),

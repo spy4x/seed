@@ -5,6 +5,7 @@ import { PublicAPICacheModel } from "@spy4x/platform/cache"
 import { DbServiceBase, type Sql } from "@spy4x/server/db"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 interface TransactionRow extends postgres.Row {
   id: number
@@ -33,7 +34,7 @@ class TransactionTestDb extends DbServiceBase {
 }
 
 Deno.test("transaction-bound repository rolls back writes and cache effects", async () => {
-  const tableName = `transaction_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const tableName = `transaction_test_${uuidV7().replaceAll("-", "")}`
   const cachedIds: number[] = []
   const cache: PublicAPICacheModel<TransactionRow> = {
     key: (id) => `row_${id}`,

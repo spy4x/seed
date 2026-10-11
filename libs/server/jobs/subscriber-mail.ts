@@ -17,6 +17,7 @@ import {
 } from "../subscribers/subscribers.ts"
 import type { MailBrand } from "../mail/mail.ts"
 import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** Mails a confirm link to an address that asked to join a list. */
 export const SUBSCRIBER_CONFIRM_MAIL_JOB = `subscribers.confirm-mail`
@@ -46,7 +47,7 @@ export async function enqueueSubscriberMail(
   list: string,
   email: string,
 ): Promise<void> {
-  const id = crypto.randomUUID()
+  const id = uuidV7()
   await sql`INSERT INTO subscription_requests (id, list_id, email) VALUES (${id}, ${list}, ${email})`
   await scheduleOutboxEvent(
     sql,

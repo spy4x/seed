@@ -10,6 +10,7 @@ import {
 import { type AuthAuditBase, AuthAuditEventType } from "@domain/identity"
 import { hashApiToken, type LiveApiToken, mintApiToken } from "@server/api-tokens/api-tokens.ts"
 import type { AppDbBase } from "./db-base.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** Options for {@link createApiTokens}. */
 export interface ApiTokensOptions {
@@ -63,7 +64,7 @@ export function createApiTokens(
       const { secret, hash } = await mintApiToken(key)
       const outcome = await db.begin(async (tx) => {
         const result = await tx.apiTokens.create({
-          id: crypto.randomUUID(),
+          id: uuidV7(),
           userId,
           groupId: request.groupId,
           name: request.name,

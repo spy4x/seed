@@ -1,6 +1,7 @@
 import type { APIRequestContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -35,7 +36,7 @@ async function enterCode(page: Page, code: string): Promise<void> {
 
 test("a new account proves its address with the mailed code, then moves to a new one", async ({ page, request }) => {
   // Fresh addresses each run: the per-address limit allows three code mails an hour.
-  const id = crypto.randomUUID().slice(0, 8)
+  const id = uuidV7().slice(-8)
   const email = `e2e-verify-${id}@example.com`
   const next = `e2e-verify-next-${id}@example.com`
   await cleanup(request, email)

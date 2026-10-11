@@ -10,6 +10,7 @@ import { PostgresGroupRepository } from "@server/groups/postgres-group-repositor
 import { createIdempotencyMiddleware, PostgresIdempotencyStore } from "@spy4x/server/idempotency"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 interface IdRow extends postgres.Row {
   id: number
@@ -24,7 +25,7 @@ interface SequenceRow extends postgres.Row {
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const connection = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...connection, max: 1 })
-  const schema = `idem_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `idem_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...connection,
     max: 25,

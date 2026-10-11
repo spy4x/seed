@@ -1,13 +1,14 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, submitAuthForm } from "./fixtures/app.ts"
 import { currentStep, totpCode } from "./fixtures/totp.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 
 test.describe("two-factor sign-in", () => {
   test("signs in with a one-time code after the password step", async ({ page, request }) => {
     // A fresh address each run, so the code mail read below is this run's.
-    const email = `e2e-two-factor-${crypto.randomUUID().slice(0, 8)}@example.com`
+    const email = `e2e-two-factor-${uuidV7().slice(-8)}@example.com`
     const password = "Passw0rd!"
     const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 

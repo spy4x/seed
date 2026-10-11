@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -56,7 +57,7 @@ test.describe("moving notes to another group", () => {
       })
       await signInOnline(ownerPage, owner)
 
-      const groups = { Source: crypto.randomUUID(), Target: crypto.randomUUID() }
+      const groups = { Source: uuidV7(), Target: uuidV7() }
       for (const [name, id] of Object.entries(groups)) {
         const created = await ownerPage.request.post(`${apiBase}/api/groups`, {
           headers,
@@ -73,7 +74,7 @@ test.describe("moving notes to another group", () => {
       for (const title of ["One", "Two", "Three", "Four"]) {
         const created = await ownerPage.request.post(
           `${apiBase}/api/groups/${groups.Source}/notes`,
-          { headers, data: { id: crypto.randomUUID(), title, body: "" } },
+          { headers, data: { id: uuidV7(), title, body: "" } },
         )
         expect(created.status(), await created.text()).toBe(201)
       }

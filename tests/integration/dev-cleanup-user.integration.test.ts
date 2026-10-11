@@ -9,6 +9,7 @@ import { createDevRoute } from "../../apps/api/routes/dev.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * The development-only `POST /test/cleanup-user` against a real Postgres, for users made through
@@ -40,7 +41,7 @@ interface CountRow extends postgres.Row {
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
-  const schema = `dev_cleanup_test_${crypto.randomUUID().replaceAll("-", "")}`
+  const schema = `dev_cleanup_test_${uuidV7().replaceAll("-", "")}`
   const sql = postgres({
     ...settings,
     max: 10,
@@ -149,7 +150,7 @@ Deno.test("dev cleanup-user route", async (t) => {
 
     await t.step("deletes the shared groups the user created, with their events", async () => {
       const userId = await signUp(app, "shared-owner")
-      await app.db.group.create({ id: crypto.randomUUID(), name: "Team" }, userId)
+      await app.db.group.create({ id: uuidV7(), name: "Team" }, userId)
       // One event for the first group made at sign-up, one for the shared group.
       expect((await rowsOf(sql, userId)).outbox_events).toBe(2)
 
@@ -195,7 +196,7 @@ Deno.test("dev cleanup-user route", async (t) => {
     await t.step("deletes the notes the user wrote in another user's group", async () => {
       const ownerId = await signUp(app, "notes-owner")
       const writerId = await signUp(app, "notes-writer")
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       await app.db.group.create({ id: groupId, name: "Notes" }, ownerId)
       expect(
         (await app.post("/test/add-member", {
@@ -205,12 +206,12 @@ Deno.test("dev cleanup-user route", async (t) => {
         })).status,
       ).toBe(200)
       await app.db.note.create(
-        { groupId, id: crypto.randomUUID(), title: "Mine", body: "" },
+        { groupId, id: uuidV7(), title: "Mine", body: "" },
         writerId,
         null,
       )
       const kept = await app.db.note.create(
-        { groupId, id: crypto.randomUUID(), title: "Owner's", body: "" },
+        { groupId, id: uuidV7(), title: "Owner's", body: "" },
         ownerId,
         null,
       )
@@ -226,7 +227,7 @@ Deno.test("dev cleanup-user route", async (t) => {
     await t.step("add-member gives a user a role in a group, and changes it", async () => {
       const ownerId = await signUp(app, "member-owner")
       const joinerId = await signUp(app, "member-joiner")
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       await app.db.group.create({ id: groupId, name: "Team" }, ownerId)
       const roleOf = async () =>
         (await sql<{ role: number }[]>`
@@ -255,7 +256,7 @@ Deno.test("dev cleanup-user route", async (t) => {
 
     await t.step("add-member leaves the owner's role alone", async () => {
       const ownerId = await signUp(app, "member-kept-owner")
-      const groupId = crypto.randomUUID()
+      const groupId = uuidV7()
       await app.db.group.create({ id: groupId, name: "Team" }, ownerId)
 
       const response = await app.post("/test/add-member", {
@@ -281,7 +282,7 @@ Deno.test("dev cleanup-user route", async (t) => {
           await sql<GroupIdRow[]>`SELECT id FROM groups WHERE owner_user_id = ${ownerId}`
         )[0].id
         await sql`UPDATE groups SET deleted_at = now() WHERE id = ${deletedGroup}`
-        const shared = crypto.randomUUID()
+        const shared = uuidV7()
         await app.db.group.create({ id: shared, name: "Team" }, ownerId)
 
         expect(

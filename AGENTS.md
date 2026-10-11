@@ -73,6 +73,7 @@ says what is missing. Do not copy the gap into a new screen.
 
 A new product aggregate copies the notes aggregate, file by file:
 [docs/aggregates.md](docs/aggregates.md) lists every file in order. Do not invent a second shape.
+Every id is a UUID version 7; a secret is the owner's decision: [docs/ids.md](docs/ids.md).
 
 ## Handoff
 

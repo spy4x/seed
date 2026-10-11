@@ -1,7 +1,8 @@
 import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
-import { canMutateNotes, canRead, GroupRole, isUuidV4, UUID_V4 } from "@domain/groups"
+import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
+import { canMutateNotes, canRead, GroupRole } from "@domain/groups"
 
 /**
  * Notes: the reference aggregate. A note belongs to one group; every member of the group reads it,
@@ -104,22 +105,19 @@ export interface DeletedNote {
 // The bodies of the REST requests and the fields of the forms that post without JavaScript. The
 // group and the note are named by the path; the socket payloads add them as `groupId` and `id`.
 
-// The id shape lives with groups, the layer below; notes and tags import it from here.
-export { isUuidV4, UUID_V4 }
-
 // Lengths are checked in characters by `parseNoteRequest`, not here: arktype counts UTF-16 units.
 const noteFields = {
   title: "string",
   body: "string",
   // The note's tags. Left out on an update, the tags stay; given, the set is replaced. Ids the
   // group has no tag for are ignored (ADR 003, section 5, rule 4).
-  "tagIds?": type(UUID_V4).array(),
+  "tagIds?": type(UUID_PATTERN).array(),
 } as const
 
 const versionField = { version: "number.integer >= 1" } as const
 
 /** `POST /api/groups/:groupId/notes`: a client-made id, so a retry cannot create a second note. */
-export const noteCreateRequestSchema = type({ id: UUID_V4, ...noteFields, "+": "reject" })
+export const noteCreateRequestSchema = type({ id: UUID_PATTERN, ...noteFields, "+": "reject" })
 export type NoteCreateRequest = typeof noteCreateRequestSchema.infer
 
 /** `PATCH /api/groups/:groupId/notes/:noteId`: the new title and body, and the version edited. */
@@ -142,19 +140,19 @@ export type NoteRestoreRequest = typeof noteRestoreRequestSchema.infer
  * The form fields are the same: `toGroupId`, and one `noteIds` per ticked note.
  */
 export const noteMoveRequestSchema = type({
-  toGroupId: UUID_V4,
-  noteIds: type(UUID_V4).array(),
+  toGroupId: UUID_PATTERN,
+  noteIds: type(UUID_PATTERN).array(),
   "+": "reject",
 })
 export type NoteMoveRequest = typeof noteMoveRequestSchema.infer
 
-const groupIdField = { groupId: UUID_V4 } as const
-const noteIdField = { id: UUID_V4 } as const
+const groupIdField = { groupId: UUID_PATTERN } as const
+const noteIdField = { id: UUID_PATTERN } as const
 
 /** The `note.create` socket payload. */
 export const noteCreatePayloadSchema = type({
   ...groupIdField,
-  id: UUID_V4,
+  id: UUID_PATTERN,
   ...noteFields,
   "+": "reject",
 })
@@ -178,8 +176,8 @@ export const noteRestorePayloadSchema = type({ ...groupIdField, ...noteIdField, 
 /** The `note.move` socket payload. */
 export const noteMovePayloadSchema = type({
   ...groupIdField,
-  toGroupId: UUID_V4,
-  noteIds: type(UUID_V4).array(),
+  toGroupId: UUID_PATTERN,
+  noteIds: type(UUID_PATTERN).array(),
   "+": "reject",
 })
 /** The `note.get` socket payload. */

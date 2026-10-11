@@ -44,7 +44,8 @@ plus a synchronization change log, not event sourcing.
 - `GroupKind`: `PERSONAL=1`, `SHARED=2`.
 - `GroupRole`: `VIEWER=1`, `EDITOR=2`, `ADMIN=3`, `OWNER=4`.
 - Signup atomically creates the user, credential, session, personal group, and owner membership.
-- All client-created syncable entities use UUID v4 IDs. DB `BIGINT` values cross JSON as decimal
+- All client-created syncable entities use UUID version 7 IDs ([docs/ids.md](../ids.md)); rows
+  made before that keep their version 4 ids. DB `BIGINT` values cross JSON as decimal
   strings to avoid JavaScript precision loss.
 - Every group resource and query is scoped by `group_id`; v1 does not use Postgres RLS.
 - Sync accepts only registered semantic commands. It never accepts class names, SQL-like patches,
@@ -239,7 +240,7 @@ One new runtime dependency is justified: Dexie through a pinned Deno `npm:` spec
 required by the approved PRD, mature, maintained, and isolates IndexedDB transaction/browser quirks.
 Raw IndexedDB was rejected because it adds large adapter and migration burden; another wrapper
 would not improve size or maintenance. No cursor, hash, UUID, merge, queue, or canonicalization
-dependency is added: Deno Web Crypto, `crypto.randomUUID()`, and internal bounded algorithms cover
+dependency is added: Deno Web Crypto, the library's `uuidV7()`, and internal bounded algorithms cover
 them. Service-worker behavior remains hand-written; no WebSocket or PWA plugin is required.
 
 ### Coupling risks

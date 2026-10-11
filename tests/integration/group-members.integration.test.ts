@@ -4,6 +4,7 @@ import postgres from "postgres"
 import { GroupError, GroupRole } from "@domain/groups"
 import { listenForGroupAccessLoss } from "@server/groups/group-change-notify.ts"
 import { revision, team, withSchema } from "./group-team.ts"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * The members of a group against a real Postgres built from schema.sql: the list, role changes,
@@ -276,6 +277,11 @@ Deno.test("remove: a member whose only group it was gets a new one", async () =>
 
     await repository.removeMember(groupId, onlyHere, owner)
     expect(await groupNames(sql, onlyHere)).toEqual(["Personal"])
+    expectVersion7Ids(
+      await sql<{ id: string }[]>`
+        SELECT group_id AS id FROM group_members WHERE user_id = ${onlyHere}
+      `,
+    )
     await repository.removeMember(groupId, viewer, owner)
     expect(await groupNames(sql, viewer)).toEqual(["Own"])
   })

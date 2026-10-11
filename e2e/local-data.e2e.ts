@@ -6,6 +6,7 @@ import {
 } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn, submitAuthForm } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /**
  * The local-data module as a swappable part (ADR 003, sections 1, 4 and 5), in a real browser with
@@ -35,14 +36,14 @@ async function signUp(request: APIRequestContext, email: string): Promise<void> 
 }
 
 async function createGroup(api: APIRequestContext, name: string): Promise<string> {
-  const groupId = crypto.randomUUID()
+  const groupId = uuidV7()
   const group = await api.post(`${apiBase}/api/groups`, { headers, data: { id: groupId, name } })
   expect(group.status(), await group.text()).toBe(201)
   return groupId
 }
 
 async function createNote(api: APIRequestContext, groupId: string, title: string) {
-  const noteId = crypto.randomUUID()
+  const noteId = uuidV7()
   const note = await api.post(`${apiBase}/api/groups/${groupId}/notes`, {
     headers,
     data: { id: noteId, title, body: "" },
@@ -202,7 +203,7 @@ test.describe("the app with the local-data module switched off", () => {
 test.describe("the app with no network, after one visit online", () => {
   test("every list screen shows what it showed last, and the lists that can mislead say when they were saved", async ({ browser, request }) => {
     test.setTimeout(120_000)
-    const id = crypto.randomUUID().slice(0, 8)
+    const id = uuidV7().slice(-8)
     const user = `e2e-kept-user-${id}@example.com`
     const other = `e2e-kept-other-${id}@example.com`
     for (const email of [user, other]) await cleanup(request, email)
@@ -352,7 +353,7 @@ test.describe("what a device keeps", () => {
   }
 
   const editQueuedLastWeek = (groupId: string, noteId: string) => ({
-    key: crypto.randomUUID(),
+    key: uuidV7(),
     entityId: noteId,
     kind: "update",
     payload: { groupId, title: "Edited before the update", body: "" },

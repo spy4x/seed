@@ -26,6 +26,7 @@ import { createSqlFromEnv } from "@spy4x/server/db"
 import { authPasswordSchema } from "@domain/identity"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The demo user's username. */
 export const DEMO_USERNAME = "demo"
@@ -95,7 +96,7 @@ export async function seed(db: AppDbBase, options: SeedOptions): Promise<boolean
   if (userId === null) return false
 
   await db.sessionStore.signOutUser(userId, null)
-  await db.group.create({ id: crypto.randomUUID(), name: DEMO_GROUP_NAME }, userId)
+  await db.group.create({ id: uuidV7(), name: DEMO_GROUP_NAME }, userId)
   return true
 }
 

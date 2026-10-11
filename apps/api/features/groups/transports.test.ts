@@ -52,6 +52,7 @@ import { createGroupOperations } from "./operations.ts"
  * handler, so a transport that skipped the buses, or a handler that skipped the role check, fails.
  * The group is on `plan`, Pro unless a test says otherwise, so the plan allows every member command.
  */
+import { isUuid } from "@spy4x/platform/universal/uuid"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const VIEWER = 2
@@ -247,6 +248,17 @@ describe("renaming a group over REST", () => {
       }
     })
   }
+
+  it("renames a group whose id is a UUID version 4, made before ids became version 7", async () => {
+    expect(isUuid(groupId, 4)).toBe(true)
+    const { groups, buses } = stack()
+
+    const response = await rest(buses, OWNER)("PATCH", `/${groupId}`, { name: "Trip" })
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).group.id).toBe(groupId)
+    expect(groups.name).toBe("Trip")
+  })
 
   it("tells a non-member the group does not exist and changes nothing", async () => {
     const { groups, buses } = stack()

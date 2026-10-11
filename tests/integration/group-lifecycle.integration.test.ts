@@ -20,6 +20,8 @@ import {
   team,
   withSchema,
 } from "./group-team.ts"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { expectVersion7Ids } from "./ids.ts"
 
 /**
  * Rename, delete and restore of a group against a real Postgres built from schema.sql: who may do
@@ -136,7 +138,7 @@ Deno.test("delete: the server refuses to delete the last group of the person", a
   await withSchema(async (sql) => {
     const repository = new PostgresGroupRepository(sql)
     const owner = await insertUser(sql)
-    const only = crypto.randomUUID()
+    const only = uuidV7()
     await repository.ensureFirst({ id: only, name: "Only" }, owner)
 
     await expect(repository.softDelete(only, owner)).rejects.toMatchObject({
@@ -156,6 +158,7 @@ Deno.test("delete: a member whose only group it was gets a new one, others keep 
 
     const stranded = (await repository.listForUser(onlyHere, { limit: 10 })).groups
     expect(stranded.map((group) => group.name)).toEqual(["Personal"])
+    expectVersion7Ids(stranded)
     const own = (await repository.listForUser(editor, { limit: 10 })).groups
     expect(own.map((group) => group.name)).toEqual(["Own"])
   })
@@ -300,10 +303,10 @@ Deno.test("restore: only the owner restores, and only inside 30 days", async () 
 Deno.test("purge: removes groups deleted over 30 days ago with everything in them", async () => {
   await withSchema(async (sql) => {
     const { repository, groupId, owner, editor } = await team(sql)
-    const kept = (await repository.create({ id: crypto.randomUUID(), name: "Recent" }, owner)).group
+    const kept = (await repository.create({ id: uuidV7(), name: "Recent" }, owner)).group
     await sql`
       INSERT INTO notes (id, group_id, title, body, change_sequence, created_by_user_id, updated_by_user_id)
-      VALUES (${crypto.randomUUID()}, ${groupId}, 't', 'b', 1, ${owner}, ${owner})
+      VALUES (${uuidV7()}, ${groupId}, 't', 'b', 1, ${owner}, ${owner})
     `
     await sql`
       INSERT INTO audit_events (event_kind, actor_user_id, group_id)
@@ -340,7 +343,7 @@ Deno.test("purge: removes groups deleted over 30 days ago with everything in the
 Deno.test("purge: keeps a deleted group that a webhook subscribed after the delete", async () => {
   await withSchema(async (sql) => {
     const { repository, groupId, owner } = await team(sql)
-    const cancelled = (await repository.create({ id: crypto.randomUUID(), name: "Old" }, owner))
+    const cancelled = (await repository.create({ id: uuidV7(), name: "Old" }, owner))
       .group
     await repository.softDelete(groupId, owner)
     await repository.softDelete(cancelled.id, owner)
@@ -444,8 +447,8 @@ Deno.test("delete: two deletes at once never leave a person without a group", as
     const bob = await insertUser(sql)
     // Each owns one group and is a member of the other's, and has no other group: either delete
     // alone is allowed, both together would leave both people with nothing.
-    const annsGroup = (await repository.create({ id: crypto.randomUUID(), name: "Ann" }, ann)).group
-    const bobsGroup = (await repository.create({ id: crypto.randomUUID(), name: "Bob" }, bob)).group
+    const annsGroup = (await repository.create({ id: uuidV7(), name: "Ann" }, ann)).group
+    const bobsGroup = (await repository.create({ id: uuidV7(), name: "Bob" }, bob)).group
     await sql`
       INSERT INTO group_members (group_id, user_id, role, added_by_user_id) VALUES
         (${annsGroup.id}, ${bob}, ${GroupRole.EDITOR}, ${ann}),
@@ -487,8 +490,8 @@ Deno.test("delete: a group that is already deleted does not count as another gro
   await withSchema(async (sql) => {
     const repository = new PostgresGroupRepository(sql)
     const owner = await insertUser(sql)
-    const live = (await repository.create({ id: crypto.randomUUID(), name: "Live" }, owner)).group
-    const gone = (await repository.create({ id: crypto.randomUUID(), name: "Gone" }, owner)).group
+    const live = (await repository.create({ id: uuidV7(), name: "Live" }, owner)).group
+    const gone = (await repository.create({ id: uuidV7(), name: "Gone" }, owner)).group
     await sql`UPDATE groups SET deleted_at = now() WHERE id = ${gone.id}`
 
     await expect(repository.softDelete(live.id, owner)).rejects.toMatchObject({
@@ -524,11 +527,10 @@ Deno.test("create, rename, delete and restore keep a 128-character request id wh
     const repository = new PostgresGroupRepository(sql)
     const owner = await insertUser(sql)
     const id = "r".repeat(128)
-    const created =
-      (await repository.create({ id: crypto.randomUUID(), name: "A", requestId: id }, owner))
-        .group
+    const created = (await repository.create({ id: uuidV7(), name: "A", requestId: id }, owner))
+      .group
     // The person keeps a second group, so deleting the first is allowed.
-    await repository.create({ id: crypto.randomUUID(), name: "B" }, owner)
+    await repository.create({ id: uuidV7(), name: "B" }, owner)
 
     await repository.rename(created.id, "Trip", owner, id)
     await repository.softDelete(created.id, owner, id)
@@ -578,14 +580,14 @@ Deno.test("notes: a write after the group was deleted is refused and leaves no t
   await withSchema(async (sql) => {
     const { repository, groupId, owner } = await team(sql)
     const notes = new PostgresNoteRepository(sql)
-    const existing = crypto.randomUUID()
+    const existing = uuidV7()
     await notes.create({ groupId, id: existing, title: "Before", body: "" }, owner, null)
     // The handlers check the role, then write. A delete that lands between the two:
     await repository.softDelete(groupId, owner)
     const outboxBefore = (await sql`SELECT 1 FROM outbox_events`).length
 
     const refused = [
-      () => notes.create({ groupId, id: crypto.randomUUID(), title: "New", body: "" }, owner, null),
+      () => notes.create({ groupId, id: uuidV7(), title: "New", body: "" }, owner, null),
       () =>
         notes.update(
           { groupId, id: existing, title: "After", body: "", expectedVersion: 1 },
@@ -618,7 +620,7 @@ Deno.test("delete: an unfinished note insert neither blocks the delete nor deadl
     await writing`BEGIN`
     await writing`
       INSERT INTO notes (id, group_id, title, body, change_sequence, created_by_user_id, updated_by_user_id)
-      VALUES (${crypto.randomUUID()}, ${groupId}, 'Racing', '', 1, ${owner}, ${owner})
+      VALUES (${uuidV7()}, ${groupId}, 'Racing', '', 1, ${owner}, ${owner})
     `
 
     const finished = await Promise.race([

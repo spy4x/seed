@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Browser, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
+import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -38,7 +39,7 @@ async function teamWith(
   member: string,
   role: number,
 ): Promise<string> {
-  const groupId = crypto.randomUUID()
+  const groupId = uuidV7()
   const created = await page.request.post(`${apiBase}/api/groups`, {
     headers,
     data: { id: groupId, name: "Team" },

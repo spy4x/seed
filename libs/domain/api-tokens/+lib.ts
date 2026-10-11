@@ -1,5 +1,5 @@
 import { type } from "arktype"
-import { isUuidV4 } from "@domain/notes"
+import { isUuid } from "@spy4x/platform/universal/uuid"
 
 /**
  * Personal API tokens (#167): a person lets a script or another service use the API in one of
@@ -86,7 +86,7 @@ export const apiTokenCreateRequestSchema = type({
   // The length is checked in characters by `parseApiTokenCreateRequest`: arktype counts UTF-16
   // units.
   name: "string",
-  groupId: type("string").narrow((value, ctx) => isUuidV4(value) || ctx.mustBe("a UUID")),
+  groupId: type("string").narrow((value, ctx) => isUuid(value) || ctx.mustBe("a UUID")),
   access: type.enumerated(ApiTokenAccess.READ, ApiTokenAccess.WRITE),
   expiresInDays: type.enumerated(...API_TOKEN_EXPIRY_DAYS, null),
   "+": "reject",
