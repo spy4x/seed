@@ -1,7 +1,6 @@
 import { computed, signal } from "@preact/signals"
-import { ConnectionLostError, RealtimeRequestError } from "@spy4x/realtime"
+import { ConnectionLostError, describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
-import { describeError } from "./describe-error.ts"
 import { apiAsUser } from "./realtime-call.ts"
 import { callCommand, callQuery, canCall, currentLayer, offlineNotes } from "../modules.ts"
 

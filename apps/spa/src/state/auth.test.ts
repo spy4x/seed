@@ -199,6 +199,30 @@ describe("a sign-out made while the server was out of reach", () => {
     expect(flags.getItem("auth:sign-out-owed")).toBe("1")
   })
 
+  it("is remembered until the page closes when the browser blocks storage", async () => {
+    const real = Object.getOwnPropertyDescriptor(globalThis, "localStorage")
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      get() {
+        throw new DOMException("The operation is insecure.", "SecurityError")
+      },
+    })
+    try {
+      useFlagStorage(undefined)
+      sessionState.value = { ...sessionState.value, user: { id: 1 } as User }
+      globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"))
+
+      await signOut()
+
+      const paths = serverThat(() => Response.json({ success: true }))
+      await bootstrapSession(() => ({ id: 5 } as User))
+      expect(paths).toEqual(["/api/auth/sign-out"])
+      expect(sessionState.value.user).toBeNull()
+    } finally {
+      if (real) Object.defineProperty(globalThis, "localStorage", real)
+    }
+  })
+
   it("is forgotten once the person signs in again", async () => {
     const flags = memoryFlags()
     flags.setItem("auth:sign-out-owed", "1")

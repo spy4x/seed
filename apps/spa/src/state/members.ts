@@ -1,5 +1,5 @@
 import { signal } from "@preact/signals"
-import { RealtimeRequestError } from "@spy4x/realtime"
+import { describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import type { GroupRole } from "@domain/groups"
 import {
@@ -8,7 +8,6 @@ import {
   type TransferError,
   transferErrorField,
 } from "@ui/group-transfer.tsx"
-import { describeError } from "./describe-error.ts"
 import { apiAsUser, fetchAsUser } from "./realtime-call.ts"
 import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS, ReadRefused } from "./read-keys.ts"

@@ -78,6 +78,22 @@ describe("readFeatureJson", () => {
     expect(await response.text()).toBe("Content type must be JSON")
   })
 
+  it("refuses a type that only contains the JSON type's name", async () => {
+    for (const contentType of ["text/plain; note=application/json", "application/jsonl"]) {
+      const response = await post(`{"a":1}`, contentType)
+
+      expect(response.status).toBe(422)
+      expect(await response.text()).toBe("Content type must be JSON")
+    }
+  })
+
+  it("refuses a request with no content type in the feature's error", async () => {
+    const response = await post(`{"a":1}`)
+
+    expect(response.status).toBe(422)
+    expect(await response.text()).toBe("Content type must be JSON")
+  })
+
   it("refuses a body that is not JSON in the feature's error", async () => {
     const response = await post(`{"a":`, "application/json")
 
@@ -87,6 +103,23 @@ describe("readFeatureJson", () => {
 
   it("refuses a body over the cap in the feature's error", async () => {
     const response = await post(jsonOfSize(MAX_JSON_BODY_BYTES + 1), "application/json")
+
+    expect(response.status).toBe(422)
+    expect(await response.text()).toBe("Request body must be JSON")
+  })
+
+  it("refuses a body whose upload breaks part-way in the feature's error", async () => {
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode(`{"a":`))
+        controller.error(new Error("connection reset"))
+      },
+    })
+    const response = await buildFeatureApp().request("http://local/echo", {
+      method: "POST",
+      body,
+      headers: { "content-type": "application/json" },
+    })
 
     expect(response.status).toBe(422)
     expect(await response.text()).toBe("Request body must be JSON")

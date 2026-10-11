@@ -8,49 +8,37 @@ import {
   type User,
   UserMFAStatus,
 } from "@domain/identity"
+import { browserStorage } from "@spy4x/platform/browser/storage"
+import type { KeyValueStore } from "@spy4x/platform/universal/key-value-store"
 import { apiFetch } from "./api.ts"
 import { PendingSecondFactor, sessionState, SessionUser } from "./session.ts"
 
 const SIGN_OUT_OWED = "auth:sign-out-owed"
 
-type FlagStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">
+/**
+ * The browser's storage for the flag. It never throws: while the browser blocks storage, the flag
+ * is remembered until the page closes.
+ */
+const browserFlags = browserStorage()
 
-function browserStorage(): FlagStorage | null {
-  let found: FlagStorage | null = null
-  try {
-    found = localStorage
-  } catch (_error) {
-    // Blocked storage: a sign-out that could not reach the server is not remembered.
-  }
-  return found
-}
-
-let flagStorage: FlagStorage | null | undefined
+let flagStorage: KeyValueStore | undefined
 
 /** Where the "sign-out owed" flag lives. Tests pass their own; `undefined` means the browser's. */
-export function useFlagStorage(storage: FlagStorage | null | undefined): void {
+export function useFlagStorage(storage: KeyValueStore | undefined): void {
   flagStorage = storage
 }
 
-function flags(): FlagStorage | null {
-  return flagStorage === undefined ? browserStorage() : flagStorage
+function flags(): KeyValueStore {
+  return flagStorage ?? browserFlags
 }
 
 function setSignOutOwed(owed: boolean): void {
-  try {
-    if (owed) flags()?.setItem(SIGN_OUT_OWED, "1")
-    else flags()?.removeItem(SIGN_OUT_OWED)
-  } catch (_error) {
-    // Nothing to keep the flag in.
-  }
+  if (owed) flags().setItem(SIGN_OUT_OWED, "1")
+  else flags().removeItem(SIGN_OUT_OWED)
 }
 
 function isSignOutOwed(): boolean {
-  try {
-    return flags()?.getItem(SIGN_OUT_OWED) === "1"
-  } catch (_error) {
-    return false
-  }
+  return flags().getItem(SIGN_OUT_OWED) === "1"
 }
 
 /**

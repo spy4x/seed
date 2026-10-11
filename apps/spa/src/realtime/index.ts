@@ -5,13 +5,13 @@ import {
   ConnectionLostError,
   createSystemClock,
   type GapReport,
-  type KeyValueStore,
   PersistentCursorStore,
   type SocketFactory,
   TransportStatus,
 } from "@spy4x/realtime"
 import { type AvailableCallPort, createSocketCallPort } from "@spy4x/realtime/calls"
 import { watchPageResume } from "@spy4x/realtime/page-lifecycle"
+import { browserStorage } from "@spy4x/platform/browser/storage"
 import { SOCKET_USER_PROTOCOL } from "@domain/identity"
 import { apiFetch } from "../state/api.ts"
 import { type SessionState, sessionState } from "../state/session.ts"
@@ -58,36 +58,6 @@ export function connectionDisplay(
   if (state.wsResume === "quiet") return "open"
   if (state.wsResume === "slow") return "reconnecting"
   return state.wsStatus
-}
-
-/** `localStorage`, or a store that forgets when the browser blocks it. */
-function browserStorage(): KeyValueStore {
-  const memory = new Map<string, string>()
-  return {
-    getItem(key) {
-      try {
-        return localStorage.getItem(key)
-      } catch (_error) {
-        return memory.get(key) ?? null
-      }
-    },
-    setItem(key, value) {
-      memory.set(key, value)
-      try {
-        localStorage.setItem(key, value)
-      } catch (_error) {
-        // Blocked storage: the cursor lives until the page closes, and the next load pulls again.
-      }
-    },
-    removeItem(key) {
-      memory.delete(key)
-      try {
-        localStorage.removeItem(key)
-      } catch (_error) {
-        // Nothing stored, nothing to remove.
-      }
-    },
-  }
 }
 
 /**

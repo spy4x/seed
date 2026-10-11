@@ -1,5 +1,5 @@
 import type { Context } from "hono"
-import { readJsonBody } from "@spy4x/server/http/bounded-body"
+import { JSON_BODY_WRONG_TYPE, readJsonBody } from "@spy4x/server/http/bounded-body"
 
 /**
  * The largest JSON body any API route accepts. The largest real one, a push subscription, is well
@@ -16,20 +16,28 @@ export function readApiJson(c: Context): Promise<unknown> {
 }
 
 /**
- * Read the JSON body of a feature route: the request must declare `application/json`, and any
- * failure to read it (too large, stalled, not JSON) is the feature's own `INVALID_REQUEST`, built
- * by `invalid` from the message, so the route answers in its feature's error shape.
+ * Read the JSON body of a feature route with the library's `readJsonBody`, under this API's rules:
+ * the body is capped at {@link MAX_JSON_BODY_BYTES}, the request must declare `application/json`,
+ * and every refusal is the feature's own `INVALID_REQUEST`, built by `invalid` from the message, so
+ * the route answers in its feature's error shape.
+ *
+ * The library rethrows a body stream that breaks while it is read (a phone that loses signal
+ * during a save), which a route would answer with 500. That is the client's failure, not the
+ * server's, so it is `invalid` here too.
  */
 export async function readFeatureJson(
   c: Context,
   invalid: (message: string) => Error,
 ): Promise<unknown> {
-  if (!c.req.header("content-type")?.toLowerCase().includes("application/json")) {
-    throw invalid("Content type must be JSON")
-  }
+  let refused: Error | undefined
   try {
-    return await readApiJson(c)
-  } catch {
-    throw invalid("Request body must be JSON")
+    return await readJsonBody(c, {
+      maxBytes: MAX_JSON_BODY_BYTES,
+      requireJsonContentType: true,
+      toError: ({ status }) =>
+        refused = invalid(status === 415 ? JSON_BODY_WRONG_TYPE : "Request body must be JSON"),
+    })
+  } catch (_error) {
+    throw refused ?? invalid("Request body must be JSON")
   }
 }

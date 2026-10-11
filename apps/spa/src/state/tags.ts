@@ -1,7 +1,6 @@
 import { computed, signal } from "@preact/signals"
-import { RealtimeRequestError } from "@spy4x/realtime"
+import { describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { DEFAULT_TAG_COLOR, TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
-import { describeError } from "./describe-error.ts"
 import { apiAsUser } from "./realtime-call.ts"
 import { callCommand, currentLayer, offlineTags } from "../modules.ts"
 
