@@ -49,6 +49,13 @@ export const EXAMPLE_ENV_FILE = "infra/envs/.env.example"
 /** Names of variables that hold a password, secret or key. */
 const SECRET_NAME = /PASS|SECRET|PEPPER|TOTP|KEY|TOKEN/
 
+/**
+ * Secrets only a development machine uses, so a production env file may leave them out or keep the
+ * example's value. `SEED_PASSWORD` is the demo user's password: `db:seed` and `db:reset` refuse to
+ * run unless `ENV` is `dev`. The example's value stays public for every other variable.
+ */
+const DEVELOPMENT_ONLY: readonly string[] = ["SEED_PASSWORD"]
+
 /** One secret a deploy must not go ahead with, and why. */
 export interface UnsafeSecret {
   name: string
@@ -76,6 +83,7 @@ export function unsafeSecretsIn(
   const names = new Set([...required, ...Object.keys(values).filter((n) => SECRET_NAME.test(n))])
   const unsafe: UnsafeSecret[] = []
   for (const name of names) {
+    if (DEVELOPMENT_ONLY.includes(name)) continue
     const value = values[name] ?? ""
     if (published.has(value)) unsafe.push({ name, reason: "example" })
     else if (value === "" && required.includes(name)) unsafe.push({ name, reason: "empty" })

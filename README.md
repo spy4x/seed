@@ -82,9 +82,13 @@ values (plus the seed's `AUTH_PEPPER` and `SEED_PASSWORD`). It drops the databas
 seeds it, after you confirm; `--yes` skips the question. It refuses unless `ENV=dev`, `DB_HOST` is
 `localhost`, `127.0.0.1` or `db`, and `DB_NAME` differs from the one in `infra/envs/.env.prod`. A
 missing or unreadable `.env.prod` also refuses; on a machine without one, add `--no-prod-check`.
+A missing `DB_PORT`, `DB_USER` or `DB_PASS`, or a missing or invalid `AUTH_PEPPER` or
+`SEED_PASSWORD`, refuses too, before anything is dropped.
 
-To add a demo user `demo` who owns a group, run `deno task db:seed` with the same values plus
-`AUTH_PEPPER` (the API's) and `SEED_PASSWORD` (the demo user's password, 8 to 50 characters).
+To add a demo user who signs in as `demo@example.com` and owns the group `Demo team`, run
+`ENV=dev deno task db:seed` with the same values plus `AUTH_PEPPER` (the API's) and `SEED_PASSWORD`
+(the demo user's password, 8 to 50 characters). It runs only with `ENV=dev`. Run again, it finds
+the user and changes nothing; when it cannot create the user, it says so and exits with 1.
 
 ## What a fresh project looks like
 

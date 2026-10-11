@@ -37,6 +37,8 @@ async function run(
       DB_USER: "u",
       DB_PASS: "p",
       DB_NAME: "fixture_dev_db",
+      AUTH_PEPPER: "fixture-pepper-0123456789-0123456789",
+      SEED_PASSWORD: "fixture-password",
       ...env,
     },
     stdin: "piped",
@@ -83,6 +85,29 @@ Deno.test("db:reset goes ahead without the production file only with --no-prod-c
     expect(r.code).toBe(1)
     expect(r.out).toContain("(no production file to compare against)")
     expect(r.out).toMatch(WENT_AHEAD)
+  })
+})
+
+Deno.test("db:reset refuses before it touches the database when a seed variable is missing", async () => {
+  await withProdFile(PROD, async (flag) => {
+    for (const name of ["AUTH_PEPPER", "SEED_PASSWORD"]) {
+      const r = await run([flag, "--yes"], { [name]: "" })
+      expect(r.code).toBe(1)
+      expect(r.out).toContain(`${name} must be set`)
+      expect(r.out).not.toMatch(WENT_AHEAD)
+    }
+  })
+})
+
+Deno.test("db:reset refuses before it touches the database when DB_PORT, DB_USER or DB_PASS is missing", async () => {
+  await withProdFile(PROD, async (flag) => {
+    for (const name of ["DB_PORT", "DB_USER", "DB_PASS"]) {
+      const r = await run([flag, "--yes"], { [name]: "" })
+      expect(r.code).toBe(1)
+      expect(r.out).toContain(name)
+      expect(r.out).not.toContain("Target:")
+      expect(r.out).not.toMatch(WENT_AHEAD)
+    }
   })
 })
 

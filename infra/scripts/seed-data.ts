@@ -1,11 +1,12 @@
 /// <reference lib="deno.ns" />
 /**
- * Seeds a development database with a small, neutral demo data set: a user `demo` (with the
- * first group every sign-up gets, named `Personal`) who owns a second group, `Demo team`.
+ * Seeds a development database with a small, neutral demo data set: a user who signs in as
+ * `demo@example.com` (with the first group every sign-up gets, named `Personal`) and owns a second
+ * group, `Demo team`.
  *
  * Usage, after `deno task db:migrate`, with the same `DB_*` values:
- * `DB_HOST=127.0.0.1 DB_PORT=5432 DB_USER=… DB_PASS=… DB_NAME=… AUTH_PEPPER=… SEED_PASSWORD=…
- * deno task db:seed`
+ * `ENV=dev DB_HOST=127.0.0.1 DB_PORT=5432 DB_USER=… DB_PASS=… DB_NAME=… AUTH_PEPPER=…
+ * SEED_PASSWORD=… deno task db:seed`
  *
  * - `AUTH_PEPPER` must be the API's own, or the demo user cannot sign in: it is part of every
  *   password hash.
@@ -13,9 +14,10 @@
  *
  * The user is created through the API's own sign-up (`createSignIn`), so the auth user, password
  * key, profile and first group are written exactly as a real sign-up writes them. The session
- * that sign-up opens is signed out at once. Running the seed again changes nothing: it stops when
- * `demo` exists. It refuses to run when `ENV` is `prod`, so no production database gets a
- * `demo` account with a known password.
+ * that sign-up opens is signed out at once. Running the seed again changes nothing: it looks the
+ * address up first and stops when the user exists. When sign-up refuses a user that does not
+ * exist, the seed fails instead of reporting success. It runs only when `ENV` is `dev`, the same
+ * rule as `db:reset`, so no production database gets a demo account with a known password.
  *
  * @module
  */
@@ -26,10 +28,14 @@ import { createSqlFromEnv } from "@spy4x/server/db"
 import { authPasswordSchema } from "@domain/identity"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
+import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
-/** The demo user's username. */
-export const DEMO_USERNAME = "demo"
+/**
+ * The address the demo user signs in with, on a domain reserved for examples (RFC 2606). Written
+ * as sign-up stores it (trimmed, lower case), so the lookup before sign-up finds it.
+ */
+export const DEMO_EMAIL = "demo@example.com"
 /** The name of the shared group the demo user owns. */
 export const DEMO_GROUP_NAME = "Demo team"
 
@@ -47,15 +53,23 @@ export class SeedConfigError extends Error {
   }
 }
 
+/** Raised when sign-up refuses to create the demo user although no such user exists. */
+export class SeedRefusedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "SeedRefusedError"
+  }
+}
+
 /**
  * Reads and checks `AUTH_PEPPER` and `SEED_PASSWORD`, with the API's rules for each, and refuses
- * to seed when `ENV` is `prod`.
+ * to seed unless `ENV` is `dev`. `db:reset` calls it before it drops anything.
  *
- * @throws {SeedConfigError} When `ENV` is `prod`, or a variable is missing or breaks its rule.
+ * @throws {SeedConfigError} When `ENV` is not `dev`, or a variable is missing or breaks its rule.
  */
 export function readSeedOptions(env: Record<string, string | undefined>): SeedOptions {
-  if (env.ENV === "prod") {
-    throw new SeedConfigError("ENV is prod: the demo user is for development databases only")
+  if (env.ENV !== "dev") {
+    throw new SeedConfigError("ENV must be dev: the demo user is for development databases only")
   }
   const pepper = env.AUTH_PEPPER ?? ""
   if (pepper.length < 32) {
@@ -68,8 +82,15 @@ export function readSeedOptions(env: Record<string, string | undefined>): SeedOp
   return { pepper, password }
 }
 
-/** Creates the demo data. `false` when the demo user already exists and nothing was written. */
+/**
+ * Creates the demo data. `false` when the demo user already exists and nothing was written.
+ *
+ * @throws {SeedRefusedError} When the user does not exist and sign-up still refuses to create it.
+ */
 export async function seed(db: AppDbBase, options: SeedOptions): Promise<boolean> {
+  // Sign-up answers `null` for a taken address and for a refused one alike, so "exists already"
+  // is decided here, not from its answer.
+  if (await db.authStore.findKey(PASSWORD_METHOD, DEMO_EMAIL)) return false
   const signIn = createSignIn({
     db,
     pepper: options.pepper,
@@ -85,7 +106,7 @@ export async function seed(db: AppDbBase, options: SeedOptions): Promise<boolean
   let failure: unknown = null
   const app = new Hono().post("/", async (c) => {
     try {
-      userId = (await signIn.signUp(c, DEMO_USERNAME, options.password))?.user.id ?? null
+      userId = (await signIn.signUp(c, DEMO_EMAIL, options.password))?.user.id ?? null
     } catch (error) {
       failure = error
     }
@@ -93,7 +114,9 @@ export async function seed(db: AppDbBase, options: SeedOptions): Promise<boolean
   })
   await app.request("/", { method: "POST" })
   if (failure) throw failure
-  if (userId === null) return false
+  if (userId === null) {
+    throw new SeedRefusedError(`sign-up refused to create the user "${DEMO_EMAIL}"`)
+  }
 
   await db.sessionStore.signOutUser(userId, null)
   await db.group.create({ id: uuidV7(), name: DEMO_GROUP_NAME }, userId)
@@ -119,9 +142,13 @@ async function main(): Promise<void> {
     const created = await seed(new AppDbBase({ sql }), options)
     console.log(
       created
-        ? `✅ Seeded user "${DEMO_USERNAME}" and shared group "${DEMO_GROUP_NAME}".`
-        : `✅ User "${DEMO_USERNAME}" exists already. Nothing to seed.`,
+        ? `✅ Seeded user "${DEMO_EMAIL}" and shared group "${DEMO_GROUP_NAME}".`
+        : `✅ User "${DEMO_EMAIL}" exists already. Nothing to seed.`,
     )
+  } catch (error) {
+    if (!(error instanceof SeedRefusedError)) throw error
+    console.error(`❌ ${error.message}`)
+    Deno.exitCode = 1
   } finally {
     await sql.end({ timeout: 5 })
   }

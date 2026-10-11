@@ -2,7 +2,16 @@
 import { expect } from "@std/expect"
 import { checkGuards, readProdDbName, ResetRefusedError, type ResetSteps, runReset } from "./db-reset.ts"
 
-const DEV = { ENV: "dev", DB_HOST: "127.0.0.1", DB_PORT: "5432", DB_NAME: "dev_db" }
+const DEV = {
+  ENV: "dev",
+  DB_HOST: "127.0.0.1",
+  DB_PORT: "5432",
+  DB_NAME: "dev_db",
+  DB_USER: "dev_user",
+  DB_PASS: "dev_pass",
+  AUTH_PEPPER: "p".repeat(32),
+  SEED_PASSWORD: "12345678",
+}
 const PROD_FILE = `# fixture\nDB_NAME=fixture_prod_db # note\nDB_HOST=db\n`
 
 function steps(answer: boolean): ResetSteps & { calls: string[] } {
@@ -26,6 +35,16 @@ Deno.test("refuses to reset when ENV is prod, before any step runs", async () =>
     new ResetRefusedError("ENV must be dev"),
   )
   expect(s.calls).toEqual([])
+})
+
+Deno.test("refuses before any step runs when the seed would refuse its variables", async () => {
+  for (const [name, value] of [["AUTH_PEPPER", undefined], ["SEED_PASSWORD", "short"]] as const) {
+    const s = steps(true)
+    await expect(runReset({ ...DEV, [name]: value }, PROD_FILE, { yes: true }, s)).rejects.toThrow(
+      new RegExp(name),
+    )
+    expect(s.calls).toEqual([])
+  }
 })
 
 Deno.test("refuses to reset when ENV is unset", () => {
@@ -67,6 +86,36 @@ Deno.test("refuses a database name that appears in .env.prod, without printing i
 
 Deno.test("refuses when DB_NAME is not set", () => {
   expect(() => checkGuards({ ...DEV, DB_NAME: undefined }, undefined)).toThrow(/DB_NAME/)
+})
+
+Deno.test("refuses before any step runs when DB_PORT is not a port number", async () => {
+  for (const port of [undefined, "", "abc", "0", "65536", "5432x"]) {
+    const s = steps(true)
+    await expect(runReset({ ...DEV, DB_PORT: port }, PROD_FILE, { yes: true }, s)).rejects.toThrow(
+      new ResetRefusedError("DB_PORT must be set to a port number"),
+    )
+    expect(s.calls).toEqual([])
+  }
+})
+
+Deno.test("refuses before any step runs when DB_USER is not set", async () => {
+  for (const user of [undefined, ""]) {
+    const s = steps(true)
+    await expect(runReset({ ...DEV, DB_USER: user }, PROD_FILE, { yes: true }, s)).rejects.toThrow(
+      new ResetRefusedError("DB_USER is not set"),
+    )
+    expect(s.calls).toEqual([])
+  }
+})
+
+Deno.test("refuses before any step runs when DB_PASS is not set", async () => {
+  for (const pass of [undefined, ""]) {
+    const s = steps(true)
+    await expect(runReset({ ...DEV, DB_PASS: pass }, PROD_FILE, { yes: true }, s)).rejects.toThrow(
+      new ResetRefusedError("DB_PASS is not set"),
+    )
+    expect(s.calls).toEqual([])
+  }
 })
 
 Deno.test("refuses when .env.prod is missing, unless the check is skipped", async () => {

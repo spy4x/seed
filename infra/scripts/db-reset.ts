@@ -12,6 +12,12 @@
  * It refuses, before it touches anything, unless all of these hold:
  *
  * - `ENV` is `dev`;
+ * - `DB_PORT` is a port number, and `DB_USER` and `DB_PASS` are set. The reset has no default for
+ *   them, because `db:migrate` and `db:seed` have none: a reset that guessed the port dropped the
+ *   database and then failed in the first of them;
+ * - `AUTH_PEPPER` and `SEED_PASSWORD` pass the seed's own check (`readSeedOptions`).
+ *
+ * So a value the migration or the seed cannot start without stops the reset before the drop.
  * - `DB_HOST` is `localhost`, `127.0.0.1` or `db`, the Compose service name of the development
  *   database;
  * - `DB_NAME` is not the `DB_NAME` in `infra/envs/.env.prod`. This guard fails closed: a missing
@@ -26,6 +32,7 @@
 
 import postgres from "postgres"
 import { parseEnvValues } from "./env-file.ts"
+import { readSeedOptions } from "./seed-data.ts"
 
 /** Where the production values live. Only `DB_NAME` is read, only inside this script. */
 export const PROD_ENV_PATH = "./infra/envs/.env.prod"
@@ -64,10 +71,11 @@ export function readProdDbName(content: string | undefined, path = PROD_ENV_PATH
 }
 
 /**
- * Checks the three guards. `prodDbName` is `undefined` only when the production check is skipped.
+ * Checks the guards. `prodDbName` is `undefined` only when the production check is skipped.
  *
- * @throws {ResetRefusedError} When `ENV` is not `dev`, the host is not local, the name is missing
- *   or the name matches `prodDbName`.
+ * @throws {ResetRefusedError} When `ENV` is not `dev`, the host is not local, the name is missing,
+ *   the name matches `prodDbName`, `DB_PORT` is not a port number, or `DB_USER` or `DB_PASS` is
+ *   missing.
  */
 export function checkGuards(
   env: Record<string, string | undefined>,
@@ -81,6 +89,14 @@ export function checkGuards(
   if (prodDbName !== undefined && env.DB_NAME === prodDbName) {
     throw new ResetRefusedError("the database name matches production")
   }
+  // `db:migrate` and `db:seed` run with `-N=$DB_HOST:$DB_PORT` and connect with these values, so
+  // without them they fail after the drop.
+  const port = env.DB_PORT ?? ""
+  if (!/^\d{1,5}$/.test(port) || Number(port) < 1 || Number(port) > 65535) {
+    throw new ResetRefusedError("DB_PORT must be set to a port number")
+  }
+  if (!env.DB_USER) throw new ResetRefusedError("DB_USER is not set")
+  if (!env.DB_PASS) throw new ResetRefusedError("DB_PASS is not set")
 }
 
 /** The steps a reset runs, replaceable so tests need no database. */
@@ -95,10 +111,12 @@ export interface ResetSteps {
 }
 
 /**
- * Runs the guards, asks for confirmation unless `yes`, then recreates, migrates and seeds.
- * Returns false when the person declined; nothing has changed then.
+ * Runs the guards and the seed's own check of its variables, asks for confirmation unless `yes`,
+ * then recreates, migrates and seeds. Returns false when the person declined; nothing has changed
+ * then.
  *
  * @throws {ResetRefusedError} When a guard refuses; no step has run then.
+ * @throws {SeedConfigError} When the seed would refuse its variables; no step has run then.
  */
 export async function runReset(
   env: Record<string, string | undefined>,
@@ -108,7 +126,10 @@ export async function runReset(
 ): Promise<boolean> {
   const prodPath = options.prodPath ?? PROD_ENV_PATH
   checkGuards(env, options.skipProdCheck ? undefined : readProdDbName(prodEnvContent, prodPath))
-  const target = `${env.DB_NAME} on ${env.DB_HOST}:${env.DB_PORT || "5432"}` +
+  // The seed runs last, in a process of its own with this same environment. What it would refuse
+  // is refused here, before the drop.
+  readSeedOptions(env)
+  const target = `${env.DB_NAME} on ${env.DB_HOST}:${env.DB_PORT}` +
     (options.skipProdCheck
       ? ` (${NO_PROD_FILE})`
       : prodPath === PROD_ENV_PATH
@@ -130,7 +151,7 @@ export async function recreateDatabase(env: Record<string, string | undefined>):
   const name = env.DB_NAME!
   const sql = postgres({
     host: env.DB_HOST,
-    port: Number(env.DB_PORT || "5432"),
+    port: Number(env.DB_PORT),
     user: env.DB_USER,
     password: env.DB_PASS,
     database: "postgres",

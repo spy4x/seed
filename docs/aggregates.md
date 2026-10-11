@@ -53,6 +53,19 @@ Add the table to `SNAPSHOT_TABLES` and apply the migration in
 `tests/integration/groups.integration.test.ts`, which compares the two. Compose applies migrations
 on every start; nothing else is needed to deploy one.
 
+**Naming a migration.** A file is named `YYYY_MM_DD_NNNN_words_in_snake_case.sql` (ending in
+`.no_transaction.sql` for a statement that cannot run in a transaction), and a new one must sort
+after every migration already on `main`. The runner applies files in name order and
+skips the ones a database has recorded, so a file that sorts earlier runs after them on your
+database and before them on an empty one, where the tables it changes do not exist yet. The date is
+a counter, not the calendar, and the names already run ahead of it: do not use today's date. Take
+the newest name on `main` and go one step past it, either the next day with `0001` or the same day
+with the next number. Then append the file name as the last line of `ON_MAIN` in
+`tests/migration-names.test.ts`, which fails for a file that is not listed or sorts before the
+newest one listed. When another pull request merges a migration first, rebase, rename yours past
+it and append it after theirs. A migration on `main` is never renamed: databases that applied it
+know it by its name.
+
 ### 3. Repository: `libs/server/notes/`
 
 | File                          | What it holds                                                                                                                                                                                                |
@@ -336,7 +349,8 @@ A setting is a property of the group itself, such as its description, colour and
 a new aggregate: the group already has the table, the repository, the transports and the change
 event. Follow the details command (`group.updateDetails`, spy4x/template#134) file by file.
 
-1. **Migration.** One file in `libs/server/db/migrations/` adds the column, with a default or a
+1. **Migration.** One file in `libs/server/db/migrations/`, named by the rule in
+   ["Naming a migration"](#2-database-libsserverdb), adds the column, with a default or a
    nullable type so existing rows stay valid, and a `CHECK` for a limit the database can hold.
    Mirror the same lines in `libs/server/db/schema.sql`; `groups.integration.test.ts` compares the
    snapshot with the migrations. Tests that apply a hand-written list of migrations

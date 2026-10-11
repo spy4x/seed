@@ -220,6 +220,23 @@ Deno.test("a secret the example leaves empty may stay empty or be left out", asy
   expect(unsafeSecretsIn(values, example)).toEqual([])
 })
 
+Deno.test("a deploy goes ahead without the seed password, and with the example's", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  expect(example.SEED_PASSWORD).not.toBe("")
+  const { SEED_PASSWORD: _, ...without } = await safeValues()
+
+  expect(await refusal(without)).toBe("")
+  expect(await refusal({ ...without, SEED_PASSWORD: "" })).toBe("")
+  expect(await refusal({ ...without, SEED_PASSWORD: example.SEED_PASSWORD })).toBe("")
+})
+
+Deno.test("the seed password of the example is refused as the value of another secret", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  const values = { ...await safeValues(), DB_PASS: example.SEED_PASSWORD }
+
+  expect(unsafeSecretsIn(values, example)).toEqual([{ name: "DB_PASS", reason: "example" }])
+})
+
 /** Reads env files from `files` instead of the disk; a path it lacks is a missing file. */
 function reader(files: Record<string, Record<string, string>>) {
   return (path: string): Promise<Record<string, string>> => {
