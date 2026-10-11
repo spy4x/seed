@@ -1,12 +1,11 @@
 import { pushSubscribeRequestSchema, pushUnsubscribeRequestSchema } from "@spy4x/platform/model"
-import type { PushSubscribeRequest, PushUnsubscribeRequest } from "@spy4x/platform/model"
 import { PushRegisterCommand, PushRemoveCommand } from "../../cqrs/commands.ts"
 import type { PushRegisterResult, PushRemoveResult } from "../../cqrs/commands.ts"
 import { PushListQuery } from "../../cqrs/queries.ts"
 import type { PushListResult } from "../../cqrs/queries.ts"
 import type { Actor } from "@domain/identity"
 import type { Operations } from "@spy4x/realtime/operations"
-import { expectNoPayload, parsePayload } from "../../services/socket-payload.ts"
+import { expectNoPayload, parsePayload } from "@spy4x/realtime"
 
 /** What the push socket requests need from the app. */
 export interface PushOperationDependencies {
@@ -25,7 +24,7 @@ export function createPushOperations(dependencies: PushOperationDependencies): O
     "push.register": {
       kind: "command",
       handle: async ({ actor, requestId, payload, idempotencyKey }) => {
-        const { subscription, deviceId } = parsePayload<PushSubscribeRequest>(
+        const { subscription, deviceId } = parsePayload(
           pushSubscribeRequestSchema,
           payload,
         )
@@ -43,7 +42,7 @@ export function createPushOperations(dependencies: PushOperationDependencies): O
     "push.remove": {
       kind: "command",
       handle: async ({ actor, requestId, payload, idempotencyKey }) => {
-        const { deviceId } = parsePayload<PushUnsubscribeRequest>(
+        const { deviceId } = parsePayload(
           pushUnsubscribeRequestSchema,
           payload,
         )

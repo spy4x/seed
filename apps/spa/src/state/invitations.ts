@@ -26,7 +26,9 @@ export interface InvitationFailure {
   plan: PlanRefusal | null
 }
 
-type Outcome<T> = { ok: true; data: T } | { ok: false; failure: InvitationFailure }
+type Outcome<T> =
+  | { ok: true; data: T }
+  | { ok: false; failure: InvitationFailure; status?: number }
 
 /** Which invitation an answer is for: the token of a link, or the id of one sent to an address. */
 export type InvitationRef = { token: string } | { invitationId: string }
@@ -75,7 +77,11 @@ export function createInvitationsStore(
         typeof (error as { code?: unknown }).code === "string"
       ? (error as { code: string }).code
       : null
-    return { ok: false, failure: { message, code, plan: readPlanRefusal(error) } }
+    return {
+      ok: false,
+      status: response.status,
+      failure: { message, code, plan: readPlanRefusal(error) },
+    }
   }
 
   const unreachable: Outcome<never> = {
@@ -104,7 +110,7 @@ export function createInvitationsStore(
     try {
       const answer = await device.through(key, async () => {
         const result = await request<T>("GET", url)
-        if (!result.ok) throw new ReadRefused(result.failure)
+        if (!result.ok) throw new ReadRefused(result.failure, result.status ?? 0)
         return result.data
       }, (copy) => early(copy?.value))
       return { ok: true, data: answer.value }

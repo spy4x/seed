@@ -245,10 +245,10 @@ export async function changePassword(
 
 /** The devices the person is signed in on, this one first. */
 export async function listSessions(): Promise<
-  { ok: true; sessions: SignedInDevice[] } | { ok: false; error: string }
+  { ok: true; sessions: SignedInDevice[] } | { ok: false; error: string; status?: number }
 > {
   const result = await apiFetch<SignedInDevicesResponse>("/api/auth/sessions")
-  if (!result.ok) return { ok: false, error: result.error.message }
+  if (!result.ok) return { ok: false, error: result.error.message, status: result.status }
   return { ok: true, sessions: result.data.sessions }
 }
 

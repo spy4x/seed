@@ -55,8 +55,6 @@ libs/domain    groups (enums, policy, commands/queries), identity (user, session
 libs/server    db (migrations and schema.sql only), groups (Postgres repository,
                cursor, change notification). Database access, outbox, key-value store, config,
                request logging, sign-in and auth come from @spy4x/server/*.
-libs/client    vite. Icons, useUrlFilters and the signed-in Shell come from
-               @spy4x/preact-icons, @spy4x/preact-signals and @spy4x/preact-system.
 libs/ui        The SPA's product screens (alias @ui/): auth, profile, groups, notes and
                the frames; the MPA renders only the newsletter's. See AGENTS.md.
 ```
@@ -371,7 +369,7 @@ hint with `profileStore.refresh()`, so a second tab follows without a reload.
    a `change.hint` with the sequence for every member's open sockets.
 5. A job is an outbox row with `aggregate_type = 'job'`, no group and no payload, claimed once its
    `available_at` has come. `scheduleOutboxEvent` (from `@spy4x/server/outbox`) writes one, in the
-   transaction of the change that needs it. Add a handler to the `JobPublisher` in
+   transaction of the change that needs it. Add a handler to the `JobPublisher` (from `@spy4x/server/outbox`) in
    `libs/server/jobs/wiring.ts`; it reads what it needs from the database. A failing job backs off
    (1 s, 2 s, 4 s, up to 5 minutes) and after 10 attempts stops with its error in
    `last_error_code`. A repeating job is listed in `repeatEveryMs`: a successful run writes the

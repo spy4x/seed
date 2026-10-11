@@ -5,7 +5,7 @@ import { Field } from "@spy4x/preact-ui/field"
 import { Select } from "@spy4x/preact-ui/input"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import type { PlanRefusal } from "@domain/billing"
-import { FocusedError } from "./group-page.tsx"
+import { ErrorState } from "@spy4x/preact-ui/error-state"
 import type { MoveTarget } from "./notes-screen.tsx"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -109,7 +109,7 @@ export function GroupMoveAllForm(
               navigate={navigate}
             />
           )
-          : <FocusedError message={error} dataE2E="group-move-all-error" />}
+          : <ErrorState focusOnAppear message={error} dataE2E="group-move-all-error" />}
         <Cluster gap="md" class="justify-end">
           <Button
             type="button"

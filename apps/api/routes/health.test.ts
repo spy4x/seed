@@ -15,19 +15,19 @@ Deno.test("health reports ok when the database and the cache answer", async () =
   const { status, body } = await health(true, true)
 
   expect(status).toBe(200)
-  expect(body).toMatchObject({ status: "ok", isDbConnected: true, isCacheConnected: true })
+  expect(body).toMatchObject({ status: "ok", checks: { database: true, cache: true } })
 })
 
 Deno.test("health reports degraded, still 200, when only the cache is down", async () => {
   const { status, body } = await health(true, false)
 
   expect(status).toBe(200)
-  expect(body).toMatchObject({ status: "degraded", isDbConnected: true, isCacheConnected: false })
+  expect(body).toMatchObject({ status: "degraded", checks: { database: true, cache: false } })
 })
 
 Deno.test("health reports down with 503 when the database is down", async () => {
   const { status, body } = await health(false, true)
 
   expect(status).toBe(503)
-  expect(body).toMatchObject({ status: "down", isDbConnected: false })
+  expect(body).toMatchObject({ status: "down", checks: { database: false, cache: true } })
 })

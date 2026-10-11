@@ -1,5 +1,6 @@
 /// <reference lib="es2022.intl" />
 import type { Command, Query } from "@spy4x/platform/cqrs"
+import { isRecord } from "@spy4x/platform/universal/is-record"
 import type { Actor } from "@domain/identity"
 
 export * from "./activity.ts"
@@ -1009,10 +1010,6 @@ export function assertOwnerRemains(ownerCount: number): void {
   if (ownerCount < 1) {
     throw new GroupError("LAST_OWNER", "A shared group must retain an owner")
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 function isGroupRole(role: GroupRole): boolean {

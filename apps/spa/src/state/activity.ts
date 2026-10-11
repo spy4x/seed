@@ -2,7 +2,7 @@ import { signal } from "@preact/signals"
 import type { ActivityRow } from "@ui/group-activity-screen.tsx"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
-import { READ_KEYS } from "./read-keys.ts"
+import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 
 /** One page of the log as the API answers: `nextCursor` is `null` on the last page. */
 export interface ActivityPageResult {
@@ -101,13 +101,16 @@ export function createActivityStore(
 }
 
 /** The activity of the open group, read over REST: `GET /api/groups/:groupId/activity`. */
-export const activityStore = createActivityStore({
+export const activityHttp: ActivityDependencies = {
   async list({ groupId, cursor }) {
     const query = cursor ? `?${new URLSearchParams({ cursor })}` : ""
     const result = await apiFetch<ActivityPageResult>(
       `/api/groups/${encodeURIComponent(groupId)}/activity${query}`,
     )
-    if (!result.ok) throw new Error(result.error.message)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status)
     return result.data
   },
-}, localReads)
+}
+
+/** The activity of the open group, over {@link activityHttp} and the device. */
+export const activityStore = createActivityStore(activityHttp, localReads)

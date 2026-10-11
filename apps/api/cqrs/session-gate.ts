@@ -1,5 +1,5 @@
 import type { CqrsMiddleware } from "@spy4x/platform/cqrs"
-import { SecondFactorStatus } from "@spy4x/server/sign-in"
+import { secondFactorSatisfied } from "@spy4x/server/sign-in"
 import { AccessError, type Actor, UserMFAStatus } from "@domain/identity"
 import { assertTokenMayDispatch, TOKEN_MESSAGES, type TokenNeed } from "./token-scope.ts"
 
@@ -16,9 +16,9 @@ type MessageConstructor = new (...args: any[]) => { data: unknown }
  * know, is refused.
  */
 export function assertSecondFactorSatisfied(actor: Actor): void {
-  const status = actor.sessionSecondFactor
-  if (status === SecondFactorStatus.Completed) return
-  if (status === SecondFactorStatus.NotRequired && actor.userMfa !== UserMFAStatus.CONFIGURED) {
+  if (
+    secondFactorSatisfied(actor.sessionSecondFactor, actor.userMfa === UserMFAStatus.CONFIGURED)
+  ) {
     return
   }
   throw new AccessError("MFA_REQUIRED", "Second factor has not been completed for this session")

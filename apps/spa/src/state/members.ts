@@ -10,7 +10,7 @@ import {
 } from "@ui/group-transfer.tsx"
 import { apiRead } from "./realtime-call.ts"
 import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
-import { READ_KEYS } from "./read-keys.ts"
+import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 
 /** A member as the API sends them: `joinedAt` is an ISO string. */
 export interface MemberItem {
@@ -251,12 +251,12 @@ export function createMembersStore(
  * Reads over REST, like every pull, so the list loads before the socket opens; changes go over the
  * socket as commands with a retry key.
  */
-export const membersStore = createMembersStore({
+export const membersHttp: MembersDependencies = {
   async list({ groupId }) {
     const result = await apiRead<{ members: MemberItem[]; memberCount: number }>(
       `/api/groups/${encodeURIComponent(groupId)}/members`,
     )
-    if (!result.ok) throw new Error(result.error.message)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status)
     return result.data
   },
   setRole: (input) => callCommand("group.setRole", input),
@@ -289,4 +289,7 @@ export const membersStore = createMembersStore({
       typeof code === "string" ? code : undefined,
     )
   },
-}, localReads)
+}
+
+/** The members of the open group, over {@link membersHttp} and the device. */
+export const membersStore = createMembersStore(membersHttp, localReads)

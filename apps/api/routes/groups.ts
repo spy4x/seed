@@ -1,4 +1,5 @@
 import { Hono } from "hono"
+import { parseBoundedInteger } from "@spy4x/platform/universal/bounded-integer"
 import type { Context, MiddlewareHandler } from "hono"
 import {
   type DeletedGroupSummary,
@@ -311,14 +312,8 @@ const requireGroupAuthentication: MiddlewareHandler<APIContext> = async (c, next
 }
 
 function parseLimit(value: string | undefined): number {
-  if (value === undefined) {
-    return 50
-  }
-  if (!/^\d+$/.test(value)) {
-    throw new GroupFeatureError("INVALID_REQUEST", "Group list limit is invalid")
-  }
-  const limit = Number(value)
-  if (limit < 1 || limit > 100) {
+  const limit = parseBoundedInteger(value, { fallback: 50, max: 100 })
+  if (limit === null) {
     throw new GroupFeatureError("INVALID_REQUEST", "Group list limit is invalid")
   }
   return limit

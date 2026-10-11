@@ -2,16 +2,12 @@
 import { expect } from "@std/expect"
 import postgres from "postgres"
 import {
+  JobPublisher,
   OutboxProcessor,
   PostgresOutboxRepository,
   scheduleOutboxEvent,
 } from "@spy4x/server/outbox"
-import {
-  JOB_AGGREGATE,
-  JOB_AGGREGATE_ID,
-  JobPublisher,
-  OUTBOX_CLEANUP_JOB,
-} from "@server/jobs/jobs.ts"
+import { JOB_AGGREGATE, JOB_AGGREGATE_ID, OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
 import {
   enqueuePasswordResetMail,
@@ -277,8 +273,10 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
       const ran: string[] = []
       const processor = new OutboxProcessor(
         new PostgresOutboxRepository(sql),
-        new JobPublisher({ [OUTBOX_CLEANUP_JOB]: () => Promise.resolve(void ran.push("ran")) }, {
-          publish: () => Promise.resolve(),
+        new JobPublisher({
+          aggregateType: JOB_AGGREGATE,
+          handlers: { [OUTBOX_CLEANUP_JOB]: () => Promise.resolve(void ran.push("ran")) },
+          fallback: { publish: () => Promise.resolve() },
         }),
       )
       await scheduleOutboxEvent(sql, JOB, { inMs: 60 * 60_000 })
@@ -298,8 +296,10 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
     await t.step("a failing job backs off, then stops with its error stored", async () => {
       const processor = new OutboxProcessor(
         new PostgresOutboxRepository(sql),
-        new JobPublisher({ [OUTBOX_CLEANUP_JOB]: () => Promise.reject(new TypeError("down")) }, {
-          publish: () => Promise.resolve(),
+        new JobPublisher({
+          aggregateType: JOB_AGGREGATE,
+          handlers: { [OUTBOX_CLEANUP_JOB]: () => Promise.reject(new TypeError("down")) },
+          fallback: { publish: () => Promise.resolve() },
         }),
         { maxAttempts: 3, baseRetryDelayMs: 60_000 },
       )

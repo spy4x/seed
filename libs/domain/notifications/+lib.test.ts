@@ -2,7 +2,6 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import {
   describeNotification,
-  isInAppLink,
   NOTIFICATION_PAGE_DEFAULT,
   NOTIFICATION_PAGE_MAX,
   NotificationError,
@@ -89,16 +88,6 @@ describe("notification request parsing", () => {
     expect(parseNotificationLimit(String(NOTIFICATION_PAGE_MAX))).toBe(NOTIFICATION_PAGE_MAX)
     for (const bad of ["0", String(NOTIFICATION_PAGE_MAX + 1), "-3", "x", "1e2"]) {
       expect(codeOf(() => parseNotificationLimit(bad))).toBe("INVALID_REQUEST")
-    }
-  })
-})
-
-describe("isInAppLink", () => {
-  it("accepts paths of this app and refuses everything that leaves it", () => {
-    expect(isInAppLink("/groups/abc")).toBe(true)
-    expect(isInAppLink("/")).toBe(true)
-    for (const bad of ["https://evil.test", "//evil.test", "/\\evil.test", "groups", "", "/a b"]) {
-      expect(isInAppLink(bad)).toBe(false)
     }
   })
 })

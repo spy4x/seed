@@ -1,3 +1,5 @@
+import { isRecord } from "@spy4x/platform/universal/is-record"
+
 /**
  * The browser's request headers the API needs: the two headers the API's cross-site guard checks,
  * and what its rate limits record. The MPA has no session, so no cookie passes either way. All pass
@@ -76,10 +78,6 @@ export function createApi(
         : { status: response.status, body, retryAfter }
     },
   }
-}
-
-export function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 /**

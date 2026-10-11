@@ -1,5 +1,5 @@
 import { createMemoryOutboxStore, type OutboxStore } from "@spy4x/realtime/outbox"
-import { createMemoryReadCache } from "../state/memory-reads.ts"
+import { createMemoryReadCache } from "@spy4x/realtime/testing"
 import type { NoteItem } from "../state/notes.ts"
 import type { TagItem } from "../state/tags.ts"
 import type { OfflineStorage } from "./index.ts"

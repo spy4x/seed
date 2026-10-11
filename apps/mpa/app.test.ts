@@ -103,6 +103,20 @@ describe("pageMiddleware", () => {
     expect(calls).toEqual([])
   })
 
+  it("answers 400 to a post whose body is not a form and never calls the API", async () => {
+    const { calls, fetch } = fakeApi(() => Response.json({}))
+    const request = new Request(`${config.webAppOrigin}/subscribe`, {
+      method: "POST",
+      headers: { ...sameOrigin, "content-type": "application/json" },
+      body: JSON.stringify({ email: "ada@example.com", list: "news" }),
+    })
+
+    const response = await appWith(fetch)(request, info)
+
+    expect(response.status).toBe(400)
+    expect(calls).toEqual([])
+  })
+
   it("keeps a page out of every cache", async () => {
     const { fetch } = fakeApi(() => Response.json({}))
 

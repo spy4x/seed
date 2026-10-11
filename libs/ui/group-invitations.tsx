@@ -25,12 +25,9 @@ import {
   INVITATION_MAX_USES,
 } from "@domain/groups"
 import { ROLE_TEXT } from "./groups-screen.tsx"
-import {
-  FocusedError,
-  useClosesWhenDone,
-  useFocusAfterRemoval,
-  useFreshError,
-} from "./group-page.tsx"
+import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
+import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
+import { useFocusAfterRemoval } from "@spy4x/preact-ui/use-focus-after-removal"
 import { MoreMenu } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
@@ -299,7 +296,10 @@ export function PendingInvitations(
     list,
     invitations?.map((invitation) => invitation.id) ?? null,
     revokingId,
-    () => wrapper.current?.parentElement?.closest("section")?.querySelector("button"),
+    {
+      earlier: false,
+      fallback: () => wrapper.current?.parentElement?.closest("section")?.querySelector("button"),
+    },
   )
   if (!canManageInvitations(actorRole)) return null
   // The wrapper draws no box of its own, and stays when the last row goes, for the focus above.
@@ -362,7 +362,7 @@ function InvitationItem(
   },
 ): JSX.Element {
   const [revoking, setRevoking] = useState(false)
-  useClosesWhenDone(pending, error !== null, () => setRevoking(false))
+  useSucceeded(pending, error !== null, () => setRevoking(false))
   const [revokeError, opened] = useFreshError(error, pending)
   const who = invitation.email ?? "Anyone with the link"
   return (
@@ -423,7 +423,7 @@ function InvitationItem(
             <p class="text-sm text-muted">
               The link for {who} stops working right away. People who joined with it stay.
             </p>
-            <FocusedError message={revokeError} dataE2E="invitation-error" />
+            <ErrorState focusOnAppear message={revokeError} dataE2E="invitation-error" />
           </div>
         </ConfirmDialog>
       )}
@@ -675,5 +675,5 @@ function AnswerError(
 ): JSX.Element {
   return refusal
     ? <PlanRefusalNotice groupId={groupId} refusal={refusal} navigate={navigate} />
-    : <FocusedError message={error} dataE2E="invitation-answer-error" />
+    : <ErrorState focusOnAppear message={error} dataE2E="invitation-answer-error" />
 }

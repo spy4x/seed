@@ -6,7 +6,7 @@ import { parseAuth, signIn } from "@api/services/auth.ts"
 import { eventBus } from "@api/services/eventBus.ts"
 import { getWebPush } from "@api/services/webPush.ts"
 import { ONE_HOUR_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
-import { startSessionExpiry } from "./services/session-expiry.ts"
+import { startIntervalRunner } from "@spy4x/platform/server/interval-runner"
 import { createAuthRoute } from "./routes/auth.ts"
 import { createPushNotificationRoute } from "./routes/pushNotification.ts"
 import { createUsersRoute } from "./routes/users.ts"
@@ -323,10 +323,10 @@ realtime.startRevalidation(REALTIME_REVALIDATE_INTERVAL_MS)
 // This is a temporary solution to expire sessions every hour
 // This should be done in a more efficient way, like using a cron job or similar
 const SESSION_EXPIRE_INTERVAL = ONE_HOUR_IN_MILLISECONDS
-startSessionExpiry({
-  expireSessions: () => signIn.expireSessions(),
-  log,
+startIntervalRunner({
+  task: () => signIn.expireSessions(),
   intervalMs: SESSION_EXPIRE_INTERVAL,
+  onError: (error) => log(`error: session expiry failed, retrying next tick`, error),
 })
 
 export default app

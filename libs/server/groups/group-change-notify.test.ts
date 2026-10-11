@@ -1,60 +1,55 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
+import { type } from "arktype"
 import {
+  groupAccessLossSchema,
   GroupChangeNotifier,
-  parseGroupAccessLoss,
-  parseGroupChange,
+  groupChangeSchema,
 } from "./group-change-notify.ts"
 
 const GROUP_ID = "0b1f3c58-7f55-4a5d-8f6e-6a3a5a9d1a01"
 
-describe("parseGroupChange", () => {
-  it("reads a well-formed change", () => {
-    expect(parseGroupChange(JSON.stringify({ groupId: GROUP_ID, sequence: 3 }))).toEqual({
-      groupId: GROUP_ID,
-      sequence: 3,
-    })
+const accepts = (schema: typeof groupChangeSchema | typeof groupAccessLossSchema, value: unknown) =>
+  !(schema(value) instanceof type.errors)
+
+describe("groupChangeSchema", () => {
+  it("accepts a well-formed change", () => {
+    expect(accepts(groupChangeSchema, { groupId: GROUP_ID, sequence: 3 })).toBe(true)
   })
 
-  it("ignores anything that is not a group change", () => {
+  it("drops anything that is not a group change", () => {
     const payloads = [
-      "not json",
-      "null",
-      "[]",
-      JSON.stringify({ groupId: "not-a-uuid", sequence: 1 }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: 0 }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: 1.5 }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: "3" }),
-      JSON.stringify({ sequence: 1 }),
+      null,
+      [],
+      { groupId: "not-a-uuid", sequence: 1 },
+      { groupId: GROUP_ID, sequence: 0 },
+      { groupId: GROUP_ID, sequence: 1.5 },
+      { groupId: GROUP_ID, sequence: "3" },
+      { sequence: 1 },
     ]
-    for (const payload of payloads) expect(parseGroupChange(payload)).toBeNull()
+    for (const payload of payloads) expect(accepts(groupChangeSchema, payload)).toBe(false)
   })
 })
 
-describe("parseGroupAccessLoss", () => {
-  it("reads a well-formed access loss", () => {
-    const payload = JSON.stringify({ groupId: GROUP_ID, sequence: 3, userIds: [4, 9] })
-    expect(parseGroupAccessLoss(payload)).toEqual({
-      groupId: GROUP_ID,
-      sequence: 3,
-      userIds: [4, 9],
-    })
+describe("groupAccessLossSchema", () => {
+  it("accepts a well-formed access loss", () => {
+    expect(accepts(groupAccessLossSchema, { groupId: GROUP_ID, sequence: 3, userIds: [4, 9] }))
+      .toBe(true)
   })
 
-  it("ignores anything that is not an access loss", () => {
+  it("drops anything that is not an access loss", () => {
     const payloads = [
-      "not json",
-      "null",
-      JSON.stringify({ groupId: GROUP_ID, sequence: 3 }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: 3, userIds: [] }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: 3, userIds: "4" }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: 3, userIds: [4, "9"] }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: 3, userIds: [0] }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: 3, userIds: [1.5] }),
-      JSON.stringify({ groupId: GROUP_ID, sequence: 0, userIds: [4] }),
-      JSON.stringify({ groupId: "not-a-uuid", sequence: 3, userIds: [4] }),
+      null,
+      { groupId: GROUP_ID, sequence: 3 },
+      { groupId: GROUP_ID, sequence: 3, userIds: [] },
+      { groupId: GROUP_ID, sequence: 3, userIds: "4" },
+      { groupId: GROUP_ID, sequence: 3, userIds: [4, "9"] },
+      { groupId: GROUP_ID, sequence: 3, userIds: [0] },
+      { groupId: GROUP_ID, sequence: 3, userIds: [1.5] },
+      { groupId: GROUP_ID, sequence: 0, userIds: [4] },
+      { groupId: "not-a-uuid", sequence: 3, userIds: [4] },
     ]
-    for (const payload of payloads) expect(parseGroupAccessLoss(payload)).toBeNull()
+    for (const payload of payloads) expect(accepts(groupAccessLossSchema, payload)).toBe(false)
   })
 })
 

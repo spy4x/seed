@@ -352,6 +352,16 @@ Deno.test("notifications: a link that leaves the app is refused before it is sto
   })
 })
 
+Deno.test("notifications: a link is stored in its normalized form", async () => {
+  await withSchema(async (sql) => {
+    const { owner } = await team(sql)
+    await createNotification(sql, { userId: owner, kind: "space", link: "/a b", payload: {} })
+    await createNotification(sql, { userId: owner, kind: "dots", link: "/a/../b", payload: {} })
+    const links = Object.fromEntries((await inboxOf(sql, owner)).map((n) => [n.kind, n.link]))
+    expect(links).toEqual({ space: "/a%20b", dots: "/b" })
+  })
+})
+
 Deno.test("notifications: the worker's nightly cleanup runs the purge of read notifications", async () => {
   await withSchema(async (sql) => {
     const { owner } = await team(sql)

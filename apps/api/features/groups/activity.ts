@@ -1,4 +1,5 @@
 import type { QueryHandler } from "@spy4x/platform/cqrs"
+import { parseBoundedInteger } from "@spy4x/platform/universal/bounded-integer"
 import {
   ACTIVITY_PAGE_DEFAULT,
   ACTIVITY_PAGE_MAX,
@@ -58,10 +59,10 @@ export async function listActivityPage(
 
 /** The `limit` of a request's query string, or the default; anything else is `INVALID_REQUEST`. */
 export function parseActivityLimitParam(value: string | undefined): number {
-  if (value === undefined) return ACTIVITY_PAGE_DEFAULT
-  const limit = /^\d+$/.test(value) ? Number(value) : 0
-  if (limit < 1 || limit > ACTIVITY_PAGE_MAX) {
-    throw new GroupError("INVALID_REQUEST", "Activity limit is invalid")
-  }
+  const limit = parseBoundedInteger(value, {
+    fallback: ACTIVITY_PAGE_DEFAULT,
+    max: ACTIVITY_PAGE_MAX,
+  })
+  if (limit === null) throw new GroupError("INVALID_REQUEST", "Activity limit is invalid")
   return limit
 }

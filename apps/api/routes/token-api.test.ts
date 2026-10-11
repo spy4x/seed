@@ -164,6 +164,23 @@ describe("token API", () => {
     expect(one.status).toBe(200)
   })
 
+  it("refuses a list limit that is not a whole number from 1 to 100", async () => {
+    const { app } = buildApp()
+    for (const limit of ["0", "101", "-1", "1.5", "abc", "", "10x"]) {
+      const response = await app.request(`${API}/groups/${groupId}/notes?limit=${limit}`, {
+        headers: headers(READER),
+      })
+      expect([limit, response.status]).toEqual([limit, 400])
+      expect(await errorCode(response)).toBe("INVALID_REQUEST")
+    }
+    for (const limit of ["1", "100"]) {
+      const response = await app.request(`${API}/groups/${groupId}/notes?limit=${limit}`, {
+        headers: headers(READER),
+      })
+      expect([limit, response.status]).toEqual([limit, 200])
+    }
+  })
+
   it("creates a note in its group with a read-write token, as its owner", async () => {
     const { app, notes } = buildApp()
     const response = await createNote(app, WRITER)

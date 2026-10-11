@@ -2,7 +2,7 @@ import { signal } from "@preact/signals"
 import type { NotificationRow } from "@ui/notifications-screen.tsx"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
-import { READ_KEYS } from "./read-keys.ts"
+import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 
 /** One page of the inbox as the API answers: `nextCursor` is `null` on the last page. */
 export interface NotificationPageResult {
@@ -202,12 +202,12 @@ export function createNotificationsStore(
 }
 
 async function unwrap<T>(result: Awaited<ReturnType<typeof apiFetch<T>>>): Promise<T> {
-  if (!result.ok) throw new Error(result.error.message)
+  if (!result.ok) throw new ReadRefused(result.error.message, result.status)
   return result.data
 }
 
 /** The inbox, read and written over REST: `/api/notifications`. */
-export const notificationsStore = createNotificationsStore({
+export const notificationsHttp: NotificationDependencies = {
   async list({ cursor }) {
     const query = cursor ? `?${new URLSearchParams({ cursor })}` : ""
     return await unwrap(await apiFetch<NotificationPageResult>(`/api/notifications${query}`))
@@ -233,4 +233,7 @@ export const notificationsStore = createNotificationsStore({
     )
     return data.unreadCount
   },
-}, localReads)
+}
+
+/** The inbox, over {@link notificationsHttp} and the device. */
+export const notificationsStore = createNotificationsStore(notificationsHttp, localReads)

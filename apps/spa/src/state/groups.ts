@@ -3,7 +3,7 @@ import { RealtimeRequestError } from "@spy4x/realtime"
 import type { GroupColor, GroupDetails, GroupMoveAllResult, GroupRole } from "@domain/groups"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiRead } from "./realtime-call.ts"
-import { READ_KEYS } from "./read-keys.ts"
+import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 import {
   advanceGroupCursor,
   callCommand,
@@ -325,7 +325,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
 }
 
 /** The groups as the server serves them: reads over REST, writes over the socket. */
-const onlineGroups: GroupsDependencies = {
+export const onlineGroups: GroupsDependencies = {
   async fetchPage(cursor, via) {
     if (via === "socket") {
       return await callQuery<GroupPage>("group.list", {
@@ -336,7 +336,7 @@ const onlineGroups: GroupsDependencies = {
     const query = new URLSearchParams({ limit: String(PAGE_LIMIT) })
     if (cursor) query.set("cursor", cursor)
     const result = await apiRead<GroupPage>(`/api/groups?${query}`)
-    if (!result.ok) throw new Error(result.error.message)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status)
     return result.data
   },
   async fetchDeleted(via) {
@@ -344,7 +344,7 @@ const onlineGroups: GroupsDependencies = {
       return await callQuery<{ groups: DeletedGroupItem[] }>("group.deleted")
     }
     const result = await apiRead<{ groups: DeletedGroupItem[] }>("/api/groups/deleted")
-    if (!result.ok) throw new Error(result.error.message)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status)
     return result.data
   },
   create: (input) => callCommand("group.create", input),

@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import type { ICacheStorage } from "@spy4x/platform/cache"
-import { createCacheService, failOpen } from "./cache-service.ts"
+import { failOpen, type ICacheStorage } from "@spy4x/platform/cache"
+import { createCacheService } from "./cache-service.ts"
 
 class MemoryCacheStorage implements ICacheStorage {
   private values = new Map<string, string>()

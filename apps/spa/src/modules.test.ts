@@ -11,7 +11,7 @@ import {
   startModules,
   stopChanges,
 } from "./modules.ts"
-import { installLocalStorage } from "./state/memory-local-storage.ts"
+import { installLocalStorage } from "@spy4x/platform/browser/testing"
 import { sessionState, type SessionUser } from "./state/session.ts"
 
 const realFetch = globalThis.fetch

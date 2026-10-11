@@ -1,4 +1,5 @@
 import { Hono } from "hono"
+import { parseBoundedInteger } from "@spy4x/platform/universal/bounded-integer"
 import type { Context, MiddlewareHandler } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { bearerTokenFromHeaders } from "@spy4x/server/http/bearer-auth"
@@ -170,9 +171,7 @@ async function readJson(c: Context<TokenApiContext>): Promise<unknown> {
 
 function parseLimit(value: string | undefined): number {
   if (value === undefined) return DEFAULT_NOTE_LIST_LIMIT
-  const limit = /^\d+$/.test(value) ? Number(value) : 0
-  if (limit < 1 || limit > 100) {
-    throw new NoteFeatureError("INVALID_REQUEST", "Note list limit is invalid")
-  }
+  const limit = parseBoundedInteger(value, { fallback: DEFAULT_NOTE_LIST_LIMIT, max: 100 })
+  if (limit === null) throw new NoteFeatureError("INVALID_REQUEST", "Note list limit is invalid")
   return limit
 }

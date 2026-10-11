@@ -1,4 +1,5 @@
 import type { Command, Query } from "@spy4x/platform/cqrs"
+import { isRecord } from "@spy4x/platform/universal/is-record"
 import type { Actor } from "@domain/identity"
 import { canManageMember, GroupError, GroupRole, type SelectedGroup } from "./+lib.ts"
 
@@ -358,8 +359,4 @@ function invalid(message: string): GroupError {
 
 function isWholeBetween(value: unknown, min: number, max: number): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= min && value <= max
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
 }

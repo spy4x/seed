@@ -8,7 +8,6 @@ import type { OutboxStore } from "@spy4x/realtime/outbox"
 import { isUnreachable } from "@spy4x/realtime/read-cache"
 import { DEFAULT_TAG_COLOR } from "@domain/tags"
 import type { TagItem, TagsDependencies } from "../state/tags.ts"
-import { keepQueuedWhenUnauthorized } from "./classify.ts"
 import { type TagEntry, type TagPayload, type TagsCache, tagsQueueDatabase } from "./tags-cache.ts"
 
 /**
@@ -33,12 +32,15 @@ export interface TagsCollectionOptions {
   store?: OutboxStore<TagPayload, TagItem>
 }
 
-/** Reads a failed tag call: unreachable (try later) or the server's refusal and its code. */
-export const classifyTagError = keepQueuedWhenUnauthorized(classifyByCode({
+/**
+ * Reads a failed tag call: unreachable (try later) or the server's refusal and its code. A write
+ * answered `unauthorized` stays queued: the library's default.
+ */
+export const classifyTagError = classifyByCode({
   version: "VERSION_CONFLICT",
   notFound: "TAG_NOT_FOUND",
   alreadyExists: "ID_ALREADY_EXISTS",
-}))
+})
 
 /** The tags of one user as an offline-writable collection. */
 export function tagsCollection(

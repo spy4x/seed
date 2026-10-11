@@ -1,10 +1,10 @@
 import type { MpaConfig } from "./config.ts"
 import { createApi } from "./api.ts"
-import { FormRejected } from "./forms.ts"
 import { define } from "./utils.ts"
 import { HttpError } from "fresh"
+import { HTTPException } from "hono/http-exception"
 import { createSameOriginCheck } from "@spy4x/server/http/same-origin"
-import { securityHeaderList } from "@spy4x/server/http/security-headers"
+import { securityHeaderList, withSecurityHeaders } from "@spy4x/server/http/security-headers"
 
 /**
  * The header set `securityHeaders` of `@spy4x/server` sends; the helper itself is Hono middleware
@@ -38,13 +38,7 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
     } catch (error) {
       response = errorResponse(error)
     }
-    const headers = new Headers(response.headers)
-    for (const [name, value] of set) headers.set(name, value)
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    })
+    return withSecurityHeaders(response, set)
   })
 }
 
@@ -56,7 +50,7 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
  *    session cookie check, since the MPA has no session;
  * 2. gives the route an API client bound to this request, which presents an MPA on its own domain
  *    to the API as the API's origin once step 1 has passed;
- * 3. answers a form it cannot read with {@link FormRejected}'s status;
+ * 3. answers a form it cannot read with the status `readFormBody` names (413, 408 or 400);
  * 4. keeps pages out of shared caches, since the newsletter pages carry a token in their address.
  *
  * Framing is forbidden by {@link securityHeadersMiddleware}, which runs before this one.
@@ -88,7 +82,7 @@ export function pageMiddleware(
     try {
       response = await ctx.next()
     } catch (error) {
-      if (!(error instanceof FormRejected)) throw error
+      if (!(error instanceof HTTPException)) throw error
       response = new Response(error.message, { status: error.status })
     }
     return withPageHeaders(response)

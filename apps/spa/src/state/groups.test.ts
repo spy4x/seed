@@ -12,7 +12,8 @@ import {
   groupsOnDevice,
   type ReadChannel,
 } from "./groups.ts"
-import { createMemoryReadCache, memoryReads } from "./memory-reads.ts"
+import { createMemoryReadCache } from "@spy4x/realtime/testing"
+import { memoryReads } from "./memory-reads.ts"
 import { createLocalReads, noLocalReads } from "../modules.ts"
 
 function item(id: string, sequence: string, name = id): GroupItem {

@@ -187,7 +187,10 @@ offline after the worker installed, which is after that first load.
 ### Signing out
 
 Signing out deletes every read copy (the `reads:<id>` database's entries and the notes) and the
-remembered user. A start that finds no session, because it ended elsewhere or expired, does the
+remembered user. While signed in, a list's copy is also deleted when the server refuses that read
+with 401, 403 or 404: the person lost access, or the thing is gone, and the copy must not come back
+offline later. An answer that says nothing about access keeps the copy: a 500, a timeout, or no
+network at all, since the server may well accept the same read a moment later. A start that finds no session, because it ended elsewhere or expired, does the
 same for the person the device remembered, before the sign-in page shows.
 
 The person is forgotten at once; their copies take IndexedDB a moment. So before a deletion starts,

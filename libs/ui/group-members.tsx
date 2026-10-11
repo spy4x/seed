@@ -9,12 +9,9 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import type { PlanRefusal } from "@domain/billing"
 import { assignableRoles, canRemoveMember, type GroupRole } from "@domain/groups"
 import { ROLE_TEXT } from "./groups-screen.tsx"
-import {
-  FocusedError,
-  useClosesWhenDone,
-  useFocusAfterRemoval,
-  useFreshError,
-} from "./group-page.tsx"
+import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
+import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
+import { useFocusAfterRemoval } from "@spy4x/preact-ui/use-focus-after-removal"
 import { MoreMenu } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import type { Navigate } from "./progressive.tsx"
@@ -113,7 +110,11 @@ export function GroupMembersSection(
     list,
     members?.map((member) => member.userId) ?? null,
     pendingUserId,
-    () => header.current?.querySelector("button") ?? header.current?.querySelector("h2"),
+    {
+      earlier: false,
+      fallback: () =>
+        header.current?.querySelector("button") ?? header.current?.querySelector("h2"),
+    },
   )
   return (
     <section
@@ -182,7 +183,7 @@ function MemberItem(
   const roles = assignableRoles(actorRole, member.role)
   const removable = canRemoveMember(actorRole, member.role)
   const [removing, setRemoving] = useState(false)
-  useClosesWhenDone(pending, error !== null, () => setRemoving(false))
+  useSucceeded(pending, error !== null, () => setRemoving(false))
   const [removeError, opened] = useFreshError(error, pending)
 
   return (
@@ -245,7 +246,7 @@ function MemberItem(
       </div>
       {!removing && (refusal
         ? <PlanRefusalNotice groupId={groupId} refusal={refusal} navigate={navigate} />
-        : <FocusedError message={error} dataE2E="group-member-error" />)}
+        : <ErrorState focusOnAppear message={error} dataE2E="group-member-error" />)}
       {removing && (
         <ConfirmDialog
           title={`Remove ${label}?`}
@@ -265,7 +266,7 @@ function MemberItem(
               this is their only group, they get a new empty one named "Personal". A team link they
               still hold lets them back in from another account, so revoke such links too.
             </p>
-            <FocusedError message={removeError} dataE2E="group-member-remove-error" />
+            <ErrorState focusOnAppear message={removeError} dataE2E="group-member-remove-error" />
           </div>
         </ConfirmDialog>
       )}

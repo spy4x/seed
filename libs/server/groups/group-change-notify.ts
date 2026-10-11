@@ -1,4 +1,6 @@
 import type postgres from "postgres"
+import { type } from "arktype"
+import { announceJson, listenJson } from "@spy4x/server/db/notify"
 import type { OutboxEvent, OutboxPublisher } from "@spy4x/server/outbox"
 import { GROUP_AGGREGATE } from "@domain/groups"
 
@@ -11,7 +13,11 @@ export interface GroupChange {
   sequence: number
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+/** What a payload on {@link GROUP_CHANGE_CHANNEL} must look like; anything else is dropped. */
+export const groupChangeSchema = type({
+  groupId: "string.uuid",
+  sequence: "number.integer & number.safe >= 1",
+})
 
 /**
  * Turns one committed outbox row into a Postgres notification, which is how a change reaches the
@@ -32,23 +38,8 @@ export class GroupChangeNotifier implements OutboxPublisher {
       throw new RangeError(`outbox row ${event.id} has no usable sequence`)
     }
     const change: GroupChange = { groupId: event.aggregateId, sequence }
-    await this.sql`SELECT pg_notify(${GROUP_CHANGE_CHANNEL}, ${JSON.stringify(change)})`
+    await announceJson(this.sql, GROUP_CHANGE_CHANNEL, change)
   }
-}
-
-/** Reads a notification payload; `null` for anything that is not a well-formed group change. */
-export function parseGroupChange(payload: string): GroupChange | null {
-  let value: unknown
-  try {
-    value = JSON.parse(payload)
-  } catch {
-    return null
-  }
-  if (typeof value !== "object" || value === null) return null
-  const { groupId, sequence } = value as Record<string, unknown>
-  if (typeof groupId !== "string" || !UUID.test(groupId)) return null
-  if (typeof sequence !== "number" || !Number.isSafeInteger(sequence) || sequence < 1) return null
-  return { groupId, sequence }
 }
 
 /**
@@ -59,11 +50,10 @@ export async function listenForGroupChanges(
   sql: postgres.Sql,
   onChange: (change: GroupChange) => void,
 ): Promise<() => Promise<void>> {
-  const subscription = await sql.listen(GROUP_CHANGE_CHANNEL, (payload) => {
-    const change = parseGroupChange(payload)
-    if (change) onChange(change)
+  return await listenJson(sql, GROUP_CHANGE_CHANNEL, {
+    schema: groupChangeSchema,
+    onMessage: ({ groupId, sequence }) => onChange({ groupId, sequence }),
   })
-  return () => subscription.unlisten()
 }
 
 /**
@@ -80,21 +70,12 @@ export interface GroupAccessLoss {
   userIds: number[]
 }
 
-/** Reads a notification payload; `null` for anything that is not a well-formed access loss. */
-export function parseGroupAccessLoss(payload: string): GroupAccessLoss | null {
-  let value: unknown
-  try {
-    value = JSON.parse(payload)
-  } catch {
-    return null
-  }
-  if (typeof value !== "object" || value === null) return null
-  const { userIds, ...rest } = value as Record<string, unknown>
-  const change = parseGroupChange(JSON.stringify(rest))
-  if (!change || !Array.isArray(userIds) || userIds.length === 0) return null
-  const valid = userIds.every((id) => typeof id === "number" && Number.isSafeInteger(id) && id > 0)
-  return valid ? { ...change, userIds: userIds as number[] } : null
-}
+/** What a payload on {@link GROUP_ACCESS_LOST_CHANNEL} must look like; anything else is dropped. */
+export const groupAccessLossSchema = type({
+  groupId: "string.uuid",
+  sequence: "number.integer & number.safe >= 1",
+  userIds: "(number.integer & number.safe >= 1)[] > 0",
+})
 
 /**
  * Calls `onLoss` for every access loss announced on {@link GROUP_ACCESS_LOST_CHANNEL}. Returns a
@@ -104,9 +85,8 @@ export async function listenForGroupAccessLoss(
   sql: postgres.Sql,
   onLoss: (loss: GroupAccessLoss) => void,
 ): Promise<() => Promise<void>> {
-  const subscription = await sql.listen(GROUP_ACCESS_LOST_CHANNEL, (payload) => {
-    const loss = parseGroupAccessLoss(payload)
-    if (loss) onLoss(loss)
+  return await listenJson(sql, GROUP_ACCESS_LOST_CHANNEL, {
+    schema: groupAccessLossSchema,
+    onMessage: ({ groupId, sequence, userIds }) => onLoss({ groupId, sequence, userIds }),
   })
-  return () => subscription.unlisten()
 }

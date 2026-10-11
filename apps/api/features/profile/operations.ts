@@ -1,12 +1,11 @@
 import { userProfileBaseSchema } from "@domain/identity"
-import type { UserProfileBase } from "@domain/identity"
 import { UserProfileUpdateCommand } from "../../cqrs/commands.ts"
 import type { UserProfileUpdateResult } from "../../cqrs/commands.ts"
 import { UserProfileGetQuery } from "../../cqrs/queries.ts"
 import type { UserProfileGetResult } from "../../cqrs/queries.ts"
 import type { Actor } from "@domain/identity"
 import type { Operations } from "@spy4x/realtime/operations"
-import { expectNoPayload, parsePayload } from "../../services/socket-payload.ts"
+import { expectNoPayload, parsePayload } from "@spy4x/realtime"
 
 /** What the profile socket requests need from the app. */
 export interface ProfileOperationDependencies {
@@ -33,7 +32,7 @@ export function createProfileOperations(
     "profile.update": {
       kind: "command",
       handle: async ({ actor, requestId, payload, idempotencyKey }) => {
-        const { firstName, lastName } = parsePayload<UserProfileBase>(
+        const { firstName, lastName } = parsePayload(
           userProfileBaseSchema,
           payload,
         )

@@ -8,7 +8,6 @@ import {
 import type { OutboxStore } from "@spy4x/realtime/outbox"
 import { isUnreachable } from "@spy4x/realtime/read-cache"
 import type { NoteItem, NotePage, NotesDependencies } from "../state/notes.ts"
-import { keepQueuedWhenUnauthorized } from "./classify.ts"
 import { TAGS_COLLECTION } from "./tags-collection.ts"
 import { databasePrefix, type NoteEntry, type NotePayload, type NotesCache } from "./notes-cache.ts"
 
@@ -35,14 +34,15 @@ export interface NotesCollectionOptions {
   store?: OutboxStore<NotePayload, NoteItem>
 }
 
-const byCode = classifyByCode({
+/**
+ * Reads a failed note call: unreachable (try later) or the server's refusal and its code. A write
+ * answered `unauthorized` stays queued: the library's default.
+ */
+export const classifyNoteError = classifyByCode({
   version: "VERSION_CONFLICT",
   notFound: "NOTE_NOT_FOUND",
   alreadyExists: "ID_ALREADY_EXISTS",
 })
-
-/** Reads a failed note call: unreachable (try later) or the server's refusal and its code. */
-export const classifyNoteError = keepQueuedWhenUnauthorized(byCode)
 
 /**
  * The notes of one user as an offline-writable collection. The queue lives in

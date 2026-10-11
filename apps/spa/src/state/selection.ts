@@ -2,7 +2,7 @@ import { signal } from "@preact/signals"
 import type { SelectedGroup } from "@domain/groups"
 import { apiRead } from "./realtime-call.ts"
 import { callCommand } from "../modules.ts"
-import { isRetryable } from "@spy4x/realtime/calls"
+import { isUnknownOutcome } from "@spy4x/realtime/calls"
 
 /** What this device keeps of the selection, so the app opens on the right group with no network. */
 export interface SelectionCache {
@@ -19,16 +19,6 @@ export interface SelectionDependencies {
   send(groupId: string): Promise<SelectedGroup>
   readCache(userId: number): SelectionCache | null
   writeCache(userId: number, cache: SelectionCache | null): void
-}
-
-/**
- * Whether the outcome of a call is unknown, because the network or the socket is down or the answer
- * was late: the choice is then kept on this device and sent when the server is reachable again. An
- * answer from the server, such as "that group is gone", is final and is not kept. `fetch` rejects
- * with a `TypeError` when the network is down; an answer with an error status never does.
- */
-export function isUnknownOutcome(error: unknown): boolean {
-  return error instanceof TypeError || isRetryable(error)
 }
 
 /**

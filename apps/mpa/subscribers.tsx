@@ -11,8 +11,10 @@ import {
   SubscriptionConfirmScreen,
   UnsubscribeScreen,
 } from "@ui/subscribe-screen.tsx"
-import { type ApiAnswer, errorMessage, isRecord } from "./api.ts"
-import { API_BODIES, readForm } from "./forms.ts"
+import { isRecord } from "@spy4x/platform/universal/is-record"
+import { type ApiAnswer, errorMessage } from "./api.ts"
+import { readFormBody } from "@spy4x/server/http/bounded-body"
+import { API_BODIES, FORM_LIMITS } from "./forms.ts"
 import { SiteFrame } from "./site.tsx"
 import { define, type State } from "./utils.ts"
 
@@ -36,7 +38,7 @@ const DONE_QUERY = "?state=done"
 export const subscribeHandlers = define.handlers({
   GET: (ctx) => renderSubscribe(ctx, { email: "", sent: false, error: null, status: 200 }),
   async POST(ctx) {
-    const body = API_BODIES.subscribe(await readForm(ctx.req))
+    const body = API_BODIES.subscribe(await readFormBody(ctx.req, FORM_LIMITS))
     const answer = await ctx.state.api.call("POST", "/api/subscribers", body)
     if (answer.status === 202) {
       return renderSubscribe(ctx, { email: "", sent: true, error: null, status: 200 })
@@ -76,7 +78,7 @@ export const subscriptionConfirmHandlers = define.handlers({
     })
   },
   async POST(ctx) {
-    const body = API_BODIES.subscriptionToken(await readForm(ctx.req))
+    const body = API_BODIES.subscriptionToken(await readFormBody(ctx.req, FORM_LIMITS))
     const answer = await ctx.state.api.call("POST", "/api/subscribers/confirm", body)
     const step = stepOf(answer, CONFIRM_STATES)
     if (step.state === "done") {
@@ -118,7 +120,7 @@ export const unsubscribeHandlers = define.handlers({
     })
   },
   async POST(ctx) {
-    const body = API_BODIES.subscriptionToken(await readForm(ctx.req))
+    const body = API_BODIES.subscriptionToken(await readFormBody(ctx.req, FORM_LIMITS))
     // The API's unsubscribe reads the token from the query or a form body, never from JSON: it is
     // the RFC 8058 one-click target too.
     const answer = await ctx.state.api.call(

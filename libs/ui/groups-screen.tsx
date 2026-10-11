@@ -12,7 +12,7 @@ import { Cluster, Section, Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { GROUP_RESTORE_DAYS, type GroupColor, GroupRole } from "@domain/groups"
 import { GroupMark } from "./group-appearance.tsx"
-import { useClosesWhenDone } from "./group-page.tsx"
+import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { GROUP_PATHS, type Navigate, ScreenForm } from "./progressive.tsx"
 
@@ -106,7 +106,7 @@ export function GroupsScreen(
   }: GroupsScreenProps,
 ): JSX.Element {
   const [creatingOpen, setCreatingOpen] = useState(false)
-  useClosesWhenDone(creating, error !== null, () => setCreatingOpen(false))
+  useSucceeded(creating, error !== null, () => setCreatingOpen(false))
   // A refused restore has no field to fix, so focus lands on the message above the list.
   const restoreMessage = useRef<HTMLDivElement>(null)
   useEffect(() => {

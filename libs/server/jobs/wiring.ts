@@ -1,6 +1,8 @@
 import type postgres from "postgres"
+import { nextUtcHour } from "@spy4x/platform/universal/time"
 import {
   ensureScheduledOutboxEvent,
+  JobPublisher,
   OutboxProcessor,
   PostgresOutboxRepository,
 } from "@spy4x/server/outbox"
@@ -55,8 +57,6 @@ import {
   JOB_AGGREGATE,
   JOB_AGGREGATE_ID,
   type JobHandler,
-  JobPublisher,
-  nextUtcHour,
   OUTBOX_CLEANUP_JOB,
   removeProcessedOutboxEvents,
 } from "./jobs.ts"
@@ -97,54 +97,66 @@ export function createOutboxProcessor(
   return new OutboxProcessor(
     new PostgresOutboxRepository(sql),
     new JobPublisher({
-      [OUTBOX_CLEANUP_JOB]: async () => {
-        const removed = await removeProcessedOutboxEvents(sql)
-        if (removed > 0) console.log(`Removed ${removed} old processed outbox row(s)`)
-        const stale = await removeStalePasswordResetRequests(sql)
-        if (stale > 0) console.log(`Removed ${stale} unsent password reset request(s)`)
-        const staleCodes = await removeStaleEmailCodeRequests(sql)
-        if (staleCodes > 0) console.log(`Removed ${staleCodes} unsent e-mail code request(s)`)
-        const staleSubs = await removeStaleSubscriptionRequests(sql)
-        if (staleSubs > 0) console.log(`Removed ${staleSubs} unsent subscription request(s)`)
-        const groups = await purgeDeletedGroups(sql)
-        if (groups.removed > 0) console.log(`Removed ${groups.removed} deleted group(s) for good`)
-        if (groups.kept > 0) {
-          console.warn(
-            `Kept ${groups.kept} deleted group(s) with a live subscription; cancel it in Stripe`,
-          )
-        }
-        const notes = await purgeDeletedNotes(sql)
-        if (notes.removed > 0) console.log(`Removed ${notes.removed} deleted note(s) for good`)
-        const invitations = await purgeDeadInvitations(sql)
-        if (invitations > 0) console.log(`Removed ${invitations} dead group invitation(s)`)
-        const audit = await purgeOldAuditEvents(sql)
-        if (audit > 0) console.log(`Removed ${audit} audit event(s) past their retention`)
-        const inbox = await purgeReadNotifications(sql)
-        if (inbox > 0) console.log(`Removed ${inbox} read notification(s) past their retention`)
-        const accounts = await hardDeleteDueAccounts(sql)
-        if (accounts.deleted > 0) console.log(`Deleted ${accounts.deleted} account(s) for good`)
-        if (accounts.blocked > 0) {
-          console.warn(
-            `Kept ${accounts.blocked} account(s) due for deletion: a shared or paid group`,
-          )
-        }
-        if (provider) {
-          const drifted = await queueSeatDrift(sql)
-          if (drifted > 0) console.log(`Queued a seat sync for ${drifted} group(s)`)
-        }
+      aggregateType: JOB_AGGREGATE,
+      handlers: {
+        [OUTBOX_CLEANUP_JOB]: async () => {
+          const removed = await removeProcessedOutboxEvents(sql)
+          if (removed > 0) console.log(`Removed ${removed} old processed outbox row(s)`)
+          const stale = await removeStalePasswordResetRequests(sql)
+          if (stale > 0) console.log(`Removed ${stale} unsent password reset request(s)`)
+          const staleCodes = await removeStaleEmailCodeRequests(sql)
+          if (staleCodes > 0) console.log(`Removed ${staleCodes} unsent e-mail code request(s)`)
+          const staleSubs = await removeStaleSubscriptionRequests(sql)
+          if (staleSubs > 0) console.log(`Removed ${staleSubs} unsent subscription request(s)`)
+          const groups = await purgeDeletedGroups(sql)
+          if (groups.removed > 0) console.log(`Removed ${groups.removed} deleted group(s) for good`)
+          if (groups.kept > 0) {
+            console.warn(
+              `Kept ${groups.kept} deleted group(s) with a live subscription; cancel it in Stripe`,
+            )
+          }
+          const notes = await purgeDeletedNotes(sql)
+          if (notes.removed > 0) console.log(`Removed ${notes.removed} deleted note(s) for good`)
+          const invitations = await purgeDeadInvitations(sql)
+          if (invitations > 0) console.log(`Removed ${invitations} dead group invitation(s)`)
+          const audit = await purgeOldAuditEvents(sql)
+          if (audit > 0) console.log(`Removed ${audit} audit event(s) past their retention`)
+          const inbox = await purgeReadNotifications(sql)
+          if (inbox > 0) console.log(`Removed ${inbox} read notification(s) past their retention`)
+          const accounts = await hardDeleteDueAccounts(sql)
+          if (accounts.deleted > 0) console.log(`Deleted ${accounts.deleted} account(s) for good`)
+          if (accounts.blocked > 0) {
+            console.warn(
+              `Kept ${accounts.blocked} account(s) due for deletion: a shared or paid group`,
+            )
+          }
+          if (provider) {
+            const drifted = await queueSeatDrift(sql)
+            if (drifted > 0) console.log(`Queued a seat sync for ${drifted} group(s)`)
+          }
+        },
+        [SEAT_SYNC_JOB]: provider ? seatSyncJob({ sql, provider }) : async () => {},
+        [PASSWORD_RESET_MAIL_JOB]: passwordResetMailJob({ sql, ...mail }),
+        [EMAIL_CODE_MAIL_JOB]: emailCodeMailJob({ sql, ...mail }),
+        [ACCOUNT_DELETION_MAIL_JOB]: accountDeletionMailJob({ sql, ...mail }),
+        [ACCOUNT_RESTORED_MAIL_JOB]: accountRestoredMailJob({ sql, ...mail }),
+        [ACCOUNT_HARD_DELETE_JOB]: accountHardDeleteJob({ sql, log: mail.log }),
+        [STARTER_DATA_JOB]: starterDataJob(sql, { billingEnabled: provider !== null, graceDays }),
+        ...billingNoticeJobs(sql, mail),
+        [SUBSCRIBER_CONFIRM_MAIL_JOB]: subscriberConfirmMailJob({
+          sql,
+          ...mail,
+          setup: subscribers,
+        }),
+        [SUBSCRIBER_WELCOME_MAIL_JOB]: subscriberWelcomeMailJob({
+          sql,
+          ...mail,
+          setup: subscribers,
+        }),
+        [SUBSCRIBER_SEND_ISSUE_JOB]: subscriberSendIssueJob({ sql, ...mail, setup: subscribers }),
       },
-      [SEAT_SYNC_JOB]: provider ? seatSyncJob({ sql, provider }) : async () => {},
-      [PASSWORD_RESET_MAIL_JOB]: passwordResetMailJob({ sql, ...mail }),
-      [EMAIL_CODE_MAIL_JOB]: emailCodeMailJob({ sql, ...mail }),
-      [ACCOUNT_DELETION_MAIL_JOB]: accountDeletionMailJob({ sql, ...mail }),
-      [ACCOUNT_RESTORED_MAIL_JOB]: accountRestoredMailJob({ sql, ...mail }),
-      [ACCOUNT_HARD_DELETE_JOB]: accountHardDeleteJob({ sql, log: mail.log }),
-      [STARTER_DATA_JOB]: starterDataJob(sql, { billingEnabled: provider !== null, graceDays }),
-      ...billingNoticeJobs(sql, mail),
-      [SUBSCRIBER_CONFIRM_MAIL_JOB]: subscriberConfirmMailJob({ sql, ...mail, setup: subscribers }),
-      [SUBSCRIBER_WELCOME_MAIL_JOB]: subscriberWelcomeMailJob({ sql, ...mail, setup: subscribers }),
-      [SUBSCRIBER_SEND_ISSUE_JOB]: subscriberSendIssueJob({ sql, ...mail, setup: subscribers }),
-    }, provider ? new SeatSyncPublisher(sql, notifier) : notifier),
+      fallback: provider ? new SeatSyncPublisher(sql, notifier) : notifier,
+    }),
     { repeatEveryMs: { [OUTBOX_CLEANUP_JOB]: DAY_MS } },
   )
 }

@@ -1,5 +1,6 @@
 import type postgres from "postgres"
-import { isInAppLink, NotificationError, type NotificationPayload } from "@domain/notifications"
+import { safeRedirectPath } from "@spy4x/net/redirect-path"
+import { NotificationError, type NotificationPayload } from "@domain/notifications"
 import { announceNotificationChange } from "./notification-hint.ts"
 
 /** What a notification is made of. */
@@ -7,7 +8,7 @@ export interface NotificationInput {
   userId: number
   kind: string
   payload: NotificationPayload
-  /** An in-app path ({@link isInAppLink}). */
+  /** An in-app path: one leading `/`, no scheme, no second slash, no backslash. */
   link: string
 }
 
@@ -23,12 +24,14 @@ export async function createNotification(
   sql: postgres.Sql,
   input: NotificationInput,
 ): Promise<void> {
-  if (!isInAppLink(input.link)) {
+  // Stored as the checked path: spaces are encoded and `..` segments are resolved.
+  const link = safeRedirectPath(input.link, { fallback: `` })
+  if (link === ``) {
     throw new NotificationError("INVALID_REQUEST", "A notification links to a page of the app")
   }
   await sql`
     INSERT INTO notifications (user_id, kind, payload, link)
-    VALUES (${input.userId}, ${input.kind}, ${sql.json(input.payload)}, ${input.link})
+    VALUES (${input.userId}, ${input.kind}, ${sql.json(input.payload)}, ${link})
   `
   await announceNotificationChange(sql, input.userId)
 }

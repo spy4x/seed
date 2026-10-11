@@ -1,4 +1,5 @@
 import type { EnvReader } from "@spy4x/server/config"
+import { parseBoundedInteger } from "@spy4x/platform/universal/bounded-integer"
 import {
   type BillingProvider,
   createStripeBilling,
@@ -135,9 +136,12 @@ function readTrialRequiresCard(value: string | undefined): boolean {
 }
 
 function readGraceDays(value: string | undefined): number {
-  if (value === undefined) return DEFAULT_GRACE_DAYS
-  const days = /^\d{1,3}$/.test(value) ? Number(value) : NaN
-  if (!(days <= MAX_GRACE_DAYS)) {
+  const days = parseBoundedInteger(value, {
+    fallback: DEFAULT_GRACE_DAYS,
+    min: 0,
+    max: MAX_GRACE_DAYS,
+  })
+  if (days === null) {
     throw new BillingConfigError(
       `BILLING_GRACE_DAYS must be a whole number of days from 0 to ${MAX_GRACE_DAYS}`,
     )

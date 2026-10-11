@@ -1,4 +1,5 @@
 import type { Command, Query } from "@spy4x/platform/cqrs"
+import { parseBoundedInteger } from "@spy4x/platform/universal/bounded-integer"
 import type { Actor } from "@domain/identity"
 
 /** The most notifications one page holds, and the default. */
@@ -134,9 +135,11 @@ export function parseNotificationId(value: unknown): string {
 
 /** The `limit` of a request's query string, or the default; anything else is `INVALID_REQUEST`. */
 export function parseNotificationLimit(value: string | undefined): number {
-  if (value === undefined) return NOTIFICATION_PAGE_DEFAULT
-  const limit = /^\d+$/.test(value) ? Number(value) : 0
-  if (limit < 1 || limit > NOTIFICATION_PAGE_MAX) {
+  const limit = parseBoundedInteger(value, {
+    fallback: NOTIFICATION_PAGE_DEFAULT,
+    max: NOTIFICATION_PAGE_MAX,
+  })
+  if (limit === null) {
     throw new NotificationError("INVALID_REQUEST", "Notification limit is invalid")
   }
   return limit
@@ -175,9 +178,4 @@ export function describeNotification(
     default:
       return "You have a new notification."
   }
-}
-
-/** Whether `link` is an in-app path: one leading `/`, no scheme, no second slash, no backslash. */
-export function isInAppLink(link: string): boolean {
-  return /^\/(?![/\\])[^\s\\]*$/.test(link)
 }

@@ -1,5 +1,6 @@
 import type postgres from "postgres"
 import { GROUP_AGGREGATE, type GroupRole } from "@domain/groups"
+import { announceJson } from "@spy4x/server/db/notify"
 import { GROUP_ACCESS_LOST_CHANNEL, type GroupAccessLoss } from "./group-change-notify.ts"
 
 /** The group is missing or deleted, so nothing may be written inside it. */
@@ -157,7 +158,7 @@ export async function recordAccessChange(
       sequence: Number(sequence),
       userIds: userIds.slice(start, start + ACCESS_LOSS_IDS_PER_NOTIFICATION),
     }
-    await sql`SELECT pg_notify(${GROUP_ACCESS_LOST_CHANNEL}, ${JSON.stringify(loss)})`
+    await announceJson(sql, GROUP_ACCESS_LOST_CHANNEL, loss)
   }
   return { sequence, authorizationRevision: bumped.authorizationRevision }
 }

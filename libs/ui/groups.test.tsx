@@ -1080,6 +1080,19 @@ describe("PendingInvitations", () => {
     expect(focused()).toBe("invite-open")
   })
 
+  it("skips the invitations before a revoked last one and moves focus to the section's button", async () => {
+    const page = (props: Partial<PendingInvitationsProps>) => (
+      <section>
+        <button type="button" data-e2e="invite-open">Invite people</button>
+        <PendingInvitations actorRole={GroupRole.OWNER} invitations={rows} {...props} />
+      </section>
+    )
+    await mount(page({}))
+    await rerender(page({ revokingId: "i-2" }))
+    await rerender(page({ invitations: [rows[0]] }))
+    expect(focused()).toBe("invite-open")
+  })
+
   it("gives no revoke for an invitation with a role above the person's", async () => {
     await mount(<PendingInvitations actorRole={GroupRole.ADMIN} invitations={rows} />)
     expect(has('[data-invitation-id="i-1"] [data-e2e=invitation-menu]')).toBe(true)

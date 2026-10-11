@@ -14,7 +14,7 @@ import {
   parseGroupDescription,
   parseGroupEmoji,
 } from "@domain/groups"
-import { FocusedError } from "./group-page.tsx"
+import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { ScreenForm } from "./progressive.tsx"
 
 /** What a colour is called on screen and to a screen reader. */
@@ -164,7 +164,7 @@ export function GroupDetailsForm(
             />
           </Field>
         </div>
-        <FocusedError message={error} dataE2E="group-details-error" />
+        <ErrorState focusOnAppear message={error} dataE2E="group-details-error" />
         <Cluster justify="end">
           <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
           <Button type="submit" data-e2e="group-details-save" busy={pending} busyLabel="Saving...">

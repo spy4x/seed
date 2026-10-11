@@ -139,12 +139,6 @@ store, audit store, and cursor signing-key adapter. It may depend on platform an
 Repositories require group scope in method signatures and SQL predicates. They never infer scope
 from payload data.
 
-#### `libs/client`
-
-Owns Dexie schema/adapter, account partitioning, local projection transaction, command queue,
-draft vault, manifest reconciliation, and sync coordinator. It may depend on platform/domain
-contracts but never imports server code.
-
 #### `apps/api`
 
 Owns Hono middleware, HTTP validation, session/MFA enforcement, Origin checks, request-size limits,

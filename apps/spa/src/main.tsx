@@ -1,10 +1,10 @@
+import { readBuildEnvVar } from "@spy4x/platform/browser/build-env"
 // Preact DevTools bridge import must be FIRST for correct detection
-if (getEnvVar("ENV") === "dev") {
+if (readBuildEnvVar(import.meta.env, "ENV", { prefix: "VITE_", optional: true }) === "dev") {
   import("preact/debug").then(() => console.log("Preact DevTools bridge loaded"))
 }
 import { render } from "preact"
 import { App } from "./app.tsx"
-import { getEnvVar } from "@client/vite/env.ts"
 import { createThemeStore } from "@spy4x/preact-signals/theme"
 import { ErrorBoundary } from "@spy4x/preact-ui/error-boundary"
 import { reportCaughtError, startErrorReporting } from "./error-reporting.ts"

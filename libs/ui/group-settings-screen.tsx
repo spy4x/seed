@@ -23,7 +23,8 @@ import {
 import { GroupDetailsForm, GroupMark } from "./group-appearance.tsx"
 import { type GroupRow, ROLE_TEXT } from "./groups-screen.tsx"
 import { type GroupMemberRow, GroupMembersSection, type MemberError } from "./group-members.tsx"
-import { FocusedError, useClosesWhenDone, useFreshError } from "./group-page.tsx"
+import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
+import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { transferCandidates } from "./group-transfer.tsx"
 import type { PlanRefusal } from "@domain/billing"
@@ -186,8 +187,8 @@ export function GroupSettingsScreen(
     if (dialog === Dialog.MOVE_ALL) onMoveAllClose?.()
     setDialog(null)
   }
-  useClosesWhenDone(leaving, leaveError !== null, close)
-  useClosesWhenDone(deleting, deleteError !== null, close)
+  useSucceeded(leaving, leaveError !== null, close)
+  useSucceeded(deleting, deleteError !== null, close)
   const [freshLeaveError, leaveOpened] = useFreshError(leaveError, leaving)
   const [freshDeleteError, deleteOpened] = useFreshError(deleteError, deleting)
 
@@ -462,7 +463,7 @@ export function GroupSettingsScreen(
               You lose access right away, on every device. What you wrote stays in the group. To
               come back, someone must add you again.
             </p>
-            <FocusedError message={freshLeaveError} dataE2E="group-leave-error" />
+            <ErrorState focusOnAppear message={freshLeaveError} dataE2E="group-leave-error" />
           </div>
         </ConfirmDialog>
       )}
@@ -487,7 +488,7 @@ export function GroupSettingsScreen(
               {GROUP_RESTORE_DAYS}{" "}
               days. After that it and all its notes are deleted for good and cannot be recovered.
             </p>
-            <FocusedError message={freshDeleteError} dataE2E="group-delete-error" />
+            <ErrorState focusOnAppear message={freshDeleteError} dataE2E="group-delete-error" />
           </div>
         </ConfirmDialog>
       )}

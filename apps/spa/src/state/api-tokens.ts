@@ -18,7 +18,11 @@ import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 export const API_TOKENS_FAILURE = "Something went wrong with your API tokens"
 
 /** One call's outcome: the data, or the message to show. */
-export type ApiTokensResult<T> = { ok: true; data: T } | { ok: false; error: string }
+export type ApiTokensResult<T> = { ok: true; data: T } | {
+  ok: false
+  error: string
+  status?: number
+}
 
 /** What the store calls. Injected so tests need no network. */
 export interface ApiTokensDependencies {
@@ -45,7 +49,9 @@ async function call<T>(
   request: ReturnType<typeof apiFetch<T>>,
 ): Promise<ApiTokensResult<T>> {
   const result = await request
-  return result.ok ? { ok: true, data: result.data } : { ok: false, error: result.error.message }
+  return result.ok
+    ? { ok: true, data: result.data }
+    : { ok: false, error: result.error.message, status: result.status }
 }
 
 /** The create form as it opens: the first group, read only, the default lifetime. */
@@ -99,7 +105,7 @@ export function createApiTokensStore(
         READ_KEYS.apiTokens,
         async () => {
           const result = await dependencies.list()
-          if (!result.ok) throw new ReadRefused(result.error)
+          if (!result.ok) throw new ReadRefused(result.error, result.status ?? 0)
           return result.data.tokens
         },
         (copy) => {

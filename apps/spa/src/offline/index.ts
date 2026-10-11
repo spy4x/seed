@@ -123,6 +123,7 @@ function after(ready: Promise<void>, cache: ReadCache): ReadCache {
   return {
     get: async (key) => (await ready, await cache.get(key)),
     set: async (key, value) => (await ready, await cache.set(key, value)),
+    delete: async (key) => (await ready, await cache.delete(key)),
     clear: async () => (await ready, await cache.clear()),
   }
 }
