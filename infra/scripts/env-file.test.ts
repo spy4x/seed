@@ -1,6 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { MissingEnvVarError, parseEnvValues, requireEnvVar } from "./env-file.ts"
+import { MissingEnvError } from "@spy4x/server/config"
+import { describeEnvFileError, parseEnvValues } from "./env-file.ts"
 
 Deno.test("parseEnvValues drops an inline comment after a space", () => {
   expect(parseEnvValues(`ENV=dev # or "prod"\nCONTAINER_PROVIDER=docker   # or podman`)).toEqual({
@@ -47,8 +48,11 @@ Deno.test("parseEnvValues reads the shipped .env.example with ENV=dev", async ()
   expect(values.CONTAINER_PROVIDER).toBe("docker")
 })
 
-Deno.test("requireEnvVar names the missing variable and the file, not a value", () => {
-  expect(() => requireEnvVar({ PATH_ON_SERVER: "" }, "PATH_ON_SERVER", "infra/envs/.env.prod"))
-    .toThrow(new MissingEnvVarError("PATH_ON_SERVER", "infra/envs/.env.prod"))
-  expect(requireEnvVar({ A: "1" }, "A", "f")).toBe("1")
+Deno.test("describeEnvFileError names the env file to fix for a missing variable", () => {
+  expect(describeEnvFileError(new MissingEnvError("SSH_TO_SERVER"), "infra/envs/.env.staging"))
+    .toBe("missing required environment variable: SSH_TO_SERVER in infra/envs/.env.staging")
+})
+
+Deno.test("describeEnvFileError passes any other error through as it is", () => {
+  expect(describeEnvFileError(new Error("line 3 is bad"), "f")).toBe("line 3 is bad")
 })

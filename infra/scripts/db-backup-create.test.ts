@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
 import { planBackup } from "./db-backup-create.ts"
-import { MissingEnvVarError } from "./env-file.ts"
+import { MissingEnvError } from "@spy4x/server/config"
 
 const VALUES = {
   PROJECT: "app",
@@ -18,7 +18,7 @@ const VALUES = {
 const NOW = new Date("2026-09-30T01:02:03.456Z")
 
 Deno.test("planBackup dumps the project's database container as the configured user", () => {
-  const plan = planBackup(VALUES, ".env", NOW)
+  const plan = planBackup(VALUES, NOW)
   expect(plan.fileName).toBe("appdb-2026-09-30T01_02_03_456Z.sql.gz")
   expect(plan.dump.args).toEqual([
     "exec",
@@ -37,7 +37,7 @@ Deno.test("planBackup dumps the project's database container as the configured u
 })
 
 Deno.test("planBackup uploads the file to the bucket folder under the same name", () => {
-  const upload = planBackup(VALUES, ".env", NOW).upload("/tmp/db-backup-x")
+  const upload = planBackup(VALUES, NOW).upload("/tmp/db-backup-x")
   expect(upload.args).toContain("/tmp/db-backup-x/appdb-2026-09-30T01_02_03_456Z.sql.gz")
   expect(upload.args).toContain("s3://app-backups/db/appdb-2026-09-30T01_02_03_456Z.sql.gz")
   expect(upload.env).toEqual({
@@ -49,7 +49,7 @@ Deno.test("planBackup uploads the file to the bucket folder under the same name"
 })
 
 Deno.test("planBackup keeps passwords and keys out of docker's arguments", () => {
-  const plan = planBackup(VALUES, ".env", NOW)
+  const plan = planBackup(VALUES, NOW)
   const args = [...plan.dump.args, ...plan.upload("/tmp/x").args].join(" ")
   for (const secret of ["db-secret", "key-id", "s3-secret"]) {
     expect(args).not.toContain(secret)
@@ -58,6 +58,6 @@ Deno.test("planBackup keeps passwords and keys out of docker's arguments", () =>
 
 Deno.test("planBackup refuses an env file without DB_PASS", () => {
   const { DB_PASS: _, ...values } = VALUES
-  expect(() => planBackup(values, "infra/envs/.env", NOW))
-    .toThrow(new MissingEnvVarError("DB_PASS", "infra/envs/.env"))
+  expect(() => planBackup(values, NOW))
+    .toThrow(new MissingEnvError("DB_PASS"))
 })

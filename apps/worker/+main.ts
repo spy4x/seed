@@ -3,6 +3,7 @@ import postgres from "postgres"
 import { createSqlFromEnv } from "@spy4x/server/db"
 import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
 import { PostgresIdempotencyStore } from "@spy4x/server/idempotency"
+import { startIdempotencySweep } from "./idempotency-sweep.ts"
 import { shutdownSignal, ShutdownSignalError } from "@spy4x/platform/server/shutdown-signal"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { createMailSender, mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
@@ -80,29 +81,26 @@ const SWEEP_INTERVAL_MS = 60 * 60_000
 
 const idempotencyKeys = new PostgresIdempotencyStore(sql)
 
-/** Removes idempotency keys past their retention, hourly. A failed sweep is tried again later. */
-async function sweepIdempotencyKeys(signal: AbortSignal): Promise<void> {
-  while (!signal.aborted) {
-    try {
-      const removed = await idempotencyKeys.sweep()
-      if (removed > 0) console.log(`Swept ${removed} expired idempotency key(s)`)
-    } catch (error) {
-      console.error("Idempotency sweep failed, retrying next interval", error)
-    }
-    await new Promise<void>((resolve) => {
-      const timer = setTimeout(done, SWEEP_INTERVAL_MS)
-      function done() {
-        clearTimeout(timer)
-        signal.removeEventListener("abort", done)
-        resolve()
-      }
-      signal.addEventListener("abort", done, { once: true })
-    })
-  }
+/** Removes idempotency keys past their retention. */
+async function sweepIdempotencyKeys(): Promise<void> {
+  const removed = await idempotencyKeys.sweep()
+  if (removed > 0) console.log(`Swept ${removed} expired idempotency key(s)`)
+}
+
+function reportSweepFailure(error: unknown): void {
+  console.error("Idempotency sweep failed, retrying next interval", error)
 }
 
 try {
-  await Promise.all([processor.run(signal, OUTBOX_IDLE_MS), sweepIdempotencyKeys(signal)])
+  await Promise.all([
+    processor.run(signal, OUTBOX_IDLE_MS),
+    startIdempotencySweep({
+      signal,
+      sweep: sweepIdempotencyKeys,
+      onError: reportSweepFailure,
+      intervalMs: SWEEP_INTERVAL_MS,
+    }),
+  ])
 } finally {
   await sql.end({ timeout: 5 })
   const reason = signal.reason instanceof ShutdownSignalError ? ` on ${signal.reason.signal}` : ""

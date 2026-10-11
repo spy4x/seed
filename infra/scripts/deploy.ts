@@ -30,7 +30,8 @@
  */
 
 import { error, log, success } from "./+lib.ts"
-import { readEnvFile, requireEnvVar } from "./env-file.ts"
+import { createEnvReader, readEnvVar } from "@spy4x/server/config"
+import { describeEnvFileError, readEnvFile } from "./env-file.ts"
 
 /** The env file used when no argument names one. */
 export const DEFAULT_ENV_FILE = "infra/envs/.env.prod"
@@ -53,11 +54,12 @@ export function shellQuote(value: string): string {
 /**
  * Builds the deploy steps from the env file's values. Runs nothing.
  *
- * @throws {import("./env-file.ts").MissingEnvVarError} When a required variable is missing.
+ * @throws {import("@spy4x/server/config").MissingEnvError} When a required variable is missing.
  */
 export function planDeploy(values: Record<string, string>, envFilePath: string): DeployStep[] {
-  const server = requireEnvVar(values, "SSH_TO_SERVER", envFilePath)
-  const path = requireEnvVar(values, "PATH_ON_SERVER", envFilePath).replace(/^~\//, "")
+  const env = createEnvReader(values)
+  const server = readEnvVar(env, "SSH_TO_SERVER")
+  const path = readEnvVar(env, "PATH_ON_SERVER").replace(/^~\//, "")
   const deno = values.DENO_ON_SERVER || "deno"
   const denoPath = `PATH="$HOME/.deno/bin:$PATH" ${deno}`
   const remoteCommand = [
@@ -130,7 +132,7 @@ async function main(): Promise<void> {
   try {
     steps = planDeploy(await readEnvFile(envFilePath), envFilePath)
   } catch (err) {
-    error(err instanceof Error ? err.message : err)
+    error(describeEnvFileError(err, envFilePath))
     Deno.exit(1)
   }
   for (const step of steps) {

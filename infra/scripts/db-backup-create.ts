@@ -15,7 +15,8 @@
  */
 
 import { error, log, success } from "./+lib.ts"
-import { readEnvFile, requireEnvVar } from "./env-file.ts"
+import { createEnvReader, readEnvVar } from "@spy4x/server/config"
+import { describeEnvFileError, readEnvFile } from "./env-file.ts"
 
 /** One `docker` invocation: its arguments and the variables it passes into the container. */
 export interface DockerRun {
@@ -35,14 +36,14 @@ export interface BackupPlan {
 /**
  * Builds the dump and upload commands from the env file's values. Runs nothing.
  *
- * @throws {import("./env-file.ts").MissingEnvVarError} When a required variable is missing.
+ * @throws {import("@spy4x/server/config").MissingEnvError} When a required variable is missing.
  */
 export function planBackup(
   values: Record<string, string>,
-  envFilePath: string,
   now: Date,
 ): BackupPlan {
-  const read = (name: string) => requireEnvVar(values, name, envFilePath)
+  const env = createEnvReader(values)
+  const read = (name: string) => readEnvVar(env, name)
   const container = `${read("PROJECT")}-db`
   const dbName = read("DB_NAME")
   const dbUser = read("DB_USER")
@@ -120,9 +121,9 @@ async function main(): Promise<void> {
   }
   let plan: BackupPlan
   try {
-    plan = planBackup(await readEnvFile(envFilePath), envFilePath, new Date())
+    plan = planBackup(await readEnvFile(envFilePath), new Date())
   } catch (err) {
-    error(err instanceof Error ? err.message : err)
+    error(describeEnvFileError(err, envFilePath))
     Deno.exit(1)
   }
 

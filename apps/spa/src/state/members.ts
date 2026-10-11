@@ -8,6 +8,7 @@ import {
   type TransferError,
   transferErrorField,
 } from "@ui/group-transfer.tsx"
+import { describeError } from "./describe-error.ts"
 import { apiRead } from "./realtime-call.ts"
 import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS, ReadRefused } from "./read-keys.ts"
@@ -45,10 +46,6 @@ export class TransferRefused extends Error {
     super(message)
     this.name = "TransferRefused"
   }
-}
-
-function describe(error: unknown, fallback: string): string {
-  return error instanceof RealtimeRequestError ? error.message : fallback
 }
 
 /**
@@ -108,7 +105,7 @@ export function createMembersStore(
       loadError.value = null
     } catch (cause) {
       if (read !== reads || groupId.value !== id) return
-      loadError.value = describe(cause, "Could not load the members")
+      loadError.value = describeError(cause, "Could not load the members")
     }
   }
 
@@ -142,7 +139,7 @@ export function createMembersStore(
       return true
     } catch (cause) {
       const plan = cause instanceof RealtimeRequestError ? readPlanRefusal(cause.details) : null
-      memberError.value = { userId, message: describe(cause, fallback), plan }
+      memberError.value = { userId, message: describeError(cause, fallback), plan }
       return false
     } finally {
       pendingUserId.value = null
@@ -176,7 +173,7 @@ export function createMembersStore(
       await dependencies.leave({ groupId: id })
       return true
     } catch (cause) {
-      leaveError.value = describe(cause, "Could not leave the group")
+      leaveError.value = describeError(cause, "Could not leave the group")
       return false
     } finally {
       leaving.value = false

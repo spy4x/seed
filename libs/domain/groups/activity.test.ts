@@ -46,6 +46,9 @@ Deno.test("activity: a move reads as a sentence with the count and the group", (
   expect(say("note.moved_out", { details: { count: 1, groupName: "Family" } })).toBe(
     "Ada moved 1 note to Family",
   )
+  expect(say("note.moved_out", { details: { groupName: "Family" } })).toBe(
+    "Ada moved some notes to Family",
+  )
 })
 
 Deno.test("activity: moving all of a group's data reads as a sentence in both groups", () => {

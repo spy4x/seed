@@ -1,4 +1,5 @@
 import type { Query } from "@spy4x/platform/cqrs"
+import { pluralize } from "@spy4x/platform/universal/text"
 import type { Actor } from "@domain/identity"
 import { GroupError, GroupRole } from "./+lib.ts"
 
@@ -145,12 +146,10 @@ function article(word: string): string {
   return /^[aeiou]/.test(word) ? "an" : "a"
 }
 
-function notes(count: unknown): string {
-  return count === 1 ? "1 note" : `${typeof count === "number" ? count : "some"} notes`
-}
-
-function items(count: unknown): string {
-  return count === 1 ? "1 item" : `${typeof count === "number" ? count : "some"} items`
+/** "1 note" or "3 notes"; "some notes" when the event kept no count. */
+function counted(count: unknown, noun: string): string {
+  if (count === 1) return `1 ${noun}`
+  return `${typeof count === "number" ? count : "some"} ${pluralize(noun)}`
 }
 
 function quoted(value: unknown): string {
@@ -219,10 +218,10 @@ export function describeActivity(
       const to = typeof details.groupName === "string" && details.groupName !== ""
         ? details.groupName
         : "another group"
-      return `${who} moved all the group's data (${items(details.count)}) to ${to}`
+      return `${who} moved all the group's data (${counted(details.count, "item")}) to ${to}`
     }
     case "group.data_moved_in":
-      return `${who} moved all of another group's data (${items(details.count)}) here`
+      return `${who} moved all of another group's data (${counted(details.count, "item")}) here`
     case "note.created": {
       const title = quoted(details.title)
       return title ? `${who} added the note ${title}` : `${who} added a note`
@@ -239,10 +238,10 @@ export function describeActivity(
       const to = typeof details.groupName === "string" && details.groupName !== ""
         ? details.groupName
         : "another group"
-      return `${who} moved ${notes(details.count)} to ${to}`
+      return `${who} moved ${counted(details.count, "note")} to ${to}`
     }
     case "note.moved_in":
-      return `${who} moved ${notes(details.count)} here from another group`
+      return `${who} moved ${counted(details.count, "note")} here from another group`
     default:
       return `${who} changed something in the group`
   }

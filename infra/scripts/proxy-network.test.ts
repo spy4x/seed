@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { ensureProxyNetwork, type RunContainerCli } from "./proxy-network.ts"
+import { ensureProxyNetwork, type RunContainerCli, runContainerCli } from "./proxy-network.ts"
 
 function fakeCli(existing: Set<string>, createCode = 0) {
   const calls: string[] = []
@@ -35,4 +35,10 @@ Deno.test("ensureProxyNetwork uses the network name it is given", async () => {
   const cli = fakeCli(new Set())
   await ensureProxyNetwork(`docker`, cli.run, `mine`)
   expect(cli.calls).toEqual([`docker network inspect mine`, `docker network create mine`])
+})
+
+// The infra tests run without `--allow-run`, so the spawn is refused: the same "could not start"
+// path as a CLI that is not installed.
+Deno.test("runContainerCli says the CLI could not be run, not that it exited with a code", async () => {
+  await expect(runContainerCli(`docker`, [`version`])).rejects.toThrow(`Could not run docker`)
 })

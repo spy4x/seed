@@ -18,17 +18,10 @@
  * @module
  */
 
+import { MissingEnvError } from "@spy4x/server/config"
 import { parseEnvValues } from "@spy4x/server/env-age64"
 
 export { parseEnvValues }
-
-/** Raised when a variable a script needs is missing or blank. Never carries a value. */
-export class MissingEnvVarError extends Error {
-  constructor(name: string, path: string) {
-    super(`${name} must be set in ${path}`)
-    this.name = "MissingEnvVarError"
-  }
-}
 
 /** Reads and parses the env file at `path`. */
 export async function readEnvFile(path: string): Promise<Record<string, string>> {
@@ -36,11 +29,10 @@ export async function readEnvFile(path: string): Promise<Record<string, string>>
 }
 
 /**
- * Returns `values[name]`, or throws {@link MissingEnvVarError} when it is missing or blank.
- * `path` only names the file in the error.
+ * The line a script prints when it cannot plan its work. A missing variable also names the env
+ * file to fix, because the library error does not know it.
  */
-export function requireEnvVar(values: Record<string, string>, name: string, path: string): string {
-  const value = values[name]
-  if (value === undefined || value === "") throw new MissingEnvVarError(name, path)
-  return value
+export function describeEnvFileError(error: unknown, envFilePath: string): string {
+  if (error instanceof MissingEnvError) return `${error.message} in ${envFilePath}`
+  return error instanceof Error ? error.message : String(error)
 }

@@ -1,5 +1,4 @@
 import { Hono } from "hono"
-import { parseBoundedInteger } from "@spy4x/platform/universal/bounded-integer"
 import type { Context, MiddlewareHandler } from "hono"
 import {
   type DeletedGroupSummary,
@@ -42,7 +41,8 @@ import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import { APIContext } from "../_types.ts"
 import { groupErrorResponse, GroupFeatureError } from "../features/groups/errors.ts"
-import { readApiJson } from "@api/services/json-body.ts"
+import { readFeatureJson } from "@api/services/json-body.ts"
+import { parseListLimit } from "@api/services/list-limit.ts"
 import { listGroupsPage } from "../features/groups/list.ts"
 
 export interface GroupsRouteDependencies {
@@ -289,14 +289,7 @@ export function createGroupsRoute(dependencies: GroupsRouteDependencies): Hono<A
 
 /** The request's JSON body, or `INVALID_REQUEST` when it is not JSON or is declared as another type. */
 async function readJsonBody(c: Context<APIContext>): Promise<unknown> {
-  if (!c.req.header("content-type")?.toLowerCase().includes("application/json")) {
-    throw new GroupFeatureError("INVALID_REQUEST", "Content type must be JSON")
-  }
-  try {
-    return await readApiJson(c)
-  } catch {
-    throw new GroupFeatureError("INVALID_REQUEST", "Request body must be JSON")
-  }
+  return readFeatureJson(c, (message) => new GroupFeatureError("INVALID_REQUEST", message))
 }
 
 /**
@@ -312,9 +305,9 @@ const requireGroupAuthentication: MiddlewareHandler<APIContext> = async (c, next
 }
 
 function parseLimit(value: string | undefined): number {
-  const limit = parseBoundedInteger(value, { fallback: 50, max: 100 })
-  if (limit === null) {
-    throw new GroupFeatureError("INVALID_REQUEST", "Group list limit is invalid")
-  }
-  return limit
+  return parseListLimit(
+    value,
+    50,
+    () => new GroupFeatureError("INVALID_REQUEST", "Group list limit is invalid"),
+  )
 }

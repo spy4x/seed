@@ -1,7 +1,7 @@
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import { isRecord } from "@spy4x/platform/universal/is-record"
 import type { Actor } from "@domain/identity"
-import { canManageMember, GroupError, GroupRole, type SelectedGroup } from "./+lib.ts"
+import { canManageMember, GroupError, GroupRole, isUuidV4, type SelectedGroup } from "./+lib.ts"
 
 /** How long an invitation works when its creator picks nothing else. */
 export const INVITATION_DEFAULT_DAYS = 7
@@ -275,7 +275,6 @@ export function assertCanInvite(actor: GroupRole | null, role: GroupRole): void 
 }
 
 const CREATE_KEYS = ["acceptSeatPrice", "email", "expiresInDays", "maxUses", "role", "sendEmail"]
-const UUID_V4_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/
 
 /**
@@ -321,7 +320,7 @@ export function parseInvitationCreateBody(value: unknown): InvitationCreateInput
 
 /** An invitation's id from a request: a lowercase UUID v4, or `INVALID_REQUEST`. */
 export function parseInvitationId(value: unknown): string {
-  if (typeof value !== "string" || !UUID_V4_PATTERN.test(value)) {
+  if (!isUuidV4(value)) {
     throw invalid("Invitation id must be a lowercase UUID v4")
   }
   return value

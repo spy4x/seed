@@ -14,7 +14,7 @@ import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import type { APIContext } from "../_types.ts"
 import { billingErrorResponse, BillingFeatureError } from "../features/billing/errors.ts"
-import { readApiJson } from "@api/services/json-body.ts"
+import { readFeatureJson } from "@api/services/json-body.ts"
 
 export interface BillingRouteDependencies {
   get(query: BillingGetQuery): Promise<{ billing: GroupBilling }>
@@ -99,12 +99,5 @@ function groupIdOf(c: Context<APIContext>): string {
 }
 
 async function readJson(c: Context<APIContext>): Promise<unknown> {
-  if (!c.req.header("content-type")?.toLowerCase().includes("application/json")) {
-    throw new BillingFeatureError("INVALID_REQUEST", "Content type must be JSON")
-  }
-  try {
-    return await readApiJson(c)
-  } catch {
-    throw new BillingFeatureError("INVALID_REQUEST", "Request body must be JSON")
-  }
+  return readFeatureJson(c, (message) => new BillingFeatureError("INVALID_REQUEST", message))
 }

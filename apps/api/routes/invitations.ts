@@ -24,7 +24,7 @@ import type { APIContext } from "../_types.ts"
 import { GroupFeatureError } from "../features/groups/errors.ts"
 import { invitationErrorResponse } from "../features/groups/invitation-errors.ts"
 import type { InvitationRateLimits } from "../features/groups/invitation-rate-limits.ts"
-import { readApiJson } from "@api/services/json-body.ts"
+import { readFeatureJson } from "@api/services/json-body.ts"
 
 export interface InvitationsRouteDependencies {
   create(command: GroupInvitationCreateCommand): Promise<GroupInvitationCreateResult>
@@ -166,12 +166,5 @@ function groupIdOf(c: Context<APIContext>): string {
 }
 
 async function readJson(c: Context<APIContext>): Promise<unknown> {
-  if (!c.req.header("content-type")?.toLowerCase().includes("application/json")) {
-    throw new GroupFeatureError("INVALID_REQUEST", "Content type must be JSON")
-  }
-  try {
-    return await readApiJson(c)
-  } catch {
-    throw new GroupFeatureError("INVALID_REQUEST", "Request body must be JSON")
-  }
+  return readFeatureJson(c, (message) => new GroupFeatureError("INVALID_REQUEST", message))
 }

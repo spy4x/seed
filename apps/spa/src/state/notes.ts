@@ -1,6 +1,7 @@
 import { computed, signal } from "@preact/signals"
 import { ConnectionLostError, RealtimeRequestError } from "@spy4x/realtime"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
+import { describeError } from "./describe-error.ts"
 import { apiRead } from "./realtime-call.ts"
 import { callCommand, callQuery, canCall, currentLayer, offlineNotes } from "../modules.ts"
 
@@ -121,10 +122,6 @@ export const NOTE_MESSAGES = {
   restoreGone: "That note is no longer in the deleted notes.",
   moveGone: "A note you ticked is no longer here, so nothing was moved.",
 } as const
-
-function describe(error: unknown, fallback: string): string {
-  return error instanceof RealtimeRequestError ? error.message : fallback
-}
 
 /** What the group's plan refused, read from the socket's `forbidden` details, or `null`. */
 function planRefusal(error: unknown): PlanRefusal | null {
@@ -255,7 +252,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
     try {
       await refresh()
     } catch (cause) {
-      listError.value = describe(cause, NOTE_MESSAGES.load)
+      listError.value = describeError(cause, NOTE_MESSAGES.load)
     }
   }
 
@@ -274,7 +271,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
     try {
       await readDeleted(forGroup)
     } catch (cause) {
-      listError.value = describe(cause, NOTE_MESSAGES.load)
+      listError.value = describeError(cause, NOTE_MESSAGES.load)
     } finally {
       deletedLoading.value = false
     }
@@ -346,7 +343,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
         if (stale()) return
         elsewhere.value = other
         missing.value = true
-      } else listError.value = describe(cause, NOTE_MESSAGES.load)
+      } else listError.value = describeError(cause, NOTE_MESSAGES.load)
     }
   }
 
@@ -376,7 +373,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
     } catch (cause) {
       createErrors.value = {
         title: null,
-        form: describe(cause, NOTE_MESSAGES.create),
+        form: describeError(cause, NOTE_MESSAGES.create),
         plan: planRefusal(cause),
       }
       return null
@@ -419,7 +416,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
           title: null,
           form: code === "NOTE_NOT_FOUND"
             ? NOTE_MESSAGES.gone
-            : describe(cause, NOTE_MESSAGES.save),
+            : describeError(cause, NOTE_MESSAGES.save),
         }
       }
       return false
@@ -454,7 +451,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
       const code = noteCode(cause)
       listError.value = code === "VERSION_CONFLICT"
         ? NOTE_MESSAGES.deleteConflict
-        : describe(cause, NOTE_MESSAGES.delete)
+        : describeError(cause, NOTE_MESSAGES.delete)
       // The page of this note offers the latest version; the list is read again.
       const edit = editing.value
       if (code === "VERSION_CONFLICT" && edit?.id === note.id) {
@@ -492,7 +489,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
         form: code === "NOTE_NOT_FOUND"
           ? NOTE_MESSAGES.restoreGone
           : cause instanceof RealtimeRequestError
-          ? describe(cause, NOTE_MESSAGES.restore)
+          ? describeError(cause, NOTE_MESSAGES.restore)
           : NOTE_MESSAGES.restoreOffline,
         plan: planRefusal(cause),
       }
@@ -559,7 +556,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
       moveError.value = code === "NOTE_NOT_FOUND"
         ? NOTE_MESSAGES.moveGone
         : cause instanceof RealtimeRequestError
-        ? describe(cause, NOTE_MESSAGES.move)
+        ? describeError(cause, NOTE_MESSAGES.move)
         : NOTE_MESSAGES.moveOffline
       // The list is stale: another member changed it first.
       if (code === "NOTE_NOT_FOUND") await refresh().catch(() => {})

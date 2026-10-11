@@ -1,5 +1,4 @@
 import { Hono } from "hono"
-import { parseBoundedInteger } from "@spy4x/platform/universal/bounded-integer"
 import type { Context, MiddlewareHandler } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { bearerTokenFromHeaders } from "@spy4x/server/http/bearer-auth"
@@ -23,7 +22,8 @@ import {
   listNotesPage,
   type NoteListDependencies,
 } from "../features/notes/list.ts"
-import { readApiJson } from "@api/services/json-body.ts"
+import { readFeatureJson } from "@api/services/json-body.ts"
+import { parseListLimit } from "@api/services/list-limit.ts"
 
 /** The context of a token request: the token that `authenticate` accepted. */
 export interface TokenApiContext {
@@ -159,19 +159,13 @@ function groupIdOf(c: Context<TokenApiContext>): string {
 }
 
 async function readJson(c: Context<TokenApiContext>): Promise<unknown> {
-  if (!c.req.header("content-type")?.toLowerCase().includes("application/json")) {
-    throw new NoteFeatureError("INVALID_REQUEST", "Content type must be JSON")
-  }
-  try {
-    return await readApiJson(c)
-  } catch {
-    throw new NoteFeatureError("INVALID_REQUEST", "Request body must be JSON")
-  }
+  return readFeatureJson(c, (message) => new NoteFeatureError("INVALID_REQUEST", message))
 }
 
 function parseLimit(value: string | undefined): number {
-  if (value === undefined) return DEFAULT_NOTE_LIST_LIMIT
-  const limit = parseBoundedInteger(value, { fallback: DEFAULT_NOTE_LIST_LIMIT, max: 100 })
-  if (limit === null) throw new NoteFeatureError("INVALID_REQUEST", "Note list limit is invalid")
-  return limit
+  return parseListLimit(
+    value,
+    DEFAULT_NOTE_LIST_LIMIT,
+    () => new NoteFeatureError("INVALID_REQUEST", "Note list limit is invalid"),
+  )
 }

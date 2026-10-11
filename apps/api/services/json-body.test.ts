@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { Hono } from "hono"
-import { MAX_JSON_BODY_BYTES, readApiJson } from "./json-body.ts"
+import { MAX_JSON_BODY_BYTES, readApiJson, readFeatureJson } from "./json-body.ts"
 
 /** A route that echoes the body it read, with Hono's default error handling. */
 function buildApp() {
@@ -36,5 +36,59 @@ describe("readApiJson", () => {
     })
 
     expect(response.status).toBe(400)
+  })
+})
+
+class TestError extends Error {}
+
+/** A route that reads its body with `readFeatureJson` and answers a `TestError` with 422. */
+function buildFeatureApp() {
+  return new Hono()
+    .onError((error, c) => c.text(error.message, error instanceof TestError ? 422 : 500))
+    .post("/echo", async (c) => {
+      return c.json({ body: await readFeatureJson(c, (message) => new TestError(message)) })
+    })
+}
+
+describe("readFeatureJson", () => {
+  const post = (body: string, contentType?: string) =>
+    buildFeatureApp().request("http://local/echo", {
+      method: "POST",
+      body,
+      headers: contentType ? { "content-type": contentType } : {},
+    })
+
+  it("returns the body of a request declared as JSON", async () => {
+    const response = await post(`{"a":1}`, "application/json; charset=utf-8")
+
+    expect(response.status).toBe(200)
+    expect((await response.json()).body).toEqual({ a: 1 })
+  })
+
+  it("accepts a JSON type written in upper case", async () => {
+    const response = await post(`{"a":1}`, "Application/JSON")
+
+    expect(response.status).toBe(200)
+  })
+
+  it("refuses a body that is not declared as JSON in the feature's error", async () => {
+    const response = await post(`{"a":1}`, "text/plain")
+
+    expect(response.status).toBe(422)
+    expect(await response.text()).toBe("Content type must be JSON")
+  })
+
+  it("refuses a body that is not JSON in the feature's error", async () => {
+    const response = await post(`{"a":`, "application/json")
+
+    expect(response.status).toBe(422)
+    expect(await response.text()).toBe("Request body must be JSON")
+  })
+
+  it("refuses a body over the cap in the feature's error", async () => {
+    const response = await post(jsonOfSize(MAX_JSON_BODY_BYTES + 1), "application/json")
+
+    expect(response.status).toBe(422)
+    expect(await response.text()).toBe("Request body must be JSON")
   })
 })

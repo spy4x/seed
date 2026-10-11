@@ -1,7 +1,7 @@
 import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
-import { canMutateNotes, canRead, GroupRole } from "@domain/groups"
+import { canMutateNotes, canRead, GroupRole, isUuidV4, UUID_V4 } from "@domain/groups"
 
 /**
  * Notes: the reference aggregate. A note belongs to one group; every member of the group reads it,
@@ -104,8 +104,8 @@ export interface DeletedNote {
 // The bodies of the REST requests and the fields of the forms that post without JavaScript. The
 // group and the note are named by the path; the socket payloads add them as `groupId` and `id`.
 
-/** The shape of every id: a lowercase UUID v4. */
-export const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+// The id shape lives with groups, the layer below; notes and tags import it from here.
+export { isUuidV4, UUID_V4 }
 
 // Lengths are checked in characters by `parseNoteRequest`, not here: arktype counts UTF-16 units.
 const noteFields = {
@@ -195,11 +195,6 @@ export const noteListPayloadSchema = type({
   "deleted?": "boolean",
   "+": "reject",
 })
-
-/** Whether `value` is a lowercase UUID v4, the shape of every group and note id. */
-export function isUuidV4(value: unknown): value is string {
-  return typeof value === "string" && UUID_V4.test(value)
-}
 
 /**
  * Validates `value` against `schema`, then trims the title and checks both lengths in characters,

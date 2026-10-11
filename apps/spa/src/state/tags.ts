@@ -1,6 +1,7 @@
 import { computed, signal } from "@preact/signals"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { DEFAULT_TAG_COLOR, TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
+import { describeError } from "./describe-error.ts"
 import { apiRead } from "./realtime-call.ts"
 import { callCommand, currentLayer, offlineTags } from "../modules.ts"
 
@@ -61,10 +62,6 @@ export interface TagFormErrors {
 }
 
 const NO_ERRORS: TagFormErrors = { name: null, form: null }
-
-function describe(error: unknown, fallback: string): string {
-  return error instanceof RealtimeRequestError ? error.message : fallback
-}
 
 /** The tag code of a refused call (`TAG_NAME_TAKEN`, `VERSION_CONFLICT`...), or `null`. */
 function tagCode(error: unknown): string | null {
@@ -135,7 +132,7 @@ export function createTagsStore(dependencies: TagsDependencies) {
     try {
       await refresh()
     } catch (cause) {
-      listError.value = describe(cause, TAG_MESSAGES.load)
+      listError.value = describeError(cause, TAG_MESSAGES.load)
     }
   }
 
@@ -205,7 +202,7 @@ export function createTagsStore(dependencies: TagsDependencies) {
       } else {
         formErrors.value = {
           name: null,
-          form: describe(cause, current.id === null ? TAG_MESSAGES.create : TAG_MESSAGES.save),
+          form: describeError(cause, current.id === null ? TAG_MESSAGES.create : TAG_MESSAGES.save),
         }
       }
       return false
@@ -231,7 +228,7 @@ export function createTagsStore(dependencies: TagsDependencies) {
         ? TAG_MESSAGES.conflict
         : code === "TAG_NOT_FOUND"
         ? TAG_MESSAGES.gone
-        : describe(cause, TAG_MESSAGES.delete)
+        : describeError(cause, TAG_MESSAGES.delete)
       if (code === "VERSION_CONFLICT" || code === "TAG_NOT_FOUND") await refresh().catch(() => {})
       return false
     } finally {

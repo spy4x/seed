@@ -2,6 +2,7 @@ import { signal } from "@preact/signals"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import type { GroupColor, GroupDetails, GroupMoveAllResult, GroupRole } from "@domain/groups"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
+import { describeError } from "./describe-error.ts"
 import { apiRead } from "./realtime-call.ts"
 import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 import {
@@ -74,10 +75,6 @@ const PAGE_LIMIT = 100
 /** More pages than any account has groups: a stop for a cursor loop, not a limit people meet. */
 const MAX_PAGES = 100
 
-function describe(error: unknown, fallback: string): string {
-  return error instanceof RealtimeRequestError ? error.message : fallback
-}
-
 /**
  * The groups screen's state: the list, the create form and what is in flight.
  *
@@ -139,7 +136,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
         loadError.value = null
       },
       (cause) => {
-        loadError.value = describe(cause, "Could not load the groups")
+        loadError.value = describeError(cause, "Could not load the groups")
         throw cause
       },
     ).finally(() => {
@@ -169,7 +166,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     try {
       await refresh("socket")
     } catch (cause) {
-      error.value = describe(cause, "Could not load the groups")
+      error.value = describeError(cause, "Could not load the groups")
     }
   }
 
@@ -187,7 +184,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
       dependencies.advance(group.id, Number(group.changeSequence))
       name.value = ""
     } catch (cause) {
-      error.value = describe(cause, "Could not create the group")
+      error.value = describeError(cause, "Could not create the group")
     } finally {
       creating.value = false
     }
@@ -214,7 +211,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
       actionError.value = {
         groupId,
         action,
-        message: describe(cause, fallback),
+        message: describeError(cause, fallback),
         ...(plan && { plan }),
       }
       return false

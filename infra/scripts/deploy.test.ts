@@ -2,7 +2,7 @@
 import { expect } from "@std/expect"
 import { basename, globToRegExp } from "@std/path"
 import { planDeploy, shellQuote, VAPID_PATH } from "./deploy.ts"
-import { MissingEnvVarError } from "./env-file.ts"
+import { MissingEnvError } from "@spy4x/server/config"
 
 const ENV_FILE = "infra/envs/.env.home"
 
@@ -87,11 +87,13 @@ Deno.test("planDeploy reads a leading ~/ in PATH_ON_SERVER as the home directory
   expect(start.args[1]).toMatch(/^cd 'app' && .* deno task compose up -d --build$/)
 })
 
-Deno.test("planDeploy refuses an env file without SSH_TO_SERVER or PATH_ON_SERVER", () => {
+Deno.test("planDeploy refuses an env file without SSH_TO_SERVER or PATH_ON_SERVER, or with it blank", () => {
   expect(() => planDeploy({ PATH_ON_SERVER: "/srv/app" }, ENV_FILE))
-    .toThrow(new MissingEnvVarError("SSH_TO_SERVER", ENV_FILE))
+    .toThrow(new MissingEnvError("SSH_TO_SERVER"))
   expect(() => planDeploy({ SSH_TO_SERVER: "h" }, ENV_FILE))
-    .toThrow(new MissingEnvVarError("PATH_ON_SERVER", ENV_FILE))
+    .toThrow(new MissingEnvError("PATH_ON_SERVER"))
+  expect(() => planDeploy({ SSH_TO_SERVER: "h", PATH_ON_SERVER: "" }, ENV_FILE))
+    .toThrow(new MissingEnvError("PATH_ON_SERVER"))
 })
 
 Deno.test("shellQuote keeps a single quote inside one shell word", () => {
