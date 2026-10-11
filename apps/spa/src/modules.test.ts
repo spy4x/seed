@@ -1,5 +1,5 @@
 import { expect } from "@std/expect"
-import { afterEach, describe, it } from "@std/testing/bdd"
+import { afterEach, beforeEach, describe, it } from "@std/testing/bdd"
 import { ConnectionLostError } from "@spy4x/realtime"
 import {
   callCommand,
@@ -11,6 +11,7 @@ import {
   startModules,
   stopChanges,
 } from "./modules.ts"
+import { installLocalStorage } from "./state/memory-local-storage.ts"
 import { sessionState, type SessionUser } from "./state/session.ts"
 
 const realFetch = globalThis.fetch
@@ -97,7 +98,14 @@ function pause(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+// The modules read who is remembered and whose copies are owed a deletion: nobody, in every test.
+let restoreLocalStorage = () => {}
+beforeEach(() => {
+  restoreLocalStorage = installLocalStorage().restore
+})
+
 afterEach(() => {
+  restoreLocalStorage()
   stopChanges()
   configureModules({})
   sessionState.value = signedOut

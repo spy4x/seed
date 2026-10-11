@@ -1,6 +1,8 @@
 import { signal } from "@preact/signals"
 import type { NotificationRow } from "@ui/notifications-screen.tsx"
 import { apiFetch } from "./api.ts"
+import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
+import { READ_KEYS } from "./read-keys.ts"
 
 /** One page of the inbox as the API answers: `nextCursor` is `null` on the last page. */
 export interface NotificationPageResult {
@@ -27,7 +29,10 @@ export interface NotificationDependencies {
  * open ({@link open}), it reads the first page instead, whose answer carries the count too, so the
  * list and the badge never disagree. A read answered after a newer one began is dropped.
  */
-export function createNotificationsStore(dependencies: NotificationDependencies) {
+export function createNotificationsStore(
+  dependencies: NotificationDependencies,
+  device: LocalReads = noLocalReads,
+) {
   const notifications = signal<readonly NotificationRow[]>([])
   const nextCursor = signal<string | null>(null)
   const unreadCount = signal(0)
@@ -42,11 +47,24 @@ export function createNotificationsStore(dependencies: NotificationDependencies)
     loading.value = true
     loadingMore.value = false
     try {
-      const page = await dependencies.list({ cursor: null })
+      const show = (page: NotificationPageResult) => {
+        notifications.value = page.notifications
+        nextCursor.value = page.nextCursor
+        unreadCount.value = page.unreadCount
+      }
+      // The device keeps each page the person opened; the first one shows while the server is asked.
+      const { value: page } = await device.through(
+        READ_KEYS.notifications(null),
+        () => dependencies.list({ cursor: null }),
+        (copy) => {
+          if (read !== reads) return false
+          if (copy && notifications.value.length > 0) return false
+          if (copy) return show(copy.value)
+          notifications.value = []
+        },
+      )
       if (read !== reads) return
-      notifications.value = page.notifications
-      nextCursor.value = page.nextCursor
-      unreadCount.value = page.unreadCount
+      show(page)
       error.value = null
     } catch (cause) {
       if (read !== reads) return
@@ -72,7 +90,10 @@ export function createNotificationsStore(dependencies: NotificationDependencies)
     if (watching) return await readFirstPage()
     const read = ++reads
     try {
-      const count = await dependencies.unreadCount()
+      const { value: count } = await device.through(
+        READ_KEYS.unreadCount,
+        () => dependencies.unreadCount(),
+      )
       if (read === reads) unreadCount.value = count
     } catch (_offline) {
       // The bell keeps its last number; the next hint or reconnect reads it again.
@@ -87,7 +108,10 @@ export function createNotificationsStore(dependencies: NotificationDependencies)
     loadingMore.value = true
     error.value = null
     try {
-      const page = await dependencies.list({ cursor })
+      const { value: page } = await device.through(
+        READ_KEYS.notifications(cursor),
+        () => dependencies.list({ cursor }),
+      )
       if (read !== reads) return
       const known = new Set(notifications.value.map((n) => n.id))
       notifications.value = [
@@ -209,4 +233,4 @@ export const notificationsStore = createNotificationsStore({
     )
     return data.unreadCount
   },
-})
+}, localReads)

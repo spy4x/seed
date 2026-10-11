@@ -189,6 +189,21 @@ describe("SignedInDevices", () => {
     expect(find("[data-e2e=sessions]").textContent).toContain("Loading your devices")
     expect(find("[data-e2e=sessions]").textContent).toContain("Could not read")
   })
+
+  it("says when the list is a copy saved on this device, with the time it was saved", async () => {
+    const savedAt = Date.UTC(2026, 9, 10, 8, 30)
+    await mount(<SignedInDevices {...devicesProps([], { savedAt })} />)
+
+    const notice = find("[data-e2e=sessions-saved-copy]")
+    expect(notice.textContent).toContain("saved on this device")
+    expect(notice.querySelector("time")?.getAttribute("datetime")).toBe("2026-10-10T08:30:00.000Z")
+  })
+
+  it("says nothing about a copy when the server answered", async () => {
+    await mount(<SignedInDevices {...devicesProps([], { savedAt: null })} />)
+
+    expect(document.querySelectorAll("[data-e2e=sessions-saved-copy]").length).toBe(0)
+  })
 })
 
 describe("ProfileScreen password dialog", () => {

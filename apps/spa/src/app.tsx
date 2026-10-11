@@ -153,7 +153,11 @@ function Frame() {
 export function App() {
   const [ready, setReady] = useState(false)
   useEffect(() => {
-    bootstrapSession(recallUser).finally(() => setReady(true))
+    bootstrapSession(recallUser)
+      // A start that found no session deletes what the device kept for the remembered user before
+      // the sign-in page shows: the next person on this device must not find it.
+      .then(() => sessionState.value.user ? undefined : forgetUser())
+      .finally(() => setReady(true))
   }, [])
 
   useEffect(() => {
@@ -167,7 +171,7 @@ export function App() {
     // The user is remembered for the next start with no network, and forgotten on sign-out.
     const { user, isReady, isMfaRequired } = sessionState.value
     if (user && !isMfaRequired) rememberUser(user)
-    else if (isReady && !user) forgetUser()
+    else if (isReady && !user) void forgetUser()
   }, [sessionState.value.user, sessionState.value.isReady, sessionState.value.isMfaRequired])
 
   // A change made in another tab while this socket was down is read when it opens again.

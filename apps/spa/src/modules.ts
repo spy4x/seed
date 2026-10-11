@@ -1,6 +1,8 @@
 import { ConnectionLostError, type GapReport } from "@spy4x/realtime"
 import { type CallPort, type RetryOptions, sendCommand, sendQuery } from "@spy4x/realtime/calls"
 import { signal } from "@preact/signals"
+import { createSignedInHint } from "@spy4x/platform/browser/signed-in-hint"
+import { cachedRead, type ReadCache, readCopy, type ReadResult } from "@spy4x/realtime/read-cache"
 import { createSyncRunner, type SyncRunner } from "@spy4x/realtime/sync-runner"
 import {
   advanceGroupCursor as advanceSocketCursor,
@@ -13,19 +15,15 @@ import {
 import {
   currentLayer as offlineLayer,
   flushOutbox as flushOfflineOutbox,
+  forgetDeviceCopy,
   type OfflineLayer,
+  type OfflineStorage,
   type OfflineTransport,
   startOffline as startOfflineLayer,
   stopOffline as stopOfflineLayer,
 } from "./offline/index.ts"
-import { offlineGroups as groupsOverLayer } from "./offline/groups-offline.ts"
-import { offlineNotes as notesOverLayer } from "./offline/notes-offline.ts"
+import { offlineNotes as notesOverLayer } from "./offline/notes-collection.ts"
 import { OfflineStatus as OfflineStatusLine } from "./offline/OfflineStatus.tsx"
-import {
-  forgetUser as forgetCachedUser,
-  recallUser as recallCachedUser,
-  rememberUser as rememberCachedUser,
-} from "./offline/session-cache.ts"
 import type { RuntimeConfig } from "./runtime-config.ts"
 import { canCallAs, createAppCallPort } from "./state/realtime-call.ts"
 import type { SessionState, SessionUser } from "./state/session.ts"
@@ -152,6 +150,8 @@ export function offlineTransportFor(userId: number, port: CallPort): OfflineTran
 export interface StartOptions {
   /** How often the page checks for changes while no socket is open. A test passes a short one. */
   pollIntervalMs?: number
+  /** Where the local-data module keeps its data. Defaults to IndexedDB; a test passes memory. */
+  storage?: OfflineStorage
 }
 
 /**
@@ -191,7 +191,24 @@ export function startModules(userId: number, reads: ChangeReads, options: StartO
     stopEvents: () => {},
   }
   session = opened
-  if (switches.offline) startOfflineLayer(userId, offlineTransportFor(userId, port))
+  if (switches.offline) {
+    const start = () => {
+      startOfflineLayer(userId, offlineTransportFor(userId, port), options.storage)
+    }
+    // Copies an earlier page still owes a deletion are deleted before the layer opens, so none of
+    // them can be shown. Until then, and for this visit when the device could not delete this
+    // person's own, the stores talk to the server alone.
+    if (owedIds().length === 0) start()
+    else {
+      void settleOwed(options.storage).then(() => {
+        if (session === opened && !owedIds().includes(userId)) start()
+      })
+    }
+  } else {
+    // What the module kept before it was switched off is deleted; nothing is opened on a device
+    // that holds no trace of it.
+    void forgetUser(options.storage)
+  }
   // The runner runs on these events too; marking the run first makes it the pull, not the check.
   // A hidden tab reads nothing, and an open socket brings the page up to date itself.
   const wake = () => {
@@ -242,7 +259,19 @@ export function stopChanges(): void {
 export function forgetModules(): void {
   stopChanges()
   disconnectRealtime({ forget: true })
-  void stopOfflineLayer({ forget: true })
+  const running = offlineLayer()
+  if (!running) return void stopOfflineLayer()
+  // `forgetUser` got here first and owes this person's deletion. The layer still clears its own
+  // copy, so an answer that arrives after the sign-out is not saved; `forgetUser` reports a refusal.
+  if (settling.has(running.userId)) return void stopOfflineLayer({ forget: true }).catch(() => {})
+  const { userId } = running
+  // Owed until the device has deleted them: a page closed before that leaves the next start to it.
+  owe(userId)
+  settling.add(userId)
+  const deleting = stopOfflineLayer({ forget: true }).finally(() => settling.delete(userId))
+  // A refusal is reported by `settle`, which may only get to it after an earlier deletion.
+  deleting.catch(() => {})
+  settle(userId, () => deleting)
 }
 
 /** Records that the page now holds a group up to `sequence`, so a later hint for it is a repeat. */
@@ -276,24 +305,173 @@ export function flushOutbox(): Promise<void> {
   return flushOfflineOutbox()
 }
 
-/** The stores' server dependencies with the device copy and the queue in front of them. */
-export const offlineGroups = groupsOverLayer
+/**
+ * The read copies of the offline-readable lists (ADR 003, level 2). A store reads its list
+ * `through` a key: the answer replaces the device's copy, and when the server is unreachable the
+ * copy answers instead (`fresh: false`, with the time it was taken). `copy` is the copy alone, for
+ * a screen to show before the server has answered.
+ */
+export interface LocalReads {
+  /**
+   * Rejects as `read` does, except when the server is unreachable and a copy exists. `early` is
+   * given the copy when the device has one before the server has answered, so a screen with
+   * nothing to show paints it first; it is never given a copy after the answer. When the server
+   * then refuses the read, `early` is called once more with `undefined`: the screen takes back
+   * what it painted, so a refusal is never read next to a list the person may no longer see. A
+   * screen that did not paint the copy (it had a list already) returns `false`, and is not asked
+   * to take anything back.
+   */
+  through<T>(
+    key: string,
+    read: () => Promise<T>,
+    early?: (copy: ReadResult<T> | undefined) => boolean | void,
+  ): Promise<ReadResult<T>>
+  /** The copy under `key`, or `undefined`. Never rejects. */
+  copy<T>(key: string): Promise<ReadResult<T> | undefined>
+}
+
+/** {@link LocalReads} over the cache `current` names at the moment of each read, or over none. */
+export function createLocalReads(current: () => ReadCache | undefined): LocalReads {
+  return {
+    async through<T>(
+      key: string,
+      read: () => Promise<T>,
+      early?: (copy: ReadResult<T> | undefined) => boolean | void,
+    ) {
+      const cache = current()
+      let answered = false
+      let painted = false
+      if (early && cache) {
+        void readCopy<T>(cache, key).then((copy) => {
+          if (!copy || answered) return
+          painted = early(copy) !== false
+        })
+      }
+      try {
+        return await cachedRead(cache, key, read)
+      } catch (refusal) {
+        // An unreachable server is answered by the copy above, so this is the server saying no.
+        if (painted) early?.(undefined)
+        throw refusal
+      } finally {
+        answered = true
+      }
+    },
+    copy: (key) => readCopy(current(), key),
+  }
+}
+
+/** Reads with no device behind them: every read goes to the server and nothing is kept. */
+export const noLocalReads: LocalReads = createLocalReads(() => undefined)
+
+/**
+ * The read copies of the signed-in user. While the module is off, or nobody is signed in, it is
+ * {@link noLocalReads}: nothing is written to the device.
+ */
+export const localReads: LocalReads = createLocalReads(() => offlineLayer()?.reads)
+
+/** The notes store's server dependencies with the device copy and the queue in front of them. */
 export const offlineNotes = notesOverLayer
 
 /** The offline status line and the conflict screen. */
 export const OfflineStatus = OfflineStatusLine
 
+/**
+ * Who was signed in on this device, kept in `localStorage` under the key it has always had, so the
+ * app can open with no network: the cookie says nothing until the server is reached. It is a hint
+ * for what to show, never a credential.
+ */
+const signedInHint = createSignedInHint<SessionUser>("offline:session", {
+  validate: (value): value is SessionUser =>
+    typeof value === "object" && value !== null &&
+    typeof (value as { id?: unknown }).id === "number",
+})
+
 /** Remembers who is signed in for a start with no network; nothing while the module is off. */
 export function rememberUser(user: SessionUser): void {
-  if (switches.offline) rememberCachedUser(user)
+  if (switches.offline) signedInHint.remember(user)
 }
 
-/** Drops the remembered user. */
-export function forgetUser(): void {
-  forgetCachedUser()
+/**
+ * The users whose copies on this device are owed a deletion, kept in `localStorage` beside the
+ * remembered user (the library's holder is a safe JSON value under one key, which is all this
+ * needs). An id is written before its deletion starts and removed only after the device has
+ * deleted the copies, so a page that closes in between, or a device that refuses, leaves the next
+ * start knowing whose copies to delete.
+ */
+const owedDeletions = createSignedInHint<number[]>("offline:owed-deletion", {
+  validate: (value): value is number[] =>
+    Array.isArray(value) && value.every((id) => typeof id === "number"),
+})
+
+function owedIds(): number[] {
+  return owedDeletions.recall() ?? []
+}
+
+function owe(userId: number): void {
+  const ids = owedIds()
+  if (!ids.includes(userId)) owedDeletions.remember([...ids, userId])
+}
+
+function disown(userId: number): void {
+  const rest = owedIds().filter((id) => id !== userId)
+  if (rest.length > 0) owedDeletions.remember(rest)
+  else owedDeletions.forget()
+}
+
+/** The deletions started on this page, in order; resolved when all of them have been tried. */
+let forgetting: Promise<void> = Promise.resolve()
+
+/** The users {@link settleOwed} is deleting for right now, so a second caller starts no second. */
+const settling = new Set<number>()
+
+/**
+ * Queues one deletion. Only a deletion that succeeded ends the debt; a failed one is reported and
+ * stays owed for the next start.
+ */
+function settle(userId: number, deletion: () => Promise<void>): void {
+  forgetting = forgetting.then(deletion).then(
+    () => disown(userId),
+    (error) => {
+      console.warn(
+        `The copies of user ${userId} kept on this device could not be deleted. ` +
+          `The next start tries again.`,
+        error,
+      )
+    },
+  )
+}
+
+/**
+ * Deletes the copies of every user who is owed it, `also` included even on a device that could not
+ * write the marker. Resolves once every deletion was tried; it never rejects.
+ */
+function settleOwed(storage?: OfflineStorage, also?: number): Promise<void> {
+  const ids = new Set(owedIds())
+  if (also !== undefined) ids.add(also)
+  for (const id of ids) {
+    if (settling.has(id)) continue
+    settling.add(id)
+    settle(id, () => forgetDeviceCopy(id, storage).finally(() => settling.delete(id)))
+  }
+  return forgetting
+}
+
+/**
+ * Drops the remembered user at once, and deletes what the device kept of the server's answers for
+ * them and for anyone an earlier page still owes it: a start that found no session must not leave
+ * the last person's lists on a shared device. The queue of unsent writes stays, as on sign-out.
+ * Resolves once the deletions were tried. It runs with the module off too, so switching the module
+ * off deletes what it kept; a device with nobody remembered and nothing owed is not opened.
+ */
+export function forgetUser(storage?: OfflineStorage): Promise<void> {
+  const remembered = signedInHint.recall()
+  signedInHint.forget()
+  if (remembered) owe(remembered.id)
+  return settleOwed(storage, remembered?.id)
 }
 
 /** The remembered user, or `null`: always `null` while the module is off. */
 export function recallUser(): SessionUser | null {
-  return switches.offline ? recallCachedUser() : null
+  return switches.offline ? signedInHint.recall() : null
 }

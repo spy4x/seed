@@ -147,10 +147,47 @@ an id is taken.
 | `views/spa-paths.ts`       | Lists the paths the router owns, for preact-components' `UnsavedGuard` in `NoteEditorView.tsx`, which asks before the person leaves the editor page with text that is not saved: on closing the tab, and on a click on any link in the app. |
 | `app.tsx`                  | The routes, and the pull: a hint for the open group reads its notes again.                                                                                                                                                                  |
 | `modules.ts` | The composition root: the only file that imports the WebSocket module and the offline layer. Stores import their ports from it ([offline.md](offline.md), "The modules and their switches"). |
+| `offline/notes-collection.ts` | Notes are offline-writable (level 3): their adapter for the shared collections layer. A level 1 or 2 aggregate has no file here. |
 
 The store does not move the group's cursor on its own writes: another member's change may have
 taken the sequence just before, and moving past it would drop that change's hint. Its own hint costs
 one extra read instead.
+
+#### Choosing the offline level
+
+Decide the level before writing the store
+([ADR 003](decisions/003-swappable-transport-and-local-data.md), section 4;
+[offline.md](offline.md#the-three-levels) lists where every list stands today).
+
+**Level 1, online only.** Write the store as above and nothing else. With no network its read
+fails and the screen shows the store's error.
+
+**Level 2, offline-readable.** The default for a list. Four steps, as in `state/members.ts`:
+
+1. Add the list's key to `READ_KEYS` in `state/read-keys.ts`. A key names everything the answer
+   depends on: the group, and the cursor when the list is paged.
+2. Give the store's factory a `device: LocalReads = noLocalReads` parameter, and pass `localReads`
+   (from `modules.ts`) where the page's store is built.
+3. Make the read `device.through(key, read, early)`. `read` must throw for a refusal (wrap a
+   result object's failure in `ReadRefused`), so only an unreachable server is answered by the
+   copy. `early` paints the copy when the screen has nothing to show, returns `false` when it
+   painted nothing, and takes the copy back when it is called with `undefined`.
+4. Add the list to `CASES` in `state/device-copies.test.ts`. That one entry runs the five promises
+   of a level 2 list against the store: the copy answers an unreachable server, every answer
+   replaces it, a refusal is not hidden by it, nothing is kept while the module is off, and it
+   shows before the server has answered.
+
+A list that can mislead when old (it lists access a person may have revoked) also exposes
+`savedAt` from the answer (`fresh ? null : savedAt`), and its screen says the list is a saved copy,
+as `libs/ui/api-tokens.tsx` does.
+
+**Level 3, offline-writable.** Only for an aggregate a person must be able to change with no
+network; it costs a conflict screen. Copy `offline/notes-collection.ts`: one `defineCollection`
+with the aggregate's commands, its error codes (`classifyByCode`), the wording of its failures and
+its device copy, added to the `collections` list in `offline/index.ts`. The queue, the keys, the
+lock and the conflict rules come from `@spy4x/realtime/collections` and are not written again.
+Then wrap the store's dependencies as `offlineNotes` does, and copy
+`offline/notes-collection.test.ts`.
 
 ### 8. Tests
 

@@ -11,6 +11,8 @@ import {
 } from "@domain/api-tokens"
 import type { ApiTokenFormValues } from "@ui/api-tokens.tsx"
 import { apiFetch } from "./api.ts"
+import { type LocalReads, noLocalReads } from "../modules.ts"
+import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 
 /** The message shown when a token call failed without a message of its own. */
 export const API_TOKENS_FAILURE = "Something went wrong with your API tokens"
@@ -61,7 +63,10 @@ export function emptyApiTokenForm(groupId: string): ApiTokenFormValues {
  * what failed. The secret of a new token lives in `created` until the person closes it, and
  * nowhere else.
  */
-export function createApiTokensStore(dependencies: ApiTokensDependencies) {
+export function createApiTokensStore(
+  dependencies: ApiTokensDependencies,
+  device: LocalReads = noLocalReads,
+) {
   const tokens = signal<readonly ApiToken[] | null>(null)
   const values = signal<ApiTokenFormValues>(emptyApiTokenForm(""))
   const errors = signal<{ list: string | null; name: string | null; form: string | null }>({
@@ -71,14 +76,48 @@ export function createApiTokensStore(dependencies: ApiTokensDependencies) {
   })
   const pending = signal({ create: false, revoke: false })
   const created = signal<ApiTokenCreateResponse | null>(null)
+  /**
+   * When the list shown was taken from the server, in epoch milliseconds, while it is the device's
+   * copy; `null` while it is the server's answer. A token revoked since may still be listed, so
+   * the screen says how old the list is.
+   */
+  const savedAt = signal<number | null>(null)
+  let reads = 0
 
-  /** Reads the list again; a failure shows above the list and keeps the old one. */
+  /**
+   * Reads the list again; a refusal shows above the list and keeps the old one. When the server
+   * is unreachable the device's copy answers, marked with its time.
+   */
   async function load(): Promise<void> {
-    const result = await dependencies.list()
-    if (result.ok) {
-      tokens.value = result.data.tokens
+    const read = ++reads
+    const show = (list: readonly ApiToken[], copyTakenAt: number | null) => {
+      tokens.value = list
+      savedAt.value = copyTakenAt
+    }
+    try {
+      const answer = await device.through(
+        READ_KEYS.apiTokens,
+        async () => {
+          const result = await dependencies.list()
+          if (!result.ok) throw new ReadRefused(result.error)
+          return result.data.tokens
+        },
+        (copy) => {
+          if (read !== reads) return false
+          if (copy && tokens.value !== null) return false
+          if (copy) return show(copy.value, copy.savedAt)
+          tokens.value = null
+          savedAt.value = null
+        },
+      )
+      if (read !== reads) return
+      show(answer.value, answer.fresh ? null : answer.savedAt)
       errors.value = { ...errors.value, list: null }
-    } else errors.value = { ...errors.value, list: result.error || API_TOKENS_FAILURE }
+    } catch (cause) {
+      if (!(cause instanceof ReadRefused)) throw cause
+      if (read !== reads) return
+      errors.value = { ...errors.value, list: String(cause.failure) || API_TOKENS_FAILURE }
+    }
   }
 
   return {
@@ -87,6 +126,7 @@ export function createApiTokensStore(dependencies: ApiTokensDependencies) {
     errors,
     pending,
     created,
+    savedAt,
     load,
 
     /** Opens the form empty, for `groupId` first. */
@@ -123,6 +163,8 @@ export function createApiTokensStore(dependencies: ApiTokensDependencies) {
       }
       created.value = result.data
       tokens.value = [result.data.token, ...(tokens.value ?? [])]
+      // The server answered, so the list is no longer the device's copy alone.
+      savedAt.value = null
     },
 
     /** Forgets the secret of the token just created. */

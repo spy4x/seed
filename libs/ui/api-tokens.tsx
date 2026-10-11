@@ -12,6 +12,7 @@ import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
+import { Notice } from "@spy4x/preact-ui/notice"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { API_TOKEN_EXPIRY_DAYS, type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
@@ -52,6 +53,12 @@ export interface ApiTokensProps {
   }
   pending: { create: boolean; revoke: boolean }
   /**
+   * When the list was taken from the server, in epoch milliseconds, while it is the copy saved on
+   * this device (the server is unreachable). The screen then says how old the list is. Leave it
+   * out, or pass `null`, for the server's answer.
+   */
+  savedAt?: number | null
+  /**
    * The token just created and its secret, shown once in the dialog with a copy control. `null`
    * once the person closed it: the secret is never available again.
    */
@@ -83,7 +90,7 @@ const ACCESS_OPTIONS = [
  * dialog shows its secret, once, with a copy control.
  */
 export function ApiTokens(props: ApiTokensProps): JSX.Element {
-  const { tokens, groups, errors, pending, created } = props
+  const { tokens, groups, errors, pending, created, savedAt } = props
   const [creating, setCreating] = useState(false)
   const [revoking, setRevoking] = useState<ApiToken | null>(null)
 
@@ -113,6 +120,13 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
       dataE2E="api-tokens"
     >
       <ErrorState message={errors.list} />
+      {savedAt != null && (
+        <Notice tone="warning" title="Saved copy" data-e2e="api-tokens-saved-copy">
+          The server is out of reach. This list was saved on this device{" "}
+          <time dateTime={new Date(savedAt).toISOString()}>{timeAgo(savedAt)}</time>. Tokens created
+          or revoked since then are missing from it.
+        </Notice>
+      )}
       {tokens === null
         ? <p class="text-sm text-muted">Loading your tokens…</p>
         : tokens.length === 0

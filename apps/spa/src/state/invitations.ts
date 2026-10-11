@@ -9,6 +9,8 @@ import {
   type InvitationRow,
 } from "@ui/group-invitations.tsx"
 import { fetchRead } from "./realtime-call.ts"
+import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
+import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 
 /** `fetch`, or a test's stand-in for it. */
 export type InvitationFetch = (url: string, init?: RequestInit) => Promise<Response>
@@ -44,26 +46,24 @@ function groupPath(groupId: string, rest = ""): string {
  * is kept in memory only, and dropped when the page closes, since it is never shown again.
  */
 export function createInvitationsStore(
-  { fetch = globalThis.fetch, origin = () => globalThis.location.origin }: {
+  { fetch = globalThis.fetch, origin = () => globalThis.location.origin, device = noLocalReads }: {
     fetch?: InvitationFetch
+    /** The read copies the two lists are kept in. Default: none, every read asks the server. */
+    device?: LocalReads
     /** The app's origin, which the copied link starts with. */
     origin?: () => string
   } = {},
 ) {
-  async function call<T>(method: string, url: string, body?: unknown): Promise<Outcome<T>> {
-    let response: Response
-    try {
-      const init: RequestInit = {
-        method,
-        credentials: "include",
-        headers: { "content-type": "application/json" },
-        body: body === undefined ? undefined : JSON.stringify(body),
-      }
-      // A read names the page's user, and a 401 signs the page out, as every read does.
-      response = method === "GET" ? await fetchRead(url, init, fetch) : await fetch(url, init)
-    } catch (_unreachable) {
-      return { ok: false, failure: { message: OFFLINE, code: null, plan: null } }
+  /** One call. Rejects when the server is unreachable; a refusal is an outcome. */
+  async function request<T>(method: string, url: string, body?: unknown): Promise<Outcome<T>> {
+    const init: RequestInit = {
+      method,
+      credentials: "include",
+      headers: { "content-type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
     }
+    // A read names the page's user, and a 401 signs the page out, as every read does.
+    const response = method === "GET" ? await fetchRead(url, init, fetch) : await fetch(url, init)
     const json: unknown = await response.json().catch(() => null)
     if (response.ok) return { ok: true, data: json as T }
     const error = (json as { error?: unknown } | null)?.error
@@ -76,6 +76,43 @@ export function createInvitationsStore(
       ? (error as { code: string }).code
       : null
     return { ok: false, failure: { message, code, plan: readPlanRefusal(error) } }
+  }
+
+  const unreachable: Outcome<never> = {
+    ok: false,
+    failure: { message: OFFLINE, code: null, plan: null },
+  }
+
+  /** One call whose every failure is an outcome: an unreachable server reads as {@link OFFLINE}. */
+  async function call<T>(method: string, url: string, body?: unknown): Promise<Outcome<T>> {
+    try {
+      return await request<T>(method, url, body)
+    } catch (_unreachable) {
+      return unreachable
+    }
+  }
+
+  /**
+   * A list read kept on the device under `key`: the answer replaces the copy, and the copy answers
+   * when the server is unreachable. `early` is given the copy before the server has answered.
+   */
+  async function readList<T>(
+    key: string,
+    url: string,
+    early: (copy: T | undefined) => boolean | void,
+  ): Promise<Outcome<T>> {
+    try {
+      const answer = await device.through(key, async () => {
+        const result = await request<T>("GET", url)
+        if (!result.ok) throw new ReadRefused(result.failure)
+        return result.data
+      }, (copy) => early(copy?.value))
+      return { ok: true, data: answer.value }
+    } catch (cause) {
+      return cause instanceof ReadRefused
+        ? { ok: false, failure: cause.failure as InvitationFailure }
+        : unreachable
+    }
   }
 
   // The group's side.
@@ -97,7 +134,15 @@ export function createInvitationsStore(
     const id = groupId.value
     if (id === null) return
     const read = ++reads
-    const result = await call<{ invitations: InvitationRow[] }>("GET", groupPath(id))
+    const result = await readList<{ invitations: InvitationRow[] }>(
+      READ_KEYS.groupInvitations(id),
+      groupPath(id),
+      (copy) => {
+        if (read !== reads || groupId.value !== id) return false
+        if (copy && invitations.value !== null) return false
+        invitations.value = copy ? copy.invitations : null
+      },
+    )
     if (read !== reads || groupId.value !== id) return
     if (result.ok) {
       invitations.value = result.data.invitations
@@ -207,9 +252,13 @@ export function createInvitationsStore(
 
   /** Reads the invitations sent to an address the person proved. */
   async function loadMine(): Promise<void> {
-    const result = await call<{ invitations: InvitationPreviewRow[] }>(
-      "GET",
+    const result = await readList<{ invitations: InvitationPreviewRow[] }>(
+      READ_KEYS.myInvitations,
       "/api/invitations/mine",
+      (copy) => {
+        if (copy && mine.value.length > 0) return false
+        mine.value = copy ? copy.invitations : []
+      },
     )
     if (result.ok) mine.value = result.data.invitations
   }
@@ -293,4 +342,4 @@ export function createInvitationsStore(
 }
 
 /** The app's invitations store. */
-export const invitationsStore = createInvitationsStore()
+export const invitationsStore = createInvitationsStore({ device: localReads })

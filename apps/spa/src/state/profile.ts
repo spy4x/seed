@@ -2,7 +2,8 @@ import { signal } from "@preact/signals"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import type { PushSubscribeRequest } from "@spy4x/platform/model"
 import type { User, UserPushTokenPublic } from "@domain/identity"
-import { callCommand, callQuery } from "../modules.ts"
+import { callCommand, callQuery, type LocalReads, localReads, noLocalReads } from "../modules.ts"
+import { READ_KEYS } from "./read-keys.ts"
 import { sessionState } from "./session.ts"
 
 /** What the profile store needs from the outside. Injected so tests need no socket. */
@@ -26,17 +27,38 @@ function failure(cause: unknown): ProfileOutcome {
  * and writes go over the socket. {@link refresh} is also the pull for the hint the server sends
  * when another tab changed either, so the page follows without a reload.
  */
-export function createProfileStore(dependencies: ProfileDependencies) {
+export function createProfileStore(
+  dependencies: ProfileDependencies,
+  device: LocalReads = noLocalReads,
+) {
   const pushDevices = signal<UserPushTokenPublic[]>([])
 
-  /** Reads the profile and the push devices again. Rejects when the socket cannot answer. */
+  let reads = 0
+
+  /**
+   * Reads the profile and the push devices again. When the server is unreachable the device's copy
+   * of the push devices answers; with no copy it rejects. The name is not taken from the copy: the
+   * session already holds the one the device remembers, which is never older.
+   */
   async function refresh(): Promise<void> {
-    const [{ user }, { devices }] = await Promise.all([
-      dependencies.query<{ user: User }>("profile.get"),
-      dependencies.query<{ devices: UserPushTokenPublic[] }>("push.list"),
-    ])
-    sessionState.value = { ...sessionState.value, user }
-    pushDevices.value = devices
+    const read = ++reads
+    const answer = await device.through(
+      READ_KEYS.profile,
+      async () => {
+        const [{ user }, { devices }] = await Promise.all([
+          dependencies.query<{ user: User }>("profile.get"),
+          dependencies.query<{ devices: UserPushTokenPublic[] }>("push.list"),
+        ])
+        return { user, devices }
+      },
+      (copy) => {
+        if (read !== reads) return false
+        if (copy && pushDevices.value.length > 0) return false
+        pushDevices.value = copy ? copy.value.devices : []
+      },
+    )
+    if (answer.fresh) sessionState.value = { ...sessionState.value, user: answer.value.user }
+    pushDevices.value = answer.value.devices
   }
 
   async function saveProfile(firstName: string, lastName: string): Promise<ProfileOutcome> {
@@ -95,6 +117,7 @@ export function createProfileStore(dependencies: ProfileDependencies) {
   }
 
   function reset(): void {
+    reads++
     pushDevices.value = []
     wasOpen = false
     dropped = false
@@ -107,4 +130,4 @@ export function createProfileStore(dependencies: ProfileDependencies) {
 export const profileStore = createProfileStore({
   query: (name) => callQuery(name),
   command: (name, payload) => callCommand(name, payload),
-})
+}, localReads)

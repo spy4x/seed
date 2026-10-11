@@ -5,6 +5,7 @@ import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { Notice } from "@spy4x/preact-ui/notice"
 import type { SignedInDevice } from "@domain/identity"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
@@ -19,6 +20,12 @@ export interface SignedInDevicesProps {
   pending: boolean
   /** Why the list could not be read or a sign-out failed; shown above the list. */
   error: string | null
+  /**
+   * When the list was taken from the server, in epoch milliseconds, while it is the copy saved on
+   * this device (the server is unreachable). The screen then says how old the list is. Leave it
+   * out, or pass `null`, for the server's answer.
+   */
+  savedAt?: number | null
   /** Ends one other session, after the person confirmed. */
   onEnd: (sessionId: number) => void
   /** Ends every session but this device's, after the person confirmed. */
@@ -33,7 +40,7 @@ type Confirming = { session: SignedInDevice } | "others" | null
  * "Sign out of all other devices" under the list while there is another. Both ask first.
  */
 export function SignedInDevices(
-  { sessions, pending, error, onEnd, onEndOthers }: SignedInDevicesProps,
+  { sessions, pending, error, savedAt, onEnd, onEndOthers }: SignedInDevicesProps,
 ): JSX.Element {
   const [confirming, setConfirming] = useState<Confirming>(null)
   const others = sessions?.filter((session) => !session.current) ?? []
@@ -45,6 +52,13 @@ export function SignedInDevices(
       dataE2E="sessions"
     >
       <ErrorState message={error} />
+      {savedAt != null && (
+        <Notice tone="warning" title="Saved copy" data-e2e="sessions-saved-copy">
+          The server is out of reach. This list was saved on this device{" "}
+          <time dateTime={new Date(savedAt).toISOString()}>{timeAgo(savedAt)}</time>. Devices signed
+          in or out since then are missing from it.
+        </Notice>
+      )}
       {sessions === null ? <p class="text-sm text-muted">Loading your devices…</p> : (
         <SettingList>
           {sessions.map((session) => (

@@ -3,12 +3,13 @@ import { RealtimeRequestError } from "@spy4x/realtime"
 import type { GroupColor, GroupDetails, GroupMoveAllResult, GroupRole } from "@domain/groups"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiRead } from "./realtime-call.ts"
+import { READ_KEYS } from "./read-keys.ts"
 import {
   advanceGroupCursor,
   callCommand,
   callQuery,
-  currentLayer,
-  offlineGroups,
+  type LocalReads,
+  localReads,
 } from "../modules.ts"
 
 /** A group as the API sends it: dates are ISO strings, the sequence a decimal string. */
@@ -357,7 +358,37 @@ const onlineGroups: GroupsDependencies = {
 }
 
 /**
- * The page's own store: reads over REST (start-up and after a missed push), writes over the
- * socket, and with the offline layer running, served from the device when the network is down.
+ * Keeps the groups list on this device (ADR 003, level 2): a REST read fetches the whole list,
+ * which replaces the device's copy, and answers from the copy when the server is unreachable. The
+ * copy is also what the store shows before the read answers. Creating a group needs the server.
+ * The socket's read, which the refresh button makes, is not kept and has no fallback: the person
+ * asked the server.
  */
-export const groupsStore = createGroupsStore(offlineGroups(onlineGroups, currentLayer))
+export function groupsOnDevice(online: GroupsDependencies, reads: LocalReads): GroupsDependencies {
+  return {
+    ...online,
+    async fetchPage(cursor, via) {
+      if (via === "socket") return await online.fetchPage(cursor, via)
+      const { value } = await reads.through(READ_KEYS.groups, async () => {
+        const groups: GroupItem[] = []
+        let next: string | null = cursor
+        for (let page = 0; page < MAX_PAGES; page++) {
+          const result = await online.fetchPage(next, via)
+          groups.push(...result.groups)
+          next = result.nextCursor
+          if (next === null) break
+        }
+        return groups
+      })
+      return { groups: value, nextCursor: null }
+    },
+    readLocal: async () => (await reads.copy<GroupItem[]>(READ_KEYS.groups))?.value ?? [],
+  }
+}
+
+/**
+ * The page's own store: reads over REST (start-up and after a missed push), writes over the
+ * socket, and with the local-data module running, served from the device when the server is
+ * unreachable.
+ */
+export const groupsStore = createGroupsStore(groupsOnDevice(onlineGroups, localReads))

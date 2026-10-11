@@ -4,7 +4,7 @@ import { ConflictChooser, type ConflictItem } from "@spy4x/preact-system/conflic
 import { SyncStatus } from "@spy4x/preact-system/sync-status"
 import { Button } from "@spy4x/preact-ui/button"
 import { activeLayer } from "./index.ts"
-import type { NoteEntry } from "./local-store.ts"
+import type { NoteEntry } from "./notes-cache.ts"
 
 const network = createOnlineStatus()
 
@@ -98,7 +98,7 @@ export function OfflineStatus(
   const choose = (id: string, choice: "keepMine" | "useTheirs") => {
     const entry = conflicts.find((candidate) => String(candidate.seq) === id)
     if (!entry) return
-    return layer.outbox[choice](entry).then(onResolved)
+    return layer.notes.outbox[choice](entry).then(onResolved)
   }
 
   return (

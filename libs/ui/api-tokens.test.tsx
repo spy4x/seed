@@ -254,6 +254,21 @@ describe("ApiTokens", () => {
     expect(find<HTMLButtonElement>(`[data-e2e=api-token-revoke-${reader.id}]`).disabled).toBe(true)
     expect(find("[data-e2e=api-tokens]").textContent).toContain("Could not revoke")
   })
+
+  it("says when the list is a copy saved on this device, with the time it was saved", async () => {
+    const savedAt = Date.UTC(2026, 9, 10, 8, 30)
+    await mount(<ApiTokens {...tokensProps([], { savedAt })} />)
+
+    const notice = find("[data-e2e=api-tokens-saved-copy]")
+    expect(notice.textContent).toContain("saved on this device")
+    expect(notice.querySelector("time")?.getAttribute("datetime")).toBe("2026-10-10T08:30:00.000Z")
+  })
+
+  it("says nothing about a copy when the server answered", async () => {
+    await mount(<ApiTokens {...tokensProps([], { savedAt: null })} />)
+
+    expect(document.querySelectorAll("[data-e2e=api-tokens-saved-copy]").length).toBe(0)
+  })
 })
 
 describe("ProfileScreen API tokens", () => {

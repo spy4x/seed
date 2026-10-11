@@ -9,7 +9,8 @@ import {
   transferErrorField,
 } from "@ui/group-transfer.tsx"
 import { apiRead } from "./realtime-call.ts"
-import { callCommand } from "../modules.ts"
+import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
+import { READ_KEYS } from "./read-keys.ts"
 
 /** A member as the API sends them: `joinedAt` is an ISO string. */
 export interface MemberItem {
@@ -56,7 +57,10 @@ function describe(error: unknown, fallback: string): string {
  * It holds one group at a time. A read answered after the page moved to another group, or after
  * a newer read started, is dropped, so the list always belongs to the group shown.
  */
-export function createMembersStore(dependencies: MembersDependencies) {
+export function createMembersStore(
+  dependencies: MembersDependencies,
+  device: LocalReads = noLocalReads,
+) {
   const groupId = signal<string | null>(null)
   /** The members, or `null` until the first read of this group answers. */
   const members = signal<readonly MemberItem[] | null>(null)
@@ -82,10 +86,25 @@ export function createMembersStore(dependencies: MembersDependencies) {
     if (id === null) return
     const read = ++reads
     try {
-      const result = await dependencies.list({ groupId: id })
+      type Answer = Awaited<ReturnType<MembersDependencies["list"]>>
+      const show = (result: Answer) => {
+        members.value = result.members
+        memberCount.value = result.memberCount
+      }
+      // The device's copy answers when the server is unreachable, and shows while it is asked.
+      const { value } = await device.through(
+        READ_KEYS.members(id),
+        () => dependencies.list({ groupId: id }),
+        (copy) => {
+          if (read !== reads || groupId.value !== id) return false
+          if (copy && members.value !== null) return false
+          if (copy) return show(copy.value)
+          members.value = null
+          memberCount.value = null
+        },
+      )
       if (read !== reads || groupId.value !== id) return
-      members.value = result.members
-      memberCount.value = result.memberCount
+      show(value)
       loadError.value = null
     } catch (cause) {
       if (read !== reads || groupId.value !== id) return
@@ -270,4 +289,4 @@ export const membersStore = createMembersStore({
       typeof code === "string" ? code : undefined,
     )
   },
-})
+}, localReads)

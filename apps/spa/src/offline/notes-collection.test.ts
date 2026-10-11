@@ -2,9 +2,17 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { ConnectionLostError, RealtimeRequestError } from "@spy4x/realtime"
 import type { NoteItem } from "../state/notes.ts"
-import { createMemoryStore } from "./memory-store.ts"
-import { createPromiseLock } from "@spy4x/realtime/outbox"
-import { createNotesOutbox, overlayNotes } from "./notes-outbox.ts"
+import type { CallPort } from "@spy4x/realtime/calls"
+import { createCollections } from "@spy4x/realtime/collections"
+import {
+  createMemoryOutboxStore,
+  createPromiseLock,
+  type OutboxLock,
+  type OutboxStore,
+} from "@spy4x/realtime/outbox"
+import { createMemoryNotesCache } from "./memory-notes-cache.ts"
+import type { NoteEntry, NotePayload, NotesCache } from "./notes-cache.ts"
+import { notesCollection } from "./notes-collection.ts"
 
 const groupId = "g-1"
 
@@ -25,6 +33,73 @@ function note(id: string, version = 1, title = id, body = ""): NoteItem {
 
 function refused(code: string) {
   return new RealtimeRequestError("conflict", "refused", { code })
+}
+
+/** The queue and the device's notes of one browser profile, which two tabs share. */
+type Device = OutboxStore<NotePayload, NoteItem> & NotesCache
+
+function createMemoryStore(): Device {
+  return { ...createMemoryOutboxStore<NotePayload, NoteItem>(), ...createMemoryNotesCache() }
+}
+
+/** The server as a test plays it: one function per kind of call. */
+interface Ports {
+  store: Device
+  lock: OutboxLock
+  isOnline(): boolean
+  newKey(): string
+  now(): string
+  send(name: string, payload: Record<string, unknown>, key: string): Promise<unknown>
+  /** The server's note as it is now, or `null` when it is gone. */
+  fetchNote(groupId: string, noteId: string): Promise<NoteItem | null>
+}
+
+/** The notes collection of user 1 over `ports`: the adapter under test, on the library's layer. */
+function notesOver(ports: Ports) {
+  const calls: CallPort = {
+    command: (name, payload, options) =>
+      ports.send(name, payload as Record<string, unknown>, options?.idempotencyKey ?? ""),
+    async query(name, payload) {
+      const { groupId, id } = payload as { groupId: string; id: string }
+      if (name !== "note.get") throw new Error(`unexpected query ${name}`)
+      const found = await ports.fetchNote(groupId, id)
+      if (!found) throw refused("NOTE_NOT_FOUND")
+      return { note: found }
+    },
+  }
+  const definition = notesCollection({ userId: 1, cache: ports.store, store: ports.store })
+  const collections = createCollections({
+    collections: [definition],
+    calls,
+    canSend: ports.isOnline,
+    lock: ports.lock,
+    newKey: ports.newKey,
+    now: ports.now,
+  })
+  return collections.get(definition)
+}
+
+/** The queue of the notes collection over `ports`. */
+function createNotesOutbox(ports: Ports) {
+  return notesOver(ports).outbox
+}
+
+/** A group's notes with the queued `entries` applied, as the adapter shapes them. */
+function overlayNotes(
+  entries: readonly NoteEntry[],
+  _userId: number,
+  group: string,
+  base: readonly NoteItem[],
+): NoteItem[] {
+  return notesOver({
+    store: createMemoryStore(),
+    lock: createPromiseLock(),
+    isOnline: () => false,
+    newKey: () => "",
+    now: () => "",
+    send: () => Promise.reject(new Error("an overlay sends nothing")),
+    fetchNote: () => Promise.resolve(null),
+  }).applyQueued(base, entries, group)
 }
 
 interface Sent {

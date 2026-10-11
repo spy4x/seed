@@ -2,6 +2,8 @@ import { signal } from "@preact/signals"
 import type { ApiResult } from "@spy4x/platform/api"
 import { type GroupBilling, providerPageUrl, readGroupBilling } from "@domain/billing"
 import { apiFetch } from "./api.ts"
+import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
+import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 
 /** `apiFetch`, or a test's stand-in for it. */
 export type BillingFetch = <T>(url: string, init?: RequestInit) => Promise<ApiResult<T>>
@@ -19,11 +21,14 @@ function billingPath(groupId: string, action = ""): string {
  * Both leave the app for the provider's page; the plan itself changes when the provider's webhook
  * arrives, and the page reads it again when the group's change sequence moves.
  *
- * `leave` opens the provider's page; tests pass a stand-in for `location.assign`.
+ * `leave` opens the provider's page; tests pass a stand-in for `location.assign`. The plan last
+ * read is kept on the device (`device`) and shown when the server is unreachable; checkout and the
+ * portal need the server.
  */
 export function createBillingStore(
   fetch: BillingFetch = apiFetch,
   leave: (url: string) => void = (url) => globalThis.location.assign(url),
+  device: LocalReads = noLocalReads,
 ) {
   /** The billing of the group last read, with its id, so another group's page shows none of it. */
   const current = signal<{ groupId: string; billing: GroupBilling } | null>(null)
@@ -38,20 +43,25 @@ export function createBillingStore(
 
   async function load(groupId: string): Promise<void> {
     try {
-      const result = await fetch<{ billing: unknown }>(billingPath(groupId))
-      if (!result.ok) {
-        error.value = { groupId, message: result.error.message, id: ++refusals }
-        return
-      }
-      const billing = readGroupBilling(result.data.billing)
-      if (!billing) {
-        error.value = { groupId, message: UNREADABLE, id: ++refusals }
-        return
-      }
+      const { value: billing } = await device.through(
+        READ_KEYS.billing(groupId),
+        async () => {
+          const result = await fetch<{ billing: unknown }>(billingPath(groupId))
+          if (!result.ok) throw new ReadRefused(result.error.message)
+          const billing = readGroupBilling(result.data.billing)
+          if (!billing) throw new ReadRefused(UNREADABLE)
+          return billing
+        },
+        (copy) => {
+          if (copy && current.value?.groupId === groupId) return false
+          current.value = copy ? { groupId, billing: copy.value } : null
+        },
+      )
       current.value = { groupId, billing }
       if (error.value?.groupId === groupId) error.value = null
-    } catch (_unreachable) {
-      error.value = { groupId, message: OFFLINE, id: ++refusals }
+    } catch (cause) {
+      const message = cause instanceof ReadRefused ? String(cause.failure) : OFFLINE
+      error.value = { groupId, message, id: ++refusals }
     }
   }
 
@@ -104,4 +114,4 @@ export function createBillingStore(
 }
 
 /** The app's billing store. */
-export const billingStore = createBillingStore()
+export const billingStore = createBillingStore(apiFetch, undefined, localReads)

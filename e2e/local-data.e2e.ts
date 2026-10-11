@@ -1,0 +1,467 @@
+import {
+  type APIRequestContext,
+  type Browser,
+  type BrowserContext,
+  type Page,
+} from "@playwright/test"
+import { expect, test } from "./fixtures/stack.ts"
+import { gotoApp, signIn, submitAuthForm } from "./fixtures/app.ts"
+
+/**
+ * The local-data module as a swappable part (ADR 003, sections 1, 4 and 5), in a real browser with
+ * a real IndexedDB: the app with the module switched off, every list screen with no network, and
+ * what a device keeps across an update, a sign-out and a start without a session.
+ */
+
+const apiBase = "http://app.localhost"
+const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
+const password = "Passw0rd!"
+const VIEWER = 1
+const EDITOR = 2
+
+async function cleanup(request: APIRequestContext, email: string): Promise<void> {
+  const response = await request.post(`${apiBase}/api/test/cleanup-user`, {
+    data: { login: email },
+  })
+  expect.soft(response.status(), await response.text()).toBe(200)
+}
+
+async function signUp(request: APIRequestContext, email: string): Promise<void> {
+  const response = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+    headers,
+    data: { email, password },
+  })
+  expect(response.ok(), await response.text()).toBe(true)
+}
+
+async function createGroup(api: APIRequestContext, name: string): Promise<string> {
+  const groupId = crypto.randomUUID()
+  const group = await api.post(`${apiBase}/api/groups`, { headers, data: { id: groupId, name } })
+  expect(group.status(), await group.text()).toBe(201)
+  return groupId
+}
+
+async function createNote(api: APIRequestContext, groupId: string, title: string) {
+  const noteId = crypto.randomUUID()
+  const note = await api.post(`${apiBase}/api/groups/${groupId}/notes`, {
+    headers,
+    data: { id: noteId, title, body: "" },
+  })
+  expect(note.status(), await note.text()).toBe(201)
+  return noteId
+}
+
+async function selectGroup(api: APIRequestContext, groupId: string): Promise<void> {
+  const selected = await api.put(`${apiBase}/api/groups/selected`, { headers, data: { groupId } })
+  expect(selected.ok(), await selected.text()).toBe(true)
+}
+
+const online = (page: Page) => page.locator("[data-e2e=shell-ws-status]")
+
+/**
+ * A browser whose app is given the test's `/config.json`. The service worker is blocked so the
+ * answer is the test's, not the worker's stored copy.
+ */
+async function configured(browser: Browser, config: Record<string, unknown>) {
+  const context = await browser.newContext({
+    baseURL: test.info().project.use.baseURL,
+    serviceWorkers: "block",
+  })
+  await context.route(
+    "**/config.json",
+    (route) => route.fulfill({ json: { env: "dev", ...config } }),
+  )
+  return { context, page: await context.newPage() }
+}
+
+/** The names of the IndexedDB databases the page's origin holds. */
+async function databases(page: Page): Promise<string[]> {
+  return await page.evaluate(async () =>
+    (await indexedDB.databases()).map((database) => database.name ?? "").sort()
+  )
+}
+
+/**
+ * How many records the database `name` holds, over all its stores; 0 when there is no such
+ * database. It never opens a database that is not there, because opening creates it.
+ */
+async function recordsIn(page: Page, name: string): Promise<number> {
+  return await page.evaluate(async (name) => {
+    const all = await indexedDB.databases()
+    if (!all.some((database) => database.name === name)) return 0
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const opening = indexedDB.open(name)
+      opening.onsuccess = () => resolve(opening.result)
+      opening.onerror = () => reject(opening.error)
+    })
+    try {
+      let records = 0
+      for (const store of Array.from(db.objectStoreNames)) {
+        records += await new Promise<number>((resolve, reject) => {
+          const counting = db.transaction(store).objectStore(store).count()
+          counting.onsuccess = () => resolve(counting.result)
+          counting.onerror = () => reject(counting.error)
+        })
+      }
+      return records
+    } finally {
+      db.close()
+    }
+  }, name)
+}
+
+/** The signed-in user's id, read from the name of the read-copy database the app opened. */
+async function userIdOnDevice(page: Page): Promise<number> {
+  let id = 0
+  await expect.poll(async () => {
+    const name = (await databases(page)).find((name) => /^reads:\d+$/.test(name))
+    id = name ? Number(name.slice("reads:".length)) : 0
+    return id
+  }).toBeGreaterThan(0)
+  return id
+}
+
+async function signOut(page: Page): Promise<void> {
+  await page.locator("[data-e2e=shell-user-menu-button]").click()
+  await page.getByRole("menuitem", { name: "Sign out" }).click()
+  await page.locator("[data-e2e=signin-required]").waitFor()
+}
+
+/**
+ * Opens `path` with no network and waits until the app has started from the worker's cache. A load
+ * is made again only when a network change broke it, as everywhere else (`gotoApp`).
+ */
+async function openOffline(page: Page, path: string): Promise<void> {
+  await gotoApp(page, path, online(page))
+  await expect(online(page)).not.toHaveText("Online")
+}
+
+test.describe("the app with the local-data module switched off", () => {
+  test("a person signs up, signs in again, makes a group and a note and reads every screen, and the page creates no IndexedDB database", async ({ browser, request }) => {
+    test.setTimeout(90_000)
+    const email = "e2e_local_data_off@example.com"
+    await cleanup(request, email)
+    const { context, page } = await configured(browser, { offline: false })
+    try {
+      await gotoApp(page, "/sign-up", page.locator("[data-e2e=auth-form-login]"))
+      await page.locator("[data-e2e=auth-form-login]").fill(email)
+      await page.locator("[data-e2e=auth-form-password]").fill(password)
+      await submitAuthForm(page, "/", online(page))
+      await expect(online(page)).toHaveText("Online")
+      await signOut(page)
+      await signIn(page, email, password)
+
+      // A group.
+      await page.getByRole("navigation", { name: "Main navigation" })
+        .getByRole("link", { name: "Groups" }).click()
+      await page.locator("[data-e2e=group-new]").click()
+      await page.locator("[data-e2e=group-name]").fill("Online-only team")
+      await page.locator("[data-e2e=group-create]").click()
+      await expect(
+        page.locator("[data-e2e=group-item-name]").filter({ hasText: "Online-only team" }),
+      ).toHaveCount(1)
+
+      // A note: created, edited, and read again after a reload.
+      await page.getByRole("button", { name: "Open notes in Online-only team" }).click()
+      await expect(page.locator("[data-e2e=notes-group]")).toHaveText("Online-only team")
+      const titles = page.locator("[data-e2e=note-item-title]")
+      await page.locator("[data-e2e=note-new]").click()
+      await page.locator("[data-e2e=note-title]").fill("Groceries")
+      await page.locator("[data-e2e=note-save]").click()
+      await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+      await page.locator("[data-e2e=page-back]").click()
+      await page.getByRole("link", { name: "Groceries" }).click()
+      await page.locator("[data-e2e=note-title]").fill("Groceries for Friday")
+      await page.locator("[data-e2e=note-save]").click()
+      await expect(page).toHaveURL("/notes")
+      await page.reload()
+      await expect(titles).toHaveText(["Groceries for Friday"])
+
+      // The other list screens read from the server.
+      await page.getByRole("navigation", { name: "Main navigation" })
+        .getByRole("link", { name: "Groups" }).click()
+      await page.getByRole("link", { name: "Settings of Online-only team" }).click()
+      await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
+      await expect(page.locator("[data-e2e=billing-plan]")).toBeVisible()
+      const groupPath = new URL(page.url()).pathname
+      await gotoApp(page, `${groupPath}/activity`, page.locator("[data-e2e=activity-list]"))
+      await gotoApp(page, "/notifications", page.getByRole("heading", { level: 1 }))
+      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toHaveCount(0)
+
+      expect(await databases(page)).toEqual([])
+      await signOut(page)
+      expect(await databases(page)).toEqual([])
+    } finally {
+      await context.close()
+      await cleanup(request, email)
+    }
+  })
+})
+
+test.describe("the app with no network, after one visit online", () => {
+  test("every list screen shows what it showed last, and the lists that can mislead say when they were saved", async ({ browser, request }) => {
+    test.setTimeout(120_000)
+    const id = crypto.randomUUID().slice(0, 8)
+    const user = `e2e-kept-user-${id}@example.com`
+    const other = `e2e-kept-other-${id}@example.com`
+    for (const email of [user, other]) await cleanup(request, email)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    const otherContext = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      await signUp(request, user)
+      await signUp(otherContext.request, other)
+      const page = await context.newPage()
+      await signIn(page, user, password)
+      await expect(online(page)).toHaveText("Online")
+      const groupId = await createGroup(page.request, "Kept team")
+      await createNote(page.request, groupId, "Written online")
+      await selectGroup(page.request, groupId)
+
+      // Somebody else's group, and a change of role in it: one notification for the person.
+      const otherApi = otherContext.request
+      const theirs = await createGroup(otherApi, "Their team")
+      const added = await request.post(`${apiBase}/api/test/add-member`, {
+        data: { login: user, groupId: theirs, role: EDITOR },
+      })
+      expect(added.status(), await added.text()).toBe(200)
+      const members = await (await otherApi.get(`${apiBase}/api/groups/${theirs}/members`)).json()
+      const userId: number = members.members.find((m: { email?: string }) =>
+        m.email === user
+      ).userId
+      const changed = await otherApi.patch(`${apiBase}/api/groups/${theirs}/members/${userId}`, {
+        headers,
+        data: { role: VIEWER },
+      })
+      expect(changed.status(), await changed.text()).toBe(200)
+
+      // The one visit online, under the service worker, to every list screen.
+      await gotoApp(page, "/notes", online(page))
+      await page.evaluate(async () => {
+        await navigator.serviceWorker.ready
+      })
+      await gotoApp(page, "/notes", page.locator("[data-e2e=note-list]"))
+      await expect(page.locator("[data-e2e=note-item-title]")).toHaveText(["Written online"])
+
+      await gotoApp(page, "/groups", page.locator("[data-e2e=group-list]"))
+      const groupNames = page.locator("[data-e2e=group-item-name]")
+      await expect(groupNames.filter({ hasText: /^(Kept|Their) team$/ })).toHaveCount(2)
+
+      await gotoApp(page, `/groups/${groupId}`, page.locator("[data-e2e=group-general-name]"))
+      await page.getByRole("button", { name: "Invite people" }).click()
+      const inviting = page.getByRole("dialog", { name: "Invite people" })
+      await inviting.locator("[data-e2e=invitation-create]").click()
+      await inviting.locator("[data-e2e=invitation-done]").click()
+      const invitations = page.locator("[data-e2e=group-section-invitations] [data-e2e=invitation]")
+      await expect(invitations).toHaveCount(1)
+      await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
+      await expect(page.locator("[data-e2e=billing-plan]")).toHaveAttribute("data-plan", "free")
+      // Once more, so the copy on the device holds the invitation just made.
+      await gotoApp(page, `/groups/${groupId}`, invitations)
+
+      const activity = page.locator("[data-e2e=activity-list] [data-e2e=activity-text]")
+      await gotoApp(page, `/groups/${groupId}/activity`, activity.first())
+      const activityOnline = await activity.allTextContents()
+
+      const notifications = page.locator(
+        "[data-e2e=notifications-list] [data-e2e=notification-text]",
+      )
+      await gotoApp(page, "/notifications", notifications.first())
+      const notificationsOnline = await notifications.allTextContents()
+
+      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      await page.locator("[data-e2e=api-token-create-open]").click()
+      await page.locator("[data-e2e=api-token-name]").fill("Kept token")
+      await page.locator("[data-e2e=api-token-create]").click()
+      await page.locator("[data-e2e=api-token-done]").click()
+      const tokens = page.locator("[data-e2e=api-token-details]")
+      await expect(tokens).toHaveCount(1)
+      // Once more, so the copy on the device holds the token just made.
+      await gotoApp(page, "/", tokens)
+      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toHaveCount(0)
+      await expect(page.locator("[data-e2e=api-tokens-saved-copy]")).toHaveCount(0)
+      const name = await page.locator("[data-e2e=profile-name]").textContent()
+
+      await context.setOffline(true)
+
+      await openOffline(page, "/notes")
+      await expect(page.locator("[data-e2e=note-item-title]")).toHaveText(["Written online"])
+
+      await openOffline(page, "/groups")
+      await expect(groupNames.filter({ hasText: /^(Kept|Their) team$/ })).toHaveCount(2)
+
+      await openOffline(page, `/groups/${groupId}`)
+      await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
+      await expect(invitations).toHaveCount(1)
+      await expect(page.locator("[data-e2e=billing-plan]")).toHaveAttribute("data-plan", "free")
+
+      await openOffline(page, `/groups/${groupId}/activity`)
+      await expect(activity).toHaveText(activityOnline)
+
+      await openOffline(page, "/notifications")
+      await expect(notifications).toHaveText(notificationsOnline)
+
+      await openOffline(page, "/")
+      await expect(page.locator("[data-e2e=profile-name]")).toHaveText(name ?? "")
+      await expect(page.locator("[data-e2e=session-current]")).toBeVisible()
+      await expect(page.locator("[data-e2e=sessions-saved-copy] time")).toBeVisible()
+      await expect(page.locator("[data-e2e=api-tokens]")).toContainText("Kept token")
+      await expect(page.locator("[data-e2e=api-tokens-saved-copy] time")).toBeVisible()
+    } finally {
+      await context.close()
+      await otherContext.close()
+      for (const email of [user, other]) await cleanup(request, email)
+    }
+  })
+})
+
+test.describe("what a device keeps", () => {
+  test.describe.configure({ timeout: 60_000 })
+
+  /** A signed-in page of a person who owns one group with one note. */
+  async function deviceWithNote(context: BrowserContext, request: APIRequestContext, user: string) {
+    await signUp(request, user)
+    const page = await context.newPage()
+    await signIn(page, user, password)
+    await expect(online(page)).toHaveText("Online")
+    const groupId = await createGroup(page.request, "Device team")
+    const noteId = await createNote(page.request, groupId, "Before the update")
+    await selectGroup(page.request, groupId)
+    await gotoApp(page, "/notes", page.locator("[data-e2e=note-list]"))
+    return { page, groupId, noteId, userId: await userIdOnDevice(page) }
+  }
+
+  /** Puts `entry` into the user's queue the way the earlier version of the app wrote it. */
+  async function queueAsEarlierVersion(page: Page, userId: number, entry: unknown): Promise<void> {
+    await page.evaluate(async ({ name, entry }) => {
+      const db = await new Promise<IDBDatabase>((resolve, reject) => {
+        const opening = indexedDB.open(name, 1)
+        opening.onupgradeneeded = () =>
+          opening.result.createObjectStore("entries", { keyPath: "seq", autoIncrement: true })
+        opening.onsuccess = () => resolve(opening.result)
+        opening.onerror = () => reject(opening.error)
+      })
+      await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction("entries", "readwrite")
+        transaction.objectStore("entries").add(entry)
+        transaction.oncomplete = () => resolve()
+        transaction.onerror = () => reject(transaction.error)
+      })
+      db.close()
+    }, { name: `offline:user:${userId}:outbox`, entry })
+  }
+
+  const editQueuedLastWeek = (groupId: string, noteId: string) => ({
+    key: crypto.randomUUID(),
+    entityId: noteId,
+    kind: "update",
+    payload: { groupId, title: "Edited before the update", body: "" },
+    baseVersion: 1,
+    attempted: false,
+    status: "pending",
+    queuedAt: "2026-10-01T08:00:00.000Z",
+  })
+
+  test("an edit the earlier version of the app left queued in IndexedDB is sent after the update", async ({ browser, request }) => {
+    const user = "e2e_local_data_queue@example.com"
+    await cleanup(request, user)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
+
+      await gotoApp(page, "/notes", page.locator("[data-e2e=note-list]"))
+
+      await expect(page.locator("[data-e2e=note-item-title]")).toHaveText([
+        "Edited before the update",
+      ])
+      await expect.poll(async () => {
+        const response = await page.request.get(`${apiBase}/api/groups/${groupId}/notes`)
+        return (await response.json()).notes.map((note: { title: string }) => note.title)
+      }).toEqual(["Edited before the update"])
+      await expect.poll(() => recordsIn(page, `offline:user:${userId}:outbox`)).toBe(0)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
+  test("the groups database of the earlier version is removed after the update", async ({ browser, request }) => {
+    const user = "e2e_local_data_groups@example.com"
+    await cleanup(request, user)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      const { page, userId } = await deviceWithNote(context, request, user)
+      const old = `offline:user:${userId}:groups`
+      await page.evaluate(async (name) => {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const opening = indexedDB.open(name, 1)
+          opening.onupgradeneeded = () =>
+            opening.result.createObjectStore("items", { keyPath: ["scope", "id"] })
+              .createIndex("byScope", "scope")
+          opening.onsuccess = () => resolve(opening.result)
+          opening.onerror = () => reject(opening.error)
+        })
+        db.close()
+      }, old)
+      expect(await databases(page)).toContain(old)
+
+      await gotoApp(page, "/groups", page.locator("[data-e2e=group-list]"))
+
+      await expect.poll(() => databases(page)).not.toContain(old)
+      await expect(
+        page.locator("[data-e2e=group-item-name]").filter({ hasText: "Device team" }),
+      ).toHaveCount(1)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
+  test("signing out deletes the read copies and the notes, and keeps a write that was never sent", async ({ browser, request }) => {
+    const user = "e2e_local_data_sign_out@example.com"
+    await cleanup(request, user)
+    // Without the socket every write is a POST, which this test fails as a dead network would.
+    const { context, page: unused } = await configured(browser, { realtime: false })
+    await unused.close()
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
+      await gotoApp(page, "/groups", page.locator("[data-e2e=group-list]"))
+      await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
+      await expect.poll(() => recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
+      await context.route("**/api/call/note.update", (route) => route.abort("internetdisconnected"))
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
+      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+
+      await signOut(page)
+
+      await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBe(0)
+      expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBe(0)
+      expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(1)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
+  test("a start that finds no session deletes the read copies of the person it remembered, before the sign-in page", async ({ browser, request }) => {
+    const user = "e2e_local_data_no_session@example.com"
+    await cleanup(request, user)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      const { page, userId } = await deviceWithNote(context, request, user)
+      await gotoApp(page, "/groups", page.locator("[data-e2e=group-list]"))
+      await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
+
+      // The session ends elsewhere: the cookie is gone, and the server says so at the next start.
+      await context.clearCookies()
+      await gotoApp(page, "/", page.locator("[data-e2e=signin-required]"))
+
+      expect(await recordsIn(page, `reads:${userId}`)).toBe(0)
+      expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBe(0)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+})

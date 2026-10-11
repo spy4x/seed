@@ -1,6 +1,6 @@
 # Offline in the SPA
 
-The SPA opens with no network, shows the notes it last saw, lets a person add, edit and delete
+The SPA opens with no network, shows every list it last saw, lets a person add, edit and delete
 notes, and sends those changes when the connection is back. A change the server cannot take is
 shown as a conflict for the person to settle; nothing is overwritten on its own.
 
@@ -11,42 +11,68 @@ the SPA works without them ([how to remove the layer](#removing-the-layer)).
 
 | Piece                                       | What it does                                                                                                              |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `offline/local-store.ts`                    | Opens, for one signed-in user, the data cache (`createDataCache`) holding the last notes and groups the server sent, and the IndexedDB outbox store (`createIndexedDbOutboxStore`). |
-| `offline/notes-outbox.ts`                   | Puts the notes (commands, error codes, wording, local store) behind the outbox of `@spy4x/realtime/outbox`, and applies queued writes to a list. |
-| `offline/notes-offline.ts`, `groups-offline.ts` | Wrap the notes and groups stores' dependencies: reads keep and serve the local copy, note writes go through the outbox. |
+| `offline/notes-collection.ts`               | The notes as one adapter for `@spy4x/realtime/collections`: their commands, error codes, wording and device copy. The queue, its rules and the overlay of queued writes on a list are the library's. |
+| `offline/notes-cache.ts`                    | The device copy of the notes, per group, for one signed-in user (`createDataCache`). |
+| `state/read-keys.ts`                        | The key of every offline-readable list in the read cache (`@spy4x/realtime/read-cache`). |
 | `offline/OfflineStatus.tsx`                 | Binds the queue to `SyncStatus` (offline, waiting, syncing, failed with Retry) and `ConflictChooser` (each conflict, with "Keep mine" and "Use the server's"), both from `@spy4x/preact-system`. |
 | `install.ts`                                | `createInstallPrompt` from `@spy4x/preact-signals`; `app.tsx` renders `InstallPrompt` from `@spy4x/preact-system` for it.     |
-| `offline/session-cache.ts`                  | Remembers who was signed in, so an offline start does not show the sign-in page.                                          |
-| `offline/index.ts`                          | Starts and stops the layer for a user. It is given the calls port and sends the queue through it.                         |
+| `modules.ts` (`signedInHint`)               | Remembers who was signed in, so an offline start does not show the sign-in page: `createSignedInHint` from `@spy4x/platform/browser/signed-in-hint`, under the `localStorage` key `offline:session`. It is a hint for what to show, never a credential. |
+| `offline/index.ts`                          | Starts and stops the layer for a user: the read cache, the notes copy and the queue. It is given the calls port and sends the queue through it. |
 | `sw.ts`, `sw-options.ts`                    | The service worker: the app's page, scripts and styles cached by `installOfflineShell`, and the push handlers.            |
+
+### The three levels
+
+Every aggregate is at one of three levels
+([ADR 003](decisions/003-swappable-transport-and-local-data.md), section 4). The level says what
+the device keeps for it, and [aggregates.md](aggregates.md#choosing-the-offline-level) has the
+recipe for each.
+
+| Level                | What works with no network                         | Which lists                                                                                                                              |
+| -------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Online only       | Nothing: the screen says the server is unreachable | Deleted notes and deleted groups, sign-in, two-factor set-up, every write except a note's                                                |
+| 2. Offline-readable  | The last list the server sent                      | Groups, members, invitations, notifications and the bell's count, activity, the profile's push devices, billing, API tokens, signed-in devices |
+| 3. Offline-writable  | The last list, and create, edit and delete         | Notes                                                                                                                                    |
 
 ### Reads: the device first
 
-The notes and groups stores are unchanged in what they do: every read is a full read of the
-server's answer, whether at start-up, after a reconnect or after a pushed hint
-([ADR 002](decisions/002-realtime-transport-and-sync.md), "Push with sequence, pull as the
-authority"). The offline layer sits behind that read:
+Every read is a full read of the server's answer, whether at start-up, after a reconnect or after a
+pushed hint ([ADR 002](decisions/002-realtime-transport-and-sync.md), "Push with sequence, pull as
+the authority"). The local-data module sits behind that read. A level 2 store reads its list
+`through` a key of `localReads` (`apps/spa/src/modules.ts`), which is `cachedRead` from
+`@spy4x/realtime/read-cache` over one IndexedDB database per user (`reads:<id>`):
 
-- When the server answers, the whole answer replaces the group's local copy, and the queued
-  writes are applied on top of it.
-- When the network is down (`fetch` rejects), the local copy answers instead. An answer with an
-  error status is not a network failure and is shown as the error it is.
-- When a screen opens, the stores show the local copy at once and replace it when the read
-  answers, so a slow connection does not show an empty list.
+- When the server answers, the answer replaces the copy under that key. For notes, the queued
+  writes are then applied on top of it.
+- When the server cannot be reached (`fetch` rejects, or a call ran out of tries), the copy answers
+  instead. An answer with an error status is not a network failure: it is shown as the error it is,
+  and a copy the screen had painted is taken back.
+- When a screen opens with nothing to show, it paints the copy at once and replaces it when the
+  read answers, so a slow connection does not show an empty list.
+- Search and filters run over the list the store holds, so they work the same on a copy.
 
-Because the local copy is replaced by every full read, it cannot drift from the server: the read
-that runs after a reconnect is the same read that heals the store.
+Because the copy is replaced by every full read, it cannot drift from the server: the read that
+runs after a reconnect is the same read that heals the store.
+
+API tokens and signed-in devices can mislead when they are old (a token revoked or a device signed
+out elsewhere is still listed), so when their list comes from the device the section says so, with
+the time the copy was saved. A name the person just changed is never replaced by the profile's
+older copy.
 
 ### Writes: the outbox
 
 The queue and its rules are not in this repository: they are the outbox of
 `@spy4x/realtime/outbox` (one entry per entity, a new key after an unknown outcome, keys that must
 still match before an entry is cleared, one writer at a time, conflicts left to a person).
-`offline/notes-outbox.ts` supplies what is about notes, and `offline/notes-outbox.test.ts` checks
-those rules through it. The queue is kept by `createIndexedDbOutboxStore` from `@spy4x/realtime/outbox-indexeddb`, in its
-own IndexedDB database per user (`offline:user:<id>:outbox`); the notes and groups the server last
+`@spy4x/realtime/collections` puts one queue behind any number of aggregates;
+`offline/notes-collection.ts` supplies what is about notes, and `offline/notes-collection.test.ts`
+checks those rules through it. The queue is kept by `createIndexedDbOutboxStore` from `@spy4x/realtime/outbox-indexeddb`, in its
+own IndexedDB database per user (`offline:user:<id>:outbox`); the notes the server last
 sent are kept by `createDataCache` from `@spy4x/platform/browser/data-cache`
-(`offline:user:<id>:notes` and `:groups`). A device that ran the earlier Dexie version keeps its
+(`offline:user:<id>:notes`). The name of the queue's database and the shape of its entries are
+unchanged from the version before the collections layer, so a write queued by that version is sent
+by this one (`offline/index.test.ts` and `e2e/local-data.e2e.ts` open such a queue). That version
+kept the groups in `offline:user:<id>:groups`; the layer moves them into the read cache at its
+first start and deletes that database. A device that ran the earlier Dexie version keeps its
 old `offline:user:<id>` database, which is no longer read: a write still queued there is not sent.
 
 A note create, update or delete is saved in the outbox, in IndexedDB, then sent at once if the
@@ -138,7 +164,19 @@ offline after the worker installed, which is after that first load.
 
 ### Signing out
 
-Signing out drops the cached notes and groups and the remembered user. The outbox stays: a write
+Signing out deletes every read copy (the `reads:<id>` database's entries and the notes) and the
+remembered user. A start that finds no session, because it ended elsewhere or expired, does the
+same for the person the device remembered, before the sign-in page shows.
+
+The person is forgotten at once; their copies take IndexedDB a moment. So before a deletion starts,
+the user's id is written to a second `localStorage` key, `offline:owed-deletion`, and removed only
+after the device has deleted the copies. A page that closes in between, or a device that refuses to
+delete (the app logs a warning), leaves the id there. Every start deletes what is owed first: a
+start with no session before the sign-in page shows, a signed-in start before the device copy is
+opened. A person whose own copies the device still cannot delete works against the server alone for
+that visit.
+
+The outbox stays: a write
 that never reached the server is the person's work, and goes out the next time the same user signs
 in on this browser. Those unsent note texts stay in IndexedDB on a shared device until that user
 signs in again, so on a shared browser use the browser's own "clear site data". A device that ran
@@ -154,7 +192,12 @@ sign-out, its session stays valid.
 
 ## What is not offline
 
-Creating a group, the profile, two-factor set-up and sign-in need the server. Every tab of one browser shares one queue in IndexedDB. Each step on the queue (saving an edit,
+Every write except a note's needs the server: creating a group, saving the profile, inviting,
+revoking a token, signing a device out, two-factor set-up and sign-in. Deleted notes and deleted
+groups are read from the server only. The selected group is switched offline only among groups
+already on the device.
+
+Every tab of one browser shares one queue in IndexedDB. Each step on the queue (saving an edit,
 sending one entry) holds a `navigator.locks` lock named for the user, so tabs take turns. After a
 send, the entry is removed, or marked a conflict, only if it still carries the key that was sent;
 an edit another tab made meanwhile has a new key and stays queued. The queue sends only while the
@@ -184,7 +227,9 @@ ports from that file and never from a module's folder; two guard tests,
   socket is not open: the module is off, or its socket is blocked or has dropped. The timer and the
   page's own write run the cheap check (`createChangeCheck` in `apps/spa/src/state/pull.ts`): it reads the groups
   list and reads the open group's notes again only when that group's change sequence moved.
-- **Local data:** the device copy, the queue and the offline status line. The queue is sent only
+- **Local data:** `localReads` (the read copies of the level 2 lists), `offlineNotes` (the notes'
+  copy and queue) and the offline status line. While the module is off `localReads` reads from the
+  server and keeps nothing, so no store has a second code path. The queue is sent only
   while the calls port is reachable as its user (`canCallAs`): the page is signed in as them and
   the browser has a network.
 
@@ -198,7 +243,13 @@ container (`infra/envs/.env.example`) and restart it; in development edit
 With `realtime: false` the page opens no socket: it writes and reads over HTTP and sees another
 person's change within about 30 seconds instead of at once. The e2e spec
 `e2e/realtime-off.e2e.ts` runs the core flows this way and fails if a socket is opened. With
-`offline: false` nothing is written to the device and every screen needs the network.
+`offline: false` nothing is written to IndexedDB: no read copy, no notes, no queue, and no
+remembered user. Every screen needs the network, and a note is written straight to the server. The
+service worker still caches the app's files, so the page itself loads fast. The e2e spec
+`e2e/local-data.e2e.ts` runs the core flows this way and fails if the page created an IndexedDB
+database. Copies written before the switch was turned off are deleted at the next start, for the
+person the device remembered and for anyone still owed a deletion; that person's unsent note writes
+stay queued, as on sign-out. A device with neither key in `localStorage` is not opened.
 
 ### Removing the WebSocket module
 
@@ -230,18 +281,20 @@ layer is missing from this list.
    The push handlers stay.
 3. In `apps/spa/src/modules.ts`, delete the `./offline/` imports and the "Local data" part of the
    file, the `startOfflineLayer` call in `startModules`, the `stopOfflineLayer` call in
-   `forgetModules`, and the `offline` switch.
+   `forgetModules`, and the `offline` switch. Keep `LocalReads`, `createLocalReads` and
+   `noLocalReads`, and make the last line of that part `export const localReads = noLocalReads`.
+   The stores of the level 2 lists then read from the server and keep nothing, with no change to
+   them or to their tests.
 4. In `apps/spa/src/app.tsx`, delete what came from that part: `bootstrapSession(recallUser)`
-   becomes `bootstrapSession()`; drop the effect that remembers the user and the `flushOutbox`
-   line of `reads`.
-5. In `apps/spa/src/state/notes.ts` and `apps/spa/src/state/groups.ts`, delete the `currentLayer`,
-   `offlineNotes` and `offlineGroups` imports, and export the store built from `onlineNotes` and
-   `onlineGroups` directly: `createNotesStore(onlineNotes)`, `createGroupsStore(onlineGroups)`. The
+   becomes `bootstrapSession()` and loses its `forgetUser` step; drop the effect that remembers the
+   user and the `flushOutbox` line of `reads`.
+5. In `apps/spa/src/state/notes.ts`, delete the `currentLayer` and `offlineNotes` imports and
+   export the store built from `onlineNotes` directly: `createNotesStore(onlineNotes)`. The
    optional `readLocal` dependency and its `showLocal` call can go with them.
 6. In `apps/spa/src/views/NotesView.tsx` and `apps/spa/src/views/NoteEditorView.tsx`, delete the
    `OfflineStatus` import and element.
-7. Delete the spec `e2e/offline.e2e.ts`, and this guard test with its clause in the `test` task in
-   `deno.jsonc`: `tests/offline-removal.test.ts`. The unit tests lived in the folder and went with
-   it.
+7. Delete the specs `e2e/offline.e2e.ts` and `e2e/local-data.e2e.ts`, and this guard test with its
+   clause in the `test` task in `deno.jsonc`: `tests/offline-removal.test.ts`. The unit tests of
+   the layer lived in the folder and went with it.
 
 The app then behaves as it did before the layer existed: reads and writes over the network only.

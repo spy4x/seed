@@ -1,18 +1,13 @@
-import type { GroupItem } from "../state/groups.ts"
 import type { NoteItem } from "../state/notes.ts"
-import { createMemoryOutboxStore } from "@spy4x/realtime/outbox"
-import type { LocalStore, NotePayload } from "./local-store.ts"
+import type { NotesCache } from "./notes-cache.ts"
 
 /**
- * A `LocalStore` in memory, with the behaviour the IndexedDB one has that the logic relies on.
+ * A `NotesCache` in memory, with the behaviour the IndexedDB one has that the logic relies on.
  * The unit tests of the offline layer run on it, because Deno has no IndexedDB.
  */
-export function createMemoryStore(): LocalStore {
+export function createMemoryNotesCache(): NotesCache {
   let notes: NoteItem[] = []
-  let groups: GroupItem[] = []
-  const outbox = createMemoryOutboxStore<NotePayload, NoteItem>()
   return {
-    ...outbox,
     readNotes: (groupId) =>
       Promise.resolve(notes.filter((note) => note.groupId === groupId).map((n) => ({ ...n }))),
     replaceNotes(groupId, next) {
@@ -29,14 +24,8 @@ export function createMemoryStore(): LocalStore {
       notes = notes.filter((note) => note.id !== noteId)
       return Promise.resolve()
     },
-    readGroups: () => Promise.resolve(groups.map((g) => ({ ...g }))),
-    replaceGroups(next) {
-      groups = next.map((g) => ({ ...g }))
-      return Promise.resolve()
-    },
-    clearCache() {
+    clear() {
       notes = []
-      groups = []
       return Promise.resolve()
     },
   }

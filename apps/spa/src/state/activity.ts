@@ -1,6 +1,8 @@
 import { signal } from "@preact/signals"
 import type { ActivityRow } from "@ui/group-activity-screen.tsx"
 import { apiFetch } from "./api.ts"
+import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
+import { READ_KEYS } from "./read-keys.ts"
 
 /** One page of the log as the API answers: `nextCursor` is `null` on the last page. */
 export interface ActivityPageResult {
@@ -19,7 +21,10 @@ export interface ActivityDependencies {
  * group: a page answered after the person moved to another group, or after the same group was
  * opened again, is dropped, so the list always belongs to the group shown.
  */
-export function createActivityStore(dependencies: ActivityDependencies) {
+export function createActivityStore(
+  dependencies: ActivityDependencies,
+  device: LocalReads = noLocalReads,
+) {
   const groupId = signal<string | null>(null)
   const events = signal<readonly ActivityRow[]>([])
   const nextCursor = signal<string | null>(null)
@@ -40,10 +45,23 @@ export function createActivityStore(dependencies: ActivityDependencies) {
     loadingMore.value = false
     error.value = null
     try {
-      const page = await dependencies.list({ groupId: id, cursor: null })
+      const show = (page: ActivityPageResult) => {
+        events.value = page.events
+        nextCursor.value = page.nextCursor
+      }
+      // The device keeps each page the person opened; the first one shows while the server is asked.
+      const { value: page } = await device.through(
+        READ_KEYS.activity(id, null),
+        () => dependencies.list({ groupId: id, cursor: null }),
+        (copy) => {
+          if (read !== reads) return false
+          if (copy && events.value.length > 0) return false
+          if (copy) return show(copy.value)
+          events.value = []
+        },
+      )
       if (read !== reads) return
-      events.value = page.events
-      nextCursor.value = page.nextCursor
+      show(page)
     } catch (cause) {
       if (read !== reads) return
       error.value = cause instanceof Error ? cause.message : "Could not load the activity"
@@ -63,7 +81,10 @@ export function createActivityStore(dependencies: ActivityDependencies) {
     loadingMore.value = true
     error.value = null
     try {
-      const page = await dependencies.list({ groupId: id, cursor })
+      const { value: page } = await device.through(
+        READ_KEYS.activity(id, cursor),
+        () => dependencies.list({ groupId: id, cursor }),
+      )
       if (read !== reads) return
       const known = new Set(events.value.map((event) => event.id))
       events.value = [...events.value, ...page.events.filter((event) => !known.has(event.id))]
@@ -89,4 +110,4 @@ export const activityStore = createActivityStore({
     if (!result.ok) throw new Error(result.error.message)
     return result.data
   },
-})
+}, localReads)

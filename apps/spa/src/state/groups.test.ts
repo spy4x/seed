@@ -1,14 +1,19 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { RealtimeRequestError } from "@spy4x/realtime"
+import type { ReadCache } from "@spy4x/realtime/read-cache"
 import { type GroupDetails, GroupRole } from "@domain/groups"
 import {
   createGroupsStore,
   type DeletedGroupItem,
   type GroupItem,
   type GroupPage,
+  type GroupsDependencies,
+  groupsOnDevice,
   type ReadChannel,
 } from "./groups.ts"
+import { createMemoryReadCache, memoryReads } from "./memory-reads.ts"
+import { createLocalReads, noLocalReads } from "../modules.ts"
 
 function item(id: string, sequence: string, name = id): GroupItem {
   return {
@@ -490,5 +495,102 @@ describe("groups store", () => {
 
     expect(store.groups.value).toEqual([])
     expect(store.name.value).toBe("")
+  })
+})
+
+describe("the groups list on the device", () => {
+  /** A server with one page of groups that a test makes unreachable or refusing. */
+  function server(groups: GroupItem[]) {
+    const state = { failure: null as Error | null, reads: [] as ReadChannel[] }
+    const online: GroupsDependencies = {
+      ...UNUSED,
+      fetchPage(_cursor, via) {
+        state.reads.push(via)
+        return state.failure
+          ? Promise.reject(state.failure)
+          : Promise.resolve({ groups, nextCursor: null })
+      },
+      create: () => Promise.reject(new Error("unused")),
+      advance: () => {},
+      newId: () => "id",
+    }
+    return { state, online }
+  }
+
+  it("answers the groups list from the device when the server is unreachable", async () => {
+    const { state, online } = server([item("g-1", "1", "Team")])
+    const deps = groupsOnDevice(online, memoryReads())
+    await deps.fetchPage(null, "rest")
+    state.failure = new TypeError("Failed to fetch")
+
+    expect((await deps.fetchPage(null, "rest")).groups.map((g) => g.name)).toEqual(["Team"])
+  })
+
+  it("replaces the device's groups with every answer of the server", async () => {
+    const groups = [item("g-1", "1", "Team")]
+    const { state, online } = server(groups)
+    const deps = groupsOnDevice(online, memoryReads())
+    await deps.fetchPage(null, "rest")
+    groups.splice(0, 1, item("g-2", "1", "Family"))
+    await deps.fetchPage(null, "rest")
+    state.failure = new TypeError("Failed to fetch")
+
+    expect((await deps.fetchPage(null, "rest")).groups.map((g) => g.name)).toEqual(["Family"])
+  })
+
+  it("does not answer from the device when the server refuses the read", async () => {
+    const { state, online } = server([item("g-1", "1")])
+    const deps = groupsOnDevice(online, memoryReads())
+    await deps.fetchPage(null, "rest")
+    state.failure = new Error("Forbidden")
+
+    await expect(deps.fetchPage(null, "rest")).rejects.toThrow("Forbidden")
+  })
+
+  it("does not paint a copy the device hands over only after the server refused the read", async () => {
+    let release!: () => void
+    const held = new Promise<void>((resolve) => release = resolve)
+    const cache = createMemoryReadCache()
+    await cache.set("members:g-1", ["Ann"])
+    const slow: ReadCache = { ...cache, get: async (key) => (await held, await cache.get(key)) }
+    const painted: unknown[] = []
+
+    await createLocalReads(() => slow).through(
+      "members:g-1",
+      () => Promise.reject(new Error("forbidden")),
+      (copy) => void painted.push(copy?.value),
+    ).catch(() => {})
+    release()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(painted).toEqual([])
+  })
+
+  it("shows the device's groups before the server has answered", async () => {
+    const { online } = server([item("g-1", "1", "Team")])
+    const reads = memoryReads()
+    await groupsOnDevice(online, reads).fetchPage(null, "rest")
+    const slow = deferred<GroupPage>()
+    const store = createGroupsStore(
+      groupsOnDevice({ ...online, fetchPage: () => slow.promise }, reads),
+    )
+
+    const reading = store.refresh()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(store.groups.value.map((g) => g.name)).toEqual(["Team"])
+
+    slow.resolve({ groups: [item("g-1", "2", "Renamed")], nextCursor: null })
+    await reading
+    expect(store.groups.value.map((g) => g.name)).toEqual(["Renamed"])
+  })
+
+  it("keeps nothing on a device whose local-data module is off", async () => {
+    const { state, online } = server([item("g-1", "1")])
+    const deps = groupsOnDevice(online, noLocalReads)
+    await deps.fetchPage(null, "rest")
+    state.failure = new TypeError("Failed to fetch")
+
+    await expect(deps.fetchPage(null, "rest")).rejects.toThrow("Failed to fetch")
+    expect(await deps.readLocal?.()).toEqual([])
   })
 })
