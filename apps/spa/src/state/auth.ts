@@ -217,20 +217,25 @@ export async function checkTotp(otp: string): Promise<{ ok: boolean; error?: str
   return { ok: true }
 }
 
-/** Changes the password; `signOutOthers` also ends every other session of the person. */
+/**
+ * Changes the password; `signOutOthers` also ends every other session of the person. The change
+ * revokes every API token of the person: `revokedTokens` says how many.
+ */
 export async function changePassword(
   password: string,
   newPassword: string,
   signOutOthers = true,
-): Promise<{ ok: boolean; error?: string }> {
-  const result = await apiFetch<ApiSuccessResponse>("/api/auth/password/change", {
+): Promise<{ ok: boolean; error?: string; revokedTokens?: number }> {
+  const result = await apiFetch<
+    ApiSuccessResponse & { revokedTokens?: number }
+  >("/api/auth/password/change", {
     method: "POST",
     body: JSON.stringify({ password, newPassword, signOutOthers }),
   })
   if (!result.ok) {
     return { ok: false, error: result.error.message }
   }
-  return { ok: true }
+  return { ok: true, revokedTokens: result.data.revokedTokens ?? 0 }
 }
 
 /** The devices the person is signed in on, this one first. */

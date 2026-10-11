@@ -29,6 +29,7 @@ import {
 } from "@domain/groups"
 import { BillingStatus } from "@domain/billing"
 import { handOverBilling } from "@server/billing/handover.ts"
+import { apiTokenRows } from "@server/api-tokens/api-tokens.ts"
 import {
   GroupNotActiveError,
   lockActorRole,
@@ -606,6 +607,8 @@ export class PostgresGroupRepository implements GroupRepository {
         )
       }
 
+      // A deleted group's tokens are over for good: a restore brings the group back, not them.
+      await apiTokenRows(transaction).revoke({ groupId }, "group-deleted")
       await repository.audit(groupId, actorId, GROUP_DELETED_EVENT, requestId)
       // Every member loses the group, the owner included: each of their pages must drop it.
       const members = await transaction<MemberRow[]>`
@@ -929,11 +932,14 @@ export class PostgresGroupRepository implements GroupRepository {
   }
 
   /**
-   * Deletes one membership. What the member wrote stays in the group with their name on it. A
-   * member left with no active group gets a new one, as a delete gives them.
+   * Deletes one membership, the one way a person leaves a group or is removed from it. What the
+   * member wrote stays in the group with their name on it. Their API tokens for the group are
+   * revoked, so none works again if the person is added back (#293). A member left with no active
+   * group gets a new one, as a delete gives them.
    */
   private async dropMember(groupId: string, userId: number): Promise<void> {
     await this.sql`DELETE FROM group_members WHERE group_id = ${groupId} AND user_id = ${userId}`
+    await apiTokenRows(this.sql).revoke({ userId, groupId }, "membership-ended")
     if (!await this.hasActiveGroup(userId)) {
       await this.insertFirst({ id: uuidV7(), name: REPLACEMENT_GROUP_NAME }, userId)
     }

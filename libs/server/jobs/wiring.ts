@@ -32,6 +32,7 @@ import {
   accountRestoredMailJob,
 } from "./account-deletion.ts"
 import { STARTER_DATA_JOB, starterDataJob } from "./starter-data.ts"
+import { API_TOKEN_CREATED_MAIL_JOB, apiTokenCreatedMailJob } from "./api-token-mail.ts"
 import { billingNoticeMailJob } from "./billing-notice-mail.ts"
 import {
   EMAIL_CODE_MAIL_JOB,
@@ -72,7 +73,7 @@ const NIGHTLY_HOUR_UTC = 3
  * nightly cleanup is one row that writes its next run, a day later, once it has succeeded. The
  * cleanup also drops password reset and e-mail code requests whose mail gave up, and removes for
  * good the groups whose 30 days for restoring are over, the invitations dead for over 30 days,
- * the personal API tokens that expired over 30 days ago, the audit events older than a year and
+ * the personal API tokens that expired or were revoked over 30 days ago, the audit events older than a year and
  * the accounts whose 7 days of waiting are over (a backstop for their own jobs). Every mail job,
  * the owner's billing notices included, shares one sender and brand.
  *
@@ -121,7 +122,7 @@ export function createOutboxProcessor(
           const invitations = await purgeDeadInvitations(sql)
           if (invitations > 0) console.log(`Removed ${invitations} dead group invitation(s)`)
           const tokens = await purgeExpiredApiTokens(sql)
-          if (tokens > 0) console.log(`Removed ${tokens} expired API token(s) for good`)
+          if (tokens > 0) console.log(`Removed ${tokens} expired or revoked API token(s) for good`)
           const audit = await purgeOldAuditEvents(sql)
           if (audit > 0) console.log(`Removed ${audit} audit event(s) past their retention`)
           const inbox = await purgeReadNotifications(sql)
@@ -143,6 +144,7 @@ export function createOutboxProcessor(
         [EMAIL_CODE_MAIL_JOB]: emailCodeMailJob({ sql, ...mail }),
         [ACCOUNT_DELETION_MAIL_JOB]: accountDeletionMailJob({ sql, ...mail }),
         [ACCOUNT_RESTORED_MAIL_JOB]: accountRestoredMailJob({ sql, ...mail }),
+        [API_TOKEN_CREATED_MAIL_JOB]: apiTokenCreatedMailJob({ sql, ...mail }),
         [ACCOUNT_HARD_DELETE_JOB]: accountHardDeleteJob({ sql, log: mail.log }),
         [STARTER_DATA_JOB]: starterDataJob(sql, { billingEnabled: provider !== null, graceDays }),
         ...billingNoticeJobs(sql, mail),

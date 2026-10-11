@@ -5,6 +5,7 @@ import { BillingNoticeKind } from "@domain/billing"
 import {
   accountDeletionMail,
   accountRestoredMail,
+  apiTokenCreatedMail,
   billingNoticeMail,
   createMailSender,
   emailCodeMail,
@@ -144,6 +145,47 @@ describe("accountDeletionMail", () => {
     expect(mail.text).toContain("Sign in before then and your account is restored")
     expect(mail.text).toContain("https://app.example.com/sign-in")
     expect(mail.html).toContain(`href="https://app.example.com/sign-in"`)
+  })
+})
+
+describe("apiTokenCreatedMail", () => {
+  const input = {
+    to: "ann@example.com",
+    name: `Zapier <script>`,
+    groupName: "Family & co",
+    canWrite: true,
+    expiresAt: new Date("2027-01-02T10:00:00Z"),
+  }
+  const mail = apiTokenCreatedMail({ webAppUrl: "https://app.example.com" }, input)
+
+  it("names the token, its group, what it can do and when it expires", () => {
+    expect(mail.to).toBe("ann@example.com")
+    expect(mail.subject).toBe("An API token was created")
+    expect(mail.text).toContain(`An API token named "Zapier <script>" was created`)
+    expect(mail.text).toContain(
+      `It can read and write the group "Family & co" and expires on January 2, 2027.`,
+    )
+  })
+
+  it("says a read-only token that never expires is just that", () => {
+    const readOnly = apiTokenCreatedMail({ webAppUrl: "https://app.example.com" }, {
+      ...input,
+      canWrite: false,
+      expiresAt: null,
+    })
+    expect(readOnly.text).toContain(`It can read the group "Family & co" and never expires.`)
+  })
+
+  it("says what to do if it was someone else: revoke it and change the password", () => {
+    expect(mail.text).toContain("If this wasn't you, revoke the token on your profile page")
+    expect(mail.text).toContain("change your password, which revokes every API token")
+    expect(mail.text).toContain("https://app.example.com/")
+  })
+
+  it("escapes the token's and the group's name in the HTML", () => {
+    expect(mail.html).toContain("Zapier &lt;script&gt;")
+    expect(mail.html).toContain("Family &amp; co")
+    expect(mail.html).not.toContain("<script>")
   })
 })
 

@@ -50,8 +50,12 @@ const SESSION_DEVICES_MIGRATION = "2026_10_23_0002_auth_session_devices.sql"
 const OUTBOX_JOBS_MIGRATION = "2026_10_03_0002_outbox_jobs.sql"
 /** Sign-up writes a starter data request and queues its job (#165). */
 const STARTER_DATA_MIGRATION = "2026_10_26_0001_starter_data.sql"
-// A reset also deletes every API token of the person, so the reset tests need their table (#167).
-const API_TOKENS_MIGRATION = "2026_10_25_0001_api_tokens.sql"
+// A password reset and a password change revoke every API token of the person, so their tests
+// need the table (#167) and the column a revoke sets (#293).
+const API_TOKENS_MIGRATIONS = [
+  "2026_10_25_0001_api_tokens.sql",
+  "2026_10_30_0001_api_token_hardening.sql",
+]
 const MASTER_MIGRATIONS = [
   "2026_01_26_0001_init.sql",
   "2026_01_26_0002_auth_profiles_audit.sql",
@@ -516,7 +520,13 @@ Deno.test("sign-up, sign-in and sign-out through the package tables", async (t) 
 
 Deno.test("username accounts and the password reset link", async (t) => {
   await withSchema(
-    [...MASTER_MIGRATIONS, AUTH_MIGRATION, KIND_MIGRATION, EMAIL_MIGRATION, API_TOKENS_MIGRATION],
+    [
+      ...MASTER_MIGRATIONS,
+      AUTH_MIGRATION,
+      KIND_MIGRATION,
+      EMAIL_MIGRATION,
+      ...API_TOKENS_MIGRATIONS,
+    ],
     async (sql) => {
       const signIn = buildSignIn(sql)
       const db = new AppDbBase({ sql })
@@ -634,7 +644,13 @@ Deno.test("username accounts and the password reset link", async (t) => {
 })
 
 Deno.test("authenticator-app enrolment, second factor and replay", async (t) => {
-  await withSchema([...MASTER_MIGRATIONS, AUTH_MIGRATION, KIND_MIGRATION], async (sql) => {
+  const migrations = [
+    ...MASTER_MIGRATIONS,
+    AUTH_MIGRATION,
+    KIND_MIGRATION,
+    ...API_TOKENS_MIGRATIONS,
+  ]
+  await withSchema(migrations, async (sql) => {
     const signIn = buildSignIn(sql)
     const signUpBody = { email: "totp-user@example.com", password: "Passw0rd!" }
     const credentials = { login: signUpBody.email, password: signUpBody.password }

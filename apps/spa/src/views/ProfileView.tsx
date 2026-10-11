@@ -39,6 +39,7 @@ import {
 import type { PushPublicKeyResponse } from "@domain/identity"
 import { SESSIONS_FAILURE } from "@ui/signed-in-devices.tsx"
 import { apiTokensHttp, createApiTokensStore } from "../state/api-tokens.ts"
+import { passwordChangedMessage } from "./password-changed-message.ts"
 import { createDevicesStore } from "../state/devices.ts"
 import { localReads } from "../modules.ts"
 import { groupsStore } from "../state/groups.ts"
@@ -169,11 +170,11 @@ export function ProfileView() {
     setSignOutOthers(true)
     // The change ends this device's session too and opens a new one: the list changes either way.
     void loadDevices()
+    // The change revoked every API token of the person: the list is read again.
+    if (result.revokedTokens) void tokens.load()
     toasts.success({
       title: "Password changed",
-      body: signOutOthers
-        ? "Every other device was signed out. Use the new password next time you sign in."
-        : "Use the new password next time you sign in.",
+      body: passwordChangedMessage(signOutOthers, result.revokedTokens ?? 0),
       dataE2E: "password-saved",
     })
   }

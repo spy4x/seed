@@ -104,8 +104,14 @@ function buildApp(sql: postgres.Sql, db: AppDbBase = new AppDbBase({ sql })) {
   })
   app.post("/password", signIn.auth.isAuthenticated2FA, async (c) => {
     const { password, newPassword, signOutOthers } = await c.req.json()
-    const ok = await signIn.changePassword(c, c.get("auth")!, password, newPassword, signOutOthers)
-    return c.json({ ok })
+    const done = await signIn.changePassword(
+      c,
+      c.get("auth")!,
+      password,
+      newPassword,
+      signOutOthers,
+    )
+    return c.json({ ok: done !== null })
   })
   const request = (
     path: string,

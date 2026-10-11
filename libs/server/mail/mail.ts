@@ -259,6 +259,50 @@ export function accountRestoredMail(brand: MailBrand, { to }: { to: string }): E
   }
 }
 
+/** What the mail about a new API token names. Never the token itself. */
+export interface ApiTokenCreatedMailInput {
+  to: string
+  name: string
+  groupName: string
+  canWrite: boolean
+  /** `null` for a token that never expires. */
+  expiresAt: Date | null
+}
+
+/**
+ * The mail sent when a personal API token is created, so a token made by someone else in a stolen
+ * session does not go unnoticed (#293). It says which token and what it can do, and how to end it:
+ * revoke it on the profile page, and change the password, which revokes every token.
+ */
+export function apiTokenCreatedMail(
+  brand: MailBrand,
+  { to, name, groupName, canWrite, expiresAt }: ApiTokenCreatedMailInput,
+): EmailMessage {
+  const host = new URL(brand.webAppUrl).host
+  const created = `An API token named "${name}" was created for your account at ${host}.`
+  const can = `It can ${canWrite ? "read and write" : "read"} the group "${groupName}" and ${
+    expiresAt ? `expires on ${billingDate(expiresAt)}` : "never expires"
+  }.`
+  const notYou =
+    "If this wasn't you, revoke the token on your profile page and change your password, which revokes every API token."
+  // The profile is the web app's first page.
+  const link = new URL("/", brand.webAppUrl).href
+  return {
+    to,
+    subject: "An API token was created",
+    text: `${created}\n\n${can}\n\n${notYou}\n\n${link}\n`,
+    html: mailHtml(
+      brand,
+      [
+        `<p>${escapeHtml(created)}</p>`,
+        `<p>${escapeHtml(can)}</p>`,
+        `<p>${escapeHtml(notYou)}</p>`,
+        `<p><a href="${escapeHtml(link)}">Open your profile</a></p>`,
+      ].join("\n"),
+    ),
+  }
+}
+
 /** What a billing notice mail names. */
 export interface BillingNoticeMailInput {
   to: string

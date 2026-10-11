@@ -122,14 +122,16 @@ const writer: ApiToken = {
   lastUsedAt: "2026-10-04T09:00:00.000Z",
 }
 
+const NO_ERRORS = { list: null, name: null, password: null, form: null }
+
 /** The section with two tokens, recording every call the app would receive. */
 function tokensProps(calls: unknown[][], props: Partial<ApiTokensProps> = {}): ApiTokensProps {
   return {
     tokens: [writer, reader],
     groups: [{ id: groupId, name: "Personal" }],
-    values: { name: "", groupId, access: ApiTokenAccess.READ, expiresInDays: 90 },
+    values: { name: "", password: "", groupId, access: ApiTokenAccess.READ, expiresInDays: 90 },
     onValueChange: (field, value) => void calls.push(["value", field, value]),
-    errors: { list: null, name: null, form: null },
+    errors: { list: null, name: null, password: null, form: null },
     pending: { create: false, revoke: false },
     created: null,
     onStartCreate: () => void calls.push(["start"]),
@@ -156,12 +158,12 @@ describe("ApiTokens", () => {
     expect(find("[data-e2e=api-tokens]").textContent).not.toContain("tpl_")
   })
 
-  it("says that a password reset revokes every token and a password change keeps them", async () => {
+  it("says that changing or resetting the password revokes every token", async () => {
     await mount(<ApiTokens {...tokensProps([])} />)
 
-    const text = find("[data-e2e=api-tokens]").textContent
-    expect(text).toContain("Resetting a forgotten password revokes every token")
-    expect(text).toContain("changing your password keeps them")
+    expect(find("[data-e2e=api-tokens]").textContent).toContain(
+      "Changing or resetting your password revokes every token",
+    )
   })
 
   it("revokes a token only after the person confirms", async () => {
@@ -179,7 +181,7 @@ describe("ApiTokens", () => {
     expect(calls).toEqual([["revoke", reader.id]])
   })
 
-  it("creates a token in a dialog: it opens empty, takes the name and submits through onCreate", async () => {
+  it("creates a token in a dialog: it opens empty, takes the name and the password and submits through onCreate", async () => {
     const calls: unknown[][] = []
     await mount(<ApiTokens {...tokensProps(calls)} />)
     expect(isOpen("api-token-dialog")).toBe(false)
@@ -187,9 +189,56 @@ describe("ApiTokens", () => {
     await click("[data-e2e=api-token-create-open]")
     expect(isOpen("api-token-dialog")).toBe(true)
     await type("[data-e2e=api-token-name]", "Zapier")
+    await type("[data-e2e=api-token-password]", "correct horse")
     await submit("[data-e2e=api-token-name]")
 
-    expect(calls).toEqual([["start"], ["value", "name", "Zapier"], ["create"]])
+    expect(calls).toEqual([
+      ["start"],
+      ["value", "name", "Zapier"],
+      ["value", "password", "correct horse"],
+      ["create"],
+    ])
+  })
+
+  it("asks for the current password in a labelled password field a manager can fill", async () => {
+    await mount(<ApiTokens {...tokensProps([])} />)
+    await click("[data-e2e=api-token-create-open]")
+
+    const input = find<HTMLInputElement>("[data-e2e=api-token-password]")
+    expect(input.type).toBe("password")
+    expect(input.getAttribute("autocomplete")).toBe("current-password")
+    expect(document.querySelector(`label[for=${input.id}]`)?.textContent).toContain("Your password")
+  })
+
+  it("moves focus to the password when it is refused, with the message tied to it", async () => {
+    const calls: unknown[][] = []
+    await mount(<ApiTokens {...tokensProps(calls)} />)
+    await click("[data-e2e=api-token-create-open]")
+    await mount(
+      <ApiTokens
+        {...tokensProps(calls, { errors: { ...NO_ERRORS, password: "Wrong password" } })}
+      />,
+    )
+
+    const input = find<HTMLInputElement>("[data-e2e=api-token-password]")
+    expect(focused()).toBe("api-token-password")
+    const describedBy = input.getAttribute("aria-describedby") ?? ""
+    expect(describedBy.split(" ").map((id) => document.getElementById(id)?.textContent))
+      .toContain("Wrong password")
+  })
+
+  it("moves focus to the name, the first field, when both are refused", async () => {
+    const calls: unknown[][] = []
+    await mount(<ApiTokens {...tokensProps(calls)} />)
+    await click("[data-e2e=api-token-create-open]")
+    await mount(
+      <ApiTokens
+        {...tokensProps(calls, {
+          errors: { ...NO_ERRORS, name: "Name is too long", password: "Wrong password" },
+        })}
+      />,
+    )
+    expect(focused()).toBe("api-token-name")
   })
 
   it("moves focus to the name when it is refused, with the message tied to it", async () => {
@@ -198,7 +247,7 @@ describe("ApiTokens", () => {
     await click("[data-e2e=api-token-create-open]")
     await mount(
       <ApiTokens
-        {...tokensProps(calls, { errors: { list: null, name: "Name is too long", form: null } })}
+        {...tokensProps(calls, { errors: { ...NO_ERRORS, name: "Name is too long" } })}
       />,
     )
 
@@ -246,7 +295,7 @@ describe("ApiTokens", () => {
       <ApiTokens
         {...tokensProps([], {
           pending: { create: false, revoke: true },
-          errors: { list: "Could not revoke", name: null, form: null },
+          errors: { ...NO_ERRORS, list: "Could not revoke" },
         })}
       />,
     )

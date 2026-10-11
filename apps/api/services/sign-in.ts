@@ -211,8 +211,12 @@ export interface SignIn {
   disconnectTotp(state: AppAuthState): Promise<boolean>
   /**
    * Replaces the password. With `signOutOthers` (the default) it also signs out every other session
-   * and gives this one a new session and cookie; without it every session stays as it is. `false`
-   * when the current password is wrong or the new one is refused.
+   * and gives this one a new session and cookie; without it every session stays as it is. Either
+   * way it revokes every personal API token of the user, each with its audit row, in the same
+   * transaction as the password, so a failed revoke leaves the old password in place, and answers
+   * how many: a token is what a stolen session leaves behind, and a person who changes the
+   * password after a break-in expects it gone (#293). `null` when the current password is wrong or
+   * the new one is refused.
    */
   changePassword(
     c: Context,
@@ -220,20 +224,23 @@ export interface SignIn {
     password: string,
     newPassword: string,
     signOutOthers?: boolean,
-  ): Promise<boolean>
+  ): Promise<{ revokedTokens: number } | null>
   /**
    * Spends the reset code for `email` and, when it was the live one, proves the address, replaces
-   * the password, signs out every session of the user and deletes every API token, with one audit
-   * row. `false`, and the password unchanged, when the code is wrong, expired, already used or
+   * the password, signs out every session of the user and revokes every API token, with an audit
+   * row each. `false`, and the password unchanged, when the code is wrong, expired, already used or
    * replaced, the new password is refused, or no live account signs in with the address.
    */
   resetPassword(email: string, code: string, newPassword: string): Promise<boolean>
   /**
    * Whether `password` is the current password of user `userId`, checked as a password change
    * checks it. A step that must not run on a stolen session alone, such as handing a group to
-   * someone else, asks for it. `false` for an account with no password.
+   * someone else, asks for it. `false` for an account with no password. `over` is the transaction
+   * to read the password in, for a caller that holds the user's row lock (a token create).
    */
-  checkPassword(userId: number, password: string): Promise<boolean>
+  checkPassword(userId: number, password: string, over?: AppDbBase): Promise<boolean>
+  /** Whether user `userId` has a password at all, read through `over` when given. */
+  hasPassword(userId: number, over?: AppDbBase): Promise<boolean>
   /**
    * Whether `code` is the user's current authenticator code, spending it so it never works twice.
    * Leaves the session as it is: for a step that asks for the code again, such as deleting the
@@ -462,16 +469,18 @@ export function createSignIn(options: SignInOptions): SignIn {
     ...signInOptions,
     normalizeSubject: normalizeUsername,
   })
-  // Password change: the session that changed it already gave the second factor.
-  const changePasswords = passwordsOver({
-    store: db.authStore,
-    sessions,
-    secondFactorFor: secondFactorFrom((user) =>
-      user?.mfa === UserMFAStatus.CONFIGURED
-        ? SecondFactorStatus.Completed
-        : SecondFactorStatus.NotRequired
-    ),
-  })
+  // Password change: the session that changed it already gave the second factor. Built over the
+  // change's transaction, so the new password and the new session join it.
+  const changePasswordsOver = (tx: AppDbBase) =>
+    passwordsOver({
+      store: tx.authStore,
+      sessions: sessionsOver(tx.sessionStore),
+      secondFactorFor: secondFactorFrom((user) =>
+        user?.mfa === UserMFAStatus.CONFIGURED
+          ? SecondFactorStatus.Completed
+          : SecondFactorStatus.NotRequired
+      ),
+    })
 
   return {
     auth,
@@ -687,20 +696,44 @@ export function createSignIn(options: SignInOptions): SignIn {
 
     async changePassword(c, { user }, password, newPassword, signOutOthers = true) {
       const change = { userId: user.id, currentPassword: password, newPassword }
+      const request = requestInfoFromContext(c, { trustedProxy: true })
+      let changed
       try {
-        if (!signOutOthers) {
-          // The person chose to stay signed in elsewhere: the password is replaced after the same
-          // checks, and no session is touched or created, so this device keeps its cookie.
-          await changePasswords.changePassword({ ...change, keepSessions: true })
-          return true
-        }
-        const result = await changePasswords.changePassword({ ...change, device: deviceOf(c) })
-        await cookie.set(c, result.session.session, result.session.cookieValue)
-        return true
+        // One transaction (#293): the password and the tokens change together or not at all, so a
+        // failed revoke never leaves a new password with live tokens. The provider is built over
+        // the transaction's stores, as at sign-up. The connection is held for one hash and one
+        // verify.
+        changed = await db.begin(async (tx) => {
+          // Key first, then the user's row: the order a reset takes them in. A token create holds
+          // the user's row while it checks the password and inserts, so it either commits before
+          // this revoke runs or sees the new password.
+          await tx.lockPasswordKey({ userId: user.id })
+          await tx.lockUser(user.id)
+          const passwords = changePasswordsOver(tx)
+          // The person may choose to stay signed in elsewhere: the password is replaced after the
+          // same checks, and no session is touched or created, so this device keeps its cookie.
+          let session = null
+          if (signOutOthers) {
+            session = (await passwords.changePassword({ ...change, device: deviceOf(c) })).session
+          } else {
+            await passwords.changePassword({ ...change, keepSessions: true })
+          }
+          const revokedTokens = await tx.apiTokens.revoke(
+            { userId: user.id },
+            "password-change",
+            { ip: request.ip || null, userAgent: request.userAgent || null },
+          )
+          return { session, revokedTokens }
+        })
       } catch (error) {
-        if (error instanceof PasswordSignInError) return false
+        if (error instanceof PasswordSignInError) return null
         throw error
       }
+      // After the commit: a cookie for a session that was rolled back would sign the device out.
+      if (changed.session) {
+        await cookie.set(c, changed.session.session, changed.session.cookieValue)
+      }
+      return { revokedTokens: changed.revokedTokens }
     },
 
     async resetPassword(rawEmail, code, newPassword) {
@@ -724,6 +757,9 @@ export function createSignIn(options: SignInOptions): SignIn {
         if (!key || key.email === null) return false
         const user = await tx.authStore.findUser(key.userId)
         if (!user || user.deletedAt !== null) return false
+        // A token create holds this row while it checks the password and inserts (#293), so the
+        // revoke below runs after it and ends its token too.
+        await tx.lockUser(user.id)
         // The link reached the mailbox, so the address is proven: this user now owns it. Another
         // user owning it already is a refusal; the code stays spent.
         if (key.provenAt === null) {
@@ -742,24 +778,20 @@ export function createSignIn(options: SignInOptions): SignIn {
         // The mailbox owner is back in control: an address change someone else asked for goes.
         await tx.emailChange.remove(user.id)
         await sessionsOver(tx.sessionStore).signOutUser(user.id)
-        // A reset is account recovery: a token minted with a stolen session goes too (#167). A
-        // voluntary password change keeps them.
-        if (await tx.apiTokens.deleteAllOf(user.id) > 0) {
-          await tx.authAudit.insert({
-            userId: user.id,
-            eventType: AuthAuditEventType.API_TOKEN_REVOKED,
-            identifier: `password-reset`,
-            ip: null,
-            userAgent: null,
-          })
-        }
+        // A reset is account recovery: a token minted with a stolen session goes too (#167), as
+        // it does on a password change.
+        await tx.apiTokens.revoke({ userId: user.id }, "password-reset")
         return true
       })
     },
 
-    async checkPassword(userId, password) {
-      const key = await passwordKeyOf(db.authStore, userId)
+    async checkPassword(userId, password, over = db) {
+      const key = await passwordKeyOf(over.authStore, userId)
       return !!key?.secret && (await hasher.verify(password, key.secret)).valid
+    },
+
+    async hasPassword(userId, over = db) {
+      return !!(await passwordKeyOf(over.authStore, userId))?.secret
     },
 
     async verifyTotpCode({ user }, code) {

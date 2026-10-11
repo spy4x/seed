@@ -130,11 +130,21 @@ app.route(
     updateProfile: (command) => commandBus.execute(command),
   }),
 )
+const tokenRateLimits = createTokenRateLimits({
+  ...config.rateLimiter,
+  store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
+  onStoreError: (error) => log("error: API token rate limit store failed and was let pass", error),
+})
 // Personal API tokens (#167). The hash key comes from the pepper, so it needs no secret of its own;
 // changing the pepper makes every token stop working, as it ends every password.
 const apiTokens = createApiTokens({
   db,
   key: await deriveSecret(config.authPepper, "api-tokens"),
+  checkPassword: async (tx, userId, password) =>
+    (await signIn.hasPassword(userId, tx))
+      ? await signIn.checkPassword(userId, password, tx)
+      : null,
+  mayAuditRefusal: tokenRateLimits.refusalAudit,
   logError: (message, error) => log(message, error),
 })
 app.route(
@@ -143,19 +153,16 @@ app.route(
     auth: signIn.auth,
     mutationGuards,
     limit: rateLimits.normal,
+    passwordLimit: rateLimits.strictByUser,
     tokens: apiTokens,
   }),
 )
-const tokenRateLimits = createTokenRateLimits({
-  ...config.rateLimiter,
-  store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
-  onStoreError: (error) => log("error: API token rate limit store failed and was let pass", error),
-})
 // The only routes that accept a token, and they accept nothing else.
 app.route(
   "/v1",
   createTokenApiRoute({
     authenticate: (c, presented) => apiTokens.authenticate(c, presented),
+    auditRefusal: (c, tokenId, reason) => apiTokens.auditRefusal(c, tokenId, reason),
     list: (query) => queryBus.execute(query),
     get: (query) => queryBus.execute(query),
     create: (command) => commandBus.execute(command),

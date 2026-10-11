@@ -92,6 +92,7 @@ function buildApp(limit = 100) {
   queries.register(NoteListQuery, createNoteListHandler(dependencies))
   queries.register(NoteGetQuery, createNoteGetHandler(dependencies))
   const looked: (string | undefined)[] = []
+  const refusals: string[] = []
   const stores = new Map<string, ReturnType<typeof memoryKv>>()
   const limits = createTokenRateLimits({
     windowMs: 60_000,
@@ -115,6 +116,9 @@ function buildApp(limit = 100) {
     },
     limitByIp: limits.failuresByIp,
     limitByToken: limits.byToken,
+    auditRefusal: (_c, tokenId, reason) => (
+      refusals.push(`${tokenId} ${reason}`), Promise.resolve()
+    ),
   })
   // `parseAuth` sets a signed-in session here, as it would for a browser with a cookie: the token
   // API must not use it.
@@ -125,7 +129,7 @@ function buildApp(limit = 100) {
     await next()
   })
   app.route("/v1", route)
-  return { app, notes, looked }
+  return { app, notes, looked, refusals, limits }
 }
 
 function headers(token?: string, ip = "198.51.100.7"): Record<string, string> {
@@ -230,6 +234,49 @@ describe("token API", () => {
     const create = await createNote(app, WRITER, otherGroupId)
     expect(create.status).toBe(403)
     expect(notes.notes.size).toBe(0)
+  })
+
+  it("reports a scope refusal for the audit trail, and no served request or other refusal", async () => {
+    const { app, refusals } = buildApp()
+    await app.request(`${API}/groups/${groupId}/notes`, { headers: headers(READER) })
+    // Refused for the owner's role, not for the token's scope.
+    expect((await createNote(app, VIEWER_WRITER, viewerGroupId)).status).toBe(403)
+    // Refused for what it asked, not for what the token may do.
+    const badLimit = await app.request(`${API}/groups/${groupId}/notes?limit=0`, {
+      headers: headers(READER),
+    })
+    expect(badLimit.status).toBe(400)
+    expect(refusals).toEqual([])
+
+    await createNote(app, READER)
+    await app.request(`${API}/groups/${otherGroupId}/notes`, { headers: headers(WRITER) })
+    expect(refusals).toEqual([
+      `${TOKENS.get(READER)!.id} scope`,
+      `${TOKENS.get(WRITER)!.id} scope`,
+    ])
+  })
+
+  it("allows one audit row per token and reason in five minutes", async () => {
+    let now = 1_000_000
+    const store = memoryKv()
+    const limits = createTokenRateLimits({
+      windowMs: 60_000,
+      limit: 100,
+      clock: () => now,
+      store: () => store,
+      onStoreError: (error) => {
+        throw error
+      },
+    })
+    expect(await limits.refusalAudit("token-a:scope")).toBe(true)
+    expect(await limits.refusalAudit("token-a:scope")).toBe(false)
+    expect(await limits.refusalAudit("token-a:revoked")).toBe(true)
+    expect(await limits.refusalAudit("token-b:scope")).toBe(true)
+
+    now += 5 * 60_000 - 1
+    expect(await limits.refusalAudit("token-a:scope")).toBe(false)
+    now += 2
+    expect(await limits.refusalAudit("token-a:scope")).toBe(true)
   })
 
   it("does no more than its owner may: a read-write token of a viewer cannot write", async () => {

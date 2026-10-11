@@ -115,9 +115,12 @@ function fakeSignIn(
     connectTotpFinish: () => (calls.push("connectTotpFinish"), Promise.resolve(succeed)),
     checkTotp: () => (calls.push("checkTotp"), Promise.resolve(succeed)),
     disconnectTotp: () => (calls.push("disconnectTotp"), Promise.resolve(true)),
-    changePassword: () => (calls.push("changePassword"), Promise.resolve(succeed)),
+    changePassword: () => (
+      calls.push("changePassword"), Promise.resolve(succeed ? { revokedTokens: 2 } : null)
+    ),
     resetPassword: () => (calls.push("resetPassword"), Promise.resolve(succeed)),
     checkPassword: () => (calls.push("checkPassword"), Promise.resolve(succeed)),
+    hasPassword: () => Promise.resolve(true),
     verifyTotpCode: () => (calls.push("verifyTotpCode"), Promise.resolve(succeed)),
     accountDeletionBlockers: () => (calls.push("accountDeletionBlockers"), Promise.resolve([])),
     deleteAccount: () => (
@@ -1510,7 +1513,7 @@ describe("signed-in devices", () => {
     const { app, emitted } = buildApp(undefined, {
       signIn: {
         changePassword: (_c, _state, _old, _new, signOutOthers) => (
-          asked.push(signOutOthers), Promise.resolve(true)
+          asked.push(signOutOthers), Promise.resolve({ revokedTokens: 0 })
         ),
       },
     })
@@ -1523,6 +1526,13 @@ describe("signed-in devices", () => {
     expect(kept.status).toBe(200)
     expect(asked).toEqual([true, true, false])
     expect(emitted).toHaveLength(2)
+  })
+
+  it("answers a password change with how many API tokens it revoked", async () => {
+    const { app } = buildApp()
+    const response = await send(app, passwordRoute({}), sameOriginHeaders)
+
+    expect(await response.json()).toEqual({ success: true, revokedTokens: 2 })
   })
 
   it("answers a wrong current password with 400, never 401, which would sign the page out", async () => {

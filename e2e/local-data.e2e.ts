@@ -273,6 +273,7 @@ test.describe("the app with no network, after one visit online", () => {
       await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
       await page.locator("[data-e2e=api-token-create-open]").click()
       await page.locator("[data-e2e=api-token-name]").fill("Kept token")
+      await page.locator("[data-e2e=api-token-password]").fill(password)
       await page.locator("[data-e2e=api-token-create]").click()
       await page.locator("[data-e2e=api-token-done]").click()
       const tokens = page.locator("[data-e2e=api-token-details]")

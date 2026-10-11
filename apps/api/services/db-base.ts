@@ -26,6 +26,7 @@ import {
   scheduleAccountRestoredMail,
 } from "@server/jobs/account-deletion.ts"
 import { scheduleStarterData } from "@server/jobs/starter-data.ts"
+import { enqueueApiTokenCreatedMail } from "@server/jobs/api-token-mail.ts"
 import type { AccountDeletionBlocker } from "@domain/identity"
 import { touchUserSeen } from "@server/auth/sessions.ts"
 import { type ApiTokenRows, apiTokenRows } from "@server/api-tokens/api-tokens.ts"
@@ -155,10 +156,31 @@ export class AppDbBase extends DbServiceBase {
 
   /**
    * Personal API tokens (`@server/api-tokens/api-tokens.ts`). Built per access, like `group`, so
-   * inside `begin()` a create, a revoke and their audit rows share the transaction.
+   * inside `begin()` a create and its audit row share the transaction.
    */
   get apiTokens(): ApiTokenRows {
     return apiTokenRows(this.sql)
+  }
+
+  /**
+   * The mail that tells a person a token was created (`@server/jobs/api-token-mail.ts`). Built per
+   * access, like `group`: `queue` belongs inside the create's `begin()`.
+   */
+  get apiTokenMail() {
+    const sql = this.sql
+    return {
+      /** Queues the worker job that mails the owner of token `tokenId`. */
+      queue: (tokenId: string): Promise<void> => enqueueApiTokenCreatedMail(sql, tokenId),
+    }
+  }
+
+  /**
+   * Locks the user's row until the transaction ends. A token create, a password change and a
+   * password reset all take it (#293), so a create cannot commit a token made with the old
+   * password after the change revoked the others. Inside `begin()` only.
+   */
+  async lockUser(userId: number): Promise<void> {
+    await this.sql`SELECT 1 FROM users WHERE id = ${userId} FOR UPDATE`
   }
 
   /**

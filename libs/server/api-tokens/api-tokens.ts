@@ -4,9 +4,19 @@
  * up, so a database dump gives nobody a working token.
  *
  * Every statement that reads or ends a token for its owner names the user, so a person reaches only
- * their own tokens; someone else's token and a missing one look the same. A token that is revoked
- * has no row, and one that expired or whose owner is gone fails {@link ApiTokenRows.findLive}, so
- * either is refused on the very next request: nothing caches a token.
+ * their own tokens; someone else's token and a missing one look the same. A token that is revoked,
+ * expired or whose owner is gone is refused by {@link ApiTokenRows.find} on the very next request:
+ * nothing caches a token.
+ *
+ * A revoked token keeps its row, marked `revoked_at`, until the worker's purge: it never works
+ * again, is not listed and is not counted, but a later request with it can still be tied to its
+ * owner and audited (#293).
+ *
+ * Every `auth_audits` row about a token names it in `identifier` as
+ * `<id> group=<group id> access=<read|write>[ reason=<reason>] name=<name>`, written from the
+ * token's own row in the statement that changes it. The name comes last because it is free text.
+ * The row therefore still says which token it was after the token is gone; it never holds the
+ * secret or its hash.
  *
  * Reads no environment and imports no singleton.
  *
@@ -22,7 +32,7 @@ import {
   ApiTokenAccess,
   isApiTokenFormat,
 } from "@domain/api-tokens"
-import type { UserMFAStatus } from "@domain/identity"
+import { AuthAuditEventType, type UserMFAStatus } from "@domain/identity"
 
 /** How stale `last_used_at` may get before a request writes it again: five minutes. */
 export const API_TOKEN_USE_RESOLUTION_MS = 5 * 60_000
@@ -45,6 +55,48 @@ export async function mintApiToken(key: string): Promise<{ secret: string; hash:
 export async function hashApiToken(secret: string, key: string): Promise<string | null> {
   if (!isApiTokenFormat(secret)) return null
   return await sha256Hex(`${secret.slice(API_TOKEN_PREFIX.length)}${key}`)
+}
+
+/** Why a token was revoked, as its audit row says it. */
+export type ApiTokenRevokeReason =
+  /** Its owner revoked it on the profile page. */
+  | "owner"
+  /** Its owner changed the password. */
+  | "password-change"
+  /** Its owner reset a forgotten password. */
+  | "password-reset"
+  /** Its owner left the group or was removed from it. */
+  | "membership-ended"
+  /** The group was deleted. */
+  | "group-deleted"
+
+/** Why a request with a token was refused, as its audit row says it. */
+export type ApiTokenRefusalReason =
+  /** The token was revoked. */
+  | "revoked"
+  /** The token expired. */
+  | "expired"
+  /** The token is live but may not do this: another group, a write, another API. */
+  | "scope"
+
+/**
+ * Which tokens a revoke ends: one token of a person, every token of a person, a person's tokens in
+ * one group, or every token of a group.
+ */
+export type ApiTokenRevokeScope =
+  | { userId: number; tokenId?: string; groupId?: string }
+  | { groupId: string }
+
+/** Where an audited token action came from. Both are cut to their column width. */
+export interface ApiTokenAuditRequest {
+  ip: string | null
+  userAgent: string | null
+}
+
+/** A token a request presented, and why it may not act now, if it may not. */
+export interface FoundApiToken {
+  token: LiveApiToken
+  refused: Exclude<ApiTokenRefusalReason, "scope"> | null
 }
 
 /** A token that may act now, with what its request needs to know about its owner. */
@@ -94,21 +146,36 @@ export interface ApiTokenRows {
    * transaction: it locks the person's `users` row, so two creates cannot both take the last slot.
    */
   create(input: ApiTokenRowInput): Promise<ApiTokenCreateOutcome>
-  /** The person's live tokens: not expired, in a live group, newest first. */
+  /** The person's live tokens: not revoked, not expired, in a live group, newest first. */
   listLive(userId: number): Promise<ApiToken[]>
   /**
-   * Deletes token `tokenId` when it belongs to `userId`. `false` when no such token of this user
-   * exists, which is also the answer for another user's token.
+   * Revokes every token in `scope` that is not revoked yet and writes one
+   * {@link AuthAuditEventType.API_TOKEN_REVOKED} row per token for its owner, naming the token and
+   * `reason`, in one statement: both are kept or neither is. Answers how many it revoked, so 0 for
+   * another person's token or a missing one.
    */
-  deleteOwn(userId: number, tokenId: string): Promise<boolean>
-  /** Deletes every token of `userId`, as a password reset does, and answers how many it deleted. */
-  deleteAllOf(userId: number): Promise<number>
+  revoke(
+    scope: ApiTokenRevokeScope,
+    reason: ApiTokenRevokeReason,
+    request?: ApiTokenAuditRequest,
+  ): Promise<number>
   /**
-   * The token whose hash is `hash`, when it may act now: not expired, and its owner's account is
-   * live. `null` otherwise. Membership of the group is not checked here: the handlers check the
-   * owner's role on every message, as they do for a session.
+   * The token whose hash is `hash`, when its owner's account is live; `refused` says why it may
+   * not act now, when it was revoked or has expired. `null` for a hash no token has. Membership of
+   * the group is not checked here: the handlers check the owner's role on every message, as they
+   * do for a session.
    */
-  findLive(hash: string): Promise<LiveApiToken | null>
+  find(hash: string): Promise<FoundApiToken | null>
+  /**
+   * Writes one `auth_audits` row of `eventType` for the owner of token `tokenId`, naming the token
+   * from its row, with `reason` when there is one. Writes nothing when the row is gone.
+   */
+  audit(
+    tokenId: string,
+    eventType: AuthAuditEventType,
+    reason: ApiTokenRefusalReason | null,
+    request?: ApiTokenAuditRequest,
+  ): Promise<void>
   /**
    * Records that token `tokenId` was used at `now`, unless that was already recorded within
    * {@link API_TOKEN_USE_RESOLUTION_MS}. `true` when it wrote, which is when the use is audited.
@@ -127,12 +194,13 @@ export function apiTokenRows(sql: postgres.Sql): ApiTokenRows {
         WHERE group_members.group_id = ${input.groupId} AND group_members.user_id = ${input.userId}
       `
       if (!member) return { refused: "GROUP_NOT_FOUND" }
-      // The same set `listLive` shows: a token of a deleted group is neither listed nor counted.
-      // Restoring the group brings its tokens back, listed, counted and working.
+      // The same set `listLive` shows: a revoked or expired token, or one of a deleted group, is
+      // neither listed nor counted.
       const [{ count }] = await sql<{ count: number }[]>`
         SELECT count(*)::int AS count FROM api_tokens
         INNER JOIN groups ON groups.id = api_tokens.group_id AND groups.deleted_at IS NULL
         WHERE api_tokens.user_id = ${input.userId}
+          AND api_tokens.revoked_at IS NULL
           AND (api_tokens.expires_at IS NULL OR api_tokens.expires_at > now())
       `
       if (count >= API_TOKENS_MAX) return { refused: "TOO_MANY_TOKENS" }
@@ -157,42 +225,76 @@ export function apiTokenRows(sql: postgres.Sql): ApiTokenRows {
         FROM api_tokens
         INNER JOIN groups ON groups.id = api_tokens.group_id AND groups.deleted_at IS NULL
         WHERE api_tokens.user_id = ${userId}
+          AND api_tokens.revoked_at IS NULL
           AND (api_tokens.expires_at IS NULL OR api_tokens.expires_at > now())
         ORDER BY api_tokens.created_at DESC, api_tokens.id
       `
       return rows.map(toApiToken)
     },
 
-    async deleteOwn(userId, tokenId) {
-      const rows = await sql`
-        DELETE FROM api_tokens WHERE id = ${tokenId} AND user_id = ${userId} RETURNING id
+    async revoke(scope, reason, request) {
+      const userId = "userId" in scope ? scope.userId : null
+      const tokenId = "tokenId" in scope ? scope.tokenId ?? null : null
+      const groupId = scope.groupId ?? null
+      // Never every token there is: a scope names a person or a group.
+      if (userId === null && groupId === null) throw new TypeError("A revoke needs a scope")
+      const { ip, userAgent } = auditRequest(request)
+      const [{ count }] = await sql<{ count: number }[]>`
+        WITH revoked AS (
+          UPDATE api_tokens SET revoked_at = now()
+          WHERE revoked_at IS NULL
+            AND (${userId}::int IS NULL OR user_id = ${userId})
+            AND (${tokenId}::uuid IS NULL OR id = ${tokenId})
+            AND (${groupId}::uuid IS NULL OR group_id = ${groupId})
+          RETURNING id, user_id, group_id, access, name
+        ),
+        audited AS (
+          INSERT INTO auth_audits (user_id, event_type, identifier, ip, user_agent)
+          SELECT user_id, ${AuthAuditEventType.API_TOKEN_REVOKED}, ${
+        apiTokenAuditIdentifier(sql, reason)
+      },
+            ${ip}, ${userAgent}
+          FROM revoked
+        )
+        SELECT count(*)::int AS count FROM revoked
       `
-      return rows.length > 0
+      return count
     },
 
-    async deleteAllOf(userId) {
-      const rows = await sql`DELETE FROM api_tokens WHERE user_id = ${userId} RETURNING id`
-      return rows.length
-    },
-
-    async findLive(hash) {
-      const [row] = await sql<LiveApiToken[]>`
+    async find(hash) {
+      const [row] = await sql<(LiveApiToken & { refused: FoundApiToken["refused"] })[]>`
         SELECT api_tokens.id, api_tokens.user_id, users.mfa AS user_mfa, api_tokens.group_id,
-          api_tokens.access
+          api_tokens.access,
+          CASE
+            WHEN api_tokens.revoked_at IS NOT NULL THEN 'revoked'
+            WHEN api_tokens.expires_at <= now() THEN 'expired'
+          END AS refused
         FROM api_tokens
         INNER JOIN users ON users.id = api_tokens.user_id AND users.deleted_at IS NULL
         WHERE api_tokens.token_hash = ${hash}
-          AND (api_tokens.expires_at IS NULL OR api_tokens.expires_at > now())
       `
       return row
         ? {
-          id: row.id,
-          userId: row.userId,
-          userMfa: row.userMfa,
-          groupId: row.groupId,
-          access: row.access,
+          token: {
+            id: row.id,
+            userId: row.userId,
+            userMfa: row.userMfa,
+            groupId: row.groupId,
+            access: row.access,
+          },
+          refused: row.refused,
         }
         : null
+    },
+
+    async audit(tokenId, eventType, reason, request) {
+      const { ip, userAgent } = auditRequest(request)
+      await sql`
+        INSERT INTO auth_audits (user_id, event_type, identifier, ip, user_agent)
+        SELECT user_id, ${eventType}, ${apiTokenAuditIdentifier(sql, reason)}, ${ip}, ${userAgent}
+        FROM api_tokens
+        WHERE id = ${tokenId}
+      `
     },
 
     async touch(tokenId, now = new Date()) {
@@ -205,6 +307,31 @@ export function apiTokenRows(sql: postgres.Sql): ApiTokenRows {
       `
       return rows.length > 0
     },
+  }
+}
+
+/**
+ * The SQL expression of a token audit row's `identifier`, over the columns of one `api_tokens` row:
+ * `<id> group=<group id> access=<read|write>[ reason=<reason>] name=<name>`. At most 190
+ * characters, inside the column's 320.
+ */
+export function apiTokenAuditIdentifier(
+  sql: postgres.Sql,
+  reason: ApiTokenRevokeReason | ApiTokenRefusalReason | null,
+): postgres.PendingQuery<postgres.Row[]> {
+  const reasonPart = reason === null ? "" : ` reason=${reason}`
+  return sql`
+    id::text || ' group=' || group_id::text
+      || ' access=' || CASE access WHEN ${ApiTokenAccess.WRITE} THEN 'write' ELSE 'read' END
+      || ${reasonPart}::text || ' name=' || name
+  `
+}
+
+/** The client sends both values, so a long header must never fail the action the row records. */
+function auditRequest(request?: ApiTokenAuditRequest): ApiTokenAuditRequest {
+  return {
+    ip: request?.ip?.slice(0, 45) || null,
+    userAgent: request?.userAgent?.slice(0, 300) || null,
   }
 }
 

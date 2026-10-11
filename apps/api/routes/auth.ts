@@ -408,19 +408,20 @@ export function createAuthRoute(
       }
       const { password, newPassword, signOutOthers = true } = validationResult.data
       const authData = c.get("auth")!
-      const isSuccess = await signIn.changePassword(
+      const changed = await signIn.changePassword(
         c,
         authData,
         password,
         newPassword,
         signOutOthers,
       )
-      if (!isSuccess) {
+      if (!changed) {
         return c.json({ error: "Invalid password" }, 400)
       }
       // The other devices' sockets close now rather than at the next periodic check.
       if (signOutOthers) emitSignOut(c, authData.user.id)
-      return c.json({ success: true })
+      // How many API tokens the change revoked, so the page can say so.
+      return c.json({ success: true, revokedTokens: changed.revokedTokens })
     })
     .get(`/sessions`, rateLimits.normal, async (c) => {
       return c.json({ sessions: await signIn.listSessions(c.get("auth")!) })

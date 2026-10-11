@@ -206,17 +206,28 @@ export enum AuthAuditEventType {
   ACCOUNT_RESTORED = 6,
   /** The person ended one of their other sessions, or all of them, from the devices list. */
   SESSIONS_ENDED = 7,
-  /** The person created a personal API token; `identifier` is its id. */
+  /**
+   * The person created a personal API token. `identifier` names the token, as in every token row
+   * below: its id, group, access and name (`@server/api-tokens/api-tokens.ts` has the format), so
+   * the row still says which token it was once the token is gone. Never the secret or its hash.
+   */
   API_TOKEN_CREATED = 8,
   /** A personal API token was used; written at most once every few minutes per token. */
   API_TOKEN_USED = 9,
-  /** The person revoked a personal API token; `identifier` is its id. */
-  API_TOKEN_REVOKED = 10,
   /**
-   * The worker deleted tokens of this person that expired long ago; `identifier` is their count, a
-   * colon and their ids.
+   * A personal API token was revoked, with the reason in `identifier`: by its owner, by a password
+   * change or reset, because the owner's membership of the group ended, or because the group was
+   * deleted.
    */
+  API_TOKEN_REVOKED = 10,
+  /** The worker deleted this person's token that expired long ago; one row per token. */
   API_TOKENS_PURGED = 11,
+  /**
+   * A request with a personal API token was refused, with the reason in `identifier`: the token was
+   * revoked or expired, or it may not do what was asked. Written a few times an hour per token at
+   * most, so a flood of refused requests cannot fill the table.
+   */
+  API_TOKEN_REFUSED = 12,
 }
 
 export const authAuditBaseSchema = type({
@@ -233,6 +244,7 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.API_TOKEN_USED,
     AuthAuditEventType.API_TOKEN_REVOKED,
     AuthAuditEventType.API_TOKENS_PURGED,
+    AuthAuditEventType.API_TOKEN_REFUSED,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",

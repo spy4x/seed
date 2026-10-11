@@ -7,16 +7,13 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { API_TOKEN_PURGE_GRACE_DAYS, ApiTokenAccess } from "@domain/api-tokens"
 import { AuthAuditEventType } from "@domain/identity"
-import {
-  API_TOKEN_PURGE_AUDIT_IDS,
-  purgeExpiredApiTokens,
-} from "@server/api-tokens/purge-expired-api-tokens.ts"
+import { purgeExpiredApiTokens } from "@server/api-tokens/purge-expired-api-tokens.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
 import { team } from "./group-team.ts"
 
 /**
- * The worker's purge of expired personal API tokens (#293) against a real Postgres, on a schema
+ * The worker's purge of expired and revoked personal API tokens (#293) against a real Postgres, on a schema
  * built from the migrations, so the audit row's event type meets the migrated check. Needs the
  * `DB_*` values (recipe in docs/handoff.md); it fails when they are missing rather than skipping.
  */
@@ -95,6 +92,11 @@ async function seed(
   return seeded
 }
 
+/** What a purge row says of a seeded token: its id, group, access and name. */
+function named(token: Seeded, groupId: string, name: string): string {
+  return `${token.id} group=${groupId} access=read name=${name}`
+}
+
 const OLD = API_TOKEN_PURGE_GRACE_DAYS + 1
 const RECENT = API_TOKEN_PURGE_GRACE_DAYS - 1
 
@@ -143,7 +145,7 @@ Deno.test("purge: a token of a soft-deleted group or account goes by its own exp
   })
 })
 
-Deno.test("purge: each owner gets one audit row with the count and the ids of their tokens", async () => {
+Deno.test("purge: every expired token deleted gets an audit row for its owner that names it, never its hash", async () => {
   await withSchema(async (sql) => {
     const { groupId, owner, admin } = await team(sql)
     const mine = await seed(sql, owner, groupId, { "old-a": OLD, "old-b": OLD + 200, "live": -30 })
@@ -152,41 +154,55 @@ Deno.test("purge: each owner gets one audit row with the count and the ids of th
     expect(await purgeExpiredApiTokens(sql)).toBe(3)
 
     const audits = await purgeAudits(sql)
-    expect(audits.toSorted((a, b) => a.userId - b.userId)).toEqual(
-      [
-        { userId: owner, identifier: `2:${[mine["old-a"].id, mine["old-b"].id].sort().join(",")}` },
-        { userId: admin, identifier: `1:${theirs["old-c"].id}` },
-      ].toSorted((a, b) => a.userId - b.userId),
-    )
+    const sorted = (rows: PurgeAudit[]) =>
+      rows.map((row) => `${row.userId} ${row.identifier}`).toSorted()
+    expect(sorted([...audits])).toEqual(sorted([
+      { userId: owner, identifier: named(mine["old-a"], groupId, "old-a") },
+      { userId: owner, identifier: named(mine["old-b"], groupId, "old-b") },
+      { userId: admin, identifier: named(theirs["old-c"], groupId, "old-c") },
+    ]))
     const stored = JSON.stringify(audits)
     for (const token of [...Object.values(mine), ...Object.values(theirs)]) {
       expect(stored).not.toContain(token.hash)
     }
-    expect(stored).not.toContain("old-")
   })
 })
 
-Deno.test("purge: an owner who lost more tokens than one audit row holds gets a second row", async () => {
+Deno.test("purge: the longest name and ids fit the audit row", async () => {
   await withSchema(async (sql) => {
     const { groupId, owner } = await team(sql)
-    const total = API_TOKEN_PURGE_AUDIT_IDS + 1
-    const tokens = await seed(
-      sql,
-      owner,
-      groupId,
-      Object.fromEntries(Array.from({ length: total }, (_, index) => [`old-${index}`, OLD])),
-    )
+    const name = "🔑".repeat(60)
+    const tokens = await seed(sql, owner, groupId, { [name]: OLD })
 
-    expect(await purgeExpiredApiTokens(sql)).toBe(total)
+    expect(await purgeExpiredApiTokens(sql)).toBe(1)
 
-    const audits = await purgeAudits(sql)
-    expect(audits.map((row) => row.identifier.split(":")[0]).sort()).toEqual([
-      "1",
-      `${API_TOKEN_PURGE_AUDIT_IDS}`,
+    expect(await purgeAudits(sql)).toEqual([
+      { userId: owner, identifier: named(tokens[name], groupId, name) },
     ])
-    const audited = audits.flatMap((row) => row.identifier.split(":")[1].split(","))
-    expect(audited.sort()).toEqual(Object.values(tokens).map((token) => token.id).sort())
-    for (const row of audits) expect(row.identifier.length).toBeLessThanOrEqual(320)
+  })
+})
+
+Deno.test("purge: a token revoked longer ago than the grace period is deleted without a second audit row", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, owner } = await team(sql)
+    const tokens = await seed(sql, owner, groupId, {
+      "revoked-long-ago": -30,
+      "revoked-lately": null,
+      "live": -30,
+    })
+    await sql`
+      UPDATE api_tokens SET revoked_at = now() - make_interval(days => ${OLD})
+      WHERE id = ${tokens["revoked-long-ago"].id}
+    `
+    await sql`
+      UPDATE api_tokens SET revoked_at = now() - make_interval(days => ${RECENT})
+      WHERE id = ${tokens["revoked-lately"].id}
+    `
+
+    expect(await purgeExpiredApiTokens(sql)).toBe(1)
+
+    expect(await names(sql)).toEqual(["live", "revoked-lately"])
+    expect(await purgeAudits(sql)).toEqual([])
   })
 })
 
@@ -245,7 +261,7 @@ Deno.test("purge: the worker's nightly cleanup deletes long-expired tokens and a
 
     expect(await names(sql)).toEqual(["just-expired", "live"])
     expect(await purgeAudits(sql)).toEqual([
-      { userId: owner, identifier: `1:${tokens["long-expired"].id}` },
+      { userId: owner, identifier: named(tokens["long-expired"], groupId, "long-expired") },
     ])
   })
 })

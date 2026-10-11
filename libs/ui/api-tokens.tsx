@@ -19,9 +19,13 @@ import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { ScreenForm } from "./progressive.tsx"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 
-/** The create form's fields. `expiresInDays` is `null` for a token that never expires. */
+/**
+ * The create form's fields. `expiresInDays` is `null` for a token that never expires; `password`
+ * is the person's current one, which the API asks for before it makes a token.
+ */
 export interface ApiTokenFormValues {
   name: string
+  password: string
   groupId: string
   access: ApiTokenAccess
   expiresInDays: number | null
@@ -48,6 +52,8 @@ export interface ApiTokensProps {
     list: string | null
     /** The name's own error, tied to its field. */
     name: string | null
+    /** The password's own error, tied to its field: it is missing or not the current one. */
+    password: string | null
     /** Why the create failed, when the API tied it to no field; shown under the form. */
     form: string | null
   }
@@ -116,7 +122,7 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
   return (
     <SettingGroup
       title="API tokens"
-      description="Let a script or another service use one of your groups without your password. Resetting a forgotten password revokes every token; changing your password keeps them."
+      description="Let a script or another service use one of your groups without your password. Changing or resetting your password revokes every token."
       dataE2E="api-tokens"
     >
       <ErrorState message={errors.list} />
@@ -205,10 +211,12 @@ function CreateForm(
   },
 ): JSX.Element {
   const nameInput = useRef<HTMLInputElement>(null)
-  // A failed submit lands the person on the field to fix.
+  const passwordInput = useRef<HTMLInputElement>(null)
+  // A failed submit lands the person on the first field to fix.
   useEffect(() => {
     if (errors.name) nameInput.current?.focus()
-  }, [errors.name])
+    else if (errors.password) passwordInput.current?.focus()
+  }, [errors.name, errors.password])
 
   return (
     <ScreenForm pending={pending.create} onSubmit={onCreate}>
@@ -253,6 +261,24 @@ function CreateForm(
           onChange={(value) =>
             onValueChange("expiresInDays", value === NEVER ? null : Number(value))}
         />
+        <Field
+          id="api-token-password"
+          label="Your password"
+          hint="A token works without your password, so creating one asks for it."
+          error={errors.password}
+          required
+        >
+          <Input
+            ref={passwordInput}
+            data-e2e="api-token-password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            value={values.password}
+            onInput={(e) => onValueChange("password", e.currentTarget.value)}
+            required
+          />
+        </Field>
         <ErrorState message={errors.form} />
         <Cluster justify="end">
           <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>

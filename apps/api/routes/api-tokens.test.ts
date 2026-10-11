@@ -46,6 +46,10 @@ function buildApp(
     auth: testSessionGuards(),
     mutationGuards: testMutationGuards,
     limit: passThrough,
+    passwordLimit: async (c, next) => {
+      calls.push(["passwordLimit", c.req.method])
+      await next()
+    },
     tokens: {
       list: (userId) => (calls.push(["list", userId]), Promise.resolve([token])),
       create: (_c, userId, request: ApiTokenCreateRequest) => {
@@ -70,7 +74,13 @@ function post(app: ReturnType<typeof buildApp>["app"], body: unknown, headers = 
   })
 }
 
-const valid = { name: "  Zapier ", groupId, access: ApiTokenAccess.READ, expiresInDays: 90 }
+const valid = {
+  name: "  Zapier ",
+  groupId,
+  access: ApiTokenAccess.READ,
+  expiresInDays: 90,
+  password: "correct horse",
+}
 
 describe("API token routes", () => {
   it("lists the signed-in person's tokens", async () => {
@@ -89,7 +99,35 @@ describe("API token routes", () => {
     expect(response.status).toBe(201)
     expect(response.headers.get("cache-control")).toBe("no-store")
     expect(await response.json()).toEqual({ token, secret: "tpl_secret" })
-    expect(calls).toEqual([["create", 7, { ...valid, name: "Zapier" }]])
+    expect(calls).toEqual([["passwordLimit", "POST"], ["create", 7, { ...valid, name: "Zapier" }]])
+  })
+
+  it("refuses a create without a password and creates nothing", async () => {
+    const { app, calls } = buildApp()
+    const { password: _password, ...withoutPassword } = valid
+    const response = await post(app, withoutPassword)
+
+    expect(response.status).toBe(400)
+    expect((await response.json() as { code: string }).code).toBe("INVALID_REQUEST")
+    expect(calls.filter(([name]) => name === "create")).toEqual([])
+  })
+
+  it("answers a wrong password with 400 and the code the form ties to its field", async () => {
+    const { app } = buildApp(undefined, new ApiTokenError("PASSWORD_INVALID", "Wrong password"))
+    const response = await post(app, valid)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Wrong password", code: "PASSWORD_INVALID" })
+  })
+
+  it("spends the password limit on a create only, never on a list or a revoke", async () => {
+    const { app, calls } = buildApp()
+    await app.request(`${API_URL}/tokens`, { headers: sameOriginHeaders })
+    await app.request(`${API_URL}/tokens/${tokenId}`, {
+      method: "DELETE",
+      headers: sameOriginHeaders,
+    })
+    expect(calls.filter(([name]) => name === "passwordLimit")).toEqual([])
   })
 
   it("refuses an invalid request with a message the web app shows, and creates nothing", async () => {
@@ -100,7 +138,7 @@ describe("API token routes", () => {
     const body = await response.json() as { error: unknown; code: string }
     expect(typeof body.error).toBe("string")
     expect(body.code).toBe("INVALID_REQUEST")
-    expect(calls).toEqual([])
+    expect(calls.filter(([name]) => name === "create")).toEqual([])
   })
 
   it("answers a group the person is not in with 404 and the cap with 409", async () => {

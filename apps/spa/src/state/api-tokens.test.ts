@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
-import { type ApiTokensDependencies, createApiTokensStore } from "./api-tokens.ts"
+import { type ApiTokensDependencies, createApiTokensStore, PASSWORD_MISSING } from "./api-tokens.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 
@@ -32,10 +32,12 @@ describe("API tokens store", () => {
   it("opens the form empty for the given group, read only, for 90 days", () => {
     const tokens = store()
     tokens.setValue("name", "Old")
+    tokens.setValue("password", "typed before")
     tokens.startCreate(groupId)
 
     expect(tokens.values.value).toEqual({
       name: "",
+      password: "",
       groupId,
       access: ApiTokenAccess.READ,
       expiresInDays: 90,
@@ -47,13 +49,20 @@ describe("API tokens store", () => {
     const tokens = store({}, calls)
     tokens.startCreate(groupId)
     tokens.setValue("name", " Zapier ")
+    tokens.setValue("password", "correct horse")
     tokens.setValue("access", ApiTokenAccess.WRITE)
     tokens.setValue("expiresInDays", null)
     await tokens.create()
 
     expect(calls).toEqual([[
       "create",
-      { name: "Zapier", groupId, access: ApiTokenAccess.WRITE, expiresInDays: null },
+      {
+        name: "Zapier",
+        password: "correct horse",
+        groupId,
+        access: ApiTokenAccess.WRITE,
+        expiresInDays: null,
+      },
     ]])
     expect(tokens.created.value?.secret).toBe("tpl_secret")
     expect(tokens.tokens.value).toEqual([token])
@@ -67,19 +76,86 @@ describe("API tokens store", () => {
     const tokens = store({}, calls)
     tokens.startCreate(groupId)
     tokens.setValue("name", "   ")
+    tokens.setValue("password", "correct horse")
     await tokens.create()
 
     expect(calls).toEqual([])
     expect(tokens.errors.value.name).toContain("Name must be")
   })
 
-  it("shows the API's refusal under the form and keeps no secret", async () => {
-    const tokens = store({ create: () => Promise.resolve({ ok: false, error: "Too many tokens" }) })
+  it("asks for the password on its field and sends nothing without one", async () => {
+    const calls: unknown[][] = []
+    const tokens = store({}, calls)
     tokens.startCreate(groupId)
     tokens.setValue("name", "Zapier")
     await tokens.create()
 
+    expect(calls).toEqual([])
+    expect(tokens.errors.value).toEqual({
+      list: null,
+      name: null,
+      password: PASSWORD_MISSING,
+      form: null,
+    })
+  })
+
+  it("names an empty name and a missing password together, on the first try", async () => {
+    const calls: unknown[][] = []
+    const tokens = store({}, calls)
+    tokens.startCreate(groupId)
+    await tokens.create()
+
+    expect(calls).toEqual([])
+    expect(tokens.errors.value.name).toContain("Name must be")
+    expect(tokens.errors.value.password).toBe(PASSWORD_MISSING)
+  })
+
+  it("shows a wrong password on its field, keeps what was typed and clears it on the next try", async () => {
+    let wrong = true
+    const tokens = store({
+      create: () =>
+        Promise.resolve(
+          wrong
+            ? { ok: false, error: "Wrong password", status: 400, code: "PASSWORD_INVALID" }
+            : { ok: true, data: { token, secret: "tpl_secret" } },
+        ),
+    })
+    tokens.startCreate(groupId)
+    tokens.setValue("name", "Zapier")
+    tokens.setValue("password", "not it")
+    await tokens.create()
+
+    expect(tokens.errors.value.password).toBe("Wrong password")
+    expect(tokens.errors.value.form).toBe(null)
+    expect(tokens.values.value.password).toBe("not it")
+    expect(tokens.created.value).toBe(null)
+
+    wrong = false
+    tokens.setValue("password", "correct horse")
+    await tokens.create()
+    expect(tokens.errors.value.password).toBe(null)
+    expect(tokens.created.value?.secret).toBe("tpl_secret")
+  })
+
+  it("forgets the password once the token exists", async () => {
+    const tokens = store()
+    tokens.startCreate(groupId)
+    tokens.setValue("name", "Zapier")
+    tokens.setValue("password", "correct horse")
+    await tokens.create()
+
+    expect(tokens.values.value.password).toBe("")
+  })
+
+  it("shows the API's refusal under the form and keeps no secret", async () => {
+    const tokens = store({ create: () => Promise.resolve({ ok: false, error: "Too many tokens" }) })
+    tokens.startCreate(groupId)
+    tokens.setValue("name", "Zapier")
+    tokens.setValue("password", "correct horse")
+    await tokens.create()
+
     expect(tokens.errors.value.form).toBe("Too many tokens")
+    expect(tokens.errors.value.password).toBe(null)
     expect(tokens.created.value).toBe(null)
     expect(tokens.pending.value.create).toBe(false)
   })

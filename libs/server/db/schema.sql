@@ -604,8 +604,10 @@ CREATE INDEX idx_notifications_read_at ON notifications (read_at) WHERE read_at 
 -- #167: personal API tokens. See migration 2026_10_25_0001_api_tokens.sql. A person lets a script use the API in one of their groups. Only a
 -- keyed SHA-256 of the token is kept (`token_hash`): the token itself is shown once and never
 -- stored. `access` is 1 for read-only, 2 for read-write. `expires_at` is NULL for a token that
--- never expires. `last_used_at` is written at most every few minutes. Revoking deletes the row,
--- so the next request with the token is refused. The row goes with its owner and with its group.
+-- never expires. `last_used_at` is written at most every few minutes. Revoking sets `revoked_at`
+-- (migration 2026_10_30_0001_api_token_hardening.sql), so the next request with the token is refused
+-- and can still be audited; the worker deletes the row 30 days later. The row goes with its owner
+-- and with its group.
 CREATE TABLE api_tokens (
     id UUID PRIMARY KEY,
     user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -616,6 +618,7 @@ CREATE TABLE api_tokens (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     expires_at TIMESTAMPTZ,
     last_used_at TIMESTAMPTZ,
+    revoked_at TIMESTAMPTZ,
     CONSTRAINT api_tokens_token_hash_key UNIQUE (token_hash),
     CONSTRAINT api_tokens_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 60),
     CONSTRAINT api_tokens_access_check CHECK (access IN (1, 2)),
@@ -629,7 +632,7 @@ CREATE INDEX idx_api_tokens_group_id ON api_tokens (group_id);
 
 -- The audit rows of an account: sign-in, sign-out, profile, sessions and personal API tokens. See
 -- migration 2026_01_26_0002_auth_profiles_audit.sql and, for the event types, the migrations that
--- widen the check (the last is 2026_10_28_0001_api_tokens_purged_audit.sql). `identifier` is plain
+-- widen the check (the last is 2026_10_30_0001_api_token_hardening.sql). `identifier` is plain
 -- text with no foreign key, so a row outlives what it names.
 CREATE TABLE auth_audits (
     id SERIAL PRIMARY KEY,
@@ -642,7 +645,7 @@ CREATE TABLE auth_audits (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]))
 );
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
