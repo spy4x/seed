@@ -286,6 +286,7 @@ deno task check            # fmt, lint, types, unit tests
 deno task spa:build
 deno task mpa:check
 deno task dev              # compose up
+deno task e2e:local        # browser tests on a stack of its own (README, "Browser tests")
 ```
 
 Integration tests need a throwaway Postgres and Valkey (Valkey requires a password, as in

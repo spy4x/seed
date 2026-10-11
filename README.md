@@ -188,6 +188,7 @@ Current tasks come from [`deno.jsonc`](deno.jsonc).
 | `deno task check`            | Lint, format check, type check and unit tests          |
 | `deno task test:integration` | Integration tests against your Postgres and Valkey     |
 | `deno task e2e`              | Playwright end-to-end tests                            |
+| `deno task e2e:local`        | The same tests against a stack of its own              |
 | `deno task db:migrate`       | Apply the SQL migrations in `libs/server/db`           |
 | `deno task db:reset`         | Drop, migrate and seed a dev database (`ENV=dev` only) |
 | `deno task spa:build`        | Build the SPA                                          |
@@ -203,6 +204,25 @@ imports and tooling settings from root `deno.jsonc`.
 deno task check
 deno task hooks:install   # runs the checks before every commit
 ```
+
+### Browser tests
+
+`deno task e2e` runs the Playwright specs in `e2e/` against the stack `deno task dev` started, at
+`http://app.localhost`. `deno task e2e:local` runs the same specs without that stack: it starts
+its own Postgres and Valkey containers, the API, the worker, the dev server and a proxy on spare
+ports, and removes all of them when it ends or is stopped.
+
+```sh
+deno task e2e:local                        # every spec
+deno task e2e:local e2e/sessions.e2e.ts    # one spec; add :42 for the test at that line
+deno task e2e:local -g "signing another"   # any other argument goes to Playwright as it is
+deno task e2e:report                       # open the report of the last run
+```
+
+It needs a container tool (`CONTAINER_PROVIDER`, `podman` by default) and the Chromium of the
+pinned Playwright. The header of [`infra/scripts/e2e-local.sh`](infra/scripts/e2e-local.sh) lists
+the rest: the environment variables it reads, and the process cap to allow when you run it under
+one.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the rules, and [docs/handoff.md](docs/handoff.md) for
 the state of the migration and the traps in this codebase. To add a product feature, follow
