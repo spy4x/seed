@@ -4,7 +4,7 @@ import { ConnectionLostError, RealtimeRequestError } from "@spy4x/realtime"
 import type { AvailableCallPort } from "@spy4x/realtime/calls"
 import type { User } from "@domain/identity"
 import { apiFetch } from "./api.ts"
-import { apiRead, canCallAs, createAppCallPort } from "./realtime-call.ts"
+import { apiAsUser, canCallAs, createAppCallPort } from "./realtime-call.ts"
 import { sessionState } from "./session.ts"
 
 interface Sent {
@@ -158,7 +158,7 @@ describe("a read of a REST route", () => {
     const { fetch, sent } = server([[200, { groups: [] }]])
     globalThis.fetch = fetch
 
-    const result = await apiRead<{ groups: unknown[] }>("/api/groups?limit=50")
+    const result = await apiAsUser<{ groups: unknown[] }>("/api/groups?limit=50")
 
     expect(result.ok).toBe(true)
     expect(sent[0].url).toBe("/api/groups?limit=50")
@@ -169,7 +169,7 @@ describe("a read of a REST route", () => {
     signedInAs(7)
     globalThis.fetch = server([[401, UNAUTHORIZED]]).fetch
 
-    const result = await apiRead("/api/groups?limit=50")
+    const result = await apiAsUser("/api/groups?limit=50")
 
     expect(result.ok).toBe(false)
     expect(sessionState.value.user).toBeNull()
@@ -180,7 +180,7 @@ describe("a read of a REST route", () => {
     globalThis.fetch = server([[404, { error: { code: "GROUP_NOT_FOUND", message: "gone" } }]])
       .fetch
 
-    await apiRead("/api/groups/x/notes")
+    await apiAsUser("/api/groups/x/notes")
 
     expect(sessionState.value.user?.id).toBe(7)
   })
@@ -190,7 +190,7 @@ describe("a read of a REST route", () => {
     const { fetch, sent } = server([[401, UNAUTHORIZED]])
     globalThis.fetch = fetch
 
-    await apiRead("/api/auth/me")
+    await apiAsUser("/api/auth/me")
 
     expect(sent[0].headers["x-realtime-user"]).toBeUndefined()
     expect(sessionState.value.isMfaRequired).toBe(true)
@@ -201,7 +201,7 @@ describe("a read of a REST route", () => {
     const { fetch, sent } = server([[200, {}]])
     globalThis.fetch = fetch
 
-    await apiRead("/api/tokens", { headers: { "x-test": "kept" } })
+    await apiAsUser("/api/tokens", { headers: { "x-test": "kept" } })
 
     expect([sent[0].headers["x-test"], sent[0].headers["x-realtime-user"]]).toEqual(["kept", "7"])
   })
@@ -227,14 +227,28 @@ describe("the SPA's one REST function", () => {
     expect(sessionState.value.user).toBeNull()
   })
 
-  it("sends a write as it is, and a refused write does not sign the page out", async () => {
+  it("sends every write as the page's user, and signs the page out when one is refused as unauthorized", async () => {
     signedInAs(7)
-    const { fetch, sent } = server([[401, { error: { code: "WRONG_PASSWORD", message: "no" } }]])
+    const { fetch, sent } = server([[200, {}], [200, {}], [401, UNAUTHORIZED]])
     globalThis.fetch = fetch
 
-    await apiFetch("/api/auth/password/change", { method: "POST", body: "{}" })
+    await apiFetch("/api/tokens", { method: "POST", body: "{}" })
+    await apiFetch("/api/notifications/read", { method: "put", body: "{}" })
+    expect(sessionState.value.user?.id).toBe(7)
+    const refused = await apiFetch("/api/tokens/1", { method: "DELETE" })
+
+    expect(sent.map((request) => request.headers["x-realtime-user"])).toEqual(["7", "7", "7"])
+    expect(refused.ok).toBe(false)
+    expect(sessionState.value.user).toBeNull()
+  })
+
+  it("names nobody on a write while nobody is signed in", async () => {
+    sessionState.value = { ...sessionState.value, user: null }
+    const { fetch, sent } = server([[200, {}]])
+    globalThis.fetch = fetch
+
+    await apiFetch("/api/auth/password/check", { method: "POST", body: "{}" })
 
     expect(sent[0].headers["x-realtime-user"]).toBeUndefined()
-    expect(sessionState.value.user?.id).toBe(7)
   })
 })

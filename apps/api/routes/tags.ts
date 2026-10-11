@@ -12,7 +12,7 @@ export interface TagsRouteDependencies {
 
 /**
  * The REST route of a group's tags, mounted at `/api/groups/:groupId/tags`: the list, which the SPA
- * reads with `apiRead`. Every tag command is an operation (`tag.create`, `tag.update`,
+ * reads with `apiAsUser`. Every tag command is an operation (`tag.create`, `tag.update`,
  * `tag.delete`) served by the socket and `POST /api/call/<name>`, so the route has no write.
  * Who may read is decided by the handler, never here.
  */

@@ -1525,6 +1525,13 @@ describe("signed-in devices", () => {
     expect(emitted).toHaveLength(2)
   })
 
+  it("answers a wrong current password with 400, never 401, which would sign the page out", async () => {
+    const { app } = buildApp(undefined, { succeed: false })
+    const response = await send(app, passwordRoute({}), sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+  })
+
   it("refuses a sign-out choice that is not true or false", async () => {
     const { app, calls } = buildApp()
     const response = await send(app, passwordRoute({ signOutOthers: "yes" }), sameOriginHeaders)

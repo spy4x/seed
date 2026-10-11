@@ -198,4 +198,26 @@ describe("invitations store on a signed-in page", () => {
     expect(pageUsers).toEqual(["7", "7"])
     expect([stillSignedIn, sessionState.value.user]).toEqual([7, null])
   })
+
+  it("creates and revokes as the page's user, and is signed out when a write is refused with 401", async () => {
+    sessionState.value = { ...sessionState.value, user: { id: 7 } as User, isMfaRequired: false }
+    const { store, pageUsers, calls } = harness({
+      "GET /api/groups/g-1/invitations": [200, { invitations: [row] }],
+      "POST /api/groups/g-1/invitations": [201, { invitation: row, token, mailSent: false }],
+      "DELETE /api/groups/g-1/invitations/i-1": [
+        401,
+        { error: { code: "unauthorized", message: "No" } },
+      ],
+    })
+    await store.open("g-1")
+    store.draft.value = { ...EMPTY_INVITATION_DRAFT }
+
+    await store.create()
+    const signedInAfterCreate = sessionState.value.user?.id
+    await store.revoke("i-1")
+
+    expect(calls.map((call) => call.method)).toContain("DELETE")
+    expect(pageUsers).toEqual(calls.map(() => "7"))
+    expect([signedInAfterCreate, sessionState.value.user]).toEqual([7, null])
+  })
 })

@@ -1,6 +1,6 @@
 import { signal } from "@preact/signals"
 import type { SelectedGroup } from "@domain/groups"
-import { apiRead } from "./realtime-call.ts"
+import { apiAsUser } from "./realtime-call.ts"
 import { callCommand } from "../modules.ts"
 import { isUnknownOutcome } from "@spy4x/realtime/calls"
 
@@ -153,7 +153,7 @@ function writeBrowserCache(userId: number, cache: SelectionCache | null): void {
 
 const onlineSelection: SelectionDependencies = {
   async fetch() {
-    const result = await apiRead<SelectedGroup>("/api/groups/selected")
+    const result = await apiAsUser<SelectedGroup>("/api/groups/selected")
     if (!result.ok) throw new Error(result.error.message)
     return result.data
   },

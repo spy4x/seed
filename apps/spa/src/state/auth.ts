@@ -195,8 +195,10 @@ export async function resetPassword(
 export async function signOut(): Promise<void> {
   try {
     const result = await apiFetch<ApiSuccessResponse>("/api/auth/sign-out", { method: "POST" })
-    // An error answer (a proxy's 502 during a deploy) has not ended the session either.
-    setSignOutOwed(!result.ok)
+    // An error answer (a proxy's 502 during a deploy) has not ended the session either. A 401 is
+    // different: the cookie is now another user's (or nobody's), so this page has no session to
+    // end, and owing the sign-out would end the other user's session at the next start.
+    setSignOutOwed(!result.ok && result.status !== 401)
   } catch (_unreachable) {
     // Offline: the page still signs out, and the sign-out is owed to the server. It is sent at
     // the next start and when the browser comes back online; until then the server's session

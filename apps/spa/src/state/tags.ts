@@ -2,7 +2,7 @@ import { computed, signal } from "@preact/signals"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { DEFAULT_TAG_COLOR, TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
 import { describeError } from "./describe-error.ts"
-import { apiRead } from "./realtime-call.ts"
+import { apiAsUser } from "./realtime-call.ts"
 import { callCommand, currentLayer, offlineTags } from "../modules.ts"
 
 /** A tag as the API sends it: dates are ISO strings, the sequence a decimal string. */
@@ -280,7 +280,7 @@ function sorted(all: TagItem[]): TagItem[] {
 /** The tags as the server serves them: reads over REST, writes through the calls port. */
 const onlineTags: TagsDependencies = {
   async fetchList(groupId) {
-    const result = await apiRead<{ tags: TagItem[] }>(`/api/groups/${groupId}/tags`)
+    const result = await apiAsUser<{ tags: TagItem[] }>(`/api/groups/${groupId}/tags`)
     if (!result.ok) throw new Error(result.error.message)
     return result.data.tags
   },

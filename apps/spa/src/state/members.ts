@@ -9,7 +9,7 @@ import {
   transferErrorField,
 } from "@ui/group-transfer.tsx"
 import { describeError } from "./describe-error.ts"
-import { apiRead } from "./realtime-call.ts"
+import { apiAsUser, fetchAsUser } from "./realtime-call.ts"
 import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 
@@ -250,7 +250,7 @@ export function createMembersStore(
  */
 export const membersHttp: MembersDependencies = {
   async list({ groupId }) {
-    const result = await apiRead<{ members: MemberItem[]; memberCount: number }>(
+    const result = await apiAsUser<{ members: MemberItem[]; memberCount: number }>(
       `/api/groups/${encodeURIComponent(groupId)}/members`,
     )
     if (!result.ok) throw new ReadRefused(result.error.message, result.status)
@@ -263,7 +263,7 @@ export const membersHttp: MembersDependencies = {
   transfer: async ({ groupId, ...body }) => {
     let response: Response
     try {
-      response = await fetch(`/api/groups/${encodeURIComponent(groupId)}/transfer`, {
+      response = await fetchAsUser(`/api/groups/${encodeURIComponent(groupId)}/transfer`, {
         method: "POST",
         credentials: "include",
         headers: { "content-type": "application/json" },

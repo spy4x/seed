@@ -2,7 +2,7 @@ import { computed, signal } from "@preact/signals"
 import { ConnectionLostError, RealtimeRequestError } from "@spy4x/realtime"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { describeError } from "./describe-error.ts"
-import { apiRead } from "./realtime-call.ts"
+import { apiAsUser } from "./realtime-call.ts"
 import { callCommand, callQuery, canCall, currentLayer, offlineNotes } from "../modules.ts"
 
 /** A note as the API sends it: dates are ISO strings, the sequence a decimal string. */
@@ -676,7 +676,7 @@ const onlineNotes: NotesDependencies = {
     const query = new URLSearchParams({ limit: String(PAGE_LIMIT) })
     if (cursor) query.set("cursor", cursor)
     if (deleted) query.set("deleted", "true")
-    const result = await apiRead<NotePage>(`/api/groups/${groupId}/notes?${query}`)
+    const result = await apiAsUser<NotePage>(`/api/groups/${groupId}/notes?${query}`)
     if (!result.ok) throw new Error(result.error.message)
     return result.data
   },

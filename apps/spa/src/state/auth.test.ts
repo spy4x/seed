@@ -168,6 +168,25 @@ describe("a sign-out made while the server was out of reach", () => {
     expect(sessionState.value.user).toBeNull()
   })
 
+  it("clears the page and owes nothing when the cookie is now another user's", async () => {
+    const flags = memoryFlags()
+    useFlagStorage(flags)
+    sessionState.value = { ...sessionState.value, user: { id: 1 } as User }
+    const sent: Headers[] = []
+    globalThis.fetch = (_input, init) => {
+      sent.push(new Headers(init?.headers))
+      return Promise.resolve(
+        Response.json({ error: { code: "unauthorized", message: "no" } }, { status: 401 }),
+      )
+    }
+
+    await signOut()
+
+    expect(sent[0].get("x-realtime-user")).toBe("1")
+    expect(sessionState.value.user).toBeNull()
+    expect(flags.getItem("auth:sign-out-owed")).toBeNull()
+  })
+
   it("is owed when the server answers the sign-out with an error", async () => {
     const flags = memoryFlags()
     useFlagStorage(flags)

@@ -14,7 +14,7 @@ export type EmailFetch = <T>(url: string, init?: RequestInit) => Promise<ApiResu
  * `null` until it is read, and again after sign-out. A call that proves or changes the address
  * reads the status again, so the banner follows.
  */
-export function createEmailStore(fetch: EmailFetch = apiFetch) {
+export function createEmailStore(request: EmailFetch = apiFetch) {
   const status = signal<EmailStatus | null>(null)
   /** The last read failed. The page shows it, with a retry, while it has no status to show. */
   const loadFailed = signal(false)
@@ -23,7 +23,7 @@ export function createEmailStore(fetch: EmailFetch = apiFetch) {
   async function refresh(): Promise<void> {
     loadFailed.value = false
     try {
-      const result = await fetch<EmailStatus>("/api/auth/email")
+      const result = await request<EmailStatus>("/api/auth/email")
       if (result.ok) status.value = result.data
       else loadFailed.value = true
     } catch (_unreachable) {
@@ -36,7 +36,7 @@ export function createEmailStore(fetch: EmailFetch = apiFetch) {
   async function post(path: string, body?: unknown): Promise<EmailOutcome> {
     let result: ApiResult<{ message?: string }>
     try {
-      result = await fetch(path, {
+      result = await request(path, {
         method: "POST",
         body: body === undefined ? undefined : JSON.stringify(body),
       })

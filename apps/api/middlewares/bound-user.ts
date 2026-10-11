@@ -5,7 +5,7 @@ import type { APIContext } from "../_types.ts"
 /**
  * Refuses a request whose page names another user than the session's (ADR 003). A cookie can
  * change under a running page: another tab signs out and someone else signs in. The page sends the
- * id of the user it was started for in `X-Realtime-User` with every read and every call, and a
+ * id of the user it was started for in `X-Realtime-User` with every REST request and every call, and a
  * request as anyone else answers 401 `unauthorized`, which signs that page out.
  *
  * It is mounted once, in `createApiApp` (`apps/api/app.ts`), in front of every route.

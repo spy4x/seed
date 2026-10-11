@@ -97,9 +97,9 @@ through one dispatcher: the socket (`/api/ws`) and the call route, `POST /api/ca
 `Idempotency-Key` header. Both refuse a call whose session is not the user the page names. A new
 aggregate therefore writes no per-command REST route: it needs only its list (`GET`) route. Every
 route under `/api` stands behind one check (`createApiApp` in `apps/api/app.ts`) that refuses a
-request whose page names another user, and the SPA names its user on every read: its one REST
-function, `apiFetch` in `apps/spa/src/state/api.ts`, sends each `GET` through `apiRead`
-(`tests/spa-reads.test.ts` fails when a store reads another way). The per-command routes of notes and groups in the table above are
+request whose page names another user, and the SPA names its user on every request: its one REST
+function, `apiFetch` in `apps/spa/src/state/api.ts`, sends each one through `apiAsUser`
+(`tests/spa-reads.test.ts` fails when a store calls another way). The per-command routes of notes and groups in the table above are
 older than the call route and are still used by the e2e specs to seed data; do not copy them.
 
 Then wire them: mount the route in `apps/api/index.ts` (before `/groups`), add the operations
@@ -140,7 +140,7 @@ an id is taken.
 
 | File                       | What it holds                                                                                                                                                                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `state/notes.ts` | The store: reads a group's notes with `apiRead`, writes with `callCommand` from `modules.ts` (which adds the idempotency key and picks the socket or `POST /api/call/<name>`), and turns a version conflict into the conflict UI. |
+| `state/notes.ts` | The store: reads a group's notes with `apiAsUser`, writes with `callCommand` from `modules.ts` (which adds the idempotency key and picks the socket or `POST /api/call/<name>`), and turns a version conflict into the conflict UI. |
 | `state/notes.test.ts`      | The store against fake calls.                                                                                                                                                                                                               |
 | `views/NotesView.tsx`      | Passes the store and the group's role to `NotesScreen`.                                                                                                                                                                                     |
 | `views/NoteEditorView.tsx` | Passes the store and the group's role to `NoteEditorScreen` for `/notes/new` and `/notes/:id`, with the offline conflict state above it.                                                                                                    |

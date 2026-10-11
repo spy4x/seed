@@ -80,14 +80,15 @@ export function canCallAs(
 }
 
 /**
- * A read (`GET`) of a REST route. It names the user the page was started for, as a call does, and
- * an `unauthorized` answer signs the page out: the session ended, or the cookie now belongs to
- * somebody else. The caller sees a failed read and so writes nothing to a device copy.
+ * A request to a REST route, a read or a write. It names the user the page was started for, as a
+ * call does, and an `unauthorized` answer signs the page out: the session ended, or the cookie now
+ * belongs to somebody else. A refused read leaves a device copy alone; a refused write changes
+ * nothing on the other user's account, because the server refuses it before the route runs.
  *
  * A page with nobody signed in names nobody and is never signed out by an answer: the start-up
- * read of `/api/auth/me` and the second-factor step read as they always did.
+ * read of `/api/auth/me`, the second-factor step and sign-in itself work as they always did.
  */
-export async function apiRead<T>(path: string, init?: RequestInit, fetcher: typeof send = send) {
+export async function apiAsUser<T>(path: string, init?: RequestInit, fetcher: typeof send = send) {
   const userId = sessionState.value.user?.id
   if (userId === undefined) return await fetcher<T>(path, init)
   const result = await fetcher<T>(path, { ...init, headers: asUser(userId, init?.headers) })
@@ -96,11 +97,11 @@ export async function apiRead<T>(path: string, init?: RequestInit, fetcher: type
 }
 
 /**
- * {@link apiRead} for a store that reads the answer itself, such as the invitations store, which
- * needs more of a refusal than `apiFetch` keeps. Same rule: the read names the page's user, and a
- * 401 signs the page out.
+ * {@link apiAsUser} for a store that reads the answer itself, such as the invitations store, which
+ * needs more of a refusal than `apiFetch` keeps. Same rule: the request names the page's user, and
+ * a 401 signs the page out.
  */
-export async function fetchRead(
+export async function fetchAsUser(
   url: string,
   init?: RequestInit,
   fetcher: (url: string, init?: RequestInit) => Promise<Response> = globalThis.fetch,

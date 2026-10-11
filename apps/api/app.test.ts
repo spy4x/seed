@@ -10,7 +10,7 @@ type Auth = APIContext["Variables"]["auth"]
 
 /** The API's app with the notes route and one plain route, signed in as user 7 unless told. */
 async function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
-  const reads: string[] = []
+  const effects: string[] = []
   const app = await createApiApp({
     write: () => {},
     parseAuth: async (c, next) => {
@@ -26,11 +26,11 @@ async function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
     restore: unused,
     move: unused,
     list: () => {
-      reads.push("note list")
+      effects.push("note list")
       return Promise.resolve({ notes: [], nextPageKey: null })
     },
     get: () => {
-      reads.push("one note")
+      effects.push("one note")
       return unused()
     },
     cursor: { encode: () => Promise.resolve("cursor"), decode: unused },
@@ -39,7 +39,7 @@ async function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
   app.route(
     "/notifications",
     new Hono<APIContext>().get("/", (c) => {
-      reads.push("notifications")
+      effects.push("notifications")
       return c.json({ notifications: [] })
     }),
   )
@@ -49,11 +49,28 @@ async function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
       throw new Error("a route failed")
     }),
   )
+  app.route(
+    "/tokens",
+    new Hono<APIContext>()
+      .post("/", (c) => {
+        effects.push("token created")
+        return c.json({ token: {} }, 201)
+      })
+      .delete("/:id", (c) => {
+        effects.push("token revoked")
+        return c.json({ success: true })
+      }),
+  )
   const get = (path: string, pageUser?: string) =>
     app.request(`http://local/api${path}`, {
       headers: pageUser === undefined ? {} : { "x-realtime-user": pageUser },
     })
-  return { get, reads }
+  const write = (method: string, path: string, pageUser?: string) =>
+    app.request(`http://local/api${path}`, {
+      method,
+      headers: pageUser === undefined ? {} : { "x-realtime-user": pageUser },
+    })
+  return { get, write, effects }
 }
 
 const READS = [
@@ -69,34 +86,54 @@ const POLICY = "default-src 'self'; script-src 'self'; style-src 'self'; img-src
 
 describe("the API's app", () => {
   it("refuses every read whose page names another user than the session's, and reads nothing", async () => {
-    const { get, reads } = await buildApp()
+    const { get, effects } = await buildApp()
 
     const responses = await Promise.all(READS.map((path) => get(path, "8")))
 
     expect(responses.map((response) => response.status)).toEqual([401, 401, 401])
     expect((await responses[1].json()).error.code).toBe("unauthorized")
-    expect(reads).toEqual([])
+    expect(effects).toEqual([])
+  })
+
+  it("refuses every write whose page names another user than the session's, and writes nothing", async () => {
+    const { write, effects } = await buildApp()
+
+    const responses = [await write("POST", "/tokens", "8"), await write("DELETE", "/tokens/1", "8")]
+
+    expect(responses.map((response) => response.status)).toEqual([401, 401])
+    expect((await responses[0].json()).error.code).toBe("unauthorized")
+    expect(effects).toEqual([])
+  })
+
+  it("accepts a write from a page that names the session's user, and from a caller that names nobody", async () => {
+    const { write, effects } = await buildApp()
+
+    const named = await write("POST", "/tokens", "7")
+    const unnamed = await write("DELETE", "/tokens/1")
+
+    expect([named.status, unnamed.status]).toEqual([201, 200])
+    expect(effects).toEqual(["token created", "token revoked"])
   })
 
   it("serves a page that names the session's user, and a caller that names nobody", async () => {
-    const { get, reads } = await buildApp()
+    const { get, effects } = await buildApp()
 
     const named = await get("/notifications", "7")
     const unnamed = await get("/groups/7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002/notes?limit=10")
 
     expect([named.status, unnamed.status]).toEqual([200, 200])
-    expect(reads).toEqual(["notifications", "note list"])
+    expect(effects).toEqual(["notifications", "note list"])
   })
 
   it("leaves a request without a session to the route, whoever its page names", async () => {
-    const { get, reads } = await buildApp(null)
+    const { get, effects } = await buildApp(null)
 
     const signedOut = await get("/groups/7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002/notes", "8")
     const open = await get("/notifications", "8")
 
     expect((await signedOut.json()).error.code).toBe("AUTH_REQUIRED")
     expect(open.status).toBe(200)
-    expect(reads).toEqual(["notifications"])
+    expect(effects).toEqual(["notifications"])
   })
 
   it("sends the security headers with a route's answer, a refusal, an unknown address and an error", async () => {
