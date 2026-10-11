@@ -368,6 +368,14 @@ test.describe("notes in a shared group", () => {
       await expect(page).toHaveURL("/notes/new")
       await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Half a thought")
 
+      // The browser's Back button is held back the same way.
+      await page.goBack()
+      await expect(dialog).toBeVisible()
+      await dialog.getByRole("button", { name: "Stay" }).first().click()
+      await expect(dialog).toHaveCount(0)
+      await expect(page).toHaveURL("/notes/new")
+      await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Half a thought")
+
       // A link in the side menu is held back the same way.
       await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", {
         name: "Groups",
