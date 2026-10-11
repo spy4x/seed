@@ -1,6 +1,7 @@
 /// <reference lib="es2022.intl" />
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import { isRecord } from "@spy4x/platform/universal/is-record"
+import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import type { Actor } from "@domain/identity"
 
@@ -603,7 +604,10 @@ function hasExactKeys(value: unknown, keys: string[]): value is Record<string, u
   return isRecord(value) && Object.keys(value).sort().join(",") === keys.join(",")
 }
 
-/** A group name from a request: trimmed, 1 to 100 characters. */
+/**
+ * A group name from a request: trimmed, 1 to 100 characters, none of them a control character
+ * (NUL, a tab, a line break), which Postgres may refuse, or an invisible or text-direction one.
+ */
 export function parseGroupName(value: unknown): string {
   if (typeof value !== "string") {
     throw new GroupError("INVALID_REQUEST", "Group name must be a string")
@@ -612,6 +616,12 @@ export function parseGroupName(value: unknown): string {
   const nameLength = Array.from(name).length
   if (nameLength < 1 || nameLength > 100) {
     throw new GroupError("INVALID_REQUEST", "Group name must contain 1 to 100 characters")
+  }
+  if (hasUnsafeTextCharacters(name)) {
+    throw new GroupError(
+      "INVALID_REQUEST",
+      "Group name must not contain control or invisible characters",
+    )
   }
   return name
 }

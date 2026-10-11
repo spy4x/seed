@@ -15,6 +15,7 @@ import {
   NoteRestoreCommand,
   NoteUpdateCommand,
 } from "@domain/notes"
+import { TagError } from "@domain/tags"
 import { createSessionGate } from "../../cqrs/session-gate.ts"
 import { createEntitlementGate } from "../../cqrs/entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "../../cqrs/entitlement-needs.ts"
@@ -574,6 +575,28 @@ for (const [via, open] of TRANSPORTS) {
         expect(empty).toMatchObject({ kind: "server.error", code: "bad_request" })
         expect(twice).toMatchObject({ kind: "server.error", code: "bad_request" })
         expect(notes.writes).toBe(0)
+        as.shutdown()
+      })
+
+      it("answers a move whose tags do not fit the other group with a conflict", async () => {
+        const { notes, buses } = stack()
+        await seedTwo(notes)
+        notes.move = () =>
+          Promise.reject(new TagError("TAG_LIMIT_REACHED", "The other group has no room"))
+        const as = open(buses, OWNER)
+
+        const answer = await as.command("note.move", {
+          groupId,
+          toGroupId: editableGroupId,
+          noteIds: [noteId],
+        })
+
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "conflict",
+          message: "The other group has no room",
+          details: { code: "TAG_LIMIT_REACHED" },
+        })
         as.shutdown()
       })
 

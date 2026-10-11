@@ -136,6 +136,7 @@ const TAG_ERROR_CODES: Record<
   ID_ALREADY_EXISTS: "conflict",
   INVALID_REQUEST: "bad_request",
   ROLE_INSUFFICIENT: "forbidden",
+  TAG_LIMIT_REACHED: "conflict",
   TAG_NAME_TAKEN: "conflict",
   TAG_NOT_FOUND: "not_found",
   VERSION_CONFLICT: "conflict",

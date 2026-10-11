@@ -86,6 +86,28 @@ Deno.test("activity: a gone actor reads as Deleted user, a missing target as a m
   )
 })
 
+Deno.test("activity: a tag's changes read as sentences that name the tag", () => {
+  expect(say("tag.created", { details: { name: "Work" } })).toBe("Ada added the tag “Work”")
+  expect(say("tag.created")).toBe("Ada added a tag")
+  expect(say("tag.updated", { details: { name: "Job", from: "Work" } })).toBe(
+    "Ada renamed the tag “Work” to “Job”",
+  )
+  expect(say("tag.updated", { details: { name: "Job", color: "red" } })).toBe(
+    "Ada changed the colour of the tag “Job”",
+  )
+  expect(say("tag.updated", { details: { name: "Job" } })).toBe("Ada changed the tag “Job”")
+  expect(say("tag.updated")).toBe("Ada changed a tag")
+  expect(say("tag.deleted", { details: { name: "Job", notes: 0 } })).toBe(
+    "Ada deleted the tag “Job”",
+  )
+  expect(say("tag.deleted", { details: { name: "Job", notes: 1 } })).toBe(
+    "Ada deleted the tag “Job”, which 1 note carried",
+  )
+  expect(say("tag.deleted", { details: { notes: 3 } })).toBe(
+    "Ada deleted a tag, which 3 notes carried",
+  )
+})
+
 Deno.test("activity: every kind the server writes has its own sentence", () => {
   for (const kind of ACTIVITY_KINDS) {
     expect(say(kind)).not.toBe(say("future.kind"))

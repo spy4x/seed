@@ -18,6 +18,7 @@ import {
   NoteVersionConflictError,
   type NoteWriteResult,
 } from "@domain/notes"
+import { TAG_EVENTS, TAG_MAX_PER_GROUP, TagError } from "@domain/tags"
 import {
   GroupNotActiveError,
   lockActorRole,
@@ -66,6 +67,14 @@ async function setNoteTags(
  * Gives the notes that just moved to `toGroupId` the tags of the same names there, creating the
  * ones the target lacks, and drops their links to the source group's tags. Names are compared
  * without regard to case, as the group's unique index does. The source group's tags stay.
+ *
+ * A tag created here counts against the target's cap (`TAG_MAX_PER_GROUP`) like one made by
+ * `tag.create`, and gets the same audit event. The count runs after the insert, in the move's
+ * transaction, which holds the lock on the target group that a `tag.create` there waits for. A
+ * move that would pass the cap is refused whole with `TAG_LIMIT_REACHED`, and the caller's
+ * transaction takes it back: moving the notes without the tags that do not fit would drop those
+ * tags from the notes without telling anyone. A move that creates no tag is never refused, so
+ * notes whose tags the target already has still move into a full group.
  */
 async function mapTagsOnMove(
   transaction: postgres.TransactionSql,
@@ -91,10 +100,33 @@ async function mapTagsOnMove(
       created_by_user_id: input.actorId,
       updated_by_user_id: input.actorId,
     }))
-    await transaction`
+    const created = await transaction<{ id: string; name: string }[]>`
       INSERT INTO tags ${transaction(copies)}
       ON CONFLICT (group_id, lower(name)) DO NOTHING
+      RETURNING id, name
     `
+    if (created.length > 0) {
+      const [{ count }] = await transaction<{ count: number }[]>`
+        SELECT count(*)::int AS count FROM tags WHERE group_id = ${input.toGroupId}
+      `
+      if (count > TAG_MAX_PER_GROUP) {
+        throw new TagError(
+          "TAG_LIMIT_REACHED",
+          `The other group has no room for these notes' tags: it can hold ${TAG_MAX_PER_GROUP}`,
+        )
+      }
+    }
+    for (const tag of created) {
+      await writeAuditEvent(transaction, {
+        eventKind: TAG_EVENTS.created,
+        actorId: input.actorId,
+        groupId: input.toGroupId,
+        requestId: input.requestId,
+        entityType: "tag",
+        entityId: tag.id,
+        details: { name: tag.name },
+      })
+    }
   }
   await transaction`
     INSERT INTO note_tags (note_id, tag_id)
@@ -170,15 +202,18 @@ export interface MoveNoteRowsInput {
   allowance: number | null
   /** The actor's role in the target, which a plan refusal needs. */
   targetRole: GroupRole
+  /** The request the move came from, kept on the audit event of each tag the move creates. */
+  requestId?: string
 }
 
 /**
  * The part of a move that moving chosen notes and moving a whole group share, in the caller's
  * transaction (which has locked both groups and checked the roles): the notes change group, their
  * version grows by one so an edit made on the old version conflicts, and the target's cap is
- * counted after the update. The notes' tags follow by name (`mapTagsOnMove`). Throws `NOTE_NOT_FOUND` when a named note is not live in the source,
- * and a `PlanError` when the target would pass its cap; the caller's transaction takes the move
- * back. Returns how many notes moved.
+ * counted after the update. The notes' tags follow by name (`mapTagsOnMove`). Throws
+ * `NOTE_NOT_FOUND` when a named note is not live in the source, a `PlanError` when the target
+ * would pass its cap on notes, and `TagError("TAG_LIMIT_REACHED")` when the notes' tags would pass
+ * its cap on tags; the caller's transaction takes the move back. Returns how many notes moved.
  */
 export async function moveNoteRows(
   transaction: postgres.TransactionSql,
@@ -497,6 +532,7 @@ export class PostgresNoteRepository implements NoteRepository {
         changeSequence: sequence,
         allowance,
         targetRole: roles.get(input.toGroupId)!,
+        requestId: input.requestId,
       })
       // The log of the group the notes left names where they went; the other says only how many.
       const target = (

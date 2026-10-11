@@ -29,7 +29,13 @@ export function createTagCreateHandler(
   return async ({ data }) => {
     assertCanWriteTags(await groups.roleOf(data.groupId, data.actor.userId))
     return await tags.create(
-      { groupId: data.groupId, id: data.id, name: data.name, color: data.color },
+      {
+        groupId: data.groupId,
+        id: data.id,
+        name: data.name,
+        color: data.color,
+        requestId: data.requestId,
+      },
       data.actor.userId,
     )
   }
@@ -47,6 +53,7 @@ export function createTagUpdateHandler(
         name: data.name,
         color: data.color,
         expectedVersion: data.version,
+        requestId: data.requestId,
       },
       data.actor.userId,
     )
@@ -60,7 +67,12 @@ export function createTagDeleteHandler(
   return async ({ data }) => {
     assertCanWriteTags(await groups.roleOf(data.groupId, data.actor.userId))
     const tag = await tags.delete(
-      { groupId: data.groupId, id: data.id, expectedVersion: data.version },
+      {
+        groupId: data.groupId,
+        id: data.id,
+        expectedVersion: data.version,
+        requestId: data.requestId,
+      },
       data.actor.userId,
     )
     return { tag }

@@ -217,7 +217,11 @@ Copy these choices:
 - **The child's write carries the ids; the server ignores unknown ones** and answers with the
   links the child really has. A client never needs to know whether the parent still exists.
 - **Moving the child maps the parent by name:** a moved note keeps its tags by name, and the target
-  group gets any tag it lacks.
+  group gets any tag it lacks, each with its own audit event.
+- **The parent is capped per group** (`TAG_MAX_PER_GROUP`), because its list has no pages. The
+  repository counts after its insert, inside the transaction that holds the group's row, so two
+  creates at once cannot both pass. A move whose new tags do not fit is refused whole
+  (`TAG_LIMIT_REACHED`): moving the notes without their tags would lose them silently.
 - **Offline, the parent's collection is declared first** in `offline/index.ts` and named in the
   child's `dependencies` (`parents`, `on`, `without`). The four rules are in
   [offline.md](offline.md#tags-the-second-offline-writable-aggregate-and-what-a-parent-means).

@@ -11,6 +11,7 @@ import {
   GroupRole,
 } from "@domain/groups"
 import { FREE_PLAN_ID, PlanError, PRO_PLAN_ID } from "@domain/billing"
+import { TagError } from "@domain/tags"
 import { createSessionGate } from "../../cqrs/session-gate.ts"
 import { createEntitlementGate } from "../../cqrs/entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "../../cqrs/entitlement-needs.ts"
@@ -225,6 +226,20 @@ describe("moving all of a group's data over REST", () => {
 
     expect(intoFree.calls[0].allowances).toEqual({ maxNotes: 10 })
     expect(fromFree.calls[0].allowances).toEqual({ maxNotes: null })
+  })
+
+  it("answers 409 when the group's tags do not fit the target group", async () => {
+    const { buses } = stack({ [FROM]: PRO_PLAN_ID, [TO]: PRO_PLAN_ID })
+    buses.moveAll = () =>
+      Promise.reject(new TagError("TAG_LIMIT_REACHED", "The other group has no room"))
+
+    const response = await rest(buses, EDITOR)(`/${FROM}/move-all`, { toGroupId: TO })
+
+    expect(response.status).toBe(409)
+    expect((await response.json()).error).toMatchObject({
+      code: "TAG_LIMIT_REACHED",
+      message: "The other group has no room for this group's tags",
+    })
   })
 
   it("answers 402 with the cap when the move would pass the target's plan", async () => {

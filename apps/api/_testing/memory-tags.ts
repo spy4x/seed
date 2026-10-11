@@ -1,4 +1,5 @@
 import {
+  assertTagRoom,
   type DeletedTag,
   type Tag,
   type TagCreateInput,
@@ -13,8 +14,9 @@ import type { MemoryNoteRepository } from "./memory-notes.ts"
 
 /**
  * Tags in memory, with the Postgres repository's rules: names are unique in a group without regard
- * to case, a write at another version is refused with the current one, and deleting a tag removes
- * it from the notes that carried it without moving their version.
+ * to case, a group holds at most `TAG_MAX_PER_GROUP`, a write at another version is refused with
+ * the current one, and deleting a tag removes it from the notes that carried it without moving
+ * their version.
  */
 export class MemoryTagRepository implements TagRepository {
   readonly tags = new Map<string, Tag>()
@@ -50,9 +52,13 @@ export class MemoryTagRepository implements TagRepository {
       throw new TagError("ID_ALREADY_EXISTS", "taken")
     }
     this.#assertNameFree(input.groupId, input.name, input.id)
+    assertTagRoom([...this.tags.values()].filter((tag) => tag.groupId === input.groupId).length + 1)
     const at = new Date("2026-10-02T10:00:00.000Z")
     const tag: Tag = {
-      ...input,
+      id: input.id,
+      groupId: input.groupId,
+      name: input.name,
+      color: input.color,
       version: 1,
       changeSequence: String(this.#sequence++),
       createdByUserId: actorId,

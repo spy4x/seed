@@ -17,5 +17,6 @@ export const noteMovable: MovableAggregate = {
       changeSequence: context.changeSequence,
       allowance: context.allowances.maxNotes ?? null,
       targetRole: context.targetRole,
+      requestId: context.requestId,
     }),
 }

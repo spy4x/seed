@@ -34,6 +34,7 @@ const ERROR_DEFINITIONS: Record<TagFeatureErrorCode, ErrorDefinition> = {
   INVALID_REQUEST: { status: 400, message: "Request is invalid" },
   MFA_REQUIRED: { status: 401, message: "Complete MFA to access tags" },
   ROLE_INSUFFICIENT: { status: 403, message: "Only an editor can change tags" },
+  TAG_LIMIT_REACHED: { status: 409, message: "The group cannot hold more tags" },
   TAG_NAME_TAKEN: { status: 409, message: "A tag with this name exists" },
   TAG_NOT_FOUND: { status: 404, message: "Tag not found" },
   VERSION_CONFLICT: { status: 409, message: "The tag was changed by someone else" },

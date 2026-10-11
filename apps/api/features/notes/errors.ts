@@ -3,6 +3,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { NoteError, type NoteErrorCode, NoteVersionConflictError } from "@domain/notes"
 import { AccessError } from "@domain/identity"
 import { PlanError, type PlanErrorCode, toPlanRefusal } from "@domain/billing"
+import { TagError } from "@domain/tags"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import type { APIContext } from "../../_types.ts"
 
@@ -16,6 +17,7 @@ export type NoteFeatureErrorCode =
   | "MFA_REQUIRED"
   | PlanErrorCode
   | "REQUEST_ORIGIN_INVALID"
+  | "TAG_LIMIT_REACHED"
 
 /** A refusal the REST route makes itself, before anything is dispatched. */
 export class NoteFeatureError extends Error {
@@ -55,6 +57,10 @@ const ERROR_DEFINITIONS: Record<NoteFeatureErrorCode, ErrorDefinition> = {
   NOTE_NOT_FOUND: { status: 404, message: "Note not found" },
   REQUEST_ORIGIN_INVALID: { status: 403, message: "Request origin is invalid" },
   SAME_GROUP: { status: 400, message: "The notes are in that group already" },
+  TAG_LIMIT_REACHED: {
+    status: 409,
+    message: "The other group has no room for these notes' tags",
+  },
   ROLE_INSUFFICIENT: { status: 403, message: "Only an editor can change notes" },
   VERSION_CONFLICT: { status: 409, message: "The note was changed by someone else" },
 }
@@ -77,6 +83,9 @@ export function noteErrorResponse(c: Context<APIContext>, error: unknown): Respo
       ? error.code
       : error instanceof IdempotencyError
       ? IDEMPOTENCY_CODES[error.code]
+      // A move creates the notes' tags in the other group, and that group may be full of tags.
+      : error instanceof TagError && error.code === "TAG_LIMIT_REACHED"
+      ? error.code
       : "INTERNAL_ERROR"
   const definition = ERROR_DEFINITIONS[code]
   return c.json({

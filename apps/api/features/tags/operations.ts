@@ -35,23 +35,29 @@ export function createTagOperations(dependencies: TagOperationDependencies): Ope
   return {
     "tag.create": {
       kind: "command",
-      handle: async ({ actor, payload, idempotencyKey }) => {
+      handle: async ({ actor, requestId, payload, idempotencyKey }) => {
         const input = parseTagRequest(tagCreatePayloadSchema, payload)
-        return await dependencies.create(new TagCreateCommand({ actor, ...input, idempotencyKey }))
+        return await dependencies.create(
+          new TagCreateCommand({ actor, ...input, requestId, idempotencyKey }),
+        )
       },
     },
     "tag.update": {
       kind: "command",
-      handle: async ({ actor, payload, idempotencyKey }) => {
+      handle: async ({ actor, requestId, payload, idempotencyKey }) => {
         const input = parseTagRequest(tagUpdatePayloadSchema, payload)
-        return await dependencies.update(new TagUpdateCommand({ actor, ...input, idempotencyKey }))
+        return await dependencies.update(
+          new TagUpdateCommand({ actor, ...input, requestId, idempotencyKey }),
+        )
       },
     },
     "tag.delete": {
       kind: "command",
-      handle: async ({ actor, payload, idempotencyKey }) => {
+      handle: async ({ actor, requestId, payload, idempotencyKey }) => {
         const input = parseTagRequest(tagDeletePayloadSchema, payload)
-        return await dependencies.delete(new TagDeleteCommand({ actor, ...input, idempotencyKey }))
+        return await dependencies.delete(
+          new TagDeleteCommand({ actor, ...input, requestId, idempotencyKey }),
+        )
       },
     },
     "tag.get": {

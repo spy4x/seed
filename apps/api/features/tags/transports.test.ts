@@ -16,6 +16,7 @@ import {
   NoteUpdateCommand,
 } from "@domain/notes"
 import {
+  TAG_MAX_PER_GROUP,
   TagCreateCommand,
   TagDeleteCommand,
   TagGetQuery,
@@ -356,6 +357,24 @@ for (const [via, open] of TRANSPORTS) {
       as.shutdown()
     })
 
+    it("refuses the tag past the group's cap as a conflict, and keeps the group at the cap", async () => {
+      const s = stack()
+      for (let index = 0; index < TAG_MAX_PER_GROUP; index++) {
+        await s.tags.create({ groupId, id: uuidV7(), name: `Tag ${index}`, color: "gray" }, OWNER)
+      }
+      const as = open(s, OWNER)
+
+      const answer = await as.command("tag.create", { ...create, name: "One too many" })
+
+      expect(answer).toMatchObject({
+        kind: "server.error",
+        code: "conflict",
+        details: { code: "TAG_LIMIT_REACHED" },
+      })
+      expect(s.tags.tags.size).toBe(TAG_MAX_PER_GROUP)
+      as.shutdown()
+    })
+
     it("refuses a colour outside the palette and an empty name", async () => {
       const s = stack()
       const as = open(s, OWNER)
@@ -369,6 +388,28 @@ for (const [via, open] of TRANSPORTS) {
         expect(answer).toMatchObject({ kind: "server.error", code: "bad_request" })
       }
       expect(s.tags.tags.size).toBe(0)
+      as.shutdown()
+    })
+
+    it("refuses a NUL in a tag name, and stores nothing", async () => {
+      const s = stack()
+      const as = open(s, OWNER)
+      await as.command("tag.create", create)
+      const nul = "a\u0000b"
+
+      const answers = [
+        await as.command("tag.create", { ...create, id: secondTagId, name: nul }),
+        await as.command("tag.update", { ...create, name: nul, version: 1 }),
+      ]
+
+      for (const answer of answers) {
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "bad_request",
+          details: { code: "INVALID_REQUEST" },
+        })
+      }
+      expect([...s.tags.tags.values()].map((tag) => tag.name)).toEqual(["Work"])
       as.shutdown()
     })
 
@@ -475,6 +516,37 @@ for (const [via, open] of TRANSPORTS) {
     })
   })
 }
+
+describe("tags over the call route", () => {
+  it("answers 400 to a tag name that holds a NUL", async () => {
+    const app = mountRoute(
+      "/call",
+      createCallRoute({
+        operations: stack().operations,
+        mapError: toRequestError,
+        log: () => {},
+        expectedOrigin: WEB_APP_URL,
+      }),
+      buildAuthData({ user: { id: OWNER }, session: { id: OWNER * 10, userId: OWNER } }),
+    )
+
+    const response = await app.request(`${API_URL}/call/tag.create`, {
+      method: "POST",
+      headers: {
+        ...sameOriginHeaders,
+        "x-realtime-user": String(OWNER),
+        "idempotency-key": "key-nul",
+      },
+      body: JSON.stringify({ ...create, name: "a\u0000b" }),
+    })
+
+    expect(response.status).toBe(400)
+    expect((await response.json()).error).toMatchObject({
+      code: "bad_request",
+      details: { code: "INVALID_REQUEST" },
+    })
+  })
+})
 
 describe("tags over the REST list", () => {
   function rest(s: Stack, userId: number | null) {

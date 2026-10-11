@@ -2,6 +2,7 @@ import type postgres from "postgres"
 import type { GroupRole } from "@domain/groups"
 import {
   assertCanWriteTags,
+  assertTagRoom,
   type DeletedTag,
   type Tag,
   TAG_EVENTS,
@@ -18,6 +19,7 @@ import {
   lockActorRole,
   recordGroupChange,
 } from "@server/groups/group-change-log.ts"
+import { writeAuditEvent } from "@server/groups/audit.ts"
 
 interface TagRow extends postgres.Row, Tag {}
 
@@ -70,7 +72,13 @@ function isNameTaken(error: unknown): boolean {
 
 /**
  * Tags in Postgres. Every write runs in one transaction that checks the actor's role on the locked
- * membership row, then records the change on the group (`recordGroupChange`), like a note's.
+ * membership row, then records the change on the group (`recordGroupChange`) and writes its audit
+ * event, like a note's.
+ *
+ * A group holds at most `TAG_MAX_PER_GROUP` tags. A create counts them after its insert, in the
+ * same transaction: the group row that `assertWriterNow` locks makes a second create of the same
+ * group wait for this one to commit, and then count it. A move of notes creates tags too and
+ * counts the same way (`mapTagsOnMove` in the note repository).
  *
  * Deleting a tag deletes its `note_tags` rows through the foreign key and touches no note, so no
  * note's version or sequence moves (ADR 003, section 5, rule 3).
@@ -94,6 +102,14 @@ export class PostgresTagRepository implements TagRepository {
     return row ? toTag(row) : null
   }
 
+  /** How many tags the group holds: what `TAG_MAX_PER_GROUP` caps. */
+  async count(groupId: string): Promise<number> {
+    const [{ count }] = await this.sql<{ count: number }[]>`
+      SELECT count(*)::int AS count FROM tags WHERE group_id = ${groupId}
+    `
+    return count
+  }
+
   async create(input: TagCreateInput, actorId: number): Promise<TagWriteResult> {
     try {
       return await this.sql.begin(async (transaction: postgres.TransactionSql) => {
@@ -113,16 +129,25 @@ export class PostgresTagRepository implements TagRepository {
           `
         )[0]
         if (inserted) {
-          return {
-            tag: await repository.stamp(
-              transaction,
-              input.groupId,
-              input.id,
-              actorId,
-              TAG_EVENTS.created,
-            ),
-            created: true,
-          }
+          // A retry of a create that landed inserts nothing, so it is neither counted nor refused.
+          assertTagRoom(await repository.count(input.groupId))
+          const tag = await repository.stamp(
+            transaction,
+            input.groupId,
+            input.id,
+            actorId,
+            TAG_EVENTS.created,
+          )
+          await writeAuditEvent(transaction, {
+            eventKind: TAG_EVENTS.created,
+            actorId,
+            groupId: input.groupId,
+            requestId: input.requestId,
+            entityType: "tag",
+            entityId: input.id,
+            details: { name: input.name },
+          })
+          return { tag, created: true }
         }
         const existing = await repository.get(input.groupId, input.id)
         if (
@@ -144,19 +169,38 @@ export class PostgresTagRepository implements TagRepository {
       return await this.sql.begin(async (transaction: postgres.TransactionSql) => {
         const repository = new PostgresTagRepository(transaction)
         await assertWriterNow(transaction, input.groupId, actorId)
-        const updated = await transaction<{ id: string }[]>`
+        // The row is read locked first, so the audit event can say what the name and colour were.
+        const [updated] = await transaction<{ previousName: string; previousColor: string }[]>`
           UPDATE tags
           SET name = ${input.name},
               color = ${input.color},
               version = version + 1,
               updated_by_user_id = ${actorId},
               updated_at = CURRENT_TIMESTAMP
-          WHERE id = ${input.id}
-            AND group_id = ${input.groupId}
-            AND version = ${input.expectedVersion}
-          RETURNING id
+          FROM (
+            SELECT id, name, color FROM tags
+            WHERE id = ${input.id}
+              AND group_id = ${input.groupId}
+              AND version = ${input.expectedVersion}
+            FOR UPDATE
+          ) AS previous
+          WHERE tags.id = previous.id
+          RETURNING previous.name AS previous_name, previous.color AS previous_color
         `
-        if (updated.length === 0) return await repository.refuseStaleWrite(input.groupId, input.id)
+        if (!updated) return await repository.refuseStaleWrite(input.groupId, input.id)
+        await writeAuditEvent(transaction, {
+          eventKind: TAG_EVENTS.updated,
+          actorId,
+          groupId: input.groupId,
+          requestId: input.requestId,
+          entityType: "tag",
+          entityId: input.id,
+          details: {
+            name: input.name,
+            ...(updated.previousName !== input.name && { from: updated.previousName }),
+            ...(updated.previousColor !== input.color && { color: input.color }),
+          },
+        })
         return await repository.stamp(
           transaction,
           input.groupId,
@@ -175,16 +219,35 @@ export class PostgresTagRepository implements TagRepository {
     return await this.sql.begin(async (transaction: postgres.TransactionSql) => {
       const repository = new PostgresTagRepository(transaction)
       await assertWriterNow(transaction, input.groupId, actorId)
+      // Counted before the delete: the foreign key takes the links with the tag, and no note
+      // records that it lost one, so the audit event is the only place that says how many did.
+      // A note in the trash keeps its links, and is not counted: the activity log speaks of the
+      // notes a member can see.
+      const [{ notes }] = await transaction<{ notes: number }[]>`
+        SELECT count(*)::int AS notes
+        FROM note_tags
+        INNER JOIN notes ON notes.id = note_tags.note_id
+        WHERE note_tags.tag_id = ${input.id} AND notes.deleted_at IS NULL
+      `
       const deleted = (
-        await transaction<{ id: string; groupId: string; version: number }[]>`
+        await transaction<{ id: string; groupId: string; version: number; name: string }[]>`
           DELETE FROM tags
           WHERE id = ${input.id}
             AND group_id = ${input.groupId}
             AND version = ${input.expectedVersion}
-          RETURNING id, group_id, version
+          RETURNING id, group_id, version, name
         `
       )[0]
       if (!deleted) return await repository.refuseStaleWrite(input.groupId, input.id)
+      await writeAuditEvent(transaction, {
+        eventKind: TAG_EVENTS.deleted,
+        actorId,
+        groupId: input.groupId,
+        requestId: input.requestId,
+        entityType: "tag",
+        entityId: input.id,
+        details: { name: deleted.name, notes },
+      })
       const sequence = await recordTagChange(
         transaction,
         input.groupId,

@@ -8,6 +8,7 @@ import type {
   NoteRestoreCommand,
   NoteUpdateCommand,
 } from "@domain/notes"
+import { TagError } from "@domain/tags"
 import type { APIContext } from "../_types.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
 import { createNotesRoute, type NotesRouteDependencies } from "./notes.ts"
@@ -88,7 +89,7 @@ function harness(
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
-  return { request, seen }
+  return { request, seen, dependencies }
 }
 
 describe("notes route", () => {
@@ -133,6 +134,23 @@ describe("notes route", () => {
       actor: { userId: 7 },
     })
     expect(seen.create).toBe(null)
+  })
+
+  it("answers 409 to a move whose tags do not fit the other group", async () => {
+    const { request, dependencies } = harness()
+    dependencies.move = () =>
+      Promise.reject(new TagError("TAG_LIMIT_REACHED", "The other group has no room"))
+
+    const response = await request("POST", `${groupId}/notes/move`, {
+      toGroupId: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111003",
+      noteIds: [noteId],
+    })
+
+    expect(response.status).toBe(409)
+    expect((await response.json()).error).toMatchObject({
+      code: "TAG_LIMIT_REACHED",
+      message: "The other group has no room for these notes' tags",
+    })
   })
 
   it("restores the note of the path in the group of the path, with the request id and key", async () => {

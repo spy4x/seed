@@ -53,6 +53,7 @@ export class PostgresGroupDataMover implements GroupDataMover {
           targetRole: roles.get(input.toGroupId)!,
           changeSequence: sequence,
           allowances,
+          requestId: input.requestId,
         })
         moved += counts[movable.kind]
       }

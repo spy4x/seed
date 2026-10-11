@@ -15,6 +15,8 @@ export interface MoveAllContext {
   changeSequence: string
   /** The target group's caps, as the entitlement gate read them; `null` is no cap. */
   allowances: MoveAllAllowances
+  /** The request the move came from, for the audit events an aggregate writes itself. */
+  requestId?: string
 }
 
 /**
@@ -28,8 +30,9 @@ export interface MovableAggregate {
   kind: string
   /**
    * Moves every live row of the source group into the target, keeping ids and history, and
-   * returns how many it moved. It refuses with the aggregate's own cap (a `PlanError`) when the
-   * target would pass it, and moves nothing it cannot move together with what it references.
+   * returns how many it moved. It refuses with the aggregate's own cap (a `PlanError`, or a
+   * domain error such as a tag's `TAG_LIMIT_REACHED`) when the target would pass it, and moves
+   * nothing it cannot move together with what it references.
    */
   moveAll(sql: postgres.TransactionSql, context: MoveAllContext): Promise<number>
 }

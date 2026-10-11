@@ -14,7 +14,7 @@ export const ACTIVITY_PAGE_MAX = 100
 export const ACTIVITY_PAGE_DEFAULT = 50
 
 /** What an audit event can point at besides a member: the thing the event is about. */
-export type AuditEntityType = "note" | "invitation"
+export type AuditEntityType = "note" | "invitation" | "tag"
 
 /** Short facts an event keeps for its sentence: names, roles, a count. Never a body or an address. */
 export type AuditDetails = Record<string, string | number>
@@ -44,6 +44,9 @@ export const ACTIVITY_KINDS = [
   "note.restored",
   "note.moved_out",
   "note.moved_in",
+  "tag.created",
+  "tag.updated",
+  "tag.deleted",
 ] as const
 
 /** A person named in the log. `userId` is `null` once the account is gone. */
@@ -242,6 +245,26 @@ export function describeActivity(
     }
     case "note.moved_in":
       return `${who} moved ${counted(details.count, "note")} here from another group`
+    case "tag.created": {
+      const name = quoted(details.name)
+      return name ? `${who} added the tag ${name}` : `${who} added a tag`
+    }
+    case "tag.updated": {
+      const name = quoted(details.name)
+      const from = quoted(details.from)
+      if (from && name) return `${who} renamed the tag ${from} to ${name}`
+      if (!name) return `${who} changed a tag`
+      return typeof details.color === "string"
+        ? `${who} changed the colour of the tag ${name}`
+        : `${who} changed the tag ${name}`
+    }
+    case "tag.deleted": {
+      const name = quoted(details.name)
+      const deleted = name ? `${who} deleted the tag ${name}` : `${who} deleted a tag`
+      return typeof details.notes === "number" && details.notes > 0
+        ? `${deleted}, which ${counted(details.notes, "note")} carried`
+        : deleted
+    }
     default:
       return `${who} changed something in the group`
   }

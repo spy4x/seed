@@ -2,6 +2,7 @@ import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
 import { canMutateNotes, canRead, GroupRole } from "@domain/groups"
+import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 
 /**
@@ -13,6 +14,13 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 
 /** The longest tag name, in characters, after trimming. */
 export const TAG_NAME_MAX_LENGTH = 40
+
+/**
+ * The most tags one group holds. A group's tags are read as one page with no cursor, so without a
+ * cap one editor could make that read as large as they like for every member. It is the same for
+ * every plan: it bounds a read, it is not something a plan sells.
+ */
+export const TAG_MAX_PER_GROUP = 100
 
 /**
  * The colours a tag can have. They are the names of the colours of the UI library's `Badge`, which
@@ -39,6 +47,7 @@ export type TagErrorCode =
   | "ID_ALREADY_EXISTS"
   | "INVALID_REQUEST"
   | "ROLE_INSUFFICIENT"
+  | "TAG_LIMIT_REACHED"
   | "TAG_NAME_TAKEN"
   | "TAG_NOT_FOUND"
   | "VERSION_CONFLICT"
@@ -50,6 +59,20 @@ export class TagError extends Error {
   ) {
     super(message)
     this.name = "TagError"
+  }
+}
+
+/**
+ * Throws `TAG_LIMIT_REACHED` when a group that just gained a tag holds more than
+ * {@link TAG_MAX_PER_GROUP}. `count` is the group's tags after the write, counted in the write's
+ * own transaction; the caller's transaction takes the write back.
+ */
+export function assertTagRoom(count: number): void {
+  if (count > TAG_MAX_PER_GROUP) {
+    throw new TagError(
+      "TAG_LIMIT_REACHED",
+      `A group can hold at most ${TAG_MAX_PER_GROUP} tags`,
+    )
   }
 }
 
@@ -124,7 +147,9 @@ export const tagListPayloadSchema = type({ ...groupIdField, "+": "reject" })
 
 /**
  * Validates `value` against `schema`, then trims the name and checks its length in characters, so
- * an emoji counts as one. Throws `TagError("INVALID_REQUEST")`.
+ * an emoji counts as one. A name that holds a control character (NUL, a tab, a line break) or an
+ * invisible or text-direction character is refused: Postgres cannot store the first, and the others
+ * make two tags look the same. Throws `TagError("INVALID_REQUEST")`.
  */
 export function parseTagRequest<S extends Type<object>>(schema: S, value: unknown): S["infer"] {
   const result = schema(value)
@@ -137,6 +162,12 @@ export function parseTagRequest<S extends Type<object>>(schema: S, value: unknow
     throw new TagError(
       "INVALID_REQUEST",
       `Tag name must contain 1 to ${TAG_NAME_MAX_LENGTH} characters`,
+    )
+  }
+  if (hasUnsafeTextCharacters(name)) {
+    throw new TagError(
+      "INVALID_REQUEST",
+      "Tag name must not contain control or invisible characters",
     )
   }
   return { ...parsed, name }
@@ -168,6 +199,8 @@ export interface TagCreatePayload {
   id: string
   name: string
   color: TagColor
+  /** The request this came from, kept on the audit event. */
+  requestId?: string
   /** Makes a retry of this command safe; see the idempotency middleware on the command bus. */
   idempotencyKey?: string
 }
@@ -191,6 +224,7 @@ export interface TagUpdatePayload {
   color: TagColor
   /** The version the person edited; a tag at any other version is not changed. */
   version: number
+  requestId?: string
   idempotencyKey?: string
 }
 
@@ -204,6 +238,7 @@ export interface TagDeletePayload {
   groupId: string
   id: string
   version: number
+  requestId?: string
   idempotencyKey?: string
 }
 
@@ -244,6 +279,7 @@ export interface TagCreateInput {
   id: string
   name: string
   color: TagColor
+  requestId?: string
 }
 
 export interface TagUpdateInput {
@@ -252,26 +288,30 @@ export interface TagUpdateInput {
   name: string
   color: TagColor
   expectedVersion: number
+  requestId?: string
 }
 
 export interface TagDeleteInput {
   groupId: string
   id: string
   expectedVersion: number
+  requestId?: string
 }
 
 /**
  * Where tags are kept. Every write records a change on the group in its own transaction (the
- * group's sequence and an outbox row). The handlers check who may write before they call it; a
- * write checks again inside its transaction, as a role can change in between.
+ * group's sequence, an outbox row and an audit event). The handlers check who may write before
+ * they call it; a write checks again inside its transaction, as a role can change in between.
  */
 export interface TagRepository {
   /** The group's tags, by name. */
   list(groupId: string): Promise<Tag[]>
   get(groupId: string, id: string): Promise<Tag | null>
   /**
-   * Throws `ID_ALREADY_EXISTS` when the id holds a different tag, and `TAG_NAME_TAKEN` when
-   * another tag of the group has the name (compared without regard to case).
+   * Throws `ID_ALREADY_EXISTS` when the id holds a different tag, `TAG_NAME_TAKEN` when another
+   * tag of the group has the name (compared without regard to case), and `TAG_LIMIT_REACHED` when
+   * the group already holds {@link TAG_MAX_PER_GROUP} tags. A retry of a create that landed is
+   * answered with its tag, full group or not.
    */
   create(input: TagCreateInput, actorId: number): Promise<TagWriteResult>
   /** Throws `TAG_NOT_FOUND`, `TAG_NAME_TAKEN`, or {@link TagVersionConflictError}. */

@@ -146,6 +146,28 @@ describe("groups route", () => {
     })
   })
 
+  it("answers 400 to a NUL in a new group's name and in a rename, and asks no bus", async () => {
+    const deps = dependencies()
+    const app = buildApp(deps)
+
+    const created = await app.request("http://local/groups", {
+      method: "POST",
+      headers: mutationHeaders,
+      body: JSON.stringify({ id, name: "Te\u0000am" }),
+    })
+    const renamed = await app.request(`http://local/groups/${id}`, {
+      method: "PATCH",
+      headers: mutationHeaders,
+      body: JSON.stringify({ name: "Te\u0000am" }),
+    })
+
+    for (const response of [created, renamed]) {
+      expect(response.status).toBe(400)
+      expect((await response.json()).error.code).toBe("INVALID_REQUEST")
+    }
+    expect(deps.createCommand).toBe(null)
+  })
+
   it("rejects client identity and returns request id", async () => {
     const deps = dependencies()
     const app = buildApp(deps)

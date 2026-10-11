@@ -3,6 +3,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { GroupError, GroupErrorCode } from "@domain/groups"
 import { AccessError } from "@domain/identity"
 import { PlanError, type PlanErrorCode, toPlanRefusal } from "@domain/billing"
+import { TagError } from "@domain/tags"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { APIContext } from "../../_types.ts"
 
@@ -16,6 +17,7 @@ export type GroupFeatureErrorCode =
   | "MFA_REQUIRED"
   | PlanErrorCode
   | "REQUEST_ORIGIN_INVALID"
+  | "TAG_LIMIT_REACHED"
 
 export class GroupFeatureError extends Error {
   constructor(
@@ -64,6 +66,10 @@ const ERROR_DEFINITIONS: Record<GroupFeatureErrorCode, ErrorDefinition> = {
   REQUEST_ORIGIN_INVALID: { status: 403, message: "Request origin is invalid" },
   ROLE_INSUFFICIENT: { status: 403, message: "Group role is insufficient" },
   SAME_GROUP: { status: 400, message: "The data is in that group already" },
+  TAG_LIMIT_REACHED: {
+    status: 409,
+    message: "The other group has no room for this group's tags",
+  },
   SUBSCRIPTION_RENEWS: {
     status: 409,
     message: "Cancel the group's subscription in the billing portal before transferring it",
@@ -84,6 +90,9 @@ export function groupErrorResponse(c: Context<APIContext>, error: unknown): Resp
     ? error.code
     : error instanceof IdempotencyError
     ? IDEMPOTENCY_CODES[error.code]
+    // Moving all data creates the notes' tags in the other group, which may be full of tags.
+    : error instanceof TagError && error.code === "TAG_LIMIT_REACHED"
+    ? error.code
     : "INTERNAL_ERROR"
   const definition = ERROR_DEFINITIONS[code]
   return c.json({
