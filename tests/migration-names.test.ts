@@ -63,6 +63,7 @@ const ON_MAIN: readonly string[] = [
   "2026_10_27_0001_tags.sql",
   "2026_10_28_0001_api_tokens_purged_audit.sql",
   "2026_10_29_0001_idempotency_claim_token_no_default.sql",
+  "2026_10_30_0001_api_token_hardening.sql",
 ]
 
 // `.no_transaction.sql` is the runner's ending for a statement that cannot run in a transaction.
