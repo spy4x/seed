@@ -627,6 +627,27 @@ CREATE INDEX idx_api_tokens_user_id ON api_tokens (user_id, created_at DESC);
 -- The cascade from a deleted group.
 CREATE INDEX idx_api_tokens_group_id ON api_tokens (group_id);
 
+-- The audit rows of an account: sign-in, sign-out, profile, sessions and personal API tokens. See
+-- migration 2026_01_26_0002_auth_profiles_audit.sql and, for the event types, the migrations that
+-- widen the check (the last is 2026_10_28_0001_api_tokens_purged_audit.sql). `identifier` is plain
+-- text with no foreign key, so a row outlives what it names.
+CREATE TABLE auth_audits (
+    id SERIAL PRIMARY KEY,
+    user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_type INT2 NOT NULL,
+    identifier VARCHAR(320),
+    ip VARCHAR(45),
+    user_agent VARCHAR(300),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMPTZ,
+    CONSTRAINT auth_audits_event_type_check
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]))
+);
+
+CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
+CREATE INDEX idx_auth_audits_event_type ON auth_audits (event_type);
+
 -- #165: starter data on sign-up. See migration 2026_10_26_0001_starter_data.sql. Sign-up writes one
 -- row here and queues a worker job that names it. The job creates the welcome note in the person's
 -- first group, then sets `done_at` in a second write. The note's id is the request's id, so a job

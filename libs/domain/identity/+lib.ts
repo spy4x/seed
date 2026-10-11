@@ -212,6 +212,11 @@ export enum AuthAuditEventType {
   API_TOKEN_USED = 9,
   /** The person revoked a personal API token; `identifier` is its id. */
   API_TOKEN_REVOKED = 10,
+  /**
+   * The worker deleted tokens of this person that expired long ago; `identifier` is their count, a
+   * colon and their ids.
+   */
+  API_TOKENS_PURGED = 11,
 }
 
 export const authAuditBaseSchema = type({
@@ -227,6 +232,7 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.API_TOKEN_CREATED,
     AuthAuditEventType.API_TOKEN_USED,
     AuthAuditEventType.API_TOKEN_REVOKED,
+    AuthAuditEventType.API_TOKENS_PURGED,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",

@@ -33,6 +33,12 @@ export const API_TOKEN_EXPIRY_DAYS = [30, 90, 365] as const
 /** The lifetime offered first. */
 export const API_TOKEN_DEFAULT_EXPIRY_DAYS = 90
 
+/**
+ * How long an expired token's row is kept, in days, before the worker deletes it. The token itself
+ * is refused from the moment it expires.
+ */
+export const API_TOKEN_PURGE_GRACE_DAYS = 30
+
 /** What a token may do in its group. */
 export enum ApiTokenAccess {
   /** Lists and reads. */

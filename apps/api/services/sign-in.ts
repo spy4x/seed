@@ -13,8 +13,8 @@
  *   key's `(method, subject)` constraint, and compared after normalisation.
  * - **Password reset by link.** `resetPassword` spends a code from `password-reset.ts`, proves the
  *   address (whoever holds the mailbox owns the account that signs in with it), sets the new
- *   password, signs out every session of the user and deletes every API token. It signs nobody in: the person signs in again
- *   with the new password, and their second factor if they have one.
+ *   password, signs out every session of the user and deletes every API token. It signs nobody
+ *   in: the person signs in again with the new password, and their second factor if they have one.
  * - **One sign-up transaction.** The auth user and key, the session, the `users` profile row (same
  *   id) and the first group are written in one `db.begin()`: the sign-up provider is built over
  *   that transaction's stores.
