@@ -122,7 +122,9 @@ test.describe("group list and settings pages", () => {
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       await gotoApp(page, "/groups", page.getByRole("heading", { level: 1, name: "Groups" }))
-      await page.getByRole("button", { name: "New group" }).click()
+      // By its hook, not its name: until the list has loaded, the empty page can show a second
+      // "New group" button, and a click by name then matches two.
+      await page.locator("[data-e2e=group-new]").click()
       await page.getByRole("dialog", { name: "New group" }).getByLabel("Name").fill("Trip")
       await page.getByRole("button", { name: "Create group" }).click()
       await page.getByRole("link", { name: "Settings of Trip" }).click()

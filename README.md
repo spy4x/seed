@@ -319,6 +319,37 @@ pinned Playwright. The header of [`infra/scripts/e2e-local.sh`](infra/scripts/e2
 the rest: the environment variables it reads, and the process cap to allow when you run it under
 one.
 
+#### Which browser tests CI runs
+
+A merge needs the pull-request check, so that check runs a smoke set; the whole suite runs after
+the merge.
+
+| When                    | Step        | Specs                                                      |
+| ----------------------- | ----------- | ---------------------------------------------------------- |
+| Pull request, and a tag | `e2e-smoke` | The smoke set below (`deno task e2e:local --smoke`)        |
+| Push to `main`          | `e2e-full`  | Every `e2e/*.e2e.ts` (`deno task e2e:local`)               |
+| All three               | `e2e-mpa`   | The website's `e2e/mpa/*.mpa.ts`                           |
+| All three               | `e2e-spa`   | `e2e/spa/security-headers.spa.ts`, on the SPA behind nginx |
+
+The smoke set is `SMOKE_SPECS` in
+[`infra/scripts/e2e-local-plan.ts`](infra/scripts/e2e-local-plan.ts), one line per spec:
+
+- `e2e/auth-profile-ws-push.e2e.ts`: a person signs in through the form, edits the profile and
+  signs out;
+- `e2e/sign-in-next.e2e.ts`: sign-in from a link to a page, with and without a one-time code;
+- `e2e/notes.e2e.ts`: a note is created, edited and deleted, and what a viewer may do;
+- `e2e/profile-two-tabs.e2e.ts`: a name saved in one tab shows in another;
+- `e2e/groups-pages.e2e.ts`: a group is created, renamed, deleted and restored;
+- `e2e/url-filters.e2e.ts`: the filters in the address follow the browser's back and forward.
+
+A screen outside the set (members, invitations, tags, offline, sessions, billing, password reset,
+account deletion) is tested only on `main`: a red `e2e-full` there, and a red badge at the top of
+this page, means the last merge broke one. It blocks no pull request. Both steps stop early, the
+smoke set after three failed tests and the whole suite after ten in a pass, so the list of failures
+in a red step may be incomplete: run the specs here for the rest. Before you add a spec to the
+set, run it ten times in a row (`deno task e2e:local e2e/<spec> --repeat-each=10`): one that fails
+once on a healthy branch blocks every pull request.
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the rules, and [docs/handoff.md](docs/handoff.md) for
 the state of the migration and the traps in this codebase. To add a product feature, follow
 [docs/aggregates.md](docs/aggregates.md): it walks through every file of the notes aggregate, in

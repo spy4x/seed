@@ -64,24 +64,6 @@ steps:
       - deno task test:integration
     depends_on: [check]
 
-  e2e:
-    # The image carries Chromium and its system libraries. Installing the browser through Deno
-    # (`playwright install`) downloads it and then hangs (issue 48), so nothing is installed here.
-    image: mcr.microsoft.com/playwright:v1.57.0-noble
-    commands:
-      # npm's newest `deno` package lags the binary, so take the pinned release itself.
-      - |
-          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
-          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
-          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
-          unzip -q -o /tmp/deno.zip -d /usr/local/bin
-          chmod +x /usr/local/bin/deno
-      - deno --version
-      - deno install --frozen
-      # The other two e2e tests need the full Docker stack; this one serves its own fixture.
-      - deno task e2e url-filters
-    depends_on: [check]
-
   e2e-mpa:
     # The MPA's browser tests: with JavaScript turned off, a visitor subscribes to the newsletter,
     # confirms and unsubscribes through the mailed links. e2e/mpa/run.sh migrates, starts the API,
@@ -181,6 +163,85 @@ steps:
     # and both run scripts keep the API's vapid.json in the repository root while they run, so it
     # waits for those two steps instead of running beside them.
     depends_on: [build, e2e-mpa]
+
+  e2e-smoke:
+    # The product's browser tests a pull request must pass: the smoke set, `SMOKE_SPECS` in
+    # infra/scripts/e2e-local-plan.ts (sign-in, the profile, notes, groups). The script is the one
+    # `deno task e2e:local` runs on a developer's machine. `E2E_SERVICES=environment` makes it use
+    # the Postgres and Valkey services below instead of starting containers, in a database of its
+    # own (`template_e2e_app`); it waits for both itself. It starts the API, the worker, the Vite
+    # dev server and a proxy that serves them at http://app.localhost:<port>. A tag runs the set
+    # too, because release.yml waits for this workflow.
+    image: mcr.microsoft.com/playwright:v1.57.0-noble
+    when:
+      - event: [pull_request, tag]
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: tester
+      DB_PASS: ci-throwaway
+      DB_NAME: template_test
+      KV_HOSTNAME: valkey
+      KV_PORT: "6379"
+      KV_PASSWORD: ci-throwaway
+      E2E_SERVICES: environment
+    commands:
+      # npm's newest `deno` package lags the binary, so take the pinned release itself.
+      - |
+          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
+          unzip -q -o /tmp/deno.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/deno
+      - deno --version
+      # Chromium resolves *.localhost itself. The requests a spec makes outside the browser ask the
+      # system resolver, which in this container does not know the name.
+      - echo "127.0.0.1 app.localhost" >> /etc/hosts
+      # Playwright stops after three failed tests. When sign-in itself is broken every test fails,
+      # each after 30 s and two retries, and the step would otherwise run into the script's limit
+      # of 25 minutes.
+      - deno task e2e:local --smoke --max-failures=3
+    # After e2e-spa: the three run scripts keep the API's vapid.json in the shared checkout while
+    # they run, and each starts a worker on the one Valkey service, where a worker would take
+    # another stack's jobs.
+    depends_on: [e2e-spa]
+
+  e2e-full:
+    # Every browser test of the product (`e2e/*.e2e.ts`), after a merge: only a push to `main`
+    # runs it, so it never stands between a pull request and its merge, nor between a tag and its
+    # images. A red run here is the sign that a merge broke a screen the smoke set does not open.
+    # The specs that start the app with no network need the built SPA behind nginx; a step has no
+    # container tool, so `E2E_BUILT=nginx` installs the build into this container's own nginx, as
+    # e2e/spa/run.sh does.
+    image: mcr.microsoft.com/playwright:v1.57.0-noble
+    when:
+      - event: push
+        branch: main
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: tester
+      DB_PASS: ci-throwaway
+      DB_NAME: template_test
+      KV_HOSTNAME: valkey
+      KV_PORT: "6379"
+      KV_PASSWORD: ci-throwaway
+      E2E_SERVICES: environment
+      E2E_BUILT: nginx
+    commands:
+      # npm's newest `deno` package lags the binary, so take the pinned release itself.
+      - |
+          curl -fsSL -o /tmp/deno.zip https://github.com/denoland/deno/releases/download/v2.9.7/deno-x86_64-unknown-linux-gnu.zip
+          echo "c6527f24f4b16031d3ae4fa9f658d5f11534c8d84ce7dc8502420280919c3490  /tmp/deno.zip" | sha256sum -c -
+          apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip
+          unzip -q -o /tmp/deno.zip -d /usr/local/bin
+          chmod +x /usr/local/bin/deno
+      - deno --version
+      - apt-get install -y -qq --no-install-recommends nginx
+      - echo "127.0.0.1 app.localhost" >> /etc/hosts
+      # Stops after ten failed tests in a pass, for the same reason as in e2e-smoke.
+      - deno task e2e:local --max-failures=10
+    depends_on: [e2e-spa]
 
 services:
   postgres:

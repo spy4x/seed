@@ -23,11 +23,31 @@ export interface Pass {
 /** The specs that load a page with the network cut. */
 export const OFFLINE_SPECS = [`offline.e2e.ts`, `local-data.e2e.ts`]
 
+/**
+ * The smoke set: the specs CI runs on every pull request (`.woodpecker/ci.yml`, step `e2e-smoke`),
+ * and `deno task e2e:local --smoke` here. The whole suite runs after the merge, on `main`. A spec
+ * joins the set with one line here; before you add one, run it ten times in a row
+ * (`deno task e2e:local e2e/<spec> --repeat-each=10`): a spec that fails once on a healthy branch
+ * blocks every pull request.
+ */
+export const SMOKE_SPECS = [
+  `auth-profile-ws-push.e2e.ts`, // sign-up over the API, sign-in, the profile, sign-out
+  `sign-in-next.e2e.ts`, // sign-in from a link, with and without a one-time code
+  `notes.e2e.ts`, // a note created, edited and deleted; what a viewer may do
+  `profile-two-tabs.e2e.ts`, // the profile saved in one tab shows in another
+  `groups-pages.e2e.ts`, // a group created, renamed, deleted and restored
+  `url-filters.e2e.ts`, // the address filters of the pinned library follow back and forward
+]
+
+/** The argument that stands for the specs of {@link SMOKE_SPECS}. */
+export const SMOKE_FLAG = `--smoke`
+
 const baseName = (path: string): string => path.slice(path.lastIndexOf(`/`) + 1)
 
 /**
  * The passes of one run, in the order they are made.
  *
+ * `--smoke` stands for the specs of {@link SMOKE_SPECS}, as if each were named.
  * An argument is a spec when the part before its first colon ends in `.e2e.ts` and `isSpecFile`
  * finds that file; `e2e/notes.e2e.ts:42` becomes `notes.e2e.ts:42`, because Playwright matches it
  * against the path of the harness's copy. Every other argument goes to every pass as it is.
@@ -46,7 +66,10 @@ export function planPasses(
   const offline: string[] = []
   const shared: string[] = []
   const all: string[] = []
-  for (const arg of args) {
+  const named = args.flatMap((arg) =>
+    arg === SMOKE_FLAG ? SMOKE_SPECS.map((name) => `e2e/${name}`) : [arg]
+  )
+  for (const arg of named) {
     const file = arg.split(`:`)[0]
     if (!file.endsWith(`.e2e.ts`) || !isSpecFile(file)) {
       shared.push(arg)

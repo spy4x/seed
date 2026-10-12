@@ -6,6 +6,8 @@
 #   deno task e2e:local                          every spec
 #   deno task e2e:local e2e/sessions.e2e.ts      one spec; `e2e/notes.e2e.ts:42` runs one test
 #   deno task e2e:local -g "signing another"     tests whose title matches
+#   deno task e2e:local --smoke                  the smoke set: the specs CI runs on a pull request
+#                                                (`SMOKE_SPECS` of `e2e-local-plan.ts`)
 #
 # What it starts, each on a spare loopback port, and removes again when it ends or is stopped:
 #   - Postgres and Valkey containers named `template-e2e-…`, with `CONTAINER_PROVIDER` (`podman`
@@ -40,6 +42,19 @@
 # report of the second of two passes is in `e2e/report/offline`. With `E2E_SPA` set, every spec
 # asked for runs in one pass against that server.
 #
+# CI runs this script too (.woodpecker/ci.yml), in a container that is thrown away afterwards and
+# has no container tool. Two variables stand in for the containers there:
+#   - `E2E_SERVICES=environment`: Postgres and Valkey are already running and named by `DB_HOST`,
+#     `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `KV_HOSTNAME`, `KV_PORT` and `KV_PASSWORD`. The
+#     script waits for both, connects to `DB_NAME`, drops and creates its own database
+#     `template_e2e_app` there and runs the stack against that. The default, `containers`, starts
+#     the two containers described above.
+#   - `E2E_BUILT=nginx`: the built SPA is served by the nginx installed on this machine instead
+#     of the image, on port 8080, as `e2e/spa/run.sh` does with `SPA_SERVER=nginx`. It builds the
+#     SPA here and copies it and nginx's configuration under /etc and /usr/share, so it needs root
+#     and an installed nginx, and it does not prove the `COPY` lines of the Dockerfile. The
+#     default, `container`, builds and runs the image.
+#
 # Needs: Deno, a container tool, `curl`, `openssl`, and the Chromium of the pinned Playwright
 # (`deno run -A npm:playwright@1.57.0 install chromium`). `E2E_CHROMIUM` names another Chromium
 # binary to use instead. `E2E_LOCAL_TIMEOUT` is the deadline of one Playwright pass in seconds
@@ -57,6 +72,18 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 cd "$ROOT"
 
 CONTAINER=${CONTAINER_PROVIDER:-podman}
+SERVICES=${E2E_SERVICES:-containers}
+BUILT_SERVER=${E2E_BUILT:-container}
+case "$SERVICES" in containers | environment) ;; *)
+  echo "E2E_SERVICES is \"$SERVICES\"; it must be containers or environment"
+  exit 1
+  ;;
+esac
+case "$BUILT_SERVER" in container | nginx) ;; *)
+  echo "E2E_BUILT is \"$BUILT_SERVER\"; it must be container or nginx"
+  exit 1
+  ;;
+esac
 command -v deno >/dev/null || { echo "e2e:local needs deno"; exit 1; }
 # The passes of this run: what serves the SPA, which specs it may see, and its arguments.
 PASS_SERVER=()
@@ -86,7 +113,14 @@ SPA_IMAGE="template-e2e-local-spa:$RUN_ID"
 IMAGE_LABEL="template-e2e-local-run=$RUN_ID"
 COPY_DIR="$ROOT/e2e/results/.local-$RUN_ID"
 
-for tool in deno curl openssl "$CONTAINER"; do
+# The container tool runs Postgres and Valkey, and the image of the built SPA.
+TOOLS=(deno curl openssl)
+if [ "$SERVICES" = containers ]; then
+  TOOLS+=("$CONTAINER")
+elif [[ " ${PASS_SERVER[*]} " == *" built "* ]]; then
+  [ "$BUILT_SERVER" = nginx ] && TOOLS+=(nginx) || TOOLS+=("$CONTAINER")
+fi
+for tool in "${TOOLS[@]}"; do
   command -v "$tool" >/dev/null || { echo "e2e:local needs $tool"; exit 1; }
 done
 if [ -e vapid.json ]; then
@@ -177,33 +211,78 @@ timeout 600 deno install --frozen
 AUTH_COOKIE_SECRET=$(openssl rand -hex 32)
 AUTH_PEPPER=$(openssl rand -hex 32)
 AUTH_TOTP=$(openssl rand -hex 20)
-DB_PASS=$(openssl rand -hex 24)
-KV_PASSWORD=$(openssl rand -hex 24)
 API_PORT=$(spare_port)
 SPA_PORT=$(spare_port)
+# The installed nginx listens where apps/spa/nginx.conf says.
+[ "$BUILT_SERVER" = nginx ] && SPA_PORT=8080
 FRONT_PORT=$(spare_port)
 
-log "starting $PG_NAME and $KV_NAME with $CONTAINER"
-CONTAINERS+=("$PG_NAME")
-timeout 300 "$CONTAINER" run --detach --name "$PG_NAME" --pids-limit=500 --memory=2g \
-  -e POSTGRES_USER=tester -e POSTGRES_PASSWORD="$DB_PASS" -e POSTGRES_DB=template_e2e \
-  -p 127.0.0.1::5432 docker.io/library/postgres:18.6-alpine >/dev/null
-CONTAINERS+=("$KV_NAME")
-# REDISCLI_AUTH lets the `valkey-cli ping` below authenticate.
-timeout 300 "$CONTAINER" run --detach --name "$KV_NAME" --pids-limit=500 --memory=1g \
-  -e REDISCLI_AUTH="$KV_PASSWORD" -p 127.0.0.1::6379 docker.io/valkey/valkey:8.1 \
-  valkey-server --requirepass "$KV_PASSWORD" >/dev/null
-DB_PORT=$("$CONTAINER" port "$PG_NAME" 5432/tcp | head -n 1 | cut -d: -f2)
-KV_PORT=$("$CONTAINER" port "$KV_NAME" 6379/tcp | head -n 1 | cut -d: -f2)
+if [ "$SERVICES" = containers ]; then
+  DB_PASS=$(openssl rand -hex 24)
+  KV_PASSWORD=$(openssl rand -hex 24)
+  log "starting $PG_NAME and $KV_NAME with $CONTAINER"
+  CONTAINERS+=("$PG_NAME")
+  timeout 300 "$CONTAINER" run --detach --name "$PG_NAME" --pids-limit=500 --memory=2g \
+    -e POSTGRES_USER=tester -e POSTGRES_PASSWORD="$DB_PASS" -e POSTGRES_DB=template_e2e \
+    -p 127.0.0.1::5432 docker.io/library/postgres:18.6-alpine >/dev/null
+  CONTAINERS+=("$KV_NAME")
+  # REDISCLI_AUTH lets the `valkey-cli ping` below authenticate.
+  timeout 300 "$CONTAINER" run --detach --name "$KV_NAME" --pids-limit=500 --memory=1g \
+    -e REDISCLI_AUTH="$KV_PASSWORD" -p 127.0.0.1::6379 docker.io/valkey/valkey:8.1 \
+    valkey-server --requirepass "$KV_PASSWORD" >/dev/null
+  DB_PORT=$("$CONTAINER" port "$PG_NAME" 5432/tcp | head -n 1 | cut -d: -f2)
+  KV_PORT=$("$CONTAINER" port "$KV_NAME" 6379/tcp | head -n 1 | cut -d: -f2)
 
-# Over TCP, not the unix socket: the image answers on the socket while it still initialises
-# (docs/handoff.md, "Traps in this codebase").
-timeout 90 "$CONTAINER" exec "$PG_NAME" sh -c \
-  'until pg_isready -h 127.0.0.1 -U tester -d template_e2e -q; do sleep 0.5; done' ||
-  { log "postgres was not ready within 90 s"; exit 1; }
-timeout 60 "$CONTAINER" exec "$KV_NAME" sh -c \
-  'until valkey-cli ping 2>/dev/null | grep -q PONG; do sleep 0.5; done' ||
-  { log "valkey was not ready within 60 s"; exit 1; }
+  # Over TCP, not the unix socket: the image answers on the socket while it still initialises
+  # (docs/handoff.md, "Traps in this codebase").
+  timeout 90 "$CONTAINER" exec "$PG_NAME" sh -c \
+    'until pg_isready -h 127.0.0.1 -U tester -d template_e2e -q; do sleep 0.5; done' ||
+    { log "postgres was not ready within 90 s"; exit 1; }
+  timeout 60 "$CONTAINER" exec "$KV_NAME" sh -c \
+    'until valkey-cli ping 2>/dev/null | grep -q PONG; do sleep 0.5; done' ||
+    { log "valkey was not ready within 60 s"; exit 1; }
+  export DB_HOST=127.0.0.1 DB_PORT DB_USER=tester DB_PASS DB_NAME=template_e2e
+  export KV_HOSTNAME=127.0.0.1 KV_PORT KV_PASSWORD
+else
+  for name in DB_HOST DB_PORT DB_USER DB_PASS DB_NAME KV_HOSTNAME KV_PORT KV_PASSWORD; do
+    [ -n "${!name:-}" ] || { log "E2E_SERVICES=environment needs $name"; exit 1; }
+  done
+  # Over TCP, for the same reason as above: a connection means the real server is up.
+  log "waiting for Postgres at $DB_HOST:$DB_PORT and Valkey at $KV_HOSTNAME:$KV_PORT"
+  for address in "$DB_HOST:$DB_PORT" "$KV_HOSTNAME:$KV_PORT"; do
+    timeout 90 deno eval '
+      const [hostname, port] = Deno.args[0].split(":")
+      for (;;) {
+        try {
+          (await Deno.connect({ hostname, port: Number(port) })).close()
+          break
+        } catch {
+          await new Promise((resolve) => setTimeout(resolve, 500))
+        }
+      }
+    ' "$address" || { log "$address did not accept connections within 90 s"; exit 1; }
+  done
+  # A fresh database of its own. Dropped first, so a rerun starts empty instead of failing on
+  # "already exists" or inheriting rows from the last run. `DB_NAME` is only the database to
+  # connect to; it must exist.
+  E2E_DB_NAME=template_e2e_app
+  timeout 120 deno eval '
+    import postgres from "postgres"
+    const name = Deno.args[0]
+    const sql = postgres({
+      host: Deno.env.get("DB_HOST"),
+      port: Number(Deno.env.get("DB_PORT")),
+      user: Deno.env.get("DB_USER"),
+      password: Deno.env.get("DB_PASS"),
+      database: Deno.env.get("DB_NAME"),
+      max: 1,
+    })
+    await sql.unsafe(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`)
+    await sql.unsafe(`CREATE DATABASE ${name}`)
+    await sql.end()
+  ' "$E2E_DB_NAME"
+  export DB_NAME=$E2E_DB_NAME
+fi
 
 export ENV=dev
 # The API's origin check compares the browser's Origin with http://$DOMAIN, port included.
@@ -216,8 +295,6 @@ export RATE_LIMITER_STRICT_LIMIT=1000
 export RATE_LIMITER_LIMIT=5000
 export RATE_LIMITER_OTP_WINDOW_MS=900000
 export RATE_LIMITER_OTP_LIMIT=1000
-export DB_HOST=127.0.0.1 DB_PORT DB_USER=tester DB_PASS DB_NAME=template_e2e
-export KV_HOSTNAME=127.0.0.1 KV_PORT KV_PASSWORD
 
 log "migrating the database"
 timeout 300 deno task db:migrate
@@ -265,7 +342,33 @@ SPA_PID=""
 start_spa() { # <dev|built>
   [ "$SPA_SERVER" = "$1" ] && return 0
   SPA_SERVER=$1
-  if [ "$1" = built ]; then
+  if [ "$1" = built ] && [ "$BUILT_SERVER" = nginx ]; then
+    # What apps/spa/dockerfile.prod does, by hand, as `e2e/spa/run.sh` does: keep the three in
+    # step.
+    log "building the SPA"
+    VITE_ENV=prod timeout 600 deno task spa:build >"$SCRATCH/spa-build.log" 2>&1 ||
+      { log "the SPA did not build"; tail -n 40 "$SCRATCH/spa-build.log"; exit 1; }
+    local html=/usr/share/nginx/html
+    cp -r apps/spa/dist/. "$html/"
+    # The distribution's own site would answer too; this configuration is the only one.
+    find /etc/nginx/sites-enabled/default -delete 2>/dev/null || true
+    mkdir -p /etc/nginx/conf.d /etc/nginx/spa /etc/spa
+    cp apps/spa/nginx.conf /etc/nginx/conf.d/default.conf
+    cp apps/spa/security-headers.conf /etc/nginx/spa/security-headers.conf
+    cp apps/spa/public-env.allow /etc/spa/public-env.allow
+    ln -sf /tmp/config.json "$html/config.json"
+    # The two scripts nginx's entrypoint runs in the image before nginx starts.
+    SPA_ENV=dev sh apps/spa/runtime-config.sh
+    SPA_ENV=dev sh apps/spa/csp-connect.sh
+    if [ -n "$SPA_PID" ]; then
+      log "stopping the dev server"
+      stop_group "$SPA_PID"
+      SPA_PID=""
+    fi
+    log "starting the built SPA in nginx on 127.0.0.1:$SPA_PORT"
+    start nginx nginx -g "daemon off;"
+    wait_for nginx "${PIDS[-1]}" 60 answers "http://127.0.0.1:$SPA_PORT/"
+  elif [ "$1" = built ]; then
     # The image exactly as a deploy builds it, as `e2e/spa/run.sh` does: keep the two in step.
     log "building the SPA image"
     build_image "base image" --tag "$BASE_IMAGE" --file Dockerfile.base .

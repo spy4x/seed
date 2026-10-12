@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { planLines, planPasses } from "./e2e-local-plan.ts"
+import { planLines, planPasses, SMOKE_SPECS } from "./e2e-local-plan.ts"
 
 const EXISTING = [
   `e2e/notes.e2e.ts`,
@@ -58,6 +58,17 @@ Deno.test("E2E_SPA puts every spec asked for on that one server, in the order gi
   expect(planPasses([`e2e/offline.e2e.ts`, `-g`, `x`, `e2e/notes.e2e.ts`], `dev`, isSpecFile))
     .toEqual([{ server: `dev`, specs: `all`, args: [`offline.e2e.ts`, `-g`, `x`, `notes.e2e.ts`] }])
   expect(planPasses([], `built`, isSpecFile)).toEqual([{ server: `built`, specs: `all`, args: [] }])
+})
+
+Deno.test("--smoke stands for the specs of the smoke set, on the dev server, with the other arguments", () => {
+  const anySpec = (path: string): boolean => path.endsWith(`.e2e.ts`)
+  expect(planPasses([`--smoke`, `--repeat-each=2`], undefined, anySpec)).toEqual([
+    { server: `dev`, specs: `other`, args: [...SMOKE_SPECS, `--repeat-each=2`] },
+  ])
+  expect(planPasses([`--smoke`, `e2e/offline.e2e.ts`], undefined, anySpec)).toEqual([
+    { server: `dev`, specs: `other`, args: [...SMOKE_SPECS] },
+    { server: `built`, specs: `offline`, args: [`offline.e2e.ts`] },
+  ])
 })
 
 Deno.test("a path that names no existing spec file is passed on as it is, to both passes", () => {
