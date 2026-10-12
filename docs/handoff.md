@@ -415,11 +415,23 @@ hint with `profileStore.refresh()`, so a second tab follows without a reload.
    `available_at` has come. `scheduleOutboxEvent` (from `@spy4x/server/outbox`) writes one, in the
    transaction of the change that needs it. Add a handler to the `JobPublisher` (from `@spy4x/server/outbox`) in
    `libs/server/jobs/wiring.ts`; it reads what it needs from the database. A failing job backs off
-   (1 s, 2 s, 4 s, up to 5 minutes) and after 10 attempts stops with its error in
-   `last_error_code`. A repeating job is listed in `repeatEveryMs`: a successful run writes the
-   next one. The worker starts one, `outbox.cleanup`, at 03:00 UTC and then daily: it removes
-   outbox rows processed more than 7 days ago. A job that gave up stays unprocessed, so the
-   worker does not restart it; look for rows with `last_error_code` set.
+   (1 s, 2 s, 4 s, up to 15 minutes) and after 20 attempts, about two and a half hours, is given
+   up (`JOB_RETRY` in `libs/server/jobs/job-failures.ts`). The row is then closed: `processed_at`
+   is set and the error's class stays in `last_error_code`, until the cleanup removes the row a
+   week later. The worker logs each attempt that fails with the row's kind, the attempt, the stage
+   and the error's class, never its message, and the last one as `abandoned` (`onAttemptFailed`):
+   search the worker's log for that word. Two things are not logged. An attempt lost with a worker
+   that died mid-run is retried after its lease without a line, unless it was the last one, which
+   is logged with stage `lease`. And the line is written after the row is closed, so a worker that
+   dies between the two leaves the closed row as the only trace, for those seven days. A repeating
+   job is listed in `repeatEveryMs`: a run that succeeds or is given up writes the next one
+   (`repeatAfterGiveUp`). The worker starts one, `outbox.cleanup`, at 03:00 UTC and then daily: it
+   removes outbox rows processed more than 7 days ago and runs every purge, each as its own step
+   (`cleanupSteps`). A step that throws is logged with its message and stops no other step; the
+   job is then retried like any other. Rows that a worker from before this (10 attempts, never
+   closed) had given up are closed by migration `2026_11_01_0001_close_given_up_outbox_rows.sql`,
+   so the worker with 20 attempts sends none of them late; a cleanup row among them is closed too,
+   and the worker writes a fresh one when it starts.
 6. A listener on the in-process event bus that throws is isolated, logged as one JSON line with the
    event and listener names and the request id, and counted in `event_listener_failures_total`
    (a `createCounter` from `@spy4x/platform/universal/metrics`). Register listeners with `subscribe` (not `eventBus.on`) so the

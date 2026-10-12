@@ -70,9 +70,11 @@ const processor = createOutboxProcessor(
   billingSetup.provider,
   subscribersSetup,
   billingSetup.graceDays,
+  billingSetup.trialRequiresCard,
 )
 
-// Starts the nightly chain the first time; a restart finds the row and adds nothing.
+// Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run
+// that is given up is closed by the processor, which writes the next night's run itself.
 await scheduleNightlyJobs(sql)
 
 /** How often the outbox is looked at when it is empty; the delay before a push. */

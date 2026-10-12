@@ -18,6 +18,7 @@ import {
   HardDeleteOutcome,
 } from "../../libs/server/auth/account-deletion.ts"
 import { issuePasswordReset } from "../../libs/server/auth/password-reset.ts"
+import { createOutboxProcessor, scheduleNightlyJobs } from "../../libs/server/jobs/wiring.ts"
 import {
   ACCOUNT_DELETION_MAIL_JOB,
   ACCOUNT_HARD_DELETE_JOB,
@@ -25,6 +26,7 @@ import {
   accountDeletionMailJob,
   accountRestoredMailJob,
 } from "../../libs/server/jobs/account-deletion.ts"
+import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
@@ -580,8 +582,87 @@ Deno.test("deleting one's own account", async (t) => {
         await sql`
           UPDATE subscriptions SET status = ${BillingStatus.Canceled} WHERE group_id = ${personal.id}
         `
-        expect(await hardDeleteDueAccounts(sql)).toEqual({ deleted: 1, blocked: 0 })
+        expect(await hardDeleteDueAccounts(sql)).toEqual({ deleted: 1, blocked: 0, failed: 0 })
         expect(await sql`SELECT 1 FROM auth_users WHERE id = ${max.id}`).toEqual([])
+      },
+    )
+
+    await t.step(
+      "a request left behind never deletes an account that is live again, and is removed",
+      async () => {
+        const zoe = await signUp(app, "zoe")
+        await requestDeletion(app, sql, zoe)
+        const id = await makeDue(sql, zoe.id)
+        // Restored with the request left in place: no code path writes this, the guard is for it.
+        await sql`UPDATE users SET deleted_at = NULL WHERE id = ${zoe.id}`
+
+        expect(await hardDeleteAccount(sql, id)).toBe(HardDeleteOutcome.NothingDue)
+
+        expect(await sql`SELECT 1 FROM auth_users WHERE id = ${zoe.id}`).toHaveLength(1)
+        expect(await sql`SELECT 1 FROM groups WHERE owner_user_id = ${zoe.id}`).toHaveLength(1)
+        expect(await sql`SELECT 1 FROM account_deletions WHERE id = ${id}`).toEqual([])
+      },
+    )
+
+    await t.step(
+      "an account whose delete throws is logged with the error and holds up no other",
+      async () => {
+        const vic = await signUp(app, "vic")
+        const wes = await signUp(app, "wes")
+        await requestDeletion(app, sql, vic)
+        await requestDeletion(app, sql, wes)
+        const vicRequest = await makeDue(sql, vic.id)
+        await makeDue(sql, wes.id)
+        // Vic's request is the older one, so it is tried first; a row nothing cascades to makes
+        // its delete throw.
+        await sql`
+          UPDATE account_deletions SET delete_after = now() - INTERVAL '1 hour'
+          WHERE id = ${vicRequest}
+        `
+        await sql`CREATE TABLE delete_stopper (user_id INT4 REFERENCES auth_users (id))`
+        const logged: string[] = []
+        try {
+          await sql`INSERT INTO delete_stopper (user_id) VALUES (${vic.id})`
+
+          const result = await hardDeleteDueAccounts(sql, (line) => void logged.push(line))
+
+          expect(result.failed).toBe(1)
+          expect(await sql`SELECT 1 FROM auth_users WHERE id = ${wes.id}`).toEqual([])
+          expect(await sql`SELECT 1 FROM auth_users WHERE id = ${vic.id}`).toHaveLength(1)
+          expect(logged).toHaveLength(1)
+          expect(logged[0]).toContain(
+            `error: the account of deletion request ${vicRequest} was not deleted: `,
+          )
+          expect(logged[0]).toContain(`violates foreign key constraint`)
+
+          // The nightly cleanup runs the same delete as one of its steps: it names the account in
+          // its own log and fails, so the processor retries it.
+          const nightly: string[] = []
+          const processor = createOutboxProcessor(sql, {
+            store: createPostgresAuthStore(sql),
+            sender: null,
+            brand: { webAppUrl: "http://app.localhost" },
+            log: (line) => void nightly.push(line),
+          })
+          await sql`DELETE FROM outbox_events`
+          await scheduleNightlyJobs(sql)
+          await sql`UPDATE outbox_events SET available_at = now()`
+
+          expect(await processor.drainOnce()).toEqual({ claimed: 1, published: 0, failed: 1 })
+          expect(nightly[0]).toContain(
+            `error: the account of deletion request ${vicRequest} was not deleted: `,
+          )
+          expect(nightly[1]).toBe(
+            `error: nightly cleanup step "delete accounts whose wait is over" failed: ` +
+              `1 account(s) due for deletion were not deleted`,
+          )
+          await sql`DELETE FROM outbox_events`
+        } finally {
+          await sql`DROP TABLE delete_stopper`
+        }
+        // With the cause gone the next run deletes it.
+        expect((await hardDeleteDueAccounts(sql)).failed).toBe(0)
+        expect(await sql`SELECT 1 FROM auth_users WHERE id = ${vic.id}`).toEqual([])
       },
     )
 

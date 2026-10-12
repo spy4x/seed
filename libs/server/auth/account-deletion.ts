@@ -223,22 +223,34 @@ export async function hardDeleteAccount(
 export interface DueDeletions {
   deleted: number
   blocked: number
+  /** Accounts whose delete threw; each is kept for the next run. */
+  failed: number
 }
 
 /**
  * Deletes for good every account whose wait is over: the backstop for a job that gave up, and the
  * retry of one that was blocked. Each account in its own transaction, so one blocked account
- * holds up no other.
+ * holds up no other, and neither does one whose delete throws: that one is told to `log` with the
+ * request's id and the error's message, counted as failed and left for the next run.
  */
-export async function hardDeleteDueAccounts(sql: postgres.Sql): Promise<DueDeletions> {
+export async function hardDeleteDueAccounts(
+  sql: postgres.Sql,
+  log: (line: string) => void = () => {},
+): Promise<DueDeletions> {
   const due = await sql<{ id: string }[]>`
     SELECT id FROM account_deletions WHERE delete_after <= now() ORDER BY delete_after
   `
-  const result: DueDeletions = { deleted: 0, blocked: 0 }
+  const result: DueDeletions = { deleted: 0, blocked: 0, failed: 0 }
   for (const { id } of due) {
-    const outcome = await hardDeleteAccount(sql, id)
-    if (outcome === HardDeleteOutcome.Deleted) result.deleted++
-    if (outcome === HardDeleteOutcome.Blocked) result.blocked++
+    try {
+      const outcome = await hardDeleteAccount(sql, id)
+      if (outcome === HardDeleteOutcome.Deleted) result.deleted++
+      if (outcome === HardDeleteOutcome.Blocked) result.blocked++
+    } catch (error) {
+      result.failed++
+      const text = error instanceof Error ? error.message : String(error)
+      log(`error: the account of deletion request ${id} was not deleted: ${text}`)
+    }
   }
   return result
 }

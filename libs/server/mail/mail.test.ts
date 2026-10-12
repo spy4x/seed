@@ -275,7 +275,8 @@ describe("billingNoticeMail", () => {
       planName: "Pro",
       at: new Date("2026-10-15T23:30:00Z"),
       link,
-      planKept: true,
+      planKeptUntil: new Date("2026-10-22T23:30:00Z"),
+      trialHasCard: true,
     })
 
   it("says when a trial ends, in UTC, and that it is charged unless cancelled", () => {
@@ -302,11 +303,38 @@ describe("billingNoticeMail", () => {
       planName: "Pro",
       at: new Date("2026-10-15T23:30:00Z"),
       link,
-      planKept: false,
+      planKeptUntil: null,
+      trialHasCard: true,
     })
 
     expect(failedTrial.text).toContain("The group is now on the free plan.")
-    expect(failedTrial.text).not.toContain("kept for a few days")
+    expect(failedTrial.text).not.toContain("is kept")
+  })
+
+  it("names the day the grace period ends, in UTC, when the plan is kept", () => {
+    const failed = mail(BillingNoticeKind.PaymentFailed)
+
+    expect(failed.text).toContain(
+      "The plan is kept until October 22, 2026 while the payment is retried.",
+    )
+  })
+
+  it("tells the owner of a trial without a card that it ends on the free plan unless one is added", () => {
+    const cardless = billingNoticeMail(brand, {
+      to: "ann@example.com",
+      kind: BillingNoticeKind.TrialEnding,
+      groupName: "Tea club",
+      planName: "Pro",
+      at: new Date("2026-10-15T23:30:00Z"),
+      link,
+      planKeptUntil: null,
+      trialHasCard: false,
+    })
+
+    expect(cardless.subject).toBe("Your Pro trial ends on October 15, 2026")
+    expect(cardless.text).toContain("Add a card from the group's page before then to keep the plan")
+    expect(cardless.text).toContain("Without a card, the group moves to the free plan.")
+    expect(cardless.text).not.toContain("To stop it, cancel it")
   })
 
   it("says when a cancelled plan ends and that it can still be renewed", () => {

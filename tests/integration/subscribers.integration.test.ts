@@ -225,5 +225,30 @@ Deno.test(`mail subscriptions go through the worker's queue and Postgres`, async
       const left = await sql<{ email: string }[]>`SELECT email FROM subscription_requests`
       expect(left.map((row) => row.email)).toEqual([`new@example.com`])
     })
+
+    await t.step(
+      `a confirm mail that is refused keeps the request and is sent on the retry`,
+      async () => {
+        await sql`DELETE FROM subscription_requests`
+        await sql`DELETE FROM outbox_events`
+        const sentBefore = sender.sent.length
+        sender.refuse.add(`bea@example.com`)
+        await enqueueSubscriberMail(sql, SUBSCRIBER_CONFIRM_MAIL_JOB, `news`, `bea@example.com`)
+
+        expect((await processor.drainOnce()).failed).toBe(1)
+
+        expect(sender.sent.length).toBe(sentBefore)
+        expect(await count(`subscription_requests`)).toBe(1)
+        expect(logged).toContain(
+          `error: a ${SUBSCRIBER_CONFIRM_MAIL_JOB} mail was not sent and will be retried`,
+        )
+
+        sender.refuse.clear()
+        await sql`UPDATE outbox_events SET available_at = now() WHERE processed_at IS NULL`
+        expect((await processor.drainOnce()).published).toBe(1)
+        expect(sender.sent.at(-1)?.to).toBe(`bea@example.com`)
+        expect(await count(`subscription_requests`)).toBe(0)
+      },
+    )
   })
 })

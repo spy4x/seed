@@ -314,10 +314,17 @@ export interface BillingNoticeMailInput {
   /** The group's page, where the owner opens the provider's portal. */
   link: string
   /**
-   * For a failed payment: whether the plan is kept for the grace period. A trial whose first charge
-   * failed has none (`false`): the group is already on the free plan. Unused for the other notices.
+   * For a failed payment: until when the plan is kept while the payment is retried. `null` when it
+   * is not kept and the group is already on the free plan: a trial whose first charge failed, or a
+   * grace period of zero days. Unused for the other notices.
    */
-  planKept: boolean
+  planKeptUntil: Date | null
+  /**
+   * For a trial: whether it was started with a card, so it turns into a charged subscription by
+   * itself. `false` for a trial without one, which ends on the free plan unless a card is added.
+   * Unused for the other notices.
+   */
+  trialHasCard: boolean
 }
 
 /**
@@ -327,7 +334,7 @@ export interface BillingNoticeMailInput {
  */
 export function billingNoticeMail(
   brand: MailBrand,
-  { to, kind, groupName, planName, at, link, planKept }: BillingNoticeMailInput,
+  { to, kind, groupName, planName, at, link, planKeptUntil, trialHasCard }: BillingNoticeMailInput,
 ): EmailMessage {
   const group = `"${groupName}"`
   const date = billingDate(at)
@@ -335,13 +342,17 @@ export function billingNoticeMail(
     [BillingNoticeKind.TrialEnding]: [
       `Your ${planName} trial ends on ${date}`,
       `The ${planName} trial of ${group} ends on ${date}.`,
-      `The subscription then starts and is charged. To stop it, cancel it before then from the group's page.`,
+      trialHasCard
+        ? `The subscription then starts and is charged. To stop it, cancel it before then from the group's page.`
+        : `Add a card from the group's page before then to keep the plan: the subscription then starts and is charged. Without a card, the group moves to the free plan.`,
     ],
     [BillingNoticeKind.PaymentFailed]: [
       `A payment for ${planName} failed`,
       `A payment for the ${planName} plan of ${group} failed.`,
-      planKept
-        ? `The plan is kept for a few days while the payment is retried. Update the card from the group's page to keep it.`
+      planKeptUntil
+        ? `The plan is kept until ${
+          billingDate(planKeptUntil)
+        } while the payment is retried. Update the card from the group's page to keep it.`
         : `The group is now on the free plan. Update the card from the group's page to get the plan back.`,
     ],
     [BillingNoticeKind.PlanEnding]: [

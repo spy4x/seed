@@ -56,6 +56,20 @@ describe("issuePasswordReset", () => {
     expect(await issuePasswordReset(store, "bob@example.com", NOW)).toBe(null)
   })
 
+  it("issues nothing for an account whose sign-in record is marked deleted", async () => {
+    const store = await storeWithAccounts()
+    const key = (await store.findKey(PASSWORD_METHOD, "ann@example.com"))!
+    const findUser = store.findUser.bind(store)
+    store.findUser = async (id) => {
+      const user = await findUser(id)
+      return user && id === key.userId ? { ...user, deletedAt: NOW } : user
+    }
+
+    expect(await issuePasswordReset(store, "ann@example.com", NOW)).toBe(null)
+    // No code was stored either: a reset code only ever exists for a live account.
+    expect(await consumePasswordReset(store, "ann@example.com", "anything", NOW)).toBe(false)
+  })
+
   it("issues nothing for a value that is not an address", async () => {
     const store = await storeWithAccounts()
 

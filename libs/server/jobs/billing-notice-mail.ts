@@ -4,7 +4,10 @@ import {
   accessEndsAt,
   BillingNoticeKind,
   billingNoticeKindOf,
+  effectivePlanId,
   findPlan,
+  FREE_PLAN_ID,
+  graceEndsAt,
   type StoredSubscription,
 } from "@domain/billing"
 import { trialNoticeAt } from "../billing/billing-notices.ts"
@@ -22,6 +25,10 @@ export interface BillingNoticeMailDeps {
   log: (line: string) => void
   /** The current time; tests pass a fixed one. */
   now?: () => Date
+  /** `BILLING_GRACE_DAYS`: how long a failed payment keeps the plan. Unset: no grace. */
+  graceDays?: number
+  /** `BILLING_TRIAL_REQUIRES_CARD`: whether a trial was started with a card. Unset: it was. */
+  trialRequiresCard?: boolean
 }
 
 interface OwnerRow extends postgres.Row {
@@ -42,7 +49,15 @@ interface OwnerRow extends postgres.Row {
  */
 export function billingNoticeMailJob(
   kind: BillingNoticeKind,
-  { sql, sender, brand, log, now = () => new Date() }: BillingNoticeMailDeps,
+  {
+    sql,
+    sender,
+    brand,
+    log,
+    now = () => new Date(),
+    graceDays = 0,
+    trialRequiresCard = true,
+  }: BillingNoticeMailDeps,
 ): JobHandler {
   const billing = new PostgresBillingRepository(sql)
   return async (event) => {
@@ -50,7 +65,8 @@ export function billingNoticeMailJob(
     const groupId = event.aggregateId
     const runAt = Number(event.aggregateVersion)
     const subscription = await billing.get(groupId)
-    if (!inForce(kind, subscription, new Date(Math.max(now().getTime(), runAt)), runAt)) return
+    const judgedAt = new Date(Math.max(now().getTime(), runAt))
+    if (!inForce(kind, subscription, judgedAt, runAt)) return
     // The owner who pays: after a transfer of ownership (#250) the old owner's subscription stays
     // theirs until it ends, so its notices go to them and never to the new owner.
     const [owner] = await sql<OwnerRow[]>`
@@ -83,13 +99,29 @@ export function billingNoticeMailJob(
       planName: findPlan(subscription.planId ?? "")?.name ?? "paid",
       at: accessEndsAt(subscription) ?? new Date(runAt),
       link: new URL(`/groups/${encodeURIComponent(groupId)}`, brand.webAppUrl).href,
-      planKept: subscription.everActive,
+      planKeptUntil: planKeptUntil(subscription, judgedAt, graceDays),
+      trialHasCard: trialRequiresCard,
     }))
     if (!result.ok) {
       log("error: a billing notice mail was not sent and will be retried")
       throw new Error("billing notice mail not sent")
     }
   }
+}
+
+/**
+ * Until when a past-due subscription keeps its plan: the end of its grace, or the end of a
+ * cancelled period when that comes first. `null` when the group is on the free plan at `at`.
+ */
+function planKeptUntil(
+  subscription: StoredSubscription,
+  at: Date,
+  graceDays: number,
+): Date | null {
+  if (effectivePlanId(subscription, at, graceDays) === FREE_PLAN_ID) return null
+  const ends = [graceEndsAt(subscription, graceDays), accessEndsAt(subscription)]
+    .filter((date): date is Date => date !== null)
+  return ends.length === 0 ? null : new Date(Math.min(...ends.map((date) => date.getTime())))
 }
 
 function inForce(
