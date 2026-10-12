@@ -2,7 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
-import { UserMFAStatus } from "@domain/identity"
+import { PUSH_TOKEN_LIMITS, UserMFAStatus } from "@domain/identity"
 import type { PushRegisterCommand, PushRemoveCommand } from "../../cqrs/commands.ts"
 import type { PushListQuery } from "../../cqrs/queries.ts"
 import { createPushOperations } from "./operations.ts"
@@ -92,6 +92,28 @@ describe("push socket requests", () => {
 
     expect(failure).toBeInstanceOf(RealtimeRequestError)
     expect((failure as RealtimeRequestError).code).toBe("bad_request")
+    expect(seen.register).toBe(null)
+  })
+
+  it("refuses a push address longer than the limit with a message that names the field", async () => {
+    const { requests, seen } = harness()
+    const endpoint = "https://push.example/".padEnd(PUSH_TOKEN_LIMITS.endpoint + 1, "a")
+
+    const failure = await Promise.resolve(requests["push.register"].handle({
+      actor,
+      requestId: "req-1",
+      signal,
+      idempotencyKey: "key-1",
+      payload: { deviceId: "device-1", subscription: { ...subscription, endpoint } },
+    })).catch((error) => error)
+
+    expect(failure).toBeInstanceOf(RealtimeRequestError)
+    expect((failure as RealtimeRequestError).code).toBe("bad_request")
+    expect((failure as RealtimeRequestError).message).toBe(
+      `subscription.endpoint must be at most length ${PUSH_TOKEN_LIMITS.endpoint} (was ${
+        PUSH_TOKEN_LIMITS.endpoint + 1
+      })`,
+    )
     expect(seen.register).toBe(null)
   })
 

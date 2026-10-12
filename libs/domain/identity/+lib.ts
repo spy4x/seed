@@ -175,12 +175,26 @@ export interface AccountDeletionStatus {
   blockers: AccountDeletionBlocker[]
 }
 
+/**
+ * The longest value, in characters, of each text field of a push device. Three places must agree
+ * on these: the request check (`pushSubscribeRequestSchema` in `@spy4x/platform/model`), the row
+ * schema below and the columns of `user_push_tokens`. A request that passes the check and does not
+ * fit the column is a server error (#355). `push-token-limits.test.ts` holds the request check to
+ * these numbers, and `tests/integration/web-push.integration.test.ts` holds the columns to them.
+ */
+export const PUSH_TOKEN_LIMITS = {
+  deviceId: 256,
+  endpoint: 2048,
+  auth: 256,
+  p256dh: 256,
+} as const
+
 export const userPushTokenSchemaBase = type({
   userId: "number = 0",
-  deviceId: "string <= 256 = ''",
-  endpoint: "string <= 256 = ''",
-  auth: "string <= 256 = ''",
-  p256dh: "string <= 256 = ''",
+  deviceId: `string <= ${PUSH_TOKEN_LIMITS.deviceId} = ''`,
+  endpoint: `string <= ${PUSH_TOKEN_LIMITS.endpoint} = ''`,
+  auth: `string <= ${PUSH_TOKEN_LIMITS.auth} = ''`,
+  p256dh: `string <= ${PUSH_TOKEN_LIMITS.p256dh} = ''`,
 })
 export type UserPushTokenBase = typeof userPushTokenSchemaBase.infer
 

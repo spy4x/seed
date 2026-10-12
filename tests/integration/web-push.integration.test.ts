@@ -8,6 +8,7 @@ import { generateVapidKeyPair } from "@spy4x/integrations/push"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { PUSH_TOKEN_LIMITS } from "@domain/identity"
 
 interface IdRow extends postgres.Row {
   id: number
@@ -19,6 +20,40 @@ interface CountRow extends postgres.Row {
 
 const MIGRATIONS = "libs/server/db/migrations"
 const PUSH_MIGRATION = "2026_09_30_0001_push_token_one_per_device.sql"
+const ENDPOINT_MIGRATION = "2026_11_02_0001_push_endpoint_2048.sql"
+const SNAPSHOT = "libs/server/db/schema.sql"
+
+type LimitedField = keyof typeof PUSH_TOKEN_LIMITS
+const LIMITED_FIELDS = Object.keys(PUSH_TOKEN_LIMITS) as LimitedField[]
+
+/**
+ * Stores a push device whose `field` is `length` characters long, and says whether the database
+ * took it. Each call uses a device of its own, so no call replaces another's row.
+ */
+async function holds(
+  sql: postgres.Sql,
+  userId: number,
+  field: LimitedField,
+  length: number,
+): Promise<boolean> {
+  const value = (name: LimitedField) => name === field ? "x".repeat(length) : `${field}-${length}`
+  try {
+    await createPushTokenStore(sql).upsert({
+      userId,
+      deviceId: value("deviceId"),
+      endpoint: value("endpoint"),
+      auth: value("auth"),
+      p256dh: value("p256dh"),
+    })
+    return true
+  } catch (error) {
+    // 22001: too long for a VARCHAR. 23514: a CHECK refused it. Anything else is a broken test.
+    if (error instanceof postgres.PostgresError && ["22001", "23514"].includes(error.code)) {
+      return false
+    }
+    throw error
+  }
+}
 
 const KEYS = await browserKeys()
 const VAPID_JSON = JSON.stringify((await generateVapidKeyPair()).keys)
@@ -48,16 +83,17 @@ Deno.test({
     const connection = buildPostgresOptions(requireDbConnection())
     const admin = postgres({ ...connection, max: 1 })
     const schema = `web_push_test_${uuidV7().replace(/-/g, "")}`
-    const open = () =>
+    const snapshotSchema = `${schema}_snapshot`
+    const open = (searchPath = schema) =>
       postgres({
         ...connection,
         max: 2,
         transform: postgres.camel,
-        connection: { options: `-c search_path=${schema}` },
+        connection: { options: `-c search_path=${searchPath}` },
       })
     const opened: postgres.Sql[] = []
-    const connect = () => {
-      const sql = open()
+    const connect = (searchPath = schema) => {
+      const sql = open(searchPath)
       opened.push(sql)
       return sql
     }
@@ -83,6 +119,8 @@ Deno.test({
         VALUES (${userA}, ${"phone"}, ${"https://push.example/old"}, ${KEYS.auth}, ${KEYS.p256dh},
           '2026-09-01T00:00:00Z')`
       await applyMigration(sql, PUSH_MIGRATION)
+      // Applied to a table that holds rows, as it is on a deployed database.
+      await applyMigration(sql, ENDPOINT_MIGRATION)
 
       await t.step(
         "the migration keeps the most recently refreshed live row of a duplicated device",
@@ -160,8 +198,55 @@ Deno.test({
         expect(await ids("shared", userA)).toBe(0)
         expect(await ids("shared", userB)).toBe(1)
       })
+
+      await t.step("a push address as long as the request limit is stored", async () => {
+        const { service } = await serviceOver(sql)
+        const endpoint = "https://push.example/".padEnd(PUSH_TOKEN_LIMITS.endpoint, "a")
+        await service.subscribe({ endpoint, keys: KEYS, expirationTime: null }, "long", userA)
+        const rows = await sql<{ endpoint: string }[]>`
+          SELECT endpoint FROM user_push_tokens
+          WHERE user_id = ${userA} AND device_id = ${"long"} AND deleted_at IS NULL`
+        expect(rows.map((row) => row.endpoint)).toEqual([endpoint])
+      })
+
+      await t.step("a push address of the limit in three-byte characters is stored", async () => {
+        // The limit counts characters; in UTF-8 this value is three times as many bytes.
+        const endpoint = "€".repeat(PUSH_TOKEN_LIMITS.endpoint)
+        await createPushTokenStore(sql).upsert({
+          userId: userA,
+          deviceId: "wide",
+          endpoint,
+          ...KEYS,
+        })
+        const rows = await sql<{ bytes: number }[]>`
+          SELECT octet_length(endpoint)::int AS bytes FROM user_push_tokens
+          WHERE user_id = ${userA} AND device_id = ${"wide"} AND deleted_at IS NULL`
+        expect(rows.map((row) => row.bytes)).toEqual([PUSH_TOKEN_LIMITS.endpoint * 3])
+      })
+
+      await admin`CREATE SCHEMA ${admin(snapshotSchema)}`
+      const snapshotSql = connect(snapshotSchema)
+      await snapshotSql.unsafe(await Deno.readTextFile(SNAPSHOT))
+      const snapshotUser = await insertUser(snapshotSql)
+      const databases = [
+        { name: "the migrated database", client: sql, user: userA },
+        { name: "schema.sql", client: snapshotSql, user: snapshotUser },
+      ]
+      for (const { name, client, user } of databases) {
+        for (const field of LIMITED_FIELDS) {
+          const limit = PUSH_TOKEN_LIMITS[field]
+          await t.step(
+            `${name} holds ${limit} characters in ${field} and refuses ${limit + 1}`,
+            async () => {
+              expect(await holds(client, user, field, limit)).toBe(true)
+              expect(await holds(client, user, field, limit + 1)).toBe(false)
+            },
+          )
+        }
+      }
     } finally {
       try {
+        await admin`DROP SCHEMA IF EXISTS ${admin(snapshotSchema)} CASCADE`
         await admin`DROP SCHEMA IF EXISTS ${admin(schema)} CASCADE`
       } finally {
         for (const client of opened) await client.end()

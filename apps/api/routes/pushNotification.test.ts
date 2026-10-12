@@ -14,6 +14,7 @@ import {
 } from "../_testing/mutation-requests.ts"
 import { MALFORMED_JSON, oversizedJson } from "../_testing/json-bodies.ts"
 import { createPushNotificationRoute } from "./pushNotification.ts"
+import { PUSH_TOKEN_LIMITS } from "@domain/identity"
 
 function buildApp(auth: APIContext["Variables"]["auth"] = buildAuthData()) {
   const calls: string[] = []
@@ -144,4 +145,31 @@ describe("push routes cap the JSON body", () => {
       })
     }
   }
+})
+
+describe("push routes hold the push address to its limit", () => {
+  const subscribe = (endpointLength: number) => ({
+    method: "POST",
+    path: "/push",
+    body: {
+      deviceId: "device-1",
+      subscription: {
+        endpoint: "https://push.example/".padEnd(endpointLength, "a"),
+        keys: { auth: "auth-key", p256dh: "p256dh-key" },
+      },
+    },
+  })
+
+  it("answers a longer push address with 400 and a message that names the field", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, subscribe(PUSH_TOKEN_LIMITS.endpoint + 1), sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({
+      error: `subscription.endpoint must be at most length ${PUSH_TOKEN_LIMITS.endpoint} (was ${
+        PUSH_TOKEN_LIMITS.endpoint + 1
+      })`,
+    })
+    expect(calls).toEqual([])
+  })
 })

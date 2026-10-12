@@ -184,12 +184,15 @@ CREATE TABLE user_push_tokens (
     id SERIAL PRIMARY KEY,
     user_id INT4 REFERENCES users(id) ON DELETE CASCADE,
     device_id VARCHAR(256) NOT NULL,
-    endpoint VARCHAR(256) NOT NULL,
+    endpoint TEXT NOT NULL,
     auth VARCHAR(256) NOT NULL,
     p256dh VARCHAR(256) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at TIMESTAMPTZ
+    deleted_at TIMESTAMPTZ,
+    -- The limits of `PUSH_TOKEN_LIMITS` (libs/domain/identity). `endpoint` has no index, and must
+    -- never get a btree one: 2048 characters can be 8192 bytes, past what an index row holds.
+    CONSTRAINT user_push_tokens_endpoint_check CHECK (length(endpoint) <= 2048)
 );
 
 CREATE INDEX idx_user_push_tokens_by_deleted_at ON user_push_tokens (deleted_at);
