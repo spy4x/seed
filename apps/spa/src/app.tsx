@@ -1,10 +1,12 @@
 import "./app.css"
+import type { ComponentChildren } from "preact"
 import { useEffect, useState } from "preact/hooks"
 import { InstallPrompt } from "@spy4x/preact-system/install-prompt"
 import { SWUpdater } from "@spy4x/preact-system/sw-updater"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Toastr } from "@spy4x/preact-ui/toastr"
-import { Route, Switch, useLocation, useSearch } from "wouter-preact"
+import { Route, type StringRouteParams, Switch, useLocation, useSearch } from "wouter-preact"
+import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
 import { canSignOut, sessionState } from "./state/session.ts"
 import { bootstrapSession, settleOwedSignOut } from "./state/auth.ts"
 import { groupsStore } from "./state/groups.ts"
@@ -46,6 +48,7 @@ import { TagsView } from "./views/TagsView.tsx"
 import { ProfileView } from "./views/ProfileView.tsx"
 import { AppShell, PublicFrame } from "./views/AppShell.tsx"
 import { signInRedirect } from "./views/sign-in-gate.ts"
+import { SPA_ROUTE_PATHS, type SpaRoutePath } from "./views/spa-paths.ts"
 import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 
 /**
@@ -71,45 +74,48 @@ function OpenIfSelected({ groupId, noteId }: { groupId: string; noteId?: string 
   return <LoadingSpinner size="lg" label="Opening the notes..." class="min-h-[50vh]" />
 }
 
+/**
+ * What each route of the table draws. The type asks for every route of `SPA_ROUTES` and no other,
+ * so a page cannot be routed without saying who may open it.
+ */
+const PAGES: {
+  [Path in SpaRoutePath]: (params: StringRouteParams<Path>) => ComponentChildren
+} = {
+  "/sign-up": () => <AuthView key="sign-up" screen="sign-up" />,
+  "/sign-in": () => <AuthView key="sign-in" screen="sign-in" />,
+  "/totp": () => <AuthView key="one-time-code" screen="one-time-code" />,
+  "/forgot-password": () => <ForgotPasswordView />,
+  "/reset-password": () => <ResetPasswordView />,
+  "/email": () => <EmailView />,
+  "/subscribe": () => <SubscribeView />,
+  "/subscribe/confirm": () => <SubscriptionConfirmView />,
+  "/unsubscribe": () => <UnsubscribeView />,
+  "/groups": () => <GroupsView />,
+  "/groups/:groupId": (params) => <GroupSettingsView groupId={params.groupId} />,
+  "/groups/:groupId/activity": (params) => <GroupActivityView groupId={params.groupId} />,
+  "/groups/:groupId/pricing": (params) => <PricingView groupId={params.groupId} />,
+  "/groups/:groupId/notes": (params) => <OpenIfSelected groupId={params.groupId} />,
+  "/groups/:groupId/notes/:noteId": (params) => (
+    <OpenIfSelected groupId={params.groupId} noteId={params.noteId} />
+  ),
+  "/invite/:token": (params) => <InvitationView key={params.token} token={params.token} />,
+  "/notifications": () => <NotificationsView />,
+  "/tags": () => <TagsView />,
+  "/notes": () => <NotesView />,
+  "/notes/new": () => <NoteEditorView key="new" />,
+  "/notes/:noteId": (params) => <NoteEditorView key={params.noteId} noteId={params.noteId} />,
+  "/": () => <ProfileView />,
+}
+
+/** One `<Route>` per row of the route table, in its order. */
 function Routes() {
   return (
     <Switch>
-      <Route path="/sign-up">{() => <AuthView key="sign-up" screen="sign-up" />}</Route>
-      <Route path="/sign-in">{() => <AuthView key="sign-in" screen="sign-in" />}</Route>
-      <Route path="/totp">{() => <AuthView key="one-time-code" screen="one-time-code" />}</Route>
-      <Route path="/forgot-password" component={ForgotPasswordView} />
-      <Route path="/reset-password" component={ResetPasswordView} />
-      <Route path="/email" component={EmailView} />
-      <Route path="/subscribe" component={SubscribeView} />
-      <Route path="/subscribe/confirm" component={SubscriptionConfirmView} />
-      <Route path="/unsubscribe" component={UnsubscribeView} />
-      <Route path="/groups" component={GroupsView} />
-      <Route path="/groups/:groupId">
-        {(params) => <GroupSettingsView groupId={params.groupId} />}
-      </Route>
-      <Route path="/groups/:groupId/activity">
-        {(params) => <GroupActivityView groupId={params.groupId} />}
-      </Route>
-      <Route path="/groups/:groupId/pricing">
-        {(params) => <PricingView groupId={params.groupId} />}
-      </Route>
-      <Route path="/groups/:groupId/notes">
-        {(params) => <OpenIfSelected groupId={params.groupId} />}
-      </Route>
-      <Route path="/groups/:groupId/notes/:noteId">
-        {(params) => <OpenIfSelected groupId={params.groupId} noteId={params.noteId} />}
-      </Route>
-      <Route path="/invite/:token">
-        {(params) => <InvitationView key={params.token} token={params.token} />}
-      </Route>
-      <Route path="/notifications" component={NotificationsView} />
-      <Route path="/tags" component={TagsView} />
-      <Route path="/notes" component={NotesView} />
-      <Route path="/notes/new">{() => <NoteEditorView key="new" />}</Route>
-      <Route path="/notes/:noteId">
-        {(params) => <NoteEditorView key={params.noteId} noteId={params.noteId} />}
-      </Route>
-      <Route path="/" component={ProfileView} />
+      {SPA_ROUTE_PATHS.map((path) => (
+        <Route key={path} path={path}>
+          {PAGES[path] as (params: Record<string, string>) => ComponentChildren}
+        </Route>
+      ))}
     </Switch>
   )
 }
@@ -132,6 +138,13 @@ function SignInGate() {
 /** A fully signed-in user gets the library `Shell`; everyone else the plain public frame. */
 function Frame() {
   const session = sessionState.value
+  // A route change swaps the page without a load: the hook moves focus to the `<h1>` the new page
+  // shows first, as a load would put the reader at its top. Focus still ends on the document body
+  // where that heading is replaced afterwards: opening a note and saving a new one (the loading
+  // heading goes when the note arrives), and signing out (the shell is swapped). The app has no
+  // page titles yet, so the tab's title stays.
+  const [path] = useLocation()
+  useRouteAnnouncer({ path })
   if (session.user && !session.isMfaRequired) {
     return (
       <AppShell user={session.user} wsStatus={connectionDisplay(session)}>

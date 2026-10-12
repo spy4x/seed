@@ -124,7 +124,8 @@ function useFocusOnError(error: string | null) {
 /**
  * The person's e-mail address: a row with the address and its state, the code that proves it while
  * one waits, and a change of address in a dialog that opens only when asked. A change closes the
- * dialog and moves focus to the code for the new address.
+ * dialog and moves focus to the code for the new address. Closing the dialog without a change asks
+ * the app to drop the typed password.
  */
 export function EmailScreen(
   {
@@ -157,6 +158,11 @@ export function EmailScreen(
     focusCode.current = false
     codeField.current?.focus()
   }, [changing])
+  // Closing the dialog drops the typed password, so opening it again never shows it.
+  const closeChange = () => {
+    setChanging(false)
+    if (values.password) onValueChange("password", "")
+  }
 
   // A change just asked for, or a code just used: focus moves on to the step that follows.
   const shown = useRef(target)
@@ -274,7 +280,7 @@ export function EmailScreen(
 
       <Modal
         open={changing}
-        onClose={() => setChanging(false)}
+        onClose={closeChange}
         title={hasEmail ? "Change e-mail address" : "Add an e-mail address"}
         cancelLabel="Close"
         dataE2E="email-change-dialog"
@@ -312,7 +318,7 @@ export function EmailScreen(
             {/* The API's refusal names no field: the password, the address or the limit. */}
             <ErrorState message={errors.change} />
             <Cluster justify="end">
-              <Button type="button" variant="ghost" onClick={() => setChanging(false)}>
+              <Button type="button" variant="ghost" onClick={closeChange}>
                 Cancel
               </Button>
               <Button

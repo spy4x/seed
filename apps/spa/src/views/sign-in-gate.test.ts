@@ -1,6 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { signInRedirect, signOutRedirect } from "./sign-in-gate.ts"
+import { SPA_ROUTE_PATHS, SPA_ROUTES } from "./spa-paths.ts"
 
 const signedOut = { user: null, isMfaRequired: false }
 const codeOwed = { user: null, isMfaRequired: true }
@@ -23,6 +24,19 @@ describe("where a visit goes before sign-in is finished", () => {
     expect(signInRedirect("/groups", "", signedOut)).toBe("/sign-in?next=%2Fgroups")
     expect(signInRedirect("/groups/g1", "", signedOut)).toBe("/sign-in?next=%2Fgroups%2Fg1")
     expect(signInRedirect("/email", "", signedOut)).toBe("/sign-in?next=%2Femail")
+  })
+
+  it("sends the tags and the notifications pages to sign-in, with the page as next", () => {
+    expect(signInRedirect("/tags", "", signedOut)).toBe("/sign-in?next=%2Ftags")
+    expect(signInRedirect("/notifications", "", signedOut)).toBe("/sign-in?next=%2Fnotifications")
+  })
+
+  it("sends every route that is not open to sign-in, and leaves every open one", () => {
+    for (const pattern of SPA_ROUTE_PATHS) {
+      const path = pattern.replace(/:\w+/g, "abc")
+      expect(signInRedirect(path, "", signedOut), pattern)
+        .toBe(SPA_ROUTES[pattern].open ? null : `/sign-in?next=${encodeURIComponent(path)}`)
+    }
   })
 
   it("sends an invitation link to sign-in first, with the invitation as next", () => {
@@ -49,6 +63,8 @@ describe("where a sign-out goes first", () => {
     expect(signOutRedirect("/notes/abc", "")).toBe("/sign-in")
     expect(signOutRedirect("/email", "")).toBe("/sign-in")
     expect(signOutRedirect("/groups/g1", "x=1")).toBe("/sign-in")
+    expect(signOutRedirect("/tags", "")).toBe("/sign-in")
+    expect(signOutRedirect("/notifications", "")).toBe("/sign-in")
   })
 
   it("leaves an auth page that carries next for plain sign-in", () => {

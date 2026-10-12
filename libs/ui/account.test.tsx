@@ -808,6 +808,23 @@ describe("EmailScreen", () => {
     expect(isOpen("email-change-dialog")).toBe(false)
   })
 
+  it("asks the app to drop the typed password when the change dialog is closed, by Cancel or by the dialog itself", async () => {
+    const change = spy<[string, string]>()
+    const values = { code: "", email: "new@example.com", password: "Passw0rd!" }
+    const props = { ...emailDefaults, values, onValueChange: change.fn }
+    await mount(<EmailScreen {...props} />)
+
+    await click("[data-e2e=email-change-open]")
+    await clickInDialog("email-change-dialog", "Cancel")
+    expect(isOpen("email-change-dialog")).toBe(false)
+    expect(change.calls).toEqual([["password", ""]])
+
+    await click("[data-e2e=email-change-open]")
+    await click("[data-e2e=email-change-dialog] button[aria-label=Close]")
+    expect(isOpen("email-change-dialog")).toBe(false)
+    expect(change.calls).toEqual([["password", ""], ["password", ""]])
+  })
+
   it("keeps the dialog open and moves focus to the new address when a change is refused", async () => {
     await mount(<EmailScreen {...emailDefaults} />)
     await click("[data-e2e=email-change-open]")

@@ -280,6 +280,11 @@ export function createInvitationsStore(
     answering.value = keyOf(ref)
     answerError.value = null
     const result = await call<T>("POST", path, ref)
+    // An answered row leaves the list in the update that ends the answer, never a render later:
+    // the screen moves focus off the row's buttons only while it still knows which row was answered.
+    if (result.ok && "invitationId" in ref) {
+      mine.value = mine.value.filter((row) => row.id !== ref.invitationId)
+    }
     answering.value = null
     if (result.ok) return result.data
     answerError.value = { ref: keyOf(ref), ...result.failure }
@@ -294,18 +299,12 @@ export function createInvitationsStore(
       "/api/invitations/accept",
       ref,
     )
-    if (joined && "invitationId" in ref) {
-      mine.value = mine.value.filter((row) => row.id !== ref.invitationId)
-    }
     return joined
   }
 
   /** Declines; resolves to whether it worked. */
   async function decline(ref: InvitationRef): Promise<boolean> {
     const done = await answer("/api/invitations/decline", ref)
-    if (done && "invitationId" in ref) {
-      mine.value = mine.value.filter((row) => row.id !== ref.invitationId)
-    }
     return done !== null
   }
 

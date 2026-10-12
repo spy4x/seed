@@ -1,4 +1,5 @@
 import type { JSX } from "preact"
+import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
@@ -38,10 +39,25 @@ export interface NotificationsScreenProps {
  * The person's inbox: one sentence per notification, when it came, and a link to what it is about.
  * Unread ones are marked in text and in weight, never by colour alone. "Mark all as read" is a
  * button in the page header, shown only while something is unread; following a link marks that
- * notification read.
+ * notification read. The button leaves once its press went through, so focus moves on to the first
+ * notification's link.
  */
 export function NotificationsScreen(props: NotificationsScreenProps): JSX.Element {
   const { notifications, navigate } = props
+  const list = useRef<HTMLUListElement>(null)
+  // Only a press of "Mark all as read" moves focus: a count that reaches zero another way (the last
+  // link followed, another tab) must not take focus from where the person is.
+  const readAllPressed = useRef(false)
+  const anyUnread = props.unreadCount > 0
+  useEffect(() => {
+    if (anyUnread || !readAllPressed.current) return
+    readAllPressed.current = false
+    list.current?.querySelector<HTMLElement>("[data-e2e=notification-link]")?.focus()
+  }, [anyUnread])
+  // A refused press keeps the button, and with it the focus.
+  useEffect(() => {
+    if (props.error) readAllPressed.current = false
+  }, [props.error])
   return (
     <div class="mx-auto w-full max-w-3xl">
       <Stack gap="lg">
@@ -49,11 +65,14 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
           title="Notifications"
           subtitle={props.unreadCount > 0 ? `${props.unreadCount} unread` : undefined}
           subtitleDataE2E="notifications-unread"
-          action={props.unreadCount > 0 && (
+          action={anyUnread && (
             <Button
               variant="outline"
               class="min-h-11 sm:min-h-9"
-              onClick={props.onReadAll}
+              onClick={() => {
+                readAllPressed.current = true
+                props.onReadAll()
+              }}
               data-e2e="notifications-read-all"
             >
               Mark all as read
@@ -75,6 +94,7 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
           )
           : (
             <ul
+              ref={list}
               class="divide-y divide-subtle overflow-hidden rounded-lg border border-subtle bg-surface"
               data-e2e="notifications-list"
             >
@@ -114,6 +134,7 @@ function NotificationItem(
   },
 ): JSX.Element {
   const unread = notification.readAt === null
+  const sentence = describeNotification(notification)
   return (
     <li
       class="flex min-h-11 items-baseline gap-3 px-4 py-3"
@@ -130,11 +151,13 @@ function NotificationItem(
             {" "}
           </>
         )}
-        {describeNotification(notification)}{" "}
+        {sentence}{" "}
         <a
           href={notification.link}
           class="underline"
           data-e2e="notification-link"
+          // A list of links reads each by its notification, not "Open, Open, Open".
+          aria-label={`Open: ${sentence}`}
           onClick={(event) => {
             // The page is opened by the browser or the router; the read is told either way.
             if (unread) onRead(notification.id)

@@ -572,17 +572,31 @@ export interface MyInvitationsSectionProps {
   navigate?: Navigate
 }
 
-/** The invitations sent to the person's e-mail address, on their groups page: one row each. */
+/**
+ * The invitations sent to the person's e-mail address, on their groups page: one row each. An
+ * answered invitation's row leaves with its buttons: focus moves to the next invitation, else to
+ * the first button of the page around the section ("New group" on the groups page).
+ */
 export function MyInvitationsSection(
   { invitations, answeringId = null, answerError = null, onAccept, onDecline, navigate }:
     MyInvitationsSectionProps,
 ): JSX.Element | null {
+  const list = useRef<HTMLUListElement>(null)
+  // The section goes with its last row, so what holds it is remembered while it is drawn.
+  const around = useRef<Element | null>(null)
+  useEffect(() => {
+    const section = list.current?.closest("section")
+    if (section) around.current = section.parentElement
+  })
+  useFocusAfterRemoval(list, invitations.map((invitation) => invitation.id), answeringId, {
+    fallback: () => around.current?.querySelector("button"),
+  })
   if (invitations.length === 0) return null
   return (
     <section aria-labelledby="my-invitations" class="flex flex-col gap-2" data-e2e="my-invitations">
       <h2 id="my-invitations" class="text-sm font-medium text-muted">Invitations for you</h2>
       <Card>
-        <ul class="divide-y divide-subtle">
+        <ul ref={list} class="divide-y divide-subtle">
           {invitations.map((invitation) => {
             const failed = answerError?.invitationId === invitation.id ? answerError : null
             const answering = answeringId === invitation.id

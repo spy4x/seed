@@ -110,6 +110,69 @@ describe("notifications screen", () => {
     root.remove()
   })
 
+  it("names each notification's link by its sentence, beginning with the word on screen", () => {
+    const page = renderToString(screen({
+      notifications: [
+        row(2, { kind: "group.ownership_received", payload: { groupName: "Trip" } }),
+        row(1),
+      ],
+    }))
+    expect(page).toContain(`aria-label="Open: You now own “Trip”."`)
+    expect(page).toContain(`aria-label="Open: You were removed from “Family”."`)
+  })
+
+  it("moves focus to the first notification's link once Mark all as read went through", async () => {
+    let asked = 0
+    const props = { notifications: [row(2), row(1)], onReadAll: () => asked++ }
+    const root = document.createElement("div")
+    document.body.append(root)
+    await act(() => render(screen({ ...props, unreadCount: 2 }), root))
+    const button = root.querySelector<HTMLElement>(`[data-e2e="notifications-read-all"]`)!
+    button.focus()
+    await act(() => button.click())
+    expect(asked).toBe(1)
+    await act(() => render(screen({ ...props, unreadCount: 0 }), root))
+    const first = root.querySelector(`[data-e2e="notification-link"]`)
+    expect(document.activeElement === first).toBe(true)
+    await act(() => render(null, root))
+    root.remove()
+  })
+
+  it("leaves focus alone when the unread count reaches zero without a press of the button", async () => {
+    const props = { notifications: [row(2), row(1)] }
+    const root = document.createElement("div")
+    document.body.append(root)
+    await act(() =>
+      render(screen({ ...props, unreadCount: 2, hasMore: true, onLoadMore: noop }), root)
+    )
+    const more = root.querySelector<HTMLElement>(`[data-e2e="notifications-more"]`)!
+    more.focus()
+    await act(() =>
+      render(screen({ ...props, unreadCount: 0, hasMore: true, onLoadMore: noop }), root)
+    )
+    expect(document.activeElement === more).toBe(true)
+    await act(() => render(null, root))
+    root.remove()
+  })
+
+  it("keeps focus on Mark all as read when the press was refused, and after a later read by another way", async () => {
+    const props = { notifications: [row(2), row(1)] }
+    const root = document.createElement("div")
+    document.body.append(root)
+    await act(() => render(screen({ ...props, unreadCount: 2 }), root))
+    const button = root.querySelector<HTMLElement>(`[data-e2e="notifications-read-all"]`)!
+    button.focus()
+    await act(() => button.click())
+    await act(() => render(screen({ ...props, unreadCount: 2, error: "Offline." }), root))
+    expect(document.activeElement === button).toBe(true)
+    const body = document.body as HTMLElement
+    button.blur()
+    await act(() => render(screen({ ...props, unreadCount: 0 }), root))
+    expect(document.activeElement === body).toBe(true)
+    await act(() => render(null, root))
+    root.remove()
+  })
+
   it("loads the next page when asked", async () => {
     let asked = 0
     const root = document.createElement("div")

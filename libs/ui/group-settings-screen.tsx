@@ -1,5 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
-import { useState } from "preact/hooks"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { IconArrowRight, IconPlus } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
@@ -191,6 +191,15 @@ export function GroupSettingsScreen(
   useSucceeded(deleting, deleteError !== null, close)
   const [freshLeaveError, leaveOpened] = useFreshError(leaveError, leaving)
   const [freshDeleteError, deleteOpened] = useFreshError(deleteError, deleting)
+  // A transfer that went through makes the person an admin, and the owner's dialog goes with the
+  // role. Focus goes to the menu that opened it, where a closed dialog would have put it.
+  const header = useRef<HTMLDivElement>(null)
+  const handedOver = dialog === Dialog.TRANSFER && group != null && group.role !== GroupRole.OWNER
+  useEffect(() => {
+    if (!handedOver) return
+    setDialog(null)
+    header.current?.querySelector<HTMLElement>("[data-e2e=group-menu]")?.focus()
+  }, [handedOver])
 
   const back = { href: SCREEN_PATHS.groups, label: "Back to groups" }
   if (!group) {
@@ -291,43 +300,45 @@ export function GroupSettingsScreen(
 
   return (
     <Stack gap="xl" class="mx-auto w-full max-w-3xl">
-      <PageHeader
-        title={group.name}
-        titleDataE2E="group-general-name"
-        heading={canRename(group.role) && onRename
-          ? (
-            <InlineEdit
-              value={group.name}
-              onSave={onRename}
-              editLabel={(name) => `Rename ${name}`}
-              savingLabel="Renaming..."
-              errorMessage={(reason) =>
-                reason instanceof Error ? reason.message : "Could not rename the group."}
-              class="-ml-2 align-middle [&>button]:text-xl [&>button]:font-semibold sm:[&>button]:text-2xl"
+      <div ref={header}>
+        <PageHeader
+          title={group.name}
+          titleDataE2E="group-general-name"
+          heading={canRename(group.role) && onRename
+            ? (
+              <InlineEdit
+                value={group.name}
+                onSave={onRename}
+                editLabel={(name) => `Rename ${name}`}
+                savingLabel="Renaming..."
+                errorMessage={(reason) =>
+                  reason instanceof Error ? reason.message : "Could not rename the group."}
+                class="-ml-2 align-middle [&>button]:text-xl [&>button]:font-semibold sm:[&>button]:text-2xl"
+              />
+            )
+            : undefined}
+          mark={<GroupMark color={group.color} emoji={group.emoji} />}
+          subtitle={
+            <>
+              <span data-e2e="group-general-role">{ROLE_TEXT[group.role]}</span>
+              {selected && <span data-e2e="group-current">&nbsp;· your current group</span>}
+            </>
+          }
+          back={back}
+          navigate={navigate}
+          action={
+            <PageAction
+              label="Open notes"
+              Icon={IconArrowRight}
+              variant="outline"
+              onClick={() => onOpen?.(group.id)}
+              dataE2E="group-open"
             />
-          )
-          : undefined}
-        mark={<GroupMark color={group.color} emoji={group.emoji} />}
-        subtitle={
-          <>
-            <span data-e2e="group-general-role">{ROLE_TEXT[group.role]}</span>
-            {selected && <span data-e2e="group-current">&nbsp;· your current group</span>}
-          </>
-        }
-        back={back}
-        navigate={navigate}
-        action={
-          <PageAction
-            label="Open notes"
-            Icon={IconArrowRight}
-            variant="outline"
-            onClick={() => onOpen?.(group.id)}
-            dataE2E="group-open"
-          />
-        }
-        menu={menu}
-        menuDataE2E="group-menu"
-      />
+          }
+          menu={menu}
+          menuDataE2E="group-menu"
+        />
+      </div>
 
       {group.description && (
         <p class="whitespace-pre-line text-sm" data-e2e="group-general-description">

@@ -66,6 +66,33 @@ test.describe("returning to the requested page after sign-in", () => {
     }
   })
 
+  // Each page with what proves it loaded for the signed-in person: the tags name their group, and
+  // a new account's inbox says it is empty.
+  for (
+    const [path, title, loaded] of [
+      ["/tags", "Tags", "[data-e2e=tags-group]"],
+      ["/notifications", "Notifications", "text=You are all caught up."],
+    ]
+  ) {
+    test(`a signed-out person who opens ${path} signs in and lands there`, async ({ page, request }) => {
+      const email = `e2e-next-page-${uuidV7().slice(-8)}@example.com`
+      await cleanup(request, email)
+      try {
+        await accountWithNote(request, email)
+
+        await gotoApp(page, path, page.locator("[data-e2e=auth-form-login]"))
+        await expect(page).toHaveURL(`/sign-in?next=${encodeURIComponent(path)}`)
+        await page.locator("[data-e2e=auth-form-login]").fill(email)
+        await page.locator("[data-e2e=auth-form-password]").fill(password)
+        await submitTo(page, path, "h1")
+        await expect(page.locator("h1")).toHaveText(title)
+        await expect(page.locator(loaded)).toBeVisible()
+      } finally {
+        await cleanup(request, email, true)
+      }
+    })
+  }
+
   test("a signed-out person with a one-time code lands on the note after the code", async ({ page, request }) => {
     const email = `e2e-next-2fa-${uuidV7().slice(-8)}@example.com`
     await cleanup(request, email)

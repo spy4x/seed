@@ -55,7 +55,8 @@ export interface GroupTransferFormProps {
 /**
  * Handing the group to another member, for the owner alone, in a dialog. The owner picks the
  * member, types the group's name and enters their password, as strong a check as a password change.
- * The new owner gets the group; the old one stays as an admin.
+ * The new owner gets the group; the old one stays as an admin. When the form leaves the page it asks
+ * the app to drop the typed password.
  */
 export function GroupTransferForm(
   {
@@ -83,6 +84,15 @@ export function GroupTransferForm(
       : message
     target.current?.focus()
   }, [error])
+
+  // The dialog closing takes the form away: the typed password goes with it, however it closed, so
+  // opening the dialog again never shows it.
+  const latest = useRef({ draft, onDraftChange })
+  latest.current = { draft, onDraftChange }
+  useEffect(() => () => {
+    const { draft, onDraftChange } = latest.current
+    if (draft.password) onDraftChange?.({ ...draft, password: "" })
+  }, [])
 
   const candidates = transferCandidates(role, members)
   // A draft member who is not offered (none picked yet, or one who left) becomes the first one

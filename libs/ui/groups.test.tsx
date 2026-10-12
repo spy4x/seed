@@ -264,6 +264,15 @@ describe("GroupsScreen", () => {
     expect(has("[data-e2e=group-new-dialog]")).toBe(false)
   })
 
+  it("moves focus to the name when the create was refused", async () => {
+    await mount(<GroupsScreen {...defaults} />)
+    await click("[data-e2e=group-new]")
+    find("[data-e2e=group-create]").focus()
+    await rerender(<GroupsScreen {...defaults} creating />)
+    await rerender(<GroupsScreen {...defaults} error="That name is taken." />)
+    expect(focused()).toBe("group-name")
+  })
+
   it("has no refresh button", async () => {
     await mount(<GroupsScreen {...defaults} />)
     expect(has("[data-e2e=group-refresh]")).toBe(false)
@@ -701,6 +710,46 @@ describe("GroupSettingsScreen header", () => {
     expect(has("[data-e2e=group-transfer-dialog] [data-e2e=transfer-body]")).toBe(true)
     await act(() => close!())
     expect(has("[data-e2e=group-transfer-dialog]")).toBe(false)
+  })
+
+  it("drops the transfer's typed password when its dialog is closed", async () => {
+    const drafts = spy<[TransferDraft]>()
+    const draft = { userId: 2, name: "", password: "secret" }
+    await mount(
+      <GroupSettingsScreen
+        {...defaults}
+        transfer={(done) => (
+          <GroupTransferForm
+            groupName="Team"
+            role={GroupRole.OWNER}
+            members={[owner, editor]}
+            draft={draft}
+            onDraftChange={drafts.fn}
+            onCancel={done}
+          />
+        )}
+      />,
+    )
+    await click("[data-e2e=group-transfer-open]")
+    await click("[data-e2e=group-transfer-dialog] button[aria-label=Close]")
+    expect(has("[data-e2e=group-transfer-dialog]")).toBe(false)
+    expect(drafts.calls).toEqual([[{ ...draft, password: "" }]])
+  })
+
+  it("moves focus to the More actions menu once a transfer went through and took the dialog away", async () => {
+    const screen = (role: GroupRole) => (
+      <GroupSettingsScreen
+        {...defaults}
+        group={{ ...team, role }}
+        transfer={() => <button type="button" data-e2e="transfer-body">transfer</button>}
+      />
+    )
+    await mount(screen(GroupRole.OWNER))
+    await click("[data-e2e=group-transfer-open]")
+    find("[data-e2e=transfer-body]").focus()
+    await rerender(screen(GroupRole.ADMIN))
+    expect(has("[data-e2e=group-transfer-dialog]")).toBe(false)
+    expect(focused()).toBe("group-menu")
   })
 
   it("offers Invite people to the owner and admins only, in a dialog the form can close", async () => {
@@ -1185,6 +1234,14 @@ describe("GroupTransferForm", () => {
     expect(focused()).toBe("group-transfer-error")
   })
 
+  it("asks the app to drop the typed password when the form leaves the page", async () => {
+    const drafts = spy<[TransferDraft]>()
+    const draft = { userId: 2, name: "Team", password: "secret" }
+    await mount(<GroupTransferForm {...defaults} draft={draft} onDraftChange={drafts.fn} />)
+    await rerender(<p>closed</p>)
+    expect(drafts.calls).toEqual([[{ userId: 2, name: "Team", password: "" }]])
+  })
+
   it("draws nothing while nobody else is in the group", async () => {
     await mount(<GroupTransferForm {...defaults} members={[owner]} />)
     expect(root!.innerHTML).toBe("")
@@ -1252,6 +1309,25 @@ describe("MyInvitationsSection", () => {
     await click("[data-e2e=invitation-accept]")
     await click("[data-e2e=invitation-decline]")
     expect([accept.calls, decline.calls]).toEqual([[["i-1"]], [["i-1"]]])
+  })
+
+  it("moves focus to the next invitation when one was answered, and to the page's first button after the last", async () => {
+    const second = { ...preview, id: "i-2", groupName: "Family" }
+    const page = (invitations: InvitationPreviewRow[], answeringId: string | null = null) => (
+      <div>
+        <button type="button" data-e2e="page-action">New group</button>
+        <MyInvitationsSection invitations={invitations} answeringId={answeringId} />
+      </div>
+    )
+    await mount(page([preview, second]))
+    await rerender(page([preview, second], "i-1"))
+    await rerender(page([second]))
+    expect(document.activeElement?.getAttribute("aria-label"))
+      .toBe("Decline the invitation to Family")
+
+    await rerender(page([second], "i-2"))
+    await rerender(page([]))
+    expect(focused()).toBe("page-action")
   })
 
   it("draws nothing when there are none", async () => {

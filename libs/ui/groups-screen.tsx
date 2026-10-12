@@ -107,6 +107,11 @@ export function GroupsScreen(
 ): JSX.Element {
   const [creatingOpen, setCreatingOpen] = useState(false)
   useSucceeded(creating, error !== null, () => setCreatingOpen(false))
+  // A refused create lands the person on the name to fix.
+  const nameInput = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (error && creatingOpen) nameInput.current?.focus()
+  }, [error])
   // A refused restore has no field to fix, so focus lands on the message above the list.
   const restoreMessage = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -224,6 +229,7 @@ export function GroupsScreen(
             <Stack>
               <Field id="group-name" label="Name" error={error} required>
                 <Input
+                  ref={nameInput}
                   data-e2e="group-name"
                   name="name"
                   autocomplete="off"

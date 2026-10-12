@@ -6,12 +6,18 @@ import { groupsStore } from "../state/groups.ts"
 import { type InvitationRef, invitationsStore } from "../state/invitations.ts"
 import { selectionStore } from "../state/selection.ts"
 
+type InvitationsStore = typeof invitationsStore
+
 /**
  * After an accept: the server already selected the joined group, so the app reads the groups and
  * the selection again and opens the notes.
  */
-async function joined(ref: InvitationRef, navigate: (path: string) => void): Promise<boolean> {
-  const result = await invitationsStore.accept(ref)
+async function joined(
+  store: InvitationsStore,
+  ref: InvitationRef,
+  navigate: (path: string) => void,
+): Promise<boolean> {
+  const result = await store.accept(ref)
   if (!result) return false
   await Promise.all([groupsStore.refreshFromUser(), selectionStore.refresh().catch(() => {})])
   navigate(NOTE_PATHS.list)
@@ -41,17 +47,19 @@ export function InvitationView({ token }: { token: string }) {
       answerError={failed && !failed.plan ? failed.message : null}
       answerRefusal={failed?.plan ?? null}
       navigate={navigate}
-      onAccept={() => void joined({ token }, navigate)}
+      onAccept={() => void joined(store, { token }, navigate)}
       onDecline={() =>
         void store.decline({ token }).then((done) => done && navigate(SCREEN_PATHS.groups))}
     />
   )
 }
 
-/** The invitations sent to the person's proved address, on the groups page. */
-export function MyInvitationsView() {
+/**
+ * The invitations sent to the person's proved address, on the groups page. `store` is the app's
+ * own unless a test hands in one with a fake API.
+ */
+export function MyInvitationsView({ store = invitationsStore }: { store?: InvitationsStore }) {
   const [, navigate] = useLocation()
-  const store = invitationsStore
   useEffect(() => void store.loadMine(), [])
   const failed = store.answerError.value
   return (
@@ -61,7 +69,7 @@ export function MyInvitationsView() {
       answerError={failed &&
         { invitationId: failed.ref, message: failed.message, plan: failed.plan }}
       navigate={navigate}
-      onAccept={(invitationId) => void joined({ invitationId }, navigate)}
+      onAccept={(invitationId) => void joined(store, { invitationId }, navigate)}
       onDecline={(invitationId) => void store.decline({ invitationId })}
     />
   )

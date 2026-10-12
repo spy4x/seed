@@ -101,6 +101,9 @@ test.describe("group invitations", () => {
 
       await card.locator("[data-e2e=invitation-accept]").click()
       await expect(inviteePage).toHaveURL("/notes")
+      // The page changed without a load: focus is on the new page's heading, not on a button
+      // that is gone.
+      await expect(inviteePage.locator("main h1")).toBeFocused()
       await gotoApp(inviteePage, `/groups/${groupId}`, settingsReady(inviteePage))
       await expect(inviteePage.locator("[data-e2e=group-general-role]")).toHaveText("Editor")
 
@@ -110,6 +113,70 @@ test.describe("group invitations", () => {
     } finally {
       await inviteePage?.context().close()
       for (const email of [owner, admin, invitee]) await cleanup(request, email, { soft: true })
+    }
+  })
+
+  test("declining keeps focus on the page: the next invitation, then New group, then the groups page's heading", async ({ page, request }) => {
+    const id = uuidV7().slice(-8)
+    const owner = `e2e-decline-owner-${id}@example.com`
+    const guest = `e2e-decline-guest-${id}@example.com`
+    for (const email of [owner, guest]) await cleanup(request, email)
+    try {
+      // The owner invites the guest's address to two groups, and makes a link to a third.
+      await signUp(request, owner)
+      const tokens: string[] = []
+      for (const [name, email] of [["Team", guest], ["Family", guest], ["Club", null]]) {
+        const groupId = uuidV7()
+        const created = await request.post(`${apiBase}/api/groups`, {
+          headers,
+          data: { id: groupId, name },
+        })
+        expect(created.status(), await created.text()).toBe(201)
+        const invited = await request.post(`${apiBase}/api/groups/${groupId}/invitations`, {
+          headers,
+          data: { role: 1, expiresInDays: 7, maxUses: 1, email, sendEmail: false },
+        })
+        expect(invited.status(), await invited.text()).toBe(201)
+        tokens.push(((await invited.json()) as { token: string }).token)
+      }
+
+      // Invitations are listed for a proved address only: the guest proves theirs.
+      await signUp(request, guest)
+      let code = ""
+      await expect.poll(async () => {
+        const mail = await request.post(`${apiBase}/api/test/last-mail`, { data: { email: guest } })
+        if (mail.ok()) code = ((await mail.json()) as { text: string }).text.split("\n\n")[1]
+        return mail.status()
+      }, { timeout: 20_000, message: "the worker mails the code" }).toBe(200)
+      const proved = await request.post(`${apiBase}/api/auth/email/verify`, {
+        headers,
+        data: { code: code.trim() },
+      })
+      expect(proved.ok(), await proved.text()).toBe(true)
+
+      await signIn(page, guest, password)
+      const mine = page.locator("[data-e2e=my-invitations]")
+      await gotoApp(page, "/groups", mine)
+      await expect(mine.locator("[data-e2e=invitation-card]")).toHaveCount(2)
+      const first = await mine.locator("[data-e2e=invitation-group]").first().textContent()
+      const second = await mine.locator("[data-e2e=invitation-group]").nth(1).textContent()
+
+      await page.getByRole("button", { name: `Decline the invitation to ${first}` }).click()
+      await expect(mine.locator("[data-e2e=invitation-card]")).toHaveCount(1)
+      await expect(page.getByRole("button", { name: `Decline the invitation to ${second}` }))
+        .toBeFocused()
+
+      await page.getByRole("button", { name: `Decline the invitation to ${second}` }).click()
+      await expect(mine).toHaveCount(0)
+      await expect(page.locator("[data-e2e=group-new]")).toBeFocused()
+
+      const card = page.locator("[data-e2e=invitation-card]")
+      await gotoApp(page, `/invite/${tokens[2]}`, card)
+      await card.locator("[data-e2e=invitation-decline]").click()
+      await expect(page).toHaveURL("/groups")
+      await expect(page.locator("main h1")).toBeFocused()
+    } finally {
+      for (const email of [owner, guest]) await cleanup(request, email, { soft: true })
     }
   })
 })

@@ -94,3 +94,15 @@ Deno.test("the scan finds a browser fetch that writes, and leaves a store's own 
   const calls = browserFetchCalls(source)
   expect(calls).toEqual(["`/api/x`, { method: `POST` }"])
 })
+
+Deno.test("the SPA draws every route from the route table", async () => {
+  // `PAGES` in `app.tsx` is typed by the table, so the type check holds the two together. A
+  // `<Route>` written by hand beside it would be a page the sign-in gate and the unsaved-changes
+  // guard never heard of.
+  const drawn = (await spaSources())
+    .map(([file, source]) => [file, source.match(/<Route[\s/>](?!`)/g)?.length ?? 0])
+    .filter(([, count]) => count !== 0)
+  expect(drawn).toEqual([["apps/spa/src/app.tsx", 1]])
+  const app = await Deno.readTextFile(`${ROOT}apps/spa/src/app.tsx`)
+  expect(app).toMatch(/SPA_ROUTE_PATHS\.map\(\(path\) => \(\s*<Route key=\{path\} path=\{path\}>/)
+})
