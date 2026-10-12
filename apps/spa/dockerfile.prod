@@ -1,7 +1,7 @@
 # Build stage
 ARG DENO_VERSION=2.9.7
 # The release pipeline starts from the published base image instead (BASE_IMAGE).
-ARG BASE_IMAGE=app/deno-base:${DENO_VERSION}
+ARG BASE_IMAGE=localhost/app/deno-base:${DENO_VERSION}
 FROM ${BASE_IMAGE} AS build
 
 # Switch to root to copy files with proper permissions

@@ -4,7 +4,7 @@
 # other images start from it (BASE_IMAGE).
 
 ARG DENO_VERSION=2.9.7
-FROM denoland/deno:alpine-${DENO_VERSION}
+FROM docker.io/denoland/deno:alpine-${DENO_VERSION}
 
 WORKDIR /app
 
@@ -39,8 +39,9 @@ COPY libs/server/subscribers/deno.json ./libs/server/subscribers/deno.json
 COPY libs/platform/deno.json ./libs/platform/deno.json
 COPY libs/ui/deno.json ./libs/ui/deno.json
 
-# Install dependencies (this layer will be cached if deno.jsonc doesn't change)
-RUN deno install
+# Install dependencies. --frozen fails the build when deno.lock does not match deno.jsonc, so the
+# image holds the versions CI tested (this layer is cached until a manifest above changes).
+RUN deno install --frozen
 
 # Set ownership for non-root user and ensure deno cache is writable
 RUN chown -R 1000:1000 /app /deno-dir
