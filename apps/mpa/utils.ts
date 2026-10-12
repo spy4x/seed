@@ -9,6 +9,8 @@ export interface State {
   webAppOrigin: string
   /** The origin of the SPA, the product itself, as `MpaConfig.apiOrigin`: links to the app use it. */
   spaOrigin: string
+  /** Whether the API takes newsletter subscriptions; `false` hides every newsletter form. */
+  newsletter: boolean
 }
 
 export const define = createDefine<State>()

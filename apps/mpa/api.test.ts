@@ -91,6 +91,47 @@ describe("createApi", () => {
   })
 })
 
+describe("createApi without an API that answers", () => {
+  const tokenRequest = new Request("https://www.example.com/subscribe/confirm")
+  const path = "/api/subscribers/confirm?list=news&token=token-from-the-link"
+
+  it("answers 502 when the API cannot be reached, and logs the call without its query", async () => {
+    const logged: string[] = []
+    const api = createApi({
+      apiUrl: "http://api:8000",
+      request: tokenRequest,
+      remoteAddress: "",
+      fetch: (input) =>
+        Promise.reject(new TypeError(`error sending request for url (${new Request(input).url})`)),
+      log: (line) => logged.push(line),
+    })
+
+    expect(await api.call("GET", path)).toEqual({ status: 502, body: null })
+    expect(logged).toEqual(["API call failed: GET /api/subscribers/confirm (TypeError)"])
+  })
+
+  it("gives up on an API that does not answer within the timeout, with 504", async () => {
+    const logged: string[] = []
+    /** Never answers; rejects only when the caller aborts, as `fetch` does. */
+    const hanging =
+      ((_input: string | URL | Request, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(init.signal!.reason))
+        })) as typeof globalThis.fetch
+    const api = createApi({
+      apiUrl: "http://api:8000",
+      request: tokenRequest,
+      remoteAddress: "",
+      fetch: hanging,
+      timeoutMs: 5,
+      log: (line) => logged.push(line),
+    })
+
+    expect(await api.call("GET", path)).toEqual({ status: 504, body: null })
+    expect(logged).toEqual(["API call failed: GET /api/subscribers/confirm (timeout)"])
+  })
+})
+
 describe("errorMessage", () => {
   it("reads both error shapes the API answers with", () => {
     expect(errorMessage({ status: 401, body: { error: "Invalid token" } }, "x")).toBe(

@@ -9,6 +9,7 @@ import {
   isCurrentSubscriberToken,
   readSubscribersSetup,
   subscriberConfirmLink,
+  subscriberPagesUrl,
   subscriberUnsubscribeLink,
 } from "./subscribers.ts"
 
@@ -26,6 +27,37 @@ describe("subscriber setup", () => {
       `prod`,
     )
     expect(setup).toEqual({ secret: SECRET, previousSecrets: [OLD_SECRET] })
+  })
+
+  it("sends the mailed links to the website when it is deployed, over https outside development", () => {
+    const prod = readSubscribersSetup(
+      env({ SUBSCRIBERS_SECRET: SECRET, MPA_DOMAIN: `www.example.com` }),
+      `prod`,
+    )
+    expect(prod?.siteUrl).toBe(`https://www.example.com`)
+    expect(subscriberPagesUrl(prod!, `https://app.example.com`)).toBe(`https://www.example.com`)
+
+    const dev = readSubscribersSetup(env({ MPA_DOMAIN: `www.localhost:8001` }), `dev`)
+    expect(dev?.siteUrl).toBe(`http://www.localhost:8001`)
+  })
+
+  it("refuses an MPA_DOMAIN that carries a scheme instead of mailing links to the host `https`", () => {
+    expect(() =>
+      readSubscribersSetup(
+        env({ SUBSCRIBERS_SECRET: SECRET, MPA_DOMAIN: `https://www.example.com` }),
+        `prod`,
+      )
+    ).toThrow(`MPA_DOMAIN must be a host`)
+  })
+
+  it("keeps the mailed links on the app when the website is not deployed", () => {
+    for (const MPA_DOMAIN of [undefined, ``, ` `]) {
+      const values: Record<string, string> = { SUBSCRIBERS_SECRET: SECRET }
+      if (MPA_DOMAIN !== undefined) values.MPA_DOMAIN = MPA_DOMAIN
+      const setup = readSubscribersSetup(env(values), `prod`)
+      expect(setup).toEqual({ secret: SECRET, previousSecrets: [] })
+      expect(subscriberPagesUrl(setup!, `https://app.example.com`)).toBe(`https://app.example.com`)
+    }
   })
 
   it("turns subscriptions off in production without a secret", () => {

@@ -37,8 +37,11 @@ export interface SitePageHead {
 
 /** What every page hands {@link SiteFrame}. */
 export interface SiteFrameProps {
-  /** The request's state: the website's own origin for canonical links, the SPA's for actions. */
-  state: Pick<State, "webAppOrigin" | "spaOrigin">
+  /**
+   * The request's state: the website's own origin for canonical links, the SPA's for actions, and
+   * whether the footer offers the newsletter.
+   */
+  state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter">
   /** The page's path on this website, such as `/pricing`, for its canonical address. */
   path: string
   head: SitePageHead
@@ -53,8 +56,8 @@ const NAV_LINKS = [
 
 /**
  * The frame of every page of the public website: its head tags, the header with the way into the
- * demo, the content and the footer with the legal pages and the newsletter. Every link and form
- * works with JavaScript turned off.
+ * demo, the content and the footer with the legal pages and, while the API takes subscriptions,
+ * the newsletter form. Every link and form works with JavaScript turned off.
  */
 export function SiteFrame({ state, path, head, children }: SiteFrameProps): JSX.Element {
   const spa = spaLinks(state.spaOrigin)
@@ -83,7 +86,7 @@ export function SiteFrame({ state, path, head, children }: SiteFrameProps): JSX.
         }
       />
       <Page as="main" class="py-8 sm:py-16">{children}</Page>
-      <SiteFooter signIn={spa.signIn} signUp={spa.signUp} />
+      <SiteFooter signIn={spa.signIn} signUp={spa.signUp} newsletter={state.newsletter} />
     </>
   )
 }
@@ -132,7 +135,9 @@ function FooterLinks(
   )
 }
 
-function SiteFooter({ signIn, signUp }: { signIn: string; signUp: string }): JSX.Element {
+function SiteFooter(
+  { signIn, signUp, newsletter }: { signIn: string; signUp: string; newsletter: boolean },
+): JSX.Element {
   return (
     <footer class="border-t border-subtle bg-surface dark:bg-canvas">
       <div class="mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
@@ -160,28 +165,30 @@ function SiteFooter({ signIn, signUp }: { signIn: string; signUp: string }): JSX
             { label: "Terms", href: "/terms" },
           ]}
         />
-        <section aria-labelledby="footer-news">
-          <h2 id="footer-news" class="text-sm font-semibold">News by e-mail</h2>
-          <p class="mt-3 text-sm text-muted">
-            What I build next, when it ships. Confirm by link, unsubscribe in one click.
-          </p>
-          <form method="post" action={FORM_ACTIONS.subscribe} class="mt-3 flex gap-2">
-            <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
-            <label for="footer-email" class="sr-only">E-mail</label>
-            <Input
-              id="footer-email"
-              name="email"
-              type="email"
-              autocomplete="email"
-              placeholder="you@example.com"
-              required
-              data-e2e="footer-subscribe-email"
-            />
-            <Button type="submit" variant="secondary" data-e2e="footer-subscribe-submit">
-              Subscribe
-            </Button>
-          </form>
-        </section>
+        {newsletter && (
+          <section aria-labelledby="footer-news">
+            <h2 id="footer-news" class="text-sm font-semibold">News by e-mail</h2>
+            <p class="mt-3 text-sm text-muted">
+              What I build next, when it ships. Confirm by link, unsubscribe in one click.
+            </p>
+            <form method="post" action={FORM_ACTIONS.subscribe} class="mt-3 flex gap-2">
+              <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
+              <label for="footer-email" class="sr-only">E-mail</label>
+              <Input
+                id="footer-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+                required
+                data-e2e="footer-subscribe-email"
+              />
+              <Button type="submit" variant="secondary" data-e2e="footer-subscribe-submit">
+                Subscribe
+              </Button>
+            </form>
+          </section>
+        )}
       </div>
       <p class="mx-auto max-w-7xl px-4 pb-12 text-sm text-muted sm:px-6 lg:px-8">
         Built in public by{" "}

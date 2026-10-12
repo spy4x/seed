@@ -24,7 +24,8 @@ test("a visitor without JavaScript goes from the home page to pricing, to sign-u
   await page.goto("/pricing")
   await page.locator("[data-e2e=footer-subscribe-email]").fill(email)
   await page.locator("[data-e2e=footer-subscribe-submit]").click()
-  await expect(page).toHaveURL("/subscribe")
+  // The website answered the post with a redirect, so a reload asks for no second mail.
+  await expect(page).toHaveURL("/subscribe?state=sent")
   await expect(page.locator("[data-e2e=subscribe-sent]")).toBeVisible()
 })
 

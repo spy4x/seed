@@ -34,20 +34,25 @@ const neverCalled = () => Promise.reject(new Error("the website called the API")
 const view = (component: unknown) => component as Parameters<App<State>["appWrapper"]>[0]
 
 /** The website's pages behind its middleware and its `_app` document, as in production. */
-const handler = new App<State>()
-  .use(pageMiddleware(config, neverCalled))
-  .appWrapper(view(AppWrapper))
-  .route("/", { component: view(Home) })
-  .route("/pricing", { component: view(Pricing), handler: pricing })
-  .route("/privacy", { component: view(Privacy) })
-  .route("/terms", { component: view(Terms) })
-  .get("/robots.txt", robots.GET!)
-  .get("/sitemap.xml", sitemap.GET!)
-  .get("/unsubscribe", unsubscribe.GET!)
-  .handler()
+function siteWith(newsletter: () => boolean) {
+  return new App<State>()
+    .use(pageMiddleware(config, neverCalled, newsletter))
+    .appWrapper(view(AppWrapper))
+    .route("/", { component: view(Home) })
+    .route("/pricing", { component: view(Pricing), handler: pricing })
+    .route("/privacy", { component: view(Privacy) })
+    .route("/terms", { component: view(Terms) })
+    .get("/robots.txt", robots.GET!)
+    .get("/sitemap.xml", sitemap.GET!)
+    .get("/unsubscribe", unsubscribe.GET!)
+    .handler()
+}
+const handler = siteWith(() => true)
+/** The same website while the API takes no subscriptions. */
+const withoutNewsletter = siteWith(() => false)
 
-async function page(path: string): Promise<{ status: number; html: string }> {
-  const response = await handler(new Request(`${site}${path}`), info)
+async function page(path: string, app = handler): Promise<{ status: number; html: string }> {
+  const response = await app(new Request(`${site}${path}`), info)
   return { status: response.status, html: await response.text() }
 }
 
@@ -148,6 +153,26 @@ describe("the public website", () => {
     const form = html.match(/<form method="post" action="\/subscribe"[\s\S]*?<\/form>/)?.[0]
     expect(form).toContain(`name="list" value="news"`)
     expect(form).toContain(`name="email"`)
+  })
+
+  it("offers no newsletter form on any page while subscriptions are off, and keeps the rest of the footer", async () => {
+    for (const path of ["/", "/pricing", "/privacy", "/terms"]) {
+      const { status, html } = await page(path, withoutNewsletter)
+
+      expect(status, path).toBe(200)
+      expect(html, path).not.toContain(`action="/subscribe"`)
+      expect(html, path).not.toContain("News by e-mail")
+      expect(hrefOf(linkNamed(html, "Privacy")), path).toBe("/privacy")
+    }
+  })
+
+  it("leaves the newsletter page out of the sitemap while subscriptions are off", async () => {
+    const response = await withoutNewsletter(new Request(`${site}/sitemap.xml`), info)
+
+    const locs = [...(await response.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+    expect(locs).toEqual(
+      SITE_PAGES.filter((path) => path !== "/subscribe").map((path) => `${site}${path}`),
+    )
   })
 
   it("keeps a page a mailed link opens out of search results", async () => {

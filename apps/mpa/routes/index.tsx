@@ -96,8 +96,7 @@ const WORKS_TODAY = [
 
 const NOT_YET = [
   "Sign-in with Google, GitHub or passkeys",
-  "Deleting an account or downloading its data",
-  "A list of your sessions with a way to sign the others out",
+  "Downloading an account's data",
   "Parts of the worker",
 ]
 

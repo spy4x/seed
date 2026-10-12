@@ -34,7 +34,7 @@ across real projects, a CLI last.
 
 Green: `deno task check` (205 tests in nine runs), `deno task test:integration` (39 tests, 91
 steps, needs Postgres), `deno task spa:build`, `deno task mpa:check`, the Playwright e2e suite
-(28 tests) and the MPA's browser test (`e2e/mpa/run.sh`, 1 test).
+(28 tests) and the MPA's browser tests (`e2e/mpa/run.sh`, 6 tests).
 
 ```
 apps/api      REST, the /api/ws socket, auth, CQRS dispatch. The only app with real behaviour.

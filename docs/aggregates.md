@@ -23,6 +23,9 @@ group reads notes; an editor or above writes them.
   the version it saw**. A stale version is refused with a typed conflict that carries the current
   version, instead of overwriting a change the client never saw.
 - **Screens are dumb: props in, callbacks out** (see "Three layers of UI" in `AGENTS.md`).
+- **A feature that stores something new about a person edits the privacy page**
+  (`apps/mpa/routes/privacy.tsx`) in the same pull request: what is kept, for how long, and who can
+  read it.
 
 ## The files, in order
 

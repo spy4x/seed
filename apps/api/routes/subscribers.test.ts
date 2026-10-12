@@ -186,11 +186,25 @@ describe(`POST /api/subscribers`, () => {
     expect(confirmMails).toEqual([])
   })
 
-  it(`answers 503 on every route when subscriptions are off`, async () => {
+  it(`answers 503 on every subscribe, confirm and unsubscribe route when subscriptions are off`, async () => {
     const { app, confirmMails } = buildApp({ setup: null })
     expect((await subscribe(app, { email: `ada@example.com`, list: `news` })).status).toBe(503)
+    expect((await app.request(`${API_URL}/subscribers/confirm?list=news&token=t`)).status).toBe(503)
     expect((await app.request(`${API_URL}/subscribers/unsubscribe?list=news`)).status).toBe(503)
     expect(confirmMails).toEqual([])
+  })
+
+  it(`tells the website whether subscriptions are on, however often it asks`, async () => {
+    const { app } = buildApp({ strictLimit: 1 })
+    for (let asked = 0; asked < 3; asked++) {
+      const on = await app.request(`${API_URL}/subscribers`)
+      expect(on.status).toBe(200)
+      expect(await on.json()).toEqual({ enabled: true })
+    }
+
+    const off = await buildApp({ setup: null }).app.request(`${API_URL}/subscribers`)
+    expect(off.status).toBe(200)
+    expect(await off.json()).toEqual({ enabled: false })
   })
 })
 
@@ -287,6 +301,19 @@ describe(`unsubscribing`, () => {
     expect(`${location.origin}${location.pathname}`).toBe(`${WEB_APP_URL}/unsubscribe`)
     expect(location.searchParams.get(`token`)).toBe(token)
     expect(await store.count()).toBe(1)
+  })
+
+  it(`sends that person to the website's unsubscribe page when the website is deployed`, async () => {
+    const { app, store } = buildApp({ setup: { ...SETUP, siteUrl: `https://www.example.com` } })
+    const token = await listed(store, `ada@example.com`)
+
+    const response = await app.request(unsubscribeUrl(token))
+
+    expect(response.status).toBe(303)
+    const location = new URL(response.headers.get(`location`)!)
+    expect(`${location.origin}${location.pathname}`).toBe(`https://www.example.com/unsubscribe`)
+    expect(location.searchParams.get(`list`)).toBe(`news`)
+    expect(location.searchParams.get(`token`)).toBe(token)
   })
 
   it(`previews whom the link names for the page`, async () => {

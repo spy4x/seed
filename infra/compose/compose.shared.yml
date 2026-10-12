@@ -469,6 +469,8 @@ services:
       # Mail subscriptions: the API checks the links the worker signs. Unset → off in production.
       - SUBSCRIBERS_SECRET=${SUBSCRIBERS_SECRET:-}
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
+      # The website's host, when it is deployed: the mailed confirm and unsubscribe links open there.
+      - MPA_DOMAIN=${MPA_DOMAIN:-}
     deploy:
       resources:
         limits:
@@ -555,6 +557,8 @@ services:
       # Mail subscriptions: the API checks the links the worker signs. Unset → off in production.
       - SUBSCRIBERS_SECRET=${SUBSCRIBERS_SECRET:-}
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
+      # The website's host, when it is deployed: the mailed confirm and unsubscribe links open there.
+      - MPA_DOMAIN=${MPA_DOMAIN:-}
     deploy:
       resources:
         limits:

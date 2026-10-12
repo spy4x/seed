@@ -12,6 +12,7 @@ import { isSubscriberList, type SubscriberList } from "@domain/subscribers"
 import {
   createListCrypto,
   subscriberConfirmLink,
+  subscriberPagesUrl,
   type SubscribersSetup,
   subscriberUnsubscribeLink,
 } from "../subscribers/subscribers.ts"
@@ -87,7 +88,7 @@ export function subscriberConfirmMailJob(deps: SubscriberMailDeps): JobHandler {
   return requestJob(deps, async (request, setup) => {
     const crypto = await createListCrypto(setup, request.listId)
     const link = subscriberConfirmLink(
-      deps.brand.webAppUrl,
+      subscriberPagesUrl(setup, deps.brand.webAppUrl),
       request.listId,
       await crypto.confirmToken(request.email),
     )

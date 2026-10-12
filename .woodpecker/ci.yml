@@ -85,7 +85,7 @@ steps:
   e2e-mpa:
     # The MPA's browser tests: with JavaScript turned off, a visitor subscribes to the newsletter,
     # confirms and unsubscribes through the mailed links. e2e/mpa/run.sh migrates, starts the API,
-    # the worker and the MPA behind one origin and runs them. It creates its own database
+    # the worker and the MPA, on a host apart from the app's, and runs them. It creates its own database
     # (`template_e2e`), so it shares nothing with the integration step, which uses `template_test`
     # at the same time. `DB_NAME` below is only the database the script connects to first.
     image: mcr.microsoft.com/playwright:v1.57.0-noble

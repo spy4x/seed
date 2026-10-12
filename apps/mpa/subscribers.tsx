@@ -12,10 +12,11 @@ import {
   UnsubscribeScreen,
 } from "@ui/subscribe-screen.tsx"
 import { isRecord } from "@spy4x/platform/universal/is-record"
+import { Notice } from "@spy4x/preact-ui/notice"
 import { type ApiAnswer, errorMessage } from "./api.ts"
 import { readFormBody } from "@spy4x/server/http/bounded-body"
 import { API_BODIES, FORM_LIMITS } from "./forms.ts"
-import { SiteFrame } from "./site.tsx"
+import { SiteFrame, type SitePageHead } from "./site.tsx"
 import { define, type State } from "./utils.ts"
 
 /**
@@ -34,15 +35,31 @@ const TOKEN_PAGE_HEAD = {
 /** The query a finished step redirects to: the page again, with no token in it. */
 const DONE_QUERY = "?state=done"
 
-/** `GET` shows the subscribe form; `POST` asks the API for a confirm link and says it is sent. */
+/** The query a taken subscribe request redirects to, so a reload does not send it again. */
+const SENT_QUERY = "?state=sent"
+
+const SUBSCRIBE_HEAD = {
+  title: "News by e-mail",
+  description: "Get a short e-mail when something new ships in Template. Double opt-in, " +
+    "one-click unsubscribe.",
+}
+
+/**
+ * `GET` shows the subscribe form; `POST` asks the API for a confirm link and 303s to this page,
+ * which then says the link is sent. A refusal is shown with the API's status and message, and the
+ * address stays in the form. While subscriptions are off, neither shows a form.
+ */
 export const subscribeHandlers = define.handlers({
-  GET: (ctx) => renderSubscribe(ctx, { email: "", sent: false, error: null, status: 200 }),
+  GET(ctx) {
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribe, SUBSCRIBE_HEAD)
+    const sent = ctx.url.searchParams.get("state") === "sent"
+    return renderSubscribe(ctx, { email: "", sent, error: null, status: 200 })
+  },
   async POST(ctx) {
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribe, SUBSCRIBE_HEAD)
     const body = API_BODIES.subscribe(await readFormBody(ctx.req, FORM_LIMITS))
     const answer = await ctx.state.api.call("POST", "/api/subscribers", body)
-    if (answer.status === 202) {
-      return renderSubscribe(ctx, { email: "", sent: true, error: null, status: 200 })
-    }
+    if (answer.status === 202) return ctx.redirect(`${FORM_ACTIONS.subscribe}${SENT_QUERY}`, 303)
     return renderSubscribe(ctx, {
       email: body.email,
       sent: false,
@@ -59,6 +76,7 @@ export const subscribeHandlers = define.handlers({
  */
 export const subscriptionConfirmHandlers = define.handlers({
   async GET(ctx) {
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, TOKEN_PAGE_HEAD)
     const { list, token } = linkOf(ctx.url)
     if (ctx.url.searchParams.get("state") === "done") {
       return renderConfirm(ctx, { state: "done", list: "", token: "", status: 200 })
@@ -78,6 +96,7 @@ export const subscriptionConfirmHandlers = define.handlers({
     })
   },
   async POST(ctx) {
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, TOKEN_PAGE_HEAD)
     const body = API_BODIES.subscriptionToken(await readFormBody(ctx.req, FORM_LIMITS))
     const answer = await ctx.state.api.call("POST", "/api/subscribers/confirm", body)
     const step = stepOf(answer, CONFIRM_STATES)
@@ -100,6 +119,7 @@ export const subscriptionConfirmHandlers = define.handlers({
  */
 export const unsubscribeHandlers = define.handlers({
   async GET(ctx) {
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.unsubscribe, TOKEN_PAGE_HEAD)
     const { list, token } = linkOf(ctx.url)
     if (ctx.url.searchParams.get("state") === "done") {
       return renderUnsubscribe(ctx, { state: "done", list: "", token: "", status: 200 })
@@ -120,6 +140,7 @@ export const unsubscribeHandlers = define.handlers({
     })
   },
   async POST(ctx) {
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.unsubscribe, TOKEN_PAGE_HEAD)
     const body = API_BODIES.subscriptionToken(await readFormBody(ctx.req, FORM_LIMITS))
     // The API's unsubscribe reads the token from the query or a form body, never from JSON: it is
     // the RFC 8058 one-click target too.
@@ -147,8 +168,8 @@ function linkOf(url: URL): { list: string; token: string } {
 
 /**
  * The state a token route answered with, and the address while it asks for the click. The API
- * answers a refused token with a 4xx status and its state in the body; anything else reads as
- * `error`.
+ * answers a refused token with a 4xx status and its state in the body; anything else, an API that
+ * cannot be reached included, reads as `error`.
  */
 function stepOf<S extends string>(
   answer: ApiAnswer,
@@ -178,11 +199,7 @@ function renderSubscribe(
     <SiteFrame
       state={ctx.state}
       path={FORM_ACTIONS.subscribe}
-      head={{
-        title: "News by e-mail",
-        description: "Get a short e-mail when something new ships in Template. Double opt-in, " +
-          "one-click unsubscribe.",
-      }}
+      head={SUBSCRIBE_HEAD}
     >
       <div class="grid items-start gap-8 lg:grid-cols-2">
         <section class="flex flex-col gap-4" aria-label="About the newsletter">
@@ -207,6 +224,28 @@ function renderSubscribe(
       </div>
     </SiteFrame>,
     { status: page.status, headers: headersOf(page) },
+  )
+}
+
+/**
+ * What every newsletter page answers while the API takes no subscriptions (`State.newsletter`):
+ * status 503 as the API's own, and no form.
+ */
+function renderOff(
+  ctx: FreshContext<State>,
+  path: string,
+  head: SitePageHead,
+): Response | Promise<Response> {
+  return ctx.render(
+    <SiteFrame state={ctx.state} path={path} head={{ ...head, noindex: true }}>
+      <div class="mx-auto w-full max-w-md" data-e2e="newsletter-off">
+        <Notice title="The newsletter is off">
+          This site is not taking newsletter subscriptions right now, and it sends no newsletter
+          while they are off. A confirm or unsubscribe link works again once they are back on.
+        </Notice>
+      </div>
+    </SiteFrame>,
+    { status: 503, headers: NO_REFERRER },
   )
 }
 

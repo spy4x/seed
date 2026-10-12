@@ -36,6 +36,12 @@ describe("readMpaConfig", () => {
     expect(() => readMpaConfig(env({ ...prod, MPA_DOMAIN: "" }))).toThrow("MPA_DOMAIN is required")
   })
 
+  it("refuses an MPA_DOMAIN that carries a scheme instead of serving the host `https`", () => {
+    expect(() => readMpaConfig(env({ ...prod, MPA_DOMAIN: "https://www.example.com" }))).toThrow(
+      "MPA_DOMAIN must be a host",
+    )
+  })
+
   it("refuses to start without the API's address", () => {
     const { API_URL: _, ...withoutApi } = prod
     expect(() => readMpaConfig(env(withoutApi))).toThrow("API_URL is required")

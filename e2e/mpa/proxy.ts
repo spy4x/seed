@@ -1,8 +1,8 @@
 /**
  * Puts the API and a site behind one origin for a browser test, as Traefik does in production:
- * `/api` goes to the API, everything else to the site, which is the MPA (`e2e/mpa/run.sh`) or the
- * SPA's nginx container (`e2e/spa/run.sh`). Reads `FRONT_PORT`, `API_PORT` and `SITE_PORT` and
- * listens on 127.0.0.1. A WebSocket under `/api` (the SPA's `/api/ws`) is passed on as well.
+ * `/api` goes to the API, everything else to the site, which is the SPA's stand-in
+ * (`e2e/mpa/run.sh`, `spa-shell.ts`) or the SPA's nginx container (`e2e/spa/run.sh`). Reads
+ * `FRONT_PORT`, `API_PORT` and `SITE_PORT` and listens on 127.0.0.1. A WebSocket under `/api` (the SPA's `/api/ws`) is passed on as well.
  */
 const port = (name: string): number => {
   const value = Number(Deno.env.get(name))

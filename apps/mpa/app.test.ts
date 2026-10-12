@@ -4,7 +4,11 @@ import { App } from "fresh"
 import { handler as subscribe } from "./routes/subscribe/index.ts"
 import { handler as subscriptionConfirm } from "./routes/subscribe/confirm.ts"
 import { handler as unsubscribe } from "./routes/unsubscribe.ts"
-import { pageMiddleware, securityHeadersMiddleware } from "./middleware.ts"
+import {
+  newsletterPageMiddleware,
+  pageMiddleware,
+  securityHeadersMiddleware,
+} from "./middleware.ts"
 import type { State } from "./utils.ts"
 
 const config = {
@@ -31,9 +35,9 @@ function fakeApi(answer: (path: string, method: string) => Response) {
   return { calls, fetch: fetch as typeof globalThis.fetch }
 }
 
-function appWith(fetch: typeof globalThis.fetch) {
+function appWith(fetch: typeof globalThis.fetch, newsletter: () => boolean = () => true) {
   return new App<State>()
-    .use(pageMiddleware(config, fetch))
+    .use(pageMiddleware(config, fetch, newsletter))
     .get("/page", (ctx) => ctx.html("<p>page</p>"))
     .get("/subscribe", subscribe.GET!)
     .post("/subscribe", subscribe.POST!)
@@ -42,6 +46,19 @@ function appWith(fetch: typeof globalThis.fetch) {
     .get("/unsubscribe", unsubscribe.GET!)
     .post("/unsubscribe", unsubscribe.POST!)
     .handler()
+}
+
+/** Runs `run` and returns every line it wrote with `console.error`, as text. */
+async function errorLog(run: () => Promise<void>): Promise<string[]> {
+  const logged: string[] = []
+  const original = console.error
+  console.error = (...args: unknown[]) => void logged.push(args.map(String).join(" "))
+  try {
+    await run()
+  } finally {
+    console.error = original
+  }
+  return logged
 }
 
 function formPost(path: string, fields: Record<string, string>, headers = sameOrigin): Request {
@@ -132,7 +149,7 @@ describe("securityHeadersMiddleware", () => {
     const { fetch } = fakeApi(() => Response.json({}))
     return new App<State>()
       .use(await securityHeadersMiddleware(appConfig))
-      .use(pageMiddleware(appConfig, fetch))
+      .use(pageMiddleware(appConfig, fetch, () => true))
       .get("/page", (ctx) => ctx.html("<p>page</p>"))
       .get("/broken", () => {
         throw new Error("a route failed")
@@ -163,30 +180,35 @@ describe("securityHeadersMiddleware", () => {
     expect(response.headers.get("cache-control")).toBe("no-store")
   })
 
-  it("sends them with the 404 of an unknown address", async () => {
+  it("sends them with the 404 of an unknown address, inside the site's frame", async () => {
     const response = await (await securedApp())(new Request(`${config.webAppOrigin}/nope`), info)
 
     expect(response.status).toBe(404)
     expectSecurityHeaders(response)
+    const page = await response.text()
+    expect(page).toContain("Page not found")
+    expect(page).toContain(`data-e2e="site-brand"`)
   })
 
-  it("sends them with the 500 of a route that throws, and logs the error", async () => {
-    const logged: unknown[] = []
-    const original = console.error
-    console.error = (...args: unknown[]) => logged.push(...args)
-    try {
-      const response = await (await securedApp())(
-        new Request(`${config.webAppOrigin}/broken`),
+  it("sends them with the 500 of a route that throws, inside the site's frame, and logs the error with the path but not the query", async () => {
+    let response = new Response()
+    const logged = await errorLog(async () => {
+      response = await (await securedApp())(
+        new Request(`${config.webAppOrigin}/broken?token=token-from-the-link`),
         info,
       )
+    })
 
-      expect(response.status).toBe(500)
-      expect(await response.text()).toBe("Internal server error")
-      expectSecurityHeaders(response)
-    } finally {
-      console.error = original
-    }
-    expect(String(logged[0])).toContain("a route failed")
+    expect(response.status).toBe(500)
+    expectSecurityHeaders(response)
+    expect(response.headers.get("cache-control")).toBe("no-store")
+    const page = await response.text()
+    expect(page).toContain("Something went wrong")
+    expect(page).toContain(`data-e2e="site-brand"`)
+    expect(logged).toHaveLength(1)
+    expect(logged[0]).toContain("GET /broken failed")
+    expect(logged[0]).toContain("a route failed")
+    expect(logged[0]).not.toContain("token-from-the-link")
   })
 
   it("sends them with the refusal of a post from another site", async () => {
@@ -240,10 +262,11 @@ describe("the subscription pages", () => {
   const token = { list: "news", token: "token-from-the-link" }
   const tokenQuery = new URLSearchParams(token).toString()
 
-  it("asks the API for a confirm link with the address and the list, and says it is on its way", async () => {
+  it("asks the API for a confirm link with the address and the list, then redirects to a page that says it is on its way", async () => {
     const { apiCalls, fetch } = subscribersApi(() => Response.json({}, { status: 202 }))
+    const app = appWith(fetch)
 
-    const response = await appWith(fetch)(
+    const response = await app(
       formPost("/subscribe", { email: "ada@example.com", list: "news" }),
       info,
     )
@@ -251,9 +274,43 @@ describe("the subscription pages", () => {
     expect(apiCalls()).toEqual([
       { method: "POST", url: "/api/subscribers", body: { email: "ada@example.com", list: "news" } },
     ])
-    expect(response.status).toBe(200)
-    expect(await response.text()).toContain("Check your inbox")
+    // A reload of the page the browser lands on is a GET: it asks the API for nothing.
+    expect(response.status).toBe(303)
+    expect(response.headers.get("location")).toBe("/subscribe?state=sent")
+    const landed = await app(new Request(`${config.webAppOrigin}/subscribe?state=sent`), info)
+    expect(landed.status).toBe(200)
+    expect(await landed.text()).toContain("Check your inbox")
+    expect(apiCalls()).toHaveLength(1)
   })
+
+  const refusals: { status: number; error: string; retryAfter: string | null }[] = [
+    { status: 400, error: "Enter a valid e-mail address", retryAfter: null },
+    { status: 429, error: "Too many requests", retryAfter: "30" },
+    { status: 503, error: "Mail subscriptions are off", retryAfter: null },
+  ]
+  for (const refusal of refusals) {
+    it(`shows a subscription the API refuses with ${refusal.status} as refused: its status, its message and the address still in the form`, async () => {
+      const { fetch } = subscribersApi(() =>
+        Response.json({ error: refusal.error }, {
+          status: refusal.status,
+          headers: refusal.retryAfter === null ? {} : { "retry-after": refusal.retryAfter },
+        })
+      )
+
+      const response = await appWith(fetch)(
+        formPost("/subscribe", { email: "ada@example.com", list: "news" }),
+        info,
+      )
+
+      expect(response.status).toBe(refusal.status)
+      expect(response.headers.get("location")).toBeNull()
+      expect(response.headers.get("retry-after")).toBe(refusal.retryAfter)
+      const page = await response.text()
+      expect(page).toContain(refusal.error)
+      expect(page).toContain(`value="ada@example.com"`)
+      expect(page).not.toContain("Check your inbox")
+    })
+  }
 
   it("shows the address a confirm link holds, sends no Referer and keeps the page out of caches", async () => {
     const { apiCalls, fetch } = subscribersApi(() =>
@@ -339,6 +396,100 @@ describe("the subscription pages", () => {
   })
 })
 
+describe("the subscription pages without an API behind them", () => {
+  const token = { list: "news", token: "token-from-the-link" }
+  const tokenQuery = new URLSearchParams(token).toString()
+  /** What Deno's `fetch` rejects with when nothing listens: the message names the full address. */
+  const unreachable = ((input: string | URL | Request) =>
+    Promise.reject(
+      new TypeError(`error sending request for url (${new Request(input).url})`),
+    )) as typeof globalThis.fetch
+
+  const requests: [string, () => Request][] = [
+    [
+      "a subscribe request",
+      () => formPost("/subscribe", { email: "ada@example.com", list: "news" }),
+    ],
+    ["a confirm link", () => new Request(`${config.webAppOrigin}/subscribe/confirm?${tokenQuery}`)],
+    ["a confirm", () => formPost("/subscribe/confirm", token)],
+    ["an unsubscribe link", () => new Request(`${config.webAppOrigin}/unsubscribe?${tokenQuery}`)],
+    ["an unsubscribe", () => formPost("/unsubscribe", token)],
+  ]
+  for (const [name, request] of requests) {
+    it(`answers ${name} with the page's own error inside the site's frame, and logs neither the token nor the address`, async () => {
+      let response = new Response()
+      const logged = await errorLog(async () => {
+        response = await appWith(unreachable)(request(), info)
+      })
+
+      expect(response.status).toBe(502)
+      expect(response.headers.get("content-type")).toContain("text/html")
+      const page = await response.text()
+      expect(page).toContain(`data-e2e="site-brand"`)
+      expect(page).toMatch(/Could not (send the link|confirm the subscription|unsubscribe)/)
+      expect(logged).toHaveLength(1)
+      expect(logged[0]).toMatch(
+        /^API call failed: (GET|POST) \/api\/subscribers[a-z/]* \(TypeError\)$/,
+      )
+      expect(logged.join()).not.toContain("token-from-the-link")
+      expect(logged.join()).not.toContain("ada@example.com")
+    })
+  }
+})
+
+describe("the subscription pages while subscriptions are off", () => {
+  const token = { list: "news", token: "token-from-the-link" }
+  const tokenQuery = new URLSearchParams(token).toString()
+  const off = () => false
+
+  const requests: [string, () => Request][] = [
+    ["the subscribe page", () => new Request(`${config.webAppOrigin}/subscribe`)],
+    [
+      "a subscribe request",
+      () => formPost("/subscribe", { email: "ada@example.com", list: "news" }),
+    ],
+    ["a confirm link", () => new Request(`${config.webAppOrigin}/subscribe/confirm?${tokenQuery}`)],
+    ["a confirm", () => formPost("/subscribe/confirm", token)],
+    ["an unsubscribe link", () => new Request(`${config.webAppOrigin}/unsubscribe?${tokenQuery}`)],
+    ["an unsubscribe", () => formPost("/unsubscribe", token)],
+  ]
+  for (const [name, request] of requests) {
+    it(`answers ${name} with a notice that the newsletter is off, no form, and no call to the API`, async () => {
+      const { calls, fetch } = fakeApi(() => Response.json({ error: "off" }, { status: 503 }))
+
+      const response = await appWith(fetch, off)(request(), info)
+
+      expect(response.status).toBe(503)
+      const page = await response.text()
+      expect(page).toContain("The newsletter is off")
+      expect(page).toContain(`data-e2e="site-brand"`)
+      expect(page).not.toContain("<form")
+      expect(page).not.toContain("Try again in a minute")
+      expect(calls).toEqual([])
+    })
+  }
+
+  it("takes the API's word that subscriptions are off before the first page, wired as the website starts", async () => {
+    const asked: string[] = []
+    const api = ((input: string | URL | Request) => {
+      asked.push(new URL(new Request(input).url).pathname)
+      return Promise.resolve(Response.json({ enabled: false }))
+    }) as typeof globalThis.fetch
+
+    const handler = new App<State>()
+      .use(await newsletterPageMiddleware(config, api))
+      .get("/subscribe", subscribe.GET!)
+      .handler()
+    const response = await handler(new Request(`${config.webAppOrigin}/subscribe`), info)
+
+    expect(response.status).toBe(503)
+    const page = await response.text()
+    expect(page).toContain("The newsletter is off")
+    expect(page).not.toContain("<form")
+    expect(asked).toEqual(["/api/subscribers"])
+  })
+})
+
 describe("an MPA on its own domain", () => {
   const ownDomain = { ...config, webAppOrigin: "https://www.example.com" }
 
@@ -350,7 +501,7 @@ describe("an MPA on its own domain", () => {
       return Promise.resolve(Response.json({}))
     }
     const handler = new App<State>()
-      .use(pageMiddleware(ownDomain, fetch as typeof globalThis.fetch))
+      .use(pageMiddleware(ownDomain, fetch as typeof globalThis.fetch, () => true))
       .post("/act", async (ctx) => {
         await ctx.state.api.call("POST", "/api/subscribers")
         return new Response(null, { status: 204 })
@@ -382,7 +533,7 @@ describe("an MPA on its own domain", () => {
 
   it(`links "Try the demo" to the SPA's sign-up at DOMAIN, not to the website's own host`, async () => {
     const response = await new App<State>()
-      .use(pageMiddleware(ownDomain, fakeApi(() => Response.json({})).fetch))
+      .use(pageMiddleware(ownDomain, fakeApi(() => Response.json({})).fetch, () => true))
       .get("/subscribe", subscribe.GET!)
       .handler()(new Request(`${ownDomain.webAppOrigin}/subscribe`), info)
 

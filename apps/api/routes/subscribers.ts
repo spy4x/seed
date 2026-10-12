@@ -27,6 +27,7 @@ import {
   createListCrypto,
   isCurrentSubscriberToken,
   subscriberConfirmLink,
+  subscriberPagesUrl,
   type SubscribersSetup,
   subscriberUnsubscribeLink,
 } from "@server/subscribers/subscribers.ts"
@@ -41,7 +42,10 @@ export const SUBSCRIBE_UNKNOWN_LIST = `There is no such mailing list`
 export const SUBSCRIBERS_OFF = `Mail subscriptions are off`
 
 export interface SubscribersRouteDependencies {
-  /** `null` when `SUBSCRIBERS_SECRET` is not set in production: every route answers 503. */
+  /**
+   * `null` when `SUBSCRIBERS_SECRET` is not set in production: every route but `GET /` answers
+   * 503.
+   */
   setup: SubscribersSetup | null
   /** The store of one list. */
   store: (list: SubscriberList) => SubscriberStore
@@ -59,10 +63,13 @@ export interface SubscribersRouteDependencies {
 /**
  * Mail subscriptions for visitors, at `/api/subscribers`:
  *
+ * - `GET /` says whether subscriptions are on, as `{ enabled }`: the public website asks before it
+ *   offers its form. It is the one route that answers when they are off.
  * - `POST /` takes `{ email, list }` and answers 202 for any valid address, listed, new or over its
  *   own limit, with the same writes, so the answer tells nothing about the list.
  * - `GET /confirm` previews a confirm link; `POST /confirm` adds the address.
- * - `GET /unsubscribe` is the link in every mail: it redirects a person to the unsubscribe page.
+ * - `GET /unsubscribe` is the link in every mail: it redirects a person to the unsubscribe page,
+ *   on the public website when that is deployed (`setup.siteUrl`), else in the app.
  * - `GET /unsubscribe/preview` says whom an unsubscribe link names, for that page.
  * - `POST /unsubscribe` removes the address: the target of a mail client's one-click POST (RFC
  *   8058), which carries no browser header, and of the page's form.
@@ -90,7 +97,8 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
         crypto,
         store: deps.store(list),
         links: {
-          confirm: (token) => subscriberConfirmLink(deps.webAppUrl, list, token),
+          confirm: (token) =>
+            subscriberConfirmLink(subscriberPagesUrl(setup, deps.webAppUrl), list, token),
           unsubscribe: (token) => subscriberUnsubscribeLink(deps.webAppUrl, list, token),
         },
         sendMail: async (mail) => {
@@ -116,6 +124,7 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
   }
 
   return new Hono<APIContext>()
+    .get(`/`, (c) => c.json({ enabled: deps.setup !== null }))
     .use(`*`, async (c, next) => {
       if (!deps.setup) return c.json({ error: SUBSCRIBERS_OFF }, 503)
       await next()
@@ -162,7 +171,10 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
       noStore(c)
       const link = linkQuery(c)
       const query = link ? `?${new URLSearchParams(link)}` : ``
-      return c.redirect(`${deps.webAppUrl}/unsubscribe${query}`, 303)
+      return c.redirect(
+        `${subscriberPagesUrl(deps.setup!, deps.webAppUrl)}/unsubscribe${query}`,
+        303,
+      )
     })
     .get(`/unsubscribe/preview`, deps.rateLimits.tokenByIp, async (c) => {
       noStore(c)

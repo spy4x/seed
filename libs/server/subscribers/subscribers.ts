@@ -17,11 +17,19 @@ export interface SubscribersSetup {
   secret: string
   /** Verify-only secrets from before a rotation, oldest last. */
   previousSecrets: string[]
+  /**
+   * The public website's address, such as `https://www.example.com`, when it is deployed
+   * (`MPA_DOMAIN`). Its confirm and unsubscribe pages work without JavaScript, so the mailed links
+   * open them. Unset → the links open the same pages of the app.
+   */
+  siteUrl?: string
 }
 
 /**
  * Reads `SUBSCRIBERS_SECRET` and the comma-separated `SUBSCRIBERS_PREVIOUS_SECRETS`. Unset in
  * development → {@link DEV_SUBSCRIBERS_SECRET}; unset in production → `null`, the feature is off.
+ * Also reads `MPA_DOMAIN`, the public website's host, as {@link SubscribersSetup.siteUrl}: plain
+ * HTTP only in development, as for the app's own address.
  * A secret that is set but unusable (shorter than 32 characters, not printable ASCII, equal to the
  * cookie secret, or the public development secret outside development) throws, so the process
  * stops at start-up. No error names a value.
@@ -35,8 +43,15 @@ export function readSubscribersSetup(
     .split(`,`)
     .map((value) => value.trim())
     .filter((value) => value !== ``)
+  const site = env.get(`MPA_DOMAIN`)?.trim() ?? ``
+  if (site.includes(`://`)) {
+    throw new Error(`MPA_DOMAIN must be a host such as www.example.com, without a scheme`)
+  }
+  const pages = site === ``
+    ? {}
+    : { siteUrl: new URL(`http${mode === `dev` ? `` : `s`}://${site}`).origin }
   if (secret === ``) {
-    return mode === `dev` ? { secret: DEV_SUBSCRIBERS_SECRET, previousSecrets: [] } : null
+    return mode === `dev` ? { secret: DEV_SUBSCRIBERS_SECRET, previousSecrets: [], ...pages } : null
   }
   const cookieSecret = env.get(`AUTH_COOKIE_SECRET`)?.trim()
   if ([secret, ...previousSecrets].some((value) => value === cookieSecret)) {
@@ -59,7 +74,7 @@ export function readSubscribersSetup(
       )
     }
   }
-  return { secret, previousSecrets }
+  return { secret, previousSecrets, ...pages }
 }
 
 /** Says what a process without subscriber secrets does, or `null` when it has them. */
@@ -116,15 +131,28 @@ export async function createRecipientLimitKey(
   return (email) => crypto.subscriberKey(email)
 }
 
-/** The page a confirm link opens. The token rides in the query; the page posts it back. */
-export function subscriberConfirmLink(webAppUrl: string, list: string, token: string): string {
-  return `${webAppUrl}/subscribe/confirm?${new URLSearchParams({ list, token })}`
+/**
+ * Where the confirm and unsubscribe pages are: the public website when it is deployed, else the
+ * app at `webAppUrl`. The first argument of {@link subscriberConfirmLink}, and where the API sends
+ * a person who opens an unsubscribe link.
+ */
+export function subscriberPagesUrl(setup: SubscribersSetup, webAppUrl: string): string {
+  return setup.siteUrl ?? webAppUrl
+}
+
+/**
+ * The page a confirm link opens, at `pagesUrl` ({@link subscriberPagesUrl}). The token rides in
+ * the query; the page posts it back.
+ */
+export function subscriberConfirmLink(pagesUrl: string, list: string, token: string): string {
+  return `${pagesUrl}/subscribe/confirm?${new URLSearchParams({ list, token })}`
 }
 
 /**
  * The unsubscribe link a mail carries, in its body and in `List-Unsubscribe`. It points at the
- * API: a mail client's one-click POST (RFC 8058) lands there directly, and a person's GET is
- * redirected to the unsubscribe page.
+ * API, which is served at the app's address whether or not the website is deployed: a mail
+ * client's one-click POST (RFC 8058) lands there directly, and a person's GET is redirected to the
+ * unsubscribe page at {@link subscriberPagesUrl}.
  */
 export function subscriberUnsubscribeLink(webAppUrl: string, list: string, token: string): string {
   return `${webAppUrl}/api/subscribers/unsubscribe?${new URLSearchParams({ list, token })}`

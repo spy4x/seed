@@ -4,7 +4,8 @@ import { playwrightBaseConfig } from "@jsr/spy4x__preact-system/playwright"
 /**
  * Playwright configuration for the MPA (`apps/mpa`), apart from the SPA's: the root configuration
  * runs `*.e2e.ts` against a stack that serves the SPA, and these specs need one that serves the
- * MPA at the same origin, with `/api` going to the API. `MPA_BASE_URL` names that origin.
+ * MPA on its own host. `MPA_BASE_URL` names that origin; `SPA_BASE_URL` names the app's, where
+ * `/api` goes to the API (`e2e/mpa/run.sh` sets both).
  *
  * Run from `apps/mpa`: `deno task e2e`.
  */

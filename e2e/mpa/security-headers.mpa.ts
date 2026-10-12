@@ -2,12 +2,15 @@ import { type APIResponse, expect, test } from "@playwright/test"
 import { watchCspViolations } from "../fixtures/csp.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
+/** The app's origin, another host than the website's (`e2e/mpa/run.sh`). */
+const SPA = new URL(Deno.env.get("SPA_BASE_URL")!).origin
+
 function expectSecurityHeaders(response: APIResponse) {
   const headers = response.headers()
-  // One origin serves the MPA and the API here, so no other origin is added to `form-action`.
+  // The website has its own host here, so its forms may also redirect to the app's.
   expect(headers["content-security-policy"]).toBe(
     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; " +
-      "connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; " +
+      `connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' ${SPA}; ` +
       "frame-ancestors 'none'",
   )
   expect(headers["x-content-type-options"]).toBe("nosniff")
@@ -30,6 +33,9 @@ test("the website sends the security headers with a page, its stylesheet and an 
   const unknown = await request.get("/no-such-page")
   expect(unknown.status()).toBe(404)
   expectSecurityHeaders(unknown)
+  // The error page keeps the site's frame, so the visitor can go on from it.
+  expect(await unknown.text()).toContain("Page not found")
+  expect(await unknown.text()).toContain("Main navigation")
 })
 
 test("a visitor walks the website and its forms without a refusal under the content security policy", async ({ context, page }) => {

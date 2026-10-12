@@ -60,6 +60,14 @@ for (const service of ["api", "worker"]) {
   })
 }
 
+// Without it both would build the mailed newsletter links on the SPA's host, where the confirm
+// and unsubscribe pages need JavaScript.
+for (const service of ["api", "worker"]) {
+  Deno.test(`the ${service} container receives the website's host`, async () => {
+    expect(await environmentOf(service)).toContain("MPA_DOMAIN")
+  })
+}
+
 Deno.test("the api container receives the error tracker's DSN", async () => {
   expect(await environmentOf("api")).toContain("ERROR_REPORT_DSN")
 })
