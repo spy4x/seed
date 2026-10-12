@@ -50,6 +50,53 @@ describe("readEmailStatus", () => {
     })
   })
 
+  it("gives an account made with a provider the address the provider proved", async () => {
+    const store = new MemoryAuthStore()
+    const { user } = await store.createUserWithKey({
+      method: "oauth:google",
+      subject: "google-1",
+      email: "gia@example.com",
+      secret: null,
+      provenAt: new Date(),
+    })
+
+    expect(await readEmailStatus(noChange, store, user.id)).toEqual({
+      email: "gia@example.com",
+      proven: true,
+      pending: null,
+    })
+  })
+
+  it("keeps the password's address when a provider with another one is linked", async () => {
+    const { store, ann, old } = await storeWithAccounts()
+    const linked = (userId: number, subject: string) =>
+      store.addKey(userId, {
+        method: "oauth:github",
+        subject,
+        email: `${subject}@example.com`,
+        secret: null,
+        provenAt: new Date(),
+      })
+    await linked(ann, "hub-ann")
+    await linked(old, "hub-old")
+
+    expect((await readEmailStatus(noChange, store, ann)).email).toBe("ann@example.com")
+    expect((await readEmailStatus(noChange, store, old)).email).toBe(null)
+  })
+
+  it("shows no address a provider did not prove", async () => {
+    const store = new MemoryAuthStore()
+    const { user } = await store.createUserWithKey({
+      method: "oauth:github",
+      subject: "hub-2",
+      email: "claimed@example.com",
+      secret: null,
+      provenAt: null,
+    })
+
+    expect((await readEmailStatus(noChange, store, user.id)).email).toBe(null)
+  })
+
   it("carries the address a change waits for, next to the one the account keeps", async () => {
     const { store, bea } = await storeWithAccounts()
     const changes = {

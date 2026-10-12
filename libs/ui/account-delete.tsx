@@ -64,6 +64,12 @@ export interface AccountDeleteProps {
   /** The person closed the dialog: the app drops what was typed and its errors. */
   onCancel?: () => void
   onDelete?: () => void
+  /**
+   * Why this account cannot be deleted here, as one sentence, or nothing when it can. The row
+   * shows the sentence in place of its button, so the dialog, which asks for a password, never
+   * opens.
+   */
+  unavailable?: string | null
   navigate?: Navigate
 }
 
@@ -83,6 +89,7 @@ export function AccountDelete(
     onOpen,
     onCancel,
     onDelete,
+    unavailable,
     navigate,
   }: AccountDeleteProps,
 ): JSX.Element {
@@ -110,8 +117,10 @@ export function AccountDelete(
         <SettingList>
           <SettingRow
             label="Delete my account"
-            value={`Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
-            action={
+            value={unavailable
+              ? <span data-e2e="account-delete-unavailable">{unavailable}</span>
+              : `Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
+            action={!unavailable && (
               <Button
                 type="button"
                 variant="outline"
@@ -125,7 +134,7 @@ export function AccountDelete(
               >
                 Delete <span class="sr-only">my account</span>
               </Button>
-            }
+            )}
           />
         </SettingList>
       </div>

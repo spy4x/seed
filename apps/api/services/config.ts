@@ -14,6 +14,11 @@ export class Config {
   devEmail = env.DEV_EMAIL
   vapidKeysPath = "./vapid.json"
   errorReportDsn = env.ERROR_REPORT_DSN
+  /** The client id and secret of each sign-in provider; one without both is off. */
+  oauth = {
+    google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET },
+    github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
+  }
   timeZone = env.TIMEZONE
   authSaltRounds = 12 // balance between security and performance
   authSessionLength = 32

@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp, submitAuthForm } from "./fixtures/app.ts"
+import { gotoApp, signIn, submitAuthForm } from "./fixtures/app.ts"
 
 const apiBase = "http://app.localhost"
 
@@ -90,6 +90,48 @@ test.describe("auth profile ws push flow", () => {
 
       const me = await page.request.get("/api/auth/me")
       expect(me.status()).toBe(401)
+    } finally {
+      await cleanup({ soft: true })
+    }
+  })
+
+  test("after a sign-in, the sign-in page names the method and the masked address", async ({ page, request }) => {
+    const email = "e2e_last_sign_in_user@example.com"
+    const password = "Passw0rd!"
+    const signInPage = () => gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
+    const cleanup = async ({ soft = false } = {}) => {
+      const response = await request.post(`${apiBase}/api/test/cleanup-user`, {
+        data: { login: email },
+      })
+      ;(soft ? expect.soft : expect)(response.status(), await response.text()).toBe(200)
+    }
+
+    await cleanup()
+    try {
+      const signUp = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+        headers: { origin: apiBase, "sec-fetch-site": "same-origin" },
+        data: { email, password },
+      })
+      expect(signUp.ok()).toBe(true)
+      // A browser nobody signed in on says nothing.
+      await signInPage()
+      await expect(page.locator("[data-e2e=last-sign-in]")).toHaveCount(0)
+
+      await signIn(page, email, password)
+      // The app asks the API which method the session used and keeps the answer. Signing out
+      // before it arrived would keep nothing, so the spec waits for it.
+      await expect.poll(() => page.evaluate(() => localStorage.getItem("last-sign-in")))
+        .not.toBeNull()
+      await page.locator("[data-e2e=shell-user-menu-button]").click()
+      await page.getByRole("menuitem", { name: "Sign out" }).click()
+      await page.locator("[data-e2e=signin-required]").waitFor()
+
+      await signInPage()
+      const last = page.locator("[data-e2e=last-sign-in]")
+      await expect(last).toContainText(
+        "Last time you signed in with your password (e***@example.com).",
+      )
+      await expect(last).not.toContainText(email)
     } finally {
       await cleanup({ soft: true })
     }

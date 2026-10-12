@@ -145,6 +145,21 @@ export async function signIn(login: string, password: string): Promise<{
   return handleAuthResponse(result)
 }
 
+/**
+ * Answers "Create a new account" after a provider sign-in nobody here was known by: the server
+ * creates the account the provider vouched for and signs it in.
+ */
+export async function confirmProviderSignUp(): Promise<{
+  ok: boolean
+  mfaRequired: boolean
+  error?: string
+}> {
+  const result = await apiFetch<SessionUser | PendingSecondFactor>("/api/auth/sign-up/confirm", {
+    method: "POST",
+  })
+  return handleAuthResponse(result)
+}
+
 export async function signUp(email: string, password: string): Promise<{
   ok: boolean
   mfaRequired: boolean

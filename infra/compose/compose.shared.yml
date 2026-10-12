@@ -439,6 +439,10 @@ services:
       - HOME=/home/deno
       - ENV=${ENV}
       - ERROR_REPORT_DSN=${ERROR_REPORT_DSN:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       - DENO_DIR=/tmp/deno-cache
       # The port apps/healthcheck.ts probes.
       - HEALTHCHECK_PORT=${API_PORT}

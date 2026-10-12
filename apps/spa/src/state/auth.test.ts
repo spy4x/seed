@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, it } from "@std/testing/bdd"
 import { type User, UserMFAStatus } from "@domain/identity"
 import {
   bootstrapSession,
+  confirmProviderSignUp,
   deleteAccount,
   signIn,
   signOut,
@@ -311,6 +312,48 @@ describe("signOut", () => {
 
     await signOut()
 
+    expect(sessionState.value.user).toBeNull()
+  })
+})
+
+describe("confirming a sign-up a provider vouched for", () => {
+  afterEach(() => {
+    globalThis.fetch = realFetch
+    sessionState.value = { ...sessionState.value, user: null, isMfaRequired: false }
+  })
+
+  /** Makes the API answer `status`, and records the method and path of each request. */
+  function confirmAnswers(status: number, answer: unknown): string[] {
+    const asked: string[] = []
+    globalThis.fetch = (input, init) => {
+      const url = new URL(String(input instanceof Request ? input.url : input), "http://x")
+      asked.push(`${init?.method ?? "GET"} ${url.pathname}`)
+      return Promise.resolve(
+        new Response(JSON.stringify(answer), {
+          status,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+    }
+    return asked
+  }
+
+  it("signs the page in as the account the server created", async () => {
+    const asked = confirmAnswers(201, user)
+
+    expect(await confirmProviderSignUp()).toEqual({ ok: true, mfaRequired: false })
+
+    expect(asked).toEqual(["POST /api/auth/sign-up/confirm"])
+    expect(sessionState.value.user?.id).toBe(1)
+  })
+
+  it("gives the server's reason and signs nobody in when the sign-up no longer waits", async () => {
+    confirmAnswers(400, { error: "This took too long. Start again from the sign-in page." })
+
+    const result = await confirmProviderSignUp()
+
+    expect(result.ok).toBe(false)
+    expect(result.error).toBe("This took too long. Start again from the sign-in page.")
     expect(sessionState.value.user).toBeNull()
   })
 })

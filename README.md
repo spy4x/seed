@@ -226,6 +226,50 @@ defines a resolver, do not start the proxy compose file: set `TRAEFIK_CERT_RESOL
 defines. If that Traefik defines none, copy the three `--certificatesresolvers.*` flags from
 `compose.proxy.yml` into its command.
 
+## Sign in with Google and GitHub
+
+Both are off until you set their credentials: the sign-in and sign-up pages then show a "Continue
+with …" link for each provider that is on, and the profile gets a "Sign-in methods" card. A
+provider is on only when both of its variables are set in the env file.
+
+| Provider | Where to register                                                         | Variables                                  | Callback URL to register                    |
+| -------- | ------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------- |
+| Google   | Google Cloud console, "APIs & Services", "Credentials", "OAuth client ID" | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `https://<DOMAIN>/api/auth/google/callback` |
+| GitHub   | GitHub, "Settings", "Developer settings", "OAuth Apps", "New OAuth App"   | `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | `https://<DOMAIN>/api/auth/github/callback` |
+
+For Google choose the application type "Web application"; the scopes asked for are `openid` and
+`email`. GitHub is asked for `read:user` and `user:email`. On your own machine the callback is
+`http://app.localhost/api/auth/<provider>/callback`; register it as a second callback URL (Google)
+or in a second OAuth App (GitHub allows one callback per app).
+
+What a person gets:
+
+- Someone the provider already signs in here is signed in. An account with an authenticator app is
+  still asked for its code.
+- Someone new is asked "Create a new account?" first, and nothing is created until they answer.
+  The question waits 10 minutes; "I already have an account" creates nothing.
+- When an account here already uses that address with a password but never confirmed it, the
+  question says so first: creating the new account locks the old one (its password stops working),
+  because the provider has proven who owns the address. The old account gets an audit row.
+- A provider account joins an existing account by its e-mail address only when both sides have
+  verified that address. An address the provider has not verified never links: that person is
+  asked whether to create a new account, like anyone unknown.
+- On the profile, a person links and unlinks providers. A provider account links whatever its
+  e-mail address, and linking never changes another person's confirmed account; one that already
+  signs in to another account here is refused, and the page says so. The last way into an account
+  cannot be unlinked, and unlinking a method signs out the devices that signed in with it.
+- Linking differs from signing up in one case. When the provider has verified an address that
+  another account here uses with a password but never confirmed, the link locks that account, as
+  creating a new account would, and it gets the same audit row. The person linking is not warned
+  first: a link has no question page.
+- The sign-in page says how the person last signed in on this browser, with most of the address
+  hidden ("Last time you signed in with Google (a\*\*\*@example.com)"), and "Not you? Forget"
+  removes it. Only the method's name and the masked address are kept, in the browser's storage,
+  and only after a finished sign-in.
+- An account made with a provider has no password. It cannot change its address, set a password
+  or delete itself yet, because each asks for the password; its profile shows the provider's
+  address, offers none of the three and says why.
+
 ## Admin consoles
 
 The MinIO console and Grafana have no public address. Each is published on the machine's own

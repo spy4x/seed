@@ -148,18 +148,18 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.67.0 (idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
+    // spy4x/ts-libs 1.68.0 (idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
     // the redirect-path check of sign-in's `next`, the password check without a session, billing).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
-    "@spy4x/validation": "jsr:@spy4x/validation@1.67.0",
-    "@spy4x/platform": "jsr:@spy4x/platform@1.67.0",
-    "@spy4x/server": "jsr:@spy4x/server@1.67.0",
-    "@spy4x/realtime": "jsr:@spy4x/realtime@1.67.0",
-    "@spy4x/integrations": "jsr:@spy4x/integrations@1.67.0",
-    "@spy4x/email": "jsr:@spy4x/email@1.67.0",
-    "@spy4x/net": "jsr:@spy4x/net@1.67.0",
-    "@spy4x/billing": "jsr:@spy4x/billing@1.67.0",
+    "@spy4x/validation": "jsr:@spy4x/validation@1.68.0",
+    "@spy4x/platform": "jsr:@spy4x/platform@1.68.0",
+    "@spy4x/server": "jsr:@spy4x/server@1.68.0",
+    "@spy4x/realtime": "jsr:@spy4x/realtime@1.68.0",
+    "@spy4x/integrations": "jsr:@spy4x/integrations@1.68.0",
+    "@spy4x/email": "jsr:@spy4x/email@1.68.0",
+    "@spy4x/net": "jsr:@spy4x/net@1.68.0",
+    "@spy4x/billing": "jsr:@spy4x/billing@1.68.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",
@@ -198,7 +198,7 @@
     "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@3.22.1",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.67.0",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.68.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components (spy4x/preact-components#121)
     "arktype": "npm:arktype@2.2.3",

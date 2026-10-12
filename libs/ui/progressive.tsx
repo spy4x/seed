@@ -42,6 +42,8 @@ export const TAG_PATHS = {
 export const SCREEN_PATHS = {
   signIn: "/sign-in",
   signUp: "/sign-up",
+  /** Asks "Create a new account?" after a provider sign-in nobody here is known by. */
+  confirmSignUp: "/sign-up/confirm",
   oneTimeCode: "/totp",
   forgotPassword: "/forgot-password",
   profile: "/",

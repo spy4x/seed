@@ -26,7 +26,10 @@ import type { EmailStatus } from "@domain/identity"
 /** How long a mailed code works. */
 export const EMAIL_CODE_TTL_MINUTES = DEFAULT_CODE_TTL_MINUTES
 
-/** The user's password key: every account here has exactly one. `null` when it is gone. */
+/**
+ * The user's password key, or `null`: an account made by a Google or GitHub sign-up has none, and
+ * an account that lost it to such a sign-up (it never confirmed its address) has none either.
+ */
 export async function passwordKeyOf(store: AuthStore, userId: number): Promise<AuthKey | null> {
   const keys = await store.listKeys(userId)
   return keys.find((key) => key.method === PASSWORD_METHOD) ?? null
@@ -56,13 +59,19 @@ export function emailChanges(sql: Sql) {
   }
 }
 
-/** Where the user's address stands: the one they sign in with, its proof, and a pending change. */
+/**
+ * Where the user's address stands: the one they sign in with, its proof, and a pending change.
+ * The password key's address when there is one; else the address a provider vouched for (#141),
+ * which is why an account made with Google reads as having a proven address.
+ */
 export async function readEmailStatus(
   changes: Pick<EmailChanges, "find">,
   store: AuthStore,
   userId: number,
 ): Promise<EmailStatus> {
-  const key = await passwordKeyOf(store, userId)
+  const keys = await store.listKeys(userId)
+  const key = keys.find((candidate) => candidate.method === PASSWORD_METHOD) ??
+    keys.find((candidate) => candidate.email !== null && candidate.provenAt !== null)
   return {
     email: key?.email ?? null,
     proven: key?.email != null && key.provenAt !== null,

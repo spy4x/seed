@@ -46,3 +46,20 @@ Deno.test("the API environment starts without ERROR_REPORT_DSN and carries it th
       .ERROR_REPORT_DSN,
   ).toBe(`https://k@e.example/1`)
 })
+
+Deno.test("the API environment starts without any sign-in provider and carries one through when set", () => {
+  const withKv = { ...REQUIRED_ENV, KV_PASSWORD: `kv-secret` }
+
+  const none = readApiEnv(createEnvReader(withKv))
+  expect([none.GOOGLE_CLIENT_ID, none.GOOGLE_CLIENT_SECRET]).toEqual([undefined, undefined])
+  expect([none.GITHUB_CLIENT_ID, none.GITHUB_CLIENT_SECRET]).toEqual([undefined, undefined])
+  const set = readApiEnv(createEnvReader({
+    ...withKv,
+    GOOGLE_CLIENT_ID: `g-id`,
+    GOOGLE_CLIENT_SECRET: `g-secret`,
+    GITHUB_CLIENT_ID: `h-id`,
+    GITHUB_CLIENT_SECRET: `h-secret`,
+  }))
+  expect([set.GOOGLE_CLIENT_ID, set.GOOGLE_CLIENT_SECRET]).toEqual([`g-id`, `g-secret`])
+  expect([set.GITHUB_CLIENT_ID, set.GITHUB_CLIENT_SECRET]).toEqual([`h-id`, `h-secret`])
+})

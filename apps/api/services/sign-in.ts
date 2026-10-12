@@ -103,6 +103,7 @@ import { consumePasswordReset } from "@server/auth/password-reset.ts"
 import { passwordKeyOf, proveEmailCode, readEmailStatus } from "@server/auth/email-verification.ts"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { createOAuthOperations, type OAuthOperations, type OAuthOptions } from "./oauth-sign-in.ts"
 
 /** Longest username, in characters (code points), after normalisation. */
 export const USERNAME_MAX_LENGTH = 50
@@ -162,6 +163,8 @@ export interface SignInOptions {
   totpIssuer: string
   /** Hashes and verifies passwords. Defaults to `createPasswordHasher` with `pepper`. */
   hasher?: PasswordHasher
+  /** Sign-in with Google and GitHub (`oauth-sign-in.ts`). Left out, every provider is off. */
+  oauth?: OAuthOptions
 }
 
 /** What {@link SignIn.deleteAccount} did. */
@@ -295,6 +298,8 @@ export interface SignIn {
    * of a cookie, so a socket that authenticated once can be checked again without the cookie.
    */
   entitledSession(sessionId: number): Promise<AppAuthState | null>
+  /** Sign-in with Google and GitHub, and the account's sign-in methods (`oauth-sign-in.ts`). */
+  oauth: OAuthOperations
 }
 
 /**
@@ -483,8 +488,33 @@ export function createSignIn(options: SignInOptions): SignIn {
       ),
     })
 
+  const oauth = createOAuthOperations(options.oauth, {
+    db,
+    sessionsOver,
+    cookie,
+    cookieSecret: options.cookieSecret,
+    secureCookie: options.secureCookie,
+    auditRow,
+    deviceOf,
+    // As a password sign-in: an account that waits to be deleted is restored, unless only its
+    // authenticator code may do that, and then the session owes the code.
+    secondFactorFor: (c) => async (authUser) => {
+      if (await waitingForCode(authUser.id)) return SecondFactorStatus.Pending
+      if (!(await restoreIfWaiting(c, authUser.id))) throw new MissingProfileError()
+      return await signInSecondFactor(authUser)
+    },
+    secondFactorAtSignUp: secondFactorFrom((user) =>
+      user?.mfa === UserMFAStatus.CONFIGURED
+        ? SecondFactorStatus.Pending
+        : SecondFactorStatus.NotRequired
+    ),
+    waitingForCode,
+    isRefusal: (error) => error instanceof MissingProfileError,
+  })
+
   return {
     auth,
+    oauth,
 
     async signUp(c, rawEmail, password, firstGroupId = uuidV7()) {
       // Checked here too, so a refused address opens no transaction and makes no provider.

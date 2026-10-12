@@ -1,4 +1,4 @@
-import { useState } from "preact/hooks"
+import { useEffect, useState } from "preact/hooks"
 import { useLocation, useSearch } from "wouter-preact"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import {
@@ -8,7 +8,15 @@ import {
   type AuthScreenKind,
 } from "@ui/auth-screen.tsx"
 import { afterSignIn, readNext, withNext } from "@ui/progressive.tsx"
+import {
+  OAUTH_NOTICE_PARAM,
+  OAUTH_NOTICES,
+  oauthNotice,
+  type OAuthProviderId,
+} from "@domain/identity"
 import { checkTotp, signIn, signUp } from "../state/auth.ts"
+import { listProviders } from "../state/sign-in-methods.ts"
+import { lastSignIn, lastSignInHint } from "../state/last-sign-in.ts"
 import { sessionState } from "../state/session.ts"
 
 /**
@@ -18,9 +26,24 @@ import { sessionState } from "../state/session.ts"
  */
 export function AuthView({ screen }: { screen: AuthScreenKind }) {
   const [, navigate] = useLocation()
-  const next = readNext(new URLSearchParams(useSearch()))
-  const [error, setError] = useState<string | null>(null)
+  const query = new URLSearchParams(useSearch())
+  const next = readNext(query)
+  // A provider sign-in that failed comes back here with `?oauth=`, and the page says so.
+  const [error, setError] = useState<string | null>(() => {
+    const notice = oauthNotice(query.get(OAUTH_NOTICE_PARAM))
+    return notice && OAUTH_NOTICES[notice]
+  })
   const [busy, setBusy] = useState(false)
+  const [last, setLast] = useState(() => lastSignInHint())
+  const [providers, setProviders] = useState<OAuthProviderId[]>([])
+  useEffect(() => {
+    if (screen === "one-time-code") return
+    let shown = true
+    void listProviders().then((found) => shown && setProviders(found))
+    return () => {
+      shown = false
+    }
+  }, [screen])
   const session = sessionState.value
 
   /** Runs one attempt: a failure shows its message, a success reloads onto the next page. */
@@ -49,6 +72,12 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
       error={error}
       navigate={navigate}
       next={next}
+      providers={providers}
+      lastSignIn={last}
+      onForgetLastSignIn={() => {
+        lastSignIn.forget()
+        setLast(null)
+      }}
       onSignIn={({ login, password }: AuthCredentials) => attempt(() => signIn(login, password))}
       onSignUp={({ login, password }: AuthCredentials) => attempt(() => signUp(login, password))}
       onOneTimeCode={(code) => attempt(() => checkTotp(code))}

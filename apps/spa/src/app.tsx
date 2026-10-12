@@ -8,6 +8,7 @@ import { Route, type StringRouteParams, Switch, useLocation, useSearch } from "w
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
 import { canSignOut, sessionState } from "./state/session.ts"
 import { bootstrapSession, settleOwedSignOut } from "./state/auth.ts"
+import { rememberSignIn } from "./state/last-sign-in.ts"
 import { groupsStore } from "./state/groups.ts"
 import { notesStore } from "./state/notes.ts"
 import { tagsStore } from "./state/tags.ts"
@@ -28,6 +29,7 @@ import {
 } from "./modules.ts"
 import { toasts } from "./state/toasts.ts"
 import { AuthView } from "./views/AuthView.tsx"
+import { ConfirmSignUpView } from "./views/ConfirmSignUpView.tsx"
 import { EmailView } from "./views/EmailView.tsx"
 import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView.tsx"
 import { GroupsView } from "./views/GroupsView.tsx"
@@ -83,6 +85,7 @@ const PAGES: {
   [Path in SpaRoutePath]: (params: StringRouteParams<Path>) => ComponentChildren
 } = {
   "/sign-up": () => <AuthView key="sign-up" screen="sign-up" />,
+  "/sign-up/confirm": () => <ConfirmSignUpView />,
   "/sign-in": () => <AuthView key="sign-in" screen="sign-in" />,
   "/totp": () => <AuthView key="one-time-code" screen="one-time-code" />,
   "/forgot-password": () => <ForgotPasswordView />,
@@ -187,6 +190,12 @@ export function App() {
     if (user && !isMfaRequired) rememberUser(user)
     else if (isReady && !user) void forgetUser()
   }, [sessionState.value.user, sessionState.value.isReady, sessionState.value.isMfaRequired])
+
+  // The sign-in page of this browser later says which method the person used (#142).
+  useEffect(() => void rememberSignIn(sessionState.value), [
+    sessionState.value.user?.id,
+    sessionState.value.isMfaRequired,
+  ])
 
   // A change made in another tab while this socket was down is read when it opens again.
   useEffect(() => profileStore.onSocketStatus(sessionState.value.wsStatus), [

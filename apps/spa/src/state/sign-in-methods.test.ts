@@ -1,0 +1,223 @@
+import { expect } from "@std/expect"
+import { afterEach, describe, it } from "@std/testing/bdd"
+import type { SignInMethod } from "@domain/identity"
+import {
+  createSignInMethodsStore,
+  listProviders,
+  readPendingSignUp,
+  type SignInMethodsHttp,
+} from "./sign-in-methods.ts"
+
+const password: SignInMethod = {
+  id: 3,
+  kind: "password",
+  email: "ada@example.com",
+  current: true,
+  canUnlink: false,
+}
+const google: SignInMethod = {
+  id: 8,
+  kind: "google",
+  email: "ada@example.com",
+  current: false,
+  canUnlink: true,
+}
+
+/** A server that holds `methods`, records each call and answers as `answers` says. */
+function fakeHttp(
+  methods: SignInMethod[],
+  answers: Partial<SignInMethodsHttp> = {},
+): SignInMethodsHttp & { calls: string[] } {
+  const calls: string[] = []
+  return {
+    calls,
+    list() {
+      calls.push("list")
+      return answers.list?.() ?? Promise.resolve({ ok: true, methods, available: ["github"] })
+    },
+    link(provider) {
+      calls.push(`link ${provider}`)
+      return answers.link?.(provider) ??
+        Promise.resolve({ ok: true, url: `https://provider.example/${provider}` })
+    },
+    unlink(methodId) {
+      calls.push(`unlink ${methodId}`)
+      return answers.unlink?.(methodId) ?? Promise.resolve({ ok: true, signedOut: false })
+    },
+  }
+}
+
+describe("the sign-in methods store", () => {
+  it("shows the methods and the providers still to link once the list is read", async () => {
+    const store = createSignInMethodsStore(fakeHttp([password, google]))
+    expect(store.methods.value).toBe(null)
+
+    await store.load()
+
+    expect(store.methods.value).toEqual([password, google])
+    expect(store.available.value).toEqual(["github"])
+    expect(store.error.value).toBe(null)
+  })
+
+  it("keeps the list shown and gives the reason when a read fails", async () => {
+    let fail = false
+    const http = fakeHttp([password], {
+      list: () => fail ? Promise.resolve({ ok: false, error: "Too many requests" }) : undefined!,
+    })
+    const store = createSignInMethodsStore(http)
+    await store.load()
+    fail = true
+
+    await store.load()
+
+    expect(store.methods.value).toEqual([password])
+    expect(store.error.value).toBe("Too many requests")
+  })
+
+  it("sends the browser to the provider's page to link it", async () => {
+    const left: string[] = []
+    const store = createSignInMethodsStore(fakeHttp([password]), (url) => void left.push(url))
+
+    await store.link("github")
+
+    expect(left).toEqual(["https://provider.example/github"])
+    expect(store.error.value).toBe(null)
+  })
+
+  it("stays on the page with the reason when a link is refused", async () => {
+    const left: string[] = []
+    const http = fakeHttp([password], {
+      link: () => Promise.resolve({ ok: false, error: "This sign-in method is not available." }),
+    })
+    const store = createSignInMethodsStore(http, (url) => void left.push(url))
+
+    await store.link("github")
+
+    expect(left).toHaveLength(0)
+    expect(store.error.value).toBe("This sign-in method is not available.")
+    expect(store.pending.value).toBe(false)
+  })
+
+  it("reads the list again after an unlink", async () => {
+    const http = fakeHttp([password])
+    const store = createSignInMethodsStore(http)
+
+    expect(await store.unlink(8)).toBe("unlinked")
+
+    expect(http.calls).toEqual(["unlink 8", "list"])
+    expect(store.methods.value).toEqual([password])
+    expect(store.pending.value).toBe(false)
+  })
+
+  it("says so when the unlink signed this device out, and reads nothing more", async () => {
+    const http = fakeHttp([google], {
+      unlink: () => Promise.resolve({ ok: true, signedOut: true }),
+    })
+    const store = createSignInMethodsStore(http)
+
+    expect(await store.unlink(8)).toBe("signed-out")
+
+    expect(http.calls).toEqual(["unlink 8"])
+  })
+
+  it("gives the server's reason when an unlink is refused, and keeps the list", async () => {
+    const http = fakeHttp([google], {
+      unlink: () => Promise.resolve({ ok: false, error: "This is your only way to sign in." }),
+    })
+    const store = createSignInMethodsStore(http)
+    await store.load()
+
+    expect(await store.unlink(8)).toBe("failed")
+
+    expect(store.error.value).toBe("This is your only way to sign in.")
+    expect(store.methods.value).toEqual([google])
+    expect(http.calls).toEqual(["list", "unlink 8"])
+  })
+
+  it("reports a failure without a reason when the server cannot be reached", async () => {
+    const http = fakeHttp([google], { unlink: () => Promise.reject(new TypeError("offline")) })
+    const store = createSignInMethodsStore(http)
+
+    expect(await store.unlink(8)).toBe("failed")
+
+    expect(store.error.value).toBe("")
+    expect(store.pending.value).toBe(false)
+  })
+
+  it("starts no second change while one is in flight", async () => {
+    let release: () => void = () => {}
+    const http = fakeHttp([password, google], {
+      unlink: () =>
+        new Promise((resolve) => {
+          release = () => resolve({ ok: true, signedOut: false })
+        }),
+    })
+    const store = createSignInMethodsStore(http, () => {})
+    const first = store.unlink(8)
+
+    expect(await store.unlink(8)).toBe("failed")
+    await store.link("github")
+    release()
+    await first
+
+    expect(http.calls).toEqual(["unlink 8", "list"])
+  })
+})
+
+describe("what the sign-in pages read", () => {
+  const realFetch = globalThis.fetch
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  /** Makes every request answer `status` with `body`, and records the paths asked for. */
+  function answers(status: number, body: unknown): string[] {
+    const asked: string[] = []
+    globalThis.fetch = (input) => {
+      asked.push(new URL(String(input instanceof Request ? input.url : input), "http://x").pathname)
+      return Promise.resolve(
+        new Response(JSON.stringify(body), {
+          status,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+    }
+    return asked
+  }
+
+  it("lists the providers the API says are on", async () => {
+    const asked = answers(200, { providers: ["google"] })
+
+    expect(await listProviders()).toEqual(["google"])
+    expect(asked).toEqual(["/api/auth/providers"])
+  })
+
+  it("shows no provider when the list cannot be read", async () => {
+    answers(503, { error: "down" })
+    expect(await listProviders()).toEqual([])
+
+    globalThis.fetch = () => Promise.reject(new TypeError("offline"))
+    expect(await listProviders()).toEqual([])
+
+    answers(200, "<html>maintenance</html>")
+    expect(await listProviders()).toEqual([])
+  })
+
+  it("reads the sign-up that waits, and none when the API holds none", async () => {
+    const waiting = {
+      provider: "google",
+      email: "ada@example.com",
+      expiresAt: "2026-11-04T08:10Z",
+      unconfirmedAccount: false,
+    }
+    const asked = answers(200, { pending: waiting })
+    expect(await readPendingSignUp()).toEqual(waiting)
+    expect(asked).toEqual(["/api/auth/sign-up/pending"])
+
+    answers(200, { pending: null })
+    expect(await readPendingSignUp()).toBe(null)
+
+    answers(500, { error: "down" })
+    expect(await readPendingSignUp()).toBe(null)
+  })
+})

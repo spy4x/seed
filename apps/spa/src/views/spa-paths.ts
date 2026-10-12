@@ -6,6 +6,8 @@
  */
 export const SPA_ROUTES = {
   "/sign-up": { open: true },
+  // The question after a provider sign-in that nobody here is known by.
+  "/sign-up/confirm": { open: true },
   "/sign-in": { open: true },
   "/totp": { open: true },
   "/forgot-password": { open: true },

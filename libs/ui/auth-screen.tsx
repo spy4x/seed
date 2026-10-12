@@ -1,8 +1,10 @@
 import type { ComponentChildren, JSX } from "preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { type AuthCredentials, AuthForm, type AuthMode } from "@spy4x/preact-system/auth-form"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { Link } from "@spy4x/preact-ui/link"
+import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
 import { type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
 
 /** The three screens `AuthScreen` draws: the two credential modes, and the second factor. */
@@ -55,6 +57,14 @@ export function authFailureMessage(screen: AuthScreenKind): string {
   return COPY[screen].failure
 }
 
+/**
+ * Where the browser goes to sign in with `provider`: the API's start route, which sends it on to
+ * the provider. `next` is the page to return to, which the API checks again.
+ */
+export function providerStartPath(provider: OAuthProviderId, next: string | null = null): string {
+  return withNext(`/api/auth/${provider}/start`, next)
+}
+
 export interface AuthScreenProps {
   screen: AuthScreenKind
   /** Signed in with every factor done: the credential screens say so instead of asking again. */
@@ -72,6 +82,74 @@ export interface AuthScreenProps {
    * posts it as the hidden `next` field, and the links to the other auth pages keep it.
    */
   next?: string | null
+  /**
+   * The providers a person can sign in with (Google, GitHub), as the API lists them. Each gets a
+   * "Continue with" link under the form on sign-in and sign-up. Left out or empty: none is shown.
+   */
+  providers?: readonly OAuthProviderId[]
+  /**
+   * How a person last signed in on this browser, shown on the sign-in screen so they pick the same
+   * way again (#142). `null` or left out: nothing is shown.
+   */
+  lastSignIn?: LastSignInHint | null
+  /** "Not you? Forget": the app drops what this browser remembered. */
+  onForgetLastSignIn?: () => void
+}
+
+/** What the sign-in screen says about the last sign-in on this browser. */
+export interface LastSignInHint {
+  method: SignInMethod["kind"]
+  /** The address, already masked (`j***@example.com`), or `null` when none was kept. */
+  email: string | null
+}
+
+/** The name of a sign-in method in a sentence. */
+const METHOD_NAMES: Record<SignInMethod["kind"], string> = {
+  password: "your password",
+  ...OAUTH_PROVIDER_NAMES,
+}
+
+/**
+ * "Last time you signed in with Google (j***@example.com)", with the button that forgets it. Once
+ * forgotten it says so and takes focus, since the button that had it is gone.
+ */
+function LastSignIn(
+  { last, onForget }: { last: LastSignInHint | null; onForget?: () => void },
+): JSX.Element | null {
+  const [forgotten, setForgotten] = useState(false)
+  const done = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    if (forgotten) done.current?.focus()
+  }, [forgotten])
+
+  if (forgotten) {
+    return (
+      <p ref={done} tabIndex={-1} role="status" class="text-sm" data-e2e="last-sign-in-forgotten">
+        Forgotten. This browser no longer remembers how you signed in.
+      </p>
+    )
+  }
+  if (!last) return null
+  return (
+    <p class="flex flex-wrap items-center gap-2 text-sm" data-e2e="last-sign-in">
+      <span>
+        Last time you signed in with {METHOD_NAMES[last.method]}
+        {last.email && <>{" "}({last.email})</>}.
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        data-e2e="last-sign-in-forget"
+        onClick={() => {
+          setForgotten(true)
+          onForget?.()
+        }}
+      >
+        Not you? Forget
+      </Button>
+    </p>
+  )
 }
 
 /**
@@ -132,6 +210,9 @@ export function AuthScreen(
     onOneTimeCode,
     navigate,
     next = null,
+    providers = [],
+    lastSignIn = null,
+    onForgetLastSignIn,
   }: AuthScreenProps,
 ): JSX.Element {
   const copy = COPY[screen]
@@ -163,6 +244,7 @@ export function AuthScreen(
 
   return (
     <AuthCard title={copy.title} description={copy.description} after={after}>
+      {screen === "sign-in" && <LastSignIn last={lastSignIn} onForget={onForgetLastSignIn} />}
       <AuthForm
         mode={screen === "one-time-code" ? "sign-in" : screen}
         step={screen === "one-time-code" ? "one-time-code" : "credentials"}
@@ -188,6 +270,23 @@ export function AuthScreen(
           )
           : undefined}
       />
+      {screen !== "one-time-code" && providers.length > 0 && (
+        <ul class="flex flex-col gap-3 border-t border-subtle pt-6" aria-label="Other ways in">
+          {providers.map((provider) => (
+            <li key={provider}>
+              {/* A plain link, with no `navigate`: the browser must leave the app for the provider. */}
+              <Button
+                href={providerStartPath(provider, next)}
+                variant="secondary"
+                class="w-full"
+                data-e2e={`provider-${provider}`}
+              >
+                Continue with {OAUTH_PROVIDER_NAMES[provider]}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
     </AuthCard>
   )
 }

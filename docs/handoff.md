@@ -233,6 +233,41 @@ These cost real time to find. Do not rediscover them.
    (`libs/server/auth/email-verification.ts`) is the one check invitations
    (#131) and OAuth linking (#141) must call before trusting an address.
 
+   **Google and GitHub (#141, #142).** `apps/api/services/oauth-sign-in.ts` wraps
+   `createOAuthSignIn` of `@spy4x/server/auth/oauth`, one per provider whose client id and secret
+   are both set (README, "Sign in with Google and GitHub"); `apps/api/routes/auth-oauth.ts` holds
+   the routes and is mounted before `createAuthRoute`. A provider method is a row of `auth_keys`
+   with the provider's name as `method` and the provider's user id as `subject`: there is no table
+   of its own. The state of a flow lives in Valkey for 10 minutes and in the HttpOnly cookie
+   `oauth_state_<provider>`. An unknown person gets no account: the callback stores a pending
+   sign-up, sets the cookie `oauth_sign_up` and redirects to `/sign-up/confirm`, where
+   `POST /api/auth/sign-up/confirm` creates the user, profile and first group. That cookie is
+   signed with the cookie secret (`@spy4x/platform/signed-payload`), because the API acts on what
+   it says and the library's flow store cannot be read, only taken from: one that was edited or
+   written by hand reads as no cookie. The library, not
+   `provenAddressOwner`, decides whether a provider account joins an existing one: only by an
+   address both sides have verified. Linking from the profile is the library's connect flow
+   (`connectUrl`, `handleConnectCallback`): bound to the signed-in user, it adds the provider
+   whatever its address and touches no other account, and a provider account that already signs in
+   to someone else ends at `/?oauth=link-taken`. Its `state` has its own HttpOnly cookie,
+   `oauth_connect_<provider>`; the one callback route runs the connect when that cookie holds the
+   callback's `state`, and the sign-in otherwise. `DELETE /api/auth/methods/:id` refuses the last usable method and ends
+   the sessions that method started. A sign-up the provider vouches for deletes another account's
+   unproven claim to the same address (the library's rule against sitting on an address): the
+   question page warns first (`PendingSignUp.unconfirmedAccount`) and the locked account gets the
+   audit row `UNCONFIRMED_ADDRESS_TAKEN`. A link whose provider vouches for such an address locks
+   that account too, with the same row but no warning: a link has no question page. Whether a
+   claim was taken is read from the database around the write (`reportingTakenClaims`), never from
+   the browser. "Go back" takes the held profile out of the flow store.
+   The two routes a browser opens as a page, `start` and `callback`, answer every failure with a
+   redirect to `/sign-in?oauth=…`, a spent rate limit included. The sign-in page's "last used"
+   hint is `apps/spa/src/state/last-sign-in.ts` over `createLastSignIn` of
+   `@spy4x/platform/browser/last-sign-in`: the app remembers the method the session used, read
+   from `GET /api/auth/methods`, once a person is signed in with every factor done. Not built: adding a password to an
+   account that has none, so such an account cannot change its address, change or reset a
+   password, or delete itself, which all ask for the password; its profile says so in each row
+   and offers none of the three.
+
    **Changing the address.** `POST /api/auth/email/change` with `{ email,
    password }` stores the new address in `email_changes` and mails it a code;
    the account keeps signing in with the old address until that code is

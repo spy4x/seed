@@ -29,7 +29,8 @@ import { readApiJson } from "@api/services/json-body.ts"
 
 /** What the auth routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface AuthRouteDependencies {
-  signIn: SignIn
+  /** Without the provider sign-in: `auth-oauth.ts` has those routes. */
+  signIn: Omit<SignIn, "oauth">
   /** Announces a sign-out, so the person's open sockets close. Audit rows are not events (#191). */
   emit(event: UserSignedOutEvent): void
   mutationGuards: MutationGuards

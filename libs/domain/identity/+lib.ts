@@ -279,6 +279,19 @@ export enum AuthAuditEventType {
    * most, so a flood of refused requests cannot fill the table.
    */
   API_TOKEN_REFUSED = 12,
+  /**
+   * A Google or GitHub account became a way into this account, with the key's method in
+   * `identifier` (`oauth:google`): the provider vouched for the address the account had proven.
+   */
+  SIGN_IN_METHOD_LINKED = 13,
+  /** The person removed a sign-in method, with the key's method in `identifier`. */
+  SIGN_IN_METHOD_UNLINKED = 14,
+  /**
+   * The account lost its password because it never confirmed its address, and someone a provider
+   * vouched for as the owner of that address created an account of their own. `identifier` is the
+   * method of that provider (`oauth:google`). The account keeps its data but has no way in.
+   */
+  UNCONFIRMED_ADDRESS_TAKEN = 15,
 }
 
 export const authAuditBaseSchema = type({
@@ -296,6 +309,9 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.API_TOKEN_REVOKED,
     AuthAuditEventType.API_TOKENS_PURGED,
     AuthAuditEventType.API_TOKEN_REFUSED,
+    AuthAuditEventType.SIGN_IN_METHOD_LINKED,
+    AuthAuditEventType.SIGN_IN_METHOD_UNLINKED,
+    AuthAuditEventType.UNCONFIRMED_ADDRESS_TAKEN,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",
@@ -349,6 +365,119 @@ export interface SignedInDevice {
 /** The answer of `GET /api/auth/sessions`: this device first, then the rest, last used first. */
 export interface SignedInDevicesResponse {
   sessions: SignedInDevice[]
+}
+
+/** The providers a person can sign in with besides a password (#141), as the API's paths name them. */
+export const OAUTH_PROVIDERS = ["google", "github"] as const
+export type OAuthProviderId = typeof OAUTH_PROVIDERS[number]
+
+/** What each provider is called on a button and in a sentence. */
+export const OAUTH_PROVIDER_NAMES: Record<OAuthProviderId, string> = {
+  google: "Google",
+  github: "GitHub",
+}
+
+/** `value` as a provider id, or `null` when it names none. */
+export function oauthProviderId(value: unknown): OAuthProviderId | null {
+  return OAUTH_PROVIDERS.find((id) => id === value) ?? null
+}
+
+/** The answer of `GET /api/auth/providers`: the providers whose credentials are set. */
+export interface OAuthProvidersResponse {
+  providers: OAuthProviderId[]
+}
+
+/**
+ * A provider sign-in that would create a new account and waits for the person to confirm it
+ * (#142), as `GET /api/auth/sign-up/pending` answers it.
+ */
+export interface PendingSignUp {
+  provider: OAuthProviderId
+  /** The address the provider reported, vouched for or not; `null` when it shared none. */
+  email: string | null
+  /** ISO 8601. After this the sign-up can no longer be confirmed. */
+  expiresAt: string
+  /**
+   * An account here signed up with a password and this address but never confirmed it. The
+   * provider vouches that the person at the question owns the address, so creating the new
+   * account takes the password away from that one. The question page says so first.
+   */
+  unconfirmedAccount: boolean
+}
+
+/** What `GET /auth/sign-up/pending` answers: the sign-up that waits, or `null` when none does. */
+export interface PendingSignUpResponse {
+  pending: PendingSignUp | null
+}
+
+/** One way into the account, as `GET /api/auth/methods` lists it (#141). */
+export interface SignInMethod {
+  /** The id to unlink it by. */
+  id: number
+  kind: "password" | OAuthProviderId
+  /** The address this method proved or signs in with; `null` when it carries none. */
+  email: string | null
+  /** This device signed in with it, so unlinking it signs this device out. */
+  current: boolean
+  /** A provider method that is not the last way in. The password is never unlinked. */
+  canUnlink: boolean
+}
+
+/** The answer of `GET /api/auth/methods`. */
+export interface SignInMethodsResponse {
+  methods: SignInMethod[]
+  /** Providers that are on and not linked to this account yet. */
+  available: OAuthProviderId[]
+}
+
+/**
+ * How a provider sign-in or a link ended, as the API's callback puts it in the `oauth` query
+ * parameter of the page it sends the browser to.
+ */
+export type OAuthNotice =
+  /** The sign-in failed: the provider refused, the attempt expired, or the account is gone. */
+  | "failed"
+  /** Linked: the provider is now a way into the signed-in account. */
+  | "linked"
+  /** Nothing changed: that provider account was already a way into the signed-in account. */
+  | "link-exists"
+  /** Not linked: another account here already signs in with that provider account. */
+  | "link-taken"
+  /** Too many attempts from this address in a minute; nothing was tried. */
+  | "busy"
+
+/**
+ * The web app's pages a provider's callback redirects to. `apps/spa` routes each one
+ * (`spa-paths.ts`), and its tests fail when one is missing there.
+ */
+export const OAUTH_PAGES = {
+  /** Sign-in: where a failed provider sign-in says so. */
+  signIn: "/sign-in",
+  /** Asks "Create a new account?" before a provider signs anyone up. */
+  confirmSignUp: "/sign-up/confirm",
+  /** Asks for the authenticator code a provider sign-in still owes. */
+  oneTimeCode: "/totp",
+  /** The profile: where sign-in lands without a `next`, and where linking reports. */
+  profile: "/",
+} as const
+
+/** The query parameter that carries an {@link OAuthNotice}. */
+export const OAUTH_NOTICE_PARAM = "oauth"
+
+/** What each {@link OAuthNotice} tells the person. */
+export const OAUTH_NOTICES: Record<OAuthNotice, string> = {
+  "failed": "That sign-in did not work. Try again.",
+  "linked": "Linked. You can now sign in with it.",
+  "link-exists": "Already linked. You can sign in with it as before.",
+  "link-taken": "Not linked: that account is already linked to another account here.",
+  "busy": "Too many attempts. Wait a minute, then try again.",
+}
+
+/** `value` as a notice, or `null` when it is none. */
+export function oauthNotice(value: unknown): OAuthNotice | null {
+  return typeof value === "string" && Object.hasOwn(OAUTH_NOTICES, value)
+    ? value as OAuthNotice
+    : null
 }
 
 // The four response shapes below have no @spy4x/platform/api counterpart: they name this app's

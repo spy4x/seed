@@ -8,6 +8,7 @@ import { getWebPush } from "@api/services/webPush.ts"
 import { ONE_HOUR_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { startIntervalRunner } from "@spy4x/platform/server/interval-runner"
 import { createAuthRoute } from "./routes/auth.ts"
+import { createOAuthRoute } from "./routes/auth-oauth.ts"
 import { createPushNotificationRoute } from "./routes/pushNotification.ts"
 import { createUsersRoute } from "./routes/users.ts"
 import { wsRoute } from "./routes/ws.ts"
@@ -107,6 +108,18 @@ const rateLimits = createAuthRateLimits({
   store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
   onStoreError: (error) => log("error: auth rate limit store failed and was let pass", error),
 })
+// Before the auth routes: their session middleware would answer for the public paths here too.
+app.route(
+  "/auth",
+  createOAuthRoute({
+    signIn,
+    emit,
+    mutationGuards,
+    rateLimits,
+    origin: config.webAppUrl,
+    logError: (message, error) => log(message, error),
+  }),
+)
 app.route(
   "/auth",
   createAuthRoute({

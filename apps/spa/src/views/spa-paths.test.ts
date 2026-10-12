@@ -1,5 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
+import { OAUTH_PAGES } from "@domain/identity"
 import { isMembersOnlyPath, isSpaPath, SPA_ROUTE_PATHS, SPA_ROUTES } from "./spa-paths.ts"
 
 /** An address the pattern matches: every `:name` filled in. */
@@ -59,6 +60,7 @@ describe("isMembersOnlyPath", () => {
     const open = SPA_ROUTE_PATHS.filter((pattern) => SPA_ROUTES[pattern].open)
     expect(open).toEqual([
       "/sign-up",
+      "/sign-up/confirm",
       "/sign-in",
       "/totp",
       "/forgot-password",
@@ -68,5 +70,14 @@ describe("isMembersOnlyPath", () => {
       "/unsubscribe",
       "/",
     ])
+  })
+})
+
+describe("the pages a provider's callback redirects to", () => {
+  it("are all routed, and open to a person who is not signed in yet", () => {
+    for (const path of Object.values(OAUTH_PAGES)) {
+      expect(SPA_ROUTE_PATHS as string[], path).toContain(path)
+      expect(isMembersOnlyPath(path), path).toBe(false)
+    }
   })
 })

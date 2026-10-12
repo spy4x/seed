@@ -54,7 +54,9 @@ export const EMAIL_CHANGE_ADDRESS_WINDOW_MS = 60 * 60_000
 export interface AuthRateLimits {
   /**
    * Strict limit per client IP, for sign-in, sign-up, asking for a reset link and using one, where
-   * no user is known yet.
+   * no user is known yet. A sign-in with Google or GitHub spends one attempt when the provider
+   * sends the browser back, and a second one when the person then confirms a new account;
+   * leaving for the provider spends the normal limit.
    */
   strictByIp: MiddlewareHandler<APIContext>
   /**
