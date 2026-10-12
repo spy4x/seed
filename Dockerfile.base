@@ -1,6 +1,7 @@
 # Base Dockerfile for app
 # This image contains the common setup for all Deno-based services
-# Build: docker build -t app/deno-base:${DENO_VERSION} -f Dockerfile.base --build-arg DENO_VERSION=X.X.X
+# Build: `deno task compose build` builds it first, as <PROJECT>/deno-base:<DENO_VERSION>, and the
+# other images start from it (BASE_IMAGE).
 
 ARG DENO_VERSION=2.9.7
 FROM denoland/deno:alpine-${DENO_VERSION}

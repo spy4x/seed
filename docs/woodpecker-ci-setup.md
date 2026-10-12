@@ -67,7 +67,6 @@ an approved pull request can edit `ci.yml` and would otherwise read them.
 
 ### Application Configuration
 - `API_PORT` - API server port (e.g., `8000`)
-- `SPA_PORT` - SPA port (e.g., `3000`)
 - `DOMAIN` - Production domain (e.g., `app.example.com`)
 - `TRAEFIK_ACME_EMAIL` - Email for Let's Encrypt certificates
 

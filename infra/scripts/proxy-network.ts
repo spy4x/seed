@@ -4,6 +4,22 @@ import { runCommand } from "@spy4x/platform/server"
 /** Name of the Docker network that Traefik and every stack's routed services share. */
 export const PROXY_NETWORK = `proxy`
 
+/** The container engines the scripts can drive. */
+export type ContainerProvider = `docker` | `podman`
+
+/**
+ * The engine an env file asks for in `CONTAINER_PROVIDER`: Docker when it is unset or empty. Every
+ * script takes it from here, so the Compose step and the network step never pick different ones.
+ *
+ * @throws {Error} When the value names neither engine.
+ */
+export function containerProvider(envVars: Record<string, string>): ContainerProvider {
+  const value = envVars[`CONTAINER_PROVIDER`] ?? ``
+  if (value === `` || value === `docker`) return `docker`
+  if (value === `podman`) return `podman`
+  throw new Error(`CONTAINER_PROVIDER must be "docker" or "podman", not "${value}"`)
+}
+
 /** Runs `<provider> <args>` and returns its exit code. */
 export type RunContainerCli = (provider: string, args: string[]) => Promise<number>
 
@@ -39,7 +55,7 @@ export const runContainerCli: RunContainerCli = async (provider, args) => {
 if (import.meta.main) {
   const { readEnvFile } = await import(`./env-file.ts`)
   const envVars = await readEnvFile(`./infra/envs/.env`)
-  const provider = envVars[`CONTAINER_PROVIDER`] === `podman` ? `podman` : `docker`
+  const provider = containerProvider(envVars)
   if (await ensureProxyNetwork(provider, runContainerCli)) {
     console.log(`Created the ${PROXY_NETWORK} network`)
   }

@@ -350,10 +350,12 @@ services:
   # endregion Monitoring
 
   # region Apps
-  # Base image with Deno and dependencies pre-installed for caching
+  # Base image with Deno and dependencies pre-installed for caching. Named after the project, as
+  # every container is: two projects on one host hold different dependencies, and one shared tag
+  # would let either build start from the other's. Each build below takes it as BASE_IMAGE.
   deno-base:
     container_name: ${PROJECT}-deno-base
-    image: app/deno-base:${DENO_VERSION}
+    image: ${PROJECT}/deno-base:${DENO_VERSION}
     build:
       context: ../..
       dockerfile: Dockerfile.base
@@ -375,6 +377,7 @@ services:
       dockerfile: apps/api/dockerfile
       args:
         - DENO_VERSION=${DENO_VERSION}
+        - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
     command: [ 'deno', 'task', 'db:migrate' ]
     deploy:
       resources:
@@ -413,6 +416,7 @@ services:
       dockerfile: apps/api/dockerfile
       args:
         - DENO_VERSION=${DENO_VERSION}
+        - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z
@@ -434,7 +438,9 @@ services:
       # The port apps/healthcheck.ts probes.
       - HEALTHCHECK_PORT=${API_PORT}
       - DENO_LOG=${DENO_LOG}
-      - DB_HOST=db
+      # The API is on the shared `proxy` network too, where a plain service name such as `db` is
+      # answered by any project's container of that name. The container's own name is unique.
+      - DB_HOST=${PROJECT}-db
       - DB_PORT=5432
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
@@ -445,7 +451,7 @@ services:
       - DEV_EMAIL=${DEV_EMAIL}
       - DOMAIN=${DOMAIN}
       - TIMEZONE=${TIMEZONE}
-      - KV_HOSTNAME=kv
+      - KV_HOSTNAME=${PROJECT}-kv
       - KV_PORT=6379
       - KV_PASSWORD=${KV_PASSWORD:?KV_PASSWORD is required}
       - RATE_LIMITER_WINDOW_MS=${RATE_LIMITER_WINDOW_MS}
@@ -524,6 +530,7 @@ services:
       dockerfile: apps/api/dockerfile
       args:
         - DENO_VERSION=${DENO_VERSION}
+        - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
     command: [ 'deno', 'run', '--allow-sys', '--allow-env', '--allow-net', 'apps/worker/+main.ts' ]
     volumes:
       - ../../apps:/app/apps:z
@@ -584,6 +591,7 @@ services:
       dockerfile: apps/spa/dockerfile.prod
       args:
         - DENO_VERSION=${DENO_VERSION}
+        - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
     environment:
       - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
@@ -642,11 +650,13 @@ services:
       dockerfile: apps/mpa/dockerfile.prod
       args:
         - DENO_VERSION=${DENO_VERSION}
+        - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
     environment:
       - ENV=${ENV}
       - DOMAIN=${DOMAIN}
       - MPA_DOMAIN=${MPA_DOMAIN:-}
-      - API_URL=http://api:${API_PORT}
+      # Not `http://api`: on the shared `proxy` network that name is any project's API.
+      - API_URL=http://${PROJECT}-api:${API_PORT}
       - DENO_LOG=${DENO_LOG}
       # The port apps/healthcheck.ts probes: the one the image's CMD serves.
       - HEALTHCHECK_PORT=8080
@@ -686,11 +696,8 @@ services:
   # endregion API & SPA
 
 # region Networking
+# The project's own network (`default`) is not declared: the engine then gives each project a free
+# subnet. A fixed one stopped a second project on the same host ("Pool overlaps").
 networks:
   proxy:
     external: true
-  default:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.50.0.0/16

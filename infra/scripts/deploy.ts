@@ -22,9 +22,11 @@
  *
  * Four steps, each stopping the deploy when it fails: rsync the files that
  * `infra/deploy/include.txt` names, leaving out every env file (any `.env*` or `*.env`, anywhere,
- * and the chosen env file itself) and the web push keys, and deleting server files under those
- * paths that are gone here (excluded files are never deleted, so a file placed by hand under
- * `apps/`, `libs/` or `infra/` survives only if it is an env file or the web push keys); copy the chosen env file to
+ * and the chosen env file itself) and the web push keys, replacing every server file that differs
+ * from this checkout's, a newer one too (so a deploy from an older commit is a full rollback), and
+ * deleting server files under those paths that are gone here (excluded files are never deleted,
+ * so a file placed by hand under `apps/`, `libs/` or `infra/` survives only if it is an env file
+ * or the web push keys); copy the chosen env file to
  * `infra/envs/.env` on the server, readable by its owner only; create `infra/configs/vapid.json`
  * on the server when it is missing (never sent from this machine, never overwritten, mode 600);
  * then run `deno task compose up -d --build` there. Compose's one-shot `migrate` service applies
@@ -46,7 +48,7 @@ export const VAPID_PATH = "infra/configs/vapid.json"
 /** The file whose secret values are public, so none of them may reach a server. */
 export const EXAMPLE_ENV_FILE = "infra/envs/.env.example"
 
-/** Names of variables that hold a password, secret or key. */
+/** What the name of a variable that holds a password, secret or key contains. */
 const SECRET_NAME = /PASS|SECRET|PEPPER|TOTP|KEY|TOKEN/
 
 /**
@@ -55,6 +57,22 @@ const SECRET_NAME = /PASS|SECRET|PEPPER|TOTP|KEY|TOKEN/
  * run unless `ENV` is `dev`. The example's value stays public for every other variable.
  */
 const DEVELOPMENT_ONLY: readonly string[] = ["SEED_PASSWORD"]
+
+/**
+ * Parts of a name that hold one of the words above without naming a secret: `PASSKEY` (the sign-in
+ * method, as in `PASSKEY_RP_ID`), and a name that ends by describing a key instead of holding one
+ * (`S3_KEY_PREFIX`, `S3_BUCKET_BACKUPS_ACCESS_KEY_ID`).
+ */
+const NOT_A_SECRET = /PASSKEY|KEY_(ID|PREFIX)$/g
+
+/**
+ * Whether a variable holds a password, secret or key, going by its name. The exemptions are cut
+ * out of the name first, so the rest of it still counts: `PASSKEY_SECRET` and `SECRET_KEY_ID` stay
+ * secrets.
+ */
+export function isSecretName(name: string): boolean {
+  return SECRET_NAME.test(name.replace(NOT_A_SECRET, ""))
+}
 
 /** One secret a deploy must not go ahead with, and why. */
 export interface UnsafeSecret {
@@ -66,7 +84,7 @@ export interface UnsafeSecret {
 /**
  * The secrets of `values` that are not safe to deploy, in the example file's order first.
  *
- * A variable is a secret when its name says so. Every secret the example gives a value is public,
+ * A variable is a secret when its name says so ({@link isSecretName}). Every secret the example gives a value is public,
  * so a secret of `values` that equals any of those values is unsafe, whichever variable holds it
  * (`DB_PASS=change-me` too). A secret the example gives a value must also have one here: left empty
  * or out, its service starts with no password or its built-in one. A secret the example leaves
@@ -77,10 +95,10 @@ export function unsafeSecretsIn(
   example: Record<string, string>,
 ): UnsafeSecret[] {
   const required = Object.keys(example).filter((name) =>
-    SECRET_NAME.test(name) && example[name] !== ""
+    isSecretName(name) && example[name] !== ""
   )
   const published = new Set(required.map((name) => example[name]))
-  const names = new Set([...required, ...Object.keys(values).filter((n) => SECRET_NAME.test(n))])
+  const names = new Set([...required, ...Object.keys(values).filter(isSecretName)])
   const unsafe: UnsafeSecret[] = []
   for (const name of names) {
     if (DEVELOPMENT_ONLY.includes(name)) continue
@@ -181,7 +199,9 @@ export function planDeploy(values: Record<string, string>, envFilePath: string):
       label: "Copying files",
       command: "rsync",
       args: [
-        "-avhzru",
+        // No `-u`: it keeps every file that is newer on the server, so a rollback, or a deploy
+        // after a file was edited there, left a mix of two versions and still reported success.
+        "-avhz",
         // Removes files deleted here, so a stale module cannot break the build on the server.
         // Excluded paths (the env file, the private key) are never deleted: no --delete-excluded.
         "--delete",

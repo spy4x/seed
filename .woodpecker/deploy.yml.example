@@ -43,8 +43,6 @@ steps:
         from_secret: kv_password
       API_PORT:
         from_secret: api_port
-      SPA_PORT:
-        from_secret: spa_port
       DOMAIN:
         from_secret: domain
       TRAEFIK_ACME_EMAIL:
@@ -69,7 +67,6 @@ steps:
         KV_PORT=${KV_PORT}
         KV_PASSWORD=${KV_PASSWORD}
         API_PORT=${API_PORT}
-        SPA_PORT=${SPA_PORT}
         DOMAIN=${DOMAIN}
         TRAEFIK_ACME_EMAIL=${TRAEFIK_ACME_EMAIL}
         SSH_TO_SERVER=${SSH_TO_SERVER}

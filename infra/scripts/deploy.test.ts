@@ -3,6 +3,7 @@ import { expect } from "@std/expect"
 import { basename, globToRegExp } from "@std/path"
 import {
   EXAMPLE_ENV_FILE,
+  isSecretName,
   planDeploy,
   planFromEnvFile,
   refuseExampleSecrets,
@@ -33,6 +34,16 @@ Deno.test("planDeploy sends files and the env file to the host and path from the
     ENV_FILE,
     "deploy@home.example.net:/srv/app/infra/envs/.env",
   ])
+})
+
+Deno.test("planDeploy's file copy does not keep a file because it is newer on the server", () => {
+  const [files] = planDeploy({ SSH_TO_SERVER: "h", PATH_ON_SERVER: "/srv/app" }, ENV_FILE)
+  // rsync's `-u` (`--update`) skips every file whose copy on the receiver is newer. Short options
+  // come bundled in one word, such as `-avhz`.
+  const bundles = files.args.filter((arg) => /^-[A-Za-z]+$/.test(arg))
+  expect(bundles[0], "the copy is still an archive copy").toContain("a")
+  expect(bundles.filter((bundle) => bundle.includes("u"))).toEqual([])
+  expect(files.args.filter((arg) => arg.startsWith("--update"))).toEqual([])
 })
 
 /**
@@ -261,4 +272,103 @@ Deno.test("a deploy without the example file stops and says the file is missing"
   await expect(planFromEnvFile(ENV_FILE, reader(files))).rejects.toThrow(
     `${EXAMPLE_ENV_FILE} is missing`,
   )
+})
+
+Deno.test("a name that describes a key or names passkeys is not a secret and may hold any value", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  // `app` is the example's DB_PASS and the default project name.
+  expect(example.DB_PASS).toBe("app")
+  const values = {
+    ...await safeValues(),
+    S3_KEY_PREFIX: "app",
+    PASSKEY_RP_ID: "app",
+    PASSKEY_RP_NAME: "app",
+    S3_BUCKET_BACKUPS_ACCESS_KEY_ID: "app",
+  }
+
+  expect(unsafeSecretsIn(values, example)).toEqual([])
+})
+
+Deno.test("the exemption for key descriptions and passkeys lets no secret through", async () => {
+  for (
+    const name of [
+      "PASSKEY_SECRET",
+      "PASSKEY_PRIVATE_KEY",
+      "SECRET_KEY_ID",
+      "S3_KEY",
+      "KEY_PREFIX_SECRET",
+      "API_KEY_IDENTITY_TOKEN",
+      // A key description counts only at the end of a name: anything after it is not described.
+      "SIGNING_KEY_IDS",
+      "S3_KEY_PREFIXES",
+      "DB_PASS",
+      "KV_PASSWORD",
+      "STRIPE_SECRET_KEY",
+      "AUTH_TOTP",
+    ]
+  ) {
+    expect({ name, secret: isSecretName(name) }).toEqual({ name, secret: true })
+  }
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  const values = { ...await safeValues(), PASSKEY_SECRET: "app", S3_KEY: example.KV_PASSWORD }
+
+  expect(unsafeSecretsIn(values, example)).toEqual([
+    { name: "PASSKEY_SECRET", reason: "example" },
+    { name: "S3_KEY", reason: "example" },
+  ])
+})
+
+/** The example file with a value in every empty line, and secrets of its own. */
+async function filledExample(): Promise<Record<string, string>> {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  const filled = Object.fromEntries(
+    Object.entries(example).map(([name, value]) => [name, value === "" ? `filled-${name}` : value]),
+  )
+  for (const name of EXAMPLE_SECRETS) filled[name] = `real-${name}`
+  return filled
+}
+
+Deno.test("a copy of the example file with its values filled in deploys: no name is missing", async () => {
+  const files = {
+    [EXAMPLE_ENV_FILE]: await readEnvFile(EXAMPLE_ENV_FILE),
+    [ENV_FILE]: await filledExample(),
+  }
+
+  const steps = await planFromEnvFile(ENV_FILE, reader(files))
+
+  expect(steps.at(0)?.args.at(-1)).toBe("filled-SSH_TO_SERVER:filled-PATH_ON_SERVER")
+})
+
+Deno.test("the example file holds every name the deploy reads, the optional ones too", async () => {
+  const read = new Set<string>()
+  const recording = new Proxy(await filledExample(), {
+    get(values, name) {
+      if (typeof name === "string") read.add(name)
+      return Reflect.get(values, name)
+    },
+  })
+  planDeploy(recording, ENV_FILE)
+
+  const example = Object.keys(await readEnvFile(EXAMPLE_ENV_FILE))
+  expect(read.size).toBeGreaterThanOrEqual(3)
+  expect([...read].filter((name) => !example.includes(name))).toEqual([])
+})
+
+Deno.test("the example file names the host port of every service the stack publishes", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  // The same four names tests/compose-exposure.test.ts finds in the Compose files.
+  for (
+    const name of ["DB_HOST_PORT", "KV_HOST_PORT", "MINIO_CONSOLE_HOST_PORT", "GRAFANA_HOST_PORT"]
+  ) {
+    expect({ name, value: example[name] }).toEqual({
+      name,
+      value: expect.stringMatching(/^127\.0\.0\.1:\d+$/),
+    })
+  }
+})
+
+Deno.test("the example file does not turn on the proxy's per-request debug log", async () => {
+  const example = await readEnvFile(EXAMPLE_ENV_FILE)
+  // The same level infra/compose/compose.proxy.yml falls back to (tests/compose-exposure.test.ts).
+  expect(example["PROXY_LOG_LEVEL"]).toBe("info")
 })

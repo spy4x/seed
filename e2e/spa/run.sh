@@ -7,8 +7,8 @@
 #
 # `SPA_SERVER` says where nginx comes from:
 # - `container` (the default): builds the image of `apps/spa/dockerfile.prod` as a deploy does and
-#   runs it, with the container tool `CONTAINER_PROVIDER` (`podman` by default, as
-#   `deno task compose`). The images it builds are removed when it ends.
+#   runs it, with the container tool `CONTAINER_PROVIDER` (`podman` by default here;
+#   `deno task compose` runs Docker by default). The images it builds are removed when it ends.
 # - `nginx`: for a machine without a container tool that is thrown away afterwards, which is the CI
 #   step (.woodpecker/ci.yml). It builds the SPA here and copies it, `nginx.conf`, the generated
 #   header file and the allow list to the paths the image has them at, under /etc and /usr/share,

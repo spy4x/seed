@@ -1,6 +1,11 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { ensureProxyNetwork, type RunContainerCli, runContainerCli } from "./proxy-network.ts"
+import {
+  containerProvider,
+  ensureProxyNetwork,
+  type RunContainerCli,
+  runContainerCli,
+} from "./proxy-network.ts"
 
 function fakeCli(existing: Set<string>, createCode = 0) {
   const calls: string[] = []
@@ -41,4 +46,20 @@ Deno.test("ensureProxyNetwork uses the network name it is given", async () => {
 // path as a CLI that is not installed.
 Deno.test("runContainerCli says the CLI could not be run, not that it exited with a code", async () => {
   await expect(runContainerCli(`docker`, [`version`])).rejects.toThrow(`Could not run docker`)
+})
+
+Deno.test("an env file without CONTAINER_PROVIDER, or with it empty, runs Docker", () => {
+  expect(containerProvider({})).toBe(`docker`)
+  expect(containerProvider({ CONTAINER_PROVIDER: `` })).toBe(`docker`)
+})
+
+Deno.test("CONTAINER_PROVIDER picks Docker or Podman by name", () => {
+  expect(containerProvider({ CONTAINER_PROVIDER: `docker` })).toBe(`docker`)
+  expect(containerProvider({ CONTAINER_PROVIDER: `podman` })).toBe(`podman`)
+})
+
+Deno.test("a CONTAINER_PROVIDER that names neither engine is refused, not replaced by a default", () => {
+  expect(() => containerProvider({ CONTAINER_PROVIDER: `Podman` })).toThrow(
+    `CONTAINER_PROVIDER must be "docker" or "podman", not "Podman"`,
+  )
 })

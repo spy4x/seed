@@ -5,6 +5,11 @@
  * Grafana have no router and are published on this machine only, as Postgres and Valkey are, Valkey
  * needs its password, the API's router drops a forged `CF-Connecting-IP` header, and in production
  * plain HTTP redirects to HTTPS.
+ *
+ * It also holds what lets two projects share one host (spy4x/template#354): every published port
+ * can be moved through a variable, every container and built image is named after the project,
+ * no network claims a fixed subnet, and a container on the shared `proxy` network reaches its own
+ * project's services by their container names.
  */
 
 import { expect } from "@std/expect"
@@ -12,18 +17,29 @@ import { fromFileUrl } from "@std/path"
 import { parse } from "@std/yaml"
 
 interface ComposeService {
+  build?: { args?: string[] }
+  container_name?: string
+  image?: string
   command?: string[]
   environment?: string[]
   labels?: string[]
+  networks?: string[]
   ports?: string[]
 }
 
-async function services(name: string): Promise<Record<string, ComposeService>> {
+interface ComposeFile {
+  services?: Record<string, ComposeService>
+  networks?: Record<string, Record<string, unknown> | null>
+}
+
+async function composeFile(name: string): Promise<ComposeFile> {
   const file = fromFileUrl(new URL(`../infra/compose/compose.${name}.yml`, import.meta.url))
-  const compose = parse(await Deno.readTextFile(file)) as {
-    services?: Record<string, ComposeService>
-  }
-  if (!compose.services) throw new Error(`${file} has no services`)
+  return parse(await Deno.readTextFile(file)) as ComposeFile
+}
+
+async function services(name: string): Promise<Record<string, ComposeService>> {
+  const compose = await composeFile(name)
+  if (!compose.services) throw new Error(`compose.${name}.yml has no services`)
   return compose.services
 }
 
@@ -125,4 +141,102 @@ Deno.test("in production plain HTTP for the SPA's and the MPA's hosts redirects 
     expect(label(service, `${router}.entrypoints`)).toBe("web")
     expect(label(service, `${router}.middlewares`)).toBe(middleware)
   }
+})
+
+Deno.test("every port a project publishes is on this machine by default and moves with a variable", async () => {
+  const variables: string[] = []
+  for (const file of ["shared", "dev", "prod"]) {
+    for (const [name, service] of Object.entries(await services(file))) {
+      for (const port of service.ports ?? []) {
+        // `${NAME_HOST_PORT:-127.0.0.1:<port>}:<container port>`; the default may hold a variable.
+        const match = port.match(
+          /^\$\{([A-Z_]+_HOST_PORT):-127\.0\.0\.1:(\d+|\$\{[A-Z_]+\})\}:\d+$/,
+        )
+        expect({ file, name, port, movable: match !== null })
+          .toEqual({ file, name, port, movable: true })
+        variables.push(match![1])
+      }
+    }
+  }
+  // infra/scripts/deploy.test.ts holds these four names to infra/envs/.env.example.
+  expect(variables.sort()).toEqual(
+    ["DB_HOST_PORT", "GRAFANA_HOST_PORT", "KV_HOST_PORT", "MINIO_CONSOLE_HOST_PORT"],
+  )
+})
+
+Deno.test("no project network claims a fixed subnet, so a second project gets a free one", async () => {
+  for (const file of ["shared", "dev", "prod"]) {
+    const networks = (await composeFile(file)).networks ?? {}
+    for (const [name, network] of Object.entries(networks)) {
+      expect({ file, name, ipam: network?.ipam }).toEqual({ file, name, ipam: undefined })
+    }
+    // Only the proxy's network has one name for every project, and the engine owns its addresses.
+    expect(Object.keys(networks).filter((name) => name !== "proxy")).toEqual([])
+    expect(networks.proxy).toEqual({ external: true })
+  }
+})
+
+Deno.test("every container and every image a project builds is named after the project", async () => {
+  const all = await services("shared")
+  const base = "${PROJECT}/deno-base:${DENO_VERSION}"
+  for (const [name, service] of Object.entries(all)) {
+    expect({ name, container: service.container_name })
+      .toEqual({ name, container: `\${PROJECT}-${name}` })
+    if (!service.build) continue
+    // The base image is the one built image with a name; every other build starts from it.
+    if (name === "deno-base") expect(service.image).toBe(base)
+    else {expect({ name, args: service.build.args }).toEqual({
+        name,
+        args: expect.arrayContaining([`BASE_IMAGE=${base}`]),
+      })}
+  }
+  for (const file of ["dev", "prod"]) {
+    for (const [name, service] of Object.entries(await services(file))) {
+      expect({ file, name, container: service.container_name, image: service.image })
+        .toEqual({ file, name, container: undefined, image: undefined })
+    }
+  }
+})
+
+/**
+ * The hosts a value names: what stands where a URL or a `host:port` pair has its host. A variable
+ * (`${PROJECT}-api`) is kept whole, so a per-project name never reads as a plain one.
+ */
+function hostsIn(value: string): string[] {
+  return value.replace(/\$\{[^}]*\}/g, "VARIABLE").split(/[^A-Za-z0-9._-]+/)
+}
+
+Deno.test("a container on the shared proxy network reaches no service by a name another project also has", async () => {
+  const files = await Promise.all(["shared", "dev", "prod"].map(services))
+  const names = new Set(files.flatMap((file) => Object.keys(file)))
+  const onProxy = [...names].filter((name) =>
+    files.some((file) => file[name]?.networks?.includes("proxy"))
+  )
+  expect(onProxy).toEqual(expect.arrayContaining(["api", "mpa", "spa"]))
+
+  // Docker answers a plain service name from every network a container is on, so on `proxy` the
+  // name `api` is the API of whichever project answers first. `${PROJECT}-api` is one container.
+  const plain: string[] = []
+  for (const name of onProxy) {
+    for (const file of files) {
+      for (const entry of file[name]?.environment ?? []) {
+        const value = entry.slice(entry.indexOf("=") + 1)
+        if (hostsIn(value).some((host) => names.has(host))) plain.push(`${name}: ${entry}`)
+      }
+    }
+  }
+  expect(plain).toEqual([])
+
+  const shared = files[0]
+  expect(shared.mpa?.environment).toContain("API_URL=http://${PROJECT}-api:${API_PORT}")
+  expect(shared.api?.environment).toContain("DB_HOST=${PROJECT}-db")
+  expect(shared.api?.environment).toContain("KV_HOSTNAME=${PROJECT}-kv")
+  for (const service of ["api", "db", "kv"]) {
+    expect(shared[service]?.container_name).toBe(`\${PROJECT}-${service}`)
+  }
+})
+
+Deno.test("the proxy logs at info unless the env file asks for another level", async () => {
+  const { traefik } = await services("proxy")
+  expect(traefik?.command).toContain("--log.level=${PROXY_LOG_LEVEL:-info}")
 })

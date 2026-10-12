@@ -1,38 +1,22 @@
 /// <reference lib="deno.ns" />
+import { planCompose } from "./compose-plan.ts";
 import { readEnvFile } from "./env-file.ts";
 import { ensureProxyNetwork, runContainerCli } from "./proxy-network.ts";
 
 const envFilePath = `./infra/envs/.env`;
-const envVars = await readEnvFile(envFilePath);
-const envName = envVars["ENV"];
-
-const args = Deno.args;
-const composeFile = `./infra/compose/compose.${envName}.yml`;
-const sharedComposeFile = `./infra/compose/compose.shared.yml`;
-const containerProvider: 'docker' | 'podman' = envVars["CONTAINER_PROVIDER"] === "docker" ? "docker" : "podman";
+// What to run, and on which engine, is decided in compose-plan.ts, where it is tested.
+const plan = planCompose(await readEnvFile(envFilePath), Deno.args, envFilePath);
 
 // Every compose file joins the external "proxy" network; create it on a fresh machine.
-if (args.includes("up") && await ensureProxyNetwork(containerProvider, runContainerCli)) {
+if (plan.ensureProxyNetwork && await ensureProxyNetwork(plan.engine, runContainerCli)) {
   console.log("Created the proxy network");
 }
 
 // Build base image first if we're doing "up" or "build"
-const needsBaseImage = args.includes("up") || args.includes("build");
-if (needsBaseImage) {
+if (plan.buildBase) {
   console.log("Building base Deno image first...");
-  const buildBaseCommand = [
-    "compose",
-    "-f",
-    sharedComposeFile,
-    "-f",
-    composeFile,
-    "--env-file",
-    envFilePath,
-    "build",
-    "deno-base",
-  ];
-  const buildProcess = new Deno.Command(containerProvider, {
-    args: buildBaseCommand,
+  const buildProcess = new Deno.Command(plan.engine, {
+    args: plan.buildBase,
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -44,19 +28,9 @@ if (needsBaseImage) {
   console.log("Base image built successfully");
 }
 
-const composeCommand = [
-  "compose",
-  "-f",
-  sharedComposeFile,
-  "-f",
-  composeFile,
-  "--env-file",
-  envFilePath,
-  ...args,
-];
-console.log("Compose command:", composeCommand.join(" "));
-const process = new Deno.Command(containerProvider, {
-  args: composeCommand,
+console.log("Compose command:", plan.command.join(" "));
+const process = new Deno.Command(plan.engine, {
+  args: plan.command,
   stdout: "inherit",
   stderr: "inherit",
 });

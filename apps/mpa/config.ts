@@ -1,6 +1,6 @@
 /** What the MPA needs to know about its surroundings. */
 export interface MpaConfig {
-  /** Where the MPA reaches the API from the server, such as `http://api:8000`. Never a browser URL. */
+  /** Where the MPA reaches the API from the server, such as `http://app-api:8000`. Never a browser URL. */
   apiUrl: string
   /**
    * The origin the browser sees the MPA at, such as `https://www.example.com`, from `MPA_DOMAIN`.

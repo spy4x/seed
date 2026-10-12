@@ -9,7 +9,7 @@
 #
 # What it starts, each on a spare loopback port, and removes again when it ends or is stopped:
 #   - Postgres and Valkey containers named `template-e2e-…`, with `CONTAINER_PROVIDER` (`podman`
-#     by default, as `deno task compose`);
+#     by default here; `deno task compose` runs Docker by default);
 #   - the API, the worker and the Vite dev server of this checkout (`E2E_SPA=built` puts the
 #     built SPA there instead, see below);
 #   - a proxy that serves them at one origin, `http://app.localhost:<port>`, and sets the client
