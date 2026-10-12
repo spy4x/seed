@@ -16,7 +16,7 @@ import { type EmailStatus, UserMFAStatus, type UserPushTokenPublic } from "@doma
 import { AccountDelete, type AccountDeleteProps } from "./account-delete.tsx"
 import { ACCOUNT_COLUMN } from "./frame.tsx"
 import { PageHeader, TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
-import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { type Navigate, PROFILE_ANCHORS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { SignedInDevices, type SignedInDevicesProps } from "./signed-in-devices.tsx"
 import { ApiTokens, type ApiTokensProps } from "./api-tokens.tsx"
@@ -301,131 +301,141 @@ export function ProfileScreen(
         </SettingList>
       </SettingGroup>
 
-      <SettingGroup title="Security">
-        <SettingList>
-          <SettingRow
-            label="Password"
-            value="Asked for when you sign in on a new device."
-            action={
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                class={TOUCH_TARGET}
-                data-e2e="password-open"
-                onClick={() => setChangingPassword(true)}
-              >
-                Change <span class="sr-only">password</span>
-              </Button>
-            }
-          />
-          <SettingRow
-            label="Two-factor sign-in"
-            dataE2E="totp-row"
-            value={step === TwoFactorStep.Disable
-              ? (
-                <span class="flex flex-wrap items-center gap-2">
-                  <Badge text="On" color="green" type="outline" />
-                  Sign-in also asks for a code from your authenticator app.
-                </span>
-              )
-              : "Off. Add a code from an authenticator app to every sign-in."}
-            action={step === TwoFactorStep.Disable
-              ? (
+      {/* The first-steps card links here (`PROFILE_ANCHORS`); the header above is sticky. */}
+      <div id={PROFILE_ANCHORS.security} class="scroll-mt-16">
+        <SettingGroup title="Security">
+          <SettingList>
+            <SettingRow
+              label="Password"
+              value="Asked for when you sign in on a new device."
+              action={
                 <Button
-                  ref={disableButton}
                   type="button"
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   class={TOUCH_TARGET}
-                  data-e2e="totp-disable"
-                  disabled={pending.totp}
-                  onClick={() => setConfirmingDisable(true)}
+                  data-e2e="password-open"
+                  onClick={() => setChangingPassword(true)}
                 >
-                  Turn off <span class="sr-only">two-factor sign-in</span>
+                  Change <span class="sr-only">password</span>
                 </Button>
-              )
-              : (
-                <ScreenForm
-                  pending={pending.totp}
-                  onSubmit={onStartTotp}
-                >
+              }
+            />
+            <SettingRow
+              label="Two-factor sign-in"
+              dataE2E="totp-row"
+              value={step === TwoFactorStep.Disable
+                ? (
+                  <span class="flex flex-wrap items-center gap-2">
+                    <Badge text="On" color="green" type="outline" />
+                    Sign-in also asks for a code from your authenticator app.
+                  </span>
+                )
+                : "Off. Add a code from an authenticator app to every sign-in."}
+              action={step === TwoFactorStep.Disable
+                ? (
                   <Button
-                    ref={enableButton}
-                    type="submit"
-                    variant="secondary"
+                    ref={disableButton}
+                    type="button"
+                    variant="ghost"
                     size="sm"
                     class={TOUCH_TARGET}
-                    data-e2e="totp-start"
-                    busy={pending.totp && step === TwoFactorStep.Enable}
-                    busyLabel="Preparing..."
+                    data-e2e="totp-disable"
+                    disabled={pending.totp}
+                    onClick={() => setConfirmingDisable(true)}
                   >
-                    Turn on <span class="sr-only">two-factor sign-in</span>
+                    Turn off <span class="sr-only">two-factor sign-in</span>
                   </Button>
-                </ScreenForm>
-              )}
-          />
-        </SettingList>
-        {step !== TwoFactorStep.Confirm && <ErrorState message={errors.totp} />}
-      </SettingGroup>
+                )
+                : (
+                  <ScreenForm
+                    pending={pending.totp}
+                    onSubmit={onStartTotp}
+                  >
+                    <Button
+                      ref={enableButton}
+                      type="submit"
+                      variant="secondary"
+                      size="sm"
+                      class={TOUCH_TARGET}
+                      data-e2e="totp-start"
+                      busy={pending.totp && step === TwoFactorStep.Enable}
+                      busyLabel="Preparing..."
+                    >
+                      Turn on <span class="sr-only">two-factor sign-in</span>
+                    </Button>
+                  </ScreenForm>
+                )}
+            />
+          </SettingList>
+          {step !== TwoFactorStep.Confirm && <ErrorState message={errors.totp} />}
+        </SettingGroup>
+      </div>
 
       {devices && <SignedInDevices {...devices} />}
 
       {apiTokens && <ApiTokens {...apiTokens} />}
 
-      <SettingGroup
-        title="Push devices"
-        description="Devices that get a notification when something changes."
-      >
-        <ErrorState message={errors.push} />
-        {pushDevices.length === 0
-          ? (
-            <EmptyState
-              icon={<IconBell class="size-6" />}
-              title="No devices yet"
-              headingLevel={3}
-              class="w-full max-w-none"
-              description="Add this browser to get notifications on it."
-              action={onRegisterPush && <AddDevice onClick={onRegisterPush} busy={pending.push} />}
-            />
-          )
-          : (
-            <>
-              <SettingList>
-                {pushDevices.map((device) => (
-                  <SettingRow
-                    key={device.id}
-                    dataE2E={`push-device-${device.deviceId}`}
-                    label={`Device ${device.deviceId.slice(-8)}`}
-                    value={`Added ${new Date(device.createdAt).toLocaleString()}`}
-                    action={
-                      <ScreenForm
-                        pending={pending.push}
-                        onSubmit={() => onRemovePush(device.deviceId)}
-                      >
-                        <Button
-                          type="submit"
-                          variant="ghost"
-                          size="sm"
-                          class={TOUCH_TARGET}
-                          data-e2e={`push-remove-${device.deviceId}`}
-                          disabled={pending.push}
-                        >
-                          Remove <span class="sr-only">device {device.deviceId.slice(-8)}</span>
-                        </Button>
-                      </ScreenForm>
-                    }
+      <div id={PROFILE_ANCHORS.pushDevices} class="scroll-mt-16">
+        <SettingGroup
+          title="Push devices"
+          description="Devices that get a notification when something changes."
+        >
+          <ErrorState message={errors.push} />
+          {pushDevices.length === 0
+            ? (
+              <EmptyState
+                icon={<IconBell class="size-6" />}
+                title="No devices yet"
+                headingLevel={3}
+                class="w-full max-w-none"
+                description="Add this browser to get notifications on it."
+                action={onRegisterPush && (
+                  <AddDevice
+                    onClick={onRegisterPush}
+                    busy={pending.push}
                   />
-                ))}
-              </SettingList>
-              {onRegisterPush && (
-                <div>
-                  <AddDevice onClick={onRegisterPush} busy={pending.push} />
-                </div>
-              )}
-            </>
-          )}
-      </SettingGroup>
+                )}
+              />
+            )
+            : (
+              <>
+                <SettingList>
+                  {pushDevices.map((device) => (
+                    <SettingRow
+                      key={device.id}
+                      dataE2E={`push-device-${device.deviceId}`}
+                      label={`Device ${device.deviceId.slice(-8)}`}
+                      value={`Added ${new Date(device.createdAt).toLocaleString()}`}
+                      action={
+                        <ScreenForm
+                          pending={pending.push}
+                          onSubmit={() => onRemovePush(device.deviceId)}
+                        >
+                          <Button
+                            type="submit"
+                            variant="ghost"
+                            size="sm"
+                            class={TOUCH_TARGET}
+                            data-e2e={`push-remove-${device.deviceId}`}
+                            disabled={pending.push}
+                          >
+                            Remove <span class="sr-only">device {device.deviceId.slice(-8)}</span>
+                          </Button>
+                        </ScreenForm>
+                      }
+                    />
+                  ))}
+                </SettingList>
+                {onRegisterPush && (
+                  <div>
+                    <AddDevice onClick={onRegisterPush} busy={pending.push} />
+                  </div>
+                )}
+              </>
+            )}
+        </SettingGroup>
+      </div>
 
       {accountDeletion && (
         <AccountDelete

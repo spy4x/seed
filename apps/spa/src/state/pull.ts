@@ -15,6 +15,9 @@ export interface PullDependencies {
   members: { refresh(): Promise<void>; groupId: ReadonlySignal<string | null> }
   /** The inbox: its unread count, and its list while the page is open. */
   notifications: { refresh(): Promise<void> }
+  /** The first-steps checklist and the tour, which the person may have closed in another tab.
+   * Its `hint` reads only while the page that draws the card is open. */
+  onboarding?: { hint(): Promise<void> }
 }
 
 /**
@@ -34,12 +37,18 @@ export interface PullDependencies {
  * removed never asks for the members of a group they left.
  */
 export function createPull(dependencies: PullDependencies) {
-  const { userId, profile, selection, groups, notes, tags, members, notifications } = dependencies
+  const { userId, profile, selection, groups, notes, tags, members, notifications, onboarding } =
+    dependencies
   return async (gap?: { groupId: string }): Promise<void> => {
-    // The hint for this person's own changes (profile, push devices, selected group, inbox), sent
-    // after a change in another tab or a new notification.
+    // The hint for this person's own changes (profile, push devices, selected group, inbox, the
+    // first-steps checklist), sent after a change in another tab or a new notification.
     if (gap?.groupId === userChangeGroupId(userId)) {
-      await Promise.all([profile.refresh(), selection.refresh(), notifications.refresh()])
+      await Promise.all([
+        profile.refresh(),
+        selection.refresh(),
+        notifications.refresh(),
+        onboarding?.hint(),
+      ])
       return
     }
     // Writes made offline go out before anything is read, so the read shows their result.

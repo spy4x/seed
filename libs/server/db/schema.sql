@@ -112,6 +112,10 @@ CREATE TABLE users (
     mfa INT2 DEFAULT 1 NOT NULL,
     -- #152: last signed-in activity, written at most every five minutes.
     last_seen_at TIMESTAMPTZ,
+    -- #298: when the person closed the first-steps checklist, and when they finished or skipped
+    -- the tour. `NULL` while each is still shown.
+    onboarding_dismissed_at TIMESTAMPTZ,
+    onboarding_tour_seen_at TIMESTAMPTZ,
     CONSTRAINT users_role_check CHECK (role >= 1 AND role <= 4),
     CONSTRAINT users_mfa_check CHECK (mfa = ANY (ARRAY[1, 2, 3])),
     CONSTRAINT users_id_auth_users_fkey FOREIGN KEY (id) REFERENCES auth_users (id)
@@ -481,6 +485,9 @@ CREATE UNIQUE INDEX idx_group_invitations_token_hash ON group_invitations (token
 CREATE INDEX idx_group_invitations_group_created ON group_invitations (group_id, created_at DESC);
 -- The invitations a person sees for the addresses they proved.
 CREATE INDEX idx_group_invitations_email ON group_invitations (email) WHERE email IS NOT NULL;
+-- Whether a person ever made an invitation (the first-steps checklist), and the cascade when a
+-- user is deleted.
+CREATE INDEX idx_group_invitations_created_by ON group_invitations (created_by_user_id);
 
 -- Who accepted each invitation. A person accepts one invitation once: a member removed from the
 -- group cannot come back through the team link they joined with.

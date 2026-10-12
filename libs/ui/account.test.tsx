@@ -336,6 +336,13 @@ describe("ProfileScreen", () => {
     expect(isOpen("password-dialog")).toBe(false)
   })
 
+  it("gives the two-factor and the push settings the places the first-steps card links to", async () => {
+    await mount(<ProfileScreen {...profileDefaults} />)
+
+    expect(find("#security").textContent).toContain("Two-factor")
+    expect(find("#push-devices").textContent).toContain("Push devices")
+  })
+
   it("names each row action after its setting, so a screen reader can tell them apart", async () => {
     await mount(<ProfileScreen {...profileDefaults} />)
 

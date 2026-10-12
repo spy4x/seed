@@ -1,5 +1,6 @@
 import type {
   GroupSelectedEvent,
+  OnboardingMarkedEvent,
   PushDevicesUpdatedEvent,
   UserProfileUpdatedEvent,
 } from "../events.ts"
@@ -21,6 +22,13 @@ export function createPushDevicesHintListener(notifyUserChange: (userId: number)
 /** Tells the person's other open tabs that they chose another group, so they read the selection. */
 export function createGroupSelectedHintListener(notifyUserChange: (userId: number) => unknown) {
   return (event: GroupSelectedEvent) => {
+    notifyUserChange(event.data.userId)
+  }
+}
+
+/** Tells the person's other open tabs that they closed the checklist or the tour. */
+export function createOnboardingHintListener(notifyUserChange: (userId: number) => unknown) {
+  return (event: OnboardingMarkedEvent) => {
     notifyUserChange(event.data.userId)
   }
 }

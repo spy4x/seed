@@ -140,6 +140,32 @@ export function emailToVerify(status: EmailStatus): string | null {
   return status.email !== null && !status.proven ? status.email : null
 }
 
+/** The first steps of a new account, each `true` once the person's own data says it is done. */
+export interface OnboardingSteps {
+  /** A code proved the address the account signs in with. */
+  emailVerified: boolean
+  /** The person wrote a note themselves; the welcome note a new account starts with does not count. */
+  noteCreated: boolean
+  /** The person invited someone to a group. */
+  memberInvited: boolean
+  /** A browser of the person is registered for push notifications. */
+  notificationsOn: boolean
+  /** An authenticator app is set up. */
+  twoFactorOn: boolean
+}
+
+/** What the SPA's first-steps checklist and tour show (`onboarding.get`). Kept per person. */
+export interface OnboardingStatus {
+  steps: OnboardingSteps
+  /** The person closed the checklist; it stays closed on every device. */
+  dismissed: boolean
+  /** The person finished or skipped the tour; it is not offered again on any device. */
+  tourSeen: boolean
+}
+
+/** The two answers a person gives once: closing the checklist, and ending the tour. */
+export type OnboardingMark = "dismissed" | "tourSeen"
+
 export const authPasswordChangeSchema = authPasswordSchema.and({
   newPassword: "8 <= string <= 50",
   /** Ends every other session of the person once the password changed. Left out means `true`. */

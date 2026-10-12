@@ -1,9 +1,15 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { GroupSelectedEvent, PushDevicesUpdatedEvent, UserProfileUpdatedEvent } from "../events.ts"
+import {
+  GroupSelectedEvent,
+  OnboardingMarkedEvent,
+  PushDevicesUpdatedEvent,
+  UserProfileUpdatedEvent,
+} from "../events.ts"
 import type { User } from "@domain/identity"
 import {
   createGroupSelectedHintListener,
+  createOnboardingHintListener,
   createProfileHintListener,
   createPushDevicesHintListener,
 } from "./user-change-hints.ts"
@@ -25,6 +31,14 @@ describe("user change hint listeners", () => {
     createPushDevicesHintListener((id) => hinted.push(id))(
       new PushDevicesUpdatedEvent({ userId: 7, devices: [], request: {} }),
     )
+
+    expect(hinted).toEqual([7])
+  })
+
+  it("hints the user who closed the checklist or the tour", () => {
+    const hinted: number[] = []
+
+    createOnboardingHintListener((id) => hinted.push(id))(new OnboardingMarkedEvent({ userId: 7 }))
 
     expect(hinted).toEqual([7])
   })

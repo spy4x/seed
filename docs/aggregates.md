@@ -420,6 +420,27 @@ Every list also needs a first-run empty state: `EmptyState` with one action when
 something to do (`New note`, `New group`), and none when there is not (the inbox, the activity
 log). See `docs/design/ui-layout.md`.
 
+## Adding a first step
+
+The home page of a new account shows a first-steps checklist and offers a short tour
+(`OnboardingCard` in `libs/ui/onboarding-card.tsx`, over preact-components' `OnboardingChecklist`
+and `Tour`). Nothing ticks a step: each one is a fact your feature already stores, read again when
+the home page opens and, while it is open, when a hint says the person changed something. Once the
+person has dismissed the card the page stops asking.
+
+1. **The fact.** Add one `EXISTS (…)` to `readOnboarding` (`libs/server/auth/onboarding.ts`) and
+   its name to `OnboardingSteps` (`libs/domain/identity/+lib.ts`). Count only what the person did
+   themselves: the welcome note above is created in their name and is left out by its id. The read
+   runs for every person on their home page, so give it an index.
+2. **The step.** Add it to `onboardingSteps` in the card, with the link to the page that does it.
+3. **The tests.** One step in `tests/integration/onboarding.integration.test.ts` (the fact, and
+   that what another member did in the person's own group does not tick it) and the title in `libs/ui/onboarding.test.tsx`.
+
+Dismiss and the end of the tour are kept on the person's `users` row (`onboarding_dismissed_at`,
+`onboarding_tour_seen_at`) through the `onboarding.dismiss` and `onboarding.tour-seen` commands, so
+both follow the person to every device. Add a screen to the tour in `TOUR_STEPS`, with the CSS
+selector of the control that opens it.
+
 ## What is left to the next aggregate
 
 - The SPA creates a note in the group it shows, over the socket, so a note never lands in a group

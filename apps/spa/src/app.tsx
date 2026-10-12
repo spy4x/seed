@@ -39,6 +39,8 @@ import { InstallOffer } from "./views/InstallOffer.tsx"
 import { InvitationView } from "./views/InvitationView.tsx"
 import { notificationsStore } from "./state/notifications.ts"
 import { invitationsStore } from "./state/invitations.ts"
+import { onboardingStore } from "./state/onboarding.ts"
+import { OnboardingView } from "./views/OnboardingView.tsx"
 import { PricingView } from "./views/BillingViews.tsx"
 import { billingStore } from "./state/billing.ts"
 import { NoteEditorView } from "./views/NoteEditorView.tsx"
@@ -148,6 +150,8 @@ function Frame() {
     return (
       <AppShell user={session.user} wsStatus={connectionDisplay(session)}>
         <InstallOffer />
+        {/* The first steps show on the home page, where a new account lands. */}
+        {path === SCREEN_PATHS.profile && <OnboardingView />}
         <Routes />
       </AppShell>
     )
@@ -204,6 +208,7 @@ export function App() {
       billingStore.reset()
       invitationsStore.reset()
       notificationsStore.reset()
+      onboardingStore.reset()
       return
     }
     // The REST read is the pull: it runs at start-up, after every reconnect and for every push
@@ -219,6 +224,7 @@ export function App() {
       tags: tagsStore,
       members: membersStore,
       notifications: notificationsStore,
+      onboarding: onboardingStore,
     }
     selectionStore.start(userId)
     // The banner asks for a code while the address waits for one.

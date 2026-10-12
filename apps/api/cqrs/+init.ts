@@ -7,11 +7,12 @@ import { createIdempotencyMiddleware, PostgresIdempotencyStore } from "@spy4x/se
 import { entitlementGate } from "@api/cqrs/entitlements.ts"
 import { useCommandMiddleware } from "@api/cqrs/command-middleware.ts"
 import {
+  OnboardingMarkCommand,
   PushRegisterCommand,
   PushRemoveCommand,
   UserProfileUpdateCommand,
 } from "@api/cqrs/commands.ts"
-import { PushListQuery, UserProfileGetQuery } from "@api/cqrs/queries.ts"
+import { OnboardingGetQuery, PushListQuery, UserProfileGetQuery } from "@api/cqrs/queries.ts"
 import {
   GroupActivityQuery,
   GroupCreateCommand,
@@ -53,6 +54,8 @@ import { userProfileGetHandler } from "@api/cqrs/query-handlers/user-profile-get
 import { pushRegisterHandler } from "@api/cqrs/command-handlers/push-register.ts"
 import { pushRemoveHandler } from "@api/cqrs/command-handlers/push-remove.ts"
 import { pushListHandler } from "@api/cqrs/query-handlers/push-list.ts"
+import { onboardingGetHandler } from "@api/cqrs/query-handlers/onboarding-get.ts"
+import { onboardingMarkHandler } from "@api/cqrs/command-handlers/onboarding-mark.ts"
 import { groupCreateHandler } from "@api/cqrs/command-handlers/group-create.ts"
 import { groupGetHandler } from "@api/cqrs/query-handlers/group-get.ts"
 import { groupListHandler } from "@api/cqrs/query-handlers/group-list.ts"
@@ -121,6 +124,7 @@ import { billingGetHandler } from "@api/cqrs/query-handlers/billing-get.ts"
 import {
   GroupOwnershipTransferredEvent,
   GroupSelectedEvent,
+  OnboardingMarkedEvent,
   PushDevicesUpdatedEvent,
   UserProfileUpdatedEvent,
   UserSignedOutEvent,
@@ -128,6 +132,7 @@ import {
 import { realtimeOnUserProfileUpdatedHandler } from "@api/cqrs/event-handlers/realtime-on-user-profile-updated.ts"
 import { realtimeOnGroupSelectedHandler } from "@api/cqrs/event-handlers/realtime-on-group-selected.ts"
 import { realtimeOnPushDevicesUpdatedHandler } from "@api/cqrs/event-handlers/realtime-on-push-devices-updated.ts"
+import { realtimeOnOnboardingMarkedHandler } from "@api/cqrs/event-handlers/realtime-on-onboarding-marked.ts"
 import { realtimeOnUserSignedOutHandler } from "@api/cqrs/event-handlers/realtime-on-user-signed-out.ts"
 import { pushOnOwnershipTransferredHandler } from "@api/cqrs/event-handlers/push-on-ownership-transferred.ts"
 
@@ -142,13 +147,14 @@ import { pushOnOwnershipTransferredHandler } from "@api/cqrs/event-handlers/push
 //   worker, which runs outbox jobs, cannot close them. Its durable backstop is already in place:
 //   every socket is revalidated on a timer (`realtime.startRevalidation`) and before each
 //   request, so a failure here delays the close by one interval at most.
-// - The two hint listeners are best-effort for the same reason. A hint a tab misses is caught up
+// - The hint listeners are best-effort for the same reason. A hint a tab misses is caught up
 //   by the read the page makes whenever its socket opens again.
 // - The push to a group's new owner is a courtesy: the transfer is already committed, and the new
 //   owner sees it in their groups whether the push arrives or not.
 subscribe(UserSignedOutEvent, realtimeOnUserSignedOutHandler)
 subscribe(UserProfileUpdatedEvent, realtimeOnUserProfileUpdatedHandler)
 subscribe(PushDevicesUpdatedEvent, realtimeOnPushDevicesUpdatedHandler)
+subscribe(OnboardingMarkedEvent, realtimeOnOnboardingMarkedHandler)
 subscribe(GroupSelectedEvent, realtimeOnGroupSelectedHandler)
 subscribe(GroupOwnershipTransferredEvent, pushOnOwnershipTransferredHandler)
 
@@ -165,6 +171,7 @@ useCommandMiddleware(commandBus, {
 commandBus.register(UserProfileUpdateCommand, userProfileUpdateHandler)
 commandBus.register(PushRegisterCommand, pushRegisterHandler)
 commandBus.register(PushRemoveCommand, pushRemoveHandler)
+commandBus.register(OnboardingMarkCommand, onboardingMarkHandler)
 commandBus.register(GroupCreateCommand, groupCreateHandler)
 commandBus.register(GroupSelectCommand, groupSelectHandler)
 commandBus.register(GroupRenameCommand, groupRenameHandler)
@@ -204,6 +211,7 @@ commandBus.register(BillingCheckoutCommand, billingCheckoutHandler)
 commandBus.register(BillingPortalCommand, billingPortalHandler)
 queryBus.register(UserProfileGetQuery, userProfileGetHandler)
 queryBus.register(PushListQuery, pushListHandler)
+queryBus.register(OnboardingGetQuery, onboardingGetHandler)
 queryBus.register(GroupListQuery, groupListHandler)
 queryBus.register(GroupGetQuery, groupGetHandler)
 queryBus.register(GroupSelectedQuery, groupSelectedHandler)

@@ -15,6 +15,7 @@ function harness(
 ) {
   const calls: string[] = []
   const inbox: string[] = []
+  const onboarding: string[] = []
   const groups = signal<readonly { id: string }[]>([{ id: "home" }, { id: "team" }])
   const pull = createPull({
     userId: USER,
@@ -38,8 +39,9 @@ function harness(
       refresh: () => Promise.resolve(void calls.push("members")),
     },
     notifications: { refresh: () => Promise.resolve(void inbox.push("notifications")) },
+    onboarding: { hint: () => Promise.resolve(void onboarding.push("onboarding")) },
   })
-  return { pull, calls, inbox }
+  return { pull, calls, inbox, onboarding }
 }
 
 describe("the pull after a hint", () => {
@@ -84,6 +86,16 @@ describe("the pull after a hint", () => {
     await pull({ groupId: userChangeGroupId(USER) })
 
     expect([...calls].sort()).toEqual(["profile", "selection"])
+  })
+
+  it("reads the first-steps checklist again for the person's own hint, and not for a group's", async () => {
+    const own = harness({ open: null, groupsAfterRead: ["home"] })
+    await own.pull({ groupId: userChangeGroupId(USER) })
+    expect(own.onboarding).toEqual(["onboarding"])
+
+    const group = harness({ open: "home", groupsAfterRead: ["home"] })
+    await group.pull({ groupId: "home" })
+    expect(group.onboarding).toEqual([])
   })
 
   it("reads the members of the open settings page for its group's hint, and never once the person was removed", async () => {

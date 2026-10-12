@@ -1,6 +1,7 @@
 import type { Actor } from "@domain/identity"
 import type { Operations } from "@spy4x/realtime/operations"
 import { createGroupOperations } from "../features/groups/operations.ts"
+import { createOnboardingOperations } from "../features/onboarding/operations.ts"
 import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
 import { createTagOperations } from "../features/tags/operations.ts"
@@ -41,6 +42,10 @@ export const operations: Operations<Actor> = {
   ...createProfileOperations({
     get: (query) => queryBus.execute(query),
     update: (command) => commandBus.execute(command),
+  }),
+  ...createOnboardingOperations({
+    get: (query) => queryBus.execute(query),
+    mark: (command) => commandBus.execute(command),
   }),
   ...createPushOperations({
     register: (command) => commandBus.execute(command),

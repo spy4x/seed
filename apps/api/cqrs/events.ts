@@ -20,6 +20,11 @@ export class GroupOwnershipTransferredEvent
   constructor(public data: { groupId: string; groupName: string; newOwnerId: number }) {}
 }
 
+/** A person closed the checklist or ended the tour. Their other open tabs read it again. */
+export class OnboardingMarkedEvent implements Event<{ userId: number }> {
+  constructor(public data: { userId: number }) {}
+}
+
 export class PushDevicesUpdatedEvent
   implements Event<{ userId: number; devices: UserPushTokenPublic[]; request: RequestInfo }> {
   constructor(
