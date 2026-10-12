@@ -1,7 +1,6 @@
 import "./app.css"
 import type { ComponentChildren } from "preact"
 import { useEffect, useState } from "preact/hooks"
-import { InstallPrompt } from "@spy4x/preact-system/install-prompt"
 import { SWUpdater } from "@spy4x/preact-system/sw-updater"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Toastr } from "@spy4x/preact-ui/toastr"
@@ -28,7 +27,6 @@ import {
   stopChanges,
 } from "./modules.ts"
 import { toasts } from "./state/toasts.ts"
-import { install } from "./install.ts"
 import { AuthView } from "./views/AuthView.tsx"
 import { EmailView } from "./views/EmailView.tsx"
 import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView.tsx"
@@ -37,6 +35,7 @@ import { SubscribeView, SubscriptionConfirmView, UnsubscribeView } from "./views
 import { GroupSettingsView } from "./views/GroupSettingsView.tsx"
 import { NotificationsView } from "./views/NotificationsView.tsx"
 import { GroupActivityView } from "./views/GroupActivityView.tsx"
+import { InstallOffer } from "./views/InstallOffer.tsx"
 import { InvitationView } from "./views/InvitationView.tsx"
 import { notificationsStore } from "./state/notifications.ts"
 import { invitationsStore } from "./state/invitations.ts"
@@ -148,12 +147,7 @@ function Frame() {
   if (session.user && !session.isMfaRequired) {
     return (
       <AppShell user={session.user} wsStatus={connectionDisplay(session)}>
-        <InstallPrompt
-          mode={install.visible.value ? install.mode.value : "unavailable"}
-          onInstall={() => install.install()}
-          onDismiss={() => install.dismiss()}
-          class="mx-auto mb-4 w-full max-w-3xl"
-        />
+        <InstallOffer />
         <Routes />
       </AppShell>
     )

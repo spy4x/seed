@@ -97,7 +97,7 @@ test.describe("installable app", () => {
     }
   })
 
-  test("the install offer appears when the browser allows install, and stays hidden after Not now", async ({ page, request }) => {
+  test("the install offer appears when the browser allows install, and Not now hides it for good and moves focus to the heading", async ({ page, request }) => {
     const user = "e2e_pwa_install@example.com"
     await cleanup(request, user)
     try {
@@ -124,6 +124,8 @@ test.describe("installable app", () => {
 
       await offer.getByRole("button", { name: "Not now" }).click()
       await expect(offer).toHaveCount(0)
+      // The card took the focused button with it: the reader continues at the page's heading.
+      await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeFocused()
 
       // A person who said "not now" is not asked again, even when the browser offers once more.
       await page.reload()
