@@ -7,6 +7,9 @@
   "imports": {
     // A browser DOM for the error boundary's test: the version libs/ui already uses.
     "happy-dom": "npm:happy-dom@20.14.5",
+    // An IndexedDB for the unit tests of the device copies (Deno has none): the version ts-libs
+    // tests `createDataCache` with.
+    "fake-indexeddb": "npm:fake-indexeddb@6.2.5",
     // 2.x resolves imports inside the Vite process. 1.x started one `deno info` process per
     // import, about 80 at once: under a cap on processes and threads some could not start, the
     // build failed with "Rollup failed to resolve import" and the rest never exited (#328).

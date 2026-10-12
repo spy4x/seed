@@ -45,7 +45,8 @@ the authority"). The local-data module sits behind that read. A level 2 store re
   writes are then applied on top of it.
 - When the server cannot be reached (`fetch` rejects, or a call ran out of tries), the copy answers
   instead. An answer with an error status is not a network failure: it is shown as the error it is,
-  and a copy the screen had painted is taken back.
+  and a copy the screen had painted is taken back. The one exception is an answer taken for the
+  proxy's ([which answers count as "unreachable"](#which-answers-count-as-unreachable)).
 - When a screen opens with nothing to show, it paints the copy at once and replaces it when the
   read answers, so a slow connection does not show an empty list.
 - Search and filters run over the list the store holds, so they work the same on a copy.
@@ -198,8 +199,16 @@ The rule is the library's (`isForeignAnswer` in `@spy4x/realtime`, which the cal
 too), and it reads only the status and `error.code`. The feature routes answer their errors as
 `{ error: { code, message } }`. So a 404 with a code is the API saying the thing is gone, and
 deletes the copy; a 404 without one is the proxy, and the copy both answers and stays. A 5xx with a
-code, such as the API's `INTERNAL_ERROR`, is the server struggling: the screen shows the error and
-the copy stays. A 401 or a 403 is a refusal with or without a code.
+code is the server struggling: the screen shows the error and the copy stays. The feature routes
+answer an error they did not expect with 500 and the code `INTERNAL_ERROR`; the calls route
+(`/api/call/<name>`) and the socket answer theirs with the code `internal`. A 401 or a 403 is a
+refusal with or without a code.
+
+The notes and tags lists follow the same rule, although their copy is not in the read cache: their
+REST reads throw the same typed refusal (`ReadRefused`, `apps/spa/src/state/read-keys.ts`), so a
+proxy's 502 shows the saved notes or tags with the queued writes on top, and a 401, a 403 or the
+API's own 404 for a group deletes what the device kept of that group's notes or tags. The queue is
+not touched.
 
 Not every answer of the API carries a code, and the page cannot tell those from a proxy's:
 
@@ -211,6 +220,16 @@ With a saved copy, the page shows the copy with its "saved at" time for these to
 many requests" or the error. Nothing is deleted, and the next read asks the server again. When the
 device holds no copy, every answer on this page shows as the error it is.
 
+### Which answer at start signs the person out
+
+The app asks `/api/auth/me` who is signed in before it renders. Only a 401 means nobody is: the app
+shows the sign-in page and deletes what the device kept for the remembered person. Every other
+error answer (a proxy's 502 or bare 404 during a deploy, a 403, a 500, a 429) says nothing about
+the session. Neither does a 2xx without a profile, such as a maintenance page or an empty body, nor
+no answer at all: the app opens as the remembered person on their saved copy, and the first call
+the server answers with `unauthorized` or 401 signs the page out. With nobody remembered (a first
+visit, or the local-data module switched off) the sign-in page shows.
+
 ### Signing out
 
 Signing out deletes every read copy (the `reads:<id>` database's entries and the notes) and the
@@ -218,8 +237,15 @@ remembered user. While signed in, a list's copy is also deleted when the server 
 with 401, 403 or its own 404 (see above): the person lost access, or the thing is gone, and the copy
 must not come back offline later. An answer that says nothing about access keeps the copy: a 500, a
 timeout, or no network at all, since the server may well accept the same read a moment later. A
-start that finds no session, because it ended elsewhere or expired, does the same for the person the
-device remembered, before the sign-in page shows.
+start that finds no session (the server answers 401, because the session ended elsewhere or
+expired) does the same for the person the device remembered, before the sign-in page shows.
+
+An answer still on its way at sign-out is not saved in this tab. Each copy is finished by its
+deletion: the read cache (`ReadCache.clear`), and the notes copy and the tags copy, whose `clear`
+(`offline/notes-cache.ts`, `offline/tags-cache.ts`) calls the library's `DataCache.finish`. A
+finished copy stores nothing afterwards, whether the late write is a list read, a note being
+opened, or the server's answer to a queued write that was being sent. The next sign-in opens new
+copies. `offline/device-copies.test.ts` checks this on IndexedDB.
 
 The person is forgotten at once; their copies take IndexedDB a moment. So before a deletion starts,
 the user's id is written to a second `localStorage` key, `offline:owed-deletion`, and removed only
@@ -291,7 +317,9 @@ ports from that file and never from a module's folder; two guard tests,
 `/config.json` carries two switches, `realtime` and `offline`. Both modules run unless the file
 says `false`. In a deployment set `SPA_REALTIME=false` or `SPA_OFFLINE=false` for the `spa`
 container (`infra/envs/.env.example`) and restart it; in development edit
-`apps/spa/public/config.json`.
+`apps/spa/public/config.json`. `0` is read as `false` and `1` as `true`. Any other value is refused
+with a warning in the browser's console and the module runs; the rest of the file, the error
+tracker's address included, is read either way (`apps/spa/src/runtime-config.ts`).
 
 With `realtime: false` the page opens no socket: it writes and reads over HTTP and sees another
 person's change within about 30 seconds instead of at once. The e2e spec

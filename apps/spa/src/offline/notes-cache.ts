@@ -22,7 +22,11 @@ export interface NotesCache {
   replaceNotes(groupId: string, notes: readonly NoteItem[]): Promise<void>
   putNote(note: NoteItem): Promise<void>
   removeNote(noteId: string): Promise<void>
-  /** Drops every note. The queue is another database and stays. */
+  /**
+   * Drops every note. The queue is another database and stays. The copy is finished after this: a
+   * write that arrives later saves nothing, so an answer still on its way at sign-out cannot put
+   * the notes back. The next start opens a new one.
+   */
   clear(): Promise<void>
 }
 
@@ -34,12 +38,13 @@ export function databasePrefix(userId: number): string {
 /**
  * The notes of one user on this browser (`createDataCache`), in a database named for the user and
  * never shared between users. Each group is a scope, so one group's full read replaces only its
- * own notes.
+ * own notes. `indexedDB` defaults to the browser's; a test passes its own.
  */
-export function openNotesCache(userId: number): NotesCache {
+export function openNotesCache(userId: number, indexedDB?: IDBFactory): NotesCache {
   const notes = createDataCache<NoteItem>({
     name: `${databasePrefix(userId)}:notes`,
     getId: (note) => note.id,
+    indexedDB,
   })
   return {
     // A copy kept before tags existed has no `tagIds`: the note then has no tags.
@@ -59,6 +64,8 @@ export function openNotesCache(userId: number): NotesCache {
       const scopes = await notes.scopes()
       await notes.batch(scopes.map((scope) => ({ op: "delete" as const, scope, id: noteId })))
     },
-    clear: () => notes.clearAll(),
+    // `finish` and not `clearAll`: a write that was already running when the person signed out,
+    // or one that comes later, saves nothing.
+    clear: () => notes.finish(),
   }
 }

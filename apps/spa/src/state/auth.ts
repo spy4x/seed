@@ -61,7 +61,8 @@ export async function settleOwedSignOut(): Promise<boolean> {
 /**
  * Asks the server who is signed in. When the server cannot be reached at all, `recall` may name
  * the user this browser last saw signed in, so the app opens offline; without it, or with none
- * remembered, the person is signed out.
+ * remembered, the person is signed out. An error answer other than 401 is read the same way: a
+ * proxy's 502 during a deploy, a 500 or a 429 says nothing about the session.
  */
 export async function bootstrapSession(
   recall?: () => SessionUser | null,
@@ -94,16 +95,21 @@ export async function bootstrapSession(
     sessionState.value = {
       ...sessionState.value,
       isReady: true,
-      user: null,
+      // Only a 401 is the server saying that nobody is signed in.
+      user: me.status === 401 ? null : recall?.() ?? null,
       isMfaRequired: false,
     }
     return
   }
   // 202 carries no profile: the session owes its one-time code, so there is no user yet.
   const isMfaRequired = me.status === 202
+  // A 2xx without a profile (a maintenance page, a captive portal, an empty body) is not the API's
+  // answer and says nothing about the session either.
+  const profile = me.data as Partial<User> | null
+  const user = typeof profile?.id === "number" ? profile as User : recall?.() ?? null
   sessionState.value = {
     ...sessionState.value,
-    user: isMfaRequired ? null : me.data as User,
+    user: isMfaRequired ? null : user,
     isMfaRequired,
     isReady: true,
   }

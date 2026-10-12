@@ -2,6 +2,7 @@ import { computed, signal } from "@preact/signals"
 import { ConnectionLostError, describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiAsUser } from "./realtime-call.ts"
+import { ReadRefused } from "./read-keys.ts"
 import { callCommand, callQuery, canCall, currentLayer, offlineNotes } from "../modules.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -677,7 +678,7 @@ export const onlineNotes: NotesDependencies = {
     if (cursor) query.set("cursor", cursor)
     if (deleted) query.set("deleted", "true")
     const result = await apiAsUser<NotePage>(`/api/groups/${groupId}/notes?${query}`)
-    if (!result.ok) throw new Error(result.error.message)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
     return result.data
   },
   get: (groupId, id) => callQuery("note.get", { groupId, id }),

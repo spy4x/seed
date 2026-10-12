@@ -1,3 +1,5 @@
+import { isForeignAnswer, RealtimeRequestError } from "@spy4x/realtime"
+
 /**
  * The name of every read copy the device keeps (ADR 003, level 2 "offline-readable"): one key per
  * list, in the read cache of the signed-in user. A store reads through its key
@@ -37,4 +39,28 @@ export class ReadRefused<F> extends Error {
     super(typeof failure === "string" ? failure : "The server refused the read")
     this.name = "ReadRefused"
   }
+}
+
+const REFUSING_STATUSES = [401, 403, 404]
+
+/**
+ * Whether a REST read's answer is taken for a proxy's, such as a 502 during a deploy. The API's own
+ * answers without an error code (a rate limit's 429, an unhandled error's 500) count too.
+ */
+export function isProxyAnswer(error: unknown): boolean {
+  return error instanceof ReadRefused && isForeignAnswer(error.status, error.code)
+}
+
+/**
+ * Whether the server answered that this person may not read the list (or that it is gone): a
+ * socket read refused with `unauthorized`, `forbidden` or `not_found`, or a REST read answered
+ * 401, 403 or 404. Any other failure, such as a 500 or a timeout, says nothing about access, and
+ * neither does a 404 without an error code, which is taken for a proxy's.
+ */
+export function isRefusal(error: unknown): boolean {
+  if (error instanceof ReadRefused) {
+    return REFUSING_STATUSES.includes(error.status) && !isProxyAnswer(error)
+  }
+  return error instanceof RealtimeRequestError &&
+    (error.code === "unauthorized" || error.code === "forbidden" || error.code === "not_found")
 }

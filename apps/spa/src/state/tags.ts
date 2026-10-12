@@ -2,6 +2,7 @@ import { computed, signal } from "@preact/signals"
 import { describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { DEFAULT_TAG_COLOR, TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
 import { apiAsUser } from "./realtime-call.ts"
+import { ReadRefused } from "./read-keys.ts"
 import { callCommand, currentLayer, offlineTags } from "../modules.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -281,7 +282,7 @@ function sorted(all: TagItem[]): TagItem[] {
 export const onlineTags: TagsDependencies = {
   async fetchList(groupId) {
     const result = await apiAsUser<{ tags: TagItem[] }>(`/api/groups/${groupId}/tags`)
-    if (!result.ok) throw new Error(result.error.message)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
     return result.data.tags
   },
   create: (input) => callCommand("tag.create", input),

@@ -8,6 +8,7 @@ import type { OutboxStore } from "@spy4x/realtime/outbox"
 import { isUnreachable } from "@spy4x/realtime/read-cache"
 import { DEFAULT_TAG_COLOR } from "@domain/tags"
 import type { TagItem, TagsDependencies } from "../state/tags.ts"
+import { isProxyAnswer, isRefusal } from "../state/read-keys.ts"
 import { type TagEntry, type TagPayload, type TagsCache, tagsQueueDatabase } from "./tags-cache.ts"
 
 /**
@@ -106,7 +107,8 @@ function byName(a: TagItem, b: TagItem): number {
 /**
  * Puts the device's copy and the queue behind the tags store's dependencies, as `offlineNotes`
  * does for notes: a read asks the server and keeps the answer (or answers from the copy when the
- * server is unreachable) with the queued writes applied; a write is queued and sent at once when
+ * server is unreachable or a proxy answers for it) with the queued writes applied, and a group the
+ * server refuses loses its copy; a write is queued and sent at once when
  * the server is reachable. Without a running layer every call goes to `online` untouched.
  */
 export function offlineTags(
@@ -140,7 +142,14 @@ export function offlineTags(
         base = await online.fetchList(groupId)
         await layer.tagsCache.replaceTags(groupId, base)
       } catch (error) {
-        if (!isUnreachable(error)) throw error
+        // The person left the group, or it is gone: its tags must not come back offline later.
+        if (isRefusal(error)) {
+          await layer.tagsCache.replaceTags(groupId, []).catch((failure) =>
+            console.warn(`The saved tags of group ${groupId} could not be deleted.`, failure)
+          )
+        }
+        // A proxy's answer, such as a 502 during a deploy, is an unreachable server too.
+        if (!isUnreachable(error) && !isProxyAnswer(error)) throw error
         base = await layer.tagsCache.readTags(groupId)
       }
       return (await layer.tags.overlay(base, groupId)).sort(byName)

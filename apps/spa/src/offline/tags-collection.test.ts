@@ -161,6 +161,39 @@ describe("tags created offline", () => {
       payload: { groupId, id: "t-0", name: "Renamed", color: "blue", version: 3 },
     }])
   })
+
+  it("send a delete as tag.delete on the version the person saw, without the name", async () => {
+    const { tags, sent, collections, state } = harness()
+    state.online = false
+    await tags.outbox.submit({
+      kind: "delete",
+      entityId: "t-0",
+      payload: { groupId, name: "Old", color: "gray" },
+      version: 4,
+    })
+    state.online = true
+    sent.length = 0
+
+    await collections.flush()
+
+    expect(sent).toEqual([{ name: "tag.delete", payload: { groupId, id: "t-0", version: 4 } }])
+  })
+
+  it("are shown in their own group's list only", async () => {
+    const { tags, state } = harness()
+    state.online = false
+    await tags.outbox.submit({
+      kind: "create",
+      entityId: "t-1",
+      payload: { ...newTag, groupId: "g-2" },
+    })
+
+    const here = await tags.overlay([tag("t-0")], groupId)
+    const there = await tags.overlay([], "g-2")
+
+    expect(here.map((t) => t.id)).toEqual(["t-0"])
+    expect(there.map((t) => t.id)).toEqual(["t-1"])
+  })
 })
 
 describe("a note that names a tag created offline", () => {

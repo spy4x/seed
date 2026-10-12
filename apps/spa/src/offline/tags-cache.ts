@@ -22,7 +22,10 @@ export interface TagsCache {
   replaceTags(groupId: string, tags: readonly TagItem[]): Promise<void>
   putTag(tag: TagItem): Promise<void>
   removeTag(tagId: string): Promise<void>
-  /** Drops every tag. The queue is another database and stays. */
+  /**
+   * Drops every tag. The queue is another database and stays. The copy is finished after this: a
+   * write that arrives later saves nothing, as with the notes (`NotesCache.clear`).
+   */
   clear(): Promise<void>
 }
 
@@ -31,11 +34,15 @@ export function tagsQueueDatabase(userId: number): string {
   return `${databasePrefix(userId)}:tags-outbox`
 }
 
-/** The tags of one user on this browser, in a database named for the user. Each group is a scope. */
-export function openTagsCache(userId: number): TagsCache {
+/**
+ * The tags of one user on this browser, in a database named for the user. Each group is a scope.
+ * `indexedDB` defaults to the browser's; a test passes its own.
+ */
+export function openTagsCache(userId: number, indexedDB?: IDBFactory): TagsCache {
   const tags = createDataCache<TagItem>({
     name: `${databasePrefix(userId)}:tags`,
     getId: (tag) => tag.id,
+    indexedDB,
   })
   return {
     readTags: (groupId) => tags.read(groupId),
@@ -45,6 +52,7 @@ export function openTagsCache(userId: number): TagsCache {
       const scopes = await tags.scopes()
       await tags.batch(scopes.map((scope) => ({ op: "delete" as const, scope, id: tagId })))
     },
-    clear: () => tags.clearAll(),
+    // `finish` and not `clearAll`: a late write saves nothing (`openNotesCache`).
+    clear: () => tags.finish(),
   }
 }

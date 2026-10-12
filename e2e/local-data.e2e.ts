@@ -446,6 +446,36 @@ test.describe("what a device keeps", () => {
     }
   })
 
+  test("a start while the proxy answers 502 for the API keeps the person signed in on their saved notes", async ({ browser, request }) => {
+    const user = "e2e_local_data_deploy@example.com"
+    await cleanup(request, user)
+    // Without the socket every call is an HTTP request, which this test answers as the proxy does.
+    const { context, page: unused } = await configured(browser, { realtime: false })
+    await unused.close()
+    try {
+      const { page, userId } = await deviceWithNote(context, request, user)
+      await expect(page.locator("[data-e2e=note-list]")).toContainText("Before the update")
+      await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
+      await expect.poll(() => recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
+
+      // A deploy: the API's container is being replaced, and the proxy answers in its place.
+      await context.route(
+        (url) => url.pathname.startsWith("/api/"),
+        (route) =>
+          route.fulfill({ status: 502, contentType: "text/html", body: "<h1>Bad Gateway</h1>" }),
+      )
+      await gotoApp(page, "/notes", page.locator("[data-e2e=note-list]"))
+
+      await expect(page.locator("[data-e2e=note-list]")).toContainText("Before the update")
+      await expect(page.locator("[data-e2e=signin-required]")).toHaveCount(0)
+      expect(await recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
+      expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
   test("a start that finds no session deletes the read copies of the person it remembered, before the sign-in page", async ({ browser, request }) => {
     const user = "e2e_local_data_no_session@example.com"
     await cleanup(request, user)

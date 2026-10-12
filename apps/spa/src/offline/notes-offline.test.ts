@@ -140,6 +140,26 @@ describe("offline notes reads", () => {
     expect((await deps.get(groupId, "mine")).note.title).toBe("Offline note")
   })
 
+  it("does not open a saved note the server says is gone", async () => {
+    const layer = layerWith({ socket: true })
+    const { online } = network([[note("a")]])
+    await layer.cache.replaceNotes(groupId, [note("a")])
+    const notFound = new RealtimeRequestError("not_found", "Note not found")
+    const deps = offlineNotes({ ...online, get: () => Promise.reject(notFound) }, () => layer)
+
+    await expect(deps.get(groupId, "a")).rejects.toThrow("Note not found")
+  })
+
+  it("opens a saved note from the device when the server cannot be reached", async () => {
+    const layer = layerWith({ socket: false })
+    const { online } = network([[note("a")]])
+    await layer.cache.replaceNotes(groupId, [note("a", 3, "Saved")])
+    const unreachable = new TypeError("Failed to fetch")
+    const deps = offlineNotes({ ...online, get: () => Promise.reject(unreachable) }, () => layer)
+
+    expect((await deps.get(groupId, "a")).note.title).toBe("Saved")
+  })
+
   it("does not hide a server error behind the cached list", async () => {
     const layer = layerWith({ socket: true })
     const { online } = network([[note("a")]])

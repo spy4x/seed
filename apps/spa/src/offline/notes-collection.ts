@@ -8,6 +8,7 @@ import {
 import type { OutboxStore } from "@spy4x/realtime/outbox"
 import { isUnreachable } from "@spy4x/realtime/read-cache"
 import type { NoteItem, NotePage, NotesDependencies } from "../state/notes.ts"
+import { isProxyAnswer, isRefusal } from "../state/read-keys.ts"
 import { TAGS_COLLECTION } from "./tags-collection.ts"
 import { databasePrefix, type NoteEntry, type NotePayload, type NotesCache } from "./notes-cache.ts"
 
@@ -130,7 +131,8 @@ export interface NotesLayer {
 /**
  * Puts the device's copy and the queue behind the notes store's dependencies:
  * - a read asks the server for the whole list, keeps it and answers with the queued writes
- *   applied; with the server unreachable it answers from what was kept;
+ *   applied; with the server unreachable (no connection, or a proxy's answer) it answers from
+ *   what was kept, and a group the server refuses loses what was kept of it;
  * - a write is queued and sent at once when the server is reachable, and stays queued when it is
  *   not.
  *
@@ -164,7 +166,14 @@ export function offlineNotes(
         }
         await layer.cache.replaceNotes(groupId, base)
       } catch (error) {
-        if (!isUnreachable(error)) throw error
+        // The person left the group, or it is gone: its notes must not come back offline later.
+        if (isRefusal(error)) {
+          await layer.cache.replaceNotes(groupId, []).catch((failure) =>
+            console.warn(`The saved notes of group ${groupId} could not be deleted.`, failure)
+          )
+        }
+        // A proxy's answer, such as a 502 during a deploy, is an unreachable server too.
+        if (!isUnreachable(error) && !isProxyAnswer(error)) throw error
         base = await layer.cache.readNotes(groupId)
       }
       return { notes: await layer.notes.overlay(base, groupId), nextCursor: null }

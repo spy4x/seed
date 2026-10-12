@@ -68,7 +68,48 @@ describe("the SPA's runtime configuration", () => {
     const asText = await loadRuntimeConfig(serving(`{"realtime":"false","offline":"true"}`).fetcher)
 
     expect(asBooleans).toEqual({ realtime: false, offline: true })
-    expect(asText).toEqual({ realtime: "false", offline: "true" })
+    expect(asText).toEqual({ realtime: false, offline: true })
+  })
+
+  it("switches a module off for 0 and on for 1, as the container writes them", async () => {
+    const { result, warnings } = await warned(() =>
+      loadRuntimeConfig(serving(`{"realtime":"1","offline":"0"}`).fetcher)
+    )
+
+    expect(result).toEqual({ realtime: true, offline: false })
+    expect(warnings).toEqual([])
+  })
+
+  it("reads a switch written in capitals", async () => {
+    const config = await loadRuntimeConfig(serving(`{"realtime":"FALSE","offline":"True"}`).fetcher)
+
+    expect(config).toEqual({ realtime: false, offline: true })
+  })
+
+  it("keeps the error tracker's address when a switch is set to 0", async () => {
+    const file = `{"env":"prod","errorReportDsn":"https://k@tracker.example/1","offline":"0"}`
+
+    const config = await loadRuntimeConfig(serving(file).fetcher)
+
+    expect(config.errorReportDsn).toBe("https://k@tracker.example/1")
+    expect(config.env).toBe("prod")
+    expect(config.offline).toBe(false)
+  })
+
+  it("refuses a switch it cannot read aloud, runs the module and keeps the rest of the file", async () => {
+    const file = `{"errorReportDsn":"https://k@tracker.example/1","offline":"off","realtime":2}`
+
+    const { result, warnings } = await warned(() => loadRuntimeConfig(serving(file).fetcher))
+
+    expect(result).toEqual({
+      errorReportDsn: "https://k@tracker.example/1",
+      offline: true,
+      realtime: true,
+    })
+    expect(warnings.map((warning) => String(warning[0])).sort().reverse()).toEqual([
+      `Runtime config: "realtime" must be true, false, 1 or 0, so it is ignored and the module runs.`,
+      `Runtime config: "offline" must be true, false, 1 or 0, so it is ignored and the module runs.`,
+    ])
   })
 
   it("falls back to the defaults when the network fails", async () => {

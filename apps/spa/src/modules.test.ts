@@ -116,12 +116,12 @@ afterEach(() => {
 })
 
 describe("the module switches", () => {
-  it("run both modules unless the configuration says false, as a boolean or as text", () => {
+  it("run both modules unless the configuration says false", () => {
     configureModules({})
     const byDefault = { ...moduleSwitches() }
-    configureModules({ realtime: "false", offline: false })
+    configureModules({ realtime: false, offline: false })
     const off = { ...moduleSwitches() }
-    configureModules({ realtime: true, offline: "true" })
+    configureModules({ realtime: true, offline: true })
 
     expect(byDefault).toEqual({ realtime: true, offline: true })
     expect(off).toEqual({ realtime: false, offline: false })

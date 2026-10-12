@@ -12,10 +12,29 @@ import { loadRuntimeConfig as loadConfigFile } from "@spy4x/platform/browser/run
 const RuntimeConfigSchema = type({
   "env?": "string",
   "errorReportDsn?": "string",
-  // The container writes every value as text, so a switch is read as `false` or `"false"`.
-  "realtime?": "boolean | 'true' | 'false'",
-  "offline?": "boolean | 'true' | 'false'",
+  "realtime?": moduleSwitch("realtime"),
+  "offline?": moduleSwitch("offline"),
 }).onUndeclaredKey("delete")
+
+/**
+ * One module switch, read as a boolean. The container writes every value as text, so off is
+ * `false` or `0` and on is `true` or `1`, as a JSON value or as text in any letter case. Any other
+ * value is refused with a console warning and the module runs, as with no value. It never fails
+ * the schema: a mistyped switch must not also drop the rest of the file, the error tracker's
+ * address included.
+ */
+function moduleSwitch(key: string) {
+  return type("unknown").pipe((value): boolean => {
+    const text = String(value).toLowerCase()
+    if (text === "false" || text === "0") return false
+    if (text !== "true" && text !== "1") {
+      console.warn(
+        `Runtime config: "${key}" must be true, false, 1 or 0, so it is ignored and the module runs.`,
+      )
+    }
+    return true
+  })
+}
 
 export type RuntimeConfig = typeof RuntimeConfigSchema.infer
 
