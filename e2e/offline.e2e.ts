@@ -46,8 +46,13 @@ async function groupWithNote(page: Page, name: string, title: string) {
   return { groupId, noteId }
 }
 
-/** Opens a group's notes, then makes sure the service worker holds the app before going offline. */
-async function openNotesAndCacheShell(page: Page, groupId: string): Promise<void> {
+/**
+ * Opens a group's notes, then makes sure the device holds what an offline start needs: the app in
+ * the service worker's cache, the choice of this group, and the group's notes. `title` is a note
+ * of the group. The page shows it only once it knows the group and has stored the server's list,
+ * so cutting the network before that would start the app on the group it had before.
+ */
+async function openNotesAndCacheShell(page: Page, groupId: string, title: string): Promise<void> {
   const selected = await page.request.put(`${apiBase}/api/groups/selected`, {
     headers,
     data: { groupId },
@@ -60,6 +65,7 @@ async function openNotesAndCacheShell(page: Page, groupId: string): Promise<void
   })
   // One more load under the worker's control, so everything the page needs is cached.
   await gotoApp(page, page.url(), page.locator("[data-e2e=note-list]"))
+  await expect(page.locator("[data-e2e=note-item-title]").filter({ hasText: title })).toHaveCount(1)
 }
 
 /** Goes offline and loads the page again: the app must start from the cache alone. */
@@ -90,7 +96,7 @@ test.describe("offline notes", () => {
       const page = await context.newPage()
       await signInOnline(page, user)
       const { groupId } = await groupWithNote(page, "Offline team", "Written online")
-      await openNotesAndCacheShell(page, groupId)
+      await openNotesAndCacheShell(page, groupId, "Written online")
 
       // The worker caches the app's files, never the API's answers or the socket route.
       const cachedPaths = async () =>
@@ -154,7 +160,7 @@ test.describe("offline notes", () => {
         })
         expect(created.status(), await created.text()).toBe(201)
       }
-      await openNotesAndCacheShell(page, groupId)
+      await openNotesAndCacheShell(page, groupId, "Keep as it is")
       await reloadOffline(context, page)
       const titles = page.locator("[data-e2e=note-item-title]")
       await expect(titles).toHaveCount(4)
@@ -212,8 +218,8 @@ test.describe("offline notes", () => {
       const first = await groupWithNote(page, "Offline first", "In the first")
       const second = await groupWithNote(page, "Offline second", "In the second")
       // Open both online so their notes are in the local store.
-      await openNotesAndCacheShell(page, second.groupId)
-      await openNotesAndCacheShell(page, first.groupId)
+      await openNotesAndCacheShell(page, second.groupId, "In the second")
+      await openNotesAndCacheShell(page, first.groupId, "In the first")
       const titles = page.locator("[data-e2e=note-item-title]")
       await expect(titles).toHaveText(["In the first"])
 
@@ -254,7 +260,7 @@ test.describe("offline notes", () => {
       await signInOnline(a, user)
       await signInOnline(b, user)
       const { groupId } = await groupWithNote(a, "Pair team", "Shared note")
-      for (const page of [a, b]) await openNotesAndCacheShell(page, groupId)
+      for (const page of [a, b]) await openNotesAndCacheShell(page, groupId, "Shared note")
       await reloadOffline(contextA, a)
       await reloadOffline(contextB, b)
 
@@ -305,7 +311,7 @@ test.describe("offline notes", () => {
       await signInOnline(a, user)
       await signInOnline(b, user)
       const { groupId, noteId } = await groupWithNote(a, "Theirs team", "Shared note")
-      for (const page of [a, b]) await openNotesAndCacheShell(page, groupId)
+      for (const page of [a, b]) await openNotesAndCacheShell(page, groupId, "Shared note")
       await reloadOffline(contextB, b)
 
       await b.getByRole("link", { name: "Shared note" }).click()

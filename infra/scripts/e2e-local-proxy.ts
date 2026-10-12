@@ -1,8 +1,8 @@
 /// <reference lib="deno.ns" />
 /**
  * The one origin `deno task e2e:local` serves the app at, as Traefik does in the compose stack:
- * `/api` goes to the API, everything else to the Vite dev server. Reads `FRONT_PORT`, `API_PORT`
- * and `SPA_PORT` and listens on 127.0.0.1.
+ * `/api` goes to the API, everything else to what serves the SPA at `SPA_PORT` (the Vite dev server
+ * or the built SPA). Reads `FRONT_PORT`, `API_PORT` and `SPA_PORT` and listens on 127.0.0.1.
  *
  * It joins the two TCP connections instead of making a request of its own: it reads the head of
  * the first request to choose the upstream, rewrites that head (`forwardedHead`) and then copies

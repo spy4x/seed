@@ -15,8 +15,9 @@ const MAX_LOGGED = 30
  * Opens `url` and waits for `ready`, which proves the app booted. Only when a request to the
  * app's own origin failed with the network-change error during the attempt is the page loaded
  * again, up to three times. Any other failure, or the same failure on the last attempt, throws
- * at once, with the failed requests, the requests still pending and the console of the last attempt
- * added to the message so a red run explains itself without a trace.
+ * at once, with the uncaught errors of the page, the failed requests, the requests still pending and
+ * the console of the last attempt added to the message, so a red run explains itself without a
+ * trace. An uncaught error can leave a page blank with every request answered.
  *
  * `open` makes the first load and defaults to `page.goto(url)`. Where the app loads `url` itself
  * after a click, the click is passed instead (see `submitAuthForm`); every later attempt is
@@ -34,6 +35,7 @@ export async function gotoApp(
   // Each request that has neither finished nor failed, with the time it started.
   let pending = new Map<Request, number>()
   let consoleLines: string[] = []
+  let pageErrors: string[] = []
   const onRequest = (request: Request) => {
     if (!appOrigin && request.isNavigationRequest()) appOrigin = new URL(request.url()).origin
     pending.set(request, Date.now())
@@ -50,16 +52,20 @@ export async function gotoApp(
   const onConsole = (message: ConsoleMessage) => {
     consoleLines.push(`${message.type()}: ${message.text()}`)
   }
+  // The stack names the module; an error thrown without one has only its message.
+  const onPageError = (error: Error) => pageErrors.push(error.stack || error.message)
   page.on("request", onRequest)
   page.on("requestfinished", onFinished)
   page.on("requestfailed", onFailed)
   page.on("console", onConsole)
+  page.on("pageerror", onPageError)
   try {
     for (let attempt = 1;; attempt++) {
       networkChanged = false
       failed = []
       pending = new Map()
       consoleLines = []
+      pageErrors = []
       try {
         await (attempt === 1 ? open() : page.goto(url))
         await ready.waitFor()
@@ -68,6 +74,8 @@ export async function gotoApp(
         if (!networkChanged || attempt === ATTEMPTS) {
           if (error instanceof Error) {
             error.message += `\nAttempt ${attempt} of ${url}.` +
+              `\nUncaught page errors (${pageErrors.length}):\n` +
+              pageErrors.slice(0, MAX_LOGGED).join("\n") +
               `\nFailed requests (${failed.length}):\n${failed.slice(0, MAX_LOGGED).join("\n")}` +
               `\nPending requests (${pending.size}):\n` +
               [...pending].slice(0, MAX_LOGGED)
@@ -84,6 +92,7 @@ export async function gotoApp(
     page.off("requestfinished", onFinished)
     page.off("requestfailed", onFailed)
     page.off("console", onConsole)
+    page.off("pageerror", onPageError)
   }
 }
 

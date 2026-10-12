@@ -175,10 +175,32 @@ A browser cannot load a worker that imports a `jsr:` specifier, so `serviceWorke
 `@spy4x/preact-theme/vite` (in `vite.config.ts`) bundles `src/sw.ts` into one classic `dist/sw.js`
 after the app build and defines `__BUILD_ID__`. On the dev server the same plugin serves the bundle
 from memory at `/sw.js`, with the build id `dev` (since preact-theme 3.8.0), which the e2e specs
-need. The web manifest comes from `webManifest()` in the same file, written as
+that run against it need. The web manifest comes from `webManifest()` in the same file, written as
 `manifest.webmanifest` and served by the dev server; `index.html` links it. The
 worker's file must stay uncached by nginx (`apps/spa/nginx.conf`), or browsers would not see an
 update.
+
+**The specs that start the app with no network run against the built SPA.** These are
+`e2e/offline.e2e.ts` and `e2e/local-data.e2e.ts`; `deno task e2e:local` gives them the image of
+`apps/spa/dockerfile.prod` behind the harness's proxy instead of the dev server, in a Playwright
+pass of their own after the other specs' (`infra/scripts/e2e-local.sh`; `e2e-local-plan.ts` next
+to it decides the passes). What a person runs offline is that build: a few files
+named by hash, stored by the worker when it installs. The dev server serves a different page,
+several hundred modules fetched one by one (`/src/…`, `/@fs/…`, `/@id/…`,
+`/node_modules/.vite/deps/…`) and stored one by one as each is first fetched, so a pass or a
+failure there says little about the deployed app.
+
+The reason for the move is a failure seen only on the dev server (#322): in about one run of the
+whole suite in two, a page opened with no network stayed blank, around the fourth offline load of
+`e2e/local-data.e2e.ts`. The worker answered every request the page made with status 200, then
+five to nine module scripts were aborted (`net::ERR_ABORTED`) within 10 ms and nothing rendered.
+Every aborted URL was one only the dev server has. Its cause is not known. In October 2026 the
+spec that failed ran 18 times in a row on the dev server, and once more inside a run of the whole
+suite, without a blank start, so nothing was caught that names what aborts the scripts. On the
+built SPA it ran 40 times without one either. A page that fails
+to start now names its uncaught errors, failed requests and console in the test's error
+(`gotoApp`, `e2e/fixtures/app.ts`); if a blank start ever shows on the built SPA, that message is
+where to look first, and it is a bug in the product, not in the harness.
 
 `SWUpdater` from `@spy4x/preact-system` already registered `/sw.js` for push notifications, so no
 registration was added. The same worker answers its `skipWaiting` message when a visitor accepts

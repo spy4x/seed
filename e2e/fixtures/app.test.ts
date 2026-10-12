@@ -6,6 +6,8 @@ import { gotoApp, NO_GOOGLE_FONTS, withoutGoogleFonts } from "./app.ts"
 type Outcome =
   | "boots"
   | "stays blank"
+  | "throws while starting"
+  | "throws, then a network change"
   | "blank after network change"
   | "blank after a network change of another origin"
   | "waits on a request"
@@ -54,6 +56,11 @@ function fakePage(outcomes: Outcome[]) {
     } else if (outcome === "stays blank") {
       fail(fakeRequest(`${APP}/src/app.tsx`, "net::ERR_CONNECTION_REFUSED"))
       emit("console", { type: () => "error", text: () => "boom in the module" } as ConsoleMessage)
+    } else if (outcome === "throws while starting") {
+      emit("pageerror", new Error("signal is not a function"))
+    } else if (outcome === "throws, then a network change") {
+      emit("pageerror", new Error("signal is not a function"))
+      fail(fakeRequest(`${APP}/src/main.tsx`, "net::ERR_NETWORK_CHANGED"))
     } else if (outcome === "waits on a request") {
       emit("request", fakeRequest("https://fonts.example/a.css"))
     }
@@ -133,6 +140,21 @@ Deno.test("gotoApp names the failed requests and the console in the error it thr
   const error = await gotoApp(fake.page, "/sign-in", fake.ready).catch((e: Error) => e)
   expect((error as Error).message).toContain(`${APP}/src/app.tsx net::ERR_CONNECTION_REFUSED`)
   expect((error as Error).message).toContain("error: boom in the module")
+})
+
+Deno.test("gotoApp names the uncaught errors of the page in the error it throws", async () => {
+  const fake = fakePage(["throws while starting"])
+  const error = await gotoApp(fake.page, "/sign-in", fake.ready).catch((e: Error) => e)
+  expect((error as Error).message).toContain(
+    "Uncaught page errors (1):\nError: signal is not a function",
+  )
+})
+
+Deno.test("gotoApp reports only the uncaught errors of its last load", async () => {
+  const fake = fakePage(["throws, then a network change", "stays blank"])
+  const error = await gotoApp(fake.page, "/sign-in", fake.ready).catch((e: Error) => e)
+  expect((error as Error).message).toContain("Attempt 2 of /sign-in.")
+  expect((error as Error).message).toContain("Uncaught page errors (0):")
 })
 
 Deno.test("gotoApp names the requests still pending in the error it throws", async () => {

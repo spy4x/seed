@@ -50,7 +50,7 @@ export default defineConfig({
     tailwindcss(),
     requireComponentCss(),
     // A build writes `dist/sw.js`, named after a hash of the built files. The dev server serves the
-    // same worker from memory at `/sw.js`, so the offline e2e specs, which run against it, have one.
+    // same worker from memory at `/sw.js`, so the e2e specs that run against it have one.
     serviceWorker({
       entry: SW_ENTRY,
       build,
