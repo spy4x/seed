@@ -1,6 +1,7 @@
 import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
+import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { canMutateNotes, canRead, GroupRole } from "@domain/groups"
 
@@ -196,7 +197,9 @@ export const noteListPayloadSchema = type({
 
 /**
  * Validates `value` against `schema`, then trims the title and checks both lengths in characters,
- * so an emoji counts as one. Throws `NoteError("INVALID_REQUEST")`.
+ * so an emoji counts as one. A title or body holding a character Postgres cannot store (NUL, half
+ * of a surrogate pair) is refused; line breaks and tabs are fine. Throws
+ * `NoteError("INVALID_REQUEST")`.
  */
 export function parseNoteRequest<S extends Type<object>>(schema: S, value: unknown): S["infer"] {
   const result = schema(value)
@@ -221,6 +224,15 @@ export function parseNoteRequest<S extends Type<object>>(schema: S, value: unkno
       "INVALID_REQUEST",
       `Note body must contain at most ${NOTE_BODY_MAX_LENGTH} characters`,
     )
+  }
+  if (hasUnstorableTextCharacters(title)) {
+    throw new NoteError(
+      "INVALID_REQUEST",
+      "Note title must not contain a NUL or a broken character",
+    )
+  }
+  if (hasUnstorableTextCharacters(parsed.body ?? "")) {
+    throw new NoteError("INVALID_REQUEST", "Note body must not contain a NUL or a broken character")
   }
   return { ...parsed, title, ...(parsed.tagIds && { tagIds: [...new Set(parsed.tagIds)] }) }
 }

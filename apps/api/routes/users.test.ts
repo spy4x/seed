@@ -65,6 +65,23 @@ describe("users routes", () => {
     expect(calls).toEqual(["updateProfile"])
   })
 
+  it("answers 400 naming the field for a NUL or half a surrogate pair in a name", async () => {
+    for (const [field, value] of [["firstName", "A\u0000da"], ["lastName", "Love\ud800lace"]]) {
+      const { app, calls } = buildApp()
+      const response = await app.request(`${API_URL}/users/me`, {
+        method: "PATCH",
+        headers: { ...sameOriginHeaders },
+        body: JSON.stringify({ firstName: "Ada", lastName: "Lovelace", [field]: value }),
+      })
+
+      expect(response.status).toBe(400)
+      expect((await response.json()).error).toContain(
+        `${field} must be free of NUL and broken characters`,
+      )
+      expect(calls).toEqual([])
+    }
+  })
+
   it("answers PATCH /users/me without a session with 401, not 403", async () => {
     const { app, calls } = buildApp(null)
     const response = await patchProfile(app, sameOriginWithoutCookieHeaders)

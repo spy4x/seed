@@ -101,6 +101,7 @@ import {
 import type { AppDbBase } from "./db-base.ts"
 import { consumePasswordReset } from "@server/auth/password-reset.ts"
 import { passwordKeyOf, proveEmailCode, readEmailStatus } from "@server/auth/email-verification.ts"
+import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** Longest username, in characters (code points), after normalisation. */
@@ -306,7 +307,7 @@ export function normalizeUsername(raw: unknown): string | null {
   const username = raw.trim().toLowerCase()
   const length = Array.from(username).length
   if (length < 1 || length > USERNAME_MAX_LENGTH) return null
-  if (username.includes("\u0000") || !username.isWellFormed()) return null
+  if (hasUnstorableTextCharacters(username)) return null
   return username
 }
 

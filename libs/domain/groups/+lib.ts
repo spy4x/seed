@@ -1,7 +1,10 @@
 /// <reference lib="es2022.intl" />
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import { isRecord } from "@spy4x/platform/universal/is-record"
-import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
+import {
+  hasUnsafeTextCharacters,
+  hasUnstorableTextCharacters,
+} from "@spy4x/platform/universal/text"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import type { Actor } from "@domain/identity"
 
@@ -649,7 +652,10 @@ export function parseRenameGroupRequest(value: unknown): { groupId: string; name
   return { groupId: parseGroupId(value.groupId), name: parseGroupName(value.name) }
 }
 
-/** A group description: at most {@link GROUP_DESCRIPTION_MAX} characters once trimmed, may be empty. */
+/**
+ * A group description: at most {@link GROUP_DESCRIPTION_MAX} characters once trimmed, may be empty.
+ * It may hold line breaks, but no character Postgres cannot store (NUL, half of a surrogate pair).
+ */
 export function parseGroupDescription(value: unknown): string {
   if (typeof value !== "string") {
     throw new GroupError("INVALID_REQUEST", "Group description must be a string")
@@ -659,6 +665,12 @@ export function parseGroupDescription(value: unknown): string {
     throw new GroupError(
       "INVALID_REQUEST",
       `Group description must contain at most ${GROUP_DESCRIPTION_MAX} characters`,
+    )
+  }
+  if (hasUnstorableTextCharacters(description)) {
+    throw new GroupError(
+      "INVALID_REQUEST",
+      "Group description must not contain a NUL or a broken character",
     )
   }
   return description

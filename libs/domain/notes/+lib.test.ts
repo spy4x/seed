@@ -113,6 +113,36 @@ describe("note requests", () => {
     expect(parseNoteRequest(noteCreateRequestSchema, { id, title, body: "" }).title)
       .toBe(title)
   })
+
+  it("refuses a NUL or half a surrogate pair in the title, on create and update", () => {
+    for (const title of ["a\u0000b", "a\ud800b"]) {
+      expect(codeOf(() => parseNoteRequest(noteCreateRequestSchema, { id, title, body: "" })))
+        .toBe("INVALID_REQUEST")
+      expect(
+        codeOf(() => parseNoteRequest(noteUpdateRequestSchema, { title, body: "", version: 1 })),
+      ).toBe("INVALID_REQUEST")
+    }
+    expect(() => parseNoteRequest(noteCreateRequestSchema, { id, title: "a\u0000b", body: "" }))
+      .toThrow("Note title must not contain a NUL or a broken character")
+  })
+
+  it("refuses a NUL or half a surrogate pair in the body, on create and update", () => {
+    for (const body of ["a\u0000b", "a\ud800b"]) {
+      expect(codeOf(() => parseNoteRequest(noteCreateRequestSchema, { id, title: "T", body })))
+        .toBe("INVALID_REQUEST")
+      expect(
+        codeOf(() => parseNoteRequest(noteUpdateRequestSchema, { title: "T", body, version: 1 })),
+      ).toBe("INVALID_REQUEST")
+    }
+    expect(() => parseNoteRequest(noteCreateRequestSchema, { id, title: "T", body: "a\u0000b" }))
+      .toThrow("Note body must not contain a NUL or a broken character")
+  })
+
+  it("keeps a line break, a tab and an emoji in the title and the body", () => {
+    const text = "one\ttwo\nthree 😀"
+    expect(parseNoteRequest(noteCreateRequestSchema, { id, title: text, body: text }))
+      .toEqual({ id, title: text, body: text })
+  })
 })
 
 describe("note tags", () => {

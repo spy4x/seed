@@ -78,6 +78,22 @@ describe("profile socket requests", () => {
     expect(seen.update).toBe(null)
   })
 
+  it("refuses an update with a NUL in a name as bad_request and does not dispatch it", async () => {
+    const { requests, seen } = harness()
+
+    const failure = await Promise.resolve(requests["profile.update"].handle({
+      actor,
+      requestId: "req-1",
+      signal,
+      idempotencyKey: "key-1",
+      payload: { firstName: "Ada", lastName: "Love\u0000lace" },
+    })).catch((error) => error)
+
+    expect(failure).toBeInstanceOf(RealtimeRequestError)
+    expect((failure as RealtimeRequestError).code).toBe("bad_request")
+    expect(seen.update).toBe(null)
+  })
+
   it("reads the profile of the actor", async () => {
     const { requests, seen } = harness()
 

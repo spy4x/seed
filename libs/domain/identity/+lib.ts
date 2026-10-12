@@ -1,6 +1,7 @@
 import { type } from "arktype"
 import { BaseModelSchema, dateSchema } from "@spy4x/platform/model"
 import type { SecondFactorStatus } from "@spy4x/server/sign-in"
+import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
 // general-purpose package. Moved here from the deleted libs/platform/types/+index.ts.
@@ -40,9 +41,19 @@ export type User = typeof userSchema.infer
 export const userUpdateSchema = userBaseSchema.pick("firstName", "lastName")
 export type UserUpdate = typeof userUpdateSchema.infer
 
+/**
+ * One part of a person's name as the profile form sends it: 1 to {@link NAME_MAX_LENGTH}
+ * characters, none of them one Postgres cannot store (NUL, half of a surrogate pair), which would
+ * answer 500 instead of 400.
+ */
+const profileName = type(`1 <= string <= ${NAME_MAX_LENGTH}`).narrow((value, ctx) =>
+  !hasUnstorableTextCharacters(value) || ctx.mustBe("free of NUL and broken characters")
+)
+
+/** The body of a profile edit, over REST and the socket: the only request that writes the names. */
 export const userProfileBaseSchema = type({
-  firstName: `1 <= string <= ${NAME_MAX_LENGTH}`,
-  lastName: `1 <= string <= ${NAME_MAX_LENGTH}`,
+  firstName: profileName,
+  lastName: profileName,
 })
 export type UserProfileBase = typeof userProfileBaseSchema.infer
 

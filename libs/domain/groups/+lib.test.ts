@@ -341,6 +341,18 @@ describe("a group's description", () => {
     expect(() => parseGroupDescription("x".repeat(501))).toThrow(GroupError)
   })
 
+  it("refuses a NUL or half a surrogate pair", () => {
+    const message = "Group description must not contain a NUL or a broken character"
+    expect(() => parseGroupDescription("Our\u0000trips")).toThrow(message)
+    expect(() => parseGroupDescription("Our\ud800trips")).toThrow(message)
+    expect(() => parseGroupDetailsBody({ description: "a\u0000b", color: null, emoji: null }))
+      .toThrow(GroupError)
+  })
+
+  it("keeps a line break, a tab and an emoji", () => {
+    expect(parseGroupDescription("Our trips\n\tsummer 🏕")).toBe("Our trips\n\tsummer 🏕")
+  })
+
   it("refuses what is not text", () => {
     expect(() => parseGroupDescription(null)).toThrow(GroupError)
     expect(() => parseGroupDescription(4)).toThrow(GroupError)

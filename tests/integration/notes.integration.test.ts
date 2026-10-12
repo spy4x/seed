@@ -22,6 +22,16 @@ import { runBlockedOnLock } from "./group-team.ts"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { createIdempotencyMiddleware, PostgresIdempotencyStore } from "@spy4x/server/idempotency"
+import { buildAuthData } from "../../apps/api/_testing/fake-auth.ts"
+import {
+  API_URL,
+  mountRoute,
+  sameOriginHeaders,
+  WEB_APP_URL,
+} from "../../apps/api/_testing/mutation-requests.ts"
+import { createCallRoute } from "../../apps/api/routes/call.ts"
+import { toRequestError } from "../../apps/api/services/realtime.ts"
+import { createNoteOperations } from "../../apps/api/features/notes/operations.ts"
 import { createSessionGate } from "../../apps/api/cqrs/session-gate.ts"
 import { createEntitlementGate } from "../../apps/api/cqrs/entitlement-gate.ts"
 import { ENTITLEMENT_NEEDS } from "../../apps/api/cqrs/entitlement-needs.ts"
@@ -953,5 +963,67 @@ Deno.test("notes against Postgres", async (t) => {
       expect(second.notes.map((note) => note.title)).toEqual(["one"])
       expect(second.nextPageKey).toBe(null)
     })
+
+    await t.step(
+      "a create with a NUL in the title or the body answers 400 and logs no error",
+      async () => {
+        const { groupId, owner } = await seedGroup(sql)
+        // What the call route logs is an error nobody expected, with its stack.
+        const logged: unknown[][] = []
+        const app = mountRoute(
+          "/call",
+          createCallRoute({
+            operations: createNoteOperations({
+              create: (command) => commands.execute(command),
+              update: (command) => commands.execute(command),
+              delete: (command) => commands.execute(command),
+              restore: (command) => commands.execute(command),
+              move: (command) => commands.execute(command),
+              get: (query) => queries.execute(query),
+              locate: (query) => queries.execute(query),
+              list: (query) => queries.execute(query),
+              cursor: {
+                encode: () => Promise.reject(new Error("no list in this step")),
+                decode: () => Promise.reject(new Error("no list in this step")),
+              },
+            }),
+            mapError: toRequestError,
+            log: (...data) => void logged.push(data),
+            expectedOrigin: WEB_APP_URL,
+          }),
+          buildAuthData({ user: { id: owner }, session: { id: owner * 10, userId: owner } }),
+        )
+        const create = (title: string, body: string) =>
+          app.request(`${API_URL}/call/note.create`, {
+            method: "POST",
+            headers: {
+              ...sameOriginHeaders,
+              "x-realtime-user": String(owner),
+              "idempotency-key": uuidV7(),
+            },
+            body: JSON.stringify({ groupId, id: uuidV7(), title, body }),
+          })
+
+        const refused = [await create("Pl\u0000an", "a"), await create("Plan", "a\u0000b")]
+        // The same route stores ordinary prose, so the 400s are about the NUL alone.
+        const stored = await create("Plan", "one\ttwo\nthree 😀")
+
+        // One comparison, so a 500 shows together with the line it logged.
+        expect({
+          statuses: [...refused, stored].map((response) => response.status),
+          logged: logged.map(([message]) => message),
+        }).toEqual({ statuses: [400, 400, 200], logged: [] })
+        for (const response of refused) {
+          expect((await response.json()).error).toMatchObject({
+            code: "bad_request",
+            details: { code: "INVALID_REQUEST" },
+          })
+        }
+        const rows = await sql<{ body: string }[]>`
+          SELECT body FROM notes WHERE group_id = ${groupId}
+        `
+        expect(rows.map((row) => row.body)).toEqual(["one\ttwo\nthree 😀"])
+      },
+    )
   })
 })
