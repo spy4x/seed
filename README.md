@@ -205,6 +205,13 @@ every server file that differs from your checkout, one edited on the server or n
 deletes the ones your checkout no longer has; env files and the web push keys are never touched. So
 deploying an older commit is a full rollback of the code. It does not roll back the database.
 
+**A server that ran Postgres 16 moves its data once.** The Compose file runs Postgres 18, which
+keeps its data in a directory of its own, so the first deploy of this version stops at "Starting
+the app" with a message that says why, and the old containers keep serving. Run
+`deno task db:upgrade-18` on the server to move the data and finish the deploy:
+[docs/postgres-18-upgrade.md](docs/postgres-18-upgrade.md) has the steps, the outage to expect and
+the way back.
+
 `deno task deploy` needs no manual step on a new server: it creates `infra/configs/vapid.json`
 (the web push keys) there when the file is missing, readable by its owner only. It never sends the
 key from your machine and never replaces one that exists. It stops before sending anything when a
@@ -272,6 +279,7 @@ Current tasks come from [`deno.jsonc`](deno.jsonc).
 | `deno task spa:build`        | Build the SPA                                          |
 | `deno task subscribers:send` | Queue an issue for a mailing list (worker container)   |
 | `deno task deploy`           | Copy the production files to the server and start them |
+| `deno task db:upgrade-18`    | Once per server: move the data from Postgres 16 to 18  |
 
 Run individual app tasks with `api:*`, `spa:*`, or `mpa:*`. Deno workspace members inherit shared
 imports and tooling settings from root `deno.jsonc`.

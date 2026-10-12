@@ -25,8 +25,9 @@ age; a version 4 id is random and scatters over the index. The ids made this way
   its end, `uuidV7().slice(-8)`: the start is the clock and repeats for about a minute.
 
 The browser makes the id of a note, a tag and a group, online and offline, so a retry or a queued
-change names the same record. Postgres 16 has no version 7 function, so SQL never makes an id: the
-application passes it in, and no `uuid` column has a default.
+change names the same record. SQL never makes an id: the application passes it in, and no
+`uuid` column has a default. Postgres 18 has `uuidv7()`, so SQL may make a version 7 id where no
+caller needs to know it first; nothing here does yet.
 
 ## A secret is not an id, and is the owner's decision
 

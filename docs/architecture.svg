@@ -96,7 +96,7 @@
   <text class="t m" x="56" y="460">API cache</text>
 
   <rect class="box data" x="250" y="412" width="360" height="76" rx="8"/>
-  <text class="t h" x="266" y="438">Postgres 16</text>
+  <text class="t h" x="266" y="438">Postgres 18</text>
   <text class="t m" x="266" y="460">authoritative: users, groups, outbox_events</text>
 
   <rect class="box ops" x="650" y="412" width="270" height="76" rx="8"/>

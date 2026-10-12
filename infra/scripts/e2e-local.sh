@@ -187,7 +187,7 @@ log "starting $PG_NAME and $KV_NAME with $CONTAINER"
 CONTAINERS+=("$PG_NAME")
 timeout 300 "$CONTAINER" run --detach --name "$PG_NAME" --pids-limit=500 --memory=2g \
   -e POSTGRES_USER=tester -e POSTGRES_PASSWORD="$DB_PASS" -e POSTGRES_DB=template_e2e \
-  -p 127.0.0.1::5432 docker.io/library/postgres:16-alpine >/dev/null
+  -p 127.0.0.1::5432 docker.io/library/postgres:18.6-alpine >/dev/null
 CONTAINERS+=("$KV_NAME")
 # REDISCLI_AUTH lets the `valkey-cli ping` below authenticate.
 timeout 300 "$CONTAINER" run --detach --name "$KV_NAME" --pids-limit=500 --memory=1g \

@@ -5,20 +5,21 @@ services:
   # region Storages
   db:
     container_name: ${PROJECT}-db
-    image: postgres:16
+    # The same 18 minor as CI and the local browser run: tests/compose-postgres.test.ts.
+    image: postgres:18.6
     restart: unless-stopped
     command: [ 
         'postgres', 
         '-c', 
         'shared_preload_libraries=pg_stat_statements',
         '-c',
-        'shared_buffers=2GB', # Set memory for shared buffers
+        'shared_buffers=${DB_SHARED_BUFFERS:-512MB}', # A quarter of the container's memory limit. The five DB_* defaults here fit DB_MEM_LIMIT=2048m; a larger limit sets them beside it (infra/envs/.env.example)
         '-c',
-        'work_mem=64MB', # Memory for sorting/hash joins per operation
+        'work_mem=${DB_WORK_MEM:-16MB}', # Memory for sorting/hash joins per operation; 30 connections can each use it
         '-c',
-        'maintenance_work_mem=512MB', # Memory for maintenance operations
+        'maintenance_work_mem=${DB_MAINTENANCE_WORK_MEM:-128MB}', # Memory for maintenance operations
         '-c',
-        'effective_cache_size=6GB', # Anticipated OS disk cache
+        'effective_cache_size=${DB_EFFECTIVE_CACHE_SIZE:-1536MB}', # Shared buffers plus the page cache the limit leaves: three quarters of it
         '-c',
         'max_connections=30', # Limit max client connections
         '-c',
@@ -36,7 +37,7 @@ services:
         '-c',
         'autovacuum_vacuum_cost_limit=1000', # Cost limit for vacuuming. 1000-2000 to allow autovacuum processes to perform more work in each cycle on larger tables.
         '-c',
-        'autovacuum_work_mem=512MB', # Memory for autovacuum processes, Explicitly set it to 256MB or 512MB, especially for large tables that are vacuumed frequently.
+        'autovacuum_work_mem=${DB_AUTOVACUUM_WORK_MEM:-128MB}', # Memory for each autovacuum worker (three by default)
         '-c',
         'random_page_cost=1.1', # Set the cost of a non-sequentially fetched disk page to 1.1, which is a good starting point for SSDs.
         '-c',
@@ -52,7 +53,11 @@ services:
           cpus: '${DB_CPU_LIMIT}'
           memory: '${DB_MEM_LIMIT}'
     volumes:
-      - ../../.volumes/postgres:/var/lib/postgresql/data:Z
+      # Postgres 18 keeps its data in a folder named after its version (18/docker) under this
+      # mount. The directory is new on purpose: a server's Postgres 16 data stays in
+      # .volumes/postgres, untouched, and `deno task db:upgrade-18` moves it over
+      # (docs/postgres-18-upgrade.md). Until then `deno task compose up` refuses to start.
+      - ../../.volumes/postgres18:/var/lib/postgresql:Z
     environment:
       - LANG=C.UTF-8
       - LC_ALL=C.UTF-8

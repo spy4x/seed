@@ -306,7 +306,7 @@ NAME="template-test-$$"
 PASS=$(openssl rand -hex 24)
 trap 'docker rm -f "$NAME" "$NAME-kv" >/dev/null' EXIT
 docker run -d --name "$NAME" -e POSTGRES_USER=tester -e POSTGRES_PASSWORD="$PASS" \
-  -e POSTGRES_DB=template_test -p 127.0.0.1::5432 postgres:16-alpine
+  -e POSTGRES_DB=template_test -p 127.0.0.1::5432 postgres:18.6-alpine
 docker run -d --name "$NAME-kv" -e REDISCLI_AUTH="$PASS" -p 127.0.0.1::6379 valkey/valkey:8.1 \
   valkey-server --requirepass "$PASS"
 PORT=$(docker port "$NAME" 5432/tcp | cut -d: -f2)
@@ -325,7 +325,9 @@ DB_HOST=127.0.0.1 DB_PORT="$PORT" DB_USER=tester DB_PASS="$PASS" DB_NAME=templat
 Compose, and so `deno task deploy`, applies migrations itself: the one-shot `migrate` service runs
 `deno task db:migrate` on every `up`, and the API and the worker start only after it exits with 0.
 There is no manual migration step in production. A failed migration fails `compose up` and leaves
-the new API and worker created but not started; fix the migration and deploy again.
+the new API and worker created but not started; fix the migration and deploy again. A server that
+still holds Postgres 16 data refuses to start until `deno task db:upgrade-18` has moved it:
+[postgres-18-upgrade.md](postgres-18-upgrade.md).
 
 To run the API for real outside compose you also need Valkey (`valkey-server --requirepass
 <KV_PASSWORD>`; the API refuses to start without `KV_PASSWORD` and sends it with `AUTH`),

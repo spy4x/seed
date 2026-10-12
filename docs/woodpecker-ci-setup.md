@@ -17,7 +17,7 @@ check ──┬── build
 
 - `check` runs `deno task check`: format, lint, type check and unit tests.
 - `build` runs `deno task build` (the SPA production build).
-- `integration` runs `deno task test:integration` against a throw-away `postgres:16-alpine` service
+- `integration` runs `deno task test:integration` against a throw-away `postgres:18.6-alpine` service
   (user `tester`, password `ci-throwaway`, database `template_test`, reachable as host `postgres`)
   and a `valkey/valkey:8.1` service (password `ci-throwaway`, host `valkey`). It waits over TCP for
   both servers, see docs/handoff.md trap 3.
