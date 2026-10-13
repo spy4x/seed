@@ -12,6 +12,7 @@ import {
   authPasswordChangeSchema,
   authPasswordForgotSchema,
   authPasswordResetSchema,
+  authPasswordSetSchema,
   authSignInSchema,
   authSignUpSchema,
   authTotpDisconnectSchema,
@@ -19,7 +20,12 @@ import {
   type User,
   UserMFAStatus,
 } from "@domain/identity"
-import { EmailChangeOutcome, EmailVerifyOutcome, type SignIn } from "@api/services/sign-in.ts"
+import {
+  EmailChangeOutcome,
+  EmailVerifyOutcome,
+  PasswordSetOutcome,
+  type SignIn,
+} from "@api/services/sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
 import { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
@@ -116,6 +122,25 @@ const MAX_SESSION_ID = 2_147_483_647
 
 /** The answer when the account has two-factor on and the request carries no code. */
 export const ACCOUNT_DELETE_CODE_REQUIRED = "Enter the code from your authenticator app"
+
+/** The same answer for a first password: with two-factor on, it needs the code too. */
+export const PASSWORD_SET_CODE_REQUIRED = ACCOUNT_DELETE_CODE_REQUIRED
+
+/**
+ * The answer when an account with no password asks for a step that the others confirm with their
+ * password, and its session is no sign-in with Google or GitHub of a moment ago.
+ */
+export const PROVIDER_PROOF_REQUIRED =
+  "Sign in with Google or GitHub again, then repeat this within a few minutes."
+
+/** The answer when a first password is asked for by an account that has one. */
+export const PASSWORD_ALREADY_SET = "This account has a password already. Change it instead."
+
+/** The answer when a first password is asked for by an account with no address to sign in with. */
+export const PASSWORD_NEEDS_ADDRESS = "Add an e-mail address first: you sign in with it."
+
+/** The answer when a first password cannot be stored. */
+export const PASSWORD_SET_REFUSED = "This password cannot be set. Try another one."
 
 /** The answer when turning two-factor off is asked for with neither a password nor a code. */
 export const TOTP_DISCONNECT_PROOF_REQUIRED =
@@ -440,6 +465,9 @@ export function createAuthRoute(
       if (outcome === EmailChangeOutcome.WrongPassword) {
         return c.json({ error: "Invalid password" }, 400)
       }
+      if (outcome === EmailChangeOutcome.ProofRequired) {
+        return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+      }
       if (outcome === EmailChangeOutcome.InvalidEmail) {
         return c.json({ error: "Enter a valid e-mail address" }, 400)
       }
@@ -478,6 +506,46 @@ export function createAuthRoute(
       // How many API tokens the change revoked, so the page can say so.
       return c.json({ success: true, revokedTokens: changed.revokedTokens })
     })
+    // The first password of an account made with Google or GitHub. There is no password to ask
+    // for, so the session itself must be a provider sign-in of a moment ago.
+    .post(`/password/set`, rateLimits.strictByUser, async (c) => {
+      const body = await readApiJson(c)
+      const validationResult = validate(authPasswordSetSchema, body)
+      if (validationResult.error) {
+        return c.json({ error: validationResult.error.description }, 400)
+      }
+      const authData = c.get("auth")!
+      const { newPassword, otp } = validationResult.data
+      // With two-factor on, the code is asked as the deletion asks it: the new password is
+      // accepted as proof to turn two-factor off, so it must not cost less than the code.
+      if (authData.user.mfa === UserMFAStatus.CONFIGURED) {
+        if (otp === undefined) return c.json({ error: PASSWORD_SET_CODE_REQUIRED }, 400)
+        // The cheap refusals first, so a code is not spent on a request that sets nothing.
+        if (await signIn.hasPassword(authData.user.id)) {
+          return c.json({ error: PASSWORD_ALREADY_SET }, 400)
+        }
+        if (!(await signIn.confirmedByProvider(authData))) {
+          return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+        }
+        const checked = await checkUnderFailureCount(
+          c,
+          totpFailures,
+          authData.user.id,
+          () => signIn.verifyTotpCode(authData, otp),
+          () => c.json({ error: "Code is incorrect" }, 400),
+        )
+        if (checked !== true) return checked
+      }
+      const outcome = await signIn.setPassword(c, authData, newPassword)
+      if (outcome === PasswordSetOutcome.Set) return c.json({ success: true })
+      const refusals = {
+        [PasswordSetOutcome.AlreadySet]: PASSWORD_ALREADY_SET,
+        [PasswordSetOutcome.ProofRequired]: PROVIDER_PROOF_REQUIRED,
+        [PasswordSetOutcome.NoAddress]: PASSWORD_NEEDS_ADDRESS,
+        [PasswordSetOutcome.Refused]: PASSWORD_SET_REFUSED,
+      }
+      return c.json({ error: refusals[outcome] }, 400)
+    })
     .get(`/sessions`, rateLimits.normal, async (c) => {
       return c.json({ sessions: await signIn.listSessions(c.get("auth")!) })
     })
@@ -506,7 +574,8 @@ export function createAuthRoute(
       return c.json({ blockers: await signIn.accountDeletionBlockers(c.get("auth")!) })
     })
     // Asks again for what a stolen session lacks: the password, and the authenticator code when
-    // two-factor is on, as the sign-in does. Groups that stop it are named before anything is
+    // two-factor is on, as the sign-in does. An account with no password has signed in with
+    // Google or GitHub a moment ago instead (#384). Groups that stop it are named before anything is
     // checked, so the person learns what to do first without typing the password in vain.
     .post(`/account/delete`, rateLimits.strictByUser, async (c) => {
       const body = await readApiJson(c)
@@ -518,8 +587,14 @@ export function createAuthRoute(
       const { password, otp } = validationResult.data
       const blockers = await signIn.accountDeletionBlockers(authData)
       if (blockers.length > 0) return c.json({ error: ACCOUNT_DELETE_BLOCKED, blockers }, 409)
-      if (!(await signIn.checkPassword(authData.user.id, password))) {
-        return c.json({ error: "Invalid password" }, 400)
+      if (await signIn.hasPassword(authData.user.id)) {
+        if (
+          password === undefined || !(await signIn.checkPassword(authData.user.id, password))
+        ) {
+          return c.json({ error: "Invalid password" }, 400)
+        }
+      } else if (!(await signIn.confirmedByProvider(authData))) {
+        return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
       }
       if (authData.user.mfa === UserMFAStatus.CONFIGURED) {
         if (otp === undefined) return c.json({ error: ACCOUNT_DELETE_CODE_REQUIRED }, 400)

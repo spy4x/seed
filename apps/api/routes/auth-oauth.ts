@@ -9,21 +9,28 @@ import {
   oauthProviderId,
   type OAuthProvidersResponse,
   type PendingSignUpResponse,
+  signInMethodLinkSchema,
 } from "@domain/identity"
+import { validate } from "@spy4x/validation"
+import { readApiJson } from "@api/services/json-body.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
 import { UnlinkOutcome } from "@api/services/oauth-sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
+import { PROVIDER_PROOF_REQUIRED } from "./auth.ts"
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { AuthRateLimits } from "../middlewares/auth-rate-limits.ts"
 
 /** What the provider sign-in routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface OAuthRouteDependencies {
-  signIn: Pick<SignIn, "auth" | "oauth">
+  signIn: Pick<
+    SignIn,
+    "auth" | "oauth" | "hasPassword" | "checkPassword" | "confirmedByProvider"
+  >
   /** Announces a sign-out, so the person's open sockets close. */
   emit(event: UserSignedOutEvent): void
   mutationGuards: MutationGuards
-  rateLimits: Pick<AuthRateLimits, "strictByIp" | "normal">
+  rateLimits: Pick<AuthRateLimits, "strictByIp" | "strictByUser" | "normal">
   /** The web app's origin: every redirect after a callback goes to a page under it. */
   origin: string
   /** Records a failure the person only sees as "that did not work". */
@@ -179,14 +186,29 @@ export function createOAuthRoute(
       return c.json(await oauth.methods(c.get("auth")!))
     })
     // A POST, not a link: another site must not be able to start a link for a signed-in person.
+    // It asks for what the deletion asks (#384): the password, or for an account without one a
+    // sign-in with a provider a moment ago. A new provider account is a new way in, and a
+    // sign-in with it would count as that proof; so a session left open cannot add one.
     .post(
       `/methods/:provider{google|github}/link`,
       isAuthenticated2FA,
       mutationGuards.signedIn,
-      rateLimits.normal,
+      rateLimits.strictByUser,
       async (c) => {
         const id = providerOf(c)
-        const url = id && await oauth.start(c, id, { linking: c.get("auth")! })
+        if (!id) return c.json({ error: PROVIDER_OFF }, 404)
+        const body = validate(signInMethodLinkSchema, await readApiJson(c))
+        if (body.error) return c.json({ error: body.error.description }, 400)
+        const state = c.get("auth")!
+        const { password } = body.data
+        if (await signIn.hasPassword(state.user.id)) {
+          if (password === undefined || !(await signIn.checkPassword(state.user.id, password))) {
+            return c.json({ error: "Invalid password" }, 400)
+          }
+        } else if (!(await signIn.confirmedByProvider(state))) {
+          return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+        }
+        const url = await oauth.start(c, id, { linking: state })
         if (!url) return c.json({ error: PROVIDER_OFF }, 404)
         return c.json({ url })
       },

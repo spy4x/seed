@@ -8,7 +8,10 @@ import {
   type EmailValues,
 } from "@ui/email-screen.tsx"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
+import { providerProofOf } from "@ui/provider-proof.tsx"
 import { emailStore } from "../state/email.ts"
+import { createSignInMethodsStore } from "../state/sign-in-methods.ts"
+import { isProviderProofFresh } from "./provider-proof-fresh.ts"
 import { sessionState } from "../state/session.ts"
 import { toasts } from "../state/toasts.ts"
 
@@ -25,13 +28,17 @@ export function EmailView() {
     change: null,
   })
   const [pending, setPending] = useState({ verify: false, send: false, change: false })
+  // An account with no password confirms a change with a provider sign-in, not a password.
+  const [methods] = useState(() => createSignInMethodsStore())
 
   const session = sessionState.value
   const signedIn = session.user !== null && !session.isMfaRequired
 
   // Signed out, here or in another tab, the app's sign-in gate takes over and returns here after.
   useEffect(() => {
-    if (signedIn) void emailStore.refresh()
+    if (!signedIn) return
+    void emailStore.refresh()
+    void methods.load()
   }, [signedIn])
 
   if (!status) {
@@ -58,6 +65,11 @@ export function EmailView() {
     onDone(outcome.message)
   }
 
+  const providerProof = providerProofOf(
+    methods.methods.value,
+    isProviderProofFresh(methods.providerProofUntil.value),
+  )
+
   return (
     <EmailScreen
       status={status}
@@ -81,10 +93,15 @@ export function EmailView() {
           setNotices((current) => ({ ...current, send: message }))
         })}
       onChange={() =>
-        run("change", () => emailStore.change(values.email, values.password), (message) => {
+        run("change", () =>
+          emailStore.change(
+            values.email,
+            providerProof ? undefined : values.password,
+          ), (message) => {
           setValues({ code: "", email: "", password: "" })
           setNotices({ send: null, change: message })
         })}
+      providerProof={providerProof}
       navigate={navigate}
     />
   )

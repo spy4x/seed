@@ -217,6 +217,7 @@ describe("ProfileScreen password dialog", () => {
       lastName: "Lovelace",
       currentPassword: "",
       newPassword: "",
+      passwordOtp: "",
       otp: "",
       twoFactorProof: "",
     },

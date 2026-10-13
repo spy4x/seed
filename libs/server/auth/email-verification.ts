@@ -19,7 +19,11 @@
 import type { Sql } from "@spy4x/server/db"
 import type { AuthKey, AuthStore } from "@spy4x/server/auth"
 import { normalizeEmail } from "@spy4x/server/auth"
-import { createEmailProof, DEFAULT_CODE_TTL_MINUTES } from "@spy4x/server/auth/email-code"
+import {
+  createEmailProof,
+  DEFAULT_CODE_TTL_MINUTES,
+  EMAIL_CODE_METHOD,
+} from "@spy4x/server/auth/email-code"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import type { EmailStatus } from "@domain/identity"
 
@@ -33,6 +37,24 @@ export const EMAIL_CODE_TTL_MINUTES = DEFAULT_CODE_TTL_MINUTES
 export async function passwordKeyOf(store: AuthStore, userId: number): Promise<AuthKey | null> {
   const keys = await store.listKeys(userId)
   return keys.find((key) => key.method === PASSWORD_METHOD) ?? null
+}
+
+/**
+ * Deletes the user's code keys, except one on the address `keep`. A code key is how an address is
+ * proven, and how an account without a password holds its address. Once the address is held
+ * elsewhere, or the account has moved on, a proven code key left behind would still say "this
+ * person owns that address" and let a provider account of its next owner in.
+ */
+export async function dropCodeKeys(
+  store: AuthStore,
+  userId: number,
+  keep: string | null = null,
+): Promise<void> {
+  for (const key of await store.listKeys(userId)) {
+    if (key.method === EMAIL_CODE_METHOD && key.email !== keep) {
+      await store.deleteKey(userId, key.id)
+    }
+  }
 }
 
 /** The `email_changes` table: one new address per user, waiting for its code. */
@@ -61,8 +83,9 @@ export function emailChanges(sql: Sql) {
 
 /**
  * Where the user's address stands: the one they sign in with, its proof, and a pending change.
- * The password key's address when there is one; else the address a provider vouched for (#141),
- * which is why an account made with Google reads as having a proven address.
+ * The password key's address when there is one. An account with no password has the address a
+ * code proved for it when it changed its address (#384), else the one a provider vouched for
+ * (#141), which is why an account made with Google reads as having a proven address.
  */
 export async function readEmailStatus(
   changes: Pick<EmailChanges, "find">,
@@ -70,8 +93,10 @@ export async function readEmailStatus(
   userId: number,
 ): Promise<EmailStatus> {
   const keys = await store.listKeys(userId)
+  const held = (candidate: AuthKey) => candidate.email !== null && candidate.provenAt !== null
   const key = keys.find((candidate) => candidate.method === PASSWORD_METHOD) ??
-    keys.find((candidate) => candidate.email !== null && candidate.provenAt !== null)
+    keys.find((candidate) => candidate.method === EMAIL_CODE_METHOD && held(candidate)) ??
+    keys.find(held)
   return {
     email: key?.email ?? null,
     proven: key?.email != null && key.provenAt !== null,

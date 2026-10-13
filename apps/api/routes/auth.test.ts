@@ -4,6 +4,7 @@ import type { APIContext } from "../_types.ts"
 import {
   EmailChangeOutcome,
   EmailVerifyOutcome,
+  PasswordSetOutcome,
   type SignedIn,
   type SignIn,
 } from "../services/sign-in.ts"
@@ -47,8 +48,12 @@ import {
   EMAIL_CODE_REFUSED,
   EMAIL_NOTHING_TO_VERIFY,
   EMAIL_TAKEN,
+  PASSWORD_ALREADY_SET,
+  PASSWORD_NEEDS_ADDRESS,
   PASSWORD_RESET_REFUSED,
   PASSWORD_RESET_REQUESTED,
+  PASSWORD_SET_REFUSED,
+  PROVIDER_PROOF_REQUIRED,
   SESSION_IS_CURRENT,
   SESSION_NOT_FOUND,
   TOTP_DISCONNECT_PROOF_REQUIRED,
@@ -124,6 +129,11 @@ function fakeSignIn(
     resetPassword: () => (calls.push("resetPassword"), Promise.resolve(succeed)),
     checkPassword: () => (calls.push("checkPassword"), Promise.resolve(succeed)),
     hasPassword: () => Promise.resolve(true),
+    confirmedByProvider: () => Promise.resolve(false),
+    setPassword: () => (
+      calls.push("setPassword"),
+        Promise.resolve(succeed ? PasswordSetOutcome.Set : PasswordSetOutcome.ProofRequired)
+    ),
     verifyTotpCode: () => (calls.push("verifyTotpCode"), Promise.resolve(succeed)),
     accountDeletionBlockers: () => (calls.push("accountDeletionBlockers"), Promise.resolve([])),
     deleteAccount: () => (
@@ -334,6 +344,12 @@ const sessionRoutes: SessionRoute[] = [
     path: "/auth/password/change",
     body: { password: "correct-horse", newPassword: "battery-staple" },
     operation: "changePassword",
+  },
+  {
+    method: "POST",
+    path: "/auth/password/set",
+    body: { newPassword: "battery-staple" },
+    operation: "setPassword",
   },
   // Reads no body: it sends a code to the address that needs one.
   { method: "POST", path: "/auth/email/send", body: undefined, operation: "emailStatus" },
@@ -1457,6 +1473,21 @@ describe("auth routes prove an e-mail address with a code", () => {
     expect(mailed).toEqual([])
   })
 
+  it("queues nothing when an account with no password has no recent provider sign-in", async () => {
+    const { app, mailed } = buildApp(undefined, {
+      signIn: { requestEmailChange: () => Promise.resolve(EmailChangeOutcome.ProofRequired) },
+    })
+    const response = await send(
+      app,
+      { ...change, body: { email: "new@example.com" } },
+      sameOriginHeaders,
+    )
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: PROVIDER_PROOF_REQUIRED })
+    expect(mailed).toEqual([])
+  })
+
   it("queues a code for the address a new account signed up with", async () => {
     const { app, mailed } = buildApp(null)
     await send(
@@ -1543,6 +1574,43 @@ describe("deleting one's own account", () => {
     expect(emitted).toEqual([])
   })
 
+  it("deletes an account that has no password after a provider sign-in a moment ago", async () => {
+    const { app, calls, emitted } = buildApp(undefined, {
+      signIn: {
+        hasPassword: () => Promise.resolve(false),
+        confirmedByProvider: () => Promise.resolve(true),
+      },
+    })
+    const response = await send(app, { ...deleteRoute, body: {} }, sameOriginHeaders)
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual(["accountDeletionBlockers", "deleteAccount"])
+    expect(emitted.length).toBe(1)
+  })
+
+  it("refuses an account that has no password when its provider sign-in is not recent", async () => {
+    const { app, calls, emitted } = buildApp(undefined, {
+      signIn: { hasPassword: () => Promise.resolve(false) },
+    })
+    const response = await send(app, { ...deleteRoute, body: {} }, sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: PROVIDER_PROOF_REQUIRED })
+    expect(calls).toEqual(["accountDeletionBlockers"])
+    expect(emitted).toEqual([])
+  })
+
+  it("still asks an account that has a password for it after a provider sign-in", async () => {
+    const { app, calls } = buildApp(undefined, {
+      signIn: { confirmedByProvider: () => Promise.resolve(true) },
+    })
+    const response = await send(app, { ...deleteRoute, body: {} }, sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect(calls).toEqual(["accountDeletionBlockers"])
+  })
+
   it("asks for the authenticator code when two-factor is on, and deletes nothing", async () => {
     const { app, calls } = buildApp(twoFactorAuth())
     const response = await send(app, deleteRoute, sameOriginHeaders)
@@ -1621,6 +1689,54 @@ describe("deleting one's own account", () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ blockers: [blocker] })
   })
+})
+
+describe("a first password", () => {
+  const setRoute = {
+    method: "POST",
+    path: "/auth/password/set",
+    body: { newPassword: "battery-staple" },
+  }
+
+  it("sets it and says so", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, setRoute, sameOriginHeaders)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ success: true })
+    expect(calls).toEqual(["setPassword"])
+  })
+
+  it("refuses a password shorter than eight characters without trying to set it", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(
+      app,
+      { ...setRoute, body: { newPassword: "short" } },
+      sameOriginHeaders,
+    )
+
+    expect(response.status).toBe(400)
+    expect(calls).toEqual([])
+  })
+
+  for (
+    const [outcome, message] of [
+      [PasswordSetOutcome.AlreadySet, PASSWORD_ALREADY_SET],
+      [PasswordSetOutcome.ProofRequired, PROVIDER_PROOF_REQUIRED],
+      [PasswordSetOutcome.NoAddress, PASSWORD_NEEDS_ADDRESS],
+      [PasswordSetOutcome.Refused, PASSWORD_SET_REFUSED],
+    ] as const
+  ) {
+    it(`answers 400 with "${message}"`, async () => {
+      const { app } = buildApp(undefined, {
+        signIn: { setPassword: () => Promise.resolve(outcome) },
+      })
+      const response = await send(app, setRoute, sameOriginHeaders)
+
+      expect(response.status).toBe(400)
+      expect(await response.json()).toEqual({ error: message })
+    })
+  }
 })
 
 describe("signed-in devices", () => {

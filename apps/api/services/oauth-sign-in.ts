@@ -28,7 +28,9 @@
  *   the write that takes it, never from what the browser sent.
  * - **An address that is not verified links nothing.** The package ignores it when it resolves the
  *   person, so such a callback always ends at the question, never inside someone's account.
- * - **Linking from the profile.** The package's connect flow: it is bound to the signed-in user,
+ * - **Linking from the profile.** Starting it asks for the account's password, or for a provider
+ *   sign-in of a moment ago when it has none (the route checks; see the last point). Then the
+ *   package's connect flow runs: it is bound to the signed-in user,
  *   adds the provider to that user whatever the provider's address, and never touches another
  *   account's methods. A provider account another user already signs in with is refused, and the
  *   page says so. Its `state` has a cookie of its own; the callback, which both kinds of flow
@@ -38,6 +40,14 @@
  *   user gets the same audit row.
  * - **Unlinking.** Only a provider method, and never the last way in. The key's sessions end with
  *   it through the foreign key, so unlinking the method this device signed in with signs it out.
+ * - **A sign-in a moment ago stands in for the password (#384).** An account made with a provider
+ *   has no password to confirm a deletion, a first password or a new address with. Its proof is
+ *   the session itself: one a provider sign-in started less than `PROVIDER_PROOF_MINUTES` ago
+ *   (`proofUntil`). A session left open on a shared machine is older than that, and the person
+ *   who is still there signs in with the provider again. Such a session cannot make itself
+ *   recent either: the one way to get a provider sign-in without the owner's provider account
+ *   would be to link another one, and starting a link asks for the same proof (the password, or
+ *   this sign-in of a moment ago). Unlinking asks for none; it adds no way in.
  *
  * Reads no environment and imports no singleton, like `sign-in.ts`.
  *
@@ -82,6 +92,7 @@ import {
   type OAuthProviderId,
   oauthProviderId,
   type PendingSignUp,
+  PROVIDER_PROOF_MINUTES,
   type SignInMethod,
   type SignInMethodsResponse,
   type User,
@@ -270,8 +281,14 @@ export interface OAuthOperations {
    * profile leaves the flow store, so a kept copy of the cookie confirms nothing either.
    */
   cancelSignUp(c: Context): Promise<void>
-  /** The user's ways in, and the providers they could still link. */
+  /** The user's ways in, the providers they could still link, and {@link proofUntil} as text. */
   methods(state: AppAuthState): Promise<SignInMethodsResponse>
+  /**
+   * Until when the request's session confirms a step that asks an account with no password for
+   * proof: `PROVIDER_PROOF_MINUTES` after a provider sign-in started it. `null` for a session a
+   * password started, and for one that is older.
+   */
+  proofUntil(state: AppAuthState): Promise<Date | null>
   /** Removes provider method `keyId` of the user, with its sessions, unless it is the last way in. */
   unlink(c: Context, state: AppAuthState, keyId: number): Promise<UnlinkOutcome>
 }
@@ -341,7 +358,10 @@ export function createOAuthOperations(
     return id !== null && enabled.has(id) ? id : null
   }
 
-  function describe(keys: AuthKey[], currentKeyId: number): SignInMethodsResponse {
+  function describe(
+    keys: AuthKey[],
+    currentKeyId: number,
+  ): Omit<SignInMethodsResponse, "providerProofUntil"> {
     const ways = keys.flatMap((key) => {
       const kind = kindOf(key)
       return kind === null ? [] : [{ key, kind }]
@@ -465,6 +485,17 @@ export function createOAuthOperations(
       )
     }
     await tx.authAudit.insert(own.auditRow(c, user.id, AuthAuditEventType.SIGNED_IN, key.method))
+  }
+
+  async function proofUntil({ session }: AppAuthState): Promise<Date | null> {
+    const key = await db.authStore.findKeyById(session.keyId)
+    if (!key?.method.startsWith("oauth:")) return null
+    // The session row the request carries has no start time; the devices list has it.
+    const started = (await sessions.listForUser(session.userId))
+      .find((row) => row.id === session.id)?.createdAt
+    if (!started) return null
+    const until = started.getTime() + PROVIDER_PROOF_MINUTES * 60_000
+    return until > clock.now() ? new Date(until) : null
   }
 
   return {
@@ -659,9 +690,15 @@ export function createOAuthOperations(
       if (waiting) await flows.take(waiting.held)
     },
 
-    async methods({ user, session }) {
-      return describe(await db.authStore.listKeys(user.id), session.keyId)
+    async methods(state) {
+      const { user, session } = state
+      return {
+        ...describe(await db.authStore.listKeys(user.id), session.keyId),
+        providerProofUntil: (await proofUntil(state))?.toISOString() ?? null,
+      }
     },
+
+    proofUntil,
 
     async unlink(c, { user, session }, keyId) {
       const outcome = await db.begin(async (tx) => {

@@ -117,8 +117,14 @@ export const authEmailCodeSchema = type({
 })
 export type AuthEmailCode = typeof authEmailCodeSchema.infer
 
-/** The body of an address change: the new address and the current password. */
-export const authEmailChangeSchema = authEmailSchema.and(authPasswordSchema)
+/**
+ * The body of an address change: the new address and the current password. An account with no
+ * password sends none: a sign-in with its provider a moment ago confirms the change instead
+ * ({@link PROVIDER_PROOF_MINUTES}).
+ */
+export const authEmailChangeSchema = authEmailSchema.and({
+  "password?": authPasswordSchema.get("password"),
+})
 export type AuthEmailChange = typeof authEmailChangeSchema.infer
 
 /** Where the signed-in person's e-mail address stands (`GET /api/auth/email`). */
@@ -173,6 +179,34 @@ export const authPasswordChangeSchema = authPasswordSchema.and({
 })
 export type AuthPasswordChange = typeof authPasswordChangeSchema.infer
 
+/**
+ * Minutes after a sign-in with Google or GitHub during which that session confirms a step that
+ * otherwise asks for the password. An account with no password has only this to prove, on a
+ * device left open, that the person is still there: deleting the account, setting a first
+ * password and changing the address each ask for it.
+ */
+export const PROVIDER_PROOF_MINUTES = 5
+
+/**
+ * The body of "set a password" for an account that has none: the first password. `otp` is the
+ * authenticator code, which an account with two-factor on must send too: the password could
+ * otherwise turn two-factor off.
+ */
+export const authPasswordSetSchema = type({
+  newPassword: "8 <= string <= 50",
+  "otp?": "/^[0-9]{6}$/",
+})
+export type AuthPasswordSet = typeof authPasswordSetSchema.infer
+
+/**
+ * The body of "link a provider". An account with a password sends it; one without has signed in
+ * with a provider it already has a moment ago instead ({@link PROVIDER_PROOF_MINUTES}).
+ */
+export const signInMethodLinkSchema = type({
+  "password?": authPasswordSchema.get("password"),
+})
+export type SignInMethodLink = typeof signInMethodLinkSchema.infer
+
 /** Days a deleted account waits before it is removed for good. Signing in before then restores it. */
 export const ACCOUNT_DELETION_GRACE_DAYS = 7
 
@@ -193,8 +227,13 @@ export const authTotpDisconnectSchema = type({
 })
 export type AuthTotpDisconnect = typeof authTotpDisconnectSchema.infer
 
-/** The body of "delete my account": the password, and an authenticator code when two-factor is on. */
-export const accountDeleteSchema = authPasswordSchema.and({
+/**
+ * The body of "delete my account": the password, and an authenticator code when two-factor is on.
+ * An account with no password sends none: a sign-in with its provider a moment ago confirms the
+ * deletion instead ({@link PROVIDER_PROOF_MINUTES}).
+ */
+export const accountDeleteSchema = type({
+  "password?": authPasswordSchema.get("password"),
   "otp?": "/^[0-9]{6}$/",
 })
 export type AccountDelete = typeof accountDeleteSchema.infer
@@ -439,6 +478,12 @@ export interface SignInMethodsResponse {
   methods: SignInMethod[]
   /** Providers that are on and not linked to this account yet. */
   available: OAuthProviderId[]
+  /**
+   * ISO 8601. Until then this session confirms a step that an account with no password cannot
+   * confirm with one: it was started by a sign-in with a provider less than
+   * {@link PROVIDER_PROOF_MINUTES} minutes ago. `null` for any other session.
+   */
+  providerProofUntil: string | null
 }
 
 /**

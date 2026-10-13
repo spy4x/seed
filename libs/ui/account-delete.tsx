@@ -14,7 +14,8 @@ import {
   DELETED_USER_NAME,
 } from "@domain/identity"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
-import { GROUP_PATHS, type Navigate, ScreenForm } from "./progressive.tsx"
+import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 import { SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 
 /** What the person has typed into the deletion dialog. */
@@ -65,18 +66,18 @@ export interface AccountDeleteProps {
   onCancel?: () => void
   onDelete?: () => void
   /**
-   * Why this account cannot be deleted here, as one sentence, or nothing when it can. The row
-   * shows the sentence in place of its button, so the dialog, which asks for a password, never
-   * opens.
+   * Set for an account with no password: the dialog asks for no password, and confirms with a
+   * provider sign-in a moment ago instead. Until there is one it shows the way to it and no form.
    */
-  unavailable?: string | null
+  providerProof?: ProviderProof | null
   navigate?: Navigate
 }
 
 /**
  * The profile page's "Danger zone": a closed disclosure at the bottom with one row, "Delete my
  * account". Its dialog lists the groups that stop the deletion, with a link to each, or asks for
- * the password (and the one-time code when two-factor is on) and says what happens next.
+ * the password (and the one-time code when two-factor is on) and says what happens next. An
+ * account with no password signs in with its provider again in place of the password.
  */
 export function AccountDelete(
   {
@@ -89,7 +90,7 @@ export function AccountDelete(
     onOpen,
     onCancel,
     onDelete,
-    unavailable,
+    providerProof,
     navigate,
   }: AccountDeleteProps,
 ): JSX.Element {
@@ -117,10 +118,8 @@ export function AccountDelete(
         <SettingList>
           <SettingRow
             label="Delete my account"
-            value={unavailable
-              ? <span data-e2e="account-delete-unavailable">{unavailable}</span>
-              : `Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
-            action={!unavailable && (
+            value={`Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
+            action={
               <Button
                 type="button"
                 variant="outline"
@@ -134,7 +133,7 @@ export function AccountDelete(
               >
                 Delete <span class="sr-only">my account</span>
               </Button>
-            )}
+            }
           />
         </SettingList>
       </div>
@@ -151,6 +150,15 @@ export function AccountDelete(
           ? <p class="text-sm text-muted" role="status">Checking your groups...</p>
           : blockers.length > 0
           ? <BlockerList blockers={blockers} navigate={navigate} onClose={close} />
+          : providerProof && !providerProof.fresh
+          ? (
+            <Stack>
+              <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+              <Cluster justify="end">
+                <Button type="button" variant="ghost" onClick={close}>Close</Button>
+              </Cluster>
+            </Stack>
+          )
           : (
             <ScreenForm pending={pending} onSubmit={onDelete}>
               <Stack>
@@ -160,23 +168,27 @@ export function AccountDelete(
                   days; sign in before then and your account is restored. Notes you wrote in other
                   people's groups stay there, by "{DELETED_USER_NAME}".
                 </p>
-                <Field
-                  id="account-delete-password"
-                  label="Password"
-                  error={errors.password}
-                  required
-                >
-                  <Input
-                    ref={password}
-                    data-e2e="account-delete-password"
-                    name="password"
-                    type="password"
-                    autocomplete="current-password"
-                    value={values.password}
-                    onInput={(e) => onValueChange("password", e.currentTarget.value)}
-                    required
-                  />
-                </Field>
+                {providerProof
+                  ? <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+                  : (
+                    <Field
+                      id="account-delete-password"
+                      label="Password"
+                      error={errors.password}
+                      required
+                    >
+                      <Input
+                        ref={password}
+                        data-e2e="account-delete-password"
+                        name="password"
+                        type="password"
+                        autocomplete="current-password"
+                        value={values.password}
+                        onInput={(e) => onValueChange("password", e.currentTarget.value)}
+                        required
+                      />
+                    </Field>
+                  )}
                 {twoFactor && (
                   <Field
                     id="account-delete-otp"

@@ -14,6 +14,8 @@ import { PageHeader, TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
+import { OAUTH_PROVIDER_NAMES } from "@domain/identity"
+import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 
 /** The messages shown when an action failed without a message of its own. */
 export const EMAIL_FAILURES = {
@@ -109,6 +111,11 @@ export interface EmailScreenProps {
   onVerify?: () => void
   onSend?: () => void
   onChange?: () => void
+  /**
+   * Set for an account with no password: the change dialog asks for no password, and confirms
+   * with a provider sign-in a moment ago instead. Until there is one it shows the way to it.
+   */
+  providerProof?: ProviderProof | null
   navigate?: Navigate
 }
 
@@ -125,7 +132,8 @@ function useFocusOnError(error: string | null) {
  * The person's e-mail address: a row with the address and its state, the code that proves it while
  * one waits, and a change of address in a dialog that opens only when asked. A change closes the
  * dialog and moves focus to the code for the new address. Closing the dialog without a change asks
- * the app to drop the typed password.
+ * the app to drop the typed password. An account with no password signs in with its provider
+ * again in place of the password.
  */
 export function EmailScreen(
   {
@@ -138,6 +146,7 @@ export function EmailScreen(
     onVerify,
     onSend,
     onChange,
+    providerProof,
     navigate,
   }: EmailScreenProps,
 ): JSX.Element {
@@ -173,6 +182,8 @@ export function EmailScreen(
   }, [target])
 
   const hasEmail = status.email !== null
+  const providerNames = providerProof?.providers
+    .map((provider) => OAUTH_PROVIDER_NAMES[provider]).join(" or ")
   return (
     <Stack gap="lg" class={ACCOUNT_COLUMN}>
       <PageHeader
@@ -187,7 +198,11 @@ export function EmailScreen(
           value={
             <span class="flex flex-wrap items-center gap-2">
               <span class="wrap-anywhere" data-e2e="email-current">
-                {hasEmail ? status.email : "None yet. You sign in with your username."}
+                {hasEmail
+                  ? status.email
+                  : providerProof
+                  ? "None yet."
+                  : "None yet. You sign in with your username."}
               </span>
               {hasEmail && <EmailState proven={status.proven} />}
             </span>
@@ -285,53 +300,70 @@ export function EmailScreen(
         cancelLabel="Close"
         dataE2E="email-change-dialog"
       >
-        <ScreenForm pending={pending.change} onSubmit={onChange}>
-          <Stack>
-            <p class="text-sm text-muted">
-              We send a code to the new address. {hasEmail
-                ? `You keep signing in with ${status.email} until you enter it.`
-                : "Once you enter it, you sign in with that address."}
-            </p>
-            <Field id="email-new" label="New e-mail address" required>
-              <Input
-                ref={emailField}
-                data-e2e="email-new"
-                name="email"
-                type="email"
-                autocomplete="email"
-                value={values.email}
-                onInput={(e) => onValueChange("email", e.currentTarget.value)}
-                required
-              />
-            </Field>
-            <Field id="email-password" label="Current password" required>
-              <Input
-                data-e2e="email-password"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                value={values.password}
-                onInput={(e) => onValueChange("password", e.currentTarget.value)}
-                required
-              />
-            </Field>
-            {/* The API's refusal names no field: the password, the address or the limit. */}
-            <ErrorState message={errors.change} />
-            <Cluster justify="end">
-              <Button type="button" variant="ghost" onClick={closeChange}>
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                data-e2e="email-change"
-                busy={pending.change}
-                busyLabel="Sending..."
-              >
-                Send code
-              </Button>
-            </Cluster>
-          </Stack>
-        </ScreenForm>
+        {providerProof && !providerProof.fresh
+          ? (
+            <Stack>
+              <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.email} />
+              <Cluster justify="end">
+                <Button type="button" variant="ghost" onClick={closeChange}>Close</Button>
+              </Cluster>
+            </Stack>
+          )
+          : (
+            <ScreenForm pending={pending.change} onSubmit={onChange}>
+              <Stack>
+                <p class="text-sm text-muted">
+                  We send a code to the new address. {providerProof
+                    ? `Your address changes once you enter it. You keep signing in with ${providerNames}.`
+                    : hasEmail
+                    ? `You keep signing in with ${status.email} until you enter it.`
+                    : "Once you enter it, you sign in with that address."}
+                </p>
+                <Field id="email-new" label="New e-mail address" required>
+                  <Input
+                    ref={emailField}
+                    data-e2e="email-new"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    value={values.email}
+                    onInput={(e) => onValueChange("email", e.currentTarget.value)}
+                    required
+                  />
+                </Field>
+                {providerProof
+                  ? <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.email} />
+                  : (
+                    <Field id="email-password" label="Current password" required>
+                      <Input
+                        data-e2e="email-password"
+                        name="password"
+                        type="password"
+                        autocomplete="current-password"
+                        value={values.password}
+                        onInput={(e) => onValueChange("password", e.currentTarget.value)}
+                        required
+                      />
+                    </Field>
+                  )}
+                {/* The API's refusal names no field: the password, the address or the limit. */}
+                <ErrorState message={errors.change} />
+                <Cluster justify="end">
+                  <Button type="button" variant="ghost" onClick={closeChange}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    data-e2e="email-change"
+                    busy={pending.change}
+                    busyLabel="Sending..."
+                  >
+                    Send code
+                  </Button>
+                </Cluster>
+              </Stack>
+            </ScreenForm>
+          )}
       </Modal>
     </Stack>
   )

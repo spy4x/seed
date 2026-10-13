@@ -60,8 +60,12 @@ export function createEmailStore(request: EmailFetch = apiFetch) {
     return post("/api/auth/email/send")
   }
 
-  /** Asks to move to `email`; the current address stays until the new one's code is entered. */
-  async function change(email: string, password: string): Promise<EmailOutcome> {
+  /**
+   * Asks to move to `email`; the current address stays until the new one's code is entered. An
+   * account with no password sends none: its sign-in with a provider a moment ago confirms it.
+   */
+  async function change(email: string, password?: string): Promise<EmailOutcome> {
+    // `JSON.stringify` leaves out an undefined password.
     const outcome = await post("/api/auth/email/change", { email, password })
     if (outcome.ok) await refresh()
     return outcome

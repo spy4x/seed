@@ -259,6 +259,22 @@ export async function changePassword(
   return { ok: true, revokedTokens: result.data.revokedTokens ?? 0 }
 }
 
+/**
+ * Sets the first password of an account that has none. The server takes it only after a sign-in
+ * with a provider a moment ago.
+ */
+export async function setPassword(
+  newPassword: string,
+  otp?: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const result = await apiFetch<ApiSuccessResponse>("/api/auth/password/set", {
+    method: "POST",
+    // With two-factor on, the authenticator code goes along.
+    body: JSON.stringify(otp === undefined ? { newPassword } : { newPassword, otp }),
+  })
+  return result.ok ? { ok: true } : { ok: false, error: result.error.message }
+}
+
 /** The devices the person is signed in on, this one first. */
 export async function listSessions(): Promise<
   { ok: true; sessions: SignedInDevice[] } | {
@@ -357,13 +373,13 @@ export async function readAccountDeletionBlockers(): Promise<
  * On success the server has ended every session of this person, so the page is signed out too.
  * `blocked` means groups stop it: {@link readAccountDeletionBlockers} names them.
  */
-export async function deleteAccount(password: string, otp?: string): Promise<
+export async function deleteAccount(password: string | undefined, otp?: string): Promise<
   | { ok: true; deleteAfter: Date }
   | { ok: false; blocked: boolean; error: string }
 > {
   const result = await apiFetch<{ deleteAfter: string }>("/api/auth/account/delete", {
     method: "POST",
-    // `JSON.stringify` leaves out an undefined code.
+    // `JSON.stringify` leaves out an undefined code, and the password an account does not have.
     body: JSON.stringify({ password, otp }),
   })
   if (!result.ok) {

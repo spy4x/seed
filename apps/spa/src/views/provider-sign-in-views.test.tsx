@@ -19,6 +19,8 @@ import { toasts } from "../state/toasts.ts"
 import { AuthView } from "./AuthView.tsx"
 import { ConfirmSignUpView } from "./ConfirmSignUpView.tsx"
 import { ProfileView } from "./ProfileView.tsx"
+import { EmailView } from "./EmailView.tsx"
+import { emailStore } from "../state/email.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -72,12 +74,15 @@ const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 250))
 function api(
   routes: Record<string, [number, unknown]>,
   other: [number, unknown] = [200, {}],
+  /** Receives the JSON body of each call that sent one, by the call's name. */
+  bodies: Record<string, unknown> = {},
 ): string[] {
   const calls: string[] = []
   globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : input, "http://app.localhost")
     const call = `${init?.method ?? "GET"} ${url.pathname}`
     calls.push(call)
+    if (typeof init?.body === "string") bodies[call] = JSON.parse(init.body)
     const [status, body] = routes[call] ?? other
     return Promise.resolve(Response.json(body, { status }))
   }) as typeof fetch
@@ -110,6 +115,25 @@ async function press(selector: string): Promise<void> {
       cancelable: true,
       button: 0,
     }) as unknown as Event,
+  )
+  await settle()
+}
+
+/** Types `value` into the field, as a person does. */
+async function type(selector: string, value: string): Promise<void> {
+  const field = document.querySelector<HTMLInputElement>(selector)
+  if (!field) throw new Error(`nothing matches ${selector}`)
+  field.value = value
+  field.dispatchEvent(new window.Event("input", { bubbles: true }) as unknown as Event)
+  await settle()
+}
+
+/** Submits the form around `selector`, as pressing its button does. */
+async function submit(selector: string): Promise<void> {
+  const form = document.querySelector(selector)?.closest("form")
+  if (!form) throw new Error(`${selector} is in no form`)
+  form.dispatchEvent(
+    new window.SubmitEvent("submit", { bubbles: true, cancelable: true }) as unknown as Event,
   )
   await settle()
 }
@@ -230,7 +254,13 @@ describe("the profile page", () => {
   it("reads the account's sign-in methods and lists them", async () => {
     // Every other read of the page fails, which each of its sections must survive anyway.
     const calls = api(
-      { "GET /api/auth/methods": [200, { methods: [google], available: ["github"] }] },
+      {
+        "GET /api/auth/methods": [200, {
+          methods: [google],
+          available: ["github"],
+          providerProofUntil: null,
+        }],
+      },
       [503, { error: "down" }],
     )
     sessionState.value = {
@@ -249,8 +279,161 @@ describe("the profile page", () => {
     expect(calls).toContain("GET /api/auth/methods")
     expect(text("[data-e2e=sign-in-method-google]")).toContain("gia@example.com")
     expect(text("[data-e2e=sign-in-method-link-github]")).toBe("Link GitHub")
-    // An account without a password is not offered a password change.
+    // An account without a password is offered a first one.
     expect(text("[data-e2e=password-none]")).toBe("None. You sign in with Google.")
+    expect(text("[data-e2e=password-open]")).toBe("Set password")
+  })
+
+  /** Signed in as an account made with Google, whose sign-in confirms until `proofUntil`. */
+  const signedInWithGoogle = (proofUntil: string | null): Record<string, [number, unknown]> => {
+    sessionState.value = {
+      ...signedOut,
+      isReady: true,
+      user: {
+        id: 1,
+        firstName: "Gia",
+        lastName: "",
+        mfa: UserMFAStatus.NOT_CONFIGURED,
+      } as NonNullable<typeof signedOut.user>,
+    }
+    return {
+      "GET /api/auth/methods": [200, {
+        methods: [google],
+        available: [],
+        providerProofUntil: proofUntil,
+      }],
+      "GET /api/auth/email": [200, { email: "gia@example.com", proven: true, pending: null }],
+      "GET /api/auth/account/deletion": [200, { blockers: [] }],
+    }
+  }
+  const SOON = "2999-01-01T00:00:00.000Z"
+  const LONG_AGO = "2020-01-01T00:00:00.000Z"
+
+  it("deletes an account with no password without sending one, after a Google sign-in a moment ago", async () => {
+    const bodies: Record<string, unknown> = {}
+    const calls = api(
+      {
+        ...signedInWithGoogle(SOON),
+        "POST /api/auth/account/delete": [200, { deleteAfter: "2026-11-12T00:00:00.000Z" }],
+      },
+      [503, { error: "down" }],
+      bodies,
+    )
+    await open("/", <ProfileView />)
+
+    await press("[data-e2e=account-delete-open]")
+    await submit("[data-e2e=account-delete-submit]")
+
+    expect(calls).toContain("POST /api/auth/account/delete")
+    expect(bodies["POST /api/auth/account/delete"]).toEqual({})
+  })
+
+  it("sets the first password of an account with none and reads its sign-in methods again", async () => {
+    const bodies: Record<string, unknown> = {}
+    const calls = api(
+      { ...signedInWithGoogle(SOON), "POST /api/auth/password/set": [200, { success: true }] },
+      [503, { error: "down" }],
+      bodies,
+    )
+    await open("/", <ProfileView />)
+
+    await press("[data-e2e=password-open]")
+    await type("[data-e2e=password-new]", "battery-staple")
+    await submit("[data-e2e=password-new]")
+
+    expect(bodies["POST /api/auth/password/set"]).toEqual({ newPassword: "battery-staple" })
+    expect(calls.filter((call) => call === "GET /api/auth/methods").length).toBe(2)
+    expect(calls).not.toContain("POST /api/auth/password/change")
+  })
+
+  it("sends the authenticator code with a first password while two-factor is on", async () => {
+    const bodies: Record<string, unknown> = {}
+    const routes = signedInWithGoogle(SOON)
+    sessionState.value = {
+      ...sessionState.value,
+      user: { ...sessionState.value.user!, mfa: UserMFAStatus.CONFIGURED },
+    }
+    const calls = api(
+      { ...routes, "POST /api/auth/password/set": [200, { success: true }] },
+      [503, { error: "down" }],
+      bodies,
+    )
+    await open("/", <ProfileView />)
+    await press("[data-e2e=password-open]")
+    await type("[data-e2e=password-new]", "battery-staple")
+
+    // Without the code nothing is sent, and the field says why.
+    await submit("[data-e2e=password-new]")
+    expect(calls).not.toContain("POST /api/auth/password/set")
+    expect(text("[data-e2e=password-dialog]")).toContain(
+      "Enter the code from your authenticator app",
+    )
+
+    await type("[data-e2e=password-otp]", "123456")
+    await submit("[data-e2e=password-new]")
+    expect(bodies["POST /api/auth/password/set"]).toEqual({
+      newPassword: "battery-staple",
+      otp: "123456",
+    })
+  })
+
+  it("links a provider with the password typed in the dialog", async () => {
+    const bodies: Record<string, unknown> = {}
+    signedInWithGoogle(null)
+    const password: SignInMethod = { ...google, id: 3, kind: "password" }
+    api(
+      {
+        "GET /api/auth/methods": [200, {
+          methods: [password],
+          available: ["github"],
+          providerProofUntil: null,
+        }],
+        // Refused, so the page is not left and the body can be read.
+        "POST /api/auth/methods/github/link": [400, { error: "Invalid password" }],
+      },
+      [503, { error: "down" }],
+      bodies,
+    )
+    await open("/", <ProfileView />)
+
+    await press("[data-e2e=sign-in-method-link-github]")
+    await type("[data-e2e=sign-in-method-link-password]", "Passw0rd!")
+    await submit("[data-e2e=sign-in-method-link-password]")
+
+    expect(bodies["POST /api/auth/methods/github/link"]).toEqual({ password: "Passw0rd!" })
+    expect(text("[data-e2e=sign-in-method-link-dialog]")).toContain("Invalid password")
+  })
+
+  it("offers the way back to Google, and no form, once the sign-in is no longer recent", async () => {
+    const calls = api(signedInWithGoogle(LONG_AGO), [503, { error: "down" }])
+    await open("/", <ProfileView />)
+
+    await press("[data-e2e=account-delete-open]")
+
+    expect(text("[data-e2e=provider-proof-google]")).toBe("Sign in with Google again")
+    expect(document.querySelectorAll("[data-e2e=account-delete-submit]").length).toBe(0)
+    expect(calls).not.toContain("POST /api/auth/account/delete")
+  })
+
+  it("changes the address of an account with no password without sending one", async () => {
+    const bodies: Record<string, unknown> = {}
+    api(
+      {
+        ...signedInWithGoogle(SOON),
+        "POST /api/auth/email/change": [200, { success: true, message: "A code is on its way." }],
+      },
+      [503, { error: "down" }],
+      bodies,
+    )
+    emailStore.reset()
+    await open("/email", <EmailView />)
+
+    await press("[data-e2e=email-change-open]")
+    expect(document.querySelectorAll("[data-e2e=email-password]").length).toBe(0)
+    await type("[data-e2e=email-new]", "gia@new.example")
+    await submit("[data-e2e=email-new]")
+
+    expect(bodies["POST /api/auth/email/change"]).toEqual({ email: "gia@new.example" })
   })
 
   it("asks for no sign-in methods while nobody is signed in", async () => {

@@ -4,9 +4,15 @@ import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { Field } from "@spy4x/preact-ui/field"
+import { Input } from "@spy4x/preact-ui/input"
+import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Modal } from "@spy4x/preact-ui/modal"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
+import { SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 
 /** The message shown when linking or unlinking failed without a message of its own. */
 export const SIGN_IN_METHODS_FAILURE = "Changing your sign-in methods failed"
@@ -25,8 +31,16 @@ export interface SignInMethodsProps {
   pending: boolean
   /** Why the list could not be read or a change failed; shown above the list, and focused. */
   error: string | null
-  /** Starts linking `provider`: the app sends the browser to it. */
-  onLink: (provider: OAuthProviderId) => void
+  /**
+   * What an account with no password confirms a link with; `null` or absent for an account that
+   * has a password, which types it instead.
+   */
+  providerProof?: ProviderProof | null
+  /**
+   * Starts linking `provider`: the app sends the browser to it. `password` is what the person
+   * typed, for an account that has one.
+   */
+  onLink: (provider: OAuthProviderId, password?: string) => void
   /** Unlinks the method with this id, after the person confirmed. */
   onUnlink: (methodId: number) => void
 }
@@ -34,16 +48,36 @@ export interface SignInMethodsProps {
 /**
  * The ways into the account: the password and each linked provider, with "Unlink" on a provider
  * while another way in remains, and "Link" for each provider not linked yet. Unlinking asks first,
- * since it signs out every device that signed in with that provider.
+ * since it signs out every device that signed in with that provider. Linking adds a way in, so it
+ * asks for what a deletion asks: the password in a dialog, or for an account without one a
+ * sign-in with a provider a moment ago.
  */
 export function SignInMethods(
-  { methods, available, pending, error, onLink, onUnlink }: SignInMethodsProps,
+  { methods, available, pending, error, providerProof = null, onLink, onUnlink }:
+    SignInMethodsProps,
 ): JSX.Element {
   const [confirming, setConfirming] = useState<SignInMethod | null>(null)
+  /** The provider whose link dialog is open. */
+  const [linking, setLinking] = useState<OAuthProviderId | null>(null)
+  // Typed here and handed to `onLink` once: the password is kept nowhere else.
+  const [password, setPassword] = useState("")
+  const passwordInput = useRef<HTMLInputElement>(null)
   const message = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (error) message.current?.focus()
+    if (!error) return
+    // The dialog is over the list: a refused password is fixed in its field.
+    if (linking !== null && passwordInput.current) passwordInput.current.focus()
+    else message.current?.focus()
   }, [error])
+  const closeLink = () => {
+    setLinking(null)
+    setPassword("")
+  }
+  const startLink = (provider: OAuthProviderId) => {
+    // A sign-in a moment ago is the proof already: nothing to ask.
+    if (providerProof?.fresh) onLink(provider)
+    else setLinking(provider)
+  }
   // The "Unlink" button that had focus goes away with its row: the list takes focus, so the
   // keyboard and a screen reader stay where the change happened.
   const list = useRef<HTMLDivElement>(null)
@@ -102,7 +136,7 @@ export function SignInMethods(
                 variant="secondary"
                 data-e2e={`sign-in-method-link-${provider}`}
                 disabled={pending}
-                onClick={() => onLink(provider)}
+                onClick={() => startLink(provider)}
               >
                 Link {OAUTH_PROVIDER_NAMES[provider]}
               </Button>
@@ -110,6 +144,62 @@ export function SignInMethods(
           </div>
         </div>
       )}
+
+      <Modal
+        open={linking !== null}
+        onClose={closeLink}
+        title={linking ? `Link ${OAUTH_PROVIDER_NAMES[linking]}` : "Link"}
+        cancelLabel="Close"
+        dataE2E="sign-in-method-link-dialog"
+      >
+        {providerProof
+          ? (
+            <Stack>
+              <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+              <Cluster justify="end">
+                <Button type="button" variant="ghost" onClick={closeLink}>Close</Button>
+              </Cluster>
+            </Stack>
+          )
+          : (
+            <ScreenForm
+              pending={pending}
+              onSubmit={() => {
+                if (linking) onLink(linking, password)
+              }}
+            >
+              <Stack>
+                <p class="text-sm text-muted">
+                  A linked account is another way to sign in, so your password is asked first.
+                </p>
+                <Field id="sign-in-method-link-password" label="Password" required>
+                  <Input
+                    ref={passwordInput}
+                    data-e2e="sign-in-method-link-password"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    value={password}
+                    onInput={(e) => setPassword(e.currentTarget.value)}
+                    required
+                  />
+                </Field>
+                <ErrorState message={error} />
+                <Cluster justify="end">
+                  <Button type="button" variant="ghost" onClick={closeLink}>Cancel</Button>
+                  <Button
+                    type="submit"
+                    data-e2e="sign-in-method-link-submit"
+                    busy={pending}
+                    busyLabel="Opening..."
+                  >
+                    Continue{linking ? ` to ${OAUTH_PROVIDER_NAMES[linking]}` : ""}
+                  </Button>
+                </Cluster>
+              </Stack>
+            </ScreenForm>
+          )}
+      </Modal>
 
       {confirming !== null && (
         <ConfirmDialog

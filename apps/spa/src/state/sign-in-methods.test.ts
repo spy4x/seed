@@ -23,6 +23,8 @@ const google: SignInMethod = {
   canUnlink: true,
 }
 
+const PROOF_UNTIL = "2026-10-13T08:05:00.000Z"
+
 /** A server that holds `methods`, records each call and answers as `answers` says. */
 function fakeHttp(
   methods: SignInMethod[],
@@ -33,11 +35,16 @@ function fakeHttp(
     calls,
     list() {
       calls.push("list")
-      return answers.list?.() ?? Promise.resolve({ ok: true, methods, available: ["github"] })
+      return answers.list?.() ?? Promise.resolve({
+        ok: true,
+        methods,
+        available: ["github"],
+        providerProofUntil: PROOF_UNTIL,
+      })
     },
-    link(provider) {
-      calls.push(`link ${provider}`)
-      return answers.link?.(provider) ??
+    link(provider, password) {
+      calls.push(password === undefined ? `link ${provider}` : `link ${provider} with ${password}`)
+      return answers.link?.(provider, password) ??
         Promise.resolve({ ok: true, url: `https://provider.example/${provider}` })
     },
     unlink(methodId) {
@@ -56,6 +63,7 @@ describe("the sign-in methods store", () => {
 
     expect(store.methods.value).toEqual([password, google])
     expect(store.available.value).toEqual(["github"])
+    expect(store.providerProofUntil.value).toBe(PROOF_UNTIL)
     expect(store.error.value).toBe(null)
   })
 
@@ -82,6 +90,34 @@ describe("the sign-in methods store", () => {
 
     expect(left).toEqual(["https://provider.example/github"])
     expect(store.error.value).toBe(null)
+  })
+
+  it("hands the account's password to the server with the link", async () => {
+    const http = fakeHttp([password])
+    const store = createSignInMethodsStore(http, () => {})
+
+    await store.link("github", "Passw0rd!")
+
+    expect(http.calls).toEqual(["link github with Passw0rd!"])
+  })
+
+  it("reads until when the provider sign-in confirms again after a refused link", async () => {
+    let until: string | null = PROOF_UNTIL
+    const http = fakeHttp([google], {
+      list: () =>
+        Promise.resolve({ ok: true, methods: [google], available: [], providerProofUntil: until }),
+      link: () => Promise.resolve({ ok: false, error: "Sign in with your provider again" }),
+    })
+    const store = createSignInMethodsStore(http, () => {})
+    await store.load()
+    until = null
+
+    await store.link("github")
+
+    expect(store.providerProofUntil.value).toBe(null)
+    // The refusal stays shown: the read after it does not clear it.
+    expect(store.error.value).toBe("Sign in with your provider again")
+    expect(store.pending.value).toBe(false)
   })
 
   it("stays on the page with the reason when a link is refused", async () => {

@@ -316,7 +316,14 @@ const profileDefaults: ProfileScreenProps = {
   user: { mfa: UserMFAStatus.NOT_CONFIGURED, ...ada },
   isMfaRequired: false,
   email: { email: "ada@example.com", proven: true, pending: null },
-  values: { ...ada, currentPassword: "", newPassword: "", otp: "", twoFactorProof: "" },
+  values: {
+    ...ada,
+    currentPassword: "",
+    newPassword: "",
+    passwordOtp: "",
+    otp: "",
+    twoFactorProof: "",
+  },
   onValueChange: () => {},
   errors: { fields: {}, profile: null, password: null, totp: null, push: null },
   pending: { profile: false, password: false, totp: false, push: false },
@@ -884,6 +891,53 @@ describe("EmailScreen", () => {
     expect(find("[data-e2e=email-current]").textContent).toBe("ann@example.com")
     expect(find("[data-e2e=email-state]").textContent).toBe("Verified")
     expect(document.querySelector("[data-e2e=email-verify-card]")).toBe(null)
+  })
+
+  it("changes the address of an account with no password after a Google sign-in a moment ago", async () => {
+    const changeAddress = spy<[]>()
+    const proven = { email: "ann@example.com", proven: true, pending: null }
+    const values = { code: "", email: "new@example.com", password: "" }
+    await mount(
+      <EmailScreen
+        {...emailDefaults}
+        status={proven}
+        values={values}
+        onChange={changeAddress.fn}
+        providerProof={{ providers: ["google"], fresh: true }}
+      />,
+    )
+
+    await click("[data-e2e=email-change-open]")
+
+    expect(document.querySelectorAll("[data-e2e=email-password]").length).toBe(0)
+    expect(find("[data-e2e=provider-proof-fresh]").textContent).toContain("Google")
+    expect(find("[data-e2e=email-change-dialog]").textContent)
+      .toContain("You keep signing in with Google.")
+    const form = find<HTMLFormElement>("[data-e2e=email-new]").closest("form")!
+    expect(Object.fromEntries(new FormData(form))).toEqual({ email: "new@example.com" })
+    expect(await submit("[data-e2e=email-new]")).toBe(true)
+    expect(changeAddress.calls).toHaveLength(1)
+  })
+
+  it("sends an account with no password to Google before a change when the sign-in is not recent", async () => {
+    const proven = { email: "ann@example.com", proven: true, pending: null }
+    await mount(
+      <EmailScreen
+        {...emailDefaults}
+        status={proven}
+        providerProof={{ providers: ["google", "github"], fresh: false }}
+      />,
+    )
+
+    await click("[data-e2e=email-change-open]")
+
+    // Plain links out of the app, which come back to this page.
+    expect(find("[data-e2e=provider-proof-google]").getAttribute("href"))
+      .toBe("/api/auth/google/start?next=%2Femail")
+    expect(find("[data-e2e=provider-proof-github]").getAttribute("href"))
+      .toBe("/api/auth/github/start?next=%2Femail")
+    expect(document.querySelectorAll("[data-e2e=email-new]").length).toBe(0)
+    expect(document.querySelectorAll("[data-e2e=email-change]").length).toBe(0)
   })
 
   it("changes the address in a dialog, which closes and hands focus to the new address's code", async () => {

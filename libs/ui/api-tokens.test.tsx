@@ -333,6 +333,7 @@ describe("ProfileScreen API tokens", () => {
           lastName: "Lovelace",
           currentPassword: "",
           newPassword: "",
+          passwordOtp: "",
           otp: "",
           twoFactorProof: "",
         }}

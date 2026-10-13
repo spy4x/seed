@@ -285,9 +285,13 @@ What a person gets:
   hidden ("Last time you signed in with Google (a\*\*\*@example.com)"), and "Not you? Forget"
   removes it. Only the method's name and the masked address are kept, in the browser's storage,
   and only after a finished sign-in.
-- An account made with a provider has no password. It cannot change its address, set a password
-  or delete itself yet, because each asks for the password; its profile shows the provider's
-  address, offers none of the three and says why.
+- An account made with a provider has no password. It changes its address, sets a first password
+  and deletes itself after signing in with its provider again: a provider sign-in less than five
+  minutes old stands in for the password, and the dialog links to the provider when there is
+  none. Once it has a password it is asked for that, like any other account.
+- Linking a provider asks for the same proof: the password when the account has one, otherwise a
+  provider sign-in less than five minutes old. A first password also asks for the authenticator
+  code while two-factor is on.
 
 ## Admin consoles
 

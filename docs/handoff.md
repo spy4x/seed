@@ -263,10 +263,23 @@ These cost real time to find. Do not rediscover them.
    redirect to `/sign-in?oauth=…`, a spent rate limit included. The sign-in page's "last used"
    hint is `apps/spa/src/state/last-sign-in.ts` over `createLastSignIn` of
    `@spy4x/platform/browser/last-sign-in`: the app remembers the method the session used, read
-   from `GET /api/auth/methods`, once a person is signed in with every factor done. Not built: adding a password to an
-   account that has none, so such an account cannot change its address, change or reset a
-   password, or delete itself, which all ask for the password; its profile says so in each row
-   and offers none of the three.
+   from `GET /api/auth/methods`, once a person is signed in with every factor done.
+
+   **An account with no password** confirms with a provider sign-in where the others give the
+   password: `oauth.proofUntil` (`apps/api/services/oauth-sign-in.ts`) holds while the request's
+   session was started by an `oauth:*` key less than `PROVIDER_PROOF_MINUTES` ago, read from
+   `auth_sessions.created_at`. `POST /api/auth/account/delete` and `POST /api/auth/email/change`
+   take it in place of `password`, and `POST /api/auth/password/set` adds the first password key,
+   on the account's address, proven. `GET /api/auth/methods` answers `providerProofUntil`, so the
+   dialogs show the form or the links back to the provider (`libs/ui/provider-proof.tsx`). A
+   changed address of such an account lives on the `email-code` key its code proved, which
+   `readEmailStatus` reads before the provider's own address. A first password takes that key
+   away (`dropCodeKeys`, `libs/server/auth/email-verification.ts`), and so does a later change of
+   address, so no `email-code` key stays on an address the account has left.
+   `POST /api/auth/password/set` asks for `otp` while two-factor is on, and
+   `POST /api/auth/methods/:provider/link` asks for the password or the same provider proof, so a
+   session cannot make itself recent by linking one more provider. Not built: a first password by
+   reset mail, so "forgot password" still finds no key for such an account.
 
    **Changing the address.** `POST /api/auth/email/change` with `{ email,
    password }` stores the new address in `email_changes` and mails it a code;

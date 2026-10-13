@@ -26,12 +26,14 @@ import { SignedInDevices, type SignedInDevicesProps } from "./signed-in-devices.
 import { signInMethodName, SignInMethods, type SignInMethodsProps } from "./sign-in-methods.tsx"
 import { ApiTokens, type ApiTokensProps } from "./api-tokens.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
+import { ProviderProofNotice, providerProofOf } from "./provider-proof.tsx"
 import { TwoFactorProof, twoFactorProof, TwoFactorStep, twoFactorStep } from "./two-factor.ts"
 
 /** The messages shown when an action failed without a message of its own. */
 export const PROFILE_FAILURES = {
   profile: "Update failed",
   password: "Password change failed",
+  passwordSet: "The password could not be set",
   totpFinish: "Failed to enable 2FA",
   totpDisable: "Failed to disable 2FA",
   push: "Push registration failed",
@@ -43,6 +45,8 @@ export interface ProfileValues {
   lastName: string
   currentPassword: string
   newPassword: string
+  /** The authenticator code a first password needs while two-factor is on. */
+  passwordOtp: string
   otp: string
   /** The password or the authenticator code typed to turn two-factor off. */
   twoFactorProof: string
@@ -74,6 +78,7 @@ const FIELD_ORDER: readonly (keyof ProfileValues)[] = [
   "lastName",
   "currentPassword",
   "newPassword",
+  "passwordOtp",
   "otp",
   "twoFactorProof",
 ]
@@ -109,6 +114,16 @@ export interface ProfileScreenProps {
   /** Drops what was typed in the name dialog and its errors, when the person closes it. */
   onCancelProfile?: () => void
   onChangePassword?: () => void
+  /**
+   * Called when an account with no password submits its first one, which `values.newPassword`
+   * holds. The same dialog asks for it, without "Current password".
+   */
+  onSetPassword?: () => void
+  /**
+   * This device signed in with Google or GitHub a moment ago, which an account with no password
+   * confirms a first password and its deletion with.
+   */
+  providerProofFresh?: boolean
   /** Drops what was typed in the password dialog and its errors, when the person closes it. */
   onCancelPassword?: () => void
   /** Whether the password change also signs out every other device. */
@@ -145,7 +160,7 @@ export interface ProfileScreenProps {
    * The "Danger zone" with "Delete my account", at the bottom. Without it the page has none.
    * `twoFactor` and `navigate` come from this screen's own props.
    */
-  accountDeletion?: Omit<AccountDeleteProps, "twoFactor" | "navigate" | "unavailable">
+  accountDeletion?: Omit<AccountDeleteProps, "twoFactor" | "navigate" | "providerProof">
   navigate?: Navigate
 }
 
@@ -154,7 +169,8 @@ export interface ProfileScreenProps {
  * sign-in, then the signed-in devices, the API tokens and push devices. Each row shows its value
  * and one action; a form opens in a dialog only when asked, and closes once its change went
  * through. Turning two-factor off asks for the password first, or for a code from the authenticator
- * app when the account has no password.
+ * app when the account has no password. Such an account sets its first password and deletes itself
+ * after a sign-in with its provider a moment ago.
  * Deleting the account sits last, in a closed "Danger zone".
  */
 export function ProfileScreen(
@@ -171,6 +187,8 @@ export function ProfileScreen(
     onSaveProfile,
     onCancelProfile,
     onChangePassword,
+    onSetPassword,
+    providerProofFresh = false,
     onCancelPassword,
     signOutOthers = true,
     onSignOutOthersChange,
@@ -191,11 +209,13 @@ export function ProfileScreen(
   const step = user ? twoFactorStep(user.mfa, enrolment !== null) : null
   const providerOnly = providerOnlyNames(methods?.methods)
   const proof = twoFactorProof(providerOnly !== null)
+  const providerProof = providerProofOf(methods?.methods, providerProofFresh)
   const fieldRefs = {
     firstName: useRef<HTMLInputElement>(null),
     lastName: useRef<HTMLInputElement>(null),
     currentPassword: useRef<HTMLInputElement>(null),
     newPassword: useRef<HTMLInputElement>(null),
+    passwordOtp: useRef<HTMLInputElement>(null),
     otp: useRef<HTMLInputElement>(null),
     twoFactorProof: useRef<HTMLInputElement>(null),
   }
@@ -315,7 +335,7 @@ export function ProfileScreen(
           <SettingRow
             label="E-mail address"
             value={<EmailValue email={email} provider={providerOnly} />}
-            action={providerOnly === null && (
+            action={
               <Button
                 href={SCREEN_PATHS.email}
                 navigate={navigate}
@@ -327,7 +347,7 @@ export function ProfileScreen(
                 {email?.email === null ? "Add" : "Change"}{" "}
                 <span class="sr-only">e-mail address</span>
               </Button>
-            )}
+            }
           />
         </SettingList>
       </SettingGroup>
@@ -341,7 +361,7 @@ export function ProfileScreen(
               value={providerOnly === null
                 ? "Asked for when you sign in on a new device."
                 : <span data-e2e="password-none">None. You sign in with {providerOnly}.</span>}
-              action={providerOnly === null && (
+              action={
                 <Button
                   type="button"
                   variant="secondary"
@@ -350,9 +370,9 @@ export function ProfileScreen(
                   data-e2e="password-open"
                   onClick={() => setChangingPassword(true)}
                 >
-                  Change <span class="sr-only">password</span>
+                  {providerProof ? "Set" : "Change"} <span class="sr-only">password</span>
                 </Button>
-              )}
+              }
             />
             <SettingRow
               label="Two-factor sign-in"
@@ -407,7 +427,7 @@ export function ProfileScreen(
         </SettingGroup>
       </div>
 
-      {methods && <SignInMethods {...methods} />}
+      {methods && <SignInMethods {...methods} providerProof={providerProof} />}
       {devices && <SignedInDevices {...devices} />}
 
       {apiTokens && <ApiTokens {...apiTokens} />}
@@ -477,9 +497,7 @@ export function ProfileScreen(
         <AccountDelete
           {...accountDeletion}
           twoFactor={user.mfa === UserMFAStatus.CONFIGURED}
-          unavailable={providerOnly === null
-            ? null
-            : "This account cannot be deleted here yet: it has no password to confirm the deletion with."}
+          providerProof={providerProof}
           navigate={navigate}
         />
       )}
@@ -549,79 +567,121 @@ export function ProfileScreen(
       <Modal
         open={changingPassword}
         onClose={cancelPassword}
-        title="Change password"
+        title={providerProof ? "Set a password" : "Change password"}
         cancelLabel="Close"
         dataE2E="password-dialog"
       >
-        <ScreenForm
-          pending={pending.password}
-          onSubmit={onChangePassword}
-        >
-          <Stack>
-            <Field
-              id="password-current"
-              label="Current password"
-              error={errors.fields.currentPassword}
-              required
+        {providerProof && !providerProof.fresh
+          ? (
+            <Stack>
+              <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+              <Cluster justify="end">
+                <Button type="button" variant="ghost" onClick={cancelPassword}>Close</Button>
+              </Cluster>
+            </Stack>
+          )
+          : (
+            <ScreenForm
+              pending={pending.password}
+              onSubmit={providerProof ? onSetPassword : onChangePassword}
             >
-              <Input
-                ref={fieldRefs.currentPassword}
-                data-e2e="password-current"
-                name="password"
-                type="password"
-                autocomplete="current-password"
-                value={values.currentPassword}
-                onInput={(e) => onValueChange("currentPassword", e.currentTarget.value)}
-                required
-              />
-            </Field>
-            <Field
-              id="password-new"
-              label="New password"
-              error={errors.fields.newPassword}
-              required
-            >
-              <Input
-                ref={fieldRefs.newPassword}
-                data-e2e="password-new"
-                name="newPassword"
-                type="password"
-                autocomplete="new-password"
-                value={values.newPassword}
-                onInput={(e) => onValueChange("newPassword", e.currentTarget.value)}
-                required
-              />
-            </Field>
-            {onSignOutOthersChange && (
-              // The row is the 44 px target: the whole label ticks the box.
-              <div class="flex min-h-11 items-center">
-                <Checkbox
-                  name="signOutOthers"
-                  value="true"
-                  data-e2e="password-sign-out-others"
-                  checked={signOutOthers}
-                  onChange={(e) => onSignOutOthersChange(e.currentTarget.checked)}
+              <Stack>
+                {providerProof
+                  ? (
+                    <>
+                      <p class="text-sm text-muted">
+                        With a password you can also sign in with your e-mail address.
+                      </p>
+                      <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+                    </>
+                  )
+                  : (
+                    <Field
+                      id="password-current"
+                      label="Current password"
+                      error={errors.fields.currentPassword}
+                      required
+                    >
+                      <Input
+                        ref={fieldRefs.currentPassword}
+                        data-e2e="password-current"
+                        name="password"
+                        type="password"
+                        autocomplete="current-password"
+                        value={values.currentPassword}
+                        onInput={(e) => onValueChange("currentPassword", e.currentTarget.value)}
+                        required
+                      />
+                    </Field>
+                  )}
+                <Field
+                  id="password-new"
+                  label="New password"
+                  error={errors.fields.newPassword}
+                  required
                 >
-                  Sign out of all other devices
-                </Checkbox>
-              </div>
-            )}
-            <ErrorState message={errors.password} />
-            <DialogButtons
-              onCancel={cancelPassword}
-              submit={
-                <Button
-                  type="submit"
-                  data-e2e="password-save"
-                  busy={pending.password}
-                  busyLabel="Updating..."
-                >
-                  Change password
-                </Button>
-              }
-            />
-          </Stack>
-        </ScreenForm>
+                  <Input
+                    ref={fieldRefs.newPassword}
+                    data-e2e="password-new"
+                    name="newPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    value={values.newPassword}
+                    onInput={(e) => onValueChange("newPassword", e.currentTarget.value)}
+                    required
+                  />
+                </Field>
+                {providerProof && user?.mfa === UserMFAStatus.CONFIGURED && (
+                  // The password could turn two-factor off, so it costs the code too.
+                  <Field
+                    id="password-otp"
+                    label="Code from your authenticator app"
+                    error={errors.fields.passwordOtp}
+                    required
+                  >
+                    <Input
+                      ref={fieldRefs.passwordOtp}
+                      data-e2e="password-otp"
+                      name="otp"
+                      inputMode="numeric"
+                      autocomplete="one-time-code"
+                      value={values.passwordOtp}
+                      onInput={(e) => onValueChange("passwordOtp", e.currentTarget.value)}
+                      required
+                    />
+                  </Field>
+                )}
+                {onSignOutOthersChange && !providerProof && (
+                  // The row is the 44 px target: the whole label ticks the box.
+                  <div class="flex min-h-11 items-center">
+                    <Checkbox
+                      name="signOutOthers"
+                      value="true"
+                      data-e2e="password-sign-out-others"
+                      checked={signOutOthers}
+                      onChange={(e) => onSignOutOthersChange(e.currentTarget.checked)}
+                    >
+                      Sign out of all other devices
+                    </Checkbox>
+                  </div>
+                )}
+                <ErrorState message={errors.password} />
+                <DialogButtons
+                  onCancel={cancelPassword}
+                  submit={
+                    <Button
+                      type="submit"
+                      data-e2e="password-save"
+                      busy={pending.password}
+                      busyLabel="Updating..."
+                    >
+                      {providerProof ? "Set password" : "Change password"}
+                    </Button>
+                  }
+                />
+              </Stack>
+            </ScreenForm>
+          )}
       </Modal>
 
       {step === TwoFactorStep.Confirm && (
@@ -761,9 +821,7 @@ export function ProfileScreen(
 
 /**
  * The names of the providers of an account that has no password ("Google", "Google and GitHub"),
- * or `null` for an account with one, or while the sign-in methods are not known. Changing the
- * e-mail address or the password and deleting the account each ask for the current password, so
- * such an account can do none of them.
+ * or `null` for an account with one, or while the sign-in methods are not known.
  */
 export function providerOnlyNames(
   methods: readonly SignInMethod[] | null | undefined,
@@ -788,22 +846,13 @@ function EmailValue(
     )
   }
   return (
-    <span class="flex flex-col items-start gap-1">
-      <span class="flex flex-wrap items-center gap-2">
-        <span class="wrap-anywhere">{email.email}</span>
-        <Badge
-          text={email.proven ? "Verified" : "Not verified"}
-          color={email.proven ? "green" : "orange"}
-          type="outline"
-        />
-      </span>
-      {provider !== null && (
-        <span data-e2e="profile-email-from-provider">
-          From{" "}
-          {provider}. It cannot be changed here: this account has no password to confirm the change
-          with.
-        </span>
-      )}
+    <span class="flex flex-wrap items-center gap-2">
+      <span class="wrap-anywhere">{email.email}</span>
+      <Badge
+        text={email.proven ? "Verified" : "Not verified"}
+        color={email.proven ? "green" : "orange"}
+        type="outline"
+      />
     </span>
   )
 }
