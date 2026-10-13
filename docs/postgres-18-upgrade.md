@@ -79,7 +79,11 @@ What the script does, in order (`infra/scripts/db-upgrade-18.ts`):
    fails, or the dump is cut short, it starts the API and the worker again and stops: nothing
    else was changed. What the failed dump wrote stays beside it as `….sql.partial`; it is not a
    backup and can be deleted.
-4. Stops Postgres 16 and starts Postgres 18 on the new, empty `.volumes/postgres18`.
+4. Stops Postgres 16 and starts Postgres 18 on the new, empty `.volumes/postgres18`. On a server
+   whose project network was made from an older definition (one last deployed before the fixed
+   subnet was removed), Compose has to recreate that network and cannot while any container runs
+   on it, so the script removes every container of the project first: the SPA and the rest are
+   down too from here until step 7, which creates them all again.
 5. Restores the dump and counts the rows again. A table that is missing or extra, or a count that
    differs, fails the upgrade. So does any restore error other than the two a fresh server always
    gives (its own role and database exist already).
@@ -98,7 +102,8 @@ The script never renames, writes or deletes `.volumes/postgres`.
 - **Before Postgres 18 started** (the message ends "Nothing was changed"): the server is as it
   was, on Postgres 16, with the apps running. Fix the cause and run the upgrade again.
 - **After Postgres 18 started** (the message says "The upgrade failed"): the database, the API and
-  the worker are stopped, and `deno task compose up` is still refused, so the half-filled database
+  the worker are stopped (on a server whose network had to be recreated, every container of the
+  project is removed), and `deno task compose up` is still refused, so the half-filled database
   is never served. Roll back as below to bring the app back, then find the cause.
 - **"The data is on Postgres 18 … but the apps did not start"**: the move is done and marked; a
   migration or an app failed afterwards. Read its log (`deno task compose logs migrate`), fix it

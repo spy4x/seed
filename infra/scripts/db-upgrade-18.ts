@@ -15,7 +15,9 @@
  *    `.db-upgrade/`. When either fails, or the run is interrupted, the API and the worker start
  *    again and nothing changed.
  * 4. Stop Postgres 16 and start Postgres 18. It gets `.volumes/postgres18`; `.volumes/postgres`
- *    is not mounted any more and is never written, renamed or deleted.
+ *    is not mounted any more and is never written, renamed or deleted. On a server whose
+ *    project network Compose would recreate, every container of the project is removed first
+ *    (the network cannot go while one runs on it); step 7 creates them again.
  * 5. Restore the dump, count the rows again and compare. Any difference fails the upgrade.
  * 6. Write the marker that lets `deno task compose` start the database from now on.
  * 7. Start everything: the `migrate` service applies pending migrations, then the API and the
@@ -34,6 +36,7 @@
 
 import { error, log, success } from "./+lib.ts"
 import { createEnvReader, readEnvVar } from "@spy4x/server/config"
+import { networksToRecreate } from "./compose-checks.ts"
 import { planCompose } from "./compose-plan.ts"
 import { describeEnvFileError, readEnvFile } from "./env-file.ts"
 import {
@@ -478,6 +481,22 @@ export function engineSteps(
     async startPostgres18() {
       // A long timeout: Postgres 16 must finish its shutdown checkpoint, not be killed.
       await compose(`stop`, `--timeout`, `120`, `db`)
+      // A network made from an older definition is removed by the `up` below, and that fails
+      // while any other container of the project still runs on it ("has active endpoints"): the
+      // run then ended with the apps down. Removing every container first lets it go; the last
+      // step creates them all again. A dry run that fails or names no network changes nothing.
+      const dryRun = await host.capture(plan([`--dry-run`, `up`, `-d`]).command)
+      const networks = dryRun.code === 0
+        ? networksToRecreate(`${dryRun.stdout}\n${dryRun.stderr}`)
+        : []
+      if (networks.length > 0) {
+        host.log(
+          `The network ${networks.join(`, `)} was made from an older definition. Removing this ` +
+            `project's containers so it can be made again: the SPA and the rest are down too ` +
+            `until the last step.`,
+        )
+        await compose(`--profile`, `*`, `down`, `--remove-orphans`)
+      }
       await compose(`up`, `-d`, `--no-deps`, `db`)
       await waitUntilReady(180_000)
       const major = await majorVersion()

@@ -329,6 +329,8 @@ These cost real time to find. Do not rediscover them.
     profile, so a deploy with it starts neither database nor Grafana. Compose also leaves the
     containers of services that no longer exist running, and does not stop a container whose
     profile is now off, such as the old Grafana in the external mode; the old data stays on disk.
+    (The one exception is a deploy that has to recreate the project's network: it removes every
+    container of the project, those too; README, "A server deployed before these changes".)
     **Deploy steps**, once, on the first deploy of this change:
 
     1. Before deploying, in the env file you deploy (`infra/envs/.env.prod`): add `monitoring`

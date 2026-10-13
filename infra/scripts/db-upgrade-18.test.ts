@@ -275,6 +275,8 @@ Deno.test("a rolled-back server is never reported as upgraded, whatever runs now
 
 const VALUES = { PROJECT: "shop", DB_NAME: "app", DB_USER: "owner", ENV: "prod" }
 const DUMP = "./.db-upgrade/postgres-16-test.sql"
+const COMPOSE =
+  "compose -f ./infra/compose/compose.shared.yml -f ./infra/compose/compose.prod.yml --env-file ./infra/envs/.env"
 const WHOLE = "\n--\n-- PostgreSQL database cluster dump complete\n--\n\n"
 const ok: Output = { code: 0, stdout: "", stderr: "" }
 
@@ -388,9 +390,37 @@ Deno.test("Postgres 16 is stopped with time to finish, then Postgres 18 starts a
     line.includes("server_version_num") ? { stdout: `${num}\n` } : {}
   const h = host({ capture: version("180006") })
   await engineSteps(VALUES, DUMP, h).startPostgres18()
-  expect(h.ran.slice(0, 2)).toEqual(["stop --timeout 120 db", "up -d --no-deps db"])
+  expect(h.ran.slice(0, 3)).toEqual([
+    "stop --timeout 120 db",
+    `${COMPOSE} --dry-run up -d`,
+    "up -d --no-deps db",
+  ])
   const still16 = host({ capture: version("160011") })
   await expect(engineSteps(VALUES, DUMP, still16).startPostgres18()).rejects.toThrow(
     "shop-db runs Postgres 16, not 18",
   )
+})
+
+Deno.test("on a server whose network Compose would recreate, every container is removed before Postgres 18 starts", async () => {
+  const answers = (dryRun: Partial<Output>) => (line: string) =>
+    line.includes("--dry-run")
+      ? dryRun
+      : line.includes("server_version_num")
+      ? { stdout: "180006\n" }
+      : {}
+  const recreated = host({
+    capture: answers({ stderr: " Network shop_default Removing \n Network shop_default Removed \n" }),
+  })
+  await engineSteps(VALUES, DUMP, recreated).startPostgres18()
+  expect(recreated.ran.slice(0, 4)).toEqual([
+    "stop --timeout 120 db",
+    `${COMPOSE} --dry-run up -d`,
+    "--profile * down --remove-orphans",
+    "up -d --no-deps db",
+  ])
+
+  // A dry run that fails proves nothing, whatever it printed: the upgrade goes on as before.
+  const unknown = host({ capture: answers({ code: 1, stderr: " Network shop_default Removing \n" }) })
+  await engineSteps(VALUES, DUMP, unknown).startPostgres18()
+  expect(unknown.ran.filter((line) => line.includes("down"))).toEqual([])
 })

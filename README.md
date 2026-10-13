@@ -194,14 +194,28 @@ more than usual:
    the proxy, so the proxy that is already running keeps serving its dashboard at
    `proxy.<DOMAIN>` until then.
 3. The next deploy publishes Grafana (with the `monitoring` profile) on `127.0.0.1:3000` and the
-   MinIO console on `127.0.0.1:9001`; when something on the server already uses one of them, the
-   deploy fails with "port is already allocated". Set `GRAFANA_HOST_PORT` or `MINIO_CONSOLE_HOST_PORT` in the env
-   file to a free `127.0.0.1:<port>` first ([Admin consoles](#admin-consoles)).
+   MinIO console on `127.0.0.1:9001`. When something on the server that is not this project
+   already listens on a port the project publishes, the deploy stops at "Starting the app" before
+   any container is created, stopped or started: it names the port and the variable to change
+   (`GRAFANA_HOST_PORT`, `MINIO_CONSOLE_HOST_PORT`), and what ran before still runs. Set that
+   variable in the env file to a free `127.0.0.1:<port>` and deploy again
+   ([Admin consoles](#admin-consoles)).
 
-That deploy also recreates the project's network, which no longer has a fixed subnet, so every
-container restarts once, the database included: expect a short outage, not the usual restart of
-the app alone. The base image is now named `<PROJECT>/deno-base`; the old `app/deno-base` image
-stays on the server until you remove it (`docker image rm app/deno-base:<version>`).
+That deploy also recreates the project's network, which no longer has a fixed subnet. Compose
+would start the containers it does not recreate on the new network without their service names
+(`db`, `kv`), so the deploy sees the change coming (a dry run names the network), builds the
+images, removes every container of the project and that network, and creates them all again:
+expect a short outage of everything, the database included, not the usual restart of the app
+alone. Data is not touched: it lives in `.volumes`. The base image is now named
+`<PROJECT>/deno-base`; the old `app/deno-base` image stays on the server until you remove it
+(`docker image rm app/deno-base:<version>`).
+
+Every deploy starts the product first (the database, Valkey, the migration, the API, the worker,
+the SPA, and the website with the `mpa` profile), then everything else. When a monitoring
+container or MinIO cannot start, the product already runs on the new version; the deploy still
+fails, and its last lines name the services that are not up. A check that cannot be made (Compose
+answers in a form the script does not read, as `podman-compose` may) is skipped, and the deploy
+runs as one `compose up`, as it did before.
 
 `deno task deploy [env file]` reads the server from the env file (`infra/envs/.env.prod` unless you
 name another): `SSH_TO_SERVER`, `PATH_ON_SERVER` and, when Deno is not on the server's `PATH`,
@@ -385,7 +399,7 @@ first, change:
 - `DOMAIN`, and `MPA_DOMAIN` with the `mpa` profile.
 - the four ports published on `127.0.0.1`: `DB_HOST_PORT`, `KV_HOST_PORT`,
   `MINIO_CONSOLE_HOST_PORT` and `GRAFANA_HOST_PORT`. A port another project holds stops
-  `compose up` with "port is already allocated".
+  `deno task compose up -d` before it changes anything, naming the port and its variable.
 
 The engine gives every project's network a free subnet, and each project's database, Valkey,
 MinIO and monitoring are on that network only. Two things are shared. The proxy: start it once per

@@ -31,6 +31,8 @@
  * on the server when it is missing (never sent from this machine, never overwritten, mode 600);
  * then run `deno task compose up -d --build` there. Compose's one-shot `migrate` service applies
  * pending migrations before the API and the worker start, and a failed migration fails this step.
+ * That task refuses a host port something else holds before it changes anything, and starts the
+ * product before the optional services (compose-checks.ts).
  *
  * @module
  */
