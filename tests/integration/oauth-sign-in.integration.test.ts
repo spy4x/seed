@@ -24,6 +24,8 @@ import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards
 import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
+import { EMAIL_CODE_METHOD } from "@spy4x/server/auth/email-code"
+import { issuePasswordReset } from "../../libs/server/auth/password-reset.ts"
 import { createSignedPayloadCodec } from "@spy4x/platform/signed-payload"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -162,7 +164,7 @@ function buildApp(
     const result = await signIn.signIn(c, email, PASSWORD)
     return result ? c.json(result.user) : c.json({ error: "refused" }, 401)
   })
-  return { app, db, sql, signedOut, logged, advance: (ms: number) => now += ms }
+  return { app, db, sql, signIn, signedOut, logged, advance: (ms: number) => now += ms }
 }
 
 type App = ReturnType<typeof buildApp>
@@ -1369,5 +1371,87 @@ Deno.test("the password, another person's method and a misspelt id cannot be unl
       "oauth:google",
     ])
     expect((await methodsOf(bob)).methods).toHaveLength(1)
+  })
+})
+
+/** Resets the password of the account that signs in with `email`, as the mailed link does. */
+async function resetByLink(app: App, email: string): Promise<boolean> {
+  const issued = (await issuePasswordReset(app.db.authStore, email, new Date()))!
+  return await app.signIn.resetPassword(email, issued.code, "N3w-Passw0rd")
+}
+
+Deno.test("a reset of an address nobody proved removes the providers linked before it, and they no longer sign in", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, {
+      mallory: { sub: "6001", email: "mallory@evil.example", verified: true },
+      loose: { sub: "6002", email: "mallory@loose.example", verified: false },
+    })
+    // Mallory signs up with Ada's address, which asks for no proof, and links her own accounts.
+    const mallory = browser(app)
+    const signedUp = await mallory.post("/password/sign-up", { email: "ada@example.com" })
+    const { id } = await signedUp.json()
+    const google = await mallory.post("/auth/methods/google/link", { password: PASSWORD })
+    expect(target(await mallory.through("google", "mallory", (await google.json()).url)))
+      .toBe("/?oauth=linked")
+    const github = await mallory.post("/auth/methods/github/link", { password: PASSWORD })
+    expect(target(await mallory.through("github", "loose", (await github.json()).url)))
+      .toBe("/?oauth=linked")
+    expect((await app.db.authStore.listKeys(id)).map((key) => key.method))
+      .toEqual(["password", "oauth:google", "oauth:github"])
+
+    // Ada takes the account back with the link in her mailbox.
+    expect(await resetByLink(app, "ada@example.com")).toBe(true)
+
+    // Mallory's Google account is a stranger's again: it is asked whether to make a new account.
+    const later = browser(app)
+    expect(target(await later.through("google", "mallory"))).not.toBe("/")
+    expect((await later.get("/auth/methods")).status).toBe(401)
+    expect(await pendingOf(later)).not.toBe(null)
+    // GitHub vouched for no address, so there is nothing to sign up with either.
+    const other = browser(app)
+    await other.through("github", "loose")
+    expect((await other.get("/auth/methods")).status).toBe(401)
+    expect((await app.db.authStore.listKeys(id)).map((key) => key.method)).toEqual(["password"])
+    expect(await accounts(sql)).toEqual({ authUsers: 1, profiles: 1 })
+  })
+})
+
+Deno.test("a reset of an address nobody proved removes a code key the account holds for another address", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, {})
+    const signedUp = await browser(app).post("/password/sign-up", { email: "ada@example.com" })
+    const { id } = await signedUp.json()
+    await app.db.authStore.addKey(id, {
+      method: EMAIL_CODE_METHOD,
+      subject: "mallory@evil.example",
+      email: "mallory@evil.example",
+      secret: null,
+      provenAt: new Date(),
+    })
+
+    expect(await resetByLink(app, "ada@example.com")).toBe(true)
+
+    expect((await app.db.authStore.listKeys(id)).map((key) => key.method)).toEqual(["password"])
+    // The address the code key held is free again for whoever owns it.
+    expect(await app.db.authStore.findUserIdByProvenEmail("mallory@evil.example")).toBe(null)
+  })
+})
+
+Deno.test("a reset of an address that was proven before keeps the linked providers, and they still sign in", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { work: { sub: "6003", email: "ada@work.example", verified: true } })
+    const ada = browser(app)
+    const adaId = await provenPasswordAccount(app, ada, "ada@example.com")
+    const link = await ada.post("/auth/methods/google/link", { password: PASSWORD })
+    expect(target(await ada.through("google", "work", (await link.json()).url)))
+      .toBe("/?oauth=linked")
+
+    expect(await resetByLink(app, "ada@example.com")).toBe(true)
+
+    expect((await app.db.authStore.listKeys(adaId)).map((key) => key.method))
+      .toEqual(["password", "oauth:google"])
+    const later = browser(app)
+    expect(target(await later.through("google", "work"))).toBe("/")
+    expect((await methodsOf(later)).methods.find((method) => method.current)?.kind).toBe("google")
   })
 })

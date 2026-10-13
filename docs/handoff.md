@@ -212,7 +212,10 @@ These cost real time to find. Do not rediscover them.
    in the same step, so the raw code exists only in the mail. `POST
    /api/auth/password/reset` with `{ email, code, newPassword }` spends the code,
    marks the address proven, sets the password and signs out every session of
-   the user; it signs nobody in. Limits: the IP limit of the other anonymous auth
+   the user; it signs nobody in. It also revokes every API token and drops a
+   waiting address change. When the address was not proven before, it removes
+   the authenticator app and every sign-in method but the password as well
+   ("A squatted address" below); an address proven before keeps them. Limits: the IP limit of the other anonymous auth
    routes, and 3 requests an hour per address (`ratelimit-reset` in Valkey,
    keyed by a hash of the address, refusing when Valkey is down).
 
@@ -299,8 +302,14 @@ These cost real time to find. Do not rediscover them.
    **A squatted address.** Anyone can still sign up first with someone else's
    address, but it stays unproven and cannot carry a second factor. A reset
    link proves the mailbox, so it gives the owner the account back: new
-   password, address proven, every session signed out, and any authenticator
-   app removed. Sign-up still answers 401 for a taken address, which tells that
+   password, address proven, every session signed out and every API token
+   revoked, any authenticator app removed, and every other sign-in method
+   deleted (#404): each linked Google or GitHub account, and a code key for
+   another address if the account holds one. Whoever linked them did so before
+   anyone proved the address, so they would be a way back in. This happens only
+   on the reset that proves the address; a later reset keeps the methods. A
+   person who linked their own provider before confirming their own address
+   links it again after a reset. Sign-up still answers 401 for a taken address, which tells that
    an account uses it.
 
    **Mail.** `libs/server/mail` picks the transport: with `ENV=dev` the console

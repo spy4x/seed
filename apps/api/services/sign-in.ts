@@ -15,6 +15,8 @@
  *   address (whoever holds the mailbox owns the account that signs in with it), sets the new
  *   password, signs out every session of the user and deletes every API token. It signs nobody
  *   in: the person signs in again with the new password, and their second factor if they have one.
+ *   When the address was not proven before, the second factor and every other sign-in method of
+ *   the account go too (#404): whoever added them never proved they own the address.
  * - **One sign-up transaction.** The auth user and key, the session, the `users` profile row (same
  *   id) and the first group are written in one `db.begin()`: the sign-up provider is built over
  *   that transaction's stores.
@@ -846,6 +848,13 @@ export function createSignIn(options: SignInOptions): SignIn {
           // their claim, so the owner signs in with the new password alone.
           await tx.userTotp.remove(user.id)
           await tx.user.clearSecondFactor(user.id)
+          // Every other way in was added before anyone proved the address (#404): a linked Google
+          // or GitHub account, and a code key for another address. They go with the claim too, or
+          // whoever signed up with the owner's address would sign in again through them. Deleting
+          // a key ends its sessions and frees the address it had proven.
+          for (const other of await tx.authStore.listKeys(user.id)) {
+            if (other.id !== key.id) await tx.authStore.deleteKey(user.id, other.id)
+          }
         }
         await tx.authStore.updateKeySecret(key.id, secret)
         // The mailbox owner is back in control: an address change someone else asked for goes.
