@@ -200,6 +200,7 @@ async function buildApp(sql: postgres.Sql) {
       mutationGuards: createMutationGuards(WEB_APP_URL),
       rateLimits: openAuthLimits,
       totpFailures: openLockout,
+      passwordFailures: openLockout,
       requestPasswordReset: () => Promise.resolve(),
       emailCodeFailures: openLockout,
       requestEmailCode: () => Promise.resolve(),

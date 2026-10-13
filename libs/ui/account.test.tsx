@@ -29,6 +29,7 @@ import {
 import { ACCOUNT_COLUMN, AppFrame, navKey, PublicFrame } from "./frame.tsx"
 import { ProfileScreen, type ProfileScreenProps } from "./profile-screen.tsx"
 import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import { TwoFactorProof } from "./two-factor.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -315,7 +316,7 @@ const profileDefaults: ProfileScreenProps = {
   user: { mfa: UserMFAStatus.NOT_CONFIGURED, ...ada },
   isMfaRequired: false,
   email: { email: "ada@example.com", proven: true, pending: null },
-  values: { ...ada, currentPassword: "", newPassword: "", otp: "" },
+  values: { ...ada, currentPassword: "", newPassword: "", otp: "", twoFactorProof: "" },
   onValueChange: () => {},
   errors: { fields: {}, profile: null, password: null, totp: null, push: null },
   pending: { profile: false, password: false, totp: false, push: false },
@@ -482,21 +483,145 @@ describe("ProfileScreen", () => {
     })
   }
 
-  it("turns two-factor off only once the person confirms, and moves focus to Turn off when it comes on", async () => {
-    const disable = spy<[]>()
+  const twoFactorOn = { ...profileDefaults.user!, mfa: UserMFAStatus.CONFIGURED }
+  /** The text of what `aria-describedby` ties to the field `selector` finds. */
+  const describedBy = (selector: string) =>
+    (find(selector).getAttribute("aria-describedby") ?? "").split(" ")
+      .map((id) => document.getElementById(id)?.textContent)
+
+  it("moves focus to Turn off when two-factor comes on", async () => {
     const enrolling = { qrcode: "<svg/>", secret: "ABC" }
     await mount(<ProfileScreen {...profileDefaults} enrolment={enrolling} />)
-    const on = { ...profileDefaults.user!, mfa: UserMFAStatus.CONFIGURED }
-    await rerender(<ProfileScreen {...profileDefaults} user={on} onDisableTotp={disable.fn} />)
+    await rerender(<ProfileScreen {...profileDefaults} user={twoFactorOn} />)
+
     expect(focused()).toBe("totp-disable")
+  })
+
+  it("turns two-factor off only once the person typed the password and submitted, and nothing when the dialog is cancelled", async () => {
+    const disable = spy<[TwoFactorProof]>()
+    const cancel = spy<[]>()
+    const change = spy<[string, string]>()
+    const props = {
+      ...profileDefaults,
+      user: twoFactorOn,
+      onDisableTotp: disable.fn,
+      onCancelDisableTotp: cancel.fn,
+      onValueChange: change.fn,
+    }
+    await mount(<ProfileScreen {...props} />)
 
     await click("[data-e2e=totp-disable]")
-    await clickInDialog("totp-disable-confirm", "Keep it on")
+    expect(isOpen("totp-disable-confirm")).toBe(true)
+    await clickInDialog("totp-disable-confirm", "Cancel")
+    expect(isOpen("totp-disable-confirm")).toBe(false)
+    expect(cancel.calls).toHaveLength(1)
     expect(disable.calls).toEqual([])
 
     await click("[data-e2e=totp-disable]")
-    await clickInDialog("totp-disable-confirm", "Turn off")
-    expect(disable.calls).toHaveLength(1)
+    const field = find<HTMLInputElement>("[data-e2e=totp-disable-proof]")
+    expect(field.type).toBe("password")
+    expect(field.required).toBe(true)
+    expect(field.labels?.[0]?.textContent).toContain("Password")
+    await type("[data-e2e=totp-disable-proof]", "correct-horse")
+    expect(change.calls).toEqual([["twoFactorProof", "correct-horse"]])
+    expect(await submit("[data-e2e=totp-disable-proof]")).toBe(true)
+    expect(disable.calls).toEqual([[TwoFactorProof.Password]])
+  })
+
+  it("asks an account with no password for a code from the authenticator app instead", async () => {
+    const disable = spy<[TwoFactorProof]>()
+    const google = { id: 2, kind: "google", email: null, current: true, canUnlink: false } as const
+    const methods = {
+      methods: [google],
+      available: [],
+      pending: false,
+      error: null,
+      onLink: () => {},
+      onUnlink: () => {},
+    }
+    await mount(
+      <ProfileScreen
+        {...profileDefaults}
+        user={twoFactorOn}
+        methods={methods}
+        onDisableTotp={disable.fn}
+      />,
+    )
+
+    await click("[data-e2e=totp-disable]")
+    const field = find<HTMLInputElement>("[data-e2e=totp-disable-proof]")
+    expect(field.type).toBe("text")
+    expect(field.getAttribute("autocomplete")).toBe("one-time-code")
+    expect(field.labels?.[0]?.textContent).toContain("Code from your app")
+    expect(await submit("[data-e2e=totp-disable-proof]")).toBe(true)
+    expect(disable.calls).toEqual([[TwoFactorProof.Code]])
+  })
+
+  it("keeps the turn-off dialog open with the refusal under its form, once", async () => {
+    const props = { ...profileDefaults, user: twoFactorOn }
+    await mount(<ProfileScreen {...props} />)
+    await click("[data-e2e=totp-disable]")
+
+    await rerender(<ProfileScreen {...props} pending={{ ...props.pending, totp: true }} />)
+    await rerender(
+      <ProfileScreen {...props} errors={{ ...props.errors, totp: "Invalid password" }} />,
+    )
+
+    expect(isOpen("totp-disable-confirm")).toBe(true)
+    expect(find("[data-e2e=totp-disable-confirm] form").textContent).toContain("Invalid password")
+    expect(document.body.textContent?.split("Invalid password")).toHaveLength(2)
+  })
+
+  it("ties a refused proof to its field and moves focus there", async () => {
+    const props = { ...profileDefaults, user: twoFactorOn }
+    await mount(<ProfileScreen {...props} />)
+    await click("[data-e2e=totp-disable]")
+    find("[data-e2e=totp-disable-submit]").focus()
+
+    await rerender(
+      <ProfileScreen
+        {...props}
+        errors={{ ...props.errors, fields: { twoFactorProof: "must be at least 8 long" } }}
+      />,
+    )
+
+    expect(isOpen("totp-disable-confirm")).toBe(true)
+    expect(find("[data-e2e=totp-disable-proof]").getAttribute("aria-invalid")).toBe("true")
+    expect(describedBy("[data-e2e=totp-disable-proof]")).toContain("must be at least 8 long")
+    expect(focused()).toBe("totp-disable-proof")
+  })
+
+  it("refuses a second turn-off while the first is pending", async () => {
+    const disable = spy<[TwoFactorProof]>()
+    const pending = { ...profileDefaults.pending, totp: true }
+    await mount(
+      <ProfileScreen {...profileDefaults} user={twoFactorOn} onDisableTotp={disable.fn} />,
+    )
+    await click("[data-e2e=totp-disable]")
+    await rerender(
+      <ProfileScreen
+        {...profileDefaults}
+        user={twoFactorOn}
+        pending={pending}
+        onDisableTotp={disable.fn}
+      />,
+    )
+
+    expect(await submit("[data-e2e=totp-disable-proof]")).toBe(true)
+    expect(disable.calls).toEqual([])
+  })
+
+  it("closes the turn-off dialog once two-factor went off, and does not open it when it comes on again", async () => {
+    const props = { ...profileDefaults, user: twoFactorOn }
+    await mount(<ProfileScreen {...props} />)
+    await click("[data-e2e=totp-disable]")
+
+    await rerender(<ProfileScreen {...props} pending={{ ...props.pending, totp: true }} />)
+    await rerender(<ProfileScreen {...profileDefaults} />)
+    expect(isOpen("totp-disable-confirm")).toBe(false)
+
+    await rerender(<ProfileScreen {...props} />)
+    expect(isOpen("totp-disable-confirm")).toBe(false)
   })
 
   it("moves no focus when the page first draws a two-factor step", async () => {

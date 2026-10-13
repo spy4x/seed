@@ -35,7 +35,9 @@ import {
   EMAIL_CODE_MAILS_PER_ADDRESS,
   RESET_MAILS_PER_ADDRESS,
 } from "../middlewares/auth-rate-limits.ts"
-import type { Lockout } from "@spy4x/server/lockout"
+import { createLockout, type Lockout } from "@spy4x/server/lockout"
+import { MemoryLockoutStore } from "@spy4x/server/lockout/memory-store"
+import { PASSWORD_LOCK_POLICY } from "../services/password-failures.ts"
 import { createKvStore, type RateLimitStore } from "@spy4x/platform/rate-limit"
 import {
   ACCOUNT_DELETE_BLOCKED,
@@ -49,6 +51,7 @@ import {
   PASSWORD_RESET_REQUESTED,
   SESSION_IS_CURRENT,
   SESSION_NOT_FOUND,
+  TOTP_DISCONNECT_PROOF_REQUIRED,
 } from "./auth.ts"
 
 /** When the fake sign-in says a deleted account goes for good. */
@@ -183,6 +186,8 @@ function buildApp(
     secondFactor,
     lockedForMs,
     codeLockedForMs,
+    passwordLockedForMs,
+    passwordFailures,
     signIn: overrides = {},
     queueFails = false,
   }: {
@@ -191,6 +196,10 @@ function buildApp(
     lockedForMs?: number
     /** The same for the e-mail code counter. */
     codeLockedForMs?: number
+    /** The same for the wrong-password counter of the sign-in name. */
+    passwordLockedForMs?: number
+    /** Replaces the fake wrong-password counter, for a test that runs the real lock. */
+    passwordFailures?: Lockout
     succeed?: boolean
     /** The second-factor state of the session that `signIn` and `signUp` hand back. */
     secondFactor?: SecondFactorStatus
@@ -203,6 +212,7 @@ function buildApp(
   const calls: string[] = []
   const failureCalls: string[] = []
   const codeFailureCalls: string[] = []
+  const passwordFailureCalls: string[] = []
   /** Every address a code mail was queued for, and every error the route logged. */
   const mailed: string[] = []
   const logged: string[] = []
@@ -218,6 +228,8 @@ function buildApp(
     mutationGuards: testMutationGuards,
     rateLimits,
     totpFailures: fakeTotpFailures(failureCalls, lockedForMs),
+    passwordFailures: passwordFailures ??
+      fakeTotpFailures(passwordFailureCalls, passwordLockedForMs),
     requestPasswordReset: (email) => (
       calls.push("requestPasswordReset"), queued.push(email), Promise.resolve()
     ),
@@ -233,6 +245,7 @@ function buildApp(
     calls,
     failureCalls,
     codeFailureCalls,
+    passwordFailureCalls,
     queued,
     logins,
     mailed,
@@ -309,7 +322,13 @@ const sessionRoutes: SessionRoute[] = [
     body: { otp: "123456" },
     operation: "connectTotpFinish",
   },
-  { method: "POST", path: "/auth/totp/disconnect", body: undefined, operation: "disconnectTotp" },
+  {
+    method: "POST",
+    path: "/auth/totp/disconnect",
+    body: { password: "correct-horse" },
+    operation: "disconnectTotp",
+    calls: { succeeded: ["checkPassword", "disconnectTotp"], failed: ["checkPassword"] },
+  },
   {
     method: "POST",
     path: "/auth/password/change",
@@ -575,6 +594,7 @@ describe("auth routes rate-limit", () => {
         mutationGuards: testMutationGuards,
         rateLimits: createAuthRateLimits(tightLimits),
         totpFailures: fakeTotpFailures([]),
+        passwordFailures: fakeTotpFailures([]),
         requestPasswordReset: () => Promise.resolve(),
         emailCodeFailures: fakeTotpFailures([]),
         requestEmailCode: () => Promise.resolve(),
@@ -842,6 +862,215 @@ describe("auth routes count wrong one-time codes per user", () => {
       expect(calls).toEqual([route.operation])
     })
   }
+})
+
+describe("auth routes ask for proof before turning two-factor off", () => {
+  const disconnect = (body: unknown) => ({
+    method: "POST" as const,
+    path: "/auth/totp/disconnect",
+    body,
+  })
+
+  for (const [name, body] of [["an empty body", {}], ["no body", undefined]] as const) {
+    it(`refuses ${name}, with neither a password nor a code, and leaves two-factor on`, async () => {
+      const { app, calls } = buildApp()
+      const response = await send(app, disconnect(body), sameOriginHeaders)
+
+      expect(response.status).toBe(400)
+      if (body) expect(await response.json()).toEqual({ error: TOTP_DISCONNECT_PROOF_REQUIRED })
+      expect(calls).toEqual([])
+    })
+  }
+
+  it("refuses a wrong password and leaves two-factor on", async () => {
+    const { app, calls } = buildApp(undefined, { succeed: false })
+    const response = await send(app, disconnect({ password: "wrong-horse" }), sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect(calls).toEqual(["checkPassword"])
+  })
+
+  it("turns two-factor off for the account's password", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, disconnect({ password: "correct-horse" }), sameOriginHeaders)
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual(["checkPassword", "disconnectTotp"])
+  })
+
+  it("turns two-factor off for a current code without asking for a password, as an account with none needs", async () => {
+    const { app, calls, failureCalls } = buildApp(undefined, {
+      signIn: { checkPassword: () => Promise.reject(new Error("no password was sent")) },
+    })
+    const response = await send(app, disconnect({ otp: "123456" }), sameOriginHeaders)
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual(["verifyTotpCode", "disconnectTotp"])
+    expect(failureCalls).toEqual(["begin", "refund"])
+  })
+
+  it("refuses a wrong code, counts it and leaves two-factor on", async () => {
+    const { app, calls, failureCalls } = buildApp(undefined, { succeed: false })
+    const response = await send(app, disconnect({ otp: "123456" }), sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Code is incorrect" })
+    expect(calls).toEqual(["verifyTotpCode"])
+    expect(failureCalls).toEqual(["begin", "fail"])
+  })
+
+  it("refuses a code while the user is locked after wrong codes, without checking it", async () => {
+    const { app, calls } = buildApp(undefined, { lockedForMs: 90_500 })
+    const response = await send(app, disconnect({ otp: "123456" }), sameOriginHeaders)
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("retry-after")).toBe("91")
+    expect(calls).toEqual([])
+  })
+
+  it("refuses a code that is not six digits", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, disconnect({ otp: "12345" }), sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(calls).toEqual([])
+  })
+})
+
+describe("auth routes lock a sign-in name after repeated wrong passwords", () => {
+  const signInRoute = anonymousRoutes.find((route) => route.path === "/auth/password/check")!
+  const RIGHT = "correct-horse"
+  const from = (attempt: number) => ({
+    ...sameOriginWithoutCookieHeaders,
+    "x-real-ip": `192.0.2.${attempt + 1}`,
+  })
+
+  /** The real lock over an in-memory store and a clock the test moves; one password is right. */
+  function lockedApp() {
+    const clock = { ms: Date.UTC(2026, 9, 13, 8), now: () => clock.ms }
+    const built = buildApp(null, {
+      passwordFailures: createLockout({
+        store: new MemoryLockoutStore(),
+        clock,
+        ...PASSWORD_LOCK_POLICY,
+      }),
+      signIn: {
+        signIn: (_c, _login, password) => {
+          built.calls.push("signIn")
+          if (password !== RIGHT) return Promise.resolve(null)
+          const { user, session } = buildAuthData()
+          return Promise.resolve({ user, session })
+        },
+      },
+    })
+    const signIn = (attempt: number, login: string, password: string) =>
+      send(built.app, { ...signInRoute, body: { login, password } }, from(attempt))
+    return { ...built, clock, signIn }
+  }
+
+  it("locks the name for a minute after six wrong passwords from six addresses, and says when to try again", async () => {
+    const { signIn, calls } = lockedApp()
+    const statuses = []
+    for (let attempt = 0; attempt < 6; attempt++) {
+      statuses.push((await signIn(attempt, "alice@example.com", "wrong-horse")).status)
+    }
+    const locked = await signIn(6, "alice@example.com", "wrong-horse")
+
+    expect(statuses).toEqual([401, 401, 401, 401, 401, 401])
+    expect(locked.status).toBe(429)
+    expect(locked.headers.get("retry-after")).toBe("60")
+    expect(await locked.json()).toEqual({
+      error: "Too many wrong passwords. Try again in 1 minute.",
+    })
+    // The seventh request never reached the password check.
+    expect(calls).toHaveLength(6)
+  })
+
+  it("refuses the right password while the lock runs and takes it once the lock ends", async () => {
+    const { signIn, calls, clock } = lockedApp()
+    for (let attempt = 0; attempt < 6; attempt++) {
+      await signIn(attempt, "alice@example.com", "wrong-horse")
+    }
+
+    clock.ms += 59_000
+    const early = await signIn(7, "alice@example.com", RIGHT)
+    expect(early.status).toBe(429)
+    expect(early.headers.get("retry-after")).toBe("1")
+    expect(calls).toHaveLength(6)
+
+    clock.ms += 1_000
+    expect((await signIn(8, "alice@example.com", RIGHT)).status).toBe(200)
+  })
+
+  it("counts the name as the sign-in normalises it, and gives another name its own count", async () => {
+    const { signIn } = lockedApp()
+    for (let attempt = 0; attempt < 6; attempt++) {
+      await signIn(attempt, attempt % 2 ? " Alice@Example.com" : "alice@example.com", "wrong-horse")
+    }
+
+    expect((await signIn(6, "alice@example.com", RIGHT)).status).toBe(429)
+    expect((await signIn(7, "bob@example.com", RIGHT)).status).toBe(200)
+  })
+
+  it("doubles the lock with each wrong password after it, up to 15 minutes", async () => {
+    const { signIn, clock } = lockedApp()
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await signIn(attempt, "alice@example.com", "wrong-horse")
+    }
+    const waits = []
+    for (let attempt = 5; attempt < 12; attempt++) {
+      await signIn(attempt, "alice@example.com", "wrong-horse")
+      const locked = await signIn(attempt, "alice@example.com", "wrong-horse")
+      const seconds = Number(locked.headers.get("retry-after"))
+      waits.push(seconds / 60)
+      clock.ms += seconds * 1_000
+    }
+
+    expect(waits).toEqual([1, 2, 4, 8, 15, 15, 15])
+  })
+
+  it("starts the count again after an hour without a wrong password", async () => {
+    const { signIn, clock } = lockedApp()
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await signIn(attempt, "alice@example.com", "wrong-horse")
+    }
+    clock.ms += 60 * 60_000
+    const statuses = []
+    for (let attempt = 5; attempt < 10; attempt++) {
+      statuses.push((await signIn(attempt, "alice@example.com", "wrong-horse")).status)
+    }
+
+    expect(statuses).toEqual([401, 401, 401, 401, 401])
+    expect((await signIn(10, "alice@example.com", RIGHT)).status).toBe(200)
+  })
+
+  it("answers 429 with Retry-After while the name is locked, without checking the password", async () => {
+    const { app, calls, passwordFailureCalls } = buildApp(null, { passwordLockedForMs: 90_500 })
+    const response = await send(app, signInRoute, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("retry-after")).toBe("91")
+    expect(await response.json()).toEqual({
+      error: "Too many wrong passwords. Try again in 2 minutes.",
+    })
+    expect(passwordFailureCalls).toEqual(["begin"])
+    expect(calls).toEqual([])
+  })
+
+  it("counts the check before the password is looked at and gives the slot back after a right one", async () => {
+    const { app, passwordFailureCalls } = buildApp(null)
+    await send(app, signInRoute, sameOriginWithoutCookieHeaders)
+
+    expect(passwordFailureCalls).toEqual(["begin", "refund"])
+  })
+
+  it("records a wrong password", async () => {
+    const { app, passwordFailureCalls } = buildApp(null, { succeed: false })
+    await send(app, signInRoute, sameOriginWithoutCookieHeaders)
+
+    expect(passwordFailureCalls).toEqual(["begin", "fail"])
+  })
 })
 
 describe("auth routes reset a password by e-mail link", () => {

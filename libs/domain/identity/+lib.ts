@@ -182,6 +182,17 @@ export const ACCOUNT_DELETION_GRACE_DAYS = 7
  */
 export const DELETED_USER_NAME = "Deleted user"
 
+/**
+ * The body of "turn two-factor off": the account's password, or a current authenticator code. A
+ * session alone is not enough, since one left open on a shared machine could remove the second
+ * factor. An account with no password sends the code.
+ */
+export const authTotpDisconnectSchema = type({
+  "password?": authPasswordSchema.get("password"),
+  "otp?": authOTPSchema.get("otp"),
+})
+export type AuthTotpDisconnect = typeof authTotpDisconnectSchema.infer
+
 /** The body of "delete my account": the password, and an authenticator code when two-factor is on. */
 export const accountDeleteSchema = authPasswordSchema.and({
   "otp?": "/^[0-9]{6}$/",

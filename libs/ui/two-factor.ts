@@ -18,3 +18,19 @@ export function twoFactorStep(
   if (isEnrolling) return TwoFactorStep.Confirm
   return mfa === UserMFAStatus.CONFIGURED ? TwoFactorStep.Disable : TwoFactorStep.Enable
 }
+
+/** What the person proves themselves with before two-factor is turned off. */
+export enum TwoFactorProof {
+  /** The account's password. */
+  Password = 1,
+  /** A current code from the authenticator app: an account with no password has only this. */
+  Code = 2,
+}
+
+/**
+ * Picks the proof to ask for: the password, or the code for an account that signs in only with a
+ * provider and so has no password.
+ */
+export function twoFactorProof(hasNoPassword: boolean): TwoFactorProof {
+  return hasNoPassword ? TwoFactorProof.Code : TwoFactorProof.Password
+}

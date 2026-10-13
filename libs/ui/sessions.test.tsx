@@ -218,6 +218,7 @@ describe("ProfileScreen password dialog", () => {
       currentPassword: "",
       newPassword: "",
       otp: "",
+      twoFactorProof: "",
     },
     onValueChange: () => {},
     errors: { fields: {}, profile: null, password: null, totp: null, push: null },

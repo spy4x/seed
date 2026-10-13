@@ -35,6 +35,7 @@ import { billingSetup } from "./services/billing.ts"
 import { createMutationGuards } from "./middlewares/mutation-guards.ts"
 import { createTotpFailures } from "./services/totp-failures.ts"
 import { createEmailCodeFailures } from "./services/email-code-failures.ts"
+import { createPasswordFailures, prunePasswordFailures } from "./services/password-failures.ts"
 import { createAuthRateLimits } from "./middlewares/auth-rate-limits.ts"
 import { commandBus } from "./services/commandBus.ts"
 import { queryBus } from "./services/queryBus.ts"
@@ -128,6 +129,7 @@ app.route(
     mutationGuards,
     rateLimits,
     totpFailures: createTotpFailures({ sql }),
+    passwordFailures: createPasswordFailures({ sql }),
     requestPasswordReset: (email) => enqueuePasswordResetMail(sql, email),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
@@ -347,6 +349,13 @@ startIntervalRunner({
   task: () => signIn.expireSessions(),
   intervalMs: SESSION_EXPIRE_INTERVAL,
   onError: (error) => log(`error: session expiry failed, retrying next tick`, error),
+})
+// Every sign-in name a stranger types adds a row to the wrong-password counter; the ones that
+// decide nothing any more go each hour.
+startIntervalRunner({
+  task: async () => void await prunePasswordFailures(sql),
+  intervalMs: ONE_HOUR_IN_MILLISECONDS,
+  onError: (error) => log(`error: pruning the wrong-password counter failed`, error),
 })
 
 export default app

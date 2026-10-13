@@ -10,6 +10,7 @@ import {
 } from "@ui/profile-screen.tsx"
 import type { AccountDeleteErrors, AccountDeleteValues } from "@ui/account-delete.tsx"
 import { SCREEN_PATHS } from "@ui/progressive.tsx"
+import { TwoFactorProof } from "@ui/two-factor.ts"
 import {
   changePassword,
   deleteAccount,
@@ -33,6 +34,7 @@ import {
   type AccountDeletionBlocker,
   authOTPSchema,
   authPasswordChangeSchema,
+  authPasswordSchema,
   OAUTH_NOTICE_PARAM,
   OAUTH_NOTICES,
   oauthNotice,
@@ -68,6 +70,7 @@ export function ProfileView() {
     currentPassword: "",
     newPassword: "",
     otp: "",
+    twoFactorProof: "",
   })
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({})
   const [profileError, setProfileError] = useState<string | null>(null)
@@ -242,14 +245,24 @@ export function ProfileView() {
     setValue("otp", "")
   }
 
-  const disableTotp = async () => {
+  const disableTotp = async (proof: TwoFactorProof) => {
     setTotpError(null)
+    const typed = values.twoFactorProof
+    // The API calls them `password` and `otp`; the dialog has one field for either.
+    const problems = proof === TwoFactorProof.Code
+      ? refusedFields(authOTPSchema, { otp: typed })?.otp
+      : refusedFields(authPasswordSchema, { password: typed })?.password
+    if (!fieldsPass(problems ? { twoFactorProof: problems } : null)) return
     setTotpBusy(true)
-    const result = await totpDisconnect()
+    const result = await totpDisconnect(
+      proof === TwoFactorProof.Code ? { otp: typed } : { password: typed },
+    )
     setTotpBusy(false)
     if (!result.ok) {
       setTotpError(result.error || PROFILE_FAILURES.totpDisable)
+      return
     }
+    setValue("twoFactorProof", "")
   }
 
   const registerPush = async () => {
@@ -408,6 +421,11 @@ export function ProfileView() {
         setValue("otp", "")
       }}
       onDisableTotp={disableTotp}
+      onCancelDisableTotp={() => {
+        setTotpError(null)
+        setFieldErrors(({ twoFactorProof: _proof, ...rest }) => rest)
+        setValue("twoFactorProof", "")
+      }}
       onRegisterPush={registerPush}
       onRemovePush={removePush}
       accountDeletion={{

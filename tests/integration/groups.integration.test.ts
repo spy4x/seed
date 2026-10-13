@@ -87,6 +87,7 @@ Deno.test({
       await applyMigration(sql, "2026_10_29_0001_idempotency_claim_token_no_default.sql")
       await applyMigration(sql, "2026_10_30_0001_api_token_hardening.sql")
       await applyMigration(sql, "2026_11_03_0001_users_onboarding.sql")
+      await applyMigration(sql, "2026_11_05_0001_password_failures.sql")
 
       await t.step("backfill is rerunnable and covers only active users", async () => {
         await applyMigration(sql, "2026_08_18_0002_personal_group_backfill.sql")
@@ -531,6 +532,7 @@ const SNAPSHOT_TABLES = [
   "email_changes",
   "email_code_requests",
   "email_code_failures",
+  "password_failures",
   "billing_customers",
   "subscriptions",
   "billing_events",

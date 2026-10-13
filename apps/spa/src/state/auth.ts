@@ -324,9 +324,16 @@ export async function totpConnectFinish(otp: string): Promise<{ ok: boolean; err
   return { ok: true }
 }
 
-export async function totpDisconnect(): Promise<{ ok: boolean; error?: string }> {
+/**
+ * Turns two-factor off. The API asks for proof that it is the account's owner: the password, or a
+ * current authenticator code for an account that has no password.
+ */
+export async function totpDisconnect(
+  proof: { password: string } | { otp: string },
+): Promise<{ ok: boolean; error?: string }> {
   const result = await apiFetch<ApiSuccessResponse>("/api/auth/totp/disconnect", {
     method: "POST",
+    body: JSON.stringify(proof),
   })
   if (!result.ok) {
     return { ok: false, error: result.error.message }

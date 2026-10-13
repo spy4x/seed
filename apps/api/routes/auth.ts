@@ -14,6 +14,7 @@ import {
   authPasswordResetSchema,
   authSignInSchema,
   authSignUpSchema,
+  authTotpDisconnectSchema,
   emailToVerify,
   type User,
   UserMFAStatus,
@@ -26,6 +27,7 @@ import type { Lockout } from "@spy4x/server/lockout"
 import type { AuthRateLimits } from "../middlewares/auth-rate-limits.ts"
 import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import { readApiJson } from "@api/services/json-body.ts"
+import { passwordFailureSubject } from "@api/services/password-failures.ts"
 
 /** What the auth routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface AuthRouteDependencies {
@@ -37,6 +39,11 @@ export interface AuthRouteDependencies {
   rateLimits: AuthRateLimits
   /** Persistent count of wrong one-time codes per user, with a growing lock. */
   totpFailures: Lockout
+  /**
+   * Persistent count of wrong passwords per sign-in name, from every network address together,
+   * with a short lock (`services/password-failures.ts`).
+   */
+  passwordFailures: Lockout
   /**
    * Queues a reset link for a normalised address. The worker sends it only when an account signs
    * in with the address, so this call does the same work either way.
@@ -110,6 +117,21 @@ const MAX_SESSION_ID = 2_147_483_647
 /** The answer when the account has two-factor on and the request carries no code. */
 export const ACCOUNT_DELETE_CODE_REQUIRED = "Enter the code from your authenticator app"
 
+/** The answer when turning two-factor off is asked for with neither a password nor a code. */
+export const TOTP_DISCONNECT_PROOF_REQUIRED =
+  "Enter your password or the code from your authenticator app"
+
+/**
+ * The answer while a sign-in name is locked after too many wrong passwords, saying when to try
+ * again. The same for a name no account uses, so it tells nothing about an account.
+ */
+export function passwordLockedMessage(waitMs: number): string {
+  const minutes = Math.max(1, Math.ceil(waitMs / 60_000))
+  return `Too many wrong passwords. Try again in ${minutes} ${
+    minutes === 1 ? "minute" : "minutes"
+  }.`
+}
+
 /** Sets `Retry-After` and answers 429 with `error`. */
 function tooMany(c: Context<APIContext>, retryAfterMs: number, error: string): Response {
   c.header("Retry-After", String(Math.ceil(retryAfterMs / 1000)))
@@ -162,6 +184,7 @@ export function createAuthRoute(
     mutationGuards,
     rateLimits,
     totpFailures,
+    passwordFailures,
     requestPasswordReset,
     emailCodeFailures,
     requestEmailCode,
@@ -209,10 +232,18 @@ export function createAuthRoute(
         return c.json({ error: validationResult.error.description }, 400)
       }
       const { login, password } = validationResult.data
+      // Counted per name and before the password is looked at, whatever address the request comes
+      // from and whether or not an account uses the name. While the name is locked not even the
+      // right password is checked.
+      const subject = await passwordFailureSubject(login)
+      const waitMs = await passwordFailures.begin(subject)
+      if (waitMs > 0) return tooMany(c, waitMs, passwordLockedMessage(waitMs))
       const signedIn = await signIn.signIn(c, login, password)
       if (!signedIn) {
+        await passwordFailures.fail(subject)
         return c.json({ error: "Invalid e-mail, username or password" }, 401)
       }
+      await passwordFailures.refund(subject)
       return signInAnswer(c, signedIn)
     })
     .post(`/password/sign-up`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
@@ -318,8 +349,31 @@ export function createAuthRoute(
       return outcome === true ? c.json({ success: true }) : outcome
     })
     .use(isAuthenticated2FA)
-    .post(`/totp/disconnect`, rateLimits.normal, async (c) => {
-      const isSuccess = await signIn.disconnectTotp(c.get("auth")!)
+    // Asks again for what a session left open on a shared machine lacks: the password, or a
+    // current authenticator code. An account with no password proves itself with the code.
+    .post(`/totp/disconnect`, rateLimits.strictByUser, async (c) => {
+      const body = await readApiJson(c)
+      const validationResult = validate(authTotpDisconnectSchema, body)
+      if (validationResult.error) {
+        return c.json({ error: validationResult.error.description }, 400)
+      }
+      const authData = c.get("auth")!
+      const { password, otp } = validationResult.data
+      if (otp !== undefined) {
+        const outcome = await checkUnderFailureCount(
+          c,
+          totpFailures,
+          authData.user.id,
+          () => signIn.verifyTotpCode(authData, otp),
+          () => c.json({ error: "Code is incorrect" }, 400),
+        )
+        if (outcome !== true) return outcome
+      } else if (password === undefined) {
+        return c.json({ error: TOTP_DISCONNECT_PROOF_REQUIRED }, 400)
+      } else if (!(await signIn.checkPassword(authData.user.id, password))) {
+        return c.json({ error: "Invalid password" }, 400)
+      }
+      const isSuccess = await signIn.disconnectTotp(authData)
       if (!isSuccess) {
         return c.json({ error: "OTP already disabled for your account" }, 400)
       }

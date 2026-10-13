@@ -388,6 +388,15 @@ CREATE TABLE email_code_failures (
     CONSTRAINT email_code_failures_failed_attempts_check CHECK (failed_attempts >= 0)
 );
 
+-- Wrong passwords per sign-in name (the SHA-256 of what was typed), with a short lock (#387).
+CREATE TABLE password_failures (
+    subject CHAR(64) PRIMARY KEY,
+    failed_attempts INT4 DEFAULT 0 NOT NULL,
+    locked_until TIMESTAMPTZ,
+    last_failure_at TIMESTAMPTZ,
+    CONSTRAINT password_failures_failed_attempts_check CHECK (failed_attempts >= 0)
+);
+
 -- One subscription per group, paid through a provider (#202). See the migration for the why.
 CREATE TABLE billing_customers (
     group_id UUID PRIMARY KEY REFERENCES groups(id) ON DELETE CASCADE,

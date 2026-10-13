@@ -334,6 +334,7 @@ describe("ProfileScreen API tokens", () => {
           currentPassword: "",
           newPassword: "",
           otp: "",
+          twoFactorProof: "",
         }}
         onValueChange={() => {}}
         errors={{ fields: {}, profile: null, password: null, totp: null, push: null }}

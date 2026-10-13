@@ -394,9 +394,38 @@ describe("two-factor enrolment", () => {
     }
     apiSucceeds()
 
-    expect(await totpDisconnect()).toEqual({ ok: true })
+    expect(await totpDisconnect({ password: "correct-horse" })).toEqual({ ok: true })
 
     expect(sessionState.value.user?.mfa).toBe(UserMFAStatus.NOT_CONFIGURED)
+  })
+
+  for (const proof of [{ password: "correct-horse" }, { otp: "123456" }]) {
+    it(`sends the ${Object.keys(proof)[0]} as the proof for disabling`, async () => {
+      const sent: unknown[] = []
+      globalThis.fetch = (_input, init) => {
+        sent.push(JSON.parse(String(init?.body)))
+        return Promise.resolve(Response.json({ success: true }))
+      }
+
+      await totpDisconnect(proof)
+
+      expect(sent).toEqual([proof])
+    })
+  }
+
+  it("keeps the authenticator app and hands back the refusal when the proof is wrong", async () => {
+    sessionState.value = {
+      ...sessionState.value,
+      user: { ...user, mfa: UserMFAStatus.CONFIGURED } as unknown as User,
+    }
+    globalThis.fetch = () =>
+      Promise.resolve(Response.json({ error: "Invalid password" }, { status: 400 }))
+
+    expect(await totpDisconnect({ password: "wrong-horse" })).toEqual({
+      ok: false,
+      error: "Invalid password",
+    })
+    expect(sessionState.value.user?.mfa).toBe(UserMFAStatus.CONFIGURED)
   })
 })
 

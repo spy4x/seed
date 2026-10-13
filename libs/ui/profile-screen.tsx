@@ -5,7 +5,6 @@ import { IconBell, IconLockClosed } from "@spy4x/preact-icons"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
-import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
@@ -27,7 +26,7 @@ import { SignedInDevices, type SignedInDevicesProps } from "./signed-in-devices.
 import { signInMethodName, SignInMethods, type SignInMethodsProps } from "./sign-in-methods.tsx"
 import { ApiTokens, type ApiTokensProps } from "./api-tokens.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
-import { TwoFactorStep, twoFactorStep } from "./two-factor.ts"
+import { TwoFactorProof, twoFactorProof, TwoFactorStep, twoFactorStep } from "./two-factor.ts"
 
 /** The messages shown when an action failed without a message of its own. */
 export const PROFILE_FAILURES = {
@@ -45,6 +44,8 @@ export interface ProfileValues {
   currentPassword: string
   newPassword: string
   otp: string
+  /** The password or the authenticator code typed to turn two-factor off. */
+  twoFactorProof: string
 }
 
 /** A message per field, keyed like {@link ProfileValues}; a field without one is absent or `null`. */
@@ -74,6 +75,7 @@ const FIELD_ORDER: readonly (keyof ProfileValues)[] = [
   "currentPassword",
   "newPassword",
   "otp",
+  "twoFactorProof",
 ]
 
 /** Which actions are in flight. */
@@ -126,7 +128,13 @@ export interface ProfileScreenProps {
   onFinishTotp?: () => void
   /** Drops an enrolment under way, when the person closes the set-up dialog. */
   onCancelTotp?: () => void
-  onDisableTotp?: () => void
+  /**
+   * Called when the person submits the "Turn off" dialog, with what `values.twoFactorProof` holds:
+   * the password, or the code for an account with no password.
+   */
+  onDisableTotp?: (proof: TwoFactorProof) => void
+  /** Drops what was typed in the "Turn off" dialog and its errors, when the person closes it. */
+  onCancelDisableTotp?: () => void
   /**
    * Registering a push device needs the browser's push manager. Without it there is no "Add
    * device" button.
@@ -145,7 +153,8 @@ export interface ProfileScreenProps {
  * The profile page as a list of settings: name and e-mail address, then password and two-factor
  * sign-in, then the signed-in devices, the API tokens and push devices. Each row shows its value
  * and one action; a form opens in a dialog only when asked, and closes once its change went
- * through. Turning two-factor off asks first.
+ * through. Turning two-factor off asks for the password first, or for a code from the authenticator
+ * app when the account has no password.
  * Deleting the account sits last, in a closed "Danger zone".
  */
 export function ProfileScreen(
@@ -172,6 +181,7 @@ export function ProfileScreen(
     onFinishTotp,
     onCancelTotp,
     onDisableTotp,
+    onCancelDisableTotp,
     onRegisterPush,
     onRemovePush,
     accountDeletion,
@@ -180,12 +190,14 @@ export function ProfileScreen(
 ): JSX.Element {
   const step = user ? twoFactorStep(user.mfa, enrolment !== null) : null
   const providerOnly = providerOnlyNames(methods?.methods)
+  const proof = twoFactorProof(providerOnly !== null)
   const fieldRefs = {
     firstName: useRef<HTMLInputElement>(null),
     lastName: useRef<HTMLInputElement>(null),
     currentPassword: useRef<HTMLInputElement>(null),
     newPassword: useRef<HTMLInputElement>(null),
     otp: useRef<HTMLInputElement>(null),
+    twoFactorProof: useRef<HTMLInputElement>(null),
   }
   const enableButton = useRef<HTMLButtonElement>(null)
   const disableButton = useRef<HTMLButtonElement>(null)
@@ -200,6 +212,10 @@ export function ProfileScreen(
     setChangingPassword(false)
     onCancelPassword?.()
   }
+  const cancelDisable = () => {
+    setConfirmingDisable(false)
+    onCancelDisableTotp?.()
+  }
 
   useSucceeded(
     pending.profile,
@@ -210,6 +226,11 @@ export function ProfileScreen(
     pending.password,
     Boolean(errors.password || errors.fields.currentPassword || errors.fields.newPassword),
     () => setChangingPassword(false),
+  )
+  useSucceeded(
+    pending.totp,
+    Boolean(errors.totp || errors.fields.twoFactorProof),
+    () => setConfirmingDisable(false),
   )
 
   // A failed submit lands the person on the field to fix.
@@ -380,7 +401,9 @@ export function ProfileScreen(
                 )}
             />
           </SettingList>
-          {step !== TwoFactorStep.Confirm && <ErrorState message={errors.totp} />}
+          {step !== TwoFactorStep.Confirm && !confirmingDisable && (
+            <ErrorState message={errors.totp} />
+          )}
         </SettingGroup>
       </div>
 
@@ -662,21 +685,76 @@ export function ProfileScreen(
         </Modal>
       )}
 
-      {confirmingDisable && (
-        <ConfirmDialog
-          title="Turn off two-factor sign-in?"
-          message="Sign-in will ask only for your password. You can turn it on again at any time."
-          confirmLabel="Turn off"
-          cancelLabel="Keep it on"
-          tone="danger"
-          dataE2E="totp-disable-confirm"
-          onCancel={() => setConfirmingDisable(false)}
-          onConfirm={() => {
-            setConfirmingDisable(false)
-            onDisableTotp?.()
-          }}
-        />
-      )}
+      <Modal
+        open={confirmingDisable && step === TwoFactorStep.Disable}
+        onClose={cancelDisable}
+        title="Turn off two-factor sign-in?"
+        cancelLabel="Close"
+        tone="danger"
+        dataE2E="totp-disable-confirm"
+      >
+        <ScreenForm
+          pending={pending.totp}
+          onSubmit={() => onDisableTotp?.(proof)}
+        >
+          <Stack>
+            <p class="text-sm text-muted">
+              {proof === TwoFactorProof.Code
+                ? "Sign-in will no longer ask for a code. Enter a code from your authenticator app to confirm it is you."
+                : "Sign-in will ask only for your password. Enter your password to confirm it is you."}
+              {" "}
+              You can turn two-factor on again at any time.
+            </p>
+            <Field
+              id="totp-disable-proof"
+              label={proof === TwoFactorProof.Code ? "Code from your app" : "Password"}
+              error={errors.fields.twoFactorProof}
+              required
+            >
+              {proof === TwoFactorProof.Code
+                ? (
+                  <Input
+                    ref={fieldRefs.twoFactorProof}
+                    data-e2e="totp-disable-proof"
+                    name="otp"
+                    inputMode="numeric"
+                    autocomplete="one-time-code"
+                    value={values.twoFactorProof}
+                    onInput={(e) => onValueChange("twoFactorProof", e.currentTarget.value)}
+                    required
+                  />
+                )
+                : (
+                  <Input
+                    ref={fieldRefs.twoFactorProof}
+                    data-e2e="totp-disable-proof"
+                    name="password"
+                    type="password"
+                    autocomplete="current-password"
+                    value={values.twoFactorProof}
+                    onInput={(e) => onValueChange("twoFactorProof", e.currentTarget.value)}
+                    required
+                  />
+                )}
+            </Field>
+            <ErrorState message={errors.totp} />
+            <DialogButtons
+              onCancel={cancelDisable}
+              submit={
+                <Button
+                  type="submit"
+                  variant="danger"
+                  data-e2e="totp-disable-submit"
+                  busy={pending.totp}
+                  busyLabel="Turning off..."
+                >
+                  Turn off
+                </Button>
+              }
+            />
+          </Stack>
+        </ScreenForm>
+      </Modal>
     </Stack>
   )
 }
