@@ -95,7 +95,11 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
   >(null)
   /** The last move of a group's data that worked, until the person closes its dialog. */
   const moved = signal<{ groupId: string; toGroupId: string; count: number } | null>(null)
-  const loading = signal(false)
+  /**
+   * True from the start, and again after a reset, until a read has answered: an empty list that
+   * has not been read is not "no groups".
+   */
+  const loading = signal(true)
   const creating = signal(false)
   const error = signal<string | null>(null)
   /** The last list read failed; cleared by the next read that succeeds. */
@@ -290,7 +294,7 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     name.value = ""
     error.value = null
     loadError.value = null
-    loading.value = false
+    loading.value = true
     creating.value = false
     inFlight = null
     queued = null

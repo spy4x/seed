@@ -31,7 +31,7 @@ test.describe("group list and settings pages", () => {
       await expect(page.getByRole("heading", { level: 1, name: "Groups" })).toBeVisible()
       await expect(page.locator("[data-e2e=group-item-name]")).toHaveCount(1)
 
-      await page.getByRole("button", { name: "New group" }).click()
+      await page.locator("[data-e2e=group-new]").click()
       const dialog = page.getByRole("dialog", { name: "New group" })
       await dialog.getByLabel("Name").fill("Trip")
       await dialog.getByRole("button", { name: "Create group" }).click()

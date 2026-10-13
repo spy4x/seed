@@ -28,7 +28,7 @@ test.describe("group billing", () => {
 
       await page.getByRole("navigation", { name: "Main navigation" })
         .getByRole("link", { name: "Groups" }).click()
-      await page.getByRole("button", { name: "New group" }).click()
+      await page.locator("[data-e2e=group-new]").click()
       await page.getByRole("dialog", { name: "New group" }).getByLabel("Name").fill("Club")
       await page.getByRole("button", { name: "Create group" }).click()
       await page.getByRole("link", { name: "Settings of Club" }).click()

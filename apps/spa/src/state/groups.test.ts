@@ -487,6 +487,29 @@ describe("groups store", () => {
     expect(sent).toBe(1)
   })
 
+  it("is loading from the start until the first read answers", async () => {
+    const answer = deferred<GroupPage>()
+    const { store } = harness({ read: () => answer.promise })
+    expect(store.loading.value).toBe(true)
+
+    const read = store.refresh()
+    expect(store.loading.value).toBe(true)
+
+    answer.resolve({ groups: [item("a", "1")], nextCursor: null })
+    await read
+    expect(store.loading.value).toBe(false)
+  })
+
+  it("is loading again after a reset, for the next person's first read", async () => {
+    const { store } = harness({ pages: [{ groups: [item("a", "1")], nextCursor: null }] })
+    await store.refresh()
+    expect(store.loading.value).toBe(false)
+
+    store.reset()
+
+    expect(store.loading.value).toBe(true)
+  })
+
   it("forgets everything on reset", async () => {
     const { store } = harness({ pages: [{ groups: [item("a", "1")], nextCursor: null }] })
     await store.refresh()

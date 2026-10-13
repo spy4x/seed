@@ -60,6 +60,8 @@ describe("GroupSettingsView", () => {
 
   it("says the group does not exist, and shows no other group, for an address that names a group the person is not in", () => {
     groupsStore.groups.value = [known]
+    // The list has been read: until then the page cannot say which groups exist.
+    groupsStore.loading.value = false
 
     const html = render(strangerId)
 
