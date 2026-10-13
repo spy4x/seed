@@ -44,7 +44,7 @@ const FEATURES = [
   {
     title: "Deploy to your own server",
     text: "Docker Compose for development and one-server production: Traefik with certificates, " +
-      "Postgres, Valkey, MinIO, Loki, Prometheus and Grafana.",
+      "Postgres, Valkey, MinIO, VictoriaMetrics, VictoriaLogs and Grafana.",
   },
   {
     title: "A public website",

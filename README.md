@@ -54,7 +54,7 @@ Docker).
 ```sh
 deno task vapid-key:create   # web push keys → infra/configs/vapid.json
 deno task proxy:start        # Traefik
-deno task dev                # Postgres, Valkey, MinIO, API, worker, SPA, Loki, Prometheus, Grafana
+deno task dev                # Postgres, Valkey, MinIO, API, worker, SPA and the monitoring
 ```
 
 Compose joins every service that Traefik routes to a Docker network named `proxy`. `proxy:start` and
@@ -64,8 +64,13 @@ alone, so a fresh machine needs no extra command.
 Then open `http://<DOMAIN>` from the env file: http://app.localhost with the values in
 `infra/envs/.env.example`.
 
-Promtail, node-exporter and cAdvisor watch the whole host, so they are off by default. Set
-`COMPOSE_PROFILES=host-monitoring` in the env file to start them too.
+Metrics and logs go to VictoriaMetrics and VictoriaLogs, with Grafana on top at
+`http://localhost:3000` ([Admin consoles](#admin-consoles)). `COMPOSE_PROFILES=monitoring` in the
+env file runs those three in this project; without it, `VM_REMOTE_WRITE_URL` and `VLOGS_URL` send
+the same metrics and logs to a monitoring server you already have.
+[docs/stack.md](docs/stack.md#monitoring) describes both modes.
+node-exporter and cAdvisor watch the whole host, so they are off by default: add `host-monitoring`
+to `COMPOSE_PROFILES` to start them too.
 
 To try the MPA in Compose, see "The SPA and the MPA" below. Stop the proxy with
 `deno task proxy:stop`. Compose applies pending migrations on every start, in the one-shot
@@ -103,7 +108,7 @@ The screenshots and the GIF use a throw-away database and a made-up user;
 <details>
 <summary>How the parts fit together</summary>
 
-<img src="docs/architecture.svg" alt="Architecture diagram. Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is the public website on Fresh, server-rendered, calling the API only for the newsletter. Servers: apps/api on Hono (auth, groups, CQRS dispatch, web push) and apps/worker, which drains outbox_events. Data: Postgres is authoritative and Valkey is the API cache; Docker Compose also runs Traefik, MinIO, Loki, Prometheus and Grafana. Shared code: libs/domain, libs/server, libs/ui and the @spy4x packages on JSR." width="860">
+<img src="docs/architecture.svg" alt="Architecture diagram. Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is the public website on Fresh, server-rendered, calling the API only for the newsletter. Servers: apps/api on Hono (auth, groups, CQRS dispatch, web push) and apps/worker, which drains outbox_events. Data: Postgres is authoritative and Valkey is the API cache; Docker Compose also runs Traefik, MinIO, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui and the @spy4x packages on JSR." width="860">
 
 </details>
 
@@ -131,7 +136,7 @@ The screenshots and the GIF use a throw-away database and a made-up user;
   WebSocket; everything is an ES module. The servers run on Deno 2 in Docker on any Linux host you
   control, and the clients run in any modern browser.
 - **Operations included.** Docker Compose for development and single-node production: Traefik,
-  Postgres, Valkey, MinIO, Loki, Prometheus and Grafana.
+  Postgres, Valkey, MinIO, VictoriaMetrics, VictoriaLogs and Grafana.
 
 **Use it if** you are starting a multi-user web product and want auth, tenancy and operations
 settled before the first feature. **Skip it if** you deploy to serverless functions rather than a server
@@ -188,9 +193,9 @@ more than usual:
 2. Run `deno task proxy:start` on it: `deno task deploy` restarts the app's containers but never
    the proxy, so the proxy that is already running keeps serving its dashboard at
    `proxy.<DOMAIN>` until then.
-3. The next deploy publishes Grafana on `127.0.0.1:3000` and the MinIO console on
-   `127.0.0.1:9001`; when something on the server already uses one of them, the deploy fails with
-   "port is already allocated". Set `GRAFANA_HOST_PORT` or `MINIO_CONSOLE_HOST_PORT` in the env
+3. The next deploy publishes Grafana (with the `monitoring` profile) on `127.0.0.1:3000` and the
+   MinIO console on `127.0.0.1:9001`; when something on the server already uses one of them, the
+   deploy fails with "port is already allocated". Set `GRAFANA_HOST_PORT` or `MINIO_CONSOLE_HOST_PORT` in the env
    file to a free `127.0.0.1:<port>` first ([Admin consoles](#admin-consoles)).
 
 That deploy also recreates the project's network, which no longer has a fixed subnet, so every

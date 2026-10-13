@@ -323,6 +323,44 @@ These cost real time to find. Do not rediscover them.
     them. Going forward is safe: old code runs against the new column, and compose runs the
     migration before the new API starts.
 
+11. **Monitoring moved from Prometheus, Loki and promtail to VictoriaMetrics, VictoriaLogs and
+    Vector (#159).** Which monitoring containers start is now decided by `COMPOSE_PROFILES`
+    (docs/stack.md, "Monitoring"); an env file written before this change has no `monitoring`
+    profile, so a deploy with it starts neither database nor Grafana. Compose also leaves the
+    containers of services that no longer exist running, and does not stop a container whose
+    profile is now off, such as the old Grafana in the external mode; the old data stays on disk.
+    **Deploy steps**, once, on the first deploy of this change:
+
+    1. Before deploying, in the env file you deploy (`infra/envs/.env.prod`): add `monitoring`
+       to `COMPOSE_PROFILES` (for the live demo, `COMPOSE_PROFILES=mpa,monitoring`), or leave it
+       out and set `VM_REMOTE_WRITE_URL` and `VLOGS_URL` for the external mode. Set
+       `ALERT_NTFY_URL`, `ALERT_NTFY_TOPIC` and `ALERT_NTFY_TOKEN` if alerts should reach ntfy.
+       The `LOKI_*`, `PROMTAIL_*` and `PROMETHEUS_*` lines are no longer read and can go.
+    2. `deno task deploy`. On a server that still holds Postgres 16 data it stops at "Starting
+       the app" until `deno task db:upgrade-18` has run there (docs/postgres-18-upgrade.md).
+    3. On the server, remove what the new files no longer run. The Compose task is the one the
+       deploy uses, so it reads the same env file and the same container engine, and it touches
+       this project's containers only. Replace `<app directory>` with `PATH_ON_SERVER`:
+       ```sh
+       cd <app directory>
+       export PATH="$HOME/.deno/bin:$PATH"
+       # Loki, Prometheus, promtail and minio-configure: their services are gone from the files.
+       deno task compose up -d --remove-orphans
+       # External mode only: the old Grafana, which the files still define but no longer start.
+       deno task compose rm --stop --force grafana
+       # Prometheus' data and Loki's two buckets. Nothing else under .volumes goes.
+       sudo rm -rf .volumes/prometheus .volumes/minio/loki-data .volumes/minio/loki-ruler
+       ```
+       `deno task compose ps --all` then lists no `loki`, `prometheus`, `promtail` or
+       `minio-configure`, and in the external mode no `grafana`. Postgres, Valkey and MinIO keep
+       running, and their data (`.volumes/postgres18`, `.volumes/kv`, the rest of `.volumes/minio`)
+       is not touched; MinIO's container restarts once during the deploy, because its start
+       command changed.
+    4. In Grafana, delete the Loki and Prometheus data sources if someone added them by hand:
+       they are stored in `.volumes/grafana`, which the deploy keeps, and they no longer answer.
+       The VictoriaMetrics and VictoriaLogs data sources come from
+       `infra/configs/grafana-datasources.yml`.
+
 ## Running it
 
 ```sh
@@ -473,7 +511,8 @@ hint with `profileStore.refresh()`, so a second tab follows without a reload.
    event and listener names and the request id, and counted in `event_listener_failures_total`
    (a `createCounter` from `@spy4x/platform/universal/metrics`). Register listeners with `subscribe` (not `eventBus.on`) so the
    name is known, and mark each best-effort or durable in `apps/api/cqrs/+init.ts`. Nothing exports
-   the counter yet (`renderPrometheus` prints it); the scrape endpoint and the alert rule are #159. An outbox row has no payload,
+   the counter yet (`renderPrometheus` prints it). Once the API serves it, add a scrape job to
+   `infra/configs/vmagent.yml` and a rule to `infra/configs/alerts.yml` (docs/stack.md, "Monitoring"). An outbox row has no payload,
    so a listener that needs the event's data cannot be durable until it has one. An audit record
    is therefore never a listener: sign-up, sign-in, sign-out and the profile change write their
    `auth_audits` row with `tx.authAudit.insert` in the command's transaction, so a failed row

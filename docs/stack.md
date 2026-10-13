@@ -42,18 +42,140 @@ Defined in `infra/compose/`:
   published port. Its pool (at most 10 connections) plus the API's (at most 10, plus one `LISTEN`
   connection) and postgres-exporter stay under Postgres' `max_connections=30`; raise that before
   raising either pool. `WORKER_CPU_LIMIT` and `WORKER_MEM_LIMIT` default to 0.5 CPU and 256M.
-- **MinIO** - object storage, with a one-shot configure container.
+- **MinIO** - object storage.
 - **Traefik** - reverse proxy, production compose only.
-- **Loki, Prometheus, Grafana, postgres-exporter** - this project's logs and metrics. Loki stores
-  what is pushed to it; nothing pushes until Promtail runs.
-- **Promtail, node-exporter, cAdvisor** - watch the whole host (all containers' logs, host CPU,
-  disk, network). Behind the `host-monitoring` compose profile, off by default so a shared server
-  does not get a second copy of its own monitoring. Turn on with
-  `COMPOSE_PROFILES=host-monitoring` in the env file; Prometheus keeps their scrape jobs and shows
+- **vmagent, Vector, postgres-exporter** - collect this project's metrics and logs and send them
+  on; see "Monitoring" below. They always run.
+- **VictoriaMetrics, VictoriaLogs, Grafana, vmalert, Alertmanager** - store, show and alert on
+  them. Behind the `monitoring` compose profile.
+- **node-exporter, cAdvisor** - watch the whole host (CPU, disk, network, every container's
+  resources). Behind the `host-monitoring` compose profile, off by default so a shared server
+  does not get a second copy of its own monitoring. vmagent keeps their scrape jobs and shows
   them as down while they are off.
 - Images are pinned to a version (postgres-exporter to a digest, because upstream never tagged the
   build in use); change a pin on purpose, not by a moving `latest`.
 - Traefik router, service and middleware names all end in `-${PROJECT}`.
+
+## Monitoring
+
+The stack is VictoriaMetrics for metrics and VictoriaLogs for logs, the same as the owner's
+servers run, with Grafana on top. The API and the worker know nothing about it: they write
+their log to standard output, and everything else happens around them.
+
+Two parts always run, in every mode:
+
+- **vmagent** scrapes the targets in `infra/configs/vmagent.yml` (itself, Vector, the Postgres
+  exporter, and the bundled VictoriaMetrics, node-exporter and cAdvisor when they run) and pushes
+  every sample on, with a `project` label.
+- **Vector** reads the log of every container of this Compose project, and of no other container
+  on the host, and sends each line on with `project`, `container_name` and `stream`
+  (`infra/configs/vector.yml`). It picks them by the label Compose sets
+  (`com.docker.compose.project`), which is exact: a project named `app` does not get the logs of
+  a project named `app-staging`. It also counts the API's answers from its request log as
+  `api_requests_total`, one series per status class (`status="2xx"` to `"5xx"`), because the API
+  has no metrics endpoint yet. `tests/monitoring-alerts.test.ts` holds the pattern to the lines
+  the API's logger writes.
+
+Where they send is the only difference between the two modes, and the env file alone decides it.
+
+**Bundled** (the default of `infra/envs/.env.example`): `COMPOSE_PROFILES` contains `monitoring`,
+and `VM_REMOTE_WRITE_URL` and `VLOGS_URL` are empty. Compose then also runs VictoriaMetrics,
+VictoriaLogs, Grafana, vmalert and Alertmanager, and vmagent and Vector send to them. Grafana is on
+`127.0.0.1:3000` of the machine, with no public address (README, "Admin consoles"; user `admin`,
+password `GRAFANA_PASS`), with both data sources already there
+(`infra/configs/grafana-datasources.yml`); it downloads the VictoriaLogs data source plugin, at
+the version pinned in the Compose file, at its first start. Both databases keep 14 days, under
+`.volumes/victoriametrics` and `.volumes/victorialogs`.
+
+**External**: take `monitoring` out of `COMPOSE_PROFILES` and name the other server:
+
+```sh
+VM_REMOTE_WRITE_URL=https://metrics.example.com/api/v1/write
+VM_REMOTE_WRITE_USERNAME=...
+VM_REMOTE_WRITE_PASSWORD=...
+VLOGS_URL=https://logs.example.com
+VLOGS_USERNAME=...
+VLOGS_PASSWORD=...
+```
+
+The user names and passwords are HTTP basic auth; leave them empty for a server that asks for
+none. A password may hold any character. None of the five bundled containers starts; but Compose
+does not stop one that is already running when its profile is turned off, so a project that ran
+the bundled mode before removes them once, by name:
+
+```sh
+deno task compose rm --stop --force victoriametrics victorialogs vmalert alertmanager grafana
+```
+
+Their data stays in `.volumes/victoriametrics`, `.volumes/victorialogs` and `.volumes/grafana`. What vmagent cannot send waits on disk
+(`.volumes/vmagent`, up to 1 GiB) and is sent when the server is back; Vector retries too, with a
+small queue in memory. Grafana, the alert rules and the retention are then the other server's.
+
+A project started with neither the profile nor the two addresses still runs: vmagent and Vector
+keep trying an address that does not exist, and nothing is stored.
+
+### Alerts
+
+Bundled mode only. vmalert evaluates `infra/configs/alerts.yml` every minute:
+
+- **ApiErrors** - the API answered 5 or more requests with a 5xx status within 5 minutes.
+- **DataDiskSpaceLow** - the disk holding `.volumes` (Postgres' data too) has under 2 GiB free
+  for 10 minutes. VictoriaMetrics reports this about its own storage and vmagent scrapes it, so no
+  host exporter is needed.
+- **HostDiskSpaceLow** - any disk of the host has under 10% free for 10 minutes. It has data only
+  with the `host-monitoring` profile.
+
+Alertmanager sends what fires, and what resolves, to ntfy: `ALERT_NTFY_URL` (the ntfy server),
+`ALERT_NTFY_TOPIC` (default `alerts`) and `ALERT_NTFY_TOKEN` (an access token, empty for an open
+topic). ntfy formats the message itself (`?template=alertmanager`, ntfy 2.14 or later), and each
+message starts with the project's name, so several projects can share a topic. With
+`ALERT_NTFY_URL` empty the alerts show in vmalert and Alertmanager and are sent nowhere. In the
+external mode, give the same rules file to the other server's vmalert: every series carries the
+`project` label.
+
+There is no alert for failing event listeners yet: the API counts them
+(`event_listener_failures_total`) but exposes no endpoint to scrape.
+
+### The Docker socket
+
+Vector reads the container logs through `/var/run/docker.sock`, in every deployment. The mount
+says `:ro`, but that does not limit anything: the socket is the whole Docker API, and a read-only
+mount of it still accepts every call, such as starting a container that mounts the host's disk.
+Whoever controls the Vector container controls the host. Traefik's mount in
+`infra/compose/compose.proxy.yml` is the same.
+
+This is accepted for now, and the container is given nothing else to make it harder to take over:
+it has no Linux capability and cannot gain one (`cap_drop: [ALL]`, `no-new-privileges`), its file
+system is read-only, it publishes no port, and it reads only its own tracked config. It still runs
+as root, because the socket belongs to root. A proxy in front of the socket that allows only
+listing containers and reading their events and logs would close the gap; it is not there yet.
+
+### Trying the external mode
+
+A second VictoriaMetrics and VictoriaLogs, each asking for a password, stand in for the other
+server on the project's own network (`app` is `PROJECT`):
+
+```sh
+docker run -d --name other-vm --network app_default victoriametrics/victoria-metrics:v1.146.0 \
+  -httpAuth.username=shipper -httpAuth.password=<password>
+docker run -d --name other-vl --network app_default victoriametrics/victoria-logs:v1.51.0 \
+  -httpAuth.username=shipper -httpAuth.password=<password>
+```
+
+Set `COMPOSE_PROFILES=` (without `monitoring`), `VM_REMOTE_WRITE_URL=http://other-vm:8428/api/v1/write`,
+`VLOGS_URL=http://other-vl:9428` and the user name and password in `infra/envs/.env`, run
+`deno task dev`, open any API address, and after a minute ask
+the other server:
+
+```sh
+docker exec app-vmagent wget -qO- \
+  'http://shipper:<password>@other-vm:8428/api/v1/query?query=api_requests_total'
+docker exec app-vmagent wget -qO- \
+  'http://shipper:<password>@other-vl:9428/select/logsql/query?query=container_name:app-api&limit=1'
+```
+
+Each prints a line of JSON: the counter with `"project":"app"`, and one line of the API's log.
+`docker rm -f other-vm other-vl` removes the stand-ins.
 
 ## Error tracking
 
