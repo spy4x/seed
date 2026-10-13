@@ -184,7 +184,7 @@ clears it.
 ## Afterwards
 
 The old data directory and the dump stay on the server until you remove them by hand. Keep them
-until you trust the new database and a backup of it exists (`infra/scripts/db-backup-create.ts`).
+until you trust the new database and a backup of it exists (README, "Backups").
 Once `.volumes/postgres` is gone, rolling back is no longer possible.
 
 ```bash

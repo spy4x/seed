@@ -12,6 +12,7 @@ It runs on every pull request and every push to `main`, in this order:
 ```
 check ──┬── build ────────┐
         ├── integration   │   (Postgres and Valkey services)
+        ├── backup-restore│   (Postgres service)
         └── e2e-mpa ──────┴── e2e-spa ──┬── e2e-smoke   (pull request and tag)
                                         └── e2e-full    (push to `main`)
 ```
@@ -22,6 +23,9 @@ check ──┬── build ────────┐
   (user `tester`, password `ci-throwaway`, database `template_test`, reachable as host `postgres`)
   and a `valkey/valkey:8.1` service (password `ci-throwaway`, host `valkey`). It waits over TCP for
   both servers, see docs/handoff.md trap 3.
+- `backup-restore` runs `infra/backup/restore.test.sh` in the `postgres:18.6` image against the same
+  Postgres service: it backs a database up with restic, restores it into an empty one and compares
+  them (README, "Backups").
 - `e2e-mpa` and `e2e-spa` run the website's browser tests and the SPA behind nginx
   (`e2e/mpa/run.sh`, `e2e/spa/run.sh`).
 - `e2e-smoke` runs the product's smoke set on every pull request and tag:
@@ -155,7 +159,7 @@ Or via the Web UI:
 
 ## Pipeline Behavior
 
-- Pull request: `check`, then `build`, `integration` and `e2e-mpa` in parallel, then `e2e-spa`,
+- Pull request: `check`, then `build`, `integration`, `backup-restore` and `e2e-mpa` in parallel, then `e2e-spa`,
   then `e2e-smoke`.
 - Push to `main`: the same steps, with `e2e-full` (every browser test) in place of `e2e-smoke`.
 - Push to any other branch: nothing. Open a pull request to run the pipeline.

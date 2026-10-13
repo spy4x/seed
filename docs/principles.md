@@ -35,7 +35,8 @@
 ## 5. Data Ownership
 
 - Users own data.
-- Backups supported.
+- Backups supported: a daily restic snapshot of the database, and a restore that a test runs
+  (README, "Backups").
 - Schema is open and migratable.
 
 ---

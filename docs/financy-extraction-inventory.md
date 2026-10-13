@@ -42,7 +42,7 @@ Three things worth knowing before planning any of this work.
 | Request logging middleware | `apps/api/middlewares/log.ts` | The template has `logger()` from Hono only. |
 | Log service | `apps/api/services/log.ts` | Consistent structured logging. |
 | e2e helpers | `e2e/shared/{auth-helpers,test-helpers}.ts` | Signed-in-session fixtures; needed before any offline→reconnect e2e. |
-| DB backup script | `infra/scripts/db-backup-create.ts` | Generic ops tooling. |
+| DB backup script | `infra/backup/backup.sh`            | Generic ops tooling. |
 | Deploy scripts | `infra/scripts/{deploy.ts,+lib.ts}`, `infra/deploy/*.txt` | Deployment file lists and driver; the template's deploy story is thin. |
 
 ## Take with redesign (the idea is good, Financy's implementation is not the target)
