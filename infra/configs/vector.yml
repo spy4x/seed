@@ -6,6 +6,9 @@
 sources:
   containers:
     type: docker_logs
+    # Not the Docker socket: the proxy in front of it, which passes on only the read calls this
+    # source makes (infra/compose/compose.shared.yml, `socket-proxy`).
+    docker_host: tcp://socket-proxy:2375
     # The label Compose puts on every container of this project. It is an exact match; a name
     # prefix would also take the containers of a project called `<this one>-staging`. The value
     # is Compose's own name for the project, which it writes in lower case whatever PROJECT says:

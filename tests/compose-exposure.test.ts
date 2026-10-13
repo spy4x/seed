@@ -21,7 +21,7 @@ interface ComposeService {
   container_name?: string
   image?: string
   command?: string[]
-  environment?: string[]
+  environment?: string[] | Record<string, string>
   labels?: string[]
   networks?: string[]
   ports?: string[]
@@ -46,6 +46,14 @@ async function services(name: string): Promise<Record<string, ComposeService>> {
 function label(service: ComposeService | undefined, key: string): string | undefined {
   const prefix = `${key}=`
   return service?.labels?.find((entry) => entry.startsWith(prefix))?.slice(prefix.length)
+}
+
+/** A service's environment as `NAME=value` entries, whichever of Compose's two forms it is in. */
+function environment(service: ComposeService | undefined): string[] {
+  const entries = service?.environment ?? []
+  return Array.isArray(entries)
+    ? entries
+    : Object.entries(entries).map(([name, value]) => `${name}=${value}`)
 }
 
 /** The names of the routers a service's labels define. */
@@ -97,6 +105,47 @@ Deno.test("the MinIO console and Grafana are published on this machine only by d
   }
 })
 
+// Everything that watches the project. A person opens Grafana only, on this machine's own address
+// (the test above); none of them is the reverse proxy's to serve.
+const MONITORING = [
+  "vmagent",
+  "vector",
+  "socket-proxy",
+  "postgres-prometheus-exporter",
+  "victoriametrics",
+  "victorialogs",
+  "vmalert",
+  "alertmanager",
+  "grafana",
+  "nodeexporter",
+  "cadvisor",
+]
+
+Deno.test("no monitoring service joins the proxy network, has a Traefik label or is given a public address", async () => {
+  const reachable: string[] = []
+  let checked = 0
+  for (const file of ["shared", "dev", "prod"]) {
+    const all = await services(file)
+    for (const name of MONITORING) {
+      const service = all[name]
+      if (!service) continue
+      checked++
+      if (service.networks?.includes("proxy")) reachable.push(`${file}: ${name} is on proxy`)
+      for (const entry of service.labels ?? []) {
+        if (entry.startsWith("traefik.")) reachable.push(`${file}: ${name} has ${entry}`)
+      }
+      for (const entry of environment(service)) {
+        // A host under the product's domain, or Grafana's own setting for its public address.
+        if (/DOMAIN\b/.test(entry) || /^GF_SERVER_(ROOT_URL|DOMAIN)=/.test(entry)) {
+          reachable.push(`${file}: ${name} is told ${entry}`)
+        }
+      }
+    }
+  }
+  expect(reachable).toEqual([])
+  expect(checked).toBeGreaterThanOrEqual(MONITORING.length)
+})
+
 Deno.test("Postgres and Valkey are published on this machine only by default", async () => {
   const { db, kv } = await services("shared")
   expect(db.ports).toEqual(["${DB_HOST_PORT:-127.0.0.1:${DB_PORT}}:5432"])
@@ -110,7 +159,7 @@ Deno.test("Postgres and Valkey are published on this machine only by default", a
 
 Deno.test("Valkey does not start without a password and asks for it on every connection", async () => {
   const { kv } = await services("shared")
-  const password = kv.environment?.find((entry) => entry.startsWith("KV_PASSWORD="))
+  const password = environment(kv).find((entry) => entry.startsWith("KV_PASSWORD="))
   expect(password).toMatch(/^KV_PASSWORD=\$\{KV_PASSWORD:\?[^}]+\}$/)
   expect(kv.command?.join(" ")).toContain('--requirepass "$$KV_PASSWORD"')
 })
@@ -171,7 +220,9 @@ Deno.test("no project network claims a fixed subnet, so a second project gets a 
       expect({ file, name, ipam: network?.ipam }).toEqual({ file, name, ipam: undefined })
     }
     // Only the proxy's network has one name for every project, and the engine owns its addresses.
-    expect(Object.keys(networks).filter((name) => name !== "proxy")).toEqual([])
+    // The one other network is Vector's way to the Docker socket proxy, named after the project.
+    expect(Object.keys(networks).filter((name) => name !== "proxy"))
+      .toEqual(file === "shared" ? ["docker-socket"] : [])
     expect(networks.proxy).toEqual({ external: true })
   }
 })
@@ -228,7 +279,7 @@ Deno.test("a container on the shared proxy network reaches no service by a name 
   const plain: string[] = []
   for (const name of onProxy) {
     for (const file of files) {
-      for (const entry of file[name]?.environment ?? []) {
+      for (const entry of environment(file[name])) {
         const value = entry.slice(entry.indexOf("=") + 1)
         if (hostsIn(value).some((host) => names.has(host))) plain.push(`${name}: ${entry}`)
       }

@@ -133,7 +133,6 @@ services:
     environment:
       - MINIO_ROOT_USER=${MINIO_USER}
       - MINIO_ROOT_PASSWORD=${MINIO_PASS}
-      - MINIO_PROMETHEUS_AUTH_TYPE=public
     volumes:
       - ../../.volumes/minio:/data:Z
     healthcheck:
@@ -199,24 +198,60 @@ services:
         max-size: '10m'
         max-file: '3'
 
+  # The only service here that mounts the Docker socket. That socket is the whole Docker API, and
+  # `:ro` on the mount stops no call, so this proxy stands between it and Vector and passes on
+  # only the read calls Vector's `docker_logs` source makes: every other method and path is
+  # refused (docs/stack.md, "The Docker socket"). It listens on a network that only Vector joins,
+  # answers Vector's address only, has no route to anywhere else and publishes no port.
+  socket-proxy:
+    container_name: ${PROJECT}-socket-proxy
+    image: wollomatic/socket-proxy:1.13.1
+    restart: unless-stopped
+    # The socket belongs to root on the host, and its group's number differs from host to host.
+    # Root opens it as its owner, with every capability dropped.
+    user: '0:0'
+    command:
+      - '-listenip=0.0.0.0'
+      # Only Vector's address, looked up by its service name on each call. The network alone is
+      # no barrier: the host, and so any process on the server, can reach an address on it.
+      - '-allowfrom=vector'
+      # The whole path must match (`$$` is a dollar sign for Compose). A container's `json` is
+      # `docker inspect`; `archive`, `export`, `exec` and every other path are left out.
+      - '-allowGET=^(/v1\.[0-9]+)?/(_ping|version|events|containers/json|containers/[A-Za-z0-9_.-]+/(json|logs))$$'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    security_opt:
+      # The Docker socket is not labelled for containers on an SELinux host.
+      - label=disable
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    read_only: true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: '32M'
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+    networks:
+      - docker-socket
+
   # Ships the logs of this Compose project's containers, and no other container's, to
   # VictoriaLogs. It also counts the API's answers by status class as a metric for vmagent.
   #
-  # It reads the logs through the Docker socket, and that socket is the whole Docker API: `:ro`
-  # only stops the socket file being replaced, it does not stop any call. Whoever controls this
-  # container can start a container that mounts the host's disk. So it gets nothing else: no
-  # Linux capability, no way to gain one, a read-only file system, no published port
-  # (docs/stack.md, "The Docker socket").
+  # It reads the logs from the Docker API through `socket-proxy` above, which lets it list
+  # containers, inspect them, read their logs and follow events, and nothing else. It still gets
+  # no Linux capability, no way to gain one, a read-only file system and no published port.
   vector:
     container_name: ${PROJECT}-vector
     image: timberio/vector:0.59.0-alpine
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
       - ../../infra/configs/vector.yml:/etc/vector/vector.yaml:ro,Z
     security_opt:
-      # The Docker socket is not labelled for containers on an SELinux host.
-      - label=disable
       - no-new-privileges:true
     cap_drop: [ALL]
     read_only: true
@@ -255,6 +290,11 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
+    depends_on:
+      - socket-proxy
+    networks:
+      - default
+      - docker-socket
 
   postgres-prometheus-exporter:
     container_name: ${PROJECT}-postgres-prometheus-exporter
@@ -873,3 +913,6 @@ services:
 networks:
   proxy:
     external: true
+  # Vector's way to `socket-proxy`, and nothing else's. `internal`: no route out of it.
+  docker-socket:
+    internal: true
