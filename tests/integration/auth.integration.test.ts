@@ -26,6 +26,7 @@ import { sha256Hex } from "@spy4x/platform/tokens"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { applyMigrations, migrationNames } from "./migrations.ts"
 
 /**
  * Sign-up, sign-in, sign-out and the authenticator app against a real Postgres, through the exact
@@ -35,34 +36,8 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
  * they are missing rather than skipping.
  */
 
+/** Moves sign-in onto the package's tables; the upgrade test inserts old rows before it. */
 const AUTH_MIGRATION = "2026_09_24_0001_auth_package_tables.sql"
-/** Drops the group kind, so a group is inserted without it. */
-const KIND_MIGRATION = "2026_10_07_0001_group_kind_removed.sql"
-// A reset also drops a waiting address change, so the reset tests need its table (#140).
-const EMAIL_MIGRATION = "2026_10_08_0002_email_verification.sql"
-/** Widens the audit row's address to the longest one a form accepts (#191). */
-const AUDIT_IDENTIFIER_MIGRATION = "2026_10_10_0001_auth_audit_identifier_320.sql"
-/** Adds the group's description, colour and emoji, which every group read and write names. */
-const APPEARANCE_MIGRATION = "2026_10_18_0001_group_appearance.sql"
-/** Adds what a session remembers about its device, which every sign-in writes (#151). */
-const SESSION_DEVICES_MIGRATION = "2026_10_23_0002_auth_session_devices.sql"
-/** Lets an outbox row be a job, with no group (#165: sign-up queues one). */
-const OUTBOX_JOBS_MIGRATION = "2026_10_03_0002_outbox_jobs.sql"
-/** Sign-up writes a starter data request and queues its job (#165). */
-const STARTER_DATA_MIGRATION = "2026_10_26_0001_starter_data.sql"
-// A password reset and a password change revoke every API token of the person, so their tests
-// need the table (#167) and the column a revoke sets (#293).
-const API_TOKENS_MIGRATIONS = [
-  "2026_10_25_0001_api_tokens.sql",
-  "2026_10_30_0001_api_token_hardening.sql",
-]
-const MASTER_MIGRATIONS = [
-  "2026_01_26_0001_init.sql",
-  "2026_01_26_0002_auth_profiles_audit.sql",
-  "2026_01_27_0001_drop_user_profiles.sql",
-  "2026_08_18_0001_group_core.sql",
-  "2026_08_18_0002_personal_group_backfill.sql",
-]
 // Test-only secrets, long enough for the package's 32-character minimum.
 const PEPPER = "integration-test-only-pepper-0123456789"
 const COOKIE_SECRET = "integration-test-only-cookie-secret-0123456789"
@@ -88,27 +63,13 @@ async function withSchema(
   })
   try {
     await admin`CREATE SCHEMA ${admin(schema)}`
-    for (const migration of migrations) await applyMigration(sql, migration)
-    await applyMigration(sql, APPEARANCE_MIGRATION)
-    await applyMigration(sql, "2026_10_19_0001_audit_activity.sql")
-    await applyMigration(sql, "2026_10_22_0001_notifications.sql")
-    // The device columns need the package's session table; a test that starts before it applies
-    // this migration itself, right after the auth migration.
-    if (migrations.includes(AUTH_MIGRATION)) {
-      await applyMigration(sql, SESSION_DEVICES_MIGRATION)
-      await applyMigration(sql, OUTBOX_JOBS_MIGRATION)
-      await applyMigration(sql, STARTER_DATA_MIGRATION)
-    }
+    await applyMigrations(sql, migrations)
     await body(sql)
   } finally {
     await sql.end({ timeout: 5 })
     await admin`DROP SCHEMA IF EXISTS ${admin(schema)} CASCADE`
     await admin.end({ timeout: 5 })
   }
-}
-
-async function applyMigration(sql: postgres.Sql, name: string): Promise<void> {
-  await sql.unsafe(await Deno.readTextFile(`libs/server/db/migrations/${name}`))
 }
 
 /** A test app with the routes the API mounts, over `createSignIn`, and a one-user cookie jar. */
@@ -312,7 +273,7 @@ Deno.test("the migrations build the package's tables with its columns, constrain
 })
 
 Deno.test("sign-up, sign-in and sign-out through the package tables", async (t) => {
-  await withSchema([...MASTER_MIGRATIONS, AUTH_MIGRATION, KIND_MIGRATION], async (sql) => {
+  await withSchema(migrationNames(), async (sql) => {
     const signIn = buildSignIn(sql)
 
     await t.step(
@@ -520,13 +481,7 @@ Deno.test("sign-up, sign-in and sign-out through the package tables", async (t) 
 
 Deno.test("username accounts and the password reset link", async (t) => {
   await withSchema(
-    [
-      ...MASTER_MIGRATIONS,
-      AUTH_MIGRATION,
-      KIND_MIGRATION,
-      EMAIL_MIGRATION,
-      ...API_TOKENS_MIGRATIONS,
-    ],
+    migrationNames(),
     async (sql) => {
       const signIn = buildSignIn(sql)
       const db = new AppDbBase({ sql })
@@ -644,13 +599,7 @@ Deno.test("username accounts and the password reset link", async (t) => {
 })
 
 Deno.test("authenticator-app enrolment, second factor and replay", async (t) => {
-  const migrations = [
-    ...MASTER_MIGRATIONS,
-    AUTH_MIGRATION,
-    KIND_MIGRATION,
-    ...API_TOKENS_MIGRATIONS,
-  ]
-  await withSchema(migrations, async (sql) => {
+  await withSchema(migrationNames(), async (sql) => {
     const signIn = buildSignIn(sql)
     const signUpBody = { email: "totp-user@example.com", password: "Passw0rd!" }
     const credentials = { login: signUpBody.email, password: signUpBody.password }
@@ -808,7 +757,8 @@ Deno.test("authenticator-app enrolment, second factor and replay", async (t) => 
 })
 
 Deno.test("the auth migration applies on top of the previous schema", async () => {
-  await withSchema(MASTER_MIGRATIONS, async (sql) => {
+  const before = migrationNames().filter((name) => name < AUTH_MIGRATION)
+  await withSchema(before, async (sql) => {
     // A user signed up under the previous schema: profile, password key, a TOTP key, a session, the
     // personal group, an audit row and a push token.
     const [old] = await sql<{ id: number; createdAt: Date }[]>`
@@ -827,7 +777,7 @@ Deno.test("the auth migration applies on top of the previous schema", async () =
       INSERT INTO user_sessions (token, user_id, key_id, expires_at)
       VALUES ('token', ${old.id}, ${key.id}, NOW() + INTERVAL '1 day')
     `
-    await applyMigration(sql, "2026_08_18_0002_personal_group_backfill.sql")
+    await applyMigrations(sql, ["2026_08_18_0002_personal_group_backfill.sql"])
     await sql`
       INSERT INTO auth_audits (user_id, event_type, identifier) VALUES (${old.id}, 1, 'olduser')
     `
@@ -836,12 +786,8 @@ Deno.test("the auth migration applies on top of the previous schema", async () =
       VALUES (${old.id}, 'device', 'https://push.example.test', 'auth', 'key')
     `
 
-    await applyMigration(sql, AUTH_MIGRATION)
-    // Every later migration runs before the next sign-up, as a deploy applies them in order.
-    await applyMigration(sql, KIND_MIGRATION)
-    await applyMigration(sql, SESSION_DEVICES_MIGRATION)
-    await applyMigration(sql, OUTBOX_JOBS_MIGRATION)
-    await applyMigration(sql, STARTER_DATA_MIGRATION)
+    // The auth migration and every later one run before the next sign-up, as a deploy applies them.
+    await applyMigrations(sql, migrationNames().filter((name) => name >= AUTH_MIGRATION))
 
     const [authUser] = await sql<{ id: number; createdAt: Date }[]>`
       SELECT id, created_at FROM auth_users
@@ -929,8 +875,7 @@ function profileUpdate(sql: postgres.Sql) {
 }
 
 Deno.test("auth audit rows are written with the action they record", async (t) => {
-  const migrations = [...MASTER_MIGRATIONS, AUTH_MIGRATION, KIND_MIGRATION]
-  await withSchema([...migrations, AUDIT_IDENTIFIER_MIGRATION], async (sql) => {
+  await withSchema(migrationNames(), async (sql) => {
     const signIn = buildSignIn(sql)
     const client = buildApp(signIn)
     const credentials = { login: "audited@example.com", password: "Passw0rd!" }

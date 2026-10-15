@@ -5,6 +5,7 @@ import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { applyMigrations } from "./migrations.ts"
 
 /**
  * Proves docs/handoff.md trap 5 against the real class `apps/api/services/db.ts`'s `DbService`
@@ -33,19 +34,6 @@ interface CountRow extends postgres.Row {
   count: number
 }
 
-const MIGRATIONS = [
-  "2026_01_26_0001_init.sql",
-  "2026_01_26_0002_auth_profiles_audit.sql",
-  "2026_01_27_0001_drop_user_profiles.sql",
-  "2026_08_18_0001_group_core.sql",
-  "2026_08_18_0002_personal_group_backfill.sql",
-  "2026_10_07_0001_group_kind_removed.sql",
-  "2026_10_08_0001_audit_outlives_group.sql",
-  "2026_10_18_0001_group_appearance.sql",
-  "2026_10_19_0001_audit_activity.sql",
-  "2026_10_22_0001_notifications.sql",
-]
-
 Deno.test({
   name: "a repository built through db.group rolls back with its transaction",
   async fn() {
@@ -61,11 +49,12 @@ Deno.test({
 
     try {
       await admin`CREATE SCHEMA ${admin(schema)}`
-      for (const migration of MIGRATIONS) {
-        await sql.unsafe(await Deno.readTextFile(`libs/server/db/migrations/${migration}`))
-      }
+      await applyMigrations(sql)
 
-      const userId = (await sql<IdRow[]>`INSERT INTO users DEFAULT VALUES RETURNING id`)[0].id
+      const [{ id: userId }] = await sql<IdRow[]>`
+        WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id)
+        INSERT INTO users (id) SELECT id FROM auth_user RETURNING id
+      `
       const groupId = uuidV7()
       const db = new AppDbBase({ sql })
 

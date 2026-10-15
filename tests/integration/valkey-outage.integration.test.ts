@@ -14,6 +14,7 @@ import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { applyMigrations } from "./migrations.ts"
 
 /**
  * A signed-in request against a real Postgres and the API's real `RedisKvStore`, while the
@@ -25,22 +26,6 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
  * are missing rather than skipping.
  */
 
-const MIGRATIONS = [
-  "2026_01_26_0001_init.sql",
-  "2026_01_26_0002_auth_profiles_audit.sql",
-  "2026_01_27_0001_drop_user_profiles.sql",
-  "2026_08_18_0001_group_core.sql",
-  "2026_08_18_0002_personal_group_backfill.sql",
-  "2026_09_24_0001_auth_package_tables.sql",
-  "2026_10_03_0002_outbox_jobs.sql",
-  "2026_10_07_0001_group_kind_removed.sql",
-  "2026_10_08_0001_audit_outlives_group.sql",
-  "2026_10_18_0001_group_appearance.sql",
-  "2026_10_19_0001_audit_activity.sql",
-  "2026_10_22_0001_notifications.sql",
-  "2026_10_23_0002_auth_session_devices.sql",
-  "2026_10_26_0001_starter_data.sql",
-]
 const RETRY_MS = 50
 const KV_PASSWORD = "integration-test-only-valkey-password"
 const PEPPER = "integration-test-only-pepper-0123456789"
@@ -161,9 +146,7 @@ async function withValkeyApp(
   let kv: RedisKvStore | undefined
   try {
     await admin`CREATE SCHEMA ${admin(schema)}`
-    for (const name of MIGRATIONS) {
-      await sql.unsafe(await Deno.readTextFile(`libs/server/db/migrations/${name}`))
-    }
+    await applyMigrations(sql)
     kv = await RedisKvStore.connect("127.0.0.1", valkey.port, "api", {
       password: KV_PASSWORD,
     })

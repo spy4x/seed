@@ -52,9 +52,9 @@ so a stranger cannot learn that a group exists.
 | `migrations/2026_10_02_0001_notes.sql` | The `notes` table: `group_id`, the fields, `version`, `change_sequence` (the group sequence the note was last written at), who created and updated it, and `deleted_at` (a delete keeps the row). |
 | `schema.sql`                           | The same table appended, so the snapshot matches the migrations.                                                                                                                                  |
 
-Add the table to `SNAPSHOT_TABLES` and apply the migration in
-`tests/integration/groups.integration.test.ts`, which compares the two. Compose applies migrations
-on every start; nothing else is needed to deploy one.
+`tests/integration/schema-snapshot.integration.test.ts` applies every migration in the folder and
+compares every table with `schema.sql`, so a migration missing from `schema.sql` fails it. Compose
+applies migrations on every start; nothing else is needed to deploy one.
 
 **Naming a migration.** A file is named `YYYY_MM_DD_NNNN_words_in_snake_case.sql` (ending in
 `.no_transaction.sql` for a statement that cannot run in a transaction), and a new one must sort
@@ -355,11 +355,9 @@ event. Follow the details command (`group.updateDetails`, spy4x/template#134) fi
 1. **Migration.** One file in `libs/server/db/migrations/`, named by the rule in
    ["Naming a migration"](#2-database-libsserverdb), adds the column, with a default or a
    nullable type so existing rows stay valid, and a `CHECK` for a limit the database can hold.
-   Mirror the same lines in `libs/server/db/schema.sql`; `groups.integration.test.ts` compares the
-   snapshot with the migrations. Tests that apply a hand-written list of migrations
-   (`auth.integration.test.ts`, `valkey-outage.integration.test.ts`, `groups.integration.test.ts`,
-   `db-group-transaction.integration.test.ts`)
-   need the new file added.
+   Mirror the same lines in `libs/server/db/schema.sql`; `schema-snapshot.integration.test.ts`
+   compares it with the migrations. Tests that build their schema from the migrations read the
+   folder, so they need no edit.
 2. **Domain.** Add the field to `Group` and `GroupSummary` in `libs/domain/groups/+lib.ts`, one
    parser per field that throws `GroupError` with `INVALID_REQUEST`, and a limit constant the screen
    can import. A colour is stored as a palette name and checked against `GROUP_COLORS`, never a hex

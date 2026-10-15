@@ -5,6 +5,7 @@ import { type OutboxEvent, OutboxProcessor, PostgresOutboxRepository } from "@sp
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { applyMigrations } from "./migrations.ts"
 
 interface CountRow extends postgres.Row {
   count: number
@@ -18,16 +19,6 @@ interface OutboxStateRow extends postgres.Row {
   claimedAt: Date | null
   availableAt: Date
 }
-
-const MIGRATIONS = [
-  "2026_01_26_0001_init.sql",
-  "2026_01_26_0002_auth_profiles_audit.sql",
-  "2026_01_27_0001_drop_user_profiles.sql",
-  "2026_08_18_0001_group_core.sql",
-  "2026_08_18_0002_personal_group_backfill.sql",
-  "2026_10_07_0001_group_kind_removed.sql",
-  "2026_10_08_0001_audit_outlives_group.sql",
-]
 
 Deno.test({
   name: "outbox drain Postgres integration",
@@ -44,9 +35,7 @@ Deno.test({
 
     try {
       await admin`CREATE SCHEMA ${admin(schema)}`
-      for (const migration of MIGRATIONS) {
-        await sql.unsafe(await Deno.readTextFile(`libs/server/db/migrations/${migration}`))
-      }
+      await applyMigrations(sql)
 
       const userId = await seedUser(sql)
       const groupId = await seedGroup(sql, userId)
@@ -170,7 +159,8 @@ Deno.test({
 
 async function seedUser(sql: postgres.Sql): Promise<number> {
   const rows = await sql<{ id: number }[]>`
-    INSERT INTO users DEFAULT VALUES RETURNING id
+    WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id)
+    INSERT INTO users (id) SELECT id FROM auth_user RETURNING id
   `
   return rows[0].id
 }

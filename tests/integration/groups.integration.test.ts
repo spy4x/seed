@@ -6,6 +6,7 @@ import { PostgresGroupRepository } from "@server/groups/postgres-group-repositor
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { applyMigrations, migrationNames } from "./migrations.ts"
 
 interface IdRow extends postgres.Row {
   id: number
@@ -15,9 +16,14 @@ interface CountRow extends postgres.Row {
   count: number
 }
 
-interface MetadataRow extends postgres.Row {
-  value: string
-}
+/** The migration that adds groups; the users inserted before it are what the backfill covers. */
+const GROUP_CORE_MIGRATION = "2026_08_18_0001_group_core.sql"
+/** Applied by the steps that check what they do to existing rows, after every other migration. */
+const MIGRATIONS_APPLIED_BY_STEPS = [
+  "2026_10_07_0001_group_kind_removed.sql",
+  "2026_10_08_0001_audit_outlives_group.sql",
+  "2026_10_09_0001_audit_request_id_128.sql",
+]
 
 Deno.test({
   name: "group core Postgres integration",
@@ -25,26 +31,17 @@ Deno.test({
     const connection = buildPostgresOptions(requireDbConnection())
     const admin = postgres({ ...connection, max: 1 })
     const schema = `groups_test_${uuidV7().replace(/-/g, "")}`
-    const snapshotSchema = `${schema}_snapshot`
     const sql = postgres({
       ...connection,
       max: 20,
       transform: postgres.camel,
       connection: { options: `-c search_path=${schema}` },
     })
-    const snapshotSql = postgres({
-      ...connection,
-      max: 1,
-      transform: postgres.camel,
-      connection: { options: `-c search_path=${snapshotSchema}` },
-    })
 
     try {
       await admin`CREATE SCHEMA ${admin(schema)}`
-      await admin`CREATE SCHEMA ${admin(snapshotSchema)}`
-      await applyMigration(sql, "2026_01_26_0001_init.sql")
-      await applyMigration(sql, "2026_01_26_0002_auth_profiles_audit.sql")
-      await applyMigration(sql, "2026_01_27_0001_drop_user_profiles.sql")
+      // Users from before groups existed, so the backfill has someone to cover.
+      await applyMigrations(sql, migrationNames().filter((name) => name < GROUP_CORE_MIGRATION))
 
       const activeUserOne =
         (await sql<IdRow[]>`INSERT INTO users DEFAULT VALUES RETURNING id`)[0].id
@@ -52,45 +49,15 @@ Deno.test({
         (await sql<IdRow[]>`INSERT INTO users DEFAULT VALUES RETURNING id`)[0].id
       await sql`INSERT INTO users (deleted_at) VALUES (NOW())`
 
-      await applyMigration(sql, "2026_08_18_0001_group_core.sql")
-      await applyMigration(sql, "2026_08_18_0002_personal_group_backfill.sql")
-      await applyMigration(sql, "2026_09_24_0001_auth_package_tables.sql")
-      await applyMigration(sql, "2026_09_30_0002_totp_failure_counter.sql")
-      await applyMigration(sql, "2026_10_01_0001_idempotency_keys.sql")
-      await applyMigration(sql, "2026_10_02_0001_notes.sql")
-      await applyMigration(sql, "2026_10_03_0001_idempotency_claim_token.sql")
-      await applyMigration(sql, "2026_10_03_0002_outbox_jobs.sql")
-      await applyMigration(sql, "2026_10_04_0001_groups_ms_precision.sql")
-      await applyMigration(sql, "2026_10_05_0001_user_settings.sql")
-      await applyMigration(sql, "2026_10_06_0001_password_reset.sql")
-      await applyMigration(sql, "2026_10_08_0002_email_verification.sql")
-      await applyMigration(sql, "2026_10_11_0001_billing.sql")
-      await applyMigration(sql, "2026_10_12_0001_billing_grace_period.sql")
-      await applyMigration(sql, "2026_10_12_0002_group_invitations.sql")
-      await applyMigration(sql, "2026_10_13_0001_billing_trial_end.sql")
-      await applyMigration(sql, "2026_10_13_0002_group_single_owner.sql")
-      await applyMigration(sql, "2026_10_14_0001_subscription_quantity.sql")
-      await applyMigration(sql, "2026_10_15_0001_subscription_ever_active.sql")
-      await applyMigration(sql, "2026_10_16_0001_billing_handover.sql")
-      await applyMigration(sql, "2026_10_17_0001_subscribers.sql")
-      await applyMigration(sql, "2026_10_18_0001_group_appearance.sql")
-      await applyMigration(sql, "2026_10_19_0001_audit_activity.sql")
-      await applyMigration(sql, "2026_10_20_0001_account_deletion.sql")
-      await applyMigration(sql, "2026_10_22_0001_notifications.sql")
-      await applyMigration(sql, "2026_10_23_0001_notes_deleted_indexes.sql")
-      await applyMigration(sql, "2026_10_23_0002_auth_session_devices.sql")
-      await applyMigration(sql, "2026_10_24_0001_users_last_seen.sql")
-      await applyMigration(sql, "2026_10_25_0001_api_tokens.sql")
-      await applyMigration(sql, "2026_10_26_0001_starter_data.sql")
-      await applyMigration(sql, "2026_10_27_0001_tags.sql")
-      await applyMigration(sql, "2026_10_28_0001_api_tokens_purged_audit.sql")
-      await applyMigration(sql, "2026_10_29_0001_idempotency_claim_token_no_default.sql")
-      await applyMigration(sql, "2026_10_30_0001_api_token_hardening.sql")
-      await applyMigration(sql, "2026_11_03_0001_users_onboarding.sql")
-      await applyMigration(sql, "2026_11_05_0001_password_failures.sql")
+      await applyMigrations(
+        sql,
+        migrationNames().filter((name) =>
+          name >= GROUP_CORE_MIGRATION && !MIGRATIONS_APPLIED_BY_STEPS.includes(name)
+        ),
+      )
 
       await t.step("backfill is rerunnable and covers only active users", async () => {
-        await applyMigration(sql, "2026_08_18_0002_personal_group_backfill.sql")
+        await applyMigrations(sql, ["2026_08_18_0002_personal_group_backfill.sql"])
         const counts = await sql<CountRow[]>`
           SELECT COUNT(*)::int AS count
           FROM groups
@@ -136,7 +103,7 @@ Deno.test({
             ORDER BY groups.id, group_members.user_id
           `
 
-          await applyMigration(sql, "2026_10_07_0001_group_kind_removed.sql")
+          await applyMigrations(sql, ["2026_10_07_0001_group_kind_removed.sql"])
 
           const after = await sql`
             SELECT groups.id, groups.name, groups.owner_user_id, group_members.user_id, group_members.role
@@ -163,7 +130,7 @@ Deno.test({
       )
 
       await t.step("an audit row outlives its group, with the group id emptied", async () => {
-        await applyMigration(sql, "2026_10_08_0001_audit_outlives_group.sql")
+        await applyMigrations(sql, ["2026_10_08_0001_audit_outlives_group.sql"])
         const userId = await insertUser(sql)
         const groupId = uuidV7()
         await sql`
@@ -192,7 +159,7 @@ Deno.test({
           VALUES ('group.renamed', ${userId}, 'short-id')
         `
 
-          await applyMigration(sql, "2026_10_09_0001_audit_request_id_128.sql")
+          await applyMigrations(sql, ["2026_10_09_0001_audit_request_id_128.sql"])
 
           const long = "r".repeat(128)
           await sql`
@@ -203,16 +170,6 @@ Deno.test({
           SELECT request_id FROM audit_events WHERE actor_user_id = ${userId} ORDER BY id
         `
           expect(rows).toEqual([{ requestId: "short-id" }, { requestId: long }])
-        },
-      )
-
-      await t.step(
-        "schema snapshot matches tables, functions, and trigger definitions",
-        async () => {
-          await snapshotSql.unsafe(await Deno.readTextFile("libs/server/db/schema.sql"))
-          expect(await groupMetadata(sql, schema)).toEqual(
-            await groupMetadata(snapshotSql, snapshotSchema),
-          )
         },
       )
 
@@ -448,9 +405,7 @@ Deno.test({
       })
     } finally {
       await sql.end({ timeout: 1 })
-      await snapshotSql.end({ timeout: 1 })
       await admin`DROP SCHEMA IF EXISTS ${admin(schema)} CASCADE`
-      await admin`DROP SCHEMA IF EXISTS ${admin(snapshotSchema)} CASCADE`
       await admin.end({ timeout: 1 })
     }
   },
@@ -502,116 +457,4 @@ function deferred<T>() {
     resolve = resolvePromise
   })
   return { promise, resolve: () => resolve(undefined as T) }
-}
-
-async function applyMigration(sql: postgres.Sql, name: string): Promise<void> {
-  const source = await Deno.readTextFile(`libs/server/db/migrations/${name}`)
-  await sql.unsafe(source)
-}
-
-/** Tables whose columns, constraints and indexes schema.sql must match the migrations on. */
-const SNAPSHOT_TABLES = [
-  "groups",
-  "group_members",
-  "audit_events",
-  "outbox_events",
-  "users",
-  "user_totp",
-  "auth_users",
-  "auth_email_owners",
-  "auth_keys",
-  "auth_sessions",
-  "auth_challenges",
-  "idempotency_keys",
-  "notes",
-  "tags",
-  "note_tags",
-  "user_settings",
-  "password_reset_requests",
-  "dev_mail",
-  "email_changes",
-  "email_code_requests",
-  "email_code_failures",
-  "password_failures",
-  "billing_customers",
-  "subscriptions",
-  "billing_events",
-  "group_invitations",
-  "group_invitation_acceptances",
-  "subscribers",
-  "subscriber_unsubscribes",
-  "subscriber_sends",
-  "subscription_requests",
-  "subscriber_issue_content",
-  "account_deletions",
-  "account_restorations",
-  "api_tokens",
-  "starter_data_requests",
-]
-
-/**
- * What the snapshot test compares. A column is numbered by its position among the table's live
- * columns, not by `ordinal_position`: a dropped column leaves a gap there, which a fresh
- * `schema.sql` does not have.
- */
-async function groupMetadata(sql: postgres.Sql, schema: string): Promise<string[]> {
-  const rows = await sql<MetadataRow[]>`
-    SELECT value
-    FROM (
-      SELECT
-        'column|' || table_name || '|' ||
-        ROW_NUMBER() OVER (PARTITION BY table_name ORDER BY ordinal_position) || '|' ||
-        column_name || '|' ||
-        data_type || '|' || COALESCE(character_maximum_length::text, '') || '|' ||
-        COALESCE(datetime_precision::text, '') || '|' || is_nullable || '|' ||
-        COALESCE(column_default, '') AS value
-      FROM information_schema.columns
-      WHERE table_schema = ${schema}
-        AND table_name IN ${sql(SNAPSHOT_TABLES)}
-
-      UNION ALL
-
-      SELECT
-        'constraint|' || tables.relname || '|' || constraints.conname || '|' ||
-        pg_get_constraintdef(constraints.oid) AS value
-      FROM pg_constraint constraints
-      INNER JOIN pg_class tables ON tables.oid = constraints.conrelid
-      INNER JOIN pg_namespace namespaces ON namespaces.oid = tables.relnamespace
-      WHERE namespaces.nspname = ${schema}
-        AND tables.relname IN ${sql(SNAPSHOT_TABLES)}
-
-      UNION ALL
-
-      SELECT
-        'index|' || tablename || '|' || indexname || '|' ||
-        replace(indexdef, ${schema}, '<schema>') AS value
-      FROM pg_indexes
-      WHERE schemaname = ${schema}
-        AND tablename IN ${sql(SNAPSHOT_TABLES)}
-
-      UNION ALL
-
-      SELECT
-        'trigger|' || tables.relname || '|' || triggers.tgname || '|' ||
-        replace(pg_get_triggerdef(triggers.oid), ${schema}, '<schema>') AS value
-      FROM pg_trigger triggers
-      INNER JOIN pg_class tables ON tables.oid = triggers.tgrelid
-      INNER JOIN pg_namespace namespaces ON namespaces.oid = tables.relnamespace
-      WHERE namespaces.nspname = ${schema}
-        AND tables.relname IN ('groups', 'group_members')
-        AND NOT triggers.tgisinternal
-
-      UNION ALL
-
-      SELECT
-        'function|' || procedures.proname || '|' ||
-        replace(pg_get_functiondef(procedures.oid), ${schema}, '<schema>') AS value
-      FROM pg_proc procedures
-      INNER JOIN pg_namespace namespaces ON namespaces.oid = procedures.pronamespace
-      WHERE namespaces.nspname = ${schema}
-        AND procedures.prokind = 'f'
-    ) metadata
-    ORDER BY value
-  `
-  return rows.map((row: MetadataRow) => row.value)
 }
