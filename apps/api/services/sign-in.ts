@@ -16,7 +16,8 @@
  *   password, signs out every session of the user and deletes every API token. It signs nobody
  *   in: the person signs in again with the new password, and their second factor if they have one.
  *   When the address was not proven before, the second factor and every other sign-in method of
- *   the account go too (#404): whoever added them never proved they own the address.
+ *   the account go too (#404): whoever added them never proved they own the address. An account
+ *   waiting to be deleted is restored by the reset (#388).
  * - **One sign-up transaction.** The auth user and key, the session, the `users` profile row (same
  *   id) and the first group are written in one `db.begin()`: the sign-up provider is built over
  *   that transaction's stores.
@@ -261,10 +262,12 @@ export interface SignIn {
   /**
    * Spends the reset code for `email` and, when it was the live one, proves the address, replaces
    * the password, signs out every session of the user and revokes every API token, with an audit
-   * row each. `false`, and the password unchanged, when the code is wrong, expired, already used or
+   * row each. An account waiting to be deleted is restored too: the link proved the mailbox, so
+   * the person is back (#388). `c`, when given, names the request in the restore's audit row.
+   * `false`, and the password unchanged, when the code is wrong, expired, already used or
    * replaced, the new password is refused, or no live account signs in with the address.
    */
-  resetPassword(email: string, code: string, newPassword: string): Promise<boolean>
+  resetPassword(email: string, code: string, newPassword: string, c?: Context): Promise<boolean>
   /**
    * Whether `password` is the current password of user `userId`, checked as a password change
    * checks it. A step that must not run on a stolen session alone, such as handing a group to
@@ -490,13 +493,23 @@ export function createSignIn(options: SignInOptions): SignIn {
    * audit row is written and the mail that says so is queued. `true` when the account is live
    * afterwards: just restored, or restored by a sign-in running alongside. `false` for a profile
    * deleted with no request waiting: one disabled some other way, or deleted for good meanwhile.
+   * The audit row names the request's address and browser when `c` is given, and none otherwise.
    */
-  async function restoreInTx(tx: AppDbBase, c: Context, userId: number): Promise<boolean> {
+  async function restoreInTx(
+    tx: AppDbBase,
+    c: Context | undefined,
+    userId: number,
+  ): Promise<boolean> {
     if (!(await tx.accountDeletion.cancel(userId))) {
       return (await tx.user.findOne({ id: userId })) !== null
     }
     await tx.user.undeleteOne({ id: userId })
-    await tx.authAudit.insert(auditRow(c, userId, AuthAuditEventType.ACCOUNT_RESTORED))
+    const eventType = AuthAuditEventType.ACCOUNT_RESTORED
+    await tx.authAudit.insert(
+      c
+        ? auditRow(c, userId, eventType)
+        : { userId, eventType, identifier: null, ip: null, userAgent: null },
+    )
     await tx.accountDeletion.restored(userId)
     return true
   }
@@ -811,7 +824,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       return { revokedTokens: changed.revokedTokens }
     },
 
-    async resetPassword(rawEmail, code, newPassword) {
+    async resetPassword(rawEmail, code, newPassword, c) {
       const email = normalizeEmail(rawEmail)
       if (email === null) return false
       // Hashed before the transaction, as at sign-up, so no pool connection waits on PBKDF2.
@@ -832,6 +845,11 @@ export function createSignIn(options: SignInOptions): SignIn {
         if (!key || key.email === null) return false
         const user = await tx.authStore.findUser(key.userId)
         if (!user || user.deletedAt !== null) return false
+        // An account waiting to be deleted comes back (#357, decision 5): the link reached the
+        // mailbox, as a sign-in would prove the password. Its request row goes before the user row
+        // is locked, the order a sign-in's restore and the delete for good take them in.
+        const profile = await tx.user.findOne({ id: user.id, includeDeleted: true })
+        if (profile && profile.deletedAt !== null) await restoreInTx(tx, c, user.id)
         // A token create holds this row while it checks the password and inserts (#293), so the
         // revoke below runs after it and ends its token too.
         await tx.lockUser(user.id)

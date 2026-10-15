@@ -11,8 +11,10 @@
  *   leave the provider charging a card nobody can reach. The person hands the group over, removes
  *   the members or cancels the plan first. The same check runs again under row locks inside the
  *   request, and once more before the delete for good.
- * - **The delete for good.** Removes the person's owned groups (their notes, members, billing and
- *   invitations go with them), their outbox rows, then the auth user. Everything else that pointed
+ * - **The delete for good.** First hands each group of theirs that sits in the bin and has another
+ *   admin to that admin ({@link handOverBinnedGroups}), so its members keep it. Then removes the
+ *   person's other owned groups (their notes, members, billing and invitations go with them), their
+ *   outbox rows, then the auth user. Everything else that pointed
  *   at the person either goes with the auth user (keys, sessions, profile, settings, push devices,
  *   audit rows) or is emptied (authors of notes, who added a member, who acted in a group's audit
  *   log), so content in shared groups stays, by "Deleted user".
@@ -29,7 +31,13 @@ import {
   type AccountDeletionBlocker,
   AccountDeletionBlockReason,
 } from "@domain/identity"
+import { GroupRole } from "@domain/groups"
 import { INVITATION_EVENTS } from "../groups/invitation-revocation.ts"
+import { writeAuditEvent } from "../groups/audit.ts"
+import { recordAccessChange } from "../groups/group-change-log.ts"
+import { notifyOwnershipReceived } from "../groups/group-notifications.ts"
+import { OWNERSHIP_TRANSFERRED_EVENT } from "../groups/postgres-group-repository.ts"
+import { handOverBilling } from "../billing/handover.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** One waiting request, as {@link recordAccountDeletion} wrote it. */
@@ -213,10 +221,69 @@ export async function hardDeleteAccount(
     // Their group-change rows in other groups name them as actor; the rows of their own groups
     // go with those groups.
     await tx`DELETE FROM outbox_events WHERE actor_user_id = ${userId}`
+    await handOverBinnedGroups(tx, userId)
     await tx`DELETE FROM groups WHERE owner_user_id = ${userId}`
     await tx`DELETE FROM auth_users WHERE id = ${userId}`
     return HardDeleteOutcome.Deleted
   })
+}
+
+/**
+ * Hands every group of `userId` that sits in the bin to another admin of it, so the delete for good
+ * that follows leaves it to its members (#357, decision 7). The heir is the group's longest-standing
+ * admin: the earliest `group_members.created_at`, then the lowest user id, among live accounts
+ * only, since one waiting to be deleted may never come back. A group with no such admin is left
+ * to go with the account. Inside the delete's transaction, after the owner's groups are locked;
+ * the group stays in the bin, where its new owner may restore it. Answers the ids handed over.
+ *
+ * Each handover does what a transfer does (`PostgresGroupRepository.transferOwnership`): billing
+ * customers recorded as handed over, the owner role moved, an audit row naming the old owner (it
+ * reads "Deleted user" once the account is gone), the heir notified, and an access change. That
+ * change names the heir as actor: an outbox row may not name the account about to be deleted.
+ */
+export async function handOverBinnedGroups(
+  tx: postgres.TransactionSql,
+  userId: number,
+): Promise<string[]> {
+  const handovers = await tx<{ groupId: string; heirId: number }[]>`
+    SELECT groups.id AS "groupId", heir.user_id AS "heirId"
+    FROM groups
+    CROSS JOIN LATERAL (
+      SELECT group_members.user_id FROM group_members
+      INNER JOIN users ON users.id = group_members.user_id AND users.deleted_at IS NULL
+      WHERE group_members.group_id = groups.id
+        AND group_members.user_id <> ${userId}
+        AND group_members.role = ${GroupRole.ADMIN}
+      ORDER BY group_members.created_at, group_members.user_id
+      LIMIT 1
+    ) AS heir
+    WHERE groups.owner_user_id = ${userId} AND groups.deleted_at IS NOT NULL
+    ORDER BY groups.id
+  `
+  for (const { groupId, heirId } of handovers) {
+    // Every subscription of the group is cancelled, or the blockers above would have stopped the
+    // delete, so this records the customers and never refuses.
+    await handOverBilling(tx, groupId)
+    // The old owner's row goes first: the unique index on the owner role allows one at a time.
+    await tx`DELETE FROM group_members WHERE group_id = ${groupId} AND user_id = ${userId}`
+    await tx`
+      UPDATE group_members
+      SET role = ${GroupRole.OWNER}, updated_at = CURRENT_TIMESTAMP
+      WHERE group_id = ${groupId} AND user_id = ${heirId}
+    `
+    await tx`UPDATE groups SET owner_user_id = ${heirId} WHERE id = ${groupId}`
+    await writeAuditEvent(tx, {
+      eventKind: OWNERSHIP_TRANSFERRED_EVENT,
+      actorId: userId,
+      groupId,
+      targetUserId: heirId,
+    })
+    await notifyOwnershipReceived(tx, groupId, heirId)
+    await recordAccessChange(tx, groupId, heirId, OWNERSHIP_TRANSFERRED_EVENT, [], {
+      allowDeleted: true,
+    })
+  }
+  return handovers.map((handover) => handover.groupId)
 }
 
 /** What one nightly run of {@link hardDeleteDueAccounts} did. */

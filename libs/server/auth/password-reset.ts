@@ -53,6 +53,9 @@ export interface IssuedPasswordReset {
  * for it. `null`, and nothing issued, when no live account signs in with this address: the caller
  * sends nothing then. A username account whose username happens to look like an address gets no
  * code either: that name was never claimed as an address, so its owner may not hold the mailbox.
+ *
+ * An account waiting to be deleted gets a code (#388): a deletion request soft-deletes the `users`
+ * profile, never the sign-in record read here, and the completed reset restores the account.
  */
 export async function issuePasswordReset(
   store: AuthStore,

@@ -226,7 +226,11 @@ export function GroupSettingsView({ groupId }: { groupId: string }) {
       movingAll={working?.groupId === groupId && working.action === "moveAll"}
       moveAllError={failure?.action === "moveAll" ? failure.message : null}
       moveAllResult={movedAll &&
-        { count: movedAll.count, toName: movedTo?.name ?? "the other group" }}
+        {
+          count: movedAll.count,
+          tags: movedAll.tags,
+          toName: movedTo?.name ?? "the other group",
+        }}
       moveAllRefusal={failure?.action === "moveAll" ? failure.plan ?? null : null}
       onMoveAllTargetChange={() => store.forgetMoveAll()}
       onMoveAllClose={() => store.forgetMoveAll()}

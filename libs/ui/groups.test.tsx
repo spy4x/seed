@@ -598,6 +598,22 @@ describe("GroupSettingsScreen header", () => {
       expect(remove.calls).toHaveLength(0)
     })
 
+    it("names the tags a move took along, in the singular for one", async () => {
+      const screen = (props: Partial<GroupSettingsScreenProps>) => (
+        <GroupSettingsScreen {...mover} onMoveAll={() => {}} {...props} />
+      )
+      await mount(screen({}))
+      await click("[data-e2e=group-move-all-open]")
+      await rerender(screen({ moveAllResult: { count: 3, tags: 2, toName: "Archive" } }))
+      expect(find("[data-e2e=group-move-all-done]").textContent).toContain(
+        `Moved 3 notes and 2 tags from "Team" to "Archive"`,
+      )
+      await rerender(screen({ moveAllResult: { count: 0, tags: 1, toName: "Archive" } }))
+      expect(find("[data-e2e=group-move-all-done]").textContent).toContain(
+        `Moved 0 notes and 1 tag from "Team"`,
+      )
+    })
+
     it("offers no delete after the move when the group cannot be deleted, and keeping the group closes", async () => {
       const closed = spy<[]>()
       const result = { count: 1, toName: "Archive" }

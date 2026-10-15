@@ -93,8 +93,13 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
   const actionError = signal<
     { groupId: string; action: GroupAction; message: string; plan?: PlanRefusal } | null
   >(null)
-  /** The last move of a group's data that worked, until the person closes its dialog. */
-  const moved = signal<{ groupId: string; toGroupId: string; count: number } | null>(null)
+  /**
+   * The last move of a group's data that worked, until the person closes its dialog: how many
+   * notes and how many tags went.
+   */
+  const moved = signal<
+    { groupId: string; toGroupId: string; count: number; tags: number } | null
+  >(null)
   /**
    * True from the start, and again after a reset, until a read has answered: an empty list that
    * has not been read is not "no groups".
@@ -268,13 +273,18 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
 
   /**
    * Moves everything in a group to another group. Resolves to whether it worked; `moved` then holds
-   * how many items went, and the notes of both groups follow through their own change events.
+   * how many notes and tags went, and both groups follow through their own change events.
    */
   async function moveAll(groupId: string, toGroupId: string): Promise<boolean> {
     return await change(groupId, "moveAll", async () => {
       moved.value = null
       const result = await dependencies.moveAll({ groupId, toGroupId })
-      moved.value = { groupId, toGroupId, count: result.moved }
+      moved.value = {
+        groupId,
+        toGroupId,
+        count: result.counts.notes ?? 0,
+        tags: result.counts.tags ?? 0,
+      }
     }, "Could not move the data")
   }
 

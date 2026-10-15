@@ -10,6 +10,7 @@ import { PostgresGroupActivityRepository } from "@server/groups/postgres-activit
 import { PostgresGroupDataMover } from "@server/groups/postgres-group-data-mover.ts"
 import type { MovableAggregate } from "@server/groups/movable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
+import { tagMovable } from "@server/tags/tag-movable.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresBillingRepository } from "@server/billing/postgres-billing-repository.ts"
@@ -48,7 +49,7 @@ export interface UserTotp {
  * joins here (`docs/aggregates.md`, "Making an aggregate movable"): put one that other aggregates
  * point at before the ones that point at it.
  */
-export const MOVABLE_AGGREGATES: readonly MovableAggregate[] = [noteMovable]
+export const MOVABLE_AGGREGATES: readonly MovableAggregate[] = [tagMovable, noteMovable]
 
 /** A cache that stores nothing: every read goes to the database. */
 const noCache: RowCache<User> = {

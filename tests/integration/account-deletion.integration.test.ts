@@ -7,7 +7,8 @@ import type { EmailMessage } from "@spy4x/email/message"
 import type { EmailSender } from "@spy4x/email/sender"
 import type { OutboxEvent } from "@spy4x/server/outbox"
 import { BillingStatus } from "@domain/billing"
-import { AccountDeletionBlockReason, UserMFAStatus } from "@domain/identity"
+import { GroupRole } from "@domain/groups"
+import { AccountDeletionBlockReason, AuthAuditEventType, UserMFAStatus } from "@domain/identity"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn, type SignIn } from "../../apps/api/services/sign-in.ts"
@@ -119,7 +120,7 @@ function buildApp(sql: postgres.Sql) {
   })
   app.post("/reset", async (c) => {
     const { email, code, password } = await c.req.json()
-    const ok = await signIn.resetPassword(email, code, password)
+    const ok = await signIn.resetPassword(email, code, password, c)
     return ok ? c.json({ ok }) : c.json({ error: "refused" }, 401)
   })
   app.post("/delete", async (c) => {
@@ -452,6 +453,34 @@ Deno.test("deleting one's own account", async (t) => {
       },
     )
 
+    await t.step(
+      "a password reset while waiting restores the account itself, before any sign-in",
+      async () => {
+        const val = await signUp(app, "val")
+        await requestDeletion(app, sql, val)
+        const issued = await issuePasswordReset(app.db.authStore, "val@example.com")
+        expect(issued).not.toBeNull()
+
+        const reset = await app.request("/reset", {
+          body: { email: issued!.email, code: issued!.code, password: PASSWORD },
+        })
+
+        expect(reset.status).toBe(200)
+        const [state] = await sql<{ request: string | null; live: boolean; restores: number }[]>`
+          SELECT
+            (SELECT id FROM account_deletions WHERE user_id = ${val.id}) AS request,
+            (SELECT deleted_at IS NULL FROM users WHERE id = ${val.id}) AS live,
+            (SELECT count(*)::int FROM account_restorations WHERE user_id = ${val.id}) AS restores
+        `
+        expect(state).toEqual({ request: null, live: true, restores: 1 })
+        const [audit] = await sql<{ count: number }[]>`
+          SELECT count(*)::int AS count FROM auth_audits
+          WHERE user_id = ${val.id} AND event_type = ${AuthAuditEventType.ACCOUNT_RESTORED}
+        `
+        expect(audit.count).toBe(1)
+      },
+    )
+
     await t.step("a deleted account with no request waiting stays refused at sign-in", async () => {
       const gus = await signUp(app, "gus")
       await sql`UPDATE users SET deleted_at = now() WHERE id = ${gus.id}`
@@ -584,6 +613,61 @@ Deno.test("deleting one's own account", async (t) => {
         `
         expect(await hardDeleteDueAccounts(sql)).toEqual({ deleted: 1, blocked: 0, failed: 0 })
         expect(await sql`SELECT 1 FROM auth_users WHERE id = ${max.id}`).toEqual([])
+      },
+    )
+
+    await t.step(
+      "the delete for good hands a shared group in the bin to its longest-standing live admin",
+      async () => {
+        const ada = await signUp(app, "ada")
+        const tom = await signUp(app, "tom")
+        const pam = await signUp(app, "pam")
+        const rex = await signUp(app, "rex")
+        const ed = await signUp(app, "ed")
+        const shared = uuidV7()
+        const alone = uuidV7()
+        await app.db.group.create({ id: shared, name: "Ada's team" }, ada.id)
+        await app.db.group.create({ id: alone, name: "Ada's editors" }, ada.id)
+        // Tom is the oldest admin but waits to be deleted himself; Pam came before Rex.
+        await sql`
+          INSERT INTO group_members (group_id, user_id, role, added_by_user_id, created_at)
+          VALUES
+            (${shared}, ${tom.id}, ${GroupRole.ADMIN}, ${ada.id}, now() - INTERVAL '3 days'),
+            (${shared}, ${pam.id}, ${GroupRole.ADMIN}, ${ada.id}, now() - INTERVAL '2 days'),
+            (${shared}, ${rex.id}, ${GroupRole.ADMIN}, ${ada.id}, now() - INTERVAL '1 day'),
+            (${shared}, ${ed.id}, ${GroupRole.EDITOR}, ${ada.id}, now() - INTERVAL '4 days'),
+            (${alone}, ${ed.id}, ${GroupRole.EDITOR}, ${ada.id}, now() - INTERVAL '4 days')
+        `
+        await sql`UPDATE users SET deleted_at = now() WHERE id = ${tom.id}`
+        await sql`UPDATE groups SET deleted_at = now() WHERE id IN (${shared}, ${alone})`
+        await requestDeletion(app, sql, ada)
+
+        expect(await hardDeleteAccount(sql, await makeDue(sql, ada.id))).toBe(
+          HardDeleteOutcome.Deleted,
+        )
+
+        const [group] = await sql<{ ownerUserId: number; inBin: boolean }[]>`
+          SELECT owner_user_id, deleted_at IS NOT NULL AS "inBin" FROM groups WHERE id = ${shared}
+        `
+        expect(group).toEqual({ ownerUserId: pam.id, inBin: true })
+        const members = await sql<{ userId: number; role: number }[]>`
+          SELECT user_id, role FROM group_members WHERE group_id = ${shared} ORDER BY user_id
+        `
+        expect(members).toEqual([
+          { userId: tom.id, role: GroupRole.ADMIN },
+          { userId: pam.id, role: GroupRole.OWNER },
+          { userId: rex.id, role: GroupRole.ADMIN },
+          { userId: ed.id, role: GroupRole.EDITOR },
+        ].sort((a, b) => a.userId - b.userId))
+        const [audit] = await sql<{ actorUserId: number | null; targetUserId: number }[]>`
+          SELECT actor_user_id, target_user_id FROM audit_events
+          WHERE group_id = ${shared} AND event_kind = 'group.ownership_transferred'
+        `
+        expect(audit).toEqual({ actorUserId: null, targetUserId: pam.id })
+        // A group in the bin with no other admin goes with the account, as before.
+        expect(await sql`SELECT 1 FROM groups WHERE id = ${alone}`).toEqual([])
+        expect(Object.entries(await rowsPointingAt(sql, ada.id)).filter(([, n]) => n > 0))
+          .toEqual([])
       },
     )
 

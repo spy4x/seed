@@ -374,12 +374,12 @@ describe("groups store", () => {
     expect(store.actionError.value?.message).toBe("A person must keep at least one group")
   })
 
-  it("moves all of a group's data and remembers how many items went", async () => {
+  it("moves all of a group's data and remembers how many notes and tags went", async () => {
     const sent: { groupId: string; toGroupId: string }[] = []
     const { store } = harness({
       moveAll: (input) => {
         sent.push(input)
-        return Promise.resolve({ moved: 7, counts: { notes: 7 } })
+        return Promise.resolve({ moved: 9, counts: { tags: 2, notes: 7 } })
       },
     })
 
@@ -387,7 +387,7 @@ describe("groups store", () => {
 
     expect(worked).toBe(true)
     expect(sent).toEqual([{ groupId: "a", toGroupId: "b" }])
-    expect(store.moved.value).toEqual({ groupId: "a", toGroupId: "b", count: 7 })
+    expect(store.moved.value).toEqual({ groupId: "a", toGroupId: "b", count: 7, tags: 2 })
     expect(store.working.value).toBeNull()
     store.forgetMoveAll()
     expect(store.moved.value).toBeNull()

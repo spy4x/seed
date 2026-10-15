@@ -320,7 +320,7 @@ export function createAuthRoute(
         return c.json({ error: validationResult.error.description }, 400)
       }
       const { email, code, newPassword } = validationResult.data
-      if (!(await signIn.resetPassword(email, code, newPassword))) {
+      if (!(await signIn.resetPassword(email, code, newPassword, c))) {
         return c.json({ error: PASSWORD_RESET_REFUSED }, 400)
       }
       return c.json({ success: true })

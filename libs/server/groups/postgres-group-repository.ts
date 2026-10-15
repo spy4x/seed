@@ -129,7 +129,7 @@ const GROUP_RESTORED_EVENT = "group.restored"
 const MEMBER_ROLE_CHANGED_EVENT = "group.member_role_changed"
 const MEMBER_REMOVED_EVENT = "group.member_removed"
 const MEMBER_LEFT_EVENT = "group.member_left"
-const OWNERSHIP_TRANSFERRED_EVENT = "group.ownership_transferred"
+export const OWNERSHIP_TRANSFERRED_EVENT = "group.ownership_transferred"
 
 /**
  * Most members one members read returns. Members join by invitation, and a plan caps them far

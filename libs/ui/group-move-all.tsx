@@ -10,9 +10,12 @@ import type { MoveTarget } from "./notes-screen.tsx"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
-/** What a finished move tells the person: how many notes went, and where. */
+/** What a finished move tells the person: how many notes and tags went, and where. */
 export interface MoveAllResult {
+  /** Notes moved. */
   count: number
+  /** Tags moved; left out or 0, the message names notes only. */
+  tags?: number
   toName: string
 }
 
@@ -84,9 +87,9 @@ export function GroupMoveAllForm(
     >
       <Stack gap="lg">
         <p class="text-sm text-muted" data-e2e="group-move-all-explanation">
-          Every note in "{groupName}" moves to the group you pick, and its members stop seeing them.
-          Members of the other group see them right away. Each note keeps its edit history. Nothing
-          moves if any of it fails.
+          Every note and tag in "{groupName}" moves to the group you pick, and its members stop
+          seeing them. Members of the other group see them right away. Each note keeps its edit
+          history. Nothing moves if any of it fails.
         </p>
         <Field id="group-move-all-to" label="Move everything to">
           <Select
@@ -152,7 +155,9 @@ function Done(
     <div ref={box}>
       <Stack gap="lg">
         <p class="text-sm" role="status" data-e2e="group-move-all-done">
-          Moved {result.count} {result.count === 1 ? `note` : `notes`} from "{groupName}" to "
+          Moved {result.count} {result.count === 1 ? `note` : `notes`}
+          {result.tags ? ` and ${result.tags} ${result.tags === 1 ? `tag` : `tags`}` : ``} from "
+          {groupName}" to "
           {result.toName}". Notes you deleted earlier stay in this group and are deleted with it.
         </p>
         <Cluster gap="md" class="justify-end">

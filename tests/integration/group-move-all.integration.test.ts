@@ -7,6 +7,8 @@ import { PostgresGroupDataMover } from "@server/groups/postgres-group-data-mover
 import type { MovableAggregate } from "@server/groups/movable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
+import { TAG_MAX_PER_GROUP } from "@domain/tags"
+import { MOVABLE_AGGREGATES } from "../../apps/api/services/db-base.ts"
 import { insertUser, runBlockedOnLock, withSchema } from "./group-team.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -53,6 +55,40 @@ async function eventKinds(sql: postgres.Sql, table: "audit_events" | "outbox_eve
   return (await sql<{ eventKind: string }[]>`
     SELECT event_kind FROM ${sql(table)} WHERE group_id = ${id} AND event_kind LIKE 'group.data%'
   `).map((row) => row.eventKind)
+}
+
+/** Inserts a tag named `name` into `groupId`, created by `userId`; answers its id. */
+async function insertTag(
+  sql: postgres.Sql,
+  groupId: string,
+  name: string,
+  userId: number,
+): Promise<string> {
+  const id = uuidV7()
+  await sql`
+    INSERT INTO tags (id, group_id, name, change_sequence, created_by_user_id, updated_by_user_id)
+    VALUES (${id}, ${groupId}, ${name}, 1, ${userId}, ${userId})
+  `
+  return id
+}
+
+/** Links note `noteId` to tag `tagId`. */
+async function link(sql: postgres.Sql, noteId: string, tagId: string): Promise<void> {
+  await sql`INSERT INTO note_tags (note_id, tag_id) VALUES (${noteId}, ${tagId})`
+}
+
+/** The tags of `groupId`, by name, with their ids and versions. */
+async function tagsOf(sql: postgres.Sql, groupId: string) {
+  return await sql<{ id: string; name: string; version: number }[]>`
+    SELECT id, name, version FROM tags WHERE group_id = ${groupId} ORDER BY lower(name)
+  `
+}
+
+/** The ids of the tags note `noteId` links to, sorted. */
+async function tagIdsOf(sql: postgres.Sql, noteId: string): Promise<string[]> {
+  return (await sql<{ tagId: string }[]>`
+    SELECT tag_id FROM note_tags WHERE note_id = ${noteId} ORDER BY tag_id
+  `).map((row) => row.tagId)
 }
 
 async function refusal(promise: Promise<unknown>): Promise<unknown> {
@@ -214,6 +250,64 @@ Deno.test("moving all of a group's data", async (t) => {
 
         expect(fits.moved).toBe(2)
         expect(await notes.count(to)).toBe(3)
+      },
+    )
+
+    await t.step(
+      "the registered aggregates move every tag too, unused ones included, and leave the source none",
+      async () => {
+        const app = new PostgresGroupDataMover(sql, MOVABLE_AGGREGATES)
+        const { editor, from, to, ids, notes } = await seed(sql, ["live", "binned"])
+        const work = await insertTag(sql, from, "Work", editor)
+        const idle = await insertTag(sql, from, "Idle", editor)
+        const old = await insertTag(sql, from, "Old", editor)
+        const sharedHere = await insertTag(sql, from, "Shared", editor)
+        const sharedThere = await insertTag(sql, to, "shared", editor)
+        await link(sql, ids[0], work)
+        await link(sql, ids[0], sharedHere)
+        await link(sql, ids[1], old)
+        await notes.delete({ groupId: from, id: ids[1], expectedVersion: 1 }, editor)
+        const stampedWith = await sequenceOf(sql, to)
+
+        const result = await app.moveAll({ fromGroupId: from, toGroupId: to }, editor, NO_CAP)
+
+        // Work, Idle and Old changed group; Shared joined the target's "shared".
+        expect(result).toEqual({ moved: 5, counts: { tags: 4, notes: 1 } })
+        expect(await tagsOf(sql, from)).toEqual([])
+        expect(await tagsOf(sql, to)).toEqual([
+          { id: idle, name: "Idle", version: 2 },
+          { id: old, name: "Old", version: 2 },
+          { id: sharedThere, name: "shared", version: 1 },
+          { id: work, name: "Work", version: 2 },
+        ])
+        expect(await tagIdsOf(sql, ids[0])).toEqual([work, sharedThere].sort())
+        // The note in the trash stays behind, and a link never crosses groups.
+        expect(await tagIdsOf(sql, ids[1])).toEqual([])
+        const [stamp] = await sql<{ changeSequence: string }[]>`
+          SELECT change_sequence::text AS change_sequence FROM tags WHERE id = ${idle}
+        `
+        expect(BigInt(stamp.changeSequence)).toBe(stampedWith)
+      },
+    )
+
+    await t.step(
+      "refuses whole when the source's unused tags would take the target over its tag cap",
+      async () => {
+        const app = new PostgresGroupDataMover(sql, MOVABLE_AGGREGATES)
+        const { editor, from, to, ids, notes } = await seed(sql, ["a"])
+        for (let index = 0; index < TAG_MAX_PER_GROUP; index++) {
+          await insertTag(sql, to, `Full ${index}`, editor)
+        }
+        const idle = await insertTag(sql, from, "Idle", editor)
+
+        const refused = await refusal(
+          app.moveAll({ fromGroupId: from, toGroupId: to }, editor, NO_CAP),
+        )
+
+        expect(refused).toMatchObject({ code: "TAG_LIMIT_REACHED" })
+        expect((await tagsOf(sql, from)).map((tag) => tag.id)).toEqual([idle])
+        expect(await notes.count(from)).toBe(1)
+        expect((await notes.list(from, { limit: 10 })).notes.map((note) => note.id)).toEqual(ids)
       },
     )
 
