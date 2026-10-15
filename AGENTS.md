@@ -21,20 +21,21 @@ stand-in.
 
 Every piece of UI has one home:
 
-| Layer               | Home                                       | Examples                                                       |
-| ------------------- | ------------------------------------------ | -------------------------------------------------------------- |
-| Generic primitives  | `spy4x/preact-components` (JSR)            | `Button`, `Field`, `Card`, `EnhancedForm`, `AuthForm`, `Shell` |
-| Product screens     | `libs/ui` (workspace member, alias `@ui/`) | `AuthScreen`, `ProfileScreen`, `AppFrame`, `PublicFrame`       |
-| State and transport | the SPA (`apps/spa/src/views`)             | stores, `fetch`, WebSocket, the router                         |
+| Layer               | Home                                                                | Examples                                                       |
+| ------------------- | ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Generic primitives  | `spy4x/preact-components` (JSR)                                     | `Button`, `Field`, `Card`, `EnhancedForm`, `AuthForm`, `Shell` |
+| Product screens     | `libs/ui` (workspace member, alias `@ui/`)                          | `AuthScreen`, `ProfileScreen`, `AppFrame`, `PublicFrame`       |
+| State and transport | the SPA (`apps/spa/src/views`) and the admin app (`apps/admin/src`) | stores, `fetch`, WebSocket, the router                         |
 
 Anything a future product could use goes to preact-components first. `libs/ui` keeps only what
 names this template's features. An app's view is wiring: it holds state, calls the API and passes
 both to a screen.
 
-The two apps have different jobs. The SPA (`apps/spa`) is the product: everything a signed-in
-person does happens there. The MPA (`apps/mpa`, Fresh) is the product's public website: the home
-page, pricing, the legal pages and the newsletter. It has no session, links to the SPA for sign-in
-and sign-up, and renders no `libs/ui` screen except the newsletter's (`subscribe-screen.tsx`).
+The three apps have different jobs. The SPA (`apps/spa`) is the product: everything a signed-in
+person does happens there. The admin app (`apps/admin`) is the operator area, on a host of its own.
+The MPA (`apps/mpa`, Fresh) is the product's public website: the home page, pricing, the legal pages
+and the newsletter. It has no session, links to the SPA for sign-in and sign-up, and renders no
+`libs/ui` screen except the newsletter's (`subscribe-screen.tsx`).
 
 **The MPA's pages work without JavaScript.** Every page is rendered on the server, and every action
 is a real `<form method="post" action="…">` or `<a href="…">`. The newsletter screens keep that
@@ -77,14 +78,13 @@ Every id is a UUID version 7; a secret is the owner's decision: [docs/ids.md](do
 
 ## The admin panel stays in sync
 
-Every feature of the product's apps (the SPA, the mobile and desktop apps, and any app added
-later) has a counterpart in the admin panel, the operator area in the SPA under `/admin`. A change
-that adds or modifies a feature in one of those apps adds or modifies its admin counterpart in the
-same PR, so the two never drift apart.
+Every feature of the product's apps (the SPA, the mobile and desktop apps, and any app added later)
+has a counterpart in the admin panel, the operator area: the admin app (`apps/admin`) on its own
+host (`ADMIN_DOMAIN`). A change that adds or modifies a feature in one of those apps adds or
+modifies its admin counterpart in the same PR, so the two never drift apart.
 
-**Open:** the admin panel is not built yet ([#146](https://github.com/spy4x/template/issues/146)),
-and neither are the Android app ([#414](https://github.com/spy4x/template/issues/414)) and the
-desktop app ([#413](https://github.com/spy4x/template/issues/413)).
+**Open:** the Android app ([#414](https://github.com/spy4x/template/issues/414)) and the desktop
+app ([#413](https://github.com/spy4x/template/issues/413)) are not built yet.
 
 ## Handoff
 

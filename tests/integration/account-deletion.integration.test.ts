@@ -429,6 +429,35 @@ Deno.test("deleting one's own account", async (t) => {
     )
 
     await t.step(
+      "a person blocked while their code is owed cannot restore the account with it",
+      async () => {
+        const bo = await signUp(app, "bo")
+        await sql`UPDATE users SET mfa = ${UserMFAStatus.CONFIGURED} WHERE id = ${bo.id}`
+        await sql`
+          INSERT INTO user_totp (user_id, secret, confirmed_at)
+          VALUES (${bo.id}, ${TOTP_SECRET}, now())
+        `
+        await requestDeletion(app, sql, bo)
+        const response = await signIn(app, "bo")
+        expect(response.status).toBe(200)
+        const cookie = cookieOf(response)
+
+        // The block lands after the password was checked and before the code (#146).
+        await sql`UPDATE users SET blocked_at = now() WHERE id = ${bo.id}`
+        const right = await app.request("/totp/check", {
+          body: { otp: totpCode(Date.now()) },
+          cookie,
+        })
+
+        expect(right.status).toBe(401)
+        const [row] = await sql<{ deletedAt: Date | null }[]>`
+          SELECT deleted_at FROM users WHERE id = ${bo.id}
+        `
+        expect(row.deletedAt).not.toBeNull()
+        expect((await app.request("/strong", { body: {}, cookie })).status).toBe(401)
+      },
+    )
+    await t.step(
       "a password reset while waiting drops an unproven second factor, so the password restores",
       async () => {
         const uma = await signUp(app, "uma")

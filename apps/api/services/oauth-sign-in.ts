@@ -685,6 +685,9 @@ export function createOAuthOperations(
           } else {
             // Someone signed up with this provider account, or proved its address, while the
             // question was open: the package signed that user in instead of making a second one.
+            // A blocked user is refused as a deleted one is (#146), and the session goes with
+            // the transaction.
+            if (await tx.admin.isBlocked(result.user.id)) throw new OAuthSignInError("user-deleted")
             user = await tx.user.updateOne({
               id: result.user.id,
               data: { lastLoginAt: new Date() },

@@ -1,0 +1,9 @@
+ARG DENO_VERSION=2.9.7
+# Compose names the base image after the project (BASE_IMAGE), as the other dockerfiles take it.
+ARG BASE_IMAGE=localhost/app/deno-base:${DENO_VERSION}
+FROM ${BASE_IMAGE}
+
+# Copy application code
+COPY . .
+
+CMD deno task admin:dev

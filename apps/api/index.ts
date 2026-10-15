@@ -19,6 +19,9 @@ import { createGroupsRoute } from "./routes/groups.ts"
 import { createNotesRoute } from "./routes/notes.ts"
 import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
+import { createAdminRoute } from "./routes/admin.ts"
+import { createAdmin } from "./services/admin.ts"
+import { ADMIN_USERS_PAGE_SIZE } from "@domain/identity"
 import { createTokenApiRoute } from "./routes/token-api.ts"
 import { createApiTokens } from "./services/api-tokens.ts"
 import { createTokenRateLimits } from "./middlewares/token-rate-limits.ts"
@@ -90,6 +93,7 @@ const app = await createApiApp({
   skipLogPaths: ["/api/health"],
   parseAuth,
   reportError: (error, context) => void errorReporter.report(error, context),
+  adminHost: config.adminDomain,
 })
 
 app.route(
@@ -101,7 +105,7 @@ app.route(
 )
 // The browser sends the web app's origin; behind the TLS-terminating proxy the API sees `http://`.
 const expectedOrigin = new URL(config.webAppUrl).origin
-const mutationGuards = createMutationGuards(config.webAppUrl)
+const mutationGuards = createMutationGuards(config.webAppUrl, config.adminAppUrl)
 const emit = (event: Parameters<typeof eventBus.emit>[0]) => eventBus.emit(event)
 // has some public routes and some more protected
 const rateLimits = createAuthRateLimits({
@@ -170,6 +174,17 @@ app.route(
     limit: rateLimits.normal,
     passwordLimit: rateLimits.strictByUser,
     tokens: apiTokens,
+  }),
+)
+// The operator area (#146). The route answers 404 to anyone below operator.
+app.route(
+  "/admin",
+  createAdminRoute({
+    auth: signIn.auth,
+    mutationGuards,
+    limit: rateLimits.normal,
+    admin: createAdmin({ db, pageSize: ADMIN_USERS_PAGE_SIZE }),
+    emit,
   }),
 )
 // The only routes that accept a token, and they accept nothing else.

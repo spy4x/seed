@@ -2631,6 +2631,15 @@
       "npm:wouter-preact@3.9.0"
     ],
     "members": {
+      "apps/admin": {
+        "dependencies": [
+          "npm:@deno/vite-plugin@2.0.4",
+          "npm:@preact/preset-vite@2.10.2",
+          "npm:@tailwindcss/vite@4.1.12",
+          "npm:tailwindcss@4.1.12",
+          "npm:vite@7.3.6"
+        ]
+      },
       "apps/mpa": {
         "dependencies": [
           "jsr:@fresh/core@2.3.3",

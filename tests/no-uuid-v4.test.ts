@@ -60,10 +60,13 @@ const SKIPPED_DIRECTORIES: readonly string[] = [
   ".vs",
   ".volumes",
   "node_modules",
+  "apps/admin/node_modules",
   "apps/api/node_modules",
   "apps/mpa/node_modules",
   "apps/spa/node_modules",
   "apps/worker/node_modules",
+  "apps/admin/.vite",
+  "apps/admin/dist",
   "apps/mpa/.vite",
   "apps/mpa/_fresh",
   "apps/spa/.vite",
@@ -75,7 +78,7 @@ const SKIPPED_DIRECTORIES: readonly string[] = [
 
 /** Single files git does not track here: generated ones, logs, and env files, which hold secrets. */
 const SKIPPED_FILES =
-  /^(apps\/spa\/security-headers\.conf|infra\/configs\/vapid\.json|tests\/\.scratch-.*|(.*\/)?(\.DS_Store|[^/]*\.log|vite\.config\.[jt]s\.timestamp-[^/]*|\.env(?![^/]*\.example$)[^/]*))$/
+  /^(apps\/(spa|admin)\/security-headers\.conf|infra\/configs\/vapid\.json|tests\/\.scratch-.*|(.*\/)?(\.DS_Store|[^/]*\.log|vite\.config\.[jt]s\.timestamp-[^/]*|\.env(?![^/]*\.example$)[^/]*))$/
 
 /**
  * Whether the guard leaves out `path` (a file or a directory, relative to the root, with `/`).

@@ -18,8 +18,8 @@
 /**
  * The services that serve requests. `deno task compose up -d` starts these first (Compose adds
  * what they depend on), then the rest, so a monitoring container or a console that cannot start
- * never leaves these stopped. Every service that is not named here is optional; `mpa` is started
- * only when its profile is on.
+ * never leaves these stopped. Every service that is not named here is optional; `mpa` and
+ * `admin` are started only when their profile is on.
  */
 export const PRODUCT_SERVICES: readonly string[] = [
   `db`,
@@ -29,6 +29,7 @@ export const PRODUCT_SERVICES: readonly string[] = [
   `worker`,
   `spa`,
   `mpa`,
+  `admin`,
 ]
 
 /** The only flags a staged start understands; anything else runs as one command, as before. */

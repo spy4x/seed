@@ -160,10 +160,11 @@ export interface ApiTokenRows {
     request?: ApiTokenAuditRequest,
   ): Promise<number>
   /**
-   * The token whose hash is `hash`, when its owner's account is live; `refused` says why it may
-   * not act now, when it was revoked or has expired. `null` for a hash no token has. Membership of
-   * the group is not checked here: the handlers check the owner's role on every message, as they
-   * do for a session.
+   * The token whose hash is `hash`, when its owner's account is live and not blocked (#146); a
+   * blocked owner's token answers as no token does, and works again once they are unblocked.
+   * `refused` says why it may not act now, when it was revoked or has expired. `null` for a hash
+   * no token has. Membership of the group is not checked here: the handlers check the owner's role
+   * on every message, as they do for a session.
    */
   find(hash: string): Promise<FoundApiToken | null>
   /**
@@ -271,6 +272,7 @@ export function apiTokenRows(sql: postgres.Sql): ApiTokenRows {
           END AS refused
         FROM api_tokens
         INNER JOIN users ON users.id = api_tokens.user_id AND users.deleted_at IS NULL
+          AND users.blocked_at IS NULL
         WHERE api_tokens.token_hash = ${hash}
       `
       return row

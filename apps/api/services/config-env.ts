@@ -15,6 +15,8 @@ export const envSchema = type({
   RATE_LIMITER_OTP_WINDOW_MS: "string.integer.parse",
   RATE_LIMITER_OTP_LIMIT: "string.integer.parse",
   DOMAIN: "string > 0",
+  /** The admin app's own host (#146); unset or empty turns the operator area off. */
+  "ADMIN_DOMAIN?": "string",
   KV_HOSTNAME: "string > 0",
   KV_PORT: "string.integer.parse",
   KV_PASSWORD: "string > 0",

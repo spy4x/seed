@@ -15,10 +15,12 @@
 #   - the API, the worker and the Vite dev server of this checkout (`E2E_SPA=built` puts the
 #     built SPA there instead, see below);
 #   - a proxy that serves them at one origin, `http://app.localhost:<port>`, and sets the client
-#     address headers itself, as Traefik does (`e2e-local-proxy.ts`).
+#     address headers itself, as Traefik does (`e2e-local-proxy.ts`);
+#   - the admin app's Vite dev server, and a second proxy that serves it with the API at
+#     `http://admin.localhost:<port>`, the admin host (`ADMIN_DOMAIN`) the operator area answers on.
 #
-# The specs name `http://app.localhost` without a port, so they run from a copy that names the
-# port, under `e2e/results/` (ignored by git). Line numbers in a report match the tracked specs.
+# The specs name `http://app.localhost` and `http://admin.localhost` without a port, so they run
+# from a copy that names the ports, under `e2e/results/` (ignored by git). Line numbers in a report match the tracked specs.
 #
 # `E2E_SPA` says what serves the SPA:
 #   - `dev`: the Vite dev server, which compiles each module when a page asks for it;
@@ -216,6 +218,8 @@ SPA_PORT=$(spare_port)
 # The installed nginx listens where apps/spa/nginx.conf says.
 [ "$BUILT_SERVER" = nginx ] && SPA_PORT=8080
 FRONT_PORT=$(spare_port)
+ADMIN_PORT=$(spare_port)
+ADMIN_FRONT_PORT=$(spare_port)
 
 if [ "$SERVICES" = containers ]; then
   DB_PASS=$(openssl rand -hex 24)
@@ -287,6 +291,8 @@ fi
 export ENV=dev
 # The API's origin check compares the browser's Origin with http://$DOMAIN, port included.
 export DOMAIN="app.localhost:$FRONT_PORT"
+# The operator area answers only on this host, port included, as on DOMAIN.
+export ADMIN_DOMAIN="admin.localhost:$ADMIN_FRONT_PORT"
 export DEV_EMAIL=dev@example.com
 export TIMEZONE=Etc/UTC
 export AUTH_COOKIE_SECRET AUTH_PEPPER AUTH_TOTP
@@ -408,6 +414,16 @@ start proxy env FRONT_PORT="$FRONT_PORT" API_PORT="$API_PORT" SPA_PORT="$SPA_POR
   infra/scripts/e2e-local-proxy.ts
 wait_for proxy "${PIDS[-1]}" 30 answers "http://127.0.0.1:$FRONT_PORT/api/health"
 
+# The admin app is served by its dev server in every pass; only the SPA has a built variant here.
+log "starting the admin app's dev server on 127.0.0.1:$ADMIN_PORT"
+start admin env VITE_ENV=dev deno task admin:dev --port "$ADMIN_PORT" --strictPort --host 127.0.0.1
+wait_for admin "${PIDS[-1]}" 120 answers "http://127.0.0.1:$ADMIN_PORT/"
+log "starting the admin proxy on 127.0.0.1:$ADMIN_FRONT_PORT"
+start admin-proxy env FRONT_PORT="$ADMIN_FRONT_PORT" API_PORT="$API_PORT" SPA_PORT="$ADMIN_PORT" \
+  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT \
+  infra/scripts/e2e-local-proxy.ts
+wait_for admin-proxy "${PIDS[-1]}" 30 answers "http://127.0.0.1:$ADMIN_FRONT_PORT/"
+
 # Chromium resolves *.localhost itself; Playwright's own requests ask the system resolver.
 getent hosts app.localhost >/dev/null 2>&1 ||
   log "warning: app.localhost does not resolve here; requests the specs make outside the browser will fail"
@@ -445,7 +461,8 @@ copy_specs() { # <all|offline|other>
     kind=other
     [[ "$OFFLINE_SPECS" == *" $name "* ]] && kind=offline
     [ "$1" = all ] || [ "$1" = "$kind" ] || continue
-    sed -e "s#http://app.localhost\"#http://app.localhost:$FRONT_PORT\"#g" "$spec" \
+    sed -e "s#http://app.localhost\"#http://app.localhost:$FRONT_PORT\"#g" \
+      -e "s#http://admin.localhost\"#http://admin.localhost:$ADMIN_FRONT_PORT\"#g" "$spec" \
       >"$COPY_DIR/$name"
   done
 }

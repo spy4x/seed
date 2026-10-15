@@ -1,0 +1,24 @@
+# Build stage
+ARG DENO_VERSION=2.9.7
+# The release pipeline starts from the published base image instead (BASE_IMAGE).
+ARG BASE_IMAGE=localhost/app/deno-base:${DENO_VERSION}
+FROM ${BASE_IMAGE} AS build
+
+# Switch to root to copy files with proper permissions
+USER root
+COPY --chown=1000:1000 . .
+USER 1000:1000
+
+RUN deno task admin:build
+
+# Production stage with nginx
+# The registry is named: podman refuses a short name when it has no terminal to ask on.
+FROM docker.io/nginxinc/nginx-unprivileged:stable-alpine
+WORKDIR /app
+COPY --from=build /app/apps/admin/dist /usr/share/nginx/html
+COPY --from=build /app/apps/admin/nginx.conf /etc/nginx/conf.d/default.conf
+# The security headers nginx.conf includes, written by the build from the built page.
+COPY --from=build /app/apps/admin/security-headers.conf /etc/nginx/admin/security-headers.conf
+USER 101
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]

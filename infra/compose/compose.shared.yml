@@ -689,6 +689,8 @@ services:
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
       # The website's host, when it is deployed: the mailed confirm and unsubscribe links open there.
       - MPA_DOMAIN=${MPA_DOMAIN:-}
+      # The admin app's host, when it is deployed: the operator area (/api/admin) answers there only.
+      - ADMIN_DOMAIN=${ADMIN_DOMAIN:-}
     deploy:
       resources:
         limits:
@@ -901,6 +903,56 @@ services:
       # Answers once the MPA's port accepts a connection (apps/healthcheck.ts).
       test:
         [ 'CMD', 'deno', 'run', '--allow-net=127.0.0.1', '--allow-env=HEALTHCHECK_PORT,PORT', 'apps/healthcheck.ts' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # The admin app (apps/admin), the operator area: `COMPOSE_PROFILES=admin` in the env file starts
+  # it. It serves `ADMIN_DOMAIN`, a host of its own, so its session cookie is that host's alone.
+  # Its `/api` goes to this project's API through a second router; the API answers the operator
+  # area there and nowhere else. `${ADMIN_DOMAIN:-}` for the reason the MPA's comment gives. Built
+  # into the image: no bind mounts.
+  admin:
+    container_name: ${PROJECT}-admin
+    profiles: [admin]
+    restart: unless-stopped
+    build:
+      context: ../..
+      dockerfile: apps/admin/dockerfile.prod
+      args:
+        - DENO_VERSION=${DENO_VERSION}
+        - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
+    deploy:
+      resources:
+        limits:
+          cpus: '${ADMIN_CPU_LIMIT:-0.5}'
+          memory: '${ADMIN_MEM_LIMIT:-128M}'
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      api:
+        condition: service_started
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.admin-${PROJECT}.rule=Host(`${ADMIN_DOMAIN:-}`) && !PathPrefix(`/api`)"
+      - "traefik.http.routers.admin-${PROJECT}.entrypoints=web"
+      - "traefik.http.routers.admin-${PROJECT}.service=admin-${PROJECT}"
+      - "traefik.http.services.admin-${PROJECT}.loadbalancer.server.port=8080"
+      # The admin host's `/api` reaches the API container, with the API router's header strip.
+      - "traefik.http.routers.admin-api-${PROJECT}.rule=Host(`${ADMIN_DOMAIN:-}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.admin-api-${PROJECT}.entrypoints=web"
+      - "traefik.http.routers.admin-api-${PROJECT}.service=api-${PROJECT}"
+      - "traefik.http.routers.admin-api-${PROJECT}.middlewares=strip-cf-ip-${PROJECT}"
+      - "traefik.docker.network=proxy"
+    networks:
+      - default
+      - proxy
+    healthcheck:
+      # nginx's image has no Deno, so this check stays on the image's own wget, as the SPA's does.
+      test: ["CMD", "wget", "--spider", "http://127.0.0.1:8080"]
       interval: 10s
       timeout: 5s
       retries: 5

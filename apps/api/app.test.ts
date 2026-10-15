@@ -157,4 +157,41 @@ describe("the API's app", () => {
       )
     }
   })
+
+  it("keeps the operator area to the admin host, and the admin host to the area", async () => {
+    const app = await createApiApp({
+      write: () => {},
+      parseAuth: async (_c, next) => await next(),
+      adminHost: "admin.local",
+    })
+    app.get("/admin/users", (c) => c.json({ users: [] }))
+    app.get("/notifications", (c) => c.json({ notifications: [] }))
+    const status = async (url: string) => (await app.request(url)).status
+
+    expect(await status("http://admin.local/api/admin/users")).toBe(200)
+    expect(await status("http://local/api/admin/users")).toBe(404)
+    expect(await status("http://admin.local/api/notifications")).toBe(404)
+    expect(await status("http://local/api/notifications")).toBe(200)
+  })
+
+  it("answers 404 to the operator area spelled with percent-escapes on another host", async () => {
+    const app = await createApiApp({
+      write: () => {},
+      parseAuth: async (_c, next) => await next(),
+      adminHost: "admin.local",
+    })
+    app.get("/admin/users/:id", (c) => c.json({ user: c.req.param("id") }))
+    app.post("/admin/users/:id/block", (c) => c.json({ blocked: c.req.param("id") }))
+    app.get("/notifications", (c) => c.json({ notifications: [] }))
+
+    for (const area of ["%61dmin", "%41dmin", "ad%6din", "%61%64%6d%69%6e"]) {
+      const get = await app.request(`http://local/api/${area}/users/42`)
+      const post = await app.request(`http://local/api/${area}/users/42/block`, { method: "POST" })
+      expect([area, get.status, post.status]).toEqual([area, 404, 404])
+    }
+    // The router reads an escaped spelling as the area itself, so the gate must too.
+    expect((await app.request(`http://admin.local/api/%61dmin/users/42`)).status).toBe(200)
+    // And the admin host cannot reach another route by escaping its letters.
+    expect((await app.request("http://admin.local/api/%6eotifications")).status).toBe(404)
+  })
 })

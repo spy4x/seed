@@ -5,7 +5,7 @@ import { validate } from "@spy4x/validation"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { normalizeEmail } from "@spy4x/server/auth"
-import { authEmailSchema, authLoginSchema } from "@domain/identity"
+import { authEmailSchema, authLoginSchema, UserRole } from "@domain/identity"
 import { GroupRole } from "@domain/groups"
 import { recordAccessChange } from "@server/groups/group-change-log.ts"
 import { type } from "arktype"
@@ -47,6 +47,10 @@ export interface DevRouteDeps {
  * `POST /close-sockets` with `{ login }` closes that user's WebSockets the way a dropped network
  * would, so an e2e spec can check that the app catches up after a reconnect. It answers with how
  * many sockets it closed.
+ *
+ * `POST /set-role` with `{ login, role }` gives that user the role (1 viewer, 2 operator,
+ * 3 supervisor, 4 administrator), so the operator area's e2e spec has an operator. Production sets
+ * a role with `deno task user:role` instead. It answers 404 when the user does not exist.
  *
  * `POST /last-mail` with `{ email }` answers the newest mail the worker sent to that address in
  * development (`dev_mail`): `{ subject, text }`, or 404 when there is none. The e2e specs read a
@@ -107,6 +111,25 @@ export function createDevRoute(deps: DevRouteDeps) {
       }
       return c.json({ success: true })
     })
+    .post("/set-role", async (c) => {
+      if (!deps.isDev) return c.json({ error: "Not allowed" }, 403)
+      let body: unknown = null
+      try {
+        body = await readApiJson(c)
+      } catch (_error) {
+        body = null
+      }
+      const validation = validate(setRoleSchema, body)
+      if (validation.error) {
+        return c.json({ error: validation.error.description }, 400)
+      }
+      const key = await findPasswordKey(deps, validation.data.login)
+      if (!key) return c.json({ error: "No such user" }, 404)
+      await deps.sql`
+        UPDATE users SET role = ${validation.data.role}, updated_at = NOW() WHERE id = ${key.userId}
+      `
+      return c.json({ success: true })
+    })
     .post("/close-sockets", async (c) => {
       const user = await readLogin(c, deps)
       if (user instanceof Response) return user
@@ -145,6 +168,11 @@ function findPasswordKey(deps: DevRouteDeps, login: string) {
 const addMemberSchema = authLoginSchema.and({
   groupId: UUID_PATTERN,
   role: type.enumerated(GroupRole.VIEWER, GroupRole.EDITOR, GroupRole.ADMIN),
+})
+
+/** The body of `POST /set-role`. */
+const setRoleSchema = authLoginSchema.and({
+  role: type.enumerated(UserRole.VIEWER, UserRole.OPERATOR, UserRole.SUPERVISOR, UserRole.ADMIN),
 })
 
 /**

@@ -2,7 +2,7 @@
 /**
  * Seeds a development database with a small, neutral demo data set: a user who signs in as
  * `demo@example.com` (with the first group every sign-up gets, named `Personal`) and owns a second
- * group, `Demo team`.
+ * group, `Demo team`. The demo user is an administrator, so it signs in to the admin app (#146).
  *
  * Usage, after `deno task db:migrate`, with the same `DB_*` values:
  * `ENV=dev DB_HOST=127.0.0.1 DB_PORT=5432 DB_USER=… DB_PASS=… DB_NAME=… AUTH_PEPPER=…
@@ -14,8 +14,8 @@
  *
  * The user is created through the API's own sign-up (`createSignIn`), so the auth user, password
  * key, profile and first group are written exactly as a real sign-up writes them. The session
- * that sign-up opens is signed out at once. Running the seed again changes nothing: it looks the
- * address up first and stops when the user exists. When sign-up refuses a user that does not
+ * that sign-up opens is signed out at once. Running the seed again only makes the demo user an
+ * administrator again: it looks the address up first and writes nothing else when the user exists. When sign-up refuses a user that does not
  * exist, the seed fails instead of reporting success. It runs only when `ENV` is `dev`, the same
  * rule as `db:reset`, so no production database gets a demo account with a known password.
  *
@@ -25,7 +25,7 @@
 import { Hono } from "hono"
 import postgres from "postgres"
 import { createSqlFromEnv } from "@spy4x/server/db"
-import { authPasswordSchema } from "@domain/identity"
+import { authPasswordSchema, UserRole } from "@domain/identity"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
@@ -83,14 +83,18 @@ export function readSeedOptions(env: Record<string, string | undefined>): SeedOp
 }
 
 /**
- * Creates the demo data. `false` when the demo user already exists and nothing was written.
+ * Creates the demo data and makes the demo user an administrator. `false` when the demo user
+ * already exists: then only the role is written.
  *
  * @throws {SeedRefusedError} When the user does not exist and sign-up still refuses to create it.
  */
 export async function seed(db: AppDbBase, options: SeedOptions): Promise<boolean> {
   // Sign-up answers `null` for a taken address and for a refused one alike, so "exists already"
   // is decided here, not from its answer.
-  if (await db.authStore.findKey(PASSWORD_METHOD, DEMO_EMAIL)) return false
+  if (await db.authStore.findKey(PASSWORD_METHOD, DEMO_EMAIL)) {
+    await db.admin.setRoleByAddress(DEMO_EMAIL, UserRole.ADMIN)
+    return false
+  }
   const signIn = createSignIn({
     db,
     pepper: options.pepper,
@@ -120,6 +124,7 @@ export async function seed(db: AppDbBase, options: SeedOptions): Promise<boolean
 
   await db.sessionStore.signOutUser(userId, null)
   await db.group.create({ id: uuidV7(), name: DEMO_GROUP_NAME }, userId)
+  await db.admin.setRoleByAddress(DEMO_EMAIL, UserRole.ADMIN)
   return true
 }
 

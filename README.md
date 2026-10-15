@@ -92,8 +92,10 @@ A missing `DB_PORT`, `DB_USER` or `DB_PASS`, or a missing or invalid `AUTH_PEPPE
 
 To add a demo user who signs in as `demo@example.com` and owns the group `Demo team`, run
 `ENV=dev deno task db:seed` with the same values plus `AUTH_PEPPER` (the API's) and `SEED_PASSWORD`
-(the demo user's password, 8 to 50 characters). It runs only with `ENV=dev`. Run again, it finds
-the user and changes nothing; when it cannot create the user, it says so and exits with 1.
+(the demo user's password, 8 to 50 characters). It runs only with `ENV=dev`. The demo user is an
+administrator, so they can also sign in to the [admin app](#the-admin-app). Run again, it finds
+the user, makes them an administrator again if their role changed, and changes nothing else; when
+it cannot create the user, it says so and exits with 1.
 
 ## What a fresh project looks like
 
@@ -171,6 +173,34 @@ Without it the links open the SPA. Without the profile nothing about the deploy 
 end-to-end test runs in CI on every pull
 request, and locally with `e2e/mpa/run.sh` against a running Postgres and Valkey (see the header
 of that script).
+
+## The admin app
+
+The admin app (`apps/admin`, Preact and Vite) is the operator area: people who run the product
+find a person by address or name, filter by role and by blocked state, and open their page with
+their sign-in methods, sessions, groups and audit trail. From there they block or unblock the
+person, or end all their sessions. A block refuses every way in (password, Google, GitHub and API
+tokens), ends the person's sessions and closes their open pages. Each action is confirmed in a
+dialog, asks for no password, and writes an audit event naming the operator.
+Nobody acts on themselves or on someone whose role is theirs or higher.
+
+It runs on a host of its own, `ADMIN_DOMAIN`, so its session cookie belongs to that host alone. It
+signs in with a password and a code only; Google and GitHub are not offered there. The API answers
+the operator area (`/api/admin`) on that host only, and there only the operator area and sign-in.
+A person below operator gets 404 from every operator route; the app's own check only says so.
+
+Roles are `viewer` (everyone, by default), `operator`, `supervisor` and `administrator`; operator
+and above open the admin app. To give someone a role, run
+`deno task user:role <address> <role>` with the database variables set, such as
+`deno task compose exec worker deno task user:role ada@example.com operator` on the server. It
+finds the person by the address they sign in with and exits with 1 when nobody does.
+
+To deploy it, add `admin` to `COMPOSE_PROFILES` in the env file and set `ADMIN_DOMAIN` to the
+app's host, such as `admin.example.com`, then run `deno task deploy`. Compose builds the `admin`
+service from `apps/admin/dockerfile.prod`, serves it at `ADMIN_DOMAIN` and sends that host's `/api`
+to the API. `ADMIN_DOMAIN` needs a DNS record pointing at the server; Traefik gets its certificate.
+In development, with the profile on, Compose serves it at `http://admin.localhost`, the
+`ADMIN_DOMAIN` that `infra/envs/.env.example` sets.
 
 ## Production certificates
 
@@ -435,11 +465,13 @@ Current tasks come from [`deno.jsonc`](deno.jsonc).
 | `deno task db:migrate`       | Apply the SQL migrations in `libs/server/db`           |
 | `deno task db:reset`         | Drop, migrate and seed a dev database (`ENV=dev` only) |
 | `deno task spa:build`        | Build the SPA                                          |
+| `deno task admin:build`      | Build the admin app                                    |
+| `deno task user:role`        | Give a person a role by their address                  |
 | `deno task subscribers:send` | Queue an issue for a mailing list (worker container)   |
 | `deno task deploy`           | Copy the production files to the server and start them |
 | `deno task db:upgrade-18`    | Once per server: move the data from Postgres 16 to 18  |
 
-Run individual app tasks with `api:*`, `spa:*`, or `mpa:*`. Deno workspace members inherit shared
+Run individual app tasks with `api:*`, `spa:*`, `admin:*`, or `mpa:*`. Deno workspace members inherit shared
 imports and tooling settings from root `deno.jsonc`.
 
 ## Development

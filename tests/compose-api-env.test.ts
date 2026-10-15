@@ -120,6 +120,7 @@ Deno.test("each Deno service checks its health with the Deno script and names it
     ["compose.shared.yml", "api", "${API_PORT}"],
     ["compose.shared.yml", "mpa", "8080"],
     ["compose.dev.yml", "spa", "5173"],
+    ["compose.dev.yml", "admin", "5174"],
   ]
 
   for (const [file, name, port] of services) {

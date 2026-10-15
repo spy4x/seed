@@ -915,6 +915,45 @@ Deno.test("a provider sign-in to an account with two-factor on still owes the co
   })
 })
 
+Deno.test("a blocked person cannot sign in with a provider, and no session is made", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const first = browser(app)
+    await first.through("google", "ada")
+    const user = await (await first.post("/auth/sign-up/confirm")).json()
+    await sql`UPDATE users SET blocked_at = now() WHERE id = ${user.id}`
+    const [{ before }] = await sql`SELECT count(*)::int AS before FROM auth_sessions`
+
+    const later = browser(app)
+    expect(target(await later.through("google", "ada"))).toBe("/sign-in?oauth=failed")
+
+    expect((await later.get("/auth/methods")).status).toBe(401)
+    const [{ after }] = await sql`SELECT count(*)::int AS after FROM auth_sessions`
+    expect(after).toBe(before)
+  })
+})
+
+Deno.test("a sign-up confirmed after its person was blocked signs nobody in", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    // Two browsers ask the same question; the first answer makes the account.
+    const first = browser(app)
+    const second = browser(app)
+    await first.through("google", "ada")
+    await second.through("google", "ada")
+    const user = await (await first.post("/auth/sign-up/confirm")).json()
+    await sql`UPDATE users SET blocked_at = now() WHERE id = ${user.id}`
+    const [{ before }] = await sql`SELECT count(*)::int AS before FROM auth_sessions`
+
+    expect((await second.post("/auth/sign-up/confirm")).status).toBe(400)
+
+    expect((await second.get("/auth/methods")).status).toBe(401)
+    const [{ after }] = await sql`SELECT count(*)::int AS after FROM auth_sessions`
+    expect(after).toBe(before)
+    expect(await accounts(sql)).toEqual({ authUsers: 1, profiles: 1 })
+  })
+})
+
 Deno.test("the profile links a provider whose verified address is the account's own", async () => {
   await withSchema(async (sql) => {
     const app = buildApp(sql, { ada: ADA })

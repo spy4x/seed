@@ -43,6 +43,9 @@ apps/spa      Preact + Vite PWA. Wires the libs/ui auth, profile and groups scre
 apps/mpa      Fresh. The public website: server-rendered, works without JavaScript, no
               session. Calls the API over HTTP (API_URL) for the newsletter only; in
               compose under the `mpa` profile.
+apps/admin    Preact + Vite. The operator area on its own host (ADMIN_DOMAIN): password and
+              code sign-in, the user list and page, block, unblock and end sessions. In
+              compose under the `admin` profile.
 apps/worker   Drains outbox_events and announces group changes (pg_notify); sweeps
               expired idempotency keys; runs delayed and repeating jobs (below). Runs in compose
               as `worker`, from the API's image.
@@ -388,6 +391,12 @@ These cost real time to find. Do not rediscover them.
        they are stored in `.volumes/grafana`, which the deploy keeps, and they no longer answer.
        The VictoriaMetrics and VictoriaLogs data sources come from
        `infra/configs/grafana-datasources.yml`.
+12. **The operator area answers on the admin host only.** `/api/admin/*` is 404 on every host but
+    `ADMIN_DOMAIN`, and everywhere when it is unset. On the admin host only `/api/admin/*` and four auth calls
+    (`/api/auth/me`, `/api/auth/password/check`, `/api/auth/totp/check`, `/api/auth/sign-out`)
+    answer (`apps/api/middlewares/admin-host.ts`). The gate reads the decoded path the router
+    matches (`c.req.path`), never the raw URL: `/api/%61dmin` is the operator area too. The host is compared with its port, so a test
+    against `admin.localhost:<port>` sets `ADMIN_DOMAIN` with that port, as `e2e:local` does.
 
 ## Running it
 

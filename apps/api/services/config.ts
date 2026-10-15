@@ -34,6 +34,9 @@ export class Config {
   // Web App Configuration
   domain = env.DOMAIN
   webAppUrl = `http${this.isDev ? "" : "s"}://${this.domain}`
+  /** The admin app's host, or `null` when it is not deployed and the operator area is off. */
+  adminDomain = env.ADMIN_DOMAIN || null
+  adminAppUrl = this.adminDomain ? `http${this.isDev ? "" : "s"}://${this.adminDomain}` : null
 
   kv = {
     hostname: env.KV_HOSTNAME,

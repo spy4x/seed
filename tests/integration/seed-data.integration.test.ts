@@ -3,6 +3,7 @@ import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
 import { GroupRole } from "@domain/groups"
+import { UserRole } from "@domain/identity"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
 import {
@@ -129,7 +130,27 @@ Deno.test("seed creates a demo user who can sign in and owns the demo group", as
   })
 })
 
-Deno.test("seed run again reports that the user exists and writes nothing", async () => {
+/** The role of the person whose password key names `address`. */
+async function roleOf(sql: postgres.Sql, address: string): Promise<number | undefined> {
+  const [row] = await sql<{ role: number }[]>`
+    SELECT u.role FROM users u JOIN auth_keys k ON k.user_id = u.id AND k.email = ${address}
+  `
+  return row?.role
+}
+
+Deno.test("seed makes the demo user an administrator, and makes them one again on a rerun", async () => {
+  await withSchema(async (sql) => {
+    const db = new AppDbBase({ sql })
+    await seed(db, { pepper: PEPPER, password: PASSWORD })
+    expect(await roleOf(sql, DEMO_EMAIL)).toBe(UserRole.ADMIN)
+
+    await sql`UPDATE users SET role = ${UserRole.VIEWER}`
+    expect(await seed(db, { pepper: PEPPER, password: PASSWORD })).toBe(false)
+    expect(await roleOf(sql, DEMO_EMAIL)).toBe(UserRole.ADMIN)
+  })
+})
+
+Deno.test("seed run again reports that the user exists and writes no other row", async () => {
   await withSchema(async (sql) => {
     const db = new AppDbBase({ sql })
     await seed(db, { pepper: PEPPER, password: PASSWORD })

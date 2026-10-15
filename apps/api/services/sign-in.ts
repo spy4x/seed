@@ -367,7 +367,7 @@ export function normalizeUsername(raw: unknown): string | null {
  * The `auth_audits` row of an action by `userId` in this request. The address is read as the API
  * always read it, trusting `X-Forwarded-For` and `X-Real-IP` from the proxy in front of it.
  */
-function auditRow(
+export function auditRow(
   c: Context,
   userId: number,
   eventType: AuthAuditEventType,
@@ -404,12 +404,20 @@ export function createSignIn(options: SignInOptions): SignIn {
   const cookie = new SessionCookie({ secret: options.cookieSecret, secure: options.secureCookie })
   const hasher = options.hasher ?? createPasswordHasher({ pepper: options.pepper })
 
-  /** The user a session belongs to, or `null` when the user is gone or may not sign in. */
+  /**
+   * The user a session belongs to, or `null` when the user is gone or may not sign in. A blocked
+   * user (#146) gets `null` here, so every request and every socket of a session they still hold
+   * is refused, whatever ended or did not end it.
+   */
   async function loadUser(userId: number): Promise<User | null> {
     const user = await db.user.findOne({ id: userId })
     // An account waiting to be deleted with two-factor on is restored only by its code, so its
     // session owes that code and reaches nothing else (`hasSecondFactor` is true for it).
-    if (!user) return await waitingForCode(userId)
+    if (!user) {
+      const waiting = await waitingForCode(userId)
+      return waiting?.blockedAt ? null : waiting
+    }
+    if (user.blockedAt) return null
     try {
       await db.group.ensureFirst({ id: uuidV7(), name: "Personal" }, user.id)
     } catch (error) {
@@ -556,6 +564,8 @@ export function createSignIn(options: SignInOptions): SignIn {
     // As a password sign-in: an account that waits to be deleted is restored, unless only its
     // authenticator code may do that, and then the session owes the code.
     secondFactorFor: (c) => async (authUser) => {
+      // A blocked user is refused before anything is restored or a session is made (#146).
+      if (await db.admin.isBlocked(authUser.id)) throw new MissingProfileError()
       if (await waitingForCode(authUser.id)) return SecondFactorStatus.Pending
       if (!(await restoreIfWaiting(c, authUser.id))) throw new MissingProfileError()
       return await signInSecondFactor(authUser)
@@ -638,6 +648,9 @@ export function createSignIn(options: SignInOptions): SignIn {
       try {
         // The hash is verified before `db.begin()`, so no pool connection waits on it.
         checked = await provider.checkCredentials({ email: login, password })
+        // A blocked user (#146) gets the same answer as a wrong password, before an account
+        // waiting to be deleted is restored or a session is made.
+        if (await db.admin.isBlocked(checked.user.id)) return null
         waiting = await waitingForCode(checked.user.id)
         if (waiting) {
           secondFactor = SecondFactorStatus.Pending

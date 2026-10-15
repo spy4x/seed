@@ -81,3 +81,21 @@ services:
       - "traefik.http.routers.redirect-mpa-http-${PROJECT}.entrypoints=web"
       - "traefik.http.routers.redirect-mpa-http-${PROJECT}.middlewares=to-mpa-${PROJECT}"
       - "traefik.http.routers.redirect-mpa-http-${PROJECT}.service=noop@internal"
+
+  # Only with COMPOSE_PROFILES=admin. Overrides compose.shared.yml's admin routers by name. No
+  # old-host redirect: the admin app has had no other host.
+  admin:
+    labels:
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.admin-${PROJECT}.entrypoints=websecure"
+      - "traefik.http.routers.admin-${PROJECT}.tls=true"
+      - "traefik.http.routers.admin-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      - "traefik.http.routers.admin-api-${PROJECT}.entrypoints=websecure"
+      - "traefik.http.routers.admin-api-${PROJECT}.tls=true"
+      - "traefik.http.routers.admin-api-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      - "traefik.http.routers.admin-api-${PROJECT}.middlewares=strip-cf-ip-${PROJECT}"
+      # Plain HTTP for the admin host redirects to HTTPS; the middleware is the SPA's.
+      - "traefik.http.routers.http-admin-${PROJECT}.rule=Host(`${ADMIN_DOMAIN:-}`)"
+      - "traefik.http.routers.http-admin-${PROJECT}.entrypoints=web"
+      - "traefik.http.routers.http-admin-${PROJECT}.middlewares=https-redirect-${PROJECT}"
+      - "traefik.http.routers.http-admin-${PROJECT}.service=noop@internal"

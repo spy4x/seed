@@ -14,6 +14,7 @@ RUN apk add --no-cache git curl bash libstdc++ libgcc
 # Copy dependency manifests for better layer caching. Every workspace member of deno.jsonc needs a
 # line here, or older Deno versions fail `deno install` (tests/dockerfile-base.test.ts checks it).
 COPY deno.jsonc deno.lock ./
+COPY apps/admin/deno.json ./apps/admin/deno.json
 COPY apps/api/deno.json ./apps/api/deno.json
 COPY apps/mpa/deno.json ./apps/mpa/deno.json
 COPY apps/spa/deno.json ./apps/spa/deno.json

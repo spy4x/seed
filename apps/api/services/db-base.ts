@@ -36,6 +36,16 @@ import type { AccountDeletionBlocker, OnboardingMark, OnboardingStatus } from "@
 import { touchUserSeen } from "@server/auth/sessions.ts"
 import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
 import { type ApiTokenRows, apiTokenRows } from "@server/api-tokens/api-tokens.ts"
+import {
+  isUserBlocked,
+  listAdminUsers,
+  lockAdminTarget,
+  readAdminUser,
+  readAdminUserParts,
+  setUserBlocked,
+  setUserRoleByAddress,
+} from "@server/auth/admin-users.ts"
+import type { AdminUserFilter, UserRole } from "@domain/identity"
 
 /** A user's authenticator-app enrolment, one row of `user_totp`. */
 export interface UserTotp {
@@ -297,6 +307,31 @@ export class AppDbBase extends DbServiceBase {
       /** Records that the person closed the checklist or ended the tour. */
       mark: (userId: number, mark: OnboardingMark): Promise<void> =>
         markOnboarding(sql, userId, mark),
+    }
+  }
+
+  /**
+   * The operator area's reads and writes (`@server/auth/admin-users.ts`, #146). Built per access,
+   * like `group`: `lockTarget`, `setBlocked` and the audit row of an action share its `begin()`.
+   */
+  get admin() {
+    const sql = this.sql
+    return {
+      /** One page of the people who are not deleted, newest first, and how many match in all. */
+      list: (filter: AdminUserFilter, pageSize: number) => listAdminUsers(sql, filter, pageSize),
+      /** The person as the list shows them, or `null` when there is no live one. */
+      find: (userId: number) => readAdminUser(sql, userId),
+      /** How the person signs in, their groups and their newest audit rows. */
+      parts: (userId: number) => readAdminUserParts(sql, userId),
+      /** Locks the live person and reads their role and block. Inside `begin()` only. */
+      lockTarget: (userId: number) => lockAdminTarget(sql, userId),
+      /** Blocks the person as of `at`, or unblocks them with `null`. */
+      setBlocked: (userId: number, at: Date | null) => setUserBlocked(sql, userId, at),
+      /** Whether the person is blocked, deleted or not. */
+      isBlocked: (userId: number) => isUserBlocked(sql, userId),
+      /** Gives the person who signs in with `address` the role, and answers their id or `null`. */
+      setRoleByAddress: (address: string, role: UserRole) =>
+        setUserRoleByAddress(sql, address, role),
     }
   }
 

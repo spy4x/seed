@@ -15,6 +15,23 @@ export enum UserRole {
 }
 export const userRoleValues = Object.values(UserRole) as UserRole[]
 
+/** What each role is called on a page and on the command line. */
+export const USER_ROLE_NAMES: Record<UserRole, string> = {
+  [UserRole.VIEWER]: "viewer",
+  [UserRole.OPERATOR]: "operator",
+  [UserRole.SUPERVISOR]: "supervisor",
+  [UserRole.ADMIN]: "administrator",
+}
+
+/** The role named `name` (`operator`), or `null` for a name no role has. */
+export function userRoleNamed(name: string): UserRole | null {
+  const wanted = name.trim().toLowerCase()
+  const found = userRoleValues.find((role) =>
+    typeof role === "number" && USER_ROLE_NAMES[role] === wanted
+  )
+  return found ?? null
+}
+
 export enum UserMFAStatus {
   NOT_CONFIGURED = 1,
   CONFIGURATION_NOT_FINISHED = 2,
@@ -32,6 +49,11 @@ export const userBaseSchema = type({
     UserMFAStatus.NOT_CONFIGURED,
   ),
   role: type.enumerated(...userRoleValues).default(UserRole.VIEWER),
+  /**
+   * When an operator blocked the person (#146), or `null`. Optional because only the row read from
+   * Postgres carries it: nothing a client sends sets it.
+   */
+  "blockedAt?": "Date | null",
 })
 export type UserBase = typeof userBaseSchema.infer
 
@@ -343,6 +365,14 @@ export enum AuthAuditEventType {
    * method of that provider (`oauth:google`). The account keeps its data but has no way in.
    */
   UNCONFIRMED_ADDRESS_TAKEN = 15,
+  /**
+   * An operator blocked the person (#146): every session ended and no sign-in is let in.
+   * `identifier` names the operator (`operator:<id>`). An operator ending all of a person's
+   * sessions writes {@link SESSIONS_ENDED} with the same `identifier`.
+   */
+  USER_BLOCKED = 16,
+  /** An operator unblocked the person. `identifier` names the operator, as for `USER_BLOCKED`. */
+  USER_UNBLOCKED = 17,
 }
 
 export const authAuditBaseSchema = type({
@@ -363,6 +393,8 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.SIGN_IN_METHOD_LINKED,
     AuthAuditEventType.SIGN_IN_METHOD_UNLINKED,
     AuthAuditEventType.UNCONFIRMED_ADDRESS_TAKEN,
+    AuthAuditEventType.USER_BLOCKED,
+    AuthAuditEventType.USER_UNBLOCKED,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",
@@ -606,3 +638,145 @@ export class AccessError extends Error {
  * unless the session is that user's, and answers with the same subprotocol.
  */
 export const SOCKET_USER_PROTOCOL = "user."
+
+// ---------------------------------------------------------------------------------------------
+// The operator area (#146): `/api/admin/...`, open to operators and the roles above them.
+// ---------------------------------------------------------------------------------------------
+
+/** The lowest role that may open the operator area. Anyone below it gets 404 there. */
+export const ADMIN_MIN_ROLE = UserRole.OPERATOR
+
+/** Whether a person with `role` may open the operator area. */
+export function canOpenAdmin(role: UserRole | undefined | null): boolean {
+  return typeof role === "number" && role >= ADMIN_MIN_ROLE
+}
+
+/** How many people one page of the operator's user list shows. */
+export const ADMIN_USERS_PAGE_SIZE = 25
+
+/** The longest search the user list takes, in characters. */
+export const ADMIN_SEARCH_MAX_LENGTH = 100
+
+/** One person in the operator's user list. Dates are ISO 8601. */
+export interface AdminUserRow {
+  id: number
+  firstName: string
+  lastName: string
+  /** The address the person signs in with, or `null` for an older account with a username only. */
+  email: string | null
+  role: UserRole
+  /** When an operator blocked the person, or `null`. */
+  blockedAt: string | null
+  createdAt: string
+  /** The last signed-in activity, to within five minutes (#152), or `null` when never seen. */
+  lastSeenAt: string | null
+}
+
+/** The answer of `GET /api/admin/users`. */
+export interface AdminUserListResponse {
+  users: AdminUserRow[]
+  /** How many people match the search and filters, over every page. */
+  total: number
+  /** The page shown, 1-based. */
+  page: number
+  pageSize: number
+}
+
+/** One way the person signs in, as the operator sees it: never a secret. */
+export interface AdminSignInMethod {
+  /** `password`, `oauth:google`, `oauth:github`, or `email-code`. */
+  method: string
+  /** The address the key holds, or `null`. */
+  email: string | null
+  /** When the address was proven, or `null` when it was not. ISO 8601. */
+  provenAt: string | null
+  createdAt: string
+}
+
+/** One live session of the person. Dates are ISO 8601. */
+export interface AdminSession {
+  id: number
+  deviceName: string
+  ipHint: string | null
+  createdAt: string
+  lastUsedAt: string
+}
+
+/** One group the person is a member of. */
+export interface AdminUserGroup {
+  id: string
+  name: string
+  /** The person's role in the group (`GroupRole`: 1 viewer, 2 editor, 3 admin, 4 owner). */
+  role: number
+}
+
+/** One row of the person's audit trail, newest first. */
+export interface AdminAuditRow {
+  id: number
+  eventType: AuthAuditEventType
+  identifier: string | null
+  ip: string | null
+  createdAt: string
+}
+
+/** The answer of `GET /api/admin/users/:id`. */
+export interface AdminUserDetail {
+  user: AdminUserRow
+  methods: AdminSignInMethod[]
+  sessions: AdminSession[]
+  groups: AdminUserGroup[]
+  /** The newest {@link ADMIN_AUDIT_LIMIT} rows of the person's audit trail. */
+  audits: AdminAuditRow[]
+}
+
+/** How many audit rows the detail page shows. */
+export const ADMIN_AUDIT_LIMIT = 50
+
+/** Whether the list shows blocked people, people who are not, or both. */
+export type AdminBlockedFilter = "any" | "blocked" | "active"
+
+/** The search and filters of the user list, as the page's address and the API's query carry them. */
+export interface AdminUserFilter {
+  /** Words that must each appear in the name or an address; `""` for everyone. */
+  query: string
+  /** Only people with this role, or `null` for every role. */
+  role: UserRole | null
+  blocked: AdminBlockedFilter
+  /** 1-based. */
+  page: number
+}
+
+/** The filter that shows everyone, first page. */
+export const ADMIN_NO_FILTER: AdminUserFilter = { query: "", role: null, blocked: "any", page: 1 }
+
+/**
+ * Reads the user list's filter from query parameters (`q`, `role`, `blocked`, `page`). A value it
+ * does not understand falls back to the default for that part, so a hand-edited address still
+ * shows a list.
+ */
+export function parseAdminUserFilter(params: URLSearchParams): AdminUserFilter {
+  const query = (params.get("q") ?? "").trim().slice(0, ADMIN_SEARCH_MAX_LENGTH)
+  const roleNumber = Number(params.get("role"))
+  const role = userRoleValues.includes(roleNumber as UserRole) && Number.isInteger(roleNumber)
+    ? roleNumber as UserRole
+    : null
+  const rawBlocked = params.get("blocked")
+  const blocked: AdminBlockedFilter = rawBlocked === "blocked" || rawBlocked === "active"
+    ? rawBlocked
+    : "any"
+  const pageNumber = Number(params.get("page"))
+  const page = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= 100_000
+    ? pageNumber
+    : 1
+  return { query, role, blocked, page }
+}
+
+/** The query string of `filter`, leaving out every part at its default. No leading `?`. */
+export function adminUserFilterQuery(filter: AdminUserFilter): string {
+  const params = new URLSearchParams()
+  if (filter.query) params.set("q", filter.query)
+  if (filter.role !== null) params.set("role", String(filter.role))
+  if (filter.blocked !== "any") params.set("blocked", filter.blocked)
+  if (filter.page > 1) params.set("page", String(filter.page))
+  return params.toString()
+}
