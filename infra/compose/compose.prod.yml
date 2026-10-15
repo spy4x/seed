@@ -66,3 +66,18 @@ services:
       - "traefik.http.routers.http-mpa-${PROJECT}.entrypoints=web"
       - "traefik.http.routers.http-mpa-${PROJECT}.middlewares=https-redirect-${PROJECT}"
       - "traefik.http.routers.http-mpa-${PROJECT}.service=noop@internal"
+      # Hosts that MPA_REDIRECT_RULE matches, such as www.example.com, answer a permanent redirect to
+      # the same path on MPA_DOMAIN. The default rule is valid and matches no request.
+      - "traefik.http.middlewares.to-mpa-${PROJECT}.redirectregex.regex=^https?://[^/]+(.*)"
+      - "traefik.http.middlewares.to-mpa-${PROJECT}.redirectregex.replacement=https://${MPA_DOMAIN:-}$${1}"
+      - "traefik.http.middlewares.to-mpa-${PROJECT}.redirectregex.permanent=true"
+      - "traefik.http.routers.redirect-mpa-${PROJECT}.rule=${MPA_REDIRECT_RULE:-!PathPrefix(`/`)}"
+      - "traefik.http.routers.redirect-mpa-${PROJECT}.entrypoints=websecure"
+      - "traefik.http.routers.redirect-mpa-${PROJECT}.tls=true"
+      - "traefik.http.routers.redirect-mpa-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+      - "traefik.http.routers.redirect-mpa-${PROJECT}.middlewares=to-mpa-${PROJECT}"
+      - "traefik.http.routers.redirect-mpa-${PROJECT}.service=noop@internal"
+      - "traefik.http.routers.redirect-mpa-http-${PROJECT}.rule=${MPA_REDIRECT_RULE:-!PathPrefix(`/`)}"
+      - "traefik.http.routers.redirect-mpa-http-${PROJECT}.entrypoints=web"
+      - "traefik.http.routers.redirect-mpa-http-${PROJECT}.middlewares=to-mpa-${PROJECT}"
+      - "traefik.http.routers.redirect-mpa-http-${PROJECT}.service=noop@internal"

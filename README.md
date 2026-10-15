@@ -38,7 +38,7 @@ members, roles, invitations and ownership transfer, billing per member, notes (t
 aggregate), the outbox worker and the public website work today, and the SPA works offline
 ([docs/offline.md](docs/offline.md)). Parts of the worker are not built yet. Details in
 [docs/architecture.md](docs/architecture.md#migration-status). The live demo runs at
-https://template.antonshubin.com, its website at https://template-mpa.antonshubin.com.
+https://app.seedsaas.com, its website at https://seedsaas.com.
 
 ## Quick start
 
@@ -181,7 +181,10 @@ resolver: Let's Encrypt, HTTP challenge on port 80, certificates stored in
 the server and run `deno task proxy:start` there.
 
 Plain `http://<DOMAIN>` (and `http://<MPA_DOMAIN>` with the `mpa` profile) answers a permanent
-redirect to HTTPS. The proxy serves nothing of its own but `/ping`: Traefik's dashboard and API are
+redirect to HTTPS. Other hosts can answer a permanent redirect to the same path on `MPA_DOMAIN`:
+set `MPA_REDIRECT_RULE` to a Traefik rule, such as ``MPA_REDIRECT_RULE=Host(`www.example.com`)``.
+
+The proxy serves nothing of its own but `/ping`: Traefik's dashboard and API are
 off, because they list every router and backend address of every project behind the proxy.
 
 **A server deployed before these changes needs three things once**, and its next deploy does
