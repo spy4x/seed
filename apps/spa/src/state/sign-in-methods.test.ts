@@ -47,9 +47,11 @@ function fakeHttp(
       return answers.link?.(provider, password) ??
         Promise.resolve({ ok: true, url: `https://provider.example/${provider}` })
     },
-    unlink(methodId) {
-      calls.push(`unlink ${methodId}`)
-      return answers.unlink?.(methodId) ?? Promise.resolve({ ok: true, signedOut: false })
+    unlink(methodId, password) {
+      calls.push(
+        password === undefined ? `unlink ${methodId}` : `unlink ${methodId} with ${password}`,
+      )
+      return answers.unlink?.(methodId, password) ?? Promise.resolve({ ok: true, signedOut: false })
     },
   }
 }
@@ -167,7 +169,35 @@ describe("the sign-in methods store", () => {
 
     expect(store.error.value).toBe("This is your only way to sign in.")
     expect(store.methods.value).toEqual([google])
-    expect(http.calls).toEqual(["list", "unlink 8"])
+    expect(http.calls).toEqual(["list", "unlink 8", "list"])
+  })
+
+  it("hands the account's password to the server with the unlink", async () => {
+    const http = fakeHttp([password])
+    const store = createSignInMethodsStore(http)
+
+    expect(await store.unlink(8, "Passw0rd!")).toBe("unlinked")
+
+    expect(http.calls).toEqual(["unlink 8 with Passw0rd!", "list"])
+  })
+
+  it("reads until when the provider sign-in confirms again after a refused unlink", async () => {
+    let until: string | null = PROOF_UNTIL
+    const http = fakeHttp([google], {
+      list: () =>
+        Promise.resolve({ ok: true, methods: [google], available: [], providerProofUntil: until }),
+      unlink: () => Promise.resolve({ ok: false, error: "Sign in with your provider again" }),
+    })
+    const store = createSignInMethodsStore(http)
+    await store.load()
+    until = null
+
+    expect(await store.unlink(8)).toBe("failed")
+
+    expect(store.providerProofUntil.value).toBe(null)
+    // The refusal stays shown: the read after it does not clear it.
+    expect(store.error.value).toBe("Sign in with your provider again")
+    expect(store.pending.value).toBe(false)
   })
 
   it("reports a failure without a reason when the server cannot be reached", async () => {

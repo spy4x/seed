@@ -9,11 +9,11 @@ import {
   oauthProviderId,
   type OAuthProvidersResponse,
   type PendingSignUpResponse,
-  signInMethodLinkSchema,
+  signInMethodProofSchema,
 } from "@domain/identity"
 import { validate } from "@spy4x/validation"
 import { readApiJson } from "@api/services/json-body.ts"
-import type { SignIn } from "@api/services/sign-in.ts"
+import type { AppAuthState, SignIn } from "@api/services/sign-in.ts"
 import { UnlinkOutcome } from "@api/services/oauth-sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
 import { PROVIDER_PROOF_REQUIRED } from "./auth.ts"
@@ -75,6 +75,27 @@ export function createOAuthRoute(
   const page = (path: string) => new URL(path, origin).href
   const withNotice = (path: string, notice: OAuthNotice) =>
     page(`${path}?${new URLSearchParams({ [OAUTH_NOTICE_PARAM]: notice })}`)
+  /**
+   * What a link and an unlink ask for (#384, #385): the account's password, or for an account
+   * without one a sign-in with a provider a moment ago. `null` when the body gives it; otherwise
+   * the refusal to answer.
+   */
+  const refuseWithoutProof = async (
+    c: Context<APIContext>,
+    state: AppAuthState,
+  ): Promise<Response | null> => {
+    const body = validate(signInMethodProofSchema, await readApiJson(c))
+    if (body.error) return c.json({ error: body.error.description }, 400)
+    const { password } = body.data
+    if (await signIn.hasPassword(state.user.id)) {
+      if (password === undefined || !(await signIn.checkPassword(state.user.id, password))) {
+        return c.json({ error: "Invalid password" }, 400)
+      }
+    } else if (!(await signIn.confirmedByProvider(state))) {
+      return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+    }
+    return null
+  }
   /** The provider a route's `:provider` names, when it is on. */
   const providerOf = (c: Context<APIContext>) => {
     const id = oauthProviderId(c.req.param("provider"))
@@ -197,31 +218,27 @@ export function createOAuthRoute(
       async (c) => {
         const id = providerOf(c)
         if (!id) return c.json({ error: PROVIDER_OFF }, 404)
-        const body = validate(signInMethodLinkSchema, await readApiJson(c))
-        if (body.error) return c.json({ error: body.error.description }, 400)
         const state = c.get("auth")!
-        const { password } = body.data
-        if (await signIn.hasPassword(state.user.id)) {
-          if (password === undefined || !(await signIn.checkPassword(state.user.id, password))) {
-            return c.json({ error: "Invalid password" }, 400)
-          }
-        } else if (!(await signIn.confirmedByProvider(state))) {
-          return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
-        }
+        const refusal = await refuseWithoutProof(c, state)
+        if (refusal) return refusal
         const url = await oauth.start(c, id, { linking: state })
         if (!url) return c.json({ error: PROVIDER_OFF }, 404)
         return c.json({ url })
       },
     )
+    // Asks for what a link asks (#385): a session left open must not take away the way in the
+    // owner uses. The strict per-user limit, since a password is checked.
     .delete(
       `/methods/:id`,
       isAuthenticated2FA,
       mutationGuards.signedIn,
-      rateLimits.normal,
+      rateLimits.strictByUser,
       async (c) => {
         const raw = c.req.param("id")
         if (!KEY_ID.test(raw)) return c.json({ error: METHOD_NOT_FOUND }, 404)
         const state = c.get("auth")!
+        const refusal = await refuseWithoutProof(c, state)
+        if (refusal) return refusal
         const outcome = await oauth.unlink(c, state, Number(raw))
         if (outcome === UnlinkOutcome.NotFound) return c.json({ error: METHOD_NOT_FOUND }, 404)
         if (outcome === UnlinkOutcome.LastMethod) return c.json({ error: METHOD_IS_LAST }, 409)

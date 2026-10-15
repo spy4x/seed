@@ -14,6 +14,7 @@ import {
   MailTransport,
   passwordResetMail,
   readMailSetup,
+  signInMethodChangedMail,
   SMTP_KEYS,
 } from "./mail.ts"
 
@@ -200,6 +201,43 @@ describe("accountRestoredMail", () => {
     expect(mail.text).toContain("app.example.com was restored by a sign-in")
     expect(mail.text).toContain("If this wasn't you, sign in, delete your account again and change")
     expect(mail.html).toContain(`href="https://app.example.com/sign-in"`)
+  })
+})
+
+describe("signInMethodChangedMail", () => {
+  const brand = { webAppUrl: "https://app.example.com" }
+  const at = new Date("2026-10-15T14:03:00Z")
+
+  it("names the linked provider and the time, and says to unlink it if it was someone else", () => {
+    const mail = signInMethodChangedMail(brand, {
+      to: "ann@example.com",
+      provider: "Google",
+      linked: true,
+      at,
+    })
+    expect(mail.to).toBe("ann@example.com")
+    expect(mail.subject).toBe("Google was linked to your account")
+    expect(mail.text).toContain(
+      "Google was linked to your account at app.example.com on October 15, 2026 at 14:03 UTC.",
+    )
+    expect(mail.text).toContain("If this wasn't you, unlink Google on your profile page")
+    expect(mail.html).toContain(`href="https://app.example.com/"`)
+  })
+
+  it("names the unlinked provider and the time, and says to change the password if it was someone else", () => {
+    const mail = signInMethodChangedMail(brand, {
+      to: "ann@example.com",
+      provider: "GitHub",
+      linked: false,
+      at,
+    })
+    expect(mail.subject).toBe("GitHub was unlinked from your account")
+    expect(mail.text).toContain(
+      "GitHub was unlinked from your account at app.example.com on October 15, 2026 at 14:03 UTC.",
+    )
+    expect(mail.text).toContain(
+      "If this wasn't you, sign in, change your password and link GitHub again.",
+    )
   })
 })
 

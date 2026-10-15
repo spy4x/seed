@@ -33,6 +33,7 @@ import {
 } from "./account-deletion.ts"
 import { STARTER_DATA_JOB, starterDataJob } from "./starter-data.ts"
 import { API_TOKEN_CREATED_MAIL_JOB, apiTokenCreatedMailJob } from "./api-token-mail.ts"
+import { SIGN_IN_METHOD_MAIL_JOB, signInMethodMailJob } from "./sign-in-method-mail.ts"
 import { type BillingNoticeMailDeps, billingNoticeMailJob } from "./billing-notice-mail.ts"
 import {
   EMAIL_CODE_MAIL_JOB,
@@ -117,6 +118,7 @@ export function createOutboxProcessor(
         [ACCOUNT_DELETION_MAIL_JOB]: accountDeletionMailJob({ sql, ...mail }),
         [ACCOUNT_RESTORED_MAIL_JOB]: accountRestoredMailJob({ sql, ...mail }),
         [API_TOKEN_CREATED_MAIL_JOB]: apiTokenCreatedMailJob({ sql, ...mail }),
+        [SIGN_IN_METHOD_MAIL_JOB]: signInMethodMailJob({ sql, ...mail }),
         [ACCOUNT_HARD_DELETE_JOB]: accountHardDeleteJob({ sql, log: mail.log }),
         [STARTER_DATA_JOB]: starterDataJob(sql, { billingEnabled: provider !== null, graceDays }),
         ...billingNoticeJobs(sql, mail, { graceDays, trialRequiresCard }),

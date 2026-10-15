@@ -2,7 +2,6 @@ import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
-import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
@@ -32,8 +31,8 @@ export interface SignInMethodsProps {
   /** Why the list could not be read or a change failed; shown above the list, and focused. */
   error: string | null
   /**
-   * What an account with no password confirms a link with; `null` or absent for an account that
-   * has a password, which types it instead.
+   * What an account with no password confirms a link or an unlink with; `null` or absent for an
+   * account that has a password, which types it instead.
    */
   providerProof?: ProviderProof | null
   /**
@@ -41,36 +40,47 @@ export interface SignInMethodsProps {
    * typed, for an account that has one.
    */
   onLink: (provider: OAuthProviderId, password?: string) => void
-  /** Unlinks the method with this id, after the person confirmed. */
-  onUnlink: (methodId: number) => void
+  /**
+   * Unlinks the method with this id, after the person confirmed. `password` is what the person
+   * typed, for an account that has one.
+   */
+  onUnlink: (methodId: number, password?: string) => void
 }
 
 /**
  * The ways into the account: the password and each linked provider, with "Unlink" on a provider
- * while another way in remains, and "Link" for each provider not linked yet. Unlinking asks first,
- * since it signs out every device that signed in with that provider. Linking adds a way in, so it
- * asks for what a deletion asks: the password in a dialog, or for an account without one a
- * sign-in with a provider a moment ago.
+ * while another way in remains, and "Link" for each provider not linked yet. Linking adds a way in
+ * and unlinking takes one away, so each asks in a dialog for what a deletion asks: the password,
+ * or for an account without one a sign-in with a provider a moment ago. The unlink dialog also
+ * says which devices it signs out, and stays open until the method has left the list, so a
+ * refused password is fixed in its field.
  */
 export function SignInMethods(
   { methods, available, pending, error, providerProof = null, onLink, onUnlink }:
     SignInMethodsProps,
 ): JSX.Element {
+  /** The method whose unlink dialog is open. */
   const [confirming, setConfirming] = useState<SignInMethod | null>(null)
   /** The provider whose link dialog is open. */
   const [linking, setLinking] = useState<OAuthProviderId | null>(null)
-  // Typed here and handed to `onLink` once: the password is kept nowhere else.
+  // Typed here and handed to `onLink` or `onUnlink` once: the password is kept nowhere else.
   const [password, setPassword] = useState("")
   const passwordInput = useRef<HTMLInputElement>(null)
   const message = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!error) return
-    // The dialog is over the list: a refused password is fixed in its field.
-    if (linking !== null && passwordInput.current) passwordInput.current.focus()
-    else message.current?.focus()
+    // A dialog is over the list: a refused password is fixed in its field, any other refusal is
+    // read in the dialog.
+    if ((linking !== null || confirming !== null) && passwordInput.current) {
+      passwordInput.current.focus()
+    } else if (confirming === null) message.current?.focus()
   }, [error])
   const closeLink = () => {
     setLinking(null)
+    setPassword("")
+  }
+  const closeUnlink = () => {
+    setConfirming(null)
     setPassword("")
   }
   const startLink = (provider: OAuthProviderId) => {
@@ -79,14 +89,26 @@ export function SignInMethods(
     else setLinking(provider)
   }
   // The "Unlink" button that had focus goes away with its row: the list takes focus, so the
-  // keyboard and a screen reader stay where the change happened.
+  // keyboard and a screen reader stay where the change happened. The unlink dialog closes once its
+  // method has gone, and the list takes focus after it, since the dialog keeps it while open.
   const list = useRef<HTMLDivElement>(null)
   const shown = useRef<readonly number[]>([])
+  const focusListAfterDialog = useRef(false)
   useEffect(() => {
     const ids = methods?.map((method) => method.id) ?? []
-    if (shown.current.some((id) => !ids.includes(id))) list.current?.focus()
+    const gone = shown.current.some((id) => !ids.includes(id))
     shown.current = ids
+    if (!gone) return
+    if (confirming !== null && !ids.includes(confirming.id)) {
+      focusListAfterDialog.current = true
+      closeUnlink()
+    } else list.current?.focus()
   }, [methods])
+  useEffect(() => {
+    if (confirming !== null || !focusListAfterDialog.current) return
+    focusListAfterDialog.current = false
+    list.current?.focus()
+  }, [confirming])
 
   return (
     <SettingGroup
@@ -202,25 +224,72 @@ export function SignInMethods(
       </Modal>
 
       {confirming !== null && (
-        <ConfirmDialog
+        <Modal
+          open
+          onClose={closeUnlink}
           title={`Unlink ${signInMethodName(confirming.kind)}?`}
-          message={confirming.current
-            ? `You signed in on this device with ${
-              signInMethodName(confirming.kind)
-            }, so it will be signed out, like every other device that did.`
-            : `Every device that signed in with ${
-              signInMethodName(confirming.kind)
-            } will be signed out. This device stays signed in.`}
-          confirmLabel="Unlink"
-          cancelLabel="Cancel"
+          cancelLabel="Close"
           tone="danger"
           dataE2E="sign-in-method-unlink-confirm"
-          onCancel={() => setConfirming(null)}
-          onConfirm={() => {
-            setConfirming(null)
-            onUnlink(confirming.id)
-          }}
-        />
+        >
+          <Stack>
+            <p class="text-sm text-muted">
+              {confirming.current
+                ? `You signed in on this device with ${
+                  signInMethodName(confirming.kind)
+                }, so it will be signed out, like every other device that did.`
+                : `Every device that signed in with ${
+                  signInMethodName(confirming.kind)
+                } will be signed out. This device stays signed in.`}
+            </p>
+            {providerProof && !providerProof.fresh
+              ? (
+                <>
+                  <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+                  <Cluster justify="end">
+                    <Button type="button" variant="ghost" onClick={closeUnlink}>Close</Button>
+                  </Cluster>
+                </>
+              )
+              : (
+                <ScreenForm
+                  pending={pending}
+                  onSubmit={() => onUnlink(confirming.id, providerProof ? undefined : password)}
+                >
+                  <Stack>
+                    {!providerProof && (
+                      <Field id="sign-in-method-unlink-password" label="Password" required>
+                        <Input
+                          ref={passwordInput}
+                          data-e2e="sign-in-method-unlink-password"
+                          name="password"
+                          type="password"
+                          autocomplete="current-password"
+                          value={password}
+                          onInput={(e) =>
+                            setPassword(e.currentTarget.value)}
+                          required
+                        />
+                      </Field>
+                    )}
+                    <ErrorState message={error} />
+                    <Cluster justify="end">
+                      <Button type="button" variant="ghost" onClick={closeUnlink}>Cancel</Button>
+                      <Button
+                        type="submit"
+                        variant="danger"
+                        data-e2e="sign-in-method-unlink-submit"
+                        busy={pending}
+                        busyLabel="Unlinking..."
+                      >
+                        Unlink
+                      </Button>
+                    </Cluster>
+                  </Stack>
+                </ScreenForm>
+              )}
+          </Stack>
+        </Modal>
       )}
     </SettingGroup>
   )

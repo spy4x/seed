@@ -70,6 +70,7 @@ const ON_MAIN: readonly string[] = [
   "2026_11_04_0001_sign_in_method_audit.sql",
   "2026_11_05_0001_password_failures.sql",
   "2026_11_06_0001_notifications_unread_purge.sql",
+  "2026_11_07_0001_sign_in_method_changes.sql",
 ]
 
 // `.no_transaction.sql` is the runner's ending for a statement that cannot run in a transaction.

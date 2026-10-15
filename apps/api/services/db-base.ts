@@ -28,6 +28,10 @@ import {
 } from "@server/jobs/account-deletion.ts"
 import { scheduleStarterData } from "@server/jobs/starter-data.ts"
 import { enqueueApiTokenCreatedMail } from "@server/jobs/api-token-mail.ts"
+import {
+  scheduleSignInMethodMail,
+  type SignInMethodChange,
+} from "@server/jobs/sign-in-method-mail.ts"
 import type { AccountDeletionBlocker, OnboardingMark, OnboardingStatus } from "@domain/identity"
 import { touchUserSeen } from "@server/auth/sessions.ts"
 import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
@@ -173,6 +177,20 @@ export class AppDbBase extends DbServiceBase {
     return {
       /** Queues the worker job that mails the owner of token `tokenId`. */
       queue: (tokenId: string): Promise<void> => enqueueApiTokenCreatedMail(sql, tokenId),
+    }
+  }
+
+  /**
+   * The mail that tells a person a sign-in method was linked or unlinked
+   * (`@server/jobs/sign-in-method-mail.ts`). Built per access, like `group`: `queue` belongs inside
+   * the change's `begin()`, beside its audit row.
+   */
+  get signInMethodMail() {
+    const sql = this.sql
+    return {
+      /** Records the change of `method` on user `userId` and queues the worker job that mails it. */
+      queue: (userId: number, change: SignInMethodChange, method: string): Promise<void> =>
+        scheduleSignInMethodMail(sql, userId, change, method),
     }
   }
 

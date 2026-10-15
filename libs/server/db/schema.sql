@@ -589,6 +589,18 @@ CREATE TABLE account_restorations (
 
 CREATE INDEX idx_account_restorations_user_id ON account_restorations (user_id);
 
+-- A sign-in method linked or unlinked whose mail is not sent yet (#385). See migration
+-- 2026_11_07_0001.
+CREATE TABLE sign_in_method_changes (
+    id UUID PRIMARY KEY,
+    user_id INT4 NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
+    event_type INT2 NOT NULL CHECK (event_type IN (13, 14)),
+    method VARCHAR(64) NOT NULL,
+    changed_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_sign_in_method_changes_user_id ON sign_in_method_changes (user_id);
+
 -- #147: the in-app inbox. One row is one thing the app tells a person: an invitation, a role
 -- change, a removal, a group handed to them. The row is written in the transaction of the change it
 -- tells about, so it exists exactly when the change does. `payload` holds the few facts the

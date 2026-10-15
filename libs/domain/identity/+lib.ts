@@ -199,13 +199,14 @@ export const authPasswordSetSchema = type({
 export type AuthPasswordSet = typeof authPasswordSetSchema.infer
 
 /**
- * The body of "link a provider". An account with a password sends it; one without has signed in
- * with a provider it already has a moment ago instead ({@link PROVIDER_PROOF_MINUTES}).
+ * The body of "link a provider" and of "unlink a sign-in method". An account with a password
+ * sends it; one without has signed in with a provider it already has a moment ago instead
+ * ({@link PROVIDER_PROOF_MINUTES}).
  */
-export const signInMethodLinkSchema = type({
+export const signInMethodProofSchema = type({
   "password?": authPasswordSchema.get("password"),
 })
-export type SignInMethodLink = typeof signInMethodLinkSchema.infer
+export type SignInMethodProof = typeof signInMethodProofSchema.infer
 
 /** Days a deleted account waits before it is removed for good. Signing in before then restores it. */
 export const ACCOUNT_DELETION_GRACE_DAYS = 7

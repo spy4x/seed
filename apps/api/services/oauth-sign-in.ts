@@ -47,7 +47,10 @@
  *   who is still there signs in with the provider again. Such a session cannot make itself
  *   recent either: the one way to get a provider sign-in without the owner's provider account
  *   would be to link another one, and starting a link asks for the same proof (the password, or
- *   this sign-in of a moment ago). Unlinking asks for none; it adds no way in.
+ *   this sign-in of a moment ago). Unlinking asks for the same proof (#385): a session left open
+ *   must not take away the way in its owner uses.
+ * - **Every link and unlink is mailed (#385)** to the account's proven address, naming the
+ *   provider and the time, from the same transaction as its audit row (`recordMethodChange`).
  *
  * Reads no environment and imports no singleton, like `sign-in.ts`.
  *
@@ -102,6 +105,7 @@ import {
 import { createSignedPayloadCodec } from "@spy4x/platform/signed-payload"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { safeRedirectPath } from "@spy4x/net/redirect-path"
+import type { SignInMethodChange } from "@server/jobs/sign-in-method-mail.ts"
 import type { AppDbBase } from "./db-base.ts"
 import type { AppAuthState, SignedIn } from "./sign-in.ts"
 
@@ -473,6 +477,22 @@ export function createOAuthOperations(
     return { user, session }
   }
 
+  /**
+   * A sign-in method linked to or unlinked from user `userId`: its audit row, and the mail that
+   * tells the person (#385), both in the change's transaction `tx`, so the mail goes exactly when
+   * the change stands.
+   */
+  async function recordMethodChange(
+    c: Context,
+    tx: AppDbBase,
+    userId: number,
+    change: SignInMethodChange,
+    method: string,
+  ): Promise<void> {
+    await tx.authAudit.insert(own.auditRow(c, userId, change, method))
+    await tx.signInMethodMail.queue(userId, change, method)
+  }
+
   /** The audit rows of a provider sign-in of an existing user: the link, when one was made, then the sign-in. */
   async function writeSignInAudit(
     c: Context,
@@ -480,9 +500,7 @@ export function createOAuthOperations(
     { user, key, outcome }: OAuthSignInResult,
   ): Promise<void> {
     if (outcome === OAuthOutcome.Linked) {
-      await tx.authAudit.insert(
-        own.auditRow(c, user.id, AuthAuditEventType.SIGN_IN_METHOD_LINKED, key.method),
-      )
+      await recordMethodChange(c, tx, user.id, AuthAuditEventType.SIGN_IN_METHOD_LINKED, key.method)
     }
     await tx.authAudit.insert(own.auditRow(c, user.id, AuthAuditEventType.SIGNED_IN, key.method))
   }
@@ -561,8 +579,12 @@ export function createOAuthOperations(
               userId: current.user.id,
             })
             if (outcome !== OAuthOutcome.Connected) return false
-            await tx.authAudit.insert(
-              own.auditRow(c, key.userId, AuthAuditEventType.SIGN_IN_METHOD_LINKED, key.method),
+            await recordMethodChange(
+              c,
+              tx,
+              key.userId,
+              AuthAuditEventType.SIGN_IN_METHOD_LINKED,
+              key.method,
             )
             await writeTakenClaims(c, tx, taken, key.method)
             return true
@@ -715,13 +737,12 @@ export function createOAuthOperations(
           secondFactorFor: own.secondFactorAtSignUp,
         }).disconnect(user.id, keyId)
         if (!removed) return UnlinkOutcome.NotFound
-        await tx.authAudit.insert(
-          own.auditRow(
-            c,
-            user.id,
-            AuthAuditEventType.SIGN_IN_METHOD_UNLINKED,
-            `oauth:${method.kind}`,
-          ),
+        await recordMethodChange(
+          c,
+          tx,
+          user.id,
+          AuthAuditEventType.SIGN_IN_METHOD_UNLINKED,
+          `oauth:${method.kind}`,
         )
         return method.current ? UnlinkOutcome.UnlinkedAndSignedOut : UnlinkOutcome.Unlinked
       })

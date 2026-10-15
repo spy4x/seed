@@ -437,14 +437,87 @@ describe("SignInMethods", () => {
     expect(isOpen("sign-in-method-unlink-confirm")).toBe(false)
   })
 
-  it("unlinks the confirmed method by its id", async () => {
-    const asked: (string | number)[] = []
-    await mount(<SignInMethods {...methodsProps(asked)} />)
+  it("asks an account with a password for it before an unlink, and hands it to the app", async () => {
+    const asked: [number, string | undefined][] = []
+    await mount(
+      <SignInMethods
+        {...methodsProps([])}
+        onUnlink={(id, typed) => void asked.push([id, typed])}
+      />,
+    )
 
     await click("[data-e2e=sign-in-method-unlink-google]")
-    await clickInDialog("sign-in-method-unlink-confirm", "Unlink")
 
-    expect(asked).toEqual([8])
+    // Nothing is unlinked until the password is given.
+    expect(asked).toEqual([])
+    await type("[data-e2e=sign-in-method-unlink-password]", "Passw0rd!")
+    await submit("[data-e2e=sign-in-method-unlink-password]")
+    expect(asked).toEqual([[8, "Passw0rd!"]])
+  })
+
+  it("shows a refused password in the unlink dialog and puts focus back on its field", async () => {
+    const mounted = await mount(<SignInMethods {...methodsProps([])} />)
+    await click("[data-e2e=sign-in-method-unlink-google]")
+
+    await act(() =>
+      render(<SignInMethods {...methodsProps([], { error: "Invalid password" })} />, mounted)
+    )
+
+    expect(isOpen("sign-in-method-unlink-confirm")).toBe(true)
+    expect(find("[data-e2e=sign-in-method-unlink-confirm]").textContent)
+      .toContain("Invalid password")
+    expect(focused()).toBe("sign-in-method-unlink-password")
+  })
+
+  it("closes the unlink dialog once the method has gone, and moves focus to the list", async () => {
+    const mounted = await mount(<SignInMethods {...methodsProps([])} />)
+    await click("[data-e2e=sign-in-method-unlink-google]")
+
+    await act(() => {
+      render(<SignInMethods {...methodsProps([], { methods: [password] })} />, mounted)
+    })
+
+    expect(isOpen("sign-in-method-unlink-confirm")).toBe(false)
+    expect(focused()).toBe("sign-in-methods-list")
+  })
+
+  it("unlinks after a confirmation, asking no password, after a Google sign-in a moment ago", async () => {
+    const asked: [number, string | undefined][] = []
+    const github = { ...google, id: 9, kind: "github" as const }
+    await mount(
+      <SignInMethods
+        {...methodsProps([], { methods: [google, github] })}
+        providerProof={{ providers: ["google", "github"], fresh: true }}
+        onUnlink={(id, typed) => void asked.push([id, typed])}
+      />,
+    )
+
+    await click("[data-e2e=sign-in-method-unlink-github]")
+
+    expect(document.querySelectorAll("[data-e2e=sign-in-method-unlink-password]").length).toBe(0)
+    expect(asked).toEqual([])
+    await submit("[data-e2e=sign-in-method-unlink-submit]")
+    expect(asked).toEqual([[9, undefined]])
+  })
+
+  it("sends the person to Google before an unlink when the sign-in is not recent", async () => {
+    const asked: (string | number)[] = []
+    const github = { ...google, id: 9, kind: "github" as const }
+    await mount(
+      <SignInMethods
+        {...methodsProps(asked, { methods: [google, github] })}
+        providerProof={{ providers: ["google", "github"], fresh: false }}
+      />,
+    )
+
+    await click("[data-e2e=sign-in-method-unlink-github]")
+
+    expect(isOpen("sign-in-method-unlink-confirm")).toBe(true)
+    expect(find("[data-e2e=provider-proof-google]").getAttribute("href"))
+      .toBe("/api/auth/google/start?next=%2F")
+    expect(document.querySelectorAll("[data-e2e=sign-in-method-unlink-password]").length).toBe(0)
+    expect(document.querySelectorAll("[data-e2e=sign-in-method-unlink-submit]").length).toBe(0)
+    expect(asked).toEqual([])
   })
 
   it("warns that unlinking the method this device used signs it out", async () => {

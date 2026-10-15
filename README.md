@@ -280,6 +280,8 @@ What a person gets:
   e-mail address, and linking never changes another person's confirmed account; one that already
   signs in to another account here is refused, and the page says so. The last way into an account
   cannot be unlinked, and unlinking a method signs out the devices that signed in with it.
+  Unlinking asks for the password, or for a provider sign-in of a moment ago when the account has
+  none, as linking does. Every link and unlink is mailed to the account's proven address.
 - Linking differs from signing up in one case. When the provider has verified an address that
   another account here uses with a password but never confirmed, the link locks that account, as
   creating a new account would, and it gets the same audit row. The person linking is not warned

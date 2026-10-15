@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check jobs.ts wiring.ts password-reset-mail.ts email-code-mail.ts billing-notice-mail.ts account-deletion.ts starter-data.ts api-token-mail.ts",
+    "check": "deno check jobs.ts wiring.ts password-reset-mail.ts email-code-mail.ts billing-notice-mail.ts account-deletion.ts starter-data.ts api-token-mail.ts sign-in-method-mail.ts",
     "test": "deno test jobs.test.ts"
   }
 }

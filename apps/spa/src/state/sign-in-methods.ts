@@ -48,8 +48,11 @@ export interface SignInMethodsHttp {
    * the account's, when it has one.
    */
   link(provider: OAuthProviderId, password?: string): Promise<Answer<{ url: string }>>
-  /** Unlinks one method. `signedOut` when it was the one this device signed in with. */
-  unlink(methodId: number): Promise<Answer<{ signedOut: boolean }>>
+  /**
+   * Unlinks one method. `password` is the account's, when it has one. `signedOut` when it was the
+   * one this device signed in with.
+   */
+  unlink(methodId: number, password?: string): Promise<Answer<{ signedOut: boolean }>>
 }
 
 export const signInMethodsHttp: SignInMethodsHttp = {
@@ -71,9 +74,10 @@ export const signInMethodsHttp: SignInMethodsHttp = {
     if (!result.ok) return { ok: false, error: result.error.message }
     return { ok: true, url: result.data.url }
   },
-  async unlink(methodId) {
+  async unlink(methodId, password) {
     const result = await apiFetch<{ signedOut: boolean }>(`/api/auth/methods/${methodId}`, {
       method: "DELETE",
+      body: JSON.stringify(password === undefined ? {} : { password }),
     })
     if (!result.ok) return { ok: false, error: result.error.message }
     return { ok: true, signedOut: result.data.signedOut === true }
@@ -147,17 +151,24 @@ export function createSignInMethodsStore(
     leave(answer.url)
   }
 
-  /** Unlinks one method, then reads the list again unless this device was signed out with it. */
-  async function unlink(methodId: number): Promise<UnlinkResult> {
+  /**
+   * Unlinks one method, with the account's `password` when it has one, then reads the list again
+   * unless this device was signed out with it.
+   */
+  async function unlink(methodId: number, password?: string): Promise<UnlinkResult> {
     if (pending.value) return "failed"
     pending.value = true
     error.value = null
-    const answer = await attempt(() => http.unlink(methodId))
-    pending.value = false
+    const answer = await attempt(() => http.unlink(methodId, password))
     if (!answer.ok) {
+      // As for a link: the provider sign-in may no longer be recent.
+      const list = await attempt(http.list)
+      if (list.ok) providerProofUntil.value = list.providerProofUntil
+      pending.value = false
       error.value = answer.error
       return "failed"
     }
+    pending.value = false
     if (answer.signedOut) return "signed-out"
     await load()
     return "unlinked"

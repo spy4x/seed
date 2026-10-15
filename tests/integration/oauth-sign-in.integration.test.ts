@@ -7,9 +7,13 @@ import postgres from "postgres"
 import {
   AuthAuditEventType,
   type PendingSignUp,
+  PROVIDER_PROOF_MINUTES,
   type SignInMethodsResponse,
   UserMFAStatus,
 } from "@domain/identity"
+import type { EmailMessage } from "@spy4x/email/message"
+import type { EmailSender } from "@spy4x/email/sender"
+import type { OutboxEvent } from "@spy4x/server/outbox"
 import {
   GITHUB_EMAILS_ENDPOINT,
   GITHUB_TOKEN_ENDPOINT,
@@ -19,7 +23,12 @@ import { GOOGLE_TOKEN_ENDPOINT, GOOGLE_USERINFO_ENDPOINT } from "@spy4x/server/a
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
 import { enabledOAuthProviders } from "../../apps/api/services/oauth-providers.ts"
-import { createOAuthRoute } from "../../apps/api/routes/auth-oauth.ts"
+import { createOAuthRoute, METHOD_IS_LAST } from "../../apps/api/routes/auth-oauth.ts"
+import { PROVIDER_PROOF_REQUIRED } from "../../apps/api/routes/auth.ts"
+import {
+  SIGN_IN_METHOD_MAIL_JOB,
+  signInMethodMailJob,
+} from "../../libs/server/jobs/sign-in-method-mail.ts"
 import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
@@ -203,7 +212,8 @@ function browser({ app }: App) {
     cookies,
     get: (path: string) => send("GET", path),
     post: (path: string, body: unknown = {}) => send("POST", path, body),
-    delete: (path: string) => send("DELETE", path),
+    /** An unlink sends its proof in the body: the password, or nothing for a provider sign-in. */
+    delete: (path: string, body: unknown = {}) => send("DELETE", path, body),
     /** The request another site makes this browser send: its cookies, the other site's origin. */
     fromAnotherSite: (method: "POST" | "DELETE", path: string) =>
       send(method, path, {}, { origin: "https://evil.example", "sec-fetch-site": "cross-site" }),
@@ -1200,7 +1210,7 @@ Deno.test("unlinking a provider ends the sessions that signed in with it and kee
     await withGoogle.through("google", "ada")
     const google = (await methodsOf(withGoogle)).methods.find((method) => method.kind === "google")!
 
-    const answer = await withPassword.delete(`/auth/methods/${google.id}`)
+    const answer = await withPassword.delete(`/auth/methods/${google.id}`, { password: PASSWORD })
 
     expect(answer.status).toBe(200)
     expect(await answer.json()).toEqual({ signedOut: false })
@@ -1224,7 +1234,7 @@ Deno.test("unlinking the method this device signed in with signs it out", async 
     await withGoogle.through("google", "ada")
     const google = (await methodsOf(withGoogle)).methods.find((method) => method.current)!
 
-    const answer = await withGoogle.delete(`/auth/methods/${google.id}`)
+    const answer = await withGoogle.delete(`/auth/methods/${google.id}`, { password: PASSWORD })
 
     expect(await answer.json()).toEqual({ signedOut: true })
     // The browser is told to drop the session cookie, not left to find out it is dead.
@@ -1312,14 +1322,26 @@ Deno.test("two unlinks sent at once leave one way in", async () => {
     const [google, github] = (await methodsOf(visitor)).methods
     expect([google.canUnlink, github.canUnlink]).toEqual([true, true])
 
-    const answers = await Promise.all([
+    const [toGoogle, toGitHub] = await Promise.all([
       visitor.delete(`/auth/methods/${google.id}`),
       visitor.delete(`/auth/methods/${github.id}`),
     ])
 
-    // Each alone would be allowed; together, the second waits for the first and is refused.
-    expect(answers.map((answer) => answer.status).sort()).toEqual([200, 409])
-    expect(await app.db.authStore.listKeys(user.id)).toHaveLength(1)
+    // Each alone would be allowed; together, one wins and the other is refused. The loser that got
+    // past the proof check waits for the winner and finds its method is the last way in. GitHub is
+    // the session's own method: when it wins, the session ends with it, and a Google unlink that
+    // reaches the proof check after that finds no recent provider sign-in left.
+    const [winner, loser, kept] = toGoogle.status === 200
+      ? [toGoogle, toGitHub, "oauth:github"]
+      : [toGitHub, toGoogle, "oauth:google"]
+    const refusal = [loser.status, (await loser.json()).error]
+    expect(winner.status).toBe(200)
+    expect([
+      [409, METHOD_IS_LAST],
+      ...(winner === toGitHub ? [[400, PROVIDER_PROOF_REQUIRED]] : []),
+    ])
+      .toContainEqual(refusal)
+    expect((await app.db.authStore.listKeys(user.id)).map((key) => key.method)).toEqual([kept])
   })
 })
 
@@ -1360,17 +1382,141 @@ Deno.test("the password, another person's method and a misspelt id cannot be unl
     const [bobKey] = (await methodsOf(bob)).methods
     const password = (await methodsOf(ada)).methods.find((method) => method.kind === "password")!
 
-    expect((await ada.delete(`/auth/methods/${password.id}`)).status).toBe(404)
-    expect((await ada.delete(`/auth/methods/${bobKey.id}`)).status).toBe(404)
+    const proof = { password: PASSWORD }
+    expect((await ada.delete(`/auth/methods/${password.id}`, proof)).status).toBe(404)
+    expect((await ada.delete(`/auth/methods/${bobKey.id}`, proof)).status).toBe(404)
     // Her own Google method, but its id written as no page writes it.
     const google = (await methodsOf(ada)).methods.find((method) => method.kind === "google")!
-    expect((await ada.delete(`/auth/methods/0x${google.id.toString(16)}`)).status).toBe(404)
+    expect((await ada.delete(`/auth/methods/0x${google.id.toString(16)}`, proof)).status)
+      .toBe(404)
 
     expect((await app.db.authStore.listKeys(adaId)).map((key) => key.method)).toEqual([
       "password",
       "oauth:google",
     ])
     expect((await methodsOf(bob)).methods).toHaveLength(1)
+  })
+})
+
+/** The mails the sign-in method job sends, with a sender that records them. */
+function methodMails(sql: postgres.Sql) {
+  const sent: EmailMessage[] = []
+  const job = signInMethodMailJob({
+    sql,
+    sender: {
+      send: (message: EmailMessage) => (
+        sent.push(message), Promise.resolve({ ok: true, accepted: [message.to], duplicates: [] })
+      ),
+    } as unknown as EmailSender,
+    brand: { webAppUrl: ORIGIN },
+    log: () => {},
+  })
+  return {
+    sent,
+    /** Runs the job for every sign-in method mail queued so far, oldest first. */
+    async runQueued(): Promise<void> {
+      const rows = await sql<{ aggregateId: string }[]>`
+        SELECT aggregate_id FROM outbox_events WHERE event_kind = ${SIGN_IN_METHOD_MAIL_JOB}
+        ORDER BY id`
+      for (const row of rows) await job({ aggregateId: row.aggregateId } as OutboxEvent)
+    },
+  }
+}
+
+/** How many sign-in method mails are queued. */
+async function queuedMethodMails(sql: postgres.Sql): Promise<number> {
+  const [row] = await sql<{ count: number }[]>`
+    SELECT count(*)::int AS count FROM outbox_events WHERE event_kind = ${SIGN_IN_METHOD_MAIL_JOB}`
+  return row.count
+}
+
+Deno.test("unlinking asks an account with a password for it, and a refusal leaves the method linked", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const owner = browser(app)
+    const ownerId = await provenPasswordAccount(app, owner, "ada@example.com")
+    // A provider sign-in by the verified address links Google: one mail queued for that.
+    await browser(app).through("google", "ada")
+    const google = (await methodsOf(owner)).methods.find((method) => method.kind === "google")!
+    expect(await queuedMethodMails(sql)).toBe(1)
+
+    const without = await owner.delete(`/auth/methods/${google.id}`)
+    const wrong = await owner.delete(`/auth/methods/${google.id}`, { password: "Wr0ng-one!" })
+
+    for (const refused of [without, wrong]) {
+      expect(refused.status).toBe(400)
+      expect((await refused.json()).error).toBe("Invalid password")
+    }
+    expect((await app.db.authStore.listKeys(ownerId)).map((key) => key.method))
+      .toEqual(["password", "oauth:google"])
+    expect(await queuedMethodMails(sql)).toBe(1)
+    expect(app.signedOut).toEqual([])
+
+    const unlinked = await owner.delete(`/auth/methods/${google.id}`, { password: PASSWORD })
+
+    expect(unlinked.status).toBe(200)
+    expect((await app.db.authStore.listKeys(ownerId)).map((key) => key.method))
+      .toEqual(["password"])
+  })
+})
+
+Deno.test("an account without a password unlinks only after a provider sign-in a moment ago", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const visitor = browser(app)
+    await visitor.through("google", "ada")
+    const user = await (await visitor.post("/auth/sign-up/confirm")).json()
+    expect(target(await visitor.through("github", "ada"))).toBe("/")
+    const [google] = (await methodsOf(visitor)).methods
+    // Every session now looks started longer ago than a provider sign-in confirms anything.
+    const minutes = PROVIDER_PROOF_MINUTES + 1
+    await sql`UPDATE auth_sessions SET created_at = created_at - make_interval(mins => ${minutes})`
+
+    const stale = await visitor.delete(`/auth/methods/${google.id}`)
+
+    expect(stale.status).toBe(400)
+    expect((await stale.json()).error).toBe(PROVIDER_PROOF_REQUIRED)
+    expect(await app.db.authStore.listKeys(user.id)).toHaveLength(2)
+
+    // Signing in with GitHub again is the proof.
+    expect(target(await visitor.through("github", "ada"))).toBe("/")
+    expect((await visitor.delete(`/auth/methods/${google.id}`)).status).toBe(200)
+    expect((await app.db.authStore.listKeys(user.id)).map((key) => key.method))
+      .toEqual(["oauth:github"])
+  })
+})
+
+Deno.test("linking and unlinking a provider each mail the proven address once, naming the provider", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const owner = browser(app)
+    const ownerId = await provenPasswordAccount(app, owner, "ada@example.com")
+    const mails = methodMails(sql)
+
+    const link = await owner.post("/auth/methods/google/link", { password: PASSWORD })
+    expect(target(await owner.through("google", "ada", (await link.json()).url)))
+      .toBe("/?oauth=linked")
+    await mails.runQueued()
+
+    expect(mails.sent.map((mail) => [mail.to, mail.subject])).toEqual([
+      ["ada@example.com", "Google was linked to your account"],
+    ])
+
+    const google = (await methodsOf(owner)).methods.find((method) => method.kind === "google")!
+    expect((await owner.delete(`/auth/methods/${google.id}`, { password: PASSWORD })).status)
+      .toBe(200)
+    await mails.runQueued()
+
+    expect(mails.sent.map((mail) => [mail.to, mail.subject])).toEqual([
+      ["ada@example.com", "Google was linked to your account"],
+      ["ada@example.com", "Google was unlinked from your account"],
+    ])
+    // The mail names the event the audit log records, and its row is gone once it is sent.
+    expect((await audit(sql, ownerId)).slice(-2)).toEqual([
+      [AuthAuditEventType.SIGN_IN_METHOD_LINKED, "oauth:google"],
+      [AuthAuditEventType.SIGN_IN_METHOD_UNLINKED, "oauth:google"],
+    ])
+    expect(await sql`SELECT id FROM sign_in_method_changes`).toHaveLength(0)
   })
 })
 

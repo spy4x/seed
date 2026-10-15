@@ -143,8 +143,8 @@ export function ProfileView() {
   }, [search])
 
   /** Unlinks one method. When this device signed in with it, the page reloads signed out. */
-  const unlinkMethod = async (methodId: number) => {
-    const result = await methods.unlink(methodId)
+  const unlinkMethod = async (methodId: number, password?: string) => {
+    const result = await methods.unlink(methodId, password)
     if (result === "signed-out") {
       location.href = SCREEN_PATHS.signIn
       return
@@ -428,7 +428,7 @@ export function ProfileView() {
         pending: methods.pending.value,
         error: methods.error.value === "" ? SIGN_IN_METHODS_FAILURE : methods.error.value,
         onLink: (provider, password) => void methods.link(provider, password),
-        onUnlink: (id) => void unlinkMethod(id),
+        onUnlink: (id, password) => void unlinkMethod(id, password),
       }}
       devices={{
         sessions: devices.sessions.value,

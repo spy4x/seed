@@ -259,6 +259,64 @@ export function accountRestoredMail(brand: MailBrand, { to }: { to: string }): E
   }
 }
 
+/**
+ * A moment as the account mails write it, before " UTC": `October 15, 2026 at 14:03`, the date in
+ * the form {@link billingDate} gives.
+ */
+const MAIL_TIME = new Intl.DateTimeFormat("en", {
+  dateStyle: "long",
+  timeStyle: "short",
+  hourCycle: "h23",
+  timeZone: "UTC",
+})
+
+/** What the mail about a linked or unlinked sign-in method names. */
+export interface SignInMethodChangedMailInput {
+  to: string
+  /** The provider as people know it: `Google`, `GitHub`. */
+  provider: string
+  /** `true` for a link, `false` for an unlink. */
+  linked: boolean
+  at: Date
+}
+
+/**
+ * The mail sent when a sign-in method is linked to the account or unlinked from it (#385), so a
+ * change made by someone else in an open session does not go unnoticed. A link is a new way in,
+ * an unlink takes one away; either way the mail says which provider and when, and what to do when
+ * it was not the owner.
+ */
+export function signInMethodChangedMail(
+  brand: MailBrand,
+  { to, provider, linked, at }: SignInMethodChangedMailInput,
+): EmailMessage {
+  const host = new URL(brand.webAppUrl).host
+  const when = `${MAIL_TIME.format(at)} UTC`
+  const changed = linked
+    ? `${provider} was linked to your account at ${host} on ${when}. It can now sign in to it.`
+    : `${provider} was unlinked from your account at ${host} on ${when}. It no longer signs in to it.`
+  const notYou = linked
+    ? `If this wasn't you, unlink ${provider} on your profile page and change your password.`
+    : `If this wasn't you, sign in, change your password and link ${provider} again.`
+  // The profile is the web app's first page.
+  const link = new URL("/", brand.webAppUrl).href
+  return {
+    to,
+    subject: linked
+      ? `${provider} was linked to your account`
+      : `${provider} was unlinked from your account`,
+    text: `${changed}\n\n${notYou}\n\n${link}\n`,
+    html: mailHtml(
+      brand,
+      [
+        `<p>${escapeHtml(changed)}</p>`,
+        `<p>${escapeHtml(notYou)}</p>`,
+        `<p><a href="${escapeHtml(link)}">Open your profile</a></p>`,
+      ].join("\n"),
+    ),
+  }
+}
+
 /** What the mail about a new API token names. Never the token itself. */
 export interface ApiTokenCreatedMailInput {
   to: string

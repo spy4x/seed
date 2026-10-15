@@ -281,7 +281,11 @@ These cost real time to find. Do not rediscover them.
    address, so no `email-code` key stays on an address the account has left.
    `POST /api/auth/password/set` asks for `otp` while two-factor is on, and
    `POST /api/auth/methods/:provider/link` asks for the password or the same provider proof, so a
-   session cannot make itself recent by linking one more provider. Not built: a first password by
+   session cannot make itself recent by linking one more provider. `DELETE /api/auth/methods/:id`
+   asks for the same proof (`refuseWithoutProof`, `apps/api/routes/auth-oauth.ts`), before it
+   answers whether the method exists. Every link and unlink, an automatic link at sign-in
+   included, queues a mail to the account's first proven address naming the provider and the time
+   (`sign_in_method_changes` and the outbox job in `libs/server/jobs/sign-in-method-mail.ts`). Not built: a first password by
    reset mail, so "forgot password" still finds no key for such an account.
 
    **Changing the address.** `POST /api/auth/email/change` with `{ email,
