@@ -619,6 +619,8 @@ CREATE INDEX idx_notifications_user_id_desc ON notifications (user_id, id DESC);
 CREATE INDEX idx_notifications_unread ON notifications (user_id) WHERE read_at IS NULL;
 -- The retention job: read rows past their 90 days, across every user.
 CREATE INDEX idx_notifications_read_at ON notifications (read_at) WHERE read_at IS NOT NULL;
+-- The retention job: unread rows past their year. See migration 2026_11_06_0001.
+CREATE INDEX idx_notifications_unread_created_at ON notifications (created_at) WHERE read_at IS NULL;
 
 -- #167: personal API tokens. See migration 2026_10_25_0001_api_tokens.sql. A person lets a script use the API in one of their groups. Only a
 -- keyed SHA-256 of the token is kept (`token_hash`): the token itself is shown once and never

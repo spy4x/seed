@@ -12,7 +12,7 @@ import { createNotification } from "@server/notifications/create-notification.ts
 import { PostgresNotificationRepository } from "@server/notifications/postgres-notification-repository.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
-import { purgeReadNotifications } from "@server/notifications/purge-notifications.ts"
+import { purgeNotifications } from "@server/notifications/purge-notifications.ts"
 import { listenForInboxNews } from "../../apps/api/services/inbox-news.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
 
@@ -295,11 +295,34 @@ Deno.test("notifications: the cleanup deletes read ones after 90 days and keeps 
       WHERE kind = 'old-unread'`
     await sql`UPDATE notifications SET read_at = now() WHERE kind = 'just-read'`
 
-    expect(await purgeReadNotifications(sql)).toBe(1)
+    expect(await purgeNotifications(sql)).toBe(1)
 
     const left = (await sql<{ kind: string }[]>`SELECT kind FROM notifications ORDER BY kind`)
       .map((row) => row.kind)
     expect(left).toEqual(["just-read", "old-unread", "recent-read"])
+  })
+})
+
+Deno.test("notifications: the cleanup deletes unread ones a year after they were created", async () => {
+  await withSchema(async (sql) => {
+    const { owner } = await team(sql)
+    const kinds = ["year-old-unread", "younger-unread", "year-old-read-recently"]
+    for (const kind of kinds) {
+      await createNotification(sql, { userId: owner, kind, link: "/groups", payload: {} })
+    }
+    await sql`UPDATE notifications SET created_at = now() - interval '366 days'
+      WHERE kind IN ('year-old-unread', 'year-old-read-recently')`
+    await sql`UPDATE notifications SET created_at = now() - interval '364 days'
+      WHERE kind = 'younger-unread'`
+    // Reading it starts the read clock: an old notification read last week stays its 90 days.
+    await sql`UPDATE notifications SET read_at = now() - interval '7 days'
+      WHERE kind = 'year-old-read-recently'`
+
+    expect(await purgeNotifications(sql)).toBe(1)
+
+    const left = (await sql<{ kind: string }[]>`SELECT kind FROM notifications ORDER BY kind`)
+      .map((row) => row.kind)
+    expect(left).toEqual(["year-old-read-recently", "younger-unread"])
   })
 })
 
@@ -362,13 +385,15 @@ Deno.test("notifications: a link is stored in its normalized form", async () => 
   })
 })
 
-Deno.test("notifications: the worker's nightly cleanup runs the purge of read notifications", async () => {
+Deno.test("notifications: the worker's nightly cleanup runs the purge of old notifications", async () => {
   await withSchema(async (sql) => {
     const { owner } = await team(sql)
-    for (const kind of ["old-read", "unread"]) {
+    for (const kind of ["old-read", "old-unread", "unread"]) {
       await createNotification(sql, { userId: owner, kind, link: "/groups", payload: {} })
     }
     await sql`UPDATE notifications SET read_at = now() - interval '91 days' WHERE kind = 'old-read'`
+    await sql`UPDATE notifications SET created_at = now() - interval '366 days'
+      WHERE kind = 'old-unread'`
     const processor = createOutboxProcessor(sql, {
       store: {} as never,
       sender: { send: () => Promise.reject(new Error("no mail in this test")) },

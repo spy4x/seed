@@ -19,7 +19,7 @@ import { GroupChangeNotifier } from "../groups/group-change-notify.ts"
 import { purgeDeadInvitations } from "../groups/purge-dead-invitations.ts"
 import { purgeDeletedNotes } from "../notes/purge-deleted-notes.ts"
 import { purgeDeletedGroups } from "../groups/purge-deleted-groups.ts"
-import { purgeReadNotifications } from "../notifications/purge-notifications.ts"
+import { purgeNotifications } from "../notifications/purge-notifications.ts"
 import { purgeOldAuditEvents } from "../groups/purge-audit-events.ts"
 import { purgeExpiredApiTokens } from "../api-tokens/purge-expired-api-tokens.ts"
 import { hardDeleteDueAccounts } from "../auth/account-deletion.ts"
@@ -194,9 +194,9 @@ function cleanupSteps(
       const audit = await purgeOldAuditEvents(sql)
       if (audit > 0) console.log(`Removed ${audit} audit event(s) past their retention`)
     }],
-    ["purge read notifications", async () => {
-      const inbox = await purgeReadNotifications(sql)
-      if (inbox > 0) console.log(`Removed ${inbox} read notification(s) past their retention`)
+    ["purge old notifications", async () => {
+      const inbox = await purgeNotifications(sql)
+      if (inbox > 0) console.log(`Removed ${inbox} notification(s) past their retention`)
     }],
     ["delete accounts whose wait is over", async () => {
       const accounts = await hardDeleteDueAccounts(sql, log)

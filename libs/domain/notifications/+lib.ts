@@ -10,6 +10,12 @@ export const NOTIFICATION_PAGE_DEFAULT = 20
 export const NOTIFICATION_RETENTION_DAYS = 90
 
 /**
+ * An unread notification is deleted by the same cleanup this many days after it was created, so an
+ * inbox nobody opens does not grow for ever.
+ */
+export const NOTIFICATION_UNREAD_RETENTION_DAYS = 365
+
+/**
  * The kinds of notification the app writes, as they are stored in `notifications.kind`. Each has a
  * sentence in {@link describeNotification}; the writers live next to the change that causes them.
  */
