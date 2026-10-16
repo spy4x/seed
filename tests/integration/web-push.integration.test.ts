@@ -8,7 +8,7 @@ import { generateVapidKeyPair } from "@spy4x/integrations/push"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { PUSH_TOKEN_LIMITS } from "@domain/identity"
+import { PUSH_SUBSCRIPTION_LIMITS } from "@spy4x/platform/model"
 
 interface IdRow extends postgres.Row {
   id: number
@@ -23,8 +23,8 @@ const PUSH_MIGRATION = "2026_09_30_0001_push_token_one_per_device.sql"
 const ENDPOINT_MIGRATION = "2026_11_02_0001_push_endpoint_2048.sql"
 const SNAPSHOT = "libs/server/db/schema.sql"
 
-type LimitedField = keyof typeof PUSH_TOKEN_LIMITS
-const LIMITED_FIELDS = Object.keys(PUSH_TOKEN_LIMITS) as LimitedField[]
+type LimitedField = keyof typeof PUSH_SUBSCRIPTION_LIMITS
+const LIMITED_FIELDS = Object.keys(PUSH_SUBSCRIPTION_LIMITS) as LimitedField[]
 
 /**
  * Stores a push device whose `field` is `length` characters long, and says whether the database
@@ -201,7 +201,7 @@ Deno.test({
 
       await t.step("a push address as long as the request limit is stored", async () => {
         const { service } = await serviceOver(sql)
-        const endpoint = "https://push.example/".padEnd(PUSH_TOKEN_LIMITS.endpoint, "a")
+        const endpoint = "https://push.example/".padEnd(PUSH_SUBSCRIPTION_LIMITS.endpoint, "a")
         await service.subscribe({ endpoint, keys: KEYS, expirationTime: null }, "long", userA)
         const rows = await sql<{ endpoint: string }[]>`
           SELECT endpoint FROM user_push_tokens
@@ -211,7 +211,7 @@ Deno.test({
 
       await t.step("a push address of the limit in three-byte characters is stored", async () => {
         // The limit counts characters; in UTF-8 this value is three times as many bytes.
-        const endpoint = "€".repeat(PUSH_TOKEN_LIMITS.endpoint)
+        const endpoint = "€".repeat(PUSH_SUBSCRIPTION_LIMITS.endpoint)
         await createPushTokenStore(sql).upsert({
           userId: userA,
           deviceId: "wide",
@@ -221,7 +221,7 @@ Deno.test({
         const rows = await sql<{ bytes: number }[]>`
           SELECT octet_length(endpoint)::int AS bytes FROM user_push_tokens
           WHERE user_id = ${userA} AND device_id = ${"wide"} AND deleted_at IS NULL`
-        expect(rows.map((row) => row.bytes)).toEqual([PUSH_TOKEN_LIMITS.endpoint * 3])
+        expect(rows.map((row) => row.bytes)).toEqual([PUSH_SUBSCRIPTION_LIMITS.endpoint * 3])
       })
 
       await admin`CREATE SCHEMA ${admin(snapshotSchema)}`
@@ -234,7 +234,7 @@ Deno.test({
       ]
       for (const { name, client, user } of databases) {
         for (const field of LIMITED_FIELDS) {
-          const limit = PUSH_TOKEN_LIMITS[field]
+          const limit = PUSH_SUBSCRIPTION_LIMITS[field]
           await t.step(
             `${name} holds ${limit} characters in ${field} and refuses ${limit + 1}`,
             async () => {

@@ -96,6 +96,7 @@ import {
   oauthProviderId,
   type PendingSignUp,
   PROVIDER_PROOF_MINUTES,
+  providerAvatarUrl,
   type SignInMethod,
   type SignInMethodsResponse,
   type User,
@@ -133,6 +134,12 @@ const SIGN_UP_COOKIE_PURPOSE = "oauth.sign-up"
 /** Longest address the confirmation page is given to show. */
 const MAX_SHOWN_EMAIL = 320
 
+/**
+ * Longest picture address the confirmation page is given to show; a longer one shows initials.
+ * Keeps the signed cookie that carries it well under a browser's 4 KB limit.
+ */
+const MAX_SHOWN_AVATAR_URL = 1024
+
 const stateCookieSchema = type({
   state: "string > 0",
   /** The page sign-in returns to, checked when it was stored and again when it is read. */
@@ -158,6 +165,10 @@ const signUpCookieSchema = type({
   email: "string | null",
   /** Whether the provider vouches for `email`. */
   verified: "boolean",
+  /** The provider's name of the person, already cut to a length by the library. */
+  "name?": "string | null",
+  /** The provider's picture, kept only on `PROVIDER_AVATAR_ORIGINS`. */
+  "avatarUrl?": "string | null",
   expiresAt: "string.date.iso",
 })
 
@@ -616,13 +627,16 @@ export function createOAuthOperations(
       }
 
       if (result.outcome === OAuthOutcome.PendingSignUp) {
-        const { email } = result.profile
+        const { email, name, avatarUrl } = result.profile
+        const picture = providerAvatarUrl(avatarUrl)
         const shown: typeof signUpCookieSchema.infer = {
           provider: id,
           token: result.token,
           held,
           email: typeof email === "string" && email.length <= MAX_SHOWN_EMAIL ? email : null,
           verified: result.profile.emailVerified === true,
+          name: name || null,
+          avatarUrl: picture && picture.length <= MAX_SHOWN_AVATAR_URL ? picture : null,
           expiresAt: result.expiresAt.toISOString(),
         }
         setCookie(c, SIGN_UP_COOKIE, await signUpCookie.sign(shown), {
@@ -644,6 +658,8 @@ export function createOAuthOperations(
       return {
         provider: waiting.provider,
         email: waiting.email,
+        name: waiting.name ?? null,
+        avatarUrl: providerAvatarUrl(waiting.avatarUrl),
         expiresAt: waiting.expiresAt,
         unconfirmedAccount: await unconfirmedClaim(db.authStore, waiting) !== null,
       }

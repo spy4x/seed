@@ -7,6 +7,7 @@ import {
   PasswordSetOutcome,
   type SignedIn,
   type SignIn,
+  SignUpOutcome,
 } from "../services/sign-in.ts"
 import {
   AccountDeletionBlockReason,
@@ -56,8 +57,14 @@ import {
   PROVIDER_PROOF_REQUIRED,
   SESSION_IS_CURRENT,
   SESSION_NOT_FOUND,
+  SIGN_UP_CODES_TOO_MANY,
+  SIGN_UP_EXPIRED,
+  SIGN_UP_REQUESTED,
   TOTP_DISCONNECT_PROOF_REQUIRED,
 } from "./auth.ts"
+
+/** When the fake sign-in's waiting sign-up stops working. */
+const WAITING_UNTIL = new Date("2026-10-17T10:10:00.000Z")
 
 /** When the fake sign-in says a deleted account goes for good. */
 const DELETE_AFTER = new Date("2026-10-11T08:00:00.000Z")
@@ -113,6 +120,19 @@ function fakeSignIn(
     signUp: (_c, email) => (
       calls.push("signUp"), logins.push(email), succeed ? signedIn() : Promise.resolve(null)
     ),
+    // Without success the hasher refuses the password, and the code is wrong.
+    requestSignUp: (_c, email) => (
+      calls.push("requestSignUp"), logins.push(email), Promise.resolve(succeed)
+    ),
+    waitingSignUp: () => Promise.resolve({ email: "alice@example.com", expiresAt: WAITING_UNTIL }),
+    resendSignUpCode: () => (calls.push("resendSignUpCode"), Promise.resolve(succeed)),
+    cancelSignUp: () => (calls.push("cancelSignUp"), Promise.resolve()),
+    completeSignUp: async () => {
+      calls.push("completeSignUp")
+      return succeed
+        ? { outcome: SignUpOutcome.Created, signedIn: await signedIn() }
+        : { outcome: SignUpOutcome.WrongCode }
+    },
     signIn: (_c, login) => (
       calls.push("signIn"), logins.push(login), succeed ? signedIn() : Promise.resolve(null)
     ),
@@ -199,7 +219,6 @@ function buildApp(
     passwordLockedForMs,
     passwordFailures,
     signIn: overrides = {},
-    queueFails = false,
   }: {
     rateLimits?: AuthRateLimits
     /** How long the failure counter says the user is locked; 0 or left out means not locked. */
@@ -215,17 +234,14 @@ function buildApp(
     secondFactor?: SecondFactorStatus
     /** Replaces operations of the fake sign-in. */
     signIn?: Partial<SignIn>
-    /** Queueing a code mail fails. */
-    queueFails?: boolean
   } = {},
 ) {
   const calls: string[] = []
   const failureCalls: string[] = []
   const codeFailureCalls: string[] = []
   const passwordFailureCalls: string[] = []
-  /** Every address a code mail was queued for, and every error the route logged. */
+  /** Every address a code mail was queued for. */
   const mailed: string[] = []
-  const logged: string[] = []
   /** Every address a reset link was queued for, as the route passed it. */
   const queued: string[] = []
   /** What the route handed `signUp` and `signIn` as the address or login. */
@@ -244,11 +260,7 @@ function buildApp(
       calls.push("requestPasswordReset"), queued.push(email), Promise.resolve()
     ),
     emailCodeFailures: fakeTotpFailures(codeFailureCalls, codeLockedForMs),
-    requestEmailCode: (_userId, email) =>
-      queueFails
-        ? Promise.reject(new Error("outbox down"))
-        : (mailed.push(email), Promise.resolve()),
-    logError: (message) => void logged.push(message),
+    requestEmailCode: (_userId, email) => (mailed.push(email), Promise.resolve()),
   })
   return {
     app: mountRoute("/auth", route, auth),
@@ -259,7 +271,6 @@ function buildApp(
     queued,
     logins,
     mailed,
-    logged,
     emitted,
   }
 }
@@ -293,7 +304,30 @@ const resetBody = {
 const anonymousRoutes: (MutationCase & { operation: string })[] = [
   { method: "POST", path: "/auth/sign-out", body: undefined, operation: "signOut" },
   { method: "POST", path: "/auth/password/check", body: credentials, operation: "signIn" },
-  { method: "POST", path: "/auth/password/sign-up", body: signUpBody, operation: "signUp" },
+  {
+    method: "POST",
+    path: "/auth/password/sign-up",
+    body: signUpBody,
+    operation: "requestSignUp",
+  },
+  {
+    method: "POST",
+    path: "/auth/password/sign-up/verify",
+    body: { code: "abcd1234" },
+    operation: "completeSignUp",
+  },
+  {
+    method: "POST",
+    path: "/auth/password/sign-up/resend",
+    body: undefined,
+    operation: "resendSignUpCode",
+  },
+  {
+    method: "POST",
+    path: "/auth/password/sign-up/cancel",
+    body: undefined,
+    operation: "cancelSignUp",
+  },
   {
     method: "POST",
     path: "/auth/password/forgot",
@@ -614,7 +648,6 @@ describe("auth routes rate-limit", () => {
         requestPasswordReset: () => Promise.resolve(),
         emailCodeFailures: fakeTotpFailures([]),
         requestEmailCode: () => Promise.resolve(),
-        logError: () => {},
       }),
       buildAuthData(),
     )
@@ -1240,12 +1273,132 @@ describe("auth routes sign up with an e-mail address", () => {
   })
 })
 
+describe("auth routes prove the address before a sign-up creates anything (#142)", () => {
+  const route = (path: string) => anonymousRoutes.find((candidate) => candidate.path === path)!
+  const signUp = route("/auth/password/sign-up")
+  const verify = route("/auth/password/sign-up/verify")
+  const resend = route("/auth/password/sign-up/resend")
+
+  it("answers a free and a taken address alike, with the same body and no session", async () => {
+    const { app, calls } = buildApp(null)
+    const answers = []
+    for (const email of ["free@example.com", "taken@example.com"]) {
+      const response = await send(
+        app,
+        { ...signUp, body: { ...signUpBody, email } },
+        sameOriginWithoutCookieHeaders,
+      )
+      answers.push({ status: response.status, body: await response.text() })
+    }
+
+    expect(answers[0]).toEqual({ status: 200, body: JSON.stringify(SIGN_UP_REQUESTED) })
+    expect(answers[1]).toEqual(answers[0])
+    expect(calls).toEqual(["requestSignUp", "requestSignUp"])
+  })
+
+  it("refuses past the address's code budget with one answer for every address", async () => {
+    const { app, calls } = buildApp(null)
+    const refusals = []
+    for (const email of ["free@example.com", "taken@example.com"]) {
+      const body = { ...signUpBody, email }
+      for (let mail = 0; mail < EMAIL_CODE_MAILS_PER_ADDRESS; mail++) {
+        await send(app, { ...signUp, body }, sameOriginWithoutCookieHeaders)
+      }
+      const refused = await send(app, { ...signUp, body }, sameOriginWithoutCookieHeaders)
+      refusals.push({
+        status: refused.status,
+        retryAfter: refused.headers.get("retry-after"),
+        body: await refused.json(),
+      })
+    }
+
+    expect(refusals[0].status).toBe(429)
+    expect(refusals[0].body).toEqual({ error: SIGN_UP_CODES_TOO_MANY })
+    expect(refusals[1]).toEqual(refusals[0])
+    expect(calls).toEqual(Array(2 * EMAIL_CODE_MAILS_PER_ADDRESS).fill("requestSignUp"))
+  })
+
+  it("signs in the account a right code created", async () => {
+    const { app } = buildApp(null)
+    const response = await send(app, verify, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toHaveProperty("id")
+  })
+
+  it("tells the holder of the mailbox how the account that uses the address signs in", async () => {
+    const { app } = buildApp(null, {
+      signIn: {
+        completeSignUp: () =>
+          Promise.resolve({
+            outcome: SignUpOutcome.AccountExists,
+            email: "alice@example.com",
+            account: { userId: 7, password: false, providers: ["google"] },
+          }),
+      },
+    })
+    const response = await send(app, verify, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({
+      accountExists: { email: "alice@example.com", password: false, providers: ["google"] },
+    })
+  })
+
+  it("answers a wrong code with the e-mail code message", async () => {
+    const { app } = buildApp(null, { succeed: false })
+    const response = await send(app, verify, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: EMAIL_CODE_REFUSED })
+  })
+
+  it("answers 410 when no sign-up waits for a code", async () => {
+    const { app } = buildApp(null, {
+      signIn: { completeSignUp: () => Promise.resolve({ outcome: SignUpOutcome.Expired }) },
+    })
+    const response = await send(app, verify, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(410)
+    expect(await response.json()).toEqual({ error: SIGN_UP_EXPIRED })
+  })
+
+  it("sends no new code when no sign-up waits", async () => {
+    const { app, calls } = buildApp(null, {
+      signIn: { waitingSignUp: () => Promise.resolve(null) },
+    })
+    const response = await send(app, resend, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(410)
+    expect(calls).toEqual([])
+  })
+
+  it("spends the waiting address's code budget on a new code", async () => {
+    const { app, calls } = buildApp(null)
+    const statuses = []
+    for (let mail = 0; mail <= EMAIL_CODE_MAILS_PER_ADDRESS; mail++) {
+      statuses.push((await send(app, resend, sameOriginWithoutCookieHeaders)).status)
+    }
+
+    expect(statuses).toEqual([...Array(EMAIL_CODE_MAILS_PER_ADDRESS).fill(200), 429])
+    expect(calls).toEqual(Array(EMAIL_CODE_MAILS_PER_ADDRESS).fill("resendSignUpCode"))
+  })
+
+  it("reads back the waiting sign-up's address for the page that asks for the code", async () => {
+    const { app } = buildApp(null)
+    const response = await app.request(`${API_URL}/auth/password/sign-up`)
+
+    expect(await response.json()).toEqual({
+      pending: { email: "alice@example.com", expiresAt: WAITING_UNTIL.toISOString() },
+    })
+  })
+})
+
 describe("auth routes prove an e-mail address with a code", () => {
   const route = (path: string) => sessionRoutes.find((candidate) => candidate.path === path)!
   const verify = route("/auth/email/verify")
   const sendCode = route("/auth/email/send")
   const change = route("/auth/email/change")
-  const signUp = anonymousRoutes.find((candidate) => candidate.path === "/auth/password/sign-up")!
 
   it("counts a code check before running it and gives the slot back when the code is right", async () => {
     const { app, codeFailureCalls } = buildApp()
@@ -1486,25 +1639,6 @@ describe("auth routes prove an e-mail address with a code", () => {
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({ error: PROVIDER_PROOF_REQUIRED })
     expect(mailed).toEqual([])
-  })
-
-  it("queues a code for the address a new account signed up with", async () => {
-    const { app, mailed } = buildApp(null)
-    await send(
-      app,
-      { ...signUp, body: { ...signUpBody, email: " Ada@Example.COM" } },
-      sameOriginWithoutCookieHeaders,
-    )
-
-    expect(mailed).toEqual(["ada@example.com"])
-  })
-
-  it("keeps a sign-up and logs the error when its code mail cannot be queued", async () => {
-    const { app, logged } = buildApp(null, { queueFails: true })
-    const response = await send(app, signUp, sameOriginWithoutCookieHeaders)
-
-    expect(response.status).toBe(200)
-    expect(logged).toEqual(["error: the code mail after a sign-up was not queued"])
   })
 })
 

@@ -2,6 +2,7 @@ import { type APIResponse, expect, test } from "@playwright/test"
 import { gotoApp, signIn } from "../fixtures/app.ts"
 import { refusalSource, watchCspViolations } from "../fixtures/csp.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "../fixtures/sign-up.ts"
 
 const TRACKER = Deno.env.get("ERROR_TRACKER_ORIGIN")
 if (!TRACKER) throw new Error("ERROR_TRACKER_ORIGIN is required: e2e/spa/run.sh sets it")
@@ -24,7 +25,10 @@ function expectSecurityHeaders(response: APIResponse) {
   expect(directives).toContain("base-uri 'self'")
   expect(directives).toContain("form-action 'self'")
   expect(directives).toContain("frame-ancestors 'none'")
-  expect(directives).toContain("img-src 'self' data:")
+  // The provider's picture on "Create a new account?": Google's and GitHub's image hosts only.
+  expect(directives).toContain(
+    "img-src 'self' data: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
+  )
   expect(directives).toContain("font-src 'self' https://fonts.gstatic.com")
   // The origin of the container's SPA_ERROR_REPORT_DSN, and nothing else beyond the app itself.
   expect(directives).toContain(`connect-src 'self' ${TRACKER}`)
@@ -135,7 +139,7 @@ test("a signed-in walk through the app meets no refusal under the content securi
   }
   await cleanup()
   try {
-    const signUp = await request.post("/api/auth/password/sign-up", {
+    const signUp = await signUpWithCode(request, "/api/auth/password/sign-up", {
       headers,
       data: { email, password },
     })
@@ -165,18 +169,9 @@ test("a signed-in walk through the app meets no refusal under the content securi
     await gotoApp(page, "/notes", page.locator("[data-e2e=note-new]"))
     await gotoApp(page, `/notes/${noteId}`, page.locator("[data-e2e=note-title]"))
 
-    // Prove the address with the mailed code, so the profile offers two-factor auth: its QR code
-    // is the one image the app builds as a `data:` address.
-    let code = ""
-    await expect.poll(async () => {
-      const response = await request.post("/api/test/last-mail", { data: { email } })
-      if (!response.ok()) return response.status()
-      code = ((await response.json()) as { text: string }).text.split("\n\n")[1].trim()
-      return response.status()
-    }, { timeout: 20_000, message: "the worker mails the code" }).toBe(200)
-    await gotoApp(page, "/email", page.locator("[data-e2e=email-code]"))
-    await page.locator("[data-e2e=email-code]").fill(code)
-    await page.locator("[data-e2e=email-verify]").click()
+    // The sign-up code proved the address, so the profile offers two-factor auth: its QR code is
+    // the one image the app builds as a `data:` address.
+    await gotoApp(page, "/email", page.locator("[data-e2e=email-state]"))
     await expect(page.locator("[data-e2e=email-state]")).toHaveText("Verified")
     await gotoApp(page, "/", page.locator("[data-e2e=totp-start]"))
     await page.locator("[data-e2e=totp-start]").click()

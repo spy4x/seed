@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp } from "./fixtures/app.ts"
 import { currentStep, enrolTotp, totpCode } from "./fixtures/totp.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -17,7 +18,7 @@ async function cleanup(request: APIRequestContext, email: string, soft = false):
 
 /** Signs `email` up through `api` and writes one note into its group; returns the note's id. */
 async function accountWithNote(api: APIRequestContext, email: string): Promise<string> {
-  const signUp = await api.post(`${apiBase}/api/auth/password/sign-up`, {
+  const signUp = await signUpWithCode(api, `${apiBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })
@@ -98,7 +99,7 @@ test.describe("returning to the requested page after sign-in", () => {
     await cleanup(request, email)
     try {
       const noteId = await accountWithNote(request, email)
-      const { secret, enrolStep } = await enrolTotp(request, apiBase, email)
+      const { secret, enrolStep } = await enrolTotp(request, apiBase)
 
       await openSignedOut(page, noteId, email)
       await submitTo(page, `/totp?next=%2Fnotes%2F${noteId}`, "[data-e2e=auth-form-code]")

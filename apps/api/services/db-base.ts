@@ -15,6 +15,8 @@ import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresBillingRepository } from "@server/billing/postgres-billing-repository.ts"
 import { emailChanges } from "@server/auth/email-verification.ts"
+import { signUpRequests } from "@server/auth/sign-up-requests.ts"
+import { enqueueSignUpCodeMail } from "@server/jobs/sign-up-code-mail.ts"
 import {
   accountDeletionBlockers,
   cancelAccountDeletion,
@@ -390,6 +392,19 @@ export class AppDbBase extends DbServiceBase {
   /** The address change waiting for its code. Built per access, like `group`. */
   get emailChange(): ReturnType<typeof emailChanges> {
     return emailChanges(this.sql)
+  }
+
+  /**
+   * Sign-ups waiting for their code (#142), and the code mails they ask for. Built per access,
+   * like `group`, so a transaction's copy writes inside the transaction.
+   */
+  get signUpRequest() {
+    const sql = this.sql
+    return {
+      ...signUpRequests(sql),
+      /** Queues a code mail to the address of the waiting sign-up `id`. */
+      queueCode: (id: string): Promise<void> => enqueueSignUpCodeMail(sql, id),
+    }
   }
 
   get user() {

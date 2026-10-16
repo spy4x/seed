@@ -1,5 +1,5 @@
 import { type } from "arktype"
-import { BaseModelSchema, dateSchema } from "@spy4x/platform/model"
+import { BaseModelSchema, dateSchema, PUSH_SUBSCRIPTION_LIMITS } from "@spy4x/platform/model"
 import type { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
@@ -286,26 +286,17 @@ export interface AccountDeletionStatus {
   blockers: AccountDeletionBlocker[]
 }
 
-/**
- * The longest value, in characters, of each text field of a push device. Three places must agree
- * on these: the request check (`pushSubscribeRequestSchema` in `@spy4x/platform/model`), the row
- * schema below and the columns of `user_push_tokens`. A request that passes the check and does not
- * fit the column is a server error (#355). `push-token-limits.test.ts` holds the request check to
- * these numbers, and `tests/integration/web-push.integration.test.ts` holds the columns to them.
- */
-export const PUSH_TOKEN_LIMITS = {
-  deviceId: 256,
-  endpoint: 2048,
-  auth: 256,
-  p256dh: 256,
-} as const
-
+// The longest value, in characters, of each text field of a push device: the library's own
+// `PUSH_SUBSCRIPTION_LIMITS`, which its request check (`pushSubscribeRequestSchema`) enforces. The
+// row schema below and the columns of `user_push_tokens` must agree with it, or a request that
+// passes the check does not fit the column (#355). `push-token-limits.test.ts` holds the row schema
+// to these numbers, and `tests/integration/web-push.integration.test.ts` holds the columns to them.
 export const userPushTokenSchemaBase = type({
   userId: "number = 0",
-  deviceId: `string <= ${PUSH_TOKEN_LIMITS.deviceId} = ''`,
-  endpoint: `string <= ${PUSH_TOKEN_LIMITS.endpoint} = ''`,
-  auth: `string <= ${PUSH_TOKEN_LIMITS.auth} = ''`,
-  p256dh: `string <= ${PUSH_TOKEN_LIMITS.p256dh} = ''`,
+  deviceId: `string <= ${PUSH_SUBSCRIPTION_LIMITS.deviceId} = ''`,
+  endpoint: `string <= ${PUSH_SUBSCRIPTION_LIMITS.endpoint} = ''`,
+  auth: `string <= ${PUSH_SUBSCRIPTION_LIMITS.auth} = ''`,
+  p256dh: `string <= ${PUSH_SUBSCRIPTION_LIMITS.p256dh} = ''`,
 })
 export type UserPushTokenBase = typeof userPushTokenSchemaBase.infer
 
@@ -500,6 +491,26 @@ export const OAUTH_PROVIDER_NAMES: Record<OAuthProviderId, string> = {
   github: "GitHub",
 }
 
+/**
+ * The only origins a provider's picture of a person is shown from: Google's and GitHub's image
+ * hosts. The SPA's `img-src` allows exactly these (docs/security-headers.md); a picture from any
+ * other host is dropped before it reaches the page, and the page shows initials instead.
+ */
+export const PROVIDER_AVATAR_ORIGINS = [
+  "https://lh3.googleusercontent.com",
+  "https://avatars.githubusercontent.com",
+] as const
+
+/** `url` when it is an `https:` address on one of {@link PROVIDER_AVATAR_ORIGINS}, else `null`. */
+export function providerAvatarUrl(url: unknown): string | null {
+  if (typeof url !== "string" || !URL.canParse(url)) return null
+  const parsed = new URL(url)
+  const allowed: readonly string[] = PROVIDER_AVATAR_ORIGINS
+  return allowed.includes(parsed.origin) && parsed.username === "" && parsed.password === ""
+    ? parsed.href
+    : null
+}
+
 /** `value` as a provider id, or `null` when it names none. */
 export function oauthProviderId(value: unknown): OAuthProviderId | null {
   return OAUTH_PROVIDERS.find((id) => id === value) ?? null
@@ -518,6 +529,13 @@ export interface PendingSignUp {
   provider: OAuthProviderId
   /** The address the provider reported, vouched for or not; `null` when it shared none. */
   email: string | null
+  /** The person's name as the provider shows it; `null` when it shared none. */
+  name: string | null
+  /**
+   * The provider's picture of the person, an `https:` address on one of
+   * {@link PROVIDER_AVATAR_ORIGINS}; `null` when it shared none, or one from anywhere else.
+   */
+  avatarUrl: string | null
   /** ISO 8601. After this the sign-up can no longer be confirmed. */
   expiresAt: string
   /**
@@ -526,6 +544,42 @@ export interface PendingSignUp {
    * account takes the password away from that one. The question page says so first.
    */
   unconfirmedAccount: boolean
+}
+
+/** How long a sign-up and its mailed code work, in minutes (#142). A new code starts it again. */
+export const SIGN_UP_CODE_MINUTES = 10
+
+/**
+ * A sign-up with an address and a password that waits for the code mailed to the address (#142),
+ * as `GET /api/auth/password/sign-up` answers it.
+ */
+export interface WaitingPasswordSignUp {
+  /** The address the person typed and the code went to. */
+  email: string
+  /** ISO 8601. After this the sign-up no longer works. */
+  expiresAt: string
+}
+
+/** What `GET /api/auth/password/sign-up` answers: the sign-up that waits, or `null`. */
+export interface WaitingPasswordSignUpResponse {
+  pending: WaitingPasswordSignUp | null
+}
+
+/**
+ * How an account that already uses the address signs in, as `POST /api/auth/password/sign-up/verify`
+ * answers the right code for such an address. Told only to the person who proved the mailbox.
+ */
+export interface ExistingAccountAnswer {
+  email: string
+  /** The account has a password, so "Sign in instead" works. */
+  password: boolean
+  /** The providers it signs in with, in the order they were linked. */
+  providers: OAuthProviderId[]
+}
+
+/** The answer of the verify route when an account already uses the address: nothing was created. */
+export interface SignUpAccountExistsResponse {
+  accountExists: ExistingAccountAnswer
 }
 
 /** What `GET /auth/sign-up/pending` answers: the sign-up that waits, or `null` when none does. */

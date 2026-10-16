@@ -42,7 +42,7 @@ const COPY: Record<AuthScreenKind, { title: string; description: string; failure
   },
   "sign-up": {
     title: "Create your account",
-    description: "All it takes is an e-mail address and a password.",
+    description: "An e-mail address and a password. We mail you a code to confirm the address.",
     failure: "Sign up failed",
   },
   "one-time-code": {

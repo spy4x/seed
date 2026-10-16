@@ -1,5 +1,6 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn, submitAuthForm } from "./fixtures/app.ts"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 
@@ -22,7 +23,7 @@ test.describe("auth profile ws push flow", () => {
     await cleanup()
     try {
       // The API refuses a mutation without the headers a browser sends from the app's own page.
-      const signUp = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+      const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
         headers: { origin: apiBase, "sec-fetch-site": "same-origin" },
         data: { email, password },
       })
@@ -108,7 +109,7 @@ test.describe("auth profile ws push flow", () => {
 
     await cleanup()
     try {
-      const signUp = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+      const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
         headers: { origin: apiBase, "sec-fetch-site": "same-origin" },
         data: { email, password },
       })

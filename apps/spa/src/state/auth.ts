@@ -2,11 +2,15 @@ import {
   type AccountDeletionBlocker,
   type AccountDeletionStatus,
   type ApiSuccessResponse,
+  type ExistingAccountAnswer,
   type SignedInDevice,
   type SignedInDevicesResponse,
+  type SignUpAccountExistsResponse,
   type TotpConnectStartResponse,
   type User,
   UserMFAStatus,
+  type WaitingPasswordSignUp,
+  type WaitingPasswordSignUpResponse,
 } from "@domain/identity"
 import { browserStorage } from "@spy4x/platform/browser/storage"
 import type { KeyValueStore } from "@spy4x/platform/universal/key-value-store"
@@ -160,16 +164,97 @@ export async function confirmProviderSignUp(): Promise<{
   return handleAuthResponse(result)
 }
 
-export async function signUp(email: string, password: string): Promise<{
-  ok: boolean
-  mfaRequired: boolean
-  error?: string
-}> {
-  const result = await apiFetch<SessionUser | PendingSecondFactor>("/api/auth/password/sign-up", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  })
-  return handleAuthResponse(result)
+/** What a request of the sign-up's code step answered (#142). */
+export type SignUpStepAnswer =
+  /** Done: a code is on its way, or the waiting sign-up was answered. */
+  | { ok: true }
+  /** No sign-up waits any more: the page shows "This sign-up expired". */
+  | { ok: false; expired: true }
+  /** Refused with a message to show; `offline` when the request never left the browser. */
+  | { ok: false; expired?: false; error?: string; offline?: boolean }
+
+/** The answer of a call that never reached the API, such as with the network off. */
+const UNREACHED: SignUpStepAnswer = { ok: false, offline: true }
+
+/**
+ * Starts a sign-up with an address and a password. The API answers the same for every address and
+ * mails a code to it; nobody is signed in yet. The code step (`verifySignUp`) comes next.
+ */
+export async function signUp(email: string, password: string): Promise<SignUpStepAnswer> {
+  try {
+    const result = await apiFetch<ApiSuccessResponse>("/api/auth/password/sign-up", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    })
+    return result.ok ? { ok: true } : { ok: false, error: result.error.message }
+  } catch (_unreachable) {
+    return UNREACHED
+  }
+}
+
+/**
+ * The sign-up that waits for its code, `null` when none does, or `undefined` when the API could not
+ * be reached and the page should keep asking.
+ */
+export async function readWaitingSignUp(): Promise<WaitingPasswordSignUp | null | undefined> {
+  try {
+    const result = await apiFetch<WaitingPasswordSignUpResponse>("/api/auth/password/sign-up")
+    return result.ok ? result.data.pending : undefined
+  } catch (_unreachable) {
+    return undefined
+  }
+}
+
+/** What the right code, or a wrong one, did to the waiting sign-up. */
+export type SignUpVerifyAnswer =
+  | SignUpStepAnswer
+  /** An account already uses the address. Nothing was created; the sign-up is gone. */
+  | { ok: false; accountExists: ExistingAccountAnswer }
+
+/**
+ * Enters the code of the waiting sign-up. The right one for a free address creates the account and
+ * signs it in, as sign-in does; for an address an account uses it creates nothing and says so.
+ */
+export async function verifySignUp(code: string): Promise<SignUpVerifyAnswer> {
+  let result
+  try {
+    result = await apiFetch<SessionUser | SignUpAccountExistsResponse>(
+      "/api/auth/password/sign-up/verify",
+      { method: "POST", body: JSON.stringify({ code }) },
+    )
+  } catch (_unreachable) {
+    return UNREACHED
+  }
+  if (result.ok && "accountExists" in result.data) {
+    return { ok: false, accountExists: result.data.accountExists }
+  }
+  if (!result.ok && result.status === 410) return { ok: false, expired: true }
+  const signedIn = await handleAuthResponse(
+    result as Awaited<ReturnType<typeof apiFetch<SessionUser | PendingSecondFactor>>>,
+  )
+  return signedIn.ok ? { ok: true } : { ok: false, error: signedIn.error }
+}
+
+/** Asks for a new code for the waiting sign-up. */
+export async function resendSignUpCode(): Promise<SignUpStepAnswer> {
+  try {
+    const result = await apiFetch<ApiSuccessResponse>("/api/auth/password/sign-up/resend", {
+      method: "POST",
+    })
+    if (result.ok) return { ok: true }
+    return result.status === 410
+      ? { ok: false, expired: true }
+      : { ok: false, error: result.error.message }
+  } catch (_unreachable) {
+    return UNREACHED
+  }
+}
+
+/** "Use a different address": forgets the waiting sign-up. Nothing was created. */
+export async function cancelPasswordSignUp(): Promise<void> {
+  // Best effort: a sign-up whose cancel never arrives expires by itself.
+  await apiFetch<ApiSuccessResponse>("/api/auth/password/sign-up/cancel", { method: "POST" })
+    .catch(() => {})
 }
 
 /**

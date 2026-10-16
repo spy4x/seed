@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Browser, expect, test as base } from "@playwright/test"
 import { gotoApp, signIn, withoutGoogleFonts } from "./app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./sign-up.ts"
 
 const WARM_PASSWORD = "Passw0rd!"
 
@@ -19,7 +20,7 @@ async function warmUp(browser: Browser, api: APIRequestContext, baseURL: string,
     }
   }
   await cleanup()
-  const signUp = await api.post("/api/auth/password/sign-up", {
+  const signUp = await signUpWithCode(api, "/api/auth/password/sign-up", {
     headers,
     data: { email, password: WARM_PASSWORD },
   })

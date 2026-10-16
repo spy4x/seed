@@ -2,9 +2,9 @@ import type { APIRequestContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { lastMail, nextCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
-const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 const password = "Passw0rd!"
 const CODE_SUBJECT = "Your code to confirm your e-mail address"
 
@@ -34,7 +34,7 @@ async function enterCode(page: Page, code: string): Promise<void> {
   await page.locator("[data-e2e=email-verify]").click()
 }
 
-test("a new account proves its address with the mailed code, then moves to a new one", async ({ page, request }) => {
+test("a new account proves its address with the mailed code before it exists, then moves to a new one", async ({ page, request }) => {
   // Fresh addresses each run: the per-address limit allows three code mails an hour.
   const id = uuidV7().slice(-8)
   const email = `e2e-verify-${id}@example.com`
@@ -42,28 +42,31 @@ test("a new account proves its address with the mailed code, then moves to a new
   await cleanup(request, email)
   await cleanup(request, next)
   try {
-    const signUp = await page.request.post(`${apiBase}/api/auth/password/sign-up`, {
-      headers,
-      data: { email, password },
-    })
-    expect(signUp.ok(), await signUp.text()).toBe(true)
-
-    // Every signed-in page asks for the code until the address is proven.
-    const banner = page.locator("[data-e2e=email-banner]")
-    await gotoApp(page, "/", banner)
-    await expect(banner).toContainText(email)
-    await banner.getByRole("link", { name: "Enter the code" }).click()
-    await expect(page).toHaveURL("/email")
-
-    const code = await codeFor(request, email)
-    await enterCode(page, "wrong-00")
+    // Sign-up asks for the code before it creates anything (#142); a wrong one is refused there.
+    await gotoApp(page, "/sign-up", page.locator("[data-e2e=auth-form-login]"))
+    await page.locator("[data-e2e=auth-form-login]").fill(email)
+    await page.locator("[data-e2e=auth-form-password]").fill(password)
+    const lastMailUrl = `${apiBase}/api/test/last-mail`
+    const before = await lastMail(request, lastMailUrl, email)
+    await page.locator("[data-e2e=auth-form-submit]").click()
+    await expect(page).toHaveURL("/sign-up/code")
+    await expect(page.locator("[data-e2e=sign-up-code]")).toContainText(email)
+    const code = await nextCode(request, lastMailUrl, email, before)
+    await page.locator("[data-e2e=sign-up-code-input]").fill("wrong-00")
+    await page.locator("[data-e2e=sign-up-code-submit]").click()
     await expect(page.getByText("This code is wrong or has expired. Ask for a new one."))
       .toBeVisible()
-    await enterCode(page, code)
-    await expect(page.locator("[data-e2e=email-verified]")).toBeVisible()
+    await expect(page.locator("[data-e2e=sign-up-code-input]")).toBeFocused()
+    await page.locator("[data-e2e=sign-up-code-input]").fill(code)
+    await gotoApp(page, "/", page.locator("[data-e2e=shell-ws-status]"), async () => {
+      await page.locator("[data-e2e=sign-up-code-submit]").click()
+      await page.waitForURL("/")
+    })
+
+    // The code proved the address: no page asks for it again.
+    await expect(page.locator("[data-e2e=email-banner]")).toHaveCount(0)
+    await gotoApp(page, "/email", page.locator("[data-e2e=email-state]"))
     await expect(page.locator("[data-e2e=email-state]")).toHaveText("Verified")
-    await gotoApp(page, "/", page.locator("[data-e2e=profile-email-link]"))
-    await expect(banner).toHaveCount(0)
 
     // A change waits for the new address's code; until then the account keeps the old one.
     await gotoApp(page, "/email", page.locator("[data-e2e=email-change-open]"))

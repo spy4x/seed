@@ -13,7 +13,7 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /**
  * The development-only `POST /test/cleanup-user` against a real Postgres, for users made through
- * the same `signIn.signUp` that `POST /api/auth/password/sign-up` runs.
+ * `signIn.signUp`, which writes the same rows as a sign-up whose code was entered.
  *
  * Needs `DB_HOST`, `DB_USER`, `DB_PASS` and `DB_NAME` (recipe in docs/handoff.md). It fails when
  * they are missing rather than skipping.
@@ -81,14 +81,24 @@ function buildApp(sql: postgres.Sql, isDev: boolean) {
     const result = await signIn.signUp(c, email, password)
     return result ? c.json(result.user) : c.json({ error: "refused" }, 401)
   })
-  app.route("/test", createDevRoute({ isDev, db, sql, closeSockets: () => 0 }))
+  const forgotten: string[] = []
+  app.route(
+    "/test",
+    createDevRoute({
+      isDev,
+      db,
+      sql,
+      closeSockets: () => 0,
+      forgetCodeBudget: (email) => Promise.resolve(void forgotten.push(email)),
+    }),
+  )
   const post = (path: string, body: unknown) =>
     app.request(`http://local${path}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     })
-  return { db, post }
+  return { db, post, forgotten }
 }
 
 /** Signs up `<name>@example.com`. */
@@ -325,16 +335,32 @@ Deno.test("dev cleanup-user route", async (t) => {
       expect(await response.json()).toEqual({ success: true })
     })
 
+    await t.step(
+      "gives an address back the code mails it spent, with or without a user",
+      async () => {
+        const fresh = buildApp(sql, true)
+        await signUp(fresh, "budget-kept")
+
+        await fresh.post("/test/cleanup-user", { login: " Budget-Kept@Example.com " })
+        await fresh.post("/test/cleanup-user", { login: "nobody-here@example.com" })
+        await fresh.post("/test/cleanup-user", { login: "just_a_username" })
+
+        expect(fresh.forgotten).toEqual(["budget-kept@example.com", "nobody-here@example.com"])
+      },
+    )
+
     await t.step("refuses with 403 and deletes nothing outside development", async () => {
       const userId = await signUp(app, "kept-in-prod")
 
-      const response = await buildApp(sql, false).post("/test/cleanup-user", {
+      const prod = buildApp(sql, false)
+      const response = await prod.post("/test/cleanup-user", {
         login: "kept-in-prod@example.com",
       })
 
       expect(response.status).toBe(403)
       const rows = await sql<IdRow[]>`SELECT id FROM auth_users WHERE id = ${userId}`
       expect(rows.length).toBe(1)
+      expect(prod.forgotten).toEqual([])
     })
   })
 })

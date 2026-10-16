@@ -1,5 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
+import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Button } from "@spy4x/preact-ui/button"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { OAUTH_PROVIDER_NAMES, type PendingSignUp } from "@domain/identity"
@@ -63,20 +64,42 @@ export function ConfirmSignUpScreen(
   }
 
   const provider = OAUTH_PROVIDER_NAMES[pending.provider]
-  const account = pending.email
+  // The provider's face of the person, so they spot the wrong account before reading it. Shown
+  // when the provider shared a name or an address; the sentence ends on a colon to point at it.
+  const identity = pending.name || pending.email
     ? (
-      <>
-        the {provider} account <strong data-e2e="confirm-sign-up-email">{pending.email}</strong>
-      </>
+      <div class="flex items-center gap-3" data-e2e="confirm-sign-up-identity">
+        {/* Decorative: the name beside it names the person. No name and no picture: an icon. */}
+        <Avatar
+          name={pending.name ?? undefined}
+          src={pending.avatarUrl ?? undefined}
+          alt=""
+          size="lg"
+          class="shrink-0"
+        />
+        <div class="flex min-w-0 flex-col">
+          {pending.name && (
+            <span class="font-medium wrap-anywhere" data-e2e="confirm-sign-up-name">
+              {pending.name}
+            </span>
+          )}
+          {pending.email && (
+            <span class="text-sm text-muted wrap-anywhere" data-e2e="confirm-sign-up-email">
+              {pending.email}
+            </span>
+          )}
+        </div>
+      </div>
     )
-    : <>this {provider} account</>
+    : null
 
   return (
     <AuthCard
       title="Create a new account?"
-      description={<>No account here signs in with {account}.</>}
+      description={`No account here signs in with this ${provider} account${identity ? ":" : "."}`}
       e2e="confirm-sign-up"
     >
+      {identity}
       <p class="text-sm">
         If you already have an account, go back and sign in the way you did before. You can then
         link {provider} on your profile. Nothing has been created yet.

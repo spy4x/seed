@@ -17,14 +17,17 @@ import {
   authSignUpSchema,
   authTotpDisconnectSchema,
   emailToVerify,
+  type SignUpAccountExistsResponse,
   type User,
   UserMFAStatus,
+  type WaitingPasswordSignUpResponse,
 } from "@domain/identity"
 import {
   EmailChangeOutcome,
   EmailVerifyOutcome,
   PasswordSetOutcome,
   type SignIn,
+  SignUpOutcome,
 } from "@api/services/sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
 import { APIContext } from "../_types.ts"
@@ -59,8 +62,6 @@ export interface AuthRouteDependencies {
   emailCodeFailures: Lockout
   /** Queues a mail with a new code for `email`, the address the user's account must prove. */
   requestEmailCode(userId: number, email: string): Promise<void>
-  /** Told when the code mail after a sign-up could not be queued; the sign-up still stands. */
-  logError(message: string, error: unknown): void
 }
 
 /** The answer to a reset request that was accepted, whether or not the address has an account. */
@@ -68,6 +69,18 @@ export const PASSWORD_RESET_REQUESTED = {
   success: true,
   message: "If an account uses this address, a link to reset its password is on its way.",
 }
+
+/**
+ * The answer to a sign-up that was accepted: a code is on its way to the address. The same for
+ * every address, whether or not an account uses it (#142).
+ */
+export const SIGN_UP_REQUESTED = { success: true }
+
+/** The answer when no sign-up waits for a code: it took too long, or its code was guessed at. */
+export const SIGN_UP_EXPIRED = "This sign-up expired. Start again."
+
+/** The answer when the address's code budget is spent; the same for every address. */
+export const SIGN_UP_CODES_TOO_MANY = "Too many codes for this address, try again later."
 
 /** The answer to a reset link that cannot be used. */
 export const PASSWORD_RESET_REFUSED = "This link is invalid, used or expired. Ask for a new one."
@@ -213,7 +226,6 @@ export function createAuthRoute(
     requestPasswordReset,
     emailCodeFailures,
     requestEmailCode,
-    logError,
   }: AuthRouteDependencies,
 ): Hono<APIContext> {
   const { isAuthenticated1FA, isAuthenticated2FA } = signIn.auth
@@ -271,6 +283,9 @@ export function createAuthRoute(
       await passwordFailures.refund(subject)
       return signInAnswer(c, signedIn)
     })
+    // Proves the address before anything is created (#142). The same work and the same answer
+    // for every well-formed address: nothing here asks whether an account uses it, so neither the
+    // answer nor its timing tells a stranger which addresses have accounts.
     .post(`/password/sign-up`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
       const body = await readApiJson(c)
       const validationResult = validate(authSignUpSchema, body)
@@ -281,18 +296,66 @@ export function createAuthRoute(
       if (email === null) {
         return c.json({ error: "Enter a valid e-mail address" }, 400)
       }
-      const signedUp = await signIn.signUp(c, email, validationResult.data.password)
-      if (!signedUp) {
-        // Sign-up necessarily tells that an address is taken; "Forgot password" is the way in.
-        return c.json({ error: "This e-mail address cannot be used to sign up" }, 401)
+      // Spent for every address, known or not, so a refusal tells nothing about an account.
+      const decision = await rateLimits.emailCodeByAddress(email)
+      if (!decision.allowed) return tooMany(c, decision.retryAfterMs, SIGN_UP_CODES_TOO_MANY)
+      if (!(await signIn.requestSignUp(c, email, validationResult.data.password))) {
+        return c.json({ error: "This password cannot be used. Try another one." }, 400)
       }
-      try {
-        await requestEmailCode(signedUp.user.id, email)
-      } catch (error) {
-        // The account exists and the cookie is set; the banner offers a new code.
-        logError("error: the code mail after a sign-up was not queued", error)
+      return c.json(SIGN_UP_REQUESTED)
+    })
+    .get(`/password/sign-up`, rateLimits.normal, async (c) => {
+      const waiting = await signIn.waitingSignUp(c)
+      const answer: WaitingPasswordSignUpResponse = {
+        pending: waiting && { email: waiting.email, expiresAt: waiting.expiresAt.toISOString() },
       }
-      return signInAnswer(c, signedUp)
+      return c.json(answer)
+    })
+    .post(
+      `/password/sign-up/verify`,
+      mutationGuards.anonymous,
+      rateLimits.strictByIp,
+      async (c) => {
+        const body = await readApiJson(c)
+        const validationResult = validate(authEmailCodeSchema, body)
+        if (validationResult.error) {
+          return c.json({ error: validationResult.error.description }, 400)
+        }
+        const result = await signIn.completeSignUp(c, validationResult.data.code)
+        switch (result.outcome) {
+          case SignUpOutcome.Created:
+            return signInAnswer(c, result.signedIn)
+          case SignUpOutcome.AccountExists: {
+            const { password, providers } = result.account
+            const answer: SignUpAccountExistsResponse = {
+              accountExists: { email: result.email, password, providers },
+            }
+            return c.json(answer)
+          }
+          case SignUpOutcome.WrongCode:
+            return c.json({ error: EMAIL_CODE_REFUSED }, 400)
+          case SignUpOutcome.Expired:
+            return c.json({ error: SIGN_UP_EXPIRED }, 410)
+        }
+      },
+    )
+    // The normal limit: the address's code budget is what stops a flood of mails.
+    .post(
+      `/password/sign-up/resend`,
+      mutationGuards.anonymous,
+      rateLimits.normal,
+      async (c) => {
+        const waiting = await signIn.waitingSignUp(c)
+        if (waiting === null) return c.json({ error: SIGN_UP_EXPIRED }, 410)
+        const decision = await rateLimits.emailCodeByAddress(waiting.email)
+        if (!decision.allowed) return tooMany(c, decision.retryAfterMs, SIGN_UP_CODES_TOO_MANY)
+        if (!(await signIn.resendSignUpCode(c))) return c.json({ error: SIGN_UP_EXPIRED }, 410)
+        return c.json({ success: true })
+      },
+    )
+    .post(`/password/sign-up/cancel`, mutationGuards.anonymous, rateLimits.normal, async (c) => {
+      await signIn.cancelSignUp(c)
+      return c.json({ success: true })
     })
     .post(`/password/forgot`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
       const body = await readApiJson(c)

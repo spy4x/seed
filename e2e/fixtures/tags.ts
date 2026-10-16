@@ -1,6 +1,7 @@
 import { type APIRequestContext, expect, type Locator, type Page, test } from "@playwright/test"
 import { gotoApp } from "./app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./sign-up.ts"
 
 /** Page objects and API helpers for the tag specs. */
 
@@ -40,7 +41,7 @@ export async function cleanup(request: APIRequestContext, email: string): Promis
 }
 
 export async function signUp(request: APIRequestContext, email: string): Promise<void> {
-  const response = await request.post(`${origin()}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(request, `${origin()}/api/auth/password/sign-up`, {
     headers: headers(),
     data: { email, password },
   })

@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { openNotes } from "./fixtures/groups.ts"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /** The sync line while changes wait or the device is offline; absent once everything is sent. */
 const WAITING = "[data-e2e=offline-status] [data-sync-state]:not([data-sync-state=synced])"
@@ -19,7 +20,7 @@ async function cleanup(request: APIRequestContext, email: string): Promise<void>
 }
 
 async function signUp(request: APIRequestContext, email: string): Promise<void> {
-  const response = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })

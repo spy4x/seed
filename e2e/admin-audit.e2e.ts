@@ -2,6 +2,7 @@ import type { APIRequestContext, BrowserContext } from "@playwright/test"
 import { readFile } from "node:fs/promises"
 import { expect, test } from "./fixtures/stack.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The admin app's audit log (#429): an operator finds a person's sign-up by their address, opens
@@ -28,7 +29,7 @@ async function cleanup(request: APIRequestContext, email: string) {
 
 /** Creates `email`'s account over the API and signs that request out again. */
 async function signUp(request: APIRequestContext, email: string) {
-  const response = await request.post(`${appBase}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(request, `${appBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })

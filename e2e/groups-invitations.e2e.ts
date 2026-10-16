@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { BILLING_WEBHOOK_PATH, proWebhook } from "./fixtures/billing.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -17,7 +18,7 @@ async function cleanup(request: APIRequestContext, email: string, { soft = false
 }
 
 async function signUp(request: APIRequestContext, email: string) {
-  const response = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })
@@ -143,19 +144,8 @@ test.describe("group invitations", () => {
         tokens.push(((await invited.json()) as { token: string }).token)
       }
 
-      // Invitations are listed for a proved address only: the guest proves theirs.
+      // Invitations are listed for a proved address only; sign-up's code proved the guest's.
       await signUp(request, guest)
-      let code = ""
-      await expect.poll(async () => {
-        const mail = await request.post(`${apiBase}/api/test/last-mail`, { data: { email: guest } })
-        if (mail.ok()) code = ((await mail.json()) as { text: string }).text.split("\n\n")[1]
-        return mail.status()
-      }, { timeout: 20_000, message: "the worker mails the code" }).toBe(200)
-      const proved = await request.post(`${apiBase}/api/auth/email/verify`, {
-        headers,
-        data: { code: code.trim() },
-      })
-      expect(proved.ok(), await proved.text()).toBe(true)
 
       await signIn(page, guest, password)
       const mine = page.locator("[data-e2e=my-invitations]")

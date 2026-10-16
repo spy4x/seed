@@ -223,6 +223,8 @@ function look(button: Element): string {
 const waiting: PendingSignUp = {
   provider: "google",
   email: "ada@example.com",
+  name: null,
+  avatarUrl: null,
   expiresAt: "2026-11-04T08:10:00.000Z",
   unconfirmedAccount: false,
 }
@@ -248,7 +250,7 @@ describe("ConfirmSignUpScreen", () => {
 
     expect(find("h1").textContent).toBe("Create a new account?")
     const card = find("[data-e2e=confirm-sign-up]").textContent
-    expect(card).toContain("signs in with the Google account ada@example.com.")
+    expect(card).toContain("No account here signs in with this Google account:")
     expect(find("[data-e2e=confirm-sign-up-email]").textContent).toBe("ada@example.com")
     expect(card).toContain("Nothing has been created yet.")
   })
@@ -331,15 +333,72 @@ describe("ConfirmSignUpScreen", () => {
     expect(find("[data-e2e=confirm-sign-up-error]").textContent).toContain("Try again later")
   })
 
-  it("names the provider alone when it shared no address", async () => {
+  it("names the provider alone when it shared neither a name nor an address", async () => {
     await mount(
       <ConfirmSignUpScreen
         {...confirmProps([], { pending: { ...waiting, provider: "github", email: null } })}
       />,
     )
 
-    expect(find("[data-e2e=confirm-sign-up]").textContent).toContain("this GitHub account")
+    expect(find("[data-e2e=confirm-sign-up]").textContent)
+      .toContain("No account here signs in with this GitHub account.")
+    expect(document.querySelector("[data-e2e=confirm-sign-up-identity]")).toBe(null)
+  })
+
+  it("shows the provider's picture, name and address side by side, the picture decorative", async () => {
+    const picture = "https://lh3.googleusercontent.com/a/ada=s96-c"
+    await mount(
+      <ConfirmSignUpScreen
+        {...confirmProps([], { pending: { ...waiting, name: "Ada Lovelace", avatarUrl: picture } })}
+      />,
+    )
+
+    const identity = find("[data-e2e=confirm-sign-up-identity]")
+    expect(find("[data-e2e=confirm-sign-up-name]").textContent).toBe("Ada Lovelace")
+    expect(find("[data-e2e=confirm-sign-up-email]").textContent).toBe("ada@example.com")
+    // Decorative: the image has an empty text alternative, as the name beside it says who it is.
+    const image = identity.querySelector("img")!
+    expect(image.getAttribute("src")).toBe(picture)
+    expect(image.getAttribute("alt")).toBe("")
+
+    // A picture that fails, such as one the page's policy blocks, gives way to the initials.
+    await act(() => void image.dispatchEvent(new window.Event("error") as unknown as Event))
+    const avatar = identity.firstElementChild!
+    expect(avatar.querySelector("img")).toBe(null)
+    expect(avatar.textContent).toBe("AL")
+    expect(avatar.getAttribute("aria-hidden")).toBe("true")
+  })
+
+  it("falls back to the name's initials without a picture, and to an icon without a name", async () => {
+    const mounted = await mount(
+      <ConfirmSignUpScreen
+        {...confirmProps([], { pending: { ...waiting, name: "Ada Lovelace" } })}
+      />,
+    )
+    const avatar = () => find("[data-e2e=confirm-sign-up-identity]").firstElementChild!
+    expect(avatar().querySelector("img")).toBe(null)
+    expect(avatar().textContent).toBe("AL")
+
+    await act(() => render(<ConfirmSignUpScreen {...confirmProps([])} />, mounted))
+
+    expect(avatar().textContent).toBe("")
+    expect(avatar().querySelector("svg")).not.toBe(null)
+    expect(document.querySelector("[data-e2e=confirm-sign-up-name]")).toBe(null)
+    expect(find("[data-e2e=confirm-sign-up-email]").textContent).toBe("ada@example.com")
+  })
+
+  it("shows the name alone when the provider shared no address", async () => {
+    await mount(
+      <ConfirmSignUpScreen
+        {...confirmProps([], {
+          pending: { ...waiting, provider: "github", email: null, name: "Ada Lovelace" },
+        })}
+      />,
+    )
+
+    expect(find("[data-e2e=confirm-sign-up-name]").textContent).toBe("Ada Lovelace")
     expect(document.querySelector("[data-e2e=confirm-sign-up-email]")).toBe(null)
+    expect(find("[data-e2e=confirm-sign-up]").textContent).toContain("this GitHub account:")
   })
 
   it("offers only the way back to sign-in when nothing waits", async () => {

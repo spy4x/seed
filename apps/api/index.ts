@@ -38,7 +38,11 @@ import { createMutationGuards } from "./middlewares/mutation-guards.ts"
 import { createTotpFailures } from "./services/totp-failures.ts"
 import { createEmailCodeFailures } from "./services/email-code-failures.ts"
 import { createPasswordFailures, prunePasswordFailures } from "./services/password-failures.ts"
-import { createAuthRateLimits } from "./middlewares/auth-rate-limits.ts"
+import {
+  createAuthRateLimits,
+  EMAIL_CODE_STORE,
+  emailCodeBudgetKey,
+} from "./middlewares/auth-rate-limits.ts"
 import { commandBus } from "./services/commandBus.ts"
 import { queryBus } from "./services/queryBus.ts"
 import { listenForInboxNews } from "./services/inbox-news.ts"
@@ -142,7 +146,6 @@ app.route(
     requestPasswordReset: (email) => enqueuePasswordResetMail(sql, email),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
-    logError: (message, error) => log(message, error),
   }),
 )
 app.route(
@@ -360,6 +363,9 @@ if (config.isDev) {
       db,
       sql,
       closeSockets: (userId) => realtime.closeUser(userId, "closed by a development script", 1012),
+      forgetCodeBudget: async (email) =>
+        await createRedisRateLimitStore(kv, { keyPrefix: EMAIL_CODE_STORE })
+          .delete(await emailCodeBudgetKey(email)),
     }),
   )
 }

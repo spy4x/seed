@@ -1,6 +1,7 @@
 import type { APIRequestContext, BrowserContext } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The admin app's groups module (#426): an operator finds a group by its name, sees its members,
@@ -25,7 +26,7 @@ async function cleanup(request: APIRequestContext, email: string) {
 
 /** Creates `email`'s account over the API; the request stays signed in as them. */
 async function signUp(request: APIRequestContext, email: string) {
-  const response = await request.post(`${appBase}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(request, `${appBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })

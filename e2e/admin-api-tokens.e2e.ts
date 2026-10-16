@@ -1,6 +1,7 @@
 import type { APIRequestContext, BrowserContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The operator area's API tokens (#427) on the admin host: an operator finds a person's token on
@@ -27,7 +28,7 @@ async function cleanup(request: APIRequestContext, email: string) {
 
 /** Creates `email`'s account over the API; `request` stays signed in as them. */
 async function signUp(request: APIRequestContext, email: string) {
-  const response = await request.post(`${appBase}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(request, `${appBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })

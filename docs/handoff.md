@@ -222,7 +222,30 @@ These cost real time to find. Do not rediscover them.
    routes, and 3 requests an hour per address (`ratelimit-reset` in Valkey,
    keyed by a hash of the address, refusing when Valkey is down).
 
-   **Proving an address (#140).** Sign-up queues the `auth.email-code-mail` job
+   **Sign-up proves the address first (#142).** `POST /api/auth/password/sign-up` hashes the
+   password, writes a waiting sign-up to `sign_up_requests` (10 minutes, `SIGN_UP_CODE_MINUTES`),
+   queues the `auth.sign-up-code-mail` job and sets the signed HttpOnly cookie `password_sign_up`
+   (path `/api/auth/password/sign-up`). It does that for every well-formed address and never asks
+   whether an account uses it, so the answer, the work and the mail are the same for a free and a
+   taken address; it spends the address's code budget (`ratelimit-email-code`). The worker mails
+   `emailCodeMail` with a code of `libs/server/auth/sign-up-requests.ts` (a challenge of purpose
+   `app.sign-up` bound to the waiting sign-up and the address, 5 guesses over all its codes). `POST
+   /api/auth/password/sign-up/verify` with `{ code }`: the right code for a free address creates the
+   account with its password key proven, as `signUp` would but proven, and signs it in; for an
+   address an account uses (its password key, proven or not, or a proven owner) it creates nothing
+   and answers `{ accountExists: { email, password, providers } }`, told only to whoever holds the
+   mailbox. Either way the waiting sign-up is gone. A wrong code is 400 with `EMAIL_CODE_REFUSED`;
+   no waiting sign-up (expired, guessed at too often, or never started) is 410. `GET` reads the
+   waiting sign-up back for a reload, `/resend` and `/cancel` give a new code or forget it. The
+   nightly cleanup deletes expired ones. `signIn.signUp`, which creates an unproven account at once,
+   is no longer reachable from a route; the seed script and the integration tests still use it.
+   The e2e specs sign up through `e2e/fixtures/sign-up.ts`, which reads the code from
+   `/api/test/last-mail` and enters it. Every sign-up spends one of the address's three code mails
+   an hour, so `POST /api/test/cleanup-user` also forgets that budget for the address it is given:
+   a spec with a fixed address can run again on a dev stack within the hour.
+
+   **Proving an address (#140).** An address change, and an account made before #142, prove their
+   address with the `auth.email-code-mail` job
    (request row in `email_code_requests`, never the code). The worker issues an
    8-character code with `@spy4x/server/auth/email-code` (only a hash is stored,
    10 minutes, single use, 5 guesses per code) and mails it. Until the code is
@@ -316,8 +339,8 @@ These cost real time to find. Do not rediscover them.
    anyone proved the address, so they would be a way back in. This happens only
    on the reset that proves the address; a later reset keeps the methods. A
    person who linked their own provider before confirming their own address
-   links it again after a reset. Sign-up still answers 401 for a taken address, which tells that
-   an account uses it.
+   links it again after a reset. Since #142 a password sign-up can no longer squat an address: the
+   account exists only once the code mailed to the address is entered.
 
    **Mail.** `libs/server/mail` picks the transport: with `ENV=dev` the console
    sender of `@spy4x/email` plus a copy in the `dev_mail` table, which the e2e

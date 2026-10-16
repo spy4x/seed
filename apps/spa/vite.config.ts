@@ -13,6 +13,7 @@ import {
   webManifest,
 } from "@spy4x/preact-theme/vite"
 import { nginxAddHeaders, securityHeaderList } from "@spy4x/server/http/security-headers"
+import { PROVIDER_AVATAR_ORIGINS } from "@domain/identity"
 
 const SW_ENTRY = fromFileUrl(new URL("./src/sw.ts", import.meta.url))
 const BUILT_PAGE = fromFileUrl(new URL("./dist/index.html", import.meta.url))
@@ -29,7 +30,9 @@ const ERROR_TRACKER_VARIABLE = "$csp_error_tracker"
  * What the SPA loads from another origin, added to the defaults of the library's policy:
  *
  * - the Google Fonts stylesheet `index.html` links, and the font files that stylesheet names;
- * - the error tracker the reporter posts to, when the deployment has one.
+ * - the error tracker the reporter posts to, when the deployment has one;
+ * - the Google and GitHub image hosts, for the provider's picture of the person on "Create a new
+ *   account?" (#142). The API drops a picture from any other host before it reaches the page.
  *
  * The API and its WebSocket are on the SPA's own origin (the proxy routes `/api` and `/ws`), so
  * `'self'` covers them, as it covers the service worker and the web manifest.
@@ -38,6 +41,7 @@ const EXTRA_SOURCES = {
   styleSrc: ["https://fonts.googleapis.com"],
   fontSrc: ["https://fonts.gstatic.com"],
   connectSrc: [ERROR_TRACKER_VARIABLE],
+  imgSrc: [...PROVIDER_AVATAR_ORIGINS],
 }
 
 /**

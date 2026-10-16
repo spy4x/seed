@@ -58,6 +58,8 @@ export const SCREEN_PATHS = {
   signUp: "/sign-up",
   /** Asks "Create a new account?" after a provider sign-in nobody here is known by. */
   confirmSignUp: "/sign-up/confirm",
+  /** Asks for the code mailed to the address a sign-up gave, before anything is created. */
+  signUpCode: "/sign-up/code",
   oneTimeCode: "/totp",
   forgotPassword: "/forgot-password",
   profile: "/",

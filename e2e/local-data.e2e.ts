@@ -5,7 +5,7 @@ import {
   type Page,
 } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp, signIn, submitAuthForm } from "./fixtures/app.ts"
+import { gotoApp, signIn } from "./fixtures/app.ts"
 import { TagsPage } from "./fixtures/tags.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import {
@@ -14,6 +14,7 @@ import {
   openGroups,
   openNotes,
 } from "./fixtures/groups.ts"
+import { signUpInPage, signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The local-data module as a swappable part (ADR 003, sections 1, 4 and 5), in a real browser with
@@ -35,7 +36,7 @@ async function cleanup(request: APIRequestContext, email: string): Promise<void>
 }
 
 async function signUp(request: APIRequestContext, email: string): Promise<void> {
-  const response = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })
@@ -151,10 +152,7 @@ test.describe("the app with the local-data module switched off", () => {
     await cleanup(request, email)
     const { context, page } = await configured(browser, { offline: false })
     try {
-      await gotoApp(page, "/sign-up", page.locator("[data-e2e=auth-form-login]"))
-      await page.locator("[data-e2e=auth-form-login]").fill(email)
-      await page.locator("[data-e2e=auth-form-password]").fill(password)
-      await submitAuthForm(page, "/", online(page))
+      await signUpInPage(page, email, password, online(page))
       await expect(online(page)).toHaveText("Online")
       await signOut(page)
       await signIn(page, email, password)

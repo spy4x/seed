@@ -84,6 +84,10 @@ import {
   normalizeEmail,
 } from "@spy4x/server/auth"
 import { EmailCodeError } from "@spy4x/server/auth/email-code"
+import { ChallengeOutcome } from "@spy4x/server/auth"
+import { createSignedPayloadCodec } from "@spy4x/platform/signed-payload"
+import { deleteCookie, getCookie, setCookie } from "hono/cookie"
+import { type } from "arktype"
 import {
   createPasswordSignIn,
   PASSWORD_METHOD,
@@ -117,6 +121,13 @@ import {
 } from "@server/auth/email-verification.ts"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import {
+  accountUsing,
+  attemptSignUpCode,
+  type ExistingAccount,
+  SIGN_UP_TTL_MINUTES,
+  signUpExpiry,
+} from "@server/auth/sign-up-requests.ts"
 import { createOAuthOperations, type OAuthOperations, type OAuthOptions } from "./oauth-sign-in.ts"
 
 /** Longest username, in characters (code points), after normalisation. */
@@ -204,6 +215,39 @@ export type AccountDeleteResult =
   /** These groups stop it; nothing changed. */
   | { deleteAfter?: undefined; blockers: AccountDeletionBlocker[] }
 
+/** What {@link SignIn.completeSignUp} did with a code. */
+export enum SignUpOutcome {
+  /** The account is created, its address proven, and the person signed in. */
+  Created = 1,
+  /** An account already uses the address. Nothing was created, and the sign-up is gone. */
+  AccountExists = 2,
+  /** The code is wrong, or expired, or used up; the sign-up still waits. */
+  WrongCode = 3,
+  /** No sign-up waits: it took too long, the code was guessed at too often, or none was started. */
+  Expired = 4,
+}
+
+/** The answer of {@link SignIn.completeSignUp}. */
+export type SignUpCompletion =
+  | { outcome: SignUpOutcome.Created; signedIn: SignedIn }
+  | { outcome: SignUpOutcome.AccountExists; email: string; account: ExistingAccount }
+  | { outcome: SignUpOutcome.WrongCode | SignUpOutcome.Expired }
+
+/** A sign-up waiting for its code, as the page that asks for the code reads it back. */
+export interface WaitingSignUp {
+  email: string
+  expiresAt: Date
+}
+
+/** The cookie that ties a browser to its waiting sign-up (#142). */
+export const PASSWORD_SIGN_UP_COOKIE = "password_sign_up"
+
+/** The only path the sign-up cookie is sent to: the routes of the waiting sign-up. */
+const PASSWORD_SIGN_UP_COOKIE_PATH = "/api/auth/password/sign-up"
+
+/** The sign-up cookie's payload: the waiting sign-up's id, signed with the cookie secret. */
+const signUpCookieSchema = type({ id: "string > 0" })
+
 /** The sign-in operations the routes call. */
 export interface SignIn {
   /** Middleware and guards from `createAuth`. */
@@ -221,6 +265,30 @@ export interface SignIn {
     password: string,
     firstGroupId?: string,
   ): Promise<SignedIn | null>
+  /**
+   * Starts a sign-up that proves its address first (#142): hashes the password, writes the
+   * waiting sign-up, queues its code mail and sets the cookie that names it. The same work and
+   * the same answer for every address: it never asks whether an account uses `email`, which must
+   * be normalised already. `false` only for a password the hasher refuses.
+   */
+  requestSignUp(c: Context, email: string, password: string): Promise<boolean>
+  /** The sign-up the request's cookie names while it waits, or `null`. */
+  waitingSignUp(c: Context): Promise<WaitingSignUp | null>
+  /**
+   * Queues a new code for the waiting sign-up and gives it a fresh lifetime. `false` when none
+   * waits. The caller spends the address's code budget first.
+   */
+  resendSignUpCode(c: Context): Promise<boolean>
+  /** Forgets the waiting sign-up, its password hash included, and clears the cookie. */
+  cancelSignUp(c: Context): Promise<void>
+  /**
+   * Checks `code` for the waiting sign-up. The right one creates the account, as `signUp` does but
+   * with its address proven, and signs it in; or, when an account already uses the address, it
+   * creates nothing and says how that account signs in. Either way the waiting sign-up is gone.
+   *
+   * @param firstGroupId The id of the person's first group. Defaults to a random UUID.
+   */
+  completeSignUp(c: Context, code: string, firstGroupId?: string): Promise<SignUpCompletion>
   /**
    * Checks the password of the account that signs in with `login`, an address or an older
    * account's username, then starts a session, records the time and writes the audit row in one
@@ -579,6 +647,68 @@ export function createSignIn(options: SignInOptions): SignIn {
     isRefusal: (error) => error instanceof MissingProfileError,
   })
 
+  /**
+   * The profile, first group, starter data and `SIGNED_UP` audit row of a new auth user, written
+   * in the sign-up's transaction `tx`.
+   */
+  async function createProfile(
+    c: Context,
+    tx: AppDbBase,
+    authUserId: number,
+    email: string | null,
+    firstGroupId: string,
+  ): Promise<User> {
+    const user = await tx.user.createForAuthUser(authUserId, {
+      firstName: "",
+      lastName: "",
+      mfa: UserMFAStatus.NOT_CONFIGURED,
+      role: UserRole.VIEWER,
+      lastLoginAt: new Date(),
+    })
+    await tx.group.createFirst({ id: firstGroupId, name: "Personal" }, user.id)
+    // The worker makes the welcome note, so a slow job never holds up the sign-up.
+    await tx.starterData.queue(user.id)
+    await tx.authAudit.insert(auditRow(c, user.id, AuthAuditEventType.SIGNED_UP, email))
+    return user
+  }
+
+  const signUpCookie = createSignedPayloadCodec({
+    secret: options.cookieSecret,
+    purpose: "app.password-sign-up",
+    version: 1,
+    schema: signUpCookieSchema,
+  })
+  const signUpCookieOptions = {
+    httpOnly: true,
+    secure: options.secureCookie,
+    sameSite: "Lax",
+    path: PASSWORD_SIGN_UP_COOKIE_PATH,
+  } as const
+
+  /** Names the waiting sign-up `id` in the browser's cookie for as long as the sign-up works. */
+  async function setSignUpCookie(c: Context, id: string): Promise<void> {
+    setCookie(c, PASSWORD_SIGN_UP_COOKIE, await signUpCookie.sign({ id }), {
+      ...signUpCookieOptions,
+      maxAge: SIGN_UP_TTL_MINUTES * 60,
+    })
+  }
+
+  /**
+   * The id in the request's sign-up cookie, or `null`. A cookie this API did not sign, or one
+   * changed since, is no cookie.
+   */
+  async function signUpIdOf(c: Context): Promise<string | null> {
+    const raw = getCookie(c, PASSWORD_SIGN_UP_COOKIE)
+    const read = raw ? await signUpCookie.verify(raw) : null
+    return read?.ok ? read.value.id : null
+  }
+
+  /** Forgets the waiting sign-up `id` and the cookie that names it. */
+  async function endSignUp(c: Context, id: string): Promise<void> {
+    await db.signUpRequest.remove(id)
+    deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)
+  }
+
   return {
     auth,
     oauth,
@@ -616,18 +746,12 @@ export function createSignIn(options: SignInOptions): SignIn {
             // package's own minimum counts code points and would refuse some passwords it accepts.
             minPasswordLength: 1,
           }).signUp({ email: rawEmail, password, device: deviceOf(c) })
-          const user = await tx.user.createForAuthUser(signedUp.user.id, {
-            firstName: "",
-            lastName: "",
-            mfa: UserMFAStatus.NOT_CONFIGURED,
-            role: UserRole.VIEWER,
-            lastLoginAt: new Date(),
-          })
-          await tx.group.createFirst({ id: firstGroupId, name: "Personal" }, user.id)
-          // The worker makes the welcome note, so a slow job never holds up the sign-up.
-          await tx.starterData.queue(user.id)
-          await tx.authAudit.insert(
-            auditRow(c, user.id, AuthAuditEventType.SIGNED_UP, normalizeEmail(rawEmail)),
+          const user = await createProfile(
+            c,
+            tx,
+            signedUp.user.id,
+            normalizeEmail(rawEmail),
+            firstGroupId,
           )
           return { user, ...signedUp.session }
         })
@@ -637,6 +761,104 @@ export function createSignIn(options: SignInOptions): SignIn {
       }
       await cookie.set(c, created.session, created.cookieValue)
       return { user: created.user, session: created.session }
+    },
+
+    async requestSignUp(c, email, password) {
+      // Hashed before anything is written, as `signUp` does, so no pool connection waits on it.
+      let secret: string
+      try {
+        secret = await hasher.hash(password)
+      } catch (error) {
+        if (error instanceof RangeError || error instanceof TypeError) return false
+        throw error
+      }
+      const id = uuidV7()
+      await db.begin(async (tx) => {
+        await tx.signUpRequest.create({ id, email, secret, expiresAt: signUpExpiry(new Date()) })
+        await tx.signUpRequest.queueCode(id)
+      })
+      await setSignUpCookie(c, id)
+      return true
+    },
+
+    async waitingSignUp(c) {
+      const id = await signUpIdOf(c)
+      const request = id === null ? null : await db.signUpRequest.find(id)
+      return request && { email: request.email, expiresAt: request.expiresAt }
+    },
+
+    async resendSignUpCode(c) {
+      const id = await signUpIdOf(c)
+      if (id === null) return false
+      const extended = await db.begin(async (tx) => {
+        if (!(await tx.signUpRequest.extend(id, signUpExpiry(new Date())))) return false
+        await tx.signUpRequest.queueCode(id)
+        return true
+      })
+      if (extended) await setSignUpCookie(c, id)
+      return extended
+    },
+
+    async cancelSignUp(c) {
+      const id = await signUpIdOf(c)
+      if (id !== null) await endSignUp(c, id)
+      else deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)
+    },
+
+    async completeSignUp(c, code, firstGroupId = uuidV7()) {
+      const now = new Date()
+      const id = await signUpIdOf(c)
+      const request = id === null ? null : await db.signUpRequest.find(id, now)
+      if (request === null) return { outcome: SignUpOutcome.Expired }
+      // Counted outside any transaction, so a wrong guess stays counted whatever follows.
+      const checked = await attemptSignUpCode(db.authStore, request, code, now)
+      if (checked === ChallengeOutcome.LockedOut) {
+        await endSignUp(c, request.id)
+        return { outcome: SignUpOutcome.Expired }
+      }
+      if (checked !== ChallengeOutcome.Matched) return { outcome: SignUpOutcome.WrongCode }
+
+      // Only now, with the mailbox proven, may the answer tell that an account uses the address.
+      const existing = async (): Promise<SignUpCompletion> => {
+        const account = await accountUsing(db.authStore, request.email)
+        await endSignUp(c, request.id)
+        if (account === null) return { outcome: SignUpOutcome.Expired }
+        return { outcome: SignUpOutcome.AccountExists, email: request.email, account }
+      }
+      if (await accountUsing(db.authStore, request.email)) return await existing()
+
+      let created
+      try {
+        created = await db.begin(async (tx) => {
+          // Proven from the start: the code just showed that this person holds the mailbox. The
+          // key claims the address, so a sign-up of the same address that won the race makes this
+          // one throw, and nothing of it is kept.
+          const signedUp = await tx.authStore.createUserWithKey({
+            method: PASSWORD_METHOD,
+            subject: request.email,
+            email: request.email,
+            secret: request.secret,
+            provenAt: now,
+          })
+          const started = await sessionsOver(tx.sessionStore).create({
+            userId: signedUp.user.id,
+            keyId: signedUp.key.id,
+            secondFactor: SecondFactorStatus.NotRequired,
+          }, deviceOf(c))
+          const user = await createProfile(c, tx, signedUp.user.id, request.email, firstGroupId)
+          await tx.signUpRequest.remove(request.id)
+          return { user, ...started }
+        })
+      } catch (error) {
+        if (error instanceof AuthConflictError) return await existing()
+        throw error
+      }
+      deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)
+      await cookie.set(c, created.session, created.cookieValue)
+      return {
+        outcome: SignUpOutcome.Created,
+        signedIn: { user: created.user, session: created.session },
+      }
     },
 
     async signIn(c, login, password) {

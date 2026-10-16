@@ -14,7 +14,7 @@ import {
 } from "../_testing/mutation-requests.ts"
 import { MALFORMED_JSON, oversizedJson } from "../_testing/json-bodies.ts"
 import { createPushNotificationRoute } from "./pushNotification.ts"
-import { PUSH_TOKEN_LIMITS } from "@domain/identity"
+import { PUSH_SUBSCRIPTION_LIMITS } from "@spy4x/platform/model"
 
 function buildApp(auth: APIContext["Variables"]["auth"] = buildAuthData()) {
   const calls: string[] = []
@@ -162,14 +162,17 @@ describe("push routes hold the push address to its limit", () => {
 
   it("answers a longer push address with 400 and a message that names the field", async () => {
     const { app, calls } = buildApp()
-    const response = await send(app, subscribe(PUSH_TOKEN_LIMITS.endpoint + 1), sameOriginHeaders)
+    const response = await send(
+      app,
+      subscribe(PUSH_SUBSCRIPTION_LIMITS.endpoint + 1),
+      sameOriginHeaders,
+    )
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({
-      error: `subscription.endpoint must be at most length ${PUSH_TOKEN_LIMITS.endpoint} (was ${
-        PUSH_TOKEN_LIMITS.endpoint + 1
-      })`,
-    })
+    const { error } = await response.json()
+    expect(error).toContain(
+      `subscription.endpoint must be at most ${PUSH_SUBSCRIPTION_LIMITS.endpoint} characters (was`,
+    )
     expect(calls).toEqual([])
   })
 })

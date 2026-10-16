@@ -1,6 +1,7 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp, signIn, submitAuthForm } from "./fixtures/app.ts"
+import { gotoApp, signIn } from "./fixtures/app.ts"
+import { signUpInPage } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const password = "Passw0rd!"
@@ -32,10 +33,7 @@ function onboardingAnswers(page: Page): { count: number } {
 
 /** Signs up through the form, as a new person does, and lands on the home page. */
 async function signUpInBrowser(page: Page, email: string): Promise<void> {
-  await gotoApp(page, "/sign-up", page.locator("[data-e2e=auth-form-login]"))
-  await page.locator("[data-e2e=auth-form-login]").fill(email)
-  await page.locator("[data-e2e=auth-form-password]").fill(password)
-  await submitAuthForm(page, "/", page.locator("[data-e2e=shell-ws-status]"))
+  await signUpInPage(page, email, password, page.locator("[data-e2e=shell-ws-status]"))
   await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 }
 

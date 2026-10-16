@@ -88,6 +88,10 @@ interface ProviderPerson {
   email?: string
   /** Whether the provider says the address is verified. */
   verified?: boolean
+  /** The name on the provider account. */
+  name?: string
+  /** The provider's picture: Google's `picture`, GitHub's `avatar_url`. */
+  picture?: string
 }
 
 /** Answers Google's and GitHub's token and profile requests from `people`, keyed by code. */
@@ -108,9 +112,17 @@ function fakeProviders(people: Record<string, ProviderPerson>) {
     const person = personOf(request)
     if (!person) return json({ error: "unauthorized" }, 401)
     if (url === GOOGLE_USERINFO_ENDPOINT) {
-      return json({ sub: person.sub, email: person.email, email_verified: person.verified })
+      return json({
+        sub: person.sub,
+        email: person.email,
+        email_verified: person.verified,
+        name: person.name,
+        picture: person.picture,
+      })
     }
-    if (url === GITHUB_USER_ENDPOINT) return json({ id: Number(person.sub) })
+    if (url === GITHUB_USER_ENDPOINT) {
+      return json({ id: Number(person.sub), name: person.name, avatar_url: person.picture })
+    }
     if (url === GITHUB_EMAILS_ENDPOINT) {
       return json(
         person.email ? [{ email: person.email, primary: true, verified: person.verified }] : [],
@@ -378,6 +390,53 @@ Deno.test("GitHub signs a person up with its verified primary address", async ()
 
     expect((await methodsOf(visitor)).methods.map((method) => [method.kind, method.email]))
       .toEqual([["github", "ada@example.com"]])
+  })
+})
+
+Deno.test("the question shows the provider's name and picture, from Google and GitHub alike", async () => {
+  await withSchema(async (sql) => {
+    const face = { name: "Ada Lovelace", picture: "https://lh3.googleusercontent.com/a/ada=s96-c" }
+    const app = buildApp(sql, {
+      google: { ...ADA, ...face },
+      github: {
+        sub: "2002",
+        email: "ada@example.com",
+        verified: true,
+        ...face,
+        picture: "https://avatars.githubusercontent.com/u/2002?v=4",
+      },
+    })
+
+    const viaGoogle = browser(app)
+    await viaGoogle.through("google", "google")
+    const viaGithub = browser(app)
+    await viaGithub.through("github", "github")
+
+    expect(await pendingOf(viaGoogle)).toMatchObject({
+      name: "Ada Lovelace",
+      avatarUrl: "https://lh3.googleusercontent.com/a/ada=s96-c",
+    })
+    expect(await pendingOf(viaGithub)).toMatchObject({
+      name: "Ada Lovelace",
+      avatarUrl: "https://avatars.githubusercontent.com/u/2002?v=4",
+    })
+  })
+})
+
+Deno.test("the question drops a picture from any other host, and shows none when there is none", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, {
+      elsewhere: { ...ADA, name: "Ada", picture: "https://tracker.example/pixel.png" },
+      bare: { sub: "1002", email: "bare@example.com", verified: true },
+    })
+
+    const elsewhere = browser(app)
+    await elsewhere.through("google", "elsewhere")
+    const bare = browser(app)
+    await bare.through("google", "bare")
+
+    expect(await pendingOf(elsewhere)).toMatchObject({ name: "Ada", avatarUrl: null })
+    expect(await pendingOf(bare)).toMatchObject({ name: null, avatarUrl: null })
   })
 })
 

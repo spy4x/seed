@@ -3,6 +3,7 @@ import type { APIRequestContext, BrowserContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The newsletter page of the operator area (#428): a visitor subscribes and confirms on the
@@ -56,7 +57,7 @@ test("an operator finds a subscriber, exports the list and removes them", async 
   let ops: Page | null = null
   try {
     // The operator's account, promoted.
-    const signUp = await request.post(`${appBase}/api/auth/password/sign-up`, {
+    const signUp = await signUpWithCode(request, `${appBase}/api/auth/password/sign-up`, {
       headers,
       data: { email: operatorEmail, password },
     })

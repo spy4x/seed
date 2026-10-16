@@ -30,6 +30,14 @@ export const EMAIL_CODE_MAILS_PER_ADDRESS = 3
 /** The window of {@link EMAIL_CODE_MAILS_PER_ADDRESS}: one hour. */
 export const EMAIL_CODE_ADDRESS_WINDOW_MS = 60 * 60_000
 
+/** The store prefix of {@link EMAIL_CODE_MAILS_PER_ADDRESS}. */
+export const EMAIL_CODE_STORE = `ratelimit-email-code`
+
+/** The key of one address's {@link EMAIL_CODE_MAILS_PER_ADDRESS}: a hash, never the address. */
+export async function emailCodeBudgetKey(email: string): Promise<string> {
+  return `auth-email-code:${await sha256Hex(email)}`
+}
+
 /**
  * Code mails one account may send to an address it wants to move to, per
  * {@link EMAIL_CHANGE_ACCOUNT_WINDOW_MS}, whatever the address. The account pays, not the address:
@@ -188,7 +196,7 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     limit: RESET_MAILS_PER_ADDRESS,
     clock,
   })
-  const emailCode = createStoreLimiter(store("ratelimit-email-code"), {
+  const emailCode = createStoreLimiter(store(EMAIL_CODE_STORE), {
     windowMs: EMAIL_CODE_ADDRESS_WINDOW_MS,
     limit: EMAIL_CODE_MAILS_PER_ADDRESS,
     clock,
@@ -241,8 +249,7 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       keyPrefix: "auth:",
     }),
     resetByAddress: async (email) => await reset.check(`auth-reset:${await sha256Hex(email)}`),
-    emailCodeByAddress: async (email) =>
-      await emailCode.check(`auth-email-code:${await sha256Hex(email)}`),
+    emailCodeByAddress: async (email) => await emailCode.check(await emailCodeBudgetKey(email)),
     emailChangeByUser: async (userId) => await emailChange.check(`auth-email-change:${userId}`),
     emailChangeByAddress: async (email) =>
       await emailChangeAddress.check(`auth-email-change-address:${await sha256Hex(email)}`),

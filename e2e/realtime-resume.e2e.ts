@@ -2,6 +2,7 @@ import { type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -51,7 +52,7 @@ async function signedIn(
     ;(soft ? expect.soft : expect)(response.status(), await response.text()).toBe(200)
   }
   await cleanup()
-  const signUp = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+  const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })

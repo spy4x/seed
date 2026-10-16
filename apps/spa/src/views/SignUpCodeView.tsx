@@ -1,0 +1,118 @@
+import { useEffect, useState } from "preact/hooks"
+import { useLocation, useSearch } from "wouter-preact"
+import {
+  type ExistingAccountAnswer,
+  SIGN_UP_CODE_MINUTES,
+  type WaitingPasswordSignUp,
+} from "@domain/identity"
+import {
+  SIGN_UP_CODE_FAILURE,
+  SIGN_UP_OFFLINE,
+  SignUpCodeScreen,
+} from "@ui/sign-up-code-screen.tsx"
+import { afterSignIn, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
+import {
+  cancelPasswordSignUp,
+  readWaitingSignUp,
+  resendSignUpCode,
+  type SignUpStepAnswer,
+  verifySignUp,
+} from "../state/auth.ts"
+import { handOffAddress } from "../state/address-handoff.ts"
+import { sessionState } from "../state/session.ts"
+
+/** The message of a refused request, or the offline one when it never left the browser. */
+function failure(answer: SignUpStepAnswer, fallback: string): string {
+  if (answer.ok || answer.expired) return fallback
+  return answer.offline ? SIGN_UP_OFFLINE : answer.error || fallback
+}
+
+/**
+ * Wires `SignUpCodeScreen` (#142): reads back the sign-up that waits for its code, so a reload
+ * stays on the step, and answers it. The right code for a new address reloads onto the page the
+ * person asked for, as sign-in does; for an address an account uses, the page says so and hands
+ * the address to sign-in or the reset page in memory.
+ */
+export function SignUpCodeView() {
+  const [, navigate] = useLocation()
+  const next = readNext(new URLSearchParams(useSearch()))
+  const [pending, setPending] = useState<WaitingPasswordSignUp | null | undefined>(undefined)
+  const [exists, setExists] = useState<ExistingAccountAnswer | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [resending, setResending] = useState(false)
+  const [resendNotice, setResendNotice] = useState<string | null>(null)
+  const [resendError, setResendError] = useState<string | null>(null)
+  const session = sessionState.value
+
+  useEffect(() => {
+    let shown = true
+    void readWaitingSignUp().then((found) => shown && setPending(found))
+    return () => {
+      shown = false
+    }
+  }, [])
+
+  const submit = async (code: string) => {
+    setError(null)
+    setBusy(true)
+    const answer = await verifySignUp(code)
+    setBusy(false)
+    if (answer.ok) {
+      location.href = afterSignIn(next)
+      return
+    }
+    if ("accountExists" in answer) {
+      setExists(answer.accountExists)
+      return
+    }
+    if (answer.expired) {
+      setPending(null)
+      return
+    }
+    setError(failure(answer, SIGN_UP_CODE_FAILURE))
+  }
+
+  const resend = async () => {
+    setResendNotice(null)
+    setResendError(null)
+    setResending(true)
+    const answer = await resendSignUpCode()
+    setResending(false)
+    if (answer.ok) setResendNotice("A new code is on its way.")
+    else if (answer.expired) setPending(null)
+    else setResendError(failure(answer, "Sending a new code failed"))
+  }
+
+  const differentAddress = async () => {
+    if (pending) handOffAddress(pending.email)
+    await cancelPasswordSignUp()
+    navigate(withNext(SCREEN_PATHS.signUp, next))
+  }
+
+  const handTo = (path: string) => () => {
+    if (exists) handOffAddress(exists.email)
+    navigate(withNext(path, next))
+  }
+
+  return (
+    <SignUpCodeScreen
+      isSignedIn={session.user !== null && !session.isMfaRequired}
+      pending={pending}
+      exists={exists}
+      minutes={SIGN_UP_CODE_MINUTES}
+      busy={busy}
+      error={error}
+      resending={resending}
+      resendNotice={resendNotice}
+      resendError={resendError}
+      onSubmit={(code) => void submit(code)}
+      onResend={() => void resend()}
+      onDifferentAddress={() => void differentAddress()}
+      onSignInInstead={handTo(SCREEN_PATHS.signIn)}
+      onForgotPassword={handTo(SCREEN_PATHS.forgotPassword)}
+      next={next}
+      navigate={navigate}
+    />
+  )
+}

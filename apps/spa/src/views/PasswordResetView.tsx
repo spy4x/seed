@@ -6,11 +6,13 @@ import {
   ResetPasswordScreen,
 } from "@ui/password-reset-screen.tsx"
 import { bootstrapSession, requestPasswordReset, resetPassword } from "../state/auth.ts"
+import { takeHandedOffAddress } from "../state/address-handoff.ts"
 
 /** Wires `ForgotPasswordScreen` to `requestPasswordReset`. */
 export function ForgotPasswordView() {
   const [, navigate] = useLocation()
-  const [email, setEmail] = useState("")
+  // The address "Forgot your password?" handed over after a sign-up found its account (#142).
+  const [email, setEmail] = useState(() => takeHandedOffAddress() ?? "")
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [sentMessage, setSentMessage] = useState<string | null>(null)

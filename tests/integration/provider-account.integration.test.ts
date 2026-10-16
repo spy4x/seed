@@ -184,7 +184,6 @@ function buildApp(sql: postgres.Sql, people: Record<string, ProviderPerson>) {
           email,
           (to, code) => Promise.resolve(void codes.set(to, code)),
         ),
-      logError: () => {},
     }),
   )
   return { app, db, sql, codes }

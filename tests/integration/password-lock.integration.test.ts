@@ -113,9 +113,6 @@ async function buildApp(sql: postgres.Sql) {
       requestPasswordReset: () => Promise.resolve(),
       emailCodeFailures: openLockout,
       requestEmailCode: () => Promise.resolve(),
-      logError: (message, error) => {
-        throw new Error(`${message}: ${error}`)
-      },
     }),
   )
   const signUp = await app.request(`${API}/sign-up`, {

@@ -8,6 +8,8 @@ export const SPA_ROUTES = {
   "/sign-up": { open: true },
   // The question after a provider sign-in that nobody here is known by.
   "/sign-up/confirm": { open: true },
+  // The code mailed to the address a sign-up gave, before the account is created (#142).
+  "/sign-up/code": { open: true },
   "/sign-in": { open: true },
   "/totp": { open: true },
   "/forgot-password": { open: true },

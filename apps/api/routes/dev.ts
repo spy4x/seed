@@ -24,6 +24,11 @@ export interface DevRouteDeps {
   sql: Sql
   /** Closes every open socket of a user like a dropped connection; returns how many it closed. */
   closeSockets(userId: number): number
+  /**
+   * Gives a normalised address back its hourly code mails, so a spec that signs a fixed address up
+   * again and again is not refused with 429 on a dev stack that outlives one run.
+   */
+  forgetCodeBudget(email: string): Promise<void>
 }
 
 /**
@@ -36,7 +41,9 @@ export interface DevRouteDeps {
  * delete: the groups they own or created (with their memberships, audit and outbox events), the
  * audit and outbox events they are the actor of, the notes they wrote, and the memberships they
  * granted in other groups.
- * It answers 200 when the login has no user, so a spec can call it before its own sign-up.
+ * It answers 200 when the login has no user, so a spec can call it before its own sign-up. For an
+ * address it also forgets the code mails the address was sent this hour, which every sign-up
+ * spends (#142), so the next sign-up of the address gets its code.
  *
  * `POST /add-member` with `{ login, groupId, role }` makes that user a member of a shared group
  * with the role (1 viewer, 2 editor, 3 admin), or changes the role of one who is. The product has
@@ -64,6 +71,7 @@ export function createDevRoute(deps: DevRouteDeps) {
       if (user.userId !== null) {
         await deleteUser(deps.sql, user.userId)
       }
+      if (user.email !== null) await deps.forgetCodeBudget(user.email)
       return c.json({ success: true })
     })
     .post("/add-member", async (c) => {
@@ -182,7 +190,7 @@ const setRoleSchema = authLoginSchema.and({
 async function readLogin(
   c: Context<APIContext>,
   deps: DevRouteDeps,
-): Promise<{ userId: number | null } | Response> {
+): Promise<{ userId: number | null; email: string | null } | Response> {
   if (!deps.isDev) {
     return c.json({ error: "Not allowed" }, 403)
   }
@@ -197,7 +205,7 @@ async function readLogin(
     return c.json({ error: validation.error.description }, 400)
   }
   const key = await findPasswordKey(deps, validation.data.login)
-  return { userId: key ? key.userId : null }
+  return { userId: key ? key.userId : null, email: normalizeEmail(validation.data.login) }
 }
 
 /** Deletes the user `userId` and every row that references them or a group they own. */

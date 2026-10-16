@@ -2,6 +2,7 @@ import type { APIRequestContext, BrowserContext, Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * The people actions of the admin app (#425): an administrator finds their own row marked "You",
@@ -28,7 +29,7 @@ async function cleanup(request: APIRequestContext, email: string) {
 
 /** Creates `email`'s account over the API and signs that request out again. */
 async function signUp(request: APIRequestContext, email: string) {
-  const response = await request.post(`${appBase}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(request, `${appBase}/api/auth/password/sign-up`, {
     headers,
     data: { email, password },
   })

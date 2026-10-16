@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { OAUTH_NOTICES, oauthNotice, oauthProviderId } from "./+lib.ts"
+import { OAUTH_NOTICES, oauthNotice, oauthProviderId, providerAvatarUrl } from "./+lib.ts"
 
 describe("oauthProviderId", () => {
   it("accepts the two providers by their exact name", () => {
@@ -23,6 +23,36 @@ describe("oauthNotice", () => {
   it("refuses a value with no message, an inherited name included", () => {
     for (const value of ["nope", "", "toString", "constructor", undefined, null, 4]) {
       expect(oauthNotice(value), String(value)).toBe(null)
+    }
+  })
+})
+
+describe("providerAvatarUrl", () => {
+  it("keeps a picture on Google's or GitHub's image host", () => {
+    for (
+      const url of [
+        "https://lh3.googleusercontent.com/a/ann=s96-c",
+        "https://avatars.githubusercontent.com/u/1?v=4",
+      ]
+    ) {
+      expect(providerAvatarUrl(url)).toBe(url)
+    }
+  })
+
+  it("drops a picture from any other host, scheme or with credentials, so the page shows initials", () => {
+    for (
+      const url of [
+        "https://avatars.example.com/u/1",
+        "http://avatars.githubusercontent.com/u/1",
+        "https://lh4.googleusercontent.com/a/ann",
+        "https://user:pass@avatars.githubusercontent.com/u/1",
+        "javascript:alert(1)",
+        "not a url",
+        null,
+        42,
+      ]
+    ) {
+      expect(providerAvatarUrl(url)).toBe(null)
     }
   })
 })

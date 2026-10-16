@@ -12,6 +12,7 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { gotoApp } from "../../../e2e/fixtures/app.ts"
 import { stripeSignature, subscriptionEvent } from "../../../e2e/fixtures/billing.ts"
 import { currentStep, totpCode } from "../../../e2e/fixtures/totp.ts"
+import { signUpWithCode } from "../../../e2e/fixtures/sign-up.ts"
 
 const APP = Deno.env.get("SHOTS_APP_URL") ?? "http://app.localhost"
 const ADMIN = Deno.env.get("SHOTS_ADMIN_URL") ?? "http://admin.localhost"
@@ -218,7 +219,7 @@ async function cleanupPeople(page: Page): Promise<void> {
 
 /** Signs `person` up in `page`'s context (the cookie lands there), names them, returns their id. */
 async function signUp(page: Page, person: Person): Promise<number> {
-  const response = await page.request.post(`${APP}/api/auth/password/sign-up`, {
+  const response = await signUpWithCode(page.request, `${APP}/api/auth/password/sign-up`, {
     headers: sameOrigin(),
     data: { email: person.email, password: PASSWORD },
   })
@@ -281,22 +282,6 @@ async function upgradeToPro(page: Page, groupId: string): Promise<void> {
   await expectOk(`Pro for ${groupId}`, webhook)
 }
 
-/** Proves `email` with the code the worker mailed, read through the development mail route. */
-async function verifyEmail(page: Page, email: string): Promise<void> {
-  let code = ""
-  for (let attempt = 0; attempt < 40 && !code; attempt++) {
-    const mail = await page.request.post(`${APP}/api/test/last-mail`, { data: { email } })
-    if (mail.ok()) code = ((await mail.json()) as { text: string }).text.split("\n\n")[1].trim()
-    else await page.waitForTimeout(500)
-  }
-  if (!code) throw new Error(`no code mail reached ${email} within 20 s`)
-  const verified = await page.request.post(`${APP}/api/auth/email/verify`, {
-    headers: sameOrigin(),
-    data: { code },
-  })
-  await expectOk(`verification of ${email}`, verified)
-}
-
 /**
  * Signs Ada in to the admin host with her password and a one-time code. Turning the authenticator
  * on ends her other sessions, so this runs after it. The code is one step past the enrolment's,
@@ -336,7 +321,6 @@ async function seed(browser: Browser, contexts: BrowserContext[], ada: Page): Pr
   await signUp(grace, GRACE)
   const linusId = await signUp(linus, LINUS)
   await signUp(margaret, MARGARET)
-  await verifyEmail(ada, ADA.email)
 
   const groupId = await createGroup(ada, "Acme Studio")
   await upgradeToPro(ada, groupId)

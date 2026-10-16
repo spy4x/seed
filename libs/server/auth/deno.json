@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check password-reset.ts email-verification.ts account-deletion.ts sessions.ts onboarding.ts admin-users.ts",
-    "test": "deno test password-reset.test.ts email-verification.test.ts"
+    "check": "deno check password-reset.ts email-verification.ts account-deletion.ts sessions.ts onboarding.ts admin-users.ts sign-up-requests.ts",
+    "test": "deno test password-reset.test.ts email-verification.test.ts sign-up-requests.test.ts"
   }
 }

@@ -30,6 +30,7 @@ import {
 import { toasts } from "./state/toasts.ts"
 import { AuthView } from "./views/AuthView.tsx"
 import { ConfirmSignUpView } from "./views/ConfirmSignUpView.tsx"
+import { SignUpCodeView } from "./views/SignUpCodeView.tsx"
 import { EmailView } from "./views/EmailView.tsx"
 import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView.tsx"
 import { GroupsView } from "./views/GroupsView.tsx"
@@ -88,6 +89,7 @@ const PAGES: {
 } = {
   "/sign-up": () => <AuthView key="sign-up" screen="sign-up" />,
   "/sign-up/confirm": () => <ConfirmSignUpView />,
+  "/sign-up/code": () => <SignUpCodeView />,
   "/sign-in": () => <AuthView key="sign-in" screen="sign-in" />,
   "/totp": () => <AuthView key="one-time-code" screen="one-time-code" />,
   "/forgot-password": () => <ForgotPasswordView />,
