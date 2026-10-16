@@ -50,6 +50,7 @@ import {
   setUserRoleByAddress,
 } from "@server/auth/admin-users.ts"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
+import { adminGroupRows } from "@server/groups/admin-groups.ts"
 import {
   listAdminApiTokens,
   listAdminUserApiTokens,
@@ -363,6 +364,11 @@ export class AppDbBase extends DbServiceBase {
       /** The dashboard's counts and 30-day series as of `now` (#424). */
       stats: (now: Date) => readAdminStats(sql, now),
     }
+  }
+
+  /** The operator area's group reads and actions (`@server/groups/admin-groups.ts`, #426). */
+  get adminGroups(): ReturnType<typeof adminGroupRows> {
+    return adminGroupRows(this.sql)
   }
 
   /** The address change waiting for its code. Built per access, like `group`. */

@@ -240,10 +240,9 @@ describe("operator area routes", () => {
     expect((await send(app, { method: "GET", path: "/admin/users/abc" })).status).toBe(404)
   })
 
-  it("answers 404 to an operator on a path the area does not have, or an empty module's", async () => {
+  it("answers 404 to an operator on a path the area does not have", async () => {
     const { app } = buildApp()
     expect((await send(app, ROUTES[8])).status).toBe(404)
-    expect((await send(app, ROUTES[9])).status).toBe(404)
     expect((await send(app, ROUTES[10])).status).toBe(404)
   })
 

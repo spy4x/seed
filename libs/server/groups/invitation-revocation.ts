@@ -1,5 +1,5 @@
 import type postgres from "postgres"
-import { type GroupRole, invitableRoles } from "@domain/groups"
+import { type AuditDetails, type GroupRole, invitableRoles } from "@domain/groups"
 import { writeAuditEvent } from "./audit.ts"
 
 /** The audit and change kinds an invitation writes. */
@@ -17,7 +17,8 @@ export const INVITATION_EVENTS = {
  * every one when `role` is `null` (they left or were removed), else those whose role `role` may not
  * invite with. Without this, a removed admin could rejoin through their own link, and a demoted
  * one could leave and come back as an editor. Runs in the caller's transaction, under its lock on
- * the group, with one audit row per revoked invitation; answers how many it revoked.
+ * the group, with one audit row per revoked invitation, carrying `details` when given; answers how
+ * many it revoked.
  */
 export async function revokeInvitationsOf(
   tx: postgres.Sql,
@@ -26,6 +27,7 @@ export async function revokeInvitationsOf(
   role: GroupRole | null,
   actorId: number,
   requestId: string | undefined,
+  details?: AuditDetails,
 ): Promise<number> {
   const kept = role === null ? [] : invitableRoles(role)
   const revoked = await tx<{ id: string }[]>`
@@ -48,6 +50,7 @@ export async function revokeInvitationsOf(
       requestId,
       entityType: "invitation",
       entityId: id,
+      details,
     })
   }
   return revoked.length

@@ -7,6 +7,7 @@ import { Button } from "@spy4x/preact-ui/button"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Link } from "@spy4x/preact-ui/link"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
@@ -310,7 +311,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
     {
       id: "groups",
       label: <TabLabel text="Groups" count={detail.groups.length} />,
-      content: <Groups detail={detail} />,
+      content: <Groups detail={detail} navigate={navigate} />,
     },
     { id: "activity", label: "Activity", content: <Activity detail={detail} /> },
     ...(props.extraTabs ?? []),
@@ -520,12 +521,22 @@ function sessionName(deviceName: string): string {
   return deviceName || "Unknown device"
 }
 
-function Groups({ detail }: { detail: AdminUserDetail }): JSX.Element {
+/** The person's groups; each name opens the group's page in the groups module (#426). */
+function Groups(
+  { detail, navigate }: { detail: AdminUserDetail; navigate?: Navigate },
+): JSX.Element {
   return (
     <Rows empty="In no group." dataE2E="admin-user-groups">
       {detail.groups.map((group) => (
         <li key={group.id} class={ROW}>
-          <span class="font-medium wrap-anywhere">{group.name}</span>
+          <Link
+            href={`/groups/${encodeURIComponent(group.id)}`}
+            navigate={navigate}
+            class="pc-link font-medium wrap-anywhere"
+            data-e2e={`admin-user-group-${group.id}`}
+          >
+            {group.name}
+          </Link>
           <span class="ml-auto">
             <Badge text={GROUP_ROLES[group.role] ?? "Member"} color="gray" type="outline" />
           </span>

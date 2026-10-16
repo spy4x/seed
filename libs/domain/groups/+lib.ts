@@ -11,6 +11,7 @@ import type { Actor } from "@domain/identity"
 export * from "./activity.ts"
 export * from "./invitations.ts"
 export * from "./move-all.ts"
+export * from "./admin-groups.ts"
 
 /**
  * The aggregate a group's changes are recorded and announced under: the `aggregate_type` of its

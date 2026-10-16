@@ -1,6 +1,7 @@
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { timeAgo } from "@spy4x/platform/universal/time"
+import type { SortRule } from "@spy4x/platform/universal/sort"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -70,17 +71,19 @@ export function roleColor(role: UserRole): "gray" | "blue" | "purple" {
 
 /**
  * The sort after a header press. The table appends a newly pressed column after the rules already
- * there; while the list is in its default order (newest first), that order is no choice of the
- * operator's, so the pressed column replaces it instead of hiding behind it.
+ * there; while the list is in its default order (`defaults`, the people list's newest first unless
+ * another list passes its own), that order is no choice of the operator's, so the pressed column
+ * replaces it instead of hiding behind it.
  */
-export function nextSort(
-  current: AdminUserFilter["sort"],
-  next: AdminUserFilter["sort"],
-): AdminUserFilter["sort"] {
-  const isDefault = current.length === ADMIN_DEFAULT_SORT.length &&
+export function nextSort<K extends string = AdminUserSortKey>(
+  current: SortRule<K>[],
+  next: SortRule<K>[],
+  defaults: readonly SortRule<K>[] = ADMIN_DEFAULT_SORT as unknown as SortRule<K>[],
+): SortRule<K>[] {
+  const isDefault = current.length === defaults.length &&
     current.every((rule, index) =>
-      rule.key === ADMIN_DEFAULT_SORT[index].key &&
-      rule.direction === ADMIN_DEFAULT_SORT[index].direction
+      rule.key === defaults[index].key &&
+      rule.direction === defaults[index].direction
     )
   return isDefault && next.length > current.length ? next.slice(current.length) : next
 }
