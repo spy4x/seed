@@ -32,7 +32,9 @@ playwright-report
 *.log
 .vs/
 
-infra/configs/vapid.json
+# The Web Push private key, wherever it is written: infra/configs/ by `deno task vapid-key:create`,
+# the API's working directory by default (apps/api/services/config.ts).
+vapid.json
 tests/.scratch-*
 
 # Screenshot masters and the font cache of apps/mpa/screenshots/capture.ts.
