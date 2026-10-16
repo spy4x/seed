@@ -79,7 +79,7 @@ test.describe("moving notes to another group", () => {
       const sourceTitles = sourcePage.locator("[data-e2e=note-item-title]")
       const targetTitles = targetPage.locator("[data-e2e=note-item-title]")
       await expect(sourceTitles).toHaveCount(4)
-      await expect(targetPage.getByText("No notes yet.")).toBeVisible()
+      await expect(targetPage.getByText("No notes yet")).toBeVisible()
 
       await openNotes(ownerPage, "Source")
       const ownerTitles = ownerPage.locator("[data-e2e=note-item-title]")
@@ -119,9 +119,9 @@ test.describe("moving notes to another group", () => {
       await expect(ownerPage.getByText("2 selected")).toBeVisible()
       await ownerPage.locator("[data-e2e=notes-move-to]").selectOption({ label: "Target" })
       await ownerPage.locator("[data-e2e=notes-move-submit]").click()
-      await expect(ownerPage.getByText("No notes yet.")).toBeVisible()
+      await expect(ownerPage.getByText("No notes yet")).toBeVisible()
       await expect(targetTitles).toHaveCount(4, { timeout: 5_000 })
-      await expect(sourcePage.getByText("No notes yet.")).toBeVisible({ timeout: 5_000 })
+      await expect(sourcePage.getByText("No notes yet")).toBeVisible({ timeout: 5_000 })
 
       // Delete from a row's menu asks first; the members of the group see it go.
       await openNotes(ownerPage, "Target")
@@ -130,7 +130,7 @@ test.describe("moving notes to another group", () => {
       await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
       const dialog = ownerPage.locator("[data-e2e=note-delete-dialog]")
       await expect(dialog).toContainText(`"One" will be deleted for everyone in Target.`)
-      await dialog.getByRole("button", { name: "Delete", exact: true }).click()
+      await dialog.getByRole("button", { name: "Delete note", exact: true }).click()
       await expect(ownerTitles).toHaveCount(3)
       await expect(ownerPage.getByRole("link", { name: "One", exact: true })).toHaveCount(0)
       await expect(targetTitles).toHaveCount(3, { timeout: 5_000 })

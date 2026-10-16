@@ -159,7 +159,7 @@ export function SubscribeForm(
             type="submit"
             data-e2e="subscribe-submit"
             busy={pending}
-            busyLabel="Sending..."
+            busyLabel="Sending…"
           >
             Subscribe
           </Button>
@@ -246,7 +246,7 @@ export function SubscriptionConfirmScreen(
             type="submit"
             data-e2e="subscription-confirm-submit"
             busy={pending}
-            busyLabel="Confirming..."
+            busyLabel="Confirming…"
           >
             Confirm
           </Button>
@@ -321,7 +321,7 @@ export function UnsubscribeScreen(
             type="submit"
             data-e2e="unsubscribe-submit"
             busy={pending}
-            busyLabel="Unsubscribing..."
+            busyLabel="Unsubscribing…"
           >
             Unsubscribe
           </Button>

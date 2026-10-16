@@ -105,7 +105,7 @@ export function ForgotPasswordScreen(
             type="submit"
             data-e2e="forgot-password-submit"
             busy={pending}
-            busyLabel="Sending..."
+            busyLabel="Sending…"
           >
             Send the link
           </Button>
@@ -208,7 +208,7 @@ export function ResetPasswordScreen(
             type="submit"
             data-e2e="reset-password-submit"
             busy={pending}
-            busyLabel="Saving..."
+            busyLabel="Saving…"
           >
             Save the new password
           </Button>

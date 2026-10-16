@@ -59,7 +59,7 @@ export function App(
   const toastr = <Toastr toasts={toasts.list.value} onDismiss={toasts.remove} dataE2E="toasts" />
 
   if (session.step === "loading") {
-    return <LoadingSpinner size="lg" label="Loading..." class="min-h-dvh bg-canvas" />
+    return <LoadingSpinner size="lg" label="Loading…" class="min-h-dvh bg-canvas" />
   }
 
   if (!user || !context) {

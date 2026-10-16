@@ -27,6 +27,8 @@ export interface NoteTarget {
   version: number
   /** The note moved on since the edit started; set after a refused save. */
   conflict: boolean
+  /** The title as saved, which the page's heading shows; not what the person is typing. */
+  savedTitle: string
 }
 
 export interface NoteEditorScreenProps {
@@ -90,7 +92,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
       <EditorPage>
         <PageHeader back={BACK} navigate={navigate} title="Note" />
         <ListEmpty
-          title={props.loading ? "Loading the group..." : "This group was not found."}
+          title={props.loading ? "Loading the group…" : "This group does not exist."}
           action={!props.loading && (
             <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
               Back to groups
@@ -114,7 +116,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
               class="min-h-11 sm:min-h-9"
               data-e2e="note-switch-group"
               busy={props.switching}
-              busyLabel="Switching..."
+              busyLabel="Switching…"
               disabled={!props.onSwitchGroup}
               onClick={props.onSwitchGroup}
             >
@@ -128,7 +130,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
   if (notFound) {
     return (
       <EditorPage>
-        <PageHeader back={BACK} navigate={navigate} title="Note not found" />
+        <PageHeader back={BACK} navigate={navigate} title="This note does not exist." />
         {props.errors.form
           ? <ErrorState message={props.errors.form} />
           : (
@@ -145,7 +147,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={BACK} navigate={navigate} title="Note" />
-        <ListEmpty title="Loading the note..." />
+        <ListEmpty title="Loading the note…" />
       </EditorPage>
     )
   }
@@ -201,7 +203,7 @@ function Editor(props: WithGroup): JSX.Element {
       <PageHeader
         back={BACK}
         navigate={navigate}
-        title={note ? "Edit note" : "New note"}
+        title={note ? note.savedTitle : "New note"}
         subtitle={group.name}
         subtitleDataE2E="notes-group"
         menuDataE2E="note-menu"
@@ -277,9 +279,9 @@ function Editor(props: WithGroup): JSX.Element {
               class="min-h-11 w-full sm:min-h-9 sm:w-auto"
               data-e2e="note-save"
               busy={saving}
-              busyLabel="Saving..."
+              busyLabel={note ? "Saving…" : "Creating…"}
             >
-              {note ? "Save note" : "Add note"}
+              {note ? "Save note" : "Create note"}
             </Button>
           </div>
         </Stack>
@@ -288,8 +290,8 @@ function Editor(props: WithGroup): JSX.Element {
         <ConfirmDialog
           title="Delete this note?"
           message={`"${value.title}" will be deleted for everyone in ${group.name}.`}
-          confirmLabel="Delete"
-          cancelLabel="Keep it"
+          confirmLabel="Delete note"
+          cancelLabel="Cancel"
           tone="danger"
           dataE2E="note-delete-dialog"
           onConfirm={() => {

@@ -45,7 +45,7 @@ export function EmailView() {
     if (emailStore.loadFailed.value) {
       return <EmailUnavailable onRetry={() => void emailStore.refresh()} />
     }
-    return <LoadingSpinner size="lg" label="Loading..." class="min-h-[50vh]" />
+    return <LoadingSpinner size="lg" label="Loading…" class="min-h-[50vh]" />
   }
 
   /** Runs one form's call: clears its messages, marks it busy, then shows what came back. */

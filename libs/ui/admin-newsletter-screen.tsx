@@ -71,7 +71,7 @@ const ACTIONS: Record<AdminSubscriberAction, {
       `address is erased, and a confirm link mailed to it before now no longer works. They can ` +
       `subscribe again from the website.`,
     submit: "Remove",
-    busy: "Removing...",
+    busy: "Removing…",
   },
   resend: {
     title: "Resend the confirm mail?",
@@ -79,7 +79,7 @@ const ACTIONS: Record<AdminSubscriberAction, {
       `${email} gets a new mail with a link to confirm the subscription. Nothing changes until ` +
       `they press it.`,
     submit: "Resend",
-    busy: "Sending...",
+    busy: "Sending…",
   },
 }
 
@@ -145,7 +145,7 @@ export function AdminNewsletterScreen(props: AdminNewsletterScreenProps): JSX.El
         titleDataE2E="admin-newsletter-title"
         action={
           <PageAction
-            label={props.exporting ? "Exporting..." : "Export CSV"}
+            label={props.exporting ? "Exporting…" : "Export CSV"}
             Icon={IconDownload}
             onClick={props.onExport}
             disabled={props.exporting}
@@ -312,7 +312,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
               variant="secondary"
               data-e2e="admin-newsletter-submit"
               busy={pending}
-              busyLabel="Searching..."
+              busyLabel="Searching…"
             >
               Search
             </Button>

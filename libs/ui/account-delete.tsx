@@ -155,7 +155,7 @@ export function AccountDelete(
         dataE2E="account-delete-dialog"
       >
         {blockers === null
-          ? <p class="text-sm text-muted" role="status">Checking your groups...</p>
+          ? <p class="text-sm text-muted" role="status">Checking your groups…</p>
           : blockers.length > 0
           ? <BlockerList blockers={blockers} navigate={navigate} onClose={close} />
           : providerProof && !providerProof.fresh
@@ -224,7 +224,7 @@ export function AccountDelete(
                     variant="danger"
                     data-e2e="account-delete-submit"
                     busy={pending}
-                    busyLabel="Deleting..."
+                    busyLabel="Deleting…"
                   >
                     Delete my account
                   </Button>

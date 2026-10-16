@@ -42,6 +42,16 @@ export const TAG_PATHS = {
   tag: (tagId: string) => `/tags/${tagId}`,
 } as const
 
+/**
+ * Where an API token is made. A token is never edited, so there is no list or token page: the
+ * tokens are listed on the profile. The address is not under `/api`: the proxy sends every path
+ * that starts with those four letters to the API, `/api-tokens` included.
+ */
+export const API_TOKEN_PATHS = {
+  /** The create page: the form, then the new token's secret, shown once. */
+  new: "/tokens/new",
+} as const
+
 /** The pages these screens link to. */
 export const SCREEN_PATHS = {
   signIn: "/sign-in",
@@ -111,6 +121,8 @@ export const GROUP_PATHS = {
   settings: (groupId: string) => `/groups/${encodeURIComponent(groupId)}`,
   /** The group's activity log, for its admins and owner. */
   activity: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/activity`,
+  /** The page that makes an invitation to the group, then shows its link once. */
+  invite: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/invitations/new`,
 } as const
 
 /** `EnhancedForm` announces nothing itself: each screen shows its own busy button and error. */

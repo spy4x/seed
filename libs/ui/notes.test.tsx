@@ -206,7 +206,8 @@ describe("NotesScreen", () => {
   it("shows an empty list as an empty state whose one action is New note", () => {
     const html = renderToString(<NotesScreen {...listDefaults} notes={[]} />)
 
-    expect(html).toContain("No notes yet.")
+    // A heading, so it has no full stop.
+    expect(html).toMatch(/>No notes yet</)
     expect(tagOf(html, "note-new-empty")).toContain(`href="${NOTE_PATHS.new}"`)
     expect(html).not.toContain(`data-e2e="note-list"`)
   })
@@ -229,8 +230,8 @@ describe("NotesScreen", () => {
     await mount(<NotesScreen {...listDefaults} notes={[]} />)
 
     const empty = [...document.querySelectorAll("[role=status]")]
-      .find((element) => element.textContent?.includes("No notes yet."))
-    if (!empty) throw new Error("no status says No notes yet.")
+      .find((element) => element.textContent?.includes("No notes yet"))
+    if (!empty) throw new Error("no status says No notes yet")
     expect(empty.closest(".pc-card")).not.toBeNull()
     expect(empty.className.split(" ")).not.toContain("border-dashed")
   })
@@ -264,12 +265,12 @@ describe("NotesScreen", () => {
     expect(html).not.toContain(`data-e2e="note-menu"`)
   })
 
-  it("says the group was not found once loading is over, with a way back to the groups", () => {
+  it("says the group does not exist once loading is over, with a way back to the groups", () => {
     expect(renderToString(<NotesScreen {...listDefaults} group={null} loading />)).toContain(
-      "Loading the group...",
+      "Loading the group…",
     )
     const html = renderToString(<NotesScreen {...listDefaults} group={null} />)
-    expect(html).toContain("This group was not found.")
+    expect(html).toContain("This group does not exist.")
     expect(html).toContain(`href="${SCREEN_PATHS.groups}"`)
   })
 })
@@ -288,7 +289,7 @@ describe("NotesScreen in the browser", () => {
       `"Trip" will be deleted for everyone in Team.`,
     )
 
-    await clickText("Delete", "[data-e2e=note-delete-dialog]")
+    await clickText("Delete note", "[data-e2e=note-delete-dialog]")
     expect(remove.calls).toEqual([[{ id: trip.id, version: trip.version }]])
     expect(count("[data-e2e=note-delete-dialog]")).toBe(0)
   })
@@ -299,7 +300,7 @@ describe("NotesScreen in the browser", () => {
     await click(`${row(groceries)} [data-e2e=note-menu]`)
     await click(`${row(groceries)} [data-e2e=note-delete]`)
 
-    await clickText("Keep it", "[data-e2e=note-delete-dialog]")
+    await clickText("Cancel", "[data-e2e=note-delete-dialog]")
 
     expect(remove.calls).toEqual([])
     expect(count("[data-e2e=note-delete-dialog]")).toBe(0)
@@ -398,7 +399,7 @@ describe("NotesScreen in the browser", () => {
     const deleteRow = async (note: NoteRow) => {
       await click(`${row(note)} [data-e2e=note-menu]`)
       await click(`${row(note)} [data-e2e=note-delete]`)
-      await clickText("Delete", "[data-e2e=note-delete-dialog]")
+      await clickText("Delete note", "[data-e2e=note-delete-dialog]")
     }
     await mount(listOf([groceries, trip, plan]))
 
@@ -430,7 +431,7 @@ describe("NotesScreen in the browser", () => {
     await mount(<NotesScreen {...listDefaults} />)
     await click(`${row(trip)} [data-e2e=note-menu]`)
     await click(`${row(trip)} [data-e2e=note-delete]`)
-    await clickText("Delete", "[data-e2e=note-delete-dialog]")
+    await clickText("Delete note", "[data-e2e=note-delete-dialog]")
     await rerender(<NotesScreen {...listDefaults} listError="Could not delete the note" />)
 
     find<HTMLElement>("[data-e2e=note-new]").focus()
@@ -577,12 +578,12 @@ describe("NotesScreen deleted notes", () => {
   })
 
   it("says there are no deleted notes, and that they are loading", () => {
-    expect(renderToString(<NotesScreen {...deletedDefaults} deletedNotes={[]} />)).toContain(
-      "No deleted notes.",
+    expect(renderToString(<NotesScreen {...deletedDefaults} deletedNotes={[]} />)).toMatch(
+      />No deleted notes</,
     )
     expect(
       renderToString(<NotesScreen {...deletedDefaults} deletedNotes={[]} deletedLoading />),
-    ).toContain("Loading deleted notes...")
+    ).toContain("Loading deleted notes…")
   })
 
   it("shows a refused restore under the banner, and the plan's limit as an upgrade prompt", async () => {
@@ -680,7 +681,7 @@ const editorDefaults: NoteEditorScreenProps = {
   saving: false,
   deleting: false,
 }
-const existing = { id: groceries.id, version: 3, conflict: false }
+const existing = { id: groceries.id, version: 3, conflict: false, savedTitle: groceries.title }
 const editing: NoteEditorScreenProps = {
   ...editorDefaults,
   note: existing,
@@ -706,13 +707,22 @@ describe("NoteEditorScreen", () => {
     expect(tagOf(html, "page-back")).toContain(`href="${NOTE_PATHS.list}"`)
     expect(tagOf(html, "page-back")).toContain(`aria-label="Back to notes"`)
     expect(html).not.toContain(`aria-label="More actions"`)
-    expect(html).toContain("Add note")
+    expect(html).toContain("Create note")
+    expect(html).not.toContain("Add note")
+  })
+
+  it("titles an existing note's page with its saved title, not the title being typed", () => {
+    const html = renderToString(
+      <NoteEditorScreen {...editing} value={{ ...groceries, title: "Groceries and more" }} />,
+    )
+
+    expect(html).toMatch(/<h1\b[^>]*><span\b[^>]*>Groceries<\/span><\/h1>/)
+    expect(html).not.toContain(">Edit note<")
   })
 
   it("puts Move and Delete of an existing note in the page's menu, not on the page", () => {
     const html = renderToString(<NoteEditorScreen {...editing} />)
 
-    expect(html).toMatch(/<h1\b[^>]*><span\b[^>]*>Edit note<\/span><\/h1>/)
     expect(html).toContain(`aria-label="More actions"`)
     expect(html).toContain("Move to Family")
     expect(html).toContain("Move to Work")
@@ -738,10 +748,10 @@ describe("NoteEditorScreen", () => {
     expect(html).toContain("Only an editor can add notes")
   })
 
-  it("says the note was not found, with a way back to the list and no form", () => {
+  it("says the note does not exist, with a way back to the list and no form", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} notFound />)
 
-    expect(html).toContain("Note not found")
+    expect(html).toContain("This note does not exist.")
     expect(html).toContain("There is no such note in Team")
     expect(html).toContain(`href="${NOTE_PATHS.list}"`)
     expect(html).not.toContain("<form")
@@ -840,18 +850,18 @@ describe("NoteEditorScreen", () => {
     expect(html).toMatch(/<a\b[^>]*data-unsaved-ok="true"[^>]*>Load the latest version/)
   })
 
-  it("says the group was not found once loading is over", () => {
+  it("says the group does not exist once loading is over", () => {
     expect(renderToString(<NoteEditorScreen {...editorDefaults} group={null} loading />))
-      .toContain("Loading the group...")
+      .toContain("Loading the group…")
     expect(renderToString(<NoteEditorScreen {...editorDefaults} group={null} />)).toContain(
-      "This group was not found.",
+      "This group does not exist.",
     )
   })
 
   it("says the note is loading while it is read", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} loading />)
 
-    expect(html).toContain("Loading the note...")
+    expect(html).toContain("Loading the note…")
     expect(html).not.toContain("<form")
   })
 })
@@ -891,7 +901,7 @@ describe("NoteEditorScreen in the browser", () => {
     expect(remove.calls).toEqual([])
     expect(find("[data-e2e=note-delete-dialog]").textContent).toContain("Delete this note?")
 
-    await clickText("Delete", "[data-e2e=note-delete-dialog]")
+    await clickText("Delete note", "[data-e2e=note-delete-dialog]")
     expect(remove.calls).toHaveLength(1)
   })
 
@@ -901,7 +911,7 @@ describe("NoteEditorScreen in the browser", () => {
     await click("[data-e2e=note-menu]")
     await click("[data-e2e=note-delete]")
 
-    await clickText("Keep it", "[data-e2e=note-delete-dialog]")
+    await clickText("Cancel", "[data-e2e=note-delete-dialog]")
 
     expect(remove.calls).toEqual([])
     expect(count("[data-e2e=note-delete-dialog]")).toBe(0)

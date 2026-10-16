@@ -279,7 +279,7 @@ describe(`the admin billing list`, () => {
     expect(calls).toEqual([[`retry`]])
   })
 
-  it(`says "Searching..." only while its own search runs, not while the first list loads`, async () => {
+  it(`says "Searching…" only while its own search runs, not while the first list loads`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminBillingListScreen {...listProps(calls, { list: null, pending: true })} />)
     const button = () => find(`[data-e2e=admin-billing-submit]`).textContent?.trim()
@@ -288,7 +288,7 @@ describe(`the admin billing list`, () => {
     await mount(<AdminBillingListScreen {...listProps(calls)} />)
     await submit(`[data-e2e=admin-billing-submit]`)
     await mount(<AdminBillingListScreen {...listProps(calls, { pending: true })} />)
-    expect(button()).toBe(`Searching...`)
+    expect(button()).toBe(`Searching…`)
   })
 
   it(`moves focus to the count once the list of a search or a chip arrives`, async () => {

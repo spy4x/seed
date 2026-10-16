@@ -88,7 +88,7 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
               <EmptyState
                 class="border-0 py-8"
                 headingLevel={2}
-                title={props.loading ? "Loading..." : "You are all caught up."}
+                title={props.loading ? "Loading…" : "You are all caught up."}
                 description={props.loading
                   ? undefined
                   : "Invitations and changes to your groups show up here."}
@@ -119,7 +119,7 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
             onClick={props.onLoadMore}
             data-e2e="notifications-more"
           >
-            {props.loadingMore ? "Loading..." : "Load more"}
+            {props.loadingMore ? "Loading…" : "Load more"}
           </Button>
         </div>
       )}

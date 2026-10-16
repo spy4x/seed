@@ -176,7 +176,7 @@ export function AdminGroupsListScreen(
               type="submit"
               data-e2e="admin-groups-submit"
               busy={pending}
-              busyLabel="Searching..."
+              busyLabel="Searching…"
             >
               Search
             </Button>

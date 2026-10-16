@@ -186,7 +186,7 @@ export function AdminUsersScreen(
               type="submit"
               data-e2e="admin-users-submit"
               busy={pending}
-              busyLabel="Searching..."
+              busyLabel="Searching…"
             >
               Search
             </Button>

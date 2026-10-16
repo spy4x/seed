@@ -99,7 +99,7 @@ export function SignedInDevices(
             variant="secondary"
             data-e2e="sessions-end-others"
             busy={pending}
-            busyLabel="Signing out..."
+            busyLabel="Signing out…"
             onClick={() => setConfirming("others")}
           >
             Sign out of all other devices

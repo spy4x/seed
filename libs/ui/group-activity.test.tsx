@@ -85,7 +85,7 @@ describe("group activity screen", () => {
 
   it("says so when nothing happened yet, and while it loads", () => {
     expect(html({})).toContain("Nothing has happened yet.")
-    expect(html({ loading: true })).toContain("Loading the activity...")
+    expect(html({ loading: true })).toContain("Loading the activity…")
     expect(html({})).not.toContain(`data-e2e="activity-more"`)
   })
 

@@ -279,7 +279,7 @@ export function AdminTokensConfirmDialog(
         </>
       ),
       submit: "Revoke",
-      busy: "Revoking...",
+      busy: "Revoking…",
     }
     : {
       title: "Remove this device",
@@ -290,7 +290,7 @@ export function AdminTokensConfirmDialog(
         </>
       ),
       submit: "Remove",
-      busy: "Removing...",
+      busy: "Removing…",
     }
   return (
     <ConfirmDialog

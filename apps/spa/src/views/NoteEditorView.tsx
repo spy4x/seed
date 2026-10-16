@@ -63,7 +63,14 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
         elsewhere={missing && elsewhereGroup ? { name: elsewhereGroup.name } : null}
         onSwitchGroup={elsewhereGroup && (() => void selectionStore.select(elsewhereGroup.id))}
         switching={selectionStore.pending.value}
-        note={editing && { id: editing.id, version: editing.version, conflict: editing.conflict }}
+        note={editing && {
+          id: editing.id,
+          version: editing.version,
+          conflict: editing.conflict,
+          // The heading names the note as saved, so typing a new title does not rename the page.
+          savedTitle: store.notes.value.find((note) => note.id === editing.id)?.title ??
+            editing.title,
+        }}
         value={editing ?? store.draft.value}
         tags={tagsStore.tags.value}
         onChange={(value) => {

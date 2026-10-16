@@ -286,7 +286,7 @@ describe("operator area: newsletter page", () => {
     await mount(<AdminNewsletterScreen {...props(calls, { exporting: true })} />)
     const button = find<HTMLButtonElement>("[data-e2e=admin-newsletter-export]")
     expect(button.disabled).toBe(true)
-    expect(button.textContent).toContain("Exporting...")
+    expect(button.textContent).toContain("Exporting…")
   })
 
   it("says why the list is empty: nobody yet, or nobody matching", async () => {

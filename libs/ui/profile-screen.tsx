@@ -421,7 +421,7 @@ export function ProfileScreen(
                       class={TOUCH_TARGET}
                       data-e2e="totp-start"
                       busy={pending.totp && step === TwoFactorStep.Enable}
-                      busyLabel="Preparing..."
+                      busyLabel="Preparing…"
                     >
                       Turn on <span class="sr-only">two-factor sign-in</span>
                     </Button>
@@ -565,7 +565,7 @@ export function ProfileScreen(
                   type="submit"
                   data-e2e="profile-save"
                   busy={pending.profile}
-                  busyLabel="Saving..."
+                  busyLabel="Saving…"
                 >
                   Save
                 </Button>
@@ -684,7 +684,7 @@ export function ProfileScreen(
                       type="submit"
                       data-e2e="password-save"
                       busy={pending.password}
-                      busyLabel="Updating..."
+                      busyLabel="Updating…"
                     >
                       {providerProof ? "Set password" : "Change password"}
                     </Button>
@@ -745,7 +745,7 @@ export function ProfileScreen(
                     type="submit"
                     data-e2e="totp-connect-finish"
                     busy={pending.totp}
-                    busyLabel="Turning on..."
+                    busyLabel="Turning on…"
                   >
                     Turn on
                   </Button>
@@ -817,7 +817,7 @@ export function ProfileScreen(
                   variant="danger"
                   data-e2e="totp-disable-submit"
                   busy={pending.totp}
-                  busyLabel="Turning off..."
+                  busyLabel="Turning off…"
                 >
                   Turn off
                 </Button>
@@ -888,7 +888,7 @@ function AddDevice({ onClick, busy }: { onClick: () => void; busy: boolean }): J
       data-e2e="push-register"
       onClick={onClick}
       busy={busy}
-      busyLabel="Working..."
+      busyLabel="Working…"
     >
       Add this device
     </Button>

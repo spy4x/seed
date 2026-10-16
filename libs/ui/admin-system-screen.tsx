@@ -98,7 +98,7 @@ export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
         titleDataE2E="admin-system-title"
         action={
           <PageAction
-            label={props.pending ? "Checking..." : "Check again"}
+            label={props.pending ? "Checking…" : "Check again"}
             Icon={IconRefresh}
             onClick={props.onRefresh}
             disabled={props.pending}
@@ -130,7 +130,7 @@ export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
           title="Run this job again"
           confirmLabel="Run again"
           busy={props.retryPending}
-          busyLabel="Starting..."
+          busyLabel="Starting…"
           onConfirm={() => {
             props.onRetry(props.retrying!)
             return false

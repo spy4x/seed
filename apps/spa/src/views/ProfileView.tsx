@@ -444,15 +444,11 @@ export function ProfileView() {
       apiTokens={{
         tokens: tokens.tokens.value,
         savedAt: tokens.savedAt.value,
-        groups,
-        values: tokens.values.value,
-        onValueChange: tokens.setValue,
-        errors: tokens.errors.value,
-        pending: tokens.pending.value,
-        created: tokens.created.value,
-        onStartCreate: () => tokens.startCreate(groups[0]?.id ?? ""),
-        onCreate: () => void tokens.create(),
-        onDismissSecret: tokens.dismissSecret,
+        // While the groups are read the opener shows: the create page says when there is none.
+        canCreate: groups.length > 0 || groupsStore.loading.value,
+        error: tokens.errors.value.list,
+        revoking: tokens.pending.value.revoke,
+        navigate,
         onRevoke: (id) =>
           void tokens.revoke(id).then((revoked) => {
             if (revoked) {

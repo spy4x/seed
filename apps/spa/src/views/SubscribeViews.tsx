@@ -102,7 +102,7 @@ export function SubscriptionConfirmView() {
     subscribersApi.confirm,
     "invalid",
   )
-  if (!step) return <LoadingSpinner size="lg" label="Checking the link..." class="min-h-[50vh]" />
+  if (!step) return <LoadingSpinner size="lg" label="Checking the link…" class="min-h-[50vh]" />
   return (
     <SubscriptionConfirmScreen
       state={step.state}
@@ -127,7 +127,7 @@ export function UnsubscribeView() {
     subscribersApi.unsubscribe,
     "not-recognised",
   )
-  if (!step) return <LoadingSpinner size="lg" label="Checking the link..." class="min-h-[50vh]" />
+  if (!step) return <LoadingSpinner size="lg" label="Checking the link…" class="min-h-[50vh]" />
   return (
     <UnsubscribeScreen
       state={step.state}

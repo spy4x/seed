@@ -941,7 +941,7 @@ describe("deleting the account from the profile", () => {
     expect(opened.calls).toHaveLength(1)
     expect(isOpen("account-delete-dialog")).toBe(true)
     expect(find("[data-e2e=account-delete-dialog] [role=status]").textContent)
-      .toBe("Checking your groups...")
+      .toBe("Checking your groups…")
     expect(document.querySelector("[data-e2e=account-delete-password]")).toBeNull()
   })
 

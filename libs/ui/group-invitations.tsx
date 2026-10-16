@@ -31,7 +31,7 @@ import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
 import { useFocusAfterRemoval } from "@spy4x/preact-ui/use-focus-after-removal"
 import { MoreMenu } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
-import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 
 /** Why the role picker offers a viewer only, on a plan without `memberRoles`. */
 export const VIEWERS_ONLY_HINT =
@@ -93,6 +93,8 @@ export interface InviteFormProps {
   createError?: string | null
   /** The group's plan refused the create: shown as a notice in place of `createError`. */
   createRefusal?: PlanRefusal | null
+  /** Why the create did not start, when no field owns it (offline): shown above the buttons. */
+  formError?: string | null
   /** Creates an invitation from the draft. */
   onCreate?: () => void
   /**
@@ -100,21 +102,18 @@ export interface InviteFormProps {
    * group billed per member.
    */
   seatPrice?: ComponentChildren
-  /**
-   * The invitation just created, or `null`. The form shows it only when it arrives while the form
-   * is open, so a link from an earlier visit is never shown again.
-   */
+  /** The invitation just created, or `null`. Given, the form gives way to its link, shown once. */
   created?: CreatedInvitation | null
-  /** Closes the dialog the form sits in: Cancel, or Done once the link is copied. */
-  onClose?: () => void
+  /** Done, after the link: the app forgets it and goes back to the group's page. */
+  onDone?: () => void
   navigate?: Navigate
 }
 
 /**
- * Inviting people, inside the "Invite people" dialog: a role up to the person's own limit, an
- * optional address, how long the link works and how many people it lets in. Once created, the
- * dialog shows the link once to copy, with a Done button. Only its hash is stored, so it is never
- * shown again.
+ * The form of the invitation page: a role up to the person's own limit, an optional address, how
+ * long the link works and how many people it lets in, with Cancel (back to the group's page) and
+ * "Create invitation". Once created, it shows the link once to copy, with a Done button. Only its
+ * hash is stored, so it is never shown again.
  */
 export function InviteForm(
   {
@@ -126,10 +125,11 @@ export function InviteForm(
     creating = false,
     createError = null,
     createRefusal = null,
+    formError = null,
     onCreate,
     seatPrice,
     created = null,
-    onClose,
+    onDone,
     navigate,
   }: InviteFormProps,
 ): JSX.Element {
@@ -137,38 +137,44 @@ export function InviteForm(
   useEffect(() => {
     if (createError && !createRefusal) emailInput.current?.focus()
   }, [createError, createRefusal])
-  // The link the app held when the dialog opened belongs to an earlier invitation.
-  const [stale] = useState(created)
-  const fresh = created !== stale ? created : null
   const createdBox = useRef<HTMLDivElement>(null)
-  // The new link is the next thing to act on, so focus moves to it.
+  // The new link is the next thing to act on, so focus moves to its copy button.
   useEffect(() => {
-    if (fresh) createdBox.current?.focus()
-  }, [fresh])
+    if (created) createdBox.current?.querySelector<HTMLElement>("button")?.focus()
+  }, [created])
 
   const roles = invitableRolesOnPlan(actorRole, memberRoles)
   // A draft role the plan does not allow (the default editor on a free plan) becomes the first one
-  // it does, so the picker and the app's draft agree.
+  // it does, so the picker and the app's draft agree. It checks after every render, not only when
+  // the role changes: an app that resets its draft in the same moment as the move would otherwise
+  // keep the default, and send a role the plan refuses.
   const role = roles.includes(draft.role) ? draft.role : roles[0]
   useEffect(() => {
     if (role !== undefined && role !== draft.role) onDraftChange?.({ ...draft, role })
-  }, [role, draft.role])
+  })
   const change = (patch: Partial<InvitationDraft>) => onDraftChange?.({ ...draft, ...patch })
 
-  if (fresh) {
+  if (created) {
     return (
-      <div ref={createdBox} tabIndex={-1} class="flex flex-col gap-4" data-e2e="invitation-created">
+      <div ref={createdBox} class="flex flex-col gap-4" data-e2e="invitation-created">
         <p class="text-sm">
           Copy this link now: it is not shown again.
-          {fresh.mailAsked &&
-            (fresh.mailSent
+          {created.mailAsked &&
+            (created.mailSent
               ? " It was also sent by e-mail."
               : " The e-mail could not be sent, so share the link yourself.")}
         </p>
-        <CopyBlock text={fresh.link} copyLabel="Copy invitation link" copiedLabel="Link copied" />
-        <Cluster justify="end">
-          <Button type="button" onClick={onClose} data-e2e="invitation-done">Done</Button>
-        </Cluster>
+        <CopyBlock text={created.link} copyLabel="Copy invitation link" copiedLabel="Link copied" />
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            class="min-h-11 w-full sm:min-h-9 sm:w-auto"
+            onClick={onDone}
+            data-e2e="invitation-done"
+          >
+            Done
+          </Button>
+        </div>
       </div>
     )
   }
@@ -250,17 +256,31 @@ export function InviteForm(
         {createRefusal && (
           <PlanRefusalNotice groupId={groupId} refusal={createRefusal} navigate={navigate} />
         )}
-        <Cluster justify="end">
-          <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+        <ErrorState focusOnAppear message={formError} dataE2E="invitation-error" />
+        {
+          // On a phone the primary button is on top at full width, Cancel under it; from `sm` up
+          // they are a row at the right, the primary button last.
+        }
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            href={GROUP_PATHS.settings(groupId)}
+            navigate={navigate}
+            variant="ghost"
+            class="min-h-11 w-full sm:min-h-9 sm:w-auto"
+            data-e2e="invitation-cancel"
+          >
+            Cancel
+          </Button>
           <Button
             type="submit"
+            class="min-h-11 w-full sm:min-h-9 sm:w-auto"
             data-e2e="invitation-create"
             busy={creating}
-            busyLabel="Creating..."
+            busyLabel="Creating…"
           >
-            Create link
+            Create invitation
           </Button>
-        </Cluster>
+        </div>
       </Stack>
     </ScreenForm>
   )
@@ -299,7 +319,10 @@ export function PendingInvitations(
     revokingId,
     {
       earlier: false,
-      fallback: () => wrapper.current?.parentElement?.closest("section")?.querySelector("button"),
+      fallback: () =>
+        wrapper.current?.parentElement?.closest("section")?.querySelector<HTMLElement>(
+          "a[href], button",
+        ),
     },
   )
   if (!canManageInvitations(actorRole)) return null
@@ -494,7 +517,7 @@ export function InvitationScreen(
         <EmptyState
           headingLevel={1}
           inset
-          title={loading ? "Opening the invitation..." : "This invitation cannot be used"}
+          title={loading ? "Opening the invitation…" : "This invitation cannot be used"}
           description={loading ? undefined : error ?? undefined}
           action={!loading && (
             <Button
@@ -541,7 +564,7 @@ export function InvitationScreen(
                   class="min-h-11 w-full justify-center sm:min-h-9 sm:w-auto"
                   data-e2e="invitation-accept"
                   busy={answering}
-                  busyLabel="Joining..."
+                  busyLabel="Joining…"
                   onClick={() => !answering && onAccept?.()}
                 >
                   Accept invitation
@@ -653,7 +676,7 @@ export function MyInvitationsSection(
                         data-e2e="invitation-accept"
                         aria-label={`Accept the invitation to ${invitation.groupName}`}
                         busy={answering}
-                        busyLabel="Joining..."
+                        busyLabel="Joining…"
                         onClick={() => !answering && onAccept?.(invitation.id)}
                       >
                         Accept

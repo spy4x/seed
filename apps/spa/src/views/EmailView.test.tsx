@@ -24,13 +24,13 @@ describe("EmailView", () => {
 
     expect(html).toContain(EMAIL_FAILURES.load)
     expect(html).toContain(`data-e2e="email-retry"`)
-    expect(html).not.toContain("Loading...")
+    expect(html).not.toContain("Loading…")
   })
 
   it("shows the spinner while the first read is still under way", () => {
     const html = render()
 
-    expect(html).toContain("Loading...")
+    expect(html).toContain("Loading…")
     expect(html).not.toContain(EMAIL_FAILURES.load)
   })
 })

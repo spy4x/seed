@@ -81,7 +81,7 @@ test.describe("notes in a shared group", () => {
       await openNotes(memberPage, "Notes team")
       await expect(memberPage.locator("[data-e2e=notes-read-only]")).toBeVisible()
       const memberTitles = memberPage.locator("[data-e2e=note-item-title]")
-      await expect(memberPage.getByText("No notes yet.")).toBeVisible()
+      await expect(memberPage.getByText("No notes yet")).toBeVisible()
       // Signing in loads the page again; from here on, nothing may load or connect again.
       const settled = { memberSockets, memberLoads }
       expect(settled.memberSockets).toBeGreaterThan(0)
@@ -124,16 +124,16 @@ test.describe("notes in a shared group", () => {
       await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
       const dialog = ownerPage.locator("[data-e2e=note-delete-dialog]")
       await expect(dialog).toBeVisible()
-      await dialog.getByRole("button", { name: "Keep it" }).first().click()
+      await dialog.getByRole("button", { name: "Cancel" }).first().click()
       await expect(dialog).toHaveCount(0)
       await expect(ownerPage).toHaveURL(notePath)
       await ownerPage.locator("[data-e2e=note-menu]").click()
       await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
-      await dialog.getByRole("button", { name: "Delete", exact: true }).click()
+      await dialog.getByRole("button", { name: "Delete note", exact: true }).click()
       await expect(ownerPage).toHaveURL("/notes")
       await expect(ownerTitles).toHaveCount(0)
       await expect(memberTitles).toHaveCount(0, { timeout: 5_000 })
-      await expect(memberPage.getByText("No notes yet.")).toBeVisible()
+      await expect(memberPage.getByText("No notes yet")).toBeVisible()
 
       expect({ memberSockets, memberLoads }).toEqual(settled)
     } finally {
@@ -307,7 +307,7 @@ test.describe("notes in a shared group", () => {
       const selectedBefore = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
       const pageOf = async (id: string) => {
         await gotoApp(page, `/notes/${id}`, page.locator("[data-e2e=shell-ws-status]"))
-        await expect(page.getByRole("heading", { level: 1, name: "Note not found" }))
+        await expect(page.getByRole("heading", { level: 1, name: "This note does not exist." }))
           .toBeVisible()
         await expect(page.locator("[data-e2e=note-not-found]")).toBeVisible()
         await expect(page.locator("[data-e2e=note-switch-group]")).toHaveCount(0)

@@ -173,7 +173,7 @@ export function GroupTransferForm(
             variant="danger"
             data-e2e="group-transfer"
             busy={transferring}
-            busyLabel="Transferring..."
+            busyLabel="Transferring…"
           >
             Transfer ownership
           </Button>

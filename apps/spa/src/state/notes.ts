@@ -106,12 +106,12 @@ const PAGE_LIMIT = 100
 const MAX_PAGES = 20
 
 export const NOTE_MESSAGES = {
-  titleRequired: "Enter a title",
+  titleRequired: "Enter a title.",
   conflict: "Someone changed this note since you opened it.",
   deleteConflict: "Someone changed that note, so it was not deleted.",
   gone: "This note was deleted.",
   load: "Could not load the notes",
-  create: "Could not add the note",
+  create: "Could not create the note. Try again.",
   save: "Could not save the note",
   delete: "Could not delete the note",
   move: "Could not move the notes",

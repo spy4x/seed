@@ -17,6 +17,7 @@ const window = new Window({ url: "http://app.localhost/" })
 const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
+  location: globalThis.location,
   getComputedStyle: globalThis.getComputedStyle,
 }
 
@@ -24,6 +25,7 @@ beforeAll(() => {
   Object.assign(globalThis, {
     document: window.document,
     FormData: window.FormData,
+    location: window.location,
     getComputedStyle: window.getComputedStyle.bind(window),
   })
 })
@@ -60,7 +62,11 @@ function find<T extends Element = HTMLElement>(selector: string): T {
 async function click(selector: string): Promise<void> {
   await act(() => {
     find(selector).dispatchEvent(
-      new window.MouseEvent("click", { bubbles: true, cancelable: true }) as unknown as Event,
+      new window.MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+      }) as unknown as Event,
     )
   })
 }
@@ -74,32 +80,8 @@ async function clickInDialog(dialog: string, label: string): Promise<void> {
   })
 }
 
-async function type(selector: string, value: string): Promise<void> {
-  const field = find<HTMLInputElement>(selector)
-  field.value = value
-  await act(() => {
-    field.dispatchEvent(new window.Event("input", { bubbles: true }) as unknown as Event)
-  })
-}
-
-async function submit(selector: string): Promise<void> {
-  const form = find(selector).closest("form")!
-  await act(async () => {
-    form.dispatchEvent(
-      new window.SubmitEvent("submit", { bubbles: true, cancelable: true }) as unknown as Event,
-    )
-    await new Promise((resolve) => setTimeout(resolve, 0))
-  })
-}
-
 function isOpen(dialog: string): boolean {
   return document.querySelector<HTMLDialogElement>(`dialog[data-e2e=${dialog}]`)?.open === true
-}
-
-function focused(): string | null | undefined {
-  const element = document.activeElement
-  return element?.getAttribute("data-e2e") ?? element?.getAttribute("aria-label") ??
-    element?.tagName
 }
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
@@ -123,22 +105,15 @@ const writer: ApiToken = {
   lastUsedAt: "2026-10-04T09:00:00.000Z",
 }
 
-const NO_ERRORS = { list: null, name: null, password: null, form: null }
-
 /** The section with two tokens, recording every call the app would receive. */
 function tokensProps(calls: unknown[][], props: Partial<ApiTokensProps> = {}): ApiTokensProps {
   return {
     tokens: [writer, reader],
-    groups: [{ id: groupId, name: "Personal" }],
-    values: { name: "", password: "", groupId, access: ApiTokenAccess.READ, expiresInDays: 90 },
-    onValueChange: (field, value) => void calls.push(["value", field, value]),
-    errors: { list: null, name: null, password: null, form: null },
-    pending: { create: false, revoke: false },
-    created: null,
-    onStartCreate: () => void calls.push(["start"]),
-    onCreate: () => void calls.push(["create"]),
-    onDismissSecret: () => void calls.push(["dismiss"]),
+    canCreate: true,
+    error: null,
+    revoking: false,
     onRevoke: (id) => void calls.push(["revoke", id]),
+    navigate: (to) => void calls.push(["navigate", to]),
     ...props,
   }
 }
@@ -192,104 +167,24 @@ describe("ApiTokens", () => {
     expect(calls).toEqual([["revoke", reader.id]])
   })
 
-  it("creates a token in a dialog: it opens empty, takes the name and the password and submits through onCreate", async () => {
-    const calls: unknown[][] = []
-    await mount(<ApiTokens {...tokensProps(calls)} />)
-    expect(isOpen("api-token-dialog")).toBe(false)
-
-    await click("[data-e2e=api-token-create-open]")
-    expect(isOpen("api-token-dialog")).toBe(true)
-    await type("[data-e2e=api-token-name]", "Zapier")
-    await type("[data-e2e=api-token-password]", "correct horse")
-    await submit("[data-e2e=api-token-name]")
-
-    expect(calls).toEqual([
-      ["start"],
-      ["value", "name", "Zapier"],
-      ["value", "password", "correct horse"],
-      ["create"],
-    ])
-  })
-
-  it("asks for the current password in a labelled password field a manager can fill", async () => {
+  it("names the token in the revoke question", async () => {
     await mount(<ApiTokens {...tokensProps([])} />)
-    await click("[data-e2e=api-token-create-open]")
 
-    const input = find<HTMLInputElement>("[data-e2e=api-token-password]")
-    expect(input.type).toBe("password")
-    expect(input.getAttribute("autocomplete")).toBe("current-password")
-    expect(document.querySelector(`label[for=${input.id}]`)?.textContent).toContain("Your password")
+    await click(`[data-e2e=api-token-revoke-${reader.id}]`)
+    expect(find("[data-e2e=api-token-revoke-confirm]").textContent).toContain('Revoke "Zapier"?')
   })
 
-  it("moves focus to the password when it is refused, with the message tied to it", async () => {
+  it("opens the create page from New token, a link a person can also open in a new tab", async () => {
     const calls: unknown[][] = []
     await mount(<ApiTokens {...tokensProps(calls)} />)
+
+    const opener = find<HTMLAnchorElement>("[data-e2e=api-token-create-open]")
+    expect(opener.tagName).toBe("A")
+    expect(opener.textContent?.trim()).toBe("New token")
+    expect(opener.getAttribute("href")).toBe("/tokens/new")
     await click("[data-e2e=api-token-create-open]")
-    await mount(
-      <ApiTokens
-        {...tokensProps(calls, { errors: { ...NO_ERRORS, password: "Wrong password" } })}
-      />,
-    )
-
-    const input = find<HTMLInputElement>("[data-e2e=api-token-password]")
-    expect(focused()).toBe("api-token-password")
-    const describedBy = input.getAttribute("aria-describedby") ?? ""
-    expect(describedBy.split(" ").map((id) => document.getElementById(id)?.textContent))
-      .toContain("Wrong password")
-  })
-
-  it("moves focus to the name, the first field, when both are refused", async () => {
-    const calls: unknown[][] = []
-    await mount(<ApiTokens {...tokensProps(calls)} />)
-    await click("[data-e2e=api-token-create-open]")
-    await mount(
-      <ApiTokens
-        {...tokensProps(calls, {
-          errors: { ...NO_ERRORS, name: "Name is too long", password: "Wrong password" },
-        })}
-      />,
-    )
-    expect(focused()).toBe("api-token-name")
-  })
-
-  it("moves focus to the name when it is refused, with the message tied to it", async () => {
-    const calls: unknown[][] = []
-    await mount(<ApiTokens {...tokensProps(calls)} />)
-    await click("[data-e2e=api-token-create-open]")
-    await mount(
-      <ApiTokens
-        {...tokensProps(calls, { errors: { ...NO_ERRORS, name: "Name is too long" } })}
-      />,
-    )
-
-    const input = find<HTMLInputElement>("[data-e2e=api-token-name]")
-    expect(focused()).toBe("api-token-name")
-    const describedBy = input.getAttribute("aria-describedby") ?? ""
-    expect(describedBy.split(" ").map((id) => document.getElementById(id)?.textContent))
-      .toContain("Name is too long")
-  })
-
-  it("shows the new secret once with a copy control that takes focus, and forgets it on Done", async () => {
-    const calls: unknown[][] = []
-    await mount(<ApiTokens {...tokensProps(calls)} />)
-    await click("[data-e2e=api-token-create-open]")
-    await mount(
-      <ApiTokens
-        {...tokensProps(calls, { created: { token: reader, secret: "tpl_shown-once-secret0000" } })}
-      />,
-    )
-
-    expect(isOpen("api-token-dialog")).toBe(true)
-    expect(find("[data-e2e=api-token-secret]").textContent).toContain("tpl_shown-once-secret0000")
-    expect(document.activeElement?.closest("[data-e2e=api-token-secret]")).not.toBe(null)
-    expect(document.activeElement?.tagName).toBe("BUTTON")
-    expect(document.querySelectorAll("[data-e2e=api-token-name]").length).toBe(0)
-
-    await click("[data-e2e=api-token-done]")
-    expect(calls).toEqual([["start"], ["dismiss"]])
-    await mount(<ApiTokens {...tokensProps(calls)} />)
-    expect(isOpen("api-token-dialog")).toBe(false)
-    expect(document.body.textContent).not.toContain("tpl_shown-once-secret0000")
+    expect(calls).toEqual([["navigate", "/tokens/new"]])
+    expect(document.querySelectorAll("dialog").length).toBe(0)
   })
 
   it("shows an empty list with its one action, and no action without a group", async () => {
@@ -297,7 +192,7 @@ describe("ApiTokens", () => {
     expect(find("[data-e2e=api-tokens]").textContent).toContain("No API tokens")
     expect(document.querySelectorAll("[data-e2e=api-token-create-open]").length).toBe(1)
 
-    await mount(<ApiTokens {...tokensProps([], { tokens: [], groups: [] })} />)
+    await mount(<ApiTokens {...tokensProps([], { tokens: [], canCreate: false })} />)
     expect(document.querySelectorAll("[data-e2e=api-token-create-open]").length).toBe(0)
   })
 
@@ -305,14 +200,14 @@ describe("ApiTokens", () => {
     await mount(
       <ApiTokens
         {...tokensProps([], {
-          pending: { create: false, revoke: true },
-          errors: { ...NO_ERRORS, list: "Could not revoke" },
+          revoking: true,
+          error: "Could not revoke.",
         })}
       />,
     )
 
     expect(find<HTMLButtonElement>(`[data-e2e=api-token-revoke-${reader.id}]`).disabled).toBe(true)
-    expect(find("[data-e2e=api-tokens]").textContent).toContain("Could not revoke")
+    expect(find("[data-e2e=api-tokens]").textContent).toContain("Could not revoke.")
   })
 
   it("says when the list is a copy saved on this device, with the time it was saved", async () => {

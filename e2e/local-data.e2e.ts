@@ -251,10 +251,10 @@ test.describe("the app with no network, after one visit online", () => {
       await expect(groupNames.filter({ hasText: /^(Kept|Their) team$/ })).toHaveCount(2)
 
       await gotoApp(page, `/groups/${groupId}`, page.locator("[data-e2e=group-general-name]"))
-      await page.getByRole("button", { name: "Invite people" }).click()
-      const inviting = page.getByRole("dialog", { name: "Invite people" })
-      await inviting.locator("[data-e2e=invitation-create]").click()
-      await inviting.locator("[data-e2e=invitation-done]").click()
+      await page.getByRole("link", { name: "Invite people" }).click()
+      await page.locator("[data-e2e=invitation-create]").click()
+      await page.locator("[data-e2e=invitation-done]").click()
+      await expect(page).toHaveURL(`/groups/${groupId}`)
       const invitations = page.locator("[data-e2e=group-section-invitations] [data-e2e=invitation]")
       await expect(invitations).toHaveCount(1)
       await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
@@ -278,6 +278,7 @@ test.describe("the app with no network, after one visit online", () => {
       await page.locator("[data-e2e=api-token-password]").fill(password)
       await page.locator("[data-e2e=api-token-create]").click()
       await page.locator("[data-e2e=api-token-done]").click()
+      await expect(page).toHaveURL("/")
       const tokens = page.locator("[data-e2e=api-token-details]")
       await expect(tokens).toHaveCount(1)
       // Once more, so the copy on the device holds the token just made.

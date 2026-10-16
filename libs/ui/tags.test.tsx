@@ -170,7 +170,7 @@ const editorDefaults: NoteEditorScreenProps = {
   group: team,
   loading: false,
   notFound: false,
-  note: { id: groceries.id, version: 3, conflict: false },
+  note: { id: groceries.id, version: 3, conflict: false, savedTitle: groceries.title },
   value: { title: "Groceries", body: "milk", tagIds: [urgent.id] },
   errors: { title: null, form: null },
   saving: false,

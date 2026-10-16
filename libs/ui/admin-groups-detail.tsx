@@ -529,7 +529,7 @@ function dialogCopy(
         text:
           `${name} loses access to ${detail.group.name} at once, with their API tokens and the invitations they made for it. What they wrote stays in the group. They get a notice.`,
         submit: `Remove`,
-        busy: `Removing...`,
+        busy: `Removing…`,
       }
     }
     case `revoke`:
@@ -538,7 +538,7 @@ function dialogCopy(
         text:
           `Nobody can join ${detail.group.name} with it any more. People who already joined stay.`,
         submit: `Revoke`,
-        busy: `Revoking...`,
+        busy: `Revoking…`,
       }
     case `transfer`:
       return {
@@ -547,7 +547,7 @@ function dialogCopy(
           adminGroupPersonName(detail.group.owner)
         } stays in the group as an admin. A subscription that still renews must be canceled by its owner first.`,
         submit: `Transfer`,
-        busy: `Transferring...`,
+        busy: `Transferring…`,
       }
   }
 }

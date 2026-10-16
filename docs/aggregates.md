@@ -135,13 +135,17 @@ for both modes: `/<entity>/new` shows it with empty fields and "Create", `/<enti
 saved fields, and its Save and Discard only while a field differs from what is saved. Groups are
 the second example: `groups-screen.tsx` lists them, each row one link to its editor, and
 `group-editor-screen.tsx` serves `/groups/new` and `/groups/:id`, with the members and the plan
-under the form.
+under the form. An entity that is created and never edited, such as an API token or an invitation, gets a
+create-only page instead (`api-token-new-screen.tsx` at `/tokens/new`, `invitation-new-screen.tsx`
+at `/groups/:groupId/invitations/new`): the form, then, once it exists, its secret or link shown
+once on the same page with a copy control and Done. Leaving before Done asks first, and the secret
+lives only in a store the page owns, never in the address, the history or the device cache.
 
 | File                     | What it holds                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `progressive.tsx`        | `NOTE_PATHS`: the pages the screens link to: `/notes`, `/notes/new` and `/notes/:id`. They carry no group id: the SPA acts on the person's selected group (see "How a group call travels", item 8, in `docs/handoff.md`).                                                                                                                                    |
 | `notes-screen.tsx`       | The list page, `NotesScreen`: props in, links and callbacks out. "New note" and each note's title are links; the only form is the move of selected notes. A viewer gets the list and no "New note".                                                                                                                                                          |
-| `note-editor-screen.tsx` | The editor page, `NoteEditorScreen`, for `/notes/new` (no note yet) and `/notes/:id`. Its fields carry the API's field names; "Save" and "Cancel" are the form's own, and the app's callbacks take the submit. A viewer gets the note as text. A note that cannot be read is "Note not found". The version conflict link and message are part of the screen. |
+| `note-editor-screen.tsx` | The editor page, `NoteEditorScreen`, for `/notes/new` (no note yet) and `/notes/:id`. Its fields carry the API's field names; "Save" and "Cancel" are the form's own, and the app's callbacks take the submit. A viewer gets the note as text. A note that cannot be read is "This note does not exist." The version conflict link and message are part of the screen. |
 | `screens.test.tsx`       | Renders the newsletter screens on the server and checks that every action is a working form or link whose fields match the request schema.                                                                                                                                                                                                                   |
 | `interactions.test.tsx`  | Drives each screen in a browser DOM: typing, submitting through the callback, and the delete dialog.                                                                                                                                                                                                                                                         |
 

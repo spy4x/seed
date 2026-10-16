@@ -233,7 +233,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
       <ListPage>
         <PageHeader title="Notes" />
         <ListEmpty
-          title={loading ? "Loading the group..." : "This group was not found."}
+          title={loading ? "Loading the group…" : "This group does not exist."}
           action={!loading && (
             <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
               Back to groups
@@ -307,7 +307,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
               class="min-h-11 shrink-0"
               aria-label={`Restore ${note.title}`}
               busy={props.restoring === note.id}
-              busyLabel="Restoring..."
+              busyLabel="Restoring…"
               disabled={Boolean(props.restoring)}
               data-e2e="note-restore"
               onClick={() => {
@@ -412,7 +412,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           ? deletedNotes.length === 0
             ? (
               <ListEmpty
-                title={props.deletedLoading ? "Loading deleted notes..." : "No deleted notes."}
+                title={props.deletedLoading ? "Loading deleted notes…" : "No deleted notes"}
               />
             )
             : deletedList
@@ -435,7 +435,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           : notes.length === 0
           ? (
             <ListEmpty
-              title={loading ? "Loading notes..." : "No notes yet."}
+              title={loading ? "Loading notes…" : "No notes yet"}
               description={loading || !group.canWrite
                 ? undefined
                 : `Notes you write here are shared with everyone in ${group.name}.`}
@@ -474,8 +474,8 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
         <ConfirmDialog
           title="Delete this note?"
           message={`"${deleting.title}" will be deleted for everyone in ${group.name}.`}
-          confirmLabel="Delete"
-          cancelLabel="Keep it"
+          confirmLabel="Delete note"
+          cancelLabel="Cancel"
           tone="danger"
           dataE2E="note-delete-dialog"
           onConfirm={() => {
@@ -594,7 +594,7 @@ function SelectionBar(
               type="submit"
               data-e2e="notes-move-submit"
               busy={moving}
-              busyLabel="Moving..."
+              busyLabel="Moving…"
             >
               Move
             </Button>

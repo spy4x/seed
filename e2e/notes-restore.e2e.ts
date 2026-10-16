@@ -73,7 +73,7 @@ test.describe("restoring deleted notes", () => {
         await ownerPage.locator(`[data-e2e=note-${noteId}] [data-e2e=note-menu]`).click()
         await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
         await ownerPage.locator("[data-e2e=note-delete-dialog]").getByRole("button", {
-          name: "Delete",
+          name: "Delete note",
           exact: true,
         }).click()
         await expect(ownerTitles).toHaveCount(0)
@@ -103,11 +103,11 @@ test.describe("restoring deleted notes", () => {
       await expect(memberPage.locator("[data-e2e=note-restore]")).toHaveCount(0)
 
       await ownerPage.getByRole("button", { name: "Restore Trip" }).click()
-      await expect(ownerPage.getByText("No deleted notes.")).toBeVisible()
+      await expect(ownerPage.getByText("No deleted notes")).toBeVisible()
       await ownerPage.locator("[data-e2e=notes-show-live]").click()
       await expect(ownerTitles).toHaveText(["Trip"])
       // The viewer's deleted list follows: the note left it.
-      await expect(memberPage.getByText("No deleted notes.")).toBeVisible({ timeout: 5_000 })
+      await expect(memberPage.getByText("No deleted notes")).toBeVisible({ timeout: 5_000 })
       await memberPage.locator("[data-e2e=notes-show-live]").click()
       await expect(memberTitles).toHaveText(["Trip"])
 
@@ -125,7 +125,7 @@ test.describe("restoring deleted notes", () => {
       await ownerPage.locator(`[data-e2e=note-${noteId}] [data-e2e=note-menu]`).click()
       await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
       await ownerPage.locator("[data-e2e=note-delete-dialog]").getByRole("button", {
-        name: "Delete",
+        name: "Delete note",
         exact: true,
       }).click()
       await expect(ownerTitles).toHaveCount(0)

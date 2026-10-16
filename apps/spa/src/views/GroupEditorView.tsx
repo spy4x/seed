@@ -2,20 +2,18 @@ import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { GroupEditorScreen } from "@ui/group-editor-screen.tsx"
-import { InviteForm, PendingInvitations } from "@ui/group-invitations.tsx"
+import { PendingInvitations } from "@ui/group-invitations.tsx"
 import { GroupTransferForm } from "@ui/group-transfer.tsx"
-import { canManageInvitations, type GroupRole, type InvitationErrorCode } from "@domain/groups"
-import { entitlementsOf } from "@domain/billing"
+import { canManageInvitations } from "@domain/groups"
 import type { GroupRow } from "@ui/groups-screen.tsx"
 import { moveTargetsOf } from "@ui/notes-screen.tsx"
-import { GROUP_PATHS, type Navigate, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { GROUP_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { groupsStore } from "../state/groups.ts"
 import { membersStore } from "../state/members.ts"
 import { selectionStore } from "../state/selection.ts"
 import { billingStore } from "../state/billing.ts"
 import { invitationsStore } from "../state/invitations.ts"
-import { SeatPriceConfirm } from "@ui/billing-screen.tsx"
 import { GroupBillingCard } from "./BillingViews.tsx"
 import { toasts } from "../state/toasts.ts"
 import { isSpaPath } from "./spa-paths.ts"
@@ -88,53 +86,6 @@ export async function saveAndAnnounce(
 function billingOf(groupId: string) {
   const current = billingStore.current.value
   return current?.groupId === groupId ? current.billing : null
-}
-
-/**
- * The "Invite people" dialog's body, wired to the invitations store. The role choice follows the
- * group's plan once it is read; until then the server alone judges the role.
- */
-export function GroupInvite(
-  { groupId, actorRole, onClose, navigate }: {
-    groupId: string
-    actorRole: GroupRole
-    onClose: () => void
-    navigate?: Navigate
-  },
-) {
-  const invites = invitationsStore
-  const createFailure = invites.createError.value
-  const billing = billingOf(groupId)
-  // A create refused for want of the price confirmation shows its message at the confirmation, when
-  // the confirmation is on screen; until the billing is read, it shows under the form.
-  const seatRefused = !!billing?.seatPrice &&
-    createFailure?.code === ("SEAT_PRICE_NOT_ACCEPTED" satisfies InvitationErrorCode)
-  return (
-    <InviteForm
-      groupId={groupId}
-      actorRole={actorRole}
-      memberRoles={billing
-        ? entitlementsOf(billing.planId, billing.enabled).features.memberRoles
-        : true}
-      draft={invites.draft.value}
-      onDraftChange={(draft) => (invites.draft.value = draft)}
-      creating={invites.creating.value}
-      createError={createFailure?.plan || seatRefused ? null : createFailure?.message}
-      createRefusal={createFailure?.plan ?? null}
-      onCreate={() => void invites.create()}
-      seatPrice={billing?.seatPrice && (
-        <SeatPriceConfirm
-          seatPrice={billing.seatPrice}
-          checked={invites.acceptSeatPrice.value}
-          onChange={(checked) => (invites.acceptSeatPrice.value = checked)}
-          error={seatRefused ? createFailure.message : null}
-        />
-      )}
-      created={invites.created.value}
-      onClose={onClose}
-      navigate={navigate}
-    />
-  )
 }
 
 /** The "Transfer ownership" dialog's body, wired to the members store. */
@@ -304,16 +255,6 @@ function ExistingGroup({ groupId }: { groupId: string }) {
       onMoveAllTargetChange={() => store.forgetMoveAll()}
       onMoveAllClose={() => store.forgetMoveAll()}
       billing={group && <GroupBillingCard groupId={groupId} />}
-      invite={group
-        ? (close) => (
-          <GroupInvite
-            groupId={groupId}
-            actorRole={group.role}
-            onClose={close}
-            navigate={navigate}
-          />
-        )
-        : undefined}
       pendingInvitations={group && (
         <PendingInvitations
           actorRole={group.role}

@@ -127,7 +127,7 @@ export function GroupMoveAllForm(
             type="submit"
             class="min-h-11 sm:min-h-9"
             busy={moving}
-            busyLabel="Moving..."
+            busyLabel="Moving…"
             data-e2e="group-move-all-submit"
           >
             Move everything

@@ -9,16 +9,22 @@ import {
   type ApiTokenListResponse,
   parseApiTokenCreateRequest,
 } from "@domain/api-tokens"
-import type { ApiTokenFormValues } from "@ui/api-tokens.tsx"
+import type { ApiTokenFormValues } from "@ui/api-token-new-screen.tsx"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS, ReadRefused } from "./read-keys.ts"
 
-/** The message shown when a token call failed without a message of its own. */
-export const API_TOKENS_FAILURE = "Something went wrong with your API tokens"
+/** The message shown when reading or revoking failed without a message of its own. */
+export const API_TOKENS_FAILURE = "Something went wrong with your API tokens."
+
+/** The message under the form when a create failed without a message of its own. */
+export const CREATE_FAILURE = "Could not create the token. Try again."
+
+/** The message under the name when the form is sent without one. */
+export const NAME_MISSING = "Enter a name."
 
 /** The message under the password when the form is sent without one. */
-export const PASSWORD_MISSING = "Enter your password to create a token"
+export const PASSWORD_MISSING = "Enter your password to create a token."
 
 /** One call's outcome: the data, or the message to show. */
 export type ApiTokensResult<T> = { ok: true; data: T } | {
@@ -71,9 +77,10 @@ export function emptyApiTokenForm(groupId: string): ApiTokenFormValues {
 }
 
 /**
- * The person's API tokens on the profile page: the list, the create form, what is in flight and
- * what failed. The secret of a new token lives in `created` until the person closes it, and
- * nowhere else.
+ * The person's API tokens: the list and revoke for the profile, the form for the create page, what
+ * is in flight and what failed. Each page makes its own store, so the secret of a new token lives
+ * in the create page's `created` until the person presses Done or the page closes, and nowhere
+ * else.
  */
 export function createApiTokensStore(
   dependencies: ApiTokensDependencies,
@@ -164,15 +171,18 @@ export function createApiTokensStore(
       // Both fields are checked before anything shows, so an empty form names both at once.
       const password = values.value.password === "" ? PASSWORD_MISSING : null
       let request: ApiTokenCreateRequest | null = null
-      let name: string | null = null
-      try {
-        // The parser wants a password; a stand-in lets it judge the name of a form without one.
-        request = parseApiTokenCreateRequest(
-          password === null ? values.value : { ...values.value, password: "-" },
-        )
-      } catch (error) {
-        if (!(error instanceof ApiTokenError)) throw error
-        name = error.message
+      let name: string | null = values.value.name.trim() === "" ? NAME_MISSING : null
+      if (name === null) {
+        try {
+          // The parser wants a password; a stand-in lets it judge the name of a form without one.
+          request = parseApiTokenCreateRequest(
+            password === null ? values.value : { ...values.value, password: "-" },
+          )
+        } catch (error) {
+          if (!(error instanceof ApiTokenError)) throw error
+          // An error is a sentence, so it ends with a full stop; the parser's message has none.
+          name = /[.!?]$/.test(error.message) ? error.message : `${error.message}.`
+        }
       }
       if (request === null || password !== null) {
         errors.value = { ...errors.value, name, password, form: null }
@@ -183,10 +193,9 @@ export function createApiTokensStore(
       const result = await dependencies.create(request)
       pending.value = { ...pending.value, create: false }
       if (!result.ok) {
-        const message = result.error || API_TOKENS_FAILURE
         errors.value = result.code === "PASSWORD_INVALID"
-          ? { ...errors.value, password: message }
-          : { ...errors.value, form: message }
+          ? { ...errors.value, password: result.error || CREATE_FAILURE }
+          : { ...errors.value, form: result.error || CREATE_FAILURE }
         return
       }
       values.value = { ...values.value, password: "" }

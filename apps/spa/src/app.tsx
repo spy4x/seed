@@ -49,6 +49,8 @@ import { NotesView } from "./views/NotesView.tsx"
 import { TagsView } from "./views/TagsView.tsx"
 import { TagEditorView } from "./views/TagEditorView.tsx"
 import { ProfileView } from "./views/ProfileView.tsx"
+import { ApiTokenNewView } from "./views/ApiTokenNewView.tsx"
+import { InvitationNewView } from "./views/InvitationNewView.tsx"
 import { AppShell, PublicFrame } from "./views/AppShell.tsx"
 import { signInRedirect } from "./views/sign-in-gate.ts"
 import { SPA_ROUTE_PATHS, type SpaRoutePath } from "./views/spa-paths.ts"
@@ -74,7 +76,7 @@ function OpenIfSelected({ groupId, noteId }: { groupId: string; noteId?: string 
       { replace: true },
     )
   }, [selected, groupId, noteId])
-  return <LoadingSpinner size="lg" label="Opening the notes..." class="min-h-[50vh]" />
+  return <LoadingSpinner size="lg" label="Opening the notes…" class="min-h-[50vh]" />
 }
 
 /**
@@ -96,6 +98,9 @@ const PAGES: {
   "/unsubscribe": () => <UnsubscribeView />,
   "/groups": () => <GroupsView />,
   "/groups/new": () => <GroupEditorView key="new" />,
+  "/groups/:groupId/invitations/new": (params) => (
+    <InvitationNewView key={params.groupId} groupId={params.groupId} />
+  ),
   "/groups/:groupId": (params) => <GroupEditorView key={params.groupId} groupId={params.groupId} />,
   "/groups/:groupId/activity": (params) => <GroupActivityView groupId={params.groupId} />,
   "/groups/:groupId/pricing": (params) => <PricingView groupId={params.groupId} />,
@@ -111,6 +116,7 @@ const PAGES: {
   "/notes": () => <NotesView />,
   "/notes/new": () => <NoteEditorView key="new" />,
   "/notes/:noteId": (params) => <NoteEditorView key={params.noteId} noteId={params.noteId} />,
+  "/tokens/new": () => <ApiTokenNewView />,
   "/": () => <ProfileView />,
 }
 
@@ -253,7 +259,7 @@ export function App() {
       {!ready || !sessionState.value.isReady
         ? (
           <main>
-            <LoadingSpinner size="lg" label="Loading..." class="min-h-dvh bg-canvas" />
+            <LoadingSpinner size="lg" label="Loading…" class="min-h-dvh bg-canvas" />
           </main>
         )
         : <Frame />}

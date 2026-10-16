@@ -205,7 +205,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
   // After a search, a chip or a page change the list is new: once it arrives, the reader starts
   // again at its count. The first list is no change, so focus stays where it was.
   const asked = useRef(false)
-  // Whether the search form sent the pending request, so only a search says "Searching...".
+  // Whether the search form sent the pending request, so only a search says "Searching…".
   const [searching, setSearching] = useState(false)
   useEffect(() => {
     if (pending) return
@@ -303,7 +303,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                   type="submit"
                   data-e2e="admin-billing-submit"
                   busy={pending && searching}
-                  busyLabel="Searching..."
+                  busyLabel="Searching…"
                 >
                   Search
                 </Button>

@@ -35,6 +35,12 @@ describe("isSpaPath", () => {
     }
   })
 
+  it("routes no page whose address starts with /api, which the proxy sends to the API", () => {
+    for (const pattern of SPA_ROUTE_PATHS) {
+      expect(pattern.startsWith("/api"), pattern).toBe(false)
+    }
+  })
+
   it("leaves server paths to the browser", () => {
     for (const path of ["/api/ws", "/notesx", "/assets/app.js", "notes"]) {
       expect(isSpaPath(path), path).toBe(false)

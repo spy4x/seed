@@ -233,7 +233,7 @@ export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
             variant="secondary"
             data-e2e="admin-audit-more"
             busy={props.loadingMore}
-            busyLabel="Loading..."
+            busyLabel="Loading…"
             onClick={props.onMore}
           >
             Show older entries
@@ -342,7 +342,7 @@ function FilterForm(
               type="submit"
               data-e2e="admin-audit-apply"
               busy={pending}
-              busyLabel="Filtering..."
+              busyLabel="Filtering…"
             >
               Apply filters
             </Button>

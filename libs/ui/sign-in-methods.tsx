@@ -213,7 +213,7 @@ export function SignInMethods(
                     type="submit"
                     data-e2e="sign-in-method-link-submit"
                     busy={pending}
-                    busyLabel="Opening..."
+                    busyLabel="Opening…"
                   >
                     Continue{linking ? ` to ${OAUTH_PROVIDER_NAMES[linking]}` : ""}
                   </Button>
@@ -280,7 +280,7 @@ export function SignInMethods(
                         variant="danger"
                         data-e2e="sign-in-method-unlink-submit"
                         busy={pending}
-                        busyLabel="Unlinking..."
+                        busyLabel="Unlinking…"
                       >
                         Unlink
                       </Button>

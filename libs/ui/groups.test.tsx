@@ -47,6 +47,7 @@ import {
   type TransferDraft,
 } from "./group-transfer.tsx"
 import { GroupsScreen, type GroupsScreenProps, NEW_GROUP_PATH } from "./groups-screen.tsx"
+import { INVITATION_OFFLINE, InvitationNewScreen } from "./invitation-new-screen.tsx"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 
@@ -784,25 +785,21 @@ describe("GroupEditorScreen header", () => {
     expect(focused()).toBe("group-menu")
   })
 
-  it("offers Invite people to the owner and admins only, in a dialog the form can close", async () => {
-    let close: (() => void) | null = null
-    const invite = (done: () => void) => {
-      close = done
-      return <p data-e2e="invite-body">invite</p>
-    }
+  it("offers Invite people to the owner and admins only, as a link to the invitation page", async () => {
+    const navigate = spy<[string]>()
     await mount(
       <GroupEditorScreen
         {...defaults}
         group={{ ...team, role: GroupRole.EDITOR }}
-        invite={invite}
+        navigate={navigate.fn}
       />,
     )
     expect(has("[data-e2e=invite-open]")).toBe(false)
-    await rerender(<GroupEditorScreen {...defaults} invite={invite} />)
+    await rerender(<GroupEditorScreen {...defaults} navigate={navigate.fn} />)
+    expect(find("[data-e2e=invite-open]").getAttribute("href")).toBe(GROUP_PATHS.invite(team.id))
     await click("[data-e2e=invite-open]")
-    expect(has("[data-e2e=invite-dialog] [data-e2e=invite-body]")).toBe(true)
-    await act(() => close!())
-    expect(has("[data-e2e=invite-dialog]")).toBe(false)
+    expect(navigate.calls).toEqual([[GROUP_PATHS.invite(team.id)]])
+    expect(has("dialog[open]")).toBe(false)
   })
 
   it("says a missing group may be deleted, with the way back to the groups", async () => {
@@ -911,7 +908,7 @@ describe("GroupMembersSection", () => {
 
   it("moves focus to the next row's menu once a member is removed, else to the section's button", async () => {
     const kim: GroupMemberRow = { ...viewer, userId: 4, email: "kim@example.com" }
-    const invite = <button type="button" data-e2e="invite-open">Invite people</button>
+    const invite = <a href="/groups/g-1/invitations/new" data-e2e="invite-open">Invite people</a>
     const section = (over: Partial<GroupMembersSectionProps>) => (
       <GroupMembersSection
         {...props}
@@ -1026,6 +1023,18 @@ describe("InviteForm", () => {
     expect(drafts.calls).toEqual([[{ ...EMPTY_INVITATION_DRAFT, role: GroupRole.VIEWER }]])
   })
 
+  it("moves the role to one the plan allows again when the app resets its draft to the default", async () => {
+    const drafts = spy<[InvitationDraft]>()
+    await mount(<InviteForm {...defaults} memberRoles={false} onDraftChange={drafts.fn} />)
+    // The app ignored the move and drew its default draft again, as a page that clears the store
+    // as it opens does.
+    await rerender(<InviteForm {...defaults} memberRoles={false} onDraftChange={drafts.fn} />)
+    expect(drafts.calls).toEqual([
+      [{ ...EMPTY_INVITATION_DRAFT, role: GroupRole.VIEWER }],
+      [{ ...EMPTY_INVITATION_DRAFT, role: GroupRole.VIEWER }],
+    ])
+  })
+
   it("reports what the person fills in and creates through the app's callback", async () => {
     const drafts = spy<[InvitationDraft]>()
     const create = spy<[]>()
@@ -1076,21 +1085,59 @@ describe("InviteForm", () => {
     expect(root!.textContent).not.toContain("Full.")
   })
 
-  it("shows the link created while it is open, focused, and closes on Done", async () => {
-    const close = spy<[]>()
-    await mount(<InviteForm {...defaults} onClose={close.fn} />)
-    await rerender(<InviteForm {...defaults} onClose={close.fn} created={created} />)
+  it("shows the created link in place of the form, its copy button focused, and calls onDone on Done", async () => {
+    const done = spy<[]>()
+    await mount(<InviteForm {...defaults} onDone={done.fn} />)
+    await rerender(<InviteForm {...defaults} onDone={done.fn} created={created} />)
     expect(has("[data-e2e=invitation-form]")).toBe(false)
     expect(find("[data-e2e=invitation-created] code").textContent).toBe(created.link)
-    expect(focused()).toBe("invitation-created")
+    expect(document.activeElement?.closest("[data-e2e=invitation-created]")).not.toBe(null)
+    expect(document.activeElement?.tagName).toBe("BUTTON")
     await click("[data-e2e=invitation-done]")
-    expect(close.calls).toHaveLength(1)
+    expect(done.calls).toHaveLength(1)
   })
 
-  it("never shows again a link that was created before it opened", async () => {
-    await mount(<InviteForm {...defaults} created={created} />)
-    expect(has("[data-e2e=invitation-created]")).toBe(false)
-    expect(has("[data-e2e=invitation-form]")).toBe(true)
+  it("leaves through Cancel to the group's page, and creates through Create invitation", async () => {
+    const navigate = spy<[string]>()
+    await mount(<InviteForm {...defaults} navigate={navigate.fn} />)
+    expect(find("[data-e2e=invitation-create]").textContent).toBe("Create invitation")
+    expect(find("[data-e2e=invitation-cancel]").getAttribute("href"))
+      .toBe(GROUP_PATHS.settings(groupId))
+    await click("[data-e2e=invitation-cancel]")
+    expect(navigate.calls).toEqual([[GROUP_PATHS.settings(groupId)]])
+  })
+
+  it("shows why a create did not start above the buttons, and moves focus to it", async () => {
+    await mount(<InviteForm {...defaults} />)
+    await rerender(<InviteForm {...defaults} formError="No connection." />)
+    expect(find("[data-e2e=invitation-error]").textContent).toContain("No connection.")
+    expect(focused()).toBe("invitation-error")
+  })
+})
+
+describe("InvitationNewScreen", () => {
+  const page = {
+    groupId,
+    group: { name: "Team", role: GroupRole.ADMIN },
+    loading: false,
+    draft: EMPTY_INVITATION_DRAFT,
+  }
+
+  it("says it is offline above the form, and a refused submit's reason above the buttons", async () => {
+    await mount(<InvitationNewScreen {...page} offline />)
+    expect(find("[data-e2e=invitation-offline]").textContent).toContain("You are offline")
+    expect(has("[data-e2e=invitation-error]")).toBe(false)
+    await rerender(<InvitationNewScreen {...page} offline refusedOffline />)
+    expect(find("[data-e2e=invitation-error]").textContent).toContain(INVITATION_OFFLINE)
+  })
+
+  it("draws a placeholder only after 300 ms while the group is read, and says it is loading", async () => {
+    await mount(<InvitationNewScreen {...page} group={null} loading />)
+    expect(has("[data-e2e=invitation-loading]")).toBe(false)
+    expect(has("form")).toBe(false)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 350)))
+    expect(find("[data-e2e=invitation-loading] [role=status]").textContent)
+      .toBe("Loading the group…")
   })
 })
 
@@ -1163,7 +1210,7 @@ describe("PendingInvitations", () => {
   it("moves focus to the next invitation's menu once one is revoked, else to the button of the section around it", async () => {
     const page = (props: Partial<PendingInvitationsProps>) => (
       <section>
-        <button type="button" data-e2e="invite-open">Invite people</button>
+        <a href="/groups/g-1/invitations/new" data-e2e="invite-open">Invite people</a>
         <PendingInvitations actorRole={GroupRole.OWNER} invitations={rows} {...props} />
       </section>
     )
@@ -1181,7 +1228,7 @@ describe("PendingInvitations", () => {
   it("skips the invitations before a revoked last one and moves focus to the section's button", async () => {
     const page = (props: Partial<PendingInvitationsProps>) => (
       <section>
-        <button type="button" data-e2e="invite-open">Invite people</button>
+        <a href="/groups/g-1/invitations/new" data-e2e="invite-open">Invite people</a>
         <PendingInvitations actorRole={GroupRole.OWNER} invitations={rows} {...props} />
       </section>
     )

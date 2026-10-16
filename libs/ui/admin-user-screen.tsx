@@ -126,39 +126,39 @@ const ACTIONS: Record<AdminAction, { title: string; text: string; submit: string
       text:
         "Every session of theirs ends at once and every way in is refused: password, Google, GitHub and API tokens. Their data stays. You can unblock them later.",
       submit: "Block",
-      busy: "Blocking...",
+      busy: "Blocking…",
     },
     unblock: {
       title: "Unblock this user",
       text: "They can sign in again, and their API tokens work again.",
       submit: "Unblock",
-      busy: "Unblocking...",
+      busy: "Unblocking…",
     },
     "end-sessions": {
       title: "End all sessions",
       text: "Every device of theirs is signed out at once. They can sign in again.",
       submit: "End all sessions",
-      busy: "Ending...",
+      busy: "Ending…",
     },
     "end-session": {
       title: "End this session",
       text: "This one device is signed out at once. Their other devices stay signed in.",
       submit: "End session",
-      busy: "Ending...",
+      busy: "Ending…",
     },
     "change-role": {
       title: "Change role",
       text:
         "The new role applies to their next request. You can give a role below your own; an administrator is made with the user:role script.",
       submit: "Change role",
-      busy: "Changing...",
+      busy: "Changing…",
     },
     "password-reset": {
       title: "Send a password-reset link",
       text:
         'They get the same mail as from "Forgot password": a link to choose a new password. Their current password keeps working until they do.',
       submit: "Send link",
-      busy: "Sending...",
+      busy: "Sending…",
     },
   }
 

@@ -1,7 +1,13 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
-import { type ApiTokensDependencies, createApiTokensStore, PASSWORD_MISSING } from "./api-tokens.ts"
+import {
+  type ApiTokensDependencies,
+  CREATE_FAILURE,
+  createApiTokensStore,
+  NAME_MISSING,
+  PASSWORD_MISSING,
+} from "./api-tokens.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 
@@ -71,7 +77,7 @@ describe("API tokens store", () => {
     expect(tokens.created.value).toBe(null)
   })
 
-  it("keeps a bad name on the page with its message and sends nothing", async () => {
+  it("asks for a name when it is blank, and sends nothing", async () => {
     const calls: unknown[][] = []
     const tokens = store({}, calls)
     tokens.startCreate(groupId)
@@ -80,7 +86,19 @@ describe("API tokens store", () => {
     await tokens.create()
 
     expect(calls).toEqual([])
-    expect(tokens.errors.value.name).toContain("Name must be")
+    expect(tokens.errors.value.name).toBe(NAME_MISSING)
+  })
+
+  it("keeps a name that is too long on the page with its message as a sentence, and sends nothing", async () => {
+    const calls: unknown[][] = []
+    const tokens = store({}, calls)
+    tokens.startCreate(groupId)
+    tokens.setValue("name", "x".repeat(500))
+    tokens.setValue("password", "correct horse")
+    await tokens.create()
+
+    expect(calls).toEqual([])
+    expect(tokens.errors.value.name).toMatch(/^Name must be .*characters\.$/)
   })
 
   it("asks for the password on its field and sends nothing without one", async () => {
@@ -106,7 +124,7 @@ describe("API tokens store", () => {
     await tokens.create()
 
     expect(calls).toEqual([])
-    expect(tokens.errors.value.name).toContain("Name must be")
+    expect(tokens.errors.value.name).toBe(NAME_MISSING)
     expect(tokens.errors.value.password).toBe(PASSWORD_MISSING)
   })
 
@@ -158,6 +176,16 @@ describe("API tokens store", () => {
     expect(tokens.errors.value.password).toBe(null)
     expect(tokens.created.value).toBe(null)
     expect(tokens.pending.value.create).toBe(false)
+  })
+
+  it("says the create failed when the API gave no message of its own", async () => {
+    const tokens = store({ create: () => Promise.resolve({ ok: false, error: "" }) })
+    tokens.startCreate(groupId)
+    tokens.setValue("name", "Zapier")
+    tokens.setValue("password", "correct horse")
+    await tokens.create()
+
+    expect(tokens.errors.value.form).toBe(CREATE_FAILURE)
   })
 
   it("reads the list again after a revoke, and keeps a failed revoke's message", async () => {

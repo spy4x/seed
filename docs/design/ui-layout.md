@@ -17,9 +17,12 @@ screens were redesigned against these rules in October 2026.
 2. **One editor per entity.** "New <entity>" opens the entity's editor page at `/<entity>/new`,
    and an existing entity opens the same editor at `/<entity>/:id`: one component, the same fields
    in both modes, never a one-field dialog for create and another form for edit. Notes and groups
-   are the examples ([aggregates.md](../aggregates.md), step 6). Any other form is closed until the
-   person presses the button for it: a `Modal` for a short form (invite someone, change password),
-   or `InlineEdit` for one value. A name is two fields, so the profile edits it in a `Modal`.
+   are the examples ([aggregates.md](../aggregates.md), step 6). An entity that is never edited
+   gets a create-only page at the same kind of address: an API token at `/tokens/new`, an
+   invitation at `/groups/:groupId/invitations/new`. Creating something is never a dialog. Any
+   other form is closed until the person presses the button for it: a `Modal` for a short form
+   (change password), or `InlineEdit` for one value. A name is two fields, so the profile edits it
+   in a `Modal`.
 3. **Hide what cannot happen.** Do not render a section that only explains why its action is
    unavailable ("You own this group, so you cannot leave it", "Nobody else is in this group yet").
    Leave the action out. When a person would otherwise not know the action exists, keep it as a

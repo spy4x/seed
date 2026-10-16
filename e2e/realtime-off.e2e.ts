@@ -126,7 +126,7 @@ test.describe("the app with the WebSocket module switched off", () => {
       await page.locator("[data-e2e=note-menu]").click()
       await page.getByRole("menuitem", { name: "Delete" }).click()
       await page.locator("[data-e2e=note-delete-dialog]")
-        .getByRole("button", { name: "Delete", exact: true }).click()
+        .getByRole("button", { name: "Delete note", exact: true }).click()
       await expect(page).toHaveURL("/notes")
       await expect(titles).toHaveCount(0)
 
@@ -169,7 +169,7 @@ test.describe("the app with the WebSocket module switched off", () => {
 
       await signInBrowser(second.page, member)
       await openNotes(second.page, "Polling team")
-      await expect(second.page.getByText("No notes yet.")).toBeVisible()
+      await expect(second.page.getByText("No notes yet")).toBeVisible()
       let loads = 0
       second.page.on("load", () => loads++)
 

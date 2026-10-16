@@ -169,7 +169,7 @@ test.describe("offline notes", () => {
         await page.locator("[data-e2e=note-menu]").click()
         await page.getByRole("menuitem", { name: "Delete" }).click()
         await page.locator("[data-e2e=note-delete-dialog]").getByRole("button", {
-          name: "Delete",
+          name: "Delete note",
           exact: true,
         }).click()
         await expect(page).toHaveURL("/notes")

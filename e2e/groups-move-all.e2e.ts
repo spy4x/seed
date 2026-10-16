@@ -79,7 +79,7 @@ test.describe("moving all of a group's data", () => {
 
       await signInOnline(watcherPage, watcher)
       await openNotes(watcherPage, "Target")
-      await expect(watcherPage.getByText("No notes yet.")).toBeVisible()
+      await expect(watcherPage.getByText("No notes yet")).toBeVisible()
 
       await gotoApp(
         ownerPage,

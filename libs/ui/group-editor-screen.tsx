@@ -133,11 +133,6 @@ export interface GroupEditorScreenProps {
   onLeave?: () => void
   /** The plan section (`BillingCard`), drawn under the members; left out, there is none. */
   billing?: ComponentChildren
-  /**
-   * The body of the "Invite people" dialog (`InviteForm`), given the function that closes it. Left
-   * out, or for a member who may not invite, there is no "Invite people" button.
-   */
-  invite?: (close: () => void) => ComponentChildren
   /** The pending invitations (`PendingInvitations`), drawn under the members. */
   pendingInvitations?: ComponentChildren
   /**
@@ -146,7 +141,7 @@ export interface GroupEditorScreenProps {
    */
   transfer?: (close: () => void) => ComponentChildren
   /**
-   * The groups the person may write to, other than this one. The menu offers "Move all data to..."
+   * The groups the person may write to, other than this one. The menu offers "Move all data to…"
    * to an editor or above, and only when there is a group to move to and `onMoveAll` is given.
    */
   moveTargets?: readonly MoveTarget[]
@@ -258,7 +253,6 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     leaveError = null,
     onLeave,
     billing,
-    invite,
     pendingInvitations,
     transfer,
     moveTargets = [],
@@ -271,7 +265,6 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     onMoveAllTargetChange,
   } = props
   const [dialog, setDialog] = useState<Dialog | null>(null)
-  const [inviting, setInviting] = useState(false)
   const close = () => {
     if (dialog === Dialog.MOVE_ALL) onMoveAllClose?.()
     setDialog(null)
@@ -421,14 +414,14 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         onRoleChange={onRoleChange}
         onRemove={onRemoveMember}
         navigate={navigate}
-        action={invite && canManageInvitations(group.role) && (
+        action={canManageInvitations(group.role) && (
           <Button
-            type="button"
+            href={GROUP_PATHS.invite(group.id)}
+            navigate={navigate}
             variant="outline"
             size="sm"
             class="min-h-11 sm:min-h-9"
             data-e2e="invite-open"
-            onClick={() => setInviting(true)}
           >
             <IconPlus class="size-4" aria-hidden="true" />
             Invite people
@@ -440,18 +433,6 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
 
       {billing}
 
-      {inviting && invite && (
-        <Modal
-          open
-          title="Invite people"
-          cancelLabel="Close"
-          closeOnBackdrop={false}
-          onClose={() => setInviting(false)}
-          dataE2E="invite-dialog"
-        >
-          {invite(() => setInviting(false))}
-        </Modal>
-      )}
       {dialog === Dialog.TRANSFER && canHandOver && (
         <Modal
           open
@@ -532,11 +513,11 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         >
           <div class="flex flex-col gap-4">
             <p class="text-sm text-muted" data-e2e="group-delete-confirmation">
-              It disappears for every member right away, with all its notes. Members who have it
+              It disappears for every member right away, with everything in it. Members who have it
               open are switched to another of their groups, and anyone left with no group gets a new
               empty one named "Personal". You can restore it from the Groups page for{" "}
               {GROUP_RESTORE_DAYS}{" "}
-              days. After that it and all its notes are deleted for good and cannot be recovered.
+              days. After that it and everything in it are deleted for good and cannot be recovered.
             </p>
             <ErrorState focusOnAppear message={freshDeleteError} dataE2E="group-delete-error" />
           </div>

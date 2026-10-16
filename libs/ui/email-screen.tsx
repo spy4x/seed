@@ -269,7 +269,7 @@ export function EmailScreen(
                         class="w-full sm:w-auto"
                         data-e2e="email-verify"
                         busy={pending.verify}
-                        busyLabel="Checking..."
+                        busyLabel="Checking…"
                       >
                         Verify
                       </Button>
@@ -287,7 +287,7 @@ export function EmailScreen(
                         class={TOUCH_TARGET}
                         data-e2e="email-send"
                         busy={pending.send}
-                        busyLabel="Sending..."
+                        busyLabel="Sending…"
                       >
                         Send a new code
                       </Button>
@@ -369,7 +369,7 @@ export function EmailScreen(
                     type="submit"
                     data-e2e="email-change"
                     busy={pending.change}
-                    busyLabel="Sending..."
+                    busyLabel="Sending…"
                   >
                     Send code
                   </Button>

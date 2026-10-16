@@ -104,7 +104,7 @@ export function ConfirmSignUpScreen(
             type="submit"
             variant="secondary"
             busy={busy}
-            busyLabel="Creating your account..."
+            busyLabel="Creating your account…"
             data-e2e="confirm-sign-up-create"
           >
             Create a new account

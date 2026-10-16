@@ -198,7 +198,7 @@ export function BillingCard(
       {billing === null
         ? (error
           ? <ErrorState message={error} />
-          : <p class="text-sm text-muted">Loading the plan...</p>)
+          : <p class="text-sm text-muted">Loading the plan…</p>)
         : (
           <div class="flex flex-col gap-4" data-e2e="billing-plan" data-plan={billing.planId}>
             <BillingNoticeBanner
@@ -314,7 +314,7 @@ export function PricingScreen(
     return (
       <Stack gap="xl">
         {header}
-        {error ? <ErrorState message={error} /> : <EmptyState title="Loading the plans..." />}
+        {error ? <ErrorState message={error} /> : <EmptyState title="Loading the plans…" />}
       </Stack>
     )
   }

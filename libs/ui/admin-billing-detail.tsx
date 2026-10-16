@@ -504,7 +504,7 @@ function ActionDialog(
       copy = {
         title: `Refund ${amount} to ${group}?`,
         submit: `Refund ${amount}`,
-        busy: `Refunding...`,
+        busy: `Refunding…`,
         danger: true,
       }
       body = payment && (
@@ -520,7 +520,7 @@ function ActionDialog(
       copy = {
         title: `Give ${group} time at no charge`,
         submit: `Give ${ADMIN_BILLING_TIME_LABELS[length]} at no charge`,
-        busy: `Saving...`,
+        busy: `Saving…`,
         danger: false,
       }
       body = (
@@ -549,7 +549,7 @@ function ActionDialog(
       copy = {
         title: `Cancel ${group}'s subscription?`,
         submit: `Cancel subscription`,
-        busy: `Cancelling...`,
+        busy: `Cancelling…`,
         danger: true,
       }
       body = (
@@ -595,7 +595,7 @@ function ActionDialog(
       copy = {
         title: `Keep ${group}'s subscription?`,
         submit: `Keep subscription`,
-        busy: `Saving...`,
+        busy: `Saving…`,
         danger: false,
       }
       body = (
