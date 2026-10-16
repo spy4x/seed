@@ -667,7 +667,7 @@ CREATE INDEX idx_api_tokens_group_id ON api_tokens (group_id);
 
 -- The audit rows of an account: sign-in, sign-out, profile, sessions and personal API tokens. See
 -- migration 2026_01_26_0002_auth_profiles_audit.sql and, for the event types, the migrations that
--- widen the check (the last is 2026_11_04_0001_sign_in_method_audit.sql). `identifier` is plain
+-- widen the check (the last is 2026_11_12_0001_push_device_removed_audit.sql). `identifier` is plain
 -- text with no foreign key, so a row outlives what it names.
 CREATE TABLE auth_audits (
     id SERIAL PRIMARY KEY,
@@ -680,7 +680,7 @@ CREATE TABLE auth_audits (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]))
 );
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);

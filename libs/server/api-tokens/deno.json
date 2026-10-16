@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check api-tokens.ts",
+    "check": "deno check api-tokens.ts admin-api-tokens.ts",
     "test": "deno test api-tokens.test.ts"
   }
 }

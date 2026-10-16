@@ -46,6 +46,17 @@ import {
   setUserRoleByAddress,
 } from "@server/auth/admin-users.ts"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
+import {
+  listAdminApiTokens,
+  listAdminUserApiTokens,
+  readApiTokenOwner,
+} from "@server/api-tokens/admin-api-tokens.ts"
+import {
+  listAdminNotifications,
+  listAdminPushDevices,
+  removeAdminPushDevice,
+} from "@server/notifications/admin-api-tokens.ts"
+import type { AdminApiTokenFilter } from "@domain/api-tokens"
 import type { AdminUserFilter, UserRole } from "@domain/identity"
 
 /** A user's authenticator-app enrolment, one row of `user_totp`. */
@@ -435,6 +446,31 @@ export class AppDbBase extends DbServiceBase {
           DELETE FROM user_totp WHERE user_id = ${userId} AND confirmed_at IS NOT NULL
           RETURNING user_id
         `).length === 1,
+    }
+  }
+
+  /**
+   * The operator area's API tokens, push devices and notifications of people (#427). Built per
+   * access, like `group`, so inside `begin()` a remove and its audit row share the transaction.
+   */
+  get adminApiTokens() {
+    const sql = this.sql
+    return {
+      /** One page of every live person's tokens in the filter's state, with the counts. */
+      list: (filter: AdminApiTokenFilter, pageSize: number, now: Date) =>
+        listAdminApiTokens(sql, filter, pageSize, now),
+      /** The person's newest tokens, revoked and expired ones among them. */
+      listForUser: (userId: number, limit: number, now: Date) =>
+        listAdminUserApiTokens(sql, userId, limit, now),
+      /** Whose the token is, or `null` when there is no such token. */
+      owner: (tokenId: string) => readApiTokenOwner(sql, tokenId),
+      /** The person's live push devices, without what can push to them. */
+      devices: (userId: number) => listAdminPushDevices(sql, userId),
+      /** Removes the person's device and answers the devices left, or `null` for no such device. */
+      removeDevice: (userId: number, deviceRowId: number) =>
+        removeAdminPushDevice(sql, userId, deviceRowId),
+      /** The person's newest notifications, kind and read state only, and their counts. */
+      notifications: (userId: number, limit: number) => listAdminNotifications(sql, userId, limit),
     }
   }
 }

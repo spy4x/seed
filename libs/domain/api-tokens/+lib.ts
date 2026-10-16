@@ -155,3 +155,99 @@ export function isApiTokenFormat(value: string): boolean {
 export function apiTokenExpiresAt(now: Date, days: number | null): Date | null {
   return days === null ? null : new Date(now.getTime() + days * 24 * 60 * 60_000)
 }
+
+// The operator area's API tokens (#427): every token across people, and one person's.
+
+/** Where a token stands for the operator: it works, its time ran out, or it was revoked. */
+export type AdminApiTokenState = "live" | "expired" | "revoked"
+
+/** Every {@link AdminApiTokenState}, in the order the page's filter shows them. */
+export const ADMIN_API_TOKEN_STATES: readonly AdminApiTokenState[] = ["live", "expired", "revoked"]
+
+/** How many tokens one page of the operator's list holds. */
+export const ADMIN_API_TOKENS_PAGE_SIZE = 25
+
+/** The most tokens one person's tab shows, newest first: live ones and those not purged yet. */
+export const ADMIN_USER_API_TOKENS_LIMIT = 100
+
+/** The person a token acts as, as the operator's list names them. */
+export interface AdminApiTokenOwner {
+  id: number
+  firstName: string
+  lastName: string
+  /** The address the person signs in with, or `null` when no key holds one. */
+  email: string | null
+}
+
+/**
+ * One token as the operator sees it: what it may do, where it stands and whose it is. Never its
+ * secret or the hash of it.
+ */
+export interface AdminApiToken {
+  /** A UUID. */
+  id: string
+  name: string
+  groupId: string
+  /** The group's name, or `null` when the group is gone. */
+  groupName: string | null
+  access: ApiTokenAccess
+  state: AdminApiTokenState
+  /** ISO 8601. */
+  createdAt: string
+  /** ISO 8601, or `null` for a token that never expires. */
+  expiresAt: string | null
+  /** ISO 8601, to within a few minutes; `null` until the token is first used. */
+  lastUsedAt: string | null
+  /** ISO 8601, or `null` while the token is not revoked. */
+  revokedAt: string | null
+  owner: AdminApiTokenOwner
+}
+
+/** How many tokens of every state there are, whatever the filter. */
+export type AdminApiTokenCounts = Record<AdminApiTokenState, number>
+
+/** The answer of `GET /api/admin/api-tokens`. */
+export interface AdminApiTokenListResponse {
+  tokens: AdminApiToken[]
+  /** How many tokens match the filter. */
+  total: number
+  page: number
+  pageSize: number
+  counts: AdminApiTokenCounts
+}
+
+/** The answer of `GET /api/admin/users/:id/api-tokens`: the person's tokens, newest first. */
+export interface AdminUserApiTokensResponse {
+  tokens: AdminApiToken[]
+}
+
+/** What the operator's token list shows: one state or every one, and which page. */
+export interface AdminApiTokenFilter {
+  state: AdminApiTokenState | null
+  page: number
+}
+
+/** The list with no filter: every token, page 1. */
+export const ADMIN_API_TOKEN_NO_FILTER: AdminApiTokenFilter = { state: null, page: 1 }
+
+/**
+ * The filter in the page's address or the API's query (`?state=live&page=2`). Anything it does not
+ * know reads as no filter and page 1, so a hand-edited address never fails.
+ */
+export function parseAdminApiTokenFilter(params: URLSearchParams): AdminApiTokenFilter {
+  const rawState = params.get("state")
+  const state = ADMIN_API_TOKEN_STATES.find((known) => known === rawState) ?? null
+  const pageNumber = Number(params.get("page"))
+  const page = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= 100_000
+    ? pageNumber
+    : 1
+  return { state, page }
+}
+
+/** The query of `filter`, without the parts that are the default; `""` for the plain list. */
+export function adminApiTokenFilterQuery(filter: AdminApiTokenFilter): string {
+  const params = new URLSearchParams()
+  if (filter.state) params.set("state", filter.state)
+  if (filter.page > 1) params.set("page", String(filter.page))
+  return params.toString()
+}

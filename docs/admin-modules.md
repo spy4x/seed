@@ -19,10 +19,13 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | `newsletter` | Newsletter    | `/newsletter`             |                                     | none yet                |
 | `audit`      | Audit log     | `/audit`                  |                                     | none yet                |
 | `system`     | System        | `/system`                 |                                     | none yet                |
-| `api-tokens` | API tokens    | `/api-tokens`             | API tokens, Devices, Notifications  | none yet                |
+| `api-tokens` | API tokens    | `/api-tokens`             | API tokens, Devices, Notifications  | `/api/admin/api-tokens*` |
 
 A module marked "none yet" is registered with a "coming soon" page (and tabs), so the sidebar shows
 the whole plan. Its own lane fills it in.
+
+The `api-tokens` module also answers a person's reads and its device removal under
+`/api/admin/users/:id/`: `api-tokens`, `devices`, `notifications` and `devices/:deviceId/remove`.
 
 ## The files of a module
 

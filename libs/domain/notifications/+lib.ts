@@ -185,3 +185,29 @@ export function describeNotification(
       return "You have a new notification."
   }
 }
+
+/** The most notifications the operator area shows of one person, newest first (#427). */
+export const ADMIN_NOTIFICATIONS_LIMIT = 50
+
+/**
+ * One notification as the operator sees it: its kind and whether it was read. Never its payload,
+ * which names the person's groups: the operator area reads facts, not what the person was told.
+ */
+export interface AdminNotification {
+  /** The row's id, as a string. */
+  id: string
+  kind: string
+  /** ISO 8601. */
+  createdAt: string
+  /** ISO 8601, or `null` while unread. */
+  readAt: string | null
+}
+
+/** The answer of `GET /api/admin/users/:id/notifications`. */
+export interface AdminNotificationsResponse {
+  /** The newest {@link ADMIN_NOTIFICATIONS_LIMIT}, newest first. */
+  notifications: AdminNotification[]
+  /** Every notification the person holds, and how many of them are unread. */
+  total: number
+  unread: number
+}

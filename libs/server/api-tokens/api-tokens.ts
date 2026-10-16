@@ -69,6 +69,8 @@ export type ApiTokenRevokeReason =
   | "membership-ended"
   /** The group was deleted. */
   | "group-deleted"
+  /** An operator revoked it in the operator area (#427); names the operator, as `operator:7`. */
+  | `operator:${number}`
 
 /** Why a request with a token was refused, as its audit row says it. */
 export type ApiTokenRefusalReason =

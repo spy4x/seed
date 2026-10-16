@@ -1,5 +1,5 @@
 import type { Hono, MiddlewareHandler } from "hono"
-import type { UserSignedOutEvent } from "@api/cqrs/events.ts"
+import type { PushDevicesUpdatedEvent, UserSignedOutEvent } from "@api/cqrs/events.ts"
 import type { AppDbBase } from "@api/services/db-base.ts"
 import type { APIContext } from "../../_types.ts"
 
@@ -11,8 +11,11 @@ export interface AdminModuleContext {
   db: AppDbBase
   /** The normal per-user budget the session routes spend too. Every module route spends it. */
   limit: MiddlewareHandler<APIContext>
-  /** Closes a person's sockets after their sessions end. */
-  emit(event: UserSignedOutEvent): void
+  /**
+   * Closes a person's sockets after their sessions end, or tells their open tabs that their push
+   * devices changed.
+   */
+  emit(event: UserSignedOutEvent | PushDevicesUpdatedEvent): void
   now(): Date
 }
 

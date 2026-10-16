@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check postgres-notification-repository.ts create-notification.ts notification-cursor.ts notification-hint.ts purge-notifications.ts",
+    "check": "deno check postgres-notification-repository.ts admin-api-tokens.ts create-notification.ts notification-cursor.ts notification-hint.ts purge-notifications.ts",
     "test": "deno test notification-cursor.test.ts notification-hint.test.ts"
   }
 }
