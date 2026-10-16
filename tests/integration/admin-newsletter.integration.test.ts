@@ -240,7 +240,7 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
       expect((await listed({ status: `pending` })).total).toBe(1)
       expect((await audits()).at(-1)).toEqual({
         eventType: AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT,
-        identifier: `news:c***@example.com`,
+        identifier: `news:c***@e***.com`,
       })
     })
 
@@ -270,7 +270,7 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
         )
         expect((await audits()).at(-1)).toEqual({
           eventType: AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED,
-          identifier: `news:b***@example.com`,
+          identifier: `news:b***@e***.com`,
         })
       },
     )

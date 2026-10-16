@@ -261,7 +261,7 @@ describe(`operator area: newsletter routes`, () => {
     expect(audits).toEqual([{
       userId: 7,
       eventType: AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED,
-      identifier: `news:b***@example.com`,
+      identifier: `news:b***@e***.com`,
       ip: null,
       userAgent: null,
     }])
@@ -274,7 +274,7 @@ describe(`operator area: newsletter routes`, () => {
     expect(response.status).toBe(500)
     expect(calls).toEqual([[`find`, pending.email], [`remove`, pending.email]])
     expect(audits.map((row) => [row.userId, row.eventType, row.identifier])).toEqual([
-      [7, AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED, `news:b***@example.com`],
+      [7, AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED, `news:b***@e***.com`],
     ])
   })
 
@@ -321,7 +321,7 @@ describe(`operator area: newsletter routes`, () => {
     expect(response.status).toBe(202)
     expect(calls).toEqual([[`find`, pending.email], [`resend`, pending.email]])
     expect(audits.map((row) => [row.userId, row.eventType, row.identifier])).toEqual([
-      [7, AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT, `news:b***@example.com`],
+      [7, AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT, `news:b***@e***.com`],
     ])
   })
 

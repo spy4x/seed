@@ -382,7 +382,7 @@ export enum AuthAuditEventType {
   PUSH_DEVICE_REMOVED = 18,
   /**
    * An operator removed an address from a mailing list (#428). The row is on the operator; its
-   * `identifier` is the list and the masked address (`news:j***@example.com`), never the address
+   * `identifier` is the list and the masked address (`news:j***@e***.com`), never the address
    * itself, which the removal erased.
    */
   NEWSLETTER_SUBSCRIBER_REMOVED = 19,

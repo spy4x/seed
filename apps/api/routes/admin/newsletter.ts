@@ -105,7 +105,7 @@ export interface AdminNewsletterRouteDependencies {
  *   another site cannot make an operator's browser run it.
  *
  * Each action writes an audit row on the operator before it acts, so no change goes unrecorded;
- * the row masks the address (`news:j***@example.com`), because a removal must not keep it.
+ * the row masks the address (`news:j***@e***.com`), because a removal must not keep it.
  */
 export function createAdminNewsletterRoutes(
   { limit, newsletter, list, now }: AdminNewsletterRouteDependencies,
@@ -142,7 +142,11 @@ export function createAdminNewsletterRoutes(
       const email = await addressOf(c)
       if (email === null) return c.json({ error: NEWSLETTER_INVALID_ADDRESS }, 400)
       if (!await newsletter.find(email)) return c.json({ error: NEWSLETTER_NOT_LISTED }, 404)
-      await audit(c, AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED, maskEmail(email))
+      await audit(
+        c,
+        AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED,
+        maskEmail(email, { domain: true }),
+      )
       await newsletter.remove(email)
       return c.json({ removed: true })
     })
@@ -155,7 +159,11 @@ export function createAdminNewsletterRoutes(
       if (found.status === `confirmed`) {
         return c.json({ error: NEWSLETTER_ALREADY_CONFIRMED }, 409)
       }
-      await audit(c, AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT, maskEmail(email))
+      await audit(
+        c,
+        AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT,
+        maskEmail(email, { domain: true }),
+      )
       await newsletter.resend(email)
       return c.json({}, 202)
     })
