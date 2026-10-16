@@ -9,6 +9,7 @@ import {
   pageMiddleware,
   securityHeadersMiddleware,
 } from "./middleware.ts"
+import { REPOSITORY_URL } from "./brand.ts"
 import type { State } from "./utils.ts"
 
 const config = {
@@ -454,7 +455,7 @@ describe("the subscription pages while subscriptions are off", () => {
     ["an unsubscribe", () => formPost("/unsubscribe", token)],
   ]
   for (const [name, request] of requests) {
-    it(`answers ${name} with a notice that the newsletter is off, no form, and no call to the API`, async () => {
+    it(`answers ${name} with a heading, a notice that the newsletter is off, a next step, no form, and no call to the API`, async () => {
       const { calls, fetch } = fakeApi(() => Response.json({ error: "off" }, { status: 503 }))
 
       const response = await appWith(fetch, off)(request(), info)
@@ -462,6 +463,10 @@ describe("the subscription pages while subscriptions are off", () => {
       expect(response.status).toBe(503)
       const page = await response.text()
       expect(page).toContain("The newsletter is off")
+      expect(page).toMatch(/<h1\b[^>]*>The Seed newsletter<\/h1>/)
+      expect(page.match(/<a [^>]*data-e2e="newsletter-off-releases"[^>]*>/)?.[0]).toContain(
+        `href="${REPOSITORY_URL}/releases"`,
+      )
       expect(page).toContain(`data-e2e="site-brand"`)
       expect(page).not.toContain("<form")
       expect(page).not.toContain("Try again in a minute")

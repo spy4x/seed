@@ -7,7 +7,7 @@ test.use({ javaScriptEnabled: false })
 test("a visitor without JavaScript goes from the home page to pricing, to sign-up and subscribes", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "The groundwork of a SaaS, already built.",
+    "The groundwork of your SaaS, already built.",
   )
 
   await page.getByRole("navigation", { name: "Main navigation" }).first()
@@ -45,10 +45,22 @@ test("the home page fits a 375 px phone: the quick start scrolls inside its own 
 
   const pageWidth = await page.evaluate(() => document.documentElement.scrollWidth)
   expect(pageWidth).toBeLessThanOrEqual(375)
-  const quickStart = page.locator("#quick-start pre")
-  const box = await quickStart.evaluate((pre) => ({
-    client: pre.clientWidth,
-    scroll: pre.scrollWidth,
+  const quickStart = page.locator("#quick-start").getByRole("group", { name: "Terminal" })
+  const box = await quickStart.evaluate((terminal) => ({
+    client: terminal.clientWidth,
+    scroll: terminal.scrollWidth,
   }))
   expect(box.scroll).toBeGreaterThan(box.client)
+})
+
+test("a keyboard user skips the header: the first Tab shows the skip link and Enter lands on the content", async ({ page }) => {
+  await page.goto("/privacy")
+
+  await page.keyboard.press("Tab")
+  const skip = page.getByRole("link", { name: "Skip to content" })
+  await expect(skip).toBeFocused()
+  await expect(skip).toBeInViewport()
+  await page.keyboard.press("Enter")
+  await expect(page).toHaveURL(/#main$/)
+  await expect(page.getByRole("main")).toBeFocused()
 })

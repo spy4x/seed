@@ -1,227 +1,543 @@
 import type { JSX } from "preact"
+import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
+import {
+  IconArrowRight,
+  IconCheck,
+  IconCreditCard,
+  IconGitHub,
+  IconGlobe,
+  IconMinus,
+  IconServer,
+  IconShieldCheck,
+  IconUsers,
+  IconZap,
+} from "@spy4x/preact-icons"
+import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
-import { Card, CardBody } from "@spy4x/preact-ui/card"
-import { Cluster, Grid, Section } from "@spy4x/preact-ui/layout"
-import { REPOSITORY_URL, SiteFrame, spaLinks } from "../site.tsx"
+import { FaqList } from "@spy4x/preact-ui/faq-list"
+import { Input } from "@spy4x/preact-ui/input"
+import { StatusMark } from "@spy4x/preact-ui/status-mark"
+import { WindowFrame } from "@spy4x/preact-ui/window-frame"
+import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { FORM_ACTIONS } from "@ui/progressive.tsx"
+import { ArchitectureDiagram } from "../components/architecture-diagram.tsx"
+import { Band } from "../components/band.tsx"
+import { CtaBand } from "../components/cta-band.tsx"
+import { FeatureCard } from "../components/feature-card.tsx"
+import { FoundersHandoff } from "../components/founders-handoff.tsx"
+import { ProofStrip } from "../components/proof-strip.tsx"
+import { SectionIntro } from "../components/section-intro.tsx"
+import { Shot } from "../components/shot.tsx"
+import {
+  AUTHOR_URL,
+  PERSON_JSON_LD,
+  REPOSITORY_URL,
+  SITE_NAME,
+  SiteFrame,
+  type SitePageHead,
+  spaLinks,
+} from "../site.tsx"
 import { define } from "../utils.ts"
 
-const FEATURES = [
-  {
-    title: "Sign-in that is done",
-    text: "Sign-up, sign-in and sessions in a signed cookie. E-mail verification by one-time " +
-      "code, password reset and an authenticator-app second factor.",
-  },
-  {
-    title: "Groups with roles",
-    text: "Every account gets a group at sign-up. Invite members, give them roles from viewer " +
-      "to owner, hand ownership over. Groups are the one boundary every rule checks.",
-  },
-  {
-    title: "Billing per member",
-    text: "Stripe subscriptions per group: a free plan with limits, a paid plan per member, " +
-      "trials, cancelling and notices when a payment fails.",
-  },
-  {
-    title: "Realtime",
-    text: "A change reaches every open tab over a WebSocket, and an app that wakes up from the " +
-      "background catches up on what it missed.",
-  },
-  {
-    title: "An app that works offline",
-    text: "The web app installs like a native one, opens with no network and queues writes. A " +
-      "write that went stale shows as a conflict to settle, never as a silent overwrite.",
-  },
-  {
-    title: "Web push",
-    text: "People allow notifications once and get them on their phone or desktop, with the " +
-      "keys created for you.",
-  },
-  {
-    title: "A worker with an outbox",
-    text: "The API writes an event in the same transaction as the change; the worker sends the " +
-      "mail and does the slow work after, so nothing is lost when a step fails.",
-  },
-  {
-    title: "Deploy to your own server",
-    text: "Docker Compose for development and one-server production: Traefik with certificates, " +
-      "Postgres, Valkey, MinIO, VictoriaMetrics, VictoriaLogs and Grafana.",
-  },
-  {
-    title: "A public website",
-    text: "This site: rendered on the server, works with JavaScript turned off, with pricing, " +
-      "legal pages and a newsletter with double opt-in.",
-  },
+/** The home page's title and description, as search results and social previews show them. */
+export const HOME_HEAD = {
+  title: `Seed: open-source SaaS starter you host on one server`,
+  description: `Free, MIT-licensed SaaS starter: sign-in with 2FA, teams with roles, per-seat ` +
+    `Stripe billing, realtime and an offline app. Deno, Postgres, Docker Compose.`,
+} as const
+
+/**
+ * Facts a visitor can check in the repository. Counted on 2026-10-16: `ls e2e/*.e2e.ts`,
+ * `git ls-files '*.test.ts*'` and the merged pull requests on GitHub.
+ */
+const PROOF = [
+  { value: `34 · 232`, label: `browser test suites and test files run in CI` },
+  { value: `208`, label: `pull requests merged since January 2026, each through review` },
+  { value: `MIT`, label: `licence: no account, no paywall` },
 ] as const
 
-const PARTS = [
-  {
-    name: "The API",
-    text: "Hono on Deno. It holds every rule: who may do what, in which group. It is the only " +
-      "part that writes to Postgres.",
-  },
-  {
-    name: "The web app",
-    text: "Preact. It is what your users sign in to. It calls the API and listens on a " +
-      "WebSocket, so it shows other people's changes as they happen.",
-  },
-  {
-    name: "The worker",
-    text: "It reads the events the API wrote next to each change and does the slow work: mail, " +
-      "notifications, clean-up.",
-  },
-  {
-    name: "The website",
-    text: "Fresh, rendered on the server, like this page. It explains your product and links " +
-      "into the app.",
-  },
+/** The quick start, one command per line, as the README runs it. */
+export const QUICK_START = [
+  `gh repo create my-product --template spy4x/template --private --clone`,
+  `cd my-product`,
+  `cp infra/envs/.env.example infra/envs/.env   # then fill in the secrets`,
+  `deno task vapid-key:create`,
+  `deno task proxy:start`,
+  `deno task dev`,
 ] as const
-
-const QUICK_START = [
-  "gh repo create my-product --template spy4x/template --private --clone",
-  "cd my-product",
-  "cp infra/envs/.env.example infra/envs/.env   # then fill in the secrets",
-  "deno task vapid-key:create",
-  "deno task proxy:start",
-  "deno task dev",
-].join("\n")
 
 const WORKS_TODAY = [
-  "Sign-up, sign-in, e-mail verification, password reset and the second factor",
-  "Groups with members, roles, invitations and ownership transfer",
-  "Billing per member with trials, through Stripe",
-  "Notes, the example feature to copy for your own",
-  "Realtime updates, the offline app and web push",
-  "The outbox worker, the mailing list and this website",
-]
+  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, the second factor`,
+  `Groups with members, roles, invitations and ownership transfer`,
+  `Billing per member with trials, through Stripe`,
+  `Account deletion with a 7-day undo`,
+  `Personal API tokens`,
+  `Realtime, the offline app and web push`,
+  `The admin area`,
+  `The outbox worker, the newsletter and this website`,
+] as const
 
-const NOT_YET = [
-  "Sign-in with Google, GitHub or passkeys",
-  "Downloading an account's data",
-  "Parts of the worker",
-]
+const NOT_BUILT = [
+  `Passkeys and magic links`,
+  `Translations: the app is English only`,
+  `File uploads: MinIO runs, nothing stores files in it yet`,
+  `Downloading an account's data`,
+  `Parts of the worker`,
+] as const
 
-function List({ items }: { items: readonly string[] }): JSX.Element {
+/** The questions, with each answer as plain text for the FAQ's structured data. */
+const FAQ = [
+  {
+    id: `faq-free`,
+    question: `Is Seed really free?`,
+    answerText: `Yes. It is MIT-licensed: use it for any number of products, commercial or not, ` +
+      `publish your fork, no account needed. You pay only for the server you run it on and for ` +
+      `services you turn on, such as Stripe or an email provider.`,
+  },
+  {
+    id: `faq-stack`,
+    question: `Why Deno and Preact instead of Next.js?`,
+    answerText: `They run on web standards (fetch, Request, Web Crypto, ES modules), start fast ` +
+      `and need few dependencies, so there is less to update and less that breaks. If your team ` +
+      `lives in the Next.js ecosystem, a Next.js starter will suit you better; the comparison ` +
+      `names good ones.`,
+  },
+  {
+    id: `faq-client-work`,
+    question: `Can I use it for client work?`,
+    answerText: `Yes. MIT allows it, and that is how I use it. Your client needs no licence of ` +
+      `their own.`,
+  },
+  {
+    id: `faq-production`,
+    question: `Is it production-ready?`,
+    answerText: `The parts listed under "Works today" have tests in CI: every pull request ` +
+      `runs the sign-in, profile, notes and groups tests, and the full suite runs after each ` +
+      `merge. Seed as a whole is still a work in progress; read the status list before you ` +
+      `rely on a part.`,
+  },
+] as const
+
+/** The page's structured data: the site, the software and its author, and the questions. */
+function homeJsonLd(origin: string): unknown[] {
+  return [
+    { "@type": `WebSite`, "@id": `${origin}/#website`, name: SITE_NAME, url: `${origin}/` },
+    {
+      "@type": `SoftwareSourceCode`,
+      name: SITE_NAME,
+      description: HOME_HEAD.description,
+      codeRepository: REPOSITORY_URL,
+      license: `https://opensource.org/licenses/MIT`,
+      programmingLanguage: `TypeScript`,
+      runtimePlatform: `Deno`,
+      author: { "@id": PERSON_JSON_LD["@id"] },
+    },
+    PERSON_JSON_LD,
+    faqPageJsonLd(FAQ),
+  ]
+}
+
+function Hero({ demoHref }: { demoHref: string }): JSX.Element {
   return (
-    <ul class="list-disc space-y-2 pl-6">
-      {items.map((item) => <li key={item}>{item}</li>)}
-    </ul>
+    <section aria-labelledby="hero-title" class="relative overflow-hidden">
+      <div aria-hidden="true" class="site-grid pointer-events-none absolute inset-0" />
+      <div class="site-glow relative">
+        <div class="mx-auto flex w-full max-w-6xl flex-col gap-12 px-4 pb-12 pt-12 sm:px-6 lg:px-8 lg:pb-16 lg:pt-16">
+          <div class="mx-auto flex max-w-3xl flex-col items-start gap-6 sm:items-center sm:text-center">
+            <Badge
+              href={REPOSITORY_URL}
+              text="Open source · MIT · Deno 2 + Postgres"
+              type="outline"
+            />
+            <h1
+              id="hero-title"
+              class="text-4xl font-semibold tracking-tight text-balance sm:text-5xl lg:text-6xl"
+            >
+              The groundwork of your SaaS, already built.
+            </h1>
+            <p class="text-lg text-muted text-pretty">
+              Seed is a free starter for web products that many people use together. Sign-in with a
+              second factor, teams with roles, per-seat Stripe billing, realtime, an offline app and
+              an admin area are wired together and tested. You deploy it to one server you own with
+              Docker Compose, and your first week goes to your product.
+            </p>
+            <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
+              <Button href={demoHref} size="lg" data-e2e="home-try-demo">Try the live demo</Button>
+              <Button href={REPOSITORY_URL} variant="outline" size="lg">
+                <IconGitHub class="size-5" /> View on GitHub
+              </Button>
+            </div>
+            <p class="text-sm text-muted">
+              The demo is the app you get on day one, with nothing added. Seed is a work in
+              progress, built in public:{" "}
+              <a href="#status" class="text-primary underline">see what works today</a>.
+            </p>
+          </div>
+          {/* Reading order is text, then code, then picture; from `lg` the code overlaps the picture. */}
+          <div class="relative flex flex-col gap-6 lg:block lg:pb-12">
+            <WindowFrame
+              variant="terminal"
+              title="Quick start"
+              class="lg:absolute lg:bottom-0 lg:left-0 lg:z-10 lg:w-lg"
+            >
+              {[QUICK_START[0], QUICK_START[4], QUICK_START[5]].map((line) => `$ ${line}`).join(
+                `\n`,
+              )}
+            </WindowFrame>
+            <WindowFrame
+              variant="browser"
+              title="app.seedsaas.com/notes"
+              class="lg:ml-auto lg:w-5/6"
+            >
+              <Shot
+                name="notes"
+                alt="The notes screen of the Seed web app: a list of a group's notes with their authors, and a button to add one."
+                sizes="(min-width: 1024px) 960px, 100vw"
+                priority
+              />
+            </WindowFrame>
+          </div>
+        </div>
+      </div>
+    </section>
   )
 }
 
-/** The home page: what Template is, who it is for, how it works, how to start, and its status. */
+function Features(): JSX.Element {
+  return (
+    <Band id="features" labelledBy="features-title">
+      <div class="flex flex-col gap-12">
+        <SectionIntro
+          id="features-title"
+          eyebrow="What you get"
+          title="Everything before your first feature"
+          lead="Each part below works today and is tested in CI. Google and GitHub sign-in and Stripe billing need your own keys, so they are off in the demo."
+        />
+        <div class="grid gap-6 lg:grid-cols-3">
+          <FeatureCard
+            id="feature-sign-in"
+            title="Sign-in that is done"
+            Icon={IconShieldCheck}
+            href="/features#sign-in"
+            wide
+            media={
+              <Shot
+                name="profile-security"
+                alt="The security page of a profile: the sign-in methods, the second factor and the open sessions."
+                sizes="(min-width: 1024px) 640px, 100vw"
+              />
+            }
+          >
+            Email and password with verification codes, password reset, Google and GitHub sign-in,
+            and an authenticator-app second factor. Sessions you can see and end.
+          </FeatureCard>
+          <FeatureCard
+            id="feature-billing"
+            title="Billing per member"
+            Icon={IconCreditCard}
+            href="/features#billing"
+          >
+            Stripe subscriptions per group: a free plan with limits, a paid plan per member, trials,
+            a grace period when a card fails. The owner confirms the price before each invite.
+          </FeatureCard>
+          <FeatureCard
+            id="feature-realtime"
+            title="Realtime and offline"
+            Icon={IconZap}
+            href="/features#realtime"
+          >
+            Changes reach every open tab over a WebSocket. The app installs, opens without a
+            network, queues writes and shows a conflict instead of overwriting someone's work.
+          </FeatureCard>
+          <FeatureCard
+            id="feature-teams"
+            title="Teams from day one"
+            Icon={IconUsers}
+            href="/features#teams"
+            wide
+            media={
+              <Shot
+                name="group-members"
+                alt="The members page of a group: each member with their role, and a button to invite someone."
+                sizes="(min-width: 1024px) 640px, 100vw"
+              />
+            }
+          >
+            Every account gets a group at sign-up. Invite people, give them roles from viewer to
+            owner, hand ownership over, restore a deleted group for 30 days.
+          </FeatureCard>
+          <FeatureCard
+            id="feature-admin"
+            title="An admin area"
+            Icon={IconServer}
+            href="/features#admin"
+          >
+            Operators find a person, see their sign-in methods, sessions, groups and audit trail,
+            and block them or end their sessions. On its own host, with every action logged.
+          </FeatureCard>
+          <FeatureCard
+            id="feature-website"
+            title="A public website"
+            Icon={IconGlobe}
+            href="/features#website"
+          >
+            This site: server-rendered, works with JavaScript turned off, with pricing from your
+            plan catalog, legal pages and a double opt-in newsletter.
+          </FeatureCard>
+          <a
+            href="/features"
+            class="site-lift flex items-center justify-between gap-4 rounded-card border border-dashed border-strong p-6 text-lg font-semibold hover:border-primary"
+            data-e2e="home-all-features"
+          >
+            All features, with screenshots and status
+            <IconArrowRight class="size-5 text-primary" />
+          </a>
+        </div>
+      </div>
+    </Band>
+  )
+}
+
+function OneServer(): JSX.Element {
+  return (
+    <Band tone="alt" id="one-server" labelledBy="one-server-title">
+      <div class="grid items-center gap-12 lg:grid-cols-2">
+        <div class="flex flex-col gap-6">
+          <SectionIntro
+            id="one-server-title"
+            eyebrow="Runs on one server you own"
+            title={
+              <>
+                One server, one <code class="font-mono">docker compose</code>, no surprise bills.
+              </>
+            }
+          />
+          <p class="text-muted text-pretty">
+            Seed runs on any Linux server you rent. Compose starts the API, the worker, the web app,
+            Postgres, Valkey and Traefik with automatic certificates. Metrics and logs go to
+            VictoriaMetrics and VictoriaLogs with Grafana on top, and a backup container saves an
+            encrypted copy of the database every day. Several products can share one server. Nothing
+            bills you per request, so a traffic spike costs you nothing extra.
+          </p>
+          <p class="text-sm text-muted">
+            Skip Seed if you want serverless functions or Vercel: it is built for a server you
+            control.
+          </p>
+        </div>
+        <ArchitectureDiagram />
+      </div>
+    </Band>
+  )
+}
+
+function QuickStart(): JSX.Element {
+  return (
+    <Band id="quick-start" labelledBy="quick-start-title">
+      <div class="grid gap-8 lg:grid-cols-12 lg:items-start">
+        <div class="flex flex-col gap-4 lg:col-span-5">
+          <SectionIntro
+            id="quick-start-title"
+            eyebrow="Quick start"
+            title="Running locally in six commands"
+          />
+          <p class="text-muted">You need Deno 2, Docker and the GitHub CLI.</p>
+          <p class="text-muted text-pretty">
+            Then open <code class="font-mono text-foreground">http://app.localhost</code>. The{" "}
+            <a href={`${REPOSITORY_URL}#readme`} class="text-primary underline">README</a>{" "}
+            lists every secret and how to deploy.
+          </p>
+        </div>
+        <WindowFrame variant="terminal" title="Terminal" class="min-w-0 lg:col-span-7">
+          {QUICK_START.map((line) => `$ ${line}`).join(`\n`)}
+        </WindowFrame>
+      </div>
+    </Band>
+  )
+}
+
+function Status(): JSX.Element {
+  return (
+    <Band tone="alt" id="status" labelledBy="status-title">
+      <div class="flex flex-col gap-8">
+        <SectionIntro
+          id="status-title"
+          eyebrow="Honest status"
+          title="Where it stands today"
+          lead="Seed is a work in progress. Here is exactly what works and what does not."
+        />
+        <div class="grid gap-6 md:grid-cols-2">
+          <section
+            aria-labelledby="works-title"
+            class="rounded-card border border-subtle bg-canvas p-6"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 id="works-title" class="text-lg font-semibold">Works today</h3>
+              <StatusMark status="ready" />
+            </div>
+            <ul class="mt-4 flex flex-col gap-3">
+              {WORKS_TODAY.map((item) => (
+                <li key={item} class="flex items-start gap-2">
+                  <IconCheck class="mt-1 size-4 shrink-0 text-primary" />
+                  <span class="text-pretty">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <section
+            aria-labelledby="not-built-title"
+            class="rounded-card border border-subtle bg-canvas p-6"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 id="not-built-title" class="text-lg font-semibold">Not built yet</h3>
+              <StatusMark status="wip" />
+            </div>
+            <ul class="mt-4 flex flex-col gap-3">
+              {NOT_BUILT.map((item) => (
+                <li key={item} class="flex items-start gap-2">
+                  <IconMinus class="mt-1 size-4 shrink-0 text-muted" />
+                  <span class="text-pretty">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+        <a
+          href={`${REPOSITORY_URL}/issues`}
+          class="inline-flex items-center gap-1 self-start font-medium text-primary hover:underline"
+        >
+          Follow progress on GitHub <IconArrowRight class="size-4" />
+        </a>
+      </div>
+    </Band>
+  )
+}
+
+function WhoBuilds(): JSX.Element {
+  return (
+    <Band id="who" labelledBy="who-title" width="3xl">
+      <div class="flex flex-col gap-6">
+        <SectionIntro
+          id="who-title"
+          eyebrow="Who builds Seed"
+          title="Built by one engineer, for real client work"
+        />
+        <p class="text-lg text-muted text-pretty">
+          I'm Anton Shubin, a senior full-stack engineer and tech lead, freelancing since 2013. Seed
+          is the groundwork I kept rebuilding for clients, pulled into one repository. I use it for
+          paid MVPs, so it gets fixed when it breaks. If something is missing for your product, open
+          an issue or write to me.
+        </p>
+        <ul class="flex flex-wrap gap-x-6 gap-y-2 font-medium">
+          <li>
+            <a href={AUTHOR_URL} class="text-primary underline">antonshubin.com</a>
+          </li>
+          <li>
+            <a
+              href="https://www.upwork.com/freelancers/ashubin"
+              class="text-primary underline"
+            >
+              Upwork profile
+            </a>
+          </li>
+          <li>
+            <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">GitHub issues</a>
+          </li>
+        </ul>
+      </div>
+    </Band>
+  )
+}
+
+function Newsletter(): JSX.Element {
+  return (
+    <Band tone="alt" id="newsletter" labelledBy="newsletter-title" width="3xl">
+      <div class="flex flex-col gap-6">
+        <SectionIntro
+          id="newsletter-title"
+          title="Get a short email when Seed changes"
+          lead="What shipped, what broke, what I learned building it. No other mail, and one click unsubscribes."
+        />
+        <form
+          method="post"
+          action={FORM_ACTIONS.subscribe}
+          class="flex flex-col gap-2"
+          data-e2e="home-subscribe"
+        >
+          <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
+          <label for="home-email" class="text-sm font-medium">Email address</label>
+          <div class="flex flex-col gap-2 sm:flex-row">
+            <Input
+              id="home-email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              required
+              aria-describedby="home-email-hint"
+              data-e2e="home-subscribe-email"
+            />
+            <Button type="submit" data-e2e="home-subscribe-submit">Subscribe</Button>
+          </div>
+          <p id="home-email-hint" class="text-sm text-muted">You confirm by email first.</p>
+        </form>
+      </div>
+    </Band>
+  )
+}
+
+function Questions(): JSX.Element {
+  return (
+    <Band id="faq" labelledBy="faq-title" width="3xl">
+      <div class="flex flex-col gap-8">
+        <SectionIntro id="faq-title" eyebrow="Questions" title="Before you start" />
+        <FaqList
+          items={FAQ.map((item) => ({
+            id: item.id,
+            question: item.question,
+            answer: item.id === `faq-stack`
+              ? (
+                <p>
+                  They run on web standards (<code>fetch</code>,{" "}
+                  <code>Request</code>, Web Crypto, ES modules), start fast and need few
+                  dependencies, so there is less to update and less that breaks. If your team lives
+                  in the Next.js ecosystem, a Next.js starter will suit you better;{" "}
+                  <a href="/compare" class="text-primary underline">the comparison</a>{" "}
+                  names good ones.
+                </p>
+              )
+              : <p>{item.answerText}</p>,
+          }))}
+        />
+      </div>
+    </Band>
+  )
+}
+
+/**
+ * The home page: what Seed is and the way into the demo first, then proof, the features, how it
+ * runs, the quick start, what works today, the way in for founders, who builds it, the newsletter
+ * and the questions. One ask throughout: try the demo.
+ */
 export default define.page(function Home({ state }) {
   const spa = spaLinks(state.spaOrigin)
+  const head: SitePageHead = {
+    ...HOME_HEAD,
+    og: `home`,
+    jsonLd: homeJsonLd(state.webAppOrigin),
+  }
   return (
-    <SiteFrame
-      state={state}
-      path="/"
-      head={{
-        title: "Template: an open-source SaaS starter on Deno",
-        description: "Sign-up with a second factor, groups with roles, billing per member, " +
-          "realtime and an offline app, wired together and MIT-licensed. Try the live demo.",
-      }}
-    >
-      <section class="flex flex-col gap-6 py-8" aria-labelledby="hero-title">
-        <p class="text-sm font-semibold text-muted">Open source · MIT · Deno 2</p>
-        <h1 id="hero-title" class="max-w-3xl text-4xl font-bold sm:text-5xl">
-          The groundwork of a SaaS, already built.
-        </h1>
-        <p class="max-w-2xl text-lg text-muted">
-          Template is an open-source starter for multi-user web products. Accounts with a second
-          factor, groups with roles, billing per member, realtime and an offline app are wired
-          together, so your first week goes to your product, not to sign-in.
-        </p>
-        <Cluster gap="md">
-          <Button href={spa.signUp} size="lg" data-e2e="home-try-demo">Try the live demo</Button>
-          <Button href={REPOSITORY_URL} variant="outline" size="lg">View on GitHub</Button>
-        </Cluster>
-        <p class="text-sm text-muted">
-          The demo is the app you get on day one, with nothing added.
-        </p>
-      </section>
-
-      <Section title="Who it is for">
-        <p class="max-w-3xl">
-          Developers starting a product that many people use together, who want sign-in, groups,
-          billing and deployment settled before the first feature. It runs on a server you control.
-          Skip it if you deploy to serverless functions.
-        </p>
-      </Section>
-
-      <Section id="features" title="What you get" description="Each part works today.">
-        <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((feature) => (
-            <li key={feature.title}>
-              <Card class="h-full">
-                <CardBody>
-                  <h3 class="font-semibold">{feature.title}</h3>
-                  <p class="mt-2 text-sm text-muted">{feature.text}</p>
-                </CardBody>
-              </Card>
-            </li>
-          ))}
-        </ul>
-      </Section>
-
-      <Section
-        id="how-it-works"
-        title="How it works"
-        description="Four parts, one repository, one server."
-      >
-        <ol class="grid gap-4 sm:grid-cols-2">
-          {PARTS.map((part, index) => (
-            <li key={part.name} class="flex gap-4">
-              <span class="text-2xl font-bold text-muted" aria-hidden="true">{index + 1}</span>
-              <div>
-                <h3 class="font-semibold">{part.name}</h3>
-                <p class="mt-1 text-sm text-muted">{part.text}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      <Section
-        id="quick-start"
-        title="Quick start"
-        description="You need Deno 2, Docker and the GitHub CLI."
-      >
-        <pre class="overflow-x-auto rounded-md border border-subtle bg-surface p-4 text-sm"><code>{QUICK_START}</code></pre>
-        <p>
-          Then open the address in <code>DOMAIN</code>, <code>app.localhost</code>{" "}
-          by default. The README lists every secret to fill in and how to deploy.
-        </p>
-      </Section>
-
-      <Section
-        id="status"
-        title="Honest status"
-        description="Work in progress, built in public. Here is where it stands."
-      >
-        <Grid gap="lg" minColumnWidth="lg">
-          <div>
-            <h3 class="mb-2 font-semibold">Works today</h3>
-            <List items={WORKS_TODAY} />
-          </div>
-          <div>
-            <h3 class="mb-2 font-semibold">Not built yet</h3>
-            <List items={NOT_YET} />
-          </div>
-        </Grid>
-      </Section>
-
-      <Section title="Built in public">
-        <p class="max-w-3xl">
-          I'm Anton Shubin. I build client MVPs on this template and develop it in the open. If
-          something is missing for your product, or you just want to say what you think,{" "}
-          <a href={`${REPOSITORY_URL}/issues`} class="underline">open an issue</a> or{" "}
-          <a href="https://antonshubin.com" class="underline">write to me</a>.
-        </p>
-        <Cluster gap="md">
-          <Button href={spa.signUp}>Try the live demo</Button>
-          <Button href={REPOSITORY_URL} variant="outline">View on GitHub</Button>
-        </Cluster>
-      </Section>
+    <SiteFrame state={state} path="/" head={head} footerNewsletter={false}>
+      <Hero demoHref={spa.signUp} />
+      <ProofStrip facts={PROOF} />
+      <Features />
+      <OneServer />
+      <QuickStart />
+      <Status />
+      <FoundersHandoff />
+      <WhoBuilds />
+      {state.newsletter && <Newsletter />}
+      <Questions />
+      <CtaBand demoHref={spa.signUp} />
     </SiteFrame>
   )
 })

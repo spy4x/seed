@@ -46,7 +46,7 @@ test("a visitor walks the website and its forms without a refusal under the cont
   await page.goto("/")
   expect((await stylesheet).status()).toBe(200)
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "The groundwork of a SaaS, already built.",
+    "The groundwork of your SaaS, already built.",
   )
   expect(await page.evaluate(() => document.styleSheets.length)).toBeGreaterThan(0)
 

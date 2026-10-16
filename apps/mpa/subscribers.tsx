@@ -1,3 +1,4 @@
+import type { ComponentChildren, JSX } from "preact"
 import type { FreshContext } from "fresh"
 import {
   DEFAULT_SUBSCRIBER_LIST,
@@ -12,11 +13,14 @@ import {
   UnsubscribeScreen,
 } from "@ui/subscribe-screen.tsx"
 import { isRecord } from "@spy4x/platform/universal/is-record"
+import { IconCheck, IconGitHub } from "@spy4x/preact-icons"
+import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { type ApiAnswer, errorMessage } from "./api.ts"
 import { readFormBody } from "@spy4x/server/http/bounded-body"
 import { API_BODIES, FORM_LIMITS } from "./forms.ts"
-import { SiteFrame, type SitePageHead } from "./site.tsx"
+import { SeedMark } from "./components/seed-mark.tsx"
+import { REPOSITORY_URL, SITE_NAME, SiteFrame, type SitePageHead, spaLinks } from "./site.tsx"
 import { define, type State } from "./utils.ts"
 
 /**
@@ -26,10 +30,11 @@ import { define, type State } from "./utils.ts"
 const NO_REFERRER = { "referrer-policy": "no-referrer" }
 
 /** The pages a mailed link opens: no search engine lists them. */
-const TOKEN_PAGE_HEAD = {
-  title: "Newsletter",
-  description: "Confirm or end your subscription to the Template newsletter.",
+const TOKEN_PAGE_HEAD: SitePageHead = {
+  title: `Newsletter`,
+  description: `Confirm or end your subscription to the Seed newsletter.`,
   noindex: true,
+  og: `subscribe`,
 }
 
 /** The query a finished step redirects to: the page again, with no token in it. */
@@ -38,10 +43,11 @@ const DONE_QUERY = "?state=done"
 /** The query a taken subscribe request redirects to, so a reload does not send it again. */
 const SENT_QUERY = "?state=sent"
 
-const SUBSCRIBE_HEAD = {
-  title: "News by e-mail",
-  description: "Get a short e-mail when something new ships in Template. Double opt-in, " +
-    "one-click unsubscribe.",
+const SUBSCRIBE_HEAD: SitePageHead = {
+  title: `Seed newsletter: what shipped, briefly`,
+  description: `A short email when Seed changes: what shipped, what broke, what I learned ` +
+    `building it. Double opt-in, one-click unsubscribe.`,
+  og: `subscribe`,
 }
 
 /**
@@ -191,6 +197,26 @@ function headersOf(page: PageStatus, extra: Record<string, string> = {}) {
   return page.retryAfter ? { ...extra, "retry-after": page.retryAfter } : extra
 }
 
+/**
+ * The band every newsletter page sits in: the hero's glow behind a centred column. `wide` gives the
+ * subscribe page room for its introduction beside the form.
+ */
+function NewsletterBand(
+  { wide = false, children }: { wide?: boolean; children: ComponentChildren },
+): JSX.Element {
+  return (
+    <div class="site-glow">
+      <div
+        class={`mx-auto flex w-full flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8 lg:py-16 ${
+          wide ? "max-w-6xl" : "max-w-md"
+        }`}
+      >
+        {children}
+      </div>
+    </div>
+  )
+}
+
 function renderSubscribe(
   ctx: FreshContext<State>,
   page: PageStatus & { email: string; sent: boolean; error: string | null },
@@ -200,50 +226,79 @@ function renderSubscribe(
       state={ctx.state}
       path={FORM_ACTIONS.subscribe}
       head={SUBSCRIBE_HEAD}
+      footerNewsletter={false}
     >
-      <div class="grid items-start gap-8 lg:grid-cols-2">
-        <section class="flex flex-col gap-4" aria-label="About the newsletter">
-          <p class="text-lg">
-            I build Template in public. Subscribe and I write when something new ships: a feature, a
-            release, or what I learned on the way.
-          </p>
-          <ul class="list-disc space-y-2 pl-6 text-muted">
-            <li>You confirm by a link first, so nobody can sign you up.</li>
-            <li>Every mail has a link that unsubscribes you in one click.</li>
-            <li>Your address is used for this newsletter and nothing else.</li>
-          </ul>
-        </section>
-        <SubscribeForm
-          email={page.email}
-          onEmailChange={() => {}}
-          list={DEFAULT_SUBSCRIBER_LIST}
-          sent={page.sent}
-          error={page.error}
-          pending={false}
-        />
-      </div>
+      <NewsletterBand wide>
+        <div class="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
+          <section class="flex flex-col gap-4" aria-label="About the newsletter">
+            <SeedMark />
+            <p class="text-2xl font-semibold tracking-tight text-balance">
+              Get a short email when Seed changes
+            </p>
+            <p class="text-lg text-muted text-pretty">
+              What shipped, what broke and what I learned building it, written by me. No other mail.
+            </p>
+            <ul class="flex flex-col gap-2">
+              {NEWSLETTER_PROMISES.map((promise) => (
+                <li key={promise} class="flex items-start gap-2">
+                  <IconCheck class="mt-1 size-4 shrink-0 text-primary" />
+                  <span class="text-pretty">{promise}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+          <SubscribeForm
+            email={page.email}
+            onEmailChange={() => {}}
+            list={DEFAULT_SUBSCRIBER_LIST}
+            sent={page.sent}
+            error={page.error}
+            pending={false}
+          />
+        </div>
+      </NewsletterBand>
     </SiteFrame>,
     { status: page.status, headers: headersOf(page) },
   )
 }
 
+const NEWSLETTER_PROMISES = [
+  `You confirm by a link first, so nobody can sign you up.`,
+  `Every email has a link that unsubscribes you in one click.`,
+  `Your address is used for this newsletter and nothing else.`,
+] as const
+
 /**
  * What every newsletter page answers while the API takes no subscriptions (`State.newsletter`):
- * status 503 as the API's own, and no form.
+ * status 503 as the API's own, and no form, but the other ways to follow the project, so the page
+ * does not end the visit.
  */
 function renderOff(
   ctx: FreshContext<State>,
   path: string,
   head: SitePageHead,
 ): Response | Promise<Response> {
+  const spa = spaLinks(ctx.state.spaOrigin)
   return ctx.render(
     <SiteFrame state={ctx.state} path={path} head={{ ...head, noindex: true }}>
-      <div class="mx-auto w-full max-w-md" data-e2e="newsletter-off">
-        <Notice title="The newsletter is off">
-          This site is not taking newsletter subscriptions right now, and it sends no newsletter
-          while they are off. A confirm or unsubscribe link works again once they are back on.
-        </Notice>
-      </div>
+      <NewsletterBand>
+        <div class="flex flex-col gap-6" data-e2e="newsletter-off">
+          <h1 class="text-3xl font-semibold tracking-tight">The {SITE_NAME} newsletter</h1>
+          <Notice title="The newsletter is off">
+            This site is not taking newsletter subscriptions right now, and it sends no newsletter
+            while they are off. A confirm or unsubscribe link works again once they are back on.
+          </Notice>
+          <p class="text-muted text-pretty">
+            To hear when Seed changes, watch its releases on GitHub. Or see what it does today.
+          </p>
+          <div class="flex flex-col gap-4 sm:flex-row">
+            <Button href={`${REPOSITORY_URL}/releases`} data-e2e="newsletter-off-releases">
+              <IconGitHub class="size-5" /> Releases on GitHub
+            </Button>
+            <Button href={spa.signUp} variant="outline">Try the live demo</Button>
+          </div>
+        </div>
+      </NewsletterBand>
     </SiteFrame>,
     { status: 503, headers: NO_REFERRER },
   )
@@ -260,14 +315,16 @@ function renderConfirm(
 ): Response | Promise<Response> {
   return ctx.render(
     <SiteFrame state={ctx.state} path={FORM_ACTIONS.subscribeConfirm} head={TOKEN_PAGE_HEAD}>
-      <SubscriptionConfirmScreen
-        state={page.state}
-        email={page.email}
-        list={page.list}
-        token={page.token}
-        error={null}
-        pending={false}
-      />
+      <NewsletterBand>
+        <SubscriptionConfirmScreen
+          state={page.state}
+          email={page.email}
+          list={page.list}
+          token={page.token}
+          error={null}
+          pending={false}
+        />
+      </NewsletterBand>
     </SiteFrame>,
     { status: page.status, headers: headersOf(page, NO_REFERRER) },
   )
@@ -279,14 +336,16 @@ function renderUnsubscribe(
 ): Response | Promise<Response> {
   return ctx.render(
     <SiteFrame state={ctx.state} path={FORM_ACTIONS.unsubscribe} head={TOKEN_PAGE_HEAD}>
-      <UnsubscribeScreen
-        state={page.state}
-        email={page.email}
-        list={page.list}
-        token={page.token}
-        error={null}
-        pending={false}
-      />
+      <NewsletterBand>
+        <UnsubscribeScreen
+          state={page.state}
+          email={page.email}
+          list={page.list}
+          token={page.token}
+          error={null}
+          pending={false}
+        />
+      </NewsletterBand>
     </SiteFrame>,
     { status: page.status, headers: headersOf(page, NO_REFERRER) },
   )

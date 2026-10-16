@@ -1,13 +1,100 @@
 @import "tailwindcss";
 /* Not real files: preactThemeCss() from @spy4x/preact-theme/vite, listed in vite.config.ts,
-   replaces both lines with the text @spy4x/preact-theme exports, and appends an @source inline(...)
-   line with the class names the library's components render. */
+   replaces these lines with the text @spy4x/preact-theme exports, and appends an @source inline(...)
+   line with the class names the library's components render. ink.css is the near-black dark
+   palette; it applies only under `.dark[data-theme="ink"]`, which `/theme.js` and `_app.tsx` set. */
 @import "@spy4x/preact-theme/tokens.css";
 @import "@spy4x/preact-theme/preset.css";
+@import "@spy4x/preact-theme/ink.css";
 /* libs/ui holds the screens; Tailwind does not scan outside this app on its own. */
 @source "../../libs/ui";
-/* preact-theme sets no font since 2.0.0. Poppins keeps the SPA's look where it is installed; the
-   page loads no web font, so elsewhere the system stack draws it, as before 2.0.0. */
+
+/* Geist Sans and Geist Mono, variable, from the npm package `geist@1.7.2` (`dist/fonts/`, files
+   `Geist-Variable.woff2` and `GeistMono-Variable.woff2`), under the SIL Open Font License beside
+   them in static/fonts/OFL.txt. To update: `npm pack geist@<version>` and copy the two files and
+   LICENSE.txt over. The sans file is preloaded in `_app.tsx`; `optional` keeps the layout from
+   shifting when it arrives late (the system font stays for that page view). */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-sans.var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: optional;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono.var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
-  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* A faint 32 px line grid behind the hero, fading out downwards. Decoration only. */
+.site-grid {
+  background-image:
+    linear-gradient(to right, var(--color-border-subtle) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-border-subtle) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+  opacity: 0.5;
+}
+
+/* One soft glow of the accent behind the hero and the closing call to action. */
+.site-glow {
+  background-image: radial-gradient(
+    60% 50% at 50% 0%,
+    color-mix(in oklab, var(--color-primary) 12%, transparent),
+    transparent
+  );
+}
+.dark .site-glow {
+  background-image: radial-gradient(
+    60% 50% at 50% 0%,
+    color-mix(in oklab, var(--color-primary) 25%, transparent),
+    transparent
+  );
+}
+
+/* A screenshot or code window: a large soft shadow in light; a hairline highlight in dark, where
+   shadows vanish on the near-black canvas. */
+.site-window {
+  box-shadow: 0 24px 48px -12px rgb(0 0 0 / 0.18);
+}
+.dark .site-window {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+/* Motion only for readers who did not ask for less of it. No smooth scrolling on the page: it
+   keeps a control moving while Playwright scrolls it into view, so a click waits for it forever. */
+@media (prefers-reduced-motion: no-preference) {
+  .site-lift {
+    transition: transform 150ms, border-color 150ms;
+  }
+  .site-lift:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* The boxes of the architecture diagram (components/architecture-diagram.tsx), in both themes. */
+.arch-box {
+  fill: var(--color-surface);
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+.arch-accent {
+  stroke: var(--color-primary-muted);
+  stroke-width: 2;
+}
+.arch-frame {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-dasharray: 6 6;
+}
+.arch-note {
+  fill: var(--color-muted-foreground);
 }
