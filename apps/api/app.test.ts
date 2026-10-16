@@ -8,6 +8,9 @@ import type { APIContext } from "./_types.ts"
 
 type Auth = APIContext["Variables"]["auth"]
 
+/** No peer is the proxy: these tests send no forwarded header. */
+const noProxy = () => Promise.resolve(false)
+
 /** The API's app with the notes route and one plain route, signed in as user 7 unless told. */
 async function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
   const effects: string[] = []
@@ -17,6 +20,7 @@ async function buildApp(auth: Auth = buildAuthData({ user: { id: 7 } })) {
       c.set("auth", auth)
       await next()
     },
+    isProxyPeer: noProxy,
   })
   const unused = () => Promise.reject(new Error("not part of this test"))
   const notes: NotesRouteDependencies = {
@@ -158,11 +162,30 @@ describe("the API's app", () => {
     }
   })
 
+  it("refuses a client address named by a container that is not the proxy, on every route", async () => {
+    const app = await createApiApp({
+      write: () => {},
+      parseAuth: async (_c, next) => await next(),
+      isProxyPeer: (peer) => Promise.resolve(peer === "172.18.0.2"),
+    })
+    app.get("/notifications", (c) => c.json({ notifications: [] }))
+    const statusFrom = async (peer: string, path: string) => {
+      const env = { remoteAddr: { transport: "tcp", hostname: peer, port: 40000 } }
+      const init = { headers: { "x-real-ip": "192.0.2.1" } }
+      return (await app.request(`http://local/api${path}`, init, env)).status
+    }
+
+    expect(await statusFrom("172.18.0.9", "/notifications")).toBe(403)
+    expect(await statusFrom("172.18.0.9", "/no-such-route")).toBe(403)
+    expect(await statusFrom("172.18.0.2", "/notifications")).toBe(200)
+  })
+
   it("keeps the operator area to the admin host, and the admin host to the area", async () => {
     const app = await createApiApp({
       write: () => {},
       parseAuth: async (_c, next) => await next(),
       adminHost: "admin.local",
+      isProxyPeer: noProxy,
     })
     app.get("/admin/users", (c) => c.json({ users: [] }))
     app.get("/notifications", (c) => c.json({ notifications: [] }))
@@ -179,6 +202,7 @@ describe("the API's app", () => {
       write: () => {},
       parseAuth: async (_c, next) => await next(),
       adminHost: "admin.local",
+      isProxyPeer: noProxy,
     })
     app.get("/admin/users/:id", (c) => c.json({ user: c.req.param("id") }))
     app.post("/admin/users/:id/block", (c) => c.json({ blocked: c.req.param("id") }))

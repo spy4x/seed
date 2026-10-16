@@ -37,6 +37,8 @@ export class Config {
   /** The admin app's host, or `null` when it is not deployed and the operator area is off. */
   adminDomain = env.ADMIN_DOMAIN || null
   adminAppUrl = this.adminDomain ? `http${this.isDev ? "" : "s"}://${this.adminDomain}` : null
+  /** The proxies allowed to name the client in `X-Real-IP` (`middlewares/proxy-peer.ts`). */
+  proxyHosts = (env.PROXY_HOSTS ?? "").split(",").map((host) => host.trim()).filter(Boolean)
   /** The release this process was built from, for the operator area's System page (#429). */
   build = { version: env.APP_VERSION || null, commit: env.APP_COMMIT || null }
 

@@ -57,6 +57,7 @@ import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
 import { mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
 import { createSubscribersRoute } from "./routes/subscribers.ts"
 import { createSubscriberRateLimits } from "./middlewares/subscriber-rate-limits.ts"
+import { createProxyPeers, DEFAULT_PROXY_HOSTS } from "./middlewares/proxy-peer.ts"
 import {
   enqueueSubscriberMail,
   SUBSCRIBER_CONFIRM_MAIL_JOB,
@@ -93,6 +94,10 @@ const app = await createApiApp({
   parseAuth,
   reportError: (error, context) => void errorReporter.report(error, context),
   adminHost: config.adminDomain,
+  isProxyPeer: createProxyPeers({
+    hosts: config.proxyHosts.length > 0 ? config.proxyHosts : DEFAULT_PROXY_HOSTS,
+    onError: (host, error) => log(`error: could not look up the proxy ${host}`, error),
+  }),
 })
 
 app.route(

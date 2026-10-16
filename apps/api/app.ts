@@ -6,6 +6,7 @@ import {
 import { securityHeaders } from "@spy4x/server/http/security-headers"
 import { requireBoundUser } from "./middlewares/bound-user.ts"
 import { createAdminHostGate } from "./middlewares/admin-host.ts"
+import { type IsProxyPeer, requireProxyForForwardedHeaders } from "./middlewares/proxy-peer.ts"
 import type { APIContext } from "./_types.ts"
 
 /**
@@ -13,6 +14,10 @@ import type { APIContext } from "./_types.ts"
  * and session parser, and the one check every route stands behind (`requireBoundUser`): a request
  * whose page names another user than the session's is refused, whatever it asks for (ADR 003). It
  * is here, and not in each route, so a new route cannot forget it.
+ *
+ * A request that names its client in `X-Real-IP` or a like header is refused unless it comes from
+ * a trusted proxy (`isProxyPeer`), so a container beside the API cannot pick the address the rate
+ * limits count it under (`requireProxyForForwardedHeaders`).
  *
  * The admin host gate stands there too: the admin app's host reaches the operator area and its
  * own sign-in only, and no other host reaches the operator area (`createAdminHostGate`).
@@ -23,12 +28,13 @@ import type { APIContext } from "./_types.ts"
  * with nothing added (docs/security-headers.md).
  */
 export async function createApiApp(
-  options: BaseMiddlewareOptions & { adminHost?: string | null },
+  options: BaseMiddlewareOptions & { adminHost?: string | null; isProxyPeer: IsProxyPeer },
 ): Promise<Hono<APIContext>> {
-  const { adminHost = null, ...base } = options
+  const { adminHost = null, isProxyPeer, ...base } = options
   const app = new Hono<APIContext>().basePath("/api")
   app.use("*", await securityHeaders())
   applyBaseMiddleware(app, base)
+  app.use("*", requireProxyForForwardedHeaders(isProxyPeer))
   app.use("*", createAdminHostGate(adminHost))
   app.use("*", requireBoundUser)
   return app

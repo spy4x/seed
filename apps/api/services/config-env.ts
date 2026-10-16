@@ -17,6 +17,11 @@ export const envSchema = type({
   DOMAIN: "string > 0",
   /** The admin app's own host (#146); unset or empty turns the operator area off. */
   "ADMIN_DOMAIN?": "string",
+  /**
+   * The proxies allowed to name the client in `X-Real-IP`, comma-separated: container names or IP
+   * addresses. Unset or empty: this machine's loopback only (`DEFAULT_PROXY_HOSTS`).
+   */
+  "PROXY_HOSTS?": "string",
   /** The release tag and commit the image was built from (`apps/api/dockerfile`); empty locally. */
   "APP_VERSION?": "string",
   "APP_COMMIT?": "string",

@@ -159,13 +159,15 @@ export interface AuthRateLimitSettings {
  * never refused. The failure counter in `services/totp-failures.ts` lives in Postgres and is what
  * limits guesses over days and years.
  *
- * Proxy assumption: the client IP comes from `X-Real-IP` because Traefik alone sits in front of the
- * API and overwrites that header on every request. The connection's own address, which
- * `deno serve` hands Hono as `env.remoteAddr`, is the fallback. `CF-Connecting-IP` and
- * `X-Forwarded-For` are not trusted: Traefik passes them through unchanged. Two setups break this.
- * Any container on the shared `proxy` network reaches the API directly and can forge `X-Real-IP`.
- * Behind Cloudflare's proxy, Traefik sets `X-Real-IP` to a Cloudflare address, so users share
- * budgets per Cloudflare edge instead of per client.
+ * Client address: the client IP comes from `X-Real-IP`, which Traefik overwrites on every request.
+ * The connection's own address, which `deno serve` hands Hono as `env.remoteAddr`, is the
+ * fallback. `CF-Connecting-IP` and `X-Forwarded-For` are not read here. Only a trusted proxy may
+ * send `X-Real-IP`: `requireProxyForForwardedHeaders` (`proxy-peer.ts`), in front of every route,
+ * refuses a request that carries it, or either other header, from any other peer, so a container on
+ * the shared `proxy` network that calls the API directly is counted under its own address. The
+ * trusted proxies are `PROXY_HOSTS`: Traefik and this project's website in the compose stack. One
+ * setup still breaks this: behind Cloudflare's proxy, Traefik sets `X-Real-IP` to a Cloudflare
+ * address, so users share budgets per Cloudflare edge instead of per client.
  */
 export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateLimits {
   const { windowMs, clock, store } = settings

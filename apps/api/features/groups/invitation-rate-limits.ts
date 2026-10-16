@@ -51,7 +51,8 @@ export interface InvitationRateLimitSettings {
  * Builds the invitation limits. Every one refuses the request when its store fails (Hono answers
  * 500), like the strict auth limits: they stand between an attacker and someone else's inbox or a
  * flood of rows. The mail budget is keyed by a hash of the address, so the store never holds one.
- * The client IP comes from `X-Real-IP`, under the proxy assumption `createAuthRateLimits` explains.
+ * The client IP comes from `X-Real-IP`, which only a trusted proxy may send, as
+ * `createAuthRateLimits` explains.
  */
 export function createInvitationRateLimits(
   settings: InvitationRateLimitSettings,

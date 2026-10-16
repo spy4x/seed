@@ -691,6 +691,11 @@ services:
       - MPA_DOMAIN=${MPA_DOMAIN:-}
       # The admin app's host, when it is deployed: the operator area (/api/admin) answers there only.
       - ADMIN_DOMAIN=${ADMIN_DOMAIN:-}
+      # Who may name the client in X-Real-IP: Traefik (compose.proxy.yml names it `traefik`) and
+      # this project's website, which passes the browser's address on. Any other container on the
+      # shared `proxy` network that sends such a header is refused
+      # (apps/api/middlewares/proxy-peer.ts).
+      - PROXY_HOSTS=traefik,${PROJECT}-mpa
     deploy:
       resources:
         limits:
@@ -896,8 +901,11 @@ services:
       - "traefik.http.routers.mpa-${PROJECT}.service=mpa-${PROJECT}"
       - "traefik.http.services.mpa-${PROJECT}.loadbalancer.server.port=8080"
       - "traefik.docker.network=proxy"
+    # The `proxy` network only: the website needs nothing but Traefik and the API. On one network,
+    # its name resolves to the one address it calls the API from, so the API can trust its
+    # `X-Real-IP` (the API's PROXY_HOSTS). On two, the API could look up one address and be called
+    # from the other.
     networks:
-      - default
       - proxy
     healthcheck:
       # Answers once the MPA's port accepts a connection (apps/healthcheck.ts).

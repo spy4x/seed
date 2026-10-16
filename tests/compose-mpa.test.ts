@@ -16,9 +16,11 @@ interface ComposeService {
   profiles?: string[]
   labels?: string[]
   environment?: string[]
+  networks?: string[]
 }
 
 const COMPOSE_PROD = fromFileUrl(new URL("../infra/compose/compose.prod.yml", import.meta.url))
+const COMPOSE_DEV = fromFileUrl(new URL("../infra/compose/compose.dev.yml", import.meta.url))
 
 async function services(file = COMPOSE): Promise<Record<string, ComposeService>> {
   const compose = parse(await Deno.readTextFile(file)) as {
@@ -63,4 +65,15 @@ Deno.test("in production the MPA is served over HTTPS on the port its image list
   expect(label(shared, "traefik.http.services.mpa-${PROJECT}.loadbalancer.server.port")).toBe(
     "8080",
   )
+})
+
+// The API trusts the website's `X-Real-IP` by looking up `${PROJECT}-mpa` (PROXY_HOSTS). On two
+// networks the website has two addresses, and the API could look up the one it is not called from.
+Deno.test("the API trusts the client address of Traefik and its own website, on one network", async () => {
+  const { api, mpa } = await services()
+  expect(api?.environment).toContain("PROXY_HOSTS=traefik,${PROJECT}-mpa")
+  expect(mpa?.networks).toEqual(["proxy"])
+  for (const file of [COMPOSE_PROD, COMPOSE_DEV]) {
+    expect((await services(file)).mpa?.networks, file).toBeUndefined()
+  }
 })
