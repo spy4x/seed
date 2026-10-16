@@ -1,6 +1,6 @@
 /**
  * The operator area's reads and writes over `users`, `auth_keys`, `group_members` and
- * `auth_audits` (#146): the searchable user list, one person's detail, blocking and setting a role.
+ * `auth_audits` (#146): the searchable user list, one person's detail, blocking, setting a role, the reset address and the CSV export.
  * Who may call them is the API's business (`apps/api/routes/admin/users.ts`); nothing here checks it.
  *
  * Reads no environment and imports no singleton: the API and the role script both use it.
@@ -19,6 +19,8 @@ import {
   type AdminUserGroup,
   type AdminUserRow,
   type AdminUserSortKey,
+  AuthAuditEventType,
+  USER_ROLE_NAMES,
   type UserRole,
 } from "@domain/identity"
 
@@ -105,15 +107,11 @@ function orderBy(sql: postgres.Sql, sort: readonly SortRule<AdminUserSortKey>[])
 }
 
 /**
- * One page of the people who are not deleted, in the order of `filter.sort` (newest first by
- * default), with how many match in all. Each word of `filter.query` must appear, in any case, in
- * the first name, the last name, an address a key holds or the password key's subject.
+ * The `WHERE` of the people `filter` matches who are not deleted. Each word of `filter.query` must
+ * appear, in any case, in the first name, the last name, an address a key holds or the password
+ * key's subject. The page and the sort play no part.
  */
-export async function listAdminUsers(
-  sql: postgres.Sql,
-  filter: AdminUserFilter,
-  pageSize: number,
-): Promise<{ users: AdminUserRow[]; total: number }> {
+function userWhere(sql: postgres.Sql, filter: AdminUserFilter) {
   let where = sql`u.deleted_at IS NULL`
   for (const word of filter.query.split(/\s+/).filter(Boolean)) {
     const pattern = containsPattern(word)
@@ -128,6 +126,19 @@ export async function listAdminUsers(
   if (filter.role !== null) where = sql`${where} AND u.role = ${filter.role}`
   if (filter.blocked === "blocked") where = sql`${where} AND u.blocked_at IS NOT NULL`
   if (filter.blocked === "active") where = sql`${where} AND u.blocked_at IS NULL`
+  return where
+}
+
+/**
+ * One page of the people who are not deleted, in the order of `filter.sort` (newest first by
+ * default), with how many match in all. Which people match is {@link userWhere}'s.
+ */
+export async function listAdminUsers(
+  sql: postgres.Sql,
+  filter: AdminUserFilter,
+  pageSize: number,
+): Promise<{ users: AdminUserRow[]; total: number }> {
+  const where = userWhere(sql, filter)
   const [{ total }] = await sql<{ total: number }[]>`
     SELECT COUNT(*)::int AS total FROM users u WHERE ${where}
   `
@@ -137,6 +148,23 @@ export async function listAdminUsers(
     LIMIT ${pageSize} OFFSET ${(filter.page - 1) * pageSize}
   `
   return { users: rows.map(toRow), total }
+}
+
+/**
+ * Every person `filter` matches, on all its pages, in its sort, `batchSize` rows at a time (#425):
+ * the CSV export. A cursor reads them, so the whole list is never in memory at once; stopping the
+ * loop early closes the cursor.
+ */
+export async function* exportAdminUsers(
+  sql: postgres.Sql,
+  filter: AdminUserFilter,
+  batchSize: number,
+): AsyncGenerator<AdminUserRow[]> {
+  const cursor = sql<UserRowRaw[]>`
+    SELECT ${userColumns(sql)} FROM users u WHERE ${userWhere(sql, filter)}
+    ORDER BY ${orderBy(sql, filter.sort)}
+  `.cursor(batchSize)
+  for await (const rows of cursor) yield rows.map(toRow)
 }
 
 /** The person `userId` as the list shows them, or `null` when there is none or they are deleted. */
@@ -238,31 +266,78 @@ export async function isUserBlocked(sql: postgres.Sql, userId: number): Promise<
   return rows.length > 0
 }
 
+/** Gives the live person `userId` the role `role`. Inside the action's `begin()`. */
+export async function setUserRole(
+  sql: postgres.Sql,
+  userId: number,
+  role: UserRole,
+): Promise<void> {
+  await sql`UPDATE users SET role = ${role}, updated_at = now() WHERE id = ${userId}`
+}
+
 /**
- * Gives the person who signs in with `address` the role `role`, and answers their id, or `null`
- * when no live person signs in with it. The address is matched as sign-up stores it (trimmed, lower
- * case): first the person who proved it, then the one whose password key names it, which is also
- * how an older account's username is found.
+ * The address a password-reset link for `userId` goes to: their password key's, as "Forgot
+ * password" looks it up. `null` when they have no password, or only a username with no address
+ * (#139), so no link can reach them.
+ */
+export async function readPasswordResetAddress(
+  sql: postgres.Sql,
+  userId: number,
+): Promise<string | null> {
+  const [row] = await sql<{ subject: string }[]>`
+    SELECT subject FROM auth_keys
+    WHERE user_id = ${userId} AND method = ${PASSWORD_METHOD} AND email IS NOT NULL
+  `
+  return row?.subject ?? null
+}
+
+/**
+ * The `identifier` of a role change's audit row: who changed it and both roles, such as
+ * `operator:7 from viewer to operator`.
+ */
+export function roleChangeIdentifier(actor: string, from: UserRole, to: UserRole): string {
+  return `${actor} from ${USER_ROLE_NAMES[from]} to ${USER_ROLE_NAMES[to]}`
+}
+
+/**
+ * Gives the person who signs in with `address` the role `role` and writes the change's audit row
+ * naming `actor`, both in one transaction, and answers their id and the role they had; `null`
+ * when no live person signs in with it. A role they already have changes nothing and writes no
+ * row. The address is matched as sign-up stores it (trimmed, lower case): first the person who
+ * proved it, then the one whose password key names it, which is also how an older account's
+ * username is found. `sql` is a pool, not a transaction: this opens its own.
  */
 export async function setUserRoleByAddress(
   sql: postgres.Sql,
   address: string,
   role: UserRole,
-): Promise<number | null> {
+  actor: string,
+): Promise<{ id: number; previous: UserRole } | null> {
   const wanted = address.trim().toLowerCase()
-  const [row] = await sql<{ id: number }[]>`
-    UPDATE users SET role = ${role}, updated_at = now()
-    WHERE deleted_at IS NULL AND id = (
-      SELECT owner.user_id FROM (
-        SELECT user_id, 1 AS rank FROM auth_email_owners WHERE email = ${wanted}
-        UNION ALL
-        SELECT user_id, 2 AS rank FROM auth_keys
-        WHERE method = ${PASSWORD_METHOD} AND subject = ${wanted}
-      ) owner
-      ORDER BY owner.rank
-      LIMIT 1
-    )
-    RETURNING id
-  `
-  return row?.id ?? null
+  return await sql.begin(async (tx) => {
+    const [row] = await tx<{ id: number; role: UserRole }[]>`
+      SELECT id, role FROM users
+      WHERE deleted_at IS NULL AND id = (
+        SELECT owner.user_id FROM (
+          SELECT user_id, 1 AS rank FROM auth_email_owners WHERE email = ${wanted}
+          UNION ALL
+          SELECT user_id, 2 AS rank FROM auth_keys
+          WHERE method = ${PASSWORD_METHOD} AND subject = ${wanted}
+        ) owner
+        ORDER BY owner.rank
+        LIMIT 1
+      )
+      FOR UPDATE
+    `
+    if (!row) return null
+    if (row.role !== role) {
+      await tx`UPDATE users SET role = ${role}, updated_at = now() WHERE id = ${row.id}`
+      await tx`
+        INSERT INTO auth_audits (user_id, event_type, identifier)
+        VALUES (${row.id}, ${AuthAuditEventType.USER_ROLE_CHANGED},
+          ${roleChangeIdentifier(actor, row.role, role)})
+      `
+    }
+    return { id: row.id, previous: row.role }
+  }) as { id: number; previous: UserRole } | null
 }

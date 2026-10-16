@@ -12,6 +12,7 @@ import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { USER_ROLE_ACTOR } from "../../apps/worker/user-role.ts"
 import { applyMigrations } from "./migrations.ts"
 
 /**
@@ -80,8 +81,16 @@ function buildApp(sql: postgres.Sql) {
   app.get("/me", signIn.auth.isAuthenticated2FA, (c) => c.json(c.get("auth")!.user))
   app.post("/act/:id/:kind", signIn.auth.isAuthenticated2FA, async (c) => {
     const kind = Number(c.req.param("kind")) as AdminActionKind
-    const { outcome } = await admin.act(c, c.get("auth")!, Number(c.req.param("id")), kind)
+    const text = await c.req.text()
+    const input = text ? JSON.parse(text) : undefined
+    const { outcome } = await admin.act(c, c.get("auth")!, Number(c.req.param("id")), kind, input)
     return c.json({ outcome })
+  })
+  app.post("/export", signIn.auth.isAuthenticated2FA, async (c) => {
+    const batches = await admin.export(c, c.get("auth")!, await c.req.json())
+    const emails: (string | null)[][] = []
+    for await (const batch of batches) emails.push(batch.map((row) => row.email))
+    return c.json(emails)
   })
 
   /** One browser: its own cookies. */
@@ -269,9 +278,10 @@ Deno.test("the role script finds a person by the address they sign in with", asy
     const { id } = await signUp(app, "ops@example.com")
     const db = new AppDbBase({ sql })
 
-    expect(await db.admin.setRoleByAddress("  OPS@example.com ", UserRole.OPERATOR)).toBe(id)
+    expect(await db.admin.setRoleByAddress("  OPS@example.com ", UserRole.OPERATOR, "test"))
+      .toEqual({ id, previous: UserRole.VIEWER })
     expect((await db.admin.find(id))?.role).toBe(UserRole.OPERATOR)
-    expect(await db.admin.setRoleByAddress("nobody@example.com", UserRole.ADMIN)).toBe(null)
+    expect(await db.admin.setRoleByAddress("nobody@example.com", UserRole.ADMIN, "test")).toBe(null)
   })
 })
 
@@ -281,7 +291,7 @@ Deno.test("a block ends the person's sessions and refuses their password and API
     const operator = await signUp(app, "ops@example.com")
     const target = await signUp(app, "ada@example.com")
     const db = new AppDbBase({ sql })
-    await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR)
+    await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR, "test")
     const [group] = await sql<{ id: string }[]>`
       SELECT id FROM groups WHERE owner_user_id = ${target.id} LIMIT 1
     `
@@ -335,7 +345,11 @@ Deno.test("block, unblock and end sessions each write an audit row that names th
     const app = buildApp(sql)
     const operator = await signUp(app, "ops@example.com")
     const target = await signUp(app, "ada@example.com")
-    await new AppDbBase({ sql }).admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR)
+    await new AppDbBase({ sql }).admin.setRoleByAddress(
+      "ops@example.com",
+      UserRole.OPERATOR,
+      "test",
+    )
 
     for (
       const kind of [AdminActionKind.Block, AdminActionKind.Unblock, AdminActionKind.EndSessions]
@@ -364,8 +378,8 @@ Deno.test("an operator acts on no one at or above their own role, nor on themsel
     const operator = await signUp(app, "ops@example.com")
     const peer = await signUp(app, "peer@example.com")
     const db = new AppDbBase({ sql })
-    await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR)
-    await db.admin.setRoleByAddress("peer@example.com", UserRole.OPERATOR)
+    await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR, "test")
+    await db.admin.setRoleByAddress("peer@example.com", UserRole.OPERATOR, "test")
 
     const onPeer = await operator.request("POST", `/act/${peer.id}/${AdminActionKind.Block}`)
     expect(await onPeer.json()).toEqual({ outcome: AdminActOutcome.Outranked })
@@ -376,5 +390,188 @@ Deno.test("an operator acts on no one at or above their own role, nor on themsel
     expect(await onSelf.json()).toEqual({ outcome: AdminActOutcome.Self })
     expect((await db.admin.find(peer.id))?.blockedAt).toBe(null)
     expect(await activeSessions(sql, peer.id)).toBe(1)
+  })
+})
+
+/** The audit rows on `userId` with `eventType`, oldest first. */
+async function auditsOf(sql: postgres.Sql, userId: number, eventType: AuthAuditEventType) {
+  return await sql<{ identifier: string }[]>`
+    SELECT identifier FROM auth_audits
+    WHERE user_id = ${userId} AND event_type = ${eventType}
+    ORDER BY id
+  `.then((rows) => rows.map((row) => row.identifier))
+}
+
+Deno.test("an administrator gives a role below their own, with an audit row naming them", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const admin = await signUp(app, "admin@example.com")
+    const target = await signUp(app, "ada@example.com")
+    const db = new AppDbBase({ sql })
+    await db.admin.setRoleByAddress("admin@example.com", UserRole.ADMIN, "test")
+    const changeRole = (role: UserRole) =>
+      admin.request("POST", `/act/${target.id}/${AdminActionKind.ChangeRole}`, { role })
+
+    expect(await (await changeRole(UserRole.SUPERVISOR)).json())
+      .toEqual({ outcome: AdminActOutcome.Done })
+    expect((await db.admin.find(target.id))?.role).toBe(UserRole.SUPERVISOR)
+    expect(await (await changeRole(UserRole.SUPERVISOR)).json())
+      .toEqual({ outcome: AdminActOutcome.Unchanged })
+    // An administrator makes no peer: that stays with the role script.
+    expect(await (await changeRole(UserRole.ADMIN)).json())
+      .toEqual({ outcome: AdminActOutcome.RoleTooHigh })
+    expect((await db.admin.find(target.id))?.role).toBe(UserRole.SUPERVISOR)
+
+    expect(await auditsOf(sql, target.id, AuthAuditEventType.USER_ROLE_CHANGED)).toEqual([
+      `operator:${admin.id} from viewer to supervisor`,
+    ])
+  })
+})
+
+Deno.test("only an administrator changes a role, never their own nor a peer's", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const supervisor = await signUp(app, "sup@example.com")
+    const admin = await signUp(app, "admin@example.com")
+    const peer = await signUp(app, "peer@example.com")
+    const target = await signUp(app, "ada@example.com")
+    const db = new AppDbBase({ sql })
+    await db.admin.setRoleByAddress("sup@example.com", UserRole.SUPERVISOR, "test")
+    await db.admin.setRoleByAddress("admin@example.com", UserRole.ADMIN, "test")
+    await db.admin.setRoleByAddress("peer@example.com", UserRole.ADMIN, "test")
+    const changeRole = (
+      actor: { request: (method: string, path: string, body?: unknown) => Promise<Response> },
+      id: number,
+      role: UserRole,
+    ) => actor.request("POST", `/act/${id}/${AdminActionKind.ChangeRole}`, { role })
+
+    expect(await (await changeRole(supervisor, target.id, UserRole.OPERATOR)).json())
+      .toEqual({ outcome: AdminActOutcome.NotAdministrator })
+    expect(await (await changeRole(admin, admin.id, UserRole.VIEWER)).json())
+      .toEqual({ outcome: AdminActOutcome.Self })
+    expect(await (await changeRole(admin, peer.id, UserRole.VIEWER)).json())
+      .toEqual({ outcome: AdminActOutcome.Outranked })
+
+    expect((await db.admin.find(target.id))?.role).toBe(UserRole.VIEWER)
+    expect((await db.admin.find(admin.id))?.role).toBe(UserRole.ADMIN)
+    expect((await db.admin.find(peer.id))?.role).toBe(UserRole.ADMIN)
+    for (const id of [target.id, admin.id, peer.id]) {
+      // The setup's own rows name "test"; none names an operator.
+      const rows = await auditsOf(sql, id, AuthAuditEventType.USER_ROLE_CHANGED)
+      expect(rows.filter((row) => row.startsWith("operator:"))).toEqual([])
+    }
+  })
+})
+
+Deno.test("an operator ends one session of a person and leaves the others open", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const operator = await signUp(app, "ops@example.com")
+    const target = await signUp(app, "ada@example.com")
+    const second = app.client()
+    const again = await second("POST", "/sign-in", { login: "ada@example.com", password: PASSWORD })
+    expect(again.status).toBe(200)
+    await new AppDbBase({ sql }).admin.setRoleByAddress(
+      "ops@example.com",
+      UserRole.OPERATOR,
+      "test",
+    )
+    const [first] = await sql<{ id: number }[]>`
+      SELECT id FROM auth_sessions WHERE user_id = ${target.id} AND status = 1 ORDER BY id LIMIT 1
+    `
+    const endSession = (sessionId: number) =>
+      operator.request("POST", `/act/${target.id}/${AdminActionKind.EndSession}`, { sessionId })
+
+    expect(await (await endSession(first.id)).json()).toEqual({ outcome: AdminActOutcome.Done })
+    expect((await target.request("GET", "/me")).status).toBe(401)
+    expect((await second("GET", "/me")).status).toBe(200)
+    expect(await activeSessions(sql, target.id)).toBe(1)
+
+    // Ended already, or someone else's session: nothing to end.
+    expect(await (await endSession(first.id)).json())
+      .toEqual({ outcome: AdminActOutcome.SessionNotFound })
+    const [operatorSession] = await sql<{ id: number }[]>`
+      SELECT id FROM auth_sessions WHERE user_id = ${operator.id} AND status = 1 LIMIT 1
+    `
+    expect(await (await endSession(operatorSession.id)).json())
+      .toEqual({ outcome: AdminActOutcome.SessionNotFound })
+    expect(await activeSessions(sql, operator.id)).toBe(1)
+
+    expect(await auditsOf(sql, target.id, AuthAuditEventType.SESSIONS_ENDED)).toEqual([
+      `operator:${operator.id} session ${first.id}`,
+    ])
+  })
+})
+
+Deno.test("a reset link from the operator area queues the same request as Forgot password", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const operator = await signUp(app, "ops@example.com")
+    const target = await signUp(app, "Ada@Example.com")
+    const db = new AppDbBase({ sql })
+    await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR, "test")
+    const sendReset = (id: number) =>
+      operator.request("POST", `/act/${id}/${AdminActionKind.SendPasswordReset}`)
+
+    expect(await (await sendReset(target.id)).json()).toEqual({ outcome: AdminActOutcome.Done })
+    expect(await sql`SELECT email FROM password_reset_requests`).toEqual([
+      { email: "ada@example.com" },
+    ])
+    expect(await auditsOf(sql, target.id, AuthAuditEventType.PASSWORD_RESET_SENT)).toEqual([
+      `operator:${operator.id}`,
+    ])
+
+    // Without a password that has an address, no link can reach the person.
+    await sql`UPDATE auth_keys SET proven_at = NULL, email = NULL WHERE user_id = ${target.id}`
+    expect(await (await sendReset(target.id)).json())
+      .toEqual({ outcome: AdminActOutcome.NoPassword })
+    expect((await sql`SELECT email FROM password_reset_requests`).length).toBe(1)
+  })
+})
+
+Deno.test("the export reads every person the filter matches, across batches, and audits it", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const operator = await signUp(app, "ops@example.com")
+    for (const name of ["ada", "adam", "adele", "linus"]) await signUp(app, `${name}@example.com`)
+    await new AppDbBase({ sql }).admin.setRoleByAddress(
+      "ops@example.com",
+      UserRole.OPERATOR,
+      "test",
+    )
+    const filter = { ...ADMIN_NO_FILTER, query: "ad", page: 2 }
+
+    // The service reads in batches of 500; the database layer is asked for batches of 2 here.
+    const response = await operator.request("POST", "/export", filter)
+    expect(await response.json()).toEqual([[
+      "adele@example.com",
+      "adam@example.com",
+      "ada@example.com",
+    ]])
+    const batches: (string | null)[][] = []
+    for await (const batch of await new AppDbBase({ sql }).admin.export(filter, 2)) {
+      batches.push(batch.map((row) => row.email))
+    }
+    expect(batches).toEqual([["adele@example.com", "adam@example.com"], ["ada@example.com"]])
+    expect(await auditsOf(sql, operator.id, AuthAuditEventType.USERS_EXPORTED)).toEqual([
+      `operator:${operator.id} q=ad`,
+    ])
+  })
+})
+
+Deno.test("the role script writes an audit row naming itself, and none when nothing changes", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const { id } = await signUp(app, "ops@example.com")
+    const db = new AppDbBase({ sql })
+
+    expect(await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR, USER_ROLE_ACTOR))
+      .toEqual({ id, previous: UserRole.VIEWER })
+    expect(await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR, USER_ROLE_ACTOR))
+      .toEqual({ id, previous: UserRole.OPERATOR })
+
+    expect(await auditsOf(sql, id, AuthAuditEventType.USER_ROLE_CHANGED)).toEqual([
+      "cli:user-role from viewer to operator",
+    ])
   })
 })

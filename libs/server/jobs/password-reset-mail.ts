@@ -22,8 +22,10 @@ export const PASSWORD_RESET_REQUEST_RETENTION_HOURS = 24
  * account signs in with the address, so neither the answer nor its timing tells which.
  *
  * The request row is written before its job, so the worker never runs a job whose row is not there
- * yet. Not one transaction: `scheduleOutboxEvent` takes a pool, not a transaction handle. When the
- * job's write fails, the caller gets the error and the row is left for the nightly cleanup.
+ * yet. `sql` is a pool or a transaction, and `scheduleOutboxEvent` takes either. Given a
+ * transaction, as the operator area's reset link does (#425), both writes commit or roll back
+ * together. Given a pool, they are separate: when the job's write fails, the caller gets the error
+ * and the row is left for the nightly cleanup.
  */
 export async function enqueuePasswordResetMail(sql: postgres.Sql, email: string): Promise<void> {
   const id = uuidV7()

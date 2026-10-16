@@ -39,6 +39,9 @@ export const DEMO_EMAIL = "demo@example.com"
 /** The name of the shared group the demo user owns. */
 export const DEMO_GROUP_NAME = "Demo team"
 
+/** Who the audit row of the demo user's role names (#425). */
+export const SEED_ACTOR = "seed"
+
 /** What the seed needs besides the database connection. */
 export interface SeedOptions {
   pepper: string
@@ -92,7 +95,7 @@ export async function seed(db: AppDbBase, options: SeedOptions): Promise<boolean
   // Sign-up answers `null` for a taken address and for a refused one alike, so "exists already"
   // is decided here, not from its answer.
   if (await db.authStore.findKey(PASSWORD_METHOD, DEMO_EMAIL)) {
-    await db.admin.setRoleByAddress(DEMO_EMAIL, UserRole.ADMIN)
+    await db.admin.setRoleByAddress(DEMO_EMAIL, UserRole.ADMIN, SEED_ACTOR)
     return false
   }
   const signIn = createSignIn({
@@ -124,7 +127,7 @@ export async function seed(db: AppDbBase, options: SeedOptions): Promise<boolean
 
   await db.sessionStore.signOutUser(userId, null)
   await db.group.create({ id: uuidV7(), name: DEMO_GROUP_NAME }, userId)
-  await db.admin.setRoleByAddress(DEMO_EMAIL, UserRole.ADMIN)
+  await db.admin.setRoleByAddress(DEMO_EMAIL, UserRole.ADMIN, SEED_ACTOR)
   return true
 }
 

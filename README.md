@@ -193,7 +193,9 @@ Roles are `viewer` (everyone, by default), `operator`, `supervisor` and `adminis
 and above open the admin app. To give someone a role, run
 `deno task user:role <address> <role>` with the database variables set, such as
 `deno task compose exec worker deno task user:role ada@example.com operator` on the server. It
-finds the person by the address they sign in with and exits with 1 when nobody does.
+finds the person by the address they sign in with and exits with 1 when nobody does. A change
+writes an audit row on the person naming the script (`cli:user-role`). In the admin app, an
+administrator can give a role below their own; an administrator is made only with the script.
 
 To deploy it, add `admin` to `COMPOSE_PROFILES` in the env file and set `ADMIN_DOMAIN` to the
 app's host, such as `admin.example.com`, then run `deno task deploy`. Compose builds the `admin`

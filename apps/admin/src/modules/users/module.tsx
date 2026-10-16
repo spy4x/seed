@@ -2,7 +2,12 @@ import type { JSX } from "preact"
 import { useEffect, useMemo } from "preact/hooks"
 import { useLocation, useSearch } from "wouter-preact"
 import { IconUsers } from "@spy4x/preact-icons"
-import { type AdminUserFilter, adminUserFilterQuery, parseAdminUserFilter } from "@domain/identity"
+import {
+  type AdminUserFilter,
+  adminUserFilterQuery,
+  adminUsersExportPath,
+  parseAdminUserFilter,
+} from "@domain/identity"
 import { ADMIN_PATHS } from "@ui/admin-frame.tsx"
 import { AdminUsersScreen } from "@ui/admin-users-screen.tsx"
 import { AdminUserScreen } from "@ui/admin-user-screen.tsx"
@@ -43,6 +48,8 @@ function UsersView({ context }: { context: AdminContext }): JSX.Element {
       error={list.error}
       onSearch={go}
       onPage={(page) => go({ ...filter, page })}
+      operatorId={context.operator.id}
+      exportHref={adminUsersExportPath(filter)}
       navigate={context.navigate}
     />
   )
@@ -82,11 +89,12 @@ function UserView(
         })}
       extraTabs={extraTabs}
       dialog={dialog.action}
+      dialogSessionId={dialog.sessionId}
       onOpenDialog={state.openDialog}
       onCloseDialog={state.closeDialog}
       actionError={dialog.error}
       pending={dialog.pending}
-      onAction={() => state.act()}
+      onAction={(_action, input) => state.act(input)}
       navigate={context.navigate}
     />
   )

@@ -1,4 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
+import { useState } from "preact/hooks"
 import { timeAgo } from "@spy4x/platform/universal/time"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
@@ -9,17 +10,36 @@ import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
+import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { Tabs } from "@spy4x/preact-ui/tabs"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
-import { type AdminUserDetail, AuthAuditEventType, type UserRole } from "@domain/identity"
+import {
+  adminGrantableRoles,
+  type AdminUserDetail,
+  AuthAuditEventType,
+  canChangeRoles,
+  type UserRole,
+} from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
-import { adminUserName, roleColor, roleLabel } from "./admin-users-screen.tsx"
+import { adminUserName, adminUserSubtitle, roleColor, roleLabel } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 /** What an operator can do to a person; each is confirmed in a dialog first. */
-export type AdminAction = "block" | "unblock" | "end-sessions"
+export type AdminAction =
+  | "block"
+  | "unblock"
+  | "end-sessions"
+  | "end-session"
+  | "change-role"
+  | "password-reset"
+
+/** What an action needs besides its name: the session to end, or the role to give. */
+export interface AdminActionInput {
+  sessionId?: number
+  role?: UserRole
+}
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminOperator {
@@ -57,6 +77,9 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED]: "warning",
   [AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT]: "neutral",
   [AuthAuditEventType.NEWSLETTER_SUBSCRIBERS_EXPORTED]: "neutral",
+  [AuthAuditEventType.USER_ROLE_CHANGED]: "warning",
+  [AuthAuditEventType.PASSWORD_RESET_SENT]: "neutral",
+  [AuthAuditEventType.USERS_EXPORTED]: "neutral",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
@@ -87,6 +110,9 @@ const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED]: "Removed a newsletter subscriber",
   [AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT]: "Resent a newsletter confirm mail",
   [AuthAuditEventType.NEWSLETTER_SUBSCRIBERS_EXPORTED]: "Exported the newsletter's subscribers",
+  [AuthAuditEventType.USER_ROLE_CHANGED]: "Role changed",
+  [AuthAuditEventType.PASSWORD_RESET_SENT]: "Password-reset link sent by an operator",
+  [AuthAuditEventType.USERS_EXPORTED]: "Exported the user list",
 }
 
 /** Each action's dialog: its title, what it does, and its button. */
@@ -111,7 +137,39 @@ const ACTIONS: Record<AdminAction, { title: string; text: string; submit: string
       submit: "End all sessions",
       busy: "Ending...",
     },
+    "end-session": {
+      title: "End this session",
+      text: "This one device is signed out at once. Their other devices stay signed in.",
+      submit: "End session",
+      busy: "Ending...",
+    },
+    "change-role": {
+      title: "Change role",
+      text:
+        "The new role applies to their next request. You can give a role below your own; an administrator is made with the user:role script.",
+      submit: "Change role",
+      busy: "Changing...",
+    },
+    "password-reset": {
+      title: "Send a password-reset link",
+      text:
+        'They get the same mail as from "Forgot password": a link to choose a new password. Their current password keeps working until they do.',
+      submit: "Send link",
+      busy: "Sending...",
+    },
   }
+
+/** The actions that change nothing the person could lose: their dialog is not red. */
+const CALM_ACTIONS: readonly AdminAction[] = ["unblock", "change-role", "password-reset"]
+
+/**
+ * The address a password-reset link would go to, or `null` when the person has no password with
+ * an address. The API answers the same on its own; this only says so before the operator asks.
+ */
+export function resetAddress(detail: Pick<AdminUserDetail, "methods">): string | null {
+  return detail.methods.find((method) => method.method === "password" && method.email)?.email ??
+    null
+}
 
 /**
  * Whether `operator` may act on the person: never on themselves, and never on a role at or above
@@ -150,22 +208,27 @@ export interface AdminUserScreenProps {
   extraTabs?: readonly AdminExtraTab[]
   /** The action whose dialog is open, or `null`. */
   dialog: AdminAction | null
-  onOpenDialog: (action: AdminAction) => void
+  /** The session the open "end-session" dialog ends. */
+  dialogSessionId?: number | null
+  /** The operator opened an action's dialog; "end-session" names its session. */
+  onOpenDialog: (action: AdminAction, sessionId?: number) => void
   /** The operator closed the dialog: the app drops its error. */
   onCloseDialog: () => void
   /** Why the API refused the open dialog's action, shown under its text, or `null`. */
   actionError: string | null
   pending: boolean
-  /** The operator confirmed the open dialog's action. */
-  onAction: (action: AdminAction) => void
+  /** The operator confirmed the open dialog's action, with the session or the role it needs. */
+  onAction: (action: AdminAction, input?: AdminActionInput) => void
   navigate?: Navigate
 }
 
 /**
  * One person in the admin app (#424): a header card with their avatar, name, badges and the one
  * "More actions" menu, then tabs for their account, how they sign in, their sessions, their groups
- * and their activity, plus any tab a module adds. The menu blocks, unblocks or ends every session,
- * each confirmed in a dialog. No password is asked: the audit trail records who acted.
+ * and their activity, plus any tab a module adds. The menu blocks, unblocks, ends every session,
+ * sends a password-reset link and, for an administrator, changes the role (#425); the Sessions tab
+ * ends one session or all. Each is confirmed in a dialog. No password is asked: the audit trail
+ * records who acted.
  */
 export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
   const { detail, error, operator, dialog, navigate } = props
@@ -188,6 +251,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
 
   const { user } = detail
   const actOn = canActOn(operator, user)
+  const address = resetAddress(detail)
   const menu = actOn && (
     <>
       {user.blockedAt
@@ -207,6 +271,24 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
       >
         End all sessions
       </DropdownItem>
+      <DropdownItem
+        dataE2E="admin-password-reset-open"
+        disabled={address === null}
+        onClick={() => props.onOpenDialog("password-reset")}
+      >
+        <span class="flex flex-col">
+          Send password-reset link
+          {address === null && <span class="text-xs text-muted">No password with an address</span>}
+        </span>
+      </DropdownItem>
+      {canChangeRoles(operator.role) && (
+        <DropdownItem
+          dataE2E="admin-change-role-open"
+          onClick={() => props.onOpenDialog("change-role")}
+        >
+          Change role
+        </DropdownItem>
+      )}
     </>
   )
 
@@ -217,7 +299,13 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
     {
       id: "sessions",
       label: <TabLabel text="Sessions" count={detail.sessions.length} />,
-      content: <Sessions detail={detail} />,
+      content: (
+        <Sessions
+          detail={detail}
+          onEnd={actOn ? (sessionId) => props.onOpenDialog("end-session", sessionId) : undefined}
+          onEndAll={actOn ? () => props.onOpenDialog("end-sessions") : undefined}
+        />
+      ),
     },
     {
       id: "groups",
@@ -233,7 +321,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
     <Stack>
       <PageHeader
         title={name}
-        subtitle={user.email ?? undefined}
+        subtitle={adminUserSubtitle(user) ?? undefined}
         mark={<Avatar name={name} size="md" />}
         back={back}
         navigate={navigate}
@@ -304,6 +392,10 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
       {actOn && dialog && (
         <ActionDialog
           action={dialog}
+          detail={detail}
+          address={address}
+          operator={operator}
+          sessionId={props.dialogSessionId ?? null}
           actionError={props.actionError}
           pending={props.pending}
           onAction={props.onAction}
@@ -370,20 +462,62 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
   )
 }
 
-function Sessions({ detail }: { detail: AdminUserDetail }): JSX.Element {
-  return (
+/**
+ * The person's open sessions. With `onEnd` and `onEndAll` (an operator who may act on them), each
+ * row has its own "End" button and "End all" sits above the list.
+ */
+function Sessions(
+  { detail, onEnd, onEndAll }: {
+    detail: AdminUserDetail
+    onEnd?: (sessionId: number) => void
+    onEndAll?: () => void
+  },
+): JSX.Element {
+  const list = (
     <Rows empty="Signed in nowhere." dataE2E="admin-user-sessions">
       {detail.sessions.map((session) => (
-        <li key={session.id} class={ROW}>
-          <span class="font-medium">{session.deviceName}</span>
+        <li key={session.id} class={ROW} data-e2e={`admin-session-${session.id}`}>
+          <span class="font-medium">{sessionName(session.deviceName)}</span>
           {session.ipHint && <span class="text-sm text-muted">{session.ipHint}</span>}
           <span class="ml-auto text-xs text-muted">
             Last active <When at={session.lastUsedAt} />
           </span>
+          {onEnd && (
+            <Button
+              variant="ghost"
+              size="sm"
+              data-e2e="admin-session-end-open"
+              aria-label={`End the session on ${sessionName(session.deviceName)}`}
+              onClick={() => onEnd(session.id)}
+            >
+              End
+            </Button>
+          )}
         </li>
       ))}
     </Rows>
   )
+  if (!onEndAll || detail.sessions.length === 0) return list
+  return (
+    <Stack>
+      <Cluster justify="end">
+        <Button
+          variant="secondary"
+          size="sm"
+          data-e2e="admin-sessions-end-all-open"
+          onClick={onEndAll}
+        >
+          End all
+        </Button>
+      </Cluster>
+      {list}
+    </Stack>
+  )
+}
+
+/** A session's device as a person reads it; a session that named none is "Unknown device". */
+function sessionName(deviceName: string): string {
+  return deviceName || "Unknown device"
 }
 
 function Groups({ detail }: { detail: AdminUserDetail }): JSX.Element {
@@ -466,34 +600,78 @@ function methodName(method: string): string {
 
 /** The dialog of one action: what it does, why the API refused it, and its button. */
 function ActionDialog(
-  { action, actionError, pending, onAction, onCloseDialog }: {
+  { action, detail, address, operator, sessionId, actionError, pending, onAction, onCloseDialog }: {
     action: AdminAction
+    detail: AdminUserDetail
+    /** Where a password-reset link goes, or `null` when it cannot. */
+    address: string | null
+    operator: AdminOperator
+    /** The session an "end-session" dialog ends. */
+    sessionId: number | null
     actionError: string | null
     pending: boolean
-    onAction: (action: AdminAction) => void
+    onAction: (action: AdminAction, input?: AdminActionInput) => void
     onCloseDialog: () => void
   },
 ): JSX.Element {
   const copy = ACTIONS[action]
+  const calm = CALM_ACTIONS.includes(action)
+  const roles = adminGrantableRoles(operator.role)
+  // The person's own role is picked first, so the button changes nothing until another is picked.
+  const [role, setRole] = useState<UserRole>(detail.user.role)
+  const session = detail.sessions.find((one) => one.id === sessionId)
+  const input: AdminActionInput | undefined = action === "change-role"
+    ? { role }
+    : action === "end-session" && sessionId !== null
+    ? { sessionId }
+    : undefined
+  const unchanged = action === "change-role" && role === detail.user.role
   return (
     <Modal
       open
       onClose={onCloseDialog}
       title={copy.title}
       cancelLabel="Close"
-      tone={action === "unblock" ? undefined : "danger"}
+      tone={calm ? undefined : "danger"}
       dataE2E="admin-action-dialog"
     >
-      <ScreenForm pending={pending} onSubmit={() => onAction(action)}>
+      <ScreenForm pending={pending} onSubmit={() => onAction(action, input)}>
         <Stack>
           <p class="text-sm text-muted">{copy.text}</p>
+          {action === "end-session" && session && (
+            <p class="text-sm font-medium" data-e2e="admin-action-session">
+              {sessionName(session.deviceName)}
+              {session.ipHint && (
+                <span class="font-normal text-muted">{` · ${session.ipHint}`}</span>
+              )}
+            </p>
+          )}
+          {action === "password-reset" && address && (
+            <p class="text-sm">
+              Sent to <span class="font-medium wrap-anywhere">{address}</span>
+            </p>
+          )}
+          {action === "change-role" && (
+            <RadioGroup
+              legend="Role"
+              name="role"
+              data-e2e="admin-role-picker"
+              options={roles.map((one) => ({
+                value: String(one),
+                label: one === detail.user.role ? `${roleLabel(one)} (now)` : roleLabel(one),
+              }))}
+              value={String(role)}
+              onChange={(value) => setRole(Number(value) as UserRole)}
+            />
+          )}
           <ErrorState message={actionError} />
           <Cluster justify="end">
             <Button type="button" variant="ghost" onClick={onCloseDialog}>Cancel</Button>
             <Button
               type="submit"
-              variant={action === "unblock" ? "primary" : "danger"}
+              variant={calm ? "primary" : "danger"}
               data-e2e="admin-action-submit"
+              disabled={unchanged}
               busy={pending}
               busyLabel={copy.busy}
             >

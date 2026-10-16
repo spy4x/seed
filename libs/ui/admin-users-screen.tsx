@@ -52,6 +52,16 @@ export function adminUserName(
   return `${user.firstName} ${user.lastName}`.trim() || user.email || "No name"
 }
 
+/**
+ * The line under a person's name: their address, or nothing when the name already is the address
+ * (a person who set no name), so it is never shown twice.
+ */
+export function adminUserSubtitle(
+  user: Pick<AdminUserRow, "firstName" | "lastName" | "email">,
+): string | null {
+  return user.email && adminUserName(user) !== user.email ? user.email : null
+}
+
 /** A role's badge colour: viewers stay quiet, every role above them stands out. */
 export function roleColor(role: UserRole): "gray" | "blue" | "purple" {
   if (role === UserRole.VIEWER) return "gray"
@@ -95,6 +105,10 @@ export interface AdminUsersScreenProps {
   /** The operator searched, sorted or changed a filter: the app reads page 1 of that. */
   onSearch: (filter: AdminUserFilter) => void
   onPage: (page: number) => void
+  /** The signed-in operator's id: their own row says "You". */
+  operatorId?: number
+  /** Where the filtered list downloads as CSV, every page of it; no button without it. */
+  exportHref?: string
   navigate?: Navigate
 }
 
@@ -103,7 +117,8 @@ export interface AdminUsersScreenProps {
  * search by name or address and filter chips for status and role. Each name opens the person.
  */
 export function AdminUsersScreen(
-  { filter, list, pending, error, onSearch, onPage, navigate }: AdminUsersScreenProps,
+  { filter, list, pending, error, onSearch, onPage, operatorId, exportHref, navigate }:
+    AdminUsersScreenProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
 
@@ -130,8 +145,19 @@ export function AdminUsersScreen(
     <Stack>
       <PageHeader
         title="Users"
-        subtitle="Everyone with an account. Open a person to block them or end their sessions."
+        subtitle="Everyone with an account. Open a person to block them, end a session or send a password-reset link."
         titleDataE2E="admin-users-title"
+        action={exportHref && (
+          // A plain download: the server streams every page of the filtered list.
+          <Button
+            href={exportHref}
+            download
+            variant="secondary"
+            data-e2e="admin-users-export"
+          >
+            Export CSV
+          </Button>
+        )}
       />
       <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
         <ScreenForm
@@ -217,7 +243,7 @@ export function AdminUsersScreen(
           <div data-e2e="admin-users-list">
             <DataTable
               mode="server"
-              columns={userColumns(navigate)}
+              columns={userColumns(operatorId, navigate)}
               rows={rows}
               sort={filter.sort}
               onSortChange={(sort) =>
@@ -246,13 +272,18 @@ export function AdminUsersScreen(
 }
 
 /** The table's columns. Every one but the status sorts, on the server. */
-function userColumns(navigate?: Navigate): DataTableColumn<UserTableRow, AdminUserSortKey>[] {
+function userColumns(
+  operatorId?: number,
+  navigate?: Navigate,
+): DataTableColumn<UserTableRow, AdminUserSortKey>[] {
   return [
     {
       key: "name",
       header: "Person",
       sortable: true,
-      render: ({ user }) => <PersonCell user={user} navigate={navigate} />,
+      render: ({ user }) => (
+        <PersonCell user={user} self={user.id === operatorId} navigate={navigate} />
+      ),
     },
     {
       key: "role",
@@ -310,25 +341,36 @@ function FilterChips(
   )
 }
 
-/** The person column: their avatar, their name as the link to their page, and their address. */
+/**
+ * The person column: their avatar, their name as the link to their page, their address when the
+ * name is not already it, and "You" on the operator's own row.
+ */
 function PersonCell(
-  { user, navigate }: { user: AdminUserRow; navigate?: Navigate },
+  { user, self, navigate }: { user: AdminUserRow; self: boolean; navigate?: Navigate },
 ): JSX.Element {
+  const subtitle = adminUserSubtitle(user)
   return (
     // At least 12rem wide: on a phone the table scrolls sideways instead of squeezing the name
     // into a column a few letters wide.
     <div class="flex min-w-48 items-center gap-3">
       <Avatar name={adminUserName(user)} size="sm" />
       <div class="flex min-w-0 flex-col">
-        <Link
-          href={ADMIN_PATHS.user(user.id)}
-          navigate={navigate}
-          class="pc-link font-medium wrap-anywhere"
-          data-e2e={`admin-user-${user.id}`}
-        >
-          {adminUserName(user)}
-        </Link>
-        {user.email && <span class="text-sm text-muted wrap-anywhere">{user.email}</span>}
+        <span class="flex flex-wrap items-center gap-2">
+          <Link
+            href={ADMIN_PATHS.user(user.id)}
+            navigate={navigate}
+            class="pc-link font-medium wrap-anywhere"
+            data-e2e={`admin-user-${user.id}`}
+          >
+            {adminUserName(user)}
+          </Link>
+          {self && (
+            <span data-e2e="admin-user-you">
+              <Badge text="You" color="gray" type="outline" />
+            </span>
+          )}
+        </span>
+        {subtitle && <span class="text-sm text-muted wrap-anywhere">{subtitle}</span>}
       </div>
     </div>
   )

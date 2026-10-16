@@ -83,6 +83,7 @@ function buildApp(
         outcome,
         user: outcome === AdminActOutcome.Done ? target : undefined,
       })),
+    export: () => Promise.reject(new Error("not used")),
   }
   const context = {
     limit: passThrough,

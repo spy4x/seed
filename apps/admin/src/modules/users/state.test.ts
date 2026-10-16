@@ -102,7 +102,7 @@ it("a confirmed action asks for no password, closes the dialog, toasts and reads
     `POST /api/admin/users/42/block`,
     `GET /api/admin/users/42`,
   ])
-  expect(state.dialog.value).toEqual({ action: null, error: null, pending: false })
+  expect(state.dialog.value).toEqual({ action: null, sessionId: null, error: null, pending: false })
   expect(toasts.list.value.map((toast) => [toast.type, toast.body])).toEqual([
     ["success", "Grace Hopper is blocked and signed out everywhere."],
   ])
@@ -115,7 +115,12 @@ it("a refused action keeps the dialog open with the API's message and no toast",
   )
   const { state, toasts } = await withDialog(request)
   await state.act()
-  expect(state.dialog.value).toEqual({ action: "block", error: message, pending: false })
+  expect(state.dialog.value).toEqual({
+    action: "block",
+    sessionId: null,
+    error: message,
+    pending: false,
+  })
   expect(toasts.list.value).toEqual([])
 })
 
@@ -131,5 +136,51 @@ it("a second confirm while the action is on its way sends nothing more", async (
   await first
   expect(calls.filter((call) => call.startsWith("POST"))).toEqual([
     `POST /api/admin/users/42/block`,
+  ])
+})
+
+it("ends the one session the dialog was opened for, and toasts it", async () => {
+  const { request, calls } = fakeRequest()
+  const { state, toasts } = await withDialog(request)
+  state.openDialog("end-session", 9)
+  await state.act()
+  expect(calls.filter((call) => call.startsWith("POST"))).toEqual([
+    `POST /api/admin/users/42/sessions/9/end`,
+  ])
+  expect(toasts.list.value.map((toast) => toast.body)).toEqual([
+    "One session of Grace Hopper has ended.",
+  ])
+})
+
+it("sends the role picked in the dialog as the body of a role change", async () => {
+  const { request, calls } = fakeRequest()
+  const { state, toasts } = await withDialog(request)
+  state.openDialog("change-role")
+  await state.act({ role: UserRole.OPERATOR })
+  expect(calls.filter((call) => call.startsWith("POST"))).toEqual([
+    `POST /api/admin/users/42/role {"role":2}`,
+  ])
+  expect(toasts.list.value.map((toast) => toast.body)).toEqual(["Grace Hopper is now operator."])
+})
+
+it("sends nothing for a role change without a role", async () => {
+  const { request, calls } = fakeRequest()
+  const { state } = await withDialog(request)
+  state.openDialog("change-role")
+  await state.act()
+  expect(calls.filter((call) => call.startsWith("POST"))).toEqual([])
+  expect(state.dialog.value.action).toBe("change-role")
+})
+
+it("asks the API to mail a password-reset link, and toasts it", async () => {
+  const { request, calls } = fakeRequest()
+  const { state, toasts } = await withDialog(request)
+  state.openDialog("password-reset")
+  await state.act()
+  expect(calls.filter((call) => call.startsWith("POST"))).toEqual([
+    `POST /api/admin/users/42/password-reset`,
+  ])
+  expect(toasts.list.value.map((toast) => toast.body)).toEqual([
+    "A password-reset link is on its way to Grace Hopper.",
   ])
 })

@@ -36,13 +36,17 @@ import type { AccountDeletionBlocker, OnboardingMark, OnboardingStatus } from "@
 import { touchUserSeen } from "@server/auth/sessions.ts"
 import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
 import { type ApiTokenRows, apiTokenRows } from "@server/api-tokens/api-tokens.ts"
+import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
 import {
+  exportAdminUsers,
   isUserBlocked,
   listAdminUsers,
   lockAdminTarget,
   readAdminUser,
   readAdminUserParts,
+  readPasswordResetAddress,
   setUserBlocked,
+  setUserRole,
   setUserRoleByAddress,
 } from "@server/auth/admin-users.ts"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
@@ -341,9 +345,21 @@ export class AppDbBase extends DbServiceBase {
       setBlocked: (userId: number, at: Date | null) => setUserBlocked(sql, userId, at),
       /** Whether the person is blocked, deleted or not. */
       isBlocked: (userId: number) => isUserBlocked(sql, userId),
-      /** Gives the person who signs in with `address` the role, and answers their id or `null`. */
-      setRoleByAddress: (address: string, role: UserRole) =>
-        setUserRoleByAddress(sql, address, role),
+      /**
+       * Gives the person who signs in with `address` the role, with an audit row naming `actor`,
+       * and answers their id and former role, or `null`. Outside `begin()`: it opens its own.
+       */
+      setRoleByAddress: (address: string, role: UserRole, actor: string) =>
+        setUserRoleByAddress(sql, address, role, actor),
+      /** Gives the live person `userId` the role. Inside the action's `begin()`. */
+      setRole: (userId: number, role: UserRole) => setUserRole(sql, userId, role),
+      /** The address a reset link for `userId` goes to, or `null` when none can reach them. */
+      resetAddress: (userId: number) => readPasswordResetAddress(sql, userId),
+      /** Queues the "Forgot password" mail to `email`, in the caller's transaction. */
+      queuePasswordReset: (email: string) => enqueuePasswordResetMail(sql, email),
+      /** Every person `filter` matches, `batchSize` rows at a time, for the CSV export. */
+      export: (filter: AdminUserFilter, batchSize: number) =>
+        exportAdminUsers(sql, filter, batchSize),
       /** The dashboard's counts and 30-day series as of `now` (#424). */
       stats: (now: Date) => readAdminStats(sql, now),
     }

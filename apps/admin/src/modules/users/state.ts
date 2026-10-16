@@ -6,23 +6,31 @@ import {
   adminUserFilterQuery,
   type AdminUserListResponse,
   type AdminUserRow,
+  USER_ROLE_NAMES,
 } from "@domain/identity"
-import type { AdminAction } from "@ui/admin-user-screen.tsx"
+import type { AdminAction, AdminActionInput } from "@ui/admin-user-screen.tsx"
 import { adminUserName } from "@ui/admin-users-screen.tsx"
 import { type AdminFetch, post } from "../../state.ts"
 
-/** Each action's path under `/api/admin/users/:id/`. */
-const ACTION_PATHS: Record<AdminAction, string> = {
-  block: "block",
-  unblock: "unblock",
-  "end-sessions": "sessions/end",
+/** Each action's path under `/api/admin/users/:id/`; ending one session names it. */
+const ACTION_PATHS: Record<AdminAction, (input: AdminActionInput) => string> = {
+  block: () => "block",
+  unblock: () => "unblock",
+  "end-sessions": () => "sessions/end",
+  "end-session": (input) => `sessions/${input.sessionId}/end`,
+  "change-role": () => "role",
+  "password-reset": () => "password-reset",
 }
 
 /** What the toast says after each action went through. */
-const ACTION_DONE: Record<AdminAction, (name: string) => string> = {
+const ACTION_DONE: Record<AdminAction, (name: string, input: AdminActionInput) => string> = {
   block: (name) => `${name} is blocked and signed out everywhere.`,
   unblock: (name) => `${name} can sign in again.`,
   "end-sessions": (name) => `Every session of ${name} has ended.`,
+  "end-session": (name) => `One session of ${name} has ended.`,
+  "change-role": (name, input) =>
+    `${name} is now ${input.role === undefined ? "on a new role" : USER_ROLE_NAMES[input.role]}.`,
+  "password-reset": (name) => `A password-reset link is on its way to ${name}.`,
 }
 
 export interface UsersListState {
@@ -41,12 +49,14 @@ export interface UsersPersonState {
 
 export interface UsersDialogState {
   action: AdminAction | null
+  /** The session an "end-session" dialog ends, or `null`. */
+  sessionId: number | null
   /** Why the API refused the action, or `null`. */
   error: string | null
   pending: boolean
 }
 
-const NO_DIALOG: UsersDialogState = { action: null, error: null, pending: false }
+const NO_DIALOG: UsersDialogState = { action: null, sessionId: null, error: null, pending: false }
 
 /**
  * The users module's state: the list, the open person and the action dialog. Every call goes
@@ -86,8 +96,8 @@ export function createUsersState(request: AdminFetch, toasts: ToastStore) {
         : { userId, detail: null, error: result.error.message }
     },
 
-    openDialog(action: AdminAction): void {
-      dialog.value = { action, error: null, pending: false }
+    openDialog(action: AdminAction, sessionId?: number): void {
+      dialog.value = { action, sessionId: sessionId ?? null, error: null, pending: false }
     },
 
     closeDialog(): void {
@@ -98,25 +108,29 @@ export function createUsersState(request: AdminFetch, toasts: ToastStore) {
     /**
      * Sends the open dialog's action. It asks for no password: the API records the operator in the
      * audit trail. On success the dialog closes, a toast says what happened, and the person is read
-     * again, so their sessions, status and activity show the change.
+     * again, so their sessions, status and activity show the change. A role change sends the role
+     * picked in the dialog; ending one session sends the session the dialog was opened for.
      */
-    async act(): Promise<void> {
-      const { action, pending } = dialog.value
+    async act(picked: AdminActionInput = {}): Promise<void> {
+      const { action, sessionId, pending } = dialog.value
       const { userId, detail } = person.value
       if (!action || pending || userId === null) return
-      dialog.value = { action, error: null, pending: true }
+      if (action === "end-session" && sessionId === null) return
+      if (action === "change-role" && picked.role === undefined) return
+      const input: AdminActionInput = { ...picked, sessionId: sessionId ?? undefined }
+      dialog.value = { action, sessionId, error: null, pending: true }
       const result = await request<{ user: AdminUserRow }>(
-        `/api/admin/users/${userId}/${ACTION_PATHS[action]}`,
-        post(),
+        `/api/admin/users/${userId}/${ACTION_PATHS[action](input)}`,
+        post(action === "change-role" ? { role: picked.role } : undefined),
       )
       if (!result.ok) {
-        dialog.value = { action, error: result.error.message, pending: false }
+        dialog.value = { action, sessionId, error: result.error.message, pending: false }
         return
       }
       dialog.value = NO_DIALOG
       const user = result.data?.user ?? detail?.user
       const name = user ? adminUserName(user) : "The person"
-      toasts.success({ body: ACTION_DONE[action](name), dataE2E: "admin-action-toast" })
+      toasts.success({ body: ACTION_DONE[action](name, input), dataE2E: "admin-action-toast" })
       await state.loadPerson(userId)
     },
   }
