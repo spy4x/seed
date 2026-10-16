@@ -229,7 +229,7 @@ Reusable code is written in the libraries first, released, then imported (the ru
 | The HTTP calls module for the client, and "prefer the socket, fall back to HTTP"        | `@spy4x/realtime` (new)                |
 | The operations table type and the HTTP adapter for the server (web-standard `Request` in, `Response` out) | `@spy4x/realtime` (new)   |
 | A read cache behind a list read: replace on answer, answer from the copy when unreachable, show the copy first, and the time the copy was taken (`createDataCache` stores none today) | `@spy4x/realtime` on `createDataCache` (new) |
-| A notice "saved copy from <time>" for a list shown from the device                      | preact-components (new, if `SyncStatus` cannot say it) |
+| A notice "saved copy from <time>" for a list shown from the device                      | preact-components (exists: `SavedCopyNotice`) |
 | An offline-writable collection: cache plus outbox plus the overlay of queued entries on a list, from one adapter; several collections flushed in order under one lock, with the "waits for its parent" rule of section 5 | `@spy4x/realtime` on `createOutbox` (new) |
 | The outbox, its IndexedDB store, the sync runner, the data cache                        | ts-libs (exist)                        |
 | `SyncStatus`, `ConflictChooser`                                                         | preact-components (exist)              |

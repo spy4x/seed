@@ -199,8 +199,10 @@ fails and the screen shows the store's error.
    shows before the server has answered.
 
 A list that can mislead when old (it lists access a person may have revoked) also exposes
-`savedAt` from the answer (`fresh ? null : savedAt`), and its screen says the list is a saved copy,
-as `libs/ui/api-tokens.tsx` does.
+`savedAt` from the answer (`fresh ? null : savedAt`), and its screen says the list is a saved copy
+with `SavedCopyNotice` from `@spy4x/preact-system`, as `libs/ui/api-tokens.tsx` does. The notice is
+rendered always, with `savedAt` `null` while the list is fresh, and its title names the list, so
+two notices on one page sound different to a screen reader.
 
 **Level 3, offline-writable.** Only for an aggregate a person must be able to change with no
 network; it costs a conflict screen. Copy `offline/notes-collection.ts`: one `defineCollection`

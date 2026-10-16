@@ -13,8 +13,8 @@ import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
-import { Notice } from "@spy4x/preact-ui/notice"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { SavedCopyNotice } from "@spy4x/preact-system/saved-copy-notice"
 import { API_TOKEN_EXPIRY_DAYS, type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { ScreenForm } from "./progressive.tsx"
@@ -92,6 +92,16 @@ const ACCESS_OPTIONS = [
 ]
 
 /**
+ * The words of the notice over a saved copy of this list. The title names the list, because the
+ * signed-in devices' notice sits on the same page and a screen reader would hear two identical ones.
+ */
+const API_TOKENS_SAVED_COPY_LABELS = {
+  title: "Saved copy of your API tokens",
+  body: (time: string) =>
+    `The server is out of reach. This list was saved on this device: ${time}. Tokens created or revoked since then are missing from it.`,
+}
+
+/**
  * "API tokens" on the profile: each live token with its group, access, expiry and last use, and
  * "Revoke", which asks first. "Create token" opens a dialog; once the token is made the same
  * dialog shows its secret, once, with a copy control.
@@ -127,13 +137,11 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
       dataE2E="api-tokens"
     >
       <ErrorState message={errors.list} />
-      {savedAt != null && (
-        <Notice tone="warning" title="Saved copy" data-e2e="api-tokens-saved-copy">
-          The server is out of reach. This list was saved on this device{" "}
-          <time dateTime={new Date(savedAt).toISOString()}>{timeAgo(savedAt)}</time>. Tokens created
-          or revoked since then are missing from it.
-        </Notice>
-      )}
+      <SavedCopyNotice
+        savedAt={savedAt}
+        labels={API_TOKENS_SAVED_COPY_LABELS}
+        data-e2e="api-tokens-saved-copy"
+      />
       {tokens === null
         ? <p class="text-sm text-muted">Loading your tokens…</p>
         : tokens.length === 0

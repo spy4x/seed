@@ -5,7 +5,7 @@ import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
-import { Notice } from "@spy4x/preact-ui/notice"
+import { SavedCopyNotice } from "@spy4x/preact-system/saved-copy-notice"
 import type { SignedInDevice } from "@domain/identity"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
@@ -32,6 +32,16 @@ export interface SignedInDevicesProps {
   onEndOthers: () => void
 }
 
+/**
+ * The words of the notice over a saved copy of this list. The title names the list, because the API
+ * tokens' notice sits on the same page and a screen reader would hear two identical ones.
+ */
+const SESSIONS_SAVED_COPY_LABELS = {
+  title: "Saved copy of your devices",
+  body: (time: string) =>
+    `The server is out of reach. This list was saved on this device: ${time}. Devices signed in or out since then are missing from it.`,
+}
+
 /** What waits for the person's confirmation: one device, or all the others. */
 type Confirming = { session: SignedInDevice } | "others" | null
 
@@ -52,13 +62,11 @@ export function SignedInDevices(
       dataE2E="sessions"
     >
       <ErrorState message={error} />
-      {savedAt != null && (
-        <Notice tone="warning" title="Saved copy" data-e2e="sessions-saved-copy">
-          The server is out of reach. This list was saved on this device{" "}
-          <time dateTime={new Date(savedAt).toISOString()}>{timeAgo(savedAt)}</time>. Devices signed
-          in or out since then are missing from it.
-        </Notice>
-      )}
+      <SavedCopyNotice
+        savedAt={savedAt}
+        labels={SESSIONS_SAVED_COPY_LABELS}
+        data-e2e="sessions-saved-copy"
+      />
       {sessions === null ? <p class="text-sm text-muted">Loading your devices…</p> : (
         <SettingList>
           {sessions.map((session) => (

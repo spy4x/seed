@@ -188,7 +188,7 @@ test.describe("the app with the local-data module switched off", () => {
       await gotoApp(page, `${groupPath}/activity`, page.locator("[data-e2e=activity-list]"))
       await gotoApp(page, "/notifications", page.getByRole("heading", { level: 1 }))
       await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
-      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toHaveCount(0)
+      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toBeEmpty()
 
       expect(await databases(page)).toEqual([])
       await signOut(page)
@@ -280,8 +280,8 @@ test.describe("the app with no network, after one visit online", () => {
       await expect(tokens).toHaveCount(1)
       // Once more, so the copy on the device holds the token just made.
       await gotoApp(page, "/", tokens)
-      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toHaveCount(0)
-      await expect(page.locator("[data-e2e=api-tokens-saved-copy]")).toHaveCount(0)
+      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toBeEmpty()
+      await expect(page.locator("[data-e2e=api-tokens-saved-copy]")).toBeEmpty()
       const name = await page.locator("[data-e2e=profile-name]").textContent()
 
       await context.setOffline(true)
@@ -306,9 +306,15 @@ test.describe("the app with no network, after one visit online", () => {
       await openOffline(page, "/")
       await expect(page.locator("[data-e2e=profile-name]")).toHaveText(name ?? "")
       await expect(page.locator("[data-e2e=session-current]")).toBeVisible()
-      await expect(page.locator("[data-e2e=sessions-saved-copy] time")).toBeVisible()
+      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toHaveAttribute(
+        "data-saved-at",
+        /^\d{4}-/,
+      )
       await expect(page.locator("[data-e2e=api-tokens]")).toContainText("Kept token")
-      await expect(page.locator("[data-e2e=api-tokens-saved-copy] time")).toBeVisible()
+      await expect(page.locator("[data-e2e=api-tokens-saved-copy]")).toHaveAttribute(
+        "data-saved-at",
+        /^\d{4}-/,
+      )
     } finally {
       await context.close()
       await otherContext.close()
