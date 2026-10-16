@@ -183,11 +183,16 @@ async function enter(): Promise<void> {
   })
 }
 
-/** The texts of every element `selector` finds, trimmed. */
+/**
+ * The texts of every element `selector` finds, trimmed, without the parts hidden from assistive
+ * technology (`aria-hidden`), such as the rail's tooltip that repeats an entry's label.
+ */
 function texts(selector: string): string[] {
-  return [...document.querySelectorAll(selector)].map((element) =>
-    element.textContent?.trim() ?? ""
-  )
+  return [...document.querySelectorAll(selector)].map((element) => {
+    const copy = element.cloneNode(true) as Element
+    copy.querySelectorAll(`[aria-hidden="true"]`).forEach((hidden) => hidden.remove())
+    return copy.textContent?.trim() ?? ""
+  })
 }
 
 /** A theme store's slice, recording every choice. */
