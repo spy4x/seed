@@ -1,6 +1,8 @@
 import type { Hono, MiddlewareHandler } from "hono"
+import type postgres from "postgres"
 import type { PushDevicesUpdatedEvent, UserSignedOutEvent } from "@api/cqrs/events.ts"
 import type { AppDbBase } from "@api/services/db-base.ts"
+import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { APIContext } from "../../_types.ts"
 
 /** The answer to anyone below operator, on every path: the area does not exist for them. */
@@ -9,6 +11,10 @@ export const ADMIN_NOT_FOUND = "Not found"
 /** What every operator-area module may build its routes from. `index.ts` passes the singletons. */
 export interface AdminModuleContext {
   db: AppDbBase
+  /** The raw client, for the reads and library stores `db` does not wrap. */
+  sql: postgres.Sql
+  /** The mail subscriptions' keys, or `null` when they are off. */
+  subscribers: SubscribersSetup | null
   /** The normal per-user budget the session routes spend too. Every module route spends it. */
   limit: MiddlewareHandler<APIContext>
   /**

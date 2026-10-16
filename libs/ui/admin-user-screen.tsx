@@ -54,6 +54,9 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.USER_BLOCKED]: "danger",
   [AuthAuditEventType.USER_UNBLOCKED]: "success",
   [AuthAuditEventType.PUSH_DEVICE_REMOVED]: "warning",
+  [AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED]: "warning",
+  [AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT]: "neutral",
+  [AuthAuditEventType.NEWSLETTER_SUBSCRIBERS_EXPORTED]: "neutral",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
@@ -81,6 +84,9 @@ const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.USER_BLOCKED]: "Blocked by an operator",
   [AuthAuditEventType.USER_UNBLOCKED]: "Unblocked by an operator",
   [AuthAuditEventType.PUSH_DEVICE_REMOVED]: "Push device removed by an operator",
+  [AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED]: "Removed a newsletter subscriber",
+  [AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT]: "Resent a newsletter confirm mail",
+  [AuthAuditEventType.NEWSLETTER_SUBSCRIBERS_EXPORTED]: "Exported the newsletter's subscribers",
 }
 
 /** Each action's dialog: its title, what it does, and its button. */

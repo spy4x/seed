@@ -175,13 +175,24 @@ app.route(
     tokens: apiTokens,
   }),
 )
+// The mail subscriptions' keys, read once for the public routes and the operator area.
+const subscribersSetup = readSubscribersSetup(Deno.env, config.isDev ? "dev" : "prod")
+const subscribersWarning = subscribersOffWarning(subscribersSetup)
+if (subscribersWarning) log(subscribersWarning)
 // The operator area (#146) and its modules (#424). The gate answers 404 to anyone below operator.
 app.route(
   "/admin",
   createAdminRoute({
     auth: signIn.auth,
     mutationGuards,
-    modules: adminModuleRoutes({ db, limit: rateLimits.normal, emit, now: () => new Date() }),
+    modules: adminModuleRoutes({
+      db,
+      sql,
+      subscribers: subscribersSetup,
+      limit: rateLimits.normal,
+      emit,
+      now: () => new Date(),
+    }),
   }),
 )
 // The only routes that accept a token, and they accept nothing else.
@@ -308,9 +319,6 @@ app.route(
   }),
 )
 // Visitors subscribe to mail. The worker signs and sends every mail; this checks the links.
-const subscribersSetup = readSubscribersSetup(Deno.env, config.isDev ? "dev" : "prod")
-const subscribersWarning = subscribersOffWarning(subscribersSetup)
-if (subscribersWarning) log(subscribersWarning)
 app.route(
   "/subscribers",
   createSubscribersRoute({
