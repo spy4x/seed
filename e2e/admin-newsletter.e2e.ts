@@ -53,6 +53,7 @@ test("an operator finds a subscriber, exports the list and removes them", async 
   // A second address on the list, so the search has something to leave out.
   const decoy = address("decoy")
   let admin: BrowserContext | null = null
+  let ops: Page | null = null
   try {
     // The operator's account, promoted.
     const signUp = await request.post(`${appBase}/api/auth/password/sign-up`, {
@@ -72,7 +73,7 @@ test("an operator finds a subscriber, exports the list and removes them", async 
 
     // The operator signs in on the admin host and opens the newsletter from the sidebar.
     admin = await browser.newContext({ baseURL: adminBase, acceptDownloads: true })
-    const ops = await admin.newPage()
+    ops = await admin.newPage()
     await ops.goto(`${adminBase}/sign-in`)
     await ops.locator("[data-e2e=auth-form-login]").fill(operatorEmail)
     await ops.locator("[data-e2e=auth-form-password]").fill(password)
@@ -124,15 +125,17 @@ test("an operator finds a subscriber, exports the list and removes them", async 
     await expect(ops).toHaveURL(/tab=sends/)
     await expect(ops.locator("[data-e2e=admin-newsletter-sends]")).toBeVisible()
   } finally {
-    // The decoy leaves the list the way an operator removes it.
-    const removed = await admin?.request.post(
-      `${adminBase}/api/admin/newsletter/subscribers/remove`,
-      {
-        headers: { origin: adminBase, "sec-fetch-site": "same-origin" },
-        data: { email: decoy },
-      },
-    )
-    if (removed) expect.soft(removed.status(), await removed.text()).toBe(200)
+    // The decoy leaves the list the way an operator removes it. The request goes from the admin
+    // page: the browser resolves `admin.localhost`, but the CI container's Node resolver does not.
+    const removed = await ops?.evaluate(async (email) => {
+      const response = await fetch("/api/admin/newsletter/subscribers/remove", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      return { status: response.status, text: await response.text() }
+    }, decoy)
+    if (removed) expect.soft(removed.status, removed.text).toBe(200)
     await admin?.close()
     const cleaned = await request.post(`${appBase}/api/test/cleanup-user`, {
       data: { login: operatorEmail },
