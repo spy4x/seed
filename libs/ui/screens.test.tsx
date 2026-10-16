@@ -263,3 +263,95 @@ describe("UnsubscribeScreen without JavaScript", () => {
     }
   })
 })
+
+describe("signed-out cards' layout", () => {
+  const forms = {
+    "sign-in": <AuthScreen {...authDefaults} />,
+    "sign-up": <AuthScreen {...authDefaults} screen="sign-up" />,
+    "forgot-password": (
+      <ForgotPasswordScreen
+        email=""
+        onEmailChange={() => {}}
+        sent={false}
+        error={null}
+        pending={false}
+      />
+    ),
+    "subscription-confirm": (
+      <SubscriptionConfirmScreen
+        state="confirm"
+        list="news"
+        token="t"
+        error={null}
+        pending={false}
+      />
+    ),
+    "unsubscribe": (
+      <UnsubscribeScreen state="confirm" list="news" token="t" error={null} pending={false} />
+    ),
+    "subscribe": (
+      <SubscribeForm
+        email=""
+        onEmailChange={() => {}}
+        list="news"
+        sent={false}
+        error={null}
+        pending={false}
+      />
+    ),
+  }
+
+  it("draws every signed-out form in one card with the same padding and a full-width submit", () => {
+    for (const [name, node] of Object.entries(forms)) {
+      const html = renderToString(node)
+      // The card's body: padded alike everywhere, and every submit button inside spans it.
+      const body = html.match(/<div class="([^"]*)">/g)?.find((tag) => tag.includes("p-6 sm:p-8"))
+      expect({ name, body }).toEqual({
+        name,
+        body: `<div class="flex flex-col gap-6 p-6 sm:p-8 [&amp;_button[type=submit]]:w-full">`,
+      })
+      expect({ name, submits: html.includes(`type="submit"`) }).toEqual({ name, submits: true })
+    }
+  })
+
+  it("leaves the width to the frame, except the subscribe form the website sets in a wide band", () => {
+    for (const [name, node] of Object.entries(forms)) {
+      const widths = renderToString(node).match(/\bmax-w-[\w-]+|\bmx-auto\b/g) ?? []
+      expect({ name, widths }).toEqual({ name, widths: name === "subscribe" ? ["max-w-md"] : [] })
+    }
+    const sent = renderToString(
+      <SubscribeForm
+        email=""
+        onEmailChange={() => {}}
+        list="news"
+        sent
+        error={null}
+        pending={false}
+      />,
+    )
+    expect(sent.match(/\bmax-w-[\w-]+/g)).toEqual(["max-w-md"])
+  })
+
+  it("spans the card with the one way onward when there is nothing to fill in", () => {
+    const pages = {
+      "signed-in": <AuthScreen {...authDefaults} isSignedIn />,
+      "link-sent": (
+        <ForgotPasswordScreen
+          email=""
+          onEmailChange={() => {}}
+          sent
+          error={null}
+          pending={false}
+        />
+      ),
+      "unsubscribed": (
+        <UnsubscribeScreen state="done" list="news" token="t" error={null} pending={false} />
+      ),
+    }
+    for (const [name, node] of Object.entries(pages)) {
+      const links = renderToString(node).match(/<a\b[^>]*>/g) ?? []
+      expect({ name, links: links.length }).toEqual({ name, links: 1 })
+      expect({ name, full: /\bw-full\b/.test(links[0] ?? "") }).toEqual({ name, full: true })
+    }
+  })
+})

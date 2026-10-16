@@ -28,7 +28,9 @@ function Message(
   return (
     <AuthCard title={title} e2e={e2e}>
       <p class="text-sm text-muted" role="status">{text}</p>
-      <Button href={href} navigate={navigate} variant="secondary">{link}</Button>
+      <Button href={href} navigate={navigate} variant="secondary" class="w-full">
+        {link}
+      </Button>
     </AuthCard>
   )
 }

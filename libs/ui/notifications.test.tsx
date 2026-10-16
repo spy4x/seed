@@ -62,17 +62,49 @@ describe("notifications screen", () => {
     expect(page).toContain("3 hours ago")
   })
 
-  it("marks an unread notification in words, not by weight or colour alone", () => {
-    const page = renderToString(screen({
+  it("marks an unread notification by a word, a dot and weight, never by colour alone", () => {
+    const root = document.createElement("div")
+    root.innerHTML = renderToString(screen({
       notifications: [row(2), row(1, { readAt: new Date().toISOString() })],
       unreadCount: 1,
     }))
-    expect(page.match(/Unread:/g)?.length).toBe(1)
-    // The weight is the second sign, so exactly the unread row carries it.
-    expect(page.match(/min-w-0 flex-1 text-sm font-semibold/g)?.length).toBe(1)
-    expect(page.match(/min-w-0 flex-1 text-sm "/g)?.length).toBe(1)
-    expect(page).toContain(`data-unread="true"`)
-    expect(page).toContain(`data-unread="false"`)
+    const [unread, read] = [...root.querySelectorAll("li")]
+    expect(unread.getAttribute("data-unread")).toBe("true")
+    expect(unread.querySelector(".sr-only")?.textContent).toBe("Unread:")
+    expect(unread.querySelector("[data-e2e=notification-dot]")?.className).toContain("bg-selected")
+    expect(unread.querySelector("[data-e2e=notification-text]")?.className).toContain("font-medium")
+    expect(read.getAttribute("data-unread")).toBe("false")
+    expect(read.querySelector(".sr-only")).toBe(null)
+    expect(read.querySelector("[data-e2e=notification-dot]")?.className).not.toContain(
+      "bg-selected",
+    )
+    expect(read.querySelector("[data-e2e=notification-text]")?.className).not.toContain(
+      "font-medium",
+    )
+  })
+
+  it("lists the notifications as rows of one card, each row a link, in the frame's column", () => {
+    const root = document.createElement("div")
+    root.innerHTML = renderToString(screen({ notifications: [row(2), row(1)], unreadCount: 2 }))
+    const list = root.querySelector("[data-e2e=notifications-list]")!
+    expect(list.parentElement?.className).toContain("pc-card")
+    for (const item of list.querySelectorAll("li")) {
+      const link = item.querySelector("[data-e2e=notification-link]")!
+      // The link is the row: its only child, at least 56 px tall.
+      expect(item.children.length).toBe(1)
+      expect(link.className).toContain("min-h-14")
+      expect(link.contains(item.querySelector("time"))).toBe(true)
+    }
+    // `AppFrame` owns the page's width; the screen sets none.
+    expect(root.innerHTML).not.toMatch(/\bmax-w-|\bmx-auto\b/)
+  })
+
+  it("draws a row's keyboard focus as the library's ring inside the row, which the card cannot clip", () => {
+    const root = document.createElement("div")
+    root.innerHTML = renderToString(screen({ notifications: [row(1)], unreadCount: 1 }))
+    const classes = root.querySelector("[data-e2e=notification-link]")!.className.split(" ")
+    expect(classes).toContain("focus-visible:ring-2")
+    expect(classes).toContain("focus-visible:ring-inset")
   })
 
   it("offers Mark all as read only while something is unread", () => {
@@ -110,15 +142,20 @@ describe("notifications screen", () => {
     root.remove()
   })
 
-  it("names each notification's link by its sentence, beginning with the word on screen", () => {
-    const page = renderToString(screen({
+  it("names each notification's link by its sentence and when it came, unread first", () => {
+    const root = document.createElement("div")
+    root.innerHTML = renderToString(screen({
       notifications: [
         row(2, { kind: "group.ownership_received", payload: { groupName: "Trip" } }),
-        row(1),
+        row(1, { readAt: "2026-10-01T10:00:00Z" }),
       ],
+      unreadCount: 1,
     }))
-    expect(page).toContain(`aria-label="Open: You now own “Trip”."`)
-    expect(page).toContain(`aria-label="Open: You were removed from “Family”."`)
+    const links = [...root.querySelectorAll("[data-e2e=notification-link]")]
+    // No `aria-label`: the name is the text on screen, so voice control finds it by what it says.
+    expect(links.map((link) => link.getAttribute("aria-label"))).toEqual([null, null])
+    expect(links[0].textContent).toBe("Unread: You now own “Trip”. 3 hours ago")
+    expect(links[1].textContent).toMatch(/^You were removed from “Family”\. \S/)
   })
 
   it("moves focus to the first notification's link once Mark all as read went through", async () => {

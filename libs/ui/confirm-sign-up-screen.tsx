@@ -55,7 +55,9 @@ export function ConfirmSignUpScreen(
         description="This took longer than ten minutes, or was already answered. Nothing was created."
         e2e="confirm-sign-up-gone"
       >
-        <Button href={SCREEN_PATHS.signIn} navigate={navigate}>Back to sign in</Button>
+        <Button href={SCREEN_PATHS.signIn} navigate={navigate} class="w-full">
+          Back to sign in
+        </Button>
       </AuthCard>
     )
   }

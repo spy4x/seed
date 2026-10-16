@@ -155,19 +155,21 @@ function LastSignIn(
 /**
  * The one card of a signed-out page: the page's `h1` and a sentence under it, then the form. A
  * submit button inside fills the card's width, and `after` sits centred under the card, such as
- * the link to the other auth page.
+ * the link to the other auth page. The card fills its column (`PublicFrame`'s 28 rem); `class`
+ * is only for a page that places the card in a wider column of its own.
  */
 export function AuthCard(
-  { title, description, after, children, e2e }: {
+  { title, description, after, children, e2e, class: className }: {
     title: string
     description?: ComponentChildren
     after?: ComponentChildren
     children: ComponentChildren
     e2e?: string
+    class?: string
   },
 ): JSX.Element {
   return (
-    <div class="flex flex-col gap-6">
+    <div class={`flex w-full flex-col gap-6 ${className ?? ""}`}>
       <Card class="w-full" data-e2e={e2e}>
         <div class="flex flex-col gap-6 p-6 sm:p-8 [&_button[type=submit]]:w-full">
           <header class="flex flex-col gap-1">
@@ -188,7 +190,9 @@ function Done(
 ): JSX.Element {
   return (
     <AuthCard title={title} description={text}>
-      <Button href={SCREEN_PATHS.profile} navigate={navigate}>Open your profile</Button>
+      <Button href={SCREEN_PATHS.profile} navigate={navigate} class="w-full">
+        Open your profile
+      </Button>
     </AuthCard>
   )
 }

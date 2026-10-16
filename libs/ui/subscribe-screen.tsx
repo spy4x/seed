@@ -1,12 +1,11 @@
 import type { JSX, Ref } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
-import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
-import { Link } from "@spy4x/preact-ui/link"
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
+import { AuthCard } from "./auth-screen.tsx"
 import { FORM_ACTIONS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 
 /** The messages shown when a step failed without a message of its own. */
@@ -19,38 +18,48 @@ export const SUBSCRIBE_FAILURES = {
 /**
  * A card with a heading and a sentence, and optionally one link onward. The sentence takes focus
  * through `statusRef` when the card replaces a form on the same page, so a screen reader reads the
- * outcome.
+ * outcome. `class` is only for the subscribe page, which the website places in a wide column.
  */
 function Outcome(
-  { title, text, link, navigate, statusRef, e2e }: {
+  { title, text, link, navigate, statusRef, e2e, class: className }: {
     title: string
     text: string
     link?: { href: string; label: string }
     navigate?: Navigate
     statusRef?: Ref<HTMLParagraphElement>
     e2e: string
+    class?: string
   },
 ): JSX.Element {
   return (
-    <Card class="mx-auto w-full max-w-md" data-e2e={e2e}>
-      <CardHeader>
-        <h1 class="text-lg font-semibold">{title}</h1>
-      </CardHeader>
-      <CardBody>
-        <p
-          class="mb-4 outline-none"
-          role="status"
-          tabIndex={-1}
-          ref={statusRef}
-          data-e2e={`${e2e}-status`}
-        >
-          {text}
-        </p>
-        {link && <Link href={link.href} navigate={navigate} class="pc-link">{link.label}</Link>}
-      </CardBody>
-    </Card>
+    <AuthCard title={title} e2e={e2e} class={className}>
+      <p
+        class="text-sm text-muted outline-none"
+        role="status"
+        tabIndex={-1}
+        ref={statusRef}
+        data-e2e={`${e2e}-status`}
+      >
+        {text}
+      </p>
+      {link && (
+        <Button href={link.href} navigate={navigate} variant="secondary" class="w-full">
+          {link.label}
+        </Button>
+      )}
+    </AuthCard>
   )
 }
+
+/**
+ * The website (`apps/mpa`) puts the subscribe form beside its introduction in a wide band, so the
+ * form keeps the 28 rem of a signed-out column itself; in the app's `PublicFrame` it changes
+ * nothing. Inputs never stretch across a wide column.
+ */
+const SUBSCRIBE_WIDTH = "max-w-md"
+
+const SUBSCRIBE_INTRO =
+  "Enter your address. We send a link to confirm it first, and every mail has a link to unsubscribe."
 
 /**
  * Moves focus to the returned element when `step` differs from the step the screen mounted with.
@@ -121,48 +130,42 @@ export function SubscribeForm(
         text="A link to confirm your subscription is on its way. It works for three days."
         statusRef={status}
         e2e="subscribe-sent"
+        class={SUBSCRIBE_WIDTH}
       />
     )
   }
   return (
-    <Card class="mx-auto w-full max-w-md">
-      <CardHeader>
-        <h1 class="text-lg font-semibold">Get the news by e-mail</h1>
-      </CardHeader>
-      <CardBody>
-        <p class="mb-4 text-sm">
-          Enter your address. We send a link to confirm it first, and every mail has a link to
-          unsubscribe.
-        </p>
-        <ScreenForm action={FORM_ACTIONS.subscribe} pending={pending} onSubmit={onSubmit}>
-          <Stack>
-            <input type="hidden" name="list" value={list} />
-            <Field id="subscribe-email" label="E-mail" error={error} required>
-              <Input
-                ref={field}
-                data-e2e="subscribe-email"
-                name="email"
-                type="email"
-                autocomplete="email"
-                value={email}
-                onInput={(e) => onEmailChange(e.currentTarget.value)}
-                required
-              />
-            </Field>
-            <div>
-              <Button
-                type="submit"
-                data-e2e="subscribe-submit"
-                busy={pending}
-                busyLabel="Sending..."
-              >
-                Subscribe
-              </Button>
-            </div>
-          </Stack>
-        </ScreenForm>
-      </CardBody>
-    </Card>
+    <AuthCard
+      title="Get the news by e-mail"
+      description={SUBSCRIBE_INTRO}
+      class={SUBSCRIBE_WIDTH}
+    >
+      <ScreenForm action={FORM_ACTIONS.subscribe} pending={pending} onSubmit={onSubmit}>
+        <Stack>
+          <input type="hidden" name="list" value={list} />
+          <Field id="subscribe-email" label="E-mail" error={error} required>
+            <Input
+              ref={field}
+              data-e2e="subscribe-email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              value={email}
+              onInput={(e) => onEmailChange(e.currentTarget.value)}
+              required
+            />
+          </Field>
+          <Button
+            type="submit"
+            data-e2e="subscribe-submit"
+            busy={pending}
+            busyLabel="Sending..."
+          >
+            Subscribe
+          </Button>
+        </Stack>
+      </ScreenForm>
+    </AuthCard>
   )
 }
 
@@ -226,36 +229,30 @@ export function SubscriptionConfirmScreen(
     )
   }
   return (
-    <Card class="mx-auto w-full max-w-md" data-e2e="subscription-confirm">
-      <CardHeader>
-        <h1 class="text-lg font-semibold">Confirm your subscription</h1>
-      </CardHeader>
-      <CardBody>
-        <p class="mb-4 text-sm">
-          {email ? `Send the news to ${email}?` : "Send the news to your address?"}
-        </p>
-        <ScreenForm action={FORM_ACTIONS.subscribeConfirm} pending={pending} onSubmit={onSubmit}>
-          <Stack>
-            <input type="hidden" name="list" value={list} />
-            <input type="hidden" name="token" value={token} />
-            <FormError
-              error={error ?? (state === "error" ? SUBSCRIBE_FAILURES.confirm : null)}
-              e2e="subscription-confirm-error"
-            />
-            <div>
-              <Button
-                type="submit"
-                data-e2e="subscription-confirm-submit"
-                busy={pending}
-                busyLabel="Confirming..."
-              >
-                Confirm
-              </Button>
-            </div>
-          </Stack>
-        </ScreenForm>
-      </CardBody>
-    </Card>
+    <AuthCard
+      title="Confirm your subscription"
+      description={email ? `Send the news to ${email}?` : "Send the news to your address?"}
+      e2e="subscription-confirm"
+    >
+      <ScreenForm action={FORM_ACTIONS.subscribeConfirm} pending={pending} onSubmit={onSubmit}>
+        <Stack>
+          <input type="hidden" name="list" value={list} />
+          <input type="hidden" name="token" value={token} />
+          <FormError
+            error={error ?? (state === "error" ? SUBSCRIBE_FAILURES.confirm : null)}
+            e2e="subscription-confirm-error"
+          />
+          <Button
+            type="submit"
+            data-e2e="subscription-confirm-submit"
+            busy={pending}
+            busyLabel="Confirming..."
+          >
+            Confirm
+          </Button>
+        </Stack>
+      </ScreenForm>
+    </AuthCard>
   )
 }
 
@@ -305,35 +302,31 @@ export function UnsubscribeScreen(
     )
   }
   return (
-    <Card class="mx-auto w-full max-w-md" data-e2e="unsubscribe">
-      <CardHeader>
-        <h1 class="text-lg font-semibold">Unsubscribe</h1>
-      </CardHeader>
-      <CardBody>
-        <p class="mb-4 text-sm">
-          {email ? `Stop sending the news to ${email}?` : "Stop sending the news to your address?"}
-        </p>
-        <ScreenForm action={FORM_ACTIONS.unsubscribe} pending={pending} onSubmit={onSubmit}>
-          <Stack>
-            <input type="hidden" name="list" value={list} />
-            <input type="hidden" name="token" value={token} />
-            <FormError
-              error={error ?? (state === "error" ? SUBSCRIBE_FAILURES.unsubscribe : null)}
-              e2e="unsubscribe-error"
-            />
-            <div>
-              <Button
-                type="submit"
-                data-e2e="unsubscribe-submit"
-                busy={pending}
-                busyLabel="Unsubscribing..."
-              >
-                Unsubscribe
-              </Button>
-            </div>
-          </Stack>
-        </ScreenForm>
-      </CardBody>
-    </Card>
+    <AuthCard
+      title="Unsubscribe"
+      description={email
+        ? `Stop sending the news to ${email}?`
+        : "Stop sending the news to your address?"}
+      e2e="unsubscribe"
+    >
+      <ScreenForm action={FORM_ACTIONS.unsubscribe} pending={pending} onSubmit={onSubmit}>
+        <Stack>
+          <input type="hidden" name="list" value={list} />
+          <input type="hidden" name="token" value={token} />
+          <FormError
+            error={error ?? (state === "error" ? SUBSCRIBE_FAILURES.unsubscribe : null)}
+            e2e="unsubscribe-error"
+          />
+          <Button
+            type="submit"
+            data-e2e="unsubscribe-submit"
+            busy={pending}
+            busyLabel="Unsubscribing..."
+          >
+            Unsubscribe
+          </Button>
+        </Stack>
+      </ScreenForm>
+    </AuthCard>
   )
 }
