@@ -54,7 +54,7 @@ Docker).
 ```sh
 deno task vapid-key:create   # web push keys → infra/configs/vapid.json
 deno task proxy:start        # Traefik
-deno task dev                # Postgres, Valkey, MinIO, API, worker, SPA and the monitoring
+deno task dev                # Postgres, Valkey, API, worker, SPA and the monitoring
 ```
 
 Compose joins every service that Traefik routes to a Docker network named `proxy`. `proxy:start` and
@@ -110,7 +110,7 @@ The screenshots and the GIF use a throw-away database and a made-up user;
 <details>
 <summary>How the parts fit together</summary>
 
-<img src="docs/architecture.svg" alt="Architecture diagram. Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is the public website on Fresh, server-rendered, calling the API only for the newsletter. Servers: apps/api on Hono (auth, groups, CQRS dispatch, web push) and apps/worker, which drains outbox_events. Data: Postgres is authoritative and Valkey is the API cache; Docker Compose also runs Traefik, MinIO, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui and the @spy4x packages on JSR." width="860">
+<img src="docs/architecture.svg" alt="Architecture diagram. Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is the public website on Fresh, server-rendered, calling the API only for the newsletter. Servers: apps/api on Hono (auth, groups, CQRS dispatch, web push) and apps/worker, which drains outbox_events. Data: Postgres is authoritative and Valkey is the API cache; Docker Compose also runs Traefik, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/ui and the @spy4x packages on JSR." width="860">
 
 </details>
 
@@ -138,7 +138,7 @@ The screenshots and the GIF use a throw-away database and a made-up user;
   WebSocket; everything is an ES module. The servers run on Deno 2 in Docker on any Linux host you
   control, and the clients run in any modern browser.
 - **Operations included.** Docker Compose for development and single-node production: Traefik,
-  Postgres, Valkey, MinIO, VictoriaMetrics, VictoriaLogs and Grafana.
+  Postgres, Valkey, VictoriaMetrics, VictoriaLogs and Grafana.
 
 **Use it if** you are starting a multi-user web product and want auth, tenancy and operations
 settled before the first feature. **Skip it if** you deploy to serverless functions rather than a server
@@ -228,11 +228,11 @@ more than usual:
 2. Run `deno task proxy:start` on it: `deno task deploy` restarts the app's containers but never
    the proxy, so the proxy that is already running keeps serving its dashboard at
    `proxy.<DOMAIN>` until then.
-3. The next deploy publishes Grafana (with the `monitoring` profile) on `127.0.0.1:3000` and the
-   MinIO console on `127.0.0.1:9001`. When something on the server that is not this project
+3. The next deploy publishes Grafana (with the `monitoring` profile) on `127.0.0.1:3000`. When
+   something on the server that is not this project
    already listens on a port the project publishes, the deploy stops at "Starting the app" before
    any container is created, stopped or started: it names the port and the variable to change
-   (`GRAFANA_HOST_PORT`, `MINIO_CONSOLE_HOST_PORT`), and what ran before still runs. Set that
+   (`GRAFANA_HOST_PORT`), and what ran before still runs. Set that
    variable in the env file to a free `127.0.0.1:<port>` and deploy again
    ([Admin consoles](#admin-consoles)).
 
@@ -247,7 +247,7 @@ alone. Data is not touched: it lives in `.volumes`. The base image is now named
 
 Every deploy starts the product first (the database, Valkey, the migration, the API, the worker,
 the SPA, and the website with the `mpa` profile), then everything else. When a monitoring
-container or MinIO cannot start, the product already runs on the new version; the deploy still
+container cannot start, the product already runs on the new version; the deploy still
 fails, and its last lines name the services that are not up. A check that cannot be made (Compose
 answers in a form the script does not read, as `podman-compose` may) is skipped, and the deploy
 runs as one `compose up`, as it did before.
@@ -332,17 +332,16 @@ What a person gets:
 
 ## Admin consoles
 
-The MinIO console and Grafana have no public address. Each is published on the machine's own
-address only: the MinIO console on `127.0.0.1:9001` (sign in with `MINIO_USER` and `MINIO_PASS`),
-Grafana on `127.0.0.1:3000` (`admin` and `GRAFANA_PASS`). On your own machine open
-`http://localhost:9001` or `http://localhost:3000`. On a server, open a tunnel first:
+Grafana has no public address. It is published on the machine's own address only, on
+`127.0.0.1:3000` (sign in with `admin` and `GRAFANA_PASS`). On your own machine open
+`http://localhost:3000`. On a server, open a tunnel first:
 
 ```sh
-ssh -L 9001:127.0.0.1:9001 -L 3000:127.0.0.1:3000 <SSH_TO_SERVER>
+ssh -L 3000:127.0.0.1:3000 <SSH_TO_SERVER>
 ```
 
-When a port is taken, set `MINIO_CONSOLE_HOST_PORT` or `GRAFANA_HOST_PORT` in the env file to
-another `127.0.0.1:<port>`. Never publish either on `0.0.0.0`.
+When the port is taken, set `GRAFANA_HOST_PORT` in the env file to another `127.0.0.1:<port>`.
+Never publish it on `0.0.0.0`.
 
 ## Backups
 
@@ -353,8 +352,8 @@ Every snapshot of the last two days is kept, then one per day for a week, one pe
 and one per month for half a year. The profile is off until you set it up, so a new product has no
 backup before these steps are done.
 
-It saves the database only. Valkey is a cache, and nothing in the template stores files in MinIO; a
-product that starts to keep uploads there has to add them. The env file and
+It saves the database only. Valkey is a cache, and the template bundles no file store: nothing in it
+keeps files yet. A product that adds uploads adds their store and its backup. The env file and
 `infra/configs/vapid.json` (the web push keys, which exist on the server only) are not in the
 backup either: keep your own copy of both.
 
@@ -438,12 +437,12 @@ first, change:
 - `PROJECT`: containers, the project's network, its base image and its Traefik routers are named
   after it. Lowercase letters, digits and dashes.
 - `DOMAIN`, and `MPA_DOMAIN` with the `mpa` profile.
-- the four ports published on `127.0.0.1`: `DB_HOST_PORT`, `KV_HOST_PORT`,
-  `MINIO_CONSOLE_HOST_PORT` and `GRAFANA_HOST_PORT`. A port another project holds stops
+- the three ports published on `127.0.0.1`: `DB_HOST_PORT`, `KV_HOST_PORT` and
+  `GRAFANA_HOST_PORT`. A port another project holds stops
   `deno task compose up -d` before it changes anything, naming the port and its variable.
 
-The engine gives every project's network a free subnet, and each project's database, Valkey,
-MinIO and monitoring are on that network only. Two things are shared. The proxy: start it once per
+The engine gives every project's network a free subnet, and each project's database, Valkey
+and monitoring are on that network only. Two things are shared. The proxy: start it once per
 server, not per project. And the `proxy` network, which the API, the SPA and the website of every
 project join so that Traefik can reach them: a container on it can open any project's API
 directly, without passing the proxy. The API refuses such a request when it names a client address

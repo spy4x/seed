@@ -42,7 +42,6 @@ Defined in `infra/compose/`:
   published port. Its pool (at most 10 connections) plus the API's (at most 10, plus one `LISTEN`
   connection) and postgres-exporter stay under Postgres' `max_connections=30`; raise that before
   raising either pool. `WORKER_CPU_LIMIT` and `WORKER_MEM_LIMIT` default to 0.5 CPU and 256M.
-- **MinIO** - object storage.
 - **Traefik** - reverse proxy, production compose only.
 - **vmagent, Vector, postgres-exporter** - collect this project's metrics and logs and send them
   on; see "Monitoring" below. They always run, and so does **socket-proxy**, through which Vector

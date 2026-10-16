@@ -80,7 +80,7 @@ const WORKS_TODAY = [
 const NOT_BUILT = [
   `Passkeys and magic links`,
   `Translations: the app is English only`,
-  `File uploads: MinIO runs, nothing stores files in it yet`,
+  `File uploads: no file store is bundled yet`,
   `Downloading an account's data`,
   `Parts of the worker`,
 ] as const

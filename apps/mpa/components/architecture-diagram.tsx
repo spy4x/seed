@@ -46,7 +46,7 @@ const WIDE: Layout = {
     { d: "M400 244 L456 244" },
   ],
   frame: { w: 624, h: 300 },
-  caption: [{ y: 340, text: "All on one server, behind Traefik, with Valkey, MinIO and Grafana" }],
+  caption: [{ y: 340, text: "All on one server, behind Traefik, with Valkey and Grafana" }],
 }
 
 const TALL: Layout = {
@@ -71,7 +71,7 @@ const TALL: Layout = {
   frame: { w: 344, h: 410 },
   caption: [
     { y: 440, text: "All on one server, behind Traefik," },
-    { y: 460, text: "with Valkey, MinIO and Grafana" },
+    { y: 460, text: "with Valkey and Grafana" },
   ],
 }
 

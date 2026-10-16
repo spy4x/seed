@@ -320,13 +320,13 @@ const TIERS: readonly Tier[] = [
           `production alike. Several products can share one server.`,
         facts: [
           `Traefik in front, with automatic certificates`,
-          `Postgres, Valkey and MinIO beside the apps`,
+          `Postgres and Valkey beside the apps`,
           `VictoriaMetrics, VictoriaLogs and Grafana, with alerts`,
           `An opt-in daily encrypted restic backup of the database, and a written restore`,
           `Release images published from CI when you push a version tag`,
         ],
         notYet: [{
-          label: `File uploads: MinIO runs, nothing stores files in it yet`,
+          label: `File uploads: no file store is bundled yet`,
           issue: issue(157),
         }],
         code: { label: `Read the Compose files`, href: source(`infra/compose/`) },

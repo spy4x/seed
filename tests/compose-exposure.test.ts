@@ -1,8 +1,8 @@
 /// <reference lib="deno.ns" />
 /**
  * Holds the Compose files to what may be reached from outside the machine
- * (spy4x/template#353): the proxy serves no dashboard or API of its own, the MinIO console and
- * Grafana have no router and are published on this machine only, as Postgres and Valkey are, Valkey
+ * (spy4x/template#353): the proxy serves no dashboard or API of its own, Grafana has no router
+ * and is published on this machine only, as Postgres and Valkey are, Valkey
  * needs its password, the API's router drops a forged `CF-Connecting-IP` header, and in production
  * plain HTTP redirects to HTTPS.
  *
@@ -82,26 +82,19 @@ Deno.test("the proxy does not turn on Traefik's unauthenticated API", async () =
 })
 
 for (const file of ["shared", "dev", "prod"]) {
-  Deno.test(`the MinIO console and Grafana have no router in compose.${file}.yml`, async () => {
+  Deno.test(`Grafana has no router in compose.${file}.yml`, async () => {
     const all = await services(file)
-    for (const name of ["minio", "grafana"]) {
-      expect(
-        (all[name]?.labels ?? []).filter((entry) => entry.startsWith("traefik.")),
-        name,
-      ).toEqual([])
-    }
+    expect((all.grafana?.labels ?? []).filter((entry) => entry.startsWith("traefik."))).toEqual([])
   })
 }
 
-Deno.test("the MinIO console and Grafana are published on this machine only by default", async () => {
-  const { minio, grafana } = await services("shared")
-  expect(minio.ports).toEqual(["${MINIO_CONSOLE_HOST_PORT:-127.0.0.1:9001}:9001"])
+Deno.test("Grafana is published on this machine only by default", async () => {
+  const { grafana } = await services("shared")
   expect(grafana.ports).toEqual(["${GRAFANA_HOST_PORT:-127.0.0.1:3000}:3000"])
   for (const file of ["dev", "prod"]) {
     const all = await services(file)
-    for (const name of ["minio", "grafana"]) {
-      expect(all[name]?.ports, `compose.${file}.yml publishes ${name} nowhere else`).toBeUndefined()
-    }
+    expect(all.grafana?.ports, `compose.${file}.yml publishes Grafana nowhere else`)
+      .toBeUndefined()
   }
 })
 
@@ -207,9 +200,9 @@ Deno.test("every port a project publishes is on this machine by default and move
       }
     }
   }
-  // infra/scripts/deploy.test.ts holds these four names to infra/envs/.env.example.
+  // infra/scripts/deploy.test.ts holds these three names to infra/envs/.env.example.
   expect(variables.sort()).toEqual(
-    ["DB_HOST_PORT", "GRAFANA_HOST_PORT", "KV_HOST_PORT", "MINIO_CONSOLE_HOST_PORT"],
+    ["DB_HOST_PORT", "GRAFANA_HOST_PORT", "KV_HOST_PORT"],
   )
 })
 

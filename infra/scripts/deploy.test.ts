@@ -153,7 +153,6 @@ Deno.test("planDeploy runs the key step with the configured Deno", () => {
 const EXAMPLE_SECRETS = [
   "DB_PASS",
   "KV_PASSWORD",
-  "MINIO_PASS",
   "GRAFANA_PASS",
   "AUTH_COOKIE_SECRET",
   "AUTH_PEPPER",
@@ -190,7 +189,7 @@ Deno.test("a deploy with one example password left stops and names that variable
 
   expect(message).toContain(ENV_FILE)
   expect(message).toContain("GRAFANA_PASS")
-  expect(message).not.toContain("MINIO_PASS")
+  expect(message).not.toContain("KV_PASSWORD")
   expect(message).not.toContain(example.GRAFANA_PASS)
 })
 
@@ -213,7 +212,7 @@ Deno.test("a secret the example sets is refused when the env file leaves it empt
   const message = await refusal({ ...await safeValues(), GRAFANA_PASS: "" })
 
   expect(message).toContain("has no value for GRAFANA_PASS")
-  expect(message).not.toContain("MINIO_PASS")
+  expect(message).not.toContain("KV_PASSWORD")
 })
 
 Deno.test("a secret the example sets is refused when the env file leaves it out", async () => {
@@ -356,10 +355,8 @@ Deno.test("the example file holds every name the deploy reads, the optional ones
 
 Deno.test("the example file names the host port of every service the stack publishes", async () => {
   const example = await readEnvFile(EXAMPLE_ENV_FILE)
-  // The same four names tests/compose-exposure.test.ts finds in the Compose files.
-  for (
-    const name of ["DB_HOST_PORT", "KV_HOST_PORT", "MINIO_CONSOLE_HOST_PORT", "GRAFANA_HOST_PORT"]
-  ) {
+  // The same three names tests/compose-exposure.test.ts finds in the Compose files.
+  for (const name of ["DB_HOST_PORT", "KV_HOST_PORT", "GRAFANA_HOST_PORT"]) {
     expect({ name, value: example[name] }).toEqual({
       name,
       value: expect.stringMatching(/^127\.0\.0\.1:\d+$/),

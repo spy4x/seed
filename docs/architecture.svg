@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 680" width="960" height="680" role="img" aria-labelledby="title desc">
   <title id="title">template architecture: what exists today and what is planned</title>
-  <desc id="desc">Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is a Fresh server-rendered shell with /health; its REST calls to the API are planned. Servers: apps/api on Hono handles auth, groups, CQRS dispatch and web push; apps/worker drains outbox_events. Data: Postgres is authoritative, Valkey is the cache; Docker Compose also runs Traefik, MinIO, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/client and the @spy4x packages on JSR.</desc>
+  <desc id="desc">Clients: apps/spa, a Preact and Vite PWA with sign-up, sign-in, TOTP and profile, talks to apps/api over REST and WebSocket; an IndexedDB offline store keeps the last notes and groups and queues writes made offline. apps/mpa is a Fresh server-rendered shell with /health; its REST calls to the API are planned. Servers: apps/api on Hono handles auth, groups, CQRS dispatch and web push; apps/worker drains outbox_events. Data: Postgres is authoritative, Valkey is the cache; Docker Compose also runs Traefik, VictoriaMetrics, VictoriaLogs and Grafana. Shared code: libs/domain, libs/server, libs/client and the @spy4x packages on JSR.</desc>
   <style>
     .bg { fill: #ffffff; stroke: #d0d7de; }
     .t { fill: #1f2328; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; }
@@ -101,7 +101,7 @@
 
   <rect class="box ops" x="650" y="412" width="270" height="76" rx="8"/>
   <text class="t" x="666" y="438">Docker Compose also runs</text>
-  <text class="t m" x="666" y="460">Traefik, MinIO, VictoriaMetrics,</text>
+  <text class="t m" x="666" y="460">Traefik, VictoriaMetrics,</text>
   <text class="t m" x="666" y="478">VictoriaLogs, Grafana</text>
 
   <!-- Shared code -->

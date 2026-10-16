@@ -209,7 +209,6 @@ const SERVICES = [
   `Traefik`,
   `Postgres`,
   `Valkey`,
-  `MinIO`,
   `VictoriaMetrics`,
   `VictoriaLogs`,
   `Grafana`,

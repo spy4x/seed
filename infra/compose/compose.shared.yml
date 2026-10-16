@@ -119,41 +119,6 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
-
-  minio:
-    container_name: ${PROJECT}-minio
-    # `pgsty/minio` is the community fork that keeps building MinIO: upstream's `minio/minio`
-    # refuses anonymous pulls. Same binary, commands and env names.
-    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
-    restart: unless-stopped
-    entrypoint:
-      - sh
-      - -euc
-      - minio server --console-address ":9001" /data
-    environment:
-      - MINIO_ROOT_USER=${MINIO_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_PASS}
-    volumes:
-      - ../../.volumes/minio:/data:Z
-    healthcheck:
-      test: [ 'CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live' ]
-      interval: 15s
-      timeout: 20s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: ${MINIO_CPU_LIMIT}
-          memory: '${MINIO_MEM_LIMIT}'
-    logging:
-      driver: json-file
-      options:
-        max-size: '10m'
-        max-file: '3'
-    ports:
-      # The admin console, on this machine only and never behind the proxy: from elsewhere, open
-      # it through an SSH tunnel (README, "Admin consoles").
-      - ${MINIO_CONSOLE_HOST_PORT:-127.0.0.1:9001}:9001
   # endregion Storages
 
   # region Monitoring
@@ -468,7 +433,8 @@ services:
       timeout: 5s
       retries: 5
     ports:
-      # As for the MinIO console: this machine only, never behind the proxy.
+      # The dashboard, on this machine only and never behind the proxy: from elsewhere, open it
+      # through an SSH tunnel (README, "Admin consoles").
       - ${GRAFANA_HOST_PORT:-127.0.0.1:3000}:3000
 
   # nodeexporter and cadvisor watch the whole host (its CPU, disk and network, and every

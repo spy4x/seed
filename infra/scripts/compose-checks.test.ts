@@ -141,12 +141,12 @@ Deno.test("a service is not up when it has no container or one that is not runni
       ROW("api", "running"),
       ROW("migrate", "exited"),
       ROW("grafana", "created"),
-      ROW("minio", "exited", 0, 127),
+      ROW("kv", "exited", 0, 127),
     ].join("\n"),
   )!
-  expect(servicesNotUp(["api", "migrate", "grafana", "minio", "vector"], containers)).toEqual([
+  expect(servicesNotUp(["api", "migrate", "grafana", "kv", "vector"], containers)).toEqual([
     "grafana (created)",
-    "minio (exited)",
+    "kv (exited)",
     "vector (no container)",
   ])
 })
