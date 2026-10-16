@@ -49,6 +49,18 @@ export const ACTIVITY_KINDS = [
   "tag.deleted",
 ] as const
 
+/**
+ * The key an operator's action from the admin area adds to its audit row's details. Its presence,
+ * whatever the value, marks the row as the operator's.
+ */
+export const OPERATOR_DETAIL = "operator"
+
+/**
+ * How a group's log names an operator who acted on the group from the admin area. Its members
+ * never see who the operator is: not their name, not their sign-in e-mail, not their account id.
+ */
+export const SUPPORT_TEAM_LABEL = "Support team"
+
 /** A person named in the log. `userId` is `null` once the account is gone. */
 export interface ActivityPerson {
   userId: number | null
@@ -161,15 +173,20 @@ function quoted(value: unknown): string {
 
 /**
  * One event in plain language, such as "Ada moved 3 notes to Family". A person with no name reads
- * as their e-mail (the server fills it in), and "Someone" if they have neither. An actor whose
- * account is gone reads "Deleted user"; a missing target reads "a member". An event whose facts
+ * as their e-mail (the server fills it in), and "Someone" if they have neither. An event an
+ * operator wrote from the admin area reads "Support team". An actor whose account is gone reads
+ * "Deleted user"; a missing target reads "a member". An event whose facts
  * were not kept (one written before the log existed) gets the shortest true sentence; a kind this
  * code does not know still reads as an event, never as a code.
  */
 export function describeActivity(
   event: Pick<ActivityEvent, "kind" | "actor" | "target" | "details">,
 ): string {
-  const who = event.actor.userId === null ? "Deleted user" : event.actor.name || "Someone"
+  const who = OPERATOR_DETAIL in event.details
+    ? SUPPORT_TEAM_LABEL
+    : event.actor.userId === null
+    ? "Deleted user"
+    : event.actor.name || "Someone"
   // A missing actor can only be a deleted account: the column was required until the log existed.
   // A missing target is either a deleted account or an event written before targets were kept, so
   // it reads "a member", which is true of both.

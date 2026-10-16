@@ -1,11 +1,13 @@
 import type postgres from "postgres"
-import type {
-  ActivityEvent,
-  ActivityPage,
-  ActivityResult,
-  AuditDetails,
-  AuditEntityType,
-  GroupActivityRepository,
+import {
+  type ActivityEvent,
+  type ActivityPage,
+  type ActivityResult,
+  type AuditDetails,
+  type AuditEntityType,
+  type GroupActivityRepository,
+  OPERATOR_DETAIL,
+  SUPPORT_TEAM_LABEL,
 } from "@domain/groups"
 
 interface ActivityRow extends postgres.Row {
@@ -31,6 +33,10 @@ interface ActivityRow extends postgres.Row {
  * members list reads it: admins already see members' e-mails there. An account that is gone leaves
  * `NULL` ids, which the log writes as "Deleted user".
  *
+ * An operator who acted on the group from the admin area is not a member, and the group's admins
+ * never learn who they are: a row carrying the operator mark reads {@link SUPPORT_TEAM_LABEL}, with
+ * no actor id, and the operator's name and e-mail are never selected for it.
+ *
  * A note the event points at "exists" while it is still in the group and not deleted; a note moved
  * to another group no longer does, so the log never links a reader to a note that left.
  */
@@ -39,20 +45,21 @@ export class PostgresGroupActivityRepository implements GroupActivityRepository 
 
   async list(groupId: string, page: ActivityPage): Promise<ActivityResult> {
     const limit = Math.max(1, Math.min(100, page.limit))
+    const byOperator = this.sql`audit_events.details ? ${OPERATOR_DETAIL}::text`
     const rows = await this.sql<ActivityRow[]>`
       SELECT
         audit_events.id::text AS id,
         audit_events.event_kind AS kind,
         audit_events.created_at AS at,
-        audit_events.actor_user_id,
-        coalesce(
+        CASE WHEN ${byOperator} THEN NULL ELSE audit_events.actor_user_id END AS actor_user_id,
+        CASE WHEN ${byOperator} THEN ${SUPPORT_TEAM_LABEL}::text ELSE coalesce(
           nullif(btrim(concat_ws(' ', actor.first_name, actor.last_name)), ''),
           (
             SELECT auth_keys.email FROM auth_keys
             WHERE auth_keys.user_id = audit_events.actor_user_id AND auth_keys.email IS NOT NULL
             ORDER BY auth_keys.id LIMIT 1
           )
-        ) AS actor_name,
+        ) END AS actor_name,
         audit_events.target_user_id,
         coalesce(
           nullif(btrim(concat_ws(' ', target.first_name, target.last_name)), ''),

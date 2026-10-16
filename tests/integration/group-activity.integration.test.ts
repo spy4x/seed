@@ -3,6 +3,8 @@ import { expect } from "@std/expect"
 import postgres from "postgres"
 import { sha256Hex } from "@spy4x/platform/tokens"
 import { ACTIVITY_KINDS, describeActivity, GroupRole } from "@domain/groups"
+import { UserRole } from "@domain/identity"
+import { AdminGroupActOutcome, adminGroupRows } from "@server/groups/admin-groups.ts"
 import { PostgresGroupActivityRepository } from "@server/groups/postgres-activity-repository.ts"
 import {
   invitationLookup,
@@ -13,7 +15,7 @@ import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
 import { purgeOldAuditEvents } from "@server/groups/purge-audit-events.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
-import { team, withSchema } from "./group-team.ts"
+import { insertUser, team, withSchema } from "./group-team.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { expectVersion7Ids } from "./ids.ts"
 
@@ -315,6 +317,54 @@ Deno.test("activity: a person with no name reads as their e-mail, as actor and a
     expect(describeActivity(event)).toBe(
       "olga@example.com changed ed@example.com from an editor to an admin",
     )
+  })
+})
+
+Deno.test("activity: an operator's action reads Support team, never their name, e-mail or id", async () => {
+  await withSchema(async (sql) => {
+    const { repository, groupId, owner, editor, viewer } = await team(sql)
+    const operatorId = await insertUser(sql)
+    await sql`UPDATE users SET role = ${UserRole.OPERATOR} WHERE id = ${operatorId}`
+    await sql`
+      UPDATE users SET first_name = NULL, last_name = NULL
+      WHERE id IN (${owner}, ${editor}, ${operatorId})
+    `
+    for (
+      const [id, email] of [
+        [owner, "olga@example.com"],
+        [editor, "ed@example.com"],
+        [operatorId, "ops@example.com"],
+      ] as const
+    ) {
+      await sql`
+        INSERT INTO auth_keys (user_id, method, subject, email)
+        VALUES (${id}, 'email', ${email}, ${email})
+      `
+    }
+    await repository.changeMemberRole(groupId, viewer, GroupRole.EDITOR, owner)
+    const operator = { id: operatorId, role: UserRole.OPERATOR }
+    expect(await adminGroupRows(sql).removeMember(operator, groupId, editor)).toBe(
+      AdminGroupActOutcome.Done,
+    )
+    const activity = new PostgresGroupActivityRepository(sql)
+
+    const [removed, changed] = (await activity.list(groupId, { limit: 2 })).events
+    expect(removed.actor).toEqual({ userId: null, name: "Support team" })
+    expect(describeActivity(removed)).toBe("Support team removed ed@example.com from the group")
+    // A member's own action still names them, by e-mail when they gave no name.
+    expect(changed.actor).toEqual({ userId: owner, name: "olga@example.com" })
+    expect(describeActivity(changed)).toBe(
+      "olga@example.com changed a member from a viewer to an editor",
+    )
+    const nameless = JSON.stringify(await activity.list(groupId, { limit: 100 }))
+    expect(nameless).not.toContain("ops@example.com")
+    expect(nameless).not.toContain(`"userId":${operatorId},`)
+
+    // A name the operator sets later does not reach the log either.
+    await sql`UPDATE users SET first_name = 'Opal', last_name = 'Quist' WHERE id = ${operatorId}`
+    const named = JSON.stringify(await activity.list(groupId, { limit: 100 }))
+    expect(named).not.toContain("Opal")
+    expect(named).not.toContain("Quist")
   })
 })
 

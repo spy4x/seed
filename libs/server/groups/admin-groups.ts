@@ -37,6 +37,7 @@ import {
   type GroupColor,
   GroupError,
   GroupRole,
+  OPERATOR_DETAIL,
 } from "@domain/groups"
 import type { UserRole } from "@domain/identity"
 import { handOverBilling } from "@server/billing/handover.ts"
@@ -50,11 +51,8 @@ import { INVITATION_EVENTS, revokeInvitationsOf } from "./invitation-revocation.
 const MEMBER_REMOVED_EVENT = "group.member_removed"
 const OWNERSHIP_TRANSFERRED_EVENT = "group.ownership_transferred"
 
-/**
- * The key an operator's action adds to its audit row's details, so the group's log can say an
- * operator did it. A number, as the admin page keeps only numeric details.
- */
-export const OPERATOR_DETAIL = "operator"
+// The operator's mark on an audit row lives with the log that reads it; the writers here use it.
+export { OPERATOR_DETAIL }
 
 /** The password method's name in `auth_keys`, as `@spy4x/server/auth/password` stores it. */
 const PASSWORD_METHOD = "password"

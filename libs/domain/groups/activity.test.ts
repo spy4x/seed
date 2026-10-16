@@ -7,6 +7,7 @@ import {
   describeActivity,
   type GroupError,
   GroupRole,
+  OPERATOR_DETAIL,
 } from "./+lib.ts"
 
 const ada = { userId: 1, name: "Ada" }
@@ -84,6 +85,18 @@ Deno.test("activity: a gone actor reads as Deleted user, a missing target as a m
   expect(say("group.member_removed", { target: null })).toBe(
     "Ada removed a member from the group",
   )
+})
+
+Deno.test("activity: an operator's event reads Support team, whoever the actor is", () => {
+  expect(say("group.member_removed", { details: { [OPERATOR_DETAIL]: 1 } })).toBe(
+    "Support team removed a member from the group",
+  )
+  expect(
+    say("group.invitation_revoked", {
+      actor: { userId: null, name: "" },
+      details: { [OPERATOR_DETAIL]: 1, role: GroupRole.EDITOR },
+    }),
+  ).toBe("Support team withdrew an invitation")
 })
 
 Deno.test("activity: a tag's changes read as sentences that name the tag", () => {
