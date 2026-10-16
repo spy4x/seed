@@ -73,15 +73,20 @@ const heading = (page: Page, name: string) =>
 const open = (page: Page, path: string) =>
   gotoApp(page, path, page.locator("[data-e2e=shell-ws-status]"))
 
-/** Picks a group from the side menu's picker with the keyboard alone: type, then Enter. */
+/**
+ * Picks a group from the header's switcher with the keyboard alone: Enter opens it on the first
+ * group, the arrow keys move to the one named, Enter chooses it.
+ */
 async function pickWithKeyboard(page: Page, groupName: string): Promise<void> {
-  const picker = page.locator("#sidebar-group-picker")
-  await picker.focus()
-  await page.keyboard.press("ArrowDown")
-  await expect(
-    page.locator("#sidebar-group-picker-listbox [role=option]", { hasText: new RegExp(groupName) }),
-  ).toBeVisible()
-  await page.keyboard.type(groupName)
+  await page.locator("[data-e2e=group-picker]").focus()
+  await page.keyboard.press("Enter")
+  const choice = page.getByRole("menuitemradio", { name: new RegExp(groupName) })
+  await expect(choice).toBeVisible()
+  for (let step = 0; step < 10; step++) {
+    if (await choice.evaluate((item) => item === document.activeElement)) break
+    await page.keyboard.press("ArrowDown")
+  }
+  await expect(choice).toBeFocused()
   await page.keyboard.press("Enter")
 }
 

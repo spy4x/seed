@@ -151,14 +151,13 @@ export function OfflineStatus(
   }
 
   return (
-    <section class="mx-auto mb-4 w-full max-w-3xl px-4" aria-label="Sync" data-e2e="offline-status">
+    <section class="w-full" aria-label="Sync" data-e2e="offline-status">
       <SyncStatus
         online={network.online.value}
         pending={pending}
         syncing={runner?.running}
         failed={(runner?.failures ?? 0) > 0 && runner?.lastError != null}
-        onRetry={() =>
-          void layer.runner.kick()}
+        onRetry={() => void layer.runner.kick()}
         labels={{ synced: "" }}
         class="data-[sync-state=waiting]:text-muted"
       />
@@ -189,8 +188,7 @@ export function OfflineStatus(
         <ConflictChooser
           conflicts={items}
           onKeepMine={(id) => choose(id, "keepMine")}
-          onUseTheirs={(id) =>
-            choose(id, "useTheirs")}
+          onUseTheirs={(id) => choose(id, "useTheirs")}
           labels={{ useTheirs: { version: "Use the server's" } }}
         />
       )}

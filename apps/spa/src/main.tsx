@@ -5,15 +5,16 @@ if (readBuildEnvVar(import.meta.env, "ENV", { prefix: "VITE_", optional: true })
 }
 import { render } from "preact"
 import { App } from "./app.tsx"
-import { createThemeStore } from "@spy4x/preact-signals/theme"
 import { ErrorBoundary } from "@spy4x/preact-ui/error-boundary"
 import { reportCaughtError, startErrorReporting } from "./error-reporting.ts"
 import { loadRuntimeConfig } from "./runtime-config.ts"
 import { install } from "./install.ts"
 import { configureModules } from "./modules.ts"
+import { themeStore } from "./state/theme.ts"
 
-// Follows the system light/dark setting. `index.html` paints the stored choice before this runs.
-createThemeStore().attach()
+// Follows the system light/dark setting until the person picks one in the account menu.
+// `index.html` paints the stored choice before this runs.
+themeStore.attach()
 
 // The browser can offer the install dialog before the app renders, so listening starts here.
 install.watch()

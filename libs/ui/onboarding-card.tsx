@@ -6,7 +6,6 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { OnboardingChecklist, type OnboardingStep } from "@spy4x/preact-ui/onboarding-checklist"
 import { Tour, type TourStep } from "@spy4x/preact-ui/tour"
 import type { OnboardingSteps } from "@domain/identity"
-import { ACCOUNT_COLUMN } from "./frame.tsx"
 import {
   GROUP_PATHS,
   type Navigate,
@@ -183,7 +182,7 @@ export function OnboardingCard(
   }, [tourOffered, tourOpen])
 
   return (
-    <div ref={card} class={ACCOUNT_COLUMN} data-e2e="onboarding">
+    <div ref={card} data-e2e="onboarding">
       <Stack gap="sm">
         <OnboardingChecklist
           title="Get started"

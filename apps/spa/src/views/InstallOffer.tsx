@@ -15,7 +15,6 @@ export function InstallOffer({ store = install }: { store?: InstallPromptStore }
       onInstall={() => store.install()}
       onDismiss={() => store.dismiss()}
       returnFocus={pageHeading}
-      class="mx-auto mb-4 w-full max-w-3xl"
     />
   )
 }

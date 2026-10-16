@@ -1,11 +1,12 @@
 import type { JSX } from "preact"
-import { IconCheck } from "@spy4x/preact-icons"
-import { Combobox } from "@spy4x/preact-ui/combobox"
+import { IconChevronDown } from "@spy4x/preact-icons"
+import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import type { GroupColor, GroupRole } from "@domain/groups"
-import { groupLabel, GroupMark } from "./group-appearance.tsx"
+import { GroupMark } from "./group-appearance.tsx"
 import { ROLE_TEXT } from "./groups-screen.tsx"
+import { type Navigate, SCREEN_PATHS } from "./progressive.tsx"
 
-/** One group of the picker: its name, and the person's role in it. */
+/** One group of the switcher: its name, and the person's role in it. */
 export interface PickerGroup {
   id: string
   name: string
@@ -15,7 +16,7 @@ export interface PickerGroup {
   role: GroupRole
 }
 
-/** What `AppFrame` needs to show the picker. */
+/** What `AppFrame` needs to show the switcher. */
 export interface GroupPickerData {
   groups: readonly PickerGroup[]
   /** The person's selected group, or `null` before it is known or for a person with no groups. */
@@ -25,43 +26,67 @@ export interface GroupPickerData {
 }
 
 /**
- * The id of the picker's text field. It kept its name from the sidebar the picker used to sit in,
- * because the e2e specs of the notes and the groups pick a group through it.
+ * The group's mark in the switcher: its own colour and emoji, or its initial on a quiet tile when
+ * it has neither, so every group has a mark and the names line up.
  */
-export const GROUP_PICKER_ID = "sidebar-group-picker"
+function SwitcherMark({ group }: { group: PickerGroup }): JSX.Element {
+  if (group.color || group.emoji) {
+    return <GroupMark color={group.color} emoji={group.emoji} size="sm" />
+  }
+  return (
+    <span
+      class="flex size-5 shrink-0 items-center justify-center rounded-md border border-subtle bg-canvas text-xs font-semibold text-muted"
+      aria-hidden="true"
+    >
+      {group.name.trim().charAt(0).toUpperCase()}
+    </span>
+  )
+}
 
 /**
- * The current group in the header: a compact, searchable list of the person's groups. The current
- * one carries a quiet check mark and each option names the person's role there.
+ * The current group in the header: a button showing its mark and name that opens a short menu of
+ * the person's groups. The current one is checked (`menuitemradio`), each names the person's role
+ * there, and the menu ends with a link to all groups.
  */
-export function GroupPicker({ groups, selectedId, onSelect }: GroupPickerData): JSX.Element {
-  const labelId = `${GROUP_PICKER_ID}-label`
+export function GroupPicker(
+  { groups, selectedId, onSelect, navigate }: GroupPickerData & { navigate?: Navigate },
+): JSX.Element {
   const selected = groups.find((group) => group.id === selectedId) ?? null
   return (
-    <div class="min-w-0 flex-1 sm:max-w-64 sm:flex-none" data-e2e="group-picker">
-      <span id={labelId} class="sr-only">Group</span>
-      <Combobox
-        id={GROUP_PICKER_ID}
-        aria-labelledby={labelId}
-        items={groups}
-        value={selected}
-        getLabel={groupLabel}
-        onChange={(group) => group && onSelect(group.id)}
-        renderOption={(group, state) => (
-          <span class="flex min-w-0 flex-1 items-center gap-2">
-            <span class="flex size-4 shrink-0" aria-hidden="true">
-              {state.selected && <IconCheck class="size-4" />}
-            </span>
-            <GroupMark color={group.color} emoji={group.emoji} size="sm" />
-            <span class="min-w-0 flex-1 truncate">{group.name}</span>
-            <span class="shrink-0 text-xs text-muted">{ROLE_TEXT[group.role]}</span>
-          </span>
-        )}
-        showClearButton={false}
-        inputClass="h-11 text-sm font-medium sm:h-9"
-        placeholder="Select a group"
-        emptyMessage="No group matches"
-      />
-    </div>
+    <Dropdown
+      trigger={
+        <>
+          {selected && <SwitcherMark group={selected} />}
+          <span class="min-w-0 truncate">{selected?.name ?? "Choose a group"}</span>
+          <IconChevronDown class="size-4 shrink-0 text-muted" aria-hidden="true" />
+        </>
+      }
+      triggerLabel={selected ? `Group: ${selected.name}` : "Group: none chosen"}
+      triggerDataE2E="group-picker"
+      triggerClasses="flex h-11 max-w-56 min-w-0 items-center gap-2 rounded-md px-2 text-sm font-medium text-foreground hover:bg-hover sm:h-9"
+      containerClasses="relative flex min-w-0 text-left"
+      panelClasses="w-72 max-w-[calc(100vw-5rem)]"
+      horizontal="left"
+      menuLabel="Switch group"
+    >
+      {groups.map((group) => (
+        <DropdownItem
+          key={group.id}
+          checked={group.id === selectedId}
+          onClick={() => group.id !== selectedId && onSelect(group.id)}
+          dataE2E={`group-picker-${group.id}`}
+        >
+          <SwitcherMark group={group} />
+          <span class="min-w-0 flex-1 truncate">{group.name}</span>
+          {/* A space, so a screen reader says "Home Owner", not "HomeOwner"; flex drops it. */}
+          {" "}
+          <span class="shrink-0 text-xs text-muted">{ROLE_TEXT[group.role]}</span>
+        </DropdownItem>
+      ))}
+      {groups.length > 0 && <div role="separator" class="my-1 border-t border-subtle" />}
+      <DropdownItem href={SCREEN_PATHS.groups} navigate={navigate} dataE2E="group-picker-all">
+        All groups
+      </DropdownItem>
+    </Dropdown>
   )
 }

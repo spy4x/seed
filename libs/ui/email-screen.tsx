@@ -9,7 +9,6 @@ import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { type EmailStatus, emailToVerify } from "@domain/identity"
-import { ACCOUNT_COLUMN } from "./frame.tsx"
 import { PageHeader, TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
@@ -185,7 +184,7 @@ export function EmailScreen(
   const providerNames = providerProof?.providers
     .map((provider) => OAUTH_PROVIDER_NAMES[provider]).join(" or ")
   return (
-    <Stack gap="lg" class={ACCOUNT_COLUMN}>
+    <Stack gap="lg">
       <PageHeader
         title="E-mail address"
         back={{ href: SCREEN_PATHS.profile, label: "Back to profile" }}

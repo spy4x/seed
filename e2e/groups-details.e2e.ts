@@ -104,10 +104,9 @@ test.describe("group details", () => {
         .toHaveText("🏠")
       await expect(page.locator(`[data-e2e=group-${groupId}] [data-e2e=group-item-description]`))
         .toContainText("Rent, bills")
-      await page.locator("#sidebar-group-picker").click()
+      await page.locator("[data-e2e=group-picker]").click()
       await expect(
-        page.locator("#sidebar-group-picker-listbox [role=option]", { hasText: "Flat" })
-          .locator("[data-e2e=group-mark]"),
+        page.getByRole("menuitemradio", { name: /Flat/ }).locator("[data-e2e=group-mark]"),
       ).toHaveText("🏠")
 
       // The same edit, made through the API by a viewer, is refused.

@@ -225,11 +225,8 @@ test.describe("offline notes", () => {
 
       await reloadOffline(context, page)
       await expect(titles).toHaveText(["In the first"])
-      const picker = page.locator("#sidebar-group-picker")
-      await picker.focus()
-      await page.keyboard.press("ArrowDown")
-      await page.keyboard.type("Offline second")
-      await page.keyboard.press("Enter")
+      await page.locator("[data-e2e=group-picker]").click()
+      await page.getByRole("menuitemradio", { name: /Offline second/ }).click()
       await expect(page.locator("[data-e2e=notes-group]")).toHaveText("Offline second")
       await expect(titles).toHaveText(["In the second"])
 

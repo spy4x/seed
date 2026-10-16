@@ -33,10 +33,10 @@ screens were redesigned against these rules in October 2026.
    page, `EmptyState` for an empty list (with its one action), `Stack`, `Cluster` and `Grid` for
    spacing. Space siblings with their `gap` rather than margins. Any spacing class must be a step on
    the theme's scale, which `tests/spacing.test.ts` enforces.
-6. **A readable width.** Forms and reading content sit in a column: `ACCOUNT_COLUMN`
-   (`libs/ui/frame.tsx`, 42 rem) for account pages, 48 rem (`max-w-3xl`) for group settings and
-   billing. Lists and tables may use the full content width (64 rem). Inputs never stretch 900 px
-   wide.
+6. **One centred column.** Every signed-in page sits in one column of 48 rem, owned by `AppFrame`
+   through `Page` (`max-w-3xl py-6 sm:py-8`); 64 rem (`max-w-5xl`) only for a data table, through
+   `AppFrame`'s `wide`; signed-out pages 28 rem (`max-w-md`, `PublicFrame`). Screens never set
+   their own width. Inputs never stretch across a wide column.
 7. **One page header on every signed-in page** (`PageHeader` from `@spy4x/preact-ui/page-header`): the page
    title (h1) on the left; the primary action and, if needed, one overflow `Dropdown` ("More
    actions", a three-dots icon button with that accessible name) on the right. On a phone the title
@@ -52,6 +52,50 @@ screens were redesigned against these rules in October 2026.
    (a screen-reader-only span is fine: `toHaveText` reads text content).
 10. **Badges carry meaning.** A green "Selected" pill on the current group is noise; show the
     current group by the picker and by a quiet check mark, not a loud badge.
+11. **The header is the banner:** the brand (leading to Notes), the group switcher, then the bell
+    and the account menu on the right. It is passed through `RailShell`'s `header`, so it sits
+    outside `<main>` and the skip link jumps past it; it is never rendered inside `<main>`. The
+    group switcher is a button showing the current group that opens a short menu of checked items
+    (`DropdownItem checked`), not a text field. The account menu says who is signed in (name and
+    address), then Profile, Notifications, the theme (System, Light, Dark) and Sign out.
+12. **The rail holds the daily destinations,** at most five so the phone bar needs no "More": Notes,
+    Tags, Activity, Groups, Profile. Activity is the selected group's log and is left out when there
+    is no selected group or the person may not read its log. Notifications stay on the bell and in
+    the account menu.
+
+## Spacing rhythm
+
+All on the theme scale (`tests/spacing.test.ts`):
+
+- page padding `py-6 sm:py-8` (from `AppFrame`);
+- `gap-8` between the page header and each top-level `Section` (`Page`'s own gap);
+- `gap-4` inside a `Section`, between its title row and its content;
+- `gap-2` inside a list or a card, or `divide-y` rows with `px-4 py-3 sm:px-6`.
+
+The e-mail banner and any other notice above the page sit at the top of the same column, never in
+a width of their own.
+
+## Lists, chips and empty states
+
+- **Lists** (notes, groups, members, tags, notifications, activity): one `Card` with
+  `divide-y divide-subtle`; each row a full-width link or button, `min-h-14 px-4 py-3 sm:px-6`. The
+  title is `font-medium` and wraps to two lines (`line-clamp-2`), never cut to one line on a phone;
+  a meta line `text-sm text-muted` under it holds the time, tags and author. Row actions go in a
+  per-row menu at the right. From `sm` the time may move to the right of the title.
+- **Settings:** `SettingGroup` + `SettingList` + `SettingRow`, one treatment per page.
+- **Chips** (a tag filter): `ToggleChips`, at least 44 px tall on a phone. A row of chips scrolls
+  sideways on a phone (`overflow-x-auto`, `flex-nowrap`) rather than wrapping into many lines.
+- **Empty states:** `EmptyState` inside the section's own `Card`, never a dashed box beside solid
+  cards: one sentence on what goes here and one primary action.
+- **Links inside rows** look like links (`text-accent underline-offset-2 hover:underline`), or the
+  whole row is the link.
+- **Primary buttons** are `w-full sm:w-auto` and sit at the right of a form's footer from `sm`.
+
+## Build
+
+The SPA's Tailwind build must see `libs/ui`, or every class only a screen uses silently disappears
+(`libs/ui/sources.css` says why). The `requireComponentCss` guard in `apps/spa/vite.config.ts`
+fails a build whose CSS lacks a class only `libs/ui` uses.
 
 ## Primitives to use
 

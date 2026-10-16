@@ -18,7 +18,6 @@ import {
   type UserPushTokenPublic,
 } from "@domain/identity"
 import { AccountDelete, type AccountDeleteProps } from "./account-delete.tsx"
-import { ACCOUNT_COLUMN } from "./frame.tsx"
 import { PageHeader, TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { type Navigate, PROFILE_ANCHORS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
@@ -311,7 +310,7 @@ export function ProfileScreen(
   const qrSrc = enrolment?.qrcode ? svgToDataUrl(enrolment.qrcode) : null
 
   return (
-    <Stack gap="xl" class={ACCOUNT_COLUMN}>
+    <Stack gap="xl">
       <PageHeader title="Profile" />
 
       <SettingGroup title="Account">

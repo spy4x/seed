@@ -1526,7 +1526,7 @@ describe("group details", () => {
     expect(has("[data-e2e=group-g-2] [data-e2e=group-item-description]")).toBe(false)
   })
 
-  it("puts the emoji before the name in the picker's field", async () => {
+  it("shows the group's emoji mark before its name on the switcher and in its menu", async () => {
     await mount(
       <GroupPicker
         groups={[owned, { id: "g-2", name: "Family", role: GroupRole.VIEWER }]}
@@ -1534,7 +1534,13 @@ describe("group details", () => {
         onSelect={() => {}}
       />,
     )
-    expect(find<HTMLInputElement>("input").value).toBe("🏠 Team")
+    expect(texts("[data-e2e=group-picker] [data-e2e=group-mark]")).toEqual(["🏠"])
+    await act(() => {
+      find("[data-e2e=group-picker]").dispatchEvent(
+        new window.MouseEvent("click", { bubbles: true }) as unknown as Event,
+      )
+    })
+    expect(texts(`[data-e2e=group-picker-${groupId}] [data-e2e=group-mark]`)).toEqual(["🏠"])
   })
 
   it("draws no mark without a colour or an emoji, and a gray one for an emoji alone", async () => {

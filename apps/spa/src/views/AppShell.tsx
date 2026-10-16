@@ -8,6 +8,7 @@ import { signOut } from "../state/auth.ts"
 import { groupsStore } from "../state/groups.ts"
 import { notificationsStore } from "../state/notifications.ts"
 import { selectionStore } from "../state/selection.ts"
+import { themeStore } from "../state/theme.ts"
 import type { SessionUser } from "../state/session.ts"
 import { signOutRedirect } from "./sign-in-gate.ts"
 
@@ -26,7 +27,10 @@ function useSignOut(): () => void {
   }
 }
 
-/** Wires the signed-in `AppFrame` to this app's router and `signOut`. */
+/**
+ * Wires the signed-in `AppFrame` to this app's router, stores and `signOut`: the groups and the
+ * selected one for the switcher and the Activity entry, the name and address for the account menu.
+ */
 export function AppShell(
   { user, wsStatus, children }: {
     user: SessionUser
@@ -47,7 +51,12 @@ export function AppShell(
           if (location.startsWith(`${NOTE_PATHS.list}/`)) navigate(NOTE_PATHS.list)
         },
       }}
-      user={user}
+      user={{
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: emailStore.status.value?.email,
+      }}
+      theme={themeStore}
       // The e-mail page itself asks for the code; the banner would only repeat it there.
       banner={location === SCREEN_PATHS.email
         ? undefined

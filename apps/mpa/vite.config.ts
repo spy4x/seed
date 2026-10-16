@@ -10,7 +10,7 @@ import { preactThemeCss, requireComponentCss } from "@spy4x/preact-theme/vite"
  * preact-components renders, then two no file of this app uses, so only a scan of libs/ui emits
  * them (libs/ui/sources.css says how a container build once lost them).
  */
-const REQUIRED_SELECTORS = [".lg\\:w-64", ".focus\\:not-sr-only", ".sm\\:max-w-64", ".top-0\\.5"]
+const REQUIRED_SELECTORS = [".lg\\:w-64", ".focus\\:not-sr-only", ".sm\\:h-9", ".top-0\\.5"]
 
 export default defineConfig({
   plugins: [

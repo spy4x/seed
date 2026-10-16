@@ -26,7 +26,7 @@ import {
   type EmailScreenProps,
   EmailUnavailable,
 } from "./email-screen.tsx"
-import { ACCOUNT_COLUMN, AppFrame, navKey, PublicFrame } from "./frame.tsx"
+import { AppFrame, navKey, PublicFrame } from "./frame.tsx"
 import { ProfileScreen, type ProfileScreenProps } from "./profile-screen.tsx"
 import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 import { TwoFactorProof } from "./two-factor.ts"
@@ -152,17 +152,127 @@ function spy<A extends unknown[]>(): { calls: A[]; fn: (...args: A) => void } {
   return { calls, fn: (...args: A) => void calls.push(args) }
 }
 
-const ada = { firstName: "Ada", lastName: "Lovelace" }
+const ada = { firstName: "Ada", lastName: "Lovelace", email: "ada@example.com" }
+
+/** Presses `key` on whatever has focus, the way the keyboard does: the event starts there. */
+async function press(key: string): Promise<void> {
+  const target = document.activeElement ?? document.body
+  await act(() => {
+    target.dispatchEvent(
+      new window.KeyboardEvent("keydown", {
+        key,
+        bubbles: true,
+        cancelable: true,
+      }) as unknown as Event,
+    )
+  })
+}
+
+/** Activates the focused control as Enter does on a button or a link: it is clicked. */
+async function enter(): Promise<void> {
+  const target = document.activeElement as HTMLElement | null
+  if (!target) throw new Error("nothing has focus")
+  await act(() => {
+    target.dispatchEvent(
+      new window.MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+      }) as unknown as Event,
+    )
+  })
+}
+
+/** The texts of every element `selector` finds, trimmed. */
+function texts(selector: string): string[] {
+  return [...document.querySelectorAll(selector)].map((element) =>
+    element.textContent?.trim() ?? ""
+  )
+}
+
+/** A theme store's slice, recording every choice. */
+function themeSpy(preference: "system" | "light" | "dark" = "system") {
+  const chosen: string[] = []
+  return {
+    chosen,
+    preference: { value: preference },
+    set: (value: string) => void chosen.push(value),
+  }
+}
 
 describe("AppFrame", () => {
-  it("signs out from the user menu through the app's callback", async () => {
-    const signOut = spy<[]>()
-    await mount(<AppFrame user={ada} onSignOut={signOut.fn}>page</AppFrame>)
+  const groups = [
+    { id: "g-1", name: "Home", role: GroupRole.OWNER },
+    { id: "g-2", name: "Team", role: GroupRole.VIEWER },
+  ]
 
-    await click("[data-e2e=shell-user-menu-button]")
-    await click("[data-e2e=signout]")
+  it("draws the header as the banner, outside main, and the page inside main", async () => {
+    await mount(
+      <AppFrame user={ada} onSignOut={() => {}}>
+        <p id="page">page</p>
+      </AppFrame>,
+    )
 
-    expect(signOut.calls).toHaveLength(1)
+    const header = find("header")
+    expect(header.closest("main")).toBe(null)
+    expect(header.querySelector("[data-e2e=shell-user-menu-button]")).not.toBe(null)
+    expect(find("#page").closest("main")).not.toBe(null)
+    expect(document.querySelector("main header")).toBe(null)
+  })
+
+  it("puts every page in the one centred 48 rem column, and a wide page in 64 rem", async () => {
+    await mount(
+      <AppFrame user={ada} onSignOut={() => {}}>
+        <p id="page">page</p>
+      </AppFrame>,
+    )
+    const column = () => find("#page").parentElement!.className
+    expect(column()).toContain("mx-auto")
+    expect(column()).toContain("max-w-3xl")
+    expect(column()).not.toContain("max-w-6xl")
+
+    await rerender(
+      <AppFrame user={ada} onSignOut={() => {}} wide>
+        <p id="page">page</p>
+      </AppFrame>,
+    )
+    expect(column()).toContain("max-w-5xl")
+    expect(column()).not.toContain("max-w-3xl")
+  })
+
+  it("lists Notes, Tags, Activity, Groups and Profile, with Activity pointing at the selected group", async () => {
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: () => {} }}
+      >
+        page
+      </AppFrame>,
+    )
+    const rail = '[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"]'
+    expect(texts(rail)).toEqual(["Notes", "Tags", "Activity", "Groups", "Profile"])
+    expect([...document.querySelectorAll(rail)].map((link) => link.getAttribute("href")))
+      .toEqual(["/notes", "/tags", "/groups/g-1/activity", "/groups", "/"])
+    // All five fit the phone bar, so it has no "More".
+    expect(texts('[data-e2e=rail-shell-tabbar] [data-e2e="rail-shell-entry"]')).toHaveLength(5)
+  })
+
+  it("leaves Activity out with no selected group, and for a group whose log the person may not read", async () => {
+    const frame = (selectedId: string | null) => (
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        groupPicker={{ groups, selectedId, onSelect: () => {} }}
+      >
+        page
+      </AppFrame>
+    )
+    const rail = '[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"]'
+    await mount(frame(null))
+    expect(texts(rail)).toEqual(["Notes", "Tags", "Groups", "Profile"])
+    await rerender(frame("g-2"))
+    expect(texts(rail)).toEqual(["Notes", "Tags", "Groups", "Profile"])
   })
 
   it("follows a plain click on a navigation entry through navigate, and leaves a Ctrl-click to the browser", async () => {
@@ -170,20 +280,28 @@ describe("AppFrame", () => {
     await mount(
       <AppFrame user={ada} onSignOut={() => {}} navigate={navigate.fn}>page</AppFrame>,
     )
-    const groups = 'a[data-e2e="rail-shell-entry"][href="/groups"]'
+    const tags = '[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"][href="/tags"]'
 
-    expect(await click(groups)).toBe(true)
-    expect(await click(groups, { ctrlKey: true })).toBe(false)
-    expect(navigate.calls).toEqual([["/groups"]])
+    expect(await click(tags)).toBe(true)
+    expect(await click(tags, { ctrlKey: true })).toBe(false)
+    expect(navigate.calls).toEqual([["/tags"]])
   })
 
-  it("marks the entry of the page shown, counting a note under Notes and the e-mail page under Profile", async () => {
+  it("links the brand to the notes", async () => {
+    await mount(<AppFrame user={ada} onSignOut={() => {}}>page</AppFrame>)
+    expect(find('header a[aria-label="Seed"]').getAttribute("href")).toBe(NOTE_PATHS.list)
+  })
+
+  it("marks the entry of the page shown: a note under Notes, a group's log under Activity, the e-mail page under Profile", async () => {
     await mount(<AppFrame user={ada} onSignOut={() => {}} currentPath="/email">page</AppFrame>)
 
     const current = [...document.querySelectorAll('[aria-current="page"]')]
     expect(current.map((link) => link.getAttribute("href"))).toEqual(["/", "/"])
     expect(navKey("/notes/abc")).toBe("notes")
+    expect(navKey("/tags")).toBe("tags")
+    expect(navKey("/groups/abc/activity")).toBe("activity")
     expect(navKey("/groups/abc")).toBe("groups")
+    expect(navKey("/groups/abc/pricing")).toBe("groups")
     expect(navKey("/billing")).toBe(undefined)
   })
 
@@ -198,22 +316,69 @@ describe("AppFrame", () => {
     expect(status.className).not.toContain("sr-only")
   })
 
-  it("draws the banner as wide as the profile page's column there, and full width elsewhere", async () => {
+  it("draws the banner at the top of the page's own column on every page", async () => {
     const frame = (path: string) => (
       <AppFrame user={ada} onSignOut={() => {}} currentPath={path} banner={<p id="banner">b</p>}>
-        page
+        <p id="page">page</p>
       </AppFrame>
     )
-    const column = () => find("#banner").parentElement?.className ?? ""
-
+    const atTop = () => {
+      const column = find("#page").parentElement!
+      expect(column.closest("main")).not.toBeNull()
+      expect(column.firstElementChild?.id).toBe("banner")
+    }
     await mount(frame(SCREEN_PATHS.profile))
-    expect(column()).toContain(ACCOUNT_COLUMN)
+    atTop()
     await rerender(frame(NOTE_PATHS.list))
-    expect(column()).not.toContain("max-w-2xl")
+    atTop()
   })
 
-  it("gives the group picker a 44 px touch target below the sm breakpoint", async () => {
-    const groups = [{ id: "g-1", name: "Home", role: GroupRole.OWNER }]
+  it("names the account menu after the person and shows their name and address in it", async () => {
+    await mount(<AppFrame user={ada} onSignOut={() => {}} theme={themeSpy()}>page</AppFrame>)
+    const trigger = find("[data-e2e=shell-user-menu-button]")
+    expect(trigger.getAttribute("aria-label")).toBe("Account: Ada Lovelace")
+
+    await click("[data-e2e=shell-user-menu-button]")
+
+    expect(texts("[data-e2e=shell-user-identity] span")).toEqual([
+      "Ada Lovelace",
+      "ada@example.com",
+    ])
+    expect(texts("[role=menu] [role=menuitem], [role=menu] [role=menuitemradio]")).toEqual([
+      "Profile",
+      "Notifications",
+      "System",
+      "Light",
+      "Dark",
+      "Sign out",
+    ])
+  })
+
+  it("signs out from the account menu through the app's callback", async () => {
+    const signOut = spy<[]>()
+    await mount(<AppFrame user={ada} onSignOut={signOut.fn}>page</AppFrame>)
+
+    await click("[data-e2e=shell-user-menu-button]")
+    await click("[data-e2e=signout]")
+
+    expect(signOut.calls).toHaveLength(1)
+  })
+
+  it("checks the current theme in the account menu and stores the one chosen", async () => {
+    const theme = themeSpy("system")
+    await mount(<AppFrame user={ada} onSignOut={() => {}} theme={theme}>page</AppFrame>)
+
+    await click("[data-e2e=shell-user-menu-button]")
+    const checked = () =>
+      [...document.querySelectorAll("[data-e2e=shell-theme] [role=menuitemradio]")]
+        .map((item) => item.getAttribute("aria-checked"))
+    expect(checked()).toEqual(["true", "false", "false"])
+    await click("[data-e2e=shell-theme-dark]")
+
+    expect(theme.chosen).toEqual(["dark"])
+  })
+
+  it("shows the current group on the switcher's button, named for a screen reader", async () => {
     await mount(
       <AppFrame
         user={ada}
@@ -223,16 +388,16 @@ describe("AppFrame", () => {
         page
       </AppFrame>,
     )
-
-    expect(find("#sidebar-group-picker").classList.contains("h-11")).toBe(true)
+    const trigger = find("[data-e2e=group-picker]")
+    expect(trigger.tagName).toBe("BUTTON")
+    expect(trigger.textContent).toBe("HHome")
+    expect(trigger.getAttribute("aria-label")).toBe("Group: Home")
+    // 44 px on a phone.
+    expect(trigger.classList.contains("h-11")).toBe(true)
   })
 
-  it("selects the group the person picks from the header's list, with a check mark on the current one", async () => {
+  it("switches group from the keyboard: the arrow keys move through the groups, the checked one is current", async () => {
     const select = spy<[string]>()
-    const groups = [
-      { id: "g-1", name: "Home", role: GroupRole.OWNER },
-      { id: "g-2", name: "Team", role: GroupRole.VIEWER },
-    ]
     await mount(
       <AppFrame
         user={ada}
@@ -242,28 +407,34 @@ describe("AppFrame", () => {
         page
       </AppFrame>,
     )
-    const input = find<HTMLInputElement>("#sidebar-group-picker")
-    expect(input.value).toBe("Home")
+    find<HTMLButtonElement>("[data-e2e=group-picker]").focus()
+    await enter()
 
-    await act(() => {
-      input.dispatchEvent(
-        new window.KeyboardEvent("keydown", {
-          key: "ArrowDown",
-          bubbles: true,
-          cancelable: true,
-        }) as unknown as Event,
-      )
-    })
-    const options = [...document.querySelectorAll("#sidebar-group-picker-listbox [role=option]")]
-    expect(options.map((option) => option.textContent)).toEqual(["HomeOwner", "TeamViewer"])
-    expect(options.map((option) => option.querySelector("svg") !== null)).toEqual([true, false])
-    await act(() => {
-      options[1].dispatchEvent(
-        new window.MouseEvent("click", { bubbles: true, cancelable: true }) as unknown as Event,
-      )
-    })
+    const radios = [...document.querySelectorAll("[role=menuitemradio]")]
+    expect(radios.map((item) => item.textContent)).toEqual(["HHome Owner", "TTeam Viewer"])
+    expect(radios.map((item) => item.getAttribute("aria-checked"))).toEqual(["true", "false"])
+    expect(document.activeElement).toBe(radios[0])
+    await press("ArrowDown")
+    expect(document.activeElement).toBe(radios[1])
+    await enter()
 
     expect(select.calls).toEqual([["g-2"]])
+  })
+
+  it("does not select the group that is already current again", async () => {
+    const select = spy<[string]>()
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: select.fn }}
+      >
+        page
+      </AppFrame>,
+    )
+    await click("[data-e2e=group-picker]")
+    await click("[data-e2e=group-picker-g-1]")
+    expect(select.calls).toEqual([])
   })
 })
 
