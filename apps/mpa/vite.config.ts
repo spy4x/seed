@@ -5,6 +5,13 @@ import { defineConfig } from "vite"
 import { fromFileUrl } from "@std/path"
 import { preactThemeCss, requireComponentCss } from "@spy4x/preact-theme/vite"
 
+/**
+ * Selectors, escaped as in the built CSS, that the client build must contain: two only
+ * preact-components renders, then two no file of this app uses, so only a scan of libs/ui emits
+ * them (libs/ui/sources.css says how a container build once lost them).
+ */
+const REQUIRED_SELECTORS = [".lg\\:w-64", ".focus\\:not-sr-only", ".sm\\:max-w-64", ".top-0\\.5"]
+
 export default defineConfig({
   plugins: [
     fresh(),
@@ -12,7 +19,7 @@ export default defineConfig({
     tailwindcss(),
     // The client build carries the stylesheet; the server build has none to check.
     {
-      ...requireComponentCss(),
+      ...requireComponentCss({ selectors: REQUIRED_SELECTORS }),
       applyToEnvironment: (environment) => environment.name === "client",
     },
   ],

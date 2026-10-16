@@ -22,6 +22,13 @@ const EXTRA_SOURCES = {
   fontSrc: ["https://fonts.gstatic.com"],
 }
 
+/**
+ * Selectors, escaped as in the built CSS, that the build must contain: two only
+ * preact-components renders, then two no file of this app uses, so only a scan of libs/ui emits
+ * them.
+ */
+const REQUIRED_SELECTORS = [".lg\\:w-64", ".focus\\:not-sr-only", ".sm\\:max-w-64", ".top-0\\.5"]
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -30,7 +37,8 @@ export default defineConfig({
     preact(),
     preactThemeCss(),
     tailwindcss(),
-    requireComponentCss(),
+    // Fails the build when its CSS lacks preact-components' classes or libs/ui's, as in the SPA.
+    requireComponentCss({ selectors: REQUIRED_SELECTORS }),
     {
       // Paints the stored (or system) light/dark choice before the first frame, as in the SPA.
       name: "theme-bootstrap",

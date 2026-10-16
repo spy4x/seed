@@ -1,0 +1,9 @@
+/* Makes Tailwind scan the screens of libs/ui. Each app's stylesheet imports this file.
+
+   The @source line sits here, not in the app, because Tailwind reads it relative to this file, so
+   the path never leaves its folder. Inside the Alpine image Tailwind's native scanner cannot
+   resolve a path: given `@source "../../../libs/ui"` in apps/spa/src/app.css, it scans
+   apps/spa/src instead and drops every class only libs/ui uses
+   (https://github.com/spy4x/template/issues/433). A source in the stylesheet's own folder needs
+   no resolving, so it works there and everywhere else. */
+@source "./";

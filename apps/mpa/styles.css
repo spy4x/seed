@@ -6,8 +6,9 @@
 @import "@spy4x/preact-theme/tokens.css";
 @import "@spy4x/preact-theme/preset.css";
 @import "@spy4x/preact-theme/ink.css";
-/* libs/ui holds the screens; Tailwind does not scan outside this app on its own. */
-@source "../../libs/ui";
+/* libs/ui holds the screens; Tailwind does not scan outside this app on its own. The file says
+   why the @source line lives there. */
+@import "../../libs/ui/sources.css";
 
 /* Geist Sans and Geist Mono, variable, from the npm package `geist@1.7.2` (`dist/fonts/`, files
    `Geist-Variable.woff2` and `GeistMono-Variable.woff2`), under the SIL Open Font License beside
