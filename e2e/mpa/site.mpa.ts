@@ -13,7 +13,9 @@ test("a visitor without JavaScript goes from the home page to pricing, to sign-u
   await page.getByRole("navigation", { name: "Main navigation" }).first()
     .getByRole("link", { name: "Pricing" }).click()
   await expect(page).toHaveURL("/pricing")
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Pricing of the demo app")
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Seed is free. Here is what it costs to run.",
+  )
 
   // Choosing a plan posts to the website, which sends the visitor to the app's sign-up.
   await page.getByRole("button", { name: "Try Pro in the demo" }).click()

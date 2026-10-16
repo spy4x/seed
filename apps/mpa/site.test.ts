@@ -5,7 +5,8 @@ import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
 import Home, { HOME_HEAD } from "./routes/index.tsx"
-import Pricing, { handler as pricing } from "./routes/pricing.tsx"
+import Mvp, { MVP_HEAD } from "./routes/mvp.tsx"
+import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
 import Privacy from "./routes/privacy.tsx"
 import Terms from "./routes/terms.tsx"
 import { handler as robots } from "./routes/robots.txt.ts"
@@ -14,6 +15,7 @@ import { handler as theme } from "./routes/theme.js.ts"
 import { handler as sitemap } from "./routes/sitemap.xml.ts"
 import { handler as unsubscribe } from "./routes/unsubscribe.ts"
 import { pageMiddleware } from "./middleware.ts"
+import { BOOK_CALL_URL, BRIEF_URL } from "./hire.ts"
 import { ogImageAlt, type OgImageKey, REPOSITORY_URL, SITE_PAGES } from "./site.tsx"
 import type { State } from "./utils.ts"
 
@@ -42,6 +44,7 @@ function siteWith(newsletter: () => boolean) {
     .appWrapper(view(AppWrapper))
     .route("/", { component: view(Home) })
     .route("/pricing", { component: view(Pricing), handler: pricing })
+    .route("/mvp", { component: view(Mvp) })
     .route("/privacy", { component: view(Privacy) })
     .route("/terms", { component: view(Terms) })
     .get("/subscribe", subscribe.GET!)
@@ -152,6 +155,8 @@ describe("the public website", () => {
   const ogCards: [string, OgImageKey][] = [
     ["/", "home"],
     ["/subscribe", "subscribe"],
+    ["/pricing", "pricing"],
+    ["/mvp", "mvp"],
     ["/privacy", "home"],
     ["/terms", "home"],
   ]
@@ -198,21 +203,87 @@ describe("the public website", () => {
     expect(await response.text()).toContain("prefers-color-scheme")
   })
 
-  it("prices every plan of the catalog and says they are the demo app's", async () => {
+  it("says Seed is free, prices running it and having it built, and sends the founder to /mvp", async () => {
     const { status, html } = await page("/pricing")
 
     expect(status).toBe(200)
-    expect(headingOne(html)).toBe("Pricing of the demo app")
-    expect(html).toContain("These are example prices")
+    expect(headingOne(html)).toBe("Seed is free. Here is what it costs to run.")
+    expect(html).toContain(`<title>${PRICING_HEAD.title} · Seed</title>`)
+    for (const card of ["way-use", "way-run", "way-hire"]) expect(html).toContain(`id="${card}"`)
+    expect(html).toContain(">$0</span>")
+    expect(html).toContain(">From $8,000</span>")
+    expect(hrefOf(linkNamed(html, "See how it works"))).toBe("/mvp")
+    expect(html).toContain(`<link rel="canonical" href="${site}/pricing"`)
+  })
+
+  it("prices every plan of the demo's catalog below Seed's own prices, as an example", async () => {
+    const { html } = await page("/pricing")
+
+    expect(html).toContain("These are not Seed's prices")
+    expect(html.indexOf(`id="demo-plans"`)).toBeGreaterThan(html.indexOf(`id="way-hire"`))
     for (const plan of PLANS) {
-      expect(html).toContain(`>${plan.name}</h2>`)
+      expect(html).toContain(`>${plan.name}</h3>`)
       expect(html).toContain(formatMoney(plan.amount, plan.currency))
       expect(html).toContain(`name="planId" value="${plan.id}"`)
     }
     expect(html.match(/<form [^>]*action="\/pricing"[^>]*method="post"/g)).toHaveLength(
       PLANS.length,
     )
-    expect(html).toContain(`<link rel="canonical" href="${site}/pricing"`)
+  })
+
+  it("offers only Seed itself, at no cost, in the pricing page's structured data", async () => {
+    const graph = jsonLdGraph((await page("/pricing")).html)
+
+    const software = graph.find((entity) => entity["@type"] === "SoftwareApplication")!
+    expect(software.offers).toEqual({ "@type": "Offer", price: 0, priceCurrency: "USD" })
+    const offers = JSON.stringify(graph).match(/"@type":"Offer"/g)
+    expect(offers).toHaveLength(1)
+    expect(graph.map((entity) => entity["@type"])).toEqual(
+      expect.arrayContaining(["Person", "FAQPage", "BreadcrumbList"]),
+    )
+  })
+
+  it("answers /mvp with the outcome, the starting price and the call on antonshubin.com", async () => {
+    const { status, html } = await page("/mvp")
+
+    expect(status).toBe(200)
+    expect(headingOne(html)).toBe(
+      "Your product, live and taking payments, in weeks rather than months.",
+    )
+    expect(html).toContain(`<title>${MVP_HEAD.title} · Seed</title>`)
+    expect(html).toContain(">From $8,000</dd>")
+    const book = BOOK_CALL_URL.replaceAll("&", "&amp;")
+    expect(html.match(/<a\b[^>]*data-e2e="mvp-book-(hero|closing)"[^>]*>/g)).toEqual([
+      expect.stringContaining(`href="${book}"`),
+      expect.stringContaining(`href="${book}"`),
+    ])
+    expect(html).toContain(`href="${BRIEF_URL.replaceAll("&", "&amp;")}"`)
+    expect(html).toContain(`<link rel="canonical" href="${site}/mvp"`)
+  })
+
+  it("keeps the newsletter off /mvp, where founders came to hire", async () => {
+    const { html } = await page("/mvp")
+
+    expect(html).not.toContain(`action="/subscribe"`)
+  })
+
+  it("describes /mvp as a service from its starting price, with its questions and no reviews", async () => {
+    const { html } = await page("/mvp")
+    const graph = jsonLdGraph(html)
+
+    const service = graph.find((entity) => entity["@type"] === "Service")!
+    expect(service.provider).toEqual({ "@id": "https://antonshubin.com/#person" })
+    expect(service.offers).toMatchObject({
+      url: BOOK_CALL_URL,
+      priceSpecification: { minPrice: 8000, priceCurrency: "USD" },
+    })
+    const faq = graph.find((entity) => entity["@type"] === "FAQPage")!
+    const questions = (faq.mainEntity as { name: string }[]).map((question) => question.name)
+    expect(questions).toHaveLength(7)
+    for (const question of questions) {
+      expect(html).toContain(`>${question}<`)
+    }
+    expect(JSON.stringify(graph)).not.toMatch(/"Review"|"AggregateRating"/)
   })
 
   it("names the trial of every plan that has one, with its length from the catalog", async () => {

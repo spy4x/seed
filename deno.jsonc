@@ -203,6 +203,8 @@
     "@std/yaml": "jsr:@std/yaml@1.3.0",
     "@playwright/test": "npm:@playwright/test@1.57.0",
     "playwright": "npm:playwright@1.57.0",
+    // The website's browser tests check each page with axe-core (e2e/mpa).
+    "@axe-core/playwright": "npm:@axe-core/playwright@4.13.0",
     // The npm name of `@spy4x/preact-system` above, for Playwright's loader; it moves with the six.
     "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@3.25.0",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
