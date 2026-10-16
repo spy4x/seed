@@ -72,6 +72,16 @@ modifies its admin counterpart in the same PR, so the two never drift apart.
 **Open:** the Android app ([#414](https://github.com/spy4x/template/issues/414)) and the desktop
 app ([#413](https://github.com/spy4x/template/issues/413)) are not built yet.
 
+## Website screenshots
+
+The public website shows pictures of the product (`apps/mpa/static/shots/`). When a change alters a
+photographed screen significantly (the shell, a screen's layout, its primary action, the palette),
+re-capture them in a PR of their own with the `recapture-shots` skill
+(`.claude/skills/recapture-shots/SKILL.md`), once the change is merged. A small change (a wording,
+a spacing nudge) does not need it. When unsure, ask the owner. The owner asked for this on
+2026-10-16: "do that automatically when screens/UI/UX change significantly (not every small
+change). If unsure if screenshots to be remade - ask me."
+
 ## Handoff
 
 [docs/handoff.md](docs/handoff.md) holds the state of the migration, the decisions already made and
