@@ -176,7 +176,9 @@ test.describe("the app with the local-data module switched off", () => {
       await page.locator("[data-e2e=note-title]").fill("Groceries for Friday")
       await page.locator("[data-e2e=note-save]").click()
       await expect(page).toHaveURL("/notes")
-      await page.reload()
+      // Through `gotoApp`, as every online load: a plain reload that a network change breaks
+      // leaves the page blank and the list empty, with nothing in the report saying why.
+      await gotoApp(page, "/notes", titles.first(), () => page.reload())
       await expect(titles).toHaveText(["Groceries for Friday"])
 
       // The other list screens read from the server.

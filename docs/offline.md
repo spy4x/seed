@@ -202,6 +202,23 @@ to start now names its uncaught errors, failed requests and console in the test'
 (`gotoApp`, `e2e/fixtures/app.ts`); if a blank start ever shows on the built SPA, that message is
 where to look first, and it is a bug in the product, not in the harness.
 
+Three more intermittent failures were reported on these specs in the same week (#322), and none
+of them came back on the built SPA in October 2026:
+
+- In `e2e/local-data.e2e.ts`, "the app with the local-data module switched off", the note list
+  showed the old title after an edit, a save and a reload (2 in 6 runs on an early head of #367),
+  or stayed empty for 5 s after that reload (2 in 10 runs, on the dev server). It passed 30 runs
+  in a row on the built SPA and 30 on the dev server, and the whole spec 20 runs in a row on the
+  built SPA. That reload was a plain `page.reload()`
+  made online, which the harness's rule forbids (`docs/handoff.md`, trap 9): a network change on
+  the machine, such as a container starting, aborts the page's module scripts, and the page stays
+  blank with nothing in the report saying why. The reload now goes through `gotoApp`, which loads
+  the page again in that case and otherwise names the page's errors and failed requests. That
+  explains an empty list; it does not explain the old title, whose cause is not known.
+- In `e2e/offline.e2e.ts`, the first test, the note list was empty after the offline reload (1 in
+  55 runs on a branch). It passed 30 runs in a row, and the whole spec 20 runs in a row. Its cause
+  is not known.
+
 `SWUpdater` from `@spy4x/preact-system` already registered `/sw.js` for push notifications, so no
 registration was added. The same worker answers its `skipWaiting` message when a visitor accepts
 the "New version available" prompt. A person's first visit is online by definition; the app can go
