@@ -49,9 +49,10 @@ const STATUS_CHIPS: { value: Exclude<AdminGroupStatusFilter, "any">; label: stri
  *   and 0.75rem on a phone.
  * - On narrower screens the low-value columns go, by position, so the rest fit without scrolling:
  *   below 1280px the note count, the plan and the creation date; below 640px also the last
- *   activity, which leaves the group, its owner and its member count.
+ *   activity and the owner, which leaves the group and its member count. On a phone the group's
+ *   cell names the owner instead, in full: a touch screen cannot open a tooltip.
  *
- * Positions follow `groupColumns`: 4 notes, 5 plan, 6 last activity, 7 created.
+ * Positions follow `groupColumns`: 2 owner, 4 notes, 5 plan, 6 last activity, 7 created.
  */
 const TABLE_CLASS = [
   `[&>div:first-child]:min-h-0`,
@@ -60,6 +61,7 @@ const TABLE_CLASS = [
   `max-xl:[&_:is(th,td):nth-child(4)]:hidden`,
   `max-xl:[&_:is(th,td):nth-child(5)]:hidden`,
   `max-xl:[&_:is(th,td):nth-child(7)]:hidden`,
+  `max-sm:[&_:is(th,td):nth-child(2)]:hidden`,
   `max-sm:[&_:is(th,td):nth-child(n+4)]:hidden`,
 ].join(` `)
 
@@ -274,17 +276,12 @@ function groupColumns(navigate?: Navigate): DataTableColumn<GroupTableRow, Admin
       id: `owner`,
       header: `Owner`,
       render: ({ group }) => (
-        // One line each, cut with an ellipsis at 11rem (6rem on a phone, without the avatar); the
-        // full text stays in the tooltip.
+        // One line each, cut with an ellipsis at 11rem; the full text stays in the tooltip. A
+        // phone hides this column and shows the owner in the group's cell.
         <div class="flex items-center gap-2">
           {/* Decorative: the name beside it already names the owner. */}
-          <Avatar
-            name={adminGroupPersonName(group.owner)}
-            alt=""
-            size="sm"
-            class="max-sm:hidden"
-          />
-          <div class="flex w-44 min-w-0 flex-col max-sm:w-24">
+          <Avatar name={adminGroupPersonName(group.owner)} alt="" size="sm" />
+          <div class="flex w-44 min-w-0 flex-col">
             <span
               class="truncate text-sm font-medium"
               title={adminGroupPersonName(group.owner)}
@@ -351,28 +348,45 @@ function groupColumns(navigate?: Navigate): DataTableColumn<GroupTableRow, Admin
   ]
 }
 
-/** The group column: its mark, its name as the link to its page, and a badge while in the trash. */
+/**
+ * The group column: its mark, its name as the link to its page, and a badge while in the trash.
+ * On a phone, which has no owner column, the owner's name and address follow, in full.
+ */
 function GroupCell(
   { group, navigate }: { group: AdminGroupRow; navigate?: Navigate },
 ): JSX.Element {
+  const owner = adminGroupPersonName(group.owner)
   return (
     // At least 10rem wide on a wider screen: a long name wraps rather than squeezing into a few
     // letters. A phone has no room to spare, so there the name wraps as narrow as it must.
-    <div class="flex min-w-40 items-center gap-3 max-sm:min-w-0 max-sm:gap-2">
+    <div class="flex min-w-40 items-center gap-3 max-sm:min-w-0 max-sm:items-start max-sm:gap-2">
       <GroupMark color={group.color} emoji={group.emoji} size="sm" />
-      <Link
-        href={ADMIN_GROUP_PATHS.group(group.id)}
-        navigate={navigate}
-        class="pc-link font-medium wrap-anywhere"
-        data-e2e={`admin-group-${group.id}`}
-      >
-        {group.name}
-      </Link>
-      {group.deletedAt && (
-        <span data-e2e="admin-group-deleted">
-          <Badge text="In trash" color="red" type="outline" />
-        </span>
-      )}
+      <div class="flex min-w-0 flex-col gap-1">
+        {/* The badge goes under a long name rather than squeezing it. */}
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <Link
+            href={ADMIN_GROUP_PATHS.group(group.id)}
+            navigate={navigate}
+            class="pc-link font-medium wrap-anywhere"
+            data-e2e={`admin-group-${group.id}`}
+          >
+            {group.name}
+          </Link>
+          {group.deletedAt && (
+            <span data-e2e="admin-group-deleted">
+              <Badge text="In trash" color="red" type="outline" />
+            </span>
+          )}
+        </div>
+        <div class="flex flex-col text-xs text-muted sm:hidden" data-e2e="admin-groups-owner-phone">
+          <span class="wrap-anywhere">
+            Owner: <span class="font-medium text-foreground">{owner}</span>
+          </span>
+          {group.owner.email && group.owner.email !== owner && (
+            <span class="wrap-anywhere">{group.owner.email}</span>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

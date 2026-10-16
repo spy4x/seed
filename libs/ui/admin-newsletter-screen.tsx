@@ -293,7 +293,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
           onSubmit={(data) =>
             onSearch({ ...filter, query: String(data.get("q") ?? "").trim(), page: 1 })}
         >
-          {/* Keyed by the query, so going back in history shows the search that page had. */}
+          {/* Keyed by the query, so the box shows the search the list was loaded with. */}
           <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60">
               <Field id="admin-newsletter-q" label="Address">

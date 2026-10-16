@@ -77,6 +77,8 @@ export function createNewsletterState(
   const dialog = signal<NewsletterDialogState>(NO_DIALOG)
   /** Counts the actions that went through, so the screen can move focus after each. */
   const done = signal(0)
+  /** The search typed on the list. Kept here for the session, never in the page's address. */
+  const query = signal(``)
   const exporting = signal(false)
 
   const state = {
@@ -86,6 +88,7 @@ export function createNewsletterState(
     dialog,
     done,
     exporting,
+    query,
 
     async loadStats(): Promise<void> {
       stats.value = { ...stats.value, error: null }
@@ -95,11 +98,16 @@ export function createNewsletterState(
         : { ...stats.value, error: result.error.message }
     },
 
+    /**
+     * Reads one page of the list. The filter goes in the body of a `POST`, never in the URL, so
+     * the search text stays out of access logs.
+     */
     async loadList(filter: AdminSubscriberFilter): Promise<void> {
       list.value = { ...list.value, filter, pending: true, error: null }
-      const query = adminSubscriberFilterQuery(filter)
+      const body = Object.fromEntries(new URLSearchParams(adminSubscriberFilterQuery(filter)))
       const result = await request<AdminSubscriberListResponse>(
-        `${API}/subscribers${query ? `?${query}` : ``}`,
+        `${API}/subscribers/search`,
+        post(body),
       )
       // An answer for a filter the page has left is dropped.
       if (list.value.filter !== filter) return

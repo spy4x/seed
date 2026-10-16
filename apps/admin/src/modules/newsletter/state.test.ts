@@ -18,8 +18,7 @@ function fakeRequest(answer: Answer = () => undefined) {
   const request = ((path: string, init?: RequestInit) => {
     const body = init?.body === undefined ? `` : ` ${init.body}`
     calls.push(`${init?.method ?? `GET`} ${path}${body}`)
-    const fallback = path.startsWith(`/api/admin/newsletter/subscribers?`) ||
-        path === `/api/admin/newsletter/subscribers`
+    const fallback = path === `/api/admin/newsletter/subscribers/search`
       ? ok({ subscribers: [], total: 0, page: 1, pageSize: 25 })
       : path.endsWith(`/sends`)
       ? ok({ sends: [] })
@@ -46,19 +45,23 @@ function fakeExport(response: Response | Error) {
   return { ports, fetched, saved }
 }
 
-it(`reads the list with the filter in the query`, async () => {
+it(`reads the list with the filter in a POST body, never in the URL`, async () => {
   const { request, calls } = fakeRequest()
   const state = createNewsletterState(request, createToastStore())
   await state.loadList({ query: `ann`, status: `pending`, page: 2 })
 
-  expect(calls).toEqual([`GET /api/admin/newsletter/subscribers?q=ann&status=pending&page=2`])
+  expect(calls).toEqual([
+    `POST /api/admin/newsletter/subscribers/search {"q":"ann","status":"pending","page":"2"}`,
+  ])
   expect(state.list.value.pending).toBe(false)
 })
 
 it(`drops the answer for a filter the page has already left`, async () => {
   let release: (value: AdminApiResult<unknown>) => void = () => {}
   const late = new Promise<AdminApiResult<unknown>>((resolve) => release = resolve)
-  const { request } = fakeRequest((path) => path.includes(`q=old`) ? late : undefined)
+  const { request } = fakeRequest((_path, init) =>
+    String(init?.body).includes(`"q":"old"`) ? late : undefined
+  )
   const state = createNewsletterState(request, createToastStore())
   const old: AdminSubscriberFilter = { ...ADMIN_SUBSCRIBERS_NO_FILTER, query: `old` }
 
@@ -83,7 +86,7 @@ it(`posts the dialog's address in the body, then reads the list and numbers agai
 
   expect(calls).toEqual([
     `POST /api/admin/newsletter/subscribers/remove {"email":"ann@example.com"}`,
-    `GET /api/admin/newsletter/subscribers`,
+    `POST /api/admin/newsletter/subscribers/search {}`,
     `GET /api/admin/newsletter/stats`,
   ])
   expect(state.dialog.value.dialog).toBeNull()
@@ -147,9 +150,12 @@ it(`says why the export failed and saves nothing`, async () => {
   }
 })
 
-it(`keeps the filter and the open tab in the address, leaving out every default`, () => {
+it(`keeps the status, page and tab in the address, leaving out every default and the search`, () => {
   expect(newsletterHref(ADMIN_SUBSCRIBERS_NO_FILTER, `subscribers`)).toBe(`/newsletter`)
-  expect(newsletterHref({ query: `a`, status: `pending`, page: 2 }, `sends`)).toBe(
-    `/newsletter?q=a&status=pending&page=2&tab=sends`,
+  expect(newsletterHref({ query: `ann@example.com`, status: `pending`, page: 2 }, `sends`)).toBe(
+    `/newsletter?status=pending&page=2&tab=sends`,
+  )
+  expect(newsletterHref({ ...ADMIN_SUBSCRIBERS_NO_FILTER, query: `ann` }, `subscribers`)).toBe(
+    `/newsletter`,
   )
 })

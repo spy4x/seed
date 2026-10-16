@@ -211,6 +211,29 @@ describe(`the admin group list`, () => {
     expect(owner.classList.contains(`truncate`)).toBe(true)
   })
 
+  it(`names each owner in full as text in the group's cell for a phone, with no tooltip`, async () => {
+    const long = `${`a`.repeat(60)}@example.com`
+    const nameless = { ...family, id: INVITATION_ID, owner: { id: 7, name: ``, email: long } }
+    await mount(
+      <AdminGroupsListScreen
+        {...listProps([], {
+          list: { groups: [family, nameless], total: 2, page: 1, pageSize: 25 },
+        })}
+      />,
+    )
+    const cells = [...document.querySelectorAll(`[data-e2e=admin-groups-list] tbody tr`)]
+      .map((row) => row.querySelector(`td`)!.querySelector(`[data-e2e=admin-groups-owner-phone]`)!)
+    // Shown only below 640px, where the owner column is hidden.
+    expect(cells.map((cell) => cell.classList.contains(`sm:hidden`))).toEqual([true, true])
+    expect(cells.map((cell) => [...cell.children].map((line) => line.textContent))).toEqual([
+      [`Owner: Ada Lovelace`, `ada@example.com`],
+      // An owner with no name is named by their address, once.
+      [`Owner: ${long}`],
+    ])
+    expect(cells.some((cell) => cell.querySelector(`[title]`) !== null)).toBe(false)
+    expect(cells.some((cell) => cell.querySelector(`.truncate`) !== null)).toBe(false)
+  })
+
   it(`moves focus to the count after a page change, not on the first page`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupsListScreen {...listProps(calls)} />)

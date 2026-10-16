@@ -117,7 +117,7 @@ export function adminSubscriberFilterQuery(filter: AdminSubscriberFilter): strin
   return params.toString()
 }
 
-/** The answer of `GET /api/admin/newsletter/subscribers`. */
+/** The answer of `POST /api/admin/newsletter/subscribers/search`. */
 export interface AdminSubscriberListResponse {
   subscribers: AdminSubscriberRow[]
   total: number

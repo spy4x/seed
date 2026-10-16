@@ -25,20 +25,27 @@ function newsletterState(context: AdminContext): NewsletterState {
   return state
 }
 
-/** The page's address for a filter and a tab; each part at its default is left out. */
+/**
+ * The page's address for a filter and a tab; each part at its default is left out, and so is the
+ * search text, always: an address is kept in the browser's history and sent in `Referer`.
+ */
 export function newsletterHref(filter: AdminSubscriberFilter, tab: AdminNewsletterTab): string {
-  const params = new URLSearchParams(adminSubscriberFilterQuery(filter))
+  const params = new URLSearchParams(adminSubscriberFilterQuery({ ...filter, query: `` }))
   if (tab !== `subscribers`) params.set(`tab`, tab)
   const query = params.toString()
   return query ? `${PATH}?${query}` : PATH
 }
 
-/** The page. Its filter and open tab live in the address, so back and forward step through them. */
+/**
+ * The page. Its status, page number and open tab live in the address, so back and forward step
+ * through them; the search text lives in the module's state only, for the session.
+ */
 function NewsletterView({ context }: { context: AdminContext }): JSX.Element {
   const state = newsletterState(context)
   const search = useSearch()
   const params = useMemo(() => new URLSearchParams(search), [search])
-  const filter = useMemo(() => parseAdminSubscriberFilter(params), [params])
+  const query = state.query.value
+  const filter = useMemo(() => ({ ...parseAdminSubscriberFilter(params), query }), [params, query])
   const tab: AdminNewsletterTab = params.get(`tab`) === `sends` ? `sends` : `subscribers`
   useEffect(() => {
     state.closeDialog()
@@ -50,7 +57,12 @@ function NewsletterView({ context }: { context: AdminContext }): JSX.Element {
   }, [filter])
   const list = state.list.value
   const dialog = state.dialog.value
-  const go = (next: AdminSubscriberFilter) => context.navigate(newsletterHref(next, tab))
+  const go = (next: AdminSubscriberFilter) => {
+    state.query.value = next.query
+    // A new search alone leaves the address as it is: no history entry that only repeats it.
+    const href = newsletterHref(next, tab)
+    if (href !== newsletterHref(filter, tab)) context.navigate(href)
+  }
   return (
     <AdminNewsletterScreen
       tab={tab}

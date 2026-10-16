@@ -143,8 +143,8 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
         headers: { ...sameOriginHeaders },
         body: body === undefined ? undefined : JSON.stringify(body),
       })
-    const listed = async (query = ``) =>
-      (await (await get(`subscribers${query}`)).json()) as AdminSubscriberListResponse
+    const listed = async (search: Record<string, string> = {}) =>
+      (await (await post(`search`, search)).json()) as AdminSubscriberListResponse
     const audits = () =>
       sql<{ eventType: number; identifier: string }[]>`
         SELECT event_type, identifier FROM auth_audits WHERE user_id = ${operatorId} ORDER BY id
@@ -166,14 +166,14 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
     })
 
     await t.step(`searches inside the address and filters by status`, async () => {
-      expect((await listed(`?q=EA@`)).subscribers.map((row) => row.email)).toEqual([
+      expect((await listed({ q: `EA@` })).subscribers.map((row) => row.email)).toEqual([
         `bea@example.com`,
       ])
-      expect((await listed(`?status=pending`)).subscribers.map((row) => row.email)).toEqual([
+      expect((await listed({ status: `pending` })).subscribers.map((row) => row.email)).toEqual([
         `cat@example.com`,
       ])
       // `%` and `_` are searched as text, not as patterns.
-      expect((await listed(`?q=%25`)).total).toBe(0)
+      expect((await listed({ q: `%` })).total).toBe(0)
     })
 
     await t.step(`pages the list and counts every match`, async () => {
@@ -237,7 +237,7 @@ Deno.test(`operator area: the newsletter module on a real database`, async (t) =
         WHERE r.email = 'cat@example.com'
       `
       expect(after.length).toBe(before.length + 1)
-      expect((await listed(`?status=pending`)).total).toBe(1)
+      expect((await listed({ status: `pending` })).total).toBe(1)
       expect((await audits()).at(-1)).toEqual({
         eventType: AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT,
         identifier: `news:c***@example.com`,

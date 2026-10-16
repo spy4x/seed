@@ -86,15 +86,27 @@ test("an operator finds a subscriber, exports the list and removes them", async 
     await expect(ops.locator("[data-e2e=admin-newsletter-stats]")).toContainText("Subscribers")
     await expect(ops.locator("[data-e2e=admin-newsletter-chart] svg").first()).toBeVisible()
 
-    // Finds the address; the filter lands in the address bar.
+    // Finds the address. The search goes in a request body: neither the page's address nor any
+    // request's URL holds it, so no history entry or access log keeps it.
+    const urls: string[] = []
+    ops.on("request", (request) => urls.push(request.url()))
     await ops.locator("[data-e2e=admin-newsletter-search]").fill(subscriber)
-    await ops.locator("[data-e2e=admin-newsletter-submit]").click()
-    await expect(ops).toHaveURL(new RegExp(`\\?q=${encodeURIComponent(subscriber)}`))
+    const [search] = await Promise.all([
+      ops.waitForRequest((request) =>
+        request.url().endsWith("/subscribers/search") &&
+        (request.postData() ?? "").includes(subscriber)
+      ),
+      ops.locator("[data-e2e=admin-newsletter-submit]").click(),
+    ])
+    expect(search.method()).toBe("POST")
+    expect(search.postDataJSON()).toEqual({ q: subscriber })
     const rows = ops.locator("[data-e2e=admin-newsletter-list] tbody tr")
     await expect(rows).toHaveCount(1)
     await expect(rows.first()).toContainText(subscriber)
     await expect(rows.first()).toContainText("Confirmed")
     await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toHaveText("1 address")
+    await expect(ops).toHaveURL(`${adminBase}/newsletter`)
+    expect(urls.filter((url) => decodeURIComponent(url).includes(subscriber))).toEqual([])
 
     // The export downloads a CSV that holds the address.
     const [download] = await Promise.all([
@@ -117,7 +129,10 @@ test("an operator finds a subscriber, exports the list and removes them", async 
     await gotoApp(page, confirmLink, page.locator("[data-e2e=subscription-confirm-submit]"))
     await page.locator("[data-e2e=subscription-confirm-submit]").click()
     await expect(page.locator("[data-e2e=subscription-confirm-done]")).toHaveCount(0)
+    // A reload forgets the search, which lives in no address, so the operator searches again.
     await ops.reload()
+    await ops.locator("[data-e2e=admin-newsletter-search]").fill(subscriber)
+    await ops.locator("[data-e2e=admin-newsletter-submit]").click()
     await expect(ops.locator("[data-e2e=admin-newsletter-count]")).toHaveText("0 addresses")
 
     // The sent issues have their own tab, kept in the address.

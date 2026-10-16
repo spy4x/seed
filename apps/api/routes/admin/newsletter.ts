@@ -1,6 +1,7 @@
 import { Hono } from "hono"
 import type { MiddlewareHandler } from "hono"
 import type postgres from "postgres"
+import { type } from "arktype"
 import { validate } from "@spy4x/validation"
 import { parseBareAddress } from "@spy4x/email/address"
 import { maskEmail } from "@spy4x/platform/universal/text"
@@ -43,6 +44,18 @@ export const NEWSLETTER_OFF = `Mail subscriptions are off`
 /** An action's body is one address: 4 KiB holds any real one. */
 const ACTION_MAX_BYTES = 4 * 1024
 
+/** A search's body is the filter's three short fields: 4 KiB holds any the page sends. */
+const SEARCH_MAX_BYTES = 4 * 1024
+
+/**
+ * The body of a search: the list's query-string fields (`q`, `status`, `page`), each as text and
+ * each optional, so `parseAdminSubscriberFilter` reads them by the same rules as before.
+ */
+const searchBodySchema = type({ "q?": `string`, "status?": `string`, "page?": `string` })
+
+/** What a search answers when its body is not the filter's fields. */
+export const NEWSLETTER_INVALID_SEARCH = `This search could not be read`
+
 /**
  * What the newsletter routes read and write, for one list. Who may call it is the route's
  * business; every address it takes is already parsed.
@@ -80,7 +93,9 @@ export interface AdminNewsletterRouteDependencies {
  * same-origin guard.
  *
  * - `GET /newsletter/stats` answers {@link AdminNewsletterStats}: counts only.
- * - `GET /newsletter/subscribers?q=&status=&page=` lists addresses, newest first.
+ * - `POST /newsletter/subscribers/search` takes `{ q?, status?, page? }`, each as text, and lists
+ *   the matching addresses, newest first. A `POST`, so the search text never sits in a URL, where
+ *   access logs and the browser's history would keep it.
  * - `GET /newsletter/sends` lists the issues sent, newest first, with their counts.
  * - `POST /newsletter/subscribers/remove` takes `{ email }`: the address leaves the list as by its
  *   unsubscribe link, and no confirm link mailed before can add it back.
@@ -111,8 +126,14 @@ export function createAdminNewsletterRoutes(
 
   return new Hono<APIContext>()
     .get(`/newsletter/stats`, limit, async (c) => c.json(await newsletter.stats()))
-    .get(`/newsletter/subscribers`, limit, async (c) => {
-      const filter = parseAdminSubscriberFilter(new URL(c.req.url).searchParams)
+    .post(`/newsletter/subscribers/search`, limit, async (c) => {
+      const checked = validate(
+        searchBodySchema,
+        await readJsonBody(c, { maxBytes: SEARCH_MAX_BYTES }),
+      )
+      if (checked.error) return c.json({ error: NEWSLETTER_INVALID_SEARCH }, 400)
+      const { q = ``, status = ``, page = `` } = checked.data
+      const filter = parseAdminSubscriberFilter(new URLSearchParams({ q, status, page }))
       return c.json(await newsletter.list(filter))
     })
     .get(`/newsletter/sends`, limit, async (c) => c.json(await newsletter.sends()))

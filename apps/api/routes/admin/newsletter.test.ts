@@ -26,6 +26,7 @@ import {
   createAdminNewsletterRoutes,
   NEWSLETTER_ALREADY_CONFIRMED,
   NEWSLETTER_INVALID_ADDRESS,
+  NEWSLETTER_INVALID_SEARCH,
   NEWSLETTER_NOT_LISTED,
   NEWSLETTER_OFF,
 } from "./newsletter.ts"
@@ -116,11 +117,12 @@ function buildApp(
 }
 
 const ACTION_BODY = JSON.stringify({ email: pending.email })
+const SEARCH_BODY = JSON.stringify({ q: `ada`, status: `pending`, page: `2` })
 
 /** Every path of the newsletter module. */
 const ROUTES = [
   { method: `GET`, path: `/admin/newsletter/stats` },
-  { method: `GET`, path: `/admin/newsletter/subscribers?q=ada&status=pending&page=2` },
+  { method: `POST`, path: `/admin/newsletter/subscribers/search`, body: SEARCH_BODY },
   { method: `GET`, path: `/admin/newsletter/sends` },
   { method: `POST`, path: `/admin/newsletter/subscribers/remove`, body: ACTION_BODY },
   { method: `POST`, path: `/admin/newsletter/subscribers/resend`, body: ACTION_BODY },
@@ -191,7 +193,7 @@ describe(`operator area: newsletter routes`, () => {
     })
   }
 
-  it(`lists subscribers with the filter read from the query`, async () => {
+  it(`lists subscribers with the search read from the body`, async () => {
     const { app, calls } = buildApp()
     const response = await request(app, ROUTES[1])
 
@@ -204,6 +206,44 @@ describe(`operator area: newsletter routes`, () => {
     })
     expect(calls).toEqual([[`list`, { query: `ada`, status: `pending`, page: 2 }]])
   })
+
+  it(`ignores a search put in the URL`, async () => {
+    const { app, calls } = buildApp()
+    const response = await request(app, {
+      method: `POST`,
+      path: `/admin/newsletter/subscribers/search?q=eve&status=pending&page=3`,
+      body: `{}`,
+    })
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual([[`list`, { query: ``, status: `any`, page: 1 }]])
+  })
+
+  it(`no longer lists subscribers on a GET, which would carry the search in its URL`, async () => {
+    const { app, calls } = buildApp()
+    const response = await request(app, {
+      method: `GET`,
+      path: `/admin/newsletter/subscribers?q=ada`,
+    })
+
+    expect(response.status).toBe(404)
+    expect(calls).toEqual([])
+  })
+
+  for (const body of [`"ada"`, `null`, JSON.stringify({ q: 42 }), JSON.stringify({ page: 2 })]) {
+    it(`answers 400 to the search body ${body}`, async () => {
+      const { app, calls } = buildApp()
+      const response = await request(app, {
+        method: `POST`,
+        path: `/admin/newsletter/subscribers/search`,
+        body,
+      })
+
+      expect(response.status).toBe(400)
+      expect((await response.json()).error).toBe(NEWSLETTER_INVALID_SEARCH)
+      expect(calls).toEqual([])
+    })
+  }
 
   it(`answers the numbers and the sent issues with their counts`, async () => {
     const { app } = buildApp()
