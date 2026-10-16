@@ -62,18 +62,18 @@ function Brand({ navigate, compact }: { navigate?: Navigate; compact?: boolean }
       href={SCREEN_PATHS.profile}
       navigate={navigate}
       class="flex shrink-0 items-center gap-2 rounded-md"
-      aria-label={compact ? "Template" : undefined}
+      aria-label={compact ? "Seed" : undefined}
     >
       <span
         class="flex size-7 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
         aria-hidden="true"
       >
-        T
+        S
       </span>
       <span
         class={compact ? "hidden text-base font-semibold sm:inline" : "text-base font-semibold"}
       >
-        Template
+        Seed
       </span>
     </Link>
   )

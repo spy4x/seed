@@ -30,7 +30,7 @@ function AdminBrand({ navigate }: { navigate?: Navigate }): JSX.Element {
       >
         A
       </span>
-      <span class="text-base font-semibold">Template admin</span>
+      <span class="text-base font-semibold">Seed admin</span>
     </Link>
   )
 }

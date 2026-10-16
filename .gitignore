@@ -34,3 +34,6 @@ playwright-report
 
 infra/configs/vapid.json
 tests/.scratch-*
+
+# Screenshot masters and the font cache of apps/mpa/screenshots/capture.ts.
+apps/mpa/screenshots/.out/

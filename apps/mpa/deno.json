@@ -5,6 +5,8 @@
     "dev": "deno run -A --node-modules-dir=auto npm:vite@7.3.6",
     // Needs the MPA and the API at MPA_BASE_URL (default http://app.localhost), /api going to the API.
     "e2e": "deno run -A --node-modules-dir npm:playwright@1.57.0 test --config=../../e2e/mpa/playwright.config.ts",
+    // Needs the dev stack with the admin app, cwebp, magick and tar: screenshots/README.md.
+    "screenshots": "deno run -A screenshots/capture.ts",
     "start": "deno serve -A _fresh/server.js"
   },
   "imports": {
