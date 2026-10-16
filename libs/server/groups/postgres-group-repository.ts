@@ -389,14 +389,22 @@ export class PostgresGroupRepository implements GroupRepository {
    * caller's transaction (a sign-up with a taken group id leaves no half-made account).
    */
   private async insertGroup(
-    input: { id: string; name: string },
+    input: { id: string; name: string } & Partial<GroupDetails>,
     ownerId: number,
     ignoreConflict: boolean,
   ): Promise<GroupRow | null> {
     const inserted = (
       await this.sql<GroupRow[]>`
-        INSERT INTO groups (id, name, owner_user_id, created_by_user_id)
-        VALUES (${input.id}, ${input.name}, ${ownerId}, ${ownerId})
+        INSERT INTO groups (id, name, description, color, emoji, owner_user_id, created_by_user_id)
+        VALUES (
+          ${input.id},
+          ${input.name},
+          ${input.description ?? ""},
+          ${input.color ?? null},
+          ${input.emoji ?? null},
+          ${ownerId},
+          ${ownerId}
+        )
         ${ignoreConflict ? this.sql`ON CONFLICT (id) DO NOTHING` : this.sql``}
         RETURNING
           id,

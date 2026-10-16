@@ -1,6 +1,16 @@
 import { signal } from "@preact/signals"
 import { describeError, RealtimeRequestError } from "@spy4x/realtime"
-import type { GroupColor, GroupDetails, GroupMoveAllResult, GroupRole } from "@domain/groups"
+import {
+  GROUP_DESCRIPTION_MAX,
+  type GroupColor,
+  type GroupDetails,
+  GroupError,
+  type GroupMoveAllResult,
+  type GroupRole,
+  parseGroupDescription,
+  parseGroupEmoji,
+  parseGroupName,
+} from "@domain/groups"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiAsUser } from "./realtime-call.ts"
 import { READ_KEYS, ReadRefused } from "./read-keys.ts"
@@ -12,6 +22,11 @@ import {
   localReads,
 } from "../modules.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import {
+  EMPTY_GROUP_DRAFT,
+  type GroupDraft,
+  type GroupEditorErrors,
+} from "@ui/group-editor-screen.tsx"
 
 /** A group as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface GroupItem {
@@ -48,8 +63,8 @@ export interface GroupsDependencies {
   fetchPage(cursor: string | null, via: ReadChannel): Promise<GroupPage>
   /** Reads the groups the person deleted and can still restore. */
   fetchDeleted(via: ReadChannel): Promise<{ groups: DeletedGroupItem[] }>
-  /** Creates a group and returns it. */
-  create(input: { id: string; name: string }): Promise<{ group: GroupItem }>
+  /** Creates a group with its details, in one request, and returns it. */
+  create(input: { id: string; name: string } & GroupDetails): Promise<{ group: GroupItem }>
   rename(input: { groupId: string; name: string }): Promise<{ group: GroupItem }>
   /** Sets a group's description, colour and emoji. */
   updateDetails(input: GroupDetails & { groupId: string }): Promise<{ group: GroupItem }>
@@ -66,7 +81,76 @@ export interface GroupsDependencies {
 }
 
 /** The changes to an existing group the store can make. */
-export type GroupAction = "rename" | "details" | "delete" | "restore" | "moveAll"
+export type GroupAction = "save" | "delete" | "restore" | "moveAll"
+
+export { EMPTY_GROUP_DRAFT, type GroupDraft, type GroupEditorErrors }
+
+export const GROUP_MESSAGES = {
+  nameRequired: "Enter a name.",
+  nameInvalid: "Use at most 100 characters, with no line breaks or hidden characters.",
+  descriptionTooLong: `Use at most ${GROUP_DESCRIPTION_MAX} characters.`,
+  emojiInvalid: "Use a single emoji, such as 🏕️, or leave it empty.",
+  create: "Could not create the group. Try again.",
+  createOffline: "Creating a group needs a connection. Try again when you are back online.",
+  saveOffline: "Saving a group needs a connection. Try again when you are back online.",
+} as const
+
+/** The editor's fields for a saved group. */
+export function draftOf(group: GroupItem): GroupDraft {
+  return {
+    name: group.name,
+    description: group.description ?? "",
+    color: group.color ?? null,
+    emoji: group.emoji ?? "",
+  }
+}
+
+/** Whether two drafts would save the same group: spaces around the text do not count. */
+function sameDraft(a: GroupDraft, b: GroupDraft): boolean {
+  return a.name.trim() === b.name.trim() && a.description.trim() === b.description.trim() &&
+    a.color === b.color && a.emoji.trim() === b.emoji.trim()
+}
+
+/** Reads `parse`'s answer, or `null` when it refused the value. */
+function parsed<T>(parse: () => T): { value: T } | null {
+  try {
+    return { value: parse() }
+  } catch (cause) {
+    if (cause instanceof GroupError) return null
+    throw cause
+  }
+}
+
+/**
+ * Checks a draft with the server's own parsers, so a typo is told before a round trip. Gives the
+ * name and details to send, or the message for each field that is wrong.
+ */
+export function checkGroupDraft(
+  draft: GroupDraft,
+): { ok: true; name: string; details: GroupDetails } | { ok: false; errors: GroupEditorErrors } {
+  const name = parsed(() => parseGroupName(draft.name))
+  const description = parsed(() => parseGroupDescription(draft.description))
+  const emoji = parsed(() => parseGroupEmoji(draft.emoji))
+  if (name && description && emoji) {
+    return {
+      ok: true,
+      name: name.value,
+      details: { description: description.value, color: draft.color, emoji: emoji.value },
+    }
+  }
+  return {
+    ok: false,
+    errors: {
+      name: name
+        ? null
+        : draft.name.trim() === ""
+        ? GROUP_MESSAGES.nameRequired
+        : GROUP_MESSAGES.nameInvalid,
+      description: description ? null : GROUP_MESSAGES.descriptionTooLong,
+      emoji: emoji ? null : GROUP_MESSAGES.emojiInvalid,
+    },
+  }
+}
 
 /** How a read reaches the API. */
 export type ReadChannel = "rest" | "socket"
@@ -84,12 +168,17 @@ const MAX_PAGES = 100
 export function createGroupsStore(dependencies: GroupsDependencies) {
   const groups = signal<readonly GroupItem[]>([])
   const deleted = signal<readonly DeletedGroupItem[]>([])
-  const name = signal("")
-  /** What the person typed as a group's new name, with the group it is for. */
-  const renameDraft = signal<{ groupId: string; name: string } | null>(null)
-  /** The group a rename, delete or restore is in flight for, and which of the three. */
+  /**
+   * What the person typed in the group editor, with the group it is for (`null`: a new group).
+   * `null` while nothing was typed: the editor then shows the group as saved, also when the group
+   * is read after the page opened.
+   */
+  const editor = signal<{ groupId: string | null; value: GroupDraft } | null>(null)
+  /** Why the editor's last create or save was refused. */
+  const editorErrors = signal<GroupEditorErrors>({})
+  /** The group a save, delete or restore is in flight for, and which of them. */
   const working = signal<{ groupId: string; action: GroupAction } | null>(null)
-  /** Why the last rename, delete or restore was refused. */
+  /** Why the last save, delete or restore was refused. */
   const actionError = signal<
     { groupId: string; action: GroupAction; message: string; plan?: PlanRefusal } | null
   >(null)
@@ -179,21 +268,78 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     }
   }
 
-  async function create(): Promise<void> {
-    const trimmed = name.value.trim()
-    if (creating.value || trimmed.length === 0) return
+  /** The saved group with this id, or `undefined`. */
+  function savedGroup(groupId: string): GroupItem | undefined {
+    return groups.value.find((group) => group.id === groupId)
+  }
+
+  /** What the editor of a group (`null`: a new one) shows: what was typed, else the saved group. */
+  function draft(groupId: string | null): GroupDraft {
+    const typed = editor.value
+    if (typed && typed.groupId === groupId) return typed.value
+    const saved = groupId === null ? undefined : savedGroup(groupId)
+    return saved ? draftOf(saved) : EMPTY_GROUP_DRAFT
+  }
+
+  /** Whether the editor of a group (`null`: a new one) holds something that is not saved. */
+  function unsaved(groupId: string | null): boolean {
+    const typed = editor.value
+    if (!typed || typed.groupId !== groupId) return false
+    const saved = groupId === null ? undefined : savedGroup(groupId)
+    return !sameDraft(typed.value, saved ? draftOf(saved) : EMPTY_GROUP_DRAFT)
+  }
+
+  /** Keeps what the person typed in the editor of a group (`null`: a new one). */
+  function edit(groupId: string | null, value: GroupDraft): void {
+    editor.value = { groupId, value }
+  }
+
+  /**
+   * Opens the editor of a group (`null`: a new one). What was typed for another group, and the
+   * errors of an earlier attempt, are dropped: they belong to a page that is gone.
+   */
+  function openEditor(groupId: string | null): void {
+    if (editor.value?.groupId !== groupId) editor.value = null
+    editorErrors.value = {}
+  }
+
+  /** Puts the editor back to the group as saved, or empties the new group's form. */
+  function discard(): void {
+    editor.value = null
+    editorErrors.value = {}
+  }
+
+  /**
+   * Creates a group from the new group's form, every field in one request. Resolves the group once
+   * it is created, `null` when the form had a mistake or the server refused it; the form keeps
+   * what was typed either way.
+   */
+  async function create(): Promise<GroupItem | null> {
+    if (creating.value) return null
+    const checked = checkGroupDraft(draft(null))
+    if (!checked.ok) {
+      editorErrors.value = checked.errors
+      return null
+    }
     creating.value = true
-    error.value = null
+    editorErrors.value = {}
     try {
       const { group } = await dependencies.create({
         id: dependencies.newId(),
-        name: trimmed,
+        name: checked.name,
+        ...checked.details,
       })
       groups.value = [group, ...groups.value.filter((existing) => existing.id !== group.id)]
       dependencies.advance(group.id, Number(group.changeSequence))
-      name.value = ""
+      if (editor.value?.groupId === null) editor.value = null
+      return group
     } catch (cause) {
-      error.value = describeError(cause, "Could not create the group")
+      editorErrors.value = {
+        form: cause instanceof RealtimeRequestError
+          ? describeError(cause, GROUP_MESSAGES.create)
+          : GROUP_MESSAGES.createOffline,
+      }
+      return null
     } finally {
       creating.value = false
     }
@@ -229,29 +375,45 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     }
   }
 
-  /** Renames a group to what the person typed. Resolves to whether it worked. */
-  async function rename(groupId: string): Promise<boolean> {
-    const draft = renameDraft.value
-    const trimmed = (draft?.groupId === groupId ? draft.name : "").trim()
-    if (trimmed.length === 0) return false
-    return await change(groupId, "rename", async () => {
-      const { group } = await dependencies.rename({ groupId, name: trimmed })
-      // A rename answers without the members, so the card keeps the ones the list sent.
-      groups.value = groups.value.map((existing) =>
-        existing.id === group.id ? { ...existing, ...group } : existing
-      )
-      renameDraft.value = null
-    }, "Could not rename the group")
-  }
-
-  /** Sets a group's description, colour and emoji. Resolves to whether it worked. */
-  async function updateDetails(groupId: string, details: GroupDetails): Promise<boolean> {
-    return await change(groupId, "details", async () => {
-      const { group } = await dependencies.updateDetails({ groupId, ...details })
-      groups.value = groups.value.map((existing) =>
-        existing.id === group.id ? { ...existing, ...group } : existing
-      )
-    }, "Could not save the details")
+  /**
+   * Saves what the person typed in a group's editor: the name and the details, each only when it
+   * changed. Resolves to whether everything was saved. A refusal keeps what was typed, and a name
+   * saved before the details were refused stays saved.
+   */
+  async function save(groupId: string): Promise<boolean> {
+    const saved = savedGroup(groupId)
+    if (!saved || working.value) return false
+    const checked = checkGroupDraft(draft(groupId))
+    if (!checked.ok) {
+      editorErrors.value = checked.errors
+      return false
+    }
+    editorErrors.value = {}
+    const before = draftOf(saved)
+    const { name, details } = checked
+    const done = await change(groupId, "save", async () => {
+      // A rename and a details update answer without the members, so the row keeps the list's.
+      const merge = (group: GroupItem) => {
+        groups.value = groups.value.map((existing) =>
+          existing.id === group.id ? { ...existing, ...group } : existing
+        )
+      }
+      if (name !== before.name) merge((await dependencies.rename({ groupId, name })).group)
+      if (
+        details.description !== before.description || details.color !== before.color ||
+        (details.emoji ?? "") !== before.emoji
+      ) {
+        merge((await dependencies.updateDetails({ groupId, ...details })).group)
+      }
+      // A failure that is not the server's answer means the server was not reached.
+    }, GROUP_MESSAGES.saveOffline)
+    const failure = actionError.value
+    if (done) {
+      if (editor.value?.groupId === groupId) editor.value = null
+    } else if (failure?.groupId === groupId && failure.action === "save") {
+      editorErrors.value = { form: failure.message }
+    }
+    return done
   }
 
   /** Deletes a group. Resolves to whether it worked, so the page can leave the group's settings. */
@@ -298,10 +460,10 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
     moved.value = null
     groups.value = []
     deleted.value = []
-    renameDraft.value = null
+    editor.value = null
+    editorErrors.value = {}
     working.value = null
     actionError.value = null
-    name.value = ""
     error.value = null
     loadError.value = null
     loading.value = true
@@ -313,17 +475,21 @@ export function createGroupsStore(dependencies: GroupsDependencies) {
   return {
     groups,
     deleted,
-    renameDraft,
+    editor,
+    editorErrors,
+    draft,
+    unsaved,
+    edit,
+    openEditor,
+    discard,
+    save,
     working,
     actionError,
-    rename,
-    updateDetails,
     remove,
     restore,
     moveAll,
     moved,
     forgetMoveAll,
-    name,
     loading,
     creating,
     error,

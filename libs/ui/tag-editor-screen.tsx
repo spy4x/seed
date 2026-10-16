@@ -137,7 +137,7 @@ export function TagEditorScreen(props: TagEditorScreenProps): JSX.Element {
 }
 
 /** `true` once `active` has held for `LOADING_DELAY_MS`; `false` again as soon as it ends. */
-function useWaited(active: boolean): boolean {
+export function useWaited(active: boolean): boolean {
   const [waited, setWaited] = useState(false)
   useEffect(() => {
     if (!active) return setWaited(false)
@@ -148,7 +148,7 @@ function useWaited(active: boolean): boolean {
 }
 
 /** The form's width: a page with one short form keeps its fields from stretching across the column. */
-const FORM_WIDTH = "max-w-md"
+export const FORM_WIDTH = "max-w-md"
 
 /**
  * A read that took longer than the delay: a placeholder in the form's place, and one polite line

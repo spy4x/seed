@@ -277,8 +277,7 @@ export function createGroupsRoute(dependencies: GroupsRouteDependencies): Hono<A
       const result = await dependencies.create(
         new GroupCreateCommand({
           actor: actorFromAuth(c.get("auth")!),
-          id: input.id,
-          name: input.name,
+          ...input,
           requestId: c.get("requestId"),
           idempotencyKey: c.req.header("idempotency-key"),
         }),

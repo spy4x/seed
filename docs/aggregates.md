@@ -130,7 +130,12 @@ sequence as its version, so it is announced exactly like a group change.
 
 An aggregate has two pages, a **list page** and an **editor page**, and each is one screen. Copy
 both. The list page only reads and links; everything that writes happens on the editor page, which
-has its own address, a back link to the list and room for a long text.
+has its own address, a back link to the list and room for a long text. The editor is one component
+for both modes: `/<entity>/new` shows it with empty fields and "Create", `/<entity>/:id` with the
+saved fields, and its Save and Discard only while a field differs from what is saved. Groups are
+the second example: `groups-screen.tsx` lists them, each row one link to its editor, and
+`group-editor-screen.tsx` serves `/groups/new` and `/groups/:id`, with the members and the plan
+under the form.
 
 | File                     | What it holds                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -375,10 +380,11 @@ event. Follow the details command (`group.updateDetails`, spy4x/template#134) fi
    `apps/api/cqrs/+init.ts`, `apps/api/index.ts` and `apps/api/services/realtimeHub.ts`.
 5. **Transports.** A REST route (`PUT /api/groups/:groupId/details`) and the socket command
    (`group.updateDetails`), with the same bad-input and role tests as the other group commands.
-6. **Screen.** An "Edit details" item in the settings menu opens a dialog; the form is never open
-   by default. Hide the item when the role may not edit. New fields on `GroupRow`, `PickerGroup`
-   and the SPA's `GroupItem` are optional, because the offline store may hold groups saved before
-   the field existed.
+6. **Screen.** Add the field to the group editor (`libs/ui/group-editor-screen.tsx`), which serves
+   both `/groups/new` and `/groups/:groupId`, and to the create request, so a new group is created
+   with it in one request. A role that may not edit sees the value as text. New fields on
+   `GroupRow`, `PickerGroup` and the SPA's `GroupItem` are optional, because the offline store may
+   hold groups saved before the field existed.
 7. **Other members.** Nothing to add: `recordChange()` makes the worker send a hint to every
    member's socket, and their pages read the group again. Test it with two pages and a count of
    page loads, as `e2e/groups-details.e2e.ts` does.

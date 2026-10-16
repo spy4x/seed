@@ -2,6 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { openNotes } from "./fixtures/groups.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -27,14 +28,6 @@ async function signUp(request: APIRequestContext, email: string): Promise<void> 
 async function signInOnline(page: Page, email: string): Promise<void> {
   await signIn(page, email, password)
   await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
-}
-
-async function openNotes(page: Page, groupName: string): Promise<void> {
-  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", {
-    name: "Groups",
-  }).click()
-  await page.getByRole("button", { name: `Open notes in ${groupName}` }).click()
-  await expect(page.locator("[data-e2e=notes-group]")).toHaveText(groupName)
 }
 
 test.describe("moving notes to another group", () => {

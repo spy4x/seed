@@ -17,6 +17,8 @@ export const SPA_ROUTES = {
   "/subscribe/confirm": { open: true },
   "/unsubscribe": { open: true },
   "/groups": { open: false },
+  // Before `/groups/:groupId`, which would take "new" for a group's id.
+  "/groups/new": { open: false },
   "/groups/:groupId": { open: false },
   "/groups/:groupId/activity": { open: false },
   "/groups/:groupId/pricing": { open: false },

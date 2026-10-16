@@ -2,6 +2,7 @@ import { type APIRequestContext, type Browser, type Page } from "@playwright/tes
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { groupLink } from "./fixtures/groups.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -223,7 +224,7 @@ test.describe("group members", () => {
     }
   })
 
-  test("the groups list shows each group's members as an avatar stack", async ({ page, request }) => {
+  test("the groups list draws each group as one link, with no member avatars", async ({ page, request }) => {
     const owner = "e2e_members_stack_owner@example.com"
     const member = "e2e_members_stack_member@example.com"
     await cleanup(request, owner)
@@ -236,8 +237,9 @@ test.describe("group members", () => {
 
       const heading = page.getByRole("heading", { level: 1, name: "Groups" })
       await gotoApp(page, "/groups", heading)
-      await expect(page.getByLabel("Members of Team (2)")).toBeVisible()
-      await expect(page.getByLabel("Members of Personal (1)")).toBeVisible()
+      await expect(groupLink(page, "Team")).toBeVisible()
+      await expect(groupLink(page, "Personal")).toBeVisible()
+      await expect(page.getByLabel(/^Members of /)).toHaveCount(0)
     } finally {
       await cleanup(request, owner, { soft: true })
       await cleanup(request, member, { soft: true })

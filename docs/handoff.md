@@ -571,10 +571,12 @@ hint with `profileStore.refresh()`, so a second tab follows without a reload.
    `/groups`. It never selects, because a link another site controls must not switch a person's
    group (the API refuses a select that is not a post from the app's own page). The create form
    names the group on screen.
-   `/groups` lists the groups as cards (the person's role, a "Selected" badge, a settings link
-   and an "Open notes" form). `/groups/:groupId` is the settings page: `GroupSettingsScreen` in
-   `libs/ui`, one `<section>` per concern. General shows the name and the role, and a rename form
-   for an admin or the owner (`PATCH /api/groups/:id`, `group.rename`). A "Delete group"
+   `/groups` lists the groups, each row one link to the group's page, with the person's role and
+   "Current" on the current group. `/groups/new` and `/groups/:groupId` are the same editor:
+   `GroupEditorScreen` in `libs/ui`. Its form holds the name, description, emoji and colour; a
+   create sends them in one `group.create`, and a save sends a rename (`PATCH /api/groups/:id`,
+   `group.rename`) and the details (`group.updateDetails`), each only when it changed. An editor or
+   a viewer sees the details as text. A "Delete group"
    section, for the owner only, holds the confirmation text and the delete
    (`DELETE /api/groups/:id`, `group.delete`). Each later issue (members, roles and leaving #130;
    invitations #131; ownership #132; moving notes #133; moving all of a group's data #260; the extra fields #134) adds its own section

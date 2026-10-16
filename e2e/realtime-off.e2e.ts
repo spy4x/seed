@@ -7,6 +7,7 @@ import {
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, submitAuthForm } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { createGroup, openGroups, openNotes } from "./fixtures/groups.ts"
 
 /**
  * The core flows on a page whose `/config.json` says `realtime: false` (ADR 003, "the proof of the
@@ -80,19 +81,6 @@ async function signInBrowser(page: Page, email: string): Promise<void> {
   await submitAuthForm(page, "/", page.locator("[data-e2e=shell-ws-status]"))
 }
 
-async function openGroups(page: Page): Promise<void> {
-  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", {
-    name: "Groups",
-  }).click()
-}
-
-async function openNotes(page: Page, groupName: string): Promise<void> {
-  await openGroups(page)
-  await page.getByRole("button", { name: `Open notes in ${groupName}` }).click()
-  await expect(page.getByRole("heading", { level: 1, name: "Notes", exact: true })).toBeVisible()
-  await expect(page.locator("[data-e2e=notes-group]")).toHaveText(groupName)
-}
-
 test.describe("the app with the WebSocket module switched off", () => {
   test("a person signs up, signs in again, and creates a group and creates, edits and deletes a note without a socket", async ({ browser, request }) => {
     const email = "e2e_realtime_off_solo@example.com"
@@ -111,12 +99,7 @@ test.describe("the app with the WebSocket module switched off", () => {
 
       // A group.
       await openGroups(page)
-      await page.locator("[data-e2e=group-new]").click()
-      await page.locator("[data-e2e=group-name]").fill("Socket-free team")
-      await page.locator("[data-e2e=group-create]").click()
-      await expect(
-        page.locator("[data-e2e=group-item-name]").filter({ hasText: "Socket-free team" }),
-      ).toHaveCount(1)
+      await createGroup(page, "Socket-free team")
 
       // A note: created, edited, deleted.
       await openNotes(page, "Socket-free team")

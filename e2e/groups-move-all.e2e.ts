@@ -2,6 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { groupLink, openNotes } from "./fixtures/groups.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -77,11 +78,7 @@ test.describe("moving all of a group's data", () => {
       }
 
       await signInOnline(watcherPage, watcher)
-      await watcherPage.getByRole("navigation", { name: "Main navigation" }).getByRole("link", {
-        name: "Groups",
-      }).click()
-      await watcherPage.getByRole("button", { name: "Open notes in Target" }).click()
-      await expect(watcherPage.locator("[data-e2e=notes-group]")).toHaveText("Target")
+      await openNotes(watcherPage, "Target")
       await expect(watcherPage.getByText("No notes yet.")).toBeVisible()
 
       await gotoApp(
@@ -90,7 +87,7 @@ test.describe("moving all of a group's data", () => {
         ownerPage.locator("[data-e2e=group-general-name]"),
       )
       await ownerPage.getByRole("button", { name: "More actions" }).click()
-      await ownerPage.getByRole("menuitem", { name: "Move all data to..." }).click()
+      await ownerPage.getByRole("menuitem", { name: "Move all data…" }).click()
       const dialog = ownerPage.locator("[data-e2e=group-move-all-dialog]")
       // Only groups the person may edit, and never the group itself.
       const options = dialog.locator("[data-e2e=group-move-all-to] option")
@@ -110,7 +107,8 @@ test.describe("moving all of a group's data", () => {
       await expect(confirm).toContainText(`Delete "Source"?`)
       await confirm.getByRole("button", { name: "Delete group", exact: true }).click()
       await expect(ownerPage).toHaveURL(/\/groups$/)
-      await expect(ownerPage.getByRole("button", { name: "Open notes in Source" })).toHaveCount(0)
+      await expect(groupLink(ownerPage, "Personal")).toBeVisible()
+      await expect(groupLink(ownerPage, "Source")).toHaveCount(0)
       await expect(watcherPage.locator("[data-e2e=note-item-title]")).toHaveCount(3)
 
       // The audit trail of the target says who moved the data in.

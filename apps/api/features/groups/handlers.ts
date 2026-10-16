@@ -40,8 +40,9 @@ export function createGroupCreateHandler(
   repository: GroupRepository,
 ): CommandHandler<GroupCreateCommand> {
   return async (command) => {
+    const { id, name, description, color, emoji, requestId } = command.data
     return await repository.create(
-      { id: command.data.id, name: command.data.name, requestId: command.data.requestId },
+      { id, name, description, color, emoji, requestId },
       command.data.actor.userId,
     )
   }

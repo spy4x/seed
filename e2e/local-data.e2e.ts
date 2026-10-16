@@ -7,6 +7,12 @@ import {
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn, submitAuthForm } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import {
+  createGroup as createGroupInBrowser,
+  openGroup,
+  openGroups,
+  openNotes,
+} from "./fixtures/groups.ts"
 
 /**
  * The local-data module as a swappable part (ADR 003, sections 1, 4 and 5), in a real browser with
@@ -155,16 +161,10 @@ test.describe("the app with the local-data module switched off", () => {
       // A group.
       await page.getByRole("navigation", { name: "Main navigation" })
         .getByRole("link", { name: "Groups" }).click()
-      await page.locator("[data-e2e=group-new]").click()
-      await page.locator("[data-e2e=group-name]").fill("Online-only team")
-      await page.locator("[data-e2e=group-create]").click()
-      await expect(
-        page.locator("[data-e2e=group-item-name]").filter({ hasText: "Online-only team" }),
-      ).toHaveCount(1)
+      await createGroupInBrowser(page, "Online-only team")
 
       // A note: created, edited, and read again after a reload.
-      await page.getByRole("button", { name: "Open notes in Online-only team" }).click()
-      await expect(page.locator("[data-e2e=notes-group]")).toHaveText("Online-only team")
+      await openNotes(page, "Online-only team")
       const titles = page.locator("[data-e2e=note-item-title]")
       await page.locator("[data-e2e=note-new]").click()
       await page.locator("[data-e2e=note-title]").fill("Groceries")
@@ -179,9 +179,8 @@ test.describe("the app with the local-data module switched off", () => {
       await expect(titles).toHaveText(["Groceries for Friday"])
 
       // The other list screens read from the server.
-      await page.getByRole("navigation", { name: "Main navigation" })
-        .getByRole("link", { name: "Groups" }).click()
-      await page.getByRole("link", { name: "Settings of Online-only team" }).click()
+      await openGroups(page)
+      await openGroup(page, "Online-only team")
       await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
       await expect(page.locator("[data-e2e=billing-plan]")).toBeVisible()
       const groupPath = new URL(page.url()).pathname

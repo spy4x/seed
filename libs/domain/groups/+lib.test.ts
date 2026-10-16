@@ -125,7 +125,40 @@ describe("group domain", () => {
     })).toEqual({
       id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001",
       name: "Team",
+      description: "",
+      color: null,
+      emoji: null,
     })
+  })
+
+  it("parses a create that carries the description, colour and emoji in the same request", () => {
+    const id = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
+
+    expect(parseCreateGroupRequest({
+      id,
+      name: "Trips",
+      description: "  Our trips  ",
+      color: "green",
+      emoji: "🏕️",
+    })).toEqual({ id, name: "Trips", description: "Our trips", color: "green", emoji: "🏕️" })
+    expect(parseCreateGroupRequest({ id, name: "Trips", color: null, emoji: "" }))
+      .toEqual({ id, name: "Trips", description: "", color: null, emoji: null })
+  })
+
+  it("refuses a create whose details are malformed, or that leaves out the id or the name", () => {
+    const id = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
+    const invalid = [
+      { name: "Team" },
+      { id },
+      { id, name: "Team", description: "x".repeat(501) },
+      { id, name: "Team", description: null },
+      { id, name: "Team", color: "pink" },
+      { id, name: "Team", emoji: "ab" },
+      { id, name: "Team", emoji: "🏕️🏕️" },
+    ]
+    for (const value of invalid) {
+      expect(() => parseCreateGroupRequest(value)).toThrow(GroupError)
+    }
   })
 
   it("refuses kind on create, now that groups have none", () => {

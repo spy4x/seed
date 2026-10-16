@@ -115,8 +115,8 @@ export interface GroupSummary {
   emoji: string | null
   role: GroupRole
   /**
-   * How many members the group has, and the first few of them in the order they joined: what the
-   * groups list draws as a stack of avatars. Only the list read fills these two.
+   * How many members the group has, which the groups list shows on each row, and the first few of
+   * them in the order they joined. Only the list read fills these two.
    */
   memberCount?: number
   members?: GroupMemberPreview[]
@@ -171,12 +171,14 @@ export interface GroupAccess {
   role: GroupRole
 }
 
-export interface CreateGroupRequest {
+/** A new group from a request: its id and name, and the details the editor filled in. */
+export interface CreateGroupRequest extends GroupDetails {
   id: string
   name: string
 }
 
-export interface CreateGroupInput {
+/** A group to create. Details left out start empty: no description, colour or emoji. */
+export interface CreateGroupInput extends Partial<GroupDetails> {
   id: string
   name: string
   requestId?: string
@@ -208,7 +210,7 @@ export interface GroupListResult {
   nextPageKey: GroupListPageKey | null
 }
 
-export interface GroupCreatePayload {
+export interface GroupCreatePayload extends Partial<GroupDetails> {
   actor: Actor
   id: string
   name: string
@@ -599,6 +601,7 @@ export interface GroupRepository {
 
 const GROUP_ID_KEYS = ["groupId"]
 const CREATE_KEYS = ["id", "name"]
+const CREATE_OPTIONAL_KEYS = ["color", "description", "emoji"]
 const RENAME_BODY_KEYS = ["name"]
 const RENAME_KEYS = ["groupId", "name"]
 const DETAILS_BODY_KEYS = ["color", "description", "emoji"]
@@ -630,11 +633,30 @@ export function parseGroupName(value: unknown): string {
   return name
 }
 
+/**
+ * A create over REST or the socket: `id` and `name`, and any of `description`, `color` and `emoji`,
+ * so one request carries everything the editor filled in. A detail left out starts empty, which
+ * keeps a client that sends only `{ id, name }` working. Any other key is refused.
+ */
 export function parseCreateGroupRequest(value: unknown): CreateGroupRequest {
-  if (!hasExactKeys(value, CREATE_KEYS)) {
-    throw new GroupError("INVALID_REQUEST", "Expected exactly id and name")
+  if (
+    !isRecord(value) || !CREATE_KEYS.every((key) => key in value) ||
+    !Object.keys(value).every((key) =>
+      CREATE_KEYS.includes(key) || CREATE_OPTIONAL_KEYS.includes(key)
+    )
+  ) {
+    throw new GroupError(
+      "INVALID_REQUEST",
+      "Expected id and name, and at most description, color and emoji",
+    )
   }
-  return { id: parseGroupId(value.id), name: parseGroupName(value.name) }
+  return {
+    id: parseGroupId(value.id),
+    name: parseGroupName(value.name),
+    description: parseGroupDescription("description" in value ? value.description : ""),
+    color: parseGroupColor("color" in value ? value.color : null),
+    emoji: parseGroupEmoji("emoji" in value ? value.emoji : null),
+  }
 }
 
 /** The body of a rename over REST, where the path names the group: exactly `{ name }`. */

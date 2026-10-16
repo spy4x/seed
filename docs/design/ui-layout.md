@@ -14,10 +14,12 @@ screens were redesigned against these rules in October 2026.
    supplementary (in an overflow menu, a dialog or a disclosure). Ask of each control: how often
    does a person need it? Daily → on the page. Monthly → one click away. Once or never → in a
    menu, or under a "Danger zone" disclosure at the bottom.
-2. **Forms open when asked.** A "create" or "edit" form is closed until the person presses the
-   button for it: a `Modal` for a short form (new group, invite someone, change password), or
-   `InlineEdit` for one value (rename a group). A name is two fields, so the profile edits it in a
-   `Modal`. The note editor is the exception: it is a page of its own, and that is fine.
+2. **One editor per entity.** "New <entity>" opens the entity's editor page at `/<entity>/new`,
+   and an existing entity opens the same editor at `/<entity>/:id`: one component, the same fields
+   in both modes, never a one-field dialog for create and another form for edit. Notes and groups
+   are the examples ([aggregates.md](../aggregates.md), step 6). Any other form is closed until the
+   person presses the button for it: a `Modal` for a short form (invite someone, change password),
+   or `InlineEdit` for one value. A name is two fields, so the profile edits it in a `Modal`.
 3. **Hide what cannot happen.** Do not render a section that only explains why its action is
    unavailable ("You own this group, so you cannot leave it", "Nobody else is in this group yet").
    Leave the action out. When a person would otherwise not know the action exists, keep it as a

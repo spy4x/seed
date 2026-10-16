@@ -142,7 +142,33 @@ describe("groups route", () => {
       },
       id,
       name: "Team",
+      description: "",
+      color: null,
+      emoji: null,
       requestId: "req-groups-1",
+    })
+  })
+
+  it("creates a group with its description, colour and emoji in one request", async () => {
+    const deps = dependencies()
+    const app = buildApp(deps)
+    const response = await app.request("http://local/groups", {
+      method: "POST",
+      headers: mutationHeaders,
+      body: JSON.stringify({
+        id,
+        name: "Trips",
+        description: "Our trips",
+        color: "red",
+        emoji: "🏕️",
+      }),
+    })
+
+    expect(response.status).toBe(201)
+    expect(deps.createCommand?.data).toMatchObject({
+      description: "Our trips",
+      color: "red",
+      emoji: "🏕️",
     })
   })
 

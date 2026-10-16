@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { createGroup } from "./fixtures/groups.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -48,9 +49,8 @@ test.describe("groups over the socket", () => {
       const names = page.locator("[data-e2e=group-item-name]")
       await expect(names).toHaveCount(1)
 
-      await page.locator("[data-e2e=group-new]").click()
-      await page.locator("[data-e2e=group-name]").fill("Trip")
-      await page.locator("[data-e2e=group-create]").click()
+      await createGroup(page, "Trip")
+      await page.goBack()
       await expect(names.filter({ hasText: "Trip" })).toHaveCount(1)
 
       // The create went over the socket, as a command with an idempotency key.
@@ -177,11 +177,7 @@ test.describe("groups over the socket", () => {
 
       await gotoApp(page, "/groups", page.locator("[data-e2e=shell-ws-status]"))
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
-      await page.locator("[data-e2e=group-new]").click()
-      await page.locator("[data-e2e=group-name]").fill("Seen live")
-      await page.locator("[data-e2e=group-create]").click()
-      await expect(page.locator("[data-e2e=group-item-name]").filter({ hasText: "Seen live" }))
-        .toHaveCount(1)
+      await createGroup(page, "Seen live")
 
       // Only the worker's announcement, turned into a hint on the socket, can bring it here.
       await expect(otherNames.filter({ hasText: "Seen live" })).toHaveCount(1, { timeout: 3_000 })

@@ -32,9 +32,14 @@ import {
   GroupMembersSection,
   type GroupMembersSectionProps,
 } from "./group-members.tsx"
-import { GroupDetailsForm, groupLabel, GroupMark } from "./group-appearance.tsx"
+import { groupLabel, GroupMark } from "./group-appearance.tsx"
 import { GroupPicker } from "./group-picker.tsx"
-import { GroupSettingsScreen, type GroupSettingsScreenProps } from "./group-settings-screen.tsx"
+import {
+  EMPTY_GROUP_DRAFT,
+  type GroupDraft,
+  GroupEditorScreen,
+  type GroupEditorScreenProps,
+} from "./group-editor-screen.tsx"
 import {
   EMPTY_TRANSFER_DRAFT,
   GroupTransferForm,
@@ -50,6 +55,7 @@ const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
   getComputedStyle: globalThis.getComputedStyle,
+  location: globalThis.location,
 }
 
 beforeAll(() => {
@@ -60,6 +66,8 @@ beforeAll(() => {
     document: window.document,
     FormData: window.FormData,
     getComputedStyle: window.getComputedStyle.bind(window),
+    // A link follows `navigate` only to the page's own origin, which it reads from `location`.
+    location: window.location,
   })
 })
 
@@ -124,15 +132,6 @@ async function choose(selector: string, value: string): Promise<void> {
   })
 }
 
-/** Presses `key` on the element `selector` finds, and lets a returned promise settle. */
-async function press(selector: string, key: string): Promise<void> {
-  const event = new window.KeyboardEvent("keydown", { key, bubbles: true, cancelable: true })
-  await act(async () => {
-    find(selector).dispatchEvent(event as unknown as Event)
-    await new Promise((resolve) => setTimeout(resolve, 0))
-  })
-}
-
 /**
  * Submits the form around `selector` from its submit button, and lets EnhancedForm's callback run.
  * Returns whether the native post was cancelled.
@@ -193,128 +192,68 @@ describe("GroupsScreen", () => {
     groups: [
       { ...team, memberCount: 3, members: [{ name: "Ann Lee" }, { name: "Bo Kim" }] },
       { id: "g-2", name: "Family", role: GroupRole.VIEWER },
+      { id: "g-3", name: "Solo", role: GroupRole.OWNER, memberCount: 1 },
     ],
     selectedId: groupId,
-    name: "",
-    creating: false,
     loading: false,
     error: null,
   }
 
-  it("lists each group as one row with its role, its members and a link to its settings", async () => {
+  it("makes each whole row one link to its group's page, with the role and no other control", async () => {
     await mount(<GroupsScreen {...defaults} />)
-    expect(texts("[data-e2e=group-item-name]")).toEqual(["Team", "Family"])
+    expect(texts("[data-e2e=group-item-name]")).toEqual(["Team", "Family", "Solo"])
     expect(find(`[data-e2e=group-${groupId}]`).textContent).toContain("Owner")
     expect(find("[data-e2e=group-g-2]").textContent).toContain("Viewer")
-    expect(find(`[data-e2e=group-${groupId}] [aria-label^="Members of Team"]`)).toBeTruthy()
-    expect(find("[data-e2e=group-g-2] [data-e2e=group-settings]").getAttribute("href"))
-      .toBe(GROUP_PATHS.settings("g-2"))
-    expect(find("[data-e2e=group-g-2] [data-e2e=group-settings]").getAttribute("aria-label"))
-      .toBe("Settings of Family")
+    const link = find("[data-e2e=group-g-2] [data-e2e=group-open]")
+    expect(link.tagName).toBe("A")
+    expect(link.getAttribute("href")).toBe(GROUP_PATHS.settings("g-2"))
+    // The link's box covers the row, so a tap anywhere on it opens the group.
+    expect(link.className).toContain("after:absolute")
+    expect(link.className).toContain("after:inset-0")
+    for (const id of [groupId, "g-2"]) {
+      expect(root!.querySelectorAll(`[data-e2e=group-${id}] a, [data-e2e=group-${id}] button`))
+        .toHaveLength(1)
+    }
+    expect(has("[data-e2e=group-settings]")).toBe(false)
+    expect(has(`[aria-label^="Members of"]`)).toBe(false)
   })
 
-  it("shows an empty list as an empty state whose one action opens the new group dialog", async () => {
+  it("counts each group's members on its row, says Only you for one, and nothing while unknown", async () => {
+    await mount(<GroupsScreen {...defaults} />)
+    expect(find(`[data-e2e=group-${groupId}] [data-e2e=group-item-members]`).textContent)
+      .toBe(" · 3 members")
+    expect(find("[data-e2e=group-g-3] [data-e2e=group-item-members]").textContent)
+      .toBe(" · Only you")
+    expect(has("[data-e2e=group-g-2] [data-e2e=group-item-members]")).toBe(false)
+  })
+
+  it("follows a row's link through the app's navigate, without a page load", async () => {
+    const navigate = spy<[string]>()
+    await mount(<GroupsScreen {...defaults} navigate={navigate.fn} />)
+    await click("[data-e2e=group-g-2] [data-e2e=group-open]")
+    expect(navigate.calls).toEqual([[GROUP_PATHS.settings("g-2")]])
+  })
+
+  it("links New group in the header and in the empty state to the create page", async () => {
     await mount(<GroupsScreen {...defaults} groups={[]} />)
-    expect(find("[data-e2e=group-new-empty]").textContent).toContain("New group")
-    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
-    await click("[data-e2e=group-new-empty]")
-    expect(has("[data-e2e=group-new-dialog] [data-e2e=group-name]")).toBe(true)
+    expect(NEW_GROUP_PATH).toBe("/groups/new")
+    expect(find("[data-e2e=group-new]").getAttribute("href")).toBe(NEW_GROUP_PATH)
+    expect(find("[data-e2e=group-new-empty]").getAttribute("href")).toBe(NEW_GROUP_PATH)
+    expect(root!.textContent).toContain("No groups yet")
+    expect(has("dialog")).toBe(false)
 
     await rerender(<GroupsScreen {...defaults} groups={[]} loading />)
     expect(has("[data-e2e=group-new-empty]")).toBe(false)
   })
 
-  it("marks only the current group, with a check and in the row's name", async () => {
+  it("marks only the current group, with Current as text and in its link's name", async () => {
     await mount(<GroupsScreen {...defaults} />)
-    expect(root!.querySelectorAll("[data-e2e=group-current]")).toHaveLength(1)
+    expect(texts("[data-e2e=group-current]")).toEqual(["Current"])
     expect(has(`[data-e2e=group-${groupId}] [data-e2e=group-current]`)).toBe(true)
     expect(find(`[data-e2e=group-${groupId}] [data-e2e=group-open]`).getAttribute("aria-label"))
-      .toBe("Open notes in Team, the current group")
+      .toBe("Team, current group")
     expect(find("[data-e2e=group-g-2] [data-e2e=group-open]").getAttribute("aria-label"))
-      .toBe("Open notes in Family")
-  })
-
-  it("opens a group's notes when its row is pressed", async () => {
-    const open = spy<[string]>()
-    await mount(<GroupsScreen {...defaults} onOpen={open.fn} />)
-    await click("[data-e2e=group-g-2] [data-e2e=group-open]")
-    expect(open.calls).toEqual([["g-2"]])
-  })
-
-  it("opens the new-group dialog when the app asks for it, and reports when it closes", async () => {
-    const closed = spy<[]>()
-    await mount(<GroupsScreen {...defaults} onCreateClose={closed.fn} />)
-    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
-    await rerender(<GroupsScreen {...defaults} createOpen onCreateClose={closed.fn} />)
-    expect(has("[data-e2e=group-new-dialog] [data-e2e=group-name]")).toBe(true)
-    await clickText("[data-e2e=group-new-dialog]", "Cancel")
-    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
-    expect(closed.calls).toHaveLength(1)
-
-    // The app drops `?new`; a later link (the switcher's "New group") opens it once more.
-    await rerender(<GroupsScreen {...defaults} onCreateClose={closed.fn} />)
-    await rerender(<GroupsScreen {...defaults} createOpen onCreateClose={closed.fn} />)
-    expect(has("[data-e2e=group-new-dialog] [data-e2e=group-name]")).toBe(true)
-  })
-
-  it("closes the new-group dialog when the address drops `?new`, as browser Back does", async () => {
-    await mount(<GroupsScreen {...defaults} createOpen />)
-    expect(has("[data-e2e=group-new-dialog]")).toBe(true)
-    await rerender(<GroupsScreen {...defaults} />)
-    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
-  })
-
-  it("reports the dialog closed once a create worked", async () => {
-    const closed = spy<[]>()
-    await mount(<GroupsScreen {...defaults} name="Book club" onCreateClose={closed.fn} />)
-    await click("[data-e2e=group-new]")
-    await rerender(
-      <GroupsScreen {...defaults} name="Book club" creating onCreateClose={closed.fn} />,
-    )
-    await rerender(<GroupsScreen {...defaults} name="Book club" onCreateClose={closed.fn} />)
-    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
-    expect(closed.calls).toHaveLength(1)
-  })
-
-  it("keeps the new-group form closed until the header's button opens it", async () => {
-    await mount(<GroupsScreen {...defaults} />)
-    expect(has("[data-e2e=group-name]")).toBe(false)
-    await click("[data-e2e=group-new]")
-    expect(has("[data-e2e=group-new-dialog] [data-e2e=group-name]")).toBe(true)
-  })
-
-  it("reports the typed name and creates the group through the app's callbacks", async () => {
-    const names = spy<[string]>()
-    const create = spy<[]>()
-    await mount(<GroupsScreen {...defaults} onNameChange={names.fn} onCreate={create.fn} />)
-    await click("[data-e2e=group-new]")
-    await type("[data-e2e=group-name]", "Trip")
-    expect(names.calls).toEqual([["Trip"]])
-    await rerender(
-      <GroupsScreen {...defaults} name="Trip" onNameChange={names.fn} onCreate={create.fn} />,
-    )
-    expect(await submit("[data-e2e=group-create]")).toBe(true)
-    expect(create.calls).toHaveLength(1)
-  })
-
-  it("closes the dialog once the create worked, and keeps it open with the error when it did not", async () => {
-    await mount(<GroupsScreen {...defaults} />)
-    await click("[data-e2e=group-new]")
-    await rerender(<GroupsScreen {...defaults} creating />)
-    await rerender(<GroupsScreen {...defaults} error="That name is taken." />)
-    expect(find("[data-e2e=group-new-dialog]").textContent).toContain("That name is taken.")
-    await rerender(<GroupsScreen {...defaults} creating />)
-    await rerender(<GroupsScreen {...defaults} />)
-    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
-  })
-
-  it("moves focus to the name when the create was refused", async () => {
-    await mount(<GroupsScreen {...defaults} />)
-    await click("[data-e2e=group-new]")
-    find("[data-e2e=group-create]").focus()
-    await rerender(<GroupsScreen {...defaults} creating />)
-    await rerender(<GroupsScreen {...defaults} error="That name is taken." />)
-    expect(focused()).toBe("group-name")
+      .toBeNull()
   })
 
   it("has no refresh button", async () => {
@@ -322,12 +261,21 @@ describe("GroupsScreen", () => {
     expect(has("[data-e2e=group-refresh]")).toBe(false)
   })
 
-  it("restores a deleted group and moves focus to a refused restore's message", async () => {
+  it("keeps the deleted groups in a closed disclosure that counts them", async () => {
+    const deleted = [{ id: "d-1", name: "Old", deletedAt: "2026-01-01T00:00:00.000Z" }]
+    await mount(<GroupsScreen {...defaults} deleted={deleted} />)
+    const disclosure = find<HTMLDetailsElement>("details[data-e2e=deleted-groups]")
+    expect(disclosure.open).toBe(false)
+    expect(find("details[data-e2e=deleted-groups] > summary").textContent)
+      .toBe("Deleted groups (1)")
+    expect(texts("[data-e2e=deleted-group-name]")).toEqual(["Old"])
+    expect(find("[data-e2e=deleted-group-d-1]").textContent).toContain("2026-01-31")
+  })
+
+  it("restores a deleted group, and opens the disclosure on a refused restore's focused message", async () => {
     const restore = spy<[string]>()
     const deleted = [{ id: "d-1", name: "Old", deletedAt: "2026-01-01T00:00:00.000Z" }]
     await mount(<GroupsScreen {...defaults} deleted={deleted} onRestore={restore.fn} />)
-    expect(texts("[data-e2e=deleted-group-name]")).toEqual(["Old"])
-    expect(find("[data-e2e=deleted-group-d-1]").textContent).toContain("2026-01-31")
     await click("[data-e2e=group-restore]")
     expect(restore.calls).toEqual([["d-1"]])
     await rerender(
@@ -338,12 +286,13 @@ describe("GroupsScreen", () => {
         onRestore={restore.fn}
       />,
     )
+    expect(find<HTMLDetailsElement>("details[data-e2e=deleted-groups]").open).toBe(true)
     expect(focused()).toBe("group-restore-error")
   })
 
   it("leaves the deleted groups out when there are none", async () => {
     await mount(<GroupsScreen {...defaults} />)
-    expect(has("[data-e2e=deleted-group-list]")).toBe(false)
+    expect(has("[data-e2e=deleted-groups]")).toBe(false)
     expect(root!.textContent).not.toContain("Deleted groups")
   })
 })
@@ -373,128 +322,151 @@ const viewer: GroupMemberRow = {
   isYou: false,
 }
 
-describe("GroupSettingsScreen header", () => {
-  const defaults: GroupSettingsScreenProps = {
+const teamDraft: GroupDraft = { name: "Team", description: "", color: null, emoji: "" }
+
+describe("GroupEditorScreen header", () => {
+  const defaults: GroupEditorScreenProps = {
     group: team,
-    selected: true,
+    current: true,
     loading: false,
+    value: teamDraft,
     members: [owner, editor],
     transfer: () => <p data-e2e="transfer-body">transfer</p>,
   }
 
   it("shows the name, the role and that it is the current group", async () => {
-    await mount(<GroupSettingsScreen {...defaults} />)
+    await mount(<GroupEditorScreen {...defaults} />)
     expect(find("[data-e2e=group-general-name]").textContent).toBe("Team")
     expect(find("[data-e2e=group-general-role]").textContent).toBe("Owner")
     expect(has("[data-e2e=group-current]")).toBe(true)
-    await rerender(<GroupSettingsScreen {...defaults} selected={false} />)
+    await rerender(<GroupEditorScreen {...defaults} current={false} />)
     expect(has("[data-e2e=group-current]")).toBe(false)
   })
 
-  it("opens the group's notes from the header", async () => {
-    const open = spy<[string]>()
-    await mount(<GroupSettingsScreen {...defaults} onOpen={open.fn} />)
-    await click("[data-e2e=group-open]")
-    expect(open.calls).toEqual([[groupId]])
+  it("offers Switch to this group in the menu only while the group is not the current one", async () => {
+    const switched = spy<[]>()
+    await mount(<GroupEditorScreen {...defaults} onSwitch={switched.fn} />)
+    expect(has("[data-e2e=group-switch]")).toBe(false)
+    await rerender(<GroupEditorScreen {...defaults} current={false} onSwitch={switched.fn} />)
+    await click("[data-e2e=group-switch]")
+    expect(switched.calls).toHaveLength(1)
   })
 
-  it("lets an admin rename the group in place", async () => {
-    const names: string[] = []
-    const rename = (name: string) => {
-      names.push(name)
-      return Promise.resolve()
-    }
+  it("orders the menu as switch and activity, then transfer and move, then delete, a divider between each part", async () => {
     await mount(
-      <GroupSettingsScreen
+      <GroupEditorScreen
         {...defaults}
-        group={{ ...team, role: GroupRole.ADMIN }}
-        onRename={rename}
+        current={false}
+        onSwitch={() => {}}
+        moveTargets={[{ id: "g2", name: "Archive" }]}
+        onMoveAll={() => {}}
       />,
     )
-    await click('button[aria-label="Rename Team"]')
-    await type('input[aria-label="New name"]', "Crew")
-    await press('input[aria-label="New name"]', "Enter")
-    expect(names).toEqual(["Crew"])
+    const order = [
+      ...root!.querySelectorAll(
+        "[data-e2e=group-switch], [data-e2e=group-activity-open], [data-e2e=group-transfer-open], [data-e2e=group-move-all-open], [data-e2e=group-leave-open], [data-e2e=group-delete-open], [role=separator]",
+      ),
+    ].map((item) => item.getAttribute("data-e2e") ?? "divider")
+    expect(order).toEqual([
+      "group-switch",
+      "group-activity-open",
+      "divider",
+      "group-transfer-open",
+      "group-move-all-open",
+      "divider",
+      "group-delete-open",
+    ])
   })
 
-  it("keeps the name's field open with the message of a refused rename", async () => {
-    const rename = () => Promise.reject(new Error("That name is too long."))
-    await mount(<GroupSettingsScreen {...defaults} onRename={rename} />)
-    await click('button[aria-label="Rename Team"]')
-    await type('input[aria-label="New name"]', "Crew")
-    await press('input[aria-label="New name"]', "Enter")
-    expect(has('input[aria-label="New name"]')).toBe(true)
-    expect(find("[data-e2e=group-general-name]").textContent).toContain("That name is too long.")
+  it("draws no divider around a part of the menu that has nothing in it", async () => {
+    // A viewer of the current group: no switch, no activity, no transfer, no move; only Leave.
+    await mount(<GroupEditorScreen {...defaults} group={{ ...team, role: GroupRole.VIEWER }} />)
+    expect(has("[role=separator]")).toBe(false)
+    expect(has("[data-e2e=group-leave-open]")).toBe(true)
   })
 
-  it("shows a viewer or an editor the name with no way to rename it", async () => {
-    const rename = () => Promise.resolve()
+  it("has no Open notes and no rename in place", async () => {
+    await mount(<GroupEditorScreen {...defaults} current={false} />)
+    expect(has("[data-e2e=group-open]")).toBe(false)
+    expect(root!.textContent).not.toContain("Open notes")
+    expect(has('button[aria-label="Rename Team"]')).toBe(false)
+  })
+
+  it("shows a viewer or an editor the details as text, with who may change them, and no form", async () => {
+    const described = { ...team, description: "Our flat" }
     for (const role of [GroupRole.VIEWER, GroupRole.EDITOR]) {
-      await mount(<GroupSettingsScreen {...defaults} group={{ ...team, role }} onRename={rename} />)
-      expect(has('button[aria-label="Rename Team"]')).toBe(false)
-      expect(find("[data-e2e=group-general-name]").textContent).toBe("Team")
+      await mount(<GroupEditorScreen {...defaults} group={{ ...described, role }} dirty />)
+      expect(has("[data-e2e=group-name]")).toBe(false)
+      expect(has("[data-e2e=group-save]")).toBe(false)
+      expect(find("[data-e2e=group-general-description]").textContent).toBe("Our flat")
+      expect(find("[data-e2e=group-read-only]").textContent).toBe(
+        "Only an admin or the owner can change this group's details.",
+      )
       await act(() => render(null, root!))
     }
+    await mount(<GroupEditorScreen {...defaults} group={{ ...team, role: GroupRole.ADMIN }} />)
+    expect(has("[data-e2e=group-name]")).toBe(true)
+    expect(has("[data-e2e=group-read-only]")).toBe(false)
   })
 
   it("gives the owner Transfer ownership and Delete group in the menu, and no Leave", async () => {
-    await mount(<GroupSettingsScreen {...defaults} />)
+    await mount(<GroupEditorScreen {...defaults} />)
     expect(has("[data-e2e=group-transfer-open]")).toBe(true)
     expect(has("[data-e2e=group-delete-open]")).toBe(true)
     expect(has("[data-e2e=group-leave-open]")).toBe(false)
   })
 
   it("gives any other member Leave group in the menu, and neither Transfer nor Delete", async () => {
-    await mount(<GroupSettingsScreen {...defaults} group={{ ...team, role: GroupRole.ADMIN }} />)
+    await mount(<GroupEditorScreen {...defaults} group={{ ...team, role: GroupRole.ADMIN }} />)
     expect(has("[data-e2e=group-leave-open]")).toBe(true)
     expect(has("[data-e2e=group-transfer-open]")).toBe(false)
     expect(has("[data-e2e=group-delete-open]")).toBe(false)
   })
 
   it("leaves Transfer ownership out while nobody else is in the group", async () => {
-    await mount(<GroupSettingsScreen {...defaults} members={[owner]} />)
+    await mount(<GroupEditorScreen {...defaults} members={[owner]} />)
     expect(has("[data-e2e=group-transfer-open]")).toBe(false)
   })
 
   it("disables Delete group with the reason when it is the person's only group or still has a subscription", async () => {
-    await mount(<GroupSettingsScreen {...defaults} isLastGroup />)
+    await mount(<GroupEditorScreen {...defaults} isLastGroup />)
     expect(find<HTMLButtonElement>("[data-e2e=group-delete-open]").disabled).toBe(true)
     expect(find("[data-e2e=group-delete-why]").textContent).toBe("It is your only group")
-    await rerender(<GroupSettingsScreen {...defaults} hasSubscription />)
+    await rerender(<GroupEditorScreen {...defaults} hasSubscription />)
     expect(find<HTMLButtonElement>("[data-e2e=group-delete-open]").disabled).toBe(true)
     expect(find("[data-e2e=group-delete-why]").textContent).toBe("Cancel its subscription first")
-    await rerender(<GroupSettingsScreen {...defaults} />)
+    await rerender(<GroupEditorScreen {...defaults} />)
     expect(find<HTMLButtonElement>("[data-e2e=group-delete-open]").disabled).toBe(false)
     expect(has("[data-e2e=group-delete-why]")).toBe(false)
   })
 
   it("disables Leave group with the reason on the person's only group", async () => {
     const admin = { ...defaults, group: { ...team, role: GroupRole.ADMIN } }
-    await mount(<GroupSettingsScreen {...admin} isLastGroup />)
+    await mount(<GroupEditorScreen {...admin} isLastGroup />)
     expect(find<HTMLButtonElement>("[data-e2e=group-leave-open]").disabled).toBe(true)
     expect(find("[data-e2e=group-leave-why]").textContent).toBe("It is your only group")
   })
 
   it("disables Transfer ownership with the reason while the group has a subscription", async () => {
-    await mount(<GroupSettingsScreen {...defaults} hasSubscription />)
+    await mount(<GroupEditorScreen {...defaults} hasSubscription />)
     expect(find<HTMLButtonElement>("[data-e2e=group-transfer-open]").disabled).toBe(true)
     expect(find("[data-e2e=group-transfer-why]").textContent).toBe("Cancel its subscription first")
-    await rerender(<GroupSettingsScreen {...defaults} />)
+    await rerender(<GroupEditorScreen {...defaults} />)
     expect(find<HTMLButtonElement>("[data-e2e=group-transfer-open]").disabled).toBe(false)
     expect(has("[data-e2e=group-transfer-why]")).toBe(false)
   })
 
   it("asks before deleting, deletes on confirm, and keeps the dialog open with a refused delete's message focused", async () => {
     const remove = spy<[]>()
-    await mount(<GroupSettingsScreen {...defaults} onDelete={remove.fn} />)
+    await mount(<GroupEditorScreen {...defaults} onDelete={remove.fn} />)
     await click("[data-e2e=group-delete-open]")
     expect(remove.calls).toHaveLength(0)
     expect(find("[data-e2e=group-delete-confirmation]").textContent).toContain("30")
     await clickText("[data-e2e=group-delete-dialog]", "Delete group")
     expect(remove.calls).toHaveLength(1)
-    await rerender(<GroupSettingsScreen {...defaults} onDelete={remove.fn} deleting />)
+    await rerender(<GroupEditorScreen {...defaults} onDelete={remove.fn} deleting />)
     await rerender(
-      <GroupSettingsScreen {...defaults} onDelete={remove.fn} deleteError="It has a plan." />,
+      <GroupEditorScreen {...defaults} onDelete={remove.fn} deleteError="It has a plan." />,
     )
     expect(find("[data-e2e=group-delete-dialog]").textContent).toContain("It has a plan.")
     expect(focused()).toBe("group-delete-error")
@@ -506,8 +478,8 @@ describe("GroupSettingsScreen header", () => {
 
     it("offers the move to an editor with a group to move to, and to no one else", async () => {
       const move = spy<[string]>()
-      const screen = (props: Partial<GroupSettingsScreenProps>) => (
-        <GroupSettingsScreen {...mover} onMoveAll={move.fn} {...props} />
+      const screen = (props: Partial<GroupEditorScreenProps>) => (
+        <GroupEditorScreen {...mover} onMoveAll={move.fn} {...props} />
       )
       await mount(screen({ group: { ...team, role: GroupRole.EDITOR } }))
       expect(has("[data-e2e=group-move-all-open]")).toBe(true)
@@ -515,13 +487,13 @@ describe("GroupSettingsScreen header", () => {
       expect(has("[data-e2e=group-move-all-open]")).toBe(false)
       await rerender(screen({ moveTargets: [] }))
       expect(has("[data-e2e=group-move-all-open]")).toBe(false)
-      await rerender(<GroupSettingsScreen {...mover} />)
+      await rerender(<GroupEditorScreen {...mover} />)
       expect(has("[data-e2e=group-move-all-open]")).toBe(false)
     })
 
     it("moves to the group the person picks, and closes without moving on Cancel", async () => {
       const move = spy<[string]>()
-      await mount(<GroupSettingsScreen {...mover} onMoveAll={move.fn} />)
+      await mount(<GroupEditorScreen {...mover} onMoveAll={move.fn} />)
       await click("[data-e2e=group-move-all-open]")
       expect(texts("[data-e2e=group-move-all-to] option")).toEqual(["Archive", "Home"])
       await clickText("[data-e2e=group-move-all-dialog]", "Cancel")
@@ -536,8 +508,8 @@ describe("GroupSettingsScreen header", () => {
 
     it("refuses a second submit while the move runs and shows a refusal in the dialog", async () => {
       const move = spy<[string]>()
-      const screen = (props: Partial<GroupSettingsScreenProps>) => (
-        <GroupSettingsScreen {...mover} onMoveAll={move.fn} {...props} />
+      const screen = (props: Partial<GroupEditorScreenProps>) => (
+        <GroupEditorScreen {...mover} onMoveAll={move.fn} {...props} />
       )
       await mount(screen({}))
       await click("[data-e2e=group-move-all-open]")
@@ -552,8 +524,8 @@ describe("GroupSettingsScreen header", () => {
     })
 
     it("shows the target's plan notice, with whose limit it is, and moves focus to it", async () => {
-      const screen = (props: Partial<GroupSettingsScreenProps>) => (
-        <GroupSettingsScreen {...mover} onMoveAll={() => {}} {...props} />
+      const screen = (props: Partial<GroupEditorScreenProps>) => (
+        <GroupEditorScreen {...mover} onMoveAll={() => {}} {...props} />
       )
       await mount(screen({}))
       await click("[data-e2e=group-move-all-open]")
@@ -585,8 +557,8 @@ describe("GroupSettingsScreen header", () => {
         limit: 10,
         canUpgrade: true,
       } as const
-      const screen = (props: Partial<GroupSettingsScreenProps>) => (
-        <GroupSettingsScreen
+      const screen = (props: Partial<GroupEditorScreenProps>) => (
+        <GroupEditorScreen
           {...mover}
           onMoveAll={() => {}}
           onMoveAllTargetChange={changed.fn}
@@ -618,8 +590,8 @@ describe("GroupSettingsScreen header", () => {
     it("says how many notes moved and offers to delete the group or keep it", async () => {
       const closed = spy<[]>()
       const remove = spy<[]>()
-      const screen = (props: Partial<GroupSettingsScreenProps>) => (
-        <GroupSettingsScreen
+      const screen = (props: Partial<GroupEditorScreenProps>) => (
+        <GroupEditorScreen
           {...mover}
           onMoveAll={() => {}}
           onDelete={remove.fn}
@@ -643,8 +615,8 @@ describe("GroupSettingsScreen header", () => {
     })
 
     it("names the tags a move took along, in the singular for one", async () => {
-      const screen = (props: Partial<GroupSettingsScreenProps>) => (
-        <GroupSettingsScreen {...mover} onMoveAll={() => {}} {...props} />
+      const screen = (props: Partial<GroupEditorScreenProps>) => (
+        <GroupEditorScreen {...mover} onMoveAll={() => {}} {...props} />
       )
       await mount(screen({}))
       await click("[data-e2e=group-move-all-open]")
@@ -662,7 +634,7 @@ describe("GroupSettingsScreen header", () => {
       const closed = spy<[]>()
       const result = { count: 1, toName: "Archive" }
       await mount(
-        <GroupSettingsScreen
+        <GroupEditorScreen
           {...mover}
           onMoveAll={() => {}}
           onMoveAllClose={closed.fn}
@@ -671,7 +643,7 @@ describe("GroupSettingsScreen header", () => {
       )
       await click("[data-e2e=group-move-all-open]")
       await rerender(
-        <GroupSettingsScreen
+        <GroupEditorScreen
           {...mover}
           onMoveAll={() => {}}
           onMoveAllClose={closed.fn}
@@ -689,7 +661,7 @@ describe("GroupSettingsScreen header", () => {
 
   it("closes the delete dialog on Cancel without deleting", async () => {
     const remove = spy<[]>()
-    await mount(<GroupSettingsScreen {...defaults} onDelete={remove.fn} />)
+    await mount(<GroupEditorScreen {...defaults} onDelete={remove.fn} />)
     await click("[data-e2e=group-delete-open]")
     await clickText("[data-e2e=group-delete-dialog]", "Cancel")
     expect(has("[data-e2e=group-delete-dialog]")).toBe(false)
@@ -697,8 +669,8 @@ describe("GroupSettingsScreen header", () => {
   })
 
   it("opens the delete dialog again without the message of an earlier refused delete", async () => {
-    const screen = (props: Partial<GroupSettingsScreenProps>) => (
-      <GroupSettingsScreen {...defaults} {...props} />
+    const screen = (props: Partial<GroupEditorScreenProps>) => (
+      <GroupEditorScreen {...defaults} {...props} />
     )
     await mount(screen({}))
     await click("[data-e2e=group-delete-open]")
@@ -716,30 +688,30 @@ describe("GroupSettingsScreen header", () => {
   it("asks before leaving and leaves on confirm", async () => {
     const leave = spy<[]>()
     const admin = { ...defaults, group: { ...team, role: GroupRole.ADMIN } }
-    await mount(<GroupSettingsScreen {...admin} onLeave={leave.fn} />)
+    await mount(<GroupEditorScreen {...admin} onLeave={leave.fn} />)
     await click("[data-e2e=group-leave-open]")
     expect(leave.calls).toHaveLength(0)
     await clickText("[data-e2e=group-leave-dialog]", "Leave group")
     expect(leave.calls).toHaveLength(1)
-    await rerender(<GroupSettingsScreen {...admin} onLeave={leave.fn} leaving />)
-    await rerender(<GroupSettingsScreen {...admin} onLeave={leave.fn} leaveError="No." />)
+    await rerender(<GroupEditorScreen {...admin} onLeave={leave.fn} leaving />)
+    await rerender(<GroupEditorScreen {...admin} onLeave={leave.fn} leaveError="No." />)
     expect(focused()).toBe("group-leave-error")
   })
 
   it("closes the leave dialog once the leave worked", async () => {
     const admin = { ...defaults, group: { ...team, role: GroupRole.ADMIN } }
-    await mount(<GroupSettingsScreen {...admin} />)
+    await mount(<GroupEditorScreen {...admin} />)
     await click("[data-e2e=group-leave-open]")
-    await rerender(<GroupSettingsScreen {...admin} leaving />)
+    await rerender(<GroupEditorScreen {...admin} leaving />)
     expect(has("[data-e2e=group-leave-dialog]")).toBe(true)
-    await rerender(<GroupSettingsScreen {...admin} />)
+    await rerender(<GroupEditorScreen {...admin} />)
     expect(has("[data-e2e=group-leave-dialog]")).toBe(false)
   })
 
   it("opens the leave dialog again without the message of an earlier refused leave", async () => {
     const admin = { ...defaults, group: { ...team, role: GroupRole.ADMIN } }
-    const screen = (props: Partial<GroupSettingsScreenProps>) => (
-      <GroupSettingsScreen {...admin} {...props} />
+    const screen = (props: Partial<GroupEditorScreenProps>) => (
+      <GroupEditorScreen {...admin} {...props} />
     )
     await mount(screen({}))
     await click("[data-e2e=group-leave-open]")
@@ -757,7 +729,7 @@ describe("GroupSettingsScreen header", () => {
   it("draws the transfer form in a dialog that the form can close", async () => {
     let close: (() => void) | null = null
     await mount(
-      <GroupSettingsScreen
+      <GroupEditorScreen
         {...defaults}
         transfer={(done) => {
           close = done
@@ -776,7 +748,7 @@ describe("GroupSettingsScreen header", () => {
     const drafts = spy<[TransferDraft]>()
     const draft = { userId: 2, name: "", password: "secret" }
     await mount(
-      <GroupSettingsScreen
+      <GroupEditorScreen
         {...defaults}
         transfer={(done) => (
           <GroupTransferForm
@@ -798,7 +770,7 @@ describe("GroupSettingsScreen header", () => {
 
   it("moves focus to the More actions menu once a transfer went through and took the dialog away", async () => {
     const screen = (role: GroupRole) => (
-      <GroupSettingsScreen
+      <GroupEditorScreen
         {...defaults}
         group={{ ...team, role }}
         transfer={() => <button type="button" data-e2e="transfer-body">transfer</button>}
@@ -819,14 +791,14 @@ describe("GroupSettingsScreen header", () => {
       return <p data-e2e="invite-body">invite</p>
     }
     await mount(
-      <GroupSettingsScreen
+      <GroupEditorScreen
         {...defaults}
         group={{ ...team, role: GroupRole.EDITOR }}
         invite={invite}
       />,
     )
     expect(has("[data-e2e=invite-open]")).toBe(false)
-    await rerender(<GroupSettingsScreen {...defaults} invite={invite} />)
+    await rerender(<GroupEditorScreen {...defaults} invite={invite} />)
     await click("[data-e2e=invite-open]")
     expect(has("[data-e2e=invite-dialog] [data-e2e=invite-body]")).toBe(true)
     await act(() => close!())
@@ -834,9 +806,26 @@ describe("GroupSettingsScreen header", () => {
   })
 
   it("says a missing group may be deleted, with the way back to the groups", async () => {
-    await mount(<GroupSettingsScreen {...defaults} group={null} />)
+    await mount(<GroupEditorScreen {...defaults} group={null} />)
     expect(root!.textContent).toContain("This group does not exist.")
     expect(find("[data-e2e=page-back]").getAttribute("href")).toBe(SCREEN_PATHS.groups)
+    expect(has("[data-e2e=group-name]")).toBe(false)
+  })
+
+  it("draws a placeholder only after 300 ms while the group is read, says it is loading, and never says it is missing", async () => {
+    await mount(<GroupEditorScreen {...defaults} group={null} loading />)
+    expect(find("h1").textContent).toBe("Group")
+    expect(has("[data-e2e=group-loading]")).toBe(false)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 200)))
+    expect(has("[data-e2e=group-loading]")).toBe(false)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 150)))
+    expect(find("[data-e2e=group-loading] [role=status]").textContent).toBe("Loading the group…")
+    // The placeholder is the library's skeleton, which a screen reader skips.
+    expect(
+      root!.querySelectorAll("[data-e2e=group-loading] [aria-hidden=true] .animate-pulse").length,
+    )
+      .toBeGreaterThan(0)
+    expect(root!.textContent).not.toContain("does not exist")
   })
 })
 
@@ -1371,11 +1360,11 @@ describe("MyInvitationsSection", () => {
     expect([accept.calls, decline.calls]).toEqual([[["i-1"]], [["i-1"]]])
   })
 
-  it("moves focus to the next invitation when one was answered, and to the page's first button after the last", async () => {
+  it("moves focus to the next invitation when one was answered, and to the page's first link or button after the last", async () => {
     const second = { ...preview, id: "i-2", groupName: "Family" }
     const page = (invitations: InvitationPreviewRow[], answeringId: string | null = null) => (
       <div>
-        <button type="button" data-e2e="page-action">New group</button>
+        <a href="/groups/new" data-e2e="page-action">New group</a>
         <MyInvitationsSection invitations={invitations} answeringId={answeringId} />
       </div>
     )
@@ -1396,160 +1385,205 @@ describe("MyInvitationsSection", () => {
   })
 })
 
-describe("group details", () => {
+describe("GroupEditorScreen form", () => {
   const owned = { ...team, description: "Our flat", color: "green" as const, emoji: "🏠" }
-  const settings: GroupSettingsScreenProps = {
+  const saved: GroupDraft = { name: "Team", description: "Our flat", color: "green", emoji: "🏠" }
+  const settings: GroupEditorScreenProps = {
     group: owned,
-    selected: true,
+    current: true,
     loading: false,
+    value: saved,
     members: [],
     transfer: () => <p>transfer</p>,
   }
+  const creating: GroupEditorScreenProps = {
+    creating: true,
+    group: null,
+    current: false,
+    loading: false,
+    value: EMPTY_GROUP_DRAFT,
+  }
 
-  it("shows the description, and the emoji on its colour, in the settings header", async () => {
-    await mount(<GroupSettingsScreen {...settings} />)
-    expect(find("[data-e2e=group-general-description]").textContent).toBe("Our flat")
-    expect(find("[data-e2e=group-mark]").textContent).toBe("🏠")
-    expect(find("[data-e2e=group-mark]").getAttribute("data-color")).toBe("green")
+  it("shows the group's emoji on its colour in the header", async () => {
+    await mount(<GroupEditorScreen {...settings} />)
+    expect(find("[data-e2e=page-header] [data-e2e=group-mark]").textContent).toBe("🏠")
+    expect(find("[data-e2e=page-header] [data-e2e=group-mark]").getAttribute("data-color"))
+      .toBe("green")
   })
 
-  it("draws no mark and no description for a group that has neither", async () => {
-    await mount(<GroupSettingsScreen {...settings} group={team} />)
-    expect(has("[data-e2e=group-mark]")).toBe(false)
-    expect(has("[data-e2e=group-general-description]")).toBe(false)
-  })
-
-  it("offers Edit details to the owner and an admin, and to no editor or viewer", async () => {
-    const onUpdateDetails = () => Promise.resolve()
-    for (
-      const [role, offered] of [
-        [GroupRole.OWNER, true],
-        [GroupRole.ADMIN, true],
-        [GroupRole.EDITOR, false],
-        [GroupRole.VIEWER, false],
-      ] as const
-    ) {
-      await mount(
-        <GroupSettingsScreen
-          {...settings}
-          group={{ ...owned, role }}
-          onUpdateDetails={onUpdateDetails}
-        />,
-      )
-      expect(has("[data-e2e=group-details-open]")).toBe(offered)
-      await act(() => render(null, root!))
-    }
-  })
-
-  it("opens the dialog with the saved details and saves what the person changed", async () => {
-    const calls = spy<[unknown]>()
-    await mount(
-      <GroupSettingsScreen
-        {...settings}
-        onUpdateDetails={(details) => {
-          calls.fn(details)
-          return Promise.resolve()
-        }}
-      />,
-    )
-    expect(has("[data-e2e=group-details-dialog]")).toBe(false)
-    await click("[data-e2e=group-details-open]")
+  it("fills the fields with the group as saved and reports each change", async () => {
+    const changes = spy<[GroupDraft]>()
+    await mount(<GroupEditorScreen {...settings} onChange={changes.fn} />)
+    expect(find<HTMLInputElement>("[data-e2e=group-name]").value).toBe("Team")
     expect(find<HTMLTextAreaElement>("[data-e2e=group-description]").value).toBe("Our flat")
-    expect(find<HTMLInputElement>("[data-e2e=group-color-green]").checked).toBe(true)
+    expect(find<HTMLInputElement>("input[name=color][value=green]").checked).toBe(true)
     expect(find<HTMLInputElement>("[data-e2e=group-emoji]").value).toBe("🏠")
 
-    await type("[data-e2e=group-description]", "  Our new flat  ")
-    await click("[data-e2e=group-color-blue]")
+    await type("[data-e2e=group-name]", "Crew")
+    await type("[data-e2e=group-description]", "Our new flat")
     await type("[data-e2e=group-emoji]", "🏕️")
-    await submit("[data-e2e=group-details-save]")
-
-    expect(calls.calls).toEqual([[{ description: "Our new flat", color: "blue", emoji: "🏕️" }]])
+    await click("input[name=color][value=blue]")
+    await click("input[name=color][value='']")
+    expect(changes.calls).toEqual([
+      [{ ...saved, name: "Crew" }],
+      [{ ...saved, description: "Our new flat" }],
+      [{ ...saved, emoji: "🏕️" }],
+      [{ ...saved, color: "blue" }],
+      [{ ...saved, color: null }],
+    ])
   })
 
-  it("clears the colour and the emoji when the person picks None and empties the field", async () => {
-    const calls = spy<[unknown]>()
-    await mount(
-      <GroupSettingsScreen
-        {...settings}
-        onUpdateDetails={(details) => {
-          calls.fn(details)
-          return Promise.resolve()
-        }}
-      />,
-    )
-    await click("[data-e2e=group-details-open]")
-    await click("[data-e2e=group-color-none]")
-    await type("[data-e2e=group-emoji]", "")
-    await submit("[data-e2e=group-details-save]")
-    expect(calls.calls).toEqual([[{ description: "Our flat", color: null, emoji: null }]])
+  it("offers None and the six colours, each named, in one radio group", async () => {
+    await mount(<GroupEditorScreen {...settings} />)
+    const fieldset = find("fieldset[data-e2e=group-color]")
+    expect(fieldset.querySelector("legend")!.textContent).toContain("Colour")
+    expect(fieldset.querySelectorAll("input[type=radio][name=color]")).toHaveLength(7)
+    expect(texts("fieldset[data-e2e=group-color] label")).toEqual([
+      "None",
+      "Red",
+      "Orange",
+      "Green",
+      "Blue",
+      "Purple",
+      "Grey",
+    ])
   })
 
-  it("tells a second emoji or a word at the emoji field, and saves nothing", async () => {
-    const calls = spy<[unknown]>()
-    await mount(
-      <GroupSettingsScreen
-        {...settings}
-        onUpdateDetails={(details) => {
-          calls.fn(details)
-          return Promise.resolve()
-        }}
-      />,
+  it("shows Discard and Save group only while a field differs from what is saved", async () => {
+    const saves = spy<[]>()
+    const discards = spy<[]>()
+    const screen = (dirty: boolean) => (
+      <GroupEditorScreen {...settings} dirty={dirty} onSave={saves.fn} onDiscard={discards.fn} />
     )
-    await click("[data-e2e=group-details-open]")
-    for (const bad of ["🏠🏕️", "ab"]) {
-      await type("[data-e2e=group-emoji]", bad)
-      await submit("[data-e2e=group-details-save]")
-      expect(find("[data-e2e=group-details-dialog]").textContent).toContain("single emoji")
-      expect(find("[data-e2e=group-emoji]").getAttribute("aria-invalid")).toBe("true")
-      expect(focused()).toBe("group-emoji")
-    }
-    expect(calls.calls).toEqual([])
+    await mount(screen(false))
+    expect(has("[data-e2e=group-save]")).toBe(false)
+    expect(has("[data-e2e=group-discard]")).toBe(false)
+
+    await rerender(screen(true))
+    expect(find("[data-e2e=group-save]").textContent).toBe("Save group")
+    await click("[data-e2e=group-discard]")
+    expect(discards.calls).toHaveLength(1)
+    expect(await submit("[data-e2e=group-save]")).toBe(true)
+    expect(saves.calls).toHaveLength(1)
   })
 
-  it("counts the description's characters, and refuses more than 500 of them when saving", async () => {
-    const calls = spy<[unknown]>()
-    await mount(
-      <GroupSettingsScreen
-        {...settings}
-        onUpdateDetails={(details) => {
-          calls.fn(details)
-          return Promise.resolve()
-        }}
-      />,
-    )
-    await click("[data-e2e=group-details-open]")
-    expect(find("[data-e2e=group-details-dialog]").textContent).toContain("8 of 500 characters")
+  it("keeps the fields and the footer in one narrow column, so they do not stretch across a wide page", async () => {
+    await mount(<GroupEditorScreen {...settings} dirty />)
+    const column = find("[data-e2e=group-name]").closest(".max-w-md")
+    expect(column).not.toBe(null)
+    expect(column!.contains(find("[data-e2e=group-save]"))).toBe(true)
+  })
 
-    // Each emoji is two UTF-16 units but one character, as the counter and the server count it.
-    await type("[data-e2e=group-description]", "🏠".repeat(501))
-    await submit("[data-e2e=group-details-save]")
-    expect(calls.calls).toEqual([])
-    expect(find("[data-e2e=group-details-dialog]").textContent).toContain("at most 500")
+  it("says writing a group needs a connection while offline, in the words of each mode", async () => {
+    await mount(<GroupEditorScreen {...settings} />)
+    expect(has("[data-e2e=group-offline]")).toBe(false)
+    await rerender(<GroupEditorScreen {...settings} offline />)
+    expect(find("[data-e2e=group-offline]").textContent).toContain("You are offline")
+    expect(find("[data-e2e=group-offline]").textContent).toContain(
+      "This is the copy saved on this device. Saving changes needs a connection.",
+    )
+    await rerender(<GroupEditorScreen {...creating} offline />)
+    expect(find("[data-e2e=group-offline]").textContent).toContain(
+      "You can fill this in now. Creating the group needs a connection.",
+    )
+  })
+
+  it("moves focus to the name field when Discard takes the footer away", async () => {
+    await mount(<GroupEditorScreen {...settings} value={{ ...saved, name: "Crew" }} dirty />)
+    find("[data-e2e=group-discard]").focus()
+    await rerender(<GroupEditorScreen {...settings} />)
+    expect(has("[data-e2e=group-discard]")).toBe(false)
+    expect(focused()).toBe("group-name")
+  })
+
+  it("moves focus to the name field once a save went through, not while it is still running", async () => {
+    const changed = { ...saved, name: "Crew" }
+    await mount(<GroupEditorScreen {...settings} value={changed} dirty />)
+    find("[data-e2e=group-save]").focus()
+    await rerender(<GroupEditorScreen {...settings} value={changed} saving />)
+    expect(focused()).not.toBe("group-name")
+    await rerender(<GroupEditorScreen {...settings} value={changed} />)
+    expect(focused()).toBe("group-name")
+  })
+
+  it("leaves focus in the fields when typing puts the saved value back", async () => {
+    await mount(<GroupEditorScreen {...settings} value={{ ...saved, name: "Crew" }} dirty />)
+    find("[data-e2e=group-description]").focus()
+    await rerender(<GroupEditorScreen {...settings} />)
     expect(focused()).toBe("group-description")
-
-    await type("[data-e2e=group-description]", "🏠".repeat(500))
-    await submit("[data-e2e=group-details-save]")
-    expect(calls.calls.length).toBe(1)
   })
 
-  it("keeps the dialog open with the message of a refused save", async () => {
-    await mount(
-      <GroupSettingsScreen
+  it("counts the description's characters as the server does, one per emoji", async () => {
+    await mount(<GroupEditorScreen {...settings} />)
+    expect(root!.textContent).toContain("8 of 500 characters")
+    await rerender(<GroupEditorScreen {...settings} value={{ ...saved, description: "🏠🏠🏠" }} />)
+    expect(root!.textContent).toContain("3 of 500 characters")
+  })
+
+  it("shows each refusal under its field and moves focus to the first one", async () => {
+    await mount(<GroupEditorScreen {...settings} dirty />)
+    await rerender(
+      <GroupEditorScreen
         {...settings}
-        onUpdateDetails={() => Promise.reject(new Error("Not allowed."))}
+        dirty
+        errors={{ description: "Use at most 500 characters.", emoji: "Use a single emoji." }}
       />,
     )
-    await click("[data-e2e=group-details-open]")
-    await submit("[data-e2e=group-details-save]")
-    expect(find("[data-e2e=group-details-dialog]").textContent).toContain("Not allowed.")
-    expect(focused()).toBe("group-details-error")
+    expect(focused()).toBe("group-description")
+    expect(find("[data-e2e=group-description]").getAttribute("aria-invalid")).toBe("true")
+    expect(find("[data-e2e=group-emoji]").getAttribute("aria-invalid")).toBe("true")
+    expect(root!.textContent).toContain("Use a single emoji.")
+    expect(find("[data-e2e=group-name]").getAttribute("aria-invalid")).not.toBe("true")
   })
 
-  it("closes the dialog once the save worked", async () => {
-    await mount(<GroupSettingsScreen {...settings} onUpdateDetails={() => Promise.resolve()} />)
-    await click("[data-e2e=group-details-open]")
-    await submit("[data-e2e=group-details-save]")
-    expect(has("[data-e2e=group-details-dialog]")).toBe(false)
+  it("moves focus to a refusal's message that names no field, under the form", async () => {
+    await mount(<GroupEditorScreen {...settings} dirty />)
+    await rerender(<GroupEditorScreen {...settings} dirty errors={{ form: "Not allowed." }} />)
+    expect(find("[data-e2e=group-form-error]").textContent).toContain("Not allowed.")
+    expect(focused()).toBe("group-form-error")
+  })
+
+  it("previews the group's mark and name as they are typed", async () => {
+    await mount(
+      <GroupEditorScreen
+        {...creating}
+        value={{ ...EMPTY_GROUP_DRAFT, name: " Trip ", emoji: "🏕️", color: "blue" }}
+      />,
+    )
+    expect(find("[data-e2e=group-preview]").textContent).toContain("Trip")
+    expect(find("[data-e2e=group-preview] [data-e2e=group-mark]").getAttribute("data-color"))
+      .toBe("blue")
+    expect(find("[data-e2e=group-preview] [data-e2e=group-mark]").textContent).toBe("🏕️")
+    await rerender(<GroupEditorScreen {...creating} />)
+    expect(find("[data-e2e=group-preview]").textContent).toContain("Your group's name")
+    expect(has("[data-e2e=group-preview] [data-e2e=group-mark]")).toBe(false)
+  })
+
+  it("draws the create page as the same form, empty, with Cancel and Create group", async () => {
+    await mount(<GroupEditorScreen {...creating} />)
+    expect(find("h1").textContent).toBe("New group")
+    expect(find<HTMLInputElement>("[data-e2e=group-name]").value).toBe("")
+    for (const field of ["group-description", "group-emoji", "group-preview"]) {
+      expect(has(`[data-e2e=${field}]`)).toBe(true)
+    }
+    expect(has("fieldset[data-e2e=group-color]")).toBe(true)
+    expect(find("[data-e2e=group-create]").textContent).toBe("Create group")
+    expect(find("[data-e2e=group-cancel]").getAttribute("href")).toBe(SCREEN_PATHS.groups)
+    // Nothing of an existing group: no menu, no members, no discard.
+    expect(has("[data-e2e=group-menu]")).toBe(false)
+    expect(has("[data-e2e=group-discard]")).toBe(false)
+    expect(root!.textContent).not.toContain("Members")
+  })
+
+  it("creates through the app's callback, and refuses a second submit while it runs", async () => {
+    const saves = spy<[]>()
+    await mount(<GroupEditorScreen {...creating} onSave={saves.fn} />)
+    expect(await submit("[data-e2e=group-create]")).toBe(true)
+    expect(saves.calls).toHaveLength(1)
+    await rerender(<GroupEditorScreen {...creating} onSave={saves.fn} saving />)
+    expect(find("[data-e2e=group-create]").textContent).toContain("Creating…")
+    await submit("[data-e2e=group-create]")
+    expect(saves.calls).toHaveLength(1)
   })
 
   it("shows each group's mark and description in the groups list", async () => {
@@ -1557,8 +1591,6 @@ describe("group details", () => {
       <GroupsScreen
         groups={[owned, { id: "g-2", name: "Family", role: GroupRole.VIEWER }]}
         selectedId={groupId}
-        name=""
-        creating={false}
         loading={false}
         error={null}
       />,
@@ -1587,7 +1619,7 @@ describe("group details", () => {
     expect(texts(`[data-e2e=group-picker-${groupId}] [data-e2e=group-mark]`)).toEqual(["🏠"])
   })
 
-  it("ends the switcher's menu with All groups, then New group, which links to the create dialog", async () => {
+  it("ends the switcher's menu with All groups, then New group, which links to the create page", async () => {
     await mount(
       <GroupPicker
         groups={[owned, { id: "g-2", name: "Family", role: GroupRole.VIEWER }]}
@@ -1602,14 +1634,17 @@ describe("group details", () => {
       "New group",
     ])
     expect(find("[data-e2e=group-picker-new]").getAttribute("href")).toBe(NEW_GROUP_PATH)
-    expect(NEW_GROUP_PATH).toBe(`${SCREEN_PATHS.groups}?new`)
+    expect(NEW_GROUP_PATH).toBe("/groups/new")
   })
 
-  it("draws no mark without a colour or an emoji, and a gray one for an emoji alone", async () => {
+  it("draws no mark without a colour or an emoji, and a grey one for an emoji alone", async () => {
     await mount(<GroupMark />)
     expect(has("[data-e2e=group-mark]")).toBe(false)
+    await rerender(<GroupMark color="gray" emoji="🏠" />)
+    const grey = find("[data-e2e=group-mark]").className
     await rerender(<GroupMark emoji="🏠" />)
     expect(find("[data-e2e=group-mark]").hasAttribute("data-color")).toBe(false)
+    expect(find("[data-e2e=group-mark]").className).toBe(grey)
     await rerender(<GroupMark color="red" />)
     expect(find("[data-e2e=group-mark]").getAttribute("data-color")).toBe("red")
     expect(groupLabel({ name: "Team", emoji: "🏠" })).toBe("🏠 Team")
@@ -1617,24 +1652,26 @@ describe("group details", () => {
   })
 })
 
-describe("group details, as the server draws them", () => {
-  it("hides the mark and names each colour for a screen reader in one radio group", () => {
+describe("group editor, as the server draws it", () => {
+  it("hides the mark and names each colour in one radio group", () => {
     const mark = renderToString(<GroupMark color="green" emoji="🏠" />)
     expect(mark).toMatch(/<span [^>]*aria-hidden="true"[^>]*>🏠<\/span>/)
 
     const form = renderToString(
-      <GroupDetailsForm
-        initial={{ description: "", color: "blue", emoji: null }}
-        onSave={() => Promise.resolve()}
-        onCancel={() => {}}
+      <GroupEditorScreen
+        creating
+        group={null}
+        current={false}
+        loading={false}
+        value={{ ...EMPTY_GROUP_DRAFT, color: "blue" }}
       />,
     )
     const radios = form.match(/<input [^>]*type="radio"[^>]*>/g) ?? []
     // None and the six palette names.
     expect(radios.length).toBe(7)
     for (const radio of radios) expect(radio).toContain(`name="color"`)
-    for (const name of ["Red", "Orange", "Green", "Blue", "Purple", "Gray"]) {
-      expect(form).toMatch(new RegExp(`<span class="sr-only">${name}</span>`))
+    for (const name of ["Red", "Orange", "Green", "Blue", "Purple", "Grey"]) {
+      expect(form).toMatch(new RegExp(`>${name}</`))
     }
   })
 })

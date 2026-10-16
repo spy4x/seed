@@ -41,33 +41,60 @@ const overflow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
 
 test.describe("group screens in the shared column", () => {
-  test("New group in the group switcher opens the create dialog, and closing it drops ?new", async ({ page, request }) => {
+  test("New group in the group switcher opens the create page, which creates the group with every field in one go", async ({ page, request }) => {
     const email = "e2e_groups_layout_new@example.com"
     await cleanup(request, email)
     try {
       await signUp(request, email)
+      const framesSent: string[] = []
+      page.on("websocket", (socket) => {
+        socket.on("framesent", (frame) => framesSent.push(String(frame.payload)))
+      })
       await signIn(page, email, password)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       await page.locator("[data-e2e=group-picker]").click()
       await page.getByRole("menuitem", { name: "New group" }).click()
-      await expect(page).toHaveURL("/groups?new")
-      const dialog = page.getByRole("dialog", { name: "New group" })
-      await expect(dialog.getByLabel("Name")).toBeFocused()
+      await expect(page).toHaveURL("/groups/new")
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText("New group")
+      await expect(page.getByRole("dialog")).toHaveCount(0)
 
-      await dialog.getByRole("button", { name: "Cancel" }).click()
-      await expect(dialog).toBeHidden()
+      // Cancel goes back to the list; leaving an untouched form asks nothing.
+      await page.locator("[data-e2e=group-cancel]").click()
       await expect(page).toHaveURL("/groups")
 
-      // Again from the groups page itself, then through to a created group.
+      // Again, through to a created group with a description, a colour and an emoji.
       await page.locator("[data-e2e=group-picker]").click()
       await page.getByRole("menuitem", { name: "New group" }).click()
-      await dialog.getByLabel("Name").fill("Book club")
-      await dialog.getByRole("button", { name: "Create group" }).click()
-      await expect(dialog).toBeHidden()
-      await expect(page).toHaveURL("/groups")
-      await expect(page.locator("[data-e2e=group-item-name]").filter({ hasText: "Book club" }))
-        .toHaveCount(1)
+      await page.getByLabel("Name").fill("Book club")
+      await page.locator("[data-e2e=group-description]").fill("One book a month")
+      await page.getByRole("radio", { name: "Purple" }).check()
+      await page.locator("[data-e2e=group-emoji]").fill("📚")
+      await expect(page.locator("[data-e2e=group-preview]")).toContainText("Book club")
+      await page.getByRole("button", { name: "Create group" }).click()
+
+      await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText("Book club")
+      await expect(page.getByRole("heading", { level: 1 })).toBeFocused()
+      await expect(page.locator("[data-e2e=group-created]")).toContainText("Book club")
+      await expect(page.locator("[data-e2e=group-current]")).toBeVisible()
+      await expect(page.locator("[data-e2e=page-header] [data-e2e=group-mark]")).toHaveText("📚")
+
+      // Read again from the server: one write stored every field.
+      await page.reload()
+      await expect(page.locator("[data-e2e=group-description]")).toHaveValue("One book a month")
+      await expect(page.getByRole("radio", { name: "Purple" })).toBeChecked()
+      await expect(page.locator("[data-e2e=group-emoji]")).toHaveValue("📚")
+      // One command carried every field; no rename or details update followed it. Making the
+      // group current is a choice of the person, not a write to the group, so it is left out.
+      const groupCommands = framesSent.map((payload) => JSON.parse(payload)).filter(
+        (frame) =>
+          frame.kind === "client.command" && String(frame.name).startsWith("group.") &&
+          frame.name !== "group.select",
+      )
+      expect(groupCommands.map((frame) => frame.name)).toEqual(["group.create"])
+      const sent = JSON.stringify(groupCommands[0])
+      for (const field of ["One book a month", "purple", "📚"]) expect(sent).toContain(field)
     } finally {
       await cleanup(request, email, true)
     }
@@ -114,8 +141,9 @@ test.describe("group screens in the shared column", () => {
       ]
       // Tall enough that no row sits under the phone's fixed tab bar: axe-core's target-size
       // rule counts a control the bar covers as too small, wherever the page happens to scroll.
+      // A group's page holds its whole editor above Members and Plan, so it needs the most.
       for (const width of [375, 1280]) {
-        await page.setViewportSize({ width, height: 1600 })
+        await page.setViewportSize({ width, height: 2400 })
         for (const { path, ready } of screens) {
           await gotoApp(page, path, ready)
           await expect(ready).toBeVisible()

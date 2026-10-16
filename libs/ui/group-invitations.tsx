@@ -586,7 +586,7 @@ export interface MyInvitationsSectionProps {
 /**
  * The invitations sent to the person's e-mail address, on their groups page: one row each. An
  * answered invitation's row leaves with its buttons: focus moves to the next invitation, else to
- * the first button of the page around the section ("New group" on the groups page).
+ * the first link or button of the page around the section ("New group" on the groups page).
  */
 export function MyInvitationsSection(
   { invitations, answeringId = null, answerError = null, onAccept, onDecline, navigate }:
@@ -600,7 +600,7 @@ export function MyInvitationsSection(
     if (section) around.current = section.parentElement
   })
   useFocusAfterRemoval(list, invitations.map((invitation) => invitation.id), answeringId, {
-    fallback: () => around.current?.querySelector("button"),
+    fallback: () => around.current?.querySelector<HTMLElement>("a[href], button"),
   })
   if (invitations.length === 0) return null
   return (

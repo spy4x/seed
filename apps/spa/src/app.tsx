@@ -34,7 +34,7 @@ import { EmailView } from "./views/EmailView.tsx"
 import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView.tsx"
 import { GroupsView } from "./views/GroupsView.tsx"
 import { SubscribeView, SubscriptionConfirmView, UnsubscribeView } from "./views/SubscribeViews.tsx"
-import { GroupSettingsView } from "./views/GroupSettingsView.tsx"
+import { GroupEditorView } from "./views/GroupEditorView.tsx"
 import { NotificationsView } from "./views/NotificationsView.tsx"
 import { GroupActivityView } from "./views/GroupActivityView.tsx"
 import { InstallOffer } from "./views/InstallOffer.tsx"
@@ -57,8 +57,8 @@ import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 /**
  * An old `/groups/:groupId/notes…` link. It selects nothing: a link must not change the selection,
  * or another site could switch a person's group by linking here. When that group is already the
- * selected one it opens the notes at their new address; otherwise it opens the groups page, which
- * has an "Open notes" button for each group. It waits for the selection to be known.
+ * selected one it opens the notes at their new address; otherwise it opens the groups page, where
+ * each group's page offers "Switch to this group". It waits for the selection to be known.
  */
 function OpenIfSelected({ groupId, noteId }: { groupId: string; noteId?: string }) {
   const [, navigate] = useLocation()
@@ -95,7 +95,8 @@ const PAGES: {
   "/subscribe/confirm": () => <SubscriptionConfirmView />,
   "/unsubscribe": () => <UnsubscribeView />,
   "/groups": () => <GroupsView />,
-  "/groups/:groupId": (params) => <GroupSettingsView groupId={params.groupId} />,
+  "/groups/new": () => <GroupEditorView key="new" />,
+  "/groups/:groupId": (params) => <GroupEditorView key={params.groupId} groupId={params.groupId} />,
   "/groups/:groupId/activity": (params) => <GroupActivityView groupId={params.groupId} />,
   "/groups/:groupId/pricing": (params) => <PricingView groupId={params.groupId} />,
   "/groups/:groupId/notes": (params) => <OpenIfSelected groupId={params.groupId} />,

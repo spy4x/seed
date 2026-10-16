@@ -81,6 +81,21 @@ Deno.test("details: only an admin or the owner sets them, and every member reads
   })
 })
 
+Deno.test("create: one write stores the name with the description, colour and emoji", async () => {
+  await withSchema(async (sql) => {
+    const { repository, owner } = await team(sql)
+    const details = { description: "Our trips", color: "green" as const, emoji: "🏕️" }
+
+    const created = await repository.create({ id: uuidV7(), name: "Trips", ...details }, owner)
+    expect(created.group).toMatchObject({ name: "Trips", ...details })
+    const read = await repository.getSummaryForMember(created.group.id, owner)
+    expect(read).toMatchObject({ name: "Trips", ...details })
+
+    const plain = await repository.create({ id: uuidV7(), name: "Plain" }, owner)
+    expect(plain.group).toMatchObject({ description: "", color: null, emoji: null })
+  })
+})
+
 Deno.test("details: an edit writes an audit row and moves the group's change sequence", async () => {
   await withSchema(async (sql) => {
     const { repository, groupId, owner } = await team(sql)

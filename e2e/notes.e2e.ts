@@ -2,6 +2,7 @@ import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { openNotes } from "./fixtures/groups.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -47,16 +48,6 @@ async function sharedGroup(
   })
   expect(added.status(), await added.text()).toBe(200)
   return groupId
-}
-
-/** Opens a group's notes from the groups page, the way a person gets there. */
-async function openNotes(page: Page, groupName: string): Promise<void> {
-  await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", {
-    name: "Groups",
-  }).click()
-  await page.getByRole("button", { name: `Open notes in ${groupName}` }).click()
-  await expect(page.getByRole("heading", { level: 1, name: "Notes", exact: true })).toBeVisible()
-  await expect(page.locator("[data-e2e=notes-group]")).toHaveText(groupName)
 }
 
 test.describe("notes in a shared group", () => {

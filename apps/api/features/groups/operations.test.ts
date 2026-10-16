@@ -130,8 +130,28 @@ describe("group socket requests", () => {
       actor,
       id,
       name: "Team",
+      description: "",
+      color: null,
+      emoji: null,
       requestId: "req-1",
       idempotencyKey: "key-1",
+    })
+  })
+
+  it("dispatches a create with the description, colour and emoji of its payload", async () => {
+    const { requests, seen } = harness()
+
+    await requests["group.create"].handle({
+      actor,
+      requestId: "req-1",
+      signal,
+      payload: { id, name: "Trips", description: "Our trips", color: "blue", emoji: "🏕️" },
+    })
+
+    expect(seen.command?.data).toMatchObject({
+      description: "Our trips",
+      color: "blue",
+      emoji: "🏕️",
     })
   })
 

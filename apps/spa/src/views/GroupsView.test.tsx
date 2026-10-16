@@ -19,8 +19,8 @@ describe("GroupsView", () => {
   it("says the groups are loading, not that there are none, before the list has been read", () => {
     const html = render()
 
-    expect(html).toContain("Loading groups...")
-    expect(html).not.toContain("No groups yet.")
+    expect(html).toContain("Loading groups…")
+    expect(html).not.toContain("No groups yet")
     expect(html).not.toContain("group-new-empty")
   })
 
@@ -29,12 +29,15 @@ describe("GroupsView", () => {
 
     const html = render()
 
-    expect(html).toContain("Loading groups...")
-    expect(html).not.toContain("No groups yet.")
+    expect(html).toContain("Loading groups…")
+    expect(html).not.toContain("No groups yet")
   })
 
-  it("opens the new-group dialog when the address asks for it with ?new", () => {
-    expect(render("new")).toContain(`data-e2e="group-new-dialog"`)
-    expect(render()).not.toContain(`data-e2e="group-new-dialog"`)
+  it("links New group to the create page, and opens no dialog for an old ?new address", () => {
+    const html = render("new")
+
+    expect(html).toMatch(/<a data-e2e="group-new" href="\/groups\/new"/)
+    expect(html).not.toContain("<dialog")
+    expect(html).not.toContain(`data-e2e="group-name"`)
   })
 })

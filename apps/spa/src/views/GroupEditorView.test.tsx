@@ -10,13 +10,13 @@ import { groupsStore } from "../state/groups.ts"
 import { invitationsStore } from "../state/invitations.ts"
 import { membersStore } from "../state/members.ts"
 import {
+  createAndOpen,
+  GroupEditorView,
   GroupInvite,
-  GroupSettingsView,
   GroupTransfer,
-  renameGroup,
+  saveAndAnnounce,
   transferAndRefresh,
-  updateGroupDetails,
-} from "./GroupSettingsView.tsx"
+} from "./GroupEditorView.tsx"
 
 const known = {
   id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001",
@@ -43,14 +43,14 @@ const renderTransfer = () =>
   )
 
 /** The view on the server: the router needs a path, because there is no `location`. */
-const render = (groupId: string) =>
+const render = (groupId: string | null) =>
   renderToString(
     <Router ssrPath="/">
-      <GroupSettingsView groupId={groupId} />
+      <GroupEditorView groupId={groupId} />
     </Router>,
   )
 
-describe("GroupSettingsView", () => {
+describe("GroupEditorView", () => {
   afterEach(() => {
     groupsStore.reset()
     membersStore.reset()
@@ -79,13 +79,37 @@ describe("GroupSettingsView", () => {
     expect(html).toContain("Admin")
   })
 
+  it("draws the create page with empty fields and Create group for no group id", () => {
+    groupsStore.groups.value = [known]
+
+    const html = render(null)
+
+    expect(html).toContain("New group")
+    expect(html).toContain(`data-e2e="group-create"`)
+    // An empty value renders as a bare `value` attribute.
+    expect(html).toMatch(/<input data-e2e="group-name"[^>]* value /)
+    expect(html).not.toContain("Secret Team")
+  })
+
+  it("shows what was typed for this group, and the saved group when the draft is another's", () => {
+    groupsStore.groups.value = [known]
+    groupsStore.edit(known.id, { name: "Crew", description: "", color: null, emoji: "" })
+
+    expect(render(known.id)).toMatch(/<input [^>]*data-e2e="group-name"[^>]*value="Crew"/)
+    expect(render(known.id)).toContain(`data-e2e="group-save"`)
+
+    groupsStore.edit(strangerId, { name: "Crew", description: "", color: null, emoji: "" })
+    expect(render(known.id)).toMatch(/<input [^>]*data-e2e="group-name"[^>]*value="Secret Team"/)
+    expect(render(known.id)).not.toContain(`data-e2e="group-save"`)
+  })
+
   it("shows the error, not a loading message, when the first read failed and nothing is held", () => {
     groupsStore.loadError.value = "Could not load the groups"
 
     const html = render(known.id)
 
     expect(html).toContain("Could not load the groups")
-    expect(html).not.toContain("Loading the group...")
+    expect(html).not.toContain("Loading the group…")
   })
 
   it("shows the members the store holds for this group, and never another group's", () => {
@@ -284,83 +308,74 @@ describe("transferAndRefresh", () => {
   })
 })
 
-describe("renameGroup", () => {
-  const store = (renamed: boolean, failure: typeof groupsStore.actionError.value = null) => {
-    const draft = { value: null as { groupId: string; name: string } | null }
-    return {
-      draft,
-      groups: {
-        renameDraft: draft,
-        rename: () => Promise.resolve(renamed),
-        actionError: { value: failure },
-      } as unknown as Parameters<typeof renameGroup>[0],
-    }
-  }
+describe("createAndOpen", () => {
+  const created = { ...known, name: "Trip" }
 
-  it("hands the new name to the store and resolves when the server renamed the group", async () => {
-    const { draft, groups } = store(true)
+  it("puts the new group's page in place of the create page, makes it current and says so", async () => {
+    const visits: [string, { replace: boolean }][] = []
+    const selected: string[] = []
+    const notices: unknown[] = []
+    const done = await createAndOpen(
+      { create: () => Promise.resolve(created) },
+      { select: (id: string) => Promise.resolve(void selected.push(id)) },
+      (to, options) => visits.push([to, options]),
+      { success: (notice) => String(notices.push(notice)) },
+    )
 
-    await renameGroup(groups, known.id, "Crew")
-
-    expect(draft.value).toEqual({ groupId: known.id, name: "Crew" })
+    expect(done).toBe(true)
+    expect(visits).toEqual([[`/groups/${known.id}`, { replace: true }]])
+    expect(selected).toEqual([known.id])
+    expect(notices).toEqual([{
+      title: "Group created",
+      body: `"Trip" is now your current group.`,
+      dataE2E: "group-created",
+    }])
   })
 
-  it("rejects with the server's message when it refused this group's rename", async () => {
-    const { groups } = store(false, {
-      groupId: known.id,
-      action: "rename",
-      message: "That name is too long.",
-    })
+  it("stays on the create page and selects nothing when the create was refused", async () => {
+    const visits: string[] = []
+    const selected: string[] = []
+    const notices: unknown[] = []
+    const done = await createAndOpen(
+      { create: () => Promise.resolve(null) },
+      { select: (id: string) => Promise.resolve(void selected.push(id)) },
+      (to) => visits.push(to),
+      { success: (notice) => String(notices.push(notice)) },
+    )
 
-    await expect(renameGroup(groups, known.id, "Crew")).rejects.toThrow("That name is too long.")
-  })
-
-  it("rejects with a general message when the refusal held is another group's", async () => {
-    const { groups } = store(false, { groupId: strangerId, action: "rename", message: "Theirs." })
-
-    await expect(renameGroup(groups, known.id, "Crew")).rejects
-      .toThrow("Could not rename the group.")
+    expect(done).toBe(false)
+    expect([visits, selected, notices]).toEqual([[], [], []])
   })
 })
 
-describe("updateGroupDetails", () => {
-  const details = { description: "Flat", color: "green" as const, emoji: "🏠" }
-  const store = (saved: boolean, failure: typeof groupsStore.actionError.value = null) => {
-    const sent: unknown[] = []
-    return {
-      sent,
-      groups: {
-        updateDetails: (groupId: string, d: unknown) => {
-          sent.push({ groupId, d })
-          return Promise.resolve(saved)
-        },
-        actionError: { value: failure },
-      } as unknown as Parameters<typeof updateGroupDetails>[0],
-    }
-  }
+describe("saveAndAnnounce", () => {
+  const groups = (saved: boolean) =>
+    ({
+      save: () => Promise.resolve(saved),
+      groups: { value: [{ ...known, name: "Crew" }] },
+    }) as unknown as Parameters<typeof saveAndAnnounce>[0]
 
-  it("hands the details to the store and resolves when the server saved them", async () => {
-    const { sent, groups } = store(true)
-
-    await updateGroupDetails(groups, known.id, details)
-
-    expect(sent).toEqual([{ groupId: known.id, d: details }])
-  })
-
-  it("rejects with the server's message when it refused this group's details", async () => {
-    const { groups } = store(false, {
-      groupId: known.id,
-      action: "details",
-      message: "Not allowed.",
+  it("says the changes are saved, with the group's new name, once the save worked", async () => {
+    const notices: unknown[] = []
+    const done = await saveAndAnnounce(groups(true), known.id, {
+      success: (notice) => String(notices.push(notice)),
     })
 
-    await expect(updateGroupDetails(groups, known.id, details)).rejects.toThrow("Not allowed.")
+    expect(done).toBe(true)
+    expect(notices).toEqual([{
+      title: "Group saved",
+      body: `"Crew" saved.`,
+      dataE2E: "group-saved",
+    }])
   })
 
-  it("rejects with a general message when the refusal held is another group's", async () => {
-    const { groups } = store(false, { groupId: strangerId, action: "details", message: "Theirs." })
+  it("says nothing when the save was refused", async () => {
+    const notices: unknown[] = []
+    const done = await saveAndAnnounce(groups(false), known.id, {
+      success: (notice) => String(notices.push(notice)),
+    })
 
-    await expect(updateGroupDetails(groups, known.id, details)).rejects
-      .toThrow("Could not save the details.")
+    expect(done).toBe(false)
+    expect(notices).toEqual([])
   })
 })

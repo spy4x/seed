@@ -35,7 +35,7 @@ async function personPage(browser: Browser, email: string): Promise<Page> {
 const settingsReady = (page: Page) => page.locator("[data-e2e=group-general-name]")
 
 test.describe("group details", () => {
-  test("the owner edits the details, the other member's open page shows them without a reload, and a viewer cannot edit", async ({ page, browser, request }) => {
+  test("the owner edits the details on the group's page, the other member's open page shows them without a reload, and a viewer reads them only", async ({ page, browser, request }) => {
     const owner = "e2e_details_owner@example.com"
     const member = "e2e_details_member@example.com"
     await cleanup(request, owner)
@@ -63,29 +63,30 @@ test.describe("group details", () => {
       await expect(memberPage.locator("[data-e2e=page-header] [data-e2e=group-mark]")).toHaveCount(
         0,
       )
-      // A viewer reads the group and has no way to edit its details.
-      await memberPage.getByRole("button", { name: "More actions" }).click()
-      await expect(memberPage.locator("[data-e2e=group-details-open]")).toHaveCount(0)
-      await memberPage.keyboard.press("Escape")
+      // A viewer reads the group's details as text, with no field and no Save.
+      await expect(memberPage.locator("[data-e2e=group-read-only]")).toBeVisible()
+      await expect(memberPage.locator("[data-e2e=group-name]")).toHaveCount(0)
+      await expect(memberPage.locator("[data-e2e=group-save]")).toHaveCount(0)
       // Count the documents the member's page loads, so a reload fails the test.
       let loads = 0
       memberPage.on("load", () => loads++)
 
       await gotoApp(page, `/groups/${groupId}`, settingsReady(page))
-      await page.getByRole("button", { name: "More actions" }).click()
-      await page.locator("[data-e2e=group-details-open]").click()
-      const dialog = page.locator("[data-e2e=group-details-dialog]")
-      await dialog.locator("[data-e2e=group-description]").fill("Rent, bills and the shopping list")
-      await dialog.locator("[data-e2e=group-color-purple]").check({ force: true })
-      await dialog.locator("[data-e2e=group-emoji]").fill("🏠🏕️")
-      await dialog.locator("[data-e2e=group-details-save]").click()
-      await expect(dialog).toContainText("single emoji")
-      await dialog.locator("[data-e2e=group-emoji]").fill("🏠")
-      await dialog.locator("[data-e2e=group-details-save]").click()
-      await expect(dialog).toHaveCount(0)
+      // The form saves nothing until something changed: no footer yet.
+      await expect(page.locator("[data-e2e=group-save]")).toHaveCount(0)
+      await page.locator("[data-e2e=group-description]").fill("Rent, bills and the shopping list")
+      await page.getByRole("radio", { name: "Purple" }).check()
+      await page.locator("[data-e2e=group-emoji]").fill("🏠🏕️")
+      await page.locator("[data-e2e=group-save]").click()
+      await expect(page.getByText("Use a single emoji")).toBeVisible()
+      await expect(page.locator("[data-e2e=group-emoji]")).toBeFocused()
+      await page.locator("[data-e2e=group-emoji]").fill("🏠")
+      await page.locator("[data-e2e=group-save]").click()
+      await expect(page.locator("[data-e2e=group-saved]")).toContainText("Flat")
+      await expect(page.locator("[data-e2e=group-save]")).toHaveCount(0)
 
-      await expect(page.locator("[data-e2e=group-general-description]"))
-        .toHaveText("Rent, bills and the shopping list")
+      await expect(page.locator("[data-e2e=group-description]"))
+        .toHaveValue("Rent, bills and the shopping list")
       const mark = page.locator("[data-e2e=page-header] [data-e2e=group-mark]")
       await expect(mark).toHaveText("🏠")
       await expect(mark).toHaveAttribute("data-color", "purple")

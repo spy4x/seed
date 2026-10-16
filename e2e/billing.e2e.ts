@@ -1,6 +1,7 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { BILLING_WEBHOOK_PATH, stripeSignature, subscriptionEvent } from "./fixtures/billing.ts"
+import { createGroup } from "./fixtures/groups.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -28,11 +29,7 @@ test.describe("group billing", () => {
 
       await page.getByRole("navigation", { name: "Main navigation" })
         .getByRole("link", { name: "Groups" }).click()
-      await page.locator("[data-e2e=group-new]").click()
-      await page.getByRole("dialog", { name: "New group" }).getByLabel("Name").fill("Club")
-      await page.getByRole("button", { name: "Create group" }).click()
-      await page.getByRole("link", { name: "Settings of Club" }).click()
-      await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
+      await createGroup(page, "Club")
       const groupId = new URL(page.url()).pathname.replace("/groups/", "")
       const plan = page.locator("[data-e2e=billing-plan]")
       await expect(plan).toHaveAttribute("data-plan", "free")

@@ -1,12 +1,13 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
+import { createGroup, groupLink, openGroup } from "./fixtures/groups.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 
 test.describe("group list and settings pages", () => {
-  test("creates a group, opens its settings and reads its name and the person's role there", async ({ page, request }) => {
+  test("creates a group on its own page, and each row of the list opens that group's page", async ({ page, request }) => {
     const email = "e2e_groups_pages_user@example.com"
     const password = "Passw0rd!"
     const cleanup = async ({ soft = false } = {}) => {
@@ -31,25 +32,59 @@ test.describe("group list and settings pages", () => {
       await expect(page.getByRole("heading", { level: 1, name: "Groups" })).toBeVisible()
       await expect(page.locator("[data-e2e=group-item-name]")).toHaveCount(1)
 
-      await page.locator("[data-e2e=group-new]").click()
-      const dialog = page.getByRole("dialog", { name: "New group" })
-      await dialog.getByLabel("Name").fill("Trip")
-      await dialog.getByRole("button", { name: "Create group" }).click()
-      await expect(dialog).toBeHidden()
+      await createGroup(page, "Trip")
+      await expect(page.locator("[data-e2e=group-general-role]")).toHaveText("Owner")
+      // The create page gave its place in the history to the group's page.
+      await page.goBack()
+      await expect(page).toHaveURL("/groups")
+
+      // Each row is one link to the group's page; the new group is the current one.
       await expect(page.locator("[data-e2e=group-item-name]").filter({ hasText: "Trip" }))
         .toHaveCount(1)
-
-      await page.getByRole("link", { name: "Settings of Trip" }).click()
-      await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
-      await expect(page.getByRole("heading", { level: 1 })).toHaveText("Trip")
-      await expect(page.locator("[data-e2e=group-general-name]")).toHaveText("Trip")
-      await expect(page.locator("[data-e2e=group-general-role]")).toHaveText("Owner")
-
+      await expect(groupLink(page, "Trip")).toHaveAccessibleName("Trip, current group")
+      await expect(page.getByRole("button", { name: /Open notes/ })).toHaveCount(0)
+      await openGroup(page, "Personal")
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText("Personal")
       await page.getByRole("link", { name: "Back to groups" }).click()
       await expect(page).toHaveURL("/groups")
-      await page.getByRole("button", { name: "Open notes in Trip" }).click()
-      await expect(page).toHaveURL("/notes")
     } finally {
+      await cleanup({ soft: true })
+    }
+  })
+
+  test("the create page says creating a group needs a connection while the browser is offline", async ({ page, request }) => {
+    const email = "e2e_groups_pages_offline@example.com"
+    const password = "Passw0rd!"
+    const cleanup = async ({ soft = false } = {}) => {
+      const response = await request.post(`${apiBase}/api/test/cleanup-user`, {
+        data: { login: email },
+      })
+      ;(soft ? expect.soft : expect)(response.status(), await response.text()).toBe(200)
+    }
+
+    await cleanup()
+    try {
+      const signUp = await request.post(`${apiBase}/api/auth/password/sign-up`, {
+        headers,
+        data: { email, password },
+      })
+      expect(signUp.ok()).toBe(true)
+      await signIn(page, email, password)
+      await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
+      await gotoApp(page, "/groups/new", page.locator("[data-e2e=group-name]"))
+      await expect(page.locator("[data-e2e=group-offline]")).toHaveCount(0)
+
+      await page.context().setOffline(true)
+      await expect(page.locator("[data-e2e=group-offline]")).toContainText(
+        "You can fill this in now. Creating the group needs a connection.",
+      )
+      await page.locator("[data-e2e=group-name]").fill("Trip")
+
+      await page.context().setOffline(false)
+      await expect(page.locator("[data-e2e=group-offline]")).toHaveCount(0)
+      await expect(page.locator("[data-e2e=group-name]")).toHaveValue("Trip")
+    } finally {
+      await page.context().setOffline(false)
       await cleanup({ soft: true })
     }
   })
@@ -93,7 +128,7 @@ test.describe("group list and settings pages", () => {
         .toBeVisible()
       expect(await overflow()).toBeLessThanOrEqual(0)
 
-      await page.getByRole("link", { name: `Settings of ${longName}` }).click()
+      await groupLink(page, longName).click()
       await expect(page.getByRole("heading", { level: 2, name: /^Members/ })).toBeVisible()
       expect(await overflow()).toBeLessThanOrEqual(0)
     } finally {
@@ -122,17 +157,15 @@ test.describe("group list and settings pages", () => {
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       await gotoApp(page, "/groups", page.getByRole("heading", { level: 1, name: "Groups" }))
-      // By its hook, not its name: until the list has loaded, the empty page can show a second
-      // "New group" button, and a click by name then matches two.
-      await page.locator("[data-e2e=group-new]").click()
-      await page.getByRole("dialog", { name: "New group" }).getByLabel("Name").fill("Trip")
-      await page.getByRole("button", { name: "Create group" }).click()
-      await page.getByRole("link", { name: "Settings of Trip" }).click()
+      await createGroup(page, "Trip")
 
-      await page.getByRole("button", { name: "Rename Trip" }).click()
-      await page.getByLabel("New name").fill("Trip 2027")
-      await page.getByLabel("New name").press("Enter")
+      // The footer shows once the name differs from the saved one.
+      await expect(page.locator("[data-e2e=group-save]")).toHaveCount(0)
+      await page.locator("[data-e2e=group-name]").fill("Trip 2027")
+      await page.locator("[data-e2e=group-save]").click()
       await expect(page.locator("[data-e2e=group-general-name]")).toHaveText("Trip 2027")
+      await expect(page.locator("[data-e2e=group-saved]")).toContainText("Trip 2027")
+      await expect(page.locator("[data-e2e=group-save]")).toHaveCount(0)
 
       await page.getByRole("button", { name: "More actions" }).click()
       await page.getByRole("menuitem", { name: "Delete group" }).click()
@@ -142,6 +175,10 @@ test.describe("group list and settings pages", () => {
       await dialog.getByRole("button", { name: "Delete group" }).click()
       await expect(page).toHaveURL("/groups")
       await expect(page.locator("[data-e2e=group-item-name]")).toHaveText(["Personal"])
+      // The deleted groups wait under a closed disclosure.
+      const deletedGroups = page.locator("[data-e2e=deleted-groups]")
+      await expect(deletedGroups).not.toHaveAttribute("open")
+      await deletedGroups.getByText("Deleted groups (1)").click()
       await expect(page.locator("[data-e2e=deleted-group-name]")).toHaveText(["Trip 2027"])
 
       await page.getByRole("button", { name: "Restore Trip 2027" }).click()
@@ -174,7 +211,7 @@ test.describe("group list and settings pages", () => {
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       await gotoApp(page, "/groups", page.getByRole("heading", { level: 1, name: "Groups" }))
-      await page.getByRole("link", { name: "Settings of Personal" }).click()
+      await openGroup(page, "Personal")
       await page.getByRole("button", { name: "More actions" }).click()
       await expect(page.locator("[data-e2e=group-delete-open]")).toBeDisabled()
       await expect(page.locator("[data-e2e=group-delete-why]")).toHaveText("It is your only group")

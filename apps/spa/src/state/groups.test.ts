@@ -6,6 +6,8 @@ import { type GroupDetails, GroupRole } from "@domain/groups"
 import {
   createGroupsStore,
   type DeletedGroupItem,
+  EMPTY_GROUP_DRAFT,
+  GROUP_MESSAGES,
   type GroupItem,
   type GroupPage,
   type GroupsDependencies,
@@ -67,7 +69,7 @@ function harness(
   const pages = [...(overrides.pages ?? [{ groups: [], nextCursor: null }])]
   const reads: { cursor: string | null; via: ReadChannel }[] = []
   const advanced: [string, number][] = []
-  const created: { id: string; name: string }[] = []
+  const created: ({ id: string; name: string } & GroupDetails)[] = []
   const store = createGroupsStore({
     ...UNUSED,
     ...(overrides.fetchDeleted && { fetchDeleted: overrides.fetchDeleted }),
@@ -187,39 +189,65 @@ describe("groups store", () => {
     expect(failing.loading.value).toBe(false)
   })
 
-  it("creates a group with a new id, puts it first and clears the name", async () => {
+  it("creates a group with every field of the form in one request, puts it first and empties the form", async () => {
     const { store, created, advanced } = harness({
       pages: [{ groups: [item("a", "1")], nextCursor: null }],
     })
     await store.refresh()
-    store.name.value = "  Trip  "
+    store.edit(null, { name: "  Trip  ", description: " Hikes ", color: "green", emoji: "🏕️" })
 
-    await store.create()
+    const group = await store.create()
 
-    expect(created).toEqual([{ id: "new-id", name: "Trip" }])
+    expect(created).toEqual([
+      { id: "new-id", name: "Trip", description: "Hikes", color: "green", emoji: "🏕️" },
+    ])
+    expect(group?.id).toBe("new-id")
     expect(store.groups.value.map((group) => group.id)).toEqual(["new-id", "a"])
     expect(advanced.at(-1)).toEqual(["new-id", 1])
-    expect(store.name.value).toBe("")
+    expect(store.draft(null)).toEqual(EMPTY_GROUP_DRAFT)
+    expect(store.unsaved(null)).toBe(false)
     expect(store.creating.value).toBe(false)
   })
 
-  it("keeps the name and shows the server's message when a create is refused", async () => {
+  it("keeps the form and shows the server's message under it when a create is refused", async () => {
     const { store } = harness({
       create: () => Promise.reject(new RealtimeRequestError("forbidden", "Group id is in use")),
     })
-    store.name.value = "Trip"
+    store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "Trip" })
 
-    await store.create()
+    expect(await store.create()).toBeNull()
 
-    expect(store.error.value).toBe("Group id is in use")
-    expect(store.name.value).toBe("Trip")
+    expect(store.editorErrors.value).toEqual({ form: "Group id is in use" })
+    expect(store.draft(null).name).toBe("Trip")
     expect(store.groups.value).toEqual([])
   })
 
-  it("ignores a create with an empty name or one already running", async () => {
-    const { store, created } = harness({})
+  it("says a create needs a connection when the server was not reached", async () => {
+    const { store } = harness({ create: () => Promise.reject(new TypeError("fetch failed")) })
+    store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "Trip" })
+
     await store.create()
-    store.name.value = "Trip"
+
+    expect(store.editorErrors.value.form).toBe(GROUP_MESSAGES.createOffline)
+  })
+
+  it("tells each wrong field before sending, and sends nothing", async () => {
+    const { store, created } = harness({})
+    store.edit(null, { name: "  ", description: "x".repeat(501), color: null, emoji: "ab" })
+
+    expect(await store.create()).toBeNull()
+
+    expect(created).toEqual([])
+    expect(store.editorErrors.value).toEqual({
+      name: GROUP_MESSAGES.nameRequired,
+      description: GROUP_MESSAGES.descriptionTooLong,
+      emoji: GROUP_MESSAGES.emojiInvalid,
+    })
+  })
+
+  it("ignores a create while one is already running", async () => {
+    const { store, created } = harness({})
+    store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "Trip" })
     const first = store.create()
     await store.create()
     await first
@@ -227,117 +255,118 @@ describe("groups store", () => {
     expect(created).toHaveLength(1)
   })
 
-  it("renames a group to what the person typed and clears the draft", async () => {
-    const renamed: { groupId: string; name: string }[] = []
+  it("shows a group as saved until something is typed, and counts only real changes as unsaved", async () => {
+    const saved = { ...item("a", "1", "Home"), description: "Flat", color: "blue" as const }
+    const { store } = harness({ pages: [{ groups: [saved], nextCursor: null }] })
+    await store.refresh()
+
+    expect(store.draft("a")).toEqual({
+      name: "Home",
+      description: "Flat",
+      color: "blue",
+      emoji: "",
+    })
+    store.edit("a", { ...store.draft("a"), name: "Home  ", emoji: " " })
+    expect(store.unsaved("a")).toBe(false)
+    store.edit("a", { ...store.draft("a"), color: "red" })
+    expect(store.unsaved("a")).toBe(true)
+    expect(store.unsaved(null)).toBe(false)
+
+    store.discard()
+
+    expect(store.draft("a").color).toBe("blue")
+    expect(store.unsaved("a")).toBe(false)
+  })
+
+  it("drops what was typed for another group when an editor opens", async () => {
     const { store } = harness({
-      pages: [{ groups: [item("a", "1", "Old"), item("b", "1")], nextCursor: null }],
+      pages: [{ groups: [item("a", "1"), item("b", "1")], nextCursor: null }],
+    })
+    await store.refresh()
+    store.edit("a", { ...store.draft("a"), name: "Typed" })
+
+    store.openEditor("a")
+    expect(store.draft("a").name).toBe("Typed")
+    store.openEditor("b")
+    expect(store.draft("a").name).toBe("a")
+  })
+
+  it("saves only the name when only the name changed, and keeps the row's members", async () => {
+    const renamed: unknown[] = []
+    const listed = { ...item("a", "1", "Old"), memberCount: 3, members: [{ name: "Ann" }] }
+    const { store } = harness({
+      pages: [{ groups: [listed, item("b", "1")], nextCursor: null }],
       rename: (input) => {
         renamed.push(input)
         return Promise.resolve({ group: item(input.groupId, "2", input.name) })
       },
     })
     await store.refresh()
-    store.renameDraft.value = { groupId: "a", name: "  New  " }
+    store.edit("a", { ...store.draft("a"), name: "  New  " })
 
-    const done = await store.rename("a")
+    expect(await store.save("a")).toBe(true)
 
-    expect(done).toBe(true)
     expect(renamed).toEqual([{ groupId: "a", name: "New" }])
-    expect(store.groups.value.map((group) => group.name)).toEqual(["New", "b"])
-    expect(store.renameDraft.value).toBeNull()
-    expect(store.working.value).toBeNull()
-  })
-
-  it("keeps the card's members when a rename answers without them", async () => {
-    const listed = { ...item("a", "1", "Old"), memberCount: 3, members: [{ name: "Ann" }] }
-    const { store } = harness({
-      pages: [{ groups: [listed], nextCursor: null }],
-      rename: (input) => Promise.resolve({ group: item(input.groupId, "2", input.name) }),
-    })
-    await store.refresh()
-    store.renameDraft.value = { groupId: "a", name: "New" }
-
-    await store.rename("a")
-
     expect(store.groups.value[0]).toMatchObject({
       name: "New",
       changeSequence: "2",
       memberCount: 3,
-      members: [{ name: "Ann" }],
     })
+    expect(store.unsaved("a")).toBe(false)
+    expect(store.working.value).toBeNull()
   })
 
-  it("keeps the typed name and shows the server's reason when a rename is refused", async () => {
-    const { store } = harness({
-      rename: () => Promise.reject(new RealtimeRequestError("forbidden", "Only an admin can")),
-    })
-    store.renameDraft.value = { groupId: "a", name: "New" }
-
-    const done = await store.rename("a")
-
-    expect(done).toBe(false)
-    expect(store.actionError.value).toEqual({
-      groupId: "a",
-      action: "rename",
-      message: "Only an admin can",
-    })
-    expect(store.renameDraft.value).toEqual({ groupId: "a", name: "New" })
-  })
-
-  it("shows a group's new details at once and keeps its other fields", async () => {
+  it("saves only the details when only they changed, with an empty emoji as none", async () => {
     const sent: unknown[] = []
     const { store } = harness({
-      pages: [{ groups: [item("a", "1"), item("b", "1")], nextCursor: null }],
+      pages: [{ groups: [{ ...item("a", "1"), emoji: "🏠" }], nextCursor: null }],
       updateDetails: (input) => {
         sent.push(input)
         return Promise.resolve({
-          group: { ...item("a", "2"), description: "Flat", color: "green", emoji: "🏠" },
+          group: { ...item("a", "2"), description: "Flat", color: "green" },
         })
       },
     })
     await store.refresh()
+    store.edit("a", { name: "a", description: "Flat", color: "green", emoji: "" })
 
-    const done = await store.updateDetails("a", {
-      description: "Flat",
-      color: "green",
-      emoji: "🏠",
-    })
+    expect(await store.save("a")).toBe(true)
 
-    expect(done).toBe(true)
-    expect(sent).toEqual([{ groupId: "a", description: "Flat", color: "green", emoji: "🏠" }])
-    const [a, b] = store.groups.value
-    expect(a).toMatchObject({ id: "a", description: "Flat", color: "green", emoji: "🏠" })
-    expect(b.color).toBeUndefined()
+    expect(sent).toEqual([{ groupId: "a", description: "Flat", color: "green", emoji: null }])
+    expect(store.groups.value[0]).toMatchObject({ description: "Flat", color: "green" })
   })
 
-  it("shows the server's reason when saving details is refused", async () => {
+  it("keeps what was typed and shows the server's reason under the form when a save is refused", async () => {
     const { store } = harness({
-      updateDetails: () => Promise.reject(new RealtimeRequestError("forbidden", "Not allowed")),
+      pages: [{ groups: [item("a", "1", "Old")], nextCursor: null }],
+      rename: () => Promise.reject(new RealtimeRequestError("forbidden", "Only an admin can")),
     })
+    await store.refresh()
+    store.edit("a", { ...store.draft("a"), name: "New" })
 
-    const done = await store.updateDetails("a", { description: "", color: null, emoji: null })
+    expect(await store.save("a")).toBe(false)
 
-    expect(done).toBe(false)
-    expect(store.actionError.value).toEqual({
-      groupId: "a",
-      action: "details",
-      message: "Not allowed",
-    })
+    expect(store.editorErrors.value).toEqual({ form: "Only an admin can" })
+    expect(store.draft("a").name).toBe("New")
+    expect(store.unsaved("a")).toBe(true)
   })
 
-  it("does not send a rename that has no name, or one typed for another group", async () => {
+  it("does not send a save with a wrong field, or for a group the person does not have", async () => {
     let sent = 0
     const { store } = harness({
+      pages: [{ groups: [item("a", "1")], nextCursor: null }],
       rename: () => {
         sent++
         return Promise.reject(new Error("unused"))
       },
     })
-    store.renameDraft.value = { groupId: "other", name: "New" }
+    await store.refresh()
+    store.edit("a", { ...store.draft("a"), name: "   " })
 
-    expect(await store.rename("a")).toBe(false)
-    store.renameDraft.value = { groupId: "a", name: "   " }
-    expect(await store.rename("a")).toBe(false)
+    expect(await store.save("a")).toBe(false)
+    expect(store.editorErrors.value.name).toBe(GROUP_MESSAGES.nameRequired)
+    store.edit("other", { ...store.draft("a"), name: "Other" })
+    expect(await store.save("other")).toBe(false)
 
     expect(sent).toBe(0)
   })
@@ -513,12 +542,12 @@ describe("groups store", () => {
   it("forgets everything on reset", async () => {
     const { store } = harness({ pages: [{ groups: [item("a", "1")], nextCursor: null }] })
     await store.refresh()
-    store.name.value = "x"
+    store.edit(null, { ...EMPTY_GROUP_DRAFT, name: "x" })
 
     store.reset()
 
     expect(store.groups.value).toEqual([])
-    expect(store.name.value).toBe("")
+    expect(store.draft(null)).toEqual(EMPTY_GROUP_DRAFT)
   })
 })
 

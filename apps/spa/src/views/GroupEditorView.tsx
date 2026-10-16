@@ -1,18 +1,15 @@
 import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
-import { GroupSettingsScreen } from "@ui/group-settings-screen.tsx"
+import { createOnlineStatus } from "@spy4x/preact-signals/online"
+import { GroupEditorScreen } from "@ui/group-editor-screen.tsx"
 import { InviteForm, PendingInvitations } from "@ui/group-invitations.tsx"
 import { GroupTransferForm } from "@ui/group-transfer.tsx"
-import {
-  canManageInvitations,
-  type GroupDetails,
-  type GroupRole,
-  type InvitationErrorCode,
-} from "@domain/groups"
+import { canManageInvitations, type GroupRole, type InvitationErrorCode } from "@domain/groups"
 import { entitlementsOf } from "@domain/billing"
 import type { GroupRow } from "@ui/groups-screen.tsx"
 import { moveTargetsOf } from "@ui/notes-screen.tsx"
-import { type Navigate, NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { GROUP_PATHS, type Navigate, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { groupsStore } from "../state/groups.ts"
 import { membersStore } from "../state/members.ts"
 import { selectionStore } from "../state/selection.ts"
@@ -20,6 +17,16 @@ import { billingStore } from "../state/billing.ts"
 import { invitationsStore } from "../state/invitations.ts"
 import { SeatPriceConfirm } from "@ui/billing-screen.tsx"
 import { GroupBillingCard } from "./BillingViews.tsx"
+import { toasts } from "../state/toasts.ts"
+import { isSpaPath } from "./spa-paths.ts"
+import { currentLayer } from "../modules.ts"
+
+const network = createOnlineStatus()
+
+/** Whether the app has no network while a device copy is on: the editor says writing waits. */
+function offlineNow(): boolean {
+  return !network.online.value && currentLayer() !== null
+}
 
 /**
  * Hands the open group over. When it worked, the groups are read again: this person is an admin
@@ -35,40 +42,46 @@ export async function transferAndRefresh(
 }
 
 /**
- * Renames the group to `name` through the store. Rejects with the store's message when the server
- * refused, so the name in the header stays open with the message under it.
+ * Creates the group from the new group's form. When it worked, the address turns into the group's
+ * page in place of `/groups/new`, so Back does not reopen an emptied form; the group becomes the
+ * current one; and a toast says so. Resolves to whether the group was created.
  */
-export async function renameGroup(
-  groups: Pick<typeof groupsStore, "renameDraft" | "rename" | "actionError">,
-  groupId: string,
-  name: string,
-): Promise<void> {
-  groups.renameDraft.value = { groupId, name }
-  if (await groups.rename(groupId)) return
-  const failure = groups.actionError.value
-  throw new Error(
-    failure?.groupId === groupId && failure.action === "rename"
-      ? failure.message
-      : "Could not rename the group.",
-  )
+export async function createAndOpen(
+  groups: Pick<typeof groupsStore, "create">,
+  selection: Pick<typeof selectionStore, "select">,
+  navigate: (to: string, options: { replace: boolean }) => void,
+  notices: Pick<typeof toasts, "success">,
+): Promise<boolean> {
+  const group = await groups.create()
+  if (!group) return false
+  // The group is in the list before the address changes, so its page draws at once.
+  navigate(GROUP_PATHS.settings(group.id), { replace: true })
+  void selection.select(group.id)
+  notices.success({
+    title: "Group created",
+    body: `"${group.name}" is now your current group.`,
+    dataE2E: "group-created",
+  })
+  return true
 }
 
 /**
- * Saves the group's description, colour and emoji through the store. Rejects with the store's
- * message when the server refused, so the dialog stays open with it.
+ * Saves what the person changed in a group's editor and, when it worked, says so in a toast: the
+ * toasts are a polite live region, so a screen reader hears it. Resolves to whether it saved.
  */
-export async function updateGroupDetails(
-  groups: Pick<typeof groupsStore, "updateDetails" | "actionError">,
+export async function saveAndAnnounce(
+  groups: Pick<typeof groupsStore, "save" | "groups">,
   groupId: string,
-  details: GroupDetails,
-): Promise<void> {
-  if (await groups.updateDetails(groupId, details)) return
-  const failure = groups.actionError.value
-  throw new Error(
-    failure?.groupId === groupId && failure.action === "details"
-      ? failure.message
-      : "Could not save the details.",
-  )
+  notices: Pick<typeof toasts, "success">,
+): Promise<boolean> {
+  if (!await groups.save(groupId)) return false
+  const saved = groups.groups.value.find((candidate) => candidate.id === groupId)
+  notices.success({
+    title: "Group saved",
+    body: saved ? `"${saved.name}" saved.` : "The group is saved.",
+    dataE2E: "group-saved",
+  })
+  return true
 }
 
 /** The open group's plan, once the billing card has read it; `null` until then. */
@@ -146,10 +159,63 @@ export function GroupTransfer(
 }
 
 /**
- * Wires one group's settings screen to the groups store, which already holds every group, and to
- * the members store, which reads this group's members when the page opens.
+ * Wires the group editor to the groups store: `/groups/new` (no `groupId`) creates a group,
+ * `/groups/:groupId` edits one. A created group becomes the current one, and the address turns into
+ * its page; the route announcer then moves focus to its name. Leaving with unsaved changes asks
+ * first. An existing group's page also reads its members and, for the owner and admins, its
+ * invitations.
  */
-export function GroupSettingsView({ groupId }: { groupId: string }) {
+export function GroupEditorView({ groupId = null }: { groupId?: string | null }) {
+  const [, navigate] = useLocation()
+  const store = groupsStore
+  useEffect(() => store.openEditor(groupId), [groupId])
+  useEffect(() => network.watch(), [])
+  return (
+    <>
+      {groupId === null ? <NewGroup /> : <ExistingGroup groupId={groupId} />}
+      <UnsavedGuard
+        when={store.unsaved(groupId)}
+        owns={(url) => isSpaPath(url.pathname)}
+        navigate={navigate}
+        labels={{
+          title: "Discard your changes?",
+          message: groupId === null
+            ? "This group is not created yet."
+            : `Your changes to "${
+              store.groups.value.find((group) => group.id === groupId)?.name ?? "this group"
+            }" are not saved.`,
+          leave: "Discard changes",
+          stay: "Keep editing",
+        }}
+        onDiscard={() => store.discard()}
+      />
+    </>
+  )
+}
+
+/** `/groups/new`: the editor with empty fields and "Create group". */
+function NewGroup() {
+  const [, navigate] = useLocation()
+  const store = groupsStore
+  return (
+    <GroupEditorScreen
+      creating
+      group={null}
+      current={false}
+      loading={false}
+      value={store.draft(null)}
+      onChange={(value) => store.edit(null, value)}
+      errors={store.editorErrors.value}
+      saving={store.creating.value}
+      offline={offlineNow()}
+      onSave={() => void createAndOpen(store, selectionStore, navigate, toasts)}
+      navigate={navigate}
+    />
+  )
+}
+
+/** `/groups/:groupId`: the group's details, members, invitations and plan. */
+function ExistingGroup({ groupId }: { groupId: string }) {
   const [, navigate] = useLocation()
   const store = groupsStore
   const team = membersStore
@@ -179,19 +245,22 @@ export function GroupSettingsView({ groupId }: { groupId: string }) {
   const movedAll = store.moved.value?.groupId === groupId ? store.moved.value : null
   const movedTo = movedAll && store.groups.value.find((other) => other.id === movedAll.toGroupId)
   return (
-    <GroupSettingsScreen
+    <GroupEditorScreen
       group={group}
-      selected={selectionStore.groupId.value === groupId}
+      current={selectionStore.groupId.value === groupId}
       // A person always has a group, so an empty list means the first read has not answered yet.
       loading={store.loading.value || store.groups.value.length === 0}
       error={store.loadError.value}
       navigate={navigate}
-      onOpen={(id) => {
-        void selectionStore.select(id)
-        navigate(NOTE_PATHS.list)
-      }}
-      onRename={(name) => renameGroup(store, groupId, name)}
-      onUpdateDetails={(details) => updateGroupDetails(store, groupId, details)}
+      onSwitch={() => void selectionStore.select(groupId)}
+      value={store.draft(groupId)}
+      onChange={(value) => store.edit(groupId, value)}
+      errors={store.editorErrors.value}
+      dirty={store.unsaved(groupId)}
+      saving={working?.groupId === groupId && working.action === "save"}
+      offline={offlineNow()}
+      onSave={() => void saveAndAnnounce(store, groupId, toasts)}
+      onDiscard={() => store.discard()}
       isLastGroup={store.groups.value.length <= 1}
       hasSubscription={billingOurs?.subscribed ?? false}
       members={ours ? team.members.value : null}

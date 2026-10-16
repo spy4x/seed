@@ -67,13 +67,7 @@ export function createGroupOperations(dependencies: GroupOperationDependencies):
       handle: async ({ actor, requestId, payload, idempotencyKey }) => {
         const input = parseCreateGroupRequest(payload)
         return await dependencies.create(
-          new GroupCreateCommand({
-            actor,
-            id: input.id,
-            name: input.name,
-            requestId,
-            idempotencyKey,
-          }),
+          new GroupCreateCommand({ actor, ...input, requestId, idempotencyKey }),
         )
       },
     },
