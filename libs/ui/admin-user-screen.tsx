@@ -88,8 +88,8 @@ export function auditTone(eventType: AuthAuditEventType): TimelineTone {
   return AUDIT_TONES[eventType] ?? "neutral"
 }
 
-/** What each audit row says happened. */
-const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
+/** What each audit row says happened; the audit log (#429) uses the same words. */
+export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.SIGNED_UP]: "Signed up",
   [AuthAuditEventType.SIGNED_IN]: "Signed in",
   [AuthAuditEventType.SIGNED_OUT]: "Signed out",

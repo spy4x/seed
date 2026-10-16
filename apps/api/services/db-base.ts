@@ -63,6 +63,22 @@ import {
 } from "@server/notifications/admin-api-tokens.ts"
 import type { AdminApiTokenFilter } from "@domain/api-tokens"
 import type { AdminUserFilter, UserRole } from "@domain/identity"
+import {
+  type AdminAuditPageKey,
+  listAdminAudit,
+  listAdminAuditOperators,
+  recordAuditExport,
+} from "@server/auth/admin-audit.ts"
+import {
+  readDatabaseFacts,
+  readFailedJobs,
+  readJobKinds,
+  readLastBackup,
+  readMigrations,
+  readQueueCounts,
+  retryFailedJob,
+} from "@server/jobs/admin-system.ts"
+import type { AdminAuditFilter } from "@domain/identity"
 
 /** A user's authenticator-app enrolment, one row of `user_totp`. */
 export interface UserTotp {
@@ -468,6 +484,40 @@ export class AppDbBase extends DbServiceBase {
           DELETE FROM user_totp WHERE user_id = ${userId} AND confirmed_at IS NOT NULL
           RETURNING user_id
         `).length === 1,
+    }
+  }
+
+  /** The operator area's audit log (`@server/auth/admin-audit.ts`, #429). Built per access. */
+  get adminAudit() {
+    const sql = this.sql
+    return {
+      /** Up to `limit` entries after `after` that match `filter`, newest first, and the next key. */
+      list: (filter: AdminAuditFilter, limit: number, after: AdminAuditPageKey | null) =>
+        listAdminAudit(sql, filter, limit, after),
+      /** Everyone with the operator role or above, for the operator filter. */
+      operators: () => listAdminAuditOperators(sql),
+      /** Records that the operator downloaded `rows` entries as a file. */
+      recordExport: (operatorId: number, rows: number, requestId: string | null) =>
+        recordAuditExport(sql, operatorId, rows, requestId),
+    }
+  }
+
+  /**
+   * The operator area's System page (`@server/jobs/admin-system.ts`, #429). Built per access, like
+   * `group`: `retryJob` belongs inside `begin()`, beside its audit row.
+   */
+  get adminSystem() {
+    const sql = this.sql
+    return {
+      database: () => readDatabaseFacts(sql),
+      queue: () => readQueueCounts(sql),
+      jobKinds: () => readJobKinds(sql),
+      failedJobs: (limit: number) => readFailedJobs(sql, limit),
+      lastBackup: () => readLastBackup(sql),
+      migrations: () => readMigrations(sql),
+      /** Runs the failed job again and writes the operator's audit row. Inside `begin()` only. */
+      retryJob: (id: string, operatorId: number, requestId: string | null) =>
+        retryFailedJob(sql, id, operatorId, requestId),
     }
   }
 

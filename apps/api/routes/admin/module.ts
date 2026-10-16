@@ -23,6 +23,12 @@ export interface AdminModuleContext {
    */
   emit(event: UserSignedOutEvent | PushDevicesUpdatedEvent): void
   now(): Date
+  /** The secret that signs the audit log's page cursors (#429), the one note cursors use. */
+  cursorSecret: string
+  /** Whether the cache (Valkey) answers, for the System page (#429). */
+  cacheConnected(): Promise<boolean>
+  /** The release tag and commit the API was built from, or `null` each for a local build (#429). */
+  build: { version: string | null; commit: string | null }
 }
 
 /**

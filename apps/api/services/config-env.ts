@@ -17,6 +17,9 @@ export const envSchema = type({
   DOMAIN: "string > 0",
   /** The admin app's own host (#146); unset or empty turns the operator area off. */
   "ADMIN_DOMAIN?": "string",
+  /** The release tag and commit the image was built from (`apps/api/dockerfile`); empty locally. */
+  "APP_VERSION?": "string",
+  "APP_COMMIT?": "string",
   KV_HOSTNAME: "string > 0",
   KV_PORT: "string.integer.parse",
   KV_PASSWORD: "string > 0",

@@ -929,6 +929,10 @@ export function adminUsersExportPath(filter: AdminUserFilter): string {
   return `/api/admin/users/export.csv${query ? `?${query}` : ""}`
 }
 
+// #429: the audit log and the System page of the operator area.
+export * from "./admin-audit.ts"
+export * from "./admin-system.ts"
+
 /**
  * One push device of a person, as the operator area shows it (#427): never the endpoint or the
  * keys, which let anyone who holds them push to the device.

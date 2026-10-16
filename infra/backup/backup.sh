@@ -53,6 +53,17 @@ backup_once() {
   restic forget --group-by paths --keep-within 2d --keep-daily 7 --keep-weekly 4 --keep-monthly 6 \
     --prune || return 1
   log "Backup done."
+  record_success
+}
+
+# Tells the operator area's System page (#429) when the last backup finished. Never fails the
+# backup: a database without the table yet (its migration not run) only logs a line.
+record_success() {
+  if ! psql --no-psqlrc --no-password --quiet --set ON_ERROR_STOP=1 --command \
+    "insert into backup_status (target, succeeded_at) values ('database', now())
+     on conflict (target) do update set succeeded_at = excluded.succeeded_at" >/dev/null; then
+    log "Could not record the backup's time for the System page; the backup itself is saved."
+  fi
 }
 
 schedule() {

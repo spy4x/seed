@@ -110,6 +110,7 @@ steps:
     commands:
       - executor --context "$$PWD" --dockerfile apps/api/dockerfile
         --build-arg "BASE_IMAGE=$$IMAGE_PREFIX-base:$${CI_COMMIT_TAG}"
+        --build-arg "APP_VERSION=$${CI_COMMIT_TAG}" --build-arg "APP_COMMIT=$${CI_COMMIT_SHA}"
         --destination "$$IMAGE_PREFIX-$$NAME:$${CI_COMMIT_TAG}"
         --no-push --tar-path "$$PWD/$$NAME.tar"
 

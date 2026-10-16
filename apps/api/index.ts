@@ -192,6 +192,9 @@ app.route(
       limit: rateLimits.normal,
       emit,
       now: () => new Date(),
+      cursorSecret: config.authCookieSecret,
+      cacheConnected: isCacheConnected,
+      build: config.build,
     }),
   }),
 )

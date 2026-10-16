@@ -741,3 +741,10 @@ CREATE TABLE note_tags (
 );
 
 CREATE INDEX idx_note_tags_tag ON note_tags (tag_id);
+
+-- #429: when the backup service last finished a backup well, per target (`database` today). See
+-- migration 2026_11_14_0001_backup_status.sql. `infra/backup/backup.sh` writes it; the API reads it.
+CREATE TABLE backup_status (
+    target VARCHAR(32) PRIMARY KEY,
+    succeeded_at TIMESTAMPTZ NOT NULL
+);
