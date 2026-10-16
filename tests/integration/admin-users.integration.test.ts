@@ -3,7 +3,7 @@ import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
 import { AuthAuditEventType, UserRole } from "@domain/identity"
-import { ADMIN_NO_FILTER } from "@domain/identity"
+import { ADMIN_NO_FILTER, type AdminUserFilter } from "@domain/identity"
 import { apiTokenRows } from "@server/api-tokens/api-tokens.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn, type SignIn } from "../../apps/api/services/sign-in.ts"
@@ -154,6 +154,112 @@ Deno.test("the user list searches names and addresses and filters by role and bl
     const second = await app.admin.list({ ...ADMIN_NO_FILTER, page: 2 })
     expect(second).toMatchObject({ total: 3, page: 2, pageSize: 2 })
     expect(second.users.length).toBe(1)
+  })
+})
+
+Deno.test("the user list sorts on the server by any column, ties kept in one order by id", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const ada = await signUp(app, "ada@example.com")
+    const grace = await signUp(app, "grace@example.com")
+    const linus = await signUp(app, "linus@example.com")
+    await sql`UPDATE users SET first_name = 'Ada', last_name = 'Lovelace',
+      last_seen_at = now() - interval '1 day' WHERE id = ${ada.id}`
+    await sql`UPDATE users SET first_name = 'grace', last_name = 'Hopper', last_seen_at = NULL
+      WHERE id = ${grace.id}`
+    await sql`UPDATE users SET last_seen_at = now() - interval '2 days' WHERE id = ${linus.id}`
+    const db = new AppDbBase({ sql })
+    const order = async (sort: AdminUserFilter["sort"]) =>
+      (await db.admin.list({ ...ADMIN_NO_FILTER, sort }, 10)).users.map((user) => user.id)
+
+    // Linus has no name, so he sorts first; the case of a name does not change its place.
+    expect(await order([{ key: "name", direction: "asc" }])).toEqual([linus.id, ada.id, grace.id])
+    expect(await order([{ key: "name", direction: "desc" }])).toEqual([grace.id, ada.id, linus.id])
+    // Never seen goes last, whichever way.
+    expect(await order([{ key: "lastSeenAt", direction: "desc" }])).toEqual([
+      ada.id,
+      linus.id,
+      grace.id,
+    ])
+    expect(await order([{ key: "lastSeenAt", direction: "asc" }])).toEqual([
+      linus.id,
+      ada.id,
+      grace.id,
+    ])
+    expect(await order([])).toEqual([linus.id, grace.id, ada.id])
+    // Everyone has the same role: the id decides, in the rule's direction.
+    expect(await order([{ key: "role", direction: "asc" }])).toEqual([ada.id, grace.id, linus.id])
+    expect(await order([{ key: "role", direction: "desc" }])).toEqual([linus.id, grace.id, ada.id])
+    // A higher role sorts after the lower ones, and first when the rule is descending.
+    await sql`UPDATE users SET role = ${UserRole.OPERATOR} WHERE id = ${grace.id}`
+    expect(await order([{ key: "role", direction: "asc" }])).toEqual([ada.id, linus.id, grace.id])
+    expect(await order([{ key: "role", direction: "desc" }])).toEqual([grace.id, linus.id, ada.id])
+  })
+})
+
+Deno.test("the dashboard counts people, sign-ups and activity, and carries no content", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const ada = await signUp(app, "ada@example.com")
+    const grace = await signUp(app, "grace@example.com")
+    const linus = await signUp(app, "linus@example.com")
+    const alan = await signUp(app, "alan@example.com")
+    const now = new Date()
+    const daysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+    // Only the rows below count as activity.
+    await sql`DELETE FROM auth_audits`
+    await sql`DELETE FROM audit_events`
+    await sql`UPDATE users SET last_seen_at = NULL, created_at = ${now} WHERE id = ${ada.id}`
+    await sql`UPDATE users SET created_at = ${daysAgo(3)}, blocked_at = ${now}
+      WHERE id = ${grace.id}`
+    await sql`UPDATE users SET created_at = ${daysAgo(10)}, last_seen_at = ${daysAgo(9)}
+      WHERE id = ${linus.id}`
+    await sql`UPDATE users SET created_at = ${daysAgo(40)}, deleted_at = ${now}
+      WHERE id = ${alan.id}`
+    await sql`INSERT INTO auth_audits (user_id, event_type, created_at)
+      VALUES (${ada.id}, ${AuthAuditEventType.SIGNED_IN}, ${now}),
+        (${grace.id}, ${AuthAuditEventType.SIGNED_IN}, ${daysAgo(1)})`
+    await sql`UPDATE users SET last_seen_at = NULL WHERE id IN (${ada.id}, ${grace.id})`
+    const [before] = await sql<{ groups: number; notes: number }[]>`
+      SELECT (SELECT COUNT(*) FROM groups WHERE deleted_at IS NULL)::int AS groups,
+        (SELECT COUNT(*) FROM notes WHERE deleted_at IS NULL)::int AS notes
+    `
+    const groupId = uuidV7()
+    await sql`INSERT INTO groups (id, name, owner_user_id) VALUES (${groupId}, 'Plans', ${ada.id})`
+    await sql`INSERT INTO notes (id, group_id, title, body, change_sequence, deleted_at)
+      VALUES (${uuidV7()}, ${groupId}, 'Secret recipe', 'The sauce is mostly butter', 1, NULL),
+        (${uuidV7()}, ${groupId}, 'Gone', 'Deleted text', 2, ${now})`
+
+    const stats = await new AppDbBase({ sql }).admin.stats(now)
+    const day = (date: Date) => date.toISOString().slice(0, 10)
+    const nonZero = (series: { day: string; count: number }[]) =>
+      series.filter((row) => row.count > 0)
+
+    expect(stats).toMatchObject({
+      people: 3,
+      blocked: 1,
+      newThisWeek: { current: 2, previous: 1 },
+      activeToday: { current: 1, previous: 1 },
+      activeThisWeek: { current: 2, previous: 1 },
+      groups: before.groups + 1,
+      notes: before.notes + 1,
+    })
+    expect(stats.signUpsPerDay.length).toBe(30)
+    expect(stats.signUpsPerDay.at(-1)!.day).toBe(day(now))
+    expect(nonZero(stats.signUpsPerDay)).toEqual([
+      { day: day(daysAgo(10)), count: 1 },
+      { day: day(daysAgo(3)), count: 1 },
+      { day: day(now), count: 1 },
+    ])
+    expect(nonZero(stats.activePerDay)).toEqual([
+      { day: day(daysAgo(9)), count: 1 },
+      { day: day(daysAgo(1)), count: 1 },
+      { day: day(now), count: 1 },
+    ])
+    const answer = JSON.stringify(stats)
+    for (const text of ["Secret", "butter", "Deleted text", "Plans", "example.com"]) {
+      expect(answer).not.toContain(text)
+    }
   })
 })
 

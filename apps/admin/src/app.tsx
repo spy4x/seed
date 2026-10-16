@@ -2,29 +2,67 @@ import "./app.css"
 import type { JSX } from "preact"
 import { useEffect, useMemo } from "preact/hooks"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
-import { Redirect, Route, Switch, useLocation, useSearch } from "wouter-preact"
+import { ThemeToggle } from "@spy4x/preact-ui/theme-toggle"
+import { Toastr } from "@spy4x/preact-ui/toastr"
+import type { createThemeStore } from "@spy4x/preact-signals/theme"
+import type { ToastStore } from "@spy4x/preact-signals/toast"
+import { Redirect, Route, Switch, useLocation } from "wouter-preact"
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
-import { adminUserFilterQuery, parseAdminUserFilter } from "@domain/identity"
-import { ADMIN_PATHS, AdminFrame, AdminNoAccess, AdminSignInScreen } from "@ui/admin-frame.tsx"
-import { AdminUsersScreen } from "@ui/admin-users-screen.tsx"
-import { AdminUserScreen } from "@ui/admin-user-screen.tsx"
-import { type AdminStore, hasAdminAccess, operatorName, operatorOf } from "./state.ts"
+import {
+  ADMIN_PATHS,
+  AdminFrame,
+  AdminNoAccess,
+  AdminShell,
+  AdminSignInScreen,
+} from "@ui/admin-frame.tsx"
+import { type AdminStore, hasAdminAccess, operatorName } from "./state.ts"
+import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
+import type { AdminContext, AdminModule } from "./modules/types.ts"
+
+export interface AppProps {
+  store: AdminStore
+  theme: ReturnType<typeof createThemeStore>
+  toasts: ToastStore
+  /** The modules to show; the registry's by default. Tests pass their own. */
+  modules?: readonly AdminModule[]
+}
 
 /**
- * The admin app (#146): operators find people and block, unblock or sign them out. It runs on its
- * own host, signs in with a password (and code) against the same API, and holds no code of the
- * SPA. Every screen comes from `libs/ui`; this file only wires the store and the address to them.
+ * The admin app (#146, #424): the operator area. It runs on its own host, signs in with a password
+ * (and code) against the same API, and holds no code of the SPA. Signed in, it shows the shell with
+ * one sidebar entry per module (`modules/registry.ts`) and the pages each module registers.
  */
-export function App({ store }: { store: AdminStore }): JSX.Element {
+export function App(
+  { store, theme, toasts, modules = ADMIN_MODULES }: AppProps,
+): JSX.Element {
   const session = store.session.value
   const [path, navigate] = useLocation()
   useRouteAnnouncer({ path })
+  // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
+  // far down the list would show with their header under the top bar. A tab change (`?tab=`) keeps
+  // the path and so the scroll.
+  useEffect(() => globalThis.scrollTo?.(0, 0), [path])
+  const user = session.step === "signed-in" ? session.user : null
+
+  // One context per signed-in session, so a module's state starts empty for the next one.
+  const context = useMemo<AdminContext | null>(
+    () =>
+      user && {
+        request: store.request,
+        toasts,
+        operator: user,
+        navigate,
+        personTabs: adminPersonTabs(modules),
+      },
+    [user?.id, modules],
+  )
+  const toastr = <Toastr toasts={toasts.list.value} onDismiss={toasts.remove} dataE2E="toasts" />
 
   if (session.step === "loading") {
     return <LoadingSpinner size="lg" label="Loading..." class="min-h-dvh bg-canvas" />
   }
 
-  if (session.step !== "signed-in" || !session.user) {
+  if (!user || !context) {
     const step = session.step === "one-time-code" ? "one-time-code" : "credentials"
     const wanted = step === "one-time-code" ? ADMIN_PATHS.oneTimeCode : ADMIN_PATHS.signIn
     if (path !== wanted) return <Redirect to={wanted} replace />
@@ -47,88 +85,39 @@ export function App({ store }: { store: AdminStore }): JSX.Element {
     )
   }
 
-  const user = session.user
   if (path === ADMIN_PATHS.signIn || path === ADMIN_PATHS.oneTimeCode) {
-    return <Redirect to={ADMIN_PATHS.users} replace />
+    return <Redirect to={ADMIN_PATHS.dashboard} replace />
   }
-  const access = hasAdminAccess(user)
+  if (!hasAdminAccess(user)) {
+    return (
+      <AdminFrame operatorName={operatorName(user)} canSignOut onSignOut={store.signOut}>
+        <AdminNoAccess />
+      </AdminFrame>
+    )
+  }
+
   return (
-    <AdminFrame
-      operatorName={operatorName(user)}
-      canSignOut
+    <AdminShell
+      navItems={modules.map((module) => module.nav)}
+      currentPath={path}
+      operator={{ name: operatorName(user), email: null }}
       onSignOut={store.signOut}
+      status={<ThemeToggle store={theme} />}
       navigate={navigate}
-      wide={access}
     >
-      {access
-        ? (
-          <Switch>
-            <Route path={ADMIN_PATHS.users}>
-              <UsersView store={store} />
+      <Switch>
+        {modules.flatMap((module) =>
+          module.routes.map(({ path: pattern, View }) => (
+            <Route key={`${module.id}:${pattern}`} path={pattern}>
+              {(params) => <View context={context} params={params as Record<string, string>} />}
             </Route>
-            <Route path="/users/:id">
-              {(params) => <UserView store={store} id={params.id} />}
-            </Route>
-            <Route>
-              <Redirect to={ADMIN_PATHS.users} replace />
-            </Route>
-          </Switch>
-        )
-        : <AdminNoAccess />}
-    </AdminFrame>
-  )
-}
-
-/** The user list. Its filter lives in the address, so back and forward step through searches. */
-function UsersView({ store }: { store: AdminStore }): JSX.Element {
-  const search = useSearch()
-  const [, navigate] = useLocation()
-  const filter = useMemo(() => parseAdminUserFilter(new URLSearchParams(search)), [search])
-  useEffect(() => {
-    store.loadList(filter)
-  }, [filter])
-  const state = store.list.value
-  const go = (next: typeof filter) => {
-    const query = adminUserFilterQuery(next)
-    navigate(query ? `${ADMIN_PATHS.users}?${query}` : ADMIN_PATHS.users)
-  }
-  return (
-    <AdminUsersScreen
-      filter={filter}
-      list={state.list}
-      pending={state.pending}
-      error={state.error}
-      onSearch={go}
-      onPage={(page) => go({ ...filter, page })}
-      navigate={navigate}
-    />
-  )
-}
-
-/** One person's page and the action dialog. */
-function UserView({ store, id }: { store: AdminStore; id: string }): JSX.Element {
-  const [, navigate] = useLocation()
-  const userId = /^[1-9]\d{0,9}$/.test(id) ? Number(id) : null
-  useEffect(() => {
-    store.closeDialog()
-    if (userId !== null) store.loadPerson(userId)
-  }, [userId])
-  const person = store.person.value
-  const dialog = store.dialog.value
-  const operator = operatorOf(store.session.value.user!)
-  const current = person.userId === userId
-  return (
-    <AdminUserScreen
-      detail={current ? person.detail : null}
-      error={userId === null ? "User not found" : current ? person.error : null}
-      operator={operator}
-      dialog={dialog.action}
-      onOpenDialog={store.openDialog}
-      onCloseDialog={store.closeDialog}
-      actionError={dialog.error}
-      pending={dialog.pending}
-      onAction={() => store.act()}
-      navigate={navigate}
-    />
+          ))
+        )}
+        <Route>
+          <Redirect to={ADMIN_PATHS.dashboard} replace />
+        </Route>
+      </Switch>
+      {toastr}
+    </AdminShell>
   )
 }

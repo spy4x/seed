@@ -2,11 +2,17 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
-import { type AdminUserRow, UserMFAStatus, UserRole } from "@domain/identity"
+import {
+  ADMIN_DEFAULT_SORT,
+  type AdminStats,
+  type AdminUserRow,
+  UserMFAStatus,
+  UserRole,
+} from "@domain/identity"
 import type { UserSignedOutEvent } from "@api/cqrs/events.ts"
 import { AdminActionKind, AdminActOutcome, type AdminService } from "@api/services/admin.ts"
-import type { APIContext } from "../_types.ts"
-import { buildAuthData } from "../_testing/fake-auth.ts"
+import type { APIContext } from "../../_types.ts"
+import { buildAuthData } from "../../_testing/fake-auth.ts"
 import {
   API_URL,
   crossSiteHeaders,
@@ -15,8 +21,12 @@ import {
   sameOriginWithoutCookieHeaders,
   testMutationGuards,
   testSessionGuards,
-} from "../_testing/mutation-requests.ts"
-import { ADMIN_OUTRANKED, ADMIN_SELF, createAdminRoute } from "./admin.ts"
+} from "../../_testing/mutation-requests.ts"
+import { createAdminRoute } from "./+routes.ts"
+import { ADMIN_OUTRANKED, ADMIN_SELF, createAdminUsersRoutes } from "./users.ts"
+import { createAdminStatsRoutes } from "./dashboard.ts"
+import { ADMIN_API_MODULES } from "./registry.ts"
+import type { AdminModuleContext } from "./module.ts"
 
 const target: AdminUserRow = {
   id: 42,
@@ -27,6 +37,19 @@ const target: AdminUserRow = {
   blockedAt: null,
   createdAt: "2026-10-01T10:00:00.000Z",
   lastSeenAt: null,
+}
+
+const stats: AdminStats = {
+  generatedAt: "2026-10-16T09:00:00.000Z",
+  people: 12,
+  blocked: 1,
+  newThisWeek: { current: 3, previous: 2 },
+  activeToday: { current: 4, previous: 5 },
+  activeThisWeek: { current: 9, previous: 7 },
+  groups: 2,
+  notes: 30,
+  signUpsPerDay: [{ day: "2026-10-16", count: 1 }],
+  activePerDay: [{ day: "2026-10-16", count: 4 }],
 }
 
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()
@@ -61,12 +84,30 @@ function buildApp(
         user: outcome === AdminActOutcome.Done ? target : undefined,
       })),
   }
+  const context = {
+    limit: passThrough,
+    emit: (event: UserSignedOutEvent) => emitted.push(event),
+    now: () => new Date(stats.generatedAt),
+  }
+  // The real registry, with the two modules that read data swapped for fakes of their services.
+  const modules = ADMIN_API_MODULES.map((module) => {
+    switch (module.id) {
+      case `users`:
+        return createAdminUsersRoutes({ ...context, admin })
+      case `dashboard`:
+        return createAdminStatsRoutes({
+          limit: passThrough,
+          stats: () => (calls.push(["stats"]), Promise.resolve(stats)),
+        })
+      default:
+        // The empty modules read nothing, so they never touch the database.
+        return module.routes({ ...context, db: null } as unknown as AdminModuleContext)
+    }
+  })
   const route = createAdminRoute({
     auth: testSessionGuards(),
     mutationGuards: testMutationGuards,
-    limit: passThrough,
-    admin,
-    emit: (event) => emitted.push(event),
+    modules,
   })
   return { app: mountRoute("/admin", route, auth), calls, emitted }
 }
@@ -79,7 +120,10 @@ const ROUTES = [
   { method: "POST", path: "/admin/users/42/block" },
   { method: "POST", path: "/admin/users/42/unblock" },
   { method: "POST", path: "/admin/users/42/sessions/end" },
+  { method: "GET", path: "/admin/stats" },
+  { method: "GET", path: "/admin/users?sort=name:asc,lastSeenAt:desc" },
   { method: "GET", path: "/admin" },
+  { method: "GET", path: "/admin/groups" },
   { method: "GET", path: "/admin/no-such-page" },
   { method: "DELETE", path: "/admin/users/42" },
 ]
@@ -148,8 +192,44 @@ describe("operator area routes", () => {
       query: "ada",
       role: UserRole.OPERATOR,
       blocked: "blocked",
+      sort: ADMIN_DEFAULT_SORT,
       page: 2,
     }]])
+  })
+
+  it("passes the list's sort from the query to the service, most significant rule first", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, ROUTES[7])
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual([["list", {
+      query: "",
+      role: null,
+      blocked: "any",
+      sort: [{ key: "name", direction: "asc" }, { key: "lastSeenAt", direction: "desc" }],
+      page: 1,
+    }]])
+  })
+
+  it("answers the dashboard's numbers to an operator", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, ROUTES[6])
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(stats)
+    expect(calls).toEqual([["stats"]])
+  })
+
+  it("registers every module once, in the sidebar's order", () => {
+    expect(ADMIN_API_MODULES.map((module) => module.id)).toEqual([
+      "dashboard",
+      "users",
+      "groups",
+      "newsletter",
+      "audit",
+      "system",
+      "api-tokens",
+    ])
   })
 
   it("shows one person to an operator, and 404 for an id that is no user", async () => {
@@ -159,9 +239,11 @@ describe("operator area routes", () => {
     expect((await send(app, { method: "GET", path: "/admin/users/abc" })).status).toBe(404)
   })
 
-  it("answers 404 to an operator on a path the area does not have", async () => {
+  it("answers 404 to an operator on a path the area does not have, or an empty module's", async () => {
     const { app } = buildApp()
-    expect((await send(app, ROUTES[7])).status).toBe(404)
+    expect((await send(app, ROUTES[8])).status).toBe(404)
+    expect((await send(app, ROUTES[9])).status).toBe(404)
+    expect((await send(app, ROUTES[10])).status).toBe(404)
   })
 
   it("blocks a person with no password asked, then closes their sockets", async () => {

@@ -222,6 +222,11 @@ The product cannot add a member yet, so tests seed one: the integration test ins
 the e2e spec calls `POST /api/test/add-member` (`apps/api/routes/dev.ts`, mounted only in
 development). Teach `POST /api/test/cleanup-user` to delete the new table's rows too.
 
+### 9. The admin counterpart
+
+Give the aggregate its operator view as an admin module: one folder in `apps/admin/src/modules/` and
+one file in `apps/api/routes/admin/`, as [admin-modules.md](admin-modules.md) describes.
+
 ## Relations between aggregates
 
 Tags are the worked example: a note names tags by id (`tagIds`), and a tag knows nothing of notes.

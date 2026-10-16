@@ -10,3 +10,15 @@
 @theme {
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
 }
+
+/* The operator area's own accent (#424): indigo, so an operator never mistakes it for the product,
+   whose accent is purple. Written after the tokens, so it wins the cascade. */
+:root {
+  --color-primary: oklch(0.398 0.195 277.366); /* indigo-800 */
+  --color-primary-muted: oklch(0.511 0.262 276.966); /* indigo-600 */
+}
+
+.dark {
+  --color-accent: oklch(0.457 0.24 277.023); /* indigo-700 */
+  --color-primary-muted: oklch(0.673 0.182 276.935); /* indigo-400 */
+}

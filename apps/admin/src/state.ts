@@ -1,16 +1,8 @@
 import { signal } from "@preact/signals"
 import { apiFetch } from "@spy4x/platform/api"
-import {
-  type AdminUserDetail,
-  type AdminUserFilter,
-  adminUserFilterQuery,
-  type AdminUserListResponse,
-  type AdminUserRow,
-  canOpenAdmin,
-  type User,
-} from "@domain/identity"
+import { canOpenAdmin, type User } from "@domain/identity"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
-import type { AdminAction, AdminOperator } from "@ui/admin-user-screen.tsx"
+import type { AdminOperator } from "@ui/admin-user-screen.tsx"
 
 /** One answer of the API: the data, or its status and message. */
 export type AdminApiResult<T> = Awaited<ReturnType<typeof apiFetch<T>>>
@@ -18,25 +10,23 @@ export type AdminApiResult<T> = Awaited<ReturnType<typeof apiFetch<T>>>
 /** What the API answers (202) while the session still owes its one-time code. */
 type PendingSecondFactor = { secondFactor: "Pending" }
 
-/** Every call the admin app makes. Injected, so the store's tests need no network. */
+/** One call to the API: a path on the app's own origin and its request. */
+export type AdminFetch = <T>(path: string, init?: RequestInit) => Promise<AdminApiResult<T>>
+
+/**
+ * The session calls the admin app makes, plus {@link AdminApi.fetch} for every module's own. Injected,
+ * so the store's tests need no network.
+ */
 export interface AdminApi {
   me(): Promise<AdminApiResult<User | PendingSecondFactor>>
   signIn(credentials: AuthCredentials): Promise<AdminApiResult<User | PendingSecondFactor>>
   oneTimeCode(otp: string): Promise<AdminApiResult<User>>
   signOut(): Promise<AdminApiResult<unknown>>
-  list(filter: AdminUserFilter): Promise<AdminApiResult<AdminUserListResponse>>
-  detail(userId: number): Promise<AdminApiResult<AdminUserDetail>>
-  act(userId: number, action: AdminAction): Promise<AdminApiResult<{ user: AdminUserRow }>>
+  fetch: AdminFetch
 }
 
-/** Each action's path under `/api/admin/users/:id/`. */
-const ACTION_PATHS: Record<AdminAction, string> = {
-  block: "block",
-  unblock: "unblock",
-  "end-sessions": "sessions/end",
-}
-
-const post = (body?: unknown): RequestInit => ({
+/** A `POST` with `body` as JSON, or with no body. */
+export const post = (body?: unknown): RequestInit => ({
   method: "POST",
   body: body === undefined ? undefined : JSON.stringify(body),
 })
@@ -47,12 +37,7 @@ export const adminHttp: AdminApi = {
   signIn: (credentials) => apiFetch("/api/auth/password/check", post(credentials)),
   oneTimeCode: (otp) => apiFetch("/api/auth/totp/check", post({ otp })),
   signOut: () => apiFetch("/api/auth/sign-out", post()),
-  list: (filter) => {
-    const query = adminUserFilterQuery(filter)
-    return apiFetch(`/api/admin/users${query ? `?${query}` : ""}`, {})
-  },
-  detail: (userId) => apiFetch(`/api/admin/users/${userId}`, {}),
-  act: (userId, action) => apiFetch(`/api/admin/users/${userId}/${ACTION_PATHS[action]}`, post()),
+  fetch: (path, init = {}) => apiFetch(path, init),
 }
 
 /** The message when a call failed without one of its own, as when the network is down. */
@@ -69,29 +54,6 @@ export interface AdminSessionState {
   error: string | null
 }
 
-export interface AdminListState {
-  /** The filter of the page the list shows, or is loading. */
-  filter: AdminUserFilter | null
-  list: AdminUserListResponse | null
-  pending: boolean
-  error: string | null
-}
-
-export interface AdminPersonState {
-  userId: number | null
-  detail: AdminUserDetail | null
-  error: string | null
-}
-
-export interface AdminDialogState {
-  action: AdminAction | null
-  /** Why the API refused the action, or `null`. */
-  error: string | null
-  pending: boolean
-}
-
-const NO_DIALOG: AdminDialogState = { action: null, error: null, pending: false }
-
 /** The operator the person page needs: who they are and their role. */
 export function operatorOf(user: User): AdminOperator {
   return { id: user.id, role: user.role }
@@ -107,7 +69,10 @@ export function operatorName(user: User): string {
   return `${user.firstName} ${user.lastName}`.trim() || "Operator"
 }
 
-async function attempt<T>(call: () => Promise<AdminApiResult<T>>): Promise<AdminApiResult<T>> {
+/** Runs `call`, turning a thrown error (the network is down) into a failed answer. */
+export async function attempt<T>(
+  call: () => Promise<AdminApiResult<T>>,
+): Promise<AdminApiResult<T>> {
   try {
     return await call()
   } catch {
@@ -116,9 +81,9 @@ async function attempt<T>(call: () => Promise<AdminApiResult<T>>): Promise<Admin
 }
 
 /**
- * The admin app's state: the session, the user list, the open person and the action dialog. A 401
- * from any call means the session is gone (it ended or the person was blocked), and the app goes
- * back to the sign-in.
+ * The admin app's session: being read, signed out, owing its code, or signed in. Every module
+ * calls the API through {@link request}: a 401 from any call means the session is gone (it ended
+ * or the operator was blocked), and the app goes back to the sign-in.
  */
 export function createAdminStore(api: AdminApi) {
   const session = signal<AdminSessionState>({
@@ -127,15 +92,9 @@ export function createAdminStore(api: AdminApi) {
     busy: false,
     error: null,
   })
-  const list = signal<AdminListState>({ filter: null, list: null, pending: false, error: null })
-  const person = signal<AdminPersonState>({ userId: null, detail: null, error: null })
-  const dialog = signal<AdminDialogState>(NO_DIALOG)
 
   function signedOut(error: string | null = null): void {
     session.value = { step: "credentials", user: null, busy: false, error }
-    list.value = { filter: null, list: null, pending: false, error: null }
-    person.value = { userId: null, detail: null, error: null }
-    dialog.value = NO_DIALOG
   }
 
   /** Applies a sign-in answer: a user signs in, a 202 asks for the code. */
@@ -151,11 +110,16 @@ export function createAdminStore(api: AdminApi) {
     session.value = { step: "signed-in", user: result.data as User, busy: false, error: null }
   }
 
-  const store = {
+  /** One call to the API for a module. A failed call answers its message; a 401 signs out. */
+  const request: AdminFetch = async <T>(path: string, init?: RequestInit) => {
+    const result = await attempt(() => api.fetch<T>(path, init))
+    if (!result.ok && result.status === 401) signedOut()
+    return result
+  }
+
+  return {
     session,
-    list,
-    person,
-    dialog,
+    request,
 
     /** Reads the session the cookie holds, if any. */
     async start(): Promise<void> {
@@ -189,62 +153,7 @@ export function createAdminStore(api: AdminApi) {
       await attempt(() => api.signOut())
       signedOut()
     },
-
-    async loadList(filter: AdminUserFilter): Promise<void> {
-      list.value = { ...list.value, filter, pending: true, error: null }
-      const result = await attempt(() => api.list(filter))
-      // An answer for a filter the page has left is dropped.
-      if (list.value.filter !== filter) return
-      if (result.ok) {
-        list.value = { filter, list: result.data, pending: false, error: null }
-      } else if (result.status === 401) {
-        signedOut()
-      } else {
-        list.value = { ...list.value, pending: false, error: result.error.message }
-      }
-    },
-
-    async loadPerson(userId: number): Promise<void> {
-      if (person.value.userId !== userId) {
-        person.value = { userId, detail: null, error: null }
-      }
-      const result = await attempt(() => api.detail(userId))
-      if (person.value.userId !== userId) return
-      if (result.ok) person.value = { userId, detail: result.data, error: null }
-      else if (result.status === 401) signedOut()
-      else person.value = { userId, detail: null, error: result.error.message }
-    },
-
-    openDialog(action: AdminAction): void {
-      dialog.value = { action, error: null, pending: false }
-    },
-
-    closeDialog(): void {
-      if (dialog.value.pending) return
-      dialog.value = NO_DIALOG
-    },
-
-    /**
-     * Sends the open dialog's action. It asks for no password: the API records the operator in the
-     * audit trail. On success the dialog closes and the person is read again, so their sessions,
-     * status and audit trail show what changed.
-     */
-    async act(): Promise<void> {
-      const { action, pending } = dialog.value
-      const userId = person.value.userId
-      if (!action || pending || userId === null || !session.value.user) return
-      dialog.value = { action, error: null, pending: true }
-      const result = await attempt(() => api.act(userId, action))
-      if (result.ok) {
-        dialog.value = NO_DIALOG
-        await store.loadPerson(userId)
-        return
-      }
-      if (result.status === 401) return signedOut()
-      dialog.value = { action, error: result.error.message, pending: false }
-    },
   }
-  return store
 }
 
 export type AdminStore = ReturnType<typeof createAdminStore>

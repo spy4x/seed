@@ -1,7 +1,7 @@
 /**
  * The operator area's reads and writes over `users`, `auth_keys`, `group_members` and
  * `auth_audits` (#146): the searchable user list, one person's detail, blocking and setting a role.
- * Who may call them is the API's business (`apps/api/routes/admin.ts`); nothing here checks it.
+ * Who may call them is the API's business (`apps/api/routes/admin/users.ts`); nothing here checks it.
  *
  * Reads no environment and imports no singleton: the API and the role script both use it.
  *
@@ -9,13 +9,16 @@
  */
 
 import type postgres from "postgres"
+import type { SortRule } from "@spy4x/platform/universal/sort"
 import {
   ADMIN_AUDIT_LIMIT,
+  ADMIN_DEFAULT_SORT,
   type AdminAuditRow,
   type AdminSignInMethod,
   type AdminUserFilter,
   type AdminUserGroup,
   type AdminUserRow,
+  type AdminUserSortKey,
   type UserRole,
 } from "@domain/identity"
 
@@ -71,9 +74,40 @@ function toRow(row: UserRowRaw): AdminUserRow {
 }
 
 /**
- * One page of the people who are not deleted, newest first, with how many match in all. Each word
- * of `filter.query` must appear, in any case, in the first name, the last name, an address a key
- * holds or the password key's subject.
+ * The `ORDER BY` of one sort key and direction. Only these fragments ever reach the query: the key
+ * and direction come from the page's address, so neither is ever written into the SQL as text.
+ */
+function sortColumn(sql: postgres.Sql, rule: SortRule<AdminUserSortKey>) {
+  const desc = rule.direction === "desc"
+  switch (rule.key) {
+    case "name":
+      return desc
+        ? sql`lower(concat_ws(' ', u.first_name, u.last_name)) DESC`
+        : sql`lower(concat_ws(' ', u.first_name, u.last_name)) ASC`
+    case "role":
+      return desc ? sql`u.role DESC` : sql`u.role ASC`
+    case "lastSeenAt":
+      return desc ? sql`u.last_seen_at DESC NULLS LAST` : sql`u.last_seen_at ASC NULLS LAST`
+    case "createdAt":
+      return desc ? sql`u.created_at DESC` : sql`u.created_at ASC`
+  }
+}
+
+/**
+ * The list's `ORDER BY`: each rule of `sort` in turn (newest first when it has none), then the id
+ * in the direction of the first rule, so equal values keep one order from page to page.
+ */
+function orderBy(sql: postgres.Sql, sort: readonly SortRule<AdminUserSortKey>[]) {
+  const rules = sort.length > 0 ? sort : ADMIN_DEFAULT_SORT
+  let clause = sortColumn(sql, rules[0])
+  for (const rule of rules.slice(1)) clause = sql`${clause}, ${sortColumn(sql, rule)}`
+  return rules[0].direction === "desc" ? sql`${clause}, u.id DESC` : sql`${clause}, u.id ASC`
+}
+
+/**
+ * One page of the people who are not deleted, in the order of `filter.sort` (newest first by
+ * default), with how many match in all. Each word of `filter.query` must appear, in any case, in
+ * the first name, the last name, an address a key holds or the password key's subject.
  */
 export async function listAdminUsers(
   sql: postgres.Sql,
@@ -99,7 +133,7 @@ export async function listAdminUsers(
   `
   const rows = await sql<UserRowRaw[]>`
     SELECT ${userColumns(sql)} FROM users u WHERE ${where}
-    ORDER BY u.created_at DESC, u.id DESC
+    ORDER BY ${orderBy(sql, filter.sort)}
     LIMIT ${pageSize} OFFSET ${(filter.page - 1) * pageSize}
   `
   return { users: rows.map(toRow), total }

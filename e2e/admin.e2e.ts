@@ -4,8 +4,8 @@ import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /**
- * The admin app (#146) on its own host: an operator signs in there, finds a person and blocks
- * them. The person's open page signs out, their session is gone and their password no longer
+ * The admin app (#146, #424) on its own host: an operator signs in there, lands on the dashboard,
+ * finds a person and blocks them. The person's open page signs out, their session is gone and their password no longer
  * signs in.
  */
 
@@ -61,6 +61,15 @@ test.describe("the admin app", () => {
       await ops.locator("[data-e2e=auth-form-login]").fill(operatorEmail)
       await ops.locator("[data-e2e=auth-form-password]").fill(password)
       await ops.locator("[data-e2e=auth-form-submit]").click()
+      await expect(ops).toHaveURL(`${adminBase}/`)
+      await expect(ops.locator("[data-e2e=admin-dashboard-title]")).toBeVisible()
+      await expect(ops.locator("[data-e2e=admin-dashboard-stats]")).toContainText("People")
+      await expect(ops.locator("[data-e2e=admin-chart-sign-ups] svg").first()).toBeVisible()
+
+      // The sidebar opens the people.
+      await ops.getByRole("navigation", { name: "Admin sections" })
+        .getByRole("link", { name: "Users" }).click()
+      await expect(ops).toHaveURL(`${adminBase}/users`)
       await expect(ops.locator("[data-e2e=admin-users-title]")).toBeVisible()
 
       // Finds the person by address and opens their page.
@@ -69,15 +78,46 @@ test.describe("the admin app", () => {
       await expect(ops).toHaveURL(new RegExp(`\\?q=${encodeURIComponent(targetEmail)}`))
       const row = ops.locator("[data-e2e=admin-users-list] a")
       await expect(row).toHaveCount(1)
+      // Opened from a list scrolled down on a short screen, the person's page starts at its top.
+      await ops.setViewportSize({ width: 390, height: 200 })
+      // On a phone the person's column keeps its width, so the name does not wrap letter by letter.
+      const cell = await row.locator("xpath=ancestor::td").boundingBox()
+      expect(cell?.width ?? 0).toBeGreaterThanOrEqual(192)
+      await ops.evaluate(() => globalThis.scrollTo(0, document.body.scrollHeight))
+      await expect.poll(() => ops.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0)
       await row.click()
+      await expect(ops.locator("[data-e2e=admin-user-title]")).toContainText(targetEmail)
+      await expect.poll(() => ops.evaluate(() => globalThis.scrollY)).toBe(0)
+      // On a phone the person's tabs stay in one row that scrolls sideways inside the page, and the
+      // keyboard still reaches the last one and scrolls it into view.
+      const tabs = ops.getByRole("tab")
+      const tops = await tabs.evaluateAll((all) =>
+        all.map((tab) => Math.round(tab.getBoundingClientRect().top))
+      )
+      expect(tops.length).toBeGreaterThan(5)
+      expect(new Set(tops).size).toBe(1)
+      await tabs.first().focus()
+      await ops.keyboard.press("End")
+      await expect(tabs.last()).toBeFocused()
+      await expect(tabs.last()).toBeInViewport({ ratio: 0.9 })
+      // The row scrolled, not the page.
+      expect(await ops.getByRole("tablist").evaluate((list) => list.scrollLeft)).toBeGreaterThan(0)
+      expect(await ops.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+        390,
+      )
+      await ops.setViewportSize({ width: 1280, height: 720 })
+      await ops.getByRole("tab", { name: /Sessions/ }).click()
+      await expect(ops).toHaveURL(/\?tab=sessions$/)
       await expect(ops.locator("[data-e2e=admin-user-sessions] li")).toHaveCount(1)
 
       // Blocks them: the dialog only confirms, it asks for no password.
       await ops.locator("[data-e2e=admin-user-menu]").click()
       await ops.locator("[data-e2e=admin-block-open]").click()
       await ops.locator("[data-e2e=admin-action-submit]").click()
+      await expect(ops.locator("[data-e2e=toasts]")).toContainText("is blocked")
       await expect(ops.locator("[data-e2e=admin-user-blocked-notice]")).toBeVisible()
       await expect(ops.locator("[data-e2e=admin-user-sessions] li")).toHaveCount(0)
+      await ops.getByRole("tab", { name: "Activity" }).click()
       await expect(ops.locator("[data-e2e=admin-user-audits]")).toContainText(
         "Blocked by an operator",
       )

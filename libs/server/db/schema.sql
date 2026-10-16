@@ -685,6 +685,8 @@ CREATE TABLE auth_audits (
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
 CREATE INDEX idx_auth_audits_event_type ON auth_audits (event_type);
+-- #424: the dashboard's active people per day read the trail by time alone.
+CREATE INDEX idx_auth_audits_created_at ON auth_audits (created_at);
 
 -- #165: starter data on sign-up. See migration 2026_10_26_0001_starter_data.sql. Sign-up writes one
 -- row here and queues a worker job that names it. The job creates the welcome note in the person's

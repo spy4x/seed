@@ -2,6 +2,7 @@ import { type } from "arktype"
 import { BaseModelSchema, dateSchema } from "@spy4x/platform/model"
 import type { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
+import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
 // general-purpose package. Moved here from the deleted libs/platform/types/+index.ts.
@@ -735,6 +736,22 @@ export const ADMIN_AUDIT_LIMIT = 50
 /** Whether the list shows blocked people, people who are not, or both. */
 export type AdminBlockedFilter = "any" | "blocked" | "active"
 
+/** A column the user list sorts by, on the server. */
+export type AdminUserSortKey = "name" | "role" | "lastSeenAt" | "createdAt"
+
+/** Every {@link AdminUserSortKey}, in the order the list's columns show them. */
+export const ADMIN_USER_SORT_KEYS: readonly AdminUserSortKey[] = [
+  "name",
+  "role",
+  "lastSeenAt",
+  "createdAt",
+]
+
+/** The order of the user list when the address names none: newest first. */
+export const ADMIN_DEFAULT_SORT: SortRule<AdminUserSortKey>[] = [
+  { key: "createdAt", direction: "desc" },
+]
+
 /** The search and filters of the user list, as the page's address and the API's query carry them. */
 export interface AdminUserFilter {
   /** Words that must each appear in the name or an address; `""` for everyone. */
@@ -742,17 +759,28 @@ export interface AdminUserFilter {
   /** Only people with this role, or `null` for every role. */
   role: UserRole | null
   blocked: AdminBlockedFilter
+  /**
+   * The order, most significant rule first. Empty means the default order, newest first; the
+   * server breaks every tie by id, so a page never shows a person twice.
+   */
+  sort: SortRule<AdminUserSortKey>[]
   /** 1-based. */
   page: number
 }
 
-/** The filter that shows everyone, first page. */
-export const ADMIN_NO_FILTER: AdminUserFilter = { query: "", role: null, blocked: "any", page: 1 }
+/** The filter that shows everyone, first page, newest first. */
+export const ADMIN_NO_FILTER: AdminUserFilter = {
+  query: "",
+  role: null,
+  blocked: "any",
+  sort: ADMIN_DEFAULT_SORT,
+  page: 1,
+}
 
 /**
- * Reads the user list's filter from query parameters (`q`, `role`, `blocked`, `page`). A value it
- * does not understand falls back to the default for that part, so a hand-edited address still
- * shows a list.
+ * Reads the user list's filter from query parameters (`q`, `role`, `blocked`, `sort`, `page`). A
+ * value it does not understand falls back to the default for that part, so a hand-edited address
+ * still shows a list. `sort=none` reads as no sort rules: the operator turned every sort off.
  */
 export function parseAdminUserFilter(params: URLSearchParams): AdminUserFilter {
   const query = (params.get("q") ?? "").trim().slice(0, ADMIN_SEARCH_MAX_LENGTH)
@@ -768,7 +796,9 @@ export function parseAdminUserFilter(params: URLSearchParams): AdminUserFilter {
   const page = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= 100_000
     ? pageNumber
     : 1
-  return { query, role, blocked, page }
+  // `none` reads as no rules: the operator turned every column's sort off.
+  const sort = parseSort(params.get("sort"), ADMIN_USER_SORT_KEYS, ADMIN_DEFAULT_SORT)
+  return { query, role, blocked, sort, page }
 }
 
 /** The query string of `filter`, leaving out every part at its default. No leading `?`. */
@@ -777,6 +807,52 @@ export function adminUserFilterQuery(filter: AdminUserFilter): string {
   if (filter.query) params.set("q", filter.query)
   if (filter.role !== null) params.set("role", String(filter.role))
   if (filter.blocked !== "any") params.set("blocked", filter.blocked)
+  const sort = serializeSort(filter.sort)
+  if (sort !== serializeSort(ADMIN_DEFAULT_SORT)) params.set("sort", sort)
   if (filter.page > 1) params.set("page", String(filter.page))
   return params.toString()
+}
+
+/** A count now and over the period before, for a stat card's change. */
+export interface AdminStatChange {
+  current: number
+  previous: number
+}
+
+/** One day of a 30-day chart: the UTC day (`YYYY-MM-DD`) and its count. */
+export interface AdminDailyCount {
+  day: string
+  count: number
+}
+
+/** How many days the dashboard's charts cover, today included. */
+export const ADMIN_STATS_DAYS = 30
+
+/**
+ * The answer of `GET /api/admin/stats`: the dashboard's numbers. Counts only, never content. A
+ * person is active on a day when they did something the product records that day: an entry in
+ * their audit trail (a sign-in, a profile change, a token used), an entry in a group's activity,
+ * or their last-seen time.
+ */
+export interface AdminStats {
+  /** When the numbers were read. ISO 8601. */
+  generatedAt: string
+  /** People with an account that is not deleted. */
+  people: number
+  /** Blocked people among them. */
+  blocked: number
+  /** Sign-ups in the last 7 days, and in the 7 days before. */
+  newThisWeek: AdminStatChange
+  /** Active people today (UTC), and yesterday. */
+  activeToday: AdminStatChange
+  /** Active people in the last 7 days, and in the 7 days before. */
+  activeThisWeek: AdminStatChange
+  /** Groups that are not deleted. */
+  groups: number
+  /** Notes that are not deleted. */
+  notes: number
+  /** Sign-ups per UTC day, oldest first, {@link ADMIN_STATS_DAYS} days ending today. */
+  signUpsPerDay: AdminDailyCount[]
+  /** Active people per UTC day, oldest first, the same days. */
+  activePerDay: AdminDailyCount[]
 }

@@ -19,9 +19,8 @@ import { createGroupsRoute } from "./routes/groups.ts"
 import { createNotesRoute } from "./routes/notes.ts"
 import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
-import { createAdminRoute } from "./routes/admin.ts"
-import { createAdmin } from "./services/admin.ts"
-import { ADMIN_USERS_PAGE_SIZE } from "@domain/identity"
+import { createAdminRoute } from "./routes/admin/+routes.ts"
+import { adminModuleRoutes } from "./routes/admin/registry.ts"
 import { createTokenApiRoute } from "./routes/token-api.ts"
 import { createApiTokens } from "./services/api-tokens.ts"
 import { createTokenRateLimits } from "./middlewares/token-rate-limits.ts"
@@ -176,15 +175,13 @@ app.route(
     tokens: apiTokens,
   }),
 )
-// The operator area (#146). The route answers 404 to anyone below operator.
+// The operator area (#146) and its modules (#424). The gate answers 404 to anyone below operator.
 app.route(
   "/admin",
   createAdminRoute({
     auth: signIn.auth,
     mutationGuards,
-    limit: rateLimits.normal,
-    admin: createAdmin({ db, pageSize: ADMIN_USERS_PAGE_SIZE }),
-    emit,
+    modules: adminModuleRoutes({ db, limit: rateLimits.normal, emit, now: () => new Date() }),
   }),
 )
 // The only routes that accept a token, and they accept nothing else.

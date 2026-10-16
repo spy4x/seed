@@ -45,6 +45,7 @@ import {
   setUserBlocked,
   setUserRoleByAddress,
 } from "@server/auth/admin-users.ts"
+import { readAdminStats } from "@server/auth/admin-stats.ts"
 import type { AdminUserFilter, UserRole } from "@domain/identity"
 
 /** A user's authenticator-app enrolment, one row of `user_totp`. */
@@ -332,6 +333,8 @@ export class AppDbBase extends DbServiceBase {
       /** Gives the person who signs in with `address` the role, and answers their id or `null`. */
       setRoleByAddress: (address: string, role: UserRole) =>
         setUserRoleByAddress(sql, address, role),
+      /** The dashboard's counts and 30-day series as of `now` (#424). */
+      stats: (now: Date) => readAdminStats(sql, now),
     }
   }
 

@@ -1,17 +1,21 @@
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { timeAgo } from "@spy4x/platform/universal/time"
+import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
+import { Tabs } from "@spy4x/preact-ui/tabs"
+import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { type AdminUserDetail, AuthAuditEventType, type UserRole } from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
-import { adminUserName, roleLabel } from "./admin-users-screen.tsx"
+import { adminUserName, roleColor, roleLabel } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 /** What an operator can do to a person; each is confirmed in a dialog first. */
@@ -25,6 +29,36 @@ export interface AdminOperator {
 
 /** What a group role is called in the person's group list. */
 const GROUP_ROLES: Record<number, string> = { 1: "Viewer", 2: "Editor", 3: "Admin", 4: "Owner" }
+
+/**
+ * Each audit event's dot on the Activity timeline. Routine events stay neutral; a new or restored
+ * account is good news; anything that takes access away or may be an attack is a warning; a block
+ * is the one danger. The title still says what happened, so the colour is never the only sign.
+ */
+const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
+  [AuthAuditEventType.SIGNED_UP]: "success",
+  [AuthAuditEventType.SIGNED_IN]: "neutral",
+  [AuthAuditEventType.SIGNED_OUT]: "neutral",
+  [AuthAuditEventType.PROFILE_UPDATED]: "neutral",
+  [AuthAuditEventType.ACCOUNT_DELETION_REQUESTED]: "warning",
+  [AuthAuditEventType.ACCOUNT_RESTORED]: "success",
+  [AuthAuditEventType.SESSIONS_ENDED]: "warning",
+  [AuthAuditEventType.API_TOKEN_CREATED]: "neutral",
+  [AuthAuditEventType.API_TOKEN_USED]: "neutral",
+  [AuthAuditEventType.API_TOKEN_REVOKED]: "warning",
+  [AuthAuditEventType.API_TOKENS_PURGED]: "neutral",
+  [AuthAuditEventType.API_TOKEN_REFUSED]: "warning",
+  [AuthAuditEventType.SIGN_IN_METHOD_LINKED]: "neutral",
+  [AuthAuditEventType.SIGN_IN_METHOD_UNLINKED]: "warning",
+  [AuthAuditEventType.UNCONFIRMED_ADDRESS_TAKEN]: "warning",
+  [AuthAuditEventType.USER_BLOCKED]: "danger",
+  [AuthAuditEventType.USER_UNBLOCKED]: "success",
+}
+
+/** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
+export function auditTone(eventType: AuthAuditEventType): TimelineTone {
+  return AUDIT_TONES[eventType] ?? "neutral"
+}
 
 /** What each audit row says happened. */
 const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
@@ -82,12 +116,30 @@ export function canActOn(operator: Pick<AdminOperator, "id" | "role">, user: {
   return operator.id !== user.id && user.role < operator.role
 }
 
+/** The person page's own tabs, in order. A module may add more after them. */
+export const ADMIN_USER_TABS = ["overview", "methods", "sessions", "groups", "activity"] as const
+
+/** One of {@link ADMIN_USER_TABS}. */
+export type AdminUserTab = typeof ADMIN_USER_TABS[number]
+
+/** A tab a module adds to the person page (`apps/admin/src/modules/`): its id, name and content. */
+export interface AdminExtraTab {
+  id: string
+  label: string
+  content: ComponentChildren
+}
+
 export interface AdminUserScreenProps {
   /** The person, or `null` while it loads or when it could not be read. */
   detail: AdminUserDetail | null
   /** Why the person could not be read, or `null`. */
   error: string | null
   operator: AdminOperator
+  /** The tab shown: one of {@link ADMIN_USER_TABS} or an extra tab's id. */
+  tab: string
+  onTab: (tab: string) => void
+  /** The modules' tabs, after the page's own. */
+  extraTabs?: readonly AdminExtraTab[]
   /** The action whose dialog is open, or `null`. */
   dialog: AdminAction | null
   onOpenDialog: (action: AdminAction) => void
@@ -102,9 +154,10 @@ export interface AdminUserScreenProps {
 }
 
 /**
- * One person in the admin app: their account, how they sign in, their sessions, their groups and
- * the newest rows of their audit trail. The "More actions" menu blocks, unblocks or ends every
- * session, each confirmed in a dialog. No password is asked: the audit trail records who acted.
+ * One person in the admin app (#424): a header card with their avatar, name, badges and the one
+ * "More actions" menu, then tabs for their account, how they sign in, their sessions, their groups
+ * and their activity, plus any tab a module adds. The menu blocks, unblocks or ends every session,
+ * each confirmed in a dialog. No password is asked: the audit trail records who acted.
  */
 export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
   const { detail, error, operator, dialog, navigate } = props
@@ -115,8 +168,12 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
       <Stack>
         <PageHeader title="User" back={back} navigate={navigate} />
         {error
-          ? <ErrorState message={error} />
-          : <p class="text-sm text-muted" role="status">Loading...</p>}
+          ? <ErrorState message={error} dataE2E="admin-user-error" />
+          : (
+            <div role="status" aria-label="Loading the person">
+              <LoadingSkeleton rows={4} />
+            </div>
+          )}
       </Stack>
     )
   }
@@ -145,102 +202,96 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
     </>
   )
 
+  const name = adminUserName(user)
+  const tabs = [
+    { id: "overview", label: "Overview", content: <Overview detail={detail} /> },
+    { id: "methods", label: `Sign-in methods`, content: <Methods detail={detail} /> },
+    {
+      id: "sessions",
+      label: <TabLabel text="Sessions" count={detail.sessions.length} />,
+      content: <Sessions detail={detail} />,
+    },
+    {
+      id: "groups",
+      label: <TabLabel text="Groups" count={detail.groups.length} />,
+      content: <Groups detail={detail} />,
+    },
+    { id: "activity", label: "Activity", content: <Activity detail={detail} /> },
+    ...(props.extraTabs ?? []),
+  ]
+  const active = tabs.some((tab) => tab.id === props.tab) ? props.tab : "overview"
+
   return (
     <Stack>
       <PageHeader
-        title={adminUserName(user)}
+        title={name}
         subtitle={user.email ?? undefined}
+        mark={<Avatar name={name} size="md" />}
         back={back}
         navigate={navigate}
         menu={menu || undefined}
         menuDataE2E="admin-user-menu"
         titleDataE2E="admin-user-title"
       />
-      {!actOn && (
-        <p class="text-sm text-muted" data-e2e="admin-user-no-actions">
-          {operator.id === user.id
-            ? "This is your own account. Operators cannot act on themselves here."
-            : "Their role is yours or higher, so you cannot act on this account."}
-        </p>
-      )}
-      {user.blockedAt && (
-        <Notice tone="danger" data-e2e="admin-user-blocked-notice">
-          Blocked{" "}
-          <time dateTime={user.blockedAt}>{timeAgo(user.blockedAt)}</time>. They cannot sign in.
-        </Notice>
-      )}
-
-      <SettingGroup title="Account">
-        <SettingList>
-          <SettingRow label="Address" value={user.email ?? "None"} />
-          <SettingRow label="Role" value={roleLabel(user.role)} />
-          <SettingRow
-            label="Status"
-            value={user.blockedAt
-              ? <Badge text="Blocked" color="red" data-e2e="admin-user-status" />
-              : <Badge text="Active" color="green" data-e2e="admin-user-status" />}
-          />
-          <SettingRow label="Created" value={<When at={user.createdAt} />} />
-          <SettingRow
-            label="Last seen"
-            value={user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}
-          />
-        </SettingList>
-      </SettingGroup>
-
-      <SettingGroup title="Sign-in methods">
-        <Rows empty="No way to sign in." dataE2E="admin-user-methods">
-          {detail.methods.map((method) => (
-            <li key={`${method.method}-${method.createdAt}`} class={ROW}>
-              <span class="font-medium">{methodName(method.method)}</span>
-              {method.email && <span class="text-sm text-muted wrap-anywhere">{method.email}</span>}
-              <span class="text-xs text-muted">{method.provenAt ? "Proven" : "Not proven"}</span>
-            </li>
-          ))}
-        </Rows>
-      </SettingGroup>
-
-      <SettingGroup title="Sessions">
-        <Rows empty="Signed in nowhere." dataE2E="admin-user-sessions">
-          {detail.sessions.map((session) => (
-            <li key={session.id} class={ROW}>
-              <span class="font-medium">{session.deviceName}</span>
-              {session.ipHint && <span class="text-sm text-muted">{session.ipHint}</span>}
-              <span class="text-xs text-muted">
-                Last active <When at={session.lastUsedAt} />
+      <div
+        class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4"
+        data-e2e="admin-user-card"
+      >
+        <div class="flex flex-wrap items-center gap-2">
+          <Badge text={roleLabel(user.role)} color={roleColor(user.role)} />
+          {user.blockedAt
+            ? (
+              <span data-e2e="admin-user-status">
+                <Badge text="Blocked" color="red" />
               </span>
-            </li>
-          ))}
-        </Rows>
-      </SettingGroup>
-
-      <SettingGroup title="Groups">
-        <Rows empty="In no group." dataE2E="admin-user-groups">
-          {detail.groups.map((group) => (
-            <li key={group.id} class={ROW}>
-              <span class="font-medium wrap-anywhere">{group.name}</span>
-              <span class="text-xs text-muted">{GROUP_ROLES[group.role] ?? "Member"}</span>
-            </li>
-          ))}
-        </Rows>
-      </SettingGroup>
-
-      <SettingGroup title="Audit trail" description="The newest events first.">
-        <Rows empty="Nothing recorded." dataE2E="admin-user-audits">
-          {detail.audits.map((audit) => (
-            <li key={audit.id} class={ROW} data-e2e={`admin-audit-${audit.eventType}`}>
-              <span class="font-medium">{AUDIT_EVENTS[audit.eventType] ?? "Other event"}</span>
-              {audit.identifier && (
-                <span class="text-sm text-muted wrap-anywhere">{audit.identifier}</span>
-              )}
-              <span class="text-xs text-muted">
-                <When at={audit.createdAt} />
-                {audit.ip && ` from ${audit.ip}`}
+            )
+            : (
+              <span data-e2e="admin-user-status">
+                <Badge text="Active" color="green" />
               </span>
-            </li>
-          ))}
-        </Rows>
-      </SettingGroup>
+            )}
+          {operator.id === user.id && <Badge text="You" color="gray" type="outline" />}
+        </div>
+        <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Fact label="Created">
+            <When at={user.createdAt} />
+          </Fact>
+          <Fact label="Last seen">{user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}</Fact>
+          <Fact label="Sessions">{detail.sessions.length}</Fact>
+          <Fact label="Groups">{detail.groups.length}</Fact>
+        </dl>
+        {user.blockedAt && (
+          <Notice tone="danger" data-e2e="admin-user-blocked-notice">
+            Blocked{" "}
+            <time dateTime={user.blockedAt}>{timeAgo(user.blockedAt)}</time>. They cannot sign in.
+          </Notice>
+        )}
+        {!actOn && (
+          <p class="text-sm text-muted" data-e2e="admin-user-no-actions">
+            {operator.id === user.id
+              ? "This is your own account. Operators cannot act on themselves here."
+              : "Their role is yours or higher, so you cannot act on this account."}
+          </p>
+        )}
+      </div>
+
+      {
+        /*
+        One row that scrolls sideways: eight tabs wrapped onto three rows on a phone. The arrow keys
+        still move between them, and focus scrolls the chosen tab into view. The bottom padding keeps
+        the active tab's underline inside the scroll box.
+      */
+      }
+      <Tabs
+        tabs={tabs}
+        active={active}
+        onChange={props.onTab}
+        lazy
+        label="About this person"
+        listClass="flex-nowrap overflow-x-auto pb-px"
+        panelClass="pt-4"
+        tabDataE2E="admin-user-tab"
+      />
 
       {actOn && dialog && (
         <ActionDialog
@@ -255,13 +306,132 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
   )
 }
 
+/** A tab's name with how many rows it holds. */
+function TabLabel({ text, count }: { text: string; count: number }): JSX.Element {
+  return (
+    <span class="inline-flex items-center gap-2">
+      {text}
+      <span class="rounded-full bg-canvas px-2 text-xs text-muted">{count}</span>
+    </span>
+  )
+}
+
+/** One fact of the header card. */
+function Fact({ label, children }: { label: string; children: ComponentChildren }): JSX.Element {
+  return (
+    <div class="flex min-w-0 flex-col gap-1">
+      <dt class="text-xs font-medium uppercase tracking-wide text-muted">{label}</dt>
+      <dd class="truncate text-sm font-medium">{children}</dd>
+    </div>
+  )
+}
+
+function Overview({ detail }: { detail: AdminUserDetail }): JSX.Element {
+  const { user } = detail
+  return (
+    <SettingGroup title="Account">
+      <SettingList>
+        <SettingRow label="Address" value={user.email ?? "None"} />
+        <SettingRow label="Role" value={roleLabel(user.role)} />
+        <SettingRow label="Status" value={user.blockedAt ? "Blocked" : "Active"} />
+        <SettingRow label="Created" value={<When at={user.createdAt} />} />
+        <SettingRow
+          label="Last seen"
+          value={user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}
+        />
+      </SettingList>
+    </SettingGroup>
+  )
+}
+
+function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
+  return (
+    <Rows empty="No way to sign in." dataE2E="admin-user-methods">
+      {detail.methods.map((method) => (
+        <li key={`${method.method}-${method.createdAt}`} class={ROW}>
+          <span class="font-medium">{methodName(method.method)}</span>
+          {method.email && <span class="text-sm text-muted wrap-anywhere">{method.email}</span>}
+          <span class="ml-auto">
+            {method.provenAt
+              ? <Badge text="Proven" color="green" type="outline" />
+              : <Badge text="Not proven" color="orange" type="outline" />}
+          </span>
+        </li>
+      ))}
+    </Rows>
+  )
+}
+
+function Sessions({ detail }: { detail: AdminUserDetail }): JSX.Element {
+  return (
+    <Rows empty="Signed in nowhere." dataE2E="admin-user-sessions">
+      {detail.sessions.map((session) => (
+        <li key={session.id} class={ROW}>
+          <span class="font-medium">{session.deviceName}</span>
+          {session.ipHint && <span class="text-sm text-muted">{session.ipHint}</span>}
+          <span class="ml-auto text-xs text-muted">
+            Last active <When at={session.lastUsedAt} />
+          </span>
+        </li>
+      ))}
+    </Rows>
+  )
+}
+
+function Groups({ detail }: { detail: AdminUserDetail }): JSX.Element {
+  return (
+    <Rows empty="In no group." dataE2E="admin-user-groups">
+      {detail.groups.map((group) => (
+        <li key={group.id} class={ROW}>
+          <span class="font-medium wrap-anywhere">{group.name}</span>
+          <span class="ml-auto">
+            <Badge text={GROUP_ROLES[group.role] ?? "Member"} color="gray" type="outline" />
+          </span>
+        </li>
+      ))}
+    </Rows>
+  )
+}
+
+/** The newest rows of the person's audit trail, newest first, on a timeline. */
+function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
+  return (
+    <Timeline
+      label="Activity"
+      empty="Nothing recorded."
+      dataE2E="admin-user-audits"
+      items={detail.audits.map((audit) => {
+        const parts = [audit.identifier, audit.ip && `from ${audit.ip}`].filter(Boolean)
+        return {
+          id: audit.id,
+          title: AUDIT_EVENTS[audit.eventType] ?? "Other event",
+          at: audit.createdAt,
+          when: timeAgo(audit.createdAt),
+          description: parts.length > 0 ? parts.join(" · ") : undefined,
+          tone: auditTone(audit.eventType),
+          dataE2E: `admin-audit-${audit.eventType}`,
+        }
+      })}
+    />
+  )
+}
+
 const ROW = "flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
 
 /** A list in the page's bordered style, or one quiet line when it is empty. */
 function Rows(
   { empty, dataE2E, children }: { empty: string; dataE2E: string; children: JSX.Element[] },
 ): JSX.Element {
-  if (children.length === 0) return <p class="text-sm text-muted" data-e2e={dataE2E}>{empty}</p>
+  if (children.length === 0) {
+    return (
+      <p
+        class="rounded-lg border border-dashed border-subtle px-4 py-6 text-center text-sm text-muted"
+        data-e2e={dataE2E}
+      >
+        {empty}
+      </p>
+    )
+  }
   return (
     <ul
       class="divide-y divide-subtle overflow-hidden rounded-lg border border-subtle bg-surface"

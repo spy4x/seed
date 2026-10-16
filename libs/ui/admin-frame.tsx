@@ -1,16 +1,25 @@
-import type { ComponentChildren, JSX } from "preact"
+import type { ComponentChildren, ComponentType, JSX } from "preact"
+import type { IconProps } from "@spy4x/preact-icons"
 import { type AuthCredentials, AuthForm } from "@spy4x/preact-system/auth-form"
+import { Shell, type ShellNavItem } from "@spy4x/preact-system/shell"
+import { Avatar } from "@spy4x/preact-ui/avatar"
+import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { Link } from "@spy4x/preact-ui/link"
+import { Stack } from "@spy4x/preact-ui/layout"
+import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { AuthCard } from "./auth-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 /**
- * Every page of the admin app (`apps/admin`, #146), which runs on a host of its own. Its routes
- * and its links name these, never a string of their own.
+ * The pages of the admin app (`apps/admin`, #146) that its screens link to. It runs on a host of
+ * its own. Its routes and its links name these, never a string of their own; a module's own page
+ * names its path in its module (`apps/admin/src/modules/`).
  */
 export const ADMIN_PATHS = {
-  users: "/",
+  dashboard: "/",
+  users: "/users",
   user: (userId: number) => `/users/${userId}`,
   signIn: "/sign-in",
   oneTimeCode: "/one-time-code",
@@ -20,18 +29,134 @@ export const ADMIN_PATHS = {
 function AdminBrand({ navigate }: { navigate?: Navigate }): JSX.Element {
   return (
     <Link
-      href={ADMIN_PATHS.users}
+      href={ADMIN_PATHS.dashboard}
       navigate={navigate}
       class="flex shrink-0 items-center gap-2 rounded-md"
     >
       <span
-        class="flex size-7 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
+        class="flex size-8 items-center justify-center rounded-lg bg-selected text-sm font-semibold text-selected-foreground"
         aria-hidden="true"
       >
-        A
+        S
       </span>
-      <span class="text-base font-semibold">Seed admin</span>
+      <span class="text-base font-semibold">Seed</span>
+      <span data-e2e="admin-mark">
+        <Badge text="Admin" color="blue" />
+      </span>
     </Link>
+  )
+}
+
+/** The signed-in operator, as the frame shows them. */
+export interface AdminShellOperator {
+  name: string
+  email: string | null
+}
+
+/** One sidebar entry: a module's page. */
+export interface AdminNavItem {
+  name: string
+  href: string
+  Icon: ComponentType<IconProps>
+}
+
+/**
+ * The signed-in admin app's frame (#424): the brand with its "Admin" mark, a sidebar with one
+ * entry per module (a drawer below `lg`), the theme switch and the operator's menu with Sign out.
+ * The page itself sits in a column of at most 72 rem.
+ */
+export function AdminShell(
+  { navItems, currentPath, operator, onSignOut, status, navigate, children }: {
+    navItems: readonly AdminNavItem[]
+    /** The address of the page shown; the entry whose page it is, or is under, is marked. */
+    currentPath: string
+    operator: AdminShellOperator
+    onSignOut: () => void
+    /** Shown in the top bar before the operator's menu: the theme switch. */
+    status?: ComponentChildren
+    navigate?: Navigate
+    children: ComponentChildren
+  },
+): JSX.Element {
+  const items: ShellNavItem[] = navItems.map(({ name, href, Icon }) => ({ name, href, Icon }))
+  return (
+    <Shell
+      navItems={items}
+      currentPath={adminNavPath(navItems, currentPath)}
+      brand={<AdminBrand navigate={navigate} />}
+      user={{ name: operator.name, email: operator.email ?? undefined }}
+      userMenuItems={[{ label: "Sign out", onClick: onSignOut, dataE2E: "admin-signout" }]}
+      status={status}
+      navigate={navigate}
+      labels={{ nav: "Admin sections" }}
+      sidebarBottom={() => (
+        <div class="flex min-w-0 items-center gap-3 rounded-lg px-2 py-2" data-e2e="admin-operator">
+          <Avatar name={operator.name} size="sm" />
+          <div class="flex min-w-0 flex-col">
+            <span class="truncate text-sm font-medium">{operator.name}</span>
+            {operator.email && <span class="truncate text-xs text-muted">{operator.email}</span>}
+          </div>
+        </div>
+      )}
+    >
+      <div class="mx-auto w-full max-w-6xl pb-12">{children}</div>
+    </Shell>
+  )
+}
+
+/**
+ * The sidebar entry `path` belongs to: the entry whose page it is, or the one whose page it is
+ * under (`/users/42` is under `/users`). The dashboard at `/` owns only itself.
+ */
+export function adminNavPath(
+  navItems: readonly Pick<AdminNavItem, "href">[],
+  path: string,
+): string {
+  let best = ""
+  for (const { href } of navItems) {
+    const under = href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`)
+    if (under && href.length > best.length) best = href
+  }
+  return best || path
+}
+
+/**
+ * The page of a module that has nothing yet (#424): its title and a quiet "coming soon". It tells
+ * an operator the section exists and is planned, not broken.
+ */
+export function AdminComingSoon(
+  { title, description, Icon }: {
+    title: string
+    description: string
+    Icon?: ComponentType<IconProps>
+  },
+): JSX.Element {
+  return (
+    <Stack>
+      <PageHeader title={title} titleDataE2E="admin-module-title" />
+      <ComingSoonPanel title={`${title} is coming soon`} description={description} Icon={Icon} />
+    </Stack>
+  )
+}
+
+/** The "coming soon" panel itself, for a page and for a person tab alike. */
+export function ComingSoonPanel(
+  { title, description, Icon }: {
+    title: string
+    description: string
+    Icon?: ComponentType<IconProps>
+  },
+): JSX.Element {
+  return (
+    <div class="rounded-xl border border-dashed border-subtle" data-e2e="admin-coming-soon">
+      <EmptyState
+        icon={Icon && <Icon class="size-8 text-muted" aria-hidden="true" />}
+        title={title}
+        headingLevel={2}
+        description={description}
+        action={<Badge text="Coming soon" color="gray" />}
+      />
+    </div>
   )
 }
 

@@ -1,0 +1,196 @@
+import type { JSX } from "preact"
+import { Kpi, KpiGrid, type KpiTone } from "@spy4x/preact-charts/kpi"
+import { LineChart } from "@spy4x/preact-charts/line-chart"
+import { Button } from "@spy4x/preact-ui/button"
+import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
+import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { Stack } from "@spy4x/preact-ui/layout"
+import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
+import { PageHeader } from "@spy4x/preact-ui/page-header"
+import {
+  ADMIN_STATS_DAYS,
+  type AdminDailyCount,
+  type AdminStatChange,
+  type AdminStats,
+} from "@domain/identity"
+
+const NUMBER = new Intl.NumberFormat("en")
+const DAY = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" })
+
+/**
+ * A change as a stat card's second line: `+3 vs previous 7 days`, `−1 vs yesterday`, or that it
+ * did not change.
+ */
+export function changeText(change: AdminStatChange, period: string): string {
+  const delta = change.current - change.previous
+  if (delta === 0) return `No change vs ${period}`
+  const sign = delta > 0 ? "+" : "−"
+  return `${sign}${NUMBER.format(Math.abs(delta))} vs ${period}`
+}
+
+/**
+ * The top of a count chart's Y axis: the first of 5, 10, 20, 50, 100, 200 and on that holds the
+ * largest count. The chart steps its axis by a nice fraction of the top, and for these tops the
+ * {@link COUNT_AXIS_STEPS} steps fall on whole people. A derived domain would pad below 0 and step
+ * by fractions.
+ */
+export function countAxisTop(counts: readonly number[]): number {
+  const largest = Math.max(0, ...counts)
+  if (!Number.isFinite(largest)) return 5
+  for (let scale = 1;; scale *= 10) {
+    for (const top of [5 * scale, 10 * scale, 20 * scale]) if (top >= largest) return top
+  }
+}
+
+/** How many steps a count chart's Y axis takes from 0 to {@link countAxisTop}. */
+const COUNT_AXIS_STEPS = 5
+
+/** A growth number's colour: up is good, down is a warning, flat is neutral. */
+export function changeTone(change: AdminStatChange): KpiTone {
+  if (change.current > change.previous) return "positive"
+  if (change.current < change.previous) return "warning"
+  return "neutral"
+}
+
+export interface AdminDashboardScreenProps {
+  /** The numbers, or `null` while they load or when they could not be read. */
+  stats: AdminStats | null
+  /** Why the numbers could not be read, or `null`. */
+  error: string | null
+  /** Reads the numbers again. */
+  onRetry: () => void
+}
+
+/**
+ * The admin app's first page (#424): stat cards with the change against the period before, and
+ * two 30-day charts, sign-ups and active people per day. Counts only: nobody's name or content.
+ */
+export function AdminDashboardScreen(
+  { stats, error, onRetry }: AdminDashboardScreenProps,
+): JSX.Element {
+  return (
+    <Stack>
+      <PageHeader
+        title="Dashboard"
+        subtitle={`The product at a glance, over the last ${ADMIN_STATS_DAYS} days.`}
+        titleDataE2E="admin-dashboard-title"
+      />
+      {stats === null
+        ? error
+          ? (
+            <div class="flex flex-col items-start gap-3">
+              <ErrorState message={error} dataE2E="admin-dashboard-error" />
+              <Button variant="secondary" onClick={onRetry}>Try again</Button>
+            </div>
+          )
+          : (
+            <div role="status" aria-label="Loading the numbers" data-e2e="admin-dashboard-loading">
+              <LoadingSkeleton rows={6} />
+            </div>
+          )
+        : <DashboardBody stats={stats} />}
+    </Stack>
+  )
+}
+
+function DashboardBody({ stats }: { stats: AdminStats }): JSX.Element {
+  return (
+    <>
+      <section aria-label="Key numbers" data-e2e="admin-dashboard-stats">
+        <KpiGrid minWidth="11rem">
+          <Kpi
+            label="People"
+            value={NUMBER.format(stats.people)}
+            sub={`${NUMBER.format(stats.blocked)} blocked`}
+            tone="accent"
+          />
+          <Kpi
+            label="New this week"
+            value={NUMBER.format(stats.newThisWeek.current)}
+            sub={changeText(stats.newThisWeek, "previous 7 days")}
+            tone={changeTone(stats.newThisWeek)}
+          />
+          <Kpi
+            label="Active today"
+            value={NUMBER.format(stats.activeToday.current)}
+            sub={changeText(stats.activeToday, "yesterday")}
+            tone={changeTone(stats.activeToday)}
+          />
+          <Kpi
+            label="Active this week"
+            value={NUMBER.format(stats.activeThisWeek.current)}
+            sub={changeText(stats.activeThisWeek, "previous 7 days")}
+            tone={changeTone(stats.activeThisWeek)}
+          />
+          <Kpi
+            label="Blocked"
+            value={NUMBER.format(stats.blocked)}
+            sub="Cannot sign in"
+            tone={stats.blocked > 0 ? "negative" : "neutral"}
+          />
+          <Kpi label="Groups" value={NUMBER.format(stats.groups)} tone="neutral" />
+          <Kpi label="Notes" value={NUMBER.format(stats.notes)} tone="neutral" />
+        </KpiGrid>
+      </section>
+      <div class="grid gap-4 lg:grid-cols-2">
+        <DailyChart
+          title="Sign-ups per day"
+          series="Sign-ups"
+          days={stats.signUpsPerDay}
+          summary={`${
+            NUMBER.format(sum(stats.signUpsPerDay))
+          } in ${stats.signUpsPerDay.length} days`}
+          dataE2E="admin-chart-sign-ups"
+        />
+        <DailyChart
+          title="Active people per day"
+          series="Active people"
+          days={stats.activePerDay}
+          // One person active on many days counts once a day, so a sum would count them again.
+          summary={`Busiest day: ${
+            NUMBER.format(Math.max(0, ...stats.activePerDay.map((day) => day.count)))
+          }`}
+          dataE2E="admin-chart-active"
+        />
+      </div>
+    </>
+  )
+}
+
+/** The sum of a run of daily counts. */
+function sum(days: readonly AdminDailyCount[]): number {
+  return days.reduce((total, day) => total + day.count, 0)
+}
+
+/** One 30-day chart in a card, with a one-line summary of the period in its header. */
+function DailyChart(
+  { title, series, days, summary, dataE2E }: {
+    title: string
+    series: string
+    days: readonly AdminDailyCount[]
+    summary: string
+    dataE2E: string
+  },
+): JSX.Element {
+  return (
+    <Card data-e2e={dataE2E}>
+      <CardHeader
+        title={title}
+        headingLevel={2}
+        action={<span class="text-sm text-muted">{summary}</span>}
+      />
+      <CardBody>
+        <LineChart
+          series={[{ name: series, points: days.map((day) => ({ x: day.day, y: day.count })) }]}
+          height={220}
+          yDomain={[0, countAxisTop(days.map((day) => day.count))]}
+          yTicks={COUNT_AXIS_STEPS}
+          xFormat={(x) => DAY.format(typeof x === "string" ? new Date(`${x}T00:00:00Z`) : x)}
+          yFormat={(value) => NUMBER.format(value)}
+          ariaLabel={`${title}, the last ${days.length} days`}
+          emptyLabel="Nothing yet"
+        />
+      </CardBody>
+    </Card>
+  )
+}
