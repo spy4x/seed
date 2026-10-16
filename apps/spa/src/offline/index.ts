@@ -155,14 +155,19 @@ export function currentLayer(): OfflineLayer | null {
   return layer
 }
 
-/** Opens the user's device copy and queue. Calling it again for the same user does nothing. */
+/**
+ * Opens the user's device copy and queue. Calling it again for the same user does nothing. Called
+ * for another user while one runs, it stops that layer and deletes its copies, as signing out does:
+ * the device must not keep one person's data for the next. The queue stays. A device that refuses
+ * the deletion is left to the debt `modules.ts` keeps for the person it remembered.
+ */
 export function startOffline(
   userId: number,
   transport: OfflineTransport,
   storage: OfflineStorage = browserStorage,
 ): OfflineLayer {
   if (layer?.userId === userId) return layer
-  void stopOffline()
+  if (layer) void stopOffline({ forget: true }).catch(() => {})
   const cache = storage.openNotes(userId)
   const tagsCache = storage.openTags(userId)
   const notices = signal<readonly string[]>([])

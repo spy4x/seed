@@ -397,6 +397,78 @@ describe("what the device keeps", () => {
     expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
   })
 
+  it("deletes the remembered person's copies at a start as someone else, before that person's layer opens, and keeps the remembered person's queue", async () => {
+    const { storage, device } = await deviceInUse()
+    server()
+    configureModules({ realtime: false, offline: true })
+    rememberUser(user(7))
+
+    // A start that finds person 8's session, as a provider sign-in's redirect brings it, in the
+    // app's order: the user is remembered first, then the modules start (apps/spa/src/app.tsx).
+    rememberUser(user(8), storage)
+    startPage(8, storage)
+    expect(currentLayer()).toBeNull()
+    await settle()
+
+    expect(recallUser()).toEqual(user(8))
+    expect([...device.reads.keys()]).toEqual([])
+    expect(await device.notes.readNotes("g-1")).toEqual([])
+    expect(await device.tags.readTags("g-1")).toEqual([])
+    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
+    expect(kept.getItem(OWED)).toBeNull()
+    expect(currentLayer()?.userId).toBe(8)
+  })
+
+  it("deletes the remembered person's copies as soon as someone else is remembered, before any layer starts", async () => {
+    const { storage, device } = await deviceInUse()
+    configureModules({ realtime: false, offline: true })
+    rememberUser(user(7))
+
+    rememberUser(user(8), storage)
+    await settle()
+
+    expect([...device.reads.keys()]).toEqual([])
+    expect(await device.notes.readNotes("g-1")).toEqual([])
+    expect(await device.tags.readTags("g-1")).toEqual([])
+    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect(kept.getItem(OWED)).toBeNull()
+  })
+
+  it("keeps the remembered person's copies at a start as the same person", async () => {
+    const { storage, device } = await deviceInUse()
+    configureModules({ realtime: false, offline: true })
+    rememberUser(user(7))
+
+    rememberUser(user(7), storage)
+    await settle()
+
+    expect([...device.reads.keys()]).toEqual(["groups"])
+    expect((await device.notes.readNotes("g-1")).map((n) => n.id)).toEqual(["n-9"])
+    expect(kept.getItem(OWED)).toBeNull()
+  })
+
+  it("deletes the copies of the person whose layer runs when another person's layer starts, and keeps their queue", async () => {
+    const { storage, device } = await deviceInUse()
+    visiblePage()
+    const transport = {
+      calls: { command: () => Promise.resolve(), query: () => Promise.resolve() },
+      canSend: () => false,
+    }
+    startOffline(7, transport, storage)
+    await settle()
+
+    startOffline(8, transport, storage)
+    await settle()
+
+    expect(currentLayer()?.userId).toBe(8)
+    expect([...device.reads.keys()]).toEqual([])
+    expect(await device.notes.readNotes("g-1")).toEqual([])
+    expect(await device.tags.readTags("g-1")).toEqual([])
+    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
+  })
+
   it("remembers the signed-in user under the key a device already holds, and nobody when what is stored there is not a user", () => {
     configureModules({ realtime: false, offline: true })
     // What the app wrote before it used the library's hint.

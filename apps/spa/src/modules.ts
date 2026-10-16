@@ -407,9 +407,20 @@ const signedInHint = createSignedInHint<SessionUser>("offline:session", {
     typeof (value as { id?: unknown }).id === "number",
 })
 
-/** Remembers who is signed in for a start with no network; nothing while the module is off. */
-export function rememberUser(user: SessionUser): void {
-  if (switches.offline) signedInHint.remember(user)
+/**
+ * Remembers who is signed in for a start with no network; nothing while the module is off. When
+ * the device remembers someone else (a provider sign-in's redirect brings a new person's cookie to
+ * a page that never signed the last one out), that person's copies are owed a deletion first and
+ * deleted at once, as on sign-out: the next person must not find them. Their queue stays.
+ */
+export function rememberUser(user: SessionUser, storage?: OfflineStorage): void {
+  if (!switches.offline) return
+  const remembered = signedInHint.recall()
+  const other = remembered && remembered.id !== user.id ? remembered.id : undefined
+  // Owed before the hint names the new person, so a page closed in between still deletes them.
+  if (other !== undefined) owe(other)
+  signedInHint.remember(user)
+  if (other !== undefined) void settleOwed(storage, other)
 }
 
 /**
