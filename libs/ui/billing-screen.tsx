@@ -9,6 +9,7 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { SettingGroup } from "@spy4x/preact-ui/setting-row"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import {
   billingDate,
@@ -169,6 +170,7 @@ export function BillingCard(
           navigate={navigate}
           variant="outline"
           size="sm"
+          class="min-h-11 sm:min-h-9"
           data-e2e="billing-see-plans"
         >
           See plans
@@ -177,7 +179,13 @@ export function BillingCard(
       {portalOpen && (
         <fieldset ref={portal} disabled={pending} class="m-0 min-w-0 border-0 p-0">
           <form method="post" action={BILLING_PATHS.portal(groupId)}>
-            <Button type="submit" variant="outline" size="sm" busy={pending}>
+            <Button
+              type="submit"
+              variant="outline"
+              size="sm"
+              class="min-h-11 sm:min-h-9"
+              busy={pending}
+            >
               Manage billing
             </Button>
           </form>
@@ -186,12 +194,7 @@ export function BillingCard(
     </Cluster>
   )
   return (
-    <section
-      aria-labelledby="group-billing"
-      class="flex flex-col gap-4"
-      data-e2e="group-section-billing"
-    >
-      <h2 id="group-billing" class="text-base font-semibold">Plan</h2>
+    <SettingGroup title="Plan" dataE2E="group-section-billing">
       {billing === null
         ? (error
           ? <ErrorState message={error} />
@@ -242,12 +245,12 @@ export function BillingCard(
                         <span data-e2e="billing-plan-name">{planName(billing.planId)}</span> plan
                       </span>
                       {billing.enabled && !billing.canManage && (
-                        <span class="text-xs text-muted" data-e2e="billing-owner-only">
+                        <span class="text-sm text-muted" data-e2e="billing-owner-only">
                           Only the group's owner can change its plan.
                         </span>
                       )}
                       {billing.enabled && billing.canManage && !billing.subscribed && (
-                        <span class="text-xs text-muted">
+                        <span class="text-sm text-muted">
                           A paid plan adds priority support for every member.
                         </span>
                       )}
@@ -261,7 +264,7 @@ export function BillingCard(
             </div>
           </div>
         )}
-    </section>
+    </SettingGroup>
   )
 }
 
@@ -309,14 +312,14 @@ export function PricingScreen(
   )
   if (billing === null) {
     return (
-      <Stack gap="xl" class="mx-auto w-full max-w-3xl">
+      <Stack gap="xl">
         {header}
         {error ? <ErrorState message={error} /> : <EmptyState title="Loading the plans..." />}
       </Stack>
     )
   }
   return (
-    <Stack gap="xl" class="mx-auto w-full max-w-3xl">
+    <Stack gap="xl">
       {header}
       {!billing.enabled
         ? <Notice data-e2e="pricing-off">Every group is on the Free plan.</Notice>
@@ -335,9 +338,9 @@ export function PricingScreen(
         : (
           <fieldset
             disabled={pending}
-            // One plan would stretch across the page; it keeps a card's width instead.
+            // One plan would stretch across the page; it keeps a card's width, centred, instead.
             class={`m-0 w-full min-w-0 border-0 p-0 ${
-              PRICING_PLANS.length === 1 ? "max-w-sm" : ""
+              PRICING_PLANS.length === 1 ? "mx-auto max-w-sm" : ""
             }`}
             data-e2e="pricing-plans"
           >

@@ -16,6 +16,7 @@ import {
   BillingStatus,
   FREE_PLAN_ID,
   type GroupBilling,
+  PAID_PLANS,
   PRO_PLAN_ID,
 } from "@domain/billing"
 import { BILLING_PATHS, BillingCard, PricingScreen } from "./billing-screen.tsx"
@@ -220,6 +221,17 @@ describe("billing screens without JavaScript", () => {
       renderToString(<PricingScreen groupId={groupId} groupName="Team" billing={FREE_OWNER} />),
     )
       .toContain(`value="${PRO_PLAN_ID}"`)
+  })
+
+  it("centres a single plan's card in the page column", () => {
+    const html = renderToString(
+      <PricingScreen groupId={groupId} groupName="Team" billing={FREE_OWNER} />,
+    )
+    const plans = html.match(/<fieldset [^>]*data-e2e="pricing-plans"[^>]*>/)?.[0] ?? ""
+
+    expect(PAID_PLANS).toHaveLength(1)
+    expect(plans).toMatch(/class="[^"]*\bmx-auto\b/)
+    expect(plans).toMatch(/class="[^"]*\bmax-w-sm\b/)
   })
 
   it("labels the per-member plan's price with the unit it is charged per", () => {

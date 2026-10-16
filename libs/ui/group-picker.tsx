@@ -3,7 +3,7 @@ import { IconChevronDown } from "@spy4x/preact-icons"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import type { GroupColor, GroupRole } from "@domain/groups"
 import { GroupMark } from "./group-appearance.tsx"
-import { ROLE_TEXT } from "./groups-screen.tsx"
+import { NEW_GROUP_PATH, ROLE_TEXT } from "./groups-screen.tsx"
 import { type Navigate, SCREEN_PATHS } from "./progressive.tsx"
 
 /** One group of the switcher: its name, and the person's role in it. */
@@ -46,7 +46,7 @@ function SwitcherMark({ group }: { group: PickerGroup }): JSX.Element {
 /**
  * The current group in the header: a button showing its mark and name that opens a short menu of
  * the person's groups. The current one is checked (`menuitemradio`), each names the person's role
- * there, and the menu ends with a link to all groups.
+ * there, and the menu ends with links to all groups and to a new one.
  */
 export function GroupPicker(
   { groups, selectedId, onSelect, navigate }: GroupPickerData & { navigate?: Navigate },
@@ -86,6 +86,9 @@ export function GroupPicker(
       {groups.length > 0 && <div role="separator" class="my-1 border-t border-subtle" />}
       <DropdownItem href={SCREEN_PATHS.groups} navigate={navigate} dataE2E="group-picker-all">
         All groups
+      </DropdownItem>
+      <DropdownItem href={NEW_GROUP_PATH} navigate={navigate} dataE2E="group-picker-new">
+        New group
       </DropdownItem>
     </Dropdown>
   )

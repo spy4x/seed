@@ -2,6 +2,7 @@ import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconArrowRight, IconPlus } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
+import { Card } from "@spy4x/preact-ui/card"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
@@ -204,13 +205,18 @@ export function GroupSettingsScreen(
   const back = { href: SCREEN_PATHS.groups, label: "Back to groups" }
   if (!group) {
     return (
-      <Stack gap="xl" class="mx-auto w-full max-w-3xl">
+      <Stack gap="xl">
         <PageHeader title="Group" back={back} navigate={navigate} />
         {error ? <ErrorState message={error} /> : (
-          <EmptyState
-            title={loading ? "Loading the group..." : "This group does not exist."}
-            description={loading ? undefined : "It may have been deleted, or you are not a member."}
-          />
+          <Card>
+            <EmptyState
+              inset
+              title={loading ? "Loading the group..." : "This group does not exist."}
+              description={loading
+                ? undefined
+                : "It may have been deleted, or you are not a member."}
+            />
+          </Card>
         )}
       </Stack>
     )
@@ -299,7 +305,7 @@ export function GroupSettingsScreen(
   )
 
   return (
-    <Stack gap="xl" class="mx-auto w-full max-w-3xl">
+    <Stack gap="xl">
       <div ref={header}>
         <PageHeader
           title={group.name}

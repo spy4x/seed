@@ -117,13 +117,15 @@ export function GroupMembersSection(
     },
   )
   return (
+    // Drawn like the page's other `SettingGroup`s (the plan), with the one action beside the
+    // heading that `SettingGroup` has no slot for.
     <section
       aria-labelledby="group-members"
-      class="flex flex-col gap-4"
+      class="flex flex-col gap-3"
       data-e2e="group-section-members"
     >
       <div ref={header} class="flex min-h-11 items-center justify-between gap-3">
-        <h2 id="group-members" class="text-base font-semibold" tabIndex={-1}>
+        <h2 id="group-members" class="text-sm font-semibold text-foreground" tabIndex={-1}>
           Members{total === null ? "" : ` (${total})`}
         </h2>
         {action}
@@ -188,7 +190,7 @@ function MemberItem(
 
   return (
     <li
-      class="flex flex-col gap-3 px-4 py-3 sm:px-6"
+      class="flex min-h-14 flex-col justify-center gap-3 px-4 py-3 sm:px-6"
       data-e2e="group-member"
       data-user-id={member.userId}
     >
@@ -196,16 +198,20 @@ function MemberItem(
         <Avatar name={label} alt="" size="sm" />
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <span class="flex min-w-0 items-center gap-2 text-sm">
-            <span class="truncate font-medium" title={label} data-e2e="group-member-name">
+            <span
+              class="line-clamp-2 break-words font-medium"
+              title={label}
+              data-e2e="group-member-name"
+            >
               {label}
             </span>
             {member.isYou && <span class="shrink-0 text-xs text-muted">you</span>}
           </span>
           {member.name.trim() && member.email && (
-            <span class="truncate text-xs text-muted" title={member.email}>{member.email}</span>
+            <span class="truncate text-sm text-muted" title={member.email}>{member.email}</span>
           )}
           {member.lastSeenAt && (
-            <span class="text-xs text-muted" data-e2e="group-member-last-seen">
+            <span class="text-sm text-muted" data-e2e="group-member-last-seen">
               Last seen <time dateTime={member.lastSeenAt}>{timeAgo(member.lastSeenAt)}</time>
             </span>
           )}

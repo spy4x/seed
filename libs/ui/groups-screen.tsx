@@ -8,13 +8,17 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
-import { Cluster, Section, Stack } from "@spy4x/preact-ui/layout"
+import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
+import { SettingGroup } from "@spy4x/preact-ui/setting-row"
 import { GROUP_RESTORE_DAYS, type GroupColor, GroupRole } from "@domain/groups"
 import { GroupMark } from "./group-appearance.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
-import { GROUP_PATHS, type Navigate, ScreenForm } from "./progressive.tsx"
+import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+
+/** The groups page with its "New group" dialog open: the address the group switcher links to. */
+export const NEW_GROUP_PATH = `${SCREEN_PATHS.groups}?new`
 
 /** One group as the screen shows it. */
 export interface GroupRow {
@@ -70,6 +74,13 @@ export interface GroupsScreenProps {
   onOpen?: (groupId: string) => void
   /** The invitations sent to the person, drawn under the header; the app fills the slot. */
   invitations?: ComponentChildren
+  /**
+   * Opens the "New group" dialog, on the first render and whenever it turns `true`: the app sets it
+   * from the address (`NEW_GROUP_PATH`), so a link can open the dialog.
+   */
+  createOpen?: boolean
+  /** The "New group" dialog closed, by Cancel or by a create that worked: the app drops `?new`. */
+  onCreateClose?: () => void
 }
 
 /** What a role is called on screen. */
@@ -83,8 +94,8 @@ export const ROLE_TEXT: Record<GroupRole, string> = {
 /**
  * The groups page: one row per group with the person's role, the members' avatars and a quiet mark
  * on the current group. A row opens the group's notes; its cog opens the group's settings. "New
- * group" in the header opens a dialog with the name field. Deleted groups the person can still
- * restore are listed under the groups, each with a Restore button.
+ * group" in the header, and a link to `NEW_GROUP_PATH`, open a dialog with the name field. Deleted
+ * groups the person can still restore are listed under the groups, each with a Restore button.
  */
 export function GroupsScreen(
   {
@@ -103,10 +114,18 @@ export function GroupsScreen(
     onRestore,
     restoringId = null,
     invitations,
+    createOpen = false,
+    onCreateClose,
   }: GroupsScreenProps,
 ): JSX.Element {
-  const [creatingOpen, setCreatingOpen] = useState(false)
-  useSucceeded(creating, error !== null, () => setCreatingOpen(false))
+  const [creatingOpen, setCreatingOpen] = useState(createOpen)
+  // The address opens and closes the dialog: `?new` dropped by Back closes it too.
+  useEffect(() => setCreatingOpen(createOpen), [createOpen])
+  const closeCreate = () => {
+    setCreatingOpen(false)
+    onCreateClose?.()
+  }
+  useSucceeded(creating, error !== null, closeCreate)
   // A refused create lands the person on the name to fix.
   const nameInput = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -119,7 +138,7 @@ export function GroupsScreen(
   }, [restoreError])
 
   return (
-    <Stack gap="xl" class="mx-auto w-full max-w-3xl">
+    <Stack gap="xl">
       <PageHeader
         title="Groups"
         action={
@@ -135,18 +154,21 @@ export function GroupsScreen(
       {!creatingOpen && groups.length > 0 && <ErrorState message={error} />}
       {groups.length === 0
         ? (
-          <EmptyState
-            headingLevel={2}
-            title={loading ? "Loading groups..." : "No groups yet."}
-            description={loading
-              ? undefined
-              : error ?? `A group holds the notes you share with the people you invite.`}
-            action={!loading && (
-              <Button onClick={() => setCreatingOpen(true)} data-e2e="group-new-empty">
-                New group
-              </Button>
-            )}
-          />
+          <Card>
+            <EmptyState
+              headingLevel={2}
+              inset
+              title={loading ? "Loading groups..." : "No groups yet."}
+              description={loading
+                ? undefined
+                : error ?? `A group holds the notes you share with the people you invite.`}
+              action={!loading && (
+                <Button onClick={() => setCreatingOpen(true)} data-e2e="group-new-empty">
+                  New group
+                </Button>
+              )}
+            />
+          </Card>
         )
         : (
           <Card>
@@ -165,7 +187,7 @@ export function GroupsScreen(
         )}
 
       {(deleted.length > 0 || restoreError) && (
-        <Section
+        <SettingGroup
           title="Deleted groups"
           description={`A deleted group and its notes can be restored for ${GROUP_RESTORE_DAYS} days. After that they are deleted for good.`}
         >
@@ -178,18 +200,18 @@ export function GroupsScreen(
                 {deleted.map((group) => (
                   <li
                     key={group.id}
-                    class="flex items-center gap-3 px-4 py-3 sm:px-6"
+                    class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6"
                     data-e2e={`deleted-group-${group.id}`}
                   >
                     <div class="flex min-w-0 flex-1 flex-col gap-1">
                       <span
-                        class="truncate text-sm font-medium"
+                        class="line-clamp-2 break-words text-sm font-medium"
                         title={group.name}
                         data-e2e="deleted-group-name"
                       >
                         {group.name}
                       </span>
-                      <span class="text-xs text-muted">
+                      <span class="text-sm text-muted">
                         Restorable until{" "}
                         <time dateTime={restorableUntil(group.deletedAt)}>
                           {restorableUntil(group.deletedAt).slice(0, 10)}
@@ -200,6 +222,7 @@ export function GroupsScreen(
                       type="button"
                       variant="outline"
                       size="sm"
+                      class="min-h-11 sm:min-h-9"
                       aria-label={`Restore ${group.name}`}
                       data-e2e="group-restore"
                       busy={restoringId === group.id}
@@ -214,7 +237,7 @@ export function GroupsScreen(
               </ul>
             </Card>
           )}
-        </Section>
+        </SettingGroup>
       )}
 
       {creatingOpen && (
@@ -222,7 +245,7 @@ export function GroupsScreen(
           open
           title="New group"
           cancelLabel="Close"
-          onClose={() => setCreatingOpen(false)}
+          onClose={closeCreate}
           dataE2E="group-new-dialog"
         >
           <ScreenForm pending={creating} onSubmit={onCreate}>
@@ -241,7 +264,7 @@ export function GroupsScreen(
                 />
               </Field>
               <Cluster justify="end">
-                <Button type="button" variant="outline" onClick={() => setCreatingOpen(false)}>
+                <Button type="button" variant="outline" onClick={closeCreate}>
                   Cancel
                 </Button>
                 <Button
@@ -271,17 +294,22 @@ function GroupItem(
   },
 ): JSX.Element {
   return (
-    <li class="flex items-center gap-3 px-4 py-3 sm:px-6" data-e2e={`group-${group.id}`}>
+    <li class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6" data-e2e={`group-${group.id}`}>
       <button
         type="button"
         class="flex min-h-11 min-w-0 flex-1 flex-col items-start justify-center gap-1 rounded-md text-left"
         aria-label={`Open notes in ${group.name}${selected ? ", the current group" : ""}`}
         data-e2e="group-open"
-        onClick={() => onOpen?.(group.id)}
+        onClick={() =>
+          onOpen?.(group.id)}
       >
         <span class="flex min-w-0 max-w-full items-center gap-2">
           <GroupMark color={group.color} emoji={group.emoji} size="sm" />
-          <span class="truncate text-sm font-medium" title={group.name} data-e2e="group-item-name">
+          <span
+            class="line-clamp-2 break-words text-sm font-medium"
+            title={group.name}
+            data-e2e="group-item-name"
+          >
             {group.name}
           </span>
           {selected && (
@@ -290,7 +318,7 @@ function GroupItem(
             </span>
           )}
         </span>
-        <span class="max-w-full truncate text-xs text-muted">
+        <span class="line-clamp-2 max-w-full text-sm text-muted">
           {ROLE_TEXT[group.role]}
           {group.description && (
             <span data-e2e="group-item-description">{` · ${group.description}`}</span>

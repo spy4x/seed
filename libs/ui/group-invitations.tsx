@@ -14,6 +14,7 @@ import { Field } from "@spy4x/preact-ui/field"
 import { Input, Select } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { SettingGroup } from "@spy4x/preact-ui/setting-row"
 import type { PlanRefusal } from "@domain/billing"
 import {
   canManageInvitations,
@@ -329,10 +330,12 @@ function InvitationList(
   return (
     <section
       aria-labelledby="group-invitations"
-      class="flex flex-col gap-2"
+      class="mt-3 flex flex-col gap-3"
       data-e2e="group-section-invitations"
     >
-      <h3 id="group-invitations" class="text-sm font-medium text-muted">Pending invitations</h3>
+      <h3 id="group-invitations" class="text-sm font-semibold text-foreground">
+        Pending invitations
+      </h3>
       <Card>
         <ul ref={list} class="divide-y divide-subtle">
           {invitations.map((invitation) => (
@@ -367,7 +370,7 @@ function InvitationItem(
   const who = invitation.email ?? "Anyone with the link"
   return (
     <li
-      class="flex items-center gap-3 px-4 py-3 sm:px-6"
+      class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6"
       data-e2e="invitation"
       data-invitation-id={invitation.id}
     >
@@ -378,10 +381,14 @@ function InvitationItem(
         {invitation.email ? <IconMail class="size-4" /> : <IconLink class="size-4" />}
       </span>
       <div class="flex min-w-0 flex-1 flex-col gap-1">
-        <span class="truncate text-sm font-medium" title={who} data-e2e="invitation-who">
+        <span
+          class="line-clamp-2 break-words text-sm font-medium"
+          title={who}
+          data-e2e="invitation-who"
+        >
           {who}
         </span>
-        <span class="truncate text-xs text-muted">
+        <span class="text-sm text-muted">
           {`used ${invitation.uses} of ${invitation.maxUses} · expires `}
           <time dateTime={invitation.expiresAt}>{invitation.expiresAt.slice(0, 10)}</time>
           {invitation.createdBy.name.trim() && ` · by ${invitation.createdBy.name}`}
@@ -483,80 +490,84 @@ export function InvitationScreen(
 ): JSX.Element {
   if (!invitation) {
     return (
-      <div class="mx-auto flex w-full max-w-md flex-col gap-4">
+      <Card>
         <EmptyState
           headingLevel={1}
+          inset
           title={loading ? "Opening the invitation..." : "This invitation cannot be used"}
           description={loading ? undefined : error ?? undefined}
           action={!loading && (
-            <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
+            <Button
+              href={SCREEN_PATHS.groups}
+              navigate={navigate}
+              variant="outline"
+              class="min-h-11 sm:min-h-9"
+            >
               Go to your groups
             </Button>
           )}
         />
-      </div>
+      </Card>
     )
   }
   const inviter = invitation.inviterName.trim() || "Someone"
   return (
-    <div class="mx-auto w-full max-w-md">
-      <Card>
-        <CardBody>
-          <div
-            class="flex flex-col items-center gap-6 text-center"
-            data-e2e="invitation-card"
-            data-invitation-id={invitation.id}
-          >
-            <Avatar name={invitation.groupName} alt="" size="lg" />
-            <div class="flex w-full min-w-0 flex-col gap-2">
-              <p class="text-sm text-muted">
-                <span data-e2e="invitation-inviter">{inviter}</span> invited you to join
-              </p>
-              <h1 class="break-words text-xl font-semibold" data-e2e="invitation-group">
-                {invitation.groupName}
-              </h1>
-              <p class="text-sm text-muted">
-                as <span class="font-medium text-foreground">{ROLE_TEXT[invitation.role]}</span>
-                {" · expires "}
-                <time dateTime={invitation.expiresAt}>{invitation.expiresAt.slice(0, 10)}</time>
-              </p>
-            </div>
-            {invitation.forYou
-              ? (
-                <div class="flex w-full flex-col gap-2">
-                  <Button
-                    type="button"
-                    class="w-full justify-center"
-                    data-e2e="invitation-accept"
-                    busy={answering}
-                    busyLabel="Joining..."
-                    onClick={() => !answering && onAccept?.()}
-                  >
-                    Accept invitation
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    class="w-full justify-center"
-                    data-e2e="invitation-decline"
-                    disabled={answering}
-                    onClick={onDecline}
-                  >
-                    Decline
-                  </Button>
-                </div>
-              )
-              : <NotForYou navigate={navigate} />}
-            <AnswerError
-              groupId={invitation.groupId}
-              error={answerError}
-              refusal={answerRefusal}
-              navigate={navigate}
-            />
+    <Card>
+      <CardBody>
+        <div
+          class="flex flex-col items-center gap-6 text-center"
+          data-e2e="invitation-card"
+          data-invitation-id={invitation.id}
+        >
+          <Avatar name={invitation.groupName} alt="" size="lg" />
+          <div class="flex w-full min-w-0 flex-col gap-2">
+            <p class="text-sm text-muted">
+              <span data-e2e="invitation-inviter">{inviter}</span> invited you to join
+            </p>
+            <h1 class="break-words text-xl font-semibold" data-e2e="invitation-group">
+              {invitation.groupName}
+            </h1>
+            <p class="text-sm text-muted">
+              as <span class="font-medium text-foreground">{ROLE_TEXT[invitation.role]}</span>
+              {" · expires "}
+              <time dateTime={invitation.expiresAt}>{invitation.expiresAt.slice(0, 10)}</time>
+            </p>
           </div>
-        </CardBody>
-      </Card>
-    </div>
+          {invitation.forYou
+            ? (
+              <div class="flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
+                <Button
+                  type="button"
+                  class="min-h-11 w-full justify-center sm:min-h-9 sm:w-auto"
+                  data-e2e="invitation-accept"
+                  busy={answering}
+                  busyLabel="Joining..."
+                  onClick={() => !answering && onAccept?.()}
+                >
+                  Accept invitation
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  class="min-h-11 w-full justify-center sm:min-h-9 sm:w-auto"
+                  data-e2e="invitation-decline"
+                  disabled={answering}
+                  onClick={onDecline}
+                >
+                  Decline
+                </Button>
+              </div>
+            )
+            : <NotForYou navigate={navigate} />}
+          <AnswerError
+            groupId={invitation.groupId}
+            error={answerError}
+            refusal={answerRefusal}
+            navigate={navigate}
+          />
+        </div>
+      </CardBody>
+    </Card>
   )
 }
 
@@ -593,8 +604,7 @@ export function MyInvitationsSection(
   })
   if (invitations.length === 0) return null
   return (
-    <section aria-labelledby="my-invitations" class="flex flex-col gap-2" data-e2e="my-invitations">
-      <h2 id="my-invitations" class="text-sm font-medium text-muted">Invitations for you</h2>
+    <SettingGroup title="Invitations for you" dataE2E="my-invitations">
       <Card>
         <ul ref={list} class="divide-y divide-subtle">
           {invitations.map((invitation) => {
@@ -604,20 +614,20 @@ export function MyInvitationsSection(
             return (
               <li
                 key={invitation.id}
-                class="flex flex-col gap-3 px-4 py-3 sm:px-6"
+                class="flex min-h-14 flex-col justify-center gap-3 px-4 py-3 sm:px-6"
                 data-e2e="invitation-card"
                 data-invitation-id={invitation.id}
               >
                 <div class="flex flex-wrap items-center gap-3">
                   <div class="flex min-w-0 flex-1 flex-col gap-1">
                     <h3
-                      class="truncate text-sm font-medium"
+                      class="line-clamp-2 break-words text-sm font-medium"
                       title={invitation.groupName}
                       data-e2e="invitation-group"
                     >
                       {invitation.groupName}
                     </h3>
-                    <p class="text-xs text-muted">
+                    <p class="text-sm text-muted">
                       <span data-e2e="invitation-inviter">{inviter}</span> invited you as{" "}
                       {ROLE_TEXT[invitation.role]}
                     </p>
@@ -628,6 +638,7 @@ export function MyInvitationsSection(
                         type="button"
                         variant="ghost"
                         size="sm"
+                        class="min-h-11 sm:min-h-9"
                         data-e2e="invitation-decline"
                         aria-label={`Decline the invitation to ${invitation.groupName}`}
                         disabled={answering}
@@ -638,12 +649,12 @@ export function MyInvitationsSection(
                       <Button
                         type="button"
                         size="sm"
+                        class="min-h-11 sm:min-h-9"
                         data-e2e="invitation-accept"
                         aria-label={`Accept the invitation to ${invitation.groupName}`}
                         busy={answering}
                         busyLabel="Joining..."
-                        onClick={() =>
-                          !answering && onAccept?.(invitation.id)}
+                        onClick={() => !answering && onAccept?.(invitation.id)}
                       >
                         Accept
                       </Button>
@@ -662,7 +673,7 @@ export function MyInvitationsSection(
           })}
         </ul>
       </Card>
-    </section>
+    </SettingGroup>
   )
 }
 

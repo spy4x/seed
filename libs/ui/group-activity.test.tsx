@@ -95,10 +95,26 @@ describe("group activity screen", () => {
     expect(page).not.toContain(`data-e2e="activity-list"`)
   })
 
-  it("goes back to the group's settings and shows a read error under the header", () => {
+  it("has no back link, since the rail leads to it, and shows a read error under the header", () => {
     const page = html({ error: "The server is out of reach." })
-    expect(page).toContain(`href="/groups/g-1"`)
+    expect(page).not.toContain(`href="/groups/g-1"`)
+    expect(page).not.toContain("Back to group settings")
     expect(page).toContain("The server is out of reach.")
+  })
+
+  it("draws 'Open the note' as an underlined link with a phone-sized touch target", () => {
+    const page = html({
+      events: [
+        row(1, {
+          kind: "note.created",
+          entity: { type: "note", id: noteId, exists: true },
+          details: { title: "Plan" },
+        }),
+      ],
+    })
+    const link = page.match(/<a [^>]*data-e2e="activity-note-link"[^>]*>/)?.[0] ?? ""
+    expect(link).toMatch(/class="[^"]*\bpc-link\b/)
+    expect(link).toMatch(/class="[^"]*\bmin-h-11\b/)
   })
 
   it("asks for the next page when 'Load more' is pressed, and only while more exist", async () => {

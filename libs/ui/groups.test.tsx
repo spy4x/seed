@@ -41,17 +41,26 @@ import {
   type GroupTransferFormProps,
   type TransferDraft,
 } from "./group-transfer.tsx"
-import { GroupsScreen, type GroupsScreenProps } from "./groups-screen.tsx"
+import { GroupsScreen, type GroupsScreenProps, NEW_GROUP_PATH } from "./groups-screen.tsx"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
-const own = { document: globalThis.document, FormData: globalThis.FormData }
+const own = {
+  document: globalThis.document,
+  FormData: globalThis.FormData,
+  getComputedStyle: globalThis.getComputedStyle,
+}
 
 beforeAll(() => {
   // Preact draws into `document`; EnhancedForm reads a form with `new FormData(form)`, which only
-  // the DOM's own FormData can do.
-  Object.assign(globalThis, { document: window.document, FormData: window.FormData })
+  // the DOM's own FormData can do. Opening a dialog locks the page's scroll, which reads the
+  // page's computed overflow.
+  Object.assign(globalThis, {
+    document: window.document,
+    FormData: window.FormData,
+    getComputedStyle: window.getComputedStyle.bind(window),
+  })
 })
 
 afterAll(async () => {
@@ -230,6 +239,41 @@ describe("GroupsScreen", () => {
     await mount(<GroupsScreen {...defaults} onOpen={open.fn} />)
     await click("[data-e2e=group-g-2] [data-e2e=group-open]")
     expect(open.calls).toEqual([["g-2"]])
+  })
+
+  it("opens the new-group dialog when the app asks for it, and reports when it closes", async () => {
+    const closed = spy<[]>()
+    await mount(<GroupsScreen {...defaults} onCreateClose={closed.fn} />)
+    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
+    await rerender(<GroupsScreen {...defaults} createOpen onCreateClose={closed.fn} />)
+    expect(has("[data-e2e=group-new-dialog] [data-e2e=group-name]")).toBe(true)
+    await clickText("[data-e2e=group-new-dialog]", "Cancel")
+    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
+    expect(closed.calls).toHaveLength(1)
+
+    // The app drops `?new`; a later link (the switcher's "New group") opens it once more.
+    await rerender(<GroupsScreen {...defaults} onCreateClose={closed.fn} />)
+    await rerender(<GroupsScreen {...defaults} createOpen onCreateClose={closed.fn} />)
+    expect(has("[data-e2e=group-new-dialog] [data-e2e=group-name]")).toBe(true)
+  })
+
+  it("closes the new-group dialog when the address drops `?new`, as browser Back does", async () => {
+    await mount(<GroupsScreen {...defaults} createOpen />)
+    expect(has("[data-e2e=group-new-dialog]")).toBe(true)
+    await rerender(<GroupsScreen {...defaults} />)
+    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
+  })
+
+  it("reports the dialog closed once a create worked", async () => {
+    const closed = spy<[]>()
+    await mount(<GroupsScreen {...defaults} name="Book club" onCreateClose={closed.fn} />)
+    await click("[data-e2e=group-new]")
+    await rerender(
+      <GroupsScreen {...defaults} name="Book club" creating onCreateClose={closed.fn} />,
+    )
+    await rerender(<GroupsScreen {...defaults} name="Book club" onCreateClose={closed.fn} />)
+    expect(has("[data-e2e=group-new-dialog]")).toBe(false)
+    expect(closed.calls).toHaveLength(1)
   })
 
   it("keeps the new-group form closed until the header's button opens it", async () => {
@@ -1541,6 +1585,24 @@ describe("group details", () => {
       )
     })
     expect(texts(`[data-e2e=group-picker-${groupId}] [data-e2e=group-mark]`)).toEqual(["🏠"])
+  })
+
+  it("ends the switcher's menu with All groups, then New group, which links to the create dialog", async () => {
+    await mount(
+      <GroupPicker
+        groups={[owned, { id: "g-2", name: "Family", role: GroupRole.VIEWER }]}
+        selectedId={groupId}
+        onSelect={() => {}}
+      />,
+    )
+    await click("[data-e2e=group-picker]")
+    const items = [...root!.querySelectorAll("[role^=menuitem]")]
+    expect(items.map((item) => item.textContent!.trim()).slice(-2)).toEqual([
+      "All groups",
+      "New group",
+    ])
+    expect(find("[data-e2e=group-picker-new]").getAttribute("href")).toBe(NEW_GROUP_PATH)
+    expect(NEW_GROUP_PATH).toBe(`${SCREEN_PATHS.groups}?new`)
   })
 
   it("draws no mark without a colour or an emoji, and a gray one for an emoji alone", async () => {
