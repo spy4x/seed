@@ -541,6 +541,34 @@ describe("ProfileScreen", () => {
     }
   })
 
+  it("starts the page with its header and shows the first-steps card under it", async () => {
+    await mount(
+      <ProfileScreen
+        {...profileDefaults}
+        onboarding={<div data-e2e="onboarding">Get started</div>}
+      />,
+    )
+
+    const heading = find("h1")
+    const card = find("[data-e2e=onboarding]")
+    expect(heading.textContent).toBe("Profile")
+    expect(heading.compareDocumentPosition(card) & window.Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy()
+    expect(
+      card.compareDocumentPosition(find("#security")) & window.Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+      .toBeTruthy()
+  })
+
+  it("shows an empty push device list inside the section's own card, not in a dashed box", async () => {
+    await mount(<ProfileScreen {...profileDefaults} pushDevices={[]} onRegisterPush={() => {}} />)
+
+    const empty = find("#push-devices [role=status]")
+    expect(empty.textContent).toContain("No devices yet")
+    expect(empty.closest(".pc-card")).not.toBeNull()
+    expect(document.querySelectorAll(".border-dashed").length).toBe(0)
+  })
+
   it("names each settings group by its own h2, under the page's one h1", async () => {
     await mount(<ProfileScreen {...profileDefaults} />)
 
@@ -886,6 +914,15 @@ describe("deleting the account from the profile", () => {
     expect(document.querySelector("[data-e2e=danger-zone]")).toBeNull()
   })
 
+  it("sets the danger zone apart as a card with a danger-coloured border", async () => {
+    await mount(withDeletion())
+
+    const zone = find("[data-e2e=danger-zone]")
+    expect(zone.classList.contains("pc-card")).toBe(true)
+    expect(zone.classList.contains("border-danger")).toBe(true)
+    expect(zone.querySelector(".pc-card")).toBeNull()
+  })
+
   it("names the delete button for a screen reader and gives it a 44 px touch target", async () => {
     await mount(withDeletion())
 
@@ -1029,6 +1066,14 @@ describe("EmailScreen", () => {
     expect(change.calls).toEqual([["code", "Ab3_x-9Q"]])
     expect(await submit("[data-e2e=email-code]")).toBe(true)
     expect(verify.calls).toHaveLength(1)
+  })
+
+  it("puts the code entry and the new-code request in one card under the section's heading", async () => {
+    await mount(<EmailScreen {...emailDefaults} />)
+
+    const card = find("[data-e2e=email-verify-card] .pc-card")
+    expect(card.querySelector("[data-e2e=email-code]")).not.toBeNull()
+    expect(card.querySelector("[data-e2e=email-send]")).not.toBeNull()
   })
 
   it("refuses a second check while the first is pending", async () => {

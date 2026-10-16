@@ -1,9 +1,10 @@
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { encodeBase64 } from "@std/encoding"
 import { IconBell, IconLockClosed } from "@spy4x/preact-icons"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { Card } from "@spy4x/preact-ui/card"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
@@ -160,6 +161,11 @@ export interface ProfileScreenProps {
    * `twoFactor` and `navigate` come from this screen's own props.
    */
   accountDeletion?: Omit<AccountDeleteProps, "twoFactor" | "navigate" | "providerProof">
+  /**
+   * The first-steps card, under the page header and above the settings, so the page still starts
+   * with its title. Without it the page has none.
+   */
+  onboarding?: ComponentChildren
   navigate?: Navigate
 }
 
@@ -202,6 +208,7 @@ export function ProfileScreen(
     onRegisterPush,
     onRemovePush,
     accountDeletion,
+    onboarding,
     navigate,
   }: ProfileScreenProps,
 ): JSX.Element {
@@ -312,6 +319,8 @@ export function ProfileScreen(
   return (
     <Stack gap="xl">
       <PageHeader title="Profile" />
+
+      {onboarding}
 
       <SettingGroup title="Account">
         <SettingList>
@@ -439,19 +448,22 @@ export function ProfileScreen(
           <ErrorState message={errors.push} />
           {pushDevices.length === 0
             ? (
-              <EmptyState
-                icon={<IconBell class="size-6" />}
-                title="No devices yet"
-                headingLevel={3}
-                class="w-full max-w-none"
-                description="Add this browser to get notifications on it."
-                action={onRegisterPush && (
-                  <AddDevice
-                    onClick={onRegisterPush}
-                    busy={pending.push}
-                  />
-                )}
-              />
+              <Card>
+                {/* Inside the section's own card, like every other section, not a dashed box. */}
+                <EmptyState
+                  icon={<IconBell class="size-6" />}
+                  title="No devices yet"
+                  headingLevel={3}
+                  inset
+                  description="Add this browser to get notifications on it."
+                  action={onRegisterPush && (
+                    <AddDevice
+                      onClick={onRegisterPush}
+                      busy={pending.push}
+                    />
+                  )}
+                />
+              </Card>
             )
             : (
               <>

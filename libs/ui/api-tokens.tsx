@@ -6,6 +6,7 @@ import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { CopyBlock } from "@spy4x/preact-ui/copy-block"
+import { Card } from "@spy4x/preact-ui/card"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
@@ -137,13 +138,17 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
         ? <p class="text-sm text-muted">Loading your tokens…</p>
         : tokens.length === 0
         ? (
-          <EmptyState
-            icon={<IconKey class="size-6" />}
-            title="No API tokens"
-            headingLevel={3}
-            description="A token acts as you in one group, read only or read and write."
-            action={createButton || undefined}
-          />
+          <Card>
+            {/* Inside the section's own card, like every other section, not a dashed box. */}
+            <EmptyState
+              icon={<IconKey class="size-6" />}
+              title="No API tokens"
+              headingLevel={3}
+              inset
+              description="A token acts as you in one group, read only or read and write."
+              action={createButton || undefined}
+            />
+          </Card>
         )
         : (
           <>

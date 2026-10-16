@@ -158,6 +158,15 @@ describe("ApiTokens", () => {
     expect(find("[data-e2e=api-tokens]").textContent).not.toContain("tpl_")
   })
 
+  it("shows an empty token list inside the section's own card, not in a dashed box", async () => {
+    await mount(<ApiTokens {...tokensProps([], { tokens: [] })} />)
+
+    const empty = find("[data-e2e=api-tokens] [role=status]")
+    expect(empty.textContent).toContain("No API tokens")
+    expect(empty.closest(".pc-card")).not.toBeNull()
+    expect(document.querySelectorAll(".border-dashed").length).toBe(0)
+  })
+
   it("says that changing or resetting the password revokes every token", async () => {
     await mount(<ApiTokens {...tokensProps([])} />)
 

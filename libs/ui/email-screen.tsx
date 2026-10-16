@@ -2,6 +2,7 @@ import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { Card, CardBody } from "@spy4x/preact-ui/card"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
@@ -184,7 +185,7 @@ export function EmailScreen(
   const providerNames = providerProof?.providers
     .map((provider) => OAUTH_PROVIDER_NAMES[provider]).join(" or ")
   return (
-    <Stack gap="lg">
+    <Stack gap="xl">
       <PageHeader
         title="E-mail address"
         back={{ href: SCREEN_PATHS.profile, label: "Back to profile" }}
@@ -234,61 +235,74 @@ export function EmailScreen(
           }
           dataE2E="email-verify-card"
         >
-          {notices.change && (
-            <p class="text-sm" role="status" data-e2e="email-change-notice">{notices.change}</p>
-          )}
-          <ScreenForm
-            pending={pending.verify}
-            onSubmit={onVerify}
-          >
-            <Stack class="max-w-sm">
-              <Field id="email-code" label="Code" error={errors.verify} required>
-                <Input
-                  ref={codeField}
-                  data-e2e="email-code"
-                  name="code"
-                  autocomplete="one-time-code"
-                  autocapitalize="off"
-                  spellcheck={false}
-                  value={values.code}
-                  onInput={(e) => onValueChange("code", e.currentTarget.value)}
-                  required
-                />
-              </Field>
-              <Cluster>
-                <Button
-                  type="submit"
-                  data-e2e="email-verify"
-                  busy={pending.verify}
-                  busyLabel="Checking..."
+          {/* One card, like every section of the profile: the code, then a new one on request. */}
+          <Card>
+            {/* The rows of the cards around it start at the same inset. */}
+            <CardBody class="sm:p-6">
+              <Stack gap="lg">
+                {notices.change && (
+                  <p class="text-sm" role="status" data-e2e="email-change-notice">
+                    {notices.change}
+                  </p>
+                )}
+                <ScreenForm
+                  pending={pending.verify}
+                  onSubmit={onVerify}
                 >
-                  Verify
-                </Button>
-              </Cluster>
-            </Stack>
-          </ScreenForm>
-          <ScreenForm pending={pending.send} onSubmit={onSend}>
-            <Stack gap="sm">
-              <p class="text-sm text-muted">
-                No mail?{" "}
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="sm"
-                  class={TOUCH_TARGET}
-                  data-e2e="email-send"
-                  busy={pending.send}
-                  busyLabel="Sending..."
-                >
-                  Send a new code
-                </Button>
-              </p>
-              <ErrorState message={errors.send} />
-              {notices.send && (
-                <p class="text-sm" role="status" data-e2e="email-send-notice">{notices.send}</p>
-              )}
-            </Stack>
-          </ScreenForm>
+                  <Stack class="max-w-sm">
+                    <Field id="email-code" label="Code" error={errors.verify} required>
+                      <Input
+                        ref={codeField}
+                        data-e2e="email-code"
+                        name="code"
+                        autocomplete="one-time-code"
+                        autocapitalize="off"
+                        spellcheck={false}
+                        value={values.code}
+                        onInput={(e) => onValueChange("code", e.currentTarget.value)}
+                        required
+                      />
+                    </Field>
+                    <Cluster>
+                      <Button
+                        type="submit"
+                        class="w-full sm:w-auto"
+                        data-e2e="email-verify"
+                        busy={pending.verify}
+                        busyLabel="Checking..."
+                      >
+                        Verify
+                      </Button>
+                    </Cluster>
+                  </Stack>
+                </ScreenForm>
+                <ScreenForm pending={pending.send} onSubmit={onSend}>
+                  <Stack gap="sm">
+                    <p class="text-sm text-muted">
+                      No mail?{" "}
+                      <Button
+                        type="submit"
+                        variant="ghost"
+                        size="sm"
+                        class={TOUCH_TARGET}
+                        data-e2e="email-send"
+                        busy={pending.send}
+                        busyLabel="Sending..."
+                      >
+                        Send a new code
+                      </Button>
+                    </p>
+                    <ErrorState message={errors.send} />
+                    {notices.send && (
+                      <p class="text-sm" role="status" data-e2e="email-send-notice">
+                        {notices.send}
+                      </p>
+                    )}
+                  </Stack>
+                </ScreenForm>
+              </Stack>
+            </CardBody>
+          </Card>
         </SettingGroup>
       )}
 

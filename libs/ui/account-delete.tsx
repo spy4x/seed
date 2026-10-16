@@ -1,5 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
+import { IconChevronDown } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
@@ -16,7 +17,7 @@ import {
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
-import { SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
+import { SettingRow } from "@spy4x/preact-ui/setting-row"
 
 /** What the person has typed into the deletion dialog. */
 export interface AccountDeleteValues {
@@ -109,34 +110,41 @@ export function AccountDelete(
   }, [errors])
 
   return (
-    <details data-e2e="danger-zone">
-      {/* A 44 px target on a phone, like every other control on the page. */}
-      <summary class="flex min-h-11 w-fit cursor-pointer items-center text-sm font-semibold text-danger sm:min-h-9">
+    // The last section, set apart by a danger-coloured card and closed until asked for. The rows sit
+    // straight in the card: a `SettingList` here would be a card inside a card.
+    <details data-e2e="danger-zone" class="group pc-card border-danger">
+      {
+        /* The whole width of the card, and a 44 px target on a phone, like every other control. The
+          chevron stands in for the marker a flex summary loses, and turns when the zone opens. */
+      }
+      <summary class="flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-lg px-4 py-3 text-sm font-semibold text-danger sm:px-6">
         Danger zone
+        <IconChevronDown
+          aria-hidden="true"
+          class="size-4 shrink-0 transition-transform group-open:rotate-180"
+        />
       </summary>
-      <div class="mt-3">
-        <SettingList>
-          <SettingRow
-            label="Delete my account"
-            value={`Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
-            action={
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                class={`${TOUCH_TARGET} text-danger`}
-                data-e2e="account-delete-open"
-                onClick={() => {
-                  setOpen(true)
-                  onOpen?.()
-                }}
-              >
-                Delete <span class="sr-only">my account</span>
-              </Button>
-            }
-          />
-        </SettingList>
-      </div>
+      <dl class="border-t border-subtle">
+        <SettingRow
+          label="Delete my account"
+          value={`Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
+          action={
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              class={`${TOUCH_TARGET} text-danger`}
+              data-e2e="account-delete-open"
+              onClick={() => {
+                setOpen(true)
+                onOpen?.()
+              }}
+            >
+              Delete <span class="sr-only">my account</span>
+            </Button>
+          }
+        />
+      </dl>
 
       <Modal
         open={open}

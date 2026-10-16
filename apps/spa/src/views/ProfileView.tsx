@@ -10,6 +10,7 @@ import {
 } from "@ui/profile-screen.tsx"
 import type { AccountDeleteErrors, AccountDeleteValues } from "@ui/account-delete.tsx"
 import { SCREEN_PATHS } from "@ui/progressive.tsx"
+import { OnboardingView } from "./OnboardingView.tsx"
 import { TwoFactorProof } from "@ui/two-factor.ts"
 import {
   changePassword,
@@ -387,6 +388,8 @@ export function ProfileView() {
   return (
     <ProfileScreen
       user={session.user}
+      // The first steps show on the home page, where a new account lands, under its header.
+      onboarding={<OnboardingView />}
       onSetPassword={submitFirstPassword}
       providerProofFresh={providerProofFresh}
       isMfaRequired={session.isMfaRequired}
