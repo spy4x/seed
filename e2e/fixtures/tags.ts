@@ -126,8 +126,10 @@ export class TagsPage {
     await expect(dialog).toBeHidden()
   }
 
-  async back(): Promise<void> {
-    await this.page.locator("[data-e2e=page-back]").click()
+  /** Goes to the notes list through the main navigation: Tags is a destination of its own. */
+  async toNotes(): Promise<void> {
+    await this.page.getByRole("navigation", { name: "Main navigation" })
+      .getByRole("link", { name: "Notes" }).click()
     await expect(this.page).toHaveURL("/notes")
   }
 }

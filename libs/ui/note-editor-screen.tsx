@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
-import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input, Textarea } from "@spy4x/preact-ui/input"
@@ -11,6 +10,7 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { NOTE_BODY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH } from "@domain/notes"
 import {
+  ListEmpty,
   type MoveTarget,
   type NoteDraft,
   type NoteFormErrors,
@@ -80,8 +80,8 @@ export interface NoteEditorScreenProps {
 /**
  * One note on a page of its own: the form to create it or edit it, and for a viewer the note as
  * text. The header has a back button and, on an existing note, a menu to move it to another group
- * or delete it (after a confirmation). Save and Cancel sit under the text, and stay in reach at the
- * bottom of a phone's screen.
+ * or delete it (after a confirmation). Save and Cancel sit in the form's footer under the text:
+ * Save full width on a phone, at the right from `sm` up.
  */
 export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
   const { group, notFound, navigate } = props
@@ -89,8 +89,7 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={BACK} navigate={navigate} title="Note" />
-        <EmptyState
-          headingLevel={2}
+        <ListEmpty
           title={props.loading ? "Loading the group..." : "This group was not found."}
           action={!props.loading && (
             <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
@@ -146,20 +145,16 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
     return (
       <EditorPage>
         <PageHeader back={BACK} navigate={navigate} title="Note" />
-        <EmptyState headingLevel={2} title="Loading the note..." />
+        <ListEmpty title="Loading the note..." />
       </EditorPage>
     )
   }
   return group.canWrite ? <Editor {...props} group={group} /> : <ReadOnlyNote {...props} />
 }
 
-/** The editor's column: about 40 rem, a readable width for a form and its text. */
+/** The page's content, in the column the app's frame sets: never a width of its own. */
 function EditorPage({ children }: { children?: ComponentChildren }): JSX.Element {
-  return (
-    <div class="mx-auto w-full max-w-2xl">
-      <Stack gap="lg">{children}</Stack>
-    </div>
-  )
+  return <Stack gap="xl">{children}</Stack>
 }
 
 /** The header's back link: to the list, which `navigate` follows without a page load. */
@@ -263,19 +258,23 @@ function Editor(props: WithGroup): JSX.Element {
             </p>
           )}
           <ErrorState message={props.moveError ?? null} />
-          <div class="sticky bottom-0 flex gap-3 border-t border-subtle bg-canvas py-3 sm:static sm:justify-end sm:border-0 sm:bg-transparent sm:py-0">
+          {
+            // The form's footer. On a phone Save is on top at full width, Cancel under it; from
+            // `sm` up they are a row at the right, Save last.
+          }
+          <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               href={NOTE_PATHS.list}
               navigate={navigate}
-              variant="outline"
-              class="flex-1 sm:flex-none"
+              variant="ghost"
+              class="min-h-11 w-full sm:min-h-9 sm:w-auto"
               data-e2e="note-cancel"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              class="flex-1 sm:flex-none"
+              class="min-h-11 w-full sm:min-h-9 sm:w-auto"
               data-e2e="note-save"
               busy={saving}
               busyLabel="Saving..."

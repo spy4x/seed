@@ -66,7 +66,7 @@ test.describe("tags with the WebSocket module switched off", () => {
       const notes = new NotesTags(page)
       await tags.openFromNotes()
       await tags.create("Urgent", "Red")
-      await tags.back()
+      await tags.toNotes()
       await notes.create("Groceries", ["Urgent"])
       await notes.create("Plan", [])
       await expect(notes.labels("Groceries")).toHaveText(["Urgent"])

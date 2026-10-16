@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
-import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
@@ -13,9 +12,9 @@ import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
 import { TAG_COLORS, TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
-import { MENU_TRIGGER_CLASSES, type NotesGroup } from "./notes-screen.tsx"
+import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES, type NotesGroup } from "./notes-screen.tsx"
 import { TagBadge, type TagRow } from "./tag-parts.tsx"
-import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 
 export type { TagRow }
 
@@ -65,8 +64,6 @@ const COLOR_LABELS: Record<TagColor, string> = {
   purple: "Purple",
 }
 
-const BACK = { href: NOTE_PATHS.list, label: "Back to notes" }
-
 /**
  * A group's tags: the list, a form to make or change one (opened by "New tag" or a tag's name) and
  * a delete behind a confirmation. A tag is only a label: deleting it takes it off its notes and
@@ -94,9 +91,8 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
   if (!group) {
     return (
       <TagsPage>
-        <PageHeader back={BACK} navigate={navigate} title="Tags" />
-        <EmptyState
-          headingLevel={2}
+        <PageHeader title="Tags" />
+        <ListEmpty
           title={props.loading ? "Loading the group..." : "This group was not found."}
           action={!props.loading && (
             <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
@@ -111,8 +107,6 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
   return (
     <TagsPage page={page}>
       <PageHeader
-        back={BACK}
-        navigate={navigate}
         title="Tags"
         subtitle={group.name}
         subtitleDataE2E="tags-group"
@@ -120,71 +114,69 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
           <PageAction label="New tag" Icon={IconPlus} onClick={props.onNew} dataE2E="tag-new" />
         )}
       />
-      {!canWrite && (
-        <p class="text-sm text-muted" data-e2e="tags-read-only">
-          You can see these tags. Only an editor can change them.
-        </p>
-      )}
-      <ErrorState message={props.listError} />
-      {tags.length === 0
-        ? (
-          <EmptyState
-            headingLevel={2}
-            title={props.loading ? "Loading tags..." : "No tags yet."}
-            description={props.loading || !canWrite
-              ? undefined
-              : "Tags label notes, so a group can find them again."}
-            action={!props.loading && canWrite && props.onNew && (
-              <Button type="button" onClick={props.onNew} data-e2e="tag-new-empty">
-                New tag
-              </Button>
-            )}
-          />
-        )
-        : (
-          <ul
-            class="divide-y divide-subtle overflow-hidden rounded-lg border border-subtle bg-surface"
-            data-e2e="tag-list"
-          >
-            {tags.map((tag) => (
-              <li
-                key={tag.id}
-                class="flex min-h-14 items-center gap-3 px-4 py-2"
-                data-e2e={`tag-${tag.id}`}
-              >
-                <div class="min-w-0 flex-1">
-                  {canWrite && props.onEdit
-                    ? (
-                      <button
-                        type="button"
-                        class="max-w-full cursor-pointer rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
-                        aria-label={`Edit ${tag.name}`}
-                        data-e2e="tag-edit"
-                        onClick={() => props.onEdit?.(tag.id)}
-                      >
-                        <TagBadge tag={tag} />
-                      </button>
-                    )
-                    : <TagBadge tag={tag} />}
-                </div>
-                {canWrite && props.onDelete && (
-                  <div class="relative -my-2 -mr-2 shrink-0">
-                    <Dropdown
-                      trigger={<IconEllipsisVertical class="size-5" />}
-                      triggerLabel={`Actions for ${tag.name}`}
-                      triggerClasses={MENU_TRIGGER_CLASSES}
-                      triggerDataE2E="tag-menu"
-                    >
-                      <DropdownItem onClick={() => setDeleting(tag)} danger dataE2E="tag-delete">
-                        Delete
-                      </DropdownItem>
-                    </Dropdown>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+      <Stack>
+        {!canWrite && (
+          <p class="text-sm text-muted" data-e2e="tags-read-only">
+            You can see these tags. Only an editor can change them.
+          </p>
         )}
+        <ErrorState message={props.listError} />
+        {tags.length === 0
+          ? (
+            <ListEmpty
+              title={props.loading ? "Loading tags..." : "No tags yet."}
+              description={props.loading || !canWrite
+                ? undefined
+                : "Tags label notes, so a group can find them again."}
+              action={!props.loading && canWrite && props.onNew && (
+                <Button type="button" onClick={props.onNew} data-e2e="tag-new-empty">
+                  New tag
+                </Button>
+              )}
+            />
+          )
+          : (
+            <ListCard dataE2E="tag-list">
+              {tags.map((tag) => (
+                <li
+                  key={tag.id}
+                  class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6"
+                  data-e2e={`tag-${tag.id}`}
+                >
+                  <div class="min-w-0 flex-1">
+                    {canWrite && props.onEdit
+                      ? (
+                        <button
+                          type="button"
+                          class="flex min-h-11 w-full cursor-pointer items-center rounded-sm text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+                          aria-label={`Edit ${tag.name}`}
+                          data-e2e="tag-edit"
+                          onClick={() => props.onEdit?.(tag.id)}
+                        >
+                          <TagBadge tag={tag} />
+                        </button>
+                      )
+                      : <TagBadge tag={tag} />}
+                  </div>
+                  {canWrite && props.onDelete && (
+                    <div class="relative -my-2 -mr-2 shrink-0">
+                      <Dropdown
+                        trigger={<IconEllipsisVertical class="size-5" />}
+                        triggerLabel={`Actions for ${tag.name}`}
+                        triggerClasses={MENU_TRIGGER_CLASSES}
+                        triggerDataE2E="tag-menu"
+                      >
+                        <DropdownItem onClick={() => setDeleting(tag)} danger dataE2E="tag-delete">
+                          Delete
+                        </DropdownItem>
+                      </Dropdown>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ListCard>
+          )}
+      </Stack>
       <Modal
         open={props.form !== null}
         onClose={() => props.onCloseForm?.()}
@@ -214,14 +206,11 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
   )
 }
 
+/** The page's content, in the column the app's frame sets: never a width of its own. */
 function TagsPage(
   { children, page }: { children?: ComponentChildren; page?: RefObject<HTMLDivElement> },
 ): JSX.Element {
-  return (
-    <div ref={page} class="mx-auto w-full max-w-2xl">
-      <Stack gap="lg">{children}</Stack>
-    </div>
-  )
+  return <div ref={page} class="flex flex-col gap-8">{children}</div>
 }
 
 function TagForm(

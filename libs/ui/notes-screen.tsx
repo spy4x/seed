@@ -1,6 +1,7 @@
 import type { ComponentChildren, JSX, Ref } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
+import { Card } from "@spy4x/preact-ui/card"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
@@ -87,8 +88,11 @@ export function moveTargetsOf(
 export const MENU_TRIGGER_CLASSES = buttonClasses("icon", "none", "size-11 sm:size-9")
 
 /**
- * A menu item that opens a page of the app: followed through `navigate` when the app gives one,
- * as a plain link otherwise. `DropdownItem` takes no `navigate`, so its link would load the page.
+ * A menu item that opens a page of the app. It is `DropdownItem` with `href` and `navigate`, which
+ * hands a plain click to the app's router and leaves a new-tab click to the browser.
+ *
+ * @deprecated Use `DropdownItem` with `href` and `navigate`; this name stays only while another
+ * screen imports it.
  */
 export function NavigateItem(
   { href, navigate, dataE2E, children }: {
@@ -98,9 +102,7 @@ export function NavigateItem(
     children: ComponentChildren
   },
 ): JSX.Element {
-  return navigate
-    ? <DropdownItem onClick={() => navigate(href)} dataE2E={dataE2E}>{children}</DropdownItem>
-    : <DropdownItem href={href} dataE2E={dataE2E}>{children}</DropdownItem>
+  return <DropdownItem href={href} navigate={navigate} dataE2E={dataE2E}>{children}</DropdownItem>
 }
 
 export interface NotesScreenProps {
@@ -230,8 +232,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
     return (
       <ListPage>
         <PageHeader title="Notes" />
-        <EmptyState
-          headingLevel={2}
+        <ListEmpty
           title={loading ? "Loading the group..." : "This group was not found."}
           action={!loading && (
             <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
@@ -254,10 +255,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
     setFocusAfter({ id: note.id, index: rows.findIndex((row) => row.id === note.id) })
 
   const list = (
-    <ul
-      class="divide-y divide-subtle overflow-hidden rounded-lg border border-subtle bg-surface"
-      data-e2e="note-list"
-    >
+    <ListCard dataE2E="note-list">
       {notes.map((note) => (
         <NoteItem
           key={note.id}
@@ -283,24 +281,21 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           )}
         />
       ))}
-    </ul>
+    </ListCard>
   )
 
   const deletedList = (
-    <ul
-      class="divide-y divide-subtle overflow-hidden rounded-lg border border-subtle bg-surface"
-      data-e2e="deleted-note-list"
-    >
+    <ListCard dataE2E="deleted-note-list">
       {deletedNotes.map((note) => (
         <li
           key={note.id}
-          class="flex min-h-16 items-center gap-3 px-4 py-3"
+          class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6"
           data-e2e={`note-${note.id}`}
         >
-          <div class="min-w-0 flex-1">
-            <h2 class="truncate text-sm font-medium" data-e2e="note-item-title">{note.title}</h2>
+          <div class="flex min-w-0 flex-1 flex-col gap-1">
+            <h2 class={ROW_TITLE} data-e2e="note-item-title">{note.title}</h2>
             {note.updatedAt && (
-              <p class="text-xs text-muted">
+              <p class="text-sm text-muted">
                 Deleted <time dateTime={note.updatedAt}>{timeAgo(note.updatedAt)}</time>
               </p>
             )}
@@ -325,7 +320,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           )}
         </li>
       ))}
-    </ul>
+    </ListCard>
   )
 
   return (
@@ -368,114 +363,113 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           </>
         }
       />
-      {!group.canWrite && (
-        <p class="text-sm text-muted" data-e2e="notes-read-only">
-          You can read these notes. Only an editor can change them.
-        </p>
-      )}
-      <ErrorState message={props.listError} />
-      {!selecting && !deletedMode && <ErrorState message={props.moveError ?? null} />}
-      {!deletedMode && !selecting && tags.length > 0 && props.onTagFilterChange && (
-        <TagChips
-          tags={tags}
-          value={activeFilter}
-          onChange={props.onTagFilterChange}
-          label="Filter by tag"
-          dataE2E="notes-tag-filter"
-        />
-      )}
-      {deletedMode && (
-        <div
-          class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-subtle bg-surface p-3"
-          data-e2e="notes-deleted-banner"
-        >
-          <p class="min-w-0 flex-1 text-sm">
-            Deleted notes stay here for {NOTE_RESTORE_DAYS} days, then they are removed for good.
+      <Stack>
+        {!group.canWrite && (
+          <p class="text-sm text-muted" data-e2e="notes-read-only">
+            You can read these notes. Only an editor can change them.
           </p>
-          <Button
-            type="button"
-            variant="ghost"
-            class="min-h-11"
-            onClick={() => props.onShowDeletedChange?.(false)}
-            data-e2e="notes-show-live"
-          >
-            Back to notes
-          </Button>
-        </div>
-      )}
-      {props.restoreError?.plan
-        ? (
-          <PlanRefusalNotice
-            groupId={group.id}
-            refusal={props.restoreError.plan}
-            navigate={navigate}
+        )}
+        <ErrorState message={props.listError} />
+        {!selecting && !deletedMode && <ErrorState message={props.moveError ?? null} />}
+        {!deletedMode && !selecting && tags.length > 0 && props.onTagFilterChange && (
+          <TagChips
+            tags={tags}
+            value={activeFilter}
+            onChange={props.onTagFilterChange}
+            label="Filter by tag"
+            dataE2E="notes-tag-filter"
           />
-        )
-        : <ErrorState message={props.restoreError?.form ?? null} />}
-      {deletedMode
-        ? deletedNotes.length === 0
+        )}
+        {deletedMode && (
+          <div
+            class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-subtle bg-surface p-3"
+            data-e2e="notes-deleted-banner"
+          >
+            <p class="min-w-0 flex-1 text-sm">
+              Deleted notes stay here for {NOTE_RESTORE_DAYS} days, then they are removed for good.
+            </p>
+            <Button
+              type="button"
+              variant="ghost"
+              class="min-h-11"
+              onClick={() => props.onShowDeletedChange?.(false)}
+              data-e2e="notes-show-live"
+            >
+              Back to notes
+            </Button>
+          </div>
+        )}
+        {props.restoreError?.plan
           ? (
-            <EmptyState
-              headingLevel={2}
-              title={props.deletedLoading ? "Loading deleted notes..." : "No deleted notes."}
+            <PlanRefusalNotice
+              groupId={group.id}
+              refusal={props.restoreError.plan}
+              navigate={navigate}
             />
           )
-          : deletedList
-        : allNotes.length > 0 && notes.length === 0
-        ? (
-          <EmptyState
-            headingLevel={2}
-            title="No notes have all these tags."
-            action={
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => props.onTagFilterChange?.([])}
-                data-e2e="notes-tag-filter-clear"
-              >
-                Clear the filter
-              </Button>
-            }
-          />
-        )
-        : notes.length === 0
-        ? (
-          <EmptyState
-            headingLevel={2}
-            title={loading ? "Loading notes..." : "No notes yet."}
-            description={loading || !group.canWrite
-              ? undefined
-              : `Notes you write here are shared with everyone in ${group.name}.`}
-            action={!loading && group.canWrite && (
-              <Button href={NOTE_PATHS.new} navigate={navigate} data-e2e="note-new-empty">
-                New note
-              </Button>
-            )}
-          />
-        )
-        : selecting
-        ? (
-          <ScreenForm
-            pending={props.moving}
-            onSubmit={(data) =>
-              props.onMove?.({
-                toGroupId: String(data.get("toGroupId") ?? ""),
-                noteIds: data.getAll("noteIds").map(String),
-              })}
-          >
-            <Stack>
-              {list}
-              <SelectionBar
-                count={shown.length}
-                moveTargets={moveTargets}
-                moving={props.moving}
-                moveError={props.moveError ?? null}
-                onCancel={stopSelecting}
+          : <ErrorState message={props.restoreError?.form ?? null} />}
+        {deletedMode
+          ? deletedNotes.length === 0
+            ? (
+              <ListEmpty
+                title={props.deletedLoading ? "Loading deleted notes..." : "No deleted notes."}
               />
-            </Stack>
-          </ScreenForm>
-        )
-        : list}
+            )
+            : deletedList
+          : allNotes.length > 0 && notes.length === 0
+          ? (
+            <ListEmpty
+              title="No notes have all these tags."
+              action={
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => props.onTagFilterChange?.([])}
+                  data-e2e="notes-tag-filter-clear"
+                >
+                  Clear the filter
+                </Button>
+              }
+            />
+          )
+          : notes.length === 0
+          ? (
+            <ListEmpty
+              title={loading ? "Loading notes..." : "No notes yet."}
+              description={loading || !group.canWrite
+                ? undefined
+                : `Notes you write here are shared with everyone in ${group.name}.`}
+              action={!loading && group.canWrite && (
+                <Button href={NOTE_PATHS.new} navigate={navigate} data-e2e="note-new-empty">
+                  New note
+                </Button>
+              )}
+            />
+          )
+          : selecting
+          ? (
+            <ScreenForm
+              pending={props.moving}
+              onSubmit={(data) =>
+                props.onMove?.({
+                  toGroupId: String(data.get("toGroupId") ?? ""),
+                  noteIds: data.getAll("noteIds").map(String),
+                })}
+            >
+              <Stack>
+                {list}
+                <SelectionBar
+                  count={shown.length}
+                  moveTargets={moveTargets}
+                  moving={props.moving}
+                  moveError={props.moveError ?? null}
+                  onCancel={stopSelecting}
+                />
+              </Stack>
+            </ScreenForm>
+          )
+          : list}
+      </Stack>
       {deleting && (
         <ConfirmDialog
           title="Delete this note?"
@@ -496,20 +490,68 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
   )
 }
 
-/** The list page's column: the full content width, about 64 rem. */
+/**
+ * The page's content, in the column the app's frame sets: never a width of its own. The header and
+ * the content under it sit the page's gap apart.
+ */
 function ListPage(
   { children, pageRef }: { children?: ComponentChildren; pageRef?: Ref<HTMLDivElement> },
 ): JSX.Element {
+  return <div class="flex flex-col gap-8" ref={pageRef}>{children}</div>
+}
+
+/** A list row's title: up to two lines, so a phone shows a long title instead of cutting it. */
+const ROW_TITLE = "line-clamp-2 break-words text-sm font-medium"
+
+/**
+ * A list: one card, its rows split by a quiet line. The card never clips (`overflow-hidden`), so a
+ * row's menu opens over the rows below it instead of being cut off; the first and last rows round
+ * their own corners so a hover background still follows the card's.
+ */
+export function ListCard(
+  { children, dataE2E }: { children?: ComponentChildren; dataE2E: string },
+): JSX.Element {
   return (
-    <div class="mx-auto w-full max-w-5xl" ref={pageRef}>
-      <Stack gap="lg">{children}</Stack>
-    </div>
+    <Card>
+      <ul
+        class="divide-y divide-subtle *:first:rounded-t-[var(--radius-primary,0.5rem)] *:last:rounded-b-[var(--radius-primary,0.5rem)]"
+        data-e2e={dataE2E}
+      >
+        {children}
+      </ul>
+    </Card>
+  )
+}
+
+/**
+ * What a list shows while it has no rows (loading, empty, or filtered to nothing): `EmptyState`
+ * inside the list's own card, without its dashed border, so it reads as part of the page.
+ */
+export function ListEmpty(
+  { title, description, action }: {
+    title: string
+    description?: string
+    action?: ComponentChildren
+  },
+): JSX.Element {
+  return (
+    <Card>
+      <EmptyState
+        headingLevel={2}
+        title={title}
+        description={description}
+        action={action}
+        inset
+      />
+    </Card>
   )
 }
 
 /**
  * The bar under the list while notes are being ticked: how many are ticked, and once any are, the
- * group to move them to and the button that does. Sticky, so it stays in reach on a long list.
+ * group to move them to and the button that does. From `md` up it is sticky, so it stays in reach on
+ * a long list. Below `md` it stays in the flow: the phone tab bar is pinned to the same bottom edge
+ * and would cover a sticky bar.
  */
 function SelectionBar(
   { count, moveTargets, moving, moveError, onCancel }: {
@@ -522,7 +564,7 @@ function SelectionBar(
 ): JSX.Element {
   return (
     <div
-      class="sticky bottom-0 flex flex-col gap-3 rounded-lg border border-subtle bg-surface p-3 shadow-sm"
+      class="flex flex-col gap-3 md:sticky md:bottom-0 rounded-lg border border-subtle bg-surface p-3 shadow-sm"
       data-e2e="notes-move"
     >
       <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -576,30 +618,30 @@ function NoteItem(
     menu: ComponentChildren
   },
 ): JSX.Element {
+  const tagged = tags.some((tag) => note.tagIds?.includes(tag.id))
   const summary = (
-    <div class="min-w-0 flex-1">
-      <div class="flex items-baseline gap-3">
-        <h2 class="min-w-0 flex-1 truncate text-sm font-medium" data-e2e="note-item-title">
-          {selecting ? note.title : (
-            <Link
-              href={NOTE_PATHS.note(note.id)}
-              navigate={navigate}
-              class="text-foreground after:absolute after:inset-0 focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-inset"
-            >
-              {note.title}
-            </Link>
-          )}
-        </h2>
-        {note.updatedAt && (
-          <time class="shrink-0 text-xs text-muted" dateTime={note.updatedAt}>
-            {timeAgo(note.updatedAt)}
-          </time>
+    <div class="flex min-w-0 flex-1 flex-col gap-1">
+      <h2 class={ROW_TITLE} data-e2e="note-item-title">
+        {selecting ? note.title : (
+          <Link
+            href={NOTE_PATHS.note(note.id)}
+            navigate={navigate}
+            class="text-foreground after:absolute after:inset-0 focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-inset"
+          >
+            {note.title}
+          </Link>
         )}
-      </div>
+      </h2>
       {note.body && (
         <p class="truncate text-sm font-normal text-muted" data-e2e="note-item-body">{note.body}</p>
       )}
-      <NoteTags tagIds={note.tagIds} tags={tags} />
+      {(note.updatedAt || tagged) && (
+        // The meta line: when the note changed, then its tags.
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
+          {note.updatedAt && <time dateTime={note.updatedAt}>{timeAgo(note.updatedAt)}</time>}
+          <NoteTags tagIds={note.tagIds} tags={tags} />
+        </div>
+      )}
     </div>
   )
   return (
@@ -613,14 +655,14 @@ function NoteItem(
             checked={ticked}
             onChange={(event) => onTick(event.currentTarget.checked)}
             aria-label={`Tick ${note.title}`}
-            labelClass="flex min-h-16 w-full cursor-pointer px-4 py-3"
+            labelClass="flex min-h-14 w-full cursor-pointer px-4 py-3 sm:px-6"
             data-e2e="note-select"
           >
             {summary}
           </Checkbox>
         )
         : (
-          <div class="flex min-h-16 items-center gap-3 px-4 py-3">
+          <div class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6">
             {summary}
             {menu && <div class="relative -my-2 -mr-2 shrink-0">{menu}</div>}
           </div>

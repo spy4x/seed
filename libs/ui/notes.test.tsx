@@ -196,12 +196,54 @@ describe("NotesScreen", () => {
     expect(html).toContain(`aria-label="Actions for Groceries"`)
   })
 
+  it("never clips the list card, so a row's menu opens in full over the rows below", async () => {
+    await mount(<NotesScreen {...listDefaults} />)
+
+    const card = find(`[data-e2e=note-list]`).parentElement as HTMLElement
+    expect(card.className.split(" ")).not.toContain("overflow-hidden")
+  })
+
   it("shows an empty list as an empty state whose one action is New note", () => {
     const html = renderToString(<NotesScreen {...listDefaults} notes={[]} />)
 
     expect(html).toContain("No notes yet.")
     expect(tagOf(html, "note-new-empty")).toContain(`href="${NOTE_PATHS.new}"`)
     expect(html).not.toContain(`data-e2e="note-list"`)
+  })
+
+  it("shows a long title on up to two lines, with the time on the line under it", async () => {
+    const long = { ...groceries, title: "Q4 roadmap: onboarding, billing and more" }
+    await mount(<NotesScreen {...listDefaults} notes={[long]} />)
+
+    const title = find(`[data-e2e=note-${long.id}] [data-e2e=note-item-title]`)
+    expect(title.textContent).toBe(long.title)
+    expect(title.className.split(" ")).toContain("line-clamp-2")
+    expect(title.className.split(" ")).not.toContain("truncate")
+    // The time sits in the meta line, never on the title's line, where it would squeeze the title.
+    const time = find(`[data-e2e=note-${long.id}] time`)
+    expect(title.contains(time)).toBe(false)
+    expect(time.parentElement?.contains(title)).toBe(false)
+  })
+
+  it("draws an empty list as a message inside a solid card, not a dashed box", async () => {
+    await mount(<NotesScreen {...listDefaults} notes={[]} />)
+
+    const empty = [...document.querySelectorAll("[role=status]")]
+      .find((element) => element.textContent?.includes("No notes yet."))
+    if (!empty) throw new Error("no status says No notes yet.")
+    expect(empty.closest(".pc-card")).not.toBeNull()
+    expect(empty.className.split(" ")).not.toContain("border-dashed")
+  })
+
+  it("sets no width of its own, so it fills the column the app's frame gives it", () => {
+    for (
+      const html of [
+        renderToString(<NotesScreen {...listDefaults} />),
+        renderToString(<NoteEditorScreen {...editorDefaults} />),
+      ]
+    ) {
+      expect(html).not.toMatch(/\bmax-w-(?:2xl|3xl|5xl)\b/)
+    }
   })
 
   it("shows a viewer the notes with no way to add, move or delete one", () => {
@@ -286,6 +328,15 @@ describe("NotesScreen in the browser", () => {
     expect(find("[data-e2e=notes-move]").textContent).toContain("Tick the notes to move")
     // Nothing ticked yet: nothing to move, so no group to pick and no move button.
     expect(count("[data-e2e=notes-move-submit]")).toBe(0)
+  })
+
+  it("pins the move bar to the bottom only from md up, where no tab bar covers it", async () => {
+    await mount(<NotesScreen {...listDefaults} />)
+    await click("[data-e2e=notes-menu]")
+    await click("[data-e2e=notes-select]")
+    const classes = find("[data-e2e=notes-move]").className.split(" ")
+    expect(classes).not.toContain("sticky")
+    expect(classes).toContain("md:sticky")
   })
 
   it("moves the ticked notes to the chosen group, and cancels the native post", async () => {
@@ -806,6 +857,19 @@ describe("NoteEditorScreen", () => {
 })
 
 describe("NoteEditorScreen in the browser", () => {
+  it("puts Save last in the form's footer: full width on a phone, at the right from sm up", async () => {
+    await mount(<NoteEditorScreen {...editorDefaults} />)
+
+    const save = find("[data-e2e=note-save]")
+    const footer = save.parentElement!
+    expect([...footer.children].map((child) => child.getAttribute("data-e2e")))
+      .toEqual(["note-cancel", "note-save"])
+    expect(save.className.split(" ")).toEqual(expect.arrayContaining(["w-full", "sm:w-auto"]))
+    expect(footer.className.split(" ")).toEqual(
+      expect.arrayContaining(["flex-col-reverse", "sm:flex-row", "sm:justify-end"]),
+    )
+  })
+
   it("reports the typed title and creates the note through the app's callbacks", async () => {
     const change = spy<[{ title: string; body: string }]>()
     const save = spy<[]>()

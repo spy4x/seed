@@ -10,6 +10,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteDraft, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
+import { TAG_PATHS } from "./progressive.tsx"
 import { TagsScreen, type TagsScreenProps } from "./tags-screen.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -181,6 +182,21 @@ const editorDefaults: NoteEditorScreenProps = {
 }
 
 describe("TagsScreen", () => {
+  it("heads the page as a main destination, with no back arrow to the notes", async () => {
+    await mount(<TagsScreen {...tagsDefaults} />)
+    expect(find("h1").textContent).toBe("Tags")
+    expect(count("[data-e2e=page-back]")).toBe(0)
+    expect(find("body").textContent).not.toContain("Back to notes")
+  })
+
+  it("draws an empty list as a message inside a solid card, not a dashed box", async () => {
+    await mount(<TagsScreen {...tagsDefaults} tags={[]} />)
+    const empty = find("[role=status]")
+    expect(empty.textContent).toContain("No tags yet.")
+    expect(empty.closest(".pc-card")).not.toBeNull()
+    expect(empty.className.split(" ")).not.toContain("border-dashed")
+  })
+
   it("lists the tags, with New tag in the header, and a viewer gets the tags and no controls", async () => {
     await mount(<TagsScreen {...tagsDefaults} />)
     expect(count("[data-e2e=tag-list] li")).toBe(2)
@@ -364,6 +380,24 @@ describe("NotesScreen tags", () => {
   it("offers the tags page from the header's menu", async () => {
     await mount(<NotesScreen {...notesDefaults} />)
     expect(count("[data-e2e=notes-tags]")).toBe(1)
+  })
+
+  it("opens the tags page from the header's menu through the app's router, not a page load", async () => {
+    const navigate = spy<[string]>()
+    await mount(<NotesScreen {...notesDefaults} navigate={navigate.fn} />)
+    await click("[data-e2e=notes-menu]")
+    expect(find("[data-e2e=notes-tags]").getAttribute("href")).toBe(TAG_PATHS.list)
+    expect(await click("[data-e2e=notes-tags]")).toBe(true)
+    expect(navigate.calls).toEqual([[TAG_PATHS.list]])
+  })
+
+  it("lays the filter out as one row that scrolls sideways on a phone and wraps from sm up", async () => {
+    await mount(<NotesScreen {...notesDefaults} />)
+    const row = find("[data-e2e=notes-tag-filter] [role=group]").className.split(" ")
+    expect(row).toEqual(
+      expect.arrayContaining(["flex-nowrap", "overflow-x-auto", "*:shrink-0", "sm:flex-wrap"]),
+    )
+    expect(row).not.toContain("flex-wrap")
   })
 })
 
