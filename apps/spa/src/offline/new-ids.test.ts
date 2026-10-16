@@ -144,7 +144,7 @@ describe("ids the SPA makes", () => {
     store.startCreate()
     store.change({ ...store.form.value!, name: "Home" })
 
-    expect(await store.save()).toBe(true)
+    expect(await store.save()).not.toBeNull()
 
     expect(created.length).toBe(1)
     expect(isUuid(created[0], 7)).toBe(true)
@@ -160,7 +160,7 @@ describe("ids the SPA makes", () => {
     store.startCreate()
     store.change({ ...store.form.value!, name: "Home" })
 
-    expect(await store.save()).toBe(true)
+    expect(await store.save()).not.toBeNull()
 
     const made = store.tags.value.find((entry) => entry.name === "Home")
     expect(sent).toEqual([])

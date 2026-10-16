@@ -9,7 +9,7 @@ import { OfflineStatus } from "../modules.ts"
 
 /**
  * Wires the tags page to the tags store for `/tags`. The tags are those of the person's selected
- * group, as the notes are; whoever may write notes may change tags.
+ * group, as the notes are; whoever may write notes may change tags, on the tag editor's pages.
  */
 export function TagsView() {
   const [, navigate] = useLocation()
@@ -35,17 +35,6 @@ export function TagsView() {
         tags={store.tags.value}
         loading={store.loading.value || groupsStore.loading.value || groupId === null}
         listError={store.listError.value}
-        form={store.form.value}
-        errors={store.formErrors.value}
-        saving={store.saving.value}
-        onNew={canWrite ? () => store.startCreate() : undefined}
-        onEdit={canWrite ? (id) => store.startEdit(id) : undefined}
-        onFormChange={(value) => {
-          const form = store.form.value
-          if (form) store.change({ ...form, name: value.name, color: value.color })
-        }}
-        onSave={() => void store.save()}
-        onCloseForm={() => store.closeForm()}
         onDelete={canWrite ? (id) => void store.remove(id) : undefined}
         navigate={navigate}
       />

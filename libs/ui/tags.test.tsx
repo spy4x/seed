@@ -1,7 +1,8 @@
 /**
- * The tags screen, and the tags on the notes screens: the filter on the list, the labels on its
- * rows and the picker on the note page. What a person does in a browser DOM (happy-dom): make,
- * rename, recolour and delete a tag, pick tags for a note, filter the list, and where focus goes.
+ * The tags list, the tag editor, and the tags on the notes screens: the filter on the list, the
+ * labels on its rows and the picker on the note page. What a person does in a browser DOM
+ * (happy-dom): make, rename, recolour and delete a tag, pick tags for a note, filter the list, and
+ * where focus goes.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
@@ -11,6 +12,7 @@ import { act } from "preact/test-utils"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteDraft, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
 import { TAG_PATHS } from "./progressive.tsx"
+import { TagEditorScreen, type TagEditorScreenProps } from "./tag-editor-screen.tsx"
 import { TagsScreen, type TagsScreenProps } from "./tags-screen.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -151,11 +153,6 @@ const tagsDefaults: TagsScreenProps = {
   tags,
   loading: false,
   listError: null,
-  form: null,
-  errors: { name: null, form: null },
-  saving: false,
-  onNew: () => {},
-  onEdit: () => {},
   onDelete: () => {},
 }
 
@@ -192,7 +189,7 @@ describe("TagsScreen", () => {
   it("draws an empty list as a message inside a solid card, not a dashed box", async () => {
     await mount(<TagsScreen {...tagsDefaults} tags={[]} />)
     const empty = find("[role=status]")
-    expect(empty.textContent).toContain("No tags yet.")
+    expect(empty.textContent).toContain("No tags yet")
     expect(empty.closest(".pc-card")).not.toBeNull()
     expect(empty.className.split(" ")).not.toContain("border-dashed")
   })
@@ -211,40 +208,39 @@ describe("TagsScreen", () => {
     expect(count("[data-e2e=tags-read-only]")).toBe(1)
   })
 
-  it("opens the form for a new tag and reports the typed name and the picked colour", async () => {
-    const open = spy<[]>()
-    await mount(<TagsScreen {...tagsDefaults} onNew={open.fn} />)
-    await click("[data-e2e=tag-new]")
-    expect(open.calls).toHaveLength(1)
+  it("opens the create page from New tag and from the empty list, through the app's router", async () => {
+    const navigate = spy<[string]>()
+    await mount(<TagsScreen {...tagsDefaults} navigate={navigate.fn} />)
+    expect(find("[data-e2e=tag-new]").getAttribute("href")).toBe(TAG_PATHS.new)
+    expect(await click("[data-e2e=tag-new]")).toBe(true)
 
-    const change = spy<[{ id: string | null; name: string; color: string }]>()
-    const form = { id: null, name: "", color: "gray" as const }
-    await mount(<TagsScreen {...tagsDefaults} form={form} onFormChange={change.fn} />)
-    await type("[data-e2e=tag-name]", "Errands")
-    expect(change.calls).toEqual([[{ id: null, name: "Errands", color: "gray" }]])
-
-    await click("[name=color][value=green]")
-    expect(change.calls.at(-1)).toEqual([{ id: null, name: "", color: "green" }])
+    await mount(<TagsScreen {...tagsDefaults} tags={[]} navigate={navigate.fn} />)
+    expect(find("[data-e2e=tag-new-empty]").getAttribute("href")).toBe(TAG_PATHS.new)
+    expect(await click("[data-e2e=tag-new-empty]")).toBe(true)
+    expect(navigate.calls).toEqual([[TAG_PATHS.new], [TAG_PATHS.new]])
+    expect(count("[data-e2e=tag-dialog]")).toBe(0)
   })
 
-  it("submits the form through the app's callback and keeps the browser from posting it", async () => {
-    const save = spy<[]>()
-    const form = { id: null, name: "Errands", color: "gray" as const }
-    await mount(<TagsScreen {...tagsDefaults} form={form} onSave={save.fn} />)
-    expect(await submit("[data-e2e=tag-name]")).toBe(true)
-    expect(save.calls).toHaveLength(1)
+  it("links each tag's name to its editor, named Edit and the tag's name", async () => {
+    const navigate = spy<[string]>()
+    await mount(<TagsScreen {...tagsDefaults} navigate={navigate.fn} />)
+    const link = find(`[data-e2e=tag-${home.id}] [data-e2e=tag-edit]`)
+    expect(link.tagName).toBe("A")
+    expect(link.getAttribute("href")).toBe(TAG_PATHS.tag(home.id))
+    expect(link.getAttribute("aria-label")).toBe("Edit Home")
+    expect(await clickOn(link)).toBe(true)
+    expect(navigate.calls).toEqual([[`/tags/${home.id}`]])
   })
 
-  it("opens a tag for renaming when its name is clicked, and shows the form as an edit", async () => {
-    const edit = spy<[string]>()
-    await mount(<TagsScreen {...tagsDefaults} onEdit={edit.fn} />)
-    await click(`[data-e2e=tag-${home.id}] [data-e2e=tag-edit]`)
-    expect(edit.calls).toEqual([[home.id]])
-
-    const form = { id: home.id, name: "Home", color: "blue" as const }
-    await mount(<TagsScreen {...tagsDefaults} form={form} />)
-    expect(find("[data-e2e=tag-dialog]").textContent).toContain("Edit tag")
-    expect(find("[data-e2e=tag-save]").textContent).toContain("Save tag")
+  it("offers Edit tag in each row's menu, leading to the tag's page through the app's router", async () => {
+    const navigate = spy<[string]>()
+    await mount(<TagsScreen {...tagsDefaults} navigate={navigate.fn} />)
+    await click(`[data-e2e=tag-${home.id}] [data-e2e=tag-menu]`)
+    const edit = find(`[data-e2e=tag-${home.id}] [data-e2e=tag-menu-edit]`)
+    expect(edit.textContent?.trim()).toBe("Edit tag")
+    expect(edit.getAttribute("href")).toBe(TAG_PATHS.tag(home.id))
+    expect(await clickOn(edit)).toBe(true)
+    expect(navigate.calls).toEqual([[TAG_PATHS.tag(home.id)]])
   })
 
   it("deletes a tag only after the person confirms, and says the notes stay", async () => {
@@ -253,11 +249,11 @@ describe("TagsScreen", () => {
     await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-menu]`)
     await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-delete]`)
     expect(remove.calls).toEqual([])
-    expect(find("[data-e2e=tag-delete-dialog]").textContent).toContain(
-      "The notes stay as they are.",
-    )
+    const dialog = find("[data-e2e=tag-delete-dialog]").textContent
+    expect(dialog).toContain(`Delete "Urgent"?`)
+    expect(dialog).toContain("The notes stay as they are.")
 
-    await clickText("Delete", "[data-e2e=tag-delete-dialog]")
+    await clickText("Delete tag", "[data-e2e=tag-delete-dialog]")
     expect(remove.calls).toEqual([[urgent.id]])
     expect(count("[data-e2e=tag-delete-dialog]")).toBe(0)
   })
@@ -269,7 +265,7 @@ describe("TagsScreen", () => {
     const remove = async (id: string) => {
       await click(`[data-e2e=tag-${id}] [data-e2e=tag-menu]`)
       await click(`[data-e2e=tag-${id}] [data-e2e=tag-delete]`)
-      await clickText("Delete", "[data-e2e=tag-delete-dialog]")
+      await clickText("Delete tag", "[data-e2e=tag-delete-dialog]")
     }
 
     await mount(<TagsScreen {...tagsDefaults} tags={three} />)
@@ -291,35 +287,15 @@ describe("TagsScreen", () => {
     await mount(<TagsScreen {...tagsDefaults} onDelete={remove.fn} />)
     await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-menu]`)
     await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-delete]`)
-    await clickText("Keep it", "[data-e2e=tag-delete-dialog]")
+    await clickText("Cancel", "[data-e2e=tag-delete-dialog]")
     expect(remove.calls).toEqual([])
     expect(count("[data-e2e=tag-delete-dialog]")).toBe(0)
   })
 
-  it("puts focus on the name field when the name is refused, and shows the message there", async () => {
-    const form = { id: null, name: "Home", color: "gray" as const }
-    await mount(<TagsScreen {...tagsDefaults} form={form} />)
-    await rerender(
-      <TagsScreen {...tagsDefaults} form={form} errors={{ name: "Taken.", form: null }} />,
-    )
-    expect(focused()).toBe("tag-name")
-    expect(find("[data-e2e=tag-name]").getAttribute("aria-describedby")).toBeTruthy()
-    expect(find("[data-e2e=tag-dialog]").textContent).toContain("Taken.")
-  })
-
-  it("shows the list's message above the tags when no dialog is open", async () => {
-    const message = "Someone changed this tag. Their version is shown."
+  it("shows the list's message above the tags", async () => {
+    const message = "Could not delete the tag"
     await mount(<TagsScreen {...tagsDefaults} listError={message} />)
-    expect(count("[data-e2e=tag-dialog]")).toBe(0)
     expect(document.body.textContent).toContain(message)
-  })
-
-  it("refuses a second submit while the tag is saving", async () => {
-    const save = spy<[]>()
-    const form = { id: null, name: "Errands", color: "gray" as const }
-    await mount(<TagsScreen {...tagsDefaults} form={form} saving onSave={save.fn} />)
-    await submit("[data-e2e=tag-name]")
-    expect(save.calls).toHaveLength(0)
   })
 
   it("invites an editor to make the first tag, and a viewer to nothing", async () => {
@@ -327,6 +303,227 @@ describe("TagsScreen", () => {
     expect(count("[data-e2e=tag-new-empty]")).toBe(1)
     await rerender(<TagsScreen {...tagsDefaults} tags={[]} group={viewerOfTeam} />)
     expect(count("[data-e2e=tag-new-empty]")).toBe(0)
+  })
+})
+
+const tagEditorDefaults: TagEditorScreenProps = {
+  group: team,
+  loading: false,
+  notFound: false,
+  tag: null,
+  value: { name: "", color: "gray" },
+  errors: { name: null, form: null },
+  saving: false,
+  dirty: false,
+}
+
+/** The editor of the saved tag Home, as the app draws it once the tag is read. */
+const editHome: TagEditorScreenProps = {
+  ...tagEditorDefaults,
+  tag: home,
+  value: { name: home.name, color: home.color },
+  onDelete: () => {},
+}
+
+describe("TagEditorScreen", () => {
+  it("titles the create page New tag, with Create tag and a Cancel that leads back to the tags", async () => {
+    const navigate = spy<[string]>()
+    await mount(<TagEditorScreen {...tagEditorDefaults} navigate={navigate.fn} />)
+    expect(find("h1").textContent).toBe("New tag")
+    expect(find("[data-e2e=tags-group]").textContent).toBe("Team")
+    expect(find("[data-e2e=tag-save]").textContent).toBe("Create tag")
+    expect(find("[data-e2e=page-back]").getAttribute("href")).toBe(TAG_PATHS.list)
+    expect(count("[data-e2e=tag-editor-menu]")).toBe(0)
+    expect(find("body").textContent).toContain("Everyone in Team sees this tag.")
+    expect(await click("[data-e2e=tag-cancel]")).toBe(true)
+    expect(navigate.calls).toEqual([[TAG_PATHS.list]])
+  })
+
+  it("names the colours in British English, Grey first", async () => {
+    await mount(<TagEditorScreen {...tagEditorDefaults} />)
+    const labels = [...document.querySelectorAll("[data-e2e=tag-color] label")]
+      .map((label) => label.textContent?.trim())
+    expect(labels).toEqual(["Grey", "Red", "Orange", "Green", "Blue", "Purple"])
+    expect(find("[data-e2e=tag-color] legend").textContent).toBe("Colour")
+  })
+
+  it("reports the typed name and the picked colour", async () => {
+    const change = spy<[{ name: string; color: string }]>()
+    await mount(<TagEditorScreen {...tagEditorDefaults} onChange={change.fn} />)
+    await type("[data-e2e=tag-name]", "Errands")
+    expect(change.calls).toEqual([[{ name: "Errands", color: "gray" }]])
+
+    await click("[name=color][value=green]")
+    expect(change.calls.at(-1)).toEqual([{ name: "", color: "green" }])
+  })
+
+  it("submits through the app's callback and keeps the browser from posting the form", async () => {
+    const save = spy<[]>()
+    const value = { name: "Errands", color: "gray" as const }
+    await mount(<TagEditorScreen {...tagEditorDefaults} value={value} onSave={save.fn} />)
+    expect(await submit("[data-e2e=tag-name]")).toBe(true)
+    expect(save.calls).toHaveLength(1)
+  })
+
+  it("refuses a second submit while the tag is being created, and says Creating…", async () => {
+    const save = spy<[]>()
+    const value = { name: "Errands", color: "gray" as const }
+    await mount(<TagEditorScreen {...tagEditorDefaults} value={value} saving onSave={save.fn} />)
+    await submit("[data-e2e=tag-name]")
+    expect(save.calls).toHaveLength(0)
+    expect(find("[data-e2e=tag-save]").textContent).toContain("Creating…")
+  })
+
+  it("titles an existing tag's page with its saved name, not the one being typed", async () => {
+    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "blue" }} dirty />)
+    expect(find("h1").textContent).toBe("Home")
+    expect(find<HTMLInputElement>("[data-e2e=tag-name]").value).toBe("Hom")
+  })
+
+  it("shows Save tag and Cancel on an existing tag only once a field changed, and Cancel puts it back", async () => {
+    const revert = spy<[]>()
+    await mount(<TagEditorScreen {...editHome} onRevert={revert.fn} />)
+    expect(count("[data-e2e=tag-save]")).toBe(0)
+    expect(count("[data-e2e=tag-cancel]")).toBe(0)
+
+    await rerender(
+      <TagEditorScreen
+        {...editHome}
+        value={{ name: "Hom", color: "blue" }}
+        dirty
+        onRevert={revert.fn}
+      />,
+    )
+    expect(find("[data-e2e=tag-save]").textContent).toBe("Save tag")
+    await click("[data-e2e=tag-cancel]")
+    expect(revert.calls).toHaveLength(1)
+  })
+
+  it("puts focus on the name field when the name is refused, and ties the message to it", async () => {
+    const value = { name: "Home", color: "gray" as const }
+    await mount(<TagEditorScreen {...tagEditorDefaults} value={value} />)
+    await rerender(
+      <TagEditorScreen
+        {...tagEditorDefaults}
+        value={value}
+        errors={{ name: "Taken.", form: null }}
+      />,
+    )
+    expect(focused()).toBe("tag-name")
+    const described = find("[data-e2e=tag-name]").getAttribute("aria-describedby") ?? ""
+    const ids = described.split(" ").filter(Boolean)
+    expect(ids.map((id) => document.getElementById(id)?.textContent).join(" ")).toContain("Taken.")
+  })
+
+  it("shows an error that no field owns under the form", async () => {
+    await mount(
+      <TagEditorScreen
+        {...editHome}
+        errors={{ name: null, form: "Could not save the tag. Try again." }}
+      />,
+    )
+    const form = find("form")
+    expect(form.textContent).toContain("Could not save the tag. Try again.")
+  })
+
+  it("deletes the tag from the page's menu only after the person confirms", async () => {
+    const remove = spy<[]>()
+    await mount(<TagEditorScreen {...editHome} onDelete={remove.fn} />)
+    await click("[data-e2e=tag-editor-menu]")
+    await click("[data-e2e=tag-editor-delete]")
+    expect(remove.calls).toEqual([])
+    const dialog = find("[data-e2e=tag-delete-dialog]").textContent
+    expect(dialog).toContain(`Delete "Home"?`)
+    expect(dialog).toContain("The notes stay as they are.")
+
+    await clickText("Cancel", "[data-e2e=tag-delete-dialog]")
+    expect(remove.calls).toEqual([])
+
+    await click("[data-e2e=tag-editor-menu]")
+    await click("[data-e2e=tag-editor-delete]")
+    await clickText("Delete tag", "[data-e2e=tag-delete-dialog]")
+    expect(remove.calls).toHaveLength(1)
+  })
+
+  it("says the tag does not exist, with the way back to the tags", async () => {
+    await mount(<TagEditorScreen {...tagEditorDefaults} notFound />)
+    const missing = find("[data-e2e=tag-not-found]")
+    expect(missing.textContent).toContain("This tag does not exist.")
+    expect(missing.textContent).toContain("It may have been deleted.")
+    expect(missing.querySelector("a")?.getAttribute("href")).toBe(TAG_PATHS.list)
+    expect(count("form")).toBe(0)
+  })
+
+  it("draws a placeholder for the form only after 300 ms, so a quick read never flickers, and says it is loading", async () => {
+    await mount(<TagEditorScreen {...tagEditorDefaults} loading />)
+    expect(find("h1").textContent).toBe("Tag")
+    expect(count("[data-e2e=tag-loading]")).toBe(0)
+    expect(count("form")).toBe(0)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 200)))
+    expect(count("[data-e2e=tag-loading]")).toBe(0)
+    await act(() => new Promise((resolve) => setTimeout(resolve, 150)))
+    expect(find("[data-e2e=tag-loading] [role=status]").textContent).toBe("Loading the tag…")
+    // The placeholder is the library's skeleton, which a screen reader skips.
+    expect(count("[data-e2e=tag-loading] [aria-hidden=true] .animate-pulse")).toBeGreaterThan(0)
+  })
+
+  it("moves focus to the name field when Cancel takes the footer away", async () => {
+    const changed = { name: "Hom", color: "blue" as const }
+    await mount(<TagEditorScreen {...editHome} value={changed} dirty />)
+    find("[data-e2e=tag-cancel]").focus()
+    await rerender(<TagEditorScreen {...editHome} />)
+    expect(count("[data-e2e=tag-cancel]")).toBe(0)
+    expect(focused()).toBe("tag-name")
+  })
+
+  it("moves focus to the name field once a save went through, not while it is still running", async () => {
+    const changed = { name: "Hom", color: "blue" as const }
+    await mount(<TagEditorScreen {...editHome} value={changed} dirty />)
+    find("[data-e2e=tag-save]").focus()
+    await rerender(<TagEditorScreen {...editHome} value={changed} saving />)
+    expect(focused()).not.toBe("tag-name")
+    await rerender(<TagEditorScreen {...editHome} value={changed} />)
+    expect(focused()).toBe("tag-name")
+  })
+
+  it("leaves focus in the fields when typing puts the saved name back", async () => {
+    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "blue" }} dirty />)
+    find("[name=color][value=red]").focus()
+    await rerender(<TagEditorScreen {...editHome} />)
+    expect(document.activeElement?.getAttribute("value")).toBe("red")
+  })
+
+  it("does nothing on Enter in an existing tag with nothing changed", async () => {
+    const save = spy<[]>()
+    await mount(<TagEditorScreen {...editHome} onSave={save.fn} />)
+    await submit("[data-e2e=tag-name]")
+    expect(save.calls).toHaveLength(0)
+  })
+
+  it("keeps the fields to a form's width, with the footer under them, on a wide column", async () => {
+    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "blue" }} dirty />)
+    const column = find("[data-e2e=tag-name]").closest(".max-w-md")
+    expect(column).not.toBeNull()
+    expect(column?.contains(find("[data-e2e=tag-save]"))).toBe(true)
+  })
+
+  it("shows a viewer the tag read-only, with who may change it, and no actions", async () => {
+    await mount(<TagEditorScreen {...editHome} group={viewerOfTeam} dirty />)
+    expect(find("[data-e2e=tag-read-only]").textContent).toBe(
+      "Only an editor can change tags in this group.",
+    )
+    expect(find<HTMLInputElement>("[data-e2e=tag-name]").closest("fieldset")?.disabled).toBe(true)
+    expect(count("[data-e2e=tag-save]")).toBe(0)
+    expect(count("[data-e2e=tag-editor-menu]")).toBe(0)
+  })
+
+  it("says the changes stay on the device while it is offline", async () => {
+    await mount(<TagEditorScreen {...tagEditorDefaults} offline />)
+    expect(find("[data-e2e=tag-offline]").textContent).toContain(
+      "Your changes are saved on this device and sent when you are back online.",
+    )
+    await rerender(<TagEditorScreen {...tagEditorDefaults} />)
+    expect(count("[data-e2e=tag-offline]")).toBe(0)
   })
 })
 

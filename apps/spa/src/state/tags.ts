@@ -37,23 +37,25 @@ export interface TagsDependencies {
 }
 
 export const TAG_MESSAGES = {
-  nameRequired: "Enter a name",
+  nameRequired: "Enter a name.",
   nameTaken: "This group already has a tag with that name.",
   conflict: "Someone changed this tag since you opened it. It is shown as it is now.",
   gone: "This tag was deleted.",
   load: "Could not load the tags",
-  create: "Could not add the tag",
-  save: "Could not save the tag",
+  create: "Could not create the tag. Try again.",
+  save: "Could not save the tag. Try again.",
   delete: "Could not delete the tag",
 } as const
 
-/** The state of the tag form: the tag being created or edited, or none. */
+/** The state of the tag editor: the tag being created or edited, or none. */
 export interface TagForm {
   /** `null` creates a tag; an id edits that tag. */
   id: string | null
   name: string
   color: TagColor
   version: number
+  /** The name and colour as saved (or a new tag's defaults): what "unsaved" compares against. */
+  base: { name: string; color: TagColor }
 }
 
 /** The error text of a form: for the name, or for the whole form. */
@@ -71,8 +73,14 @@ function tagCode(error: unknown): string | null {
   return typeof code === "string" ? code : null
 }
 
+/** The editor's state for `tag` as saved. */
+function toForm(tag: TagItem): TagForm {
+  const base = { name: tag.name, color: tag.color }
+  return { id: tag.id, ...base, version: tag.version, base }
+}
+
 /**
- * The tags of one group: the list, and the one form (create or edit) the tags screen opens.
+ * The tags of one group: the list, and the one editor (create or edit) the tag pages open.
  * Notes read it for their picker, their chips and their filter, so it is a store of its own, and
  * it follows the notes' rules: a full read of the server's answer, with the device's copy and the
  * queued writes shown meanwhile.
@@ -88,6 +96,12 @@ export function createTagsStore(dependencies: TagsDependencies) {
   const deleting = signal<string | null>(null)
   /** The tag by id, for the chips a note shows. */
   const byId = computed(() => new Map(tags.value.map((tag) => [tag.id, tag])))
+  /** The person changed the name or the colour, and no save has taken it yet. */
+  const unsaved = computed(() => {
+    const current = form.value
+    if (!current) return false
+    return current.name !== current.base.name || current.color !== current.base.color
+  })
   let inFlight: Promise<void> | null = null
   let queued: Promise<void> | null = null
 
@@ -137,38 +151,62 @@ export function createTagsStore(dependencies: TagsDependencies) {
     }
   }
 
-  /** Opens the form to create a tag. */
+  /**
+   * Opens the editor to create a tag. What the person typed into an earlier create form stays, as
+   * a note's draft does; an edit form is replaced.
+   */
   function startCreate(): void {
-    form.value = { id: null, name: "", color: DEFAULT_TAG_COLOR, version: 0 }
+    if (form.value?.id === null) return
+    const base = { name: "", color: DEFAULT_TAG_COLOR }
+    form.value = { id: null, ...base, version: 0, base }
     formErrors.value = NO_ERRORS
   }
 
-  /** Opens the form to rename or recolour a tag. */
+  /**
+   * Opens the editor of a tag, from the tag as the list holds it. A form already open on this tag
+   * with unsaved changes is kept; otherwise it follows the tag, so a change that arrives while the
+   * person only looks is shown.
+   */
   function startEdit(id: string): void {
     const tag = byId.value.get(id)
     if (!tag) return
-    form.value = { id, name: tag.name, color: tag.color, version: tag.version }
-    formErrors.value = NO_ERRORS
+    if (form.value?.id === id && unsaved.value) return
+    const same = form.value?.id === id
+    form.value = toForm(tag)
+    if (!same) formErrors.value = NO_ERRORS
   }
 
   function change(next: TagForm): void {
     form.value = next
   }
 
+  /** Puts the edited tag's fields back to the last saved values. */
+  function revert(): void {
+    const current = form.value
+    if (!current) return
+    form.value = { ...current, ...current.base }
+    formErrors.value = NO_ERRORS
+  }
+
+  /** Drops the editor and what was typed into it. */
   function closeForm(): void {
     form.value = null
     formErrors.value = NO_ERRORS
   }
 
-  /** Saves the form: creates or updates. Resolves `true` once saved. */
-  async function save(): Promise<boolean> {
+  /**
+   * Saves the editor: creates or updates. Resolves the tag as saved, after which the editor holds
+   * that tag with nothing unsaved; `null` when it was refused or failed. A tag that moved on is
+   * read again and shown as it is now, with a message; a tag that is gone closes the editor.
+   */
+  async function save(): Promise<TagItem | null> {
     const forGroup = groupId.value
     const current = form.value
-    if (!forGroup || !current || saving.value) return false
+    if (!forGroup || !current || saving.value) return null
     const name = current.name.trim()
     if (!name) {
       formErrors.value = { name: TAG_MESSAGES.nameRequired, form: null }
-      return false
+      return null
     }
     saving.value = true
     formErrors.value = NO_ERRORS
@@ -188,25 +226,29 @@ export function createTagsStore(dependencies: TagsDependencies) {
           version: current.version,
         })
       tags.value = sorted([tag, ...tags.value.filter((existing) => existing.id !== tag.id)])
-      form.value = null
-      return true
+      form.value = toForm(tag)
+      return tag
     } catch (cause) {
       const code = tagCode(cause)
       if (code === "TAG_NAME_TAKEN") {
         formErrors.value = { name: TAG_MESSAGES.nameTaken, form: null }
       } else if (code === "VERSION_CONFLICT" || code === "TAG_NOT_FOUND") {
-        // The form would save over the other change: read the latest and close it. The message
-        // goes above the list, because the form that would show it is closed.
-        form.value = null
+        // Saving would write over the other change: read the latest and show it instead of what
+        // was typed. A deleted tag leaves the list, and the editor says so.
         await refresh().catch(() => {})
-        listError.value = code === "TAG_NOT_FOUND" ? TAG_MESSAGES.gone : TAG_MESSAGES.conflict
+        const latest = current.id === null ? undefined : byId.value.get(current.id)
+        form.value = latest ? toForm(latest) : null
+        formErrors.value = {
+          name: null,
+          form: latest && code === "VERSION_CONFLICT" ? TAG_MESSAGES.conflict : TAG_MESSAGES.gone,
+        }
       } else {
         formErrors.value = {
           name: null,
           form: describeError(cause, current.id === null ? TAG_MESSAGES.create : TAG_MESSAGES.save),
         }
       }
-      return false
+      return null
     } finally {
       saving.value = false
     }
@@ -222,6 +264,7 @@ export function createTagsStore(dependencies: TagsDependencies) {
     try {
       await dependencies.delete({ groupId: forGroup, id, version: tag.version })
       tags.value = tags.value.filter((existing) => existing.id !== id)
+      if (form.value?.id === id) closeForm()
       return true
     } catch (cause) {
       const code = tagCode(cause)
@@ -242,7 +285,10 @@ export function createTagsStore(dependencies: TagsDependencies) {
     tags.value = []
     loading.value = false
     listError.value = null
-    form.value = null
+    // A tag being created belongs to no group yet: what the person typed stays when the group
+    // changes under the create page (a switch, or the server's selection replacing the cached
+    // one), and the tag is created in the group now shown. An edited tag belongs to the old group.
+    if (form.value?.id !== null) form.value = null
     formErrors.value = NO_ERRORS
     saving.value = false
     deleting.value = null
@@ -260,11 +306,13 @@ export function createTagsStore(dependencies: TagsDependencies) {
     formErrors,
     saving,
     deleting,
+    unsaved,
     open,
     refresh,
     startCreate,
     startEdit,
     change,
+    revert,
     closeForm,
     save,
     remove,

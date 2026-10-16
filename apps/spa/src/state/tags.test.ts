@@ -68,25 +68,85 @@ describe("tags store", () => {
     expect(store.tags.value.map((tag) => tag.id)).toEqual(["server"])
   })
 
-  it("creates a tag with a new id and keeps the list sorted by name", async () => {
+  it("creates a tag with a new id, keeps the list sorted by name and goes on editing the new tag", async () => {
     const { store, calls } = harness()
     await store.open(groupId)
     store.startCreate()
     store.change({ ...store.form.value!, name: "  Cherry  " })
-    expect(await store.save()).toBe(true)
+    expect(store.unsaved.value).toBe(true)
+    expect((await store.save())?.id).toBe("new-1")
     expect(calls).toEqual([{
       name: "create",
       input: { groupId, id: "new-1", name: "Cherry", color: "gray" },
     }])
     expect(store.tags.value.map((tag) => tag.name)).toEqual(["alpha", "Beta", "Cherry"])
+    expect(store.form.value?.id).toBe("new-1")
+    expect(store.unsaved.value).toBe(false)
+  })
+
+  it("keeps what was typed into the create form when the create page opens again", async () => {
+    const { store } = harness()
+    await store.open(groupId)
+    store.startCreate()
+    store.change({ ...store.form.value!, name: "Draft" })
+    store.startCreate()
+    expect(store.form.value?.name).toBe("Draft")
+  })
+
+  it("keeps the create form when the group changes, and creates the tag in the new group", async () => {
+    const { store, calls } = harness()
+    await store.open(groupId)
+    store.startCreate()
+    store.change({ ...store.form.value!, name: "Errands" })
+    await store.open("g-2")
+    expect(store.form.value).toMatchObject({ id: null, name: "Errands" })
+    store.change({ ...store.form.value!, color: "green" })
+    expect((await store.save())?.name).toBe("Errands")
+    expect(calls).toEqual([{
+      name: "create",
+      input: { groupId: "g-2", id: "new-1", name: "Errands", color: "green" },
+    }])
+  })
+
+  it("drops an edited tag's form when the group changes, since the tag is in the old group", async () => {
+    const { store } = harness()
+    await store.open(groupId)
+    store.startEdit("b")
+    await store.open("g-2")
     expect(store.form.value).toBeNull()
+  })
+
+  it("counts a changed name or colour as unsaved, and puts the saved values back on revert", async () => {
+    const { store } = harness()
+    await store.open(groupId)
+    store.startEdit("b")
+    expect(store.unsaved.value).toBe(false)
+    store.change({ ...store.form.value!, color: "red" })
+    expect(store.unsaved.value).toBe(true)
+    store.revert()
+    expect(store.form.value).toMatchObject({ id: "b", name: "Beta", color: "gray" })
+    expect(store.unsaved.value).toBe(false)
+  })
+
+  it("keeps unsaved changes when the tag is opened again, and follows the tag when nothing changed", async () => {
+    const { store } = harness()
+    await store.open(groupId)
+    store.startEdit("b")
+    store.change({ ...store.form.value!, name: "Typed" })
+    store.startEdit("b")
+    expect(store.form.value?.name).toBe("Typed")
+
+    store.revert()
+    store.tags.value = [item("b", "Renamed elsewhere", 2), item("a", "alpha")]
+    store.startEdit("b")
+    expect(store.form.value).toMatchObject({ name: "Renamed elsewhere", version: 2 })
   })
 
   it("refuses an empty name without calling the server", async () => {
     const { store, calls } = harness()
     await store.open(groupId)
     store.startCreate()
-    expect(await store.save()).toBe(false)
+    expect(await store.save()).toBeNull()
     expect(store.formErrors.value.name).toBe(TAG_MESSAGES.nameRequired)
     expect(calls).toEqual([])
   })
@@ -108,38 +168,47 @@ describe("tags store", () => {
     await store.open(groupId)
     store.startCreate()
     store.change({ ...store.form.value!, name: "alpha" })
-    expect(await store.save()).toBe(false)
+    expect(await store.save()).toBeNull()
     expect(store.formErrors.value.name).toBe(TAG_MESSAGES.nameTaken)
     expect(store.form.value).not.toBeNull()
   })
 
-  it("closes the form and reads again when the tag moved on", async () => {
+  it("reads again when the tag moved on, and shows it as it is now with a message", async () => {
     let reads = 0
     const { store } = harness({
-      fetchList: () => (reads++, Promise.resolve([item("a", "alpha", 5)])),
+      fetchList: () => (reads++, Promise.resolve([item("a", reads > 1 ? "Alpha 2" : "alpha", 5)])),
       update: () => Promise.reject(refused("VERSION_CONFLICT")),
     })
     await store.open(groupId)
     store.startEdit("a")
-    await store.save()
-    expect(store.listError.value).toBe(TAG_MESSAGES.conflict)
-    expect(store.form.value).toBeNull()
+    store.change({ ...store.form.value!, name: "Mine" })
+    expect(await store.save()).toBeNull()
+    expect(store.formErrors.value.form).toBe(TAG_MESSAGES.conflict)
+    expect(store.form.value).toMatchObject({ id: "a", name: "Alpha 2", version: 5 })
+    expect(store.unsaved.value).toBe(false)
     expect(reads).toBe(2)
   })
 
-  it("says above the list that the tag was deleted when a rename finds it gone", async () => {
-    const { store } = harness({ update: () => Promise.reject(refused("TAG_NOT_FOUND")) })
+  it("closes the editor and says the tag was deleted when a rename finds it gone", async () => {
+    let reads = 0
+    const { store } = harness({
+      fetchList: () => Promise.resolve(reads++ ? [item("b", "Beta")] : [item("a"), item("b")]),
+      update: () => Promise.reject(refused("TAG_NOT_FOUND")),
+    })
     await store.open(groupId)
     store.startEdit("a")
-    expect(await store.save()).toBe(false)
-    expect(store.listError.value).toBe(TAG_MESSAGES.gone)
+    expect(await store.save()).toBeNull()
+    expect(store.formErrors.value.form).toBe(TAG_MESSAGES.gone)
     expect(store.form.value).toBeNull()
+    expect(store.tags.value.map((tag) => tag.id)).toEqual(["b"])
   })
 
-  it("deletes a tag at its version and drops it from the list", async () => {
+  it("deletes a tag at its version, drops it from the list and closes its editor", async () => {
     const { store, calls } = harness()
     await store.open(groupId)
+    store.startEdit("a")
     expect(await store.remove("a")).toBe(true)
+    expect(store.form.value).toBeNull()
     expect(calls).toEqual([{ name: "delete", input: { groupId, id: "a", version: 1 } }])
     expect(store.tags.value.map((tag) => tag.id)).toEqual(["b"])
   })

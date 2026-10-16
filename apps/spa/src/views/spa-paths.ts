@@ -26,6 +26,9 @@ export const SPA_ROUTES = {
   "/invite/:token": { open: false },
   "/notifications": { open: false },
   "/tags": { open: false },
+  // Before the tag's page, or "new" would be read as a tag's id.
+  "/tags/new": { open: false },
+  "/tags/:tagId": { open: false },
   "/notes": { open: false },
   "/notes/new": { open: false },
   "/notes/:noteId": { open: false },

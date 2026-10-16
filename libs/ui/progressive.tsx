@@ -32,10 +32,14 @@ export const NOTE_PATHS = {
   note: (noteId: string) => `/notes/${noteId}`,
 } as const
 
-/** Where the tags page lives. Tags are the SPA's: the website has no session. */
+/** Where the tags pages live. Tags are the SPA's: the website has no session. */
 export const TAG_PATHS = {
-  /** A group's tags: create, rename, recolour, delete. */
+  /** A group's tags, each a link to its editor, and a delete in each row's menu. */
   list: "/tags",
+  /** The create page: the tag editor with no tag yet. */
+  new: "/tags/new",
+  /** One tag's editor. */
+  tag: (tagId: string) => `/tags/${tagId}`,
 } as const
 
 /** The pages these screens link to. */

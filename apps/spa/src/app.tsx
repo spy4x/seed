@@ -47,6 +47,7 @@ import { billingStore } from "./state/billing.ts"
 import { NoteEditorView } from "./views/NoteEditorView.tsx"
 import { NotesView } from "./views/NotesView.tsx"
 import { TagsView } from "./views/TagsView.tsx"
+import { TagEditorView } from "./views/TagEditorView.tsx"
 import { ProfileView } from "./views/ProfileView.tsx"
 import { AppShell, PublicFrame } from "./views/AppShell.tsx"
 import { signInRedirect } from "./views/sign-in-gate.ts"
@@ -104,6 +105,8 @@ const PAGES: {
   "/invite/:token": (params) => <InvitationView key={params.token} token={params.token} />,
   "/notifications": () => <NotificationsView />,
   "/tags": () => <TagsView />,
+  "/tags/new": () => <TagEditorView key="new" />,
+  "/tags/:tagId": (params) => <TagEditorView key={params.tagId} tagId={params.tagId} />,
   "/notes": () => <NotesView />,
   "/notes/new": () => <NoteEditorView key="new" />,
   "/notes/:noteId": (params) => <NoteEditorView key={params.noteId} noteId={params.noteId} />,

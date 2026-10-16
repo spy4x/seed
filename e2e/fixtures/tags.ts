@@ -101,14 +101,26 @@ export class TagsPage {
     await gotoApp(this.page, "/tags", this.page.locator("[data-e2e=tags-group]"))
   }
 
+  /** Creates a tag on its create page, which then becomes the tag's page, and goes back. */
   async create(name: string, color?: string): Promise<void> {
     await this.page.locator("[data-e2e=tag-new], [data-e2e=tag-new-empty]").first().click()
-    await this.fillAndSave(name, color)
+    await expect(this.page).toHaveURL("/tags/new")
+    await this.fill(name, color)
+    await this.page.locator("[data-e2e=tag-save]").click()
+    await expect(this.page).toHaveURL(/\/tags\/[0-9a-f-]{36}$/)
+    await expect(this.page.locator("[data-e2e=tag-title]")).toHaveText(name)
+    await this.back()
   }
 
+  /** Renames a tag on its page; Save leaves once nothing is left to save, then goes back. */
   async rename(from: string, to: string, color?: string): Promise<void> {
     await this.row(from).locator("[data-e2e=tag-edit]").click()
-    await this.fillAndSave(to, color)
+    await expect(this.page).toHaveURL(/\/tags\/[0-9a-f-]{36}$/)
+    await this.fill(to, color)
+    await this.page.locator("[data-e2e=tag-save]").click()
+    await expect(this.page.locator("[data-e2e=tag-save]")).toBeHidden()
+    await expect(this.page.locator("[data-e2e=tag-title]")).toHaveText(to)
+    await this.back()
   }
 
   async remove(name: string): Promise<void> {
@@ -118,12 +130,16 @@ export class TagsPage {
       .click()
   }
 
-  private async fillAndSave(name: string, color?: string): Promise<void> {
-    const dialog = this.page.locator("[data-e2e=tag-dialog]")
-    await dialog.locator("[data-e2e=tag-name]").fill(name)
-    if (color) await dialog.getByLabel(color, { exact: true }).check()
-    await dialog.locator("[data-e2e=tag-save]").click()
-    await expect(dialog).toBeHidden()
+  private async fill(name: string, color?: string): Promise<void> {
+    await this.page.locator("[data-e2e=tag-name]").fill(name)
+    if (color) {
+      await this.page.locator("[data-e2e=tag-color]").getByLabel(color, { exact: true }).check()
+    }
+  }
+
+  private async back(): Promise<void> {
+    await this.page.locator("[data-e2e=page-back]").click()
+    await expect(this.page).toHaveURL("/tags")
   }
 
   /** Goes to the notes list through the main navigation: Tags is a destination of its own. */

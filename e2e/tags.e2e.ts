@@ -90,6 +90,37 @@ test.describe("tags", () => {
     }
   })
 
+  test("a tag typed on the create page is kept and created in the group the person switches to", async ({ browser, request }) => {
+    const user = "e2e_tags_switch@example.com"
+    await cleanup(request, user)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      await signUp(request, user)
+      const page = await context.newPage()
+      await signInOnline(page, user)
+      const second = await selectedGroup(page, "Second team")
+      const first = await selectedGroup(page, "First team")
+      await gotoApp(page, "/tags/new", page.locator("[data-e2e=tag-name]"))
+      await expect(page.locator("[data-e2e=tags-group]")).toHaveText("First team")
+      await page.locator("[data-e2e=tag-name]").fill("Errands")
+
+      await page.locator("[data-e2e=group-picker]").click()
+      await page.getByRole("menuitemradio", { name: /Second team/ }).click()
+      await expect(page.locator("[data-e2e=tags-group]")).toHaveText("Second team")
+      await expect(page.locator("[data-e2e=tag-name]")).toHaveValue("Errands")
+
+      await page.locator("[data-e2e=tag-name]").fill("Errands 2")
+      await page.locator("[data-e2e=tag-save]").click()
+      await expect(page).toHaveURL(/\/tags\/[0-9a-f-]{36}$/)
+      await expect.poll(async () => (await serverTags(page, second)).map((t) => t.name))
+        .toEqual(["Errands 2"])
+      expect(await serverTags(page, first)).toEqual([])
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
   test("a tag made and renamed with no network, and a note that names it, reach the server in order and show in a second browser", async ({ browser, request }) => {
     const user = "e2e_tags_offline@example.com"
     await cleanup(request, user)
