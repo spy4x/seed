@@ -4,6 +4,9 @@ import {
   type BillingProvider,
   createStripeBilling,
   type PlanRef,
+  type Refund,
+  RefundStatus,
+  type Subscription,
   SubscriptionStatus,
 } from "@spy4x/billing"
 import { DEFAULT_GRACE_DAYS, PRO_PLAN_ID } from "@domain/billing"
@@ -32,8 +35,14 @@ export enum BillingMode {
 
 export interface BillingSetup {
   mode: BillingMode
-  /** `null` when billing is off. */
-  provider: BillingProvider | null
+  /** `null` when billing is off. Every optional call is there: the operator area uses them. */
+  provider: Required<BillingProvider> | null
+  /**
+   * The provider's dashboard, where an operator checks a customer: Stripe's test-mode dashboard for
+   * a test key, its live one otherwise. `null` when billing is off or the development provider runs,
+   * since neither has a dashboard to open.
+   */
+  dashboardUrl: string | null
   /** Days a past-due group keeps its plan while the provider retries the charge. */
   graceDays: number
   /** Whether starting a trial asks for a card (`BILLING_TRIAL_REQUIRES_CARD`, default true). */
@@ -86,7 +95,13 @@ export function readBillingSetup(
   const chosen = env.get("BILLING_PROVIDER") ?? (appEnv === "dev" ? "fake" : "off")
   switch (chosen) {
     case "off":
-      return { mode: BillingMode.Off, provider: null, graceDays, trialRequiresCard }
+      return {
+        mode: BillingMode.Off,
+        provider: null,
+        dashboardUrl: null,
+        graceDays,
+        trialRequiresCard,
+      }
     case "fake":
       if (appEnv !== "dev") {
         throw new BillingConfigError(
@@ -96,6 +111,7 @@ export function readBillingSetup(
       return {
         mode: BillingMode.Fake,
         provider: createFakeBilling(env.get("STRIPE_PRICE_PRO") ?? FAKE_PRO_PRICE_ID),
+        dashboardUrl: null,
         graceDays,
         trialRequiresCard,
       }
@@ -121,6 +137,7 @@ export function readBillingSetup(
           plans: planRefs(env.get("STRIPE_PRICE_PRO")!),
           fetch: options.fetch,
         }),
+        dashboardUrl: stripeDashboardUrl(env.get("STRIPE_SECRET_KEY")!),
         graceDays,
         trialRequiresCard,
       }
@@ -128,6 +145,16 @@ export function readBillingSetup(
     default:
       throw new BillingConfigError("BILLING_PROVIDER must be stripe, fake or off")
   }
+}
+
+/**
+ * Stripe's dashboard for a secret key: a test key (`sk_test_…`, or a restricted `rk_test_…`) only
+ * sees test-mode customers, which live under `/test`.
+ */
+export function stripeDashboardUrl(secretKey: string): string {
+  return /^(sk|rk)_test_/.test(secretKey)
+    ? "https://dashboard.stripe.com/test"
+    : "https://dashboard.stripe.com"
 }
 
 function readTrialRequiresCard(value: string | undefined): boolean {
@@ -159,8 +186,12 @@ function planRefs(proPriceId: string): PlanRef[] {
  * they had paid or closed the portal; the plan changes only when a signed webhook says so, exactly
  * as with Stripe. Webhooks are verified and parsed by the real Stripe adapter with
  * {@link FAKE_WEBHOOK_SECRET}, and its network is a `fetch` that refuses every call.
+ *
+ * The operator calls answer as Stripe would, without a webhook following: every subscription's last
+ * payment is one Pro seat paid now, refundable once per provider, and the subscription changes are
+ * only answered. A retried refund with the same idempotency key answers the same refund.
  */
-export function createFakeBilling(proPriceId: string): BillingProvider {
+export function createFakeBilling(proPriceId: string): Required<BillingProvider> {
   const stripe = createStripeBilling({
     secretKey: "sk_test_fake",
     webhookSecret: FAKE_WEBHOOK_SECRET,
@@ -168,6 +199,29 @@ export function createFakeBilling(proPriceId: string): BillingProvider {
     fetch: () => Promise.reject(new Error("The development billing provider makes no requests")),
   })
   const known = new Set([PRO_PLAN_ID])
+  const refunds = new Map<string, Refund>()
+  const refunded = new Set<string>()
+  const paymentIdOf = (subscriptionId: string) => `pi_fake_${subscriptionId}`
+  const answered = (
+    subscriptionId: string,
+    change: Partial<Subscription>,
+  ): Promise<{ ok: true; value: Subscription }> =>
+    Promise.resolve({
+      ok: true,
+      value: {
+        id: subscriptionId,
+        customerId: "cus_fake",
+        status: SubscriptionStatus.Active,
+        planId: PRO_PLAN_ID,
+        priceId: proPriceId,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        trialEnd: null,
+        quantity: 1,
+        reference: null,
+        ...change,
+      },
+    })
   return {
     createCheckout(request) {
       if (!known.has(request.planId)) {
@@ -206,6 +260,58 @@ export function createFakeBilling(proPriceId: string): BillingProvider {
         value: { id: `bps_fake_${uuidV7()}`, url: request.returnUrl },
       })
     },
+    readLastPayment(request) {
+      const id = paymentIdOf(request.subscriptionId)
+      const done = refunded.has(id)
+      return Promise.resolve({
+        ok: true,
+        value: {
+          id,
+          invoiceId: `in_fake_${request.subscriptionId}`,
+          amount: 900,
+          currency: "EUR",
+          decimals: 2,
+          paidAt: new Date(),
+          amountRefunded: done ? 900 : 0,
+          refunded: done,
+        },
+      })
+    },
+    refundPayment(request) {
+      const again = refunds.get(request.idempotencyKey)
+      if (again) return Promise.resolve({ ok: true, value: again })
+      if (!request.paymentId.startsWith("pi_fake_") || refunded.has(request.paymentId)) {
+        return Promise.resolve({
+          ok: false,
+          error: {
+            code: "provider_error",
+            message: "Stripe answered 400: this payment cannot be refunded",
+            status: 400,
+          },
+        })
+      }
+      const refund: Refund = {
+        id: `re_fake_${uuidV7()}`,
+        paymentId: request.paymentId,
+        amount: 900,
+        currency: "EUR",
+        decimals: 2,
+        status: RefundStatus.Succeeded,
+      }
+      refunded.add(request.paymentId)
+      refunds.set(request.idempotencyKey, refund)
+      return Promise.resolve({ ok: true, value: refund })
+    },
+    setTrialEnd: (request) =>
+      answered(request.subscriptionId, {
+        status: SubscriptionStatus.Trialing,
+        trialEnd: request.trialEnd,
+        currentPeriodEnd: request.trialEnd,
+      }),
+    cancelNow: (request) =>
+      answered(request.subscriptionId, { status: SubscriptionStatus.Canceled }),
+    setCancelAtPeriodEnd: (request) =>
+      answered(request.subscriptionId, { cancelAtPeriodEnd: request.cancelAtPeriodEnd }),
     parseEvent: (rawBody, headers) => stripe.parseEvent(rawBody, headers),
   }
 }

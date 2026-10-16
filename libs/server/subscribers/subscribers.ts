@@ -26,6 +26,22 @@ export interface SubscribersSetup {
 }
 
 /**
+ * The public website's address, such as `https://www.example.com`, from `MPA_DOMAIN`, or `null`
+ * while the website is not deployed. Plain HTTP only in development, as for the app's own
+ * address. A value with a scheme throws, so the process stops at start-up.
+ */
+export function readSiteUrl(
+  env: { get(name: string): string | undefined },
+  mode: `dev` | `prod`,
+): string | null {
+  const site = env.get(`MPA_DOMAIN`)?.trim() ?? ``
+  if (site.includes(`://`)) {
+    throw new Error(`MPA_DOMAIN must be a host such as www.example.com, without a scheme`)
+  }
+  return site === `` ? null : new URL(`http${mode === `dev` ? `` : `s`}://${site}`).origin
+}
+
+/**
  * Reads `SUBSCRIBERS_SECRET` and the comma-separated `SUBSCRIBERS_PREVIOUS_SECRETS`. Unset in
  * development → {@link DEV_SUBSCRIBERS_SECRET}; unset in production → `null`, the feature is off.
  * Also reads `MPA_DOMAIN`, the public website's host, as {@link SubscribersSetup.siteUrl}: plain
@@ -43,13 +59,8 @@ export function readSubscribersSetup(
     .split(`,`)
     .map((value) => value.trim())
     .filter((value) => value !== ``)
-  const site = env.get(`MPA_DOMAIN`)?.trim() ?? ``
-  if (site.includes(`://`)) {
-    throw new Error(`MPA_DOMAIN must be a host such as www.example.com, without a scheme`)
-  }
-  const pages = site === ``
-    ? {}
-    : { siteUrl: new URL(`http${mode === `dev` ? `` : `s`}://${site}`).origin }
+  const siteUrl = readSiteUrl(env, mode)
+  const pages = siteUrl === null ? {} : { siteUrl }
   if (secret === ``) {
     return mode === `dev` ? { secret: DEV_SUBSCRIBERS_SECRET, previousSecrets: [], ...pages } : null
   }

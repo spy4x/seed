@@ -15,6 +15,7 @@ import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
+import type { BillingAuditEvent } from "@domain/billing"
 import { ACTIVITY_KINDS } from "@domain/groups"
 import {
   accountAuditEvent,
@@ -32,6 +33,7 @@ import {
   parseAuditEvent,
 } from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
+import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
 import { AUDIT_EVENTS, auditTone } from "./admin-user-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
@@ -78,6 +80,7 @@ export function auditEventLabel(event: string): string {
   if (!parsed) return event
   if (parsed.source === "account") {
     return AUDIT_EVENTS[parsed.eventType as AuthAuditEventType] ??
+      BILLING_AUDIT_LABELS[parsed.eventType as BillingAuditEvent] ??
       `Account event ${parsed.eventType}`
   }
   return ACTIVITY_LABELS[parsed.kind] ?? parsed.kind
@@ -106,6 +109,10 @@ const EVENT_OPTIONS: SelectOption[] = [
   ...[ADMIN_JOB_RETRIED_KIND, ADMIN_AUDIT_EXPORTED_KIND].map((kind) => ({
     value: activityAuditEvent(kind),
     label: `Operator: ${ACTIVITY_LABELS[kind]}`,
+  })),
+  ...Object.entries(BILLING_AUDIT_LABELS).map(([eventType, label]) => ({
+    value: accountAuditEvent(Number(eventType)),
+    label: `Operator: ${label}`,
   })),
 ]
 

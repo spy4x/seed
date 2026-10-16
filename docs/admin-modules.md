@@ -16,6 +16,7 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | `dashboard`  | Dashboard     | `/`                       |                                     | `GET /api/admin/stats`  |
 | `users`      | Users         | `/users`, `/users/:id`    | (the page's own five)               | `/api/admin/users/*`    |
 | `groups`     | Groups        | `/groups`, `/groups/:id`  |                                     | `/api/admin/groups/*`   |
+| `billing`    | Billing       | `/billing`, `/billing/:groupId` |                               | `/api/admin/billing/*`  |
 | `newsletter` | Newsletter    | `/newsletter`             |                                     | `/api/admin/newsletter/*` |
 | `audit`      | Audit log     | `/audit`                  |                                     | `/api/admin/audit*`     |
 | `system`     | System        | `/system`                 |                                     | `/api/admin/system*`    |
@@ -33,7 +34,7 @@ The `api-tokens` module also answers a person's reads and its device removal und
 | ------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `apps/admin/src/modules/<id>/module.tsx`    | The `AdminModule`: `id`, `nav` (name, first page, icon), `routes` and optional `personTabs`. |
 | `apps/admin/src/modules/<id>/state.ts`      | The module's own state, when its pages share any, over `context.request`. With its test.      |
-| `libs/ui/admin-<id>-screen.tsx`             | The screens: props in, callbacks out, like every `libs/ui` screen.                            |
+| `libs/ui/admin-<id>-screen.tsx`             | The screens: props in, callbacks out, like every `libs/ui` screen. Billing splits them in two: `admin-billing-list.tsx` and `admin-billing-detail.tsx`. |
 | `apps/api/routes/admin/<id>.ts`             | The `AdminApiModule`: `id` and `routes(context)`, a Hono app of paths under `/api/admin`.     |
 | `libs/server/<area>/admin-<id>.ts`          | The SQL, when the module reads anything.                                                      |
 

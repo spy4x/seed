@@ -16,6 +16,7 @@ import {
   type AdminAuditFilter,
   AuthAuditEventType,
 } from "@domain/identity"
+import { BILLING_AUDIT_EVENTS } from "@domain/billing"
 import {
   AdminAuditScreen,
   type AdminAuditScreenProps,
@@ -317,5 +318,16 @@ describe("audit log screen", () => {
     expect(auditEventLabel(activityAuditEvent("note.created"))).toBe("Note added")
     expect(auditEventLabel(activityAuditEvent("billing.paid"))).toBe("billing.paid")
     expect(auditEventLabel(accountAuditEvent(999))).toBe("Account event 999")
+  })
+
+  it("names an operator's billing action, and offers it as a filter", async () => {
+    expect(auditEventLabel(accountAuditEvent(BILLING_AUDIT_EVENTS.paymentRefunded))).toBe(
+      "Payment refunded by an operator",
+    )
+    await mount(<AdminAuditScreen {...props([])} />)
+    const options = [...document.querySelectorAll("[data-e2e=admin-audit-event] option")]
+    expect(options.map((option) => option.textContent)).toContain(
+      "Operator: Cancellation undone by an operator",
+    )
   })
 })

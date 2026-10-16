@@ -16,6 +16,7 @@ import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { Tabs } from "@spy4x/preact-ui/tabs"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
+import type { BillingAuditEvent } from "@domain/billing"
 import {
   adminGrantableRoles,
   type AdminUserDetail,
@@ -24,6 +25,7 @@ import {
   type UserRole,
 } from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
+import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
 import { adminUserName, adminUserSubtitle, roleColor, roleLabel } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
@@ -557,7 +559,8 @@ function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
         const parts = [audit.identifier, audit.ip && `from ${audit.ip}`].filter(Boolean)
         return {
           id: audit.id,
-          title: AUDIT_EVENTS[audit.eventType] ?? "Other event",
+          title: AUDIT_EVENTS[audit.eventType] ??
+            BILLING_AUDIT_LABELS[audit.eventType as number as BillingAuditEvent] ?? "Other event",
           at: audit.createdAt,
           when: timeAgo(audit.createdAt),
           description: parts.length > 0 ? parts.join(" · ") : undefined,

@@ -10,6 +10,7 @@ import {
   FAKE_PRO_PRICE_ID,
   FAKE_WEBHOOK_SECRET,
   readBillingSetup,
+  stripeDashboardUrl,
 } from "./setup.ts"
 
 const STRIPE_KEYS = {
@@ -30,6 +31,7 @@ describe("billing configuration", () => {
     expect(setup).toEqual({
       mode: BillingMode.Off,
       provider: null,
+      dashboardUrl: null,
       graceDays: DEFAULT_GRACE_DAYS,
       trialRequiresCard: true,
     })
@@ -147,6 +149,37 @@ describe("billing configuration", () => {
     expect(result).toMatchObject({
       ok: true,
       value: { id: "sub_dev", quantity: 4, planId: "pro", priceId: "price_dev" },
+    })
+  })
+
+  it("links a test key to Stripe's test dashboard and a live key to the live one", () => {
+    expect(stripeDashboardUrl("sk_test_x")).toBe("https://dashboard.stripe.com/test")
+    expect(stripeDashboardUrl("rk_test_x")).toBe("https://dashboard.stripe.com/test")
+    expect(stripeDashboardUrl("sk_live_x")).toBe("https://dashboard.stripe.com")
+    const env = createEnvReader({ BILLING_PROVIDER: "stripe", ...STRIPE_KEYS })
+    expect(readBillingSetup(env, "prod", API).dashboardUrl).toBe(
+      "https://dashboard.stripe.com/test",
+    )
+    expect(readBillingSetup(createEnvReader({}), "dev", API).dashboardUrl).toBeNull()
+  })
+
+  it("refunds the development payment once, and answers a retry with the same refund", async () => {
+    const billing = createFakeBilling("price_dev")
+    const read = await billing.readLastPayment({ subscriptionId: "sub_dev" })
+    if (!read.ok || read.value === null) throw new Error("expected a payment")
+    expect(read.value.refunded).toBe(false)
+
+    const key = "refund-key-1"
+    const first = await billing.refundPayment({ paymentId: read.value.id, idempotencyKey: key })
+    const retry = await billing.refundPayment({ paymentId: read.value.id, idempotencyKey: key })
+    const other = await billing.refundPayment({ paymentId: read.value.id, idempotencyKey: "k2" })
+
+    expect(first.ok).toBe(true)
+    expect(retry).toEqual(first)
+    expect(other).toMatchObject({ ok: false, error: { code: "provider_error" } })
+    expect(await billing.readLastPayment({ subscriptionId: "sub_dev" })).toMatchObject({
+      ok: true,
+      value: { refunded: true, amountRefunded: 900 },
     })
   })
 

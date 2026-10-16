@@ -667,7 +667,7 @@ CREATE INDEX idx_api_tokens_group_id ON api_tokens (group_id);
 
 -- The audit rows of an account: sign-in, sign-out, profile, sessions and personal API tokens. See
 -- migration 2026_01_26_0002_auth_profiles_audit.sql and, for the event types, the migrations that
--- widen the check (the last is 2026_11_13_0001_newsletter_admin_audit.sql). `identifier` is plain
+-- widen the check (the last is 2026_11_16_0001_admin_billing.sql). `identifier` is plain
 -- text with no foreign key, so a row outlives what it names.
 CREATE TABLE auth_audits (
     id SERIAL PRIMARY KEY,
@@ -680,7 +680,7 @@ CREATE TABLE auth_audits (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]))
 );
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
@@ -747,4 +747,19 @@ CREATE INDEX idx_note_tags_tag ON note_tags (tag_id);
 CREATE TABLE backup_status (
     target VARCHAR(32) PRIMARY KEY,
     succeeded_at TIMESTAMPTZ NOT NULL
+);
+
+-- #196: one row per billing action an operator asked for, by the idempotency key the page made.
+-- The key is claimed before the provider is called; the audit row is written once (`audited_at`).
+-- See migration 2026_11_16_0001_admin_billing.sql.
+CREATE TABLE admin_billing_actions (
+    idempotency_key UUID PRIMARY KEY,
+    action VARCHAR(32) NOT NULL,
+    group_id UUID NOT NULL,
+    operator_id INT4 NOT NULL,
+    -- The new trial end the first try computed for time at no charge, so a retry sends the provider
+    -- the same request; `NULL` for the other actions.
+    until TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    audited_at TIMESTAMPTZ
 );

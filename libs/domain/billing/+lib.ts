@@ -709,3 +709,5 @@ export interface GroupRoleLookup {
   roleOf(groupId: string, userId: number): Promise<GroupRole | null>
 }
 // #endregion Ports
+
+export * from "./admin.ts"

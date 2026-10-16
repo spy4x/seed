@@ -127,6 +127,11 @@ const ROUTES = [
   { method: "GET", path: "/admin/groups" },
   { method: "GET", path: "/admin/no-such-page" },
   { method: "DELETE", path: "/admin/users/42" },
+  { method: "GET", path: "/admin/billing/figures" },
+  { method: "GET", path: "/admin/billing/customers?status=all" },
+  { method: "GET", path: "/admin/billing/0199f0a0-0000-7000-8000-000000000001" },
+  { method: "GET", path: "/admin/billing/0199f0a0-0000-7000-8000-000000000001/payment" },
+  { method: "POST", path: "/admin/billing/0199f0a0-0000-7000-8000-000000000001/refund" },
 ]
 
 function send(
@@ -226,6 +231,7 @@ describe("operator area routes", () => {
       "dashboard",
       "users",
       "groups",
+      "billing",
       "newsletter",
       "audit",
       "system",

@@ -65,6 +65,7 @@ import {
 } from "@server/jobs/subscriber-mail.ts"
 import {
   createRecipientLimitKey,
+  readSiteUrl,
   readSubscribersSetup,
   subscribersOffWarning,
 } from "@server/subscribers/subscribers.ts"
@@ -194,12 +195,14 @@ app.route(
       db,
       sql,
       subscribers: subscribersSetup,
+      siteUrl: readSiteUrl(Deno.env, config.isDev ? "dev" : "prod"),
       limit: rateLimits.normal,
       emit,
       now: () => new Date(),
       cursorSecret: config.authCookieSecret,
       cacheConnected: isCacheConnected,
       build: config.build,
+      billing: billingSetup,
     }),
   }),
 )
