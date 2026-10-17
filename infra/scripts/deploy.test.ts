@@ -156,7 +156,6 @@ const EXAMPLE_SECRETS = [
   "GRAFANA_PASS",
   "AUTH_COOKIE_SECRET",
   "AUTH_PEPPER",
-  "AUTH_TOTP",
 ]
 
 /** The shipped example with a value of its own for every secret: a file that may deploy. */

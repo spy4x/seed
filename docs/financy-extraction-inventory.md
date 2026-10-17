@@ -1,12 +1,13 @@
 # Financy → Template extraction inventory
 
 - Status: draft, for triage
-- Compiled: 2026-08-19 from `/home/spy4x/sync/code/financy` at commit `f3a7f5e`
+- Compiled: 2026-08-19 from the Financy repository at commit `f3a7f5e`
 - Purpose: list what is worth lifting out of Financy into this template, and what is not,
   so extraction is a series of small reviewed PRs instead of a copy-paste sweep.
 
-Financy shares this repository's lineage (`apps/{api,web}`, `libs/{client,server,shared}`,
-`infra/*`), so most items move with light rework rather than a rewrite.
+Financy shares this repository's lineage: its `apps/{api,web}` and `libs/{client,server,shared}`
+are the layout this repository had before it was split into `apps/{api,spa,mpa,admin,worker}` and
+`libs/{platform,domain,server,ui}`. Paths below that name those old folders are Financy's.
 
 ## Headline findings
 

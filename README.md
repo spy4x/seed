@@ -3,7 +3,7 @@
 # template
 
 **A SaaS starting point on web standards: sign-up with a second factor, groups, billing, an API, a
-web app, a worker and Postgres. Work in progress: parts of the worker are not built yet.**
+web app, a worker and Postgres. Work in progress.**
 
 [![CI](https://ci.antonshubin.com/api/badges/11/status.svg)](https://ci.antonshubin.com/repos/11)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -12,7 +12,7 @@ web app, a worker and Postgres. Work in progress: parts of the worker are not bu
 gh repo create my-product --template spy4x/template --private --clone
 ```
 
-<img src="docs/screenshots/sign-up-flow.gif" alt="A new user signs up with a username and password, lands on the profile page with the realtime connection open, types the first name Alex and the last name Rivera, and saves; a green toast confirms the profile was updated." width="800">
+<img src="docs/screenshots/sign-up-flow.gif" alt="An older version of the app: a new user signs up with a username and password, lands on the profile page with the realtime connection open, types the first name Alex and the last name Rivera, and saves; a green toast confirms the profile was updated." width="800">
 
 [Architecture](docs/architecture.md) · [ADR 001](docs/decisions/001-deno-platform-template.md) ·
 [ADR 002](docs/decisions/002-realtime-transport-and-sync.md) ·
@@ -36,8 +36,9 @@ stay out.
 [ADR 001](docs/decisions/001-deno-platform-template.md). Sign-up, sign-in with TOTP, groups with
 members, roles, invitations and ownership transfer, billing per member, notes (the reference
 aggregate), the outbox worker and the public website work today, and the SPA works offline
-([docs/offline.md](docs/offline.md)). Parts of the worker are not built yet. Details in
-[docs/architecture.md](docs/architecture.md#migration-status). The live demo runs at
+([docs/offline.md](docs/offline.md)). Details in
+[docs/architecture.md](docs/architecture.md#migration-status); what is not built yet is listed on
+the [open issues](https://github.com/spy4x/template/issues). The live demo runs at
 https://app.seedsaas.com, its website at https://seedsaas.com.
 
 ## Quick start
@@ -99,10 +100,10 @@ it cannot create the user, it says so and exits with 1.
 
 ## What a fresh project looks like
 
-| Light                                                                                                                                                                                                 | Dark                                                                                                                                                                                                |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <img src="docs/screenshots/sign-in-light.png" alt="The sign-in page in the light theme: a card titled Welcome back with username and password fields, a Sign in button and a link to sign up.">       | <img src="docs/screenshots/sign-in-dark.png" alt="The sign-in page in the dark theme: a card titled Welcome back with username and password fields, a Sign in button and a link to sign up.">       |
-| <img src="docs/screenshots/profile-light.png" alt="The profile page in the light theme for the demo user Alex Rivera: name fields with a Save button, a change-password card and a two-factor card."> | <img src="docs/screenshots/profile-dark.png" alt="The profile page in the dark theme for the demo user Alex Rivera: name fields with a Save button, a change-password card and a two-factor card."> |
+| Light                                                                                                                                                                                                                     | Dark                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/screenshots/sign-in-light.png" alt="An older version of the sign-in page in the light theme: a card titled Welcome back with username and password fields, a Sign in button and a link to sign up.">       | <img src="docs/screenshots/sign-in-dark.png" alt="An older version of the sign-in page in the dark theme: a card titled Welcome back with username and password fields, a Sign in button and a link to sign up.">       |
+| <img src="docs/screenshots/profile-light.png" alt="An older version of the profile page in the light theme for the demo user Alex Rivera: name fields with a Save button, a change-password card and a two-factor card."> | <img src="docs/screenshots/profile-dark.png" alt="An older version of the profile page in the dark theme for the demo user Alex Rivera: name fields with a Save button, a change-password card and a two-factor card."> |
 
 The screenshots and the GIF use a throw-away database and a made-up user;
 [`docs/screenshots/record.ts`](docs/screenshots/record.ts) records them again from a running app.
@@ -273,7 +274,8 @@ password or secret in the env file equals one that `infra/envs/.env.example` pri
 are public), or when one that the example file sets is empty or missing, and names each such
 variable. It reads the example file for that, so keep the file. Router, service and middleware names
 carry `${PROJECT}`, so projects with different `PROJECT` values can share one Traefik. Postgres and
-Valkey stay on `127.0.0.1`. Every image has a pinned version.
+Valkey stay on `127.0.0.1`. Every image has a pinned version, except the nginx base of the SPA and
+admin images (`nginx-unprivileged:stable-alpine`).
 
 The template usually deploys behind a Traefik that several projects share. If that Traefik already
 defines a resolver, do not start the proxy compose file: set `TRAEFIK_CERT_RESOLVER` to the name it
@@ -516,7 +518,8 @@ one.
 #### Which browser tests CI runs
 
 A merge needs the pull-request check, so that check runs a smoke set; the whole suite runs after
-the merge.
+the merge. Every step of the pipeline, browser tests or not, is listed in
+[docs/woodpecker-ci-setup.md](docs/woodpecker-ci-setup.md).
 
 | When                    | Step        | Specs                                                      |
 | ----------------------- | ----------- | ---------------------------------------------------------- |

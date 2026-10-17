@@ -120,8 +120,8 @@ export interface BillingCardProps {
   pending?: boolean
   navigate?: Navigate
   /**
-   * Opens the provider's portal. Without it, the manage button posts to `BILLING_PATHS.portal`;
-   * with it, the app takes the submit over.
+   * Opens the provider's portal: the app takes the manage button's submit over. Without it the
+   * button posts to `BILLING_PATHS.portal`, a path no app serves, so every app passes it.
    */
   onManage?: () => void
 }
@@ -282,8 +282,9 @@ export interface PricingScreenProps {
   pending?: boolean
   navigate?: Navigate
   /**
-   * Opens the provider's checkout for a plan. Without it, each plan's form posts `{ planId }` to
-   * `BILLING_PATHS.checkout`; with it, the app takes the submit over.
+   * Opens the provider's checkout for a plan: the app takes each plan's submit over. Without it the
+   * form posts `{ planId }` to `BILLING_PATHS.checkout`, a path no app serves, so every app passes
+   * it.
    */
   onChoose?: (planId: string) => void
 }

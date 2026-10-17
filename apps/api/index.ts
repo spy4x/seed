@@ -380,9 +380,8 @@ await listenForInboxNews(sql, realtime)
 // within this interval; the per-request check already refuses their frames.
 realtime.startRevalidation(REALTIME_REVALIDATE_INTERVAL_MS)
 
-// TODO: move this to a better place
-// This is a temporary solution to expire sessions every hour
-// This should be done in a more efficient way, like using a cron job or similar
+// Expired sessions are swept every hour by each API process. A repeating worker job would run it
+// once for every instance instead.
 const SESSION_EXPIRE_INTERVAL = ONE_HOUR_IN_MILLISECONDS
 startIntervalRunner({
   task: () => signIn.expireSessions(),

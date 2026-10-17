@@ -10,7 +10,6 @@ export class Config {
   env = env.ENV
   authCookieSecret = env.AUTH_COOKIE_SECRET
   authPepper = env.AUTH_PEPPER
-  authTotp = env.AUTH_TOTP
   devEmail = env.DEV_EMAIL
   vapidKeysPath = "./vapid.json"
   errorReportDsn = env.ERROR_REPORT_DSN
@@ -20,8 +19,6 @@ export class Config {
     github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
   }
   timeZone = env.TIMEZONE
-  authSaltRounds = 12 // balance between security and performance
-  authSessionLength = 32
   authSessionDurationMin = 60 * 24 * 30 * 2 // 2 months
   rateLimiter = {
     windowMs: env.RATE_LIMITER_WINDOW_MS,

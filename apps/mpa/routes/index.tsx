@@ -70,7 +70,7 @@ const WORKS_TODAY = [
   `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, the second factor`,
   `Groups with members, roles, invitations and ownership transfer`,
   `Billing per member with trials, through Stripe`,
-  `Account deletion with a 7-day undo`,
+  `The list of signed-in devices, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
   `Realtime, the offline app and web push`,
   `The admin area`,
@@ -82,7 +82,6 @@ const NOT_BUILT = [
   `Translations: the app is English only`,
   `File uploads: no file store is bundled yet`,
   `Downloading an account's data`,
-  `Parts of the worker`,
 ] as const
 
 /** The questions, with each answer as plain text for the FAQ's structured data. */

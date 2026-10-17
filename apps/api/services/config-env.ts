@@ -6,7 +6,6 @@ export const envSchema = type({
   ENV: "'dev' | 'prod'",
   AUTH_COOKIE_SECRET: "string > 0",
   AUTH_PEPPER: "string > 0",
-  AUTH_TOTP: "string > 0",
   DEV_EMAIL: "string > 0",
   TIMEZONE: "string > 0",
   RATE_LIMITER_WINDOW_MS: "string.integer.parse",

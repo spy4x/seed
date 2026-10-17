@@ -6,18 +6,18 @@ them. The diagram in the README, [`architecture.svg`](architecture.svg), shows w
 
 ## Migration status
 
-> **Migration status: WIP.** App boundaries, group core persistence, signup personal groups,
-> basic group REST/CQRS, the notes reference aggregate ([aggregates.md](aggregates.md)), the
-> public website (`apps/mpa`, server-rendered, works without JavaScript), the offline SPA
-> ([offline.md](offline.md)) and the `libs/shared` split into `libs/platform` and `libs/domain` now
-> exist. Group administration and worker behavior stay incomplete. Target architecture below and
-> ADR 001
-> are authoritative.
+> **Migration status: WIP.** App boundaries, groups with members, roles, invitations and
+> ownership transfer, the notes reference aggregate ([aggregates.md](aggregates.md)) and tags, the
+> outbox worker with its delayed and repeating jobs, the public website (`apps/mpa`,
+> server-rendered, works without JavaScript), the offline SPA ([offline.md](offline.md)), the admin
+> app (`apps/admin`) and the `libs/shared` split into `libs/platform` and `libs/domain` now exist.
+> What is not built yet is listed on the [open issues](https://github.com/spy4x/template/issues).
+> Target architecture below and ADR 001 are authoritative.
 
 ## Database evolution
 
-Database evolution is forward-additive. Group-core DDL and personal-group backfill use separate
-migrations; backfill is idempotent and safe to rerun during rollout.
+Database evolution is forward-additive. A migration that rewrites rows is idempotent and safe to
+rerun during rollout.
 
 ## Target architecture
 

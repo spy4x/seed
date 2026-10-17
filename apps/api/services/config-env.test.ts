@@ -7,7 +7,6 @@ const REQUIRED_ENV: Record<string, string> = {
   ENV: "dev",
   AUTH_COOKIE_SECRET: "test-only-cookie-secret-0123456789abcdef",
   AUTH_PEPPER: "test-only-pepper-0123456789abcdef",
-  AUTH_TOTP: "test-only-totp",
   DEV_EMAIL: "dev@example.test",
   TIMEZONE: "UTC",
   RATE_LIMITER_WINDOW_MS: "1000",

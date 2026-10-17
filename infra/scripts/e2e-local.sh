@@ -212,7 +212,6 @@ timeout 600 deno install --frozen
 # Throw-away secrets, never printed.
 AUTH_COOKIE_SECRET=$(openssl rand -hex 32)
 AUTH_PEPPER=$(openssl rand -hex 32)
-AUTH_TOTP=$(openssl rand -hex 20)
 API_PORT=$(spare_port)
 SPA_PORT=$(spare_port)
 # The installed nginx listens where apps/spa/nginx.conf says.
@@ -295,7 +294,7 @@ export DOMAIN="app.localhost:$FRONT_PORT"
 export ADMIN_DOMAIN="admin.localhost:$ADMIN_FRONT_PORT"
 export DEV_EMAIL=dev@example.com
 export TIMEZONE=Etc/UTC
-export AUTH_COOKIE_SECRET AUTH_PEPPER AUTH_TOTP
+export AUTH_COOKIE_SECRET AUTH_PEPPER
 export RATE_LIMITER_WINDOW_MS=60000
 export RATE_LIMITER_STRICT_LIMIT=1000
 export RATE_LIMITER_LIMIT=5000

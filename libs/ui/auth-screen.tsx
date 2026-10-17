@@ -78,8 +78,8 @@ export interface AuthScreenProps {
   onOneTimeCode?: (code: string) => void
   navigate?: Navigate
   /**
-   * The page to return to after sign-in, already checked by the app (`checkedNext`). The form
-   * posts it as the hidden `next` field, and the links to the other auth pages keep it.
+   * The page to return to after sign-in, already checked by the app (`checkedNext`). The links to
+   * the other auth pages and to each provider keep it; the form renders no field for it.
    */
   next?: string | null
   /**
@@ -199,8 +199,8 @@ function Done(
 
 /**
  * Sign-in, sign-up and the second-factor step: one `AuthForm` from `@spy4x/preact-system` in an
- * {@link AuthCard}, with the link to the other mode under the card. Without callbacks each form
- * posts to its page's route; with them the app takes the submit over.
+ * {@link AuthCard}, with the link to the other mode under the card. The app takes each submit over
+ * with its callback; the form names no route of its own.
  */
 export function AuthScreen(
   {

@@ -7,9 +7,9 @@
  * This module only says where the counter lives: the `failed_attempts`, `locked_until` and
  * `last_failure_at` columns of the user's `user_totp` row.
  *
- * The in-memory rate limit in `middlewares/auth-rate-limits.ts` stops a burst and forgets
- * everything on restart. This counter lives in Postgres, so it survives a restart and a second
- * API instance sees it. Together they cap a guesser at about 570 guesses a year for one user, a
+ * The per-user rate limit `otpByUser` in `middlewares/auth-rate-limits.ts` keeps its budget in
+ * Valkey and stops a burst within its window. This counter lives in Postgres next to the
+ * authenticator, and its lock grows with every failure. Together they cap a guesser at about 570 guesses a year for one user, a
  * chance of about 0.17% of hitting one of the 3 codes that are valid at any moment (arithmetic in
  * the pull request of #73).
  *

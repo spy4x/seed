@@ -1,12 +1,14 @@
 -- =============================================================================
 -- Template Database Schema
 -- =============================================================================
--- Auth + web push core
--- Enums start at 1
+-- The whole schema as the migrations build it; tests/integration/schema-snapshot.integration.test.ts
+-- compares the two. Enums start at 1
 -- =============================================================================
 
 CREATE EXTENSION IF NOT EXISTS plpgsql;
 
+-- In a migrated database the runner of @spy4x/server/db creates its own history table, with
+-- checksums; the snapshot test leaves this table out of the comparison.
 CREATE TABLE migrations (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,

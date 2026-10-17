@@ -42,7 +42,8 @@ Defined in `infra/compose/`:
   published port. Its pool (at most 10 connections) plus the API's (at most 10, plus one `LISTEN`
   connection) and postgres-exporter stay under Postgres' `max_connections=30`; raise that before
   raising either pool. `WORKER_CPU_LIMIT` and `WORKER_MEM_LIMIT` default to 0.5 CPU and 256M.
-- **Traefik** - reverse proxy, production compose only.
+- **Traefik** - reverse proxy, in `infra/compose/compose.proxy.yml`, started by
+  `deno task proxy:start` for local work and in production alike.
 - **vmagent, Vector, postgres-exporter** - collect this project's metrics and logs and send them
   on; see "Monitoring" below. They always run, and so does **socket-proxy**, through which Vector
   reads the Docker API ("The Docker socket" below).
@@ -52,8 +53,9 @@ Defined in `infra/compose/`:
   resources). Behind the `host-monitoring` compose profile, off by default so a shared server
   does not get a second copy of its own monitoring. vmagent keeps their scrape jobs and shows
   them as down while they are off.
-- Images are pinned to a version (postgres-exporter to a digest, because upstream never tagged the
-  build in use); change a pin on purpose, not by a moving `latest`.
+- Images are pinned to a version tag, none to a digest; change a pin on purpose, not by a moving
+  `latest`. The one moving tag is the nginx base of the SPA and admin images
+  (`nginx-unprivileged:stable-alpine`).
 - Traefik router, service and middleware names all end in `-${PROJECT}`.
 
 ## Monitoring
@@ -324,10 +326,10 @@ baked into the build; the container writes them to `/config.json` when it starts
 Docker Compose for both local development and single-node production. Scaling is
 vertical, through per-service resource limits.
 
-CI is Woodpecker. `.woodpecker/ci.yml` runs `deno task check`, the SPA build, the integration
-tests against a Postgres service and a smoke set of browser tests on every pull request, and every
-browser test on a push to `main`; see [woodpecker-ci-setup.md](woodpecker-ci-setup.md). A `v*` tag publishes the
-images (`.woodpecker/release.yml`). Deploys are not wired up (`.woodpecker/deploy.yml.example`).
+CI is Woodpecker: `.woodpecker/ci.yml` on every pull request, push to `main` and version tag. Its
+steps are listed once, in [woodpecker-ci-setup.md](woodpecker-ci-setup.md). A `v*` tag also
+publishes the images (`.woodpecker/release.yml`). Deploys are not wired up
+(`.woodpecker/deploy.yml.example`).
 
 ## Conventions worth keeping
 

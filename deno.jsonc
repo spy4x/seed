@@ -31,7 +31,7 @@
   "minimumDependencyAge": { "age": "1440", "exclude": ["jsr:@spy4x/*", "npm:@jsr/spy4x__*"] },
   "tasks": {
     "dev": "deno run compose up -d", // used in terminal to start the development environment
-    "build": "deno task spa:build", // used in terminal to build production docker images
+    "build": "deno task spa:build", // builds the SPA for production (CI's `build` step)
 
     // #region apps/api
     "api:dev": "deno serve --allow-all --watch apps/api/index.ts", // used in docker-compose to start the API server in development mode

@@ -84,7 +84,7 @@ change). If unsure if screenshots to be remade - ask me."
 
 ## Handoff
 
-[docs/handoff.md](docs/handoff.md) holds the state of the migration, the decisions already made and
+[docs/handoff.md](docs/handoff.md) holds the map of the repository, the decisions already made and
 the traps in this codebase. Read its "Traps in this codebase" before changing the API or the tests.
 
 ## The live demo is not production

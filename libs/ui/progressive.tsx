@@ -79,8 +79,8 @@ export const SCREEN_PATHS = {
 export const PROFILE_ANCHORS = { security: "security", pushDevices: "push-devices" } as const
 
 /**
- * The query parameter, and the hidden field of each auth form, that carries the page a signed-out
- * person asked for through sign-in, so sign-in can return there.
+ * The query parameter that carries the page a signed-out person asked for through sign-in, so
+ * sign-in can return there.
  */
 export const NEXT_PARAM = "next"
 

@@ -213,8 +213,10 @@ network; it costs a conflict screen. Copy `offline/notes-collection.ts`: one `de
 with the aggregate's commands, its error codes (`classifyByCode`), the wording of its failures and
 its device copy, added to the `collections` list in `offline/index.ts`. The queue, the keys, the
 lock and the conflict rules come from `@spy4x/realtime/collections` and are not written again.
-Then wrap the store's dependencies as `offlineNotes` does, and copy
-`offline/notes-collection.test.ts`.
+The device copy follows `offline/notes-cache.ts`: its
+`clear` calls the store's `finish`, not `clearAll`, so a write still on its way when the person
+signs out saves nothing and cannot put the data back. Then wrap the store's dependencies as
+`offlineNotes` does, and copy `offline/notes-collection.test.ts`.
 
 ### 8. Tests
 
@@ -229,9 +231,11 @@ Then wrap the store's dependencies as `offlineNotes` does, and copy
 | `e2e/notes-move.e2e.ts`                                          | Moving one note and ticked notes, with members of both groups watching.                                                                                   |
 | `tests/integration/note-move-push.integration.test.ts`           | Members of both groups get a hint for a move; a stranger gets none.                                                                                       |
 
-The product cannot add a member yet, so tests seed one: the integration test inserts the row, and
-the e2e spec calls `POST /api/test/add-member` (`apps/api/routes/dev.ts`, mounted only in
-development). Teach `POST /api/test/cleanup-user` to delete the new table's rows too.
+Members join a group through an invitation (`docs/handoff.md`, "Members, invitations and
+ownership"). A test that needs a second member seeds it instead of walking the invitation flow:
+the integration test inserts the row, and the e2e spec calls `POST /api/test/add-member`
+(`apps/api/routes/dev.ts`, mounted only in development). Teach `POST /api/test/cleanup-user` to
+delete the new table's rows too.
 
 ### 9. The admin counterpart
 
@@ -460,7 +464,9 @@ selector of the control that opens it.
 
 - The SPA creates a note in the group it shows, over the socket, so a note never lands in a group
   other than the one on screen.
-- The role check and the write are two steps, not one transaction. Membership cannot change
-  through the product yet; when it can, the check moves into the write's transaction.
+- Every write reads the actor's role again inside its own transaction with `lockActorRole`
+  (`libs/server/groups/group-change-log.ts`), as the notes repository does: it locks the group row,
+  then the membership `FOR SHARE`, so a write racing a removal or a demotion waits for it and is
+  then refused (spy4x/template#230).
 - The SPA reads the whole list again on every hint. A pull of only the notes changed after the
   cursor needs the `change_sequence` column, which is already there, and a query that uses it.

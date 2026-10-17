@@ -82,7 +82,7 @@ async function mapTagsOnMove(
   noteIds: readonly string[],
 ): Promise<void> {
   if (noteIds.length === 0) return
-  // Postgres 16 cannot make a version 7 id, so every copy gets its id here (docs/ids.md). A tag
+  // The application makes every id, so every copy gets its id here (docs/ids.md). A tag
   // the target already has keeps its own row and id: the conflict drops the copy.
   const carried = await transaction<{ name: string; color: string }[]>`
     SELECT source.name, source.color

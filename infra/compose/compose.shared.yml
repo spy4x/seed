@@ -625,7 +625,6 @@ services:
       - DB_NAME=${DB_NAME}
       - AUTH_COOKIE_SECRET=${AUTH_COOKIE_SECRET}
       - AUTH_PEPPER=${AUTH_PEPPER}
-      - AUTH_TOTP=${AUTH_TOTP}
       - DEV_EMAIL=${DEV_EMAIL}
       - DOMAIN=${DOMAIN}
       - TIMEZONE=${TIMEZONE}

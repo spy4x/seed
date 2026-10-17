@@ -62,8 +62,7 @@ wait_for() { # <name> <pid> <url>
 # resolver, which in the CI container does not know it.
 AUTH_COOKIE_SECRET=$(openssl rand -hex 32)
 AUTH_PEPPER=$(openssl rand -hex 32)
-AUTH_TOTP=$(openssl rand -hex 20)
-export AUTH_COOKIE_SECRET AUTH_PEPPER AUTH_TOTP
+export AUTH_COOKIE_SECRET AUTH_PEPPER
 export ENV=dev
 export DOMAIN="127.0.0.1:$FRONT_PORT"
 # The website has its own host, apart from the app's: the same address on another port is another

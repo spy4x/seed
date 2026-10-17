@@ -50,8 +50,8 @@ export interface ForgotPasswordScreenProps {
 }
 
 /**
- * Asks for the address a reset link goes to. Without `onSubmit` the form posts `{ email }` to its
- * route; with it the app takes the submit over. The answer is the same whether or not an account
+ * Asks for the address a reset link goes to. The app takes the submit over with `onSubmit`; the
+ * form names no route of its own. The answer is the same whether or not an account
  * uses the address, so the screen never says which.
  */
 export function ForgotPasswordScreen(
@@ -123,9 +123,8 @@ export interface ResetPasswordScreenProps {
 }
 
 /**
- * Sets a new password with the address and code a reset link carries. The form posts
- * `{ email, code, newPassword }` to its route, the first two as hidden fields; with `onSubmit` the
- * app takes the submit over. A link without its address or code offers a new link instead.
+ * Sets a new password with the address and code a reset link carries. The form shows the new
+ * password only; the app takes the submit over with `onSubmit` and sends all three. A link without its address or code offers a new link instead.
  */
 export function ResetPasswordScreen(
   { email, code, newPassword, onNewPasswordChange, done, error, pending, onSubmit, navigate }:
