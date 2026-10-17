@@ -88,7 +88,7 @@ Deno.test("the api container receives each sign-in provider's client id and secr
   }
 })
 
-/** The check of every service that runs on Deno: `apps/healthcheck.ts`, which probes one port. */
+/** The check of every service that runs on Deno: `apps/healthcheck.ts`, before its optional path. */
 const DENO_HEALTHCHECK = [
   "CMD",
   "deno",
@@ -114,19 +114,22 @@ async function checkedService(file: string, name: string): Promise<CheckedServic
 }
 
 // The script reads its port from HEALTHCHECK_PORT and falls back to 3000, which no service uses:
-// a service that runs the script without naming its port would never turn healthy.
-Deno.test("each Deno service checks its health with the Deno script and names its own port", async () => {
-  const services: [file: string, name: string, port: string][] = [
-    ["compose.shared.yml", "api", "${API_PORT}"],
-    ["compose.shared.yml", "mpa", "8080"],
-    ["compose.dev.yml", "spa", "5173"],
-    ["compose.dev.yml", "admin", "5174"],
+// a service that runs the script without naming its port would never turn healthy. Given a path,
+// it asks that path over HTTP instead of only connecting: the API's /api/health answers 503 when
+// the database is down, so the container turns unhealthy. The dev servers have no health route;
+// an open port is all they can tell.
+Deno.test("each Deno service checks its health with the Deno script, on its own port and path", async () => {
+  const services: [file: string, name: string, port: string, path: string[]][] = [
+    ["compose.shared.yml", "api", "${API_PORT}", ["/api/health"]],
+    ["compose.shared.yml", "mpa", "8080", ["/health"]],
+    ["compose.dev.yml", "spa", "5173", []],
+    ["compose.dev.yml", "admin", "5174", []],
   ]
 
-  for (const [file, name, port] of services) {
+  for (const [file, name, port, path] of services) {
     const service = await checkedService(file, name)
 
-    expect(service.healthcheck?.test, `${name} in ${file}`).toEqual(DENO_HEALTHCHECK)
+    expect(service.healthcheck?.test, `${name} in ${file}`).toEqual([...DENO_HEALTHCHECK, ...path])
     expect(service.environment, `${name} in ${file}`).toContain(`HEALTHCHECK_PORT=${port}`)
   }
 })

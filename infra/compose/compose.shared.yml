@@ -672,9 +672,10 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
-      # Answers once the API's port accepts a connection (apps/healthcheck.ts).
+      # Answers once GET /api/health returns 200 (apps/healthcheck.ts). That route reports the
+      # database: with it down the API answers 503, and the container turns unhealthy.
       test:
-        [ 'CMD', 'deno', 'run', '--allow-net=127.0.0.1', '--allow-env=HEALTHCHECK_PORT,PORT', 'apps/healthcheck.ts' ]
+        [ 'CMD', 'deno', 'run', '--allow-net=127.0.0.1', '--allow-env=HEALTHCHECK_PORT,PORT', 'apps/healthcheck.ts', '/api/health' ]
       interval: 10s
       timeout: 5s
       retries: 30
@@ -873,9 +874,10 @@ services:
     networks:
       - proxy
     healthcheck:
-      # Answers once the MPA's port accepts a connection (apps/healthcheck.ts).
+      # Answers once GET /health returns 200: the website serves (apps/healthcheck.ts,
+      # apps/mpa/routes/health.ts).
       test:
-        [ 'CMD', 'deno', 'run', '--allow-net=127.0.0.1', '--allow-env=HEALTHCHECK_PORT,PORT', 'apps/healthcheck.ts' ]
+        [ 'CMD', 'deno', 'run', '--allow-net=127.0.0.1', '--allow-env=HEALTHCHECK_PORT,PORT', 'apps/healthcheck.ts', '/health' ]
       interval: 10s
       timeout: 5s
       retries: 5
