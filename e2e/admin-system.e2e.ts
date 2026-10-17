@@ -1,5 +1,6 @@
 import type { APIRequestContext, BrowserContext } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
+import { readdir } from "node:fs/promises"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
@@ -14,6 +15,19 @@ const adminBase = "http://admin.localhost"
 const headers = { origin: appBase, "sec-fetch-site": "same-origin" }
 const password = "Passw0rd!"
 const OPERATOR = 2
+
+/**
+ * The newest migration in the repository, which the System page names as the last one applied. The
+ * path is relative to the repository root, where Playwright runs: `e2e:local` runs a copy of this
+ * spec from another folder, so `import.meta.url` would point elsewhere.
+ */
+async function newestMigration(): Promise<string> {
+  const dir = `libs/server/db/migrations`
+  const names = (await readdir(dir)).filter((name) => name.endsWith(`.sql`)).sort()
+  const newest = names.at(-1)
+  if (!newest) throw new Error(`no migration found in ${dir}`)
+  return newest.replace(/(\.no_transaction)?\.sql$/, ``)
+}
 
 async function cleanup(request: APIRequestContext, email: string) {
   const response = await request.post(`${appBase}/api/test/cleanup-user`, {
@@ -58,7 +72,7 @@ test.describe("the admin System page", () => {
       await expect(badge("admin-system-migrations")).toHaveAttribute("data-health", "ok")
       await expect(ops.locator("[data-e2e=admin-system-database]")).toContainText("Postgres 18")
       await expect(ops.locator("[data-e2e=admin-system-migrations]")).toContainText(
-        "2026_11_17_0001_sign_up_requests",
+        await newestMigration(),
       )
       await expect(ops.locator("[data-e2e=admin-system-queue]")).toContainText("Due now")
       await expect(ops.locator("[data-e2e=admin-system-build]")).toContainText("Runtime")
