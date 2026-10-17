@@ -13,6 +13,7 @@ import {
 import type { NoteItem } from "../state/notes.ts"
 import type { TagItem } from "../state/tags.ts"
 import { sessionState, type SessionUser } from "../state/session.ts"
+import { toasts } from "../state/toasts.ts"
 import { currentLayer, forgetDeviceCopy, startOffline, stopOffline } from "./index.ts"
 import { installLocalStorage } from "@spy4x/platform/browser/testing"
 import { createMemoryStorage } from "./memory-storage.ts"
@@ -139,6 +140,7 @@ afterEach(async () => {
   sessionState.value = signedOut
   globalThis.fetch = realFetch
   delete globals.document
+  toasts.clear()
 })
 
 describe("a queue an earlier version of the app left on the device", () => {
@@ -693,6 +695,58 @@ describe("what the device keeps", () => {
 
     expect(opened).toEqual([])
     expect(kept.size).toBe(0)
+  })
+})
+
+describe("a queue left on the device while the module is off", () => {
+  /** A device database list holding the notes queue of user 7, recording what it deletes. */
+  function holdingQueue() {
+    const held = new Set(["offline:user:7:outbox"])
+    const deleted: string[] = []
+    return {
+      deleted,
+      databases: {
+        list: () => Promise.resolve([...held]),
+        delete: (name: string) => (held.delete(name), deleted.push(name), Promise.resolve()),
+      },
+    }
+  }
+
+  it("is sent once at the start, and the device then holds none", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).queue.putEntry(QUEUED_BY_AN_EARLIER_VERSION)
+    const { databases, deleted } = holdingQueue()
+    const calls = server()
+    visiblePage()
+    configureModules({ realtime: false, offline: false })
+    sessionState.value = { ...signedOut, user: user(7) }
+
+    startModules(7, reads, { storage, databases })
+    await settle()
+
+    expect(calls.filter((call) => call.url.includes("note.update")).map((call) => call.key))
+      .toEqual(["key-from-last-week"])
+    expect(deleted).toEqual(["offline:user:7:outbox"])
+    expect(currentLayer()).toBeNull()
+    expect(toasts.list.value).toEqual([])
+  })
+
+  it("drops a write the server refused and says so in a warning that stays", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).queue.putEntry({ ...QUEUED_BY_AN_EARLIER_VERSION, status: "conflict" })
+    const { databases, deleted } = holdingQueue()
+    server()
+    visiblePage()
+    configureModules({ realtime: false, offline: false })
+    sessionState.value = { ...signedOut, user: user(7) }
+
+    startModules(7, reads, { storage, databases })
+    await settle()
+
+    expect(deleted).toEqual(["offline:user:7:outbox"])
+    expect(toasts.list.value.map((toast) => [toast.type, toast.body, toast.duration])).toEqual([
+      ["warning", `1 change you made offline couldn't be saved: "Written offline".`, 0],
+    ])
   })
 })
 

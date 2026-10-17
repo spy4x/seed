@@ -131,9 +131,14 @@ async function userIdOnDevice(page: Page): Promise<number> {
 }
 
 async function signOut(page: Page): Promise<void> {
+  await askToSignOut(page)
+  await page.locator("[data-e2e=signin-required]").waitFor()
+}
+
+/** Chooses Sign out in the account menu, which may first ask about unsent changes. */
+async function askToSignOut(page: Page): Promise<void> {
   await page.locator("[data-e2e=shell-user-menu-button]").click()
   await page.getByRole("menuitem", { name: "Sign out" }).click()
-  await page.locator("[data-e2e=signin-required]").waitFor()
 }
 
 /**
@@ -442,11 +447,141 @@ test.describe("what a device keeps", () => {
       await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
       await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
 
-      await signOut(page)
+      await askToSignOut(page)
+      await page.locator("[data-e2e=unsent-sign-out-anyway]").click()
+      await page.locator("[data-e2e=signin-required]").waitFor()
 
       await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBe(0)
       expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBe(0)
       expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(1)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
+  test("signing out with an unsent edit asks first, and Send, then sign out sends it before signing out", async ({ browser, request }) => {
+    const user = "e2e_local_data_sign_out_wait@example.com"
+    await cleanup(request, user)
+    const { context, page: unused } = await configured(browser, { realtime: false })
+    await unused.close()
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
+      await context.route("**/api/call/note.update", (route) => route.abort("internetdisconnected"))
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
+      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+
+      await askToSignOut(page)
+      const dialog = page.getByRole("dialog", { name: "You have 1 unsent change" })
+      await expect(dialog).toBeVisible()
+      await expect(page.locator("[data-e2e=unsent-wait]")).toBeFocused()
+      await page.locator("[data-e2e=unsent-wait]").click()
+      await expect(page.locator("[data-e2e=unsent-status]")).toContainText(
+        "Couldn't reach the server. Trying again…",
+      )
+      await expect(page.locator("[data-e2e=session-current]")).toBeAttached()
+
+      await context.unroute("**/api/call/note.update")
+      await page.locator("[data-e2e=signin-required]").waitFor({ timeout: 30_000 })
+
+      expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(0)
+      const api = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+      try {
+        const signedIn = await api.newPage()
+        await signIn(signedIn, user, password)
+        await expect.poll(async () => {
+          const response = await signedIn.request.get(`${apiBase}/api/groups/${groupId}/notes`)
+          return (await response.json()).notes.map((note: { title: string }) => note.title)
+        }).toEqual(["Edited before the update"])
+      } finally {
+        await api.close()
+      }
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
+  test("Cancel in the unsent-changes question keeps the person signed in with the queue", async ({ browser, request }) => {
+    const user = "e2e_local_data_sign_out_cancel@example.com"
+    await cleanup(request, user)
+    const { context, page: unused } = await configured(browser, { realtime: false })
+    await unused.close()
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
+      await context.route("**/api/call/note.update", (route) => route.abort("internetdisconnected"))
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
+      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+
+      await askToSignOut(page)
+      await page.locator("[data-e2e=unsent-dialog]").waitFor()
+      await page.locator("[data-e2e=unsent-cancel]").click()
+
+      await expect(page.locator("[data-e2e=unsent-dialog]")).toHaveCount(0)
+      // A fresh start asks the server who is signed in, so a sign-out in flight cannot pass.
+      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(1)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
+  test("a queue left on the device is sent once after the module is switched off, and the device then holds none", async ({ browser, request }) => {
+    const user = "e2e_local_data_off_queue@example.com"
+    await cleanup(request, user)
+    const { context, page: unused } = await configured(browser, {})
+    await unused.close()
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
+      await context.unroute("**/config.json")
+      await context.route(
+        "**/config.json",
+        (route) => route.fulfill({ json: { env: "dev", offline: false } }),
+      )
+
+      await gotoApp(page, "/notes", page.locator("[data-e2e=note-list]"))
+
+      await expect.poll(async () => {
+        const response = await page.request.get(`${apiBase}/api/groups/${groupId}/notes`)
+        return (await response.json()).notes.map((note: { title: string }) => note.title)
+      }).toEqual(["Edited before the update"])
+      await expect.poll(() => databases(page)).not.toContain(`offline:user:${userId}:outbox`)
+      await expect(page.locator("[data-e2e=offline-queue-refused]")).toHaveCount(0)
+    } finally {
+      await context.close()
+      await cleanup(request, user)
+    }
+  })
+
+  test("with the module switched off, a queued write the server refuses is dropped and named in a warning", async ({ browser, request }) => {
+    const user = "e2e_local_data_off_refused@example.com"
+    await cleanup(request, user)
+    const { context, page: unused } = await configured(browser, {})
+    await unused.close()
+    try {
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
+      // The note moves on to version 2, so an edit made on version 1 is refused.
+      const moved = await page.request.patch(`${apiBase}/api/groups/${groupId}/notes/${noteId}`, {
+        headers,
+        data: { title: "Changed elsewhere", body: "", version: 1 },
+      })
+      expect(moved.ok(), await moved.text()).toBe(true)
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
+      await context.unroute("**/config.json")
+      await context.route(
+        "**/config.json",
+        (route) => route.fulfill({ json: { env: "dev", offline: false } }),
+      )
+
+      await gotoApp(page, "/notes", page.locator("[data-e2e=note-list]"))
+
+      await expect(page.locator("[data-e2e=offline-queue-refused]")).toContainText(
+        `1 change you made offline couldn't be saved: "Edited before the update".`,
+      )
+      await expect.poll(() => databases(page)).not.toContain(`offline:user:${userId}:outbox`)
+      await expect(page.locator("[data-e2e=note-item-title]")).toHaveText(["Changed elsewhere"])
     } finally {
       await context.close()
       await cleanup(request, user)

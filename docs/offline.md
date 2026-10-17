@@ -308,6 +308,23 @@ an error (a proxy's 502 during a deploy), the person stays signed out and the re
 used. Signing in or completing the one-time code clears the flag. Until the server accepts the
 sign-out, its session stays valid.
 
+**Signing out with unsent changes asks first.** When the person signs out from the account menu
+while the queue holds writes, the app does not sign out at once: `UnsentChangesDialog` from
+`@spy4x/preact-system` asks, with the number of changes and the fact that they stay on this browser
+and are sent only at the next sign-in here. "Send, then sign out" (the focused primary) sends the
+queue now and shows the wait in the same dialog: "Sending changes… 1 of 3 sent", "You're offline.
+We'll send your changes when you're back online, then sign you out." (the button then reads
+"Waiting…"), or "Couldn't reach the server. Trying again…" while the sync runner backs off. Once
+the queue is empty, the sign-out goes on by itself. A write the server refused never sends by
+itself, so it is counted apart; once only such writes are left, the button becomes "Review
+changes", which closes the dialog and opens the notes page of their group, where the chooser is.
+"Sign out anyway" signs out at once and keeps the queue, as before; "Cancel", Escape and the
+backdrop keep the person signed in. With an empty queue, or the module off, sign-out is immediate,
+as before. The check is `watchUnsentChanges` in `modules.ts` (the counts and the wait are
+`offline/unsent.ts`); `views/AppShell.tsx` asks it and `views/UnsentSignOut.tsx` draws the dialog.
+The two-factor step's sign-out, a sign-out by the server (401) and "sign out other devices" never
+ask: no queue is open there, or it is not this device that signs out.
+
 ## What is not offline
 
 Every write except a note's or a tag's needs the server: creating a group, saving the profile, inviting,
@@ -371,6 +388,18 @@ database. Copies written before the switch was turned off are deleted at the nex
 person the device remembered and for anyone still owed a deletion; that person's unsent note writes
 stay queued, as on sign-out. A device with neither key in `localStorage` is not opened.
 
+**A queue left while the module is off is sent once, then deleted.** At every signed-in start with
+`offline: false`, the app looks for that person's queue databases (`offline:user:<id>:outbox` and
+`offline:user:<id>:tags-outbox`) in `indexedDB.databases()`, without opening anything, so a device
+with no queue still gets no database. When one is there, and the page can send as that person, the
+writes go out in order (`offline/send-once.ts`), and the databases are deleted. A write that cannot
+reach the server keeps the whole queue for the next start or the next time the browser comes back
+online; the person sees nothing, because the writes are still safe on the device. A write the server
+refused cannot be resolved with the module off, since there is no conflict screen: it is dropped,
+and one warning that stays until dismissed says so, naming up to three:
+`2 changes you made offline couldn't be saved: "Shopping list", "Trip plan".` A browser that cannot
+list its databases keeps the queue.
+
 ### Removing the WebSocket module
 
 A product that never wants the socket deletes it:
@@ -405,7 +434,8 @@ layer is missing from this list.
    re-export and `noLocalReads`, and make the last line of that part
    `export const localReads = noLocalReads`.
    The stores of the level 2 lists then read from the server and keep nothing, with no change to
-   them or to their tests.
+   them or to their tests. `watchUnsentChanges` and the `UnsentWait` and `UnsentView` types go
+   with that part; delete `sendLeftQueue`, its call in `startModules`, and the `databases` option.
 4. In `apps/spa/src/app.tsx`, delete what came from that part: `bootstrapSession(recallUser)`
    becomes `bootstrapSession()` and loses its `forgetUser` step; drop the effect that remembers the
    user and the `flushOutbox` line of `reads`.
@@ -416,7 +446,10 @@ layer is missing from this list.
    the store built from `onlineTags` directly: `createTagsStore(onlineTags)`.
 7. In `apps/spa/src/views/NotesView.tsx`, `apps/spa/src/views/NoteEditorView.tsx` and
    `apps/spa/src/views/TagsView.tsx`, delete the `OfflineStatus` import and element.
-8. Delete the specs `e2e/offline.e2e.ts` and `e2e/local-data.e2e.ts`, the offline test in
+8. In `apps/spa/src/views/AppShell.tsx`, delete `useSignOut` and the `watchUnsentChanges` and
+   `UnsentSignOut` imports, and pass `useSignOutNow()` as `onSignOut`. Delete
+   `apps/spa/src/views/UnsentSignOut.tsx` and `apps/spa/src/views/UnsentSignOut.test.tsx`.
+9. Delete the specs `e2e/offline.e2e.ts` and `e2e/local-data.e2e.ts`, the offline test in
    `e2e/tags.e2e.ts` (the one named "a tag made and renamed with no network..."), and this guard test with its
    clause in the `test` task in `deno.jsonc`: `tests/offline-removal.test.ts`. The unit tests of
    the layer lived in the folder and went with it.

@@ -141,7 +141,7 @@ export const browserStorage: OfflineStorage = {
 let layer: OfflineLayer | null = null
 
 /** One lock per user across all tabs of the browser; one tab's chain where locks are missing. */
-function withBrowserLock(userId: number): OutboxLock {
+export function withBrowserLock(userId: number): OutboxLock {
   return typeof navigator !== "undefined" && navigator.locks
     ? createWebLock(navigator.locks, `offline-outbox:${userId}`)
     : createPromiseLock()

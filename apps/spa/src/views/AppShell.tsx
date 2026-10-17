@@ -1,4 +1,6 @@
 import type { ComponentChildren } from "preact"
+import { useEffect } from "preact/hooks"
+import { useSignal } from "@preact/signals"
 import { useLocation, useSearch } from "wouter-preact"
 import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
@@ -10,20 +12,62 @@ import { notificationsStore } from "../state/notifications.ts"
 import { selectionStore } from "../state/selection.ts"
 import { themeStore } from "../state/theme.ts"
 import type { SessionUser } from "../state/session.ts"
+import { type UnsentWait, watchUnsentChanges } from "../modules.ts"
 import { signOutRedirect } from "./sign-in-gate.ts"
+import { UnsentSignOut } from "./UnsentSignOut.tsx"
 
 /**
  * Signs out, leaving a page for signed-in people for plain sign-in first, while the session still
  * holds: once it is cleared, the sign-in gate would keep the page as `next` for whoever signs in
  * next.
  */
-function useSignOut(): () => void {
+function useSignOutNow(): () => void {
   const [location, navigate] = useLocation()
   const search = useSearch()
   return () => {
     const target = signOutRedirect(location, search)
     if (target) navigate(target, { replace: true })
     void signOut()
+  }
+}
+
+/**
+ * The person's own sign-out: at once when nothing waits in the offline queue, as before; otherwise
+ * it first asks, in `dialog`, whether to send the queued writes before signing out.
+ */
+function useSignOut(): { onSignOut: () => void; dialog: ComponentChildren } {
+  const signOutNow = useSignOutNow()
+  const [, navigate] = useLocation()
+  const wait = useSignal<UnsentWait | null>(null)
+  const close = () => {
+    wait.value?.dispose()
+    wait.value = null
+  }
+  useEffect(() => close, [])
+  return {
+    onSignOut: () => {
+      const watched = watchUnsentChanges()
+      if (watched) wait.value = watched
+      else signOutNow()
+    },
+    dialog: wait.value
+      ? (
+        <UnsentSignOut
+          wait={wait.value}
+          onSignOut={() => {
+            close()
+            signOutNow()
+          }}
+          onCancel={close}
+          onReview={(groupId) => {
+            close()
+            // The notes page of that group shows the conflicts with their choices.
+            if (groupId) void selectionStore.select(groupId)
+            navigate(NOTE_PATHS.list)
+          }}
+        />
+      )
+      : null,
   }
 }
 
@@ -39,7 +83,7 @@ export function AppShell(
   },
 ) {
   const [location, navigate] = useLocation()
-  const onSignOut = useSignOut()
+  const { onSignOut, dialog } = useSignOut()
   return (
     <AppFrame
       groupPicker={{
@@ -68,6 +112,7 @@ export function AppShell(
       onSignOut={onSignOut}
     >
       {children}
+      {dialog}
     </AppFrame>
   )
 }
@@ -77,7 +122,8 @@ export function PublicFrame(
   { canSignOut, children }: { canSignOut: boolean; children: ComponentChildren },
 ) {
   const [, navigate] = useLocation()
-  const onSignOut = useSignOut()
+  // No queue is open before sign-in finishes, so this sign-out never has one to ask about.
+  const onSignOut = useSignOutNow()
   return (
     <PublicFrameScreen
       canSignOut={canSignOut}
