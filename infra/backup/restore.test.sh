@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Proves a backup can be restored: backs a database up with backup.sh, restores it into an empty
-# one and compares what is there.
+# one and compares what is there. It also kills a run half-way and runs the next one, saves the web
+# push keys, and keeps two projects that share one repository apart.
 #
 # It needs `psql`, `pg_dump`, `pg_restore` and `restic` on PATH and a Postgres server where PGUSER
 # may create databases (PGHOST, PGUSER, PGPASSWORD). `deno task test:backup` gives it both: the
@@ -25,9 +26,16 @@ OCCUPIED="backup_test_occupied_$suffix"
 NEW_SERVER="backup_test_new_server_$suffix"
 REPLACED="backup_test_replaced_$suffix"
 BROKEN="backup_test_broken_$suffix"
+OTHER="backup_test_other_$suffix"
+SHARED="backup_test_shared_$suffix"
+LOCKER="backup_test_locker_$suffix"
 work=$(mktemp -d)
 cleanup() {
-  for database in "$SOURCE" "$RESTORED" "$OCCUPIED" "$NEW_SERVER" "$REPLACED" "$BROKEN"; do
+  # The session that holds a table lock for the kill case below, if it still runs.
+  psql --no-psqlrc --quiet --dbname postgres --command "select pg_terminate_backend(pid)
+    from pg_stat_activity where application_name = '$LOCKER'" >/dev/null 2>&1 || true
+  for database in "$SOURCE" "$RESTORED" "$OCCUPIED" "$NEW_SERVER" "$REPLACED" "$BROKEN" "$OTHER" \
+    "$SHARED"; do
     dropdb --if-exists --force --maintenance-db=postgres "$database" >/dev/null 2>&1 || true
   done
   find "$work" -delete
@@ -35,12 +43,21 @@ cleanup() {
 trap cleanup EXIT
 # A directory here, not a real repository; the password protects nothing.
 export RESTIC_REPOSITORY="$work/repository" RESTIC_PASSWORD=test-only
+# This project's name, the health file and a stand-in for the web push keys: no real key.
+export PROJECT=backup-test-a BACKUP_OK_FILE="$work/backup-ok" VAPID_FILE="$work/vapid.json"
+printf '{"publicKey":"test-only","privateKey":"test-only"}\n' >"$VAPID_FILE"
+OTHER_PROJECT=backup-test-b
 
 sql() { psql --no-psqlrc --quiet --tuples-only --no-align --set ON_ERROR_STOP=1 --dbname "$1" --command "$2"; }
 tables() { sql "$1" "select count(*) from pg_tables where schemaname = 'public'"; }
 notes() { sql "$1" "select string_agg(id || '=' || note, ',' order by id) from backup_probe"; }
-# The id and the time of the newest snapshot in the repository.
-newest() { restic snapshots --json latest | grep -o "\"$1\":\"[^\"]*" | head -n 1 | cut -d'"' -f4; }
+# The id and the time of this project's newest database snapshot.
+newest() {
+  restic snapshots --json --host "$PROJECT" --tag db latest | grep -o "\"$1\":\"[^\"]*" |
+    head -n 1 | cut -d'"' -f4
+}
+# How many database snapshots a project has.
+count() { restic snapshots --json --host "$1" --tag db | grep -o '"short_id"' | wc -l; }
 check() {
   if [ "$2" = "$3" ]; then echo "ok: $1"; else
     echo "FAILED: $1"
@@ -106,10 +123,63 @@ check "a restore says which snapshot it loads, by id and time" \
 sql "$SOURCE" "create table backup_bulk as select n, repeat('x', 100) as filler from generate_series(1, 20000) n"
 pg_dump --format=custom --compress=0 --no-password --dbname "$SOURCE" >"$work/whole.dump"
 head -c $(($(stat -c %s "$work/whole.dump") / 2)) "$work/whole.dump" |
-  restic backup --quiet --stdin --stdin-filename db.dump --tag db
+  restic backup --quiet --host "$PROJECT" --stdin --stdin-filename db.dump --tag db
 createdb --maintenance-db=postgres "$BROKEN"
 if PGDATABASE=$BROKEN "$BACKUP" restore "$(newest short_id)"; then failed="not failed"; else failed=failed; fi
 check "a restore whose dump breaks off half-way fails and leaves the database empty" \
   "failed, 0 tables" "$failed, $(tables "$BROKEN") tables"
+
+# The web push keys are saved with the database, and come back as they were.
+check "a backup saves the web push keys, and they come back unchanged" \
+  "$(cat "$VAPID_FILE")" "$(restic dump --host "$PROJECT" --tag vapid latest /vapid.json)"
+
+# A run killed half-way. Another session holds a lock on a table, so pg_dump waits inside
+# `restic backup`, which holds its own lock on the repository; then the whole run is killed, the
+# way a stop past its grace period, a reboot or the out-of-memory killer ends it.
+PGAPPNAME=$LOCKER psql --no-psqlrc --quiet --dbname "$SOURCE" --command \
+  "begin; lock table backup_probe in access exclusive mode; select pg_sleep(120)" >/dev/null 2>&1 &
+for attempt in $(seq 1 30); do
+  [ "$(sql "$SOURCE" "select count(*) from pg_locks l join pg_stat_activity a using (pid)
+    where a.application_name = '$LOCKER' and l.mode = 'AccessExclusiveLock' and l.granted")" = 0 ] ||
+    break
+  [ "$attempt" != 30 ] || { echo "FAILED: the table lock was not taken in 30 s"; exit 1; }
+  sleep 1
+done
+PGDATABASE=$SOURCE setsid "$BACKUP" once >"$work/killed.log" 2>&1 &
+killed=$!
+for attempt in $(seq 1 30); do
+  [ -z "$(ls -A "$RESTIC_REPOSITORY/locks")" ] || break
+  [ "$attempt" != 30 ] || { echo "FAILED: the run took no lock in 30 s"; cat "$work/killed.log"; exit 1; }
+  sleep 1
+done
+kill -KILL -- "-$killed"
+wait "$killed" || true
+sql postgres "select pg_terminate_backend(pid) from pg_stat_activity where application_name = '$LOCKER'" >/dev/null
+check "the killed run leaves its lock in the repository" "1" "$(ls -A "$RESTIC_REPOSITORY/locks" | wc -l)"
+rm -f "$BACKUP_OK_FILE"
+before=$(count "$PROJECT")
+if PGDATABASE=$SOURCE "$BACKUP" once; then completed=completed; else completed=failed; fi
+check "after a run killed half-way, the next run completes and touches the health file" \
+  "completed, health file touched, $((before + 1)) snapshots" \
+  "$completed, health file $([ -e "$BACKUP_OK_FILE" ] && echo touched || echo "not touched"), $(count "$PROJECT") snapshots"
+
+# Two projects in one repository by mistake. The other one has a daily snapshot from ten days long
+# ago; one clean-up for both would thin those out with this project's.
+for day in 01 02 03 04 05 06 07 08 09 10; do
+  echo "old" | restic backup --quiet --host "$OTHER_PROJECT" --tag db --stdin \
+    --stdin-filename db.dump --time "2025-01-$day 12:00:00"
+done
+PGDATABASE=$SOURCE "$BACKUP" once
+check "this project's clean-up leaves another project's snapshots in the same repository alone" \
+  "10" "$(count "$OTHER_PROJECT")"
+# The other project then saves the newest snapshot in the repository.
+createdb --maintenance-db=postgres "$OTHER"
+sql "$OTHER" "create table backup_probe (id integer primary key, note text not null);
+  insert into backup_probe values (1, 'other project')"
+PROJECT=$OTHER_PROJECT PGDATABASE=$OTHER "$BACKUP" once
+createdb --maintenance-db=postgres "$SHARED"
+PGDATABASE=$SHARED "$BACKUP" restore latest
+check "with another project's newer snapshot in the repository, restore latest loads this project's" \
+  "$(notes "$SOURCE")" "$(notes "$SHARED")"
 
 echo "Backup and restore: all checks passed."

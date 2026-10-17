@@ -490,9 +490,10 @@ services:
         max-file: '3'
   # endregion Monitoring
 
-  # Only with COMPOSE_PROFILES=backup (docs/backups.md): a restic snapshot of the database when it
-  # starts and every 24 hours after. Built on the db service's own image, so pg_dump is the
-  # server's version. Unhealthy when the last complete backup is more than two days old.
+  # Only with COMPOSE_PROFILES=backup (docs/backups.md): a restic snapshot of the database and of
+  # the web push keys when it starts and every 24 hours after. Built on the db service's own image,
+  # so pg_dump is the server's version. Unhealthy when the last complete backup is more than two
+  # days old; the BackupMissing alert (infra/configs/alerts.yml) says so too.
   backup:
     container_name: ${PROJECT}-backup
     profiles: [backup]
@@ -501,7 +502,25 @@ services:
       args:
         - POSTGRES_IMAGE=docker.io/library/postgres:18.6
     restart: unless-stopped
+    # The owner of infra/configs/vapid.json, which `deno task deploy` makes readable by its owner
+    # only; the api service reads it as the same user.
+    user: "1000:1000"
+    volumes:
+      # Long form, as in the api service: a missing file fails the start instead of Docker creating
+      # an empty directory there. Shared label (`z`), so both containers can read it.
+      - type: bind
+        source: ../../infra/configs/vapid.json
+        target: /run/vapid.json
+        read_only: true
+        bind:
+          create_host_path: false
+          selinux: z
     environment:
+      # The host of every snapshot this project saves (infra/backup/backup.sh).
+      - PROJECT=${PROJECT}
+      - VAPID_FILE=/run/vapid.json
+      # The image's home belongs to its postgres user, not to the user above.
+      - RESTIC_CACHE_DIR=/tmp/restic-cache
       - PGHOST=db
       - PGUSER=${DB_USER}
       - PGPASSWORD=${DB_PASS}
@@ -596,13 +615,14 @@ services:
       - ../../libs:/app/libs:z
       - ../../deno.jsonc:/app/deno.jsonc:z
       # Long form so a missing file fails the start with an error instead of Docker creating an
-      # empty directory there. `deno task deploy` generates the file on the server.
+      # empty directory there. `deno task deploy` generates the file on the server. Shared label
+      # (`z`): the backup service reads it too, and a private one would lock either out.
       - type: bind
         source: ../../infra/configs/vapid.json
         target: /app/vapid.json
         bind:
           create_host_path: false
-          selinux: Z
+          selinux: z
     user: "1000:1000"
     environment:
       - HOME=/home/deno

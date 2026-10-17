@@ -7,6 +7,7 @@ FROM docker.io/restic/restic:0.18.1 AS restic
 FROM ${POSTGRES_IMAGE}
 COPY --from=restic /usr/bin/restic /usr/local/bin/restic
 COPY --chmod=755 backup.sh /usr/local/bin/backup
-# Nothing here needs root: the dump goes over the network and restic keeps its cache in the home.
+# Nothing here needs root: the dump goes over the network. restic keeps its cache in the home, or
+# in RESTIC_CACHE_DIR where Compose runs the service as another user (compose.shared.yml).
 USER postgres
 ENTRYPOINT ["backup"]

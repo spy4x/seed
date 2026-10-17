@@ -88,3 +88,57 @@ Deno.test("Vector counts the lines of the container the API runs as", async () =
   ) as { services: { api: { container_name: string } } }
   expect(counted).toBe(compose.services.api.container_name)
 })
+
+Deno.test("Vector turns the backup's own last line into the gauge BackupMissing reads", async () => {
+  const vector = parse(await Deno.readTextFile(new URL("vector.yml", CONFIGS))) as {
+    transforms: {
+      backup_runs: { source: string }
+      backup_metrics: { metrics: { type: string; field: string; name: string }[] }
+    }
+  }
+  const { source } = vector.transforms.backup_runs
+  const container = source.match(/if \.container_name != "([^"]+)" \{ abort \}/)?.[1]
+  const pattern = source.match(/match\(string!\(\.message\), r'([^']+)'\)/)?.[1]
+  if (!container || !pattern) throw new Error(`vector.yml: the backup_runs pattern was not found`)
+
+  // The line backup.sh writes after a complete run, as its `log` function prints it.
+  const script = await Deno.readTextFile(new URL("../backup/backup.sh", CONFIGS))
+  const done = script.match(/^\s*log "(Backup done\.)"$/m)?.[1]
+  expect(done).toBe(`Backup done.`)
+  expect(`2026-10-17T03:00:00Z ${done}`).toMatch(new RegExp(pattern))
+  // A failed run's line, and the "done" words inside another line, count for nothing.
+  expect(`2026-10-17T03:00:00Z BACKUP FAILED. The next try is in 24 hours.`).not.toMatch(
+    new RegExp(pattern),
+  )
+  expect(`2026-10-17T03:00:00Z Backup done. Then something else`).not.toMatch(new RegExp(pattern))
+
+  const compose = parse(
+    await Deno.readTextFile(new URL("../compose/compose.shared.yml", CONFIGS)),
+  ) as { services: { backup: { container_name: string } } }
+  expect(container).toBe(compose.services.backup.container_name)
+
+  const [metric] = vector.transforms.backup_metrics.metrics
+  expect(metric).toEqual({
+    type: `gauge`,
+    field: `finished`,
+    name: `backup_last_success_timestamp_seconds`,
+  })
+  const rules = parse(await Deno.readTextFile(new URL("alerts.yml", CONFIGS))) as AlertRules
+  const rule = rules.groups.flatMap((group) => group.rules).find((r) => r.alert === `BackupMissing`)
+  expect(rule?.expr).toContain(`max_over_time(${metric.name}[14d])`)
+})
+
+Deno.test("BackupMissing looks back no further than the bundled VictoriaMetrics keeps data", async () => {
+  // A longer window would promise an alert that the store has already dropped the data for.
+  const compose = parse(
+    await Deno.readTextFile(new URL("../compose/compose.shared.yml", CONFIGS)),
+  ) as { services: { victoriametrics: { command: string[] } } }
+  const retention = compose.services.victoriametrics.command
+    .map((flag) => flag.match(/^-retentionPeriod=(\d+)d$/)?.[1])
+    .find(Boolean)
+  const rules = parse(await Deno.readTextFile(new URL("alerts.yml", CONFIGS))) as AlertRules
+  const rule = rules.groups.flatMap((group) => group.rules).find((r) => r.alert === `BackupMissing`)
+  const window = rule?.expr.match(/backup_last_success_timestamp_seconds\[(\d+)d\]/)?.[1]
+  if (!retention || !window) throw new Error(`the retention or the rule's window was not found`)
+  expect(Number(window)).toBeLessThanOrEqual(Number(retention))
+})

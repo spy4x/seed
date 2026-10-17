@@ -36,3 +36,25 @@ groups:
         annotations:
           summary: '{{ $labels.project }}: {{ $labels.mountpoint }} has {{ $value | humanizePercentage }} free'
           description: 'Less than 10% of the disk at {{ $labels.mountpoint }} is free.'
+
+  - name: backup
+    rules:
+      # backup_last_success_timestamp_seconds is the time of the backup service's last complete
+      # run, which Vector reads from its "Backup done." line (infra/configs/vector.yml). Its newest
+      # value over 14 days, so a gap in the series (Vector restarted, a day with no line) does not
+      # hide it. 14 days is the bundled VictoriaMetrics' -retentionPeriod, which leaves older
+      # samples out of every query: a longer window would only look longer
+      # (tests/monitoring-alerts.test.ts holds the two together). So 14 days after the last complete
+      # backup the series is gone and the alert resolves, and ntfy says "resolved", although no
+      # backup has run. A project that never switched the backup profile on has no series and no
+      # alert. Tested in infra/configs/alerts.test.yml.
+      - alert: BackupMissing
+        expr: |
+          time() - max by (project) (
+            max_over_time(backup_last_success_timestamp_seconds[14d])
+          ) > 2 * 86400
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.project }}: no backup has completed for {{ $value | humanizeDuration }}'
+          description: 'Read the backup log (deno task compose logs backup) and docs/backups.md, "When the backup is unhealthy".'

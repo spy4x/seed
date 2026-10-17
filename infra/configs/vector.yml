@@ -49,6 +49,25 @@ transforms:
         tags:
           status: '{{status}}'
 
+  # The backup service writes `Backup done.` at the end of every complete run
+  # (infra/backup/backup.sh). backup_last_success_timestamp_seconds is the time of the newest such
+  # line, and the BackupMissing alert reads its age. A project without the backup profile writes
+  # none and has no series. tests/monitoring-alerts.test.ts holds this pattern to the script's line.
+  backup_runs:
+    type: remap
+    inputs: [containers]
+    source: |
+      if .container_name != "${PROJECT}-backup" { abort }
+      if !match(string!(.message), r'Z Backup done\.$') { abort }
+      . = { "finished": to_unix_timestamp(timestamp!(.timestamp)) }
+  backup_metrics:
+    type: log_to_metric
+    inputs: [backup_runs]
+    metrics:
+      - type: gauge
+        field: finished
+        name: backup_last_success_timestamp_seconds
+
 sinks:
   victorialogs:
     type: elasticsearch
@@ -70,7 +89,9 @@ sinks:
   # Scraped by vmagent (infra/configs/vmagent.yml).
   metrics:
     type: prometheus_exporter
-    inputs: [api_request_metrics]
+    inputs: [api_request_metrics, backup_metrics]
     address: 0.0.0.0:9598
     # Keep a counter that no request has moved for a day, so a quiet API does not lose its series.
+    # The backup's gauge, set once a day, may still drop out between two runs or at a restart:
+    # BackupMissing reads its newest value over 14 days, so a gap does not matter.
     flush_period_secs: 86400

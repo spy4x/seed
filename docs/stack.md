@@ -126,6 +126,12 @@ Bundled mode only. vmalert evaluates `infra/configs/alerts.yml` every minute:
   host exporter is needed.
 - **HostDiskSpaceLow** - any disk of the host has under 10% free for 10 minutes. It has data only
   with the `host-monitoring` profile.
+- **BackupMissing** - no backup has completed for two days. Vector reads the backup service's
+  "Backup done." line; a project without the `backup` profile has no such line and no alert. The
+  rule reads the last 14 days, the bundled VictoriaMetrics' retention: 14 days after the last
+  complete backup the alert resolves although backups are still stopped, and so does it for a
+  project that switches the profile off. `infra/configs/alerts.test.yml` tests
+  the rule (CI step `alert-rules`).
 
 Alertmanager sends what fires, and what resolves, to ntfy: `ALERT_NTFY_URL` (the ntfy server),
 `ALERT_NTFY_TOPIC` (default `alerts`) and `ALERT_NTFY_TOKEN` (an access token, empty for an open

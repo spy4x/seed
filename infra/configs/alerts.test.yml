@@ -1,0 +1,67 @@
+# Unit tests of the alert rules in alerts.yml, run by vmalert-tool (.woodpecker/ci.yml,
+# `alert-rules`). Time starts at 0, the first second of 1970, so a gauge that holds a Unix time
+# holds the hours below times 3600.
+rule_files:
+  - alerts.yml
+evaluation_interval: 1h
+
+tests:
+  # The backup service completes a run every 24 hours. Vector keeps the gauge while it runs.
+  - interval: 1h
+    input_series:
+      - series: 'backup_last_success_timestamp_seconds{project="seed"}'
+        values: '0x23 86400x23 172800x23 259200x23'
+    alert_rule_test:
+      - eval_time: 95h
+        groupname: backup
+        alertname: BackupMissing
+        exp_alerts: []
+
+  # The last run completes at hour 0; the series stops a day later, as when Vector drops a gauge
+  # nothing set for a day. Quiet before two days, firing after, still firing at 12.5 days, and
+  # resolved once the last sample is older than the rule's 14-day window (the retention of the
+  # bundled VictoriaMetrics, which drops it anyway).
+  - interval: 1h
+    input_series:
+      - series: 'backup_last_success_timestamp_seconds{project="seed"}'
+        values: '0x23'
+    alert_rule_test:
+      - eval_time: 47h
+        groupname: backup
+        alertname: BackupMissing
+        exp_alerts: []
+      - eval_time: 49h
+        groupname: backup
+        alertname: BackupMissing
+        exp_alerts:
+          - exp_labels:
+              project: seed
+              severity: critical
+            exp_annotations:
+              summary: 'seed: no backup has completed for 2d 1h 0m 0s'
+              description: 'Read the backup log (deno task compose logs backup) and docs/backups.md, "When the backup is unhealthy".'
+      - eval_time: 300h
+        groupname: backup
+        alertname: BackupMissing
+        exp_alerts:
+          - exp_labels:
+              project: seed
+              severity: critical
+            exp_annotations:
+              summary: 'seed: no backup has completed for 12d 12h 0m 0s'
+              description: 'Read the backup log (deno task compose logs backup) and docs/backups.md, "When the backup is unhealthy".'
+      - eval_time: 360h
+        groupname: backup
+        alertname: BackupMissing
+        exp_alerts: []
+
+  # A project without the backup profile: no backup line, no series, no alert.
+  - interval: 1h
+    input_series:
+      - series: 'api_requests_total{project="seed",status="2xx"}'
+        values: '0+10x72'
+    alert_rule_test:
+      - eval_time: 72h
+        groupname: backup
+        alertname: BackupMissing
+        exp_alerts: []
