@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp, signIn } from "./fixtures/app.ts"
+import { gotoApp, openProfile, signIn } from "./fixtures/app.ts"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
@@ -38,8 +38,7 @@ test.describe("profile over the socket", () => {
         }
       })
       await signIn(first, email, password)
-      await first.getByRole("navigation", { name: "Main navigation" })
-        .getByRole("link", { name: "Profile" }).click()
+      await openProfile(first)
       await expect(first.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
 
       const second = await context.newPage()
@@ -76,8 +75,7 @@ test.describe("profile over the socket", () => {
         openSockets.push(route)
       })
       await gotoApp(second, "/", second.locator("[data-e2e=shell-ws-status]"))
-      await second.getByRole("navigation", { name: "Main navigation" })
-        .getByRole("link", { name: "Profile" }).click()
+      await openProfile(second)
       await expect(second.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
       await expect(second.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
       await expect(first.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")

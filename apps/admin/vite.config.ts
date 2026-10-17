@@ -27,7 +27,12 @@ const EXTRA_SOURCES = {
  * preact-components renders, then two no file of this app uses, so only a scan of libs/ui emits
  * them.
  */
-const REQUIRED_SELECTORS = [".lg\\:w-64", ".focus\\:not-sr-only", ".sm\\:h-9", ".top-0\\.5"]
+const REQUIRED_SELECTORS = [
+  ".lg\\:w-64",
+  ".focus\\:not-sr-only",
+  ".sm\\:justify-end",
+  ".sm\\:flex-wrap",
+]
 
 // https://vite.dev/config/
 export default defineConfig({

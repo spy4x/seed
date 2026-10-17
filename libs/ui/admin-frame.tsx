@@ -1,15 +1,18 @@
 import type { ComponentChildren, ComponentType, JSX } from "preact"
 import type { IconProps } from "@spy4x/preact-icons"
 import { type AuthCredentials, AuthForm } from "@spy4x/preact-system/auth-form"
-import { Shell, type ShellNavItem } from "@spy4x/preact-system/shell"
-import { Avatar } from "@spy4x/preact-ui/avatar"
+import { AccountMenu } from "@spy4x/preact-system/account-menu"
+import { RailShell, type RailShellSidebarPlace } from "@spy4x/preact-system/rail-shell"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
+import { Tooltip } from "@spy4x/preact-ui/tooltip"
 import { AuthCard } from "./auth-screen.tsx"
+import type { FrameTheme } from "./frame.tsx"
+import { MENU_TOOLTIP_CLASS, placeHook } from "./group-picker.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 /**
@@ -25,24 +28,39 @@ export const ADMIN_PATHS = {
   oneTimeCode: "/one-time-code",
 } as const
 
-/** The admin app's brand: tells an operator at once that this is not the product. */
-function AdminBrand({ navigate }: { navigate?: Navigate }): JSX.Element {
+/**
+ * The admin app's brand: the "Admin" badge, which tells an operator at once that this is not the
+ * product, and the product's name in muted text. The 72 px rail has room for the badge alone. In
+ * the phone's More sheet it is a plain heading row, not a link: the Dashboard tab already leads home,
+ * and a link there would leave the sheet open over the new page.
+ */
+function AdminBrand(
+  { navigate, place = "sidebar" }: { navigate?: Navigate; place?: RailShellSidebarPlace },
+): JSX.Element {
+  const rail = place === "rail"
+  if (place === "overlay") {
+    return (
+      <div class="flex min-h-11 items-center gap-2 px-2">
+        <span data-e2e={placeHook("admin-mark", place)}>
+          <Badge text="Admin" color="blue" />
+        </span>
+        <span class="text-base font-semibold text-muted">Seed</span>
+      </div>
+    )
+  }
   return (
     <Link
       href={ADMIN_PATHS.dashboard}
       navigate={navigate}
-      class="flex shrink-0 items-center gap-2 rounded-md"
+      class={rail
+        ? "flex min-h-11 w-full items-center justify-center rounded-md"
+        : "flex min-h-11 shrink-0 items-center gap-2 rounded-md px-2"}
+      aria-label={rail ? "Seed admin" : undefined}
     >
-      <span
-        class="flex size-8 items-center justify-center rounded-lg bg-selected text-sm font-semibold text-selected-foreground"
-        aria-hidden="true"
-      >
-        S
-      </span>
-      <span class="text-base font-semibold">Seed</span>
-      <span data-e2e="admin-mark">
+      <span data-e2e={placeHook("admin-mark", place)}>
         <Badge text="Admin" color="blue" />
       </span>
+      {!rail && <span class="text-base font-semibold text-muted">Seed</span>}
     </Link>
   )
 }
@@ -61,46 +79,72 @@ export interface AdminNavItem {
 }
 
 /**
- * The signed-in admin app's frame (#424): the brand with its "Admin" mark, a sidebar with one
- * entry per module (a drawer below `lg`), the theme switch and the operator's menu with Sign out.
- * The page itself sits in a column of at most 72 rem.
+ * The signed-in admin app's frame (#424, #453), the same shell as the product's: a labelled sidebar
+ * from `lg`, a 72 px icon rail from `md` and a bottom tab bar below that, with no header.
+ *
+ * - The top of the column, and of the phone's More sheet, is the brand with its "Admin" badge.
+ * - The middle is one entry per module.
+ * - The bottom is the operator's account menu: the theme and Sign out.
+ *
+ * On a phone the first four modules are tabs and "More" opens a sheet with the rest and the
+ * operator's menu. The page sits in a column of at most 72 rem.
  */
 export function AdminShell(
-  { navItems, currentPath, operator, onSignOut, status, navigate, children }: {
+  { navItems, currentPath, operator, theme, onSignOut, navigate, children }: {
     navItems: readonly AdminNavItem[]
     /** The address of the page shown; the entry whose page it is, or is under, is marked. */
     currentPath: string
     operator: AdminShellOperator
+    /** The theme store; left out, the operator's menu offers no theme. */
+    theme?: FrameTheme
     onSignOut: () => void
-    /** Shown in the top bar before the operator's menu: the theme switch. */
-    status?: ComponentChildren
     navigate?: Navigate
     children: ComponentChildren
   },
 ): JSX.Element {
-  const items: ShellNavItem[] = navItems.map(({ name, href, Icon }) => ({ name, href, Icon }))
-  return (
-    <Shell
-      navItems={items}
-      currentPath={adminNavPath(navItems, currentPath)}
-      brand={<AdminBrand navigate={navigate} />}
+  const label = `Account: ${operator.name}`
+  const account = (place: RailShellSidebarPlace) => (
+    <AccountMenu
       user={{ name: operator.name, email: operator.email ?? undefined }}
-      userMenuItems={[{ label: "Sign out", onClick: onSignOut, dataE2E: "admin-signout" }]}
-      status={status}
+      theme={theme?.preference.value}
+      onThemeChange={theme && ((choice) => theme.set(choice))}
+      signOut={{
+        label: "Sign out",
+        onClick: onSignOut,
+        dataE2E: placeHook("admin-signout", place),
+      }}
+      display={place === "rail" ? "avatar" : "full"}
+      vertical={place === "overlay" ? "auto" : "up"}
       navigate={navigate}
+      dataE2E={placeHook("admin-operator", place)}
+      labels={{ trigger: label }}
+    />
+  )
+  return (
+    <RailShell
+      items={navItems.map(({ name, href, Icon }) => ({ key: href, label: name, href, Icon }))}
+      currentKey={adminNavPath(navItems, currentPath)}
+      navigateLink={navigate && ((_key, href) => navigate(href))}
+      sidebarTop={(place) => <AdminBrand navigate={navigate} place={place} />}
+      sidebarBottom={(place) =>
+        place === "rail"
+          ? (
+            <Tooltip
+              label={label}
+              content={label}
+              placement="right"
+              focusable={false}
+              class="flex w-full justify-center"
+              contentClass={MENU_TOOLTIP_CLASS}
+            >
+              {account(place)}
+            </Tooltip>
+          )
+          : account(place)}
       labels={{ nav: "Admin sections" }}
-      sidebarBottom={() => (
-        <div class="flex min-w-0 items-center gap-3 rounded-lg px-2 py-2" data-e2e="admin-operator">
-          <Avatar name={operator.name} size="sm" />
-          <div class="flex min-w-0 flex-col">
-            <span class="truncate text-sm font-medium">{operator.name}</span>
-            {operator.email && <span class="truncate text-xs text-muted">{operator.email}</span>}
-          </div>
-        </div>
-      )}
     >
-      <div class="mx-auto w-full max-w-6xl pb-12">{children}</div>
-    </Shell>
+      <div class="mx-auto w-full max-w-6xl p-4 pb-12">{children}</div>
+    </RailShell>
   )
 }
 

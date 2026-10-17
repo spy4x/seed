@@ -2,7 +2,6 @@ import "./app.css"
 import type { JSX } from "preact"
 import { useEffect, useMemo } from "preact/hooks"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
-import { ThemeToggle } from "@spy4x/preact-ui/theme-toggle"
 import { Toastr } from "@spy4x/preact-ui/toastr"
 import type { createThemeStore } from "@spy4x/preact-signals/theme"
 import type { ToastStore } from "@spy4x/preact-signals/toast"
@@ -101,8 +100,8 @@ export function App(
       navItems={modules.map((module) => module.nav)}
       currentPath={path}
       operator={{ name: operatorName(user), email: null }}
+      theme={theme}
       onSignOut={store.signOut}
-      status={<ThemeToggle store={theme} />}
       navigate={navigate}
     >
       <Switch>

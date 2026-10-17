@@ -1,21 +1,31 @@
 import type { ComponentChildren, JSX } from "preact"
 import { canViewActivity } from "@domain/groups"
 import {
+  IconAlertTriangle,
   IconBell,
   IconClock,
   IconDocumentText,
   IconTag,
-  IconUser,
   IconUsers,
 } from "@spy4x/preact-icons"
-import { RailShell, type RailShellItem } from "@spy4x/preact-system/rail-shell"
+import { AccountMenu } from "@spy4x/preact-system/account-menu"
+import {
+  RailShell,
+  type RailShellItem,
+  type RailShellSidebarPlace,
+} from "@spy4x/preact-system/rail-shell"
 import { Avatar } from "@spy4x/preact-ui/avatar"
-import { badgeClasses } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
-import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { Page } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
-import { GroupPicker, type GroupPickerData } from "./group-picker.tsx"
+import { Tooltip } from "@spy4x/preact-ui/tooltip"
+import {
+  GroupPicker,
+  type GroupPickerData,
+  GroupSheet,
+  MENU_TOOLTIP_CLASS,
+  placeHook,
+} from "./group-picker.tsx"
 import {
   GROUP_PATHS,
   type Navigate,
@@ -26,9 +36,9 @@ import {
 } from "./progressive.tsx"
 
 /**
- * The daily destinations, in the order the rail and the phone tab bar show them. Five at most, so
- * the phone bar needs no "More". Activity belongs to the selected group and shows only while there
- * is one whose log the person may read.
+ * The daily destinations, in the order the sidebar and the phone tab bar show them. Four at most, so
+ * the phone bar keeps its last slot for the Account sheet. Activity belongs to the selected group and
+ * shows only while there is one whose log the person may read. Profile is in the account menu.
  */
 export function navItems(activityGroupId: string | null): RailShellItem[] {
   return [
@@ -41,13 +51,13 @@ export function navItems(activityGroupId: string | null): RailShellItem[] {
       Icon: IconClock,
     }]),
     { key: "groups", label: "Groups", href: SCREEN_PATHS.groups, Icon: IconUsers },
-    { key: "profile", label: "Profile", href: SCREEN_PATHS.profile, Icon: IconUser },
   ]
 }
 
 /**
  * The navigation entry a path belongs to: a note belongs to Notes, a group's activity log to
- * Activity, any other group page to Groups, and the e-mail page to Profile, where it is opened from.
+ * Activity and any other group page to Groups. The account's pages (profile, e-mail) belong to no
+ * entry: they open from the account menu.
  */
 export function navKey(path: string | undefined): string | undefined {
   if (path === undefined) return undefined
@@ -55,7 +65,6 @@ export function navKey(path: string | undefined): string | undefined {
   if (path === TAG_PATHS.list || path.startsWith(`${TAG_PATHS.list}/`)) return "tags"
   if (/^\/groups\/[^/]+\/activity\/?$/.test(path)) return "activity"
   if (path === SCREEN_PATHS.groups || path.startsWith(`${SCREEN_PATHS.groups}/`)) return "groups"
-  if (path === SCREEN_PATHS.profile || path === SCREEN_PATHS.email) return "profile"
   return undefined
 }
 
@@ -98,224 +107,197 @@ export interface FrameTheme {
   set(preference: ThemeChoice): void
 }
 
-const THEME_CHOICES: readonly { value: ThemeChoice; label: string }[] = [
-  { value: "system", label: "System" },
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-]
-
-/**
- * The product's mark and name. Signed in, it leads to the notes, the product's home, and on a phone
- * shows the mark alone; signed out, it leads to `/`, which the sign-in gate answers.
- */
-function Brand(
-  { navigate, compact }: { navigate?: Navigate; compact?: boolean },
-): JSX.Element {
-  return (
-    <Link
-      href={compact ? NOTE_PATHS.list : SCREEN_PATHS.profile}
-      navigate={navigate}
-      class={compact
-        ? "flex min-h-11 shrink-0 items-center gap-2 rounded-md sm:min-h-9"
-        : "flex shrink-0 items-center gap-2 rounded-md"}
-      aria-label={compact ? "Seed" : undefined}
-    >
-      <span
-        class="flex size-7 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
-        aria-hidden="true"
-      >
-        S
-      </span>
-      <span
-        class={compact ? "hidden text-base font-semibold sm:inline" : "text-base font-semibold"}
-      >
-        Seed
-      </span>
-    </Link>
-  )
+/** The user's full name, else the e-mail address, else "User": how the account entry names them. */
+export function displayName(user: FrameUser): string {
+  return `${user.firstName} ${user.lastName}`.trim() || user.email || "User"
 }
 
-/** The user's full name, or "User" before they set one. */
-function displayName(user: FrameUser): string {
-  return `${user.firstName} ${user.lastName}`.trim() || "User"
-}
-
-/** The most the bell's badge writes; more reads "99+" so the badge keeps its size. */
+/** The most a badge writes; more reads "99+" so the badge keeps its size. */
 const BADGE_MAX = 99
 
-/** The bell's accessible name: `Notifications`, or `Notifications, 3 unread`. */
+/** The Notifications entry's accessible name: `Notifications`, or `Notifications, 3 unread`. */
 export function bellLabel(unreadCount: number): string {
-  return unreadCount > 0 ? `Notifications, ${unreadCount} unread` : `Notifications`
+  return unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"
 }
 
+/** The look of `RailShell`'s own counters, so every count in the shell reads the same. */
+const COUNT_BADGE =
+  "h-5 min-w-5 shrink-0 rounded-full bg-primary px-1 text-center text-xs leading-5 font-semibold text-primary-foreground"
+
+/** A row in the sidebar's bottom zone or the phone's sheet: 44 px tall, like `RailShell`'s own. */
+const SLOT_ROW =
+  "flex min-h-11 w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted hover:bg-canvas hover:text-foreground"
+
+/** The rail's cell for one control, the width of the 72 px column. */
+const RAIL_CELL =
+  "relative flex min-h-11 w-full items-center justify-center rounded-md text-muted hover:bg-canvas hover:text-foreground"
+
 /**
- * The inbox's bell in the header: a link to the notifications page with the unread count in a
- * badge while there is any. The count is part of the link's name, so a screen reader hears it; the
- * badge itself is hidden from it. The target is 44 px square on a phone.
+ * The Notifications entry: a link to the inbox with the unread count in a badge while there is any.
+ * The count is part of the link's name, so a screen reader hears the real number; the badge is
+ * hidden from it. In the rail it is the bell alone, with the name as its tooltip.
  */
-function NotificationBell(
-  { unreadCount, navigate }: { unreadCount: number; navigate?: Navigate },
+function InboxEntry(
+  { unreadCount, navigate, place }: {
+    unreadCount: number
+    navigate?: Navigate
+    place: RailShellSidebarPlace
+  },
 ): JSX.Element {
+  const label = bellLabel(unreadCount)
+  const badge = (extra: string) =>
+    unreadCount > 0 && (
+      <span
+        class={`${COUNT_BADGE} ${extra}`}
+        aria-hidden="true"
+        data-e2e={placeHook("shell-bell-count", place)}
+      >
+        {unreadCount > BADGE_MAX ? `${BADGE_MAX}+` : unreadCount}
+      </span>
+    )
+  if (place === "rail") {
+    return (
+      <Tooltip
+        label="Notifications"
+        content="Notifications"
+        placement="right"
+        focusable={false}
+        class="flex w-full"
+      >
+        <Link
+          href={SCREEN_PATHS.notifications}
+          navigate={navigate}
+          aria-label={label}
+          class={RAIL_CELL}
+          data-e2e={placeHook("shell-bell", place)}
+        >
+          <IconBell class="size-6" aria-hidden="true" />
+          {badge("absolute top-1 left-1/2 ml-2")}
+        </Link>
+      </Tooltip>
+    )
+  }
   return (
     <Link
       href={SCREEN_PATHS.notifications}
       navigate={navigate}
-      aria-label={bellLabel(unreadCount)}
-      class="relative flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted hover:bg-hover hover:text-foreground sm:min-h-9 sm:min-w-9"
-      data-e2e="shell-bell"
+      aria-label={label}
+      class={SLOT_ROW}
+      data-e2e={placeHook("shell-bell", place)}
     >
-      <IconBell class="size-5" aria-hidden="true" />
-      {unreadCount > 0 && (
-        <span
-          class={badgeClasses(
-            "red",
-            "filled",
-            "absolute top-0.5 right-0.5 min-w-4 justify-center px-1 py-0 text-[10px] leading-4",
-          )}
-          aria-hidden="true"
-          data-e2e="shell-bell-count"
-        >
-          {unreadCount > BADGE_MAX ? `${BADGE_MAX}+` : unreadCount}
-        </span>
-      )}
+      <IconBell class="size-6 shrink-0" aria-hidden="true" />
+      <span class="min-w-0 flex-1 truncate">Notifications</span>
+      {badge("ml-auto")}
     </Link>
   )
 }
 
 /**
- * The connection in the header. Its text is always there for screen readers and the e2e specs;
- * a person sees it only while it is news ({@link connectionIsNews}).
+ * The connection while it is news ({@link connectionIsNews}): a warning chip in the sidebar and the
+ * sheet, a warning icon with the text as its tooltip in the rail. Screen readers skip it, because
+ * the frame's one live region ({@link AppFrame}) already says it.
  */
-function ConnectionState({ status }: { status: ConnectionStatus }): JSX.Element {
-  const visible = connectionIsNews(status)
-  return (
-    <span
-      class={visible
-        ? "inline-flex items-center gap-2 rounded-full bg-warning-soft px-3 py-1 text-xs font-medium text-warning"
-        : "sr-only"}
-      role="status"
-      data-e2e="shell-ws-status"
-    >
-      {CONNECTION_TEXT[status]}
-    </span>
-  )
-}
-
-/** A hairline between the menu's parts; a separator is a menu's own child, so it needs no item. */
-function MenuDivider(): JSX.Element {
-  return <div role="separator" class="my-1 border-t border-subtle" />
-}
-
-/**
- * The account menu behind the avatar: who is signed in, the account's pages, the theme and Sign out.
- * The theme is a set of radio items, so the arrow keys reach it like every other entry.
- */
-function AccountMenu(
-  { user, theme, navigate, onSignOut }: {
-    user: FrameUser
-    theme?: FrameTheme
-    navigate?: Navigate
-    onSignOut: () => void
-  },
+function ConnectionChip(
+  { status, place }: { status: ConnectionStatus; place: RailShellSidebarPlace },
 ): JSX.Element {
-  const name = displayName(user)
+  const text = CONNECTION_TEXT[status]
+  const icon = <IconAlertTriangle class="size-5 shrink-0" aria-hidden="true" />
+  if (place === "rail") {
+    return (
+      <div aria-hidden="true" class="flex w-full" data-e2e={placeHook("shell-ws-chip", place)}>
+        <Tooltip
+          label={text}
+          content={text}
+          placement="right"
+          focusable={false}
+          class="flex w-full"
+        >
+          <span class="flex min-h-11 w-full items-center justify-center rounded-md bg-warning-soft text-warning">
+            {icon}
+          </span>
+        </Tooltip>
+      </div>
+    )
+  }
   return (
-    <Dropdown
-      trigger={<Avatar name={name} alt="" size="sm" />}
-      triggerLabel={`Account: ${name}`}
-      triggerDataE2E="shell-user-menu-button"
-      triggerClasses="flex min-h-11 min-w-11 items-center justify-center rounded-full hover:bg-hover sm:min-h-9 sm:min-w-9"
-      panelClasses="w-64"
-      menuLabel="Account menu"
+    <div
+      aria-hidden="true"
+      class="flex min-h-11 items-center gap-2 rounded-md bg-warning-soft px-3 py-2 text-sm font-medium text-warning"
+      data-e2e={placeHook("shell-ws-chip", place)}
     >
-      <div role="none" class="flex flex-col px-4 py-2" data-e2e="shell-user-identity">
-        <span class="truncate font-medium text-foreground">{name}</span>
-        {user.email && <span class="truncate text-sm text-muted">{user.email}</span>}
-      </div>
-      <MenuDivider />
-      <DropdownItem href={SCREEN_PATHS.profile} navigate={navigate} dataE2E="shell-menu-profile">
-        Profile
-      </DropdownItem>
-      <DropdownItem
-        href={SCREEN_PATHS.notifications}
-        navigate={navigate}
-        dataE2E="shell-menu-notifications"
-      >
-        Notifications
-      </DropdownItem>
-      {theme && (
-        <>
-          <MenuDivider />
-          <div role="group" aria-labelledby="shell-theme-label" data-e2e="shell-theme">
-            <span
-              id="shell-theme-label"
-              role="none"
-              class="block px-4 pt-1 pb-1 text-xs font-medium text-muted"
-            >
-              Theme
-            </span>
-            {THEME_CHOICES.map((choice) => (
-              <DropdownItem
-                key={choice.value}
-                checked={theme.preference.value === choice.value}
-                onClick={() => theme.set(choice.value)}
-                dataE2E={`shell-theme-${choice.value}`}
-              >
-                {choice.label}
-              </DropdownItem>
-            ))}
-          </div>
-        </>
-      )}
-      <MenuDivider />
-      <DropdownItem onClick={onSignOut} dataE2E="signout">Sign out</DropdownItem>
-    </Dropdown>
-  )
-}
-
-/**
- * The header's row: the brand and the group switcher on the left; the connection while it is not
- * live, the bell and the account menu on the right.
- */
-function HeaderBar(
-  { user, theme, connection, navigate, onSignOut, groupPicker, unreadCount }: {
-    user: FrameUser
-    theme?: FrameTheme
-    connection?: ConnectionStatus
-    navigate?: Navigate
-    onSignOut: () => void
-    groupPicker?: GroupPickerData
-    unreadCount?: number
-  },
-): JSX.Element {
-  return (
-    <div class="flex h-14 items-center gap-2 border-b border-subtle bg-surface px-4 sm:gap-3 sm:px-6">
-      <Brand navigate={navigate} compact />
-      {groupPicker && <GroupPicker {...groupPicker} navigate={navigate} />}
-      <div class="ml-auto flex shrink-0 items-center gap-1">
-        {connection && <ConnectionState status={connection} />}
-        {unreadCount !== undefined && (
-          <NotificationBell unreadCount={unreadCount} navigate={navigate} />
-        )}
-        <AccountMenu user={user} theme={theme} navigate={navigate} onSignOut={onSignOut} />
-      </div>
+      {icon}
+      <span class="min-w-0 truncate">{text}</span>
     </div>
   )
 }
 
 /**
- * Keeps `RailShell`'s `<header>` at the top of the window while the page scrolls. The shell draws
- * that element itself, so the classes reach it through its root.
+ * The account entry: the library's `AccountMenu` with Profile, the theme and Sign out. The sidebar
+ * and the sheet show the avatar, the name and the e-mail; the rail shows the avatar alone with its
+ * name as a tooltip.
  */
-const STICKY_HEADER =
-  "[&_[data-e2e=rail-shell-header]]:sticky [&_[data-e2e=rail-shell-header]]:top-0 [&_[data-e2e=rail-shell-header]]:z-20"
+function AccountEntry(
+  { user, theme, navigate, onSignOut, place }: {
+    user: FrameUser
+    theme?: FrameTheme
+    navigate?: Navigate
+    onSignOut: () => void
+    place: RailShellSidebarPlace
+  },
+): JSX.Element {
+  const name = displayName(user)
+  const label = `Account: ${name}`
+  // A person known only by the address would read it twice.
+  const email = user.email && user.email !== name ? user.email : undefined
+  const menu = (
+    <AccountMenu
+      user={{ name, email }}
+      items={[{
+        label: "Profile",
+        href: SCREEN_PATHS.profile,
+        dataE2E: placeHook("shell-menu-profile", place),
+      }]}
+      theme={theme?.preference.value}
+      onThemeChange={theme && ((choice) => theme.set(choice))}
+      signOut={{ label: "Sign out", onClick: onSignOut, dataE2E: placeHook("signout", place) }}
+      display={place === "rail" ? "avatar" : "full"}
+      vertical={place === "overlay" ? "auto" : "up"}
+      navigate={navigate}
+      dataE2E={placeHook("shell-user-menu-button", place)}
+      labels={{ trigger: label }}
+    />
+  )
+  if (place !== "rail") return menu
+  return (
+    <Tooltip
+      label={label}
+      content={label}
+      placement="right"
+      focusable={false}
+      class="flex w-full justify-center"
+      contentClass={MENU_TOOLTIP_CLASS}
+    >
+      {menu}
+    </Tooltip>
+  )
+}
 
 /**
- * The signed-in frame, mobile first: a bottom tab bar on a phone and a rail from `md` up
- * (`RailShell`), and a slim header with the brand, the group switcher, the connection while it is
- * not live, the inbox's bell with its unread count, and the account menu. The header is
- * `RailShell`'s `header`, so it is the page's banner, outside `<main>`, and the skip link jumps past
- * it.
+ * The signed-in frame, mobile first, with no header: everything around the page lives in
+ * `RailShell`'s column, a labelled sidebar from `lg`, a 72 px icon rail from `md`, and a bottom tab
+ * bar below that.
+ *
+ * - The top of the column is the group switcher.
+ * - The middle is the destinations ({@link navItems}).
+ * - The bottom is the connection while it is not live, Notifications with its unread count, and the
+ *   account menu (Profile, Theme, Sign out).
+ *
+ * On a phone the tab bar's last slot is "Account": the avatar with the unread count, opening a sheet
+ * with the groups, Notifications and the account menu. The skip link jumps past the column into
+ * `<main>`.
+ *
+ * The connection has one live region, outside the column so it exists once; its text is always
+ * there for screen readers and the e2e specs (`shell-ws-status`).
  *
  * Every page sits in one centred column of 48 rem (`Page`); `wide` gives a data table 64 rem, and a
  * form never needs it. `banner` shows at the top of that column, above the page's own header, such
@@ -348,7 +330,7 @@ export function AppFrame(
     onSignOut: () => void
     groupPicker?: GroupPickerData
     banner?: ComponentChildren
-    /** How many notifications are unread. Left out, the header has no bell. */
+    /** How many notifications are unread. Left out, the sidebar has no Notifications entry. */
     unreadCount?: number
     /** Gives the page the wider column (64 rem), for a data table that needs it. */
     wide?: boolean
@@ -357,29 +339,75 @@ export function AppFrame(
 ): JSX.Element {
   const selected = groupPicker?.groups.find((group) => group.id === groupPicker.selectedId)
   const activityGroupId = selected && canViewActivity(selected.role) ? selected.id : null
+  const top = groupPicker &&
+    ((place: RailShellSidebarPlace) =>
+      place === "overlay"
+        ? <GroupSheet {...groupPicker} navigate={navigate} />
+        : <GroupPicker {...groupPicker} navigate={navigate} place={place} />)
+  const bottom = (place: RailShellSidebarPlace) => (
+    <div class="flex flex-col gap-1">
+      {connection && connectionIsNews(connection) && (
+        <ConnectionChip status={connection} place={place} />
+      )}
+      {unreadCount !== undefined && (
+        <InboxEntry unreadCount={unreadCount} navigate={navigate} place={place} />
+      )}
+      <AccountEntry
+        user={user}
+        theme={theme}
+        navigate={navigate}
+        onSignOut={onSignOut}
+        place={place}
+      />
+    </div>
+  )
   return (
-    <RailShell
-      items={navItems(activityGroupId)}
-      currentKey={navKey(currentPath)}
-      navigateLink={navigate && ((_key, href) => navigate(href))}
-      class={STICKY_HEADER}
-      header={
-        <HeaderBar
-          user={user}
-          theme={theme}
-          connection={connection}
-          navigate={navigate}
-          onSignOut={onSignOut}
-          groupPicker={groupPicker}
-          unreadCount={unreadCount}
-        />
-      }
+    <>
+      {connection && (
+        <span class="sr-only" role="status" data-e2e="shell-ws-status">
+          {CONNECTION_TEXT[connection]}
+        </span>
+      )}
+      <RailShell
+        items={navItems(activityGroupId)}
+        currentKey={navKey(currentPath)}
+        navigateLink={navigate && ((_key, href) => navigate(href))}
+        sidebarTop={top}
+        sidebarBottom={bottom}
+        moreTab={{
+          icon: <Avatar name={displayName(user)} alt="" size="sm" />,
+          counter: unreadCount,
+        }}
+        labels={{ more: "Account", moreDialog: "Account", counter: (count) => `${count} unread` }}
+      >
+        <Page class={wide ? "max-w-5xl py-6 sm:py-8" : "max-w-3xl py-6 sm:py-8"}>
+          {banner}
+          {children}
+        </Page>
+      </RailShell>
+    </>
+  )
+}
+
+/**
+ * The product's mark and name above the signed-out pages. It leads to `/`, which the sign-in gate
+ * answers.
+ */
+function Brand({ navigate }: { navigate?: Navigate }): JSX.Element {
+  return (
+    <Link
+      href={SCREEN_PATHS.profile}
+      navigate={navigate}
+      class="flex shrink-0 items-center gap-2 rounded-md"
     >
-      <Page class={wide ? "max-w-5xl py-6 sm:py-8" : "max-w-3xl py-6 sm:py-8"}>
-        {banner}
-        {children}
-      </Page>
-    </RailShell>
+      <span
+        class="flex size-7 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
+        aria-hidden="true"
+      >
+        S
+      </span>
+      <span class="text-base font-semibold">Seed</span>
+    </Link>
   )
 }
 

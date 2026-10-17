@@ -27,6 +27,7 @@ import {
   EmailUnavailable,
 } from "./email-screen.tsx"
 import { AppFrame, navKey, PublicFrame } from "./frame.tsx"
+import { MENU_TOOLTIP_CLASS } from "./group-picker.tsx"
 import { ProfileScreen, type ProfileScreenProps } from "./profile-screen.tsx"
 import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 import { TwoFactorProof } from "./two-factor.ts"
@@ -205,24 +206,49 @@ function themeSpy(preference: "system" | "light" | "dark" = "system") {
   }
 }
 
+/** The labels of the sidebar's navigation entries, without the rail's tooltip copies. */
+function railLabels(): string[] {
+  return [...document.querySelectorAll('[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"]')]
+    .map((link) => link.querySelector("span:not([aria-hidden])")?.textContent ?? "")
+}
+
+/** The menu panel of the dropdown whose trigger `selector` finds: the trigger's sibling. */
+function menuOf(selector: string): HTMLElement {
+  const menu = find(selector).parentElement!.querySelector<HTMLElement>("[role=menu]")
+  if (!menu) throw new Error(`${selector} has no menu`)
+  return menu
+}
+
+/** The texts of the items in the menu `selector`'s trigger opens. */
+function menuItems(selector: string): string[] {
+  return [...menuOf(selector).querySelectorAll("[role=menuitem], [role=menuitemradio]")]
+    .map((item) => item.textContent?.trim() ?? "")
+}
+
 describe("AppFrame", () => {
   const groups = [
     { id: "g-1", name: "Home", role: GroupRole.OWNER },
     { id: "g-2", name: "Team", role: GroupRole.VIEWER },
   ]
 
-  it("draws the header as the banner, outside main, and the page inside main", async () => {
+  it("has no header bar or brand: the sidebar holds the switcher, Notifications and the account", async () => {
     await mount(
-      <AppFrame user={ada} onSignOut={() => {}}>
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        unreadCount={0}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: () => {} }}
+      >
         <p id="page">page</p>
       </AppFrame>,
     )
 
-    const header = find("header")
-    expect(header.closest("main")).toBe(null)
-    expect(header.querySelector("[data-e2e=shell-user-menu-button]")).not.toBe(null)
+    expect(document.querySelector("header")).toBe(null)
+    expect(document.body.textContent).not.toContain("Seed")
+    expect(find("[data-e2e=rail-shell-top] [data-e2e=group-picker]")).not.toBe(null)
+    expect(find("[data-e2e=rail-shell-bottom] [data-e2e=shell-bell]")).not.toBe(null)
+    expect(find("[data-e2e=rail-shell-bottom] [data-e2e=shell-user-menu-button]")).not.toBe(null)
     expect(find("#page").closest("main")).not.toBe(null)
-    expect(document.querySelector("main header")).toBe(null)
   })
 
   it("puts every page in the one centred 48 rem column, and a wide page in 64 rem", async () => {
@@ -245,7 +271,7 @@ describe("AppFrame", () => {
     expect(column()).not.toContain("max-w-3xl")
   })
 
-  it("lists Notes, Tags, Activity, Groups and Profile, with Activity pointing at the selected group", async () => {
+  it("lists Notes, Tags, Activity and Groups, with Activity pointing at the selected group", async () => {
     await mount(
       <AppFrame
         user={ada}
@@ -256,11 +282,18 @@ describe("AppFrame", () => {
       </AppFrame>,
     )
     const rail = '[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"]'
-    expect(texts(rail)).toEqual(["Notes", "Tags", "Activity", "Groups", "Profile"])
+    expect(railLabels()).toEqual(["Notes", "Tags", "Activity", "Groups"])
     expect([...document.querySelectorAll(rail)].map((link) => link.getAttribute("href")))
-      .toEqual(["/notes", "/tags", "/groups/g-1/activity", "/groups", "/"])
-    // All five fit the phone bar, so it has no "More".
-    expect(texts('[data-e2e=rail-shell-tabbar] [data-e2e="rail-shell-entry"]')).toHaveLength(5)
+      .toEqual(["/notes", "/tags", "/groups/g-1/activity", "/groups"])
+    expect(texts('[data-e2e=rail-shell-tabbar] [data-e2e="rail-shell-entry"]')).toHaveLength(4)
+  })
+
+  it("ends the phone bar with Account, counting the unread notifications in its name", async () => {
+    await mount(<AppFrame user={ada} onSignOut={() => {}} unreadCount={3}>page</AppFrame>)
+    const more = find("[data-e2e=rail-shell-more]")
+    expect(more.textContent).toContain("Account")
+    expect(more.getAttribute("aria-label")).toBe("Account, 3 unread")
+    expect(find("[data-e2e=rail-shell-dialog] h2").textContent).toBe("Account")
   })
 
   it("leaves Activity out with no selected group, and for a group whose log the person may not read", async () => {
@@ -273,11 +306,10 @@ describe("AppFrame", () => {
         page
       </AppFrame>
     )
-    const rail = '[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"]'
     await mount(frame(null))
-    expect(texts(rail)).toEqual(["Notes", "Tags", "Groups", "Profile"])
+    expect(railLabels()).toEqual(["Notes", "Tags", "Groups"])
     await rerender(frame("g-2"))
-    expect(texts(rail)).toEqual(["Notes", "Tags", "Groups", "Profile"])
+    expect(railLabels()).toEqual(["Notes", "Tags", "Groups"])
   })
 
   it("follows a plain click on a navigation entry through navigate, and leaves a Ctrl-click to the browser", async () => {
@@ -292,33 +324,49 @@ describe("AppFrame", () => {
     expect(navigate.calls).toEqual([["/tags"]])
   })
 
-  it("links the brand to the notes", async () => {
-    await mount(<AppFrame user={ada} onSignOut={() => {}}>page</AppFrame>)
-    expect(find('header a[aria-label="Seed"]').getAttribute("href")).toBe(NOTE_PATHS.list)
-  })
-
-  it("marks the entry of the page shown: a note under Notes, a group's log under Activity, the e-mail page under Profile", async () => {
+  it("marks the entry of the page shown: a note under Notes, a group's log under Activity, and none for the account's pages", async () => {
     await mount(<AppFrame user={ada} onSignOut={() => {}} currentPath="/email">page</AppFrame>)
+    expect(document.querySelectorAll('[aria-current="page"]')).toHaveLength(0)
 
+    await rerender(
+      <AppFrame user={ada} onSignOut={() => {}} currentPath="/notes/abc">page</AppFrame>,
+    )
     const current = [...document.querySelectorAll('[aria-current="page"]')]
-    expect(current.map((link) => link.getAttribute("href"))).toEqual(["/", "/"])
+    expect(current.map((link) => link.getAttribute("href"))).toEqual(["/notes", "/notes"])
+
     expect(navKey("/notes/abc")).toBe("notes")
     expect(navKey("/tags")).toBe("tags")
     expect(navKey("/groups/abc/activity")).toBe("activity")
     expect(navKey("/groups/abc")).toBe("groups")
     expect(navKey("/groups/abc/pricing")).toBe("groups")
     expect(navKey("/billing")).toBe(undefined)
+    expect(navKey(SCREEN_PATHS.profile)).toBe(undefined)
+    expect(navKey(SCREEN_PATHS.email)).toBe(undefined)
   })
 
-  it("keeps a live connection out of sight but readable, and shows one that is down", async () => {
+  it("says the connection in one live region always, and shows it only while it is down", async () => {
     await mount(<AppFrame user={ada} onSignOut={() => {}} connection="open">page</AppFrame>)
-    const status = find("[data-e2e=shell-ws-status]")
-    expect(status.textContent).toBe("Online")
-    expect(status.className).toBe("sr-only")
+    const status = () => document.querySelectorAll("[data-e2e=shell-ws-status]")
+    expect(status()).toHaveLength(1)
+    expect(status()[0].textContent).toBe("Online")
+    expect(status()[0].getAttribute("role")).toBe("status")
+    expect(status()[0].className).toBe("sr-only")
+    expect(document.querySelector("[data-e2e^=shell-ws-chip]")).toBe(null)
 
     await rerender(<AppFrame user={ada} onSignOut={() => {}} connection="closed">page</AppFrame>)
-    expect(status.textContent).toBe("Offline")
-    expect(status.className).not.toContain("sr-only")
+    expect(status()).toHaveLength(1)
+    expect(status()[0].textContent).toBe("Offline")
+    expect(find("[data-e2e=rail-shell-bottom] [data-e2e=shell-ws-chip]").textContent).toBe(
+      "Offline",
+    )
+    // The chips repeat what the live region says, so a screen reader hears it once.
+    const chips = [...document.querySelectorAll("[data-e2e^=shell-ws-chip]")]
+    expect(chips.map((chip) => chip.getAttribute("data-e2e"))).toEqual([
+      "shell-ws-chip-rail",
+      "shell-ws-chip",
+      "shell-ws-chip-overlay",
+    ])
+    expect(chips.every((chip) => chip.closest("[aria-hidden=true]") !== null)).toBe(true)
   })
 
   it("draws the banner at the top of the page's own column on every page", async () => {
@@ -338,25 +386,33 @@ describe("AppFrame", () => {
     atTop()
   })
 
-  it("names the account menu after the person and shows their name and address in it", async () => {
+  it("names the account entry after the person, shows their name and address, and offers Profile, Theme and Sign out", async () => {
     await mount(<AppFrame user={ada} onSignOut={() => {}} theme={themeSpy()}>page</AppFrame>)
     const trigger = find("[data-e2e=shell-user-menu-button]")
     expect(trigger.getAttribute("aria-label")).toBe("Account: Ada Lovelace")
+    expect(trigger.textContent).toContain("Ada Lovelaceada@example.com")
 
-    await click("[data-e2e=shell-user-menu-button]")
-
-    expect(texts("[data-e2e=shell-user-identity] span")).toEqual([
-      "Ada Lovelace",
-      "ada@example.com",
-    ])
-    expect(texts("[role=menu] [role=menuitem], [role=menu] [role=menuitemradio]")).toEqual([
+    expect(menuItems("[data-e2e=shell-user-menu-button]")).toEqual([
       "Profile",
-      "Notifications",
       "System",
       "Light",
       "Dark",
       "Sign out",
     ])
+  })
+
+  it("names a person with no name by their e-mail address, written once", async () => {
+    await mount(
+      <AppFrame
+        user={{ firstName: "", lastName: "", email: "ada@example.com" }}
+        onSignOut={() => {}}
+      >
+        page
+      </AppFrame>,
+    )
+    const trigger = find("[data-e2e=shell-user-menu-button]")
+    expect(trigger.getAttribute("aria-label")).toBe("Account: ada@example.com")
+    expect(trigger.textContent?.split("ada@example.com")).toHaveLength(2)
   })
 
   it("signs out from the account menu through the app's callback", async () => {
@@ -369,21 +425,55 @@ describe("AppFrame", () => {
     expect(signOut.calls).toHaveLength(1)
   })
 
+  it("signs out from the rail's avatar menu and from the phone's Account sheet", async () => {
+    const signOut = spy<[]>()
+    await mount(<AppFrame user={ada} onSignOut={signOut.fn}>page</AppFrame>)
+
+    await click("[data-e2e=shell-user-menu-button-rail]")
+    await click("[data-e2e=signout-rail]")
+    await click("[data-e2e=rail-shell-more]")
+    await click("[data-e2e=shell-user-menu-button-overlay]")
+    await click("[data-e2e=signout-overlay]")
+
+    expect(signOut.calls).toHaveLength(2)
+  })
+
+  it("opens Profile from every copy of the account menu through navigate, and leaves a Ctrl-click to the browser", async () => {
+    const navigate = spy<[string]>()
+    await mount(<AppFrame user={ada} onSignOut={() => {}} navigate={navigate.fn}>page</AppFrame>)
+
+    expect(find("[data-e2e=shell-menu-profile]").getAttribute("href")).toBe(SCREEN_PATHS.profile)
+    expect(await click("[data-e2e=shell-menu-profile]")).toBe(true)
+    expect(await click("[data-e2e=shell-menu-profile]", { ctrlKey: true })).toBe(false)
+    expect(await click("[data-e2e=shell-menu-profile-rail]")).toBe(true)
+    expect(await click("[data-e2e=shell-menu-profile-overlay]")).toBe(true)
+    expect(navigate.calls).toEqual([
+      [SCREEN_PATHS.profile],
+      [SCREEN_PATHS.profile],
+      [SCREEN_PATHS.profile],
+    ])
+  })
+
   it("checks the current theme in the account menu and stores the one chosen", async () => {
     const theme = themeSpy("system")
     await mount(<AppFrame user={ada} onSignOut={() => {}} theme={theme}>page</AppFrame>)
 
     await click("[data-e2e=shell-user-menu-button]")
+    const menu = menuOf("[data-e2e=shell-user-menu-button]")
     const checked = () =>
-      [...document.querySelectorAll("[data-e2e=shell-theme] [role=menuitemradio]")]
+      [...menu.querySelectorAll("[data-e2e=account-menu-theme] [role=menuitemradio]")]
         .map((item) => item.getAttribute("aria-checked"))
     expect(checked()).toEqual(["true", "false", "false"])
-    await click("[data-e2e=shell-theme-dark]")
+    await act(() => {
+      menu.querySelector("[data-e2e=account-menu-theme-dark]")!.dispatchEvent(
+        new window.MouseEvent("click", { bubbles: true, button: 0 }) as unknown as Event,
+      )
+    })
 
     expect(theme.chosen).toEqual(["dark"])
   })
 
-  it("shows the current group on the switcher's button, named for a screen reader", async () => {
+  it("shows the current group and the person's role on the switcher, named for a screen reader", async () => {
     await mount(
       <AppFrame
         user={ada}
@@ -395,10 +485,69 @@ describe("AppFrame", () => {
     )
     const trigger = find("[data-e2e=group-picker]")
     expect(trigger.tagName).toBe("BUTTON")
-    expect(trigger.textContent).toBe("HHome")
+    expect(trigger.textContent).toBe("HHomeOwner")
     expect(trigger.getAttribute("aria-label")).toBe("Group: Home")
-    // 44 px on a phone.
-    expect(trigger.classList.contains("h-11")).toBe(true)
+    // 44 px tall.
+    expect(trigger.classList.contains("min-h-11")).toBe(true)
+  })
+
+  it("asks to choose a group while none is chosen, in words its name contains", async () => {
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        groupPicker={{ groups, selectedId: null, onSelect: () => {} }}
+      >
+        page
+      </AppFrame>,
+    )
+    const trigger = find("[data-e2e=group-picker]")
+    expect(trigger.textContent).toBe("Choose a group")
+    expect(trigger.getAttribute("aria-label")).toBe("Choose a group")
+  })
+
+  it("names the rail's icon-only controls and shows the same words as their tooltips", async () => {
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        unreadCount={2}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: () => {} }}
+      >
+        page
+      </AppFrame>,
+    )
+    const tip = (selector: string) =>
+      find(selector).closest("[role=group]")?.querySelector("[role=tooltip]")?.textContent
+    expect(find("[data-e2e=group-picker-rail]").getAttribute("aria-label")).toBe("Group: Home")
+    expect(tip("[data-e2e=group-picker-rail]")).toBe("Group: Home")
+    expect(find("[data-e2e=shell-bell-rail]").getAttribute("aria-label")).toBe(
+      "Notifications, 2 unread",
+    )
+    expect(tip("[data-e2e=shell-bell-rail]")).toBe("Notifications")
+    expect(find("[data-e2e=shell-user-menu-button-rail]").getAttribute("aria-label")).toBe(
+      "Account: Ada Lovelace",
+    )
+    expect(tip("[data-e2e=shell-user-menu-button-rail]")).toBe("Account: Ada Lovelace")
+  })
+
+  it("gives the rail menus' tooltips the class that hides them while their menu is open", async () => {
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        unreadCount={2}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: () => {} }}
+      >
+        page
+      </AppFrame>,
+    )
+    const surface = (selector: string) =>
+      find(selector).closest("[role=group]")!.querySelector("[role=tooltip]")!.className
+    expect(surface("[data-e2e=group-picker-rail]")).toContain(MENU_TOOLTIP_CLASS)
+    expect(surface("[data-e2e=shell-user-menu-button-rail]")).toContain(MENU_TOOLTIP_CLASS)
+    // The bell opens no menu, so its tooltip stays.
+    expect(surface("[data-e2e=shell-bell-rail]")).not.toContain(MENU_TOOLTIP_CLASS)
   })
 
   it("switches group from the keyboard: the arrow keys move through the groups, the checked one is current", async () => {
@@ -415,7 +564,7 @@ describe("AppFrame", () => {
     find<HTMLButtonElement>("[data-e2e=group-picker]").focus()
     await enter()
 
-    const radios = [...document.querySelectorAll("[role=menuitemradio]")]
+    const radios = [...menuOf("[data-e2e=group-picker]").querySelectorAll("[role=menuitemradio]")]
     expect(radios.map((item) => item.textContent)).toEqual(["HHome Owner", "TTeam Viewer"])
     expect(radios.map((item) => item.getAttribute("aria-checked"))).toEqual(["true", "false"])
     expect(document.activeElement).toBe(radios[0])
@@ -440,6 +589,78 @@ describe("AppFrame", () => {
     await click("[data-e2e=group-picker]")
     await click("[data-e2e=group-picker-g-1]")
     expect(select.calls).toEqual([])
+  })
+
+  it("switches group from the rail's switcher, and not to the group already current", async () => {
+    const select = spy<[string]>()
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: select.fn }}
+      >
+        page
+      </AppFrame>,
+    )
+    await click("[data-e2e=group-picker-rail]")
+    await click("[data-e2e=group-picker-g-1-rail]")
+    await click("[data-e2e=group-picker-rail]")
+    await click("[data-e2e=group-picker-g-2-rail]")
+    expect(select.calls).toEqual([["g-2"]])
+  })
+
+  it("lists the groups in the phone's Account sheet, switches on a tap and closes the sheet", async () => {
+    const select = spy<[string]>()
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        unreadCount={0}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: select.fn }}
+      >
+        page
+      </AppFrame>,
+    )
+    const sheet = "[data-e2e=rail-shell-dialog]"
+    await click("[data-e2e=rail-shell-more]")
+    expect(find<HTMLDialogElement>(sheet).open).toBe(true)
+
+    expect(find("[data-e2e=group-sheet-g-1]").getAttribute("aria-current")).toBe("true")
+    expect(find("[data-e2e=group-sheet-g-2]").getAttribute("aria-current")).toBe(null)
+    expect(find("[data-e2e=group-sheet-all]").getAttribute("href")).toBe("/groups")
+    expect(find("[data-e2e=group-sheet-new]").getAttribute("href")).toBe("/groups/new")
+    expect(find(`${sheet} [data-e2e=shell-bell-overlay]`)).not.toBe(null)
+    expect(find(`${sheet} [data-e2e=shell-user-menu-button-overlay]`)).not.toBe(null)
+
+    await click("[data-e2e=group-sheet-g-2]")
+    expect(select.calls).toEqual([["g-2"]])
+    expect(find<HTMLDialogElement>(sheet).open).toBe(false)
+  })
+
+  it("makes every row of the phone's Account sheet at least 44 px tall", async () => {
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        unreadCount={0}
+        connection="closed"
+        groupPicker={{ groups, selectedId: "g-1", onSelect: () => {} }}
+      >
+        page
+      </AppFrame>,
+    )
+    const rows = [
+      "group-sheet-g-1",
+      "group-sheet-g-2",
+      "group-sheet-all",
+      "group-sheet-new",
+      "shell-ws-chip-overlay",
+      "shell-bell-overlay",
+    ]
+    for (const row of rows) {
+      expect({ row, tall: find(`[data-e2e=${row}]`).classList.contains("min-h-11") })
+        .toEqual({ row, tall: true })
+    }
   })
 })
 

@@ -1,5 +1,5 @@
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp, signIn, submitAuthForm } from "./fixtures/app.ts"
+import { gotoApp, openProfile, signIn, submitAuthForm } from "./fixtures/app.ts"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
@@ -39,25 +39,28 @@ test.describe("auth profile ws push flow", () => {
       await submitAuthForm(page, "/", page.locator("[data-e2e=shell-ws-status]"))
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
-      // The signed-in layout: the skip link is the first thing Tab reaches, and the navigation
-      // marks the page you are on as the current one.
+      // The signed-in layout: the skip link is the first thing Tab reaches. The profile is the
+      // home page and belongs to no navigation entry: it opens from the account menu.
       await page.keyboard.press("Tab")
       await expect(page.locator("[data-e2e=rail-shell-skip-link]")).toBeFocused()
       const nav = page.getByRole("navigation", { name: "Main navigation" })
-      await expect(nav.getByRole("link", { name: "Profile" })).toHaveAttribute(
-        "aria-current",
-        "page",
-      )
+      await expect(nav.locator("[aria-current=page]")).toHaveCount(0)
 
       // Nav links go through the router: a click keeps the page instead of reloading it, and a
-      // Ctrl-click (Cmd on macOS) is left to the browser, which opens the link in a new tab.
+      // Ctrl-click (Cmd on macOS) is left to the browser, which opens the link in a new tab. The
+      // entry of the page shown is marked as the current one.
       await page.evaluate(() => Object.assign(globalThis, { e2ePageMarker: true }))
-      await nav.getByRole("link", { name: "Profile" }).click()
-      await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
+      await nav.getByRole("link", { name: "Notes" }).click()
+      await expect(nav.getByRole("link", { name: "Notes" })).toHaveAttribute("aria-current", "page")
       expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
       const newTab = page.context().waitForEvent("page", { timeout: 5_000 })
-      await nav.getByRole("link", { name: "Profile" }).click({ modifiers: ["ControlOrMeta"] })
+      await nav.getByRole("link", { name: "Tags" }).click({ modifiers: ["ControlOrMeta"] })
       await (await newTab).close()
+
+      // Profile in the account menu goes through the router too.
+      await openProfile(page)
+      await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
+      expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
 
       await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
       await expect(page.getByRole("heading", { level: 2, name: "Push devices" })).toBeVisible()

@@ -51,22 +51,30 @@ screens were redesigned against these rules in October 2026.
    header instead.
 8. **Mobile first.** Design the 375 px layout first; touch targets at least 44 px; nothing scrolls
    sideways. The desktop layout is the same content with more room, not a different screen.
-9. **Status only when it matters.** "Online" in the header and "WS: open" on the profile are debug
-   output. Show the connection only when it is not live (offline, reconnecting). Keep the
-   `data-e2e="shell-ws-status"` element and its text for the e2e tests, visually hidden when online
-   (a screen-reader-only span is fine: `toHaveText` reads text content).
+9. **Status only when it matters.** "Online" in the sidebar and "WS: open" on the profile are debug
+   output. Show the connection only when it is not live (offline, reconnecting), as a chip at the
+   top of the sidebar's bottom zone. Keep the `data-e2e="shell-ws-status"` element and its text for
+   the e2e tests: one screen-reader-only live region, always present (`toHaveText` reads text
+   content).
 10. **Badges carry meaning.** A green "Selected" pill on the current group is noise; show the
     current group by the picker and by a quiet check mark, not a loud badge.
-11. **The header is the banner:** the brand (leading to Notes), the group switcher, then the bell
-    and the account menu on the right. It is passed through `RailShell`'s `header`, so it sits
-    outside `<main>` and the skip link jumps past it; it is never rendered inside `<main>`. The
-    group switcher is a button showing the current group that opens a short menu of checked items
-    (`DropdownItem checked`), not a text field. The account menu says who is signed in (name and
-    address), then Profile, Notifications, the theme (System, Light, Dark) and Sign out.
-12. **The rail holds the daily destinations,** at most five so the phone bar needs no "More": Notes,
-    Tags, Activity, Groups, Profile. Activity is the selected group's log and is left out when there
-    is no selected group or the person may not read its log. Notifications stay on the bell and in
-    the account menu.
+11. **The sidebar is the only chrome.** No header bar and no brand mark: a signed-in page starts with
+    its `PageHeader`. `AppFrame` and `AdminShell` use `RailShell`'s slots, a labelled sidebar from
+    `lg` and a 72 px icon rail from `md`, where every icon-only control has a tooltip with its name.
+    The top slot is the group switcher: a button showing the current group and the person's role
+    that opens a short menu of checked items (`DropdownItem checked`) ending with "All groups" and
+    "New group", not a text field. The bottom slot is the connection while it is not live,
+    "Notifications" with its unread count, and the library's `AccountMenu` (the name and address on
+    its button, then Profile, the theme and Sign out). The skip link jumps past the column into
+    `<main>`. The admin app tops its sidebar with the "Admin" badge and the product's name in muted
+    text, and its account menu holds the theme and Sign out.
+12. **The sidebar's middle holds the daily destinations,** at most four so the phone bar keeps its
+    last slot: Notes, Tags, Activity, Groups. Activity is the selected group's log and is left out
+    when there is no selected group or the person may not read its log. Profile lives in the
+    account menu only. On a phone the last tab is "Account": the avatar with the unread count,
+    opening a sheet with the groups, Notifications and the account menu, every row at least 44 px
+    tall. Because the switcher is in that sheet, a group-scoped page names its group as the
+    `PageHeader` subtitle.
 
 ## Spacing rhythm
 

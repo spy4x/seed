@@ -320,7 +320,7 @@ describe("first-steps tour", () => {
     expect(document.activeElement?.textContent?.trim()).toBe("Dismiss")
   })
 
-  it("walks the side navigation and the bell, in that order, and keeps the hooks the browser tests use", async () => {
+  it("walks the side navigation, Notifications and the account, in that order, on the hooks the browser tests use", async () => {
     await mount()
 
     expect(TOUR_STEPS.map((step) => step.id)).toEqual([
@@ -332,8 +332,8 @@ describe("first-steps tour", () => {
     expect(TOUR_STEPS.map((step) => step.target)).toEqual([
       `[data-e2e="rail-shell-rail"] a[href="/notes"]`,
       `[data-e2e="rail-shell-rail"] a[href="/groups"]`,
-      `[data-e2e="shell-bell"]`,
-      `[data-e2e="rail-shell-rail"] a[href="/"]`,
+      `[data-e2e="shell-bell"], [data-e2e="shell-bell-rail"]`,
+      `[data-e2e="shell-user-menu-button"], [data-e2e="shell-user-menu-button-rail"]`,
     ])
     expect(all("[data-e2e=onboarding-tour-start]").map((b) => b.textContent?.trim())).toEqual([
       "Take the tour",

@@ -1,6 +1,6 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp, signIn } from "./fixtures/app.ts"
+import { gotoApp, openProfile, signIn } from "./fixtures/app.ts"
 import { signUpInPage } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
@@ -47,8 +47,7 @@ const step = (page: Page, title: string) =>
 async function openHome(page: Page): Promise<void> {
   await nav(page).getByRole("link", { name: "Notes" }).click()
   await expect(page.getByRole("heading", { level: 1, name: "Notes", exact: true })).toBeVisible()
-  await nav(page).getByRole("link", { name: "Profile" }).click()
-  await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
+  await openProfile(page)
 }
 
 /** Presses Tab until the control named `name` has focus, as a keyboard user reaches it. */
@@ -95,7 +94,7 @@ test.describe("first steps", () => {
       await page.locator("[data-e2e=note-save]").click()
       await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
 
-      await nav(page).getByRole("link", { name: "Profile" }).click()
+      await openProfile(page)
       await expect(step(page, "Write your first note")).toContainText("Done:")
       await expect(step(page, "Invite someone to your group")).toContainText("To do:")
     } finally {

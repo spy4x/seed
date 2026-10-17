@@ -75,7 +75,7 @@ const open = (page: Page, path: string) =>
   gotoApp(page, path, page.locator("[data-e2e=shell-ws-status]"))
 
 /**
- * Picks a group from the header's switcher with the keyboard alone: Enter opens it on the first
+ * Picks a group from the sidebar's switcher with the keyboard alone: Enter opens it on the first
  * group, the arrow keys move to the one named, Enter chooses it.
  */
 async function pickWithKeyboard(page: Page, groupName: string): Promise<void> {

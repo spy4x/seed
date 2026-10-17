@@ -116,6 +116,16 @@ export async function signIn(page: Page, email: string, password: string): Promi
 }
 
 /**
+ * Opens the profile the way a person does on a wide window: from the account menu at the bottom of
+ * the sidebar, which goes through the app's router. Waits for the page's heading.
+ */
+export async function openProfile(page: Page): Promise<void> {
+  await page.locator("[data-e2e=shell-user-menu-button]").click()
+  await page.getByRole("menuitem", { name: "Profile" }).click()
+  await page.getByRole("heading", { level: 1, name: "Profile" }).waitFor()
+}
+
+/**
  * Chromium's switch that makes the Google Fonts hosts fail to resolve. The SPA's `index.html` loads
  * a stylesheet from fonts.googleapis.com, which holds back the app's scripts until it arrives, and
  * font files from fonts.gstatic.com, which hold back the page's `load` event. Over a slow internet
