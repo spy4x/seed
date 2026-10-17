@@ -22,6 +22,7 @@ import {
   createInvitationCreateHandler,
   type InvitationHandlerDependencies,
   type InvitationStore,
+  INVITE_NEEDS_PROVEN_EMAIL,
 } from "./invitations.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
@@ -95,6 +96,7 @@ function dependencies(
   const deps: InvitationHandlerDependencies = {
     invitations: store,
     ownerOf: () => Promise.resolve(null),
+    addressProven: () => Promise.resolve(true),
     planOf: () => Promise.resolve({ maxMembers: null, memberRoles: true }),
     seatPriced: () => Promise.resolve(false),
     mail: {
@@ -179,6 +181,41 @@ describe("invitation handlers", () => {
 
     await expect(create(command)).rejects.toThrow("without the entitlement gate")
     expect(calls.created).toEqual([])
+  })
+
+  it("refuses an invitation by link and by address until the creator's own address is proven", async () => {
+    const { store, calls } = fakeStore()
+    let proven = false
+    const asked: number[] = []
+    const { deps, sent } = dependencies(store, {
+      addressProven: (userId) => {
+        asked.push(userId)
+        return Promise.resolve(proven)
+      },
+    })
+    const create = createInvitationCreateHandler(deps)
+
+    for (
+      const command of [
+        createCommand(),
+        createCommand({ email: "friend@example.com", sendEmail: true }),
+      ]
+    ) {
+      const refused = await create(command).catch((error) => error)
+      expect(refused).toBeInstanceOf(InvitationError)
+      expect(refused.code).toBe("ADDRESS_NOT_PROVEN")
+      expect(refused.message).toBe(INVITE_NEEDS_PROVEN_EMAIL)
+    }
+    expect(asked).toEqual([7, 7])
+    expect(calls.created).toEqual([])
+    expect(sent).toEqual([])
+
+    proven = true
+    await create(createCommand())
+    await create(createCommand({ email: "friend@example.com", sendEmail: true }))
+
+    expect(calls.created.map((record) => record.email)).toEqual([null, "friend@example.com"])
+    expect(sent).toHaveLength(1)
   })
 
   it("refuses an address-bound accept from an account that did not prove the address", async () => {

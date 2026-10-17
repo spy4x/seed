@@ -311,6 +311,17 @@ person who linked their own provider before confirming their own address
 links it again after a reset. Since #142 a password sign-up can no longer squat an address: the
 account exists only once the code mailed to the address is entered.
 
+An account whose address is not proven cannot invite (#411): creating an invitation, by link or by
+address, is refused with `ADDRESS_NOT_PROVEN` (403) and "Verify your e-mail address on the E-mail
+page before you invite anyone.", which the SPA shows above the invitation form's buttons with a
+"Verify e-mail" button. The reset removes no members, so without this a squatter could let a second
+account of theirs into the first group and keep it there after the owner's reset. The reset that proves the address also revokes
+every pending invitation the account made, in every group (`revokeAllInvitationsOf`), so a link
+made before this rule existed lets nobody in afterwards. An account
+with no address (a username account from before #139) cannot invite either until it adds and
+proves one. The check is `hasProvenAddress` (`libs/server/auth/email-verification.ts`), asked by
+the create handler in `apps/api/features/groups/invitations.ts`.
+
 **Mail.** `libs/server/mail` picks the transport: with `ENV=dev` the console
 sender of `@spy4x/email` plus a copy in the `dev_mail` table, which the e2e
 specs read through `POST /api/test/last-mail` (reset links and codes alike); any other `ENV` uses SMTP when

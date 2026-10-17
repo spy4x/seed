@@ -155,6 +155,24 @@ describe("InvitationNewView", () => {
     expect(other).not.toContain(`id="invitation-seat-price-error"`)
   })
 
+  it("shows a refusal for the creator's unverified address above the buttons with a way to the E-mail page, not at the invitee's address", () => {
+    const message = "Verify your e-mail address on the E-mail page before you invite anyone."
+    invitationsStore.createError.value = { message, code: "ADDRESS_NOT_PROVEN", plan: null }
+
+    const html = renderInvite(GroupRole.OWNER)
+    const email = html.match(/<input[^>]*name="email"[^>]*>/)?.[0] ?? ""
+    const start = html.indexOf(`data-e2e="invitation-error"`)
+    const notice = start < 0 ? "" : html.slice(start, html.indexOf(`data-e2e="invitation-create"`))
+
+    expect(notice).toContain(message)
+    expect(notice).toContain(`href="/email"`)
+    expect(html.match(new RegExp(message, "g"))).toHaveLength(1)
+    expect(email).not.toBe("")
+    expect(email).not.toContain("aria-invalid")
+    // The form stays, so the person can still fill it in and send it once the address is verified.
+    expect(html).toContain(`data-e2e="invitation-create"`)
+  })
+
   it("shows a refusal for the price under the form while the group's billing is not read", () => {
     groupsStore.groups.value = [{ ...known, role: GroupRole.OWNER }]
     billingStore.reset()

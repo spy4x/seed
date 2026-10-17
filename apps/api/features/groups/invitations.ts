@@ -29,6 +29,10 @@ import { invitationMail, type MailBrand } from "@server/mail/mail.ts"
 import { sha256Hex } from "@spy4x/platform/tokens"
 import { GroupSelectedEvent } from "../../cqrs/events.ts"
 
+/** Why an account whose address is not proven may not invite; the SPA shows it under the form. */
+export const INVITE_NEEDS_PROVEN_EMAIL =
+  "Verify your e-mail address on the E-mail page before you invite anyone."
+
 /** The path of an invitation's page in both apps. */
 export function invitationPath(token: string): string {
   return `/invite/${token}`
@@ -75,6 +79,8 @@ export interface InvitationHandlerDependencies {
   invitations: InvitationStore
   /** The user who proved `email`, or `null`: `provenAddressOwner`. */
   ownerOf(email: string): Promise<number | null>
+  /** Whether the user's own address is proven: `hasProvenAddress`. */
+  addressProven(userId: number): Promise<boolean>
   /**
    * What the group's plan allows an invitation now, read as the entitlement gate reads it: no cap
    * and every role while billing is off.
@@ -99,13 +105,16 @@ const ROLE_NAMES: Record<GroupRole, string> = {
 
 /**
  * Creates an invitation and, when asked, mails its link. The token is made here and handed back
- * once; the store keeps only its hash. Who may invite with which role, whether the plan allows
- * that role, and the group's member cap are checked by the store on locked rows. A mail that is
- * not sent leaves the invitation in place: the answer says `mailSent: false` and the creator
- * copies the link instead.
+ * once; the store keeps only its hash. Only an account whose own address is proven may invite, by
+ * link or by address (#411): whoever signed up first with somebody else's address could otherwise
+ * let a second account of theirs in, and keep it in the group after the owner takes the account
+ * back with a password reset. Who may invite with which role, whether the plan allows that role,
+ * and the group's member cap are checked by the store on locked rows. A mail that is not sent
+ * leaves the invitation in place: the answer says `mailSent: false` and the creator copies the
+ * link instead.
  */
 export function createInvitationCreateHandler(
-  { invitations, planOf, seatPriced, mail }: InvitationHandlerDependencies,
+  { invitations, addressProven, planOf, seatPriced, mail }: InvitationHandlerDependencies,
 ): CommandHandler<GroupInvitationCreateCommand> {
   return async (command) => {
     const { data, allowance } = command
@@ -118,6 +127,9 @@ export function createInvitationCreateHandler(
     const email = data.email === null ? null : normalizeEmail(data.email)
     if (data.email !== null && email === null) {
       throw new GroupError("INVALID_REQUEST", "The e-mail address is invalid")
+    }
+    if (!(await addressProven(data.actor.userId))) {
+      throw new InvitationError("ADDRESS_NOT_PROVEN", INVITE_NEEDS_PROVEN_EMAIL)
     }
     // Each person who joins adds a seat to the bill, so the creator confirms the price first.
     if (!data.acceptSeatPrice && await seatPriced(data.groupId, data.actor.userId)) {

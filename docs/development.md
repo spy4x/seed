@@ -38,7 +38,8 @@ To add a demo user who signs in as `demo@example.com` and owns the group `Demo t
 `ENV=dev deno task db:seed` with the same values plus `AUTH_PEPPER` (the API's) and `SEED_PASSWORD`
 (the demo user's password, 8 to 50 characters). It runs only with `ENV=dev`. The demo user is an
 administrator, so they can also sign in to the [admin app](apps.md#the-admin-app). Run again, it finds
-the user, makes them an administrator again if their role changed, and changes nothing else; when
+the user, makes them an administrator again if their role changed, marks their address proven if
+it is not yet (an account with an unproven address cannot invite), and changes nothing else; when
 it cannot create the user, it says so and exits with 1.
 
 ## Tasks

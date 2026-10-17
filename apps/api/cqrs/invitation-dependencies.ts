@@ -1,5 +1,5 @@
 import { entitlementsOf, UNLIMITED } from "@domain/billing"
-import { provenAddressOwner } from "@server/auth/email-verification.ts"
+import { hasProvenAddress, provenAddressOwner } from "@server/auth/email-verification.ts"
 import { createMailSender, readMailSetup } from "@server/mail/mail.ts"
 import { PostgresInvitationRepository } from "@server/groups/postgres-invitation-repository.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
@@ -29,6 +29,7 @@ const planOf = createPlanOf(db.billing, billingSetup)
 export const invitationDependencies: InvitationHandlerDependencies = {
   invitations: new PostgresInvitationRepository(sql),
   ownerOf: (email) => provenAddressOwner(db.authStore, email),
+  addressProven: (userId) => hasProvenAddress(db.authStore, userId),
   planOf: async (groupId) => {
     const { limits, features } = billingSetup.provider === null
       ? UNLIMITED

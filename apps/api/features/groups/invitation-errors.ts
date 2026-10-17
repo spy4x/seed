@@ -5,6 +5,7 @@ import type { APIContext } from "../../_types.ts"
 import { groupErrorResponse } from "./errors.ts"
 
 const INVITATION_STATUSES: Record<InvitationErrorCode, ContentfulStatusCode> = {
+  ADDRESS_NOT_PROVEN: 403,
   ALREADY_MEMBER: 409,
   INVITATION_ALREADY_USED: 409,
   INVITATION_EXPIRED: 410,

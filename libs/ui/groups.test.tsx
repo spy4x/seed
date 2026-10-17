@@ -1111,6 +1111,25 @@ describe("InviteForm", () => {
     expect(root!.textContent).not.toContain("Full.")
   })
 
+  it("shows a refusal for the creator's unverified address as a focused notice that leads to the E-mail page", async () => {
+    const message = "Verify your e-mail address on the E-mail page before you invite anyone."
+    const went: string[] = []
+    await mount(<InviteForm {...defaults} navigate={(to) => went.push(to)} />)
+    await rerender(
+      <InviteForm {...defaults} navigate={(to) => went.push(to)} addressRefusal={message} />,
+    )
+    expect(focused()).toBe("invitation-error")
+    expect(find("[data-e2e=invitation-error]").textContent).toContain(message)
+    expect(find("[data-e2e=invitation-verify-email]").textContent).toBe("Verify e-mail")
+    // A phone-sized touch target, as tall as the form's own controls.
+    expect(find("[data-e2e=invitation-verify-email]").classList.contains("min-h-11")).toBe(true)
+    // The address field is not blamed, and the form stays to send once the address is verified.
+    expect(find("[data-e2e=invitation-email]").getAttribute("aria-invalid")).toBe(null)
+    expect(has("[data-e2e=invitation-create]")).toBe(true)
+    await click("[data-e2e=invitation-verify-email]")
+    expect(went).toEqual([SCREEN_PATHS.email])
+  })
+
   it("shows the created link in place of the form, its copy button focused, and calls onDone on Done", async () => {
     const done = spy<[]>()
     await mount(<InviteForm {...defaults} onDone={done.fn} />)

@@ -52,6 +52,9 @@ export function InvitationNewView({ groupId }: { groupId: string }) {
   // the confirmation is on screen; until the billing is read, it shows under the form.
   const seatRefused = !!billing?.seatPrice &&
     createFailure?.code === ("SEAT_PRICE_NOT_ACCEPTED" satisfies InvitationErrorCode)
+  // The creator's own address is not verified: no field of the form can fix that, so the message
+  // stands above the buttons, with the way to the E-mail page, rather than at the invitee's address.
+  const unproven = createFailure?.code === ("ADDRESS_NOT_PROVEN" satisfies InvitationErrorCode)
   const created = invites.created.value
   const draft = invites.draft.value
   // The role is left out: the form itself moves it to the first one the plan allows.
@@ -76,7 +79,8 @@ export function InvitationNewView({ groupId }: { groupId: string }) {
         draft={draft}
         onDraftChange={(next) => (invites.draft.value = next)}
         creating={invites.creating.value}
-        createError={createFailure?.plan || seatRefused ? null : createFailure?.message}
+        createError={createFailure?.plan || seatRefused || unproven ? null : createFailure?.message}
+        addressRefusal={unproven ? createFailure.message : null}
         createRefusal={createFailure?.plan ?? null}
         onCreate={() => {
           setRefusedOffline(offline)

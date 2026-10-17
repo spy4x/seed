@@ -1108,6 +1108,9 @@ export function createSignIn(options: SignInOptions): SignIn {
           for (const other of await tx.authStore.listKeys(user.id)) {
             if (other.id !== key.id) await tx.authStore.deleteKey(user.id, other.id)
           }
+          // An invitation made before the address was proven is a way in for whoever made it
+          // (#411): a second account of theirs could still join through the link after this reset.
+          await tx.invitationRevocation.allOf(user.id)
         }
         await tx.authStore.updateKeySecret(key.id, secret)
         // The mailbox owner is back in control: an address change someone else asked for goes.

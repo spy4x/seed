@@ -161,6 +161,27 @@ Deno.test("seed run again reports that the user exists and writes no other row",
   })
 })
 
+/** When the key that names `address` (the demo user's only key) was proven, or `null`. */
+async function provenAt(sql: postgres.Sql, address: string): Promise<Date | null> {
+  const [row] = await sql<{ provenAt: Date | null }[]>`
+    SELECT proven_at FROM auth_keys WHERE email = ${address}
+  `
+  return row?.provenAt ?? null
+}
+
+Deno.test("seed proves the demo user's address, and proves it again on a rerun", async () => {
+  await withSchema(async (sql) => {
+    const db = new AppDbBase({ sql })
+    await seed(db, { pepper: PEPPER, password: PASSWORD })
+    expect(await provenAt(sql, DEMO_EMAIL)).not.toBeNull()
+
+    // A demo user seeded before the address was proven by the seed.
+    await sql`UPDATE auth_keys SET proven_at = NULL WHERE email = ${DEMO_EMAIL}`
+    expect(await seed(db, { pepper: PEPPER, password: PASSWORD })).toBe(false)
+    expect(await provenAt(sql, DEMO_EMAIL)).not.toBeNull()
+  })
+})
+
 Deno.test("seed fails when sign-up refuses a user that does not exist", async () => {
   await withSchema(async (sql) => {
     const db = new AppDbBase({ sql })

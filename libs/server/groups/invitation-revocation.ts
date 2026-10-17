@@ -55,3 +55,32 @@ export async function revokeInvitationsOf(
   }
   return revoked.length
 }
+
+/**
+ * Revokes every pending invitation `creatorId` made, in every group: the password reset that takes
+ * a squatted account back calls it (#411), so a link the squatter made lets nobody in afterwards.
+ * Runs in the caller's transaction, with one audit row per revoked invitation, the creator as its
+ * actor; answers how many it revoked.
+ */
+export async function revokeAllInvitationsOf(tx: postgres.Sql, creatorId: number): Promise<number> {
+  const revoked = await tx<{ id: string; groupId: string }[]>`
+    UPDATE group_invitations
+    SET revoked_at = CURRENT_TIMESTAMP
+    WHERE created_by_user_id = ${creatorId}
+      AND revoked_at IS NULL
+      AND declined_at IS NULL
+      AND uses < max_uses
+      AND expires_at > CURRENT_TIMESTAMP
+    RETURNING id, group_id
+  `
+  for (const { id, groupId } of revoked) {
+    await writeAuditEvent(tx, {
+      eventKind: INVITATION_EVENTS.revoked,
+      actorId: creatorId,
+      groupId,
+      entityType: "invitation",
+      entityId: id,
+    })
+  }
+  return revoked.length
+}

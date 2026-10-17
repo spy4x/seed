@@ -13,6 +13,7 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input, Select } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
+import { Notice } from "@spy4x/preact-ui/notice"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { SettingGroup } from "@spy4x/preact-ui/setting-row"
 import type { PlanRefusal } from "@domain/billing"
@@ -95,6 +96,11 @@ export interface InviteFormProps {
   createRefusal?: PlanRefusal | null
   /** Why the create did not start, when no field owns it (offline): shown above the buttons. */
   formError?: string | null
+  /**
+   * The create was refused because the creator's own address is not verified: the message, shown
+   * above the buttons as a notice with a way to the E-mail page.
+   */
+  addressRefusal?: string | null
   /** Creates an invitation from the draft. */
   onCreate?: () => void
   /**
@@ -126,6 +132,7 @@ export function InviteForm(
     createError = null,
     createRefusal = null,
     formError = null,
+    addressRefusal = null,
     onCreate,
     seatPrice,
     created = null,
@@ -256,6 +263,7 @@ export function InviteForm(
         {createRefusal && (
           <PlanRefusalNotice groupId={groupId} refusal={createRefusal} navigate={navigate} />
         )}
+        {addressRefusal && <AddressRefusalNotice message={addressRefusal} navigate={navigate} />}
         <ErrorState focusOnAppear message={formError} dataE2E="invitation-error" />
         {
           // On a phone the primary button is on top at full width, Cancel under it; from `sm` up
@@ -697,6 +705,38 @@ export function MyInvitationsSection(
         </ul>
       </Card>
     </SettingGroup>
+  )
+}
+
+/**
+ * A create refused because the creator's own address is not verified: the API's sentence and the
+ * way to the E-mail page. It takes focus when it appears, as `PlanRefusalNotice` does.
+ */
+function AddressRefusalNotice(
+  { message, navigate }: { message: string; navigate?: Navigate },
+): JSX.Element {
+  const box = useRef<HTMLDivElement>(null)
+  useEffect(() => box.current?.focus(), [message])
+  return (
+    <div ref={box} tabIndex={-1} data-e2e="invitation-error">
+      <Notice
+        tone="danger"
+        urgent
+        action={
+          <Button
+            href={SCREEN_PATHS.email}
+            navigate={navigate}
+            size="sm"
+            class="min-h-11 sm:min-h-9"
+            data-e2e="invitation-verify-email"
+          >
+            Verify e-mail
+          </Button>
+        }
+      >
+        {message}
+      </Notice>
+    </div>
   )
 }
 

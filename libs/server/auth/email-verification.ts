@@ -92,16 +92,32 @@ export async function readEmailStatus(
   store: AuthStore,
   userId: number,
 ): Promise<EmailStatus> {
-  const keys = await store.listKeys(userId)
-  const held = (candidate: AuthKey) => candidate.email !== null && candidate.provenAt !== null
-  const key = keys.find((candidate) => candidate.method === PASSWORD_METHOD) ??
-    keys.find((candidate) => candidate.method === EMAIL_CODE_METHOD && held(candidate)) ??
-    keys.find(held)
+  const key = addressKeyOf(await store.listKeys(userId))
   return {
     email: key?.email ?? null,
-    proven: key?.email != null && key.provenAt !== null,
+    proven: isProven(key),
     pending: await changes.find(userId),
   }
+}
+
+/**
+ * Whether the address the user signs in with is proven: `readEmailStatus`'s `proven`, without the
+ * pending change. An account with no address at all (a username account made before #139) is not.
+ */
+export async function hasProvenAddress(store: AuthStore, userId: number): Promise<boolean> {
+  return isProven(addressKeyOf(await store.listKeys(userId)))
+}
+
+/** The key that holds the user's address, in the order `readEmailStatus` describes. */
+function addressKeyOf(keys: AuthKey[]): AuthKey | undefined {
+  const held = (candidate: AuthKey) => candidate.email !== null && candidate.provenAt !== null
+  return keys.find((candidate) => candidate.method === PASSWORD_METHOD) ??
+    keys.find((candidate) => candidate.method === EMAIL_CODE_METHOD && held(candidate)) ??
+    keys.find(held)
+}
+
+function isProven(key: AuthKey | undefined): boolean {
+  return key?.email != null && key.provenAt !== null
 }
 
 /**

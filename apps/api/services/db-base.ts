@@ -20,6 +20,7 @@ import { PostgresGroupRepository } from "@server/groups/postgres-group-repositor
 import { PostgresNotificationRepository } from "@server/notifications/postgres-notification-repository.ts"
 import { PostgresGroupActivityRepository } from "@server/groups/postgres-activity-repository.ts"
 import { PostgresGroupDataMover } from "@server/groups/postgres-group-data-mover.ts"
+import { revokeAllInvitationsOf } from "@server/groups/invitation-revocation.ts"
 import type { MovableAggregate } from "@server/groups/movable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
 import { tagMovable } from "@server/tags/tag-movable.ts"
@@ -153,6 +154,14 @@ export class AppDbBase extends DbServiceBase {
    */
   get group(): PostgresGroupRepository {
     return new PostgresGroupRepository(this.sql)
+  }
+
+  /** Revokes every pending invitation a person made (#411). Built per access, like `group`. */
+  get invitationRevocation() {
+    const sql = this.sql
+    return {
+      allOf: (creatorId: number): Promise<number> => revokeAllInvitationsOf(sql, creatorId),
+    }
   }
 
   /** The read side of a group's activity log. Built per access, like `group`. */
