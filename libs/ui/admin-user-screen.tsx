@@ -4,7 +4,10 @@ import { timeAgo } from "@spy4x/platform/universal/time"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
+import { Card } from "@spy4x/preact-ui/card"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
+import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
@@ -120,49 +123,54 @@ export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.USERS_EXPORTED]: "Exported the user list",
 }
 
-/** Each action's dialog: its title, what it does, and its button. */
-const ACTIONS: Record<AdminAction, { title: string; text: string; submit: string; busy: string }> =
-  {
-    block: {
-      title: "Block this user",
-      text:
-        "Every session of theirs ends at once and every way in is refused: password, Google, GitHub and API tokens. Their data stays. You can unblock them later.",
-      submit: "Block",
-      busy: "Blocking…",
-    },
-    unblock: {
-      title: "Unblock this user",
-      text: "They can sign in again, and their API tokens work again.",
-      submit: "Unblock",
-      busy: "Unblocking…",
-    },
-    "end-sessions": {
-      title: "End all sessions",
-      text: "Every device of theirs is signed out at once. They can sign in again.",
-      submit: "End all sessions",
-      busy: "Ending…",
-    },
-    "end-session": {
-      title: "End this session",
-      text: "This one device is signed out at once. Their other devices stay signed in.",
-      submit: "End session",
-      busy: "Ending…",
-    },
-    "change-role": {
-      title: "Change role",
-      text:
-        "The new role applies to their next request. You can give a role below your own; an administrator is made with the user:role script.",
-      submit: "Change role",
-      busy: "Changing…",
-    },
-    "password-reset": {
-      title: "Send a password-reset link",
-      text:
-        'They get the same mail as from "Forgot password": a link to choose a new password. Their current password keeps working until they do.',
-      submit: "Send link",
-      busy: "Sending…",
-    },
-  }
+/**
+ * Each action's dialog: its title, which names the person, what it does, and its button. Every
+ * dialog but "change-role" only confirms, so it is a `ConfirmDialog` (ui-layout rule 4).
+ */
+const ACTIONS: Record<
+  AdminAction,
+  { title: (name: string) => string; text: string; submit: string; busy: string }
+> = {
+  block: {
+    title: (name) => `Block ${name}`,
+    text:
+      "Every session of theirs ends at once and every way in is refused: password, Google, GitHub and API tokens. Their data stays. You can unblock them later.",
+    submit: "Block",
+    busy: "Blocking…",
+  },
+  unblock: {
+    title: (name) => `Unblock ${name}`,
+    text: "They can sign in again, and their API tokens work again.",
+    submit: "Unblock",
+    busy: "Unblocking…",
+  },
+  "end-sessions": {
+    title: (name) => `End all sessions of ${name}`,
+    text: "Every device of theirs is signed out at once. They can sign in again.",
+    submit: "End all sessions",
+    busy: "Ending…",
+  },
+  "end-session": {
+    title: (name) => `End a session of ${name}`,
+    text: "This one device is signed out at once. Their other devices stay signed in.",
+    submit: "End session",
+    busy: "Ending…",
+  },
+  "change-role": {
+    title: (name) => `Change the role of ${name}`,
+    text:
+      "The new role applies to their next request. You can give a role below your own; an administrator is made with the user:role script.",
+    submit: "Change role",
+    busy: "Changing…",
+  },
+  "password-reset": {
+    title: (name) => `Send ${name} a password-reset link`,
+    text:
+      'They get the same mail as from "Forgot password": a link to choose a new password. Their current password keeps working until they do.',
+    submit: "Send link",
+    busy: "Sending…",
+  },
+}
 
 /** The actions that change nothing the person could lose: their dialog is not red. */
 const CALM_ACTIONS: readonly AdminAction[] = ["unblock", "change-role", "password-reset"]
@@ -373,11 +381,10 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
             <time dateTime={user.blockedAt}>{timeAgo(user.blockedAt)}</time>. They cannot sign in.
           </Notice>
         )}
-        {!actOn && (
+        {/* The operator's own page says nothing about it: the "You" badge already does (rule 3). */}
+        {!actOn && operator.id !== user.id && (
           <p class="text-sm text-muted" data-e2e="admin-user-no-actions">
-            {operator.id === user.id
-              ? "This is your own account. Operators cannot act on themselves here."
-              : "Their role is yours or higher, so you cannot act on this account."}
+            Their role is yours or higher, so you cannot act on this account.
           </p>
         )}
       </div>
@@ -585,18 +592,16 @@ function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
 
 const ROW = "flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3"
 
-/** A list in the page's bordered style, or one quiet line when it is empty. */
+/** A list in the page's bordered style, or a card with one quiet line when it is empty. */
 function Rows(
   { empty, dataE2E, children }: { empty: string; dataE2E: string; children: JSX.Element[] },
 ): JSX.Element {
   if (children.length === 0) {
     return (
-      <p
-        class="rounded-lg border border-dashed border-subtle px-4 py-6 text-center text-sm text-muted"
-        data-e2e={dataE2E}
-      >
-        {empty}
-      </p>
+      // The list's card with one quiet line in its body's place: no dashed box inside the page.
+      <Card data-e2e={dataE2E}>
+        <EmptyState inset description={empty} />
+      </Card>
     )
   }
   return (
@@ -618,7 +623,10 @@ function methodName(method: string): string {
   return method
 }
 
-/** The dialog of one action: what it does, why the API refused it, and its button. */
+/**
+ * The dialog of one action: what it does to whom, why the API refused it, and its button. A
+ * confirm-only action is a `ConfirmDialog`; changing the role needs a choice, so it is a form.
+ */
 function ActionDialog(
   { action, detail, address, operator, sessionId, actionError, pending, onAction, onCloseDialog }: {
     action: AdminAction
@@ -636,26 +644,30 @@ function ActionDialog(
 ): JSX.Element {
   const copy = ACTIONS[action]
   const calm = CALM_ACTIONS.includes(action)
+  const title = copy.title(adminUserName(detail.user))
   const roles = adminGrantableRoles(operator.role)
   // The person's own role is picked first, so the button changes nothing until another is picked.
   const [role, setRole] = useState<UserRole>(detail.user.role)
   const session = detail.sessions.find((one) => one.id === sessionId)
-  const input: AdminActionInput | undefined = action === "change-role"
-    ? { role }
-    : action === "end-session" && sessionId !== null
-    ? { sessionId }
-    : undefined
-  const unchanged = action === "change-role" && role === detail.user.role
-  return (
-    <Modal
-      open
-      onClose={onCloseDialog}
-      title={copy.title}
-      cancelLabel="Close"
-      tone={calm ? undefined : "danger"}
-      dataE2E="admin-action-dialog"
-    >
-      <ScreenForm pending={pending} onSubmit={() => onAction(action, input)}>
+
+  if (action !== "change-role") {
+    const input = action === "end-session" && sessionId !== null ? { sessionId } : undefined
+    return (
+      <ConfirmDialog
+        title={title}
+        tone={calm ? "default" : "danger"}
+        confirmLabel={copy.submit}
+        busy={pending}
+        busyLabel={copy.busy}
+        onConfirm={() => {
+          onAction(action, input)
+          // The app closes the dialog once the API answers; a refusal keeps it open with its error.
+          return false
+        }}
+        onCancel={onCloseDialog}
+        dataE2E="admin-action-dialog"
+        confirmDataE2E="admin-action-submit"
+      >
         <Stack>
           <p class="text-sm text-muted">{copy.text}</p>
           {action === "end-session" && session && (
@@ -671,25 +683,41 @@ function ActionDialog(
               Sent to <span class="font-medium wrap-anywhere">{address}</span>
             </p>
           )}
-          {action === "change-role" && (
-            <RadioGroup
-              legend="Role"
-              name="role"
-              data-e2e="admin-role-picker"
-              options={roles.map((one) => ({
-                value: String(one),
-                label: one === detail.user.role ? `${roleLabel(one)} (now)` : roleLabel(one),
-              }))}
-              value={String(role)}
-              onChange={(value) => setRole(Number(value) as UserRole)}
-            />
-          )}
+          <ErrorState message={actionError} />
+        </Stack>
+      </ConfirmDialog>
+    )
+  }
+
+  const unchanged = role === detail.user.role
+  return (
+    <Modal
+      open
+      onClose={onCloseDialog}
+      title={title}
+      cancelLabel="Close"
+      dataE2E="admin-action-dialog"
+    >
+      <ScreenForm pending={pending} onSubmit={() => onAction(action, { role })}>
+        <Stack>
+          <p class="text-sm text-muted">{copy.text}</p>
+          <RadioGroup
+            legend="Role"
+            name="role"
+            data-e2e="admin-role-picker"
+            options={roles.map((one) => ({
+              value: String(one),
+              label: one === detail.user.role ? `${roleLabel(one)} (now)` : roleLabel(one),
+            }))}
+            value={String(role)}
+            onChange={(value) => setRole(Number(value) as UserRole)}
+          />
           <ErrorState message={actionError} />
           <Cluster justify="end">
             <Button type="button" variant="ghost" onClick={onCloseDialog}>Cancel</Button>
             <Button
               type="submit"
-              variant={calm ? "primary" : "danger"}
+              variant="primary"
               data-e2e="admin-action-submit"
               disabled={unchanged}
               busy={pending}

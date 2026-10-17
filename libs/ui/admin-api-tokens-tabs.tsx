@@ -1,4 +1,5 @@
 import type { JSX } from "preact"
+import { useRef } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { DataTable } from "@spy4x/preact-ui/data-table"
@@ -16,7 +17,23 @@ import {
   PANEL_ROW,
   PanelRows,
   tokenColumns,
+  tokenTableClass,
+  useFocusAfterConfirm,
 } from "./admin-api-tokens-screen.tsx"
+
+/**
+ * A panel's count, as a heading that takes focus after a confirmed revoke or removal, so focus
+ * does not fall to the page's body when the row's button is gone.
+ */
+function PanelCount(
+  props: { count: string; headingRef: { current: HTMLHeadingElement | null }; dataE2E: string },
+): JSX.Element {
+  return (
+    <h2 ref={props.headingRef} tabIndex={-1} class="text-sm text-muted" data-e2e={props.dataE2E}>
+      {props.count}
+    </h2>
+  )
+}
 
 /** What each notification kind is called; a kind this page does not know shows as stored. */
 const KIND_LABELS: Record<string, string> = {
@@ -69,16 +86,24 @@ interface ActionPanelProps {
 export function AdminPersonTokensPanel(
   props: PanelLoad<AdminApiToken[]> & ActionPanelProps,
 ): JSX.Element {
+  const heading = useRef<HTMLHeadingElement>(null)
+  useFocusAfterConfirm(props.confirm, heading)
   const waiting = loadingOrError(props, "Loading API tokens")
   if (waiting) return waiting
   const tokens = props.data!
   return (
     <Stack>
+      <PanelCount
+        headingRef={heading}
+        dataE2E="admin-person-api-tokens-count"
+        count={`${tokens.length} ${tokens.length === 1 ? "token" : "tokens"}`}
+      />
       {tokens.length === 0
         ? <PanelRows empty="No API tokens." dataE2E="admin-person-api-tokens">{[]}</PanelRows>
         : (
           <div data-e2e="admin-person-api-tokens">
             <DataTable
+              class={tokenTableClass(false)}
               columns={tokenColumns({ ...props, withOwner: false })}
               rows={tokens}
               sort={[]}
@@ -105,13 +130,21 @@ export function AdminPersonTokensPanel(
 export function AdminPersonDevicesPanel(
   props: PanelLoad<AdminPushDevice[]> & ActionPanelProps,
 ): JSX.Element {
+  const heading = useRef<HTMLHeadingElement>(null)
+  useFocusAfterConfirm(props.confirm, heading)
   const waiting = loadingOrError(props, "Loading devices")
   if (waiting) return waiting
   const own = props.userId === props.operatorId
+  const devices = props.data!
   return (
     <Stack>
+      <PanelCount
+        headingRef={heading}
+        dataE2E="admin-person-devices-count"
+        count={`${devices.length} ${devices.length === 1 ? "device" : "devices"}`}
+      />
       <PanelRows empty="No device gets push notifications." dataE2E="admin-person-devices">
-        {props.data!.map((device) => (
+        {devices.map((device) => (
           <li key={device.id} class={PANEL_ROW} data-e2e={`admin-person-device-${device.id}`}>
             <span class="font-medium">Device {device.label}</span>
             <span class="text-sm text-muted">

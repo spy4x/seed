@@ -192,7 +192,17 @@ function SystemBody(
             {cache.reachable ? `Yes, in ${cache.latencyMs} ms` : "No answer"}
           </Fact>
         </StatusCard>
-        <StatusCard title="Job queue" health={queue.health} dataE2E="admin-system-queue">
+        <StatusCard
+          title="Job queue"
+          health={queue.health}
+          dataE2E="admin-system-queue"
+          hint={
+            <>
+              Warns when a job waits more than {ADMIN_QUEUE_LATE_WARNING_MINUTES}{" "}
+              minutes or any job failed.
+            </>
+          }
+        >
           <Fact label="Due now">
             {NUMBER.format(queue.due)}
             {queue.oldestDueAt && (
@@ -207,19 +217,21 @@ function SystemBody(
           <Fact label={`Failed, last ${ADMIN_FAILED_JOBS_DAYS} days`}>
             {NUMBER.format(queue.failed)}
           </Fact>
-          <p class="text-xs text-muted">
-            Warns when a job waits more than {ADMIN_QUEUE_LATE_WARNING_MINUTES}{" "}
-            minutes or any job failed.
-          </p>
         </StatusCard>
-        <StatusCard title="Backup" health={backup.health} dataE2E="admin-system-backup">
+        <StatusCard
+          title="Backup"
+          health={backup.health}
+          dataE2E="admin-system-backup"
+          hint={
+            <>
+              Warns after {ADMIN_BACKUP_WARNING_HOURS} hours without one, and is an error after{" "}
+              {ADMIN_BACKUP_ERROR_HOURS}.
+            </>
+          }
+        >
           <Fact label="Last success">
             {backup.succeededAt ? <When at={backup.succeededAt} /> : "None recorded"}
           </Fact>
-          <p class="text-xs text-muted">
-            Warns after {ADMIN_BACKUP_WARNING_HOURS} hours without one, and is an error after{" "}
-            {ADMIN_BACKUP_ERROR_HOURS}.
-          </p>
         </StatusCard>
         <StatusCard title="Migrations" health={migrations.health} dataE2E="admin-system-migrations">
           <Fact label="Applied">{NUMBER.format(migrations.applied)}</Fact>
@@ -249,12 +261,17 @@ function SystemBody(
   )
 }
 
-/** One part of the stack: its name, its state as a badge, and its facts. */
+/**
+ * One part of the stack: its name, its state as a badge, its facts, and a hint on when it warns.
+ * The hint goes after the facts' `<dl>`, never inside it: a `<dl>` holds only `dt` and `dd` groups.
+ */
 function StatusCard(
-  { title, health, dataE2E, children }: {
+  { title, health, dataE2E, hint, children }: {
     title: string
     health?: AdminHealth
     dataE2E: string
+    /** One quiet line under the facts, such as when the card warns. */
+    hint?: ComponentChildren
     children: ComponentChildren
   },
 ): JSX.Element {
@@ -265,8 +282,9 @@ function StatusCard(
         headingLevel={2}
         action={health === undefined ? undefined : <HealthBadge health={health} />}
       />
-      <CardBody>
+      <CardBody class="flex flex-col gap-3">
         <dl class="flex flex-col gap-2">{children}</dl>
+        {hint && <p class="text-xs text-muted">{hint}</p>}
       </CardBody>
     </Card>
   )
@@ -323,12 +341,14 @@ function JobsCard({ jobs }: { jobs: readonly AdminSystemJobKind[] }): JSX.Elemen
         <DataTable
           columns={columns}
           rows={jobs}
+          // No 300 px blank under a short table or its empty state.
+          class="[&>div:first-child]:min-h-0"
           sort={[]}
           onSortChange={() => {}}
           caption="Each job's last and next run"
           captionHidden
           rowKey={(job) => job.kind}
-          empty={<EmptyState title="No job has run yet" />}
+          empty={<EmptyState inset title="No job has run yet" />}
         />
       </CardBody>
     </Card>
@@ -402,13 +422,19 @@ function FailedJobsCard(
         <DataTable
           columns={columns}
           rows={jobs}
+          // No 300 px blank under a short table or its empty state.
+          class="[&>div:first-child]:min-h-0"
           sort={[]}
           onSortChange={() => {}}
           caption="Jobs that gave up"
           captionHidden
           rowKey={(job) => job.id}
           empty={
-            <EmptyState title="No job failed" description="Every job finished or is waiting." />
+            <EmptyState
+              inset
+              title="No job failed"
+              description="Every job finished or is waiting."
+            />
           }
         />
       </CardBody>

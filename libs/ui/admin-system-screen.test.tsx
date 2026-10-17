@@ -228,4 +228,20 @@ describe("system screen", () => {
 
     expect(find("[data-e2e=admin-system-failed]").textContent).toContain("No job failed")
   })
+
+  it("keeps each part's hint after its list of facts, never inside it", async () => {
+    await mount(<AdminSystemScreen {...props([])} />)
+
+    expect(document.querySelectorAll("dl p")).toHaveLength(0)
+    const hints = [...document.querySelectorAll("dl + p")].map((hint) => hint.textContent)
+    expect(hints).toHaveLength(2)
+  })
+
+  it("draws an empty table without a dashed box", async () => {
+    await mount(
+      <AdminSystemScreen {...props([], { snapshot: { ...snapshot, failedJobs: [] } })} />,
+    )
+
+    expect(document.querySelector(".border-dashed") === null).toBe(true)
+  })
 })

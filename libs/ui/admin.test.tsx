@@ -279,7 +279,7 @@ describe("the admin user list", () => {
     expect(focused()).toBe("admin-users-search")
   })
 
-  it("says so when nobody matches", async () => {
+  it("says so when nobody matches, without a dashed box", async () => {
     await mount(
       <AdminUsersScreen
         {...listProps([], { list: { users: [], total: 0, page: 1, pageSize: 25 } })}
@@ -287,6 +287,20 @@ describe("the admin user list", () => {
     )
     expect(find("[data-e2e=admin-users-list]").textContent).toContain("Nobody matches")
     expect(has("[data-e2e^=admin-user-4]")).toBe(false)
+    expect(has(".border-dashed")).toBe(false)
+  })
+
+  it("keeps each chip row on one line that scrolls sideways on a phone, and caps the search", async () => {
+    await mount(<AdminUsersScreen {...listProps([])} />)
+
+    for (const row of ["[data-e2e=admin-users-blocked]", "[data-e2e=admin-users-role]"]) {
+      expect(find(row).className).toContain("overflow-x-auto")
+      expect(find(row).className).toContain("sm:flex-wrap")
+      expect(find(`${row} [role=group]`).className).toContain("flex-nowrap")
+    }
+    expect(find("[data-e2e=admin-users-search]").closest(".basis-60")?.className).toContain(
+      "sm:max-w-md",
+    )
   })
 
   it("shows a loading state until the list comes, and the API's message when it fails", async () => {
@@ -419,6 +433,19 @@ describe("one person in the admin app", () => {
     expect(entry.textContent).toContain("operator:7 · from 203.0.113.9")
   })
 
+  it("says so on an empty tab, without a dashed box", async () => {
+    await mount(
+      <AdminUserScreen
+        {...userProps([], { tab: "sessions", detail: { ...detail, sessions: [] } })}
+      />,
+    )
+
+    expect(find("[role=tabpanel] [data-e2e=admin-user-sessions]").textContent).toContain(
+      "Signed in nowhere.",
+    )
+    expect(has(".border-dashed")).toBe(false)
+  })
+
   it("asks the app to open a tab when it is pressed", async () => {
     const calls: unknown[][] = []
     await mount(<AdminUserScreen {...userProps(calls)} />)
@@ -464,7 +491,7 @@ describe("one person in the admin app", () => {
     expect(has("[data-e2e=admin-user-blocked-notice]")).toBe(true)
   })
 
-  it("offers no action on the operator's own account or on an equal role", async () => {
+  it("offers no action on the operator's own account, without a line saying so, or on an equal role", async () => {
     await mount(
       <AdminUserScreen
         {...userProps([], {
@@ -473,7 +500,9 @@ describe("one person in the admin app", () => {
       />,
     )
     expect(has("[data-e2e=admin-block-open]")).toBe(false)
-    expect(find("[data-e2e=admin-user-no-actions]").textContent).toContain("your own account")
+    // The "You" badge says whose page it is; a sentence on what cannot happen is left out.
+    expect(has("[data-e2e=admin-user-no-actions]")).toBe(false)
+    expect(find("[data-e2e=admin-user-card]").textContent).not.toContain("your own account")
 
     await mount(
       <AdminUserScreen {...userProps([], { detail: { ...detail, user: grace } })} />,
@@ -483,12 +512,19 @@ describe("one person in the admin app", () => {
     expect(find("[data-e2e=admin-user-no-actions]").textContent).toContain("yours or higher")
   })
 
-  it("confirms the open action without asking for a password", async () => {
+  it("confirms a block in a confirm dialog that names the person and the consequence, without a password", async () => {
     const calls: unknown[][] = []
     await mount(<AdminUserScreen {...userProps(calls, { dialog: "block" })} />)
 
+    const dialog = find("[data-e2e=admin-action-dialog]")
+    expect(dialog.getAttribute("role")).toBe("alertdialog")
+    const titleId = dialog.getAttribute("aria-labelledby")!
+    expect(document.getElementById(titleId)!.textContent).toBe("Block Ada Lovelace")
+    const question = document.getElementById(dialog.getAttribute("aria-describedby")!)!
+    expect(question.textContent).toContain("every way in is refused")
     expect(has("[data-e2e=admin-action-dialog] input")).toBe(false)
-    await submit("[data-e2e=admin-action-submit]")
+    expect(find("[data-e2e=admin-action-submit]").textContent).toBe("Block")
+    await click("[data-e2e=admin-action-submit]")
     expect(calls).toEqual([["action", "block"]])
   })
 

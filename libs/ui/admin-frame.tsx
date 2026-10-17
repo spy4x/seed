@@ -5,6 +5,7 @@ import { AccountMenu } from "@spy4x/preact-system/account-menu"
 import { RailShell, type RailShellSidebarPlace } from "@spy4x/preact-system/rail-shell"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { Card } from "@spy4x/preact-ui/card"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
@@ -87,7 +88,8 @@ export interface AdminNavItem {
  * - The bottom is the operator's account menu: the theme and Sign out.
  *
  * On a phone the first four modules are tabs and "More" opens a sheet with the rest and the
- * operator's menu. The page sits in a column of at most 72 rem.
+ * operator's menu. The page sits in a column of at most 64 rem (`max-w-5xl`), the width the design
+ * language and `docs/design/ui-layout.md` rule 6 give a page of tables and dashboards.
  */
 export function AdminShell(
   { navItems, currentPath, operator, theme, onSignOut, navigate, children }: {
@@ -143,7 +145,7 @@ export function AdminShell(
           : account(place)}
       labels={{ nav: "Admin sections" }}
     >
-      <div class="mx-auto w-full max-w-6xl p-4 pb-12">{children}</div>
+      <div class="mx-auto w-full max-w-5xl p-4 pb-12">{children}</div>
     </RailShell>
   )
 }
@@ -192,15 +194,17 @@ export function ComingSoonPanel(
   },
 ): JSX.Element {
   return (
-    <div class="rounded-xl border border-dashed border-subtle" data-e2e="admin-coming-soon">
+    // A card with the empty state in its body's place: no dashed box beside the page's solid cards.
+    <Card data-e2e="admin-coming-soon">
       <EmptyState
+        inset
         icon={Icon && <Icon class="size-8 text-muted" aria-hidden="true" />}
         title={title}
         headingLevel={2}
         description={description}
         action={<Badge text="Coming soon" color="gray" />}
       />
-    </div>
+    </Card>
   )
 }
 

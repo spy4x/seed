@@ -17,7 +17,7 @@ import {
   IconShieldCheck,
   IconUsers,
 } from "@spy4x/preact-icons"
-import { AdminShell } from "./admin-frame.tsx"
+import { AdminShell, ComingSoonPanel } from "./admin-frame.tsx"
 import { MENU_TOOLTIP_CLASS } from "./group-picker.tsx"
 
 const window = new Window({ url: "http://admin.localhost/" })
@@ -112,7 +112,7 @@ describe("AdminShell", () => {
     expect(brand.textContent).toBe("AdminSeed")
     expect(brand.querySelector(".text-muted")?.textContent).toBe("Seed")
     expect(find("#page").closest("main")).not.toBe(null)
-    expect(find("#page").parentElement!.className).toContain("max-w-6xl")
+    expect(find("#page").parentElement!.className).toContain("max-w-5xl")
   })
 
   it("tops the phone's More sheet with the Admin badge and the product's name, as a heading row", async () => {
@@ -234,5 +234,16 @@ describe("AdminShell", () => {
     // The tooltip hides while the operator's menu is open, so it never sits beside it.
     expect(trigger.closest("[role=group]")!.querySelector("[role=tooltip]")!.className)
       .toContain(MENU_TOOLTIP_CLASS)
+  })
+})
+
+describe("ComingSoonPanel", () => {
+  it("shows its message without a dashed box", async () => {
+    await mount(<ComingSoonPanel title="Reports is coming soon" description="Soon." />)
+    const panel = find(`[data-e2e="admin-coming-soon"]`)
+
+    expect(panel.textContent).toContain("Reports is coming soon")
+    expect(panel.textContent).toContain("Coming soon")
+    expect(document.querySelector(".border-dashed") === null).toBe(true)
   })
 })

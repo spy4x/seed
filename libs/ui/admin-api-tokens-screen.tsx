@@ -1,8 +1,9 @@
-import type { ComponentChildren, JSX } from "preact"
+import type { ComponentChildren, JSX, RefObject } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { Card } from "@spy4x/preact-ui/card"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
@@ -89,6 +90,8 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
     shown.current = page
   }, [page])
 
+  useFocusAfterConfirm(props.confirm, heading)
+
   const chips = ADMIN_API_TOKEN_STATES.map((state) => ({
     value: state,
     label: list ? `${STATE_LABELS[state]} (${list.counts[state]})` : STATE_LABELS[state],
@@ -131,6 +134,7 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
           <div data-e2e="admin-api-tokens-list" aria-busy={pending}>
             <DataTable
               mode="server"
+              class={tokenTableClass(true)}
               columns={tokenColumns({ ...props, withOwner: true })}
               rows={list.tokens}
               sort={[]}
@@ -140,6 +144,7 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
               rowKey={(token) => token.id}
               empty={
                 <EmptyState
+                  inset
                   title={filter.state ? `No ${filter.state} tokens` : "No API tokens yet"}
                   description={filter.state
                     ? "Pick another state to see the rest."
@@ -166,9 +171,25 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
 }
 
 /**
+ * The classes of a token table, the groups list's phone pattern: below `sm` only the token's cell
+ * and its Revoke button stay, so nothing scrolls sideways; the cell then names the owner and the
+ * state itself. Positions follow {@link tokenColumns}: with the owner, 1 owner, 3 state, 4 last
+ * used and 5 expires; without it, 2 state, 3 last used and 4 expires.
+ */
+export function tokenTableClass(withOwner: boolean): string {
+  return [
+    `[&>div:first-child]:min-h-0`,
+    `max-sm:[&_:is(th,td)]:px-3`,
+    withOwner
+      ? `max-sm:[&_:is(th,td):is(:nth-child(1),:nth-child(3),:nth-child(4),:nth-child(5))]:hidden`
+      : `max-sm:[&_:is(th,td):is(:nth-child(2),:nth-child(3),:nth-child(4))]:hidden`,
+  ].join(` `)
+}
+
+/**
  * The columns of a token table: the owner (on the page, not on a person's tab), the name with its
  * group, access and creation day, the state, when it was last used and expires, and the revoke
- * button.
+ * button. On a phone the name's cell also names the owner and the state ({@link tokenTableClass}).
  */
 export function tokenColumns(
   { operatorId, onAsk, navigate, withOwner }: {
@@ -193,6 +214,20 @@ export function tokenColumns(
           </span>
           <span class="text-sm text-muted">
             Created <Day at={token.createdAt} />
+          </span>
+          {/* A phone hides the owner and state columns, so the cell says both. */}
+          <span
+            class="flex flex-col gap-1 text-sm text-muted sm:hidden"
+            data-e2e="admin-api-token-phone"
+          >
+            {withOwner && <OwnerLine token={token} />}
+            <span>
+              <Badge
+                text={STATE_LABELS[token.state]}
+                color={stateColor(token.state)}
+                type="outline"
+              />
+            </span>
           </span>
         </span>
       ),
@@ -234,6 +269,8 @@ export function tokenColumns(
             <Button
               variant="ghost"
               size="sm"
+              // 44 px tall on a phone, the touch target of the house accessibility rules.
+              class="max-sm:min-h-11"
               data-e2e={`admin-api-token-revoke-${token.id}`}
               aria-label={`Revoke ${token.name}`}
               onClick={() => onAsk({ kind: "revoke", token })}
@@ -253,6 +290,25 @@ export function tokenColumns(
     },
     ...columns,
   ]
+}
+
+/**
+ * Moves focus to `target` once a confirmed revoke or removal succeeded: the dialog closes after a
+ * pending request, with no error. The row's button that opened the dialog is gone then (a revoked
+ * token has no Revoke), so the dialog's own focus restore would leave focus on the page's body. A
+ * cancel, or a refusal that keeps the dialog open, leaves focus where the dialog puts it.
+ */
+export function useFocusAfterConfirm(
+  confirm: AdminTokensConfirmState,
+  target: RefObject<HTMLElement>,
+): void {
+  const wasPending = useRef(false)
+  useEffect(() => {
+    if (wasPending.current && confirm.target === null && confirm.error === null) {
+      target.current?.focus()
+    }
+    wasPending.current = confirm.pending
+  }, [confirm])
 }
 
 /** The confirm dialog of a revoke or a device removal: what it does, and why the API refused. */
@@ -327,10 +383,32 @@ export function AccessBadge({ access }: { access: ApiTokenAccess }): JSX.Element
 
 /** A token's state: a live one is good news, a revoked one stands out, an expired one stays quiet. */
 export function StateBadge({ state }: { state: AdminApiTokenState }): JSX.Element {
-  const color = state === "live" ? "green" : state === "revoked" ? "red" : "gray"
   return (
     <span data-e2e={`admin-api-token-state-${state}`}>
-      <Badge text={STATE_LABELS[state]} color={color} type="outline" />
+      <Badge text={STATE_LABELS[state]} color={stateColor(state)} type="outline" />
+    </span>
+  )
+}
+
+function stateColor(state: AdminApiTokenState): "green" | "red" | "gray" {
+  return state === "live" ? "green" : state === "revoked" ? "red" : "gray"
+}
+
+/**
+ * The owner inside a token's cell on a phone, as the groups list names a group's owner there: the
+ * name, then the address when the name is not already it. The link to their page is the owner
+ * column's, which a phone hides.
+ */
+function OwnerLine({ token }: { token: AdminApiToken }): JSX.Element {
+  const name = adminUserName({ ...token.owner })
+  return (
+    <span class="flex flex-col">
+      <span class="wrap-anywhere">
+        Owner: <span class="font-medium text-foreground">{name}</span>
+      </span>
+      {token.owner.email && token.owner.email !== name && (
+        <span class="wrap-anywhere">{token.owner.email}</span>
+      )}
     </span>
   )
 }
@@ -372,18 +450,16 @@ function OwnerCell(
   )
 }
 
-/** A list in the person page's bordered style, or one quiet line when it is empty. */
+/** A list in the person page's bordered style, or a card with one quiet line when it is empty. */
 export function PanelRows(
   { empty, dataE2E, children }: { empty: string; dataE2E: string; children: ComponentChildren[] },
 ): JSX.Element {
   if (children.length === 0) {
     return (
-      <p
-        class="rounded-lg border border-dashed border-subtle px-4 py-6 text-center text-sm text-muted"
-        data-e2e={dataE2E}
-      >
-        {empty}
-      </p>
+      // The list's card with one quiet line in its body's place: no dashed box inside the page.
+      <Card data-e2e={dataE2E}>
+        <EmptyState inset description={empty} />
+      </Card>
     )
   }
   return (

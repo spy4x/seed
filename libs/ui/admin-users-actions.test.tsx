@@ -258,7 +258,7 @@ describe("one person in the admin app, with the people actions", () => {
 
     await mount(<AdminUserScreen {...userProps(calls, { dialog: "password-reset" })} />)
     expect(find("[data-e2e=admin-action-dialog]").textContent).toContain("ada@example.com")
-    await submit("[data-e2e=admin-action-submit]")
+    await click("[data-e2e=admin-action-submit]")
     expect(calls.at(-1)).toEqual(["action", "password-reset", undefined])
   })
 
@@ -307,7 +307,7 @@ describe("one person in the admin app, with the people actions", () => {
     expect(find("[data-e2e=admin-action-session]").textContent).toBe(
       "Firefox on Linux · 203.0.113.x",
     )
-    await submit("[data-e2e=admin-action-submit]")
+    await click("[data-e2e=admin-action-submit]")
     expect(calls).toEqual([["action", "end-session", { sessionId: 9 }]])
   })
 

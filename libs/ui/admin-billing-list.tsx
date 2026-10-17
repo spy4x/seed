@@ -390,6 +390,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                     onSortChange={() => {}}
                     empty={
                       <EmptyState
+                        inset
                         title="No group matches"
                         description="Try another name or address, or clear the filters."
                         action={

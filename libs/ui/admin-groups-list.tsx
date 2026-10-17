@@ -159,7 +159,7 @@ export function AdminGroupsListScreen(
         >
           {/* Keyed by the query, so going back in history shows the search that page had. */}
           <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
-            <div class="min-w-0 flex-1 basis-60">
+            <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
               <Field id="admin-groups-q" label="Group name, owner or group id">
                 <Input
                   name="q"
@@ -242,6 +242,7 @@ export function AdminGroupsListScreen(
               rowKey={(row) => row.group.id}
               empty={
                 <EmptyState
+                  inset
                   title="No group matches"
                   description={filtered
                     ? `Try another name or address, or clear the filters.`
