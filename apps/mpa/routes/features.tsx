@@ -108,8 +108,8 @@ const TIERS: readonly Tier[] = [
         visual: (
           <WindowFrame variant="browser" title="app.seedsaas.com/groups">
             <Shot
-              name="group-members"
-              alt="The members page of a group: each member with their role, and a button to invite someone."
+              name="activity"
+              alt="A group's activity log: who added which note or tag, and when, with a link to open each note."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
@@ -234,7 +234,7 @@ const TIERS: readonly Tier[] = [
           <WindowFrame variant="browser" title="app.seedsaas.com/notifications">
             <Shot
               name="notifications"
-              alt="The notifications page: three unread notices about a new group owner, a role change and an invitation, each with a link to open it."
+              alt="The notifications page: three unread notices about a new group owner, a role change and an invitation, each row opening what it is about."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
