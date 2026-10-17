@@ -85,7 +85,7 @@ test("a new account proves its address with the mailed code before it exists, th
     await expect(page.locator("[data-e2e=email-verify-card]")).toHaveCount(0)
 
     // The new address signs in; the old one no longer does.
-    await page.locator("[data-e2e=shell-user-menu-button]").click()
+    await page.locator("[data-e2e=account-menu-button]").click()
     await page.getByRole("menuitem", { name: "Sign out" }).click()
     // Signing out leaves the e-mail page for plain sign-in: whoever signs in next must not be
     // sent back to this person's page.

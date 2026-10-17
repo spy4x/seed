@@ -26,7 +26,10 @@ async function signUp(request: APIRequestContext, email: string) {
   expect(response.ok(), await response.text()).toBe(true)
 }
 
-const bell = (page: Page) => page.locator("[data-e2e=shell-bell]")
+/** The rail's Notifications cell; the phone sheet holds a second link to the same page. */
+const bell = (page: Page) => page.locator(`[data-e2e=rail-shell-bottom] a[href="/notifications"]`)
+const bellCount = (page: Page) =>
+  page.locator("[data-e2e=rail-shell-bottom] [data-e2e=rail-shell-counter]")
 
 test.describe("notifications inbox", () => {
   test("the bell counts a role change and a removal live, the page lists them, and only their owner can read them", async ({ page, browser, request }) => {
@@ -55,8 +58,8 @@ test.describe("notifications inbox", () => {
       ).userId
 
       await signIn(page, member, password)
-      await expect(bell(page)).toHaveAttribute("aria-label", "Notifications")
-      await expect(page.locator("[data-e2e=shell-bell-count]")).toHaveCount(0)
+      await expect(bell(page)).toHaveAccessibleName("Notifications")
+      await expect(bellCount(page)).toHaveCount(0)
 
       // Another person's action reaches this open page without a reload.
       const changed = await ownerApi.patch(`${apiBase}/api/groups/${groupId}/members/${memberId}`, {
@@ -64,8 +67,8 @@ test.describe("notifications inbox", () => {
         data: { role: VIEWER },
       })
       expect(changed.status(), await changed.text()).toBe(200)
-      await expect(bell(page)).toHaveAttribute("aria-label", "Notifications, 1 unread")
-      await expect(page.locator("[data-e2e=shell-bell-count]")).toHaveText("1")
+      await expect(bell(page)).toHaveAccessibleName("Notifications, 1 unread")
+      await expect(bellCount(page)).toHaveText("1")
 
       const removed = await ownerApi.delete(
         `${apiBase}/api/groups/${groupId}/members/${memberId}`,
@@ -74,7 +77,7 @@ test.describe("notifications inbox", () => {
         },
       )
       expect(removed.status(), await removed.text()).toBe(200)
-      await expect(bell(page)).toHaveAttribute("aria-label", "Notifications, 2 unread")
+      await expect(bell(page)).toHaveAccessibleName("Notifications, 2 unread")
 
       await bell(page).click()
       await expect(page).toHaveURL(/\/notifications$/)
@@ -99,20 +102,20 @@ test.describe("notifications inbox", () => {
         return { code, message }
       }
       expect(await refusal(theirs)).toEqual(await refusal(nowhere))
-      await expect(bell(page)).toHaveAttribute("aria-label", "Notifications, 2 unread")
+      await expect(bell(page)).toHaveAccessibleName("Notifications, 2 unread")
 
       // Following a notification's link marks that one read.
       await list.locator("li").nth(0).locator("[data-e2e=notification-link]").click()
       await expect(page).toHaveURL(/\/groups$/)
-      await expect(bell(page)).toHaveAttribute("aria-label", "Notifications, 1 unread")
+      await expect(bell(page)).toHaveAccessibleName("Notifications, 1 unread")
 
       await page.reload()
-      await expect(bell(page)).toHaveAttribute("aria-label", "Notifications, 1 unread")
+      await expect(bell(page)).toHaveAccessibleName("Notifications, 1 unread")
       await bell(page).click()
       await expect(page.locator("[data-e2e=notifications-unread]")).toHaveText("1 unread")
       await page.locator("[data-e2e=notifications-read-all]").click()
-      await expect(bell(page)).toHaveAttribute("aria-label", "Notifications")
-      await expect(page.locator("[data-e2e=shell-bell-count]")).toHaveCount(0)
+      await expect(bell(page)).toHaveAccessibleName("Notifications")
+      await expect(bellCount(page)).toHaveCount(0)
       await expect(page.locator("[data-e2e=notifications-read-all]")).toHaveCount(0)
       await expect(list.locator("li[data-unread=true]")).toHaveCount(0)
 
@@ -134,7 +137,7 @@ test.describe("notifications inbox", () => {
       await bell(page).click()
       await expect(page).toHaveURL(/\/notifications$/)
       await expect(page.getByText("You are all caught up.")).toBeVisible()
-      await expect(page.locator("[data-e2e=shell-bell-count]")).toHaveCount(0)
+      await expect(bellCount(page)).toHaveCount(0)
     } finally {
       await cleanup(request, email, { soft: true })
     }

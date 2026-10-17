@@ -9,8 +9,10 @@ import { Redirect, Route, Switch, useLocation } from "wouter-preact"
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
 import {
   ADMIN_PATHS,
+  ADMIN_PRODUCT,
   AdminFrame,
   AdminNoAccess,
+  adminPageTitle,
   AdminShell,
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
@@ -41,12 +43,16 @@ export function App(
   const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])
   const session = store.session.value
   const [path, navigate] = useLocation()
-  useRouteAnnouncer({ path })
+  const user = session.step === "signed-in" ? session.user : null
+  // The tab says "Users · Admin · Seed", so an operator never mistakes it for the product's.
+  const title = user && hasAdminAccess(user)
+    ? adminPageTitle(modules.map((module) => module.nav), path)
+    : `Admin · ${ADMIN_PRODUCT}`
+  useRouteAnnouncer({ path, title })
   // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
   // far down the list would show with their header under the top bar. A tab change (`?tab=`) keeps
   // the path and so the scroll.
   useEffect(() => globalThis.scrollTo?.(0, 0), [path])
-  const user = session.step === "signed-in" ? session.user : null
   // The operator's own region format, zone and clock, read again for each signed-in session.
   useEffect(() => {
     if (user) void own.load()

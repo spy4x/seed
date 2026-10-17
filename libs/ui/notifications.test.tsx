@@ -8,7 +8,7 @@ import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
-import { AppFrame, bellLabel } from "./frame.tsx"
+import { AppFrame } from "./frame.tsx"
 import { type NotificationRow, NotificationsScreen } from "./notifications-screen.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -236,24 +236,33 @@ describe("Notifications entry", () => {
       </AppFrame>,
     )
 
+  /** Every Notifications link the frame renders: the rail's cell, then the phone sheet's row. */
+  const bells = (page: string) =>
+    [...page.matchAll(/<a\b[^>]*href="\/notifications"[^>]*>.*?<\/a>/g)]
+      .map((match) => match[0])
+
   it("names the unread count in the link's accessible name and badges it", () => {
-    const page = frame(3)
-    expect(page).toContain(`aria-label="Notifications, 3 unread"`)
-    expect(page).toContain(`href="/notifications"`)
-    expect(page).toContain(`data-e2e="shell-bell-count"`)
-    // 44 px tall: the class must sit on the entry's own link, not on a neighbour.
-    const link = page.match(/<a\b[^>]*data-e2e="shell-bell"[^>]*>/)?.[0] ?? ""
-    expect(link).toContain("min-h-11")
+    const [rail, sheet] = bells(frame(3))
+    expect(rail).toContain(`aria-label="Notifications, 3 unread"`)
+    expect(rail).toMatch(/data-e2e="rail-shell-counter"[^>]*>3</)
+    // The rail's own 48 px cell, so the bell lines up with the sections above it.
+    expect(rail).toContain("size-12")
+    expect(sheet).toContain(`aria-label="Notifications, 3 unread"`)
+    expect(sheet).toContain("min-h-11")
   })
 
   it("shows no badge when everything is read, and caps a long count at 99+", () => {
-    expect(frame(0)).not.toContain(`data-e2e="shell-bell-count"`)
-    expect(frame(0)).toContain(`aria-label="Notifications"`)
-    expect(frame(250)).toMatch(/data-e2e="shell-bell-count"[^>]*>99\+</)
-    expect(bellLabel(250)).toBe("Notifications, 250 unread")
+    const [read] = bells(frame(0))
+    expect(read).not.toContain(`data-e2e="rail-shell-counter"`)
+    // The visible label names the link on its own; no count, so no aria-label to add one.
+    expect(read).not.toContain("aria-label")
+    expect(read).toMatch(/>Notifications<\/span><\/a>$/)
+    const [many] = bells(frame(250))
+    expect(many).toMatch(/data-e2e="rail-shell-counter"[^>]*>99\+</)
+    expect(many).toContain(`aria-label="Notifications, 250 unread"`)
   })
 
   it("has no Notifications entry in a frame that was not given a count", () => {
-    expect(frame()).not.toContain(`data-e2e="shell-bell"`)
+    expect(bells(frame())).toEqual([])
   })
 })

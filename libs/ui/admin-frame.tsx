@@ -1,8 +1,8 @@
 import type { ComponentChildren, ComponentType, JSX } from "preact"
 import type { IconProps } from "@spy4x/preact-icons"
 import { type AuthCredentials, AuthForm } from "@spy4x/preact-system/auth-form"
-import { AccountMenu } from "@spy4x/preact-system/account-menu"
-import { RailShell, type RailShellSidebarPlace } from "@spy4x/preact-system/rail-shell"
+import { AccountTag } from "@spy4x/preact-system/account-menu"
+import { AppShell } from "@spy4x/preact-system/app-shell"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
@@ -10,10 +10,8 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
-import { Tooltip } from "@spy4x/preact-ui/tooltip"
 import { AuthCard } from "./auth-screen.tsx"
 import type { FrameTheme } from "./frame.tsx"
-import { MENU_TOOLTIP_CLASS, placeHook } from "./group-picker.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 /**
@@ -29,39 +27,28 @@ export const ADMIN_PATHS = {
   oneTimeCode: "/one-time-code",
 } as const
 
+/** The product's name, the last part of every admin page's title. */
+export const ADMIN_PRODUCT = "Seed"
+
+/** The word that marks the operator area: the account cell's badge and the titles' middle part. */
+const ADMIN_TAG = "Admin"
+
 /**
- * The admin app's brand: the "Admin" badge, which tells an operator at once that this is not the
- * product, and the product's name in muted text. The 72 px rail has room for the badge alone. In
- * the phone's More sheet it is a plain heading row, not a link: the Dashboard tab already leads home,
- * and a link there would leave the sheet open over the new page.
+ * The signed-out admin pages' brand: the product's name and the neutral "Admin" badge, which tells
+ * an operator at once that this is not the product. The signed-in shell has no brand; the same
+ * badge sits under the operator's avatar in the rail instead.
  */
-function AdminBrand(
-  { navigate, place = "sidebar" }: { navigate?: Navigate; place?: RailShellSidebarPlace },
-): JSX.Element {
-  const rail = place === "rail"
-  if (place === "overlay") {
-    return (
-      <div class="flex min-h-11 items-center gap-2 px-2">
-        <span data-e2e={placeHook("admin-mark", place)}>
-          <Badge text="Admin" />
-        </span>
-        <span class="text-base font-semibold text-muted">Seed</span>
-      </div>
-    )
-  }
+function AdminBrand({ navigate }: { navigate?: Navigate }): JSX.Element {
   return (
     <Link
       href={ADMIN_PATHS.dashboard}
       navigate={navigate}
-      class={rail
-        ? "flex min-h-11 w-full items-center justify-center rounded-md"
-        : "flex min-h-11 shrink-0 items-center gap-2 rounded-md px-2"}
-      aria-label={rail ? "Seed admin" : undefined}
+      class="-ml-2 flex min-h-11 shrink-0 items-center gap-2 rounded-md px-2"
     >
-      <span data-e2e={placeHook("admin-mark", place)}>
-        <Badge text="Admin" />
+      <span class="text-base font-semibold text-foreground">{ADMIN_PRODUCT}</span>
+      <span data-e2e="admin-mark">
+        <AccountTag tag={ADMIN_TAG} />
       </span>
-      {!rail && <span class="text-base font-semibold text-muted">Seed</span>}
     </Link>
   )
 }
@@ -72,7 +59,7 @@ export interface AdminShellOperator {
   email: string | null
 }
 
-/** One sidebar entry: a module's page. */
+/** One rail entry: a module's page. */
 export interface AdminNavItem {
   name: string
   href: string
@@ -80,15 +67,17 @@ export interface AdminNavItem {
 }
 
 /**
- * The signed-in admin app's frame (#424, #453), the same shell as the product's: a labelled sidebar
- * from `lg`, a 72 px icon rail from `md` and a bottom tab bar below that, with no header.
+ * The signed-in admin app's frame (#424, #453, #516): the library's `AppShell`, the same shell as
+ * the product's, so the two look made by one person.
  *
- * - The top of the column, and of the phone's More sheet, is the brand with its "Admin" badge.
- * - The middle is one entry per module.
- * - The bottom is the operator's account menu: the theme and Sign out.
+ * - The rail's top zone is empty: there is no group switcher, because operators work across every
+ *   group, and no brand, which would repeat the Dashboard entry.
+ * - The middle is one entry per module, Dashboard first.
+ * - The bottom is the operator's account menu (the theme and Sign out), with a neutral "Admin"
+ *   badge under the avatar, so the cell an operator checks says where they are signed in.
  *
- * On a phone the first four modules are tabs and "More" opens a sheet with the rest and the
- * operator's menu. The page sits in a column of at most 64 rem (`max-w-5xl`), the width the design
+ * On a phone the first four modules are tabs and the last tab, "Admin", opens a sheet with the rest
+ * and the operator's menu. The page sits in the wide column of 64 rem, the width the design
  * language and `docs/design/ui-layout.md` rule 6 give a page of tables and dashboards.
  */
 export function AdminShell(
@@ -104,54 +93,42 @@ export function AdminShell(
     children: ComponentChildren
   },
 ): JSX.Element {
-  const label = `Account: ${operator.name}`
-  const account = (place: RailShellSidebarPlace) => (
-    <AccountMenu
-      user={{ name: operator.name, email: operator.email ?? undefined }}
-      theme={theme?.preference.value}
-      onThemeChange={theme && ((choice) => theme.set(choice))}
-      signOut={{
-        label: "Sign out",
-        onClick: onSignOut,
-        dataE2E: placeHook("admin-signout", place),
-      }}
-      display={place === "rail" ? "avatar" : "full"}
-      vertical={place === "overlay" ? "auto" : "up"}
-      navigate={navigate}
-      dataE2E={placeHook("admin-operator", place)}
-      labels={{ trigger: label }}
-    />
-  )
   return (
-    <RailShell
+    <AppShell
       items={navItems.map(({ name, href, Icon }) => ({ key: href, label: name, href, Icon }))}
-      currentKey={adminNavPath(navItems, currentPath)}
-      navigateLink={navigate && ((_key, href) => navigate(href))}
-      sidebarTop={(place) => <AdminBrand navigate={navigate} place={place} />}
-      sidebarBottom={(place) =>
-        place === "rail"
-          ? (
-            <Tooltip
-              label={label}
-              content={label}
-              placement="right"
-              focusable={false}
-              class="flex w-full justify-center"
-              contentClass={MENU_TOOLTIP_CLASS}
-            >
-              {account(place)}
-            </Tooltip>
-          )
-          : account(place)}
+      currentPath={currentPath}
+      navigate={navigate}
+      account={{
+        user: { name: operator.name, email: operator.email ?? undefined },
+        theme: theme?.preference.value,
+        onThemeChange: theme && ((choice) => theme.set(choice)),
+        signOut: { label: "Sign out", onClick: onSignOut },
+        tag: ADMIN_TAG,
+      }}
+      width="wide"
       labels={{ nav: "Admin sections" }}
     >
-      <div class="mx-auto w-full max-w-5xl p-4 pb-12">{children}</div>
-    </RailShell>
+      {children}
+    </AppShell>
   )
 }
 
 /**
- * The sidebar entry `path` belongs to: the entry whose page it is, or the one whose page it is
+ * The browser tab's title for an admin page: `Users · Admin · Seed`, named after the entry whose
+ * page it is or is under, so the tab itself says it is the operator area. A page under no entry
+ * reads `Admin · Seed`.
+ */
+export function adminPageTitle(
+  navItems: readonly Pick<AdminNavItem, "href" | "name">[],
+  path: string,
+): string {
+  const href = adminNavPath(navItems, path)
+  const page = navItems.find((item) => item.href === href)?.name
+  return [page, ADMIN_TAG, ADMIN_PRODUCT].filter(Boolean).join(" · ")
+}
+
+/**
+ * The rail entry `path` belongs to: the entry whose page it is, or the one whose page it is
  * under (`/users/42` is under `/users`). The dashboard at `/` owns only itself.
  */
 export function adminNavPath(

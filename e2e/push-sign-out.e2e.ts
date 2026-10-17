@@ -66,7 +66,7 @@ async function signInWithNotifications(page: Page, user: string): Promise<void> 
 }
 
 async function signOutFromMenu(page: Page): Promise<void> {
-  await page.locator("[data-e2e=shell-user-menu-button]").click()
+  await page.locator("[data-e2e=account-menu-button]").click()
   await page.getByRole("menuitem", { name: "Sign out" }).click()
   await page.locator("[data-e2e=signin-required]").waitFor()
 }

@@ -80,11 +80,8 @@ export function onboardingSteps(
 /** The link of the side navigation that opens `href`; hidden on a phone, where a step is a sheet. */
 const railLink = (href: string) => `[data-e2e="rail-shell-rail"] a[href="${href}"]`
 
-/**
- * A control of the sidebar's bottom zone: its labelled copy from `lg`, its icon in the rail between
- * `md` and `lg`. The tour points at whichever is visible.
- */
-const slotControl = (hook: string) => `[data-e2e="${hook}"], [data-e2e="${hook}-rail"]`
+/** A control of the rail's bottom zone: the Notifications cell or the account trigger. */
+const railBottom = (selector: string) => `[data-e2e="rail-shell-bottom"] ${selector}`
 
 /** The tour: the main screens, each shown by the control that opens it. */
 export const TOUR_STEPS: readonly TourStep[] = [
@@ -104,14 +101,14 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
   {
     id: "notifications",
-    target: slotControl("shell-bell"),
+    target: railBottom(`a[href="${SCREEN_PATHS.notifications}"]`),
     title: "Notifications",
     body: "What happened while you were away, such as an invitation.",
     placement: "right",
   },
   {
     id: "profile",
-    target: slotControl("shell-user-menu-button"),
+    target: railBottom(`[data-e2e="account-menu-button"]`),
     title: "Profile",
     body:
       "Your account: your name, password, two-factor sign-in and devices, the theme and Sign out.",

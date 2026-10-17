@@ -4,7 +4,7 @@ import { useSignal } from "@preact/signals"
 import { useLocation, useSearch } from "wouter-preact"
 import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
-import { EmailBanner } from "@ui/email-screen.tsx"
+import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
 import { emailStore } from "../state/email.ts"
 import { signOut } from "../state/auth.ts"
 import { groupsStore } from "../state/groups.ts"
@@ -101,8 +101,9 @@ export function AppShell(
         email: emailStore.status.value?.email,
       }}
       theme={themeStore}
-      // The e-mail page itself asks for the code; the banner would only repeat it there.
-      banner={location === SCREEN_PATHS.email
+      // The e-mail page itself asks for the code; the banner would only repeat it there. With
+      // nothing to show it is left out, because the frame keeps a margin under any banner it gets.
+      banner={location === SCREEN_PATHS.email || !showsEmailBanner(emailStore.status.value)
         ? undefined
         : <EmailBanner status={emailStore.status.value} navigate={navigate} />}
       connection={wsStatus}

@@ -1,5 +1,5 @@
 /**
- * The admin app's signed-in frame, driven in a browser DOM (happy-dom): what the sidebar holds,
+ * The admin app's frames, driven in a browser DOM (happy-dom): what the rail holds,
  * what the operator's menu offers and what reaches the app's callbacks.
  */
 import { expect } from "@std/expect"
@@ -17,23 +17,25 @@ import {
   IconShieldCheck,
   IconUsers,
 } from "@spy4x/preact-icons"
-import { AdminShell, ComingSoonPanel } from "./admin-frame.tsx"
-import { MENU_TOOLTIP_CLASS } from "./group-picker.tsx"
+import { AdminFrame, adminPageTitle, AdminShell, ComingSoonPanel } from "./admin-frame.tsx"
 
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
   document: globalThis.document,
   location: globalThis.location,
   getComputedStyle: globalThis.getComputedStyle,
+  HTMLElement: globalThis.HTMLElement,
 }
 
 beforeAll(() => {
   // Preact draws into `document`; a link is routed only when it points at the page's own origin
-  // (`location`), and a dialog locks the page's scroll after reading its style (`getComputedStyle`).
+  // (`location`), and a dialog locks the page's scroll after reading its style (`getComputedStyle`), and the rail
+  // places a tooltip only on an element it recognises (`HTMLElement`).
   Object.assign(globalThis, {
     document: window.document,
     location: window.location,
     getComputedStyle: window.getComputedStyle.bind(window),
+    HTMLElement: window.HTMLElement,
   })
 })
 
@@ -71,7 +73,7 @@ async function click(selector: string): Promise<void> {
   })
 }
 
-/** The labels of the sidebar's entries, without the rail's tooltip copies. */
+/** The labels of the rail's entries, without their tooltip copies. */
 function entryLabels(selector: string): string[] {
   return [...document.querySelectorAll(`${selector} [data-e2e="rail-shell-entry"]`)]
     .map((entry) => entry.querySelector("span:not([aria-hidden])")?.textContent ?? "")
@@ -99,32 +101,52 @@ function themeSpy() {
 
 const operator = { name: "Olga Ops", email: null }
 
+/** The operator's account trigger in the rail, `AccountMenu`'s default hook. */
+const ACCOUNT = "[data-e2e=rail-shell-bottom] [data-e2e=account-menu-button]"
+/** The account section of the phone's sheet. */
+const SHEET_ACCOUNT = "[data-e2e=rail-shell-dialog] [data-e2e=app-shell-sheet-account]"
+
+/** The button inside `container` whose text is `label`, or a failure naming both. */
+function button(container: string, label: string): HTMLElement {
+  const found = [...document.querySelectorAll<HTMLElement>(`${container} button`)]
+    .find((candidate) => candidate.textContent?.trim() === label)
+  if (!found) throw new Error(`${container} has no ${label} button`)
+  return found
+}
+
 describe("AdminShell", () => {
-  it("has no header bar: the Admin badge with the product's name tops the sidebar, without the S mark", async () => {
+  it("has no header, brand or switcher: the rail starts with Dashboard and the page sits in the wide column", async () => {
     await mount(
       <AdminShell navItems={modules} currentPath="/" operator={operator} onSignOut={() => {}}>
         <p id="page">page</p>
       </AdminShell>,
     )
     expect(document.querySelector("header")).toBe(null)
-    const brand = find("[data-e2e=rail-shell-top] [data-e2e=admin-mark]").closest("a")!
-    expect(brand.getAttribute("href")).toBe("/")
-    expect(brand.textContent).toBe("AdminSeed")
-    expect(brand.querySelector(".text-muted")?.textContent).toBe("Seed")
+    expect(document.querySelector("[data-e2e=rail-shell-top]")).toBe(null)
+    expect(document.querySelector("[data-e2e=admin-mark]")).toBe(null)
+    expect(document.querySelector("[data-e2e=rail-shell-column]")!.textContent).not.toContain(
+      "Seed",
+    )
+    expect(entryLabels("[data-e2e=rail-shell-rail]")[0]).toBe("Dashboard")
     expect(find("#page").closest("main")).not.toBe(null)
-    expect(find("#page").parentElement!.className).toContain("max-w-5xl")
+    expect(find("#page").closest("[data-e2e=app-shell-content]")!.className).toContain(
+      "max-w-5xl",
+    )
   })
 
-  it("tops the phone's More sheet with the Admin badge and the product's name, as a heading row", async () => {
+  it("marks the account cell with a neutral Admin badge and names the operator's button with it", async () => {
     await mount(
       <AdminShell navItems={modules} currentPath="/" operator={operator} onSignOut={() => {}}>
         page
       </AdminShell>,
     )
-    const top = find("[data-e2e=rail-shell-dialog] [data-e2e=rail-shell-overlay-top]")
-    expect(top.querySelector("[data-e2e=admin-mark-overlay]")?.textContent).toBe("Admin")
-    expect(top.textContent).toBe("AdminSeed")
-    expect(top.querySelector("a")?.outerHTML).toBe(undefined)
+    const trigger = find(ACCOUNT)
+    expect(trigger.getAttribute("aria-label")).toBe("Account: Olga Ops, Admin")
+    const badge = [...trigger.querySelectorAll("span")].find((span) => span.textContent === "Admin")
+    expect(badge).not.toBe(undefined)
+    // Gray, never the accent: the badge must not read as a second brand colour.
+    expect(badge!.className).toContain("text-foreground")
+    expect(badge!.className).not.toMatch(/accent|primary/)
   })
 
   it("lists every module under Admin sections and marks the one whose page is shown", async () => {
@@ -141,10 +163,10 @@ describe("AdminShell", () => {
     const nav = find("[data-e2e=rail-shell-rail]")
     expect(nav.getAttribute("aria-label")).toBe("Admin sections")
     expect(entryLabels("[data-e2e=rail-shell-rail]")).toEqual(modules.map((module) => module.name))
-    expect(nav.querySelector('[aria-current="page"]')?.getAttribute("href")).toBe("/users")
+    expect(nav.querySelector("[aria-current]")?.getAttribute("href")).toBe("/users")
   })
 
-  it("keeps the first four modules as phone tabs and the rest in More", async () => {
+  it("keeps the first four modules as phone tabs and ends the bar with Admin, whose sheet holds the rest", async () => {
     await mount(
       <AdminShell navItems={modules} currentPath="/" operator={operator} onSignOut={() => {}}>
         page
@@ -156,17 +178,20 @@ describe("AdminShell", () => {
       "Groups",
       "Billing",
     ])
-    expect(find("[data-e2e=rail-shell-more]").textContent).toContain("More")
+    expect(find("[data-e2e=rail-shell-more]").textContent).toContain("Admin")
+    expect(find("[data-e2e=rail-shell-dialog] h2").textContent).toBe("Admin")
     expect(entryLabels("[data-e2e=rail-shell-dialog]")).toEqual([
       "Newsletter",
       "Audit log",
       "System",
       "API tokens",
     ])
-    expect(find("[data-e2e=rail-shell-dialog] [data-e2e=admin-operator-overlay]")).not.toBe(null)
+    const header = find(`${SHEET_ACCOUNT} [data-e2e=app-shell-sheet-account-header]`).textContent
+    expect(header).toContain("Olga Ops")
+    expect(header).toMatch(/Admin$/)
   })
 
-  it("offers the theme and Sign out in the operator's menu at the bottom of the sidebar", async () => {
+  it("offers the theme and Sign out in the operator's menu and in the phone's sheet", async () => {
     const theme = themeSpy()
     const signedOut: true[] = []
     await mount(
@@ -180,60 +205,55 @@ describe("AdminShell", () => {
         page
       </AdminShell>,
     )
-    const trigger = find("[data-e2e=rail-shell-bottom] [data-e2e=admin-operator]")
-    expect(trigger.getAttribute("aria-label")).toBe("Account: Olga Ops")
-    const menu = trigger.parentElement!.querySelector("[role=menu]")!
+    const menu = find(ACCOUNT).parentElement!.querySelector("[role=menu]")!
     expect(
       [...menu.querySelectorAll("[role=menuitem], [role=menuitemradio]")]
         .map((item) => item.textContent?.trim()),
     ).toEqual(["System", "Light", "Dark", "Sign out"])
 
-    await click("[data-e2e=admin-operator]")
+    await click(ACCOUNT)
     await act(() => {
       menu.querySelector("[data-e2e=account-menu-theme-dark]")!.dispatchEvent(
         new window.MouseEvent("click", { bubbles: true, button: 0 }) as never,
       )
     })
-    await click("[data-e2e=admin-signout]")
+    await act(() => {
+      button("[data-e2e=app-shell-account] [role=menu]", "Sign out").dispatchEvent(
+        new window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 }) as never,
+      )
+    })
+    await click("[data-e2e=rail-shell-more]")
+    await act(() => {
+      button(SHEET_ACCOUNT, "Sign out").dispatchEvent(
+        new window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 }) as never,
+      )
+    })
 
     expect(theme.chosen).toEqual(["dark"])
-    expect(signedOut).toEqual([true])
-  })
-
-  it("signs out from the rail's avatar menu and from the phone's More sheet", async () => {
-    const signedOut: true[] = []
-    await mount(
-      <AdminShell
-        navItems={modules}
-        currentPath="/"
-        operator={operator}
-        onSignOut={() => void signedOut.push(true)}
-      >
-        page
-      </AdminShell>,
-    )
-    await click("[data-e2e=admin-operator-rail]")
-    await click("[data-e2e=admin-signout-rail]")
-    await click("[data-e2e=rail-shell-more]")
-    await click("[data-e2e=admin-operator-overlay]")
-    await click("[data-e2e=admin-signout-overlay]")
     expect(signedOut).toEqual([true, true])
   })
+})
 
-  it("names the operator's avatar in the rail and shows the same words as its tooltip, hidden while the menu is open", async () => {
+describe("adminPageTitle", () => {
+  it("names the page's section, then Admin, then the product", () => {
+    expect(adminPageTitle(modules, "/")).toBe("Dashboard · Admin · Seed")
+    expect(adminPageTitle(modules, "/users")).toBe("Users · Admin · Seed")
+    expect(adminPageTitle(modules, "/users/42")).toBe("Users · Admin · Seed")
+    expect(adminPageTitle(modules, "/nowhere")).toBe("Admin · Seed")
+  })
+})
+
+describe("AdminFrame", () => {
+  it("shows the product's name with the same neutral Admin badge above the sign-in", async () => {
     await mount(
-      <AdminShell navItems={modules} currentPath="/" operator={operator} onSignOut={() => {}}>
+      <AdminFrame operatorName={null} canSignOut={false} onSignOut={() => {}} wide={false}>
         page
-      </AdminShell>,
+      </AdminFrame>,
     )
-    const trigger = find("[data-e2e=admin-operator-rail]")
-    expect(trigger.getAttribute("aria-label")).toBe("Account: Olga Ops")
-    expect(trigger.closest("[role=group]")?.querySelector("[role=tooltip]")?.textContent).toBe(
-      "Account: Olga Ops",
-    )
-    // The tooltip hides while the operator's menu is open, so it never sits beside it.
-    expect(trigger.closest("[role=group]")!.querySelector("[role=tooltip]")!.className)
-      .toContain(MENU_TOOLTIP_CLASS)
+    const brand = find("header [data-e2e=admin-mark]").closest("a")!
+    expect(brand.getAttribute("href")).toBe("/")
+    expect(brand.textContent).toBe("SeedAdmin")
+    expect(find("[data-e2e=admin-mark] span").className).not.toMatch(/accent|primary/)
   })
 })
 

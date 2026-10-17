@@ -90,7 +90,7 @@ test.describe("the app with the WebSocket module switched off", () => {
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       // Sign out and in again, through the forms.
-      await page.locator("[data-e2e=shell-user-menu-button]").click()
+      await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
       await page.locator("[data-e2e=signin-required]").waitFor()
       await signInBrowser(page, email)

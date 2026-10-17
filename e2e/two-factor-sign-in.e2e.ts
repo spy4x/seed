@@ -51,7 +51,7 @@ test.describe("two-factor sign-in", () => {
       await expect(page.locator("[data-e2e=totp-disable]")).toBeVisible()
       await expect(page.locator("[data-e2e=totp-start]")).toHaveCount(0)
 
-      await page.locator("[data-e2e=shell-user-menu-button]").click()
+      await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
       await page.locator("[data-e2e=signin-required]").waitFor()
 

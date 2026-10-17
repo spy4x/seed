@@ -120,7 +120,7 @@ export async function signIn(page: Page, email: string, password: string): Promi
  * the sidebar, which goes through the app's router. Waits for the page's heading.
  */
 export async function openProfile(page: Page): Promise<void> {
-  await page.locator("[data-e2e=shell-user-menu-button]").click()
+  await page.locator("[data-e2e=account-menu-button]").click()
   await page.getByRole("menuitem", { name: "Profile" }).click()
   await page.getByRole("heading", { level: 1, name: "Profile" }).waitFor()
 }

@@ -101,7 +101,7 @@ test.describe("groups over the socket", () => {
       await signIn(page, email, password)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
-      await page.locator("[data-e2e=shell-user-menu-button]").click()
+      await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
       await page.locator("[data-e2e=signin-required]").waitFor()
 
@@ -133,7 +133,7 @@ test.describe("groups over the socket", () => {
       await gotoApp(other, "/", other.locator("[data-e2e=shell-ws-status]"))
       await expect(other.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
-      await page.locator("[data-e2e=shell-user-menu-button]").click()
+      await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
       await page.locator("[data-e2e=signin-required]").waitFor()
 

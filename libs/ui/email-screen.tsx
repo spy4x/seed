@@ -27,14 +27,22 @@ export const EMAIL_FAILURES = {
 } as const
 
 /**
+ * Whether `EmailBanner` shows anything for this state: only while an address waits for its code.
+ * A frame passes the banner only then, because it keeps room for any banner it is given.
+ */
+export function showsEmailBanner(status: EmailStatus | null): boolean {
+  return Boolean(status && emailToVerify(status))
+}
+
+/**
  * The notice a signed-in page shows while an address waits for its code. Nothing when there is
- * none. Its action opens the page where the code goes.
+ * none (`showsEmailBanner`). Its action opens the page where the code goes.
  */
 export function EmailBanner(
   { status, navigate }: { status: EmailStatus | null; navigate?: Navigate },
 ): JSX.Element | null {
-  const email = status && emailToVerify(status)
-  if (!email) return null
+  if (!status || !showsEmailBanner(status)) return null
+  const email = emailToVerify(status)
   return (
     <Notice
       tone="warning"

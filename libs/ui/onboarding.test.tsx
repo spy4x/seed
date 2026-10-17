@@ -332,8 +332,8 @@ describe("first-steps tour", () => {
     expect(TOUR_STEPS.map((step) => step.target)).toEqual([
       `[data-e2e="rail-shell-rail"] a[href="/notes"]`,
       `[data-e2e="rail-shell-rail"] a[href="/groups"]`,
-      `[data-e2e="shell-bell"], [data-e2e="shell-bell-rail"]`,
-      `[data-e2e="shell-user-menu-button"], [data-e2e="shell-user-menu-button-rail"]`,
+      `[data-e2e="rail-shell-bottom"] a[href="/notifications"]`,
+      `[data-e2e="rail-shell-bottom"] [data-e2e="account-menu-button"]`,
     ])
     expect(all("[data-e2e=onboarding-tour-start]").map((b) => b.textContent?.trim())).toEqual([
       "Take the tour",

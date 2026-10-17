@@ -88,7 +88,7 @@ test.describe("auth profile ws push flow", () => {
       await expect(page.locator("[data-e2e=profile-dialog]")).toHaveCount(0)
       await expect(page.locator("[data-e2e=profile-name]")).toHaveText(`${firstName} ${lastName}`)
 
-      await page.locator("[data-e2e=shell-user-menu-button]").click()
+      await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
       await page.locator("[data-e2e=signin-required]").waitFor()
 
@@ -126,7 +126,7 @@ test.describe("auth profile ws push flow", () => {
       // before it arrived would keep nothing, so the spec waits for it.
       await expect.poll(() => page.evaluate(() => localStorage.getItem("last-sign-in")))
         .not.toBeNull()
-      await page.locator("[data-e2e=shell-user-menu-button]").click()
+      await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
       await page.locator("[data-e2e=signin-required]").waitFor()
 

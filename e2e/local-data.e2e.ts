@@ -137,7 +137,7 @@ async function signOut(page: Page): Promise<void> {
 
 /** Chooses Sign out in the account menu, which may first ask about unsent changes. */
 async function askToSignOut(page: Page): Promise<void> {
-  await page.locator("[data-e2e=shell-user-menu-button]").click()
+  await page.locator("[data-e2e=account-menu-button]").click()
   await page.getByRole("menuitem", { name: "Sign out" }).click()
 }
 

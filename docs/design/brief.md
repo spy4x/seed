@@ -38,7 +38,12 @@ must be good enough to ship as it is.
 - Hue: purple, 305°. Light accent `oklch(0.381 0.176 305)` (`#59168b`), set as `--color-primary`
   and `--color-accent`. Dark mode is the house ink palette with the same hue.
 - The brand mark is the house construction: a rounded square in the brand hue with a white glyph,
-  then "Seed" in Geist 500. The admin panel adds an "Admin" badge that is not a second accent.
+  then "Seed" in Geist 500. It appears on the public website and the signed-out screens; a
+  signed-in page carries no brand, because the frame is the library's `AppShell`, the same in every
+  app of the house.
+- The admin panel is told apart by a neutral gray "Admin" badge, never by a second accent: under
+  the operator's avatar in the rail, beside "Seed" on its sign-in page, and in its page titles
+  ("Users · Admin · Seed").
 - The accent marks the one primary action and "current". Status colours are never purple.
 
 ## Reference products
