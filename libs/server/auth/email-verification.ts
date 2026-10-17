@@ -57,6 +57,24 @@ export async function dropCodeKeys(
   }
 }
 
+/**
+ * Takes `address` off every key of the user that still carries it, keeping the keys (#403). After
+ * an address change those are the provider keys: each keeps signing in by its provider's own user
+ * id, but no longer says "this person owns the old address". Left in place, it would let any other
+ * Google or GitHub identity that vouches for the old address, such as one the mailbox's next
+ * holder makes, be linked into the account.
+ */
+export async function releaseAddress(
+  store: AuthStore,
+  userId: number,
+  address: string,
+): Promise<void> {
+  if (!store.releaseKeyEmail) throw new TypeError("the auth store cannot release an address")
+  for (const key of await store.listKeys(userId)) {
+    if (key.email === address) await store.releaseKeyEmail(userId, key.id)
+  }
+}
+
 /** The `email_changes` table: one new address per user, waiting for its code. */
 export type EmailChanges = ReturnType<typeof emailChanges>
 

@@ -30,7 +30,9 @@
  *   address too; when it was unproven until then, the reset also removes any second factor, since
  *   whoever set it up never showed they own the mailbox. A new address waits in `email_changes`
  *   until its code proves it; only then does the password key move to it, so the account signs in
- *   with the old address until that moment.
+ *   with the old address until that moment. Then a Google or GitHub key that carried the old
+ *   address loses it and keeps signing in (#403): the old address no longer opens the account
+ *   through another provider identity that vouches for it.
  * - **Audit rows in the same transaction (#191).** Sign-up, sign-in and sign-out each write their
  *   `auth_audits` row inside the transaction that changes the session, so a failed row undoes the
  *   action. Sign-in checks the password with the package's `checkCredentials` first and creates
@@ -119,6 +121,7 @@ import {
   passwordKeyOf,
   proveEmailCode,
   readEmailStatus,
+  releaseAddress,
 } from "@server/auth/email-verification.ts"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
@@ -1368,11 +1371,13 @@ export function createSignIn(options: SignInOptions): SignIn {
         if (status.pending === null) return { outcome: EmailVerifyOutcome.Verified }
 
         // No password to move (#384): the key `proveAddress` just proved holds the new address.
-        // An address held that way before goes, so the account has one address and the old one
-        // is free again. The provider keys keep what their provider vouched for.
-        // Every other session ends, as for an account with a password below (#406).
+        // An address held that way before goes, and a provider key that carried the old address
+        // keeps signing in but carries it no more (#403), so the account has one address and the
+        // old one is free again. Every other session ends, as for an account with a password
+        // below (#406).
         if (key === null) {
           await dropCodeKeys(tx.authStore, user.id, target)
+          if (status.email !== null) await releaseAddress(tx.authStore, user.id, status.email)
           await tx.emailChange.remove(user.id)
           await txSessions.signOutUser(user.id, { except: session.id })
           return { outcome: EmailVerifyOutcome.Verified }
@@ -1381,9 +1386,11 @@ export function createSignIn(options: SignInOptions): SignIn {
         // A new address: `proveAddress` gave the user a proven code key for it, which also removed
         // every other user's unproven claim to it. The password moves onto a key for the new
         // address, then every code key of the account and the old key go; deleting the old key
-        // ends its sessions. No key of the account's own making is left on an address it had
-        // before, so that address is free again. A provider key keeps what its provider vouched
-        // for. The sessions that a provider sign-in started end too: only the new one stays.
+        // ends its sessions. A provider key that carried the old address loses it but stays: the
+        // Google or GitHub identity linked before the move keeps signing in by its own user id,
+        // while a different identity that only vouches for the old address is no longer matched
+        // to this account (#403). No key is left on the old address, so it is free again. The
+        // sessions that a provider sign-in started end too: only the new one stays.
         const moved = await tx.authStore.addKey(user.id, {
           method: PASSWORD_METHOD,
           subject: target,
@@ -1400,6 +1407,7 @@ export function createSignIn(options: SignInOptions): SignIn {
             : SecondFactorStatus.NotRequired,
         }, deviceOf(c))
         await tx.authStore.deleteKey(user.id, key.id)
+        if (status.email !== null) await releaseAddress(tx.authStore, user.id, status.email)
         await txSessions.signOutUser(user.id, { except: created.session.id })
         await tx.emailChange.remove(user.id)
         return { outcome: EmailVerifyOutcome.Verified, created }
