@@ -1,25 +1,15 @@
 @import "tailwindcss";
 /* Not real files: preactThemeCss() from @spy4x/preact-theme/vite, listed in vite.config.ts,
-   replaces both lines with the text @spy4x/preact-theme exports, and appends an @source inline(...)
-   line with the class names the library's components render. */
+   replaces these lines with the text @spy4x/preact-theme exports, and appends an @source inline(...)
+   line with the class names the library's components render. ink.css is the near-black dark
+   palette; it applies only under `.dark[data-theme="ink"]`, which index.html and the theme script
+   set. */
 @import "@spy4x/preact-theme/tokens.css";
 @import "@spy4x/preact-theme/preset.css";
+@import "@spy4x/preact-theme/ink.css";
 /* libs/ui holds the screens; Tailwind does not scan outside this app on its own. The file says
    why the @source line lives there. */
 @import "../../../libs/ui/sources.css";
-/* preact-theme sets no font since 2.0.0. The app keeps Poppins, which index.html loads. */
-@theme {
-  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
-}
-
-/* The operator area's own accent (#424): indigo, so an operator never mistakes it for the product,
-   whose accent is purple. Written after the tokens, so it wins the cascade. */
-:root {
-  --color-primary: oklch(0.398 0.195 277.366); /* indigo-800 */
-  --color-primary-muted: oklch(0.511 0.262 276.966); /* indigo-600 */
-}
-
-.dark {
-  --color-accent: oklch(0.457 0.24 277.023); /* indigo-700 */
-  --color-primary-muted: oklch(0.673 0.182 276.935); /* indigo-400 */
-}
+/* Seed's fonts and purple, the product's own: the operator area differs only by its "Admin"
+   badge, so an operator recognises the product (preact-components docs/design-language.md). */
+@import "../../../libs/ui/brand.css";

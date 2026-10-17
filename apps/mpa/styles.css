@@ -10,30 +10,8 @@
    why the @source line lives there. */
 @import "../../libs/ui/sources.css";
 
-/* Geist Sans and Geist Mono, variable, from the npm package `geist@1.7.2` (`dist/fonts/`, files
-   `Geist-Variable.woff2` and `GeistMono-Variable.woff2`), under the SIL Open Font License beside
-   them in static/fonts/OFL.txt. To update: `npm pack geist@<version>` and copy the two files and
-   LICENSE.txt over. The sans file is preloaded in `_app.tsx`; `optional` keeps the layout from
-   shifting when it arrives late (the system font stays for that page view). */
-@font-face {
-  font-family: "Geist";
-  src: url("/fonts/geist-sans.var.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: optional;
-}
-@font-face {
-  font-family: "Geist Mono";
-  src: url("/fonts/geist-mono.var.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-@theme {
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-}
+/* Seed's fonts and purple, shared with the product and the admin app. */
+@import "../../libs/ui/brand.css";
 
 /* A faint 32 px line grid behind the hero, fading out downwards. Decoration only. */
 .site-grid {

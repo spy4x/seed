@@ -17,9 +17,9 @@ import {
   RealtimePair,
 } from "../components/features-visuals.tsx"
 import { OnThisPage } from "../components/on-this-page.tsx"
-import { PageHero } from "../components/page-hero.tsx"
 import { Shot } from "../components/shot.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
+import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { REPOSITORY_URL, SITE_NAME, SiteFrame, type SitePageHead, spaLinks } from "../site.tsx"
 import { define } from "../utils.ts"
 
@@ -388,6 +388,7 @@ function featuresJsonLd(origin: string, demo: string): unknown[] {
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {
   return (
     <PageHero
+      class="site-glow"
       eyebrow="Features"
       title="Everything Seed ships, and what it does not yet"
       lead="Seed is a free, open-source SaaS starter with teams and billing. Each section says what a person using your product notices, then what you get as a developer, and links to the code."

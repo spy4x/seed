@@ -684,6 +684,13 @@ describe("PublicFrame", () => {
     expect(await click('a[href="/"]')).toBe(true)
     expect(navigate.calls).toEqual([["/"]])
   })
+  it("shows the product's sprout mark above the signed-out pages, named by its text", async () => {
+    await mount(<PublicFrame canSignOut={false} onSignOut={() => {}}>page</PublicFrame>)
+
+    const mark = find('a[href="/"] [data-e2e=brand-mark]')
+    expect(mark.textContent).toBe("Seed")
+    expect(mark.querySelector("[aria-hidden=true] svg")).not.toBeNull()
+  })
 })
 
 describe("AuthScreen", () => {

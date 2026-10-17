@@ -29,13 +29,15 @@ function expectSecurityHeaders(response: APIResponse) {
   expect(directives).toContain(
     "img-src 'self' data: https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
   )
-  expect(directives).toContain("font-src 'self' https://fonts.gstatic.com")
+  // Geist comes from the app's own /fonts/ (#444): no font host is allowed, so the policy sends no
+  // font-src and fonts fall back to default-src 'self'.
+  expect(policy).not.toContain("font-src")
   // The origin of the container's SPA_ERROR_REPORT_DSN, and nothing else beyond the app itself.
   expect(directives).toContain(`connect-src 'self' ${TRACKER}`)
   // The app's own files and the two inline blocks of the built page, each by its hash.
   expect(policy).toMatch(/(^|; )script-src 'self' 'sha256-[A-Za-z0-9+/]{43}='(;|$)/)
   expect(policy).toMatch(
-    /(^|; )style-src 'self' 'sha256-[A-Za-z0-9+/]{43}=' https:\/\/fonts\.googleapis\.com(;|$)/,
+    /(^|; )style-src 'self' 'sha256-[A-Za-z0-9+/]{43}='(;|$)/,
   )
   expect(policy).not.toContain("unsafe")
   expect(policy).not.toContain("*")
@@ -113,21 +115,10 @@ test("the API sends the security headers with an answer and with an unknown addr
 
 test("a signed-in walk through the app meets no refusal under the content security policy", async ({ context, page, request, baseURL }) => {
   const violations = await watchCspViolations(context)
-  // Google's two font hosts, answered here: the run needs no internet, and a request the policy
-  // refuses never gets this far, so the counters prove the policy let both through.
-  let stylesheets = 0
-  let fonts = 0
-  await context.route("https://fonts.googleapis.com/**", async (route) => {
-    stylesheets++
-    await route.fulfill({
-      contentType: "text/css",
-      body: `@font-face { font-family: "Poppins"; font-weight: 300 600; ` +
-        `src: url(https://fonts.gstatic.com/s/poppins/e2e.woff2) format("woff2"); }`,
-    })
-  })
-  await context.route("https://fonts.gstatic.com/**", async (route) => {
-    fonts++
-    await route.fulfill({ status: 404, contentType: "font/woff2", body: "" })
+  // The fonts the page asks for: Geist from the app's own origin, nothing from another one.
+  const fontRequests: string[] = []
+  page.on("request", (request) => {
+    if (request.resourceType() === "font") fontRequests.push(request.url())
   })
 
   const email = `e2e-csp-${uuidV7().slice(-8)}@example.com`
@@ -149,8 +140,11 @@ test("a signed-in walk through the app meets no refusal under the content securi
     // WebSocket.
     await signIn(page, email, password)
     await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
-    expect(stylesheets, "the Google Fonts stylesheet was asked for").toBeGreaterThan(0)
-    await expect.poll(() => fonts, { message: "a font file was asked for" }).toBeGreaterThan(0)
+    await expect.poll(() => fontRequests.length, { message: "a font file was asked for" })
+      .toBeGreaterThan(0)
+    const origin = new URL(baseURL!).origin
+    expect(fontRequests.filter((url) => new URL(url).origin !== origin)).toEqual([])
+    expect(fontRequests).toContain(`${origin}/fonts/geist-sans.var.woff2`)
 
     // The service worker installs from /sw.js and takes the page over.
     await page.evaluate(() => navigator.serviceWorker.ready.then(() => undefined))

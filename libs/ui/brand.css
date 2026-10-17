@@ -1,0 +1,46 @@
+/* Seed's brand, the same in the product (apps/spa), the admin app (apps/admin) and the website
+   (apps/mpa): each app's stylesheet imports this file after the library's tokens and ink.css
+   (spy4x/template#444, preact-components docs/design-language.md).
+
+   Fonts: Geist Sans and Geist Mono, variable, from the npm package `geist@1.7.2` (`dist/fonts/`,
+   files `Geist-Variable.woff2` and `GeistMono-Variable.woff2`), under the SIL Open Font License
+   beside them in OFL.txt. Every app serves the two files itself at `/fonts/` (apps/spa/public,
+   apps/admin/public, apps/mpa/static), so no page asks a font CDN, and preloads the sans file. To
+   update: `npm pack geist@<version>` and copy the two files and LICENSE.txt into the three folders.
+   `swap` shows the text at once in "Geist Fallback", Arial scaled to Geist's metrics (the values
+   next/font computes for Geist), so the swap barely moves the layout. */
+@font-face {
+  font-family: "Geist";
+  src: url("/fonts/geist-sans.var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/fonts/geist-mono.var.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist Fallback";
+  src: local("Arial"), local("Liberation Sans"), local("Helvetica");
+  ascent-override: 95.94%;
+  descent-override: 28.16%;
+  line-gap-override: 0%;
+  size-adjust: 104.76%;
+}
+
+@theme {
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Seed's one hue, purple at 305°, in every app. `--color-accent` is set too, so the dark palette,
+   ink included, draws its buttons, rings and selected states from the same purple. The admin app
+   differs from the product only by the "Admin" badge beside the mark. */
+:root {
+  --color-primary: oklch(0.381 0.176 305);
+  --color-accent: oklch(0.381 0.176 305);
+}

@@ -1,7 +1,8 @@
 import type { ComponentChildren, JSX } from "preact"
 import { Head } from "fresh/runtime"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
-import { IconGitHub } from "@spy4x/preact-icons"
+import { IconGitHub, IconSprout } from "@spy4x/preact-icons"
+import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { Input } from "@spy4x/preact-ui/input"
 import { Notice } from "@spy4x/preact-ui/notice"
@@ -11,7 +12,6 @@ import { SiteHeader } from "@spy4x/preact-system/site-header"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME } from "./brand.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
-import { SeedMark } from "./components/seed-mark.tsx"
 import type { State } from "./utils.ts"
 
 export { AUTHOR_URL, REPOSITORY_URL, SITE_NAME }
@@ -164,7 +164,7 @@ export function SiteFrame(
         currentPath={path}
         brand={
           <a href="/" class="rounded-control" data-e2e="site-brand">
-            <SeedMark />
+            <BrandMark Icon={IconSprout} name="Seed" />
           </a>
         }
         links={NAV_LINKS}
@@ -174,7 +174,7 @@ export function SiteFrame(
       <SiteFooter
         brand={
           <div class="flex max-w-sm flex-col gap-3">
-            <SeedMark />
+            <BrandMark Icon={IconSprout} name="Seed" />
             <p class="text-sm text-muted">
               The groundwork of your SaaS, open source under the MIT licence.
             </p>

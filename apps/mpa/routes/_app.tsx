@@ -13,6 +13,10 @@ export default define.page(function App({ Component }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Seed</title>
+        {/* The browser's own frame takes the canvas of the palette the device asks for. */}
+        <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#080b10" media="(prefers-color-scheme: dark)" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <script src="/theme.js"></script>
         <link
           rel="preload"

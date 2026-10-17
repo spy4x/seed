@@ -1,4 +1,4 @@
-import type { ConsoleMessage, LaunchOptions, Locator, Page, Request } from "@playwright/test"
+import type { ConsoleMessage, Locator, Page, Request } from "@playwright/test"
 
 /**
  * What Chromium reports for a request that was in flight when the host's network interfaces
@@ -123,19 +123,4 @@ export async function openProfile(page: Page): Promise<void> {
   await page.locator("[data-e2e=shell-user-menu-button]").click()
   await page.getByRole("menuitem", { name: "Profile" }).click()
   await page.getByRole("heading", { level: 1, name: "Profile" }).waitFor()
-}
-
-/**
- * Chromium's switch that makes the Google Fonts hosts fail to resolve. The SPA's `index.html` loads
- * a stylesheet from fonts.googleapis.com, which holds back the app's scripts until it arrives, and
- * font files from fonts.gstatic.com, which hold back the page's `load` event. Over a slow internet
- * connection either one timed a spec out; the e2e checks the app, not Google's servers, so the
- * browser renders with fallback fonts instead.
- */
-export const NO_GOOGLE_FONTS =
-  `--host-resolver-rules=MAP fonts.googleapis.com ~NOTFOUND, MAP fonts.gstatic.com ~NOTFOUND`
-
-/** `options` with {@link NO_GOOGLE_FONTS} added to its arguments; everything else is kept as is. */
-export function withoutGoogleFonts(options: LaunchOptions): LaunchOptions {
-  return { ...options, args: [...(options.args ?? []), NO_GOOGLE_FONTS] }
 }

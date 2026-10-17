@@ -14,6 +14,7 @@ import {
 } from "@spy4x/preact-icons"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { Card } from "@spy4x/preact-ui/card"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
 import { Input } from "@spy4x/preact-ui/input"
 import { StatusMark } from "@spy4x/preact-ui/status-mark"
@@ -365,10 +366,7 @@ function Status(): JSX.Element {
           lead="Seed is a work in progress. Here is exactly what works and what does not."
         />
         <div class="grid gap-6 md:grid-cols-2">
-          <section
-            aria-labelledby="works-title"
-            class="rounded-card border border-subtle bg-canvas p-6"
-          >
+          <Card role="region" aria-labelledby="works-title" class="rounded-card bg-canvas p-6">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <h3 id="works-title" class="text-lg font-semibold">Works today</h3>
               <StatusMark status="ready" />
@@ -381,11 +379,8 @@ function Status(): JSX.Element {
                 </li>
               ))}
             </ul>
-          </section>
-          <section
-            aria-labelledby="not-built-title"
-            class="rounded-card border border-subtle bg-canvas p-6"
-          >
+          </Card>
+          <Card role="region" aria-labelledby="not-built-title" class="rounded-card bg-canvas p-6">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <h3 id="not-built-title" class="text-lg font-semibold">Not built yet</h3>
               <StatusMark status="wip" />
@@ -398,7 +393,7 @@ function Status(): JSX.Element {
                 </li>
               ))}
             </ul>
-          </section>
+          </Card>
         </div>
         <a
           href={`${REPOSITORY_URL}/issues`}

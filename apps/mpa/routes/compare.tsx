@@ -4,10 +4,10 @@ import { Button } from "@spy4x/preact-ui/button"
 import { type ComparisonRow, ComparisonTable } from "@spy4x/preact-ui/comparison-table"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
 import { breadcrumbListJsonLd, faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { Band } from "../components/band.tsx"
 import { type Alternative, CompareAlternatives } from "../components/compare-alternatives.tsx"
 import { CtaBand } from "../components/cta-band.tsx"
-import { PageHero } from "../components/page-hero.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
 import {
   PERSON_JSON_LD,
@@ -266,6 +266,7 @@ function compareJsonLd(origin: string): unknown[] {
 function Hero({ demoHref }: { demoHref: string }): JSX.Element {
   return (
     <PageHero
+      class="site-glow"
       eyebrow="Compare"
       title="How Seed compares to other SaaS starters"
       lead={

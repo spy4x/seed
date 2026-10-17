@@ -116,6 +116,20 @@ describe("the public website", () => {
     expect(html).toContain(`<title>Privacy: what Seed's demo and site keep · Seed</title>`)
   })
 
+  it("gives every page the Seed mark as its tab icon and the canvas of each palette as its theme colour", async () => {
+    for (const path of ["/", "/pricing", "/subscribe"]) {
+      const { html } = await page(path)
+
+      expect(html, path).toContain(`<link rel="icon" type="image/svg+xml" href="/favicon.svg"`)
+      expect(html, path).toContain(
+        `<meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)"`,
+      )
+      expect(html, path).toContain(
+        `<meta name="theme-color" content="#080b10" media="(prefers-color-scheme: dark)"`,
+      )
+    }
+  })
+
   it("starts every page with a link that skips to the main content, then one header, main and footer", async () => {
     for (const path of ["/", "/privacy", "/subscribe"]) {
       const { html } = await page(path)

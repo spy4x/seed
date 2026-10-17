@@ -5,6 +5,7 @@ import {
   IconBell,
   IconClock,
   IconDocumentText,
+  IconSprout,
   IconTag,
   IconUsers,
 } from "@spy4x/preact-icons"
@@ -15,6 +16,7 @@ import {
   type RailShellSidebarPlace,
 } from "@spy4x/preact-system/rail-shell"
 import { Avatar } from "@spy4x/preact-ui/avatar"
+import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { Page } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
@@ -400,13 +402,7 @@ function Brand({ navigate }: { navigate?: Navigate }): JSX.Element {
       navigate={navigate}
       class="flex shrink-0 items-center gap-2 rounded-md"
     >
-      <span
-        class="flex size-7 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
-        aria-hidden="true"
-      >
-        S
-      </span>
-      <span class="text-base font-semibold">Seed</span>
+      <BrandMark Icon={IconSprout} name="Seed" />
     </Link>
   )
 }

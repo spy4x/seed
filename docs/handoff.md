@@ -328,7 +328,7 @@ outside `ENV=dev`. The worker reads the keys at start-up, so a change needs a de
 
 A full-stack e2e spec imports `test` from `e2e/fixtures/stack.ts` and loads pages through `gotoApp`
 or `signIn`. That fixture warms Vite's page bundles once per
-worker and blocks Google Fonts, and `gotoApp` loads the page again when a network change
+worker, and `gotoApp` loads the page again when a network change
 leaves it blank. A spec on Playwright's own `test`, or one calling `page.goto` or
 `page.reload` while online, gets none of this and brings the cold-start flakes back. Older specs
 still call `page.reload()` directly; `grep -n "page.reload" e2e/*.e2e.ts` lists them.

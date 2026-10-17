@@ -2,9 +2,9 @@ import { IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
 import { breadcrumbListJsonLd, faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { Band } from "../components/band.tsx"
 import { CtaBand } from "../components/cta-band.tsx"
-import { PageHero } from "../components/page-hero.tsx"
 import { PricingDemoPlans } from "../components/pricing-demo-plans.tsx"
 import { PricingWays } from "../components/pricing-ways.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
@@ -101,6 +101,7 @@ export default define.page(function Pricing({ state }) {
   return (
     <SiteFrame state={state} path="/pricing" head={head}>
       <PageHero
+        class="site-glow"
         eyebrow="Pricing"
         title="Seed is free. Here is what it costs to run."
         lead="MIT licence, no paid tier, no account needed. You pay for one server and for the services you choose to turn on."

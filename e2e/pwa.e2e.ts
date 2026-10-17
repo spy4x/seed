@@ -36,16 +36,17 @@ test.describe("installable app", () => {
     await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
     const { url, manifest } = await linkedManifest(page)
 
-    expect(manifest.name).toBeTruthy()
-    expect(manifest.short_name).toBeTruthy()
+    expect(manifest.name).toBe("Seed")
+    expect(manifest.short_name).toBe("Seed")
     expect(manifest.display).toBe("standalone")
     expect(manifest.start_url).toBe("/")
     expect(manifest.theme_color).toMatch(/^#[0-9a-f]{6}$/i)
     expect(manifest.background_color).toBeTruthy()
-    await expect(page.locator("meta[name=theme-color]")).toHaveAttribute(
-      "content",
-      manifest.theme_color as string,
-    )
+    // One theme-color per palette (#444): the light one is the manifest's, the dark one ink's canvas.
+    await expect(page.locator(`meta[name=theme-color][media="(prefers-color-scheme: light)"]`))
+      .toHaveAttribute("content", manifest.theme_color as string)
+    await expect(page.locator(`meta[name=theme-color][media="(prefers-color-scheme: dark)"]`))
+      .toHaveAttribute("content", "#080b10")
 
     const wanted = [
       { size: "192x192", purpose: undefined },

@@ -13,13 +13,13 @@ import {
   UnsubscribeScreen,
 } from "@ui/subscribe-screen.tsx"
 import { isRecord } from "@spy4x/platform/universal/is-record"
-import { IconCheck, IconGitHub } from "@spy4x/preact-icons"
+import { IconCheck, IconGitHub, IconSprout } from "@spy4x/preact-icons"
+import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { type ApiAnswer, errorMessage } from "./api.ts"
 import { readFormBody } from "@spy4x/server/http/bounded-body"
 import { API_BODIES, FORM_LIMITS } from "./forms.ts"
-import { SeedMark } from "./components/seed-mark.tsx"
 import { REPOSITORY_URL, SITE_NAME, SiteFrame, type SitePageHead, spaLinks } from "./site.tsx"
 import { define, type State } from "./utils.ts"
 
@@ -231,7 +231,7 @@ function renderSubscribe(
       <NewsletterBand wide>
         <div class="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
           <section class="flex flex-col gap-4" aria-label="About the newsletter">
-            <SeedMark />
+            <BrandMark Icon={IconSprout} name="Seed" />
             <p class="text-2xl font-semibold tracking-tight text-balance">
               Get a short email when Seed changes
             </p>

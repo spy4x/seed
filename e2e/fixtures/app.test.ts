@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
 import type { ConsoleMessage, Locator, Page, Request } from "@playwright/test"
-import { gotoApp, NO_GOOGLE_FONTS, withoutGoogleFonts } from "./app.ts"
+import { gotoApp } from "./app.ts"
 
 type Outcome =
   | "boots"
@@ -169,14 +169,4 @@ Deno.test("gotoApp stops listening when it returns", async () => {
   const fake = fakePage(["boots"])
   await gotoApp(fake.page, "/sign-in", fake.ready)
   expect(fake.listeners()).toBe(0)
-})
-
-Deno.test("withoutGoogleFonts keeps the browser and the arguments it is given", () => {
-  const options = withoutGoogleFonts({ executablePath: "/opt/chrome", args: ["--mute-audio"] })
-  expect(options.executablePath).toBe("/opt/chrome")
-  expect(options.args).toEqual(["--mute-audio", NO_GOOGLE_FONTS])
-})
-
-Deno.test("withoutGoogleFonts adds the switch when no arguments were given", () => {
-  expect(withoutGoogleFonts({}).args).toEqual([NO_GOOGLE_FONTS])
 })

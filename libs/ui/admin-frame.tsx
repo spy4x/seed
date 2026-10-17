@@ -42,7 +42,7 @@ function AdminBrand(
     return (
       <div class="flex min-h-11 items-center gap-2 px-2">
         <span data-e2e={placeHook("admin-mark", place)}>
-          <Badge text="Admin" color="blue" />
+          <Badge text="Admin" />
         </span>
         <span class="text-base font-semibold text-muted">Seed</span>
       </div>
@@ -58,7 +58,7 @@ function AdminBrand(
       aria-label={rail ? "Seed admin" : undefined}
     >
       <span data-e2e={placeHook("admin-mark", place)}>
-        <Badge text="Admin" color="blue" />
+        <Badge text="Admin" />
       </span>
       {!rail && <span class="text-base font-semibold text-muted">Seed</span>}
     </Link>

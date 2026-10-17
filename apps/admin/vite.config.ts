@@ -19,15 +19,12 @@ const BUILT_PAGE = fromFileUrl(new URL("./dist/index.html", import.meta.url))
 const SECURITY_HEADERS = fromFileUrl(new URL("./security-headers.conf", import.meta.url))
 
 /**
- * What the admin app loads from another origin, added to the defaults of the library's policy: the
- * Google Fonts stylesheet `index.html` links, and the font files it names. The API is on the app's
- * own origin (the proxy routes `/api`), so `'self'` covers it. Unlike the SPA, the app has no
- * service worker, no web manifest and no error tracker, so nothing differs per deployment.
+ * What the admin app loads from another origin, added to the defaults of the library's policy:
+ * nothing. The API is on the app's own origin (the proxy routes `/api`), and so are the fonts
+ * (`public/fonts`), so `'self'` covers both. Unlike the SPA, the app has no service worker, no web
+ * manifest and no error tracker, so nothing differs per deployment.
  */
-const EXTRA_SOURCES = {
-  styleSrc: ["https://fonts.googleapis.com"],
-  fontSrc: ["https://fonts.gstatic.com"],
-}
+const EXTRA_SOURCES = {}
 
 /**
  * Selectors, escaped as in the built CSS, that the build must contain: two only

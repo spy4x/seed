@@ -1,5 +1,6 @@
 import type { ComponentChildren, ComponentType, JSX } from "preact"
 import { IconArrowRight, type IconProps } from "@spy4x/preact-icons"
+import { Card } from "@spy4x/preact-ui/card"
 
 export interface FeatureCardProps {
   /** The heading's id, so the card's "Learn more" link can name which feature it is about. */
@@ -23,9 +24,10 @@ export function FeatureCard(
   { id, title, Icon, href, wide = false, media, children }: FeatureCardProps,
 ): JSX.Element {
   return (
-    <article
+    <Card
+      role="article"
       aria-labelledby={id}
-      class={`site-lift flex flex-col gap-4 overflow-hidden rounded-card border border-subtle bg-surface p-6 ${
+      class={`site-lift flex flex-col gap-4 overflow-hidden rounded-card p-6 ${
         wide ? "lg:col-span-2" : ""
       }`}
     >
@@ -42,6 +44,6 @@ export function FeatureCard(
         Learn more <IconArrowRight class="size-4" />
       </a>
       {media && <div class="-mx-6 -mb-6 mt-2 border-t border-subtle">{media}</div>}
-    </article>
+    </Card>
   )
 }
