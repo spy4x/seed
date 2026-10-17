@@ -53,7 +53,7 @@ steps:
                 break
               } catch {
                 if (i === 120) {
-                  console.error(`${hostname} did not accept connections within 60 s`)
+                  console.error(`$${hostname} did not accept connections within 60 s`)
                   Deno.exit(1)
                 }
                 await new Promise((resolve) => setTimeout(resolve, 500))
@@ -220,8 +220,7 @@ steps:
       # system resolver, which in this container does not know the name.
       - echo "127.0.0.1 app.localhost" >> /etc/hosts
       # Playwright stops after three failed tests. When sign-in itself is broken every test fails,
-      # each after 30 s and two retries, and the step would otherwise run into the script's limit
-      # of 25 minutes.
+      # each after 30 s, and the step would otherwise run into the script's limit of 25 minutes.
       - deno task e2e:local --smoke --max-failures=3
     # After e2e-spa: the three run scripts keep the API's vapid.json in the shared checkout while
     # they run, and each starts a worker on the one Valkey service, where a worker would take
