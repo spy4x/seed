@@ -38,6 +38,7 @@ import {
 import { roleColor, roleLabel } from "./admin-users-screen.tsx"
 import { GroupMark } from "./group-appearance.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { useFormat, When } from "@spy4x/preact-ui/format"
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminGroupOperatorView {
@@ -148,6 +149,7 @@ export interface AdminGroupScreenProps {
  */
 export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
   const { detail, error, operator, navigate } = props
+  const format = useFormat()
   const back = { href: ADMIN_GROUP_PATHS.list, label: `Groups` }
 
   if (!detail) {
@@ -268,8 +270,8 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
           <Fact label="Renews">
             {detail.billing?.currentPeriodEnd
               ? detail.billing.cancelAtPeriodEnd
-                ? `Ends ${new Date(detail.billing.currentPeriodEnd).toLocaleDateString()}`
-                : new Date(detail.billing.currentPeriodEnd).toLocaleDateString()
+                ? `Ends ${format.date(detail.billing.currentPeriodEnd)}`
+                : format.date(detail.billing.currentPeriodEnd)
               : `No subscription`}
           </Fact>
         </dl>
@@ -323,11 +325,6 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
       <dd class="truncate text-sm font-medium">{children}</dd>
     </div>
   )
-}
-
-/** A moment as "3 days ago", with the exact time for a machine and on hover. */
-function When({ at }: { at: string }): JSX.Element {
-  return <time dateTime={at} title={new Date(at).toLocaleString()}>{timeAgo(at)}</time>
 }
 
 const ROW = `flex min-h-14 flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3`

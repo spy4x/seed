@@ -1,6 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
 import { useRef, useState } from "preact/hooks"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Card } from "@spy4x/preact-ui/card"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
@@ -15,6 +14,7 @@ import { useFocusAfterRemoval } from "@spy4x/preact-ui/use-focus-after-removal"
 import { MoreMenu } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import type { Navigate } from "./progressive.tsx"
+import { When } from "@spy4x/preact-ui/format"
 
 /** One member of a group as the members section shows them. */
 export interface GroupMemberRow {
@@ -213,7 +213,7 @@ function MemberItem(
           )}
           {member.lastSeenAt && (
             <span class="text-sm text-muted" data-e2e="group-member-last-seen">
-              Last seen <time dateTime={member.lastSeenAt}>{timeAgo(member.lastSeenAt)}</time>
+              Last seen <When at={member.lastSeenAt} />
             </span>
           )}
         </div>

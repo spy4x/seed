@@ -26,6 +26,7 @@ import {
   type EmailScreenProps,
   EmailUnavailable,
 } from "./email-screen.tsx"
+import { createFormatters } from "@spy4x/time/format"
 import { AppFrame, navKey, PublicFrame } from "./frame.tsx"
 import { MENU_TOOLTIP_CLASS } from "./group-picker.tsx"
 import { ProfileScreen, type ProfileScreenProps } from "./profile-screen.tsx"
@@ -1201,7 +1202,7 @@ describe("deleting the account from the profile", () => {
       "FamilyOther people still use it. Hand it over or remove them.",
       "ShopIts plan is still paid. Cancel the plan first.",
       `ClubIts plan is cancelled and runs until ${
-        new Date("2026-11-20T12:00:00.000Z").toLocaleDateString(undefined, { dateStyle: "long" })
+        createFormatters().date("2026-11-20T12:00:00.000Z", "long")
       }. Wait until the plan ends.`,
     ])
     // A tap target of 44 px on a phone.

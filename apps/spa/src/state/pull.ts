@@ -15,6 +15,8 @@ export interface PullDependencies {
   members: { refresh(): Promise<void>; groupId: ReadonlySignal<string | null> }
   /** The inbox: its unread count, and its list while the page is open. */
   notifications: { refresh(): Promise<void> }
+  /** The person's display preferences, which they may have changed on another device. */
+  preferences?: { refresh(): Promise<void> }
   /** The first-steps checklist and the tour, which the person may have closed in another tab.
    * Its `hint` reads only while the page that draws the card is open. */
   onboarding?: { hint(): Promise<void> }
@@ -37,17 +39,28 @@ export interface PullDependencies {
  * removed never asks for the members of a group they left.
  */
 export function createPull(dependencies: PullDependencies) {
-  const { userId, profile, selection, groups, notes, tags, members, notifications, onboarding } =
-    dependencies
+  const {
+    userId,
+    profile,
+    selection,
+    groups,
+    notes,
+    tags,
+    members,
+    notifications,
+    onboarding,
+    preferences,
+  } = dependencies
   return async (gap?: { groupId: string }): Promise<void> => {
     // The hint for this person's own changes (profile, push devices, selected group, inbox, the
-    // first-steps checklist), sent after a change in another tab or a new notification.
+    // first-steps checklist, preferences), sent after a change in another tab or a notification.
     if (gap?.groupId === userChangeGroupId(userId)) {
       await Promise.all([
         profile.refresh(),
         selection.refresh(),
         notifications.refresh(),
         onboarding?.hint(),
+        preferences?.refresh(),
       ])
       return
     }
@@ -56,8 +69,12 @@ export function createPull(dependencies: PullDependencies) {
     const openGroup = notes.groupId.value
     const membersGroup = members.groupId.value
     const tagsGroup = tags?.groupId.value ?? null
-    // A group hint is not about the inbox; a start-up or a reconnect may have missed one.
-    if (!gap) void notifications.refresh()
+    // A group hint is not about the inbox or the preferences; a start-up or a reconnect may have
+    // missed one.
+    if (!gap) {
+      void notifications.refresh()
+      void preferences?.refresh().catch(() => {})
+    }
     await Promise.all([selection.refresh(), groups.refresh()])
     const due = (id: string | null) =>
       id !== null && groups.groups.value.some((g) => g.id === id) && (!gap || gap.groupId === id)

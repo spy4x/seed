@@ -4,10 +4,13 @@ import {
   type Actor,
   type OnboardingMark,
   type OnboardingStatus,
+  type Preferences,
+  type PreferencesDevice,
   User,
   type UserPushTokenPublic,
 } from "@domain/identity"
 import type { PushSubscribeRequest } from "@spy4x/platform/model"
+import type { SettingsSaveResult } from "@spy4x/platform/universal/settings"
 export interface UserProfileUpdatePayload {
   actor: Actor
   firstName: string
@@ -39,6 +42,37 @@ export interface OnboardingMarkPayload {
 export class OnboardingMarkCommand implements Command<OnboardingMarkPayload, OnboardingStatus> {
   __resultType?: OnboardingStatus
   constructor(public data: OnboardingMarkPayload) {}
+}
+
+export interface PreferencesSavePayload {
+  actor: Actor
+  /** Unchecked: `{ version, value }`, the version the change was made on and the whole value. */
+  request: unknown
+  /** Makes a retry of this command safe; see the idempotency middleware on the command bus. */
+  idempotencyKey?: string
+}
+
+/**
+ * The actor saves their display preferences. A refusal is an answer, not an error: a conflict
+ * carries the record that won, so the page can show it.
+ */
+export class PreferencesSaveCommand
+  implements Command<PreferencesSavePayload, SettingsSaveResult<Preferences>> {
+  __resultType?: SettingsSaveResult<Preferences>
+  constructor(public data: PreferencesSavePayload) {}
+}
+
+export interface PreferencesDevicePayload {
+  actor: Actor
+  device: PreferencesDevice
+  /** Makes a retry of this command safe; see the idempotency middleware on the command bus. */
+  idempotencyKey?: string
+}
+
+/** The page tells the zone and region format of its device; the first one is kept. */
+export class PreferencesDeviceCommand implements Command<PreferencesDevicePayload, void> {
+  __resultType?: void
+  constructor(public data: PreferencesDevicePayload) {}
 }
 
 export interface PushRegisterPayload {

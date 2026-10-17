@@ -14,6 +14,11 @@ export class GroupSelectedEvent implements Event<{ userId: number; groupId: stri
   constructor(public data: { userId: number; groupId: string }) {}
 }
 
+/** A person saved their display preferences. Their other open tabs read them again. */
+export class PreferencesUpdatedEvent implements Event<{ userId: number }> {
+  constructor(public data: { userId: number }) {}
+}
+
 /** A group has a new owner, who is told by web push. */
 export class GroupOwnershipTransferredEvent
   implements Event<{ groupId: string; groupName: string; newOwnerId: number }> {

@@ -2,6 +2,7 @@ import { type } from "arktype"
 import { BaseModelSchema, dateSchema, PUSH_SUBSCRIPTION_LIMITS } from "@spy4x/platform/model"
 import type { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
+import type { AdminUserPreferences } from "./preferences.ts"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
@@ -821,6 +822,8 @@ export interface AdminUserDetail {
   groups: AdminUserGroup[]
   /** The newest {@link ADMIN_AUDIT_LIMIT} rows of the person's audit trail. */
   audits: AdminAuditRow[]
+  /** Their theme, region format, time zone and clock, read-only (#163). */
+  preferences: AdminUserPreferences
 }
 
 /** How many audit rows the detail page shows. */
@@ -991,6 +994,7 @@ export function adminUsersExportPath(filter: AdminUserFilter): string {
 // #429: the audit log and the System page of the operator area.
 export * from "./admin-audit.ts"
 export * from "./admin-system.ts"
+export * from "./preferences.ts"
 
 /**
  * One push device of a person, as the operator area shows it (#427): never the endpoint or the

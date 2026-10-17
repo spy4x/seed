@@ -19,7 +19,7 @@ const states = new WeakMap<AdminContext, BillingState>()
 function billingState(context: AdminContext): BillingState {
   let state = states.get(context)
   if (!state) {
-    state = createBillingState(context.request, context.toasts)
+    state = createBillingState(context.request, context.toasts, undefined, context.format)
     states.set(context, state)
   }
   return state

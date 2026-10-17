@@ -13,9 +13,9 @@ import {
   type AdminStatChange,
   type AdminStats,
 } from "@domain/identity"
+import { useFormat } from "@spy4x/preact-ui/format"
 
 const NUMBER = new Intl.NumberFormat("en")
-const DAY = new Intl.DateTimeFormat("en", { month: "short", day: "numeric", timeZone: "UTC" })
 
 /**
  * A change as a stat card's second line: `+3 vs previous 7 days`, `−1 vs yesterday`, or that it
@@ -172,6 +172,8 @@ function DailyChart(
     dataE2E: string
   },
 ): JSX.Element {
+  // The server counts each day in UTC, so its label is that UTC day, in the operator's format.
+  const day = useFormat().utc()
   return (
     <Card data-e2e={dataE2E}>
       <CardHeader
@@ -185,7 +187,7 @@ function DailyChart(
           height={220}
           yDomain={[0, countAxisTop(days.map((day) => day.count))]}
           yTicks={COUNT_AXIS_STEPS}
-          xFormat={(x) => DAY.format(typeof x === "string" ? new Date(`${x}T00:00:00Z`) : x)}
+          xFormat={(x) => day.dayMonth(typeof x === "string" ? `${x}T00:00:00Z` : x)}
           yFormat={(value) => NUMBER.format(value)}
           ariaLabel={`${title}, the last ${days.length} days`}
           emptyLabel="Nothing yet"

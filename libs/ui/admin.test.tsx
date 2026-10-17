@@ -322,6 +322,12 @@ const detail: AdminUserDetail = {
     ip: "203.0.113.9",
     createdAt: "2026-10-13T10:00:00.000Z",
   }],
+  preferences: {
+    value: { theme: "dark", locale: "en-GB", timeZone: "Europe/Berlin", hourCycle: null },
+    version: 3,
+    updatedAt: "2026-10-12T10:00:00.000Z",
+    firstTimeZone: "Europe/Berlin",
+  },
 }
 
 const operator = { id: 7, role: UserRole.OPERATOR }
@@ -351,6 +357,22 @@ describe("one person in the admin app", () => {
     expect(find("[data-e2e=admin-user-card]").textContent).toContain("Viewer")
     expect(find("[role=tab][aria-selected=true]").textContent).toBe("Overview")
     expect(find("[role=tabpanel]").textContent).toContain("ada@example.com")
+  })
+
+  it("shows the person's language and region read-only on the Overview, with their time now", async () => {
+    const now = new Date("2026-10-17T12:05:00.000Z")
+    await mount(<AdminUserScreen {...userProps([], { now })} />)
+
+    const panel = find("[role=tabpanel]")
+    expect(panel.textContent).toContain("Language and region")
+    expect(find("[data-e2e=admin-user-preferences-theme]").textContent).toContain("Dark")
+    expect(find("[data-e2e=admin-user-preferences-time-zone]").textContent).toContain(
+      "Berlin, Europe · GMT+2",
+    )
+    expect(find("[data-e2e=admin-user-preferences-time-zone]").textContent).toMatch(
+      /(14:05|2:05\spm) there now/i,
+    )
+    expect(panel.querySelector("[data-e2e=admin-user-preferences-time-zone] button")).toBeNull()
   })
 
   it("shows each tab's own content: sign-in methods, sessions, groups and activity", async () => {

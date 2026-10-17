@@ -17,6 +17,7 @@ import {
   type AdminSignInMethod,
   type AdminUserFilter,
   type AdminUserGroup,
+  type AdminUserPreferences,
   type AdminUserRow,
   type AdminUserSortKey,
   AuthAuditEventType,
@@ -24,6 +25,7 @@ import {
   type UserRole,
 } from "@domain/identity"
 import { likeContains } from "@spy4x/server/db"
+import { readAdminPreferences } from "./preferences.ts"
 
 /** The password method's name in `auth_keys`, as `@spy4x/server/auth/password` stores it. */
 const PASSWORD_METHOD = "password"
@@ -176,12 +178,14 @@ export async function readAdminUser(
 
 /**
  * What the detail page shows besides the person and their sessions: how they sign in (never a
- * secret), their groups, and the newest {@link ADMIN_AUDIT_LIMIT} rows of their audit trail.
+ * secret), their groups, the newest {@link ADMIN_AUDIT_LIMIT} rows of their audit trail, and their
+ * display preferences.
  */
 export async function readAdminUserParts(sql: postgres.Sql, userId: number): Promise<{
   methods: AdminSignInMethod[]
   groups: AdminUserGroup[]
   audits: AdminAuditRow[]
+  preferences: AdminUserPreferences
 }> {
   const methods = await sql<
     { method: string; email: string | null; provenAt: Date | null; createdAt: Date }[]
@@ -209,7 +213,9 @@ export async function readAdminUserParts(sql: postgres.Sql, userId: number): Pro
     ORDER BY created_at DESC, id DESC
     LIMIT ${ADMIN_AUDIT_LIMIT}
   `
+  const preferences = await readAdminPreferences(sql, userId)
   return {
+    preferences,
     methods: methods.map((row) => ({
       method: row.method,
       email: row.email,

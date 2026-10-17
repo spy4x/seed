@@ -8,11 +8,18 @@ import { entitlementGate } from "@api/cqrs/entitlements.ts"
 import { useCommandMiddleware } from "@api/cqrs/command-middleware.ts"
 import {
   OnboardingMarkCommand,
+  PreferencesDeviceCommand,
+  PreferencesSaveCommand,
   PushRegisterCommand,
   PushRemoveCommand,
   UserProfileUpdateCommand,
 } from "@api/cqrs/commands.ts"
-import { OnboardingGetQuery, PushListQuery, UserProfileGetQuery } from "@api/cqrs/queries.ts"
+import {
+  OnboardingGetQuery,
+  PreferencesGetQuery,
+  PushListQuery,
+  UserProfileGetQuery,
+} from "@api/cqrs/queries.ts"
 import {
   GroupActivityQuery,
   GroupCreateCommand,
@@ -56,6 +63,9 @@ import { pushRemoveHandler } from "@api/cqrs/command-handlers/push-remove.ts"
 import { pushListHandler } from "@api/cqrs/query-handlers/push-list.ts"
 import { onboardingGetHandler } from "@api/cqrs/query-handlers/onboarding-get.ts"
 import { onboardingMarkHandler } from "@api/cqrs/command-handlers/onboarding-mark.ts"
+import { preferencesGetHandler } from "@api/cqrs/query-handlers/preferences-get.ts"
+import { preferencesSaveHandler } from "@api/cqrs/command-handlers/preferences-save.ts"
+import { preferencesDeviceHandler } from "@api/cqrs/command-handlers/preferences-device.ts"
 import { groupCreateHandler } from "@api/cqrs/command-handlers/group-create.ts"
 import { groupGetHandler } from "@api/cqrs/query-handlers/group-get.ts"
 import { groupListHandler } from "@api/cqrs/query-handlers/group-list.ts"
@@ -125,6 +135,7 @@ import {
   GroupOwnershipTransferredEvent,
   GroupSelectedEvent,
   OnboardingMarkedEvent,
+  PreferencesUpdatedEvent,
   PushDevicesUpdatedEvent,
   UserProfileUpdatedEvent,
   UserSignedOutEvent,
@@ -133,6 +144,7 @@ import { realtimeOnUserProfileUpdatedHandler } from "@api/cqrs/event-handlers/re
 import { realtimeOnGroupSelectedHandler } from "@api/cqrs/event-handlers/realtime-on-group-selected.ts"
 import { realtimeOnPushDevicesUpdatedHandler } from "@api/cqrs/event-handlers/realtime-on-push-devices-updated.ts"
 import { realtimeOnOnboardingMarkedHandler } from "@api/cqrs/event-handlers/realtime-on-onboarding-marked.ts"
+import { realtimeOnPreferencesUpdatedHandler } from "@api/cqrs/event-handlers/realtime-on-preferences-updated.ts"
 import { realtimeOnUserSignedOutHandler } from "@api/cqrs/event-handlers/realtime-on-user-signed-out.ts"
 import { pushOnOwnershipTransferredHandler } from "@api/cqrs/event-handlers/push-on-ownership-transferred.ts"
 
@@ -155,6 +167,7 @@ subscribe(UserSignedOutEvent, realtimeOnUserSignedOutHandler)
 subscribe(UserProfileUpdatedEvent, realtimeOnUserProfileUpdatedHandler)
 subscribe(PushDevicesUpdatedEvent, realtimeOnPushDevicesUpdatedHandler)
 subscribe(OnboardingMarkedEvent, realtimeOnOnboardingMarkedHandler)
+subscribe(PreferencesUpdatedEvent, realtimeOnPreferencesUpdatedHandler)
 subscribe(GroupSelectedEvent, realtimeOnGroupSelectedHandler)
 subscribe(GroupOwnershipTransferredEvent, pushOnOwnershipTransferredHandler)
 
@@ -172,6 +185,8 @@ commandBus.register(UserProfileUpdateCommand, userProfileUpdateHandler)
 commandBus.register(PushRegisterCommand, pushRegisterHandler)
 commandBus.register(PushRemoveCommand, pushRemoveHandler)
 commandBus.register(OnboardingMarkCommand, onboardingMarkHandler)
+commandBus.register(PreferencesSaveCommand, preferencesSaveHandler)
+commandBus.register(PreferencesDeviceCommand, preferencesDeviceHandler)
 commandBus.register(GroupCreateCommand, groupCreateHandler)
 commandBus.register(GroupSelectCommand, groupSelectHandler)
 commandBus.register(GroupRenameCommand, groupRenameHandler)
@@ -212,6 +227,7 @@ commandBus.register(BillingPortalCommand, billingPortalHandler)
 queryBus.register(UserProfileGetQuery, userProfileGetHandler)
 queryBus.register(PushListQuery, pushListHandler)
 queryBus.register(OnboardingGetQuery, onboardingGetHandler)
+queryBus.register(PreferencesGetQuery, preferencesGetHandler)
 queryBus.register(GroupListQuery, groupListHandler)
 queryBus.register(GroupGetQuery, groupGetHandler)
 queryBus.register(GroupSelectedQuery, groupSelectedHandler)

@@ -11,7 +11,6 @@ import { Select } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import type { PlanRefusal } from "@domain/billing"
 import { canMutateNotes, type GroupRole } from "@domain/groups"
 import { NOTE_RESTORE_DAYS } from "@domain/notes"
@@ -19,6 +18,7 @@ import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { NoteTags, TagChips, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
+import { When } from "@spy4x/preact-ui/format"
 
 /**
  * Where focus goes once the list changes: after the row of note `id` (at `index`) leaves, the row
@@ -296,7 +296,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             <h2 class={ROW_TITLE} data-e2e="note-item-title">{note.title}</h2>
             {note.updatedAt && (
               <p class="text-sm text-muted">
-                Deleted <time dateTime={note.updatedAt}>{timeAgo(note.updatedAt)}</time>
+                Deleted <When at={note.updatedAt} />
               </p>
             )}
           </div>
@@ -638,7 +638,7 @@ function NoteItem(
       {(note.updatedAt || tagged) && (
         // The meta line: when the note changed, then its tags.
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
-          {note.updatedAt && <time dateTime={note.updatedAt}>{timeAgo(note.updatedAt)}</time>}
+          {note.updatedAt && <When at={note.updatedAt} />}
           <NoteTags tagIds={note.tagIds} tags={tags} />
         </div>
       )}

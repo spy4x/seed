@@ -8,6 +8,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { createFormatters } from "@spy4x/time/format"
 import {
   ADMIN_BILLING_NO_FILTER,
   type AdminBillingCustomer,
@@ -29,6 +30,9 @@ import {
   AdminBillingCustomerScreen,
   type AdminBillingCustomerScreenProps,
 } from "./admin-billing-detail.tsx"
+
+/** A day as the screens write it on this device: the default formatter, with no person's settings. */
+const day = (at: string) => createFormatters().date(at)
 
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
@@ -215,14 +219,14 @@ describe(`the admin billing list`, () => {
     )
     const rows = document.querySelectorAll(`[data-e2e=admin-billing-list] tbody tr`)
     expect(rows[0].querySelector(`[data-e2e=admin-billing-row-status]`)?.textContent).toBe(
-      `ActiveRenews Nov 12, 2026`,
+      `ActiveRenews ${day(`2026-11-12T12:00:00.000Z`)}`,
     )
     expect(rows[0].querySelector(`[data-e2e=admin-billing-row-amount]`)?.textContent).toBe(
       `€36.004 × €9.00`,
     )
     expect(rows[0].querySelector(`[data-e2e=admin-billing-deleted]`) === null).toBe(true)
     expect(rows[1].querySelector(`[data-e2e=admin-billing-row-status]`)?.textContent).toBe(
-      `TrialEnds Oct 30, 2026`,
+      `TrialEnds ${day(`2026-10-30T12:00:00.000Z`)}`,
     )
     expect(rows[1].querySelector(`[data-e2e=admin-billing-row-amount]`)?.textContent).toBe(
       `€0.00would be €18.00`,
@@ -378,10 +382,12 @@ describe(`one customer in the admin app`, () => {
     const summary = find(`[data-e2e=admin-billing-summary]`).textContent
     expect(summary).toContain(`Pro, 4 seats`)
     expect(summary).toContain(`4 × €9.00 = €36.00`)
-    expect(summary).toContain(`Mar 3, 2026`)
+    expect(summary).toContain(day(`2026-03-03T12:00:00.000Z`))
     // The page header keeps one line, so the address lives in the summary, where it wraps.
     expect(find(`[data-e2e=admin-billing-owner-email]`).textContent).toBe(`ada@acme.test`)
-    expect(find(`[data-e2e=admin-billing-payment]`).textContent).toBe(`€36.00 on Oct 12, 2026`)
+    expect(find(`[data-e2e=admin-billing-payment]`).textContent).toBe(
+      `€36.00 on ${day(`2026-10-12T12:00:00.000Z`)}`,
+    )
     const history = find(`[data-e2e=admin-billing-history]`).textContent
     expect(history).toContain(`€36.00 refunded`)
     expect(history).toContain(`By Grace Hopper. Note: Charged twice`)
@@ -441,7 +447,7 @@ describe(`one customer in the admin app`, () => {
     const now = find<HTMLInputElement>(`[data-e2e=admin-billing-dialog] input[value=now]`)
     expect(now.disabled).toBe(true)
     expect(find(`[data-e2e=admin-billing-dialog]`).textContent).toContain(
-      `At the end of the period, on Nov 12, 2026`,
+      `At the end of the period, on ${day(`2026-11-12T12:00:00.000Z`)}`,
     )
     await submit(`[data-e2e=admin-billing-action-submit]`)
     expect(calls).toEqual([[`action`, { kind: `cancel`, when: `period_end`, note: `` }]])
@@ -451,13 +457,17 @@ describe(`one customer in the admin app`, () => {
     const calls: unknown[][] = []
     await mount(<AdminBillingCustomerScreen {...customerProps(calls, { dialog: `time` })} />)
     // Active until Nov 12: the time at no charge starts after the paid period.
-    expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(`until Dec 12, 2026`)
+    expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(
+      `until ${day(`2026-12-12T12:00:00.000Z`)}`,
+    )
     const week = find<HTMLInputElement>(`[data-e2e=admin-billing-dialog] input[value='7d']`)
     await act(() => {
       week.checked = true
       week.dispatchEvent(new window.Event(`change`, { bubbles: true }) as unknown as Event)
     })
-    expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(`until Nov 19, 2026`)
+    expect(find(`[data-e2e=admin-billing-until]`).textContent).toContain(
+      `until ${day(`2026-11-19T12:00:00.000Z`)}`,
+    )
     await submit(`[data-e2e=admin-billing-action-submit]`)
     expect(calls).toEqual([[`action`, { kind: `time`, length: `7d`, note: `` }]])
   })

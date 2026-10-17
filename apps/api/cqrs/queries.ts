@@ -1,5 +1,11 @@
 import { Query } from "@spy4x/platform/cqrs"
-import { type Actor, type OnboardingStatus, User, type UserPushTokenPublic } from "@domain/identity"
+import {
+  type Actor,
+  type OnboardingStatus,
+  User,
+  type UserPushTokenPublic,
+  type VersionedPreferences,
+} from "@domain/identity"
 export interface UserProfileGetPayload {
   actor: Actor
 }
@@ -21,6 +27,16 @@ export interface OnboardingGetPayload {
 export class OnboardingGetQuery implements Query<OnboardingGetPayload, OnboardingStatus> {
   __resultType?: OnboardingStatus
   constructor(public data: OnboardingGetPayload) {}
+}
+
+export interface PreferencesGetPayload {
+  actor: Actor
+}
+
+/** The actor's display preferences and their version; version `0` with the defaults when none. */
+export class PreferencesGetQuery implements Query<PreferencesGetPayload, VersionedPreferences> {
+  __resultType?: VersionedPreferences
+  constructor(public data: PreferencesGetPayload) {}
 }
 
 export interface PushListPayload {

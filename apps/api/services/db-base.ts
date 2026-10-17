@@ -10,6 +10,7 @@ import {
   type AuthAuditBase,
   type OnboardingMark,
   type OnboardingStatus,
+  type PreferencesDevice,
   type User,
   type UserBase,
   UserMFAStatus,
@@ -47,6 +48,7 @@ import {
 } from "@server/jobs/sign-in-method-mail.ts"
 import { touchUserSeen } from "@server/auth/sessions.ts"
 import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
+import { preferencesStore, recordFirstDevice } from "@server/auth/preferences.ts"
 import { type ApiTokenRows, apiTokenRows } from "@server/api-tokens/api-tokens.ts"
 import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
 import {
@@ -350,6 +352,21 @@ export class AppDbBase extends DbServiceBase {
       /** Records that the person closed the checklist or ended the tour. */
       mark: (userId: number, mark: OnboardingMark): Promise<void> =>
         markOnboarding(sql, userId, mark),
+    }
+  }
+
+  /**
+   * A person's display preferences (`@server/auth/preferences.ts`, #163). Built per access, like
+   * `group`.
+   */
+  get preferences() {
+    const sql = this.sql
+    return {
+      /** The versioned record, keyed by the person's id; the write is a compare-and-set. */
+      store: preferencesStore(sql),
+      /** Keeps the first device's zone and region format: the ones the person signed up with. */
+      recordFirstDevice: (userId: number, device: PreferencesDevice): Promise<void> =>
+        recordFirstDevice(sql, userId, device),
     }
   }
 

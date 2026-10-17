@@ -8,6 +8,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { createFormatters } from "@spy4x/time/format"
 import {
   ADMIN_SUBSCRIBERS_NO_FILTER,
   type AdminNewsletterSend,
@@ -18,6 +19,9 @@ import {
   AdminNewsletterScreen,
   type AdminNewsletterScreenProps,
 } from "./admin-newsletter-screen.tsx"
+
+/** A day as the screens write it on this device: the default formatter, with no person's settings. */
+const day = (at: string) => createFormatters().date(at)
 
 const window = new Window({ url: "http://admin.localhost/newsletter" })
 const own = {
@@ -327,7 +331,7 @@ describe("operator area: newsletter page", () => {
     const cells = [...row.querySelectorAll("td")].map((cell) => cell.textContent?.trim())
     expect(cells).toEqual([
       "First issue2026-10-first",
-      "Oct 10, 2026",
+      day("2026-10-10T12:00:00.000Z"),
       "2",
       "1",
       "1",

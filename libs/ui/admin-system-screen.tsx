@@ -23,6 +23,7 @@ import {
   type AdminSystemJobKind,
   type AdminSystemSnapshot,
 } from "@domain/identity"
+import { When } from "@spy4x/preact-ui/format"
 
 const NUMBER = new Intl.NumberFormat("en")
 
@@ -278,11 +279,6 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
       <dd class="text-sm font-medium wrap-anywhere">{children}</dd>
     </div>
   )
-}
-
-/** A moment as "3 days ago", with the exact time on hover and for a machine. */
-function When({ at }: { at: string }): JSX.Element {
-  return <time dateTime={at} title={new Date(at).toLocaleString()}>{timeAgo(at)}</time>
 }
 
 function JobsCard({ jobs }: { jobs: readonly AdminSystemJobKind[] }): JSX.Element {

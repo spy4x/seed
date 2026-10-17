@@ -6,6 +6,7 @@ import {
   ADMIN_DEFAULT_SORT,
   type AdminStats,
   type AdminUserRow,
+  DEFAULT_PREFERENCES,
   UserMFAStatus,
   UserRole,
 } from "@domain/identity"
@@ -70,7 +71,19 @@ function buildApp(
     detail: (id) => (calls.push(["detail", id]),
       Promise.resolve(
         id === target.id
-          ? { user: target, methods: [], sessions: [], groups: [], audits: [] }
+          ? {
+            user: target,
+            methods: [],
+            sessions: [],
+            groups: [],
+            audits: [],
+            preferences: {
+              value: DEFAULT_PREFERENCES,
+              version: 0,
+              updatedAt: null,
+              firstTimeZone: null,
+            },
+          }
           : null,
       )),
     act: (

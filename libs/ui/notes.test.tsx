@@ -14,6 +14,8 @@ import { BILLING_PATHS } from "./billing-screen.tsx"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteRow, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
 import { NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -194,6 +196,24 @@ describe("NotesScreen", () => {
     expect(html).toMatch(/data-e2e="note-item-body"[^>]*>milk</)
     expect(html).toContain(`datetime="${groceries.updatedAt}"`)
     expect(html).toContain(`aria-label="Actions for Groceries"`)
+  })
+
+  it("writes when a note changed in the person's own zone and region format", () => {
+    const titleIn = (locale: string, timeZone: string) => {
+      const html = renderToString(
+        <FormatContext.Provider value={createFormatters({ locale, timeZone, hourCycle: null })}>
+          <NotesScreen {...listDefaults} />
+        </FormatContext.Provider>,
+      )
+      return html.match(/<time[^>]*title="([^"]*)"/)?.[1]
+    }
+
+    // 10:00 UTC is noon in Berlin and 6 in the morning in New York.
+    const berlin = titleIn("de-DE", "Europe/Berlin")
+    const newYork = titleIn("en-US", "America/New_York")
+    // The hover text is the exact instant, to the second and with the zone (preact-ui's `When`).
+    expect(berlin).toBe("01.10.2026, 12:00:00 MESZ")
+    expect(newYork).toMatch(/^Oct 1, 2026, 6:00:00\sAM EDT$/)
   })
 
   it("never clips the list card, so a row's menu opens in full over the rows below", async () => {

@@ -28,6 +28,8 @@ import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
 import { adminUserName, adminUserSubtitle, roleColor, roleLabel } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { When } from "@spy4x/preact-ui/format"
+import { AdminPreferencesGroup } from "./preferences.tsx"
 
 /** What an operator can do to a person; each is confirmed in a dialog first. */
 export type AdminAction =
@@ -223,6 +225,8 @@ export interface AdminUserScreenProps {
   /** The operator confirmed the open dialog's action, with the session or the role it needs. */
   onAction: (action: AdminAction, input?: AdminActionInput) => void
   navigate?: Navigate
+  /** The moment the person's local time is shown for; the page's render time by default. */
+  now?: Date
 }
 
 /**
@@ -297,7 +301,11 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
 
   const name = adminUserName(user)
   const tabs = [
-    { id: "overview", label: "Overview", content: <Overview detail={detail} /> },
+    {
+      id: "overview",
+      label: "Overview",
+      content: <Overview detail={detail} now={props.now ?? new Date()} />,
+    },
     { id: "methods", label: `Sign-in methods`, content: <Methods detail={detail} /> },
     {
       id: "sessions",
@@ -429,21 +437,24 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
   )
 }
 
-function Overview({ detail }: { detail: AdminUserDetail }): JSX.Element {
+function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.Element {
   const { user } = detail
   return (
-    <SettingGroup title="Account">
-      <SettingList>
-        <SettingRow label="Address" value={user.email ?? "None"} />
-        <SettingRow label="Role" value={roleLabel(user.role)} />
-        <SettingRow label="Status" value={user.blockedAt ? "Blocked" : "Active"} />
-        <SettingRow label="Created" value={<When at={user.createdAt} />} />
-        <SettingRow
-          label="Last seen"
-          value={user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}
-        />
-      </SettingList>
-    </SettingGroup>
+    <Stack>
+      <SettingGroup title="Account">
+        <SettingList>
+          <SettingRow label="Address" value={user.email ?? "None"} />
+          <SettingRow label="Role" value={roleLabel(user.role)} />
+          <SettingRow label="Status" value={user.blockedAt ? "Blocked" : "Active"} />
+          <SettingRow label="Created" value={<When at={user.createdAt} />} />
+          <SettingRow
+            label="Last seen"
+            value={user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}
+          />
+        </SettingList>
+      </SettingGroup>
+      <AdminPreferencesGroup preferences={detail.preferences} now={now} />
+    </Stack>
   )
 }
 
@@ -596,11 +607,6 @@ function Rows(
       {children}
     </ul>
   )
-}
-
-/** A moment as "3 days ago", with the exact time for a machine and on hover. */
-function When({ at }: { at: string }): JSX.Element {
-  return <time dateTime={at} title={new Date(at).toLocaleString()}>{timeAgo(at)}</time>
 }
 
 /** A sign-in method's key name as a person reads it. */

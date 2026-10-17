@@ -25,6 +25,8 @@ import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-
 import { SignedInDevices, type SignedInDevicesProps } from "./signed-in-devices.tsx"
 import { signInMethodName, SignInMethods, type SignInMethodsProps } from "./sign-in-methods.tsx"
 import { ApiTokens, type ApiTokensProps } from "./api-tokens.tsx"
+import { useFormat } from "@spy4x/preact-ui/format"
+import { PreferencesGroup, type PreferencesGroupProps } from "./preferences.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { ProviderProofNotice, providerProofOf } from "./provider-proof.tsx"
 import { TwoFactorProof, twoFactorProof, TwoFactorStep, twoFactorStep } from "./two-factor.ts"
@@ -139,6 +141,8 @@ export interface ProfileScreenProps {
   devices?: SignedInDevicesProps
   /** The "API tokens" section, after the signed-in devices. Without it the page has none. */
   apiTokens?: ApiTokensProps
+  /** "Language and region": the theme, region format, time zone and clock. Without it, none. */
+  preferences?: PreferencesGroupProps
   onStartTotp?: () => void
   onFinishTotp?: () => void
   /** Drops an enrolment under way, when the person closes the set-up dialog. */
@@ -200,6 +204,7 @@ export function ProfileScreen(
     methods,
     devices,
     apiTokens,
+    preferences,
     onStartTotp,
     onFinishTotp,
     onCancelTotp,
@@ -216,6 +221,7 @@ export function ProfileScreen(
   const providerOnly = providerOnlyNames(methods?.methods)
   const proof = twoFactorProof(providerOnly !== null)
   const providerProof = providerProofOf(methods?.methods, providerProofFresh)
+  const format = useFormat()
   const fieldRefs = {
     firstName: useRef<HTMLInputElement>(null),
     lastName: useRef<HTMLInputElement>(null),
@@ -360,6 +366,8 @@ export function ProfileScreen(
         </SettingList>
       </SettingGroup>
 
+      {preferences && <PreferencesGroup {...preferences} />}
+
       {/* The first-steps card links here (`PROFILE_ANCHORS`); the header above is sticky. */}
       <div id={PROFILE_ANCHORS.security} class="scroll-mt-16">
         <SettingGroup title="Security">
@@ -473,7 +481,7 @@ export function ProfileScreen(
                       key={device.id}
                       dataE2E={`push-device-${device.deviceId}`}
                       label={`Device ${device.deviceId.slice(-8)}`}
-                      value={`Added ${new Date(device.createdAt).toLocaleString()}`}
+                      value={`Added ${format.dateTime(device.createdAt)}`}
                       action={
                         <ScreenForm
                           pending={pending.push}

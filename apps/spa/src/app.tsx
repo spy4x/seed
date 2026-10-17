@@ -43,6 +43,7 @@ import { InvitationView } from "./views/InvitationView.tsx"
 import { notificationsStore } from "./state/notifications.ts"
 import { invitationsStore } from "./state/invitations.ts"
 import { onboardingStore } from "./state/onboarding.ts"
+import { preferencesState } from "./state/preferences.ts"
 import { PricingView } from "./views/BillingViews.tsx"
 import { billingStore } from "./state/billing.ts"
 import { NoteEditorView } from "./views/NoteEditorView.tsx"
@@ -56,6 +57,7 @@ import { AppShell, PublicFrame } from "./views/AppShell.tsx"
 import { signInRedirect } from "./views/sign-in-gate.ts"
 import { SPA_ROUTE_PATHS, type SpaRoutePath } from "./views/spa-paths.ts"
 import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { FormatContext } from "@spy4x/preact-ui/format"
 
 /**
  * An old `/groups/:groupId/notes…` link. It selects nothing: a link must not change the selection,
@@ -227,6 +229,7 @@ export function App() {
       invitationsStore.reset()
       notificationsStore.reset()
       onboardingStore.reset()
+      preferencesState.reset()
       return
     }
     // The REST read is the pull: it runs at start-up, after every reconnect and for every push
@@ -243,6 +246,7 @@ export function App() {
       members: membersStore,
       notifications: notificationsStore,
       onboarding: onboardingStore,
+      preferences: preferencesState,
     }
     selectionStore.start(userId)
     // The banner asks for a code while the address waits for one.
@@ -250,14 +254,17 @@ export function App() {
     // The calls port, the device copy, and what triggers the pull: the socket's hints, or without
     // the socket the page's own events and a timer (`modules.ts`).
     startModules(userId, { pull: createPull(reads), check: createChangeCheck(reads) })
+    // After the calls port exists: the server keeps the first device's zone, as the sign-up one.
+    preferencesState.start()
     return () => stopChanges()
   }, [
     sessionState.value.user?.id,
     sessionState.value.isMfaRequired,
   ])
 
+  // Every date and time on every screen is written in the person's own settings.
   return (
-    <>
+    <FormatContext.Provider value={preferencesState.format.value}>
       {!ready || !sessionState.value.isReady
         ? (
           <main>
@@ -271,6 +278,6 @@ export function App() {
         dataE2E="toasts"
       />
       <SWUpdater />
-    </>
+    </FormatContext.Provider>
   )
 }

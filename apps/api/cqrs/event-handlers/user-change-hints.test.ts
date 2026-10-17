@@ -3,6 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import {
   GroupSelectedEvent,
   OnboardingMarkedEvent,
+  PreferencesUpdatedEvent,
   PushDevicesUpdatedEvent,
   UserProfileUpdatedEvent,
 } from "../events.ts"
@@ -10,6 +11,7 @@ import type { User } from "@domain/identity"
 import {
   createGroupSelectedHintListener,
   createOnboardingHintListener,
+  createPreferencesHintListener,
   createProfileHintListener,
   createPushDevicesHintListener,
 } from "./user-change-hints.ts"
@@ -30,6 +32,16 @@ describe("user change hint listeners", () => {
 
     createPushDevicesHintListener((id) => hinted.push(id))(
       new PushDevicesUpdatedEvent({ userId: 7, devices: [], request: {} }),
+    )
+
+    expect(hinted).toEqual([7])
+  })
+
+  it("hints the user who saved their preferences, so their other devices read them", () => {
+    const hinted: number[] = []
+
+    createPreferencesHintListener((id) => hinted.push(id))(
+      new PreferencesUpdatedEvent({ userId: 7 }),
     )
 
     expect(hinted).toEqual([7])

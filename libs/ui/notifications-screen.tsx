@@ -6,10 +6,10 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { followLinkClick } from "@spy4x/preact-ui/link"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { describeNotification, type Notification } from "@domain/notifications"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import type { Navigate } from "./progressive.tsx"
+import { When } from "@spy4x/preact-ui/format"
 
 /** One notification as the API sends it: the times are ISO timestamps, `readAt` is `null` unread. */
 export type NotificationRow =
@@ -174,9 +174,7 @@ function NotificationItem(
             {sentence}
           </span>
           {/* The space keeps the time a word of its own in the link's accessible name. */}{" "}
-          <time class="shrink-0 text-xs text-muted" dateTime={notification.createdAt}>
-            {timeAgo(notification.createdAt)}
-          </time>
+          <When class="shrink-0 text-xs text-muted" at={notification.createdAt} />
         </span>
       </a>
     </li>

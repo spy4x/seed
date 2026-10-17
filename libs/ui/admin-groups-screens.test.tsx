@@ -15,7 +15,7 @@ import {
   type AdminGroupRow,
   GroupRole,
 } from "@domain/groups"
-import { type AdminUserDetail, UserRole } from "@domain/identity"
+import { type AdminUserDetail, DEFAULT_PREFERENCES, UserRole } from "@domain/identity"
 import { AdminGroupsListScreen, type AdminGroupsListScreenProps } from "./admin-groups-list.tsx"
 import {
   activityTone,
@@ -529,6 +529,12 @@ describe(`the person page's groups`, () => {
       sessions: [],
       groups: [{ id: GROUP_ID, name: `Family`, role: GroupRole.OWNER }],
       audits: [],
+      preferences: {
+        value: DEFAULT_PREFERENCES,
+        version: 0,
+        updatedAt: null,
+        firstTimeZone: null,
+      },
     }
     const props: AdminUserScreenProps = {
       detail: person,

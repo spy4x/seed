@@ -13,6 +13,7 @@ import {
   type AdminUserDetail,
   type AdminUserRow,
   AuthAuditEventType,
+  DEFAULT_PREFERENCES,
   UserRole,
 } from "@domain/identity"
 import { AdminUsersScreen, type AdminUsersScreenProps } from "./admin-users-screen.tsx"
@@ -175,6 +176,7 @@ const detail: AdminUserDetail = {
   ],
   groups: [],
   audits: [],
+  preferences: { value: DEFAULT_PREFERENCES, version: 0, updatedAt: null, firstTimeZone: null },
 }
 
 const operator = { id: 7, role: UserRole.OPERATOR }

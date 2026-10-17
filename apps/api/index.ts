@@ -21,6 +21,8 @@ import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
 import { createAdminRoute } from "./routes/admin/+routes.ts"
 import { adminModuleRoutes } from "./routes/admin/registry.ts"
+import { createAdminOwnPreferencesRoute } from "./routes/admin/own-preferences.ts"
+import { preferencesDefinition } from "@domain/identity"
 import { createTokenApiRoute } from "./routes/token-api.ts"
 import { createApiTokens } from "./services/api-tokens.ts"
 import { createTokenRateLimits } from "./middlewares/token-rate-limits.ts"
@@ -208,7 +210,13 @@ app.route(
       cacheConnected: isCacheConnected,
       build: config.build,
       billing: billingSetup,
-    }),
+    }).concat(
+      createAdminOwnPreferencesRoute({
+        limit: rateLimits.normal,
+        read: async (userId) =>
+          preferencesDefinition.resolve(await db.preferences.store.read(String(userId))),
+      }),
+    ),
   }),
 )
 // The only routes that accept a token, and they accept nothing else.

@@ -1,6 +1,5 @@
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import type { SortRule } from "@spy4x/platform/universal/sort"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
@@ -28,6 +27,7 @@ import {
 } from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { OnDay, When } from "@spy4x/preact-ui/format"
 
 const ROLE_CHIPS = [UserRole.VIEWER, UserRole.OPERATOR, UserRole.SUPERVISOR, UserRole.ADMIN].map(
   (role) => ({ value: String(role), label: roleLabel(role) }),
@@ -37,8 +37,6 @@ const STATUS_CHIPS: { value: Exclude<AdminBlockedFilter, "any">; label: string }
   { value: "active", label: "Active" },
   { value: "blocked", label: "Blocked" },
 ]
-
-const CREATED = new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" })
 
 /** A role as a person reads it: `Operator`. */
 export function roleLabel(role: UserRole): string {
@@ -312,11 +310,7 @@ function userColumns(
       sortable: true,
       render: ({ lastSeenAt }) =>
         lastSeenAt
-          ? (
-            <time class="whitespace-nowrap text-sm" dateTime={lastSeenAt}>
-              {timeAgo(lastSeenAt)}
-            </time>
-          )
+          ? <When class="whitespace-nowrap text-sm" at={lastSeenAt} />
           : <span class="text-sm text-muted">Never</span>,
     },
     {
@@ -324,9 +318,7 @@ function userColumns(
       header: "Created",
       sortable: true,
       render: ({ createdAt }) => (
-        <time class="whitespace-nowrap text-sm text-muted" dateTime={createdAt}>
-          {CREATED.format(new Date(createdAt))}
-        </time>
+        <OnDay class="whitespace-nowrap text-sm text-muted" at={createdAt} />
       ),
     },
   ]

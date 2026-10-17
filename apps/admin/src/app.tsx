@@ -17,6 +17,8 @@ import {
 import { type AdminStore, hasAdminAccess, operatorName } from "./state.ts"
 import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
 
 export interface AppProps {
   store: AdminStore
@@ -24,6 +26,8 @@ export interface AppProps {
   toasts: ToastStore
   /** The modules to show; the registry's by default. Tests pass their own. */
   modules?: readonly AdminModule[]
+  /** The operator's own date format; one over `store.request` by default. Tests pass their own. */
+  operatorFormat?: OperatorFormat
 }
 
 /**
@@ -32,8 +36,9 @@ export interface AppProps {
  * one sidebar entry per module (`modules/registry.ts`) and the pages each module registers.
  */
 export function App(
-  { store, theme, toasts, modules = ADMIN_MODULES }: AppProps,
+  { store, theme, toasts, modules = ADMIN_MODULES, operatorFormat }: AppProps,
 ): JSX.Element {
+  const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])
   const session = store.session.value
   const [path, navigate] = useLocation()
   useRouteAnnouncer({ path })
@@ -42,6 +47,11 @@ export function App(
   // the path and so the scroll.
   useEffect(() => globalThis.scrollTo?.(0, 0), [path])
   const user = session.step === "signed-in" ? session.user : null
+  // The operator's own region format, zone and clock, read again for each signed-in session.
+  useEffect(() => {
+    if (user) void own.load()
+    else own.reset()
+  }, [user?.id])
 
   // One context per signed-in session, so a module's state starts empty for the next one.
   const context = useMemo<AdminContext | null>(
@@ -52,6 +62,7 @@ export function App(
         operator: user,
         navigate,
         personTabs: adminPersonTabs(modules),
+        format: () => own.format.value,
       },
     [user?.id, modules],
   )
@@ -96,27 +107,29 @@ export function App(
   }
 
   return (
-    <AdminShell
-      navItems={modules.map((module) => module.nav)}
-      currentPath={path}
-      operator={{ name: operatorName(user), email: null }}
-      theme={theme}
-      onSignOut={store.signOut}
-      navigate={navigate}
-    >
-      <Switch>
-        {modules.flatMap((module) =>
-          module.routes.map(({ path: pattern, View }) => (
-            <Route key={`${module.id}:${pattern}`} path={pattern}>
-              {(params) => <View context={context} params={params as Record<string, string>} />}
-            </Route>
-          ))
-        )}
-        <Route>
-          <Redirect to={ADMIN_PATHS.dashboard} replace />
-        </Route>
-      </Switch>
-      {toastr}
-    </AdminShell>
+    <FormatContext.Provider value={own.format.value}>
+      <AdminShell
+        navItems={modules.map((module) => module.nav)}
+        currentPath={path}
+        operator={{ name: operatorName(user), email: null }}
+        theme={theme}
+        onSignOut={store.signOut}
+        navigate={navigate}
+      >
+        <Switch>
+          {modules.flatMap((module) =>
+            module.routes.map(({ path: pattern, View }) => (
+              <Route key={`${module.id}:${pattern}`} path={pattern}>
+                {(params) => <View context={context} params={params as Record<string, string>} />}
+              </Route>
+            ))
+          )}
+          <Route>
+            <Redirect to={ADMIN_PATHS.dashboard} replace />
+          </Route>
+        </Switch>
+        {toastr}
+      </AdminShell>
+    </FormatContext.Provider>
   )
 }

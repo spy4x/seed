@@ -1,6 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -24,6 +23,7 @@ import {
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { adminUserName } from "./admin-users-screen.tsx"
 import type { Navigate } from "./progressive.tsx"
+import { OnDay, When } from "@spy4x/preact-ui/format"
 
 /** The page's address in the admin app. */
 export const ADMIN_API_TOKENS_PATH = "/api-tokens"
@@ -34,8 +34,6 @@ const STATE_LABELS: Record<AdminApiTokenState, string> = {
   expired: "Expired",
   revoked: "Revoked",
 }
-
-const DAY = new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" })
 
 /**
  * What the operator is about to do and to what: revoke a token, or remove one of a person's push
@@ -339,20 +337,12 @@ export function StateBadge({ state }: { state: AdminApiTokenState }): JSX.Elemen
 
 /** A day, with the exact moment for a machine and on hover. */
 export function Day({ at }: { at: string }): JSX.Element {
-  return (
-    <time class="whitespace-nowrap text-sm" dateTime={at} title={new Date(at).toLocaleString()}>
-      {DAY.format(new Date(at))}
-    </time>
-  )
+  return <OnDay class="whitespace-nowrap text-sm" at={at} />
 }
 
 /** A moment as "3 days ago", with the exact time for a machine and on hover. */
 export function Ago({ at }: { at: string }): JSX.Element {
-  return (
-    <time class="whitespace-nowrap text-sm" dateTime={at} title={new Date(at).toLocaleString()}>
-      {timeAgo(at)}
-    </time>
-  )
+  return <When class="whitespace-nowrap text-sm" at={at} />
 }
 
 /** The owner column: their avatar, their name as the link to their page, and their address. */

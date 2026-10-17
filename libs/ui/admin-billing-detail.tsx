@@ -45,6 +45,8 @@ import {
   money,
   perMonth,
 } from "./admin-billing-list.tsx"
+import { useFormat } from "@spy4x/preact-ui/format"
+import type { Formatters } from "@spy4x/time/format"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 /** The signed-in operator, as far as the page needs them. */
@@ -197,6 +199,7 @@ export function billingMenu(
  */
 export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProps): JSX.Element {
   const { detail, error, navigate } = props
+  const format = useFormat()
   const back = { href: ADMIN_BILLING_PATHS.list, label: `Billing` }
 
   if (!detail) {
@@ -297,7 +300,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
           <LastPayment {...props.payment} onRetry={props.onRetryPayment} />
         </Fact>
         <Fact label="Customer since">
-          {detail.customerSince ? billingDate(detail.customerSince) : `Not recorded`}
+          {detail.customerSince ? billingDate(detail.customerSince, format) : `Not recorded`}
         </Fact>
         {customer.owner.email && (
           <Fact label="Owner's email">
@@ -326,7 +329,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
           dataE2E="admin-billing-history"
           items={detail.history.map((entry) => ({
             id: entry.id,
-            title: historyTitle(entry),
+            title: historyTitle(entry, format),
             at: entry.at,
             when: timeAgo(entry.at),
             description: historyDescription(entry),
@@ -386,6 +389,7 @@ function perMonthLine(customer: AdminBillingCustomer): string {
 function LastPayment(
   { payment, error, onRetry }: AdminBillingPaymentView & { onRetry: () => void },
 ): JSX.Element {
+  const format = useFormat()
   if (error !== null) {
     return (
       <span class="flex flex-wrap items-center gap-2" data-e2e="admin-billing-payment-error">
@@ -404,7 +408,7 @@ function LastPayment(
   if (payment === null) return <span data-e2e="admin-billing-payment">None yet</span>
   return (
     <span data-e2e="admin-billing-payment">
-      {paymentAmount(payment)} on {billingDate(payment.paidAt)}
+      {paymentAmount(payment)} on {billingDate(payment.paidAt, format)}
       {payment.refunded ? `, refunded` : payment.amountRefunded > 0 ? `, partly refunded` : ``}
     </span>
   )
@@ -415,14 +419,19 @@ function paymentAmount(payment: Pick<AdminBillingPayment, "amount" | "currency">
 }
 
 /** What the operator did, as the history names it. */
-export function historyTitle(entry: AdminBillingHistoryEntry): string {
+export function historyTitle(
+  entry: AdminBillingHistoryEntry,
+  format: Pick<Formatters, "date">,
+): string {
   switch (entry.event) {
     case BILLING_AUDIT_EVENTS.paymentRefunded:
       return entry.amount
         ? `${formatMoney(entry.amount.amount, entry.amount.currency)} refunded`
         : `Payment refunded`
     case BILLING_AUDIT_EVENTS.timeGiven:
-      return entry.until ? `No charge until ${billingDate(entry.until)}` : `Time given at no charge`
+      return entry.until
+        ? `No charge until ${billingDate(entry.until, format)}`
+        : `Time given at no charge`
     case BILLING_AUDIT_EVENTS.cancelledAtPeriodEnd:
       return `Set to cancel at the period's end`
     case BILLING_AUDIT_EVENTS.cancelledNow:
@@ -484,11 +493,14 @@ function ActionDialog(
 ): JSX.Element {
   const { dialog, detail, operator, pending, onAction, onCloseDialog, actionError } = props
   const { customer } = detail
+  const format = useFormat()
   const group = customer.groupName
   const plan = billingPlanName(customer.planId)
   const price = listPriceOf(customer)
   const charge = price ? money(price) : `its plan's price`
-  const periodEnd = customer.currentPeriodEnd ? billingDate(customer.currentPeriodEnd) : null
+  const periodEnd = customer.currentPeriodEnd
+    ? billingDate(customer.currentPeriodEnd, format)
+    : null
   const payment = props.payment.payment ?? null
 
   const [length, setLength] = useState<AdminBillingTimeLength>(`1m`)
@@ -509,14 +521,14 @@ function ActionDialog(
       }
       body = payment && (
         <p class="text-sm text-muted">
-          Stripe returns the {amount} paid on {billingDate(payment.paidAt)}{" "}
+          Stripe returns the {amount} paid on {billingDate(payment.paidAt, format)}{" "}
           to the card it came from. The subscription keeps running; to stop it, cancel it too.
         </p>
       )
       break
     }
     case `time`: {
-      const until = billingDate(noChargeUntil(customer, length, props.now).toISOString())
+      const until = billingDate(noChargeUntil(customer, length, props.now).toISOString(), format)
       copy = {
         title: `Give ${group} time at no charge`,
         submit: `Give ${ADMIN_BILLING_TIME_LABELS[length]} at no charge`,

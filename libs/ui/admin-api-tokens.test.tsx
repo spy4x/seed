@@ -8,6 +8,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { createFormatters } from "@spy4x/time/format"
 import {
   type AdminApiToken,
   type AdminApiTokenFilter,
@@ -25,6 +26,9 @@ import {
   AdminPersonNotificationsPanel,
   AdminPersonTokensPanel,
 } from "./admin-api-tokens-tabs.tsx"
+
+/** A day as the screens write it on this device: the default formatter, with no person's settings. */
+const day = (at: string) => createFormatters().date(at)
 
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
@@ -172,10 +176,10 @@ describe("the API tokens page", () => {
         "Read and write",
         "Read only",
         "Deleted group",
-        "Oct 1, 2026",
-        "Jan 1, 2027",
+        day("2026-10-01T10:00:00.000Z"),
+        day("2027-01-01T00:00:00.000Z"),
         "Never",
-        "Revoked Oct 10, 2026",
+        `Revoked ${day("2026-10-10T10:00:00.000Z")}`,
       ]
     ) expect(list).toContain(shown)
     expect(has(`[data-e2e="admin-api-token-state-live"]`)).toBe(true)

@@ -56,6 +56,8 @@ import { createSignInMethodsStore } from "../state/sign-in-methods.ts"
 import { localReads } from "../modules.ts"
 import { groupsStore } from "../state/groups.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { preferencesState } from "../state/preferences.ts"
+import { usePreferencesProps } from "./preferences-props.ts"
 
 const NO_DELETE_VALUES: AccountDeleteValues = { password: "", otp: "" }
 const NO_DELETE_ERRORS: AccountDeleteErrors = { form: null }
@@ -69,6 +71,7 @@ export function ProfileView() {
   const [, navigate] = useLocation()
   const search = useSearch()
   const session = sessionState.value
+  const preferences = usePreferencesProps()
   const [values, setValues] = useState<ProfileValues>({
     firstName: session.user?.firstName || "",
     lastName: session.user?.lastName || "",
@@ -379,7 +382,7 @@ export function ProfileView() {
     toasts.success({
       title: "Account deleted",
       body: `It goes for good on ${
-        result.deleteAfter.toLocaleDateString(undefined, { dateStyle: "long" })
+        preferencesState.format.value.date(result.deleteAfter, "long")
       }. Sign in before then to keep it.`,
       dataE2E: "account-deleted",
     })
@@ -425,6 +428,7 @@ export function ProfileView() {
       }}
       signOutOthers={signOutOthers}
       onSignOutOthersChange={setSignOutOthers}
+      preferences={preferences}
       methods={{
         methods: methods.methods.value,
         available: methods.available.value,

@@ -1,0 +1,81 @@
+import { type } from "arktype"
+import { defineSettings, type VersionedSettings } from "@spy4x/platform/universal/settings"
+import { REGION_FORMAT_LOCALES } from "@spy4x/time/locale"
+import { isValidTimeZone } from "@spy4x/time/tz"
+
+/**
+ * A person's display preferences (#163): one record per person, kept on the server with a version,
+ * so every device shows the same theme, region format, time zone and clock.
+ *
+ * `null` means "automatic": each device uses its own region format or zone. A zone or format the
+ * person picks is stored and follows them everywhere.
+ *
+ * @module
+ */
+
+/** The longest zone name the runtime knows is about 30 characters; anything past this is junk. */
+const NAME_MAX_LENGTH = 64
+
+/** A time zone this runtime's tzdata knows, such as `Europe/Berlin`. */
+const timeZoneSchema = type(`string <= ${NAME_MAX_LENGTH}`).narrow((value, context) =>
+  isValidTimeZone(value) || context.mustBe(`a time zone from the list`)
+)
+
+/** A region format from the picker's list, such as `de-DE`. */
+const localeSchema = type.enumerated(...REGION_FORMAT_LOCALES)
+
+/** The record's shape. Every key has a default, so a record saved before a key existed reads. */
+export const preferencesSchema = type({
+  theme: `'system' | 'light' | 'dark'`,
+  locale: localeSchema.or(`null`),
+  timeZone: timeZoneSchema.or(`null`),
+  hourCycle: `'h12' | 'h23' | null`,
+})
+
+export type Preferences = typeof preferencesSchema.infer
+
+/** The theme preference: `system` follows each device's light or dark setting. */
+export type ThemePreference = Preferences["theme"]
+
+/** What a person has before their first save: the system theme, everything else automatic. */
+export const DEFAULT_PREFERENCES: Preferences = {
+  theme: `system`,
+  locale: null,
+  timeZone: null,
+  hourCycle: null,
+}
+
+/**
+ * The largest value the server stores, in bytes of JSON. The four keys need about 100, so the row
+ * cannot be used as free storage.
+ */
+export const PREFERENCES_MAX_BYTES = 512
+
+/** The checks the server and the SPA share: the schema, the defaults, the cap and the version. */
+export const preferencesDefinition = defineSettings<Preferences>(preferencesSchema, {
+  defaults: DEFAULT_PREFERENCES,
+  maxBytes: PREFERENCES_MAX_BYTES,
+})
+
+/** A record as the server answers it: the value and the version it was saved as. */
+export type VersionedPreferences = VersionedSettings<Preferences>
+
+/** What the operator area shows of a person's preferences (read-only). */
+export interface AdminUserPreferences {
+  /** The stored record, resolved: defaults where nothing was saved. */
+  value: Preferences
+  /** `0` while the person never saved. */
+  version: number
+  /** When the person last saved, or `null` when they never did. */
+  updatedAt: string | null
+  /** The zone of the first device the person used: the one they signed up with. */
+  firstTimeZone: string | null
+}
+
+/** The body of `preferences.device`: the zone and region format of the device that is open. */
+export const preferencesDeviceSchema = type({
+  timeZone: `string <= ${NAME_MAX_LENGTH}`,
+  locale: `string <= ${NAME_MAX_LENGTH}`,
+})
+
+export type PreferencesDevice = typeof preferencesDeviceSchema.infer

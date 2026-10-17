@@ -17,6 +17,8 @@ import {
   AuthAuditEventType,
 } from "@domain/identity"
 import { BILLING_AUDIT_EVENTS } from "@domain/billing"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import {
   AdminAuditScreen,
   type AdminAuditScreenProps,
@@ -224,6 +226,20 @@ describe("audit log screen", () => {
     expect(rows[2].textContent).toContain("Themselves")
     expect(rows[2].textContent).toContain("192.0.2.10")
     expect(rows[0].textContent).toContain("Job mail.password_reset")
+  })
+
+  it("writes each entry's exact moment in UTC, in the operator's region format", async () => {
+    // An operator in Berlin with German formats: 08:00 UTC is 10:00 there, yet the log says UTC.
+    await mount(
+      <FormatContext.Provider
+        value={createFormatters({ locale: "de-DE", timeZone: "Europe/Berlin" })}
+      >
+        <AdminAuditScreen {...props([])} />
+      </FormatContext.Provider>,
+    )
+    const rows = [...find("[data-e2e=admin-audit-table]").querySelectorAll("tbody tr")]
+
+    expect(rows[2].textContent).toContain("15.10.2026, 08:00:00 UTC")
   })
 
   it("calls a missing person deleted only on a person's own trail", async () => {

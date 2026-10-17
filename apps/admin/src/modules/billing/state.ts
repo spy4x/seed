@@ -20,6 +20,7 @@ import type {
   AdminBillingWaiting,
 } from "@ui/admin-billing-detail.tsx"
 import { billingDate } from "@ui/admin-billing-list.tsx"
+import { createFormatters, type Formatters } from "@spy4x/time/format"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 
 /**
@@ -125,10 +126,13 @@ function actionRequest(
 function actionDone(
   action: AdminBillingAction,
   answer: AdminBillingActionResponse,
+  format: Pick<Formatters, "date">,
 ): string {
   const { customer } = answer.detail
   const group = customer.groupName
-  const periodEnd = customer.currentPeriodEnd ? billingDate(customer.currentPeriodEnd) : null
+  const periodEnd = customer.currentPeriodEnd
+    ? billingDate(customer.currentPeriodEnd, format)
+    : null
   switch (action.kind) {
     case `refund`:
       return answer.refunded
@@ -136,7 +140,7 @@ function actionDone(
         : `The last payment of ${group} is refunded.`
     case `time`:
       return answer.until
-        ? `${group} is charged nothing until ${billingDate(answer.until)}.`
+        ? `${group} is charged nothing until ${billingDate(answer.until, format)}.`
         : `${group} got time at no charge.`
     case `cancel`:
       return action.when === `now`
@@ -160,6 +164,7 @@ export function createBillingState(
   request: AdminFetch,
   toasts: ToastStore,
   clock: BillingClock = SYSTEM_CLOCK,
+  format: () => Pick<Formatters, "date"> = () => createFormatters(),
 ) {
   const figures = signal<BillingFiguresState>({ figures: null, error: null })
   const list = signal<BillingListState>({ filter: null, list: null, pending: false, error: null })
@@ -294,7 +299,10 @@ export function createBillingState(
         return
       }
       dialog.value = NO_DIALOG
-      toasts.success({ body: actionDone(action, result.data), dataE2E: `admin-billing-toast` })
+      toasts.success({
+        body: actionDone(action, result.data, format()),
+        dataE2E: `admin-billing-toast`,
+      })
       if (customer.value.groupId !== groupId) return
       customer.value = { ...customer.value, detail: result.data.detail }
       if (action.kind === `refund`) {

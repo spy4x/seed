@@ -36,6 +36,7 @@ import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
 import { AUDIT_EVENTS, auditTone } from "./admin-user-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { useFormat } from "@spy4x/preact-ui/format"
 
 /** How the log is drawn: a dense table, or a timeline that reads like a story. */
 export type AdminAuditView = "table" | "timeline"
@@ -115,17 +116,6 @@ const EVENT_OPTIONS: SelectOption[] = [
     label: `Operator: ${label}`,
   })),
 ]
-
-const EXACT = new Intl.DateTimeFormat("en", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  timeZone: "UTC",
-  timeZoneName: "short",
-})
 
 export interface AdminAuditScreenProps {
   /** What the address asked for; the filter form starts from it. */
@@ -405,12 +395,16 @@ function selfDone(entry: AdminAuditEntry): boolean {
   return !entry.byOperator && entry.person !== null && entry.person.id === entry.actor?.id
 }
 
-/** The exact moment, in UTC, under a relative time. */
+/**
+ * The exact moment under a relative time. In UTC on purpose, in the operator's region format: an
+ * operator matches a row against the server's logs, which are in UTC.
+ */
 function When({ at }: { at: string }): JSX.Element {
+  const format = useFormat()
   return (
     <time class="flex flex-col whitespace-nowrap" dateTime={at}>
       <span class="text-sm">{timeAgo(at)}</span>
-      <span class="text-xs text-muted">{EXACT.format(new Date(at))}</span>
+      <span class="text-xs text-muted">{format.utc().exact(at)}</span>
     </time>
   )
 }
@@ -501,6 +495,7 @@ function AuditTable(
 function AuditTimeline(
   { entries, navigate }: { entries: readonly AdminAuditEntry[]; navigate?: Navigate },
 ): JSX.Element {
+  const format = useFormat()
   return (
     <div class="rounded-xl border border-subtle bg-surface p-4" data-e2e="admin-audit-timeline">
       <Timeline
@@ -511,7 +506,7 @@ function AuditTimeline(
             id: entry.key,
             title: auditEventLabel(entry.event),
             at: entry.at,
-            when: <span title={EXACT.format(new Date(entry.at))}>{timeAgo(entry.at)}</span>,
+            when: <span title={format.utc().exact(entry.at)}>{timeAgo(entry.at)}</span>,
             tone: entryTone(entry),
             dataE2E: `admin-audit-entry-${entry.key}`,
             description: (

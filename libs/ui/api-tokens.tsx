@@ -1,6 +1,5 @@
 import type { JSX } from "preact"
 import { useState } from "preact/hooks"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { IconKey } from "@spy4x/preact-icons"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -13,6 +12,7 @@ import { type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { API_TOKEN_PATHS, type Navigate } from "./progressive.tsx"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
+import { useFormat, When } from "@spy4x/preact-ui/format"
 
 export interface ApiTokensProps {
   /** Live tokens, newest first; `null` while the list is not known yet. */
@@ -145,6 +145,7 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
  * line each, so a narrow screen never strands a separator.
  */
 function TokenDetails({ token }: { token: ApiToken }): JSX.Element {
+  const format = useFormat()
   return (
     <span class="flex flex-col items-start gap-1" data-e2e="api-token-details">
       <span class="flex flex-wrap items-center gap-2">
@@ -159,7 +160,7 @@ function TokenDetails({ token }: { token: ApiToken }): JSX.Element {
         {token.expiresAt
           ? (
             <>
-              Expires <time dateTime={token.expiresAt}>{formatDate(token.expiresAt)}</time>
+              Expires <time dateTime={token.expiresAt}>{format.date(token.expiresAt)}</time>
             </>
           )
           : "Never expires"}
@@ -168,15 +169,11 @@ function TokenDetails({ token }: { token: ApiToken }): JSX.Element {
         {token.lastUsedAt
           ? (
             <>
-              Last used <time dateTime={token.lastUsedAt}>{timeAgo(token.lastUsedAt)}</time>
+              Last used <When at={token.lastUsedAt} />
             </>
           )
           : "Never used"}
       </span>
     </span>
   )
-}
-
-function formatDate(iso: string): string {
-  return new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(new Date(iso))
 }

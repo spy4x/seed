@@ -5,10 +5,10 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { type ActivityEvent, describeActivity } from "@domain/groups"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import { When } from "@spy4x/preact-ui/format"
 
 /** One event as the API sends it: `at` is an ISO timestamp. */
 export type ActivityRow = Omit<ActivityEvent, "at"> & { at: string }
@@ -153,7 +153,7 @@ function ActivityItem(
         {describeActivity(event)}
       </p>
       <p class="flex flex-wrap items-center gap-x-3 text-sm text-muted">
-        <time dateTime={event.at}>{timeAgo(event.at)}</time>
+        <When at={event.at} />
         {note && (
           <Link
             href={NOTE_PATHS.note(note)}

@@ -1,7 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { Kpi, KpiGrid } from "@spy4x/preact-charts/kpi"
 import { IconCreditCard, IconExternalLink } from "@spy4x/preact-icons"
 import { Badge, type BadgeColor } from "@spy4x/preact-ui/badge"
@@ -38,6 +37,8 @@ import {
 } from "@domain/billing"
 import { adminGroupPersonName } from "./admin-groups-list.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { useFormat, When } from "@spy4x/preact-ui/format"
+import type { Formatters } from "@spy4x/time/format"
 
 /** The billing module's pages in the admin app. */
 export const ADMIN_BILLING_PATHS = {
@@ -74,12 +75,11 @@ const STATUS_CHIPS: { value: AdminBillingStatusFilter; label: string }[] = [
   { value: `all`, label: `All` },
 ]
 
-const DAY = new Intl.DateTimeFormat(`en`, { year: `numeric`, month: `short`, day: `numeric` })
 const NUMBER = new Intl.NumberFormat(`en`)
 
-/** A date as the admin shows it: `Oct 23, 2026`. */
-export function billingDate(at: string): string {
-  return DAY.format(new Date(at))
+/** A date as the admin shows it, in the operator's format: `23 Oct 2026` or `Oct 23, 2026`. */
+export function billingDate(at: string, format: Pick<Formatters, "date">): string {
+  return format.date(at)
 }
 
 /** An amount as a person reads it: `€36.00`. */
@@ -110,9 +110,12 @@ export function billingStatusBadge(
 }
 
 /** The key date beside the status word: `Plan kept until Oct 23, 2026`, or `""` for none. */
-export function billingDatePhrase(view: AdminBillingStatusView): string {
+export function billingDatePhrase(
+  view: AdminBillingStatusView,
+  format: Pick<Formatters, "date">,
+): string {
   if (view.date === null) return ``
-  const day = billingDate(view.date.at)
+  const day = billingDate(view.date.at, format)
   switch (view.date.kind) {
     case `renews`:
       return `Renews ${day}`
@@ -131,7 +134,7 @@ export function BillingStatusLine(
   { view, dataE2E }: { view: AdminBillingStatusView; dataE2E?: string },
 ): JSX.Element {
   const badge = billingStatusBadge(view)
-  const phrase = billingDatePhrase(view)
+  const phrase = billingDatePhrase(view, useFormat())
   return (
     <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-1" data-e2e={dataE2E}>
       <Badge text={badge.text} color={badge.color} />
@@ -200,6 +203,7 @@ export interface AdminBillingListScreenProps {
  */
 export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.Element {
   const { filter, list, pending, error, onSearch, onPage, navigate } = props
+  const format = useFormat()
   const heading = useRef<HTMLHeadingElement>(null)
 
   // After a search, a chip or a page change the list is new: once it arrives, the reader starts
@@ -377,7 +381,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}
-                    columns={customerColumns(props.now, list.graceDays, navigate)}
+                    columns={customerColumns(props.now, list.graceDays, format, navigate)}
                     rows={list.customers.map((customer) => ({ customer }))}
                     caption="Customers"
                     captionHidden
@@ -471,13 +475,7 @@ function Figures(
         webhook arrives. {figures.lastEventAt
           ? (
             <>
-              Last Stripe event{" "}
-              <time
-                dateTime={figures.lastEventAt}
-                title={new Date(figures.lastEventAt).toLocaleString()}
-              >
-                {timeAgo(figures.lastEventAt)}
-              </time>.
+              Last Stripe event <When at={figures.lastEventAt} />.
             </>
           )
           : `No Stripe event has arrived yet.`}
@@ -515,9 +513,9 @@ interface CustomerRow {
 const NO_SORT: [] = []
 
 /** When the customer is charged next: the renewal, or the end of a trial; `None` otherwise. */
-function nextCharge(view: AdminBillingStatusView): string {
+function nextCharge(view: AdminBillingStatusView, format: Pick<Formatters, "date">): string {
   return view.date?.kind === `renews` || view.date?.kind === `trial_ends`
-    ? billingDate(view.date.at)
+    ? billingDate(view.date.at, format)
     : `None`
 }
 
@@ -525,6 +523,7 @@ function nextCharge(view: AdminBillingStatusView): string {
 function customerColumns(
   now: Date,
   graceDays: number,
+  format: Pick<Formatters, "date">,
   navigate?: Navigate,
 ): DataTableColumn<CustomerRow, "customer">[] {
   return [
@@ -590,7 +589,7 @@ function customerColumns(
       header: `Next charge`,
       render: ({ customer }) => (
         <span class="whitespace-nowrap text-sm">
-          {nextCharge(adminBillingStatus(customer, now, graceDays))}
+          {nextCharge(adminBillingStatus(customer, now, graceDays), format)}
         </span>
       ),
     },
