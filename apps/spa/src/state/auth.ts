@@ -399,13 +399,18 @@ export async function endOtherSessions(): Promise<{ ok: boolean; error?: string 
   return { ok: true }
 }
 
-export async function totpConnectStart(): Promise<
+/**
+ * Starts turning two-factor on. The API asks for proof that it is the account's owner (#406): the
+ * password, or for an account without one, which sends none, a provider sign-in a moment ago.
+ */
+export async function totpConnectStart(password: string | undefined): Promise<
   | { ok: true; qrcode: string; secret: string }
   | { ok: false; error: string }
 > {
   const result = await apiFetch<TotpConnectStartResponse>(
     "/api/auth/totp/connect/start",
-    { method: "POST" },
+    // `JSON.stringify` leaves out the password an account does not have.
+    { method: "POST", body: JSON.stringify({ password }) },
   )
   if (!result.ok) {
     return { ok: false, error: result.error.message }

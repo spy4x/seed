@@ -99,7 +99,7 @@ test.describe("returning to the requested page after sign-in", () => {
     await cleanup(request, email)
     try {
       const noteId = await accountWithNote(request, email)
-      const { secret, enrolStep } = await enrolTotp(request, apiBase)
+      const { secret, enrolStep } = await enrolTotp(request, apiBase, password)
 
       await openSignedOut(page, noteId, email)
       await submitTo(page, `/totp?next=%2Fnotes%2F${noteId}`, "[data-e2e=auth-form-code]")

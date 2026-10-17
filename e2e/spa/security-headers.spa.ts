@@ -169,6 +169,8 @@ test("a signed-in walk through the app meets no refusal under the content securi
     await expect(page.locator("[data-e2e=email-state]")).toHaveText("Verified")
     await gotoApp(page, "/", page.locator("[data-e2e=totp-start]"))
     await page.locator("[data-e2e=totp-start]").click()
+    await page.locator("[data-e2e=totp-start-password]").fill(password)
+    await page.locator("[data-e2e=totp-start-submit]").click()
     const qrCode = page.getByRole("img", { name: "QR code for your authenticator app" })
     await expect(qrCode).toBeVisible()
     expect(await qrCode.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(

@@ -30,16 +30,22 @@ export const currentStep = (): number => Math.floor(Date.now() / 1000 / STEP_SEC
 
 /**
  * Turns two-factor sign-in on for the account `api` is signed in as, through the API: connects an
- * authenticator app. Two-factor needs a proven address, which sign-up's code proved (#142). `base` is the app's origin, which the API's same-origin check compares.
+ * authenticator app, confirmed with the account's `password` (#406). Two-factor needs a proven
+ * address, which sign-up's code proved (#142). `base` is the app's origin, which the API's
+ * same-origin check compares.
  * Returns the app's secret and the step its enrolment code used, which the server will not accept
  * again.
  */
 export async function enrolTotp(
   api: APIRequestContext,
   base: string,
+  password: string,
 ): Promise<{ secret: string; enrolStep: number }> {
   const headers = { origin: base, "sec-fetch-site": "same-origin" }
-  const started = await api.post(`${base}/api/auth/totp/connect/start`, { headers })
+  const started = await api.post(`${base}/api/auth/totp/connect/start`, {
+    headers,
+    data: { password },
+  })
   expect(started.ok(), await started.text()).toBe(true)
   const { secret } = (await started.json()) as { secret: string }
   const enrolStep = currentStep()

@@ -79,6 +79,7 @@ export function ProfileView() {
     newPassword: "",
     passwordOtp: "",
     otp: "",
+    totpPassword: "",
     twoFactorProof: "",
   })
   const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({})
@@ -262,15 +263,27 @@ export function ProfileView() {
     })
   }
 
+  /**
+   * Starts the set-up after the "Turn on" dialog: with the password, or for an account with none
+   * after its provider sign-in a moment ago, as the deletion asks (#406).
+   */
   const startTotp = async () => {
     setTotpError(null)
+    const password = providerProof ? undefined : values.totpPassword
+    if (password !== undefined) {
+      const problem = refusedFields(authPasswordSchema, { password })?.password
+      if (!fieldsPass(problem ? { totpPassword: problem } : null)) return
+    }
     setTotpBusy(true)
-    const result = await totpConnectStart()
+    const result = await totpConnectStart(password)
     setTotpBusy(false)
     if (!result.ok) {
       setTotpError(result.error)
+      // A refusal may mean the provider sign-in is no longer recent: the dialog then says so.
+      if (providerProof) void methods.load()
       return
     }
+    setValue("totpPassword", "")
     setEnrolment({ qrcode: result.qrcode, secret: result.secret })
   }
 
@@ -465,6 +478,11 @@ export function ProfileView() {
           }),
       }}
       onStartTotp={startTotp}
+      onCancelStartTotp={() => {
+        setTotpError(null)
+        setFieldErrors(({ totpPassword: _password, ...rest }) => rest)
+        setValue("totpPassword", "")
+      }}
       onFinishTotp={finishTotp}
       onCancelTotp={() => {
         setEnrolment(null)

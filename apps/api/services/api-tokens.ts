@@ -28,9 +28,19 @@ export interface ApiTokensOptions {
   key: string
   /**
    * Whether `password` is the current password of user `userId`, read inside transaction `tx`:
-   * the sign-in's own check. `null` when the account has no password.
+   * the sign-in's own check. `null` when the account has no password. Not counted itself: the
+   * create runs it inside {@link countPasswordCheck}.
    */
   checkPassword: (tx: AppDbBase, userId: number, password: string) => Promise<boolean | null>
+  /**
+   * The sign-in's count of wrong passwords per account (#406, `SignIn.countPasswordCheck`): runs
+   * `check` and counts a `false`, and throws `PasswordLockedError` without running it while the
+   * account is locked.
+   */
+  countPasswordCheck: <Right extends boolean | null>(
+    userId: number,
+    check: () => Promise<Right>,
+  ) => Promise<Right>
   /**
    * Whether one more refusal may be audited under `key`, a token's id and the reason. It spends
    * the budget that keeps a flood of refused requests from filling `auth_audits`
@@ -93,7 +103,15 @@ const REFUSAL_MESSAGES = {
 
 /** Builds the token operations over `options.db`. */
 export function createApiTokens(
-  { db, key, checkPassword, mayAuditRefusal, logError, now = () => new Date() }: ApiTokensOptions,
+  {
+    db,
+    key,
+    checkPassword,
+    countPasswordCheck,
+    mayAuditRefusal,
+    logError,
+    now = () => new Date(),
+  }: ApiTokensOptions,
 ): ApiTokens {
   async function auditRefusal(
     c: Context,
@@ -114,30 +132,40 @@ export function createApiTokens(
 
     async create(c, userId, { password, ...request }) {
       const { secret, hash } = await mintApiToken(key)
-      const outcome = await db.begin(async (tx) => {
-        // The password is checked under the lock a password change and a reset take (#293): this
-        // create either commits before their revoke runs, or reads the new password and is
-        // refused. The connection is held for one verify.
-        await tx.lockUser(userId)
-        const valid = await checkPassword(tx, userId, password)
-        if (valid === null) return { refused: "PASSWORD_NOT_SET" as const }
-        if (!valid) return { refused: "PASSWORD_INVALID" as const }
-        const result = await tx.apiTokens.create({
-          id: uuidV7(),
-          userId,
-          groupId: request.groupId,
-          name: request.name,
-          hash,
-          access: request.access,
-          expiresAt: apiTokenExpiresAt(now(), request.expiresInDays),
+      const run = () =>
+        db.begin(async (tx) => {
+          // The password is checked under the lock a password change and a reset take (#293): this
+          // create either commits before their revoke runs, or reads the new password and is
+          // refused. The connection is held for one verify.
+          await tx.lockUser(userId)
+          const valid = await checkPassword(tx, userId, password)
+          if (valid === null) return { refused: "PASSWORD_NOT_SET" as const }
+          if (!valid) return { refused: "PASSWORD_INVALID" as const }
+          const result = await tx.apiTokens.create({
+            id: uuidV7(),
+            userId,
+            groupId: request.groupId,
+            name: request.name,
+            hash,
+            access: request.access,
+            expiresAt: apiTokenExpiresAt(now(), request.expiresInDays),
+          })
+          if ("created" in result) {
+            const { id } = result.created
+            await tx.apiTokens.audit(id, AuthAuditEventType.API_TOKEN_CREATED, null, requestOf(c))
+            await tx.apiTokenMail.queue(id)
+          }
+          return result
         })
-        if ("created" in result) {
-          const { id } = result.created
-          await tx.apiTokens.audit(id, AuthAuditEventType.API_TOKEN_CREATED, null, requestOf(c))
-          await tx.apiTokenMail.queue(id)
-        }
-        return result
+      // Counted around the transaction, which holds its connection (#406). Only a wrong password
+      // is a guess; an account with none has nothing to guess.
+      const held: { outcome?: Awaited<ReturnType<typeof run>> } = {}
+      await countPasswordCheck(userId, async () => {
+        const outcome = held.outcome = await run()
+        const refused = "refused" in outcome ? outcome.refused : null
+        return refused === "PASSWORD_INVALID" ? false : refused === "PASSWORD_NOT_SET" ? null : true
       })
+      const outcome = held.outcome!
       if ("refused" in outcome) {
         if (outcome.refused === "PASSWORD_NOT_SET") {
           throw new ApiTokenError("PASSWORD_INVALID", PASSWORD_NOT_SET_MESSAGE)

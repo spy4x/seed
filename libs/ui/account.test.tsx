@@ -727,6 +727,7 @@ const profileDefaults: ProfileScreenProps = {
     newPassword: "",
     passwordOtp: "",
     otp: "",
+    totpPassword: "",
     twoFactorProof: "",
   },
   onValueChange: () => {},
@@ -885,7 +886,8 @@ describe("ProfileScreen", () => {
     await mount(<ProfileScreen {...props} />)
     expect(document.querySelector("[data-e2e=totp-dialog]")).toBe(null)
 
-    expect(await submit("[data-e2e=totp-start]")).toBe(true)
+    await click("[data-e2e=totp-start]")
+    expect(await submit("[data-e2e=totp-start-password]")).toBe(true)
     expect(start.calls).toHaveLength(1)
     await rerender(<ProfileScreen {...props} enrolment={{ qrcode: "<svg/>", secret: "ABC" }} />)
 
@@ -929,6 +931,136 @@ describe("ProfileScreen", () => {
     (find(selector).getAttribute("aria-describedby") ?? "").split(" ")
       .map((id) => document.getElementById(id)?.textContent)
 
+  const google = { id: 2, kind: "google", email: null, current: true, canUnlink: false } as const
+  /** The sign-in methods of an account with no password, which signs in with Google only. */
+  const googleOnly = {
+    methods: [google],
+    available: [],
+    pending: false,
+    error: null,
+    onLink: () => {},
+    onUnlink: () => {},
+  }
+
+  it("turns two-factor on only once the person typed the password and submitted, and nothing when the dialog is cancelled (#406)", async () => {
+    const start = spy<[]>()
+    const cancel = spy<[]>()
+    const change = spy<[string, string]>()
+    const props = {
+      ...profileDefaults,
+      onStartTotp: start.fn,
+      onCancelStartTotp: cancel.fn,
+      onValueChange: change.fn,
+    }
+    await mount(<ProfileScreen {...props} />)
+
+    await click("[data-e2e=totp-start]")
+    expect(isOpen("totp-start-confirm")).toBe(true)
+    expect(start.calls).toEqual([])
+    await clickInDialog("totp-start-confirm", "Cancel")
+    expect(isOpen("totp-start-confirm")).toBe(false)
+    expect(cancel.calls).toHaveLength(1)
+    expect(start.calls).toEqual([])
+
+    await click("[data-e2e=totp-start]")
+    const field = find<HTMLInputElement>("[data-e2e=totp-start-password]")
+    expect(field.type).toBe("password")
+    expect(field.required).toBe(true)
+    expect(field.getAttribute("autocomplete")).toBe("current-password")
+    expect(field.labels?.[0]?.textContent).toContain("Password")
+    await type("[data-e2e=totp-start-password]", "correct-horse")
+    expect(change.calls).toEqual([["totpPassword", "correct-horse"]])
+    expect(await submit("[data-e2e=totp-start-password]")).toBe(true)
+    expect(start.calls).toHaveLength(1)
+  })
+
+  it("ties a refused password for turning two-factor on to its field and moves focus there (#406)", async () => {
+    await mount(<ProfileScreen {...profileDefaults} />)
+    await click("[data-e2e=totp-start]")
+    find("[data-e2e=totp-start-submit]").focus()
+
+    await rerender(
+      <ProfileScreen
+        {...profileDefaults}
+        errors={{ ...profileDefaults.errors, fields: { totpPassword: "must be at least 8 long" } }}
+      />,
+    )
+
+    expect(isOpen("totp-start-confirm")).toBe(true)
+    expect(find("[data-e2e=totp-start-password]").getAttribute("aria-invalid")).toBe("true")
+    expect(describedBy("[data-e2e=totp-start-password]")).toContain("must be at least 8 long")
+    expect(focused()).toBe("totp-start-password")
+  })
+
+  it("keeps the turn-on dialog open with the refusal under its form, once (#406)", async () => {
+    await mount(<ProfileScreen {...profileDefaults} />)
+    await click("[data-e2e=totp-start]")
+
+    await rerender(
+      <ProfileScreen {...profileDefaults} pending={{ ...profileDefaults.pending, totp: true }} />,
+    )
+    await rerender(
+      <ProfileScreen
+        {...profileDefaults}
+        errors={{ ...profileDefaults.errors, totp: "Invalid password" }}
+      />,
+    )
+
+    expect(isOpen("totp-start-confirm")).toBe(true)
+    expect(find("[data-e2e=totp-start-confirm] form").textContent).toContain("Invalid password")
+    expect(document.body.textContent?.split("Invalid password")).toHaveLength(2)
+  })
+
+  it("refuses a second turn-on while the first is pending (#406)", async () => {
+    const start = spy<[]>()
+    await mount(<ProfileScreen {...profileDefaults} onStartTotp={start.fn} />)
+    await click("[data-e2e=totp-start]")
+    await rerender(
+      <ProfileScreen
+        {...profileDefaults}
+        pending={{ ...profileDefaults.pending, totp: true }}
+        onStartTotp={start.fn}
+      />,
+    )
+
+    expect(await submit("[data-e2e=totp-start-password]")).toBe(true)
+    expect(start.calls).toEqual([])
+  })
+
+  it("sends an account with no password to its provider before two-factor goes on, with no form (#406)", async () => {
+    const start = spy<[]>()
+    await mount(
+      <ProfileScreen {...profileDefaults} methods={googleOnly} onStartTotp={start.fn} />,
+    )
+
+    await click("[data-e2e=totp-start]")
+
+    expect(isOpen("totp-start-confirm")).toBe(true)
+    expect(find("[data-e2e=totp-start-confirm] [data-e2e=provider-proof-needed]")).toBeTruthy()
+    expect(find("[data-e2e=provider-proof-google]").getAttribute("href")).toContain("google")
+    expect(document.querySelector("[data-e2e=totp-start-confirm] form")).toBe(null)
+    expect(start.calls).toEqual([])
+  })
+
+  it("turns two-factor on for an account with no password after a provider sign-in a moment ago, without a password field (#406)", async () => {
+    const start = spy<[]>()
+    await mount(
+      <ProfileScreen
+        {...profileDefaults}
+        methods={googleOnly}
+        providerProofFresh
+        onStartTotp={start.fn}
+      />,
+    )
+
+    await click("[data-e2e=totp-start]")
+
+    expect(find("[data-e2e=totp-start-confirm] [data-e2e=provider-proof-fresh]")).toBeTruthy()
+    expect(document.querySelector("[data-e2e=totp-start-password]")).toBe(null)
+    expect(await submit("[data-e2e=totp-start-submit]")).toBe(true)
+    expect(start.calls).toHaveLength(1)
+  })
+
   it("moves focus to Turn off when two-factor comes on", async () => {
     const enrolling = { qrcode: "<svg/>", secret: "ABC" }
     await mount(<ProfileScreen {...profileDefaults} enrolment={enrolling} />)
@@ -970,20 +1102,11 @@ describe("ProfileScreen", () => {
 
   it("asks an account with no password for a code from the authenticator app instead", async () => {
     const disable = spy<[TwoFactorProof]>()
-    const google = { id: 2, kind: "google", email: null, current: true, canUnlink: false } as const
-    const methods = {
-      methods: [google],
-      available: [],
-      pending: false,
-      error: null,
-      onLink: () => {},
-      onUnlink: () => {},
-    }
     await mount(
       <ProfileScreen
         {...profileDefaults}
         user={twoFactorOn}
-        methods={methods}
+        methods={googleOnly}
         onDisableTotp={disable.fn}
       />,
     )

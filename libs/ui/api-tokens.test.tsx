@@ -248,6 +248,7 @@ describe("ProfileScreen API tokens", () => {
           newPassword: "",
           passwordOtp: "",
           otp: "",
+          totpPassword: "",
           twoFactorProof: "",
         }}
         onValueChange={() => {}}

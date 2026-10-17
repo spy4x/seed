@@ -16,6 +16,7 @@ import { readApiJson } from "@api/services/json-body.ts"
 import type { AppAuthState, SignIn } from "@api/services/sign-in.ts"
 import { UnlinkOutcome } from "@api/services/oauth-sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
+import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
 import { PROVIDER_PROOF_REQUIRED } from "./auth.ts"
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
@@ -88,8 +89,16 @@ export function createOAuthRoute(
     if (body.error) return c.json({ error: body.error.description }, 400)
     const { password } = body.data
     if (await signIn.hasPassword(state.user.id)) {
-      if (password === undefined || !(await signIn.checkPassword(state.user.id, password))) {
-        return c.json({ error: "Invalid password" }, 400)
+      if (password === undefined) return c.json({ error: "Invalid password" }, 400)
+      try {
+        if (!(await signIn.checkPassword(state.user.id, password))) {
+          return c.json({ error: "Invalid password" }, 400)
+        }
+      } catch (error) {
+        // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
+        if (!(error instanceof PasswordLockedError)) throw error
+        c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
+        return c.json({ error: passwordLockedMessage(error.retryAfterMs) }, 429)
       }
     } else if (!(await signIn.confirmedByProvider(state))) {
       return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)

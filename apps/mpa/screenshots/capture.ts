@@ -394,6 +394,7 @@ async function seed(browser: Browser, contexts: BrowserContext[], ada: Page): Pr
   // An authenticator, so the profile shows two-factor sign-in on.
   const started = await ada.request.post(`${APP}/api/auth/totp/connect/start`, {
     headers: sameOrigin(),
+    data: { password: PASSWORD },
   })
   await expectOk("authenticator start", started)
   const { secret } = await started.json() as { secret: string }

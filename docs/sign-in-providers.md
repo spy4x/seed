@@ -44,6 +44,8 @@ What a person gets:
   and deletes itself after signing in with its provider again: a provider sign-in less than five
   minutes old stands in for the password, and the dialog links to the provider when there is
   none. Once it has a password it is asked for that, like any other account.
-- Linking a provider asks for the same proof: the password when the account has one, otherwise a
-  provider sign-in less than five minutes old. A first password also asks for the authenticator
-  code while two-factor is on.
+- Linking a provider, and turning two-factor sign-in on, ask for the same proof: the password when
+  the account has one, otherwise a provider sign-in less than five minutes old. A first password
+  also asks for the authenticator code while two-factor is on.
+- A first password, a new address and two-factor sign-in turned on each sign out every other
+  device of the account; the device that made the change stays signed in.

@@ -20,6 +20,7 @@ import {
   testSessionGuards,
 } from "../_testing/mutation-requests.ts"
 import { createApiTokensRoute } from "./api-tokens.ts"
+import { PasswordLockedError } from "../services/password-locked.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const tokenId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111009"
@@ -39,7 +40,7 @@ const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await nex
 
 function buildApp(
   auth: APIContext["Variables"]["auth"] = buildAuthData({ user: { id: 7 } }),
-  refusal: ApiTokenError | null = null,
+  refusal: ApiTokenError | PasswordLockedError | null = null,
 ) {
   const calls: unknown[][] = []
   const route = createApiTokensRoute({
@@ -118,6 +119,18 @@ describe("API token routes", () => {
 
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({ error: "Wrong password", code: "PASSWORD_INVALID" })
+  })
+
+  it("answers a create while the account's wrong passwords lock it with 429 and the time to wait", async () => {
+    const { app } = buildApp(undefined, new PasswordLockedError(90_500))
+    const response = await post(app, valid)
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("retry-after")).toBe("91")
+    expect(await response.json()).toEqual({
+      error: "Too many wrong passwords. Try again in 2 minutes.",
+      code: "PASSWORD_LOCKED",
+    })
   })
 
   it("spends the password limit on a create only, never on a list or a revoke", async () => {

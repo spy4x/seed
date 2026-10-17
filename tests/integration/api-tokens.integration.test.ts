@@ -107,7 +107,11 @@ const openLockout = {
 }
 
 /** The API as `index.ts` mounts the parts this feature touches, with a clock the test moves. */
-async function buildApp(sql: postgres.Sql) {
+/**
+ * `countPasswords: false` checks every password without the account's count of wrong ones
+ * (#406), for a test that sends more creates at once than the count lets through together.
+ */
+async function buildApp(sql: postgres.Sql, { countPasswords = true } = {}) {
   const db = new AppDbBase({ sql })
   const clock = { now: new Date(), storeDown: false }
   const signIn = createSignIn({
@@ -146,12 +150,15 @@ async function buildApp(sql: postgres.Sql) {
     key: TOKEN_KEY,
     checkPassword: async (tx, userId, password) => {
       const valid = (await signIn.hasPassword(userId, tx))
-        ? await signIn.checkPassword(userId, password, tx)
+        ? await signIn.verifyPassword(userId, password, tx)
         : null
       // Where a test puts another request between a create's password check and its insert.
       await hooks.passwordChecked?.()
       return valid
     },
+    countPasswordCheck: countPasswords
+      ? signIn.countPasswordCheck
+      : <Right extends boolean | null>(_userId: number, check: () => Promise<Right>) => check(),
     mayAuditRefusal: limits.refusalAudit,
     logError: (message, error) => {
       if (!clock.storeDown) throw new Error(`${message}: ${error}`)
@@ -559,6 +566,46 @@ Deno.test("creating a token needs the account's password: none, a wrong one and 
   })
 })
 
+Deno.test("wrong passwords at a token create count on the account's lock, which refuses the right one (#406)", async () => {
+  await withSchema(async (sql) => {
+    const app = await buildApp(sql)
+    const ada = await signUp(app, "ada@example.com")
+    const create = async (password: string) => {
+      const response = await app.app.request(`${API}/tokens`, {
+        method: "POST",
+        headers: browser(ada.cookie),
+        body: JSON.stringify({
+          name: "Script",
+          groupId: ada.groupId,
+          access: ApiTokenAccess.READ,
+          expiresInDays: 30,
+          password,
+        }),
+      })
+      const body = (await response.json()) as { code?: string }
+      return {
+        status: response.status,
+        code: body.code,
+        retryAfter: response.headers.get("retry-after"),
+      }
+    }
+
+    for (let guess = 0; guess < 6; guess++) {
+      expect(await create("Not-the-Passw0rd")).toEqual({
+        status: 400,
+        code: "PASSWORD_INVALID",
+        retryAfter: null,
+      })
+    }
+    expect(await create(PASSWORD)).toEqual({
+      status: 429,
+      code: "PASSWORD_LOCKED",
+      retryAfter: "60",
+    })
+    expect(await sql`SELECT 1 FROM api_tokens`).toEqual([])
+  })
+})
+
 Deno.test("creating a token queues one mail to its owner, which names the token and not its secret", async () => {
   await withSchema(async (sql) => {
     const app = await buildApp(sql)
@@ -799,7 +846,9 @@ async function createStatus(app: App, person: Person, groupId: string): Promise<
 
 Deno.test("a person holds at most the cap of live tokens, even when creates race", async () => {
   await withSchema(async (sql) => {
-    const app = await buildApp(sql)
+    // Each check counts as a wrong password until it is found right, so 25 at once would lock
+    // the account; the cap is what this test is about.
+    const app = await buildApp(sql, { countPasswords: false })
     const ada = await signUp(app, "ada@example.com")
     const statuses = await Promise.all(
       Array.from({ length: API_TOKENS_MAX + 5 }, () => createStatus(app, ada, ada.groupId)),

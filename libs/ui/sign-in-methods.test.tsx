@@ -729,6 +729,7 @@ describe("ProfileScreen for an account without a password", () => {
       newPassword: "",
       passwordOtp: "",
       otp: "",
+      totpPassword: "",
       twoFactorProof: "",
     },
     onValueChange: () => {},

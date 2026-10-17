@@ -266,14 +266,18 @@ from `GET /api/auth/methods`, once a person is signed in with every factor done.
 **An account with no password** confirms with a provider sign-in where the others give the
 password: `oauth.proofUntil` (`apps/api/services/oauth-sign-in.ts`) holds while the request's
 session was started by an `oauth:*` key less than `PROVIDER_PROOF_MINUTES` ago, read from
-`auth_sessions.created_at`. `POST /api/auth/account/delete` and `POST /api/auth/email/change`
-take it in place of `password`, and `POST /api/auth/password/set` adds the first password key,
-on the account's address, proven. `GET /api/auth/methods` answers `providerProofUntil`, so the
+`auth_sessions.created_at`. `POST /api/auth/account/delete`, `POST /api/auth/email/change` and
+`POST /api/auth/totp/connect/start` take it in place of `password`, and
+`POST /api/auth/password/set` adds the first password key, on the account's address, proven,
+and signs out every other session of the account; the one that set it stays signed in (#406).
+`GET /api/auth/methods` answers `providerProofUntil`, so the
 dialogs show the form or the links back to the provider (`libs/ui/provider-proof.tsx`). A
 changed address of such an account lives on the `email-code` key its code proved, which
 `readEmailStatus` reads before the provider's own address. A first password takes that key
 away (`dropCodeKeys`, `libs/server/auth/email-verification.ts`), and so does a later change of
-address, so no `email-code` key stays on an address the account has left.
+address, so no `email-code` key stays on an address the account has left. Such an account cannot
+move to an address another of its sign-in methods carries already (`EMAIL_ALREADY_CARRIED`): it
+reads its address from those methods, so the change would answer "done" and change nothing.
 `POST /api/auth/password/set` asks for `otp` while two-factor is on, and
 `POST /api/auth/methods/:provider/link` asks for the password or the same provider proof, so a
 session cannot make itself recent by linking one more provider. `DELETE /api/auth/methods/:id`
@@ -292,11 +296,26 @@ budget (3 an hour from all accounts, `ratelimit-email-change-address`), never
 the address's own code budget: the address may be someone else's, and a
 stranger must not run its owner's budget out (#224). Both refusals use one
 wording. The verify call then moves the password key to the new address,
-signs out every other session and gives this one a new cookie. A username
+signs out every other session, those a Google or GitHub sign-in started included, and gives
+this one a new cookie. An account with no password has its new address on the code key instead,
+and every other session ends the same way while this one keeps its cookie (#406). A username
 account adds its first address the same way, and from then on signs in with
 the address instead of the username. A password reset drops a waiting change.
 A reset and a move of one account both lock its password key first
 (`lockPasswordKey`), so neither copies a hash the other is replacing.
+
+**Wrong passwords from a session (#406).** Every step a signed-in person confirms with the
+password counts the wrong ones in `password_check_failures`, keyed by the user id: turning
+two-factor on or off, a password change, an address change, deleting the account, linking or
+unlinking a provider, creating an API token and handing a group over. They share one count
+(`signIn.checkPassword`, and `changePassword`, `requestEmailChange` and `countPasswordCheck`,
+which count the same way) with the sign-in page's policy: 5 free, then a lock of 1 minute doubling
+to 15 (`PASSWORD_LOCK_POLICY`, `apps/api/services/password-locked.ts`). While it runs, even the
+right password is answered 429 with `Retry-After` (`PasswordLockedError`). The sign-in page keeps
+its own count per name (`password_failures`), so a stranger who types the person's address there
+does not lock their signed-in steps, and a session's guesses do not lock the sign-in page. A check
+counts as wrong until it is found right, so more than six checks of one account at the same moment
+are refused (the sixth sets the lock): no person sends that many.
 
 **A squatted address.** Anyone can still sign up first with someone else's
 address, but it stays unproven and cannot carry a second factor. A reset
@@ -428,10 +447,12 @@ start it with `deno run --allow-sys -E -N apps/worker/+main.ts` and the API's `D
 `DOMAIN` values. It also sends the password reset mails (trap 8).
 
 **Personal API tokens: what is asked, what ends one, what is kept.** Creating a token asks for the
-account's current password (`signIn.checkPassword`, behind the strict per-user limit), so a stolen
-session cannot mint one; an account with no password cannot create tokens and is told so. The
-password is checked inside the create's transaction, under the lock on the person's `users` row
-(`lockUser`). A password change and a reset take that lock too, after the password key's, and
+account's current password (`signIn.verifyPassword`, behind the strict per-user limit), so a
+stolen session cannot mint one; an account with no password cannot create tokens and is told so.
+The password is checked inside the create's transaction, under the lock on the person's `users` row
+(`lockUser`), and counted around it (`signIn.countPasswordCheck`, below "Wrong passwords from a
+session"): the count needs a pool connection of its own, which it must not wait for while the
+transaction holds one. A password change and a reset take that lock too, after the password key's, and
 write the password and revoke the tokens in one transaction: both happen or neither, and a token
 made with the old password never outlives the change. The create queues the
 `api-token.created-mail` job, which mails the owner's proven address. A token's name is one line:

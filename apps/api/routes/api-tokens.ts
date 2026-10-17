@@ -7,6 +7,7 @@ import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
 import type { ApiTokens } from "@api/services/api-tokens.ts"
 import { readApiJson } from "@api/services/json-body.ts"
+import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
 
 /** What the token management routes call. `index.ts` passes the app's singletons. */
 export interface ApiTokensRouteDependencies {
@@ -40,7 +41,8 @@ const STATUS = {
  * - `POST /` creates one from `{ name, groupId, access, expiresInDays, password }`: 201
  *   `{ token, secret }`. The secret is in this answer only. `password` is the person's current
  *   password, asked again because a stolen session does not have it: 400 `PASSWORD_INVALID`
- *   without the right one. The owner is mailed that a token was created.
+ *   without the right one, 429 `PASSWORD_LOCKED` with `Retry-After` after too many wrong ones at
+ *   any signed-in step (#406). The owner is mailed that a token was created.
  * - `DELETE /:id` revokes one: `{ success: true }`, or 404 when the person has no such token.
  *
  * A refusal answers `{ error, code }`, the message the web app shows.
@@ -48,6 +50,14 @@ const STATUS = {
 export function createApiTokensRoute(dependencies: ApiTokensRouteDependencies): Hono<APIContext> {
   return new Hono<APIContext>()
     .onError((error, c) => {
+      // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
+      if (error instanceof PasswordLockedError) {
+        c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
+        return c.json({
+          error: passwordLockedMessage(error.retryAfterMs),
+          code: "PASSWORD_LOCKED",
+        }, 429)
+      }
       if (!(error instanceof ApiTokenError)) throw error
       return c.json({ error: error.message, code: error.code }, STATUS[error.code])
     })

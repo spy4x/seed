@@ -17,6 +17,7 @@ import {
   authSignUpSchema,
   authTotpDisconnectSchema,
   emailToVerify,
+  signInMethodProofSchema,
   type SignUpAccountExistsResponse,
   type User,
   UserMFAStatus,
@@ -37,6 +38,7 @@ import type { AuthRateLimits } from "../middlewares/auth-rate-limits.ts"
 import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import { readApiJson } from "@api/services/json-body.ts"
 import { passwordFailureSubject } from "@api/services/password-failures.ts"
+import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
 
 /** What the auth routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface AuthRouteDependencies {
@@ -87,6 +89,13 @@ export const PASSWORD_RESET_REFUSED = "This link is invalid, used or expired. As
 
 /** The answer to an e-mail code that cannot be used: wrong, expired or used up alike. */
 export const EMAIL_CODE_REFUSED = "This code is wrong or has expired. Ask for a new one."
+
+/**
+ * The answer when an account with no password asks to move to an address another of its sign-in
+ * methods carries: the change would change nothing.
+ */
+export const EMAIL_ALREADY_CARRIED =
+  "Your account already has this address through another sign-in method."
 
 /** The answer when the address is proven and no change waits, so no code is due. */
 export const EMAIL_NOTHING_TO_VERIFY = "Your e-mail address is already verified."
@@ -159,17 +168,6 @@ export const PASSWORD_SET_REFUSED = "This password cannot be set. Try another on
 export const TOTP_DISCONNECT_PROOF_REQUIRED =
   "Enter your password or the code from your authenticator app"
 
-/**
- * The answer while a sign-in name is locked after too many wrong passwords, saying when to try
- * again. The same for a name no account uses, so it tells nothing about an account.
- */
-export function passwordLockedMessage(waitMs: number): string {
-  const minutes = Math.max(1, Math.ceil(waitMs / 60_000))
-  return `Too many wrong passwords. Try again in ${minutes} ${
-    minutes === 1 ? "minute" : "minutes"
-  }.`
-}
-
 /** Sets `Retry-After` and answers 429 with `error`. */
 function tooMany(c: Context<APIContext>, retryAfterMs: number, error: string): Response {
   c.header("Retry-After", String(Math.ceil(retryAfterMs / 1000)))
@@ -239,6 +237,12 @@ export function createAuthRoute(
       }),
     )
   return new Hono<APIContext>()
+    // A password check of a signed-in step while the account is locked (#406). Every other error
+    // goes on to the app's handler.
+    .onError((error, c) => {
+      if (!(error instanceof PasswordLockedError)) throw error
+      return tooMany(c, error.retryAfterMs, passwordLockedMessage(error.retryAfterMs))
+    })
     .post(`/sign-out`, mutationGuards.anonymous, rateLimits.normal, async (c) => {
       const authData = c.get("auth")
       await signIn.signOut(c)
@@ -413,8 +417,27 @@ export function createAuthRoute(
         return c.json({ error: "Invalid request format" }, 400)
       }
     })
-    .post(`/totp/connect/start`, rateLimits.normal, async (c) => {
-      const { error, qrcode, secret } = await signIn.connectTotpStart(c.get("auth")!)
+    // Asks for what the deletion asks (#406): the password, or for an account without one a
+    // sign-in with Google or GitHub a moment ago. Finishing the set-up signs every other session
+    // out, so a session left open must not be able to lock its owner out with an app of its own.
+    .post(`/totp/connect/start`, rateLimits.strictByUser, async (c) => {
+      const body = await readApiJson(c)
+      const validationResult = validate(signInMethodProofSchema, body)
+      if (validationResult.error) {
+        return c.json({ error: validationResult.error.description }, 400)
+      }
+      const authData = c.get("auth")!
+      const { password } = validationResult.data
+      if (await signIn.hasPassword(authData.user.id)) {
+        if (
+          password === undefined || !(await signIn.checkPassword(authData.user.id, password))
+        ) {
+          return c.json({ error: "Invalid password" }, 400)
+        }
+      } else if (!(await signIn.confirmedByProvider(authData))) {
+        return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+      }
+      const { error, qrcode, secret } = await signIn.connectTotpStart(authData)
       if (error) {
         return c.json({ error }, 400)
       }
@@ -512,6 +535,9 @@ export function createAuthRoute(
       if (outcome === EmailVerifyOutcome.NothingToVerify) {
         return c.json({ error: EMAIL_NOTHING_TO_VERIFY }, 400)
       }
+      // A new address signed the other devices out (#406): their sockets close now. Proving the
+      // address the account has ends none, and the hub then finds nothing to close.
+      emitSignOut(c, authData.user.id)
       return c.json({ success: true })
     })
     .post(`/email/change`, rateLimits.strictByUser, async (c) => {
@@ -533,6 +559,9 @@ export function createAuthRoute(
       }
       if (outcome === EmailChangeOutcome.InvalidEmail) {
         return c.json({ error: "Enter a valid e-mail address" }, 400)
+      }
+      if (outcome === EmailChangeOutcome.AlreadyCarried) {
+        return c.json({ error: EMAIL_ALREADY_CARRIED }, 400)
       }
       if (outcome === EmailChangeOutcome.Kept) {
         return c.json({ success: true, message: "Your address stays as it is." })
@@ -600,7 +629,11 @@ export function createAuthRoute(
         if (checked !== true) return checked
       }
       const outcome = await signIn.setPassword(c, authData, newPassword)
-      if (outcome === PasswordSetOutcome.Set) return c.json({ success: true })
+      if (outcome === PasswordSetOutcome.Set) {
+        // The other devices were signed out (#406): their sockets close now.
+        emitSignOut(c, authData.user.id)
+        return c.json({ success: true })
+      }
       const refusals = {
         [PasswordSetOutcome.AlreadySet]: PASSWORD_ALREADY_SET,
         [PasswordSetOutcome.ProofRequired]: PROVIDER_PROOF_REQUIRED,

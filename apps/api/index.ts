@@ -172,8 +172,9 @@ const apiTokens = createApiTokens({
   key: await deriveSecret(config.authPepper, "api-tokens"),
   checkPassword: async (tx, userId, password) =>
     (await signIn.hasPassword(userId, tx))
-      ? await signIn.checkPassword(userId, password, tx)
+      ? await signIn.verifyPassword(userId, password, tx)
       : null,
+  countPasswordCheck: signIn.countPasswordCheck,
   mayAuditRefusal: tokenRateLimits.refusalAudit,
   logError: (message, error) => log(message, error),
 })

@@ -40,11 +40,13 @@ import {
 import { createLockout, type Lockout } from "@spy4x/server/lockout"
 import { MemoryLockoutStore } from "@spy4x/server/lockout/memory-store"
 import { PASSWORD_LOCK_POLICY } from "../services/password-failures.ts"
+import { PasswordLockedError } from "../services/password-locked.ts"
 import { createKvStore, type RateLimitStore } from "@spy4x/platform/rate-limit"
 import {
   ACCOUNT_DELETE_BLOCKED,
   ACCOUNT_DELETE_CODE_REQUIRED,
   createAuthRoute,
+  EMAIL_ALREADY_CARRIED,
   EMAIL_CHANGE_TOO_MANY,
   EMAIL_CODE_REFUSED,
   EMAIL_NOTHING_TO_VERIFY,
@@ -148,6 +150,8 @@ function fakeSignIn(
     ),
     resetPassword: () => (calls.push("resetPassword"), Promise.resolve(succeed)),
     checkPassword: () => (calls.push("checkPassword"), Promise.resolve(succeed)),
+    countPasswordCheck: (_userId, check) => check(),
+    verifyPassword: () => (calls.push("verifyPassword"), Promise.resolve(succeed)),
     hasPassword: () => Promise.resolve(true),
     confirmedByProvider: () => Promise.resolve(false),
     setPassword: () => (
@@ -357,8 +361,9 @@ const sessionRoutes: SessionRoute[] = [
   {
     method: "POST",
     path: "/auth/totp/connect/start",
-    body: undefined,
+    body: { password: "correct-horse" },
     operation: "connectTotpStart",
+    calls: { succeeded: ["checkPassword", "connectTotpStart"], failed: ["checkPassword"] },
   },
   {
     method: "POST",
@@ -985,6 +990,113 @@ describe("auth routes ask for proof before turning two-factor off", () => {
     expect(response.status).toBe(400)
     expect(calls).toEqual([])
   })
+})
+
+describe("auth routes ask for proof before turning two-factor on (#406)", () => {
+  const start = (body: unknown) => ({
+    method: "POST" as const,
+    path: "/auth/totp/connect/start",
+    body,
+  })
+
+  it("refuses an account with a password that sends none, and starts nothing", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, start({}), sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect(calls).toEqual([])
+  })
+
+  it("refuses a wrong password and starts nothing", async () => {
+    const { app, calls } = buildApp(undefined, { succeed: false })
+    const response = await send(app, start({ password: "wrong-horse" }), sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect(calls).toEqual(["checkPassword"])
+  })
+
+  it("starts the set-up for the account's password", async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, start({ password: "correct-horse" }), sameOriginHeaders)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ qrcode: "qr", secret: "s" })
+    expect(calls).toEqual(["checkPassword", "connectTotpStart"])
+  })
+
+  it("refuses an account without a password whose provider sign-in is not recent", async () => {
+    const { app, calls } = buildApp(undefined, {
+      signIn: { hasPassword: () => Promise.resolve(false) },
+    })
+    const response = await send(app, start({}), sameOriginHeaders)
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: PROVIDER_PROOF_REQUIRED })
+    expect(calls).toEqual([])
+  })
+
+  it("starts the set-up for an account without a password after a provider sign-in a moment ago", async () => {
+    const { app, calls } = buildApp(undefined, {
+      signIn: {
+        hasPassword: () => Promise.resolve(false),
+        confirmedByProvider: () => Promise.resolve(true),
+      },
+    })
+    const response = await send(app, start({}), sameOriginHeaders)
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual(["connectTotpStart"])
+  })
+})
+
+describe("auth routes refuse a password step while the account's wrong passwords lock it (#406)", () => {
+  const locked = () => Promise.reject(new PasswordLockedError(90_500))
+  const cases: { route: MutationCase; signIn: Partial<SignIn> }[] = [
+    {
+      route: { method: "POST", path: "/auth/totp/connect/start", body: { password: "pw-12345" } },
+      signIn: { checkPassword: locked },
+    },
+    {
+      route: { method: "POST", path: "/auth/totp/disconnect", body: { password: "pw-12345" } },
+      signIn: { checkPassword: locked },
+    },
+    {
+      route: { method: "POST", path: "/auth/account/delete", body: { password: "pw-12345" } },
+      signIn: { checkPassword: locked },
+    },
+    {
+      route: {
+        method: "POST",
+        path: "/auth/password/change",
+        body: { password: "pw-12345", newPassword: "battery-staple" },
+      },
+      signIn: { changePassword: locked },
+    },
+    {
+      route: {
+        method: "POST",
+        path: "/auth/email/change",
+        body: { email: "new@example.com", password: "pw-12345" },
+      },
+      signIn: { requestEmailChange: locked },
+    },
+  ]
+  for (const { route, signIn } of cases) {
+    it(`answers ${route.path} with 429, the time to wait and no change`, async () => {
+      const { app, calls, mailed } = buildApp(undefined, { signIn })
+      const response = await send(app, route, sameOriginHeaders)
+
+      expect(response.status).toBe(429)
+      expect(response.headers.get("retry-after")).toBe("91")
+      expect(await response.json()).toEqual({
+        error: "Too many wrong passwords. Try again in 2 minutes.",
+      })
+      expect(calls.filter((call) => call !== "accountDeletionBlockers")).toEqual([])
+      expect(mailed).toEqual([])
+    })
+  }
 })
 
 describe("auth routes lock a sign-in name after repeated wrong passwords", () => {
@@ -1640,6 +1752,36 @@ describe("auth routes prove an e-mail address with a code", () => {
     expect(await response.json()).toEqual({ error: PROVIDER_PROOF_REQUIRED })
     expect(mailed).toEqual([])
   })
+
+  it("refuses, and queues nothing, when another sign-in method of the account carries the address", async () => {
+    const { app, mailed } = buildApp(undefined, {
+      signIn: { requestEmailChange: () => Promise.resolve(EmailChangeOutcome.AlreadyCarried) },
+    })
+    const response = await send(
+      app,
+      { ...change, body: { email: "new@example.com" } },
+      sameOriginHeaders,
+    )
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: EMAIL_ALREADY_CARRIED })
+    expect(mailed).toEqual([])
+  })
+
+  it("announces a sign-out once a code proved a new address, so the other devices' sockets close", async () => {
+    const { app, emitted } = buildApp()
+    const response = await send(app, verify, sameOriginHeaders)
+
+    expect(response.status).toBe(200)
+    expect(emitted.map((event) => event.data.userId)).toEqual([buildAuthData().user.id])
+  })
+
+  it("announces no sign-out for a wrong code", async () => {
+    const { app, emitted } = buildApp(undefined, { succeed: false })
+    await send(app, verify, sameOriginHeaders)
+
+    expect(emitted).toEqual([])
+  })
 })
 
 describe("deleting one's own account", () => {
@@ -1839,6 +1981,20 @@ describe("a first password", () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ success: true })
     expect(calls).toEqual(["setPassword"])
+  })
+
+  it("announces a sign-out once it is set, so the other devices' sockets close", async () => {
+    const { app, emitted } = buildApp()
+    await send(app, setRoute, sameOriginHeaders)
+
+    expect(emitted.map((event) => event.data.userId)).toEqual([buildAuthData().user.id])
+  })
+
+  it("announces no sign-out when it is refused", async () => {
+    const { app, emitted } = buildApp(undefined, { succeed: false })
+    await send(app, setRoute, sameOriginHeaders)
+
+    expect(emitted).toEqual([])
   })
 
   it("refuses a password shorter than eight characters without trying to set it", async () => {

@@ -21,25 +21,15 @@
 
 import type { Sql } from "@spy4x/server/db"
 import { normalizeEmail } from "@spy4x/server/auth"
-import { createLockout, type Lockout, type LockoutPolicy } from "@spy4x/server/lockout"
+import { createLockout, type Lockout } from "@spy4x/server/lockout"
 import { createPostgresLockoutStore } from "@spy4x/server/lockout/postgres"
 import { sha256Hex } from "@spy4x/platform/tokens"
 import type { Clock } from "@spy4x/platform/universal/time"
 import { normalizeUsername } from "./sign-in.ts"
+import { PASSWORD_LOCK_POLICY } from "./password-locked.ts"
 
-const MINUTE_MS = 60_000
-
-/**
- * 5 wrong passwords cost no wait. The 6th locks the name for 1 minute, and each one after doubles
- * the lock up to 15 minutes. An hour without a wrong password sets the count back to 0. The quiet
- * hour is longer than the longest lock, so waiting a lock out does not buy a fresh count.
- */
-export const PASSWORD_LOCK_POLICY: Readonly<LockoutPolicy> = Object.freeze({
-  freeFailures: 5,
-  firstLockMs: MINUTE_MS,
-  maxLockMs: 15 * MINUTE_MS,
-  quietResetMs: 60 * MINUTE_MS,
-})
+// Defined beside the signed-in account's count (#406), which shares it.
+export { PASSWORD_LOCK_POLICY }
 
 /** Options for {@link createPasswordFailures}. */
 export interface PasswordFailuresOptions {

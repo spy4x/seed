@@ -28,6 +28,8 @@ import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresBillingRepository } from "@server/billing/postgres-billing-repository.ts"
 import { emailChanges } from "@server/auth/email-verification.ts"
+import type { Lockout } from "@spy4x/server/lockout"
+import { createPasswordCheckFailures } from "./password-locked.ts"
 import { signUpRequests } from "@server/auth/sign-up-requests.ts"
 import { enqueueSignUpCodeMail } from "@server/jobs/sign-up-code-mail.ts"
 import {
@@ -421,6 +423,14 @@ export class AppDbBase extends DbServiceBase {
   /** The operator area's group reads and actions (`@server/groups/admin-groups.ts`, #426). */
   get adminGroups(): ReturnType<typeof adminGroupRows> {
     return adminGroupRows(this.sql)
+  }
+
+  /**
+   * The count of wrong passwords a signed-in account types (#406). Only the pool's is used: each
+   * update runs in a transaction of its own. Built per access, like `group`.
+   */
+  get passwordCheckFailures(): Lockout {
+    return createPasswordCheckFailures({ sql: this.sql })
   }
 
   /** The address change waiting for its code. Built per access, like `group`. */

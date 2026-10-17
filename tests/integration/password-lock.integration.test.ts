@@ -123,6 +123,8 @@ async function buildApp(sql: postgres.Sql) {
   expect(signUp.status).toBe(200)
 
   let requests = 0
+  /** The cookies the last sign-in set, as a browser sends them back. */
+  let lastCookies: string[] = []
   /** One sign-in, each from a network address of its own. What a stranger sees of the answer. */
   const attempt = async (login: string, password: string) => {
     requests += 1
@@ -136,13 +138,37 @@ async function buildApp(sql: postgres.Sql) {
       },
       body: JSON.stringify({ login, password }),
     })
+    lastCookies = response.headers.getSetCookie().map((line) => line.split(";")[0])
     return {
       status: response.status,
       retryAfter: response.headers.get("retry-after"),
       body: response.status === 200 ? "the profile" : await response.json(),
     }
   }
-  return { clock, attempt }
+  /** Signs in with the right password and answers a client that sends this session's cookie. */
+  const session = async () => {
+    const signedIn = await attempt("ada@example.com", PASSWORD)
+    expect(signedIn.status).toBe(200)
+    const cookie = lastCookies.join("; ")
+    return async (path: string, body: unknown) => {
+      const response = await app.request(`${API}${path}`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: WEB_APP_URL,
+          "sec-fetch-site": "same-origin",
+          cookie,
+        },
+        body: JSON.stringify(body),
+      })
+      return {
+        status: response.status,
+        retryAfter: response.headers.get("retry-after"),
+        body: await response.json(),
+      }
+    }
+  }
+  return { clock, attempt, session }
 }
 
 Deno.test("repeated wrong passwords lock one account for a short time", async (t) => {
@@ -240,5 +266,73 @@ Deno.test("the wrong-password counter forgets rows that decide nothing any more"
       SELECT subject FROM password_failures ORDER BY subject
     `
     expect(left.map((row) => row.subject[0])).toEqual(["a", "b"])
+  })
+})
+
+Deno.test("an account with a password turns two-factor on only with that password (#406)", async (t) => {
+  await withSchema(async (sql) => {
+    const { session } = await buildApp(sql)
+    const post = await session()
+
+    await t.step("none and a wrong one are refused, and no set-up starts", async () => {
+      expect((await post("/auth/totp/connect/start", {})).body).toEqual({
+        error: "Invalid password",
+      })
+      expect((await post("/auth/totp/connect/start", { password: "wrong-guess" })).body)
+        .toEqual({ error: "Invalid password" })
+      expect(await sql`SELECT 1 FROM user_totp`).toEqual([])
+    })
+
+    await t.step("the right one starts it", async () => {
+      // An unproven address cannot carry a second factor; `signUp` leaves it unproven.
+      const [{ userId }] = await sql<{ userId: number }[]>`SELECT user_id FROM auth_keys`
+      await sql`INSERT INTO auth_email_owners (email, user_id) VALUES ('ada@example.com', ${userId})`
+      await sql`UPDATE auth_keys SET proven_at = now()`
+      const started = await post("/auth/totp/connect/start", { password: PASSWORD })
+      expect(started.status).toBe(200)
+      expect(typeof started.body.secret).toBe("string")
+    })
+  })
+})
+
+Deno.test("wrong passwords at every signed-in step share one lock per account (#406)", async (t) => {
+  await withSchema(async (sql) => {
+    const { session, attempt } = await buildApp(sql)
+    const post = await session()
+    const wrong = "wrong-guess"
+
+    await t.step("six wrong passwords over five different steps are each refused", async () => {
+      const answers = [
+        await post("/auth/totp/connect/start", { password: wrong }),
+        await post("/auth/totp/disconnect", { password: wrong }),
+        await post("/auth/account/delete", { password: wrong }),
+        await post("/auth/email/change", { email: "ada@new.example", password: wrong }),
+        await post("/auth/password/change", { password: wrong, newPassword: "Battery-staple1" }),
+        await post("/auth/totp/disconnect", { password: wrong }),
+      ]
+      expect(answers.map((answer) => answer.status)).toEqual([400, 400, 400, 400, 400, 400])
+    })
+
+    await t.step(
+      "the right password is then refused with the time to wait, at any step",
+      async () => {
+        const locked = {
+          status: 429,
+          retryAfter: "60",
+          body: { error: "Too many wrong passwords. Try again in 1 minute." },
+        }
+        expect(await post("/auth/totp/disconnect", { password: PASSWORD })).toEqual(locked)
+        expect(await post("/auth/totp/connect/start", { password: PASSWORD })).toEqual(locked)
+        expect(await sql`SELECT 1 FROM user_totp`).toEqual([])
+      },
+    )
+
+    await t.step("the count is kept per account, not per sign-in name", async () => {
+      const rows = await sql<{ userId: number }[]>`SELECT user_id FROM password_check_failures`
+      expect(rows.length).toBe(1)
+      expect(await sql`SELECT 1 FROM password_failures WHERE failed_attempts > 0`).toEqual([])
+      // The sign-in page keeps its own count, which the session's guesses did not touch.
+      expect((await attempt("ada@example.com", PASSWORD)).status).toBe(200)
+    })
   })
 })

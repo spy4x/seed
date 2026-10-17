@@ -406,6 +406,15 @@ CREATE TABLE password_failures (
     CONSTRAINT password_failures_failed_attempts_check CHECK (failed_attempts >= 0)
 );
 
+-- Wrong passwords a signed-in account types at the steps that ask for it again (#406).
+CREATE TABLE password_check_failures (
+    user_id INT4 PRIMARY KEY REFERENCES auth_users (id) ON DELETE CASCADE,
+    failed_attempts INT4 DEFAULT 0 NOT NULL,
+    locked_until TIMESTAMPTZ,
+    last_failure_at TIMESTAMPTZ,
+    CONSTRAINT password_check_failures_failed_attempts_check CHECK (failed_attempts >= 0)
+);
+
 -- One subscription per group, paid through a provider (#202). See the migration for the why.
 CREATE TABLE billing_customers (
     group_id UUID PRIMARY KEY REFERENCES groups(id) ON DELETE CASCADE,

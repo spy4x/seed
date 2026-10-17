@@ -53,6 +53,7 @@ import { createGroupOperations } from "./operations.ts"
  * The group is on `plan`, Pro unless a test says otherwise, so the plan allows every member command.
  */
 import { isUuid } from "@spy4x/platform/universal/uuid"
+import { PasswordLockedError } from "../../services/password-locked.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const VIEWER = 2
@@ -62,6 +63,8 @@ const OWNER = 5
 const STRANGER = 9
 /** The one password `stack` accepts, for every person. */
 const PASSWORD = "correct-horse"
+/** A password `stack` does not look at: the account is locked after too many wrong ones. */
+const LOCKED_PASSWORD = "locked-password"
 
 function stack(plan = PRO_PLAN_ID) {
   const groups = new MemoryGroupRepository(groupId, {
@@ -96,6 +99,8 @@ function stack(plan = PRO_PLAN_ID) {
     createGroupTransferHandler(groups, {
       checkPassword: (userId, password) => {
         passwordChecks.push(userId)
+        // As the sign-in answers while the account's wrong passwords lock it (#406).
+        if (password === LOCKED_PASSWORD) return Promise.reject(new PasswordLockedError(90_500))
         return Promise.resolve(password === PASSWORD)
       },
       emit: (event) => transferred.push(event.data.newOwnerId),
@@ -968,6 +973,24 @@ describe("transferring ownership over REST", () => {
 
     expect(response.status).toBe(400)
     expect((await response.json()).error.code).toBe("PASSWORD_INVALID")
+    expect(groups.writes).toBe(0)
+    expect(transferred).toEqual([])
+  })
+
+  it("refuses with 429 and the time to wait while the account's wrong passwords lock it", async () => {
+    const { groups, buses, transferred } = stack()
+
+    const response = await rest(buses, OWNER)(
+      "POST",
+      `/${groupId}/transfer`,
+      transfer(EDITOR, "Team", LOCKED_PASSWORD),
+    )
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("retry-after")).toBe("91")
+    const { error } = await response.json()
+    expect(error.code).toBe("PASSWORD_LOCKED")
+    expect(error.message).toBe("Too many wrong passwords. Try again in 2 minutes.")
     expect(groups.writes).toBe(0)
     expect(transferred).toEqual([])
   })

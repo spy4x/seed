@@ -6,6 +6,7 @@ import { PlanError, type PlanErrorCode, toPlanRefusal } from "@domain/billing"
 import { TagError } from "@domain/tags"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { APIContext } from "../../_types.ts"
+import { PasswordLockedError, passwordLockedMessage } from "../../services/password-locked.ts"
 
 export type GroupFeatureErrorCode =
   | GroupErrorCode
@@ -85,6 +86,18 @@ const IDEMPOTENCY_CODES: Record<IdempotencyError["code"], GroupFeatureErrorCode>
 }
 
 export function groupErrorResponse(c: Context<APIContext>, error: unknown): Response {
+  // Handing a group over asks for the password, which the account's lock may refuse to check
+  // (#406): the refusal says when to try again.
+  if (error instanceof PasswordLockedError) {
+    c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
+    return c.json({
+      error: {
+        code: "PASSWORD_LOCKED",
+        message: passwordLockedMessage(error.retryAfterMs),
+        requestId: c.get("requestId") || "unknown",
+      },
+    }, 429)
+  }
   const code = error instanceof GroupFeatureError || error instanceof GroupError ||
       error instanceof AccessError || error instanceof PlanError
     ? error.code

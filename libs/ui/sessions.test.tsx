@@ -227,6 +227,7 @@ describe("ProfileScreen password dialog", () => {
       newPassword: "",
       passwordOtp: "",
       otp: "",
+      totpPassword: "",
       twoFactorProof: "",
     },
     onValueChange: () => {},
