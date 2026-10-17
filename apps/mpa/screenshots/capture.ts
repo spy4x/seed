@@ -507,6 +507,8 @@ const SCREENS: Screen[] = [
     forms: ["desktop"],
     async open(page) {
       await gotoApp(page, "/", page.locator("[data-e2e=totp-disable]"))
+      // "Language and region" comes first now; the picture starts at Security.
+      await scrollToTop(page.locator("#security"))
     },
   },
   {
