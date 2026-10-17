@@ -1,4 +1,5 @@
 import { Hono } from "hono"
+import { deadline } from "@std/async/deadline"
 import type { MiddlewareHandler } from "hono"
 import { type } from "arktype"
 import {
@@ -20,7 +21,10 @@ export const ADMIN_JOB_NOT_FOUND = "No failed job has this id. It may have been 
 export const ADMIN_JOB_SUPERSEDED =
   "A newer run of this job is already waiting, so this one is not run again."
 
-/** How long the page waits for the database or the cache to answer before it counts it as down. */
+/**
+ * How long the page waits for the database or the cache to answer before it counts it as down, and
+ * for each of its database reads before it shows that part as an error.
+ */
 export const CACHE_PROBE_TIMEOUT_MS = 2_000
 
 /** A job's id in the path: the outbox row's UUID. */
@@ -53,14 +57,17 @@ export interface AdminSystemRouteDependencies {
   runtime?: string
   /** When the API process started; the process's own start by default. */
   startedAt?: Date
-  /** How long a probe may take; {@link CACHE_PROBE_TIMEOUT_MS} by default. */
+  /** How long a probe or a read may take; {@link CACHE_PROBE_TIMEOUT_MS} by default. */
   probeTimeoutMs?: number
 }
 
-/** `read()`, or `null` when it throws: one part that cannot be read leaves the others readable. */
-async function attempt<T>(read: () => Promise<T>): Promise<T | null> {
+/**
+ * `read()`, or `null` when it throws or outlasts `timeoutMs`: one part that cannot be read leaves
+ * the others readable, and a database that stops answering half-way never holds the page.
+ */
+async function attempt<T>(read: () => Promise<T>, timeoutMs: number): Promise<T | null> {
   try {
-    return await read()
+    return await deadline(read(), timeoutMs)
   } catch {
     return null
   }
@@ -72,12 +79,7 @@ async function timed(
   timeoutMs: number,
 ): Promise<{ ok: boolean; ms: number }> {
   const started = performance.now()
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const late = new Promise<boolean>((resolve) => {
-    timer = setTimeout(() => resolve(false), timeoutMs)
-  })
-  const ok = await Promise.race([probe().catch(() => false), late])
-  clearTimeout(timer)
+  const ok = await deadline(probe(), timeoutMs).catch(() => false)
   return { ok, ms: Math.round(performance.now() - started) }
 }
 
@@ -97,12 +99,12 @@ export async function readSystemSnapshot(
   ])
   const [facts, queue, jobs, failedJobs, backup, migrations] = db.ok
     ? await Promise.all([
-      attempt(() => system.database()),
-      attempt(() => system.queue()),
-      attempt(() => system.jobKinds()),
-      attempt(() => system.failedJobs(ADMIN_FAILED_JOBS_LIMIT)),
-      attempt(() => system.lastBackup()),
-      attempt(() => system.migrations()),
+      attempt(() => system.database(), timeout),
+      attempt(() => system.queue(), timeout),
+      attempt(() => system.jobKinds(), timeout),
+      attempt(() => system.failedJobs(ADMIN_FAILED_JOBS_LIMIT), timeout),
+      attempt(() => system.lastBackup(), timeout),
+      attempt(() => system.migrations(), timeout),
     ])
     : [null, null, null, null, undefined, null]
 

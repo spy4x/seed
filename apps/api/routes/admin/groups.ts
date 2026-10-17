@@ -82,6 +82,10 @@ const REFUSALS: Record<
     status: 409,
     error: `The group's subscription still renews. Its owner cancels it before a transfer.`,
   },
+  [AdminGroupActOutcome.RecipientBlocked]: {
+    status: 409,
+    error: `This member is blocked. Unblock them before handing the group over.`,
+  },
 }
 
 /** A user id from the path, or `null` when it is no positive integer Postgres can hold. */

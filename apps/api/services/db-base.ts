@@ -3,7 +3,18 @@ import type { AuthSessionRecord, AuthStore } from "@spy4x/server/auth"
 import { createPostgresAuthStore, createPostgresSessionStore } from "@spy4x/server/auth/postgres"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import type { SessionStore } from "@spy4x/server/sign-in"
-import { type AuthAuditBase, type User, type UserBase, UserMFAStatus } from "@domain/identity"
+import {
+  type AccountDeletionBlocker,
+  type AdminAuditFilter,
+  type AdminUserFilter,
+  type AuthAuditBase,
+  type OnboardingMark,
+  type OnboardingStatus,
+  type User,
+  type UserBase,
+  UserMFAStatus,
+  type UserRole,
+} from "@domain/identity"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { PostgresNotificationRepository } from "@server/notifications/postgres-notification-repository.ts"
 import { PostgresGroupActivityRepository } from "@server/groups/postgres-activity-repository.ts"
@@ -34,7 +45,6 @@ import {
   scheduleSignInMethodMail,
   type SignInMethodChange,
 } from "@server/jobs/sign-in-method-mail.ts"
-import type { AccountDeletionBlocker, OnboardingMark, OnboardingStatus } from "@domain/identity"
 import { touchUserSeen } from "@server/auth/sessions.ts"
 import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
 import { type ApiTokenRows, apiTokenRows } from "@server/api-tokens/api-tokens.ts"
@@ -64,7 +74,6 @@ import {
   removeAdminPushDevice,
 } from "@server/notifications/admin-api-tokens.ts"
 import type { AdminApiTokenFilter } from "@domain/api-tokens"
-import type { AdminUserFilter, UserRole } from "@domain/identity"
 import {
   type AdminAuditPageKey,
   listAdminAudit,
@@ -80,7 +89,6 @@ import {
   readQueueCounts,
   retryFailedJob,
 } from "@server/jobs/admin-system.ts"
-import type { AdminAuditFilter } from "@domain/identity"
 
 /** A user's authenticator-app enrolment, one row of `user_totp`. */
 export interface UserTotp {

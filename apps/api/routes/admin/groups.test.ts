@@ -229,6 +229,7 @@ describe(`operator area group routes`, () => {
     [AdminGroupActOutcome.IsOwner, 409],
     [AdminGroupActOutcome.LastGroup, 409],
     [AdminGroupActOutcome.SubscriptionRenews, 409],
+    [AdminGroupActOutcome.RecipientBlocked, 409],
   ]
   for (const [outcome, status] of refusals) {
     it(`answers ${status} with a sentence when the service refuses with outcome ${outcome}`, async () => {

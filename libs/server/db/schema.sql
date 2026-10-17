@@ -126,6 +126,10 @@ CREATE TABLE users (
 
 COMMENT ON COLUMN users.role IS '1=viewer, 2=operator, 3=supervisor, 4=administrator';
 COMMENT ON COLUMN users.mfa IS '1=not_configured, 2=confuration_not_finished, 3=configured';
+-- #462: the dashboard's counts of sign-ups, active people and blocked people.
+CREATE INDEX idx_users_created_at ON users (created_at);
+CREATE INDEX idx_users_last_seen_at ON users (last_seen_at);
+CREATE INDEX idx_users_blocked_at ON users (blocked_at) WHERE blocked_at IS NOT NULL;
 
 CREATE TABLE groups (
     id UUID PRIMARY KEY,
@@ -688,6 +692,10 @@ CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at
 CREATE INDEX idx_auth_audits_event_type ON auth_audits (event_type);
 -- #424: the dashboard's active people per day read the trail by time alone.
 CREATE INDEX idx_auth_audits_created_at ON auth_audits (created_at);
+-- #462: the audit log's filters by IP prefix and by operator (`operator:<id>` rows only).
+CREATE INDEX idx_auth_audits_ip ON auth_audits (ip text_pattern_ops);
+CREATE INDEX idx_auth_audits_operator ON auth_audits (identifier text_pattern_ops)
+    WHERE identifier LIKE 'operator:%';
 
 -- #165: starter data on sign-up. See migration 2026_10_26_0001_starter_data.sql. Sign-up writes one
 -- row here and queues a worker job that names it. The job creates the welcome note in the person's

@@ -200,6 +200,7 @@ app.route(
       subscribers: subscribersSetup,
       siteUrl: readSiteUrl(Deno.env, config.isDev ? "dev" : "prod"),
       limit: rateLimits.normal,
+      resetByAddress: rateLimits.resetByAddress,
       emit,
       now: () => new Date(),
       cursorSecret: config.authCookieSecret,

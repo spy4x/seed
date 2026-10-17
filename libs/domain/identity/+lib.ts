@@ -14,7 +14,10 @@ export enum UserRole {
   SUPERVISOR = 3,
   ADMIN = 4,
 }
-export const userRoleValues = Object.values(UserRole) as UserRole[]
+/** Every role's number. `Object.values` of a numeric enum also holds its names, left out here. */
+export const userRoleValues = Object.values(UserRole).filter((value) =>
+  typeof value === "number"
+) as UserRole[]
 
 /** What each role is called on a page and on the command line. */
 export const USER_ROLE_NAMES: Record<UserRole, string> = {
@@ -27,10 +30,7 @@ export const USER_ROLE_NAMES: Record<UserRole, string> = {
 /** The role named `name` (`operator`), or `null` for a name no role has. */
 export function userRoleNamed(name: string): UserRole | null {
   const wanted = name.trim().toLowerCase()
-  const found = userRoleValues.find((role) =>
-    typeof role === "number" && USER_ROLE_NAMES[role] === wanted
-  )
-  return found ?? null
+  return userRoleValues.find((role) => USER_ROLE_NAMES[role] === wanted) ?? null
 }
 
 export enum UserMFAStatus {
@@ -930,6 +930,11 @@ export const ADMIN_STATS_DAYS = 30
 export interface AdminStats {
   /** When the numbers were read. ISO 8601. */
   generatedAt: string
+  /**
+   * True when `people`, `groups` or `notes` is the database's estimate rather than a count: a table
+   * that large is not counted on every load (#462). Absent means counted.
+   */
+  approximate?: boolean
   /** People with an account that is not deleted. */
   people: number
   /** Blocked people among them. */

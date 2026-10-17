@@ -16,6 +16,7 @@ import {
   crossSiteHeaders,
   mountRoute,
   sameOriginHeaders,
+  sameOriginWithoutCookieHeaders,
   testMutationGuards,
   testSessionGuards,
 } from "../../_testing/mutation-requests.ts"
@@ -27,6 +28,7 @@ import {
   ADMIN_ROLE_TOO_HIGH,
   ADMIN_SAME_ROLE,
   ADMIN_SESSION_NOT_FOUND,
+  ADMIN_TOO_MANY_RESETS,
   createAdminUsersRoutes,
 } from "./users.ts"
 
@@ -53,7 +55,12 @@ const administrator = () => buildAuthData({ user: { id: 7, role: UserRole.ADMIN 
 
 function buildApp(
   auth: APIContext["Variables"]["auth"] = administrator(),
-  { outcome = AdminActOutcome.Done, rows = [[person]] as AdminUserRow[][] } = {},
+  {
+    outcome = AdminActOutcome.Done,
+    retryAfterMs = undefined as number | undefined,
+    rows = [[person]] as AdminUserRow[][],
+    exportError = undefined as Error | undefined,
+  } = {},
 ) {
   const calls: unknown[][] = []
   const emitted: UserSignedOutEvent[] = []
@@ -62,11 +69,17 @@ function buildApp(
     detail: () => Promise.resolve(null),
     act: (_c, actor, id, action, input?: AdminActInput) => (
       calls.push(["act", actor.user.id, id, action, input]),
-        Promise.resolve({ outcome, user: outcome === AdminActOutcome.Done ? person : undefined })
+        Promise.resolve({
+          outcome,
+          retryAfterMs,
+          user: outcome === AdminActOutcome.Done ? person : undefined,
+        })
     ),
     export: (_c, actor, filter: AdminUserFilter) => {
       calls.push(["export", actor.user.id, filter])
       return Promise.resolve((async function* () {
+        // The database refuses the first read, after the audit row is written.
+        if (exportError) throw exportError
         for (const batch of rows) yield batch
       })())
     },
@@ -114,6 +127,17 @@ describe("the people actions of the operator area", () => {
       const response = await send(app, route)
 
       expect(response.status).toBe(404)
+      expect(calls).toEqual([])
+      expect(emitted).toEqual([])
+    })
+  }
+
+  for (const route of ROUTES) {
+    it(`answers 401 without a session on ${route.method} ${route.path}`, async () => {
+      const { app, calls, emitted } = buildApp(null)
+      const response = await send(app, route, sameOriginWithoutCookieHeaders)
+
+      expect(response.status).toBe(401)
       expect(calls).toEqual([])
       expect(emitted).toEqual([])
     })
@@ -202,6 +226,26 @@ describe("the people actions of the operator area", () => {
 
     expect(response.status).toBe(409)
     expect((await response.json()).error).toBe(ADMIN_NO_PASSWORD)
+  })
+
+  it("answers 429 with Retry-After when the address has had its reset links for now", async () => {
+    const { app } = buildApp(administrator(), {
+      outcome: AdminActOutcome.TooManyResets,
+      retryAfterMs: 61_500,
+    })
+    const response = await send(app, ROUTES[2])
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get("retry-after")).toBe("62")
+    expect((await response.json()).error).toBe(ADMIN_TOO_MANY_RESETS)
+  })
+
+  it("answers 500, not a file of headers only, when the export's first read fails", async () => {
+    const { app } = buildApp(administrator(), { exportError: new Error("database gone") })
+    const response = await send(app, ROUTES[3])
+
+    expect(response.status).toBe(500)
+    expect(response.headers.get("content-disposition")).toBeNull()
   })
 
   it("exports the filtered rows of every batch as a CSV download, every page and no secret", async () => {

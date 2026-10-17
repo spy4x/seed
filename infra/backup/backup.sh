@@ -19,6 +19,9 @@ DUMP_NAME=db.dump
 # Touched after every complete run; the service's health check reads its age.
 OK_FILE=/tmp/backup-ok
 INTERVAL_SECONDS=86400
+# libpq waits forever for a database that takes the connection and never answers; psql and pg_dump
+# give up after this many seconds instead, so a stuck database fails the run rather than hangs it.
+export PGCONNECT_TIMEOUT="${PGCONNECT_TIMEOUT:-10}"
 
 log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*"; }
 

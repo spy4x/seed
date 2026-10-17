@@ -194,6 +194,7 @@
     "@preact/signals-core": "npm:@preact/signals-core@1.12.1",
 
     // shared
+    "@std/async": "jsr:@std/async@1.5.1",
     "@std/path": "jsr:@std/path@1.1.6",
     "@std/fs": "jsr:@std/fs@1.0.24",
     "@std/expect": "jsr:@std/expect@1.0.17",

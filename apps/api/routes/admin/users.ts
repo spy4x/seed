@@ -44,6 +44,7 @@ export const ADMIN_SESSION_NOT_FOUND = "Session not found"
 export const ADMIN_EXPORT_CROSS_SITE = "The export opens only from the operator area"
 export const ADMIN_NO_PASSWORD =
   "This user has no password with an address, so no reset link can reach them"
+export const ADMIN_TOO_MANY_RESETS = "Too many reset links for this address, try again later."
 
 /** Each refusal of an action: its status and message. `Unchanged` depends on the action. */
 const REFUSALS: Partial<Record<AdminActOutcome, { status: 403 | 404 | 409; error: string }>> = {
@@ -135,7 +136,17 @@ export function createAdminUsersRoutes(
   async function act(c: Context<APIContext>, action: AdminActionKind, input?: AdminActInput) {
     const targetId = serialIdOf(c.req.param("id") ?? ``)
     if (targetId === null) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
-    const { outcome, user } = await admin.act(c, c.get("auth")!, targetId, action, input)
+    const { outcome, user, retryAfterMs } = await admin.act(
+      c,
+      c.get("auth")!,
+      targetId,
+      action,
+      input,
+    )
+    if (outcome === AdminActOutcome.TooManyResets) {
+      c.header("Retry-After", String(Math.ceil((retryAfterMs ?? 0) / 1000)))
+      return c.json({ error: ADMIN_TOO_MANY_RESETS }, 429)
+    }
     if (outcome === AdminActOutcome.Unchanged) {
       return c.json({ error: UNCHANGED[action] ?? ADMIN_USER_NOT_FOUND }, 409)
     }
@@ -169,10 +180,17 @@ export function createAdminUsersRoutes(
       const batches = await admin.export(c, c.get("auth")!, filter)
       const encoder = new TextEncoder()
       const iterator = batches[Symbol.asyncIterator]()
+      const lines = (rows: AdminUserRow[]) =>
+        encoder.encode(rows.map((row) => `${csvRow(ADMIN_EXPORT_COLUMNS, row)}\r\n`).join(""))
+      // The first batch is read before the answer starts: a query that fails at once is a 500, not
+      // a 200 with a file of headers only. A failure after it can only cut the download short.
+      const first = await iterator.next()
       const body = new ReadableStream<Uint8Array>({
         start(controller) {
           // The byte-order mark tells Excel the file is UTF-8.
           controller.enqueue(encoder.encode(`\uFEFF${csvHeaderRow(ADMIN_EXPORT_COLUMNS)}\r\n`))
+          if (first.done) controller.close()
+          else controller.enqueue(lines(first.value))
         },
         async pull(controller) {
           const next = await iterator.next()
@@ -180,8 +198,7 @@ export function createAdminUsersRoutes(
             controller.close()
             return
           }
-          const lines = next.value.map((row) => `${csvRow(ADMIN_EXPORT_COLUMNS, row)}\r\n`)
-          controller.enqueue(encoder.encode(lines.join("")))
+          controller.enqueue(lines(next.value))
         },
         // The operator stopped the download: the cursor closes.
         async cancel() {
@@ -220,11 +237,11 @@ export function createAdminUsersRoutes(
 /** The people module: the list, one person and the actions on them. */
 export const usersAdminModule: AdminApiModule = {
   id: `users`,
-  routes: ({ db, limit, emit, now }) =>
+  routes: ({ db, limit, resetByAddress, emit, now }) =>
     createAdminUsersRoutes({
       limit,
       emit,
       now,
-      admin: createAdmin({ db, pageSize: ADMIN_USERS_PAGE_SIZE, now }),
+      admin: createAdmin({ db, pageSize: ADMIN_USERS_PAGE_SIZE, resetByAddress, now }),
     }),
 }

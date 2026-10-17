@@ -212,6 +212,17 @@ Deno.test("audit log: filters by person, by id or by name, as subject or as acto
   })
 })
 
+Deno.test("audit log: a person filter of a number no id can be finds nothing, without an error", async () => {
+  await withSchema(async (sql) => {
+    await seed(sql)
+    // 2147483648 is one past the largest `int4`; the others are longer still.
+    for (const person of ["2147483648", "9999999999", "99999999999"]) {
+      const { entries } = await listAdminAudit(sql, filter({ person }), 50, null)
+      expect(entries).toEqual([])
+    }
+  })
+})
+
 Deno.test("audit log: filters by operator, finding only what that operator did", async () => {
   await withSchema(async (sql) => {
     const { op, bob, groupId } = await seed(sql)
@@ -271,11 +282,15 @@ Deno.test("audit log: names the operator of a row whose note goes on after their
       `activity:${ADMIN_JOB_RETRIED_KIND}`,
       `account:${AuthAuditEventType.USER_BLOCKED}`,
     ])
-    // The person filter finds the operator's actions by their mark too.
+    // The person filter finds the operator's actions by their mark too, and not the row of the
+    // operator whose id merely starts with the same digits.
     const byPerson = await listAdminAudit(sql, filter({ person: String(op) }), 50, null)
-    expect(byPerson.entries.map((entry) => entry.key)).toEqual(
-      expect.arrayContaining(noted.map((entry) => entry.key)),
-    )
+    const keys = byPerson.entries.map((entry) => entry.key)
+    expect(keys).toEqual(expect.arrayContaining(noted.map((entry) => entry.key)))
+    const [decoy] = await sql<{ id: number }[]>`
+      SELECT id FROM auth_audits WHERE identifier = ${`operator:${op}5 from viewer`}
+    `
+    expect(keys).not.toContain(`account-${decoy.id}`)
   })
 })
 

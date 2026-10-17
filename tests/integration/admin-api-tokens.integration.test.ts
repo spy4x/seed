@@ -218,7 +218,7 @@ Deno.test("an operator's revoke ends the token and audits it; their own or a pee
   })
 })
 
-Deno.test("a person's devices carry no endpoint or keys; a removal deletes one and audits it", async () => {
+Deno.test("a person's devices carry no endpoint or keys; a removal deletes one, audits it and spares a role at or above the operator's", async () => {
   await withSchema(async (sql) => {
     const ops = await person(sql, "ops@example.com", UserRole.OPERATOR)
     const ada = await person(sql, "ada@example.com")
@@ -271,6 +271,20 @@ Deno.test("a person's devices carry no endpoint or keys; a removal deletes one a
     // The operator's own device is not theirs to remove here.
     const mine = await insert(ops.id, "device-0000-myphone1")
     expect((await call("POST", `/users/${ops.id}/devices/${mine}/remove`)).status).toBe(403)
+
+    // Nor a peer's, nor a supervisor's: a role at or above their own.
+    for (const role of [UserRole.OPERATOR, UserRole.SUPERVISOR]) {
+      const above = await person(sql, `role-${role}@example.com`, role)
+      const theirs = await insert(above.id, `device-0000-role${role}xxx`)
+      expect((await call("POST", `/users/${above.id}/devices/${theirs}/remove`)).status).toBe(403)
+      const [{ live }] = await sql<{ live: number }[]>`
+        SELECT count(*)::int AS live FROM user_push_tokens WHERE id = ${theirs}
+          AND deleted_at IS NULL
+      `
+      expect(live).toBe(1)
+      expect(await auditsOf(sql, above.id, AuthAuditEventType.PUSH_DEVICE_REMOVED)).toEqual([])
+    }
+    expect(emitted).toHaveLength(1)
   })
 })
 

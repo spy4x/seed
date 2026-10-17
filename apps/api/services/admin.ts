@@ -1,4 +1,5 @@
 import type { Context } from "hono"
+import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import {
   type AdminUserDetail,
   type AdminUserFilter,
@@ -7,7 +8,7 @@ import {
   type AdminUserRow,
   AuthAuditEventType,
   canChangeRoles,
-  type UserRole,
+  UserRole,
 } from "@domain/identity"
 import { roleChangeIdentifier } from "@server/auth/admin-users.ts"
 import type { AppDbBase } from "./db-base.ts"
@@ -53,6 +54,11 @@ export enum AdminActOutcome {
   SessionNotFound = 8,
   /** The person has no password with an address, so no reset link can reach them. */
   NoPassword = 9,
+  /**
+   * The address has had its reset links for now: the same budget "Forgot password" spends, so no
+   * one, operator or stranger, mails one inbox more often than it allows.
+   */
+  TooManyResets = 10,
 }
 
 /** How many rows the CSV export reads from the database at a time. */
@@ -75,7 +81,7 @@ export interface AdminService {
     targetId: number,
     action: AdminActionKind,
     input?: AdminActInput,
-  ): Promise<{ outcome: AdminActOutcome; user?: AdminUserRow }>
+  ): Promise<{ outcome: AdminActOutcome; user?: AdminUserRow; retryAfterMs?: number }>
   /**
    * Every person `filter` matches, on all its pages, in batches (#425). The audit row on `actor`
    * is written before the first row is read, so an export that fails half-way is recorded too.
@@ -104,9 +110,14 @@ export function exportIdentifier(operatorId: number, filter: AdminUserFilter): s
 
 /** Builds the operator area's service over the app's database. */
 export function createAdmin(
-  { db, pageSize, now = () => new Date() }: {
+  { db, pageSize, resetByAddress, now = () => new Date() }: {
     db: AppDbBase
     pageSize: number
+    /**
+     * Spends one of the address's reset links: the budget "Forgot password" spends
+     * (`createAuthRateLimits().resetByAddress`). It throws when its store fails, so no link leaves.
+     */
+    resetByAddress(email: string): Promise<RateLimitDecision>
     now?: () => Date
   },
 ): AdminService {
@@ -142,10 +153,26 @@ export function createAdmin(
           return { outcome: AdminActOutcome.RoleTooHigh }
         }
       }
+      let retryAfterMs: number | undefined
       const outcome = await db.begin(async (tx) => {
-        const target = await tx.admin.lockTarget(targetId)
+        // Both rows locked, in id order so two operators acting on each other wait instead of
+        // deadlocking. The operator's role is read again under the lock: one lowered, blocked or
+        // deleted since the request began acts with what they have now (a blocked or deleted
+        // operator with nothing).
+        const [first, second] = [actor.user.id, targetId].sort((a, b) => a - b)
+        const locked = new Map([
+          [first, await tx.admin.lockTarget(first)],
+          [second, await tx.admin.lockTarget(second)],
+        ])
+        const target = locked.get(targetId)
         if (!target) return AdminActOutcome.NotFound
-        if (target.role >= actor.user.role) return AdminActOutcome.Outranked
+        const self = locked.get(actor.user.id)
+        const actorRole = self && !self.blocked ? self.role : UserRole.VIEWER
+        if (target.role >= actorRole) return AdminActOutcome.Outranked
+        if (action === AdminActionKind.ChangeRole) {
+          if (!canChangeRoles(actorRole)) return AdminActOutcome.NotAdministrator
+          if (input.role! >= actorRole) return AdminActOutcome.RoleTooHigh
+        }
         const identifier = operatorIdentifier(actor.user.id)
         switch (action) {
           case AdminActionKind.Block:
@@ -186,7 +213,7 @@ export function createAdmin(
             break
           }
           case AdminActionKind.ChangeRole: {
-            // Checked above: an administrator, giving a role below their own.
+            // Checked above, on the locked row: an administrator, giving a role below their own.
             const role = input.role!
             if (target.role === role) return AdminActOutcome.Unchanged
             await tx.admin.setRole(targetId, role)
@@ -203,6 +230,11 @@ export function createAdmin(
           case AdminActionKind.SendPasswordReset: {
             const email = await tx.admin.resetAddress(targetId)
             if (email === null) return AdminActOutcome.NoPassword
+            const decision = await resetByAddress(email)
+            if (!decision.allowed) {
+              retryAfterMs = decision.retryAfterMs
+              return AdminActOutcome.TooManyResets
+            }
             // The same request "Forgot password" queues: the worker issues the code and mails it.
             await tx.admin.queuePasswordReset(email)
             await tx.authAudit.insert(
@@ -213,6 +245,7 @@ export function createAdmin(
         }
         return AdminActOutcome.Done
       })
+      if (outcome === AdminActOutcome.TooManyResets) return { outcome, retryAfterMs }
       if (outcome !== AdminActOutcome.Done) return { outcome }
       return { outcome, user: (await db.admin.find(targetId)) ?? undefined }
     },

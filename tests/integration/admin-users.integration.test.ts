@@ -13,6 +13,9 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { USER_ROLE_ACTOR } from "../../apps/worker/user-role.ts"
+import { createKvStore } from "@spy4x/platform/rate-limit"
+import { createAuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits.ts"
+import { readAdminStats } from "@server/auth/admin-stats.ts"
 import { applyMigrations } from "./migrations.ts"
 
 /**
@@ -62,10 +65,42 @@ function buildSignIn(sql: postgres.Sql): SignIn {
   })
 }
 
-/** The sign-in routes and one operator action, each with a cookie jar of its own per client. */
+/** The auth limits with an in-process store per limiter, as Valkey keeps them per prefix. */
+function memoryRateLimits() {
+  return createAuthRateLimits({
+    windowMs: 60_000,
+    strictLimit: 1_000,
+    limit: 1_000,
+    otpWindowMs: 900_000,
+    otpLimit: 1_000,
+    store: () => {
+      const entries = new Map<string, unknown>()
+      return createKvStore({
+        backend: {
+          get: (key) => Promise.resolve(entries.get(key)),
+          set: (key, value) => Promise.resolve(void entries.set(key, value)),
+          delete: (key) => Promise.resolve(void entries.delete(key)),
+        },
+      })
+    },
+    onStoreError: () => {},
+  })
+}
+
+/**
+ * The sign-in routes and one operator action, each with a cookie jar of its own per client. The
+ * action runs `hooks.meanwhile` between reading the session and acting, when a test sets it: what
+ * changes in the database while a request is under way.
+ */
 function buildApp(sql: postgres.Sql) {
   const signIn = buildSignIn(sql)
-  const admin = createAdmin({ db: new AppDbBase({ sql }), pageSize: 2 })
+  const rateLimits = memoryRateLimits()
+  const admin = createAdmin({
+    db: new AppDbBase({ sql }),
+    pageSize: 2,
+    resetByAddress: rateLimits.resetByAddress,
+  })
+  const hooks: { meanwhile?: (actorId: number) => Promise<unknown> } = {}
   const app = new Hono<APIContext>()
   app.use(signIn.auth.parseAuth)
   app.post("/sign-up", async (c) => {
@@ -83,7 +118,9 @@ function buildApp(sql: postgres.Sql) {
     const kind = Number(c.req.param("kind")) as AdminActionKind
     const text = await c.req.text()
     const input = text ? JSON.parse(text) : undefined
-    const { outcome } = await admin.act(c, c.get("auth")!, Number(c.req.param("id")), kind, input)
+    const auth = c.get("auth")!
+    await hooks.meanwhile?.(auth.user.id)
+    const { outcome } = await admin.act(c, auth, Number(c.req.param("id")), kind, input)
     return c.json({ outcome })
   })
   app.post("/export", signIn.auth.isAuthenticated2FA, async (c) => {
@@ -116,7 +153,7 @@ function buildApp(sql: postgres.Sql) {
       return response
     }
   }
-  return { client, admin }
+  return { client, admin, rateLimits, hooks }
 }
 
 /** Signs `email` up in a client of its own and answers that client and the user's id. */
@@ -269,6 +306,33 @@ Deno.test("the dashboard counts people, sign-ups and activity, and carries no co
     for (const text of ["Secret", "butter", "Deleted text", "Plans", "example.com"]) {
       expect(answer).not.toContain(text)
     }
+  })
+})
+
+Deno.test("the dashboard estimates a large table's live rows from the planner and says so", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    for (const name of ["ada", "grace", "linus", "alan"]) await signUp(app, `${name}@example.com`)
+    await sql`UPDATE users SET deleted_at = now() WHERE id IN (
+      SELECT id FROM users ORDER BY id LIMIT 1
+    )`
+    const now = new Date()
+
+    const counted = await readAdminStats(sql, now)
+    expect(counted.approximate).toBe(false)
+    expect(counted.people).toBe(3)
+
+    // A table never analyzed is counted whatever its size: the planner has no figure for it.
+    expect((await readAdminStats(sql, now, { exactBelow: 0 })).approximate).toBe(false)
+
+    // Once analyzed, every table counts as large here: each figure is the planner's.
+    await sql`ANALYZE users, groups, notes`
+    const estimated = await readAdminStats(sql, now, { exactBelow: 0 })
+    expect(estimated.approximate).toBe(true)
+    // An ANALYZE of a table this small reads every row: the estimate leaves the deleted one out.
+    expect(estimated.people).toBe(3)
+    expect(estimated.groups).toBe(counted.groups)
+    expect(estimated.notes).toBe(counted.notes)
   })
 })
 
@@ -526,6 +590,93 @@ Deno.test("a reset link from the operator area queues the same request as Forgot
     expect(await (await sendReset(target.id)).json())
       .toEqual({ outcome: AdminActOutcome.NoPassword })
     expect((await sql`SELECT email FROM password_reset_requests`).length).toBe(1)
+  })
+})
+
+Deno.test("an address gets no more reset links than Forgot password allows, whoever asks", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const operator = await signUp(app, "ops@example.com")
+    const supervisor = await signUp(app, "sup@example.com")
+    const target = await signUp(app, "ada@example.com")
+    const db = new AppDbBase({ sql })
+    await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR, "test")
+    await db.admin.setRoleByAddress("sup@example.com", UserRole.SUPERVISOR, "test")
+    const sendReset = (actor: typeof operator) =>
+      actor.request("POST", `/act/${target.id}/${AdminActionKind.SendPasswordReset}`)
+
+    // "Forgot password" spends the address's budget too: twice from the sign-in page here.
+    for (let i = 0; i < 2; i++) {
+      expect((await app.rateLimits.resetByAddress("ada@example.com")).allowed).toBe(true)
+    }
+    expect(await (await sendReset(operator)).json()).toEqual({ outcome: AdminActOutcome.Done })
+    // The budget is spent: another operator is refused, and so is the sign-in page.
+    expect(await (await sendReset(supervisor)).json())
+      .toEqual({ outcome: AdminActOutcome.TooManyResets })
+    expect(await (await sendReset(operator)).json())
+      .toEqual({ outcome: AdminActOutcome.TooManyResets })
+    expect((await app.rateLimits.resetByAddress("ada@example.com")).allowed).toBe(false)
+
+    expect((await sql`SELECT email FROM password_reset_requests`).length).toBe(1)
+    expect(await auditsOf(sql, target.id, AuthAuditEventType.PASSWORD_RESET_SENT)).toEqual([
+      `operator:${operator.id}`,
+    ])
+  })
+})
+
+Deno.test("a reset link is queued only together with its audit row", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const operator = await signUp(app, "ops@example.com")
+    const target = await signUp(app, "ada@example.com")
+    const db = new AppDbBase({ sql })
+    await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR, "test")
+    // The audit row cannot be written: the queued request must not outlive it.
+    await sql.unsafe(`
+      CREATE FUNCTION refuse_reset_audit() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN RAISE EXCEPTION 'audit refused'; END $$;
+      CREATE TRIGGER refuse_reset_audit BEFORE INSERT ON auth_audits FOR EACH ROW
+        WHEN (NEW.event_type = ${AuthAuditEventType.PASSWORD_RESET_SENT})
+        EXECUTE FUNCTION refuse_reset_audit();
+    `)
+
+    const response = await operator.request(
+      "POST",
+      `/act/${target.id}/${AdminActionKind.SendPasswordReset}`,
+    )
+
+    expect(response.status).toBe(500)
+    expect(await sql`SELECT email FROM password_reset_requests`).toEqual([])
+  })
+})
+
+Deno.test("an operator whose role was lowered or who was blocked since the request began acts with what they have now", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const admin = await signUp(app, "admin@example.com")
+    const target = await signUp(app, "ada@example.com")
+    const db = new AppDbBase({ sql })
+    await db.admin.setRoleByAddress("admin@example.com", UserRole.ADMIN, "test")
+    const act = (kind: AdminActionKind, body?: unknown) =>
+      admin.request("POST", `/act/${target.id}/${kind}`, body)
+
+    // Lowered to operator after the request read the session.
+    app.hooks.meanwhile = (id) => sql`UPDATE users SET role = ${UserRole.OPERATOR} WHERE id = ${id}`
+    expect(await (await act(AdminActionKind.ChangeRole, { role: UserRole.SUPERVISOR })).json())
+      .toEqual({ outcome: AdminActOutcome.NotAdministrator })
+    expect((await db.admin.find(target.id))?.role).toBe(UserRole.VIEWER)
+
+    // Blocked after the request read the session, still an administrator: no action at all.
+    await sql`UPDATE users SET role = ${UserRole.ADMIN} WHERE id = ${admin.id}`
+    app.hooks.meanwhile = (id) => sql`UPDATE users SET blocked_at = now() WHERE id = ${id}`
+    expect(await (await act(AdminActionKind.Block)).json())
+      .toEqual({ outcome: AdminActOutcome.Outranked })
+    expect((await db.admin.find(target.id))?.blockedAt).toBe(null)
+
+    for (const kind of [AuthAuditEventType.USER_ROLE_CHANGED, AuthAuditEventType.USER_BLOCKED]) {
+      const rows = await auditsOf(sql, target.id, kind)
+      expect(rows.filter((row) => row.startsWith("operator:"))).toEqual([])
+    }
   })
 })
 

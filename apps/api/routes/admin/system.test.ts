@@ -6,6 +6,7 @@ import {
   type AdminFailedJob,
   AdminHealth,
   AdminJobRetryOutcome,
+  type AdminSystemSnapshot,
   UserRole,
 } from "@domain/identity"
 import type { APIContext } from "../../_types.ts"
@@ -15,6 +16,7 @@ import {
   crossSiteHeaders,
   mountRoute,
   sameOriginHeaders,
+  sameOriginWithoutCookieHeaders,
   testMutationGuards,
   testSessionGuards,
 } from "../../_testing/mutation-requests.ts"
@@ -42,6 +44,10 @@ const failedJob: AdminFailedJob = {
 
 interface Options {
   role?: UserRole
+  /** No session at all. */
+  signedOut?: boolean
+  /** A database read that never answers. */
+  hang?: keyof AdminSystemStore
   databaseConnected?: boolean
   cache?: () => Promise<boolean>
   oldestDueAt?: Date | null
@@ -107,6 +113,10 @@ function buildApp(options: Options = {}) {
     startedAt: new Date("2026-10-16T08:00:00.000Z"),
     probeTimeoutMs: PROBE_TIMEOUT_MS,
   })
+  if (options.hang) {
+    // Never settles, like a database that took the query and stopped answering.
+    system[options.hang] = () => new Promise<never>(() => {})
+  }
   const app = mountRoute(
     "/admin",
     createAdminRoute({
@@ -114,7 +124,9 @@ function buildApp(options: Options = {}) {
       mutationGuards: testMutationGuards,
       modules: [route],
     }),
-    buildAuthData({ user: { id: 7, role: options.role ?? UserRole.OPERATOR } }),
+    options.signedOut ? null : buildAuthData({
+      user: { id: 7, role: options.role ?? UserRole.OPERATOR },
+    }),
   )
   return { app, calls }
 }
@@ -143,6 +155,34 @@ describe("system routes", () => {
 
       expect(response.status).toBe(404)
       expect(calls).toEqual([])
+    })
+
+    it(`answers 401 without a session on ${method} ${path} and reads nothing`, async () => {
+      const { app, calls } = buildApp({ signedOut: true })
+      const response = await send(app, method, path, sameOriginWithoutCookieHeaders)
+
+      expect(response.status).toBe(401)
+      expect(calls).toEqual([])
+    })
+  }
+
+  // Each database read waits no longer than a probe: one that hangs shows its part as an error
+  // and the page still answers.
+  const hangs: [keyof AdminSystemStore, (body: AdminSystemSnapshot) => unknown, Options][] = [
+    ["databaseConnected", (body) => body.database.reachable, {}],
+    ["database", (body) => body.database.health, {}],
+    ["queue", (body) => body.queue.health, {}],
+    ["jobKinds", (body) => body.jobs.length, {}],
+    ["failedJobs", (body) => body.failedJobs.length, { failed: 1 }],
+    ["lastBackup", (body) => body.backup.health, {}],
+    ["migrations", (body) => body.migrations.health, {}],
+  ]
+  for (const [read, part, options] of hangs) {
+    it(`answers in time and shows the part as missing when ${read} never answers`, async () => {
+      const healthy = part(await snapshot(options))
+      const body = await snapshot({ ...options, hang: read })
+
+      expect(part(body)).not.toEqual(healthy)
     })
   }
 

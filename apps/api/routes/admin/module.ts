@@ -1,4 +1,5 @@
 import type { Hono, MiddlewareHandler } from "hono"
+import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import type postgres from "postgres"
 import type { BillingProvider } from "@spy4x/billing"
 import type { PushDevicesUpdatedEvent, UserSignedOutEvent } from "@api/cqrs/events.ts"
@@ -18,6 +19,11 @@ export interface AdminModuleContext {
   subscribers: SubscribersSetup | null
   /** The normal per-user budget the session routes spend too. Every module route spends it. */
   limit: MiddlewareHandler<APIContext>
+  /**
+   * Spends one of an address's reset links, from the budget "Forgot password" spends too
+   * (`createAuthRateLimits().resetByAddress`). Throws when its store fails.
+   */
+  resetByAddress(email: string): Promise<RateLimitDecision>
   /**
    * Closes a person's sockets after their sessions end, or tells their open tabs that their push
    * devices changed.

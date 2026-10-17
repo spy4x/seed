@@ -16,6 +16,7 @@ import {
   API_URL,
   mountRoute,
   sameOriginHeaders,
+  sameOriginWithoutCookieHeaders,
   testMutationGuards,
   testSessionGuards,
 } from "../../_testing/mutation-requests.ts"
@@ -58,6 +59,7 @@ function buildApp(
     userId = 7,
     entries = [entry],
     next = nextKey as AdminAuditPageKey | null,
+    signedIn = true,
   } = {},
 ) {
   const calls: unknown[][] = []
@@ -84,13 +86,17 @@ function buildApp(
       mutationGuards: testMutationGuards,
       modules: [route],
     }),
-    buildAuthData({ user: { id: userId, role } }),
+    signedIn ? buildAuthData({ user: { id: userId, role } }) : null,
   )
   return { app, calls }
 }
 
-function get(app: ReturnType<typeof buildApp>["app"], path: string) {
-  return app.request(`${API_URL}/admin${path}`, { headers: { ...sameOriginHeaders } })
+function get(
+  app: ReturnType<typeof buildApp>["app"],
+  path: string,
+  headers: Record<string, string> = sameOriginHeaders,
+) {
+  return app.request(`${API_URL}/admin${path}`, { headers: { ...headers } })
 }
 
 describe("audit log routes", () => {
@@ -107,6 +113,14 @@ describe("audit log routes", () => {
       const response = await get(app, path)
 
       expect(response.status).toBe(404)
+      expect(calls).toEqual([])
+    })
+
+    it(`answers 401 without a session on GET ${path} and reads nothing`, async () => {
+      const { app, calls } = buildApp({ signedIn: false })
+      const response = await get(app, path, sameOriginWithoutCookieHeaders)
+
+      expect(response.status).toBe(401)
       expect(calls).toEqual([])
     })
   }

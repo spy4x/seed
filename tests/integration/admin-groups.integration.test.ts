@@ -293,7 +293,7 @@ Deno.test(`an operator removes a member, who loses tokens and invitations, with 
   })
 })
 
-Deno.test(`a supervisor transfers a group only to its own member; an operator and a renewing subscription cannot`, async () => {
+Deno.test(`a supervisor transfers a group only to its own member; an operator, a renewing subscription and a blocked member cannot`, async () => {
   await withSchema(async (sql) => {
     const { groupId, owner, editor, stranger } = await team(sql)
     const operator = { id: await operatorUser(sql, UserRole.OPERATOR), role: UserRole.OPERATOR }
@@ -315,6 +315,17 @@ Deno.test(`a supervisor transfers a group only to its own member; an operator an
       AdminGroupActOutcome.SubscriptionRenews,
     )
     await sql`UPDATE subscriptions SET cancel_at_period_end = TRUE WHERE group_id = ${groupId}`
+
+    // A blocked member cannot sign in to run the group: the transfer waits for the unblock.
+    await sql`UPDATE users SET blocked_at = now() WHERE id = ${editor}`
+    expect(await rows.transferOwnership(supervisor, groupId, editor)).toBe(
+      AdminGroupActOutcome.RecipientBlocked,
+    )
+    const [kept] = await sql<{ ownerUserId: number }[]>`
+      SELECT owner_user_id FROM groups WHERE id = ${groupId}
+    `
+    expect(kept.ownerUserId).toBe(owner)
+    await sql`UPDATE users SET blocked_at = NULL WHERE id = ${editor}`
 
     // The owner's admin link: an admin of the group may no longer hand out admin access.
     const adminLink = await insertInvitation(sql, groupId, owner, { role: GroupRole.ADMIN })
