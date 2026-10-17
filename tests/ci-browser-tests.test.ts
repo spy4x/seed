@@ -4,7 +4,7 @@
  * check must run the smoke set (`SMOKE_SPECS` of `infra/scripts/e2e-local-plan.ts`), and the set
  * must keep the sign-in and the notes specs: without either, a pull request that breaks that
  * screen shows green again. The whole suite runs after the merge, on `main`, where a red run is
- * seen but blocks nobody. `README.md` and `docs/woodpecker-ci-setup.md` name the specs of the set.
+ * seen but blocks nobody. `docs/development.md` and `docs/woodpecker-ci-setup.md` name the specs of the set.
  */
 
 import { expect } from "@std/expect"
@@ -127,8 +127,8 @@ Deno.test("a push to main runs the whole suite, and a pull request does not wait
   expect(blockingSteps(ci, SMOKE, "tag", "main")).toEqual(["e2e-smoke"])
 })
 
-Deno.test("README.md and the CI guide name every spec of the smoke set", async () => {
-  for (const path of ["README.md", "docs/woodpecker-ci-setup.md"]) {
+Deno.test("the development guide and the CI guide name every spec of the smoke set", async () => {
+  for (const path of ["docs/development.md", "docs/woodpecker-ci-setup.md"]) {
     const text = await read(path)
     const missing = SMOKE_SPECS.filter((name) => !text.includes(name))
     expect({ path, missing }).toEqual({ path, missing: [] })

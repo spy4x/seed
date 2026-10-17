@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 /**
- * Holds the optional `mpa` service in `infra/compose/compose.shared.yml` to what the README's
+ * Holds the optional `mpa` service in `infra/compose/compose.shared.yml` to what docs/apps.md's
  * "The SPA and the MPA" section promises: it exists only under the `mpa` profile, so the default
  * deploy stays the SPA alone, and when it runs it serves `MPA_DOMAIN` only, never the SPA's
  * `DOMAIN` (spy4x/template#122, #265).

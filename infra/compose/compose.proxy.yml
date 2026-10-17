@@ -13,7 +13,7 @@ services:
       - '--entrypoints.web.address=:80'
       - '--ping=true'
       - '--ping.entryPoint=web'
-      # Certificate resolver the production routers name; see "Production certificates" in README.
+      # Certificate resolver the production routers name; see "Production certificates" in docs/deploy.md.
       - '--certificatesresolvers.${TRAEFIK_CERT_RESOLVER:-myresolver}.acme.email=${TRAEFIK_ACME_EMAIL:-}'
       - '--certificatesresolvers.${TRAEFIK_CERT_RESOLVER:-myresolver}.acme.storage=/letsencrypt/acme.json'
       - '--certificatesresolvers.${TRAEFIK_CERT_RESOLVER:-myresolver}.acme.httpchallenge.entrypoint=web'

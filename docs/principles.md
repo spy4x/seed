@@ -36,7 +36,7 @@
 
 - Users own data.
 - Backups supported: a daily restic snapshot of the database, and a restore that a test runs
-  (README, "Backups").
+  (docs/backups.md).
 - Schema is open and migratable.
 
 ---

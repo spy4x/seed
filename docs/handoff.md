@@ -233,7 +233,7 @@ addresses both sides have verified (below).
 
 **Google and GitHub (#141, #142).** `apps/api/services/oauth-sign-in.ts` wraps
 `createOAuthSignIn` of `@spy4x/server/auth/oauth`, one per provider whose client id and secret
-are both set (README, "Sign in with Google and GitHub"); `apps/api/routes/auth-oauth.ts` holds
+are both set (docs/sign-in-providers.md); `apps/api/routes/auth-oauth.ts` holds
 the routes and is mounted before `createAuthRoute`. A provider method is a row of `auth_keys`
 with the provider's name as `method` and the provider's user id as `subject`: there is no table
 of its own. The state of a flow lives in Valkey for 10 minutes and in the HttpOnly cookie
@@ -366,7 +366,7 @@ deno task check            # fmt, lint, types, unit tests
 deno task spa:build
 deno task mpa:check
 deno task dev              # compose up
-deno task e2e:local        # browser tests on a stack of its own (README, "Browser tests")
+deno task e2e:local        # browser tests on a stack of its own (docs/development.md, "Browser tests")
 ```
 
 Integration tests need a throwaway Postgres and Valkey (Valkey requires a password, as in

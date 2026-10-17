@@ -17,7 +17,7 @@ error answers included.
 `Strict-Transport-Security` covers subdomains: every host under the product's domain, such as the
 MPA when `MPA_DOMAIN` is one, must be served over HTTPS, as the production Compose file does.
 Grafana has no such host: it is published only on `127.0.0.1` of the
-server (README, "Admin consoles"). A browser ignores the header over plain HTTP, so development
+server (docs/deploy.md, "Admin consoles"). A browser ignores the header over plain HTTP, so development
 is not affected.
 
 ## The SPA's policy

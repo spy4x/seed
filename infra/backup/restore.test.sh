@@ -93,7 +93,7 @@ createdb --maintenance-db=postgres "$REPLACED"
 if PGDATABASE=$REPLACED "$BACKUP" restore; then refused="not refused"; else refused=refused; fi
 check "a restore that names no snapshot is refused and loads nothing" \
   "refused, 0 tables" "$refused, $(tables "$REPLACED") tables"
-# What the README says to do there: choose a snapshot from before the failure and name it.
+# What docs/backups.md says to do there: choose a snapshot from before the failure and name it.
 said=$(PGDATABASE=$REPLACED "$BACKUP" restore "$first_snapshot")
 check "after later backups, one of an empty database among them, a restore by id brings back that snapshot's rows" \
   "1=first,2=it's,3=żółw" "$(notes "$REPLACED")"

@@ -434,7 +434,7 @@ services:
       retries: 5
     ports:
       # The dashboard, on this machine only and never behind the proxy: from elsewhere, open it
-      # through an SSH tunnel (README, "Admin consoles").
+      # through an SSH tunnel (docs/deploy.md, "Admin consoles").
       - ${GRAFANA_HOST_PORT:-127.0.0.1:3000}:3000
 
   # nodeexporter and cadvisor watch the whole host (its CPU, disk and network, and every
@@ -490,7 +490,7 @@ services:
         max-file: '3'
   # endregion Monitoring
 
-  # Only with COMPOSE_PROFILES=backup (README, "Backups"): a restic snapshot of the database when it
+  # Only with COMPOSE_PROFILES=backup (docs/backups.md): a restic snapshot of the database when it
   # starts and every 24 hours after. Built on the db service's own image, so pg_dump is the
   # server's version. Unhealthy when the last complete backup is more than two days old.
   backup:
