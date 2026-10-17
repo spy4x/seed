@@ -2,8 +2,8 @@
 /**
  * Copies the app to a server over SSH and starts it there with Compose.
  *
- * Usage: `deno task deploy [env file]`. The env file defaults to `infra/envs/.env.prod` and must
- * live under `infra/`. It reads:
+ * Usage: `deno task deploy [--allow-dirty] [env file]`. The env file defaults to
+ * `infra/envs/.env.prod` and must live under `infra/`. It reads:
  *
  * - `SSH_TO_SERVER` (required): the SSH destination, `user@host` or a `Host` alias from
  *   `~/.ssh/config`.
@@ -16,9 +16,12 @@
  * rsync as a destination, the second runs unquoted in the remote shell (so `~/bin/deno` works).
  * `PATH_ON_SERVER` is quoted.
  *
- * Before anything is sent, the deploy stops when a password or secret in the env file equals one
- * that `infra/envs/.env.example` prints, or when one that the example file sets is empty or left
- * out. The message names each such variable and never prints a value.
+ * Before anything is sent, the deploy stops when the working tree has uncommitted changes,
+ * untracked files included, because the copy sends the files as they are on disk and what runs on
+ * the server would then match no commit. `--allow-dirty` sends them anyway. It also stops when a
+ * password or secret in the env file equals one that `infra/envs/.env.example` prints, or when one
+ * that the example file sets is empty or left out. The message names each such variable and never
+ * prints a value.
  *
  * Four steps, each stopping the deploy when it fails: rsync the files that
  * `infra/deploy/include.txt` names, leaving out every env file (any `.env*` or `*.env`, anywhere,
@@ -162,6 +165,84 @@ export async function planFromEnvFile(
   return planDeploy(values, envFilePath)
 }
 
+/** The flag that lets a deploy send a working tree with uncommitted changes. */
+export const ALLOW_DIRTY_FLAG = "--allow-dirty"
+
+/** What the command line of `deno task deploy` asks for. */
+export interface DeployArgs {
+  envFilePath: string
+  allowDirty: boolean
+}
+
+/**
+ * Reads the command line: an optional {@link ALLOW_DIRTY_FLAG} and an optional env file, in any
+ * order.
+ *
+ * @throws {Error} On an unknown flag or a second env file, so a typo never deploys by accident.
+ */
+export function parseDeployArgs(args: readonly string[]): DeployArgs {
+  const allowDirty = args.includes(ALLOW_DIRTY_FLAG)
+  const rest = args.filter((arg) => arg !== ALLOW_DIRTY_FLAG)
+  const unknown = rest.find((arg) => arg.startsWith("-"))
+  if (unknown) throw new Error(`Unknown option ${unknown}. The only option is ${ALLOW_DIRTY_FLAG}.`)
+  if (rest.length > 1) throw new Error(`Name at most one env file, not ${rest.join(" and ")}.`)
+  return { envFilePath: rest[0] ?? DEFAULT_ENV_FILE, allowDirty }
+}
+
+/**
+ * Stops a deploy from a working tree with uncommitted changes, unless `allowDirty` is set.
+ *
+ * @param status The output of `git status --porcelain`: one line per changed or untracked file.
+ * @throws {Error} Naming the first changed files and {@link ALLOW_DIRTY_FLAG}.
+ */
+export function refuseDirtyTree(status: string, allowDirty: boolean): void {
+  if (allowDirty) return
+  const changed = status.split("\n").filter((line) => line.trim() !== "")
+  if (changed.length === 0) return
+  const shown = changed.slice(0, 5).map((line) => `  ${line.trim()}`)
+  if (changed.length > shown.length) shown.push(`  and ${changed.length - shown.length} more`)
+  throw new Error(
+    [
+      `The working tree has uncommitted changes, and the deploy would send them as they are:`,
+      ...shown,
+      `Commit or stash them first, or run \`deno task deploy ${ALLOW_DIRTY_FLAG}\` ` +
+      `to send them anyway.`,
+    ].join("\n"),
+  )
+}
+
+/**
+ * Lists this checkout's uncommitted changes, untracked files included, with `git status`.
+ *
+ * @throws {Error} When git cannot answer, naming {@link ALLOW_DIRTY_FLAG}: a tree that cannot be
+ *   checked is not taken for a clean one.
+ */
+async function readWorkingTreeStatus(): Promise<string> {
+  let output: Deno.CommandOutput
+  try {
+    output = await new Deno.Command("git", {
+      args: ["status", "--porcelain", "--untracked-files=normal"],
+      stdout: "piped",
+      stderr: "piped",
+    }).output()
+  } catch (err) {
+    if (!(err instanceof Deno.errors.NotFound)) throw err
+    throw new Error(
+      `git is not installed, so the deploy cannot check for uncommitted changes. ` +
+        `Install it, or pass ${ALLOW_DIRTY_FLAG} to deploy without the check.`,
+    )
+  }
+  const decoder = new TextDecoder()
+  if (!output.success) {
+    throw new Error(
+      `git status failed, so the deploy cannot check for uncommitted changes: ` +
+        `${decoder.decode(output.stderr).trim()}. ` +
+        `Pass ${ALLOW_DIRTY_FLAG} to deploy without the check.`,
+    )
+  }
+  return decoder.decode(output.stdout)
+}
+
 /** One program to run, with its arguments, and what to call it in the log. */
 export interface DeployStep {
   label: string
@@ -247,7 +328,15 @@ async function run(step: DeployStep): Promise<number> {
 }
 
 async function main(): Promise<void> {
-  const envFilePath = Deno.args[0] ?? DEFAULT_ENV_FILE
+  let args: DeployArgs
+  try {
+    args = parseDeployArgs(Deno.args)
+    refuseDirtyTree(args.allowDirty ? "" : await readWorkingTreeStatus(), args.allowDirty)
+  } catch (err) {
+    error(err instanceof Error ? err.message : String(err))
+    Deno.exit(1)
+  }
+  const { envFilePath } = args
   let steps: DeployStep[]
   try {
     steps = await planFromEnvFile(envFilePath)

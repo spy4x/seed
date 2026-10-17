@@ -14,4 +14,6 @@ export default defineConfig({
     ci: !!Deno.env.get("CI"),
     chromium: devices["Desktop Chrome"],
   }),
+  // The base config retries twice in CI; a test that fails once must fail the run (#394).
+  retries: 0,
 })

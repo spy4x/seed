@@ -48,10 +48,9 @@ check ──┬── build ────────┐
 - The browser steps run one after another: each keeps the API's `vapid.json` in the shared
   checkout and starts a worker on the one Valkey service.
 - Both steps stop after that many failed tests. With sign-in broken every test fails, each after
-  30 s and two retries, and a step would otherwise run into the script's limit of 25 minutes.
-- A failed test is retried twice in CI and then counts as passed ("flaky" in the step's last
-  lines). Whether that stays is an open decision
-  (<https://github.com/spy4x/template/issues/357>).
+  30 s, and a step would otherwise run into the script's limit of 25 minutes.
+- A failed test is not retried: one failure fails the step, so a test that fails every second run
+  shows red, not green (`tests/playwright-retries.test.ts`).
 
 None of these steps needs a secret. A pull request from a fork waits until someone approves it in
 Woodpecker, because the repository requires approval for forks.

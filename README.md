@@ -261,6 +261,11 @@ deletes the ones your checkout no longer has; env files and the web push keys ar
 deploying an older commit is a full rollback of the code. It does not roll back the database or
 Valkey: before rolling back, read traps 10 and 11 in [docs/handoff.md](docs/handoff.md).
 
+The deploy stops when your working tree has uncommitted changes, untracked files included, and
+lists them: the copy sends files as they are on disk, so the server would run code that matches no
+commit. Commit or stash them first, or run `deno task deploy --allow-dirty [env file]` to send
+them anyway.
+
 **A server that ran Postgres 16 moves its data once.** The Compose file runs Postgres 18, which
 keeps its data in a directory of its own, so the first deploy of this version stops at "Starting
 the app" with a message that says why, and the old containers keep serving. Run
@@ -567,6 +572,11 @@ git push origin v1.2.3
 
 The pipeline refuses a tag whose commit is not on `main`. Setup and the steps:
 [docs/woodpecker-ci-setup.md](docs/woodpecker-ci-setup.md#releases).
+
+**Release images are public.** A new Docker Hub repository is public unless the account says
+otherwise, and the API image holds the whole source tree, not only the build output. A private
+product makes its repositories private on Docker Hub (`-base`, `-api`, `-spa` and `-mpa`), or sets
+the account's default visibility to private, before its first release tag.
 
 ## Built by
 

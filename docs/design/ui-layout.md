@@ -32,6 +32,9 @@ screens were redesigned against these rules in October 2026.
    action that needs the password again (transfer ownership, delete the account) uses a `Modal` with
    a password form and a danger-styled submit button instead. Never put a red button on the page
    next to everyday actions.
+   Two actions stay one click, because each is undone in one step: declining an invitation (the
+   group invites the person again) and removing a push device (turning notifications on there
+   again adds it back).
 5. **Less chrome.** No card inside a card, no card around a single line, no dashed box inside a
    card. A list on its own is a list; a signed-in page's heading is its `PageHeader`, never a
    `CardHeader`. Use `Card` for a genuine group of related content, `Section` for a titled part of a

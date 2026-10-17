@@ -2,10 +2,14 @@
 import { expect } from "@std/expect"
 import { basename, globToRegExp } from "@std/path"
 import {
+  ALLOW_DIRTY_FLAG,
+  DEFAULT_ENV_FILE,
   EXAMPLE_ENV_FILE,
   isSecretName,
+  parseDeployArgs,
   planDeploy,
   planFromEnvFile,
+  refuseDirtyTree,
   refuseExampleSecrets,
   unsafeSecretsIn,
   VAPID_PATH,
@@ -367,4 +371,45 @@ Deno.test("the example file does not turn on the proxy's per-request debug log",
   const example = await readEnvFile(EXAMPLE_ENV_FILE)
   // The same level infra/compose/compose.proxy.yml falls back to (tests/compose-exposure.test.ts).
   expect(example["PROXY_LOG_LEVEL"]).toBe("info")
+})
+
+Deno.test("a deploy from a working tree with uncommitted changes stops and names the flag", () => {
+  const status = " M apps/api/+main.ts\n?? libs/new-module.ts\n"
+  expect(() => refuseDirtyTree(status, false)).toThrow(ALLOW_DIRTY_FLAG)
+  expect(() => refuseDirtyTree(status, false)).toThrow("apps/api/+main.ts")
+  expect(() => refuseDirtyTree(status, false)).toThrow("libs/new-module.ts")
+})
+
+Deno.test("a deploy from a clean working tree goes ahead", () => {
+  expect(() => refuseDirtyTree("", false)).not.toThrow()
+  expect(() => refuseDirtyTree("\n", false)).not.toThrow()
+})
+
+Deno.test("the flag lets a deploy send uncommitted changes", () => {
+  expect(() => refuseDirtyTree(" M apps/api/+main.ts\n", true)).not.toThrow()
+})
+
+Deno.test("a long list of uncommitted changes names the first five and counts the rest", () => {
+  const status = Array.from({ length: 8 }, (_, i) => ` M file-${i}.ts`).join("\n")
+  expect(() => refuseDirtyTree(status, false)).toThrow("file-4.ts")
+  expect(() => refuseDirtyTree(status, false)).toThrow("and 3 more")
+  expect(() => refuseDirtyTree(status, false)).not.toThrow("file-5.ts")
+})
+
+Deno.test("the deploy command line takes the flag and an env file in either order", () => {
+  expect(parseDeployArgs([])).toEqual({ envFilePath: DEFAULT_ENV_FILE, allowDirty: false })
+  expect(parseDeployArgs([ENV_FILE])).toEqual({ envFilePath: ENV_FILE, allowDirty: false })
+  expect(parseDeployArgs([ALLOW_DIRTY_FLAG, ENV_FILE])).toEqual({
+    envFilePath: ENV_FILE,
+    allowDirty: true,
+  })
+  expect(parseDeployArgs([ENV_FILE, ALLOW_DIRTY_FLAG])).toEqual({
+    envFilePath: ENV_FILE,
+    allowDirty: true,
+  })
+})
+
+Deno.test("the deploy command line refuses a mistyped flag and a second env file", () => {
+  expect(() => parseDeployArgs(["--allow-dirt"])).toThrow("Unknown option --allow-dirt")
+  expect(() => parseDeployArgs([ENV_FILE, "infra/envs/.env.prod"])).toThrow("at most one env file")
 })
