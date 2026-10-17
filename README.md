@@ -12,7 +12,7 @@ web app, a worker and Postgres. Work in progress.**
 gh repo create my-product --template spy4x/template --private --clone
 ```
 
-<img src="docs/screenshots/sign-up-flow.gif" alt="An older version of the app: a new user signs up with a username and password, lands on the profile page with the realtime connection open, types the first name Alex and the last name Rivera, and saves; a green toast confirms the profile was updated." width="800">
+<img src="docs/screenshots/sign-up-flow.gif" alt="A new user signs up with an e-mail address and a password, types the code the app mailed to that address, lands on the profile page with a Get started checklist, opens Edit name, types the first name Alex and the last name Rivera, and saves; a green toast confirms the profile was updated." width="800">
 
 [Architecture](docs/architecture.md) · [ADR 001](docs/decisions/001-deno-platform-template.md) ·
 [ADR 002](docs/decisions/002-realtime-transport-and-sync.md) ·
@@ -100,10 +100,10 @@ it cannot create the user, it says so and exits with 1.
 
 ## What a fresh project looks like
 
-| Light                                                                                                                                                                                                                     | Dark                                                                                                                                                                                                                    |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <img src="docs/screenshots/sign-in-light.png" alt="An older version of the sign-in page in the light theme: a card titled Welcome back with username and password fields, a Sign in button and a link to sign up.">       | <img src="docs/screenshots/sign-in-dark.png" alt="An older version of the sign-in page in the dark theme: a card titled Welcome back with username and password fields, a Sign in button and a link to sign up.">       |
-| <img src="docs/screenshots/profile-light.png" alt="An older version of the profile page in the light theme for the demo user Alex Rivera: name fields with a Save button, a change-password card and a two-factor card."> | <img src="docs/screenshots/profile-dark.png" alt="An older version of the profile page in the dark theme for the demo user Alex Rivera: name fields with a Save button, a change-password card and a two-factor card."> |
+| Light                                                                                                                                                                                                                                                                                                   | Dark                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/screenshots/sign-in-light.png" alt="The sign-in page in the light theme: a card titled Welcome back with an e-mail or username field, a password field, a Sign in button, a link for a forgotten password and a link to create an account.">                                             | <img src="docs/screenshots/sign-in-dark.png" alt="The sign-in page in the dark theme: a card titled Welcome back with an e-mail or username field, a password field, a Sign in button, a link for a forgotten password and a link to create an account.">                                             |
+| <img src="docs/screenshots/profile-light.png" alt="The profile page in the light theme for the demo user Alex Rivera: the sidebar with the Personal group, Notes, Tags, Activity and Groups, a Get started checklist with the e-mail address already verified, and the Account section with the name."> | <img src="docs/screenshots/profile-dark.png" alt="The profile page in the dark theme for the demo user Alex Rivera: the sidebar with the Personal group, Notes, Tags, Activity and Groups, a Get started checklist with the e-mail address already verified, and the Account section with the name."> |
 
 The screenshots and the GIF use a throw-away database and a made-up user;
 [`docs/screenshots/record.ts`](docs/screenshots/record.ts) records them again from a running app.
@@ -258,7 +258,8 @@ name another): `SSH_TO_SERVER`, `PATH_ON_SERVER` and, when Deno is not on the se
 `DENO_ON_SERVER`. `infra/envs/.env.example` lists them with every other name. The copy replaces
 every server file that differs from your checkout, one edited on the server or newer there too, and
 deletes the ones your checkout no longer has; env files and the web push keys are never touched. So
-deploying an older commit is a full rollback of the code. It does not roll back the database.
+deploying an older commit is a full rollback of the code. It does not roll back the database or
+Valkey: before rolling back, read traps 10 and 11 in [docs/handoff.md](docs/handoff.md).
 
 **A server that ran Postgres 16 moves its data once.** The Compose file runs Postgres 18, which
 keeps its data in a directory of its own, so the first deploy of this version stops at "Starting

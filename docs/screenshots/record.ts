@@ -2,8 +2,10 @@
  * Records the README screenshots, the sign-up GIF and the GitHub social preview image from a
  * running app, with neutral demo data.
  *
- * Needs the app reachable as one origin (API under /api, SPA everywhere else) on a fresh,
- * throw-away database: the GIF signs the demo user up, and the stills sign that user in.
+ * Needs the app reachable as one origin (API under /api, SPA everywhere else) on a throw-away
+ * database in development mode: the run first deletes the demo user through the development route
+ * `/api/test/cleanup-user`; the GIF signs that user up, reading the mailed code
+ * from the development route `/api/test/last-mail`, and the stills sign that user in.
  * `deno task dev` behind `deno task proxy:start` serves it at http://app.localhost. Also needs
  * `ffmpeg` on the PATH for the GIF.
  *
@@ -24,7 +26,7 @@ type Theme = typeof THEMES[number]
 
 /** Neutral demo data: no real person, product or price. */
 const DEMO = {
-  username: "alex.rivera",
+  email: "alex.rivera@example.com",
   password: "Demo-passw0rd!",
   firstName: "Alex",
   lastName: "Rivera",
@@ -47,15 +49,23 @@ function newContext(browser: Browser, theme: Theme, scale: number): Promise<Brow
   })
 }
 
-/** Waits for the SPA's first load, which is slow while the dev server bundles dependencies. */
+/**
+ * Deletes the demo user a previous run left, through the development route, and waits for the
+ * first load of both signed-out pages, which is slow while the dev server bundles dependencies.
+ */
 async function warmUp(browser: Browser): Promise<void> {
   const context = await newContext(browser, "light", 1)
   try {
     const page = await context.newPage()
-    await page.goto("/sign-in")
-    await page.getByRole("heading", { level: 1, name: "Welcome back" }).waitFor({
-      timeout: 120_000,
+    const cleanup = await page.request.post("/api/test/cleanup-user", {
+      data: { login: DEMO.email },
     })
+    if (!cleanup.ok()) throw new Error(`cleanup-user answered ${cleanup.status()}`)
+    const pages = [["/sign-in", "Welcome back"], ["/sign-up", "Create your account"]]
+    for (const [path, name] of pages) {
+      await page.goto(path)
+      await page.getByRole("heading", { level: 1, name }).waitFor({ timeout: 120_000 })
+    }
   } finally {
     await context.close()
   }
@@ -70,16 +80,15 @@ async function captureStills(browser: Browser, theme: Theme): Promise<Record<str
     await page.getByRole("heading", { level: 1, name: "Welcome back" }).waitFor()
     await page.waitForTimeout(500)
     const signIn = await page.screenshot()
-    await page.locator("[data-e2e=auth-form-login]").fill(DEMO.username)
+    await page.locator("[data-e2e=auth-form-login]").fill(DEMO.email)
     await page.locator("[data-e2e=auth-form-password]").fill(DEMO.password)
     await page.locator("[data-e2e=auth-form-submit]").click()
     await page.waitForURL(`${BASE_URL}/`)
-    await page.locator("[data-e2e=ws-status]", { hasText: "open" }).waitFor()
-    await page.waitForFunction(
-      (name) =>
-        document.querySelector<HTMLInputElement>("[data-e2e=profile-first-name]")?.value === name,
-      DEMO.firstName,
-    )
+    await page.locator("[data-e2e=profile-name]", {
+      hasText: `${DEMO.firstName} ${DEMO.lastName}`,
+    }).waitFor()
+    // The sidebar names the group once the groups have loaded.
+    await page.getByRole("button", { name: /^Group: / }).waitFor()
     await page.waitForTimeout(800)
     const profile = await page.screenshot()
     return { "sign-in": signIn, profile }
@@ -135,8 +144,25 @@ async function socialPreview(browser: Browser, profile: Uint8Array): Promise<Uin
   }
 }
 
+/** The text of the newest mail the dev worker sent to `email`, from the development route. */
+async function lastMailText(page: Page, email: string): Promise<string | null> {
+  const response = await page.request.post("/api/test/last-mail", { data: { email } })
+  return response.ok() ? (await response.json() as { text: string }).text : null
+}
+
+/** Waits for a mail to `email` other than `before` and answers the code in it. */
+async function nextCode(page: Page, email: string, before: string | null): Promise<string> {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const text = await lastMailText(page, email)
+    if (text && text !== before) return text.split("\n\n")[1].trim()
+    await page.waitForTimeout(500)
+  }
+  throw new Error(`no sign-up code reached ${email} within 20 seconds`)
+}
+
 /**
- * Records sign-up, then naming the profile, the way a person does it, with a drawn pointer.
+ * Records sign-up with an address, a password and the mailed code, then naming the profile, the
+ * way a person does it, with a drawn pointer.
  * The GIF is recorded in the light theme; the stills cover both.
  * Returns the WebM path and how many seconds of blank start to trim.
  */
@@ -158,21 +184,33 @@ async function recordFlow(browser: Browser, dir: string): Promise<{ video: strin
     page = await context.newPage()
     const started = Date.now()
     await page.goto("/sign-up")
-    await page.getByRole("heading", { level: 1, name: "Create account" }).waitFor()
+    await page.getByRole("heading", { level: 1, name: "Create your account" }).waitFor()
     await page.mouse.move(pointer.x, pointer.y)
     trim = (Date.now() - started) / 1000
     await page.waitForTimeout(900)
 
     const h = VIEWPORT.height
-    await typeLike(page, pointer, page.locator("[data-e2e=auth-form-login]"), DEMO.username, h)
+    await typeLike(page, pointer, page.locator("[data-e2e=auth-form-login]"), DEMO.email, h)
     await page.waitForTimeout(300)
     await typeLike(page, pointer, page.locator("[data-e2e=auth-form-password]"), DEMO.password, h)
     await page.waitForTimeout(500)
+    const before = await lastMailText(page, DEMO.email)
     await clickLike(page, pointer, page.locator("[data-e2e=auth-form-submit]"), h)
+    const codeInput = page.locator("[data-e2e=sign-up-code-input]")
+    await codeInput.waitFor()
+    const code = await nextCode(page, DEMO.email, before)
+    await page.waitForTimeout(600)
+    await typeLike(page, pointer, codeInput, code, h)
+    await page.waitForTimeout(400)
+    await clickLike(page, pointer, page.locator("[data-e2e=sign-up-code-submit]"), h)
     await page.waitForURL(`${BASE_URL}/`)
-    await page.locator("[data-e2e=ws-status]", { hasText: "open" }).waitFor()
+    const edit = page.locator("[data-e2e=profile-edit]")
+    await edit.waitFor()
     await page.waitForTimeout(1000)
 
+    await clickLike(page, pointer, edit, h)
+    await page.locator("[data-e2e=profile-first-name]").waitFor()
+    await page.waitForTimeout(400)
     await typeLike(page, pointer, page.locator("[data-e2e=profile-first-name]"), DEMO.firstName, h)
     await page.waitForTimeout(300)
     await typeLike(page, pointer, page.locator("[data-e2e=profile-last-name]"), DEMO.lastName, h)

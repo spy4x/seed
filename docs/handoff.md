@@ -343,6 +343,13 @@ change ended after a break-in. Before rolling back, delete those rows:
 them. Going forward is safe: old code runs against the new column, and compose runs the
 migration before the new API starts.
 
+### 11. A rollback past the cache's key prefix needs Valkey flushed first (PR #21)
+
+Since PR #21 every key the API writes to Valkey starts with `api:` (`apps/api/services/cache.ts`);
+older code reads and writes the same values without it. Rolled back past that change, the old code
+finds the unprefixed keys it left behind, up to a month old, and serves them as current. Flush
+Valkey before such a rollback. Going forward is safe: the new code ignores the old keys.
+
 ### 12. The operator area answers on the admin host only
 
 `/api/admin/*` is 404 on every host but
