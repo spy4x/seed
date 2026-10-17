@@ -39,6 +39,7 @@
 
 import { error, log, success } from "./+lib.ts"
 import { createEnvReader, readEnvVar } from "@spy4x/server/config"
+import { shellQuote } from "@spy4x/platform/universal/shell"
 import { describeEnvFileError, readEnvFile } from "./env-file.ts"
 
 /** The env file used when no argument names one. */
@@ -166,11 +167,6 @@ export interface DeployStep {
   label: string
   command: "rsync" | "ssh"
   args: string[]
-}
-
-/** Quotes `value` as one word for a POSIX shell. */
-export function shellQuote(value: string): string {
-  return `'${value.replaceAll(`'`, `'\\''`)}'`
 }
 
 /**

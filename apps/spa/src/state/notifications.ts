@@ -2,7 +2,8 @@ import { signal } from "@preact/signals"
 import type { NotificationRow } from "@ui/notifications-screen.tsx"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
-import { READ_KEYS, ReadRefused } from "./read-keys.ts"
+import { READ_KEYS } from "./read-keys.ts"
+import { ReadRefused } from "@spy4x/realtime/read-cache"
 
 /** One page of the inbox as the API answers: `nextCursor` is `null` on the last page. */
 export interface NotificationPageResult {

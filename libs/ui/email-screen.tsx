@@ -13,6 +13,7 @@ import { type EmailStatus, emailToVerify } from "@domain/identity"
 import { PageHeader, TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
+import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { OAUTH_PROVIDER_NAMES } from "@domain/identity"
 import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
@@ -117,15 +118,6 @@ export interface EmailScreenProps {
    */
   providerProof?: ProviderProof | null
   navigate?: Navigate
-}
-
-/** Moves focus to `field` each time a new `error` arrives, so a failed submit lands on it. */
-function useFocusOnError(error: string | null) {
-  const field = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    if (error) field.current?.focus()
-  }, [error])
-  return field
 }
 
 /**

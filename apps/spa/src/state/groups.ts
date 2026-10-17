@@ -13,7 +13,8 @@ import {
 } from "@domain/groups"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiAsUser } from "./realtime-call.ts"
-import { READ_KEYS, ReadRefused } from "./read-keys.ts"
+import { READ_KEYS } from "./read-keys.ts"
+import { ReadRefused } from "@spy4x/realtime/read-cache"
 import {
   advanceGroupCursor,
   callCommand,

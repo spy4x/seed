@@ -1,9 +1,10 @@
 import type { JSX, Ref } from "preact"
-import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
+import { useFocusOnChange } from "@spy4x/preact-ui/use-focus-on-change"
+import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
 import { AuthCard } from "./auth-screen.tsx"
 import { FORM_ACTIONS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
@@ -61,28 +62,6 @@ const SUBSCRIBE_WIDTH = "max-w-md"
 const SUBSCRIBE_INTRO =
   "Enter your address. We send a link to confirm it first, and every mail has a link to unsubscribe."
 
-/**
- * Moves focus to the returned element when `step` differs from the step the screen mounted with.
- * A page that opens on an outcome keeps focus where the browser put it.
- */
-function useFocusOnStepChange(step: string) {
-  const first = useRef(step)
-  const element = useRef<HTMLParagraphElement>(null)
-  useEffect(() => {
-    if (step !== first.current) element.current?.focus()
-  }, [step])
-  return element
-}
-
-/** Moves focus to `element` each time a new `error` arrives, so a failed submit lands on it. */
-function useFocusOnError<T extends HTMLElement>(error: string | null) {
-  const element = useRef<T>(null)
-  useEffect(() => {
-    if (error) element.current?.focus()
-  }, [error])
-  return element
-}
-
 /** An error under a form that the API tied to no field. It takes focus when it appears. */
 function FormError({ error, e2e }: { error: string | null; e2e: string }): JSX.Element | null {
   const message = useFocusOnError<HTMLParagraphElement>(error)
@@ -122,7 +101,7 @@ export function SubscribeForm(
   { email, onEmailChange, list, sent, error, pending, onSubmit }: SubscribeFormProps,
 ): JSX.Element {
   const field = useFocusOnError<HTMLInputElement>(error)
-  const status = useFocusOnStepChange(sent ? "sent" : "form")
+  const status = useFocusOnChange<HTMLParagraphElement>(sent ? "sent" : "form")
   if (sent) {
     return (
       <Outcome
@@ -193,7 +172,7 @@ export interface SubscriptionConfirmScreenProps {
 export function SubscriptionConfirmScreen(
   { state, email, list, token, error, pending, onSubmit, navigate }: SubscriptionConfirmScreenProps,
 ): JSX.Element {
-  const status = useFocusOnStepChange(state)
+  const status = useFocusOnChange<HTMLParagraphElement>(state)
   if (state === "done") {
     return (
       <Outcome
@@ -278,7 +257,7 @@ export interface UnsubscribeScreenProps {
 export function UnsubscribeScreen(
   { state, email, list, token, error, pending, onSubmit, navigate }: UnsubscribeScreenProps,
 ): JSX.Element {
-  const status = useFocusOnStepChange(state)
+  const status = useFocusOnChange<HTMLParagraphElement>(state)
   if (state === "done") {
     return (
       <Outcome

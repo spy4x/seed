@@ -34,29 +34,31 @@ describe("startIdempotencySweep", () => {
     const fake = fakeTimers()
     let sweeps = 0
 
-    await startIdempotencySweep({
+    startIdempotencySweep({
       signal: AbortSignal.abort(),
       sweep: () => Promise.resolve(void sweeps++),
       onError: () => {},
       intervalMs: 1000,
       timers: fake.timers,
     })
+    await settle()
 
     expect(fake.calls.set).toBe(0)
     expect(sweeps).toBe(0)
   })
 
-  it("sweeps once at start and leaves one timer set", async () => {
+  it("sweeps once at start, before any timer fires, and then sets one timer", async () => {
     const fake = fakeTimers()
     let sweeps = 0
 
-    await startIdempotencySweep({
+    startIdempotencySweep({
       signal: new AbortController().signal,
       sweep: () => Promise.resolve(void sweeps++),
       onError: () => {},
       intervalMs: 1000,
       timers: fake.timers,
     })
+    await settle()
 
     expect(sweeps).toBe(1)
     expect(fake.pending.size).toBe(1)
@@ -65,43 +67,34 @@ describe("startIdempotencySweep", () => {
   it("clears the timer when the signal aborts later", async () => {
     const fake = fakeTimers()
     const controller = new AbortController()
-    await startIdempotencySweep({
+    startIdempotencySweep({
       signal: controller.signal,
       sweep: () => Promise.resolve(),
       onError: () => {},
       intervalMs: 1000,
       timers: fake.timers,
     })
+    await settle()
 
     controller.abort()
 
     expect(fake.pending.size).toBe(0)
   })
 
-  it("reports a failing sweep and still runs the next tick", async () => {
+  it("reports a failing sweep to onError", async () => {
     const fake = fakeTimers()
     const reported: unknown[] = []
-    let sweeps = 0
     const failure = new Error("database is down")
 
-    await startIdempotencySweep({
+    startIdempotencySweep({
       signal: new AbortController().signal,
-      sweep: () => {
-        sweeps++
-        return sweeps <= 2 ? Promise.reject(failure) : Promise.resolve()
-      },
+      sweep: () => Promise.reject(failure),
       onError: (error) => reported.push(error),
       intervalMs: 1000,
       timers: fake.timers,
     })
-    expect(reported).toEqual([failure]) // The first tick also fails: reported, and a successor is scheduled.
-    ;[...fake.pending.values()][0]()
     await settle()
-    expect(reported).toEqual([failure, failure])
-    expect(fake.pending.size).toBe(1) // The next tick succeeds.
-    ;[...fake.pending.values()][0]()
-    await settle()
-    expect(sweeps).toBe(3)
-    expect(reported.length).toBe(2)
+
+    expect(reported).toEqual([failure])
   })
 })

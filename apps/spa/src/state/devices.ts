@@ -2,7 +2,8 @@ import { signal } from "@preact/signals"
 import type { SignedInDevice } from "@domain/identity"
 import { type LocalReads, noLocalReads } from "../modules.ts"
 import { listSessions } from "./auth.ts"
-import { READ_KEYS, ReadRefused } from "./read-keys.ts"
+import { READ_KEYS } from "./read-keys.ts"
+import { ReadRefused } from "@spy4x/realtime/read-cache"
 
 /** The read of the signed-in devices: `listSessions`, or a test's stand-in. */
 export type DevicesList = typeof listSessions

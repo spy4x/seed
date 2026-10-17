@@ -7,6 +7,7 @@ import {
 } from "@spy4x/platform/rate-limit"
 import {
   createRateLimitMiddleware,
+  denoServeRemoteAddr,
   type RateLimitContext,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
@@ -67,8 +68,6 @@ export function createTokenRateLimits(settings: TokenRateLimitSettings): TokenRa
       limit,
       onError: onStoreError,
     })
-  const remoteAddr = ({ env }: RateLimitContext<TokenApiContext>) =>
-    (env as { remoteAddr?: { hostname?: string } } | undefined)?.remoteAddr?.hostname
   const tokenId = (_: Request, context: RateLimitContext<TokenApiContext>) =>
     (context.get?.("apiToken") as { id?: string } | undefined)?.id
   const refusals = createStoreLimiter(store(`ratelimit-api-token-refusal`), {
@@ -79,14 +78,14 @@ export function createTokenRateLimits(settings: TokenRateLimitSettings): TokenRa
   return {
     refusalAudit: async (key) => (await refusals.check(`api-token-refusal:${key}`)).allowed,
     failuresByIp: createRateLimitMiddleware(failOpen(`ratelimit-api-token-ip`), {
-      remoteAddr,
+      remoteAddr: denoServeRemoteAddr,
       keyResolver: userThenIp<TokenApiContext>(() => undefined, { trustedProxy: `x-real-ip` }),
       keyPrefix: `api-token-ip:`,
       skipSuccessful: true,
       onRefundError: onStoreError,
     }),
     byToken: createRateLimitMiddleware(failOpen(`ratelimit-api-token`), {
-      remoteAddr,
+      remoteAddr: denoServeRemoteAddr,
       keyResolver: userThenIp<TokenApiContext>(tokenId, { trustedProxy: `x-real-ip` }),
       keyPrefix: `api-token:`,
     }),

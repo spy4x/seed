@@ -9,6 +9,7 @@ import {
 import { sha256Hex } from "@spy4x/platform/tokens"
 import {
   createRateLimitMiddleware,
+  denoServeRemoteAddr,
   type RateLimitContext,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
@@ -170,12 +171,13 @@ export interface AuthRateLimitSettings {
  * Client address: the client IP comes from `X-Real-IP`, which Traefik overwrites on every request.
  * The connection's own address, which `deno serve` hands Hono as `env.remoteAddr`, is the
  * fallback. `CF-Connecting-IP` and `X-Forwarded-For` are not read here. Only a trusted proxy may
- * send `X-Real-IP`: `requireProxyForForwardedHeaders` (`proxy-peer.ts`), in front of every route,
- * refuses a request that carries it, or either other header, from any other peer, so a container on
- * the shared `proxy` network that calls the API directly is counted under its own address. The
- * trusted proxies are `PROXY_HOSTS`: Traefik and this project's website in the compose stack. One
- * setup still breaks this: behind Cloudflare's proxy, Traefik sets `X-Real-IP` to a Cloudflare
- * address, so users share budgets per Cloudflare edge instead of per client.
+ * send `X-Real-IP`: `requireProxyForForwardedHeaders` (`@spy4x/server/http/trusted-proxy`), in
+ * front of every route, refuses a request that carries it, or either other header, from any other
+ * peer, so a container on the shared `proxy` network that calls the API directly is counted under
+ * its own address. The trusted proxies are `PROXY_HOSTS`: Traefik and this project's website in
+ * the compose stack. One setup still breaks this: behind Cloudflare's proxy, Traefik sets
+ * `X-Real-IP` to a Cloudflare address, so users share budgets per Cloudflare edge instead of per
+ * client.
  */
 export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateLimits {
   const { windowMs, clock, store } = settings
@@ -217,8 +219,6 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     createStoreLimiter(store("ratelimit-normal"), { windowMs, limit: settings.limit, clock }),
     { limit: settings.limit, onError: settings.onStoreError },
   )
-  const remoteAddr = ({ env }: RateLimitContext<APIContext>) =>
-    (env as { remoteAddr?: { hostname?: string } } | undefined)?.remoteAddr?.hostname
   const userId = (_: Request, context: RateLimitContext<APIContext>) =>
     (context.get?.("auth") as AppAuthState | null | undefined)?.user.id?.toString()
   const noUser = () => undefined
@@ -226,17 +226,17 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
   const byUser = userThenIp<APIContext>(userId, { trustedProxy: "x-real-ip" })
   return {
     strictByIp: createRateLimitMiddleware(strict, {
-      remoteAddr,
+      remoteAddr: denoServeRemoteAddr,
       keyResolver: byIp,
       keyPrefix: "auth-strict:",
     }),
     strictByUser: createRateLimitMiddleware(strict, {
-      remoteAddr,
+      remoteAddr: denoServeRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth-strict:",
     }),
     otpByUser: createRateLimitMiddleware(otp, {
-      remoteAddr,
+      remoteAddr: denoServeRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth-otp:",
       // A correct code gives its slot back: only wrong codes run the budget out.
@@ -244,7 +244,7 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       onRefundError: (error) => settings.onStoreError(error),
     }),
     normal: createRateLimitMiddleware(normal, {
-      remoteAddr,
+      remoteAddr: denoServeRemoteAddr,
       keyResolver: byUser,
       keyPrefix: "auth:",
     }),

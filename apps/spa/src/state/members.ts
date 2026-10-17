@@ -10,7 +10,8 @@ import {
 } from "@ui/group-transfer.tsx"
 import { apiAsUser, fetchAsUser } from "./realtime-call.ts"
 import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
-import { READ_KEYS, ReadRefused } from "./read-keys.ts"
+import { READ_KEYS } from "./read-keys.ts"
+import { ReadRefused } from "@spy4x/realtime/read-cache"
 
 /** A member as the API sends them: `joinedAt` is an ISO string. */
 export interface MemberItem {

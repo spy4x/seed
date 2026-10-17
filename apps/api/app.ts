@@ -6,7 +6,8 @@ import {
 import { securityHeaders } from "@spy4x/server/http/security-headers"
 import { requireBoundUser } from "./middlewares/bound-user.ts"
 import { createAdminHostGate } from "./middlewares/admin-host.ts"
-import { type IsProxyPeer, requireProxyForForwardedHeaders } from "./middlewares/proxy-peer.ts"
+import { type IsProxyPeer, requireProxyForForwardedHeaders } from "@spy4x/server/http/trusted-proxy"
+import { denoServeRemoteAddr } from "@spy4x/platform/rate-limit/hono"
 import type { APIContext } from "./_types.ts"
 
 /**
@@ -34,7 +35,10 @@ export async function createApiApp(
   const app = new Hono<APIContext>().basePath("/api")
   app.use("*", await securityHeaders())
   applyBaseMiddleware(app, base)
-  app.use("*", requireProxyForForwardedHeaders(isProxyPeer))
+  app.use(
+    "*",
+    requireProxyForForwardedHeaders<APIContext>(isProxyPeer, { remoteAddr: denoServeRemoteAddr }),
+  )
   app.use("*", createAdminHostGate(adminHost))
   app.use("*", requireBoundUser)
   return app

@@ -10,7 +10,8 @@ import {
 } from "@ui/group-invitations.tsx"
 import { fetchAsUser } from "./realtime-call.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
-import { READ_KEYS, ReadRefused } from "./read-keys.ts"
+import { READ_KEYS } from "./read-keys.ts"
+import { ReadRefused } from "@spy4x/realtime/read-cache"
 
 /** `fetch`, or a test's stand-in for it. */
 export type InvitationFetch = (url: string, init?: RequestInit) => Promise<Response>

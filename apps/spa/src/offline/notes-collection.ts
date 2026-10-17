@@ -6,9 +6,8 @@ import {
   defineCollection,
 } from "@spy4x/realtime/collections"
 import type { OutboxStore } from "@spy4x/realtime/outbox"
-import { isUnreachable } from "@spy4x/realtime/read-cache"
+import { isProxyAnswer, isRefusal, isUnreachable } from "@spy4x/realtime/read-cache"
 import type { NoteItem, NotePage, NotesDependencies } from "../state/notes.ts"
-import { isProxyAnswer, isRefusal } from "../state/read-keys.ts"
 import { TAGS_COLLECTION } from "./tags-collection.ts"
 import { databasePrefix, type NoteEntry, type NotePayload, type NotesCache } from "./notes-cache.ts"
 

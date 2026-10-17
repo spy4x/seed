@@ -23,7 +23,7 @@ import type {
   SubscriberList,
 } from "@domain/subscribers"
 import { fillDays, statsDays } from "../auth/admin-stats.ts"
-import { containsPattern } from "../auth/admin-users.ts"
+import { likeContains } from "@spy4x/server/db"
 import { enqueueSubscriberMail, SUBSCRIBER_CONFIRM_MAIL_JOB } from "../jobs/subscriber-mail.ts"
 import { createListCrypto, type SubscribersSetup } from "./subscribers.ts"
 
@@ -78,7 +78,7 @@ export async function listAdminSubscribers(
   pageSize: number,
 ): Promise<{ subscribers: AdminSubscriberRow[]; total: number }> {
   const where = sql`
-    WHERE (${filter.query} = '' OR a.email ILIKE ${containsPattern(filter.query)})
+    WHERE (${filter.query} = '' OR a.email ILIKE ${likeContains(filter.query)})
       AND (${filter.status} = 'any' OR a.status = ${filter.status})
   `
   const [{ total }] = await sql<{ total: number }[]>`

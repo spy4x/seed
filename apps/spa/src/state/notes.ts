@@ -2,7 +2,7 @@ import { computed, signal } from "@preact/signals"
 import { ConnectionLostError, describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiAsUser } from "./realtime-call.ts"
-import { ReadRefused } from "./read-keys.ts"
+import { ReadRefused } from "@spy4x/realtime/read-cache"
 import { callCommand, callQuery, canCall, currentLayer, offlineNotes } from "../modules.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 

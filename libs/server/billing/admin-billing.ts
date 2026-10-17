@@ -23,6 +23,7 @@ import {
   monthlyRevenueOf,
   readBillingAuditIdentifier,
 } from "@domain/billing"
+import { likeContains } from "@spy4x/server/db"
 
 const PASSWORD_METHOD = `password`
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -30,11 +31,6 @@ const DAY_MS = 24 * 60 * 60 * 1000
 const LIVE = [BillingStatus.Trialing, BillingStatus.Active, BillingStatus.PastDue]
 /** A subscription that pays: its list price counts toward monthly revenue. */
 const PAYING = [BillingStatus.Active, BillingStatus.PastDue]
-
-/** `value` with `\`, `%` and `_` escaped, inside `%…%`: a pattern that matches it literally. */
-function containsPattern(value: string): string {
-  return `%${value.replace(/[\\%_]/g, (character) => `\\${character}`)}%`
-}
 
 /** The figures above the list, over every stored subscription, a group in the trash included. */
 export async function readAdminBillingFigures(
@@ -121,7 +117,7 @@ function searchWhere(sql: postgres.Sql, query: string) {
   }
   let where = sql`TRUE`
   for (const word of words) {
-    const pattern = containsPattern(word)
+    const pattern = likeContains(word)
     where = sql`${where} AND (
       g.name ILIKE ${pattern} OR o.first_name ILIKE ${pattern} OR o.last_name ILIKE ${pattern}
       OR EXISTS (

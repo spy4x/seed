@@ -5,10 +5,9 @@ import {
   defineCollection,
 } from "@spy4x/realtime/collections"
 import type { OutboxStore } from "@spy4x/realtime/outbox"
-import { isUnreachable } from "@spy4x/realtime/read-cache"
+import { isProxyAnswer, isRefusal, isUnreachable } from "@spy4x/realtime/read-cache"
 import { DEFAULT_TAG_COLOR } from "@domain/tags"
 import type { TagItem, TagsDependencies } from "../state/tags.ts"
-import { isProxyAnswer, isRefusal } from "../state/read-keys.ts"
 import { type TagEntry, type TagPayload, type TagsCache, tagsQueueDatabase } from "./tags-cache.ts"
 
 /**

@@ -12,7 +12,8 @@ import {
 import type { ApiTokenFormValues } from "@ui/api-token-new-screen.tsx"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, noLocalReads } from "../modules.ts"
-import { READ_KEYS, ReadRefused } from "./read-keys.ts"
+import { READ_KEYS } from "./read-keys.ts"
+import { ReadRefused } from "@spy4x/realtime/read-cache"
 
 /** The message shown when reading or revoking failed without a message of its own. */
 export const API_TOKENS_FAILURE = "Something went wrong with your API tokens."

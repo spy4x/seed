@@ -8,6 +8,7 @@ import {
 import { sha256Hex } from "@spy4x/platform/tokens"
 import {
   createRateLimitMiddleware,
+  denoServeRemoteAddr,
   type RateLimitContext,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
@@ -73,18 +74,16 @@ export function createInvitationRateLimits(
     limit: INVITATION_MAILS_PER_ADDRESS,
     clock,
   })
-  const remoteAddr = ({ env }: RateLimitContext<APIContext>) =>
-    (env as { remoteAddr?: { hostname?: string } } | undefined)?.remoteAddr?.hostname
   const userId = (_: Request, context: RateLimitContext<APIContext>) =>
     (context.get?.("auth") as AppAuthState | null | undefined)?.user.id?.toString()
   return {
     createByUser: createRateLimitMiddleware(create, {
-      remoteAddr,
+      remoteAddr: denoServeRemoteAddr,
       keyResolver: userThenIp<APIContext>(userId, { trustedProxy: "x-real-ip" }),
       keyPrefix: "invitation-create:",
     }),
     answerByIp: createRateLimitMiddleware(answer, {
-      remoteAddr,
+      remoteAddr: denoServeRemoteAddr,
       keyResolver: userThenIp<APIContext>(() => undefined, { trustedProxy: "x-real-ip" }),
       keyPrefix: "invitation-answer:",
     }),

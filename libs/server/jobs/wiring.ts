@@ -1,10 +1,13 @@
 import type postgres from "postgres"
 import { nextUtcHour } from "@spy4x/platform/universal/time"
 import {
+  attemptFailureLine,
   ensureScheduledOutboxEvent,
   JobPublisher,
+  type JobStep,
   OutboxProcessor,
   PostgresOutboxRepository,
+  stepsJob,
 } from "@spy4x/server/outbox"
 import type { BillingProvider } from "@spy4x/billing"
 import { BillingNoticeKind } from "@domain/billing"
@@ -61,13 +64,13 @@ import {
   subscriberWelcomeMailJob,
 } from "./subscriber-mail.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
-import { cleanupJob, type CleanupStep, JOB_RETRY, logAttemptFailure } from "./job-failures.ts"
+import { JOB_RETRY } from "./job-failures.ts"
 import {
   JOB_AGGREGATE,
   JOB_AGGREGATE_ID,
   type JobHandler,
   OUTBOX_CLEANUP_JOB,
-  removeProcessedOutboxEvents,
+  OUTBOX_RETENTION_DAYS,
 } from "./jobs.ts"
 
 const DAY_MS = 24 * 60 * 60_000
@@ -116,7 +119,11 @@ export function createOutboxProcessor(
     new JobPublisher({
       aggregateType: JOB_AGGREGATE,
       handlers: {
-        [OUTBOX_CLEANUP_JOB]: cleanupJob(cleanupSteps(sql, provider, mail.log), mail.log),
+        [OUTBOX_CLEANUP_JOB]: stepsJob(
+          `nightly cleanup`,
+          cleanupSteps(sql, provider, mail.log),
+          mail.log,
+        ),
         [SEAT_SYNC_JOB]: provider ? seatSyncJob({ sql, provider }) : async () => {},
         [PASSWORD_RESET_MAIL_JOB]: passwordResetMailJob({ sql, ...mail }),
         [EMAIL_CODE_MAIL_JOB]: emailCodeMailJob({ sql, ...mail }),
@@ -145,7 +152,7 @@ export function createOutboxProcessor(
     {
       repeatEveryMs: { [OUTBOX_CLEANUP_JOB]: DAY_MS },
       repeatAfterGiveUp: true,
-      onAttemptFailed: logAttemptFailure(mail.log),
+      onAttemptFailed: (failure) => mail.log(attemptFailureLine(failure)),
       ...JOB_RETRY,
     },
   )
@@ -159,10 +166,10 @@ function cleanupSteps(
   sql: postgres.Sql,
   provider: BillingProvider | null,
   log: (line: string) => void,
-): CleanupStep[] {
+): JobStep[] {
   return [
     ["remove old processed outbox rows", async () => {
-      const removed = await removeProcessedOutboxEvents(sql)
+      const removed = await new PostgresOutboxRepository(sql).removeProcessed(OUTBOX_RETENTION_DAYS)
       if (removed > 0) console.log(`Removed ${removed} old processed outbox row(s)`)
     }],
     ["remove unsent password reset requests", async () => {

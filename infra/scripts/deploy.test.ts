@@ -7,7 +7,6 @@ import {
   planDeploy,
   planFromEnvFile,
   refuseExampleSecrets,
-  shellQuote,
   unsafeSecretsIn,
   VAPID_PATH,
 } from "./deploy.ts"
@@ -116,8 +115,9 @@ Deno.test("planDeploy refuses an env file without SSH_TO_SERVER or PATH_ON_SERVE
     .toThrow(new MissingEnvError("PATH_ON_SERVER"))
 })
 
-Deno.test("shellQuote keeps a single quote inside one shell word", () => {
-  expect(shellQuote(`it's`)).toBe(`'it'\\''s'`)
+Deno.test("planDeploy keeps a single quote in PATH_ON_SERVER inside one shell word", () => {
+  const [, , , start] = planDeploy({ SSH_TO_SERVER: "h", PATH_ON_SERVER: "/srv/it's" }, ENV_FILE)
+  expect(start.args[1]).toMatch(/^cd '\/srv\/it'\\''s' && /)
 })
 
 Deno.test("planDeploy creates the web push keys on the server before starting the app", () => {

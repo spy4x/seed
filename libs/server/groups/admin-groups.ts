@@ -46,6 +46,7 @@ import { writeAuditEvent } from "./audit.ts"
 import { recordAccessChange } from "./group-change-log.ts"
 import { notifyOwnershipReceived, notifyRemoved } from "./group-notifications.ts"
 import { INVITATION_EVENTS, revokeInvitationsOf } from "./invitation-revocation.ts"
+import { likeContains } from "@spy4x/server/db"
 
 /** The kinds the group's own actions write; the same strings the members' actions write. */
 const MEMBER_REMOVED_EVENT = "group.member_removed"
@@ -102,11 +103,6 @@ function personColumns(sql: postgres.Sql, alias: string, prefix: string) {
       LIMIT 1
     ) AS ${sql(`${prefix}_email`)}
   `
-}
-
-/** `value` with `\`, `%` and `_` escaped, inside `%…%`: a pattern that matches it literally. */
-function containsPattern(value: string): string {
-  return `%${value.replace(/[\\%_]/g, (character) => `\\${character}`)}%`
 }
 
 interface GroupRowRaw {
@@ -226,7 +222,7 @@ export async function listAdminGroups(
     where = sql`g.id = ${filter.query}`
   } else {
     for (const word of words) {
-      const pattern = containsPattern(word)
+      const pattern = likeContains(word)
       where = sql`${where} AND (
         g.name ILIKE ${pattern} OR o.first_name ILIKE ${pattern} OR o.last_name ILIKE ${pattern}
         OR EXISTS (

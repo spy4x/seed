@@ -23,6 +23,7 @@ import {
   USER_ROLE_NAMES,
   type UserRole,
 } from "@domain/identity"
+import { likeContains } from "@spy4x/server/db"
 
 /** The password method's name in `auth_keys`, as `@spy4x/server/auth/password` stores it. */
 const PASSWORD_METHOD = "password"
@@ -37,11 +38,6 @@ interface UserRowRaw {
   blockedAt: Date | null
   createdAt: Date
   lastSeenAt: Date | null
-}
-
-/** `value` with `\`, `%` and `_` escaped, inside `%…%`: a pattern that matches it literally. */
-export function containsPattern(value: string): string {
-  return `%${value.replace(/[\\%_]/g, (character) => `\\${character}`)}%`
 }
 
 /**
@@ -114,7 +110,7 @@ function orderBy(sql: postgres.Sql, sort: readonly SortRule<AdminUserSortKey>[])
 function userWhere(sql: postgres.Sql, filter: AdminUserFilter) {
   let where = sql`u.deleted_at IS NULL`
   for (const word of filter.query.split(/\s+/).filter(Boolean)) {
-    const pattern = containsPattern(word)
+    const pattern = likeContains(word)
     where = sql`${where} AND (
       u.first_name ILIKE ${pattern} OR u.last_name ILIKE ${pattern} OR EXISTS (
         SELECT 1 FROM auth_keys k

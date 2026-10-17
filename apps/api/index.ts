@@ -61,7 +61,8 @@ import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
 import { mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
 import { createSubscribersRoute } from "./routes/subscribers.ts"
 import { createSubscriberRateLimits } from "./middlewares/subscriber-rate-limits.ts"
-import { createProxyPeers, DEFAULT_PROXY_HOSTS } from "./middlewares/proxy-peer.ts"
+import { DEFAULT_PROXY_HOSTS } from "./middlewares/proxy-peer.ts"
+import { createProxyPeers } from "@spy4x/server/http/trusted-proxy"
 import {
   enqueueSubscriberMail,
   SUBSCRIBER_CONFIRM_MAIL_JOB,

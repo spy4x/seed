@@ -14,19 +14,20 @@ export interface IdempotencySweepOptions {
 }
 
 /**
- * Sweeps once now, then every `intervalMs` until `signal` aborts. The library runner's first tick
- * comes after a full interval, and a worker restarted more often than that would never sweep, so
- * the first sweep is run here. Resolves when that first sweep has finished; a failure is reported,
- * never thrown. A signal that is already aborted starts nothing.
+ * Sweeps once now, then every `intervalMs` until `signal` aborts. The first sweep runs at once
+ * (`runFirstTickNow`), because a worker restarted more often than `intervalMs` would otherwise
+ * never sweep. A failure is reported, never thrown. A signal that is already aborted starts
+ * nothing.
  */
-export async function startIdempotencySweep(options: IdempotencySweepOptions): Promise<void> {
+export function startIdempotencySweep(options: IdempotencySweepOptions): void {
   const { signal, sweep, onError, intervalMs, timers } = options
   if (signal.aborted) return
-  const stop = startIntervalRunner({ task: sweep, intervalMs, onError, timers })
+  const stop = startIntervalRunner({
+    task: sweep,
+    intervalMs,
+    onError,
+    timers,
+    runFirstTickNow: true,
+  })
   signal.addEventListener("abort", stop, { once: true })
-  try {
-    await sweep()
-  } catch (error) {
-    onError(error)
-  }
 }

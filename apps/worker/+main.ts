@@ -94,15 +94,13 @@ function reportSweepFailure(error: unknown): void {
 }
 
 try {
-  await Promise.all([
-    processor.run(signal, OUTBOX_IDLE_MS),
-    startIdempotencySweep({
-      signal,
-      sweep: sweepIdempotencyKeys,
-      onError: reportSweepFailure,
-      intervalMs: SWEEP_INTERVAL_MS,
-    }),
-  ])
+  startIdempotencySweep({
+    signal,
+    sweep: sweepIdempotencyKeys,
+    onError: reportSweepFailure,
+    intervalMs: SWEEP_INTERVAL_MS,
+  })
+  await processor.run(signal, OUTBOX_IDLE_MS)
 } finally {
   await sql.end({ timeout: 5 })
   const reason = signal.reason instanceof ShutdownSignalError ? ` on ${signal.reason.signal}` : ""

@@ -244,7 +244,7 @@ answer an error they did not expect with 500 and the code `INTERNAL_ERROR`; the 
 refusal with or without a code.
 
 The notes and tags lists follow the same rule, although their copy is not in the read cache: their
-REST reads throw the same typed refusal (`ReadRefused`, `apps/spa/src/state/read-keys.ts`), so a
+REST reads throw the same typed refusal (`ReadRefused`, `@spy4x/realtime/read-cache`), so a
 proxy's 502 shows the saved notes or tags with the queued writes on top, and a 401, a 403 or the
 API's own 404 for a group deletes what the device kept of that group's notes or tags. The queue is
 not touched.
@@ -401,8 +401,9 @@ layer is missing from this list.
    The push handlers stay.
 3. In `apps/spa/src/modules.ts`, delete the `./offline/` imports and the "Local data" part of the
    file, the `startOfflineLayer` call in `startModules`, the `stopOfflineLayer` call in
-   `forgetModules`, and the `offline` switch. Keep `LocalReads`, `createLocalReads` and
-   `noLocalReads`, and make the last line of that part `export const localReads = noLocalReads`.
+   `forgetModules`, and the `offline` switch. Keep the `LocalReads` and `createLocalReads`
+   re-export and `noLocalReads`, and make the last line of that part
+   `export const localReads = noLocalReads`.
    The stores of the level 2 lists then read from the server and keep nothing, with no change to
    them or to their tests.
 4. In `apps/spa/src/app.tsx`, delete what came from that part: `bootstrapSession(recallUser)`

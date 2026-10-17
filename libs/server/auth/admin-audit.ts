@@ -24,7 +24,7 @@ import {
   parseAuditEvent,
   UserRole,
 } from "@domain/identity"
-import { containsPattern } from "./admin-users.ts"
+import { likeContains } from "@spy4x/server/db"
 
 /** The password method's name in `auth_keys`, as `@spy4x/server/auth/password` stores it. */
 const PASSWORD_METHOD = "password"
@@ -86,7 +86,7 @@ function personIds(sql: postgres.Sql, query: string) {
   }
   let where = sql`TRUE`
   for (const word of query.split(/\s+/).filter(Boolean)) {
-    const pattern = containsPattern(word)
+    const pattern = likeContains(word)
     where = sql`${where} AND (
       u.first_name ILIKE ${pattern} OR u.last_name ILIKE ${pattern} OR EXISTS (
         SELECT 1 FROM auth_keys k

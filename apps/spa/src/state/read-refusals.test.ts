@@ -11,7 +11,7 @@ import { createGroupsStore, groupsOnDevice, onlineGroups } from "./groups.ts"
 import { createInvitationsStore } from "./invitations.ts"
 import { createMembersStore, membersHttp } from "./members.ts"
 import { memoryReads } from "./memory-reads.ts"
-import { ReadRefused } from "./read-keys.ts"
+import { ReadRefused } from "@spy4x/realtime/read-cache"
 import { createNotificationsStore, notificationsHttp } from "./notifications.ts"
 import { sessionState } from "./session.ts"
 
@@ -49,6 +49,8 @@ interface Case {
   /** What the server answers to a read that works. */
   body: unknown
   open(device: LocalReads): { load(): Promise<unknown>; shown(): Promise<unknown> | unknown }
+  /** What the screen shows after a read that works: `body`'s list, as the store paints it. */
+  painted: unknown
   /** What the screen shows when the device holds nothing. */
   empty: unknown
 }
@@ -64,6 +66,7 @@ const CASES: Case[] = [
       const store = createMembersStore(membersHttp, device)
       return { load: () => store.open(groupId), shown: () => store.members.value }
     },
+    painted: [{ userId: 1, name: "Ann", role: 1, joinedAt: "", isYou: false }],
     empty: null,
   },
   {
@@ -73,6 +76,7 @@ const CASES: Case[] = [
       const store = createInvitationsStore({ device })
       return { load: () => store.open(groupId), shown: () => store.invitations.value }
     },
+    painted: [{ id: "i-1" }],
     empty: null,
   },
   {
@@ -82,6 +86,7 @@ const CASES: Case[] = [
       const store = createInvitationsStore({ device })
       return { load: () => store.loadMine(), shown: () => store.mine.value }
     },
+    painted: [{ id: "i-1" }],
     empty: [],
   },
   {
@@ -91,6 +96,7 @@ const CASES: Case[] = [
       const store = createNotificationsStore(notificationsHttp, device)
       return { load: () => store.open(), shown: () => store.notifications.value }
     },
+    painted: [{ id: "1" }],
     empty: [],
   },
   {
@@ -100,6 +106,7 @@ const CASES: Case[] = [
       const store = createNotificationsStore(notificationsHttp, device)
       return { load: () => store.refresh(), shown: () => store.unreadCount.value }
     },
+    painted: 3,
     empty: 0,
   },
   {
@@ -109,6 +116,7 @@ const CASES: Case[] = [
       const store = createActivityStore(activityHttp, device)
       return { load: () => store.open(groupId), shown: () => store.events.value }
     },
+    painted: [{ id: "1" }],
     empty: [],
   },
   {
@@ -126,6 +134,7 @@ const CASES: Case[] = [
         shown: () => copy,
       }
     },
+    painted: [{ id: groupId, changeSequence: "1" }],
     empty: [],
   },
   {
@@ -138,6 +147,7 @@ const CASES: Case[] = [
         shown: () => store.current.value?.billing.planId ?? null,
       }
     },
+    painted: "pro",
     empty: null,
   },
   {
@@ -147,6 +157,7 @@ const CASES: Case[] = [
       const store = createApiTokensStore(apiTokensHttp, device)
       return { load: () => store.load(), shown: () => store.tokens.value }
     },
+    painted: [{ id: "t-1" }],
     empty: null,
   },
   {
@@ -156,6 +167,7 @@ const CASES: Case[] = [
       const store = createDevicesStore(undefined, device)
       return { load: () => store.load(), shown: () => store.sessions.value }
     },
+    painted: [{ id: 1 }],
     empty: null,
   },
 ]
@@ -213,21 +225,21 @@ describe("a saved copy and the answer of the server", () => {
       for (const status of [401, 403, 404]) {
         it(`are deleted when the server answers ${status}, so they are not shown offline later`, async () => {
           const { shownOnline, shownOffline } = await afterAnswer(status)
-          expect(shownOnline).not.toEqual(list.empty)
+          expect(shownOnline).toEqual(list.painted)
           expect(shownOffline).toEqual(list.empty)
         })
       }
 
       it("are kept when the server answers 500", async () => {
         const { shownOnline, shownOffline } = await afterAnswer(500)
-        expect(shownOnline).not.toEqual(list.empty)
+        expect(shownOnline).toEqual(list.painted)
         expect(shownOffline).toEqual(shownOnline)
       })
 
       for (const status of [401, 403]) {
         it(`are deleted on a ${status} without an error code`, async () => {
           const { shownOnline, shownOffline } = await afterAnswer({ proxy: status })
-          expect(shownOnline).not.toEqual(list.empty)
+          expect(shownOnline).toEqual(list.painted)
           expect(shownOffline).toEqual(list.empty)
         })
       }
@@ -237,7 +249,7 @@ describe("a saved copy and the answer of the server", () => {
       for (const status of [502, 404, 429, 500]) {
         it(`are shown and kept on a ${status} without an error code`, async () => {
           const { shownOnline, shownThen, shownOffline } = await afterAnswer({ proxy: status })
-          expect(shownOnline).not.toEqual(list.empty)
+          expect(shownOnline).toEqual(list.painted)
           expect(shownThen).toEqual(shownOnline)
           expect(shownOffline).toEqual(shownOnline)
         })

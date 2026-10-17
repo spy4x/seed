@@ -7,22 +7,13 @@
  */
 
 import type postgres from "postgres"
+import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
+import { recentIsoDates } from "@spy4x/time/date"
 import { ADMIN_STATS_DAYS, type AdminDailyCount, type AdminStats } from "@domain/identity"
-
-const DAY_MS = 24 * 60 * 60 * 1000
-
-/** `date` as its UTC day, `YYYY-MM-DD`. */
-export function utcDay(date: Date): string {
-  return date.toISOString().slice(0, 10)
-}
 
 /** The {@link ADMIN_STATS_DAYS} UTC days that end on `now`'s day, oldest first. */
 export function statsDays(now: Date): string[] {
-  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  return Array.from(
-    { length: ADMIN_STATS_DAYS },
-    (_, index) => utcDay(new Date(today - (ADMIN_STATS_DAYS - 1 - index) * DAY_MS)),
-  )
+  return recentIsoDates(ADMIN_STATS_DAYS, now)
 }
 
 /** Fills every day of `days` from `rows`, with 0 for a day no row names. */
@@ -102,8 +93,8 @@ export async function readAdminStats(
   const from = new Date(`${days[0]}T00:00:00.000Z`)
   const today = days[days.length - 1]
   const yesterday = days[days.length - 2]
-  const weekAgo = new Date(now.getTime() - 7 * DAY_MS)
-  const twoWeeksAgo = new Date(now.getTime() - 14 * DAY_MS)
+  const weekAgo = new Date(now.getTime() - 7 * ONE_DAY_IN_MILLISECONDS)
+  const twoWeeksAgo = new Date(now.getTime() - 14 * ONE_DAY_IN_MILLISECONDS)
 
   const live = await liveCounts(sql, exactBelow)
   const [counts] = await sql<{ blocked: number; newThisWeek: number; newWeekBefore: number }[]>`

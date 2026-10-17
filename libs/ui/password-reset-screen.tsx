@@ -1,9 +1,9 @@
 import type { JSX } from "preact"
-import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
+import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import { Link } from "@spy4x/preact-ui/link"
 import { AuthCard } from "./auth-screen.tsx"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
@@ -33,15 +33,6 @@ function Message(
       </Button>
     </AuthCard>
   )
-}
-
-/** Moves focus to `field` each time a new `error` arrives, so a failed submit lands on it. */
-function useFocusOnError(error: string | null) {
-  const field = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    if (error) field.current?.focus()
-  }, [error])
-  return field
 }
 
 export interface ForgotPasswordScreenProps {

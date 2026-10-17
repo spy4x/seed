@@ -135,6 +135,22 @@ describe("the module switches", () => {
 
     expect([withSocket, connectionDisplay(state)]).toEqual(["closed", "open"])
   })
+
+  it("follow the browser's offline and online events on a started page with no socket, until it stops", () => {
+    visiblePage()
+    configureModules({ realtime: false, offline: false })
+    const state = { wsStatus: "open", wsResume: "none" } as const
+    startModules(7, { pull: () => {}, check: () => Promise.resolve() })
+
+    dispatchEvent(new Event("offline"))
+    const offline = connectionDisplay(state)
+    dispatchEvent(new Event("online"))
+    const online = connectionDisplay(state)
+    stopChanges()
+    dispatchEvent(new Event("offline"))
+
+    expect([offline, online, connectionDisplay(state)]).toEqual(["closed", "open", "open"])
+  })
 })
 
 describe("a page with no socket", () => {
