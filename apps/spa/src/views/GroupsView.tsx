@@ -5,8 +5,9 @@ import { selectionStore } from "../state/selection.ts"
 import { MyInvitationsView } from "./InvitationView.tsx"
 
 /**
- * Wires the groups screen to the groups store: the list, the deleted groups and their restore. A
- * row and "New group" are links, to the group's page and to `/groups/new`.
+ * Wires the groups screen to the groups store: the list, a failed read with its retry, the deleted
+ * groups and their restore. A row and "New group" are links, to the group's page and to
+ * `/groups/new`.
  */
 export function GroupsView() {
   const store = groupsStore
@@ -21,6 +22,8 @@ export function GroupsView() {
       navigate={navigate}
       loading={store.loading.value}
       error={store.error.value}
+      loadError={store.loadError.value}
+      onRetry={() => void store.refresh().catch(() => {})}
       restoreError={failure?.action === "restore" ? failure.message : null}
       restoringId={working?.action === "restore" ? working.groupId : null}
       onRestore={(groupId) => void store.restore(groupId)}

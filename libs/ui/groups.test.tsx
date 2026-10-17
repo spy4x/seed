@@ -247,6 +247,32 @@ describe("GroupsScreen", () => {
     expect(has("[data-e2e=group-new-empty]")).toBe(false)
   })
 
+  it("shows a failed first read with Try again, not No groups yet or New group", async () => {
+    const retries = spy<[]>()
+    const failed = { ...defaults, groups: [], loadError: "Could not load the groups" }
+    await mount(<GroupsScreen {...failed} onRetry={retries.fn} />)
+    expect(find("[data-e2e=groups-load-error] [role=alert]").textContent)
+      .toBe("Could not load the groups")
+    expect(root!.textContent).not.toContain("No groups yet")
+    expect(has("[data-e2e=group-new]")).toBe(false)
+    expect(has("[data-e2e=group-new-empty]")).toBe(false)
+
+    find("[data-e2e=groups-retry]").focus()
+    await click("[data-e2e=groups-retry]")
+    expect(retries.calls).toHaveLength(1)
+
+    // While the retry runs the message and the button stay, so focus stays on the button.
+    await rerender(<GroupsScreen {...failed} onRetry={retries.fn} loading />)
+    expect(find("[data-e2e=groups-retry]").textContent).toContain("Loading groups…")
+    expect(focused()).toBe("groups-retry")
+    expect(root!.textContent).not.toContain("No groups yet")
+
+    // A retry that answers brings the list and New group back.
+    await rerender(<GroupsScreen {...defaults} onRetry={retries.fn} />)
+    expect(has("[data-e2e=groups-load-error]")).toBe(false)
+    expect(has("[data-e2e=group-new]")).toBe(true)
+  })
+
   it("marks only the current group, with Current as text and in its link's name", async () => {
     await mount(<GroupsScreen {...defaults} />)
     expect(texts("[data-e2e=group-current]")).toEqual(["Current"])

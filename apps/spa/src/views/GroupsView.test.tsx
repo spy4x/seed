@@ -33,6 +33,18 @@ describe("GroupsView", () => {
     expect(html).not.toContain("No groups yet")
   })
 
+  it("shows a failed first read and Try again, not No groups yet, when nothing is saved", () => {
+    groupsStore.loading.value = false
+    groupsStore.loadError.value = "Could not load the groups"
+
+    const html = render()
+
+    expect(html).toContain("Could not load the groups")
+    expect(html).toContain(`data-e2e="groups-retry"`)
+    expect(html).not.toContain("No groups yet")
+    expect(html).not.toContain(`data-e2e="group-new"`)
+  })
+
   it("links New group to the create page, and opens no dialog for an old ?new address", () => {
     const html = render("new")
 

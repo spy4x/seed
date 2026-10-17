@@ -52,6 +52,13 @@ export interface GroupsScreenProps {
   loading: boolean
   /** Why the list could not be read, or `null`. */
   error: string | null
+  /**
+   * Why the last read of the list failed, or `null`. With no groups to show it takes the place of
+   * the list, with "Try again" and no "New group": the person may well have groups.
+   */
+  loadError?: string | null
+  /** Reads the list again, from "Try again" after a failed read. */
+  onRetry?: () => void
   /** Why a restore was refused, shown above the deleted groups, or `null`. */
   restoreError?: string | null
   /** Restores a deleted group. */
@@ -82,6 +89,8 @@ export function GroupsScreen(
     navigate,
     loading,
     error,
+    loadError = null,
+    onRetry,
     deleted = [],
     restoreError = null,
     onRestore,
@@ -99,11 +108,15 @@ export function GroupsScreen(
     restoreMessage.current?.focus()
   }, [restoreError])
 
+  // A failed read with nothing to show is not "no groups": the page says so and offers a retry,
+  // and "New group" waits until the list is known.
+  const readFailed = groups.length === 0 && loadError !== null
+
   return (
     <Stack gap="xl">
       <PageHeader
         title="Groups"
-        action={
+        action={!readFailed && (
           <PageAction
             label="New group"
             Icon={IconPlus}
@@ -111,11 +124,28 @@ export function GroupsScreen(
             navigate={navigate}
             dataE2E="group-new"
           />
-        }
+        )}
       />
       {invitations}
       {groups.length > 0 && <ErrorState message={error} />}
-      {groups.length === 0
+      {readFailed
+        ? (
+          <div class="flex flex-col items-center gap-3" data-e2e="groups-load-error">
+            <ErrorState message={loadError} />
+            <Button
+              type="button"
+              variant="secondary"
+              class="min-h-11 sm:min-h-9"
+              busy={loading}
+              busyLabel="Loading groups…"
+              onClick={onRetry}
+              data-e2e="groups-retry"
+            >
+              Try again
+            </Button>
+          </div>
+        )
+        : groups.length === 0
         ? (
           <Card>
             <EmptyState
