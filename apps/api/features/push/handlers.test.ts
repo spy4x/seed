@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
-import { UserMFAStatus, type UserPushTokenPublic } from "@domain/identity"
+import { AccessError, UserMFAStatus, type UserPushTokenPublic } from "@domain/identity"
 import { PushRegisterCommand, PushRemoveCommand } from "../../cqrs/commands.ts"
 import { PushDevicesUpdatedEvent } from "../../cqrs/events.ts"
 import { PushListQuery } from "../../cqrs/queries.ts"
@@ -15,6 +15,7 @@ const actor = {
   userId: 7,
   userMfa: UserMFAStatus.NOT_CONFIGURED,
   sessionSecondFactor: SecondFactorStatus.NotRequired,
+  sessionId: 70,
 }
 const request = { requestId: "req-1" }
 const subscription = {
@@ -31,8 +32,8 @@ function harness() {
   const deps = {
     webPush: () =>
       Promise.resolve({
-        subscribe: (_sub: unknown, deviceId: string, userId: number) => {
-          calls.push(`subscribe ${deviceId} for ${userId}`)
+        subscribe: (_sub: unknown, deviceId: string, userId: number, sessionId: number) => {
+          calls.push(`subscribe ${deviceId} for ${userId} in session ${sessionId}`)
           return Promise.resolve(device(userId, deviceId))
         },
         unsubscribe: (deviceId: string, userId: number) => {
@@ -58,11 +59,24 @@ describe("push handlers", () => {
     )
 
     expect(result.userPushToken.userId).toBe(7)
-    expect(calls).toEqual(["subscribe phone for 7", "list for 7"])
+    expect(calls).toEqual(["subscribe phone for 7 in session 70", "list for 7"])
     expect(events).toHaveLength(1)
     expect(events[0].data.userId).toBe(7)
     expect(events[0].data.devices.map((d) => d.deviceId)).toEqual(["listed"])
     expect(events[0].data.request).toEqual(request)
+  })
+
+  it("refuses to register a device for an actor without a session, and stores nothing", async () => {
+    const { deps, calls, events } = harness()
+    const { sessionId: _, ...tokenActor } = actor
+
+    const refused = createPushRegisterHandler(deps)(
+      new PushRegisterCommand({ actor: tokenActor, deviceId: "phone", subscription, request }),
+    )
+
+    await expect(refused).rejects.toThrow(AccessError)
+    expect(calls).toEqual([])
+    expect(events).toHaveLength(0)
   })
 
   it("removes the device of the actor and announces that user's devices", async () => {

@@ -18,6 +18,11 @@ function memoryStore(rows: PushTokenRecord[] = []): PushTokenStore & { rows: Pus
       live.push(row)
       return Promise.resolve(row)
     },
+    upsertForSession: ({ sessionId: _, ...input }) => {
+      const row = { id: live.length + 1, ...input, createdAt: NOW, updatedAt: NOW }
+      live.push(row)
+      return Promise.resolve(row)
+    },
     remove: ({ userId, deviceId }) => {
       const index = live.findIndex((row) => row.userId === userId && row.deviceId === deviceId)
       if (index >= 0) live.splice(index, 1)
@@ -141,6 +146,7 @@ describe("WebPushService subscriptions", () => {
       { endpoint: "https://push.example/new", keys: KEYS, expirationTime: null },
       "device-9",
       7,
+      70,
     )
     expect(result).toEqual({
       id: 2,
@@ -195,6 +201,7 @@ describe("createWebPushService with today's key file", () => {
       { endpoint: "https://push.example/new", keys: KEYS, expirationTime: null },
       "device-1",
       1,
+      10,
     )
     await webPush.send(1, message)
     expect(push.requests.length).toBe(2)

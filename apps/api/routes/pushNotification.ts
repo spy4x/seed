@@ -11,6 +11,7 @@ import { requestInfoFromContext } from "@spy4x/platform/request-info"
 import { pushSubscribeRequestSchema, pushUnsubscribeRequestSchema } from "@spy4x/platform/model"
 import { validate } from "@spy4x/validation"
 import { readApiJson } from "@api/services/json-body.ts"
+import { AccessError } from "@domain/identity"
 
 /** What the push routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface PushNotificationRouteDependencies {
@@ -40,16 +41,22 @@ export function createPushNotificationRoute(
         return c.json({ error: validationResult.error.description }, 400)
       }
       const { subscription, deviceId } = validationResult.data
-      const { userPushToken } = await register(
-        new PushRegisterCommand({
-          actor: actorFromAuth(c.get("auth")!),
-          subscription,
-          deviceId,
-          // trustedProxy: true keeps the old behaviour of trusting X-Forwarded-For / X-Real-IP.
-          request: requestInfoFromContext(c, { trustedProxy: true }),
-        }),
-      )
-      return c.json({ userPushToken })
+      try {
+        const { userPushToken } = await register(
+          new PushRegisterCommand({
+            actor: actorFromAuth(c.get("auth")!),
+            subscription,
+            deviceId,
+            // trustedProxy: true keeps the old behaviour of trusting X-Forwarded-For / X-Real-IP.
+            request: requestInfoFromContext(c, { trustedProxy: true }),
+          }),
+        )
+        return c.json({ userPushToken })
+      } catch (error) {
+        // The session ended while the body was on its way, as at a password reset (#409).
+        if (error instanceof AccessError) return c.json({ error: "Not authenticated" }, 401)
+        throw error
+      }
     })
     .delete("/", async (c) => {
       const body = await readApiJson(c)

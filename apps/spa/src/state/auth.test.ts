@@ -314,6 +314,80 @@ describe("signOut", () => {
 
     expect(sessionState.value.user).toBeNull()
   })
+
+  /**
+   * Gives the test's `navigator` a service worker whose registration holds one push subscription.
+   * `unsubscribe` answers with `settle`; the returned record says whether it was called.
+   */
+  function browserWithSubscription(settle: () => Promise<boolean>) {
+    const record = { unsubscribed: false }
+    const subscription = {
+      unsubscribe: () => {
+        record.unsubscribed = true
+        return settle()
+      },
+    }
+    const registration = { pushManager: { getSubscription: () => Promise.resolve(subscription) } }
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: { getRegistration: () => Promise.resolve(registration) },
+    })
+    return record
+  }
+
+  /** Lets the chained promises of the push sign-out settle. */
+  const settled = () => new Promise((resolve) => setTimeout(resolve, 0))
+
+  it("ends this browser's push subscription, also when the server cannot be reached", async () => {
+    useFlagStorage(memoryFlags())
+    sessionState.value = { ...sessionState.value, user: { id: 1 } as User }
+    globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"))
+    const browser = browserWithSubscription(() => Promise.resolve(true))
+    try {
+      await signOut()
+      await settled()
+
+      expect(browser.unsubscribed).toBe(true)
+      expect(sessionState.value.user).toBeNull()
+    } finally {
+      Reflect.deleteProperty(navigator, "serviceWorker")
+    }
+  })
+
+  it("does not wait for the browser to end its push subscription", async () => {
+    useFlagStorage(memoryFlags())
+    sessionState.value = { ...sessionState.value, user: { id: 1 } as User }
+    globalThis.fetch = () => Promise.resolve(Response.json({ success: true }))
+    // A push service that never answers: sign-out must finish anyway.
+    const browser = browserWithSubscription(() => new Promise(() => {}))
+    try {
+      await signOut()
+      await settled()
+
+      expect(browser.unsubscribed).toBe(true)
+      expect(sessionState.value.user).toBeNull()
+    } finally {
+      Reflect.deleteProperty(navigator, "serviceWorker")
+    }
+  })
+
+  it("signs out when the browser refuses to read its push subscription", async () => {
+    useFlagStorage(memoryFlags())
+    sessionState.value = { ...sessionState.value, user: { id: 1 } as User }
+    globalThis.fetch = () => Promise.resolve(Response.json({ success: true }))
+    Object.defineProperty(navigator, "serviceWorker", {
+      configurable: true,
+      value: { getRegistration: () => Promise.reject(new DOMException("denied", "SecurityError")) },
+    })
+    try {
+      await signOut()
+      await settled()
+
+      expect(sessionState.value.user).toBeNull()
+    } finally {
+      Reflect.deleteProperty(navigator, "serviceWorker")
+    }
+  })
 })
 
 describe("confirming a sign-up a provider vouched for", () => {

@@ -139,6 +139,7 @@ describe("groups route", () => {
         userId: 7,
         userMfa: UserMFAStatus.NOT_CONFIGURED,
         sessionSecondFactor: SecondFactorStatus.NotRequired,
+        sessionId: 1,
       },
       id,
       name: "Team",
@@ -377,6 +378,7 @@ describe("groups route", () => {
       userId: 1,
       userMfa: UserMFAStatus.CONFIGURED,
       sessionSecondFactor: SecondFactorStatus.NotRequired,
+      sessionId: 1,
     })
   })
 

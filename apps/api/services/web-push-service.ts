@@ -13,7 +13,7 @@ import {
   type WebPushSender,
   type WebPushSenderOptions,
 } from "@spy4x/integrations/push"
-import type { UserPushTokenPublic } from "@domain/identity"
+import { AccessError, type UserPushTokenPublic } from "@domain/identity"
 import type { PushTokenRecord, PushTokenStore } from "./push-token-store.ts"
 
 /** The library's sender options this service passes through; it supplies keys and store. */
@@ -67,18 +67,26 @@ export class WebPushService {
     return this.encodedPublicKey
   }
 
+  /**
+   * Stores the subscription for session `sessionId` of `userId` and sends it a welcome push.
+   * Throws `AccessError` when the session has ended by the time the row would be written, as
+   * after a password reset (#409).
+   */
   public async subscribe(
     subscription: PushSubscribeRequest["subscription"],
     deviceId: string,
     userId: number,
+    sessionId: number,
   ): Promise<UserPushTokenPublic> {
-    const token = await this.store.upsert({
+    const token = await this.store.upsertForSession({
+      sessionId,
       userId,
       deviceId,
       endpoint: subscription.endpoint,
       auth: subscription.keys.auth,
       p256dh: subscription.keys.p256dh,
     })
+    if (!token) throw new AccessError("AUTH_REQUIRED", "The session has ended")
     // The welcome push goes to this one subscription only, not to the user's other devices. One
     // the push service reports gone deletes the row, yet subscribe still reports success: the
     // browser handed us the subscription a moment ago.

@@ -698,6 +698,11 @@ export interface Actor {
   userMfa: UserMFAStatus
   sessionSecondFactor: SecondFactorStatus
   /**
+   * The session the actor acts through, when a session does. A write that must not outlive the
+   * session, such as storing a push subscription (#409), checks it again under a lock.
+   */
+  sessionId?: number
+  /**
    * Set when a personal API token acts instead of a session (#167). The session gate then lets
    * through only the messages a token may send, in the token's group, and only reads when the
    * token cannot write.

@@ -1,5 +1,5 @@
 import type { CommandHandler, QueryHandler } from "@spy4x/platform/cqrs"
-import type { UserPushTokenPublic } from "@domain/identity"
+import { AccessError, type UserPushTokenPublic } from "@domain/identity"
 import type { PushRegisterCommand, PushRemoveCommand } from "../../cqrs/commands.ts"
 import { PushDevicesUpdatedEvent } from "../../cqrs/events.ts"
 import type { PushListQuery } from "../../cqrs/queries.ts"
@@ -19,8 +19,15 @@ export function createPushRegisterHandler(
   { webPush, emit }: PushHandlerDependencies,
 ): CommandHandler<PushRegisterCommand> {
   return async ({ data: { actor, subscription, deviceId, request } }) => {
+    // Only a session stores a browser: the store checks under a lock that it is still live.
+    if (actor.sessionId === undefined) throw new AccessError("AUTH_REQUIRED", "No session")
     const service = await webPush()
-    const userPushToken = await service.subscribe(subscription, deviceId, actor.userId)
+    const userPushToken = await service.subscribe(
+      subscription,
+      deviceId,
+      actor.userId,
+      actor.sessionId,
+    )
     const devices = await service.deviceList(actor.userId)
     emit(new PushDevicesUpdatedEvent({ userId: actor.userId, devices, request }))
     return { userPushToken }

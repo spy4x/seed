@@ -56,12 +56,23 @@ async function holds(
 }
 
 const KEYS = await browserKeys()
+/** Any session id: `serviceOver`'s store does not read it. */
+const SESSION = 1
 const VAPID_JSON = JSON.stringify((await generateVapidKeyPair()).keys)
 
-/** A service over `sql` whose push service is in memory and answers `failures` per endpoint. */
+/**
+ * A service over `sql` whose push service is in memory and answers `failures` per endpoint. The
+ * steps run on the schema of an older migration, where the session check of `upsertForSession`
+ * cannot read `auth_sessions`, so it stores as `upsert` does; that check is tested in
+ * `reset-push-subscriptions.integration.test.ts`.
+ */
 async function serviceOver(sql: postgres.Sql, failures: Record<string, number> = {}) {
   const push = fakePushService(failures)
-  const service = await createWebPushService(VAPID_JSON, push.options, createPushTokenStore(sql))
+  const store = createPushTokenStore(sql)
+  const service = await createWebPushService(VAPID_JSON, push.options, {
+    ...store,
+    upsertForSession: ({ sessionId: _, ...input }) => store.upsert(input),
+  })
   return { service, endpoints: () => push.requests.map((request) => request.endpoint) }
 }
 
@@ -138,6 +149,7 @@ Deno.test({
             { endpoint, keys: KEYS, expirationTime: null },
             "tablet",
             userB,
+            SESSION,
           )
         }
         const rows = await sql<CountRow[]>`
@@ -156,6 +168,7 @@ Deno.test({
           },
           "laptop",
           userA,
+          SESSION,
         )
         // A restart: a new client and a new service over the same database, nothing in memory.
         const restartedSql = connect()
@@ -190,6 +203,7 @@ Deno.test({
             },
             "shared",
             user,
+            SESSION,
           )
         }
         await service.unsubscribe("shared", userA)
@@ -202,7 +216,12 @@ Deno.test({
       await t.step("a push address as long as the request limit is stored", async () => {
         const { service } = await serviceOver(sql)
         const endpoint = "https://push.example/".padEnd(PUSH_SUBSCRIPTION_LIMITS.endpoint, "a")
-        await service.subscribe({ endpoint, keys: KEYS, expirationTime: null }, "long", userA)
+        await service.subscribe(
+          { endpoint, keys: KEYS, expirationTime: null },
+          "long",
+          userA,
+          SESSION,
+        )
         const rows = await sql<{ endpoint: string }[]>`
           SELECT endpoint FROM user_push_tokens
           WHERE user_id = ${userA} AND device_id = ${"long"} AND deleted_at IS NULL`

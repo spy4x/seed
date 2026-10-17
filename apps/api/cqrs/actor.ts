@@ -10,5 +10,6 @@ export function actorFromAuth(auth: AppAuthState): Actor {
     userId: auth.user.id,
     userMfa: auth.user.mfa,
     sessionSecondFactor: auth.session.secondFactor,
+    sessionId: auth.session.id,
   }
 }

@@ -13,11 +13,12 @@
  *   key's `(method, subject)` constraint, and compared after normalisation.
  * - **Password reset by link.** `resetPassword` spends a code from `password-reset.ts`, proves the
  *   address (whoever holds the mailbox owns the account that signs in with it), sets the new
- *   password, signs out every session of the user and deletes every API token. It signs nobody
- *   in: the person signs in again with the new password, and their second factor if they have one.
- *   When the address was not proven before, the second factor and every other sign-in method of
- *   the account go too (#404): whoever added them never proved they own the address. An account
- *   waiting to be deleted is restored by the reset (#388).
+ *   password, signs out every session of the user, deletes every API token and removes every
+ *   push subscription (#409). It signs nobody in: the person signs in again with the new
+ *   password, and their second factor if they have one. When the address was not proven
+ *   before, the second factor and every other sign-in method of the account go too (#404):
+ *   whoever added them never proved they own the address. An account waiting to be deleted is
+ *   restored by the reset (#388).
  * - **One sign-up transaction.** The auth user and key, the session, the `users` profile row (same
  *   id) and the first group are written in one `db.begin()`: the sign-up provider is built over
  *   that transaction's stores.
@@ -339,8 +340,9 @@ export interface SignIn {
   /**
    * Spends the reset code for `email` and, when it was the live one, proves the address, replaces
    * the password, signs out every session of the user and revokes every API token, with an audit
-   * row each. An account waiting to be deleted is restored too: the link proved the mailbox, so
-   * the person is back (#388). `c`, when given, names the request in the restore's audit row.
+   * row each, and removes every push subscription of the user (#409). An account waiting to be
+   * deleted is restored too: the link proved the mailbox, so the person is back (#388). `c`,
+   * when given, names the request in the restore's audit row.
    * `false`, and the password unchanged, when the code is wrong, expired, already used or
    * replaced, the new password is refused, or no live account signs in with the address.
    */
@@ -1177,6 +1179,9 @@ export function createSignIn(options: SignInOptions): SignIn {
         // A reset is account recovery: a token minted with a stolen session goes too (#167), as
         // it does on a password change.
         await tx.apiTokens.revoke({ userId: user.id }, "password-reset")
+        // Every browser that switched the account's notifications on stops getting them (#409),
+        // whoever it belongs to: the owner switches them on again where they want them.
+        await tx.pushTokens.removeAllOf(user.id)
         return true
       })
     },

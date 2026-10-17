@@ -67,6 +67,7 @@ import {
   setUserRoleByAddress,
 } from "@server/auth/admin-users.ts"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
+import { removeAllPushTokensOf } from "./push-token-store.ts"
 import { adminGroupRows } from "@server/groups/admin-groups.ts"
 import {
   listAdminApiTokens,
@@ -163,6 +164,17 @@ export class AppDbBase extends DbServiceBase {
     const sql = this.sql
     return {
       allOf: (creatorId: number): Promise<number> => revokeAllInvitationsOf(sql, creatorId),
+    }
+  }
+
+  /**
+   * A person's stored push subscriptions (#409). Built per access, like `group`, so a reset's
+   * transaction removes them inside it.
+   */
+  get pushTokens() {
+    const sql = this.sql
+    return {
+      removeAllOf: (userId: number): Promise<void> => removeAllPushTokensOf(sql, userId),
     }
   }
 
