@@ -31,7 +31,7 @@ async function askForCode(
 }
 
 test("two sign-ups of one address: the first code signs in, the second finds the account and hands the address to sign-in", async ({ browser, request }) => {
-  // A fresh address each run: every sign-up spends one of the address's three code mails an hour.
+  // A fresh address each run: each sign-up spends one of the client's three code mails an hour.
   const email = `e2e-sign-up-race-${uuidV7().slice(-8)}@example.com`
   await cleanup(request, email)
   const first = await browser.newContext({ baseURL: apiBase })

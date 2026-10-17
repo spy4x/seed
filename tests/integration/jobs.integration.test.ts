@@ -465,6 +465,26 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
       },
     )
 
+    await t.step(
+      "the nightly cleanup removes expired codes and keeps one still running",
+      async () => {
+        const insertCode = (subject: string, minutes: number) =>
+          sql`
+            INSERT INTO auth_challenges (purpose, subject, secret_hash, expires_at)
+            VALUES ('app.sign-up', ${subject}, 'hash', now() + make_interval(mins => ${minutes}))
+          `
+        await insertCode("abandoned", -1)
+        await insertCode("waiting", 10)
+
+        await advanceClock(sql, 25 * 60)
+        const result = await createOutboxProcessor(sql, mailOff(sql)).drainOnce()
+        expect(result.failed).toBe(0)
+
+        const left = await sql<{ subject: string }[]>`SELECT subject FROM auth_challenges`
+        expect(left).toEqual([{ subject: "waiting" }])
+      },
+    )
+
     await t.step("a row names both its group and its actor, or neither", async () => {
       const [{ groupId, userId }] = await sql<{ groupId: string; userId: number }[]>`
         WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id),
@@ -587,7 +607,7 @@ Deno.test("the worker's processor when a job keeps failing", async (t) => {
         })
         await scheduleNightlyJobs(sql, new Date())
         await skipWait(sql)
-        // The second step of the cleanup reads this table; the group purge runs three steps later.
+        // The second step of the cleanup reads this table; the group purge runs five steps later.
         await sql`ALTER TABLE password_reset_requests RENAME TO password_reset_requests_gone`
 
         const result = await processor.drainOnce()

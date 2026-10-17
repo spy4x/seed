@@ -70,6 +70,7 @@ const openAuthLimits: AuthRateLimits = {
   normal: passThrough,
   resetByAddress: notCalled,
   emailCodeByAddress: notCalled,
+  signUpCode: notCalled,
   emailChangeByUser: notCalled,
   emailChangeByAddress: notCalled,
 }

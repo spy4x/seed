@@ -300,8 +300,9 @@ export function createAuthRoute(
       if (email === null) {
         return c.json({ error: "Enter a valid e-mail address" }, 400)
       }
-      // Spent for every address, known or not, so a refusal tells nothing about an account.
-      const decision = await rateLimits.emailCodeByAddress(email)
+      // Spent for every address, known or not, so a refusal tells nothing about an account. The
+      // sign-up budgets, not the account's own: a stranger's sign-ups must not lock its owner out.
+      const decision = await rateLimits.signUpCode(c, email)
       if (!decision.allowed) return tooMany(c, decision.retryAfterMs, SIGN_UP_CODES_TOO_MANY)
       if (!(await signIn.requestSignUp(c, email, validationResult.data.password))) {
         return c.json({ error: "This password cannot be used. Try another one." }, 400)
@@ -343,7 +344,7 @@ export function createAuthRoute(
         }
       },
     )
-    // The normal limit: the address's code budget is what stops a flood of mails.
+    // The normal limit: the address's sign-up code budgets are what stop a flood of mails.
     .post(
       `/password/sign-up/resend`,
       mutationGuards.anonymous,
@@ -351,7 +352,7 @@ export function createAuthRoute(
       async (c) => {
         const waiting = await signIn.waitingSignUp(c)
         if (waiting === null) return c.json({ error: SIGN_UP_EXPIRED }, 410)
-        const decision = await rateLimits.emailCodeByAddress(waiting.email)
+        const decision = await rateLimits.signUpCode(c, waiting.email)
         if (!decision.allowed) return tooMany(c, decision.retryAfterMs, SIGN_UP_CODES_TOO_MANY)
         if (!(await signIn.resendSignUpCode(c))) return c.json({ error: SIGN_UP_EXPIRED }, 410)
         return c.json({ success: true })

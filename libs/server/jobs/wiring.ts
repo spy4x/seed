@@ -43,6 +43,7 @@ import {
   emailCodeMailJob,
   removeStaleEmailCodeRequests,
 } from "./email-code-mail.ts"
+import { removeExpiredAuthChallenges } from "./auth-challenges.ts"
 import {
   removeExpiredSignUps,
   SIGN_UP_CODE_MAIL_JOB,
@@ -183,6 +184,10 @@ function cleanupSteps(
     ["remove expired sign-ups", async () => {
       const signUps = await removeExpiredSignUps(sql)
       if (signUps > 0) console.log(`Removed ${signUps} expired sign-up(s)`)
+    }],
+    ["remove expired codes", async () => {
+      const codes = await removeExpiredAuthChallenges(sql)
+      if (codes > 0) console.log(`Removed ${codes} expired code(s)`)
     }],
     ["remove unsent subscription requests", async () => {
       const staleSubs = await removeStaleSubscriptionRequests(sql)

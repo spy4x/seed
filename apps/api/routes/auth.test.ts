@@ -36,6 +36,8 @@ import {
   EMAIL_CHANGE_MAILS_PER_ADDRESS,
   EMAIL_CODE_MAILS_PER_ADDRESS,
   RESET_MAILS_PER_ADDRESS,
+  SIGN_UP_CODE_MAILS_PER_ADDRESS,
+  SIGN_UP_CODE_MAILS_PER_CLIENT,
 } from "../middlewares/auth-rate-limits.ts"
 import { createLockout, type Lockout } from "@spy4x/server/lockout"
 import { MemoryLockoutStore } from "@spy4x/server/lockout/memory-store"
@@ -1408,12 +1410,12 @@ describe("auth routes prove the address before a sign-up creates anything (#142)
     expect(calls).toEqual(["requestSignUp", "requestSignUp"])
   })
 
-  it("refuses past the address's code budget with one answer for every address", async () => {
+  it("refuses past one client's code budget for an address with one answer for every address", async () => {
     const { app, calls } = buildApp(null)
     const refusals = []
     for (const email of ["free@example.com", "taken@example.com"]) {
       const body = { ...signUpBody, email }
-      for (let mail = 0; mail < EMAIL_CODE_MAILS_PER_ADDRESS; mail++) {
+      for (let mail = 0; mail < SIGN_UP_CODE_MAILS_PER_CLIENT; mail++) {
         await send(app, { ...signUp, body }, sameOriginWithoutCookieHeaders)
       }
       const refused = await send(app, { ...signUp, body }, sameOriginWithoutCookieHeaders)
@@ -1427,7 +1429,76 @@ describe("auth routes prove the address before a sign-up creates anything (#142)
     expect(refusals[0].status).toBe(429)
     expect(refusals[0].body).toEqual({ error: SIGN_UP_CODES_TOO_MANY })
     expect(refusals[1]).toEqual(refusals[0])
-    expect(calls).toEqual(Array(2 * EMAIL_CODE_MAILS_PER_ADDRESS).fill("requestSignUp"))
+    expect(calls).toEqual(Array(2 * SIGN_UP_CODE_MAILS_PER_CLIENT).fill("requestSignUp"))
+  })
+
+  /** The headers of an anonymous request from `ip`. */
+  const from = (ip: string) => ({ ...sameOriginWithoutCookieHeaders, "x-real-ip": ip })
+
+  it("leaves the address's owner a code after a stranger keeps signing the address up (#494)", async () => {
+    const { app, calls } = buildApp(null)
+    const stranger = []
+    for (let attempt = 0; attempt <= SIGN_UP_CODE_MAILS_PER_ADDRESS; attempt++) {
+      stranger.push((await send(app, signUp, from("192.0.2.1"))).status)
+    }
+    const owner = await send(app, signUp, from("198.51.100.7"))
+
+    expect(stranger).toEqual([
+      ...Array(SIGN_UP_CODE_MAILS_PER_CLIENT).fill(200),
+      ...Array(SIGN_UP_CODE_MAILS_PER_ADDRESS + 1 - SIGN_UP_CODE_MAILS_PER_CLIENT).fill(429),
+    ])
+    expect(owner.status).toBe(200)
+    expect(calls).toEqual(Array(SIGN_UP_CODE_MAILS_PER_CLIENT + 1).fill("requestSignUp"))
+  })
+
+  it("counts every address of an IPv6 /64 as one client", async () => {
+    const { app } = buildApp(null)
+    const statuses = []
+    for (let attempt = 0; attempt <= SIGN_UP_CODE_MAILS_PER_CLIENT; attempt++) {
+      statuses.push((await send(app, signUp, from(`2001:db8::${attempt + 1}`))).status)
+    }
+
+    expect(statuses).toEqual([...Array(SIGN_UP_CODE_MAILS_PER_CLIENT).fill(200), 429])
+  })
+
+  it("caps sign-up codes to one address from many networks together", async () => {
+    const { app, calls } = buildApp(null)
+    const statuses = []
+    for (let network = 1; statuses.length <= SIGN_UP_CODE_MAILS_PER_ADDRESS; network++) {
+      for (let mail = 0; mail < SIGN_UP_CODE_MAILS_PER_CLIENT; mail++) {
+        statuses.push((await send(app, signUp, from(`192.0.2.${network}`))).status)
+      }
+    }
+    const fresh = await send(app, signUp, from("198.51.100.7"))
+    const otherAddress = await send(
+      app,
+      { ...signUp, body: { ...signUpBody, email: "bob@example.com" } },
+      from("198.51.100.7"),
+    )
+
+    expect(statuses.slice(0, SIGN_UP_CODE_MAILS_PER_ADDRESS)).toEqual(
+      Array(SIGN_UP_CODE_MAILS_PER_ADDRESS).fill(200),
+    )
+    expect(statuses.slice(SIGN_UP_CODE_MAILS_PER_ADDRESS)).not.toContain(200)
+    expect(fresh.status).toBe(429)
+    expect(otherAddress.status).toBe(200)
+    expect(calls).toHaveLength(SIGN_UP_CODE_MAILS_PER_ADDRESS + 1)
+  })
+
+  it("leaves a signed-in account's own code budget whole after strangers sign its address up", async () => {
+    const rateLimits = createAuthRateLimits(generousLimits)
+    const anonymous = buildApp(null, { rateLimits })
+    for (let network = 1; network <= 4; network++) {
+      for (let mail = 0; mail < SIGN_UP_CODE_MAILS_PER_CLIENT; mail++) {
+        await send(anonymous.app, signUp, from(`192.0.2.${network}`))
+      }
+    }
+    const signedIn = buildApp(undefined, { rateLimits })
+    const sendCode = sessionRoutes.find((candidate) => candidate.path === "/auth/email/send")!
+    const response = await send(signedIn.app, sendCode, sameOriginHeaders)
+
+    expect(response.status).toBe(200)
+    expect(signedIn.mailed).toEqual(["alice@example.com"])
   })
 
   it("signs in the account a right code created", async () => {
@@ -1485,15 +1556,25 @@ describe("auth routes prove the address before a sign-up creates anything (#142)
     expect(calls).toEqual([])
   })
 
-  it("spends the waiting address's code budget on a new code", async () => {
+  it("spends the client's sign-up code budget for the waiting address on a new code", async () => {
     const { app, calls } = buildApp(null)
     const statuses = []
-    for (let mail = 0; mail <= EMAIL_CODE_MAILS_PER_ADDRESS; mail++) {
+    for (let mail = 0; mail <= SIGN_UP_CODE_MAILS_PER_CLIENT; mail++) {
       statuses.push((await send(app, resend, sameOriginWithoutCookieHeaders)).status)
     }
 
-    expect(statuses).toEqual([...Array(EMAIL_CODE_MAILS_PER_ADDRESS).fill(200), 429])
-    expect(calls).toEqual(Array(EMAIL_CODE_MAILS_PER_ADDRESS).fill("resendSignUpCode"))
+    expect(statuses).toEqual([...Array(SIGN_UP_CODE_MAILS_PER_CLIENT).fill(200), 429])
+    expect(calls).toEqual(Array(SIGN_UP_CODE_MAILS_PER_CLIENT).fill("resendSignUpCode"))
+  })
+
+  it("shares one client's sign-up code budget between a sign-up and its new codes", async () => {
+    const { app } = buildApp(null)
+    for (let mail = 0; mail < SIGN_UP_CODE_MAILS_PER_CLIENT; mail++) {
+      await send(app, signUp, sameOriginWithoutCookieHeaders)
+    }
+    const response = await send(app, resend, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(429)
   })
 
   it("reads back the waiting sign-up's address for the page that asks for the code", async () => {

@@ -1,5 +1,7 @@
-import type { MiddlewareHandler } from "hono"
+import type { Context, MiddlewareHandler } from "hono"
 import {
+  clientIp,
+  clientIpBucket,
   type Clock,
   createStoreLimiter,
   failOpenLimiter,
@@ -23,8 +25,9 @@ export const RESET_MAILS_PER_ADDRESS = 3
 export const RESET_ADDRESS_WINDOW_MS = 60 * 60_000
 
 /**
- * Code mails one address may be sent per {@link EMAIL_CODE_ADDRESS_WINDOW_MS}, from any account or
- * IP: a new address, or a new code for one.
+ * Code mails a signed-in account may have sent to its own address per
+ * {@link EMAIL_CODE_ADDRESS_WINDOW_MS}. A sign-up spends {@link SIGN_UP_CODE_MAILS_PER_CLIENT} and
+ * {@link SIGN_UP_CODE_MAILS_PER_ADDRESS} instead, so a stranger's sign-ups cannot run it out.
  */
 export const EMAIL_CODE_MAILS_PER_ADDRESS = 3
 
@@ -37,6 +40,49 @@ export const EMAIL_CODE_STORE = `ratelimit-email-code`
 /** The key of one address's {@link EMAIL_CODE_MAILS_PER_ADDRESS}: a hash, never the address. */
 export async function emailCodeBudgetKey(email: string): Promise<string> {
   return `auth-email-code:${await sha256Hex(email)}`
+}
+
+/**
+ * Sign-up code mails one client, an IP address or an IPv6 /64, may have sent to one address per
+ * {@link SIGN_UP_CODE_WINDOW_MS}: a sign-up or a new code for one. Keyed by the address and the
+ * client together, so a stranger who starts sign-ups for an address spends only their own share,
+ * and the address's owner, from their own network, still gets a code.
+ */
+export const SIGN_UP_CODE_MAILS_PER_CLIENT = 3
+
+/**
+ * Sign-up code mails all clients together may have sent to one address per
+ * {@link SIGN_UP_CODE_WINDOW_MS}, so many networks together still cannot flood an inbox. Higher
+ * than {@link SIGN_UP_CODE_MAILS_PER_CLIENT}, so a stranger needs several networks to reach it.
+ */
+export const SIGN_UP_CODE_MAILS_PER_ADDRESS = 10
+
+/** The window of both sign-up code budgets: one hour. */
+export const SIGN_UP_CODE_WINDOW_MS = 60 * 60_000
+
+/** The store prefix of both sign-up code budgets. */
+export const SIGN_UP_CODE_STORE = `ratelimit-sign-up-code`
+
+/**
+ * The keys of one address's sign-up code budgets, the whole address's and one client's: hashes,
+ * never the address. `client` is what {@link signUpClient} answers.
+ */
+export async function signUpCodeBudgetKeys(
+  email: string,
+  client: string,
+): Promise<{ address: string; client: string }> {
+  const hash = await sha256Hex(email)
+  return { address: `auth-sign-up-code:${hash}`, client: `auth-sign-up-code:${hash}:${client}` }
+}
+
+/**
+ * The client a request counts as for {@link SIGN_UP_CODE_MAILS_PER_CLIENT}: its IP address, or its
+ * IPv6 /64, read the same way as for the per-IP limits (`X-Real-IP`, else the connection).
+ */
+export function signUpClient(c: Context<APIContext>): string {
+  // `c.env` is what `deno serve` hands Hono, the same object the per-IP limits read.
+  const remoteAddr = denoServeRemoteAddr({ req: c.req.raw, env: c.env } as RateLimitContext)
+  return clientIpBucket(clientIp(c.req.raw, remoteAddr, "x-real-ip"))
 }
 
 /**
@@ -93,6 +139,14 @@ export interface AuthRateLimits {
    */
   emailCodeByAddress(email: string): Promise<RateLimitDecision>
   /**
+   * Spends one of the client's {@link SIGN_UP_CODE_MAILS_PER_CLIENT} sign-up code mails to the
+   * address, then one of the address's {@link SIGN_UP_CODE_MAILS_PER_ADDRESS}, and says whether
+   * both allowed it. A client past its own share spends nothing of the address's, so one network
+   * that keeps asking cannot run the address's budget out. Refuses the same way as
+   * `emailCodeByAddress` when the store fails.
+   */
+  signUpCode(c: Context<APIContext>, email: string): Promise<RateLimitDecision>
+  /**
    * Spends one of the account's {@link EMAIL_CHANGE_MAILS_PER_ACCOUNT} code mails to a new address,
    * and refuses the same way as `emailCodeByAddress` when the store fails.
    */
@@ -116,8 +170,9 @@ export interface AuthRateLimitSettings {
   /**
    * Builds the store one limiter keeps its budgets in. `name` is that limiter's own key prefix:
    * `ratelimit-strict`, `ratelimit-otp`, `ratelimit-reset`, `ratelimit-email-code`,
-   * `ratelimit-email-change`, `ratelimit-email-change-address` or `ratelimit-normal`. Production
-   * passes `createRedisRateLimitStore` over Valkey; tests pass an in-process store.
+   * `ratelimit-sign-up-code`, `ratelimit-email-change`, `ratelimit-email-change-address` or
+   * `ratelimit-normal`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
+   * in-process store.
    */
   store: (name: string) => RateLimitStore
   /**
@@ -158,7 +213,10 @@ export interface AuthRateLimitSettings {
  * the account wants to move to spends the account's budget (`emailChangeByUser`) and a separate
  * budget of that address for change mails (`emailChangeByAddress`) instead: the address may be
  * someone else's, and a stranger must not run its owner's budget out, while many strangers
- * together still cannot flood it. Every other auth route spends one normal budget per user, else
+ * together still cannot flood it. A sign-up and a new code for one prove nothing yet, so they spend
+ * neither of those: they spend the client's share of the address's sign-up mails and the
+ * address's sign-up total (`signUpCode`), so a stranger who signs an address up runs out of their
+ * own share, not of its owner's. Every other auth route spends one normal budget per user, else
  * per IP. Each route mounts its limiter after its cross-site check, so a
  * refused cross-site request spends nobody's budget.
  *
@@ -201,6 +259,19 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
   const emailCode = createStoreLimiter(store(EMAIL_CODE_STORE), {
     windowMs: EMAIL_CODE_ADDRESS_WINDOW_MS,
     limit: EMAIL_CODE_MAILS_PER_ADDRESS,
+    clock,
+  })
+  // Both sign-up budgets share one store: a client's share and the whole address's, so a stranger
+  // cannot run the owner's share out, and many strangers together cannot flood the inbox.
+  const signUpStore = store(SIGN_UP_CODE_STORE)
+  const signUpByClient = createStoreLimiter(signUpStore, {
+    windowMs: SIGN_UP_CODE_WINDOW_MS,
+    limit: SIGN_UP_CODE_MAILS_PER_CLIENT,
+    clock,
+  })
+  const signUpByAddress = createStoreLimiter(signUpStore, {
+    windowMs: SIGN_UP_CODE_WINDOW_MS,
+    limit: SIGN_UP_CODE_MAILS_PER_ADDRESS,
     clock,
   })
   // Keyed by the account, so asking to move to someone else's address spends only the asker's.
@@ -250,6 +321,12 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     }),
     resetByAddress: async (email) => await reset.check(`auth-reset:${await sha256Hex(email)}`),
     emailCodeByAddress: async (email) => await emailCode.check(await emailCodeBudgetKey(email)),
+    signUpCode: async (c, email) => {
+      const keys = await signUpCodeBudgetKeys(email, signUpClient(c))
+      const own = await signUpByClient.check(keys.client)
+      if (!own.allowed) return own
+      return await signUpByAddress.check(keys.address)
+    },
     emailChangeByUser: async (userId) => await emailChange.check(`auth-email-change:${userId}`),
     emailChangeByAddress: async (email) =>
       await emailChangeAddress.check(`auth-email-change-address:${await sha256Hex(email)}`),

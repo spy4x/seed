@@ -13,6 +13,7 @@ import type { Sql, Transaction } from "@spy4x/server/db"
 import type { AppDbBase } from "@api/services/db-base.ts"
 import { readApiJson } from "@api/services/json-body.ts"
 import { normalizeUsername } from "@api/services/sign-in.ts"
+import { signUpClient } from "../middlewares/auth-rate-limits.ts"
 
 /** What the development-only routes need. */
 export interface DevRouteDeps {
@@ -25,10 +26,11 @@ export interface DevRouteDeps {
   /** Closes every open socket of a user like a dropped connection; returns how many it closed. */
   closeSockets(userId: number): number
   /**
-   * Gives a normalised address back its hourly code mails, so a spec that signs a fixed address up
-   * again and again is not refused with 429 on a dev stack that outlives one run.
+   * Gives a normalised address back its hourly code mails: its own, its sign-up total and the
+   * sign-up share of `client` (what `signUpClient` answers for the caller), so a spec that signs a
+   * fixed address up again and again is not refused with 429 on a dev stack that outlives one run.
    */
-  forgetCodeBudget(email: string): Promise<void>
+  forgetCodeBudget(email: string, client: string): Promise<void>
 }
 
 /**
@@ -43,7 +45,9 @@ export interface DevRouteDeps {
  * granted in other groups.
  * It answers 200 when the login has no user, so a spec can call it before its own sign-up. For an
  * address it also forgets the code mails the address was sent this hour, which every sign-up
- * spends (#142), so the next sign-up of the address gets its code.
+ * spends (#142), so the caller's next sign-up of the address gets its code. A sign-up is counted
+ * per address and client together (#494), and the caller's client share is the one forgotten: the
+ * e2e specs call this route through the same proxy as the browser they sign up with.
  *
  * `POST /add-member` with `{ login, groupId, role }` makes that user a member of a shared group
  * with the role (1 viewer, 2 editor, 3 admin), or changes the role of one who is. The product has
@@ -71,7 +75,7 @@ export function createDevRoute(deps: DevRouteDeps) {
       if (user.userId !== null) {
         await deleteUser(deps.sql, user.userId)
       }
-      if (user.email !== null) await deps.forgetCodeBudget(user.email)
+      if (user.email !== null) await deps.forgetCodeBudget(user.email, signUpClient(c))
       return c.json({ success: true })
     })
     .post("/add-member", async (c) => {

@@ -198,7 +198,12 @@ password, writes a waiting sign-up to `sign_up_requests` (10 minutes, `SIGN_UP_C
 queues the `auth.sign-up-code-mail` job and sets the signed HttpOnly cookie `password_sign_up`
 (path `/api/auth/password/sign-up`). It does that for every well-formed address and never asks
 whether an account uses it, so the answer, the work and the mail are the same for a free and a
-taken address; it spends the address's code budget (`ratelimit-email-code`). The worker mails
+taken address. It spends the sign-up code budgets (`ratelimit-sign-up-code`, #494): three mails an
+hour to the address from one client (an IP, or an IPv6 /64), and ten an hour to the address from
+all clients together. A client past its three spends nothing of the ten, so a stranger who keeps
+signing an address up cannot lock its owner out, and the account's own budget
+(`ratelimit-email-code`) is never touched. The nightly cleanup deletes expired codes from
+`auth_challenges`. The worker mails
 `emailCodeMail` with a code of `libs/server/auth/sign-up-requests.ts` (a challenge of purpose
 `app.sign-up` bound to the waiting sign-up and the address, 5 guesses over all its codes). `POST
 /api/auth/password/sign-up/verify` with `{ code }`: the right code for a free address creates the
@@ -211,9 +216,10 @@ waiting sign-up back for a reload, `/resend` and `/cancel` give a new code or fo
 nightly cleanup deletes expired ones. `signIn.signUp`, which creates an unproven account at once,
 is no longer reachable from a route; the seed script and the integration tests still use it.
 The e2e specs sign up through `e2e/fixtures/sign-up.ts`, which reads the code from
-`/api/test/last-mail` and enters it. Every sign-up spends one of the address's three code mails
-an hour, so `POST /api/test/cleanup-user` also forgets that budget for the address it is given:
-a spec with a fixed address can run again on a dev stack within the hour.
+`/api/test/last-mail` and enters it. Every sign-up spends one of the caller's three code mails
+an hour to the address, so `POST /api/test/cleanup-user` also forgets the address's budgets, the
+caller's share among them: a spec with a fixed address can run again on a dev stack within the
+hour, as long as it calls the route through the same proxy as its browser.
 
 **Proving an address (#140).** An address change, and an account made before #142, prove their
 address with the `auth.email-code-mail` job
@@ -223,7 +229,8 @@ address with the `auth.email-code-mail` job
 entered, every signed-in page of the SPA shows a banner linking to `/email`.
 `GET /api/auth/email` answers `{ email, proven, pending }`; `POST
 /api/auth/email/verify` takes `{ code }`; `POST /api/auth/email/send` asks for
-a new code (3 mails an hour per address, `ratelimit-email-code` in Valkey);
+a new code (3 mails an hour per address, `ratelimit-email-code` in Valkey, which sign-ups
+never spend);
 codes come from `createEmailProof` and are bound to the user and the address,
 so another account proving the same address cannot spend this one's guesses;
 wrong codes also count against the account in `email_code_failures`
