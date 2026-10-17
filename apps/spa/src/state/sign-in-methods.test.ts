@@ -81,7 +81,45 @@ describe("the sign-in methods store", () => {
     await store.load()
 
     expect(store.methods.value).toEqual([password])
-    expect(store.error.value).toBe("Too many requests")
+    expect(store.loadError.value).toBe("Too many requests")
+    expect(store.error.value).toBe(null)
+  })
+
+  it("tells a read that cannot reach the server apart from a failed change", async () => {
+    let release: () => void = () => {}
+    const http = fakeHttp([password], {
+      list: () =>
+        new Promise((_resolve, reject) => {
+          release = () => reject(new TypeError("offline"))
+        }),
+    })
+    const store = createSignInMethodsStore(http)
+
+    const read = store.load()
+    expect(store.loading.value).toBe(true)
+    release()
+    await read
+
+    expect(store.loading.value).toBe(false)
+    expect(store.methods.value).toBe(null)
+    expect(store.loadError.value).toBe("")
+    expect(store.error.value).toBe(null)
+  })
+
+  it("clears the read's failure once a read answers", async () => {
+    let fail = true
+    const http = fakeHttp([password], {
+      list: () => fail ? Promise.reject(new TypeError("offline")) : undefined!,
+    })
+    const store = createSignInMethodsStore(http)
+    await store.load()
+    expect(store.loadError.value).toBe("")
+    fail = false
+
+    await store.load()
+
+    expect(store.loadError.value).toBe(null)
+    expect(store.methods.value).toEqual([password])
   })
 
   it("sends the browser to the provider's page to link it", async () => {
@@ -207,6 +245,7 @@ describe("the sign-in methods store", () => {
     expect(await store.unlink(8)).toBe("failed")
 
     expect(store.error.value).toBe("")
+    expect(store.loadError.value).toBe(null)
     expect(store.pending.value).toBe(false)
   })
 

@@ -447,6 +447,9 @@ export function ProfileView() {
         available: methods.available.value,
         pending: methods.pending.value,
         error: methods.error.value === "" ? SIGN_IN_METHODS_FAILURE : methods.error.value,
+        loadError: methods.loadError.value,
+        loading: methods.loading.value,
+        onRetry: () => void methods.load(),
         onLink: (provider, password) => void methods.link(provider, password),
         onUnlink: (id, password) => void unlinkMethod(id, password),
       }}

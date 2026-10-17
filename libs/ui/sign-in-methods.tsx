@@ -16,6 +16,10 @@ import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 /** The message shown when linking or unlinking failed without a message of its own. */
 export const SIGN_IN_METHODS_FAILURE = "Changing your sign-in methods failed"
 
+/** The message shown when the list could not be read without a reason of its own, as offline. */
+export const SIGN_IN_METHODS_LOAD_FAILURE =
+  "Your sign-in methods could not be loaded. Check your connection and try again."
+
 /** What a method is called in the list. */
 export function signInMethodName(kind: SignInMethod["kind"]): string {
   return kind === "password" ? "Password" : OAUTH_PROVIDER_NAMES[kind]
@@ -28,8 +32,17 @@ export interface SignInMethodsProps {
   available: readonly OAuthProviderId[]
   /** A link or an unlink is in flight: every button waits. */
   pending: boolean
-  /** Why the list could not be read or a change failed; shown above the list, and focused. */
+  /** Why a link or an unlink failed; shown above the list, and focused. */
   error: string | null
+  /**
+   * Why the list could not be read, or `null`; empty for a read that failed without a reason, as
+   * offline, which shows {@link SIGN_IN_METHODS_LOAD_FAILURE}. Shown with "Try again".
+   */
+  loadError?: string | null
+  /** The list is being read: "Try again" waits, and keeps focus. */
+  loading?: boolean
+  /** Reads the list again, from "Try again" after a failed read. */
+  onRetry?: () => void
   /**
    * What an account with no password confirms a link or an unlink with; `null` or absent for an
    * account that has a password, which types it instead.
@@ -56,8 +69,18 @@ export interface SignInMethodsProps {
  * refused password is fixed in its field.
  */
 export function SignInMethods(
-  { methods, available, pending, error, providerProof = null, onLink, onUnlink }:
-    SignInMethodsProps,
+  {
+    methods,
+    available,
+    pending,
+    error,
+    loadError = null,
+    loading = false,
+    onRetry,
+    providerProof = null,
+    onLink,
+    onUnlink,
+  }: SignInMethodsProps,
 ): JSX.Element {
   /** The method whose unlink dialog is open. */
   const [confirming, setConfirming] = useState<SignInMethod | null>(null)
@@ -119,8 +142,26 @@ export function SignInMethods(
       <div ref={message} tabIndex={-1} data-e2e="sign-in-methods-error">
         <ErrorState message={error} />
       </div>
+      {loadError !== null && (
+        // A failed read is not a failed change: it says the list could not be read and offers a
+        // retry. While the retry runs the message and the button stay, so focus stays on it.
+        <div class="flex flex-col items-start gap-3" data-e2e="sign-in-methods-load-error">
+          <ErrorState message={loadError || SIGN_IN_METHODS_LOAD_FAILURE} />
+          <Button
+            type="button"
+            variant="secondary"
+            class={TOUCH_TARGET}
+            busy={loading}
+            busyLabel="Loading sign-in methods…"
+            onClick={onRetry}
+            data-e2e="sign-in-methods-retry"
+          >
+            Try again
+          </Button>
+        </div>
+      )}
       {methods === null
-        ? <p class="text-sm text-muted">Loading your sign-in methods…</p>
+        ? loadError === null && <p class="text-sm text-muted">Loading your sign-in methods…</p>
         : (
           <div ref={list} tabIndex={-1} data-e2e="sign-in-methods-list">
             <SettingList>

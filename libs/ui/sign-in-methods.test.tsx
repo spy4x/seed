@@ -13,7 +13,12 @@ import { type PendingSignUp, type SignInMethod, UserMFAStatus } from "@domain/id
 import { ProfileScreen, type ProfileScreenProps, providerOnlyNames } from "./profile-screen.tsx"
 import { AuthScreen, type AuthScreenProps } from "./auth-screen.tsx"
 import { ConfirmSignUpScreen, type ConfirmSignUpScreenProps } from "./confirm-sign-up-screen.tsx"
-import { SignInMethods, type SignInMethodsProps } from "./sign-in-methods.tsx"
+import {
+  SIGN_IN_METHODS_FAILURE,
+  SIGN_IN_METHODS_LOAD_FAILURE,
+  SignInMethods,
+  type SignInMethodsProps,
+} from "./sign-in-methods.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -690,6 +695,52 @@ describe("SignInMethods", () => {
     expect(focused()).toBe("sign-in-methods-error")
     expect(find("[data-e2e=sign-in-methods-error]").textContent)
       .toContain("This is your only way to sign in.")
+  })
+
+  it("says offline that the list could not be loaded, not that a change failed", async () => {
+    await mount(
+      <SignInMethods {...methodsProps([], { methods: null, available: [], loadError: "" })} />,
+    )
+
+    const section = find("[data-e2e=sign-in-methods]").textContent ?? ""
+    expect(find("[data-e2e=sign-in-methods-load-error]").textContent)
+      .toContain(SIGN_IN_METHODS_LOAD_FAILURE)
+    expect(section).not.toContain(SIGN_IN_METHODS_FAILURE)
+    expect(section).not.toContain("Loading your sign-in methods…")
+    expect(find("[data-e2e=sign-in-methods-retry]").textContent).toContain("Try again")
+  })
+
+  it("says a failed change failed, with no Try again", async () => {
+    await mount(<SignInMethods {...methodsProps([], { error: SIGN_IN_METHODS_FAILURE })} />)
+
+    expect(find("[data-e2e=sign-in-methods-error]").textContent).toContain(SIGN_IN_METHODS_FAILURE)
+    expect(document.querySelector("[data-e2e=sign-in-methods-load-error]") !== null).toBe(false)
+    expect(document.querySelector("[data-e2e=sign-in-methods-retry]") !== null).toBe(false)
+  })
+
+  it("reads the list again from Try again, keeping focus on it while the read runs", async () => {
+    let retries = 0
+    const failed = methodsProps([], {
+      methods: null,
+      available: [],
+      loadError: "",
+      onRetry: () => void retries++,
+    })
+    const mounted = await mount(<SignInMethods {...failed} />)
+
+    find("[data-e2e=sign-in-methods-retry]").focus()
+    await click("[data-e2e=sign-in-methods-retry]")
+    expect(retries).toBe(1)
+
+    await act(() => render(<SignInMethods {...failed} loading />, mounted))
+    expect(find("[data-e2e=sign-in-methods-retry]").textContent)
+      .toContain("Loading sign-in methods…")
+    expect(focused()).toBe("sign-in-methods-retry")
+
+    // A read that answers brings the list and takes the message away.
+    await act(() => render(<SignInMethods {...methodsProps([])} />, mounted))
+    expect(document.querySelector("[data-e2e=sign-in-methods-load-error]") !== null).toBe(false)
+    expect(find("[data-e2e=sign-in-methods-list]")).toBeTruthy()
   })
 
   it("moves focus to the list when the unlinked method leaves it", async () => {

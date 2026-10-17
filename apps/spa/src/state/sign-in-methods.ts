@@ -103,8 +103,15 @@ export function createSignInMethodsStore(
    * cannot give a password for; `null` when it does not.
    */
   const providerProofUntil = signal<string | null>(null)
-  /** Why the last read or change failed; empty when the server gave no reason. */
+  /** Why the last link or unlink failed; empty when the server gave no reason. */
   const error = signal<string | null>(null)
+  /**
+   * Why the last read of the list failed; empty when the server gave no reason, as when it cannot
+   * be reached. Kept apart from `error`, so a failed read is never told as a failed change.
+   */
+  const loadError = signal<string | null>(null)
+  /** A read of the list is in flight. */
+  const loading = signal(false)
   const pending = signal(false)
 
   /** One call: a thrown request counts as a failure without a reason. */
@@ -116,17 +123,19 @@ export function createSignInMethodsStore(
     }
   }
 
-  /** Reads the list again; a failure sets `error` and keeps the list shown. */
+  /** Reads the list again; a failure sets `loadError` and keeps the list shown. */
   async function load(): Promise<void> {
+    loading.value = true
     const answer = await attempt(http.list)
+    loading.value = false
     if (!answer.ok) {
-      error.value = answer.error
+      loadError.value = answer.error
       return
     }
     methods.value = answer.methods
     available.value = answer.available
     providerProofUntil.value = answer.providerProofUntil
-    error.value = null
+    loadError.value = null
   }
 
   /**
@@ -174,7 +183,18 @@ export function createSignInMethodsStore(
     return "unlinked"
   }
 
-  return { methods, available, providerProofUntil, error, pending, load, link, unlink }
+  return {
+    methods,
+    available,
+    providerProofUntil,
+    error,
+    loadError,
+    loading,
+    pending,
+    load,
+    link,
+    unlink,
+  }
 }
 
 export type SignInMethodsStore = ReturnType<typeof createSignInMethodsStore>
