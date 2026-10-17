@@ -1,19 +1,17 @@
 /// <reference lib="deno.ns" />
-import { readFileSync } from "node:fs"
 import { defineConfig } from "vite"
 import { fromFileUrl } from "@std/path"
 import deno from "@deno/vite-plugin"
 import preact from "@preact/preset-vite"
 import tailwindcss from "@tailwindcss/vite"
 import { themeBootstrapScript } from "@spy4x/preact-signals/theme"
-import { npmSpecifiers, preactThemeCss, requireComponentCss } from "@spy4x/preact-theme/vite"
+import {
+  denoModuleIds,
+  npmSpecifiers,
+  preactThemeCss,
+  requireComponentCss,
+} from "@spy4x/preact-theme/vite"
 import { nginxAddHeaders, securityHeaderList } from "@spy4x/server/http/security-headers"
-
-// The date format module at the deno.jsonc pin, as in apps/spa/vite.config.ts.
-const PREACT_UI_VERSION = readFileSync(new URL(`../../deno.jsonc`, import.meta.url), `utf8`)
-  .match(/"jsr:@spy4x\/preact-ui@([^"]+)"/)?.[1]
-if (!PREACT_UI_VERSION) throw new Error(`deno.jsonc pins no @spy4x/preact-ui version`)
-const PREACT_UI_FORMAT = `https://jsr.io/@spy4x/preact-ui/${PREACT_UI_VERSION}/format.tsx`
 
 const BUILT_PAGE = fromFileUrl(new URL("./dist/index.html", import.meta.url))
 const SECURITY_HEADERS = fromFileUrl(new URL("./security-headers.conf", import.meta.url))
@@ -41,6 +39,8 @@ const REQUIRED_SELECTORS = [
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    // One id per Deno module, as in the SPA (apps/spa/vite.config.ts says why). Before `deno()`.
+    denoModuleIds(),
     npmSpecifiers({ readTextFile: Deno.readTextFile }),
     deno(),
     preact(),
@@ -79,10 +79,6 @@ export default defineConfig({
     alias: [{
       find: /^@ui\//,
       replacement: fromFileUrl(new URL("../../libs/ui/", import.meta.url)),
-    }, {
-      // One copy of the date format's context, as in the SPA (apps/spa/vite.config.ts says why).
-      find: /^@spy4x\/preact-ui\/format$/,
-      replacement: PREACT_UI_FORMAT,
     }],
   },
   optimizeDeps: {

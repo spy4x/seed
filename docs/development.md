@@ -111,7 +111,7 @@ the merge. Every step of the pipeline, browser tests or not, is listed in
 | Pull request, and a tag | `e2e-smoke` | The smoke set below (`deno task e2e:local --smoke`)        |
 | Push to `main`          | `e2e-full`  | Every `e2e/*.e2e.ts` (`deno task e2e:local`)               |
 | All three               | `e2e-mpa`   | The website's `e2e/mpa/*.mpa.ts`                           |
-| All three               | `e2e-spa`   | `e2e/spa/security-headers.spa.ts`, on the SPA behind nginx |
+| All three               | `e2e-spa`   | `e2e/spa/*.spa.ts`, on the SPA behind nginx                |
 
 The smoke set is `SMOKE_SPECS` in
 [`infra/scripts/e2e-local-plan.ts`](../infra/scripts/e2e-local-plan.ts), one line per spec:

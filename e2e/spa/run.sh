@@ -2,8 +2,9 @@
 # Runs the browser tests of the SPA as production serves it (`e2e/spa`): puts the built SPA behind
 # nginx with `apps/spa/nginx.conf`, migrates the database, starts the API and the worker, puts both
 # behind one origin (`e2e/mpa/proxy.ts`) and runs Playwright. The specs check what nginx adds and
-# the development stack never shows: the security headers, and that the app runs under its content
-# security policy without a refusal.
+# the development stack never shows: the security headers, that the app runs under its content
+# security policy without a refusal, and that the bundle holds one copy of the date format's context
+# (`preferences.spa.ts`).
 #
 # `SPA_SERVER` says where nginx comes from:
 # - `container` (the default): builds the image of `apps/spa/dockerfile.prod` as a deploy does and

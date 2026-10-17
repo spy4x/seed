@@ -27,16 +27,16 @@
     "jsr:@spy4x/platform@1.78.0": "1.78.0",
     "jsr:@spy4x/platform@1.79.0": "1.79.0",
     "jsr:@spy4x/platform@^1.79.0": "1.79.0",
-    "jsr:@spy4x/preact-charts@6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-cn@^6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-icons@6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-icons@^6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-signals@6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-system@6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-theme@6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-theme@^6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-ui@6.1.1": "6.1.1",
-    "jsr:@spy4x/preact-ui@^6.1.1": "6.1.1",
+    "jsr:@spy4x/preact-charts@6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-cn@^6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-icons@6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-icons@^6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-signals@6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-system@6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-theme@6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-theme@^6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-ui@6.2.0": "6.2.0",
+    "jsr:@spy4x/preact-ui@^6.2.0": "6.2.0",
     "jsr:@spy4x/realtime@1.79.0": "1.79.0",
     "jsr:@spy4x/server@1.79.0": "1.79.0",
     "jsr:@spy4x/time@1.78.0": "1.78.0",
@@ -101,7 +101,7 @@
     "npm:@babel/preset-react@^7.27.1": "7.29.7_@babel+core@7.29.7",
     "npm:@deno/vite-plugin@2.0.4": "2.0.4_vite@7.3.6",
     "npm:@jsr/spy4x__platform@1.79.0": "1.79.0",
-    "npm:@jsr/spy4x__preact-system@6.1.1": "6.1.1",
+    "npm:@jsr/spy4x__preact-system@6.2.0": "6.2.0",
     "npm:@noble/ciphers@^2.1.1": "2.4.0",
     "npm:@noble/curves@^2.0.1": "2.0.1",
     "npm:@noble/hashes@^2.0.1": "2.0.1",
@@ -310,8 +310,8 @@
         "npm:arktype"
       ]
     },
-    "@spy4x/preact-charts@6.1.1": {
-      "integrity": "1f1886707dd8996e7936e43005480b6b409fe271069fba7aaf28a96df3abe958",
+    "@spy4x/preact-charts@6.2.0": {
+      "integrity": "9476e4491e315c0559bba7c29490ebc8967a989e562a99bb39b08aa087cc4d83",
       "dependencies": [
         "jsr:@spy4x/platform@1.78.0",
         "jsr:@spy4x/validation@1.78.0",
@@ -319,20 +319,20 @@
         "npm:preact@^10.29.8"
       ]
     },
-    "@spy4x/preact-cn@6.1.1": {
-      "integrity": "7bd2883eb8f142a27ac9f9538519e370c4875f0a4beab9fdda5b3c1a2d1f628f",
+    "@spy4x/preact-cn@6.2.0": {
+      "integrity": "b592d8500c08aec37335acd91c91ae7a2763284b130a0b9e7b17c2d4911e67eb",
       "dependencies": [
         "npm:tailwind-merge"
       ]
     },
-    "@spy4x/preact-icons@6.1.1": {
-      "integrity": "7c6154fb897674f3c47ebfaf0cf93265f288ad99c162658d414c02ad6bb73ac2",
+    "@spy4x/preact-icons@6.2.0": {
+      "integrity": "c022d33d604a0a047c5779f9bc9ab69a8ff81cfa1fe0c8a3a2f5dbf2d2665481",
       "dependencies": [
         "npm:preact@^10.29.8"
       ]
     },
-    "@spy4x/preact-signals@6.1.1": {
-      "integrity": "e988c5e4311baea0c9fd48b325d79e33033c12e459cbe1305f07948aa693f127",
+    "@spy4x/preact-signals@6.2.0": {
+      "integrity": "9cd4c1540321f994a4d89abe33515ccb6d947cf86f3913a815543108588d533f",
       "dependencies": [
         "jsr:@spy4x/platform@1.78.0",
         "jsr:@spy4x/time@1.78.0",
@@ -344,34 +344,34 @@
         "npm:wouter-preact"
       ]
     },
-    "@spy4x/preact-system@6.1.1": {
-      "integrity": "bf1c3b2968d6894a8debd419fcf08f7e394e4e3ee1c45dad17b23eea638c7e33",
+    "@spy4x/preact-system@6.2.0": {
+      "integrity": "3f090b9588466d08088e3ac0d3d84bad4d4a0c7cd16835281d086e90e350b3d6",
       "dependencies": [
         "jsr:@spy4x/platform@1.78.0",
         "jsr:@spy4x/preact-cn",
-        "jsr:@spy4x/preact-icons@^6.1.1",
-        "jsr:@spy4x/preact-theme@^6.1.1",
-        "jsr:@spy4x/preact-ui@^6.1.1",
+        "jsr:@spy4x/preact-icons@^6.2.0",
+        "jsr:@spy4x/preact-theme@^6.2.0",
+        "jsr:@spy4x/preact-ui@^6.2.0",
         "jsr:@spy4x/time@1.78.0",
         "npm:@preact/signals@^2.5.1",
         "npm:preact@^10.29.8"
       ]
     },
-    "@spy4x/preact-theme@6.1.1": {
-      "integrity": "c1434f59b588a33ad3bc709939375afc8582ee666fb45ddf17bad469186276a1",
+    "@spy4x/preact-theme@6.2.0": {
+      "integrity": "c0f7625fdc5a329cab8aba096c73c182c24664ee2f6d18b053639b48d6a6170e",
       "dependencies": [
         "jsr:@spy4x/platform@1.78.0",
         "jsr:@std/path@1.1.6",
         "jsr:@std/semver@1.0.8"
       ]
     },
-    "@spy4x/preact-ui@6.1.1": {
-      "integrity": "f694abf9d88e02113fce4e1582a07c2ba216f8f74cb5e683656f3ac0ca23f757",
+    "@spy4x/preact-ui@6.2.0": {
+      "integrity": "820f0f62e5e1e07e6633221a17f5aa6dbc33d3e4d871e2633a6e53ecdff4650c",
       "dependencies": [
         "jsr:@spy4x/platform@1.78.0",
         "jsr:@spy4x/preact-cn",
-        "jsr:@spy4x/preact-icons@^6.1.1",
-        "jsr:@spy4x/preact-theme@^6.1.1",
+        "jsr:@spy4x/preact-icons@^6.2.0",
+        "jsr:@spy4x/preact-theme@^6.2.0",
         "jsr:@spy4x/time@1.78.0",
         "npm:@preact/signals@^2.5.1",
         "npm:preact@^10.29.8"
@@ -1245,22 +1245,22 @@
       ],
       "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__platform/1.79.0.tgz"
     },
-    "@jsr/spy4x__preact-cn@6.1.1": {
-      "integrity": "sha512-CZRvgPkSGUrq4kfUSSe55A4aeWFXIy055ahcZS/fh55oVJT7Hgiq5PpaRydNbhYAUahhO/im81zonYPTdvTK1w==",
+    "@jsr/spy4x__preact-cn@6.2.0": {
+      "integrity": "sha512-qbZ+bIIyD+0bn3TEXCP0G82vrIOIKqmOC94n5lQnjCX4zpr2+FQ//94VE3m7Zj0YhIUpO1BdfpQZHy+s7LiKQg==",
       "dependencies": [
         "tailwind-merge"
       ],
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-cn/6.1.1.tgz"
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-cn/6.2.0.tgz"
     },
-    "@jsr/spy4x__preact-icons@6.1.1": {
-      "integrity": "sha512-T962Unsf06BCE+MdWRryqyx20IgGPK16EAgQReT5VNef+fA9jQ95pGT3UvPBjxbI3AHTF8oGyMH++k953a5vgQ==",
+    "@jsr/spy4x__preact-icons@6.2.0": {
+      "integrity": "sha512-h9cJv6kNhO4VFPjlOSNYAh3QK8Sy2WDymQdNgOe/eHjEYAPO0kwqaEJFz0WKABvRa5zl2t+aa8x3e3yIJuK9vw==",
       "dependencies": [
         "preact"
       ],
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-icons/6.1.1.tgz"
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-icons/6.2.0.tgz"
     },
-    "@jsr/spy4x__preact-system@6.1.1": {
-      "integrity": "sha512-fKz31ERcpEmw0Ebq9EpecD9TiNsnngCCe7y/UxjNVJ7drpMGUvNli53hAxOBIOhxcP/K++R+SuVgi3f81C8rKQ==",
+    "@jsr/spy4x__preact-system@6.2.0": {
+      "integrity": "sha512-H6bxoj7o2U62aCfl8KVvguNs4P78awvbgqx9isUHFC4TaKb0LcjbmAAks3l8dbZ9fJKERCW6LgrVOQmIhBo3Mw==",
       "dependencies": [
         "@jsr/spy4x__platform@1.78.0",
         "@jsr/spy4x__preact-cn",
@@ -1271,19 +1271,19 @@
         "@preact/signals",
         "preact"
       ],
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-system/6.1.1.tgz"
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-system/6.2.0.tgz"
     },
-    "@jsr/spy4x__preact-theme@6.1.1": {
-      "integrity": "sha512-eTSj2RZnmuwUXe9LGmOoADImBy31fheIBZBFV2tK59aob9O6uwWeyxA/ZJtABFoRWSQcNW1bUJhQrq6kMzei5Q==",
+    "@jsr/spy4x__preact-theme@6.2.0": {
+      "integrity": "sha512-klnc1FdpnNMX/OZpRPoYWqBiXlPsXabZX41DRRWuiBjEaa13f1e6OedqqDu1GE84q3N3s/f3TxIAijIJMIM1ow==",
       "dependencies": [
         "@jsr/spy4x__platform@1.78.0",
         "@jsr/std__path",
         "@jsr/std__semver"
       ],
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-theme/6.1.1.tgz"
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-theme/6.2.0.tgz"
     },
-    "@jsr/spy4x__preact-ui@6.1.1": {
-      "integrity": "sha512-sRE0P69HzS61PN7Db0rSIKwpqDELiTyUNHpcKqDz/wWGT8s9k/9M2xQ7EAjANpFDYWmkaNuu5HseqtRKO/W6eg==",
+    "@jsr/spy4x__preact-ui@6.2.0": {
+      "integrity": "sha512-fnWnUXkcvtHsmVPGpLHTcQiGlZDdBZUoXlpMP6lGiJcTZWXe0TVLiq6e+KCnO5T33G8oJ5eftwopmbF4JP46ug==",
       "dependencies": [
         "@jsr/spy4x__platform@1.78.0",
         "@jsr/spy4x__preact-cn",
@@ -1293,7 +1293,7 @@
         "@preact/signals",
         "preact"
       ],
-      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-ui/6.1.1.tgz"
+      "tarball": "https://npm.jsr.io/~/11/@jsr/spy4x__preact-ui/6.2.0.tgz"
     },
     "@jsr/spy4x__time@1.78.0": {
       "integrity": "sha512-x7BBsXAn4dlcc9vsDZPg/PRc4wZvph7PWhEo9cIrNky6G7PAUvxC3BT/SvJFX11dPbMp2essFjykW6Kxht+0cQ==",
@@ -2633,12 +2633,12 @@
       "jsr:@spy4x/integrations@1.79.0",
       "jsr:@spy4x/net@1.79.0",
       "jsr:@spy4x/platform@1.79.0",
-      "jsr:@spy4x/preact-charts@6.1.1",
-      "jsr:@spy4x/preact-icons@6.1.1",
-      "jsr:@spy4x/preact-signals@6.1.1",
-      "jsr:@spy4x/preact-system@6.1.1",
-      "jsr:@spy4x/preact-theme@6.1.1",
-      "jsr:@spy4x/preact-ui@6.1.1",
+      "jsr:@spy4x/preact-charts@6.2.0",
+      "jsr:@spy4x/preact-icons@6.2.0",
+      "jsr:@spy4x/preact-signals@6.2.0",
+      "jsr:@spy4x/preact-system@6.2.0",
+      "jsr:@spy4x/preact-theme@6.2.0",
+      "jsr:@spy4x/preact-ui@6.2.0",
       "jsr:@spy4x/realtime@1.79.0",
       "jsr:@spy4x/server@1.79.0",
       "jsr:@spy4x/time@1.79.0",
@@ -2653,7 +2653,7 @@
       "jsr:@std/yaml@1.3.0",
       "npm:@axe-core/playwright@4.13.0",
       "npm:@jsr/spy4x__platform@1.79.0",
-      "npm:@jsr/spy4x__preact-system@6.1.1",
+      "npm:@jsr/spy4x__preact-system@6.2.0",
       "npm:@playwright/test@1.57.0",
       "npm:@preact/signals-core@1.12.1",
       "npm:@preact/signals@2.5.1",

@@ -1,5 +1,4 @@
 /// <reference lib="deno.ns" />
-import { readFileSync } from "node:fs"
 import { build, defineConfig } from "vite"
 import { fromFileUrl } from "@std/path"
 import deno from "@deno/vite-plugin"
@@ -7,6 +6,7 @@ import preact from "@preact/preset-vite"
 import tailwindcss from "@tailwindcss/vite"
 import { themeBootstrapScript } from "@spy4x/preact-signals/theme"
 import {
+  denoModuleIds,
   npmSpecifiers,
   preactThemeCss,
   requireComponentCss,
@@ -15,13 +15,6 @@ import {
 } from "@spy4x/preact-theme/vite"
 import { nginxAddHeaders, securityHeaderList } from "@spy4x/server/http/security-headers"
 import { PROVIDER_AVATAR_ORIGINS } from "@domain/identity"
-
-/** The pinned @spy4x/preact-ui version, read from deno.jsonc. */
-const PREACT_UI_VERSION = readFileSync(new URL(`../../deno.jsonc`, import.meta.url), `utf8`)
-  .match(/"jsr:@spy4x\/preact-ui@([^"]+)"/)?.[1]
-if (!PREACT_UI_VERSION) throw new Error(`deno.jsonc pins no @spy4x/preact-ui version`)
-/** The date format module at the pinned version; see the alias below for why it needs one. */
-const PREACT_UI_FORMAT = `https://jsr.io/@spy4x/preact-ui/${PREACT_UI_VERSION}/format.tsx`
 
 const SW_ENTRY = fromFileUrl(new URL("./src/sw.ts", import.meta.url))
 const BUILT_PAGE = fromFileUrl(new URL("./dist/index.html", import.meta.url))
@@ -66,6 +59,9 @@ const REQUIRED_SELECTORS = [
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    // One id per Deno module, so a context such as the date format's loads once and the screens
+    // read the copy the app provides (spy4x/preact-components#785). It must come before `deno()`.
+    denoModuleIds(),
     npmSpecifiers({ readTextFile: Deno.readTextFile }),
     deno(),
     preact(),
@@ -153,14 +149,6 @@ export default defineConfig({
     alias: [{
       find: /^@ui\//,
       replacement: fromFileUrl(new URL("../../libs/ui/", import.meta.url)),
-    }, {
-      // One copy of the date format's context, so the screens read the one the app provides.
-      // @deno/vite-plugin 2.0.4 names a JSR module after the specifier the loader gave back, which
-      // is `jsr:/…` until the package is loaded and `https://jsr.io/…` after: the first module to
-      // import it got a copy of its own. Its URL has one name, built from the deno.jsonc pin, so it
-      // moves with it; remove it once the Vite plugins of @spy4x/preact-theme give each module one name.
-      find: /^@spy4x\/preact-ui\/format$/,
-      replacement: PREACT_UI_FORMAT,
     }],
   },
   optimizeDeps: {
