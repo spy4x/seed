@@ -179,11 +179,9 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
             <WindowFrame
               variant="terminal"
               title="Quick start"
-              class="lg:absolute lg:bottom-0 lg:left-0 lg:z-10 lg:w-lg"
+              class="lg:absolute lg:bottom-0 lg:left-0 lg:z-10 lg:w-2xl"
             >
-              {[QUICK_START[0], QUICK_START[4], QUICK_START[5]].map((line) => `$ ${line}`).join(
-                `\n`,
-              )}
+              {QUICK_START.map((line) => `$ ${line}`).join(`\n`)}
             </WindowFrame>
             <WindowFrame
               variant="browser"

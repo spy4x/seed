@@ -6,7 +6,7 @@ import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
 import Compare from "./routes/compare.tsx"
 import Features from "./routes/features.tsx"
-import Home, { HOME_HEAD } from "./routes/index.tsx"
+import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
 import Mvp, { MVP_HEAD } from "./routes/mvp.tsx"
 import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
 import Privacy from "./routes/privacy.tsx"
@@ -112,6 +112,13 @@ describe("the public website", () => {
     expect(metaContent(html, "og:url")).toBe(`${site}/`)
     expect(metaContent(html, "description")).toBe(HOME_HEAD.description)
     expect(html.match(/<title>/g)).toHaveLength(1)
+  })
+
+  it("shows every quick-start command in the hero, from creating the repository to starting it", async () => {
+    const { html } = await page("/")
+
+    const hero = html.slice(html.indexOf(`id="hero-title"`), html.indexOf(`id="features"`))
+    for (const line of QUICK_START) expect(hero).toContain(`$ ${line}`)
   })
 
   it("names a page after its own title, then the site, when the title does not name Seed", async () => {
