@@ -1,4 +1,4 @@
-import type { JSX } from "preact"
+import { Fragment, type JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -35,6 +35,19 @@ export function showsEmailBanner(status: EmailStatus | null): boolean {
 }
 
 /**
+ * An address that a narrow screen wraps after its `@` and before its dots, never mid-word:
+ * `ada@<wbr>example<wbr>.com`. A part too long for a whole line still breaks anywhere.
+ */
+function breakableAddress(email: string): JSX.Element[] {
+  return email.split(/(?<=@)|(?=\.)/).map((part, index) => (
+    <Fragment key={index}>
+      {index > 0 && <wbr />}
+      {part}
+    </Fragment>
+  ))
+}
+
+/**
  * The notice a signed-in page shows while an address waits for its code. Nothing when there is
  * none (`showsEmailBanner`). Its action opens the page where the code goes.
  */
@@ -59,7 +72,8 @@ export function EmailBanner(
         </Button>
       }
     >
-      Verify <strong class="wrap-anywhere">{email}</strong> with the code we mail there.
+      Verify <strong class="wrap-anywhere">{breakableAddress(email!)}</strong>{" "}
+      with the code we mail there.
     </Notice>
   )
 }

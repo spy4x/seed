@@ -1,6 +1,6 @@
 import { signal } from "@preact/signals"
 import { apiFetch } from "@spy4x/platform/api"
-import { canOpenAdmin, type User } from "@domain/identity"
+import { canOpenAdmin, type EmailStatus, type User } from "@domain/identity"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import type { AdminOperator } from "@ui/admin-user-screen.tsx"
 
@@ -64,9 +64,18 @@ export function hasAdminAccess(user: User | null): boolean {
   return user !== null && canOpenAdmin(user.role)
 }
 
-/** The display name of the signed-in operator. */
-export function operatorName(user: User): string {
-  return `${user.firstName} ${user.lastName}`.trim() || "Operator"
+/**
+ * The display name of the signed-in operator: their name, else their address, as the product's
+ * app shows a person with no name. "Operator" only for an account with neither.
+ */
+export function operatorName(user: User, email: string | null = null): string {
+  return `${user.firstName} ${user.lastName}`.trim() || email || "Operator"
+}
+
+/** The signed-in operator's address, or `null` for an account without one or a failed read. */
+export async function readOperatorEmail(request: AdminFetch): Promise<string | null> {
+  const answer = await attempt(() => request<EmailStatus>(`/api/auth/email`))
+  return answer.ok ? answer.data.email : null
 }
 
 /** Runs `call`, turning a thrown error (the network is down) into a failed answer. */

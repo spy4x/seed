@@ -92,6 +92,24 @@ describe("OfflineStatus", () => {
     expect(text()).toContain("Tag Mine")
   })
 
+  it("keeps a section gap between itself and the page header under it", async () => {
+    const storage = createMemoryStorage()
+    await storage.of(7).tagsQueue.putEntry({
+      key: "tag-key",
+      entityId: "t-1",
+      kind: "create",
+      baseVersion: 0,
+      payload: { groupId: "g-1", name: "Mine", color: "red" },
+      attempted: false,
+      status: "pending",
+      queuedAt: "2026-10-01T08:00:00.000Z",
+    })
+
+    await mountStrip(storage)
+
+    expect(root!.querySelector("[data-e2e=offline-status]")!.classList.contains("mb-8")).toBe(true)
+  })
+
   it("tells the person a tag was taken off their notes, until they dismiss it", async () => {
     const layer = await mountStrip(createMemoryStorage())
     const message = "A tag you created offline could not be saved, so it was taken off 2 notes."

@@ -20,13 +20,14 @@ async function statusOf(app: Hono<APIContext>, url: string, method = "GET") {
 }
 
 describe("admin host gate", () => {
-  it("lets the admin host reach the operator area and its sign-in, sign-out and session", async () => {
+  it("lets the admin host reach the operator area, sign-in, sign-out, session and address", async () => {
     const app = buildApp()
     for (
       const path of [
         "/api/admin/users",
         "/api/admin/users/42/block",
         "/api/auth/me",
+        "/api/auth/email",
         "/api/auth/password/check",
         "/api/auth/totp/check",
         "/api/auth/sign-out",
@@ -44,6 +45,7 @@ describe("admin host gate", () => {
         "/api/auth/password/sign-up",
         "/api/auth/google/start",
         "/api/auth/account/delete",
+        "/api/auth/email/change",
         "/api/groups",
         "/api/tokens",
         "/api/v1/notes",

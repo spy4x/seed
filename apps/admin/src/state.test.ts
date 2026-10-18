@@ -1,7 +1,13 @@
 import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
 import { type User, UserMFAStatus, UserRole } from "@domain/identity"
-import { type AdminApi, type AdminApiResult, createAdminStore } from "./state.ts"
+import {
+  type AdminApi,
+  type AdminApiResult,
+  createAdminStore,
+  operatorName,
+  readOperatorEmail,
+} from "./state.ts"
 
 const operator = {
   id: 7,
@@ -113,4 +119,21 @@ it("signing out ends the session even when the server cannot be reached", async 
   await store.signOut()
   expect(store.session.value.step).toBe("credentials")
   expect(store.session.value.user).toBe(null)
+})
+
+it("names an operator with no name by their address, and Operator only without one", () => {
+  expect(operatorName(operator, `olga@example.com`)).toBe(`Olga Operator`)
+  const nameless = { ...operator, firstName: ``, lastName: `` }
+  expect(operatorName(nameless, `olga@example.com`)).toBe(`olga@example.com`)
+  expect(operatorName(nameless)).toBe(`Operator`)
+})
+
+it("reads the operator's address from the API, and none when the call fails", async () => {
+  const status = { email: `olga@example.com`, proven: true, pending: null }
+  const { api, calls } = fakeApi({ fetch: <T>() => Promise.resolve(ok(status as T)) })
+  expect(await readOperatorEmail(api.fetch)).toBe(`olga@example.com`)
+  expect(calls).toEqual([[`fetch`, `/api/auth/email`, undefined]])
+
+  const down = fakeApi({ fetch: () => Promise.reject(new TypeError(`Failed to fetch`)) })
+  expect(await readOperatorEmail(down.api.fetch)).toBe(null)
 })

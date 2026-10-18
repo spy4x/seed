@@ -99,7 +99,11 @@ export function AdminShell(
       currentPath={currentPath}
       navigate={navigate}
       account={{
-        user: { name: operator.name, email: operator.email ?? undefined },
+        // An operator known only by the address would read it twice.
+        user: {
+          name: operator.name,
+          email: operator.email && operator.email !== operator.name ? operator.email : undefined,
+        },
         theme: theme?.preference.value,
         onThemeChange: theme && ((choice) => theme.set(choice)),
         signOut: { label: "Sign out", onClick: onSignOut },

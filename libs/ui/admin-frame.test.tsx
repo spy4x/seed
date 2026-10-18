@@ -192,6 +192,24 @@ describe("AdminShell", () => {
     expect(header).toMatch(/Admin$/)
   })
 
+  it("shows an operator known only by the address once, in the cell, its menu and the sheet", async () => {
+    const address = "ops@example.com"
+    await mount(
+      <AdminShell
+        navItems={modules}
+        currentPath="/"
+        operator={{ name: address, email: address }}
+        onSignOut={() => {}}
+      >
+        page
+      </AdminShell>,
+    )
+    const times = (text: string) => text.split(address).length - 1
+    expect(find(ACCOUNT).getAttribute("aria-label")).toBe(`Account: ${address}, Admin`)
+    expect(times(find(ACCOUNT).parentElement!.querySelector("[role=menu]")!.textContent!)).toBe(1)
+    expect(times(find(SHEET_ACCOUNT).textContent!)).toBe(1)
+  })
+
   it("offers the theme and Sign out in the operator's menu and in the phone's sheet", async () => {
     const theme = themeSpy()
     const signedOut: true[] = []

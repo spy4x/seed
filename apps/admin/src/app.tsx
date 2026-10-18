@@ -1,6 +1,6 @@
 import "./app.css"
 import type { JSX } from "preact"
-import { useEffect, useMemo } from "preact/hooks"
+import { useEffect, useMemo, useState } from "preact/hooks"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Toastr } from "@spy4x/preact-ui/toastr"
 import type { createThemeStore } from "@spy4x/preact-signals/theme"
@@ -16,7 +16,7 @@ import {
   AdminShell,
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
-import { type AdminStore, hasAdminAccess, operatorName } from "./state.ts"
+import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from "./state.ts"
 import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
@@ -57,6 +57,17 @@ export function App(
   useEffect(() => {
     if (user) void own.load()
     else own.reset()
+  }, [user?.id])
+  // The operator's address, the account cell's name when they have none (#172).
+  const [email, setEmail] = useState<string | null>(null)
+  useEffect(() => {
+    setEmail(null)
+    if (!user) return
+    let current = true
+    void readOperatorEmail(store.request).then((address) => current && setEmail(address))
+    return () => {
+      current = false
+    }
   }, [user?.id])
 
   // One context per signed-in session, so a module's state starts empty for the next one.
@@ -106,7 +117,7 @@ export function App(
   }
   if (!hasAdminAccess(user)) {
     return (
-      <AdminFrame operatorName={operatorName(user)} canSignOut onSignOut={store.signOut}>
+      <AdminFrame operatorName={operatorName(user, email)} canSignOut onSignOut={store.signOut}>
         <AdminNoAccess />
       </AdminFrame>
     )
@@ -117,7 +128,7 @@ export function App(
       <AdminShell
         navItems={modules.map((module) => module.nav)}
         currentPath={path}
-        operator={{ name: operatorName(user), email: null }}
+        operator={{ name: operatorName(user, email), email }}
         theme={theme}
         onSignOut={store.signOut}
         navigate={navigate}
