@@ -2,8 +2,9 @@
 
 # Seed
 
-**A SaaS starting point on web standards: sign-up with a second factor, groups, billing, an API, a
-web app, a worker and Postgres. Work in progress.**
+**The groundwork of your SaaS, already built. A free, MIT-licensed starter: sign-in with a second
+factor, teams with roles, per-seat Stripe billing, realtime, an offline app and an admin area.
+Deno, Postgres, Docker Compose. Work in progress.**
 
 [![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -40,13 +41,13 @@ on the [open issues](https://github.com/spy4x/seed/issues).
 - **Offline-first SPA.** The SPA keeps the last notes and groups in IndexedDB (the shared data cache), opens with no
   network, and queues note writes with their idempotency keys. It sends them on reconnect and
   shows a stale write as a conflict to settle, never as a silent overwrite. The layer sits in one
-  folder, so a product that does not want it deletes the folder and keeps an online SPA:
-  [docs/offline.md](docs/offline.md).
+  folder, so a product that does not want it deletes the folder, follows the removal steps in
+  [docs/offline.md](docs/offline.md#removing-the-layer) and keeps an online SPA.
 - **Mailing lists.** Visitors subscribe at `/subscribe` with double opt-in, and every list mail
   carries a one-click unsubscribe. The worker signs the links with `SUBSCRIBERS_SECRET` and sends
   the confirm, welcome and issue mail: [docs/architecture.md](docs/architecture.md#mail-subscriptions).
-- **CQRS with an outbox.** Commands, queries and events go through one bus. Creating a shared
-  group writes its event to `outbox_events`, and the worker drains that table.
+- **CQRS with an outbox.** Commands, queries and events go through one bus. Every group change
+  writes its event to `outbox_events`, and the worker drains that table.
 - **Safe API defaults.** Every mutation must come from the web app's own origin, and group lists
   page with HMAC-signed cursors.
 - **Built on web standards.** Hono handlers take a Fetch `Request` and return a `Response`;
@@ -137,4 +138,4 @@ Licensed under [MIT](LICENSE). Copyright (c) 2026 Anton Shubin.
 
 ---
 
-Made by Anton Shubin · [antonshubin.com/tools/template](https://antonshubin.com/tools/template)
+Made by Anton Shubin · [antonshubin.com/tools/seed](https://antonshubin.com/tools/seed)
