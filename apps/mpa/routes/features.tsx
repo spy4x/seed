@@ -41,6 +41,11 @@ function issue(number: number): string {
   return `${REPOSITORY_URL}/issues/${number}`
 }
 
+/** A closed issue from before the move, which stays in the archived spy4x/template. */
+function templateIssue(number: number): string {
+  return `https://github.com/spy4x/template/issues/${number}`
+}
+
 /** A feature as the page lists it, without the side its picture goes on: the tier decides that. */
 type Feature = Omit<FeatureSectionProps, "flip"> & { nav: string }
 
@@ -79,7 +84,7 @@ const TIERS: readonly Tier[] = [
           `Personal API tokens, stored only as keyed hashes`,
           `Wrong passwords counted per sign-in name, with a short lock, from any network address`,
         ],
-        notYet: [{ label: `Passkeys`, issue: issue(162) }, { label: `Magic links` }],
+        notYet: [{ label: `Passkeys`, issue: issue(222) }, { label: `Magic links` }],
         code: { label: `Read the sign-in code`, href: source(`apps/api/services/sign-in.ts`) },
         visual: (
           <WindowFrame variant="browser" title="app.seedsaas.com/profile">
@@ -159,8 +164,8 @@ const TIERS: readonly Tier[] = [
           `Nightly clean-up of read notifications, dead invitations and old audit events`,
         ],
         notYet: [
-          { label: `Downloading an account's data`, issue: issue(145) },
-          { label: `Translations: the app is English only`, issue: issue(200) },
+          { label: `Downloading an account's data`, issue: issue(229) },
+          { label: `Translations: the app is English only`, issue: issue(216) },
         ],
         code: {
           label: `Read the account deletion code`,
@@ -296,9 +301,9 @@ const TIERS: readonly Tier[] = [
           `Nobody can act on a person of an equal or higher role`,
         ],
         notYet: [
-          { label: `Groups for operators`, issue: issue(426) },
-          { label: `Billing for operators`, issue: issue(196) },
-          { label: `Newsletter for operators`, issue: issue(428) },
+          { label: `Groups for operators`, issue: templateIssue(426) },
+          { label: `Billing for operators`, issue: templateIssue(196) },
+          { label: `Newsletter for operators`, issue: templateIssue(428) },
         ],
         code: { label: `Read the admin app`, href: source(`apps/admin/`) },
         visual: (
@@ -327,7 +332,7 @@ const TIERS: readonly Tier[] = [
         ],
         notYet: [{
           label: `File uploads: no file store is bundled yet`,
-          issue: issue(157),
+          issue: issue(225),
         }],
         code: { label: `Read the Compose files`, href: source(`infra/compose/`) },
         visual: <DeployVisual />,

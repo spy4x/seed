@@ -47,7 +47,7 @@ export const ADMIN_BILLING_PATHS = {
 } as const
 
 /** Where the billing setup is described, for the action of the "Billing is off" state. */
-export const ADMIN_BILLING_SETUP_URL = `https://github.com/spy4x/template/blob/main/docs/billing.md`
+export const ADMIN_BILLING_SETUP_URL = `https://github.com/spy4x/seed/blob/main/docs/billing.md`
 
 /** The list's message when it could not be read, whatever the cause. */
 export const ADMIN_BILLING_LIST_ERROR =

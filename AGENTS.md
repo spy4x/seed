@@ -1,4 +1,4 @@
-# AGENTS.md — template
+# AGENTS.md — Seed
 
 Read `README.md` and `CONTRIBUTING.md` first. The global agent instructions own Git Flow, review
 and cleanup; this file adds what is specific to this repo.
@@ -73,8 +73,8 @@ has a counterpart in the admin panel, the operator area: the admin app (`apps/ad
 host (`ADMIN_DOMAIN`). A change that adds or modifies a feature in one of those apps adds or
 modifies its admin counterpart in the same PR, so the two never drift apart.
 
-**Open:** the Android app ([#414](https://github.com/spy4x/template/issues/414)) and the desktop
-app ([#413](https://github.com/spy4x/template/issues/413)) are not built yet.
+**Open:** the Android app ([#202](https://github.com/spy4x/seed/issues/202)) and the desktop
+app ([#203](https://github.com/spy4x/seed/issues/203)) are not built yet.
 
 ## Product screenshots
 

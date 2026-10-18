@@ -59,7 +59,7 @@ const PROOF = [
 
 /** The quick start, one command per line, as the README runs it. */
 export const QUICK_START = [
-  `gh repo create my-product --template spy4x/template --private --clone`,
+  `gh repo create my-product --template spy4x/seed --private --clone`,
   `cd my-product`,
   `cp infra/envs/.env.example infra/envs/.env   # then fill in the secrets`,
   `deno task vapid-key:create`,
