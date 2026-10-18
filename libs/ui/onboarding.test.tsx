@@ -19,6 +19,8 @@ const NAMES = [
   "cancelAnimationFrame",
   "HTMLElement",
   "Element",
+  "innerWidth",
+  "innerHeight",
 ] as const
 const own = Object.fromEntries(
   NAMES.map((name) => [name, (globalThis as Record<string, unknown>)[name]]),
@@ -27,7 +29,8 @@ const own = Object.fromEntries(
 beforeAll(() => {
   // Preact draws into `document`. A link is routed only when it points at the page's own origin
   // (`location`). The library's tour reads its target's style, lays itself out in an animation
-  // frame and asks `instanceof HTMLElement` when it puts focus back.
+  // frame and asks `instanceof HTMLElement` when it puts focus back; it places itself in the window
+  // (`innerWidth`, `innerHeight`).
   Object.assign(
     globalThis,
     Object.fromEntries(NAMES.map((name) => {
@@ -298,6 +301,23 @@ describe("first-steps tour", () => {
       expect(document.activeElement?.textContent).toBe("Get started")
     } finally {
       rail.remove()
+    }
+  })
+
+  it("names the account step's Go to button by the place, without the person's address", async () => {
+    const bottom = window.document.createElement("div")
+    bottom.setAttribute("data-e2e", "rail-shell-bottom")
+    bottom.innerHTML =
+      `<button data-e2e="account-menu-button" aria-label="Account: ada@example.com">A</button>`
+    window.document.body.appendChild(bottom)
+    // happy-dom lays nothing out; the tour names only a target that has a box.
+    const account = bottom.firstElementChild as unknown as HTMLElement
+    account.getBoundingClientRect = () => ({ width: 48, height: 48 }) as DOMRect
+    try {
+      await mount({ tourOpen: true, tourIndex: TOUR_STEPS.length - 1 })
+      expect(control("Go to Account").textContent).not.toContain("@")
+    } finally {
+      bottom.remove()
     }
   })
 

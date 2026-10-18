@@ -116,6 +116,15 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
 ]
 
+/**
+ * The tour's Go to button, named by the place only: the account button's name goes on with the
+ * person's address ("Account: ada@example.com"), which would wrap the button to two lines.
+ */
+export function tourGoToLabel(targetName: string): string {
+  const place = targetName.split(`:`)[0].trim()
+  return place ? `Go to ${place}` : `Go to the highlighted control`
+}
+
 /** What {@link OnboardingCard} takes. */
 export interface OnboardingCardProps {
   /** Which first steps the person's own data says are done. */
@@ -227,6 +236,7 @@ export function OnboardingCard(
         index={tourIndex}
         onIndexChange={onTourIndexChange}
         onClose={end}
+        goToLabel={tourGoToLabel}
       />
     </div>
   )
