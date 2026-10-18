@@ -87,8 +87,7 @@ async function captureStills(browser: Browser, theme: Theme): Promise<Record<str
     await page.locator("[data-e2e=profile-name]", {
       hasText: `${DEMO.firstName} ${DEMO.lastName}`,
     }).waitFor()
-    // The sidebar names the group once the groups have loaded.
-    await page.getByRole("button", { name: /^Group: / }).waitFor()
+    await profileLoaded(page, DEMO.email)
     await page.waitForTimeout(800)
     const profile = await page.screenshot()
     return { "sign-in": signIn, profile }
@@ -215,13 +214,29 @@ async function nextCode(page: Page, email: string, before: string | null): Promi
   throw new Error(`no sign-up code reached ${email} within 20 seconds`)
 }
 
+/** What `recordFlow` hands to `toGif`: the video and the parts of it to leave out. */
+interface Recording {
+  video: string
+  /** Seconds of blank start to trim. */
+  trim: number
+  /** Seconds into the video, from its start, between which the profile was still loading. */
+  loading: [number, number]
+}
+
+/** Waits until the profile shows everything it loads: the group, the e-mail and the checklist. */
+async function profileLoaded(page: Page, email: string): Promise<void> {
+  await page.getByRole("button", { name: /^Group: / }).waitFor()
+  await page.getByText(email, { exact: true }).filter({ visible: true }).first().waitFor()
+  await page.locator("[data-e2e=onboarding]").waitFor()
+}
+
 /**
  * Records sign-up with an address, a password and the mailed code, then naming the profile, the
  * way a person does it, with a drawn pointer.
  * The GIF is recorded in the light theme; the stills cover both.
- * Returns the WebM path and how many seconds of blank start to trim.
+ * Returns the WebM path, how many seconds of blank start to trim, and when the profile loaded.
  */
-async function recordFlow(browser: Browser, dir: string): Promise<{ video: string; trim: number }> {
+async function recordFlow(browser: Browser, dir: string): Promise<Recording> {
   const context = await browser.newContext({
     baseURL: BASE_URL,
     viewport: VIEWPORT,
@@ -233,6 +248,7 @@ async function recordFlow(browser: Browser, dir: string): Promise<{ video: strin
   const pointer = { x: 900, y: 620 }
   let page: Page | undefined
   let trim = 0
+  let loading: [number, number] = [0, 0]
   try {
     await context.addInitScript(`window.__demoPointerStart = ${JSON.stringify(pointer)}`)
     await context.addInitScript({ path: new URL("pointer.js", import.meta.url).pathname })
@@ -258,9 +274,15 @@ async function recordFlow(browser: Browser, dir: string): Promise<{ video: strin
     await typeLike(page, pointer, codeInput, code, h)
     await page.waitForTimeout(400)
     await clickLike(page, pointer, page.locator("[data-e2e=sign-up-code-submit]"), h)
+    // From the click until the profile has loaded, the page shows parts of it (the group chip as
+    // a bare chevron, the e-mail as "–"); the GIF leaves that stretch out.
+    const clicked = (Date.now() - started) / 1000
     await page.waitForURL(`${BASE_URL}/`)
+    await profileLoaded(page, DEMO.email)
+    // A moment for the last paint to reach the video.
+    await page.waitForTimeout(300)
+    loading = [clicked + 0.1, (Date.now() - started) / 1000]
     const edit = page.locator("[data-e2e=profile-edit]")
-    await edit.waitFor()
     await page.waitForTimeout(1000)
 
     await clickLike(page, pointer, edit, h)
@@ -278,11 +300,16 @@ async function recordFlow(browser: Browser, dir: string): Promise<{ video: strin
   }
   const video = await page?.video()?.path()
   if (!video) throw new Error("the recording context produced no video")
-  return { video, trim }
+  return { video, trim, loading }
 }
 
-async function toGif(video: string, trim: number, out: string): Promise<void> {
-  const filter = "fps=20,scale=800:-1:flags=lanczos,split[a][b];" +
+/**
+ * Converts the recording to a GIF from `trim` on, without the frames between `loading`'s two
+ * moments. The timestamps count from the video's start, which is when the page was created.
+ */
+async function toGif({ video, trim, loading: [from, to] }: Recording, out: string): Promise<void> {
+  const filter = `fps=20,select='not(between(t,${from.toFixed(2)},${to.toFixed(2)}))',` +
+    "setpts=N/20/TB,scale=800:-1:flags=lanczos,split[a][b];" +
     "[a]palettegen=max_colors=256:stats_mode=diff[p];" +
     "[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle"
   const { success, stderr } = await new Deno.Command("ffmpeg", {
@@ -309,8 +336,7 @@ const browser = await chromium.launch({ executablePath: Deno.env.get("CHROME_PAT
 const videoDir = await Deno.makeTempDir()
 try {
   await warmUp(browser)
-  const { video, trim } = await recordFlow(browser, videoDir)
-  await toGif(video, trim, `${OUT_DIR}sign-up-flow.gif`)
+  await toGif(await recordFlow(browser, videoDir), `${OUT_DIR}sign-up-flow.gif`)
   let darkProfile: Uint8Array | undefined
   for (const theme of THEMES) {
     const stills = await captureStills(browser, theme)

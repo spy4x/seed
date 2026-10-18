@@ -42,7 +42,7 @@ A screen that fails is listed at the end and the run exits 1; the others are sti
 | `notes`            | desktop and mobile   | 1280, 640 / 780, 390 |
 | `profile-security` | desktop              | 1280, 640            |
 | `group-members`    | desktop              | 1280, 640            |
-| `billing`          | desktop              | 1280, 640            |
+| `billing`          | desktop and mobile   | 1280, 640 / 780, 390 |
 | `notifications`    | desktop              | 1280, 640            |
 | `activity`         | desktop              | 1280, 640            |
 | `admin-overview`   | desktop (admin host) | 1280, 640            |

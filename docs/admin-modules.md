@@ -1,17 +1,17 @@
 # Admin modules
 
 The operator area (`apps/admin`, on `ADMIN_DOMAIN`) is a list of modules. A module is one section of
-the sidebar: its entry, its pages, optionally tabs on a person's page, and the API routes those
+the icon rail: its entry, its pages, optionally tabs on a person's page, and the API routes those
 pages call. Every feature of the product has its counterpart here (see "The admin panel stays in
 sync" in `AGENTS.md`), and that counterpart is a module.
 
 ## The registered modules
 
-The two registries list the same ids in the same order, which is the sidebar's order. A test on
+The two registries list the same ids in the same order, which is the icon rail's order. A test on
 each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 `apps/api/routes/admin/+routes.test.ts`).
 
-| Id           | Sidebar entry | Pages                     | Person tabs                         | API                     |
+| Id           | Rail entry    | Pages                     | Person tabs                         | API                     |
 | ------------ | ------------- | ------------------------- | ----------------------------------- | ----------------------- |
 | `dashboard`  | Dashboard     | `/`                       |                                     | `GET /api/admin/stats`  |
 | `users`      | Users         | `/users`, `/users/:id`    | (the page's own five)               | `/api/admin/users/*`    |
@@ -22,8 +22,8 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | `system`     | System        | `/system`                 |                                     | `/api/admin/system*`    |
 | `api-tokens` | API tokens    | `/api-tokens`             | API tokens, Devices, Notifications  | `/api/admin/api-tokens*` |
 
-A module marked "none yet" is registered with a "coming soon" page (and tabs), so the sidebar shows
-the whole plan. Its own lane fills it in.
+A module marked "none yet" is registered with a "coming soon" page (and tabs), so the icon rail
+shows the whole plan. Its own lane fills it in.
 
 The `api-tokens` module also answers a person's reads and its device removal under
 `/api/admin/users/:id/`: `api-tokens`, `devices`, `notifications` and `devices/:deviceId/remove`.

@@ -114,6 +114,8 @@ interface OgCard {
   shot: string
   /** How far down the screenshot its frame starts, in the card's pixels. */
   top?: number
+  /** How wide the screenshot is drawn, in the card's pixels: 860 unless set. */
+  width?: number
 }
 
 const OG_CARDS: OgCard[] = [
@@ -150,9 +152,12 @@ const OG_CARDS: OgCard[] = [
     eyebrow: "For founders",
     title: "Your MVP, live and taking payments.",
     sub: "From $8,000 · from 3 weeks · you own everything",
-    shot: "billing-dark-1280.webp",
-    // The plan and its price, below the member list.
-    top: 136,
+    // The phone picture, which has no rail: the plan alone, near its real size.
+    shot: "billing-dark-780.webp",
+    width: 480,
+    // The frame starts 531 card pixels down the picture (its 431st CSS pixel), in the empty
+    // canvas above the "Plan" heading, and ends below the footnote, above the tab bar.
+    top: 531,
   },
   {
     file: "subscribe",
@@ -521,21 +526,32 @@ const SCREENS: Screen[] = [
         `/groups/${seeded.groupId}`,
         page.locator("[data-e2e=group-member]").nth(3),
       )
-      // The members come after the group's form on the same page.
+      // Linus's menu open: the roles an owner hands out, which the billing picture lacks.
+      await page.locator("[data-e2e=group-member-menu]").nth(1).click()
+      await page.getByRole("menuitem", { name: "Make Viewer" }).waitFor()
+      // The menu focuses its first item a frame after it opens, which scrolls the page; the
+      // members go back to the top only after that.
+      await page.waitForFunction(() => document.activeElement?.getAttribute("role") === "menuitem")
       await scrollToTop(page.locator("[data-e2e=group-section-members]"))
     },
   },
   {
     name: "billing",
-    forms: ["desktop"],
+    forms: ["desktop", "mobile"],
     async open(page, seeded) {
       await gotoApp(
         page,
         `/groups/${seeded.groupId}`,
         page.locator("[data-e2e=billing-plan][data-plan=pro]"),
       )
-      // From the members down to the plan, which ends the page.
-      await scrollToTop(page.locator("[data-e2e=group-section-members]"))
+      // On a desktop, from the members down to the plan, which ends the page. On a phone, the
+      // plan alone: the home page's billing card crops it at close to its real size.
+      const mobile = page.viewportSize()!.width < 768
+      await scrollToTop(
+        page.locator(
+          mobile ? "[data-e2e=group-section-billing]" : "[data-e2e=group-section-members]",
+        ),
+      )
     },
   },
   {
@@ -802,6 +818,7 @@ async function renderOgImages(browser: Browser, contexts: BrowserContext[]): Pro
           sub: card.sub,
           shot: card.shot ? `/static/shots/${card.shot}` : "",
           top: String(card.top ?? 0),
+          width: String(card.width ?? 860),
         })
         await page.goto(`${origin}/screenshots/og.html?${query}`)
         await page.evaluate(() => document.fonts.ready)
