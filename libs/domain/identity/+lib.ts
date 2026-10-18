@@ -205,9 +205,9 @@ export type AuthPasswordChange = typeof authPasswordChangeSchema.infer
 
 /**
  * Minutes after a sign-in with Google or GitHub during which that session confirms a step that
- * otherwise asks for the password. An account with no password has only this to prove, on a
- * device left open, that the person is still there: deleting the account, setting a first
- * password and changing the address each ask for it.
+ * otherwise asks for the password. It proves the browser is signed in to the provider, not who sits
+ * at it (#204). Deleting the account, setting a first password and changing the address each ask
+ * for it when the account has no password.
  */
 export const PROVIDER_PROOF_MINUTES = 5
 
