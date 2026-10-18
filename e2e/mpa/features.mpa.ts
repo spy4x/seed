@@ -39,7 +39,7 @@ test.describe(`without JavaScript`, () => {
       .evaluateAll((links) => links.map((link) => link.getAttribute(`href`)!))
     expect(hrefs.length).toBeGreaterThanOrEqual(10)
     for (const href of hrefs) {
-      const match = href.match(/^https:\/\/github\.com\/spy4x\/template\/(tree|blob)\/main\/(.+)$/)
+      const match = href.match(new RegExp(`^${REPOSITORY}/(tree|blob)/main/(.+)$`))
       expect(match, href).not.toBeNull()
       const info = Deno.statSync(new URL(match![2], ROOT))
       expect(info.isDirectory, href).toBe(match![1] === `tree`)
