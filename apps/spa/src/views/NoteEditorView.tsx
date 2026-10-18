@@ -1,4 +1,4 @@
-import { useEffect } from "preact/hooks"
+import { useEffect, useRef } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { canMutateNotes } from "@domain/groups"
 import { NoteEditorScreen } from "@ui/note-editor-screen.tsx"
@@ -10,6 +10,7 @@ import { tagsStore } from "../state/tags.ts"
 import { selectionStore } from "../state/selection.ts"
 import { OfflineStatus } from "../modules.ts"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
+import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { isSpaPath } from "./spa-paths.ts"
 
 /**
@@ -46,6 +47,16 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   // The open note is read once the list is: until then it is neither found nor missing.
   const readingNote = !creating && editing === null && !missing && listError === null
   const errors = creating ? store.createErrors.value : store.editErrors.value
+  const loading = groupsStore.loading.value || groupId === null || readingNote
+  // A route change focuses the loading page's heading, which the note's own heading then replaces,
+  // leaving focus on the page body. Once the note shows, lost focus goes to its heading.
+  const wasLoading = useRef(loading)
+  useEffect(() => {
+    if (wasLoading.current && !loading && document.activeElement === document.body) {
+      pageHeading()?.focus()
+    }
+    wasLoading.current = loading
+  }, [loading])
   return (
     <>
       {groupId && (
@@ -58,7 +69,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
         group={membership
           ? { id: membership.id, name: membership.name, canWrite: canMutateNotes(membership.role) }
           : null}
-        loading={groupsStore.loading.value || groupId === null || readingNote}
+        loading={loading}
         notFound={missing || (!creating && editing === null && listError !== null)}
         elsewhere={missing && elsewhereGroup ? { name: elsewhereGroup.name } : null}
         onSwitchGroup={elsewhereGroup && (() => void selectionStore.select(elsewhereGroup.id))}
