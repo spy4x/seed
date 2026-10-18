@@ -9,6 +9,7 @@ import {
   rememberUser,
   startModules,
   stopChanges,
+  wipeDevice,
 } from "../modules.ts"
 import type { NoteItem } from "../state/notes.ts"
 import type { TagItem } from "../state/tags.ts"
@@ -116,13 +117,50 @@ function startPage(id: number, storage: ReturnType<typeof createMemoryStorage>):
   visiblePage()
   configureModules({ realtime: false, offline: true })
   sessionState.value = { ...signedOut, user: user(id) }
-  startModules(id, reads, { storage })
+  startModules(id, reads, { storage, databases: storage.databases })
 }
 
 /** What the page's `localStorage` holds: the remembered user and the deletions still owed. */
 let kept: ReturnType<typeof installLocalStorage>["kept"]
 let restoreLocalStorage = () => {}
 const OWED = "offline:owed-deletion"
+
+/** A Web Storage in memory with the parts a wipe walks: `length`, `key` and `clear`. */
+function webStorage(initial: Record<string, string> = {}) {
+  const entries = new Map(Object.entries(initial))
+  return {
+    entries,
+    get length() {
+      return entries.size
+    },
+    key: (index: number) => [...entries.keys()][index] ?? null,
+    getItem: (key: string) => entries.get(key) ?? null,
+    setItem: (key: string, value: string) => void entries.set(key, value),
+    removeItem: (key: string) => void entries.delete(key),
+    clear: () => entries.clear(),
+  }
+}
+
+/** Puts `local` and `session` in place of the page's storages; returns the way back. */
+function installWebStorage(local: Storage | object, session: Storage | object): () => void {
+  const real = {
+    local: Object.getOwnPropertyDescriptor(globalThis, "localStorage"),
+    session: Object.getOwnPropertyDescriptor(globalThis, "sessionStorage"),
+  }
+  Object.defineProperty(globalThis, "localStorage", { configurable: true, value: local })
+  Object.defineProperty(globalThis, "sessionStorage", { configurable: true, value: session })
+  return () => {
+    for (
+      const [name, descriptor] of [["localStorage", real.local], [
+        "sessionStorage",
+        real.session,
+      ]] as const
+    ) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor)
+      else delete (globalThis as Record<string, unknown>)[name]
+    }
+  }
+}
 
 beforeEach(() => {
   const installed = installLocalStorage()
@@ -281,16 +319,24 @@ describe("what the device keeps", () => {
     expect([...storage.of(7).reads.keys()]).toEqual([])
   })
 
-  it("deletes the tags on sign-out, and keeps the queued tag writes", async () => {
+  /** The sign-out in the app's order (`apps/spa/src/app.tsx`): the device first, then the layer. */
+  async function signOut(storage: ReturnType<typeof createMemoryStorage>): Promise<void> {
+    sessionState.value = signedOut
+    const wiped = wipeDevice(storage, storage.databases)
+    forgetModules()
+    await wiped
+    await settle()
+  }
+
+  it("deletes the tags and the queued tag writes on sign-out", async () => {
     const { storage, device } = await deviceInUse()
     startPage(7, storage)
     await settle()
 
-    forgetModules()
-    await settle()
+    await signOut(storage)
 
     expect(await device.tags.readTags("g-1")).toEqual([])
-    expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
+    expect(await device.tagsQueue.readOutbox()).toEqual([])
   })
 
   it("sends a tag queued on the device before the note that names it", async () => {
@@ -324,18 +370,51 @@ describe("what the device keeps", () => {
     expect(calls.map((call) => call.url)).toEqual(["/api/call/tag.create", "/api/call/note.create"])
   })
 
-  it("deletes the read copies and the notes on sign-out, and keeps the queued writes", async () => {
+  it("deletes the read copies, the notes and the queued writes on sign-out", async () => {
     const { storage, device } = await deviceInUse()
     server()
     startPage(7, storage)
     await settle()
 
-    forgetModules()
-    await settle()
+    await signOut(storage)
 
     expect([...device.reads.keys()]).toEqual([])
     expect(await device.notes.readNotes("g-1")).toEqual([])
-    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect(await device.queue.readOutbox()).toEqual([])
+    expect(currentLayer()).toBeNull()
+  })
+
+  it("deletes the app's browser storage on sign-out, and keeps only what finishes it and what belongs to the device", async () => {
+    const { storage } = await deviceInUse()
+    server()
+    startPage(7, storage)
+    await settle()
+    const local = webStorage({
+      "offline:session": `{"id":7}`,
+      "selection:7": `{"groupId":"g-1"}`,
+      "realtime:user:7:g-1": "12",
+      "preferences:kept-zone": "Europe/Berlin",
+      "auth:sign-out-owed": "1",
+      "offline:owed-deletion": "[7]",
+      "theme": "dark",
+      "install-prompt-dismissed": "1",
+      "last-sign-in": `{"method":"password","email":"a***@example.com"}`,
+    })
+    const session = webStorage({ "draft": "Private text" })
+    const restore = installWebStorage(local, session)
+    try {
+      await signOut(storage)
+    } finally {
+      restore()
+    }
+
+    expect([...local.entries.keys()].sort()).toEqual([
+      "auth:sign-out-owed",
+      "install-prompt-dismissed",
+      "last-sign-in",
+      "theme",
+    ])
+    expect(session.entries.size).toBe(0)
   })
 
   it("saves no answer that arrives after the sign-out", async () => {
@@ -383,23 +462,35 @@ describe("what the device keeps", () => {
     expect(kept.getItem("offline:owed-deletion")).toBeNull()
   })
 
-  it("deletes the remembered user's copies at a start that finds no session, and keeps their queue", async () => {
+  it("deletes everything of the remembered user at a start that finds no session, their queue included", async () => {
     const { storage, device } = await deviceInUse()
     configureModules({ realtime: false, offline: true })
     rememberUser(user(7))
 
     // No layer runs: the page found no session and shows the sign-in page.
-    await forgetUser(storage)
+    await wipeDevice(storage, storage.databases)
 
     expect(recallUser()).toBeNull()
     expect([...device.reads.keys()]).toEqual([])
     expect(await device.notes.readNotes("g-1")).toEqual([])
-    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect(await device.queue.readOutbox()).toEqual([])
     expect(await device.tags.readTags("g-1")).toEqual([])
+    expect(await device.tagsQueue.readOutbox()).toEqual([])
+  })
+
+  it("keeps the remembered user's queue when only their copies are forgotten, as a start with the module off needs to send it", async () => {
+    const { storage, device } = await deviceInUse()
+    configureModules({ realtime: false, offline: true })
+    rememberUser(user(7))
+
+    await forgetUser(storage)
+
+    expect([...device.reads.keys()]).toEqual([])
+    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
     expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
   })
 
-  it("deletes the remembered person's copies at a start as someone else, before that person's layer opens, and keeps the remembered person's queue", async () => {
+  it("deletes everything of the remembered person at a start as someone else, their queue included, before that person's layer opens", async () => {
     const { storage, device } = await deviceInUse()
     server()
     configureModules({ realtime: false, offline: true })
@@ -407,7 +498,7 @@ describe("what the device keeps", () => {
 
     // A start that finds person 8's session, as a provider sign-in's redirect brings it, in the
     // app's order: the user is remembered first, then the modules start (apps/spa/src/app.tsx).
-    rememberUser(user(8), storage)
+    rememberUser(user(8), storage, storage.databases)
     startPage(8, storage)
     expect(currentLayer()).toBeNull()
     await settle()
@@ -416,25 +507,45 @@ describe("what the device keeps", () => {
     expect([...device.reads.keys()]).toEqual([])
     expect(await device.notes.readNotes("g-1")).toEqual([])
     expect(await device.tags.readTags("g-1")).toEqual([])
-    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
-    expect((await device.tagsQueue.readOutbox()).map((entry) => entry.entityId)).toEqual(["t-1"])
+    expect(await device.queue.readOutbox()).toEqual([])
+    expect(await device.tagsQueue.readOutbox()).toEqual([])
     expect(kept.getItem(OWED)).toBeNull()
     expect(currentLayer()?.userId).toBe(8)
   })
 
-  it("deletes the remembered person's copies as soon as someone else is remembered, before any layer starts", async () => {
+  it("deletes everything of the remembered person, their queue included, as soon as someone else is remembered, and nothing of the new person", async () => {
     const { storage, device } = await deviceInUse()
+    const next = storage.of(8)
+    await next.queue.putEntry({ ...QUEUED_BY_AN_EARLIER_VERSION, status: "conflict" })
     configureModules({ realtime: false, offline: true })
     rememberUser(user(7))
 
-    rememberUser(user(8), storage)
+    rememberUser(user(8), storage, storage.databases)
     await settle()
 
     expect([...device.reads.keys()]).toEqual([])
     expect(await device.notes.readNotes("g-1")).toEqual([])
     expect(await device.tags.readTags("g-1")).toEqual([])
-    expect((await device.queue.readOutbox()).map((entry) => entry.entityId)).toEqual(["n-1"])
+    expect(await device.queue.readOutbox()).toEqual([])
+    expect(await device.tagsQueue.readOutbox()).toEqual([])
+    expect((await next.queue.readOutbox()).length).toBe(1)
     expect(kept.getItem(OWED)).toBeNull()
+  })
+
+  it("deletes the app's browser storage as soon as someone else is remembered, and remembers the new person", async () => {
+    configureModules({ realtime: false, offline: true })
+    const local = webStorage({ "offline:session": `{"id":7}`, "selection:7": `{"groupId":"g-1"}` })
+    const session = webStorage({ "draft": "Private text" })
+    const restore = installWebStorage(local, session)
+    try {
+      rememberUser(user(8), createMemoryStorage())
+      await settle()
+    } finally {
+      restore()
+    }
+
+    expect([...local.entries]).toEqual([["offline:session", `{"id":8}`]])
+    expect(session.entries.size).toBe(0)
   })
 
   it("keeps the remembered person's copies at a start as the same person", async () => {
@@ -521,7 +632,10 @@ describe("what the device keeps", () => {
     expect([...device.reads.keys()]).toEqual([])
   })
 
-  /** `storage` with a read-copy deletion that `clear` replaces: one that waits, or one that fails. */
+  /**
+   * `storage` with a read-copy deletion that `clear` replaces: one that waits, or one that fails.
+   * Deleting a read-copy database goes through it too.
+   */
   function deleting(
     storage: ReturnType<typeof createMemoryStorage>,
     clear: (really: () => Promise<void>) => Promise<void>,
@@ -531,6 +645,13 @@ describe("what the device keeps", () => {
       openReads(userId) {
         const reads = storage.openReads(userId)
         return { ...reads, clear: () => clear(() => reads.clear()) }
+      },
+      databases: {
+        list: storage.databases.list,
+        delete: (name) =>
+          name.startsWith("reads:")
+            ? clear(() => storage.databases.delete(name))
+            : storage.databases.delete(name),
       },
     }
   }
@@ -795,7 +916,7 @@ describe("two people on one device", () => {
     return warned
   }
 
-  it("deletes the first person's owed copies before the second person's layer opens, and keeps the first person's queue and the second person's copies", async () => {
+  it("deletes the first person's owed copies and queue before the second person's layer opens, and keeps the second person's copies and queue", async () => {
     const storage = createMemoryStorage()
     const first = await used(storage, 7)
     const second = await used(storage, 8)
@@ -808,8 +929,9 @@ describe("two people on one device", () => {
 
     expect([...first.reads.keys()]).toEqual([])
     expect(await first.notes.readNotes("g-1")).toEqual([])
-    expect((await first.queue.readOutbox()).length).toBe(1)
+    expect(await first.queue.readOutbox()).toEqual([])
     expect([...second.reads.keys()]).toEqual(["groups"])
+    expect((await second.queue.readOutbox()).length).toBe(1)
     expect(kept.getItem(OWED)).toBeNull()
     expect(currentLayer()?.userId).toBe(8)
   })

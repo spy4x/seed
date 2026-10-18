@@ -35,7 +35,8 @@ import type { TagItem } from "../state/tags.ts"
  * - the queue of note writes (`offline:user:<id>:outbox`);
  * - the tags (`offline:user:<id>:tags`) and their queue (`offline:user:<id>:tags-outbox`).
  *
- * Signing out deletes the read copies, the notes and the tags. The queues stay: it is the person's unsent work.
+ * Stopping the layer for a sign-out deletes the read copies, the notes and the tags. The sign-out
+ * then deletes every database of the app, the queues included (`wipeDevice` in `modules.ts`).
  */
 
 /** How the layer reaches the server: the calls port, and whether it may send now. */
@@ -158,8 +159,9 @@ export function currentLayer(): OfflineLayer | null {
 /**
  * Opens the user's device copy and queue. Calling it again for the same user does nothing. Called
  * for another user while one runs, it stops that layer and deletes its copies, as signing out does:
- * the device must not keep one person's data for the next. The queue stays. A device that refuses
- * the deletion is left to the debt `modules.ts` keeps for the person it remembered.
+ * the device must not keep one person's data for the next. The queue is deleted with every other
+ * database by `wipeDevice` in `modules.ts`, which a change of user runs. A device that refuses the
+ * deletion is left to the debt `modules.ts` keeps for the person it remembered.
  */
 export function startOffline(
   userId: number,
@@ -227,10 +229,10 @@ export function startOffline(
 }
 
 /**
- * Stops the layer. `forget` also deletes the read copies and the notes, as signing out must; the
- * queue stays, because a write that never reached the server is the person's work and goes out the
- * next time they sign in on this browser. It rejects when the device could not delete them: the
- * caller keeps the deletion owed (`modules.ts`).
+ * Stops the layer. `forget` also deletes the read copies and the notes, as signing out must. The
+ * queue stays here: a start with the module off still sends it once, and a sign-out deletes it with
+ * every other database (`wipeDevice` in `modules.ts`). It rejects when the device could not delete
+ * the copies: the caller keeps the deletion owed (`modules.ts`).
  */
 export async function stopOffline({ forget = false } = {}): Promise<void> {
   const closing = layer
@@ -256,7 +258,8 @@ async function forgetCopies(
 
 /**
  * Deletes what the device kept of the server's answers for `userId`, stopping their layer first
- * when it runs. The queue stays, as on sign-out. It rejects when the device could not delete.
+ * when it runs. The queue stays; a sign-out deletes it (`wipeDevice` in `modules.ts`). It rejects
+ * when the device could not delete.
  */
 export async function forgetDeviceCopy(
   userId: number,

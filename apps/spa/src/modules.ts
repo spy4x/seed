@@ -19,13 +19,19 @@ import {
   type OfflineLayer,
   type OfflineStorage,
   type OfflineTransport,
+  readsDatabase,
   startOffline as startOfflineLayer,
   stopOffline as stopOfflineLayer,
 } from "./offline/index.ts"
 import { offlineNotes as notesOverLayer } from "./offline/notes-collection.ts"
 import { offlineTags as tagsOverLayer } from "./offline/tags-collection.ts"
 import { OfflineStatus as OfflineStatusLine } from "./offline/OfflineStatus.tsx"
-import { type QueueDatabases, refusedMessage, sendQueueOnce } from "./offline/send-once.ts"
+import {
+  browserDatabases,
+  type QueueDatabases,
+  refusedMessage,
+  sendQueueOnce,
+} from "./offline/send-once.ts"
 import {
   type UnsentView,
   type UnsentWait,
@@ -158,7 +164,10 @@ export interface StartOptions {
   pollIntervalMs?: number
   /** Where the local-data module keeps its data. Defaults to IndexedDB; a test passes memory. */
   storage?: OfflineStorage
-  /** The device's database list, for the queue left while the module is off. A test passes one. */
+  /**
+   * The device's database list: for the queue left while the module is off, and for the databases
+   * of a person still owed a deletion. A test passes one.
+   */
   databases?: QueueDatabases
 }
 
@@ -207,9 +216,13 @@ export function startModules(userId: number, reads: ChangeReads, options: StartO
     // Copies an earlier page still owes a deletion are deleted before the layer opens, so none of
     // them can be shown. Until then, and for this visit when the device could not delete this
     // person's own, the stores talk to the server alone.
-    if (owedIds().length === 0) start()
+    const owed = owedIds()
+    if (owed.length === 0) start()
     else {
-      void settleOwed(options.storage).then(() => {
+      void settleOwed(options.storage)
+      // A sign-out cut short (the page closed) leaves its databases too, the queue among them.
+      deleteDatabases(options.databases, owed)
+      void forgetting.then(() => {
         if (session === opened && !owedIds().includes(userId)) start()
       })
     }
@@ -321,6 +334,40 @@ export function forgetModules(): void {
   settle(userId, () => deleting)
 }
 
+/**
+ * What a sign-out leaves in `localStorage`. None of it is a person's data: the debts that finish
+ * the sign-out (the server's sign-out, a deletion the device could not do yet) and the device's own
+ * answers (the theme, the dismissed install offer), plus the masked hint of how someone last signed
+ * in here, which the sign-in page shows and "Not you? Forget" drops (#142).
+ */
+const KEPT_KEYS: ReadonlySet<string> = new Set([
+  "auth:sign-out-owed", // `state/auth.ts`
+  "offline:owed-deletion", // below
+  "theme", // `state/theme.ts`, the library's default key
+  "install-prompt-dismissed", // `install.ts`
+  "last-sign-in", // `state/last-sign-in.ts`
+])
+
+/**
+ * Deletes every `localStorage` key of the app but {@link KEPT_KEYS}, and all of `sessionStorage`:
+ * the selected group, the socket's cursors, the kept time zone, the remembered user. Blocked
+ * storage holds nothing to delete.
+ */
+export function clearBrowserStorage(): void {
+  try {
+    const keys: string[] = []
+    for (let index = 0; index < localStorage.length; index++) keys.push(localStorage.key(index)!)
+    for (const key of keys) if (!KEPT_KEYS.has(key)) localStorage.removeItem(key)
+  } catch (_blocked) {
+    // Nothing is stored where the browser refuses storage.
+  }
+  try {
+    sessionStorage.clear()
+  } catch (_blocked) {
+    // As above.
+  }
+}
+
 /** Records that the page now holds a group up to `sequence`, so a later hint for it is a repeat. */
 export function advanceGroupCursor(groupId: string, sequence: number): void {
   if (switches.realtime) advanceSocketCursor(groupId, sequence)
@@ -409,17 +456,28 @@ const signedInHint = createSignedInHint<SessionUser>("offline:session", {
 /**
  * Remembers who is signed in for a start with no network; nothing while the module is off. When
  * the device remembers someone else (a provider sign-in's redirect brings a new person's cookie to
- * a page that never signed the last one out), that person's copies are owed a deletion first and
- * deleted at once, as on sign-out: the next person must not find them. Their queue stays.
+ * a page that never signed the last one out), everything the app kept in the browser is deleted at
+ * once, as on sign-out ({@link wipeDevice}), their queue of unsent writes included: the next person
+ * must not find them. The new person's layer opens only once the device holds none of it.
  */
-export function rememberUser(user: SessionUser, storage?: OfflineStorage): void {
+export function rememberUser(
+  user: SessionUser,
+  storage?: OfflineStorage,
+  databases?: QueueDatabases,
+): void {
   if (!switches.offline) return
   const remembered = signedInHint.recall()
   const other = remembered && remembered.id !== user.id ? remembered.id : undefined
+  if (other === undefined) {
+    signedInHint.remember(user)
+    return
+  }
   // Owed before the hint names the new person, so a page closed in between still deletes them.
-  if (other !== undefined) owe(other)
+  owe(other)
+  clearBrowserStorage()
   signedInHint.remember(user)
-  if (other !== undefined) void settleOwed(storage, other)
+  void settleOwed(storage, other)
+  deleteDatabases(databases, [other])
 }
 
 /**
@@ -489,16 +547,64 @@ function settleOwed(storage?: OfflineStorage, also?: number): Promise<void> {
 
 /**
  * Drops the remembered user at once, and deletes what the device kept of the server's answers for
- * them and for anyone an earlier page still owes it: a start that found no session must not leave
- * the last person's lists on a shared device. The queue of unsent writes stays, as on sign-out.
- * Resolves once the deletions were tried. It runs with the module off too, so switching the module
- * off deletes what it kept; a device with nobody remembered and nothing owed is not opened.
+ * them and for anyone an earlier page still owes it. The queue of unsent writes stays: a signed-in
+ * start with the module off calls it, and sends that queue once. A sign-out deletes the queue too,
+ * through {@link wipeDevice}. Resolves once the deletions were tried. It runs with the module off,
+ * so switching the module off deletes what it kept; a device with nobody remembered and nothing owed
+ * is not opened.
  */
 export function forgetUser(storage?: OfflineStorage): Promise<void> {
   const remembered = signedInHint.recall()
   signedInHint.forget()
   if (remembered) owe(remembered.id)
   return settleOwed(storage, remembered?.id)
+}
+
+/** Whether the IndexedDB database `name` holds something of one of `userIds`. */
+function belongsTo(name: string, userIds: readonly number[]): boolean {
+  return userIds.some((id) =>
+    name === readsDatabase(id) || name === `offline:user:${id}` ||
+    name.startsWith(`offline:user:${id}:`)
+  )
+}
+
+/**
+ * Queues the deletion of the app's IndexedDB databases after the deletions already queued, so a
+ * copy those finish is not opened again afterwards: every database, or only those of `userIds`.
+ * The next person's layer waits for it: a start that owes a deletion opens the layer only once
+ * {@link forgetting} has settled.
+ */
+function deleteDatabases(
+  databases: QueueDatabases = browserDatabases,
+  userIds?: readonly number[],
+): void {
+  forgetting = forgetting.then(async () => {
+    try {
+      const listed = await databases.list() ?? []
+      const names = userIds ? listed.filter((name) => belongsTo(name, userIds)) : listed
+      const results = await Promise.allSettled(names.map((name) => databases.delete(name)))
+      const failed = results.find((result) => result.status === "rejected")
+      if (failed) throw failed.reason
+    } catch (error) {
+      console.warn("The data this app kept on the device could not all be deleted.", error)
+    }
+  })
+}
+
+/**
+ * Signing out on this device (#206): deletes everything the app keeps in the browser, so the next
+ * person on a shared device finds nothing of the last one. Every IndexedDB database goes, the
+ * queue of unsent writes included, and so does every `localStorage` key but the few
+ * {@link KEPT_KEYS}, and `sessionStorage`. What the server owns comes back at the next sign-in.
+ * The app calls it whenever the page settles with nobody signed in: after the account menu's
+ * sign-out, a start whose session ended (401), and a sign-out by the server. Resolves once every
+ * deletion was tried; it never rejects.
+ */
+export function wipeDevice(storage?: OfflineStorage, databases?: QueueDatabases): Promise<void> {
+  void forgetUser(storage)
+  clearBrowserStorage()
+  deleteDatabases(databases)
+  return forgetting
 }
 
 /** The remembered user, or `null`: always `null` while the module is off. */
