@@ -45,8 +45,8 @@
  *   the session itself: one a provider sign-in started less than `PROVIDER_PROOF_MINUTES` ago
  *   (`proofUntil`). It proves the browser is signed in to the provider, not who sits at it: on a
  *   browser where the provider is still signed in, signing in again is one click. That is enough
- *   for this product, which aims below bank-level proofs (#204). Such a session cannot make itself
- *   recent either: the one way to get a provider sign-in without the owner's provider account
+ *   for this product, which aims below bank-level proofs (#204). An old session cannot make
+ *   itself recent: the one way to get a provider sign-in without the owner's provider account
  *   would be to link another one, and starting a link asks for the same proof (the password, or
  *   this sign-in of a moment ago). Unlinking asks for the same proof (#385): a session left open
  *   must not take away the way in its owner uses.
