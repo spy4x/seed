@@ -1,6 +1,6 @@
 # Group Sync Technical Design
 
-> **Group kinds were dropped (#129).** Wherever this document says `GroupKind`, `PERSONAL`,
+> **Group kinds were dropped (spy4x/template#129).** Wherever this document says `GroupKind`, `PERSONAL`,
 > `SHARED`, `createPersonal`, `createShared` or `PERSONAL_GROUP_IMMUTABLE`, read an ordinary group:
 > there is no `kind` column and no personal-group invariant. Sign-up creates a group named
 > "Personal". `docs/handoff.md` ("How a group call travels", items 9 and 10) is current.
@@ -844,14 +844,14 @@ These routes prove ordinary REST and MPA parity. They dispatch the same notes CQ
 7. UI stops rendering group before any push/pull starts.
 8. A direct stale push also rechecks authorization and returns concealed `GROUP_NOT_FOUND`.
 
-### Access changes on open sockets (#110)
+### Access changes on open sockets (spy4x/template#110)
 
 This is what is built; the steps above describe the offline device, this the online one.
 
 1. Every change that alters who may see a group, or what they may do in it, calls
    `recordAccessChange` (`libs/server/groups/group-change-log.ts`) in its own transaction instead
    of `recordGroupChange`. Today that is the delete and the restore; removing a member and changing
-   a role (#130) call it too. It stamps the change (sequence and outbox row), raises
+   a role (spy4x/template#130) call it too. It stamps the change (sequence and outbox row), raises
    `groups.authorization_revision` by one, and names the users who can no longer see the group
    with `pg_notify` on the `group_access_lost` channel.
 2. Postgres delivers a notification sent inside a transaction only when that transaction commits,
