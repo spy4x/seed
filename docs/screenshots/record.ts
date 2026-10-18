@@ -129,9 +129,9 @@ async function socialPreview(browser: Browser, profile: Uint8Array): Promise<Uin
       <div style="position:absolute;left:72px;top:0;bottom:0;width:470px;display:flex;
         flex-direction:column;justify-content:center;gap:20px">
         <div style="font-size:72px;font-weight:700;letter-spacing:-2px">Seed</div>
-        <div style="font-size:30px;line-height:1.3;color:#c9d1dc">The web-standards SaaS
-          baseline: auth, two-factor sign-in, groups, an API, a worker and Postgres, wired
-          together.</div>
+        <div style="font-size:30px;line-height:1.3;color:#c9d1dc">The open-source SaaS
+          starter: sign-in with a second factor, teams with roles, billing, an offline app and
+          an admin area, wired together.</div>
         <div style="font-size:20px;color:#8b95a5">Deno · Hono · Preact · Fresh · Postgres</div>
       </div>
       <img src="${dataUrl(profile)}" style="position:absolute;left:600px;top:70px;width:800px;
