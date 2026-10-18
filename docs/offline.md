@@ -181,7 +181,7 @@ worker's file must stay uncached by nginx (`apps/spa/nginx.conf`), or browsers w
 update.
 
 **The specs that start the app with no network run against the built SPA.** These are
-`e2e/offline.e2e.ts` and `e2e/local-data.e2e.ts`; `deno task e2e:local` gives them the image of
+`e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and `e2e/search-offline.e2e.ts`; `deno task e2e:local` gives them the image of
 `apps/spa/dockerfile.prod` behind the harness's proxy instead of the dev server, in a Playwright
 pass of their own after the other specs' (`infra/scripts/e2e-local.sh`; `e2e-local-plan.ts` next
 to it decides the passes). What a person runs offline is that build: a few files
@@ -443,13 +443,16 @@ layer is missing from this list.
    export the store built from `onlineNotes` directly: `createNotesStore(onlineNotes)`. The
    optional `readLocal` dependency and its `showLocal` call can go with them.
 6. In `apps/spa/src/state/tags.ts`, delete the `currentLayer` and `offlineTags` imports and export
-   the store built from `onlineTags` directly: `createTagsStore(onlineTags)`.
+   the store built from `onlineTags` directly: `createTagsStore(onlineTags)`. In
+   `apps/spa/src/views/AppShell.tsx`, delete the `currentLayer` import and make the search's
+   `deviceNotes` answer `[]`: with no copy, a search the server cannot answer finds nothing.
 7. In `apps/spa/src/views/NotesView.tsx`, `apps/spa/src/views/NoteEditorView.tsx` and
    `apps/spa/src/views/TagsView.tsx`, delete the `OfflineStatus` import and element.
 8. In `apps/spa/src/views/AppShell.tsx`, delete `useSignOut` and the `watchUnsentChanges` and
    `UnsentSignOut` imports, and pass `useSignOutNow()` as `onSignOut`. Delete
    `apps/spa/src/views/UnsentSignOut.tsx` and `apps/spa/src/views/UnsentSignOut.test.tsx`.
-9. Delete the specs `e2e/offline.e2e.ts` and `e2e/local-data.e2e.ts`, the offline test in
+9. Delete the specs `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and `e2e/search-offline.e2e.ts`
+   (with their names in `OFFLINE_SPECS` of `infra/scripts/e2e-local-plan.ts`), the offline test in
    `e2e/tags.e2e.ts` (the one named "a tag made and renamed with no network..."), and this guard test with its
    clause in the `test` task in `deno.jsonc`: `tests/offline-removal.test.ts`. The unit tests of
    the layer lived in the folder and went with it.

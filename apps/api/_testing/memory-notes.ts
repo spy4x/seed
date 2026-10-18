@@ -12,6 +12,7 @@ import {
   type NoteMoveInput,
   type NoteRepository,
   type NoteRestoreInput,
+  type NoteSearchHit,
   type NoteUpdateInput,
   NoteVersionConflictError,
   type NoteWriteResult,
@@ -53,6 +54,28 @@ export class MemoryNoteRepository implements NoteRepository {
     const groupId = this.notes.get(id)?.groupId
     if (!groupId || !this.groups) return null
     return await this.groups.roleOf(groupId, userId) === null ? null : groupId
+  }
+
+  /**
+   * Live notes in the user's groups whose title or body contains every word of `text`, newest
+   * first. A stand-in for the full text query; the integration test covers the real one.
+   */
+  async searchForMember(userId: number, text: string, limit: number): Promise<NoteSearchHit[]> {
+    const words = text.toLowerCase().split(/\s+/).filter(Boolean)
+    const hits: NoteSearchHit[] = []
+    for (const note of this.notes.values()) {
+      if (!this.groups || await this.groups.roleOf(note.groupId, userId) === null) continue
+      const haystack = `${note.title} ${note.body}`.toLowerCase()
+      if (!words.every((word) => haystack.includes(word))) continue
+      hits.push({
+        id: note.id,
+        groupId: note.groupId,
+        title: note.title,
+        snippet: note.body.slice(0, 120),
+        updatedAt: note.updatedAt,
+      })
+    }
+    return hits.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()).slice(0, limit)
   }
 
   /** Drops a deleted tag from every note, as the foreign key does; no note's version moves. */

@@ -116,7 +116,7 @@ const GROUP_ERROR_CODES: Record<
 
 const NOTE_ERROR_CODES: Record<
   NoteError["code"],
-  "bad_request" | "forbidden" | "not_found" | "conflict"
+  "bad_request" | "forbidden" | "not_found" | "conflict" | "rate_limited"
 > = {
   GROUP_NOT_FOUND: "not_found",
   ID_ALREADY_EXISTS: "conflict",
@@ -125,6 +125,7 @@ const NOTE_ERROR_CODES: Record<
   NOTE_NOT_FOUND: "not_found",
   ROLE_INSUFFICIENT: "forbidden",
   SAME_GROUP: "bad_request",
+  SEARCH_RATE_LIMITED: "rate_limited",
   VERSION_CONFLICT: "conflict",
 }
 

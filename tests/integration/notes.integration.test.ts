@@ -981,6 +981,7 @@ Deno.test("notes against Postgres", async (t) => {
               move: (command) => commands.execute(command),
               get: (query) => queries.execute(query),
               locate: (query) => queries.execute(query),
+              search: () => Promise.reject(new Error("not part of this test")),
               list: (query) => queries.execute(query),
               cursor: {
                 encode: () => Promise.reject(new Error("no list in this step")),

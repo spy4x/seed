@@ -371,10 +371,12 @@ describe("AppFrame", () => {
       [...document.querySelectorAll(`[data-e2e=rail-shell-rail] [aria-current="${value}"]`)]
         .map((link) => link.getAttribute("href"))
 
+    // preact-components 8 writes `aria-current="false"` on the entries that are not current.
+    const current = "[aria-current]:not([aria-current=false])"
     await mount(at(SCREEN_PATHS.email))
-    expect(document.querySelectorAll("[aria-current]")).toHaveLength(0)
+    expect(document.querySelectorAll(current)).toHaveLength(0)
     await rerender(at(SCREEN_PATHS.profile))
-    expect(document.querySelectorAll("[aria-current]")).toHaveLength(0)
+    expect(document.querySelectorAll(current)).toHaveLength(0)
 
     await rerender(at(NOTE_PATHS.list))
     expect(marked("page")).toEqual(["/notes"])
@@ -398,6 +400,92 @@ describe("AppFrame", () => {
     expect(status()[0].textContent).toBe("Offline")
     expect(find("[data-e2e=rail-shell-bottom] [data-e2e=app-shell-connection]")).not.toBe(null)
     expect(find("[data-e2e=app-shell-offline-strip]").textContent).toBe("Offline")
+  })
+
+  /** A stand-in for `SearchPalette`: its root and hidden trigger, noting each time it opens. */
+  function StubSearch({ opened }: { opened: string[] }) {
+    return (
+      <div data-e2e="search-root">
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          class="hidden"
+          onClick={() => {
+            const sheet = document.querySelector<HTMLDialogElement>(
+              "dialog[data-e2e=rail-shell-dialog]",
+            )
+            opened.push(`sheet ${sheet?.open ? "open" : "closed"}`)
+          }}
+        />
+      </div>
+    )
+  }
+
+  it("puts Search under the group switcher in the rail, names its keys, and opens the one palette after the page", async () => {
+    const opened: string[] = []
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: () => {} }}
+        search={<StubSearch opened={opened} />}
+        banner={<p id="banner">b</p>}
+      >
+        <p id="page">page</p>
+      </AppFrame>,
+    )
+
+    const cell = find("[data-e2e=rail-shell-top] [data-e2e=shell-search-rail]")
+    const picker = find("[data-e2e=rail-shell-top] [data-e2e^=group-picker]")
+    // The switcher comes first, then the search.
+    expect(picker.compareDocumentPosition(cell) & 4).toBe(4)
+    expect(cell.querySelector("button")?.textContent?.trim()).toBe("Search")
+    // It names the palette's keys, in the tooltip and to a screen reader.
+    expect(cell.querySelector("[data-e2e=rail-shell-tooltip]")?.textContent).toBe("Search (Ctrl K)")
+    expect(cell.querySelector("button")?.getAttribute("aria-keyshortcuts")).toBe("Control+K /")
+    // One palette, after the page: a signed-in page still starts with the banner, then its own.
+    expect(document.querySelectorAll("[data-e2e=search-root]").length).toBe(1)
+    const column = find("[data-e2e=app-shell-content]")
+    expect(column.firstElementChild?.querySelector("#banner")).not.toBe(null)
+    expect(find("#page").compareDocumentPosition(find("[data-e2e=search-root]")) & 4).toBe(4)
+
+    await act(() => {
+      cell.querySelector("button")!.dispatchEvent(
+        new window.MouseEvent("click", { bubbles: true }) as unknown as Event,
+      )
+    })
+    expect(opened).toEqual(["sheet closed"])
+  })
+
+  it("offers Search first in the phone's Account sheet, which closes the sheet and then opens the palette", async () => {
+    const opened: string[] = []
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: () => {} }}
+        search={<StubSearch opened={opened} />}
+      >
+        <p id="page">page</p>
+      </AppFrame>,
+    )
+    const sheet = find<HTMLDialogElement>("dialog[data-e2e=rail-shell-dialog]")
+    const entry = find("[data-e2e=rail-shell-overlay-top] [data-e2e=shell-search-sheet] button")
+    expect(entry.textContent?.trim()).toBe("Search")
+    expect(entry.className).toContain("min-h-11")
+    const groupSheet = find(
+      "[data-e2e=rail-shell-overlay-top] [aria-labelledby=group-sheet-heading]",
+    )
+    expect(entry.compareDocumentPosition(groupSheet) & 4).toBe(4)
+
+    await act(() => sheet.showModal())
+    await act(async () => {
+      entry.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+      await new Promise((resolve) => setTimeout(resolve, 10))
+    })
+
+    expect(sheet.open).toBe(false)
+    expect(opened).toEqual(["sheet closed"])
   })
 
   it("draws the banner at the top of the page's own column on every page", async () => {

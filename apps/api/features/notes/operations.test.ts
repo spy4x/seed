@@ -9,6 +9,7 @@ import {
   type NoteLocateQuery,
   type NoteMoveCommand,
   type NoteRestoreCommand,
+  type NoteSearchQuery,
 } from "@domain/notes"
 import { createNoteOperations } from "./operations.ts"
 import { DEFAULT_NOTE_LIST_LIMIT } from "./list.ts"
@@ -29,7 +30,8 @@ function harness() {
     locate: NoteLocateQuery | null
     move: NoteMoveCommand | null
     restore: NoteRestoreCommand | null
-  } = { create: null, list: null, locate: null, move: null, restore: null }
+    search: NoteSearchQuery | null
+  } = { create: null, list: null, locate: null, move: null, restore: null, search: null }
   const unused = () => Promise.reject(new Error("not used"))
   const requests = createNoteOperations({
     create(command) {
@@ -50,6 +52,10 @@ function harness() {
     locate(query) {
       seen.locate = query
       return Promise.resolve({ groupId })
+    },
+    search(query) {
+      seen.search = query
+      return Promise.resolve({ notes: [] })
     },
     list(query) {
       seen.list = query
@@ -74,7 +80,21 @@ describe("note socket requests", () => {
         "note.list": "query",
         "note.get": "query",
         "note.locate": "query",
+        "note.search": "query",
       })
+  })
+
+  it("dispatches a search with the socket's actor and the trimmed text", async () => {
+    const { requests, seen } = harness()
+
+    await requests["note.search"].handle({
+      actor,
+      requestId: "req-10",
+      signal,
+      payload: { q: "  weekly plan " },
+    })
+
+    expect(seen.search?.data).toEqual({ actor, q: "weekly plan" })
   })
 
   it("dispatches a create with the socket's actor, request id and idempotency key", async () => {

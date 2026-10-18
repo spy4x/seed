@@ -1,11 +1,20 @@
 import type { ComponentChildren, JSX } from "preact"
+import { useRef } from "preact/hooks"
 import { canViewActivity } from "@domain/groups"
-import { IconClock, IconDocumentText, IconSprout, IconTag, IconUsers } from "@spy4x/preact-icons"
+import {
+  IconClock,
+  IconDocumentText,
+  IconSearch,
+  IconSprout,
+  IconTag,
+  IconUsers,
+} from "@spy4x/preact-icons"
 import {
   AppShell,
   type AppShellConnection,
   type AppShellItem,
 } from "@spy4x/preact-system/app-shell"
+import { RailEntry, type RailItem } from "@spy4x/preact-system/rail"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
 import { Link } from "@spy4x/preact-ui/link"
@@ -18,6 +27,7 @@ import {
   ScreenForm,
   TAG_PATHS,
 } from "./progressive.tsx"
+import { openSearch, SEARCH_HOTKEYS } from "./search-palette.tsx"
 
 /**
  * The daily destinations, in the order the rail and the phone tab bar show them. Four at most, so
@@ -67,16 +77,35 @@ export function displayName(user: FrameUser): string {
 }
 
 /**
+ * The search's entry, drawn by the library as the rail's other cells and the sheet's other rows. It
+ * names the palette's keys, so the rail's tooltip reads "Search (Ctrl K)" and a screen reader hears
+ * them; the palette binds them itself.
+ */
+const SEARCH_ENTRY: RailItem = {
+  key: "search",
+  label: "Search",
+  Icon: IconSearch,
+  keyshortcuts: SEARCH_HOTKEYS,
+}
+
+/**
  * The signed-in frame: the library's `AppShell`, which draws every piece of chrome the same way in
  * every app, fed with this product's data.
  *
- * - The top of the 72 px rail is the group switcher ({@link GroupPicker}).
+ * - The top of the 72 px rail is the group switcher ({@link GroupPicker}), then "Search", an icon
+ *   cell with its tooltip that opens `search`.
  * - The middle is the destinations ({@link navItems}).
  * - The bottom is the connection while it is not live, Notifications with its unread count, and the
  *   account menu (Profile, Theme, Sign out).
  *
  * On a phone the tab bar's last slot is "Account": the avatar with the unread count, opening a sheet
- * with the groups ({@link GroupSheet}), Notifications and the account's choices.
+ * with "Search", the groups ({@link GroupSheet}), Notifications and the account's choices.
+ * Choosing "Search" there closes the sheet, which gives focus back to "Account", and then opens
+ * the palette; closing the palette gives focus back to "Account" again.
+ *
+ * `search` is drawn once, at the end of the page's column, with no trigger of its own (such as
+ * `SearchPalette`, which binds Ctrl K and `/` itself). Both "Search" entries open it by clicking
+ * its hidden trigger.
  *
  * Every page sits in one centred column of 48 rem; `wide` gives a data table 64 rem, and a form
  * never needs it. `banner` shows at the top of that column, above the page's own header, such as
@@ -97,6 +126,7 @@ export function AppFrame(
     groupPicker,
     banner,
     unreadCount,
+    search,
     wide = false,
     children,
   }: {
@@ -112,6 +142,8 @@ export function AppFrame(
     banner?: ComponentChildren
     /** How many notifications are unread. Left out, the rail has no bell. */
     unreadCount?: number
+    /** The search palette, drawn once. Left out, the frame has no search. */
+    search?: ComponentChildren
     /** Gives the page the wider column (64 rem), for a data table that needs it. */
     wide?: boolean
     children: ComponentChildren
@@ -122,16 +154,46 @@ export function AppFrame(
   const name = displayName(user)
   // A person known only by the address would read it twice.
   const email = user.email && user.email !== name ? user.email : undefined
+  const hasSearch = search !== undefined
+  const searchRoot = useRef<HTMLDivElement>(null)
+  const sheetSearch = useRef<HTMLDivElement>(null)
+  const open = () => openSearch(searchRoot.current)
+  const openFromSheet = () => {
+    const sheet = sheetSearch.current?.closest("dialog")
+    if (!sheet?.open) return open()
+    // The entry closes the sheet after this; the palette opens once it has, so the sheet's own
+    // close handler, which focuses "Account", runs first and the palette's field keeps focus.
+    sheet.addEventListener("close", open, { once: true })
+  }
   return (
     <AppShell
       items={navItems(activityGroupId)}
       currentPath={currentPath}
       navigate={navigate}
-      switcher={groupPicker &&
-        ((place) =>
+      switcher={groupPicker || hasSearch
+        ? ((place) =>
           place === "sheet"
-            ? <GroupSheet {...groupPicker} navigate={navigate} />
-            : <GroupPicker {...groupPicker} navigate={navigate} />)}
+            ? (
+              <div class="flex flex-col gap-2">
+                {hasSearch && (
+                  <div ref={sheetSearch} data-e2e="shell-search-sheet">
+                    <RailEntry item={SEARCH_ENTRY} place="sheet" navigate={openFromSheet} />
+                  </div>
+                )}
+                {groupPicker && <GroupSheet {...groupPicker} navigate={navigate} />}
+              </div>
+            )
+            : (
+              <div class="flex flex-col items-center gap-1">
+                {groupPicker && <GroupPicker {...groupPicker} navigate={navigate} />}
+                {hasSearch && (
+                  <div data-e2e="shell-search-rail">
+                    <RailEntry item={SEARCH_ENTRY} place="rail" navigate={open} />
+                  </div>
+                )}
+              </div>
+            ))
+        : undefined}
       notifications={unreadCount === undefined
         ? undefined
         : { href: SCREEN_PATHS.notifications, unread: unreadCount }}
@@ -147,6 +209,7 @@ export function AppFrame(
       width={wide ? "wide" : "default"}
     >
       {children}
+      {hasSearch && <div ref={searchRoot}>{search}</div>}
     </AppShell>
   )
 }

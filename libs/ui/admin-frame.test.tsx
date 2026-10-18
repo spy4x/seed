@@ -163,7 +163,8 @@ describe("AdminShell", () => {
     const nav = find("[data-e2e=rail-shell-rail]")
     expect(nav.getAttribute("aria-label")).toBe("Admin sections")
     expect(entryLabels("[data-e2e=rail-shell-rail]")).toEqual(modules.map((module) => module.name))
-    expect(nav.querySelector("[aria-current]")?.getAttribute("href")).toBe("/users")
+    expect(nav.querySelector("[aria-current]:not([aria-current=false])")?.getAttribute("href"))
+      .toBe("/users")
   })
 
   it("keeps the first four modules as phone tabs and ends the bar with Admin, whose sheet holds the rest", async () => {

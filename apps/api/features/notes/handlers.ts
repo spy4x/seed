@@ -3,6 +3,7 @@ import {
   assertCanReadNotes,
   assertCanWriteNotes,
   type GroupRoleLookup,
+  NOTE_SEARCH_LIMIT,
   NoteCreateCommand,
   NoteDeleteCommand,
   NoteError,
@@ -12,6 +13,7 @@ import {
   NoteMoveCommand,
   type NoteRepository,
   NoteRestoreCommand,
+  NoteSearchQuery,
   NoteUpdateCommand,
 } from "@domain/notes"
 
@@ -176,5 +178,28 @@ export function createNoteLocateHandler(
     const groupId = await notes.groupIdOfForMember(data.id, data.actor.userId)
     if (!groupId) throw new NoteError("NOTE_NOT_FOUND", "Note not found")
     return { groupId }
+  }
+}
+
+/** What the search handler needs: the notes, and the person's search budget. */
+export interface NoteSearchHandlerDependencies {
+  notes: NoteRepository
+  /** `true` while the person may search again; see `createNoteSearchLimit`. */
+  searchAllowed(userId: number): Promise<boolean>
+}
+
+/**
+ * Searches the live notes of every group the person is a member of now. Membership is decided by
+ * the search query itself, so there is no group to check first. A person past the search budget
+ * gets `SEARCH_RATE_LIMITED`.
+ */
+export function createNoteSearchHandler(
+  { notes, searchAllowed }: NoteSearchHandlerDependencies,
+): QueryHandler<NoteSearchQuery> {
+  return async ({ data }) => {
+    if (!await searchAllowed(data.actor.userId)) {
+      throw new NoteError("SEARCH_RATE_LIMITED", "Too many searches. Wait a minute")
+    }
+    return { notes: await notes.searchForMember(data.actor.userId, data.q, NOTE_SEARCH_LIMIT) }
   }
 }

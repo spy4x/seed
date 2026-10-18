@@ -57,6 +57,7 @@ const ERROR_DEFINITIONS: Record<NoteFeatureErrorCode, ErrorDefinition> = {
   NOTE_NOT_FOUND: { status: 404, message: "Note not found" },
   REQUEST_ORIGIN_INVALID: { status: 403, message: "Request origin is invalid" },
   SAME_GROUP: { status: 400, message: "The notes are in that group already" },
+  SEARCH_RATE_LIMITED: { status: 429, message: "Too many searches. Wait a minute" },
   TAG_LIMIT_REACHED: {
     status: 409,
     message: "The other group has no room for these notes' tags",

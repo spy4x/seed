@@ -13,6 +13,7 @@ import {
   NoteLocateQuery,
   NoteMoveCommand,
   NoteRestoreCommand,
+  NoteSearchQuery,
   NoteUpdateCommand,
 } from "@domain/notes"
 import { TagError } from "@domain/tags"
@@ -39,6 +40,7 @@ import {
   createNoteLocateHandler,
   createNoteMoveHandler,
   createNoteRestoreHandler,
+  createNoteSearchHandler,
   createNoteUpdateHandler,
 } from "./handlers.ts"
 import { createNoteOperations } from "./operations.ts"
@@ -99,6 +101,19 @@ function stack(plan = FREE_PLAN_ID, plans: Record<string, string> = {}) {
   queries.register(NoteListQuery, createNoteListHandler(dependencies))
   queries.register(NoteGetQuery, createNoteGetHandler(dependencies))
   queries.register(NoteLocateQuery, createNoteLocateHandler(dependencies))
+  /** Searches each person may still run; a test empties it to reach the limit. */
+  const searchBudget = new Map<number, number>()
+  queries.register(
+    NoteSearchQuery,
+    createNoteSearchHandler({
+      notes,
+      searchAllowed: (userId) => {
+        const left = searchBudget.get(userId) ?? Infinity
+        searchBudget.set(userId, left - 1)
+        return Promise.resolve(left > 0)
+      },
+    }),
+  )
   const buses = {
     create: (command: NoteCreateCommand) => commands.execute(command),
     update: (command: NoteUpdateCommand) => commands.execute(command),
@@ -108,12 +123,13 @@ function stack(plan = FREE_PLAN_ID, plans: Record<string, string> = {}) {
     list: (query: NoteListQuery) => queries.execute(query),
     get: (query: NoteGetQuery) => queries.execute(query),
     locate: (query: NoteLocateQuery) => queries.execute(query),
+    search: (query: NoteSearchQuery) => queries.execute(query),
     cursor: {
       encode: () => Promise.resolve("next"),
       decode: () => Promise.resolve({ updatedAt: new Date(0), id: noteId }),
     },
   }
-  return { notes, buses }
+  return { notes, buses, searchBudget }
 }
 
 async function seedNote(notes: MemoryNoteRepository) {
@@ -262,6 +278,65 @@ for (const [via, open] of TRANSPORTS) {
         })
       }
       expect(notes.writes).toBe(0)
+      as.shutdown()
+    })
+
+    it("finds notes in the person's own groups only, by text sent in the payload", async () => {
+      const { notes, buses } = stack()
+      await notes.create({ groupId, id: noteId, title: "Weekly plan", body: "" }, OWNER, null)
+      const strangers = uuidV7()
+      await notes.create(
+        { groupId: strangerGroupId, id: strangers, title: "Weekly plan too", body: "" },
+        STRANGER,
+        null,
+      )
+      const asOwner = open(buses, OWNER)
+      const asStranger = open(buses, STRANGER)
+
+      const owner = await asOwner.query("note.search", { q: "  weekly  " })
+      const stranger = await asStranger.query("note.search", { q: "weekly" })
+
+      expect(owner).toMatchObject({ kind: "server.result" })
+      expect((owner as { payload: { notes: { id: string }[] } }).payload.notes.map((n) => n.id))
+        .toEqual([noteId])
+      expect(stranger).toEqual({ kind: "server.result", payload: { notes: [] } })
+      asOwner.shutdown()
+      asStranger.shutdown()
+    })
+
+    it("refuses a search shorter than two characters without repeating it", async () => {
+      const { buses } = stack()
+      const as = open(buses, OWNER)
+
+      const answers = [
+        await as.query("note.search", { q: " w " }),
+        await as.query("note.search", { q: "x".repeat(201) }),
+        await as.query("note.search", { q: "plan", groupId }),
+      ]
+
+      for (const answer of answers) {
+        expect(answer).toMatchObject({
+          kind: "server.error",
+          code: "bad_request",
+          details: { code: "INVALID_REQUEST" },
+        })
+        expect(JSON.stringify(answer)).not.toContain("plan")
+      }
+      as.shutdown()
+    })
+
+    it("answers a person past the search budget with rate_limited", async () => {
+      const { buses, searchBudget } = stack()
+      searchBudget.set(OWNER, 0)
+      const as = open(buses, OWNER)
+
+      const answer = await as.query("note.search", { q: "plan" })
+
+      expect(answer).toMatchObject({
+        kind: "server.error",
+        code: "rate_limited",
+        details: { code: "SEARCH_RATE_LIMITED" },
+      })
       as.shutdown()
     })
 

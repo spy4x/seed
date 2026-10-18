@@ -21,7 +21,7 @@ export interface Pass {
 }
 
 /** The specs that load a page with the network cut. */
-export const OFFLINE_SPECS = [`offline.e2e.ts`, `local-data.e2e.ts`]
+export const OFFLINE_SPECS = [`offline.e2e.ts`, `local-data.e2e.ts`, `search-offline.e2e.ts`]
 
 /**
  * The smoke set: the specs CI runs on every pull request (`.woodpecker/ci.yml`, step `e2e-smoke`),

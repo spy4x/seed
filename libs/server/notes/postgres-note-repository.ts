@@ -14,6 +14,7 @@ import {
   type NoteMoveInput,
   type NoteRepository,
   type NoteRestoreInput,
+  type NoteSearchHit,
   type NoteUpdateInput,
   NoteVersionConflictError,
   type NoteWriteResult,
@@ -26,6 +27,7 @@ import {
 } from "@server/groups/group-change-log.ts"
 import { writeAuditEvent } from "@server/groups/audit.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { searchNotesForMember } from "./note-search.ts"
 
 /** The longest note title an audit event keeps, so the log never holds more than a line of text. */
 const AUDIT_TITLE_MAX = 100
@@ -313,6 +315,10 @@ export class PostgresNoteRepository implements NoteRepository {
       `
     )[0]
     return row?.groupId ?? null
+  }
+
+  searchForMember(userId: number, text: string, limit: number): Promise<NoteSearchHit[]> {
+    return searchNotesForMember(this.sql, userId, text, limit)
   }
 
   /**

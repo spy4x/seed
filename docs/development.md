@@ -86,8 +86,8 @@ deno task e2e:local -g "signing another"   # any other argument goes to Playwrig
 deno task e2e:report                       # open the report of the last run
 ```
 
-The two specs that start the app with no network, `e2e/offline.e2e.ts` and
-`e2e/local-data.e2e.ts`, run against the built SPA, the image a deploy serves, and every other spec
+The specs that start the app with no network, `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and
+`e2e/search-offline.e2e.ts`, run against the built SPA, the image a deploy serves, and every other spec
 against the dev server ([docs/offline.md](offline.md), "The app shell", says why). A run that
 needs both makes two Playwright passes, the dev server first and then the built SPA in its place,
 so `deno task e2e:local` alone still runs every spec. It fails when either pass fails, and its last

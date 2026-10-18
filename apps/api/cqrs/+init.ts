@@ -105,6 +105,7 @@ import {
   NoteLocateQuery,
   NoteMoveCommand,
   NoteRestoreCommand,
+  NoteSearchQuery,
   NoteUpdateCommand,
 } from "@domain/notes"
 import {
@@ -127,6 +128,7 @@ import { noteMoveHandler } from "@api/cqrs/command-handlers/note-move.ts"
 import { noteListHandler } from "@api/cqrs/query-handlers/note-list.ts"
 import { noteGetHandler } from "@api/cqrs/query-handlers/note-get.ts"
 import { noteLocateHandler } from "@api/cqrs/query-handlers/note-locate.ts"
+import { noteSearchHandler } from "@api/cqrs/query-handlers/note-search.ts"
 import { BillingCheckoutCommand, BillingGetQuery, BillingPortalCommand } from "@domain/billing"
 import { billingCheckoutHandler } from "@api/cqrs/command-handlers/billing-checkout.ts"
 import { billingPortalHandler } from "@api/cqrs/command-handlers/billing-portal.ts"
@@ -240,6 +242,7 @@ queryBus.register(MyInvitationsQuery, createMyInvitationsHandler(invitationDepen
 queryBus.register(NoteListQuery, noteListHandler)
 queryBus.register(NoteGetQuery, noteGetHandler)
 queryBus.register(NoteLocateQuery, noteLocateHandler)
+queryBus.register(NoteSearchQuery, noteSearchHandler)
 queryBus.register(TagListQuery, tagListHandler)
 queryBus.register(TagGetQuery, tagGetHandler)
 queryBus.register(BillingGetQuery, billingGetHandler)

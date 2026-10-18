@@ -67,6 +67,7 @@ export const operations: Operations<Actor> = {
     list: (query) => queryBus.execute(query),
     get: (query) => queryBus.execute(query),
     locate: (query) => queryBus.execute(query),
+    search: (query) => queryBus.execute(query),
     cursor: noteListCursor,
   }),
   ...createTagOperations({

@@ -43,6 +43,15 @@ export const NOTE_RESTORE_DAYS = 30
 /** The most notes one move takes: a request for more is refused, not cut short. */
 export const NOTE_MOVE_MAX = 100
 
+/** The fewest characters a note search needs, after trimming: one letter matches too much. */
+export const NOTE_SEARCH_MIN_LENGTH = 2
+
+/** The most characters a note search takes, after trimming: a request for more is refused. */
+export const NOTE_SEARCH_MAX_LENGTH = 200
+
+/** The most notes one search answers, best first. There is no next page: typing more narrows it. */
+export const NOTE_SEARCH_LIMIT = 20
+
 export type NoteErrorCode =
   | "GROUP_NOT_FOUND"
   | "ID_ALREADY_EXISTS"
@@ -51,6 +60,7 @@ export type NoteErrorCode =
   | "NOTE_NOT_FOUND"
   | "SAME_GROUP"
   | "ROLE_INSUFFICIENT"
+  | "SEARCH_RATE_LIMITED"
   | "VERSION_CONFLICT"
 
 export class NoteError extends Error {
@@ -183,6 +193,12 @@ export const noteMovePayloadSchema = type({
 })
 /** The `note.get` socket payload. */
 export const noteGetPayloadSchema = type({ ...groupIdField, ...noteIdField, "+": "reject" })
+/**
+ * The `note.search` payload: the text, in the body of the socket frame or of `POST
+ * /api/call/note.search`, never in a URL. See {@link parseNoteSearchRequest} for its length.
+ */
+export const noteSearchPayloadSchema = type({ q: "string", "+": "reject" })
+
 /** The `note.locate` socket payload: a note id, with no group. */
 export const noteLocatePayloadSchema = type({ ...noteIdField, "+": "reject" })
 /** The `note.list` socket payload. */
@@ -235,6 +251,27 @@ export function parseNoteRequest<S extends Type<object>>(schema: S, value: unkno
     throw new NoteError("INVALID_REQUEST", "Note body must not contain a NUL or a broken character")
   }
   return { ...parsed, title, ...(parsed.tagIds && { tagIds: [...new Set(parsed.tagIds)] }) }
+}
+
+/**
+ * Validates a search: the schema, then the text trimmed to {@link NOTE_SEARCH_MIN_LENGTH} to
+ * {@link NOTE_SEARCH_MAX_LENGTH} characters, an emoji counting as one. Throws
+ * `NoteError("INVALID_REQUEST")`. The message never repeats the text, so a log of it holds none.
+ */
+export function parseNoteSearchRequest(value: unknown): { q: string } {
+  const result = noteSearchPayloadSchema(value)
+  if (result instanceof type.errors) {
+    throw new NoteError("INVALID_REQUEST", "A search takes one text field, q")
+  }
+  const q = result.q.trim()
+  const length = Array.from(q).length
+  if (length < NOTE_SEARCH_MIN_LENGTH || length > NOTE_SEARCH_MAX_LENGTH) {
+    throw new NoteError(
+      "INVALID_REQUEST",
+      `A search must contain ${NOTE_SEARCH_MIN_LENGTH} to ${NOTE_SEARCH_MAX_LENGTH} characters`,
+    )
+  }
+  return { q }
 }
 
 /**
@@ -446,6 +483,56 @@ export class NoteLocateQuery implements Query<NoteLocatePayload, { groupId: stri
   __resultType?: { groupId: string }
   constructor(public data: NoteLocatePayload) {}
 }
+/** The longest snippet of a search hit, in characters, "…" included. */
+export const NOTE_SNIPPET_MAX_LENGTH = 120
+
+/**
+ * A search hit's snippet: `text` with its whitespace folded, cut to {@link NOTE_SNIPPET_MAX_LENGTH}
+ * characters on a word boundary, with "…" where it does not reach an end of the body. The server
+ * passes the words around the match; the device, which searches its own copy, the body's start.
+ */
+export function trimNoteSnippet(text: string, startsBody: boolean, endsBody: boolean): string {
+  const folded = text.replace(/\s+/g, " ").trim()
+  if (folded === "") return ""
+  const characters = Array.from(folded)
+  let cut = folded
+  let cutEnd = !endsBody
+  if (characters.length > NOTE_SNIPPET_MAX_LENGTH - 2) {
+    const head = characters.slice(0, NOTE_SNIPPET_MAX_LENGTH - 2).join("")
+    const space = head.lastIndexOf(" ")
+    cut = space > 0 ? head.slice(0, space) : head
+    cutEnd = true
+  }
+  return `${startsBody ? "" : "…"}${cut}${cutEnd ? "…" : ""}`
+}
+
+/** One note a search found: enough to list it and open it, never its whole body. */
+export interface NoteSearchHit {
+  id: string
+  groupId: string
+  title: string
+  /**
+   * Plain text around the first match in the body, with "…" where it was cut; the start of the
+   * body when only the title matched; empty for an empty body.
+   */
+  snippet: string
+  updatedAt: Date
+}
+
+export interface NoteSearchPayload {
+  actor: Actor
+  /** The text, trimmed and of a valid length (`parseNoteSearchRequest`). */
+  q: string
+}
+
+/**
+ * The live notes, in every group the actor is a member of now, whose title or body hold every word
+ * of the text, each as a word or the start of one; at most {@link NOTE_SEARCH_LIMIT}, best first.
+ */
+export class NoteSearchQuery implements Query<NoteSearchPayload, { notes: NoteSearchHit[] }> {
+  __resultType?: { notes: NoteSearchHit[] }
+  constructor(public data: NoteSearchPayload) {}
+}
 // #endregion Commands and queries
 
 // #region Ports
@@ -502,6 +589,11 @@ export interface NoteRepository {
    * one lookup in every case so that no case is slower than another.
    */
   groupIdOfForMember(id: string, userId: number): Promise<string | null>
+  /**
+   * The live notes matching `text` in the groups the user is an active member of, at most `limit`,
+   * best first. Membership is part of the one query that finds them, never a filter after it.
+   */
+  searchForMember(userId: number, text: string, limit: number): Promise<NoteSearchHit[]>
   /**
    * Throws `ID_ALREADY_EXISTS` when the id holds a different note, and a `PlanError` when the group
    * already holds `allowance` notes (`null` for no cap), counted in the write's own transaction.

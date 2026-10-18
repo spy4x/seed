@@ -14,11 +14,14 @@ import {
   noteMovePayloadSchema,
   NoteRestoreCommand,
   noteRestorePayloadSchema,
+  type NoteSearchHit,
+  NoteSearchQuery,
   NoteUpdateCommand,
   noteUpdatePayloadSchema,
   type NoteWriteResult,
   parseNoteMoveRequest,
   parseNoteRequest,
+  parseNoteSearchRequest,
 } from "@domain/notes"
 import type { Actor } from "@domain/identity"
 import type { Operations } from "@spy4x/realtime/operations"
@@ -33,6 +36,7 @@ export interface NoteOperationDependencies extends NoteListDependencies {
   get(query: NoteGetQuery): Promise<{ note: Note }>
   locate(query: NoteLocateQuery): Promise<{ groupId: string }>
   move(command: NoteMoveCommand): Promise<{ notes: Note[] }>
+  search(query: NoteSearchQuery): Promise<{ notes: NoteSearchHit[] }>
 }
 
 /**
@@ -121,6 +125,14 @@ export function createNoteOperations(dependencies: NoteOperationDependencies): O
       handle: async ({ actor, payload }) => {
         const input = parseNoteRequest(noteLocatePayloadSchema, payload)
         return await dependencies.locate(new NoteLocateQuery({ actor, ...input }))
+      },
+    },
+    // The text travels in the payload only: a socket frame, or the body of `POST /api/call`.
+    "note.search": {
+      kind: "query",
+      handle: async ({ actor, payload }) => {
+        const { q } = parseNoteSearchRequest(payload)
+        return await dependencies.search(new NoteSearchQuery({ actor, q }))
       },
     },
   }

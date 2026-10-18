@@ -124,6 +124,7 @@ function stack() {
       list: (query) => queries.execute(query),
       get: (query) => queries.execute(query),
       locate: (query) => queries.execute(query),
+      search: () => Promise.reject(new Error("not part of this test")),
       cursor: {
         encode: () => Promise.resolve("next"),
         decode: () => Promise.resolve({ updatedAt: new Date(0), id: noteId }),

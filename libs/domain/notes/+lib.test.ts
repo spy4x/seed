@@ -6,6 +6,8 @@ import {
   assertCanWriteNotes,
   NOTE_BODY_MAX_LENGTH,
   NOTE_MOVE_MAX,
+  NOTE_SEARCH_MAX_LENGTH,
+  NOTE_SNIPPET_MAX_LENGTH,
   NOTE_TAG_MAX,
   NOTE_TITLE_MAX_LENGTH,
   noteCreatePayloadSchema,
@@ -21,6 +23,8 @@ import {
   NoteVersionConflictError,
   parseNoteMoveRequest,
   parseNoteRequest,
+  parseNoteSearchRequest,
+  trimNoteSnippet,
 } from "./+lib.ts"
 import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -255,5 +259,62 @@ describe("note move request", () => {
     )
 
     expect(parsed.groupId).toBe(groupId)
+  })
+})
+
+describe(`trimNoteSnippet`, () => {
+  it(`marks a cut start and a cut end with an ellipsis`, () => {
+    expect(trimNoteSnippet(`middle of the body`, false, false)).toBe(`…middle of the body…`)
+  })
+
+  it(`adds no ellipsis where the snippet reaches the body's ends`, () => {
+    expect(trimNoteSnippet(`the whole body`, true, true)).toBe(`the whole body`)
+  })
+
+  it(`folds line breaks into spaces`, () => {
+    expect(trimNoteSnippet(`first\n\nsecond`, true, true)).toBe(`first second`)
+  })
+
+  it(`cuts a long snippet on a word boundary within the maximum length`, () => {
+    const snippet = trimNoteSnippet(`word `.repeat(60), true, true)
+
+    expect(Array.from(snippet).length).toBeLessThanOrEqual(NOTE_SNIPPET_MAX_LENGTH)
+    expect(snippet.endsWith(`word…`)).toBe(true)
+  })
+
+  it(`answers an empty snippet for an empty body`, () => {
+    expect(trimNoteSnippet(``, false, false)).toBe(``)
+    expect(trimNoteSnippet(` \n `, false, false)).toBe(``)
+  })
+})
+
+describe(`parseNoteSearchRequest`, () => {
+  it(`answers the text trimmed`, () => {
+    expect(parseNoteSearchRequest({ q: `  weekly plan ` })).toEqual({ q: `weekly plan` })
+  })
+
+  it(`refuses a text shorter than two or longer than the maximum, without repeating it`, () => {
+    for (const q of [``, ` p `, `p`.repeat(NOTE_SEARCH_MAX_LENGTH + 1)]) {
+      const error = (() => {
+        try {
+          parseNoteSearchRequest({ q })
+        } catch (thrown) {
+          return thrown
+        }
+      })()
+      expect(error).toBeInstanceOf(NoteError)
+      expect((error as NoteError).code).toBe(`INVALID_REQUEST`)
+      expect((error as NoteError).message).not.toContain(`pp`)
+    }
+  })
+
+  it(`counts an emoji as one character`, () => {
+    expect(parseNoteSearchRequest({ q: `🙂🙂` })).toEqual({ q: `🙂🙂` })
+    expect(() => parseNoteSearchRequest({ q: `🙂` })).toThrow(NoteError)
+  })
+
+  it(`refuses a payload with any field but q`, () => {
+    expect(() => parseNoteSearchRequest({ q: `plan`, groupId: `x` })).toThrow(NoteError)
+    expect(() => parseNoteSearchRequest({ q: 12 })).toThrow(NoteError)
   })
 })

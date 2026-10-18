@@ -314,6 +314,10 @@ CREATE TABLE notes (
     created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ(3),
+    search_vector tsvector GENERATED ALWAYS AS (
+        setweight(to_tsvector('simple'::regconfig, title), 'A')
+        || setweight(to_tsvector('simple'::regconfig, body), 'B')
+    ) STORED,
     CONSTRAINT notes_title_check CHECK (length(btrim(title)) BETWEEN 1 AND 200),
     CONSTRAINT notes_body_check CHECK (length(body) <= 10000),
     CONSTRAINT notes_version_check CHECK (version >= 1),
@@ -329,6 +333,9 @@ CREATE INDEX idx_notes_group_updated_id_deleted
     ON notes (group_id, updated_at DESC, id)
     WHERE deleted_at IS NOT NULL;
 CREATE INDEX idx_notes_deleted_at ON notes (deleted_at) WHERE deleted_at IS NOT NULL;
+-- Search over live notes (#299). See migration 2026_11_22_0001.
+CREATE INDEX idx_notes_search_vector_active ON notes USING GIN (search_vector)
+    WHERE deleted_at IS NULL;
 
 -- A future pull by cursor: a group's notes changed after a sequence, deleted ones included.
 CREATE INDEX idx_notes_group_change_sequence ON notes (group_id, change_sequence);
