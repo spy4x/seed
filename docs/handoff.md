@@ -276,7 +276,9 @@ from `GET /api/auth/methods`, once a person is signed in with every factor done.
 **An account with no password** confirms with a provider sign-in where the others give the
 password: `oauth.proofUntil` (`apps/api/services/oauth-sign-in.ts`) holds while the request's
 session was started by an `oauth:*` key less than `PROVIDER_PROOF_MINUTES` ago, read from
-`auth_sessions.created_at`. `POST /api/auth/account/delete`, `POST /api/auth/email/change` and
+`auth_sessions.created_at`. It proves the browser is signed in to the provider, not who is at the
+keyboard: where the provider is still signed in, the new sign-in is one click (#204).
+`POST /api/auth/account/delete`, `POST /api/auth/email/change` and
 `POST /api/auth/totp/connect/start` take it in place of `password`, and
 `POST /api/auth/password/set` adds the first password key, on the account's address, proven,
 and signs out every other session of the account; the one that set it stays signed in (#406).
