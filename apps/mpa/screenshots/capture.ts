@@ -151,8 +151,9 @@ const OG_CARDS: OgCard[] = [
     title: "Your MVP, live and taking payments.",
     sub: "From $8,000 · from 3 weeks · you own everything",
     shot: "billing-dark-1280.webp",
-    // The plan and its price, below the member list.
-    top: 136,
+    // The member list and the plan with its price. The frame shows the screenshot from just above
+    // the member list to just below the renewal date: both edges fall between rail icons.
+    top: 46,
   },
   {
     file: "subscribe",
@@ -521,7 +522,12 @@ const SCREENS: Screen[] = [
         `/groups/${seeded.groupId}`,
         page.locator("[data-e2e=group-member]").nth(3),
       )
-      // The members come after the group's form on the same page.
+      // Linus's menu open: the roles an owner hands out, which the billing picture lacks.
+      await page.locator("[data-e2e=group-member-menu]").nth(1).click()
+      await page.getByRole("menuitem", { name: "Make Viewer" }).waitFor()
+      // The menu focuses its first item a frame after it opens, which scrolls the page; the
+      // members go back to the top only after that.
+      await page.waitForFunction(() => document.activeElement?.getAttribute("role") === "menuitem")
       await scrollToTop(page.locator("[data-e2e=group-section-members]"))
     },
   },
