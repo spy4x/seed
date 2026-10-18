@@ -14,6 +14,7 @@ import {
   parseAdminAuditFilter,
   parseAuditEvent,
 } from "@domain/identity"
+import { BILLING_AUDIT_EVENTS } from "@domain/billing"
 import type { AdminAuditPageKey } from "@server/auth/admin-audit.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
@@ -89,12 +90,20 @@ export interface AdminAuditRouteDependencies {
   now(): Date
 }
 
+/** The billing events by number, named as their keys in snake case: `payment_refunded`. */
+const BILLING_EVENT_NAMES = new Map<number, string>(
+  Object.entries(BILLING_AUDIT_EVENTS).map((
+    [key, eventType],
+  ) => [eventType, key.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)]),
+)
+
 /** An entry's event as a stable name for a spreadsheet: `signed_in`, `note.created`. */
 export function auditEventName(event: string): string {
   const parsed = parseAuditEvent(event)
   if (!parsed) return event
   if (parsed.source === "activity") return parsed.kind
-  return AuthAuditEventType[parsed.eventType]?.toLowerCase() ?? `account_${parsed.eventType}`
+  return AuthAuditEventType[parsed.eventType]?.toLowerCase() ??
+    BILLING_EVENT_NAMES.get(parsed.eventType) ?? `account_${parsed.eventType}`
 }
 
 /** One row of the file. Every text cell goes through the CSV writer's formula guard. */

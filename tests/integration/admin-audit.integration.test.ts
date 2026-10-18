@@ -10,6 +10,7 @@ import {
   AuthAuditEventType,
   UserRole,
 } from "@domain/identity"
+import { BILLING_AUDIT_EVENTS, billingAuditIdentifier } from "@domain/billing"
 import { type AdminAuditPageKey, listAdminAudit } from "@server/auth/admin-audit.ts"
 import { roleChangeIdentifier } from "@server/auth/admin-users.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
@@ -239,6 +240,45 @@ Deno.test("audit log: filters by operator, finding only what that operator did",
       `account:${AuthAuditEventType.USER_BLOCKED}`,
     ])
     expect(nobody.entries).toEqual([])
+  })
+})
+
+Deno.test("audit log: finds an operator's billing actions by them, about the group", async () => {
+  await withSchema(async (sql) => {
+    const { op, bob, groupId } = await seed(sql)
+    // After every seeded entry, so these rows come first. Billing writes the operator as `user_id`.
+    const T4 = "2026-10-15T10:00:00Z"
+    const T5 = "2026-10-16T10:00:00Z"
+    const refund = billingAuditIdentifier({
+      groupId,
+      objectId: "pi_1",
+      amount: { amount: 3600, currency: "EUR", decimals: 2 },
+      note: "charged twice",
+    })
+    const cancel = billingAuditIdentifier({ groupId, objectId: "sub_1", note: "" })
+    await sql`
+      INSERT INTO auth_audits (user_id, event_type, identifier, created_at) VALUES
+        (${op}, ${BILLING_AUDIT_EVENTS.paymentRefunded}, ${refund}, ${T4}),
+        (${op}, ${BILLING_AUDIT_EVENTS.cancelledNow}, ${cancel}, ${T5}),
+        (${bob}, ${BILLING_AUDIT_EVENTS.cancelledAtPeriodEnd}, ${cancel}, ${T5})
+    `
+    const theirs = await listAdminAudit(sql, filter({ operator: op }), 50, null)
+    const billing = theirs.entries.slice(0, 2)
+
+    expect(billing.map((entry) => entry.event)).toEqual([
+      `account:${BILLING_AUDIT_EVENTS.cancelledNow}`,
+      `account:${BILLING_AUDIT_EVENTS.paymentRefunded}`,
+    ])
+    expect(billing.map((entry) => [entry.person, entry.actor?.id, entry.byOperator, entry.group]))
+      .toEqual([
+        [null, op, true, { id: groupId, name: "Family" }],
+        [null, op, true, { id: groupId, name: "Family" }],
+      ])
+    // Another operator's billing action is not theirs, and the rest of their trail stays.
+    expect(theirs.entries.map((entry) => entry.event).slice(2)).toEqual([
+      `activity:${ADMIN_JOB_RETRIED_KIND}`,
+      `account:${AuthAuditEventType.USER_BLOCKED}`,
+    ])
   })
 })
 
