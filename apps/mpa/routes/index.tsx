@@ -16,6 +16,7 @@ import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
+import { FeatureCard } from "@spy4x/preact-ui/feature-card"
 import { Input } from "@spy4x/preact-ui/input"
 import { StatusMark } from "@spy4x/preact-ui/status-mark"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
@@ -24,10 +25,10 @@ import { FORM_ACTIONS } from "@ui/progressive.tsx"
 import { ArchitectureDiagram } from "../components/architecture-diagram.tsx"
 import { Band } from "../components/band.tsx"
 import { CtaBand } from "../components/cta-band.tsx"
-import { FeatureCard } from "../components/feature-card.tsx"
 import { FoundersHandoff } from "../components/founders-handoff.tsx"
 import { ProofStrip } from "../components/proof-strip.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
+import { PairShot } from "../components/features-visuals.tsx"
 import { Shot } from "../components/shot.tsx"
 import {
   AUTHOR_URL,
@@ -203,6 +204,24 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
   )
 }
 
+/**
+ * The plan panel of the billing screenshot, drawn near its real size so its text stays legible
+ * in a narrow card: the image is wider than the card and shifted so the panel shows.
+ */
+function BillingCrop(): JSX.Element {
+  return (
+    <div class="relative h-94 overflow-hidden">
+      <div class="absolute -left-60 -top-80 w-[1110px] max-w-none">
+        <Shot
+          name="billing"
+          alt="A group's plan in the Seed app: Pro, active, €36.00 a month for 4 members at €9.00 each, with a button to manage billing."
+          sizes="1110px"
+        />
+      </div>
+    </div>
+  )
+}
+
 function Features(): JSX.Element {
   return (
     <Band id="features" labelledBy="features-title">
@@ -236,6 +255,7 @@ function Features(): JSX.Element {
             title="Billing per member"
             Icon={IconCreditCard}
             href="/features#billing"
+            media={<BillingCrop />}
           >
             Stripe subscriptions per group: a free plan with limits, a paid plan per member, trials,
             a grace period when a card fails. The owner confirms the price before each invite.
@@ -245,6 +265,17 @@ function Features(): JSX.Element {
             title="Realtime and offline"
             Icon={IconZap}
             href="/features#realtime"
+            media={
+              <div class="h-94 overflow-hidden">
+                <div class="w-104 max-w-none">
+                  <PairShot
+                    name="realtime-a"
+                    alt="The note editor of the Seed app, with the title being changed; every other open window shows the new title after Save."
+                    sizes="416px"
+                  />
+                </div>
+              </div>
+            }
           >
             Changes reach every open tab over a WebSocket. The app installs, opens without a
             network, queues writes and shows a conflict instead of overwriting someone's work.

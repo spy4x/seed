@@ -10,9 +10,14 @@ function pairSrcset(name: string, theme: "light" | "dark"): string {
   return PAIR_WIDTHS.map((width) => `/shots/${name}-${theme}-${width}.webp ${width}w`).join(`, `)
 }
 
-/** One half of the realtime pair, light or dark as the device asks. */
-function PairShot({ name, alt }: { name: string; alt: string }): JSX.Element {
-  const sizes = `(min-width: 1280px) 220px, (min-width: 768px) 336px, 50vw`
+/** One half of the realtime pair, light or dark as the device asks, `sizes` wide. */
+export function PairShot(
+  { name, alt, sizes = `(min-width: 1280px) 220px, (min-width: 768px) 336px, 50vw` }: {
+    name: string
+    alt: string
+    sizes?: string
+  },
+): JSX.Element {
   return (
     <picture>
       <source
