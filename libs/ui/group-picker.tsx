@@ -1,5 +1,5 @@
 import type { JSX } from "preact"
-import { IconCheck, IconChevronDown } from "@spy4x/preact-icons"
+import { IconCheck, IconChevronDown, IconList, IconPlus } from "@spy4x/preact-icons"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { Link } from "@spy4x/preact-ui/link"
 import { RailCell, railFocusRing } from "@spy4x/preact-system/rail"
@@ -120,6 +120,9 @@ export function GroupPicker(
 const sheetRow =
   "flex min-h-11 w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm hover:bg-canvas"
 
+/** "All groups" and "New group": rows like the sheet's own (Profile, Sign out), with an icon. */
+const sheetLink = `${sheetRow} ${railFocusRing} font-medium text-muted hover:text-foreground`
+
 /**
  * The groups in the phone's Account sheet: one row per group, the current one checked, then "All
  * groups" and "New group". Choosing a group selects it and closes the sheet, as a menu closes when
@@ -157,24 +160,30 @@ export function GroupSheet(
           )
         })}
       </ul>
-      <div class="grid grid-cols-2 gap-1">
-        <Link
-          href={SCREEN_PATHS.groups}
-          navigate={navigate}
-          class={`${sheetRow} justify-center text-accent`}
-          data-e2e="group-sheet-all"
-        >
-          All groups
-        </Link>
-        <Link
-          href={NEW_GROUP_PATH}
-          navigate={navigate}
-          class={`${sheetRow} justify-center text-accent`}
-          data-e2e="group-sheet-new"
-        >
-          New group
-        </Link>
-      </div>
+      <ul class="flex flex-col gap-1 border-t border-subtle pt-1">
+        <li>
+          <Link
+            href={SCREEN_PATHS.groups}
+            navigate={navigate}
+            class={sheetLink}
+            data-e2e="group-sheet-all"
+          >
+            <IconList class="size-5 shrink-0" aria-hidden="true" />
+            All groups
+          </Link>
+        </li>
+        <li>
+          <Link
+            href={NEW_GROUP_PATH}
+            navigate={navigate}
+            class={sheetLink}
+            data-e2e="group-sheet-new"
+          >
+            <IconPlus class="size-5 shrink-0" aria-hidden="true" />
+            New group
+          </Link>
+        </li>
+      </ul>
     </div>
   )
 }

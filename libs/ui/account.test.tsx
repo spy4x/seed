@@ -680,6 +680,29 @@ describe("AppFrame", () => {
     expect(find<HTMLDialogElement>(sheet).open).toBe(false)
   })
 
+  it("draws All groups and New group in the phone's sheet as rows with an icon, like its other entries", async () => {
+    await mount(
+      <AppFrame
+        user={ada}
+        onSignOut={() => {}}
+        groupPicker={{ groups, selectedId: "g-1", onSelect: () => {} }}
+      >
+        page
+      </AppFrame>,
+    )
+    for (const row of ["group-sheet-all", "group-sheet-new"]) {
+      const link = find(`[data-e2e=${row}]`)
+      expect({
+        row,
+        listed: link.parentElement?.tagName,
+        icon: link.querySelector("svg") !== null,
+        centred: link.classList.contains("justify-center"),
+        accent: link.classList.contains("text-accent"),
+        weight: link.classList.contains("font-medium"),
+      }).toEqual({ row, listed: "LI", icon: true, centred: false, accent: false, weight: true })
+    }
+  })
+
   it("makes every group row of the phone's Account sheet at least 44 px tall", async () => {
     await mount(
       <AppFrame
