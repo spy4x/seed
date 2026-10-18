@@ -151,7 +151,9 @@ export function OfflineStatus(
   }
 
   return (
-    <section class="w-full" aria-label="Sync" data-e2e="offline-status">
+    // It sits above the page's header, as the shell's banner does: a section gap (`Page`'s gap-8)
+    // keeps a conflict card off the header.
+    <section class="mb-8 w-full" aria-label="Sync" data-e2e="offline-status">
       <SyncStatus
         online={network.online.value}
         pending={pending}
