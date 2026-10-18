@@ -9,6 +9,7 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { SEOHead } from "@spy4x/preact-system/seo-head"
 import { SiteFooter, type SiteFooterGroup } from "@spy4x/preact-system/site-footer"
 import { SiteHeader } from "@spy4x/preact-system/site-header"
+import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME } from "./brand.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
@@ -97,6 +98,14 @@ export interface SitePageHead {
   jsonLd?: readonly unknown[]
 }
 
+/**
+ * A page's `<title>`: its own title, then the site's name, unless the title names the site
+ * already, so no title says "Seed" twice.
+ */
+export function pageTitle(title: string): string {
+  return title.includes(SITE_NAME) ? title : `${title} · ${SITE_NAME}`
+}
+
 /** What every page hands {@link SiteFrame}. */
 export interface SiteFrameProps {
   /**
@@ -139,7 +148,7 @@ export function SiteFrame(
     <>
       <Head>
         <SEOHead
-          title={path === `/` ? head.title : `${head.title} · ${SITE_NAME}`}
+          title={pageTitle(head.title)}
           description={head.description}
           canonical={`${state.webAppOrigin}${path}`}
           ogImage={`${state.webAppOrigin}/og/${og}.png`}
@@ -207,6 +216,31 @@ export interface LegalPageProps extends Omit<SiteFrameProps, "head"> {
 }
 
 /**
+ * A legal page's structured data: the page itself, part of the site the home page declares, and
+ * its place under the home page.
+ */
+function legalPageJsonLd(
+  origin: string,
+  path: string,
+  crumb: string,
+  name: string,
+  description: string,
+): unknown[] {
+  const url = `${origin}${path}`
+  return [
+    {
+      "@type": `WebPage`,
+      "@id": `${url}#webpage`,
+      url,
+      name,
+      description,
+      isPartOf: { "@id": `${origin}/#website` },
+    },
+    breadcrumbListJsonLd(url, [{ name: SITE_NAME, href: `/` }, { name: crumb }]),
+  ]
+}
+
+/**
  * A legal page of the demo: its title, a notice that it is a template a product must adapt, and
  * its text in one reading column. Headings, lists and links inside `children` get the page's prose
  * styles.
@@ -215,7 +249,15 @@ export function LegalPage(
   { state, path, title, headTitle, description, updated, sections, children }: LegalPageProps,
 ): JSX.Element {
   return (
-    <SiteFrame state={state} path={path} head={{ title: headTitle ?? title, description }}>
+    <SiteFrame
+      state={state}
+      path={path}
+      head={{
+        title: headTitle ?? title,
+        description,
+        jsonLd: legalPageJsonLd(state.webAppOrigin, path, title, headTitle ?? title, description),
+      }}
+    >
       <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
         <header class="flex max-w-3xl flex-col gap-4">
           <h1 class="text-3xl font-semibold tracking-tight lg:text-4xl">{title}</h1>

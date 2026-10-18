@@ -48,7 +48,9 @@ export function PricingDemoPlans(): JSX.Element {
           headingLevel={3}
           labels={{
             choose: `Try in the demo`,
-            chooseName: (name) => `Try ${name} in the demo`,
+            // The name starts with the visible text, so speech input ("click Try in the demo")
+            // finds the button, and the plan tells the buttons apart.
+            chooseName: (name) => `Try in the demo: ${name}`,
             highlighted: `Recommended`,
           }}
         />

@@ -52,7 +52,7 @@ test("a visitor walks the website and its forms without a refusal under the cont
 
   await page.goto("/pricing")
   // A form that the website answers with a redirect.
-  await page.getByRole("button", { name: "Try Pro in the demo" }).click()
+  await page.getByRole("button", { name: "Try in the demo: Pro" }).click()
   await expect(page).toHaveURL(/\/sign-up$/)
 
   const email = `mpa-csp-${uuidV7().slice(-8)}@example.com`

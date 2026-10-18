@@ -18,7 +18,7 @@ test("a visitor without JavaScript goes from the home page to pricing, to sign-u
   )
 
   // Choosing a plan posts to the website, which sends the visitor to the app's sign-up.
-  await page.getByRole("button", { name: "Try Pro in the demo" }).click()
+  await page.getByRole("button", { name: "Try in the demo: Pro" }).click()
   await expect(page).toHaveURL(/\/sign-up$/)
 
   // A fresh address each run: the per-address limit allows three confirm mails an hour.

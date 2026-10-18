@@ -4,7 +4,9 @@ import { App } from "fresh"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
-import Home, { HOME_HEAD } from "./routes/index.tsx"
+import Compare from "./routes/compare.tsx"
+import Features from "./routes/features.tsx"
+import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
 import Mvp, { MVP_HEAD } from "./routes/mvp.tsx"
 import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
 import Privacy from "./routes/privacy.tsx"
@@ -43,6 +45,8 @@ function siteWith(newsletter: () => boolean) {
     .use(pageMiddleware(config, neverCalled, newsletter))
     .appWrapper(view(AppWrapper))
     .route("/", { component: view(Home) })
+    .route("/features", { component: view(Features) })
+    .route("/compare", { component: view(Compare) })
     .route("/pricing", { component: view(Pricing), handler: pricing })
     .route("/mvp", { component: view(Mvp) })
     .route("/privacy", { component: view(Privacy) })
@@ -110,10 +114,51 @@ describe("the public website", () => {
     expect(html.match(/<title>/g)).toHaveLength(1)
   })
 
-  it("names every other page after its own title, then the site", async () => {
-    const { html } = await page("/privacy")
+  it("shows every quick-start command in the hero, from creating the repository to starting it", async () => {
+    const { html } = await page("/")
 
-    expect(html).toContain(`<title>Privacy: what Seed's demo and site keep · Seed</title>`)
+    const hero = html.slice(html.indexOf(`id="hero-title"`), html.indexOf(`id="features"`))
+    for (const line of QUICK_START) expect(hero).toContain(`$ ${line}`)
+  })
+
+  it("keeps every quick-start line a bare command, since interactive zsh passes a comment's words on", () => {
+    for (const line of QUICK_START) expect(line, line).not.toContain("#")
+  })
+
+  it("tells the reader under the hero's commands to fill in the secrets first", async () => {
+    const { html } = await page("/")
+
+    const caption = html.match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/)?.[1]
+      .replace(/<[^>]+>/g, "")
+    expect(caption).toBe("Before proxy:start, fill in the secrets in infra/envs/.env.")
+  })
+
+  it("gives the billing and realtime cards a picture of the app", async () => {
+    const { html } = await page("/")
+
+    for (const [id, shot] of [["feature-billing", "billing"], ["feature-realtime", "realtime-a"]]) {
+      const start = html.indexOf(`aria-labelledby="${id}"`)
+      const card = html.slice(start, html.indexOf(`role="article"`, start + 1))
+      expect(card, id).toContain(`/shots/${shot}-light-`)
+    }
+  })
+
+  it("names a page after its own title, then the site, when the title does not name Seed", async () => {
+    const { html } = await page("/mvp")
+
+    expect(html).toContain(`<title>${MVP_HEAD.title} · Seed</title>`)
+  })
+
+  it("keeps every title within 60 characters and naming Seed once, and every description within 155", async () => {
+    for (const path of SITE_PAGES) {
+      const { html } = await page(path)
+      const title = html.match(/<title>([^<]*)<\/title>/)![1].replaceAll("&#39;", "'")
+      const description = metaContent(html, "description")!
+
+      expect(title.length, `${path}: ${title}`).toBeLessThanOrEqual(60)
+      expect(title.match(/Seed/g), `${path}: ${title}`).toHaveLength(1)
+      expect(description.length, `${path}: ${description}`).toBeLessThanOrEqual(155)
+    }
   })
 
   it("gives every page the Seed mark as its tab icon and the canvas of each palette as its theme colour", async () => {
@@ -201,9 +246,20 @@ describe("the public website", () => {
     for (const question of questions) expect(html).toContain(`>${question}<`)
   })
 
-  it("adds no structured data to a legal page", async () => {
-    for (const path of ["/privacy", "/terms"]) {
-      expect(jsonLdGraph((await page(path)).html), path).toEqual([])
+  it("describes a legal page as a page of the site, one step below the home page", async () => {
+    for (const [path, name] of [["/privacy", "Privacy"], ["/terms", "Terms"]]) {
+      const graph = jsonLdGraph((await page(path)).html)
+
+      const webPage = graph.find((entity) => entity["@type"] === "WebPage")
+      expect(webPage, path).toMatchObject({
+        url: `${site}${path}`,
+        isPartOf: { "@id": `${site}/#website` },
+      })
+      const crumbs = graph.find((entity) => entity["@type"] === "BreadcrumbList")
+      expect(crumbs?.itemListElement, path).toEqual([
+        { "@type": "ListItem", position: 1, name: "Seed", item: `${site}/` },
+        { "@type": "ListItem", position: 2, name, item: `${site}${path}` },
+      ])
     }
   })
 
@@ -222,7 +278,7 @@ describe("the public website", () => {
 
     expect(status).toBe(200)
     expect(headingOne(html)).toBe("Seed is free. Here is what it costs to run.")
-    expect(html).toContain(`<title>${PRICING_HEAD.title} · Seed</title>`)
+    expect(html).toContain(`<title>${PRICING_HEAD.title}</title>`)
     for (const card of ["way-use", "way-run", "way-hire"]) expect(html).toContain(`id="${card}"`)
     expect(html).toContain(">$0</span>")
     expect(html).toContain(">From $8,000</span>")
@@ -307,6 +363,20 @@ describe("the public website", () => {
     expect(withTrial.length).toBeGreaterThan(0)
     for (const plan of withTrial) expect(html).toContain(`The first ${plan.trialDays} days free`)
     expect(html.match(/days free/g)).toHaveLength(withTrial.length)
+  })
+
+  it("names every demo plan's button with its visible text, then the plan", async () => {
+    const { html } = await page("/pricing")
+
+    const buttons = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
+      .filter((match) => match[1].includes(`type="submit"`) && match[2].includes("demo"))
+    expect(buttons).toHaveLength(PLANS.length)
+    for (const [index, plan] of PLANS.entries()) {
+      const [, attributes, content] = buttons[index]
+      const visible = content.replace(/<[^>]+>/g, "").trim()
+      const name = attributes.match(/aria-label="([^"]*)"/)?.[1]
+      expect(name, plan.name).toBe(`${visible}: ${plan.name}`)
+    }
   })
 
   it("sends a plan chosen without JavaScript to the SPA's sign-up", async () => {
