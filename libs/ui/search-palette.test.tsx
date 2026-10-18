@@ -255,6 +255,16 @@ describe("SearchPalette", () => {
     expect(listed()).toContain("Acme Studio | Viewer")
   })
 
+  it("asks for a second character, instead of saying no note matches, when one character finds nothing", async () => {
+    await mount()
+    await open()
+
+    await type("q")
+
+    expect(listed()).toEqual([])
+    expect(status()).toBe("Type at least 2 characters to search notes.")
+  })
+
   it("offers no new note or tag in a group the person may only read, and no new group offline", async () => {
     await mount({
       currentGroup: { id: STUDIO.id, name: STUDIO.name, canWrite: false },
