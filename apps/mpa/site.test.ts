@@ -121,6 +121,28 @@ describe("the public website", () => {
     for (const line of QUICK_START) expect(hero).toContain(`$ ${line}`)
   })
 
+  it("keeps every quick-start line a bare command, since interactive zsh passes a comment's words on", () => {
+    for (const line of QUICK_START) expect(line, line).not.toContain("#")
+  })
+
+  it("tells the reader under the hero's commands to fill in the secrets first", async () => {
+    const { html } = await page("/")
+
+    const caption = html.match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/)?.[1]
+      .replace(/<[^>]+>/g, "")
+    expect(caption).toBe("Before proxy:start, fill in the secrets in infra/envs/.env.")
+  })
+
+  it("gives the billing and realtime cards a picture of the app", async () => {
+    const { html } = await page("/")
+
+    for (const [id, shot] of [["feature-billing", "billing"], ["feature-realtime", "realtime-a"]]) {
+      const start = html.indexOf(`aria-labelledby="${id}"`)
+      const card = html.slice(start, html.indexOf(`role="article"`, start + 1))
+      expect(card, id).toContain(`/shots/${shot}-light-`)
+    }
+  })
+
   it("names a page after its own title, then the site, when the title does not name Seed", async () => {
     const { html } = await page("/mvp")
 

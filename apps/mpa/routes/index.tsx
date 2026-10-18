@@ -58,11 +58,14 @@ const PROOF = [
   { value: `MIT`, label: `licence: no account, no paywall` },
 ] as const
 
-/** The quick start, one command per line, as the README runs it. */
+/**
+ * The quick start, one command per line, as the README runs it. No line carries a `#` comment:
+ * interactive zsh, the macOS default, passes a comment's words to the command.
+ */
 export const QUICK_START = [
   `gh repo create my-product --template spy4x/seed --private --clone`,
   `cd my-product`,
-  `cp infra/envs/.env.example infra/envs/.env   # then fill in the secrets`,
+  `cp infra/envs/.env.example infra/envs/.env`,
   `deno task vapid-key:create`,
   `deno task proxy:start`,
   `deno task dev`,
@@ -180,6 +183,12 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               variant="terminal"
               title="Quick start"
               class="lg:absolute lg:bottom-0 lg:left-0 lg:z-10 lg:w-2xl"
+              caption={
+                <span>
+                  Before <code class="font-mono">proxy:start</code>, fill in the secrets in{" "}
+                  <code class="font-mono">infra/envs/.env</code>.
+                </span>
+              }
             >
               {QUICK_START.map((line) => `$ ${line}`).join(`\n`)}
             </WindowFrame>
@@ -371,7 +380,10 @@ function QuickStart(): JSX.Element {
           />
           <p class="text-muted">You need Deno 2, Docker and the GitHub CLI.</p>
           <p class="text-muted text-pretty">
-            Then open <code class="font-mono text-foreground">http://app.localhost</code>. The{" "}
+            Fill in the secrets in <code class="font-mono text-foreground">infra/envs/.env</code>
+            {" "}
+            after the copy, then open{" "}
+            <code class="font-mono text-foreground">http://app.localhost</code>. The{" "}
             <a href={`${REPOSITORY_URL}#readme`} class="text-primary underline">README</a>{" "}
             lists every secret and how to deploy.
           </p>
