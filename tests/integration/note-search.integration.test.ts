@@ -111,5 +111,17 @@ Deno.test("the note search against Postgres", async (t) => {
       expect(hit.snippet).not.toContain("<b>")
       expect(hit.snippet).not.toContain("word0 ")
     })
+
+    await t.step(
+      "a snippet that holds the whole body keeps its punctuation and no ellipsis",
+      async () => {
+        const { groupId, owner } = await team(sql)
+        await write(groupId, owner, "Plan", "(Draft) Budget for the roadmap items.")
+
+        const [hit] = await notes.searchForMember(owner, "roadmap", NOTE_SEARCH_LIMIT)
+
+        expect(hit.snippet).toBe("(Draft) Budget for the roadmap items.")
+      },
+    )
   })
 })

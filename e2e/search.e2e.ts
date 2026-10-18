@@ -61,7 +61,7 @@ const result = (page: Page, label: string) =>
 type Probe = { focusAfterClose?: Promise<string> }
 
 test.describe("search", () => {
-  test("Ctrl+K and the rail's Search open the one search, Escape leaves no focus in it, and picking a note of another group opens it in that group", async ({ browser, request }) => {
+  test("Ctrl+K and the rail's Search open the one search, Escape leaves no focus in it, and picking a note of another group opens it in that group with focus on its title", async ({ browser, request }) => {
     const user = "e2e_search_online@example.com"
     await cleanup(request, user)
     const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
@@ -131,6 +131,8 @@ test.describe("search", () => {
 
       await expect(page).toHaveURL(new RegExp(`/notes/${garden.noteId}$`))
       await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Garden notes")
+      // Focus lands on the note's heading, not on the page body or back where the search began.
+      await expect(page.getByRole("heading", { level: 1, name: "Garden notes" })).toBeFocused()
       await expect(page.locator("[data-e2e=group-picker]")).toHaveAccessibleName(/Side project/)
     } finally {
       await context.close()
@@ -138,7 +140,7 @@ test.describe("search", () => {
     }
   })
 
-  test("on a phone, Search in the Account sheet and Ctrl+K open the search, focus goes back to Account, and it finds a note", async ({ browser, request }) => {
+  test("on a phone, Search in the Account sheet and Ctrl+K open the search, focus goes back to Account, and a found note opens with focus on its title", async ({ browser, request }) => {
     const user = "e2e_search_phone@example.com"
     await cleanup(request, user)
     const context = await browser.newContext({
@@ -184,6 +186,7 @@ test.describe("search", () => {
       await phonePalette.getByRole("option").filter({ hasText: "Garden notes" }).click()
       await expect(page).toHaveURL(new RegExp(`/notes/${garden.noteId}$`))
       await expect(page.locator("[data-e2e=note-title]")).toHaveValue("Garden notes")
+      await expect(page.getByRole("heading", { level: 1, name: "Garden notes" })).toBeFocused()
     } finally {
       await context.close()
       await cleanup(request, user)

@@ -156,10 +156,10 @@ function SignInGate() {
 function Frame() {
   const session = sessionState.value
   // A route change swaps the page without a load: the hook moves focus to the `<h1>` the new page
-  // shows first, as a load would put the reader at its top. Focus still ends on the document body
-  // where that heading is replaced afterwards: opening a note and saving a new one (the loading
-  // heading goes when the note arrives), and signing out (the shell is swapped). The app has no
-  // page titles yet, so the tab's title stays.
+  // shows first, as a load would put the reader at its top. The note page moves focus on to the
+  // note's heading when it replaces the loading one (`NoteEditorView`). Focus still ends on the
+  // document body when signing out swaps the shell. The app has no page titles yet, so the tab's
+  // title stays.
   const [path] = useLocation()
   useRouteAnnouncer({ path })
   if (session.user && !session.isMfaRequired) {

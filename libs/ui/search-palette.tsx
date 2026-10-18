@@ -105,6 +105,12 @@ export function quoted(query: string): string {
     : characters.join("")
 }
 
+/**
+ * The no-results line for a query too short to search notes: groups and actions were matched, the
+ * notes were not, so it must not say that no note matches.
+ */
+export const SHORT_QUERY_LABEL = `Type at least ${NOTE_QUERY_MIN} characters to search notes.`
+
 /** The no-results line for `query`, which says where the search looked. */
 export function emptyLabel(query: string, onDevice: boolean): string {
   return onDevice
@@ -171,7 +177,9 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
     }))
     const actions = rankOptions(actionOptions(currentGroup, online), text)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
-    if (!signal.aborted) setEmpty(emptyLabel(text, answer.onDevice))
+    if (!signal.aborted) {
+      setEmpty(asksNotes ? emptyLabel(text, answer.onDevice) : SHORT_QUERY_LABEL)
+    }
     return [...notes, ...groupRows, ...actions]
   }
 
