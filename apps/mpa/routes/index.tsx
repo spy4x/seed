@@ -212,19 +212,23 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
 }
 
 /**
- * The plan panel of the billing screenshot, drawn a little above its real size so its text stays
- * legible in a narrow card: the image is wider than the card and shifted so the crop starts at the
- * "Plan" heading, below the member list, and ends with the screenshot.
+ * The plan of the phone billing screenshot, from the empty canvas above its "Plan" heading to the
+ * canvas below its footnote: at most 390 px wide, so the card shows it whole at about its real size.
+ * It sits in the middle of the card's picture area on the same canvas colour.
  */
 function BillingCrop(): JSX.Element {
   return (
-    <div class="relative h-94 overflow-hidden">
-      <div class="absolute -left-[309px] -top-[511px] w-[1420px] max-w-none">
-        <Shot
-          name="billing"
-          alt="A group's plan in the Seed app: Pro, active, €36.00 a month for 4 members at €9.00 each, with a button to manage billing."
-          sizes="1420px"
-        />
+    <div class="flex h-94 items-center overflow-hidden bg-canvas">
+      <div class="aspect-[390/364] w-full max-w-[390px] overflow-hidden">
+        {/* 412 to 776 px down the 390×844 screenshot, clear of the borders above and below. */}
+        <div class="-translate-y-[48.815%]">
+          <Shot
+            name="billing"
+            kind="mobile"
+            alt="A group's plan in the Seed app: Pro, active, €36.00 a month with its renewal date, a button to manage billing, and a note that 4 members pay €9.00 each a month, the owner included."
+            sizes="390px"
+          />
+        </div>
       </div>
     </div>
   )
@@ -296,13 +300,17 @@ function Features(): JSX.Element {
             href="/features#teams"
             wide
             media={
-              <div class="aspect-[1280/470] overflow-hidden">
-                {/* The member list only: the plan below it is the billing card's picture. */}
-                <Shot
-                  name="group-members"
-                  alt="The members of a group, each with their role, a button to invite people, and one member's menu open: Make Viewer, Make Admin, Remove from group."
-                  sizes="(min-width: 1024px) 640px, 100vw"
-                />
+              <div class="aspect-[1280/470] overflow-hidden lg:flex lg:aspect-auto lg:h-94 lg:justify-center lg:bg-canvas">
+                {/* Members only, no plan; from lg on, as tall as the realtime card beside it. */}
+                <div class="lg:w-[640px] lg:shrink-0 lg:overflow-hidden">
+                  <div class="lg:w-[1024px] lg:-translate-x-[221.6px]">
+                    <Shot
+                      name="group-members"
+                      alt="The members of a group, each with their role, a button to invite people, and one member's menu open: Make Viewer, Make Admin, Remove from group."
+                      sizes="(min-width: 1024px) 1024px, 100vw"
+                    />
+                  </div>
+                </div>
               </div>
             }
           >

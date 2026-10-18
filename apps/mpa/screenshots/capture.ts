@@ -114,6 +114,8 @@ interface OgCard {
   shot: string
   /** How far down the screenshot its frame starts, in the card's pixels. */
   top?: number
+  /** How wide the screenshot is drawn, in the card's pixels: 860 unless set. */
+  width?: number
 }
 
 const OG_CARDS: OgCard[] = [
@@ -150,10 +152,12 @@ const OG_CARDS: OgCard[] = [
     eyebrow: "For founders",
     title: "Your MVP, live and taking payments.",
     sub: "From $8,000 · from 3 weeks · you own everything",
-    shot: "billing-dark-1280.webp",
-    // The member list and the plan with its price. The frame shows the screenshot from just above
-    // the member list to just below the renewal date: both edges fall between rail icons.
-    top: 46,
+    // The phone picture, which has no rail: the plan alone, near its real size.
+    shot: "billing-dark-780.webp",
+    width: 480,
+    // The frame starts 531 card pixels down the picture (its 431st CSS pixel), in the empty
+    // canvas above the "Plan" heading, and ends below the footnote, above the tab bar.
+    top: 531,
   },
   {
     file: "subscribe",
@@ -533,15 +537,21 @@ const SCREENS: Screen[] = [
   },
   {
     name: "billing",
-    forms: ["desktop"],
+    forms: ["desktop", "mobile"],
     async open(page, seeded) {
       await gotoApp(
         page,
         `/groups/${seeded.groupId}`,
         page.locator("[data-e2e=billing-plan][data-plan=pro]"),
       )
-      // From the members down to the plan, which ends the page.
-      await scrollToTop(page.locator("[data-e2e=group-section-members]"))
+      // On a desktop, from the members down to the plan, which ends the page. On a phone, the
+      // plan alone: the home page's billing card crops it at close to its real size.
+      const mobile = page.viewportSize()!.width < 768
+      await scrollToTop(
+        page.locator(
+          mobile ? "[data-e2e=group-section-billing]" : "[data-e2e=group-section-members]",
+        ),
+      )
     },
   },
   {
@@ -808,6 +818,7 @@ async function renderOgImages(browser: Browser, contexts: BrowserContext[]): Pro
           sub: card.sub,
           shot: card.shot ? `/static/shots/${card.shot}` : "",
           top: String(card.top ?? 0),
+          width: String(card.width ?? 860),
         })
         await page.goto(`${origin}/screenshots/og.html?${query}`)
         await page.evaluate(() => document.fonts.ready)

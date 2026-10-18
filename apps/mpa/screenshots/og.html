@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
   The Open Graph card of one website page, 1200×630. capture.ts opens it with the words in the
-  query string (eyebrow, title, sub, shot, top) and photographs it. Self-contained: its fonts come from
-  the pinned geist package that capture.ts unpacks, and nothing loads from outside.
+  query string (eyebrow, title, sub, shot, top, width) and photographs it. Self-contained: its
+  fonts come from the pinned geist package that capture.ts unpacks, and nothing loads from outside.
 -->
 <html lang="en">
   <head>
@@ -168,6 +168,7 @@
       image.onerror = () => document.body.setAttribute("data-error", shot)
       // How far down the picture the frame starts, in its own pixels.
       image.style.marginTop = `-${Number(query.get("top") ?? 0)}px`
+      image.style.width = `${Number(query.get("width") ?? 860)}px`
       image.src = shot
     } else {
       ready()
