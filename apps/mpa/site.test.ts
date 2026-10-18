@@ -365,6 +365,20 @@ describe("the public website", () => {
     expect(html.match(/days free/g)).toHaveLength(withTrial.length)
   })
 
+  it("names every demo plan's button with its visible text, then the plan", async () => {
+    const { html } = await page("/pricing")
+
+    const buttons = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
+      .filter((match) => match[1].includes(`type="submit"`) && match[2].includes("demo"))
+    expect(buttons).toHaveLength(PLANS.length)
+    for (const [index, plan] of PLANS.entries()) {
+      const [, attributes, content] = buttons[index]
+      const visible = content.replace(/<[^>]+>/g, "").trim()
+      const name = attributes.match(/aria-label="([^"]*)"/)?.[1]
+      expect(name, plan.name).toBe(`${visible}: ${plan.name}`)
+    }
+  })
+
   it("sends a plan chosen without JavaScript to the SPA's sign-up", async () => {
     const response = await handler(
       new Request(`${site}/pricing`, {
