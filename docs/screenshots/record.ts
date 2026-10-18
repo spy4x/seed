@@ -97,10 +97,10 @@ async function captureStills(browser: Browser, theme: Theme): Promise<Record<str
   }
 }
 
-function dataUrl(png: Uint8Array): string {
+function dataUrl(bytes: Uint8Array, type = "image/png"): string {
   let binary = ""
-  for (const byte of png) binary += String.fromCharCode(byte)
-  return `data:image/png;base64,${btoa(binary)}`
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return `data:${type};base64,${btoa(binary)}`
 }
 
 /** Puts a capture in a rounded window on a neutral backdrop, 16:10 at 2x like the capture. */
@@ -119,25 +119,80 @@ async function frame(browser: Browser, theme: Theme, png: Uint8Array): Promise<U
   }
 }
 
-/** The 1280x640 image GitHub shows when the repository link is shared. */
+/** The website's typefaces, which the social preview embeds so it does not depend on the host. */
+const FONTS = new URL("../../apps/mpa/static/fonts/", import.meta.url)
+
+/**
+ * The 1280x640 image GitHub shows when the repository link is shared. It copies the website's
+ * home card (`apps/mpa/screenshots/og.html`, `apps/mpa/static/og/home.png`): the same words,
+ * typefaces, colours and sprout lockup, with the dark profile capture in place of the notes one.
+ */
 async function socialPreview(browser: Browser, profile: Uint8Array): Promise<Uint8Array> {
+  const sans = dataUrl(await Deno.readFile(new URL("geist-sans.var.woff2", FONTS)), "font/woff2")
+  const mono = dataUrl(await Deno.readFile(new URL("geist-mono.var.woff2", FONTS)), "font/woff2")
   const context = await browser.newContext({ viewport: { width: 1280, height: 640 } })
   try {
     const page = await context.newPage()
-    await page.setContent(`<!doctype html><html><body style="margin:0;width:1280px;height:640px;
-      overflow:hidden;background:${BACKDROP.dark};font-family:system-ui,sans-serif;color:#f5f7fa">
-      <div style="position:absolute;left:72px;top:0;bottom:0;width:470px;display:flex;
-        flex-direction:column;justify-content:center;gap:20px">
-        <div style="font-size:72px;font-weight:700;letter-spacing:-2px">Seed</div>
-        <div style="font-size:30px;line-height:1.3;color:#c9d1dc">The web-standards SaaS
-          baseline: auth, two-factor sign-in, groups, an API, a worker and Postgres, wired
-          together.</div>
-        <div style="font-size:20px;color:#8b95a5">Deno · Hono · Preact · Fresh · Postgres</div>
+    await page.setContent(`<!doctype html><html lang="en"><head><style>
+      @font-face { font-family: "Geist"; src: url("${sans}") format("woff2"); font-weight: 100 900 }
+      @font-face {
+        font-family: "Geist Mono"; src: url("${mono}") format("woff2"); font-weight: 100 900
+      }
+      * { box-sizing: border-box; margin: 0 }
+      body {
+        position: relative; width: 1280px; height: 640px; overflow: hidden; background: #0a0a0c;
+        color: #f4f4f6; font-family: "Geist", sans-serif;
+      }
+      .grid {
+        position: absolute; inset: 0; background-size: 48px 48px;
+        background-image: linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+        mask-image: radial-gradient(ellipse at 70% 20%, #000 20%, transparent 80%);
+      }
+      .glow {
+        position: absolute; top: -260px; right: -200px; width: 760px; height: 620px;
+        background: radial-gradient(closest-side, rgba(139,92,246,.42), transparent);
+      }
+      .shot {
+        position: absolute; top: 96px; left: 760px; width: 560px; height: 410px;
+        border-radius: 14px; border: 1px solid rgba(255,255,255,.12); overflow: hidden;
+        box-shadow: 0 30px 80px rgba(0,0,0,.6);
+      }
+      .shot img { display: block; width: 900px; height: auto }
+      .copy { position: absolute; left: 72px; top: 96px; width: 600px }
+      .eyebrow {
+        font-family: "Geist Mono", monospace; font-size: 20px; letter-spacing: .12em;
+        text-transform: uppercase; color: #a78bfa;
+      }
+      h1 { margin-top: 28px; font-size: 60px; line-height: 1.06; font-weight: 650; letter-spacing: -.03em }
+      .sub { margin-top: 28px; font-size: 26px; line-height: 1.35; color: #a1a1aa }
+      footer {
+        position: absolute; left: 72px; right: 72px; bottom: 60px; display: flex;
+        align-items: center; justify-content: space-between;
+      }
+      .brand {
+        display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 650;
+        letter-spacing: -.02em;
+      }
+      .domain { font-family: "Geist Mono", monospace; font-size: 22px; color: #a1a1aa }
+      </style></head><body>
+      <div class="grid"></div><div class="glow"></div>
+      <div class="shot"><img src="${dataUrl(profile)}" alt=""></div>
+      <div class="copy">
+        <p class="eyebrow">Open-source SaaS foundation</p>
+        <h1>The groundwork of your SaaS, already built.</h1>
+        <p class="sub">Seed · open source · MIT · one server you own</p>
       </div>
-      <img src="${dataUrl(profile)}" style="position:absolute;left:600px;top:70px;width:800px;
-        height:500px;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.5),
-        0 0 0 1px rgba(255,255,255,.12)"></body></html>`)
+      <footer>
+        <span class="brand"><svg width="40" height="40" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M16 29V15" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" />
+          <path d="M16 17C16 10 11 6 4 6c0 7 5 11 12 11Z" fill="#4ade80" />
+          <path d="M16 14c0-6 4.5-10 12-10 0 6.5-4.5 10-12 10Z" fill="#a78bfa" />
+        </svg>Seed</span>
+        <span class="domain">seedsaas.com</span>
+      </footer></body></html>`)
     await page.locator("img").evaluate((img: HTMLImageElement) => img.decode())
+    await page.evaluate(() => document.fonts.ready)
     return await page.screenshot()
   } finally {
     await context.close()
