@@ -84,6 +84,16 @@ describe("UnsentSignOut", () => {
       .toBe("You have 3 unsent changes")
   })
 
+  it("says that signing out now deletes the unsent changes, never that they stay", async () => {
+    await mount(fakeWait().wait)
+
+    const text = window.document.querySelector("[data-e2e=unsent-dialog]")?.textContent ?? ""
+    expect(text).toContain(
+      "If you sign out now, they're deleted from this browser and never reach the server.",
+    )
+    expect(text).not.toContain("stay on this browser")
+  })
+
   it("starts sending on Send, then sign out, and does not sign out yet", async () => {
     const { wait, sends } = fakeWait()
     const calls = await mount(wait)

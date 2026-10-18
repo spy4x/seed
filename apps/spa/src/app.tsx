@@ -21,11 +21,11 @@ import {
   connectionDisplay,
   flushOutbox,
   forgetModules,
-  forgetUser,
   recallUser,
   rememberUser,
   startModules,
   stopChanges,
+  wipeDevice,
 } from "./modules.ts"
 import { toasts } from "./state/toasts.ts"
 import { AuthView } from "./views/AuthView.tsx"
@@ -182,9 +182,9 @@ export function App() {
   const [ready, setReady] = useState(false)
   useEffect(() => {
     bootstrapSession(recallUser)
-      // A start that found no session deletes what the device kept for the remembered user before
-      // the sign-in page shows: the next person on this device must not find it.
-      .then(() => sessionState.value.user ? undefined : forgetUser())
+      // A start that found no session deletes everything the app kept on the device before the
+      // sign-in page shows: the next person on this device must not find it.
+      .then(() => sessionState.value.user ? undefined : wipeDevice())
       .finally(() => setReady(true))
   }, [])
 
@@ -196,10 +196,11 @@ export function App() {
   }, [])
 
   useEffect(() => {
-    // The user is remembered for the next start with no network, and forgotten on sign-out.
+    // The user is remembered for the next start with no network. Signed out, the device keeps
+    // nothing of anyone (#206).
     const { user, isReady, isMfaRequired } = sessionState.value
     if (user && !isMfaRequired) rememberUser(user)
-    else if (isReady && !user) void forgetUser()
+    else if (isReady && !user) void wipeDevice()
   }, [sessionState.value.user, sessionState.value.isReady, sessionState.value.isMfaRequired])
 
   // The sign-in page of this browser later says which method the person used (#142).

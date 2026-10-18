@@ -29,8 +29,12 @@ export function UnsentSignOut(
       conflicts={view.conflicts}
       sent={view.sent}
       state={view.state}
-      // Nothing is being sent while the device is offline; "Sending…" would say otherwise.
-      labels={view.state === "offline" ? { sendBusy: "Waiting…" } : undefined}
+      labels={{
+        // Signing out deletes everything the app keeps on this browser, the queue too (#206).
+        kept: "If you sign out now, they're deleted from this browser and never reach the server.",
+        // Nothing is being sent while the device is offline; "Sending…" would say otherwise.
+        ...(view.state === "offline" ? { sendBusy: "Waiting…" } : {}),
+      }}
       onSend={() => wait.send()}
       onSignOut={onSignOut}
       onCancel={onCancel}

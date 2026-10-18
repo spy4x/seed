@@ -294,13 +294,29 @@ start with no session before the sign-in page shows, a signed-in start before th
 opened. A person whose own copies the device still cannot delete works against the server alone for
 that visit.
 
-The outbox stays: a write
-that never reached the server is the person's work, and goes out the next time the same user signs
-in on this browser. Those unsent note texts stay in IndexedDB on a shared device until that user
-signs in again, so on a shared browser use the browser's own "clear site data". A device that ran
-the earlier Dexie version also keeps its old `offline:user:<id>` database: signing out does not
-clear it, so its cached notes stay on that device until the browser's "clear site data". Signing out with no
-network, or while the server answers with an error, signs the page out at once and records that a
+**Signing out deletes everything the app keeps in this browser** (#206). The owner decided on
+2026-10-18: "when a user signs out - delete everything from local storage and local db. Simple as
+that." Once the page settles with nobody signed in (the account menu's sign-out, a start whose
+session ended with a 401, a sign-out by the server), `wipeDevice` in `modules.ts` deletes every
+IndexedDB database of the app, the queue of unsent writes (`offline:user:<id>:outbox` and
+`:tags-outbox`) and the old Dexie `offline:user:<id>` database included, every `localStorage` key
+but a few, and all of `sessionStorage`. A write still in the queue is lost; the dialog below says
+so first. What the server owns (the notes, the preferences, the selected group) comes back at the
+next sign-in. The keys a sign-out keeps (`KEPT_KEYS`) hold no person's data: `auth:sign-out-owed`
+and `offline:owed-deletion`, the debts that finish the sign-out; `theme` and
+`install-prompt-dismissed`, the device's own answers; and `last-sign-in`, the masked hint the
+sign-in page shows (#142), which "Not you? Forget" drops. The databases go after the deletions
+already queued, so a copy those finished is not opened again. A browser that refuses to delete a
+database logs a warning, and the next signed-out start tries again.
+
+A change of user on one device does the same for the person before. When a provider sign-in's
+redirect brings another person's cookie to a page that never signed the last one out, the
+remembered person's databases, their queue included, and the same `localStorage` and
+`sessionStorage` keys are deleted before the new person's offline copy opens. A signed-in start
+that still owes someone a deletion (a sign-out cut short by a closed page) deletes that person's
+databases too before it opens the copy.
+
+Signing out with no network, or while the server answers with an error, signs the page out at once and records that a
 sign-out is owed to the server (`localStorage`, `auth:sign-out-owed`). The app sends it first thing
 at the next start, before asking who is signed in, and again when the browser comes back online. The
 flag is cleared only when the server answers with success; while it is unreachable or answers with
@@ -310,15 +326,16 @@ sign-out, its session stays valid.
 
 **Signing out with unsent changes asks first.** When the person signs out from the account menu
 while the queue holds writes, the app does not sign out at once: `UnsentChangesDialog` from
-`@spy4x/preact-system` asks, with the number of changes and the fact that they stay on this browser
-and are sent only at the next sign-in here. "Send, then sign out" (the focused primary) sends the
-queue now and shows the wait in the same dialog: "Sending changes… 1 of 3 sent", "You're offline.
+`@spy4x/preact-system` asks, with the number of changes and the fact that signing out now deletes
+them: "If you sign out now, they're deleted from this browser and never reach the server."
+(`views/UnsentSignOut.tsx` passes these words). "Send, then sign out" (the focused primary) sends
+the queue now and shows the wait in the same dialog: "Sending changes… 1 of 3 sent", "You're offline.
 We'll send your changes when you're back online, then sign you out." (the button then reads
 "Waiting…"), or "Couldn't reach the server. Trying again…" while the sync runner backs off. Once
 the queue is empty, the sign-out goes on by itself. A write the server refused never sends by
 itself, so it is counted apart; once only such writes are left, the button becomes "Review
 changes", which closes the dialog and opens the notes page of their group, where the chooser is.
-"Sign out anyway" signs out at once and keeps the queue, as before; "Cancel", Escape and the
+"Sign out anyway" signs out at once and deletes the queue with everything else; "Cancel", Escape and the
 backdrop keep the person signed in. With an empty queue, or the module off, sign-out is immediate,
 as before. The check is `watchUnsentChanges` in `modules.ts` (the counts and the wait are
 `offline/unsent.ts`); `views/AppShell.tsx` asks it and `views/UnsentSignOut.tsx` draws the dialog.
@@ -386,7 +403,7 @@ service worker still caches the app's files, so the page itself loads fast. The 
 `e2e/local-data.e2e.ts` runs the core flows this way and fails if the page created an IndexedDB
 database. Copies written before the switch was turned off are deleted at the next start, for the
 person the device remembered and for anyone still owed a deletion; that person's unsent note writes
-stay queued, as on sign-out. A device with neither key in `localStorage` is not opened.
+stay queued and are sent once, as below. A device with neither key in `localStorage` is not opened.
 
 **A queue left while the module is off is sent once, then deleted.** At every signed-in start with
 `offline: false`, the app looks for that person's queue databases (`offline:user:<id>:outbox` and
@@ -437,8 +454,9 @@ layer is missing from this list.
    them or to their tests. `watchUnsentChanges` and the `UnsentWait` and `UnsentView` types go
    with that part; delete `sendLeftQueue`, its call in `startModules`, and the `databases` option.
 4. In `apps/spa/src/app.tsx`, delete what came from that part: `bootstrapSession(recallUser)`
-   becomes `bootstrapSession()` and loses its `forgetUser` step; drop the effect that remembers the
-   user and the `flushOutbox` line of `reads`.
+   becomes `bootstrapSession()` and loses its `wipeDevice` step; in the effect that remembers the
+   user, drop `rememberUser` and call `clearBrowserStorage()` where it called `wipeDevice()`; drop
+   the `flushOutbox` line of `reads`.
 5. In `apps/spa/src/state/notes.ts`, delete the `currentLayer` and `offlineNotes` imports and
    export the store built from `onlineNotes` directly: `createNotesStore(onlineNotes)`. The
    optional `readLocal` dependency and its `showLocal` call can go with them.

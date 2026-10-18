@@ -432,7 +432,7 @@ test.describe("what a device keeps", () => {
     }
   })
 
-  test("signing out deletes the read copies and the notes, and keeps a write that was never sent", async ({ browser, request }) => {
+  test("signing out deletes every database and local storage key of the app, a write that was never sent included", async ({ browser, request }) => {
     const user = "e2e_local_data_sign_out@example.com"
     await cleanup(request, user)
     // Without the socket every write is a POST, which this test fails as a dead network would.
@@ -451,9 +451,14 @@ test.describe("what a device keeps", () => {
       await page.locator("[data-e2e=unsent-sign-out-anyway]").click()
       await page.locator("[data-e2e=signin-required]").waitFor()
 
-      await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBe(0)
-      expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBe(0)
-      expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(1)
+      await expect.poll(() => databases(page)).toEqual([])
+      // Only what finishes a sign-out and the device's own answers may stay (`KEPT_KEYS`).
+      const left = await page.evaluate(() => Object.keys(localStorage))
+      expect(
+        left.filter((key) =>
+          !["auth:sign-out-owed", "theme", "install-prompt-dismissed", "last-sign-in"].includes(key)
+        ),
+      ).toEqual([])
     } finally {
       await context.close()
       await cleanup(request, user)
@@ -618,7 +623,7 @@ test.describe("what a device keeps", () => {
     }
   })
 
-  test("a start with another person's session, as a provider sign-in's redirect brings it, deletes the copies of the person the browser remembered", async ({ browser, request }) => {
+  test("a start with another person's session, as a provider sign-in's redirect brings it, deletes the copies and the queue of the person the browser remembered", async ({ browser, request }) => {
     const first = "e2e_local_data_switch_first@example.com"
     const second = "e2e_local_data_switch_second@example.com"
     await cleanup(request, first)
@@ -626,7 +631,7 @@ test.describe("what a device keeps", () => {
     const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
     const elsewhere = await browser.newContext({ baseURL: test.info().project.use.baseURL })
     try {
-      const { page, userId } = await deviceWithNote(context, request, first)
+      const { page, groupId, noteId, userId } = await deviceWithNote(context, request, first)
       await gotoApp(page, "/groups", page.locator("[data-e2e=group-list]"))
       await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
       await expect.poll(() => recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
@@ -635,6 +640,7 @@ test.describe("what a device keeps", () => {
       await tags.open()
       await tags.create("Urgent")
       await expect.poll(() => recordsIn(page, `offline:user:${userId}:tags`)).toBeGreaterThan(0)
+      await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
       await signUp(request, second)
       const other = await elsewhere.newPage()
       await signIn(other, second, password)
@@ -655,6 +661,7 @@ test.describe("what a device keeps", () => {
       await expect.poll(() => recordsIn(page, `reads:${userId}`)).toBe(0)
       expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBe(0)
       expect(await recordsIn(page, `offline:user:${userId}:tags`)).toBe(0)
+      expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(0)
     } finally {
       await elsewhere.close()
       await context.close()
