@@ -33,6 +33,7 @@ import {
   BillingStatus,
   listPriceOf,
   noChargeUntil,
+  planEndsIfCancelledAt,
   seatsOf,
 } from "@domain/billing"
 import { UserRole } from "@domain/identity"
@@ -484,6 +485,30 @@ interface DialogCopy {
   danger: boolean
 }
 
+/**
+ * What cancelling at the period's end leaves the group: its plan until the period's end, or until an
+ * earlier grace or trial end, or nothing more when that end has passed and it is on Free already.
+ */
+function periodEndHelp(
+  group: string,
+  plan: string,
+  keptUntil: Date | null,
+  periodEnd: string | null,
+  now: Date,
+  format: Pick<Formatters, "date">,
+): string {
+  const renew = `Its owner can renew it under Manage billing before the period ends.`
+  if (keptUntil !== null && keptUntil.getTime() <= now.getTime()) {
+    return `${group} is already on Free and is not charged again. ${renew}`
+  }
+  if (keptUntil === null || (periodEnd !== null && keptUntil.getTime() === Date.parse(periodEnd))) {
+    return `${group} keeps ${plan} until then and is not charged again. ${renew}`
+  }
+  return `${group} keeps ${plan} until ${
+    billingDate(keptUntil.toISOString(), format)
+  } and is not charged again. ${renew}`
+}
+
 /** The dialog of one action: what it does, its choice when it has one, the note and its button. */
 function ActionDialog(
   props: AdminBillingCustomerScreenProps & {
@@ -501,6 +526,7 @@ function ActionDialog(
   const periodEnd = customer.currentPeriodEnd
     ? billingDate(customer.currentPeriodEnd, format)
     : null
+  const keptUntil = planEndsIfCancelledAt(customer, detail.graceDays)
   const payment = props.payment.payment ?? null
 
   const [length, setLength] = useState<AdminBillingTimeLength>(`1m`)
@@ -582,7 +608,14 @@ function ActionDialog(
                     ? `At the end of the period, on ${periodEnd}`
                     : `At the end of the period`}
                   help={periodAllowed
-                    ? `${group} keeps ${plan} until then and is not charged again. Its owner can renew it under Manage billing before that date.`
+                    ? periodEndHelp(
+                      group,
+                      plan,
+                      keptUntil,
+                      customer.currentPeriodEnd,
+                      props.now,
+                      format,
+                    )
                     : `Already set to end then.`}
                 />
               ),
