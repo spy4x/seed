@@ -34,6 +34,7 @@ import {
   parseAuditEvent,
 } from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
+import { ADMIN_GROUP_PATHS } from "./admin-groups-list.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
 import { AUDIT_EVENTS, auditTone } from "./admin-user-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -452,7 +453,8 @@ function PersonCell(
 function PhonePeople({ entry }: { entry: AdminAuditEntry }): JSX.Element | null {
   const name = (person: AdminAuditPerson | null) =>
     person?.name ?? (entry.source === "account" ? "Deleted account" : null)
-  const about = name(entry.person)
+  // An operator's billing action is about a group, which no person stands for.
+  const about = entry.person === null && entry.group ? entry.group.name : name(entry.person)
   const by = selfDone(entry) ? null : name(entry.actor)
   if (!about && !by) return null
   return (
@@ -528,9 +530,19 @@ function AuditTable(
     {
       id: "person",
       header: "About",
-      render: (entry) => (
-        <PersonCell entry={entry} person={entry.person} navigate={navigate} address />
-      ),
+      render: (entry) =>
+        entry.person === null && entry.group
+          ? (
+            <Link
+              href={ADMIN_GROUP_PATHS.group(entry.group.id)}
+              navigate={navigate}
+              class="pc-link block w-36 truncate text-sm font-medium"
+              title={entry.group.name}
+            >
+              {entry.group.name}
+            </Link>
+          )
+          : <PersonCell entry={entry} person={entry.person} navigate={navigate} address />,
     },
     {
       id: "actor",
