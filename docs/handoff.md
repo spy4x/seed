@@ -6,7 +6,7 @@
 > [ADR 002](decisions/002-realtime-transport-and-sync.md) and
 > [ADR 003](decisions/003-swappable-transport-and-local-data.md) first - they are authoritative
 > and this file is not. What is still to build is in the
-> [open issues](https://github.com/spy4x/template/issues), not here.
+> [open issues](https://github.com/spy4x/seed/issues), not here.
 
 ## What this repository is
 

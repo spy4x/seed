@@ -1,11 +1,11 @@
 <div align="center">
 
-# template
+# Seed
 
 **A SaaS starting point on web standards: sign-up with a second factor, groups, billing, an API, a
 web app, a worker and Postgres. Work in progress.**
 
-[![CI](https://ci.antonshubin.com/api/badges/11/status.svg)](https://ci.antonshubin.com/repos/11)
+[![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 [**Try the live demo →**](https://app.seedsaas.com) · [Website](https://seedsaas.com) ·
@@ -28,9 +28,9 @@ stay out.
 **Status:** work in progress. Sign-up, sign-in with TOTP, groups with members, roles, invitations
 and ownership transfer, billing per member, notes (the reference aggregate), the outbox worker, the
 admin app and the public website work today, and the SPA works offline. What is not built yet is
-on the [open issues](https://github.com/spy4x/template/issues).
+on the [open issues](https://github.com/spy4x/seed/issues).
 
-## Why template
+## Why Seed
 
 - **Tenancy from day one.** Every user gets a group at sign-up; every group uses the same IDs,
   membership checks and roles, from viewer to owner. A group can be renamed, deleted and, for 30
@@ -66,7 +66,7 @@ Requires [Deno](https://deno.com) 2, Docker and the [GitHub CLI](https://cli.git
 GitHub's "Use this template" button and clone the result).
 
 ```sh
-gh repo create my-product --template spy4x/template --private --clone
+gh repo create my-product --template spy4x/seed --private --clone
 cd my-product
 cp infra/envs/.env.example infra/envs/.env
 ```
@@ -129,8 +129,8 @@ traps in this codebase.
 
 ## Built by
 
-I'm [Anton Shubin](https://antonshubin.com), a senior full-stack engineer and tech lead. This
-template is the foundation I build client SaaS MVPs on. Need an MVP built for your product?
+I'm [Anton Shubin](https://antonshubin.com), a senior full-stack engineer and tech lead.
+Seed is the foundation I build client SaaS MVPs on. Need an MVP built for your product?
 [That's my day job →](https://antonshubin.com/catalog/zero-to-production-saas-mvp)
 
 Licensed under [MIT](LICENSE). Copyright (c) 2026 Anton Shubin.

@@ -14,9 +14,9 @@ Current implementation has all decided app and library directories. Generic CQRS
 in `libs/platform`; remaining `libs/shared` code still requires classification.
 
 Current task and dependency configuration is
-[`deno.jsonc`](https://github.com/spy4x/template/blob/main/deno.jsonc). Current source layout is
-under [`apps`](https://github.com/spy4x/template/tree/main/apps) and
-[`libs`](https://github.com/spy4x/template/tree/main/libs).
+[`deno.jsonc`](https://github.com/spy4x/seed/blob/main/deno.jsonc). Current source layout is
+under [`apps`](https://github.com/spy4x/seed/tree/main/apps) and
+[`libs`](https://github.com/spy4x/seed/tree/main/libs).
 
 ## Decision
 

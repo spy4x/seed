@@ -11,7 +11,7 @@ them. The diagram in the README, [`architecture.svg`](architecture.svg), shows w
 > outbox worker with its delayed and repeating jobs, the public website (`apps/mpa`,
 > server-rendered, works without JavaScript), the offline SPA ([offline.md](offline.md)), the admin
 > app (`apps/admin`) and the `libs/shared` split into `libs/platform` and `libs/domain` now exist.
-> What is not built yet is listed on the [open issues](https://github.com/spy4x/template/issues).
+> What is not built yet is listed on the [open issues](https://github.com/spy4x/seed/issues).
 > Target architecture below and ADR 001 are authoritative.
 
 ## Database evolution

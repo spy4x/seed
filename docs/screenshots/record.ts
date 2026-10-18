@@ -128,7 +128,7 @@ async function socialPreview(browser: Browser, profile: Uint8Array): Promise<Uin
       overflow:hidden;background:${BACKDROP.dark};font-family:system-ui,sans-serif;color:#f5f7fa">
       <div style="position:absolute;left:72px;top:0;bottom:0;width:470px;display:flex;
         flex-direction:column;justify-content:center;gap:20px">
-        <div style="font-size:72px;font-weight:700;letter-spacing:-2px">template</div>
+        <div style="font-size:72px;font-weight:700;letter-spacing:-2px">Seed</div>
         <div style="font-size:30px;line-height:1.3;color:#c9d1dc">The web-standards SaaS
           baseline: auth, two-factor sign-in, groups, an API, a worker and Postgres, wired
           together.</div>
