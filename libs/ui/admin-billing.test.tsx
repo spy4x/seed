@@ -453,6 +453,44 @@ describe(`one customer in the admin app`, () => {
     expect(calls).toEqual([[`action`, { kind: `cancel`, when: `period_end`, note: `` }]])
   })
 
+  it(`promises a past-due group its plan only until the grace end the status line shows`, async () => {
+    const calls: unknown[][] = []
+    // Past due since Oct 13 with 7 days of grace: Pro until Oct 20, long before the period's end.
+    const pastDue = customer({
+      status: BillingStatus.PastDue,
+      pastDueSince: `2026-10-13T12:00:00.000Z`,
+    })
+    await mount(
+      <AdminBillingCustomerScreen
+        {...customerProps(calls, { dialog: `cancel`, detail: detail({ customer: pastDue }) })}
+      />,
+    )
+    const graceEnd = day(`2026-10-20T12:00:00.000Z`)
+    expect(find(`[data-e2e=admin-billing-status]`).textContent).toContain(
+      `Plan kept until ${graceEnd}`,
+    )
+    const dialog = find(`[data-e2e=admin-billing-dialog]`).textContent
+    expect(dialog).toContain(`Acme Studio keeps Pro until ${graceEnd} and is not charged again.`)
+    expect(dialog).not.toContain(`keeps Pro until then`)
+  })
+
+  it(`says a group past its grace period is already on Free, not that it keeps Pro`, async () => {
+    const calls: unknown[][] = []
+    const lapsed = customer({
+      status: BillingStatus.PastDue,
+      pastDueSince: `2026-10-01T12:00:00.000Z`,
+    })
+    await mount(
+      <AdminBillingCustomerScreen
+        {...customerProps(calls, { dialog: `cancel`, detail: detail({ customer: lapsed }) })}
+      />,
+    )
+    expect(find(`[data-e2e=admin-billing-status]`).textContent).toContain(`On Free since`)
+    const dialog = find(`[data-e2e=admin-billing-dialog]`).textContent
+    expect(dialog).toContain(`Acme Studio is already on Free and is not charged again.`)
+    expect(dialog).not.toContain(`keeps Pro`)
+  })
+
   it(`shows the new end as the length changes, and sends the picked length`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminBillingCustomerScreen {...customerProps(calls, { dialog: `time` })} />)

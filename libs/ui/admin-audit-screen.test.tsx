@@ -251,6 +251,28 @@ describe("audit log screen", () => {
     expect(rows[1].textContent).toContain("Deleted account")
   })
 
+  it("names the group, not a deleted account, as what an operator's billing action is about", async () => {
+    const refunded: AdminAuditEntry = {
+      ...blocked,
+      key: "account-7",
+      event: accountAuditEvent(BILLING_AUDIT_EVENTS.paymentRefunded),
+      person: null,
+      group: { id: "0199c3a0-0000-7000-8000-000000000001", name: "Acme Studio" },
+    }
+    await mount(<AdminAuditScreen {...props([], { entries: [refunded] })} />)
+    const [row] = [...find("[data-e2e=admin-audit-table]").querySelectorAll("tbody tr")]
+    const about = row.querySelectorAll("td")[2]
+
+    expect(about.textContent).toBe("Acme Studio")
+    expect(about.querySelector("a")?.getAttribute("href")).toBe(
+      "/groups/0199c3a0-0000-7000-8000-000000000001",
+    )
+    expect(row.textContent).not.toContain("Deleted account")
+    expect(find("[data-e2e=admin-audit-people-phone]").textContent).toBe(
+      "About Acme Studio · by Grace Hopper",
+    )
+  })
+
   it("names a person's address once when they set no name", async () => {
     const plain = { id: 12, name: "lin@example.com", email: "lin@example.com" }
     const entry = { ...signedIn, key: "account-6", person: plain, actor: plain }

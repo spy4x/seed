@@ -105,6 +105,19 @@ describe(`status word and key date`, () => {
     )
   })
 
+  it(`says a past-due group cancelled at a period's end before its grace end keeps it until then`, () => {
+    const ending = customer({
+      status: BillingStatus.PastDue,
+      pastDueSince: `2026-11-08T00:00:00.000Z`,
+      cancelAtPeriodEnd: true,
+    })
+    // Grace would run to Nov 15; the period ends on Nov 12, and the plan with it.
+    expect(adminBillingStatus(ending, new Date(`2026-11-10T00:00:00.000Z`), 7).date).toEqual({
+      kind: `plan_kept_until`,
+      at: `2026-11-12T00:00:00.000Z`,
+    })
+  })
+
   it(`shows a trial's end date`, () => {
     const trial = customer({
       status: BillingStatus.Trialing,

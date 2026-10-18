@@ -9,6 +9,7 @@ import {
   type AdminAuditFilter,
   UserRole,
 } from "@domain/identity"
+import { BILLING_AUDIT_EVENT_TYPES } from "@domain/billing"
 import type { AdminAuditPageKey } from "@server/auth/admin-audit.ts"
 import type { APIContext } from "../../_types.ts"
 import { buildAuthData } from "../../_testing/fake-auth.ts"
@@ -277,5 +278,15 @@ describe("auditEventName", () => {
     expect(auditEventName("account:2")).toBe("signed_in")
     expect(auditEventName("account:16")).toBe("user_blocked")
     expect(auditEventName("activity:note.created")).toBe("note.created")
+  })
+
+  it("names every billing event after its key, never by its number", () => {
+    expect(BILLING_AUDIT_EVENT_TYPES.map((type) => auditEventName(`account:${type}`))).toEqual([
+      "payment_refunded",
+      "time_given",
+      "cancelled_at_period_end",
+      "cancelled_now",
+      "cancellation_undone",
+    ])
   })
 })

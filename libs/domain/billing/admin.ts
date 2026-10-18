@@ -1,6 +1,12 @@
 import { type } from "arktype"
 import { isUuid } from "@spy4x/platform/universal/uuid"
-import { BillingStatus, findPlan, graceEndsAt, type StoredSubscription } from "./+lib.ts"
+import {
+  accessEndsAt,
+  BillingStatus,
+  findPlan,
+  graceEndsAt,
+  type StoredSubscription,
+} from "./+lib.ts"
 
 /**
  * The operator area's billing module (#196): who pays, what they pay, and the five things support
@@ -363,6 +369,30 @@ function storedOf(customer: AdminBillingCustomer): StoredSubscription {
 }
 
 /**
+ * When the subscription stops keeping its plan by itself, by the rule `effectivePlanId` applies:
+ * the earliest of the grace end of a failed payment and the access end (a trial's end, or the period
+ * end of a subscription cancelled at its end). `null` when it keeps renewing.
+ */
+function planEndsAt(subscription: StoredSubscription, graceDays: number): Date | null {
+  const ends = [graceEndsAt(subscription, graceDays), accessEndsAt(subscription)]
+    .filter((date): date is Date => date !== null)
+  if (ends.length === 0) return null
+  return new Date(Math.min(...ends.map((date) => date.getTime())))
+}
+
+/**
+ * When the group would lose its plan if it were cancelled at its period's end now: the period's end,
+ * or the earlier end of its grace period or trial. The cancel dialog promises this date. `null` when
+ * the subscription records neither.
+ */
+export function planEndsIfCancelledAt(
+  customer: AdminBillingCustomer,
+  graceDays: number,
+): Date | null {
+  return planEndsAt({ ...storedOf(customer), cancelAtPeriodEnd: true }, graceDays)
+}
+
+/**
  * A customer's status word and key date: "Past due, plan kept until Oct 23", "Trial, ends Oct 30",
  * "Active, renews Nov 12", "Active, ends Nov 12" for a cancellation waiting for the period's end.
  */
@@ -389,13 +419,13 @@ export function adminBillingStatus(
           : { kind: customer.cancelAtPeriodEnd ? `ends` : `renews`, at: customer.currentPeriodEnd },
       }
     case BillingStatus.PastDue: {
-      const graceEnd = graceEndsAt(storedOf(customer), graceDays)
-      if (graceEnd === null) return { state: AdminBillingState.PastDue, date: null }
+      const end = planEndsAt(storedOf(customer), graceDays)
+      if (end === null) return { state: AdminBillingState.PastDue, date: null }
       return {
         state: AdminBillingState.PastDue,
         date: {
-          kind: graceEnd.getTime() > now.getTime() ? `plan_kept_until` : `on_free_since`,
-          at: graceEnd.toISOString(),
+          kind: end.getTime() > now.getTime() ? `plan_kept_until` : `on_free_since`,
+          at: end.toISOString(),
         },
       }
     }

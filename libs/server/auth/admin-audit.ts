@@ -24,6 +24,7 @@ import {
   parseAuditEvent,
   UserRole,
 } from "@domain/identity"
+import { BILLING_AUDIT_EVENT_TYPES } from "@domain/billing"
 import { likeContains } from "@spy4x/server/db"
 
 /** The password method's name in `auth_keys`, as `@spy4x/server/auth/password` stores it. */
@@ -35,6 +36,20 @@ const PASSWORD_METHOD = "password"
  * `session 5` or `q=ada`.
  */
 const OPERATOR_IDENTIFIER = /^operator:([1-9]\d{0,9})(?: (.*))?$/s
+
+/**
+ * The group a billing row is about, from the start of its identifier (`billingAuditIdentifier` in
+ * `@domain/billing`), as a POSIX pattern for Postgres. Only the shape of a UUID is taken, so the cast
+ * that follows never fails on a row written by hand.
+ */
+const BILLING_GROUP_PATTERN =
+  `^group:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}) `
+
+/** Whether an account row is a billing action, which the operator writes on their own row. */
+function isBillingRow(row: Pick<EntryRaw, "source" | "eventType">): boolean {
+  return row.source === "account" && row.eventType !== null &&
+    (BILLING_AUDIT_EVENT_TYPES as readonly number[]).includes(row.eventType)
+}
 
 /**
  * Where the next page starts: after this entry. `at` is the entry's time to the microsecond, as
@@ -146,8 +161,13 @@ function accountBranch(
     // `LIKE 'operator:%'` lets Postgres read the partial index `idx_auth_audits_operator`, built
     // over exactly those rows; it must stay text in the query, never a parameter.
     const mark = `operator:${filter.operator}`
-    where = sql`${where} AND identifier LIKE 'operator:%'
-      AND (identifier = ${mark} OR starts_with(identifier, ${`${mark} `}))`
+    // A billing action is on the operator's own row: `user_id` is who acted, and the identifier
+    // names the group (`group:<id> …`), so it carries no operator mark.
+    where = sql`${where} AND (
+      (identifier LIKE 'operator:%'
+        AND (identifier = ${mark} OR starts_with(identifier, ${`${mark} `})))
+      OR (event_type IN ${sql([...BILLING_AUDIT_EVENT_TYPES])} AND user_id = ${filter.operator})
+    )`
   }
   if (filter.person) {
     const people = personIds(sql, filter.person)
@@ -161,7 +181,9 @@ function accountBranch(
     SELECT 'account' AS source, id::text AS id, created_at, ${atKey(sql, "created_at")} AS at_key,
       event_type, NULL::text AS kind, identifier, ip, user_agent,
       user_id AS person_id, NULL::int4 AS actor_id,
-      NULL::uuid AS group_id, NULL::text AS entity_type, NULL::text AS job_kind
+      CASE WHEN event_type IN ${sql([...BILLING_AUDIT_EVENT_TYPES])}
+        THEN substring(identifier FROM ${BILLING_GROUP_PATTERN})::uuid END AS group_id,
+      NULL::text AS entity_type, NULL::text AS job_kind
     FROM auth_audits
     WHERE ${where}
     ORDER BY created_at DESC, id DESC
@@ -293,6 +315,23 @@ async function readPeopleByIds(
 
 function toEntry(row: EntryRaw, people: Map<number, AdminAuditPerson>): AdminAuditEntry {
   const person = row.personId === null ? null : people.get(row.personId) ?? null
+  if (isBillingRow(row)) {
+    // The operator acted on a group: the group is what the entry is about, and no person is.
+    return {
+      key: `account-${row.id}`,
+      source: "account",
+      event: accountAuditEvent(row.eventType ?? 0),
+      at: row.createdAt.toISOString(),
+      person: null,
+      actor: person,
+      byOperator: true,
+      group: row.groupId && row.groupName ? { id: row.groupId, name: row.groupName } : null,
+      identifier: row.identifier,
+      ip: row.ip,
+      userAgent: row.userAgent,
+      jobKind: null,
+    }
+  }
   if (row.source === "account") {
     const operator = operatorOf(row)
     return {
