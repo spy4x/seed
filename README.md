@@ -1,3 +1,5 @@
+> **Seed v1 is retired.** This branch keeps its code. Seed v2 lives on [`main`](https://github.com/spy4x/seed).
+
 # Seed
 **Full-stack startup monorepo template. Build your next startup idea with best practices from day 1!**
 
