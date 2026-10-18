@@ -4,6 +4,8 @@ import { App } from "fresh"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
+import Compare from "./routes/compare.tsx"
+import Features from "./routes/features.tsx"
 import Home, { HOME_HEAD } from "./routes/index.tsx"
 import Mvp, { MVP_HEAD } from "./routes/mvp.tsx"
 import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
@@ -43,6 +45,8 @@ function siteWith(newsletter: () => boolean) {
     .use(pageMiddleware(config, neverCalled, newsletter))
     .appWrapper(view(AppWrapper))
     .route("/", { component: view(Home) })
+    .route("/features", { component: view(Features) })
+    .route("/compare", { component: view(Compare) })
     .route("/pricing", { component: view(Pricing), handler: pricing })
     .route("/mvp", { component: view(Mvp) })
     .route("/privacy", { component: view(Privacy) })
@@ -110,10 +114,22 @@ describe("the public website", () => {
     expect(html.match(/<title>/g)).toHaveLength(1)
   })
 
-  it("names every other page after its own title, then the site", async () => {
-    const { html } = await page("/privacy")
+  it("names a page after its own title, then the site, when the title does not name Seed", async () => {
+    const { html } = await page("/mvp")
 
-    expect(html).toContain(`<title>Privacy: what Seed's demo and site keep · Seed</title>`)
+    expect(html).toContain(`<title>${MVP_HEAD.title} · Seed</title>`)
+  })
+
+  it("keeps every title within 60 characters and naming Seed once, and every description within 155", async () => {
+    for (const path of SITE_PAGES) {
+      const { html } = await page(path)
+      const title = html.match(/<title>([^<]*)<\/title>/)![1].replaceAll("&#39;", "'")
+      const description = metaContent(html, "description")!
+
+      expect(title.length, `${path}: ${title}`).toBeLessThanOrEqual(60)
+      expect(title.match(/Seed/g), `${path}: ${title}`).toHaveLength(1)
+      expect(description.length, `${path}: ${description}`).toBeLessThanOrEqual(155)
+    }
   })
 
   it("gives every page the Seed mark as its tab icon and the canvas of each palette as its theme colour", async () => {
@@ -201,9 +217,20 @@ describe("the public website", () => {
     for (const question of questions) expect(html).toContain(`>${question}<`)
   })
 
-  it("adds no structured data to a legal page", async () => {
-    for (const path of ["/privacy", "/terms"]) {
-      expect(jsonLdGraph((await page(path)).html), path).toEqual([])
+  it("describes a legal page as a page of the site, one step below the home page", async () => {
+    for (const [path, name] of [["/privacy", "Privacy"], ["/terms", "Terms"]]) {
+      const graph = jsonLdGraph((await page(path)).html)
+
+      const webPage = graph.find((entity) => entity["@type"] === "WebPage")
+      expect(webPage, path).toMatchObject({
+        url: `${site}${path}`,
+        isPartOf: { "@id": `${site}/#website` },
+      })
+      const crumbs = graph.find((entity) => entity["@type"] === "BreadcrumbList")
+      expect(crumbs?.itemListElement, path).toEqual([
+        { "@type": "ListItem", position: 1, name: "Seed", item: `${site}/` },
+        { "@type": "ListItem", position: 2, name, item: `${site}${path}` },
+      ])
     }
   })
 
@@ -222,7 +249,7 @@ describe("the public website", () => {
 
     expect(status).toBe(200)
     expect(headingOne(html)).toBe("Seed is free. Here is what it costs to run.")
-    expect(html).toContain(`<title>${PRICING_HEAD.title} · Seed</title>`)
+    expect(html).toContain(`<title>${PRICING_HEAD.title}</title>`)
     for (const card of ["way-use", "way-run", "way-hire"]) expect(html).toContain(`id="${card}"`)
     expect(html).toContain(">$0</span>")
     expect(html).toContain(">From $8,000</span>")
