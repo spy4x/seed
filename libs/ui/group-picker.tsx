@@ -160,7 +160,7 @@ export function GroupSheet(
           )
         })}
       </ul>
-      <ul class="flex flex-col gap-1 border-t border-subtle pt-1">
+      <ul class="flex flex-col gap-1">
         <li>
           <Link
             href={SCREEN_PATHS.groups}
@@ -168,7 +168,7 @@ export function GroupSheet(
             class={sheetLink}
             data-e2e="group-sheet-all"
           >
-            <IconList class="size-5 shrink-0" aria-hidden="true" />
+            <IconList class="size-6 shrink-0" aria-hidden="true" />
             All groups
           </Link>
         </li>
@@ -179,7 +179,7 @@ export function GroupSheet(
             class={sheetLink}
             data-e2e="group-sheet-new"
           >
-            <IconPlus class="size-5 shrink-0" aria-hidden="true" />
+            <IconPlus class="size-6 shrink-0" aria-hidden="true" />
             New group
           </Link>
         </li>
