@@ -396,8 +396,9 @@ Valkey before such a rollback. Going forward is safe: the new code ignores the o
 ### 12. The operator area answers on the admin host only
 
 `/api/admin/*` is 404 on every host but
-`ADMIN_DOMAIN`, and everywhere when it is unset. On the admin host only `/api/admin/*` and four auth calls
-(`/api/auth/me`, `/api/auth/password/check`, `/api/auth/totp/check`, `/api/auth/sign-out`)
+`ADMIN_DOMAIN`, and everywhere when it is unset. On the admin host only `/api/admin/*` and five auth calls
+(`/api/auth/me`, `/api/auth/email`, `/api/auth/password/check`, `/api/auth/totp/check`,
+`/api/auth/sign-out`)
 answer (`apps/api/middlewares/admin-host.ts`). The gate reads the decoded path the router
 matches (`c.req.path`), never the raw URL: `/api/%61dmin` is the operator area too. The host is compared with its port, so a test
 against `admin.localhost:<port>` sets `ADMIN_DOMAIN` with that port, as `e2e:local` does.
