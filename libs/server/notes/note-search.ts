@@ -23,13 +23,19 @@ export function prefixQuery(text: string): string | null {
   return words.length === 0 ? null : words.map((word) => `${word}:*`).join(" & ")
 }
 
-/** A row of the search query: the hit, and where its snippet sits in the body. */
+/**
+ * A row of the search query: the hit, and where its snippet sits in the body. `ts_headline` drops
+ * the punctuation before the first word and after the last, so `lead` and `tail` carry the body's
+ * own, and the snippet starts or ends the body when it does with them.
+ */
 interface SearchRow {
   id: string
   groupId: string
   title: string
   updatedAt: Date
   snippet: string
+  lead: string
+  tail: string
   startsBody: boolean
   endsBody: boolean
 }
@@ -60,12 +66,18 @@ export async function searchNotesForMember(
         found.title,
         found.updated_at,
         found.snippet,
-        found.body = '' OR starts_with(found.body, found.snippet) AS starts_body,
-        found.body = '' OR right(found.body, length(found.snippet)) = found.snippet AS ends_body
+        found.lead,
+        found.tail,
+        found.body = '' OR starts_with(found.body, found.lead || found.snippet) AS starts_body,
+        found.body = '' OR
+          right(found.body, length(found.snippet || found.tail)) = found.snippet || found.tail
+          AS ends_body
       FROM (
         SELECT
           matched.*,
-          ts_headline('simple', matched.body, matched.query, ${HEADLINE_OPTIONS}) AS snippet
+          ts_headline('simple', matched.body, matched.query, ${HEADLINE_OPTIONS}) AS snippet,
+          substring(matched.body from '^[^[:alnum:]]*') AS lead,
+          substring(matched.body from '[^[:alnum:]]*$') AS tail
         FROM (
           SELECT
             notes.id,
@@ -96,6 +108,10 @@ export async function searchNotesForMember(
     groupId: row.groupId,
     title: row.title,
     updatedAt: row.updatedAt,
-    snippet: trimNoteSnippet(row.snippet, row.startsBody, row.endsBody),
+    snippet: trimNoteSnippet(
+      `${row.startsBody ? row.lead : ""}${row.snippet}${row.endsBody ? row.tail : ""}`,
+      row.startsBody,
+      row.endsBody,
+    ),
   }))
 }
