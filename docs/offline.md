@@ -190,7 +190,7 @@ several hundred modules fetched one by one (`/src/…`, `/@fs/…`, `/@id/…`,
 `/node_modules/.vite/deps/…`) and stored one by one as each is first fetched, so a pass or a
 failure there says little about the deployed app.
 
-The reason for the move is a failure seen only on the dev server (#322): in about one run of the
+The reason for the move is a failure seen only on the dev server (spy4x/template#322): in about one run of the
 whole suite in two, a page opened with no network stayed blank, around the fourth offline load of
 `e2e/local-data.e2e.ts`. The worker answered every request the page made with status 200, then
 five to nine module scripts were aborted (`net::ERR_ABORTED`) within 10 ms and nothing rendered.
@@ -202,11 +202,11 @@ to start now names its uncaught errors, failed requests and console in the test'
 (`gotoApp`, `e2e/fixtures/app.ts`); if a blank start ever shows on the built SPA, that message is
 where to look first, and it is a bug in the product, not in the harness.
 
-Three more intermittent failures were reported on these specs in the same week (#322), and none
+Three more intermittent failures were reported on these specs in the same week (spy4x/template#322), and none
 of them came back on the built SPA in October 2026:
 
 - In `e2e/local-data.e2e.ts`, "the app with the local-data module switched off", the note list
-  showed the old title after an edit, a save and a reload (2 in 6 runs on an early head of #367),
+  showed the old title after an edit, a save and a reload (2 in 6 runs on an early head of spy4x/template#367),
   or stayed empty for 5 s after that reload (2 in 10 runs, on the dev server). It passed 30 runs
   in a row on the built SPA and 30 on the dev server, and the whole spec 20 runs in a row on the
   built SPA. That reload was a plain `page.reload()`
@@ -305,7 +305,7 @@ so first. What the server owns (the notes, the preferences, the selected group) 
 next sign-in. The keys a sign-out keeps (`KEPT_KEYS`) hold no person's data: `auth:sign-out-owed`
 and `offline:owed-deletion`, the debts that finish the sign-out; `theme` and
 `install-prompt-dismissed`, the device's own answers; and `last-sign-in`, the masked hint the
-sign-in page shows (#142), which "Not you? Forget" drops. The databases go after the deletions
+sign-in page shows (spy4x/template#142), which "Not you? Forget" drops. The databases go after the deletions
 already queued, so a copy those finished is not opened again. A browser that refuses to delete a
 database logs a warning, and the next signed-out start tries again.
 

@@ -27,7 +27,7 @@ price variable to `readBillingSetup` (`libs/server/billing/setup.ts`), to
 
 ## Per-member pricing
 
-Pro is billed per member (`perSeat` on the plan, [#205](https://github.com/spy4x/template/issues/205)).
+Pro is billed per member (`perSeat` on the plan, [spy4x/template#205](https://github.com/spy4x/template/issues/205)).
 The subscription's quantity is the group's member count, the owner included: the same count that
 `maxMembers` caps. A pending invitation reserves no seat; accepting it does.
 
@@ -76,7 +76,7 @@ deleted: the subscription stays stored as past due, and everything over a Free c
 - Any other status clears it. A payment that makes the subscription active again brings the plan
   back at once; a later failure starts a new grace period.
 - Only a subscription that has paid gets the grace period
-  ([#247](https://github.com/spy4x/template/issues/247)). `subscriptions.ever_active` turns true at
+  ([spy4x/template#247](https://github.com/spy4x/template/issues/247)). `subscriptions.ever_active` turns true at
   the subscription's first active event and stays true while the same subscription is held; a new
   subscription starts without it. A trial whose first charge fails goes from trialing straight to
   past due, never active, so the group is on Free from that failure, which is the trial's end. The
@@ -174,7 +174,7 @@ address. A failed send is retried. With mail off, nothing is sent.
 A Stripe customer belongs to one group (`billing_customers`, keyed by the group) and carries the
 card, name, address and invoices of the owner who checked out. Stripe cannot move a subscription to
 another customer. So a transfer of ownership
-([#250](https://github.com/spy4x/template/issues/250)) never gives the new owner the old owner's
+([spy4x/template#250](https://github.com/spy4x/template/issues/250)) never gives the new owner the old owner's
 customer, and never lets the old owner's card be charged again without their say:
 
 1. **A subscription that still renews refuses the transfer** (409 `SUBSCRIPTION_RENEWS`). The owner
@@ -218,7 +218,7 @@ answers.
 | `memberRoles`  | feature | no      | yes     | Promoting a member (`GroupMemberRoleCommand`)                |
 | `maxNotes`     | limit   | 10      | no cap  | Creating a note (`NoteCreateCommand`), or moving notes into the group (`NoteMoveCommand`; the gate reserves room for one, the repository counts all)                 |
 | `maxMembers`   | limit   | 3       | 50      | Inviting (`GroupInvitationCreateCommand`) and accepting      |
-| `storageBytes` | limit   | 50 MiB  | 10 GiB  | Not yet: the key ships for attachments (#157)                |
+| `storageBytes` | limit   | 50 MiB  | 10 GiB  | Not yet: the key ships for attachments (#225)                |
 
 A limit of `null` means no cap.
 
@@ -333,7 +333,7 @@ Delivery rules the webhook keeps:
 - Another subscription replaces the one held when it pays (trialing or active), whatever the held
   one's status, or when the held one is cancelled. One that does not pay never replaces a live
   one: the end or a late failed payment of an old subscription leaves the newer one, and the
-  group's plan, as they are ([#242](https://github.com/spy4x/template/issues/242)).
+  group's plan, as they are ([spy4x/template#242](https://github.com/spy4x/template/issues/242)).
 - A bad or missing signature gets 400; a body that cannot be read after a valid signature, and
   events this app does not handle, get 200 so Stripe stops sending them; a failure while storing
   gets 500 so Stripe retries.

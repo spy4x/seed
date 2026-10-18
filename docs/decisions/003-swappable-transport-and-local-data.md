@@ -165,7 +165,7 @@ route makes it reachable over HTTP with no new handler.
 | --------------------------------- | -------------------- | ------------------------------------------------------------------------------------- |
 | Notes                             | 3, offline-writable  | The product's content: a person writes it anywhere. Moving and restoring stay online (two groups, or a server-side state the device cannot know). |
 | Deleted notes, deleted groups     | 1, online only       | Rarely opened, and restoring needs the server. The device keeps no copy, as today.     |
-| Tags (#170)                       | 3, offline-writable  | Content too, and a note written offline must be able to take a tag created offline.   |
+| Tags (spy4x/template#170)                       | 3, offline-writable  | Content too, and a note written offline must be able to take a tag created offline.   |
 | Groups list                       | 2, offline-readable  | Needed to show anything. Create, rename, delete and restore change access for other people, so they need the server. |
 | Selected group                    | 2, offline-readable  | Read to know which notes to show. Switching is a server setting shared by every device; offline switching is not built (see "Not decided here"). |
 | Members                           | 2, offline-readable  | A list a person looks up. Roles, removal, leaving, transfer and moving all notes change access: online only. |
@@ -210,7 +210,7 @@ entry. Tags are the parent and notes depend on them. Four rules make that safe:
    the layer removes that tag from the queued notes and tells the person. The notes then send
    without it.
 4. **The server ignores tag ids it does not know in a note write.** Deleting a tag removes its
-   links (#170), and another member may delete a tag at any moment, so a write that names a tag
+   links (spy4x/template#170), and another member may delete a tag at any moment, so a write that names a tag
    deleted a second ago must not fail. The answer carries the tags the note really has, and the
    page shows those. Removing a tag's links does not change the version of the notes that had it,
    so deleting a tag never turns an offline edit of such a note into a conflict.
@@ -233,7 +233,7 @@ Reusable code is written in the libraries first, released, then imported (the ru
 | An offline-writable collection: cache plus outbox plus the overlay of queued entries on a list, from one adapter; several collections flushed in order under one lock, with the "waits for its parent" rule of section 5 | `@spy4x/realtime` on `createOutbox` (new) |
 | The outbox, its IndexedDB store, the sync runner, the data cache                        | ts-libs (exist)                        |
 | `SyncStatus`, `ConflictChooser`                                                         | preact-components (exist)              |
-| Three open bugs this depends on: the pull on the first open (ts-libs#399), an outbox event inside a transaction (#367), nested error bodies in `apiFetch` (#452) | ts-libs |
+| Three open bugs this depends on: the pull on the first open (ts-libs#399), an outbox event inside a transaction (ts-libs#367), nested error bodies in `apiFetch` (ts-libs#452) | ts-libs |
 | `modules.ts`, each aggregate's adapter and wording, the level table above               | the template                           |
 
 ## Consequences

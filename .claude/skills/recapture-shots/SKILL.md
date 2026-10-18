@@ -31,7 +31,7 @@ Two sets of pictures show the product, and both are re-captured together:
    `127.0.0.1:<port>` form so Postgres stays off the network (`127.0.0.1:55432`).
 4. Add `admin` to `COMPOSE_PROFILES` in `infra/envs/.env`, then from the worktree root run
    `deno task proxy:start` and `deno task dev`. Both start detached Docker containers. When
-   `deno task dev` hangs on its `docker compose --dry-run` check (#455), run what it would run:
+   `deno task dev` hangs on its `docker compose --dry-run` check (#200), run what it would run:
 
    ```bash
    docker compose -f ./infra/compose/compose.shared.yml -f ./infra/compose/compose.dev.yml \

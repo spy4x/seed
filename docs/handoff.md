@@ -71,7 +71,7 @@ ADR 002 is recent and reverses part of ADR 001. In short:
 - `apps/spa` speaks **WebSocket** for mutations, queries and realtime. It uses
   REST only for bootstrap and the auth endpoints that must exist before a socket
   can open.
-- `apps/mpa` is the public website, not a second client of the product (#265): home page,
+- `apps/mpa` is the public website, not a second client of the product (spy4x/template#265): home page,
   pricing (from the `PLANS` catalog), privacy, terms, `robots.txt`, `sitemap.xml` and the
   newsletter. It speaks REST only, for the newsletter, and has no session; its sign-in and sign-up
   links open the SPA at `DOMAIN`.
@@ -131,7 +131,7 @@ These cost real time to find. Do not rediscover them.
 workspace _members_ once the directory contains any. Moving tests under
 `libs/platform` silently dropped 10 of 20 tests, with the step count unchanged
 so it looked fine. The same hid `libs/server/jobs`'s tests from `deno task check`
-until #139 made it, `libs/server/auth` and `libs/server/mail` members. Every lib holding tests is registered in the `workspace`
+until spy4x/template#139 made it, `libs/server/auth` and `libs/server/mail` members. Every lib holding tests is registered in the `workspace`
 array in `deno.jsonc`; add new ones there or their tests will not run.
 
 ### 2. `deno fmt` from the repo root, always
@@ -162,12 +162,12 @@ corrupt objects; prefer the remote as the sync channel.
 the transactional service with `Object.create(this)` and rebinds `sql`, so
 caching the repository would silently escape the transaction.
 
-### 8. Accounts sign in with an e-mail address; older accounts keep their username (#139)
+### 8. Accounts sign in with an e-mail address; older accounts keep their username (spy4x/template#139)
 
 Sign-up takes an address, normalised by `normalizeEmail`
 (`@spy4x/server/auth`), and stores it on the password key twice: as `subject`,
 which is what sign-in looks up, and as `email`. The address is never stored on
-`users`. An account made before #139 keeps its username as `subject` and
+`users`. An account made before spy4x/template#139 keeps its username as `subject` and
 `email` stays `NULL`; it signs in with the username as before, through the
 same field (`login`): a value `normalizeEmail` accepts is looked up as an
 address, anything else as a username. An address is attached to a key at
@@ -184,7 +184,7 @@ in the same step, so the raw code exists only in the mail. `POST
 /api/auth/password/reset` with `{ email, code, newPassword }` spends the code,
 marks the address proven, sets the password and signs out every session of
 the user; it signs nobody in. It also revokes every API token, removes every
-push subscription (#409) and drops a waiting address change. A subscribe stores
+push subscription (spy4x/template#409) and drops a waiting address change. A subscribe stores
 its row under the lock the reset takes on the user, after checking that its
 session is still live, so one that started before the reset stores nothing.
 When the address was not proven before, it removes the authenticator app and
@@ -193,12 +193,12 @@ address proven before keeps them. Limits: the IP limit of the other anonymous au
 routes, and 3 requests an hour per address (`ratelimit-reset` in Valkey,
 keyed by a hash of the address, refusing when Valkey is down).
 
-**Sign-up proves the address first (#142).** `POST /api/auth/password/sign-up` hashes the
+**Sign-up proves the address first (spy4x/template#142).** `POST /api/auth/password/sign-up` hashes the
 password, writes a waiting sign-up to `sign_up_requests` (10 minutes, `SIGN_UP_CODE_MINUTES`),
 queues the `auth.sign-up-code-mail` job and sets the signed HttpOnly cookie `password_sign_up`
 (path `/api/auth/password/sign-up`). It does that for every well-formed address and never asks
 whether an account uses it, so the answer, the work and the mail are the same for a free and a
-taken address. It spends the sign-up code budgets (`ratelimit-sign-up-code`, #494): three mails an
+taken address. It spends the sign-up code budgets (`ratelimit-sign-up-code`, spy4x/template#494): three mails an
 hour to the address from one client (an IP, or an IPv6 /64), and ten an hour to the address from
 all clients together. A client past its three spends nothing of the ten, so a stranger who keeps
 signing an address up cannot lock its owner out, and the account's own budget
@@ -221,7 +221,7 @@ an hour to the address, so `POST /api/test/cleanup-user` also forgets the addres
 caller's share among them: a spec with a fixed address can run again on a dev stack within the
 hour, as long as it calls the route through the same proxy as its browser.
 
-**Proving an address (#140).** An address change, and an account made before #142, prove their
+**Proving an address (spy4x/template#140).** An address change, and an account made before spy4x/template#142, prove their
 address with the `auth.email-code-mail` job
 (request row in `email_code_requests`, never the code). The worker issues an
 8-character code with `@spy4x/server/auth/email-code` (only a hash is stored,
@@ -237,11 +237,11 @@ wrong codes also count against the account in `email_code_failures`
 (`@spy4x/server/lockout`: 5 in a row lock it for 15 minutes, doubling). A
 wrong and an expired code get the same answer. An unproven address cannot
 turn on an authenticator app. `provenAddressOwner`
-(`libs/server/auth/email-verification.ts`) is the check an invitation by address (#131) calls
+(`libs/server/auth/email-verification.ts`) is the check an invitation by address (spy4x/template#131) calls
 before trusting an address. Google and GitHub sign-in do not call it: the library decides by the
 addresses both sides have verified (below).
 
-**Google and GitHub (#141, #142).** `apps/api/services/oauth-sign-in.ts` wraps
+**Google and GitHub (spy4x/template#141, spy4x/template#142).** `apps/api/services/oauth-sign-in.ts` wraps
 `createOAuthSignIn` of `@spy4x/server/auth/oauth`, one per provider whose client id and secret
 are both set (docs/sign-in-providers.md); `apps/api/routes/auth-oauth.ts` holds
 the routes and is mounted before `createAuthRoute`. A provider method is a row of `auth_keys`
@@ -281,7 +281,7 @@ keyboard: where the provider is still signed in, the new sign-in is one click (#
 `POST /api/auth/account/delete`, `POST /api/auth/email/change` and
 `POST /api/auth/totp/connect/start` take it in place of `password`, and
 `POST /api/auth/password/set` adds the first password key, on the account's address, proven,
-and signs out every other session of the account; the one that set it stays signed in (#406).
+and signs out every other session of the account; the one that set it stays signed in (spy4x/template#406).
 `GET /api/auth/methods` answers `providerProofUntil`, so the
 dialogs show the form or the links back to the provider (`libs/ui/provider-proof.tsx`). A
 changed address of such an account lives on the `email-code` key its code proved, which
@@ -306,17 +306,17 @@ entered. A code mail to a new address, the first one or a resend, spends the
 account's budget (3 an hour, `ratelimit-email-change`) and the address's change
 budget (3 an hour from all accounts, `ratelimit-email-change-address`), never
 the address's own code budget: the address may be someone else's, and a
-stranger must not run its owner's budget out (#224). Both refusals use one
+stranger must not run its owner's budget out (spy4x/template#224). Both refusals use one
 wording. The verify call then moves the password key to the new address,
 signs out every other session, those a Google or GitHub sign-in started included, and gives
 this one a new cookie. An account with no password has its new address on the code key instead,
-and every other session ends the same way while this one keeps its cookie (#406). A username
+and every other session ends the same way while this one keeps its cookie (spy4x/template#406). A username
 account adds its first address the same way, and from then on signs in with
 the address instead of the username. A password reset drops a waiting change.
 A reset and a move of one account both lock its password key first
 (`lockPasswordKey`), so neither copies a hash the other is replacing.
 
-**Wrong passwords from a session (#406).** Every step a signed-in person confirms with the
+**Wrong passwords from a session (spy4x/template#406).** Every step a signed-in person confirms with the
 password counts the wrong ones in `password_check_failures`, keyed by the user id: turning
 two-factor on or off, a password change, an address change, deleting the account, linking or
 unlinking a provider, creating an API token and handing a group over. They share one count
@@ -333,24 +333,24 @@ are refused (the sixth sets the lock): no person sends that many.
 address, but it stays unproven and cannot carry a second factor. A reset
 link proves the mailbox, so it gives the owner the account back: new
 password, address proven, every session signed out, every API token
-revoked, every push subscription removed (#409), so no browser keeps getting
+revoked, every push subscription removed (spy4x/template#409), so no browser keeps getting
 the account's notifications, any authenticator app removed, and every other
-sign-in method deleted (#404): each linked Google or GitHub account, and a code key for
+sign-in method deleted (spy4x/template#404): each linked Google or GitHub account, and a code key for
 another address if the account holds one. Whoever linked them did so before
 anyone proved the address, so they would be a way back in. This happens only
 on the reset that proves the address; a later reset keeps the methods. A
 person who linked their own provider before confirming their own address
-links it again after a reset. Since #142 a password sign-up can no longer squat an address: the
+links it again after a reset. Since spy4x/template#142 a password sign-up can no longer squat an address: the
 account exists only once the code mailed to the address is entered.
 
-An account whose address is not proven cannot invite (#411): creating an invitation, by link or by
+An account whose address is not proven cannot invite (spy4x/template#411): creating an invitation, by link or by
 address, is refused with `ADDRESS_NOT_PROVEN` (403) and "Verify your e-mail address on the E-mail
 page before you invite anyone.", which the SPA shows above the invitation form's buttons with a
 "Verify e-mail" button. The reset removes no members, so without this a squatter could let a second
 account of theirs into the first group and keep it there after the owner's reset. The reset that proves the address also revokes
 every pending invitation the account made, in every group (`revokeAllInvitationsOf`), so a link
 made before this rule existed lets nobody in afterwards. An account
-with no address (a username account from before #139) cannot invite either until it adds and
+with no address (a username account from before spy4x/template#139) cannot invite either until it adds and
 proves one. The check is `hasProvenAddress` (`libs/server/auth/email-verification.ts`), asked by
 the create handler in `apps/api/features/groups/invitations.ts`.
 
@@ -367,7 +367,7 @@ worker still start, each logs one warning naming the missing keys, `/forgot-pass
 usual answer and sends nothing, and sign-up works but no code arrives. No code is ever logged
 outside `ENV=dev`. The worker reads the keys at start-up, so a change needs a deploy.
 
-### 9. A full-stack e2e spec loads pages through the stack fixture (#105)
+### 9. A full-stack e2e spec loads pages through the stack fixture (spy4x/template#105)
 
 A full-stack e2e spec imports `test` from `e2e/fixtures/stack.ts` and loads pages through `gotoApp`
 or `signIn`. That fixture warms Vite's page bundles once per
@@ -376,7 +376,7 @@ leaves it blank. A spec on Playwright's own `test`, or one calling `page.goto` o
 `page.reload` while online, gets none of this and brings the cold-start flakes back. Older specs
 still call `page.reload()` directly; `grep -n "page.reload" e2e/*.e2e.ts` lists them.
 
-### 10. A rollback past the `api_tokens.revoked_at` migration revives revoked tokens (#293)
+### 10. A rollback past the `api_tokens.revoked_at` migration revives revoked tokens (spy4x/template#293)
 
 A revoked token keeps its row and hash for 30 days, and only code from that
 change on reads `revoked_at`: older code finds the row and lets the token act. So every token
@@ -386,9 +386,9 @@ change ended after a break-in. Before rolling back, delete those rows:
 them. Going forward is safe: old code runs against the new column, and compose runs the
 migration before the new API starts.
 
-### 11. A rollback past the cache's key prefix needs Valkey flushed first (PR #21)
+### 11. A rollback past the cache's key prefix needs Valkey flushed first (PR spy4x/template#21)
 
-Since PR #21 every key the API writes to Valkey starts with `api:` (`apps/api/services/cache.ts`);
+Since PR spy4x/template#21 every key the API writes to Valkey starts with `api:` (`apps/api/services/cache.ts`);
 older code reads and writes the same values without it. Rolled back past that change, the old code
 finds the unprefixed keys it left behind, up to a month old, and serves them as current. Flush
 Valkey before such a rollback. Going forward is safe: the new code ignores the old keys.
@@ -552,7 +552,7 @@ hint with `profileStore.refresh()`, so a second tab follows without a reload.
    so a listener that needs the event's data cannot be durable until it has one. An audit record
    is therefore never a listener: sign-up, sign-in, sign-out and the profile change write their
    `auth_audits` row with `tx.authAudit.insert` in the command's transaction, so a failed row
-   undoes the action and a kept action always has its row (#191). A new audited action does the
+   undoes the action and a kept action always has its row (spy4x/template#191). A new audited action does the
    same.
 7. The SPA treats a hint as a reason to read. `pull` (`apps/spa/src/state/pull.ts`) reads again
    what the hint names: the groups list (over REST, `GET /api/groups`, or as the socket's
@@ -579,8 +579,8 @@ hint with `profileStore.refresh()`, so a second tab follows without a reload.
    `group.rename`) and the details (`group.updateDetails`), each only when it changed. An editor or
    a viewer sees the details as text. A "Delete group"
    section, for the owner only, holds the confirmation text and the delete
-   (`DELETE /api/groups/:id`, `group.delete`). Each later issue (members, roles and leaving #130;
-   invitations #131; ownership #132; moving notes #133; moving all of a group's data #260; the extra fields #134) adds its own section
+   (`DELETE /api/groups/:id`, `group.delete`). Each later issue (members, roles and leaving spy4x/template#130;
+   invitations spy4x/template#131; ownership spy4x/template#132; moving notes spy4x/template#133; moving all of a group's data spy4x/template#260; the extra fields spy4x/template#134) adds its own section
    to that screen, shown only to the roles that may use it.
 9. **Deleting a group.** A delete is soft: `groups.deleted_at` is set and the row, its members and
    its notes stay. The server refuses it with `LAST_GROUP` (409) when it is the actor's last active
@@ -615,19 +615,19 @@ hint with `profileStore.refresh()`, so a second tab follows without a reload.
 
 ## Members, invitations and ownership
 
-Member removal, role changes and leaving (#130) call `recordAccessChange` in their transaction,
+Member removal, role changes and leaving (spy4x/template#130) call `recordAccessChange` in their transaction,
 with the removed member in its list of users who lost access (a demoted member keeps access).
 Note writes and rename read the actor's role again inside their own transaction with
 `lockActorRole` (`libs/server/groups/group-change-log.ts`): it locks the group row, then the
 membership `FOR SHARE`, so a write racing a removal or demotion waits for it and is then refused
-(#230). The member commands lock the group row too, then the memberships of the actor and the
+(spy4x/template#230). The member commands lock the group row too, then the memberships of the actor and the
 target with `lockMemberRoles` (`FOR UPDATE`), and check the rule on those rows. Keep the group row
 first in both: the other order deadlocks a write against a member change (the "lock order" tests
 in `tests/integration/group-write-race.integration.test.ts`). `recordAccessChange` and
 `recordGroupChange` take a transaction, never the pool. Members' sign-in addresses go only to the
 owner and admins (`canSeeMemberEmails`); other members get no `email` field.
 
-Invitations (#131): only `sha256(token)` is stored (`group_invitations.token_hash`), so a link
+Invitations (spy4x/template#131): only `sha256(token)` is stored (`group_invitations.token_hash`), so a link
 is shown once, in the answer to its create, and never again: the create sends no
 `Idempotency-Key`, since the idempotency store would keep the token. The link is
 `/invite/:token`; the API takes the token only in a JSON body, never in a URL it logs, and the SPA
@@ -646,7 +646,7 @@ an invitation adds a viewer only, on create and on accept; the role picker says 
 are the only way into a group through the product. The nightly cleanup deletes invitations that
 have been dead (expired, revoked, declined or used up) for over 30 days.
 
-Ownership transfer (#132): `POST /api/groups/:id/transfer` takes `{ userId, name, password }`, over
+Ownership transfer (spy4x/template#132): `POST /api/groups/:id/transfer` takes `{ userId, name, password }`, over
 HTTP only, never the socket, so the password does not cross a long-lived channel. It spends the
 per-user budget a password change spends (`strictByUser`), checks the role, then the typed name,
 then the password, so a refused request spends no password check. One transaction demotes the old
@@ -657,7 +657,7 @@ The new owner gets a web push. A subscription that still renews refuses the tran
 (`SUBSCRIPTION_RENEWS`); after it, the old owner's billing customer is handed over and the new owner
 checks out with their own ([docs/billing.md](billing.md), "Transfer of ownership").
 
-Moving all of a group's data (#260): `POST /api/groups/:id/move-all` takes `{ toGroupId }`, and the
+Moving all of a group's data (spy4x/template#260): `POST /api/groups/:id/move-all` takes `{ toGroupId }`, and the
 socket command `group.moveAll` takes `{ groupId, toGroupId }`. One transaction locks both groups in
 id order, checks edit rights in both on the locked rows, records a change in each
 (`group.data_moved_out`, `group.data_moved_in`), runs every aggregate in `MOVABLE_AGGREGATES`
