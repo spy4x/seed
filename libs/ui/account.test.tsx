@@ -1700,7 +1700,15 @@ describe("EmailBanner", () => {
   it("warns with a link to the e-mail page while an address waits for its code", () => {
     const html = renderToString(<EmailBanner status={emailDefaults.status} />)
     expect(html).toMatch(/<a [^>]*href="\/email"[^>]*>Enter the code<\/a>/)
-    expect(html).toContain("ann@example.com")
+    expect(html.replaceAll("<wbr/>", "")).toContain("ann@example.com")
+  })
+
+  it("lets a narrow screen wrap the address only after its @ and before its dots", () => {
+    const status = { email: "ann.lee@mail.example.com", proven: false, pending: null }
+    const html = renderToString(<EmailBanner status={status} />)
+    expect(html).toContain(
+      '<strong class="wrap-anywhere">ann<wbr/>.lee@<wbr/>mail<wbr/>.example<wbr/>.com</strong>',
+    )
   })
 
   it("gives its link a 44 px touch target on a phone", () => {
