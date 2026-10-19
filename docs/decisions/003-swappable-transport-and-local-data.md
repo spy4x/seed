@@ -233,7 +233,7 @@ Reusable code is written in the libraries first, released, then imported (the ru
 | An offline-writable collection: cache plus outbox plus the overlay of queued entries on a list, from one adapter; several collections flushed in order under one lock, with the "waits for its parent" rule of section 5 | `@spy4x/realtime` on `createOutbox` (new) |
 | The outbox, its IndexedDB store, the sync runner, the data cache                        | ts-libs (exist)                        |
 | `SyncStatus`, `ConflictChooser`                                                         | preact-components (exist)              |
-| Three open bugs this depends on: the pull on the first open (ts-libs#399), an outbox event inside a transaction (ts-libs#367), nested error bodies in `apiFetch` (ts-libs#452) | ts-libs |
+| Three bugs this depended on, all fixed in ts-libs 1.56.0: the pull on the first open (ts-libs#399), an outbox event inside a transaction (ts-libs#367), nested error bodies in `apiFetch` (ts-libs#452) | ts-libs |
 | `modules.ts`, each aggregate's adapter and wording, the level table above               | the template                           |
 
 ## Consequences
