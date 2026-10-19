@@ -1,5 +1,12 @@
-import type { MiddlewareHandler } from "hono"
+import type { Context, MiddlewareHandler } from "hono"
+import {
+  BodyReadTimeoutError,
+  PayloadTooLargeError,
+  readBoundedBody,
+} from "@spy4x/net/bounded-body"
+import { JSON_BODY_TIMEOUT, JSON_BODY_TOO_LARGE } from "@spy4x/server/http/bounded-body"
 import type { APIContext } from "../_types.ts"
+import { MAX_JSON_BODY_BYTES } from "../services/json-body.ts"
 
 /** Why a shared demo account may not do what it asked. */
 export const DEMO_ACCOUNT_REFUSAL =
@@ -83,11 +90,10 @@ export function createDemoGuard(isDemo: DemoAccountLookup): MiddlewareHandler<AP
     const path = c.req.path
     const actorId = c.get(`auth`)?.user.id ?? null
 
-    // Read from a copy, so the route still reads the body itself.
-    const body = method === `POST` && (ADDRESS_ROUTES.some((p) => p.test(path)) ||
-        INVITATION_CREATE.test(path))
-      ? await c.req.raw.clone().json().catch(() => null)
-      : null
+    const reads = method === `POST` &&
+      (ADDRESS_ROUTES.some((p) => p.test(path)) || INVITATION_CREATE.test(path))
+    const body = reads ? await readAndKeepBody(c) : null
+    if (body instanceof Response) return body
     const email = typeof body?.email === `string` ? body.email.trim().toLowerCase() : ``
     if (email && ADDRESS_ROUTES.some((p) => p.test(path)) && !email.endsWith(DEMO_ADDRESS_DOMAIN)) {
       return c.json(
@@ -111,5 +117,31 @@ export function createDemoGuard(isDemo: DemoAccountLookup): MiddlewareHandler<AP
       }
     }
     await next()
+  }
+}
+
+/**
+ * Reads the JSON body under the routes' own cap ({@link MAX_JSON_BODY_BYTES}), so a huge body is
+ * never buffered here, and puts the bytes back on the request for the route to read. A body over
+ * the cap or one that stalls is answered here, as the route would. Not JSON → `null`; the route
+ * refuses it.
+ */
+async function readAndKeepBody(
+  c: Context<APIContext>,
+): Promise<Record<string, unknown> | null | Response> {
+  let bytes: Uint8Array
+  try {
+    bytes = await readBoundedBody(c.req.raw, { maxBytes: MAX_JSON_BODY_BYTES })
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) return c.json({ error: JSON_BODY_TOO_LARGE }, 413)
+    if (error instanceof BodyReadTimeoutError) return c.json({ error: JSON_BODY_TIMEOUT }, 408)
+    throw error
+  }
+  c.req.raw = new Request(c.req.raw, { body: bytes as Uint8Array<ArrayBuffer> })
+  try {
+    const parsed = JSON.parse(new TextDecoder().decode(bytes))
+    return typeof parsed === `object` ? parsed : null
+  } catch {
+    return null
   }
 }

@@ -11,6 +11,7 @@ import {
   DEMO_SIGN_UP_REFUSAL,
   DEMO_TARGET_REFUSAL,
 } from "./demo-guard.ts"
+import { MAX_JSON_BODY_BYTES } from "../services/json-body.ts"
 
 const DEMO_ID = 7
 const PERSON_ID = 8
@@ -139,6 +140,36 @@ Deno.test("nobody can give the demo a real address, which its public operator co
   // An invitation without an address is a link, and passes.
   expect((await call(PERSON_ID, "POST", "/api/groups/abc/invitations", { email: null })).status)
     .toBe(200)
+})
+
+Deno.test("reads no more of a huge body than the routes' own cap", async () => {
+  const api = new Hono<APIContext>().basePath("/api")
+  api.use("*", async (c, next) => {
+    c.set("auth", null)
+    await next()
+  })
+  api.use("*", createDemoGuard(() => Promise.resolve(new Set())))
+  // A route that refuses the body without reading it, as the real routes do past their cap.
+  api.post("*", (c) => c.json({ error: "too large" }, 413))
+
+  let pulled = 0
+  const chunk = new TextEncoder().encode(`{"email":"${"a".repeat(16 * 1024)}`)
+  const body = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (pulled >= 8 * 1024 * 1024) return controller.close()
+      pulled += chunk.length
+      controller.enqueue(chunk)
+    },
+  })
+  const response = await api.request("/api/auth/password/sign-up", {
+    method: "POST",
+    body,
+    headers: { "content-type": "application/json" },
+    duplex: "half",
+  } as RequestInit)
+  expect(response.status).toBe(413)
+  await response.body?.cancel()
+  expect(pulled).toBeLessThan(MAX_JSON_BODY_BYTES * 4)
 })
 
 Deno.test("a visitor who is not signed in passes", async () => {
