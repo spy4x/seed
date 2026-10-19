@@ -152,6 +152,29 @@ export class PostgresBillingRepository implements BillingRepository {
   }
 
   /**
+   * One conditional `UPDATE`: Postgres locks the person's row, so a second checkout of another
+   * group that runs at the same time re-reads it after the first commits and finds the trial gone.
+   * The time is kept from the first claim.
+   */
+  async claimTrial(userId: number, groupId: string): Promise<boolean> {
+    const rows = await this.sql`
+      UPDATE users SET
+        trial_group_id = ${groupId},
+        trial_used_at = COALESCE(trial_used_at, now())
+      WHERE id = ${userId} AND (trial_group_id IS NULL OR trial_group_id = ${groupId})
+      RETURNING id
+    `
+    return rows.length > 0
+  }
+
+  async trialUsed(userId: number): Promise<boolean> {
+    const rows = await this.sql`
+      SELECT 1 FROM users WHERE id = ${userId} AND trial_group_id IS NOT NULL
+    `
+    return rows.length > 0
+  }
+
+  /**
    * Applies one verified webhook event in a single transaction: the event id is stored first, so a
    * second delivery finds it and changes nothing; then the group's subscription is replaced only
    * when the event is not older than the one it holds, and the change is recorded on the group

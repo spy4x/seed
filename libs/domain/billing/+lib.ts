@@ -496,6 +496,32 @@ export function readGroupBilling(value: unknown): GroupBilling | null {
   }
 }
 
+/**
+ * The trial a person may still start (`GET /api/billing/trial`). A trial is given once per person
+ * (#205): the first group whose checkout they open gets it, and their later groups check out
+ * without one. The create-group page says which.
+ */
+export interface PersonTrial {
+  /** `false` when this deployment takes no payments. */
+  enabled: boolean
+  /** The person's trial went to a group already. */
+  used: boolean
+  /** The longest trial of a paid plan, in days; 0 when no plan has one. */
+  days: number
+}
+
+const personTrialSchema = type({ enabled: "boolean", used: "boolean", days: "number.integer >= 0" })
+
+/** Reads a {@link PersonTrial} back from the API's JSON; `null` when it is not one. */
+export function readPersonTrial(value: unknown): PersonTrial | null {
+  const trial = personTrialSchema(value)
+  if (trial instanceof type.errors) return null
+  return { enabled: trial.enabled, used: trial.used, days: trial.days }
+}
+
+/** The longest trial any paid plan starts with, in days. */
+export const LONGEST_TRIAL_DAYS = Math.max(0, ...PAID_PLANS.map((plan) => plan.trialDays))
+
 export type BillingErrorCode =
   | "ALREADY_SUBSCRIBED"
   | "BILLING_DISABLED"
@@ -665,6 +691,15 @@ export class BillingGetQuery implements Query<BillingGetPayload, { billing: Grou
   __resultType?: { billing: GroupBilling }
   constructor(public data: BillingGetPayload) {}
 }
+export interface BillingTrialPayload {
+  actor: Actor
+}
+
+/** Whether the actor's trial is still to be used; see {@link PersonTrial}. */
+export class BillingTrialQuery implements Query<BillingTrialPayload, { trial: PersonTrial }> {
+  __resultType?: { trial: PersonTrial }
+  constructor(public data: BillingTrialPayload) {}
+}
 // #endregion Commands and queries
 
 // #region Ports
@@ -702,6 +737,14 @@ export interface BillingRepository {
   handedOver(groupId: string): Promise<boolean>
   /** The group's members, the owner included: the count `maxMembers` caps and seats bill. */
   membersOf(groupId: string): Promise<number>
+  /**
+   * Gives the person's one trial to the group, in one conditional write: `true` when the trial is
+   * unused or already went to this group, `false` when another group has it. Two checkouts of two
+   * groups at once never both get it.
+   */
+  claimTrial(userId: number, groupId: string): Promise<boolean>
+  /** Whether the person's trial went to a group already. */
+  trialUsed(userId: number): Promise<boolean>
 }
 
 /** The actor's role in a group, or `null` when they are not an active member of an active group. */

@@ -129,10 +129,16 @@ import { noteListHandler } from "@api/cqrs/query-handlers/note-list.ts"
 import { noteGetHandler } from "@api/cqrs/query-handlers/note-get.ts"
 import { noteLocateHandler } from "@api/cqrs/query-handlers/note-locate.ts"
 import { noteSearchHandler } from "@api/cqrs/query-handlers/note-search.ts"
-import { BillingCheckoutCommand, BillingGetQuery, BillingPortalCommand } from "@domain/billing"
+import {
+  BillingCheckoutCommand,
+  BillingGetQuery,
+  BillingPortalCommand,
+  BillingTrialQuery,
+} from "@domain/billing"
 import { billingCheckoutHandler } from "@api/cqrs/command-handlers/billing-checkout.ts"
 import { billingPortalHandler } from "@api/cqrs/command-handlers/billing-portal.ts"
 import { billingGetHandler } from "@api/cqrs/query-handlers/billing-get.ts"
+import { billingTrialHandler } from "@api/cqrs/query-handlers/billing-trial.ts"
 import {
   GroupOwnershipTransferredEvent,
   GroupSelectedEvent,
@@ -246,6 +252,7 @@ queryBus.register(NoteSearchQuery, noteSearchHandler)
 queryBus.register(TagListQuery, tagListHandler)
 queryBus.register(TagGetQuery, tagGetHandler)
 queryBus.register(BillingGetQuery, billingGetHandler)
+queryBus.register(BillingTrialQuery, billingTrialHandler)
 queryBus.register(NotificationListQuery, notificationListHandler)
 queryBus.register(NotificationUnreadCountQuery, notificationUnreadCountHandler)
 commandBus.register(NotificationMarkReadCommand, notificationMarkReadHandler)

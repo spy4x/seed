@@ -8,9 +8,11 @@ import {
   BillingGetQuery,
   BillingPortalCommand,
   type BillingRepository,
+  BillingTrialQuery,
   type GroupRoleLookup,
   handoverTrialDays,
   hasLiveSubscription,
+  LONGEST_TRIAL_DAYS,
   PAID_PLANS,
   type StoredSubscription,
   toGroupBilling,
@@ -98,11 +100,15 @@ export function createBillingCheckoutHandler(
       // Only a group's first checkout starts with a trial: a group that ever paid, or tried, has a
       // customer already. After a transfer the new owner gets no customer of the old owner's, and
       // a trial only for the plan time the old owner already paid for, with a card always asked.
+      // Otherwise the trial is the owner's one trial, which goes to the first group they check out.
       ...(customerId
         ? { customerId }
         : handedOver
         ? handoverTrial(current, dependencies)
-        : trialOf(plan.trialDays, dependencies.trialRequiresCard)),
+        : plan.trialDays > 0 &&
+            await dependencies.billing.claimTrial(data.actor.userId, data.groupId)
+        ? trialOf(plan.trialDays, dependencies.trialRequiresCard)
+        : {}),
       // The client's key is scoped to the group and the person, so one person's key can never
       // replay a checkout the provider made for another group or person.
       ...(data.idempotencyKey
@@ -115,6 +121,22 @@ export function createBillingCheckoutHandler(
     }
     return { url: result.value.url }
   }
+}
+
+/**
+ * The actor's own trial: whether it went to a group already, and how long it lasts. Any signed-in
+ * person may ask about their own; nobody can ask about anyone else's.
+ */
+export function createBillingTrialHandler(
+  { billing, provider }: BillingHandlerDependencies,
+): QueryHandler<BillingTrialQuery> {
+  return async ({ data }) => ({
+    trial: {
+      enabled: provider !== null,
+      used: provider !== null && await billing.trialUsed(data.actor.userId),
+      days: provider === null ? 0 : LONGEST_TRIAL_DAYS,
+    },
+  })
 }
 
 /** The new owner's trial after a transfer: the old owner's remaining plan time, or none. */
