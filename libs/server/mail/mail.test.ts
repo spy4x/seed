@@ -25,7 +25,7 @@ const SMTP = {
   SMTP_PORT: "587",
   SMTP_USER: "mailer",
   SMTP_PASS: "not-a-real-password",
-  SMTP_FROM: "App <noreply@example.com>",
+  SMTP_FROM: "App <hi@example.com>",
 }
 
 describe("readMailSetup", () => {
@@ -43,7 +43,7 @@ describe("readMailSetup", () => {
         port: 587,
         user: "mailer",
         pass: "not-a-real-password",
-        from: "App <noreply@example.com>",
+        from: "App <hi@example.com>",
       },
     })
   })
