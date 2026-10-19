@@ -41,6 +41,7 @@ export function DemoNotice(
   if (kind === "sign-up") {
     return (
       <Notice
+        live={false}
         title="Public demo"
         data-e2e="demo-credentials"
         action={
@@ -55,7 +56,7 @@ export function DemoNotice(
   }
   const operator = kind === "operator"
   return (
-    <Notice title="Public demo" data-e2e="demo-credentials">
+    <Notice live={false} title="Public demo" data-e2e="demo-credentials">
       <div class="flex flex-col gap-3">
         <p>Anyone can sign in with this account and see what others add. {RESET_NOTE}</p>
         <dl class="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-1">

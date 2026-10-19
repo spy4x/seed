@@ -169,6 +169,8 @@ describe("AuthScreen in the browser", () => {
     expect(notice.textContent).toContain("demo@example.com")
     expect(notice.textContent).toContain("public-demo")
     expect(notice.textContent).toContain("midnight Pacific time")
+    // Standing instructions, found while reading: no live region announces them when they arrive.
+    expect(notice.getAttribute("role")).toBeNull()
     expect(find("[data-e2e=demo-other-app] a").getAttribute("href")).toBe(demo.otherAppUrl)
     // The notice comes before the form, and the form's own submit stays the primary action.
     expect(
@@ -184,6 +186,7 @@ describe("AuthScreen in the browser", () => {
   it("points sign-up to the shared account and shows nothing on the code step", async () => {
     await mount(<AuthScreen {...authDefaults} screen="sign-up" demo={demo} />)
     expect(find("[data-e2e=demo-credentials]").textContent).toContain("Use the demo account")
+    expect(find("[data-e2e=demo-credentials]").getAttribute("role")).toBeNull()
     expect(root!.querySelector("[data-e2e=demo-sign-in]")).toBeNull()
 
     await rerender(
