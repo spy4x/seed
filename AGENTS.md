@@ -95,6 +95,16 @@ asked for this on 2026-10-16: "do that automatically when screens/UI/UX change s
 every small change). If unsure if screenshots to be remade - ask me." On 2026-10-17 the owner
 agreed that the skill covers the README pictures too.
 
+## The public demo
+
+The template's server runs a public demo with shared accounts, fake data and a nightly wipe,
+turned on by `DEMO_MODE=true`: [docs/demo.md](docs/demo.md). A change that adds, edits or removes
+a table, a column or anything else in the database structure updates the demo's wipe and seed in
+the same PR, as that doc's "When the database changes" says, so the demo keeps working and shows
+the new feature. The owner asked for this on 2026-10-19: "a local AGENTS.md instruction (or a
+reference to a separate doc) about how it works and that we should update wipe/seed script when we
+add/edit/remove tables or schema or db structure overall."
+
 ## Handoff
 
 [docs/handoff.md](docs/handoff.md) holds the map of the repository, the decisions already made and

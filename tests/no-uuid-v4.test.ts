@@ -43,7 +43,7 @@ export const ALLOWED: ReadonlySet<string> = new Set([
  */
 export const PENDING: ReadonlyMap<string, string> = new Map([
   // Signs the seed script's session cookies. Waits on the owner's decision.
-  ["infra/scripts/seed-data.ts", "cookieSecret: crypto.randomUUID() + crypto.randomUUID(),"],
+  ["apps/worker/demo/seed.ts", "cookieSecret: crypto.randomUUID() + crypto.randomUUID(),"],
   // Webhook secret of a process that takes no webhooks. Waits on the owner's decision.
   ["libs/server/billing/setup.ts", ": `whsec_unused_${crypto.randomUUID()}`,"],
 ])
@@ -277,7 +277,7 @@ Deno.test("the UUID version 4 guard checks a new migration and lets the two old 
 })
 
 Deno.test("the UUID version 4 guard lets a secret that waits on the owner through on its one line only", () => {
-  const path = "infra/scripts/seed-data.ts"
+  const path = "apps/worker/demo/seed.ts"
   const line = `    ${PENDING.get(path)}`
   expect(findUuidV4(path, `const a = 1\n${line}`)).toEqual([])
   // Another call in the same file, a second copy of the line, and the line in another file.

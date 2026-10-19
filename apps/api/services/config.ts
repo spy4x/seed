@@ -1,9 +1,15 @@
+import { isDemoMode } from "@server/auth/demo-accounts.ts"
 import { readApiEnv } from "./config-env.ts"
 
 const env = readApiEnv()
 // loadConfig names a failing variable but not the rule it broke, so this one says it outright.
 if (env.AUTH_COOKIE_SECRET.length < 32) {
   throw new Error("AUTH_COOKIE_SECRET must be at least 32 characters (openssl rand -hex 32)")
+}
+
+// The demo prints the password on its sign-in pages, so it cannot run without one.
+if (isDemoMode({ DEMO_MODE: env.DEMO_MODE }) && (env.SEED_PASSWORD ?? "").length < 8) {
+  throw new Error("SEED_PASSWORD must be set (8 characters or more) while DEMO_MODE is true")
 }
 
 export class Config {
@@ -13,8 +19,11 @@ export class Config {
   devEmail = env.DEV_EMAIL
   vapidKeysPath = "./vapid.json"
   errorReportDsn = env.ERROR_REPORT_DSN
-  /** The client id and secret of each sign-in provider; one without both is off. */
-  oauth = {
+  /**
+   * The client id and secret of each sign-in provider; one without both is off. All are off in the
+   * public demo: a provider account brings a real address, which the demo operator could read.
+   */
+  oauth = isDemoMode({ DEMO_MODE: env.DEMO_MODE }) ? { google: {}, github: {} } : {
     google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET },
     github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
   }
@@ -38,6 +47,8 @@ export class Config {
   proxyHosts = (env.PROXY_HOSTS ?? "").split(",").map((host) => host.trim()).filter(Boolean)
   /** The release this process was built from, for the operator area's System page (#429). */
   build = { version: env.APP_VERSION || null, commit: env.APP_COMMIT || null }
+  /** The public demo's shared password, or `null` when the demo is off (docs/demo.md). */
+  demoPassword = isDemoMode({ DEMO_MODE: env.DEMO_MODE }) ? env.SEED_PASSWORD! : null
 
   kv = {
     hostname: env.KV_HOSTNAME,

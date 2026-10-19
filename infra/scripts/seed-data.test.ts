@@ -1,6 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { DEMO_EMAIL, readSeedOptions, SeedConfigError } from "./seed-data.ts"
+import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL } from "@server/auth/demo-accounts.ts"
+import { readSeedOptions, SeedConfigError } from "./seed-data.ts"
 
 const PEPPER = "p".repeat(32)
 const DEV = { ENV: "dev", AUTH_PEPPER: PEPPER, SEED_PASSWORD: "12345678" }
@@ -23,14 +24,21 @@ Deno.test("readSeedOptions refuses a password sign-up would refuse", () => {
   }
 })
 
-Deno.test("readSeedOptions refuses to seed unless ENV is dev, as db:reset does", () => {
+Deno.test("readSeedOptions refuses to seed unless ENV is dev or the public demo is on", () => {
   for (const ENV of ["prod", "test", "", undefined]) {
-    expect(() => readSeedOptions({ ...DEV, ENV })).toThrow(
-      new SeedConfigError("ENV must be dev: the demo user is for development databases only"),
-    )
+    for (const DEMO_MODE of [undefined, "", "1", "TRUE", "yes"]) {
+      expect(() => readSeedOptions({ ...DEV, ENV, DEMO_MODE })).toThrow(
+        new SeedConfigError(
+          "ENV must be dev, or DEMO_MODE true: the demo accounts are for development and the public demo only",
+        ),
+      )
+    }
   }
+  expect(readSeedOptions({ ...DEV, ENV: "prod", DEMO_MODE: "true" }).password).toBe("12345678")
 })
 
-Deno.test("the demo user's address is on a domain reserved for examples", () => {
-  expect(DEMO_EMAIL).toMatch(/@example\.(com|net|org)$/)
+Deno.test("the demo accounts' addresses are on a domain reserved for examples", () => {
+  for (const address of [DEMO_USER_EMAIL, DEMO_ADMIN_EMAIL]) {
+    expect(address).toMatch(/@example\.(com|net|org)$/)
+  }
 })

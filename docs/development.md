@@ -34,13 +34,14 @@ missing or unreadable `.env.prod` also refuses; on a machine without one, add `-
 A missing `DB_PORT`, `DB_USER` or `DB_PASS`, or a missing or invalid `AUTH_PEPPER` or
 `SEED_PASSWORD`, refuses too, before anything is dropped.
 
-To add a demo user who signs in as `demo@example.com` and owns the group `Demo team`, run
-`ENV=dev deno task db:seed` with the same values plus `AUTH_PEPPER` (the API's) and `SEED_PASSWORD`
-(the demo user's password, 8 to 50 characters). It runs only with `ENV=dev`. The demo user is an
-administrator, so they can also sign in to the [admin app](apps.md#the-admin-app). Run again, it finds
-the user, makes them an administrator again if their role changed, marks their address proven if
-it is not yet (an account with an unproven address cannot invite), and changes nothing else; when
-it cannot create the user, it says so and exits with 1.
+To fill a database with the demo data, run `ENV=dev deno task db:seed` with the same values plus
+`AUTH_PEPPER` (the API's) and `SEED_PASSWORD` (the shared password, 8 to 50 characters). It adds
+two accounts that sign in with that password and no second factor: `demo@example.com`, a plain
+user, and `admin@example.com`, an administrator who signs in to the
+[admin app](apps.md#the-admin-app). It also adds fake people, groups, tags, notes, invitations and
+newsletter subscribers. Run again, it finds the demo user, puts both accounts' roles and proven
+addresses right, and changes nothing else; when it cannot create an account, it says so and exits
+with 1. The same seed runs on the public demo every night ([demo.md](demo.md)).
 
 ## Tasks
 

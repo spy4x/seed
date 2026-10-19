@@ -11,6 +11,10 @@ import { systemEnv } from "@spy4x/server/config"
 import { readSubscribersSetup, subscribersOffWarning } from "@server/subscribers/subscribers.ts"
 // The API's own reading of the billing variables, so both processes run one provider.
 import { readBillingSetup } from "@server/billing/setup.ts"
+import { isDemoMode } from "@server/auth/demo-accounts.ts"
+import { readSeedOptions } from "./demo/options.ts"
+import { startDemoReset } from "./demo/reset.ts"
+import { isDemoSeeded, resetDemo } from "./demo/run.ts"
 
 const sql = createSqlFromEnv(Deno.env.toObject(), {
   transform: postgres.camel,
@@ -91,6 +95,22 @@ async function sweepIdempotencyKeys(): Promise<void> {
 
 function reportSweepFailure(error: unknown): void {
   console.error("Idempotency sweep failed, retrying next interval", error)
+}
+
+// The public demo (docs/demo.md): wiped and seeded again at midnight on the US west coast. A setup
+// that cannot seed stops the worker, so a broken demo shows at deploy time.
+if (isDemoMode(Deno.env.toObject())) {
+  const seedOptions = readSeedOptions(Deno.env.toObject())
+  startDemoReset({
+    signal,
+    isSeeded: () => isDemoSeeded(sql),
+    reset: async () => {
+      await resetDemo(sql, { ...seedOptions, subscribers: subscribersSetup })
+      console.log("Demo wiped and seeded again")
+    },
+    now: () => new Date(),
+    onError: (error) => console.error("Demo reset failed, retrying next minute", error),
+  })
 }
 
 try {

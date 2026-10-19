@@ -6,6 +6,7 @@ import { Card } from "@spy4x/preact-ui/card"
 import { Link } from "@spy4x/preact-ui/link"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
 import { type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
+import { type DemoCredentials, DemoNotice } from "./demo-notice.tsx"
 
 /** The three screens `AuthScreen` draws: the two credential modes, and the second factor. */
 export type AuthScreenKind = AuthMode | "one-time-code"
@@ -94,6 +95,11 @@ export interface AuthScreenProps {
   lastSignIn?: LastSignInHint | null
   /** "Not you? Forget": the app drops what this browser remembered. */
   onForgetLastSignIn?: () => void
+  /**
+   * The public demo's shared account (docs/demo.md), shown above the card on sign-in and sign-up.
+   * `null` or left out: the demo is off and nothing is shown.
+   */
+  demo?: DemoCredentials | null
 }
 
 /** What the sign-in screen says about the last sign-in on this browser. */
@@ -217,6 +223,7 @@ export function AuthScreen(
     providers = [],
     lastSignIn = null,
     onForgetLastSignIn,
+    demo = null,
   }: AuthScreenProps,
 ): JSX.Element {
   const copy = COPY[screen]
@@ -246,7 +253,7 @@ export function AuthScreen(
     ? <>Already have an account? {linkTo(SCREEN_PATHS.signIn, "Sign in")}</>
     : <>Lost your device? {linkTo(SCREEN_PATHS.signIn, "Back to sign in")}</>
 
-  return (
+  const card = (
     <AuthCard title={copy.title} description={copy.description} after={after}>
       {screen === "sign-in" && <LastSignIn last={lastSignIn} onForget={onForgetLastSignIn} />}
       <AuthForm
@@ -292,5 +299,21 @@ export function AuthScreen(
         </ul>
       )}
     </AuthCard>
+  )
+  // One wrapper whether or not the notice shows: the notice arrives after a fetch, and a card that
+  // moved in the tree would be drawn again, losing what was typed or filled in.
+  return (
+    <div class="flex w-full flex-col gap-6">
+      {demo && screen !== "one-time-code" && (
+        <DemoNotice
+          demo={demo}
+          kind={screen === "sign-up" ? "sign-up" : "product"}
+          busy={busy}
+          onSignIn={onSignIn}
+          navigate={navigate}
+        />
+      )}
+      {card}
+    </div>
   )
 }

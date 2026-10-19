@@ -460,6 +460,14 @@ Dismiss and the end of the tour are kept on the person's `users` row (`onboardin
 both follow the person to every device. Add a screen to the tour in `TOUR_STEPS`, with the CSS
 selector of the control that opens it.
 
+## Showing it in the public demo
+
+A new aggregate adds fake rows to the demo in the same PR ([demo.md](demo.md), "When the database
+changes"): a few believable items per themed group in `apps/worker/demo/fake-data.ts`, written in
+`apps/worker/demo/seed.ts` through the aggregate's own repository, and the new counts in
+`tests/integration/demo-seed.integration.test.ts`. The nightly wipe empties the new table without a
+change.
+
 ## What is left to the next aggregate
 
 - The SPA creates a note in the group it shows, over the socket, so a note never lands in a group
