@@ -80,10 +80,9 @@ app ([#203](https://github.com/spy4x/seed/issues/203)) are not built yet.
 
 The public website (`apps/mpa`, seedsaas.com) describes the product's features: the home page's
 feature cards, `/features`, `/pricing`, `/compare` and `/mvp`, and the components they render
-(`apps/mpa/components/`). A change that adds, modifies or
-removes a feature updates every page that names it in the same PR, so the site never lists a
-feature the product lacks and never leaves out one it has. The owner asked for this on 2026-10-19:
-"create the rule".
+(`apps/mpa/components/`). A change that adds, modifies or removes a feature updates every page that
+names it in the same PR, so the site never lists a feature the product lacks and never leaves out
+one it has. The owner asked for this on 2026-10-19: "create the rule".
 
 ## Product screenshots
 
