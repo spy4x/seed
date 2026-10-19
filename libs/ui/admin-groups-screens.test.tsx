@@ -542,6 +542,7 @@ describe(`the person page's groups`, () => {
       sessions: [],
       groups: [{ id: GROUP_ID, name: `Family`, role: GroupRole.OWNER }],
       audits: [],
+      trialUsedAt: null,
       preferences: {
         value: DEFAULT_PREFERENCES,
         version: 0,

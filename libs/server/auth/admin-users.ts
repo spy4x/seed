@@ -178,14 +178,15 @@ export async function readAdminUser(
 
 /**
  * What the detail page shows besides the person and their sessions: how they sign in (never a
- * secret), their groups, the newest {@link ADMIN_AUDIT_LIMIT} rows of their audit trail, and their
- * display preferences.
+ * secret), their groups, the newest {@link ADMIN_AUDIT_LIMIT} rows of their audit trail, their
+ * display preferences, and when their billing trial was used.
  */
 export async function readAdminUserParts(sql: postgres.Sql, userId: number): Promise<{
   methods: AdminSignInMethod[]
   groups: AdminUserGroup[]
   audits: AdminAuditRow[]
   preferences: AdminUserPreferences
+  trialUsedAt: string | null
 }> {
   const methods = await sql<
     { method: string; email: string | null; provenAt: Date | null; createdAt: Date }[]
@@ -214,8 +215,12 @@ export async function readAdminUserParts(sql: postgres.Sql, userId: number): Pro
     LIMIT ${ADMIN_AUDIT_LIMIT}
   `
   const preferences = await readAdminPreferences(sql, userId)
+  const [trial] = await sql<{ trialUsedAt: Date | null }[]>`
+    SELECT trial_used_at FROM users WHERE id = ${userId}
+  `
   return {
     preferences,
+    trialUsedAt: trial?.trialUsedAt?.toISOString() ?? null,
     methods: methods.map((row) => ({
       method: row.method,
       email: row.email,

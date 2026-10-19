@@ -458,6 +458,16 @@ function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.
             label="Last seen"
             value={user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}
           />
+          <SettingRow
+            label="Billing trial"
+            value={detail.trialUsedAt
+              ? (
+                <>
+                  Used <When at={detail.trialUsedAt} />
+                </>
+              )
+              : "Not used"}
+          />
         </SettingList>
       </SettingGroup>
       <AdminPreferencesGroup preferences={detail.preferences} now={now} />
