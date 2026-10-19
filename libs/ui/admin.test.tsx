@@ -674,4 +674,23 @@ describe("the admin sign-in", () => {
 
     expect(calls).toEqual([["code", "123456"]])
   })
+
+  it("signs in as the demo operator in one press while the demo is on", async () => {
+    const calls: unknown[][] = []
+    await mount(
+      <AdminSignInScreen
+        step="credentials"
+        busy={false}
+        error={null}
+        onSignIn={(credentials) => void calls.push(["sign-in", credentials])}
+        onOneTimeCode={() => {}}
+        demo={{ login: "admin@example.com", password: "public-demo", otherAppUrl: null }}
+      />,
+    )
+    expect(document.body.textContent).toContain("admin@example.com")
+    expect(document.querySelector("[data-e2e=demo-other-app]")).toBeNull()
+    await act(() => document.querySelector<HTMLButtonElement>("[data-e2e=demo-sign-in]")!.click())
+
+    expect(calls).toEqual([["sign-in", { login: "admin@example.com", password: "public-demo" }]])
+  })
 })

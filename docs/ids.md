@@ -40,7 +40,7 @@ a correct guess would give.
 Two such values are still a version 4 UUID from Web Crypto and wait on that decision. The guard
 lets each through by its file and exact line:
 
-- `infra/scripts/seed-data.ts`: the cookie secret of the seed script's own session manager.
+- `apps/worker/demo/seed.ts`: the cookie secret of the seed script's own session manager.
 - `libs/server/billing/setup.ts`: the webhook secret given to the billing client of a process that
   takes no webhooks.
 

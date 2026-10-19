@@ -149,6 +149,48 @@ describe("AuthScreen in the browser", () => {
     expect(await submit("input[name=otp]")).toBe(true)
     expect(code.calls).toEqual([["012345"]])
   })
+
+  const demo = {
+    login: "demo@example.com",
+    password: "public-demo",
+    otherAppUrl: "https://admin.example.com",
+  }
+
+  it("shows no demo notice while the demo is off", async () => {
+    await mount(<AuthScreen {...authDefaults} />)
+    expect(root!.querySelector("[data-e2e=demo-credentials]")).toBeNull()
+  })
+
+  it("signs in with the shared demo account in one press, and not while busy", async () => {
+    const signIn = spy<[{ login: string; password: string }]>()
+    await mount(<AuthScreen {...authDefaults} demo={demo} onSignIn={signIn.fn} />)
+
+    const notice = find("[data-e2e=demo-credentials]")
+    expect(notice.textContent).toContain("demo@example.com")
+    expect(notice.textContent).toContain("public-demo")
+    expect(notice.textContent).toContain("midnight Pacific time")
+    expect(find("[data-e2e=demo-other-app] a").getAttribute("href")).toBe(demo.otherAppUrl)
+    // The notice comes before the form, and the form's own submit stays the primary action.
+    expect(
+      notice.compareDocumentPosition(find("form")) & window.Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    await act(() => find<HTMLButtonElement>("[data-e2e=demo-sign-in]").click())
+    expect(signIn.calls).toEqual([[{ login: demo.login, password: demo.password }]])
+
+    await rerender(<AuthScreen {...authDefaults} demo={demo} busy onSignIn={signIn.fn} />)
+    expect(find<HTMLButtonElement>("[data-e2e=demo-sign-in]").disabled).toBe(true)
+  })
+
+  it("points sign-up to the shared account and shows nothing on the code step", async () => {
+    await mount(<AuthScreen {...authDefaults} screen="sign-up" demo={demo} />)
+    expect(find("[data-e2e=demo-credentials]").textContent).toContain("Use the demo account")
+    expect(root!.querySelector("[data-e2e=demo-sign-in]")).toBeNull()
+
+    await rerender(
+      <AuthScreen {...authDefaults} screen="one-time-code" isMfaRequired demo={demo} />,
+    )
+    expect(root!.querySelector("[data-e2e=demo-credentials]")).toBeNull()
+  })
 })
 
 const forgotDefaults: ForgotPasswordScreenProps = {
