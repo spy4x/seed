@@ -34,7 +34,7 @@ import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { transferCandidates } from "./group-transfer.tsx"
-import type { PlanRefusal } from "@domain/billing"
+import type { PersonTrial, PlanRefusal } from "@domain/billing"
 import { GroupMoveAllForm, type MoveAllResult } from "./group-move-all.tsx"
 import { type MoveTarget, NavigateItem } from "./notes-screen.tsx"
 import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
@@ -131,6 +131,11 @@ export interface GroupEditorScreenProps {
   leaveError?: string | null
   /** Leaves the group, once the person confirmed it. */
   onLeave?: () => void
+  /**
+   * On the create page, the person's own trial: the page says whether the new group can start one.
+   * Left out, or with billing off, it says nothing about plans.
+   */
+  trial?: PersonTrial | null
   /** The plan section (`BillingCard`), drawn under the members; left out, there is none. */
   billing?: ComponentChildren
   /** The pending invitations (`PendingInvitations`), drawn under the members. */
@@ -546,6 +551,7 @@ function GroupForm(
     navigate,
     group,
     offline = false,
+    trial = null,
   }: GroupEditorScreenProps,
 ): JSX.Element {
   const box = useRef<HTMLDivElement>(null)
@@ -644,6 +650,9 @@ function GroupForm(
               optional={optional}
             />
             <Preview value={value} />
+            {creating && trialText(trial) && (
+              <p class="text-sm text-muted" data-e2e="group-trial">{trialText(trial)}</p>
+            )}
             <ErrorState focusOnAppear message={errors.form ?? null} dataE2E="group-form-error" />
             {showFooter && (
               // On a phone the primary button is on top at full width; from `sm` up the two are a
@@ -689,6 +698,21 @@ function GroupForm(
       </ScreenForm>
     </>
   )
+}
+
+/**
+ * What the create page says about the trial, or `null` to say nothing: billing is off, or no plan
+ * has a trial and the person never used one. One trial per person (#205), so it names the rule.
+ */
+export function trialText(trial: PersonTrial | null): string | null {
+  if (!trial?.enabled) return null
+  if (trial.used) {
+    return "New groups start on the free plan. You have used your free trial, so a paid plan " +
+      "here is charged from the first day."
+  }
+  if (trial.days <= 0) return null
+  return `New groups start on the free plan. Your ${trial.days}-day free trial of a paid plan ` +
+    `goes to the first group you choose a paid plan for.`
 }
 
 /**

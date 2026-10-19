@@ -100,9 +100,23 @@ again, which a past-due one blocks (409 `ALREADY_SUBSCRIBED`).
 
 ## Trials
 
-A group's first checkout of a plan with `trialDays` asks Stripe for a trial of that length. A
-group that already has a Stripe customer, because it paid or trialed before, checks out without
-one, so a trial is given once per group (see "Known limits").
+A trial is given once per person, not once per group
+([#205](https://github.com/spy4x/seed/issues/205)): otherwise anyone could keep the paid plan for
+ever by creating new groups. A checkout of a plan with `trialDays` asks Stripe for a trial of that
+length only when both hold:
+
+- The group has no Stripe customer yet, because it never paid or trialed.
+- The owner's trial is unused, or already went to this group. The checkout claims it for the group
+  in one conditional `UPDATE` of the owner's row (`users.trial_group_id`, with `trial_used_at`), so
+  two checkouts of two groups opened at the same time never both get it. A second checkout of the
+  same group, after the owner closed Stripe's page, still gets it.
+
+Only the owner checks out, so joining someone else's group never uses a person's trial. The
+handover trial after a transfer of ownership ("Transfer of ownership" below) carries the old owner's paid
+time and does not use the new owner's trial. The checkout decides on the server; the client cannot
+ask for a trial. `GET /api/billing/trial` answers the signed-in person's own `{ enabled, used,
+days }`, and the page that creates a group says from it whether a trial comes with the new group.
+The admin panel shows when a person's trial was used, on the person's Overview tab.
 
 `BILLING_TRIAL_REQUIRES_CARD` decides whether the trial's checkout asks for a card. It is `true`
 by default: a trial with a card converts on its own, and a person who cannot pay does not get one.
@@ -202,8 +216,8 @@ customer, and never lets the old owner's card be charged again without their say
    days. The new subscription takes over the group as soon as it trials ("Flow" below), its customer
    replaces the old one, and the old subscription's later events, its end included, change
    nothing.
-   Once the old plan has ended, the new owner's checkout has no trial: a trial is given once per
-   group.
+   Once the old plan has ended, the new owner's checkout has no trial: the group had its trial,
+   and the new owner's own trial is not spent on it.
 
 The settings page tells the owner this before they transfer.
 
@@ -408,8 +422,11 @@ provider, so its public secret cannot sign a real event.
   the cut-off holds; an open page shows the old plan until it reads the billing again (a reload, or
   the next change of the group).
 - The notice banner is on the group's settings page only, not on every page of the group.
-- A trial is given once per group, not once per person: an owner who creates a new group can try
-  the paid plan again there.
+- The trial is claimed when the owner opens Stripe's checkout, not when the trial starts. An owner
+  who opens the checkout of one group, closes it, and then checks out another group gets no trial
+  there; the first group keeps it, also when it is deleted later.
+- A person who deletes their account and signs up again gets a new trial: the trial is kept on the
+  account.
 - An invitation created before its group moved to per-member billing carries no price
   confirmation; accepting it still adds a seat. An admin confirms the price as the owner does.
 - The pricing page shows Pro's price without "per member"; the plan's feature list says it.

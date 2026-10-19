@@ -7,7 +7,9 @@ import {
   BillingGetQuery,
   BillingPortalCommand,
   type BillingRedirect,
+  BillingTrialQuery,
   type GroupBilling,
+  type PersonTrial,
 } from "@domain/billing"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
@@ -77,6 +79,22 @@ export function createBillingRoute(dependencies: BillingRouteDependencies): Hono
           }),
         ),
       )
+    })
+}
+
+/**
+ * The signed-in person's own trial, mounted at `/api/billing/trial`: `GET /` answers
+ * `{ trial: PersonTrial }`. The create-group page reads it to say whether a trial comes with the
+ * new group; the checkout decides on its own.
+ */
+export function createBillingTrialRoute(
+  dependencies: { trial(query: BillingTrialQuery): Promise<{ trial: PersonTrial }> },
+): Hono<APIContext> {
+  return new Hono<APIContext>()
+    .onError((error, c) => billingErrorResponse(c, error))
+    .use(requireAuthentication)
+    .get("/", async (c) => {
+      return c.json(await dependencies.trial(new BillingTrialQuery({ actor: actorOf(c) })))
     })
 }
 

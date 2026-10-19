@@ -33,7 +33,7 @@ import {
   type InvitationsRouteDependencies,
 } from "./routes/invitations.ts"
 import { invitationRateLimits } from "./cqrs/invitation-dependencies.ts"
-import { createBillingRoute } from "./routes/billing.ts"
+import { createBillingRoute, createBillingTrialRoute } from "./routes/billing.ts"
 import { createBillingWebhookRoute } from "./routes/billing-webhook.ts"
 import { billingSetup } from "./services/billing.ts"
 import { createMutationGuards } from "./middlewares/mutation-guards.ts"
@@ -312,6 +312,7 @@ app.route(
     expectedOrigin,
   }),
 )
+app.route("/billing/trial", createBillingTrialRoute({ trial: (query) => queryBus.execute(query) }))
 // No session and no origin check: the provider calls it, and its signature is the only proof.
 app.route(
   "/webhooks/billing",

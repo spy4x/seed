@@ -77,6 +77,7 @@ function buildApp(
             sessions: [],
             groups: [],
             audits: [],
+            trialUsedAt: null,
             preferences: {
               value: DEFAULT_PREFERENCES,
               version: 0,

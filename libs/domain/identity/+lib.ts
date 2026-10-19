@@ -829,6 +829,8 @@ export interface AdminUserDetail {
   audits: AdminAuditRow[]
   /** Their theme, region format, time zone and clock, read-only (#163). */
   preferences: AdminUserPreferences
+  /** When their one billing trial went to a group (#205), or `null` while unused. ISO 8601. */
+  trialUsedAt: string | null
 }
 
 /** How many audit rows the detail page shows. */

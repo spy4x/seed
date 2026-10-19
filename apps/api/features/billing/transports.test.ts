@@ -10,17 +10,19 @@ import {
   BillingNoticeKind,
   BillingPortalCommand,
   BillingStatus,
+  BillingTrialQuery,
   type StoredSubscription,
 } from "@domain/billing"
 import { createSessionGate } from "../../cqrs/session-gate.ts"
 import { buildAuthData } from "../../_testing/fake-auth.ts"
 import { roles } from "../../_testing/memory-notes.ts"
 import type { APIContext } from "../../_types.ts"
-import { createBillingRoute } from "../../routes/billing.ts"
+import { createBillingRoute, createBillingTrialRoute } from "../../routes/billing.ts"
 import {
   createBillingCheckoutHandler,
   createBillingGetHandler,
   createBillingPortalHandler,
+  createBillingTrialHandler,
 } from "./handlers.ts"
 
 /**
@@ -30,6 +32,8 @@ import {
  */
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
+/** Another group of the owner's, which their trial can go to instead. */
+const OTHER_GROUP = "0199f0c4-6a1e-7c2d-9b3a-4d5e6f708192"
 const OWNER = 1
 const ADMIN = 2
 const EDITOR = 3
@@ -67,7 +71,10 @@ function stack(
     trialRequiresCard = true,
     members = 1,
     handedOver = false,
+    trialGroup = null,
   }: {
+    /** The group each person's one trial went to, as `users.trial_group_id` holds it. */
+    trialGroup?: string | null
     subscription?: StoredSubscription | null
     members?: number
     customer?: string | null
@@ -85,8 +92,17 @@ function stack(
     [`${groupId}:${EDITOR}`]: GroupRole.EDITOR,
     [`${groupId}:${VIEWER}`]: GroupRole.VIEWER,
   })
+  // One person's trial, kept the way `claimTrial` keeps it: the first group that claims it has it.
+  const trials = new Map<number, string>()
+  if (trialGroup) trials.set(OWNER, trialGroup)
   const dependencies = {
     billing: {
+      claimTrial: (userId: number, id: string) => {
+        if ((trials.get(userId) ?? id) !== id) return Promise.resolve(false)
+        trials.set(userId, id)
+        return Promise.resolve(true)
+      },
+      trialUsed: (userId: number) => Promise.resolve(trials.has(userId)),
       get: () => Promise.resolve(subscription),
       lockedRoleOf: (id: string, userId: number) => groups.roleOf(id, userId),
       customerOf: () => Promise.resolve(customer),
@@ -108,6 +124,8 @@ function stack(
   const queries = new QueryBus()
   queries.use(createSessionGate([]))
   queries.register(BillingGetQuery, createBillingGetHandler(dependencies))
+  queries.register(BillingTrialQuery, createBillingTrialHandler(dependencies))
+  const trialRoute = createBillingTrialRoute({ trial: (query) => queries.execute(query) })
   const route = createBillingRoute({
     get: (query) => queries.execute(query),
     checkout: (command) => commands.execute(command),
@@ -128,7 +146,9 @@ function stack(
       await next()
     })
     app.route("/groups/:groupId/billing", route)
-    return app.request(`http://local/groups/${groupId}/billing${path}`, {
+    app.route("/billing/trial", trialRoute)
+    const url = path.startsWith("/billing/trial") ? path : `/groups/${groupId}/billing${path}`
+    return app.request(`http://local${url}`, {
       method,
       headers: {
         "content-type": "application/json",
@@ -140,7 +160,7 @@ function stack(
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   }
-  return { recorder, call }
+  return { recorder, call, trials }
 }
 
 const PRO: StoredSubscription = {
@@ -213,6 +233,48 @@ describe("billing over REST", () => {
 
     expect(first.recorder.checkouts[0].trialDays).toBe(14)
     expect(again.recorder.checkouts[0]).not.toHaveProperty("trialDays")
+  })
+
+  it("starts the checkout without a trial when the owner's trial went to another group", async () => {
+    const { recorder, call, trials } = stack({ trialGroup: OTHER_GROUP })
+
+    const response = await call(OWNER, "POST", "/checkout", { planId: "pro" })
+
+    expect(response.status).toBe(200)
+    expect(recorder.checkouts[0]).not.toHaveProperty("trialDays")
+    expect(trials.get(OWNER)).toBe(OTHER_GROUP)
+  })
+
+  it("gives the owner's trial to the first group they check out, and again to that group only", async () => {
+    const { recorder, call, trials } = stack()
+
+    await call(OWNER, "POST", "/checkout", { planId: "pro" })
+    await call(OWNER, "POST", "/checkout", { planId: "pro" })
+
+    expect(trials.get(OWNER)).toBe(groupId)
+    expect(recorder.checkouts.map((checkout) => checkout.trialDays)).toEqual([14, 14])
+  })
+
+  it("leaves the trial of a member whose checkout is refused unused", async () => {
+    const { call, trials } = stack()
+
+    await call(ADMIN, "POST", "/checkout", { planId: "pro" })
+
+    expect(trials.has(ADMIN)).toBe(false)
+  })
+
+  it("tells a person whether their trial is used, and nothing of trials while billing is off", async () => {
+    const fresh = await stack().call(VIEWER, "GET", "/billing/trial")
+    const used = await stack({ trialGroup: OTHER_GROUP }).call(OWNER, "GET", "/billing/trial")
+    const off = await stack({ enabled: false, trialGroup: OTHER_GROUP }).call(
+      OWNER,
+      "GET",
+      "/billing/trial",
+    )
+
+    expect(await fresh.json()).toEqual({ trial: { enabled: true, used: false, days: 14 } })
+    expect(await used.json()).toEqual({ trial: { enabled: true, used: true, days: 14 } })
+    expect(await off.json()).toEqual({ trial: { enabled: false, used: false, days: 0 } })
   })
 
   it("asks for a card to start a trial unless the setup says a trial needs none", async () => {

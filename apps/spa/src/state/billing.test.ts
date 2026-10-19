@@ -195,6 +195,21 @@ describe("billing store", () => {
     expect(store.pending.value).toBe(false)
   })
 
+  it("reads the person's own trial, and keeps none from an answer it cannot read", async () => {
+    const trial = { enabled: true, used: true, days: 14 }
+    const { store, calls } = harness(
+      { ok: true, status: 200, data: { trial } },
+      { ok: true, status: 200, data: { trial: { enabled: true, used: "no", days: 14 } } },
+    )
+
+    await store.loadTrial()
+    expect(calls[0]).toEqual({ url: `/api/billing/trial`, method: "GET", body: undefined })
+    expect(store.trial.value).toEqual(trial)
+
+    await store.loadTrial()
+    expect(store.trial.value).toBeNull()
+  })
+
   it("forgets everything on sign-out", async () => {
     const { store } = harness({ ok: true, status: 200, data: { billing: billingJson } })
     await store.load(groupId)

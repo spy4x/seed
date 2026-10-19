@@ -336,6 +336,7 @@ const detail: AdminUserDetail = {
     ip: "203.0.113.9",
     createdAt: "2026-10-13T10:00:00.000Z",
   }],
+  trialUsedAt: null,
   preferences: {
     value: { theme: "dark", locale: "en-GB", timeZone: "Europe/Berlin", hourCycle: null },
     version: 3,
@@ -371,6 +372,17 @@ describe("one person in the admin app", () => {
     expect(find("[data-e2e=admin-user-card]").textContent).toContain("Viewer")
     expect(find("[role=tab][aria-selected=true]").textContent).toBe("Overview")
     expect(find("[role=tabpanel]").textContent).toContain("ada@example.com")
+  })
+
+  it("says on the Overview whether the person has used their billing trial", async () => {
+    await mount(<AdminUserScreen {...userProps([])} />)
+    expect(find("[role=tabpanel]").textContent).toContain("Billing trialNot used")
+
+    const trialUsedAt = "2026-10-12T10:00:00.000Z"
+    await mount(<AdminUserScreen {...userProps([], { detail: { ...detail, trialUsedAt } })} />)
+    const panel = find("[role=tabpanel]")
+    expect(panel.textContent).toContain("Billing trialUsed ")
+    expect(panel.querySelector(`time[datetime="${trialUsedAt}"]`)).not.toBeNull()
   })
 
   it("shows the person's language and region read-only on the Overview, with their time now", async () => {

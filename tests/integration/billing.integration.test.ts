@@ -1231,3 +1231,45 @@ Deno.test("billing notices reach the owner through the worker's queue", async (t
 function longDate(ms: number): string {
   return new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" }).format(new Date(ms))
 }
+
+Deno.test("one billing trial per person against Postgres", async (t) => {
+  await withSchema(async (sql) => {
+    const billing = new PostgresBillingRepository(sql)
+
+    await t.step(
+      "two checkouts of two groups at once give the person's trial to one of them only",
+      async () => {
+        const { groupId: first, owner } = await seedGroup(sql)
+        const second = uuidV7()
+        await new PostgresGroupRepository(sql).create({ id: second, name: "Second" }, owner)
+
+        const claims = await Promise.all([
+          billing.claimTrial(owner, first),
+          billing.claimTrial(owner, second),
+        ])
+
+        expect(claims.filter(Boolean)).toHaveLength(1)
+        const winner = claims[0] ? first : second
+        expect(await billing.claimTrial(owner, winner)).toBe(true)
+        expect(await billing.claimTrial(owner, winner === first ? second : first)).toBe(false)
+        expect(await billing.trialUsed(owner)).toBe(true)
+      },
+    )
+
+    await t.step(
+      "a person invited into a group whose trial is used still has their own",
+      async () => {
+        const { groupId: shared, owner } = await seedGroup(sql)
+        const { groupId: own, owner: invited } = await seedGroup(sql)
+        await sql`
+          INSERT INTO group_members (group_id, user_id, role, added_by_user_id)
+          VALUES (${shared}, ${invited}, ${GroupRole.ADMIN}, ${owner})
+        `
+        expect(await billing.claimTrial(owner, shared)).toBe(true)
+
+        expect(await billing.trialUsed(invited)).toBe(false)
+        expect(await billing.claimTrial(invited, own)).toBe(true)
+      },
+    )
+  })
+})
