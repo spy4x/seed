@@ -149,8 +149,8 @@ Deno.test("reads no more of a huge body than the routes' own cap", async () => {
     await next()
   })
   api.use("*", createDemoGuard(() => Promise.resolve(new Set())))
-  // A route that refuses the body without reading it, as the real routes do past their cap.
-  api.post("*", (c) => c.json({ error: "too large" }, 413))
+  // The route would accept anything: the 413 must come from the guard.
+  api.post("*", (c) => c.json({ ok: true }))
 
   let pulled = 0
   const chunk = new TextEncoder().encode(`{"email":"${"a".repeat(16 * 1024)}`)
