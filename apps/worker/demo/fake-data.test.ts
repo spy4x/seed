@@ -15,6 +15,8 @@ Deno.test("fake demo data has unique addresses, all on example.com", () => {
   const invitees = data.groups.flatMap((group) => group.invitations.map((i) => i.email))
   const addresses = [...data.users.map((user) => user.email), ...invitees.filter(Boolean)]
   expect(new Set(data.users.map((user) => user.email)).size).toBe(data.users.length)
+  const names = data.users.map((user) => `${user.firstName} ${user.lastName}`)
+  expect(new Set(names).size).toBe(names.length)
   expect(new Set(data.subscribers).size).toBe(data.subscribers.length)
   for (const address of [...addresses, ...data.subscribers]) {
     expect(address).toMatch(/^[a-z0-9.]+@example\.com$/)

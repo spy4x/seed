@@ -1,4 +1,4 @@
-import { apiFetch } from "@spy4x/platform/api"
+import { apiFetch } from "./api.ts"
 import { type DemoInfo, parseDemoInfo } from "@domain/identity"
 
 /**

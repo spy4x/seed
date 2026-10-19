@@ -167,6 +167,12 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
       JOIN auth_keys k ON k.user_id = m.user_id AND k.email = ${DEMO_USER_EMAIL}
     `
     expect(groups).toBe(4)
+    // They open the group they own, which has notes, not their empty first group.
+    const [selected] = await sql<{ name: string }[]>`
+      SELECT g.name FROM user_settings s JOIN groups g ON g.id = s.selected_group_id
+      JOIN auth_keys k ON k.user_id = s.user_id AND k.email = ${DEMO_USER_EMAIL}
+    `
+    expect(selected?.name).toBe(data.groups.find((group) => group.owner === "demo")!.name)
   })
 })
 

@@ -1,5 +1,6 @@
 import { startIntervalRunner } from "@spy4x/platform/server/interval-runner"
 import type { TimerPort } from "@spy4x/platform/server/throttled-saver"
+import { isoDateInTz } from "@spy4x/time/tz"
 
 /** The demo is wiped when this zone's date changes: midnight on the US west coast. */
 export const DEMO_TIME_ZONE = `America/Los_Angeles`
@@ -9,8 +10,7 @@ export const DEMO_CHECK_EVERY_MS = 60_000
 
 /** The calendar date (`YYYY-MM-DD`) that `now` falls on in `timeZone`. */
 export function demoDay(now: Date, timeZone = DEMO_TIME_ZONE): string {
-  // The `en-CA` locale writes dates as `YYYY-MM-DD`.
-  return new Intl.DateTimeFormat(`en-CA`, { timeZone }).format(now)
+  return isoDateInTz(now, timeZone)
 }
 
 /** What {@link demoResetTask} needs. */

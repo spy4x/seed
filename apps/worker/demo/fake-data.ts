@@ -289,15 +289,15 @@ export function fakeDemoData(seed: number): FakeDemoData {
   }
 
   const users: FakeUser[] = []
-  const emails = new Set<string>()
+  // One person per full name, so the address follows from the name and never repeats.
+  const names = new Set<string>()
   while (users.length < FAKE_COUNTS.users) {
     const firstName = pick(FIRST_NAMES)
     const lastName = pick(LAST_NAMES)
     const base = `${firstName}.${lastName}`.toLowerCase()
-    let email = `${base}@example.com`
-    for (let n = 2; emails.has(email); n++) email = `${base}${n}@example.com`
-    emails.add(email)
-    users.push({ email, firstName, lastName })
+    if (names.has(base)) continue
+    names.add(base)
+    users.push({ email: `${base}@example.com`, firstName, lastName })
   }
 
   const note = (theme: Theme, title: string): FakeNote => {

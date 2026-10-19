@@ -58,9 +58,10 @@ export async function seedDemo(
     return false
   }
   const demoId = await signUp(db, options.pepper, DEMO_USER_EMAIL, options.password)
-  await ensureAccount(db, DEMO_ADMIN_EMAIL, options.password, options.pepper)
+  const adminId = await signUp(db, options.pepper, DEMO_ADMIN_EMAIL, options.password)
   await settleAccounts(db)
   await setName(sql, demoId, `Demo`, `User`)
+  await setName(sql, adminId, `Demo`, `Operator`)
 
   const data = fakeDemoData(options.dataSeed)
   const userIds: number[] = []
@@ -72,7 +73,9 @@ export async function seedDemo(
     userIds.push(id)
   }
   const idOf = (member: FakeMember) => member === `demo` ? demoId : userIds[member]
-  await seedGroups(db, sql, data, idOf)
+  const owned = await seedGroups(db, sql, data, idOf)
+  // The demo user opens the busy group they own, not their empty first group.
+  if (owned) await db.group.select(demoId, owned)
   if (options.subscribers) await seedSubscribers(sql, data, options.subscribers)
   return true
 }
@@ -100,17 +103,22 @@ async function settleAccounts(db: AppDbBase): Promise<void> {
   await db.admin.setRoleByAddress(DEMO_ADMIN_EMAIL, UserRole.ADMIN, SEED_ACTOR)
 }
 
-/** Groups, their members, tags, notes and pending invitations. */
+/**
+ * Groups, their members, tags, notes and pending invitations. Answers the id of the group the
+ * demo user owns, or `null` when there is none.
+ */
 async function seedGroups(
   db: AppDbBase,
   sql: postgres.Sql,
   data: FakeDemoData,
   idOf: (member: FakeMember) => number,
-): Promise<void> {
+): Promise<string | null> {
   const invitations = new PostgresInvitationRepository(sql)
+  let demoOwned: string | null = null
   for (const group of data.groups) {
     const ownerId = idOf(group.owner)
     const groupId = uuidV7()
+    if (group.owner === `demo`) demoOwned = groupId
     await db.group.create({ id: groupId, name: group.name }, ownerId)
     for (const { member, role } of group.members) {
       await sql`
@@ -154,6 +162,7 @@ async function seedGroups(
       )
     }
   }
+  return demoOwned
 }
 
 /** The newsletter list, keyed as the subscribe flow keys it. */
