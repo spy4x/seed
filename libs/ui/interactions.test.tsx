@@ -161,6 +161,17 @@ describe("AuthScreen in the browser", () => {
     expect(root!.querySelector("[data-e2e=demo-credentials]")).toBeNull()
   })
 
+  it("keeps what was typed and the focus when the demo notice arrives", async () => {
+    await mount(<AuthScreen {...authDefaults} />)
+    await type("input[name=login]", "typed-before@example.com")
+    find<HTMLInputElement>("input[name=login]").focus()
+
+    await rerender(<AuthScreen {...authDefaults} demo={demo} />)
+    expect(find("[data-e2e=demo-credentials]")).toBeTruthy()
+    expect(find<HTMLInputElement>("input[name=login]").value).toBe("typed-before@example.com")
+    expect(document.activeElement?.getAttribute("name")).toBe("login")
+  })
+
   it("signs in with the shared demo account in one press, and not while busy", async () => {
     const signIn = spy<[{ login: string; password: string }]>()
     await mount(<AuthScreen {...authDefaults} demo={demo} onSignIn={signIn.fn} />)

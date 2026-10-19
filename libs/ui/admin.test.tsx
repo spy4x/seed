@@ -675,6 +675,26 @@ describe("the admin sign-in", () => {
     expect(calls).toEqual([["code", "123456"]])
   })
 
+  it("keeps what was typed when the demo notice arrives", async () => {
+    const props = {
+      step: "credentials" as const,
+      busy: false,
+      error: null,
+      onSignIn: () => {},
+      onOneTimeCode: () => {},
+    }
+    await mount(<AdminSignInScreen {...props} />)
+    await type("input[name=login]", "typed-before@example.com")
+    await mount(
+      <AdminSignInScreen
+        {...props}
+        demo={{ login: "admin@example.com", password: "public-demo", otherAppUrl: null }}
+      />,
+    )
+    expect(has("[data-e2e=demo-credentials]")).toBe(true)
+    expect(find<HTMLInputElement>("input[name=login]").value).toBe("typed-before@example.com")
+  })
+
   it("signs in as the demo operator in one press while the demo is on", async () => {
     const calls: unknown[][] = []
     await mount(

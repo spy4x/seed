@@ -300,16 +300,19 @@ export function AuthScreen(
       )}
     </AuthCard>
   )
-  if (!demo || screen === "one-time-code") return card
+  // One wrapper whether or not the notice shows: the notice arrives after a fetch, and a card that
+  // moved in the tree would be drawn again, losing what was typed or filled in.
   return (
     <div class="flex w-full flex-col gap-6">
-      <DemoNotice
-        demo={demo}
-        kind={screen === "sign-up" ? "sign-up" : "product"}
-        busy={busy}
-        onSignIn={onSignIn}
-        navigate={navigate}
-      />
+      {demo && screen !== "one-time-code" && (
+        <DemoNotice
+          demo={demo}
+          kind={screen === "sign-up" ? "sign-up" : "product"}
+          busy={busy}
+          onSignIn={onSignIn}
+          navigate={navigate}
+        />
+      )}
       {card}
     </div>
   )

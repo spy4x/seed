@@ -272,10 +272,12 @@ export function AdminSignInScreen(
       />
     </AuthCard>
   )
-  if (!demo || !credentials) return card
+  // One wrapper whether or not the notice shows, so the card is not drawn again when it arrives.
   return (
     <div class="flex w-full flex-col gap-6">
-      <DemoNotice demo={demo} kind="operator" busy={busy} onSignIn={onSignIn} />
+      {demo && credentials && (
+        <DemoNotice demo={demo} kind="operator" busy={busy} onSignIn={onSignIn} />
+      )}
       {card}
     </div>
   )
