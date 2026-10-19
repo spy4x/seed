@@ -13,6 +13,28 @@ export const DEMO_TARGET_REFUSAL =
 export const DEMO_INVITATION_MAIL_REFUSAL =
   `The shared demo account cannot mail invitations. Create the invitation without mail and copy its link instead.`
 
+/** Why the demo refuses an address outside example.com. */
+export const DEMO_ADDRESS_REFUSAL =
+  `The public demo takes only made-up addresses at example.com, such as ada@example.com, because anyone can sign in as its operator and see them.`
+
+/** Why the demo refuses a sign-up with a real address; a made-up one would never get its code. */
+export const DEMO_SIGN_UP_REFUSAL =
+  `The public demo does not take real e-mail addresses, because anyone can sign in as its operator and see them. Sign in with the shared demo account instead.`
+
+/** The only domain the demo stores addresses of: no real person's, so the public operator sees none. */
+const DEMO_ADDRESS_DOMAIN = `@example.com`
+
+/** A sign-up with a password, whose body carries the new account's `email`. */
+const SIGN_UP = /^\/api\/auth\/password\/sign-up$/
+
+/** Requests whose JSON body carries an `email` the demo stores, by path (all are POST). */
+const ADDRESS_ROUTES: readonly RegExp[] = [
+  SIGN_UP,
+  /^\/api\/auth\/email\/change$/,
+  /^\/api\/subscribers$/,
+  /^\/api\/groups\/[^/]+\/invitations$/,
+]
+
 /**
  * What a shared account may not do to itself, by method and path: anything that would lock the
  * next visitor out or sign them out (password, address, second factor, sign-in providers,
@@ -47,7 +69,10 @@ export type DemoAccountLookup = (userIds: readonly number[]) => Promise<Set<numb
  * - a shared account may not change its password, address, second factor or sign-in providers,
  *   end sessions or delete itself;
  * - an operator may not block, sign out, reset or change the role of a shared account;
- * - a shared account may not mail an invitation (a link without mail still works).
+ * - a shared account may not mail an invitation (a link without mail still works);
+ * - nobody may give the demo an address outside example.com (sign-up, address change, newsletter,
+ *   invitation), because the operator's password is public and the admin panel lists and exports
+ *   every address.
  *
  * A refusal is a 403 with a message the screens show. Everything else, including every other
  * request of a shared account, passes; the nightly wipe undoes it.
@@ -58,6 +83,19 @@ export function createDemoGuard(isDemo: DemoAccountLookup): MiddlewareHandler<AP
     const path = c.req.path
     const actorId = c.get(`auth`)?.user.id ?? null
 
+    // Read from a copy, so the route still reads the body itself.
+    const body = method === `POST` && (ADDRESS_ROUTES.some((p) => p.test(path)) ||
+        INVITATION_CREATE.test(path))
+      ? await c.req.raw.clone().json().catch(() => null)
+      : null
+    const email = typeof body?.email === `string` ? body.email.trim().toLowerCase() : ``
+    if (email && ADDRESS_ROUTES.some((p) => p.test(path)) && !email.endsWith(DEMO_ADDRESS_DOMAIN)) {
+      return c.json(
+        { error: SIGN_UP.test(path) ? DEMO_SIGN_UP_REFUSAL : DEMO_ADDRESS_REFUSAL },
+        403,
+      )
+    }
+
     const target = method === `POST` ? ADMIN_USER_ACTION.exec(path) : null
     if (target && (await isDemo([Number(target[1])])).size > 0) {
       return c.json({ error: DEMO_TARGET_REFUSAL }, 403)
@@ -67,8 +105,6 @@ export function createDemoGuard(isDemo: DemoAccountLookup): MiddlewareHandler<AP
     if (OWN_ACCOUNT_ROUTES.some(([m, pattern]) => m === method && pattern.test(path))) {
       if ((await isDemo([actorId])).size > 0) return c.json({ error: DEMO_ACCOUNT_REFUSAL }, 403)
     } else if (method === `POST` && INVITATION_CREATE.test(path)) {
-      // Read from a copy, so the route still reads the body itself.
-      const body = await c.req.raw.clone().json().catch(() => null)
       const mails = typeof body === `object` && body !== null && body.sendEmail === true
       if (mails && (await isDemo([actorId])).size > 0) {
         return c.json({ error: DEMO_INVITATION_MAIL_REFUSAL }, 403)

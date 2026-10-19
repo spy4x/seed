@@ -19,8 +19,11 @@ export class Config {
   devEmail = env.DEV_EMAIL
   vapidKeysPath = "./vapid.json"
   errorReportDsn = env.ERROR_REPORT_DSN
-  /** The client id and secret of each sign-in provider; one without both is off. */
-  oauth = {
+  /**
+   * The client id and secret of each sign-in provider; one without both is off. All are off in the
+   * public demo: a provider account brings a real address, which the demo operator could read.
+   */
+  oauth = isDemoMode({ DEMO_MODE: env.DEMO_MODE }) ? { google: {}, github: {} } : {
     google: { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET },
     github: { clientId: env.GITHUB_CLIENT_ID, clientSecret: env.GITHUB_CLIENT_SECRET },
   }

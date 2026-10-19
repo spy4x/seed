@@ -20,7 +20,8 @@ export async function isDemoSeeded(sql: postgres.Sql): Promise<boolean> {
 /**
  * Wipes the database and seeds the demo again, with fake data picked by the demo's date, so each
  * day looks a little different. The wipe empties the outbox too, so the nightly cleanup is
- * scheduled again. A failure part-way leaves the demo missing, and the next check runs it again.
+ * scheduled again. A failure part-way is tried again on the next check. A worker that restarts
+ * in between finds the demo user and keeps the half-seeded demo until the next midnight.
  */
 export async function resetDemo(
   sql: postgres.Sql,

@@ -6,7 +6,9 @@ import type { AppAuthState } from "../services/sign-in.ts"
 import {
   createDemoGuard,
   DEMO_ACCOUNT_REFUSAL,
+  DEMO_ADDRESS_REFUSAL,
   DEMO_INVITATION_MAIL_REFUSAL,
+  DEMO_SIGN_UP_REFUSAL,
   DEMO_TARGET_REFUSAL,
 } from "./demo-guard.ts"
 
@@ -103,7 +105,7 @@ Deno.test("an operator cannot act on a shared demo account, only on others", asy
 
 Deno.test("a shared demo account may create an invitation link but not mail one", async () => {
   const path = "/api/groups/abc/invitations"
-  expect(await call(DEMO_ID, "POST", path, { sendEmail: true, email: "a@example.org" })).toEqual({
+  expect(await call(DEMO_ID, "POST", path, { sendEmail: true, email: "a@example.com" })).toEqual({
     status: 403,
     body: { error: DEMO_INVITATION_MAIL_REFUSAL },
   })
@@ -111,6 +113,32 @@ Deno.test("a shared demo account may create an invitation link but not mail one"
   expect(link.status).toBe(200)
   expect(JSON.parse(link.body.body)).toEqual({ sendEmail: false, email: null })
   expect((await call(PERSON_ID, "POST", path, { sendEmail: true })).status).toBe(200)
+})
+
+Deno.test("nobody can give the demo a real address, which its public operator could read", async () => {
+  const cases: [number | null, string, string][] = [
+    [null, "/api/auth/password/sign-up", DEMO_SIGN_UP_REFUSAL],
+    [PERSON_ID, "/api/auth/email/change", DEMO_ADDRESS_REFUSAL],
+    [null, "/api/subscribers", DEMO_ADDRESS_REFUSAL],
+    [PERSON_ID, "/api/groups/abc/invitations", DEMO_ADDRESS_REFUSAL],
+  ]
+  for (const [userId, path, error] of cases) {
+    for (const email of ["ada@gmail.com", " Ada@Example.org ", "ada@mail.example.com"]) {
+      expect({ path, email, ...(await call(userId, "POST", path, { email })) }).toEqual({
+        path,
+        email,
+        status: 403,
+        body: { error },
+      })
+    }
+    for (const email of ["ada@example.com", " Ada@EXAMPLE.com "]) {
+      expect({ path, email, status: (await call(userId, "POST", path, { email })).status })
+        .toEqual({ path, email, status: 200 })
+    }
+  }
+  // An invitation without an address is a link, and passes.
+  expect((await call(PERSON_ID, "POST", "/api/groups/abc/invitations", { email: null })).status)
+    .toBe(200)
 })
 
 Deno.test("a visitor who is not signed in passes", async () => {
