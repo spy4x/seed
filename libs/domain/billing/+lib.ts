@@ -61,7 +61,10 @@ export interface Plan {
   features: string[]
   /** What the plan allows. The server checks these; `features` above is only the pricing text. */
   entitlements: Entitlements
-  /** Days of free trial a group's first checkout of this plan starts with; `0` for none. */
+  /**
+   * Days of free trial this plan offers; `0` for none. Each person gets one trial, whichever group
+   * they first open a checkout for (docs/billing.md, "Trials").
+   */
   trialDays: number
   /**
    * The plan bills `amount` per member a month, the owner included, so the subscription's quantity

@@ -712,7 +712,7 @@ export function trialText(trial: PersonTrial | null): string | null {
   }
   if (trial.days <= 0) return null
   return `New groups start on the free plan. Your ${trial.days}-day free trial of a paid plan ` +
-    `goes to the first group you upgrade.`
+    `goes to the first group you choose a paid plan for.`
 }
 
 /**

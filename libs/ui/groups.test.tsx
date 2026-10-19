@@ -1585,7 +1585,7 @@ describe("GroupEditorScreen form", () => {
       <GroupEditorScreen {...creating} trial={{ enabled: true, used: false, days: 14 }} />,
     )
     expect(find("[data-e2e=group-trial]").textContent).toContain(
-      "Your 14-day free trial of a paid plan goes to the first group you upgrade.",
+      "Your 14-day free trial of a paid plan goes to the first group you choose a paid plan for.",
     )
     await rerender(
       <GroupEditorScreen {...creating} trial={{ enabled: true, used: true, days: 14 }} />,
