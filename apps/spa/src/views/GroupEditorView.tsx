@@ -148,6 +148,7 @@ export function GroupEditorView({ groupId = null }: { groupId?: string | null })
 function NewGroup() {
   const [, navigate] = useLocation()
   const store = groupsStore
+  useEffect(() => void billingStore.loadTrial(), [])
   return (
     <GroupEditorScreen
       creating
@@ -161,6 +162,7 @@ function NewGroup() {
       offline={offlineNow()}
       onSave={() => void createAndOpen(store, selectionStore, navigate, toasts)}
       navigate={navigate}
+      trial={billingStore.trial.value}
     />
   )
 }

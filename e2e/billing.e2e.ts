@@ -67,4 +67,46 @@ test.describe("group billing", () => {
       await cleanup({ soft: true })
     }
   })
+
+  test("the create-group page offers the person's trial until a group's checkout takes it", async ({ page, request }) => {
+    const email = "e2e_billing_trial@example.com"
+    const password = "Passw0rd!"
+    const cleanup = async ({ soft = false } = {}) => {
+      const response = await request.post(`${apiBase}/api/test/cleanup-user`, {
+        data: { login: email },
+      })
+      ;(soft ? expect.soft : expect)(response.status(), await response.text()).toBe(200)
+    }
+
+    await cleanup()
+    try {
+      const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
+        headers,
+        data: { email, password },
+      })
+      expect(signUp.ok()).toBe(true)
+      await signIn(page, email, password)
+      const groups = page.getByRole("navigation", { name: "Main navigation" })
+        .getByRole("link", { name: "Groups" })
+      const trial = page.locator("[data-e2e=group-trial]")
+
+      await groups.click()
+      await page.locator("[data-e2e=group-new]").click()
+      await expect(trial).toContainText("Your 14-day free trial of a paid plan")
+      await page.locator("[data-e2e=group-name]").fill("First")
+      await page.locator("[data-e2e=group-create]").click()
+      await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
+      const groupId = new URL(page.url()).pathname.replace("/groups/", "")
+
+      await page.getByRole("link", { name: "See plans" }).click()
+      await page.getByRole("button", { name: "Choose Pro" }).click()
+      await expect(page).toHaveURL(`/groups/${groupId}`)
+
+      await groups.click()
+      await page.locator("[data-e2e=group-new]").click()
+      await expect(trial).toContainText("You have used your free trial")
+    } finally {
+      await cleanup({ soft: true })
+    }
+  })
 })

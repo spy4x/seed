@@ -1,6 +1,12 @@
 import { signal } from "@preact/signals"
 import type { ApiResult } from "@spy4x/platform/api"
-import { type GroupBilling, providerPageUrl, readGroupBilling } from "@domain/billing"
+import {
+  type GroupBilling,
+  type PersonTrial,
+  providerPageUrl,
+  readGroupBilling,
+  readPersonTrial,
+} from "@domain/billing"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
@@ -107,13 +113,27 @@ export function createBillingStore(
     return open(groupId, "/portal")
   }
 
+  /** The person's own trial, for the create-group page; `null` until read or when unreadable. */
+  const trial = signal<PersonTrial | null>(null)
+
+  /** Reads the person's trial. A failure leaves `trial` empty: the page then says nothing of it. */
+  async function loadTrial(): Promise<void> {
+    try {
+      const result = await fetch<{ trial: unknown }>(`/api/billing/trial`)
+      trial.value = result.ok ? readPersonTrial(result.data.trial) : null
+    } catch (_unreachable) {
+      trial.value = null
+    }
+  }
+
   function reset(): void {
     current.value = null
     error.value = null
     pending.value = false
+    trial.value = null
   }
 
-  return { current, error, pending, load, checkout, portal, reset }
+  return { current, error, pending, trial, load, loadTrial, checkout, portal, reset }
 }
 
 /** The app's billing store. */
