@@ -45,17 +45,9 @@ test("a page loads the tracker from the Umami origin and the website's own event
   expect(violations).toEqual([])
 })
 
-test("names the calls to action on the page, and counts a header link the shared header draws", async ({ page }) => {
+// The shared header takes no `data-umami-event`, so `/analytics.js` names its links by where they go.
+test("counts the shared header's GitHub and Pricing links as clicked in the header", async ({ page }) => {
   await page.goto("/")
-  await expect(page.locator("[data-e2e=site-try-demo]")).toHaveAttribute(
-    "data-umami-event",
-    "try-demo",
-  )
-  await expect(page.locator("[data-e2e=home-try-demo]")).toHaveAttribute(
-    "data-umami-event-from",
-    "hero",
-  )
-
   await stayOnPage(page, "click")
   await page.getByRole("navigation", { name: "Main navigation" }).first()
     .getByRole("link", { name: "GitHub" }).click()

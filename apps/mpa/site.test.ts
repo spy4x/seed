@@ -510,7 +510,7 @@ describe("the public website", () => {
     expect(html).not.toContain("/analytics.js")
   })
 
-  it("names the main calls to action for Umami: the demo, GitHub and hiring", async () => {
+  it("names the demo links of the header and the hero, the hire link and the newsletter form for Umami", async () => {
     const { html } = await page("/", withAnalytics)
 
     const tryDemo = html.match(/<a[^>]*data-e2e="site-try-demo"[^>]*>/)?.[0]
@@ -518,7 +518,6 @@ describe("the public website", () => {
     expect(tryDemo).toContain(`data-umami-event-from="header"`)
     const heroDemo = html.match(/<a[^>]*data-e2e="home-try-demo"[^>]*>/)?.[0]
     expect(heroDemo).toContain(`data-umami-event-from="hero"`)
-    expect(html).toContain(`data-umami-event="github"`)
     expect(html.match(/<a[^>]*data-e2e="home-founders"[^>]*>/)?.[0]).toContain(
       `data-umami-event="hire-me"`,
     )
