@@ -2,8 +2,9 @@
  * Records the admin panel video of the public website's `/features#admin` section: the videos go
  * to `apps/mpa/media/video/` (served by `apps/mpa/routes/video/[file].ts`), the poster to
  * `apps/mpa/static/video/`. One support case end to end, then short glimpses of other screens, in
- * the dark theme, with burned-in captions, a "Sample data" label on every screen and a title and
- * an end card. The shot list and the copy are on issue #279.
+ * the dark theme, with burned-in captions, a "Sample data" label on every screen, a zoom in each
+ * shot on what its caption is about, and a title and an end card. The poster is a still of the
+ * Users list without any of that. The shot list and the copy are on issue #279.
  *
  * Needs a running stack with the product app, the admin app, the worker and the development seed,
  * never the live server:
@@ -46,7 +47,7 @@ const APP_URL = Deno.env.get("APP_URL") ?? "http://app.localhost"
 const SEED_PASSWORD = Deno.env.get("SEED_PASSWORD")
 if (!SEED_PASSWORD) throw new Error("SEED_PASSWORD is required: the seed's shared password")
 for (const [name, url] of [["ADMIN_URL", ADMIN_URL], ["APP_URL", APP_URL]]) {
-  if (!/^https?:\/\/[a-z0-9.-]*localhost(:\d+)?$/.test(url)) {
+  if (!/^https?:\/\/([a-z0-9-]+\.)*localhost(:\d+)?$/.test(url)) {
     throw new Error(`${name} must be a local host such as http://app.localhost, not ${url}`)
   }
 }
@@ -120,13 +121,6 @@ class Recorder {
     if (!this.latest) throw new Error("the screencast sent no frame yet")
     const now = performance.now() / 1000
     this.current = [await this.write(this.latest.data, now)]
-  }
-
-  /** The newest frame of the running shot on disk. */
-  latestFile(): string {
-    const frame = this.current?.at(-1)
-    if (!frame) throw new Error("no shot is running")
-    return frame.file
   }
 
   /** Ends the shot. What happens until the next `begin` is cut. */
@@ -245,6 +239,10 @@ function overlayScript(font: string): string {
 
   const targets = () => [document.body, ...document.querySelectorAll("dialog[open]")]
   globalThis.__video = {
+    // Hides the whole layer, for the poster: no pointer, caption or label.
+    bare(on) {
+      layer.style.visibility = on ? "hidden" : ""
+    },
     caption(text) {
       const bar = $(".v-caption")
       if (text) bar.textContent = text
@@ -447,6 +445,12 @@ async function zoomOn(page: Page, region: Box): Promise<void> {
   )
 }
 
+/** Takes a zoom away off the record, between shots: the next shot starts at 1×. */
+async function unzoom(page: Page): Promise<void> {
+  await video(page, `__video.unzoom()`)
+  await pause(page, 600)
+}
+
 /** Glides the pointer to `target` and clicks it where it is, without scrolling the page first. */
 async function clickInPlace(
   page: Page,
@@ -477,9 +481,9 @@ const BRAND = renderToString(h(BrandMark, { Icon: IconSprout, name: "Seed" }))
 /**
  * Plays the shot list into the recorder. Every shot starts on a settled screen, shows its caption
  * for at least 2.5 seconds, and ends with a hard cut; nothing between shots is kept. Returns the
- * poster's frame.
+ * poster's still.
  */
-async function play(page: Page, rec: Recorder): Promise<string> {
+async function play(page: Page, rec: Recorder, frames: string): Promise<string> {
   const pointer = { x: 1100, y: 700 }
   await page.mouse.move(pointer.x, pointer.y)
   const shot = async (text: string | null, body: () => Promise<void>) => {
@@ -532,8 +536,23 @@ async function play(page: Page, rec: Recorder): Promise<string> {
   await shot(null, () => pause(page, 3000))
   await card(null)
 
+  // The poster, off the record: the Users list without the layer, cropped to the first five people
+  // and the page's right edge, so it carries no text of ours and cuts no word.
+  await settle(page)
+  await video(page, `__video.bare(true)`)
+  const fifth = await box(page.locator("table tbody tr").nth(4))
+  const height = Math.round(fifth.y + fifth.height + 16)
+  const width = Math.round(height * POSTER.width / POSTER.height)
+  const heading = await box(page.getByRole("heading", { level: 1, name: "Users" }))
+  if (VIEWPORT.width - width > heading.x - 16) throw new Error("the poster's crop cuts the page")
+  const poster = `${frames}/poster.png`
+  await page.screenshot({
+    path: poster,
+    clip: { x: VIEWPORT.width - width, y: 0, width, height },
+  })
+  await video(page, `__video.bare(false)`)
+
   // 1. Users: the search narrows the list to one person, zoomed in on the field and the result.
-  let poster = ""
   await shot("Find anyone by name or address", async () => {
     await pause(page, 500)
     const field = page.getByLabel("Name or address")
@@ -544,32 +563,26 @@ async function play(page: Page, rec: Recorder): Promise<string> {
     await pause(page, 500)
     const person = page.locator("table tbody tr").first().locator("td").first()
     await zoomOn(page, union(await box(field), await box(person)))
-    await pause(page, 900)
-    // The zoomed result, once the zoom has settled: no click mark, the pointer at rest.
-    poster = rec.latestFile()
-    await pause(page, 1500)
+    await pause(page, 2400)
     await video(page, `__video.unzoom()`)
     await pause(page, 700)
     await press(page.getByRole("link", { name: PERSON.name }))
   })
   await page.mouse.up()
 
-  // 2. The person's page, cut to once it has loaded, then its Sessions tab, zoomed in.
+  // 2. The person's page on its Sessions tab, opened off the record, zoomed in on the tabs and her
+  // two sessions.
   await page.getByRole("heading", { level: 1, name: PERSON.name }).waitFor()
-  await page.getByRole("tab", { name: /Sessions/ }).waitFor()
+  await clickLike(page, pointer, page.getByRole("tab", { name: /Sessions/ }), H)
+  const sessions = page.locator("[data-e2e=admin-user-sessions]")
+  await sessions.locator("li").first().waitFor()
   await shot("Sign-in methods, sessions, groups and history", async () => {
-    await pause(page, 1000)
-    await clickLike(page, pointer, page.getByRole("tab", { name: /Sessions/ }), H)
-    const sessions = page.locator("[data-e2e=admin-user-sessions]")
-    await sessions.locator("li").first().waitFor()
-    await pause(page, 400)
+    await pause(page, 300)
     const tabs = await box(page.getByRole("tablist"))
-    const list = await box(sessions)
-    await zoomOn(page, { ...union(tabs, list), width: Math.min(tabs.width, 740) })
-    await pause(page, 2800)
-    await video(page, `__video.unzoom()`)
-    await pause(page, 700)
+    await zoomOn(page, { ...union(tabs, await box(sessions)), width: Math.min(tabs.width, 740) })
+    await pause(page, 3200)
   })
+  await unzoom(page)
 
   // 3. End all sessions: the confirmation, zoomed in, then confirmed.
   await shot("Every action asks first", async () => {
@@ -601,45 +614,66 @@ async function play(page: Page, rec: Recorder): Promise<string> {
   await clickLike(page, pointer, page.getByRole("link", { name: "Audit log" }), H)
   await page.getByRole("heading", { level: 1, name: "Audit log" }).waitFor()
   await moveLike(page, pointer, { x: 1150, y: 260 })
+  const rows = page.locator("table tbody tr")
+  await rows.first().getByText("Sessions ended").waitFor()
   await shot("…and lands in the audit log", async () => {
-    await pause(page, 900)
-    const rows = page.locator("table tbody tr")
-    await rows.first().getByText("Sessions ended").waitFor()
+    await pause(page, 300)
     // The header, the new row and the one before it, from When to Done by.
     const header = await box(page.locator("table thead tr"))
     await zoomOn(page, { ...union(header, await box(rows.nth(1))), width: 640 })
-    await pause(page, 2800)
-    await video(page, `__video.unzoom()`)
-    await pause(page, 800)
+    await pause(page, 3200)
   })
+  await unzoom(page)
 
   // 5. Groups, then one group's members.
   await clickLike(page, pointer, page.getByRole("link", { name: "Groups" }), H)
   await page.getByRole("heading", { level: 1, name: "Groups" }).waitFor()
+  await moveLike(page, pointer, { x: 900, y: 120 })
   await shot("Every group, its owner and its members", async () => {
-    await pause(page, 500)
-    await press(page.getByRole("link", { name: "Product team" }))
-    await cut(async () => {
-      await page.mouse.up()
-      await page.getByRole("heading", { level: 1, name: "Product team" }).waitFor()
-    })
+    // The first groups, from their names to their owners.
+    await pause(page, 300)
+    const groups = page.locator("table tbody tr")
+    const header = await box(page.locator("table thead tr"))
+    await zoomOn(page, { ...union(header, await box(groups.nth(3))), width: 560 })
     await pause(page, 2400)
+    // A hard cut to the one the operator opens: no stretch of the list at 1× in between.
+    await cut(async () => {
+      await unzoom(page)
+      await clickLike(page, pointer, page.getByRole("link", { name: "Product team" }), H)
+      await page.getByRole("heading", { level: 1, name: "Product team" }).waitFor()
+      await moveLike(page, pointer, { x: 900, y: 200 })
+    })
+    // Its tabs and first members, by name and address.
+    await pause(page, 300)
+    const tabs = await box(page.locator("[data-e2e=admin-group-tab]").first())
+    const fourth = await box(page.locator("[data-e2e=admin-group-members] > li").nth(3))
+    await zoomOn(page, { ...union(tabs, fourth), width: 600 })
+    await pause(page, 2600)
   })
+  await unzoom(page)
 
-  // 6. Newsletter.
+  // 6. Newsletter, zoomed in on its title and its first three numbers.
   await clickLike(page, pointer, page.getByRole("link", { name: "Newsletter" }), H)
   await page.getByRole("heading", { level: 1, name: "Newsletter" }).waitFor()
-  await shot("Your newsletter's subscribers and sends", async () => {
-    await pause(page, 400)
-    await moveLike(page, pointer, { x: 700, y: 420 })
-    await pause(page, 2400)
+  await moveLike(page, pointer, { x: 1000, y: 500 })
+  await shot("Your newsletter's subscribers", async () => {
+    await pause(page, 300)
+    const title = await box(page.locator("[data-e2e=admin-newsletter-title]"))
+    const stats = await box(page.locator("[data-e2e=admin-newsletter-stats]"))
+    await zoomOn(page, { ...union(title, stats), width: Math.round(stats.width * 0.75) })
+    await pause(page, 3000)
   })
+  await unzoom(page)
 
-  // 7. The same screen switches to light, from the operator's account menu.
+  // 7. The same screen switches to light, from the operator's account menu, zoomed in on it.
   await shot("Light and dark", async () => {
     await pause(page, 300)
     await clickInPlace(page, pointer, page.locator(ACCOUNT_MENU))
-    await pause(page, 500)
+    await pause(page, 400)
+    await zoomOn(page, await box(page.getByRole("menu")))
+    await pause(page, 1600)
+    await video(page, `__video.unzoom()`)
+    await pause(page, 600)
     await clickInPlace(page, pointer, page.getByRole("menuitemradio", { name: "Light" }))
     await moveLike(page, pointer, { x: 700, y: 420 })
     await pause(page, 2000)
@@ -717,7 +751,7 @@ async function encode(
   throw new Error(`${out} stays above its budget of ${budget} bytes`)
 }
 
-/** The poster: one frame of the recording, at the delivered size, as WebP within its budget. */
+/** The poster: the still `play` took, at the poster size, as WebP within its budget. */
 async function encodePoster(frame: string, out: string): Promise<number> {
   for (const quality of [82, 74, 66, 58]) {
     await ffmpeg([
@@ -763,7 +797,7 @@ try {
     await signInAndWarmUp(page)
     const rec = new Recorder(await context.newCDPSession(page), frames)
     await rec.start()
-    const posterFrame = await play(page, rec)
+    const posterFrame = await play(page, rec, frames)
     await rec.stop()
 
     await Deno.mkdir(VIDEO_DIR, { recursive: true })
