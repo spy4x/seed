@@ -205,7 +205,9 @@ test(`the video is as long as the page says, and its file loads under the site's
       element.load()
     })
   )
-  expect(loaded).toEqual({ size: `1920x1200`, seconds: SECONDS })
+  // The seconds the line under the player names, which the label, JSON-LD and sitemap share.
+  const said = (await page.locator(`[data-e2e=admin-video-meta]`).textContent())!
+  expect(loaded).toEqual({ size: `1920x1200`, seconds: Number(said.match(/^(\d+) seconds/)![1]) })
 })
 
 // axe-core runs as a script in the page, so these checks keep JavaScript on: /theme.js then picks
