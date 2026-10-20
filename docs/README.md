@@ -40,4 +40,5 @@ Pick the guide that fits. The [README](../README.md) has the pitch and the quick
 - [UI and design](design/)
 - [Group sync product requirements](prd/group-sync-platform.md)
 - [Financy extraction inventory](financy-extraction-inventory.md)
-- [Screenshots](screenshots/): `record.ts` re-records the README's pictures.
+- [Screenshots](screenshots/): `record.ts` re-records the README's pictures, and `admin-video.ts`
+  (`deno task video:admin`) the website's admin panel video.
