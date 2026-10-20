@@ -3,7 +3,7 @@ import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
 import { UserRole } from "@domain/identity"
-import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL } from "@server/auth/demo-accounts.ts"
+import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL, realPersonIds } from "@server/auth/demo-accounts.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
@@ -173,6 +173,21 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
       JOIN auth_keys k ON k.user_id = s.user_id AND k.email = ${DEMO_USER_EMAIL}
     `
     expect(selected?.name).toBe(data.groups.find((group) => group.owner === "demo")!.name)
+  })
+})
+
+Deno.test("only a person with an address outside example.com counts as real", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
+    const seeded = (await sql<{ id: number }[]>`SELECT id FROM auth_users`).map((row) => row.id)
+    expect(await realPersonIds(sql, seeded)).toEqual(new Set())
+
+    const [{ id }] = await sql<{ id: number }[]>`INSERT INTO auth_users DEFAULT VALUES RETURNING id`
+    await sql`
+      INSERT INTO auth_keys (user_id, method, subject, email)
+      VALUES (${id}, 'password', 'ada@mail.example.com', 'ada@mail.example.com')
+    `
+    expect(await realPersonIds(sql, [...seeded, id])).toEqual(new Set([id]))
   })
 })
 

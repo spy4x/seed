@@ -6,15 +6,23 @@ import type { AppAuthState } from "../services/sign-in.ts"
 import {
   createDemoGuard,
   DEMO_ACCOUNT_REFUSAL,
-  DEMO_ADDRESS_REFUSAL,
   DEMO_INVITATION_MAIL_REFUSAL,
-  DEMO_SIGN_UP_REFUSAL,
+  DEMO_REAL_PERSON_REFUSAL,
+  DEMO_REAL_SUBSCRIBER_REFUSAL,
   DEMO_TARGET_REFUSAL,
 } from "./demo-guard.ts"
 import { MAX_JSON_BODY_BYTES } from "../services/json-body.ts"
 
 const DEMO_ID = 7
 const PERSON_ID = 8
+/** A real person: an address outside example.com. */
+const REAL_ID = 9
+
+const lookups = {
+  isDemo: (ids: readonly number[]) => Promise.resolve(new Set(ids.filter((id) => id === DEMO_ID))),
+  isRealPerson: (ids: readonly number[]) =>
+    Promise.resolve(new Set(ids.filter((id) => id === REAL_ID))),
+}
 
 /** An API with the guard, signed in as `userId`, where every route answers 200. */
 function app(userId: number | null) {
@@ -25,7 +33,7 @@ function app(userId: number | null) {
   })
   api.use(
     "*",
-    createDemoGuard((ids) => Promise.resolve(new Set(ids.filter((id) => id === DEMO_ID)))),
+    createDemoGuard(lookups),
   )
   api.all("*", async (c) => {
     // The route can still read the body the guard looked at.
@@ -116,30 +124,45 @@ Deno.test("a shared demo account may create an invitation link but not mail one"
   expect((await call(PERSON_ID, "POST", path, { sendEmail: true })).status).toBe(200)
 })
 
-Deno.test("nobody can give the demo a real address, which its public operator could read", async () => {
-  const cases: [number | null, string, string][] = [
-    [null, "/api/auth/password/sign-up", DEMO_SIGN_UP_REFUSAL],
-    [PERSON_ID, "/api/auth/email/change", DEMO_ADDRESS_REFUSAL],
-    [null, "/api/subscribers", DEMO_ADDRESS_REFUSAL],
-    [PERSON_ID, "/api/groups/abc/invitations", DEMO_ADDRESS_REFUSAL],
-  ]
-  for (const [userId, path, error] of cases) {
-    for (const email of ["ada@gmail.com", " Ada@Example.org ", "ada@mail.example.com"]) {
-      expect({ path, email, ...(await call(userId, "POST", path, { email })) }).toEqual({
+Deno.test("anyone may give the demo a real address", async () => {
+  for (
+    const [userId, path] of [
+      [null, "/api/auth/password/sign-up"],
+      [PERSON_ID, "/api/auth/email/change"],
+      [null, "/api/subscribers"],
+      [PERSON_ID, "/api/groups/abc/invitations"],
+    ] as const
+  ) {
+    expect({ path, status: (await call(userId, "POST", path, { email: "ada@gmail.com" })).status })
+      .toEqual({ path, status: 200 })
+  }
+})
+
+Deno.test("the operator cannot act on a real person, only on the made-up ones", async () => {
+  for (
+    const action of ["role", "block", "unblock", "password-reset", "sessions/end", "sessions/4/end"]
+  ) {
+    expect({ action, ...(await call(PERSON_ID, "POST", `/api/admin/users/${REAL_ID}/${action}`)) })
+      .toEqual({ action, status: 403, body: { error: DEMO_REAL_PERSON_REFUSAL } })
+  }
+})
+
+Deno.test("the operator cannot mail or remove a real subscriber, only made-up ones", async () => {
+  for (const action of ["resend", "remove"]) {
+    const path = `/api/admin/newsletter/subscribers/${action}`
+    // What the screen sends is the masked address it shows.
+    for (const email of ["ada@gmail.com", "a***@g***.com", "ada@mail.example.com"]) {
+      expect({ path, email, ...(await call(PERSON_ID, "POST", path, { email })) }).toEqual({
         path,
         email,
         status: 403,
-        body: { error },
+        body: { error: DEMO_REAL_SUBSCRIBER_REFUSAL },
       })
     }
-    for (const email of ["ada@example.com", " Ada@EXAMPLE.com "]) {
-      expect({ path, email, status: (await call(userId, "POST", path, { email })).status })
-        .toEqual({ path, email, status: 200 })
-    }
+    const madeUp = await call(PERSON_ID, "POST", path, { email: "Ada@Example.com" })
+    expect(madeUp.status).toBe(200)
+    expect(JSON.parse(madeUp.body.body)).toEqual({ email: "Ada@Example.com" })
   }
-  // An invitation without an address is a link, and passes.
-  expect((await call(PERSON_ID, "POST", "/api/groups/abc/invitations", { email: null })).status)
-    .toBe(200)
 })
 
 Deno.test("reads no more of a huge body than the routes' own cap", async () => {
@@ -148,7 +171,7 @@ Deno.test("reads no more of a huge body than the routes' own cap", async () => {
     c.set("auth", null)
     await next()
   })
-  api.use("*", createDemoGuard(() => Promise.resolve(new Set())))
+  api.use("*", createDemoGuard(lookups))
   // The route would accept anything: the 413 must come from the guard.
   api.post("*", (c) => c.json({ ok: true }))
 
@@ -161,7 +184,7 @@ Deno.test("reads no more of a huge body than the routes' own cap", async () => {
       controller.enqueue(chunk)
     },
   })
-  const response = await api.request("/api/auth/password/sign-up", {
+  const response = await api.request("/api/admin/newsletter/subscribers/resend", {
     method: "POST",
     body,
     headers: { "content-type": "application/json" },
