@@ -20,6 +20,7 @@ import { handler as videoSitemap } from "./routes/video-sitemap.xml.ts"
 import { handler as llms } from "./routes/llms.txt.ts"
 import { handler as unsubscribe } from "./routes/unsubscribe.ts"
 import { pageMiddleware } from "./middleware.ts"
+// Seed's own site: see docs/start-a-product.md
 import { HIRE_PAGE_URL } from "./hire.ts"
 import { ogImageAlt, type OgImageKey, REPOSITORY_URL } from "./site.tsx"
 import { SITE_PAGES } from "./pages.ts"

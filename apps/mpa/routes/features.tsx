@@ -494,6 +494,7 @@ export default define.page(function Features({ state }) {
               ))}
             </FeatureTier>
           ))}
+          {/* Seed's own site: see docs/start-a-product.md */}
           <a
             href="/compare"
             class="inline-flex items-center gap-1 self-start py-2 text-lg font-medium text-primary hover:underline"

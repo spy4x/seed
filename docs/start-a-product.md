@@ -6,8 +6,9 @@ Seed must not go live with any of that: it would carry someone else's offer and 
 claims about competitors the product never checked.
 
 Work through this list in the product's first pull requests, next to the steps in
-[Building a product on Seed](products.md#start-a-product). Every place in code is also marked
-with the comment `Seed's own site: see docs/start-a-product.md`, so this finds what is left:
+[Building a product on Seed](products.md#start-a-product). Every place in a file that can hold a
+comment is also marked with `Seed's own site: see docs/start-a-product.md`, so this finds what is
+left (images, `LICENSE`, `AGENTS.md` and the env file carry no mark):
 
 ```sh
 git grep -n "Seed's own site"
@@ -22,7 +23,10 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
 
 - **Set** `AUTHOR_URL` in `apps/mpa/brand.ts`: the author's own site.
 - **Delete** `apps/mpa/hire.ts`: the author's prices (`HIRE_PRICES`) and his MVP offer
-  (`HIRE_PAGE_URL`).
+  (`HIRE_PAGE_URL`). Its other importers change with it: `apps/mpa/routes/pricing.tsx` (the FAQ
+  on how `HIRE_PRICES.mvpFrom` is worked out, and a hire link), `apps/mpa/routes/index.tsx` (the
+  link in `WhoBuilds`), `apps/mpa/site.tsx`, `apps/mpa/error-page.tsx`,
+  `apps/mpa/components/pricing-ways.tsx` and `apps/mpa/site.test.ts`.
 - **Delete** the `/mvp` redirect to that offer, `apps/mpa/routes/mvp.ts`, and its browser test
   `e2e/mpa/mvp.mpa.ts`.
 - **Replace** "Hire me", "About Anton" and the "Built in public by" line in the header and footer:
@@ -32,7 +36,8 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   `routes/pricing.tsx` and `routes/compare.tsx` use it.
 - **Replace** the "Who builds Seed" band, `WhoBuilds` in `apps/mpa/routes/index.tsx`.
 - **Delete** the founders' band that sends to the MVP offer,
-  `apps/mpa/components/founders-handoff.tsx`.
+  `apps/mpa/components/founders-handoff.tsx`, and its use, `<FoundersHandoff />` in
+  `apps/mpa/routes/index.tsx`.
 - **Replace** the "have it built" card with the author's prices,
   `apps/mpa/components/pricing-ways.tsx`.
 - **Delete** the hire link on the error page, `apps/mpa/error-page.tsx`, and the `hire-me` event
@@ -41,13 +46,17 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
 ## Seed's own pages and copy
 
 - **Delete** `/compare`: named competitors, their prices and the day they were checked. That is
-  `apps/mpa/routes/compare.tsx`, its entry in `apps/mpa/pages.ts` and its browser test
-  `e2e/mpa/compare.mpa.ts`.
+  `apps/mpa/routes/compare.tsx`, the card component only it uses,
+  `apps/mpa/components/compare-alternatives.tsx`, its entry in `apps/mpa/pages.ts`, its Open
+  Graph image `apps/mpa/static/og/compare.png` with the `compare` key of `OG_IMAGES` in
+  `apps/mpa/site.tsx`, the `compare-source` event in `docs/analytics.md`, and its browser test
+  `e2e/mpa/compare.mpa.ts`. Remove the links to it too, or they lead nowhere: "Compare" in the
+  header (`NAV_LINKS`) and footer (`footerGroups`) in `apps/mpa/site.tsx`, "How Seed compares"
+  in `apps/mpa/routes/features.tsx` and "the comparison" in `apps/mpa/routes/index.tsx`.
 - **Replace** the page copy and FAQs of the home, features, admin and pricing pages:
   `apps/mpa/routes/index.tsx`, `routes/features.tsx`, `routes/admin.tsx`, `routes/pricing.tsx`.
 - **Replace** the `llms.txt` summary. It is the home page's description, `HOME_HEAD` in
-  `apps/mpa/routes/index.tsx`; the page list comes from `apps/mpa/pages.ts` and the rest from
-  `apps/mpa/routes/llms.txt.ts`.
+  `apps/mpa/routes/index.tsx`; the page list follows `apps/mpa/pages.ts` by itself.
 - **Replace** the privacy policy and terms, written for seedsaas.com and its demo:
   `apps/mpa/routes/privacy.tsx`, `apps/mpa/routes/terms.tsx`.
 - **Set** `SITE_NAME` and `REPOSITORY_URL` in `apps/mpa/brand.ts`.
@@ -75,6 +84,6 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
 - **Replace** the README's pictures in `docs/screenshots/` and the GitHub social preview, whose
   card says `seedsaas.com`: `docs/screenshots/record.ts` records them.
 - **Set** the licence holder in `LICENSE`.
-- **Delete** the `AGENTS.md` sections "The live demo is not production" and "Financy": they apply
-  to the template only, and the product's own `AGENTS.md` leaves them out
-  ([step 3](products.md#start-a-product)).
+- **Replace** `AGENTS.md` with the product's own, as
+  [step 3](products.md#start-a-product) says: it applies Seed's `AGENTS.md` except the sections
+  "The live demo is not production" and "Financy", which hold for the template only.

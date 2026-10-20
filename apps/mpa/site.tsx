@@ -44,6 +44,7 @@ export const OG_IMAGES: Record<OgImageKey, { headline: string; line: string }> =
     headline: `An admin panel for your SaaS.`,
     line: `Users · billing · audit log · roles`,
   },
+  // Seed's own site: see docs/start-a-product.md
   compare: {
     headline: `Seed vs ShipFast, Supastarter, Makerkit, Open SaaS`,
     line: `Honest, sourced, checked 16 Oct 2026`,
@@ -184,7 +185,7 @@ export interface SiteFrameProps {
 /** The header's links, in display order. */
 export const NAV_LINKS = [
   { label: `Features`, href: `/features` },
-  { label: `Compare`, href: `/compare` },
+  { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
   { label: `Pricing`, href: `/pricing` },
   { label: `Hire me`, href: HIRE_PAGE_URL },
   { label: `GitHub`, href: REPOSITORY_URL, Icon: IconGitHub },
@@ -356,7 +357,7 @@ function footerGroups(spa: { signIn: string; signUp: string }): SiteFooterGroup[
       links: [
         { label: `Features`, href: `/features` },
         { label: `Admin panel`, href: `/admin` },
-        { label: `Compare`, href: `/compare` },
+        { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
         { label: `Pricing`, href: `/pricing` },
         { label: `Try the demo`, href: spa.signUp },
         { label: `Sign in`, href: spa.signIn },
