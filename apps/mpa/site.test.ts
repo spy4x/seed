@@ -671,7 +671,7 @@ describe("the public website", () => {
     }
   })
 
-  it("dates neither the home page's hero nor /compare's lead a second time", async () => {
+  it("draws no dated line on the home page, and keeps the date out of /compare's own lead", async () => {
     const { html: home } = await page("/")
     const { html: compare } = await page("/compare")
 
