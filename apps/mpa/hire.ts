@@ -20,6 +20,9 @@ const FROM_SEED = `utm_source=seedsaas&utm_medium=referral&utm_campaign=mvp`
 /** antonshubin.com's booking page: the calendar for a free 30-minute call. */
 export const BOOK_CALL_URL = `${AUTHOR_URL}/book?${FROM_SEED}`
 
+/** antonshubin.com's page for the MVP offer: a product built on Seed, from idea to production. */
+export const HIRE_PAGE_URL = `${AUTHOR_URL}/catalog/zero-to-production-saas-mvp?${FROM_SEED}`
+
 /** The written-brief form on the same booking page, for a founder who prefers to write. */
 export const BRIEF_URL = `${BOOK_CALL_URL}#brief`
 

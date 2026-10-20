@@ -20,7 +20,7 @@ const DEMO_PLANS: PricingPlan[] = PLANS.map((plan) => ({
     ? [`The first ${plan.trialDays} days free`, ...plan.features]
     : [...plan.features],
   highlighted: plan.amount > 0,
-  unit: plan.perSeat ? `member` : undefined,
+  unit: plan.perSeat ? `seat` : undefined,
 }))
 
 /**
@@ -39,7 +39,7 @@ export function PricingDemoPlans(): JSX.Element {
         />
         <Notice title="These are not Seed's prices">
           They are the plans of the demo app, read from its plan catalog, so you can try checkout,
-          trials and per-member billing. Your product sets its own plans in one file,{" "}
+          trials and per-seat billing. Your product sets its own plans in one file,{" "}
           <code class="font-mono">libs/domain/billing</code>.
         </Notice>
         {/* The table draws its own forms: `/analytics.js` counts a submit inside this wrapper. */}
@@ -58,7 +58,7 @@ export function PricingDemoPlans(): JSX.Element {
           />
         </div>
         <p class="text-sm text-muted">
-          In the demo you start on Free and change the plan on your group's billing page.
+          In the demo you start on Free and change the plan on your team's billing page.
         </p>
       </div>
     </Band>

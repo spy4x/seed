@@ -1,7 +1,9 @@
 import type { JSX } from "preact"
 import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
-import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
+import { FaqList } from "@spy4x/preact-ui/faq-list"
+import { breadcrumbListJsonLd, faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { Band } from "../components/band.tsx"
 import { CtaBand } from "../components/cta-band.tsx"
 import {
   FeatureSection,
@@ -19,6 +21,7 @@ import {
 import { AdminVideoStill } from "../components/admin-video.tsx"
 import { ADMIN_VIDEO } from "../admin-video.ts"
 import { OnThisPage } from "../components/on-this-page.tsx"
+import { SectionIntro } from "../components/section-intro.tsx"
 import { Shot } from "../components/shot.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
@@ -60,7 +63,7 @@ const TIERS: readonly Tier[] = [
     id: `settled`,
     eyebrow: `Settled for you`,
     title: `A SaaS starter with teams and billing already wired`,
-    lead: `Accounts, groups and money: the parts every product needs before its first feature, ` +
+    lead: `Accounts, teams and money: the parts every product needs before its first feature, ` +
       `and the ones that are easiest to get wrong.`,
     status: `Tested in CI. Google and GitHub sign-in and Stripe need your own keys, so they are ` +
       `off in the demo.`,
@@ -73,7 +76,7 @@ const TIERS: readonly Tier[] = [
         lead:
           `People sign up with an email address and a password, prove the address with a code ` +
           `sent by email, reset a forgotten password, or continue with Google or GitHub. An ` +
-          `authenticator app adds a second factor. They see every device they are signed in on ` +
+          `authenticator app adds two-factor authentication (2FA). They see every device they are signed in on ` +
           `and can sign the others out. Changing a sign-in method asks for proof and sends a mail.`,
         facts: [
           `Passwords hashed with PBKDF2-SHA-256 through Web Crypto, 600,000 rounds by default`,
@@ -87,7 +90,7 @@ const TIERS: readonly Tier[] = [
           <WindowFrame variant="browser" title="app.seedsaas.com/profile">
             <Shot
               name="profile-security"
-              alt="The security page of a profile: the sign-in methods, the second factor and the open sessions."
+              alt="The security page of a profile: the sign-in methods, two-factor authentication (2FA) and the open sessions."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
@@ -97,21 +100,22 @@ const TIERS: readonly Tier[] = [
         id: `teams`,
         nav: `Teams and roles`,
         eyebrow: `Teams`,
-        title: `Groups with roles, from the first minute`,
-        lead: `Every account gets a personal group at sign-up. People make shared groups, invite ` +
+        title: `Teams with roles, from the first minute`,
+        lead: `Every account gets a personal team at sign-up. People make shared teams, invite ` +
           `others, give them roles from viewer to owner and hand ownership over in one step. A ` +
-          `deleted group can be brought back for 30 days, and each group keeps an activity log.`,
+          `deleted team can be brought back for 30 days, and each team keeps an activity log.`,
         facts: [
-          `The group is the one tenancy boundary: personal and shared data pass the same check`,
+          `The team is the one tenancy boundary: personal and shared data pass the same check`,
+          `In the app and its code, a team is called a group`,
           `No second permission model to keep in sync with the first`,
           `Invitations, role changes and ownership transfer, each with its own tests`,
         ],
-        code: { label: `Read the groups domain`, href: source(`libs/domain/groups/`) },
+        code: { label: `Read the teams domain`, href: source(`libs/domain/groups/`) },
         visual: (
           <WindowFrame variant="browser" title="app.seedsaas.com/groups">
             <Shot
               name="activity"
-              alt="A group's activity log: who added which note or tag, and when, with a link to open each note."
+              alt="A team's activity log: who added which note or tag, and when, with a link to open each note."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
@@ -119,9 +123,9 @@ const TIERS: readonly Tier[] = [
       },
       {
         id: `billing`,
-        nav: `Billing per member`,
+        nav: `Per-seat billing`,
         eyebrow: `Money`,
-        title: `Billing per member, through Stripe`,
+        title: `Per-seat billing, through Stripe`,
         lead:
           `People see a pricing table, a free plan with limits and a 14-day trial of the paid ` +
           `plan. The owner sees what one more member costs before inviting them, and a clear ` +
@@ -142,7 +146,7 @@ const TIERS: readonly Tier[] = [
           <WindowFrame variant="browser" title="app.seedsaas.com/groups">
             <Shot
               name="billing"
-              alt="A group's members and its plan: Pro, active, €36.00 a month for 4 members at €9.00 each, with a button to manage billing."
+              alt="A sample team's members and its plan, at the demo's example prices: Pro, active, €36.00 a month for 4 members at €9.00 each, with a button to manage billing."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
@@ -186,7 +190,7 @@ const TIERS: readonly Tier[] = [
         eyebrow: `Realtime`,
         title: `Changes show up without a reload`,
         lead:
-          `A teammate's change appears in every open tab of the group, and a laptop that wakes ` +
+          `A teammate's change appears in every open tab of the team, and a laptop that wakes ` +
           `from sleep catches up on what it missed.`,
         facts: [
           `A standard WebSocket, with a sequence on every change`,
@@ -221,7 +225,7 @@ const TIERS: readonly Tier[] = [
         nav: `Notifications`,
         eyebrow: `Notifications`,
         title: `Notifications in the app, on the phone and the desktop`,
-        lead: `People get a notice when they are invited, given a new role or handed a group, in ` +
+        lead: `People get a notice when they are invited, given a new role or handed a team, in ` +
           `the app and as a web push on their phone or desktop.`,
         facts: [
           `Web push with your own keys, made by one task: deno task vapid-key:create`,
@@ -236,7 +240,7 @@ const TIERS: readonly Tier[] = [
           <WindowFrame variant="browser" title="app.seedsaas.com/notifications">
             <Shot
               name="notifications"
-              alt="The notifications page: three unread notices about a new group owner, a role change and an invitation, each row opening what it is about."
+              alt="The notifications page: three unread notices about a new team owner, a role change and an invitation, each row opening what it is about."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
@@ -278,7 +282,7 @@ const TIERS: readonly Tier[] = [
     id: `operations`,
     eyebrow: `Operations`,
     title: `Run it, watch it, support the people on it`,
-    lead: `One server you own, the tools to see what it does, and an area where your team ` +
+    lead: `One server you rent, the tools to see what it does, and an area where your team ` +
       `helps the people who use your product.`,
     status: `Every module below ships today. What is not built yet is listed under each.`,
     features: [
@@ -290,7 +294,7 @@ const TIERS: readonly Tier[] = [
         lead: (
           <>
             Your team finds a person by name or address and sees their sign-in methods, sessions,
-            groups and history. From the same place they manage groups, refund a payment, look after
+            teams and history. From the same place they manage teams, refund a payment, look after
             the newsletter's subscribers, check the system's health and run a failed job again.{" "}
             <a
               href="/admin"
@@ -370,7 +374,38 @@ const TIERS: readonly Tier[] = [
   },
 ]
 
-/** The page's structured data: the software, as a free developer tool, and the page's place. */
+/**
+ * What a visitor asks that the sections above do not answer, with each answer as plain text for the
+ * FAQ's structured data. Each answer's first sentence stands alone, in 40 words or fewer.
+ */
+const FAQ = [
+  {
+    id: `faq-serverless`,
+    question: `Can Seed run on Vercel or serverless functions?`,
+    answerText: `No. Seed runs as long-lived containers with Docker Compose on one Linux server ` +
+      `you rent, because the API keeps WebSocket connections open and a worker drains a queue.`,
+  },
+  {
+    id: `faq-runtime`,
+    question: `Can Seed run on Node.js or Bun?`,
+    answerText: `Not today. Seed's servers run on Deno 2 in Docker, and its tasks and tests use ` +
+      `Deno. The code is built on web standards such as fetch, Request and Web Crypto.`,
+  },
+  {
+    id: `faq-database`,
+    question: `Can Seed use a database other than Postgres?`,
+    answerText: `No. Seed is built on Postgres: its migrations, queries and integration tests ` +
+      `assume it.`,
+  },
+  {
+    id: `faq-native`,
+    question: `Can Seed ship as a mobile or desktop app?`,
+    answerText: `Not as a store app yet. Today the web app installs from the browser on phones ` +
+      `and desktops and opens with no network; Android and desktop apps are planned.`,
+  },
+] as const
+
+/** The page's structured data: the software, its questions, and the page's place. */
 function featuresJsonLd(origin: string, demo: string): unknown[] {
   return [
     {
@@ -383,6 +418,7 @@ function featuresJsonLd(origin: string, demo: string): unknown[] {
       url: demo,
       featureList: TIERS.flatMap((tier) => tier.features.map((feature) => feature.nav)),
     },
+    faqPageJsonLd(FAQ),
     breadcrumbListJsonLd(`${origin}/features`, [
       { name: SITE_NAME, href: `${origin}/` },
       { name: `Features` },
@@ -396,7 +432,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       class="site-glow"
       eyebrow="Features"
       title="Everything Seed ships, and what it does not yet"
-      lead="Seed is a free, open-source SaaS starter with teams and billing. Each section says what a person using your product notices, then what you get as a developer, and links to the code."
+      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, 2FA, teams with roles, per-seat Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
     >
       <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button
@@ -437,9 +473,12 @@ export default define.page(function Features({ state }) {
     og: `features`,
     jsonLd: featuresJsonLd(state.webAppOrigin, spa.signUp),
   }
-  const nav = TIERS.flatMap((tier) =>
-    tier.features.map((feature) => ({ label: feature.nav, href: `#${feature.id}` }))
-  )
+  const nav = [
+    ...TIERS.flatMap((tier) =>
+      tier.features.map((feature) => ({ label: feature.nav, href: `#${feature.id}` }))
+    ),
+    { label: `Questions`, href: `#faq` },
+  ]
   return (
     <SiteFrame state={state} path="/features" head={head}>
       <Hero demoHref={spa.signUp} />
@@ -464,6 +503,18 @@ export default define.page(function Features({ state }) {
           </a>
         </div>
       </div>
+      <Band tone="alt" id="faq" labelledBy="faq-title" width="3xl">
+        <div class="flex flex-col gap-8">
+          <SectionIntro id="faq-title" eyebrow="Questions" title="Can Seed do that?" />
+          <FaqList
+            items={FAQ.map((item) => ({
+              id: item.id,
+              question: item.question,
+              answer: <p>{item.answerText}</p>,
+            }))}
+          />
+        </div>
+      </Band>
       <CtaBand demoHref={spa.signUp} />
     </SiteFrame>
   )

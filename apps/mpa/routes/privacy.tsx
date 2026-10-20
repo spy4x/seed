@@ -149,10 +149,10 @@ export default define.page(function Privacy({ state }) {
       <h2 id="deleting">Deleting your data</h2>
       <p>
         You can delete your account from your profile in the app. It asks for your password, and for
-        your authenticator code if the second factor is on. The account is hidden at once and
-        deleted for good 7 days later; signing in during those 7 days brings it back. A group you
-        own that other people still use, or a paid plan that is not cancelled, stops the deletion
-        until you hand the group over or cancel the plan.
+        your authenticator code if 2FA is on. The account is hidden at once and deleted for good 7
+        days later; signing in during those 7 days brings it back. A group you own that other people
+        still use, or a paid plan that is not cancelled, stops the deletion until you hand the group
+        over or cancel the plan.
       </p>
       <p>
         Deleting the account removes the groups you own with their notes, your sessions, your

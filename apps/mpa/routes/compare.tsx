@@ -27,8 +27,8 @@ const CHECKED_ON_TEXT = `16 October 2026`
 /** The page's title and description, as search results and social previews show them. */
 export const COMPARE_HEAD = {
   title: `Seed vs ShipFast, Supastarter, Makerkit and Open SaaS`,
-  description: `An honest, dated comparison of SaaS starters: price, licence, hosting, 2FA, ` +
-    `teams, per-seat billing, admin, offline. Sources linked; who Seed is not for.`,
+  description: `An honest, dated comparison of SaaS starters and boilerplates: price, licence, ` +
+    `hosting, 2FA, teams, per-seat billing, admin, offline. Sources linked.`,
 } as const
 
 /** The columns of the table, Seed first: the table highlights the first one as ours. */
@@ -71,7 +71,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `yes`, `yes`, `yes`, `no`, `yes`],
   },
   {
-    capability: `Two-factor (app)`,
+    capability: `2FA (authenticator app)`,
     values: [`yes`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
@@ -269,15 +269,11 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       class="site-glow"
       eyebrow="Compare"
       title="How Seed compares to other SaaS starters"
-      lead={
-        <>
-          I build Seed, so I am not neutral. To make up for it, every claim about another product
-          links to the page I read it on, and the table shows where Seed is weaker.
-        </>
-      }
+      lead="Seed is a free, MIT-licensed SaaS starter for products used by teams, and it runs on one server you rent. Here it is side by side with five other SaaS starters and boilerplates."
     >
       <p class="max-w-2xl text-muted text-pretty">
-        Checked on{" "}
+        I build Seed, so I am not neutral. To make up for it, every claim about another product
+        links to the page I read it on, and the table shows where Seed is weaker. Checked on{" "}
         <time datetime={CHECKED_ON}>{CHECKED_ON_TEXT}</time>. Products change; if a row is out of
         date, <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">open an issue</a>
         {" "}
@@ -344,7 +340,8 @@ function Table(): JSX.Element {
               a young project with one maintainer and no community forum yet, while the Next.js SaaS
               Starter and Open SaaS each have more than 16,000 GitHub stars. Seed is for you if you
               build a product for teams, want sign-in, roles, per-seat billing and operations
-              settled before your first feature, and want to own the server and the code outright.
+              settled before your first feature, and want to control the server and own the code
+              outright.
             </>
           }
         />
@@ -355,8 +352,10 @@ function Table(): JSX.Element {
             <a href="/#status" class="text-primary underline">status list</a> says what works.
           </li>
           <li>
-            ShipFast's sales page shows a launch discount counter; the prices here are the ones it
-            displayed on {CHECKED_ON_TEXT}.
+            ShipFast's prices are the ones its{" "}
+            <a href="https://shipfa.st/" class="text-primary underline">sales page</a> showed on
+            {" "}
+            {CHECKED_ON_TEXT}.
           </li>
           <li>
             For Seed's features in detail, see{" "}
