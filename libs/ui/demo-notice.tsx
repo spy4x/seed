@@ -7,18 +7,16 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { type Navigate, SCREEN_PATHS } from "./progressive.tsx"
 
 /**
- * The public demo's shared account for one sign-in page (docs/demo.md): what to type, and the
- * other app's address so the page can link it. The app reads it from `GET /api/demo`.
+ * The public demo's shared account (docs/demo.md): what to type on the product's sign-in page.
+ * The app reads it from `GET /api/demo`.
  */
 export interface DemoCredentials {
   login: string
   password: string
-  /** The other app: the admin panel on the product's page, the product on the admin's. */
-  otherAppUrl: string | null
 }
 
 /** Which page the notice is on. */
-export type DemoNoticeKind = "product" | "operator" | "sign-up"
+export type DemoNoticeKind = "sign-in" | "sign-up"
 
 const RESET_NOTE = `Everything is wiped every night at midnight Pacific time.`
 
@@ -54,7 +52,6 @@ export function DemoNotice(
       </Notice>
     )
   }
-  const operator = kind === "operator"
   return (
     <Notice live={false} title="Public demo" data-e2e="demo-credentials">
       <div class="flex flex-col gap-3">
@@ -74,26 +71,9 @@ export function DemoNotice(
             data-e2e="demo-sign-in"
             onClick={() => onSignIn?.({ login: demo.login, password: demo.password })}
           >
-            {operator ? "Sign in as the demo operator" : "Sign in as the demo user"}
+            Sign in as the demo user
           </Button>
         </div>
-        {demo.otherAppUrl && (
-          <p data-e2e="demo-other-app">
-            {operator
-              ? (
-                <>
-                  <a href={demo.otherAppUrl} class="pc-link font-medium">Open the product</a>{" "}
-                  to see what users see.
-                </>
-              )
-              : (
-                <>
-                  The admin panel has its own demo account.{" "}
-                  <a href={demo.otherAppUrl} class="pc-link font-medium">Open the admin panel</a>
-                </>
-              )}
-          </p>
-        )}
       </div>
     </Notice>
   )

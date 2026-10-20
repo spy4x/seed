@@ -1024,16 +1024,13 @@ export interface AdminPushDevicesResponse {
 }
 
 /**
- * The answer of `GET /api/demo` while the public demo is on (docs/demo.md): the two shared
- * accounts, their one password, and each app's address, so each sign-in page can link the other.
+ * The answer of `GET /api/demo` while the public demo is on (docs/demo.md): the shared account
+ * and its password, which the product's sign-in page prints.
  * The route is 404 while the demo is off.
  */
 export const demoInfoSchema = type({
   userLogin: "string",
-  adminLogin: "string",
   password: "string",
-  appUrl: "string",
-  adminUrl: "string | null",
 })
 export type DemoInfo = typeof demoInfoSchema.infer
 

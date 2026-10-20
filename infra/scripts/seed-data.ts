@@ -1,8 +1,8 @@
 /// <reference lib="deno.ns" />
 /**
- * Seeds a database with the demo data (docs/demo.md): the shared accounts `demo@example.com`, a
- * plain user, and `admin@example.com`, an administrator who signs in to the admin app, both with
- * `SEED_PASSWORD` and no second factor, plus fake people, groups, tags, notes, invitations and
+ * Seeds a database with the demo data (docs/demo.md): the shared account `demo@example.com`, a
+ * plain user, and in development (`ENV=dev`) also `admin@example.com`, an administrator who signs
+ * in to the admin app, both with `SEED_PASSWORD` and no second factor, plus fake people, groups, tags, notes, invitations and
  * newsletter subscribers. The public demo's worker runs the same seed after its nightly wipe.
  *
  * Usage, after `deno task db:migrate`, with the same `DB_*` values:
@@ -14,7 +14,7 @@
  * - `SEED_PASSWORD` is the shared password, 8 to 50 characters like any sign-up.
  * - `SUBSCRIBERS_SECRET`, when set, keys the fake subscribers; development uses its own default.
  *
- * Running it again writes nothing but the two accounts' roles and proven addresses. It runs only
+ * Running it again writes nothing but the accounts' roles and proven addresses. It runs only
  * when `ENV` is `dev` or `DEMO_MODE` is `true` (`readSeedOptions`), so no product's database gets
  * an account with a published password.
  *
@@ -24,7 +24,7 @@
 import postgres from "postgres"
 import { createSqlFromEnv } from "@spy4x/server/db"
 import { readSubscribersSetup } from "@server/subscribers/subscribers.ts"
-import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL } from "@server/auth/demo-accounts.ts"
+import { DEMO_USER_EMAIL, DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { readSeedOptions, type SeedOptions } from "../../apps/worker/demo/options.ts"
 import { seedDemo, SeedRefusedError } from "../../apps/worker/demo/seed.ts"
@@ -55,10 +55,14 @@ async function main(): Promise<void> {
       ...options,
       dataSeed: DEV_DATA_SEED,
       subscribers,
+      // The public demo has no administrator: its password would be public (docs/demo.md).
+      operator: env.ENV === `dev`,
     })
     console.log(
       created
-        ? `✅ Seeded "${DEMO_USER_EMAIL}", "${DEMO_ADMIN_EMAIL}" and the fake data.`
+        ? `✅ Seeded "${DEMO_USER_EMAIL}"${
+          env.ENV === `dev` ? `, "${DEV_ADMIN_EMAIL}"` : ``
+        } and the fake data.`
         : `✅ "${DEMO_USER_EMAIL}" exists already. Nothing else to seed.`,
     )
   } catch (error) {

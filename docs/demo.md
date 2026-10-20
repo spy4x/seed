@@ -1,7 +1,7 @@
 # The public demo
 
-The template's own server runs a public demo: anyone can sign in to the product and to the admin
-panel with shared accounts printed on each sign-in page, and find both full of fake data. The
+The template's own server runs a public demo of the product: anyone can sign in with a shared
+account printed on the sign-in page, or sign up with their own, and find it full of fake data. The
 database is wiped and seeded again every night at midnight Pacific time, so whatever visitors do
 lasts a day at most.
 
@@ -14,7 +14,7 @@ In the server's env file (`infra/envs/.env.prod`, which `deno task deploy` copie
 
 ```bash
 DEMO_MODE=true
-SEED_PASSWORD=<the shared password, 8 to 50 characters; it is printed on the sign-in pages>
+SEED_PASSWORD=<the shared password, 8 to 50 characters; it is printed on the sign-in page>
 ```
 
 Both the API and the worker read them (`infra/compose/compose.shared.yml`). The API refuses to
@@ -25,20 +25,24 @@ start with `DEMO_MODE=true` and no `SEED_PASSWORD`; the worker refuses to start 
 
 | Part | Where | What |
 | --- | --- | --- |
-| Shared accounts | `libs/server/auth/demo-accounts.ts` | `demo@example.com` (a plain user) and `admin@example.com` (an administrator), one password, no second factor. |
-| Sign-in pages | `libs/ui/demo-notice.tsx`, `GET /api/demo` (`apps/api/routes/demo.ts`) | A notice above the card with the credentials, a copy button for each, a "Sign in as the demo user" button and a link to the other app. `GET /api/demo` is 404 while the demo is off, and the notice is not drawn. |
-| Guard | `apps/api/middlewares/demo-guard.ts` | A shared account cannot change its password, address, second factor or sign-in providers, end sessions, delete itself or mail an invitation. An operator cannot block, sign out, reset or change the role of a shared account. An operator cannot block, unblock, reset, sign out or change the role of a real person (an address outside `example.com`), or resend to or remove a real subscriber. Each refusal is a 403 with a message. |
-| Hidden addresses | `apps/api/middlewares/demo-admin-mask.ts` | Every answer of the admin API, the CSV exports included, has each address outside `example.com` masked (`ada@gmail.com` becomes `a***@g***.com`), and an admin search matches only `example.com` addresses, so typing part of a hidden address finds nobody. Other details, such as IP addresses and browsers, stay visible. |
+| Shared account | `libs/server/auth/demo-accounts.ts` | `demo@example.com`, a plain user, with no second factor. |
+| Sign-in page | `libs/ui/demo-notice.tsx`, `GET /api/demo` (`apps/api/routes/demo.ts`) | A notice above the card with the credentials, a copy button for each and a "Sign in as the demo user" button. `GET /api/demo` is 404 while the demo is off, and the notice is not drawn. |
+| Guard | `apps/api/middlewares/demo-guard.ts` | The shared account cannot change its password, address, second factor or sign-in providers, end sessions, delete itself or mail an invitation. Each refusal is a 403 with a message. |
 | Fake data | `apps/worker/demo/fake-data.ts` | 25 people, 8 groups with members, tags and notes, pending invitations, 40 newsletter subscribers, all on `example.com`. The demo user owns one group and is an editor and a viewer in two more. The data is picked by the day, so each day looks a little different. |
-| Seed | `apps/worker/demo/seed.ts` | Signs the accounts up through the API's own sign-up, and writes groups, tags, notes and invitations through their repositories. Group members, people's names and newsletter subscribers are written with raw SQL. `deno task db:seed` runs the same seed in development. |
+| Seed | `apps/worker/demo/seed.ts` | Signs the people up through the API's own sign-up, and writes groups, tags, notes and invitations through their repositories. Group members, people's names and newsletter subscribers are written with raw SQL. `deno task db:seed` runs the same seed in development. |
 | Wipe | `apps/worker/demo/wipe.ts` | Empties every table except `KEPT_TABLES` (the migration history and the backup status) in one transaction. Ids are not restarted, so nothing cached under an old id describes a new row. |
 | Nightly reset | `apps/worker/demo/reset.ts`, `run.ts`, started in `apps/worker/+main.ts` | Checks every minute. When the date in `America/Los_Angeles` changes, it wipes, seeds and schedules the nightly cleanup again. After a deploy it seeds at once only when the demo is missing. A failed reset is tried again a minute later; a worker that restarts in between keeps the half-seeded demo until the next midnight. |
 
 Visitors may sign up with their own address, by password or with Google or GitHub, and subscribe
-to the newsletter. The admin password is printed on the sign-in page, so the operator sees those
-addresses masked. The operator cannot block, unblock, reset, sign out or change the role of those
-people, or resend to or remove a real subscriber. Other operator actions, such as removing someone
-from a group, still work. Their accounts are wiped with everything else that night.
+to the newsletter. Their accounts are wiped with everything else that night.
+
+**The admin panel is not part of the demo.** Its host still runs, but the demo seeds no operator
+account, so nobody outside can sign in to it. A public operator account would show every visitor's
+address, IP address and devices to anyone, and each admin action would need its own demo rule.
+The admin panel is shown in a video on the website instead. The owner decided this on 2026-10-20:
+"My decision is admin panel, not for a demo, but we need a good video about it." In development,
+`deno task db:seed` adds `admin@example.com`, an administrator, so the admin app can be tried
+locally.
 
 ## When the database changes
 

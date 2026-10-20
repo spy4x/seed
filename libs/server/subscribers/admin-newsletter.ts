@@ -76,12 +76,9 @@ export async function listAdminSubscribers(
   list: SubscriberList,
   filter: AdminSubscriberFilter,
   pageSize: number,
-  hideRealAddresses = false,
 ): Promise<{ subscribers: AdminSubscriberRow[]; total: number }> {
-  // In the public demo the operator sees real addresses masked: a search must not give them back.
-  const searchable = hideRealAddresses ? sql`AND a.email LIKE '%@example.com'` : sql``
   const where = sql`
-    WHERE (${filter.query} = '' OR (a.email ILIKE ${likeContains(filter.query)} ${searchable}))
+    WHERE (${filter.query} = '' OR a.email ILIKE ${likeContains(filter.query)})
       AND (${filter.status} = 'any' OR a.status = ${filter.status})
   `
   const [{ total }] = await sql<{ total: number }[]>`

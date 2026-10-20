@@ -129,11 +129,6 @@ export interface AppDbBaseOptions {
    * none. Nothing that decides authentication or a role reads it: see `user.findOne`.
    */
   userCache?: RowCache<User>
-  /**
-   * The public demo (docs/demo.md): the operator's searches match only example.com addresses, so
-   * a search cannot give back a real address the operator sees masked. Defaults to `false`.
-   */
-  hideRealAddresses?: boolean
 }
 
 /**
@@ -149,13 +144,10 @@ export class AppDbBase extends DbServiceBase {
    * `#private` field cannot be read through a clone's prototype chain.
    */
   private readonly userCache: RowCache<User>
-  /** {@link AppDbBaseOptions.hideRealAddresses}. */
-  readonly hideRealAddresses: boolean
 
   constructor(options: AppDbBaseOptions) {
     super({ sql: options.sql })
     this.userCache = options.userCache ?? noCache
-    this.hideRealAddresses = options.hideRealAddresses ?? false
   }
 
   /**
@@ -407,11 +399,9 @@ export class AppDbBase extends DbServiceBase {
    */
   get admin() {
     const sql = this.sql
-    const hide = this.hideRealAddresses
     return {
       /** One page of the people who are not deleted, newest first, and how many match in all. */
-      list: (filter: AdminUserFilter, pageSize: number) =>
-        listAdminUsers(sql, filter, pageSize, hide),
+      list: (filter: AdminUserFilter, pageSize: number) => listAdminUsers(sql, filter, pageSize),
       /** The person as the list shows them, or `null` when there is no live one. */
       find: (userId: number) => readAdminUser(sql, userId),
       /** How the person signs in, their groups and their newest audit rows. */
@@ -436,7 +426,7 @@ export class AppDbBase extends DbServiceBase {
       queuePasswordReset: (email: string) => enqueuePasswordResetMail(sql, email),
       /** Every person `filter` matches, `batchSize` rows at a time, for the CSV export. */
       export: (filter: AdminUserFilter, batchSize: number) =>
-        exportAdminUsers(sql, filter, batchSize, hide),
+        exportAdminUsers(sql, filter, batchSize),
       /** The dashboard's counts and 30-day series as of `now` (#424). */
       stats: (now: Date) => readAdminStats(sql, now),
     }
@@ -444,7 +434,7 @@ export class AppDbBase extends DbServiceBase {
 
   /** The operator area's group reads and actions (`@server/groups/admin-groups.ts`, #426). */
   get adminGroups(): ReturnType<typeof adminGroupRows> {
-    return adminGroupRows(this.sql, this.hideRealAddresses)
+    return adminGroupRows(this.sql)
   }
 
   /**
@@ -571,11 +561,10 @@ export class AppDbBase extends DbServiceBase {
   /** The operator area's audit log (`@server/auth/admin-audit.ts`, #429). Built per access. */
   get adminAudit() {
     const sql = this.sql
-    const hide = this.hideRealAddresses
     return {
       /** Up to `limit` entries after `after` that match `filter`, newest first, and the next key. */
       list: (filter: AdminAuditFilter, limit: number, after: AdminAuditPageKey | null) =>
-        listAdminAudit(sql, filter, limit, after, hide),
+        listAdminAudit(sql, filter, limit, after),
       /** Everyone with the operator role or above, for the operator filter. */
       operators: () => listAdminAuditOperators(sql),
       /** Records that the operator downloaded `rows` entries as a file. */

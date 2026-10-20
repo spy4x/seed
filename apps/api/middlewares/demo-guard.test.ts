@@ -7,22 +7,14 @@ import {
   createDemoGuard,
   DEMO_ACCOUNT_REFUSAL,
   DEMO_INVITATION_MAIL_REFUSAL,
-  DEMO_REAL_PERSON_REFUSAL,
-  DEMO_REAL_SUBSCRIBER_REFUSAL,
-  DEMO_TARGET_REFUSAL,
 } from "./demo-guard.ts"
 import { MAX_JSON_BODY_BYTES } from "../services/json-body.ts"
 
 const DEMO_ID = 7
 const PERSON_ID = 8
-/** A real person: an address outside example.com. */
-const REAL_ID = 9
 
-const lookups = {
-  isDemo: (ids: readonly number[]) => Promise.resolve(new Set(ids.filter((id) => id === DEMO_ID))),
-  isRealPerson: (ids: readonly number[]) =>
-    Promise.resolve(new Set(ids.filter((id) => id === REAL_ID))),
-}
+const isDemo = (ids: readonly number[]) =>
+  Promise.resolve(new Set(ids.filter((id) => id === DEMO_ID)))
 
 /** An API with the guard, signed in as `userId`, where every route answers 200. */
 function app(userId: number | null) {
@@ -31,10 +23,7 @@ function app(userId: number | null) {
     c.set("auth", userId === null ? null : { user: { id: userId } } as unknown as AppAuthState)
     await next()
   })
-  api.use(
-    "*",
-    createDemoGuard(lookups),
-  )
+  api.use("*", createDemoGuard(isDemo))
   api.all("*", async (c) => {
     // The route can still read the body the guard looked at.
     const body = c.req.method === "POST" ? await c.req.text() : ""
@@ -97,21 +86,6 @@ Deno.test("a shared demo account still signs out, edits its profile and writes n
   }
 })
 
-Deno.test("an operator cannot act on a shared demo account, only on others", async () => {
-  for (
-    const action of ["role", "block", "unblock", "password-reset", "sessions/end", "sessions/4/end"]
-  ) {
-    const path = `/api/admin/users/${DEMO_ID}/${action}`
-    expect({ action, ...(await call(PERSON_ID, "POST", path)) }).toEqual({
-      action,
-      status: 403,
-      body: { error: DEMO_TARGET_REFUSAL },
-    })
-    expect((await call(PERSON_ID, "POST", `/api/admin/users/${PERSON_ID}/${action}`)).status)
-      .toBe(200)
-  }
-})
-
 Deno.test("a shared demo account may create an invitation link but not mail one", async () => {
   const path = "/api/groups/abc/invitations"
   expect(await call(DEMO_ID, "POST", path, { sendEmail: true, email: "a@example.com" })).toEqual({
@@ -138,45 +112,18 @@ Deno.test("anyone may give the demo a real address", async () => {
   }
 })
 
-Deno.test("the operator cannot act on a real person, only on the made-up ones", async () => {
-  for (
-    const action of ["role", "block", "unblock", "password-reset", "sessions/end", "sessions/4/end"]
-  ) {
-    expect({ action, ...(await call(PERSON_ID, "POST", `/api/admin/users/${REAL_ID}/${action}`)) })
-      .toEqual({ action, status: 403, body: { error: DEMO_REAL_PERSON_REFUSAL } })
-  }
-})
-
-Deno.test("the operator cannot mail or remove a real subscriber, only made-up ones", async () => {
-  for (const action of ["resend", "remove"]) {
-    const path = `/api/admin/newsletter/subscribers/${action}`
-    // What the screen sends is the masked address it shows.
-    for (const email of ["ada@gmail.com", "a***@g***.com", "ada@mail.example.com"]) {
-      expect({ path, email, ...(await call(PERSON_ID, "POST", path, { email })) }).toEqual({
-        path,
-        email,
-        status: 403,
-        body: { error: DEMO_REAL_SUBSCRIBER_REFUSAL },
-      })
-    }
-    const madeUp = await call(PERSON_ID, "POST", path, { email: "Ada@Example.com" })
-    expect(madeUp.status).toBe(200)
-    expect(JSON.parse(madeUp.body.body)).toEqual({ email: "Ada@Example.com" })
-  }
-})
-
 Deno.test("reads no more of a huge body than the routes' own cap", async () => {
   const api = new Hono<APIContext>().basePath("/api")
   api.use("*", async (c, next) => {
-    c.set("auth", null)
+    c.set("auth", { user: { id: DEMO_ID } } as unknown as AppAuthState)
     await next()
   })
-  api.use("*", createDemoGuard(lookups))
+  api.use("*", createDemoGuard(isDemo))
   // The route would accept anything: the 413 must come from the guard.
   api.post("*", (c) => c.json({ ok: true }))
 
   let pulled = 0
-  const chunk = new TextEncoder().encode(`{"email":"${"a".repeat(16 * 1024)}`)
+  const chunk = new TextEncoder().encode(`{"sendEmail":true,"email":"${"a".repeat(16 * 1024)}`)
   const body = new ReadableStream<Uint8Array>({
     pull(controller) {
       if (pulled >= 8 * 1024 * 1024) return controller.close()
@@ -184,7 +131,7 @@ Deno.test("reads no more of a huge body than the routes' own cap", async () => {
       controller.enqueue(chunk)
     },
   })
-  const response = await api.request("/api/admin/newsletter/subscribers/resend", {
+  const response = await api.request("/api/groups/abc/invitations", {
     method: "POST",
     body,
     headers: { "content-type": "application/json" },

@@ -97,8 +97,8 @@ agreed that the skill covers the README pictures too.
 
 ## The public demo
 
-The template's server runs a public demo with shared accounts, fake data and a nightly wipe,
-turned on by `DEMO_MODE=true`: [docs/demo.md](docs/demo.md). A change that adds, edits or removes
+The template's server runs a public demo of the product (not the admin panel) with a shared
+account, fake data and a nightly wipe, turned on by `DEMO_MODE=true`: [docs/demo.md](docs/demo.md). A change that adds, edits or removes
 a table, a column or anything else in the database structure updates the demo's wipe and seed in
 the same PR, as that doc's "When the database changes" says, so the demo keeps working and shows
 the new feature. The owner asked for this on 2026-10-19: "a local AGENTS.md instruction (or a

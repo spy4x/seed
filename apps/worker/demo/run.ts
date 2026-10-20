@@ -30,6 +30,6 @@ export async function resetDemo(
 ): Promise<void> {
   await wipeDatabase(sql)
   const dataSeed = Number(demoDay(now).replaceAll(`-`, ``))
-  await seedDemo(new AppDbBase({ sql }), sql, { ...options, dataSeed })
+  await seedDemo(new AppDbBase({ sql }), sql, { ...options, dataSeed, operator: false })
   await scheduleNightlyJobs(sql, now)
 }

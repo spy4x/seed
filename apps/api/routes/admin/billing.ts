@@ -91,14 +91,10 @@ export interface AdminBillingRouteDependencies {
 }
 
 /** The store over one `sql` client. It reads nothing until called. */
-export function createAdminBillingStore(
-  sql: postgres.Sql,
-  hideRealAddresses: () => boolean = () => false,
-): AdminBillingStore {
+export function createAdminBillingStore(sql: postgres.Sql): AdminBillingStore {
   return {
     figures: (now) => readAdminBillingFigures(sql, now),
-    list: (filter, pageSize) =>
-      listAdminBillingCustomers(sql, filter, pageSize, hideRealAddresses()),
+    list: (filter, pageSize) => listAdminBillingCustomers(sql, filter, pageSize),
     record: (groupId) => readAdminBillingRecord(sql, groupId),
     isOwnerOrMember: (groupId, userId) => isOwnerOrMember(sql, groupId, userId),
     claim: (claim) => claimAdminBillingAction(sql, claim),
@@ -463,7 +459,7 @@ export const billingAdminModule: AdminApiModule = {
   routes: (context) =>
     createAdminBillingRoutes({
       limit: context.limit,
-      store: createAdminBillingStore(context.sql, () => context.db.hideRealAddresses),
+      store: createAdminBillingStore(context.sql),
       billing: adminBillingSettings(context),
       now: context.now,
     }),

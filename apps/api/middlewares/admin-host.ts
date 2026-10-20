@@ -7,7 +7,7 @@ export const ADMIN_API_PREFIX = "/api/admin"
 /**
  * The only routes besides the operator area that the admin app's host reaches: who is signed in
  * and their address (the account cell shows it when they have no name), sign-in with a password,
- * its authenticator code, sign-out, and the public demo's accounts. Everything else the product does
+ * its authenticator code, and sign-out. Everything else the product does
  * (sign-up, Google and GitHub, notes, groups) stays on the web app's host.
  */
 export const ADMIN_HOST_AUTH_PATHS: readonly string[] = [
@@ -16,8 +16,6 @@ export const ADMIN_HOST_AUTH_PATHS: readonly string[] = [
   "/api/auth/password/check",
   "/api/auth/totp/check",
   "/api/auth/sign-out",
-  // The public demo's shared accounts, which the admin sign-in page prints (docs/demo.md).
-  "/api/demo",
 ]
 
 /** Whether `path` is the operator area or a route under it. */

@@ -7,7 +7,7 @@ if (env.AUTH_COOKIE_SECRET.length < 32) {
   throw new Error("AUTH_COOKIE_SECRET must be at least 32 characters (openssl rand -hex 32)")
 }
 
-// The demo prints the password on its sign-in pages, so it cannot run without one.
+// The demo prints the password on its sign-in page, so it cannot run without one.
 if (isDemoMode({ DEMO_MODE: env.DEMO_MODE }) && (env.SEED_PASSWORD ?? "").length < 8) {
   throw new Error("SEED_PASSWORD must be set (8 characters or more) while DEMO_MODE is true")
 }

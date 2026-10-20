@@ -16,18 +16,11 @@ import {
   AdminShell,
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
-import {
-  type AdminStore,
-  hasAdminAccess,
-  operatorName,
-  readDemo,
-  readOperatorEmail,
-} from "./state.ts"
+import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from "./state.ts"
 import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
-import type { DemoInfo } from "@domain/identity"
 
 export interface AppProps {
   store: AdminStore
@@ -77,16 +70,6 @@ export function App(
     }
   }, [user?.id])
 
-  // The public demo's shared operator account (docs/demo.md), read once; nothing while it is off.
-  const [demo, setDemo] = useState<DemoInfo | null>(null)
-  useEffect(() => {
-    let current = true
-    void readDemo().then((found) => current && setDemo(found))
-    return () => {
-      current = false
-    }
-  }, [])
-
   // One context per signed-in session, so a module's state starts empty for the next one.
   const context = useMemo<AdminContext | null>(
     () =>
@@ -124,8 +107,6 @@ export function App(
           error={session.error}
           onSignIn={store.signIn}
           onOneTimeCode={store.oneTimeCode}
-          demo={demo &&
-            { login: demo.adminLogin, password: demo.password, otherAppUrl: demo.appUrl }}
         />
       </AdminFrame>
     )
