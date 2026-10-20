@@ -10,7 +10,8 @@ Deno, Postgres, Docker Compose. Work in progress.**
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 [**Try the live demo →**](https://app.seedsaas.com) · [Website](https://seedsaas.com) ·
-[Architecture](docs/architecture.md) · [Deploy](docs/deploy.md) · [All docs](docs/README.md)
+[Architecture](docs/architecture.md) · [Deploy](docs/deploy.md) · [All docs](docs/README.md) ·
+[Start a product](docs/start-a-product.md)
 
 <img src="docs/screenshots/sign-up-flow.gif" alt="A new user signs up with an e-mail address and a password, types the code the app mailed to that address, lands on the profile page with a Get started checklist, opens Edit name, types the first name Alex and the last name Rivera, and saves; a green toast confirms the profile was updated." width="800">
 

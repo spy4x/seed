@@ -8,6 +8,8 @@ Pick the guide that fits. The [README](../README.md) has the pitch and the quick
 - [The three apps](apps.md): the SPA, the admin app and the public website, and how to deploy each.
 - [Building a product on Seed](products.md): start a product, take Seed's later changes, give
   back to Seed.
+- [Start a product: what belongs to Seed's own website](start-a-product.md): what a new product
+  deletes, replaces or sets.
 - [Deploy and operate](deploy.md): certificates, the deploy, consoles, several projects on one
   server, releases.
 - [Sign in with Google and GitHub](sign-in-providers.md): registering the providers and what a

@@ -22,6 +22,8 @@ in the product's first pull request:
 3. Replace `AGENTS.md` with the product's own. It says that Seed's `AGENTS.md` applies, except the
    sections "The live demo is not production" and "Financy", and adds what is specific to the
    product. A sync never touches it.
+4. Remove or replace what belongs to Seed's own website and its author:
+   [the checklist](start-a-product.md).
 
 ## Take Seed's changes
 

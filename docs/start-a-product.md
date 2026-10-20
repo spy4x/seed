@@ -1,0 +1,80 @@
+# Start a product: what belongs to Seed's own website
+
+Seed's repository is both the template and the home of seedsaas.com, Seed's own website. Some of
+it describes Seed, names its competitors or sells its author's paid work. A product started from
+Seed must not go live with any of that: it would carry someone else's offer and prices, and
+claims about competitors the product never checked.
+
+Work through this list in the product's first pull requests, next to the steps in
+[Building a product on Seed](products.md#start-a-product). Every place in code is also marked
+with the comment `Seed's own site: see docs/start-a-product.md`, so this finds what is left:
+
+```sh
+git grep -n "Seed's own site"
+```
+
+Each item says what the product does: **delete** it, **replace** it with its own, or **set** a
+value. A file the product deletes or takes over completely goes into `.seed/skip`, so later syncs
+from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the browser tests in
+`e2e/mpa/` check some of these values, and change with them.
+
+## The author and his paid work
+
+- **Set** `AUTHOR_URL` in `apps/mpa/brand.ts`: the author's own site.
+- **Delete** `apps/mpa/hire.ts`: the author's prices (`HIRE_PRICES`) and his MVP offer
+  (`HIRE_PAGE_URL`).
+- **Delete** the `/mvp` redirect to that offer, `apps/mpa/routes/mvp.ts`, and its browser test
+  `e2e/mpa/mvp.mpa.ts`.
+- **Replace** "Hire me", "About Anton" and the "Built in public by" line in the header and footer:
+  `NAV_LINKS`, `footerGroups` and `SiteFrame` in `apps/mpa/site.tsx`.
+- **Replace** `PERSON_JSON_LD` in `apps/mpa/site.tsx`: the Person (Anton Shubin) and his company
+  (NeatSoft PTE LTD) in the structured data. `apps/mpa/routes/index.tsx`, `routes/features.tsx`,
+  `routes/pricing.tsx` and `routes/compare.tsx` use it.
+- **Replace** the "Who builds Seed" band, `WhoBuilds` in `apps/mpa/routes/index.tsx`.
+- **Delete** the founders' band that sends to the MVP offer,
+  `apps/mpa/components/founders-handoff.tsx`.
+- **Replace** the "have it built" card with the author's prices,
+  `apps/mpa/components/pricing-ways.tsx`.
+- **Delete** the hire link on the error page, `apps/mpa/error-page.tsx`, and the `hire-me` event
+  in `docs/analytics.md`.
+
+## Seed's own pages and copy
+
+- **Delete** `/compare`: named competitors, their prices and the day they were checked. That is
+  `apps/mpa/routes/compare.tsx`, its entry in `apps/mpa/pages.ts` and its browser test
+  `e2e/mpa/compare.mpa.ts`.
+- **Replace** the page copy and FAQs of the home, features, admin and pricing pages:
+  `apps/mpa/routes/index.tsx`, `routes/features.tsx`, `routes/admin.tsx`, `routes/pricing.tsx`.
+- **Replace** the `llms.txt` summary. It is the home page's description, `HOME_HEAD` in
+  `apps/mpa/routes/index.tsx`; the page list comes from `apps/mpa/pages.ts` and the rest from
+  `apps/mpa/routes/llms.txt.ts`.
+- **Replace** the privacy policy and terms, written for seedsaas.com and its demo:
+  `apps/mpa/routes/privacy.tsx`, `apps/mpa/routes/terms.tsx`.
+- **Set** `SITE_NAME` and `REPOSITORY_URL` in `apps/mpa/brand.ts`.
+- **Replace** the Open Graph images in `apps/mpa/static/og/`, drawn by
+  `apps/mpa/screenshots/og.html`.
+- **Replace** the product screenshots and the admin video: `apps/mpa/static/shots/`,
+  `apps/mpa/static/video/` and `apps/mpa/media/video/`, taken by `apps/mpa/screenshots/capture.ts`
+  and `apps/mpa/admin-video.ts`.
+- **Replace** the browser frames titled `app.seedsaas.com/…` in `apps/mpa/routes/index.tsx`,
+  `apps/mpa/routes/features.tsx` and `apps/mpa/components/features-visuals.tsx`.
+
+## Settings
+
+- **Set** the crawler policy, `ROBOTS_POLICY` in `apps/mpa/config.ts`.
+- **Set** the analytics ids, `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID`, in the server's env
+  file (`infra/envs/.env.example` lists them), as [Analytics](analytics.md) says.
+- **Set** the domains and whether the public demo runs: `MPA_DOMAIN`, `DOMAIN` and `DEMO_MODE` in
+  the env file ([The public demo](demo.md)).
+- **Set** where release images go, `IMAGE_PREFIX` in `.woodpecker/release.yml`.
+
+## The repository's own files
+
+- **Replace** the README's demo and website links, CI badge, author section and admin video link
+  in `README.md`.
+- **Replace** the README's pictures in `docs/screenshots/` and the GitHub social preview, whose
+  card says `seedsaas.com`: `docs/screenshots/record.ts` records them.
+- **Set** the licence holder in `LICENSE`.
+- **Delete** the `AGENTS.md` sections "The live demo is not production" and "Financy": they apply
+  to the template only, and the product's own `AGENTS.md` leaves them out
+  ([step 3](products.md#start-a-product)).
