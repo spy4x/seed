@@ -4,9 +4,13 @@ import { type AuthCredentials, AuthForm, type AuthMode } from "@spy4x/preact-sys
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { Link } from "@spy4x/preact-ui/link"
+import { Notice } from "@spy4x/preact-ui/notice"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
 import { type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
-import { type DemoCredentials, DemoNotice } from "./demo-notice.tsx"
+
+/** The public demo's one line on sign-in and sign-up (docs/demo.md). */
+export const DEMO_NOTE =
+  `This is a public demo, wiped every night. A new account starts with sample data to explore.`
 
 /** The three screens `AuthScreen` draws: the two credential modes, and the second factor. */
 export type AuthScreenKind = AuthMode | "one-time-code"
@@ -96,10 +100,10 @@ export interface AuthScreenProps {
   /** "Not you? Forget": the app drops what this browser remembered. */
   onForgetLastSignIn?: () => void
   /**
-   * The public demo's shared account (docs/demo.md), shown above the card on sign-in and sign-up.
-   * `null` or left out: the demo is off and nothing is shown.
+   * `true` while the public demo is on (docs/demo.md): one line above the card on sign-in and
+   * sign-up says so.
    */
-  demo?: DemoCredentials | null
+  demo?: boolean
 }
 
 /** What the sign-in screen says about the last sign-in on this browser. */
@@ -223,7 +227,7 @@ export function AuthScreen(
     providers = [],
     lastSignIn = null,
     onForgetLastSignIn,
-    demo = null,
+    demo = false,
   }: AuthScreenProps,
 ): JSX.Element {
   const copy = COPY[screen]
@@ -300,18 +304,11 @@ export function AuthScreen(
       )}
     </AuthCard>
   )
-  // One wrapper whether or not the notice shows: the notice arrives after a fetch, and a card that
-  // moved in the tree would be drawn again, losing what was typed or filled in.
   return (
     <div class="flex w-full flex-col gap-6">
       {demo && screen !== "one-time-code" && (
-        <DemoNotice
-          demo={demo}
-          kind={screen === "sign-up" ? "sign-up" : "sign-in"}
-          busy={busy}
-          onSignIn={onSignIn}
-          navigate={navigate}
-        />
+        // Standing information, read before the form: no live region announces it.
+        <Notice live={false} data-e2e="demo-notice">{DEMO_NOTE}</Notice>
       )}
       {card}
     </div>

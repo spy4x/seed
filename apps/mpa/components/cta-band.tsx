@@ -30,7 +30,8 @@ export type CtaBandProps = DemoAsk | CodeAsk
 export function CtaBand(props: CtaBandProps): JSX.Element {
   const {
     title = "See it working in a minute",
-    lead = "The demo is the app you get on day one. Sign up, create a group, invite yourself.",
+    lead =
+      "The demo is the app you get on day one. Sign up and start in groups full of sample notes.",
   } = props
   const github = (variant: "primary" | "outline") => (
     <Button href={REPOSITORY_URL} variant={variant} size="lg" data-e2e="cta-github">

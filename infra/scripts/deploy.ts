@@ -59,8 +59,9 @@ const SECRET_NAME = /PASS|SECRET|PEPPER|TOTP|KEY|TOKEN/
 
 /**
  * Secrets only a development machine uses, so a production env file may leave them out or keep the
- * example's value. `SEED_PASSWORD` is the demo user's password: `db:seed` and `db:reset` refuse to
- * run unless `ENV` is `dev`. The example's value stays public for every other variable.
+ * example's value. `SEED_PASSWORD` is the development administrator's password: `db:seed` and
+ * `db:reset` refuse to run unless `ENV` is `dev`. The example's value stays public for every other
+ * variable.
  */
 const DEVELOPMENT_ONLY: readonly string[] = ["SEED_PASSWORD"]
 

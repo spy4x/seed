@@ -20,8 +20,7 @@ import { listProviders } from "../state/sign-in-methods.ts"
 import { lastSignIn, lastSignInHint } from "../state/last-sign-in.ts"
 import { takeHandedOffAddress } from "../state/address-handoff.ts"
 import { sessionState } from "../state/session.ts"
-import { readDemo } from "../state/demo.ts"
-import type { DemoInfo } from "@domain/identity"
+import { demoMode } from "../state/demo.ts"
 
 /**
  * Wires `AuthScreen` to this app's `signIn`, `signUp` and `checkTotp`. The route picks `screen`; a
@@ -40,7 +39,6 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
   const [busy, setBusy] = useState(false)
   const [last, setLast] = useState(() => lastSignInHint())
   const [providers, setProviders] = useState<OAuthProviderId[]>([])
-  const [demo, setDemo] = useState<DemoInfo | null>(null)
   // An address another page handed over (#142): "Sign in instead" after a sign-up found its
   // account, or "Use a different address" back to the sign-up form. The form's fields are its
   // own, so the address goes into the field it renders, and focus to the field after it.
@@ -62,15 +60,6 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     if (screen === "one-time-code") return
     let shown = true
     void listProviders().then((found) => shown && setProviders(found))
-    return () => {
-      shown = false
-    }
-  }, [screen])
-  // The public demo's shared account (docs/demo.md); nothing while the demo is off.
-  useEffect(() => {
-    if (screen === "one-time-code") return
-    let shown = true
-    void readDemo().then((found) => shown && setDemo(found))
     return () => {
       shown = false
     }
@@ -122,8 +111,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
       next={next}
       providers={providers}
       lastSignIn={last}
-      demo={demo &&
-        { login: demo.userLogin, password: demo.password }}
+      demo={demoMode.value}
       onForgetLastSignIn={() => {
         lastSignIn.forget()
         setLast(null)

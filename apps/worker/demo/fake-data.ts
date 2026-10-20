@@ -4,9 +4,10 @@ import type { TagColor } from "@domain/tags"
 
 /**
  * The fake data of the public demo (docs/demo.md): people, groups with members, tags and notes,
- * pending invitations and newsletter subscribers. Pure and deterministic: one `seed` always gives
- * the same data, so a test can pin it and each night can use a new seed. Every address is on
- * `example.com`, a domain reserved for examples, so no mail reaches a real person.
+ * pending invitations and newsletter subscribers, and the sample groups of a new account. Pure and
+ * deterministic: one `seed` always gives the same data, so a test can pin it and each night can use
+ * a new seed. Every address is on `example.com`, a domain reserved for examples, so no mail reaches
+ * a real person.
  */
 
 /** A fake person. Signs up with a random password nobody knows. */
@@ -16,8 +17,8 @@ export interface FakeUser {
   lastName: string
 }
 
-/** Who a fake group's row points at: a fake person by index, or the shared demo user. */
-export type FakeMember = number | `demo`
+/** Who a fake group's row points at: a fake person by index, or the new account (`you`). */
+export type FakeMember = number | `you`
 
 export interface FakeNote {
   title: string
@@ -274,8 +275,15 @@ const BULLETS = [
   `Update the budget`,
 ]
 
-/** Builds the demo's fake data from `seed`. The same seed always gives the same data. */
-export function fakeDemoData(seed: number): FakeDemoData {
+/** A new account's sample groups: by theme, the role the account has in it. */
+const YOUR_ROLES: readonly [number, GroupRole][] = [
+  [0, GroupRole.OWNER],
+  [1, GroupRole.EDITOR],
+  [3, GroupRole.VIEWER],
+]
+
+/** The seeded helpers both builders draw from. */
+function randomTools(seed: number) {
   const random = seededRandom(seed)
   const int = (min: number, max: number) => min + Math.floor(random() * (max - min + 1))
   const pick = <T>(items: readonly T[]): T => items[int(0, items.length - 1)]
@@ -287,6 +295,57 @@ export function fakeDemoData(seed: number): FakeDemoData {
     }
     return out
   }
+  return { random, int, pick, sample }
+}
+
+/**
+ * One themed group of fake people, with its tags, notes and pending invitations. With `yourRole`,
+ * the new account is in it with that role; as the owner, the first fake person becomes an admin.
+ */
+function fakeGroup(
+  tools: ReturnType<typeof randomTools>,
+  index: number,
+  yourRole: GroupRole | null,
+): FakeGroup {
+  const { random, int, pick, sample } = tools
+  const theme = THEMES[index]
+  const people = Array.from({ length: FAKE_COUNTS.users }, (_, person) => person)
+  const [ownerIndex, ...memberIndexes] = sample(people, int(4, 8))
+  const roles = [GroupRole.ADMIN, GroupRole.EDITOR, GroupRole.EDITOR, GroupRole.VIEWER]
+  const members: FakeGroup["members"] = memberIndexes.map((member) => ({
+    member,
+    role: pick(roles),
+  }))
+  let owner: FakeMember = ownerIndex
+  if (yourRole === GroupRole.OWNER) {
+    owner = `you`
+    members.push({ member: ownerIndex, role: GroupRole.ADMIN })
+  } else if (yourRole !== null) {
+    members.push({ member: `you`, role: yourRole })
+  }
+  const notes = sample(theme.titles, theme.titles.length).map((title): FakeNote => {
+    const lines = sample(SENTENCES, int(1, 3))
+    if (random() < 0.5) lines.push(``, ...sample(BULLETS, int(2, 4)).map((item) => `- ${item}`))
+    return {
+      title,
+      body: lines.join(`\n`),
+      tags: sample(theme.tags, int(0, 2)).map((tag) => tag.name),
+    }
+  })
+  const invitations: FakeGroup["invitations"] = [
+    { email: `invitee${index + 1}@example.com`, role: GroupRole.EDITOR },
+  ]
+  if (random() < 0.5) invitations.push({ email: null, role: GroupRole.VIEWER })
+  return { name: theme.name, owner, members, tags: theme.tags, notes, invitations }
+}
+
+/**
+ * Builds the demo's population from `seed`: the fake people, one group of theirs per theme, and
+ * the newsletter list. The same seed always gives the same data.
+ */
+export function fakeDemoData(seed: number): FakeDemoData {
+  const tools = randomTools(seed)
+  const { pick, sample } = tools
 
   const users: FakeUser[] = []
   // One person per full name, so the address follows from the name and never repeats.
@@ -300,49 +359,7 @@ export function fakeDemoData(seed: number): FakeDemoData {
     users.push({ email: `${base}@example.com`, firstName, lastName })
   }
 
-  const note = (theme: Theme, title: string): FakeNote => {
-    const lines = sample(SENTENCES, int(1, 3))
-    if (random() < 0.5) lines.push(``, ...sample(BULLETS, int(2, 4)).map((item) => `- ${item}`))
-    return {
-      title,
-      body: lines.join(`\n`),
-      tags: sample(theme.tags, int(0, 2)).map((tag) => tag.name),
-    }
-  }
-
-  const people = users.map((_, index) => index)
-  // The demo user owns the first group and joins two more, so every role shows somewhere.
-  const demoRoles: (GroupRole | null)[] = THEMES.map((_, index) =>
-    index === 0
-      ? GroupRole.OWNER
-      : index === 1
-      ? GroupRole.EDITOR
-      : index === 3
-      ? GroupRole.VIEWER
-      : null
-  )
-  const groups = THEMES.map((theme, index): FakeGroup => {
-    const demoRole = demoRoles[index]
-    const [ownerIndex, ...memberIndexes] = sample(people, int(4, 8))
-    const roles = [GroupRole.ADMIN, GroupRole.EDITOR, GroupRole.EDITOR, GroupRole.VIEWER]
-    const members: FakeGroup["members"] = memberIndexes.map((member) => ({
-      member,
-      role: pick(roles),
-    }))
-    let owner: FakeMember = ownerIndex
-    if (demoRole === GroupRole.OWNER) {
-      owner = `demo`
-      members.push({ member: ownerIndex, role: GroupRole.ADMIN })
-    } else if (demoRole !== null) {
-      members.push({ member: `demo`, role: demoRole })
-    }
-    const notes = sample(theme.titles, theme.titles.length).map((title) => note(theme, title))
-    const invitations: FakeGroup["invitations"] = [
-      { email: `invitee${index + 1}@example.com`, role: GroupRole.EDITOR },
-    ]
-    if (random() < 0.5) invitations.push({ email: null, role: GroupRole.VIEWER })
-    return { name: theme.name, owner, members, tags: theme.tags, notes, invitations }
-  })
+  const groups = THEMES.map((_, index) => fakeGroup(tools, index, null))
 
   const subscribers = new Set<string>()
   for (const user of sample(users, 12)) subscribers.add(user.email)
@@ -351,4 +368,14 @@ export function fakeDemoData(seed: number): FakeDemoData {
   }
 
   return { users, groups, subscribers: [...subscribers] }
+}
+
+/**
+ * The sample groups of a new account (`you`), built from `seed`: one it owns and two of fake
+ * people's where it is an editor and a viewer, so every role shows somewhere. Members are fake
+ * people by index into the population of {@link fakeDemoData}.
+ */
+export function fakeWorkspace(seed: number): FakeGroup[] {
+  const tools = randomTools(seed)
+  return YOUR_ROLES.map(([index, role]) => fakeGroup(tools, index, role))
 }

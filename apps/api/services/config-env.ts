@@ -35,10 +35,6 @@ export const envSchema = type({
   /** Sign-in with GitHub is on only when both are set. */
   "GITHUB_CLIENT_ID?": "string",
   "GITHUB_CLIENT_SECRET?": "string",
-  /** `true` turns the public demo on (docs/demo.md); anything else leaves it off. */
-  "DEMO_MODE?": "string",
-  /** The demo accounts' shared password, which the sign-in pages print while the demo is on. */
-  "SEED_PASSWORD?": "string",
 })
 
 /** Reads and checks the API's environment. Throws a `ConfigError` naming every bad variable. */

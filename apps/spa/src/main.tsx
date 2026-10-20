@@ -11,6 +11,7 @@ import { loadRuntimeConfig } from "./runtime-config.ts"
 import { install } from "./install.ts"
 import { configureModules } from "./modules.ts"
 import { themeStore } from "./state/theme.ts"
+import { demoMode } from "./state/demo.ts"
 
 // Follows the system light/dark setting until the person picks one in the account menu.
 // `index.html` paints the stored choice before this runs.
@@ -25,6 +26,7 @@ const config = await loadRuntimeConfig()
 
 // Which optional modules run: the socket and the device copy, both on unless the file says no.
 configureModules(config)
+demoMode.value = config.demo === true
 
 // Without a DSN this does nothing and the page makes no request to any tracker.
 startErrorReporting(

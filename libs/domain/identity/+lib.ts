@@ -1022,19 +1022,3 @@ export interface AdminPushDevice {
 export interface AdminPushDevicesResponse {
   devices: AdminPushDevice[]
 }
-
-/**
- * The answer of `GET /api/demo` while the public demo is on (docs/demo.md): the shared account
- * and its password, which the product's sign-in page prints.
- * The route is 404 while the demo is off.
- */
-export const demoInfoSchema = type({
-  userLogin: "string",
-  password: "string",
-})
-export type DemoInfo = typeof demoInfoSchema.infer
-
-/** `GET /api/demo`'s body when it is a {@link DemoInfo}, else `null`: the demo is off or broken. */
-export function parseDemoInfo(data: unknown): DemoInfo | null {
-  return demoInfoSchema.allows(data) ? data : null
-}

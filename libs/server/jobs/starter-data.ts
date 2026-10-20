@@ -43,10 +43,16 @@ export interface StarterDataPlan {
   billingEnabled?: boolean
   /** The billing setup's grace period, which `effectivePlanId` counts. */
   graceDays?: number
+  /**
+   * More starter data for the account, written before the welcome note: the public demo's sample
+   * groups (docs/demo.md). It must add nothing when it runs again for the same account.
+   */
+  sampleData?: ((userId: number) => Promise<void>) | null
 }
 
 /**
- * Creates the welcome note in the person's first group, then sets `done_at`. The note's id is the
+ * Writes `plan.sampleData`, if any, and creates the welcome note in the person's first group, then
+ * sets `done_at`. The note's id is the
  * request's id, so a job that runs twice (a forced retry, a crash between the note and the marker)
  * adds one note: the second insert finds the first and does nothing. Once `done_at` is set the job
  * does not look at the notes again, so a note the person deleted stays deleted. A person with no
@@ -62,6 +68,7 @@ export function starterDataJob(sql: postgres.Sql, plan: StarterDataPlan = {}): J
       WHERE id = ${event.aggregateId}
     `
     if (!request || request.doneAt) return
+    await plan.sampleData?.(request.userId)
     const [group] = await sql<{ id: string }[]>`
       SELECT groups.id
       FROM group_members

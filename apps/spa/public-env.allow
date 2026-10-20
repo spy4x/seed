@@ -7,3 +7,5 @@ SPA_ERROR_REPORT_DSN errorReportDsn
 # Module switches (apps/spa/src/modules.ts, ADR 003). Unset means on; `false` turns one off.
 SPA_REALTIME realtime
 SPA_OFFLINE offline
+# The public demo (docs/demo.md): `true` shows the demo line on the sign-in and sign-up pages.
+SPA_DEMO demo

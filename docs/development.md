@@ -35,13 +35,13 @@ A missing `DB_PORT`, `DB_USER` or `DB_PASS`, or a missing or invalid `AUTH_PEPPE
 `SEED_PASSWORD`, refuses too, before anything is dropped.
 
 To fill a database with the demo data, run `ENV=dev deno task db:seed` with the same values plus
-`AUTH_PEPPER` (the API's) and `SEED_PASSWORD` (the shared password, 8 to 50 characters). It adds
-two accounts that sign in with that password and no second factor: `demo@example.com`, a plain
-user, and `admin@example.com`, an administrator who signs in to the
-[admin app](apps.md#the-admin-app); the public demo seeds only the first. It also adds fake
-people, groups, tags, notes, invitations and newsletter subscribers. Run again, it finds the demo
-user, puts both accounts' roles and proven addresses right, and changes nothing else; when it
-cannot create an account, it says so and exits with 1. The same seed runs on the public demo every night ([demo.md](demo.md)).
+`AUTH_PEPPER` (the API's) and `SEED_PASSWORD` (8 to 50 characters). It adds `admin@example.com`,
+an administrator who signs in to the [admin app](apps.md#the-admin-app) with that password and no
+second factor, and fake people, groups, tags, notes, invitations and newsletter subscribers. For
+the product itself, sign up with an address of your own. Run again, it puts the administrator's
+role and proven address right and changes nothing else; when it cannot create an account, it says
+so and exits with 1. The public demo runs the same seed every night, without the administrator
+([demo.md](demo.md)).
 
 ## Tasks
 

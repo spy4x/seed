@@ -58,9 +58,6 @@ import { operations, realtime } from "./services/realtimeHub.ts"
 import { toRequestError } from "./services/realtime.ts"
 import { createCallRoute } from "./routes/call.ts"
 import { createHealthRoute } from "./routes/health.ts"
-import { createDemoRoute } from "./routes/demo.ts"
-import { createDemoGuard } from "./middlewares/demo-guard.ts"
-import { demoAccountIds } from "@server/auth/demo-accounts.ts"
 import { isCacheConnected, kv } from "./services/cache.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
@@ -120,15 +117,6 @@ app.route(
     isCacheConnected,
   }),
 )
-// The public demo (docs/demo.md): the sign-in page reads the shared account here, and the guard
-// keeps one visitor from locking the next out of it. Both do nothing while the demo is off.
-app.route(
-  "/demo",
-  createDemoRoute({ password: config.demoPassword }),
-)
-if (config.demoPassword !== null) {
-  app.use("*", createDemoGuard((ids) => demoAccountIds(sql, ids)))
-}
 // The browser sends the web app's origin; behind the TLS-terminating proxy the API sees `http://`.
 const expectedOrigin = new URL(config.webAppUrl).origin
 const mutationGuards = createMutationGuards(config.webAppUrl, config.adminAppUrl)

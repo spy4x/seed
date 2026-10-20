@@ -34,7 +34,7 @@ import {
   accountHardDeleteJob,
   accountRestoredMailJob,
 } from "./account-deletion.ts"
-import { STARTER_DATA_JOB, starterDataJob } from "./starter-data.ts"
+import { STARTER_DATA_JOB, starterDataJob, type StarterDataPlan } from "./starter-data.ts"
 import { API_TOKEN_CREATED_MAIL_JOB, apiTokenCreatedMailJob } from "./api-token-mail.ts"
 import { SIGN_IN_METHOD_MAIL_JOB, signInMethodMailJob } from "./sign-in-method-mail.ts"
 import { type BillingNoticeMailDeps, billingNoticeMailJob } from "./billing-notice-mail.ts"
@@ -95,7 +95,8 @@ const NIGHTLY_HOUR_UTC = 3
  *
  * With a `provider`, the welcome note of a new account respects the group's plan cap, counting the
  * plan with `graceDays`; without one, nothing caps it. The billing notice mails say what
- * `graceDays` and `trialRequiresCard` make true.
+ * `graceDays` and `trialRequiresCard` make true. `sampleData` adds to a new account's starter data
+ * (`StarterDataPlan`).
  *
  * A row that fails is retried by {@link JOB_RETRY}; every failed attempt is logged through
  * `mail.log` with the row's kind and the error's name, and the last one as abandoned. A row that
@@ -113,6 +114,7 @@ export function createOutboxProcessor(
   subscribers: SubscribersSetup | null = null,
   graceDays = 0,
   trialRequiresCard = true,
+  sampleData: StarterDataPlan["sampleData"] = null,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   return new OutboxProcessor(
@@ -134,7 +136,11 @@ export function createOutboxProcessor(
         [API_TOKEN_CREATED_MAIL_JOB]: apiTokenCreatedMailJob({ sql, ...mail }),
         [SIGN_IN_METHOD_MAIL_JOB]: signInMethodMailJob({ sql, ...mail }),
         [ACCOUNT_HARD_DELETE_JOB]: accountHardDeleteJob({ sql, log: mail.log }),
-        [STARTER_DATA_JOB]: starterDataJob(sql, { billingEnabled: provider !== null, graceDays }),
+        [STARTER_DATA_JOB]: starterDataJob(sql, {
+          billingEnabled: provider !== null,
+          graceDays,
+          sampleData,
+        }),
         ...billingNoticeJobs(sql, mail, { graceDays, trialRequiresCard }),
         [SUBSCRIBER_CONFIRM_MAIL_JOB]: subscriberConfirmMailJob({
           sql,

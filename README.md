@@ -89,7 +89,7 @@ Then open `http://<DOMAIN>` from the env file: http://app.localhost with the val
 To keep taking Seed's fixes and features in your product later, see
 [docs/products.md](docs/products.md).
 
-The rest of the local stack (monitoring, migrations, a demo user, resetting the database) is in
+The rest of the local stack (monitoring, migrations, demo data, resetting the database) is in
 [docs/development.md](docs/development.md).
 
 ## What you get

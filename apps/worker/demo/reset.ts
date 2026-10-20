@@ -13,9 +13,14 @@ export function demoDay(now: Date, timeZone = DEMO_TIME_ZONE): string {
   return isoDateInTz(now, timeZone)
 }
 
+/** The fake data's seed for the demo's date at `now`, so each day looks a little different. */
+export function demoDataSeed(now: Date): number {
+  return Number(demoDay(now).replaceAll(`-`, ``))
+}
+
 /** What {@link demoResetTask} needs. */
 export interface DemoResetDeps {
-  /** Whether the database holds the demo already (the demo user exists). */
+  /** Whether the database holds the demo already (`isDemoSeeded`). */
   isSeeded: () => Promise<boolean>
   /** Wipes the database and seeds the demo again. */
   reset: () => Promise<void>

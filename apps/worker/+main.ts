@@ -12,9 +12,10 @@ import { readSubscribersSetup, subscribersOffWarning } from "@server/subscribers
 // The API's own reading of the billing variables, so both processes run one provider.
 import { readBillingSetup } from "@server/billing/setup.ts"
 import { isDemoMode } from "@server/auth/demo-accounts.ts"
-import { readSeedOptions } from "./demo/options.ts"
-import { startDemoReset } from "./demo/reset.ts"
+import { AppDbBase } from "../api/services/db-base.ts"
+import { demoDataSeed, startDemoReset } from "./demo/reset.ts"
 import { isDemoSeeded, resetDemo } from "./demo/run.ts"
+import { seedWorkspace } from "./demo/seed.ts"
 
 const sql = createSqlFromEnv(Deno.env.toObject(), {
   transform: postgres.camel,
@@ -59,6 +60,9 @@ const billingSetup = readBillingSetup(systemEnv, Deno.env.get("ENV") === "dev" ?
   webhooks: false,
 })
 
+// The public demo (docs/demo.md) gives every new account its own sample groups.
+const demo = isDemoMode(Deno.env.toObject())
+
 // A committed group change is announced on a Postgres channel; the API process, which holds the
 // sockets, turns it into a hint for the group's members. The same table holds jobs: a row that
 // belongs to no group and runs when its time has come.
@@ -75,6 +79,9 @@ const processor = createOutboxProcessor(
   subscribersSetup,
   billingSetup.graceDays,
   billingSetup.trialRequiresCard,
+  demo
+    ? (userId) => seedWorkspace(new AppDbBase({ sql }), sql, userId, demoDataSeed(new Date()))
+    : null,
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run
@@ -97,15 +104,13 @@ function reportSweepFailure(error: unknown): void {
   console.error("Idempotency sweep failed, retrying next interval", error)
 }
 
-// The public demo (docs/demo.md): wiped and seeded again at midnight on the US west coast. A setup
-// that cannot seed stops the worker, so a broken demo shows at deploy time.
-if (isDemoMode(Deno.env.toObject())) {
-  const seedOptions = readSeedOptions(Deno.env.toObject())
+// The public demo (docs/demo.md): wiped and seeded again at midnight on the US west coast.
+if (demo) {
   startDemoReset({
     signal,
     isSeeded: () => isDemoSeeded(sql),
     reset: async () => {
-      await resetDemo(sql, { ...seedOptions, subscribers: subscribersSetup })
+      await resetDemo(sql, { subscribers: subscribersSetup })
       console.log("Demo wiped and seeded again")
     },
     now: () => new Date(),

@@ -16,10 +16,10 @@ export class SeedConfigError extends Error {
 }
 
 /**
- * Reads and checks `AUTH_PEPPER` and `SEED_PASSWORD`, with the API's rules for each. Seeding runs
- * only on a development database (`ENV=dev`) or on the public demo (`DEMO_MODE=true`), so no
- * product's database gets an account with a published password. `db:reset` calls it before it
- * drops anything.
+ * Reads and checks `AUTH_PEPPER` and `SEED_PASSWORD` (the development administrator's password),
+ * with the API's rules for each, for `db:seed` and `db:reset`. Seeding runs only on a development
+ * database (`ENV=dev`) or on the public demo (`DEMO_MODE=true`), so no product's database gets
+ * an account with a published password. `db:reset` calls it before it drops anything.
  *
  * @throws {SeedConfigError} When neither holds, or a variable is missing or breaks its rule.
  */

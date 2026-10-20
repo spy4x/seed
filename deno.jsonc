@@ -58,7 +58,7 @@
     // #region Scripts
     "db:migrate": "deno run -N=$DB_HOST:$DB_PORT -E -R=./libs/server/db/migrations ./infra/scripts/db-migrate.ts",
     "db:reset": "deno run -N -E -R=./infra/envs --allow-run=deno ./infra/scripts/db-reset.ts", // drop, migrate, seed; dev only, see the script
-    "db:seed": "deno run -N=$DB_HOST:$DB_PORT -E ./infra/scripts/seed-data.ts", // demo user and group, see the script
+    "db:seed": "deno run -N=$DB_HOST:$DB_PORT -E ./infra/scripts/seed-data.ts", // the fake population, and the dev administrator; see the script
     "subscribers:send": "deno run -N -E -R ./apps/worker/subscribers-send.ts", // queues an issue for a mailing list; run in the worker container, see docs/development.md
     "user:role": "deno run -N -E -R ./apps/worker/user-role.ts", // gives a person a role by their address, such as operator for the admin app; see docs/apps.md
     "deps:check": "deno outdated -r",
