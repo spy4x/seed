@@ -629,10 +629,10 @@ describe("the public website", () => {
 
     expect(lastmods).toEqual({
       "/": undefined,
-      "/features": undefined,
+      "/features": "2026-10-21T00:00:00.000Z",
       "/admin": "2026-10-21T00:00:00.000Z",
       "/compare": "2026-10-16T00:00:00.000Z",
-      "/pricing": undefined,
+      "/pricing": "2026-10-21T00:00:00.000Z",
       "/subscribe": undefined,
       "/privacy": "2026-10-20T00:00:00.000Z",
       "/terms": "2026-10-16T00:00:00.000Z",
@@ -648,6 +648,40 @@ describe("the public website", () => {
 
       expect(html, path).toContain(`Last changed ${day.format(new Date(`${updated}T00:00:00Z`))}`)
     }
+  })
+
+  it("names the author and the sitemap's day under the hero of /compare, /pricing and /features", async () => {
+    // /compare's day is when its rows were checked against the other products, so it says so.
+    const word: Record<string, string> = { "/compare": "Checked" }
+    const updated = Object.fromEntries(SITE_PAGES.map((entry) => [entry.path, entry.updated]))
+    const day = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeZone: "UTC" })
+    for (const path of ["/compare", "/pricing", "/features"]) {
+      const { html } = await page(path)
+      const meta = html.match(/<p [^>]*data-e2e="page-hero-meta"[^>]*>([\s\S]*?)<\/p>/)?.[1]
+
+      expect(meta, path).toContain(`By <a`)
+      expect(hrefOf(linkNamed(meta ?? "", "Anton Shubin")), path).toBe("https://antonshubin.com")
+      expect(meta, path).toContain(
+        `${word[path] ?? "Updated"} <time datetime="${updated[path]}">` +
+          `${day.format(new Date(`${updated[path]}T00:00:00Z`))}</time>`,
+      )
+      expect(html.indexOf("page-hero-meta"), path).toBeGreaterThan(
+        html.indexOf("Try the live demo"),
+      )
+    }
+  })
+
+  it("dates neither the home page's hero nor /compare's lead a second time", async () => {
+    const { html: home } = await page("/")
+    const { html: compare } = await page("/compare")
+
+    expect(home).not.toContain("page-hero-meta")
+    const hero = compare.slice(
+      compare.indexOf(`data-e2e="page-hero"`),
+      compare.indexOf(`data-e2e="page-hero-meta"`),
+    )
+    expect(hero).toContain("Products change; if a row is out of date")
+    expect(hero).not.toContain("<time")
   })
 
   it("takes each page's title and description in the page list from the page's own head", async () => {
