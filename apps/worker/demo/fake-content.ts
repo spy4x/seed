@@ -685,3 +685,19 @@ export const SENT_ISSUES: readonly { issue: string; subject: string; daysAgo: nu
   },
   { issue: `tags-and-colours`, subject: `Tags, colours and a calmer list`, daysAgo: 63 },
 ]
+
+/** What people rename their first group, "Personal", to. */
+export const FIRST_GROUP_NAMES = [
+  `Ideas`,
+  `Work`,
+  `Reading list`,
+  `Side project`,
+  `Recipes`,
+  `Thesis`,
+  `Freelance`,
+  `Journal`,
+  `Inbox`,
+  `Learning Spanish`,
+  `Garden`,
+  `Gift ideas`,
+] as const

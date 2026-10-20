@@ -4,6 +4,7 @@ import { GroupRole } from "@domain/groups"
 import type { TagColor } from "@domain/tags"
 import {
   DEVICES,
+  FIRST_GROUP_NAMES,
   NAME_POOLS,
   SENT_ISSUES,
   type Theme,
@@ -49,6 +50,8 @@ export interface FakeUser {
   blockedAgo: number | null
   /** When they last changed their name, or `null`. */
   profileUpdatedAgo: number | null
+  /** What they renamed their first group, "Personal", to, or `null` if they kept the name. */
+  firstGroupName: string | null
   /** The browsers they use: an entry of `DEVICES` and the address it signs in from. */
   devices: { userAgent: string; ip: string }[]
   /** Every sign-in after sign-up, oldest first, by its index in `devices`. */
@@ -276,7 +279,7 @@ function sessionsOf(tools: Tools, signIns: FakeUser["signIns"]): FakeUser["sessi
   return [...latest].sort((a, b) => a[1] - b[1]).slice(0, 2).map(([device, createdAgo]) => ({
     device,
     createdAgo,
-    lastUsedAgo: tools.int(Math.min(5, createdAgo), Math.min(createdAgo, 2 * DAY)),
+    lastUsedAgo: tools.int(Math.min(5, createdAgo), Math.min(createdAgo, 4 * DAY)),
   }))
 }
 
@@ -332,6 +335,7 @@ function fakeUsers(tools: Tools, now: Date): FakeUser[] {
       secondFactor: false,
       blockedAgo: null,
       profileUpdatedAgo: tools.chance(0.2) ? tools.between(joinedAgo - 30, 60) : null,
+      firstGroupName: tools.chance(0.4) ? tools.pick(FIRST_GROUP_NAMES) : null,
       devices,
       signIns,
       sessions: sessionsOf(tools, signIns),
@@ -353,7 +357,13 @@ function fakeUsers(tools: Tools, now: Date): FakeUser[] {
   const others = users.map((_, i) => i).filter((i) => i !== VIDEO_PERSON_INDEX)
   const recent = others.filter((i) => users[i].joinedAgo < 12 * DAY)
   for (const i of tools.sample(recent, 4)) {
-    Object.assign(users[i], { verified: false, signIns: [], sessions: [], profileUpdatedAgo: null })
+    Object.assign(users[i], {
+      verified: false,
+      signIns: [],
+      sessions: [],
+      profileUpdatedAgo: null,
+      firstGroupName: null,
+    })
   }
   const verified = others.filter((i) => users[i].verified)
   const busy = verified.filter((i) => users[i].signIns.length >= 4)

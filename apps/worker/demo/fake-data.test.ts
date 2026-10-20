@@ -123,6 +123,15 @@ Deno.test("a few people are unverified, blocked, on Google or GitHub, or use a s
   expect(users.filter((user) => user.secondFactor)).toHaveLength(8)
 })
 
+Deno.test("some people renamed their first group, and nobody who never confirmed", () => {
+  const { users } = fakeDemoData(1, NOW)
+  const renamed = users.filter((user) => user.firstGroupName !== null)
+  expect(renamed.length).toBeGreaterThan(users.length / 5)
+  expect(renamed.length).toBeLessThan(users.length * 3 / 5)
+  expect(new Set(renamed.map((user) => user.firstGroupName)).size).toBeGreaterThan(5)
+  expect(renamed.every((user) => user.verified)).toBe(true)
+})
+
 Deno.test("subscriptions include paying, past-due, cancelled, ending and trial groups", () => {
   const { subscriptions } = fakeDemoData(1, NOW)
   const statuses = subscriptions.map((s) => s.status)

@@ -269,7 +269,15 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
     expect(counts.members).toBe(
       people + data.groups.reduce((sum, group) => sum + 1 + group.members.length, 0),
     )
-    expect(counts.notes).toBe(data.groups.reduce((sum, group) => sum + group.notes.length, 0))
+    // Every person's welcome note, dated when they joined, plus the themed groups' notes.
+    expect(counts.notes).toBe(
+      people + data.groups.reduce((sum, group) => sum + group.notes.length, 0),
+    )
+    const welcomes = await sql<{ late: number }[]>`
+      SELECT COUNT(*)::int AS late FROM notes n JOIN users u ON u.id = n.created_by_user_id
+      WHERE n.title = ${WELCOME_NOTE_TITLE} AND n.created_at <> u.created_at
+    `
+    expect(welcomes[0].late).toBe(0)
     expect(counts.tags).toBe(data.groups.reduce((sum, group) => sum + group.tags.length, 0))
     expect(counts.invitations).toBe(
       data.groups.reduce((sum, group) => sum + group.invitations.length, 0),
