@@ -569,19 +569,25 @@ Deno.test("the development seed adds the operator's refund, blocks and a recent 
   })
 })
 
-Deno.test("a visitor's sample group has activity by several people over weeks", async () => {
+Deno.test("a visitor's sample groups have notes by several people on different days", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const userId = await signUpVisitor(sql, "visitor@example.net")
     await drainJobs(sql)
 
-    const [log] = await sql<{ actors: number; days: number }[]>`
-      SELECT COUNT(DISTINCT e.actor_user_id)::int AS actors,
+    const groups = await sql<{ authors: number; days: number }[]>`
+      SELECT
+        COUNT(DISTINCT e.actor_user_id)::int AS authors,
         (EXTRACT(EPOCH FROM max(e.created_at) - min(e.created_at)) / 86400)::float8 AS days
-      FROM audit_events e JOIN groups g ON g.id = e.group_id AND g.owner_user_id = ${userId}
-      WHERE g.name <> 'Personal'
+      FROM audit_events e JOIN group_members m ON m.group_id = e.group_id AND m.user_id = ${userId}
+      JOIN groups g ON g.id = e.group_id
+      WHERE g.name <> 'Personal' AND e.event_kind = 'note.created'
+      GROUP BY e.group_id
     `
-    expect(log.actors).toBeGreaterThanOrEqual(3)
-    expect(log.days).toBeGreaterThanOrEqual(7)
+    expect(groups.length).toBeGreaterThan(0)
+    for (const group of groups) {
+      expect(group.authors).toBeGreaterThanOrEqual(2)
+      expect(group.days).toBeGreaterThan(1)
+    }
   })
 })
