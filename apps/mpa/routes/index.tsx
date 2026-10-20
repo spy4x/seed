@@ -323,8 +323,8 @@ function Features(): JSX.Element {
             Icon={IconServer}
             href="/features#admin"
           >
-            Operators find a person, see their sign-in methods, sessions, groups and audit trail,
-            and block them or end their sessions. On its own host, with every action logged.
+            Operators find a person, manage groups, refund a payment and check the system's health.
+            On its own host, with every action confirmed and logged.
           </FeatureCard>
           <FeatureCard
             id="feature-website"
