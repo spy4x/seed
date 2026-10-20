@@ -52,7 +52,7 @@ export function AdminVideoStill(): JSX.Element {
             class="block h-auto w-full"
           />
           <span class="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-            <IconPlaySolid class="size-16 rounded-full bg-scrim p-5 text-scrim-foreground shadow-lg motion-safe:transition-transform motion-safe:group-hover:scale-110" />
+            <IconPlaySolid class="size-16 rounded-full bg-scrim p-4 text-scrim-foreground shadow-lg motion-safe:transition-transform motion-safe:group-hover:scale-110" />
           </span>
         </span>
       </WindowFrame>
