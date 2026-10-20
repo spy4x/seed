@@ -150,55 +150,29 @@ describe("AuthScreen in the browser", () => {
     expect(code.calls).toEqual([["012345"]])
   })
 
-  const demo = { login: "demo@example.com", password: "public-demo" }
-
-  it("shows no demo notice while the demo is off", async () => {
+  it("shows no demo line while the demo is off", async () => {
     await mount(<AuthScreen {...authDefaults} />)
-    expect(root!.querySelector("[data-e2e=demo-credentials]")).toBeNull()
+    expect(root!.querySelector("[data-e2e=demo-notice]")).toBeNull()
   })
 
-  it("keeps what was typed and the focus when the demo notice arrives", async () => {
-    await mount(<AuthScreen {...authDefaults} />)
-    await type("input[name=login]", "typed-before@example.com")
-    find<HTMLInputElement>("input[name=login]").focus()
+  it("says on sign-in and sign-up that the demo is public, wiped nightly and starts with samples", async () => {
+    for (const screen of ["sign-in", "sign-up"] as const) {
+      await mount(<AuthScreen {...authDefaults} screen={screen} demo />)
+      const notice = find("[data-e2e=demo-notice]")
+      expect(notice.textContent).toContain("public demo")
+      expect(notice.textContent).toContain("wiped every night")
+      expect(notice.textContent).toContain("sample data")
+      // Standing information, found while reading: no live region announces it.
+      expect(notice.getAttribute("role")).toBeNull()
+      // The line comes before the form, which keeps the page's one primary action.
+      expect(
+        notice.compareDocumentPosition(find("form")) & window.Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy()
+      expect(notice.querySelector("button, a")).toBeNull()
+    }
 
-    await rerender(<AuthScreen {...authDefaults} demo={demo} />)
-    expect(find("[data-e2e=demo-credentials]")).toBeTruthy()
-    expect(find<HTMLInputElement>("input[name=login]").value).toBe("typed-before@example.com")
-    expect(document.activeElement?.getAttribute("name")).toBe("login")
-  })
-
-  it("signs in with the shared demo account in one press, and not while busy", async () => {
-    const signIn = spy<[{ login: string; password: string }]>()
-    await mount(<AuthScreen {...authDefaults} demo={demo} onSignIn={signIn.fn} />)
-
-    const notice = find("[data-e2e=demo-credentials]")
-    expect(notice.textContent).toContain("demo@example.com")
-    expect(notice.textContent).toContain("public-demo")
-    expect(notice.textContent).toContain("midnight Pacific time")
-    // Standing instructions, found while reading: no live region announces them when they arrive.
-    expect(notice.getAttribute("role")).toBeNull()
-    // The notice comes before the form, and the form's own submit stays the primary action.
-    expect(
-      notice.compareDocumentPosition(find("form")) & window.Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy()
-    await act(() => find<HTMLButtonElement>("[data-e2e=demo-sign-in]").click())
-    expect(signIn.calls).toEqual([[{ login: demo.login, password: demo.password }]])
-
-    await rerender(<AuthScreen {...authDefaults} demo={demo} busy onSignIn={signIn.fn} />)
-    expect(find<HTMLButtonElement>("[data-e2e=demo-sign-in]").disabled).toBe(true)
-  })
-
-  it("points sign-up to the shared account and shows nothing on the code step", async () => {
-    await mount(<AuthScreen {...authDefaults} screen="sign-up" demo={demo} />)
-    expect(find("[data-e2e=demo-credentials]").textContent).toContain("Use the demo account")
-    expect(find("[data-e2e=demo-credentials]").getAttribute("role")).toBeNull()
-    expect(root!.querySelector("[data-e2e=demo-sign-in]")).toBeNull()
-
-    await rerender(
-      <AuthScreen {...authDefaults} screen="one-time-code" isMfaRequired demo={demo} />,
-    )
-    expect(root!.querySelector("[data-e2e=demo-credentials]")).toBeNull()
+    await rerender(<AuthScreen {...authDefaults} screen="one-time-code" isMfaRequired demo />)
+    expect(root!.querySelector("[data-e2e=demo-notice]")).toBeNull()
   })
 })
 

@@ -63,6 +63,15 @@ describe("the SPA's runtime configuration", () => {
     }
   })
 
+  it("turns the demo flag on for true only, and keeps the rest of the file for any value", async () => {
+    for (
+      const [value, demo] of [[`"true"`, true], [`true`, true], [`"1"`, false], [`"no"`, false]]
+    ) {
+      const config = await loadRuntimeConfig(serving(`{"env":"prod","demo":${value}}`).fetcher)
+      expect(config).toEqual({ env: "prod", demo })
+    }
+  })
+
   it("reads the module switches, written as booleans or as the container's text", async () => {
     const asBooleans = await loadRuntimeConfig(serving(`{"realtime":false,"offline":true}`).fetcher)
     const asText = await loadRuntimeConfig(serving(`{"realtime":"false","offline":"true"}`).fetcher)

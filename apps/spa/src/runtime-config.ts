@@ -7,13 +7,15 @@ import { loadRuntimeConfig as loadConfigFile } from "@spy4x/platform/browser/run
  * is optional: a missing one means "the default". A key not named here is dropped.
  *
  * `realtime` and `offline` switch the WebSocket module and the local-data module off when they are
- * `false` (`apps/spa/src/modules.ts`, ADR 003); both run by default.
+ * `false` (`apps/spa/src/modules.ts`, ADR 003); both run by default. `demo` is `true` only while
+ * the public demo is on (docs/demo.md); any other value leaves it off.
  */
 const RuntimeConfigSchema = type({
   "env?": "string",
   "errorReportDsn?": "string",
   "realtime?": moduleSwitch("realtime"),
   "offline?": moduleSwitch("offline"),
+  "demo?": type("unknown").pipe((value): boolean => String(value) === "true"),
 }).onUndeclaredKey("delete")
 
 /**
