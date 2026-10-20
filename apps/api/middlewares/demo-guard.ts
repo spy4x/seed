@@ -20,27 +20,13 @@ export const DEMO_TARGET_REFUSAL =
 export const DEMO_INVITATION_MAIL_REFUSAL =
   `The shared demo account cannot mail invitations. Create the invitation without mail and copy its link instead.`
 
-/** Why the demo refuses an address outside example.com. */
-export const DEMO_ADDRESS_REFUSAL =
-  `The public demo takes only made-up addresses at example.com, such as ada@example.com, because anyone can sign in as its operator and see them.`
+/** Why the demo operator may not act on a real person's account. */
+export const DEMO_REAL_PERSON_REFUSAL =
+  `In the public demo, real people's accounts are hidden from the operator, so they cannot be blocked, signed out, sent a reset or given another role. Try it on one of the example.com people.`
 
-/** Why the demo refuses a sign-up with a real address; a made-up one would never get its code. */
-export const DEMO_SIGN_UP_REFUSAL =
-  `The public demo does not take real e-mail addresses, because anyone can sign in as its operator and see them. Sign in with the shared demo account instead.`
-
-/** The only domain the demo stores addresses of: no real person's, so the public operator sees none. */
-const DEMO_ADDRESS_DOMAIN = `@example.com`
-
-/** A sign-up with a password, whose body carries the new account's `email`. */
-const SIGN_UP = /^\/api\/auth\/password\/sign-up$/
-
-/** Requests whose JSON body carries an `email` the demo stores, by path (all are POST). */
-const ADDRESS_ROUTES: readonly RegExp[] = [
-  SIGN_UP,
-  /^\/api\/auth\/email\/change$/,
-  /^\/api\/subscribers$/,
-  /^\/api\/groups\/[^/]+\/invitations$/,
-]
+/** Why the demo operator may not mail or remove a real newsletter subscriber. */
+export const DEMO_REAL_SUBSCRIBER_REFUSAL =
+  `In the public demo, real subscribers are hidden from the operator, so they cannot be mailed or removed. Try it on one of the example.com subscribers.`
 
 /**
  * What a shared account may not do to itself, by method and path: anything that would lock the
@@ -65,8 +51,17 @@ const ADMIN_USER_ACTION =
 /** A new invitation of a group. */
 const INVITATION_CREATE = /^\/api\/groups\/[^/]+\/invitations$/
 
-/** Answers which of `userIds` are shared demo accounts (`demoAccountIds`). */
+/** An operator's action on one newsletter subscriber, whose body carries the `email`. */
+const ADMIN_SUBSCRIBER_ACTION = /^\/api\/admin\/newsletter\/subscribers\/(resend|remove)$/
+
+/** Answers which of `userIds` match: the shared accounts (`demoAccountIds`) or real people (`realPersonIds`). */
 export type DemoAccountLookup = (userIds: readonly number[]) => Promise<Set<number>>
+
+/** What the guard looks up. */
+export interface DemoGuardLookups {
+  isDemo: DemoAccountLookup
+  isRealPerson: DemoAccountLookup
+}
 
 /**
  * Guards the public demo's shared accounts (docs/demo.md), mounted only while `DEMO_MODE` is on.
@@ -77,47 +72,54 @@ export type DemoAccountLookup = (userIds: readonly number[]) => Promise<Set<numb
  *   end sessions or delete itself;
  * - an operator may not block, sign out, reset or change the role of a shared account;
  * - a shared account may not mail an invitation (a link without mail still works);
- * - nobody may give the demo an address outside example.com (sign-up, address change, newsletter,
- *   invitation), because the operator's password is public and the admin panel lists and exports
- *   every address.
+ * - an operator may not act on, mail or remove a real person (an address outside example.com),
+ *   because the operator's password is public; `createDemoAdminMask` hides their addresses too.
  *
  * A refusal is a 403 with a message the screens show. Everything else, including every other
  * request of a shared account, passes; the nightly wipe undoes it.
  */
-export function createDemoGuard(isDemo: DemoAccountLookup): MiddlewareHandler<APIContext> {
+export function createDemoGuard(
+  { isDemo, isRealPerson }: DemoGuardLookups,
+): MiddlewareHandler<APIContext> {
   return async (c, next) => {
     const method = c.req.method
     const path = c.req.path
     const actorId = c.get(`auth`)?.user.id ?? null
 
     const reads = method === `POST` &&
-      (ADDRESS_ROUTES.some((p) => p.test(path)) || INVITATION_CREATE.test(path))
+      (INVITATION_CREATE.test(path) || ADMIN_SUBSCRIBER_ACTION.test(path))
     const body = reads ? await readAndKeepBody(c) : null
     if (body instanceof Response) return body
-    const email = typeof body?.email === `string` ? body.email.trim().toLowerCase() : ``
-    if (email && ADDRESS_ROUTES.some((p) => p.test(path)) && !email.endsWith(DEMO_ADDRESS_DOMAIN)) {
-      return c.json(
-        { error: SIGN_UP.test(path) ? DEMO_SIGN_UP_REFUSAL : DEMO_ADDRESS_REFUSAL },
-        403,
-      )
+    if (method === `POST` && ADMIN_SUBSCRIBER_ACTION.test(path)) {
+      const email = typeof body?.email === `string` ? body.email : ``
+      if (!isExampleAddress(email)) return c.json({ error: DEMO_REAL_SUBSCRIBER_REFUSAL }, 403)
     }
 
     const target = method === `POST` ? ADMIN_USER_ACTION.exec(path) : null
-    if (target && (await isDemo([Number(target[1])])).size > 0) {
-      return c.json({ error: DEMO_TARGET_REFUSAL }, 403)
+    if (target) {
+      const id = Number(target[1])
+      if ((await isDemo([id])).size > 0) return c.json({ error: DEMO_TARGET_REFUSAL }, 403)
+      if ((await isRealPerson([id])).size > 0) {
+        return c.json({ error: DEMO_REAL_PERSON_REFUSAL }, 403)
+      }
     }
     if (actorId === null) return await next()
 
     if (OWN_ACCOUNT_ROUTES.some(([m, pattern]) => m === method && pattern.test(path))) {
       if ((await isDemo([actorId])).size > 0) return c.json({ error: DEMO_ACCOUNT_REFUSAL }, 403)
     } else if (method === `POST` && INVITATION_CREATE.test(path)) {
-      const mails = typeof body === `object` && body !== null && body.sendEmail === true
+      const mails = body?.sendEmail === true
       if (mails && (await isDemo([actorId])).size > 0) {
         return c.json({ error: DEMO_INVITATION_MAIL_REFUSAL }, 403)
       }
     }
     await next()
   }
+}
+
+/** Whether `email` is at example.com, the domain of the demo's own made-up people. */
+export function isExampleAddress(email: string): boolean {
+  return /@example\.com$/i.test(email.trim())
 }
 
 /**

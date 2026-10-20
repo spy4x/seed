@@ -26,6 +26,7 @@ import {
 } from "@domain/identity"
 import { BILLING_AUDIT_EVENT_TYPES } from "@domain/billing"
 import { likeContains } from "@spy4x/server/db"
+import { keyAddressMatches } from "./admin-users.ts"
 
 /** The password method's name in `auth_keys`, as `@spy4x/server/auth/password` stores it. */
 const PASSWORD_METHOD = "password"
@@ -95,7 +96,7 @@ const MAX_PERSON_ID = 2_147_483_647
  * is when it is a number a person's id can be. A longer number is searched for as a word, like
  * any other text, so it never reaches Postgres as an `int4` it cannot hold.
  */
-function personIds(sql: postgres.Sql, query: string) {
+function personIds(sql: postgres.Sql, query: string, hideRealAddresses: boolean) {
   if (/^[1-9]\d{0,9}$/.test(query) && Number(query) <= MAX_PERSON_ID) {
     return sql`SELECT ${Number(query)}::int4 AS id`
   }
@@ -103,11 +104,8 @@ function personIds(sql: postgres.Sql, query: string) {
   for (const word of query.split(/\s+/).filter(Boolean)) {
     const pattern = likeContains(word)
     where = sql`${where} AND (
-      u.first_name ILIKE ${pattern} OR u.last_name ILIKE ${pattern} OR EXISTS (
-        SELECT 1 FROM auth_keys k
-        WHERE k.user_id = u.id
-          AND (k.email ILIKE ${pattern} OR (k.method = ${PASSWORD_METHOD} AND k.subject ILIKE ${pattern}))
-      )
+      u.first_name ILIKE ${pattern} OR u.last_name ILIKE ${pattern} OR
+        ${keyAddressMatches(sql, sql`u.id`, pattern, hideRealAddresses)}
     )`
   }
   return sql`SELECT u.id FROM users u WHERE ${where}`
@@ -150,6 +148,7 @@ function accountBranch(
   filter: AdminAuditFilter,
   key: AdminAuditPageKey | null,
   limit: number,
+  hideRealAddresses: boolean,
 ) {
   const event = parseAuditEvent(filter.event)
   if (event?.source === "activity") return null
@@ -170,7 +169,7 @@ function accountBranch(
     )`
   }
   if (filter.person) {
-    const people = personIds(sql, filter.person)
+    const people = personIds(sql, filter.person, hideRealAddresses)
     // The person the row is about, or the operator who acted on them.
     where = sql`${where} AND (user_id IN (${people}) OR EXISTS (
       SELECT 1 FROM (${people}) p
@@ -197,6 +196,7 @@ function activityBranch(
   filter: AdminAuditFilter,
   key: AdminAuditPageKey | null,
   limit: number,
+  hideRealAddresses: boolean,
 ) {
   const event = parseAuditEvent(filter.event)
   // Group activity keeps no address: a filter by one finds none of it.
@@ -208,7 +208,7 @@ function activityBranch(
       AND event_kind IN ${sql([...ADMIN_OPERATOR_ACTIVITY_KINDS])}`
   }
   if (filter.person) {
-    const people = personIds(sql, filter.person)
+    const people = personIds(sql, filter.person, hideRealAddresses)
     where = sql`${where} AND (actor_user_id IN (${people}) OR target_user_id IN (${people}))`
   }
   // Only the job's kind leaves `details`, and only for the operator's own entry: every other
@@ -237,10 +237,11 @@ export async function listAdminAudit(
   filter: AdminAuditFilter,
   limit: number,
   after: AdminAuditPageKey | null,
+  hideRealAddresses = false,
 ): Promise<{ entries: AdminAuditEntry[]; next: AdminAuditPageKey | null }> {
   const branches = [
-    accountBranch(sql, filter, after, limit + 1),
-    activityBranch(sql, filter, after, limit + 1),
+    accountBranch(sql, filter, after, limit + 1, hideRealAddresses),
+    activityBranch(sql, filter, after, limit + 1, hideRealAddresses),
   ].filter((branch) => branch !== null)
   if (branches.length === 0) return { entries: [], next: null }
   const union = branches.length === 2 ? sql`${branches[0]} UNION ALL ${branches[1]}` : branches[0]

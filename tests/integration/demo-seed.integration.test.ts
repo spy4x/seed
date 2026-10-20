@@ -3,8 +3,13 @@ import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
 import { UserRole } from "@domain/identity"
-import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL } from "@server/auth/demo-accounts.ts"
+import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL, realPersonIds } from "@server/auth/demo-accounts.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
+import { listAdminUsers } from "@server/auth/admin-users.ts"
+import { listAdminSubscribers } from "@server/subscribers/admin-newsletter.ts"
+import { createListCrypto } from "@server/subscribers/subscribers.ts"
+import { ADMIN_NO_FILTER } from "@domain/identity"
+import { ADMIN_SUBSCRIBERS_NO_FILTER, DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
@@ -173,6 +178,58 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
       JOIN auth_keys k ON k.user_id = s.user_id AND k.email = ${DEMO_USER_EMAIL}
     `
     expect(selected?.name).toBe(data.groups.find((group) => group.owner === "demo")!.name)
+  })
+})
+
+Deno.test("only a person with an address outside example.com counts as real", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
+    const seeded = (await sql<{ id: number }[]>`SELECT id FROM auth_users`).map((row) => row.id)
+    expect(await realPersonIds(sql, seeded)).toEqual(new Set())
+
+    const [{ id }] = await sql<{ id: number }[]>`INSERT INTO auth_users DEFAULT VALUES RETURNING id`
+    await sql`
+      INSERT INTO auth_keys (user_id, method, subject, email)
+      VALUES (${id}, 'password', 'ada@mail.example.com', 'ada@mail.example.com')
+    `
+    expect(await realPersonIds(sql, [...seeded, id])).toEqual(new Set([id]))
+  })
+})
+
+Deno.test("in the demo, an admin search cannot find a real address it shows masked", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
+    const email = "ada.lovelace@gmail.com"
+    const [{ id }] = await sql<{ id: number }[]>`INSERT INTO auth_users DEFAULT VALUES RETURNING id`
+    await sql`INSERT INTO users (id) VALUES (${id})`
+    await sql`
+      INSERT INTO auth_keys (user_id, method, subject, email) VALUES (${id}, 'password', ${email}, ${email})
+    `
+    const key = await (await createListCrypto(SUBSCRIBERS, DEFAULT_SUBSCRIBER_LIST)).subscriberKey(
+      email,
+    )
+    await sql`
+      INSERT INTO subscribers (list_id, email, key, subscribed_at)
+      VALUES (${DEFAULT_SUBSCRIBER_LIST}, ${email}, ${key}, now())
+    `
+    const people = (hide: boolean, query: string) =>
+      listAdminUsers(sql, { ...ADMIN_NO_FILTER, query }, 50, hide)
+    const subscribers = (hide: boolean, query: string) =>
+      listAdminSubscribers(
+        sql,
+        DEFAULT_SUBSCRIBER_LIST,
+        { ...ADMIN_SUBSCRIBERS_NO_FILTER, query },
+        50,
+        hide,
+      )
+
+    expect((await people(false, "lovelace")).total).toBe(1)
+    expect((await people(true, "lovelace")).total).toBe(0)
+    expect((await subscribers(false, "lovelace")).total).toBe(1)
+    expect((await subscribers(true, "lovelace")).total).toBe(0)
+    // The made-up people and subscribers are still found by address.
+    expect((await people(true, "@example.com")).total).toBe(FAKE_COUNTS.users + 2)
+    expect((await subscribers(true, "@example.com")).total).toBe(FAKE_COUNTS.subscribers)
   })
 })
 

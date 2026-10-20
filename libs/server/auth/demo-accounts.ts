@@ -35,3 +35,21 @@ export async function demoAccountIds(
   `
   return new Set(rows.map((row) => row.userId))
 }
+
+/**
+ * The ids among `userIds` of real people: anyone with a sign-in key whose address is outside
+ * example.com, the domain of the demo's own made-up people, proven or not. The demo operator may
+ * not act on them.
+ */
+export async function realPersonIds(
+  sql: postgres.Sql,
+  userIds: readonly number[],
+): Promise<Set<number>> {
+  if (userIds.length === 0) return new Set()
+  const rows = await sql<{ userId: number }[]>`
+    SELECT DISTINCT user_id AS "userId" FROM auth_keys
+    WHERE user_id IN ${sql(userIds)} AND email IS NOT NULL
+      AND email NOT LIKE '%@example.com'
+  `
+  return new Set(rows.map((row) => row.userId))
+}

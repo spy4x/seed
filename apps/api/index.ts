@@ -59,8 +59,9 @@ import { toRequestError } from "./services/realtime.ts"
 import { createCallRoute } from "./routes/call.ts"
 import { createHealthRoute } from "./routes/health.ts"
 import { createDemoRoute } from "./routes/demo.ts"
+import { createDemoAdminMask } from "./middlewares/demo-admin-mask.ts"
 import { createDemoGuard } from "./middlewares/demo-guard.ts"
-import { demoAccountIds } from "@server/auth/demo-accounts.ts"
+import { demoAccountIds, realPersonIds } from "@server/auth/demo-accounts.ts"
 import { isCacheConnected, kv } from "./services/cache.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
@@ -130,7 +131,16 @@ app.route(
     adminUrl: config.adminAppUrl,
   }),
 )
-if (config.demoPassword !== null) app.use("*", createDemoGuard((ids) => demoAccountIds(sql, ids)))
+if (config.demoPassword !== null) {
+  app.use("*", createDemoAdminMask())
+  app.use(
+    "*",
+    createDemoGuard({
+      isDemo: (ids) => demoAccountIds(sql, ids),
+      isRealPerson: (ids) => realPersonIds(sql, ids),
+    }),
+  )
+}
 // The browser sends the web app's origin; behind the TLS-terminating proxy the API sees `http://`.
 const expectedOrigin = new URL(config.webAppUrl).origin
 const mutationGuards = createMutationGuards(config.webAppUrl, config.adminAppUrl)
