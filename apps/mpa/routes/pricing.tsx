@@ -12,6 +12,7 @@ import { HIRE_PAGE_URL, HIRE_PRICES } from "../hire.ts"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
+  SITE_AUTHOR,
   siteBreadcrumbsJsonLd,
   SiteFrame,
   type SitePageHead,
@@ -19,6 +20,12 @@ import {
   spaLinks,
 } from "../site.tsx"
 import { define } from "../utils.ts"
+
+/**
+ * The day this page's prices or wording last changed: the hero's "Updated" line and the sitemap's
+ * `lastmod`. Change it with them.
+ */
+export const PRICING_UPDATED = `2026-10-21`
 
 /** The page's title and description, as search results and social previews show them. */
 export const PRICING_HEAD = {
@@ -93,6 +100,8 @@ export default define.page(function Pricing({ state }) {
         eyebrow="Pricing"
         title="Seed is free. Here is what it costs to run."
         lead="Seed is a free, MIT-licensed SaaS starter, with no paid tier and no account. You pay only for one server you rent and for optional services such as Stripe."
+        author={SITE_AUTHOR}
+        updated={PRICING_UPDATED}
       >
         <div class="flex w-full flex-col gap-4 pt-2 sm:w-auto sm:flex-row">
           <Button

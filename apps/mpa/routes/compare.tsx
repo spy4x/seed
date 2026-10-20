@@ -12,6 +12,7 @@ import { SectionIntro } from "../components/section-intro.tsx"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
+  SITE_AUTHOR,
   SITE_NAME,
   siteBreadcrumbsJsonLd,
   SiteFrame,
@@ -21,7 +22,10 @@ import {
 } from "../site.tsx"
 import { define } from "../utils.ts"
 
-/** The day every row was read off the products' own pages. Re-check at least every three months. */
+/**
+ * The day every row was read off the products' own pages: the hero's "Checked" line, the JSON-LD
+ * `dateModified` and the sitemap's `lastmod`. Re-check at least every three months.
+ */
 export const CHECKED_ON = `2026-10-16`
 /** {@link CHECKED_ON} as people read it. */
 const CHECKED_ON_TEXT = `16 October 2026`
@@ -272,13 +276,15 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       eyebrow="Compare"
       title="How Seed compares to other SaaS starters"
       lead="Seed is a free, MIT-licensed SaaS starter for products used by teams, and it runs on one server you rent. Here it is side by side with five other SaaS starters and boilerplates."
+      author={SITE_AUTHOR}
+      updated={CHECKED_ON}
+      labels={{ updated: `Checked` }}
     >
       <p class="max-w-2xl text-muted text-pretty">
         I build Seed, so I am not neutral. To make up for it, every claim about another product
-        links to the page I read it on, and the table shows where Seed is weaker. Checked on{" "}
-        <time datetime={CHECKED_ON}>{CHECKED_ON_TEXT}</time>. Products change; if a row is out of
-        date, <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">open an issue</a>
-        {" "}
+        links to the page I read it on, and the table shows where Seed is weaker. Products change;
+        if a row is out of date,{" "}
+        <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">open an issue</a>{" "}
         and I will fix it.
       </p>
       <div class="mt-2 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">

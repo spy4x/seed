@@ -28,6 +28,7 @@ import { PageHero } from "@spy4x/preact-ui/page-hero"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
+  SITE_AUTHOR,
   siteBreadcrumbsJsonLd,
   SiteFrame,
   type SitePageHead,
@@ -35,6 +36,12 @@ import {
   spaLinks,
 } from "../site.tsx"
 import { define } from "../utils.ts"
+
+/**
+ * The day this page's feature list or wording last changed: the hero's "Updated" line and the
+ * sitemap's `lastmod`. Change it with them.
+ */
+export const FEATURES_UPDATED = `2026-10-21`
 
 /** The page's title and description, as search results and social previews show them. */
 export const FEATURES_HEAD = {
@@ -432,6 +439,8 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       eyebrow="Features"
       title="Everything Seed ships, and what it does not yet"
       lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, 2FA, teams with roles, per-seat Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
+      author={SITE_AUTHOR}
+      updated={FEATURES_UPDATED}
     >
       <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button

@@ -31,9 +31,8 @@ test.describe("without JavaScript", () => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "How Seed compares to other SaaS starters",
     )
-    await expect(page.locator("main time[datetime='2026-10-16']").first()).toHaveText(
-      "16 October 2026",
-    )
+    await expect(page.locator("[data-e2e=page-hero-meta] time[datetime='2026-10-16']"))
+      .toHaveText("16 Oct 2026")
 
     const table = page.getByRole("table", { name: CAPTION })
     await expect(table.locator("caption")).toHaveText(CAPTION)

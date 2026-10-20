@@ -4,12 +4,14 @@ import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { IconGitHub, IconSprout } from "@spy4x/preact-icons"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { Button } from "@spy4x/preact-ui/button"
+import { FormatContext } from "@spy4x/preact-ui/format"
 import { Input } from "@spy4x/preact-ui/input"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { SEOHead } from "@spy4x/preact-system/seo-head"
 import { SiteFooter, type SiteFooterGroup } from "@spy4x/preact-system/site-footer"
 import { SiteHeader } from "@spy4x/preact-system/site-header"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
+import { createFormatters } from "@spy4x/time/format"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME } from "./brand.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
@@ -97,6 +99,15 @@ export const PERSON_JSON_LD = {
     url: `https://neatsoft.dev`,
   },
 } as const
+
+/** The author a dated page names in its hero, linked to their own site. */
+export const SITE_AUTHOR = { name: PERSON_JSON_LD.name, href: AUTHOR_URL } as const
+
+/**
+ * How the website writes a date, `16 Oct 2026`: British English like its prose, in UTC, so the
+ * server's own locale and zone never change what a page says.
+ */
+const SITE_FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC` })
 
 /** What Seed is, in the words of the home page's lead, for the product's structured data. */
 const SOFTWARE_DESCRIPTION = `Seed is a free, MIT-licensed SaaS starter with sign-in and ` +
@@ -244,7 +255,9 @@ export function SiteFrame(
           </Button>
         }
       />
-      <main id="main" tabIndex={-1} class="outline-none">{children}</main>
+      <main id="main" tabIndex={-1} class="outline-none">
+        <FormatContext.Provider value={SITE_FORMAT}>{children}</FormatContext.Provider>
+      </main>
       <SiteFooter
         brand={
           <div class="flex max-w-sm flex-col gap-3">

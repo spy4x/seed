@@ -1,8 +1,8 @@
 import { ADMIN_HEAD, ADMIN_UPDATED } from "./routes/admin.tsx"
 import { CHECKED_ON, COMPARE_HEAD } from "./routes/compare.tsx"
-import { FEATURES_HEAD } from "./routes/features.tsx"
+import { FEATURES_HEAD, FEATURES_UPDATED } from "./routes/features.tsx"
 import { HOME_HEAD } from "./routes/index.tsx"
-import { PRICING_HEAD } from "./routes/pricing.tsx"
+import { PRICING_HEAD, PRICING_UPDATED } from "./routes/pricing.tsx"
 import { PRIVACY_HEAD } from "./routes/privacy.tsx"
 import { TERMS_HEAD } from "./routes/terms.tsx"
 import { SUBSCRIBE_HEAD } from "./subscribers.tsx"
@@ -36,10 +36,10 @@ function sitePage(
  */
 export const SITE_PAGES: readonly SitePage[] = [
   sitePage(`/`, HOME_HEAD),
-  sitePage(`/features`, FEATURES_HEAD),
+  sitePage(`/features`, FEATURES_HEAD, FEATURES_UPDATED),
   sitePage(`/admin`, ADMIN_HEAD, ADMIN_UPDATED),
   sitePage(`/compare`, COMPARE_HEAD, CHECKED_ON),
-  sitePage(`/pricing`, PRICING_HEAD),
+  sitePage(`/pricing`, PRICING_HEAD, PRICING_UPDATED),
   sitePage(`/subscribe`, SUBSCRIBE_HEAD),
   sitePage(`/privacy`, PRIVACY_HEAD, PRIVACY_HEAD.updated),
   sitePage(`/terms`, TERMS_HEAD, TERMS_HEAD.updated),
