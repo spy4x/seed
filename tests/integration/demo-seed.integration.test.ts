@@ -7,13 +7,20 @@ import { UserRole } from "@domain/identity"
 import { DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { WELCOME_NOTE_TITLE } from "@server/jobs/starter-data.ts"
+import { postgresFakePayments } from "@server/billing/fake-payments.ts"
 import { readOnboarding } from "@server/auth/onboarding.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
-import { FAKE_COUNTS, fakeDemoData, fakeWorkspace } from "../../apps/worker/demo/fake-data.ts"
+import {
+  FAKE_COUNTS,
+  fakeDemoData,
+  fakePeople,
+  fakeWorkspace,
+  VIDEO_PERSON_INDEX,
+} from "../../apps/worker/demo/fake-data.ts"
 import {
   type DemoSeedOptions,
   seedDemo,
@@ -26,6 +33,20 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { SessionStatus } from "@spy4x/server/sign-in"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { BILLING_AUDIT_EVENTS, BillingStatus } from "@domain/billing"
+import { AuthAuditEventType } from "@domain/identity"
+import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
+import { readAdminStats } from "@server/auth/admin-stats.ts"
+import {
+  listAdminBillingCustomers,
+  readAdminBillingFigures,
+  readAdminBillingRecord,
+} from "@server/billing/admin-billing.ts"
+import { readLastBackup } from "@server/jobs/admin-system.ts"
+import {
+  listAdminNewsletterSends,
+  readAdminNewsletterStats,
+} from "@server/subscribers/admin-newsletter.ts"
 
 /**
  * The public demo's seed, sample groups, wipe and reset (docs/demo.md) against a real Postgres with every
@@ -41,11 +62,14 @@ const PEPPER = "integration-test-only-pepper-0123456789"
 const COOKIE_SECRET = "integration-test-only-cookie-secret-0123456789"
 const PASSWORD = "Passw0rd!"
 const SUBSCRIBERS = { secret: DEV_SUBSCRIBERS_SECRET, previousSecrets: [] }
+/** The moment the seed's history counts back from: now, so the database's own clock agrees. */
+const NOW = new Date()
 const OPTIONS: DemoSeedOptions = {
   pepper: PEPPER,
   adminPassword: null,
   dataSeed: 7,
   subscribers: SUBSCRIBERS,
+  now: NOW,
 }
 /** What `deno task db:seed` passes in development: the administrator too. */
 const DEV_OPTIONS: DemoSeedOptions = { ...OPTIONS, adminPassword: PASSWORD }
@@ -203,14 +227,20 @@ async function accountOf(sql: postgres.Sql, address: string) {
   return row
 }
 
-Deno.test("the public demo's seed creates no administrator and no session", async () => {
+Deno.test("the public demo's seed creates no administrator, operator history or backup", async () => {
   await withSchema(async (sql) => {
     expect(await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)).toBe(true)
 
     // The public demo has no administrator: its password would be public.
     expect(await sql`SELECT 1 FROM auth_keys WHERE email = ${DEV_ADMIN_EMAIL}`).toHaveLength(0)
     expect(await sql`SELECT 1 FROM users WHERE role >= ${UserRole.OPERATOR}`).toHaveLength(0)
-    expect((await count(sql)).activeSessions).toBe(0)
+    expect(
+      await sql`SELECT 1 FROM auth_audits WHERE event_type IN ${
+        sql([AuthAuditEventType.USER_BLOCKED, BILLING_AUDIT_EVENTS.paymentRefunded])
+      }`,
+    ).toHaveLength(0)
+    // The server's own backup service records its backups; the demo seed never fakes one.
+    expect(await readLastBackup(sql)).toBeNull()
   })
 })
 
@@ -230,7 +260,7 @@ Deno.test("the development seed adds an administrator", async () => {
 Deno.test("the demo seed fills the database with the fake data", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
-    const data = fakeDemoData(OPTIONS.dataSeed)
+    const data = fakeDemoData(OPTIONS.dataSeed, NOW)
     const people = FAKE_COUNTS.users
 
     const counts = await count(sql)
@@ -240,13 +270,24 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
     expect(counts.members).toBe(
       people + data.groups.reduce((sum, group) => sum + 1 + group.members.length, 0),
     )
-    expect(counts.notes).toBe(data.groups.reduce((sum, group) => sum + group.notes.length, 0))
+    // Every person's welcome note, dated when they joined, their own notes, and the groups' notes.
+    expect(counts.notes).toBe(
+      people + data.users.reduce((sum, user) => sum + user.ownNotes.length, 0) +
+        data.groups.reduce((sum, group) => sum + group.notes.length, 0),
+    )
+    const welcomes = await sql<{ late: number }[]>`
+      SELECT COUNT(*)::int AS late FROM notes n JOIN users u ON u.id = n.created_by_user_id
+      WHERE n.title = ${WELCOME_NOTE_TITLE} AND n.created_at <> u.created_at
+    `
+    expect(welcomes[0].late).toBe(0)
     expect(counts.tags).toBe(data.groups.reduce((sum, group) => sum + group.tags.length, 0))
     expect(counts.invitations).toBe(
       data.groups.reduce((sum, group) => sum + group.invitations.length, 0),
     )
     expect(counts.subscribers).toBe(FAKE_COUNTS.subscribers)
-    expect(counts.activeSessions).toBe(0)
+    expect(counts.activeSessions).toBe(
+      data.users.reduce((sum, user) => sum + user.sessions.length, 0),
+    )
   })
 })
 
@@ -290,7 +331,7 @@ Deno.test("a visitor who signs up to the demo gets sample groups once and opens 
     ])
     expect(workspace.selected).toBe(owned.name)
     // The population's jobs ran too, and gave the fake people no sample groups.
-    const population = FAKE_COUNTS.users + fakeDemoData(OPTIONS.dataSeed).groups.length
+    const population = FAKE_COUNTS.users + fakeDemoData(OPTIONS.dataSeed, NOW).groups.length
     expect((await count(sql)).groups).toBe(population + 1 + sample.length)
     // The sample groups' members are the population's fake people.
     const [{ members }] = await sql<{ members: number }[]>`
@@ -317,7 +358,7 @@ Deno.test("a visitor who signs up to the demo gets sample groups once and opens 
 
     // A retried job and a second sign-in add nothing.
     const before = await count(sql)
-    await sql`UPDATE starter_data_requests SET done_at = NULL`
+    await sql`UPDATE starter_data_requests SET done_at = NULL WHERE user_id = ${userId}`
     await sql`UPDATE outbox_events SET processed_at = NULL, available_at = now()`
     await drainJobs(sql)
     expect(await canSignIn(sql, "visitor@example.net", PASSWORD)).toBe(true)
@@ -330,12 +371,23 @@ Deno.test("a visitor still gets the group they own when the population is of ano
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const userId = await signUpVisitor(sql, "late@example.net")
-    // The sample groups of the next day's seed: none of its fake people have accounts.
-    await drainJobs(sql, OPTIONS.dataSeed + 1)
+    // The sample groups of the next day's seed: few of its fake people have accounts today.
+    const next = OPTIONS.dataSeed + 1
+    await drainJobs(sql, next)
 
-    const owned = fakeWorkspace(OPTIONS.dataSeed + 1).find((group) => group.owner === "you")!
+    const sample = fakeWorkspace(next)
+    const owned = sample.find((group) => group.owner === "you")!
+    // A group whose made-up owner has no account today is left out; the owned one never is.
+    const today = new Set(fakePeople(OPTIONS.dataSeed).map((person) => person.email))
+    const kept = sample.filter((group) =>
+      group.owner === "you" || today.has(fakePeople(next)[group.owner].email)
+    )
+    expect(kept.length).toBeLessThan(sample.length)
     const workspace = await workspaceOf(sql, userId)
-    expect(workspace.groups.map((group) => group.name)).toEqual(["Personal", owned.name])
+    expect(workspace.groups.map((group) => group.name)).toEqual([
+      "Personal",
+      ...kept.map((group) => group.name),
+    ])
     expect(workspace.selected).toBe(owned.name)
   })
 })
@@ -408,5 +460,207 @@ Deno.test("the reset wipes, seeds again and schedules the nightly cleanup", asyn
     expect(await count(sql)).toEqual(first)
     const cleanup = await sql`SELECT 1 FROM outbox_events WHERE event_kind = ${OUTBOX_CLEANUP_JOB}`
     expect(cleanup.length).toBe(1)
+  })
+})
+
+Deno.test("the demo seed's history fills the admin panel's screens", async (t) => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
+
+    await t.step(
+      "the seed spreads sign-ups and activity over the dashboard's 30 days",
+      async () => {
+        const stats = await readAdminStats(sql, NOW)
+        expect(stats.people).toBe(FAKE_COUNTS.users)
+        // Not everyone joined today: sign-ups fall on most days, and only some in the window.
+        const signUpDays = stats.signUpsPerDay.filter((day) => day.count > 0)
+        expect(signUpDays.length).toBeGreaterThanOrEqual(15)
+        const signUps = stats.signUpsPerDay.reduce((sum, day) => sum + day.count, 0)
+        expect(signUps).toBeLessThan(FAKE_COUNTS.users * 0.75)
+        // Someone is active every past day, and today is no spike of the whole population. Today
+        // is the UTC day so far: empty just after midnight, about a full day's activity late.
+        expect(stats.activePerDay.slice(0, -1).every((day) => day.count > 0)).toBe(true)
+        expect(stats.activeToday.current).toBeLessThan(FAKE_COUNTS.users * 0.75)
+        expect(stats.blocked).toBe(2)
+      },
+    )
+
+    await t.step(
+      "the seed's billing has paying customers, one past due, one cancelled and trials",
+      async () => {
+        const figures = await readAdminBillingFigures(sql, NOW)
+        expect(figures.paying).toBe(7)
+        expect(figures.pastDue).toBe(1)
+        expect(figures.trials).toBe(2)
+        expect(figures.ending).toBe(1)
+        expect(figures.monthlyRevenue).toHaveLength(1)
+        expect(figures.monthlyRevenue[0].amount).toBeGreaterThan(0)
+        expect(figures.lastEventAt).not.toBeNull()
+        const cancelled = await listAdminBillingCustomers(
+          sql,
+          { query: "", status: "cancelled", page: 1 },
+          25,
+        )
+        expect(cancelled.total).toBe(1)
+        // Every provider id is marked as fake.
+        const ids = await sql<{ id: string }[]>`
+        SELECT provider_subscription_id AS id FROM subscriptions
+        UNION ALL SELECT provider_customer_id FROM billing_customers
+        UNION ALL SELECT id FROM billing_events
+      `
+        expect(ids.every(({ id }) => /^(sub|cus|evt)_fake[0-9a-f]+$/.test(id))).toBe(true)
+      },
+    )
+
+    await t.step("the newsletter grows over time and has three sent issues", async () => {
+      const stats = await readAdminNewsletterStats(sql, DEFAULT_SUBSCRIBER_LIST, NOW)
+      expect(stats.confirmed).toBe(FAKE_COUNTS.subscribers)
+      expect(stats.issues).toBe(3)
+      const sizes = stats.subscribersPerDay.map((day) => day.count)
+      expect(sizes[0]).toBeLessThan(sizes[sizes.length - 1])
+      const sends = await listAdminNewsletterSends(sql, DEFAULT_SUBSCRIBER_LIST, 10)
+      expect(sends).toHaveLength(3)
+      for (const send of sends) {
+        expect(send.completedAt).not.toBeNull()
+        expect(send.sent).toBeGreaterThan(0)
+      }
+      // Older issues went to fewer people.
+      expect(sends[0].recipients!).toBeGreaterThan(sends[2].recipients!)
+    })
+
+    await t.step(
+      "the video's person has two sessions: Firefox on Windows and Safari on iPhone",
+      async () => {
+        const priya = fakeDemoData(OPTIONS.dataSeed, NOW).users[VIDEO_PERSON_INDEX]
+
+        const sessions = await sql<{ deviceName: string }[]>`
+        SELECT s.device_name FROM auth_sessions s
+        JOIN auth_keys k ON k.user_id = s.user_id AND k.subject = ${priya.email}
+        WHERE s.status = ${SessionStatus.Active}
+        ORDER BY s.device_name
+      `
+        expect(priya.email).toBe("priya.novak@example.com")
+        expect(sessions.map((s) => s.deviceName)).toEqual([
+          "Firefox on Windows",
+          "Safari on iPhone",
+        ])
+      },
+    )
+  })
+})
+
+/**
+ * How many rows have an earlier time than the row with the id before theirs: in `audit_events`
+ * within each group, whose feeds sort by id, and in `auth_audits` across the table.
+ */
+async function outOfOrder(
+  sql: postgres.Sql,
+  table: "audit_events" | "auth_audits",
+): Promise<number> {
+  const scope = table === "audit_events" ? sql`PARTITION BY group_id` : sql``
+  const [{ rows }] = await sql<{ rows: number }[]>`
+    SELECT COUNT(*)::int AS rows FROM (
+      SELECT created_at < lag(created_at) OVER (${scope} ORDER BY id) AS back FROM ${sql(table)}
+    ) t WHERE back
+  `
+  return rows
+}
+
+Deno.test("the seeds' audit rows have ids in the order of their times", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
+    await signUpVisitor(sql, "visitor@example.net")
+    await drainJobs(sql)
+
+    // Feeds and billing histories sort by id: a row out of order would jump back in time.
+    expect(await outOfOrder(sql, "audit_events")).toBe(0)
+    expect(await outOfOrder(sql, "auth_audits")).toBe(0)
+  })
+})
+
+Deno.test("the development billing provider tells the seeded customers' payments", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
+    const payments = postgresFakePayments(sql)
+    const subscriptions = await sql<{
+      id: string
+      status: BillingStatus
+      quantity: number
+      currentPeriodEnd: Date
+      pastDueSince: Date | null
+    }[]>`
+      SELECT provider_subscription_id AS id, status, quantity, current_period_end, past_due_since
+      FROM subscriptions
+    `
+    const month = 30 * 24 * 60 * 60_000
+    for (const subscription of subscriptions) {
+      const payment = await payments(subscription.id)
+      if (subscription.status === BillingStatus.Trialing) {
+        expect(payment).toBeNull()
+        continue
+      }
+      // The price of every seat, at the start of the period paid for.
+      expect(payment!.amount).toBe(900 * subscription.quantity)
+      const due = subscription.pastDueSince ?? subscription.currentPeriodEnd
+      expect(payment!.paidAt.getTime()).toBe(due.getTime() - month)
+    }
+    const [{ groupId }] = await sql<{ groupId: string }[]>`
+      SELECT substring(a.identifier from 'group:([^ ]+)') AS group_id
+      FROM auth_audits a WHERE a.event_type = ${BILLING_AUDIT_EVENTS.paymentRefunded}
+    `
+    const [refunded] = await sql<{ id: string }[]>`
+      SELECT provider_subscription_id AS id FROM subscriptions WHERE group_id = ${groupId}
+    `
+    expect((await payments(refunded.id))!.refunded).toBe(true)
+    const others = subscriptions.filter((s) =>
+      s.id !== refunded.id && s.status !== BillingStatus.Trialing
+    )
+    for (const other of others) expect((await payments(other.id))!.refunded).toBe(false)
+  })
+})
+
+Deno.test("the development seed adds the operator's refund, blocks and a recent backup", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
+
+    const [{ groupId }] = await sql<{ groupId: string }[]>`
+      SELECT substring(a.identifier from 'group:([^ ]+)') AS group_id
+      FROM auth_audits a WHERE a.event_type = ${BILLING_AUDIT_EVENTS.paymentRefunded}
+    `
+    const record = await readAdminBillingRecord(sql, groupId)
+    const refund = record!.history.find((entry) =>
+      entry.event === BILLING_AUDIT_EVENTS.paymentRefunded
+    )
+    expect(refund?.operator).toBe("Dev Operator")
+    expect(refund?.amount?.amount).toBeGreaterThan(0)
+    const blocks = await sql`
+      SELECT 1 FROM auth_audits WHERE event_type = ${AuthAuditEventType.USER_BLOCKED}
+    `
+    expect(blocks).toHaveLength(2)
+    const backup = await readLastBackup(sql)
+    expect(NOW.getTime() - backup!.getTime()).toBeLessThan(24 * 60 * 60_000)
+  })
+})
+
+Deno.test("a visitor's sample groups have notes by several people on different days", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
+    const userId = await signUpVisitor(sql, "visitor@example.net")
+    await drainJobs(sql)
+
+    const groups = await sql<{ authors: number; days: number }[]>`
+      SELECT
+        COUNT(DISTINCT e.actor_user_id)::int AS authors,
+        (EXTRACT(EPOCH FROM max(e.created_at) - min(e.created_at)) / 86400)::float8 AS days
+      FROM audit_events e JOIN group_members m ON m.group_id = e.group_id AND m.user_id = ${userId}
+      JOIN groups g ON g.id = e.group_id
+      WHERE g.name <> 'Personal' AND e.event_kind = 'note.created'
+      GROUP BY e.group_id
+    `
+    expect(groups.length).toBeGreaterThan(0)
+    for (const group of groups) {
+      expect(group.authors).toBeGreaterThanOrEqual(2)
+      expect(group.days).toBeGreaterThan(1)
+    }
   })
 })

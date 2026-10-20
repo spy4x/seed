@@ -1,20 +1,67 @@
 import { seededRandom } from "@spy4x/platform/universal/statistics"
+import { BillingStatus } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import type { TagColor } from "@domain/tags"
+import {
+  DEVICES,
+  FIRST_GROUP_NAMES,
+  NAME_POOLS,
+  PERSONAL_NOTES,
+  SENT_ISSUES,
+  SMALL_THEMES,
+  type Theme,
+  THEMES,
+  VIDEO_PERSON,
+  VIDEO_PERSON_DEVICES,
+} from "./fake-content.ts"
 
 /**
- * The fake data of the public demo (docs/demo.md): people, groups with members, tags and notes,
- * pending invitations and newsletter subscribers, and the sample groups of a new account. Pure and
- * deterministic: one `seed` always gives the same data, so a test can pin it and each night can use
- * a new seed. Every address is on `example.com`, a domain reserved for examples, so no mail reaches
- * a real person.
+ * The fake data of the public demo and the development seed (docs/demo.md): people with months of
+ * sign-ins on their own devices, groups with members, tags, notes and invitations written by
+ * several people over weeks, the groups' subscriptions, the newsletter, and what an operator did.
+ * Pure and deterministic: one `seed` and `now` always give the same data, so a test can pin it and
+ * each night can use a new seed. Every time is in minutes before `now` (`…Ago`) or after it
+ * (`…In`). Every address is on `example.com` and every IP address in a range reserved for
+ * documentation, so nothing reaches a real person or machine.
  */
+
+/** Minutes in an hour and in a day: every time here is counted in minutes. */
+export const HOUR = 60
+export const DAY = 24 * HOUR
+
+/** How much the demo holds. */
+export const FAKE_COUNTS = { users: 140, subscribers: 90 } as const
+
+/** A way in besides the password, as `auth_keys.method` names it. */
+export type FakeProvider = `oauth:google` | `oauth:github`
 
 /** A fake person. Signs up with a random password nobody knows. */
 export interface FakeUser {
   email: string
   firstName: string
   lastName: string
+  joinedAgo: number
+  /** Whether they confirmed their address. One who did not never signed in again. */
+  verified: boolean
+  /** Google or GitHub, linked `providerAgo` minutes ago; `null` for the password only. */
+  provider: FakeProvider | null
+  providerAgo: number
+  /** An authenticator app as a second factor. */
+  secondFactor: boolean
+  /** When an operator blocked them, or `null`. */
+  blockedAgo: number | null
+  /** When they last changed their name, or `null`. */
+  profileUpdatedAgo: number | null
+  /** What they renamed their first group, "Personal", to, or `null` if they kept the name. */
+  firstGroupName: string | null
+  /** Notes they keep in their first group, oldest first, each `ago` minutes back. */
+  ownNotes: { title: string; body: string; ago: number }[]
+  /** The browsers they use: an entry of `DEVICES` and the address it signs in from. */
+  devices: { userAgent: string; ip: string }[]
+  /** Every sign-in after sign-up, oldest first, by its index in `devices`. */
+  signIns: { ago: number; device: number }[]
+  /** Sessions still signed in, by their index in `devices`. */
+  sessions: { device: number; createdAgo: number; lastUsedAgo: number }[]
 }
 
 /** Who a fake group's row points at: a fake person by index, or the new account (`you`). */
@@ -25,255 +72,67 @@ export interface FakeNote {
   body: string
   /** Names of the group's tags on the note. */
   tags: string[]
+  author: FakeMember
+  createdAgo: number
+  /** Who last changed it, and when; `null` when nobody did. */
+  edit: { by: FakeMember; ago: number } | null
 }
 
 export interface FakeGroup {
   name: string
   owner: FakeMember
-  members: { member: FakeMember; role: GroupRole }[]
-  tags: { name: string; color: TagColor }[]
+  createdAgo: number
+  members: { member: FakeMember; role: GroupRole; joinedAgo: number }[]
+  tags: { name: string; color: TagColor; author: FakeMember; createdAgo: number }[]
   notes: FakeNote[]
   /** Pending invitations: tied to an address, or `null` for a link anyone may use. */
-  invitations: { email: string | null; role: GroupRole }[]
+  invitations: { email: string | null; role: GroupRole; author: FakeMember; createdAgo: number }[]
+  /** Members the owner made admin after they joined as editors. */
+  promotions: { member: FakeMember; ago: number }[]
 }
+
+/** A group's subscription to the paid plan, as the provider's webhooks would have left it. */
+export interface FakeSubscription {
+  /** The group, by its index in `groups`. */
+  group: number
+  status: BillingStatus
+  seats: number
+  customerSinceAgo: number
+  /** Minutes until the paid period ends; negative once it has. */
+  periodEndIn: number
+  trialEndIn: number | null
+  pastDueSinceAgo: number | null
+  cancelAtPeriodEnd: boolean
+  everActive: boolean
+  /** Every payment the provider reported, oldest first. */
+  paymentsAgo: number[]
+}
+
+/** Something an operator did in the admin app. Written only when an operator exists. */
+export type FakeOperatorAction =
+  | { kind: `blocked` | `password-reset` | `sessions-ended`; user: number; ago: number }
+  | { kind: `refund` | `time-given`; subscription: number; ago: number; note: string }
+  | { kind: `users-exported` | `subscribers-exported`; ago: number }
 
 export interface FakeDemoData {
   users: FakeUser[]
   groups: FakeGroup[]
-  /** Addresses on the newsletter list. */
-  subscribers: string[]
+  subscriptions: FakeSubscription[]
+  /** Addresses on the newsletter list, and when each confirmed. */
+  subscribers: { email: string; ago: number }[]
+  /** Addresses that left the list, and when. */
+  unsubscribed: { email: string; ago: number }[]
+  /** Issues sent to the list, newest first. */
+  issues: { issue: string; subject: string; sentAgo: number; failed: number }[]
+  /** The operator's own sign-ins and actions, for the development seed. */
+  operator: { joinedAgo: number; signIns: number[]; actions: FakeOperatorAction[] }
 }
 
-/** How much the demo holds. */
-export const FAKE_COUNTS = { users: 25, subscribers: 40 } as const
+/** How recent the people are who start {@link SMALL_THEMES} groups, in days. */
+const SMALL_GROUPS_DAYS = 12
 
-const FIRST_NAMES = [
-  `Ava`,
-  `Ben`,
-  `Chloe`,
-  `Daniel`,
-  `Elena`,
-  `Felix`,
-  `Grace`,
-  `Hugo`,
-  `Iris`,
-  `Jonas`,
-  `Kira`,
-  `Leo`,
-  `Maya`,
-  `Noah`,
-  `Olivia`,
-  `Priya`,
-  `Quinn`,
-  `Rafael`,
-  `Sofia`,
-  `Theo`,
-  `Uma`,
-  `Victor`,
-  `Wen`,
-  `Yusuf`,
-  `Zoe`,
-]
-
-const LAST_NAMES = [
-  `Anderson`,
-  `Becker`,
-  `Costa`,
-  `Dubois`,
-  `Eriksen`,
-  `Fischer`,
-  `Garcia`,
-  `Hansen`,
-  `Ivanova`,
-  `Jensen`,
-  `Kowalski`,
-  `Lee`,
-  `Martin`,
-  `Nakamura`,
-  `Okafor`,
-  `Patel`,
-  `Rossi`,
-  `Silva`,
-  `Tanaka`,
-  `Novak`,
-  `Walsh`,
-  `Young`,
-]
-
-/** One theme per group: its name, tags and the note titles its notes draw from. */
-interface Theme {
-  name: string
-  tags: { name: string; color: TagColor }[]
-  titles: string[]
-}
-
-const THEMES: Theme[] = [
-  {
-    name: `Product team`,
-    tags: [
-      { name: `roadmap`, color: `blue` },
-      { name: `bug`, color: `red` },
-      { name: `idea`, color: `purple` },
-      { name: `done`, color: `green` },
-    ],
-    titles: [
-      `Q3 roadmap draft`,
-      `Onboarding drop-off: what we know`,
-      `Pricing page feedback`,
-      `Release notes for 2.4`,
-      `Customer interview: Acme Corp`,
-      `Search is slow on large accounts`,
-      `Dark mode polish list`,
-      `Weekly product sync`,
-      `Ideas for the referral program`,
-      `Mobile app beta checklist`,
-    ],
-  },
-  {
-    name: `Marketing`,
-    tags: [
-      { name: `blog`, color: `orange` },
-      { name: `social`, color: `blue` },
-      { name: `launch`, color: `purple` },
-    ],
-    titles: [
-      `Launch post outline`,
-      `Newsletter topics for next month`,
-      `Landing page headline tests`,
-      `Conference talk proposal`,
-      `Case study: Northwind`,
-      `SEO keywords to target`,
-      `Social calendar, week 32`,
-      `Podcast guest list`,
-    ],
-  },
-  {
-    name: `Engineering`,
-    tags: [
-      { name: `infra`, color: `gray` },
-      { name: `incident`, color: `red` },
-      { name: `rfc`, color: `blue` },
-      { name: `tech-debt`, color: `orange` },
-    ],
-    titles: [
-      `RFC: move jobs to the outbox`,
-      `Postgres upgrade plan`,
-      `Incident review: login outage`,
-      `On-call handbook`,
-      `Flaky tests to fix`,
-      `Backup restore drill`,
-      `API rate limits`,
-      `Dependency updates, August`,
-      `Code review guidelines`,
-    ],
-  },
-  {
-    name: `Book club`,
-    tags: [
-      { name: `to-read`, color: `blue` },
-      { name: `finished`, color: `green` },
-      { name: `favourite`, color: `purple` },
-    ],
-    titles: [
-      `Next month's pick`,
-      `Notes on "The Left Hand of Darkness"`,
-      `Meeting schedule`,
-      `Books everyone suggested`,
-      `Questions for Thursday`,
-      `Favourite quotes so far`,
-    ],
-  },
-  {
-    name: `Home renovation`,
-    tags: [
-      { name: `kitchen`, color: `orange` },
-      { name: `budget`, color: `red` },
-      { name: `done`, color: `green` },
-    ],
-    titles: [
-      `Kitchen layout options`,
-      `Quotes from contractors`,
-      `Paint colours shortlist`,
-      `Budget tracker`,
-      `Things to buy this weekend`,
-      `Bathroom tiles`,
-      `Permit paperwork`,
-    ],
-  },
-  {
-    name: `Trip to Japan`,
-    tags: [
-      { name: `booking`, color: `blue` },
-      { name: `food`, color: `orange` },
-      { name: `must-see`, color: `purple` },
-    ],
-    titles: [
-      `Itinerary, two weeks`,
-      `Ryokan options in Kyoto`,
-      `Rail pass: worth it?`,
-      `Restaurants to try in Osaka`,
-      `Packing list`,
-      `Phrases to learn`,
-      `Day trip to Nara`,
-    ],
-  },
-  {
-    name: `Design studio`,
-    tags: [
-      { name: `client`, color: `blue` },
-      { name: `review`, color: `orange` },
-      { name: `approved`, color: `green` },
-    ],
-    titles: [
-      `Brand refresh brief`,
-      `Feedback on the logo concepts`,
-      `Icon set inventory`,
-      `Type scale proposal`,
-      `Client workshop agenda`,
-      `Accessibility audit notes`,
-    ],
-  },
-  {
-    name: `Running club`,
-    tags: [
-      { name: `race`, color: `red` },
-      { name: `training`, color: `blue` },
-    ],
-    titles: [
-      `Autumn half marathon plan`,
-      `Sunday long run routes`,
-      `Interval sessions`,
-      `Shoe recommendations`,
-      `Race day checklist`,
-    ],
-  },
-]
-
-const SENTENCES = [
-  `Let's decide this by Friday.`,
-  `I added a few options below, comment on the ones you like.`,
-  `Most of this came out of last week's call.`,
-  `The numbers are rough, but the direction is clear.`,
-  `Open question: who owns the follow-up?`,
-  `We tried this once before and it worked well.`,
-  `Keep it short, we can always add more later.`,
-  `See the linked doc for the full context.`,
-  `Two people raised the same concern, worth a look.`,
-  `Next step is a quick prototype.`,
-  `Nothing here is final yet.`,
-  `Ping me if anything is unclear.`,
-]
-
-const BULLETS = [
-  `Check with the team`,
-  `Write a first draft`,
-  `Compare three options`,
-  `Ask for a quote`,
-  `Book a time`,
-  `Share the summary`,
-  `Collect feedback`,
-  `Update the budget`,
-]
+/** The index of the video's person in `users`; the first person stays the day's marker. */
+export const VIDEO_PERSON_INDEX = 1
 
 /** A new account's sample groups: by theme, the role the account has in it. */
 const YOUR_ROLES: readonly [number, GroupRole][] = [
@@ -282,11 +141,26 @@ const YOUR_ROLES: readonly [number, GroupRole][] = [
   [3, GroupRole.VIEWER],
 ]
 
-/** The seeded helpers both builders draw from. */
+/** The order subscriptions are handed out in, oldest group first. */
+const PLAN_ROTA: readonly (`active` | `canceled` | `ending` | `past_due` | `trial`)[] = [
+  `active`,
+  `active`,
+  `canceled`,
+  `ending`,
+  `active`,
+  `past_due`,
+  `active`,
+  `active`,
+  `trial`,
+  `trial`,
+]
+
+/** The seeded helpers every builder draws from. */
 function randomTools(seed: number) {
   const random = seededRandom(seed)
   const int = (min: number, max: number) => min + Math.floor(random() * (max - min + 1))
   const pick = <T>(items: readonly T[]): T => items[int(0, items.length - 1)]
+  const chance = (p: number) => random() < p
   const sample = <T>(items: readonly T[], count: number): T[] => {
     const copy = [...items]
     const out: T[] = []
@@ -295,87 +169,543 @@ function randomTools(seed: number) {
     }
     return out
   }
-  return { random, int, pick, sample }
+  /** A time between `from` and `to` minutes ago (`from >= to`), nearer `from` with `early`. */
+  const between = (from: number, to: number, early = false) => {
+    const share = early ? random() ** 2 : random()
+    return Math.round(from - Math.max(0, from - to) * share)
+  }
+  return { random, int, pick, chance, sample, between }
+}
+
+type Tools = ReturnType<typeof randomTools>
+
+/** How busy a day is: weekends are quiet, Fridays a little. `now` gives the weekday. */
+function dayWeight(now: Date, daysAgo: number): number {
+  const weekday = new Date(now.getTime() - daysAgo * DAY * 60_000).getUTCDay()
+  if (weekday === 0 || weekday === 6) return 0.45
+  return weekday === 5 ? 0.85 : 1
+}
+
+/** A day within the last `days`, more often a recent one and a weekday. */
+function recentDay(tools: Tools, now: Date, days: number): number {
+  for (;;) {
+    const day = tools.int(0, days - 1)
+    const growth = (1 + 4 * (1 - day / days) ** 2) / 5
+    if (tools.random() < growth * dayWeight(now, day)) return day
+  }
+}
+
+/** A minute inside day `day` before now, never in the last ten minutes. */
+function minuteOf(tools: Tools, day: number): number {
+  return Math.max(10, day * DAY + tools.int(0, DAY - 1))
+}
+
+/** The address a name signs up with: mostly first.last, sometimes shorter. */
+function addressOf(tools: Tools, firstName: string, lastName: string): string {
+  const plain = (text: string) => text.normalize(`NFD`).replace(/[^A-Za-z]/g, ``).toLowerCase()
+  const first = plain(firstName)
+  const last = plain(lastName)
+  const style = tools.int(1, 10)
+  const local = style <= 7
+    ? `${first}.${last}`
+    : style <= 9
+    ? `${first}${last}`
+    : `${first[0]}.${last}`
+  return `${local}@example.com`
+}
+
+/** A random name from one culture's pool. */
+function randomName(tools: Tools): { firstName: string; lastName: string } {
+  const pool = tools.pick(NAME_POOLS)
+  return { firstName: tools.pick(pool.first), lastName: tools.pick(pool.last) }
+}
+
+/** A name and address that are in neither `names` nor `addresses`; both sets get it. */
+function uniquePerson(
+  tools: Tools,
+  names: Set<string>,
+  addresses: Set<string>,
+): { firstName: string; lastName: string; email: string } {
+  for (;;) {
+    const { firstName, lastName } = randomName(tools)
+    const email = addressOf(tools, firstName, lastName)
+    const name = `${firstName} ${lastName}`
+    if (names.has(name) || addresses.has(email)) continue
+    names.add(name)
+    addresses.add(email)
+    return { firstName, lastName, email }
+  }
+}
+
+/** An address in a range reserved for documentation (RFC 5737, RFC 3849). */
+function fakeIp(tools: Tools): string {
+  if (tools.chance(0.15)) {
+    return `2001:db8:${tools.int(1, 0xffff).toString(16)}::${tools.int(1, 255)}`
+  }
+  const net = tools.pick([`192.0.2`, `198.51.100`, `203.0.113`])
+  return `${net}.${tools.int(1, 254)}`
+}
+
+/** How often each kind of person signs in, per day: the share and the chance a day. */
+const HABITS = [
+  { share: 0.25, perDay: 0.75, days: Infinity },
+  { share: 0.4, perDay: 0.3, days: Infinity },
+  { share: 0.25, perDay: 0.1, days: Infinity },
+  // Tried it for a week or two and stopped.
+  { share: 0.1, perDay: 0.5, days: 12 },
+]
+
+/** One person's sign-ins, from the day after `joinedAgo` until now, at most 75 days back. */
+function signInsOf(
+  tools: Tools,
+  now: Date,
+  joinedAgo: number,
+  deviceCount: number,
+): FakeUser["signIns"] {
+  let roll = tools.random()
+  const habit = HABITS.find((h) => (roll -= h.share) < 0) ?? HABITS[1]
+  const joinDay = Math.floor(joinedAgo / DAY)
+  const out: FakeUser["signIns"] = []
+  for (let day = Math.min(joinDay - 1, 75); day >= 0; day--) {
+    if (joinDay - day > habit.days) break
+    if (!tools.chance(habit.perDay * dayWeight(now, day))) continue
+    // The first device is the one they use most.
+    const device = tools.chance(0.6) ? 0 : tools.int(0, deviceCount - 1)
+    out.push({ ago: minuteOf(tools, day), device })
+  }
+  return out
+}
+
+/** The sessions still open: one per device used in the last two weeks, at most two. */
+function sessionsOf(tools: Tools, signIns: FakeUser["signIns"]): FakeUser["sessions"] {
+  const latest = new Map<number, number>()
+  for (const signIn of signIns) {
+    if (signIn.ago > 14 * DAY) continue
+    latest.set(signIn.device, Math.min(latest.get(signIn.device) ?? Infinity, signIn.ago))
+  }
+  return [...latest].sort((a, b) => a[1] - b[1]).slice(0, 2).map(([device, createdAgo]) => ({
+    device,
+    createdAgo,
+    // Last used within a day of opening it: the next sign-in opens a new one.
+    lastUsedAgo: tools.int(Math.max(Math.min(5, createdAgo), createdAgo - DAY), createdAgo),
+  }))
+}
+
+/** The video person's address. */
+const VIDEO_PERSON_EMAIL = `priya.novak@example.com`
+
+/**
+ * The fake people's names and addresses, from many cultures, drawn before anything else from
+ * `tools`, so they depend on the seed alone: the sample groups find people by address at any time
+ * of the day.
+ */
+function drawPeople(tools: Tools): { firstName: string; lastName: string; email: string }[] {
+  const names = new Set<string>([`${VIDEO_PERSON.firstName} ${VIDEO_PERSON.lastName}`])
+  const addresses = new Set<string>([VIDEO_PERSON_EMAIL])
+  return Array.from(
+    { length: FAKE_COUNTS.users },
+    (_, i) =>
+      i === VIDEO_PERSON_INDEX
+        ? { ...VIDEO_PERSON, email: VIDEO_PERSON_EMAIL }
+        : uniquePerson(tools, names, addresses),
+  )
 }
 
 /**
- * One themed group of fake people, with its tags, notes and pending invitations. With `yourRole`,
- * the new account is in it with that role; as the owner, the first fake person becomes an admin.
+ * The fake people's names and addresses for `seed`, the same as those of
+ * {@link fakeDemoData} at any `now`.
+ */
+export function fakePeople(seed: number): { firstName: string; lastName: string; email: string }[] {
+  return drawPeople(randomTools(seed))
+}
+
+/** The fake people: sign-up times on a growing curve, devices, habits and a few special cases. */
+function fakeUsers(tools: Tools, now: Date): FakeUser[] {
+  const users = drawPeople(tools).map((person, i): FakeUser => {
+    const video = i === VIDEO_PERSON_INDEX
+    // Three in ten joined before the dashboard's window, the rest on a curve that grows to now.
+    const joinedAgo = video
+      ? 47 * DAY + 9 * HOUR
+      : tools.chance(0.3)
+      ? minuteOf(tools, tools.int(61, 240))
+      : minuteOf(tools, recentDay(tools, now, 60))
+    const deviceIndexes = video
+      ? [...VIDEO_PERSON_DEVICES]
+      : tools.sample(DEVICES.map((_, n) => n), tools.int(1, 3))
+    const devices = deviceIndexes.map((n) => ({ userAgent: DEVICES[n], ip: fakeIp(tools) }))
+    const signIns = signInsOf(tools, now, joinedAgo, devices.length)
+    return {
+      ...person,
+      joinedAgo,
+      verified: true,
+      provider: null,
+      providerAgo: 0,
+      secondFactor: false,
+      blockedAgo: null,
+      profileUpdatedAgo: tools.chance(0.2) ? tools.between(joinedAgo - 30, 60) : null,
+      firstGroupName: tools.chance(0.4) ? tools.pick(FIRST_GROUP_NAMES) : null,
+      ownNotes: [],
+      devices,
+      signIns,
+      sessions: sessionsOf(tools, signIns),
+    }
+  })
+  const priya = users[VIDEO_PERSON_INDEX]
+  // The video ends her two sessions: one on each of her browsers, both used today.
+  priya.signIns = [
+    ...priya.signIns.filter((s) => s.ago > 3 * DAY),
+    { ago: 2 * DAY + 4 * HOUR, device: 0 },
+    { ago: 6 * HOUR, device: 1 },
+  ]
+  priya.sessions = [
+    { device: 0, createdAgo: 2 * DAY + 4 * HOUR, lastUsedAgo: 3 * HOUR },
+    { device: 1, createdAgo: 6 * HOUR, lastUsedAgo: 40 },
+  ]
+  priya.profileUpdatedAgo = null
+
+  const others = users.map((_, i) => i).filter((i) => i !== VIDEO_PERSON_INDEX)
+  const recent = others.filter((i) => users[i].joinedAgo < 12 * DAY)
+  for (const i of tools.sample(recent, 4)) {
+    Object.assign(users[i], {
+      verified: false,
+      signIns: [],
+      sessions: [],
+      profileUpdatedAgo: null,
+      firstGroupName: null,
+    })
+  }
+  const verified = others.filter((i) => users[i].verified)
+  const busy = verified.filter((i) => users[i].signIns.length >= 4)
+  for (const i of tools.sample(busy, 2)) {
+    const user = users[i]
+    const blockedAgo = tools.between(user.signIns[Math.floor(user.signIns.length / 2)].ago, 2 * DAY)
+    user.blockedAgo = blockedAgo
+    user.signIns = user.signIns.filter((signIn) => signIn.ago > blockedAgo)
+    user.sessions = []
+  }
+  const open = verified.filter((i) => users[i].blockedAgo === null)
+  for (const [n, i] of tools.sample(open, 15).entries()) {
+    const user = users[i]
+    user.provider = n < 10 ? `oauth:google` : `oauth:github`
+    // Half signed up with it, half linked it later.
+    user.providerAgo = tools.chance(0.5) ? user.joinedAgo : tools.between(user.joinedAgo - 60, 60)
+  }
+  for (const i of tools.sample(open, 8)) users[i].secondFactor = true
+  // About half keep a few notes of their own, written over the time since they joined.
+  for (const user of users) {
+    if (!user.verified || !tools.chance(0.55)) continue
+    user.ownNotes = tools.sample(PERSONAL_NOTES, tools.int(1, 4))
+      // Most right after they joined, fewer as time goes on.
+      .map((note) => ({ ...note, ago: Math.max(0, tools.between(user.joinedAgo - 30, 20, true)) }))
+      .sort((a, b) => b.ago - a.ago)
+  }
+  return users
+}
+
+/** Indexes of the people who may act in groups: not the video's person, address confirmed. */
+function groupPeople(users: readonly FakeUser[]): number[] {
+  return users.map((_, i) => i).filter((i) => users[i].verified && i !== VIDEO_PERSON_INDEX)
+}
+
+/**
+ * One themed group, with members joining over time, tags, notes by several writers, a promotion
+ * and pending invitations. `joined` says when a person joined the product (`Infinity` when it does
+ * not matter) and `maxAgo` how old the group may be. With `yourRole`, the new account is in it
+ * with that role; as the owner, the first fake person becomes an admin, and the content is the
+ * fake people's.
  */
 function fakeGroup(
-  tools: ReturnType<typeof randomTools>,
-  index: number,
+  tools: Tools,
+  theme: Theme,
+  people: readonly number[],
+  joined: (person: number) => number,
+  maxAgo: number,
   yourRole: GroupRole | null,
+  taken: Set<string>,
 ): FakeGroup {
-  const { random, int, pick, sample } = tools
-  const theme = THEMES[index]
-  const people = Array.from({ length: FAKE_COUNTS.users }, (_, person) => person)
-  const [ownerIndex, ...memberIndexes] = sample(people, int(4, 8))
+  const { int, pick, chance, sample, between } = tools
+  const picked = sample(people, int(theme.members[0], theme.members[1]) + 1)
+    .sort((a, b) => joined(b) - joined(a))
+  const [ownerIndex, ...memberIndexes] = picked
+  const createdAgo = Math.max(
+    2 * HOUR,
+    Math.min(maxAgo, joined(ownerIndex) - int(30, 3 * DAY)),
+  )
   const roles = [GroupRole.ADMIN, GroupRole.EDITOR, GroupRole.EDITOR, GroupRole.VIEWER]
   const members: FakeGroup["members"] = memberIndexes.map((member) => ({
     member,
     role: pick(roles),
+    joinedAgo: between(Math.min(createdAgo - 5, joined(member)), 30, true),
   }))
   let owner: FakeMember = ownerIndex
   if (yourRole === GroupRole.OWNER) {
     owner = `you`
-    members.push({ member: ownerIndex, role: GroupRole.ADMIN })
+    members.unshift({ member: ownerIndex, role: GroupRole.ADMIN, joinedAgo: createdAgo - 5 })
   } else if (yourRole !== null) {
-    members.push({ member: `you`, role: yourRole })
+    members.push({ member: `you`, role: yourRole, joinedAgo: 0 })
   }
-  const notes = sample(theme.titles, theme.titles.length).map((title): FakeNote => {
-    const lines = sample(SENTENCES, int(1, 3))
-    if (random() < 0.5) lines.push(``, ...sample(BULLETS, int(2, 4)).map((item) => `- ${item}`))
+  const joinedAgo = (member: FakeMember) =>
+    member === owner ? createdAgo : members.find((m) => m.member === member)!.joinedAgo
+  // The new account writes nothing: the "Get started" checklist counts what a person made.
+  const writers: FakeMember[] = [
+    ...(owner === `you` ? [] : [owner]),
+    ...members.filter((m) => m.member !== `you` && m.role !== GroupRole.VIEWER).map((m) =>
+      m.member
+    ),
+  ]
+  const lead = writers[0]
+  const tags = theme.tags.map((tag) => ({
+    ...tag,
+    author: lead,
+    createdAgo: Math.max(joinedAgo(lead) - int(2, 40), 20),
+  }))
+  const tagsReady = Math.min(...tags.map((tag) => tag.createdAgo))
+  const notes = sample(theme.notes, theme.notes.length).map((note): FakeNote => {
+    const author = pick(writers)
+    const createdAgo = between(Math.min(tagsReady - 1, joinedAgo(author)), 15)
+    const by = pick(writers)
+    const edit = chance(0.35)
+      ? { by, ago: between(Math.min(createdAgo - 1, joinedAgo(by)), 5) }
+      : null
     return {
-      title,
-      body: lines.join(`\n`),
+      ...note,
       tags: sample(theme.tags, int(0, 2)).map((tag) => tag.name),
+      author,
+      createdAgo,
+      edit: edit && edit.ago < createdAgo ? edit : null,
+    }
+  }).sort((a, b) => b.createdAgo - a.createdAgo)
+  const inviter =
+    writers.find((w) =>
+      w === owner || members.some((m) => m.member === w && m.role === GroupRole.ADMIN)
+    ) ?? lead
+  const inviteAgo = () => between(Math.min(joinedAgo(inviter), 6 * DAY), 20)
+  const names = new Set<string>()
+  const invitations: FakeGroup["invitations"] = [{
+    email: uniquePerson(tools, names, taken).email,
+    role: GroupRole.EDITOR,
+    author: inviter,
+    createdAgo: inviteAgo(),
+  }]
+  if (chance(0.5)) {
+    invitations.push({
+      email: null,
+      role: GroupRole.VIEWER,
+      author: inviter,
+      createdAgo: inviteAgo(),
+    })
+  }
+  const promotions = owner === `you` ? [] : members
+    .filter((m) => m.role === GroupRole.ADMIN && chance(0.6))
+    .map((m) => ({ member: m.member, ago: between(m.joinedAgo - 1, 30) }))
+  return { name: theme.name, owner, createdAgo, members, tags, notes, invitations, promotions }
+}
+
+/** Subscriptions for the oldest groups, in the order of {@link PLAN_ROTA}. */
+function fakeSubscriptions(tools: Tools, groups: readonly FakeGroup[]): FakeSubscription[] {
+  const { int } = tools
+  const MONTH = 30 * DAY
+  const byAge = groups.map((_, i) => i).sort((a, b) => groups[b].createdAgo - groups[a].createdAgo)
+  return PLAN_ROTA.map((kind, rank): FakeSubscription => {
+    const group = byAge[rank]
+    const { createdAgo, members } = groups[group]
+    const seats = members.length + 1
+    if (kind === `trial`) {
+      const since = Math.max(HOUR, Math.min(createdAgo - HOUR, int(3, 12) * DAY + int(0, DAY)))
+      return {
+        group,
+        status: BillingStatus.Trialing,
+        seats,
+        customerSinceAgo: since,
+        periodEndIn: 14 * DAY - since,
+        trialEndIn: 14 * DAY - since,
+        pastDueSinceAgo: null,
+        cancelAtPeriodEnd: false,
+        everActive: false,
+        paymentsAgo: [],
+      }
+    }
+    const since = Math.max(2 * DAY, createdAgo - int(1, 10) * DAY)
+    const endedAgo = kind === `canceled` ? int(8, 20) * DAY : 0
+    const paymentsAgo: number[] = []
+    for (let at = since; at > endedAgo; at -= MONTH) paymentsAgo.push(at)
+    const nextIn = MONTH - (since % MONTH)
+    const pastDueSinceAgo = kind === `past_due` ? 3 * DAY + int(0, 10 * HOUR) : null
+    if (pastDueSinceAgo !== null) {
+      // The renewal failed: the period moved on, but its payment never came.
+      while (paymentsAgo.length > 1 && paymentsAgo[paymentsAgo.length - 1] < pastDueSinceAgo) {
+        paymentsAgo.pop()
+      }
+    }
+    return {
+      group,
+      status: {
+        active: BillingStatus.Active,
+        ending: BillingStatus.Active,
+        canceled: BillingStatus.Canceled,
+        past_due: BillingStatus.PastDue,
+      }[kind],
+      seats,
+      customerSinceAgo: since,
+      periodEndIn: kind === `canceled`
+        ? -endedAgo
+        : pastDueSinceAgo !== null
+        ? MONTH - pastDueSinceAgo
+        : nextIn,
+      trialEndIn: null,
+      pastDueSinceAgo,
+      cancelAtPeriodEnd: kind === `ending`,
+      everActive: true,
+      paymentsAgo,
     }
   })
-  const invitations: FakeGroup["invitations"] = [
-    { email: `invitee${index + 1}@example.com`, role: GroupRole.EDITOR },
-  ]
-  if (random() < 0.5) invitations.push({ email: null, role: GroupRole.VIEWER })
-  return { name: theme.name, owner, members, tags: theme.tags, notes, invitations }
+}
+
+/** The newsletter: members and readers joining over four months, sends, a few who left. */
+function fakeNewsletter(
+  tools: Tools,
+  now: Date,
+  users: readonly FakeUser[],
+  taken: Set<string>,
+): Pick<FakeDemoData, `subscribers` | `unsubscribed` | `issues`> {
+  const { int, chance, pick, sample, between } = tools
+  const issues = SENT_ISSUES.map((sent, n) => ({
+    issue: sent.issue,
+    subject: sent.subject,
+    sentAgo: sent.daysAgo * DAY + int(0, 5 * HOUR),
+    failed: n === 1 ? 1 : 0,
+  }))
+  const readerDay = () =>
+    chance(0.25) ? Math.max(0, pick(SENT_ISSUES).daysAgo - int(0, 2)) : recentDay(tools, now, 120)
+  const members = sample(groupPeople(users).filter((i) => users[i].blockedAgo === null), 28)
+  const subscribers = members.map((i) => ({
+    email: users[i].email,
+    ago: between(users[i].joinedAgo - 10, 30),
+  }))
+  const names = new Set<string>()
+  while (subscribers.length < FAKE_COUNTS.subscribers) {
+    subscribers.push({
+      email: uniquePerson(tools, names, taken).email,
+      ago: minuteOf(tools, readerDay()),
+    })
+  }
+  const unsubscribed = Array.from({ length: 5 }, () => ({
+    email: uniquePerson(tools, names, taken).email,
+    ago: minuteOf(tools, Math.max(0, pick(SENT_ISSUES).daysAgo - int(0, 3))),
+  }))
+  return { subscribers, unsubscribed, issues }
+}
+
+/** What the operator did: blocked people, a reset, a refund, time given, two exports. */
+function fakeOperator(
+  tools: Tools,
+  now: Date,
+  users: readonly FakeUser[],
+  subscriptions: readonly FakeSubscription[],
+): FakeDemoData["operator"] {
+  const { int, sample } = tools
+  const signIns: number[] = []
+  for (let day = 60; day >= 0; day--) {
+    if (dayWeight(now, day) === 1 || tools.chance(0.2)) signIns.push(minuteOf(tools, day))
+  }
+  const actions: FakeOperatorAction[] = users.flatMap((user, i) =>
+    user.blockedAgo === null ? [] : [{ kind: `blocked` as const, user: i, ago: user.blockedAgo }]
+  )
+  const open = groupPeople(users).filter((i) => users[i].blockedAgo === null)
+  const [reset, ended] = sample(open, 2)
+  actions.push({ kind: `password-reset`, user: reset, ago: int(1, 6) * DAY + int(0, DAY) })
+  actions.push({ kind: `sessions-ended`, user: ended, ago: int(5, 15) * DAY + int(0, DAY) })
+  const refunded = subscriptions.findIndex((s) => s.status === BillingStatus.Active)
+  const lastPayment = subscriptions[refunded].paymentsAgo.at(-1)!
+  actions.push({
+    kind: `refund`,
+    subscription: refunded,
+    ago: Math.max(30, lastPayment - int(2 * HOUR, 2 * DAY)),
+    note: `Charged twice after a card retry; refunded the second payment.`,
+  })
+  const trial = subscriptions.findLastIndex((s) => s.status === BillingStatus.Trialing)
+  actions.push({
+    kind: `time-given`,
+    subscription: trial,
+    ago: Math.min(subscriptions[trial].customerSinceAgo - 30, int(1, 3) * DAY),
+    note: `An extra week while they move their notes over from a shared drive.`,
+  })
+  actions.push({ kind: `users-exported`, ago: int(3, 9) * DAY + int(0, DAY) })
+  actions.push({ kind: `subscribers-exported`, ago: int(10, 25) * DAY + int(0, DAY) })
+  return { joinedAgo: 210 * DAY, signIns, actions }
 }
 
 /**
- * Builds the demo's population from `seed`: the fake people, one group of theirs per theme, and
- * the newsletter list. The same seed always gives the same data.
+ * Builds the demo's population from `seed`, with every time counted back from `now`: the fake
+ * people, one group of theirs per theme, the subscriptions, the newsletter and what an operator
+ * did. The same seed and `now` always give the same data; the names depend on `seed` alone.
  */
-export function fakeDemoData(seed: number): FakeDemoData {
+export function fakeDemoData(seed: number, now: Date): FakeDemoData {
   const tools = randomTools(seed)
-  const { pick, sample } = tools
-
-  const users: FakeUser[] = []
-  // One person per full name, so the address follows from the name and never repeats.
-  const names = new Set<string>()
-  while (users.length < FAKE_COUNTS.users) {
-    const firstName = pick(FIRST_NAMES)
-    const lastName = pick(LAST_NAMES)
-    const base = `${firstName}.${lastName}`.toLowerCase()
-    if (names.has(base)) continue
-    names.add(base)
-    users.push({ email: `${base}@example.com`, firstName, lastName })
-  }
-
-  const groups = THEMES.map((_, index) => fakeGroup(tools, index, null))
-
-  const subscribers = new Set<string>()
-  for (const user of sample(users, 12)) subscribers.add(user.email)
-  for (let n = 1; subscribers.size < FAKE_COUNTS.subscribers; n++) {
-    subscribers.add(`reader${n}@example.com`)
-  }
-
-  return { users, groups, subscribers: [...subscribers] }
+  const users = fakeUsers(tools, now)
+  const people = groupPeople(users)
+  const taken = new Set(users.map((user) => user.email))
+  const groups = THEMES.map((theme) =>
+    fakeGroup(
+      tools,
+      theme,
+      people,
+      (i) => users[i].joinedAgo,
+      tools.int(25, 220) * DAY,
+      null,
+      taken,
+    )
+  )
+  const subscriptions = fakeSubscriptions(tools, groups)
+  // Recent sign-ups start small groups of their own, so the newest groups are shared ones too.
+  const recent = people.filter((i) => users[i].joinedAgo < SMALL_GROUPS_DAYS * DAY)
+  const small = SMALL_THEMES.map((theme) =>
+    fakeGroup(
+      tools,
+      theme,
+      recent,
+      (i) => users[i].joinedAgo,
+      SMALL_GROUPS_DAYS * DAY,
+      null,
+      taken,
+    )
+  )
+  // The video's person edits in one of them, so her page shows a shared group.
+  const shared = small[0]
+  shared.members.push({
+    member: VIDEO_PERSON_INDEX,
+    role: GroupRole.EDITOR,
+    joinedAgo: tools.between(
+      Math.min(shared.createdAgo - 5, users[VIDEO_PERSON_INDEX].joinedAgo),
+      30,
+      true,
+    ),
+  })
+  const newsletter = fakeNewsletter(tools, now, users, taken)
+  const operator = fakeOperator(tools, now, users, subscriptions)
+  return { users, groups: [...groups, ...small], subscriptions, ...newsletter, operator }
 }
 
 /**
  * The sample groups of a new account (`you`), built from `seed`: one it owns and two of fake
  * people's where it is an editor and a viewer, so every role shows somewhere. Members are fake
- * people by index into the population of {@link fakeDemoData}.
+ * people by index into the population of {@link fakeDemoData}; the groups are one to six weeks
+ * old, and the account joined the two it does not own just now.
  */
 export function fakeWorkspace(seed: number): FakeGroup[] {
   const tools = randomTools(seed)
-  return YOUR_ROLES.map(([index, role]) => fakeGroup(tools, index, role))
+  const people = Array.from({ length: FAKE_COUNTS.users }, (_, i) => i)
+    .filter((i) => i !== VIDEO_PERSON_INDEX)
+  const taken = new Set<string>()
+  return YOUR_ROLES.map(([index, role]) =>
+    fakeGroup(
+      tools,
+      THEMES[index],
+      people,
+      () => Infinity,
+      tools.int(7, 40) * DAY + tools.int(0, DAY),
+      role,
+      taken,
+    )
+  )
 }

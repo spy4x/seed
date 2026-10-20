@@ -11,6 +11,7 @@ import {
 } from "@spy4x/billing"
 import { DEFAULT_GRACE_DAYS, PRO_PLAN_ID } from "@domain/billing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import type { FakePayments } from "./fake-payments.ts"
 
 /**
  * The webhook signing secret of the development provider. It is public on purpose: the e2e tests
@@ -58,6 +59,11 @@ export interface BillingSetupOptions {
   webhooks: boolean
   /** Replaces the network for Stripe's API calls; tests pass one, the apps never do. */
   fetch?: typeof fetch
+  /**
+   * Where the development provider reads a subscription's last payment (`postgresFakePayments`).
+   * Without it, every subscription's last payment is one Pro seat paid now.
+   */
+  fakePayments?: FakePayments
 }
 
 /** Thrown at start-up when billing is asked for but cannot run. Names variables, never values. */
@@ -110,7 +116,10 @@ export function readBillingSetup(
       }
       return {
         mode: BillingMode.Fake,
-        provider: createFakeBilling(env.get("STRIPE_PRICE_PRO") ?? FAKE_PRO_PRICE_ID),
+        provider: createFakeBilling(
+          env.get("STRIPE_PRICE_PRO") ?? FAKE_PRO_PRICE_ID,
+          options.fakePayments,
+        ),
         dashboardUrl: null,
         graceDays,
         trialRequiresCard,
@@ -187,11 +196,15 @@ function planRefs(proPriceId: string): PlanRef[] {
  * as with Stripe. Webhooks are verified and parsed by the real Stripe adapter with
  * {@link FAKE_WEBHOOK_SECRET}, and its network is a `fetch` that refuses every call.
  *
- * The operator calls answer as Stripe would, without a webhook following: every subscription's last
- * payment is one Pro seat paid now, refundable once per provider, and the subscription changes are
- * only answered. A retried refund with the same idempotency key answers the same refund.
+ * The operator calls answer as Stripe would, without a webhook following: a subscription's last
+ * payment comes from `payments` (one Pro seat paid now without it), refundable once per provider,
+ * and the subscription changes are only answered. A retried refund with the same idempotency key
+ * answers the same refund.
  */
-export function createFakeBilling(proPriceId: string): Required<BillingProvider> {
+export function createFakeBilling(
+  proPriceId: string,
+  payments?: FakePayments,
+): Required<BillingProvider> {
   const stripe = createStripeBilling({
     secretKey: "sk_test_fake",
     webhookSecret: FAKE_WEBHOOK_SECRET,
@@ -201,6 +214,7 @@ export function createFakeBilling(proPriceId: string): Required<BillingProvider>
   const known = new Set([PRO_PLAN_ID])
   const refunds = new Map<string, Refund>()
   const refunded = new Set<string>()
+  const amounts = new Map<string, number>()
   const paymentIdOf = (subscriptionId: string) => `pi_fake_${subscriptionId}`
   const answered = (
     subscriptionId: string,
@@ -260,22 +274,27 @@ export function createFakeBilling(proPriceId: string): Required<BillingProvider>
         value: { id: `bps_fake_${uuidV7()}`, url: request.returnUrl },
       })
     },
-    readLastPayment(request) {
+    async readLastPayment(request) {
       const id = paymentIdOf(request.subscriptionId)
-      const done = refunded.has(id)
-      return Promise.resolve({
+      const payment = payments
+        ? await payments(request.subscriptionId)
+        : { amount: 900, paidAt: new Date(), refunded: false }
+      if (payment === null) return { ok: true, value: null }
+      amounts.set(id, payment.amount)
+      const done = payment.refunded || refunded.has(id)
+      return {
         ok: true,
         value: {
           id,
           invoiceId: `in_fake_${request.subscriptionId}`,
-          amount: 900,
+          amount: payment.amount,
           currency: "EUR",
           decimals: 2,
-          paidAt: new Date(),
-          amountRefunded: done ? 900 : 0,
+          paidAt: payment.paidAt,
+          amountRefunded: done ? payment.amount : 0,
           refunded: done,
         },
-      })
+      }
     },
     refundPayment(request) {
       const again = refunds.get(request.idempotencyKey)
@@ -293,7 +312,7 @@ export function createFakeBilling(proPriceId: string): Required<BillingProvider>
       const refund: Refund = {
         id: `re_fake_${uuidV7()}`,
         paymentId: request.paymentId,
-        amount: 900,
+        amount: amounts.get(request.paymentId) ?? 900,
         currency: "EUR",
         decimals: 2,
         status: RefundStatus.Succeeded,

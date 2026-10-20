@@ -1,9 +1,10 @@
 /// <reference lib="deno.ns" />
 /**
- * Seeds a database with the demo's population (docs/demo.md): fake people, groups, tags, notes,
- * invitations and newsletter subscribers. In development (`ENV=dev`) it also adds
- * `admin@example.com`, an administrator who signs in to the admin app with `SEED_PASSWORD` and no
- * second factor. The public demo's worker runs the same seed after its nightly wipe.
+ * Seeds a database with the demo's population (docs/demo.md): fake people with months of history,
+ * groups, tags, notes, invitations, subscriptions and the newsletter. In development (`ENV=dev`) it
+ * also adds `admin@example.com`, an administrator who signs in to the admin app with
+ * `SEED_PASSWORD` and no second factor, with what an operator did and a finished backup. The
+ * public demo's worker runs the same seed after its nightly wipe.
  *
  * Usage, after `deno task db:migrate`, with the same `DB_*` values:
  * `ENV=dev DB_HOST=127.0.0.1 DB_PORT=5432 DB_USER=… DB_PASS=… DB_NAME=… AUTH_PEPPER=…

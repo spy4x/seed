@@ -1,6 +1,8 @@
 import { systemEnv } from "@spy4x/server/config"
 import { readBillingSetup } from "@server/billing/setup.ts"
+import { postgresFakePayments } from "@server/billing/fake-payments.ts"
 import { config } from "./config.ts"
+import { sql } from "./db.ts"
 
 /**
  * The payment provider this process runs with, read once at start-up: a billing setup that cannot
@@ -8,4 +10,6 @@ import { config } from "./config.ts"
  */
 export const billingSetup = readBillingSetup(systemEnv, config.isDev ? "dev" : "prod", {
   webhooks: true,
+  // Only the development provider reads it: the admin's customer page then matches the seeded data.
+  fakePayments: postgresFakePayments(sql),
 })
