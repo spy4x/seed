@@ -45,6 +45,7 @@ export async function resetDemo(
     adminPassword: null,
     dataSeed: demoDataSeed(now),
     subscribers: options.subscribers,
+    now,
   })
   await scheduleNightlyJobs(sql, now)
 }

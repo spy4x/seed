@@ -1,26 +1,163 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
+import { deviceName } from "@spy4x/net/user-agent"
+import { BillingStatus } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
-import { FAKE_COUNTS, fakeDemoData, type FakeGroup, fakeWorkspace } from "./fake-data.ts"
+import {
+  DAY,
+  FAKE_COUNTS,
+  fakeDemoData,
+  type FakeGroup,
+  fakePeople,
+  fakeWorkspace,
+  VIDEO_PERSON_INDEX,
+} from "./fake-data.ts"
 
-Deno.test("fake demo data is the same for the same seed and differs for another", () => {
-  expect(fakeDemoData(42)).toEqual(fakeDemoData(42))
-  expect(fakeDemoData(42)).not.toEqual(fakeDemoData(43))
+/** A Tuesday noon: the weekdays below count back from it. */
+const NOW = new Date("2026-10-20T12:00:00Z")
+
+/** The UTC weekday `ago` minutes before {@link NOW}: 0 is Sunday. */
+const weekdayOf = (ago: number) => new Date(NOW.getTime() - ago * 60_000).getUTCDay()
+
+Deno.test("fake demo data is the same for the same seed and moment, and differs for another seed", () => {
+  expect(fakeDemoData(42, NOW)).toEqual(fakeDemoData(42, NOW))
+  expect(fakeDemoData(42, NOW)).not.toEqual(fakeDemoData(43, NOW))
 })
 
-Deno.test("fake demo data has unique addresses, all on example.com", () => {
-  const data = fakeDemoData(1)
+Deno.test("the fake people's names and addresses depend on the seed alone", () => {
+  const later = new Date(NOW.getTime() + 9 * 60 * 60_000)
+  for (const now of [NOW, later]) {
+    const people = fakeDemoData(7, now).users.map(({ firstName, lastName, email }) => ({
+      firstName,
+      lastName,
+      email,
+    }))
+    expect(people).toEqual(fakePeople(7))
+  }
+})
+
+Deno.test("fake demo data has unique names and addresses, all on example.com", () => {
+  const data = fakeDemoData(1, NOW)
   expect(data.users).toHaveLength(FAKE_COUNTS.users)
   expect(data.subscribers).toHaveLength(FAKE_COUNTS.subscribers)
   const invitees = data.groups.flatMap((group) => group.invitations.map((i) => i.email))
-  const addresses = [...data.users.map((user) => user.email), ...invitees.filter(Boolean)]
-  expect(new Set(data.users.map((user) => user.email)).size).toBe(data.users.length)
+  const users = data.users.map((user) => user.email)
+  expect(new Set(users).size).toBe(users.length)
   const names = data.users.map((user) => `${user.firstName} ${user.lastName}`)
   expect(new Set(names).size).toBe(names.length)
-  expect(new Set(data.subscribers).size).toBe(data.subscribers.length)
-  for (const address of [...addresses, ...data.subscribers]) {
+  const listed = data.subscribers.map((s) => s.email)
+  const left = data.unsubscribed.map((s) => s.email)
+  expect(new Set([...listed, ...left]).size).toBe(listed.length + left.length)
+  for (const address of [...users, ...invitees.filter(Boolean), ...listed, ...left]) {
     expect(address).toMatch(/^[a-z0-9.]+@example\.com$/)
   }
+})
+
+Deno.test("every fake IP address is in a range reserved for documentation", () => {
+  const ips = fakeDemoData(1, NOW).users.flatMap((user) => user.devices.map((d) => d.ip))
+  for (const ip of ips) {
+    expect(ip).toMatch(/^(192\.0\.2|198\.51\.100|203\.0\.113)\.\d+$|^2001:db8:/)
+  }
+})
+
+Deno.test("sign-ups spread over the last 30 days and grow towards now", () => {
+  const { users } = fakeDemoData(1, NOW)
+  const perDay = Array.from({ length: 30 }, () => 0)
+  for (const user of users) {
+    const day = Math.floor(user.joinedAgo / DAY)
+    if (day < 30) perDay[day]++
+  }
+  expect(perDay.filter((count) => count > 0).length).toBeGreaterThanOrEqual(18)
+  const sum = (from: number, to: number) => perDay.slice(from, to).reduce((a, b) => a + b, 0)
+  expect(sum(0, 15)).toBeGreaterThan(sum(15, 30))
+  // A third or so joined before the window, so the dashboard's total is more than its chart.
+  expect(users.filter((user) => user.joinedAgo >= 60 * DAY).length).toBeGreaterThan(20)
+})
+
+Deno.test("someone signs in every day of the last 30, fewer at weekends", () => {
+  const { users } = fakeDemoData(1, NOW)
+  const active = Array.from({ length: 30 }, () => new Set<number>())
+  const weekend = new Set<number>()
+  for (const [i, user] of users.entries()) {
+    for (const signIn of user.signIns) {
+      const day = Math.floor(signIn.ago / DAY)
+      if (day >= 30) continue
+      active[day].add(i)
+      if ([0, 6].includes(weekdayOf(day * DAY))) weekend.add(day)
+    }
+  }
+  expect(active.every((people) => people.size > 0)).toBe(true)
+  const average = (days: number[]) =>
+    days.reduce((sum, day) => sum + active[day].size, 0) / days.length
+  const days = active.map((_, day) => day)
+  expect(average(days.filter((day) => weekend.has(day)))).toBeLessThan(
+    average(days.filter((day) => !weekend.has(day))),
+  )
+})
+
+Deno.test("the video's person signs in on Firefox on Windows and Safari on iPhone", () => {
+  for (const seed of [1, 20261020]) {
+    const priya = fakeDemoData(seed, NOW).users[VIDEO_PERSON_INDEX]
+    expect(`${priya.firstName} ${priya.lastName} ${priya.email}`)
+      .toBe(`Priya Novak priya.novak@example.com`)
+    const devices = priya.sessions.map((session) =>
+      deviceName(priya.devices[session.device].userAgent)
+    )
+    expect(devices).toEqual([`Firefox on Windows`, `Safari on iPhone`])
+    expect(priya.verified && priya.blockedAgo === null).toBe(true)
+  }
+})
+
+Deno.test("a few people are unverified, blocked, on Google or GitHub, or use a second factor", () => {
+  const { users } = fakeDemoData(1, NOW)
+  expect(users.filter((user) => !user.verified)).toHaveLength(4)
+  const blocked = users.filter((user) => user.blockedAgo !== null)
+  expect(blocked).toHaveLength(2)
+  // A blocked person signs in no more and has no session left.
+  for (const user of blocked) {
+    expect(user.sessions).toHaveLength(0)
+    expect(user.signIns.every((signIn) => signIn.ago > user.blockedAgo!)).toBe(true)
+  }
+  expect(users.filter((user) => user.provider === `oauth:google`)).toHaveLength(10)
+  expect(users.filter((user) => user.provider === `oauth:github`)).toHaveLength(5)
+  expect(users.filter((user) => user.secondFactor)).toHaveLength(8)
+})
+
+Deno.test("subscriptions include paying, past-due, cancelled, ending and trial groups", () => {
+  const { subscriptions } = fakeDemoData(1, NOW)
+  const statuses = subscriptions.map((s) => s.status)
+  expect(statuses.filter((s) => s === BillingStatus.Active)).toHaveLength(6)
+  expect(statuses.filter((s) => s === BillingStatus.PastDue)).toHaveLength(1)
+  expect(statuses.filter((s) => s === BillingStatus.Canceled)).toHaveLength(1)
+  expect(statuses.filter((s) => s === BillingStatus.Trialing)).toHaveLength(2)
+  expect(subscriptions.filter((s) => s.cancelAtPeriodEnd)).toHaveLength(1)
+  for (const subscription of subscriptions) {
+    // Payments are a month apart and all after the customer started.
+    const payments = subscription.paymentsAgo
+    for (let i = 1; i < payments.length; i++) expect(payments[i - 1] - payments[i]).toBe(30 * DAY)
+    if (payments.length > 0) expect(payments[0]).toBe(subscription.customerSinceAgo)
+  }
+  const active = subscriptions.find((s) => s.status === BillingStatus.Active)!
+  expect(active.paymentsAgo.length).toBeGreaterThan(1)
+})
+
+Deno.test("the operator refunds a paid subscription and gives a trial more time", () => {
+  const { operator, subscriptions } = fakeDemoData(1, NOW)
+  const refund = operator.actions.find((action) => action.kind === `refund`)
+  const time = operator.actions.find((action) => action.kind === `time-given`)
+  expect(refund && `subscription` in refund).toBe(true)
+  expect(time && `subscription` in time).toBe(true)
+  if (refund?.kind !== `refund` || time?.kind !== `time-given`) return
+  expect(subscriptions[refund.subscription].paymentsAgo.length).toBeGreaterThan(0)
+  expect(subscriptions[time.subscription].status).toBe(BillingStatus.Trialing)
+})
+
+Deno.test("the newsletter grows over months and has three sent issues", () => {
+  const { subscribers, issues } = fakeDemoData(1, NOW)
+  expect(issues.map((issue) => issue.subject)).toHaveLength(3)
+  const before = (ago: number) => subscribers.filter((s) => s.ago > ago).length
+  expect(before(90 * DAY)).toBeLessThan(before(30 * DAY))
+  expect(before(30 * DAY)).toBeLessThan(subscribers.length)
 })
 
 /** Nobody is in a group twice, the owner is not also a member, and note tags are the group's. */
@@ -30,12 +167,22 @@ function expectWellFormed(groups: FakeGroup[]): void {
     expect(new Set(ids).size).toBe(ids.length)
     const names = new Set(group.tags.map((tag) => tag.name))
     for (const note of group.notes) for (const tag of note.tags) expect(names.has(tag)).toBe(true)
+    // Nothing happens before the group exists, and nobody writes before they joined.
+    const joined = new Map(group.members.map((m) => [m.member, m.joinedAgo]))
+    joined.set(group.owner, group.createdAgo)
+    for (const note of group.notes) {
+      expect(note.createdAgo).toBeLessThanOrEqual(joined.get(note.author)!)
+      if (note.edit) expect(note.edit.ago).toBeLessThan(note.createdAgo)
+    }
+    for (const member of group.members) {
+      expect(member.joinedAgo).toBeLessThanOrEqual(group.createdAgo)
+    }
   }
 }
 
 Deno.test("the demo's population groups hold fake people only", () => {
   for (const seed of [1, 20261019, 99]) {
-    const { groups } = fakeDemoData(seed)
+    const { groups } = fakeDemoData(seed, NOW)
     const people = groups.flatMap((group) => [group.owner, ...group.members.map((m) => m.member)])
     expect(people.every((person) => typeof person === "number")).toBe(true)
     expectWellFormed(groups)
@@ -57,5 +204,23 @@ Deno.test("a new account owns one sample group and is an editor and a viewer in 
       expect(group.members.filter((m) => m.member !== "you").length).toBeGreaterThan(0)
     }
     expectWellFormed(groups)
+  }
+})
+
+Deno.test("a new account's sample notes are written by several people over days", () => {
+  for (const seed of [1, 20261019, 99]) {
+    const groups = fakeWorkspace(seed)
+    for (const group of groups) {
+      const authors = new Set(group.notes.map((note) => note.author))
+      expect(authors.size).toBeGreaterThanOrEqual(2)
+      expect(authors.has(`you`)).toBe(false)
+      const times = group.notes.map((note) => note.createdAgo)
+      expect(Math.max(...times) - Math.min(...times)).toBeGreaterThan(DAY)
+    }
+    // Every note body reads as its own: no body, and no line of one, repeats.
+    const lines = groups.flatMap((group) =>
+      group.notes.flatMap((note) => note.body.split(`\n`).filter(Boolean))
+    )
+    expect(new Set(lines).size).toBe(lines.length)
   }
 })

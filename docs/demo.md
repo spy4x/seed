@@ -19,7 +19,7 @@ copies). The worker and the SPA read it (`infra/compose/compose.shared.yml`); th
 
 | Part | Where | What |
 | --- | --- | --- |
-| Population | `apps/worker/demo/fake-data.ts` (`fakeDemoData`), `seed.ts` (`seedDemo`) | 25 fake people, 8 groups of theirs with members, tags, notes and pending invitations, and 40 newsletter subscribers, all on `example.com`, so the admin side and other people's groups look lived in. Picked by the day, so each day looks a little different. The people sign up through the API's own sign-up with random passwords nobody knows. |
+| Population | `apps/worker/demo/fake-content.ts` (names, themes, notes), `fake-data.ts` (`fakeDemoData`), `seed.ts` (`seedDemo`), `history.ts` | 140 fake people with names from many cultures, all on `example.com`, and their history counted back from the moment of the seed: sign-ups over eight months on a curve that grows towards now, sign-ins on weekday rhythm from their own browsers (IP addresses from the ranges reserved for documentation), open sessions, a few on Google or GitHub, with a second factor, unverified or blocked. 14 groups of different sizes whose members, tags, notes and invitations arrive over weeks, written by several members. Ten of them pay: active, past due, cancelled, ending and in trial, with a payment a month, under provider ids marked `_fake`; no provider is called. 90 newsletter subscribers joining over four months, five who left, and three sent issues. Picked by the day, so each day looks a little different. The people sign up through the API's own sign-up with one random password nobody knows. Priya Novak, whom the admin video follows, is always there, with two sessions: Firefox on Windows and Safari on iPhone. |
 | Sample groups | `fake-data.ts` (`fakeWorkspace`), `seed.ts` (`seedWorkspace`), started by the starter-data job (`libs/server/jobs/starter-data.ts`) | Every new account gets three themed groups, with the population's people as members, tags, notes and invitations, and opens the one it owns. |
 | Sign-in and sign-up pages | `libs/ui/auth-screen.tsx` (`DEMO_NOTE`), `apps/spa/src/state/demo.ts` | One line above the form: the demo is public, wiped every night, and a new account starts with sample data. The SPA reads `demo` from its `/config.json` (`SPA_DEMO` in `apps/spa/public-env.allow`, which compose sets from `DEMO_MODE`). |
 | Wipe | `apps/worker/demo/wipe.ts` | Empties every table except `KEPT_TABLES` (the migration history and the backup status) in one transaction. Ids are not restarted, so nothing cached under an old id describes a new row. |
@@ -38,7 +38,9 @@ address, IP address and devices to anyone, and each admin action would need its 
 The admin panel is shown in a video on the website instead. The owner decided this on 2026-10-20:
 "My decision is admin panel, not for a demo, but we need a good video about it." In development,
 `deno task db:seed` adds `admin@example.com`, an administrator, so the admin app can be tried
-locally.
+locally, with what an operator did over the weeks (blocks, a reset mail, a refund, time given,
+exports) and a finished backup, so the System page shows a healthy server. The public demo gets
+neither: it has no operator, and its server's own backup service records the backups.
 
 ## When the database changes
 
@@ -50,7 +52,10 @@ updates the demo in the same PR:
 - **The seed** writes what a visitor should see. A new feature gets fake rows in
   `apps/worker/demo/fake-data.ts` and `seed.ts`, written through the feature's own repository, so
   the population and every new account's sample groups show it. A renamed or dropped column breaks
-  the seed's raw SQL (`group_members`, `users`, `auth_keys`, `subscribers`); fix it there.
+  the seed's raw SQL, which writes the past the app's own code cannot (`apps/worker/demo/history.ts`
+  and `seed.ts`: `users`, `auth_*`, `group_members`, `audit_events`, `subscriptions`,
+  `billing_*`, `subscriber*`, `user_totp`, `backup_status`); fix it there.
 - **The tests**: `tests/integration/demo-seed.integration.test.ts` checks that the wipe leaves
-  every table but the kept ones empty, that the seed's counts match the fake data, and what a new
-  account's sample groups hold. Run it.
+  every table but the kept ones empty, that the seed's counts match the fake data, what a new
+  account's sample groups hold, and what the admin's dashboard, billing and newsletter read from
+  the seed. Run it.
