@@ -28,7 +28,7 @@ import { define } from "../utils.ts"
 /** The page's title and description, as search results and social previews show them. */
 export const ADMIN_HEAD = {
   title: `Admin panel for your SaaS: users, billing, audit log`,
-  description: `Watch Seed's admin panel: find a person, end their sessions, refund a payment, ` +
+  description: `Seed's admin panel: find a person, end their sessions, refund a payment, ` +
     `run a failed job again. Every action asks first and is logged. Free, MIT.`,
 } as const
 
@@ -114,11 +114,11 @@ const ROLES: readonly { name: string; text: string }[] = [
     text: `Also refunds payments, cancels a subscription at once and hands a group to another ` +
       `member.`,
   },
-  { name: `Administrator`, text: `Also gives roles, always one below their own.` },
+  { name: `Administrator`, text: `Also gives roles, any role below their own.` },
 ]
 
 const GUARANTEES = [
-  `Signing in to the admin needs a second factor.`,
+  `Signing in to the admin asks for the second factor of every operator who has turned one on.`,
   `Anyone below operator gets "page not found", as if the admin did not exist.`,
   `Every action asks first and is written to the audit log.`,
   `The admin reads counts and account facts, never the content of a person's notes.`,
