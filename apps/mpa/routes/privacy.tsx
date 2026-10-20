@@ -11,6 +11,14 @@ const PRIVACY_SECTIONS = [
   { label: `Questions`, href: `#questions` },
 ] as const
 
+/** The privacy page's title, summary and the date its text last changed. */
+export const PRIVACY_HEAD = {
+  title: `Privacy: what Seed's demo and site keep`,
+  description: `What seedsaas.com and the Seed demo store about you, why, for how long, and ` +
+    `how to delete it. No ads, no tracking cookies, no data sold.`,
+  updated: `2026-10-20`,
+} as const
+
 /**
  * What this website and the live demo store and why, in plain words. A product built on Seed adapts
  * it.
@@ -21,9 +29,8 @@ export default define.page(function Privacy({ state }) {
       state={state}
       path="/privacy"
       title="Privacy"
-      headTitle="Privacy: what Seed's demo and site keep"
-      description={`What seedsaas.com and the Seed demo store about you, why, for how long, and ` +
-        `how to delete it. No ads, no tracking cookies, no data sold.`}
+      headTitle={PRIVACY_HEAD.title}
+      description={PRIVACY_HEAD.description}
       updated="20 October 2026"
       sections={PRIVACY_SECTIONS}
     >

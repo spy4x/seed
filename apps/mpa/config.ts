@@ -1,3 +1,5 @@
+import { FORM_ACTIONS } from "@ui/progressive.tsx"
+
 /** What the MPA needs to know about its surroundings. */
 export interface MpaConfig {
   /** Where the MPA reaches the API from the server, such as `http://app-api:8000`. Never a browser URL. */
@@ -23,6 +25,27 @@ export interface MpaConfig {
 export interface AnalyticsConfig {
   origin: string
   websiteId: string
+}
+
+/** Who `robots.txt` lets in, and where no crawler goes. */
+export interface RobotsPolicy {
+  /**
+   * Crawlers named in a group of their own, each allowed everything but {@link disallow}. A
+   * crawler obeys only the group that names it, so each group repeats the disallowed paths.
+   */
+  allowBots: readonly string[]
+  /** Paths no crawler fetches, such as the one-time links a newsletter mails. */
+  disallow: readonly string[]
+}
+
+/**
+ * The website's crawler policy: every crawler is let in, and the AI search bots are named so the
+ * choice is plain to read. `Google-Extended` is never blocked: it also decides whether Gemini may
+ * use the site in its answers. A product built on Seed changes this to choose differently.
+ */
+export const ROBOTS_POLICY: RobotsPolicy = {
+  allowBots: [`OAI-SearchBot`, `PerplexityBot`, `Claude-SearchBot`, `Bingbot`],
+  disallow: [FORM_ACTIONS.subscribeConfirm, FORM_ACTIONS.unsubscribe],
 }
 
 /**

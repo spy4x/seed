@@ -72,7 +72,7 @@ ADR 002 is recent and reverses part of ADR 001. In short:
   REST only for bootstrap and the auth endpoints that must exist before a socket
   can open.
 - `apps/mpa` is the public website, not a second client of the product (spy4x/template#265): home page,
-  pricing (from the `PLANS` catalog), privacy, terms, `robots.txt`, `sitemap.xml` and the
+  pricing (from the `PLANS` catalog), privacy, terms, `robots.txt`, `sitemap.xml`, `llms.txt` and the
   newsletter. It speaks REST only, for the newsletter, and has no session; its sign-in and sign-up
   links open the SPA at `DOMAIN`.
 - Every transport is a thin adapter over **one set of CQRS handlers**. A transport parses,

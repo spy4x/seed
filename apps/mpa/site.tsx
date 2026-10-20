@@ -18,18 +18,6 @@ import type { State } from "./utils.ts"
 
 export { AUTHOR_URL, REPOSITORY_URL, SITE_NAME }
 
-/** The pages the website lists in `sitemap.xml`, in the order a visitor meets them. */
-export const SITE_PAGES = [
-  `/`,
-  `/features`,
-  `/admin`,
-  `/compare`,
-  `/pricing`,
-  `/subscribe`,
-  `/privacy`,
-  `/terms`,
-] as const
-
 /** The pages that have an Open Graph image of their own, at `/og/<key>.png`. */
 export type OgImageKey =
   | `home`

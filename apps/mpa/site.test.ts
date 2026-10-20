@@ -9,17 +9,20 @@ import Compare from "./routes/compare.tsx"
 import Features from "./routes/features.tsx"
 import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
 import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
-import Privacy from "./routes/privacy.tsx"
-import Terms from "./routes/terms.tsx"
+import Privacy, { PRIVACY_HEAD } from "./routes/privacy.tsx"
+import Terms, { TERMS_HEAD } from "./routes/terms.tsx"
 import { handler as mvp } from "./routes/mvp.ts"
 import { handler as robots } from "./routes/robots.txt.ts"
 import { handler as subscribe } from "./routes/subscribe/index.ts"
 import { handler as theme } from "./routes/theme.js.ts"
 import { handler as sitemap } from "./routes/sitemap.xml.ts"
+import { handler as videoSitemap } from "./routes/video-sitemap.xml.ts"
+import { handler as llms } from "./routes/llms.txt.ts"
 import { handler as unsubscribe } from "./routes/unsubscribe.ts"
 import { pageMiddleware } from "./middleware.ts"
 import { HIRE_PAGE_URL } from "./hire.ts"
-import { ogImageAlt, type OgImageKey, REPOSITORY_URL, SITE_PAGES } from "./site.tsx"
+import { ogImageAlt, type OgImageKey, REPOSITORY_URL } from "./site.tsx"
+import { SITE_PAGES } from "./pages.ts"
 import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
 
@@ -58,6 +61,8 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .get("/robots.txt", robots.GET!)
     .get("/theme.js", theme.GET!)
     .get("/sitemap.xml", sitemap.GET!)
+    .get("/video-sitemap.xml", videoSitemap.GET!)
+    .get("/llms.txt", llms.GET!)
     .get("/unsubscribe", unsubscribe.GET!)
     .handler()
 }
@@ -184,7 +189,7 @@ describe("the public website", () => {
   })
 
   it("keeps every title within 60 characters and naming Seed once, and every description within 155", async () => {
-    for (const path of SITE_PAGES) {
+    for (const { path } of SITE_PAGES) {
       const { html } = await page(path)
       const title = html.match(/<title>([^<]*)<\/title>/)![1].replaceAll("&#39;", "'")
       const description = metaContent(html, "description")!
@@ -284,7 +289,7 @@ describe("the public website", () => {
   })
 
   it("calls 2FA and per-seat billing by one name in the website's own words on every page", async () => {
-    for (const path of SITE_PAGES) {
+    for (const { path } of SITE_PAGES) {
       const { html } = await page(path)
       // The demo's plan cards quote the app's plan catalog, which names things as the app does.
       const text = html.replace(/<section id="demo-plans"[\s\S]*?<\/section>/, " ")
@@ -344,7 +349,7 @@ describe("the public website", () => {
   it("describes Seed as one product, with one id that the pages about it point at", async () => {
     const home = graphIds(jsonLdGraph((await page("/")).html))
 
-    for (const path of SITE_PAGES) {
+    for (const { path } of SITE_PAGES) {
       const graph = jsonLdGraph((await page(path)).html)
       const { defined, referenced } = graphIds(graph)
 
@@ -382,7 +387,7 @@ describe("the public website", () => {
 
   it("roots every page's breadcrumb trail at the home page's full address", async () => {
     // The home page is the root itself, and the newsletter page has no structured data.
-    for (const path of SITE_PAGES.filter((path) => path !== "/" && path !== "/subscribe")) {
+    for (const { path } of SITE_PAGES.filter(({ path }) => path !== "/" && path !== "/subscribe")) {
       const graph = jsonLdGraph((await page(path)).html)
       const crumbs = graph.find((entity) => isType(entity, "BreadcrumbList"))
 
@@ -487,7 +492,7 @@ describe("the public website", () => {
 
   it("sends every hire link on the site to the hire page, and none to /mvp", async () => {
     // The listed pages, and the not-found page every unknown address gets.
-    for (const path of [...SITE_PAGES, "/no-such-page"]) {
+    for (const path of [...SITE_PAGES.map((entry) => entry.path), "/no-such-page"]) {
       const { html } = await page(path)
 
       expect(html, path).not.toMatch(/href="(https:\/\/www\.example\.com)?\/mvp"/)
@@ -577,7 +582,7 @@ describe("the public website", () => {
 
     const locs = [...(await response.text()).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
     expect(locs).toEqual(
-      SITE_PAGES.filter((path) => path !== "/subscribe").map((path) => `${site}${path}`),
+      SITE_PAGES.filter(({ path }) => path !== "/subscribe").map(({ path }) => `${site}${path}`),
     )
   })
 
@@ -613,6 +618,86 @@ describe("the public website", () => {
       ]
         .map((path) => `${site}${path}`),
     )
+  })
+
+  it("dates a sitemap entry only where its page states a date", async () => {
+    const xml = await (await handler(new Request(`${site}/sitemap.xml`), info)).text()
+    const lastmods = Object.fromEntries(
+      [...xml.matchAll(/<loc>([^<]+)<\/loc>\n(?:\s*<lastmod>([^<]+)<\/lastmod>)?/g)]
+        .map((match) => [match[1].slice(site.length), match[2]]),
+    )
+
+    expect(lastmods).toEqual({
+      "/": undefined,
+      "/features": undefined,
+      "/admin": "2026-10-21T00:00:00.000Z",
+      "/compare": "2026-10-16T00:00:00.000Z",
+      "/pricing": undefined,
+      "/subscribe": undefined,
+      "/privacy": "2026-10-20T00:00:00.000Z",
+      "/terms": "2026-10-16T00:00:00.000Z",
+    })
+  })
+
+  it("shows on each legal page the same day its sitemap entry carries", async () => {
+    const day = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeZone: "UTC" })
+    for (
+      const [path, updated] of [["/privacy", PRIVACY_HEAD.updated], ["/terms", TERMS_HEAD.updated]]
+    ) {
+      const { html } = await page(path)
+
+      expect(html, path).toContain(`Last changed ${day.format(new Date(`${updated}T00:00:00Z`))}`)
+    }
+  })
+
+  it("takes each page's title and description in the page list from the page's own head", async () => {
+    for (const { path, title, description } of SITE_PAGES) {
+      const { html } = await page(path)
+
+      expect(metaContent(html, "description"), path).toBe(description)
+      const shown = html.match(/<title>([^<]*)<\/title>/)![1].replaceAll("&#39;", "'")
+      expect(shown.startsWith(title), `${path}: ${shown}`).toBe(true)
+    }
+  })
+
+  it("lists every public page in llms.txt with its title, address and description", async () => {
+    const response = await handler(new Request(`${site}/llms.txt`), info)
+    const text = await response.text()
+
+    expect(response.headers.get("content-type")).toBe("text/plain; charset=utf-8")
+    expect(text).toMatch(/^# Seed\n\n> Free, MIT-licensed SaaS starter/)
+    for (const { path, title, description } of SITE_PAGES) {
+      expect(text, path).toContain(`- [${title}](${site}${path}): ${description}\n`)
+    }
+    expect(text).toContain(`(${REPOSITORY_URL})`)
+  })
+
+  it("leaves the newsletter page out of llms.txt while subscriptions are off", async () => {
+    const text = await (await withoutNewsletter(new Request(`${site}/llms.txt`), info)).text()
+
+    expect(text).not.toContain(`${site}/subscribe)`)
+    expect(text).toContain(`${site}/terms)`)
+  })
+
+  it("names each AI search bot in robots.txt with the same rules as every other crawler", async () => {
+    const text = await (await handler(new Request(`${site}/robots.txt`), info)).text()
+    const rules = "Disallow: /subscribe/confirm\nDisallow: /unsubscribe\nAllow: /\n"
+
+    for (const agent of ["*", "OAI-SearchBot", "PerplexityBot", "Claude-SearchBot", "Bingbot"]) {
+      expect(text, agent).toContain(`User-agent: ${agent}\n${rules}`)
+    }
+    expect(text).not.toContain("Google-Extended")
+    expect(text).not.toMatch(/Disallow: \/\n/)
+    expect(text).toContain(`Sitemap: ${site}/video-sitemap.xml`)
+  })
+
+  it("lists the admin panel video on its page in the video sitemap", async () => {
+    const response = await handler(new Request(`${site}/video-sitemap.xml`), info)
+    const xml = await response.text()
+
+    expect(response.headers.get("content-type")).toBe("application/xml; charset=utf-8")
+    expect(xml).toContain(`<url><loc>${site}/admin</loc><video:video>`)
+    expect(xml).toContain(`<video:content_loc>${site}/`)
   })
 
   it("loads no tracker and no script of its own while analytics is off", async () => {
