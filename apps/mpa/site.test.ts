@@ -486,12 +486,16 @@ describe("the public website", () => {
   })
 
   it("sends every hire link on the site to the hire page, and none to /mvp", async () => {
-    for (const path of SITE_PAGES) {
+    // The listed pages, and the not-found page every unknown address gets.
+    for (const path of [...SITE_PAGES, "/no-such-page"]) {
       const { html } = await page(path)
 
       expect(html, path).not.toMatch(/href="(https:\/\/www\.example\.com)?\/mvp"/)
     }
     const hire = HIRE_PAGE_URL.replaceAll("&", "&amp;")
+    const notFound = await page("/no-such-page")
+    expect(notFound.status).toBe(404)
+    expect(hrefOf(linkNamed(notFound.html, "Hire me to build your MVP"))).toBe(hire)
     const home = (await page("/")).html
     expect(home.match(/<a\b[^>]*data-umami-event="hire-me"[^>]*>/g)?.length).toBeGreaterThan(0)
     for (const link of home.match(/<a\b[^>]*data-umami-event="hire-me"[^>]*>/g)!) {
