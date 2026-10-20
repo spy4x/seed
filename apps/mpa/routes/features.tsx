@@ -279,7 +279,7 @@ const TIERS: readonly Tier[] = [
     title: `Run it, watch it, support the people on it`,
     lead: `One server you own, the tools to see what it does, and an area where your team ` +
       `helps the people who use your product.`,
-    status: `Everything below ships today. Translations are not in yet.`,
+    status: `Every module below ships today. What is not built yet is listed under each.`,
     features: [
       {
         id: `admin`,

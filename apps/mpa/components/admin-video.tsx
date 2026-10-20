@@ -19,7 +19,7 @@ const TRANSCRIPT = [
   `The operator chooses "End all". A dialog asks them to confirm; they confirm, and the list empties.`,
   `The audit log's newest row reads "Sessions ended", about Priya Novak, done by the operator.`,
   `Groups lists every group with its owner. The operator opens one, Product team, and sees its members.`,
-  `Newsletter shows 40 subscribers and a chart of subscribers per day.`,
+  `Newsletter shows 40 subscribers, none pending and 20 who joined in the last 30 days, zoomed in on those numbers.`,
   `From the account menu, the operator switches the theme from dark to light.`,
   `An end card: "Free and MIT-licensed. The code is on GitHub."`,
 ] as const
