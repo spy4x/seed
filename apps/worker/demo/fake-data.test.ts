@@ -164,9 +164,10 @@ Deno.test("the operator refunds a paid subscription and gives a trial more time"
 Deno.test("the newsletter grows over months and has three sent issues", () => {
   const { subscribers, issues } = fakeDemoData(1, NOW)
   expect(issues.map((issue) => issue.subject)).toHaveLength(3)
-  const before = (ago: number) => subscribers.filter((s) => s.ago > ago).length
-  expect(before(90 * DAY)).toBeLessThan(before(30 * DAY))
-  expect(before(30 * DAY)).toBeLessThan(subscribers.length)
+  const joined = (from: number, to: number) =>
+    subscribers.filter((s) => s.ago >= from * DAY && s.ago < to * DAY).length
+  // More people joined in the last month than in the month two months before.
+  expect(joined(0, 30)).toBeGreaterThan(joined(60, 90) * 1.5)
 })
 
 /** Nobody is in a group twice, the owner is not also a member, and note tags are the group's. */
