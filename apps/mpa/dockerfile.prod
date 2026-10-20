@@ -8,7 +8,11 @@ USER root
 COPY --chown=1000:1000 . .
 USER 1000:1000
 
-RUN deno task mpa:build
+# Fresh puts its build id into asset addresses (`?__frsh_c=`) and serves those as immutable for a
+# year. It reads the id from CI_COMMIT_SHA or `git rev-parse HEAD`, and the image has no .git, so
+# the id came out empty and stayed the same across deploys. A hash of the sources stands in.
+RUN CI_COMMIT_SHA="$(find apps libs deno.jsonc deno.lock -name node_modules -prune -o -type f \
+      -exec sha1sum {} + | sort | sha1sum | cut -d' ' -f1)" deno task mpa:build
 # The container healthcheck runs this file; cached here so it never downloads at run time.
 RUN deno cache --frozen apps/healthcheck.ts
 

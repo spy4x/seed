@@ -1,6 +1,8 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { App } from "fresh"
+import { setBuildCache } from "fresh/internal"
+import { asset } from "fresh/runtime"
 import { handler as subscribe } from "./routes/subscribe/index.ts"
 import { handler as subscriptionConfirm } from "./routes/subscribe/confirm.ts"
 import { handler as unsubscribe } from "./routes/unsubscribe.ts"
@@ -8,6 +10,8 @@ import {
   newsletterPageMiddleware,
   pageMiddleware,
   securityHeadersMiddleware,
+  staticFilesMiddleware,
+  UNVERSIONED_FILE_CACHE,
 } from "./middleware.ts"
 import { REPOSITORY_URL } from "./brand.ts"
 import type { MpaConfig } from "./config.ts"
@@ -136,12 +140,12 @@ describe("pageMiddleware", () => {
     expect(calls).toEqual([])
   })
 
-  it("keeps a page out of every cache", async () => {
+  it("lets a browser keep a page but revalidate it before showing it again", async () => {
     const { fetch } = fakeApi(() => Response.json({}))
 
     const response = await appWith(fetch)(new Request(`${config.webAppOrigin}/page`), info)
 
-    expect(response.headers.get("cache-control")).toBe("no-store")
+    expect(response.headers.get("cache-control")).toBe("no-cache")
   })
 })
 
@@ -179,7 +183,7 @@ describe("securityHeadersMiddleware", () => {
 
     expect(response.status).toBe(200)
     expectSecurityHeaders(response)
-    expect(response.headers.get("cache-control")).toBe("no-store")
+    expect(response.headers.get("cache-control")).toBe("no-cache")
   })
 
   it("sends them with the 404 of an unknown address, inside the site's frame", async () => {
@@ -203,7 +207,7 @@ describe("securityHeadersMiddleware", () => {
 
     expect(response.status).toBe(500)
     expectSecurityHeaders(response)
-    expect(response.headers.get("cache-control")).toBe("no-store")
+    expect(response.headers.get("cache-control")).toBe("no-cache")
     const page = await response.text()
     expect(page).toContain("Something went wrong")
     expect(page).toContain(`data-e2e="site-brand"`)
@@ -571,5 +575,54 @@ describe("an MPA on its own domain", () => {
     await post({ origin: "null", "sec-fetch-site": "same-origin" })
 
     expect(seen[0].get("origin")).toBe("null")
+  })
+})
+
+describe("staticFilesMiddleware", () => {
+  /** An app in production mode whose build holds one static file, `/shots/home.webp`. */
+  function staticApp() {
+    const app = new App<State>().use(staticFilesMiddleware())
+    setBuildCache(app, {
+      root: ".",
+      islandRegistry: new Map(),
+      clientEntry: "",
+      features: { errorOverlay: false },
+      getFsRoutes: () => [],
+      getEntryAssets: () => [],
+      readFile: (pathname) =>
+        Promise.resolve(
+          pathname === "/shots/home.webp"
+            ? {
+              hash: "home",
+              size: 4,
+              contentType: "image/webp",
+              readable: new Uint8Array(4),
+              close: () => {},
+            }
+            : null,
+        ),
+    }, "production")
+    return app.handler()
+  }
+
+  it("sends a file whose address carries the build id as immutable for a year", async () => {
+    const response = await staticApp()(
+      new Request(`${config.webAppOrigin}${asset("/shots/home.webp")}`),
+      info,
+    )
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("cache-control")).toBe("public, max-age=31536000, immutable")
+  })
+
+  it("sends a file whose address has no build id for an hour, never as immutable", async () => {
+    const response = await staticApp()(
+      new Request(`${config.webAppOrigin}/shots/home.webp`),
+      info,
+    )
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get("cache-control")).toBe(UNVERSIONED_FILE_CACHE)
+    expect(UNVERSIONED_FILE_CACHE).toBe("public, max-age=3600")
   })
 })

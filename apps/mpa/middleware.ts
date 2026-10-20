@@ -2,8 +2,9 @@ import type { MpaConfig } from "./config.ts"
 import { createApi } from "./api.ts"
 import { renderErrorPage } from "./error-page.tsx"
 import { createNewsletterStatus } from "./newsletter.ts"
-import { define } from "./utils.ts"
-import { HttpError } from "fresh"
+import { define, type State } from "./utils.ts"
+import { HttpError, staticFiles } from "fresh"
+import { FORM_ACTIONS } from "@ui/progressive.tsx"
 import { HTTPException } from "hono/http-exception"
 import { createSameOriginCheck } from "@spy4x/server/http/same-origin"
 import { securityHeaderList, withSecurityHeaders } from "@spy4x/server/http/security-headers"
@@ -61,7 +62,9 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
  * 4. answers a form it cannot read with the status `readFormBody` names (413, 408 or 400);
  * 5. answers any other error, the 404 of an unknown address included, with the error page inside
  *    the site's frame (`error-page.tsx`);
- * 6. keeps pages out of shared caches, since the newsletter pages carry a token in their address.
+ * 6. lets a browser keep a page but ask again before showing it (`no-cache`, which leaves the
+ *    back/forward cache working), and keeps every newsletter answer out of all caches
+ *    (`no-store`), since the newsletter pages carry a token in their address.
  *
  * Framing is forbidden by {@link securityHeadersMiddleware}, which runs before this one.
  */
@@ -76,7 +79,10 @@ export function pageMiddleware(
   })
   return define.middleware(async (ctx) => {
     if (crossSiteRefusal(ctx.req)) {
-      return withPageHeaders(new Response("Cross-site request refused", { status: 403 }))
+      return withPageHeaders(
+        new Response("Cross-site request refused", { status: 403 }),
+        ctx.url.pathname,
+      )
     }
     ctx.state.webAppOrigin = config.webAppOrigin
     ctx.state.spaOrigin = config.apiOrigin
@@ -99,7 +105,7 @@ export function pageMiddleware(
         ? new Response(error.message, { status: error.status })
         : await renderErrorPage(ctx, error)
     }
-    return withPageHeaders(response)
+    return withPageHeaders(response, ctx.url.pathname)
   })
 }
 
@@ -123,15 +129,49 @@ function remoteAddress(info: Deno.ServeHandlerInfo): string {
   return address.transport === "tcp" || address.transport === "udp" ? address.hostname : ""
 }
 
-function withPageHeaders(response: Response): Response {
+const NEWSLETTER_PATHS: string[] = Object.values(FORM_ACTIONS)
+
+function withPageHeaders(response: Response, path: string): Response {
   const headers = new Headers(response.headers)
-  if (headers.get("content-type")?.startsWith("text/html")) {
+  if (NEWSLETTER_PATHS.includes(path)) {
     headers.set("cache-control", "no-store")
+  } else if (headers.get("content-type")?.startsWith("text/html")) {
+    headers.set("cache-control", "no-cache")
   }
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
+  })
+}
+
+/** What Fresh sends with a static file whose address carries no build id. */
+const FRESH_NO_STORE = "no-cache, no-store, max-age=0, must-revalidate"
+
+/** How long a browser keeps a static file whose address carries no build id: one hour. */
+export const UNVERSIONED_FILE_CACHE = "public, max-age=3600"
+
+/**
+ * Fresh's `staticFiles`, with a shorter rule for files whose address carries no build id.
+ *
+ * Fresh sends a file as immutable for a year when its address carries the build id (`?__frsh_c=`,
+ * which Fresh adds to every `<img>`) or a hashed name (`/assets/`). Any other file, such as a font
+ * the stylesheet names or the Open Graph image a crawler fetches, it sends as never to be stored,
+ * so every page view downloads it again. Such a file can change in the next deploy under the same
+ * address, so it must not be immutable: a browser keeps it for {@link UNVERSIONED_FILE_CACHE} and
+ * then revalidates it with its ETag. In development Fresh's own rule stays.
+ */
+export function staticFilesMiddleware() {
+  const serve = staticFiles<State>()
+  return define.middleware(async (ctx) => {
+    const response = await serve(ctx)
+    if (
+      ctx.config.mode !== "development" &&
+      response.headers.get("cache-control") === FRESH_NO_STORE
+    ) {
+      response.headers.set("cache-control", UNVERSIONED_FILE_CACHE)
+    }
+    return response
   })
 }
 
