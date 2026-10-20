@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
-import { DEMO_USER_EMAIL, DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
+import { DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { readSeedOptions, SeedConfigError } from "./seed-data.ts"
 
 const PEPPER = "p".repeat(32)
@@ -37,8 +37,6 @@ Deno.test("readSeedOptions refuses to seed unless ENV is dev or the public demo 
   expect(readSeedOptions({ ...DEV, ENV: "prod", DEMO_MODE: "true" }).password).toBe("12345678")
 })
 
-Deno.test("the demo accounts' addresses are on a domain reserved for examples", () => {
-  for (const address of [DEMO_USER_EMAIL, DEV_ADMIN_EMAIL]) {
-    expect(address).toMatch(/@example\.(com|net|org)$/)
-  }
+Deno.test("the development administrator's address is on a domain reserved for examples", () => {
+  expect(DEV_ADMIN_EMAIL).toMatch(/@example\.(com|net|org)$/)
 })

@@ -681,10 +681,6 @@ services:
       # shared `proxy` network that sends such a header is refused
       # (apps/api/middlewares/proxy-peer.ts).
       - PROXY_HOSTS=traefik,${PROJECT}-mpa
-      # The public demo (docs/demo.md): `true` shows the shared account on the product's sign-in
-      # page (GET /api/demo) and guards it. Unset → off.
-      - DEMO_MODE=${DEMO_MODE:-}
-      - SEED_PASSWORD=${SEED_PASSWORD:-}
     deploy:
       resources:
         limits:
@@ -775,11 +771,9 @@ services:
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
       # The website's host, when it is deployed: the mailed confirm and unsubscribe links open there.
       - MPA_DOMAIN=${MPA_DOMAIN:-}
-      # The public demo (docs/demo.md): `true` wipes and seeds the database every night. The seed
-      # signs the shared account up with the API's pepper and SEED_PASSWORD. Unset → off.
+      # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
+      # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}
-      - AUTH_PEPPER=${AUTH_PEPPER}
-      - SEED_PASSWORD=${SEED_PASSWORD:-}
     deploy:
       resources:
         limits:
