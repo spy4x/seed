@@ -34,7 +34,14 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
       "The demo is the app you get on day one. Sign up and start in groups full of sample notes.",
   } = props
   const github = (variant: "primary" | "outline") => (
-    <Button href={REPOSITORY_URL} variant={variant} size="lg" data-e2e="cta-github">
+    <Button
+      href={REPOSITORY_URL}
+      variant={variant}
+      size="lg"
+      data-e2e="cta-github"
+      data-umami-event="github"
+      data-umami-event-from="cta"
+    >
       <IconGitHub class="size-5" aria-hidden="true" /> View on GitHub
     </Button>
   )
@@ -50,6 +57,8 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
                 href={props.code.href}
                 class="inline-flex min-h-11 items-center gap-1 font-medium text-primary hover:underline"
                 data-e2e="cta-code"
+                data-umami-event="read-code"
+                data-umami-event-from="cta"
               >
                 {props.code.label} <IconArrowRight class="size-4" aria-hidden="true" />
               </a>
@@ -57,7 +66,14 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
           )
           : (
             <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-              <Button href={props.demoHref} size="lg">Try the live demo</Button>
+              <Button
+                href={props.demoHref}
+                size="lg"
+                data-umami-event="try-demo"
+                data-umami-event-from="cta"
+              >
+                Try the live demo
+              </Button>
               {github("outline")}
             </div>
           )}

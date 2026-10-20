@@ -55,6 +55,12 @@ Deno.test("the MPA learns its own host, or it would refuse its own forms", async
   expect(mpa?.environment).toContain("MPA_DOMAIN=${MPA_DOMAIN:-}")
 })
 
+Deno.test("the MPA gets the Umami pair from the env file, empty by default so no tracker loads", async () => {
+  const { mpa } = await services()
+  expect(mpa?.environment).toContain("MPA_UMAMI_ORIGIN=${MPA_UMAMI_ORIGIN:-}")
+  expect(mpa?.environment).toContain("MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}")
+})
+
 Deno.test("in production the MPA is served over HTTPS on the port its image listens on", async () => {
   const { mpa } = await services(COMPOSE_PROD)
   const router = "traefik.http.routers.mpa-${PROJECT}"

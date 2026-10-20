@@ -296,6 +296,8 @@ const TIERS: readonly Tier[] = [
               href="/admin"
               class="font-medium text-primary underline"
               data-e2e="features-admin-watch"
+              data-umami-event="features-admin-video"
+              data-umami-event-from="lead"
             >
               Watch it in {ADMIN_VIDEO.seconds} seconds
             </a>.
@@ -346,6 +348,7 @@ const TIERS: readonly Tier[] = [
           `Pricing read from the app's plan catalog`,
           `A newsletter with double opt-in and one-click unsubscribe`,
           `sitemap.xml, robots.txt, canonical links and Open Graph images`,
+          `Optional cookieless analytics in your own Umami, with an event on every call to action`,
         ],
         code: { label: `Read the website's code`, href: source(`apps/mpa/`) },
       },
@@ -396,8 +399,22 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       lead="Seed is a free, open-source SaaS starter with teams and billing. Each section says what a person using your product notices, then what you get as a developer, and links to the code."
     >
       <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-        <Button href={demoHref} size="lg" data-e2e="features-try-demo">Try the live demo</Button>
-        <Button href={REPOSITORY_URL} variant="outline" size="lg">
+        <Button
+          href={demoHref}
+          size="lg"
+          data-e2e="features-try-demo"
+          data-umami-event="try-demo"
+          data-umami-event-from="hero"
+        >
+          Try the live demo
+        </Button>
+        <Button
+          href={REPOSITORY_URL}
+          variant="outline"
+          size="lg"
+          data-umami-event="github"
+          data-umami-event-from="hero"
+        >
           <IconGitHub class="size-5" aria-hidden="true" /> View on GitHub
         </Button>
       </div>

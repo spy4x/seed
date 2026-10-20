@@ -284,8 +284,22 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
         and I will fix it.
       </p>
       <div class="mt-2 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-        <Button href={demoHref} size="lg" data-e2e="compare-try-demo">Try the live demo</Button>
-        <Button href={REPOSITORY_URL} variant="outline" size="lg">
+        <Button
+          href={demoHref}
+          size="lg"
+          data-e2e="compare-try-demo"
+          data-umami-event="try-demo"
+          data-umami-event-from="hero"
+        >
+          Try the live demo
+        </Button>
+        <Button
+          href={REPOSITORY_URL}
+          variant="outline"
+          size="lg"
+          data-umami-event="github"
+          data-umami-event-from="hero"
+        >
           <IconGitHub class="size-5" aria-hidden="true" /> View on GitHub
         </Button>
       </div>

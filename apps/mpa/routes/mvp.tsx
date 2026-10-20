@@ -200,7 +200,12 @@ export default define.page(function Mvp({ state }) {
               answer: item.id === `faq-idea`
                 ? (
                   <p>
-                    <a href={BRIEF_URL} class="text-primary underline">
+                    <a
+                      href={BRIEF_URL}
+                      class="text-primary underline"
+                      data-umami-event="send-brief"
+                      data-umami-event-from="faq"
+                    >
                       Send a paragraph about your idea or problem
                     </a>{" "}
                     and I will write back with three concrete suggestions. No cost, no pitch. Or

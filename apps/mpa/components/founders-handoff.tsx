@@ -27,6 +27,8 @@ export function FoundersHandoff(): JSX.Element {
           size="lg"
           class="shrink-0"
           data-e2e="home-founders"
+          data-umami-event="hire-me"
+          data-umami-event-from="home"
         >
           See how it works and what it costs <IconArrowRight class="size-5" aria-hidden="true" />
         </Button>

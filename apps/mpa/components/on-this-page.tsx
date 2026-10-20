@@ -13,7 +13,12 @@ export function OnThisPage({ links }: OnThisPageProps): JSX.Element {
     <ul class="flex flex-col gap-2 text-sm">
       {links.map((link) => (
         <li key={link.href}>
-          <a href={link.href} class="text-muted hover:text-foreground hover:underline">
+          <a
+            href={link.href}
+            class="text-muted hover:text-foreground hover:underline"
+            data-umami-event="on-this-page"
+            data-umami-event-section={link.href.slice(1)}
+          >
             {link.label}
           </a>
         </li>

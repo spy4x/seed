@@ -63,7 +63,13 @@ export function PricingWays(): JSX.Element {
             price="$0"
             unit="MIT licence, no account"
             action={
-              <Button href={REPOSITORY_URL} variant="outline" class="w-full">
+              <Button
+                href={REPOSITORY_URL}
+                variant="outline"
+                class="w-full"
+                data-umami-event="github"
+                data-umami-event-from="ways"
+              >
                 <IconGitHub class="size-5" aria-hidden="true" /> View on GitHub
               </Button>
             }
@@ -81,6 +87,8 @@ export function PricingWays(): JSX.Element {
                 href={`${REPOSITORY_URL}#production-certificates`}
                 variant="outline"
                 class="w-full"
+                data-umami-event="read-code"
+                data-umami-event-from="deploy-guide"
               >
                 Read the deploy guide
               </Button>
@@ -96,7 +104,14 @@ export function PricingWays(): JSX.Element {
             unit={`from ${HIRE_PRICES.mvpWeeks} to a live product`}
             highlighted
             action={
-              <Button href="/mvp" variant="primary" class="w-full" data-e2e="pricing-mvp">
+              <Button
+                href="/mvp"
+                variant="primary"
+                class="w-full"
+                data-e2e="pricing-mvp"
+                data-umami-event="hire-me"
+                data-umami-event-from="pricing"
+              >
                 See how it works <IconArrowRight class="size-5" aria-hidden="true" />
               </Button>
             }

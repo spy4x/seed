@@ -42,18 +42,21 @@ export function PricingDemoPlans(): JSX.Element {
           trials and per-member billing. Your product sets its own plans in one file,{" "}
           <code class="font-mono">libs/domain/billing</code>.
         </Notice>
-        <PricingTable
-          plans={DEMO_PLANS}
-          action="/pricing"
-          headingLevel={3}
-          labels={{
-            choose: `Try in the demo`,
-            // The name starts with the visible text, so speech input ("click Try in the demo")
-            // finds the button, and the plan tells the buttons apart.
-            chooseName: (name) => `Try in the demo: ${name}`,
-            highlighted: `Recommended`,
-          }}
-        />
+        {/* The table draws its own forms: `/analytics.js` counts a submit inside this wrapper. */}
+        <div data-analytics-submit="pricing-plan" data-analytics-field="planId">
+          <PricingTable
+            plans={DEMO_PLANS}
+            action="/pricing"
+            headingLevel={3}
+            labels={{
+              choose: `Try in the demo`,
+              // The name starts with the visible text, so speech input ("click Try in the demo")
+              // finds the button, and the plan tells the buttons apart.
+              chooseName: (name) => `Try in the demo: ${name}`,
+              highlighted: `Recommended`,
+            }}
+          />
+        </div>
         <p class="text-sm text-muted">
           In the demo you start on Free and change the plan on your group's billing page.
         </p>

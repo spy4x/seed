@@ -24,10 +24,17 @@ export function AdminVideoPlayer(): JSX.Element {
         class="block h-auto w-full bg-canvas"
         aria-label={`The Seed admin panel, a video of ${ADMIN_VIDEO.seconds} seconds ${ADMIN_VIDEO.sound.label}`}
         data-e2e="admin-video"
+        data-analytics-video="admin-video"
       >
         <source src={ADMIN_VIDEO.webm} type={`video/webm; codecs="av01.0.08M.08"`} />
         <source src={ADMIN_VIDEO.mp4} type="video/mp4" />
-        <a href={ADMIN_VIDEO.mp4}>Download the video (MP4, {ADMIN_VIDEO.mp4Size})</a>
+        <a
+          href={ADMIN_VIDEO.mp4}
+          data-umami-event="admin-video-download"
+          data-umami-event-from="player"
+        >
+          Download the video (MP4, {ADMIN_VIDEO.mp4Size})
+        </a>
       </video>
     </WindowFrame>
   )
@@ -39,7 +46,13 @@ export function AdminVideoPlayer(): JSX.Element {
  */
 export function AdminVideoStill(): JSX.Element {
   return (
-    <a href="/admin" class="group block rounded-card" data-e2e="admin-video-still">
+    <a
+      href="/admin"
+      class="group block rounded-card"
+      data-e2e="admin-video-still"
+      data-umami-event="features-admin-video"
+      data-umami-event-from="still"
+    >
       <WindowFrame variant="browser" title={FRAME_TITLE}>
         <span class="relative block">
           <img

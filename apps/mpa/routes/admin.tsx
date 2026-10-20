@@ -156,13 +156,18 @@ function adminJsonLd(origin: string): unknown[] {
   ]
 }
 
-/** A text link with an arrow, at least 44 px tall so a finger hits it. */
+/**
+ * A text link with an arrow, at least 44 px tall so a finger hits it. `event` and `from` name the
+ * Umami event a click sends (`docs/analytics.md`).
+ */
 function TextLink(
-  { href, children, down = false, e2e }: {
+  { href, children, down = false, e2e, event, from }: {
     href: string
     children: string
     down?: boolean
     e2e: string
+    event: string
+    from?: string
   },
 ): JSX.Element {
   const Arrow = down ? IconArrowDown : IconArrowRight
@@ -171,6 +176,8 @@ function TextLink(
       href={href}
       class="inline-flex min-h-11 items-center gap-1 self-start font-medium text-primary hover:underline"
       data-e2e={e2e}
+      data-umami-event={event}
+      data-umami-event-from={from}
     >
       {children} <Arrow class="size-4" aria-hidden="true" />
     </a>
@@ -191,7 +198,12 @@ function Hero(): JSX.Element {
           <p class="pt-2 text-sm text-muted text-pretty sm:pt-0" data-e2e="admin-video-meta">
             {ADMIN_VIDEO.seconds} seconds · {ADMIN_VIDEO.sound.line} · Sample data
           </p>
-          <TextLink href="#transcript" down e2e="admin-transcript-jump">
+          <TextLink
+            href="#transcript"
+            down
+            e2e="admin-transcript-jump"
+            event="admin-transcript-jump"
+          >
             Read what the video shows
           </TextLink>
         </div>
@@ -215,6 +227,8 @@ function Modules(): JSX.Element {
               <a
                 href={`${REPOSITORY_URL}/blob/main/docs/admin-modules.md`}
                 class="font-mono text-[0.9em] text-primary underline"
+                data-umami-event="read-code"
+                data-umami-event-from="modules"
               >
                 docs/admin-modules.md
               </a>.
@@ -268,7 +282,9 @@ function Roles(): JSX.Element {
             ))}
           </ul>
           <NotYetList items={NOT_YET} />
-          <TextLink href={ADMIN_CODE.href} e2e="admin-roles-code">{ADMIN_CODE.label}</TextLink>
+          <TextLink href={ADMIN_CODE.href} e2e="admin-roles-code" event="read-code" from="roles">
+            {ADMIN_CODE.label}
+          </TextLink>
         </div>
       </div>
     </Band>
@@ -288,7 +304,12 @@ function Transcript(): JSX.Element {
           {ADMIN_VIDEO.transcript.map((line) => <li key={line} class="text-pretty">{line}</li>)}
         </ol>
         <p class="text-muted">The people and groups in the video are made-up sample data.</p>
-        <TextLink href={ADMIN_VIDEO.mp4} e2e="admin-video-download">
+        <TextLink
+          href={ADMIN_VIDEO.mp4}
+          e2e="admin-video-download"
+          event="admin-video-download"
+          from="transcript"
+        >
           {`Download the video (MP4, ${ADMIN_VIDEO.mp4Size})`}
         </TextLink>
       </div>
