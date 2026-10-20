@@ -172,8 +172,8 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               </Button>
             </div>
             <p class="text-sm text-muted">
-              The demo is the app you get on day one, with nothing added. Seed is a work in
-              progress, built in public:{" "}
+              The demo is the app you get on day one, with sample data in your new account. Seed is
+              a work in progress, built in public:{" "}
               <a href="#status" class="text-primary underline">see what works today</a>.
             </p>
           </div>

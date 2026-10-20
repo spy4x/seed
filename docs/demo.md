@@ -1,40 +1,36 @@
 # The public demo
 
-The template's own server runs a public demo of the product: anyone can sign in with a shared
-account printed on the sign-in page, or sign up with their own, and find it full of fake data. The
+The template's own server runs a public demo of the product. Anyone signs up with their own
+address, by password or with Google or GitHub, and starts in a workspace full of sample data: a
+group they own, and two groups of made-up people where they are an editor and a viewer. The
 database is wiped and seeded again every night at midnight Pacific time, so whatever visitors do
-lasts a day at most.
+lasts a day at most. There is no shared account and no demo-only rule in the API: each visitor
+works in groups nobody else can see.
 
 It is off unless `DEMO_MODE=true`. A product started from the template never turns it on: its
 server holds real people's data.
 
 ## Turning it on
 
-In the server's env file (`infra/envs/.env.prod`, which `deno task deploy` copies):
-
-```bash
-DEMO_MODE=true
-SEED_PASSWORD=<the shared password, 8 to 50 characters; it is printed on the sign-in page>
-```
-
-Both the API and the worker read them (`infra/compose/compose.shared.yml`). The API refuses to
-start with `DEMO_MODE=true` and no `SEED_PASSWORD`; the worker refuses to start without a valid
-`SEED_PASSWORD` and `AUTH_PEPPER`.
+Set `DEMO_MODE=true` in the server's env file (`infra/envs/.env.prod`, which `deno task deploy`
+copies). The worker and the SPA read it (`infra/compose/compose.shared.yml`); the API does not.
 
 ## What it does
 
 | Part | Where | What |
 | --- | --- | --- |
-| Shared account | `libs/server/auth/demo-accounts.ts` | `demo@example.com`, a plain user, with no second factor. |
-| Sign-in page | `libs/ui/demo-notice.tsx`, `GET /api/demo` (`apps/api/routes/demo.ts`) | A notice above the card with the credentials, a copy button for each and a "Sign in as the demo user" button. `GET /api/demo` is 404 while the demo is off, and the notice is not drawn. |
-| Guard | `apps/api/middlewares/demo-guard.ts` | The shared account cannot change its password, address, second factor or sign-in providers, end sessions, delete itself or mail an invitation. Each refusal is a 403 with a message. |
-| Fake data | `apps/worker/demo/fake-data.ts` | 25 people, 8 groups with members, tags and notes, pending invitations, 40 newsletter subscribers, all on `example.com`. The demo user owns one group and is an editor and a viewer in two more. The data is picked by the day, so each day looks a little different. |
-| Seed | `apps/worker/demo/seed.ts` | Signs the people up through the API's own sign-up, and writes groups, tags, notes and invitations through their repositories. Group members, people's names and newsletter subscribers are written with raw SQL. `deno task db:seed` runs the same seed in development. |
+| Population | `apps/worker/demo/fake-data.ts` (`fakeDemoData`), `seed.ts` (`seedDemo`) | 25 fake people, 8 groups of theirs with members, tags, notes and pending invitations, and 40 newsletter subscribers, all on `example.com`, so the admin side and other people's groups look lived in. Picked by the day, so each day looks a little different. The people sign up through the API's own sign-up with random passwords nobody knows. |
+| Sample groups | `fake-data.ts` (`fakeWorkspace`), `seed.ts` (`seedWorkspace`), started by the starter-data job (`libs/server/jobs/starter-data.ts`) | Every new account gets three themed groups, with the population's people as members, tags, notes and invitations, and opens the one it owns. |
+| Sign-in and sign-up pages | `libs/ui/auth-screen.tsx` (`DEMO_NOTE`), `apps/spa/src/state/demo.ts` | One line above the form: the demo is public, wiped every night, and a new account starts with sample data. The SPA reads `demo` from its `/config.json` (`SPA_DEMO` in `apps/spa/public-env.allow`, which compose sets from `DEMO_MODE`). |
 | Wipe | `apps/worker/demo/wipe.ts` | Empties every table except `KEPT_TABLES` (the migration history and the backup status) in one transaction. Ids are not restarted, so nothing cached under an old id describes a new row. |
-| Nightly reset | `apps/worker/demo/reset.ts`, `run.ts`, started in `apps/worker/+main.ts` | Checks every minute. When the date in `America/Los_Angeles` changes, it wipes, seeds and schedules the nightly cleanup again. After a deploy it seeds at once only when the demo is missing. A failed reset is tried again a minute later; a worker that restarts in between keeps the half-seeded demo until the next midnight. |
+| Nightly reset | `apps/worker/demo/reset.ts`, `run.ts`, started in `apps/worker/+main.ts` | Checks every minute. When the date in `America/Los_Angeles` changes, it wipes, seeds the population and schedules the nightly cleanup again. After a deploy it seeds at once only when the day's population is missing or an operator account exists. A failed reset is tried again a minute later; a worker that restarts in between keeps the half-seeded demo until the next midnight. |
 
-Visitors may sign up with their own address, by password or with Google or GitHub, and subscribe
-to the newsletter. Their accounts are wiped with everything else that night.
+**Why a job, not sign-up itself.** Every sign-up (password, Google, GitHub) already queues the
+starter-data job in its own transaction, and the worker runs it within a second. While the demo is
+on, that job writes the sample groups before the welcome note. A slow or failing write never
+delays or fails a sign-up, and a failed job is retried. An account that is in any group besides
+its first one has its sample groups already and gets nothing more, so a retry or a second sign-in
+adds nothing. The population's fake people get none.
 
 **The admin panel is not part of the demo.** Its host still runs, but the demo seeds no operator
 account, so nobody outside can sign in to it. A public operator account would show every visitor's
@@ -53,7 +49,8 @@ updates the demo in the same PR:
   survive the night goes into `KEPT_TABLES`, with the reason.
 - **The seed** writes what a visitor should see. A new feature gets fake rows in
   `apps/worker/demo/fake-data.ts` and `seed.ts`, written through the feature's own repository, so
-  the demo shows it. A renamed or dropped column breaks the seed's raw SQL (`group_members`,
-  `users`, `subscribers`); fix it there.
+  the population and every new account's sample groups show it. A renamed or dropped column breaks
+  the seed's raw SQL (`group_members`, `users`, `auth_keys`, `subscribers`); fix it there.
 - **The tests**: `tests/integration/demo-seed.integration.test.ts` checks that the wipe leaves
-  every table but the kept ones empty and that the seed's counts match the fake data. Run it.
+  every table but the kept ones empty, that the seed's counts match the fake data, and what a new
+  account's sample groups hold. Run it.

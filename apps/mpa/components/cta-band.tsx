@@ -17,7 +17,8 @@ export function CtaBand(
   {
     demoHref,
     title = "See it working in a minute",
-    lead = "The demo is the app you get on day one. Sign up, create a group, invite yourself.",
+    lead =
+      "The demo is the app you get on day one. Sign up and start in groups full of sample notes.",
   }: CtaBandProps,
 ): JSX.Element {
   return (
