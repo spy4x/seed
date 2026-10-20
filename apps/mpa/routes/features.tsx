@@ -2,7 +2,7 @@ import type { JSX } from "preact"
 import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
-import { breadcrumbListJsonLd, faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
 import { Band } from "../components/band.tsx"
 import { CtaBand } from "../components/cta-band.tsx"
 import {
@@ -25,7 +25,15 @@ import { SectionIntro } from "../components/section-intro.tsx"
 import { Shot } from "../components/shot.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
-import { REPOSITORY_URL, SITE_NAME, SiteFrame, type SitePageHead, spaLinks } from "../site.tsx"
+import {
+  PERSON_JSON_LD,
+  REPOSITORY_URL,
+  siteBreadcrumbsJsonLd,
+  SiteFrame,
+  type SitePageHead,
+  softwareJsonLd,
+  spaLinks,
+} from "../site.tsx"
 import { define } from "../utils.ts"
 
 /** The page's title and description, as search results and social previews show them. */
@@ -406,23 +414,14 @@ const FAQ = [
 ] as const
 
 /** The page's structured data: the software, its questions, and the page's place. */
-function featuresJsonLd(origin: string, demo: string): unknown[] {
+function featuresJsonLd(origin: string): unknown[] {
   return [
-    {
-      "@type": `SoftwareApplication`,
-      name: SITE_NAME,
-      description: FEATURES_HEAD.description,
-      applicationCategory: `DeveloperApplication`,
-      operatingSystem: `Linux (Docker)`,
-      offers: { "@type": `Offer`, price: 0, priceCurrency: `USD` },
-      url: demo,
+    softwareJsonLd(origin, {
       featureList: TIERS.flatMap((tier) => tier.features.map((feature) => feature.nav)),
-    },
+    }),
+    PERSON_JSON_LD,
     faqPageJsonLd(FAQ),
-    breadcrumbListJsonLd(`${origin}/features`, [
-      { name: SITE_NAME, href: `${origin}/` },
-      { name: `Features` },
-    ]),
+    siteBreadcrumbsJsonLd(origin, `/features`, `Features`),
   ]
 }
 
@@ -471,7 +470,7 @@ export default define.page(function Features({ state }) {
   const head: SitePageHead = {
     ...FEATURES_HEAD,
     og: `features`,
-    jsonLd: featuresJsonLd(state.webAppOrigin, spa.signUp),
+    jsonLd: featuresJsonLd(state.webAppOrigin),
   }
   const nav = [
     ...TIERS.flatMap((tier) =>

@@ -15,14 +15,19 @@ import {
 import type { IconProps } from "@spy4x/preact-icons"
 import { FeatureCard } from "@spy4x/preact-ui/feature-card"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
-import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { ADMIN_VIDEO, ADMIN_VIDEO_DURATION } from "../admin-video.ts"
 import { AdminVideoPlayer } from "../components/admin-video.tsx"
 import { Band } from "../components/band.tsx"
 import { CtaBand } from "../components/cta-band.tsx"
 import { NotYetList } from "../components/features-section.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
-import { REPOSITORY_URL, SITE_NAME, SiteFrame, type SitePageHead } from "../site.tsx"
+import {
+  REPOSITORY_URL,
+  siteBreadcrumbsJsonLd,
+  SiteFrame,
+  type SitePageHead,
+  softwareId,
+} from "../site.tsx"
 import { define } from "../utils.ts"
 
 /** The page's title and description, as search results and social previews show them. */
@@ -148,11 +153,9 @@ function adminJsonLd(origin: string): unknown[] {
       width: ADMIN_VIDEO.width,
       height: ADMIN_VIDEO.height,
       transcript: ADMIN_VIDEO.transcript.join(` `),
+      about: { "@id": softwareId(origin) },
     },
-    breadcrumbListJsonLd(url, [
-      { name: SITE_NAME, href: `${origin}/` },
-      { name: `Admin panel` },
-    ]),
+    siteBreadcrumbsJsonLd(origin, `/admin`, `Admin panel`),
   ]
 }
 

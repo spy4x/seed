@@ -3,7 +3,7 @@ import { IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { type ComparisonRow, ComparisonTable } from "@spy4x/preact-ui/comparison-table"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
-import { breadcrumbListJsonLd, faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { Band } from "../components/band.tsx"
 import { type Alternative, CompareAlternatives } from "../components/compare-alternatives.tsx"
@@ -13,8 +13,10 @@ import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
   SITE_NAME,
+  siteBreadcrumbsJsonLd,
   SiteFrame,
   type SitePageHead,
+  softwareId,
   spaLinks,
 } from "../site.tsx"
 import { define } from "../utils.ts"
@@ -255,9 +257,9 @@ function compareJsonLd(origin: string): unknown[] {
       description: COMPARE_HEAD.description,
       dateModified: CHECKED_ON,
       author: { "@id": PERSON_JSON_LD["@id"] },
-      about: { "@type": `SoftwareSourceCode`, name: SITE_NAME, codeRepository: REPOSITORY_URL },
+      about: { "@id": softwareId(origin) },
     },
-    breadcrumbListJsonLd(url, [{ name: SITE_NAME, href: `/` }, { name: `Compare` }]),
+    siteBreadcrumbsJsonLd(origin, `/compare`, `Compare`),
     PERSON_JSON_LD,
     faqPageJsonLd(FAQ),
   ]

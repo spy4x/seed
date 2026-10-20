@@ -103,6 +103,31 @@ function jsonLdGraph(html: string): Record<string, unknown>[] {
   return scripts.flatMap((match) => JSON.parse(match[1])["@graph"])
 }
 
+/** Whether a JSON-LD entity has the type `type`, alone or among several. */
+function isType(entity: Record<string, unknown>, type: string): boolean {
+  return [entity["@type"]].flat().includes(type)
+}
+
+/**
+ * Every `@id` a graph defines (an object with more than its id) and every one it only points at
+ * (an object that holds nothing but `@id`), at any depth.
+ */
+function graphIds(graph: unknown): { defined: Set<string>; referenced: Set<string> } {
+  const defined = new Set<string>()
+  const referenced = new Set<string>()
+  const walk = (value: unknown): void => {
+    if (Array.isArray(value)) return value.forEach(walk)
+    if (!value || typeof value !== "object") return
+    const record = value as Record<string, unknown>
+    if (typeof record["@id"] === "string") {
+      ;(Object.keys(record).length === 1 ? referenced : defined).add(record["@id"])
+    }
+    Object.values(record).forEach(walk)
+  }
+  walk(graph)
+  return { defined, referenced }
+}
+
 /** The markup between the first opening `<tag` and its matching close, for a tag never nested. */
 function element(html: string, tag: string): string | undefined {
   return html.match(new RegExp(`<${tag}\\b[\\s\\S]*?</${tag}>`))?.[0]
@@ -303,15 +328,70 @@ describe("the public website", () => {
     const { html } = await page("/")
     const graph = jsonLdGraph(html)
 
-    expect(graph.map((entity) => entity["@type"])).toEqual(
+    expect(graph.flatMap((entity) => entity["@type"])).toEqual(
       expect.arrayContaining(["WebSite", "SoftwareSourceCode", "Person", "FAQPage"]),
     )
-    const source = graph.find((entity) => entity["@type"] === "SoftwareSourceCode")!
+    const source = graph.find((entity) => isType(entity, "SoftwareSourceCode"))!
     expect(source.codeRepository).toBe(REPOSITORY_URL)
     const faq = graph.find((entity) => entity["@type"] === "FAQPage")!
     const questions = (faq.mainEntity as { name: string }[]).map((question) => question.name)
     expect(questions.length).toBeGreaterThan(0)
     for (const question of questions) expect(html).toContain(`>${question}<`)
+  })
+
+  it("describes Seed as one product, with one id that the pages about it point at", async () => {
+    const home = graphIds(jsonLdGraph((await page("/")).html))
+
+    for (const path of SITE_PAGES) {
+      const graph = jsonLdGraph((await page(path)).html)
+      const { defined, referenced } = graphIds(graph)
+
+      for (const id of referenced) {
+        expect(defined.has(id) || home.defined.has(id), `${path} points at ${id}`).toBe(true)
+      }
+      for (const entity of graph) {
+        if (isType(entity, "SoftwareApplication") || isType(entity, "SoftwareSourceCode")) {
+          expect(entity["@id"], path).toBe(`${site}/#software`)
+        }
+      }
+    }
+    for (const path of ["/", "/features", "/admin", "/compare", "/pricing"]) {
+      const { defined, referenced } = graphIds(jsonLdGraph((await page(path)).html))
+      expect(defined.has(`${site}/#software`) || referenced.has(`${site}/#software`), path)
+        .toBe(true)
+    }
+  })
+
+  it("names the author's profiles and company, as antonshubin.com does", async () => {
+    const graph = jsonLdGraph((await page("/")).html)
+
+    const person = graph.find((entity) => isType(entity, "Person"))!
+    expect(person.sameAs).toEqual(expect.arrayContaining([
+      "https://github.com/spy4x",
+      "https://www.linkedin.com/in/anton-shubin",
+      "https://www.upwork.com/freelancers/ashubin",
+    ]))
+    expect(person.worksFor).toMatchObject({
+      "@type": "Organization",
+      "@id": "https://neatsoft.dev/#org",
+      name: "NeatSoft PTE LTD",
+    })
+  })
+
+  it("roots every page's breadcrumb trail at the home page's full address", async () => {
+    // The home page is the root itself, and the newsletter page has no structured data.
+    for (const path of SITE_PAGES.filter((path) => path !== "/" && path !== "/subscribe")) {
+      const graph = jsonLdGraph((await page(path)).html)
+      const crumbs = graph.find((entity) => isType(entity, "BreadcrumbList"))
+
+      expect(crumbs, path).toBeDefined()
+      expect((crumbs!.itemListElement as unknown[])[0], path).toEqual({
+        "@type": "ListItem",
+        position: 1,
+        name: "Seed",
+        item: `${site}/`,
+      })
+    }
   })
 
   it("describes a legal page as a page of the site, one step below the home page", async () => {
@@ -384,7 +464,7 @@ describe("the public website", () => {
   it("offers only Seed itself, at no cost, in the pricing page's structured data", async () => {
     const graph = jsonLdGraph((await page("/pricing")).html)
 
-    const software = graph.find((entity) => entity["@type"] === "SoftwareApplication")!
+    const software = graph.find((entity) => isType(entity, "SoftwareApplication"))!
     expect(software.offers).toEqual({ "@type": "Offer", price: 0, priceCurrency: "USD" })
     const offers = JSON.stringify(graph).match(/"@type":"Offer"/g)
     expect(offers).toHaveLength(1)

@@ -38,6 +38,8 @@ import {
   SITE_NAME,
   SiteFrame,
   type SitePageHead,
+  softwareId,
+  softwareJsonLd,
   spaLinks,
 } from "../site.tsx"
 import { define } from "../utils.ts"
@@ -126,17 +128,15 @@ const FAQ = [
 /** The page's structured data: the site, the software and its author, and the questions. */
 function homeJsonLd(origin: string): unknown[] {
   return [
-    { "@type": `WebSite`, "@id": `${origin}/#website`, name: SITE_NAME, url: `${origin}/` },
     {
-      "@type": `SoftwareSourceCode`,
+      "@type": `WebSite`,
+      "@id": `${origin}/#website`,
       name: SITE_NAME,
-      description: HOME_HEAD.description,
-      codeRepository: REPOSITORY_URL,
-      license: `https://opensource.org/licenses/MIT`,
-      programmingLanguage: `TypeScript`,
-      runtimePlatform: `Deno`,
-      author: { "@id": PERSON_JSON_LD["@id"] },
+      url: `${origin}/`,
+      publisher: { "@id": PERSON_JSON_LD["@id"] },
+      about: { "@id": softwareId(origin) },
     },
+    softwareJsonLd(origin),
     PERSON_JSON_LD,
     faqPageJsonLd(FAQ),
   ]
