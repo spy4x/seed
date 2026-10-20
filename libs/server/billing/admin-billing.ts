@@ -24,6 +24,7 @@ import {
   readBillingAuditIdentifier,
 } from "@domain/billing"
 import { likeContains } from "@spy4x/server/db"
+import { keyAddressMatches } from "@server/auth/admin-users.ts"
 
 const PASSWORD_METHOD = `password`
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -109,7 +110,7 @@ function statusWhere(sql: postgres.Sql, status: AdminBillingStatusFilter) {
  * subscription; otherwise each word must appear, in any case, in the group's name, the owner's
  * name or an address the owner signs in with.
  */
-function searchWhere(sql: postgres.Sql, query: string) {
+function searchWhere(sql: postgres.Sql, query: string, hideRealAddresses: boolean) {
   const words = query.split(/\s+/).filter(Boolean)
   if (isUuid(query)) return sql`g.id = ${query}`
   if (/^(sub|cus)_[A-Za-z0-9]+$/.test(query)) {
@@ -120,14 +121,7 @@ function searchWhere(sql: postgres.Sql, query: string) {
     const pattern = likeContains(word)
     where = sql`${where} AND (
       g.name ILIKE ${pattern} OR o.first_name ILIKE ${pattern} OR o.last_name ILIKE ${pattern}
-      OR EXISTS (
-        SELECT 1 FROM auth_keys k
-        WHERE k.user_id = o.id
-          AND (
-            k.email ILIKE ${pattern}
-            OR (k.method = ${PASSWORD_METHOD} AND k.subject ILIKE ${pattern})
-          )
-      )
+      OR ${keyAddressMatches(sql, sql`o.id`, pattern, hideRealAddresses)}
     )`
   }
   return where
@@ -208,8 +202,9 @@ export async function listAdminBillingCustomers(
   sql: postgres.Sql,
   filter: AdminBillingFilter,
   pageSize: number,
+  hideRealAddresses = false,
 ): Promise<{ customers: AdminBillingCustomer[]; total: number; counts: AdminBillingCounts }> {
-  const search = searchWhere(sql, filter.query)
+  const search = searchWhere(sql, filter.query, hideRealAddresses)
   const [counts] = await sql<AdminBillingCounts[]>`
     SELECT
       COUNT(*) FILTER (WHERE ${statusWhere(sql, `paying`)})::int AS paying,

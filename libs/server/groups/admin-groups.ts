@@ -47,6 +47,7 @@ import { recordAccessChange } from "./group-change-log.ts"
 import { notifyOwnershipReceived, notifyRemoved } from "./group-notifications.ts"
 import { INVITATION_EVENTS, revokeInvitationsOf } from "./invitation-revocation.ts"
 import { likeContains } from "@spy4x/server/db"
+import { keyAddressMatches } from "@server/auth/admin-users.ts"
 
 /** The kinds the group's own actions write; the same strings the members' actions write. */
 const MEMBER_REMOVED_EVENT = "group.member_removed"
@@ -215,6 +216,7 @@ export async function listAdminGroups(
   sql: postgres.Sql,
   filter: AdminGroupFilter,
   pageSize: number,
+  hideRealAddresses = false,
 ): Promise<{ groups: AdminGroupRow[]; total: number }> {
   const words = filter.query.split(/\s+/).filter(Boolean)
   let where = sql`TRUE`
@@ -225,14 +227,7 @@ export async function listAdminGroups(
       const pattern = likeContains(word)
       where = sql`${where} AND (
         g.name ILIKE ${pattern} OR o.first_name ILIKE ${pattern} OR o.last_name ILIKE ${pattern}
-        OR EXISTS (
-          SELECT 1 FROM auth_keys k
-          WHERE k.user_id = o.id
-            AND (
-              k.email ILIKE ${pattern}
-              OR (k.method = ${PASSWORD_METHOD} AND k.subject ILIKE ${pattern})
-            )
-        )
+        OR ${keyAddressMatches(sql, sql`o.id`, pattern, hideRealAddresses)}
       )`
     }
   }
@@ -665,9 +660,10 @@ export async function transferOwnershipAsOperator(
 }
 
 /** Every read and action of this module over one `sql` client: the shape `db.adminGroups` gives. */
-export function adminGroupRows(sql: postgres.Sql) {
+export function adminGroupRows(sql: postgres.Sql, hideRealAddresses = false) {
   return {
-    list: (filter: AdminGroupFilter, pageSize: number) => listAdminGroups(sql, filter, pageSize),
+    list: (filter: AdminGroupFilter, pageSize: number) =>
+      listAdminGroups(sql, filter, pageSize, hideRealAddresses),
     find: (groupId: string) => readAdminGroup(sql, groupId),
     revokeInvitation: (operator: AdminGroupOperator, groupId: string, invitationId: string) =>
       revokeInvitationAsOperator(sql, operator, groupId, invitationId),
