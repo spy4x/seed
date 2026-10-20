@@ -95,6 +95,12 @@ asked for this on 2026-10-16: "do that automatically when screens/UI/UX change s
 every small change). If unsure if screenshots to be remade - ask me." On 2026-10-17 the owner
 agreed that the skill covers the README pictures too.
 
+The admin panel video on the website's `/admin` page (`apps/mpa/media/video/`) shows the admin
+app's screens too. When a change alters a screen the video shows significantly, re-record the
+video with `deno task video:admin` in the same follow-up PR as the screenshots, and update
+`apps/mpa/admin-video.ts` (its length, size, upload date and transcript) to match. The skill says
+how. On 2026-10-20 the owner, asked whether the video should join this rule, answered: "Add."
+
 ## The public demo
 
 The template's server runs a public demo of the product (not the admin panel) with fake data,

@@ -1,6 +1,6 @@
 ---
 name: recapture-shots
-description: Re-capture the product screenshots, both the public website's (apps/mpa/static/shots and og cards, by apps/mpa/screenshots/capture.ts) and the README's (docs/screenshots, by docs/screenshots/record.ts). Use after a change that alters how a photographed screen looks in a significant way, and ask the owner when unsure.
+description: Re-capture the product screenshots, both the public website's (apps/mpa/static/shots and og cards, by apps/mpa/screenshots/capture.ts) and the README's (docs/screenshots, by docs/screenshots/record.ts). Use after a change that alters how a photographed screen looks in a significant way, and ask the owner when unsure. Also re-records the admin panel video of the website's /admin page (docs/screenshots/admin-video.ts) when a screen it shows changed significantly.
 ---
 
 # Re-capture the product screenshots
@@ -11,6 +11,11 @@ Two sets of pictures show the product, and both are re-captured together:
   `apps/mpa/static/shots/` and `apps/mpa/static/og/`.
 - The README: the stills, the sign-up GIF and the GitHub social preview, made by
   `docs/screenshots/record.ts` and committed under `docs/screenshots/`.
+
+The admin panel video on the website's `/admin` page is a third piece, made by
+`docs/screenshots/admin-video.ts` (`deno task video:admin`) and committed under
+`apps/mpa/media/video/` and `apps/mpa/static/video/`. Re-record it in the same PR when the change
+altered a screen the video shows significantly; its header names the shots.
 
 `AGENTS.md`, "Product screenshots", says when to run this. This skill says how.
 
@@ -64,6 +69,19 @@ reads from the API's development route `/api/test/last-mail`; that route exists 
 `ENV=dev`. It deletes the demo user through `/api/test/cleanup-user` before it starts, so any
 development database works, also one where an earlier run left the user.
 
+When the video needs it too, record it last, on a freshly seeded database, as the header of
+`docs/screenshots/admin-video.ts` says (`ENV=dev deno task db:reset`, then restart the API and the
+worker):
+
+```bash
+APP_URL=http://app.localhost ADMIN_URL=http://admin.localhost SEED_PASSWORD=… systemd-run --user --scope --quiet -p TasksMax=4000 -p MemoryMax=8G timeout 900 deno task video:admin
+```
+
+It prints the length, the file sizes and the music's loudness. Update `apps/mpa/admin-video.ts`
+with them (the seconds from `ffprobe` of the MP4, rounded; the MP4's size; the upload date with
+its timezone) and with one transcript line per shot of the new cut, then the e2e tests in
+`e2e/mpa/admin.mpa.ts` that pin the length, the number of shots and the size.
+
 ## 4. Look, then ship
 
 1. Open every changed `.webp`, `og/*.png` and `docs/screenshots/*.png` with the Read tool, and a few
@@ -72,7 +90,9 @@ development database works, also one where an earlier run left the user.
    `ffmpeg -i sign-up-flow.gif -vf "select='not(mod(n,20))'" -fps_mode vfr f%02d.png`. Check each
    against the screen it shows: right data, nothing cut off, both themes, no spinner or toast
    caught mid-flight.
-2. Update the README's alt text so it describes the new pictures.
+2. Update the README's alt text so it describes the new pictures. For the video, extract stills
+   of key moments (`ffmpeg -i admin-panel.mp4 -vf fps=2 still-%03d.png` in your scratch folder),
+   look at each, and check that the transcript matches what the video shows.
 3. Check the budgets the website's README names: 90 KB for the notes hero at 1280, 70 KB for the
    rest, under 2.5 MB for the folder (`du -sb apps/mpa/static/shots`).
 4. Stop what you started: `deno task compose down` and `deno task proxy:stop`, unless the stack was
