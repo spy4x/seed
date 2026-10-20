@@ -55,9 +55,9 @@ export default define.page(function Privacy({ state }) {
               pricing page and how much of the video was watched.
             </p>
             <p>
-              If your browser sends Do Not Track, nothing is counted. Known bots are not counted. A
-              page opened from a newsletter mail's link is not counted until the link has done its
-              job, so the link's code never reaches the statistics. The demo counts nothing.
+              If your browser sends Do Not Track, nothing is counted. Known bots are not counted.
+              The page a newsletter link opens is not counted, so the link's code never reaches the
+              statistics. The demo counts nothing.
             </p>
           </>
         )
