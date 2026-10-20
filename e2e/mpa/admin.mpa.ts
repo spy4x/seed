@@ -3,9 +3,9 @@ import { AxeBuilder } from "@axe-core/playwright"
 
 const REPOSITORY = `https://github.com/spy4x/seed`
 /** What the page says about the video: its length, its sound, and one line per shot. */
-const SECONDS = 45
-const SHOTS = 9
-const MP4_SIZE = `3 MB`
+const SECONDS = 60
+const SHOTS = 12
+const MP4_SIZE = `6 MB`
 
 /** Runs axe-core over the whole page and returns each violation's rule and the elements it hit. */
 async function violations(page: Page): Promise<string[]> {
@@ -43,7 +43,7 @@ test.describe(`without JavaScript`, () => {
     await expect(video).toHaveAttribute(`poster`, `/video/admin-panel-poster-1920.webp`)
     await expect(video).toHaveAttribute(
       `aria-label`,
-      `The Seed admin panel, a video of ${SECONDS} seconds with no sound`,
+      `The Seed admin panel, a video of ${SECONDS} seconds with music and no speech`,
     )
 
     // The WebM first, so a browser that plays AV1 never fetches the MP4. Each file is served.
@@ -62,7 +62,7 @@ test.describe(`without JavaScript`, () => {
   test(`the line under the player gives the length and the sound, and its link lands on the transcript`, async ({ page }) => {
     await page.goto(`/admin`)
     await expect(page.locator(`[data-e2e=admin-video-meta]`)).toHaveText(
-      `${SECONDS} seconds · No sound · Sample data`,
+      `${SECONDS} seconds · Music, no speech · Sample data`,
     )
     await page.locator(`[data-e2e=admin-transcript-jump]`).click()
     await expect(page).toHaveURL(/\/admin#transcript$/)
@@ -75,7 +75,7 @@ test.describe(`without JavaScript`, () => {
     await expect(transcript.getByRole(`heading`, { level: 2 })).toHaveText(`What the video shows`)
     await expect(transcript.locator(`details`)).toHaveCount(0)
     await expect(transcript.locator(`ol > li`)).toHaveCount(SHOTS)
-    await expect(transcript).toContainText(`The video has no sound.`)
+    await expect(transcript).toContainText(`Music plays under the video. There is no speech.`)
     await expect(transcript).toContainText(
       `The people and teams in the video are made-up sample data.`,
     )
