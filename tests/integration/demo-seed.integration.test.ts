@@ -477,9 +477,9 @@ Deno.test("the demo seed's history fills the admin panel's screens", async (t) =
         expect(signUpDays.length).toBeGreaterThanOrEqual(15)
         const signUps = stats.signUpsPerDay.reduce((sum, day) => sum + day.count, 0)
         expect(signUps).toBeLessThan(FAKE_COUNTS.users * 0.75)
-        // Someone is active every day, and today is no spike of the whole population. Today is
-        // the UTC day so far, so late in the day it holds about a full day of activity.
-        expect(stats.activePerDay.every((day) => day.count > 0)).toBe(true)
+        // Someone is active every past day, and today is no spike of the whole population. Today
+        // is the UTC day so far: empty just after midnight, about a full day's activity late.
+        expect(stats.activePerDay.slice(0, -1).every((day) => day.count > 0)).toBe(true)
         expect(stats.activeToday.current).toBeLessThan(FAKE_COUNTS.users * 0.75)
         expect(stats.blocked).toBe(2)
       },
