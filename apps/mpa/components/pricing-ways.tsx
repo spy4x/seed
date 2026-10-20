@@ -2,7 +2,7 @@ import type { ComponentChildren, JSX } from "preact"
 import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { REPOSITORY_URL } from "../brand.ts"
-import { HIRE_PRICES } from "../hire.ts"
+import { HIRE_PAGE_URL, HIRE_PRICES } from "../hire.ts"
 import { Band } from "./band.tsx"
 import { SectionIntro } from "./section-intro.tsx"
 
@@ -44,7 +44,8 @@ function WayCard(
 
 /**
  * The three ways to use Seed and what each costs: the code (nothing), running it (one server) and
- * having it built (Anton's starting price). The last card sends a founder to `/mvp`.
+ * having it built (Anton's starting price). The last card sends a founder to
+ * antonshubin.com's MVP page.
  */
 export function PricingWays(): JSX.Element {
   return (
@@ -105,7 +106,7 @@ export function PricingWays(): JSX.Element {
             highlighted
             action={
               <Button
-                href="/mvp"
+                href={HIRE_PAGE_URL}
                 variant="primary"
                 class="w-full"
                 data-e2e="pricing-mvp"

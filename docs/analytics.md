@@ -52,9 +52,7 @@ Event names are kebab-case. Umami stores the page of every event, so a name neve
 | `sign-in`                 | `from`                        | The footer's link to the demo's sign-in                                              |
 | `github`                  | `from`                        | A link into the GitHub repository that names no other event                          |
 | `read-code`               | `from`                        | A link to a part of the code or its docs ("Read the code", the deploy guide)         |
-| `hire-me`                 | `from`                        | A button or link to `/mvp`                                                           |
-| `book-call`               | `from`                        | "Book a free 30-minute call" on `/mvp`                                               |
-| `send-brief`              | `from`                        | "Send a written brief" on `/mvp`                                                     |
+| `hire-me`                 | `from`                        | A button or link to antonshubin.com's MVP page                                      |
 | `compare-source`          | `product`                     | A source link of a compared product on `/compare`                                    |
 | `on-this-page`            | `section`                     | A link of the "On this page" list (`/features`, `/privacy`, `/terms`)                |
 | `outbound-link`           | `url`, `from`                 | Any other link to another site                                                       |

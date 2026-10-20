@@ -1,5 +1,6 @@
 import { type FreshContext, HttpError } from "fresh"
 import { Button } from "@spy4x/preact-ui/button"
+import { HIRE_PAGE_URL } from "./hire.ts"
 import { REPOSITORY_URL, SiteFrame, spaLinks } from "./site.tsx"
 import type { State } from "./utils.ts"
 
@@ -62,7 +63,7 @@ export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promi
                   </li>
                   <li>
                     <a
-                      href="/mvp"
+                      href={HIRE_PAGE_URL}
                       class="text-primary underline"
                       data-umami-event="hire-me"
                       data-umami-event-from="not-found"

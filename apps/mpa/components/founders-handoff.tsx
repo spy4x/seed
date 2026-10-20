@@ -1,11 +1,12 @@
 import type { JSX } from "preact"
 import { Button } from "@spy4x/preact-ui/button"
 import { IconArrowRight } from "@spy4x/preact-icons"
+import { HIRE_PAGE_URL } from "../hire.ts"
 import { Band } from "./band.tsx"
 
 /**
  * The one band of a developer page that speaks to the other audience: founders who want their
- * product built on Seed, sent to `/mvp`.
+ * product built on Seed, sent to antonshubin.com's MVP page.
  */
 export function FoundersHandoff(): JSX.Element {
   return (
@@ -22,7 +23,7 @@ export function FoundersHandoff(): JSX.Element {
           </p>
         </div>
         <Button
-          href="/mvp"
+          href={HIRE_PAGE_URL}
           variant="secondary"
           size="lg"
           class="shrink-0"
