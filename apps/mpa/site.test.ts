@@ -4,21 +4,21 @@ import { App } from "fresh"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
-import Admin from "./routes/admin.tsx"
+import Admin, { ADMIN_HEAD } from "./routes/admin.tsx"
 import Compare from "./routes/compare.tsx"
 import Features from "./routes/features.tsx"
 import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
-import Mvp, { MVP_HEAD } from "./routes/mvp.tsx"
 import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
 import Privacy from "./routes/privacy.tsx"
 import Terms from "./routes/terms.tsx"
+import { handler as mvp } from "./routes/mvp.ts"
 import { handler as robots } from "./routes/robots.txt.ts"
 import { handler as subscribe } from "./routes/subscribe/index.ts"
 import { handler as theme } from "./routes/theme.js.ts"
 import { handler as sitemap } from "./routes/sitemap.xml.ts"
 import { handler as unsubscribe } from "./routes/unsubscribe.ts"
 import { pageMiddleware } from "./middleware.ts"
-import { BOOK_CALL_URL, BRIEF_URL, HIRE_PAGE_URL } from "./hire.ts"
+import { HIRE_PAGE_URL } from "./hire.ts"
 import { ogImageAlt, type OgImageKey, REPOSITORY_URL, SITE_PAGES } from "./site.tsx"
 import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
@@ -51,7 +51,7 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .route("/admin", { component: view(Admin) })
     .route("/compare", { component: view(Compare) })
     .route("/pricing", { component: view(Pricing), handler: pricing })
-    .route("/mvp", { component: view(Mvp) })
+    .get("/mvp", mvp.GET!)
     .route("/privacy", { component: view(Privacy) })
     .route("/terms", { component: view(Terms) })
     .get("/subscribe", subscribe.GET!)
@@ -178,9 +178,9 @@ describe("the public website", () => {
   })
 
   it("names a page after its own title, then the site, when the title does not name Seed", async () => {
-    const { html } = await page("/mvp")
+    const { html } = await page("/admin")
 
-    expect(html).toContain(`<title>${MVP_HEAD.title} · Seed</title>`)
+    expect(html).toContain(`<title>${ADMIN_HEAD.title} · Seed</title>`)
   })
 
   it("keeps every title within 60 characters and naming Seed once, and every description within 155", async () => {
@@ -236,7 +236,7 @@ describe("the public website", () => {
       ["Features", "/features"],
       ["Compare", "/compare"],
       ["Pricing", "/pricing"],
-      ["Hire me", "/mvp"],
+      ["Hire me", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
       ["GitHub", REPOSITORY_URL],
       ["Try the demo", `${spa}/sign-up`],
     ]))
@@ -250,7 +250,6 @@ describe("the public website", () => {
     ["/admin", "admin"],
     ["/subscribe", "subscribe"],
     ["/pricing", "pricing"],
-    ["/mvp", "mvp"],
     ["/privacy", "home"],
     ["/terms", "home"],
   ]
@@ -305,6 +304,9 @@ describe("the public website", () => {
     )
     expect(link).toBe(HIRE_PAGE_URL)
     expect(link).toMatch(/^https:\/\/antonshubin\.com\/catalog\/zero-to-production-saas-mvp\?/)
+    // The link beside it says what it opens, not a second "antonshubin.com".
+    expect(hrefOf(linkNamed(html, "About me"))).toBe("https://antonshubin.com/about")
+    expect(linkNamed(html, "antonshubin.com")).toBeUndefined()
   })
 
   it("ends /features with its questions, listed under On this page and in its structured data", async () => {
@@ -421,7 +423,7 @@ describe("the public website", () => {
     expect(await response.text()).toContain("prefers-color-scheme")
   })
 
-  it("says Seed is free, prices running it and having it built, and sends the founder to /mvp", async () => {
+  it("says Seed is free, prices running it and having it built, and sends the founder to the hire page", async () => {
     const { status, html } = await page("/pricing")
 
     expect(status).toBe(200)
@@ -430,7 +432,7 @@ describe("the public website", () => {
     for (const card of ["way-use", "way-run", "way-hire"]) expect(html).toContain(`id="${card}"`)
     expect(html).toContain(">$0</span>")
     expect(html).toContain(">From $8,000</span>")
-    expect(hrefOf(linkNamed(html, "See how it works"))).toBe("/mvp")
+    expect(hrefOf(linkNamed(html, "See how it works"))).toBe(HIRE_PAGE_URL.replaceAll("&", "&amp;"))
     expect(html).toContain(`<link rel="canonical" href="${site}/pricing"`)
   })
 
@@ -473,47 +475,32 @@ describe("the public website", () => {
     )
   })
 
-  it("answers /mvp with the outcome, the starting price and the call on antonshubin.com", async () => {
-    const { status, html } = await page("/mvp")
+  it("answers /mvp with a permanent redirect to the hire page on antonshubin.com", async () => {
+    const response = await handler(new Request(`${site}/mvp`), info)
 
-    expect(status).toBe(200)
-    expect(headingOne(html)).toBe(
-      "Your product, live and taking payments, in weeks rather than months.",
+    expect(response.status).toBe(301)
+    expect(response.headers.get("location")).toBe(HIRE_PAGE_URL)
+    expect(HIRE_PAGE_URL).toMatch(
+      /^https:\/\/antonshubin\.com\/catalog\/zero-to-production-saas-mvp\?utm_source=seedsaas&/,
     )
-    expect(html).toContain(`<title>${MVP_HEAD.title} · Seed</title>`)
-    expect(html).toContain(">From $8,000</dd>")
-    const book = BOOK_CALL_URL.replaceAll("&", "&amp;")
-    expect(html.match(/<a\b[^>]*data-e2e="mvp-book-(hero|closing)"[^>]*>/g)).toEqual([
-      expect.stringContaining(`href="${book}"`),
-      expect.stringContaining(`href="${book}"`),
-    ])
-    expect(html).toContain(`href="${BRIEF_URL.replaceAll("&", "&amp;")}"`)
-    expect(html).toContain(`<link rel="canonical" href="${site}/mvp"`)
   })
 
-  it("keeps the newsletter off /mvp, where founders came to hire", async () => {
-    const { html } = await page("/mvp")
+  it("sends every hire link on the site to the hire page, and none to /mvp", async () => {
+    // The listed pages, and the not-found page every unknown address gets.
+    for (const path of [...SITE_PAGES, "/no-such-page"]) {
+      const { html } = await page(path)
 
-    expect(html).not.toContain(`action="/subscribe"`)
-  })
-
-  it("describes /mvp as a service from its starting price, with its questions and no reviews", async () => {
-    const { html } = await page("/mvp")
-    const graph = jsonLdGraph(html)
-
-    const service = graph.find((entity) => entity["@type"] === "Service")!
-    expect(service.provider).toEqual({ "@id": "https://antonshubin.com/#person" })
-    expect(service.offers).toMatchObject({
-      url: BOOK_CALL_URL,
-      priceSpecification: { minPrice: 8000, priceCurrency: "USD" },
-    })
-    const faq = graph.find((entity) => entity["@type"] === "FAQPage")!
-    const questions = (faq.mainEntity as { name: string }[]).map((question) => question.name)
-    expect(questions).toHaveLength(7)
-    for (const question of questions) {
-      expect(html).toContain(`>${question}<`)
+      expect(html, path).not.toMatch(/href="(https:\/\/www\.example\.com)?\/mvp"/)
     }
-    expect(JSON.stringify(graph)).not.toMatch(/"Review"|"AggregateRating"/)
+    const hire = HIRE_PAGE_URL.replaceAll("&", "&amp;")
+    const notFound = await page("/no-such-page")
+    expect(notFound.status).toBe(404)
+    expect(hrefOf(linkNamed(notFound.html, "Hire me to build your MVP"))).toBe(hire)
+    const home = (await page("/")).html
+    expect(home.match(/<a\b[^>]*data-umami-event="hire-me"[^>]*>/g)?.length).toBeGreaterThan(0)
+    for (const link of home.match(/<a\b[^>]*data-umami-event="hire-me"[^>]*>/g)!) {
+      expect(link).toContain(`href="${hire}"`)
+    }
   })
 
   it("names the trial of every plan that has one, with its length from the catalog", async () => {
@@ -620,7 +607,6 @@ describe("the public website", () => {
         "/admin",
         "/compare",
         "/pricing",
-        "/mvp",
         "/subscribe",
         "/privacy",
         "/terms",

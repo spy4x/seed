@@ -154,18 +154,6 @@ const OG_CARDS: OgCard[] = [
     shot: "",
   },
   {
-    file: "mvp",
-    eyebrow: "For founders",
-    title: "Your MVP, live and taking payments.",
-    sub: "From $8,000 · from 3 weeks · you own everything",
-    // The phone picture, which has no rail: the plan alone, near its real size.
-    shot: "shots/billing-dark-780.webp",
-    width: 480,
-    // The frame starts 531 card pixels down the picture (its 431st CSS pixel), in the empty
-    // canvas above the "Plan" heading, and ends below the footnote, above the tab bar.
-    top: 531,
-  },
-  {
     file: "subscribe",
     eyebrow: "Newsletter",
     title: "What shipped in Seed, briefly.",

@@ -1,12 +1,10 @@
 import { AUTHOR_URL } from "./brand.ts"
 
 /**
- * What hiring Anton costs, as antonshubin.com lists it (checked on 2026-10-16). `/pricing` and
- * `/mvp` both read these, so a change of price is one edit here and one on antonshubin.com.
+ * What hiring Anton costs, as antonshubin.com lists it (checked on 2026-10-16). `/pricing` reads
+ * these, so a change of price is one edit here and one on antonshubin.com.
  */
 export const HIRE_PRICES = {
-  /** The starting price of an MVP built on Seed, in US dollars. */
-  mvpFromUsd: 8_000,
   mvpFrom: `$8,000`,
   mvpWeeks: `3 weeks`,
   hourly: `$150`,
@@ -17,14 +15,8 @@ export const HIRE_PRICES = {
 /** Tags a link to antonshubin.com with where the visitor came from, for its lead log. */
 const FROM_SEED = `utm_source=seedsaas&utm_medium=referral&utm_campaign=mvp`
 
-/** antonshubin.com's booking page: the calendar for a free 30-minute call. */
-export const BOOK_CALL_URL = `${AUTHOR_URL}/book?${FROM_SEED}`
-
-/** antonshubin.com's page for the MVP offer: a product built on Seed, from idea to production. */
+/**
+ * antonshubin.com's page for the MVP offer: a product built on Seed, from idea to production. Every
+ * "hire me" link on this site goes there, and `/mvp` answers a 301 to it.
+ */
 export const HIRE_PAGE_URL = `${AUTHOR_URL}/catalog/zero-to-production-saas-mvp?${FROM_SEED}`
-
-/** The written-brief form on the same booking page, for a founder who prefers to write. */
-export const BRIEF_URL = `${BOOK_CALL_URL}#brief`
-
-/** Anton's Upwork profile: where the reviews and the figures quoted on `/mvp` can be checked. */
-export const UPWORK_URL = `https://www.upwork.com/freelancers/ashubin`

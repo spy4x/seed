@@ -505,7 +505,7 @@ function WhoBuilds(): JSX.Element {
             </a>
           </li>
           <li>
-            <a href={AUTHOR_URL} class="text-primary underline">antonshubin.com</a>
+            <a href={`${AUTHOR_URL}/about`} class="text-primary underline">About me</a>
           </li>
           <li>
             <a

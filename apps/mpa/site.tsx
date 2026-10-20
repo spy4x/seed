@@ -13,6 +13,7 @@ import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME } from "./brand.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
+import { HIRE_PAGE_URL } from "./hire.ts"
 import type { State } from "./utils.ts"
 
 export { AUTHOR_URL, REPOSITORY_URL, SITE_NAME }
@@ -24,7 +25,6 @@ export const SITE_PAGES = [
   `/admin`,
   `/compare`,
   `/pricing`,
-  `/mvp`,
   `/subscribe`,
   `/privacy`,
   `/terms`,
@@ -37,7 +37,6 @@ export type OgImageKey =
   | `admin`
   | `compare`
   | `pricing`
-  | `mvp`
   | `subscribe`
 
 /**
@@ -62,10 +61,6 @@ export const OG_IMAGES: Record<OgImageKey, { headline: string; line: string }> =
     line: `Honest, sourced, checked 16 Oct 2026`,
   },
   pricing: { headline: `Seed is free.`, line: `MIT licence · you pay for one server` },
-  mvp: {
-    headline: `Your MVP, live and taking payments.`,
-    line: `From $8,000 · from 3 weeks · you own everything`,
-  },
   subscribe: {
     headline: `What shipped in Seed, briefly.`,
     line: `A short email when it changes`,
@@ -201,7 +196,7 @@ export const NAV_LINKS = [
   { label: `Features`, href: `/features` },
   { label: `Compare`, href: `/compare` },
   { label: `Pricing`, href: `/pricing` },
-  { label: `Hire me`, href: `/mvp` },
+  { label: `Hire me`, href: HIRE_PAGE_URL },
   { label: `GitHub`, href: REPOSITORY_URL, Icon: IconGitHub },
 ] as const
 
@@ -388,7 +383,7 @@ function footerGroups(spa: { signIn: string; signUp: string }): SiteFooterGroup[
     {
       title: `Company`,
       links: [
-        { label: `Hire me`, href: `/mvp` },
+        { label: `Hire me`, href: HIRE_PAGE_URL, external: true },
         { label: `About Anton`, href: AUTHOR_URL, external: true },
         { label: `Privacy`, href: `/privacy` },
         { label: `Terms`, href: `/terms` },

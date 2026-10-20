@@ -8,7 +8,7 @@ import { CtaBand } from "../components/cta-band.tsx"
 import { PricingDemoPlans } from "../components/pricing-demo-plans.tsx"
 import { PricingWays } from "../components/pricing-ways.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
-import { HIRE_PRICES } from "../hire.ts"
+import { HIRE_PAGE_URL, HIRE_PRICES } from "../hire.ts"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
@@ -128,7 +128,9 @@ export default define.page(function Pricing({ state }) {
                 ? (
                   <p>
                     {item.answerText}{" "}
-                    <a href="/mvp" class="text-primary underline">How an MVP build works</a>.
+                    <a href={HIRE_PAGE_URL} class="text-primary underline">
+                      How an MVP build works
+                    </a>.
                   </p>
                 )
                 : <p>{item.answerText}</p>,
