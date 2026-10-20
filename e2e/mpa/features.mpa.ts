@@ -86,6 +86,15 @@ test.describe(`without JavaScript`, () => {
     )
   })
 
+  test(`the admin video is followed by a link to the admin app's code`, async ({ page }) => {
+    await page.goto(`/features`)
+    const link = page.locator(
+      `section#admin details[data-e2e=admin-video-transcript] + a[data-e2e=admin-video-code-link]`,
+    )
+    await expect(link).toHaveText(`Read the admin app`)
+    await expect(link).toHaveAttribute(`href`, /\/tree\/main\/apps\/admin\/?$/)
+  })
+
   test(`the features page fits a 375 px phone with no sideways scroll`, async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto(`/features`)

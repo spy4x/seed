@@ -1,4 +1,5 @@
 import type { JSX } from "preact"
+import { IconArrowRight } from "@spy4x/preact-icons"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 
 /** The recording, made by `deno task video:admin`: the videos are in `media/video/` (served by
@@ -28,9 +29,9 @@ const TRANSCRIPT = [
  * The admin panel video of `/features#admin`, in a browser frame. The native player only: it
  * loads nothing before a click, plays with the sound off (it has none) and works without
  * JavaScript. Its size is fixed, so nothing moves when the poster arrives. The transcript under it
- * says what each shot shows.
+ * says what each shot shows, and `code` links to the code again for a viewer who just watched it.
  */
-export function AdminVideo(): JSX.Element {
+export function AdminVideo({ code }: { code: { label: string; href: string } }): JSX.Element {
   return (
     <div class="flex flex-col gap-3">
       <WindowFrame variant="browser" title="admin.seedsaas.com">
@@ -63,6 +64,13 @@ export function AdminVideo(): JSX.Element {
         </ol>
         <p class="mt-3 text-muted">The people and groups in the video are made-up sample data.</p>
       </details>
+      <a
+        href={code.href}
+        class="inline-flex items-center gap-1 self-start py-2 text-sm font-medium text-primary hover:underline"
+        data-e2e="admin-video-code-link"
+      >
+        {code.label} <IconArrowRight class="size-4" aria-hidden="true" />
+      </a>
     </div>
   )
 }

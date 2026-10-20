@@ -37,6 +37,9 @@ function source(path: string): string {
   return `${REPOSITORY_URL}/${kind}/main/${path.replace(/\/$/, ``)}`
 }
 
+/** The admin app's code: the section's own link, repeated under its video. */
+const ADMIN_CODE = { label: `Read the admin app`, href: source(`apps/admin/`) }
+
 /** An open issue of the repository, by number. */
 function issue(number: number): string {
   return `${REPOSITORY_URL}/issues/${number}`
@@ -301,8 +304,8 @@ const TIERS: readonly Tier[] = [
           { label: `Translations: the admin app is English only`, issue: issue(275) },
           { label: `Signing in as a person to see what they see` },
         ],
-        code: { label: `Read the admin app`, href: source(`apps/admin/`) },
-        visual: <AdminVideo />,
+        code: ADMIN_CODE,
+        visual: <AdminVideo code={ADMIN_CODE} />,
         wide: true,
       },
       {
