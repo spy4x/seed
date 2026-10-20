@@ -16,6 +16,7 @@ import {
   OutboxDiagram,
   RealtimePair,
 } from "../components/features-visuals.tsx"
+import { AdminVideo } from "../components/admin-video.tsx"
 import { OnThisPage } from "../components/on-this-page.tsx"
 import { Shot } from "../components/shot.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
@@ -39,11 +40,6 @@ function source(path: string): string {
 /** An open issue of the repository, by number. */
 function issue(number: number): string {
   return `${REPOSITORY_URL}/issues/${number}`
-}
-
-/** A closed issue from before the move, which stays in the archived spy4x/template. */
-function templateIssue(number: number): string {
-  return `https://github.com/spy4x/template/issues/${number}`
 }
 
 /** A feature as the page lists it, without the side its picture goes on: the tier decides that. */
@@ -283,38 +279,31 @@ const TIERS: readonly Tier[] = [
     title: `Run it, watch it, support the people on it`,
     lead: `One server you own, the tools to see what it does, and an area where your team ` +
       `helps the people who use your product.`,
-    status: `The admin area covers people today; groups, billing and newsletter screens for ` +
-      `operators come next.`,
+    status: `Everything below ships today. Translations are not in yet.`,
     features: [
       {
         id: `admin`,
         nav: `Admin area`,
         eyebrow: `Support`,
         title: `An admin area for your operators`,
-        lead: `Your support team finds a person by address or name, filters by role or blocked ` +
-          `state, opens their sign-in methods, sessions, groups and audit trail, blocks or ` +
-          `unblocks them, and ends their sessions.`,
+        lead: `Your team finds a person by name or address and sees their sign-in methods, ` +
+          `sessions, groups and history. From the same place they manage groups, refund a ` +
+          `payment, look after the newsletter's subscribers, check the system's health and run ` +
+          `a failed job again.`,
         facts: [
           `A separate app on its own host, with its own session cookie`,
-          `Roles: operator, supervisor, administrator`,
-          `Every action confirmed first and written to the audit trail`,
-          `Nobody can act on a person of an equal or higher role`,
+          `Dashboard, users, groups, billing, newsletter, audit log, system and API tokens`,
+          `Roles: operator, supervisor, administrator. Nobody can act on a person of an equal ` +
+          `or higher role`,
+          `Every action confirmed first and written to the audit log`,
         ],
         notYet: [
-          { label: `Groups for operators`, issue: templateIssue(426) },
-          { label: `Billing for operators`, issue: templateIssue(196) },
-          { label: `Newsletter for operators`, issue: templateIssue(428) },
+          { label: `Translations: the admin app is English only`, issue: issue(275) },
+          { label: `Signing in as a person to see what they see` },
         ],
         code: { label: `Read the admin app`, href: source(`apps/admin/`) },
-        visual: (
-          <WindowFrame variant="browser" title="admin.seedsaas.com">
-            <Shot
-              name="admin-overview"
-              alt="The admin area's people list: a search by name or address, filters by role and blocked state, and four people with when each was last seen."
-              sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
-            />
-          </WindowFrame>
-        ),
+        visual: <AdminVideo />,
+        wide: true,
       },
       {
         id: `deploy`,
