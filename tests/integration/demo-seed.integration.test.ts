@@ -7,6 +7,7 @@ import { UserRole } from "@domain/identity"
 import { DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { WELCOME_NOTE_TITLE } from "@server/jobs/starter-data.ts"
+import { postgresFakePayments } from "@server/billing/fake-payments.ts"
 import { readOnboarding } from "@server/auth/onboarding.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
@@ -32,7 +33,7 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { SessionStatus } from "@spy4x/server/sign-in"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { BILLING_AUDIT_EVENTS } from "@domain/billing"
+import { BILLING_AUDIT_EVENTS, BillingStatus } from "@domain/billing"
 import { AuthAuditEventType } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
@@ -269,9 +270,10 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
     expect(counts.members).toBe(
       people + data.groups.reduce((sum, group) => sum + 1 + group.members.length, 0),
     )
-    // Every person's welcome note, dated when they joined, plus the themed groups' notes.
+    // Every person's welcome note, dated when they joined, their own notes, and the groups' notes.
     expect(counts.notes).toBe(
-      people + data.groups.reduce((sum, group) => sum + group.notes.length, 0),
+      people + data.users.reduce((sum, user) => sum + user.ownNotes.length, 0) +
+        data.groups.reduce((sum, group) => sum + group.notes.length, 0),
     )
     const welcomes = await sql<{ late: number }[]>`
       SELECT COUNT(*)::int AS late FROM notes n JOIN users u ON u.id = n.created_by_user_id
@@ -543,6 +545,76 @@ Deno.test("the demo seed's history fills the admin panel's screens", async (t) =
         ])
       },
     )
+  })
+})
+
+/**
+ * How many rows have an earlier time than the row with the id before theirs: in `audit_events`
+ * within each group, whose feeds sort by id, and in `auth_audits` across the table.
+ */
+async function outOfOrder(
+  sql: postgres.Sql,
+  table: "audit_events" | "auth_audits",
+): Promise<number> {
+  const scope = table === "audit_events" ? sql`PARTITION BY group_id` : sql``
+  const [{ rows }] = await sql<{ rows: number }[]>`
+    SELECT COUNT(*)::int AS rows FROM (
+      SELECT created_at < lag(created_at) OVER (${scope} ORDER BY id) AS back FROM ${sql(table)}
+    ) t WHERE back
+  `
+  return rows
+}
+
+Deno.test("the seeds' audit rows have ids in the order of their times", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
+    await signUpVisitor(sql, "visitor@example.net")
+    await drainJobs(sql)
+
+    // Feeds and billing histories sort by id: a row out of order would jump back in time.
+    expect(await outOfOrder(sql, "audit_events")).toBe(0)
+    expect(await outOfOrder(sql, "auth_audits")).toBe(0)
+  })
+})
+
+Deno.test("the development billing provider tells the seeded customers' payments", async () => {
+  await withSchema(async (sql) => {
+    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
+    const payments = postgresFakePayments(sql)
+    const subscriptions = await sql<{
+      id: string
+      status: BillingStatus
+      quantity: number
+      currentPeriodEnd: Date
+      pastDueSince: Date | null
+    }[]>`
+      SELECT provider_subscription_id AS id, status, quantity, current_period_end, past_due_since
+      FROM subscriptions
+    `
+    const month = 30 * 24 * 60 * 60_000
+    for (const subscription of subscriptions) {
+      const payment = await payments(subscription.id)
+      if (subscription.status === BillingStatus.Trialing) {
+        expect(payment).toBeNull()
+        continue
+      }
+      // The price of every seat, at the start of the period paid for.
+      expect(payment!.amount).toBe(900 * subscription.quantity)
+      const due = subscription.pastDueSince ?? subscription.currentPeriodEnd
+      expect(payment!.paidAt.getTime()).toBe(due.getTime() - month)
+    }
+    const [{ groupId }] = await sql<{ groupId: string }[]>`
+      SELECT substring(a.identifier from 'group:([^ ]+)') AS group_id
+      FROM auth_audits a WHERE a.event_type = ${BILLING_AUDIT_EVENTS.paymentRefunded}
+    `
+    const [refunded] = await sql<{ id: string }[]>`
+      SELECT provider_subscription_id AS id FROM subscriptions WHERE group_id = ${groupId}
+    `
+    expect((await payments(refunded.id))!.refunded).toBe(true)
+    const others = subscriptions.filter((s) =>
+      s.id !== refunded.id && s.status !== BillingStatus.Trialing
+    )
+    for (const other of others) expect((await payments(other.id))!.refunded).toBe(false)
   })
 })
 

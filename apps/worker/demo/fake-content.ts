@@ -701,3 +701,224 @@ export const FIRST_GROUP_NAMES = [
   `Garden`,
   `Gift ideas`,
 ] as const
+
+/** Small groups a few recent sign-ups start together: two to four people, a couple of notes. */
+export const SMALL_THEMES: readonly Theme[] = [
+  {
+    name: `Flat 4B`,
+    members: [1, 2],
+    tags: [{ name: `bills`, color: `orange` }],
+    notes: [
+      {
+        title: `Cleaning rota`,
+        body: `Kitchen: Mon/Thu. Bathroom: Sat. Swap in the chat if needed.`,
+      },
+      {
+        title: `Internet contract`,
+        body: `Ends in March. The fibre offer downstairs is €5 cheaper.`,
+      },
+    ],
+  },
+  {
+    name: `Climbing crew`,
+    members: [2, 3],
+    tags: [{ name: `trip`, color: `green` }],
+    notes: [
+      { title: `Gym times`, body: `Tuesday 7 pm works for everyone but Sam. Friday as a backup.` },
+      { title: `Gear to borrow`, body: `Two harnesses spare, no size 42 shoes. Chalk is shared.` },
+      { title: `Outdoor day`, body: `Weather looks dry on the 2nd. Meet at the car park at 9.` },
+    ],
+  },
+  {
+    name: `Thesis group`,
+    members: [2, 3],
+    tags: [{ name: `deadline`, color: `red` }, { name: `reading`, color: `blue` }],
+    notes: [
+      {
+        title: `Draft deadlines`,
+        body: `Chapter 2 to the supervisor by the 15th, feedback round after.`,
+      },
+      {
+        title: `Shared sources`,
+        body: `The survey paper from 2023 cites all three datasets we use.`,
+      },
+    ],
+  },
+  {
+    name: `Side project`,
+    members: [1, 2],
+    tags: [{ name: `idea`, color: `purple` }],
+    notes: [
+      {
+        title: `Name ideas`,
+        body: `Shortlist: Tidy, Ledgerly, Plainbook. Check the domains first.`,
+      },
+      { title: `First week`, body: `Landing page, a waitlist form and ten people to talk to.` },
+    ],
+  },
+  {
+    name: `Wedding guests`,
+    members: [1, 2],
+    tags: [{ name: `rsvp`, color: `red` }],
+    notes: [
+      {
+        title: `Who still has to answer`,
+        body: `Aunt Rosa, the Lindqvists and two from the office.`,
+      },
+      { title: `Seating`, body: `Keep the cousins away from the speakers this time.` },
+    ],
+  },
+  {
+    name: `Study group`,
+    members: [2, 3],
+    tags: [{ name: `exam`, color: `red` }],
+    notes: [
+      {
+        title: `Topics we split`,
+        body: `Graphs to me, dynamic programming to Lea, the rest together.`,
+      },
+      { title: `Mock exam`, body: `Saturday 10:00 in the library, room 3. Timed, no phones.` },
+      { title: `Formulas`, body: `Write them out by hand once; it sticks better than reading.` },
+    ],
+  },
+  {
+    name: `Band practice`,
+    members: [2, 3],
+    tags: [{ name: `setlist`, color: `orange` }],
+    notes: [
+      { title: `Setlist for the 14th`, body: `Open fast, the slow one third, the cover last.` },
+      { title: `Rehearsal room`, body: `Booked Wednesdays 8–10 pm until the end of the month.` },
+    ],
+  },
+  {
+    name: `Volunteers`,
+    members: [2, 3],
+    tags: [{ name: `shift`, color: `blue` }],
+    notes: [
+      { title: `Food bank shifts`, body: `Saturday mornings need two more people from next week.` },
+      { title: `Van keys`, body: `With the front desk. Sign the sheet when you take them.` },
+    ],
+  },
+  {
+    name: `Supper club`,
+    members: [2, 3],
+    tags: [{ name: `menu`, color: `orange` }],
+    notes: [
+      { title: `Next host`, body: `Dawit, then Ingrid. Theme for March: one pot only.` },
+      {
+        title: `Allergies`,
+        body: `No nuts for Mei, no pork for Karim. Everything else is fair game.`,
+      },
+    ],
+  },
+  {
+    name: `Garden plot 12`,
+    members: [1, 2],
+    tags: [{ name: `sowing`, color: `green` }],
+    notes: [
+      { title: `What we planted`, body: `Garlic in the back row, broad beans along the fence.` },
+      { title: `Watering`, body: `Every other evening in a dry week. The tap is by the shed.` },
+    ],
+  },
+  {
+    name: `Board games night`,
+    members: [2, 3],
+    tags: [{ name: `to-buy`, color: `purple` }],
+    notes: [
+      { title: `Games we own`, body: `Catan, Azul, Codenames, and the long one nobody finishes.` },
+      { title: `Next host`, body: `Second Friday at Jun's. Snacks rotate, the host makes tea.` },
+    ],
+  },
+  {
+    name: `Kids' school`,
+    members: [1, 2],
+    tags: [{ name: `forms`, color: `orange` }],
+    notes: [
+      {
+        title: `Forms to sign`,
+        body: `Museum trip permission by Thursday, photo consent by Monday.`,
+      },
+      { title: `Pick-up rota`, body: `Mon/Wed me, Tue/Thu you, Fridays whoever finishes first.` },
+    ],
+  },
+  {
+    name: `Hiking Patagonia`,
+    members: [2, 3],
+    tags: [{ name: `booking`, color: `blue` }],
+    notes: [
+      { title: `Refugios`, body: `Two nights booked, one waitlisted. Pay the rest by the 1st.` },
+      {
+        title: `Kit list`,
+        body: `Rain shell, gaiters, two warm layers, a spare headlamp battery.`,
+      },
+      { title: `Flights`, body: `Cheapest via Santiago on a Tuesday. Hold off a week.` },
+    ],
+  },
+  {
+    name: `Freelance clients`,
+    members: [1, 2],
+    tags: [{ name: `invoice`, color: `green` }],
+    notes: [
+      { title: `Invoices due`, body: `Two sent, one overdue by a week. Send a friendly reminder.` },
+      { title: `Rates`, body: `Day rate up 10% from January; tell existing clients in December.` },
+    ],
+  },
+  {
+    name: `Language exchange`,
+    members: [2, 3],
+    tags: [{ name: `topic`, color: `purple` }],
+    notes: [
+      { title: `This week's topic`, body: `Food from home. Half in English, half in Portuguese.` },
+      { title: `Where we meet`, body: `The café by the station, Thursday 6:30 pm, upstairs.` },
+    ],
+  },
+  {
+    name: `Home studio`,
+    members: [1, 2],
+    tags: [{ name: `gear`, color: `gray` }],
+    notes: [
+      {
+        title: `Acoustic panels`,
+        body: `Six for the back wall, two for the corners. Measure first.`,
+      },
+      { title: `Mic choice`, body: `The dynamic one: the room is too live for a condenser.` },
+    ],
+  },
+]
+
+/** Notes people keep in their own first group, picked a few at a time. */
+export const PERSONAL_NOTES: readonly ThemeNote[] = [
+  { title: `Groceries`, body: `Oat milk, lemons, rice, coffee beans, dish soap.` },
+  { title: `Books to read`, body: `"Piranesi", "The Dispossessed", "Educated".` },
+  { title: `Gift ideas`, body: `Mum: a good scarf. Leo: the Lego set he keeps looking at.` },
+  { title: `Passwords to change`, body: `Old email, the bank app, the router. Use the manager.` },
+  { title: `Running plan`, body: `3 runs a week: one long, one easy, one with hills.` },
+  {
+    title: `Recipe: dal`,
+    body: `Red lentils, onion, garlic, ginger, cumin, a tin of tomatoes. 25 minutes.`,
+  },
+  { title: `Call the dentist`, body: `Ask about the cleaning and the cracked filling, top left.` },
+  { title: `Holiday packing`, body: `Charger, adapter, swim things, the good sunglasses.` },
+  { title: `Podcast list`, body: `The one about city planning, and the cooking one Ana liked.` },
+  {
+    title: `Ideas for the weekend`,
+    body: `Flea market Saturday morning, the new exhibition on Sunday.`,
+  },
+  { title: `Car service`, body: `Due in 1,000 km. Ask them to look at the left rear tyre.` },
+  { title: `Meeting notes`, body: `Agreed: ship the draft Friday, review on Monday.` },
+  { title: `Words to look up`, body: `Sonder, hygge, saudade, mamihlapinatapai.` },
+  { title: `Budget for the month`, body: `Rent first, then savings, then everything else.` },
+  { title: `Plants`, body: `Water the fern twice a week. The cactus is fine on its own.` },
+  { title: `Films to watch`, body: `"Perfect Days", "Past Lives", the new Miyazaki.` },
+  { title: `Learning Spanish`, body: `Ten minutes a day. This week: the past tense, again.` },
+  { title: `Things to fix at home`, body: `Dripping tap, the wobbly chair, the hallway light.` },
+  { title: `Birthday list`, body: `Noor on the 3rd, Tomasz on the 19th, Dad on the 28th.` },
+  { title: `Work ideas`, body: `A checklist for new hires; a shorter weekly report.` },
+  { title: `Bike route`, body: `Along the canal to the bridge, back through the park: 18 km.` },
+  { title: `Reading notes`, body: `Chapter 4: habits stick when they are easy and obvious.` },
+  { title: `Moving checklist`, body: `Change the address with the bank, the doctor and the post.` },
+  {
+    title: `Questions for the landlord`,
+    body: `Heating schedule, bike storage, when the deposit comes back.`,
+  },
+]

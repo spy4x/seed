@@ -21,6 +21,8 @@ import {
 } from "./fake-data.ts"
 import {
   type At,
+  lastId,
+  orderIdsByTime,
   writeBilling,
   writeDevelopmentBackup,
   writeNewsletter,
@@ -29,7 +31,7 @@ import {
 } from "./history.ts"
 
 /** Who the audit rows of the seeded roles name (#425). */
-export const SEED_ACTOR = `seed`
+export const SEED_ACTOR = `development seed`
 
 /** What the demo seed needs besides the database. */
 export interface DemoSeedOptions {
@@ -93,6 +95,8 @@ export async function seedDemo(
 ): Promise<boolean> {
   const now = options.now ?? new Date()
   const at: At = (ago) => new Date(now.getTime() - ago * 60_000)
+  const firstAudit = await lastId(sql, `audit_events`)
+  const firstSignInAudit = await lastId(sql, `auth_audits`)
   const admin = options.adminPassword === null
     ? null
     : await ensureAdmin(db, sql, options.pepper, options.adminPassword)
@@ -125,6 +129,8 @@ export async function seedDemo(
     await writeOperator(sql, admin.id, admin.created, data, userIds, subscriptions, at)
     await writeDevelopmentBackup(sql, at)
   }
+  await orderIdsByTime(sql, `audit_events`, firstAudit)
+  await orderIdsByTime(sql, `auth_audits`, firstSignInAudit)
   return true
 }
 
@@ -158,7 +164,14 @@ export async function seedWorkspace(
   if ([...ids.values()].includes(userId)) return
   const idOf = (member: FakeMember) => member === `you` ? userId : ids.get(people[member]) ?? null
   const at: At = (ago) => new Date(now.getTime() - ago * 60_000)
+  const firstAudit = await lastId(sql, `audit_events`)
   const groupIds = await seedGroups(db, sql, fakeWorkspace(dataSeed), idOf, at, false)
+  await orderIdsByTime(
+    sql,
+    `audit_events`,
+    firstAudit,
+    groupIds.filter((id): id is string => id !== null),
+  )
   const owned = fakeWorkspace(dataSeed).findIndex((group) => group.owner === `you`)
   const ownedId = groupIds[owned]
   if (ownedId) await db.group.select(userId, ownedId)

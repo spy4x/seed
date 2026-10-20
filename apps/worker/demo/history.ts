@@ -293,6 +293,7 @@ export async function writePeople(
     JOIN group_members m ON m.user_id = v.id
     WHERE g.id = m.group_id AND v.first_group_name IS NOT NULL
   `
+  await writeOwnNotes(sql, users, ids, at)
   if (providerKeys.length > 0) await sql`INSERT INTO auth_keys ${sql(providerKeys)}`
   if (factors.length > 0) await sql`INSERT INTO user_totp ${sql(factors)}`
   if (sessions.length > 0) await sql`INSERT INTO auth_sessions ${sql(sessions)}`
@@ -455,6 +456,12 @@ export async function writeOperator(
       joined: at(data.operator.joinedAgo),
       device: desk,
     }])
+    // The seed made them the administrator a minute after they signed up.
+    await sql`
+      UPDATE auth_audits SET created_at = ${at(data.operator.joinedAgo - 1)},
+        updated_at = ${at(data.operator.joinedAgo - 1)}
+      WHERE user_id = ${operatorId} AND event_type = ${AuthAuditEventType.USER_ROLE_CHANGED}
+    `
   }
   const who = operatorIdentifier(operatorId)
   const audits = data.operator.signIns.map((ago) =>
@@ -522,6 +529,75 @@ export async function writeOperator(
     UPDATE users SET last_seen_at = ${at(latest)}, last_login_at = ${at(latest)}
     WHERE id = ${operatorId}
   `
+}
+
+/**
+ * The notes people keep in their first group, through the app's own repository, each moved with
+ * its audit row to when it was written. Run while that group is the only one they are in.
+ */
+async function writeOwnNotes(
+  sql: postgres.Sql,
+  users: readonly FakeUser[],
+  ids: readonly number[],
+  at: At,
+): Promise<void> {
+  const firsts = await sql<{ userId: number; groupId: string }[]>`
+    SELECT user_id, group_id FROM group_members WHERE user_id IN ${sql(ids)}
+  `
+  const groupOf = new Map(firsts.map((row) => [row.userId, row.groupId]))
+  const notes = new PostgresNoteRepository(sql)
+  const dated: { id: string; at: string }[] = []
+  for (const [i, user] of users.entries()) {
+    for (const note of user.ownNotes) {
+      const id = uuidV7()
+      const groupId = groupOf.get(ids[i])!
+      await notes.create({ id, groupId, title: note.title, body: note.body }, ids[i], null)
+      dated.push({ id, at: at(note.ago).toISOString() })
+    }
+  }
+  if (dated.length === 0) return
+  const v = sql`jsonb_to_recordset(${sql.json(dated)}::jsonb) AS v(id uuid, at timestamptz)`
+  await sql`UPDATE notes n SET created_at = v.at, updated_at = v.at FROM ${v} WHERE n.id = v.id`
+  await sql`
+    UPDATE audit_events e SET created_at = v.at FROM ${v} WHERE e.entity_id = v.id
+  `
+}
+
+/**
+ * Renumbers the rows of `table` with an id above `after` (and, with `groupIds`, in those groups
+ * only) so their ids follow their times. The seed dates rows after writing them, but lists sort by
+ * id: without this a feed would jump back and forth in time. The rows keep the same set of ids, so
+ * no id is reused or skipped and the table's sequence is untouched.
+ */
+export async function orderIdsByTime(
+  sql: postgres.Sql,
+  table: `audit_events` | `auth_audits`,
+  after: number,
+  groupIds?: readonly string[],
+): Promise<void> {
+  if (groupIds?.length === 0) return
+  const scope = groupIds ? sql`AND group_id IN ${sql(groupIds)}` : sql``
+  await sql.begin(async (tx) => {
+    // Two steps through negative ids, so no step meets a primary key still in use.
+    await tx`
+      WITH picked AS (SELECT id, created_at FROM ${tx(table)} WHERE id > ${after} ${scope}),
+        slots AS (SELECT id, row_number() OVER (ORDER BY id) AS n FROM picked),
+        moves AS (SELECT id, row_number() OVER (ORDER BY created_at, id) AS n FROM picked)
+      UPDATE ${tx(table)} t SET id = -slots.id
+      FROM moves JOIN slots USING (n)
+      WHERE t.id = moves.id
+    `
+    await tx`UPDATE ${tx(table)} SET id = -id WHERE id < 0`
+  })
+}
+
+/** The newest id of `table`, or 0: what {@link orderIdsByTime} renumbers after. */
+export async function lastId(
+  sql: postgres.Sql,
+  table: `audit_events` | `auth_audits`,
+): Promise<number> {
+  const [{ id }] = await sql<{ id: string | null }[]>`SELECT max(id)::text AS id FROM ${sql(table)}`
+  return Number(id ?? 0)
 }
 
 /** The operator's desk browser. */

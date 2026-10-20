@@ -6,7 +6,9 @@ import {
   DEVICES,
   FIRST_GROUP_NAMES,
   NAME_POOLS,
+  PERSONAL_NOTES,
   SENT_ISSUES,
+  SMALL_THEMES,
   type Theme,
   THEMES,
   VIDEO_PERSON,
@@ -52,6 +54,8 @@ export interface FakeUser {
   profileUpdatedAgo: number | null
   /** What they renamed their first group, "Personal", to, or `null` if they kept the name. */
   firstGroupName: string | null
+  /** Notes they keep in their first group, oldest first, each `ago` minutes back. */
+  ownNotes: { title: string; body: string; ago: number }[]
   /** The browsers they use: an entry of `DEVICES` and the address it signs in from. */
   devices: { userAgent: string; ip: string }[]
   /** Every sign-in after sign-up, oldest first, by its index in `devices`. */
@@ -123,6 +127,9 @@ export interface FakeDemoData {
   /** The operator's own sign-ins and actions, for the development seed. */
   operator: { joinedAgo: number; signIns: number[]; actions: FakeOperatorAction[] }
 }
+
+/** How recent the people are who start {@link SMALL_THEMES} groups, in days. */
+const SMALL_GROUPS_DAYS = 12
 
 /** The index of the video's person in `users`; the first person stays the day's marker. */
 export const VIDEO_PERSON_INDEX = 1
@@ -279,7 +286,8 @@ function sessionsOf(tools: Tools, signIns: FakeUser["signIns"]): FakeUser["sessi
   return [...latest].sort((a, b) => a[1] - b[1]).slice(0, 2).map(([device, createdAgo]) => ({
     device,
     createdAgo,
-    lastUsedAgo: tools.int(Math.min(5, createdAgo), Math.min(createdAgo, 4 * DAY)),
+    // Last used within a day of opening it: the next sign-in opens a new one.
+    lastUsedAgo: tools.int(Math.max(Math.min(5, createdAgo), createdAgo - DAY), createdAgo),
   }))
 }
 
@@ -336,6 +344,7 @@ function fakeUsers(tools: Tools, now: Date): FakeUser[] {
       blockedAgo: null,
       profileUpdatedAgo: tools.chance(0.2) ? tools.between(joinedAgo - 30, 60) : null,
       firstGroupName: tools.chance(0.4) ? tools.pick(FIRST_GROUP_NAMES) : null,
+      ownNotes: [],
       devices,
       signIns,
       sessions: sessionsOf(tools, signIns),
@@ -382,6 +391,14 @@ function fakeUsers(tools: Tools, now: Date): FakeUser[] {
     user.providerAgo = tools.chance(0.5) ? user.joinedAgo : tools.between(user.joinedAgo - 60, 60)
   }
   for (const i of tools.sample(open, 8)) users[i].secondFactor = true
+  // About half keep a few notes of their own, written over the time since they joined.
+  for (const user of users) {
+    if (!user.verified || !tools.chance(0.55)) continue
+    user.ownNotes = tools.sample(PERSONAL_NOTES, tools.int(1, 4))
+      // Most right after they joined, fewer as time goes on.
+      .map((note) => ({ ...note, ago: tools.between(user.joinedAgo - 30, 20, true) }))
+      .sort((a, b) => b.ago - a.ago)
+  }
   return users
 }
 
@@ -640,9 +657,33 @@ export function fakeDemoData(seed: number, now: Date): FakeDemoData {
     )
   )
   const subscriptions = fakeSubscriptions(tools, groups)
+  // Recent sign-ups start small groups of their own, so the newest groups are shared ones too.
+  const recent = people.filter((i) => users[i].joinedAgo < SMALL_GROUPS_DAYS * DAY)
+  const small = SMALL_THEMES.map((theme) =>
+    fakeGroup(
+      tools,
+      theme,
+      recent,
+      (i) => users[i].joinedAgo,
+      SMALL_GROUPS_DAYS * DAY,
+      null,
+      taken,
+    )
+  )
+  // The video's person edits in one of them, so her page shows a shared group.
+  const shared = small[0]
+  shared.members.push({
+    member: VIDEO_PERSON_INDEX,
+    role: GroupRole.EDITOR,
+    joinedAgo: tools.between(
+      Math.min(shared.createdAgo - 5, users[VIDEO_PERSON_INDEX].joinedAgo),
+      30,
+      true,
+    ),
+  })
   const newsletter = fakeNewsletter(tools, now, users, taken)
   const operator = fakeOperator(tools, now, users, subscriptions)
-  return { users, groups, subscriptions, ...newsletter, operator }
+  return { users, groups: [...groups, ...small], subscriptions, ...newsletter, operator }
 }
 
 /**

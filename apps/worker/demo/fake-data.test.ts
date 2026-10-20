@@ -132,6 +132,31 @@ Deno.test("some people renamed their first group, and nobody who never confirmed
   expect(renamed.every((user) => user.verified)).toBe(true)
 })
 
+Deno.test("about half the people keep notes of their own, written after they joined", () => {
+  const { users } = fakeDemoData(1, NOW)
+  const writers = users.filter((user) => user.ownNotes.length > 0)
+  expect(writers.length).toBeGreaterThan(users.length * 0.4)
+  expect(writers.length).toBeLessThan(users.length * 0.7)
+  for (const user of writers) {
+    expect(user.verified).toBe(true)
+    for (const note of user.ownNotes) expect(note.ago).toBeLessThanOrEqual(user.joinedAgo)
+  }
+})
+
+Deno.test("recent sign-ups share small groups, and the video's person edits in one", () => {
+  const { users, groups } = fakeDemoData(1, NOW)
+  const small = groups.filter((group) => group.createdAgo < 12 * DAY)
+  expect(small.length).toBeGreaterThanOrEqual(16)
+  for (const group of small) {
+    expect(group.members.length).toBeGreaterThan(0)
+    expect(users[group.owner as number].joinedAgo).toBeLessThan(12 * DAY)
+  }
+  const priya = groups.filter((group) =>
+    group.members.some((m) => m.member === VIDEO_PERSON_INDEX && m.role === GroupRole.EDITOR)
+  )
+  expect(priya).toHaveLength(1)
+})
+
 Deno.test("subscriptions include paying, past-due, cancelled, ending and trial groups", () => {
   const { subscriptions } = fakeDemoData(1, NOW)
   const statuses = subscriptions.map((s) => s.status)
