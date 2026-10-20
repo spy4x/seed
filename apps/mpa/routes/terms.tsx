@@ -9,6 +9,14 @@ const TERMS_SECTIONS = [
   { label: `Changes`, href: `#changes` },
 ] as const
 
+/** The terms page's title, summary and the date its text last changed. */
+export const TERMS_HEAD = {
+  title: `Terms of the free Seed demo`,
+  description: `The rules of the free Seed demo: what it is, what it is not, and what is not ` +
+    `allowed in it.`,
+  updated: `2026-10-16`,
+} as const
+
 /** The few rules of the live demo. A product built on Seed writes its own. */
 export default define.page(function Terms({ state }) {
   return (
@@ -16,9 +24,8 @@ export default define.page(function Terms({ state }) {
       state={state}
       path="/terms"
       title="Terms"
-      headTitle="Terms of the free Seed demo"
-      description={`The rules of the free Seed demo: what it is, what it is not, and what is not ` +
-        `allowed in it.`}
+      headTitle={TERMS_HEAD.title}
+      description={TERMS_HEAD.description}
       updated="16 October 2026"
       sections={TERMS_SECTIONS}
     >

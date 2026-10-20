@@ -11,7 +11,7 @@ The template ships two web apps over the same API, with different jobs.
   changes live over a WebSocket ([ADR 002](decisions/002-realtime-transport-and-sync.md)), and
   it works offline ([docs/offline.md](offline.md)). Compose serves it at `DOMAIN`.
 - **The MPA** (`apps/mpa`, Fresh) is the product's public website: the home page, pricing read
-  from the `PLANS` catalog, privacy and terms pages to adapt, `robots.txt`, `sitemap.xml` and the
+  from the `PLANS` catalog, privacy and terms pages to adapt, `robots.txt`, `sitemap.xml`, `llms.txt` and the
   newsletter. Every page is rendered on the server and works with JavaScript turned off. It has
   no session; its sign-in and sign-up links open the SPA at `DOMAIN`.
 

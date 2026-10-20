@@ -43,7 +43,7 @@ const DONE_QUERY = "?state=done"
 /** The query a taken subscribe request redirects to, so a reload does not send it again. */
 const SENT_QUERY = "?state=sent"
 
-const SUBSCRIBE_HEAD: SitePageHead = {
+export const SUBSCRIBE_HEAD: SitePageHead = {
   title: `Seed newsletter: what shipped, briefly`,
   description: `A short email when Seed changes: what shipped, what broke, what I learned ` +
     `building it. Double opt-in, one-click unsubscribe.`,

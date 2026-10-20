@@ -112,13 +112,18 @@ test.describe(`without JavaScript`, () => {
     expect(items.map((item) => item.name)).toEqual([`Seed`, `Admin panel`])
   })
 
-  test(`the sitemap lists /admin with when it changed and its video`, async ({ request, baseURL }) => {
+  test(`the sitemap lists /admin with when it changed, and the video sitemap its video`, async ({ request, baseURL }) => {
     const origin = new URL(baseURL!).origin
-    const xml = await (await request.get(`/sitemap.xml`)).text()
+    const pages = await (await request.get(`/sitemap.xml`)).text()
+    expect(pages).toMatch(
+      new RegExp(
+        `<loc>${origin}/admin</loc>\\s*<lastmod>\\d{4}-\\d{2}-\\d{2}T00:00:00\\.000Z</lastmod>`,
+      ),
+    )
+    const xml = await (await request.get(`/video-sitemap.xml`)).text()
     expect(xml).toContain(`xmlns:video="http://www.google.com/schemas/sitemap-video/1.1"`)
     const entry = xml.match(new RegExp(`<url><loc>${origin}/admin</loc>.*?</url>`))?.[0]
     expect(entry).toBeDefined()
-    expect(entry).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}<\/lastmod>/)
     expect(entry).toContain(
       `<video:thumbnail_loc>${origin}/video/admin-panel-poster-1920.webp</video:thumbnail_loc>`,
     )
