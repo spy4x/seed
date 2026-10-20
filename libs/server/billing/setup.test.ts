@@ -183,6 +183,34 @@ describe("billing configuration", () => {
     })
   })
 
+  it("answers the development payment from its payments port, refunds included", async () => {
+    const paidAt = new Date("2026-09-20T08:00:00Z")
+    const facts = new Map([
+      ["sub_paying", { amount: 5400, paidAt, refunded: false }],
+      ["sub_refunded", { amount: 8100, paidAt, refunded: true }],
+    ])
+    const billing = createFakeBilling("price_dev", (id) => Promise.resolve(facts.get(id) ?? null))
+
+    // A trial has paid nothing yet.
+    expect(await billing.readLastPayment({ subscriptionId: "sub_trial" })).toEqual({
+      ok: true,
+      value: null,
+    })
+    const paying = await billing.readLastPayment({ subscriptionId: "sub_paying" })
+    expect(paying).toMatchObject({
+      ok: true,
+      value: { amount: 5400, paidAt, refunded: false, amountRefunded: 0 },
+    })
+    expect(await billing.readLastPayment({ subscriptionId: "sub_refunded" })).toMatchObject({
+      ok: true,
+      value: { amount: 8100, refunded: true, amountRefunded: 8100 },
+    })
+    // A refund gives back what was paid, not one seat.
+    if (!paying.ok || paying.value === null) throw new Error("expected a payment")
+    const refund = await billing.refundPayment({ paymentId: paying.value.id, idempotencyKey: "k" })
+    expect(refund).toMatchObject({ ok: true, value: { amount: 5400 } })
+  })
+
   describe("a process that verifies no webhook, as the worker", () => {
     it("runs Stripe on the secret key and the Pro price alone", () => {
       const env = createEnvReader({
