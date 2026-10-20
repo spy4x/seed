@@ -89,14 +89,74 @@ export function spaLinks(spaOrigin: string): { signIn: string; signUp: string } 
   }
 }
 
-/** The author as a JSON-LD entity, with the id other entities point at. */
+/**
+ * The author as a JSON-LD entity, with the id other entities point at. `sameAs` and the company
+ * match the Person antonshubin.com publishes, so engines join the two into one person.
+ */
 export const PERSON_JSON_LD = {
   "@type": `Person`,
   "@id": `${AUTHOR_URL}/#person`,
   name: `Anton Shubin`,
   url: AUTHOR_URL,
   jobTitle: `Senior full-stack engineer`,
+  sameAs: [
+    `https://www.upwork.com/freelancers/ashubin`,
+    `https://github.com/spy4x`,
+    `https://www.linkedin.com/in/anton-shubin`,
+    `https://www.youtube.com/@anton-shubin`,
+    `https://www.youtube.com/@anton-shubin-live`,
+    `https://x.com/spy4x`,
+  ],
+  worksFor: {
+    "@type": `Organization`,
+    "@id": `https://neatsoft.dev/#org`,
+    name: `NeatSoft PTE LTD`,
+    url: `https://neatsoft.dev`,
+  },
 } as const
+
+/** What Seed is, in the words of the home page's lead, for the product's structured data. */
+const SOFTWARE_DESCRIPTION = `Seed is a free, MIT-licensed SaaS starter with sign-in and ` +
+  `two-factor authentication (2FA), teams with roles, per-seat Stripe billing, realtime, an ` +
+  `offline app and an admin area.`
+
+/** The id of Seed's one product entity, which every page's structured data points at. */
+export function softwareId(origin: string): string {
+  return `${origin}/#software`
+}
+
+/**
+ * Seed as one JSON-LD entity: free software and its source code under one id. Every page that
+ * describes the product draws this node, so all copies agree; `extra` adds what only that page
+ * shows, such as the feature list.
+ */
+export function softwareJsonLd(origin: string, extra: Record<string, unknown> = {}): unknown {
+  return {
+    "@type": [`SoftwareApplication`, `SoftwareSourceCode`],
+    "@id": softwareId(origin),
+    name: SITE_NAME,
+    url: `${origin}/`,
+    description: SOFTWARE_DESCRIPTION,
+    applicationCategory: `DeveloperApplication`,
+    operatingSystem: `Linux (Docker)`,
+    license: `https://opensource.org/licenses/MIT`,
+    codeRepository: REPOSITORY_URL,
+    programmingLanguage: `TypeScript`,
+    runtimePlatform: `Deno`,
+    author: { "@id": PERSON_JSON_LD["@id"] },
+    // Only Seed itself is offered. The demo's plans are an example and are not sold.
+    offers: { "@type": `Offer`, price: 0, priceCurrency: `USD` },
+    ...extra,
+  }
+}
+
+/** A page's breadcrumb trail, always rooted at the home page's full address. */
+export function siteBreadcrumbsJsonLd(origin: string, path: string, name: string): unknown {
+  return breadcrumbListJsonLd(`${origin}${path}`, [
+    { name: SITE_NAME, href: `${origin}/` },
+    { name },
+  ])
+}
 
 /** The title and description of one page, for its `<head>` and its social previews. */
 export interface SitePageHead {
@@ -258,7 +318,7 @@ function legalPageJsonLd(
       description,
       isPartOf: { "@id": `${origin}/#website` },
     },
-    breadcrumbListJsonLd(url, [{ name: SITE_NAME, href: `/` }, { name: crumb }]),
+    siteBreadcrumbsJsonLd(origin, path, crumb),
   ]
 }
 

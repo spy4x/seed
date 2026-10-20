@@ -1,6 +1,6 @@
 import { Steps } from "@spy4x/preact-ui/steps"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
-import { breadcrumbListJsonLd, faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
 import { Band } from "../components/band.tsx"
 import { MvpCallBand } from "../components/mvp-call-band.tsx"
 import { MvpHero } from "../components/mvp-hero.tsx"
@@ -10,7 +10,13 @@ import { MvpProof } from "../components/mvp-proof.tsx"
 import { ProofStrip } from "../components/proof-strip.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
 import { BOOK_CALL_URL, BRIEF_URL, HIRE_PRICES } from "../hire.ts"
-import { PERSON_JSON_LD, SITE_NAME, SiteFrame, type SitePageHead } from "../site.tsx"
+import {
+  PERSON_JSON_LD,
+  SITE_NAME,
+  siteBreadcrumbsJsonLd,
+  SiteFrame,
+  type SitePageHead,
+} from "../site.tsx"
 import { define } from "../utils.ts"
 
 /** The page's title and description, as search results and social previews show them. */
@@ -136,10 +142,7 @@ function mvpJsonLd(origin: string): unknown[] {
     },
     PERSON_JSON_LD,
     faqPageJsonLd(FAQ),
-    breadcrumbListJsonLd(`${origin}/mvp`, [
-      { name: SITE_NAME, href: `/` },
-      { name: `Build my MVP` },
-    ]),
+    siteBreadcrumbsJsonLd(origin, `/mvp`, `Build my MVP`),
   ]
 }
 

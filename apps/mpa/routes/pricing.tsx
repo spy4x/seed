@@ -1,7 +1,7 @@
 import { IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
-import { breadcrumbListJsonLd, faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { Band } from "../components/band.tsx"
 import { CtaBand } from "../components/cta-band.tsx"
@@ -12,9 +12,10 @@ import { HIRE_PRICES } from "../hire.ts"
 import {
   PERSON_JSON_LD,
   REPOSITORY_URL,
-  SITE_NAME,
+  siteBreadcrumbsJsonLd,
   SiteFrame,
   type SitePageHead,
+  softwareJsonLd,
   spaLinks,
 } from "../site.tsx"
 import { define } from "../utils.ts"
@@ -56,23 +57,10 @@ const FAQ = [
 /** The page's structured data: Seed as free software, its author, the questions and the trail. */
 function pricingJsonLd(origin: string): unknown[] {
   return [
-    {
-      "@type": `SoftwareApplication`,
-      name: SITE_NAME,
-      url: `${origin}/`,
-      applicationCategory: `DeveloperApplication`,
-      operatingSystem: `Linux (Docker)`,
-      license: `https://opensource.org/licenses/MIT`,
-      author: { "@id": PERSON_JSON_LD["@id"] },
-      // Only Seed itself is offered here. The demo's plans are an example and are not sold.
-      offers: { "@type": `Offer`, price: 0, priceCurrency: `USD` },
-    },
+    softwareJsonLd(origin),
     PERSON_JSON_LD,
     faqPageJsonLd(FAQ),
-    breadcrumbListJsonLd(`${origin}/pricing`, [
-      { name: SITE_NAME, href: `/` },
-      { name: `Pricing` },
-    ]),
+    siteBreadcrumbsJsonLd(origin, `/pricing`, `Pricing`),
   ]
 }
 
