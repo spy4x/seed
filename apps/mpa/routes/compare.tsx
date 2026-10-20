@@ -23,7 +23,7 @@ import {
 import { define } from "../utils.ts"
 
 /**
- * The day every row was read off the products' own pages: the hero's "Updated" line, the JSON-LD
+ * The day every row was read off the products' own pages: the hero's "Checked" line, the JSON-LD
  * `dateModified` and the sitemap's `lastmod`. Re-check at least every three months.
  */
 export const CHECKED_ON = `2026-10-16`
