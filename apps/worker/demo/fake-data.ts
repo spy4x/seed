@@ -396,7 +396,7 @@ function fakeUsers(tools: Tools, now: Date): FakeUser[] {
     if (!user.verified || !tools.chance(0.55)) continue
     user.ownNotes = tools.sample(PERSONAL_NOTES, tools.int(1, 4))
       // Most right after they joined, fewer as time goes on.
-      .map((note) => ({ ...note, ago: tools.between(user.joinedAgo - 30, 20, true) }))
+      .map((note) => ({ ...note, ago: Math.max(0, tools.between(user.joinedAgo - 30, 20, true)) }))
       .sort((a, b) => b.ago - a.ago)
   }
   return users
