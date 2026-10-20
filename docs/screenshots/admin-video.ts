@@ -385,7 +385,8 @@ async function signInAndWarmUp(page: Page): Promise<void> {
   await page.goto(`/users?q=${encodeURIComponent(PERSON.search)}`)
   await page.getByRole("link", { name: PERSON.name }).click()
   await page.getByRole("heading", { level: 1, name: PERSON.name }).waitFor({ timeout: 120_000 })
-  await page.goto("/groups")
+  // The list opens on the newest groups; the one the video opens is found by name.
+  await page.goto(`/groups?q=${encodeURIComponent("Product team")}`)
   await page.getByRole("link", { name: "Product team" }).click()
   await page.getByRole("heading", { level: 1, name: "Product team" }).waitFor({ timeout: 120_000 })
   await page.waitForLoadState("networkidle")
@@ -650,6 +651,8 @@ async function play(
     // A hard cut to the one the operator opens: no stretch of the list at 1× in between.
     await cut(async () => {
       await unzoom(page)
+      // The list opens on the newest groups, so the cut also searches for the one it opens.
+      await page.goto(`/groups?q=${encodeURIComponent("Product team")}`)
       await clickLike(page, pointer, page.getByRole("link", { name: "Product team" }), H)
       await page.getByRole("heading", { level: 1, name: "Product team" }).waitFor()
       await moveLike(page, pointer, { x: 900, y: 200 })
