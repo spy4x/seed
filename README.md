@@ -86,6 +86,9 @@ deno task dev                # Postgres, Valkey, API, worker, SPA and the monito
 Then open `http://<DOMAIN>` from the env file: http://app.localhost with the values in
 `infra/envs/.env.example`.
 
+To keep taking Seed's fixes and features in your product later, see
+[docs/products.md](docs/products.md).
+
 The rest of the local stack (monitoring, migrations, a demo user, resetting the database) is in
 [docs/development.md](docs/development.md).
 

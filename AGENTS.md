@@ -122,8 +122,14 @@ ours to touch.
 This holds for the template only. A product started from the template deletes this section: its
 server holds real people's data.
 
+## Products built on Seed
+
+A product starts as a copy of Seed and keeps taking Seed's later changes as a patch:
+[docs/products.md](docs/products.md) says how. Keep that recipe working: a change to it, or to
+what a product must record, updates that doc in the same PR.
+
 ## Financy
 
-Financy is an older product and is rebuilt on this template only when the template is finished.
-The template decides how Financy's code looks; Financy only says which features it needs. Do not
-port Financy's structure into the template.
+Financy is being rebuilt on Seed, as the first product built on it. Seed decides how Financy's
+code looks; Financy says which features it needs. A feature any product would need is built here
+first and Financy takes it with a sync. Do not port Financy's old structure into Seed.
