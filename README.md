@@ -101,7 +101,7 @@ The rest of the local stack (monitoring, migrations, a demo user, resetting the 
 
 The admin panel, on its own host, in a 50-second video on the website:
 
-<a href="https://seedsaas.com/features#admin"><img src="apps/mpa/static/video/admin-panel-poster-1280.webp" alt="Watch the admin panel video on seedsaas.com: the Users page of the admin panel in the dark theme, with a search by name or address, filters by status and role, and a list of people." width="640"></a>
+<a href="https://seedsaas.com/features#admin"><img src="apps/mpa/static/video/admin-panel-poster-1280.webp" alt="Watch the admin panel video on seedsaas.com: the Users page of the admin panel in the dark theme, zoomed in on a search for &quot;novak&quot; that found one person, Priya Novak." width="640"></a>
 
 The screenshots, the GIF and the video show made-up people;
 [`docs/screenshots/record.ts`](docs/screenshots/record.ts) records the pictures again from a running

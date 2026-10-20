@@ -1,25 +1,32 @@
 /**
- * Records the admin panel video of the public website's `/features#admin` section
- * (`apps/mpa/static/video/`): one support case end to end, then short glimpses of the other
- * screens, in the dark theme, with burned-in captions, a "Sample data" label and a title and an
- * end card. The shot list and the copy are on issue #279.
+ * Records the admin panel video of the public website's `/features#admin` section: the videos go
+ * to `apps/mpa/media/video/` (served by `apps/mpa/routes/video/[file].ts`), the poster to
+ * `apps/mpa/static/video/`. One support case end to end, then short glimpses of other screens, in
+ * the dark theme, with burned-in captions, a "Sample data" label on every screen and a title and
+ * an end card. The shot list and the copy are on issue #279.
  *
- * Needs a running stack with the admin app and the development seed, never the live server:
+ * Needs a running stack with the product app, the admin app, the worker and the development seed,
+ * never the live server:
  *
- * 1. Start a local stack whose admin app answers at `ADMIN_URL` (`deno task dev` behind
- *    `deno task proxy:start` serves it at http://admin.localhost).
+ * 1. Start a local stack (`deno task dev` behind `deno task proxy:start` serves the product app at
+ *    http://app.localhost and the admin app at http://admin.localhost).
  * 2. Seed its database once: `ENV=dev deno task db:seed` with the values in docs/development.md.
  *    The video shows the seed's fake example.com people, groups and subscribers.
  * 3. Record, with the seed's shared password:
  *
  * ```sh
- * ADMIN_URL=http://admin.localhost SEED_PASSWORD=… deno task video:admin
+ * APP_URL=http://app.localhost ADMIN_URL=http://admin.localhost SEED_PASSWORD=… deno task video:admin
  * ```
  *
- * It signs `demo@example.com` in from two emulated devices, so the person page has sessions to
- * end, then signs `admin@example.com` in and records. Each run adds one "Sessions ended" row to
- * the audit log. Needs `ffmpeg` with libsvtav1, libx264 and libwebp on the PATH. `CHROME_PATH`
- * points Playwright at a Chromium already on disk instead of its own download.
+ * First the seeded person the video follows, Priya Novak, gets a password the way a person
+ * does: the product app mails her a reset code (read back through the development-only
+ * `/api/test/last-mail`), and the reset sets a new random password. She then signs in from a phone
+ * and a desktop browser, so her page has sessions to end. Then `admin@example.com` signs in and the
+ * recording starts. Each run adds those sign-ins and one "Sessions ended" row to the audit log.
+ * The product sends an address at most three reset mails an hour, so a fourth run within the hour
+ * stops with a message saying so.
+ * Needs `ffmpeg` with libsvtav1, libx264 and libwebp on the PATH. `CHROME_PATH` points Playwright
+ * at a Chromium already on disk instead of its own download.
  *
  * How it records: Chrome's screencast sends a 2560×1600 frame each time the page paints, which
  * stays sharp where Playwright's own video would blur the text. The zooms, the captions, the label,
@@ -27,17 +34,25 @@
  * frame until the next one and encodes. Before publishing, look at stills of the result
  * (`ffmpeg -i admin-panel.mp4 -vf fps=2 still-%03d.png`) for anything that is not sample data.
  */
-import { type Browser, type CDPSession, chromium, devices, type Locator, type Page } from "playwright"
+import { type CDPSession, chromium, devices, type Locator, type Page } from "playwright"
+import { h } from "preact"
+import { renderToString } from "npm:preact-render-to-string@6.7.0"
+import { BrandMark } from "@spy4x/preact-ui/brand-mark"
+import { IconSprout } from "@spy4x/preact-icons"
 import { clickLike, moveLike, typeLike } from "./human-mouse.ts"
 
 const ADMIN_URL = Deno.env.get("ADMIN_URL") ?? "http://admin.localhost"
+const APP_URL = Deno.env.get("APP_URL") ?? "http://app.localhost"
 const SEED_PASSWORD = Deno.env.get("SEED_PASSWORD")
 if (!SEED_PASSWORD) throw new Error("SEED_PASSWORD is required: the seed's shared password")
-if (!/^https?:\/\/[a-z0-9.-]*localhost(:\d+)?$/.test(ADMIN_URL)) {
-  throw new Error(`ADMIN_URL must be a local host such as http://admin.localhost, not ${ADMIN_URL}`)
+for (const [name, url] of [["ADMIN_URL", ADMIN_URL], ["APP_URL", APP_URL]]) {
+  if (!/^https?:\/\/[a-z0-9.-]*localhost(:\d+)?$/.test(url)) {
+    throw new Error(`${name} must be a local host such as http://app.localhost, not ${url}`)
+  }
 }
 
-const OUT_DIR = new URL("../../apps/mpa/static/video/", import.meta.url).pathname
+const VIDEO_DIR = new URL("../../apps/mpa/media/video/", import.meta.url).pathname
+const POSTER_DIR = new URL("../../apps/mpa/static/video/", import.meta.url).pathname
 const FONT = new URL("../../apps/mpa/static/fonts/geist-sans.var.woff2", import.meta.url)
 const VIEWPORT = { width: 1280, height: 800 }
 /** The delivered size, and the size budgets of each file. */
@@ -47,7 +62,8 @@ const BUDGET = { webm: 3_000_000, mp4: 5_000_000, poster: 60_000 }
 const POSTER = { width: 1280, height: 800 }
 const FPS = 30
 const ADMIN_EMAIL = "admin@example.com"
-const DEMO_EMAIL = "demo@example.com"
+/** The seeded person the support case follows, and what the operator types to find her. */
+const PERSON = { name: "Priya Novak", email: "priya.novak@example.com", search: "novak" }
 
 /** One screencast frame on disk and when it was painted, in seconds. */
 interface Frame {
@@ -106,6 +122,13 @@ class Recorder {
     this.current = [await this.write(this.latest.data, now)]
   }
 
+  /** The newest frame of the running shot on disk. */
+  latestFile(): string {
+    const frame = this.current?.at(-1)
+    if (!frame) throw new Error("no shot is running")
+    return frame.file
+  }
+
   /** Ends the shot. What happens until the next `begin` is cut. */
   end(): Segment {
     if (!this.current) throw new Error("no shot is running")
@@ -144,8 +167,14 @@ function overlayScript(font: string): string {
     .v-card h1 { margin: 0; font-size: 60px; line-height: 1.1; font-weight: 600;
       letter-spacing: -0.03em; color: oklch(0.96 0.006 260); text-wrap: balance }
     .v-card p { margin: 0; font-size: 30px; font-weight: 500; color: oklch(0.72 0.014 260) }
-    .v-brand { display: flex; align-items: center; gap: 14px; font-size: 34px; font-weight: 650;
-      letter-spacing: -0.02em; color: oklch(0.96 0.006 260) }
+    /* The brand mark as the website's header draws it in the dark theme, twice the size. */
+    .v-brand { zoom: 2 }
+    .v-brand [data-e2e=brand-mark] { display: inline-flex; align-items: center; gap: 8px;
+      font-size: 16px; line-height: 24px; font-weight: 500; color: oklch(0.93 0.006 260) }
+    .v-brand [data-e2e=brand-mark] > span:first-child { display: flex; flex-shrink: 0;
+      width: 32px; height: 32px; align-items: center; justify-content: center;
+      border-radius: 12px; background: oklch(0.381 0.176 305); color: #fff }
+    .v-brand svg { width: 20px; height: 20px }
     .v-caption { position: absolute; left: 0; right: 0; bottom: 0; height: 84px;
       display: flex; align-items: center; justify-content: center; font-size: 32px;
       font-weight: 500; letter-spacing: -0.01em; background: oklch(0.15 0.012 260 / 0.7);
@@ -162,11 +191,7 @@ function overlayScript(font: string): string {
     .v-mark { position: absolute; width: 72px; height: 72px; margin: -36px 0 0 -36px;
       border-radius: 50%; box-sizing: border-box; border: 4px solid #38bdf8 }
   </style>
-  <div class="v-card"><div class="v-brand"><svg width="44" height="44" viewBox="0 0 32 32">
-    <path d="M16 29V15" stroke="#4ade80" stroke-width="2.4" stroke-linecap="round" />
-    <path d="M16 17C16 10 11 6 4 6c0 7 5 11 12 11Z" fill="#4ade80" />
-    <path d="M16 14c0-6 4.5-10 12-10 0 6.5-4.5 10-12 10Z" fill="#a78bfa" />
-  </svg>Seed</div><h1></h1><p></p></div>
+  <div class="v-card"><div class="v-brand"></div><h1></h1><p></p></div>
   <div class="v-caption"></div>
   <div class="v-label">Sample data</div>
   <div class="v-pointer"><svg width="24" height="28" viewBox="0 0 24 28">
@@ -228,7 +253,9 @@ function overlayScript(font: string): string {
     card(card) {
       $(".v-card").classList.toggle("on", Boolean(card))
       pointer().style.visibility = card ? "hidden" : ""
+      $(".v-label").style.visibility = card ? "hidden" : ""
       if (!card) return
+      $(".v-brand").innerHTML = card.brand
       $(".v-card h1").textContent = card.title
       $(".v-card p").textContent = card.sub ?? ""
     },
@@ -270,31 +297,71 @@ function dataUrl(bytes: Uint8Array, type: string): string {
   return `data:${type};base64,${btoa(binary)}`
 }
 
+/** A POST to the product app's API as its own pages send it, from a browser with `userAgent`. */
+async function post(path: string, body: unknown, userAgent?: string): Promise<Response> {
+  return await fetch(`${APP_URL}/api${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: APP_URL,
+      "Sec-Fetch-Site": "same-origin",
+      ...(userAgent ? { "User-Agent": userAgent } : {}),
+    },
+    body: JSON.stringify(body),
+  })
+}
+
 /**
- * Signs the demo user in from a phone and a desktop browser, so the person page lists two
- * sessions for the video to end. The sign-ins are real: the API names each device from its
- * browser's user agent.
+ * Gives {@link PERSON} a fresh random password through the product's own reset flow, then signs her
+ * in from a phone and a desktop browser, so her page lists two sessions for the video to end. The
+ * API names each device from the user agent it sees.
  */
-async function signInDemoDevices(browser: Browser): Promise<void> {
+async function signInPerson(): Promise<void> {
+  const lastMail = async () => {
+    const response = await post("/test/last-mail", { email: PERSON.email })
+    return response.ok ? await response.json() as { subject: string; text: string } : null
+  }
+  // A mail from an earlier run carries a spent code: wait for one that differs from it.
+  const before = (await lastMail())?.text
+  const forgot = await post("/auth/password/forgot", { email: PERSON.email })
+  if (forgot.status === 429) {
+    throw new Error(`${PERSON.email} had three reset mails this hour already; record again later`)
+  }
+  if (!forgot.ok) throw new Error(`the reset request answered ${forgot.status}`)
+  let code: string | null = null
+  const deadline = Date.now() + 30_000
+  while (!code && Date.now() < deadline) {
+    const mail = await lastMail()
+    const fresh = mail?.subject === "Reset your password" && mail.text !== before
+    const link = fresh ? mail.text.match(/https?:\/\/\S+/) : null
+    code = link ? new URL(link[0]).searchParams.get("code") : null
+    if (!code) await new Promise((resolve) => setTimeout(resolve, 500))
+  }
+  if (!code) {
+    throw new Error(`no reset mail reached ${PERSON.email} within 30 s; is the worker running?`)
+  }
+  const password = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(18))))
+  const reset = await post("/auth/password/reset", {
+    email: PERSON.email,
+    code,
+    newPassword: password,
+  })
+  if (!reset.ok) throw new Error(`the reset answered ${reset.status}: ${await reset.text()}`)
   for (const device of ["iPhone 15", "Desktop Firefox"]) {
-    const context = await browser.newContext({ ...devices[device], baseURL: ADMIN_URL })
-    try {
-      // From the sign-in page, so the browser sends the same-origin headers the API asks for.
-      const page = await context.newPage()
-      await page.goto("/sign-in")
-      const status = await page.evaluate(
-        async ([login, password]) =>
-          (await fetch("/api/auth/password/check", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ login, password }),
-          })).status,
-        [DEMO_EMAIL, SEED_PASSWORD!],
-      )
-      if (status !== 200) throw new Error(`the demo user's sign-in answered ${status}`)
-    } finally {
-      await context.close()
-    }
+    const response = await post(
+      "/auth/password/check",
+      { login: PERSON.email, password },
+      devices[device].userAgent,
+    )
+    if (!response.ok) throw new Error(`${PERSON.name}'s sign-in answered ${response.status}`)
+    await response.body?.cancel()
+    // The app's first request after a sign-in, which also marks her as seen.
+    const cookie = response.headers.getSetCookie().map((line) => line.split(";")[0]).join("; ")
+    const me = await fetch(`${APP_URL}/api/auth/me`, {
+      headers: { Cookie: cookie, "User-Agent": devices[device].userAgent },
+    })
+    if (!me.ok) throw new Error(`${PERSON.name}'s first request answered ${me.status}`)
+    await me.body?.cancel()
   }
 }
 
@@ -311,9 +378,9 @@ async function signInAndWarmUp(page: Page): Promise<void> {
     await page.waitForLoadState("networkidle")
   }
   // The person page and a group's page load their own code on first use.
-  await page.goto(`/users?q=${encodeURIComponent("demo@")}`)
-  await page.getByRole("link", { name: "Demo User" }).click()
-  await page.getByRole("heading", { level: 1, name: "Demo User" }).waitFor({ timeout: 120_000 })
+  await page.goto(`/users?q=${encodeURIComponent(PERSON.search)}`)
+  await page.getByRole("link", { name: PERSON.name }).click()
+  await page.getByRole("heading", { level: 1, name: PERSON.name }).waitFor({ timeout: 120_000 })
   await page.goto("/groups")
   await page.getByRole("link", { name: "Product team" }).click()
   await page.getByRole("heading", { level: 1, name: "Product team" }).waitFor({ timeout: 120_000 })
@@ -326,21 +393,58 @@ const SCREENS = [
   ["/groups", "Groups"],
   ["/newsletter", "Newsletter"],
   ["/audit", "Audit log"],
-  ["/system", "System"],
-  ["/", "Dashboard"],
 ] as const
 
 const H = VIEWPORT.height
+/** The caption bar's height: a zoom centres its region in the frame above it. */
+const CAPTION = 84
 const pause = (page: Page, ms: number) => page.waitForTimeout(ms)
 const video = (page: Page, script: string) => page.evaluate(script)
 const caption = (page: Page, text: string | null) =>
   video(page, `__video.caption(${JSON.stringify(text)})`)
 
-/** The centre of an element on screen. */
-async function centre(page: Page, selector: string): Promise<{ x: number; y: number }> {
-  const box = await page.locator(selector).first().boundingBox()
-  if (!box) throw new Error(`${selector} has no box`)
-  return { x: Math.round(box.x + box.width / 2), y: Math.round(box.y + box.height / 2) }
+interface Box {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/** The box of an element on screen. */
+async function box(target: Locator): Promise<Box> {
+  const found = await target.first().boundingBox()
+  if (!found) throw new Error(`${target} has no box`)
+  return found
+}
+
+/** The smallest box around all of `boxes`. */
+function union(...boxes: Box[]): Box {
+  const x = Math.min(...boxes.map((b) => b.x))
+  const y = Math.min(...boxes.map((b) => b.y))
+  return {
+    x,
+    y,
+    width: Math.max(...boxes.map((b) => b.x + b.width)) - x,
+    height: Math.max(...boxes.map((b) => b.y + b.height)) - y,
+  }
+}
+
+/**
+ * Zooms in on `region`: as far as it fits above the caption with a margin, between 1.6× and 2×,
+ * with its centre in the middle of that space, and never past the page's edges.
+ */
+async function zoomOn(page: Page, region: Box): Promise<void> {
+  const room = { width: VIEWPORT.width - 80, height: H - CAPTION - 60 }
+  const s = Math.max(1.6, Math.min(2, room.width / region.width, room.height / region.height))
+  const tx = VIEWPORT.width / 2
+  const ty = (H - CAPTION) / 2
+  const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), high)
+  const x = clamp(region.x + region.width / 2, tx / s, VIEWPORT.width - (VIEWPORT.width - tx) / s)
+  const y = clamp(region.y + region.height / 2, ty / s, H - (H - ty) / s)
+  await video(
+    page,
+    `__video.zoom(${s.toFixed(3)}, ${Math.round(x)}, ${Math.round(y)}, ${tx}, ${ty})`,
+  )
 }
 
 /** Glides the pointer to `target` and clicks it where it is, without scrolling the page first. */
@@ -349,11 +453,10 @@ async function clickInPlace(
   pointer: { x: number; y: number },
   target: Locator,
 ): Promise<void> {
-  const box = await target.boundingBox()
-  if (!box) throw new Error("click target has no box")
+  const found = await box(target)
   await moveLike(page, pointer, {
-    x: Math.round(box.x + box.width / 2),
-    y: Math.round(box.y + box.height / 2),
+    x: Math.round(found.x + found.width / 2),
+    y: Math.round(found.y + found.height / 2),
   })
   await pause(page, 150)
   await page.mouse.down()
@@ -368,9 +471,13 @@ async function settle(page: Page): Promise<void> {
   await pause(page, 500)
 }
 
+/** The brand mark of the cards: the website header's own component. */
+const BRAND = renderToString(h(BrandMark, { Icon: IconSprout, name: "Seed" }))
+
 /**
  * Plays the shot list into the recorder. Every shot starts on a settled screen, shows its caption
- * for at least 2.5 seconds, and ends with a hard cut; nothing between shots is kept.
+ * for at least 2.5 seconds, and ends with a hard cut; nothing between shots is kept. Returns the
+ * poster's frame.
  */
 async function play(page: Page, rec: Recorder): Promise<string> {
   const pointer = { x: 1100, y: 700 }
@@ -397,113 +504,116 @@ async function play(page: Page, rec: Recorder): Promise<string> {
    */
   const press = async (target: Locator) => {
     await target.waitFor()
-    let box = await target.boundingBox()
-    if (box && (box.y < 96 || box.y + box.height > H - 48)) {
-      const delta = Math.round(box.y + box.height / 2 - H / 2)
+    let found = await box(target)
+    if (found.y < 96 || found.y + found.height > H - 48) {
+      const delta = Math.round(found.y + found.height / 2 - H / 2)
       await page.evaluate(`scrollBy({ top: ${delta}, behavior: "smooth" })`)
       await pause(page, 800)
-      box = await target.boundingBox()
+      found = await box(target)
     }
-    if (!box) throw new Error("press target has no box")
     await moveLike(page, pointer, {
-      x: Math.round(box.x + box.width / 2),
-      y: Math.round(box.y + box.height / 2),
+      x: Math.round(found.x + found.width / 2),
+      y: Math.round(found.y + found.height / 2),
     })
     await pause(page, 150)
     await page.mouse.down()
     await pause(page, 350)
   }
+  const card = (content: { title: string; sub?: string } | null) =>
+    video(page, `__video.card(${JSON.stringify(content && { ...content, brand: BRAND })})`)
 
-  // 0. Title card, over the dashboard it cuts to.
-  await page.goto("/")
-  await page.getByRole("heading", { level: 1, name: "Dashboard" }).waitFor()
-  await video(page, `__video.card(${
-    JSON.stringify({
-      title: "Seed's admin panel, built for support work",
-      sub: "Part of Seed. Free and MIT-licensed.",
-    })
-  })`)
-  await shot(null, () => pause(page, 3000))
-  await video(page, `__video.card(null)`)
-
-  // 1. Dashboard.
-  await shot("The product at a glance", async () => {
-    await pause(page, 600)
-    await moveLike(page, pointer, { x: 640, y: 250 })
-    await pause(page, 3000)
-  })
-
-  // 2. Users: the search narrows the list to one person. The search box starts empty.
-  await clickLike(page, pointer, page.getByRole("link", { name: "Users" }), H)
+  // 0. Title card, over the empty Users list it cuts to.
+  await page.goto("/users")
   await page.getByRole("heading", { level: 1, name: "Users" }).waitFor()
+  await card({
+    title: "Seed's admin panel, built for support work",
+    sub: "Part of Seed. Free and MIT-licensed.",
+  })
+  await shot(null, () => pause(page, 3000))
+  await card(null)
+
+  // 1. Users: the search narrows the list to one person, zoomed in on the field and the result.
+  let poster = ""
   await shot("Find anyone by name or address", async () => {
     await pause(page, 500)
-    await typeLike(page, pointer, page.getByLabel("Name or address"), "demo@", H)
+    const field = page.getByLabel("Name or address")
+    await typeLike(page, pointer, field, PERSON.search, H)
     await pause(page, 300)
     await page.keyboard.press("Enter")
     await page.getByText("1 person", { exact: true }).waitFor()
-    await pause(page, 1600)
-    await press(page.getByRole("link", { name: "Demo User" }))
+    await pause(page, 500)
+    const person = page.locator("table tbody tr").first().locator("td").first()
+    await zoomOn(page, union(await box(field), await box(person)))
+    await pause(page, 900)
+    // The zoomed result, once the zoom has settled: no click mark, the pointer at rest.
+    poster = rec.latestFile()
+    await pause(page, 1500)
+    await video(page, `__video.unzoom()`)
+    await pause(page, 700)
+    await press(page.getByRole("link", { name: PERSON.name }))
   })
   await page.mouse.up()
-  // The list's first frame, before the caption fades in, is the poster.
-  const poster = rec.segments.at(-1)!.frames[0].file
 
-  // 3. The person's page, cut to once it has loaded, then its Sessions tab.
-  await page.getByRole("heading", { level: 1, name: "Demo User" }).waitFor()
+  // 2. The person's page, cut to once it has loaded, then its Sessions tab, zoomed in.
+  await page.getByRole("heading", { level: 1, name: PERSON.name }).waitFor()
   await page.getByRole("tab", { name: /Sessions/ }).waitFor()
   await shot("Sign-in methods, sessions, groups and history", async () => {
-    await pause(page, 1200)
+    await pause(page, 1000)
     await clickLike(page, pointer, page.getByRole("tab", { name: /Sessions/ }), H)
-    await page.locator("[data-e2e=admin-user-sessions] li").first().waitFor()
-    await pause(page, 2400)
+    const sessions = page.locator("[data-e2e=admin-user-sessions]")
+    await sessions.locator("li").first().waitFor()
+    await pause(page, 400)
+    const tabs = await box(page.getByRole("tablist"))
+    const list = await box(sessions)
+    await zoomOn(page, { ...union(tabs, list), width: Math.min(tabs.width, 740) })
+    await pause(page, 2800)
+    await video(page, `__video.unzoom()`)
+    await pause(page, 700)
   })
 
-  // 4. End all sessions: the confirmation, zoomed in, then confirmed.
+  // 3. End all sessions: the confirmation, zoomed in, then confirmed.
   await shot("Every action asks first", async () => {
     await clickLike(page, pointer, page.locator("[data-e2e=admin-sessions-end-all-open]"), H)
     const dialog = page.locator("[data-e2e=admin-action-dialog]")
     await dialog.waitFor()
     await pause(page, 400)
-    const submit = page.locator("[data-e2e=admin-action-submit]")
-    const box = await submit.boundingBox()
-    if (!box) throw new Error("the confirm button has no box")
+    const submit = await box(page.locator("[data-e2e=admin-action-submit]"))
     await moveLike(page, pointer, {
-      x: Math.round(box.x + box.width / 2),
-      y: Math.round(box.y + box.height / 2),
+      x: Math.round(submit.x + submit.width / 2),
+      y: Math.round(submit.y + submit.height / 2),
     })
-    const focus = await centre(page, "[data-e2e=admin-action-dialog]")
-    await video(page, `__video.zoom(1.5, ${focus.x}, ${focus.y - 40})`)
-    await pause(page, 2300)
+    await pause(page, 200)
+    await zoomOn(page, await box(dialog))
+    await pause(page, 2600)
     await video(page, `__video.unzoom()`)
-    await pause(page, 600)
-    await clickLike(page, pointer, submit, H)
+    await pause(page, 700)
+    await clickLike(page, pointer, page.locator("[data-e2e=admin-action-submit]"), H)
     await dialog.waitFor({ state: "hidden" })
     await pause(page, 1600)
   })
   // The confirmation's toast closes before the next shot.
-  await page.getByText("Every session of Demo User has ended.").waitFor({
+  await page.getByText(`Every session of ${PERSON.name} has ended.`).waitFor({
     state: "hidden",
     timeout: 20_000,
   })
 
-  // 5. The audit log, its newest row the one just written.
+  // 4. The audit log, zoomed in on its newest row: the one just written.
   await clickLike(page, pointer, page.getByRole("link", { name: "Audit log" }), H)
   await page.getByRole("heading", { level: 1, name: "Audit log" }).waitFor()
   await moveLike(page, pointer, { x: 1150, y: 260 })
   await shot("…and lands in the audit log", async () => {
     await pause(page, 900)
-    const row = page.locator("table tbody tr").first()
-    await row.getByText("Sessions ended").waitFor()
-    const box = await row.boundingBox()
-    if (!box) throw new Error("the newest audit row has no box")
-    await video(page, `__video.zoom(1.5, ${Math.round(box.x)}, ${Math.round(box.y)}, ${Math.round(box.x)}, 300)`)
-    await pause(page, 2600)
+    const rows = page.locator("table tbody tr")
+    await rows.first().getByText("Sessions ended").waitFor()
+    // The header, the new row and the one before it, from When to Done by.
+    const header = await box(page.locator("table thead tr"))
+    await zoomOn(page, { ...union(header, await box(rows.nth(1))), width: 640 })
+    await pause(page, 2800)
     await video(page, `__video.unzoom()`)
-    await pause(page, 900)
+    await pause(page, 800)
   })
 
-  // 7. Groups, then one group's members.
+  // 5. Groups, then one group's members.
   await clickLike(page, pointer, page.getByRole("link", { name: "Groups" }), H)
   await page.getByRole("heading", { level: 1, name: "Groups" }).waitFor()
   await shot("Every group, its owner and its members", async () => {
@@ -516,7 +626,7 @@ async function play(page: Page, rec: Recorder): Promise<string> {
     await pause(page, 2400)
   })
 
-  // 9. Newsletter.
+  // 6. Newsletter.
   await clickLike(page, pointer, page.getByRole("link", { name: "Newsletter" }), H)
   await page.getByRole("heading", { level: 1, name: "Newsletter" }).waitFor()
   await shot("Your newsletter's subscribers and sends", async () => {
@@ -525,29 +635,18 @@ async function play(page: Page, rec: Recorder): Promise<string> {
     await pause(page, 2400)
   })
 
-  // 10. System. No job failed in the seed, so no retry is shown and the caption says less.
-  await clickLike(page, pointer, page.getByRole("link", { name: "System" }), H)
-  await page.getByRole("heading", { level: 1, name: "System" }).waitFor()
-  await shot("Health and background jobs", async () => {
-    await pause(page, 400)
-    await moveLike(page, pointer, { x: 640, y: 300 })
-    await pause(page, 2400)
-  })
-
-  // 11. The same screen switches to light, from the operator's account menu.
+  // 7. The same screen switches to light, from the operator's account menu.
   await shot("Light and dark", async () => {
     await pause(page, 300)
     await clickInPlace(page, pointer, page.locator(ACCOUNT_MENU))
     await pause(page, 500)
     await clickInPlace(page, pointer, page.getByRole("menuitemradio", { name: "Light" }))
-    await moveLike(page, pointer, { x: 640, y: 300 })
+    await moveLike(page, pointer, { x: 700, y: 420 })
     await pause(page, 2000)
   })
 
-  // 12. End card.
-  await video(page, `__video.card(${
-    JSON.stringify({ title: "Free and MIT-licensed. The code is on GitHub." })
-  })`)
+  // 8. End card.
+  await card({ title: "Free and MIT-licensed. The code is on GitHub." })
   await shot(null, () => pause(page, 3000))
 
   return poster
@@ -641,7 +740,7 @@ async function encodePoster(frame: string, out: string): Promise<number> {
 const browser = await chromium.launch({ executablePath: Deno.env.get("CHROME_PATH") || undefined })
 const frames = await Deno.makeTempDir({ prefix: "admin-video-" })
 try {
-  await signInDemoDevices(browser)
+  await signInPerson()
   const context = await browser.newContext({
     baseURL: ADMIN_URL,
     // The audit log prints the browser's user agent; headless Chromium names itself
@@ -667,35 +766,53 @@ try {
     const posterFrame = await play(page, rec)
     await rec.stop()
 
-    await Deno.mkdir(OUT_DIR, { recursive: true })
+    await Deno.mkdir(VIDEO_DIR, { recursive: true })
+    await Deno.mkdir(POSTER_DIR, { recursive: true })
     const list = `${frames}/list.txt`
     await Deno.writeTextFile(list, concatList(rec.segments))
     const seconds = rec.segments.reduce((sum, s) => sum + s.end - s.frames[0].at, 0)
-    const webm = await encode(list, `${OUT_DIR}admin-panel.webm`, BUDGET.webm, (crf) => [
-      "-c:v",
-      "libsvtav1",
-      "-preset",
-      "4",
-      "-crf",
-      String(crf),
-      "-g",
-      "300",
-    ], [36, 42, 48], seconds)
-    const mp4 = await encode(list, `${OUT_DIR}admin-panel.mp4`, BUDGET.mp4, (crf) => [
-      "-c:v",
-      "libx264",
-      "-preset",
-      "slow",
-      "-tune",
-      "animation",
-      "-crf",
-      String(crf),
-      "-pix_fmt",
-      "yuv420p",
-      "-movflags",
-      "+faststart",
-    ], [24, 28, 32], seconds)
-    const poster = await encodePoster(posterFrame, `${OUT_DIR}admin-panel-poster-${POSTER.width}.webp`)
+    const webm = await encode(
+      list,
+      `${VIDEO_DIR}admin-panel.webm`,
+      BUDGET.webm,
+      (crf) => [
+        "-c:v",
+        "libsvtav1",
+        "-preset",
+        "4",
+        "-crf",
+        String(crf),
+        "-g",
+        "300",
+      ],
+      [36, 42, 48],
+      seconds,
+    )
+    const mp4 = await encode(
+      list,
+      `${VIDEO_DIR}admin-panel.mp4`,
+      BUDGET.mp4,
+      (crf) => [
+        "-c:v",
+        "libx264",
+        "-preset",
+        "slow",
+        "-tune",
+        "animation",
+        "-crf",
+        String(crf),
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+      ],
+      [24, 28, 32],
+      seconds,
+    )
+    const poster = await encodePoster(
+      posterFrame,
+      `${POSTER_DIR}admin-panel-poster-${POSTER.width}.webp`,
+    )
     console.log(
       `admin-panel: ${seconds.toFixed(1)} s, webm ${webm} B, mp4 ${mp4} B, poster ${poster} B`,
     )

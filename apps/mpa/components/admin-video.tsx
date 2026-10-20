@@ -1,7 +1,8 @@
 import type { JSX } from "preact"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 
-/** The recording's files in `static/video/`, made by `deno task video:admin`. */
+/** The recording, made by `deno task video:admin`: the videos are in `media/video/` (served by
+ * `routes/video/[file].ts`), the poster in `static/video/`. */
 export const ADMIN_VIDEO = {
   webm: `/video/admin-panel.webm`,
   mp4: `/video/admin-panel.mp4`,
@@ -13,14 +14,12 @@ export const ADMIN_VIDEO = {
 /** What the video shows, one sentence per shot, for a reader who cannot watch it. */
 const TRANSCRIPT = [
   `A title card: "Seed's admin panel, built for support work."`,
-  `The dashboard counts people, groups and notes, and charts sign-ups and active people per day.`,
-  `On Users, the operator types "demo@" into the search, and the list narrows to one person, Demo User.`,
-  `Demo User's page opens. Its Sessions tab lists two signed-in devices.`,
+  `On Users, the operator types "novak" into the search. The list narrows to one person, Priya Novak, and the video zooms in on the field and the result.`,
+  `Priya Novak's page opens. Its Sessions tab lists her two signed-in devices: Firefox on Windows and Safari on iPhone.`,
   `The operator chooses "End all". A dialog asks them to confirm; they confirm, and the list empties.`,
-  `The audit log's newest row reads "Sessions ended", about Demo User, done by the operator.`,
+  `The audit log's newest row reads "Sessions ended", about Priya Novak, done by the operator.`,
   `Groups lists every group with its owner. The operator opens one, Product team, and sees its members.`,
   `Newsletter shows 40 subscribers and a chart of subscribers per day.`,
-  `System shows the health of the database, the cache, the job queue, backups and migrations. The backup card says Error: this sample install has never run a backup.`,
   `From the account menu, the operator switches the theme from dark to light.`,
   `An end card: "Free and MIT-licensed. The code is on GitHub."`,
 ] as const
@@ -44,7 +43,7 @@ export function AdminVideo(): JSX.Element {
           width={ADMIN_VIDEO.width}
           height={ADMIN_VIDEO.height}
           class="block h-auto w-full bg-canvas"
-          aria-label="The admin panel, in a video of about 50 seconds with no sound"
+          aria-label="The admin panel, in a video of about 45 seconds with no sound"
           data-e2e="admin-video"
         >
           <source src={ADMIN_VIDEO.webm} type={`video/webm; codecs="av01.0.08M.08"`} />
