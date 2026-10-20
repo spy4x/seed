@@ -21,7 +21,7 @@ export interface DemoSeedOptions {
   pepper: string
   /** The password of the shared demo account, and of the development administrator. */
   password: string
-  /** Also seeds {@link DEV_ADMIN_EMAIL}, an administrator: development only, never the public demo. */
+  /** Also seeds {@link DEV_ADMIN_EMAIL}, an administrator: development only, never the demo. */
   operator: boolean
   /** Picks the fake data; the same seed gives the same data. */
   dataSeed: number

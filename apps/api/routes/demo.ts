@@ -4,8 +4,8 @@ import { DEMO_USER_EMAIL } from "@server/auth/demo-accounts.ts"
 
 /**
  * `GET /` answers the public demo's shared account and password (docs/demo.md), which the
- * product's sign-in page prints. The password is public by design. With the demo off it answers 404, so a
- * product started from the template shows nothing.
+ * product's sign-in page prints. The password is public by design. With the demo off it answers
+ * 404, so a product started from the template shows nothing.
  */
 export function createDemoRoute(
   demo: { password: string | null },

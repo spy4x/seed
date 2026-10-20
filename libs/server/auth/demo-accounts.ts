@@ -3,8 +3,8 @@ import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 
 /**
  * The public demo (docs/demo.md): one shared account whose password is printed on the product's
- * sign-in page, a database full of fake data, and a nightly wipe. Off unless `DEMO_MODE` is `true`, so a
- * product started from the template never runs it by accident.
+ * sign-in page, a database full of fake data, and a nightly wipe. Off unless `DEMO_MODE` is
+ * `true`, so a product started from the template never runs it by accident.
  */
 
 /** The shared product account. Addresses are on a domain reserved for examples (RFC 2606). */

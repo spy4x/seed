@@ -131,7 +131,7 @@ async function accountOf(sql: postgres.Sql, address: string) {
   return row
 }
 
-Deno.test("the demo seed creates the shared account, which signs in with no second factor", async () => {
+Deno.test("the demo seed creates only the shared account, with no second factor", async () => {
   await withSchema(async (sql) => {
     expect(await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)).toBe(true)
 
@@ -248,6 +248,19 @@ Deno.test("the wipe empties every table but the kept ones, and never reuses an i
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const [{ after }] = await sql<{ after: number }[]>`SELECT min(id) AS after FROM users`
     expect(after).toBeGreaterThan(before)
+  })
+})
+
+Deno.test("an operator account left in the demo makes the worker seed it again", async () => {
+  await withSchema(async (sql) => {
+    // What an older seed left: the demo user and an administrator whose password is public.
+    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
+    expect(await isDemoSeeded(sql)).toBe(false)
+
+    const { pepper, password, subscribers } = OPTIONS
+    await resetDemo(sql, { pepper, password, subscribers })
+    expect(await isDemoSeeded(sql)).toBe(true)
+    expect(await sql`SELECT 1 FROM auth_keys WHERE email = ${DEV_ADMIN_EMAIL}`).toHaveLength(0)
   })
 })
 

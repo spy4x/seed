@@ -2,7 +2,7 @@ import { apiFetch } from "./api.ts"
 import { type DemoInfo, parseDemoInfo } from "@domain/identity"
 
 /**
- * The public demo's shared accounts (docs/demo.md), or `null` while the demo is off (the route
+ * The public demo's shared account (docs/demo.md), or `null` while the demo is off (the route
  * answers 404) or the API cannot be reached: the sign-in page then shows no demo notice.
  */
 export async function readDemo(): Promise<DemoInfo | null> {
