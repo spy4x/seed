@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 /**
  * The admin panel video, as the website describes it: one source for the line under the player,
  * its `aria-label`, the JSON-LD and sitemap `duration`, the `/features` link and the transcript.

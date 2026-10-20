@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import { AUTHOR_URL } from "./brand.ts"
 
 /**

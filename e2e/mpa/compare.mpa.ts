@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import { expect, type Page, test } from "@playwright/test"
 import { AxeBuilder } from "@axe-core/playwright"
 

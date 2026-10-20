@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 /**
  * Captures the product screenshots and the Open Graph images of the public website.
  *

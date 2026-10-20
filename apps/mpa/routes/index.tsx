@@ -44,6 +44,7 @@ import {
 } from "../site.tsx"
 import { define } from "../utils.ts"
 
+// Seed's own site: see docs/start-a-product.md (also the llms.txt summary)
 /** The home page's title and description, as search results and social previews show them. */
 export const HOME_HEAD = {
   title: `Seed: free open-source SaaS starter and boilerplate`,
@@ -477,6 +478,7 @@ function Status(): JSX.Element {
   )
 }
 
+// Seed's own site: see docs/start-a-product.md
 function WhoBuilds(): JSX.Element {
   return (
     <Band id="who" labelledBy="who-title" width="3xl">

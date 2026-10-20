@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 /**
  * Records the README screenshots, the sign-up GIF and the GitHub social preview image from a
  * running app, with neutral demo data.

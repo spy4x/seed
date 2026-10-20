@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import type { ComponentChildren, JSX } from "preact"
 import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"

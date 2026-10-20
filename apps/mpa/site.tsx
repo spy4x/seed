@@ -72,6 +72,7 @@ export function spaLinks(spaOrigin: string): { signIn: string; signUp: string } 
   }
 }
 
+// Seed's own site: see docs/start-a-product.md
 /**
  * The author as a JSON-LD entity, with the id other entities point at. `sameAs` and the company
  * match the Person antonshubin.com publishes, so engines join the two into one person.
@@ -179,6 +180,7 @@ export interface SiteFrameProps {
   children: ComponentChildren
 }
 
+// Seed's own site: see docs/start-a-product.md (the hire link)
 /** The header's links, in display order. */
 export const NAV_LINKS = [
   { label: `Features`, href: `/features` },
@@ -258,6 +260,7 @@ export function SiteFrame(
         aside={state.newsletter && footerNewsletter ? <FooterNewsletter /> : undefined}
         bottom={
           <p>
+            {/* Seed's own site: see docs/start-a-product.md */}
             Built in public by{" "}
             <a href={AUTHOR_URL} class="underline hover:text-foreground">Anton Shubin</a>. MIT
             licence.
@@ -369,6 +372,7 @@ function footerGroups(spa: { signIn: string; signUp: string }): SiteFooterGroup[
       ],
     },
     {
+      // Seed's own site: see docs/start-a-product.md
       title: `Company`,
       links: [
         { label: `Hire me`, href: HIRE_PAGE_URL, external: true },

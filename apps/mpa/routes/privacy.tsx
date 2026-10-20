@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import { AUTHOR_URL, LegalPage, REPOSITORY_URL } from "../site.tsx"
 import { define } from "../utils.ts"
 
