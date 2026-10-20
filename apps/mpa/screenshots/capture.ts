@@ -109,7 +109,7 @@ interface OgCard {
   eyebrow: string
   title: string
   sub: string
-  /** A dark screenshot from `static/shots`, or "" for a card of words only. */
+  /** A dark picture under `static/`, such as `shots/notes-dark-1280.webp`, or "" for words only. */
   shot: string
   /** How far down the screenshot its frame starts, in the card's pixels. */
   top?: number
@@ -123,14 +123,21 @@ const OG_CARDS: OgCard[] = [
     eyebrow: "Open-source SaaS foundation",
     title: "The groundwork of your SaaS, already built.",
     sub: "Seed · open source · MIT · one server you own",
-    shot: "notes-dark-1280.webp",
+    shot: "shots/notes-dark-1280.webp",
   },
   {
     file: "features",
     eyebrow: "Features",
     title: "Auth, teams, billing, offline, admin.",
     sub: "Everything Seed ships, and what it does not yet",
-    shot: "group-members-dark-1280.webp",
+    shot: "shots/group-members-dark-1280.webp",
+  },
+  {
+    file: "admin",
+    eyebrow: "Admin panel",
+    title: "An admin panel for your SaaS.",
+    sub: "Users · billing · audit log · roles",
+    shot: "video/admin-panel-poster-1920.webp",
   },
   {
     file: "compare",
@@ -152,7 +159,7 @@ const OG_CARDS: OgCard[] = [
     title: "Your MVP, live and taking payments.",
     sub: "From $8,000 · from 3 weeks · you own everything",
     // The phone picture, which has no rail: the plan alone, near its real size.
-    shot: "billing-dark-780.webp",
+    shot: "shots/billing-dark-780.webp",
     width: 480,
     // The frame starts 531 card pixels down the picture (its 431st CSS pixel), in the empty
     // canvas above the "Plan" heading, and ends below the footnote, above the tab bar.
@@ -763,7 +770,7 @@ async function renderOgImages(browser: Browser, contexts: BrowserContext[]): Pro
           eyebrow: card.eyebrow,
           title: card.title,
           sub: card.sub,
-          shot: card.shot ? `/static/shots/${card.shot}` : "",
+          shot: card.shot ? `/static/${card.shot}` : "",
           top: String(card.top ?? 0),
           width: String(card.width ?? 860),
         })
