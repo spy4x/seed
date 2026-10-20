@@ -80,7 +80,7 @@ test.describe(`without JavaScript`, () => {
 
     const transcript = section.locator(`details[data-e2e=admin-video-transcript]`)
     await expect(transcript.locator(`summary`)).toHaveText(`Read what the video shows`)
-    await expect(transcript.locator(`li`)).toHaveCount(11)
+    await expect(transcript.locator(`li`)).toHaveCount(9)
     await expect(transcript).toContainText(
       `The people and groups in the video are made-up sample data.`,
     )
@@ -131,3 +131,26 @@ for (const scheme of [`light`, `dark`] as const) {
     }
   })
 }
+
+test(`each admin video answers a byte range with 206 and exactly those bytes, as Safari asks`, async ({ request }) => {
+  for (const name of [`admin-panel.webm`, `admin-panel.mp4`]) {
+    const response = await request.get(`/video/${name}`, { headers: { Range: `bytes=0-99` } })
+    expect(response.status(), name).toBe(206)
+    expect(response.headers()[`content-range`], name).toMatch(/^bytes 0-99\/\d+$/)
+    expect((await response.body()).byteLength, name).toBe(100)
+    expect(response.headers()[`cache-control`], name).toContain(`max-age=`)
+    expect(response.headers()[`content-security-policy`], name).toContain(`default-src 'self'`)
+  }
+})
+
+test(`the video route serves only its listed files`, async ({ request }) => {
+  for (
+    const path of [
+      `/video/admin-panel.mov`,
+      `/video/..%2F..%2Fdeno.json`,
+      `/video/%2E%2E%2Fmain.ts`,
+    ]
+  ) {
+    expect((await request.get(path)).status(), path).toBe(404)
+  }
+})
