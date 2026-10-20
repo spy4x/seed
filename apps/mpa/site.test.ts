@@ -4,6 +4,7 @@ import { App } from "fresh"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { PLANS } from "@domain/billing"
 import AppWrapper from "./routes/_app.tsx"
+import Admin from "./routes/admin.tsx"
 import Compare from "./routes/compare.tsx"
 import Features from "./routes/features.tsx"
 import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
@@ -46,6 +47,7 @@ function siteWith(newsletter: () => boolean) {
     .appWrapper(view(AppWrapper))
     .route("/", { component: view(Home) })
     .route("/features", { component: view(Features) })
+    .route("/admin", { component: view(Admin) })
     .route("/compare", { component: view(Compare) })
     .route("/pricing", { component: view(Pricing), handler: pricing })
     .route("/mvp", { component: view(Mvp) })
@@ -213,6 +215,7 @@ describe("the public website", () => {
 
   const ogCards: [string, OgImageKey][] = [
     ["/", "home"],
+    ["/admin", "admin"],
     ["/subscribe", "subscribe"],
     ["/pricing", "pricing"],
     ["/mvp", "mvp"],
@@ -454,7 +457,17 @@ describe("the public website", () => {
     expect(response.headers.get("content-type")).toBe("application/xml; charset=utf-8")
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1])
     expect(locs).toEqual(
-      ["/", "/features", "/compare", "/pricing", "/mvp", "/subscribe", "/privacy", "/terms"]
+      [
+        "/",
+        "/features",
+        "/admin",
+        "/compare",
+        "/pricing",
+        "/mvp",
+        "/subscribe",
+        "/privacy",
+        "/terms",
+      ]
         .map((path) => `${site}${path}`),
     )
   })
