@@ -7,6 +7,7 @@ import { UserRole } from "@domain/identity"
 import { DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
 import { WELCOME_NOTE_TITLE } from "@server/jobs/starter-data.ts"
+import { readOnboarding } from "@server/auth/onboarding.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
@@ -305,6 +306,10 @@ Deno.test("a visitor who signs up to the demo gets sample groups once and opens 
       JOIN groups g ON g.id = i.group_id AND g.owner_user_id = ${userId}
     `
     expect(invitations).toBe(owned.invitations.length)
+    // Someone else wrote the sample content, so the checklist starts unticked.
+    const onboarding = await readOnboarding(sql, userId)
+    expect(onboarding?.steps.noteCreated).toBe(false)
+    expect(onboarding?.steps.memberInvited).toBe(false)
     const welcome = await sql`
       SELECT 1 FROM notes WHERE title = ${WELCOME_NOTE_TITLE} AND created_by_user_id = ${userId}
     `

@@ -1,5 +1,6 @@
 import { Hono } from "hono"
 import type postgres from "postgres"
+import { GroupRole } from "@domain/groups"
 import { UserRole } from "@domain/identity"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
@@ -134,6 +135,10 @@ async function ensureAdmin(
  * Groups, their members, tags, notes and pending invitations. `idOf` answers `null` for someone
  * without an account: such a member is left out, and a group with such an owner is skipped.
  * Answers the id of the group `you` own, or `null` when there is none.
+ *
+ * The content of the group `you` own is written by its made-up admin, never by `you`: the
+ * "Get started" checklist counts the notes and invitations a person made. Without that admin the
+ * group stays empty.
  */
 async function seedGroups(
   db: AppDbBase,
@@ -158,10 +163,13 @@ async function seedGroups(
         ON CONFLICT DO NOTHING
       `
     }
+    const admin = group.members.find((m) => m.member !== `you` && m.role === GroupRole.ADMIN)
+    const authorId = group.owner === `you` ? (admin ? idOf(admin.member) : null) : ownerId
+    if (authorId === null) continue
     const tagIds = new Map<string, string>()
     for (const tag of group.tags) {
       const id = uuidV7()
-      await db.tag.create({ id, groupId, name: tag.name, color: tag.color }, ownerId)
+      await db.tag.create({ id, groupId, name: tag.name, color: tag.color }, authorId)
       tagIds.set(tag.name, id)
     }
     for (const note of group.notes) {
@@ -173,7 +181,7 @@ async function seedGroups(
           body: note.body,
           tagIds: note.tags.map((name) => tagIds.get(name)!),
         },
-        ownerId,
+        authorId,
         null,
       )
     }
@@ -188,7 +196,7 @@ async function seedGroups(
           // Nobody holds the token: the invitation only shows as pending.
           tokenHash: await sha256Hex(randomBase64Url(32)),
         },
-        ownerId,
+        authorId,
         { maxMembers: null, memberRoles: true },
       )
     }
