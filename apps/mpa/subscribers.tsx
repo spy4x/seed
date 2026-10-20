@@ -247,14 +247,17 @@ function renderSubscribe(
               ))}
             </ul>
           </section>
-          <SubscribeForm
-            email={page.email}
-            onEmailChange={() => {}}
-            list={DEFAULT_SUBSCRIBER_LIST}
-            sent={page.sent}
-            error={page.error}
-            pending={false}
-          />
+          <div data-analytics-submit="newsletter-subscribe">
+            <SubscribeForm
+              email={page.email}
+              onEmailChange={() => {}}
+              list={DEFAULT_SUBSCRIBER_LIST}
+              sent={page.sent}
+              error={page.error}
+              pending={false}
+            />
+          </div>
+          {page.sent && <AnalyticsView name="newsletter-sent" />}
         </div>
       </NewsletterBand>
     </SiteFrame>,
@@ -324,6 +327,7 @@ function renderConfirm(
           error={null}
           pending={false}
         />
+        {page.state === "done" && <AnalyticsView name="newsletter-confirmed" />}
       </NewsletterBand>
     </SiteFrame>,
     { status: page.status, headers: headersOf(page, NO_REFERRER) },
@@ -345,8 +349,17 @@ function renderUnsubscribe(
           error={null}
           pending={false}
         />
+        {page.state === "done" && <AnalyticsView name="newsletter-unsubscribed" />}
       </NewsletterBand>
     </SiteFrame>,
     { status: page.status, headers: headersOf(page, NO_REFERRER) },
   )
+}
+
+/**
+ * Marks a page that sends an Umami event by being shown (`/analytics.js`, `docs/analytics.md`):
+ * a finished newsletter step, which no click on this website causes.
+ */
+function AnalyticsView({ name }: { name: string }): JSX.Element {
+  return <span hidden data-analytics-view={name} />
 }

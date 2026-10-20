@@ -15,15 +15,18 @@ import { securityHeaderList, withSecurityHeaders } from "@spy4x/server/http/secu
  * only, no plugins and no framing. Its `Referrer-Policy: no-referrer` also covers the newsletter
  * pages, whose address carries a token.
  *
- * One directive is widened. The pricing page's form posts to the MPA, which redirects to the SPA's
- * sign-up, and a browser applies `form-action` to that redirect too. On a domain of its own the
- * MPA therefore allows the SPA's origin there.
+ * Two things widen it. The pricing page's form posts to the MPA, which redirects to the SPA's
+ * sign-up, and a browser applies `form-action` to that redirect too: on a domain of its own the
+ * MPA therefore allows the SPA's origin there. With analytics on, the Umami origin is allowed in
+ * `script-src` (its tracker) and `connect-src` (the events it sends), and nowhere else.
  */
 function securityHeaderSet(config: MpaConfig): Promise<[string, string][]> {
+  const umami = config.analytics?.origin
   return securityHeaderList({
-    extraSources: config.apiOrigin === config.webAppOrigin
-      ? undefined
-      : { formAction: [config.apiOrigin] },
+    extraSources: {
+      ...(config.apiOrigin === config.webAppOrigin ? {} : { formAction: [config.apiOrigin] }),
+      ...(umami ? { scriptSrc: [umami], connectSrc: [umami] } : {}),
+    },
   })
 }
 
@@ -54,7 +57,7 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
  *    to the API as the API's origin once step 1 has passed;
  * 3. tells the route whether the newsletter is on, as `newsletter()` says. It is required, so a
  *    caller cannot leave the status out by accident: the website starts through
- *    {@link newsletterPageMiddleware};
+ *    {@link newsletterPageMiddleware}, and where analytics go, if anywhere;
  * 4. answers a form it cannot read with the status `readFormBody` names (413, 408 or 400);
  * 5. answers any other error, the 404 of an unknown address included, with the error page inside
  *    the site's frame (`error-page.tsx`);
@@ -87,6 +90,7 @@ export function pageMiddleware(
       fetch,
     })
     ctx.state.newsletter = newsletter()
+    ctx.state.analytics = config.analytics
     let response: Response
     try {
       response = await ctx.next()

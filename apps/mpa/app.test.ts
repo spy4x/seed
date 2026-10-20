@@ -10,9 +10,10 @@ import {
   securityHeadersMiddleware,
 } from "./middleware.ts"
 import { REPOSITORY_URL } from "./brand.ts"
+import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
 
-const config = {
+const config: MpaConfig = {
   apiUrl: "http://api:8000",
   webAppOrigin: "https://app.example.com",
   apiOrigin: "https://app.example.com",
@@ -235,6 +236,21 @@ describe("securityHeadersMiddleware", () => {
 
     expect(response.headers.get("content-security-policy")).toBe(
       policy.replace("form-action 'self'", "form-action 'self' https://app.example.com"),
+    )
+  })
+
+  it("allows the Umami origin to load its tracker and take its events, and nothing more", async () => {
+    const analytics = { origin: "https://stats.example.com", websiteId: "site" }
+
+    const response = await (await securedApp({ ...config, analytics }))(
+      new Request(`${config.webAppOrigin}/page`),
+      info,
+    )
+
+    expect(response.headers.get("content-security-policy")).toBe(
+      policy
+        .replace("script-src 'self'", "script-src 'self' https://stats.example.com")
+        .replace("connect-src 'self'", "connect-src 'self' https://stats.example.com"),
     )
   })
 })

@@ -189,7 +189,17 @@ export function SiteFrame(
           </a>
         }
         links={NAV_LINKS}
-        actions={<Button href={spa.signUp} size="sm" data-e2e="site-try-demo">Try the demo</Button>}
+        actions={
+          <Button
+            href={spa.signUp}
+            size="sm"
+            data-e2e="site-try-demo"
+            data-umami-event="try-demo"
+            data-umami-event-from="header"
+          >
+            Try the demo
+          </Button>
+        }
       />
       <main id="main" tabIndex={-1} class="outline-none">{children}</main>
       <SiteFooter
@@ -335,7 +345,12 @@ function FooterNewsletter(): JSX.Element {
       <p class="text-sm text-muted">
         A short email when {SITE_NAME} changes. You confirm by email first; one click unsubscribes.
       </p>
-      <form method="post" action={FORM_ACTIONS.subscribe} class="flex gap-2">
+      <form
+        method="post"
+        action={FORM_ACTIONS.subscribe}
+        class="flex gap-2"
+        data-analytics-submit="newsletter-subscribe"
+      >
         <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
         <label for="footer-email" class="sr-only">Email address</label>
         <Input

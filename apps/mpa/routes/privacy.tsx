@@ -3,6 +3,7 @@ import { define } from "../utils.ts"
 
 const PRIVACY_SECTIONS = [
   { label: `This website`, href: `#website` },
+  { label: `Visitor statistics`, href: `#statistics` },
   { label: `What the demo stores`, href: `#stores` },
   { label: `Cookies and your browser`, href: `#cookies` },
   { label: `What it does not do`, href: `#does-not` },
@@ -23,7 +24,7 @@ export default define.page(function Privacy({ state }) {
       headTitle="Privacy: what Seed's demo and site keep"
       description={`What seedsaas.com and the Seed demo store about you, why, for how long, and ` +
         `how to delete it. No ads, no tracking cookies, no data sold.`}
-      updated="16 October 2026"
+      updated="20 October 2026"
       sections={PRIVACY_SECTIONS}
     >
       <p>
@@ -37,6 +38,30 @@ export default define.page(function Privacy({ state }) {
         sets no cookies. The server keeps request logs, with your IP address, to run and fix the
         site. If you subscribe, it keeps your email address and when you confirmed it.
       </p>
+      <h2 id="statistics">Visitor statistics</h2>
+      {state.analytics
+        ? (
+          <>
+            <p>
+              This website counts visits with Umami, which I host myself, so the numbers reach no
+              other company. It sets no cookies and stores nothing that names you: no IP address, no
+              email address, and nothing that follows you to other sites.
+            </p>
+            <p>
+              For each page it records the address of the page, the site you came from, your
+              browser, operating system, device type, screen size and language, your country, region
+              and city, worked out from your IP address, and how fast the page loaded. It also
+              counts clicks on the main buttons and links, newsletter sign-ups, plans chosen on the
+              pricing page and how much of the video was watched.
+            </p>
+            <p>
+              If your browser sends Do Not Track, nothing is counted. Known bots are not counted.
+              The page a newsletter link opens is not counted, so the link's code never reaches the
+              statistics. The demo counts nothing.
+            </p>
+          </>
+        )
+        : <p>This website keeps no visitor statistics, and neither does the demo.</p>}
       <h2 id="stores">What the demo stores</h2>
       <ul>
         <li>
@@ -109,7 +134,7 @@ export default define.page(function Privacy({ state }) {
         </li>
       </ul>
       <p>
-        There are no advertising cookies, no analytics and no tracking. So that the app opens
+        The demo has no advertising cookies, no analytics and no tracking. So that the app opens
         without a network, it also keeps in your browser's own storage: who is signed in, a copy of
         your notes and groups, the group you last selected, the position the realtime connection
         reached, so it picks up where it left off, whether you dismissed the offer to install the

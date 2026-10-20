@@ -20,6 +20,7 @@ import { handler as unsubscribe } from "./routes/unsubscribe.ts"
 import { pageMiddleware } from "./middleware.ts"
 import { BOOK_CALL_URL, BRIEF_URL } from "./hire.ts"
 import { ogImageAlt, type OgImageKey, REPOSITORY_URL, SITE_PAGES } from "./site.tsx"
+import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
 
 /** The website on its own domain, so a link to the website and a link to the SPA differ. */
@@ -41,9 +42,9 @@ const neverCalled = () => Promise.reject(new Error("the website called the API")
 const view = (component: unknown) => component as Parameters<App<State>["appWrapper"]>[0]
 
 /** The website's pages behind its middleware and its `_app` document, as in production. */
-function siteWith(newsletter: () => boolean) {
+function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
   return new App<State>()
-    .use(pageMiddleware(config, neverCalled, newsletter))
+    .use(pageMiddleware(siteConfig, neverCalled, newsletter))
     .appWrapper(view(AppWrapper))
     .route("/", { component: view(Home) })
     .route("/features", { component: view(Features) })
@@ -63,6 +64,12 @@ function siteWith(newsletter: () => boolean) {
 const handler = siteWith(() => true)
 /** The same website while the API takes no subscriptions. */
 const withoutNewsletter = siteWith(() => false)
+/** The same website counting visits in a Umami. */
+const UMAMI = {
+  origin: "https://stats.example.com",
+  websiteId: "0199f1a2-0000-7000-8000-000000000001",
+}
+const withAnalytics = siteWith(() => true, { ...config, analytics: UMAMI })
 
 async function page(path: string, app = handler): Promise<{ status: number; html: string }> {
   const response = await app(new Request(`${site}${path}`), info)
@@ -470,5 +477,69 @@ describe("the public website", () => {
       ]
         .map((path) => `${site}${path}`),
     )
+  })
+
+  it("loads no tracker and no script of its own while analytics is off", async () => {
+    for (const path of ["/", "/pricing", "/privacy"]) {
+      const { html } = await page(path)
+      expect(html, path).not.toContain("script.js")
+      expect(html, path).not.toContain("/analytics.js")
+    }
+  })
+
+  it("loads Umami's tracker, counting only on its own host and honouring Do Not Track, then its own events", async () => {
+    const { html } = await page("/", withAnalytics)
+
+    const tracker = html.match(/<script[^>]*src="https:\/\/stats\.example\.com\/script\.js"[^>]*>/)
+      ?.[0]
+    expect(tracker).toContain(`data-website-id="${UMAMI.websiteId}"`)
+    expect(tracker).toContain(`data-domains="www.example.com"`)
+    expect(tracker).toContain(`data-do-not-track="true"`)
+    expect(tracker).toContain("defer")
+    const own = html.match(/<script[^>]*src="\/analytics\.js"[^>]*>/)?.[0]
+    expect(own).toContain(`data-spa-origin="${spa}"`)
+    expect(own).toContain(`data-repository="${REPOSITORY_URL}"`)
+    // Umami runs first: the website's events call the tracker it defines.
+    expect(html.indexOf("stats.example.com/script.js")).toBeLessThan(html.indexOf("/analytics.js"))
+  })
+
+  it("leaves the tracker out of a page whose address carries a newsletter token", async () => {
+    const { html } = await page("/unsubscribe?list=news&token=secret-token", withAnalytics)
+
+    expect(html).not.toContain("script.js")
+    expect(html).not.toContain("/analytics.js")
+  })
+
+  it("names the demo links of the header and the hero, the hire link and the newsletter form for Umami", async () => {
+    const { html } = await page("/", withAnalytics)
+
+    const tryDemo = html.match(/<a[^>]*data-e2e="site-try-demo"[^>]*>/)?.[0]
+    expect(tryDemo).toContain(`data-umami-event="try-demo"`)
+    expect(tryDemo).toContain(`data-umami-event-from="header"`)
+    const heroDemo = html.match(/<a[^>]*data-e2e="home-try-demo"[^>]*>/)?.[0]
+    expect(heroDemo).toContain(`data-umami-event-from="hero"`)
+    expect(html.match(/<a[^>]*data-e2e="home-founders"[^>]*>/)?.[0]).toContain(
+      `data-umami-event="hire-me"`,
+    )
+    expect(html.match(/<form[^>]*data-e2e="home-subscribe"[^>]*>/)?.[0]).toContain(
+      `data-analytics-submit="newsletter-subscribe"`,
+    )
+  })
+
+  it("says on the privacy page that visits are counted in a self-hosted Umami without cookies, and what it records", async () => {
+    const { html } = await page("/privacy", withAnalytics)
+
+    expect(html).toContain(`<h2 id="statistics">Visitor statistics</h2>`)
+    expect(html).toContain("counts visits with Umami, which I host myself")
+    expect(html).toContain("It sets no cookies")
+    expect(html).toContain("If your browser sends Do Not Track, nothing is counted.")
+    expect(html).not.toContain("There are no advertising cookies, no analytics")
+  })
+
+  it("says on the privacy page that no visits are counted while analytics is off", async () => {
+    const { html } = await page("/privacy")
+
+    expect(html).toContain("This website keeps no visitor statistics, and neither does the demo.")
+    expect(html).not.toContain("Umami")
   })
 })

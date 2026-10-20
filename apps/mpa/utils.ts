@@ -1,5 +1,6 @@
 import { createDefine } from "fresh"
 import type { Api } from "./api.ts"
+import type { AnalyticsConfig } from "./config.ts"
 
 /** What the middleware hands every route. */
 export interface State {
@@ -11,6 +12,8 @@ export interface State {
   spaOrigin: string
   /** Whether the API takes newsletter subscriptions; `false` hides every newsletter form. */
   newsletter: boolean
+  /** Where page views and events go; `undefined` leaves the tracker out of every page. */
+  analytics?: AnalyticsConfig
 }
 
 export const define = createDefine<State>()

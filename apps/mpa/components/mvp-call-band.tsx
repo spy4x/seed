@@ -18,13 +18,21 @@ export function MvpCallActions(
         center ? "sm:justify-center" : ""
       }`}
     >
-      <Button href={BOOK_CALL_URL} size="lg" data-e2e={`mvp-book-${place}`}>
+      <Button
+        href={BOOK_CALL_URL}
+        size="lg"
+        data-e2e={`mvp-book-${place}`}
+        data-umami-event="book-call"
+        data-umami-event-from={place}
+      >
         <IconCalendar class="size-5" aria-hidden="true" /> Book a free 30-minute call
       </Button>
       <a
         href={BRIEF_URL}
         class="inline-flex items-center justify-center gap-1 py-2 font-medium text-primary underline-offset-4 hover:underline"
         data-e2e={`mvp-brief-${place}`}
+        data-umami-event="send-brief"
+        data-umami-event-from={place}
       >
         Or send a written brief <IconArrowRight class="size-4" aria-hidden="true" />
       </a>

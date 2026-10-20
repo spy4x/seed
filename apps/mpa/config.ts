@@ -12,12 +12,24 @@ export interface MpaConfig {
    * derives from `ENV` and `DOMAIN`, where the SPA is served.
    */
   apiOrigin: string
+  /** Where page views and events go, or `undefined` when the website runs without analytics. */
+  analytics?: AnalyticsConfig
+}
+
+/**
+ * A self-hosted Umami (`docs/analytics.md`): its origin, which serves `/script.js` and takes the
+ * events, and the website's id there. The id is public: it is written into every page.
+ */
+export interface AnalyticsConfig {
+  origin: string
+  websiteId: string
 }
 
 /**
  * Reads the configuration from the environment: `ENV`, `DOMAIN` (as the API reads them), `API_URL`
- * and `MPA_DOMAIN`. Throws when a required one is missing, or when `MPA_DOMAIN` carries a scheme
- * (it would become the host `https`), so a misconfigured MPA refuses to start.
+ * and `MPA_DOMAIN`, and the optional pair `MPA_UMAMI_ORIGIN` and `MPA_UMAMI_WEBSITE_ID`. Throws
+ * when a required one is missing, when `MPA_DOMAIN` carries a scheme (it would become the host
+ * `https`), or when only one of the Umami pair is set, so a misconfigured MPA refuses to start.
  */
 export function readMpaConfig(env: { get(name: string): string | undefined }): MpaConfig {
   const required = (name: string): string => {
@@ -34,5 +46,23 @@ export function readMpaConfig(env: { get(name: string): string | undefined }): M
     apiUrl: new URL(required("API_URL")).origin,
     webAppOrigin: new URL(`${scheme}://${required("MPA_DOMAIN")}`).origin,
     apiOrigin,
+    analytics: readAnalytics(env),
   }
+}
+
+/** Both Umami values, or neither: one alone is a mistake, not a choice to turn analytics off. */
+function readAnalytics(
+  env: { get(name: string): string | undefined },
+): AnalyticsConfig | undefined {
+  const origin = env.get("MPA_UMAMI_ORIGIN") ?? ""
+  const websiteId = env.get("MPA_UMAMI_WEBSITE_ID") ?? ""
+  if (!origin && !websiteId) return undefined
+  if (!origin || !websiteId) {
+    throw new Error("MPA_UMAMI_ORIGIN and MPA_UMAMI_WEBSITE_ID are set together or not at all")
+  }
+  const url = URL.parse(origin)
+  if (url?.protocol !== "https:" && url?.protocol !== "http:") {
+    throw new Error("MPA_UMAMI_ORIGIN must be an address such as https://stats.example.com")
+  }
+  return { origin: url.origin, websiteId }
 }

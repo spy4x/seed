@@ -64,6 +64,8 @@ export function FeatureSection(
           href={code.href}
           class="inline-flex items-center gap-1 self-start py-2 text-sm font-medium text-primary hover:underline"
           data-e2e="feature-code-link"
+          data-umami-event="read-code"
+          data-umami-event-from={id}
         >
           {code.label} <IconArrowRight class="size-4" aria-hidden="true" />
         </a>

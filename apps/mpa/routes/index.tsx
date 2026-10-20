@@ -166,8 +166,22 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               Docker Compose, and your first week goes to your product.
             </p>
             <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
-              <Button href={demoHref} size="lg" data-e2e="home-try-demo">Try the live demo</Button>
-              <Button href={REPOSITORY_URL} variant="outline" size="lg">
+              <Button
+                href={demoHref}
+                size="lg"
+                data-e2e="home-try-demo"
+                data-umami-event="try-demo"
+                data-umami-event-from="hero"
+              >
+                Try the live demo
+              </Button>
+              <Button
+                href={REPOSITORY_URL}
+                variant="outline"
+                size="lg"
+                data-umami-event="github"
+                data-umami-event-from="hero"
+              >
                 <IconGitHub class="size-5" /> View on GitHub
               </Button>
             </div>
@@ -317,15 +331,18 @@ function Features(): JSX.Element {
             Every account gets a group at sign-up. Invite people, give them roles from viewer to
             owner, hand ownership over, restore a deleted group for 30 days.
           </FeatureCard>
-          <FeatureCard
-            id="feature-admin"
-            title="An admin area"
-            Icon={IconServer}
-            href="/admin"
-          >
-            Operators find a person, manage groups, refund a payment and check the system's health.
-            On its own host, with every action confirmed and logged.
-          </FeatureCard>
+          {/* The card draws its own link; Umami counts a click on anything inside this wrapper. */}
+          <div class="contents" data-umami-event="home-admin-card">
+            <FeatureCard
+              id="feature-admin"
+              title="An admin area"
+              Icon={IconServer}
+              href="/admin"
+            >
+              Operators find a person, manage groups, refund a payment and check the system's
+              health. On its own host, with every action confirmed and logged.
+            </FeatureCard>
+          </div>
           <FeatureCard
             id="feature-website"
             title="A public website"
@@ -510,6 +527,7 @@ function Newsletter(): JSX.Element {
           action={FORM_ACTIONS.subscribe}
           class="flex flex-col gap-2"
           data-e2e="home-subscribe"
+          data-analytics-submit="newsletter-subscribe"
         >
           <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
           <label for="home-email" class="text-sm font-medium">Email address</label>

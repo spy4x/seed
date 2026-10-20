@@ -865,6 +865,9 @@ services:
       - ENV=${ENV}
       - DOMAIN=${DOMAIN}
       - MPA_DOMAIN=${MPA_DOMAIN:-}
+      # Optional, together: the website's Umami (docs/analytics.md). Empty loads no tracker.
+      - MPA_UMAMI_ORIGIN=${MPA_UMAMI_ORIGIN:-}
+      - MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}
       # Not `http://api`: on the shared `proxy` network that name is any project's API.
       - API_URL=http://${PROJECT}-api:${API_PORT}
       - DENO_LOG=${DENO_LOG}

@@ -4,13 +4,16 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 
 /** The app's origin, another host than the website's (`e2e/mpa/run.sh`). */
 const SPA = new URL(Deno.env.get("SPA_BASE_URL")!).origin
+/** The stand-in Umami's origin (`e2e/mpa/run.sh`): analytics is on in these tests. */
+const UMAMI = Deno.env.get("MPA_UMAMI_ORIGIN")!
 
 function expectSecurityHeaders(response: APIResponse) {
   const headers = response.headers()
   // The website has its own host here, so its forms may also redirect to the app's.
   expect(headers["content-security-policy"]).toBe(
-    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; " +
-      `connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' ${SPA}; ` +
+    `default-src 'self'; script-src 'self' ${UMAMI}; style-src 'self'; img-src 'self' data:; ` +
+      `connect-src 'self' ${UMAMI}; object-src 'none'; base-uri 'self'; ` +
+      `form-action 'self' ${SPA}; ` +
       "frame-ancestors 'none'",
   )
   expect(headers["x-content-type-options"]).toBe("nosniff")

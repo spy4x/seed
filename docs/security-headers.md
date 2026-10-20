@@ -94,6 +94,10 @@ font, so the policy is the helper's default with nothing added: `'self'` for `de
 `script-src`, `style-src` and `connect-src`; `'self'` and `data:` for `img-src`; `object-src
 'none'`; `base-uri 'self'`; `frame-ancestors 'none'`.
 
+With analytics on (`MPA_UMAMI_ORIGIN`, [analytics.md](analytics.md)), `script-src` and
+`connect-src` also allow the Umami origin: its tracker loads from there and sends its events there.
+Without it the policy names no other origin.
+
 `form-action` is `'self'`, plus the SPA's origin when the MPA runs on a domain of its own
 (`MPA_DOMAIN` differs from `DOMAIN`). The pricing page's form posts to the MPA, which redirects to
 the SPA's sign-up, and a browser applies `form-action` to that redirect as well.

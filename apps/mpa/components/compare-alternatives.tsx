@@ -66,6 +66,8 @@ export function CompareAlternatives({ items, checkedOn }: CompareAlternativesPro
                         href={source.href}
                         class="inline-block py-2 text-primary underline"
                         rel="noopener"
+                        data-umami-event="compare-source"
+                        data-umami-event-product={item.name}
                       >
                         {source.label}
                       </a>

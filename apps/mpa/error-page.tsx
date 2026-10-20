@@ -31,6 +31,7 @@ export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promi
         aria-labelledby="error-title"
         class="site-glow flex min-h-[60vh] items-center"
         data-e2e="error-page"
+        data-analytics-view={notFound ? "not-found" : "error-page"}
       >
         <div class="mx-auto flex w-full max-w-md flex-col items-start gap-6 px-4 py-16">
           <p class="font-mono text-6xl font-semibold text-muted" aria-hidden="true">
@@ -46,7 +47,13 @@ export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promi
             ? (
               <>
                 <div class="flex w-full flex-col gap-4 sm:flex-row">
-                  <Button href={spa.signUp}>Try the live demo</Button>
+                  <Button
+                    href={spa.signUp}
+                    data-umami-event="try-demo"
+                    data-umami-event-from="not-found"
+                  >
+                    Try the live demo
+                  </Button>
                   <Button href="/" variant="outline">Back to the home page</Button>
                 </div>
                 <ul class="flex flex-wrap gap-x-6 gap-y-2 font-medium">
@@ -54,7 +61,14 @@ export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promi
                     <a href="/features" class="text-primary underline">See the features</a>
                   </li>
                   <li>
-                    <a href="/mvp" class="text-primary underline">Hire me to build your MVP</a>
+                    <a
+                      href="/mvp"
+                      class="text-primary underline"
+                      data-umami-event="hire-me"
+                      data-umami-event-from="not-found"
+                    >
+                      Hire me to build your MVP
+                    </a>
                   </li>
                 </ul>
                 <p class="text-sm text-muted">

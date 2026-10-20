@@ -77,6 +77,9 @@ export RATE_LIMITER_OTP_WINDOW_MS=900000
 export RATE_LIMITER_OTP_LIMIT=1000
 export API_URL="http://127.0.0.1:$API_PORT"
 export MPA_BASE_URL="http://$MPA_DOMAIN"
+# Analytics on, against the stand-in tracker `spa-shell.ts` serves: never a real Umami.
+export MPA_UMAMI_ORIGIN="http://127.0.0.1:$SPA_PORT"
+export MPA_UMAMI_WEBSITE_ID=0199f1a2-0000-7000-8000-00000000e2e0
 export SPA_BASE_URL="http://$DOMAIN"
 
 # A fresh database of its own. Dropped first, so a rerun starts empty instead of failing on
