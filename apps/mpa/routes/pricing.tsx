@@ -21,9 +21,9 @@ import { define } from "../utils.ts"
 
 /** The page's title and description, as search results and social previews show them. */
 export const PRICING_HEAD = {
-  title: `Seed pricing: free, MIT, on your own server`,
-  description: `Seed costs nothing: MIT licence, no paid tier. You pay for one server and the ` +
-    `services you turn on. Want it built for you? MVPs on Seed start at ${HIRE_PRICES.mvpFrom}.`,
+  title: `Seed pricing: a free, MIT-licensed SaaS starter`,
+  description: `Seed is free under MIT, with no paid tier. Running it costs one Linux server at ` +
+    `your host's price, plus any services you turn on.`,
 } as const
 
 /** The questions, with each answer as plain text for the FAQ's structured data. */
@@ -32,7 +32,7 @@ const FAQ = [
     id: `faq-paid`,
     question: `Is there a paid version of Seed?`,
     answerText: `No. There is no pro tier, no licence key and no feature held back. If you want ` +
-      `help, you can hire me; that is the only thing I sell.`,
+      `help, you can hire me: paid help from me is the only thing I sell.`,
   },
   {
     id: `faq-server`,
@@ -104,7 +104,7 @@ export default define.page(function Pricing({ state }) {
         class="site-glow"
         eyebrow="Pricing"
         title="Seed is free. Here is what it costs to run."
-        lead="MIT licence, no paid tier, no account needed. You pay for one server and for the services you choose to turn on."
+        lead="Seed is a free, MIT-licensed SaaS starter, with no paid tier and no account. You pay only for one server you rent and for optional services such as Stripe."
       >
         <div class="flex w-full flex-col gap-4 pt-2 sm:w-auto sm:flex-row">
           <Button

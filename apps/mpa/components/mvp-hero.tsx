@@ -36,7 +36,7 @@ export function MvpHero(): JSX.Element {
           <WindowFrame variant="browser" title="your-product.com/billing">
             <Shot
               name="billing"
-              alt="The billing page of a product built on Seed: the team's members with their roles, and the plan at 9 euros per member a month."
+              alt="The billing page of a product built on Seed: the team's members with their roles, and an example plan at 9 euros per seat a month."
               sizes="(min-width: 1024px) 560px, 100vw"
               priority
             />

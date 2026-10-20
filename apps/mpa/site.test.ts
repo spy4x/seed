@@ -18,7 +18,7 @@ import { handler as theme } from "./routes/theme.js.ts"
 import { handler as sitemap } from "./routes/sitemap.xml.ts"
 import { handler as unsubscribe } from "./routes/unsubscribe.ts"
 import { pageMiddleware } from "./middleware.ts"
-import { BOOK_CALL_URL, BRIEF_URL } from "./hire.ts"
+import { BOOK_CALL_URL, BRIEF_URL, HIRE_PAGE_URL } from "./hire.ts"
 import { ogImageAlt, type OgImageKey, REPOSITORY_URL, SITE_PAGES } from "./site.tsx"
 import type { MpaConfig } from "./config.ts"
 import type { State } from "./utils.ts"
@@ -116,7 +116,7 @@ describe("the public website", () => {
     expect(headingOne(html)).toBe("The groundwork of your SaaS, already built.")
     expect(hrefOf(linkNamed(html, "Try the live demo"))).toBe(`${spa}/sign-up`)
     expect(hrefOf(linkNamed(html, "View on GitHub"))).toBe(REPOSITORY_URL)
-    expect(html).toContain(`<title>Seed: open-source SaaS starter you host on one server</title>`)
+    expect(html).toContain(`<title>Seed: free open-source SaaS starter and boilerplate</title>`)
     expect(html).toContain(`<link rel="canonical" href="${site}/"`)
     expect(metaContent(html, "og:url")).toBe(`${site}/`)
     expect(metaContent(html, "description")).toBe(HOME_HEAD.description)
@@ -241,6 +241,64 @@ describe("the public website", () => {
     })
   }
 
+  it("names Seed a boilerplate in the home page's title and the comparison's description", async () => {
+    const home = (await page("/")).html
+    const compare = (await page("/compare")).html
+
+    expect(home.match(/<title>([^<]*)<\/title>/)![1]).toContain("boilerplate")
+    expect(metaContent(compare, "description")).toContain("boilerplates")
+  })
+
+  it("opens the lead of each main page with one sentence that says what Seed is", async () => {
+    for (const path of ["/", "/features", "/compare", "/pricing"]) {
+      const { html } = await page(path)
+      const lead = html.slice(html.indexOf("</h1>")).match(/<p\b[^>]*>([\s\S]*?)<\/p>/)![1]
+        .replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim()
+
+      expect(lead, path).toMatch(/^Seed is a free, MIT-licensed SaaS starter[^.]*\./)
+    }
+  })
+
+  it("calls 2FA and per-seat billing by one name in the website's own words on every page", async () => {
+    for (const path of SITE_PAGES) {
+      const { html } = await page(path)
+      // The demo's plan cards quote the app's plan catalog, which names things as the app does.
+      const text = html.replace(/<section id="demo-plans"[\s\S]*?<\/section>/, " ")
+        .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")
+
+      expect(text, path).not.toMatch(/second factor/i)
+      expect(text, path).not.toMatch(/per[- ]member/i)
+    }
+  })
+
+  it("links the home page to the MVP offer on antonshubin.com, with text that says so", async () => {
+    const { html } = await page("/")
+
+    const link = hrefOf(linkNamed(html, "My MVP offer on antonshubin.com"))?.replaceAll(
+      "&amp;",
+      "&",
+    )
+    expect(link).toBe(HIRE_PAGE_URL)
+    expect(link).toMatch(/^https:\/\/antonshubin\.com\/catalog\/zero-to-production-saas-mvp\?/)
+  })
+
+  it("ends /features with its questions, listed under On this page and in its structured data", async () => {
+    const { html } = await page("/features")
+    const graph = jsonLdGraph(html)
+
+    const faqAt = html.indexOf(`<section id="faq"`)
+    expect(faqAt).toBeGreaterThan(html.indexOf(`id="quality"`))
+    expect(faqAt).toBeLessThan(html.indexOf(`aria-labelledby="cta-title"`))
+    expect(html).toContain(`href="#faq"`)
+    const faq = graph.find((entity) => entity["@type"] === "FAQPage")!
+    const questions = (faq.mainEntity as { name: string }[]).map((question) => question.name)
+    expect(questions.length).toBeGreaterThanOrEqual(3)
+    for (const question of questions) {
+      expect(question).toMatch(/^Can Seed /)
+      expect(html).toContain(`>${question}<`)
+    }
+  })
+
   it("describes the home page as the site, the source code, its author and its questions", async () => {
     const { html } = await page("/")
     const graph = jsonLdGraph(html)
@@ -294,6 +352,18 @@ describe("the public website", () => {
     expect(html).toContain(">From $8,000</span>")
     expect(hrefOf(linkNamed(html, "See how it works"))).toBe("/mvp")
     expect(html).toContain(`<link rel="canonical" href="${site}/pricing"`)
+  })
+
+  it("names no price above $0 in the pricing page's description", async () => {
+    const { html } = await page("/pricing")
+
+    for (const key of ["description", "og:description"]) {
+      const description = metaContent(html, key)!
+      expect(description, key).toContain("free")
+      expect(description.match(/\$\s?[\d,.]+/g) ?? [], key).toEqual(
+        description.match(/\$0\b/g) ?? [],
+      )
+    }
   })
 
   it("prices every plan of the demo's catalog below Seed's own prices, as an example", async () => {

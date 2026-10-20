@@ -30,6 +30,7 @@ import { ProofStrip } from "../components/proof-strip.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
 import { PairShot } from "../components/features-visuals.tsx"
 import { Shot } from "../components/shot.tsx"
+import { HIRE_PAGE_URL } from "../hire.ts"
 import {
   AUTHOR_URL,
   PERSON_JSON_LD,
@@ -43,7 +44,7 @@ import { define } from "../utils.ts"
 
 /** The home page's title and description, as search results and social previews show them. */
 export const HOME_HEAD = {
-  title: `Seed: open-source SaaS starter you host on one server`,
+  title: `Seed: free open-source SaaS starter and boilerplate`,
   description: `Free, MIT-licensed SaaS starter: sign-in with 2FA, teams with roles, per-seat ` +
     `Stripe billing, realtime and an offline app. Deno, Postgres, Docker Compose.`,
 } as const
@@ -72,9 +73,9 @@ export const QUICK_START = [
 ] as const
 
 const WORKS_TODAY = [
-  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, the second factor`,
-  `Groups with members, roles, invitations and ownership transfer`,
-  `Billing per member with trials, through Stripe`,
+  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, 2FA with an authenticator app`,
+  `Teams with members, roles, invitations and ownership transfer`,
+  `Per-seat billing with trials, through Stripe`,
   `The list of signed-in devices, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
   `Realtime, the offline app and web push`,
@@ -95,7 +96,7 @@ const FAQ = [
     id: `faq-free`,
     question: `Is Seed really free?`,
     answerText: `Yes. It is MIT-licensed: use it for any number of products, commercial or not, ` +
-      `publish your fork, no account needed. You pay only for the server you run it on and for ` +
+      `publish your fork, no account needed. You pay only for one server you rent and for ` +
       `services you turn on, such as Stripe or an email provider.`,
   },
   {
@@ -116,7 +117,7 @@ const FAQ = [
     id: `faq-production`,
     question: `Is it production-ready?`,
     answerText: `The parts listed under "Works today" have tests in CI: every pull request ` +
-      `runs the sign-in, profile, notes and groups tests, and the full suite runs after each ` +
+      `runs the sign-in, profile, notes and teams tests, and the full suite runs after each ` +
       `merge. Seed as a whole is still a work in progress; read the status list before you ` +
       `rely on a part.`,
   },
@@ -160,10 +161,9 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               The groundwork of your SaaS, already built.
             </h1>
             <p class="text-lg text-muted text-pretty">
-              Seed is a free starter for web products that many people use together. Sign-in with a
-              second factor, teams with roles, per-seat Stripe billing, realtime, an offline app and
-              an admin area are wired together and tested. You deploy it to one server you own with
-              Docker Compose, and your first week goes to your product.
+              Seed is a free, MIT-licensed SaaS starter with sign-in and two-factor authentication
+              (2FA), teams with roles, per-seat Stripe billing, realtime, an offline app and an
+              admin area. You deploy it to one Linux server you rent with Docker Compose.
             </p>
             <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
               <Button
@@ -213,7 +213,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
             >
               <Shot
                 name="notes"
-                alt="The notes screen of the Seed web app: a list of a group's notes with their tags and when each changed, and a button to add one."
+                alt="The notes screen of the Seed web app: a list of a team's notes with their tags and when each changed, and a button to add one."
                 sizes="(min-width: 1024px) 960px, 100vw"
                 priority
               />
@@ -239,7 +239,7 @@ function BillingCrop(): JSX.Element {
           <Shot
             name="billing"
             kind="mobile"
-            alt="A group's plan in the Seed app: Pro, active, €36.00 a month with its renewal date, a button to manage billing, and a note that 4 members pay €9.00 each a month, the owner included."
+            alt="A sample team's plan in the demo app, at the demo's example prices: Pro, active, €36.00 a month with its renewal date, a button to manage billing, and a note that 4 members pay €9.00 each a month, the owner included."
             sizes="390px"
           />
         </div>
@@ -268,23 +268,23 @@ function Features(): JSX.Element {
             media={
               <Shot
                 name="profile-security"
-                alt="The security page of a profile: the sign-in methods, the second factor and the open sessions."
+                alt="The security page of a profile: the sign-in methods, two-factor authentication (2FA) and the open sessions."
                 sizes="(min-width: 1024px) 640px, 100vw"
               />
             }
           >
             Email and password with verification codes, password reset, Google and GitHub sign-in,
-            and an authenticator-app second factor. Sessions you can see and end.
+            and 2FA with an authenticator app. Sessions you can see and end.
           </FeatureCard>
           <FeatureCard
             id="feature-billing"
-            title="Billing per member"
+            title="Per-seat billing"
             Icon={IconCreditCard}
             href="/features#billing"
             media={<BillingCrop />}
           >
-            Stripe subscriptions per group: a free plan with limits, a paid plan per member, trials,
-            a grace period when a card fails. The owner confirms the price before each invite.
+            Stripe subscriptions per team: a free plan with limits, a paid plan per seat, trials, a
+            grace period when a card fails. The owner confirms the price before each invite.
           </FeatureCard>
           <FeatureCard
             id="feature-realtime"
@@ -320,7 +320,7 @@ function Features(): JSX.Element {
                   <div class="lg:w-[1024px] lg:-translate-x-[221.6px]">
                     <Shot
                       name="group-members"
-                      alt="The members of a group, each with their role, a button to invite people, and one member's menu open: Make Viewer, Make Admin, Remove from group."
+                      alt="The members of a team, each with their role, a button to invite people, and one member's menu open: Make Viewer, Make Admin, Remove from group."
                       sizes="(min-width: 1024px) 1024px, 100vw"
                     />
                   </div>
@@ -328,8 +328,8 @@ function Features(): JSX.Element {
               </div>
             }
           >
-            Every account gets a group at sign-up. Invite people, give them roles from viewer to
-            owner, hand ownership over, restore a deleted group for 30 days.
+            Every account gets a team at sign-up. Invite people, give them roles from viewer to
+            owner, hand ownership over, restore a deleted team for 30 days.
           </FeatureCard>
           {/* The card draws its own link; Umami counts a click on anything inside this wrapper. */}
           <div class="contents" data-umami-event="home-admin-card">
@@ -339,8 +339,8 @@ function Features(): JSX.Element {
               Icon={IconServer}
               href="/admin"
             >
-              Operators find a person, manage groups, refund a payment and check the system's
-              health. On its own host, with every action confirmed and logged.
+              Operators find a person, manage teams, refund a payment and check the system's health.
+              On its own host, with every action confirmed and logged.
             </FeatureCard>
           </div>
           <FeatureCard
@@ -373,7 +373,7 @@ function OneServer(): JSX.Element {
         <div class="flex flex-col gap-6">
           <SectionIntro
             id="one-server-title"
-            eyebrow="Runs on one server you own"
+            eyebrow="Runs on one server you rent"
             title={
               <>
                 One server, one <code class="font-mono">docker compose</code>, no surprise bills.
@@ -493,6 +493,17 @@ function WhoBuilds(): JSX.Element {
           an issue or write to me.
         </p>
         <ul class="flex flex-wrap gap-x-6 gap-y-2 font-medium">
+          <li>
+            <a
+              href={HIRE_PAGE_URL}
+              class="text-primary underline"
+              data-e2e="home-hire-page"
+              data-umami-event="hire-me"
+              data-umami-event-from="who"
+            >
+              My MVP offer on antonshubin.com
+            </a>
+          </li>
           <li>
             <a href={AUTHOR_URL} class="text-primary underline">antonshubin.com</a>
           </li>
