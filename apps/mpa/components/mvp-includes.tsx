@@ -41,7 +41,7 @@ const INCLUDED = [
     id: `get-admin`,
     title: `An admin area`,
     Icon: IconCog6Tooth,
-    text: `Where you look up customers and handle their problems.`,
+    text: `Where you look up customers, refund payments and keep the system healthy.`,
   },
   {
     id: `get-hosting`,

@@ -99,8 +99,14 @@ The rest of the local stack (monitoring, migrations, a demo user, resetting the 
 | <img src="docs/screenshots/sign-in-light.png" alt="The sign-in page in the light theme: a card titled Welcome back with an e-mail or username field, a password field, a Sign in button, a link for a forgotten password and a link to create an account.">                                                                                                    | <img src="docs/screenshots/sign-in-dark.png" alt="The sign-in page in the dark theme: a card titled Welcome back with an e-mail or username field, a password field, a Sign in button, a link for a forgotten password and a link to create an account.">                                                                                                    |
 | <img src="docs/screenshots/profile-light.png" alt="The profile page in the light theme for the demo user Alex Rivera: a narrow icon rail on the left with the Personal group, search, Notes, Tags, Activity, Groups, notifications and the account, a Get started checklist with the e-mail address already verified, and the Account section with the name."> | <img src="docs/screenshots/profile-dark.png" alt="The profile page in the dark theme for the demo user Alex Rivera: a narrow icon rail on the left with the Personal group, search, Notes, Tags, Activity, Groups, notifications and the account, a Get started checklist with the e-mail address already verified, and the Account section with the name."> |
 
-The screenshots and the GIF show a made-up user;
-[`docs/screenshots/record.ts`](docs/screenshots/record.ts) records them again from a running app.
+The admin panel, on its own host, in a 45-second video on the website:
+
+<a href="https://seedsaas.com/features#admin"><img src="apps/mpa/static/video/admin-panel-poster-1280.webp" alt="Watch the admin panel video on seedsaas.com: the Users page of the admin panel in the dark theme, listing five made-up people with their role, status and when they were last seen." width="640"></a>
+
+The screenshots, the GIF and the video show made-up people;
+[`docs/screenshots/record.ts`](docs/screenshots/record.ts) records the pictures again from a running
+app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
+(`deno task video:admin`) the video.
 
 <details>
 <summary>How the parts fit together</summary>

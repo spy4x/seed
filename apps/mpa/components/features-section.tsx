@@ -27,6 +27,11 @@ export interface FeatureSectionProps {
   visual?: ComponentChildren
   /** Puts the picture on the left from `xl`, so neighbouring sections alternate. */
   flip?: boolean
+  /**
+   * Puts the picture under the text at every width, up to 640 px wide, for one that needs the room
+   * (a video). `flip` then does nothing.
+   */
+  wide?: boolean
 }
 
 /**
@@ -34,17 +39,23 @@ export interface FeatureSectionProps {
  * honest status, a link to the code, and a picture beside the text from `xl` (below it on a phone).
  */
 export function FeatureSection(
-  { id, eyebrow, title, lead, facts, notYet = [], code, visual, flip = false }: FeatureSectionProps,
+  { id, eyebrow, title, lead, facts, notYet = [], code, visual, flip = false, wide = false }:
+    FeatureSectionProps,
 ): JSX.Element {
   const headingId = `${id}-title`
+  const side = Boolean(visual) && !wide
   return (
     <section
       id={id}
       aria-labelledby={headingId}
-      class={`grid scroll-mt-16 gap-8 ${visual ? "xl:grid-cols-2 xl:items-center" : ""}`}
+      class={`grid scroll-mt-16 gap-8 ${side ? "xl:grid-cols-2 xl:items-center" : ""}`}
       data-e2e={`feature-${id}`}
     >
-      <div class={`flex min-w-0 flex-col gap-4 ${flip ? "xl:order-2" : ""}`}>
+      <div
+        class={`flex min-w-0 flex-col gap-4 ${wide ? "max-w-2xl" : ""} ${
+          side && flip ? "xl:order-2" : ""
+        }`}
+      >
         <p class="font-mono text-sm font-medium text-primary">{eyebrow}</p>
         <h3 id={headingId} class="text-xl font-semibold tracking-tight text-balance lg:text-2xl">
           {title}
@@ -67,7 +78,15 @@ export function FeatureSection(
           {code.label} <IconArrowRight class="size-4" aria-hidden="true" />
         </a>
       </div>
-      {visual && <div class={`min-w-0 max-w-2xl ${flip ? "xl:order-1" : ""}`}>{visual}</div>}
+      {visual && (
+        <div
+          class={`min-w-0 ${wide ? "max-w-[640px]" : "max-w-2xl"} ${
+            side && flip ? "xl:order-1" : ""
+          }`}
+        >
+          {visual}
+        </div>
+      )}
     </section>
   )
 }
