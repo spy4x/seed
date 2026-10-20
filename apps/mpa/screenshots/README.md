@@ -12,10 +12,8 @@ is committed: the website serves the files, nothing builds them at deploy time.
 
 ## Run it
 
-1. Start the development stack with the admin app: add `admin` to `COMPOSE_PROFILES` in
-   `infra/envs/.env`, then run `deno task proxy:start` and `deno task dev` from the repository
-   root. The script talks to `http://app.localhost` and `http://admin.localhost`;
-   `SHOTS_APP_URL` and `SHOTS_ADMIN_URL` change them.
+1. Start the development stack: run `deno task proxy:start` and `deno task dev` from the repository
+   root. The script talks to `http://app.localhost`; `SHOTS_APP_URL` changes it.
 2. Have `cwebp` (libwebp), `magick` (ImageMagick 7) and `tar` on the `PATH`.
 3. From `apps/mpa`: `deno task screenshots`.
    `deno task screenshots --og-only` renders only the social cards, from the shots already there.
@@ -31,24 +29,23 @@ A screen that fails is listed at the end and the run exits 1; the others are sti
 - Builds the group "Acme Studio" on Pro, five tags and six notes, each note written by its author,
   the way the e2e tests do. Pro comes from a signed webhook of the development billing provider,
   so no Stripe account is needed. Every id it makes is a UUID version 7.
-- Gives Ada three notifications from three other groups, two-factor sign-in, and the operator role.
+- Gives Ada three notifications from three other groups and two-factor sign-in.
 - Photographs each screen in light and dark with reduced motion, a hidden caret, no transitions,
   and a clock fixed a few minutes after the data was made, so every time reads "3 minutes ago".
   The realtime and offline-conflict pictures save a note while they are open, so their clock is
   the real one.
 
-| Screen             | Form                 | Delivered widths     |
-| ------------------ | -------------------- | -------------------- |
-| `notes`            | desktop and mobile   | 1280, 640 / 780, 390 |
-| `profile-security` | desktop              | 1280, 640            |
-| `group-members`    | desktop              | 1280, 640            |
-| `billing`          | desktop and mobile   | 1280, 640 / 780, 390 |
-| `notifications`    | desktop              | 1280, 640            |
-| `activity`         | desktop              | 1280, 640            |
-| `admin-overview`   | desktop (admin host) | 1280, 640            |
-| `sign-in`          | mobile               | 780, 390             |
-| `realtime-a`, `-b` | desktop, half width  | 640, 320             |
-| `offline-conflict` | desktop              | 1280, 640            |
+| Screen             | Form                | Delivered widths     |
+| ------------------ | ------------------- | -------------------- |
+| `notes`            | desktop and mobile  | 1280, 640 / 780, 390 |
+| `profile-security` | desktop             | 1280, 640            |
+| `group-members`    | desktop             | 1280, 640            |
+| `billing`          | desktop and mobile  | 1280, 640 / 780, 390 |
+| `notifications`    | desktop             | 1280, 640            |
+| `activity`         | desktop             | 1280, 640            |
+| `sign-in`          | mobile              | 780, 390             |
+| `realtime-a`, `-b` | desktop, half width | 640, 320             |
+| `offline-conflict` | desktop             | 1280, 640            |
 
 Desktop is a 1280×800 viewport at device scale 2, mobile a 390×844 viewport at device scale 3.
 

@@ -15,7 +15,6 @@ import { currentStep, totpCode } from "../../../e2e/fixtures/totp.ts"
 import { signUpWithCode } from "../../../e2e/fixtures/sign-up.ts"
 
 const APP = Deno.env.get("SHOTS_APP_URL") ?? "http://app.localhost"
-const ADMIN = Deno.env.get("SHOTS_ADMIN_URL") ?? "http://admin.localhost"
 const MPA = new URL("..", import.meta.url).pathname
 const MASTERS = `${MPA}screenshots/.out/masters`
 const CACHE = `${MPA}screenshots/.out/cache`
@@ -189,8 +188,6 @@ interface Seeded {
   now: Date
   /** Ada's signed-in session on the app host, with two-factor sign-in on. */
   appState: StorageState
-  /** Ada's signed-in session on the admin host. */
-  adminState: StorageState
   /** API contexts of Ada and Grace, for writes during a capture. */
   ada: Page
   grace: Page
@@ -287,34 +284,6 @@ async function upgradeToPro(page: Page, groupId: string): Promise<void> {
   await expectOk(`Pro for ${groupId}`, webhook)
 }
 
-/**
- * Signs Ada in to the admin host with her password and a one-time code. Turning the authenticator
- * on ends her other sessions, so this runs after it. The code is one step past the enrolment's,
- * which the server would refuse as a replay.
- */
-async function adminSession(
-  browser: Browser,
-  contexts: BrowserContext[],
-  secret: string,
-  enrolStep: number,
-): Promise<StorageState> {
-  const context = await browser.newContext({ baseURL: ADMIN })
-  contexts.push(context)
-  const page = await context.newPage()
-  await page.goto(`${ADMIN}/`)
-  await page.locator("[data-e2e=auth-form-login]").fill(ADA.email)
-  await page.locator("[data-e2e=auth-form-password]").fill(PASSWORD)
-  await page.locator("[data-e2e=auth-form-submit]").click()
-  const step = Math.max(currentStep(), enrolStep + 1)
-  await page.locator("[data-e2e=auth-form-code]").fill(await totpCode(secret, step))
-  await page.locator("[data-e2e=auth-form-submit]").click()
-  // The admin host opens on its dashboard once she is in.
-  await page.locator("[data-e2e=admin-dashboard-stats]").waitFor()
-  const state = await context.storageState()
-  await context.close()
-  return state
-}
-
 /** Builds everything the screens show. Each person has a browser context of their own. */
 async function seed(browser: Browser, contexts: BrowserContext[], ada: Page): Promise<Seeded> {
   const pageFor = async () => {
@@ -390,12 +359,6 @@ async function seed(browser: Browser, contexts: BrowserContext[], ada: Page): Pr
   })
   await expectOk("transfer to Ada", transfer)
 
-  // Ada runs the operator area too.
-  const role = await ada.request.post(`${APP}/api/test/set-role`, {
-    data: { login: ADA.email, role: 4 },
-  })
-  await expectOk("Ada's administrator role", role)
-
   // An authenticator, so the profile shows two-factor sign-in on.
   const started = await ada.request.post(`${APP}/api/auth/totp/connect/start`, {
     headers: sameOrigin(),
@@ -403,13 +366,11 @@ async function seed(browser: Browser, contexts: BrowserContext[], ada: Page): Pr
   })
   await expectOk("authenticator start", started)
   const { secret } = await started.json() as { secret: string }
-  const enrolStep = currentStep()
   const finished = await ada.request.post(`${APP}/api/auth/totp/connect/finish`, {
     headers: sameOrigin(),
-    data: { otp: await totpCode(secret, enrolStep) },
+    data: { otp: await totpCode(secret, currentStep()) },
   })
   await expectOk("authenticator finish", finished)
-  const adminState = await adminSession(browser, contexts, secret, enrolStep)
   // Ada has used the product for a while: her first-steps card is gone from the profile.
   const dismissed = await ada.request.post(`${APP}/api/call/onboarding.dismiss`, {
     headers: {
@@ -428,7 +389,6 @@ async function seed(browser: Browser, contexts: BrowserContext[], ada: Page): Pr
     noteIds,
     now: new Date(Date.now() + 3 * 60_000),
     appState: await ada.context().storageState(),
-    adminState,
     ada,
     grace,
   }
@@ -438,7 +398,6 @@ interface ContextOptions {
   theme: Theme
   form: Form
   state?: StorageState
-  base?: string
   /** CSS width of a desktop capture; the realtime pair is half the usual width. */
   width?: number
   /** The page saves a note while it is open, so its clock is the real time. */
@@ -453,7 +412,7 @@ async function openPage(
 ): Promise<Page> {
   const desktop = options.form === "desktop"
   const context = await browser.newContext({
-    baseURL: options.base ?? APP,
+    baseURL: APP,
     storageState: options.state,
     colorScheme: options.theme,
     reducedMotion: "reduce",
@@ -496,7 +455,6 @@ async function snap(page: Page, name: string): Promise<void> {
 interface Screen {
   name: string
   forms: Form[]
-  admin?: boolean
   open(page: Page, seeded: Seeded): Promise<void>
 }
 
@@ -580,16 +538,6 @@ const SCREENS: Screen[] = [
       await page.locator("[data-e2e=auth-form-login]").fill(ADA.email)
     },
   },
-  {
-    name: "admin-overview",
-    forms: ["desktop"],
-    admin: true,
-    async open(page) {
-      // The people list, which the website's caption describes. The host opens on a dashboard.
-      await page.goto(`${ADMIN}/users`)
-      await page.locator("[data-e2e=admin-users-list] a").nth(3).waitFor()
-    },
-  },
 ]
 
 /** Runs `shoot`, recording a failure instead of stopping, so one broken screen does not hide others. */
@@ -613,8 +561,7 @@ async function captureScreens(browser: Browser, contexts: BrowserContext[], seed
           const page = await openPage(browser, contexts, seeded, {
             theme,
             form,
-            state: signedOut ? undefined : screen.admin ? seeded.adminState : seeded.appState,
-            base: screen.admin ? ADMIN : APP,
+            state: signedOut ? undefined : seeded.appState,
           })
           try {
             await screen.open(page, seeded)
