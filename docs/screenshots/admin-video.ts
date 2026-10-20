@@ -1,10 +1,16 @@
 /**
- * Records the admin panel video of the public website's `/features#admin` section: the videos go
- * to `apps/mpa/media/video/` (served by `apps/mpa/routes/video/[file].ts`), the poster to
+ * Records the admin panel video of the public website's `/admin` page: the videos go to
+ * `apps/mpa/media/video/` (served by `apps/mpa/routes/video/[file].ts`), the two posters to
  * `apps/mpa/static/video/`. One support case end to end, then short glimpses of other screens, in
  * the dark theme, with burned-in captions, a "Sample data" label on every screen, a zoom in each
- * shot on what its caption is about, and a title and an end card. The poster is a still of the
- * Users list without any of that. The shot list and the copy are on issue #279.
+ * shot on what its caption is about, and a title and an end card. The 1280 px poster, shown on
+ * `/features`, is a still of the Users list without any of that; the 1920 px one, the player's on
+ * `/admin`, is the first frame of the video's Users shot. The shot list and the copy are on issue
+ * #279.
+ *
+ * After a run, update `apps/mpa/admin-video.ts` with what it prints and what the new cut shows: the
+ * length in seconds, the MP4's size, the sound, the upload date and one transcript line per shot.
+ * The website's caption, the player's label, the JSON-LD and the sitemap all read from there.
  *
  * Needs a running stack with the product app, the admin app, the worker and the development seed,
  * never the live server:
@@ -37,7 +43,7 @@
  */
 import { type CDPSession, chromium, devices, type Locator, type Page } from "playwright"
 import { h } from "preact"
-import { renderToString } from "npm:preact-render-to-string@6.7.0"
+import { renderToString } from "preact-render-to-string"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
 import { IconSprout } from "@spy4x/preact-icons"
 import { clickLike, moveLike, typeLike } from "./human-mouse.ts"
@@ -59,7 +65,7 @@ const VIEWPORT = { width: 1280, height: 800 }
 /** The delivered size, and the size budgets of each file. */
 const OUTPUT = { width: 1920, height: 1200 }
 const BUDGET = { webm: 3_000_000, mp4: 5_000_000, poster: 60_000 }
-/** The poster's width and height: the website draws the video at most 640 px wide. */
+/** The still's width and height: `/features` draws it at most 672 px wide. */
 const POSTER = { width: 1280, height: 800 }
 const FPS = 30
 const ADMIN_EMAIL = "admin@example.com"
@@ -481,9 +487,13 @@ const BRAND = renderToString(h(BrandMark, { Icon: IconSprout, name: "Seed" }))
 /**
  * Plays the shot list into the recorder. Every shot starts on a settled screen, shows its caption
  * for at least 2.5 seconds, and ends with a hard cut; nothing between shots is kept. Returns the
- * poster's still.
+ * posters' frames: the cropped still of the Users list, and the first frame of the Users shot.
  */
-async function play(page: Page, rec: Recorder, frames: string): Promise<string> {
+async function play(
+  page: Page,
+  rec: Recorder,
+  frames: string,
+): Promise<{ still: string; opening: string }> {
   const pointer = { x: 1100, y: 700 }
   await page.mouse.move(pointer.x, pointer.y)
   const shot = async (text: string | null, body: () => Promise<void>) => {
@@ -553,6 +563,7 @@ async function play(page: Page, rec: Recorder, frames: string): Promise<string> 
   await video(page, `__video.bare(false)`)
 
   // 1. Users: the search narrows the list to one person, zoomed in on the field and the result.
+  const usersShot = rec.segments.length
   await shot("Find anyone by name or address", async () => {
     await pause(page, 500)
     const field = page.getByLabel("Name or address")
@@ -683,7 +694,7 @@ async function play(page: Page, rec: Recorder, frames: string): Promise<string> 
   await card({ title: "Free and MIT-licensed. The code is on GitHub." })
   await shot(null, () => pause(page, 3000))
 
-  return poster
+  return { still: poster, opening: rec.segments[usersShot].frames[0].file }
 }
 
 /** The button that opens the operator's account menu at the foot of the rail. */
@@ -751,14 +762,18 @@ async function encode(
   throw new Error(`${out} stays above its budget of ${budget} bytes`)
 }
 
-/** The poster: the still `play` took, at the poster size, as WebP within its budget. */
-async function encodePoster(frame: string, out: string): Promise<number> {
+/** A poster: a frame `play` returned, at `size`, as WebP within its budget. */
+async function encodePoster(
+  frame: string,
+  out: string,
+  size: { width: number; height: number },
+): Promise<number> {
   for (const quality of [82, 74, 66, 58]) {
     await ffmpeg([
       "-i",
       frame,
       "-vf",
-      `scale=${POSTER.width}:${POSTER.height}:flags=lanczos`,
+      `scale=${size.width}:${size.height}:flags=lanczos`,
       "-c:v",
       "libwebp",
       "-quality",
@@ -797,7 +812,7 @@ try {
     await signInAndWarmUp(page)
     const rec = new Recorder(await context.newCDPSession(page), frames)
     await rec.start()
-    const posterFrame = await play(page, rec, frames)
+    const posterFrames = await play(page, rec, frames)
     await rec.stop()
 
     await Deno.mkdir(VIDEO_DIR, { recursive: true })
@@ -844,11 +859,18 @@ try {
       seconds,
     )
     const poster = await encodePoster(
-      posterFrame,
+      posterFrames.still,
       `${POSTER_DIR}admin-panel-poster-${POSTER.width}.webp`,
+      POSTER,
+    )
+    const opening = await encodePoster(
+      posterFrames.opening,
+      `${POSTER_DIR}admin-panel-poster-${OUTPUT.width}.webp`,
+      OUTPUT,
     )
     console.log(
-      `admin-panel: ${seconds.toFixed(1)} s, webm ${webm} B, mp4 ${mp4} B, poster ${poster} B`,
+      `admin-panel: ${seconds.toFixed(1)} s, webm ${webm} B, mp4 ${mp4} B, ` +
+        `posters ${poster} B and ${opening} B. Now update apps/mpa/admin-video.ts.`,
     )
   } finally {
     await context.close()

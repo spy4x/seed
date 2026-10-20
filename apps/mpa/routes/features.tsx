@@ -16,7 +16,8 @@ import {
   OutboxDiagram,
   RealtimePair,
 } from "../components/features-visuals.tsx"
-import { AdminVideo } from "../components/admin-video.tsx"
+import { AdminVideoStill } from "../components/admin-video.tsx"
+import { ADMIN_VIDEO } from "../admin-video.ts"
 import { OnThisPage } from "../components/on-this-page.tsx"
 import { Shot } from "../components/shot.tsx"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
@@ -36,9 +37,6 @@ function source(path: string): string {
   const kind = path.endsWith(`/`) ? `tree` : `blob`
   return `${REPOSITORY_URL}/${kind}/main/${path.replace(/\/$/, ``)}`
 }
-
-/** The admin app's code: the section's own link, repeated under its video. */
-const ADMIN_CODE = { label: `Read the admin app`, href: source(`apps/admin/`) }
 
 /** An open issue of the repository, by number. */
 function issue(number: number): string {
@@ -289,24 +287,31 @@ const TIERS: readonly Tier[] = [
         nav: `Admin area`,
         eyebrow: `Support`,
         title: `An admin area for your operators`,
-        lead: `Your team finds a person by name or address and sees their sign-in methods, ` +
-          `sessions, groups and history. From the same place they manage groups, refund a ` +
-          `payment, look after the newsletter's subscribers, check the system's health and run ` +
-          `a failed job again.`,
+        lead: (
+          <>
+            Your team finds a person by name or address and sees their sign-in methods, sessions,
+            groups and history. From the same place they manage groups, refund a payment, look after
+            the newsletter's subscribers, check the system's health and run a failed job again.{" "}
+            <a
+              href="/admin"
+              class="font-medium text-primary underline"
+              data-e2e="features-admin-watch"
+            >
+              Watch it in {ADMIN_VIDEO.seconds} seconds
+            </a>.
+          </>
+        ),
         facts: [
           `A separate app on its own host, with its own session cookie`,
-          `Dashboard, users, groups, billing, newsletter, audit log, system and API tokens`,
-          `Roles: operator, supervisor, administrator. Nobody can act on a person of an equal ` +
-          `or higher role`,
-          `Every action confirmed first and written to the audit log`,
+          `Eight modules, from the dashboard to API tokens`,
+          `Every action asks first and is written to the audit log`,
         ],
         notYet: [
           { label: `Translations: the admin app is English only`, issue: issue(275) },
           { label: `Signing in as a person to see what they see` },
         ],
-        code: ADMIN_CODE,
-        visual: <AdminVideo code={ADMIN_CODE} />,
-        wide: true,
+        code: { label: `Read the admin app`, href: source(`apps/admin/`) },
+        visual: <AdminVideoStill />,
       },
       {
         id: `deploy`,

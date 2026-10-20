@@ -2683,6 +2683,7 @@
       "npm:arktype@2.2.3",
       "npm:playwright@1.57.0",
       "npm:postgres@3.4.7",
+      "npm:preact-render-to-string@6.7.0",
       "npm:preact@10.29.8",
       "npm:wouter-preact@3.9.0"
     ],

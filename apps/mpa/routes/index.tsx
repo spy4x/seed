@@ -321,7 +321,7 @@ function Features(): JSX.Element {
             id="feature-admin"
             title="An admin area"
             Icon={IconServer}
-            href="/features#admin"
+            href="/admin"
           >
             Operators find a person, manage groups, refund a payment and check the system's health.
             On its own host, with every action confirmed and logged.

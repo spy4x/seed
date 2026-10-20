@@ -21,6 +21,7 @@ export { AUTHOR_URL, REPOSITORY_URL, SITE_NAME }
 export const SITE_PAGES = [
   `/`,
   `/features`,
+  `/admin`,
   `/compare`,
   `/pricing`,
   `/mvp`,
@@ -30,7 +31,14 @@ export const SITE_PAGES = [
 ] as const
 
 /** The pages that have an Open Graph image of their own, at `/og/<key>.png`. */
-export type OgImageKey = `home` | `features` | `compare` | `pricing` | `mvp` | `subscribe`
+export type OgImageKey =
+  | `home`
+  | `features`
+  | `admin`
+  | `compare`
+  | `pricing`
+  | `mvp`
+  | `subscribe`
 
 /**
  * What each Open Graph image says: its big headline and the small line under it. The image's alt
@@ -44,6 +52,10 @@ export const OG_IMAGES: Record<OgImageKey, { headline: string; line: string }> =
   features: {
     headline: `Auth, teams, billing, offline, admin.`,
     line: `Everything Seed ships, and what it does not yet`,
+  },
+  admin: {
+    headline: `An admin panel for your SaaS.`,
+    line: `Users · billing · audit log · roles`,
   },
   compare: {
     headline: `Seed vs ShipFast, Supastarter, Makerkit, Open SaaS`,
@@ -287,6 +299,7 @@ function footerGroups(spa: { signIn: string; signUp: string }): SiteFooterGroup[
       title: `Product`,
       links: [
         { label: `Features`, href: `/features` },
+        { label: `Admin panel`, href: `/admin` },
         { label: `Compare`, href: `/compare` },
         { label: `Pricing`, href: `/pricing` },
         { label: `Try the demo`, href: spa.signUp },
