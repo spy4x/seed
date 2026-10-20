@@ -3,13 +3,8 @@ import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
 import { UserRole } from "@domain/identity"
-import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL, realPersonIds } from "@server/auth/demo-accounts.ts"
+import { DEMO_USER_EMAIL, DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
-import { listAdminUsers } from "@server/auth/admin-users.ts"
-import { listAdminSubscribers } from "@server/subscribers/admin-newsletter.ts"
-import { createListCrypto } from "@server/subscribers/subscribers.ts"
-import { ADMIN_NO_FILTER } from "@domain/identity"
-import { ADMIN_SUBSCRIBERS_NO_FILTER, DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { DEV_SUBSCRIBERS_SECRET } from "@server/subscribers/subscribers.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
@@ -41,7 +36,10 @@ const OPTIONS: DemoSeedOptions = {
   password: PASSWORD,
   dataSeed: 7,
   subscribers: SUBSCRIBERS,
+  operator: false,
 }
+/** What `deno task db:seed` passes in development: the administrator too. */
+const DEV_OPTIONS: DemoSeedOptions = { ...OPTIONS, operator: true }
 
 /** Runs `body` against a fresh schema with every migration applied, and drops the schema after. */
 async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<void> {
@@ -133,11 +131,27 @@ async function accountOf(sql: postgres.Sql, address: string) {
   return row
 }
 
-Deno.test("the demo seed creates two shared accounts that sign in with no second factor", async () => {
+Deno.test("the demo seed creates only the shared account, with no second factor", async () => {
   await withSchema(async (sql) => {
     expect(await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)).toBe(true)
 
-    for (const address of [DEMO_USER_EMAIL, DEMO_ADMIN_EMAIL]) {
+    expect(await canSignIn(sql, DEMO_USER_EMAIL, PASSWORD)).toBe(true)
+    expect(await canSignIn(sql, DEMO_USER_EMAIL, `${PASSWORD}x`)).toBe(false)
+    const account = await accountOf(sql, DEMO_USER_EMAIL)
+    expect(account.provenAt).not.toBeNull()
+    expect(account.mfa).toBe(1)
+    expect(account.role).toBe(UserRole.VIEWER)
+    // The public demo has no administrator: its password is printed on the sign-in page.
+    expect(await sql`SELECT 1 FROM auth_keys WHERE email = ${DEV_ADMIN_EMAIL}`).toHaveLength(0)
+    expect(await sql`SELECT 1 FROM users WHERE role >= ${UserRole.OPERATOR}`).toHaveLength(0)
+  })
+})
+
+Deno.test("the development seed adds an administrator", async () => {
+  await withSchema(async (sql) => {
+    expect(await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)).toBe(true)
+
+    for (const address of [DEMO_USER_EMAIL, DEV_ADMIN_EMAIL]) {
       expect(await canSignIn(sql, address, PASSWORD)).toBe(true)
       expect(await canSignIn(sql, address, `${PASSWORD}x`)).toBe(false)
       const account = await accountOf(sql, address)
@@ -145,7 +159,7 @@ Deno.test("the demo seed creates two shared accounts that sign in with no second
       expect(account.mfa).toBe(1)
     }
     expect((await accountOf(sql, DEMO_USER_EMAIL)).role).toBe(UserRole.VIEWER)
-    expect((await accountOf(sql, DEMO_ADMIN_EMAIL)).role).toBe(UserRole.ADMIN)
+    expect((await accountOf(sql, DEV_ADMIN_EMAIL)).role).toBe(UserRole.ADMIN)
   })
 })
 
@@ -153,7 +167,7 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const data = fakeDemoData(OPTIONS.dataSeed)
-    const people = FAKE_COUNTS.users + 2
+    const people = FAKE_COUNTS.users + 1
 
     const counts = await count(sql)
     // Every person's first group, plus the themed groups.
@@ -181,71 +195,19 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
   })
 })
 
-Deno.test("only a person with an address outside example.com counts as real", async () => {
-  await withSchema(async (sql) => {
-    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
-    const seeded = (await sql<{ id: number }[]>`SELECT id FROM auth_users`).map((row) => row.id)
-    expect(await realPersonIds(sql, seeded)).toEqual(new Set())
-
-    const [{ id }] = await sql<{ id: number }[]>`INSERT INTO auth_users DEFAULT VALUES RETURNING id`
-    await sql`
-      INSERT INTO auth_keys (user_id, method, subject, email)
-      VALUES (${id}, 'password', 'ada@mail.example.com', 'ada@mail.example.com')
-    `
-    expect(await realPersonIds(sql, [...seeded, id])).toEqual(new Set([id]))
-  })
-})
-
-Deno.test("in the demo, an admin search cannot find a real address it shows masked", async () => {
-  await withSchema(async (sql) => {
-    await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
-    const email = "ada.lovelace@gmail.com"
-    const [{ id }] = await sql<{ id: number }[]>`INSERT INTO auth_users DEFAULT VALUES RETURNING id`
-    await sql`INSERT INTO users (id) VALUES (${id})`
-    await sql`
-      INSERT INTO auth_keys (user_id, method, subject, email) VALUES (${id}, 'password', ${email}, ${email})
-    `
-    const key = await (await createListCrypto(SUBSCRIBERS, DEFAULT_SUBSCRIBER_LIST)).subscriberKey(
-      email,
-    )
-    await sql`
-      INSERT INTO subscribers (list_id, email, key, subscribed_at)
-      VALUES (${DEFAULT_SUBSCRIBER_LIST}, ${email}, ${key}, now())
-    `
-    const people = (hide: boolean, query: string) =>
-      listAdminUsers(sql, { ...ADMIN_NO_FILTER, query }, 50, hide)
-    const subscribers = (hide: boolean, query: string) =>
-      listAdminSubscribers(
-        sql,
-        DEFAULT_SUBSCRIBER_LIST,
-        { ...ADMIN_SUBSCRIBERS_NO_FILTER, query },
-        50,
-        hide,
-      )
-
-    expect((await people(false, "lovelace")).total).toBe(1)
-    expect((await people(true, "lovelace")).total).toBe(0)
-    expect((await subscribers(false, "lovelace")).total).toBe(1)
-    expect((await subscribers(true, "lovelace")).total).toBe(0)
-    // The made-up people and subscribers are still found by address.
-    expect((await people(true, "@example.com")).total).toBe(FAKE_COUNTS.users + 2)
-    expect((await subscribers(true, "@example.com")).total).toBe(FAKE_COUNTS.subscribers)
-  })
-})
-
-Deno.test("the demo seed run again writes nothing but the shared accounts' roles", async () => {
+Deno.test("the demo seed run again writes nothing but the accounts' roles", async () => {
   await withSchema(async (sql) => {
     const db = new AppDbBase({ sql })
-    await seedDemo(db, sql, OPTIONS)
+    await seedDemo(db, sql, DEV_OPTIONS)
     const seeded = await count(sql)
     await sql`UPDATE users SET role = ${UserRole.ADMIN}`
-    await sql`UPDATE auth_keys SET proven_at = NULL WHERE email = ${DEMO_ADMIN_EMAIL}`
+    await sql`UPDATE auth_keys SET proven_at = NULL WHERE email = ${DEV_ADMIN_EMAIL}`
 
-    expect(await seedDemo(db, sql, OPTIONS)).toBe(false)
+    expect(await seedDemo(db, sql, DEV_OPTIONS)).toBe(false)
 
     expect(await count(sql)).toEqual(seeded)
     expect((await accountOf(sql, DEMO_USER_EMAIL)).role).toBe(UserRole.VIEWER)
-    expect((await accountOf(sql, DEMO_ADMIN_EMAIL)).provenAt).not.toBeNull()
+    expect((await accountOf(sql, DEV_ADMIN_EMAIL)).provenAt).not.toBeNull()
   })
 })
 
@@ -289,6 +251,19 @@ Deno.test("the wipe empties every table but the kept ones, and never reuses an i
   })
 })
 
+Deno.test("an operator account left in the demo makes the worker seed it again", async () => {
+  await withSchema(async (sql) => {
+    // What an older seed left: the demo user and an administrator whose password is public.
+    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
+    expect(await isDemoSeeded(sql)).toBe(false)
+
+    const { pepper, password, subscribers } = OPTIONS
+    await resetDemo(sql, { pepper, password, subscribers })
+    expect(await isDemoSeeded(sql)).toBe(true)
+    expect(await sql`SELECT 1 FROM auth_keys WHERE email = ${DEV_ADMIN_EMAIL}`).toHaveLength(0)
+  })
+})
+
 Deno.test("the reset wipes, seeds again and schedules the nightly cleanup", async () => {
   await withSchema(async (sql) => {
     expect(await isDemoSeeded(sql)).toBe(false)
@@ -296,6 +271,8 @@ Deno.test("the reset wipes, seeds again and schedules the nightly cleanup", asyn
     await resetDemo(sql, { pepper, password, subscribers })
     const first = await count(sql)
     expect(await isDemoSeeded(sql)).toBe(true)
+    // The public demo has no administrator: its password is printed on the sign-in page.
+    expect(await sql`SELECT 1 FROM users WHERE role >= ${UserRole.OPERATOR}`).toHaveLength(0)
 
     await sql`INSERT INTO groups (id, name, owner_user_id)
       SELECT ${uuidV7()}, 'Left by a visitor', id FROM users LIMIT 1`

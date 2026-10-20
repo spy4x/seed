@@ -123,7 +123,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
       providers={providers}
       lastSignIn={last}
       demo={demo &&
-        { login: demo.userLogin, password: demo.password, otherAppUrl: demo.adminUrl }}
+        { login: demo.userLogin, password: demo.password }}
       onForgetLastSignIn={() => {
         lastSignIn.forget()
         setLast(null)

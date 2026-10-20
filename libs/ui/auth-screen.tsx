@@ -307,7 +307,7 @@ export function AuthScreen(
       {demo && screen !== "one-time-code" && (
         <DemoNotice
           demo={demo}
-          kind={screen === "sign-up" ? "sign-up" : "product"}
+          kind={screen === "sign-up" ? "sign-up" : "sign-in"}
           busy={busy}
           onSignIn={onSignIn}
           navigate={navigate}

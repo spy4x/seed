@@ -31,7 +31,6 @@ describe("admin host gate", () => {
         "/api/auth/password/check",
         "/api/auth/totp/check",
         "/api/auth/sign-out",
-        "/api/demo",
       ]
     ) {
       expect({ path, status: await statusOf(app, `http://${ADMIN_HOST}${path}`) })

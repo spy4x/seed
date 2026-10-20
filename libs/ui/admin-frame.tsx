@@ -11,7 +11,6 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { AuthCard } from "./auth-screen.tsx"
-import { type DemoCredentials, DemoNotice } from "./demo-notice.tsx"
 import type { FrameTheme } from "./frame.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
@@ -237,18 +236,16 @@ export function AdminFrame(
  * is no sign-up, no password reset and no Google or GitHub here; those stay in the product.
  */
 export function AdminSignInScreen(
-  { step, busy, error, onSignIn, onOneTimeCode, demo = null }: {
+  { step, busy, error, onSignIn, onOneTimeCode }: {
     step: "credentials" | "one-time-code"
     busy: boolean
     error: string | null
     onSignIn: (credentials: AuthCredentials) => void
     onOneTimeCode: (code: string) => void
-    /** The public demo's shared operator account (docs/demo.md); `null`: the demo is off. */
-    demo?: DemoCredentials | null
   },
 ): JSX.Element {
   const credentials = step === "credentials"
-  const card = (
+  return (
     <AuthCard
       title={credentials ? "Operator sign-in" : "Enter your code"}
       description={credentials
@@ -271,15 +268,6 @@ export function AdminSignInScreen(
         onOneTimeCode={onOneTimeCode}
       />
     </AuthCard>
-  )
-  // One wrapper whether or not the notice shows, so the card is not drawn again when it arrives.
-  return (
-    <div class="flex w-full flex-col gap-6">
-      {demo && credentials && (
-        <DemoNotice demo={demo} kind="operator" busy={busy} onSignIn={onSignIn} />
-      )}
-      {card}
-    </div>
   )
 }
 

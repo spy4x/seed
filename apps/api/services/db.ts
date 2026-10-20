@@ -1,7 +1,6 @@
 import postgres from "postgres"
 import { createSqlFromEnv, type Sql } from "@spy4x/server/db"
 import { publicAPICache } from "./cache.ts"
-import { isDemoMode } from "@server/auth/demo-accounts.ts"
 import { AppDbBase } from "./db-base.ts"
 // import { getLatestMetrics } from "../routes/metric.ts"
 
@@ -28,11 +27,7 @@ export const sql: Sql = (() => {
 
 export class DbService extends AppDbBase {
   constructor() {
-    super({
-      sql,
-      userCache: publicAPICache.user,
-      hideRealAddresses: isDemoMode({ DEMO_MODE: Deno.env.get("DEMO_MODE") }),
-    })
+    super({ sql, userCache: publicAPICache.user })
   }
 }
 

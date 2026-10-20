@@ -150,11 +150,7 @@ describe("AuthScreen in the browser", () => {
     expect(code.calls).toEqual([["012345"]])
   })
 
-  const demo = {
-    login: "demo@example.com",
-    password: "public-demo",
-    otherAppUrl: "https://admin.example.com",
-  }
+  const demo = { login: "demo@example.com", password: "public-demo" }
 
   it("shows no demo notice while the demo is off", async () => {
     await mount(<AuthScreen {...authDefaults} />)
@@ -182,7 +178,6 @@ describe("AuthScreen in the browser", () => {
     expect(notice.textContent).toContain("midnight Pacific time")
     // Standing instructions, found while reading: no live region announces them when they arrive.
     expect(notice.getAttribute("role")).toBeNull()
-    expect(find("[data-e2e=demo-other-app] a").getAttribute("href")).toBe(demo.otherAppUrl)
     // The notice comes before the form, and the form's own submit stays the primary action.
     expect(
       notice.compareDocumentPosition(find("form")) & window.Node.DOCUMENT_POSITION_FOLLOWING,

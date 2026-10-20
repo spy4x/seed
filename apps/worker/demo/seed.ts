@@ -5,7 +5,7 @@ import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { randomBase64Url, sha256Hex } from "@spy4x/platform/tokens"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { DEMO_ADMIN_EMAIL, DEMO_USER_EMAIL } from "@server/auth/demo-accounts.ts"
+import { DEMO_USER_EMAIL, DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { PostgresInvitationRepository } from "@server/groups/postgres-invitation-repository.ts"
 import { createListCrypto, type SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { AppDbBase } from "../../api/services/db-base.ts"
@@ -19,8 +19,10 @@ export const SEED_ACTOR = `seed`
 export interface DemoSeedOptions {
   /** The API's `AUTH_PEPPER`: part of every password hash, so the accounts can sign in. */
   pepper: string
-  /** The password of both shared demo accounts. */
+  /** The password of the shared demo account, and of the development administrator. */
   password: string
+  /** Also seeds {@link DEV_ADMIN_EMAIL}, an administrator: development only, never the demo. */
+  operator: boolean
   /** Picks the fake data; the same seed gives the same data. */
   dataSeed: number
   /** Signs the subscriber keys; `null` seeds no subscribers. */
@@ -36,12 +38,13 @@ export class SeedRefusedError extends Error {
 }
 
 /**
- * Creates the public demo's data: the two shared accounts, with no second factor, and the fake
+ * Creates the public demo's data: the shared account, with no second factor, and the fake
  * data of {@link fakeDemoData}. Every person is created through the API's own sign-up, so their
- * rows are what a real sign-up writes, and every address is marked proven.
+ * rows are what a real sign-up writes, and every address is marked proven. With `operator`, the
+ * development administrator is created too.
  *
- * `false` when the demo user exists already: then only the two accounts' roles and proven
- * addresses are put right, and nothing else is written, so a second run adds no second copy.
+ * `false` when the demo user exists already: then only the accounts' roles and proven addresses
+ * are put right, and nothing else is written, so a second run adds no second copy.
  *
  * @throws {SeedRefusedError} When sign-up refuses an account that does not exist.
  */
@@ -53,15 +56,17 @@ export async function seedDemo(
   // Sign-up answers `null` for a taken address and for a refused one alike, so "exists already"
   // is decided here, not from its answer.
   if (await db.authStore.findKey(PASSWORD_METHOD, DEMO_USER_EMAIL)) {
-    await ensureAccount(db, DEMO_ADMIN_EMAIL, options.password, options.pepper)
-    await settleAccounts(db)
+    if (options.operator) await ensureAccount(db, DEV_ADMIN_EMAIL, options.password, options.pepper)
+    await settleAccounts(db, options.operator)
     return false
   }
   const demoId = await signUp(db, options.pepper, DEMO_USER_EMAIL, options.password)
-  const adminId = await signUp(db, options.pepper, DEMO_ADMIN_EMAIL, options.password)
-  await settleAccounts(db)
   await setName(sql, demoId, `Demo`, `User`)
-  await setName(sql, adminId, `Demo`, `Operator`)
+  if (options.operator) {
+    const adminId = await signUp(db, options.pepper, DEV_ADMIN_EMAIL, options.password)
+    await setName(sql, adminId, `Dev`, `Operator`)
+  }
+  await settleAccounts(db, options.operator)
 
   const data = fakeDemoData(options.dataSeed)
   const userIds: number[] = []
@@ -93,14 +98,15 @@ async function ensureAccount(
 }
 
 /**
- * Proves both shared addresses (an unproven one cannot invite, #411), makes the admin an
- * administrator and keeps the demo user a plain user.
+ * Proves the demo user's address (an unproven one cannot invite, #411) and keeps it a plain user.
+ * With `operator`, proves the development administrator too and makes it an administrator.
  */
-async function settleAccounts(db: AppDbBase): Promise<void> {
+async function settleAccounts(db: AppDbBase, operator: boolean): Promise<void> {
   await prove(db, DEMO_USER_EMAIL)
-  await prove(db, DEMO_ADMIN_EMAIL)
   await db.admin.setRoleByAddress(DEMO_USER_EMAIL, UserRole.VIEWER, SEED_ACTOR)
-  await db.admin.setRoleByAddress(DEMO_ADMIN_EMAIL, UserRole.ADMIN, SEED_ACTOR)
+  if (!operator) return
+  await prove(db, DEV_ADMIN_EMAIL)
+  await db.admin.setRoleByAddress(DEV_ADMIN_EMAIL, UserRole.ADMIN, SEED_ACTOR)
 }
 
 /**

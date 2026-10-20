@@ -195,13 +195,7 @@ export function createAdminNewsletter(
     enabled: setup !== null,
     stats: () => readAdminNewsletterStats(sql, list, now()),
     async list(filter) {
-      const page = await listAdminSubscribers(
-        sql,
-        list,
-        filter,
-        ADMIN_SUBSCRIBERS_PAGE_SIZE,
-        db.hideRealAddresses,
-      )
+      const page = await listAdminSubscribers(sql, list, filter, ADMIN_SUBSCRIBERS_PAGE_SIZE)
       return { ...page, page: filter.page, pageSize: ADMIN_SUBSCRIBERS_PAGE_SIZE }
     },
     sends: async () => ({

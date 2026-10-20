@@ -109,38 +109,22 @@ function orderBy(sql: postgres.Sql, sort: readonly SortRule<AdminUserSortKey>[])
  * appear, in any case, in the first name, the last name, an address a key holds or the password
  * key's subject. The page and the sort play no part.
  */
-function userWhere(sql: postgres.Sql, filter: AdminUserFilter, hideRealAddresses: boolean) {
+function userWhere(sql: postgres.Sql, filter: AdminUserFilter) {
   let where = sql`u.deleted_at IS NULL`
   for (const word of filter.query.split(/\s+/).filter(Boolean)) {
     const pattern = likeContains(word)
     where = sql`${where} AND (
-      u.first_name ILIKE ${pattern} OR u.last_name ILIKE ${pattern} OR
-        ${keyAddressMatches(sql, sql`u.id`, pattern, hideRealAddresses)}
+      u.first_name ILIKE ${pattern} OR u.last_name ILIKE ${pattern} OR EXISTS (
+        SELECT 1 FROM auth_keys k
+        WHERE k.user_id = u.id
+          AND (k.email ILIKE ${pattern} OR (k.method = ${PASSWORD_METHOD} AND k.subject ILIKE ${pattern}))
+      )
     )`
   }
   if (filter.role !== null) where = sql`${where} AND u.role = ${filter.role}`
   if (filter.blocked === "blocked") where = sql`${where} AND u.blocked_at IS NOT NULL`
   if (filter.blocked === "active") where = sql`${where} AND u.blocked_at IS NULL`
   return where
-}
-
-/**
- * Whether one of person `userId`'s sign-in keys has an address containing `pattern`. With
- * `hideRealAddresses` (the public demo, docs/demo.md), only example.com addresses count: the demo
- * operator sees real addresses masked, and a search on them would give them back letter by letter.
- */
-export function keyAddressMatches(
-  sql: postgres.Sql,
-  userId: postgres.Fragment,
-  pattern: string,
-  hideRealAddresses: boolean,
-) {
-  return sql`EXISTS (
-    SELECT 1 FROM auth_keys k
-    WHERE k.user_id = ${userId}
-      AND (k.email ILIKE ${pattern} OR (k.method = ${PASSWORD_METHOD} AND k.subject ILIKE ${pattern}))
-      ${hideRealAddresses ? sql`AND k.email LIKE '%@example.com'` : sql``}
-  )`
 }
 
 /**
@@ -151,9 +135,8 @@ export async function listAdminUsers(
   sql: postgres.Sql,
   filter: AdminUserFilter,
   pageSize: number,
-  hideRealAddresses = false,
 ): Promise<{ users: AdminUserRow[]; total: number }> {
-  const where = userWhere(sql, filter, hideRealAddresses)
+  const where = userWhere(sql, filter)
   const [{ total }] = await sql<{ total: number }[]>`
     SELECT COUNT(*)::int AS total FROM users u WHERE ${where}
   `
@@ -174,10 +157,9 @@ export async function* exportAdminUsers(
   sql: postgres.Sql,
   filter: AdminUserFilter,
   batchSize: number,
-  hideRealAddresses = false,
 ): AsyncGenerator<AdminUserRow[]> {
   const cursor = sql<UserRowRaw[]>`
-    SELECT ${userColumns(sql)} FROM users u WHERE ${userWhere(sql, filter, hideRealAddresses)}
+    SELECT ${userColumns(sql)} FROM users u WHERE ${userWhere(sql, filter)}
     ORDER BY ${orderBy(sql, filter.sort)}
   `.cursor(batchSize)
   for await (const rows of cursor) yield rows.map(toRow)

@@ -1,12 +1,6 @@
 import { signal } from "@preact/signals"
 import { apiFetch } from "@spy4x/platform/api"
-import {
-  canOpenAdmin,
-  type DemoInfo,
-  type EmailStatus,
-  parseDemoInfo,
-  type User,
-} from "@domain/identity"
+import { canOpenAdmin, type EmailStatus, type User } from "@domain/identity"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import type { AdminOperator } from "@ui/admin-user-screen.tsx"
 
@@ -44,15 +38,6 @@ export const adminHttp: AdminApi = {
   oneTimeCode: (otp) => apiFetch("/api/auth/totp/check", post({ otp })),
   signOut: () => apiFetch("/api/auth/sign-out", post()),
   fetch: (path, init = {}) => apiFetch(path, init),
-}
-
-/**
- * The public demo's shared accounts (docs/demo.md), or `null` while the demo is off (404) or the
- * API cannot be reached: the sign-in page then shows no demo notice.
- */
-export async function readDemo(request: AdminFetch = adminHttp.fetch): Promise<DemoInfo | null> {
-  const answer = await attempt(() => request<DemoInfo>(`/api/demo`))
-  return answer.ok ? parseDemoInfo(answer.data) : null
 }
 
 /** The message when a call failed without one of its own, as when the network is down. */
