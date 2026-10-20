@@ -136,12 +136,12 @@ describe("pageMiddleware", () => {
     expect(calls).toEqual([])
   })
 
-  it("keeps a page out of every cache", async () => {
+  it("lets a browser keep a page but revalidate it before showing it again", async () => {
     const { fetch } = fakeApi(() => Response.json({}))
 
     const response = await appWith(fetch)(new Request(`${config.webAppOrigin}/page`), info)
 
-    expect(response.headers.get("cache-control")).toBe("no-store")
+    expect(response.headers.get("cache-control")).toBe("no-cache")
   })
 })
 
@@ -179,7 +179,7 @@ describe("securityHeadersMiddleware", () => {
 
     expect(response.status).toBe(200)
     expectSecurityHeaders(response)
-    expect(response.headers.get("cache-control")).toBe("no-store")
+    expect(response.headers.get("cache-control")).toBe("no-cache")
   })
 
   it("sends them with the 404 of an unknown address, inside the site's frame", async () => {
@@ -203,7 +203,7 @@ describe("securityHeadersMiddleware", () => {
 
     expect(response.status).toBe(500)
     expectSecurityHeaders(response)
-    expect(response.headers.get("cache-control")).toBe("no-store")
+    expect(response.headers.get("cache-control")).toBe("no-cache")
     const page = await response.text()
     expect(page).toContain("Something went wrong")
     expect(page).toContain(`data-e2e="site-brand"`)

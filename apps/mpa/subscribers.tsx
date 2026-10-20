@@ -25,7 +25,7 @@ import { define, type State } from "./utils.ts"
 
 /**
  * The confirm and unsubscribe pages carry a signed token in their address: no `Referer` leaves
- * them. Every page already answers `Cache-Control: no-store` (`pageMiddleware`).
+ * them. Every newsletter answer already carries `Cache-Control: no-store` (`pageMiddleware`).
  */
 const NO_REFERRER = { "referrer-policy": "no-referrer" }
 
