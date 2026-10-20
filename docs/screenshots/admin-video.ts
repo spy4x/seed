@@ -6,7 +6,7 @@
  * a zoom in each shot on what its caption is about, a title and an end card, and soft music under
  * it all (`admin-video-music.opus`, see `MUSIC.md`). The 1280 px poster, shown on `/features`, is a
  * still of the Users list without any of that; the 1920 px one, the player's on `/admin`, is the
- * first frame of the video's Dashboard shot. The shot list and the copy are on issues #279 and
+ * Dashboard the video opens on, without any of that either. The shot list and the copy are on issues #279 and
  * #285.
  *
  * After a run, update `apps/mpa/admin-video.ts` with what it prints and what the new cut shows: the
@@ -21,10 +21,15 @@
  * 2. Seed its database fresh: `ENV=dev deno task db:reset` with the values in docs/development.md,
  *    then restart the API and the worker, which lose their database connection in the reset.
  *    The video shows the seed's fake example.com people, groups, customers and subscribers.
- * 3. Record, with the seed's shared password:
+ * 3. Run the API as a release build runs: with `APP_VERSION` (the version, such as `v2.0.0`) and
+ *    `APP_COMMIT` (the commit being recorded) in its environment, which System shows. The
+ *    development compose file does not pass them, so add them for the recording, for example
+ *    with a compose override file that sets them on the `api` service.
+ * 4. Record, with the seed's shared password and the same version:
  *
  * ```sh
- * APP_URL=http://app.localhost ADMIN_URL=http://admin.localhost SEED_PASSWORD=… deno task video:admin
+ * APP_URL=http://app.localhost ADMIN_URL=http://admin.localhost SEED_PASSWORD=… APP_VERSION=v2.0.0 \
+ *   deno task video:admin
  * ```
  *
  * First the seeded person the video follows, Priya Novak, gets a password the way a person
@@ -56,6 +61,11 @@ const ADMIN_URL = Deno.env.get("ADMIN_URL") ?? "http://admin.localhost"
 const APP_URL = Deno.env.get("APP_URL") ?? "http://app.localhost"
 const SEED_PASSWORD = Deno.env.get("SEED_PASSWORD")
 if (!SEED_PASSWORD) throw new Error("SEED_PASSWORD is required: the seed's shared password")
+/** The release version the recorded API reports on System, as a release build does. */
+const VERSION = Deno.env.get("APP_VERSION")
+if (!VERSION) {
+  throw new Error("APP_VERSION is required: the version the stack's API runs with (see the header)")
+}
 for (const [name, url] of [["ADMIN_URL", ADMIN_URL], ["APP_URL", APP_URL]]) {
   if (!/^https?:\/\/([a-z0-9-]+\.)*localhost(:\d+)?$/.test(url)) {
     throw new Error(`${name} must be a local host such as http://app.localhost, not ${url}`)
@@ -474,6 +484,27 @@ async function zoomOn(page: Page, region: Box, least = 1.6): Promise<void> {
   )
 }
 
+/**
+ * Zooms so that `region` ends exactly where the caption starts, as large as the frame allows (at
+ * most 2×), centred across. Nothing below `region` shows above the caption, so the caption never
+ * cuts a card or a row in half. `region` is measured at 1×.
+ */
+async function fillAboveCaption(page: Page, region: Box): Promise<void> {
+  const room = H - CAPTION
+  const s = Math.min(2, (VIEWPORT.width - 80) / region.width, room / region.height)
+  const tx = VIEWPORT.width / 2
+  const x = Math.min(
+    Math.max(region.x + region.width / 2, tx / s),
+    VIEWPORT.width - (VIEWPORT.width - tx) / s,
+  )
+  const y = region.y + region.height / 2
+  const ty = room - s * region.height / 2
+  await video(
+    page,
+    `__video.zoom(${s.toFixed(3)}, ${Math.round(x)}, ${Math.round(y)}, ${tx}, ${Math.round(ty)})`,
+  )
+}
+
 /** Takes a zoom away off the record, between shots: the next shot starts at 1×. */
 async function unzoom(page: Page): Promise<void> {
   await video(page, `__video.unzoom()`)
@@ -510,7 +541,7 @@ const BRAND = renderToString(h(BrandMark, { Icon: IconSprout, name: "Seed" }))
 /**
  * Plays the shot list into the recorder. Every shot starts on a settled screen, shows its caption
  * for at least 2.5 seconds, and ends with a hard cut; nothing between shots is kept. Returns the
- * posters' frames: the cropped still of the Users list, and the first frame of the Dashboard shot.
+ * posters' frames: the cropped still of the Users list, and the Dashboard the video opens on.
  */
 async function play(
   page: Page,
@@ -577,10 +608,16 @@ async function play(
   })
   await video(page, `__video.bare(false)`)
 
-  // 0. Title card, over the Dashboard it cuts to.
+  // 0. Title card, over the Dashboard it cuts to. First, off the record, the player's poster: the
+  // Dashboard without the layer, so no pointer, caption or label.
   await page.goto("/")
   await page.getByRole("heading", { level: 1, name: "Dashboard" }).waitFor()
   await page.locator("[data-e2e=admin-chart-active]").waitFor()
+  await settle(page)
+  await video(page, `__video.bare(true)`)
+  const opening = `${frames}/opening.png`
+  await page.screenshot({ path: opening })
+  await video(page, `__video.bare(false)`)
   await card({
     title: "Seed's admin panel, built for support work",
     sub: "Part of Seed. Free and MIT-licensed.",
@@ -589,7 +626,6 @@ async function play(
   await card(null)
 
   // 1. Dashboard: the whole screen, then a zoom on the chart of who was active each day.
-  const dashboardShot = rec.segments.length
   await shot("The last 30 days at a glance", async () => {
     await pause(page, 2000)
     await zoomOn(page, await box(page.locator("[data-e2e=admin-chart-active]")))
@@ -713,8 +749,10 @@ async function play(
   await moveLike(page, pointer, { x: 1000, y: 300 })
   await shot("Who pays, what they pay, and every refund", async () => {
     await pause(page, 300)
+    // From the title to the third customer, which ends where the caption starts.
     const title = await box(page.getByRole("heading", { level: 1, name: "Billing" }))
-    await zoomOn(page, union(title, await box(customers.nth(1))), 1)
+    const third = await box(customers.nth(2))
+    await fillAboveCaption(page, union({ ...title, y: title.y - 16 }, third))
     await pause(page, 2600)
     await cut(async () => {
       await unzoom(page)
@@ -746,39 +784,38 @@ async function play(
   })
   await unzoom(page)
 
-  // 9. System: the summary and the first row of services, slightly zoomed in.
+  // 9. System: from its title to the last row of services, which ends where the caption starts.
   await clickLike(page, pointer, page.getByRole("link", { name: "System" }), H)
   await page.getByRole("heading", { level: 1, name: "System" }).waitFor()
-  const summary = page.locator("[data-e2e=admin-system-summary]")
-  await summary.waitFor()
-  await moveLike(page, pointer, { x: 1100, y: 740 })
-  await shot("The health of every service", async () => {
-    await pause(page, 300)
-    const services = page.locator("[data-e2e=admin-system-cards] > *")
-    await zoomOn(page, union(await box(summary), await box(services.nth(2))), 1)
-    await pause(page, 3000)
-  })
-  await unzoom(page)
+  await page.locator("[data-e2e=admin-system-summary]").waitFor()
+  await page.locator("[data-e2e=admin-system-build]").getByText(VERSION).waitFor()
+  const systemTitle = await box(page.getByRole("heading", { level: 1, name: "System" }))
+  const services = await box(page.locator("[data-e2e=admin-system-cards]"))
+  const system = union({ ...systemTitle, y: systemTitle.y - 16 }, services)
+  await fillAboveCaption(page, system)
+  await pause(page, 600)
+  await moveLike(page, pointer, { x: 1100, y: 690 })
+  await shot("The health of every service", () => pause(page, 3000))
 
   // 10. The same screen switches to light, from the operator's account menu, zoomed in on it.
   await shot("Light and dark", async () => {
-    await pause(page, 300)
+    await pause(page, 100)
     await clickInPlace(page, pointer, page.locator(ACCOUNT_MENU))
-    await pause(page, 400)
+    await pause(page, 300)
     await zoomOn(page, await box(page.getByRole("menu")))
-    await pause(page, 1600)
-    await video(page, `__video.unzoom()`)
-    await pause(page, 600)
+    await pause(page, 1100)
+    await fillAboveCaption(page, system)
+    await pause(page, 500)
     await clickInPlace(page, pointer, page.getByRole("menuitemradio", { name: "Light" }))
     await moveLike(page, pointer, { x: 700, y: 420 })
-    await pause(page, 2000)
+    await pause(page, 1300)
   })
 
   // 11. End card.
   await card({ title: "Free and MIT-licensed. The code is on GitHub." })
   await shot(null, () => pause(page, 3000))
 
-  return { still: poster, opening: rec.segments[dashboardShot].frames[0].file }
+  return { still: poster, opening }
 }
 
 /** The button that opens the operator's account menu at the foot of the rail. */

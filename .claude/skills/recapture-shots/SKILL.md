@@ -71,10 +71,11 @@ development database works, also one where an earlier run left the user.
 
 When the video needs it too, record it last, on a freshly seeded database, as the header of
 `docs/screenshots/admin-video.ts` says (`ENV=dev deno task db:reset`, then restart the API and the
-worker):
+worker), with the API run as a release build (`APP_VERSION` and `APP_COMMIT`, which System
+shows; the header says how):
 
 ```bash
-APP_URL=http://app.localhost ADMIN_URL=http://admin.localhost SEED_PASSWORD=… systemd-run --user --scope --quiet -p TasksMax=4000 -p MemoryMax=8G timeout 900 deno task video:admin
+APP_URL=http://app.localhost ADMIN_URL=http://admin.localhost SEED_PASSWORD=… APP_VERSION=… systemd-run --user --scope --quiet -p TasksMax=4000 -p MemoryMax=8G timeout 900 deno task video:admin
 ```
 
 It prints the length, the file sizes and the music's loudness. Update `apps/mpa/admin-video.ts`
