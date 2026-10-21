@@ -861,7 +861,7 @@ describe("ProfileScreen for an account without a password", () => {
     expect(find("[data-e2e=password-open]").textContent).toBe("Set password")
   })
 
-  it("shows a guest the account type and no e-mail row, with one solid Keep your account", async () => {
+  it("shows a guest the account type and no e-mail row, and the account and methods rows lead to keeping it without a solid button", async () => {
     await mount(
       <ProfileScreen
         {...profile}
