@@ -120,7 +120,7 @@ async function settle(page: Page, app: string, groupId: string): Promise<void> {
   }
 }
 
-/** The browser state of Priya in the app and of the administrator in the admin app. */
+/** The browser state of the chosen person in the app and of the administrator in the admin app. */
 export async function stage(
   browser: Browser,
   hosts: { app: string; admin: string },
