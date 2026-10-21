@@ -25,6 +25,9 @@ interface ComposeService {
   labels?: string[]
   networks?: string[]
   ports?: string[]
+  user?: string
+  depends_on?: Record<string, { condition?: string }>
+  healthcheck?: { test?: string[] }
 }
 
 interface ComposeFile {
@@ -251,6 +254,60 @@ Deno.test("the backup image is built on the database's own Postgres image", asyn
   expect(backup.build?.args).toEqual([`POSTGRES_IMAGE=docker.io/library/${db.image}`])
 })
 
+Deno.test("PgBouncer publishes no port and is on the project's own network only", async () => {
+  for (const file of ["shared", "dev", "prod"]) {
+    const pgbouncer = (await services(file)).pgbouncer
+    if (file === "shared" && !pgbouncer) throw new Error("compose.shared.yml has no pgbouncer")
+    expect({ file, ports: pgbouncer?.ports }).toEqual({ file, ports: undefined })
+    expect({ file, networks: pgbouncer?.networks ?? ["default"] })
+      .toEqual({ file, networks: ["default"] })
+    expect((pgbouncer?.labels ?? []).filter((entry) => entry.startsWith("traefik."))).toEqual([])
+  }
+})
+
+Deno.test("PgBouncer runs as its image's unprivileged user, from an image pinned by version and digest", async () => {
+  const { pgbouncer } = await services("shared")
+  expect(pgbouncer.user).toBe("70:70")
+  expect(pgbouncer.image).toMatch(
+    /^docker\.io\/edoburu\/pgbouncer:v\d+\.\d+\.\d+-p\d+@sha256:[0-9a-f]{64}$/,
+  )
+  // postgres.js prepares statements by name; under transaction pooling PgBouncer must track them.
+  expect(environment(pgbouncer)).toEqual(
+    expect.arrayContaining(["POOL_MODE=transaction", "MAX_PREPARED_STATEMENTS=200"]),
+  )
+})
+
+Deno.test("the API and the worker query through PgBouncer and start once it is healthy", async () => {
+  const all = await services("shared")
+  expect(all.pgbouncer?.healthcheck?.test?.[0]).toBe("CMD")
+  const hosts = { api: "DB_HOST=${PROJECT}-pgbouncer", worker: "DB_HOST=pgbouncer" }
+  for (const [name, host] of Object.entries(hosts)) {
+    const entries = environment(all[name])
+    expect({ name, hosts: entries.filter((entry) => entry.startsWith("DB_HOST=")) })
+      .toEqual({ name, hosts: [host] })
+    expect({ name, pgbouncer: all[name]?.depends_on?.pgbouncer })
+      .toEqual({ name, pgbouncer: { condition: "service_healthy" } })
+  }
+})
+
+Deno.test("migrate and the API's LISTEN connection go to Postgres directly, past PgBouncer", async () => {
+  const all = await services("shared")
+  expect(environment(all.migrate).filter((entry) => entry.startsWith("DB_HOST="))).toEqual([
+    "DB_HOST=db",
+  ])
+  // apps/api/services/db-direct.ts: the client `LISTEN` runs on reads these two.
+  expect(environment(all.api)).toEqual(
+    expect.arrayContaining(["DB_DIRECT_HOST=${PROJECT}-db", "DB_DIRECT_PORT=5432"]),
+  )
+  for (const file of ["dev", "prod"]) {
+    for (const name of ["api", "worker", "migrate"]) {
+      const overridden = environment((await services(file))[name])
+        .filter((entry) => /^DB_(DIRECT_)?(HOST|PORT)=/.test(entry))
+      expect({ file, name, overridden }).toEqual({ file, name, overridden: [] })
+    }
+  }
+})
+
 /**
  * The hosts a value names: what stands where a URL or a `host:port` pair has its host. A variable
  * (`${PROJECT}-api`) is kept whole, so a per-project name never reads as a plain one.
@@ -282,9 +339,10 @@ Deno.test("a container on the shared proxy network reaches no service by a name 
 
   const shared = files[0]
   expect(shared.mpa?.environment).toContain("API_URL=http://${PROJECT}-api:${API_PORT}")
-  expect(shared.api?.environment).toContain("DB_HOST=${PROJECT}-db")
+  expect(shared.api?.environment).toContain("DB_HOST=${PROJECT}-pgbouncer")
+  expect(shared.api?.environment).toContain("DB_DIRECT_HOST=${PROJECT}-db")
   expect(shared.api?.environment).toContain("KV_HOSTNAME=${PROJECT}-kv")
-  for (const service of ["api", "db", "kv"]) {
+  for (const service of ["api", "db", "kv", "pgbouncer"]) {
     expect(shared[service]?.container_name).toBe(`\${PROJECT}-${service}`)
   }
 })
