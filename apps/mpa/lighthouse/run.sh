@@ -12,7 +12,8 @@ HERE=apps/mpa/lighthouse
 [ -f apps/mpa/_fresh/server.js ] || { echo "no MPA build: run deno task mpa:build first"; exit 1; }
 
 if [ -z "${CHROME_PATH:-}" ]; then
-  CHROME_PATH=$(find "${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}" -path '*/chromium-*/chrome-linux*/chrome' -type f 2>/dev/null | sort -V | tail -n 1)
+  CHROME_PATH=$(find "${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}" \
+    -path '*/chromium-*/chrome-linux*/chrome' -type f 2>/dev/null | sort -V | tail -n 1)
   [ -n "$CHROME_PATH" ] || { echo "no Chromium found: set CHROME_PATH"; exit 1; }
 fi
 export CHROME_PATH
@@ -49,7 +50,8 @@ ENV=prod DOMAIN=app.example.com MPA_DOMAIN=www.example.com API_URL=http://127.0.
 PIDS+=($!)
 wait_for mpa "${PIDS[-1]}" http://127.0.0.1:48410/health
 
-timeout 900 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'daemon off;' >"$SCRATCH/nginx.log" 2>&1 &
+timeout 900 nginx -p "$SCRATCH" -e stderr -c "$PWD/$HERE/nginx.conf" -g 'daemon off;' \
+  >"$SCRATCH/nginx.log" 2>&1 &
 PIDS+=($!)
 wait_for nginx "${PIDS[-1]}" http://127.0.0.1:48411/health
 

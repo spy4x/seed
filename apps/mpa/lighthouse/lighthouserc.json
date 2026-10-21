@@ -11,7 +11,10 @@
         "http://127.0.0.1:48411/subscribe"
       ],
       "numberOfRuns": 3,
-      "settings": { "chromeFlags": "--headless=new --no-sandbox" }
+      "settings": {
+        "chromeFlags": "--headless=new --no-sandbox --disable-dev-shm-usage",
+        "disableFullPageScreenshot": true
+      }
     },
     "assert": {
       "assertions": {
