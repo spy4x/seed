@@ -21,6 +21,8 @@ import {
   type SitePageHead,
   softwareId,
   spaLinks,
+  TRY_ENTRY,
+  TRY_REL,
 } from "../site.tsx"
 import { define } from "../utils.ts"
 
@@ -294,12 +296,13 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       <div class="mt-2 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button
           href={demoHref}
+          rel={TRY_REL}
           size="lg"
           data-e2e="compare-try-demo"
           data-umami-event="try-demo"
           data-umami-event-from="hero"
         >
-          Try the live demo
+          {TRY_ENTRY.label}
         </Button>
         <Button
           href={REPOSITORY_URL}
@@ -440,12 +443,12 @@ export default define.page(function Compare({ state }) {
   }
   return (
     <SiteFrame state={state} path="/compare" head={head}>
-      <Hero demoHref={spa.signUp} />
+      <Hero demoHref={spa.try} />
       <Table />
       <Alternatives />
       <Questions />
       <CtaBand
-        demoHref={spa.signUp}
+        demoHref={spa.try}
         title="See what Seed does in a minute"
         lead="The demo is the app you get on day one. Check the table against it yourself."
       />

@@ -2,7 +2,7 @@
 import { type FreshContext, HttpError } from "fresh"
 import { Button } from "@spy4x/preact-ui/button"
 import { HIRE_PAGE_URL } from "./hire.ts"
-import { REPOSITORY_URL, SiteFrame, spaLinks } from "./site.tsx"
+import { REPOSITORY_URL, SiteFrame, spaLinks, TRY_ENTRY, TRY_REL } from "./site.tsx"
 import type { State } from "./utils.ts"
 
 /**
@@ -50,11 +50,12 @@ export function renderErrorPage(ctx: FreshContext<State>, error: unknown): Promi
               <>
                 <div class="flex w-full flex-col gap-4 sm:flex-row">
                   <Button
-                    href={spa.signUp}
+                    href={spa.try}
+                    rel={TRY_REL}
                     data-umami-event="try-demo"
                     data-umami-event-from="not-found"
                   >
-                    Try the live demo
+                    {TRY_ENTRY.label}
                   </Button>
                   <Button href="/" variant="outline">Back to the home page</Button>
                 </div>

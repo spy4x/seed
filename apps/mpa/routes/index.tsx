@@ -41,6 +41,8 @@ import {
   softwareId,
   softwareJsonLd,
   spaLinks,
+  TRY_ENTRY,
+  TRY_REL,
 } from "../site.tsx"
 import { define } from "../utils.ts"
 
@@ -79,6 +81,7 @@ export const AI_PROMPT =
 
 const WORKS_TODAY = [
   `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, 2FA with an authenticator app`,
+  `Guest accounts: try the app with one click, keep the account by adding a sign-in method`,
   `Groups with members, roles, invitations and ownership transfer`,
   `Exporting a group to a file, and importing one as a new group`,
   `Per-member billing with trials, through Stripe`,
@@ -98,6 +101,13 @@ const NOT_BUILT = [
 
 /** The questions, with each answer as plain text for the FAQ's structured data. */
 const FAQ = [
+  {
+    id: `faq-try`,
+    question: `Can I try it without an account?`,
+    answerText: `Yes. Try the live demo opens the app in a guest account with sample data, ` +
+      `without an email or a password. Add a sign-in method to keep it; the demo is wiped every ` +
+      `night either way. Seed itself needs no account at all: clone it from GitHub.`,
+  },
   {
     id: `faq-free`,
     question: `Is Seed really free?`,
@@ -172,12 +182,13 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
             <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
               <Button
                 href={demoHref}
+                rel={TRY_REL}
                 size="lg"
                 data-e2e="home-try-demo"
                 data-umami-event="try-demo"
                 data-umami-event-from="hero"
               >
-                Try the live demo
+                {TRY_ENTRY.label}
               </Button>
               <Button
                 href={REPOSITORY_URL}
@@ -190,8 +201,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               </Button>
             </div>
             <p class="text-sm text-muted">
-              The demo is the app you get on day one, with sample data in your new account. Seed is
-              a work in progress, built in public:{" "}
+              {TRY_ENTRY.line} Seed is a work in progress, built in public:{" "}
               <a href="#status" class="text-primary underline">see what works today</a>.
             </p>
           </div>
@@ -280,7 +290,8 @@ function Features(): JSX.Element {
             }
           >
             Email and password with verification codes, password reset, Google and GitHub sign-in,
-            passkeys, and 2FA with an authenticator app. Sessions you can see and end.
+            passkeys, guest accounts, and 2FA with an authenticator app. Sessions you can see and
+            end.
           </FeatureCard>
           <FeatureCard
             id="feature-billing"
@@ -626,7 +637,7 @@ export default define.page(function Home({ state }) {
   }
   return (
     <SiteFrame state={state} path="/" head={head} footerNewsletter={false}>
-      <Hero demoHref={spa.signUp} />
+      <Hero demoHref={spa.try} />
       <ProofStrip facts={PROOF} />
       <Features />
       <OneServer />
@@ -637,7 +648,7 @@ export default define.page(function Home({ state }) {
       <WhoBuilds />
       {state.newsletter && <Newsletter />}
       <Questions />
-      <CtaBand demoHref={spa.signUp} />
+      <CtaBand demoHref={spa.try} />
     </SiteFrame>
   )
 })

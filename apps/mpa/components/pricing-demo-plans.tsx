@@ -25,8 +25,8 @@ const DEMO_PLANS: PricingPlan[] = PLANS.map((plan) => ({
 
 /**
  * The demo app's plans as an example of the billing Seed ships, kept apart from Seed's own prices.
- * Each plan's button is a form that posts to `/pricing`, which sends the visitor to the demo's
- * sign-up, so it works without JavaScript.
+ * Each plan's button is a form that posts to `/pricing`, which opens the demo as a guest account
+ * (#224), so it works without JavaScript.
  */
 export function PricingDemoPlans(): JSX.Element {
   return (
@@ -39,7 +39,8 @@ export function PricingDemoPlans(): JSX.Element {
         />
         <Notice title="These are not Seed's prices">
           They are the plans of the demo app, read from its plan catalog, so you can try checkout,
-          trials and per-member billing. Your product sets its own plans in one file,{" "}
+          trials and per-member billing. The demo opens as a guest account; checkout asks you to add
+          a sign-in method first. Your product sets its own plans in one file,{" "}
           <code class="font-mono">libs/domain/billing</code>.
         </Notice>
         {/* The table draws its own forms: `/analytics.js` counts a submit inside this wrapper. */}
