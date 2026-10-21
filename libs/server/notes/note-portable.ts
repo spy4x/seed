@@ -22,19 +22,29 @@ export const notePortable = portable<NoteExportEntry>({
   limit: "maxNotes",
   parse: parseNoteExportEntry,
   async *read(sql, groupId) {
-    const cursor = sql<NoteExportEntry[]>`
-      SELECT
-        notes.id, notes.title, notes.body,
-        COALESCE(
-          (SELECT array_agg(tag_id ORDER BY tag_id) FROM note_tags WHERE note_id = notes.id),
-          '{}'
-        ) AS tag_ids,
-        notes.created_at, notes.updated_at
-      FROM notes
-      WHERE notes.group_id = ${groupId} AND notes.deleted_at IS NULL
-      ORDER BY notes.created_at, notes.id
-    `.cursor(READ_PAGE)
-    for await (const page of cursor) yield page
+    // Keyset pages, each its own short query after the last id: nothing is held between pages, so
+    // a download the reader stopped keeps no connection from the pool. Ids are UUID v7, so this is
+    // also roughly the order the notes were made in.
+    let after: string | null = null
+    while (true) {
+      const page: NoteExportEntry[] = await sql<NoteExportEntry[]>`
+        SELECT
+          notes.id, notes.title, notes.body,
+          COALESCE(
+            (SELECT array_agg(tag_id ORDER BY tag_id) FROM note_tags WHERE note_id = notes.id),
+            '{}'
+          ) AS tag_ids,
+          notes.created_at, notes.updated_at
+        FROM notes
+        WHERE notes.group_id = ${groupId} AND notes.deleted_at IS NULL
+          AND (${after}::uuid IS NULL OR notes.id > ${after}::uuid)
+        ORDER BY notes.id
+        LIMIT ${READ_PAGE}
+      `
+      if (page.length > 0) yield page
+      if (page.length < READ_PAGE) return
+      after = page[page.length - 1].id
+    }
   },
   async write(sql, entries, context) {
     const ids = new Map<string, string>()

@@ -17,7 +17,7 @@ import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import type { APIContext } from "../_types.ts"
 import { groupErrorResponse, GroupFeatureError } from "../features/groups/errors.ts"
-import type { GroupImportRateLimits } from "../features/groups/import-rate-limits.ts"
+import type { GroupFileRateLimits } from "../features/groups/file-rate-limits.ts"
 
 /** Room for the name beside the file in an import's body. */
 const IMPORT_BODY_EXTRA_BYTES = 4 * 1024
@@ -26,7 +26,7 @@ export interface GroupFilesRouteDependencies {
   exportGroup(command: GroupExportCommand): Promise<GroupExportResult>
   check(query: GroupImportCheckQuery): Promise<GroupImportSummary>
   importGroup(command: GroupImportCommand): Promise<GroupImportResult>
-  rateLimits: GroupImportRateLimits
+  rateLimits: GroupFileRateLimits
   /** See `GroupsRouteDependencies.expectedOrigin`. */
   expectedOrigin?: string
 }
@@ -55,48 +55,49 @@ export function createGroupFilesRoute(dependencies: GroupFilesRouteDependencies)
     .onError((error, c) => groupErrorResponse(c, error))
     // Each route names the session check itself: this app shares `/api/groups` with the groups
     // route, and a middleware for all its paths would run in front of that route's too.
-    .get("/:groupId/export", requireAuthentication, async (c) => {
-      // A GET the mutation guards let through, yet it writes an audit event in the person's name
-      // and hands out the group's data: only the app's own page may ask for it. A missing header is
-      // refused too.
-      if (c.req.header("sec-fetch-site") !== "same-origin") {
-        throw new GroupFeatureError("REQUEST_ORIGIN_INVALID", "Export must come from the app")
-      }
-      const groupId = parseGroupId(c.req.param("groupId"))
-      const file = await dependencies.exportGroup(
-        new GroupExportCommand({
-          actor: actorFromAuth(c.get("auth")!),
-          groupId,
-          requestId: c.get("requestId"),
-        }),
-      )
-      const encoder = new TextEncoder()
-      const iterator = file.chunks[Symbol.asyncIterator]()
-      // The first piece is read before the answer starts: a read that fails at once is a 500, not
-      // a 200 with half a file. A failure after it can only cut the download short, and a file cut
-      // short is not valid JSON, so an import refuses it.
-      const first = await iterator.next()
-      const body = new ReadableStream<Uint8Array>({
-        start(controller) {
-          if (first.done) controller.close()
-          else controller.enqueue(encoder.encode(first.value))
-        },
-        async pull(controller) {
-          const next = await iterator.next()
-          if (next.done) controller.close()
-          else controller.enqueue(encoder.encode(next.value))
-        },
-        // The person stopped the download: the cursor closes.
-        async cancel() {
-          await iterator.return?.()
-        },
-      })
-      return c.body(body, 200, {
-        "content-type": "application/json; charset=utf-8",
-        "content-disposition": `attachment; filename="${file.fileName}"`,
-        "cache-control": "no-store",
-      })
-    })
+    .get(
+      "/:groupId/export",
+      requireAuthentication,
+      // Before the budget, so another site cannot spend a person's exports.
+      requireAppPage,
+      dependencies.rateLimits.exportByUser,
+      async (c) => {
+        const groupId = parseGroupId(c.req.param("groupId"))
+        const file = await dependencies.exportGroup(
+          new GroupExportCommand({
+            actor: actorFromAuth(c.get("auth")!),
+            groupId,
+            requestId: c.get("requestId"),
+          }),
+        )
+        const encoder = new TextEncoder()
+        const iterator = file.chunks[Symbol.asyncIterator]()
+        // The first piece is read before the answer starts: a read that fails at once is a 500, not
+        // a 200 with half a file. A failure after it can only cut the download short, and a file cut
+        // short is not valid JSON, so an import refuses it.
+        const first = await iterator.next()
+        const body = new ReadableStream<Uint8Array>({
+          start(controller) {
+            if (first.done) controller.close()
+            else controller.enqueue(encoder.encode(first.value))
+          },
+          async pull(controller) {
+            const next = await iterator.next()
+            if (next.done) controller.close()
+            else controller.enqueue(encoder.encode(next.value))
+          },
+          // The person stopped the download: the cursor closes.
+          async cancel() {
+            await iterator.return?.()
+          },
+        })
+        return c.body(body, 200, {
+          "content-type": "application/json; charset=utf-8",
+          "content-disposition": `attachment; filename="${file.fileName}"`,
+          "cache-control": "no-store",
+        })
+      },
+    )
     .post(
       "/import/check",
       requireAuthentication,
@@ -158,6 +159,21 @@ async function readFile(c: Context<APIContext>, maxBytes: number): Promise<unkno
 }
 
 /** A session at all; its strength is the session gate's on the buses, as for every group route. */
+/**
+ * A GET the mutation guards let through, yet the export writes an audit event in the person's name
+ * and hands out the group's data: only the app's own page may ask for it. A missing header is
+ * refused too.
+ */
+const requireAppPage: MiddlewareHandler<APIContext> = async (c, next) => {
+  if (c.req.header("sec-fetch-site") !== "same-origin") {
+    return groupErrorResponse(
+      c,
+      new GroupFeatureError("REQUEST_ORIGIN_INVALID", "Export must come from the app"),
+    )
+  }
+  return await next()
+}
+
 const requireAuthentication: MiddlewareHandler<APIContext> = async (c, next) => {
   if (!c.get("auth")) {
     return groupErrorResponse(c, new GroupFeatureError("AUTH_REQUIRED", "Missing session"))

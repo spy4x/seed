@@ -10,6 +10,7 @@ import { portable } from "@server/groups/portable.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { tagPortable } from "@server/tags/tag-portable.ts"
+import { notePortable } from "@server/notes/note-portable.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { UserMFAStatus } from "@domain/identity"
@@ -278,5 +279,114 @@ Deno.test("a refused file, a file over the plan and a failure halfway write noth
       Error,
     )
     expect(reached).toBe(true)
+  })
+})
+
+Deno.test("ten exports whose readers stopped leave the pool free, and a long group pages whole", async () => {
+  await withSchema(async (sql) => {
+    const source = await seed(sql)
+    // More notes than one page holds, so each export reads its notes in two queries.
+    const extra = Array.from({ length: 600 }, (_, index) => ({
+      id: uuidV7(),
+      title: `Extra ${index}`,
+      body: "",
+      tagIds: [],
+      createdAt: "2026-10-01T09:00:00.000Z",
+      updatedAt: "2026-10-01T09:00:00.000Z",
+    }))
+    await sql.begin((tx) =>
+      notePortable.write(tx, extra, {
+        groupId: source.groupId,
+        actorId: source.owner,
+        changeSequence: "1",
+        newIdOf: () => undefined,
+      })
+    )
+    const porter = new PostgresGroupPorter(sql, PORTABLE_AGGREGATES)
+    // The pool holds ten connections. Each export is read until its first page of notes, then
+    // left hanging, as a download the person stopped.
+    for (let reader = 0; reader < 10; reader++) {
+      const file = await porter.exportGroup(source.groupId, source.owner)
+      const iterator = file.chunks[Symbol.asyncIterator]()
+      while (!(await iterator.next()).value?.includes(`"title"`));
+    }
+    const free = await Promise.race([
+      sql`SELECT 1 AS one`.then(() => "free"),
+      new Promise((resolve) => setTimeout(() => resolve("exhausted"), 3_000)),
+    ])
+    expect(free).toBe("free")
+
+    const whole = await exportAs(sql, source.groupId, source.owner) as {
+      aggregates: { notes: { id: string }[] }
+    }
+    const ids = whole.aggregates.notes.map((note) => note.id)
+    expect(ids).toHaveLength(603)
+    expect(new Set(ids).size).toBe(603)
+  })
+})
+
+Deno.test("a file carrying another group's real ids leaves that group untouched", async () => {
+  await withSchema(async (sql) => {
+    const source = await seed(sql)
+    const file = await exportAs(sql, source.groupId, source.owner) as {
+      group: { name: string }
+      aggregates: { notes: { title: string }[]; tags: { name: string }[] }
+    }
+    const rows = async () => ({
+      notes: [...await sql`SELECT * FROM notes WHERE group_id = ${source.groupId} ORDER BY id`],
+      tags: [...await sql`SELECT * FROM tags WHERE group_id = ${source.groupId} ORDER BY id`],
+      links: [
+        ...await sql`
+        SELECT nt.* FROM note_tags nt JOIN notes n ON n.id = nt.note_id
+        WHERE n.group_id = ${source.groupId} ORDER BY nt.note_id, nt.tag_id
+      `,
+      ],
+    })
+    const before = await rows()
+    // A stranger edits the file, keeping the source's ids, and imports it.
+    for (const note of file.aggregates.notes) note.title = `Taken ${note.title}`
+    for (const tag of file.aggregates.tags) tag.name = `Taken ${tag.name}`
+    const stranger = await insertUser(sql)
+    const result = await new PostgresGroupPorter(sql, PORTABLE_AGGREGATES).importGroup(
+      { file, name: null },
+      stranger,
+      NO_CAP,
+    )
+    expect(await rows()).toEqual(before)
+    const titles = await sql<{ title: string }[]>`
+      SELECT title FROM notes WHERE group_id = ${result.group.id} ORDER BY title
+    `
+    expect(titles.map((row) => row.title)).toEqual(["Taken Groceries", "Taken Plain", "Taken Plan"])
+  })
+})
+
+Deno.test("a former owner who handed the group over and was removed cannot export it", async () => {
+  await withSchema(async (sql) => {
+    const source = await seed(sql)
+    const heir = await insertUser(sql)
+    await sql`
+      INSERT INTO group_members (group_id, user_id, role, added_by_user_id)
+      VALUES (${source.groupId}, ${heir}, ${GroupRole.ADMIN}, ${source.owner})
+    `
+    // The hand-over, then the removal: the person was the owner a moment ago.
+    await sql`
+      UPDATE group_members SET role = ${GroupRole.ADMIN}
+      WHERE group_id = ${source.groupId} AND user_id = ${source.owner}
+    `
+    await sql`
+      UPDATE group_members SET role = ${GroupRole.OWNER}
+      WHERE group_id = ${source.groupId} AND user_id = ${heir}
+    `
+    await sql`UPDATE groups SET owner_user_id = ${heir} WHERE id = ${source.groupId}`
+    await sql`
+      DELETE FROM group_members WHERE group_id = ${source.groupId} AND user_id = ${source.owner}
+    `
+    const codeOf = (userId: number) =>
+      exportAs(sql, source.groupId, userId).then(
+        () => "exported",
+        (error) => error instanceof GroupError ? error.code : String(error),
+      )
+    expect(await codeOf(source.owner)).toBe("GROUP_NOT_FOUND")
+    expect(await codeOf(heir)).toBe("exported")
   })
 })

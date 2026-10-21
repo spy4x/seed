@@ -24,10 +24,11 @@ import {
   type GroupFileHandlerDependencies,
 } from "../features/groups/files.ts"
 import {
-  createGroupImportRateLimits,
+  createGroupFileRateLimits,
+  GROUP_EXPORTS_PER_USER,
   GROUP_IMPORTS_PER_USER,
-  type GroupImportRateLimits,
-} from "../features/groups/import-rate-limits.ts"
+  type GroupFileRateLimits,
+} from "../features/groups/file-rate-limits.ts"
 import { createGroupFilesRoute } from "./group-files.ts"
 
 const GROUP_ID = uuidV7()
@@ -41,7 +42,7 @@ const sameOrigin = {
 }
 
 const pass: MiddlewareHandler<APIContext> = (_c, next) => next()
-const noLimits: GroupImportRateLimits = { checkByUser: pass, importByUser: pass }
+const noLimits: GroupFileRateLimits = { exportByUser: pass, checkByUser: pass, importByUser: pass }
 
 /** A database that fails any use: a route that reaches it would have written something. */
 const noDatabase = new Proxy(() => {}, {
@@ -70,7 +71,7 @@ function note(title: string) {
 interface Setup {
   roles?: Record<number, GroupRole>
   porter?: Partial<GroupFilePorter>
-  limits?: GroupImportRateLimits
+  limits?: GroupFileRateLimits
   /** `null` is a request with no session. */
   userId?: number | null
 }
@@ -116,6 +117,18 @@ function exportRequest(site = "same-origin") {
   })
 }
 
+/** A rate-limit store in memory, fresh for each test. */
+function memoryStore(): RateLimitStore {
+  const entries = new Map<string, unknown>()
+  return createKvStore({
+    backend: {
+      get: (key) => Promise.resolve(entries.get(key)),
+      set: (key, value) => Promise.resolve(void entries.set(key, value)),
+      delete: (key) => Promise.resolve(void entries.delete(key)),
+    },
+  })
+}
+
 describe("group export route", () => {
   const streaming: Partial<GroupFilePorter> = {
     exportGroup: () =>
@@ -153,6 +166,28 @@ describe("group export route", () => {
       expect(response.status).toBe(status)
       expect((await response.json()).error.code).toBe(code)
     }
+  })
+
+  it("stops a person's exports past the hourly budget", async () => {
+    const store = memoryStore()
+    const porter: Partial<GroupFilePorter> = {
+      exportGroup: () =>
+        Promise.resolve({
+          fileName: "family-2026-10-21.json",
+          chunks: (async function* () {
+            yield `{}`
+          })(),
+        }),
+    }
+    const limited = app({
+      roles: { [OWNER]: GroupRole.OWNER },
+      porter,
+      limits: createGroupFileRateLimits({ store: () => store }),
+    })
+    for (let index = 0; index < GROUP_EXPORTS_PER_USER; index++) {
+      expect((await limited.request(exportRequest())).status).toBe(200)
+    }
+    expect((await limited.request(exportRequest())).status).toBe(429)
   })
 
   it("refuses a download another site asks for, or one with no session", async () => {
@@ -232,17 +267,23 @@ describe("group import routes", () => {
     expect(response.status).toBe(403)
   })
 
+  it("answers a file of a million empty notes at once, without reading them", async () => {
+    const empty = JSON.stringify(exportFile([]))
+    const header = empty.slice(0, empty.indexOf(`"notes":[`) + `"notes":[`.length)
+    const count = Math.floor((GROUP_IMPORT_MAX_BYTES - header.length - 4) / 3)
+    const body = `${header}${Array(count).fill("{}").join(",")}]}}`
+    expect(body.length).toBeLessThan(GROUP_IMPORT_MAX_BYTES)
+    const started = performance.now()
+    const response = await app().request(post("/import/check", body))
+    expect(performance.now() - started).toBeLessThan(1_000)
+    expect(response.status).toBe(422)
+    expect((await response.json()).error.problems[0]).toMatchObject({ where: "Notes" })
+  })
+
   it("stops a person's imports past the hourly budget", async () => {
-    const entries = new Map<string, unknown>()
-    const store: RateLimitStore = createKvStore({
-      backend: {
-        get: (key) => Promise.resolve(entries.get(key)),
-        set: (key, value) => Promise.resolve(void entries.set(key, value)),
-        delete: (key) => Promise.resolve(void entries.delete(key)),
-      },
-    })
+    const store = memoryStore()
     const limited = app({
-      limits: createGroupImportRateLimits({ store: () => store }),
+      limits: createGroupFileRateLimits({ store: () => store }),
       porter: {
         importGroup: () => Promise.resolve({ group: { id: GROUP_ID } as never, parts: [] }),
       },
