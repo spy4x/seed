@@ -80,7 +80,10 @@ mark. **Replace** each with the product's name:
 - `apps/admin/index.html`: the `<title>` (`Admin · Seed`).
 - `libs/ui/frame.tsx`: the `name` of the `BrandMark` in the app frame.
 - `libs/ui/admin-frame.tsx`: `ADMIN_PRODUCT`, which names the admin's tab titles and brand mark.
-  `libs/ui/admin-frame.test.tsx` checks it and changes with it.
+
+These tests check the name and change with it: `libs/ui/admin-frame.test.tsx`,
+`libs/ui/account.test.tsx` (the brand mark), `e2e/pwa.e2e.ts` (the manifest's names) and
+`e2e/app-shell-parity.e2e.ts` (the admin tab title).
 
 ## Settings
 
