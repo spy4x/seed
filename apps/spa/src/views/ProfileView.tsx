@@ -49,7 +49,9 @@ import { SESSIONS_FAILURE } from "@ui/signed-in-devices.tsx"
 import { SIGN_IN_METHODS_FAILURE } from "@ui/sign-in-methods.tsx"
 import { apiTokensHttp, createApiTokensStore } from "../state/api-tokens.ts"
 import { passwordChangedMessage } from "./password-changed-message.ts"
-import { isProviderProofFresh } from "./provider-proof-fresh.ts"
+import { isProviderProofFresh, withPasskeyProof } from "./provider-proof-fresh.ts"
+import { supportsPasskeys } from "@spy4x/platform/browser/passkey"
+import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { providerProofOf } from "@ui/provider-proof.tsx"
 import { createDevicesStore } from "../state/devices.ts"
 import { createSignInMethodsStore } from "../state/sign-in-methods.ts"
@@ -67,6 +69,9 @@ const CODE_MISSING = "Enter the code from your authenticator app"
  * Wires `ProfileScreen` to this app's session store, the auth calls and the push endpoints. Holds
  * what the user types, what is in flight and what failed; the screen only draws it.
  */
+/** Adding a passkey needs the server: the card says so while the device is offline. */
+const network = createOnlineStatus()
+
 export function ProfileView() {
   const [, navigate] = useLocation()
   const search = useSearch()
@@ -102,12 +107,17 @@ export function ProfileView() {
   const [devices] = useState(() => createDevicesStore(listSessions, localReads))
   const [devicesBusy, setDevicesBusy] = useState(false)
   const [methods] = useState(() => createSignInMethodsStore())
+  const [passkeysSupported] = useState(() => supportsPasskeys())
+  const online = network.online.value
   const [tokens] = useState(() => createApiTokensStore(apiTokensHttp, localReads))
   const groups = groupsStore.groups.value
 
   const providerProofFresh = isProviderProofFresh(methods.providerProofUntil.value)
   /** Set when the account has no password: what confirms its deletion in place of one. */
-  const providerProof = providerProofOf(methods.methods.value, providerProofFresh)
+  const providerProof = withPasskeyProof(
+    providerProofOf(methods.methods.value, providerProofFresh),
+    methods,
+  )
 
   /** Reads the signed-in devices again; a failure shows above the list and keeps the old one. */
   const loadDevices = () => devices.load()
@@ -452,6 +462,11 @@ export function ProfileView() {
         onRetry: () => void methods.load(),
         onLink: (provider, password) => void methods.link(provider, password),
         onUnlink: (id, password) => void unlinkMethod(id, password),
+        passkeysSupported,
+        online,
+        passkeyStatus: methods.passkeyStatus.value,
+        onAddPasskey: (password) => void methods.addPasskey(password),
+        onRenamePasskey: (id, name) => methods.renamePasskey(id, name),
       }}
       devices={{
         sessions: devices.sessions.value,

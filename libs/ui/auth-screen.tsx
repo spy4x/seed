@@ -104,6 +104,18 @@ export interface AuthScreenProps {
    * sign-up says so.
    */
   demo?: boolean
+  /**
+   * Signs in with a passkey (#222): "Sign in with a passkey" is the first of the other ways in on
+   * the sign-in screen. Left out, as in a browser without passkeys, there is no such button.
+   */
+  onPasskey?: () => void
+  /** The passkey sign-in waits for the device: its button says so. */
+  passkeyBusy?: boolean
+  /**
+   * The browser offers passkeys in the login field's autofill: the field gets the `webauthn`
+   * token, and the app runs the request that waits for a pick.
+   */
+  passkeyAutofill?: boolean
 }
 
 /** What the sign-in screen says about the last sign-in on this browser. */
@@ -116,6 +128,7 @@ export interface LastSignInHint {
 /** The name of a sign-in method in a sentence. */
 const METHOD_NAMES: Record<SignInMethod["kind"], string> = {
   password: "your password",
+  passkey: "a passkey",
   ...OAUTH_PROVIDER_NAMES,
 }
 
@@ -228,6 +241,9 @@ export function AuthScreen(
     lastSignIn = null,
     onForgetLastSignIn,
     demo = false,
+    onPasskey,
+    passkeyBusy = false,
+    passkeyAutofill = false,
   }: AuthScreenProps,
 ): JSX.Element {
   const copy = COPY[screen]
@@ -257,6 +273,8 @@ export function AuthScreen(
     ? <>Already have an account? {linkTo(SCREEN_PATHS.signIn, "Sign in")}</>
     : <>Lost your device? {linkTo(SCREEN_PATHS.signIn, "Back to sign in")}</>
 
+  // A passkey signs in to an account that exists: sign-up offers none.
+  const passkeyButton = screen === "sign-in" && onPasskey !== undefined
   const card = (
     <AuthCard title={copy.title} description={copy.description} after={after}>
       {screen === "sign-in" && <LastSignIn last={lastSignIn} onForget={onForgetLastSignIn} />}
@@ -272,6 +290,7 @@ export function AuthScreen(
           codeHint: "Six digits from your authenticator app.",
         }}
         names={FIELD_NAMES[screen]}
+        passkeyAutofill={passkeyAutofill}
         onSignIn={onSignIn}
         onSignUp={onSignUp}
         onOneTimeCode={onOneTimeCode}
@@ -285,8 +304,24 @@ export function AuthScreen(
           )
           : undefined}
       />
-      {screen !== "one-time-code" && providers.length > 0 && (
+      {screen !== "one-time-code" && (providers.length > 0 || passkeyButton) && (
         <ul class="flex flex-col gap-3 border-t border-subtle pt-6" aria-label="Other ways in">
+          {passkeyButton && (
+            <li>
+              <Button
+                type="button"
+                variant="secondary"
+                class="w-full"
+                busy={passkeyBusy}
+                busyLabel="Waiting for your device…"
+                disabled={busy}
+                onClick={onPasskey}
+                data-e2e="passkey-sign-in"
+              >
+                Sign in with a passkey
+              </Button>
+            </li>
+          )}
           {providers.map((provider) => (
             <li key={provider}>
               {/* A plain link, with no `navigate`: the browser must leave the app for the provider. */}

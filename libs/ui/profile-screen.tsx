@@ -369,7 +369,14 @@ export function ProfileScreen(
           />
           <SettingRow
             label="E-mail address"
-            value={<EmailValue email={email} provider={providerOnly} />}
+            value={
+              <EmailValue
+                email={email}
+                provider={providerOnly === null ? null : providerOnlyNames(
+                  methods?.methods?.filter((method) => method.kind !== "passkey"),
+                ) ?? ""}
+              />
+            }
             action={
               <Button
                 href={SCREEN_PATHS.email}
@@ -418,7 +425,8 @@ export function ProfileScreen(
                 ? (
                   <span class="flex flex-wrap items-center gap-2">
                     <Badge text="On" color="green" type="outline" />
-                    Sign-in also asks for a code from your authenticator app.
+                    Sign-in also asks for a code from your authenticator app, unless you use a
+                    passkey.
                   </span>
                 )
                 : "Off. Add a code from an authenticator app to every sign-in."}
@@ -920,7 +928,7 @@ export function ProfileScreen(
 }
 
 /**
- * The names of the providers of an account that has no password ("Google", "Google and GitHub"),
+ * The ways in of an account that has no password ("Google", "Google and GitHub", "a passkey"),
  * or `null` for an account with one, or while the sign-in methods are not known.
  */
 export function providerOnlyNames(
@@ -928,7 +936,13 @@ export function providerOnlyNames(
 ): string | null {
   if (!methods || methods.length === 0) return null
   if (methods.some((method) => method.kind === "password")) return null
-  return methods.map((method) => signInMethodName(method.kind)).join(" and ")
+  const passkeys = methods.filter((method) => method.kind === "passkey").length
+  return [
+    ...methods.flatMap((method) =>
+      method.kind === "passkey" ? [] : [signInMethodName(method.kind)]
+    ),
+    ...(passkeys === 0 ? [] : [passkeys === 1 ? "a passkey" : "passkeys"]),
+  ].join(" and ")
 }
 
 /** The address and whether it is proven, or a placeholder while it is not known. */
@@ -939,8 +953,9 @@ function EmailValue(
   if (email.email === null) {
     return (
       <span>
-        {provider === null
-          ? "None. You sign in with your username."
+        {provider === null ? "None. You sign in with your username." : provider === ""
+          // A passkey carries no address (#222).
+          ? "None."
           : `None. ${provider} shared no verified address.`}
       </span>
     )

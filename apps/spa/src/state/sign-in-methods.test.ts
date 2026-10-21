@@ -25,6 +25,14 @@ const google: SignInMethod = {
 
 const PROOF_UNTIL = "2026-10-13T08:05:00.000Z"
 
+/** What the server answers for a new passkey; the fake device reads none of it. */
+const PASSKEY_OPTIONS = {
+  rp: { id: "app.example", name: "Example" },
+  user: { id: "MQ", name: "ada@example.com", displayName: "Ada" },
+  challenge: "Y2hhbGxlbmdl",
+  pubKeyCredParams: [{ type: "public-key" as const, alg: -7 }],
+}
+
 /** A server that holds `methods`, records each call and answers as `answers` says. */
 function fakeHttp(
   methods: SignInMethod[],
@@ -52,6 +60,20 @@ function fakeHttp(
         password === undefined ? `unlink ${methodId}` : `unlink ${methodId} with ${password}`,
       )
       return answers.unlink?.(methodId, password) ?? Promise.resolve({ ok: true, signedOut: false })
+    },
+    passkeyOptions(password) {
+      calls.push(password === undefined ? `passkey options` : `passkey options with ${password}`)
+      return answers.passkeyOptions?.(password) ??
+        Promise.resolve({ ok: true, options: PASSKEY_OPTIONS })
+    },
+    addPasskey(credential) {
+      calls.push(`add passkey ${credential.id}`)
+      return answers.addPasskey?.(credential) ??
+        Promise.resolve({ ok: true, keyId: 9, name: "Chrome on Linux" })
+    },
+    renamePasskey(methodId, name) {
+      calls.push(`rename ${methodId} to ${name}`)
+      return answers.renamePasskey?.(methodId, name) ?? Promise.resolve({ ok: true, name })
     },
   }
 }

@@ -13,6 +13,11 @@ import {
   type WaitingPasswordSignUpResponse,
 } from "@domain/identity"
 import { browserStorage } from "@spy4x/platform/browser/storage"
+import {
+  getPasskey,
+  type PasskeyBrowser,
+  signalUnknownPasskey,
+} from "@spy4x/platform/browser/passkey"
 import type { KeyValueStore } from "@spy4x/platform/universal/key-value-store"
 import { apiFetch } from "./api.ts"
 import { PendingSecondFactor, sessionState, SessionUser } from "./session.ts"
@@ -147,6 +152,54 @@ export async function signIn(login: string, password: string): Promise<{
     body: JSON.stringify({ login, password }),
   })
   return handleAuthResponse(result)
+}
+
+/** How a passkey sign-in ended, as the sign-in page and the proof dialogs tell it. */
+export type PasskeySignInAnswer =
+  | { ok: true; mfaRequired: boolean }
+  /** The person closed the device's dialog, or the request was aborted: nothing to say. */
+  | { ok: false; cancelled: true }
+  | { ok: false; cancelled: false; error: string }
+
+/**
+ * Signs in with a passkey (#222). Signed out, any passkey of the site will do, and `autofill`
+ * waits for the person to pick one in the e-mail field. Signed in (`confirm`), only the person's
+ * own passkeys count, and the new session confirms the steps an account without a password
+ * confirms with a fresh sign-in. A passkey the server no longer knows is signalled to the device,
+ * so it stops offering it.
+ */
+export async function signInWithPasskey(
+  { autofill = false, confirm = false, signal, browser }: {
+    autofill?: boolean
+    confirm?: boolean
+    signal?: AbortSignal
+    browser?: PasskeyBrowser
+  } = {},
+): Promise<PasskeySignInAnswer> {
+  const base = confirm ? "/api/auth/passkeys/confirm" : "/api/auth/passkeys/sign-in"
+  const options = await apiFetch<Parameters<typeof getPasskey>[0]>(`${base}/options`, {
+    method: "POST",
+    signal,
+  })
+  if (!options.ok) return { ok: false, cancelled: false, error: options.error.message }
+  let credential
+  try {
+    credential = await getPasskey(options.data, { autofill, signal, browser })
+  } catch (_failed) {
+    // A device that refused for its own reason is told as "that did not work".
+    return { ok: false, cancelled: false, error: "" }
+  }
+  if (!credential) return { ok: false, cancelled: true }
+  const result = await apiFetch<SessionUser | PendingSecondFactor>(base, {
+    method: "POST",
+    body: JSON.stringify(credential),
+  })
+  if (!result.ok && result.status === 404 && options.data.rpId) {
+    await signalUnknownPasskey(options.data.rpId, credential.id, browser)
+  }
+  const answer = await handleAuthResponse(result)
+  if (!answer.ok) return { ok: false, cancelled: false, error: answer.error ?? "" }
+  return { ok: true, mfaRequired: answer.mfaRequired }
 }
 
 /**

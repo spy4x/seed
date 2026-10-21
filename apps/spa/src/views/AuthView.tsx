@@ -1,4 +1,5 @@
-import { useEffect, useState } from "preact/hooks"
+import { useEffect, useRef, useState } from "preact/hooks"
+import { supportsPasskeyAutofill, supportsPasskeys } from "@spy4x/platform/browser/passkey"
 import { useLocation, useSearch } from "wouter-preact"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import {
@@ -15,12 +16,21 @@ import {
   oauthNotice,
   type OAuthProviderId,
 } from "@domain/identity"
-import { checkTotp, signIn, signUp } from "../state/auth.ts"
+import {
+  checkTotp,
+  type PasskeySignInAnswer,
+  signIn,
+  signInWithPasskey,
+  signUp,
+} from "../state/auth.ts"
 import { listProviders } from "../state/sign-in-methods.ts"
 import { lastSignIn, lastSignInHint } from "../state/last-sign-in.ts"
 import { takeHandedOffAddress } from "../state/address-handoff.ts"
 import { sessionState } from "../state/session.ts"
 import { demoMode } from "../state/demo.ts"
+
+/** How long an autofill passkey request waits before it starts again with a fresh challenge. */
+const PASSKEY_AUTOFILL_RENEW_MS = 4.5 * 60_000
 
 /**
  * Wires `AuthScreen` to this app's `signIn`, `signUp` and `checkTotp`. The route picks `screen`; a
@@ -65,6 +75,61 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     }
   }, [screen])
   const session = sessionState.value
+
+  // Passkeys (#222): the button when the browser has them, and the autofill request that waits
+  // for a pick in the login field while the sign-in page is open. The server's challenge lives
+  // five minutes, so the waiting request is started again a little before that.
+  const [passkeyBusy, setPasskeyBusy] = useState(false)
+  const [autofill, setAutofill] = useState(false)
+  const waiting = useRef<AbortController | null>(null)
+  const passkeys = screen === "sign-in" && supportsPasskeys()
+  const finishPasskey = (answer: PasskeySignInAnswer) => {
+    if (answer.ok) {
+      location.href = answer.mfaRequired
+        ? withNext(AUTH_PATHS["one-time-code"], next)
+        : afterSignIn(next)
+      return true
+    }
+    if (!answer.cancelled) setError(answer.error || authFailureMessage(screen))
+    return false
+  }
+  const waitForAutofill = () => {
+    waiting.current?.abort()
+    const controller = new AbortController()
+    waiting.current = controller
+    const renew = setTimeout(waitForAutofill, PASSKEY_AUTOFILL_RENEW_MS)
+    controller.signal.addEventListener("abort", () => clearTimeout(renew))
+    void signInWithPasskey({ autofill: true, signal: controller.signal })
+      .then((answer) => {
+        if (controller.signal.aborted) return
+        clearTimeout(renew)
+        // A refusal is told, and the field offers its passkeys again.
+        if (!finishPasskey(answer)) waitForAutofill()
+      })
+  }
+  useEffect(() => {
+    if (!passkeys) return
+    let shown = true
+    void supportsPasskeyAutofill().then((offered) => {
+      if (!shown || !offered) return
+      setAutofill(true)
+      waitForAutofill()
+    })
+    return () => {
+      shown = false
+      waiting.current?.abort()
+    }
+  }, [passkeys])
+  /** "Sign in with a passkey": the autofill request steps aside for the device's own dialog. */
+  const passkeySignIn = async () => {
+    const resume = waiting.current !== null && !waiting.current.signal.aborted
+    waiting.current?.abort()
+    setError(null)
+    setPasskeyBusy(true)
+    const answer = await signInWithPasskey()
+    setPasskeyBusy(false)
+    if (!finishPasskey(answer) && resume) waitForAutofill()
+  }
 
   /** Runs one attempt: a failure shows its message, a success reloads onto the next page. */
   const attempt = async (
@@ -116,6 +181,9 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
         lastSignIn.forget()
         setLast(null)
       }}
+      onPasskey={passkeys ? () => void passkeySignIn() : undefined}
+      passkeyBusy={passkeyBusy}
+      passkeyAutofill={autofill}
       onSignIn={({ login, password }: AuthCredentials) => attempt(() => signIn(login, password))}
       onSignUp={({ login, password }: AuthCredentials) => void requestSignUp(login, password)}
       onOneTimeCode={(code) => attempt(() => checkTotp(code))}
