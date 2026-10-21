@@ -310,7 +310,7 @@ describe("AppFrame", () => {
     expect(column()).not.toContain("max-w-3xl")
   })
 
-  it("lists Notes, Tags, Activity and Groups, with Activity pointing at the selected group", async () => {
+  it("lists Overview, Notes, Activity and Groups, with Activity pointing at the selected group", async () => {
     await mount(
       <AppFrame
         user={ada}
@@ -321,9 +321,9 @@ describe("AppFrame", () => {
       </AppFrame>,
     )
     const rail = '[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"]'
-    expect(railLabels()).toEqual(["Notes", "Tags", "Activity", "Groups"])
+    expect(railLabels()).toEqual(["Overview", "Notes", "Activity", "Groups"])
     expect([...document.querySelectorAll(rail)].map((link) => link.getAttribute("href")))
-      .toEqual(["/notes", "/tags", "/groups/g-1/activity", "/groups"])
+      .toEqual(["/overview", "/notes", "/groups/g-1/activity", "/groups"])
     expect(texts('[data-e2e=rail-shell-tabbar] [data-e2e="rail-shell-entry"]')).toHaveLength(4)
   })
 
@@ -346,9 +346,9 @@ describe("AppFrame", () => {
       </AppFrame>
     )
     await mount(frame(null))
-    expect(railLabels()).toEqual(["Notes", "Tags", "Groups"])
+    expect(railLabels()).toEqual(["Overview", "Notes", "Groups"])
     await rerender(frame("g-2"))
-    expect(railLabels()).toEqual(["Notes", "Tags", "Groups"])
+    expect(railLabels()).toEqual(["Overview", "Notes", "Groups"])
   })
 
   it("follows a plain click on a navigation entry through navigate, and leaves a Ctrl-click to the browser", async () => {
@@ -356,11 +356,11 @@ describe("AppFrame", () => {
     await mount(
       <AppFrame user={ada} onSignOut={() => {}} navigate={navigate.fn}>page</AppFrame>,
     )
-    const tags = '[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"][href="/tags"]'
+    const notes = '[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"][href="/notes"]'
 
-    expect(await click(tags)).toBe(true)
-    expect(await click(tags, { ctrlKey: true })).toBe(false)
-    expect(navigate.calls).toEqual([["/tags"]])
+    expect(await click(notes)).toBe(true)
+    expect(await click(notes, { ctrlKey: true })).toBe(false)
+    expect(navigate.calls).toEqual([["/notes"]])
   })
 
   it("marks a list as the page, a note inside it as its section, and nothing for the account's pages", async () => {
@@ -505,13 +505,13 @@ describe("AppFrame", () => {
     atTop()
   })
 
-  it("names the account entry after the person, shows their name and address, and offers Profile, Theme and Sign out", async () => {
+  it("names the account entry after the person, shows their name and address, and offers Profile, Tags, Theme and Sign out", async () => {
     await mount(<AppFrame user={ada} onSignOut={() => {}} theme={themeSpy()}>page</AppFrame>)
     expect(find(ACCOUNT).getAttribute("aria-label")).toBe("Account: Ada Lovelace")
     expect(find("[data-e2e=account-menu-header]").textContent).toContain(
       "Ada Lovelaceada@example.com",
     )
-    expect(menuItems(ACCOUNT)).toEqual(["Profile", "System", "Light", "Dark", "Sign out"])
+    expect(menuItems(ACCOUNT)).toEqual(["Profile", "Tags", "System", "Light", "Dark", "Sign out"])
   })
 
   it("names a person with no name by their e-mail address, written once", async () => {

@@ -75,9 +75,10 @@ screens were redesigned against these rules in October 2026.
     a neutral "Admin" badge under the operator's avatar says where the operator is, and its tables
     use the wide column.
 12. **The rail's middle holds the daily destinations,** at most four so the phone bar keeps its
-    last slot: Notes, Tags, Activity, Groups. Activity is the selected group's log and is left out
-    when there is no selected group or the person may not read its log. Profile lives in the
-    account menu only. Below `md` the rail becomes a tab bar; its last tab is "Account" ("Admin"
+    last slot: Overview, Notes, Activity, Groups. Overview opens the selected group's overview.
+    Activity is the selected group's log and is left out when there is no selected group or the
+    person may not read its log. Profile and Tags live in the account menu; Tags is also in Notes'
+    "More actions", on `g t` and in the search palette. Below `md` the rail becomes a tab bar; its last tab is "Account" ("Admin"
     in the admin), the avatar with the unread count, opening a sheet with the groups, the
     destinations that did not fit, Notifications and the account, every row at least 44 px tall.
     Because the switcher is in that sheet, a group-scoped page names its group as the `PageHeader`
