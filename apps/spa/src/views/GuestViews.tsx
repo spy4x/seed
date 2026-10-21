@@ -31,7 +31,6 @@ import {
 } from "../state/guest.ts"
 import { createSignInMethodsStore, listProviders } from "../state/sign-in-methods.ts"
 import { sessionState } from "../state/session.ts"
-import { toasts } from "../state/toasts.ts"
 
 /** Where a new guest lands: the notes, where the starter note waits. */
 const GUEST_HOME = "/notes"
@@ -49,8 +48,10 @@ export function TryView() {
   const run = async () => {
     setState({ kind: "working" })
     const answer = await startGuest()
+    // A reload, as every sign-in does, so the app starts its modules for the new account; replacing
+    // this page keeps Back from landing on `/try` again.
     if (answer.kind === "started" || answer.kind === "already-guest") {
-      navigate(next ?? GUEST_HOME, { replace: true })
+      location.replace(next ?? GUEST_HOME)
       return
     }
     setState(answer.kind === "rate-limited" ? answer : { kind: answer.kind })
@@ -58,7 +59,7 @@ export function TryView() {
   useEffect(() => {
     const user = sessionState.value.user
     if (user && !isGuestSession(user)) return setState({ kind: "signed-in" })
-    if (user) return navigate(next ?? GUEST_HOME, { replace: true })
+    if (user) return location.replace(next ?? GUEST_HOME)
     // Once, even when a development build runs effects twice.
     if (started.current) return
     started.current = true
@@ -221,15 +222,9 @@ export function GuestTakenView() {
         const answer = await switchFromGuest(choice, password, otp)
         setBusy(false)
         if (!answer.ok) return setError(answer.error)
-        const moved = answer.result.movedGroups
-        if (moved > 0) {
-          toasts.success({
-            title: "Groups moved",
-            body: `${moved} ${moved === 1 ? "group" : "groups"} moved from your guest account.`,
-            dataE2E: "guest-groups-moved",
-          })
-        }
-        navigate(SCREEN_PATHS.profile, { replace: true })
+        // Another account now: a reload starts the app for it, as a sign-in does. The Profile says
+        // how many groups came along (`?moved=`).
+        location.replace(`${SCREEN_PATHS.profile}?moved=${answer.result.movedGroups}`)
       }}
     />
   )

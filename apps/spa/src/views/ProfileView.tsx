@@ -149,8 +149,22 @@ export function ProfileView() {
   }, [session.user?.id, session.isMfaRequired])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
+  // A switch from a guest account (#224) lands here with `?moved=`, the groups that came along.
   useEffect(() => {
-    const notice = oauthNotice(new URLSearchParams(search).get(OAUTH_NOTICE_PARAM))
+    const query = new URLSearchParams(search)
+    const moved = Number(query.get("moved"))
+    if (query.has("moved")) {
+      toasts.success({
+        title: "Signed in to your account",
+        body: moved > 0
+          ? `${moved} ${moved === 1 ? "group" : "groups"} moved from your guest account.`
+          : "Your guest account was deleted.",
+        dataE2E: "guest-switched",
+      })
+      navigate(SCREEN_PATHS.profile, { replace: true })
+      return
+    }
+    const notice = oauthNotice(query.get(OAUTH_NOTICE_PARAM))
     if (!notice) return
     const toast = { body: OAUTH_NOTICES[notice], dataE2E: `sign-in-method-${notice}` }
     if (notice === "linked") toasts.success({ title: "Sign-in method linked", ...toast })
