@@ -25,7 +25,10 @@ import {
   GroupCreateCommand,
   GroupDeleteCommand,
   GroupDeletedListQuery,
+  GroupExportCommand,
   GroupGetQuery,
+  GroupImportCheckQuery,
+  GroupImportCommand,
   GroupInvitationAcceptCommand,
   GroupInvitationCreateCommand,
   GroupInvitationDeclineCommand,
@@ -67,6 +70,8 @@ import { preferencesGetHandler } from "@api/cqrs/query-handlers/preferences-get.
 import { preferencesSaveHandler } from "@api/cqrs/command-handlers/preferences-save.ts"
 import { preferencesDeviceHandler } from "@api/cqrs/command-handlers/preferences-device.ts"
 import { groupCreateHandler } from "@api/cqrs/command-handlers/group-create.ts"
+import { groupExportHandler, groupImportHandler } from "@api/cqrs/command-handlers/group-files.ts"
+import { groupImportCheckHandler } from "@api/cqrs/query-handlers/group-import-check.ts"
 import { groupGetHandler } from "@api/cqrs/query-handlers/group-get.ts"
 import { groupListHandler } from "@api/cqrs/query-handlers/group-list.ts"
 import { groupSelectHandler } from "@api/cqrs/command-handlers/group-select.ts"
@@ -206,6 +211,8 @@ commandBus.register(GroupMemberRemoveCommand, groupMemberRemoveHandler)
 commandBus.register(GroupLeaveCommand, groupLeaveHandler)
 commandBus.register(GroupTransferCommand, groupTransferHandler)
 commandBus.register(GroupMoveAllCommand, groupMoveAllHandler)
+commandBus.register(GroupExportCommand, groupExportHandler)
+commandBus.register(GroupImportCommand, groupImportHandler)
 commandBus.register(
   GroupInvitationCreateCommand,
   createInvitationCreateHandler(invitationDependencies),
@@ -238,6 +245,7 @@ queryBus.register(OnboardingGetQuery, onboardingGetHandler)
 queryBus.register(PreferencesGetQuery, preferencesGetHandler)
 queryBus.register(GroupListQuery, groupListHandler)
 queryBus.register(GroupGetQuery, groupGetHandler)
+queryBus.register(GroupImportCheckQuery, groupImportCheckHandler)
 queryBus.register(GroupSelectedQuery, groupSelectedHandler)
 queryBus.register(GroupDeletedListQuery, groupDeletedListHandler)
 queryBus.register(GroupMembersQuery, groupMembersHandler)

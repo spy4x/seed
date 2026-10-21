@@ -320,3 +320,47 @@ export interface TagRepository {
   delete(input: TagDeleteInput, actorId: number): Promise<DeletedTag>
 }
 // #endregion Ports
+
+// #region Export file
+/**
+ * One tag in a group's export file: its id in the file, which the file's notes name it by, its
+ * name and colour, and when it was written.
+ */
+export const tagExportEntrySchema = type({
+  id: UUID_PATTERN,
+  ...tagFields,
+  createdAt: "string.date.iso.parse",
+  updatedAt: "string.date.iso.parse",
+  "+": "reject",
+})
+export type TagExportEntry = typeof tagExportEntrySchema.infer
+
+/** Checks one tag of a file with the rules of a create. Throws `TagError("INVALID_REQUEST")`. */
+export function parseTagExportEntry(value: unknown): TagExportEntry {
+  return parseTagRequest(tagExportEntrySchema, value) as TagExportEntry
+}
+
+/**
+ * What is wrong across a file's tags, by index: a name another tag already has, compared without
+ * regard to case as the group's unique index does, and more than {@link TAG_MAX_PER_GROUP} tags
+ * (index `null`: the tags as a whole).
+ */
+export function tagExportProblems(
+  tags: readonly Pick<TagExportEntry, "name">[],
+): { index: number | null; problem: string }[] {
+  const problems: { index: number | null; problem: string }[] = []
+  if (tags.length > TAG_MAX_PER_GROUP) {
+    problems.push({
+      index: null,
+      problem: `the file holds ${tags.length} tags, and a group holds at most ${TAG_MAX_PER_GROUP}`,
+    })
+  }
+  const names = new Set<string>()
+  tags.forEach((tag, index) => {
+    const name = tag.name.toLowerCase()
+    if (names.has(name)) problems.push({ index, problem: `another tag in the file is called this` })
+    names.add(name)
+  })
+  return problems
+}
+// #endregion Export file

@@ -627,3 +627,29 @@ export interface GroupRoleLookup {
   roleOf(groupId: string, userId: number): Promise<GroupRole | null>
 }
 // #endregion Ports
+
+// #region Export file
+/**
+ * One note in a group's export file (`docs/aggregates.md`, "Making an aggregate exportable"): its
+ * id in the file, its text, the ids of its tags in the file, and when it was written. Who wrote it
+ * stays out: the file holds no person. The dates come back on import, so the list keeps its order.
+ */
+export const noteExportEntrySchema = type({
+  id: UUID_PATTERN,
+  title: "string",
+  body: "string",
+  tagIds: type(UUID_PATTERN).array(),
+  createdAt: "string.date.iso.parse",
+  updatedAt: "string.date.iso.parse",
+  "+": "reject",
+})
+export type NoteExportEntry = typeof noteExportEntrySchema.infer
+
+/**
+ * Checks one note of a file with the rules of a create ({@link parseNoteRequest}): lengths, the
+ * characters, at most {@link NOTE_TAG_MAX} tags. Throws `NoteError("INVALID_REQUEST")`.
+ */
+export function parseNoteExportEntry(value: unknown): NoteExportEntry {
+  return parseNoteRequest(noteExportEntrySchema, value) as NoteExportEntry
+}
+// #endregion Export file

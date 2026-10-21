@@ -12,6 +12,7 @@ import {
   DeletedGroupSummary,
   FirstGroupInput,
   Group,
+  GROUP_FILE_EVENTS,
   GROUP_MEMBER_PREVIEW_LIMIT,
   GROUP_RESTORE_DAYS,
   GroupAccess,
@@ -348,6 +349,26 @@ export class PostgresGroupRepository implements GroupRepository {
       const repository = new PostgresGroupRepository(transaction)
       return await repository.createInCurrentTransaction(input, actorId)
     })
+  }
+
+  /**
+   * Creates the group an import fills (#230), owned by the importer, with `imported_at` set, and
+   * records its change under `group.imported`. Inside the import's transaction only: the caller
+   * writes the file's entities stamped with the answered sequence, then the audit event, so the
+   * group and all it holds are kept or undone together. A taken id fails the statement.
+   */
+  async createImported(
+    input: CreateGroupInput,
+    actorId: number,
+  ): Promise<{ group: GroupSummary; changeSequence: string }> {
+    await this.assertActiveUser(actorId)
+    const inserted = (await this.insertGroup(input, actorId, false))!
+    await this.sql`UPDATE groups SET imported_at = now() WHERE id = ${inserted.id}`
+    const sequence = await this.recordChange(inserted.id, actorId, GROUP_FILE_EVENTS.imported)
+    return {
+      group: toSummary(withStampedSequence(inserted, sequence), GroupRole.OWNER),
+      changeSequence: sequence,
+    }
   }
 
   async createFirst(input: FirstGroupInput, userId: number): Promise<void> {

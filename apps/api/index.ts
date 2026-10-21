@@ -16,6 +16,8 @@ import { createNotificationsRoute } from "./routes/notifications.ts"
 import { notificationCursor } from "./services/notification-cursor.ts"
 import { createGroupActivityRoute } from "./routes/group-activity.ts"
 import { createGroupsRoute } from "./routes/groups.ts"
+import { createGroupFilesRoute } from "./routes/group-files.ts"
+import { createGroupImportRateLimits } from "./features/groups/import-rate-limits.ts"
 import { createNotesRoute } from "./routes/notes.ts"
 import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
@@ -320,6 +322,19 @@ app.route(
     provider: billingSetup.provider,
     applyEvent: (event) => db.billing.applyEvent(event),
     log,
+  }),
+)
+// Before the groups route: it shares `/groups`, and its own routes match none of these paths.
+app.route(
+  "/groups",
+  createGroupFilesRoute({
+    exportGroup: (command) => commandBus.execute(command),
+    check: (query) => queryBus.execute(query),
+    importGroup: (command) => commandBus.execute(command),
+    rateLimits: createGroupImportRateLimits({
+      store: (keyPrefix) => createRedisRateLimitStore(kv, { keyPrefix }),
+    }),
+    expectedOrigin,
   }),
 )
 app.route(
