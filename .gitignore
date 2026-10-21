@@ -27,6 +27,7 @@ apps/admin/security-headers.conf
 e2e/results
 e2e/report
 playwright-report
+.lighthouseci
 
 # Logs
 *.log

@@ -53,6 +53,7 @@
     "mpa:build": "deno task --cwd apps/mpa build",
     "mpa:start": "deno task --cwd apps/mpa start",
     "mpa:check": "deno task --cwd apps/mpa check",
+    "lighthouse": "apps/mpa/lighthouse/run.sh", // the public website's Lighthouse budget, on a built MPA; see the script
     // #endregion apps/mpa
 
     // #region Scripts
