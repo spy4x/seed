@@ -60,8 +60,9 @@ export const DEFAULT_PREFERENCES: Preferences = {
 }
 
 /**
- * The largest value the server stores, in bytes of JSON. The display keys need about 100 and a
- * full overview layout about 1,900, so the row cannot be used as free storage.
+ * The largest value the server stores, in bytes of JSON. The display keys need about 100, and an
+ * overview layout of 32 widgets with ids of about 30 characters about 1,800 (the widget ids of
+ * today are 11 to 15 characters), so the row cannot be used as free storage.
  */
 export const PREFERENCES_MAX_BYTES = 2048
 
