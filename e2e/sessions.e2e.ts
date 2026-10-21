@@ -86,7 +86,7 @@ test.describe("signed-in devices", () => {
       await expect(phonePage.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       await signIn(page, email, password)
-      await gotoApp(page, "/", page.locator("[data-e2e=sessions]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=sessions]"))
       const sessions = page.locator("[data-e2e=sessions]")
       await expect(sessions.locator("[data-e2e=session-current]")).toContainText("This device")
       const phoneRow = sessions.locator("dl > div", { hasText: "Safari on iPhone" })
@@ -108,7 +108,7 @@ test.describe("signed-in devices", () => {
       expect(await signedIn(phone)).toBe(false)
       // The server closes the phone's socket as soon as the session ends (about 20 ms here). The
       // hub's periodic check every 15 seconds would land within half a second of it only by chance.
-      await expect(phonePage.locator("[data-e2e=signin-required]")).toBeVisible({ timeout: 8_000 })
+      await expect(phonePage.locator("[data-e2e=auth-form-login]")).toBeVisible({ timeout: 8_000 })
       await expect(phonePage.locator("[data-e2e=shell-ws-status]")).toHaveCount(0)
       expect(socketClosedAt).toBeGreaterThan(0)
       expect(socketClosedAt - endedAt).toBeLessThan(500)
@@ -131,7 +131,7 @@ test.describe("signed-in devices", () => {
         await signInOver(other, email)
       }
       await signIn(page, email, password)
-      await gotoApp(page, "/", page.locator("[data-e2e=sessions]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=sessions]"))
       const rows = page.locator("[data-e2e=sessions] dl > div")
       await expect(rows).toHaveCount(3)
 
@@ -159,7 +159,7 @@ test.describe("signed-in devices", () => {
       phone = await device(browser, SAFARI_IPHONE)
       await signInOver(phone, email)
       await signIn(page, email, password)
-      await gotoApp(page, "/", page.locator("[data-e2e=password-open]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=password-open]"))
 
       const change = async (from: string, to: string, signOutOthers: boolean) => {
         await page.locator("[data-e2e=password-open]").click()
