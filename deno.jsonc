@@ -69,6 +69,7 @@
     "vapid-key:create": "deno run -W=infra/configs/vapid.json ./infra/scripts/vapid-keys-create.ts",
     "load": "deno run -R=./infra/envs --allow-run=docker,podman ./tests/load/run.ts", // k6 load scenarios against the local dev stack, and the Postgres numbers; see docs/capacity.md
     "video:admin": "deno run -A docs/screenshots/admin-video.ts", // records the website's admin panel video from a local stack, see the script
+    "demo-video": "deno run -A media/demo/recipe/record.ts", // records the README's demo video into media/demo (--encode re-encodes the last take), see media/demo/recipe/README.md
     "compose": "deno run -R=./infra,./.volumes --allow-run=docker,podman --allow-net=127.0.0.1,0.0.0.0 ./infra/scripts/compose.ts", // reads .volumes to refuse starting Postgres 18 beside unmoved Postgres 16 data; binds the host ports the project publishes, for a moment, to refuse a start when one is taken
     "db:upgrade-18": "deno run -R=./infra,./.volumes,./.db-upgrade -W=./.db-upgrade --allow-run=docker,podman ./infra/scripts/db-upgrade-18.ts", // once per server: moves the data from Postgres 16 to 18, see docs/postgres-18-upgrade.md
     "proxy:network": "deno run -R=./infra --allow-run=docker,podman ./infra/scripts/proxy-network.ts", // creates the shared "proxy" network when it is missing
@@ -241,6 +242,7 @@
     "build",
     "docs",
     "infra",
+    "media/demo",
     "*.lock"
   ],
   // Everything under infra stays out of fmt, lint and type checks; only infra/scripts' tests run.
