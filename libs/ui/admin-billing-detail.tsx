@@ -370,10 +370,10 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
   )
 }
 
-/** `Pro, 4 seats`. */
+/** `Pro, 4 members`. */
 function planLine(customer: AdminBillingCustomer): string {
   const seats = seatsOf(customer)
-  return `${billingPlanName(customer.planId)}, ${seats} ${seats === 1 ? `seat` : `seats`}`
+  return `${billingPlanName(customer.planId)}, ${seats} ${seats === 1 ? `member` : `members`}`
 }
 
 /** `4 × €9.00 = €36.00`, or what a trial would pay. */
