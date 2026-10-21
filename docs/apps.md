@@ -9,7 +9,7 @@ The template ships two web apps over the same API, with different jobs.
 - **The SPA** (`apps/spa`, Preact and Vite) is the product. Everything a signed-in person does
   happens there: sign-up and sign-in, notes, groups, billing, the profile. People see each other's
   changes live over a WebSocket ([ADR 002](decisions/002-realtime-transport-and-sync.md)), and
-  it works offline ([docs/offline.md](offline.md)). Compose serves it at `DOMAIN`.
+  it works offline ([the offline guide](offline.md)). Compose serves it at `DOMAIN`.
 - **The MPA** (`apps/mpa`, Fresh) is the product's public website: the home page, pricing read
   from the `PLANS` catalog, privacy and terms pages to adapt, `robots.txt`, `sitemap.xml`,
   `llms.txt` and the newsletter. Every page is rendered on the server and works with JavaScript

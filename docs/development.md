@@ -12,7 +12,7 @@ Metrics and logs go to VictoriaMetrics and VictoriaLogs, with Grafana on top at
 `http://localhost:3000` ([Admin consoles](deploy.md#admin-consoles)). `COMPOSE_PROFILES=monitoring`
 in the env file runs those three in this project; without it, `VM_REMOTE_WRITE_URL` and `VLOGS_URL`
 send the same metrics and logs to a monitoring server you already have.
-[docs/stack.md](stack.md#monitoring) describes both modes. node-exporter and cAdvisor watch the
+[The stack guide](stack.md#monitoring) describes both modes. node-exporter and cAdvisor watch the
 whole host, so they are off by default: add `host-monitoring` to `COMPOSE_PROFILES` to start them
 too.
 
@@ -90,7 +90,7 @@ deno task e2e:report                       # open the report of the last run
 
 The specs that start the app with no network, `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and
 `e2e/search-offline.e2e.ts`, run against the built SPA, the image a deploy serves, and every other
-spec against the dev server ([docs/offline.md](offline.md), "The app shell", says why). A run that
+spec against the dev server ([the offline guide](offline.md), "The app shell", says why). A run that
 needs both makes two Playwright passes, the dev server first and then the built SPA in its place, so
 `deno task e2e:local` alone still runs every spec. It fails when either pass fails, and its last
 lines give the counts of each pass. The report of the second pass is in `e2e/report/offline`, which
@@ -106,7 +106,7 @@ one.
 
 A merge needs the pull-request check, so that check runs a smoke set; the whole suite runs after
 the merge. Every step of the pipeline, browser tests or not, is listed in
-[docs/woodpecker-ci-setup.md](woodpecker-ci-setup.md).
+[the CI guide](woodpecker-ci-setup.md).
 
 | When                    | Step        | Specs                                                      |
 | ----------------------- | ----------- | ---------------------------------------------------------- |
@@ -134,7 +134,7 @@ in a red step may be incomplete: run the specs here for the rest. Before you add
 set, run it ten times in a row (`deno task e2e:local e2e/<spec> --repeat-each=10`): one that fails
 once on a healthy branch blocks every pull request.
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for the rules, and [docs/handoff.md](handoff.md) for
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for the rules, and [the handoff](handoff.md) for
 the state of the migration and the traps in this codebase. To add a product feature, follow
-[docs/aggregates.md](aggregates.md): it walks through every file of the notes aggregate, in
+[the aggregate guide](aggregates.md): it walks through every file of the notes aggregate, in
 order.

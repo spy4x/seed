@@ -88,7 +88,7 @@ Steps: `guard` (the tagged commit must be an ancestor of `main`), `build-base`, 
 `build-api`, `build-spa` and `build-mpa` in parallel, each followed by its `publish-*`. Kaniko
 builds into a tar file without any secret, and crane, the only step with the token, pushes it. A
 version without a pre-release suffix also gets `latest`. The worker and the migration run the API
-image, so there is no worker image. How to cut a release: [docs/deploy.md](deploy.md#releases).
+image, so there is no worker image. How to cut a release: [the deploy guide](deploy.md#releases).
 
 ## Changing the Deno version
 
