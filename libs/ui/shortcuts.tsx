@@ -1,4 +1,5 @@
 import type { JSX } from "preact"
+import { useEffect, useRef } from "preact/hooks"
 import { parseHotkey } from "@spy4x/platform/browser/hotkeys"
 import { ShortcutsDialog } from "@spy4x/preact-ui/shortcuts-dialog"
 import { ToggleField } from "@spy4x/preact-ui/toggle-field"
@@ -86,21 +87,37 @@ export interface ShortcutsProps {
 /**
  * The "Keyboard shortcuts" dialog: the rows that work now ({@link activeRows}), the same list the
  * app binds, so it never shows a key that does nothing. Its footer says when shortcuts do not
- * work and holds the switch that turns the single keys off on this device.
+ * work and holds the switch that turns the single keys off on this device; the dialog keeps its
+ * height while it is open after the switch is pressed, so the switch stays under the pointer.
  */
 export function ShortcutsList(
   { rows, open, onClose, singleKeys, onSingleKeys }: ShortcutsProps,
 ): JSX.Element {
   const active = activeRows(rows, singleKeys)
+  // The switch drops or restores rows, and the dialog is centred, so it would jump away from the
+  // pointer. A press on the switch pins the dialog's height until it closes, and the footer keeps
+  // to the bottom (`[&>footer]:mt-auto`), so the switch stays where it was.
+  const pinned = useRef<HTMLDialogElement | null>(null)
+  useEffect(() => {
+    if (open || !pinned.current) return
+    pinned.current.style.removeProperty("min-height")
+    pinned.current = null
+  }, [open])
+  const keepHeight = (event: JSX.TargetedMouseEvent<HTMLDivElement>) => {
+    const dialog = event.currentTarget.closest("dialog")
+    if (!dialog) return
+    dialog.style.minHeight = `${dialog.offsetHeight}px`
+    pinned.current = dialog
+  }
   return (
     <ShortcutsDialog
       open={open}
       onClose={onClose}
       shortcuts={active}
       title={SHORTCUT_TEXT.title}
-      class="sm:max-w-lg"
+      class="sm:max-w-lg [&>footer]:mt-auto"
       footer={
-        <div class="w-full" data-e2e="shortcuts-footer">
+        <div class="w-full" data-e2e="shortcuts-footer" onClickCapture={keepHeight}>
           <ToggleField
             id="single-key-shortcuts"
             label={SHORTCUT_TEXT.switchLabel}

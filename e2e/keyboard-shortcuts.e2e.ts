@@ -99,6 +99,33 @@ test.describe("keyboard shortcuts", () => {
     }
   })
 
+  test("the single-key switch stays under the pointer when it is turned off and on", async ({ page, request }) => {
+    const email = address("switch")
+    try {
+      await signUp(request, email)
+      await signIn(page, email, password)
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 900 })
+        await press(page, "?")
+        const list = page.getByRole("dialog", { name: "Keyboard shortcuts" })
+        const toggle = list.getByRole("switch", { name: "Single-key shortcuts" })
+        await expect(toggle).toBeVisible()
+        const before = await toggle.boundingBox()
+        await toggle.click()
+        await expect(toggle).toHaveAttribute("aria-checked", "false")
+        const off = await toggle.boundingBox()
+        await toggle.click()
+        await expect(toggle).toHaveAttribute("aria-checked", "true")
+        const on = await toggle.boundingBox()
+        expect([off?.y, on?.y], `width ${width}`).toEqual([before?.y, before?.y])
+        await page.keyboard.press("Escape")
+        await expect(list).toBeHidden()
+      }
+    } finally {
+      await cleanup(request, email)
+    }
+  })
+
   test("the shortcuts dialog and the New note dialog, with an error and after an add, pass axe-core in light and dark", async ({ page, request }) => {
     const email = address("axe")
     try {

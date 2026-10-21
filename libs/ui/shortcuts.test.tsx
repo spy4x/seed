@@ -57,15 +57,17 @@ const ROWS: ShortcutRow[] = [
 ]
 
 /** The dialog open over `rows`; returns the switch's reports. */
-async function mount(singleKeys: boolean, rows = ROWS): Promise<boolean[]> {
+async function mount(singleKeys: boolean, rows = ROWS, open = true): Promise<boolean[]> {
   const toggled: boolean[] = []
-  root = document.createElement("div")
-  document.body.append(root)
+  if (!root) {
+    root = document.createElement("div")
+    document.body.append(root)
+  }
   await act(() =>
     render(
       <ShortcutsList
         rows={rows}
-        open
+        open={open}
         onOpen={() => {}}
         onClose={() => {}}
         singleKeys={singleKeys}
@@ -122,6 +124,18 @@ describe("the Keyboard shortcuts dialog", () => {
       .toBe(SHORTCUT_TEXT.switchLabel)
     await act(() => toggle.click())
     expect(toggled).toEqual([false])
+  })
+})
+
+describe("the Keyboard shortcuts dialog's height", () => {
+  it("is pinned when the switch is pressed, so the switch stays put, and freed once it closes", async () => {
+    await mount(true)
+    const dialog = document.querySelector<HTMLDialogElement>("dialog")!
+    expect(dialog.style.minHeight).toBe("")
+    await act(() => document.querySelector<HTMLButtonElement>("[role=switch]")!.click())
+    expect(dialog.style.minHeight).toMatch(/^\d+px$/)
+    await mount(false, ROWS, false)
+    expect(dialog.style.minHeight).toBe("")
   })
 })
 
