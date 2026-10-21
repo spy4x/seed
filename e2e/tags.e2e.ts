@@ -54,20 +54,25 @@ test.describe("tags", () => {
       await expect(notes.labels("Trip")).toHaveText(["Home"])
       await expect(notes.labels("Plan")).toHaveCount(0)
 
-      // The filter narrows the local list and is kept in the address.
-      await notes.filterChip("Home").click()
-      await expect(page).toHaveURL(/tags=/)
+      // The filter narrows the local list and is kept in the address, one `tag=` per tag.
+      await notes.toggleTagFilter("Home")
+      await expect(page).toHaveURL(/[?&]tag=/)
       await expect(notes.titles).toHaveText(["Trip", "Groceries"])
-      await notes.filterChip("Urgent").click()
+      // Any of the tags by default; All of these tags narrows to the notes with every one.
+      await notes.toggleTagFilter("Urgent")
+      await expect(notes.titles).toHaveText(["Trip", "Groceries"])
+      await page.locator("[data-e2e=filter-tags]").click()
+      await page.getByRole("menuitemradio", { name: "All of these tags" }).click()
+      await page.keyboard.press("Escape")
       await expect(notes.titles).toHaveText(["Groceries"])
       // The address is written a frame after the click; wait for both tags before reloading.
-      await expect(page).toHaveURL(/tags=[^&]*(%2C|,)/)
+      await expect(page).toHaveURL(/tag=[^&]+&(.*&)?tag=/)
+      await expect(page).toHaveURL(/match=all/)
       await page.reload()
       await expect(notes.titles).toHaveText(["Groceries"])
-      await notes.filterChip("Urgent").click()
-      await notes.filterChip("Home").click()
+      await page.locator("[data-e2e=filter-clear]").click()
       await expect(notes.titles).toHaveCount(3)
-      await expect(page).not.toHaveURL(/tags=/)
+      await expect(page).not.toHaveURL(/tag=|match=/)
 
       // Deleting a tag takes it off the notes and leaves the notes (the integration test proves
       // their versions stay); focus moves to the next tag's menu, not to the page's body.

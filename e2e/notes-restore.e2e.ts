@@ -72,11 +72,8 @@ test.describe("restoring deleted notes", () => {
 
       const deleteTrip = async () => {
         await ownerPage.locator(`[data-e2e=note-${noteId}] [data-e2e=note-menu]`).click()
+        // A row's Delete needs no confirmation: Undo in the toast takes it back.
         await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
-        await ownerPage.locator("[data-e2e=note-delete-dialog]").getByRole("button", {
-          name: "Delete note",
-          exact: true,
-        }).click()
         await expect(ownerTitles).toHaveCount(0)
         await expect(memberTitles).toHaveCount(0, { timeout: 5_000 })
       }
@@ -125,10 +122,6 @@ test.describe("restoring deleted notes", () => {
       await expect(ownerTitles).toHaveText(["Trip"])
       await ownerPage.locator(`[data-e2e=note-${noteId}] [data-e2e=note-menu]`).click()
       await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
-      await ownerPage.locator("[data-e2e=note-delete-dialog]").getByRole("button", {
-        name: "Delete note",
-        exact: true,
-      }).click()
       await expect(ownerTitles).toHaveCount(0)
       await ownerPage.locator("[data-e2e=note-undo-toast]").getByRole("button", {
         name: "Undo",

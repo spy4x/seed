@@ -88,8 +88,11 @@ test.describe("moving notes to another group", () => {
       // One note, from its own page's menu: the person lands on the list, which no longer has it.
       await ownerPage.getByRole("link", { name: "One", exact: true }).click()
       await ownerPage.locator("[data-e2e=note-menu]").click()
-      await ownerPage.getByRole("menuitem", { name: "Move to Target" }).click()
+      await ownerPage.getByRole("menuitem", { name: "Move to group…" }).click()
+      await ownerPage.locator("[data-e2e=note-move-dialog]").getByRole("button", { name: "Target" })
+        .click()
       await expect(ownerPage).toHaveURL("/notes")
+      await expect(ownerPage.locator("[data-e2e=note-moved]")).toContainText("moved to Target")
       await expect(ownerTitles).toHaveCount(3)
       await expect(ownerPage.getByRole("link", { name: "One", exact: true })).toHaveCount(0)
       await expect(sourceTitles).toHaveCount(3, { timeout: 5_000 })
@@ -104,14 +107,16 @@ test.describe("moving notes to another group", () => {
 
       // One note, from its row's menu on the list.
       await ownerPage.getByRole("button", { name: "Actions for Two" }).click()
-      await ownerPage.getByRole("menuitem", { name: "Move to Target" }).click()
+      await ownerPage.getByRole("menuitem", { name: "Move to group…" }).click()
+      await ownerPage.locator("[data-e2e=note-move-dialog]").getByRole("button", { name: "Target" })
+        .click()
       await expect(ownerTitles).toHaveCount(2)
       await expect(targetTitles).toHaveCount(2, { timeout: 5_000 })
 
       // Ticked notes, from the list: tick boxes appear only once the person asks to select.
       await expect(ownerPage.locator("[data-e2e=note-select]")).toHaveCount(0)
       await ownerPage.getByRole("button", { name: "More actions" }).click()
-      await ownerPage.getByRole("menuitem", { name: "Select notes to move" }).click()
+      await ownerPage.getByRole("menuitem", { name: "Select notes" }).click()
       // Nothing ticked yet: a hint, and no way to move nothing.
       await expect(ownerPage.getByText("Tick the notes to move")).toBeVisible()
       await expect(ownerPage.locator("[data-e2e=notes-move-submit]")).toHaveCount(0)
@@ -124,14 +129,12 @@ test.describe("moving notes to another group", () => {
       await expect(targetTitles).toHaveCount(4, { timeout: 5_000 })
       await expect(sourcePage.getByText("No notes yet")).toBeVisible({ timeout: 5_000 })
 
-      // Delete from a row's menu asks first; the members of the group see it go.
+      // Delete from a row's menu goes at once, with Undo in a toast; the members see it go.
       await openNotes(ownerPage, "Target")
       await expect(ownerTitles).toHaveCount(4)
       await ownerPage.getByRole("button", { name: "Actions for One" }).click()
       await ownerPage.getByRole("menuitem", { name: "Delete" }).click()
-      const dialog = ownerPage.locator("[data-e2e=note-delete-dialog]")
-      await expect(dialog).toContainText(`"One" will be deleted for everyone in Target.`)
-      await dialog.getByRole("button", { name: "Delete note", exact: true }).click()
+      await expect(ownerPage.locator("[data-e2e=note-undo-toast]")).toBeVisible()
       await expect(ownerTitles).toHaveCount(3)
       await expect(ownerPage.getByRole("link", { name: "One", exact: true })).toHaveCount(0)
       await expect(targetTitles).toHaveCount(3, { timeout: 5_000 })

@@ -71,10 +71,10 @@ test.describe("tags with the WebSocket module switched off", () => {
       await notes.create("Plan", [])
       await expect(notes.labels("Groceries")).toHaveText(["Urgent"])
 
-      await notes.filterChip("Urgent").click()
+      await notes.toggleTagFilter("Urgent")
       await expect(notes.titles).toHaveText(["Groceries"])
       // The address is written a frame after the click; wait for it before reloading.
-      await expect(page).toHaveURL(/tags=/)
+      await expect(page).toHaveURL(/[?&]tag=/)
       await page.reload()
       await expect(notes.titles).toHaveText(["Groceries"])
 
@@ -82,7 +82,7 @@ test.describe("tags with the WebSocket module switched off", () => {
       expect((await serverNotes(page, groupId)).find((n) => n.title === "Groceries")?.tagIds)
         .toEqual([tag.id])
 
-      await notes.filterChip("Urgent").click()
+      await notes.toggleTagFilter("Urgent")
       await tags.openFromNotes()
       await tags.remove("Urgent")
       await expect(tags.names).toHaveCount(0)
