@@ -7,11 +7,13 @@ import { DEFAULT_TAG_COLOR } from "@domain/tags"
 import { TagEditorScreen } from "@ui/tag-editor-screen.tsx"
 import { TAG_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
+import { notesStore } from "../state/notes.ts"
 import { selectionStore } from "../state/selection.ts"
 import { tagsStore } from "../state/tags.ts"
 import { toasts } from "../state/toasts.ts"
 import { currentLayer, OfflineStatus } from "../modules.ts"
 import { isSpaPath } from "./spa-paths.ts"
+import { deleteAndAnnounce } from "./tag-delete.ts"
 
 const network = createOnlineStatus()
 
@@ -93,7 +95,7 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
         deleting={store.deleting.value !== null}
         onDelete={canWrite && tag
           ? async () => {
-            if (await store.remove(tag.id)) navigate(TAG_PATHS.list)
+            if (await deleteAndAnnounce(store, tag.id, notesStore, toasts)) navigate(TAG_PATHS.list)
           }
           : undefined}
         offline={!network.online.value && currentLayer() !== null}

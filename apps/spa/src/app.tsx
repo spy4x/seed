@@ -276,6 +276,10 @@ export function App() {
       <Toastr
         toasts={toasts.list.value}
         onDismiss={toasts.remove}
+        // From `md` up, where the rail replaces the phone's tab bar, the stack sits at the bottom
+        // right, clear of the page header's "More actions" menu (#236); on a phone it stays at
+        // the top, clear of the tab bar.
+        class="md:top-auto! md:bottom-(--toastr-gap)!"
         dataE2E="toasts"
       />
       <SWUpdater />

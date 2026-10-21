@@ -70,18 +70,19 @@ screens were redesigned against these rules in October 2026.
     person's role) and focus ring, opening a short menu of checked items (`DropdownItem checked`)
     ending with "All groups" and "New group". The bottom zone is the connection while it is not
     live, "Notifications" with its unread count, and the account: the avatar opening the library's
-    `AccountMenu` (the name and address, then Profile, the theme and Sign out). The skip link
+    `AccountMenu` (the name and address, which open the profile, then Keyboard shortcuts and Sign
+    out; the theme is chosen on the profile). The admin's menu keeps the theme. The skip link
     jumps past the rail into `<main>`. The admin's rail starts with Dashboard and has no switcher;
     a neutral "Admin" badge under the operator's avatar says where the operator is, and its tables
     use the wide column.
 12. **The rail's middle holds the daily destinations,** at most four so the phone bar keeps its
     last slot: Notes, Tags, Activity, Groups. Activity is the selected group's log and is left out
-    when there is no selected group or the person may not read its log. Profile lives in the
-    account menu only. Below `md` the rail becomes a tab bar; its last tab is "Account" ("Admin"
-    in the admin), the avatar with the unread count, opening a sheet with the groups, the
-    destinations that did not fit, Notifications and the account, every row at least 44 px tall.
-    Because the switcher is in that sheet, a group-scoped page names its group as the `PageHeader`
-    subtitle.
+    when there is no selected group or the person may not read its log. The profile opens from
+    the account menu's name and address only. Below `md` the rail becomes a tab bar; its last tab
+    is "Account" ("Admin" in the admin), the avatar with the unread count, opening a sheet with
+    the groups, the destinations that did not fit, Notifications and the account, every row at
+    least 44 px tall. Because the switcher is in that sheet, a group-scoped page names its group as
+    the `PageHeader` subtitle.
 
 ## Spacing rhythm
 
