@@ -12,6 +12,7 @@ import { renderToString } from "preact-render-to-string"
 import type { PlanRefusal } from "@domain/billing"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteRow, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
+import { NO_NOTE_FILTERS, type NoteFilters } from "./notes-filter.ts"
 import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters } from "@spy4x/time/format"
@@ -159,6 +160,12 @@ const groceries = {
   version: 3,
   updatedAt: "2026-10-01T10:00:00.000Z",
 }
+/** Opens a row's menu, chooses "Move to group…" and picks `groupName` in the dialog. */
+async function moveFromRow(selector: string, groupName: string): Promise<void> {
+  await click(`${selector} [data-e2e=note-menu]`)
+  await click(`${selector} [data-e2e=note-move]`)
+  await clickText(groupName, "[data-e2e=note-move-dialog]")
+}
 const trip = { ...groceries, id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111005", title: "Trip", body: "" }
 const plan = { ...groceries, id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111006", title: "Plan", body: "" }
 const targets = [
@@ -188,13 +195,54 @@ describe("NotesScreen", () => {
     expect(html).toContain(`aria-label="More actions"`)
   })
 
-  it("shows each note as a row with a link to its page, its text and when it changed", () => {
-    const html = renderToString(<NotesScreen {...listDefaults} />)
+  it("shows each note as a row with a link to its page, its author, when it changed and when it was made, and no excerpt", () => {
+    const authored = {
+      ...groceries,
+      createdAt: "2026-03-12T09:00:00.000Z",
+      authorId: "7",
+      authorName: "Maya Chen",
+    }
+    const html = renderToString(<NotesScreen {...listDefaults} notes={[authored]} />)
 
     expect(html).toContain(`href="${NOTE_PATHS.note(groceries.id)}"`)
-    expect(html).toMatch(/data-e2e="note-item-body"[^>]*>milk</)
+    expect(html).toMatch(/data-e2e="note-author"[^>]*>.*Maya Chen<\/span><\/span>/)
     expect(html).toContain(`datetime="${groceries.updatedAt}"`)
+    expect(html).toContain(`datetime="${authored.createdAt}"`)
+    expect(html).toContain("Updated")
+    expect(html).toContain("Created")
+    expect(html).not.toContain("milk")
     expect(html).toContain(`aria-label="Actions for Groceries"`)
+  })
+
+  it("says Created on a phone for a note nobody changed since it was made", async () => {
+    const fresh = { ...groceries, createdAt: groceries.updatedAt }
+    await mount(<NotesScreen {...listDefaults} notes={[fresh]} />)
+
+    const phone = [...document.querySelectorAll(`[data-e2e=note-${fresh.id}] .sm\\:hidden`)]
+      .map((element) => element.textContent).join(" ")
+    expect(phone).toContain("Created")
+    expect(phone).not.toContain("Updated")
+  })
+
+  it("tells a screen reader the exact moment, not only how long ago", () => {
+    const html = renderToString(<NotesScreen {...listDefaults} notes={[groceries]} />)
+
+    expect(html).toMatch(/<span class="sr-only">Updated [^<]*2026[^<]*<\/span>/)
+  })
+
+  it("shows up to three tags on a row and folds the rest into +N, named for a screen reader", async () => {
+    const tagRows = ["Design", "Plans", "Q4", "Hiring"].map((name, index) => ({
+      id: `7b6d8d6c-1af5-4f04-8ae4-b1ee5d1110a${index}`,
+      name,
+      color: "blue" as const,
+    }))
+    const tagged = { ...groceries, tagIds: tagRows.map((tag) => tag.id) }
+    await mount(<NotesScreen {...listDefaults} notes={[tagged]} tags={tagRows} />)
+
+    expect(count(`[data-e2e=note-${tagged.id}] [data-e2e=note-tag]`)).toBe(3)
+    const more = find(`[data-e2e=note-${tagged.id}] [data-e2e=note-tags-more]`)
+    expect(more.textContent).toBe("+1and Hiring")
+    expect(more.getAttribute("title")).toBe("Hiring")
   })
 
   it("writes when a note changed in the person's own zone and region format", () => {
@@ -267,22 +315,29 @@ describe("NotesScreen", () => {
     }
   })
 
-  it("shows a viewer the notes with no way to add, move or delete one", () => {
+  it("shows a viewer the notes with no way to add, move or delete one", async () => {
     const html = renderToString(<NotesScreen {...listDefaults} group={viewerOfTeam} />)
 
     expect(html).toContain("Only an editor can change them.")
     expect(html).toContain("Groceries")
     expect(html).not.toContain(`data-e2e="note-new"`)
-    expect(html).not.toContain(`data-e2e="note-menu"`)
     expect(html).not.toContain(`data-e2e="notes-select"`)
+
+    await mount(<NotesScreen {...listDefaults} group={viewerOfTeam} onCopyLink={() => {}} />)
+    const row = `[data-e2e=note-${groceries.id}]`
+    await click(`${row} [data-e2e=note-menu]`)
+    expect(count(`${row} [data-e2e=note-open]`)).toBe(1)
+    expect(count(`${row} [data-e2e=note-copy-link]`)).toBe(1)
+    expect(count(`${row} [data-e2e=note-move]`)).toBe(0)
+    expect(count(`${row} [data-e2e=note-delete]`)).toBe(0)
   })
 
-  it("gives rows no menu when there is nowhere to move a note and no delete", () => {
-    const html = renderToString(
-      <NotesScreen {...listDefaults} moveTargets={[]} onDelete={undefined} />,
-    )
+  it("keeps Open in a row's menu when there is nowhere to move a note and no delete", async () => {
+    await mount(<NotesScreen {...listDefaults} moveTargets={[]} onDelete={undefined} />)
+    await click(`[data-e2e=note-${groceries.id}] [data-e2e=note-menu]`)
 
-    expect(html).not.toContain(`data-e2e="note-menu"`)
+    const items = [...document.querySelectorAll(`[data-e2e=note-${groceries.id}] [role=menuitem]`)]
+    expect(items.map((item) => item.textContent)).toEqual(["Open"])
   })
 
   it("says the group does not exist once loading is over, with a way back to the groups", () => {
@@ -298,42 +353,69 @@ describe("NotesScreen", () => {
 describe("NotesScreen in the browser", () => {
   const row = (note: { id: string }) => `[data-e2e=note-${note.id}]`
 
-  it("deletes a note from its row's menu only after the person confirms, at the version shown", async () => {
+  it("orders a row's menu Open, Move to group…, Copy link, then Delete after a divider", async () => {
+    await mount(<NotesScreen {...listDefaults} onCopyLink={() => {}} />)
+    await click(`${row(trip)} [data-e2e=note-menu]`)
+
+    const panel = find(`${row(trip)} [role=menu]`)
+    expect([...panel.children].map((item) => item.getAttribute("role") ?? item.textContent))
+      .toEqual(["menuitem", "menuitem", "menuitem", "separator", "menuitem"])
+    expect([...panel.querySelectorAll("[role=menuitem]")].map((item) => item.textContent))
+      .toEqual(["Open", "Move to group…", "Copy link", "Delete"])
+    expect(find(`${row(trip)} [data-e2e=note-open]`).getAttribute("href"))
+      .toBe(NOTE_PATHS.note(trip.id))
+  })
+
+  it("deletes a note from its row's menu at once, at the version shown, with no confirmation", async () => {
     const remove = spy<[{ id: string; version: number }]>()
     await mount(<NotesScreen {...listDefaults} onDelete={remove.fn} />)
 
     await click(`${row(trip)} [data-e2e=note-menu]`)
     await click(`${row(trip)} [data-e2e=note-delete]`)
-    expect(remove.calls).toEqual([])
-    expect(find("[data-e2e=note-delete-dialog]").textContent).toContain(
-      `"Trip" will be deleted for everyone in Team.`,
-    )
 
-    await clickText("Delete note", "[data-e2e=note-delete-dialog]")
     expect(remove.calls).toEqual([[{ id: trip.id, version: trip.version }]])
-    expect(count("[data-e2e=note-delete-dialog]")).toBe(0)
+    expect(count("[role=dialog], [role=alertdialog]")).toBe(0)
   })
 
-  it("deletes nothing when the person keeps the note", async () => {
-    const remove = spy<[{ id: string; version: number }]>()
-    await mount(<NotesScreen {...listDefaults} onDelete={remove.fn} />)
-    await click(`${row(groceries)} [data-e2e=note-menu]`)
-    await click(`${row(groceries)} [data-e2e=note-delete]`)
+  it("copies a note's link from its row's menu through the app's callback", async () => {
+    const copy = spy<[{ id: string; title: string }]>()
+    await mount(<NotesScreen {...listDefaults} onCopyLink={copy.fn} />)
 
-    await clickText("Cancel", "[data-e2e=note-delete-dialog]")
+    await click(`${row(trip)} [data-e2e=note-menu]`)
+    await click(`${row(trip)} [data-e2e=note-copy-link]`)
 
-    expect(remove.calls).toEqual([])
-    expect(count("[data-e2e=note-delete-dialog]")).toBe(0)
+    expect(copy.calls.map(([note]) => note.id)).toEqual([trip.id])
   })
 
-  it("moves one note from its row's menu to the group the person picks", async () => {
+  it("moves one note from its row's menu to the group the person picks in the dialog", async () => {
     const move = spy<[{ toGroupId: string; noteIds: string[] }]>()
     await mount(<NotesScreen {...listDefaults} onMove={move.fn} />)
 
     await click(`${row(groceries)} [data-e2e=note-menu]`)
-    await clickText("Move to Work", row(groceries))
+    await click(`${row(groceries)} [data-e2e=note-move]`)
+    expect(move.calls).toEqual([])
+    const dialog = find("[data-e2e=note-move-dialog]")
+    expect(dialog.textContent).toContain(`Choose the group "Groceries" moves to.`)
+    expect([...dialog.querySelectorAll("[data-e2e=note-move-target]")].map((b) => b.textContent))
+      .toEqual(["Family", "Work"])
 
+    await clickText("Work", "[data-e2e=note-move-dialog]")
     expect(move.calls).toEqual([[{ toGroupId: targets[1].id, noteIds: [groceries.id] }]])
+    expect(count("[data-e2e=note-move-dialog]")).toBe(0)
+  })
+
+  it("moves nothing when the person cancels the group dialog, and gives focus back to the row's menu", async () => {
+    const move = spy<[{ toGroupId: string; noteIds: string[] }]>()
+    await mount(<NotesScreen {...listDefaults} onMove={move.fn} />)
+
+    await click(`${row(groceries)} [data-e2e=note-menu]`)
+    await click(`${row(groceries)} [data-e2e=note-move]`)
+    await click("[data-e2e=note-move-cancel]")
+
+    expect(move.calls).toEqual([])
+    expect(count("[data-e2e=note-move-dialog]")).toBe(0)
+    expect(focusedRow()).toBe(`note-${groceries.id}`)
+    expect(focused()).toBe("note-menu")
   })
 
   it("shows tick boxes and the move bar only after the person asks to select notes", async () => {
@@ -419,12 +501,11 @@ describe("NotesScreen in the browser", () => {
     expect(count("[data-e2e=note-select]")).toBe(2)
     expect(find("[data-e2e=notes-move]").textContent).toContain("Could not move the notes")
   })
-  it("moves focus to the next row's menu after a confirmed delete, else the previous row's, else More actions", async () => {
+  it("moves focus to the next row's menu after a delete, else the previous row's, else More actions", async () => {
     const listOf = (notes: NoteRow[]) => <NotesScreen {...listDefaults} notes={notes} />
     const deleteRow = async (note: NoteRow) => {
       await click(`${row(note)} [data-e2e=note-menu]`)
       await click(`${row(note)} [data-e2e=note-delete]`)
-      await clickText("Delete note", "[data-e2e=note-delete-dialog]")
     }
     await mount(listOf([groceries, trip, plan]))
 
@@ -444,8 +525,7 @@ describe("NotesScreen in the browser", () => {
   it("moves focus to the next row's menu once a move from a row's menu goes through", async () => {
     await mount(<NotesScreen {...listDefaults} />)
 
-    await click(`${row(groceries)} [data-e2e=note-menu]`)
-    await clickText("Move to Work", row(groceries))
+    await moveFromRow(row(groceries), "Work")
     await rerender(<NotesScreen {...listDefaults} notes={[trip]} />)
 
     expect(focusedRow()).toBe(`note-${trip.id}`)
@@ -456,7 +536,6 @@ describe("NotesScreen in the browser", () => {
     await mount(<NotesScreen {...listDefaults} />)
     await click(`${row(trip)} [data-e2e=note-menu]`)
     await click(`${row(trip)} [data-e2e=note-delete]`)
-    await clickText("Delete note", "[data-e2e=note-delete-dialog]")
     await rerender(<NotesScreen {...listDefaults} listError="Could not delete the note" />)
 
     find<HTMLElement>("[data-e2e=note-new]").focus()
@@ -468,8 +547,7 @@ describe("NotesScreen in the browser", () => {
 
   it("leaves focus where the person put it when a refused move's note leaves the list later", async () => {
     await mount(<NotesScreen {...listDefaults} />)
-    await click(`${row(groceries)} [data-e2e=note-menu]`)
-    await clickText("Move to Work", row(groceries))
+    await moveFromRow(row(groceries), "Work")
     await rerender(<NotesScreen {...listDefaults} moveError="Could not move the note" />)
 
     find<HTMLElement>("[data-e2e=note-new]").focus()
@@ -517,7 +595,128 @@ describe("NotesScreen in the browser", () => {
     const items = document.querySelectorAll<HTMLButtonElement>(
       `${row(groceries)} [data-e2e=note-move]`,
     )
-    expect([...items].map((item) => item.disabled)).toEqual([true, true])
+    expect([...items].map((item) => item.disabled)).toEqual([true])
+  })
+})
+
+describe("NotesScreen filter bar", () => {
+  const maya = { ...groceries, authorId: "7", authorName: "Maya Chen" }
+  const mine = { ...trip, authorId: "1", authorName: "You" }
+  const filtered: NotesScreenProps = {
+    ...listDefaults,
+    notes: [maya, mine],
+    filters: NO_NOTE_FILTERS,
+    onFiltersChange: () => {},
+    authors: [
+      { id: "9", name: "Zoe Park" },
+      { id: "1", name: "Anna Bell", isYou: true },
+      { id: "7", name: "Maya Chen" },
+    ],
+    youId: "1",
+  }
+  /** The filters as the last change reported them. */
+  const last = (change: { calls: [NoteFilters][] }) => change.calls.at(-1)?.[0]
+
+  it("reports the search as the person types, and counts the notes it shows", async () => {
+    const change = spy<[NoteFilters]>()
+    await mount(<NotesScreen {...filtered} onFiltersChange={change.fn} />)
+    expect(find("[data-e2e=notes-count]").textContent).toBe("2 notes")
+    const search = find("[data-e2e=filter-search]")
+    expect(find(`label[for="${search.id}"]`).textContent).toBe("Search notes")
+
+    await type("[data-e2e=filter-search]", "milk")
+    expect(last(change)?.q).toBe("milk")
+
+    await rerender(<NotesScreen {...filtered} filters={{ ...NO_NOTE_FILTERS, q: "Trip" }} />)
+    expect(find("[data-e2e=notes-count]").textContent).toBe("1 note")
+  })
+
+  it("lists Anyone, then You, then the other members from A to Z in the Author menu", async () => {
+    const change = spy<[NoteFilters]>()
+    await mount(<NotesScreen {...filtered} onFiltersChange={change.fn} />)
+    await click("[data-e2e=filter-author]")
+
+    const menu = find("[data-e2e=filter-author]").parentElement!
+    const items = [...menu.querySelectorAll("[role=menuitemradio]")]
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Anyone",
+      "You",
+      "Maya Chen",
+      "Zoe Park",
+    ])
+    await clickOn(items[2])
+    expect(last(change)?.author).toBe("7")
+  })
+
+  it("shows only the chosen author's notes, and the person's own for Created by me", async () => {
+    const change = spy<[NoteFilters]>()
+    await mount(
+      <NotesScreen {...filtered} filters={{ ...NO_NOTE_FILTERS, author: "7" }} />,
+    )
+    expect(count(`[data-e2e=note-${maya.id}]`)).toBe(1)
+    expect(count(`[data-e2e=note-${mine.id}]`)).toBe(0)
+
+    await rerender(<NotesScreen {...filtered} onFiltersChange={change.fn} />)
+    await clickText("Created by me", "[data-e2e=notes-filter-bar]")
+    expect(last(change)?.mine).toBe(true)
+    await rerender(<NotesScreen {...filtered} filters={{ ...NO_NOTE_FILTERS, mine: true }} />)
+    expect(count(`[data-e2e=note-${maya.id}]`)).toBe(0)
+    expect(count(`[data-e2e=note-${mine.id}]`)).toBe(1)
+  })
+
+  it("offers the three orders and reports the one the person picks", async () => {
+    const change = spy<[NoteFilters]>()
+    await mount(<NotesScreen {...filtered} onFiltersChange={change.fn} />)
+    const sort = [...find("[data-e2e=notes-filter-bar]").querySelectorAll("button")]
+      .find((button) => button.textContent?.includes("Last updated"))
+    if (!sort) throw new Error("no sort button reads Last updated")
+    await clickOn(sort)
+
+    const items = [...sort.parentElement!.querySelectorAll("[role=menuitemradio]")]
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Last updated",
+      "Date created",
+      "Title (A–Z)",
+    ])
+    await clickOn(items[2])
+    expect(last(change)?.sort).toBe("title")
+  })
+
+  it("names the search when nothing matches it, and clears only the search", async () => {
+    const change = spy<[NoteFilters]>()
+    await mount(
+      <NotesScreen
+        {...filtered}
+        filters={{ ...NO_NOTE_FILTERS, q: "zebra", author: "7" }}
+        onFiltersChange={change.fn}
+      />,
+    )
+    expect(find("body").textContent).toContain(`No notes match "zebra"`)
+    expect(find("body").textContent).toContain("Check the spelling or search for fewer words.")
+
+    await click("[data-e2e=notes-search-clear]")
+    expect(change.calls).toEqual([[{ ...NO_NOTE_FILTERS, q: "", author: "7" }]])
+  })
+
+  it("hides the bar while notes are being selected, in the deleted notes, and with no notes at all", async () => {
+    await mount(<NotesScreen {...filtered} />)
+    expect(count("[data-e2e=notes-filter-bar]")).toBe(1)
+    await click("[data-e2e=notes-menu]")
+    await click("[data-e2e=notes-select]")
+    expect(count("[data-e2e=notes-filter-bar]")).toBe(0)
+
+    await mount(<NotesScreen {...filtered} showDeleted onShowDeletedChange={() => {}} />)
+    expect(count("[data-e2e=notes-filter-bar]")).toBe(0)
+
+    await mount(<NotesScreen {...filtered} notes={[]} />)
+    expect(count("[data-e2e=notes-filter-bar]")).toBe(0)
+  })
+
+  it("filters only the notes it holds, so it works on the device's copy with no call to make", async () => {
+    // The screen has no data port at all: every filter runs over `notes`, whatever filled them.
+    await mount(<NotesScreen {...filtered} filters={{ ...NO_NOTE_FILTERS, q: "milk" }} />)
+    expect(count(`[data-e2e=note-${maya.id}]`)).toBe(1)
+    expect(count(`[data-e2e=note-${mine.id}]`)).toBe(0)
   })
 })
 
@@ -727,7 +926,10 @@ describe("NoteEditorScreen", () => {
       />,
     )
 
-    expect(html).toMatch(/<h1\b[^>]*><span\b[^>]*>New note<\/span><\/h1>/)
+    // The title is typed into the heading itself, so the page shows it once and has no Title field.
+    expect(html).toMatch(/<h1\b[^>]*title="New note"[^>]*><input\b[^>]*data-e2e="note-title"/)
+    expect(html).toContain(`aria-label="Title"`)
+    expect(html).not.toContain(">Title<")
     expect(html).toMatch(/data-e2e="notes-group"[^>]*>Team</)
     expect(tagOf(html, "page-back")).toContain(`href="${NOTE_PATHS.list}"`)
     expect(tagOf(html, "page-back")).toContain(`aria-label="Back to notes"`)
@@ -736,21 +938,43 @@ describe("NoteEditorScreen", () => {
     expect(html).not.toContain("Add note")
   })
 
-  it("titles an existing note's page with its saved title, not the title being typed", () => {
+  it("shows the title being typed once, in the heading, with the saved title as its tooltip", () => {
     const html = renderToString(
       <NoteEditorScreen {...editing} value={{ ...groceries, title: "Groceries and more" }} />,
     )
 
-    expect(html).toMatch(/<h1\b[^>]*><span\b[^>]*>Groceries<\/span><\/h1>/)
+    expect(html).toMatch(/<h1\b[^>]*title="Groceries"[^>]*><input\b[^>]*value="Groceries and more"/)
+    expect(html.match(/Groceries and more/g)).toHaveLength(1)
     expect(html).not.toContain(">Edit note<")
+  })
+
+  it("says under the title who made the note and when, and who changed it last", () => {
+    const authorship = {
+      createdAt: "2026-03-12T09:00:00.000Z",
+      createdBy: "Maya Chen",
+      updatedAt: "2026-10-01T10:00:00.000Z",
+      updatedBy: "You",
+    }
+    const html = renderToString(<NoteEditorScreen {...editing} authorship={authorship} />)
+    const line = html.match(/data-e2e="note-authorship"[^>]*>([\s\S]*?)<\/p>/)?.[1]
+      .replace(/<span class="sr-only">[^<]*<\/span>/g, "").replace(/<[^>]+>/g, "")
+    expect(line).toMatch(/^Created by Maya Chen, .*2026\s*·\s*Updated by You, .+ ago$/)
+
+    const fresh = renderToString(
+      <NoteEditorScreen
+        {...editing}
+        authorship={{ ...authorship, updatedAt: authorship.createdAt }}
+      />,
+    )
+    expect(fresh).toContain("Created by Maya Chen")
+    expect(fresh).not.toContain("Updated by")
   })
 
   it("puts Move and Delete of an existing note in the page's menu, not on the page", () => {
     const html = renderToString(<NoteEditorScreen {...editing} />)
 
     expect(html).toContain(`aria-label="More actions"`)
-    expect(html).toContain("Move to Family")
-    expect(html).toContain("Move to Work")
+    expect(html).toContain("Move to group…")
     // Inside the menu, which stays closed until the person opens it.
     expect(html).toMatch(/<details\b[^>]*>(?:(?!<\/details>)[\s\S])*data-e2e="note-delete"/)
     expect(html).toContain("Save note")
@@ -947,7 +1171,9 @@ describe("NoteEditorScreen in the browser", () => {
     await mount(<NoteEditorScreen {...editing} onMove={move.fn} />)
 
     await click("[data-e2e=note-menu]")
-    await clickText("Move to Family")
+    await click("[data-e2e=note-move]")
+    expect(move.calls).toEqual([])
+    await clickText("Family", "[data-e2e=note-move-dialog]")
 
     expect(move.calls).toEqual([[targets[0].id]])
   })

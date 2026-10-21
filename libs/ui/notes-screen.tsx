@@ -1,24 +1,33 @@
 import type { ComponentChildren, JSX, Ref } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
+import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
-import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { FilterBar, type FilterBarMenu } from "@spy4x/preact-ui/filter-bar"
+import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
 import { Select } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
+import { Modal } from "@spy4x/preact-ui/modal"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
 import type { PlanRefusal } from "@domain/billing"
 import { canMutateNotes, type GroupRole } from "@domain/groups"
 import { NOTE_RESTORE_DAYS } from "@domain/notes"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
-import { NoteTags, TagChips, type TagRow } from "./tag-parts.tsx"
+import { NoteTags, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
-import { When } from "@spy4x/preact-ui/format"
+import {
+  filterNotes,
+  NO_NOTE_FILTERS,
+  NOTE_SORTS,
+  type NoteFilters,
+  type NoteSort,
+} from "./notes-filter.ts"
 
 /**
  * Where focus goes once the list changes: after the row of note `id` (at `index`) leaves, the row
@@ -37,8 +46,25 @@ export interface NoteRow {
   version: number
   /** When the note last changed, as an ISO timestamp; the row shows it as "3 hours ago". */
   updatedAt?: string
+  /** When the note was created, as an ISO timestamp. */
+  createdAt?: string
   /** The ids of the tags on the note. */
   tagIds?: readonly string[]
+  /** The id of the member who created the note; `null` when that account is gone. */
+  authorId?: string | null
+  /**
+   * The creator as the row names them: "You", their name, or "Former member". Left out while the
+   * members are not read yet, and the row shows no author.
+   */
+  authorName?: string
+}
+
+/** A member the "Author" menu offers. */
+export interface NoteAuthor {
+  id: string
+  name: string
+  /** The person themselves: listed first, as "You". */
+  isYou?: boolean
 }
 
 /** What the person has typed into a note form. */
@@ -87,23 +113,8 @@ export function moveTargetsOf(
 /** The overflow trigger: 44 px on a phone, where it is a touch target, 36 px from `sm` up. */
 export const MENU_TRIGGER_CLASSES = buttonClasses("icon", "none", "size-11 sm:size-9")
 
-/**
- * A menu item that opens a page of the app. It is `DropdownItem` with `href` and `navigate`, which
- * hands a plain click to the app's router and leaves a new-tab click to the browser.
- *
- * @deprecated Use `DropdownItem` with `href` and `navigate`; this name stays only while another
- * screen imports it.
- */
-export function NavigateItem(
-  { href, navigate, dataE2E, children }: {
-    href: string
-    navigate?: Navigate
-    dataE2E?: string
-    children: ComponentChildren
-  },
-): JSX.Element {
-  return <DropdownItem href={href} navigate={navigate} dataE2E={dataE2E}>{children}</DropdownItem>
-}
+/** How many tags a row shows before it folds the rest into "+N". */
+const ROW_TAGS = 3
 
 export interface NotesScreenProps {
   /** `null` while the group is not known yet (loading), or when the person is not a member. */
@@ -122,8 +133,13 @@ export interface NotesScreenProps {
   moving?: boolean
   /** The refusal of the last move. */
   moveError?: string | null
-  /** Deletes a note from its row's menu, after the person confirms. Left out, rows offer no delete. */
+  /**
+   * Deletes a note from its row's menu at once: the app offers Undo in a toast, so there is no
+   * confirmation. Left out, rows offer no delete.
+   */
   onDelete?: (note: { id: string; version: number }) => void
+  /** Copies the link to a note, from its row's menu. Left out, the menu offers no "Copy link". */
+  onCopyLink?: (note: { id: string; title: string }) => void
   /**
    * The "Show deleted" filter is on: the list shows `deletedNotes`, each with a Restore button for
    * an editor. Left out, `onShowDeletedChange` hides the filter's menu entry.
@@ -149,32 +165,45 @@ export interface NotesScreenProps {
   /** The group's tags: shown on the rows and offered as a filter. Left out, notes show no tags. */
   tags?: readonly TagRow[]
   /**
-   * The tags the list is narrowed to: a note shows only when it has all of them. The app keeps
-   * them in the address, and the screen filters the list it was given, so it works offline.
+   * The search, the filters and the order. The app keeps them in the address; the screen filters
+   * the list it was given, so they work on the device's copy offline. Left out with
+   * `onFiltersChange`, there is no filter bar.
    */
-  tagFilter?: readonly string[]
-  onTagFilterChange?: (ids: string[]) => void
+  filters?: NoteFilters
+  /** Called with the whole new set when the person changes the search, a filter or the order. */
+  onFiltersChange?: (filters: NoteFilters) => void
+  /** Clears the tags, author and "Created by me" filters at once, as one change of the address. */
+  onClearFilters?: () => void
+  /** The members the "Author" menu offers. Left out or empty, there is no "Author" menu. */
+  authors?: readonly NoteAuthor[]
+  /** The person's own id, for "Created by me". Left out, there is no such toggle. */
+  youId?: string | null
   navigate?: Navigate
 }
 
+/** "1 note", "42 notes". */
+function noteCount(count: number): string {
+  return count === 1 ? "1 note" : `${count} notes`
+}
+
 /**
- * The notes of one group, as a list of rows. Writing happens on the note's own page
- * (`NoteEditorScreen`): "New note" and each note's title open it. Each row has a menu to move the
- * note to another group or delete it, the delete behind a confirmation. "Select notes" in the
- * header's menu ticks several notes at once and moves them together, all or none. "Show deleted
- * notes" in the same menu swaps the list for the deleted notes, which an editor can restore.
+ * The notes of one group, as a list of rows under a bar to search, filter and sort them. Writing
+ * happens on the note's own page (`NoteEditorScreen`): "New note" and each note's title open it.
+ * Each row names its author, when it changed and was created, and its tags, and has a menu to open
+ * it, move it to another group, copy its link or delete it (Undo comes from the app's toast).
+ * "Select notes" in the header's menu ticks several notes at once and moves them together, all or
+ * none. "Show deleted notes" in the same menu swaps the list for the deleted notes, which an editor
+ * can restore.
  */
 export function NotesScreen(props: NotesScreenProps): JSX.Element {
   const { group, loading, navigate } = props
   const allNotes = props.notes
   const tags = props.tags ?? []
-  // A filter that names a tag now gone would hide every note: it only counts tags that exist.
-  const activeFilter = tags.length === 0
-    ? []
-    : (props.tagFilter ?? []).filter((id) => tags.some((tag) => tag.id === id))
-  const notes = activeFilter.length === 0
-    ? allNotes
-    : allNotes.filter((note) => activeFilter.every((id) => note.tagIds?.includes(id)))
+  const filters = props.filters ?? NO_NOTE_FILTERS
+  const notes = filterNotes(allNotes, filters, {
+    youId: props.youId ?? null,
+    knownTagIds: tags.map((tag) => tag.id),
+  })
   const moveTargets = group?.canWrite && props.onMove ? props.moveTargets ?? [] : []
   const onDelete = group?.canWrite ? props.onDelete : undefined
   const deletedMode = Boolean(props.showDeleted && props.onShowDeletedChange)
@@ -183,7 +212,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
   const rows = deletedMode ? deletedNotes : notes
   const [selecting, setSelecting] = useState(false)
   const [ticked, setTicked] = useState<readonly string[]>([])
-  const [deleting, setDeleting] = useState<NoteRow | null>(null)
+  const [moving, setMoving] = useState<NoteRow | null>(null)
   const page = useRef<HTMLDivElement>(null)
   const [focusAfter, setFocusAfter] = useState<FocusAfter | null>(null)
 
@@ -253,6 +282,9 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
   }
   const leaving = (note: NoteRow) =>
     setFocusAfter({ id: note.id, index: rows.findIndex((row) => row.id === note.id) })
+  const change = (next: Partial<NoteFilters>) => props.onFiltersChange?.({ ...filters, ...next })
+  const showBar = !deletedMode && !selecting && props.onFiltersChange !== undefined &&
+    allNotes.length > 0
 
   const list = (
     <ListCard dataE2E="note-list">
@@ -266,16 +298,17 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           ticked={shown.includes(note.id)}
           onTick={(on) =>
             setTicked((ids) => on ? [...ids, note.id] : ids.filter((id) => id !== note.id))}
-          menu={!selecting && (moveTargets.length > 0 || onDelete) && (
+          menu={!selecting && (
             <NoteRowMenu
               note={note}
-              moveTargets={moveTargets}
-              onMove={props.onMove &&
-                ((toGroupId) => {
+              navigate={navigate}
+              onMove={moveTargets.length > 0 ? () => setMoving(note) : undefined}
+              onCopyLink={props.onCopyLink && (() => props.onCopyLink?.(note))}
+              onDelete={onDelete &&
+                (() => {
                   leaving(note)
-                  props.onMove?.({ toGroupId, noteIds: [note.id] })
+                  onDelete({ id: note.id, version: note.version })
                 })}
-              onDelete={onDelete && (() => setDeleting(note))}
               disabled={props.moving}
             />
           )}
@@ -323,6 +356,44 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
     </ListCard>
   )
 
+  const query = filters.q.trim()
+  const emptyList = query !== ""
+    ? (
+      <ListEmpty
+        title={`No notes match "${query}"`}
+        description="Check the spelling or search for fewer words."
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => change({ q: "" })}
+            data-e2e="notes-search-clear"
+          >
+            Clear search
+          </Button>
+        }
+      />
+    )
+    : (
+      <ListEmpty
+        title="No notes match these filters"
+        description="Try fewer tags or another author."
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              props.onClearFilters
+                ? props.onClearFilters()
+                : change({ tagIds: [], match: "any", author: null, mine: false })}
+            data-e2e="notes-filters-clear"
+          >
+            Clear filters
+          </Button>
+        }
+      />
+    )
+
   return (
     <ListPage pageRef={page}>
       <PageHeader
@@ -351,15 +422,12 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             )}
             {canSelect && !selecting && !deletedMode && (
               <DropdownItem onClick={() => setSelecting(true)} dataE2E="notes-select">
-                Select notes to move
+                Select notes
               </DropdownItem>
             )}
-            <NavigateItem href={TAG_PATHS.list} navigate={navigate} dataE2E="notes-tags">
+            <DropdownItem href={TAG_PATHS.list} navigate={navigate} dataE2E="notes-tags">
               Manage tags
-            </NavigateItem>
-            <NavigateItem href={SCREEN_PATHS.groups} navigate={navigate} dataE2E="notes-groups">
-              All groups
-            </NavigateItem>
+            </DropdownItem>
           </>
         }
       />
@@ -369,17 +437,20 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             You can read these notes. Only an editor can change them.
           </p>
         )}
-        <ErrorState message={props.listError} />
-        {!selecting && !deletedMode && <ErrorState message={props.moveError ?? null} />}
-        {!deletedMode && !selecting && tags.length > 0 && props.onTagFilterChange && (
-          <TagChips
+        {showBar && (
+          <NotesFilterBar
+            filters={filters}
+            onChange={change}
+            onClear={props.onClearFilters}
+            notes={allNotes}
             tags={tags}
-            value={activeFilter}
-            onChange={props.onTagFilterChange}
-            label="Filter by tag"
-            dataE2E="notes-tag-filter"
+            authors={props.authors ?? []}
+            youId={props.youId ?? null}
+            count={noteCount(notes.length)}
           />
         )}
+        <ErrorState message={props.listError} />
+        {!selecting && !deletedMode && <ErrorState message={props.moveError ?? null} />}
         {deletedMode && (
           <div
             class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-subtle bg-surface p-3"
@@ -417,21 +488,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             )
             : deletedList
           : allNotes.length > 0 && notes.length === 0
-          ? (
-            <ListEmpty
-              title="No notes have all these tags."
-              action={
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => props.onTagFilterChange?.([])}
-                  data-e2e="notes-tag-filter-clear"
-                >
-                  Clear the filter
-                </Button>
-              }
-            />
-          )
+          ? emptyList
           : notes.length === 0
           ? (
             <ListEmpty
@@ -470,23 +527,122 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           )
           : list}
       </Stack>
-      {deleting && (
-        <ConfirmDialog
-          title="Delete this note?"
-          message={`"${deleting.title}" will be deleted for everyone in ${group.name}.`}
-          confirmLabel="Delete note"
-          cancelLabel="Cancel"
-          tone="danger"
-          dataE2E="note-delete-dialog"
-          onConfirm={() => {
-            setDeleting(null)
-            leaving(deleting)
-            onDelete?.({ id: deleting.id, version: deleting.version })
+      {moving && (
+        <MoveNoteDialog
+          note={moving}
+          moveTargets={moveTargets}
+          onMove={(toGroupId) => {
+            setMoving(null)
+            leaving(moving)
+            props.onMove?.({ toGroupId, noteIds: [moving.id] })
           }}
-          onCancel={() => setDeleting(null)}
+          onCancel={() => {
+            setMoving(null)
+            // The dialog was opened from the row's menu, whose trigger takes focus back.
+            page.current
+              ?.querySelector<HTMLElement>(`[data-e2e=note-${moving.id}] [data-e2e=note-menu]`)
+              ?.focus()
+          }}
         />
       )}
     </ListPage>
+  )
+}
+
+/**
+ * The bar over the list: search, the "Tags" and "Author" menus, "Created by me", the order, the
+ * active filters as chips and how many notes show.
+ */
+function NotesFilterBar(
+  { filters, onChange, onClear, notes, tags, authors, youId, count }: {
+    filters: NoteFilters
+    onChange: (next: Partial<NoteFilters>) => void
+    onClear?: () => void
+    notes: readonly NoteRow[]
+    tags: readonly TagRow[]
+    authors: readonly NoteAuthor[]
+    youId: string | null
+    count: string
+  },
+): JSX.Element {
+  const menus: FilterBarMenu[] = []
+  if (tags.length > 0) {
+    menus.push({
+      id: "tags",
+      label: "Tags",
+      chipLabel: "Tag",
+      multiple: true,
+      options: tags.map((tag) => ({
+        value: tag.id,
+        label: tag.name,
+        count: notes.filter((note) => note.tagIds?.includes(tag.id)).length,
+      })),
+      value: filters.tagIds.filter((id) => tags.some((tag) => tag.id === id)),
+      onChange: (tagIds) => onChange({ tagIds }),
+      headerLabel: "Show notes with",
+      header: (
+        <>
+          <DropdownItem
+            checked={filters.match === "any"}
+            keepOpen
+            onClick={() => onChange({ match: "any" })}
+            dataE2E="notes-tags-any"
+          >
+            Any of these tags
+          </DropdownItem>
+          <DropdownItem
+            checked={filters.match === "all"}
+            keepOpen
+            onClick={() => onChange({ match: "all" })}
+            dataE2E="notes-tags-all"
+          >
+            All of these tags
+          </DropdownItem>
+        </>
+      ),
+    })
+  }
+  const you = authors.find((author) => author.isYou)
+  const others = authors
+    .filter((author) => !author.isYou)
+    .sort((a, b) => a.name.localeCompare(b.name))
+  if (authors.length > 0) {
+    menus.push({
+      id: "author",
+      label: "Author",
+      anyLabel: "Anyone",
+      options: [
+        ...(you ? [{ value: you.id, label: "You" }] : []),
+        ...others.map((author) => ({ value: author.id, label: author.name })),
+      ],
+      value: filters.author,
+      onChange: (author) => onChange({ author }),
+    })
+  }
+  return (
+    <div data-e2e="notes-filter-bar">
+      <FilterBar
+        search={{
+          value: filters.q,
+          onChange: (q) => onChange({ q }),
+          label: "Search notes",
+        }}
+        filters={menus}
+        toggles={youId === null ? [] : [{
+          id: "mine",
+          label: "Created by me",
+          pressed: filters.mine,
+          onChange: (mine) => onChange({ mine }),
+        }]}
+        sort={{
+          options: [...NOTE_SORTS],
+          value: filters.sort,
+          onChange: (sort) => onChange({ sort: sort as NoteSort }),
+        }}
+        onClear={onClear}
+        count={<span data-e2e="notes-count">{count}</span>}
+      />
+    </div>
   )
 }
 
@@ -606,7 +762,35 @@ function SelectionBar(
   )
 }
 
-/** One note's row: its title, the first of its text, when it changed, and its menu. */
+/**
+ * A moment as "Updated 3 hours ago" or "Created 12 Mar 2026". Its hover text is the exact moment,
+ * and a screen reader hears the exact moment too, not only the rough distance.
+ */
+function Stamp(
+  { label, at, day, class: className }: {
+    label: string
+    at: string
+    /** Shows the calendar day instead of the distance from now. */
+    day?: boolean
+    class?: string
+  },
+): JSX.Element {
+  const format = useFormat()
+  return (
+    <span class={className}>
+      <span aria-hidden="true">
+        {label} {day ? <OnDay at={at} /> : <When at={at} />}
+      </span>
+      <span class="sr-only">{label} {format.exact(at)}</span>
+    </span>
+  )
+}
+
+/**
+ * One note's row: its title (two lines at most), then who created it, when it changed and its
+ * tags; from `sm` up the dates sit at the right, "Updated" over "Created". A note that never
+ * changed after it was made says "Created" on a phone.
+ */
 function NoteItem(
   { note, tags, navigate, selecting, ticked, onTick, menu }: {
     note: NoteRow
@@ -618,30 +802,51 @@ function NoteItem(
     menu: ComponentChildren
   },
 ): JSX.Element {
-  const tagged = tags.some((tag) => note.tagIds?.includes(tag.id))
+  const edited = note.updatedAt !== undefined && note.updatedAt !== note.createdAt
+  const phoneStamp = edited
+    ? { label: "Updated", at: note.updatedAt }
+    : { label: "Created", at: note.createdAt ?? note.updatedAt }
   const summary = (
-    <div class="flex min-w-0 flex-1 flex-col gap-1">
-      <h2 class={ROW_TITLE} data-e2e="note-item-title">
-        {selecting ? note.title : (
-          <Link
-            href={NOTE_PATHS.note(note.id)}
-            navigate={navigate}
-            class="text-foreground after:absolute after:inset-0 focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-inset"
-          >
-            {note.title}
-          </Link>
-        )}
-      </h2>
-      {note.body && (
-        <p class="truncate text-sm font-normal text-muted" data-e2e="note-item-body">{note.body}</p>
-      )}
-      {(note.updatedAt || tagged) && (
-        // The meta line: when the note changed, then its tags.
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
-          {note.updatedAt && <When at={note.updatedAt} />}
-          <NoteTags tagIds={note.tagIds} tags={tags} />
+    <div class="flex min-w-0 flex-1 gap-4">
+      <div class="flex min-w-0 flex-1 flex-col gap-1">
+        <h2 class={ROW_TITLE} data-e2e="note-item-title">
+          {selecting ? note.title : (
+            <Link
+              href={NOTE_PATHS.note(note.id)}
+              navigate={navigate}
+              class="text-foreground after:absolute after:inset-0 focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-inset"
+            >
+              {note.title}
+            </Link>
+          )}
+        </h2>
+        {
+          // The meta line: the author, when it changed (on a phone), then its tags.
+        }
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
+          {note.authorName && (
+            <span class="flex min-w-0 items-center gap-2" data-e2e="note-author">
+              <Avatar name={note.authorName} alt="" size="xs" class="size-5 text-[10px]" />
+              <span class="truncate">{note.authorName}</span>
+            </span>
+          )}
+          {phoneStamp.at && (
+            <>
+              {note.authorName && <span aria-hidden="true" class="sm:hidden">·</span>}
+              <Stamp
+                label={phoneStamp.label}
+                at={phoneStamp.at}
+                class="sm:hidden"
+              />
+            </>
+          )}
+          <NoteTags tagIds={note.tagIds} tags={tags} max={ROW_TAGS} />
         </div>
-      )}
+      </div>
+      <div class="hidden shrink-0 flex-col items-end gap-1 text-right text-sm text-muted sm:flex">
+        {note.updatedAt && <Stamp label="Updated" at={note.updatedAt} />}
+        {note.createdAt && <Stamp label="Created" at={note.createdAt} day />}
+      </div>
     </div>
   )
   return (
@@ -662,7 +867,7 @@ function NoteItem(
           </Checkbox>
         )
         : (
-          <div class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6">
+          <div class="flex min-h-14 items-start gap-3 px-4 py-3 sm:px-6">
             {summary}
             {menu && <div class="relative -my-2 -mr-2 shrink-0">{menu}</div>}
           </div>
@@ -671,12 +876,19 @@ function NoteItem(
   )
 }
 
-/** A row's menu: move the note to each group it can go to, and delete it. */
+/** A quiet line between a menu's everyday items and its destructive one. */
+const MENU_DIVIDER = <div role="separator" class="my-1 border-t border-subtle" />
+
+/**
+ * A row's menu: open the note, move it to another group (which asks where), copy its link, and,
+ * after a divider, delete it.
+ */
 function NoteRowMenu(
-  { note, moveTargets, onMove, onDelete, disabled }: {
+  { note, navigate, onMove, onCopyLink, onDelete, disabled }: {
     note: NoteRow
-    moveTargets: readonly MoveTarget[]
-    onMove?: (toGroupId: string) => void
+    navigate?: Navigate
+    onMove?: () => void
+    onCopyLink?: () => void
     onDelete?: () => void
     disabled?: boolean
   },
@@ -688,19 +900,71 @@ function NoteRowMenu(
       triggerClasses={MENU_TRIGGER_CLASSES}
       triggerDataE2E="note-menu"
     >
-      {onMove && moveTargets.map((target) => (
-        <DropdownItem
-          key={target.id}
-          onClick={() => onMove(target.id)}
-          disabled={disabled}
-          dataE2E="note-move"
-        >
-          Move to {target.name}
+      <DropdownItem href={NOTE_PATHS.note(note.id)} navigate={navigate} dataE2E="note-open">
+        Open
+      </DropdownItem>
+      {onMove && (
+        <DropdownItem onClick={onMove} disabled={disabled} dataE2E="note-move">
+          Move to group…
         </DropdownItem>
-      ))}
+      )}
+      {onCopyLink && (
+        <DropdownItem onClick={onCopyLink} dataE2E="note-copy-link">Copy link</DropdownItem>
+      )}
+      {onDelete && MENU_DIVIDER}
       {onDelete && (
         <DropdownItem onClick={onDelete} danger dataE2E="note-delete">Delete</DropdownItem>
       )}
     </Dropdown>
+  )
+}
+
+/**
+ * Asks which group a note moves to: one button per group the person may write in. A press moves
+ * the note at once; Cancel, Escape or the backdrop keeps it where it is.
+ */
+export function MoveNoteDialog(
+  { note, moveTargets, onMove, onCancel }: {
+    note: { title: string }
+    moveTargets: readonly MoveTarget[]
+    onMove: (toGroupId: string) => void
+    onCancel: () => void
+  },
+): JSX.Element {
+  return (
+    <Modal
+      open
+      title="Move to group"
+      cancelLabel="Cancel"
+      onClose={onCancel}
+      ariaDescribedBy="note-move-question"
+      dataE2E="note-move-dialog"
+      footer={
+        <Button type="button" variant="ghost" onClick={onCancel} data-e2e="note-move-cancel">
+          Cancel
+        </Button>
+      }
+    >
+      <Stack gap="md">
+        <p id="note-move-question" class="text-sm text-muted">
+          Choose the group "{note.title}" moves to. Everyone in that group will see it.
+        </p>
+        <ul class="flex flex-col gap-2">
+          {moveTargets.map((target) => (
+            <li key={target.id}>
+              <Button
+                type="button"
+                variant="outline"
+                class="min-h-11 w-full justify-start sm:min-h-9"
+                onClick={() => onMove(target.id)}
+                data-e2e="note-move-target"
+              >
+                {target.name}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </Stack>
+    </Modal>
   )
 }
