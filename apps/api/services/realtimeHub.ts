@@ -7,6 +7,7 @@ import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
 import { createTagOperations } from "../features/tags/operations.ts"
 import { createNoteOperations } from "../features/notes/operations.ts"
+import { createNoteWidgetOperations } from "../features/notes/widgets.ts"
 import { signIn } from "./auth.ts"
 import { commandBus } from "./commandBus.ts"
 import { db } from "./db.ts"
@@ -69,6 +70,11 @@ export const operations: Operations<Actor> = {
     locate: (query) => queryBus.execute(query),
     search: (query) => queryBus.execute(query),
     cursor: noteListCursor,
+  }),
+  ...createNoteWidgetOperations({
+    total: (query) => queryBus.execute(query),
+    added: (query) => queryBus.execute(query),
+    series: (query) => queryBus.execute(query),
   }),
   ...createTagOperations({
     create: (command) => commandBus.execute(command),

@@ -30,6 +30,7 @@ import { noteMovable } from "@server/notes/note-movable.ts"
 import { tagMovable } from "@server/tags/tag-movable.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
+import { PostgresNoteOverview } from "@server/notes/note-overview.ts"
 import { PostgresBillingRepository } from "@server/billing/postgres-billing-repository.ts"
 import { emailChanges } from "@server/auth/email-verification.ts"
 import type { Lockout } from "@spy4x/server/lockout"
@@ -223,6 +224,11 @@ export class AppDbBase extends DbServiceBase {
   /** The notes repository. Built per access, like `group`, so inside `begin()` it uses the transaction. */
   get note(): PostgresNoteRepository {
     return new PostgresNoteRepository(this.sql)
+  }
+
+  /** The numbers behind the notes' overview widgets. Built per access, like `note`. */
+  get noteOverview(): PostgresNoteOverview {
+    return new PostgresNoteOverview(this.sql)
   }
 
   /** The tags repository. Built per access, like `note`. */
