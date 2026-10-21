@@ -216,7 +216,8 @@ describe("NotesScreen", () => {
     expect(newYork).toMatch(/^Oct 1, 2026, 6:00:00\sAM EDT$/)
   })
 
-  it("never clips the list card, so a row's menu opens in full over the rows below", async () => {
+  // Clipping is layout, which happy-dom does not draw: the class that would clip is the check.
+  it("never clips the list card, so a row's menu opens in full over the rows below (class check: no layout here)", async () => {
     await mount(<NotesScreen {...listDefaults} />)
 
     const card = find(`[data-e2e=note-list]`).parentElement as HTMLElement
@@ -351,10 +352,15 @@ describe("NotesScreen in the browser", () => {
     expect(count("[data-e2e=notes-move-submit]")).toBe(0)
   })
 
-  it("pins the move bar to the bottom only from md up, where no tab bar covers it", async () => {
+  // Pinning is layout, which happy-dom does not draw: the order is checked, and the pin by class.
+  it("puts the move bar after the list, pinned to the bottom only from md up, where no tab bar covers it (class check: no layout here)", async () => {
     await mount(<NotesScreen {...listDefaults} />)
     await click("[data-e2e=notes-menu]")
     await click("[data-e2e=notes-select]")
+    const after = find("[data-e2e=note-list]").compareDocumentPosition(
+      find("[data-e2e=notes-move]"),
+    )
+    expect(after & 4).toBe(4)
     const classes = find("[data-e2e=notes-move]").className.split(" ")
     expect(classes).not.toContain("sticky")
     expect(classes).toContain("md:sticky")
