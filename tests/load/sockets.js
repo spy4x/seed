@@ -16,6 +16,7 @@ import {
   signUpUsers,
 } from "./lib.js"
 
+/** 1,000 sockets over 50 people is 20 each: the most `@spy4x/realtime` lets one user hold. */
 const USERS = 50
 const SOCKETS = 1000
 /** Sockets open over this many seconds, then each stays open until {@link HOLD_S} has passed. */
@@ -26,6 +27,8 @@ const HOLD_S = 150
 const socketOpened = new Rate(`socket_opened`)
 /** Sockets the server closed, or that failed, before the run closed them. */
 const socketDropped = new Counter(`socket_dropped`)
+/** Frames the server sent besides its liveness pings: the pushes the sockets heard. */
+const serverFrames = new Counter(`server_frames`)
 
 export const options = {
   setupTimeout: `5m`,
@@ -50,6 +53,7 @@ export const options = {
   },
   thresholds: {
     socket_opened: [`rate>0.99`],
+    socket_dropped: [`count<1`],
     ws_connecting: [`p(95)<1000`],
     "http_req_duration{scenario:pushes}": [`p(95)<1000`],
     "http_req_failed{scenario:pushes}": [`rate<0.01`],
@@ -82,6 +86,16 @@ export function holdSocket({ users }) {
       socket.close()
     }, (HOLD_S - wait) * 1000)
   }
+  // The server closes a socket that says nothing for 90 seconds, so answer its pings as the
+  // app's client does (`@spy4x/realtime`).
+  socket.onmessage = (event) => {
+    const message = JSON.parse(event.data)
+    if (message.kind === `server.ping`) {
+      socket.send(
+        JSON.stringify({ kind: `client.pong`, ...(message.id ? { id: message.id } : {}) }),
+      )
+    } else serverFrames.add(1)
+  }
   socket.onerror = () => {
     if (!opened) socketOpened.add(false)
   }
@@ -113,6 +127,7 @@ export function handleSummary(data) {
   return compactSummary(data, `pushes`, [
     `socket_opened`,
     `socket_dropped`,
+    `server_frames`,
     `ws_connecting`,
     `ws_msgs_received`,
     `ws_sessions`,
