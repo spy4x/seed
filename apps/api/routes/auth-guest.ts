@@ -22,7 +22,7 @@ export interface GuestRouteDependencies {
   mutationGuards: MutationGuards
   rateLimits: Pick<
     AuthRateLimits,
-    "guestByIp" | "strictByUser" | "otpByUser" | "normal"
+    "guestStart" | "strictByUser" | "otpByUser" | "normal"
   >
 }
 
@@ -65,8 +65,13 @@ export function createGuestRoute(
       mutationGuards.anonymous,
       alreadySignedIn,
       off,
-      rateLimits.guestByIp,
       async (c) => {
+        const decision = await rateLimits.guestStart(c)
+        if (!decision.allowed) {
+          const seconds = Math.ceil(decision.retryAfterMs / 1000)
+          c.header("Retry-After", String(seconds))
+          return c.json({ error: GUEST_ANSWERS.tooMany, retryAfterSeconds: seconds }, 429)
+        }
         const started = await guests.start(c, c.get("auth"))
         if (started.outcome === GuestStartOutcome.Off) {
           return c.json({ error: GUEST_ANSWERS.off }, 404)

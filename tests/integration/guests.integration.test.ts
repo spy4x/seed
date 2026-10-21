@@ -81,7 +81,7 @@ const openLimits: AuthRateLimits = {
   strictByIp: passThrough,
   strictByUser: passThrough,
   otpByUser: passThrough,
-  guestByIp: passThrough,
+  guestStart: allowed,
   normal: passThrough,
   resetByAddress: allowed,
   emailCodeByAddress: allowed,
@@ -636,7 +636,8 @@ Deno.test("the hourly limit refuses a sixth guest from one network with the wait
     }
     expect(answers.map((answer) => answer.status)).toEqual([201, 201, 201, 201, 201, 429])
     expect(Number(answers[5].retryAfter)).toBeGreaterThan(60 * 59)
+    expect(answers[5].body.retryAfterSeconds).toBe(Number(answers[5].retryAfter))
     // Another network is not counted with it.
     expect((await fixture.browser("203.0.113.10").call("POST", "/auth/guest")).status).toBe(201)
-  }, { rateLimits: { guestByIp: limits.guestByIp } })
+  }, { rateLimits: { guestStart: limits.guestStart } })
 })

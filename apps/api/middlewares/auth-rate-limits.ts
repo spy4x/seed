@@ -138,10 +138,12 @@ export interface AuthRateLimits {
    */
   otpByUser: MiddlewareHandler<APIContext>
   /**
-   * New guest accounts per client IP (#224): {@link GUEST_STARTS_PER_HOUR} an hour. A refusal is
-   * 429 with `Retry-After`, which the `/try` page turns into minutes.
+   * Spends one of the client's {@link GUEST_STARTS_PER_HOUR} new guest accounts an hour (#224),
+   * counted per address as the sign-up mails are (an IPv6 client by its prefix), and says whether
+   * it was allowed. Refuses the same way as `emailCodeByAddress` when the store fails: this budget
+   * stands between a script and a database full of empty accounts.
    */
-  guestByIp: MiddlewareHandler<APIContext>
+  guestStart(c: Context<APIContext>): Promise<RateLimitDecision>
   /** Normal limit per signed-in user, else per client IP, for every other auth route. */
   normal: MiddlewareHandler<APIContext>
   /**
@@ -338,11 +340,6 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       skipSuccessful: true,
       onRefundError: (error) => settings.onStoreError(error),
     }),
-    guestByIp: createRateLimitMiddleware(guest, {
-      remoteAddr: denoServeRemoteAddr,
-      keyResolver: byIp,
-      keyPrefix: "auth-guest:",
-    }),
     normal: createRateLimitMiddleware(normal, {
       remoteAddr: denoServeRemoteAddr,
       keyResolver: byUser,
@@ -356,6 +353,7 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       if (!own.allowed) return own
       return await signUpByAddress.check(keys.address)
     },
+    guestStart: async (c) => await guest.check(`auth-guest:${signUpClient(c)}`),
     emailChangeByUser: async (userId) => await emailChange.check(`auth-email-change:${userId}`),
     emailChangeByAddress: async (email) =>
       await emailChangeAddress.check(`auth-email-change-address:${await sha256Hex(email)}`),
