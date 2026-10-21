@@ -74,8 +74,8 @@ test.describe("plan limits", () => {
       expect((await listed.json()).notes).toHaveLength(FREE_NOTES)
 
       // Following it would leave the typed draft, so the unsaved-text guard would ask first.
-      await expect(refusal.getByRole("link", { name: "See plans" }))
-        .toHaveAttribute("href", `/groups/${groupId}/pricing`)
+      await expect(refusal.getByRole("link", { name: "Open Plan and billing" }))
+        .toHaveAttribute("href", `/groups/${groupId}/billing`)
 
       await upgrade(request, groupId)
       expect(await addNote(page, groupId, "On Pro")).toBe(201)
@@ -105,15 +105,19 @@ test.describe("plan limits", () => {
       })
       expect(added.status(), await added.text()).toBe(200)
 
-      await gotoApp(page, `/groups/${groupId}`, page.locator("[data-e2e=group-general-name]"))
+      await gotoApp(
+        page,
+        `/groups/${groupId}/members`,
+        page.locator("[data-e2e=group-general-name]"),
+      )
       const row = page.locator("[data-e2e=group-member]").filter({ hasText: member })
       await row.getByRole("button", { name: `Actions for ${member}` }).click()
       await page.getByRole("menuitem", { name: "Make Admin" }).click()
 
       const refusal = row.locator("[data-e2e=plan-refusal]")
       await expect(refusal).toBeFocused()
-      await expect(refusal.getByRole("link", { name: "See plans" }))
-        .toHaveAttribute("href", `/groups/${groupId}/pricing`)
+      await expect(refusal.getByRole("link", { name: "Open Plan and billing" }))
+        .toHaveAttribute("href", `/groups/${groupId}/billing`)
       await expect(row.locator("[data-e2e=group-member-role]")).toHaveText("Editor")
 
       await upgrade(request, groupId)

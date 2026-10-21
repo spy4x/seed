@@ -133,17 +133,21 @@ test.describe("group screens in the shared column", () => {
 
       const screens = [
         { path: "/groups", ready: page.locator("[data-e2e=group-list]") },
-        { path: `/groups/${groupId}`, ready: page.locator("[data-e2e=group-member]").first() },
+        { path: `/groups/${groupId}`, ready: page.locator("[data-e2e=group-name]") },
+        {
+          path: `/groups/${groupId}/members`,
+          ready: page.locator("[data-e2e=group-member]").first(),
+        },
         {
           path: `/groups/${groupId}/activity`,
           ready: page.locator("[data-e2e=activity-note-link]").first(),
         },
-        { path: `/groups/${groupId}/pricing`, ready: page.locator("[data-e2e=pricing-plans]") },
+        { path: `/groups/${groupId}/billing`, ready: page.locator("[data-e2e=billing-plan]") },
         { path: `/groups/import`, ready: page.locator("[data-e2e=group-import-title]") },
       ]
       // Tall enough that no row sits under the phone's fixed tab bar: axe-core's target-size
       // rule counts a control the bar covers as too small, wherever the page happens to scroll.
-      // A group's page holds its whole editor above Members and Plan, so it needs the most.
+      // A group's General tab holds its whole editor, so it needs the most.
       for (const width of [375, 1280]) {
         await page.setViewportSize({ width, height: 2400 })
         for (const { path, ready } of screens) {
@@ -163,17 +167,6 @@ test.describe("group screens in the shared column", () => {
       await expect(page.getByRole("link", { name: "Back to group settings" })).toHaveCount(0)
       await link.click()
       await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
-
-      // The one plan's card sits in the middle of the column.
-      const plans = page.locator("[data-e2e=pricing-plans]")
-      await gotoApp(page, `/groups/${groupId}/pricing`, plans)
-      const { left, right } = await plans.evaluate((element) => {
-        const own = element.getBoundingClientRect()
-        const column = element.parentElement!.getBoundingClientRect()
-        return { left: own.left - column.left, right: column.right - own.right }
-      })
-      expect(left).toBeGreaterThan(0)
-      expect(Math.abs(left - right)).toBeLessThanOrEqual(1)
     } finally {
       for (const email of [owner, admin]) await cleanup(request, email, true)
     }

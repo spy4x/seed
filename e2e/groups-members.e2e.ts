@@ -116,7 +116,7 @@ test.describe("group members", () => {
       const groupId = await teamWith(page, request, member, 2)
 
       memberPage = await personPage(browser, member)
-      await gotoApp(memberPage, `/groups/${groupId}`, settingsReady(memberPage))
+      await gotoApp(memberPage, `/groups/${groupId}/members`, settingsReady(memberPage))
       await expect(memberPage.locator("[data-e2e=group-general-role]")).toHaveText("Editor")
       // An editor reads the members but has no control over them.
       await expect(memberPage.locator("[data-e2e=group-member]")).toHaveCount(2)
@@ -124,7 +124,7 @@ test.describe("group members", () => {
       // Mark the page, so a reload would show as a missing mark.
       await memberPage.evaluate(() => Object.assign(globalThis, { notReloaded: true }))
 
-      await gotoApp(page, `/groups/${groupId}`, settingsReady(page))
+      await gotoApp(page, `/groups/${groupId}/members`, settingsReady(page))
       const row = page.locator("[data-e2e=group-member]").filter({ hasText: member })
       await row.getByRole("button", { name: `Actions for ${member}` }).click()
       await page.getByRole("menuitem", { name: "Make Viewer" }).click()
@@ -166,12 +166,12 @@ test.describe("group members", () => {
 
       memberPage = await personPage(browser, member)
       await delaySockets(memberPage, 2_500)
-      await gotoApp(memberPage, `/groups/${groupId}`, settingsReady(memberPage))
+      await gotoApp(memberPage, `/groups/${groupId}/members`, settingsReady(memberPage))
       await expect(memberPage.locator("[data-e2e=group-general-role]")).toHaveText("Editor")
       await expect(memberPage.locator("[data-e2e=shell-ws-status]")).not.toHaveText("Online")
 
       // The member's page has its answer from REST, and its socket is not yet known to the server.
-      await gotoApp(page, `/groups/${groupId}`, settingsReady(page))
+      await gotoApp(page, `/groups/${groupId}/members`, settingsReady(page))
       const row = page.locator("[data-e2e=group-member]").filter({ hasText: member })
       await row.getByRole("button", { name: `Actions for ${member}` }).click()
       await page.getByRole("menuitem", { name: "Make Viewer" }).click()
@@ -201,14 +201,14 @@ test.describe("group members", () => {
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
       const groupId = await teamWith(page, request, member, 1)
 
-      await gotoApp(page, `/groups/${groupId}`, settingsReady(page))
+      await gotoApp(page, `/groups/${groupId}/members`, settingsReady(page))
       await page.getByRole("button", { name: "More actions" }).click()
       await expect(page.getByRole("menuitem", { name: "Delete group" })).toBeVisible()
       await expect(page.locator("[data-e2e=group-leave-open]")).toHaveCount(0)
       await page.keyboard.press("Escape")
 
       memberPage = await personPage(browser, member)
-      await gotoApp(memberPage, `/groups/${groupId}`, settingsReady(memberPage))
+      await gotoApp(memberPage, `/groups/${groupId}/members`, settingsReady(memberPage))
       await memberPage.getByRole("button", { name: "More actions" }).click()
       await memberPage.getByRole("menuitem", { name: "Leave group" }).click()
       const dialog = memberPage.locator("[data-e2e=group-leave-dialog]")

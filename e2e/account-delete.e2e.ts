@@ -104,7 +104,7 @@ test("a group other people still use stops the deletion and links to that group"
     await expect(page.locator("[data-e2e=account-delete-password]")).toHaveCount(0)
     await blocker.click()
 
-    await expect(page).toHaveURL(`/groups/${groupId}`)
+    await expect(page).toHaveURL(`/groups/${groupId}/members`)
     expect((await page.request.get(`${apiBase}/api/auth/me`)).status()).toBe(200)
   } finally {
     await cleanup(request, owner, { soft: true })
