@@ -365,6 +365,11 @@ describe("ConfirmSignUpScreen", () => {
 
   it("shows the provider's picture, name and address side by side, the picture decorative", async () => {
     const picture = "https://lh3.googleusercontent.com/a/ada=s96-c"
+    // happy-dom loads no image, so every one looks finished with no pixels, which `Avatar` reads
+    // as a picture that failed before the page ran. Give this one the width a loaded one has.
+    const images = window.HTMLImageElement.prototype
+    const width = Object.getOwnPropertyDescriptor(images, "naturalWidth")
+    Object.defineProperty(images, "naturalWidth", { configurable: true, get: () => 96 })
     await mount(
       <ConfirmSignUpScreen
         {...confirmProps([], { pending: { ...waiting, name: "Ada Lovelace", avatarUrl: picture } })}
@@ -385,6 +390,8 @@ describe("ConfirmSignUpScreen", () => {
     expect(avatar.querySelector("img")).toBe(null)
     expect(avatar.textContent).toBe("AL")
     expect(avatar.getAttribute("aria-hidden")).toBe("true")
+    if (width) Object.defineProperty(images, "naturalWidth", width)
+    else delete (images as { naturalWidth?: number }).naturalWidth
   })
 
   it("falls back to the name's initials without a picture, and to an icon without a name", async () => {
