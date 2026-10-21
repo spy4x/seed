@@ -16,17 +16,11 @@ import { selectionStore } from "../state/selection.ts"
 import { toasts } from "../state/toasts.ts"
 import { useUndoToast } from "./use-undo-toast.ts"
 import { personName } from "./note-people.ts"
+import { movedToast } from "./note-toasts.ts"
 import { OfflineStatus } from "../modules.ts"
 
 /** The filter parameters "Clear filters" takes out of the address; search and sort stay. */
 const FILTER_PARAMS = ["tag", "match", "author", "mine"]
-
-/** "Note moved to Home.", "3 notes moved to Home." */
-export function movedToast(count: number, groupName: string): { title: string; body: string } {
-  return count === 1
-    ? { title: "Note moved", body: `The note was moved to ${groupName}.` }
-    : { title: "Notes moved", body: `${count} notes were moved to ${groupName}.` }
-}
 
 /**
  * Wires the notes list to the notes store for `/notes`. The notes are those of the person's

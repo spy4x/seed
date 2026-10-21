@@ -638,6 +638,18 @@ describe("NoteEditorScreen tags", () => {
     }]])
   })
 
+  it("labels the picker Tags on the page and ticks the chosen tags with a check mark", async () => {
+    await mount(<NoteEditorScreen {...editorDefaults} />)
+    const picker = find("[data-e2e=note-tags-picker]")
+    expect(picker.firstElementChild?.textContent).toBe("Tags")
+    expect(picker.querySelector("[role=group]")?.getAttribute("aria-label")).toBe("Tags")
+    const urgentChip = [...picker.querySelectorAll("button")].find((b) =>
+      b.textContent === "Urgent"
+    )
+    expect(urgentChip?.getAttribute("aria-pressed")).toBe("true")
+    expect(urgentChip?.querySelector("svg")).not.toBeNull()
+  })
+
   it("takes a tag off when the person unticks it", async () => {
     const change = spy<[NoteDraft]>()
     await mount(<NoteEditorScreen {...editorDefaults} onChange={change.fn} />)

@@ -16,7 +16,7 @@ import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { isSpaPath } from "./spa-paths.ts"
 import { personName } from "./note-people.ts"
-import { movedToast } from "./NotesView.tsx"
+import { movedToast } from "./note-toasts.ts"
 
 /**
  * Wires the note page to the notes store: `/notes/new` (no `noteId`) creates a note in the
