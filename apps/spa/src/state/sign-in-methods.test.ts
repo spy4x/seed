@@ -1,9 +1,12 @@
 import { expect } from "@std/expect"
 import { afterEach, describe, it } from "@std/testing/bdd"
 import type { SignInMethod } from "@domain/identity"
+import type { PasskeyBrowser } from "@spy4x/platform/browser/passkey"
 import {
   createSignInMethodsStore,
   listProviders,
+  PASSKEY_NOT_SAVED,
+  PASSKEY_ON_THIS_DEVICE,
   readPendingSignUp,
   type SignInMethodsHttp,
 } from "./sign-in-methods.ts"
@@ -346,5 +349,125 @@ describe("what the sign-in pages read", () => {
 
     answers(500, { error: "down" })
     expect(await readPendingSignUp()).toBe(null)
+  })
+})
+
+/** A device whose dialog answers as `answer` says: a new passkey, a closed dialog, or a refusal. */
+function fakeDevice(answer: "create" | "close" | Error): PasskeyBrowser {
+  return {
+    PublicKeyCredential: {
+      parseCreationOptionsFromJSON: (options) =>
+        options as unknown as PublicKeyCredentialCreationOptions,
+      parseRequestOptionsFromJSON: (options) =>
+        options as unknown as PublicKeyCredentialRequestOptions,
+    },
+    credentials: {
+      create: () => {
+        if (answer instanceof Error) return Promise.reject(answer)
+        if (answer === "close") {
+          return Promise.reject(new DOMException("The user closed the dialog.", "NotAllowedError"))
+        }
+        return Promise.resolve({
+          toJSON: () => ({ id: "cred-1", rawId: "cred-1", type: "public-key", response: {} }),
+        })
+      },
+      get: () => Promise.resolve(null),
+    },
+  }
+}
+
+describe("adding and renaming passkeys", () => {
+  it("asks the server with the password, then the device, then stores the passkey and reads the list", async () => {
+    const http = fakeHttp([password])
+    const store = createSignInMethodsStore(http, () => {}, { browser: fakeDevice("create") })
+
+    await store.addPasskey("Passw0rd!")
+    expect(http.calls).toEqual(["passkey options with Passw0rd!", "add passkey cred-1", "list"])
+    expect(store.passkeyStatus.value).toEqual({ kind: "added", keyId: 9, name: "Chrome on Linux" })
+    expect(store.pending.value).toBe(false)
+    expect(store.error.value).toBe(null)
+  })
+
+  it("says nothing was added when the person closes the device's dialog", async () => {
+    const http = fakeHttp([password])
+    const store = createSignInMethodsStore(http, () => {}, { browser: fakeDevice("close") })
+
+    await store.addPasskey("Passw0rd!")
+    expect(http.calls).toEqual(["passkey options with Passw0rd!"])
+    expect(store.passkeyStatus.value).toEqual({ kind: "cancelled" })
+    expect(store.error.value).toBe(null)
+  })
+
+  it("says this device has a passkey already when the device refuses for that", async () => {
+    const already = new DOMException("excluded", "InvalidStateError")
+    const store = createSignInMethodsStore(fakeHttp([password]), () => {}, {
+      browser: fakeDevice(already),
+    })
+
+    await store.addPasskey("Passw0rd!")
+    expect(store.error.value).toBe(PASSKEY_ON_THIS_DEVICE)
+    expect(store.passkeyStatus.value).toBe(null)
+  })
+
+  it("gives the server's reason when it refuses the password or the passkey", async () => {
+    const refused = fakeHttp([password], {
+      passkeyOptions: () => Promise.resolve({ ok: false, error: "Invalid password" }),
+    })
+    const store = createSignInMethodsStore(refused, () => {}, { browser: fakeDevice("create") })
+    await store.addPasskey("wrong")
+    expect(store.error.value).toBe("Invalid password")
+    expect(store.passkeyStatus.value).toBe(null)
+
+    const notSaved = fakeHttp([password], {
+      addPasskey: () => Promise.resolve({ ok: false, error: "" }),
+    })
+    const second = createSignInMethodsStore(notSaved, () => {}, { browser: fakeDevice("create") })
+    await second.addPasskey("Passw0rd!")
+    expect(second.error.value).toBe(PASSKEY_NOT_SAVED)
+  })
+
+  it("renames a passkey in the list, and rejects with the server's reason when refused", async () => {
+    const passkey: SignInMethod = {
+      id: 9,
+      kind: "passkey",
+      email: null,
+      current: false,
+      canUnlink: true,
+      passkey: { name: "Chrome on Linux", createdAt: PROOF_UNTIL, lastUsedAt: null },
+    }
+    const http = fakeHttp([password, passkey])
+    const store = createSignInMethodsStore(http)
+    await store.load()
+
+    await store.renamePasskey(9, "Work laptop")
+    expect(store.methods.value?.find((method) => method.id === 9)?.passkey?.name).toBe(
+      "Work laptop",
+    )
+
+    const refusing = createSignInMethodsStore(fakeHttp([passkey], {
+      renamePasskey: () => Promise.resolve({ ok: false, error: "Give the passkey a name" }),
+    }))
+    await refusing.load()
+    await expect(refusing.renamePasskey(9, "x")).rejects.toThrow("Give the passkey a name")
+    expect(refusing.methods.value?.[0].passkey?.name).toBe("Chrome on Linux")
+  })
+
+  it("reads the list again after a passkey sign-in confirms, and says nothing when it was cancelled", async () => {
+    const http = fakeHttp([password])
+    let answer: { ok: boolean; cancelled?: boolean; error?: string } = { ok: true }
+    const store = createSignInMethodsStore(http, () => {}, {
+      confirm: () => Promise.resolve(answer),
+    })
+
+    await store.confirmWithPasskey()
+    expect(http.calls).toEqual(["list"])
+
+    answer = { ok: false, cancelled: true }
+    await store.confirmWithPasskey()
+    expect(store.error.value).toBe(null)
+    answer = { ok: false, error: "That passkey did not work." }
+    await store.confirmWithPasskey()
+    expect(store.error.value).toBe("That passkey did not work.")
+    expect(http.calls).toEqual(["list"])
   })
 })
