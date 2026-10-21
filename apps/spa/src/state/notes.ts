@@ -84,7 +84,7 @@ interface Draft {
   tagIds: string[]
 }
 
-interface FormErrors {
+export interface FormErrors {
   title: string | null
   form: string | null
   /** The group's plan refused the write: the screen shows an upgrade prompt for it. */
@@ -383,6 +383,35 @@ export function createNotesStore(dependencies: NotesDependencies) {
     }
   }
 
+  /**
+   * Creates a note with a title only, in any group the person may write to, as the New note dialog
+   * does from any page. It takes the same call as {@link create}, so it gets the same errors, plan
+   * refusal and offline queue, and leaves the editor's draft alone. `id` is the caller's: kept for
+   * a retry of the same note, so a create the server already took is not made twice. A note made
+   * in the open group joins its list.
+   */
+  async function quickCreate(
+    input: { groupId: string; id: string; title: string },
+  ): Promise<{ note: NoteItem } | { errors: FormErrors }> {
+    const title = input.title.trim()
+    if (!title) return { errors: { title: NOTE_MESSAGES.titleRequired, form: null } }
+    try {
+      const { note } = await dependencies.create({ ...input, title, body: "", tagIds: [] })
+      if (groupId.value === input.groupId) {
+        notes.value = [note, ...notes.value.filter((existing) => existing.id !== note.id)]
+      }
+      return { note }
+    } catch (cause) {
+      return {
+        errors: {
+          title: null,
+          form: describeError(cause, NOTE_MESSAGES.create),
+          plan: planRefusal(cause),
+        },
+      }
+    }
+  }
+
   /** Saves the edit. Resolves `true` once saved, `false` when it was refused or failed. */
   async function save(): Promise<boolean> {
     const forGroup = groupId.value
@@ -626,6 +655,7 @@ export function createNotesStore(dependencies: NotesDependencies) {
     refresh,
     reloadLatest,
     create,
+    quickCreate,
     discardDraft,
     save,
     remove,

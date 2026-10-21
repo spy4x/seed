@@ -2,11 +2,12 @@ import type { ComponentChildren } from "preact"
 import { useEffect } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 import { useLocation, useSearch } from "wouter-preact"
-import { canMutateNotes } from "@domain/groups"
+import { canMutateNotes, canViewActivity } from "@domain/groups"
 import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
 import { type SearchChoice, SearchPalette } from "@ui/search-palette.tsx"
+import { NewNoteDialog } from "@ui/new-note-dialog.tsx"
 import { emailStore } from "../state/email.ts"
 import { signOut } from "../state/auth.ts"
 import { groupsStore } from "../state/groups.ts"
@@ -15,6 +16,11 @@ import { notificationsStore } from "../state/notifications.ts"
 import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
 import { themeStore } from "../state/theme.ts"
+import { newNoteStore } from "../state/new-note.ts"
+import { hasFinePointer, singleKeys } from "../state/shortcuts.ts"
+import { spaShortcutRows } from "./shortcuts.ts"
+import { useShortcuts } from "@platform/shortcuts.ts"
+import { activeRows } from "@ui/shortcuts.tsx"
 import type { SessionUser } from "../state/session.ts"
 import {
   callQuery,
@@ -96,8 +102,56 @@ function useSignOut(): { onSignOut: () => void; dialog: ComponentChildren } {
 }
 
 /**
+ * The New note dialog over every signed-in page, wired to the notes store: the note goes to the
+ * group chosen in it, else the selected one when the person may write there, else their only group
+ * they may write to. Adding leaves the person on the page; Ctrl Enter, or "Open note", opens the
+ * note, switching to its group first when it is another one.
+ */
+function NewNoteLayer({ navigate }: { navigate: (href: string) => void }) {
+  const store = newNoteStore
+  const writable = groupsStore.groups.value.filter((group) => canMutateNotes(group.role))
+  const selected = selectionStore.groupId.value
+  const targetId = store.groupId.value ??
+    (writable.some((group) => group.id === selected)
+      ? selected
+      : writable.length === 1
+      ? writable[0].id
+      : null)
+  const target = writable.find((group) => group.id === targetId) ?? null
+  const openNote = async (noteId: string, groupId: string) => {
+    store.close()
+    if (groupId !== selectionStore.groupId.value) await selectionStore.select(groupId)
+    navigate(NOTE_PATHS.note(noteId))
+  }
+  return (
+    <NewNoteDialog
+      open={store.open.value}
+      onClose={store.close}
+      groups={writable.map(({ id, name }) => ({ id, name }))}
+      groupId={target?.id ?? null}
+      onGroupChange={(groupId) => store.groupId.value = groupId}
+      title={store.title.value}
+      onTitleChange={(title) => store.title.value = title}
+      pending={store.pending.value}
+      errors={store.errors.value}
+      added={store.added.value}
+      onAdd={async (openAfter) => {
+        const note = await store.add(target && { id: target.id, name: target.name })
+        if (note && openAfter) await openNote(note.id, note.groupId)
+      }}
+      onOpenNote={(noteId) => {
+        const added = store.added.value
+        if (added) void openNote(noteId, added.groupId)
+      }}
+      navigate={navigate}
+    />
+  )
+}
+
+/**
  * Wires the signed-in `AppFrame` to this app's router, stores and `signOut`: the groups and the
- * selected one for the switcher and the Activity entry, the name and address for the account menu.
+ * selected one for the switcher and the Activity entry, the name and address for the account menu,
+ * and the keyboard shortcuts with the New note dialog.
  */
 export function AppShell(
   { user, wsStatus, children }: {
@@ -110,8 +164,17 @@ export function AppShell(
   const { onSignOut, dialog } = useSignOut()
   const groups = groupsStore.groups.value
   const current = groups.find((group) => group.id === selectionStore.groupId.value)
+  const shortcutsOpen = useSignal(false)
+  const rows = spaShortcutRows({
+    navigate,
+    openShortcuts: () => shortcutsOpen.value = true,
+    openNewNote: newNoteStore.show,
+    activityGroupId: current && canViewActivity(current.role) ? current.id : null,
+  })
+  useShortcuts(activeRows(rows, singleKeys.on.value))
   const open = async (choice: SearchChoice) => {
     if (choice.kind === "page") return navigate(choice.href)
+    if (choice.kind === "new-note") return newNoteStore.show()
     if (choice.kind === "group") return navigate(GROUP_PATHS.settings(choice.groupId))
     // Straight to the note: never the editor's "Note in another group" page in between.
     if (choice.groupId !== selectionStore.groupId.value) {
@@ -130,8 +193,18 @@ export function AppShell(
             : null}
           online={wsStatus === "open"}
           onSelect={(choice) => void open(choice)}
+          slashKey={singleKeys.on.value}
         />
       }
+      shortcuts={{
+        rows,
+        open: shortcutsOpen.value,
+        onOpen: () => shortcutsOpen.value = true,
+        onClose: () => shortcutsOpen.value = false,
+        singleKeys: singleKeys.on.value,
+        onSingleKeys: singleKeys.set,
+        inMenu: hasFinePointer(),
+      }}
       groupPicker={{
         groups: groupsStore.groups.value,
         selectedId: selectionStore.groupId.value,
@@ -160,6 +233,7 @@ export function AppShell(
     >
       {children}
       {dialog}
+      <NewNoteLayer navigate={navigate} />
     </AppFrame>
   )
 }
