@@ -124,6 +124,8 @@ const series: WidgetView = {
           ]}
           height={220}
           yDomain={[0, top]}
+          // Notes come whole: fewer steps than notes, so no tick reads 0.2.
+          yTicks={Math.min(5, top)}
           xFormat={(x) => day(format, typeof x === "string" ? x : x.toISOString().slice(0, 10))}
           yFormat={(value) => format.number(value)}
           ariaLabel={`Notes over time. ${summary}.`}

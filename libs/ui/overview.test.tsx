@@ -212,6 +212,21 @@ describe("the group overview", () => {
     expect(document.querySelectorAll(`${card(series)} [data-chart-table] tbody tr`)).toHaveLength(3)
   })
 
+  it("labels the chart's axis in whole notes when the group has only a few", async () => {
+    await mount({
+      ...READY,
+      [series]: {
+        status: "ready",
+        data: { days: DAYS, current: [0, 0, 1], previous: null },
+        savedAt: null,
+      },
+    })
+
+    const labels = [...document.querySelectorAll(`${card(series)} span.tabular-nums`)]
+      .map((label) => label.textContent)
+    expect(labels).toEqual(["0", "1"])
+  })
+
   it("shows one line for a range with no notes, and real zeros in the numbers", async () => {
     await mount({
       [total]: { status: "ready", data: { current: 0, previous: 0 }, savedAt: null },
