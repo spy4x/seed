@@ -349,4 +349,12 @@ describe("reading a note from an export file", () => {
     expect(problem({ ...entry, tagIds: [`nope`] })).toBe(`the tag id is not valid`)
     expect(problem({ ...entry, extra: 1 })).toBe(`it holds "extra", which a note does not have`)
   })
+
+  it("refuses a huge tag list quickly, before checking its items", () => {
+    const started = performance.now()
+    expect(problem({ ...entry, tagIds: Array(2_400_000).fill(0) })).toBe(
+      `A note can carry at most ${NOTE_TAG_MAX} tags`,
+    )
+    expect(performance.now() - started).toBeLessThan(1_000)
+  })
 })

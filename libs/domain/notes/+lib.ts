@@ -650,6 +650,11 @@ export type NoteExportEntry = typeof noteExportEntrySchema.infer
  * characters, at most {@link NOTE_TAG_MAX} tags. Throws `NoteError("INVALID_REQUEST")`.
  */
 export function parseNoteExportEntry(value: unknown): NoteExportEntry {
+  // The schema checks every item of a list, so a huge `tagIds` is refused before it runs.
+  const tagIds = (value as { tagIds?: unknown } | null)?.tagIds
+  if (Array.isArray(tagIds) && tagIds.length > NOTE_TAG_MAX) {
+    throw new NoteError("INVALID_REQUEST", `A note can carry at most ${NOTE_TAG_MAX} tags`)
+  }
   const shape = noteExportEntrySchema(value)
   if (shape instanceof type.errors) {
     throw new NoteError("INVALID_REQUEST", plainEntryProblem(shape, "note", NOTE_EXPORT_LABELS))
