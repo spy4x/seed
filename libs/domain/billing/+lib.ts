@@ -102,7 +102,6 @@ export const PLANS: readonly Plan[] = [
       "Unlimited notes",
       "Up to 50 members",
       "Promote members to editor or admin",
-      "Priority support",
     ],
     entitlements: {
       features: { memberRoles: true },
