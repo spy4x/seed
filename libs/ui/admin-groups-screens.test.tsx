@@ -379,6 +379,24 @@ describe(`one group in the admin app`, () => {
     expect(fact.querySelector(`a`)?.getAttribute(`href`)).toBe(`/users/45`)
   })
 
+  it(`links a group with a subscription to its customer in Billing, and a free one nowhere`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([])} />)
+    expect(has(`[data-e2e=admin-group-billing]`)).toBe(false)
+    await act(() => render(null, root!))
+    const paying = {
+      ...detail,
+      billing: {
+        planId: `pro`,
+        status: 2,
+        currentPeriodEnd: `2026-11-04T00:00:00.000Z`,
+        cancelAtPeriodEnd: false,
+      },
+    }
+    await mount(<AdminGroupScreen {...groupProps([], { detail: paying })} />)
+    expect(find(`[data-e2e=admin-group-billing]`).getAttribute(`href`))
+      .toBe(`/billing/${family.id}`)
+  })
+
   it(`draws the counts as plain facts, with no bordered box but badges inside the header card`, async () => {
     await mount(<AdminGroupScreen {...groupProps([])} />)
     const card = find(`[data-e2e=admin-group-card]`)
