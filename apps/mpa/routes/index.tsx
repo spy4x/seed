@@ -265,6 +265,7 @@ function Features(): JSX.Element {
             title="Sign-in that is done"
             Icon={IconShieldCheck}
             href="/features#sign-in"
+            linkLabel="How sign-in works"
             wide
             media={
               <Shot
@@ -282,6 +283,7 @@ function Features(): JSX.Element {
             title="Per-member billing"
             Icon={IconCreditCard}
             href="/features#billing"
+            linkLabel="How billing works"
             media={<BillingCrop />}
           >
             Stripe subscriptions per group: a free plan with limits, a paid plan per member, trials,
@@ -292,6 +294,7 @@ function Features(): JSX.Element {
             title="Realtime and offline"
             Icon={IconZap}
             href="/features#realtime"
+            linkLabel="How realtime and offline work"
             media={
               <div class="h-94 overflow-hidden">
                 {/* As wide as the card up to 416 px, so the Save button is never cut. */}
@@ -313,6 +316,7 @@ function Features(): JSX.Element {
             title="Groups from day one"
             Icon={IconUsers}
             href="/features#teams"
+            linkLabel="How groups work"
             wide
             media={
               <div class="aspect-[1280/470] overflow-hidden lg:flex lg:aspect-auto lg:h-94 lg:justify-center lg:bg-canvas">
@@ -339,6 +343,7 @@ function Features(): JSX.Element {
               title="An admin area"
               Icon={IconServer}
               href="/admin"
+              linkLabel="Tour the admin panel"
             >
               Operators find a person, manage groups, refund a payment and check the system's
               health. On its own host, with every action confirmed and logged.
@@ -349,6 +354,7 @@ function Features(): JSX.Element {
             title="A public website"
             Icon={IconGlobe}
             href="/features#website"
+            linkLabel="What the website includes"
           >
             This site: server-rendered, works with JavaScript turned off, with pricing from your
             plan catalog, legal pages and a double opt-in newsletter.
