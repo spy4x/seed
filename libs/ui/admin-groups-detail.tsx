@@ -263,6 +263,25 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
           <Fact label="Created">
             <When at={group.createdAt} />
           </Fact>
+          {detail.imported && (
+            <Fact label="Imported">
+              <span data-e2e="admin-group-imported">
+                <When at={detail.imported.at} />
+                {detail.imported.by && (
+                  <span class="font-normal text-muted">
+                    {" by "}
+                    <Link
+                      href={ADMIN_PATHS.user(detail.imported.by.id)}
+                      navigate={navigate}
+                      class="pc-link"
+                    >
+                      {adminGroupPersonName(detail.imported.by)}
+                    </Link>
+                  </span>
+                )}
+              </span>
+            </Fact>
+          )}
           <Fact label="Last activity">
             {group.lastActivityAt ? <When at={group.lastActivityAt} /> : `None`}
           </Fact>

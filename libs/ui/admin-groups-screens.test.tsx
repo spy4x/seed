@@ -326,6 +326,7 @@ const detail: AdminGroupDetail = {
     details: { role: GroupRole.EDITOR },
     byOperator: true,
   }],
+  imported: null,
 }
 
 const operator = { id: 7, role: UserRole.OPERATOR }
@@ -358,6 +359,24 @@ describe(`one group in the admin app`, () => {
     expect(counts).toContain(`12`)
     expect(counts).toContain(`2 in trash`)
     expect(find(`[data-e2e=admin-group-status]`).textContent).toBe(`Active`)
+  })
+
+  it(`says when a group was made from an export file and who imported it, and nothing for one created empty`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([])} />)
+    expect(has(`[data-e2e=admin-group-imported]`)).toBe(false)
+    await act(() => render(null, root!))
+    const imported = {
+      ...detail,
+      imported: {
+        at: `2026-10-21T09:00:00.000Z`,
+        by: { id: 45, name: `Bob Builder`, email: `bob@example.com` },
+      },
+    }
+    await mount(<AdminGroupScreen {...groupProps([], { detail: imported })} />)
+    const fact = find(`[data-e2e=admin-group-imported]`)
+    expect(fact.closest(`[data-e2e=admin-group-counts]`)).not.toBe(null)
+    expect(fact.textContent).toContain(`by Bob Builder`)
+    expect(fact.querySelector(`a`)?.getAttribute(`href`)).toBe(`/users/45`)
   })
 
   it(`draws the counts as plain facts, with no bordered box but badges inside the header card`, async () => {

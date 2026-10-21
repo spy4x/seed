@@ -89,6 +89,8 @@ export interface FakeGroup {
   invitations: { email: string | null; role: GroupRole; author: FakeMember; createdAgo: number }[]
   /** Members the owner made admin after they joined as editors. */
   promotions: { member: FakeMember; ago: number }[]
+  /** The owner made it from an export file, so the admin panel shows an "Imported" fact. */
+  imported?: boolean
 }
 
 /** A group's subscription to the paid plan, as the provider's webhooks would have left it. */
@@ -681,6 +683,8 @@ export function fakeDemoData(seed: number, now: Date): FakeDemoData {
       true,
     ),
   })
+  // The newest small group came from an export file: its owner moved it over from elsewhere.
+  small[small.length - 1].imported = true
   const newsletter = fakeNewsletter(tools, now, users, taken)
   const operator = fakeOperator(tools, now, users, subscriptions)
   return { users, groups: [...groups, ...small], subscriptions, ...newsletter, operator }

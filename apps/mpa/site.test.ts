@@ -778,7 +778,7 @@ describe("the public website", () => {
       "/compare": "2026-10-16T00:00:00.000Z",
       "/pricing": "2026-10-21T00:00:00.000Z",
       "/subscribe": undefined,
-      "/privacy": "2026-10-20T00:00:00.000Z",
+      "/privacy": "2026-10-21T00:00:00.000Z",
       "/terms": "2026-10-16T00:00:00.000Z",
     })
   })

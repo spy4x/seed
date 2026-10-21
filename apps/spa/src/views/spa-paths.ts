@@ -21,6 +21,8 @@ export const SPA_ROUTES = {
   "/groups": { open: false },
   // Before `/groups/:groupId`, which would take "new" for a group's id.
   "/groups/new": { open: false },
+  // Making a group from an export file; also before `/groups/:groupId`.
+  "/groups/import": { open: false },
   // A group's create-only invitation page, matched before the group's own routes.
   "/groups/:groupId/invitations/new": { open: false },
   "/groups/:groupId": { open: false },

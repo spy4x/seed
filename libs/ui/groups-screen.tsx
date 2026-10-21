@@ -3,6 +3,7 @@ import { useEffect, useRef } from "preact/hooks"
 import { IconChevronDown, IconChevronRight, IconPlus } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
+import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Stack } from "@spy4x/preact-ui/layout"
@@ -79,7 +80,8 @@ export const ROLE_TEXT: Record<GroupRole, string> = {
 
 /**
  * The groups page: one row per group, the whole row a link to the group's page, with the person's
- * role and "Current" on the group the notes show. "New group" in the header opens the create page.
+ * role and "Current" on the group the notes show. "New group" in the header opens the create page;
+ * its "More actions" menu opens the import page.
  * Deleted groups the person can still restore sit under a closed disclosure, each with Restore.
  */
 export function GroupsScreen(
@@ -125,6 +127,13 @@ export function GroupsScreen(
             dataE2E="group-new"
           />
         )}
+        // Rare actions go in the menu: "New group" stays the page's one primary action.
+        menu={
+          <DropdownItem href={GROUP_PATHS.import} navigate={navigate} dataE2E="group-import-open">
+            Import a group…
+          </DropdownItem>
+        }
+        menuDataE2E="groups-menu"
       />
       {invitations}
       {groups.length > 0 && <ErrorState message={error} />}

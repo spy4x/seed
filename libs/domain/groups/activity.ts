@@ -39,6 +39,8 @@ export const ACTIVITY_KINDS = [
   "group.invitation_declined",
   "group.data_moved_out",
   "group.data_moved_in",
+  "group.exported",
+  "group.imported",
   "note.created",
   "note.deleted",
   "note.restored",
@@ -242,6 +244,10 @@ export function describeActivity(
     }
     case "group.data_moved_in":
       return `${who} moved all of another group's data (${counted(details.count, "item")}) here`
+    case "group.exported":
+      return `${who} exported the group to a file`
+    case "group.imported":
+      return `${who} created the group from an export file (${counted(details.count, "item")})`
     case "note.created": {
       const title = quoted(details.title)
       return title ? `${who} added the note ${title}` : `${who} added a note`

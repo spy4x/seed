@@ -149,6 +149,7 @@ CREATE TABLE groups (
     description VARCHAR(2000) DEFAULT '' NOT NULL,
     color VARCHAR(16),
     emoji VARCHAR(32),
+    imported_at TIMESTAMPTZ,
     CONSTRAINT groups_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 100),
     CONSTRAINT groups_description_check CHECK (char_length(description) <= 500),
     CONSTRAINT groups_authorization_revision_check CHECK (authorization_revision >= 1),
