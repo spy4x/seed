@@ -119,7 +119,8 @@ export function nameFlag(args: string[]): string | undefined {
  */
 export async function writeSafely(path: string, text: string, mode?: number): Promise<void> {
   const temporary = `${path}.tmp`
-  const keep = (await Deno.lstat(path).catch(() => undefined))?.mode
+  // `stat` follows a link, so its replacement takes the target's mode, never the link's 0777.
+  const keep = (await Deno.stat(path).catch(() => undefined))?.mode
   const wanted = keep == null ? mode : keep & 0o777
   // Deno sets this mode as given, past the umask and on a temporary file left by a crash too.
   await Deno.writeTextFile(temporary, text, wanted === undefined ? {} : { mode: wanted })
