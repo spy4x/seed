@@ -169,12 +169,29 @@ export async function openTerminal(
       return await waitForPrompts(log, prompts, seconds)
     },
     async close() {
+      // Stop everything the shell still runs (`deno task dev`, docker compose) first: killing
+      // ttyd alone leaves its shell's session starting containers while the stack is removed.
+      const shells = await new Deno.Command("pgrep", { args: ["-P", String(ttyd.pid)] }).output()
+      for (const pid of new TextDecoder().decode(shells.stdout).split("\n").filter(Boolean)) {
+        await stopSession(pid)
+      }
       await page.close().catch(() => {})
       try {
         ttyd.kill("SIGTERM")
       } catch { /* already gone */ }
       await ttyd.status
     },
+  }
+}
+
+/** Stops every process of the session that `leader` leads: SIGTERM, then SIGKILL after 20 s. */
+async function stopSession(leader: string): Promise<void> {
+  for (const [signal, seconds] of [["TERM", 20], ["KILL", 5]] as const) {
+    await new Deno.Command("pkill", { args: [`-${signal}`, "-s", leader] }).output()
+    for (const deadline = Date.now() + seconds * 1000; Date.now() < deadline; await sleep(200)) {
+      const { success } = await new Deno.Command("pgrep", { args: ["-s", leader] }).output()
+      if (!success) return
+    }
   }
 }
 

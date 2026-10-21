@@ -19,8 +19,9 @@
  * 4. `encode.ts` adds the title and end cards, burns in the captions this run wrote to
  *    `captions.vtt`, lays the music under it, and writes the videos and posters.
  *
- * On exit, failed or not, it removes the stack's containers, volumes and images, and Traefik and
- * the `proxy` network only when this run started them.
+ * On exit, failed, stopped with Ctrl-C (SIGINT) or SIGTERM, or not, it removes the stack's
+ * containers, volumes and images, its temporary folder, and Traefik and the `proxy` network only
+ * when this run started them.
  */
 import { type Browser, type BrowserContext, chromium, type Locator, type Page } from "playwright"
 import { encodeDemo, CARD_SECONDS } from "./encode.ts"
@@ -392,8 +393,32 @@ async function record(): Promise<void> {
   const app = `${projects}/${PROJECT}`
   await Deno.mkdir(projects)
   const take = new Take(`${TAKE}/frames`)
-  const browser = await chromium.launch()
+  // Playwright's own signal handlers would close the browser and exit before the cleanup below.
+  const browser = await chromium.launch({
+    handleSIGINT: false,
+    handleSIGTERM: false,
+    handleSIGHUP: false,
+  })
   let term: Terminal | null = null
+  // Deno skips `finally` when a signal ends the process, so Ctrl-C and SIGTERM run the same
+  // cleanup themselves, once, and then exit.
+  let released: Promise<void> | null = null
+  const release = () =>
+    released ??= (async () => {
+      await term?.close().catch(() => {})
+      await browser.close().catch(() => {})
+      await cleanup(app, traefikBefore, networkBefore)
+      // The containers write the database files and Vite's caches as their own users.
+      await ok(["sudo", "-n", "find", work, "-delete"])
+    })()
+  const listeners = ([["SIGINT", 130], ["SIGTERM", 143]] as const).map(([signal, code]) => {
+    const listener = () => {
+      console.error(`${signal}: removing the stack, then exiting`)
+      release().finally(() => Deno.exit(code))
+    }
+    Deno.addSignalListener(signal, listener)
+    return [signal, listener] as const
+  })
   try {
     const agent = await browser.newPage()
     const userAgent = (await agent.evaluate(() => navigator.userAgent)).replace("Headless", "")
@@ -437,10 +462,8 @@ async function record(): Promise<void> {
     await Deno.writeTextFile(`${OUT}/captions.vtt`, take.vtt(CARD_SECONDS.title))
     console.log(`take: ${take.seconds().toFixed(1)} s in ${take.shots.length} shots`)
   } finally {
-    await term?.close()
-    await browser.close()
-    await cleanup(app, traefikBefore, networkBefore)
-    await Deno.remove(work, { recursive: true }).catch(() => {})
+    await release()
+    for (const [signal, listener] of listeners) Deno.removeSignalListener(signal, listener)
   }
 }
 
@@ -465,7 +488,7 @@ async function writeTake(take: Take): Promise<void> {
   await Deno.remove(`${TAKE}/frames`, { recursive: true })
 }
 
-/** Removes what the recording started: the stack, its data and images, and Traefik if it was ours. */
+/** Removes the stack this run started, its volumes and images, and Traefik if it was ours. */
 async function cleanup(app: string, traefikBefore: boolean, networkBefore: boolean) {
   const compose = [
     ..."docker compose -f infra/compose/compose.shared.yml -f infra/compose/compose.dev.yml".split(" "),
@@ -481,10 +504,6 @@ async function cleanup(app: string, traefikBefore: boolean, networkBefore: boole
   const images = await run(["docker", "images", "-q", `${PROJECT}/*`]).catch(() => "")
   for (const image of images.split("\n").filter(Boolean)) await ok(["docker", "rmi", image])
   if (!networkBefore) await ok(["docker", "network", "rm", "proxy"])
-  // Postgres and Valkey write their data as their own users.
-  if (await Deno.stat(`${app}/.volumes`).catch(() => null)) {
-    await ok(["sudo", "-n", "find", `${app}/.volumes`, "-delete"])
-  }
 }
 
 /** Encodes the last take into `media/demo/`. */

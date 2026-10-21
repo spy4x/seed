@@ -49,7 +49,9 @@ A recording writes `captions.vtt` anew, with each caption timed from the moment 
 6. `encode.ts` adds the title and end cards, burns in the captions, lays the music under it at
    about -28 LUFS, and writes `demo.webm`, `demo.mp4`, `poster.webp` and `poster-640.webp`.
 7. On exit, failed, stopped with Ctrl-C (SIGINT) or SIGTERM, or not, the stack's containers,
-   volumes and images go, and Traefik and the `proxy` network too when this run started them.
+   volumes and images go, with its temporary folder (through `sudo -n`, since the containers write
+   files there as their own users), and Traefik and the `proxy` network too when this run started
+   them.
 
 The poster is the team's notes list, the first screen of the app, without the pointer: the clip's
 opening frame is an empty terminal, which tells a visitor nothing.
