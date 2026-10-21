@@ -181,7 +181,7 @@ async function socialPreview(browser: Browser, profile: Uint8Array): Promise<Uin
       <div class="copy">
         <p class="eyebrow">Open-source SaaS foundation</p>
         <h1>The groundwork of your SaaS, already built.</h1>
-        <p class="sub">Seed · open source · MIT · one server you own</p>
+        <p class="sub">Seed · open source · MIT · one server you rent</p>
       </div>
       <footer>
         <span class="brand"><svg width="40" height="40" viewBox="0 0 32 32" aria-hidden="true">
