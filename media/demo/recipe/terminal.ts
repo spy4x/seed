@@ -123,7 +123,7 @@ export async function openTerminal(
   }
   const ttyd = new Deno.Command("ttyd", {
     args: [
-      ...["-i", "127.0.0.1", "-p", String(port), "-W", "-o", "-w", cwd],
+      ...["-i", "127.0.0.1", "-p", String(port), "-W", "-O", "-o", "-w", cwd],
       ...Object.entries(options).flatMap(([key, value]) => ["-t", `${key}=${value}`]),
       ...["env", "-i", `HOME=${home}`, "TERM=xterm-256color", `DENO_DIR=${denoDir}`, ...keep],
       ...[`DEMO_LOG=${log}`, "__demo_quiet=1"],
