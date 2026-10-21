@@ -283,6 +283,19 @@ describe("the public website", () => {
     expect(header).not.toContain(`href="${site}/sign-`)
   })
 
+  it("marks the header's Hire me as leaving the site, with an icon after its label", async () => {
+    const header = element((await page("/")).html, "header")!
+    const inner = (href: string) =>
+      [...header.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)]
+        .filter((match) => hrefOf(match[0]) === href).map((match) => match[1])
+
+    // Once in the desktop row and once in the mobile panel.
+    const hire = inner(HIRE_PAGE_URL.replaceAll("&", "&amp;"))
+    expect(hire).toHaveLength(2)
+    for (const link of hire) expect(link).toMatch(/Hire me\s*<svg\b[^>]*aria-hidden="true"/)
+    for (const link of inner("/pricing")) expect(link).not.toContain("<svg")
+  })
+
   const ogCards: [string, OgImageKey][] = [
     ["/", "home"],
     ["/admin", "admin"],

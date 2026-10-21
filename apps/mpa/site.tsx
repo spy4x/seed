@@ -198,7 +198,7 @@ export const NAV_LINKS = [
   { label: `Features`, href: `/features` },
   { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
   { label: `Pricing`, href: `/pricing` },
-  { label: `Hire me`, href: HIRE_PAGE_URL },
+  { label: `Hire me`, href: HIRE_PAGE_URL, external: true },
   { label: `GitHub`, href: REPOSITORY_URL, Icon: IconGitHub },
 ] as const
 
