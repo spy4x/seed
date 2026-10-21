@@ -74,7 +74,8 @@ const NOTES: { title: string; body: string; tags: TagName[]; author: Person }[] 
   },
   {
     title: "Interview notes: three design agencies",
-    body: "All three bill per seat and hate per-seat pricing. Two of them work offline on trains.",
+    body:
+      "All three bill per member and hate per-member pricing. Two of them work offline on trains.",
     tags: ["Research"],
     author: MARGARET,
   },
