@@ -139,6 +139,21 @@ const TIERS: readonly Tier[] = [
         ),
       },
       {
+        id: `overview`,
+        nav: `Group overview`,
+        eyebrow: `Overview`,
+        title: `Overview for each group`,
+        lead: `Key numbers and a chart for any date range. Each person hides and reorders the ` +
+          `widgets, and the layout follows them to their other devices.`,
+        facts: [
+          `Each number is compared with the period before, without a colour verdict`,
+          `Counts only: no note's text and no ranking of people`,
+          `Each widget loads, fails and retries on its own`,
+          `A new aggregate adds its own widgets, and the admin area shows them too`,
+        ],
+        code: { label: `Read the overview widgets`, href: source(`libs/domain/notes/overview.ts`) },
+      },
+      {
         id: `billing`,
         nav: `Per-member billing`,
         eyebrow: `Money`,
