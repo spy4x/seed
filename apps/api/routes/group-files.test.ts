@@ -168,7 +168,7 @@ describe("group export route", () => {
     }
   })
 
-  it("stops a person's exports past the hourly budget", async () => {
+  it("stops a person's exports past the hourly budget, which other sites cannot spend", async () => {
     const store = memoryStore()
     const porter: Partial<GroupFilePorter> = {
       exportGroup: () =>
@@ -184,6 +184,10 @@ describe("group export route", () => {
       porter,
       limits: createGroupFileRateLimits({ store: () => store }),
     })
+    // Another site's requests are refused before the budget, so they cannot spend it.
+    for (let index = 0; index < GROUP_EXPORTS_PER_USER; index++) {
+      expect((await limited.request(exportRequest("cross-site"))).status).toBe(403)
+    }
     for (let index = 0; index < GROUP_EXPORTS_PER_USER; index++) {
       expect((await limited.request(exportRequest())).status).toBe(200)
     }
