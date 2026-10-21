@@ -61,9 +61,13 @@ test.describe("keyboard shortcuts", () => {
       await signUp(request, email)
       await signIn(page, email, password)
 
-      // `g` then `t` goes to Tags.
-      await press(page, "g t")
-      await expect(page).toHaveURL(/\/tags$/)
+      // `g` then `t` goes to Tags. The first page may still be settling (its group loads and the
+      // address can be replaced once), so the sequence is pressed again until it lands.
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
+      await expect(async () => {
+        await press(page, "g t")
+        await expect(page).toHaveURL(/\/tags$/, { timeout: 1500 })
+      }).toPass({ timeout: 15_000 })
       await expect(page.getByRole("heading", { level: 1, name: "Tags" })).toBeVisible()
 
       await press(page, "n")
