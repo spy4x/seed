@@ -72,6 +72,8 @@ export function billingState(billing: GroupBilling): BillingState {
 }
 
 export interface GroupBillingPanelProps {
+  /** The group's id: the person's trial counts as unused for the group that holds it. */
+  groupId: string
   /** The group's name, for the sentences that say what it pays. */
   groupName: string
   /** The group's billing, or `null` while it is read. */
@@ -149,7 +151,7 @@ export function GroupBillingPanel(props: GroupBillingPanelProps): JSX.Element {
 
 /** The card that says which plan the group is on, what it costs, and the one primary action. */
 function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }): JSX.Element {
-  const { billing, groupName, memberCount, ownerName, trial, confirming = false } = props
+  const { billing, groupId, groupName, memberCount, ownerName, trial, confirming = false } = props
   const { pending = false, now = new Date(), onCheckout, onPortal } = props
   const state = billingState(billing)
   const owner = billing.canManage
@@ -184,8 +186,9 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
       </p>
     )
   } else if (state === BillingState.FREE) {
-    // A group that ever paid, or an owner whose one trial went to another group, gets no trial.
-    const trialUsed = trial?.used ?? false
+    // A group that ever paid, or an owner whose one trial went to another group, gets no trial. The
+    // group that holds the trial gets it again: its checkout claims the same trial.
+    const trialUsed = (trial?.used ?? false) && trial?.groupId !== groupId
     const withTrial = PRO.trialDays > 0 && !trialUsed && !billing.hasCustomer
     body = (
       <p>
@@ -196,7 +199,8 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
           } a month.`}
       </p>
     )
-    action = !billing.subscribed && (
+    // Back from the checkout, the payment is on its way: a second checkout could be paid twice.
+    action = !billing.subscribed && !confirming && (
       <Button
         class="min-h-11 w-full sm:min-h-9 sm:w-auto"
         busy={pending}
@@ -210,7 +214,7 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
         <span class="sr-only">(opens Stripe)</span>
       </Button>
     )
-    fine = !billing.subscribed && (
+    fine = !billing.subscribed && !confirming && (
       <>
         {trialUsed && (
           <span class="block" data-e2e="billing-trial-used">
@@ -269,7 +273,7 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
   return (
     <Card>
       <div class="flex flex-col gap-3 px-4 py-4 sm:px-6">
-        <h3 class="text-base font-semibold text-foreground">
+        <h3 class="text-base font-medium text-foreground">
           <span data-e2e="billing-plan-name">{name}</span> plan{" "}
           {status && (
             <span class="font-normal text-muted" data-e2e="billing-status">· {status}</span>
@@ -282,7 +286,9 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
           </p>
         )}
         {action && <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">{action}</div>}
-        {fine && <p class="text-xs text-muted" data-e2e="billing-fine-print">{fine}</p>}
+        {fine && (
+          <p class="text-sm text-muted sm:text-right" data-e2e="billing-fine-print">{fine}</p>
+        )}
       </div>
     </Card>
   )

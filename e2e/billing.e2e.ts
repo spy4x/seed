@@ -8,7 +8,7 @@ const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 
 test.describe("group billing", () => {
-  test("the owner upgrades a group to Pro, and the page shows it once the signed webhook arrives", async ({ page, request }) => {
+  test("the owner starts a group's Pro trial, and the page shows it once the signed webhook arrives", async ({ page, request }) => {
     const email = "e2e_billing_owner@example.com"
     const password = "Passw0rd!"
     const cleanup = async ({ soft = false } = {}) => {
@@ -44,8 +44,10 @@ test.describe("group billing", () => {
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
       await expect(plan).toHaveAttribute("data-plan", "free")
       await expect(page.locator("[data-e2e=billing-confirming]")).toBeVisible()
+      // While Stripe confirms, a second checkout could be paid twice: none is offered.
+      await expect(page.locator("[data-e2e=billing-checkout]")).toHaveCount(0)
 
-      const body = subscriptionEvent({ reference: groupId })
+      const body = subscriptionEvent({ reference: groupId, status: "trialing" })
       const delivered = await request.post(`${apiBase}${BILLING_WEBHOOK_PATH}`, {
         headers: {
           "content-type": "application/json",
@@ -57,7 +59,8 @@ test.describe("group billing", () => {
 
       // No reload: the plan change reaches the open page through the group's change hint.
       await expect(plan).toHaveAttribute("data-plan", "pro")
-      await expect(page.locator("[data-e2e=billing-upgraded]")).toContainText("You're on Pro")
+      await expect(page.locator("[data-e2e=billing-upgraded]"))
+        .toContainText("Your 14-day Pro trial has started")
       await expect(page.getByRole("button", { name: "Change card (opens Stripe)" })).toBeVisible()
 
       const replayed = await request.post(`${apiBase}${BILLING_WEBHOOK_PATH}`, {

@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "preact/hooks"
 import { useLocation, useSearch } from "wouter-preact"
-import { findPlan, FREE_PLAN_ID } from "@domain/billing"
+import {
+  billingDate,
+  BillingStatus,
+  findPlan,
+  FREE_PLAN_ID,
+  type GroupBilling,
+} from "@domain/billing"
 import { GroupBillingPanel } from "@ui/billing-screen.tsx"
 import { GROUP_PATHS } from "@ui/progressive.tsx"
 import { billingStore } from "../state/billing.ts"
@@ -9,6 +15,27 @@ import { toasts } from "../state/toasts.ts"
 
 /** The query the checkout's success address carries, so the tab knows the owner just paid. */
 export const CHECKOUT_DONE = "checkout=done"
+
+/**
+ * What the toast says once the provider confirmed the owner's checkout: a started trial is no
+ * payment, so it names the trial and its end; a paid start names the plan.
+ */
+export function checkoutDoneToast(
+  billing: GroupBilling,
+  groupName: string,
+): { title: string; body: string } {
+  const found = findPlan(billing.planId)
+  const plan = found?.name ?? billing.planId
+  const trialEnd = billing.status === BillingStatus.Trialing
+    ? billing.trialEnd ?? billing.currentPeriodEnd
+    : null
+  return trialEnd
+    ? {
+      title: `Your ${found?.trialDays ?? 14}-day ${plan} trial has started`,
+      body: `"${groupName}" is on ${plan} until ${billingDate(trialEnd)}.`,
+    }
+    : { title: `You're on ${plan}`, body: `Stripe confirmed the payment for "${groupName}".` }
+}
 
 /**
  * Reads the group's billing when the tab opens and again whenever the group's change sequence
@@ -55,15 +82,11 @@ export function GroupBillingView(
   useEffect(() => {
     if (!waiting.current || !paid) return
     waiting.current = false
-    const plan = findPlan(billing.planId)?.name ?? billing.planId
-    toasts.success({
-      title: `You're on ${plan}`,
-      body: `Stripe confirmed the payment for "${groupName}".`,
-      dataE2E: "billing-upgraded",
-    })
+    toasts.success({ ...checkoutDoneToast(billing, groupName), dataE2E: "billing-upgraded" })
   }, [paid])
   return (
     <GroupBillingPanel
+      groupId={groupId}
       groupName={groupName}
       billing={billing}
       memberCount={memberCount}

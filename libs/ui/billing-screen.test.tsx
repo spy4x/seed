@@ -122,14 +122,18 @@ function calls() {
   }
 }
 
+const GROUP_ID = "019a0000-0000-7000-8000-00000000000a"
+const OTHER_GROUP_ID = "019a0000-0000-7000-8000-00000000000b"
+
 function panel(billing: GroupBilling | null, props: Partial<GroupBillingPanelProps> = {}): VNode {
   return (
     <GroupBillingPanel
+      groupId={GROUP_ID}
       groupName="Team"
       billing={billing}
       memberCount={6}
       ownerName="Maya Chen"
-      trial={{ enabled: true, used: false, days: 14 }}
+      trial={{ enabled: true, used: false, groupId: null, days: 14 }}
       now={NOW}
       {...props}
     />
@@ -192,13 +196,30 @@ describe("GroupBillingPanel", () => {
 
   it("offers Upgrade to Pro, saying the trial went to another group, once the owner used it", async () => {
     const app = calls()
-    await mount(panel(FREE_OWNER, { ...app.props, trial: { enabled: true, used: true, days: 14 } }))
+    const trial = { enabled: true, used: true, groupId: OTHER_GROUP_ID, days: 14 }
+    await mount(panel(FREE_OWNER, { ...app.props, trial }))
     expect(find("[data-e2e=billing-checkout]").textContent).toBe("Upgrade to Pro (opens Stripe)")
     expect(find("[data-e2e=billing-trial-used]").textContent).toBe(
       "You have used your free trial on another group.",
     )
     await click("[data-e2e=billing-checkout]")
     expect(app.checkouts).toEqual([PRO_PLAN_ID])
+  })
+
+  it("offers the trial again to the group that holds it, with no line about another group", async () => {
+    const trial = { enabled: true, used: true, groupId: GROUP_ID, days: 14 }
+    await mount(panel(FREE_OWNER, { trial }))
+    expect(find("[data-e2e=billing-checkout]").textContent).toBe(
+      "Start 14-day free trial (opens Stripe)",
+    )
+    expect(has("[data-e2e=billing-trial-used]")).toBe(false)
+  })
+
+  it("offers no checkout and no fine print while Stripe confirms the owner's checkout", async () => {
+    await mount(panel(FREE_OWNER, { confirming: true }))
+    expect(has("[data-e2e=billing-confirming]")).toBe(true)
+    expect(has("[data-e2e=billing-checkout]")).toBe(false)
+    expect(has("[data-e2e=billing-fine-print]")).toBe(false)
   })
 
   it("offers a free group that paid before Upgrade to Pro, and its invoices in Stripe", async () => {
