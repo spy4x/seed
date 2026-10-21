@@ -173,11 +173,13 @@ describe("SignInMethods with passkeys", () => {
       .toEqual(["sign-in-method-password", "sign-in-method-passkey", "sign-in-method-google"])
   })
 
-  it("shows a passkey by its name, when it was added and last used, and this device's use", async () => {
+  it("shows a passkey by its full name, when it was added and last used, and this device's use", async () => {
     await mount(<SignInMethods {...methodsProps([])} />)
 
     const row = find("[data-e2e=sign-in-method-passkey]")
     expect(row.textContent).toContain("Chrome on macOS")
+    // A long name is cut off on a narrow screen, so the whole of it is in the title.
+    expect(find("[data-e2e=passkey-full-name]").getAttribute("title")).toBe("Chrome on macOS")
     expect(find("[data-e2e=passkey-dates]").textContent).toMatch(/^Added .+ · Last used .+/)
     expect(row.querySelector("time")?.getAttribute("datetime")).toBe("2026-10-21T09:00:00.000Z")
     expect(row.textContent).toContain("Used on this device")

@@ -470,19 +470,22 @@ function MethodDetails(
         <>
           {onRename
             ? (
-              <InlineEdit
-                value={passkey.name}
-                onSave={(name) => onRename(method.id, name)}
-                editLabel={(name) => `Rename ${name}`}
-                inputLabel="Passkey name"
-                errorMessage={() => PASSKEY_RENAME_FAILURE}
-                disabled={pending}
-                dataE2E={`passkey-name-${method.id}`}
-                // The button's own padding would push the name off the line under it.
-                class="-ml-2 font-medium text-foreground"
-              />
+              // The control cuts a long name off on a narrow screen; the title shows it in full.
+              <span title={passkey.name} class="max-w-full min-w-0" data-e2e="passkey-full-name">
+                <InlineEdit
+                  value={passkey.name}
+                  onSave={(name) => onRename(method.id, name)}
+                  editLabel={(name) => `Rename ${name}`}
+                  inputLabel="Passkey name"
+                  errorMessage={() => PASSKEY_RENAME_FAILURE}
+                  disabled={pending}
+                  dataE2E={`passkey-name-${method.id}`}
+                  // The button's own padding would push the name off the line under it.
+                  class="-ml-2 font-medium text-foreground"
+                />
+              </span>
             )
-            : <span class="font-medium text-foreground">{passkey.name}</span>}
+            : <span class="font-medium break-words text-foreground">{passkey.name}</span>}
           <span data-e2e="passkey-dates">
             Added <OnDay at={passkey.createdAt} />
             {" · "}
