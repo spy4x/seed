@@ -89,6 +89,8 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.PASSWORD_RESET_SENT]: "neutral",
   [AuthAuditEventType.USERS_EXPORTED]: "neutral",
   [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "neutral",
+  [AuthAuditEventType.GUEST_STARTED]: "neutral",
+  [AuthAuditEventType.GUEST_KEPT]: "success",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
@@ -123,6 +125,8 @@ export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.PASSWORD_RESET_SENT]: "Password-reset link sent by an operator",
   [AuthAuditEventType.USERS_EXPORTED]: "Exported the user list",
   [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "Passkey renamed",
+  [AuthAuditEventType.GUEST_STARTED]: "Started as a guest",
+  [AuthAuditEventType.GUEST_KEPT]: "Kept the guest account",
 }
 
 /**

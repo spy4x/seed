@@ -49,6 +49,11 @@ export interface SignUpRequest {
   /** The password hash; the raw password is never stored. */
   secret: string
   expiresAt: Date
+  /**
+   * The guest keeping their account with this address (#224): the right code adds the password to
+   * that guest instead of making a new account. `null` or left out for a plain sign-up.
+   */
+  guestUserId?: number | null
 }
 
 /** When a sign-up asked for at `now`, or given a new code at `now`, stops working. */
@@ -62,15 +67,19 @@ export function signUpRequests(sql: Sql) {
     /** Writes a new waiting sign-up. */
     create: async (request: SignUpRequest): Promise<void> => {
       await sql`
-        INSERT INTO sign_up_requests (id, email, secret, expires_at)
-        VALUES (${request.id}, ${request.email}, ${request.secret}, ${request.expiresAt})
+        INSERT INTO sign_up_requests (id, email, secret, expires_at, guest_user_id)
+        VALUES (
+          ${request.id}, ${request.email}, ${request.secret}, ${request.expiresAt},
+          ${request.guestUserId ?? null}
+        )
       `
     },
     /** The waiting sign-up with this id while it works, or `null`. Any other id is `null`. */
     find: async (id: string, now = new Date()): Promise<SignUpRequest | null> => {
       if (!UUID_PATTERN.test(id)) return null
       const [row] = await sql<SignUpRequest[]>`
-        SELECT id, email, secret, expires_at AS "expiresAt" FROM sign_up_requests
+        SELECT id, email, secret, expires_at AS "expiresAt", guest_user_id AS "guestUserId"
+        FROM sign_up_requests
         WHERE id = ${id} AND expires_at > ${now}
       `
       return row ?? null

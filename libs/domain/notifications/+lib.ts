@@ -28,6 +28,11 @@ export const NotificationKind = {
   RemovedFromGroup: "group.removed",
   /** The group's owner handed the group to the person. */
   OwnershipReceived: "group.ownership_received",
+  /**
+   * A guest account's reminder to add a sign-in method (#224). Its payload carries the reminder's
+   * `title` and `text`, both fixed sentences of the app, never anything the person wrote.
+   */
+  GuestReminder: "guest.reminder",
 } as const
 
 /**
@@ -181,6 +186,10 @@ export function describeNotification(
       return `You were removed from ${group}.`
     case NotificationKind.OwnershipReceived:
       return `You now own ${group}.`
+    case NotificationKind.GuestReminder:
+      return `${text(payload.title, "Keep your account")}. ${
+        text(payload.text, "Add a sign-in method to keep it.")
+      }`
     default:
       return "You have a new notification."
   }

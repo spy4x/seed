@@ -111,6 +111,7 @@ import type { SignInMethodChange } from "@server/jobs/sign-in-method-mail.ts"
 import { PASSKEY_METHOD, passkeyIdentifier, type PasskeySummary } from "@server/auth/passkeys.ts"
 import type { AppDbBase } from "./db-base.ts"
 import type { AppAuthState, SignedIn } from "./sign-in.ts"
+import type { GuestKeeper } from "./guest-sign-in.ts"
 
 /** How long a started flow and its cookie live: the package's default, in seconds. */
 const FLOW_SECONDS = 600
@@ -237,6 +238,8 @@ export interface OAuthInternals {
   waitingForCode(userId: number): Promise<User | null>
   /** Whether `error` means "this user may not sign in" rather than a fault. */
   isRefusal(error: unknown): boolean
+  /** A guest's provider link keeps the account, or, when that provider account is taken, offers to switch (#224). */
+  guests?: GuestKeeper
 }
 
 /** How a provider's callback ended. */
@@ -430,6 +433,23 @@ export function createOAuthOperations(
    * claim is read before the write and looked for again after. That it is gone afterwards is the
    * fact the audit row records: only another user's unproven claim is ever deleted by the write.
    */
+  /** `store`, noting in `found` every key a lookup by method and subject answered. */
+  function notingFoundKeys(store: AuthStore, found: AuthKey[]): AuthStore {
+    return new Proxy(store, {
+      get(target, name, receiver) {
+        if (name === "findKey") {
+          return async (method: string, subject: string) => {
+            const key = await target.findKey(method, subject)
+            if (key) found.push(key)
+            return key
+          }
+        }
+        const value = Reflect.get(target, name, receiver)
+        return typeof value === "function" ? value.bind(target) : value
+      },
+    })
+  }
+
   function reportingTakenClaims(store: AuthStore, taken: AuthKey[]): AuthStore {
     const noting = async <T>(key: NewAuthKey, write: () => Promise<T>): Promise<T> => {
       const claim = key.email === null ? null : await store.findKey(PASSWORD_METHOD, key.email)
@@ -593,12 +613,14 @@ export function createOAuthOperations(
         if (!current || current.session.secondFactor === SecondFactorStatus.Pending) {
           return failed()
         }
-        let added
+        let added: boolean | "kept"
+        // The keys the link looked up, to find the other account when the identity is taken.
+        const found: AuthKey[] = []
         try {
           added = await db.begin(async (tx) => {
             const taken: AuthKey[] = []
             const { key, outcome } = await signInWith(id, {
-              store: reportingTakenClaims(tx.authStore, taken),
+              store: reportingTakenClaims(notingFoundKeys(tx.authStore, found), taken),
               sessions: own.sessionsOver(tx.sessionStore),
               secondFactorFor: own.secondFactorAtSignUp,
             }).handleConnectCallback({
@@ -615,14 +637,26 @@ export function createOAuthOperations(
               key.method,
             )
             await writeTakenClaims(c, tx, taken, key.method)
-            return true
+            const kept = await own.guests?.keep(c, tx, key.userId, key.id, key.method)
+            return kept ? "kept" : true
           })
         } catch (error) {
           if (error instanceof OAuthSignInError) {
-            return failed(error.reason === "identity-taken" ? "link-taken" : "failed")
+            if (error.reason !== "identity-taken") return failed()
+            // A guest whose provider account already signs in to another account here gets the
+            // choice to switch to it: the provider just proved the person holds that account.
+            const other = found.find((key) =>
+              key.userId !== current.user.id && key.method !== PASSWORD_METHOD
+            )
+            if (current.user.guestSince && other && own.guests) {
+              await own.guests.taken(current.user.id, other, false)
+              return failed("guest-taken")
+            }
+            return failed("link-taken")
           }
           throw error
         }
+        if (added === "kept") return { kind: "notice", notice: "kept", linking }
         return { kind: "notice", notice: added ? "linked" : "link-exists", linking }
       }
 

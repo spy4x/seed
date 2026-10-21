@@ -67,6 +67,7 @@ import {
 } from "./subscriber-mail.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import { JOB_RETRY } from "./job-failures.ts"
+import { cleanUpGuests } from "../auth/guests.ts"
 import {
   JOB_AGGREGATE,
   JOB_AGGREGATE_ID,
@@ -190,6 +191,11 @@ function cleanupSteps(
     ["remove expired sign-ups", async () => {
       const signUps = await removeExpiredSignUps(sql)
       if (signUps > 0) console.log(`Removed ${signUps} expired sign-up(s)`)
+    }],
+    // Guest accounts (#224): empty ones a week on, and any unused for a year.
+    ["remove empty and idle guest accounts", async () => {
+      const guests = await cleanUpGuests(sql)
+      if (guests > 0) console.log(`Removed ${guests} empty or idle guest account(s)`)
     }],
     ["remove expired codes", async () => {
       const codes = await removeExpiredAuthChallenges(sql)

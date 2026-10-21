@@ -59,6 +59,11 @@ export const userBaseSchema = type({
    * Postgres carries it: nothing a client sends sets it.
    */
   "blockedAt?": "Date | null",
+  /**
+   * When the guest account was made (#224), or `null` for an account with a sign-in method, which
+   * includes a guest who kept the account. Optional for the same reason as `blockedAt`.
+   */
+  "guestSince?": "Date | null",
 })
 export type UserBase = typeof userBaseSchema.infer
 
@@ -407,6 +412,10 @@ export enum AuthAuditEventType {
    * `@domain/billing/admin.ts`.
    */
   SIGN_IN_METHOD_RENAMED = 30,
+  /** A guest account was made with one click (#224). */
+  GUEST_STARTED = 31,
+  /** A guest kept the account by adding a sign-in method; `identifier` names the method. */
+  GUEST_KEPT = 32,
 }
 
 export const authAuditBaseSchema = type({
@@ -437,6 +446,8 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.PASSWORD_RESET_SENT,
     AuthAuditEventType.USERS_EXPORTED,
     AuthAuditEventType.SIGN_IN_METHOD_RENAMED,
+    AuthAuditEventType.GUEST_STARTED,
+    AuthAuditEventType.GUEST_KEPT,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",
@@ -593,6 +604,14 @@ export interface SignUpAccountExistsResponse {
   accountExists: ExistingAccountAnswer
 }
 
+/**
+ * What the sign-up code answers for a guest whose address belongs to an account with a password
+ * (#224): nothing changed, and `/keep/taken` asks what to do.
+ */
+export interface SignUpGuestTakenResponse {
+  guestTaken: true
+}
+
 /** What `GET /auth/sign-up/pending` answers: the sign-up that waits, or `null` when none does. */
 export interface PendingSignUpResponse {
   pending: PendingSignUp | null
@@ -671,6 +690,10 @@ export type OAuthNotice =
   | "link-taken"
   /** Too many attempts from this address in a minute; nothing was tried. */
   | "busy"
+  /** A guest linked the provider: the account is kept (#224). */
+  | "kept"
+  /** A guest's provider account signs in to another account here: the switch page asks (#224). */
+  | "guest-taken"
 
 /**
  * The web app's pages a provider's callback redirects to. `apps/spa` routes each one
@@ -685,6 +708,10 @@ export const OAUTH_PAGES = {
   oneTimeCode: "/totp",
   /** The profile: where sign-in lands without a `next`, and where linking reports. */
   profile: "/",
+  /** Keeping a guest account (#224): where a guest's link reports. */
+  keep: "/keep",
+  /** "That sign-in belongs to another account": where a guest's taken link lands. */
+  keepTaken: "/keep/taken",
 } as const
 
 /** The query parameter that carries an {@link OAuthNotice}. */
@@ -697,6 +724,8 @@ export const OAUTH_NOTICES: Record<OAuthNotice, string> = {
   "link-exists": "Already linked. You can sign in with it as before.",
   "link-taken": "Not linked: that account is already linked to another account here.",
   "busy": "Too many attempts. Wait a minute, then try again.",
+  "kept": "Sign-in method added. You can now sign in with it on any device.",
+  "guest-taken": "That sign-in method belongs to another account.",
 }
 
 /** `value` as a notice, or `null` when it is none. */
@@ -1046,6 +1075,7 @@ export function adminUsersExportPath(filter: AdminUserFilter): string {
 export * from "./admin-audit.ts"
 export * from "./admin-system.ts"
 export * from "./preferences.ts"
+export * from "./guests.ts"
 
 /**
  * One push device of a person, as the operator area shows it (#427): never the endpoint or the

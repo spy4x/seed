@@ -15,6 +15,7 @@ import {
   type RateLimitContext,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
+import { GUEST_STARTS_PER_HOUR } from "@domain/identity"
 import type { APIContext } from "../_types.ts"
 import type { AppAuthState } from "../services/sign-in.ts"
 
@@ -136,6 +137,11 @@ export interface AuthRateLimits {
    * `/totp/connect/finish` share one budget. Only failed checks (status 400 and above) spend it.
    */
   otpByUser: MiddlewareHandler<APIContext>
+  /**
+   * New guest accounts per client IP (#224): {@link GUEST_STARTS_PER_HOUR} an hour. A refusal is
+   * 429 with `Retry-After`, which the `/try` page turns into minutes.
+   */
+  guestByIp: MiddlewareHandler<APIContext>
   /** Normal limit per signed-in user, else per client IP, for every other auth route. */
   normal: MiddlewareHandler<APIContext>
   /**
@@ -182,8 +188,8 @@ export interface AuthRateLimitSettings {
   /**
    * Builds the store one limiter keeps its budgets in. `name` is that limiter's own key prefix:
    * `ratelimit-strict`, `ratelimit-otp`, `ratelimit-reset`, `ratelimit-email-code`,
-   * `ratelimit-sign-up-code`, `ratelimit-email-change`, `ratelimit-email-change-address` or
-   * `ratelimit-normal`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
+   * `ratelimit-sign-up-code`, `ratelimit-email-change`, `ratelimit-email-change-address`,
+   * `ratelimit-guest` or `ratelimit-normal`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
    * in-process store.
    */
   store: (name: string) => RateLimitStore
@@ -298,6 +304,12 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     limit: EMAIL_CHANGE_MAILS_PER_ADDRESS,
     clock,
   })
+  // An hour long, so a script cannot fill the database with empty accounts.
+  const guest = createStoreLimiter(store("ratelimit-guest"), {
+    windowMs: 60 * 60_000,
+    limit: GUEST_STARTS_PER_HOUR,
+    clock,
+  })
   const normal = failOpenLimiter(
     createStoreLimiter(store("ratelimit-normal"), { windowMs, limit: settings.limit, clock }),
     { limit: settings.limit, onError: settings.onStoreError },
@@ -325,6 +337,11 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       // A correct code gives its slot back: only wrong codes run the budget out.
       skipSuccessful: true,
       onRefundError: (error) => settings.onStoreError(error),
+    }),
+    guestByIp: createRateLimitMiddleware(guest, {
+      remoteAddr: denoServeRemoteAddr,
+      keyResolver: byIp,
+      keyPrefix: "auth-guest:",
     }),
     normal: createRateLimitMiddleware(normal, {
       remoteAddr: denoServeRemoteAddr,

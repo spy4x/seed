@@ -31,6 +31,7 @@ import {
 import { PASSKEY_METHOD, passkeyIdentifier, uniqueName } from "@server/auth/passkeys.ts"
 import type { AppDbBase } from "./db-base.ts"
 import type { AppAuthState, SignedIn } from "./sign-in.ts"
+import type { GuestKeeper } from "./guest-sign-in.ts"
 
 /**
  * Longest credential id kept, in base64url characters: `auth_keys.subject` holds 255. The
@@ -78,6 +79,8 @@ export interface PasskeyInternals {
    * sign in (blocked, or gone).
    */
   admit(c: Context, userId: number): Promise<SecondFactorStatus | null>
+  /** A guest's first passkey keeps the account (#224). */
+  guests?: GuestKeeper
   /** The profile of a user who waits to be deleted with two-factor on, else `null`. */
   waitingForCode(userId: number): Promise<User | null>
 }
@@ -255,6 +258,8 @@ export function createPasskeyOperations(
             backedUp: checked.backedUp,
             name,
           })
+          // A guest's first passkey is the account's first way in: it is a guest no more.
+          await own.guests?.keep(c, tx, user.id, key.id, PASSKEY_METHOD)
           await tx.authAudit.insert(
             own.auditRow(
               c,

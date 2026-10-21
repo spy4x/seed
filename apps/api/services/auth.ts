@@ -13,6 +13,7 @@ export const signIn = createSignIn({
   secureCookie: !config.isDev,
   sessionMinutes: config.authSessionDurationMin,
   totpIssuer: config.domain,
+  guests: config.guestMode,
   oauth: {
     providers: enabledOAuthProviders(config.oauth),
     origin: config.webAppUrl,
