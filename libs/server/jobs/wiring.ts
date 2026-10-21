@@ -71,6 +71,7 @@ import {
   JOB_AGGREGATE,
   JOB_AGGREGATE_ID,
   type JobHandler,
+  LEGACY_JOB_AGGREGATE_ID,
   OUTBOX_CLEANUP_JOB,
   OUTBOX_RETENTION_DAYS,
 } from "./jobs.ts"
@@ -267,12 +268,22 @@ function billingNoticeJobs(
 }
 
 /**
- * Starts the nightly cleanup chain at the next 03:00 UTC unless a run is already waiting. The
- * processor closes a cleanup row it gives up and writes the next run itself, so a chain never
+ * Starts the nightly cleanup chain at the next 03:00 UTC unless a run is already waiting, under
+ * `JOB_AGGREGATE_ID` or `LEGACY_JOB_AGGREGATE_ID`. The processor closes a cleanup row it gives up and writes the next run itself, so a chain never
  * stays stopped; a row an older worker gave up was closed by migration
  * `2026_11_01_0001_close_given_up_outbox_rows.sql`, and this then writes a fresh one.
  */
 export async function scheduleNightlyJobs(sql: postgres.Sql, now = new Date()): Promise<void> {
+  // A chain started under the old id is still the nightly cleanup: a second one would run beside it.
+  const legacy = await sql`
+    SELECT 1 FROM outbox_events
+    WHERE event_kind = ${OUTBOX_CLEANUP_JOB}
+      AND aggregate_type = ${JOB_AGGREGATE}
+      AND aggregate_id = ${LEGACY_JOB_AGGREGATE_ID}
+      AND processed_at IS NULL
+    LIMIT 1
+  `
+  if (legacy.length > 0) return
   await ensureScheduledOutboxEvent(
     sql,
     { eventKind: OUTBOX_CLEANUP_JOB, aggregateType: JOB_AGGREGATE, aggregateId: JOB_AGGREGATE_ID },
