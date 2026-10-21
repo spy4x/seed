@@ -44,16 +44,13 @@ async function tryItNow(page: Page): Promise<void> {
   })
 }
 
-test(`"Try it now" opens the app as a guest in one click, and Back does not make a second one`, async ({ page }) => {
+// Back from the app is not tested: Chromium skips a history entry that navigated on without a user
+// gesture, as `/try` does, so the test could not tell `location.replace` from `assign`.
+test(`"Try it now" opens the app as a guest in one click`, async ({ page }) => {
   try {
     await tryItNow(page)
     await expect(page.locator(`[data-e2e=guest-banner]`)).toBeVisible()
-    const guest = await me(page)
-    expect(guest.guestSince).not.toBeNull()
-
-    await page.goBack()
-    await expect(page).toHaveURL(`/sign-up`)
-    expect((await me(page)).id).toBe(guest.id)
+    expect((await me(page)).guestSince).not.toBeNull()
   } finally {
     await deleteGuest(page)
   }
