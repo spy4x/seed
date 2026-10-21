@@ -3,7 +3,12 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { personName } from "./note-people.ts"
 
-const members = [{ userId: 7, name: "Maya Chen" }, { userId: 1, name: "Anna Bell" }]
+const members = [
+  { userId: 1, name: "Anna Bell" },
+  { userId: 7, name: "Maya Chen" },
+  { userId: 9, name: "Leo Park" },
+  { userId: 5, name: " " },
+]
 
 describe("personName", () => {
   it("names the person themselves You, even before the members are read", () => {
@@ -13,6 +18,11 @@ describe("personName", () => {
 
   it("names another member by the name the group knows", () => {
     expect(personName(7, 1, members)).toBe("Maya Chen")
+    expect(personName(9, 1, members)).toBe("Leo Park")
+  })
+
+  it("names a member who set no name Unnamed member, as the members list does", () => {
+    expect(personName(5, 1, members)).toBe("Unnamed member")
   })
 
   it("names an account that left the group or is gone Former member", () => {

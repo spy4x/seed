@@ -138,7 +138,7 @@ export function NotesView() {
           })}
         authors={(members ?? []).map((member) => ({
           id: String(member.userId),
-          name: member.name,
+          name: personName(member.userId, null, members) ?? member.name,
           isYou: member.userId === youId,
         }))}
         youId={youId === null ? null : String(youId)}

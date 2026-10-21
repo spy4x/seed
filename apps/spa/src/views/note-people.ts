@@ -6,7 +6,8 @@ export interface NotePerson {
 
 /**
  * How the notes screens name the member with `userId`: "You" for the person themselves, the
- * member's name, or "Former member" for an account that is gone or no longer in the group.
+ * member's name ("Unnamed member" when they set none), or "Former member" for an account that is
+ * gone or no longer in the group.
  * `undefined` while the members are not read yet (`members` is `null`), so a screen shows no name
  * rather than a wrong one.
  *
@@ -21,5 +22,8 @@ export function personName(
 ): string | undefined {
   if (userId !== null && userId === youId) return "You"
   if (members === null) return undefined
-  return members.find((member) => member.userId === userId)?.name ?? "Former member"
+  const member = members.find((candidate) => candidate.userId === userId)
+  if (!member) return "Former member"
+  // The same words as the group's members list for a member who set no name.
+  return member.name.trim() || "Unnamed member"
 }
