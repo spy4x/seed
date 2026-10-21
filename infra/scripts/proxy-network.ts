@@ -102,22 +102,28 @@ if (import.meta.main) {
     console.error(`infra/envs/.env is missing. Run: deno task init`)
     Deno.exit(1)
   })
-  const provider = containerProvider(envVars)
-  if (await ensureProxyNetwork(provider, runContainerCli)) {
-    console.log(`Created the ${PROXY_NETWORK} network`)
-  }
-  // `--start` is `deno task dev`'s first step.
-  if (Deno.args.includes(`--start`)) {
-    const result = await startProxy(
-      provider,
-      (command) => runCommand(command),
-      async ([program, ...args]) =>
-        (await new Deno.Command(program, { args, stdout: `inherit`, stderr: `inherit` }).output())
-          .code,
-    )
-    if (result === `started`) console.log(`Started Traefik`)
-    if (result === `manual`) {
-      console.log(`Traefik is not running: start it with deno task proxy:start`)
+  // One plain line on failure, not a stack trace; the start shows Docker's own output above it.
+  try {
+    const provider = containerProvider(envVars)
+    if (await ensureProxyNetwork(provider, runContainerCli)) {
+      console.log(`Created the ${PROXY_NETWORK} network`)
     }
+    // `--start` is `deno task dev`'s first step.
+    if (Deno.args.includes(`--start`)) {
+      const result = await startProxy(
+        provider,
+        (command) => runCommand(command),
+        async ([program, ...args]) =>
+          (await new Deno.Command(program, { args, stdout: `inherit`, stderr: `inherit` }).output())
+            .code,
+      )
+      if (result === `started`) console.log(`Started Traefik`)
+      if (result === `manual`) {
+        console.log(`Traefik is not running: start it with deno task proxy:start`)
+      }
+    }
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error))
+    Deno.exit(1)
   }
 }
