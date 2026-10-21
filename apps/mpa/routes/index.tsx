@@ -76,7 +76,7 @@ export const QUICK_START = [
 ] as const
 
 const WORKS_TODAY = [
-  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, 2FA with an authenticator app`,
+  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, 2FA with an authenticator app`,
   `Groups with members, roles, invitations and ownership transfer`,
   `Per-member billing with trials, through Stripe`,
   `The list of signed-in devices, and account deletion with a 7‑day undo`,
@@ -87,7 +87,7 @@ const WORKS_TODAY = [
 ] as const
 
 const NOT_BUILT = [
-  `Passkeys and magic links`,
+  `Magic links`,
   `Translations: the app is English only`,
   `File uploads: no file store is bundled yet`,
   `Downloading an account's data`,
@@ -276,7 +276,7 @@ function Features(): JSX.Element {
             }
           >
             Email and password with verification codes, password reset, Google and GitHub sign-in,
-            and 2FA with an authenticator app. Sessions you can see and end.
+            passkeys, and 2FA with an authenticator app. Sessions you can see and end.
           </FeatureCard>
           <FeatureCard
             id="feature-billing"
