@@ -205,7 +205,7 @@ describe("the public website", () => {
     expect(caption).toBe(
       `init writes infra/envs/.env with every secret filled in. Or ask your AI agent: ${
         AI_PROMPT.replaceAll(`"`, `&quot;`)
-      }`,
+      }.`,
     )
   })
 

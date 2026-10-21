@@ -205,7 +205,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
                 <span>
                   <code class="font-mono">init</code> writes{" "}
                   <code class="font-mono">infra/envs/.env</code>{" "}
-                  with every secret filled in. Or ask your AI agent: <AiPrompt />
+                  with every secret filled in. Or ask your AI agent: <AiPrompt />.
                 </span>
               }
             >
@@ -419,7 +419,7 @@ function QuickStart(): JSX.Element {
             eyebrow="Quick start"
             title="Running locally in four commands"
           />
-          <p class="text-muted">You need Deno 2 and Docker.</p>
+          <p class="text-muted">You need Deno 2 and Docker; the GitHub CLI is optional.</p>
           <p class="text-muted text-pretty">
             <code class="font-mono text-foreground">init</code>{" "}
             copies the env file and generates every secret and the web push keys;{" "}
@@ -430,7 +430,7 @@ function QuickStart(): JSX.Element {
             lists every setting and how to deploy.
           </p>
           <p class="text-muted text-pretty">
-            Or ask your AI agent: <AiPrompt />
+            Or ask your AI agent: <AiPrompt />.
           </p>
         </div>
         <WindowFrame variant="terminal" title="Terminal" class="min-w-0 lg:col-span-7">
