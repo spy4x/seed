@@ -876,7 +876,7 @@ describe("ProfileScreen for an account without a password", () => {
     expect(document.body.textContent).not.toContain("You sign in with your username")
     // The account row and the empty sign-in methods lead to /keep too, but not as primaries.
     for (const name of ["profile-keep", "methods-keep"]) {
-      expect(find(`[data-e2e=${name}]`).className, name).not.toMatch(/\bbg-primary\b/)
+      expect(find(`[data-e2e=${name}]`).className, name).not.toMatch(/\bbg-accent-900\b/)
     }
   })
 
