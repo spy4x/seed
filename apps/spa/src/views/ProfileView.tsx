@@ -418,6 +418,7 @@ export function ProfileView() {
       onboarding={<OnboardingView />}
       onSetPassword={submitFirstPassword}
       providerProofFresh={providerProofFresh}
+      providerProof={providerProof}
       isMfaRequired={session.isMfaRequired}
       email={emailStore.status.value}
       values={values}

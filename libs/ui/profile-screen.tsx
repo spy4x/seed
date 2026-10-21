@@ -28,7 +28,7 @@ import { ApiTokens, type ApiTokensProps } from "./api-tokens.tsx"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { PreferencesGroup, type PreferencesGroupProps } from "./preferences.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
-import { ProviderProofNotice, providerProofOf } from "./provider-proof.tsx"
+import { type ProviderProof, ProviderProofNotice, providerProofOf } from "./provider-proof.tsx"
 import { TwoFactorProof, twoFactorProof, TwoFactorStep, twoFactorStep } from "./two-factor.ts"
 
 /** The messages shown when an action failed without a message of its own. */
@@ -129,6 +129,12 @@ export interface ProfileScreenProps {
    * confirms a first password, two-factor sign-in and its deletion with.
    */
   providerProofFresh?: boolean
+  /**
+   * The proof an account with no password gives, as the app built it, with its passkey button
+   * (`onPasskey`) when it has one. Left out, the screen builds it from `methods` and
+   * `providerProofFresh`, without that button.
+   */
+  providerProof?: ProviderProof | null
   /** Drops what was typed in the password dialog and its errors, when the person closes it. */
   onCancelPassword?: () => void
   /** Whether the password change also signs out every other device. */
@@ -209,6 +215,7 @@ export function ProfileScreen(
     onChangePassword,
     onSetPassword,
     providerProofFresh = false,
+    providerProof: givenProof,
     onCancelPassword,
     signOutOthers = true,
     onSignOutOthersChange,
@@ -232,7 +239,9 @@ export function ProfileScreen(
   const step = user ? twoFactorStep(user.mfa, enrolment !== null) : null
   const providerOnly = providerOnlyNames(methods?.methods)
   const proof = twoFactorProof(providerOnly !== null)
-  const providerProof = providerProofOf(methods?.methods, providerProofFresh)
+  const providerProof = givenProof !== undefined
+    ? givenProof
+    : providerProofOf(methods?.methods, providerProofFresh)
   const format = useFormat()
   const fieldRefs = {
     firstName: useRef<HTMLInputElement>(null),
