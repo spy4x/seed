@@ -248,7 +248,7 @@ export function AppFrame(
 function Brand({ navigate }: { navigate?: Navigate }): JSX.Element {
   return (
     <Link
-      href={SCREEN_PATHS.profile}
+      href={SCREEN_PATHS.home}
       navigate={navigate}
       class="flex shrink-0 items-center gap-2 rounded-md"
     >

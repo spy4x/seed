@@ -13,25 +13,21 @@ import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
 import {
   AccountDeletionBlockReason,
+  type EmailStatus,
   UserMFAStatus,
   type UserPushTokenPublic,
 } from "@domain/identity"
 import { GroupRole } from "@domain/groups"
 import type { AccountDeleteProps } from "./account-delete.tsx"
 import { AuthScreen } from "./auth-screen.tsx"
-import {
-  EMAIL_FAILURES,
-  EmailBanner,
-  EmailScreen,
-  type EmailScreenProps,
-  EmailUnavailable,
-  showsEmailBanner,
-} from "./email-screen.tsx"
+import { EmailBanner, type EmailChangeProps, showsEmailBanner } from "./email-screen.tsx"
+import { AccountSection } from "./profile-account.tsx"
+import type { ProviderProof } from "./provider-proof.tsx"
 import { createFormatters } from "@spy4x/time/format"
 import { AppFrame, PublicFrame } from "./frame.tsx"
 import { railFocusRing } from "@spy4x/preact-system/rail"
 import { ProfileScreen, type ProfileScreenProps } from "./profile-screen.tsx"
-import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "./progressive.tsx"
 import { TwoFactorProof } from "./two-factor.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -41,6 +37,7 @@ const own = {
   location: globalThis.location,
   getComputedStyle: globalThis.getComputedStyle,
   HTMLElement: globalThis.HTMLElement,
+  CSS: globalThis.CSS,
 }
 
 beforeAll(() => {
@@ -54,6 +51,8 @@ beforeAll(() => {
     location: window.location,
     getComputedStyle: window.getComputedStyle.bind(window),
     HTMLElement: window.HTMLElement,
+    // The settings layout finds the item to focus with `CSS.escape`.
+    CSS: window.CSS,
   })
 })
 
@@ -373,7 +372,7 @@ describe("AppFrame", () => {
 
     // preact-components 8 writes `aria-current="false"` on the entries that are not current.
     const current = "[aria-current]:not([aria-current=false])"
-    await mount(at(SCREEN_PATHS.email))
+    await mount(at(profilePath("account")))
     expect(document.querySelectorAll(current)).toHaveLength(0)
     await rerender(at(SCREEN_PATHS.profile))
     expect(document.querySelectorAll(current)).toHaveLength(0)
@@ -774,6 +773,7 @@ const device = {
 } as unknown as UserPushTokenPublic
 
 const profileDefaults: ProfileScreenProps = {
+  section: "security",
   onRemovePush: () => {},
   user: { mfa: UserMFAStatus.NOT_CONFIGURED, ...ada },
   isMfaRequired: false,
@@ -795,88 +795,160 @@ const profileDefaults: ProfileScreenProps = {
 }
 
 describe("ProfileScreen", () => {
+  const twoFactorOn = { ...profileDefaults.user!, mfa: UserMFAStatus.CONFIGURED }
+  /** The text of what `aria-describedby` ties to the field `selector` finds. */
+  const describedBy = (selector: string) =>
+    (find(selector).getAttribute("aria-describedby") ?? "").split(" ")
+      .map((id) => document.getElementById(id)?.textContent)
+
+  const google = { id: 2, kind: "google", email: null, current: true, canUnlink: false } as const
+  /** The sign-in methods of an account with no password, which signs in with Google only. */
+  const googleOnly = {
+    methods: [google],
+    available: [],
+    pending: false,
+    error: null,
+    onLink: () => {},
+    onUnlink: () => {},
+  }
+
   it("shows the name and the address with its state as rows, with no form open", async () => {
-    await mount(<ProfileScreen {...profileDefaults} />)
+    await mount(<ProfileScreen {...profileDefaults} section="account" emailChange={emailChange} />)
 
     expect(find("[data-e2e=profile-name]").textContent).toBe("Ada Lovelace")
-    expect(find("[data-e2e=profile-email-link]").getAttribute("href")).toBe(SCREEN_PATHS.email)
-    expect(document.body.textContent).toContain("ada@example.com")
+    expect(find("[data-e2e=email-current]").textContent).toBe("ada@example.com")
     expect(document.body.textContent).toContain("Verified")
     expect(document.body.textContent).not.toContain("Not verified")
     expect(isOpen("profile-dialog")).toBe(false)
     expect(isOpen("password-dialog")).toBe(false)
   })
 
-  it("gives the two-factor and the push settings the places the first-steps card links to", async () => {
+  it("links every section at its own address and marks the open one", async () => {
     await mount(<ProfileScreen {...profileDefaults} />)
 
-    expect(find("#security").textContent).toContain("Two-factor")
-    expect(find("#push-devices").textContent).toContain("Push devices")
+    const links = [...document.querySelectorAll<HTMLAnchorElement>("[data-e2e=settings-nav] a")]
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/profile/account",
+      "/profile/security",
+      "/profile/region",
+      "/profile/appearance",
+      "/profile/notifications",
+      "/profile/api-tokens",
+      "/profile/danger-zone",
+    ])
+    expect(find("[aria-current=page]").getAttribute("href")).toBe("/profile/security")
+    expect(find("[data-e2e=settings-heading]").textContent).toBe("Sign-in and security")
+  })
+
+  it("shows only the open section, and on the list's own address none", async () => {
+    await mount(<ProfileScreen {...profileDefaults} section="account" emailChange={emailChange} />)
+    expect(document.querySelector("[data-e2e=profile-edit]")).not.toBeNull()
+    expect(document.querySelector("[data-e2e=password-open]")).toBeNull()
+
+    await rerender(<ProfileScreen {...profileDefaults} section={null} />)
+    expect(document.querySelector("[data-e2e=profile-edit]")).toBeNull()
+    expect(document.querySelector("[data-e2e=settings-heading]")).toBeNull()
+    expect(document.querySelector("[aria-current=page]")).toBeNull()
+  })
+
+  it("says in the list whether two-factor is on", async () => {
+    await mount(<ProfileScreen {...profileDefaults} section={null} />)
+    expect(find("[data-e2e=settings-nav-security]").textContent).toContain("Two-factor off")
+
+    await rerender(<ProfileScreen {...profileDefaults} section={null} user={twoFactorOn} />)
+    expect(find("[data-e2e=settings-nav-security]").textContent).toContain("Two-factor on")
   })
 
   it("names each row action after its setting, so a screen reader can tell them apart", async () => {
-    await mount(<ProfileScreen {...profileDefaults} />)
-
     const name = (hook: string) => find(`[data-e2e=${hook}]`).textContent
+    await mount(<ProfileScreen {...profileDefaults} section="account" emailChange={emailChange} />)
     expect(name("profile-edit")).toBe("Edit name")
-    expect(name("profile-email-link")).toBe("Change e-mail address")
+    expect(name("email-change-open")).toBe("Change e-mail address")
+
+    await rerender(<ProfileScreen {...profileDefaults} />)
     expect(name("password-open")).toBe("Change password")
     expect(name("totp-start")).toBe("Turn on two-factor sign-in")
   })
 
   it("gives each row action a 44 px touch target below the sm breakpoint", async () => {
-    await mount(<ProfileScreen {...profileDefaults} />)
-
-    for (const hook of ["profile-edit", "profile-email-link", "password-open", "totp-start"]) {
-      const classes = find(`[data-e2e=${hook}]`).classList
-      expect([hook, classes.contains("min-h-11")]).toEqual([hook, true])
+    const target = (
+      hook: string,
+    ) => [hook, find(`[data-e2e=${hook}]`).classList.contains("min-h-11")]
+    await mount(<ProfileScreen {...profileDefaults} section="account" emailChange={emailChange} />)
+    for (const hook of ["profile-edit", "email-change-open"]) {
+      expect(target(hook)).toEqual([hook, true])
     }
+
+    await rerender(<ProfileScreen {...profileDefaults} />)
+    for (const hook of ["password-open", "totp-start"]) expect(target(hook)).toEqual([hook, true])
   })
 
-  it("starts the page with its header and shows the first-steps card under it", async () => {
+  it("lists the password once, among the ways to sign in, with its Change button", async () => {
+    const password = {
+      id: 1,
+      kind: "password",
+      email: "ada@example.com",
+      current: true,
+      canUnlink: false,
+    } as const
     await mount(
       <ProfileScreen
         {...profileDefaults}
-        onboarding={<div data-e2e="onboarding">Get started</div>}
+        methods={{ ...googleOnly, methods: [password, google] }}
       />,
     )
 
-    const heading = find("h1")
-    const card = find("[data-e2e=onboarding]")
-    expect(heading.textContent).toBe("Profile")
-    expect(heading.compareDocumentPosition(card) & window.Node.DOCUMENT_POSITION_FOLLOWING)
-      .toBeTruthy()
-    expect(
-      card.compareDocumentPosition(find("#security")) & window.Node.DOCUMENT_POSITION_FOLLOWING,
-    )
-      .toBeTruthy()
+    expect(texts("[data-e2e=sign-in-methods] dt").filter((label) => label === "Password"))
+      .toHaveLength(1)
+    expect(find("[data-e2e=sign-in-method-password] [data-e2e=password-open]").textContent)
+      .toBe("Change password")
+  })
+
+  it("gives an account with no password a Password row with Set, among the ways to sign in", async () => {
+    await mount(<ProfileScreen {...profileDefaults} methods={googleOnly} />)
+
+    const row = find("[data-e2e=sign-in-method-password]")
+    expect(row.textContent).toContain("None. You sign in with Google.")
+    expect(row.querySelector("[data-e2e=password-open]")?.textContent).toBe("Set password")
   })
 
   it("shows an empty push device list inside the section's own card, not in a dashed box", async () => {
-    await mount(<ProfileScreen {...profileDefaults} pushDevices={[]} onRegisterPush={() => {}} />)
+    await mount(
+      <ProfileScreen
+        {...profileDefaults}
+        section="notifications"
+        pushDevices={[]}
+        onRegisterPush={() => {}}
+      />,
+    )
 
-    const empty = find("#push-devices [role=status]")
+    const empty = find("[data-e2e=push-devices] [role=status]")
     expect(empty.textContent).toContain("No devices yet")
     expect(empty.closest(".pc-card")).not.toBeNull()
     expect(document.querySelectorAll(".border-dashed").length).toBe(0)
   })
 
-  it("names each settings group by its own h2, under the page's one h1", async () => {
+  it("names the open section and each of its groups by an h2, under the page's one h1", async () => {
     await mount(<ProfileScreen {...profileDefaults} />)
 
     const names = [...document.querySelectorAll("section[aria-labelledby]")].map((section) =>
       document.getElementById(section.getAttribute("aria-labelledby") ?? "")?.textContent
     )
-    expect(names).toEqual(["Account", "Security", "Push devices"])
+    expect(names).toEqual(["Sign-in and security", "Two-factor sign-in"])
     expect([...document.querySelectorAll("h1, h2")].map((h) => h.tagName)).toEqual(
-      ["H1", "H2", "H2", "H2"],
+      ["H1", "H2", "H2"],
     )
   })
 
   it("edits the name in a dialog, saves it through the app's callback and closes once it is saved", async () => {
     const change = spy<[string, string]>()
     const save = spy<[]>()
-    const props = { ...profileDefaults, onValueChange: change.fn, onSaveProfile: save.fn }
+    const props = {
+      ...profileDefaults,
+      section: "account",
+      onValueChange: change.fn,
+      onSaveProfile: save.fn,
+    } as const
     await mount(<ProfileScreen {...props} />)
 
     await click("[data-e2e=profile-edit]")
@@ -929,7 +1001,14 @@ describe("ProfileScreen", () => {
   it("refuses a second save while the first is pending", async () => {
     const save = spy<[]>()
     const pending = { ...profileDefaults.pending, profile: true }
-    await mount(<ProfileScreen {...profileDefaults} pending={pending} onSaveProfile={save.fn} />)
+    await mount(
+      <ProfileScreen
+        {...profileDefaults}
+        section="account"
+        pending={pending}
+        onSaveProfile={save.fn}
+      />,
+    )
     await click("[data-e2e=profile-edit]")
 
     expect(await submit("[data-e2e=profile-first-name]")).toBe(true)
@@ -970,7 +1049,10 @@ describe("ProfileScreen", () => {
   ) {
     it(`asks the app to drop what was typed when the ${dialog} is cancelled or closed`, async () => {
       const cancel = spy<[]>()
-      await mount(<ProfileScreen {...profileDefaults} {...{ [callback]: cancel.fn }} />)
+      const section = dialog === "profile-dialog" ? "account" : "security"
+      await mount(
+        <ProfileScreen {...profileDefaults} section={section} {...{ [callback]: cancel.fn }} />,
+      )
 
       await click(`[data-e2e=${opener}]`)
       await clickInDialog(dialog, "Cancel")
@@ -980,23 +1062,6 @@ describe("ProfileScreen", () => {
       expect(isOpen(dialog)).toBe(false)
       expect(cancel.calls).toHaveLength(2)
     })
-  }
-
-  const twoFactorOn = { ...profileDefaults.user!, mfa: UserMFAStatus.CONFIGURED }
-  /** The text of what `aria-describedby` ties to the field `selector` finds. */
-  const describedBy = (selector: string) =>
-    (find(selector).getAttribute("aria-describedby") ?? "").split(" ")
-      .map((id) => document.getElementById(id)?.textContent)
-
-  const google = { id: 2, kind: "google", email: null, current: true, canUnlink: false } as const
-  /** The sign-in methods of an account with no password, which signs in with Google only. */
-  const googleOnly = {
-    methods: [google],
-    available: [],
-    pending: false,
-    error: null,
-    onLink: () => {},
-    onUnlink: () => {},
   }
 
   it("turns two-factor on only once the person typed the password and submitted, and nothing when the dialog is cancelled (#406)", async () => {
@@ -1254,7 +1319,9 @@ describe("ProfileScreen", () => {
     // Version 7 ids made close together start with the same time, so the label is their end.
     const first = { ...device, id: 1, deviceId: "0199d1c2-5a10-7b3c-8f21-6d0e4a9b1c35" }
     const second = { ...device, id: 2, deviceId: "0199d1c2-5a11-7e4d-9a32-0c7f5b8e2d46" }
-    await mount(<ProfileScreen {...profileDefaults} pushDevices={[first, second]} />)
+    await mount(
+      <ProfileScreen {...profileDefaults} section="notifications" pushDevices={[first, second]} />,
+    )
 
     const text = (id: string) => find(`[data-e2e=push-device-${id}]`).textContent
     expect(text(first.deviceId)).toContain("Device 4a9b1c35")
@@ -1263,13 +1330,14 @@ describe("ProfileScreen", () => {
 
   it("offers Add this device in an empty list, and removes a device with its id", async () => {
     const remove = spy<[string]>()
-    await mount(<ProfileScreen {...profileDefaults} onRemovePush={remove.fn} />)
+    const props = { ...profileDefaults, section: "notifications" } as const
+    await mount(<ProfileScreen {...props} onRemovePush={remove.fn} />)
     expect(await submit(`[data-e2e=push-remove-${device.deviceId}]`)).toBe(true)
     expect(remove.calls).toEqual([[device.deviceId]])
 
     const register = spy<[]>()
     await rerender(
-      <ProfileScreen {...profileDefaults} pushDevices={[]} onRegisterPush={register.fn} />,
+      <ProfileScreen {...props} pushDevices={[]} onRegisterPush={register.fn} />,
     )
     expect(document.body.textContent).toContain("No devices yet")
     await click("[data-e2e=push-register]")
@@ -1301,30 +1369,27 @@ function withDeletion(
   return (
     <ProfileScreen
       {...profileDefaults}
+      section="danger-zone"
       {...props}
       accountDeletion={{ ...deletionDefaults, ...deletion }}
     />
   )
 }
 
-/** Opens the danger zone's disclosure and then the deletion dialog. */
+/** Opens the deletion dialog. */
 async function openDeletion(): Promise<void> {
-  find<HTMLDetailsElement>("[data-e2e=danger-zone]").open = true
   await click("[data-e2e=account-delete-open]")
 }
 
 describe("deleting the account from the profile", () => {
-  it("keeps the danger zone closed, last on the page, and leaves it out without the app's wiring", async () => {
+  it("shows Delete account as a section of its own, and leaves it empty without the app's wiring", async () => {
     await mount(withDeletion())
 
-    const zone = find<HTMLDetailsElement>("[data-e2e=danger-zone]")
-    expect(zone.open).toBe(false)
-    expect(zone.querySelector("summary")?.textContent).toBe("Danger zone")
-    const blocks = [...zone.parentElement!.children].filter((child) => child.tagName !== "DIALOG")
-    expect(blocks[blocks.length - 1]).toBe(zone)
+    expect(find("[data-e2e=settings-heading]").textContent).toBe("Delete account")
+    expect(find("[data-e2e=danger-zone]").textContent).toContain("Delete my account")
     expect(isOpen("account-delete-dialog")).toBe(false)
 
-    await rerender(<ProfileScreen {...profileDefaults} />)
+    await rerender(<ProfileScreen {...profileDefaults} section="danger-zone" />)
     expect(document.querySelector("[data-e2e=danger-zone]")).toBeNull()
   })
 
@@ -1343,7 +1408,6 @@ describe("deleting the account from the profile", () => {
     const button = find("[data-e2e=account-delete-open]")
     expect(button.textContent).toBe("Delete my account")
     expect(button.classList.contains("min-h-11")).toBe(true)
-    expect(find("[data-e2e=danger-zone] summary").classList.contains("min-h-11")).toBe(true)
   })
 
   it("asks the app for the blockers on opening and says it is checking until they arrive", async () => {
@@ -1457,24 +1521,61 @@ describe("deleting the account from the profile", () => {
   })
 })
 
-const emailDefaults: EmailScreenProps = {
-  status: { email: "ann@example.com", proven: false, pending: null },
+const emailDefaults: EmailChangeProps = {
   values: { code: "", email: "", password: "" },
   onValueChange: () => {},
   errors: { verify: null, send: null, change: null },
-  notices: { send: null, change: null },
+  notices: { send: null },
   pending: { verify: false, send: false, change: false },
 }
 
-/** The e-mail page while its change request is on its way. */
+/** What the API says of an address that waits for its code. */
+const unproven = { email: "ann@example.com", proven: false, pending: null }
+/** A proven address with no change waiting. */
+const proven = { email: "ann@example.com", proven: true, pending: null }
+
+/** The e-mail dialog's wiring as the profile passes it, for the profile tests. */
+const emailChange = emailDefaults
+
+/** The Account section with its e-mail address and dialog, built over the defaults. */
+function account(
+  props: Partial<EmailChangeProps> & {
+    status?: EmailStatus
+    providerProof?: ProviderProof | null
+    openEmailCode?: boolean
+  } = {},
+): VNode {
+  const { status = unproven, providerProof, openEmailCode, ...change } = props
+  return (
+    <AccountSection
+      name="Ann Lee"
+      nameEdit={{
+        firstName: "Ann",
+        lastName: "Lee",
+        onValueChange: () => {},
+        fieldErrors: {},
+        error: null,
+        pending: false,
+      }}
+      email={status}
+      providerOnly={null}
+      emailChange={{ ...emailDefaults, ...change }}
+      providerProof={providerProof}
+      openEmailCode={openEmailCode}
+    />
+  )
+}
+
+/** The e-mail dialog while its change request is on its way. */
 const changePending = { ...emailDefaults.pending, change: true }
 
-describe("EmailScreen", () => {
-  it("reports the typed code and checks it through the app's callback", async () => {
+describe("the e-mail address on the Account section", () => {
+  it("opens at the code when asked, reports the typed code and checks it through the app's callback", async () => {
     const change = spy<[string, string]>()
     const verify = spy<[]>()
-    await mount(<EmailScreen {...emailDefaults} onValueChange={change.fn} onVerify={verify.fn} />)
+    await mount(account({ openEmailCode: true, onValueChange: change.fn, onVerify: verify.fn }))
 
+    expect(isOpen("email-change-dialog")).toBe(true)
     await type("[data-e2e=email-code]", "Ab3_x-9Q")
 
     expect(change.calls).toEqual([["code", "Ab3_x-9Q"]])
@@ -1482,18 +1583,31 @@ describe("EmailScreen", () => {
     expect(verify.calls).toHaveLength(1)
   })
 
-  it("puts the code entry and the new-code request in one card under the section's heading", async () => {
-    await mount(<EmailScreen {...emailDefaults} />)
+  it("offers Enter code on the row while the address waits for one, opening the dialog at the code", async () => {
+    await mount(account())
+    expect(isOpen("email-change-dialog")).toBe(false)
 
-    const card = find("[data-e2e=email-verify-card] .pc-card")
-    expect(card.querySelector("[data-e2e=email-code]")).not.toBeNull()
-    expect(card.querySelector("[data-e2e=email-send]")).not.toBeNull()
+    await click("[data-e2e=email-code-open]")
+
+    expect(isOpen("email-change-dialog")).toBe(true)
+    expect(find("[data-e2e=email-verify-card]").textContent).toContain("ann@example.com")
+    expect(document.querySelector("[data-e2e=email-send]")).not.toBeNull()
+    expect(document.querySelector("[data-e2e=email-new]")).toBeNull()
+  })
+
+  it("opens nothing for a proven address, even when asked for the code", async () => {
+    await mount(account({ status: proven, openEmailCode: true }))
+
+    expect(isOpen("email-change-dialog")).toBe(false)
+    expect(document.querySelector("[data-e2e=email-code-open]")).toBeNull()
+    expect(find("[data-e2e=email-current]").textContent).toBe("ann@example.com")
+    expect(find("[data-e2e=email-state]").textContent).toBe("Verified")
   })
 
   it("refuses a second check while the first is pending", async () => {
     const verify = spy<[]>()
     const pending = { ...emailDefaults.pending, verify: true }
-    await mount(<EmailScreen {...emailDefaults} pending={pending} onVerify={verify.fn} />)
+    await mount(account({ openEmailCode: true, pending, onVerify: verify.fn }))
 
     await submit("[data-e2e=email-code]")
 
@@ -1501,11 +1615,11 @@ describe("EmailScreen", () => {
   })
 
   it("ties a refused code to the code field and moves focus there", async () => {
-    await mount(<EmailScreen {...emailDefaults} />)
+    await mount(account({ openEmailCode: true }))
     find("[data-e2e=email-verify]").focus()
 
     const errors = { ...emailDefaults.errors, verify: "This code is wrong" }
-    await rerender(<EmailScreen {...emailDefaults} errors={errors} />)
+    await rerender(account({ openEmailCode: true, errors }))
 
     const field = find("[data-e2e=email-code]")
     const describedBy = field.getAttribute("aria-describedby") ?? ""
@@ -1514,27 +1628,27 @@ describe("EmailScreen", () => {
     expect(focused()).toBe("email-code")
   })
 
-  it("shows the address with its state, and asks for no code once it is proven", async () => {
-    const proven = { email: "ann@example.com", proven: true, pending: null }
-    await mount(<EmailScreen {...emailDefaults} status={proven} />)
+  it("closes the dialog once the code went through", async () => {
+    await mount(account({ openEmailCode: true }))
 
-    expect(find("[data-e2e=email-current]").textContent).toBe("ann@example.com")
-    expect(find("[data-e2e=email-state]").textContent).toBe("Verified")
-    expect(document.querySelector("[data-e2e=email-verify-card]")).toBe(null)
+    await rerender(
+      account({ openEmailCode: true, pending: { ...emailDefaults.pending, verify: true } }),
+    )
+    await rerender(account({ openEmailCode: true, status: proven }))
+
+    expect(isOpen("email-change-dialog")).toBe(false)
   })
 
   it("changes the address of an account with no password after a Google sign-in a moment ago", async () => {
     const changeAddress = spy<[]>()
-    const proven = { email: "ann@example.com", proven: true, pending: null }
     const values = { code: "", email: "new@example.com", password: "" }
     await mount(
-      <EmailScreen
-        {...emailDefaults}
-        status={proven}
-        values={values}
-        onChange={changeAddress.fn}
-        providerProof={{ providers: ["google"], fresh: true }}
-      />,
+      account({
+        status: proven,
+        values,
+        onChange: changeAddress.fn,
+        providerProof: { providers: ["google"], fresh: true },
+      }),
     )
 
     await click("[data-e2e=email-change-open]")
@@ -1550,32 +1664,26 @@ describe("EmailScreen", () => {
   })
 
   it("sends an account with no password to Google before a change when the sign-in is not recent", async () => {
-    const proven = { email: "ann@example.com", proven: true, pending: null }
     await mount(
-      <EmailScreen
-        {...emailDefaults}
-        status={proven}
-        providerProof={{ providers: ["google", "github"], fresh: false }}
-      />,
+      account({ status: proven, providerProof: { providers: ["google", "github"], fresh: false } }),
     )
 
     await click("[data-e2e=email-change-open]")
 
-    // Plain links out of the app, which come back to this page.
+    // Plain links out of the app, which come back to the Account section.
     expect(find("[data-e2e=provider-proof-google]").getAttribute("href"))
-      .toBe("/api/auth/google/start?next=%2Femail")
+      .toBe("/api/auth/google/start?next=%2Fprofile%2Faccount")
     expect(find("[data-e2e=provider-proof-github]").getAttribute("href"))
-      .toBe("/api/auth/github/start?next=%2Femail")
+      .toBe("/api/auth/github/start?next=%2Fprofile%2Faccount")
     expect(document.querySelectorAll("[data-e2e=email-new]").length).toBe(0)
     expect(document.querySelectorAll("[data-e2e=email-change]").length).toBe(0)
   })
 
-  it("changes the address in a dialog, which closes and hands focus to the new address's code", async () => {
+  it("asks for the new address and the password, then for the code in the same dialog", async () => {
     const changeAddress = spy<[]>()
-    const proven = { email: "ann@example.com", proven: true, pending: null }
     const values = { code: "", email: "new@example.com", password: "Passw0rd!" }
-    const props = { ...emailDefaults, status: proven, values, onChange: changeAddress.fn }
-    await mount(<EmailScreen {...props} />)
+    const props = { status: proven, values, onChange: changeAddress.fn }
+    await mount(account(props))
     expect(isOpen("email-change-dialog")).toBe(false)
 
     await click("[data-e2e=email-change-open]")
@@ -1585,88 +1693,60 @@ describe("EmailScreen", () => {
       email: "new@example.com",
       password: "Passw0rd!",
     })
+    expect(find("[data-e2e=email-change]").textContent).toBe("Send code")
     expect(await submit("[data-e2e=email-new]")).toBe(true)
     expect(changeAddress.calls).toHaveLength(1)
 
-    await rerender(<EmailScreen {...props} pending={changePending} />)
-    await rerender(<EmailScreen {...props} status={{ ...proven, pending: "new@example.com" }} />)
-    expect(isOpen("email-change-dialog")).toBe(false)
+    await rerender(account({ ...props, pending: changePending }))
+    await rerender(account({ ...props, status: { ...proven, pending: "new@example.com" } }))
+    expect(isOpen("email-change-dialog")).toBe(true)
     expect(focused()).toBe("email-code")
-    expect(find("[data-e2e=email-verify-card]").textContent).toContain("new@example.com")
+    const step = find("[data-e2e=email-verify-card]").textContent
+    expect(step).toContain("new@example.com")
+    expect(step).toContain("You keep signing in with ann@example.com until you enter it.")
+    expect(find("[data-e2e=email-verify]").textContent).toBe("Confirm address")
   })
 
-  it("closes the change dialog when the address already waiting is asked for again", async () => {
-    // The API answers a repeated request with the same address and the same notice.
-    const waiting = { email: "ann@example.com", proven: true, pending: "new@example.com" }
-    const notices = { send: null, change: "Enter the code we mailed to new@example.com." }
-    const props = { ...emailDefaults, status: waiting, notices }
-    await mount(<EmailScreen {...props} />)
-    await click("[data-e2e=email-change-open]")
-
-    await rerender(<EmailScreen {...props} pending={changePending} />)
-    await rerender(<EmailScreen {...props} />)
-    expect(isOpen("email-change-dialog")).toBe(false)
-    expect(focused()).toBe("email-code")
-  })
-
-  it("keeps the change dialog closed once the new address is proven", async () => {
-    const proven = { email: "ann@example.com", proven: true, pending: null }
-    await mount(<EmailScreen {...emailDefaults} status={proven} />)
-    await click("[data-e2e=email-change-open]")
-    await rerender(<EmailScreen {...emailDefaults} status={proven} pending={changePending} />)
-    await rerender(
-      <EmailScreen {...emailDefaults} status={{ ...proven, pending: "new@example.com" }} />,
-    )
-
-    await rerender(
-      <EmailScreen {...emailDefaults} status={{ ...proven, email: "new@example.com" }} />,
-    )
-    expect(isOpen("email-change-dialog")).toBe(false)
-  })
-
-  it("asks the app to drop the typed password when the change dialog is closed, by Cancel or by the dialog itself", async () => {
-    const change = spy<[string, string]>()
-    const values = { code: "", email: "new@example.com", password: "Passw0rd!" }
-    const props = { ...emailDefaults, values, onValueChange: change.fn }
-    await mount(<EmailScreen {...props} />)
+  it("asks the app to drop what was typed when the dialog is closed, by Cancel or by the dialog itself", async () => {
+    const close = spy<[]>()
+    await mount(account({ status: proven, onClose: close.fn }))
 
     await click("[data-e2e=email-change-open]")
     await clickInDialog("email-change-dialog", "Cancel")
     expect(isOpen("email-change-dialog")).toBe(false)
-    expect(change.calls).toEqual([["password", ""]])
+    expect(close.calls).toHaveLength(1)
 
     await click("[data-e2e=email-change-open]")
     await click("[data-e2e=email-change-dialog] button[aria-label=Close]")
     expect(isOpen("email-change-dialog")).toBe(false)
-    expect(change.calls).toEqual([["password", ""], ["password", ""]])
+    expect(close.calls).toHaveLength(2)
   })
 
-  it("keeps the dialog open and moves focus to the new address when a change is refused", async () => {
-    await mount(<EmailScreen {...emailDefaults} />)
+  it("keeps the dialog at the address and moves focus there when a change is refused", async () => {
+    await mount(account({ status: proven }))
     await click("[data-e2e=email-change-open]")
 
     const errors = { ...emailDefaults.errors, change: "Invalid password" }
-    await rerender(<EmailScreen {...emailDefaults} pending={changePending} />)
-    await rerender(<EmailScreen {...emailDefaults} errors={errors} />)
+    await rerender(account({ status: proven, pending: changePending }))
+    await rerender(account({ status: proven, errors }))
 
     expect(isOpen("email-change-dialog")).toBe(true)
     expect(focused()).toBe("email-new")
     expect(find("[data-e2e=email-change-dialog]").textContent).toContain("Invalid password")
   })
 
-  it("names the change action after the address and gives the row actions a 44 px target on a phone", async () => {
-    await mount(<EmailScreen {...emailDefaults} />)
+  it("names the change action after the address and gives the actions a 44 px target on a phone", async () => {
+    await mount(account({ openEmailCode: true }))
 
     expect(find("[data-e2e=email-change-open]").textContent).toBe("Change e-mail address")
-    for (const hook of ["email-change-open", "email-send"]) {
+    for (const hook of ["email-change-open", "email-code-open", "email-send"]) {
       const classes = find(`[data-e2e=${hook}]`).classList
       expect([hook, classes.contains("min-h-11")]).toEqual([hook, true])
     }
   })
 
   it("tells a username account that the address replaces the username for sign-in", async () => {
-    const status = { email: null, proven: false, pending: null }
-    await mount(<EmailScreen {...emailDefaults} status={status} />)
+    await mount(account({ status: { email: null, proven: false, pending: null } }))
     expect(find("[data-e2e=email-current]").textContent).toContain(
       "You sign in with your username.",
     )
@@ -1676,30 +1756,19 @@ describe("EmailScreen", () => {
       .toContain("Once you enter it, you sign in with that address.")
   })
 
-  it("claims no mail was sent, since mail may be off", () => {
-    const page = renderToString(<EmailScreen {...emailDefaults} />)
-    const banner = renderToString(<EmailBanner status={emailDefaults.status} />)
-    for (const html of [page, banner]) expect(html.toLowerCase()).not.toMatch(/\b(sent|mailed)\b/)
-  })
-
-  it("retries an unread address through the app's callback, or reloads the page without it", async () => {
-    const retry = spy<[]>()
-    await mount(<EmailUnavailable onRetry={retry.fn} />)
-
-    expect(find("[role=alert]").textContent).toBe(EMAIL_FAILURES.load)
-    await click("[data-e2e=email-retry]")
-    expect(retry.calls).toHaveLength(1)
-
-    await mount(<EmailUnavailable />)
-    expect(document.querySelectorAll("[data-e2e=email-retry]")[1].getAttribute("href"))
-      .toBe(SCREEN_PATHS.email)
+  it("claims no mail was sent, since mail may be off", async () => {
+    await mount(account({ openEmailCode: true }))
+    const banner = renderToString(<EmailBanner status={unproven} />)
+    for (const text of [document.body.textContent ?? "", banner]) {
+      expect(text.toLowerCase()).not.toMatch(/\b(sent|mailed)\b/)
+    }
   })
 })
 
 describe("EmailBanner", () => {
   it("warns with a link to the e-mail page while an address waits for its code", () => {
-    const html = renderToString(<EmailBanner status={emailDefaults.status} />)
-    expect(html).toMatch(/<a [^>]*href="\/email"[^>]*>Enter the code<\/a>/)
+    const html = renderToString(<EmailBanner status={unproven} />)
+    expect(html).toMatch(/<a [^>]*href="\/profile\/account\?verify"[^>]*>Enter the code<\/a>/)
     expect(html.replaceAll("<wbr/>", "")).toContain("ann@example.com")
   })
 
@@ -1712,7 +1781,7 @@ describe("EmailBanner", () => {
   })
 
   it("gives its link a 44 px touch target on a phone", () => {
-    const html = renderToString(<EmailBanner status={emailDefaults.status} />)
+    const html = renderToString(<EmailBanner status={unproven} />)
     expect(html).toMatch(/<a [^>]*class="[^"]*\bmin-h-11\b[^"]*"[^>]*>Enter the code<\/a>/)
   })
 
@@ -1724,7 +1793,7 @@ describe("EmailBanner", () => {
 
   it("is said to show only while an address waits for its code, as it draws", () => {
     const proven = { email: "ann@example.com", proven: true, pending: null }
-    expect(showsEmailBanner(emailDefaults.status)).toBe(true)
+    expect(showsEmailBanner(unproven)).toBe(true)
     expect(showsEmailBanner(proven)).toBe(false)
     expect(showsEmailBanner(null)).toBe(false)
   })

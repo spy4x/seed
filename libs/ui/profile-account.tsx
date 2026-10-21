@@ -1,0 +1,230 @@
+import type { JSX } from "preact"
+import { useEffect, useRef, useState } from "preact/hooks"
+import { Button } from "@spy4x/preact-ui/button"
+import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { Field } from "@spy4x/preact-ui/field"
+import { Input } from "@spy4x/preact-ui/input"
+import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Modal } from "@spy4x/preact-ui/modal"
+import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
+import { SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
+import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
+import { type EmailStatus, emailToVerify } from "@domain/identity"
+import { type EmailChangeProps, EmailDialog, EmailState, type EmailStep } from "./email-screen.tsx"
+import { profilePath, ScreenForm } from "./progressive.tsx"
+import type { ProviderProof } from "./provider-proof.tsx"
+
+/** What the name dialog shows: the typed names, their errors and whether a save is in flight. */
+export interface NameEditProps {
+  firstName: string
+  lastName: string
+  onValueChange: (field: "firstName" | "lastName", value: string) => void
+  /**
+   * Each field's message, tied to it. Focus moves to the first field with a message each time the
+   * app passes a new object.
+   */
+  fieldErrors: { firstName?: string | null; lastName?: string | null }
+  /** A refusal that names no field, under the form. */
+  error: string | null
+  pending: boolean
+  onSave?: () => void
+  /** Drops what was typed and its errors, when the person closes the dialog. */
+  onCancel?: () => void
+}
+
+/** What {@link AccountSection} takes. */
+export interface AccountSectionProps {
+  /** The saved name, shown on the row. */
+  name: string
+  nameEdit: NameEditProps
+  /** The person's e-mail address and whether it is proven, or `null` while it is not known. */
+  email: EmailStatus | null
+  /**
+   * The ways in of an account with no password, for a missing address: "Google", or `""` for an
+   * account that signs in with a passkey only; `null` for an account with a password.
+   */
+  providerOnly: string | null
+  /** The e-mail dialog's state and calls. Without it the address has no button. */
+  emailChange?: EmailChangeProps
+  /** Opens the e-mail dialog at its code on the first render, while an address waits for one. */
+  openEmailCode?: boolean
+  /** What an account with no password confirms an address change with. */
+  providerProof?: ProviderProof | null
+}
+
+/**
+ * The profile's Account section: the name, edited in a dialog, and the e-mail address, changed in
+ * one dialog that asks for the new address and the password, then for the code mailed there. While
+ * an address waits for its code the row offers "Enter code" too, which opens the same dialog at the
+ * code.
+ */
+export function AccountSection(
+  { name, nameEdit, email, providerOnly, emailChange, openEmailCode, providerProof }:
+    AccountSectionProps,
+): JSX.Element {
+  const [editingName, setEditingName] = useState(false)
+  const firstName = useRef<HTMLInputElement>(null)
+  const lastName = useRef<HTMLInputElement>(null)
+  const target = email ? emailToVerify(email) : null
+  const [emailStep, setEmailStep] = useState<EmailStep | null>(
+    openEmailCode && target ? "code" : null,
+  )
+  const cancelName = () => {
+    setEditingName(false)
+    nameEdit.onCancel?.()
+  }
+  useSucceeded(
+    nameEdit.pending,
+    Boolean(nameEdit.error || nameEdit.fieldErrors.firstName || nameEdit.fieldErrors.lastName),
+    () => setEditingName(false),
+  )
+  // A refused save lands the person on the field to fix. The app passes a new object per check.
+  useEffect(() => {
+    if (nameEdit.fieldErrors.firstName) firstName.current?.focus()
+    else if (nameEdit.fieldErrors.lastName) lastName.current?.focus()
+  }, [nameEdit.fieldErrors])
+
+  return (
+    <>
+      <SettingList>
+        <SettingRow
+          label="Name"
+          value={<span data-e2e="profile-name">{name || "Not set"}</span>}
+          action={
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              class={TOUCH_TARGET}
+              data-e2e="profile-edit"
+              onClick={() => setEditingName(true)}
+            >
+              Edit <span class="sr-only">name</span>
+            </Button>
+          }
+        />
+        <SettingRow
+          label="E-mail address"
+          value={<EmailValue email={email} provider={providerOnly} />}
+          action={email && emailChange && (
+            <Cluster gap="sm" justify="end">
+              {target && (
+                <Button
+                  type="button"
+                  size="sm"
+                  class={TOUCH_TARGET}
+                  data-e2e="email-code-open"
+                  onClick={() => setEmailStep("code")}
+                >
+                  Enter code
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                class={TOUCH_TARGET}
+                data-e2e="email-change-open"
+                onClick={() => setEmailStep("address")}
+              >
+                {email.email === null ? "Add" : "Change"}{" "}
+                <span class="sr-only">e-mail address</span>
+              </Button>
+            </Cluster>
+          )}
+        />
+      </SettingList>
+
+      <Modal
+        open={editingName}
+        onClose={cancelName}
+        title="Edit name"
+        cancelLabel="Close"
+        dataE2E="profile-dialog"
+      >
+        <ScreenForm pending={nameEdit.pending} onSubmit={nameEdit.onSave}>
+          <Stack>
+            <Field
+              id="profile-first-name"
+              label="First name"
+              error={nameEdit.fieldErrors.firstName}
+              required
+            >
+              <Input
+                ref={firstName}
+                data-e2e="profile-first-name"
+                name="firstName"
+                autocomplete="given-name"
+                value={nameEdit.firstName}
+                onInput={(e) => nameEdit.onValueChange("firstName", e.currentTarget.value)}
+                required
+              />
+            </Field>
+            <Field
+              id="profile-last-name"
+              label="Last name"
+              error={nameEdit.fieldErrors.lastName}
+              required
+            >
+              <Input
+                ref={lastName}
+                data-e2e="profile-last-name"
+                name="lastName"
+                autocomplete="family-name"
+                value={nameEdit.lastName}
+                onInput={(e) => nameEdit.onValueChange("lastName", e.currentTarget.value)}
+                required
+              />
+            </Field>
+            <ErrorState message={nameEdit.error} />
+            <Cluster justify="end">
+              <Button type="button" variant="ghost" onClick={cancelName}>Cancel</Button>
+              <Button
+                type="submit"
+                data-e2e="profile-save"
+                busy={nameEdit.pending}
+                busyLabel="Saving…"
+              >
+                Save
+              </Button>
+            </Cluster>
+          </Stack>
+        </ScreenForm>
+      </Modal>
+
+      {email && emailChange && (
+        <EmailDialog
+          {...emailChange}
+          step={emailStep}
+          onStepChange={setEmailStep}
+          status={email}
+          providerProof={providerProof}
+          next={profilePath("account")}
+        />
+      )}
+    </>
+  )
+}
+
+/** The address and whether it is proven, or a placeholder while it is not known. */
+function EmailValue(
+  { email, provider }: { email: EmailStatus | null; provider: string | null },
+): JSX.Element {
+  if (!email) return <span>…</span>
+  if (email.email === null) {
+    return (
+      <span data-e2e="email-current">
+        {provider === null ? "None. You sign in with your username." : provider === ""
+          // A passkey carries no address (#222).
+          ? "None."
+          : `None. ${provider} shared no verified address.`}
+      </span>
+    )
+  }
+  return (
+    <span class="flex flex-wrap items-center gap-2">
+      <span class="wrap-anywhere" data-e2e="email-current">{email.email}</span>
+      <EmailState proven={email.proven} />
+    </span>
+  )
+}

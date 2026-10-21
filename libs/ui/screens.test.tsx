@@ -114,7 +114,7 @@ describe("AuthScreen links", () => {
     const noCodeOwed = noScriptSurface(<AuthScreen {...authDefaults} screen="one-time-code" />)
     for (const surface of [signedIn, noCodeOwed]) {
       expect(surface.forms).toEqual([])
-      expect(surface.links).toEqual(["/"])
+      expect(surface.links).toEqual([SCREEN_PATHS.profile])
     }
   })
 })

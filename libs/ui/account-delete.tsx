@@ -1,6 +1,5 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
-import { IconChevronDown } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
@@ -15,7 +14,7 @@ import {
   DELETED_USER_NAME,
 } from "@domain/identity"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
-import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { GROUP_PATHS, type Navigate, profilePath, ScreenForm } from "./progressive.tsx"
 import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 import { SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFormat } from "@spy4x/preact-ui/format"
@@ -81,7 +80,7 @@ export interface AccountDeleteProps {
 }
 
 /**
- * The profile page's "Danger zone": a closed disclosure at the bottom with one row, "Delete my
+ * The profile's "Delete account" section: a danger-coloured card with one row, "Delete my
  * account". Its dialog lists the groups that stop the deletion, with a link to each, or asks for
  * the password (and the one-time code when two-factor is on) and says what happens next. An
  * account with no password signs in with its provider again in place of the password.
@@ -116,21 +115,10 @@ export function AccountDelete(
   }, [errors])
 
   return (
-    // The last section, set apart by a danger-coloured card and closed until asked for. The rows sit
+    // The profile's last section, on a page of its own, in a danger-coloured card. The row sits
     // straight in the card: a `SettingList` here would be a card inside a card.
-    <details data-e2e="danger-zone" class="group pc-card border-danger">
-      {
-        /* The whole width of the card, and a 44 px target on a phone, like every other control. The
-          chevron stands in for the marker a flex summary loses, and turns when the zone opens. */
-      }
-      <summary class="flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-lg px-4 py-3 text-sm font-semibold text-danger sm:px-6">
-        Danger zone
-        <IconChevronDown
-          aria-hidden="true"
-          class="size-4 shrink-0 transition-transform group-open:rotate-180"
-        />
-      </summary>
-      <dl class="border-t border-subtle">
+    <div data-e2e="danger-zone" class="pc-card border-danger">
+      <dl>
         <SettingRow
           label="Delete my account"
           value={`Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
@@ -167,7 +155,7 @@ export function AccountDelete(
           : providerProof && !providerProof.fresh
           ? (
             <Stack>
-              <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+              <ProviderProofNotice proof={providerProof} next={profilePath("danger-zone")} />
               <Cluster justify="end">
                 <Button type="button" variant="ghost" onClick={close}>Close</Button>
               </Cluster>
@@ -183,7 +171,7 @@ export function AccountDelete(
                   people's groups stay there, by "{DELETED_USER_NAME}".
                 </p>
                 {providerProof
-                  ? <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+                  ? <ProviderProofNotice proof={providerProof} next={profilePath("danger-zone")} />
                   : (
                     <Field
                       id="account-delete-password"
@@ -239,7 +227,7 @@ export function AccountDelete(
             </ScreenForm>
           )}
       </Modal>
-    </details>
+    </div>
   )
 }
 

@@ -540,6 +540,27 @@ describe("deleteAccount", () => {
     expect(sessionState.value.user).toBeNull()
   })
 
+  it("leaves the page while still signed in, then signs it out", async () => {
+    apiAnswers(200, { success: true, deleteAfter: "2026-10-11T08:00:00.000Z" })
+    const signedInOnLeave: boolean[] = []
+
+    await deleteAccount("secret-pass", undefined, () => {
+      signedInOnLeave.push(sessionState.value.user !== null)
+    })
+
+    expect(signedInOnLeave).toEqual([true])
+    expect(sessionState.value.user).toBeNull()
+  })
+
+  it("does not leave the page when the server refuses", async () => {
+    apiAnswers(400, { error: "Invalid password" })
+    let left = 0
+
+    await deleteAccount("wrong", undefined, () => void left++)
+
+    expect(left).toBe(0)
+  })
+
   it("sends no code without two-factor, and keeps the session when groups block it", async () => {
     apiAnswers(409, { error: "You own groups", blockers: [] })
 
