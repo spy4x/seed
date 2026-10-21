@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
 import { parseEnvValues } from "./env-file.ts"
-import { prepareEnv, projectSlug, randomHex, SECRETS } from "./init.ts"
+import { KEEPS_OLD_DATA, nameFlag, prepareEnv, projectSlug, randomHex, SECRETS } from "./init.ts"
 
 const example = await Deno.readTextFile(`infra/envs/.env.example`)
 const fake = (bytes: number) => `x`.repeat(bytes * 2)
@@ -50,4 +50,39 @@ Deno.test("a project name becomes a Compose project name", () => {
   expect(projectSlug(`My Product`)).toBe(`my-product`)
   expect(projectSlug(` Financy! `)).toBe(`financy`)
   expect(() => projectSlug(`!!!`)).toThrow(`no letter or digit`)
+})
+
+Deno.test("a placeholder keeps its quotes and its note", () => {
+  const old = example.replace(/^KV_PASSWORD=.*$/m, `KV_PASSWORD="change-me" # dev only`)
+  const { text } = prepareEnv(example, old, undefined, fake)
+  expect(text).toContain(`KV_PASSWORD="${fake(SECRETS.KV_PASSWORD)}" # dev only\n`)
+})
+
+Deno.test("a placeholder written with export or spaces is replaced, so a second run is quiet", () => {
+  const old = example
+    .replace(/^KV_PASSWORD=.*$/m, `export KV_PASSWORD=change-me`)
+    .replace(/^GRAFANA_PASS=.*$/m, `GRAFANA_PASS = change-me`)
+  const first = prepareEnv(example, old, undefined, fake)
+  expect(first.text).toContain(`export KV_PASSWORD=${fake(SECRETS.KV_PASSWORD)}\n`)
+  expect(first.text).toContain(`GRAFANA_PASS = ${fake(SECRETS.GRAFANA_PASS)}\n`)
+  expect(prepareEnv(example, first.text, undefined).changed).toEqual([])
+})
+
+Deno.test("a key set twice: the line Compose reads is replaced, the other is kept", () => {
+  const old = example.replace(/^KV_PASSWORD=.*$/m, `KV_PASSWORD=mine\nKV_PASSWORD=change-me`)
+  const { text } = prepareEnv(example, old, undefined, fake)
+  expect(text).toContain(`KV_PASSWORD=mine\nKV_PASSWORD=${fake(SECRETS.KV_PASSWORD)}\n`)
+  expect(parseEnvValues(text, `.env`).KV_PASSWORD).toBe(fake(SECRETS.KV_PASSWORD))
+})
+
+Deno.test("the pepper and the Grafana password carry a warning, the others do not", () => {
+  expect(Object.keys(KEEPS_OLD_DATA).sort()).toEqual([`AUTH_PEPPER`, `GRAFANA_PASS`])
+  for (const key of Object.keys(KEEPS_OLD_DATA)) expect(SECRETS).toHaveProperty(key)
+})
+
+Deno.test("--name needs a value", () => {
+  expect(nameFlag([])).toBeUndefined()
+  expect(nameFlag([`--yes`, `--name`, `Acme`])).toBe(`Acme`)
+  expect(() => nameFlag([`--name`])).toThrow(`--name needs a value`)
+  expect(() => nameFlag([`--name`, `--yes`])).toThrow(`--name needs a value`)
 })
