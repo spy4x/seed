@@ -25,7 +25,7 @@ describe("admin keyboard shortcuts", () => {
     expect(seen.navigated).toEqual(ADMIN_MODULES.map((m) => m.nav.href))
   })
 
-  it("lists g sequences only for the modules shown", () => {
+  it("lists the g sequences of the modules shown, in the rail's order", () => {
     const shown = ADMIN_MODULES.slice(0, 2)
     const goTo = rows("/", shown).list.filter((row) => row.keys.startsWith("g "))
     expect(goTo.map((row) => row.description)).toEqual(shown.map((m) => m.nav.name))
