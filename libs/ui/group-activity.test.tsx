@@ -1,5 +1,5 @@
 /**
- * The group activity screen: what it renders (server-rendered HTML) and what "Load more" does in a
+ * The group page's Activity tab: what it renders (server-rendered HTML) and what "Load more" does in a
  * browser DOM (happy-dom).
  */
 import { expect } from "@std/expect"
@@ -8,8 +8,11 @@ import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
-import { GroupActivityScreen, type GroupActivityScreenProps } from "./group-activity-screen.tsx"
-import type { ActivityRow } from "./group-activity-screen.tsx"
+import {
+  type ActivityRow,
+  GroupActivityPanel,
+  type GroupActivityPanelProps,
+} from "./group-activity-panel.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = { document: globalThis.document }
@@ -23,7 +26,6 @@ afterAll(async () => {
   await window.happyDOM.close()
 })
 
-const group = { id: "g-1", name: "Family" }
 const noteId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
 
 function row(id: number, parts: Partial<ActivityRow> = {}): ActivityRow {
@@ -39,13 +41,13 @@ function row(id: number, parts: Partial<ActivityRow> = {}): ActivityRow {
   }
 }
 
-function html(props: Partial<GroupActivityScreenProps>): string {
+function html(props: Partial<GroupActivityPanelProps>): string {
   return renderToString(
-    <GroupActivityScreen group={group} events={[]} loading={false} error={null} {...props} />,
+    <GroupActivityPanel events={[]} loading={false} error={null} {...props} />,
   )
 }
 
-describe("group activity screen", () => {
+describe("group activity panel", () => {
   it("writes each event as a sentence with when it happened", () => {
     const page = html({
       events: [
@@ -95,11 +97,10 @@ describe("group activity screen", () => {
     expect(page).not.toContain(`data-e2e="activity-list"`)
   })
 
-  it("has no back link, since the rail leads to it, and shows a read error under the header", () => {
+  it("shows a read error in place of the empty list", () => {
     const page = html({ error: "The server is out of reach." })
-    expect(page).not.toContain(`href="/groups/g-1"`)
-    expect(page).not.toContain("Back to group settings")
     expect(page).toContain("The server is out of reach.")
+    expect(page).not.toContain("Nothing has happened yet.")
   })
 
   it("draws 'Open the note' as an underlined link with a phone-sized touch target", () => {
@@ -123,8 +124,7 @@ describe("group activity screen", () => {
     document.body.append(root)
     await act(() =>
       render(
-        <GroupActivityScreen
-          group={group}
+        <GroupActivityPanel
           events={[row(1)]}
           loading={false}
           error={null}
@@ -140,8 +140,7 @@ describe("group activity screen", () => {
 
     await act(() =>
       render(
-        <GroupActivityScreen
-          group={group}
+        <GroupActivityPanel
           events={[row(1)]}
           loading={false}
           error={null}

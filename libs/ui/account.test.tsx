@@ -1359,7 +1359,7 @@ describe("deleting the account from the profile", () => {
     expect(document.querySelector("[data-e2e=account-delete-password]")).toBeNull()
   })
 
-  it("lists each blocking group as a link to its settings with what it needs, and asks for no password", async () => {
+  it("lists each blocking group as a link to the tab that deals with it, with what it needs, and asks for no password", async () => {
     const navigate = spy<[string]>()
     const blockers = [
       { groupId: "g-1", name: "Family", reason: AccountDeletionBlockReason.Members, endsAt: null },
@@ -1381,9 +1381,9 @@ describe("deleting the account from the profile", () => {
 
     const items = [...document.querySelectorAll("[data-e2e=account-delete-blockers] li")]
     expect(items.map((item) => item.querySelector("a")?.getAttribute("href"))).toEqual([
-      GROUP_PATHS.settings("g-1"),
-      GROUP_PATHS.settings("g-2"),
-      GROUP_PATHS.settings("g-3"),
+      GROUP_PATHS.members("g-1"),
+      GROUP_PATHS.billing("g-2"),
+      GROUP_PATHS.billing("g-3"),
     ])
     expect(items.map((item) => item.textContent)).toEqual([
       "FamilyOther people still use it. Hand it over or remove them.",
@@ -1399,7 +1399,7 @@ describe("deleting the account from the profile", () => {
     expect(document.querySelector("[data-e2e=account-delete-submit]")).toBeNull()
 
     expect(await click("[data-e2e=account-delete-blocker-g-1]")).toBe(true)
-    expect(navigate.calls).toEqual([[GROUP_PATHS.settings("g-1")]])
+    expect(navigate.calls).toEqual([[GROUP_PATHS.members("g-1")]])
   })
 
   it("asks for the password alone while two-factor is off, and for the code as well once it is on", async () => {

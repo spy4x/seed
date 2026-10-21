@@ -186,12 +186,19 @@ describe("billing store", () => {
     expect(store.pending.value).toBe(false)
   })
 
-  it("says the server is out of reach when the call never arrives", async () => {
+  it("says Stripe's page could not be opened when the call never arrives", async () => {
     const { store } = harness(new TypeError("Failed to fetch"))
 
     await store.portal(groupId)
+    expect(store.error.value?.message).toBe(
+      "Could not open Stripe's billing page. Check your connection and try again.",
+    )
+    expect(store.pending.value).toBe(false)
 
-    expect(store.error.value?.message).toBe("The server is out of reach. Try again.")
+    await store.checkout(groupId, "pro")
+    expect(store.error.value?.message).toBe(
+      "Could not open Stripe's checkout. Check your connection and try again.",
+    )
     expect(store.pending.value).toBe(false)
   })
 

@@ -261,7 +261,9 @@ function BlockerList(
         {blockers.map((blocker) => (
           <li key={blocker.groupId} class="flex flex-col gap-1">
             <Link
-              href={GROUP_PATHS.settings(blocker.groupId)}
+              href={blocker.reason === AccountDeletionBlockReason.Members
+                ? GROUP_PATHS.members(blocker.groupId)
+                : GROUP_PATHS.billing(blocker.groupId)}
               navigate={navigate}
               class="pc-link inline-flex min-h-11 items-center self-start font-medium wrap-anywhere sm:min-h-9"
               data-e2e={`account-delete-blocker-${blocker.groupId}`}

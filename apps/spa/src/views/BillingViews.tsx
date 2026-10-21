@@ -1,12 +1,18 @@
-import { useEffect } from "preact/hooks"
-import { useLocation } from "wouter-preact"
-import { BillingCard, PricingScreen } from "@ui/billing-screen.tsx"
+import { useEffect, useRef } from "preact/hooks"
+import { useLocation, useSearch } from "wouter-preact"
+import { findPlan, FREE_PLAN_ID } from "@domain/billing"
+import { GroupBillingPanel } from "@ui/billing-screen.tsx"
+import { GROUP_PATHS } from "@ui/progressive.tsx"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
+import { toasts } from "../state/toasts.ts"
+
+/** The query the checkout's success address carries, so the tab knows the owner just paid. */
+export const CHECKOUT_DONE = "checkout=done"
 
 /**
- * Reads the group's billing when the page opens and again whenever the group's change sequence
- * moves: a plan change is recorded on the group, so the provider's webhook reaches this page as an
+ * Reads the group's billing when the tab opens and again whenever the group's change sequence
+ * moves: a plan change is recorded on the group, so the provider's webhook reaches this tab as an
  * ordinary group hint.
  */
 function useGroupBilling(groupId: string) {
@@ -18,44 +24,57 @@ function useGroupBilling(groupId: string) {
   const current = billingStore.current.value
   const failure = billingStore.error.value
   return {
-    group,
     billing: current?.groupId === groupId ? current.billing : null,
     error: failure?.groupId === groupId ? failure.message : null,
     errorId: failure?.groupId === groupId ? failure.id : undefined,
   }
 }
 
-/** The plan section of a group's settings page. */
-export function GroupBillingCard({ groupId }: { groupId: string }) {
+/**
+ * The group page's Plan and billing tab, wired to the billing store. Back from the provider's
+ * checkout (`?checkout=done`), the address loses its query at once, so a reload does not say it
+ * again, and a toast says "You're on Pro" as soon as the provider's webhook has changed the plan.
+ */
+export function GroupBillingView(
+  { groupId, groupName, memberCount, ownerName }: {
+    groupId: string
+    groupName: string
+    memberCount: number | null
+    ownerName: string | null
+  },
+) {
   const [, navigate] = useLocation()
+  const search = useSearch()
   const { billing, error, errorId } = useGroupBilling(groupId)
+  useEffect(() => void billingStore.loadTrial(), [])
+  const waiting = useRef(new URLSearchParams(search).get("checkout") === "done")
+  useEffect(() => {
+    if (search.includes(CHECKOUT_DONE)) navigate(GROUP_PATHS.billing(groupId), { replace: true })
+  }, [search])
+  const paid = billing !== null && billing.planId !== FREE_PLAN_ID
+  useEffect(() => {
+    if (!waiting.current || !paid) return
+    waiting.current = false
+    const plan = findPlan(billing.planId)?.name ?? billing.planId
+    toasts.success({
+      title: `You're on ${plan}`,
+      body: `Stripe confirmed the payment for "${groupName}".`,
+      dataE2E: "billing-upgraded",
+    })
+  }, [paid])
   return (
-    <BillingCard
-      groupId={groupId}
+    <GroupBillingPanel
+      groupName={groupName}
       billing={billing}
+      memberCount={memberCount}
+      ownerName={ownerName}
+      trial={billingStore.trial.value}
+      confirming={waiting.current && !paid}
       error={error}
       errorId={errorId}
       pending={billingStore.pending.value}
-      navigate={navigate}
-      onManage={() => void billingStore.portal(groupId)}
-    />
-  )
-}
-
-/** The plans a group can move to, at `/groups/:groupId/pricing`. */
-export function PricingView({ groupId }: { groupId: string }) {
-  const [, navigate] = useLocation()
-  const { group, billing, error, errorId } = useGroupBilling(groupId)
-  return (
-    <PricingScreen
-      groupId={groupId}
-      groupName={group?.name ?? null}
-      billing={billing}
-      error={error}
-      errorId={errorId}
-      pending={billingStore.pending.value}
-      navigate={navigate}
-      onChoose={(planId) => void billingStore.checkout(groupId, planId)}
+      onCheckout={(planId) => void billingStore.checkout(groupId, planId)}
+      onPortal={() => void billingStore.portal(groupId)}
     />
   )
 }

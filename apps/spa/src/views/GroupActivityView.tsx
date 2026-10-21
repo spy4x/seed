@@ -1,13 +1,13 @@
 import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { canViewActivity } from "@domain/groups"
-import { GroupActivityScreen } from "@ui/group-activity-screen.tsx"
+import { GroupActivityPanel } from "@ui/group-activity-panel.tsx"
 import { activityStore } from "../state/activity.ts"
 import { groupsStore } from "../state/groups.ts"
 
 /**
- * Wires a group's activity log to the activity store for `/groups/:groupId/activity`. The log is
- * read only for an admin or the owner; any other member sees the refusal without a request.
+ * Wires the group page's Activity tab to the activity store. The log is read only for an admin or
+ * the owner; any other member sees the refusal without a request.
  */
 export function GroupActivityView({ groupId }: { groupId: string }) {
   const [, navigate] = useLocation()
@@ -20,8 +20,7 @@ export function GroupActivityView({ groupId }: { groupId: string }) {
   const store = activityStore
   const ours = store.groupId.value === groupId
   return (
-    <GroupActivityScreen
-      group={membership ? { id: membership.id, name: membership.name } : null}
+    <GroupActivityPanel
       events={ours ? store.events.value : []}
       loading={groupsStore.loading.value || (allowed && (!ours || store.loading.value))}
       loadingMore={store.loadingMore.value}

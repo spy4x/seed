@@ -25,11 +25,11 @@ export const SPA_ROUTES = {
   "/groups/import": { open: false },
   // A group's create-only invitation page, matched before the group's own routes.
   "/groups/:groupId/invitations/new": { open: false },
-  "/groups/:groupId": { open: false },
-  "/groups/:groupId/activity": { open: false },
-  "/groups/:groupId/pricing": { open: false },
   "/groups/:groupId/notes": { open: false },
   "/groups/:groupId/notes/:noteId": { open: false },
+  // A group's page and its tabs (`/members`, `/billing`, `/activity`), after the rows above: one
+  // route, so switching tabs keeps the page and its tab list on screen.
+  "/groups/:groupId/:tab?": { open: false },
   // An invitation is answered once signed in or signed up.
   "/invite/:token": { open: false },
   "/notifications": { open: false },
@@ -79,4 +79,17 @@ export function isSpaPath(pathname: string): boolean {
  */
 export function isMembersOnlyPath(pathname: string): boolean {
   return pathname.startsWith("/") && MEMBER_SECTIONS.has(section(pathname))
+}
+
+/** The tab part of a group page's address: `/groups/:groupId/members` and its siblings. */
+const GROUP_TAB = /^(\/groups\/[^/]+)\/(members|billing|activity)$/
+
+/**
+ * The page an address shows, for the route announcer: a group page's tabs count as one page, so
+ * choosing a tab leaves focus on the tab, as the tabs pattern asks, instead of moving it to the
+ * heading.
+ */
+export function announcedPage(path: string): string {
+  const [pathname, query = ""] = path.split(/(?=[?#])/, 2)
+  return pathname.replace(GROUP_TAB, "$1") + query
 }

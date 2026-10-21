@@ -57,7 +57,7 @@ describe("InvitationNewView", () => {
     expect(html).toContain("New invitation")
     expect(html).toContain("Secret Team")
     expect(html).toContain("Create invitation")
-    expect(html).toContain(`href="/groups/${known.id}"`)
+    expect(html).toContain(`href="/groups/${known.id}/members"`)
     expect(html).not.toContain("<dialog")
   })
 

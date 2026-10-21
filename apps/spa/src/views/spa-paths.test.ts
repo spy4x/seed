@@ -4,10 +4,16 @@ import { renderToString } from "preact-render-to-string"
 import { h } from "preact"
 import { matchRoute, useRouter } from "wouter-preact"
 import { OAUTH_PAGES } from "@domain/identity"
-import { isMembersOnlyPath, isSpaPath, SPA_ROUTE_PATHS, SPA_ROUTES } from "./spa-paths.ts"
+import {
+  announcedPage,
+  isMembersOnlyPath,
+  isSpaPath,
+  SPA_ROUTE_PATHS,
+  SPA_ROUTES,
+} from "./spa-paths.ts"
 
-/** An address the pattern matches: every `:name` filled in. */
-const addressOf = (pattern: string) => pattern.replace(/:\w+/g, "abc")
+/** An address the pattern matches: every `:name` filled in, an optional `:name?` too. */
+const addressOf = (pattern: string) => pattern.replace(/:\w+\??/g, "abc")
 
 describe("isSpaPath", () => {
   it("knows the SPA's own paths", () => {
@@ -129,6 +135,31 @@ describe("the route order", () => {
       expect(routeFor(path), path).toBe(path.replace("/abc/", "/:groupId/"))
     }
     expect(routeFor("/tags/abc")).toBe("/tags/:tagId")
-    expect(routeFor("/groups/abc")).toBe("/groups/:groupId")
+    expect(routeFor("/groups/abc")).toBe("/groups/:groupId/:tab?")
+  })
+
+  it("draws a group's page and each of its tabs from one route, and its notes' old links from theirs", () => {
+    for (const path of ["/groups/abc", "/groups/abc/members", "/groups/abc/billing"]) {
+      expect(routeFor(path), path).toBe("/groups/:groupId/:tab?")
+    }
+    expect(routeFor("/groups/abc/activity")).toBe("/groups/:groupId/:tab?")
+    expect(routeFor("/groups/abc/notes")).toBe("/groups/:groupId/notes")
+  })
+})
+
+describe("announcedPage", () => {
+  it("counts a group's tabs as one page, so choosing a tab moves no focus", () => {
+    for (const path of ["/groups/abc", "/groups/abc/members", "/groups/abc/billing"]) {
+      expect(announcedPage(path), path).toBe("/groups/abc")
+    }
+    expect(announcedPage("/groups/abc/activity?checkout=done")).toBe("/groups/abc?checkout=done")
+  })
+
+  it("leaves every other address as it is", () => {
+    for (
+      const path of ["/groups", "/groups/new", "/groups/abc/notes", "/groups/abc/invitations/new"]
+    ) {
+      expect(announcedPage(path), path).toBe(path)
+    }
   })
 })

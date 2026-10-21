@@ -3,8 +3,7 @@ import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Notice } from "@spy4x/preact-ui/notice"
 import type { FeatureKey, LimitKey, PlanRefusal } from "@domain/billing"
-import { BILLING_PATHS } from "./billing-screen.tsx"
-import type { Navigate } from "./progressive.tsx"
+import { GROUP_PATHS, type Navigate } from "./progressive.tsx"
 
 /**
  * What a refusal says, per entitlement: a title, and what the plan allows. `who` is what the title
@@ -67,8 +66,8 @@ export function PlanRefusalNotice(
         tone="warning"
         title={text.title}
         action={refusal.canUpgrade && (
-          <Button href={BILLING_PATHS.pricing(groupId)} navigate={navigate} size="sm">
-            See plans
+          <Button href={GROUP_PATHS.billing(groupId)} navigate={navigate} size="sm">
+            Open Plan and billing
           </Button>
         )}
       >

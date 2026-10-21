@@ -1,27 +1,28 @@
 /**
- * The plan section of a group's settings and the pricing page: what the server renders (a working
- * form for every action, without JavaScript) and what a person does once the page runs, in a
- * happy-dom page. Kept beside the screens rather than in `screens.test.tsx`, so billing stays in its
- * own files.
+ * A group's Plan and billing tab: what each billing state says and offers, and what a press of each
+ * button hands the app, in a happy-dom page. Kept beside the screen rather than in
+ * `screens.test.tsx`, so billing stays in its own files.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
-import { renderToString } from "preact-render-to-string"
 import {
-  billingCheckoutRequestSchema,
   BillingNoticeKind,
   BillingStatus,
   FREE_PLAN_ID,
   type GroupBilling,
-  PAID_PLANS,
   PRO_PLAN_ID,
 } from "@domain/billing"
-import { BILLING_PATHS, BillingCard, PricingScreen } from "./billing-screen.tsx"
+import {
+  BillingState,
+  billingState,
+  GroupBillingPanel,
+  type GroupBillingPanelProps,
+} from "./billing-screen.tsx"
 
-const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
+const NOW = new Date("2026-10-21T12:00:00Z")
 
 const FREE_OWNER: GroupBilling = {
   enabled: true,
@@ -41,225 +42,38 @@ const PRO_OWNER: GroupBilling = {
   ...FREE_OWNER,
   planId: PRO_PLAN_ID,
   status: BillingStatus.Active,
-  currentPeriodEnd: new Date("2026-11-01T00:00:00Z"),
+  currentPeriodEnd: new Date("2026-11-04T00:00:00Z"),
   subscribed: true,
   hasCustomer: true,
+  seatPrice: { seats: 6, amount: 900, currency: "EUR" },
 }
 
-interface RenderedForm {
-  action: string | undefined
-  method: string | undefined
-  fields: string[]
+const TRIAL_OWNER: GroupBilling = {
+  ...PRO_OWNER,
+  status: BillingStatus.Trialing,
+  trialEnd: new Date("2026-10-31T12:00:00Z"),
+  currentPeriodEnd: new Date("2026-10-31T12:00:00Z"),
 }
 
-function attribute(tag: string, name: string): string | undefined {
-  return tag.match(new RegExp(`\\s${name}="([^"]*)"`))?.[1]
+const ENDING_OWNER: GroupBilling = { ...PRO_OWNER, cancelAtPeriodEnd: true }
+
+const PAST_DUE_OWNER: GroupBilling = {
+  ...PRO_OWNER,
+  status: BillingStatus.PastDue,
+  notice: {
+    kind: BillingNoticeKind.PaymentFailed,
+    at: new Date("2026-10-28T00:00:00Z"),
+    daysLeft: 7,
+  },
 }
 
-/** Every form the server renders: where it posts and the names of the fields it sends. */
-function forms(node: VNode): RenderedForm[] {
-  const html = renderToString(node)
-  return [...html.matchAll(/<form\b([^>]*)>([\s\S]*?)<\/form>/g)].map(([, attrs, body]) => ({
-    action: attribute(` ${attrs}`, "action"),
-    method: attribute(` ${attrs}`, "method"),
-    fields: [...body.matchAll(/<(?:input|select|textarea)\b[^>]*>/g)]
-      .map(([tag]) => attribute(tag, "name"))
-      .filter((name): name is string => name !== undefined)
-      .sort(),
-  }))
+/** The same billing as a member who is not the owner reads it: no notice, no way to change it. */
+function asMember(billing: GroupBilling): GroupBilling {
+  return { ...billing, canManage: false, notice: null }
 }
-
-describe("billing screens without JavaScript", () => {
-  it("gives the owner of a free group a link to the plans and no form", () => {
-    const html = renderToString(<BillingCard groupId={groupId} billing={FREE_OWNER} />)
-
-    expect(html).toContain(`href="${BILLING_PATHS.pricing(groupId)}"`)
-    expect(forms(<BillingCard groupId={groupId} billing={FREE_OWNER} />)).toEqual([])
-  })
-
-  it("gives the owner of a paying group a form that posts to the portal", () => {
-    expect(forms(<BillingCard groupId={groupId} billing={PRO_OWNER} />)).toEqual([
-      { action: BILLING_PATHS.portal(groupId), method: "post", fields: [] },
-    ])
-  })
-
-  it("gives the owner the portal, and no upgrade, while a subscription that shows as free is live", () => {
-    const incomplete = {
-      ...FREE_OWNER,
-      status: BillingStatus.Incomplete,
-      subscribed: true,
-      hasCustomer: true,
-    }
-    const html = renderToString(<BillingCard groupId={groupId} billing={incomplete} />)
-
-    expect(forms(<BillingCard groupId={groupId} billing={incomplete} />)).toEqual([
-      { action: BILLING_PATHS.portal(groupId), method: "post", fields: [] },
-    ])
-    expect(html).not.toContain(BILLING_PATHS.pricing(groupId))
-  })
-
-  it("gives the owner of a group whose subscription ended both the plans and the portal", () => {
-    const lapsed = { ...FREE_OWNER, status: BillingStatus.Canceled, hasCustomer: true }
-    const html = renderToString(<BillingCard groupId={groupId} billing={lapsed} />)
-
-    expect(html).toContain(`href="${BILLING_PATHS.pricing(groupId)}"`)
-    expect(forms(<BillingCard groupId={groupId} billing={lapsed} />)).toEqual([
-      { action: BILLING_PATHS.portal(groupId), method: "post", fields: [] },
-    ])
-  })
-
-  it("shows any other member the plan and no way to change it", () => {
-    const member = { ...PRO_OWNER, canManage: false }
-    const html = renderToString(<BillingCard groupId={groupId} billing={member} />)
-
-    expect(html).toContain(`data-e2e="billing-owner-only"`)
-    expect(html).not.toContain(BILLING_PATHS.pricing(groupId))
-    expect(forms(<BillingCard groupId={groupId} billing={member} />)).toEqual([])
-  })
-
-  it("shows a trial's end on the plan, and the owner how many days are left", () => {
-    const trialEnd = new Date("2026-10-15T10:00:00Z")
-    const trial = {
-      ...PRO_OWNER,
-      status: BillingStatus.Trialing,
-      trialEnd,
-      currentPeriodEnd: new Date("2026-11-15T10:00:00Z"),
-      notice: { kind: BillingNoticeKind.TrialEnding, at: trialEnd, daysLeft: 2 },
-    }
-    const html = renderToString(<BillingCard groupId={groupId} billing={trial} />)
-
-    expect(html).toContain("Trial ends on October 15, 2026")
-    expect(html).toContain(`role="status"`)
-    expect(html).toContain("The trial ends in 2 days, on October 15, 2026.")
-  })
-
-  it("announces a notice politely as a warning, with its kind for the e2e hooks", () => {
-    const at = new Date("2026-10-08T10:00:00Z")
-    const failed = {
-      ...PRO_OWNER,
-      status: BillingStatus.PastDue,
-      notice: { kind: BillingNoticeKind.PaymentFailed, at, daysLeft: 3 },
-    }
-    const html = renderToString(<BillingCard groupId={groupId} billing={failed} />)
-    const notice = html.match(/<div[^>]*data-e2e="billing-notice"[^>]*>/)?.[0] ?? ``
-
-    expect(notice).toContain(`role="status"`)
-    expect(notice).not.toContain(`role="alert"`)
-    expect(notice).toContain(`data-kind="${BillingNoticeKind.PaymentFailed}"`)
-    expect(notice).toContain(`border-warning`)
-  })
-
-  it("tells the owner when a cancelled plan ends and how to renew it, beside the portal", () => {
-    const at = new Date("2026-11-01T00:00:00Z")
-    const ending = {
-      ...PRO_OWNER,
-      cancelAtPeriodEnd: true,
-      notice: { kind: BillingNoticeKind.PlanEnding, at, daysLeft: 1 },
-    }
-    const html = renderToString(<BillingCard groupId={groupId} billing={ending} />)
-
-    expect(html).toContain(
-      "The Pro plan was cancelled and ends in 1 day, on November 1, 2026. To keep it, renew it",
-    )
-    expect(forms(<BillingCard groupId={groupId} billing={ending} />)).toEqual([
-      { action: BILLING_PATHS.portal(groupId), method: "post", fields: [] },
-    ])
-  })
-
-  it("tells the owner of a failed payment until when the plan is kept, and after that how to get it back", () => {
-    const at = new Date("2026-10-08T10:00:00Z")
-    const failed = (planId: string, daysLeft: number) => ({
-      ...PRO_OWNER,
-      planId,
-      status: BillingStatus.PastDue,
-      notice: { kind: BillingNoticeKind.PaymentFailed, at, daysLeft },
-    })
-
-    expect(renderToString(<BillingCard groupId={groupId} billing={failed(PRO_PLAN_ID, 6)} />))
-      .toContain("within 6 days, by October 8, 2026, to keep the Pro plan.")
-    const lapsed = renderToString(
-      <BillingCard groupId={groupId} billing={failed(FREE_PLAN_ID, 0)} />,
-    )
-    expect(lapsed).toContain("so the group is on the free plan.")
-    expect(lapsed).toContain("to get the paid plan back.")
-    expect(forms(<BillingCard groupId={groupId} billing={failed(FREE_PLAN_ID, 0)} />))
-      .toEqual([{ action: BILLING_PATHS.portal(groupId), method: "post", fields: [] }])
-  })
-
-  it("shows a group billed per member what it pays: the price times its members", () => {
-    const seats = { ...PRO_OWNER, seatPrice: { seats: 3, amount: 900, currency: "EUR" } }
-    const html = renderToString(<BillingCard groupId={groupId} billing={seats} />)
-
-    expect(html).toContain("€27.00")
-    expect(html).toContain("3 members at €9.00 each a month, the owner included.")
-  })
-
-  it("shows no notice when there is none", () => {
-    expect(renderToString(<BillingCard groupId={groupId} billing={PRO_OWNER} />))
-      .not.toContain(`data-e2e="billing-notice"`)
-  })
-
-  it("shows only the plan while billing is off: no upgrade, and no word about who could change it", () => {
-    const off = { ...FREE_OWNER, enabled: false, canManage: false }
-    const html = renderToString(<BillingCard groupId={groupId} billing={off} />)
-
-    expect(html).toContain(`data-plan="free"`)
-    expect(html).not.toContain(BILLING_PATHS.pricing(groupId))
-    expect(html).not.toContain(`data-e2e="billing-owner-only"`)
-  })
-
-  it("posts each paid plan to the checkout with the API's field name", () => {
-    const rendered = forms(
-      <PricingScreen groupId={groupId} groupName="Team" billing={FREE_OWNER} />,
-    )
-    const keys = billingCheckoutRequestSchema.props.map((prop) => String(prop.key)).sort()
-
-    expect(rendered).toEqual([
-      { action: BILLING_PATHS.checkout(groupId), method: "post", fields: keys },
-    ])
-    expect(
-      renderToString(<PricingScreen groupId={groupId} groupName="Team" billing={FREE_OWNER} />),
-    )
-      .toContain(`value="${PRO_PLAN_ID}"`)
-  })
-
-  it("centres a single plan's card in the page column", () => {
-    const html = renderToString(
-      <PricingScreen groupId={groupId} groupName="Team" billing={FREE_OWNER} />,
-    )
-    const plans = html.match(/<fieldset [^>]*data-e2e="pricing-plans"[^>]*>/)?.[0] ?? ""
-
-    expect(PAID_PLANS).toHaveLength(1)
-    expect(plans).toMatch(/class="[^"]*\bmx-auto\b/)
-    expect(plans).toMatch(/class="[^"]*\bmax-w-sm\b/)
-  })
-
-  it("labels the per-member plan's price with the unit it is charged per", () => {
-    const html = renderToString(
-      <PricingScreen groupId={groupId} groupName="Team" billing={FREE_OWNER} />,
-    )
-
-    expect(html).toContain("€9.00")
-    expect(html).toContain("per member / month")
-  })
-
-  it("shows no plan to choose to a member who is not the owner, nor to a group that pays", () => {
-    const member = { ...FREE_OWNER, canManage: false }
-
-    expect(forms(<PricingScreen groupId={groupId} groupName="Team" billing={member} />)).toEqual([])
-    expect(forms(<PricingScreen groupId={groupId} groupName="Team" billing={PRO_OWNER} />))
-      .toEqual([])
-  })
-
-  it("shows no plan to choose while a subscription that shows as free is live", () => {
-    const paused = { ...FREE_OWNER, status: BillingStatus.Paused, subscribed: true }
-
-    expect(forms(<PricingScreen groupId={groupId} groupName="Team" billing={paused} />)).toEqual([])
-  })
-})
 
 const window = new Window({ url: "http://app.localhost/" })
-const own = { document: globalThis.document, FormData: globalThis.FormData }
+const own = { document: globalThis.document }
 
 let root: HTMLElement | null = null
 
@@ -280,21 +94,65 @@ function find<T extends Element = HTMLElement>(selector: string): T {
   return element as unknown as T
 }
 
-/** Submits the form around `selector`; `true` when nothing cancelled it, so the browser posts. */
-async function submit(selector: string): Promise<boolean> {
-  const form = find(selector).closest("form")
-  if (!form) throw new Error(`${selector} is in no form`)
-  let posted = false
-  await act(() => {
-    const event = new window.Event("submit", { bubbles: true, cancelable: true })
-    posted = form.dispatchEvent(event as unknown as Event)
-  })
-  return posted
+function has(selector: string): boolean {
+  return root?.querySelector(selector) !== null
 }
 
-describe("billing screens in the browser", () => {
+function text(): string {
+  return (root?.textContent ?? "").replace(/\s+/g, " ")
+}
+
+async function click(selector: string): Promise<void> {
+  await act(() => find(selector).click())
+}
+
+/** What the panel handed the app: each checkout's plan, and each portal open. */
+function calls() {
+  const checkouts: string[] = []
+  let portals = 0
+  return {
+    checkouts,
+    get portals() {
+      return portals
+    },
+    props: {
+      onCheckout: (planId: string) => checkouts.push(planId),
+      onPortal: () => portals++,
+    },
+  }
+}
+
+function panel(billing: GroupBilling | null, props: Partial<GroupBillingPanelProps> = {}): VNode {
+  return (
+    <GroupBillingPanel
+      groupName="Team"
+      billing={billing}
+      memberCount={6}
+      ownerName="Maya Chen"
+      trial={{ enabled: true, used: false, days: 14 }}
+      now={NOW}
+      {...props}
+    />
+  )
+}
+
+describe("billingState", () => {
+  it("names the state each billing is drawn in", () => {
+    expect(billingState({ ...FREE_OWNER, enabled: false })).toBe(BillingState.OFF)
+    expect(billingState(FREE_OWNER)).toBe(BillingState.FREE)
+    expect(billingState(TRIAL_OWNER)).toBe(BillingState.TRIAL)
+    expect(billingState(PRO_OWNER)).toBe(BillingState.PRO)
+    expect(billingState(ENDING_OWNER)).toBe(BillingState.ENDING)
+    expect(billingState(PAST_DUE_OWNER)).toBe(BillingState.PAST_DUE)
+    // A subscription that is paused or incomplete shows the free plan; it is no Pro.
+    expect(billingState({ ...PRO_OWNER, planId: FREE_PLAN_ID, status: BillingStatus.Paused }))
+      .toBe(BillingState.FREE)
+  })
+})
+
+describe("GroupBillingPanel", () => {
   beforeAll(() => {
-    Object.assign(globalThis, { document: window.document, FormData: window.FormData })
+    Object.assign(globalThis, { document: window.document })
   })
 
   afterAll(async () => {
@@ -308,115 +166,181 @@ describe("billing screens in the browser", () => {
     root = null
   })
 
-  it("hands the chosen plan to the app's callback instead of posting", async () => {
-    const chosen: string[] = []
-    await mount(
-      <PricingScreen
-        groupId={groupId}
-        groupName="Team"
-        billing={FREE_OWNER}
-        onChoose={(planId) => chosen.push(planId)}
-      />,
+  it("titles the tab and says Stripe handles the billing", async () => {
+    await mount(panel(FREE_OWNER))
+    expect(find("[data-e2e=group-section-billing] h2").textContent).toBe("Plan and billing")
+    expect(text()).toContain("What Team pays each month. Billing is handled by Stripe.")
+  })
+
+  it("prices Pro for a free group's members and opens the 14-day trial's checkout for its owner", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, app.props))
+    expect(find("[data-e2e=billing-plan-name]").textContent).toBe("Free")
+    expect(text()).toContain(
+      "Pro costs €9.00 per member a month. With 6 members, Team would pay €54.00 a month.",
     )
-
-    const posted = await submit(`[data-e2e="pricing-plans"] button`)
-
-    expect(posted).toBe(false)
-    expect(chosen).toEqual([PRO_PLAN_ID])
-  })
-
-  it("lets the plan's form post itself when the app takes no callback", async () => {
-    await mount(<PricingScreen groupId={groupId} groupName="Team" billing={FREE_OWNER} />)
-
-    expect(await submit(`[data-e2e="pricing-plans"] button`)).toBe(true)
-  })
-
-  it("disables every plan while a checkout opens, and opens none twice", async () => {
-    const chosen: string[] = []
-    await mount(
-      <PricingScreen
-        groupId={groupId}
-        groupName="Team"
-        billing={FREE_OWNER}
-        pending
-        onChoose={(planId) => chosen.push(planId)}
-      />,
+    expect(find("[data-e2e=billing-checkout]").textContent).toBe(
+      "Start 14-day free trial (opens Stripe)",
     )
-
-    expect(find<HTMLFieldSetElement>(`[data-e2e="pricing-plans"]`).disabled).toBe(true)
-    await submit(`[data-e2e="pricing-plans"] button`)
-    expect(chosen).toEqual([])
-  })
-
-  it("opens the portal through the app's callback, and only once while it is pending", async () => {
-    let opened = 0
-    const card = (pending: boolean) => (
-      <BillingCard
-        groupId={groupId}
-        billing={PRO_OWNER}
-        pending={pending}
-        onManage={() => opened++}
-      />
+    expect(find("[data-e2e=billing-fine-print]").textContent).toBe(
+      "Billed monthly per member. Cancel any time; you keep Pro until the period ends.",
     )
-    await mount(card(false))
-
-    expect(await submit(`[data-e2e="group-section-billing"] form button`)).toBe(false)
-    await rerender(card(true))
-    await submit(`[data-e2e="group-section-billing"] form button`)
-
-    expect(opened).toBe(1)
+    expect(has("[data-e2e=billing-row-invoices]")).toBe(false)
+    await click("[data-e2e=billing-checkout]")
+    expect(app.checkouts).toEqual([PRO_PLAN_ID])
   })
 
-  it("moves focus to a refused checkout's message", async () => {
-    const props = { groupId, groupName: "Team", billing: FREE_OWNER }
-    await mount(<PricingScreen {...props} />)
-
-    await rerender(<PricingScreen {...props} error="The payment provider is unavailable." />)
-
-    expect(document.activeElement?.getAttribute("data-e2e")).toBe("pricing-error")
-    expect(find(`[data-e2e="pricing-error"]`).textContent).toContain("unavailable")
+  it("offers Upgrade to Pro, saying the trial went to another group, once the owner used it", async () => {
+    const app = calls()
+    await mount(panel(FREE_OWNER, { ...app.props, trial: { enabled: true, used: true, days: 14 } }))
+    expect(find("[data-e2e=billing-checkout]").textContent).toBe("Upgrade to Pro (opens Stripe)")
+    expect(find("[data-e2e=billing-trial-used]").textContent).toBe(
+      "You have used your free trial on another group.",
+    )
+    await click("[data-e2e=billing-checkout]")
+    expect(app.checkouts).toEqual([PRO_PLAN_ID])
   })
 
-  it("moves focus to the message again when the same refusal comes back", async () => {
-    const props = { groupId, groupName: "Team", billing: FREE_OWNER, error: "Refused." }
-    await mount(<PricingScreen {...props} errorId={1} />)
-    find<HTMLButtonElement>(`[data-e2e="pricing-plans"] button`).focus()
-
-    await rerender(<PricingScreen {...props} errorId={2} />)
-
-    expect(document.activeElement?.getAttribute("data-e2e")).toBe("pricing-error")
+  it("offers a free group that paid before Upgrade to Pro, and its invoices in Stripe", async () => {
+    const app = calls()
+    await mount(panel({ ...FREE_OWNER, hasCustomer: true }, app.props))
+    expect(find("[data-e2e=billing-checkout]").textContent).toBe("Upgrade to Pro (opens Stripe)")
+    expect(has("[data-e2e=billing-trial-used]")).toBe(false)
+    expect(has("[data-e2e=billing-row-card]")).toBe(false)
+    expect(has("[data-e2e=billing-row-cancel]")).toBe(false)
+    await click("[data-e2e=billing-portal-invoices]")
+    expect(app.portals).toBe(1)
+    expect(app.checkouts).toEqual([])
   })
 
-  it("moves focus to the portal's message again when the same refusal comes back", async () => {
-    const props = { groupId, billing: PRO_OWNER, error: "Refused." }
-    await mount(<BillingCard {...props} errorId={1} />)
-    find<HTMLButtonElement>(`[data-e2e="group-section-billing"] form button`).focus()
-
-    await rerender(<BillingCard {...props} errorId={2} />)
-
-    expect(document.activeElement?.getAttribute("data-e2e")).toBe("billing-error")
+  it("tells a trialing owner when the trial ends and what the group pays then, and cancels in Stripe", async () => {
+    const app = calls()
+    await mount(panel(TRIAL_OWNER, app.props))
+    expect(find("[data-e2e=billing-status]").textContent).toBe("· Trial")
+    expect(find("[data-e2e=billing-trial]").textContent).toBe(
+      "The trial ends in 10 days, on October 31, 2026. Then Team pays €54.00 a month unless you cancel.",
+    )
+    expect(has("[data-e2e=billing-checkout]")).toBe(false)
+    expect(find("[data-e2e=billing-row-cancel]").textContent).toContain(
+      "Nothing is charged if you cancel before October 31, 2026.",
+    )
+    await click("[data-e2e=billing-portal-cancel]")
+    expect(app.portals).toBe(1)
   })
 
-  // happy-dom draws no layout, so the 44 px a phone needs is read from the class that sets it.
-  it("gives See plans and Manage billing a 44 px tap target on a phone (class check: no layout here)", async () => {
-    // A free group the provider knows already: both actions sit in the plan's row.
-    await mount(<BillingCard groupId={groupId} billing={{ ...FREE_OWNER, hasCustomer: true }} />)
-    const controls = [...root!.querySelectorAll("a, button")]
-    const tapTarget = (label: string) => {
-      const control = controls.find((element) => element.textContent?.trim() === label)
-      if (!control) throw new Error(`no link or button reads ${label}`)
-      return control.classList.contains("min-h-11")
+  it("shows a paying owner the monthly total, the renewal date and a Stripe row for each change", async () => {
+    const app = calls()
+    await mount(panel(PRO_OWNER, app.props))
+    expect(find("[data-e2e=billing-plan-name]").textContent).toBe("Pro")
+    expect(find("[data-e2e=billing-status]").textContent).toBe("· Renews on November 4, 2026")
+    expect(find("[data-e2e=billing-seats]").textContent).toBe(
+      "€54.00 a month, for 6 members at €9.00 each, the owner included.",
+    )
+    for (
+      const [row, button] of [["card", "Change card"], ["invoices", "View invoices"], [
+        "cancel",
+        "Cancel plan",
+      ]]
+    ) {
+      expect(find(`[data-e2e=billing-portal-${row}]`).textContent).toBe(`${button} (opens Stripe)`)
+      await click(`[data-e2e=billing-portal-${row}]`)
     }
-
-    expect({ seePlans: tapTarget("See plans"), manage: tapTarget("Manage billing") })
-      .toEqual({ seePlans: true, manage: true })
+    expect(app.portals).toBe(3)
+    expect(has("[data-e2e=billing-checkout]")).toBe(false)
   })
 
-  it("moves focus to a refused portal's message", async () => {
-    await mount(<BillingCard groupId={groupId} billing={PRO_OWNER} />)
+  it("tells the owner of a cancelled plan when Pro ends and renews it in Stripe, with no Cancel plan", async () => {
+    const app = calls()
+    await mount(panel(ENDING_OWNER, app.props))
+    expect(find("[data-e2e=billing-status]").textContent).toBe("· Ends on November 4, 2026")
+    expect(find("[data-e2e=billing-ending]").textContent).toBe(
+      "Pro ends on November 4, 2026. The group then moves to the free plan.",
+    )
+    expect(has("[data-e2e=billing-row-cancel]")).toBe(false)
+    await click("[data-e2e=billing-renew]")
+    expect(app.portals).toBe(1)
+  })
 
-    await rerender(<BillingCard groupId={groupId} billing={PRO_OWNER} error="No subscription." />)
+  it("warns the owner of a past-due group to change the card, and changes it in Stripe", async () => {
+    const app = calls()
+    await mount(panel(PAST_DUE_OWNER, app.props))
+    expect(find("[data-e2e=billing-status]").textContent).toBe("· Payment failed")
+    expect(find("[data-e2e=billing-notice]").textContent).toBe(
+      "A payment failed. Update the card with Change card within 7 days, by October 28, 2026, to keep Pro.",
+    )
+    // Cancelling is still in Stripe's page, but the tab offers no row that says Pro is kept.
+    expect(has("[data-e2e=billing-row-cancel]")).toBe(false)
+    await click("[data-e2e=billing-portal-card]")
+    expect(app.portals).toBe(1)
+    await mount(
+      panel(
+        {
+          ...PAST_DUE_OWNER,
+          planId: FREE_PLAN_ID,
+          notice: { ...PAST_DUE_OWNER.notice!, daysLeft: 0 },
+        },
+        app.props,
+      ),
+    )
+    expect(text()).toContain(
+      "A payment failed, so the group is on the free plan. Update the card with Change card to get Pro back.",
+    )
+    // The group still has its subscription, so a second checkout is never offered.
+    expect(has("[data-e2e=billing-checkout]")).toBe(false)
+  })
 
+  it("shows a member who is not the owner the plan and who can change it, and not one button", async () => {
+    for (const billing of [FREE_OWNER, TRIAL_OWNER, PRO_OWNER, ENDING_OWNER, PAST_DUE_OWNER]) {
+      const app = calls()
+      await mount(panel(asMember(billing), app.props))
+      expect(find("[data-e2e=billing-owner-only]").textContent).toBe(
+        "Only Maya Chen, the group's owner, can change its plan or see invoices.",
+      )
+      expect(root!.querySelectorAll("button, a[href], form").length).toBe(0)
+      expect(has("[data-e2e=billing-notice]")).toBe(false)
+      await act(() => render(null, root!))
+    }
+  })
+
+  it("says every group is on the free plan while billing is off, with no button", async () => {
+    await mount(panel({ ...FREE_OWNER, enabled: false, canManage: false }))
+    expect(find("[data-e2e=billing-off]").textContent).toBe("Every group is on the free plan.")
+    expect(root!.querySelectorAll("button, a[href]").length).toBe(0)
+  })
+
+  it("says Stripe is confirming the payment while the owner is back from checkout and the group is still free", async () => {
+    await mount(panel(FREE_OWNER, { confirming: true }))
+    expect(find("[data-e2e=billing-confirming]").textContent).toBe(
+      "Stripe is confirming the payment. This page updates by itself.",
+    )
+    await rerender(panel(PRO_OWNER, { confirming: true }))
+    expect(has("[data-e2e=billing-confirming]")).toBe(false)
+  })
+
+  it("opens nothing a second time while Stripe's page is opening", async () => {
+    const app = calls()
+    await mount(panel(PRO_OWNER, { ...app.props, pending: true }))
+    await click("[data-e2e=billing-portal-card]")
+    await mount(panel(FREE_OWNER, { ...app.props, pending: true }))
+    await click("[data-e2e=billing-checkout]")
+    expect(app.portals).toBe(0)
+    expect(app.checkouts).toEqual([])
+  })
+
+  it("moves focus to the error each time Stripe's page could not be opened", async () => {
+    const error = "Could not open Stripe's billing page. Check your connection and try again."
+    await mount(panel(PRO_OWNER, { error, errorId: 1 }))
+    find<HTMLButtonElement>("[data-e2e=billing-portal-card]").focus()
+    await rerender(panel(PRO_OWNER, { error, errorId: 2 }))
     expect(document.activeElement?.getAttribute("data-e2e")).toBe("billing-error")
+    expect(find("[data-e2e=billing-error]").textContent).toContain(error)
+  })
+
+  it("says it is loading the plan, then why it could not be read", async () => {
+    await mount(panel(null))
+    expect(find("[role=status]").getAttribute("aria-label")).toBe("Loading the plan")
+    await rerender(panel(null, { error: "The plan could not be read." }))
+    expect(text()).toContain("The plan could not be read.")
+    expect(has("[data-e2e=billing-plan]")).toBe(false)
   })
 })

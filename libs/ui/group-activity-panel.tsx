@@ -6,22 +6,13 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { type ActivityEvent, describeActivity } from "@domain/groups"
-import { PageHeader } from "@spy4x/preact-ui/page-header"
-import { type Navigate, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import { type Navigate, NOTE_PATHS } from "./progressive.tsx"
 import { When } from "@spy4x/preact-ui/format"
 
 /** One event as the API sends it: `at` is an ISO timestamp. */
 export type ActivityRow = Omit<ActivityEvent, "at"> & { at: string }
 
-/** The group whose activity is shown. */
-export interface ActivityGroup {
-  id: string
-  name: string
-}
-
-export interface GroupActivityScreenProps {
-  /** `null` while the group is not known yet (loading), or when the person is not a member. */
-  group: ActivityGroup | null
+export interface GroupActivityPanelProps {
   /** The newest events first; a later page is added at the end. */
   events: readonly ActivityRow[]
   loading: boolean
@@ -39,98 +30,65 @@ export interface GroupActivityScreenProps {
 }
 
 /**
- * A group's activity log: one sentence per event ("Ada moved 3 notes to Family"), when it
+ * A group's Activity tab: one sentence per event ("Ada moved 3 notes to Family"), when it
  * happened, and a link to the note while it is still in the group. The log pages back in time with
- * "Load more". Only admins and the owner see it; the server refuses everyone else too. It is a
- * destination of the rail, so its header has no back link.
+ * "Load more". Only admins and the owner see it; the server refuses everyone else too. The group's
+ * page draws the header and the tabs around it.
  */
-export function GroupActivityScreen(props: GroupActivityScreenProps): JSX.Element {
-  const { group, events, navigate } = props
+export function GroupActivityPanel(props: GroupActivityPanelProps): JSX.Element {
+  const { events, navigate } = props
+  if (props.forbidden) {
+    return (
+      <Card data-e2e="activity-forbidden">
+        <EmptyState
+          headingLevel={2}
+          inset
+          title="Only admins and the owner can see the activity."
+          description="Ask an admin if you need to know what changed."
+        />
+      </Card>
+    )
+  }
   return (
-    <Stack gap="xl">
-      <PageHeader
-        title="Activity"
-        subtitle={group?.name}
-        subtitleDataE2E="activity-group"
-        navigate={navigate}
-      />
-      {!group
+    <Stack>
+      <ErrorState message={props.error} />
+      {events.length === 0
         ? (
-          <Card>
-            <EmptyState
-              headingLevel={2}
-              inset
-              title={props.loading ? "Loading the group…" : "This group does not exist."}
-              action={!props.loading && (
-                <Button
-                  href={SCREEN_PATHS.groups}
-                  navigate={navigate}
-                  variant="outline"
-                  class="min-h-11 sm:min-h-9"
-                >
-                  Back to groups
-                </Button>
-              )}
-            />
-          </Card>
-        )
-        : props.forbidden
-        ? (
-          <Card data-e2e="activity-forbidden">
-            <EmptyState
-              headingLevel={2}
-              inset
-              title="Only admins and the owner can see the activity."
-              description="Ask an admin if you need to know what changed."
-            />
-          </Card>
+          !props.error && (
+            <Card>
+              <EmptyState
+                headingLevel={2}
+                inset
+                title={props.loading ? "Loading the activity…" : "Nothing has happened yet."}
+                description={props.loading
+                  ? undefined
+                  : "Changes to the group and its notes show up here."}
+              />
+            </Card>
+          )
         )
         : (
-          <>
-            <ErrorState message={props.error} />
-            {events.length === 0
-              ? (
-                !props.error && (
-                  <Card>
-                    <EmptyState
-                      headingLevel={2}
-                      inset
-                      title={props.loading ? "Loading the activity…" : "Nothing has happened yet."}
-                      description={props.loading
-                        ? undefined
-                        : "Changes to the group and its notes show up here."}
-                    />
-                  </Card>
-                )
-              )
-              : (
-                <Card>
-                  <ul class="divide-y divide-subtle" data-e2e="activity-list">
-                    {events.map((event) => (
-                      <ActivityItem
-                        key={event.id}
-                        event={event}
-                        navigate={navigate}
-                      />
-                    ))}
-                  </ul>
-                </Card>
-              )}
-            {props.hasMore && props.onLoadMore && (
-              <div class="flex justify-center">
-                <Button
-                  variant="outline"
-                  class="min-h-11 sm:min-h-9"
-                  disabled={props.loadingMore}
-                  onClick={props.onLoadMore}
-                  data-e2e="activity-more"
-                >
-                  {props.loadingMore ? "Loading…" : "Load more"}
-                </Button>
-              </div>
-            )}
-          </>
+          <Card>
+            <ul class="divide-y divide-subtle" data-e2e="activity-list">
+              {events.map((event) => (
+                <ActivityItem key={event.id} event={event} navigate={navigate} />
+              ))}
+            </ul>
+          </Card>
         )}
+      {props.hasMore && props.onLoadMore && (
+        <div class="flex justify-center">
+          <Button
+            variant="outline"
+            class="min-h-11 sm:min-h-9"
+            disabled={props.loadingMore}
+            onClick={props.onLoadMore}
+            data-e2e="activity-more"
+          >
+            {props.loadingMore ? "Loading…" : "Load more"}
+          </Button>
+        </div>
+      )}
     </Stack>
   )
 }

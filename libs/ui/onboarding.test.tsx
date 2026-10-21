@@ -149,7 +149,7 @@ describe("first-steps card", () => {
     await update({ steps: { ...NONE, emailVerified: true, noteCreated: true } })
 
     expect(stepLines()[1]).toContain("Done: ")
-    expect(control("Invite someone").getAttribute("href")).toBe("/groups/g-1")
+    expect(control("Invite someone").getAttribute("href")).toBe("/groups/g-1/members")
   })
 
   it("links each step to the page that does it", async () => {
@@ -173,7 +173,7 @@ describe("first-steps card", () => {
     expect(hrefs).toEqual([
       "/email",
       "/notes/new",
-      "/groups/g-1",
+      "/groups/g-1/members",
       "/#push-devices",
       "/#security",
     ])
