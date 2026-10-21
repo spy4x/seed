@@ -716,15 +716,18 @@ export function createSignIn(options: SignInOptions): SignIn {
     cookie,
     auditRow,
     deviceOf,
-    // A passkey proves the person and the device at once, so it owes no authenticator code. The
-    // exception is an account that waits to be deleted with two-factor on: only the code restores
-    // it, as after a password.
+    // A passkey proves the person and the device at once: the library asks the device to verify
+    // the person on every ceremony, so it counts as both factors and owes no authenticator code.
+    // An account with an authenticator app gets `Completed`, which the 2FA gate accepts, as after
+    // a code. The exception is an account that waits to be deleted with two-factor on: only the
+    // code restores it, as after a password.
     admit: async (c, userId) => {
       if (await db.admin.isBlocked(userId)) return null
       if (await waitingForCode(userId)) return SecondFactorStatus.Pending
-      if (!(await db.user.findOne({ id: userId, includeDeleted: true }))) return null
+      const user = await db.user.findOne({ id: userId, includeDeleted: true })
+      if (!user) return null
       if (!(await restoreIfWaiting(c, userId))) return null
-      return SecondFactorStatus.NotRequired
+      return hasSecondFactor(user) ? SecondFactorStatus.Completed : SecondFactorStatus.NotRequired
     },
     waitingForCode,
   })

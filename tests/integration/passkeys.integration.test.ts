@@ -2,7 +2,7 @@
 import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
-import { AuthAuditEventType, type SignInMethodsResponse } from "@domain/identity"
+import { AuthAuditEventType, type SignInMethodsResponse, UserMFAStatus } from "@domain/identity"
 import type { OAuthFlowKv } from "@spy4x/server/auth/oauth"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
@@ -71,10 +71,14 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
   }
 }
 
-/** A KV whose `take` returns and deletes in one step. Expiry is left to the challenge itself. */
-function memoryKv(): OAuthFlowKv {
+/**
+ * A KV whose `take` returns and deletes in one step. Expiry is left to the challenge itself.
+ * `keys` lists what it holds, so a test can see under which name a challenge waits.
+ */
+function memoryKv(): OAuthFlowKv & { keys(): string[] } {
   const values = new Map<string, string>()
   return {
+    keys: () => [...values.keys()],
     set: (key, value) => (values.set(key, value), Promise.resolve()),
     take: (key) => {
       const value = values.get(key) ?? null
@@ -91,6 +95,7 @@ function buildApp(sql: postgres.Sql) {
   const logged: string[] = []
   const db = new AppDbBase({ sql })
   const url = new URL(ORIGIN)
+  const kv = memoryKv()
   const signIn = createSignIn({
     db,
     pepper: PEPPER,
@@ -100,7 +105,7 @@ function buildApp(sql: postgres.Sql) {
     totpIssuer: "example.test",
     passkeys: {
       rp: { id: url.hostname, name: "Example", origins: [url.origin] },
-      kv: memoryKv(),
+      kv,
       log: (message) => void logged.push(message),
     },
   })
@@ -125,7 +130,12 @@ function buildApp(sql: postgres.Sql) {
     const result = await signIn.signUp(c, email, PASSWORD)
     return result ? c.json(result.user) : c.json({ error: "refused" }, 401)
   })
-  return { app, db, sql, logged }
+  app.post("/password/sign-in", async (c) => {
+    const { email } = await c.req.json()
+    const result = await signIn.signIn(c, email, PASSWORD)
+    return result ? c.json(result.user) : c.json({ error: "refused" }, 401)
+  })
+  return { app, db, sql, logged, kv }
 }
 
 type App = ReturnType<typeof buildApp>
@@ -413,5 +423,118 @@ Deno.test("another person's passkey is refused where the person is known", async
     expect(confirmed.status).toBe(200)
     expect((await confirmed.json()).id).toBe(ada.id)
     expect((await methodsOf(ada.visitor)).providerProofUntil).not.toBeNull()
+  })
+})
+
+Deno.test("a passkey sign-in on an account with an authenticator app passes the two-factor gate", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const ada = await passwordAccount(app, "ada@example.com")
+    const passkey = new SoftPasskey(ORIGIN)
+    expect((await addPasskey(ada.visitor, passkey)).status).toBe(201)
+    await sql`UPDATE users SET mfa = ${UserMFAStatus.CONFIGURED} WHERE id = ${ada.id}`
+
+    // The device verified the person, so the passkey counts as both factors: no code is asked.
+    const laptop = browser(app)
+    const signedIn = await passkeySignIn(laptop, passkey)
+    expect(signedIn.status).toBe(200)
+    expect((await laptop.get("/auth/methods")).status).toBe(200)
+  })
+})
+
+Deno.test("confirming with a passkey on an account with an authenticator app keeps the person signed in", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const ada = await passwordAccount(app, "ada@example.com")
+    const passkey = new SoftPasskey(ORIGIN)
+    expect((await addPasskey(ada.visitor, passkey)).status).toBe(201)
+    await sql`UPDATE users SET mfa = ${UserMFAStatus.CONFIGURED} WHERE id = ${ada.id}`
+    const laptop = browser(app)
+    expect((await passkeySignIn(laptop, passkey)).status).toBe(200)
+
+    const options = await laptop.post("/auth/passkeys/confirm/options")
+    expect(options.status).toBe(200)
+    const confirmed = await laptop.post(
+      "/auth/passkeys/confirm",
+      await passkey.get(await options.json()),
+    )
+    expect(confirmed.status).toBe(200)
+    expect((await laptop.get("/auth/methods")).status).toBe(200)
+  })
+})
+
+Deno.test("a blocked person cannot sign in with their passkey", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const ada = await passwordAccount(app, "ada@example.com")
+    const passkey = new SoftPasskey(ORIGIN)
+    expect((await addPasskey(ada.visitor, passkey)).status).toBe(201)
+    await sql`UPDATE users SET blocked_at = CURRENT_TIMESTAMP WHERE id = ${ada.id}`
+
+    const laptop = browser(app)
+    const refused = await passkeySignIn(laptop, passkey)
+    expect(refused.status).toBe(400)
+    expect(await refused.json()).toEqual({ error: PASSKEY_REFUSED })
+    expect((await laptop.get("/auth/methods")).status).toBe(401)
+  })
+})
+
+Deno.test("only the session that asked to add a passkey can finish adding it", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const ada = await passwordAccount(app, "ada@example.com")
+    // A second session of the same person, signed in with the password on another browser.
+    const elsewhere = browser(app)
+    expect((await elsewhere.post("/password/sign-in", { email: "ada@example.com" })).status)
+      .toBe(200)
+    const passkey = new SoftPasskey(ORIGIN)
+
+    const options = await ada.visitor.post("/auth/passkeys/add/options", { password: PASSWORD })
+    const registration = await passkey.create(await options.json())
+    const stolen = await elsewhere.post("/auth/passkeys", registration)
+    expect(stolen.status).toBe(400)
+    expect(await stolen.json()).toEqual({ error: PASSKEY_NOT_SAVED })
+    expect(await sql`SELECT 1 FROM auth_passkeys`).toHaveLength(0)
+    // The session that asked still can.
+    expect((await ada.visitor.post("/auth/passkeys", registration)).status).toBe(201)
+  })
+})
+
+Deno.test("each ceremony keeps its challenge under its own name, the add and confirm ones under the session", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const ada = await passwordAccount(app, "ada@example.com")
+    const passkey = new SoftPasskey(ORIGIN)
+    expect((await addPasskey(ada.visitor, passkey)).status).toBe(201)
+    const waiting = (prefix: string) => app.kv.keys().filter((key) => key.startsWith(prefix))
+
+    await browser(app).post("/auth/passkeys/sign-in/options")
+    expect(waiting("passkey:sign-in:")).toHaveLength(1)
+    expect(waiting("passkey:sign-in:")[0]).toMatch(/^passkey:sign-in:[^:]+$/)
+    await ada.visitor.post("/auth/passkeys/confirm/options")
+    expect(waiting("passkey:confirm:")).toHaveLength(1)
+    expect(waiting("passkey:confirm:")[0]).toMatch(/^passkey:confirm:[^:]+:[^:]+$/)
+    await ada.visitor.post("/auth/passkeys/add/options", { password: PASSWORD })
+    expect(waiting("passkey:add:")).toHaveLength(1)
+    expect(waiting("passkey:add:")[0]).toMatch(/^passkey:add:[^:]+:[^:]+$/)
+    // A confirm challenge does not open the signed-out sign-in.
+    const confirmOptions = await ada.visitor.post("/auth/passkeys/confirm/options")
+    const assertion = await passkey.get(await confirmOptions.json())
+    const crossed = await browser(app).post("/auth/passkeys/sign-in", assertion)
+    expect(crossed.status).toBe(400)
+    expect(await crossed.json()).toEqual({ error: PASSKEY_REFUSED })
+  })
+})
+
+Deno.test("a passkey's stored counter never goes down, even when two sign-ins finish out of order", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const ada = await passwordAccount(app, "ada@example.com")
+    const { keyId } = await (await addPasskey(ada.visitor, new SoftPasskey(ORIGIN))).json()
+
+    await app.db.passkeys.recordUse(keyId, { counter: 5, backedUp: true })
+    await app.db.passkeys.recordUse(keyId, { counter: 3, backedUp: true })
+    expect(await sql`SELECT counter FROM auth_passkeys WHERE key_id = ${keyId}`)
+      .toEqual([{ counter: "5" }])
   })
 })
