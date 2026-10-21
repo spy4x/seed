@@ -92,8 +92,8 @@ export function createBillingCheckoutHandler(
     }
     const result = await provider.createCheckout({
       planId: data.planId,
-      successUrl: appUrl(dependencies, `/groups/${data.groupId}`),
-      cancelUrl: appUrl(dependencies, `/groups/${data.groupId}/pricing`),
+      successUrl: appUrl(dependencies, `/groups/${data.groupId}/billing?checkout=done`),
+      cancelUrl: appUrl(dependencies, `/groups/${data.groupId}/billing`),
       reference: data.groupId,
       // A per-member plan starts with a seat for every member; the worker keeps it in step after.
       ...(plan.perSeat ? { quantity: await dependencies.billing.membersOf(data.groupId) } : {}),
@@ -166,7 +166,7 @@ export function createBillingPortalHandler(
     if (!customerId) throw new BillingError("NO_SUBSCRIPTION", "The group has never paid")
     const result = await provider.createPortalSession({
       customerId,
-      returnUrl: appUrl(dependencies, `/groups/${data.groupId}`),
+      returnUrl: appUrl(dependencies, `/groups/${data.groupId}/billing`),
     })
     if (!result.ok) {
       dependencies.log("error: billing portal failed", result.error)

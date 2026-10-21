@@ -216,8 +216,8 @@ describe("billing over REST", () => {
     expect(await response.json()).toEqual({ url: "https://pay.example/cs_1" })
     expect(recorder.checkouts).toEqual([{
       planId: "pro",
-      successUrl: `https://app.example.com/groups/${groupId}`,
-      cancelUrl: `https://app.example.com/groups/${groupId}/pricing`,
+      successUrl: `https://app.example.com/groups/${groupId}/billing?checkout=done`,
+      cancelUrl: `https://app.example.com/groups/${groupId}/billing`,
       reference: groupId,
       quantity: 3,
       customerId: "cus_1",
@@ -392,7 +392,7 @@ describe("billing over REST", () => {
     expect(await response.json()).toEqual({ url: "https://pay.example/p" })
     expect(recorder.portals).toEqual([{
       customerId: "cus_1",
-      returnUrl: `https://app.example.com/groups/${groupId}`,
+      returnUrl: `https://app.example.com/groups/${groupId}/billing`,
     }])
   })
 
@@ -415,8 +415,8 @@ describe("billing over REST", () => {
       // From 2026-10-01T10:00 to 2026-11-01T00:00 is 30 days and 14 hours: 31 whole days.
       expect(recorder.checkouts).toEqual([{
         planId: "pro",
-        successUrl: `https://app.example.com/groups/${groupId}`,
-        cancelUrl: `https://app.example.com/groups/${groupId}/pricing`,
+        successUrl: `https://app.example.com/groups/${groupId}/billing?checkout=done`,
+        cancelUrl: `https://app.example.com/groups/${groupId}/billing`,
         reference: groupId,
         quantity: 2,
         trialDays: 31,

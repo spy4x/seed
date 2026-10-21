@@ -369,7 +369,7 @@ export interface BillingNoticeMailInput {
   planName: string
   /** When the trial or the cancelled plan ends; unused for a failed payment. */
   at: Date
-  /** The group's page, where the owner opens the provider's portal. */
+  /** The group's Plan and billing tab, where the owner opens the provider's portal. */
   link: string
   /**
    * For a failed payment: until when the plan is kept while the payment is retried. `null` when it
