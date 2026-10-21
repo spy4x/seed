@@ -41,14 +41,15 @@ on the [open issues](https://github.com/spy4x/seed/issues).
   days, restored, and a person always keeps at least one.
 - **Auth that is done.** Sign-up, sign-in, sessions and an authenticator-app second factor, with
   PBKDF2-SHA-256 password hashes. Web push subscriptions are built in too.
-- **Offline-first SPA.** The SPA keeps the last notes and groups in IndexedDB (the shared data cache), opens with no
-  network, and queues note writes with their idempotency keys. It sends them on reconnect and
-  shows a stale write as a conflict to settle, never as a silent overwrite. The layer sits in one
-  folder, so a product that does not want it deletes the folder, follows the removal steps in
-  [docs/offline.md](docs/offline.md#removing-the-layer) and keeps an online SPA.
+- **Offline-first SPA.** The SPA keeps the last notes and groups in IndexedDB (the shared data
+  cache), opens with no network, and queues note writes with their idempotency keys. It sends them
+  on reconnect and shows a stale write as a conflict to settle, never as a silent overwrite. The
+  layer sits in one folder, so a product that does not want it deletes the folder, follows the
+  removal steps in [docs/offline.md](docs/offline.md#removing-the-layer) and keeps an online SPA.
 - **Mailing lists.** Visitors subscribe at `/subscribe` with double opt-in, and every list mail
   carries a one-click unsubscribe. The worker signs the links with `SUBSCRIBERS_SECRET` and sends
-  the confirm, welcome and issue mail: [docs/architecture.md](docs/architecture.md#mail-subscriptions).
+  the confirm, welcome and issue mail:
+  [docs/architecture.md](docs/architecture.md#mail-subscriptions).
 - **CQRS with an outbox.** Commands, queries and events go through one bus. Every group change
   writes its event to `outbox_events`, and the worker drains that table.
 - **Safe API defaults.** Every mutation must come from the web app's own origin, and group lists
@@ -61,8 +62,8 @@ on the [open issues](https://github.com/spy4x/seed/issues).
   Postgres, Valkey, VictoriaMetrics, VictoriaLogs and Grafana.
 
 **Use it if** you are starting a multi-user web product and want auth, tenancy and operations
-settled before the first feature. **Skip it if** you deploy to serverless functions rather than a server
-you run.
+settled before the first feature. **Skip it if** you deploy to serverless functions rather than a
+server you run.
 
 ## Quick start
 

@@ -115,8 +115,9 @@ aggregate therefore writes no per-command REST route: it needs only its list (`G
 route under `/api` stands behind one check (`createApiApp` in `apps/api/app.ts`) that refuses a
 request whose page names another user, and the SPA names its user on every request: its one REST
 function, `apiFetch` in `apps/spa/src/state/api.ts`, sends each one through `apiAsUser`
-(`tests/spa-reads.test.ts` fails when a store calls another way). The per-command routes of notes and groups in the table above are
-older than the call route and are still used by the e2e specs to seed data; do not copy them.
+(`tests/spa-reads.test.ts` fails when a store calls another way). The per-command routes of notes
+and groups in the table above are older than the call route and are still used by the e2e specs to
+seed data; do not copy them.
 
 Then wire them: mount the route in `apps/api/index.ts` (before `/groups`), add the operations
 to the `Realtime` in `apps/api/services/realtimeHub.ts`, and map `NoteError` in `toRequestError`
@@ -135,11 +136,12 @@ for both modes: `/<entity>/new` shows it with empty fields and "Create", `/<enti
 saved fields, and its Save and Discard only while a field differs from what is saved. Groups are
 the second example: `groups-screen.tsx` lists them, each row one link to its editor, and
 `group-editor-screen.tsx` serves `/groups/new` and `/groups/:id`, with the members and the plan
-under the form. An entity that is created and never edited, such as an API token or an invitation, gets a
-create-only page instead (`api-token-new-screen.tsx` at `/tokens/new`, `invitation-new-screen.tsx`
-at `/groups/:groupId/invitations/new`): the form, then, once it exists, its secret or link shown
-once on the same page with a copy control and Done. Leaving before Done asks first, and the secret
-lives only in a store the page owns, never in the address, the history or the device cache.
+under the form. An entity that is created and never edited, such as an API token or an invitation,
+gets a create-only page instead (`api-token-new-screen.tsx` at `/tokens/new`,
+`invitation-new-screen.tsx` at `/groups/:groupId/invitations/new`): the form, then, once it exists,
+its secret or link shown once on the same page with a copy control and Done. Leaving before Done
+asks first, and the secret lives only in a store the page owns, never in the address, the history or
+the device cache.
 
 | File                     | What it holds                                                                                                                                                                                                                                                                                                                                                |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -281,12 +283,12 @@ The MPA has no session, so tags exist in the SPA only.
 
 ## Delete, restore and purge
 
-A delete keeps the row (`deleted_at`), so it can come back. An aggregate follows the notes files that
-mention `restore`:
+A delete keeps the row (`deleted_at`), so it can come back. An aggregate follows the notes files
+that mention `restore`:
 
 1. **Domain.** A request schema (empty: a restore needs no version, because nothing but a restore
-   changes a deleted row), a socket payload with the group and the id, a command, a `<kind>.restored`
-   event, an audit and activity kind, and a `deleted` flag on the list query.
+   changes a deleted row), a socket payload with the group and the id, a command, a
+   `<kind>.restored` event, an audit and activity kind, and a `deleted` flag on the list query.
 2. **Repository.** `restore` runs in one transaction: it checks the role on the locked membership
    row, clears `deleted_at` only where it is set (a live or missing row is `NOT_FOUND`), raises the
    version, counts the plan's cap including the restored row and refuses with the plan's refusal,
@@ -296,13 +298,15 @@ mention `restore`:
    one row, because a restore adds a live row exactly as a create does.
 4. **Transports.** `POST /:id/restore` (empty body), `?deleted=true` on the list, the socket command
    `<kind>.restore` and the `deleted` flag of `<kind>.list`.
-5. **Purge.** The worker's nightly cleanup (`libs/server/jobs/wiring.ts`) calls a `purgeDeleted<Kind>`
-   that hard-deletes rows deleted more than the restore window ago. It takes `now` as a parameter, so
-   a test sets the clock. Notes use 30 days (`NOTE_RESTORE_DAYS`). Anything that hangs off the row,
-   such as attachments, must be removed with it, or the purge leaves orphans.
-6. **Screens and SPA.** A delete offers Undo for ten seconds (`useUndoToast`, which pushes it to the app's toast list), and the list's menu
-   has "Show deleted notes", which lists the deleted rows with a Restore button for editors. The
-   store never queues a restore: it needs the server, like a move.
+5. **Purge.** The worker's nightly cleanup (`libs/server/jobs/wiring.ts`) calls a
+   `purgeDeleted<Kind>` that hard-deletes rows deleted more than the restore window ago. It takes
+   `now` as a parameter, so a test sets the clock. Notes use 30 days (`NOTE_RESTORE_DAYS`). Anything
+   that hangs off the row, such as attachments, must be removed with it, or the purge leaves
+   orphans.
+6. **Screens and SPA.** A delete offers Undo for ten seconds (`useUndoToast`, which pushes it to the
+   app's toast list), and the list's menu has "Show deleted notes", which lists the deleted rows
+   with a Restore button for editors. The store never queues a restore: it needs the server, like a
+   move.
 7. **Tests.** Both transports (every role, stranger, a live row, the cap), Postgres (version,
    sequence, audit row, the deleted list's cursor), the purge against a fixed clock and through the
    nightly job, the store, the screens and an e2e spec.
@@ -317,14 +321,15 @@ same steps; copy the notes files that mention `move`:
    same group with `SAME_GROUP`), the command, and `<kind>.moved_out` and `<kind>.moved_in` events.
 2. **Repository.** One transaction that locks both groups in id order (so two opposite moves wait
    for each other instead of deadlocking), checks the actor's role on both locked membership rows,
-   updates `group_id`, raises the version, refuses with `NOT_FOUND` and rolls back when any id is not
-   in the source, counts the cap on the target, records one change per group (`moved_out` on the
+   updates `group_id`, raises the version, refuses with `NOT_FOUND` and rolls back when any id is
+   not in the source, counts the cap on the target, records one change per group (`moved_out` on the
    source, `moved_in` on the target) and writes one `audit_events` row per group. The id and the
    history stay: a move is an update, not a copy and a delete.
 3. **Handler and gate.** The handler asks for edit rights in the source, then in the target. The
    entitlement gate judges the target group (`needsRoom` with `toGroupId`), so a move into a full
    group is refused, but only for someone who can write in the source too (its `judges` reads the
-   source role through `roleIn`), so a viewer of the source gets 403, not 402; the repository counts all moved rows, the gate only reserves room for one.
+   source role through `roleIn`), so a viewer of the source gets 403, not 402; the repository counts
+   all moved rows, the gate only reserves room for one.
 4. **Transports.** `POST /move` (registered before `POST /`) and the socket command `<kind>.move`.
 5. **Screens.** The list gets a tick box per row and one form posting `{ toGroupId, noteIds }`; the
    item page gets a form posting `{ toGroupId }`. Targets are the person's groups where they may
@@ -351,8 +356,9 @@ register, or its rows stay behind and are lost when the group is deleted.
 1. Write a `MovableAggregate` (`libs/server/groups/movable.ts`): a `kind` and
    `moveAll(sql, context)`, which moves the aggregate's live rows inside the transaction the mover
    opened and returns how many moved. Reuse the repository's own move (the notes file
-   `libs/server/notes/note-movable.ts` calls `moveNoteRows`, the function `PostgresNoteRepository.move`
-   uses); never copy its SQL. Stamp the rows with `context.changeSequence`, the target's sequence.
+   `libs/server/notes/note-movable.ts` calls `moveNoteRows`, the function
+   `PostgresNoteRepository.move` uses); never copy its SQL. Stamp the rows with
+   `context.changeSequence`, the target's sequence.
 2. Add it to `MOVABLE_AGGREGATES` in `apps/api/services/db-base.ts`. The order is the order of the
    moves; the mover has already recorded both groups' changes, locked both groups and checked edit
    rights in both.
@@ -453,7 +459,8 @@ person has dismissed the card the page stops asking.
    runs for every person on their home page, so give it an index.
 2. **The step.** Add it to `onboardingSteps` in the card, with the link to the page that does it.
 3. **The tests.** One step in `tests/integration/onboarding.integration.test.ts` (the fact, and
-   that what another member did in the person's own group does not tick it) and the title in `libs/ui/onboarding.test.tsx`.
+   that what another member did in the person's own group does not tick it) and the title in
+   `libs/ui/onboarding.test.tsx`.
 
 Dismiss and the end of the tour are kept on the person's `users` row (`onboarding_dismissed_at`,
 `onboarding_tour_seen_at`) through the `onboarding.dismiss` and `onboarding.tour-seen` commands, so

@@ -119,8 +119,9 @@ directly, without passing the proxy. The API refuses such a request when it name
 (`X-Real-IP` and the like): only Traefik, which must keep the container name `traefik`, and the
 project's own website may, as `PROXY_HOSTS` in the API's environment lists them. So a neighbour
 cannot pose as many visitors to dodge the sign-in limits, though it can still call the API as one.
-Share a server only between projects you trust alike. On that network a project addresses its own services by container name (`<PROJECT>-api`,
-`<PROJECT>-db`), never by a plain service name such as `api`, which any project would answer.
+Share a server only between projects you trust alike. On that network a project addresses its own
+services by container name (`<PROJECT>-api`, `<PROJECT>-db`), never by a plain service name such as
+`api`, which any project would answer.
 
 With the `host-monitoring` profile, turn it on in one project only: its containers watch the whole
 host.

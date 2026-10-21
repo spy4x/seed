@@ -59,11 +59,13 @@ Three things worth knowing before planning any of this work.
 
 ## Leave in Financy (product-specific)
 
-Currency and money handling (`libs/shared/{helpers/currency*,helpers/currency-converter*,constants/currency*}`,
-`apps/api/services/{currency,exchange-rate-provider}.ts`, `apps/api/workers/exchange-rate-fetcher.ts`),
-account balances (`libs/shared/helpers/account-balance.ts`), the Telegram bot
-(`apps/api/services/telegram/*`, `apps/api/handlers/telegram/*`, `apps/api/workers/telegram-polling.ts`),
-and every `docs/features/*.md` describing budgets, transactions and dashboards.
+Currency and money handling
+(`libs/shared/{helpers/currency*,helpers/currency-converter*,constants/currency*}`,
+`apps/api/services/{currency,exchange-rate-provider}.ts`,
+`apps/api/workers/exchange-rate-fetcher.ts`), account balances
+(`libs/shared/helpers/account-balance.ts`), the Telegram bot (`apps/api/services/telegram/*`,
+`apps/api/handlers/telegram/*`, `apps/api/workers/telegram-polling.ts`), and every
+`docs/features/*.md` describing budgets, transactions and dashboards.
 
 One caveat: **money-as-integers** is a template-level convention worth documenting even though the
 currency code itself stays behind. Financy's helpers are a good reference for the arithmetic.
@@ -72,7 +74,8 @@ currency code itself stays behind. Financy's helpers are a good reference for th
 
 - `libs/shared/cqrs/*` — this repo has `libs/platform/cqrs`.
 - `libs/shared/types/+index.ts` — split here into `libs/platform/types` + `libs/domain/identity`.
-- `libs/shared/rpc/+index.ts` — inspect before deciding; likely superseded by the REST/CQRS boundary.
+- `libs/shared/rpc/+index.ts` — inspect before deciding; likely superseded by the REST/CQRS
+  boundary.
 - `docs/offline-first-with-dexie.md` — superseded by `docs/design/group-sync.md`, which is
   cursor-based and group-scoped. Keep Financy's doc only as background reading.
 

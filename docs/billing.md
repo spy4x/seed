@@ -27,9 +27,10 @@ price variable to `readBillingSetup` (`libs/server/billing/setup.ts`), to
 
 ## Per-member pricing
 
-Pro is billed per member (`perSeat` on the plan, [spy4x/template#205](https://github.com/spy4x/template/issues/205)).
-The subscription's quantity is the group's member count, the owner included: the same count that
-`maxMembers` caps. A pending invitation reserves no seat; accepting it does.
+Pro is billed per member (`perSeat` on the plan,
+[spy4x/template#205](https://github.com/spy4x/template/issues/205)). The subscription's quantity is
+the group's member count, the owner included: the same count that `maxMembers` caps. A pending
+invitation reserves no seat; accepting it does.
 
 - **Checkout** asks Stripe for one seat per member at that moment.
 - **A change of members** (someone joins through an invitation, is removed, or leaves) is committed
@@ -76,11 +77,12 @@ deleted: the subscription stays stored as past due, and everything over a Free c
 - Any other status clears it. A payment that makes the subscription active again brings the plan
   back at once; a later failure starts a new grace period.
 - Only a subscription that has paid gets the grace period
-  ([spy4x/template#247](https://github.com/spy4x/template/issues/247)). `subscriptions.ever_active` turns true at
-  the subscription's first active event and stays true while the same subscription is held; a new
-  subscription starts without it. A trial whose first charge fails goes from trialing straight to
-  past due, never active, so the group is on Free from that failure, which is the trial's end. The
-  grace exists to keep a paying customer whose card expired, not to lengthen a free trial.
+  ([spy4x/template#247](https://github.com/spy4x/template/issues/247)). `subscriptions.ever_active`
+  turns true at the subscription's first active event and stays true while the same subscription is
+  held; a new subscription starts without it. A trial whose first charge fails goes from trialing
+  straight to past due, never active, so the group is on Free from that failure, which is the
+  trial's end. The grace exists to keep a paying customer whose card expired, not to lengthen a free
+  trial.
 - An active event that Stripe delivers after a newer past-due one is stale and changes nothing
   else, but it still sets `ever_active`: it proves that the subscription paid.
 - `effectivePlanId(subscription, now, graceDays)` in `libs/domain/billing/+lib.ts` decides. The
@@ -112,11 +114,11 @@ length only when both hold:
   same group, after the owner closed Stripe's page, still gets it.
 
 Only the owner checks out, so joining someone else's group never uses a person's trial. The
-handover trial after a transfer of ownership ("Transfer of ownership" below) carries the old owner's paid
-time and does not use the new owner's trial. The checkout decides on the server; the client cannot
-ask for a trial. `GET /api/billing/trial` answers the signed-in person's own `{ enabled, used,
-days }`, and the page that creates a group says from it whether a trial comes with the new group.
-The admin panel shows when a person's trial was used, on the person's Overview tab.
+handover trial after a transfer of ownership ("Transfer of ownership" below) carries the old owner's
+paid time and does not use the new owner's trial. The checkout decides on the server; the client
+cannot ask for a trial. `GET /api/billing/trial` answers the signed-in person's own `{ enabled,
+used, days }`, and the page that creates a group says from it whether a trial comes with the new
+group. The admin panel shows when a person's trial was used, on the person's Overview tab.
 
 `BILLING_TRIAL_REQUIRES_CARD` decides whether the trial's checkout asks for a card. It is `true`
 by default: a trial with a card converts on its own, and a person who cannot pay does not get one.
@@ -175,8 +177,8 @@ address. A failed send is retried. With mail off, nothing is sent.
 - Only the owner may open a checkout or the Stripe customer portal. Anyone else gets 403
   (`ROLE_INSUFFICIENT`), and a person outside the group gets 404.
 - A group with a subscription that is not cancelled cannot open a second checkout (409
-  `ALREADY_SUBSCRIBED`), even when that subscription shows as Free (paused, incomplete, or on a price
-  not in the catalog). The owner changes or cancels it in the portal.
+  `ALREADY_SUBSCRIBED`), even when that subscription shows as Free (paused, incomplete, or on a
+  price not in the catalog). The owner changes or cancels it in the portal.
 - The owner sees the portal button whenever the group has a live subscription or a Stripe customer
   (past invoices, the card on file), except a customer handed over by a transfer of ownership
   ("Transfer of ownership" below).
@@ -188,8 +190,8 @@ address. A failed send is retried. With mail off, nothing is sent.
 A Stripe customer belongs to one group (`billing_customers`, keyed by the group) and carries the
 card, name, address and invoices of the owner who checked out. Stripe cannot move a subscription to
 another customer. So a transfer of ownership
-([spy4x/template#250](https://github.com/spy4x/template/issues/250)) never gives the new owner the old owner's
-customer, and never lets the old owner's card be charged again without their say:
+([spy4x/template#250](https://github.com/spy4x/template/issues/250)) never gives the new owner the
+old owner's customer, and never lets the old owner's card be charged again without their say:
 
 1. **A subscription that still renews refuses the transfer** (409 `SUBSCRIPTION_RENEWS`). The owner
    cancels it in the portal first, at the end of the paid period. A subscription cancelled at its
@@ -434,10 +436,10 @@ provider, so its public secret cannot sign a real event.
   a group therefore run one after another. With two workers, two syncs could run at once and the
   older count could reach Stripe last: the stored quantity would then match the members while
   Stripe bills another count, and only a later webhook from Stripe would correct it.
-- A transfer reads the subscription as the webhooks last reported it. If the owner renews a cancelled
-  subscription in the portal and transfers the group before Stripe's webhook for the renewal
-  arrives, the transfer goes through and the subscription renews on their card. Nobody can then
-  reach its portal through the app: cancel it in the Stripe dashboard.
+- A transfer reads the subscription as the webhooks last reported it. If the owner renews a
+  cancelled subscription in the portal and transfers the group before Stripe's webhook for the
+  renewal arrives, the transfer goes through and the subscription renews on their card. Nobody can
+  then reach its portal through the app: cancel it in the Stripe dashboard.
 - If the old owner renews the cancelled subscription in Stripe after the transfer, outside the app,
   the group keeps it and the new owner sees **See plans**, but their checkout answers 409
   `ALREADY_SUBSCRIBED`. Nobody can reach that subscription's portal through the app: cancel it in

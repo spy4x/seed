@@ -22,13 +22,14 @@ rerun during rollout.
 ## Target architecture
 
 Apps compose bounded domain and platform libraries: Postgres is authoritative, browser data is
-a local projection in IndexedDB, and REST endpoints dispatch CQRS flows with versioned, cursor-based,
-idempotent sync.
+a local projection in IndexedDB, and REST endpoints dispatch CQRS flows with versioned,
+cursor-based, idempotent sync.
 
 Target apps:
 
 - `apps/api`: REST, auth, authorization, CQRS dispatch, and sync transport.
-- `apps/spa`: offline-capable Preact/Vite client backed by the shared data cache and outbox in IndexedDB.
+- `apps/spa`: offline-capable Preact/Vite client backed by the shared data cache and outbox in
+  IndexedDB.
 - `apps/mpa`: the product's public website, server-rendered: home page, pricing, legal pages and
   the newsletter. It has no session; the product itself is the SPA.
 - `apps/worker`: asynchronous event handlers, projections, and integrations.
@@ -76,9 +77,9 @@ job, and only the worker signs links and sends.
   takes a post without browser headers. The unsubscribe routes refuse any token but the version 2
   format template signs: the library still reads antonshubin.com's version 1 tokens, and checks
   each against the whole list.
-- **Rate limits.** Per IP on subscribing and on every token check, and three confirm mails an hour per address. The address
-  budget is keyed by an HMAC under a key derived from the secret, so Valkey holds no address and
-  no plain hash of one.
+- **Rate limits.** Per IP on subscribing and on every token check, and three confirm mails an hour
+  per address. The address budget is keyed by an HMAC under a key derived from the secret, so Valkey
+  holds no address and no plain hash of one.
 - **Issues.** In the worker container, `deno task subscribers:send news issue.json` (or `-` for
   stdin) takes `{ id, subject, preheader?, blocks }`, where each block is `{ heading }`,
   `{ paragraph }`, `{ list: [...] }` or `{ button: { href, label } }`. Rerunning the same `id`

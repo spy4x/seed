@@ -2,10 +2,10 @@
 
 ## Overview
 
-The pipeline lives in `.woodpecker/ci.yml`. Woodpecker reads every `*.yml` file in the `.woodpecker/`
-folder at the repository root as its own workflow, with no setting to change in its web interface.
-Every product copied from the template gets the pipeline the moment its repository is activated in
-Woodpecker.
+The pipeline lives in `.woodpecker/ci.yml`. Woodpecker reads every `*.yml` file in the
+`.woodpecker/` folder at the repository root as its own workflow, with no setting to change in its
+web interface. Every product copied from the template gets the pipeline the moment its repository is
+activated in Woodpecker.
 
 It runs on every pull request, every push to `main` and every tag, in this order; only
 `release.yml` (below) filters tags to `v<digit>*`. A push to any other branch runs nothing: open a
@@ -21,25 +21,25 @@ check ──┬── build ────────┐
 
 - `check` runs `deno task check`: format, lint, type check and unit tests.
 - `build` runs `deno task build` (the SPA production build).
-- `integration` runs `deno task test:integration` against a throw-away `postgres:18.6-alpine` service
-  (user `tester`, password `ci-throwaway`, database `template_test`, reachable as host `postgres`)
-  and a `valkey/valkey:8.1` service (password `ci-throwaway`, host `valkey`). It waits over TCP for
-  both servers, see docs/handoff.md trap 3.
+- `integration` runs `deno task test:integration` against a throw-away `postgres:18.6-alpine`
+  service (user `tester`, password `ci-throwaway`, database `template_test`, reachable as host
+  `postgres`) and a `valkey/valkey:8.1` service (password `ci-throwaway`, host `valkey`). It waits
+  over TCP for both servers, see docs/handoff.md trap 3.
 - `backup-restore` runs `infra/backup/restore.test.sh` in the `postgres:18.6` image against the same
   Postgres service: it backs a database up with restic, restores it into an empty one and compares
   them (docs/backups.md).
 - `e2e-mpa` and `e2e-spa` run the website's browser tests and the SPA behind nginx
   (`e2e/mpa/run.sh`, `e2e/spa/run.sh`).
 - `e2e-smoke` runs the product's smoke set on every pull request and tag:
-  `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres and Valkey
-  services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
+  `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
+  and Valkey services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
   `infra/scripts/e2e-local-plan.ts`: `auth-profile-ws-push.e2e.ts`, `sign-in-next.e2e.ts`,
   `notes.e2e.ts`, `profile-two-tabs.e2e.ts`, `groups-pages.e2e.ts` and `url-filters.e2e.ts`. A pull
   request that breaks sign-in, the profile, notes or the groups pages in a browser fails here.
-- `e2e-full` runs every `e2e/*.e2e.ts` on a push to `main` only: `deno task e2e:local --max-failures=10`, with the
-  built SPA in the container's own nginx for the specs that start the app with no network
-  (`E2E_BUILT=nginx`). It is not part of the pull-request check, so it blocks no merge; a red run
-  on `main` says the last merge broke a screen outside the smoke set.
+- `e2e-full` runs every `e2e/*.e2e.ts` on a push to `main` only: `deno task e2e:local
+  --max-failures=10`, with the built SPA in the container's own nginx for the specs that start the
+  app with no network (`E2E_BUILT=nginx`). It is not part of the pull-request check, so it blocks no
+  merge; a red run on `main` says the last merge broke a screen outside the smoke set.
 - The four browser steps run in `mcr.microsoft.com/playwright`, which ships Chromium and its system
   libraries, and install the pinned Deno release from GitHub, checked against its SHA-256.
   Playwright's own browser download, run through Deno in the plain Deno image, hangs. The image
@@ -70,7 +70,8 @@ it, because nothing reads them.
 
 1. In Woodpecker, open the repository and enable it. The forge webhook is created for you.
 2. Leave the repository's **Pipeline path** empty. Woodpecker then uses `.woodpecker/`. Setting it
-   to another path (for example `infra/configs/`) hides the pipeline from every copy of the template.
+   to another path (for example `infra/configs/`) hides the pipeline from every copy of the
+   template.
 3. Check that a pull request shows the `check`, `build`, `integration`, `backup-restore`,
    `e2e-mpa`, `e2e-spa` and `e2e-smoke` results (`gh pr checks <number>`).
 
