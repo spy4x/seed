@@ -290,7 +290,7 @@ Deno.test("the API and the worker query through PgBouncer and start once it is h
   }
 })
 
-Deno.test("migrate and the API's LISTEN connection go to Postgres directly, past PgBouncer", async () => {
+Deno.test("migrate, and the API's direct connection for LISTEN, are given Postgres itself, not PgBouncer", async () => {
   const all = await services("shared")
   expect(environment(all.migrate).filter((entry) => entry.startsWith("DB_HOST="))).toEqual([
     "DB_HOST=db",
