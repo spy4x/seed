@@ -80,6 +80,13 @@ Deno.test("keeps the server's env files and key files out of every build context
   }
 })
 
+Deno.test("keeps the demo video and its raw take out of every build context", async () => {
+  const rules = await Deno.readTextFile(`${ROOT}.dockerignore`)
+  for (const path of ["media/demo/demo.mp4", "media/demo/.take/take.mkv"]) {
+    expect({ path, ignored: isIgnored(rules, path) }).toEqual({ path, ignored: true })
+  }
+})
+
 Deno.test("still sends what the images need", async () => {
   const rules = await Deno.readTextFile(`${ROOT}.dockerignore`)
   for (

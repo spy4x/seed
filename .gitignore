@@ -41,3 +41,6 @@ tests/.scratch-*
 
 # Screenshot masters and the font cache of apps/mpa/screenshots/capture.ts.
 apps/mpa/screenshots/.out/
+
+# The raw take of the demo video (media/demo/recipe/record.ts): frames, kept for a re-encode.
+media/demo/.take/
