@@ -62,6 +62,11 @@ export interface FakeUser {
   signIns: { ago: number; device: number }[]
   /** Sessions still signed in, by their index in `devices`. */
   sessions: { device: number; createdAgo: number; lastUsedAgo: number }[]
+  /**
+   * A passkey (#222) made on one of `devices`, added `addedAgo` minutes ago and last used
+   * `lastUsedAgo` minutes ago (`null`: never); `null` for none.
+   */
+  passkey: { device: number; addedAgo: number; lastUsedAgo: number | null } | null
 }
 
 /** Who a fake group's row points at: a fake person by index, or the new account (`you`). */
@@ -348,6 +353,7 @@ function fakeUsers(tools: Tools, now: Date): FakeUser[] {
       devices,
       signIns,
       sessions: sessionsOf(tools, signIns),
+      passkey: null,
     }
   })
   const priya = users[VIDEO_PERSON_INDEX]
@@ -683,7 +689,34 @@ export function fakeDemoData(seed: number, now: Date): FakeDemoData {
   })
   const newsletter = fakeNewsletter(tools, now, users, taken)
   const operator = fakeOperator(tools, now, users, subscriptions)
+  addPasskeys(randomTools(seed + PASSKEY_SEED_OFFSET), users)
   return { users, groups: [...groups, ...small], subscriptions, ...newsletter, operator }
+}
+
+/** Passkeys draw from a stream of their own, so adding them moved no other fake row. */
+const PASSKEY_SEED_OFFSET = 222
+
+/** How many fake people have a passkey. */
+export const FAKE_PASSKEYS = 12
+
+/**
+ * Gives {@link FAKE_PASSKEYS} confirmed, unblocked people a passkey on one of their devices, added
+ * after they joined; most used it since.
+ */
+function addPasskeys(tools: ReturnType<typeof randomTools>, users: FakeUser[]): void {
+  // Joined two days ago or more, so the passkey came later.
+  const open = users.flatMap((user, i) =>
+    user.verified && user.blockedAgo === null && user.joinedAgo > 2 * DAY ? [i] : []
+  )
+  for (const i of tools.sample(open, FAKE_PASSKEYS)) {
+    const user = users[i]
+    const addedAgo = tools.between(user.joinedAgo - 30, 60)
+    user.passkey = {
+      device: tools.int(0, user.devices.length - 1),
+      addedAgo,
+      lastUsedAgo: tools.chance(0.75) ? tools.between(addedAgo - 10, 5) : null,
+    }
+  }
 }
 
 /**

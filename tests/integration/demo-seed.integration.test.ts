@@ -16,6 +16,7 @@ import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { createSignIn } from "../../apps/api/services/sign-in.ts"
 import {
   FAKE_COUNTS,
+  FAKE_PASSKEYS,
   fakeDemoData,
   fakePeople,
   fakeWorkspace,
@@ -114,6 +115,7 @@ interface Counts extends postgres.Row {
   invitations: number
   subscribers: number
   activeSessions: number
+  passkeys: number
 }
 
 async function count(sql: postgres.Sql): Promise<Counts> {
@@ -127,7 +129,8 @@ async function count(sql: postgres.Sql): Promise<Counts> {
       (SELECT COUNT(*)::int FROM group_invitations) AS invitations,
       (SELECT COUNT(*)::int FROM subscribers) AS subscribers,
       (SELECT COUNT(*)::int FROM auth_sessions WHERE status = ${SessionStatus.Active})
-        AS active_sessions
+        AS active_sessions,
+      (SELECT COUNT(*)::int FROM auth_passkeys) AS passkeys
   `
   return row
 }
@@ -288,6 +291,18 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
     expect(counts.activeSessions).toBe(
       data.users.reduce((sum, user) => sum + user.sessions.length, 0),
     )
+    // Every fake passkey is a key of method `passkey` with its row, linked in the audit trail.
+    expect(counts.passkeys).toBe(FAKE_PASSKEYS)
+    const passkeyKeys = await sql`
+      SELECT 1 FROM auth_keys k JOIN auth_passkeys p ON p.key_id = k.id AND p.user_id = k.user_id
+      WHERE k.method = 'passkey' AND k.subject LIKE 'fake-%'
+    `
+    expect(passkeyKeys).toHaveLength(FAKE_PASSKEYS)
+    const linked = await sql`
+      SELECT 1 FROM auth_audits WHERE identifier LIKE 'passkey name=%'
+        AND event_type = ${AuthAuditEventType.SIGN_IN_METHOD_LINKED}
+    `
+    expect(linked).toHaveLength(FAKE_PASSKEYS)
   })
 })
 
