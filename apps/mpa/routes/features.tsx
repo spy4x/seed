@@ -98,6 +98,7 @@ const TIERS: readonly Tier[] = [
           `Passwords hashed with PBKDF2-SHA-256 through Web Crypto, 600,000 rounds by default`,
           `Signed session cookies, and an audit trail of every sign-in event`,
           `Personal API tokens, stored only as keyed hashes`,
+          `Passkeys: only the public key is stored, and each sign-in challenge works once`,
           `Wrong passwords counted per sign-in name, with a short lock, from any network address`,
         ],
         notYet: [{ label: `Magic links` }],

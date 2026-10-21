@@ -450,6 +450,7 @@ describe("the public website", () => {
     const { html } = await page("/features")
 
     expect(html).toContain(`or sign in with a passkey.`)
+    expect(html).toContain(`Passkeys: only the public key is stored`)
     expect(html).toContain(`Google and GitHub sign-in, passkeys, 2FA`)
     expect(html).not.toContain(`issues/222`)
   })
