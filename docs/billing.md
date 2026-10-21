@@ -335,10 +335,10 @@ that neither misses one.
 1. The owner opens the group's **Plan and billing** tab and presses **Start 14-day free trial** (or
    **Upgrade to Pro** once their trial is used). The API asks Stripe for a checkout session with the
    group's id as its reference and sends the browser there.
-2. Stripe takes the payment and returns the browser to the tab, at
-   `/groups/:groupId/billing?checkout=done`. The tab says Stripe is confirming the plan, and
-   says "You're on Pro" in a toast once the webhook below has changed the plan. The portal and a
-   cancelled checkout return to the tab too.
+2. Stripe takes the card (a trial charges nothing yet) and returns the browser to the tab, at
+   `/groups/:groupId/billing?checkout=done`. The tab says Stripe is confirming the plan. Once the
+   webhook below has changed the plan, a toast says "Your 14-day Pro trial has started", or
+   "You're on Pro" after a paid start. The portal and a cancelled checkout return to the tab too.
 3. Stripe posts `customer.subscription.created` to `POST /api/webhooks/billing`. The API checks the
    signature first; then, in one transaction, it stores the event id, writes the group's
    subscription and its customer, and records `group.plan.changed` in the outbox when the plan or
