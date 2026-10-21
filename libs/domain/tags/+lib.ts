@@ -1,7 +1,13 @@
 import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
-import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
+import {
+  canMutateNotes,
+  canRead,
+  GroupRole,
+  legacyExportColor,
+  plainEntryProblem,
+} from "@domain/groups"
 import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { hexColor } from "@spy4x/platform/universal/color"
@@ -341,8 +347,14 @@ export const tagExportEntrySchema = type({
 })
 export type TagExportEntry = typeof tagExportEntrySchema.infer
 
-/** Checks one tag of a file with the rules of a create. Throws `TagError("INVALID_REQUEST")`. */
-export function parseTagExportEntry(value: unknown): TagExportEntry {
+/**
+ * Checks one tag of a file with the rules of a create, reading an old colour name as its hex.
+ * Throws `TagError("INVALID_REQUEST")`.
+ */
+export function parseTagExportEntry(entry: unknown): TagExportEntry {
+  const value = typeof entry === "object" && entry !== null && "color" in entry
+    ? { ...entry, color: legacyExportColor(entry.color) }
+    : entry
   const shape = tagExportEntrySchema(value)
   if (shape instanceof type.errors) {
     throw new TagError("INVALID_REQUEST", plainEntryProblem(shape, "tag", TAG_EXPORT_LABELS))

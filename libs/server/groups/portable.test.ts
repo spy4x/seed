@@ -76,6 +76,29 @@ describe("parseGroupFile", () => {
     ])
   })
 
+  it("reads a version 1 file's old colour names as the hex the migration gave them", () => {
+    const parsed = parseGroupFile(
+      file({ tags: [{ ...tag("Work"), color: "blue" }] }, {
+        version: 1,
+        group: { name: "Family", description: "", color: "green", emoji: null },
+      }),
+      AGGREGATES,
+    )
+    expect(parsed.settings.color).toBe("#15803d")
+    expect(
+      parsed.entries.get("tags")?.map((entry) => (entry as unknown as { color: string }).color),
+    )
+      .toEqual(["#1d4ed8"])
+  })
+
+  it("still refuses a colour that is neither hex nor an old colour name", () => {
+    expect(
+      problemsOf(file({ tags: [{ ...tag("Work"), color: "teal" }] }, {
+        group: { name: "Family", description: "", color: "lime", emoji: null },
+      })).problems.length,
+    ).toBe(2)
+  })
+
   it("treats a kind the file leaves out as empty", () => {
     expect(parseGroupFile(file({ notes: [note("One")] }), AGGREGATES).entries.get("tags"))
       .toEqual([])

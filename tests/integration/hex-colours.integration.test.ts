@@ -4,6 +4,7 @@ import postgres from "postgres"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { LEGACY_COLORS } from "@domain/groups"
 import { applyMigrations, migrationNames } from "./migrations.ts"
 
 /**
@@ -14,7 +15,7 @@ import { applyMigrations, migrationNames } from "./migrations.ts"
 
 const HEX_MIGRATION = "2026_11_26_0001_hex_colours.sql"
 
-Deno.test("the hex colour migration turns every palette name into its preset's hex", async () => {
+Deno.test("the hex colour migration turns every palette name into the hex an import reads it as", async () => {
   const settings = buildPostgresOptions(requireDbConnection())
   const admin = postgres({ ...settings, max: 1, onnotice: () => {} })
   const schema = `hex_colours_test_${uuidV7().replaceAll("-", "")}`
@@ -35,7 +36,7 @@ Deno.test("the hex colour migration turns every palette name into its preset's h
       WITH auth_user AS (INSERT INTO auth_users DEFAULT VALUES RETURNING id)
       INSERT INTO users (id) SELECT id FROM auth_user RETURNING id
     `
-    const palette = ["gray", "red", "orange", "green", "blue", "purple"]
+    const palette = Object.keys(LEGACY_COLORS)
     const groupIds: string[] = []
     for (const color of [...palette, null]) {
       const id = uuidV7()
@@ -54,14 +55,8 @@ Deno.test("the hex colour migration turns every palette name into its preset's h
 
     await applyMigrations(sql, names.slice(at))
 
-    const expected = {
-      gray: "#4b5563",
-      red: "#b91c1c",
-      orange: "#c2410c",
-      green: "#15803d",
-      blue: "#1d4ed8",
-      purple: "#7e22ce",
-    }
+    // An import reads a version 1 file's colour names through the same table.
+    const expected = LEGACY_COLORS
     const tags = await sql<{ name: string; color: string }[]>`SELECT name, color FROM tags`
     expect(Object.fromEntries(tags.map((tag) => [tag.name, tag.color]))).toEqual(expected)
     const groups = await sql<{ name: string; color: string | null }[]>`

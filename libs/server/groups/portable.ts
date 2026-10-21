@@ -10,6 +10,7 @@ import {
   type GroupFilePart,
   GroupImportError,
   type GroupImportProblem,
+  legacyExportColor,
   parseGroupColor,
   parseGroupDescription,
   parseGroupEmoji,
@@ -183,7 +184,7 @@ function parseSettings(
   }
   const name = read(() => parseGroupName(value.name))
   const description = read(() => parseGroupDescription(value.description ?? ""))
-  const color = read(() => parseGroupColor(value.color ?? null))
+  const color = read(() => parseGroupColor(legacyExportColor(value.color ?? null)))
   const emoji = read(() => parseGroupEmoji(value.emoji ?? null))
   return name === null ? null : { name, description: description ?? "", color, emoji }
 }
