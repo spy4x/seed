@@ -6,7 +6,7 @@
 import "@preact/signals"
 import { signal } from "@preact/signals"
 import { expect } from "@std/expect"
-import { afterAll, beforeAll, describe, it } from "@std/testing/bdd"
+import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
@@ -92,11 +92,19 @@ afterAll(async () => {
   await window.happyDOM.close()
 })
 
+let root: HTMLElement | null = null
+
+afterEach(async () => {
+  if (root) await act(() => render(null, root!))
+  root?.remove()
+  root = null
+})
+
 describe("ProfileView", () => {
   it("shows the first-steps card under the page's heading, above the settings", async () => {
-    const root = window.document.createElement("div") as unknown as HTMLElement
+    root = window.document.createElement("div") as unknown as HTMLElement
     window.document.body.appendChild(root as never)
-    await act(() => render(<ProfileView />, root))
+    await act(() => render(<ProfileView />, root!))
 
     const heading = root.querySelector("h1")
     const card = root.querySelector("[data-e2e=onboarding]")
@@ -105,8 +113,5 @@ describe("ProfileView", () => {
     expect(card).not.toBe(null)
     expect(heading!.compareDocumentPosition(card!) & 4).toBe(4)
     expect(card!.compareDocumentPosition(account!) & 4).toBe(4)
-
-    await act(() => render(null, root))
-    root.remove()
   })
 })
