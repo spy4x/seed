@@ -86,7 +86,8 @@ test.describe("profile over the socket", () => {
       await first.locator("[data-e2e=profile-first-name]").fill("Ada")
       await first.locator("[data-e2e=profile-last-name]").fill("Lovelace")
       await first.locator("[data-e2e=profile-save]").click()
-      await first.locator("[data-e2e=profile-saved]").getByText("Saved", { exact: true }).waitFor()
+      await first.locator("[data-e2e=profile-saved]").getByText("Profile saved", { exact: true })
+        .waitFor()
 
       // The second tab was neither reloaded nor touched: the server's hint made it read again.
       await expect(second.locator("[data-e2e=profile-name]")).toHaveText("Ada Lovelace")
@@ -108,7 +109,8 @@ test.describe("profile over the socket", () => {
       await first.locator("[data-e2e=profile-edit]").click()
       await first.locator("[data-e2e=profile-first-name]").fill("Grace")
       await first.locator("[data-e2e=profile-save]").click()
-      await first.locator("[data-e2e=profile-saved]").getByText("Saved", { exact: true }).waitFor()
+      await first.locator("[data-e2e=profile-saved]").getByText("Profile saved", { exact: true })
+        .waitFor()
       await expect(second.locator("[data-e2e=profile-name]")).toHaveText("Ada Lovelace")
       socketBlocked = false
       await expect(second.locator("[data-e2e=profile-name]")).toHaveText("Grace Lovelace", {

@@ -83,7 +83,7 @@ export function EmailView() {
           setValues((current) => ({ ...current, code: "" }))
           setNotices({ send: null, change: null })
           toasts.success({
-            title: "Verified",
+            title: "E-mail verified",
             body: "Your e-mail address is verified.",
             dataE2E: "email-verified",
           })
