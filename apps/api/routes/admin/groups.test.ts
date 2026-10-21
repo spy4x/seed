@@ -103,7 +103,7 @@ const ROUTES: Route[] = [
   {
     method: `GET`,
     path:
-      `/admin/groups/${GROUP_ID}/widgets/notes.total?from=2026-10-01&to=2026-10-21&timeZone=UTC`,
+      `/admin/groups/${GROUP_ID}/widgets/notes.total?from=2026-10-01&to=2026-10-21&timeZone=Europe%2FBerlin`,
   },
 ]
 
@@ -264,7 +264,7 @@ describe(`operator area group routes`, () => {
     expect(calls).toEqual([[`widget`, GROUP_ID, `notes.total`, {
       groupId: GROUP_ID,
       range: { from: `2026-10-01`, to: `2026-10-21` },
-      timeZone: `UTC`,
+      timeZone: `Europe/Berlin`,
     }]])
   })
 
