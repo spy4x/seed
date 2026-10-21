@@ -62,6 +62,37 @@ function withNext(path: string, next: string | null): string {
 }
 
 /**
+ * What a link and an unlink ask for (#384, #385), and adding a passkey (#222): the account's
+ * password, or for an account without one a sign-in with a provider or a passkey a moment ago.
+ * `null` when the body gives it; otherwise the refusal to answer.
+ */
+export async function refusalWithoutProof(
+  signIn: Pick<SignIn, "hasPassword" | "checkPassword" | "confirmedByProvider">,
+  c: Context<APIContext>,
+  state: AppAuthState,
+): Promise<Response | null> {
+  const body = validate(signInMethodProofSchema, await readApiJson(c))
+  if (body.error) return c.json({ error: body.error.description }, 400)
+  const { password } = body.data
+  if (await signIn.hasPassword(state.user.id)) {
+    if (password === undefined) return c.json({ error: "Invalid password" }, 400)
+    try {
+      if (!(await signIn.checkPassword(state.user.id, password))) {
+        return c.json({ error: "Invalid password" }, 400)
+      }
+    } catch (error) {
+      // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
+      if (!(error instanceof PasswordLockedError)) throw error
+      c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
+      return c.json({ error: passwordLockedMessage(error.retryAfterMs) }, 429)
+    }
+  } else if (!(await signIn.confirmedByProvider(state))) {
+    return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+  }
+  return null
+}
+
+/**
  * Sign-in with Google and GitHub: starting a flow, the provider's callback, the question before a
  * provider creates an account, and the account's sign-in methods. Mounted at `/auth` BEFORE
  * `createAuthRoute`, whose session middleware would otherwise answer 401 for the public routes
@@ -76,35 +107,9 @@ export function createOAuthRoute(
   const page = (path: string) => new URL(path, origin).href
   const withNotice = (path: string, notice: OAuthNotice) =>
     page(`${path}?${new URLSearchParams({ [OAUTH_NOTICE_PARAM]: notice })}`)
-  /**
-   * What a link and an unlink ask for (#384, #385): the account's password, or for an account
-   * without one a sign-in with a provider a moment ago. `null` when the body gives it; otherwise
-   * the refusal to answer.
-   */
-  const refuseWithoutProof = async (
-    c: Context<APIContext>,
-    state: AppAuthState,
-  ): Promise<Response | null> => {
-    const body = validate(signInMethodProofSchema, await readApiJson(c))
-    if (body.error) return c.json({ error: body.error.description }, 400)
-    const { password } = body.data
-    if (await signIn.hasPassword(state.user.id)) {
-      if (password === undefined) return c.json({ error: "Invalid password" }, 400)
-      try {
-        if (!(await signIn.checkPassword(state.user.id, password))) {
-          return c.json({ error: "Invalid password" }, 400)
-        }
-      } catch (error) {
-        // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
-        if (!(error instanceof PasswordLockedError)) throw error
-        c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
-        return c.json({ error: passwordLockedMessage(error.retryAfterMs) }, 429)
-      }
-    } else if (!(await signIn.confirmedByProvider(state))) {
-      return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
-    }
-    return null
-  }
+  const refuseWithoutProof = (c: Context<APIContext>, state: AppAuthState) =>
+    refusalWithoutProof(signIn, c, state)
+
   /** The provider a route's `:provider` names, when it is on. */
   const providerOf = (c: Context<APIContext>) => {
     const id = oauthProviderId(c.req.param("provider"))

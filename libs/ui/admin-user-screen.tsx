@@ -31,7 +31,7 @@ import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
 import { adminUserName, adminUserSubtitle, roleColor, roleLabel } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
-import { When } from "@spy4x/preact-ui/format"
+import { OnDay, When } from "@spy4x/preact-ui/format"
 import { AdminPreferencesGroup } from "./preferences.tsx"
 
 /** What an operator can do to a person; each is confirmed in a dialog first. */
@@ -88,6 +88,7 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.USER_ROLE_CHANGED]: "warning",
   [AuthAuditEventType.PASSWORD_RESET_SENT]: "neutral",
   [AuthAuditEventType.USERS_EXPORTED]: "neutral",
+  [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "neutral",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
@@ -121,6 +122,7 @@ export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.USER_ROLE_CHANGED]: "Role changed",
   [AuthAuditEventType.PASSWORD_RESET_SENT]: "Password-reset link sent by an operator",
   [AuthAuditEventType.USERS_EXPORTED]: "Exported the user list",
+  [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "Passkey renamed",
 }
 
 /**
@@ -482,11 +484,27 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
         <li key={`${method.method}-${method.createdAt}`} class={ROW}>
           <span class="font-medium">{methodName(method.method)}</span>
           {method.email && <span class="text-sm text-muted wrap-anywhere">{method.email}</span>}
-          <span class="ml-auto">
-            {method.provenAt
-              ? <Badge text="Proven" color="green" type="outline" />
-              : <Badge text="Not proven" color="orange" type="outline" />}
-          </span>
+          {method.passkey
+            ? (
+              // A passkey proves no address: its name and dates, read-only (#222).
+              <span class="text-sm text-muted wrap-anywhere" data-e2e="admin-user-passkey">
+                {method.passkey.name} · Added <OnDay at={method.createdAt} /> ·{" "}
+                {method.passkey.lastUsedAt
+                  ? (
+                    <>
+                      Last used <When at={method.passkey.lastUsedAt} />
+                    </>
+                  )
+                  : "Not used yet"}
+              </span>
+            )
+            : (
+              <span class="ml-auto">
+                {method.provenAt
+                  ? <Badge text="Proven" color="green" type="outline" />
+                  : <Badge text="Not proven" color="orange" type="outline" />}
+              </span>
+            )}
         </li>
       ))}
     </Rows>
@@ -630,6 +648,7 @@ function methodName(method: string): string {
   if (method === "oauth:google") return "Google"
   if (method === "oauth:github") return "GitHub"
   if (method === "email-code") return "E-mail code"
+  if (method === "passkey") return "Passkey"
   return method
 }
 

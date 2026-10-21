@@ -9,6 +9,7 @@ import { ONE_HOUR_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constan
 import { startIntervalRunner } from "@spy4x/platform/server/interval-runner"
 import { createAuthRoute } from "./routes/auth.ts"
 import { createOAuthRoute } from "./routes/auth-oauth.ts"
+import { createPasskeyRoute } from "./routes/auth-passkeys.ts"
 import { createPushNotificationRoute } from "./routes/pushNotification.ts"
 import { createUsersRoute } from "./routes/users.ts"
 import { wsRoute } from "./routes/ws.ts"
@@ -141,6 +142,7 @@ app.route(
     logError: (message, error) => log(message, error),
   }),
 )
+app.route("/auth", createPasskeyRoute({ signIn, mutationGuards, rateLimits }))
 app.route(
   "/auth",
   createAuthRoute({

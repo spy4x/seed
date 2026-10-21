@@ -11,13 +11,22 @@ import { providerStartPath } from "./auth-screen.tsx"
 
 /**
  * What an account with no password confirms a step with, where the others type their password:
- * a sign-in with one of its providers a moment ago.
+ * a sign-in with one of its providers or passkeys a moment ago.
  */
 export interface ProviderProof {
   /** The providers the account signs in with. */
   providers: readonly OAuthProviderId[]
+  /** The account has a passkey (#222). */
+  passkeys?: boolean
   /** This device signed in with one of them less than `PROVIDER_PROOF_MINUTES` minutes ago. */
   fresh: boolean
+  /**
+   * Signs in again with a passkey without leaving the page. Left out, the notice offers no passkey
+   * button, and the person signs in again from the sign-in page.
+   */
+  onPasskey?: () => void
+  /** That sign-in is running: the passkey button waits. */
+  passkeyPending?: boolean
 }
 
 /**
@@ -30,11 +39,13 @@ export function providerProofOf(
 ): ProviderProof | null {
   if (!methods || methods.length === 0) return null
   const providers: OAuthProviderId[] = []
+  let passkeys = false
   for (const { kind } of methods) {
     if (kind === "password") return null
-    providers.push(kind)
+    if (kind === "passkey") passkeys = true
+    else providers.push(kind)
   }
-  return { providers, fresh }
+  return { providers, passkeys, fresh }
 }
 
 /**
@@ -46,6 +57,7 @@ export function ProviderProofNotice(
   { proof, next }: { proof: ProviderProof; next: string },
 ): JSX.Element {
   const names = proof.providers.map((provider) => OAUTH_PROVIDER_NAMES[provider])
+  if (proof.passkeys) names.push("a passkey")
   if (proof.fresh) {
     return (
       <p class="text-sm text-muted" data-e2e="provider-proof-fresh">
@@ -60,6 +72,18 @@ export function ProviderProofNotice(
         again, then come back here within {PROVIDER_PROOF_MINUTES} minutes.
       </p>
       <Cluster>
+        {proof.passkeys && proof.onPasskey && (
+          <Button
+            type="button"
+            variant="secondary"
+            busy={proof.passkeyPending}
+            busyLabel="Waiting for your device…"
+            onClick={proof.onPasskey}
+            data-e2e="provider-proof-passkey"
+          >
+            Sign in with a passkey again
+          </Button>
+        )}
         {proof.providers.map((provider) => (
           <Button
             key={provider}

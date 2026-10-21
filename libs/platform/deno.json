@@ -1,1 +1,7 @@
-{}
+{
+  "imports": {
+    // A browser DOM for the shortcuts tests: key presses, focus and dialogs. The same version
+    // libs/ui's tests load.
+    "happy-dom": "npm:happy-dom@20.14.5"
+  }
+}

@@ -13,6 +13,7 @@ import {
   PRO_PLAN_ID,
 } from "@domain/billing"
 import { AuthAuditEventType } from "@domain/identity"
+import { PASSKEY_METHOD, passkeyIdentifier } from "@server/auth/passkeys.ts"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { BACKUP_TARGET_DATABASE } from "@server/jobs/admin-system.ts"
 import { WELCOME_NOTE_BODY, WELCOME_NOTE_TITLE } from "@server/jobs/starter-data.ts"
@@ -178,6 +179,7 @@ export async function writePeople(
   const audits: AuditRow[] = []
   const profiles = []
   const providerKeys = []
+  const passkeys: { userId: number; name: string; added: Date; lastUsed: Date | null }[] = []
   const factors = []
   const sessions = []
   for (const [i, user] of users.entries()) {
@@ -247,6 +249,20 @@ export async function writePeople(
         )
       }
     }
+    if (user.passkey) {
+      const added = at(user.passkey.addedAgo)
+      const device = user.devices[user.passkey.device]
+      const name = deviceName(device.userAgent) || `Passkey`
+      passkeys.push({
+        userId: id,
+        name,
+        added,
+        lastUsed: user.passkey.lastUsedAgo === null ? null : at(user.passkey.lastUsedAgo),
+      })
+      audits.push(
+        audit(id, AuthAuditEventType.SIGN_IN_METHOD_LINKED, added, passkeyIdentifier(name), device),
+      )
+    }
     if (user.secondFactor) {
       const enrolled = at(Math.max(user.joinedAgo - HOUR, 0))
       factors.push({
@@ -295,9 +311,49 @@ export async function writePeople(
   `
   await writeOwnNotes(sql, users, ids, at)
   if (providerKeys.length > 0) await sql`INSERT INTO auth_keys ${sql(providerKeys)}`
+  await writePasskeys(sql, passkeys)
   if (factors.length > 0) await sql`INSERT INTO user_totp ${sql(factors)}`
   if (sessions.length > 0) await sql`INSERT INTO auth_sessions ${sql(sessions)}`
   await insertAudits(sql, audits)
+}
+
+/**
+ * The fake people's passkeys (#222): a key of method `passkey` and its `auth_passkeys` row each.
+ * The credential id is marked as fake and the public key is random bytes, which no device holds a
+ * private key for: nobody can sign in with one.
+ */
+async function writePasskeys(
+  sql: postgres.Sql,
+  passkeys: readonly { userId: number; name: string; added: Date; lastUsed: Date | null }[],
+): Promise<void> {
+  if (passkeys.length === 0) return
+  const keys = await sql<{ id: number; userId: number }[]>`
+    INSERT INTO auth_keys ${
+    sql(passkeys.map((passkey) => ({
+      userId: passkey.userId,
+      method: PASSKEY_METHOD,
+      subject: `fake-${uuidV7()}`,
+      email: null,
+      provenAt: null,
+      createdAt: passkey.added,
+      updatedAt: passkey.added,
+    })))
+  }
+    RETURNING id, user_id
+  `
+  // One passkey per person, so the owner finds the key.
+  const keyOf = new Map(keys.map((key) => [key.userId, key.id]))
+  await sql`
+    INSERT INTO auth_passkeys ${
+    sql(passkeys.map((passkey) => ({
+      keyId: keyOf.get(passkey.userId)!,
+      userId: passkey.userId,
+      publicKey: crypto.getRandomValues(new Uint8Array(77)),
+      name: passkey.name,
+      lastUsedAt: passkey.lastUsed,
+    })))
+  }
+  `
 }
 
 /** The provider ids of one seeded subscription, for the operator's audit rows. */

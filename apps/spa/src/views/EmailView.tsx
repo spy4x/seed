@@ -11,7 +11,7 @@ import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { providerProofOf } from "@ui/provider-proof.tsx"
 import { emailStore } from "../state/email.ts"
 import { createSignInMethodsStore } from "../state/sign-in-methods.ts"
-import { isProviderProofFresh } from "./provider-proof-fresh.ts"
+import { isProviderProofFresh, withPasskeyProof } from "./provider-proof-fresh.ts"
 import { sessionState } from "../state/session.ts"
 import { toasts } from "../state/toasts.ts"
 
@@ -65,9 +65,9 @@ export function EmailView() {
     onDone(outcome.message)
   }
 
-  const providerProof = providerProofOf(
-    methods.methods.value,
-    isProviderProofFresh(methods.providerProofUntil.value),
+  const providerProof = withPasskeyProof(
+    providerProofOf(methods.methods.value, isProviderProofFresh(methods.providerProofUntil.value)),
+    methods,
   )
 
   return (
