@@ -189,10 +189,19 @@ export async function readAdminUserParts(sql: postgres.Sql, userId: number): Pro
   trialUsedAt: string | null
 }> {
   const methods = await sql<
-    { method: string; email: string | null; provenAt: Date | null; createdAt: Date }[]
+    {
+      method: string
+      email: string | null
+      provenAt: Date | null
+      createdAt: Date
+      passkeyName: string | null
+      passkeyLastUsedAt: Date | null
+    }[]
   >`
-    SELECT method, email, proven_at, created_at FROM auth_keys
-    WHERE user_id = ${userId} ORDER BY id
+    SELECT k.method, k.email, k.proven_at, k.created_at,
+      p.name AS passkey_name, p.last_used_at AS passkey_last_used_at
+    FROM auth_keys k LEFT JOIN auth_passkeys p ON p.key_id = k.id
+    WHERE k.user_id = ${userId} ORDER BY k.id
   `
   const groups = await sql<AdminUserGroup[]>`
     SELECT g.id, g.name, m.role FROM group_members m
@@ -226,6 +235,10 @@ export async function readAdminUserParts(sql: postgres.Sql, userId: number): Pro
       email: row.email,
       provenAt: row.provenAt?.toISOString() ?? null,
       createdAt: row.createdAt.toISOString(),
+      passkey: row.passkeyName === null ? undefined : {
+        name: row.passkeyName,
+        lastUsedAt: row.passkeyLastUsedAt?.toISOString() ?? null,
+      },
     })),
     groups: groups.map((row) => ({ id: row.id, name: row.name, role: row.role })),
     audits: audits.map((row) => ({

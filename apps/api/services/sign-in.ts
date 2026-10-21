@@ -133,6 +133,11 @@ import {
   signUpExpiry,
 } from "@server/auth/sign-up-requests.ts"
 import { createOAuthOperations, type OAuthOperations, type OAuthOptions } from "./oauth-sign-in.ts"
+import {
+  createPasskeyOperations,
+  type PasskeyOperations,
+  type PasskeyOptions,
+} from "./passkey-sign-in.ts"
 import { PasswordLockedError } from "./password-locked.ts"
 
 /** Longest username, in characters (code points), after normalisation. */
@@ -216,6 +221,8 @@ export interface SignInOptions {
   hasher?: PasswordHasher
   /** Sign-in with Google and GitHub (`oauth-sign-in.ts`). Left out, every provider is off. */
   oauth?: OAuthOptions
+  /** Sign-in with passkeys (`passkey-sign-in.ts`). Left out, passkeys are off. */
+  passkeys?: PasskeyOptions
 }
 
 /** What {@link SignIn.deleteAccount} did. */
@@ -451,6 +458,8 @@ export interface SignIn {
   entitledSession(sessionId: number): Promise<AppAuthState | null>
   /** Sign-in with Google and GitHub, and the account's sign-in methods (`oauth-sign-in.ts`). */
   oauth: OAuthOperations
+  /** Adding passkeys and signing in with them (`passkey-sign-in.ts`). */
+  passkeys: PasskeyOperations
 }
 
 /**
@@ -701,6 +710,25 @@ export function createSignIn(options: SignInOptions): SignIn {
     isRefusal: (error) => error instanceof MissingProfileError,
   })
 
+  const passkeys = createPasskeyOperations(options.passkeys, {
+    db,
+    sessionsOver,
+    cookie,
+    auditRow,
+    deviceOf,
+    // A passkey proves the person and the device at once, so it owes no authenticator code. The
+    // exception is an account that waits to be deleted with two-factor on: only the code restores
+    // it, as after a password.
+    admit: async (c, userId) => {
+      if (await db.admin.isBlocked(userId)) return null
+      if (await waitingForCode(userId)) return SecondFactorStatus.Pending
+      if (!(await db.user.findOne({ id: userId, includeDeleted: true }))) return null
+      if (!(await restoreIfWaiting(c, userId))) return null
+      return SecondFactorStatus.NotRequired
+    },
+    waitingForCode,
+  })
+
   /**
    * The profile, first group, starter data and `SIGNED_UP` audit row of a new auth user, written
    * in the sign-up's transaction `tx`.
@@ -766,6 +794,7 @@ export function createSignIn(options: SignInOptions): SignIn {
   return {
     auth,
     oauth,
+    passkeys,
 
     async signUp(c, rawEmail, password, firstGroupId = uuidV7()) {
       // Checked here too, so a refused address opens no transaction and makes no provider.

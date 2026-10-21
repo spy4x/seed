@@ -108,6 +108,7 @@ import { createSignedPayloadCodec } from "@spy4x/platform/signed-payload"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { safeRedirectPath } from "@spy4x/net/redirect-path"
 import type { SignInMethodChange } from "@server/jobs/sign-in-method-mail.ts"
+import { PASSKEY_METHOD, passkeyIdentifier, type PasskeySummary } from "@server/auth/passkeys.ts"
 import type { AppDbBase } from "./db-base.ts"
 import type { AppAuthState, SignedIn } from "./sign-in.ts"
 
@@ -252,7 +253,7 @@ export enum UnlinkOutcome {
   Unlinked = 1,
   /** Unlinked, and it was the method this device signed in with: the cookie is cleared. */
   UnlinkedAndSignedOut = 2,
-  /** No provider method with this id on the account. The password is never unlinked. */
+  /** No provider method or passkey with this id on the account. The password is never unlinked. */
   NotFound = 3,
   /** It is the only way in. Nothing changed. */
   LastMethod = 4,
@@ -370,6 +371,7 @@ export function createOAuthOperations(
   /** Which way in a key is, or `null` for a key nobody can sign in with now. */
   function kindOf(key: AuthKey): SignInMethod["kind"] | null {
     if (key.method === PASSWORD_METHOD) return key.secret ? "password" : null
+    if (key.method === PASSKEY_METHOD) return "passkey"
     const id = key.method.startsWith("oauth:") ? oauthProviderId(key.method.slice(6)) : null
     return id !== null && enabled.has(id) ? id : null
   }
@@ -377,7 +379,18 @@ export function createOAuthOperations(
   function describe(
     keys: AuthKey[],
     currentKeyId: number,
+    passkeys: readonly PasskeySummary[],
   ): Omit<SignInMethodsResponse, "providerProofUntil"> {
+    const passkeyOf = (keyId: number) => {
+      const found = passkeys.find((passkey) => passkey.keyId === keyId)
+      return found
+        ? {
+          name: found.name,
+          createdAt: found.createdAt.toISOString(),
+          lastUsedAt: found.lastUsedAt?.toISOString() ?? null,
+        }
+        : undefined
+    }
     const ways = keys.flatMap((key) => {
       const kind = kindOf(key)
       return kind === null ? [] : [{ key, kind }]
@@ -390,6 +403,7 @@ export function createOAuthOperations(
         email: key.email ?? (kind === "password" ? key.subject : null),
         current: key.id === currentKeyId,
         canUnlink: kind !== "password" && ways.length > 1,
+        passkey: kind === "passkey" ? passkeyOf(key.id) : undefined,
       })),
       available: [...enabled.keys()].filter((id) => !ways.some((way) => way.kind === id)),
     }
@@ -500,8 +514,9 @@ export function createOAuthOperations(
     userId: number,
     change: SignInMethodChange,
     method: string,
+    identifier: string = method,
   ): Promise<void> {
-    await tx.authAudit.insert(own.auditRow(c, userId, change, method))
+    await tx.authAudit.insert(own.auditRow(c, userId, change, identifier))
     await tx.signInMethodMail.queue(userId, change, method)
   }
 
@@ -519,7 +534,8 @@ export function createOAuthOperations(
 
   async function proofUntil({ session }: AppAuthState): Promise<Date | null> {
     const key = await db.authStore.findKeyById(session.keyId)
-    if (!key?.method.startsWith("oauth:")) return null
+    // A passkey sign-in proves as much as a provider's (#222): the device verified the person.
+    if (!key || !(key.method.startsWith("oauth:") || key.method === PASSKEY_METHOD)) return null
     // The session row the request carries has no start time; the devices list has it.
     const started = (await sessions.listForUser(session.userId))
       .find((row) => row.id === session.id)?.createdAt
@@ -735,7 +751,11 @@ export function createOAuthOperations(
     async methods(state) {
       const { user, session } = state
       return {
-        ...describe(await db.authStore.listKeys(user.id), session.keyId),
+        ...describe(
+          await db.authStore.listKeys(user.id),
+          session.keyId,
+          await db.passkeys.list(user.id),
+        ),
         providerProofUntil: (await proofUntil(state))?.toISOString() ?? null,
       }
     },
@@ -747,10 +767,27 @@ export function createOAuthOperations(
         // Two unlinks at once each see the other's method as the one that remains; the lock makes
         // the second read after the first has finished.
         await tx.lockUser(user.id)
-        const { methods } = describe(await tx.authStore.listKeys(user.id), session.keyId)
+        const { methods } = describe(
+          await tx.authStore.listKeys(user.id),
+          session.keyId,
+          await tx.passkeys.list(user.id),
+        )
         const method = methods.find((candidate) => candidate.id === keyId)
         if (!method || method.kind === "password") return UnlinkOutcome.NotFound
         if (!method.canUnlink) return UnlinkOutcome.LastMethod
+        if (method.kind === "passkey") {
+          // The key's sessions go with it (`auth_sessions` cascades), and so does its passkey row.
+          if (!(await tx.authStore.deleteKey(user.id, keyId))) return UnlinkOutcome.NotFound
+          await recordMethodChange(
+            c,
+            tx,
+            user.id,
+            AuthAuditEventType.SIGN_IN_METHOD_UNLINKED,
+            PASSKEY_METHOD,
+            passkeyIdentifier(method.passkey?.name ?? ""),
+          )
+          return method.current ? UnlinkOutcome.UnlinkedAndSignedOut : UnlinkOutcome.Unlinked
+        }
         const removed = await signInWith(method.kind, {
           store: tx.authStore,
           sessions: own.sessionsOver(tx.sessionStore),

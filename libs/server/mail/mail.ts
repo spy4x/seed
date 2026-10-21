@@ -278,6 +278,8 @@ export interface SignInMethodChangedMailInput {
   /** `true` for a link, `false` for an unlink. */
   linked: boolean
   at: Date
+  /** The method is a passkey (#222), which is added and removed rather than linked. */
+  passkey?: boolean
 }
 
 /**
@@ -288,29 +290,60 @@ export interface SignInMethodChangedMailInput {
  */
 export function signInMethodChangedMail(
   brand: MailBrand,
-  { to, provider, linked, at }: SignInMethodChangedMailInput,
+  { to, provider, linked, at, passkey = false }: SignInMethodChangedMailInput,
 ): EmailMessage {
   const host = new URL(brand.webAppUrl).host
   const when = `${MAIL_TIME.format(at)} UTC`
+  // The profile is the web app's first page.
+  const link = new URL("/", brand.webAppUrl).href
+  if (passkey) {
+    const changed = linked
+      ? `A passkey was added to your account at ${host} on ${when}. It can now sign in to it.`
+      : `A passkey was removed from your account at ${host} on ${when}. It no longer signs in to it.`
+    const notYou = linked
+      ? `If this wasn't you, remove the passkey on your profile page and change your password.`
+      : `If this wasn't you, sign in, change your password and add your passkey again.`
+    return methodMail(
+      brand,
+      to,
+      linked ? `A passkey was added to your account` : `A passkey was removed from your account`,
+      [changed, notYou],
+      link,
+    )
+  }
   const changed = linked
     ? `${provider} was linked to your account at ${host} on ${when}. It can now sign in to it.`
     : `${provider} was unlinked from your account at ${host} on ${when}. It no longer signs in to it.`
   const notYou = linked
     ? `If this wasn't you, unlink ${provider} on your profile page and change your password.`
     : `If this wasn't you, sign in, change your password and link ${provider} again.`
-  // The profile is the web app's first page.
-  const link = new URL("/", brand.webAppUrl).href
-  return {
+  return methodMail(
+    brand,
     to,
-    subject: linked
+    linked
       ? `${provider} was linked to your account`
       : `${provider} was unlinked from your account`,
-    text: `${changed}\n\n${notYou}\n\n${link}\n`,
+    [changed, notYou],
+    link,
+  )
+}
+
+/** A sign-in method mail: its paragraphs, then the link to the profile. */
+function methodMail(
+  brand: MailBrand,
+  to: string,
+  subject: string,
+  paragraphs: readonly string[],
+  link: string,
+): EmailMessage {
+  return {
+    to,
+    subject,
+    text: `${paragraphs.join("\n\n")}\n\n${link}\n`,
     html: mailHtml(
       brand,
       [
-        `<p>${escapeHtml(changed)}</p>`,
-        `<p>${escapeHtml(notYou)}</p>`,
+        ...paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`),
         `<p><a href="${escapeHtml(link)}">Open your profile</a></p>`,
       ].join("\n"),
     ),

@@ -43,7 +43,7 @@ import { PasswordLockedError, passwordLockedMessage } from "@api/services/passwo
 /** What the auth routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface AuthRouteDependencies {
   /** Without the provider sign-in: `auth-oauth.ts` has those routes. */
-  signIn: Omit<SignIn, "oauth">
+  signIn: Omit<SignIn, "oauth" | "passkeys">
   /** Announces a sign-out, so the person's open sockets close. Audit rows are not events (#191). */
   emit(event: UserSignedOutEvent): void
   mutationGuards: MutationGuards
