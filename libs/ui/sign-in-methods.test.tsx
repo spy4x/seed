@@ -872,7 +872,7 @@ describe("ProfileScreen for an account without a password", () => {
     )
 
     expect(find("[data-e2e=profile-account-type]").textContent).toContain("Guest account")
-    expect(document.querySelector("[data-e2e=profile-email-link]")).toBeNull()
+    expect(document.querySelectorAll("[data-e2e=profile-email-link]").length).toBe(0)
     expect(document.body.textContent).not.toContain("You sign in with your username")
     // The account row and the empty sign-in methods lead to /keep too, but not as primaries.
     for (const name of ["profile-keep", "methods-keep"]) {
