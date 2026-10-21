@@ -142,6 +142,10 @@ CREATE TABLE users (
     -- #205: the group the person's one billing trial went to, and when. `NULL` while unused.
     trial_group_id UUID,
     trial_used_at TIMESTAMPTZ,
+    -- #224: when the guest account was made; NULL for an account with a sign-in method, and again
+    -- once a guest keeps the account. `guest_visit_days` counts the days the guest used the app.
+    guest_since TIMESTAMPTZ,
+    guest_visit_days INT2 DEFAULT 0 NOT NULL,
     CONSTRAINT users_role_check CHECK (role >= 1 AND role <= 4),
     CONSTRAINT users_mfa_check CHECK (mfa = ANY (ARRAY[1, 2, 3])),
     CONSTRAINT users_id_auth_users_fkey FOREIGN KEY (id) REFERENCES auth_users (id)
@@ -154,6 +158,7 @@ COMMENT ON COLUMN users.mfa IS '1=not_configured, 2=confuration_not_finished, 3=
 CREATE INDEX idx_users_created_at ON users (created_at);
 CREATE INDEX idx_users_last_seen_at ON users (last_seen_at);
 CREATE INDEX idx_users_blocked_at ON users (blocked_at) WHERE blocked_at IS NOT NULL;
+CREATE INDEX idx_users_guest_since ON users (guest_since) WHERE guest_since IS NOT NULL;
 
 CREATE TABLE groups (
     id UUID PRIMARY KEY,
@@ -726,7 +731,7 @@ CREATE TABLE auth_audits (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]))
 );
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
@@ -822,6 +827,8 @@ CREATE TABLE sign_up_requests (
     secret TEXT NOT NULL,
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- #224: set when a guest keeps their own account with this address and password.
+    guest_user_id INT4 REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT sign_up_requests_email_check CHECK (length(email) BETWEEN 3 AND 254)
 );
 
@@ -846,4 +853,35 @@ CREATE TABLE user_preferences (
     first_locale VARCHAR(64),
     updated_at TIMESTAMPTZ(3),
     CONSTRAINT user_preferences_version_check CHECK (version >= 0)
+);
+
+-- #224: guest accounts. See migration 2026_11_26_0001_guest_accounts.sql.
+CREATE TABLE guest_events (
+    id UUID PRIMARY KEY,
+    kind INT2 NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT guest_events_kind_check CHECK (kind BETWEEN 1 AND 3)
+);
+
+CREATE INDEX idx_guest_events_kind_created_at ON guest_events (kind, created_at);
+
+CREATE TABLE guest_switches (
+    guest_user_id INT4 PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    target_user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    target_key_id INT4 NOT NULL,
+    method TEXT NOT NULL,
+    needs_password BOOLEAN NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT guest_switches_key_fkey FOREIGN KEY (target_key_id, target_user_id)
+        REFERENCES auth_keys (id, user_id) ON DELETE CASCADE,
+    CONSTRAINT guest_switches_other_user_check CHECK (target_user_id <> guest_user_id)
+);
+
+CREATE TABLE guest_reminders (
+    user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind INT2 NOT NULL,
+    sent_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    PRIMARY KEY (user_id, kind),
+    CONSTRAINT guest_reminders_kind_check CHECK (kind BETWEEN 1 AND 3)
 );
