@@ -11,6 +11,7 @@
  */
 
 import type postgres from "postgres"
+import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { CONFIRM_TTL_MS } from "@spy4x/server/subscribers"
 import { createPostgresSubscriberStore } from "@spy4x/server/subscribers/postgres"
 import { type CsvColumn, toCsvBytes } from "@spy4x/platform/universal/csv"
@@ -26,8 +27,6 @@ import { fillDays, statsDays } from "../auth/admin-stats.ts"
 import { likeContains } from "@spy4x/server/db"
 import { enqueueSubscriberMail, SUBSCRIBER_CONFIRM_MAIL_JOB } from "../jobs/subscriber-mail.ts"
 import { createListCrypto, type SubscribersSetup } from "./subscribers.ts"
-
-const DAY_MS = 24 * 60 * 60 * 1000
 
 interface SubscriberDbRow {
   email: string
@@ -132,8 +131,8 @@ export async function readAdminNewsletterStats(
 ): Promise<AdminNewsletterStats> {
   const days = statsDays(now)
   const from = new Date(`${days[0]}T00:00:00.000Z`)
-  const monthAgo = new Date(now.getTime() - 30 * DAY_MS)
-  const twoMonthsAgo = new Date(now.getTime() - 60 * DAY_MS)
+  const monthAgo = new Date(now.getTime() - 30 * ONE_DAY_IN_MILLISECONDS)
+  const twoMonthsAgo = new Date(now.getTime() - 60 * ONE_DAY_IN_MILLISECONDS)
   const [counts] = await sql<{
     confirmed: number
     pending: number

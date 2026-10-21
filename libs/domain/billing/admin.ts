@@ -1,4 +1,5 @@
 import { type } from "arktype"
+import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
   accessEndsAt,
@@ -245,12 +246,10 @@ export const ADMIN_BILLING_TIME_LABELS: Record<AdminBillingTimeLength, string> =
   "12m": "12 months",
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
 /** `date` moved by `length`: days exactly, months by the calendar in UTC (Jan 31 + 1 month = Mar 3). */
 export function addTimeLength(date: Date, length: AdminBillingTimeLength): Date {
   const count = Number(length.slice(0, -1))
-  if (length.endsWith("d")) return new Date(date.getTime() + count * DAY_MS)
+  if (length.endsWith("d")) return new Date(date.getTime() + count * ONE_DAY_IN_MILLISECONDS)
   const next = new Date(date.getTime())
   next.setUTCMonth(next.getUTCMonth() + count)
   return next

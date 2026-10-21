@@ -1,4 +1,5 @@
 import type postgres from "postgres"
+import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { BillingNoticeKind, TRIAL_NOTICE_DAYS } from "@domain/billing"
 import { JOB_AGGREGATE } from "@server/jobs/jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
@@ -10,11 +11,9 @@ export const BILLING_NOTICE_JOBS: Readonly<Record<BillingNoticeKind, string>> = 
   [BillingNoticeKind.PlanEnding]: "billing.plan-ending-mail",
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
 /** When the mail that a trial ends soon goes out: {@link TRIAL_NOTICE_DAYS} days before its end. */
 export function trialNoticeAt(trialEnd: Date): Date {
-  return new Date(trialEnd.getTime() - TRIAL_NOTICE_DAYS * DAY_MS)
+  return new Date(trialEnd.getTime() - TRIAL_NOTICE_DAYS * ONE_DAY_IN_MILLISECONDS)
 }
 
 /**

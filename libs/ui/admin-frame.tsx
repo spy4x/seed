@@ -27,6 +27,7 @@ export const ADMIN_PATHS = {
   oneTimeCode: "/one-time-code",
 } as const
 
+// Seed's own site: see docs/start-a-product.md
 /** The product's name, the last part of every admin page's title. */
 export const ADMIN_PRODUCT = "Seed"
 
