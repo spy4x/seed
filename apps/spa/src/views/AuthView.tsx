@@ -103,8 +103,12 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
       .then((answer) => {
         if (controller.signal.aborted) return
         clearTimeout(renew)
-        // A refusal is told, and the field offers its passkeys again.
-        if (!finishPasskey(answer)) waitForAutofill()
+        // The autofill waits quietly: it says nothing unless a picked passkey was refused, and
+        // then the field offers its passkeys again. A browser or device that turned the request
+        // down is left alone, so the request does not start over and over.
+        if (answer.ok || (!answer.cancelled && answer.picked)) {
+          if (!finishPasskey(answer)) waitForAutofill()
+        }
       })
   }
   useEffect(() => {

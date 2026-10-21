@@ -478,7 +478,8 @@ function MethodDetails(
                 errorMessage={() => PASSKEY_RENAME_FAILURE}
                 disabled={pending}
                 dataE2E={`passkey-name-${method.id}`}
-                class="font-medium text-foreground"
+                // The button's own padding would push the name off the line under it.
+                class="-ml-2 font-medium text-foreground"
               />
             )
             : <span class="font-medium text-foreground">{passkey.name}</span>}

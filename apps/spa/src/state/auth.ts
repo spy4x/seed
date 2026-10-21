@@ -159,7 +159,11 @@ export type PasskeySignInAnswer =
   | { ok: true; mfaRequired: boolean }
   /** The person closed the device's dialog, or the request was aborted: nothing to say. */
   | { ok: false; cancelled: true }
-  | { ok: false; cancelled: false; error: string }
+  /**
+   * It failed. `picked` says whether the device gave a passkey and the server refused it; before
+   * that, the server's options or the device itself failed.
+   */
+  | { ok: false; cancelled: false; picked: boolean; error: string }
 
 /**
  * Signs in with a passkey (#222). Signed out, any passkey of the site will do, and `autofill`
@@ -181,13 +185,15 @@ export async function signInWithPasskey(
     method: "POST",
     signal,
   })
-  if (!options.ok) return { ok: false, cancelled: false, error: options.error.message }
+  if (!options.ok) {
+    return { ok: false, cancelled: false, picked: false, error: options.error.message }
+  }
   let credential
   try {
     credential = await getPasskey(options.data, { autofill, signal, browser })
   } catch (_failed) {
     // A device that refused for its own reason is told as "that did not work".
-    return { ok: false, cancelled: false, error: "" }
+    return { ok: false, cancelled: false, picked: false, error: "" }
   }
   if (!credential) return { ok: false, cancelled: true }
   const result = await apiFetch<SessionUser | PendingSecondFactor>(base, {
@@ -198,7 +204,7 @@ export async function signInWithPasskey(
     await signalUnknownPasskey(options.data.rpId, credential.id, browser)
   }
   const answer = await handleAuthResponse(result)
-  if (!answer.ok) return { ok: false, cancelled: false, error: answer.error ?? "" }
+  if (!answer.ok) return { ok: false, cancelled: false, picked: true, error: answer.error ?? "" }
   return { ok: true, mfaRequired: answer.mfaRequired }
 }
 
