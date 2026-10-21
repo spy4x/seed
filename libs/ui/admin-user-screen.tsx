@@ -92,7 +92,7 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "neutral",
   [AuthAuditEventType.GUEST_STARTED]: "neutral",
   [AuthAuditEventType.GUEST_KEPT]: "success",
-  [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "danger",
+  [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "warning",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
