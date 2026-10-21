@@ -1,7 +1,9 @@
 import type { JSX } from "preact"
-import { Badge } from "@spy4x/preact-ui/badge"
+import { badgeClasses } from "@spy4x/preact-ui/badge"
+import { COLOR_PRESETS } from "@spy4x/preact-ui/color-field"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
-import type { TagColor } from "@domain/tags"
+import { isHexColor, readableTextColor } from "@spy4x/platform/universal/color"
+import { DEFAULT_TAG_COLOR, type TagColor } from "@domain/tags"
 
 /** One tag as the screens show it. */
 export interface TagRow {
@@ -10,9 +12,35 @@ export interface TagRow {
   color: TagColor
 }
 
-/** A tag as a small coloured label; the case the person typed is kept. */
-export function TagBadge({ tag }: { tag: TagRow }): JSX.Element {
-  return <Badge text={tag.name} color={tag.color} class="normal-case" />
+/**
+ * The fill and the text colour of anything drawn in `color`: a tag chip, a group mark. The text is
+ * black or white, whichever reads better on the fill. A value that is no `#rrggbb` (a copy saved
+ * on the device before colours were hex) draws in the default gray instead of failing.
+ */
+export function colorStyle(color: string): JSX.CSSProperties {
+  const fill = isHexColor(color) ? color : DEFAULT_TAG_COLOR
+  return { backgroundColor: fill, borderColor: fill, color: readableTextColor(fill) }
+}
+
+/** A colour in words: the preset's name ("Red"), or the hex code of a custom colour. */
+export function colorName(color: string): string {
+  return COLOR_PRESETS.find((preset) => preset.value === color.toLowerCase())?.label ?? color
+}
+
+/**
+ * A tag as a small label in its colour; the case the person typed is kept. A name longer than the
+ * room it has ends in an ellipsis instead of running over what sits beside it.
+ */
+export function TagBadge({ tag }: { tag: Pick<TagRow, "name" | "color"> }): JSX.Element {
+  return (
+    <span
+      class={badgeClasses("gray", "filled", "max-w-full normal-case")}
+      style={colorStyle(tag.color)}
+      title={tag.name}
+    >
+      <span class="min-w-0 truncate">{tag.name}</span>
+    </span>
+  )
 }
 
 /** The tags of a note as labels, in the order given; ids of tags that are gone are left out. */

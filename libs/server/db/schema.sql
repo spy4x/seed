@@ -171,6 +171,7 @@ CREATE TABLE groups (
     imported_at TIMESTAMPTZ,
     CONSTRAINT groups_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 100),
     CONSTRAINT groups_description_check CHECK (char_length(description) <= 500),
+    CONSTRAINT groups_color_check CHECK (color ~ '^#[0-9a-f]{6}$'),
     CONSTRAINT groups_authorization_revision_check CHECK (authorization_revision >= 1),
     CONSTRAINT groups_next_change_sequence_check CHECK (next_change_sequence >= 1)
 );
@@ -763,7 +764,7 @@ CREATE TABLE tags (
     id UUID PRIMARY KEY,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     name VARCHAR(40) NOT NULL,
-    color VARCHAR(10) DEFAULT 'gray' NOT NULL,
+    color VARCHAR(10) DEFAULT '#4b5563' NOT NULL,
     version INT4 DEFAULT 1 NOT NULL,
     change_sequence BIGINT NOT NULL,
     created_by_user_id INT4 REFERENCES users(id) ON DELETE SET NULL,
@@ -771,7 +772,7 @@ CREATE TABLE tags (
     created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT tags_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 40),
-    CONSTRAINT tags_color_check CHECK (color IN ('gray', 'red', 'orange', 'green', 'blue', 'purple')),
+    CONSTRAINT tags_color_check CHECK (color ~ '^#[0-9a-f]{6}$'),
     CONSTRAINT tags_version_check CHECK (version >= 1),
     CONSTRAINT tags_change_sequence_check CHECK (change_sequence >= 1)
 );

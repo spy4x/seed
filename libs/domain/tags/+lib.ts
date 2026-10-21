@@ -4,6 +4,7 @@ import type { Actor } from "@domain/identity"
 import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
 import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
+import { hexColor } from "@spy4x/platform/universal/color"
 
 /**
  * Tags: the second reference aggregate, and the parent of notes. A tag belongs to one group, has a
@@ -23,14 +24,13 @@ export const TAG_NAME_MAX_LENGTH = 40
 export const TAG_MAX_PER_GROUP = 100
 
 /**
- * The colours a tag can have. They are the names of the colours of the UI library's `Badge`, which
- * draws a tag; the domain keeps only the names, so it needs no UI import.
+ * A tag's colour: any `#rrggbb`, kept in lower case. The screens draw the tag's name on it in black
+ * or white, whichever reads better (`readableTextColor`), so no colour makes a name unreadable.
  */
-export const TAG_COLORS = ["gray", "red", "orange", "green", "blue", "purple"] as const
-export type TagColor = typeof TAG_COLORS[number]
+export type TagColor = string
 
-/** The colour a new tag has when the person picks none. */
-export const DEFAULT_TAG_COLOR: TagColor = "gray"
+/** The colour a new tag has when the person picks none: the gray of the colour picker's presets. */
+export const DEFAULT_TAG_COLOR: TagColor = "#4b5563"
 
 /**
  * The outbox event kinds a tag change is recorded under. Each rides on the group's change log, like
@@ -112,7 +112,8 @@ export interface DeletedTag {
 }
 
 // #region Request schemas
-const colorField = type.enumerated(...TAG_COLORS)
+/** A `#rrggbb` in either case, stored in lower case so the same colour is always the same text. */
+const colorField = hexColor.pipe((color) => color.toLowerCase())
 const versionField = { version: "number.integer >= 1" } as const
 const tagFields = { name: "string", color: colorField } as const
 const groupIdField = { groupId: UUID_PATTERN } as const

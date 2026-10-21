@@ -1,16 +1,7 @@
 import type { JSX } from "preact"
 import { badgeClasses } from "@spy4x/preact-ui/badge"
 import type { GroupColor } from "@domain/groups"
-
-/** What a colour is called on screen and to a screen reader. */
-export const COLOR_TEXT: Record<GroupColor, string> = {
-  red: "Red",
-  orange: "Orange",
-  green: "Green",
-  blue: "Blue",
-  purple: "Purple",
-  gray: "Grey",
-}
+import { colorStyle } from "./tag-parts.tsx"
 
 /** The group's colour and emoji, as the lists and the headers carry them. */
 export interface GroupAppearance {
@@ -34,10 +25,11 @@ export function GroupMark(
   return (
     <span
       class={badgeClasses(
-        color ?? "gray",
+        "gray",
         "filled",
         `${box} shrink-0 justify-center rounded-md p-0 leading-none normal-case ${className ?? ""}`,
       )}
+      style={color ? colorStyle(color) : undefined}
       aria-hidden="true"
       data-e2e="group-mark"
       data-color={color ?? undefined}

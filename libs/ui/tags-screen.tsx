@@ -118,7 +118,7 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                         <Link
                           href={TAG_PATHS.tag(tag.id)}
                           navigate={navigate}
-                          class="flex min-h-11 w-full items-center rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
+                          class="flex min-h-11 w-full min-w-0 items-center rounded-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
                           aria-label={`Edit ${tag.name}`}
                           data-e2e="tag-edit"
                         >

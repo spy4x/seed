@@ -56,11 +56,11 @@ const MARGARET: Person = {
 const PEOPLE = [ADA, GRACE, LINUS, MARGARET]
 
 const TAGS = [
-  { name: "Roadmap", color: "purple" },
-  { name: "Bug", color: "red" },
-  { name: "Design", color: "blue" },
-  { name: "Research", color: "green" },
-  { name: "Ops", color: "orange" },
+  { name: "Roadmap", color: "#7e22ce" },
+  { name: "Bug", color: "#b91c1c" },
+  { name: "Design", color: "#1d4ed8" },
+  { name: "Research", color: "#15803d" },
+  { name: "Ops", color: "#c2410c" },
 ] as const
 type TagName = typeof TAGS[number]["name"]
 

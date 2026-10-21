@@ -222,13 +222,13 @@ function callRoute(stack: Stack, userId: number): Transport {
 
 const TRANSPORTS = [["the socket", socket], ["the call route", callRoute]] as const
 
-const create = { groupId, id: tagId, name: "Work", color: "blue" }
+const create = { groupId, id: tagId, name: "Work", color: "#1d4ed8" }
 
 for (const [via, open] of TRANSPORTS) {
   describe(`tags over ${via}`, () => {
     it("refuses every write of a viewer and changes nothing", async () => {
       const s = stack()
-      await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+      await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
       s.tags.writes = 0
       const as = open(s, VIEWER)
 
@@ -251,13 +251,13 @@ for (const [via, open] of TRANSPORTS) {
 
     it("lets a viewer list the group's tags by name", async () => {
       const s = stack()
-      await s.tags.create({ groupId, id: secondTagId, name: "work", color: "red" }, OWNER)
-      await s.tags.create({ groupId, id: tagId, name: "Home", color: "blue" }, OWNER)
+      await s.tags.create({ groupId, id: secondTagId, name: "work", color: "#b91c1c" }, OWNER)
+      await s.tags.create({ groupId, id: tagId, name: "Home", color: "#1d4ed8" }, OWNER)
       await s.tags.create({
         groupId: otherGroupId,
         id: uuidV7(),
         name: "Other",
-        color: "gray",
+        color: "#4b5563",
       }, OWNER)
       const as = open(s, VIEWER)
 
@@ -291,18 +291,18 @@ for (const [via, open] of TRANSPORTS) {
       const updated = await as.command("tag.update", {
         ...create,
         name: "Job",
-        color: "red",
+        color: "#b91c1c",
         version: 1,
       })
       const deleted = await as.command("tag.delete", { groupId, id: tagId, version: 2 })
 
       expect(created).toMatchObject({
         kind: "server.result",
-        payload: { created: true, tag: { name: "Work", color: "blue", version: 1 } },
+        payload: { created: true, tag: { name: "Work", color: "#1d4ed8", version: 1 } },
       })
       expect(updated).toMatchObject({
         kind: "server.result",
-        payload: { tag: { name: "Job", color: "red", version: 2 } },
+        payload: { tag: { name: "Job", color: "#b91c1c", version: 2 } },
       })
       expect(deleted).toMatchObject({
         kind: "server.result",
@@ -315,7 +315,7 @@ for (const [via, open] of TRANSPORTS) {
     it("renames a tag whose id and group id are UUID version 4, made before ids became version 7", async () => {
       expect([isUuid(groupId, 4), isUuid(tagId, 4)]).toEqual([true, true])
       const s = stack()
-      await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+      await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
       const as = open(s, OWNER)
 
       const updated = await as.command("tag.update", { ...create, name: "Job", version: 1 })
@@ -329,7 +329,7 @@ for (const [via, open] of TRANSPORTS) {
 
     it("answers a stale rename with a conflict and the current version", async () => {
       const s = stack()
-      await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+      await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
       const as = open(s, OWNER)
 
       const answer = await as.command("tag.update", { ...create, name: "Job", version: 5 })
@@ -345,7 +345,7 @@ for (const [via, open] of TRANSPORTS) {
 
     it("refuses a name another tag of the group has, whatever its case", async () => {
       const s = stack()
-      await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+      await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
       const as = open(s, OWNER)
 
       const answer = await as.command("tag.create", { ...create, id: secondTagId, name: "WORK" })
@@ -361,7 +361,10 @@ for (const [via, open] of TRANSPORTS) {
     it("refuses the tag past the group's cap as a conflict, and keeps the group at the cap", async () => {
       const s = stack()
       for (let index = 0; index < TAG_MAX_PER_GROUP; index++) {
-        await s.tags.create({ groupId, id: uuidV7(), name: `Tag ${index}`, color: "gray" }, OWNER)
+        await s.tags.create(
+          { groupId, id: uuidV7(), name: `Tag ${index}`, color: "#4b5563" },
+          OWNER,
+        )
       }
       const as = open(s, OWNER)
 
@@ -376,12 +379,13 @@ for (const [via, open] of TRANSPORTS) {
       as.shutdown()
     })
 
-    it("refuses a colour outside the palette and an empty name", async () => {
+    it("refuses a colour that is no #rrggbb and an empty name", async () => {
       const s = stack()
       const as = open(s, OWNER)
 
       const answers = [
-        await as.command("tag.create", { ...create, color: "pink" }),
+        await as.command("tag.create", { ...create, color: "blue" }),
+        await as.command("tag.create", { ...create, color: "#1d4ed" }),
         await as.command("tag.create", { ...create, name: "   " }),
       ]
 
@@ -445,9 +449,9 @@ for (const [via, open] of TRANSPORTS) {
 
       it("keeps the tags a note names that exist and ignores the ones that do not", async () => {
         const s = stack()
-        await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+        await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
         await s.tags.create(
-          { groupId: otherGroupId, id: secondTagId, name: "Elsewhere", color: "red" },
+          { groupId: otherGroupId, id: secondTagId, name: "Elsewhere", color: "#b91c1c" },
           OWNER,
         )
         const as = open(s, OWNER)
@@ -466,7 +470,7 @@ for (const [via, open] of TRANSPORTS) {
 
       it("ignores an unknown tag id on an update and answers with the tags the note has", async () => {
         const s = stack()
-        await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+        await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
         await s.notes.create({ ...note, tagIds: [tagId] }, OWNER, null)
         const as = open(s, OWNER)
 
@@ -485,7 +489,7 @@ for (const [via, open] of TRANSPORTS) {
 
       it("keeps a note's tags when an update names none", async () => {
         const s = stack()
-        await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+        await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
         await s.notes.create({ ...note, tagIds: [tagId] }, OWNER, null)
         const as = open(s, OWNER)
 
@@ -500,7 +504,7 @@ for (const [via, open] of TRANSPORTS) {
 
       it("removes a deleted tag from its notes without changing their version", async () => {
         const s = stack()
-        await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+        await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
         await s.notes.create({ ...note, tagIds: [tagId] }, OWNER, null)
         const before = s.notes.notes.get(noteId)!
         const as = open(s, OWNER)
@@ -568,7 +572,7 @@ describe("tags over the REST list", () => {
 
   it("lists a member's group tags", async () => {
     const s = stack()
-    await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+    await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
 
     const response = await rest(s, VIEWER)(groupId)
 
@@ -579,7 +583,7 @@ describe("tags over the REST list", () => {
   it("lists the tags of a group whose id is a UUID version 4", async () => {
     expect(isUuid(groupId, 4)).toBe(true)
     const s = stack()
-    await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+    await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
 
     const response = await rest(s, OWNER)(groupId)
 
@@ -589,7 +593,7 @@ describe("tags over the REST list", () => {
 
   it("answers a stranger as an unknown group, with no tag", async () => {
     const s = stack()
-    await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+    await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
 
     const response = await rest(s, STRANGER)(groupId)
 
@@ -599,7 +603,7 @@ describe("tags over the REST list", () => {
 
   it("answers 401 and lists nothing when there is no session", async () => {
     const s = stack()
-    await s.tags.create({ groupId, id: tagId, name: "Work", color: "blue" }, OWNER)
+    await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
 
     const response = await rest(s, null)(groupId)
 

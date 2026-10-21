@@ -14,7 +14,7 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
-import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { ColorField } from "@spy4x/preact-ui/color-field"
 import { Tabs } from "@spy4x/preact-ui/tabs"
 import {
   canDelete,
@@ -24,13 +24,12 @@ import {
   canMutateNotes,
   canRename,
   canViewActivity,
-  GROUP_COLORS,
   GROUP_DESCRIPTION_MAX,
   GROUP_RESTORE_DAYS,
   type GroupColor,
   GroupRole,
 } from "@domain/groups"
-import { COLOR_TEXT, GroupMark } from "./group-appearance.tsx"
+import { GroupMark } from "./group-appearance.tsx"
 import { type GroupRow, ROLE_TEXT } from "./groups-screen.tsx"
 import { type GroupMemberRow, GroupMembersSection, type MemberError } from "./group-members.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
@@ -234,6 +233,8 @@ export function GroupEditorScreen(props: GroupEditorScreenProps): JSX.Element {
         <PageHeader
           title="New group"
           titleDataE2E="group-new-title"
+          // The colour and emoji chosen so far, as the group's mark will show them.
+          mark={<GroupMark color={props.value.color} emoji={props.value.emoji.trim() || null} />}
           back={BACK}
           navigate={navigate}
         />
@@ -491,7 +492,10 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         <PageHeader
           title={group.name}
           titleDataE2E="group-general-name"
-          mark={<GroupMark color={group.color} emoji={group.emoji} />}
+          mark={canRename(group.role)
+            // The fields' colour and emoji, so the mark follows a change before it is saved.
+            ? <GroupMark color={props.value.color} emoji={props.value.emoji.trim() || null} />
+            : <GroupMark color={group.color} emoji={group.emoji} />}
           subtitle={
             <>
               <span data-e2e="group-general-role">{ROLE_TEXT[group.role]}</span>
@@ -769,12 +773,16 @@ function GroupForm(
                 onInput={(e) => change({ emoji: e.currentTarget.value })}
               />
             </Field>
-            <ColorChoice
-              value={value.color}
-              onChange={(color) => change({ color })}
-              optional={optional}
-            />
-            <Preview value={value} />
+            <div data-e2e="group-color">
+              <ColorField
+                legend={<>Colour {optional}</>}
+                name="color"
+                allowNone
+                hint="Shown behind the group's mark."
+                value={value.color}
+                onChange={(color) => change({ color })}
+              />
+            </div>
             {creating && trialText(trial) && (
               <p class="text-sm text-muted" data-e2e="group-trial">{trialText(trial)}</p>
             )}
@@ -838,65 +846,6 @@ export function trialText(trial: PersonTrial | null): string | null {
   if (trial.days <= 0) return null
   return `New groups start on the free plan. Your ${trial.days}-day free trial of a paid plan ` +
     `goes to the first group you choose a paid plan for.`
-}
-
-/**
- * The colour choice: the library's radio group, one radio per colour drawn with its swatch and its
- * name, plus "None". Real radios in one `<fieldset>`, so the arrow keys move between them and a
- * screen reader reads each colour's name.
- */
-function ColorChoice(
-  { value, onChange, optional }: {
-    value: GroupColor | null
-    onChange: (color: GroupColor | null) => void
-    optional: ComponentChildren
-  },
-): JSX.Element {
-  return (
-    <div>
-      <RadioGroup
-        legend={<>Colour {optional}</>}
-        name="color"
-        data-e2e="group-color"
-        aria-describedby="group-color-hint"
-        class="[&>div]:flex-row [&>div]:flex-wrap [&>div]:gap-x-4"
-        value={value ?? ""}
-        onChange={(picked) => onChange(picked === "" ? null : picked as GroupColor)}
-        options={[
-          {
-            value: "",
-            label: <span class="min-h-11 content-center sm:min-h-9" title="No colour">None</span>,
-          },
-          ...GROUP_COLORS.map((color) => ({
-            value: color,
-            label: (
-              <span class="flex min-h-11 items-center gap-2 sm:min-h-9">
-                <GroupMark color={color} size="sm" />
-                {COLOR_TEXT[color]}
-              </span>
-            ),
-          })),
-        ]}
-      />
-      <p id="group-color-hint" class="mt-2 text-sm text-muted">Shown behind the group's mark.</p>
-    </div>
-  )
-}
-
-/** The group's mark and name as the lists will show them, from what is typed now. */
-function Preview({ value }: { value: GroupDraft }): JSX.Element {
-  const name = value.name.trim()
-  return (
-    <div class="flex flex-col gap-2" data-e2e="group-preview">
-      <span class="pc-label">Preview</span>
-      <span class="flex min-h-9 min-w-0 items-center gap-2">
-        <GroupMark color={value.color} emoji={value.emoji.trim() || null} />
-        <span class={`break-words text-sm font-medium ${name ? "" : "text-muted"}`}>
-          {name || "Your group's name"}
-        </span>
-      </span>
-    </div>
-  )
 }
 
 /** The details as text, for a member who may not change them, with who may. */

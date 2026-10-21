@@ -26,7 +26,7 @@ const AGGREGATES = [tagPortable, notePortable]
 const at = "2026-10-01T09:00:00.000Z"
 
 function tag(name: string, id = uuidV7()) {
-  return { id, name, color: "blue", createdAt: at, updatedAt: at }
+  return { id, name, color: "#1d4ed8", createdAt: at, updatedAt: at }
 }
 
 function note(title: string, tagIds: string[] = [], id = uuidV7()) {
@@ -38,7 +38,7 @@ function file(aggregates: Record<string, unknown>, overrides: Record<string, unk
     format: GROUP_EXPORT_FORMAT,
     version: GROUP_EXPORT_VERSION,
     exportedAt: at,
-    group: { name: "Family", description: "", color: "green", emoji: null },
+    group: { name: "Family", description: "", color: "#15803d", emoji: null },
     aggregates,
     ...overrides,
   }
@@ -65,7 +65,7 @@ describe("parseGroupFile", () => {
     expect(parsed.settings).toEqual({
       name: "Family",
       description: "",
-      color: "green",
+      color: "#15803d",
       emoji: null,
     })
     expect(parsed.entries.get("tags")?.length).toBe(1)

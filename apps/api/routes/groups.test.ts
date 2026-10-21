@@ -160,7 +160,7 @@ describe("groups route", () => {
         id,
         name: "Trips",
         description: "Our trips",
-        color: "red",
+        color: "#b91c1c",
         emoji: "🏕️",
       }),
     })
@@ -168,7 +168,7 @@ describe("groups route", () => {
     expect(response.status).toBe(201)
     expect(deps.createCommand?.data).toMatchObject({
       description: "Our trips",
-      color: "red",
+      color: "#b91c1c",
       emoji: "🏕️",
     })
   })

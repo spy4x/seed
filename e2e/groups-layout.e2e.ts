@@ -69,9 +69,9 @@ test.describe("group screens in the shared column", () => {
       await page.getByRole("menuitem", { name: "New group" }).click()
       await page.getByLabel("Name").fill("Book club")
       await page.locator("[data-e2e=group-description]").fill("One book a month")
-      await page.getByRole("radio", { name: "Purple" }).check()
+      await page.locator("[data-e2e=group-color]").getByTitle("Purple", { exact: true }).click()
       await page.locator("[data-e2e=group-emoji]").fill("📚")
-      await expect(page.locator("[data-e2e=group-preview]")).toContainText("Book club")
+      await expect(page.getByRole("radio", { name: "Purple" })).toBeChecked()
       await page.getByRole("button", { name: "Create group" }).click()
 
       await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
@@ -95,7 +95,7 @@ test.describe("group screens in the shared column", () => {
       )
       expect(groupCommands.map((frame) => frame.name)).toEqual(["group.create"])
       const sent = JSON.stringify(groupCommands[0])
-      for (const field of ["One book a month", "purple", "📚"]) expect(sent).toContain(field)
+      for (const field of ["One book a month", "#7e22ce", "📚"]) expect(sent).toContain(field)
     } finally {
       await cleanup(request, email, true)
     }

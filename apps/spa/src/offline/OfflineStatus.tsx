@@ -3,6 +3,7 @@ import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { ConflictChooser, type ConflictItem } from "@spy4x/preact-system/conflict-chooser"
 import { SyncStatus } from "@spy4x/preact-system/sync-status"
 import { Button } from "@spy4x/preact-ui/button"
+import { colorName } from "@ui/tag-parts.tsx"
 import { activeLayer } from "./index.ts"
 import type { NoteEntry } from "./notes-cache.ts"
 import type { TagEntry } from "./tags-cache.ts"
@@ -50,8 +51,10 @@ function tagView(entry: TagEntry): ConflictView {
     reason: entry.conflict?.reason ?? "version",
     mine: entry.kind === "delete"
       ? "You deleted this tag."
-      : `${entry.payload.name} (${entry.payload.color})`,
-    theirs: server ? `${server.name} (${server.color})` : "The tag is no longer in this group.",
+      : `${entry.payload.name} (${colorName(entry.payload.color)})`,
+    theirs: server
+      ? `${server.name} (${colorName(server.color)})`
+      : "The tag is no longer in this group.",
     canKeepMine: Boolean(server),
   }
 }

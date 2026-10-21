@@ -145,12 +145,12 @@ describe("group socket requests", () => {
       actor,
       requestId: "req-1",
       signal,
-      payload: { id, name: "Trips", description: "Our trips", color: "blue", emoji: "🏕️" },
+      payload: { id, name: "Trips", description: "Our trips", color: "#1d4ed8", emoji: "🏕️" },
     })
 
     expect(seen.command?.data).toMatchObject({
       description: "Our trips",
-      color: "blue",
+      color: "#1d4ed8",
       emoji: "🏕️",
     })
   })

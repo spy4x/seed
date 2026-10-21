@@ -32,7 +32,7 @@ const stamps = {
   updatedAt: "2026-10-02T00:00:00.000Z",
 }
 const note = (id: string): NoteItem => ({ id, groupId, title: id, body: "", tagIds: [], ...stamps })
-const tag = (id: string): TagItem => ({ id, groupId, name: id, color: "gray", ...stamps })
+const tag = (id: string): TagItem => ({ id, groupId, name: id, color: "#4b5563", ...stamps })
 
 /** The device of user 1 in memory. `sent` lists every command that reached the server. */
 function device(state: { socket: boolean }) {
@@ -175,7 +175,7 @@ describe("ids the SPA makes", () => {
     const { sent, notesLayer, tagsLayer } = device(state)
     const notes = offlineNotes({ ...onlineNotes, fetchPage: unreachable }, () => notesLayer)
     const tags = offlineTags({ ...onlineTags, fetchList: unreachable }, () => tagsLayer)
-    await tags.create({ groupId, id: OLD_TAG_ID, name: "Home", color: "gray" })
+    await tags.create({ groupId, id: OLD_TAG_ID, name: "Home", color: "#4b5563" })
     await notes.create({ groupId, id: OLD_NOTE_ID, title: "Old", body: "", tagIds: [OLD_TAG_ID] })
     expect(sent).toEqual([])
 

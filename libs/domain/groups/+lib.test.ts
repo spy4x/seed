@@ -138,9 +138,9 @@ describe("group domain", () => {
       id,
       name: "Trips",
       description: "  Our trips  ",
-      color: "green",
+      color: "#15803d",
       emoji: "🏕️",
-    })).toEqual({ id, name: "Trips", description: "Our trips", color: "green", emoji: "🏕️" })
+    })).toEqual({ id, name: "Trips", description: "Our trips", color: "#15803d", emoji: "🏕️" })
     expect(parseCreateGroupRequest({ id, name: "Trips", color: null, emoji: "" }))
       .toEqual({ id, name: "Trips", description: "", color: null, emoji: null })
   })
@@ -393,15 +393,14 @@ describe("a group's description", () => {
 })
 
 describe("a group's colour", () => {
-  it("is a palette name or null", () => {
-    for (const color of ["red", "orange", "green", "blue", "purple", "gray"]) {
-      expect(parseGroupColor(color)).toBe(color)
-    }
+  it("is any #rrggbb, kept in lower case, or null", () => {
+    expect(parseGroupColor("#1d4ed8")).toBe("#1d4ed8")
+    expect(parseGroupColor("#FACC15")).toBe("#facc15")
     expect(parseGroupColor(null)).toBeNull()
   })
 
-  it("refuses a hex value, an unknown name and a missing value", () => {
-    for (const value of ["#ff0000", "pink", "RED", "", undefined, 3]) {
+  it("refuses a palette name, a short or long hex, and a missing value", () => {
+    for (const value of ["red", "#ff00", "#ff000000", "ff0000", "", undefined, 3]) {
       expect(() => parseGroupColor(value)).toThrow(GroupError)
     }
   })
@@ -434,18 +433,18 @@ describe("a group's emoji", () => {
 
 describe("a group's details request", () => {
   const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
-  const details = { description: " Trips ", color: "green", emoji: "🏕️" }
+  const details = { description: " Trips ", color: "#15803d", emoji: "🏕️" }
 
   it("carries exactly the three fields, cleaned", () => {
     expect(parseGroupDetailsBody(details)).toEqual({
       description: "Trips",
-      color: "green",
+      color: "#15803d",
       emoji: "🏕️",
     })
     expect(parseGroupDetailsRequest({ groupId, ...details })).toEqual({
       groupId,
       description: "Trips",
-      color: "green",
+      color: "#15803d",
       emoji: "🏕️",
     })
   })

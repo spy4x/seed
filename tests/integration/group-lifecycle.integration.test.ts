@@ -56,7 +56,7 @@ Deno.test("rename: only an admin or the owner changes the name", async () => {
 Deno.test("details: only an admin or the owner sets them, and every member reads them", async () => {
   await withSchema(async (sql) => {
     const { repository, groupId, owner, admin, editor, viewer, stranger } = await team(sql)
-    const details = { description: "Our trips", color: "blue" as const, emoji: "🏕️" }
+    const details = { description: "Our trips", color: "#1d4ed8" as const, emoji: "🏕️" }
 
     for (const who of [viewer, editor, stranger]) {
       expect(await repository.updateDetails(groupId, details, who)).toBeNull()
@@ -84,7 +84,7 @@ Deno.test("details: only an admin or the owner sets them, and every member reads
 Deno.test("create: one write stores the name with the description, colour and emoji", async () => {
   await withSchema(async (sql) => {
     const { repository, owner } = await team(sql)
-    const details = { description: "Our trips", color: "green" as const, emoji: "🏕️" }
+    const details = { description: "Our trips", color: "#15803d" as const, emoji: "🏕️" }
 
     const created = await repository.create({ id: uuidV7(), name: "Trips", ...details }, owner)
     expect(created.group).toMatchObject({ name: "Trips", ...details })
@@ -102,7 +102,7 @@ Deno.test("details: an edit writes an audit row and moves the group's change seq
 
     await repository.updateDetails(
       groupId,
-      { description: "x", color: "red", emoji: null },
+      { description: "x", color: "#b91c1c", emoji: null },
       owner,
       "req-details",
     )

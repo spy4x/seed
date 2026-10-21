@@ -17,30 +17,30 @@ const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const id = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d112001"
 
 describe("parsing a tag request", () => {
-  it("trims the name and keeps the colour", () => {
+  it("trims the name and keeps the colour, in lower case", () => {
     const parsed = parseTagRequest(tagCreatePayloadSchema, {
       groupId,
       id,
       name: "  Work  ",
-      color: "blue",
+      color: "#1D4ED8",
     })
 
     expect(parsed.name).toBe("Work")
-    expect(parsed.color).toBe("blue")
+    expect(parsed.color).toBe("#1d4ed8")
   })
 
   it("counts an emoji as one character", () => {
     const name = "🙂".repeat(TAG_NAME_MAX_LENGTH)
 
-    expect(parseTagRequest(tagCreatePayloadSchema, { groupId, id, name, color: "gray" }).name)
+    expect(parseTagRequest(tagCreatePayloadSchema, { groupId, id, name, color: "#4b5563" }).name)
       .toBe(name)
     expect(() =>
-      parseTagRequest(tagCreatePayloadSchema, { groupId, id, name: name + "🙂", color: "gray" })
+      parseTagRequest(tagCreatePayloadSchema, { groupId, id, name: name + "🙂", color: "#4b5563" })
     ).toThrow("Tag name must contain")
   })
 
   it("refuses a name with a NUL, a line break or an invisible character, on create and rename", () => {
-    const base = { groupId, id, color: "blue" }
+    const base = { groupId, id, color: "#1d4ed8" }
     const message = "Tag name must not contain control or invisible characters"
 
     for (const name of ["a\u0000b", "a\nb", "a\u200bb", "a\u202eb"]) {
@@ -60,11 +60,13 @@ describe("parsing a tag request", () => {
     )
   })
 
-  it("refuses a blank name, a colour outside the palette and a missing version", () => {
-    const base = { groupId, id, name: "Work", color: "blue", version: 1 }
+  it("refuses a blank name, a colour that is no #rrggbb and a missing version", () => {
+    const base = { groupId, id, name: "Work", color: "#1d4ed8", version: 1 }
 
     expect(() => parseTagRequest(tagCreatePayloadSchema, { ...base, name: "  " })).toThrow()
-    expect(() => parseTagRequest(tagCreatePayloadSchema, { ...base, color: "pink" })).toThrow()
+    for (const color of ["blue", "#1d4ed", "#1d4ed8ff", "1d4ed8", "#gggggg"]) {
+      expect(() => parseTagRequest(tagCreatePayloadSchema, { ...base, color })).toThrow()
+    }
     expect(() => parseTagRequest(tagUpdatePayloadSchema, { ...base, version: undefined })).toThrow()
   })
 })
@@ -82,7 +84,7 @@ describe("reading a tag from an export file", () => {
   const entry = {
     id,
     name: "Home",
-    color: "blue",
+    color: "#1d4ed8",
     createdAt: "2026-10-01T09:00:00.000Z",
     updatedAt: "2026-10-01T09:00:00.000Z",
   }
@@ -100,7 +102,7 @@ describe("reading a tag from an export file", () => {
     const { name: _name, ...withoutName } = entry
     expect(problem(withoutName)).toBe(`the name is missing`)
     expect(problem({ ...entry, color: `pink` })).toBe(
-      `the colour must be blue, gray, green, orange, purple or red`,
+      `the colour must be a hex colour like #1a2b3c`,
     )
     expect(problem({ ...entry, updatedAt: `soon` })).toBe(
       `the last change date must be a date and time`,

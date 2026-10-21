@@ -193,7 +193,7 @@ async function fillTags(
     id: uuidV7(),
     group_id: groupId,
     name: `Filler ${index + 1}`,
-    color: "gray",
+    color: "#4b5563",
     change_sequence: 1,
     created_by_user_id: userId,
     updated_by_user_id: userId,
@@ -243,7 +243,7 @@ Deno.test("tags against Postgres", async (t) => {
 
     const createTag = (userId: number, groupId: string, name: string, id = uuidV7()) =>
       commands.execute(
-        new TagCreateCommand({ actor: actor(userId), groupId, id, name, color: "blue" }),
+        new TagCreateCommand({ actor: actor(userId), groupId, id, name, color: "#1d4ed8" }),
       )
 
     const createNote = (
@@ -276,7 +276,7 @@ Deno.test("tags against Postgres", async (t) => {
             groupId,
             id: tag.id,
             name: "Job",
-            color: "red",
+            color: "#b91c1c",
             version: 1,
           }),
         )
@@ -284,7 +284,7 @@ Deno.test("tags against Postgres", async (t) => {
           new TagDeleteCommand({ actor: actor(owner), groupId, id: tag.id, version: 2 }),
         )
 
-        expect(renamed.tag).toMatchObject({ name: "Job", color: "red", version: 2 })
+        expect(renamed.tag).toMatchObject({ name: "Job", color: "#b91c1c", version: 2 })
         expect(await nextSequence(sql, groupId)).toBe(before + 3n)
         expect(await tagOutbox(sql, groupId)).toEqual(["tag.created", "tag.updated", "tag.deleted"])
       },
@@ -299,6 +299,18 @@ Deno.test("tags against Postgres", async (t) => {
 
       expect(listed.tags.map((tag) => tag.name)).toEqual(["Work"])
       expect(refused).toMatchObject({ code: "ROLE_INSUFFICIENT" })
+    })
+
+    await t.step("the database refuses a colour that is no lower-case #rrggbb", async () => {
+      const { owner, groupId } = await seed()
+      const { tag } = await createTag(owner, groupId, "Loud")
+      for (const color of ["blue", "#FACC15", "#facc1"]) {
+        await expect(sql`UPDATE tags SET color = ${color} WHERE id = ${tag.id}`).rejects.toThrow(
+          "tags_color_check",
+        )
+        await expect(sql`UPDATE groups SET color = ${color} WHERE id = ${groupId}`).rejects
+          .toThrow("groups_color_check")
+      }
     })
 
     await t.step("a name another tag of the group has is refused whatever its case", async () => {
@@ -324,7 +336,7 @@ Deno.test("tags against Postgres", async (t) => {
           groupId,
           id: tag.id,
           name: "Job",
-          color: "red",
+          color: "#b91c1c",
           version: 7,
         }),
       ))
@@ -351,7 +363,7 @@ Deno.test("tags against Postgres", async (t) => {
             groupId: strangerGroupId,
             id: tag.id,
             name: "Mine",
-            color: "red",
+            color: "#b91c1c",
             version: 1,
           }),
         ))
@@ -381,11 +393,11 @@ Deno.test("tags against Postgres", async (t) => {
         const repository = new PostgresTagRepository(sql)
 
         const create = await refusal(repository.create(
-          { groupId, id: uuidV7(), name: "New", color: "blue" },
+          { groupId, id: uuidV7(), name: "New", color: "#1d4ed8" },
           viewer,
         ))
         const update = await refusal(repository.update(
-          { groupId, id: tag.id, name: "Job", color: "red", expectedVersion: 1 },
+          { groupId, id: tag.id, name: "Job", color: "#b91c1c", expectedVersion: 1 },
           viewer,
         ))
         const remove = await refusal(
@@ -495,7 +507,7 @@ Deno.test("tags against Postgres", async (t) => {
         expect(targetTags.tags.map((tag) => tag.name)).toEqual(["Home", "work"])
         expect(home2.id).not.toBe(home.id)
         expectVersion7Ids([home2])
-        expect(home2.color).toBe("blue")
+        expect(home2.color).toBe("#1d4ed8")
         expect([...notes[0].tagIds].sort()).toEqual([existing.id, home2.id].sort())
         const sourceTags = await queries.execute(new TagListQuery({ actor: actor(owner), groupId }))
         expect(sourceTags.tags.map((tag) => tag.name)).toEqual(["Home", "Work"])
@@ -525,13 +537,13 @@ Deno.test("tags against Postgres", async (t) => {
             groupId,
             id: uuidV7(),
             name: nul,
-            color: "red",
+            color: "#b91c1c",
           })),
           await refusal(call(owner, "tag.update", {
             groupId,
             id: tag.id,
             name: nul,
-            color: "red",
+            color: "#b91c1c",
             version: 1,
           })),
           await refusal(call(owner, "group.create", { id: newGroupId, name: nul })),
@@ -546,7 +558,7 @@ Deno.test("tags against Postgres", async (t) => {
         expect(await nextSequence(sql, groupId)).toBe(before)
         expect(await sql`SELECT 1 FROM groups WHERE id = ${newGroupId}`).toHaveLength(0)
         // The same calls with a clean name are stored, so the refusals above are the name's.
-        await call(owner, "tag.create", { groupId, id: uuidV7(), name: "a b", color: "red" })
+        await call(owner, "tag.create", { groupId, id: uuidV7(), name: "a b", color: "#b91c1c" })
         await call(owner, "group.create", { id: newGroupId, name: "a b" })
         expect(await sql`SELECT 1 FROM groups WHERE id = ${newGroupId}`).toHaveLength(1)
       },
@@ -739,22 +751,22 @@ Deno.test("tags against Postgres", async (t) => {
         const { owner, groupId } = await seed()
         const id = uuidV7()
         const tag = { groupId, id }
-        await call(owner, "tag.create", { ...tag, name: "Work", color: "blue" })
+        await call(owner, "tag.create", { ...tag, name: "Work", color: "#1d4ed8" })
         await createNote(owner, groupId, [id])
         await createNote(owner, groupId, [id])
         // A note in the trash keeps its link, and is not one of the notes that "carried" the tag.
         const { note: trashed } = await createNote(owner, groupId, [id])
         await notes.delete({ groupId, id: trashed.id, expectedVersion: 1 }, owner)
 
-        await call(owner, "tag.update", { ...tag, name: "Job", color: "blue", version: 1 })
-        await call(owner, "tag.update", { ...tag, name: "Job", color: "red", version: 2 })
+        await call(owner, "tag.update", { ...tag, name: "Job", color: "#1d4ed8", version: 1 })
+        await call(owner, "tag.update", { ...tag, name: "Job", color: "#b91c1c", version: 2 })
         await call(owner, "tag.delete", { ...tag, version: 3 })
 
         const event = { actorUserId: owner, requestId: "req-tags", entityType: "tag", entityId: id }
         expect(await tagAudit(sql, groupId)).toEqual([
           { ...event, eventKind: "tag.created", details: { name: "Work" } },
           { ...event, eventKind: "tag.updated", details: { name: "Job", from: "Work" } },
-          { ...event, eventKind: "tag.updated", details: { name: "Job", color: "red" } },
+          { ...event, eventKind: "tag.updated", details: { name: "Job", color: "#b91c1c" } },
           { ...event, eventKind: "tag.deleted", details: { name: "Job", notes: 2 } },
         ])
       },
@@ -792,7 +804,7 @@ Deno.test("tags against Postgres", async (t) => {
           groupId,
           id: tag.id,
           name: "home",
-          color: "red",
+          color: "#b91c1c",
           version: 1,
         }),
       ))

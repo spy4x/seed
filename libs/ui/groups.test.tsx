@@ -1602,8 +1602,8 @@ describe("MyInvitationsSection", () => {
 })
 
 describe("GroupEditorScreen form", () => {
-  const owned = { ...team, description: "Our flat", color: "green" as const, emoji: "🏠" }
-  const saved: GroupDraft = { name: "Team", description: "Our flat", color: "green", emoji: "🏠" }
+  const owned = { ...team, description: "Our flat", color: "#15803d" as const, emoji: "🏠" }
+  const saved: GroupDraft = { name: "Team", description: "Our flat", color: "#15803d", emoji: "🏠" }
   const settings: GroupEditorScreenProps = {
     group: owned,
     current: true,
@@ -1620,11 +1620,36 @@ describe("GroupEditorScreen form", () => {
     value: EMPTY_GROUP_DRAFT,
   }
 
-  it("shows the group's emoji on its colour in the header", async () => {
+  it("shows the group's emoji on its colour in the header, in a text colour that reads on it", async () => {
     await mount(<GroupEditorScreen {...settings} />)
-    expect(find("[data-e2e=page-header] [data-e2e=group-mark]").textContent).toBe("🏠")
+    const mark = find<HTMLElement>("[data-e2e=page-header] [data-e2e=group-mark]")
+    expect(mark.textContent).toBe("🏠")
+    expect(mark.getAttribute("data-color")).toBe("#15803d")
+    expect(mark.style.backgroundColor).toBe("#15803d")
+    expect(mark.style.color).toBe("#ffffff")
+  })
+
+  it("updates the header's mark as the colour and emoji change, before they are saved", async () => {
+    await mount(
+      <GroupEditorScreen {...settings} value={{ ...saved, color: "#facc15", emoji: " 🏕️ " }} />,
+    )
+    const mark = find<HTMLElement>("[data-e2e=page-header] [data-e2e=group-mark]")
+    expect(mark.getAttribute("data-color")).toBe("#facc15")
+    expect(mark.textContent).toBe("🏕️")
+    // Yellow is the one preset dark text reads on.
+    expect(mark.style.color).toBe("#000000")
+  })
+
+  it("shows a viewer the group's saved mark, not the fields'", async () => {
+    await mount(
+      <GroupEditorScreen
+        {...settings}
+        group={{ ...owned, role: GroupRole.VIEWER }}
+        value={{ ...saved, color: "#facc15" }}
+      />,
+    )
     expect(find("[data-e2e=page-header] [data-e2e=group-mark]").getAttribute("data-color"))
-      .toBe("green")
+      .toBe("#15803d")
   })
 
   it("fills the fields with the group as saved and reports each change", async () => {
@@ -1632,37 +1657,41 @@ describe("GroupEditorScreen form", () => {
     await mount(<GroupEditorScreen {...settings} onChange={changes.fn} />)
     expect(find<HTMLInputElement>("[data-e2e=group-name]").value).toBe("Team")
     expect(find<HTMLTextAreaElement>("[data-e2e=group-description]").value).toBe("Our flat")
-    expect(find<HTMLInputElement>("input[name=color][value=green]").checked).toBe(true)
+    expect(find<HTMLInputElement>("input[name=color][value='#15803d']").checked).toBe(true)
     expect(find<HTMLInputElement>("[data-e2e=group-emoji]").value).toBe("🏠")
 
     await type("[data-e2e=group-name]", "Crew")
     await type("[data-e2e=group-description]", "Our new flat")
     await type("[data-e2e=group-emoji]", "🏕️")
-    await click("input[name=color][value=blue]")
-    await click("input[name=color][value='']")
+    await click("input[name=color][value='#1d4ed8']")
+    await click("input[name=color][value=none]")
     expect(changes.calls).toEqual([
       [{ ...saved, name: "Crew" }],
       [{ ...saved, description: "Our new flat" }],
       [{ ...saved, emoji: "🏕️" }],
-      [{ ...saved, color: "blue" }],
+      [{ ...saved, color: "#1d4ed8" }],
       [{ ...saved, color: null }],
     ])
   })
 
-  it("offers None and the six colours, each named, in one radio group", async () => {
+  it("offers No colour, the 16 presets and a custom colour, each named, in one radio group", async () => {
     await mount(<GroupEditorScreen {...settings} />)
-    const fieldset = find("fieldset[data-e2e=group-color]")
+    const fieldset = find("[data-e2e=group-color] fieldset")
     expect(fieldset.querySelector("legend")!.textContent).toContain("Colour")
-    expect(fieldset.querySelectorAll("input[type=radio][name=color]")).toHaveLength(7)
-    expect(texts("fieldset[data-e2e=group-color] label")).toEqual([
-      "None",
-      "Red",
-      "Orange",
-      "Green",
-      "Blue",
-      "Purple",
-      "Grey",
-    ])
+    expect(fieldset.querySelector("legend")!.textContent).toContain("Optional")
+    expect(fieldset.querySelectorAll("input[type=radio][name=color]")).toHaveLength(18)
+    const names = texts("[data-e2e=group-color] label")
+    expect(names[0]).toBe("No colour")
+    expect(names.slice(1, 3)).toEqual(["Gray", "Red"])
+    expect(names.at(-1)).toBe("Pick a custom colour")
+  })
+
+  it("takes a custom hex colour typed into the colour field", async () => {
+    const changes = spy<[GroupDraft]>()
+    await mount(<GroupEditorScreen {...settings} onChange={changes.fn} />)
+    await click("input[name=color][value=custom]")
+    await type("[data-e2e=group-color] input.font-mono", "#59168B")
+    expect(changes.calls).toEqual([[{ ...saved, color: "#59168b" }]])
   })
 
   it("shows Discard and Save group only while a field differs from what is saved", async () => {
@@ -1789,30 +1818,28 @@ describe("GroupEditorScreen form", () => {
     expect(focused()).toBe("group-form-error")
   })
 
-  it("previews the group's mark and name as they are typed", async () => {
+  it("has no Preview block: the header's mark is the preview, on the create page too", async () => {
+    await mount(<GroupEditorScreen {...settings} />)
+    expect(has("[data-e2e=group-preview]")).toBe(false)
+    expect(root!.textContent).not.toContain("Preview")
     await mount(
-      <GroupEditorScreen
-        {...creating}
-        value={{ ...EMPTY_GROUP_DRAFT, name: " Trip ", emoji: "🏕️", color: "blue" }}
-      />,
+      <GroupEditorScreen {...creating} value={{ ...EMPTY_GROUP_DRAFT, color: "#0f766e" }} />,
     )
-    expect(find("[data-e2e=group-preview]").textContent).toContain("Trip")
-    expect(find("[data-e2e=group-preview] [data-e2e=group-mark]").getAttribute("data-color"))
-      .toBe("blue")
-    expect(find("[data-e2e=group-preview] [data-e2e=group-mark]").textContent).toBe("🏕️")
+    expect(root!.textContent).not.toContain("Preview")
+    expect(find("[data-e2e=page-header] [data-e2e=group-mark]").getAttribute("data-color"))
+      .toBe("#0f766e")
     await rerender(<GroupEditorScreen {...creating} />)
-    expect(find("[data-e2e=group-preview]").textContent).toContain("Your group's name")
-    expect(has("[data-e2e=group-preview] [data-e2e=group-mark]")).toBe(false)
+    expect(has("[data-e2e=page-header] [data-e2e=group-mark]")).toBe(false)
   })
 
   it("draws the create page as the same form, empty, with Cancel and Create group", async () => {
     await mount(<GroupEditorScreen {...creating} />)
     expect(find("h1").textContent).toBe("New group")
     expect(find<HTMLInputElement>("[data-e2e=group-name]").value).toBe("")
-    for (const field of ["group-description", "group-emoji", "group-preview"]) {
+    for (const field of ["group-description", "group-emoji"]) {
       expect(has(`[data-e2e=${field}]`)).toBe(true)
     }
-    expect(has("fieldset[data-e2e=group-color]")).toBe(true)
+    expect(has("[data-e2e=group-color] fieldset")).toBe(true)
     expect(find("[data-e2e=group-create]").textContent).toBe("Create group")
     expect(find("[data-e2e=group-cancel]").getAttribute("href")).toBe(SCREEN_PATHS.groups)
     // Nothing of an existing group: no menu, no members, no discard.
@@ -1886,13 +1913,13 @@ describe("GroupEditorScreen form", () => {
   it("draws no mark without a colour or an emoji, and a grey one for an emoji alone", async () => {
     await mount(<GroupMark />)
     expect(has("[data-e2e=group-mark]")).toBe(false)
-    await rerender(<GroupMark color="gray" emoji="🏠" />)
-    const grey = find("[data-e2e=group-mark]").className
     await rerender(<GroupMark emoji="🏠" />)
     expect(find("[data-e2e=group-mark]").hasAttribute("data-color")).toBe(false)
-    expect(find("[data-e2e=group-mark]").className).toBe(grey)
-    await rerender(<GroupMark color="red" />)
-    expect(find("[data-e2e=group-mark]").getAttribute("data-color")).toBe("red")
+    expect(find<HTMLElement>("[data-e2e=group-mark]").getAttribute("style")).toBe(null)
+    expect(find("[data-e2e=group-mark]").className).toContain("bg-track")
+    await rerender(<GroupMark color="#b91c1c" />)
+    expect(find("[data-e2e=group-mark]").getAttribute("data-color")).toBe("#b91c1c")
+    expect(find<HTMLElement>("[data-e2e=group-mark]").style.backgroundColor).toBe("#b91c1c")
     expect(groupLabel({ name: "Team", emoji: "🏠" })).toBe("🏠 Team")
     expect(groupLabel({ name: "Team", emoji: null })).toBe("Team")
   })
@@ -1900,7 +1927,7 @@ describe("GroupEditorScreen form", () => {
 
 describe("group editor, as the server draws it", () => {
   it("hides the mark and names each colour in one radio group", () => {
-    const mark = renderToString(<GroupMark color="green" emoji="🏠" />)
+    const mark = renderToString(<GroupMark color="#15803d" emoji="🏠" />)
     expect(mark).toMatch(/<span [^>]*aria-hidden="true"[^>]*>🏠<\/span>/)
 
     const form = renderToString(
@@ -1909,14 +1936,14 @@ describe("group editor, as the server draws it", () => {
         group={null}
         current={false}
         loading={false}
-        value={{ ...EMPTY_GROUP_DRAFT, color: "blue" }}
+        value={{ ...EMPTY_GROUP_DRAFT, color: "#1d4ed8" }}
       />,
     )
     const radios = form.match(/<input [^>]*type="radio"[^>]*>/g) ?? []
-    // None and the six palette names.
-    expect(radios.length).toBe(7)
+    // No colour, the 16 presets and Custom.
+    expect(radios.length).toBe(18)
     for (const radio of radios) expect(radio).toContain(`name="color"`)
-    for (const name of ["Red", "Orange", "Green", "Blue", "Purple", "Grey"]) {
+    for (const name of ["No colour", "Gray", "Yellow", "Pink", "Pick a custom colour"]) {
       expect(form).toMatch(new RegExp(`>${name}</`))
     }
   })

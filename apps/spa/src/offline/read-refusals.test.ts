@@ -31,7 +31,7 @@ const stamps = {
   updatedAt: "2026-10-02T00:00:00.000Z",
 }
 const note: NoteItem = { id: "n-1", groupId, title: "Plan", body: "", tagIds: [], ...stamps }
-const tag: TagItem = { id: "t-1", groupId, name: "Urgent", color: "gray", ...stamps }
+const tag: TagItem = { id: "t-1", groupId, name: "Urgent", color: "#4b5563", ...stamps }
 
 /** A device in memory holding the notes and tags of user 1, with nothing queued. */
 function device() {

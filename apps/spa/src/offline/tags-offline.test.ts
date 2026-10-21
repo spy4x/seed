@@ -15,7 +15,7 @@ function tag(id: string, name = id, version = 1): TagItem {
     id,
     groupId,
     name,
-    color: "gray",
+    color: "#4b5563",
     version,
     changeSequence: "1",
     createdByUserId: 1,
@@ -81,7 +81,7 @@ describe("tags with the offline layer", () => {
     const deps = offlineTags(online, () => layer)
     await deps.fetchList(groupId)
 
-    await deps.create({ groupId, id: "m", name: "Mid", color: "blue" })
+    await deps.create({ groupId, id: "m", name: "Mid", color: "#1d4ed8" })
 
     expect((await deps.fetchList(groupId)).map((t) => t.name)).toEqual(["Alpha", "Mid", "Zulu"])
   })
@@ -91,7 +91,12 @@ describe("tags with the offline layer", () => {
     const layer = layerWith({ socket: true })
     const deps = offlineTags(online, () => layer)
 
-    const { tag: created } = await deps.create({ groupId, id: "t-1", name: "Urgent", color: "red" })
+    const { tag: created } = await deps.create({
+      groupId,
+      id: "t-1",
+      name: "Urgent",
+      color: "#b91c1c",
+    })
 
     expect([created.id, created.name]).toEqual(["t-1", "sent"])
     expect(layer.tags.outbox.entries()).toEqual([])
@@ -110,8 +115,8 @@ describe("tags with the offline layer", () => {
 
     expect((await deps.fetchList(groupId)).map((t) => t.id)).toEqual(["a"])
     expect(await deps.readLocal?.(groupId)).toEqual([])
-    await deps.create({ groupId, id: "n", name: "New", color: "red" })
-    await deps.update({ groupId, id: "a", name: "Alpha", color: "red", version: 1 })
+    await deps.create({ groupId, id: "n", name: "New", color: "#b91c1c" })
+    await deps.update({ groupId, id: "a", name: "Alpha", color: "#b91c1c", version: 1 })
     await deps.delete({ groupId, id: "a", version: 1 })
     expect(sent).toEqual(["create n", "update a", "delete a"])
   })

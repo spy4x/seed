@@ -12,6 +12,7 @@ import { act } from "preact/test-utils"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteDraft, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
 import { TAG_PATHS } from "./progressive.tsx"
+import { colorName, colorStyle } from "./tag-parts.tsx"
 import { TagEditorScreen, type TagEditorScreenProps } from "./tag-editor-screen.tsx"
 import { TagsScreen, type TagsScreenProps } from "./tags-screen.tsx"
 
@@ -129,8 +130,8 @@ function spy<A extends unknown[]>(): { calls: A[]; fn: (...args: A) => void } {
 
 const team = { id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002", name: "Team", canWrite: true }
 const viewerOfTeam = { ...team, canWrite: false }
-const urgent = { id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d112001", name: "Urgent", color: "red" as const }
-const home = { id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d112002", name: "Home", color: "blue" as const }
+const urgent = { id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d112001", name: "Urgent", color: "#b91c1c" }
+const home = { id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d112002", name: "Home", color: "#1d4ed8" }
 const tags = [urgent, home]
 const groceries = {
   id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001",
@@ -271,6 +272,24 @@ describe("TagsScreen", () => {
     expect(count("[data-e2e=tag-delete-dialog]")).toBe(0)
   })
 
+  it("draws each tag in its own colour, with text that reads on it", async () => {
+    await mount(
+      <TagsScreen {...tagsDefaults} tags={[{ ...urgent, color: "#facc15" }, home]} />,
+    )
+    const yellow = find<HTMLElement>(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-edit] span`)
+    expect(yellow.style.backgroundColor).toBe("#facc15")
+    expect(yellow.style.color).toBe("#000000")
+    const blue = find<HTMLElement>(`[data-e2e=tag-${home.id}] [data-e2e=tag-edit] span`)
+    expect(blue.style.backgroundColor).toBe("#1d4ed8")
+    expect(blue.style.color).toBe("#ffffff")
+  })
+
+  it("draws a colour that is no hex, such as an old copy on the device, in the default gray", () => {
+    expect(colorStyle("blue").backgroundColor).toBe("#4b5563")
+    expect(colorName("#B91C1C")).toBe("Red")
+    expect(colorName("#59168b")).toBe("#59168b")
+  })
+
   it("moves focus to the next row's menu, else the previous row's, else the New tag action, once a tag is deleted", async () => {
     const row = () => document.activeElement?.closest("li")?.getAttribute("data-e2e")
     const third = { ...home, id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d112003", name: "Work" }
@@ -324,7 +343,7 @@ const tagEditorDefaults: TagEditorScreenProps = {
   loading: false,
   notFound: false,
   tag: null,
-  value: { name: "", color: "gray" },
+  value: { name: "", color: "#4b5563" },
   errors: { name: null, form: null },
   saving: false,
   dirty: false,
@@ -352,27 +371,44 @@ describe("TagEditorScreen", () => {
     expect(navigate.calls).toEqual([[TAG_PATHS.list]])
   })
 
-  it("names the colours in British English, Grey first", async () => {
+  it("offers the 16 named presets and a custom colour, with no None: a tag always has a colour", async () => {
     await mount(<TagEditorScreen {...tagEditorDefaults} />)
     const labels = [...document.querySelectorAll("[data-e2e=tag-color] label")]
       .map((label) => label.textContent?.trim())
-    expect(labels).toEqual(["Grey", "Red", "Orange", "Green", "Blue", "Purple"])
+    expect(labels).toHaveLength(17)
+    expect(labels.slice(0, 3)).toEqual(["Gray", "Red", "Orange"])
+    expect(labels.at(-1)).toBe("Pick a custom colour")
     expect(find("[data-e2e=tag-color] legend").textContent).toBe("Colour")
+  })
+
+  it("previews the chip with the name typed so far, or a stand-in while it is empty", async () => {
+    await mount(
+      <TagEditorScreen {...tagEditorDefaults} value={{ name: " Errands ", color: "#facc15" }} />,
+    )
+    const chip = find<HTMLElement>("[data-e2e=tag-color] [data-e2e=color-field-preview] span")
+    expect(chip.textContent).toBe("Errands")
+    expect(chip.style.color).toBe("#000000")
+    await rerender(<TagEditorScreen {...tagEditorDefaults} />)
+    expect(find("[data-e2e=color-field-preview]").textContent).toBe("Tag name")
   })
 
   it("reports the typed name and the picked colour", async () => {
     const change = spy<[{ name: string; color: string }]>()
     await mount(<TagEditorScreen {...tagEditorDefaults} onChange={change.fn} />)
     await type("[data-e2e=tag-name]", "Errands")
-    expect(change.calls).toEqual([[{ name: "Errands", color: "gray" }]])
+    expect(change.calls).toEqual([[{ name: "Errands", color: "#4b5563" }]])
 
-    await click("[name=color][value=green]")
-    expect(change.calls.at(-1)).toEqual([{ name: "", color: "green" }])
+    await click("[name=color][value='#15803d']")
+    expect(change.calls.at(-1)).toEqual([{ name: "", color: "#15803d" }])
+
+    await click("[name=color][value=custom]")
+    await type("[data-e2e=tag-color] input.font-mono", "#59168B")
+    expect(change.calls.at(-1)).toEqual([{ name: "", color: "#59168b" }])
   })
 
   it("submits through the app's callback and keeps the browser from posting the form", async () => {
     const save = spy<[]>()
-    const value = { name: "Errands", color: "gray" as const }
+    const value = { name: "Errands", color: "#4b5563" as const }
     await mount(<TagEditorScreen {...tagEditorDefaults} value={value} onSave={save.fn} />)
     expect(await submit("[data-e2e=tag-name]")).toBe(true)
     expect(save.calls).toHaveLength(1)
@@ -380,7 +416,7 @@ describe("TagEditorScreen", () => {
 
   it("refuses a second submit while the tag is being created, and says Creating…", async () => {
     const save = spy<[]>()
-    const value = { name: "Errands", color: "gray" as const }
+    const value = { name: "Errands", color: "#4b5563" as const }
     await mount(<TagEditorScreen {...tagEditorDefaults} value={value} saving onSave={save.fn} />)
     await submit("[data-e2e=tag-name]")
     expect(save.calls).toHaveLength(0)
@@ -388,7 +424,7 @@ describe("TagEditorScreen", () => {
   })
 
   it("titles an existing tag's page with its saved name, not the one being typed", async () => {
-    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "blue" }} dirty />)
+    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "#1d4ed8" }} dirty />)
     expect(find("h1").textContent).toBe("Home")
     expect(find<HTMLInputElement>("[data-e2e=tag-name]").value).toBe("Hom")
   })
@@ -402,7 +438,7 @@ describe("TagEditorScreen", () => {
     await rerender(
       <TagEditorScreen
         {...editHome}
-        value={{ name: "Hom", color: "blue" }}
+        value={{ name: "Hom", color: "#1d4ed8" }}
         dirty
         onRevert={revert.fn}
       />,
@@ -413,7 +449,7 @@ describe("TagEditorScreen", () => {
   })
 
   it("puts focus on the name field when the name is refused, and ties the message to it", async () => {
-    const value = { name: "Home", color: "gray" as const }
+    const value = { name: "Home", color: "#4b5563" as const }
     await mount(<TagEditorScreen {...tagEditorDefaults} value={value} />)
     await rerender(
       <TagEditorScreen
@@ -481,7 +517,7 @@ describe("TagEditorScreen", () => {
   })
 
   it("moves focus to the name field when Cancel takes the footer away", async () => {
-    const changed = { name: "Hom", color: "blue" as const }
+    const changed = { name: "Hom", color: "#1d4ed8" as const }
     await mount(<TagEditorScreen {...editHome} value={changed} dirty />)
     find("[data-e2e=tag-cancel]").focus()
     await rerender(<TagEditorScreen {...editHome} />)
@@ -490,7 +526,7 @@ describe("TagEditorScreen", () => {
   })
 
   it("moves focus to the name field once a save went through, not while it is still running", async () => {
-    const changed = { name: "Hom", color: "blue" as const }
+    const changed = { name: "Hom", color: "#1d4ed8" as const }
     await mount(<TagEditorScreen {...editHome} value={changed} dirty />)
     find("[data-e2e=tag-save]").focus()
     await rerender(<TagEditorScreen {...editHome} value={changed} saving />)
@@ -500,10 +536,10 @@ describe("TagEditorScreen", () => {
   })
 
   it("leaves focus in the fields when typing puts the saved name back", async () => {
-    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "blue" }} dirty />)
-    find("[name=color][value=red]").focus()
+    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "#1d4ed8" }} dirty />)
+    find("[name=color][value='#b91c1c']").focus()
     await rerender(<TagEditorScreen {...editHome} />)
-    expect(document.activeElement?.getAttribute("value")).toBe("red")
+    expect(document.activeElement?.getAttribute("value")).toBe("#b91c1c")
   })
 
   it("does nothing on Enter in an existing tag with nothing changed", async () => {
@@ -514,7 +550,7 @@ describe("TagEditorScreen", () => {
   })
 
   it("keeps the fields to a form's width, with the footer under them, on a wide column", async () => {
-    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "blue" }} dirty />)
+    await mount(<TagEditorScreen {...editHome} value={{ name: "Hom", color: "#1d4ed8" }} dirty />)
     const column = find("[data-e2e=tag-name]").closest(".max-w-md")
     expect(column).not.toBeNull()
     expect(column?.contains(find("[data-e2e=tag-save]"))).toBe(true)

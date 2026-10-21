@@ -76,7 +76,7 @@ test.describe("group details", () => {
       // The form saves nothing until something changed: no footer yet.
       await expect(page.locator("[data-e2e=group-save]")).toHaveCount(0)
       await page.locator("[data-e2e=group-description]").fill("Rent, bills and the shopping list")
-      await page.getByRole("radio", { name: "Purple" }).check()
+      await page.locator("[data-e2e=group-color]").getByTitle("Purple", { exact: true }).click()
       await page.locator("[data-e2e=group-emoji]").fill("🏠🏕️")
       await page.locator("[data-e2e=group-save]").click()
       await expect(page.getByText("Use a single emoji")).toBeVisible()
@@ -90,7 +90,7 @@ test.describe("group details", () => {
         .toHaveValue("Rent, bills and the shopping list")
       const mark = page.locator("[data-e2e=page-header] [data-e2e=group-mark]")
       await expect(mark).toHaveText("🏠")
-      await expect(mark).toHaveAttribute("data-color", "purple")
+      await expect(mark).toHaveAttribute("data-color", "#7e22ce")
 
       // Only the worker's announcement, turned into a hint on the socket, can bring it here.
       await expect(memberPage.locator("[data-e2e=group-general-description]"))
@@ -114,7 +114,7 @@ test.describe("group details", () => {
       // The same edit, made through the API by a viewer, is refused.
       const refused = await memberPage.request.put(`${apiBase}/api/groups/${groupId}/details`, {
         headers: { ...headers, "idempotency-key": uuidV7() },
-        data: { description: "Mine", color: "red", emoji: null },
+        data: { description: "Mine", color: "#b91c1c", emoji: null },
       })
       expect(refused.status()).toBe(403)
     } finally {

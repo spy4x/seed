@@ -6,6 +6,7 @@ import {
   hasUnstorableTextCharacters,
 } from "@spy4x/platform/universal/text"
 import { isUuid } from "@spy4x/platform/universal/uuid"
+import { isHexColor } from "@spy4x/platform/universal/color"
 import type { Actor } from "@domain/identity"
 
 export * from "./activity.ts"
@@ -34,13 +35,10 @@ export const GROUP_DESCRIPTION_MAX = 500
 export const GROUP_EMOJI_MAX = 16
 
 /**
- * The colours a group can carry: names of the design tokens' palette, never a hex value, so the
- * theme decides the shade in light and dark. Adding a name here and in `group-appearance.tsx`
- * is all a new colour needs; the database stores the name.
+ * A group's colour: any `#rrggbb`, kept in lower case. The mark draws the emoji on it, and the
+ * screens pick black or white for anything written on it (`readableTextColor`).
  */
-export const GROUP_COLORS = ["red", "orange", "green", "blue", "purple", "gray"] as const
-
-export type GroupColor = typeof GROUP_COLORS[number]
+export type GroupColor = string
 
 export enum GroupRole {
   VIEWER = 1,
@@ -700,15 +698,13 @@ export function parseGroupDescription(value: unknown): string {
   return description
 }
 
-/** A group colour: one of {@link GROUP_COLORS}, or `null` for none. */
+/** A group colour: a `#rrggbb` in either case, returned in lower case, or `null` for none. */
 export function parseGroupColor(value: unknown): GroupColor | null {
   if (value === null) return null
-  if (typeof value === "string" && (GROUP_COLORS as readonly string[]).includes(value)) {
-    return value as GroupColor
-  }
+  if (isHexColor(value)) return value.toLowerCase()
   throw new GroupError(
     "INVALID_REQUEST",
-    `Group colour must be null or one of ${GROUP_COLORS.join(", ")}`,
+    "Group colour must be null or a hex colour like #1a2b3c",
   )
 }
 

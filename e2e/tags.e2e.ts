@@ -44,7 +44,7 @@ test.describe("tags", () => {
       await expect.poll(async () => (await serverTags(page, groupId)).map((t) => t.name).sort())
         .toEqual(["Home", "Urgent"])
       expect((await serverTags(page, groupId)).find((t) => t.name === "Home")?.color)
-        .toBe("blue")
+        .toBe("#1d4ed8")
       await tags.toNotes()
 
       await notes.create("Groceries", ["Home", "Urgent"])
@@ -162,7 +162,7 @@ test.describe("tags", () => {
       await expect.poll(async () => (await serverTags(page, groupId)).map((t) => t.name))
         .toEqual(["Errands"])
       const [tag] = await serverTags(page, groupId)
-      expect(tag.color).toBe("green")
+      expect(tag.color).toBe("#15803d")
       await expect.poll(async () => (await serverNotes(page, groupId)).map((n) => n.tagIds))
         .toEqual([[tag.id]])
 
