@@ -11,7 +11,7 @@
 export const ADMIN_VIDEO = {
   webm: `/video/admin-panel.webm`,
   mp4: `/video/admin-panel.mp4`,
-  /** The full frame the video's Dashboard shot opens on: the player's poster on `/admin`. */
+  /** The Dashboard, without the pointer: the player's poster on `/admin`. */
   poster: `/video/admin-panel-poster-1920.webp`,
   /** A still of the Users list, cropped to its first five people: the picture on `/features`. */
   still: `/video/admin-panel-poster-1280.webp`,
@@ -21,9 +21,9 @@ export const ADMIN_VIDEO = {
   /** The length, rounded to whole seconds. */
   seconds: 60,
   /** The MP4's size, as the download link names it. */
-  mp4Size: `6 MB`,
+  mp4Size: `5 MB`,
   /** When the recording was published, with its timezone, for the JSON-LD and the sitemap. */
-  uploadDate: `2026-10-21T05:28:36+07:00`,
+  uploadDate: `2026-10-21T07:08:32+07:00`,
   /** What a viewer hears, in the line under the player, in its label and above the transcript. */
   sound: {
     line: `Music, no speech`,
@@ -41,7 +41,7 @@ export const ADMIN_VIDEO = {
     `Groups lists every group with its owner, the largest first. The operator opens Product team and sees its members.`,
     `Billing shows €450.00 a month from seven paying groups, one of them past due. The operator opens Research lab, whose history shows a refunded payment with the operator's note.`,
     `Newsletter shows 90 subscribers, 46 who joined in the last 30 days, 3 issues sent and a chart of the list growing.`,
-    `System says everything is working: the database, the cache and the job queue are all OK.`,
+    `System says everything is working: the database, the cache, the job queue, the backups and the migrations are all OK, and the API runs release v2.0.0 with its commit.`,
     `From the account menu, the operator switches the theme from dark to light.`,
     `An end card: "Free and MIT-licensed. The code is on GitHub."`,
   ],

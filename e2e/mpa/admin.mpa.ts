@@ -5,7 +5,7 @@ const REPOSITORY = `https://github.com/spy4x/seed`
 /** What the page says about the video: its length, its sound, and one line per shot. */
 const SECONDS = 60
 const SHOTS = 12
-const MP4_SIZE = `6 MB`
+const MP4_SIZE = `5 MB`
 
 /** Runs axe-core over the whole page and returns each violation's rule and the elements it hit. */
 async function violations(page: Page): Promise<string[]> {
