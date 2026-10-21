@@ -24,6 +24,8 @@ import {
   totpConnectStart,
   totpDisconnect,
 } from "../state/auth.ts"
+import { deleteGuestAccount, isGuestSession } from "../state/guest.ts"
+import { guestRefusal } from "../state/guest-refusal.ts"
 import { sessionState } from "../state/session.ts"
 import { emailStore } from "../state/email.ts"
 import { apiFetch } from "../state/api.ts"
@@ -103,6 +105,7 @@ export function ProfileView() {
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [blockers, setBlockers] = useState<AccountDeletionBlocker[] | null>(null)
   const [signOutOthers, setSignOutOthers] = useState(true)
+  const [guestDeleteError, setGuestDeleteError] = useState<string | null>(null)
   // Both lists are kept on the device and shown, with their time, when the server is unreachable.
   const [devices] = useState(() => createDevicesStore(listSessions, localReads))
   const [devicesBusy, setDevicesBusy] = useState(false)
@@ -338,6 +341,11 @@ export function ProfileView() {
   }
 
   const registerPush = async () => {
+    // Before the browser asks for permission: the server refuses a guest's device anyway (#224).
+    if (isGuestSession()) {
+      guestRefusal.value = "push"
+      return
+    }
     if (!pushPublicKey) return
     setPushError(null)
     setPushBusy(true)
@@ -417,9 +425,30 @@ export function ProfileView() {
     })
   }
 
+  const submitGuestDelete = async (confirm: string) => {
+    setGuestDeleteError(null)
+    setDeleteBusy(true)
+    const result = await deleteGuestAccount(confirm)
+    setDeleteBusy(false)
+    if (!result.ok) return setGuestDeleteError(result.error)
+    navigate(SCREEN_PATHS.signUp, { replace: true })
+    toasts.success({
+      title: "Guest account deleted",
+      body: "Everything in it is gone.",
+      dataE2E: "guest-deleted",
+    })
+  }
+
   return (
     <ProfileScreen
       user={session.user}
+      guest={isGuestSession(session.user)
+        ? {
+          pending: deleteBusy,
+          error: guestDeleteError,
+          onDelete: (confirm) => void submitGuestDelete(confirm),
+        }
+        : undefined}
       // The first steps show on the home page, where a new account lands, under its header.
       onboarding={<OnboardingView />}
       onSetPassword={submitFirstPassword}

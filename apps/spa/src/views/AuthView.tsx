@@ -27,7 +27,7 @@ import { listProviders } from "../state/sign-in-methods.ts"
 import { lastSignIn, lastSignInHint } from "../state/last-sign-in.ts"
 import { takeHandedOffAddress } from "../state/address-handoff.ts"
 import { sessionState } from "../state/session.ts"
-import { demoMode } from "../state/demo.ts"
+import { demoMode, guestMode } from "../state/demo.ts"
 
 /** How long an autofill passkey request waits before it starts again with a fresh challenge. */
 const PASSKEY_AUTOFILL_RENEW_MS = 4.5 * 60_000
@@ -181,6 +181,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
       providers={providers}
       lastSignIn={last}
       demo={demoMode.value}
+      guest={guestMode.value}
       onForgetLastSignIn={() => {
         lastSignIn.forget()
         setLast(null)

@@ -4,6 +4,7 @@ import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { ONBOARDING_FAILURE, OnboardingCard } from "@ui/onboarding-card.tsx"
 import { onboardingStore } from "../state/onboarding.ts"
 import { selectionStore } from "../state/selection.ts"
+import { isGuestSession } from "../state/guest.ts"
 
 /**
  * The first-steps card under the home page's header. It reads the steps each time the home page opens, so a
@@ -27,6 +28,7 @@ export function OnboardingView({ store = onboardingStore }: { store?: typeof onb
       steps={status.steps}
       groupId={selectionStore.groupId.value}
       navigate={navigate}
+      guest={isGuestSession()}
       onDismiss={() => {
         // The card hides at once, before the server answers, so focus moves now.
         void store.dismiss()
