@@ -167,11 +167,11 @@ export class PostgresBillingRepository implements BillingRepository {
     return rows.length > 0
   }
 
-  async trialUsed(userId: number): Promise<boolean> {
-    const rows = await this.sql`
-      SELECT 1 FROM users WHERE id = ${userId} AND trial_group_id IS NOT NULL
+  async trialGroupOf(userId: number): Promise<string | null> {
+    const [row] = await this.sql<{ trialGroupId: string | null }[]>`
+      SELECT trial_group_id FROM users WHERE id = ${userId}
     `
-    return rows.length > 0
+    return row?.trialGroupId ?? null
   }
 
   /**

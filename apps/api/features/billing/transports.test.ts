@@ -102,7 +102,7 @@ function stack(
         trials.set(userId, id)
         return Promise.resolve(true)
       },
-      trialUsed: (userId: number) => Promise.resolve(trials.has(userId)),
+      trialGroupOf: (userId: number) => Promise.resolve(trials.get(userId) ?? null),
       get: () => Promise.resolve(subscription),
       lockedRoleOf: (id: string, userId: number) => groups.roleOf(id, userId),
       customerOf: () => Promise.resolve(customer),
@@ -216,8 +216,8 @@ describe("billing over REST", () => {
     expect(await response.json()).toEqual({ url: "https://pay.example/cs_1" })
     expect(recorder.checkouts).toEqual([{
       planId: "pro",
-      successUrl: `https://app.example.com/groups/${groupId}`,
-      cancelUrl: `https://app.example.com/groups/${groupId}/pricing`,
+      successUrl: `https://app.example.com/groups/${groupId}/billing?checkout=done`,
+      cancelUrl: `https://app.example.com/groups/${groupId}/billing`,
       reference: groupId,
       quantity: 3,
       customerId: "cus_1",
@@ -263,7 +263,7 @@ describe("billing over REST", () => {
     expect(trials.has(ADMIN)).toBe(false)
   })
 
-  it("tells a person whether their trial is used, and nothing of trials while billing is off", async () => {
+  it("tells a person whether their trial is used and by which group, and nothing of trials while billing is off", async () => {
     const fresh = await stack().call(VIEWER, "GET", "/billing/trial")
     const used = await stack({ trialGroup: OTHER_GROUP }).call(OWNER, "GET", "/billing/trial")
     const off = await stack({ enabled: false, trialGroup: OTHER_GROUP }).call(
@@ -272,9 +272,15 @@ describe("billing over REST", () => {
       "/billing/trial",
     )
 
-    expect(await fresh.json()).toEqual({ trial: { enabled: true, used: false, days: 14 } })
-    expect(await used.json()).toEqual({ trial: { enabled: true, used: true, days: 14 } })
-    expect(await off.json()).toEqual({ trial: { enabled: false, used: false, days: 0 } })
+    expect(await fresh.json()).toEqual({
+      trial: { enabled: true, used: false, groupId: null, days: 14 },
+    })
+    expect(await used.json()).toEqual({
+      trial: { enabled: true, used: true, groupId: OTHER_GROUP, days: 14 },
+    })
+    expect(await off.json()).toEqual({
+      trial: { enabled: false, used: false, groupId: null, days: 0 },
+    })
   })
 
   it("asks for a card to start a trial unless the setup says a trial needs none", async () => {
@@ -384,7 +390,7 @@ describe("billing over REST", () => {
     expect(ended.billing).toMatchObject({ planId: "free", subscribed: false, hasCustomer: true })
   })
 
-  it("opens the owner's portal for the group's customer, back to the group's settings", async () => {
+  it("opens the owner's portal for the group's customer, back to its Plan and billing tab", async () => {
     const { recorder, call } = stack({ subscription: PRO, customer: "cus_1" })
 
     const response = await call(OWNER, "POST", "/portal")
@@ -392,7 +398,7 @@ describe("billing over REST", () => {
     expect(await response.json()).toEqual({ url: "https://pay.example/p" })
     expect(recorder.portals).toEqual([{
       customerId: "cus_1",
-      returnUrl: `https://app.example.com/groups/${groupId}`,
+      returnUrl: `https://app.example.com/groups/${groupId}/billing`,
     }])
   })
 
@@ -415,8 +421,8 @@ describe("billing over REST", () => {
       // From 2026-10-01T10:00 to 2026-11-01T00:00 is 30 days and 14 hours: 31 whole days.
       expect(recorder.checkouts).toEqual([{
         planId: "pro",
-        successUrl: `https://app.example.com/groups/${groupId}`,
-        cancelUrl: `https://app.example.com/groups/${groupId}/pricing`,
+        successUrl: `https://app.example.com/groups/${groupId}/billing?checkout=done`,
+        cancelUrl: `https://app.example.com/groups/${groupId}/billing`,
         reference: groupId,
         quantity: 2,
         trialDays: 31,

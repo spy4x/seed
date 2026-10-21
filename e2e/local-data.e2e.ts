@@ -187,9 +187,10 @@ test.describe("the app with the local-data module switched off", () => {
       // The other list screens read from the server.
       await openGroups(page)
       await openGroup(page, "Online-only team")
-      await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
-      await expect(page.locator("[data-e2e=billing-plan]")).toBeVisible()
       const groupPath = new URL(page.url()).pathname
+      await gotoApp(page, `${groupPath}/members`, page.locator("[data-e2e=group-member]"))
+      await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
+      await gotoApp(page, `${groupPath}/billing`, page.locator("[data-e2e=billing-plan]"))
       await gotoApp(page, `${groupPath}/activity`, page.locator("[data-e2e=activity-list]"))
       await gotoApp(page, "/notifications", page.getByRole("heading", { level: 1 }))
       await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
@@ -253,17 +254,23 @@ test.describe("the app with no network, after one visit online", () => {
       const groupNames = page.locator("[data-e2e=group-item-name]")
       await expect(groupNames.filter({ hasText: /^(Kept|Their) team$/ })).toHaveCount(2)
 
-      await gotoApp(page, `/groups/${groupId}`, page.locator("[data-e2e=group-general-name]"))
-      await page.getByRole("link", { name: "Invite people" }).click()
+      await gotoApp(
+        page,
+        `/groups/${groupId}/members`,
+        page.locator("[data-e2e=group-general-name]"),
+      )
+      await page.getByRole("link", { name: "Invite" }).click()
       await page.locator("[data-e2e=invitation-create]").click()
       await page.locator("[data-e2e=invitation-done]").click()
-      await expect(page).toHaveURL(`/groups/${groupId}`)
+      await expect(page).toHaveURL(`/groups/${groupId}/members`)
       const invitations = page.locator("[data-e2e=group-section-invitations] [data-e2e=invitation]")
       await expect(invitations).toHaveCount(1)
       await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
-      await expect(page.locator("[data-e2e=billing-plan]")).toHaveAttribute("data-plan", "free")
       // Once more, so the copy on the device holds the invitation just made.
-      await gotoApp(page, `/groups/${groupId}`, invitations)
+      await gotoApp(page, `/groups/${groupId}/members`, invitations)
+      const plan = page.locator("[data-e2e=billing-plan]")
+      await gotoApp(page, `/groups/${groupId}/billing`, plan)
+      await expect(plan).toHaveAttribute("data-plan", "free")
 
       const activity = page.locator("[data-e2e=activity-list] [data-e2e=activity-text]")
       await gotoApp(page, `/groups/${groupId}/activity`, activity.first())
@@ -298,10 +305,11 @@ test.describe("the app with no network, after one visit online", () => {
       await openOffline(page, "/groups")
       await expect(groupNames.filter({ hasText: /^(Kept|Their) team$/ })).toHaveCount(2)
 
-      await openOffline(page, `/groups/${groupId}`)
+      await openOffline(page, `/groups/${groupId}/members`)
       await expect(page.locator("[data-e2e=group-member]")).toHaveCount(1)
       await expect(invitations).toHaveCount(1)
-      await expect(page.locator("[data-e2e=billing-plan]")).toHaveAttribute("data-plan", "free")
+      await openOffline(page, `/groups/${groupId}/billing`)
+      await expect(plan).toHaveAttribute("data-plan", "free")
 
       await openOffline(page, `/groups/${groupId}/activity`)
       await expect(activity).toHaveText(activityOnline)

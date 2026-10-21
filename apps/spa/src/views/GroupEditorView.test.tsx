@@ -4,6 +4,7 @@ import { renderToString } from "preact-render-to-string"
 import { Router } from "wouter-preact"
 import { type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
+import { GroupTab } from "@ui/group-editor-screen.tsx"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { invitationsStore } from "../state/invitations.ts"
@@ -37,10 +38,10 @@ const renderTransfer = () =>
   )
 
 /** The view on the server: the router needs a path, because there is no `location`. */
-const render = (groupId: string | null) =>
+const render = (groupId: string | null, tab = GroupTab.GENERAL) =>
   renderToString(
     <Router ssrPath="/">
-      <GroupEditorView groupId={groupId} />
+      <GroupEditorView groupId={groupId} tab={tab} />
     </Router>,
   )
 
@@ -118,16 +119,16 @@ describe("GroupEditorView", () => {
     }]
 
     membersStore.groupId.value = strangerId
-    expect(render(known.id)).not.toContain("Vera Viewer")
+    expect(render(known.id, GroupTab.MEMBERS)).not.toContain("Vera Viewer")
 
     membersStore.groupId.value = known.id
-    expect(render(known.id)).toContain("Vera Viewer")
+    expect(render(known.id, GroupTab.MEMBERS)).toContain("Vera Viewer")
   })
 
-  it("links Invite people to the group's invitation page, and offers no invite dialog", () => {
+  it("links Invite to the group's invitation page, and offers no invite dialog", () => {
     groupsStore.groups.value = [known]
 
-    const html = render(known.id)
+    const html = render(known.id, GroupTab.MEMBERS)
 
     const invite = html.match(/<a[^>]*data-e2e="invite-open"[^>]*>/)?.[0] ?? ""
     expect(invite).toContain(`href="/groups/${known.id}/invitations/new"`)

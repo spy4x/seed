@@ -12,7 +12,7 @@ import { renderToString } from "preact-render-to-string"
 import { act } from "preact/test-utils"
 import type { PlanRefusal } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
-import { BILLING_PATHS, SeatPriceConfirm } from "./billing-screen.tsx"
+import { SeatPriceConfirm } from "./billing-screen.tsx"
 import {
   type CreatedInvitation,
   EMPTY_INVITATION_DRAFT,
@@ -39,6 +39,8 @@ import {
   type GroupDraft,
   GroupEditorScreen,
   type GroupEditorScreenProps,
+  GroupTab,
+  groupTabOf,
 } from "./group-editor-screen.tsx"
 import {
   EMPTY_TRANSFER_DRAFT,
@@ -392,7 +394,7 @@ describe("GroupEditorScreen header", () => {
     expect(switched.calls).toHaveLength(1)
   })
 
-  it("orders the menu as switch and activity, then transfer and move, then delete, a divider between each part", async () => {
+  it("orders the menu as switch, then transfer and move, then delete, a divider between each part", async () => {
     await mount(
       <GroupEditorScreen
         {...defaults}
@@ -409,7 +411,6 @@ describe("GroupEditorScreen header", () => {
     ].map((item) => item.getAttribute("data-e2e") ?? "divider")
     expect(order).toEqual([
       "group-switch",
-      "group-activity-open",
       "divider",
       "group-transfer-open",
       "group-move-all-open",
@@ -419,7 +420,7 @@ describe("GroupEditorScreen header", () => {
   })
 
   it("draws no divider around a part of the menu that has nothing in it", async () => {
-    // A viewer of the current group: no switch, no activity, no transfer, no move; only Leave.
+    // A viewer of the current group: no switch, no transfer, no move; only Leave.
     await mount(<GroupEditorScreen {...defaults} group={{ ...team, role: GroupRole.VIEWER }} />)
     expect(has("[role=separator]")).toBe(false)
     expect(has("[data-e2e=group-leave-open]")).toBe(true)
@@ -824,17 +825,21 @@ describe("GroupEditorScreen header", () => {
     expect(focused()).toBe("group-menu")
   })
 
-  it("offers Invite people to the owner and admins only, as a link to the invitation page", async () => {
+  it("offers Invite in the Members tab's header to the owner and admins only, as a link to the invitation page", async () => {
     const navigate = spy<[string]>()
+    const members = { ...defaults, tab: GroupTab.MEMBERS }
     await mount(
       <GroupEditorScreen
-        {...defaults}
+        {...members}
         group={{ ...team, role: GroupRole.EDITOR }}
         navigate={navigate.fn}
       />,
     )
     expect(has("[data-e2e=invite-open]")).toBe(false)
     await rerender(<GroupEditorScreen {...defaults} navigate={navigate.fn} />)
+    expect(has("[data-e2e=invite-open]")).toBe(false)
+    await rerender(<GroupEditorScreen {...members} navigate={navigate.fn} />)
+    expect(has("[data-e2e=page-header] [data-e2e=invite-open]")).toBe(true)
     expect(find("[data-e2e=invite-open]").getAttribute("href")).toBe(GROUP_PATHS.invite(team.id))
     await click("[data-e2e=invite-open]")
     expect(navigate.calls).toEqual([[GROUP_PATHS.invite(team.id)]])
@@ -862,6 +867,89 @@ describe("GroupEditorScreen header", () => {
     )
       .toBeGreaterThan(0)
     expect(root!.textContent).not.toContain("does not exist")
+  })
+})
+
+describe("GroupEditorScreen tabs", () => {
+  const defaults: GroupEditorScreenProps = {
+    group: team,
+    current: true,
+    loading: false,
+    value: teamDraft,
+    members: [owner, editor],
+    memberCount: 2,
+    billing: <p data-e2e="billing-body">plan</p>,
+    activity: <p data-e2e="activity-body">log</p>,
+  }
+  const tabs = () => [...root!.querySelectorAll("[role=tab]")].map((tab) => tab.textContent)
+  const selected = () => root!.querySelector("[role=tab][aria-selected=true]")?.textContent
+
+  it("draws General, Members, Plan and billing and Activity, with the open tab's content only", async () => {
+    await mount(<GroupEditorScreen {...defaults} />)
+    expect(tabs()).toEqual(["General", "Members", "Plan and billing", "Activity"])
+    expect(selected()).toBe("General")
+    expect(has("[data-e2e=group-name]")).toBe(true)
+    expect(has("[data-e2e=group-section-members]")).toBe(false)
+    for (
+      const [tab, label, part] of [
+        [GroupTab.MEMBERS, "Members", "group-section-members"],
+        [GroupTab.BILLING, "Plan and billing", "billing-body"],
+        [GroupTab.ACTIVITY, "Activity", "activity-body"],
+      ] as const
+    ) {
+      await rerender(<GroupEditorScreen {...defaults} tab={tab} />)
+      expect(selected()).toBe(label)
+      expect(has(`[role=tabpanel] [data-e2e=${part}]`)).toBe(true)
+      expect(has("[data-e2e=group-name]")).toBe(false)
+    }
+  })
+
+  it("follows a chosen tab to its own address", async () => {
+    const navigate = spy<[string]>()
+    await mount(<GroupEditorScreen {...defaults} navigate={navigate.fn} />)
+    const [, members, billing, activity] = root!.querySelectorAll<HTMLElement>("[role=tab]")
+    await act(() => members.click())
+    await act(() => billing.click())
+    await act(() => activity.click())
+    expect(navigate.calls).toEqual([
+      [GROUP_PATHS.members(team.id)],
+      [GROUP_PATHS.billing(team.id)],
+      [GROUP_PATHS.activity(team.id)],
+    ])
+  })
+
+  it("leaves the Activity tab out for an editor or a viewer, unless its address is open", async () => {
+    for (const role of [GroupRole.EDITOR, GroupRole.VIEWER]) {
+      await mount(<GroupEditorScreen {...defaults} group={{ ...team, role }} />)
+      expect(tabs()).toEqual(["General", "Members", "Plan and billing"])
+      await rerender(
+        <GroupEditorScreen {...defaults} group={{ ...team, role }} tab={GroupTab.ACTIVITY} />,
+      )
+      expect(selected()).toBe("Activity")
+      await act(() => render(null, root!))
+    }
+  })
+
+  it("links the member count to the Plan and billing tab, except on that tab", async () => {
+    await mount(<GroupEditorScreen {...defaults} />)
+    const count = find<HTMLAnchorElement>("a[data-e2e=group-member-count]")
+    expect(count.textContent).toBe("2 members")
+    expect(count.getAttribute("href")).toBe(GROUP_PATHS.billing(team.id))
+    await rerender(<GroupEditorScreen {...defaults} tab={GroupTab.BILLING} />)
+    expect(has("a[data-e2e=group-member-count]")).toBe(false)
+    expect(find("[data-e2e=group-member-count]").textContent).toBe("2 members")
+  })
+})
+
+describe("groupTabOf", () => {
+  it("reads the tab an address names, General for none, and nothing for any other part", () => {
+    expect(groupTabOf(undefined)).toBe(GroupTab.GENERAL)
+    expect(groupTabOf("members")).toBe(GroupTab.MEMBERS)
+    expect(groupTabOf("billing")).toBe(GroupTab.BILLING)
+    expect(groupTabOf("activity")).toBe(GroupTab.ACTIVITY)
+    for (const part of ["general", "pricing", "Members", ""]) {
+      expect(groupTabOf(part), part).toBe(null)
+    }
   })
 })
 
@@ -1021,11 +1109,11 @@ describe("PlanRefusalNotice", () => {
     canUpgrade: true,
   }
 
-  it("gives the owner a See plans link to the group's pricing", async () => {
+  it("gives the owner a link to the group's Plan and billing tab", async () => {
     await mount(<PlanRefusalNotice groupId={groupId} refusal={refusal} />)
     const link = find<HTMLAnchorElement>("[data-e2e=plan-refusal] a")
-    expect(link.textContent).toBe("See plans")
-    expect(link.getAttribute("href")).toBe(BILLING_PATHS.pricing(groupId))
+    expect(link.textContent).toBe("Open Plan and billing")
+    expect(link.getAttribute("href")).toBe(GROUP_PATHS.billing(groupId))
     expect(focused()).toBe("plan-refusal")
   })
 
@@ -1155,14 +1243,14 @@ describe("InviteForm", () => {
     expect(done.calls).toHaveLength(1)
   })
 
-  it("leaves through Cancel to the group's page, and creates through Create invitation", async () => {
+  it("leaves through Cancel to the group's Members tab, and creates through Create invitation", async () => {
     const navigate = spy<[string]>()
     await mount(<InviteForm {...defaults} navigate={navigate.fn} />)
     expect(find("[data-e2e=invitation-create]").textContent).toBe("Create invitation")
     expect(find("[data-e2e=invitation-cancel]").getAttribute("href"))
-      .toBe(GROUP_PATHS.settings(groupId))
+      .toBe(GROUP_PATHS.members(groupId))
     await click("[data-e2e=invitation-cancel]")
-    expect(navigate.calls).toEqual([[GROUP_PATHS.settings(groupId)]])
+    expect(navigate.calls).toEqual([[GROUP_PATHS.members(groupId)]])
   })
 
   it("gives Cancel, Create invitation and Done a 44 px tap target on a phone (class check: no layout here)", async () => {
@@ -1618,19 +1706,28 @@ describe("GroupEditorScreen form", () => {
 
   it("says on the create page whether a trial comes with the new group, and nothing with billing off", async () => {
     await mount(
-      <GroupEditorScreen {...creating} trial={{ enabled: true, used: false, days: 14 }} />,
+      <GroupEditorScreen
+        {...creating}
+        trial={{ enabled: true, used: false, groupId: null, days: 14 }}
+      />,
     )
     expect(find("[data-e2e=group-trial]").textContent).toContain(
       "Your 14-day free trial of a paid plan goes to the first group you choose a paid plan for.",
     )
     await rerender(
-      <GroupEditorScreen {...creating} trial={{ enabled: true, used: true, days: 14 }} />,
+      <GroupEditorScreen
+        {...creating}
+        trial={{ enabled: true, used: true, groupId: "g-2", days: 14 }}
+      />,
     )
     expect(find("[data-e2e=group-trial]").textContent).toContain(
       "You have used your free trial, so a paid plan here is charged from the first day.",
     )
     await rerender(
-      <GroupEditorScreen {...creating} trial={{ enabled: false, used: true, days: 14 }} />,
+      <GroupEditorScreen
+        {...creating}
+        trial={{ enabled: false, used: true, groupId: "g-2", days: 14 }}
+      />,
     )
     expect(has("[data-e2e=group-trial]")).toBe(false)
     await rerender(<GroupEditorScreen {...creating} />)

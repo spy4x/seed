@@ -211,19 +211,19 @@ describe("OnboardingView", () => {
     expect(store.tourOffered.value).toBe(true)
   })
 
-  it("links the invitation step to the selected group and opens a step through the router", async () => {
+  it("links the invitation step to the selected group's Members tab and opens a step through the router", async () => {
     selectionStore.groupId.value = "g-9"
     try {
       const steps = { ...fresh.steps, emailVerified: true, noteCreated: true }
       await mount(storeOver({ ...fresh, steps }).store)
-      const link = root!.querySelector(`a[href="/groups/g-9"]`)
+      const link = root!.querySelector(`a[href="/groups/g-9/members"]`)
       expect(link).not.toBe(null)
 
       const click = new window.MouseEvent("click", { bubbles: true, cancelable: true, button: 0 })
       await act(() => void link!.dispatchEvent(click as never))
 
       expect(click.defaultPrevented).toBe(true)
-      expect(window.location.pathname).toBe("/groups/g-9")
+      expect(window.location.pathname).toBe("/groups/g-9/members")
     } finally {
       selectionStore.groupId.value = null
       window.history.replaceState(null, "", "/")

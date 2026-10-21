@@ -1,6 +1,6 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import type { ActivityRow } from "@ui/group-activity-screen.tsx"
+import type { ActivityRow } from "@ui/group-activity-panel.tsx"
 import { type ActivityPageResult, createActivityStore } from "./activity.ts"
 
 function row(id: number): ActivityRow {

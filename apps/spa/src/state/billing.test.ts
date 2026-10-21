@@ -186,17 +186,29 @@ describe("billing store", () => {
     expect(store.pending.value).toBe(false)
   })
 
-  it("says the server is out of reach when the call never arrives", async () => {
+  it("says Stripe's page could not be opened when the call never arrives", async () => {
     const { store } = harness(new TypeError("Failed to fetch"))
 
     await store.portal(groupId)
+    expect(store.error.value?.message).toBe(
+      "Could not open Stripe's billing page. Check your connection and try again.",
+    )
+    expect(store.pending.value).toBe(false)
 
-    expect(store.error.value?.message).toBe("The server is out of reach. Try again.")
+    await store.checkout(groupId, "pro")
+    expect(store.error.value?.message).toBe(
+      "Could not open Stripe's checkout. Check your connection and try again.",
+    )
     expect(store.pending.value).toBe(false)
   })
 
   it("reads the person's own trial, and keeps none from an answer it cannot read", async () => {
-    const trial = { enabled: true, used: true, days: 14 }
+    const trial = {
+      enabled: true,
+      used: true,
+      groupId: "019a0000-0000-7000-8000-000000000001",
+      days: 14,
+    }
     const { store, calls } = harness(
       { ok: true, status: 200, data: { trial } },
       { ok: true, status: 200, data: { trial: { enabled: true, used: "no", days: 14 } } },

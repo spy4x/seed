@@ -98,7 +98,7 @@ export function billingNoticeMailJob(
       groupName: owner.name,
       planName: findPlan(subscription.planId ?? "")?.name ?? "paid",
       at: accessEndsAt(subscription) ?? new Date(runAt),
-      link: new URL(`/groups/${encodeURIComponent(groupId)}`, brand.webAppUrl).href,
+      link: new URL(`/groups/${encodeURIComponent(groupId)}/billing`, brand.webAppUrl).href,
       planKeptUntil: planKeptUntil(subscription, judgedAt, graceDays),
       trialHasCard: trialRequiresCard,
     }))

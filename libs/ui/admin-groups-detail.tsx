@@ -29,6 +29,7 @@ import {
   GroupRole,
 } from "@domain/groups"
 import type { UserRole } from "@domain/identity"
+import { ADMIN_BILLING_PATHS } from "./admin-billing-list.tsx"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import {
   ADMIN_GROUP_PATHS,
@@ -292,6 +293,19 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
                 : format.date(detail.billing.currentPeriodEnd)
               : `No subscription`}
           </Fact>
+          {detail.billing && (
+            // The same subscription the owner sees on the group's Plan and billing tab.
+            <Fact label="Billing">
+              <Link
+                href={ADMIN_BILLING_PATHS.customer(group.id)}
+                navigate={navigate}
+                class="pc-link"
+                data-e2e="admin-group-billing"
+              >
+                Open the customer
+              </Link>
+            </Fact>
+          )}
         </dl>
         {deleted && (
           <Notice tone="danger" data-e2e="admin-group-deleted-notice">

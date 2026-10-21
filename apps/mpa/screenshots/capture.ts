@@ -478,7 +478,7 @@ const SCREENS: Screen[] = [
     async open(page, seeded) {
       await gotoApp(
         page,
-        `/groups/${seeded.groupId}`,
+        `/groups/${seeded.groupId}/members`,
         page.locator("[data-e2e=group-member]").nth(3),
       )
       // Linus's menu open: the roles an owner hands out, which the billing picture lacks.
@@ -496,17 +496,12 @@ const SCREENS: Screen[] = [
     async open(page, seeded) {
       await gotoApp(
         page,
-        `/groups/${seeded.groupId}`,
+        `/groups/${seeded.groupId}/billing`,
         page.locator("[data-e2e=billing-plan][data-plan=pro]"),
       )
-      // On a desktop, from the members down to the plan, which ends the page. On a phone, the
-      // plan alone: the home page's billing card crops it at close to its real size.
-      const mobile = page.viewportSize()!.width < 768
-      await scrollToTop(
-        page.locator(
-          mobile ? "[data-e2e=group-section-billing]" : "[data-e2e=group-section-members]",
-        ),
-      )
+      // The Plan and billing tab, from its title down; the home page's billing card crops it on a
+      // phone at close to its real size.
+      await scrollToTop(page.locator("[data-e2e=group-section-billing]"))
     },
   },
   {

@@ -1,5 +1,5 @@
 import { signal } from "@preact/signals"
-import type { ActivityRow } from "@ui/group-activity-screen.tsx"
+import type { ActivityRow } from "@ui/group-activity-panel.tsx"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"

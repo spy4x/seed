@@ -10,10 +10,9 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
 import type { PlanRefusal } from "@domain/billing"
-import { BILLING_PATHS } from "./billing-screen.tsx"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteRow, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
-import { NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
+import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters } from "@spy4x/time/format"
 
@@ -822,7 +821,7 @@ describe("NoteEditorScreen", () => {
     expect(html).not.toContain("There is no such note")
   })
 
-  it("shows the owner the note cap with a link to the group's pricing page", () => {
+  it("shows the owner the note cap with a link to the group's Plan and billing tab", () => {
     const capped: PlanRefusal = {
       code: "PLAN_LIMIT_REACHED",
       entitlement: "maxNotes",
@@ -838,10 +837,10 @@ describe("NoteEditorScreen", () => {
 
     expect(html).toContain(`data-e2e="plan-refusal"`)
     expect(html).toContain("up to 10 notes")
-    expect(html).toContain(`href="${BILLING_PATHS.pricing(groupId)}"`)
+    expect(html).toContain(`href="${GROUP_PATHS.billing(groupId)}"`)
   })
 
-  it("tells a member who cannot upgrade to ask the owner, and gives no pricing link", () => {
+  it("tells a member who cannot upgrade to ask the owner, and gives no link to the plan", () => {
     const capped: PlanRefusal = {
       code: "PLAN_LIMIT_REACHED",
       entitlement: "maxNotes",
@@ -856,7 +855,7 @@ describe("NoteEditorScreen", () => {
     )
 
     expect(html).toContain("Ask the group's owner to upgrade the plan.")
-    expect(html).not.toContain(BILLING_PATHS.pricing(groupId))
+    expect(html).not.toContain(GROUP_PATHS.billing(groupId))
   })
 
   it("ties the title error to its field and tells a stale edit where the latest version is", () => {
@@ -983,7 +982,7 @@ describe("NoteEditorScreen in the browser", () => {
 
     expect(focused()).toBe("plan-refusal")
     expect(await click("[data-e2e=plan-refusal] a")).toBe(true)
-    expect(navigate.calls).toEqual([[BILLING_PATHS.pricing(groupId)]])
+    expect(navigate.calls).toEqual([[GROUP_PATHS.billing(groupId)]])
   })
 
   it("disables Delete in the page's menu while a delete is pending", async () => {

@@ -1,10 +1,11 @@
 import { useEffect } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
-import { GroupEditorScreen } from "@ui/group-editor-screen.tsx"
+import { GroupEditorScreen, GroupTab, groupTabOf } from "@ui/group-editor-screen.tsx"
+import { memberLabel } from "@ui/group-members.tsx"
 import { PendingInvitations } from "@ui/group-invitations.tsx"
 import { GroupTransferForm } from "@ui/group-transfer.tsx"
-import { canManageInvitations } from "@domain/groups"
+import { canManageInvitations, GroupRole } from "@domain/groups"
 import type { GroupRow } from "@ui/groups-screen.tsx"
 import { moveTargetsOf } from "@ui/notes-screen.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
@@ -15,7 +16,8 @@ import { selectionStore } from "../state/selection.ts"
 import { billingStore } from "../state/billing.ts"
 import { invitationsStore } from "../state/invitations.ts"
 import { groupExportStore } from "../state/group-files.ts"
-import { GroupBillingCard } from "./BillingViews.tsx"
+import { GroupBillingView } from "./BillingViews.tsx"
+import { GroupActivityView } from "./GroupActivityView.tsx"
 import { toasts } from "../state/toasts.ts"
 import { isSpaPath } from "./spa-paths.ts"
 import { currentLayer } from "../modules.ts"
@@ -83,7 +85,7 @@ export async function saveAndAnnounce(
   return true
 }
 
-/** The open group's plan, once the billing card has read it; `null` until then. */
+/** The open group's plan, once the billing tab has read it; `null` until then. */
 function billingOf(groupId: string) {
   const current = billingStore.current.value
   return current?.groupId === groupId ? current.billing : null
@@ -111,20 +113,39 @@ export function GroupTransfer(
 }
 
 /**
+ * `/groups/:groupId/:tab?`: the group's page on the tab its address names. The old plans page
+ * (`/pricing`) opens the Plan and billing tab, and an address with any other last part opens the
+ * General tab, both in place of the address they came with.
+ */
+export function GroupPage({ groupId, tab }: { groupId: string; tab?: string }) {
+  const [, navigate] = useLocation()
+  const open = groupTabOf(tab)
+  useEffect(() => {
+    if (open !== null) return
+    navigate(tab === "pricing" ? GROUP_PATHS.billing(groupId) : GROUP_PATHS.settings(groupId), {
+      replace: true,
+    })
+  }, [open, tab, groupId])
+  return open === null ? null : <GroupEditorView key={groupId} groupId={groupId} tab={open} />
+}
+
+/**
  * Wires the group editor to the groups store: `/groups/new` (no `groupId`) creates a group,
- * `/groups/:groupId` edits one. A created group becomes the current one, and the address turns into
+ * `/groups/:groupId` edits one, and `/groups/:groupId/<tab>` opens another of its tabs. A created group becomes the current one, and the address turns into
  * its page; the route announcer then moves focus to its name. Leaving with unsaved changes asks
  * first. An existing group's page also reads its members and, for the owner and admins, its
  * invitations.
  */
-export function GroupEditorView({ groupId = null }: { groupId?: string | null }) {
+export function GroupEditorView(
+  { groupId = null, tab = GroupTab.GENERAL }: { groupId?: string | null; tab?: GroupTab },
+) {
   const [, navigate] = useLocation()
   const store = groupsStore
   useEffect(() => store.openEditor(groupId), [groupId])
   useEffect(() => network.watch(), [])
   return (
     <>
-      {groupId === null ? <NewGroup /> : <ExistingGroup groupId={groupId} />}
+      {groupId === null ? <NewGroup /> : <ExistingGroup groupId={groupId} tab={tab} />}
       <UnsavedGuard
         when={store.unsaved(groupId)}
         owns={(url) => isSpaPath(url.pathname)}
@@ -168,8 +189,8 @@ function NewGroup() {
   )
 }
 
-/** `/groups/:groupId`: the group's details, members, invitations and plan. */
-function ExistingGroup({ groupId }: { groupId: string }) {
+/** `/groups/:groupId` and its tabs: the group's details, members, invitations, plan and log. */
+function ExistingGroup({ groupId, tab }: { groupId: string; tab: GroupTab }) {
   const [, navigate] = useLocation()
   const store = groupsStore
   const team = membersStore
@@ -198,8 +219,11 @@ function ExistingGroup({ groupId }: { groupId: string }) {
   const failure = store.actionError.value?.groupId === groupId ? store.actionError.value : null
   const movedAll = store.moved.value?.groupId === groupId ? store.moved.value : null
   const movedTo = movedAll && store.groups.value.find((other) => other.id === movedAll.toGroupId)
+  const memberRows = ours ? team.members.value : null
+  const owner = memberRows?.find((member) => member.role === GroupRole.OWNER)
   return (
     <GroupEditorScreen
+      tab={tab}
       group={group}
       current={selectionStore.groupId.value === groupId}
       // A person always has a group, so an empty list means the first read has not answered yet.
@@ -260,7 +284,15 @@ function ExistingGroup({ groupId }: { groupId: string }) {
       moveAllRefusal={failure?.action === "moveAll" ? failure.plan ?? null : null}
       onMoveAllTargetChange={() => store.forgetMoveAll()}
       onMoveAllClose={() => store.forgetMoveAll()}
-      billing={group && <GroupBillingCard groupId={groupId} />}
+      billing={group && (
+        <GroupBillingView
+          groupId={groupId}
+          groupName={group.name}
+          memberCount={ours ? team.memberCount.value ?? memberRows?.length ?? null : null}
+          ownerName={owner ? memberLabel(owner) : null}
+        />
+      )}
+      activity={<GroupActivityView groupId={groupId} />}
       pendingInvitations={group && (
         <PendingInvitations
           actorRole={group.role}
