@@ -174,6 +174,11 @@ function buildApp(
       logError: (message) => void logged.push(message),
     }),
   )
+  // "Try it now" (#224): a guest account signed in on the browser that asks.
+  app.post("/guest", async (c) => {
+    const started = await signIn.guests.start(c, c.get("auth"))
+    return c.json({ userId: "signedIn" in started ? started.signedIn.user.id : null })
+  })
   // The password sign-up and sign-in, for accounts that exist before a provider is used.
   app.post("/password/sign-up", async (c) => {
     const { email } = await c.req.json()
@@ -1035,6 +1040,60 @@ Deno.test("the profile links a provider whose verified address is the account's 
       AuthAuditEventType.SIGN_IN_METHOD_LINKED,
       "oauth:google",
     ])
+  })
+})
+
+/** The guest's row: its id and whether it is a guest still. */
+async function guestRow(sql: postgres.Sql, id: number): Promise<{ guest: boolean } | undefined> {
+  const [row] = await sql<{ guest: boolean }[]>`
+    SELECT guest_since IS NOT NULL AS guest FROM users WHERE id = ${id}`
+  return row
+}
+
+Deno.test("a guest keeps the account with Google, with no password asked, and the same user id", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const guest = browser(app)
+    const { userId } = await (await guest.post("/guest")).json()
+    expect(await guestRow(sql, userId)).toEqual({ guest: true })
+
+    const link = await guest.post("/auth/methods/google/link", {})
+    expect(link.status).toBe(200)
+    expect(target(await guest.through("google", "ada", (await link.json()).url)))
+      .toBe("/keep?oauth=kept")
+
+    expect(await guestRow(sql, userId)).toEqual({ guest: false })
+    expect(await accounts(sql)).toEqual({ authUsers: 1, profiles: 1 })
+    expect((await methodsOf(guest)).methods.map((method) => method.kind)).toContain("google")
+    const later = browser(app)
+    expect(target(await later.through("google", "ada"))).toBe("/")
+    const [{ id }] = await sql<{ id: number }[]>`SELECT id FROM users`
+    expect(id).toBe(userId)
+  })
+})
+
+Deno.test("a guest's Google that signs in to another account offers the switch and merges nothing", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const owner = browser(app)
+    expect(target(await owner.through("google", "ada"))).toBe("/sign-up/confirm")
+    expect((await owner.post("/auth/sign-up/confirm")).status).toBe(201)
+    const before = await accounts(sql)
+
+    const guest = browser(app)
+    const { userId } = await (await guest.post("/guest")).json()
+    const link = await guest.post("/auth/methods/google/link", {})
+    expect(target(await guest.through("google", "ada", (await link.json()).url)))
+      .toBe("/keep/taken")
+
+    expect(await guestRow(sql, userId)).toEqual({ guest: true })
+    expect(await accounts(sql)).toEqual({
+      authUsers: before.authUsers + 1,
+      profiles: before.profiles + 1,
+    })
+    const [{ switches }] = await sql<{ switches: number }[]>`
+      SELECT count(*)::int AS switches FROM guest_switches WHERE guest_user_id = ${userId}`
+    expect(switches).toBe(1)
   })
 })
 
