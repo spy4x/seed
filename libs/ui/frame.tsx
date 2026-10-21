@@ -102,6 +102,8 @@ export function shortcutsMenuItems(shortcuts: FrameShortcuts | undefined) {
       label: SHORTCUT_TEXT.menuEntry,
       onClick: shortcuts.onOpen,
       dataE2E: "account-shortcuts",
+      // Shown, and announced as `aria-keyshortcuts`, only while `?` works.
+      keyshortcuts: shortcuts.singleKeys ? ["?"] : undefined,
     }]
     : []
 }

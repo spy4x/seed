@@ -15,6 +15,7 @@ import {
   type ShortcutRow,
   ShortcutsList,
 } from "./shortcuts.tsx"
+import { shortcutsMenuItems } from "./frame.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -133,5 +134,31 @@ describe("isSingleKey", () => {
 
   it("keeps every row while single keys are on", () => {
     expect(activeRows(ROWS, true)).toEqual(ROWS)
+  })
+})
+
+describe("the account menu's Keyboard shortcuts entry", () => {
+  const base = {
+    rows: ROWS,
+    open: false,
+    onOpen: run,
+    onClose: run,
+    singleKeys: true,
+    onSingleKeys: run,
+  }
+
+  it("names ? as its key while single keys are on, and no key while they are off", () => {
+    expect(shortcutsMenuItems({ ...base, inMenu: true })[0]).toMatchObject({
+      label: SHORTCUT_TEXT.menuEntry,
+      onClick: run,
+      keyshortcuts: ["?"],
+    })
+    expect(shortcutsMenuItems({ ...base, singleKeys: false, inMenu: true })[0].keyshortcuts)
+      .toBeUndefined()
+  })
+
+  it("is left out on a device without a fine pointer", () => {
+    expect(shortcutsMenuItems({ ...base, inMenu: false })).toEqual([])
+    expect(shortcutsMenuItems(undefined)).toEqual([])
   })
 })
