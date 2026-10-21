@@ -4,7 +4,8 @@
  * check must run the smoke set (`SMOKE_SPECS` of `infra/scripts/e2e-local-plan.ts`), and the set
  * must keep the sign-in and the notes specs: without either, a pull request that breaks that
  * screen shows green again. The whole suite runs after the merge, on `main`, where a red run is
- * seen but blocks nobody. `docs/development.md` and `docs/woodpecker-ci-setup.md` name the specs of the set.
+ * seen but blocks nobody. `docs/development.md` and `docs/woodpecker-ci-setup.md` name the specs
+ * of the set.
  */
 
 import { expect } from "@std/expect"
