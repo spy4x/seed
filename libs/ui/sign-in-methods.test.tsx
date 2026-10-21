@@ -20,6 +20,7 @@ import {
   type SignInMethodsProps,
 } from "./sign-in-methods.tsx"
 import { SCREEN_PATHS } from "./progressive.tsx"
+import { providerProofOf } from "./provider-proof.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -817,6 +818,34 @@ describe("ProfileScreen for an account without a password", () => {
     pushDevices: [],
   } as unknown as ProfileScreenProps
   const onlyGoogle = { ...google, current: true, canUnlink: false }
+
+  it("offers to sign in again with a passkey where it asks for proof, using the app's handler", async () => {
+    const passkey: SignInMethod = {
+      id: 12,
+      kind: "passkey",
+      email: null,
+      current: true,
+      canUnlink: false,
+      passkey: { name: "Chrome on macOS", createdAt: "2026-10-21T09:00:00.000Z", lastUsedAt: null },
+    }
+    let pressed = 0
+    const proof = { ...providerProofOf([passkey], false)!, onPasskey: () => void pressed++ }
+    await mount(
+      <ProfileScreen
+        {...profile}
+        methods={methodsProps([], { methods: [passkey] })}
+        providerProof={proof}
+        onSetPassword={() => {}}
+      />,
+    )
+
+    await click("[data-e2e=password-open]")
+    expect(find("[data-e2e=provider-proof-needed]").textContent).toContain(
+      "Sign in with a passkey again",
+    )
+    await click("[data-e2e=provider-proof-passkey]")
+    expect(pressed).toBe(1)
+  })
 
   it("offers a change of address and a first password", async () => {
     await mount(

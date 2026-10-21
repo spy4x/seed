@@ -268,7 +268,7 @@ of `@spy4x/platform/browser/last-sign-in`: the app remembers the method the sess
 
 **An account with no password** confirms with a provider sign-in where the others give the
 password: `oauth.proofUntil` (`apps/api/services/oauth-sign-in.ts`) holds while the request's
-session was started by an `oauth:*` key less than `PROVIDER_PROOF_MINUTES` ago, read from
+session was started by an `oauth:*` or `passkey` key less than `PROVIDER_PROOF_MINUTES` ago, read from
 `auth_sessions.created_at`. It proves the browser is signed in to the provider, not who is at the
 keyboard: where the provider is still signed in, the new sign-in is one click (#204).
 `POST /api/auth/account/delete`, `POST /api/auth/email/change` and
@@ -285,12 +285,31 @@ its sign-in methods carries already (`EMAIL_ALREADY_CARRIED`): it reads its addr
 methods, so the change would answer "done" and change nothing. `POST /api/auth/password/set` asks
 for `otp` while two-factor is on, and `POST /api/auth/methods/:provider/link` asks for the password
 or the same provider proof, so a session cannot make itself recent by linking one more provider.
-`DELETE /api/auth/methods/:id` asks for the same proof (`refuseWithoutProof`,
+`DELETE /api/auth/methods/:id` asks for the same proof (`refusalWithoutProof`,
 `apps/api/routes/auth-oauth.ts`), before it answers whether the method exists. Every link and
 unlink, an automatic link at sign-in included, queues a mail to the account's first proven address
 naming the provider and the time (`sign_in_method_changes` and the outbox job in
 `libs/server/jobs/sign-in-method-mail.ts`). Not built: a first password by reset mail, so "forgot
 password" still finds no key for such an account.
+
+**Passkeys (#222).** A passkey is an `auth_keys` row of method `passkey` whose `subject` is the
+credential id (at most 255 characters; a longer one is refused), with its public key, counter,
+transports and name in `auth_passkeys` (`libs/server/auth/passkeys.ts`). The WebAuthn checks are
+`@spy4x/server/webauthn`; `apps/api/services/passkey-sign-in.ts` keeps each challenge in Valkey
+under `passkey:<ceremony>:…<challenge>` and takes it with the atomic `take`, so a response answers
+once. The relying party is the web app's host and origin (`config.webAppUrl`). The routes are
+`apps/api/routes/auth-passkeys.ts`: `POST /api/auth/passkeys/add/options` asks for the password or
+the proof above, `POST /api/auth/passkeys` stores the passkey named after the browser
+(`deviceName`, " 2" on a clash), `PATCH /api/auth/passkeys/:id` renames it
+(writing `SIGN_IN_METHOD_RENAMED` with both names), and
+`DELETE /api/auth/methods/:id` removes it like any method. `POST /api/auth/passkeys/sign-in` (with
+`/options`) signs in with any passkey of the site and owes no authenticator code, except to restore
+an account that waits to be deleted with two-factor on. The device verifies the person on every
+ceremony, so the passkey counts as both factors: an account with an authenticator app gets a
+`Completed` session, which the 2FA gate lets through; an unknown credential answers 404 with
+`unknown: true`, and the SPA tells the device to forget it. `POST /api/auth/passkeys/confirm`
+(with `/options`) is a passkey sign-in again by a signed-in person, checked against that person's
+id, and replaces the session: it is the passkey's way to make the proof above fresh.
 
 **Changing the address.** `POST /api/auth/email/change` with `{ email,
 password }` stores the new address in `email_changes` and mails it a code;

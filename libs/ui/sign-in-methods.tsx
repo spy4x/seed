@@ -4,9 +4,11 @@ import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
+import { InlineEdit } from "@spy4x/preact-ui/inline-edit"
 import { Input } from "@spy4x/preact-ui/input"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
+import { OnDay, When } from "@spy4x/preact-ui/format"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
@@ -20,10 +22,35 @@ export const SIGN_IN_METHODS_FAILURE = "Changing your sign-in methods failed"
 export const SIGN_IN_METHODS_LOAD_FAILURE =
   "Your sign-in methods could not be loaded. Check your connection and try again."
 
+/** What the card says when a rename was refused or did not arrive. */
+export const PASSKEY_RENAME_FAILURE = "The name could not be saved. Try again."
+
 /** What a method is called in the list. */
 export function signInMethodName(kind: SignInMethod["kind"]): string {
-  return kind === "password" ? "Password" : OAUTH_PROVIDER_NAMES[kind]
+  if (kind === "password") return "Password"
+  if (kind === "passkey") return "Passkey"
+  return OAUTH_PROVIDER_NAMES[kind]
 }
+
+/** What a method is called in a sentence or a dialog: a passkey by the name it was given. */
+function shownName(method: SignInMethod): string {
+  return method.passkey?.name ?? signInMethodName(method.kind)
+}
+
+/** Where each kind stands in the list (#222): the password, the passkeys, then the providers. */
+const ORDER: Record<SignInMethod["kind"], number> = {
+  password: 0,
+  passkey: 1,
+  google: 2,
+  github: 3,
+}
+
+/** Where adding a passkey stands, for the button and the status line under the list. */
+export type PasskeyAddStatus =
+  | { kind: "waiting" }
+  /** Closed or timed out on the device: nothing was added. */
+  | { kind: "cancelled" }
+  | { kind: "added"; keyId: number; name: string }
 
 export interface SignInMethodsProps {
   /** The account's ways in; `null` while the list is not known yet. */
@@ -58,6 +85,20 @@ export interface SignInMethodsProps {
    * typed, for an account that has one.
    */
   onUnlink: (methodId: number, password?: string) => void
+  /**
+   * Starts adding a passkey (#222): the app asks the server, then the device. `password` is what
+   * the person typed, for an account that has one. Left out, or without `passkeysSupported`, there
+   * is no "Add a passkey" button; existing passkeys stay listed and removable.
+   */
+  onAddPasskey?: (password?: string) => void
+  /** This browser can make and use passkeys. */
+  passkeysSupported?: boolean
+  /** `false` while the device is offline: adding a passkey waits for a connection. */
+  online?: boolean
+  /** The last passkey add, for its button and its status line. */
+  passkeyStatus?: PasskeyAddStatus | null
+  /** Renames a passkey; a rejection keeps the field open with the typed name. */
+  onRenamePasskey?: (methodId: number, name: string) => Promise<void>
 }
 
 /**
@@ -80,12 +121,19 @@ export function SignInMethods(
     providerProof = null,
     onLink,
     onUnlink,
+    onAddPasskey,
+    passkeysSupported = false,
+    online = true,
+    passkeyStatus = null,
+    onRenamePasskey,
   }: SignInMethodsProps,
 ): JSX.Element {
   /** The method whose unlink dialog is open. */
   const [confirming, setConfirming] = useState<SignInMethod | null>(null)
-  /** The provider whose link dialog is open. */
-  const [linking, setLinking] = useState<OAuthProviderId | null>(null)
+  /** The provider whose link dialog is open, or `passkey` for the dialog before a new passkey. */
+  const [linking, setLinking] = useState<OAuthProviderId | "passkey" | null>(null)
+  const canAddPasskey = passkeysSupported && onAddPasskey !== undefined
+  const sorted = methods && [...methods].sort((a, b) => ORDER[a.kind] - ORDER[b.kind])
   // Typed here and handed to `onLink` or `onUnlink` once: the password is kept nowhere else.
   const [password, setPassword] = useState("")
   const passwordInput = useRef<HTMLInputElement>(null)
@@ -106,11 +154,30 @@ export function SignInMethods(
     setConfirming(null)
     setPassword("")
   }
-  const startLink = (provider: OAuthProviderId) => {
+  const startLink = (provider: OAuthProviderId | "passkey") => {
     // A sign-in a moment ago is the proof already: nothing to ask.
-    if (providerProof?.fresh) onLink(provider)
-    else setLinking(provider)
+    if (!providerProof?.fresh) setLinking(provider)
+    else if (provider === "passkey") onAddPasskey?.()
+    else onLink(provider)
   }
+  const submitLink = () => {
+    if (linking === "passkey") onAddPasskey?.(password)
+    else if (linking) onLink(linking, password)
+  }
+  // The device's dialog took over, or the add ended: the password dialog has done its job.
+  const addButton = useRef<HTMLButtonElement>(null)
+  const status = useRef<HTMLParagraphElement>(null)
+  useEffect(() => {
+    if (!passkeyStatus) return
+    if (linking === "passkey") closeLink()
+    // Cancelled: back to the button. Added: to the new passkey's name, to rename it.
+    if (passkeyStatus.kind === "cancelled") addButton.current?.focus()
+    if (passkeyStatus.kind === "added") {
+      list.current?.querySelector<HTMLButtonElement>(
+        `[data-e2e="passkey-name-${passkeyStatus.keyId}"] button`,
+      )?.focus()
+    }
+  }, [passkeyStatus])
   // The "Unlink" button that had focus goes away with its row: the list takes focus, so the
   // keyboard and a screen reader stay where the change happened. The unlink dialog closes once its
   // method has gone, and the list takes focus after it, since the dialog keeps it while open.
@@ -165,23 +232,33 @@ export function SignInMethods(
         : (
           <div ref={list} tabIndex={-1} data-e2e="sign-in-methods-list">
             <SettingList>
-              {methods.map((method) => (
+              {(sorted ?? []).map((method) => (
                 <SettingRow
                   key={method.id}
                   dataE2E={`sign-in-method-${method.kind}`}
                   label={signInMethodName(method.kind)}
-                  value={<MethodDetails method={method} only={methods.length === 1} />}
+                  value={
+                    <MethodDetails
+                      method={method}
+                      only={methods.length === 1}
+                      pending={pending}
+                      onRename={onRenamePasskey}
+                    />
+                  }
                   action={method.canUnlink && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       class={TOUCH_TARGET}
-                      data-e2e={`sign-in-method-unlink-${method.kind}`}
+                      data-e2e={method.kind === "passkey"
+                        ? `sign-in-method-remove-passkey-${method.id}`
+                        : `sign-in-method-unlink-${method.kind}`}
                       disabled={pending}
                       onClick={() => setConfirming(method)}
                     >
-                      Unlink <span class="sr-only">{signInMethodName(method.kind)}</span>
+                      {method.kind === "passkey" ? "Remove" : "Unlink"}{" "}
+                      <span class="sr-only">{shownName(method)}</span>
                     </Button>
                   )}
                 />
@@ -189,9 +266,23 @@ export function SignInMethods(
             </SettingList>
           </div>
         )}
-      {available.length > 0 && (
+      {(available.length > 0 || canAddPasskey) && (
         <div class="flex flex-col items-start gap-3">
           <div class="flex flex-wrap gap-3">
+            {canAddPasskey && (
+              <Button
+                ref={addButton}
+                type="button"
+                variant="secondary"
+                data-e2e="sign-in-method-add-passkey"
+                disabled={pending || !online}
+                busy={passkeyStatus?.kind === "waiting"}
+                busyLabel="Waiting for your device…"
+                onClick={() => startLink("passkey")}
+              >
+                Add a passkey
+              </Button>
+            )}
             {available.map((provider) => (
               <Button
                 key={provider}
@@ -205,13 +296,27 @@ export function SignInMethods(
               </Button>
             ))}
           </div>
+          {canAddPasskey && !online && (
+            <p class="text-sm text-muted" data-e2e="passkey-offline">
+              Adding a passkey needs a connection.
+            </p>
+          )}
         </div>
       )}
+      <p ref={status} role="status" class="text-sm empty:hidden" data-e2e="passkey-status">
+        {passkeyStatus?.kind === "cancelled" && "No passkey was added."}
+        {passkeyStatus?.kind === "added" &&
+          `Passkey added as "${passkeyStatus.name}". Rename it if you like.`}
+      </p>
 
       <Modal
         open={linking !== null}
         onClose={closeLink}
-        title={linking ? `Link ${OAUTH_PROVIDER_NAMES[linking]}` : "Link"}
+        title={linking === "passkey"
+          ? "Add a passkey"
+          : linking
+          ? `Link ${OAUTH_PROVIDER_NAMES[linking]}`
+          : "Link"}
         cancelLabel="Close"
         dataE2E="sign-in-method-link-dialog"
       >
@@ -227,13 +332,13 @@ export function SignInMethods(
           : (
             <ScreenForm
               pending={pending}
-              onSubmit={() => {
-                if (linking) onLink(linking, password)
-              }}
+              onSubmit={submitLink}
             >
               <Stack>
                 <p class="text-sm text-muted">
-                  A linked account is another way to sign in, so your password is asked first.
+                  {linking === "passkey"
+                    ? "A passkey is another way to sign in, so your password is asked first."
+                    : "A linked account is another way to sign in, so your password is asked first."}
                 </p>
                 <Field id="sign-in-method-link-password" label="Password" required>
                   <Input
@@ -254,9 +359,11 @@ export function SignInMethods(
                     type="submit"
                     data-e2e="sign-in-method-link-submit"
                     busy={pending}
-                    busyLabel="Opening…"
+                    busyLabel={linking === "passkey" ? "Waiting for your device…" : "Opening…"}
                   >
-                    Continue{linking ? ` to ${OAUTH_PROVIDER_NAMES[linking]}` : ""}
+                    Continue{linking && linking !== "passkey"
+                      ? ` to ${OAUTH_PROVIDER_NAMES[linking]}`
+                      : ""}
                   </Button>
                 </Cluster>
               </Stack>
@@ -268,14 +375,22 @@ export function SignInMethods(
         <Modal
           open
           onClose={closeUnlink}
-          title={`Unlink ${signInMethodName(confirming.kind)}?`}
+          title={confirming.kind === "passkey"
+            ? `Remove "${shownName(confirming)}"?`
+            : `Unlink ${signInMethodName(confirming.kind)}?`}
           cancelLabel="Close"
           tone="danger"
           dataE2E="sign-in-method-unlink-confirm"
         >
           <Stack>
             <p class="text-sm text-muted">
-              {confirming.current
+              {confirming.kind === "passkey"
+                ? `You can no longer sign in with this passkey. Every device that signed in with it is signed out. Delete it from your password manager too.${
+                  confirming.current
+                    ? " This device signed in with it, so it will be signed out too."
+                    : ""
+                }`
+                : confirming.current
                 ? `You signed in on this device with ${
                   signInMethodName(confirming.kind)
                 }, so it will be signed out, like every other device that did.`
@@ -321,9 +436,9 @@ export function SignInMethods(
                         variant="danger"
                         data-e2e="sign-in-method-unlink-submit"
                         busy={pending}
-                        busyLabel="Unlinking…"
+                        busyLabel={confirming.kind === "passkey" ? "Removing…" : "Unlinking…"}
                       >
-                        Unlink
+                        {confirming.kind === "passkey" ? "Remove passkey" : "Unlink"}
                       </Button>
                     </Cluster>
                   </Stack>
@@ -336,16 +451,61 @@ export function SignInMethods(
   )
 }
 
-/** The method's address, whether this device used it, and why the only one has no "Unlink". */
+/**
+ * The method's address, or a passkey's name (renamed in place) and dates; whether this device
+ * used it; and why the only one has no "Unlink" or "Remove".
+ */
 function MethodDetails(
-  { method, only }: { method: SignInMethod; only: boolean },
+  { method, only, pending, onRename }: {
+    method: SignInMethod
+    only: boolean
+    pending: boolean
+    onRename?: (methodId: number, name: string) => Promise<void>
+  },
 ): JSX.Element {
+  const { passkey } = method
   return (
     <span class="flex flex-col items-start gap-1">
+      {passkey && (
+        <>
+          {onRename
+            ? (
+              // The control cuts a long name off on a narrow screen; the title shows it in full.
+              <span title={passkey.name} class="max-w-full min-w-0" data-e2e="passkey-full-name">
+                <InlineEdit
+                  value={passkey.name}
+                  onSave={(name) => onRename(method.id, name)}
+                  editLabel={(name) => `Rename ${name}`}
+                  inputLabel="Passkey name"
+                  errorMessage={() => PASSKEY_RENAME_FAILURE}
+                  disabled={pending}
+                  dataE2E={`passkey-name-${method.id}`}
+                  // The button's own padding would push the name off the line under it.
+                  class="-ml-2 font-medium text-foreground"
+                />
+              </span>
+            )
+            : <span class="font-medium break-words text-foreground">{passkey.name}</span>}
+          <span data-e2e="passkey-dates">
+            Added <OnDay at={passkey.createdAt} />
+            {" · "}
+            {passkey.lastUsedAt
+              ? (
+                <>
+                  Last used <When at={passkey.lastUsedAt} />
+                </>
+              )
+              : "Not used yet"}
+          </span>
+        </>
+      )}
       {method.email && <span data-e2e="sign-in-method-email">{method.email}</span>}
       {method.current && <Badge text="Used on this device" color="green" type="outline" />}
       {only && method.kind !== "password" && (
-        <span>Your only way to sign in, so it cannot be unlinked.</span>
+        <span>
+          Your only way to sign in, so it cannot be{" "}
+          {method.kind === "passkey" ? "removed" : "unlinked"}.
+        </span>
       )}
     </span>
   )

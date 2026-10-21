@@ -1,7 +1,10 @@
 import { type } from "arktype"
 import { BaseModelSchema, dateSchema, PUSH_SUBSCRIPTION_LIMITS } from "@spy4x/platform/model"
 import type { SecondFactorStatus } from "@spy4x/server/sign-in"
-import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
+import {
+  hasUnsafeTextCharacters,
+  hasUnstorableTextCharacters,
+} from "@spy4x/platform/universal/text"
 import type { AdminUserPreferences } from "./preferences.ts"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 
@@ -398,6 +401,12 @@ export enum AuthAuditEventType {
    * holds many people; `identifier` names the operator and the filter (`operator:<id> q=ada`).
    */
   USERS_EXPORTED = 24,
+  /**
+   * The person renamed one of their passkeys (#222). `identifier` names both names:
+   * `passkey name=<new> from=<old>`. Numbers 25 to 29 are the billing events of
+   * `@domain/billing/admin.ts`.
+   */
+  SIGN_IN_METHOD_RENAMED = 30,
 }
 
 export const authAuditBaseSchema = type({
@@ -427,6 +436,7 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.USER_ROLE_CHANGED,
     AuthAuditEventType.PASSWORD_RESET_SENT,
     AuthAuditEventType.USERS_EXPORTED,
+    AuthAuditEventType.SIGN_IN_METHOD_RENAMED,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",
@@ -588,17 +598,49 @@ export interface PendingSignUpResponse {
   pending: PendingSignUp | null
 }
 
+/** Longest name a passkey may have, in characters (#222). */
+export const PASSKEY_NAME_MAX_LENGTH = 64
+
+/**
+ * The name of a passkey from a rename's body, trimmed, or `null` when the body has none a passkey
+ * may carry: empty, longer than {@link PASSKEY_NAME_MAX_LENGTH} characters, or holding a character
+ * a one-line name must not (`hasUnsafeTextCharacters`). The name goes into the audit trail as it is.
+ */
+export function parsePasskeyName(body: unknown): string | null {
+  const raw = (body as { name?: unknown } | null)?.name
+  if (typeof raw !== "string") return null
+  const name = raw.trim()
+  const length = Array.from(name).length
+  if (length < 1 || length > PASSKEY_NAME_MAX_LENGTH || hasUnsafeTextCharacters(name)) return null
+  return name
+}
+
+/** The answer to adding a passkey: its key id and the name it was given. */
+export interface PasskeyAdded {
+  keyId: number
+  name: string
+}
+
+/** What a passkey row adds to a {@link SignInMethod} (#222). Dates are ISO 8601. */
+export interface PasskeyDetails {
+  name: string
+  createdAt: string
+  lastUsedAt: string | null
+}
+
 /** One way into the account, as `GET /api/auth/methods` lists it (#141). */
 export interface SignInMethod {
   /** The id to unlink it by. */
   id: number
-  kind: "password" | OAuthProviderId
+  kind: "password" | "passkey" | OAuthProviderId
   /** The address this method proved or signs in with; `null` when it carries none. */
   email: string | null
   /** This device signed in with it, so unlinking it signs this device out. */
   current: boolean
-  /** A provider method that is not the last way in. The password is never unlinked. */
+  /** A provider method or passkey that is not the last way in. The password is never unlinked. */
   canUnlink: boolean
+  /** The passkey's name and dates, on a passkey row only. */
+  passkey?: PasskeyDetails
 }
 
 /** The answer of `GET /api/auth/methods`. */
@@ -784,8 +826,10 @@ export interface AdminUserListResponse {
 
 /** One way the person signs in, as the operator sees it: never a secret. */
 export interface AdminSignInMethod {
-  /** `password`, `oauth:google`, `oauth:github`, or `email-code`. */
+  /** `password`, `oauth:google`, `oauth:github`, `email-code`, or `passkey`. */
   method: string
+  /** A passkey's name and last use (#222), on a passkey row only. */
+  passkey?: { name: string; lastUsedAt: string | null }
   /** The address the key holds, or `null`. */
   email: string | null
   /** When the address was proven, or `null` when it was not. ISO 8601. */

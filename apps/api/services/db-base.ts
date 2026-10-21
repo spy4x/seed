@@ -54,6 +54,17 @@ import {
   type SignInMethodChange,
 } from "@server/jobs/sign-in-method-mail.ts"
 import { touchUserSeen } from "@server/auth/sessions.ts"
+import {
+  findPasskey,
+  insertPasskey,
+  listPasskeys,
+  type NewPasskey,
+  passkeyDescriptors,
+  type PasskeySummary,
+  recordPasskeyUse,
+  renamePasskey,
+  type StoredPasskey,
+} from "@server/auth/passkeys.ts"
 import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
 import { preferencesStore, recordFirstDevice } from "@server/auth/preferences.ts"
 import { type ApiTokenRows, apiTokenRows } from "@server/api-tokens/api-tokens.ts"
@@ -279,6 +290,21 @@ export class AppDbBase extends DbServiceBase {
    * (`@server/jobs/sign-in-method-mail.ts`). Built per access, like `group`: `queue` belongs inside
    * the change's `begin()`, beside its audit row.
    */
+  /** The passkey part of `passkey` keys (#222). Built per access, like `group`. */
+  get passkeys() {
+    const sql = this.sql
+    return {
+      insert: (passkey: NewPasskey): Promise<void> => insertPasskey(sql, passkey),
+      list: (userId: number): Promise<PasskeySummary[]> => listPasskeys(sql, userId),
+      descriptors: (userId: number) => passkeyDescriptors(sql, userId),
+      find: (credentialId: string): Promise<StoredPasskey | null> => findPasskey(sql, credentialId),
+      recordUse: (keyId: number, use: { counter: number; backedUp: boolean }): Promise<void> =>
+        recordPasskeyUse(sql, keyId, use),
+      rename: (userId: number, keyId: number, name: string): Promise<string | null> =>
+        renamePasskey(sql, userId, keyId, name),
+    }
+  }
+
   get signInMethodMail() {
     const sql = this.sql
     return {

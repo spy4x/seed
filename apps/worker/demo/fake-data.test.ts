@@ -6,6 +6,7 @@ import { GroupRole } from "@domain/groups"
 import {
   DAY,
   FAKE_COUNTS,
+  FAKE_PASSKEYS,
   fakeDemoData,
   type FakeGroup,
   fakePeople,
@@ -121,6 +122,20 @@ Deno.test("a few people are unverified, blocked, on Google or GitHub, or use a s
   expect(users.filter((user) => user.provider === `oauth:google`)).toHaveLength(10)
   expect(users.filter((user) => user.provider === `oauth:github`)).toHaveLength(5)
   expect(users.filter((user) => user.secondFactor)).toHaveLength(8)
+})
+
+Deno.test("a dozen confirmed, unblocked people added a passkey after they joined", () => {
+  const { users } = fakeDemoData(1, NOW)
+  const holders = users.filter((user) => user.passkey !== null)
+  expect(holders).toHaveLength(FAKE_PASSKEYS)
+  for (const user of holders) {
+    const { device, addedAgo, lastUsedAgo } = user.passkey!
+    expect(user.verified).toBe(true)
+    expect(user.blockedAgo).toBeNull()
+    expect(device).toBeLessThan(user.devices.length)
+    expect(addedAgo).toBeLessThan(user.joinedAgo)
+    if (lastUsedAgo !== null) expect(lastUsedAgo).toBeLessThan(addedAgo)
+  }
 })
 
 Deno.test("some people renamed their first group, and nobody who never confirmed", () => {

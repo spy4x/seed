@@ -4,6 +4,7 @@ import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { AuthAuditEventType, OAUTH_PROVIDER_NAMES, oauthProviderId } from "@domain/identity"
 import { type MailBrand, signInMethodChangedMail } from "../mail/mail.ts"
+import { PASSKEY_METHOD } from "../auth/passkeys.ts"
 import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
 
 /**
@@ -60,6 +61,7 @@ interface ChangeRow extends postgres.Row {
 /** The provider a key's method names, as people know it; the method itself for anything else. */
 function providerName(method: string): string {
   const id = method.startsWith("oauth:") ? oauthProviderId(method.slice(6)) : null
+  if (method === PASSKEY_METHOD) return "A passkey"
   return id ? OAUTH_PROVIDER_NAMES[id] : method
 }
 
@@ -94,6 +96,7 @@ export function signInMethodMailJob(deps: SignInMethodMailDeps): JobHandler {
         provider: providerName(change.method),
         linked: change.eventType === AuthAuditEventType.SIGN_IN_METHOD_LINKED,
         at: change.changedAt,
+        passkey: change.method === PASSKEY_METHOD,
       }))
       if (!result.ok) {
         deps.log("error: a sign-in method mail was not sent and will be retried")

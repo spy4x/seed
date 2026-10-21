@@ -416,6 +416,48 @@ describe("one person in the admin app", () => {
     expect(activity).toContain("operator:7")
   })
 
+  it("lists a passkey read-only by its name and dates, with no proof badge", async () => {
+    const passkey = {
+      method: "passkey",
+      email: null,
+      provenAt: null,
+      createdAt: "2026-10-02T10:00:00.000Z",
+      passkey: { name: "Chrome on macOS", lastUsedAt: "2026-10-14T10:00:00.000Z" },
+    }
+    await mount(
+      <AdminUserScreen
+        {...userProps([], { tab: "methods", detail: { ...detail, methods: [passkey] } })}
+      />,
+    )
+
+    const row = find("[role=tabpanel] [data-e2e=admin-user-methods] li")
+    expect(row.textContent).toContain("Passkey")
+    expect(find("[data-e2e=admin-user-passkey]").textContent).toMatch(
+      /^Chrome on macOS · Added .+ · Last used .+/,
+    )
+    expect(row.textContent).not.toMatch(/proven/i)
+    expect(row.querySelector("button")).toBeNull()
+  })
+
+  it("shows a passkey rename in the activity with the new and the old name", async () => {
+    const renamed = {
+      id: 2,
+      eventType: AuthAuditEventType.SIGN_IN_METHOD_RENAMED,
+      identifier: "passkey name=Work laptop from=Chrome on macOS",
+      ip: null,
+      createdAt: "2026-10-14T10:00:00.000Z",
+    }
+    await mount(
+      <AdminUserScreen
+        {...userProps([], { tab: "activity", detail: { ...detail, audits: [renamed] } })}
+      />,
+    )
+
+    const entry = find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_RENAMED}]`)
+    expect(entry.textContent).toContain("Passkey renamed")
+    expect(entry.textContent).toContain("passkey name=Work laptop from=Chrome on macOS")
+  })
+
   it("colours each activity entry by what happened, the block alone as a danger", async () => {
     const tones = {
       neutral: [AuthAuditEventType.SIGNED_IN, AuthAuditEventType.API_TOKEN_USED],

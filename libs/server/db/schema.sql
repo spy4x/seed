@@ -58,6 +58,25 @@ CREATE TABLE auth_keys (
 CREATE INDEX auth_keys_user_id_idx ON auth_keys (user_id);
 CREATE INDEX auth_keys_email_idx ON auth_keys (email) WHERE email IS NOT NULL;
 
+-- #222: what only a passkey key has. See migration 2026_11_25_0001_auth_passkeys.sql.
+CREATE TABLE auth_passkeys (
+    key_id INT4 PRIMARY KEY,
+    user_id INT4 NOT NULL,
+    public_key BYTEA NOT NULL,
+    counter INT8 DEFAULT 0 NOT NULL,
+    transports TEXT[] DEFAULT '{}' NOT NULL,
+    backed_up BOOLEAN DEFAULT false NOT NULL,
+    name TEXT NOT NULL,
+    last_used_at TIMESTAMPTZ,
+    CONSTRAINT auth_passkeys_key_fkey FOREIGN KEY (key_id, user_id)
+        REFERENCES auth_keys (id, user_id) ON DELETE CASCADE,
+    CONSTRAINT auth_passkeys_public_key_check CHECK (octet_length(public_key) BETWEEN 1 AND 2048),
+    CONSTRAINT auth_passkeys_counter_check CHECK (counter BETWEEN 0 AND 4294967295),
+    CONSTRAINT auth_passkeys_name_check CHECK (length(name) BETWEEN 1 AND 64)
+);
+
+CREATE INDEX auth_passkeys_user_id_idx ON auth_passkeys (user_id);
+
 -- Status: 1 = active, 2 = expired, 3 = signed out. Second factor: 1 = not required, 2 = pending,
 -- 3 = completed. The values of SessionStatus and SecondFactorStatus in @spy4x/server/sign-in.
 CREATE TABLE auth_sessions (
@@ -694,7 +713,7 @@ CREATE INDEX idx_api_tokens_group_id ON api_tokens (group_id);
 
 -- The audit rows of an account: sign-in, sign-out, profile, sessions and personal API tokens. See
 -- migration 2026_01_26_0002_auth_profiles_audit.sql and, for the event types, the migrations that
--- widen the check (the last is 2026_11_16_0001_admin_billing.sql). `identifier` is plain
+-- widen the check (the last is 2026_11_25_0001_auth_passkeys.sql). `identifier` is plain
 -- text with no foreign key, so a row outlives what it names.
 CREATE TABLE auth_audits (
     id SERIAL PRIMARY KEY,
@@ -707,7 +726,7 @@ CREATE TABLE auth_audits (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]))
 );
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
