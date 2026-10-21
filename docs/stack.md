@@ -83,10 +83,10 @@ Where they send is the only difference between the two modes, and the env file a
 **Bundled** (the default of `infra/envs/.env.example`): `COMPOSE_PROFILES` contains `monitoring`,
 and `VM_REMOTE_WRITE_URL` and `VLOGS_URL` are empty. Compose then also runs VictoriaMetrics,
 VictoriaLogs, Grafana, vmalert and Alertmanager, and vmagent and Vector send to them. Grafana is on
-`127.0.0.1:3000` of the machine, with no public address (docs/deploy.md, "Admin consoles"; user `admin`,
-password `GRAFANA_PASS`), with both data sources already there
-(`infra/configs/grafana-datasources.yml`); it downloads the VictoriaLogs data source plugin, at
-the version pinned in the Compose file, at its first start. Both databases keep 14 days, under
+`127.0.0.1:3000` of the machine, with no public address (docs/deploy.md, "Admin consoles"; user
+`admin`, password `GRAFANA_PASS`), with both data sources already there
+(`infra/configs/grafana-datasources.yml`); it downloads the VictoriaLogs data source plugin, at the
+version pinned in the Compose file, at its first start. Both databases keep 14 days, under
 `.volumes/victoriametrics` and `.volumes/victorialogs`.
 
 **External**: take `monitoring` out of `COMPOSE_PROFILES` and name the other server:
@@ -109,9 +109,10 @@ the bundled mode before removes them once, by name:
 deno task compose rm --stop --force victoriametrics victorialogs vmalert alertmanager grafana
 ```
 
-Their data stays in `.volumes/victoriametrics`, `.volumes/victorialogs` and `.volumes/grafana`. What vmagent cannot send waits on disk
-(`.volumes/vmagent`, up to 1 GiB) and is sent when the server is back; Vector retries too, with a
-small queue in memory. Grafana, the alert rules and the retention are then the other server's.
+Their data stays in `.volumes/victoriametrics`, `.volumes/victorialogs` and `.volumes/grafana`. What
+vmagent cannot send waits on disk (`.volumes/vmagent`, up to 1 GiB) and is sent when the server is
+back; Vector retries too, with a small queue in memory. Grafana, the alert rules and the retention
+are then the other server's.
 
 A project started with neither the profile nor the two addresses still runs: vmagent and Vector
 keep trying an address that does not exist, and nothing is stored.
@@ -238,10 +239,10 @@ docker run -d --name other-vl --network app_default victoriametrics/victoria-log
   -httpAuth.username=shipper -httpAuth.password=<password>
 ```
 
-Set `COMPOSE_PROFILES=` (without `monitoring`), `VM_REMOTE_WRITE_URL=http://other-vm:8428/api/v1/write`,
-`VLOGS_URL=http://other-vl:9428` and the user name and password in `infra/envs/.env`, run
-`deno task dev`, open any API address, and after a minute ask
-the other server:
+Set `COMPOSE_PROFILES=` (without `monitoring`),
+`VM_REMOTE_WRITE_URL=http://other-vm:8428/api/v1/write`, `VLOGS_URL=http://other-vl:9428` and the
+user name and password in `infra/envs/.env`, run `deno task dev`, open any API address, and after a
+minute ask the other server:
 
 ```sh
 docker exec app-vmagent wget -qO- \
@@ -260,21 +261,23 @@ stack trace and alerts. The tracker is [GlitchTip](https://glitchtip.com) (MIT l
 Sentry's protocol, runs on Postgres and Valkey). Any Sentry-compatible tracker works, because the
 app only needs a DSN.
 
-**In the app.** `createErrorReporter` from `@spy4x/platform` is a small reporter that posts Sentry's envelope
-format, about 270 lines and no dependency, instead of the 30 KB `@sentry/browser`.
+**In the app.** `createErrorReporter` from `@spy4x/platform` is a small reporter that posts Sentry's
+envelope format, about 270 lines and no dependency, instead of the 30 KB `@sentry/browser`.
 
 - The SPA reports `error` and `unhandledrejection` events and the errors its `ErrorBoundary`
   catches (`apps/spa/src/error-reporting.ts`). The MPA has no client script, so it reports nothing.
-- The API's base middleware (`applyBaseMiddleware` from `@spy4x/server/request-log/base-middleware`) logs and reports every error answered
-  with status 500 or more, with the request id, the method and the path. That includes an error a
-  route's own `onError` answered; the answer is unchanged. It never sends a query string, a header
-  or a body. An `HTTPException` below 500 is an answer, not a failure, and is not reported.
+- The API's base middleware (`applyBaseMiddleware` from `@spy4x/server/request-log/base-middleware`)
+  logs and reports every error answered with status 500 or more, with the request id, the method and
+  the path. That includes an error a route's own `onError` answered; the answer is unchanged. It
+  never sends a query string, a header or a body. An `HTTPException` below 500 is an answer, not a
+  failure, and is not reported.
 - A report never carries cookies, headers, form values, query strings or fragments. Free text (the
   message, the stack) has URLs cut to their path and values named like `password`, `token`,
   `cookie`, `api_key` or `Bearer …` masked; the rest of an `Authorization`, `Cookie` or
-  `Set-Cookie` line, a relative path's query and a bare JWT are masked too. The SPA also masks `/invite/<token>`.
-- Reporting is capped (20 reports per page load, 100 per hour in the API process) and fails open: a tracker
-  that is down never changes what a person sees.
+  `Set-Cookie` line, a relative path's query and a bare JWT are masked too. The SPA also masks
+  `/invite/<token>`.
+- Reporting is capped (20 reports per page load, 100 per hour in the API process) and fails open: a
+  tracker that is down never changes what a person sees.
 - **No DSN, no reporting:** with `ERROR_REPORT_DSN` (API) and `SPA_ERROR_REPORT_DSN` (browser,
   read at container start) empty, nothing is sent and no request is made. A browser DSN is
   public by design; give the SPA its own GlitchTip project so a leaked key can only add noise.
@@ -310,9 +313,9 @@ baked into the build; the container writes them to `/config.json` when it starts
   module off"; and `SPA_DEMO` as `demo`, set from `DEMO_MODE`; `docs/demo.md`). Anything else in the
   container's environment is ignored. The file goes to every visitor's browser, so list a public
   value only; `tests/spa-runtime-config.test.ts` fails if a name looks like a secret.
-- **Start-up:** nginx's entrypoint runs `apps/spa/runtime-config.sh`, which writes `/tmp/config.json`
-  (`/config.json` is a link to it, so the container can run as any user). A variable that is unset
-  or empty is left out.
+- **Start-up:** nginx's entrypoint runs `apps/spa/runtime-config.sh`, which writes
+  `/tmp/config.json` (`/config.json` is a link to it, so the container can run as any user). A
+  variable that is unset or empty is left out.
 - **In the app:** `apps/spa/src/runtime-config.ts` fetches the file before the first render and
   checks it with an arktype schema. A missing or invalid file gives the defaults (no error tracker)
   and a console warning, never a blank page.

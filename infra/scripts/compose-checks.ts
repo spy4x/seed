@@ -37,7 +37,8 @@ const STAGED_FLAGS = [`-d`, `--detach`, `--build`, `--remove-orphans`]
 
 /**
  * Whether `args` start the whole project in the background: `up` with `-d`, no service named and
- * no flag but the ones a deploy and the README use. Only such a run is checked and staged.
+ * no flag but the ones a deploy and the `compose up -d` runs of `docs/backups.md` and
+ * `docs/deploy.md` use. Only such a run is checked and staged.
  */
 export function startsWholeProject(args: string[]): boolean {
   const [command, ...flags] = args
