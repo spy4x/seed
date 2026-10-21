@@ -42,6 +42,10 @@ export const ADMIN_NOT_ADMINISTRATOR = "Only an administrator can change a role"
 export const ADMIN_ROLE_TOO_HIGH = "You can only give a role below your own"
 export const ADMIN_SESSION_NOT_FOUND = "Session not found"
 export const ADMIN_EXPORT_CROSS_SITE = "The export opens only from the operator area"
+/** A guest delete of a full account: support never deletes that one at once. */
+export const ADMIN_NOT_GUEST =
+  `This is not a guest account. Only a guest account can be deleted from here.`
+
 export const ADMIN_NO_PASSWORD =
   "This user has no password with an address, so no reset link can reach them"
 export const ADMIN_TOO_MANY_RESETS = "Too many reset links for this address, try again later."
@@ -55,6 +59,7 @@ const REFUSALS: Partial<Record<AdminActOutcome, { status: 403 | 404 | 409; error
   [AdminActOutcome.RoleTooHigh]: { status: 403, error: ADMIN_ROLE_TOO_HIGH },
   [AdminActOutcome.SessionNotFound]: { status: 404, error: ADMIN_SESSION_NOT_FOUND },
   [AdminActOutcome.NoPassword]: { status: 409, error: ADMIN_NO_PASSWORD },
+  [AdminActOutcome.NotGuest]: { status: 409, error: ADMIN_NOT_GUEST },
 }
 
 /** What `Unchanged` means for each action that can end so. */
@@ -69,6 +74,7 @@ const ACTIONS = {
   unblock: AdminActionKind.Unblock,
   "sessions/end": AdminActionKind.EndSessions,
   "password-reset": AdminActionKind.SendPasswordReset,
+  "guest/delete": AdminActionKind.DeleteGuest,
 } as const
 
 /** The actions after which the person's sockets close: their sessions changed or ended. */
@@ -76,6 +82,7 @@ const CLOSES_SOCKETS: ReadonlySet<AdminActionKind> = new Set([
   AdminActionKind.Block,
   AdminActionKind.EndSessions,
   AdminActionKind.EndSession,
+  AdminActionKind.DeleteGuest,
 ])
 
 /**
@@ -117,7 +124,8 @@ function serialIdOf(raw: string): number | null {
  *   pages, as CSV, read in batches and streamed (#425). It writes an audit row on the operator, so
  *   it answers 403 unless `Sec-Fetch-Site` is `same-origin`: the session cookie is `SameSite=Lax`,
  *   which another site's link or top-level navigation still carries.
- * - `POST /users/:id/block`, `/unblock`, `/sessions/end` and `/password-reset` take no body and
+ * - `POST /users/:id/block`, `/unblock`, `/sessions/end`, `/password-reset` and `/guest/delete`
+ *   (#224: a guest account only, deleted at once; the audit row is the operator's) take no body and
  *   answer `{ user }`. `/sessions/:sessionId/end` ends one session. `/role` takes `{ role }`.
  *   They ask for no fresh password or code: the owner chose the audit trail over a confirmation
  *   password (2026-10-15). Each writes an audit row on the person naming the operator. Block

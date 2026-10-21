@@ -52,9 +52,10 @@ CREATE TABLE guest_reminders (
     CONSTRAINT guest_reminders_kind_check CHECK (kind BETWEEN 1 AND 3)
 );
 
--- 31 = a guest account was made, 32 = a guest kept the account (`identifier` names the method).
+-- 31 = a guest account was made, 32 = a guest kept the account (`identifier` names the method),
+-- 33 = an operator deleted a guest account (on the operator's row, `identifier` = `user:<id>`).
 ALTER TABLE auth_audits
     DROP CONSTRAINT auth_audits_event_type_check,
     ADD CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]))
         NOT VALID;

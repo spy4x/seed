@@ -6,6 +6,7 @@ import {
   hasUnstorableTextCharacters,
 } from "@spy4x/platform/universal/text"
 import type { AdminUserPreferences } from "./preferences.ts"
+import type { GuestStats } from "./guests.ts"
 import { parseSort, serializeSort, type SortRule } from "@spy4x/platform/universal/sort"
 
 // Not in @spy4x/platform/model: too template-specific (a user's name length limit) to belong in a
@@ -416,6 +417,11 @@ export enum AuthAuditEventType {
   GUEST_STARTED = 31,
   /** A guest kept the account by adding a sign-in method; `identifier` names the method. */
   GUEST_KEPT = 32,
+  /**
+   * An operator deleted a guest account (#224). The row is the operator's, because the guest's
+   * own rows go with the account: `identifier` is `user:<id>` of the deleted guest.
+   */
+  GUEST_DELETED_BY_OPERATOR = 33,
 }
 
 export const authAuditBaseSchema = type({
@@ -448,6 +454,7 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.SIGN_IN_METHOD_RENAMED,
     AuthAuditEventType.GUEST_STARTED,
     AuthAuditEventType.GUEST_KEPT,
+    AuthAuditEventType.GUEST_DELETED_BY_OPERATOR,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",
@@ -841,6 +848,8 @@ export interface AdminUserRow {
   createdAt: string
   /** The last signed-in activity, to within five minutes (#152), or `null` when never seen. */
   lastSeenAt: string | null
+  /** When a guest account (#224) was started, or `null` (or absent) for a full account. */
+  guestSince?: string | null
 }
 
 /** The answer of `GET /api/admin/users`. */
@@ -912,6 +921,9 @@ export const ADMIN_AUDIT_LIMIT = 50
 /** Whether the list shows blocked people, people who are not, or both. */
 export type AdminBlockedFilter = "any" | "blocked" | "active"
 
+/** Which kind of account the user list shows (#224): guests, or accounts with a sign-in method. */
+export type AdminAccountFilter = "guest" | "full"
+
 /** A column the user list sorts by, on the server. */
 export type AdminUserSortKey = "name" | "role" | "lastSeenAt" | "createdAt"
 
@@ -935,6 +947,8 @@ export interface AdminUserFilter {
   /** Only people with this role, or `null` for every role. */
   role: UserRole | null
   blocked: AdminBlockedFilter
+  /** Only guest accounts (#224), or only full ones; absent for both. */
+  account?: AdminAccountFilter
   /**
    * The order, most significant rule first. Empty means the default order, newest first; the
    * server breaks every tie by id, so a page never shows a person twice.
@@ -974,7 +988,9 @@ export function parseAdminUserFilter(params: URLSearchParams): AdminUserFilter {
     : 1
   // `none` reads as no rules: the operator turned every column's sort off.
   const sort = parseSort(params.get("sort"), ADMIN_USER_SORT_KEYS, ADMIN_DEFAULT_SORT)
-  return { query, role, blocked, sort, page }
+  const rawAccount = params.get("account")
+  const account = rawAccount === "guest" || rawAccount === "full" ? rawAccount : undefined
+  return { query, role, blocked, ...(account ? { account } : {}), sort, page }
 }
 
 /** The query string of `filter`, leaving out every part at its default. No leading `?`. */
@@ -983,6 +999,7 @@ export function adminUserFilterQuery(filter: AdminUserFilter): string {
   if (filter.query) params.set("q", filter.query)
   if (filter.role !== null) params.set("role", String(filter.role))
   if (filter.blocked !== "any") params.set("blocked", filter.blocked)
+  if (filter.account) params.set("account", filter.account)
   const sort = serializeSort(filter.sort)
   if (sort !== serializeSort(ADMIN_DEFAULT_SORT)) params.set("sort", sort)
   if (filter.page > 1) params.set("page", String(filter.page))
@@ -1036,6 +1053,8 @@ export interface AdminStats {
   signUpsPerDay: AdminDailyCount[]
   /** Active people per UTC day, oldest first, the same days. */
   activePerDay: AdminDailyCount[]
+  /** Guest accounts (#224) started, kept and cleaned up over the same days. */
+  guests?: GuestStats
 }
 
 /** The roles an operator-area page may pick from, lowest first. */
