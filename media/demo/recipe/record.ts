@@ -456,7 +456,8 @@ async function writeTake(take: Take): Promise<void> {
   }
   await run([
     ...["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-threads", "2"],
-    ...["-framerate", "30", "-i", `${seq}/%06d.jpg`, "-vf", "scale=1280:800:flags=lanczos"],
+    ...["-framerate", "30", "-i", `${seq}/%06d.jpg`],
+    ...["-vf", "scale=1280:800:flags=lanczos:out_range=tv"],
     ...["-c:v", "libx264", "-qp", "0", "-preset", "veryfast", "-pix_fmt", "yuv444p"],
     `${TAKE}/take.mkv`,
   ])
