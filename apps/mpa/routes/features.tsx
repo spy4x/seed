@@ -441,6 +441,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
       author={SITE_AUTHOR}
       updated={FEATURES_UPDATED}
+      note='Seed is a work in progress, built in public. What is not built yet is marked "Not built yet" next to the claim it limits, with its issue when one is open.'
     >
       <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button
@@ -462,10 +463,6 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
           <IconGitHub class="size-5" aria-hidden="true" /> View on GitHub
         </Button>
       </div>
-      <p class="max-w-2xl text-sm text-muted text-pretty">
-        Seed is a work in progress, built in public. What is not built yet is marked "Not built yet"
-        next to the claim it limits, with its issue when one is open.
-      </p>
     </PageHero>
   )
 }
