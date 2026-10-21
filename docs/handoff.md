@@ -304,7 +304,9 @@ the proof above, `POST /api/auth/passkeys` stores the passkey named after the br
 (writing `SIGN_IN_METHOD_RENAMED` with both names), and
 `DELETE /api/auth/methods/:id` removes it like any method. `POST /api/auth/passkeys/sign-in` (with
 `/options`) signs in with any passkey of the site and owes no authenticator code, except to restore
-an account that waits to be deleted with two-factor on; an unknown credential answers 404 with
+an account that waits to be deleted with two-factor on. The device verifies the person on every
+ceremony, so the passkey counts as both factors: an account with an authenticator app gets a
+`Completed` session, which the 2FA gate lets through; an unknown credential answers 404 with
 `unknown: true`, and the SPA tells the device to forget it. `POST /api/auth/passkeys/confirm`
 (with `/options`) is a passkey sign-in again by a signed-in person, checked against that person's
 id, and replaces the session: it is the passkey's way to make the proof above fresh.
