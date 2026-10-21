@@ -69,7 +69,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `no`, `no`, `partial`, `yes`, `yes`],
   },
   {
-    capability: `Email and password sign-in`,
+    capability: `Password sign-in`,
     values: [`yes`, `no`, `yes`, `yes`, `yes`, `yes`],
   },
   {
@@ -82,7 +82,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `yes`, `yes`, `yes`, `no`, `yes`],
   },
   {
-    capability: `2FA (authenticator app)`,
+    capability: `App-based 2FA`,
     values: [`yes`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
@@ -99,7 +99,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
-    capability: `Payments besides Stripe`,
+    capability: `Non-Stripe payments`,
     values: [`no`, `yes`, `yes`, `yes`, `no`, `yes`],
   },
   {
@@ -283,14 +283,14 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       author={SITE_AUTHOR}
       updated={CHECKED_ON}
       labels={{ updated: `Checked` }}
+      note={
+        <>
+          I build Seed, so I am not neutral. Every claim about another product links to its source,
+          and the table shows where Seed is weaker. A row out of date?{" "}
+          <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">Open an issue</a>.
+        </>
+      }
     >
-      <p class="max-w-2xl text-muted text-pretty">
-        I build Seed, so I am not neutral. To make up for it, every claim about another product
-        links to the page I read it on, and the table shows where Seed is weaker. Products change;
-        if a row is out of date,{" "}
-        <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">open an issue</a>{" "}
-        and I will fix it.
-      </p>
       <div class="mt-2 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button
           href={demoHref}
@@ -362,8 +362,8 @@ function Table(): JSX.Element {
         />
         <ul class="flex max-w-3xl list-disc flex-col gap-2 pl-6 text-sm text-muted">
           <li>
-            Seed's gaps (magic links, translations, file uploads, data export) are not built yet; do
-            not choose Seed for them today. The{" "}
+            Seed's gaps (magic links, translations, file uploads, downloading an account's data) are
+            not built yet; do not choose Seed for them today. The{" "}
             <a href="/#status" class="text-primary underline">status list</a> says what works.
           </li>
           <li>

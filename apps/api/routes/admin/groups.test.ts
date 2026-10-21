@@ -43,6 +43,7 @@ const detail: AdminGroupDetail = {
   billing: null,
   members: [],
   invitations: [],
+  imported: null,
   activity: [],
 }
 

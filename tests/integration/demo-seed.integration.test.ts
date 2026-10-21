@@ -287,6 +287,19 @@ Deno.test("the demo seed fills the database with the fake data", async () => {
     expect(counts.invitations).toBe(
       data.groups.reduce((sum, group) => sum + group.invitations.length, 0),
     )
+    // The group the fake data marks imported has the date and a log that starts with the import.
+    const imported = await sql<{ name: string; kinds: string[] }[]>`
+      SELECT g.name,
+        array_agg(a.event_kind)
+          FILTER (WHERE a.event_kind IN ('group.created', 'group.imported')) AS kinds
+      FROM groups g LEFT JOIN audit_events a ON a.group_id = g.id
+      WHERE g.imported_at IS NOT NULL
+      GROUP BY g.id
+    `
+    expect([...imported]).toEqual([{
+      name: data.groups.find((group) => group.imported)!.name,
+      kinds: [`group.imported`],
+    }])
     expect(counts.subscribers).toBe(FAKE_COUNTS.subscribers)
     expect(counts.activeSessions).toBe(
       data.users.reduce((sum, user) => sum + user.sessions.length, 0),

@@ -58,7 +58,7 @@ CREATE TABLE auth_keys (
 CREATE INDEX auth_keys_user_id_idx ON auth_keys (user_id);
 CREATE INDEX auth_keys_email_idx ON auth_keys (email) WHERE email IS NOT NULL;
 
--- #222: what only a passkey key has. See migration 2026_11_24_0001_auth_passkeys.sql.
+-- #222: what only a passkey key has. See migration 2026_11_25_0001_auth_passkeys.sql.
 CREATE TABLE auth_passkeys (
     key_id INT4 PRIMARY KEY,
     user_id INT4 NOT NULL,
@@ -168,6 +168,7 @@ CREATE TABLE groups (
     description VARCHAR(2000) DEFAULT '' NOT NULL,
     color VARCHAR(16),
     emoji VARCHAR(32),
+    imported_at TIMESTAMPTZ,
     CONSTRAINT groups_name_check CHECK (length(btrim(name)) BETWEEN 1 AND 100),
     CONSTRAINT groups_description_check CHECK (char_length(description) <= 500),
     CONSTRAINT groups_authorization_revision_check CHECK (authorization_revision >= 1),

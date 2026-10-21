@@ -101,7 +101,7 @@ test.describe("group screens in the shared column", () => {
     }
   })
 
-  test("groups, settings, activity and pricing pass axe-core and fit a phone and a desktop", async ({ page, request }) => {
+  test("groups, settings, activity, pricing and import pass axe-core and fit a phone and a desktop", async ({ page, request }) => {
     const owner = "e2e_groups_layout_owner@example.com"
     const admin = "e2e_groups_layout_admin@example.com"
     for (const email of [owner, admin]) await cleanup(request, email)
@@ -139,6 +139,7 @@ test.describe("group screens in the shared column", () => {
           ready: page.locator("[data-e2e=activity-note-link]").first(),
         },
         { path: `/groups/${groupId}/pricing`, ready: page.locator("[data-e2e=pricing-plans]") },
+        { path: `/groups/import`, ready: page.locator("[data-e2e=group-import-title]") },
       ]
       // Tall enough that no row sits under the phone's fixed tab bar: axe-core's target-size
       // rule counts a control the bar covers as too small, wherever the page happens to scroll.

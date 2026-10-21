@@ -22,6 +22,10 @@ import { PostgresGroupActivityRepository } from "@server/groups/postgres-activit
 import { PostgresGroupDataMover } from "@server/groups/postgres-group-data-mover.ts"
 import { revokeAllInvitationsOf } from "@server/groups/invitation-revocation.ts"
 import type { MovableAggregate } from "@server/groups/movable.ts"
+import type { PortableAggregate } from "@server/groups/portable.ts"
+import { PostgresGroupPorter } from "@server/groups/postgres-group-porter.ts"
+import { notePortable } from "@server/notes/note-portable.ts"
+import { tagPortable } from "@server/tags/tag-portable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
 import { tagMovable } from "@server/tags/tag-movable.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
@@ -125,6 +129,13 @@ export interface UserTotp {
  */
 export const MOVABLE_AGGREGATES: readonly MovableAggregate[] = [tagMovable, noteMovable]
 
+/**
+ * The aggregates a group's export file holds, in the order an import writes them. A new aggregate
+ * joins here (`docs/aggregates.md`, "Making an aggregate exportable"): put one that other
+ * aggregates point at before the ones that point at it.
+ */
+export const PORTABLE_AGGREGATES: readonly PortableAggregate[] = [tagPortable, notePortable]
+
 /** A cache that stores nothing: every read goes to the database. */
 const noCache: RowCache<User> = {
   wrap: (_key, compute) => compute(),
@@ -202,6 +213,11 @@ export class AppDbBase extends DbServiceBase {
   /** Moves all of a group's data to another group. Built per access, like `group`. */
   get groupData(): PostgresGroupDataMover {
     return new PostgresGroupDataMover(this.sql, MOVABLE_AGGREGATES)
+  }
+
+  /** A group's export file and the import of one. Built per access, like `group`. */
+  get groupFiles(): PostgresGroupPorter {
+    return new PostgresGroupPorter(this.sql, PORTABLE_AGGREGATES)
   }
 
   /** The notes repository. Built per access, like `group`, so inside `begin()` it uses the transaction. */
