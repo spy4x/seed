@@ -139,6 +139,33 @@ function element(html: string, tag: string): string | undefined {
   return html.match(new RegExp(`<${tag}\\b[\\s\\S]*?</${tag}>`))?.[0]
 }
 
+/** Text of a piece of markup, its tags dropped. */
+function textOf(html: string): string {
+  return html.replace(/<[^>]+>/g, "").trim()
+}
+
+/**
+ * The comparison table of `html`: the product of each column, then each row's capability, its
+ * note and the value it shows each product, as a reader sees them.
+ */
+function comparisonTable(html: string) {
+  const table = element(html, "table") ?? ""
+  const headers = [...(element(table, "thead") ?? "").matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/g)]
+    .slice(1)
+    .map((match) => textOf(match[1].replace(/<span\b[\s\S]*?<\/span>/g, "")))
+  const rows = [...(element(table, "tbody") ?? "").matchAll(/<tr>([\s\S]*?)<\/tr>/g)].map(
+    ([, row]) => {
+      const head = row.match(/<th\b[^>]*>([\s\S]*?)<\/th>/)?.[1] ?? ""
+      return {
+        capability: textOf(head.replace(/<span\b[\s\S]*?<\/span>/g, "")),
+        note: textOf(head.match(/<span\b[^>]*>([\s\S]*?)<\/span>/)?.[1] ?? ""),
+        values: [...row.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/g)].map((cell) => textOf(cell[1])),
+      }
+    },
+  )
+  return { headers, rows }
+}
+
 describe("the public website", () => {
   it("answers the home page with its heading, the demo and GitHub links and its head tags", async () => {
     const { status, html } = await page("/")
@@ -279,6 +306,32 @@ describe("the public website", () => {
     expect(metaContent(compare, "description")).toContain("boilerplates")
   })
 
+  it("shows on /compare what each starter includes, Seed's gaps among them", async () => {
+    const { headers, rows } = comparisonTable((await page("/compare")).html)
+    const row = (capability: string) =>
+      rows.find((candidate) => candidate.capability === capability)
+
+    expect(headers).toEqual([
+      "Seed",
+      "ShipFast",
+      "Supastarter",
+      "Makerkit",
+      "Next.js SaaS Starter",
+      "Open SaaS",
+    ])
+    expect(row("2FA (authenticator app)")?.values).toEqual(["Yes", "No", "Yes", "Yes", "No", "No"])
+    expect(row("Passkeys")?.values).toEqual(["No", "No", "Yes", "Yes", "No", "No"])
+    expect(row("Teams with roles")).toEqual({
+      capability: "Teams with roles",
+      note: "Next.js SaaS Starter: Owner and Member only",
+      values: ["Yes", "No", "Yes", "Yes", "Partial", "No"],
+    })
+    // Every row names a value for every product.
+    for (const { capability, values } of rows) {
+      expect(values.length, capability).toBe(headers.length)
+    }
+  })
+
   it("opens the lead of each main page with one sentence that says what Seed is", async () => {
     for (const path of ["/", "/features", "/compare", "/pricing"]) {
       const { html } = await page(path)
@@ -313,6 +366,19 @@ describe("the public website", () => {
     // The link beside it says what it opens, not a second "antonshubin.com".
     expect(hrefOf(linkNamed(html, "About me"))).toBe("https://antonshubin.com/about")
     expect(linkNamed(html, "antonshubin.com")).toBeUndefined()
+  })
+
+  it("links each Not built yet item on /features that has an open issue to that issue", async () => {
+    const { html } = await page("/features")
+
+    const links = [...html.matchAll(/<a href="([^"]*)"[^>]*>issue #(\d+)<\/a>/g)]
+      .map(([, href, number]) => ({ href, number }))
+    expect(links.length).toBeGreaterThan(0)
+    for (const { href, number } of links) expect(href).toBe(`${REPOSITORY_URL}/issues/${number}`)
+    // Passkeys is not built yet, and its issue is the place to follow it.
+    expect(html).toMatch(
+      new RegExp(`Passkeys \\(<a href="${REPOSITORY_URL}/issues/222"[^>]*>issue #222</a>\\)`),
+    )
   })
 
   it("ends /features with its questions, listed under On this page and in its structured data", async () => {
@@ -565,6 +631,17 @@ describe("the public website", () => {
     const form = html.match(/<form method="post" action="\/subscribe"[\s\S]*?<\/form>/)?.[0]
     expect(form).toContain(`name="list" value="news"`)
     expect(form).toContain(`name="email"`)
+  })
+
+  it("offers the newsletter form once on the home page, in its content, and not again in the footer", async () => {
+    const home = (await page("/")).html
+    const pricing = (await page("/pricing")).html
+
+    expect(home.match(/<form method="post" action="\/subscribe"/g)).toHaveLength(1)
+    expect(home).not.toContain(`id="footer-news"`)
+    expect(hrefOf(linkNamed(home, "Privacy"))).toBe("/privacy")
+    // A page without the form in its content keeps the footer's.
+    expect(pricing).toContain(`id="footer-news"`)
   })
 
   it("offers no newsletter form on any page while subscriptions are off, and keeps the rest of the footer", async () => {

@@ -225,21 +225,21 @@ describe("a saved copy and the answer of the server", () => {
       for (const status of [401, 403, 404]) {
         it(`are deleted when the server answers ${status}, so they are not shown offline later`, async () => {
           const { shownOnline, shownOffline } = await afterAnswer(status)
-          expect(shownOnline).toEqual(list.painted)
+          expect(shownOnline).toStrictEqual(list.painted)
           expect(shownOffline).toEqual(list.empty)
         })
       }
 
       it("are kept when the server answers 500", async () => {
         const { shownOnline, shownOffline } = await afterAnswer(500)
-        expect(shownOnline).toEqual(list.painted)
-        expect(shownOffline).toEqual(shownOnline)
+        expect(shownOnline).toStrictEqual(list.painted)
+        expect(shownOffline).toStrictEqual(shownOnline)
       })
 
       for (const status of [401, 403]) {
         it(`are deleted on a ${status} without an error code`, async () => {
           const { shownOnline, shownOffline } = await afterAnswer({ proxy: status })
-          expect(shownOnline).toEqual(list.painted)
+          expect(shownOnline).toStrictEqual(list.painted)
           expect(shownOffline).toEqual(list.empty)
         })
       }
@@ -249,9 +249,9 @@ describe("a saved copy and the answer of the server", () => {
       for (const status of [502, 404, 429, 500]) {
         it(`are shown and kept on a ${status} without an error code`, async () => {
           const { shownOnline, shownThen, shownOffline } = await afterAnswer({ proxy: status })
-          expect(shownOnline).toEqual(list.painted)
-          expect(shownThen).toEqual(shownOnline)
-          expect(shownOffline).toEqual(shownOnline)
+          expect(shownOnline).toStrictEqual(list.painted)
+          expect(shownThen).toStrictEqual(shownOnline)
+          expect(shownOffline).toStrictEqual(shownOnline)
         })
       }
     })

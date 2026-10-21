@@ -186,6 +186,19 @@ describe("TagsScreen", () => {
     expect(find("body").textContent).not.toContain("Back to notes")
   })
 
+  // happy-dom draws no layout, so the width is read from the classes that would set one.
+  it("sets no page width of its own, so the list and the editor fill the app frame's column (class check: no layout here)", async () => {
+    await mount(
+      <>
+        <TagsScreen {...tagsDefaults} />
+        <TagEditorScreen {...editHome} />
+      </>,
+    )
+    expect(count("[data-e2e=tag-list]")).toBe(1)
+    expect(count("[data-e2e=tag-name]")).toBe(1)
+    expect(root!.innerHTML).not.toMatch(/\bmax-w-(?:2xl|3xl|4xl|5xl)\b/)
+  })
+
   it("draws an empty list as a message inside a solid card, not a dashed box", async () => {
     await mount(<TagsScreen {...tagsDefaults} tags={[]} />)
     const empty = find("[role=status]")
