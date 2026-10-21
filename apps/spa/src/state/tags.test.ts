@@ -84,6 +84,22 @@ describe("tags store", () => {
     expect(store.unsaved.value).toBe(false)
   })
 
+  it("keeps a tag's note count through a save, which does not send it, and counts a new tag at 0", async () => {
+    const { store } = harness({
+      fetchList: () => Promise.resolve([{ ...item("a", "alpha"), noteCount: 4 }]),
+    })
+    await store.open(groupId)
+    store.startEdit("a")
+    store.change({ ...store.form.value!, name: "Alpha" })
+    expect((await store.save())?.noteCount).toBe(4)
+    expect(store.tags.value.find((tag) => tag.id === "a")?.noteCount).toBe(4)
+
+    store.startCreate()
+    store.change({ ...store.form.value!, name: "Cherry" })
+    await store.save()
+    expect(store.tags.value.find((tag) => tag.id === "new-1")?.noteCount).toBe(0)
+  })
+
   it("keeps what was typed into the create form when the create page opens again", async () => {
     const { store } = harness()
     await store.open(groupId)

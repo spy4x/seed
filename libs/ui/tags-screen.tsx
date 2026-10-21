@@ -9,8 +9,8 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
 import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES, type NotesGroup } from "./notes-screen.tsx"
-import { TagBadge, type TagRow } from "./tag-parts.tsx"
-import { type Navigate, SCREEN_PATHS, TAG_PATHS } from "./progressive.tsx"
+import { noteCountText, TagBadge, tagDeleteMessage, type TagRow } from "./tag-parts.tsx"
+import { type Navigate, NOTE_PATHS, SCREEN_PATHS, TAG_PATHS } from "./progressive.tsx"
 
 export type { TagRow }
 
@@ -127,6 +127,27 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
                       )
                       : <TagBadge tag={tag} />}
                   </div>
+                  {tag.noteCount !== undefined && (
+                    tag.noteCount === 0
+                      ? (
+                        <span class="shrink-0 text-sm text-muted" data-e2e="tag-note-count">
+                          No notes
+                        </span>
+                      )
+                      : (
+                        <Link
+                          href={NOTE_PATHS.tagged(tag.id)}
+                          navigate={navigate}
+                          class="pc-link inline-flex min-h-11 shrink-0 items-center text-sm"
+                          aria-label={tag.noteCount === 1
+                            ? `Show the note tagged ${tag.name}`
+                            : `Show the ${tag.noteCount} notes tagged ${tag.name}`}
+                          data-e2e="tag-note-count"
+                        >
+                          {noteCountText(tag.noteCount)}
+                        </Link>
+                      )
+                  )}
                   {canWrite && props.onDelete && (
                     <div class="relative -my-2 -mr-2 shrink-0">
                       <Dropdown
@@ -155,8 +176,8 @@ export function TagsScreen(props: TagsScreenProps): JSX.Element {
       </Stack>
       {deleting && (
         <ConfirmDialog
-          title={`Delete "${deleting.name}"?`}
-          message="The tag is taken off every note that has it. The notes stay as they are."
+          title={`Delete tag "${deleting.name}"?`}
+          message={tagDeleteMessage(deleting.noteCount)}
           confirmLabel="Delete tag"
           cancelLabel="Cancel"
           tone="danger"

@@ -301,6 +301,26 @@ Deno.test("tags against Postgres", async (t) => {
       expect(refused).toMatchObject({ code: "ROLE_INSUFFICIENT" })
     })
 
+    await t.step(
+      "the list counts each tag's live notes and leaves a deleted note out",
+      async () => {
+        const { owner, viewer, groupId } = await seed()
+        const { tag: work } = await createTag(owner, groupId, "Work")
+        const { tag: home } = await createTag(owner, groupId, "Home")
+        await createNote(owner, groupId, [work.id, home.id])
+        await createNote(owner, groupId, [work.id])
+        const { note: gone } = await createNote(owner, groupId, [work.id])
+        await notes.delete({ groupId, id: gone.id, expectedVersion: gone.version }, owner)
+
+        const listed = await queries.execute(new TagListQuery({ actor: actor(viewer), groupId }))
+
+        expect(listed.tags.map(({ name, noteCount }) => [name, noteCount])).toEqual([
+          ["Home", 1],
+          ["Work", 2],
+        ])
+      },
+    )
+
     await t.step("the database refuses a colour that is no lower-case #rrggbb", async () => {
       const { owner, groupId } = await seed()
       const { tag } = await createTag(owner, groupId, "Loud")

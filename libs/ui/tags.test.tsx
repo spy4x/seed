@@ -11,8 +11,8 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteDraft, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
-import { TAG_PATHS } from "./progressive.tsx"
-import { colorName, colorStyle } from "./tag-parts.tsx"
+import { NOTE_PATHS, TAG_PATHS } from "./progressive.tsx"
+import { colorName, colorStyle, tagDeleteMessage } from "./tag-parts.tsx"
 import { TagEditorScreen, type TagEditorScreenProps } from "./tag-editor-screen.tsx"
 import { TagsScreen, type TagsScreenProps } from "./tags-screen.tsx"
 
@@ -264,12 +264,59 @@ describe("TagsScreen", () => {
     await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-delete]`)
     expect(remove.calls).toEqual([])
     const dialog = find("[data-e2e=tag-delete-dialog]").textContent
-    expect(dialog).toContain(`Delete "Urgent"?`)
-    expect(dialog).toContain("The notes stay as they are.")
+    expect(dialog).toContain(`Delete tag "Urgent"?`)
+    expect(dialog).toContain("It comes off every note that has it. The notes stay.")
 
     await clickText("Delete tag", "[data-e2e=tag-delete-dialog]")
     expect(remove.calls).toEqual([[urgent.id]])
     expect(count("[data-e2e=tag-delete-dialog]")).toBe(0)
+  })
+
+  it("names how many notes lose the tag in the delete confirmation", async () => {
+    await mount(<TagsScreen {...tagsDefaults} tags={[{ ...urgent, noteCount: 3 }]} />)
+    await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-menu]`)
+    await click(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-delete]`)
+    expect(find("[data-e2e=tag-delete-dialog]").textContent).toContain(
+      "It comes off 3 notes. The notes stay.",
+    )
+    expect(tagDeleteMessage(1)).toBe("It comes off 1 note. The notes stay.")
+    expect(tagDeleteMessage(0)).toBe("No note carries it.")
+  })
+
+  it("links each tag's note count to the notes filtered by that tag, named for a screen reader", async () => {
+    const navigate = spy<[string]>()
+    await mount(
+      <TagsScreen
+        {...tagsDefaults}
+        tags={[{ ...urgent, noteCount: 3 }, { ...home, noteCount: 1 }]}
+        navigate={navigate.fn}
+      />,
+    )
+    const count3 = find(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-note-count]`)
+    expect(count3.tagName).toBe("A")
+    expect(count3.textContent).toBe("3 notes")
+    expect(count3.getAttribute("href")).toBe(`/notes?tag=${urgent.id}`)
+    expect(count3.getAttribute("aria-label")).toBe("Show the 3 notes tagged Urgent")
+    const count1 = find(`[data-e2e=tag-${home.id}] [data-e2e=tag-note-count]`)
+    expect(count1.textContent).toBe("1 note")
+    expect(count1.getAttribute("aria-label")).toBe("Show the note tagged Home")
+    expect(await clickOn(count3)).toBe(true)
+    expect(navigate.calls).toEqual([[NOTE_PATHS.tagged(urgent.id)]])
+  })
+
+  it("says No notes as plain text for a tag no note carries, and nothing while the count is unknown", async () => {
+    await mount(<TagsScreen {...tagsDefaults} tags={[{ ...urgent, noteCount: 0 }, home]} />)
+    const none = find(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-note-count]`)
+    expect(none.tagName).toBe("SPAN")
+    expect(none.textContent).toBe("No notes")
+    expect(count(`[data-e2e=tag-${home.id}] [data-e2e=tag-note-count]`)).toBe(0)
+  })
+
+  it("shows a viewer the counts too, as links: reading notes is everyone's", async () => {
+    await mount(
+      <TagsScreen {...tagsDefaults} group={viewerOfTeam} tags={[{ ...urgent, noteCount: 2 }]} />,
+    )
+    expect(find(`[data-e2e=tag-${urgent.id}] [data-e2e=tag-note-count]`).tagName).toBe("A")
   })
 
   it("draws each tag in its own colour, with text that reads on it", async () => {
@@ -482,8 +529,8 @@ describe("TagEditorScreen", () => {
     await click("[data-e2e=tag-editor-delete]")
     expect(remove.calls).toEqual([])
     const dialog = find("[data-e2e=tag-delete-dialog]").textContent
-    expect(dialog).toContain(`Delete "Home"?`)
-    expect(dialog).toContain("The notes stay as they are.")
+    expect(dialog).toContain(`Delete tag "Home"?`)
+    expect(dialog).toContain("It comes off every note that has it. The notes stay.")
 
     await clickText("Cancel", "[data-e2e=tag-delete-dialog]")
     expect(remove.calls).toEqual([])

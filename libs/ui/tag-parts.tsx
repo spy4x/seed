@@ -10,6 +10,8 @@ export interface TagRow {
   id: string
   name: string
   color: TagColor
+  /** How many of the group's notes carry it; left out while the device has not been told. */
+  noteCount?: number
 }
 
 /**
@@ -41,6 +43,21 @@ export function TagBadge({ tag }: { tag: Pick<TagRow, "name" | "color"> }): JSX.
       <span class="min-w-0 truncate">{tag.name}</span>
     </span>
   )
+}
+
+/** "3 notes", "1 note" or "No notes": a tag's note count in words. */
+export function noteCountText(count: number): string {
+  return count === 0 ? "No notes" : count === 1 ? "1 note" : `${count} notes`
+}
+
+/**
+ * What the confirmation of a tag's delete says: how many notes lose it, when the count is known,
+ * and that the notes themselves stay.
+ */
+export function tagDeleteMessage(noteCount: number | undefined): string {
+  if (noteCount === 0) return "No note carries it."
+  if (noteCount === undefined) return "It comes off every note that has it. The notes stay."
+  return `It comes off ${noteCountText(noteCount)}. The notes stay.`
 }
 
 /** The tags of a note as labels, in the order given; ids of tags that are gone are left out. */

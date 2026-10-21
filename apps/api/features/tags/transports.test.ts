@@ -518,6 +518,28 @@ for (const [via, open] of TRANSPORTS) {
         expect(after.changeSequence).toBe(before.changeSequence)
         as.shutdown()
       })
+
+      it("lists each tag with how many live notes carry it, leaving deleted notes out", async () => {
+        const s = stack()
+        await s.tags.create({ groupId, id: tagId, name: "Work", color: "#1d4ed8" }, OWNER)
+        await s.tags.create({ groupId, id: secondTagId, name: "Home", color: "#b91c1c" }, OWNER)
+        await s.notes.create({ ...note, tagIds: [tagId, secondTagId] }, OWNER, null)
+        await s.notes.create({ ...note, id: uuidV7(), tagIds: [tagId] }, OWNER, null)
+        const gone = uuidV7()
+        await s.notes.create({ ...note, id: gone, tagIds: [tagId] }, OWNER, null)
+        await s.notes.delete({ groupId, id: gone, expectedVersion: 1 }, OWNER)
+        const as = open(s, VIEWER)
+
+        const answer = await as.query("tag.list", { groupId })
+
+        const listed = (answer as { payload: { tags: { name: string; noteCount: number }[] } })
+          .payload.tags
+        expect(listed.map(({ name, noteCount }) => [name, noteCount])).toEqual([
+          ["Home", 1],
+          ["Work", 2],
+        ])
+        as.shutdown()
+      })
     })
   })
 }

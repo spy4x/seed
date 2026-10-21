@@ -13,7 +13,7 @@ import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { ColorField } from "@spy4x/preact-ui/color-field"
 import { TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
 import { ListEmpty, type NotesGroup } from "./notes-screen.tsx"
-import { TagBadge, type TagRow } from "./tag-parts.tsx"
+import { TagBadge, tagDeleteMessage, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
 
 /** What the tag's fields show: what the person typed, or the tag as saved. */
@@ -309,8 +309,8 @@ function Editor(props: WithGroup): JSX.Element {
       </ScreenForm>
       {asking && tag && (
         <ConfirmDialog
-          title={`Delete "${tag.name}"?`}
-          message="The tag is taken off every note that has it. The notes stay as they are."
+          title={`Delete tag "${tag.name}"?`}
+          message={tagDeleteMessage(tag.noteCount)}
           confirmLabel="Delete tag"
           cancelLabel="Cancel"
           tone="danger"

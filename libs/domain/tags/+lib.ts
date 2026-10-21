@@ -103,6 +103,11 @@ export interface Tag {
   updatedAt: Date
 }
 
+/** A tag in its group's list, with how many of the group's notes carry it; deleted notes do not count. */
+export interface ListedTag extends Tag {
+  noteCount: number
+}
+
 /** What a delete leaves: the tag's id, the version it had and the group's change sequence. */
 export interface DeletedTag {
   id: string
@@ -257,8 +262,8 @@ export interface TagListPayload {
   groupId: string
 }
 
-export class TagListQuery implements Query<TagListPayload, { tags: Tag[] }> {
-  __resultType?: { tags: Tag[] }
+export class TagListQuery implements Query<TagListPayload, { tags: ListedTag[] }> {
+  __resultType?: { tags: ListedTag[] }
   constructor(public data: TagListPayload) {}
 }
 
@@ -305,8 +310,8 @@ export interface TagDeleteInput {
  * they call it; a write checks again inside its transaction, as a role can change in between.
  */
 export interface TagRepository {
-  /** The group's tags, by name. */
-  list(groupId: string): Promise<Tag[]>
+  /** The group's tags, by name, each with its note count. */
+  list(groupId: string): Promise<ListedTag[]>
   get(groupId: string, id: string): Promise<Tag | null>
   /**
    * Throws `ID_ALREADY_EXISTS` when the id holds a different tag, `TAG_NAME_TAKEN` when another
