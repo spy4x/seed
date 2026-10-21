@@ -341,7 +341,7 @@ describe("the public website", () => {
       "Next.js SaaS Starter",
       "Open SaaS",
     ])
-    expect(row("2FA (authenticator app)")?.values).toEqual(["Yes", "No", "Yes", "Yes", "No", "No"])
+    expect(row("App-based 2FA")?.values).toEqual(["Yes", "No", "Yes", "Yes", "No", "No"])
     expect(row("Passkeys")?.values).toEqual(["No", "No", "Yes", "Yes", "No", "No"])
     expect(row("Groups with roles")).toEqual({
       capability: "Groups with roles",

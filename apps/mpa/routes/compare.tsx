@@ -69,7 +69,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `no`, `no`, `partial`, `yes`, `yes`],
   },
   {
-    capability: `Email and password sign-in`,
+    capability: `Password sign-in`,
     values: [`yes`, `no`, `yes`, `yes`, `yes`, `yes`],
   },
   {
@@ -82,7 +82,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `yes`, `yes`, `yes`, `no`, `yes`],
   },
   {
-    capability: `2FA (authenticator app)`,
+    capability: `App-based 2FA`,
     values: [`yes`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
@@ -99,7 +99,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
-    capability: `Payments besides Stripe`,
+    capability: `Non-Stripe payments`,
     values: [`no`, `yes`, `yes`, `yes`, `no`, `yes`],
   },
   {
