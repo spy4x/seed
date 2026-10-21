@@ -141,6 +141,11 @@ async function mount(
   return seen
 }
 
+/** The `data-e2e` of the focused element: a short value for a test to compare and print. */
+function focused(): string | null {
+  return document.activeElement?.getAttribute("data-e2e") ?? null
+}
+
 function find<T extends Element = HTMLElement>(selector: string): T {
   const element = document.querySelector(selector)
   if (!element) throw new Error(`nothing matches ${selector}`)
@@ -264,7 +269,7 @@ describe("the group overview", () => {
     await clickText("Try again", card(added))
 
     expect(seen.retried).toEqual([added])
-    expect(document.activeElement).toBe(find(card(added)))
+    expect(focused()).toBe(`overview-widget-${added}`)
   })
 
   it("hides a widget from its menu and moves focus to the card now in its place", async () => {
@@ -274,8 +279,8 @@ describe("the group overview", () => {
     await clickText("Hide widget", card(total))
 
     expect(seen.hidden).toEqual([total])
-    expect(document.querySelector(card(total))).toBeNull()
-    expect(document.activeElement).toBe(find(card(added)))
+    expect(document.querySelectorAll(card(total)).length).toBe(0)
+    expect(focused()).toBe(`overview-widget-${added}`)
   })
 
   it("offers Customise overview when every widget is hidden, and focuses it after the last hide", async () => {
@@ -286,7 +291,7 @@ describe("the group overview", () => {
     }
 
     expect(text("[data-e2e=overview-all-hidden]")).toContain("All widgets are hidden")
-    expect(document.activeElement).toBe(find("[data-e2e=overview-all-hidden-customise]"))
+    expect(focused()).toBe("overview-all-hidden-customise")
   })
 
   it("customises the layout from More actions, saving each switch as it is flipped", async () => {
@@ -303,7 +308,7 @@ describe("the group overview", () => {
       { id: added, hidden: true },
       { id: series, hidden: false },
     ])
-    expect(document.querySelector(card(added))).toBeNull()
+    expect(document.querySelectorAll(card(added)).length).toBe(0)
 
     await clickText("Done", "dialog[data-e2e=overview-customiser]")
     expect(dialog.open).toBe(false)
@@ -330,14 +335,14 @@ describe("the group overview", () => {
   it("offers a viewer of an empty group no New note", async () => {
     await mount(READY, { emptyGroup: { canCreate: false } })
 
-    expect(document.querySelector("[data-e2e=overview-new-note]")).toBeNull()
+    expect(document.querySelectorAll("[data-e2e=overview-new-note]").length).toBe(0)
   })
 
   it("tells a person outside the group that it does not exist", async () => {
     await mount(READY, { group: null })
 
     expect(document.body.textContent).toContain("This group does not exist.")
-    expect(document.querySelector("[data-widget-status]")).toBeNull()
+    expect(document.querySelectorAll("[data-widget-status]").length).toBe(0)
   })
 
   it("asks for a shorter range instead of loading one longer than a year", async () => {
@@ -346,7 +351,7 @@ describe("the group overview", () => {
     })
 
     expect(text("[data-e2e=overview-period]")).toBe("Choose a range of a year or less.")
-    expect(document.querySelector("[data-widget-status]")).toBeNull()
+    expect(document.querySelectorAll("[data-widget-status]").length).toBe(0)
   })
 })
 
@@ -377,6 +382,6 @@ describe("the admin group page's overview widgets", () => {
     expect(text("[data-e2e=admin-group-overview] h2")).toBe("Overview widgets")
     expect(text("[data-e2e=admin-group-overview]")).toContain("Their layouts are not shown here.")
     expect(document.querySelectorAll("[data-widget-status=ready]")).toHaveLength(3)
-    expect(document.querySelector("[data-widget-status] button[aria-haspopup]")).toBeNull()
+    expect(document.querySelectorAll("[data-widget-status] button[aria-haspopup]").length).toBe(0)
   })
 })
