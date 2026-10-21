@@ -42,6 +42,7 @@ export type AdminAction =
   | "end-session"
   | "change-role"
   | "password-reset"
+  | "delete-guest"
 
 /** What an action needs besides its name: the session to end, or the role to give. */
 export interface AdminActionInput {
@@ -91,6 +92,7 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "neutral",
   [AuthAuditEventType.GUEST_STARTED]: "neutral",
   [AuthAuditEventType.GUEST_KEPT]: "success",
+  [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "danger",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
@@ -127,6 +129,7 @@ export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "Passkey renamed",
   [AuthAuditEventType.GUEST_STARTED]: "Started as a guest",
   [AuthAuditEventType.GUEST_KEPT]: "Kept the guest account",
+  [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "Deleted a guest account",
 }
 
 /**
@@ -175,6 +178,13 @@ const ACTIONS: Record<
       'They get the same mail as from "Forgot password": a link to choose a new password. Their current password keeps working until they do.',
     submit: "Send link",
     busy: "Sending…",
+  },
+  "delete-guest": {
+    title: (name) => `Delete the guest account ${name}`,
+    text:
+      "The account and everything in it are deleted at once, with no grace period. Support never restores a guest account: it has no sign-in method to prove whose it was.",
+    submit: "Delete guest account",
+    busy: "Deleting…",
   },
 }
 
@@ -302,6 +312,14 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
           {address === null && <span class="text-xs text-muted">No password with an address</span>}
         </span>
       </DropdownItem>
+      {user.guestSince && (
+        <DropdownItem
+          dataE2E="admin-delete-guest-open"
+          onClick={() => props.onOpenDialog("delete-guest")}
+        >
+          Delete guest account
+        </DropdownItem>
+      )}
       {canChangeRoles(operator.role) && (
         <DropdownItem
           dataE2E="admin-change-role-open"
@@ -371,8 +389,19 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
                 <Badge text="Active" color="green" />
               </span>
             )}
+          {user.guestSince && (
+            <span data-e2e="admin-user-guest">
+              <Badge text="Guest" color="gray" type="outline" />
+            </span>
+          )}
           {operator.id === user.id && <Badge text="You" color="gray" type="outline" />}
         </div>
+        {user.guestSince && (
+          <p class="text-sm text-muted" data-e2e="admin-user-guest-note">
+            A guest account: made with one click and no sign-in method. Support never restores a
+            guest account.
+          </p>
+        )}
         <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Fact label="Created">
             <When at={user.createdAt} />
