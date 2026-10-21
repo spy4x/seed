@@ -27,6 +27,7 @@ export const handler = define.handlers({
             })),
         },
         {
+          // Seed's own site: see docs/start-a-product.md
           title: `Source code`,
           links: [{
             title: `${SITE_NAME} on GitHub`,
