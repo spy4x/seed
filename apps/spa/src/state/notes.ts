@@ -31,7 +31,7 @@ export interface UndoOffer {
 }
 
 /** How long Undo is offered after a delete, in milliseconds. */
-export const UNDO_MS = 10_000
+export const UNDO_MS = 8_000
 
 /** One page of a group's notes. */
 export interface NotePage {
