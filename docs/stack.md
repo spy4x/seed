@@ -54,8 +54,8 @@ Defined in `infra/compose/`:
   does not get a second copy of its own monitoring. vmagent keeps their scrape jobs and shows
   them as down while they are off.
 - Images are pinned to a version tag, and PgBouncer's to a digest too, since every query passes
-  through it; change a pin on purpose, not by a moving `latest`. The one moving tag is the nginx base of the SPA and admin images
-  (`nginx-unprivileged:stable-alpine`).
+  through it; change a pin on purpose, not by a moving `latest`. The one moving tag is the nginx
+  base of the SPA and admin images (`nginx-unprivileged:stable-alpine`).
 - Traefik router, service and middleware names all end in `-${PROJECT}`.
 
 ## Database connections

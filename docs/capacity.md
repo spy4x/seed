@@ -83,10 +83,10 @@ What this run says, with the caveat above:
 - None of the three loads came near a limit. The API never passed 36 % of its one CPU and Postgres
   never passed 25 % of one core, so 100 readers, 50 writers or 1,000 idle sockets fit with room to
   spare. A run with more people is what finds the limit.
-- Connections stayed at 14 of 30 in every scenario: the API's pool caps them, so PgBouncer
-  ([#226](https://github.com/spy4x/seed/issues/226))
-  is not needed for one API process. It becomes a question with a second API process or a larger
-  pool.
+- Connections stayed at 14 of 30 in every scenario: the API's pool capped them. This run predates
+  PgBouncer ([#226](https://github.com/spy4x/seed/issues/226)), which now sits between the API, the
+  worker and Postgres and holds their server connections at 20 however many processes run. The
+  connection counts above describe the direct layout of that time.
 - A socket client must answer the server's pings. The first socket run did not, and the server
   closed 997 of 1,000 sockets after 90 silent seconds, as `@spy4x/realtime` does on purpose. The
   app's client answers them; the scenario now does too.
