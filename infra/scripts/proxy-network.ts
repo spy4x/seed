@@ -68,21 +68,30 @@ export const PROXY_UP = [
 export type ProxyStart = `running` | `started` | `manual`
 
 /**
- * Starts the project's Traefik for `deno task dev` unless a container named `traefik` already
- * runs, which may be another project's or a shared one: it is left alone. Under Podman it starts
- * nothing, since `proxy:start` calls Docker.
+ * Starts Traefik for `deno task dev` unless a container named `traefik` already runs, which may
+ * be another project's or a shared one: it is left alone. A stopped one is started as it is, since
+ * `up -d` fails on its name when another project made it. A missing one is created like
+ * `proxy:start` does, except under Podman, as `proxy:start` calls Docker.
  *
- * @throws {Error} When the start fails, with what the engine printed.
+ * @param ask runs a command and returns its output, for the state check.
+ * @param start runs a command with its output on the terminal (an image pull shows), and returns
+ *   its exit code.
+ * @throws {Error} When the start fails; the engine's own output is already on the terminal.
  */
 export async function startProxy(
   provider: ContainerProvider,
-  run: (command: string[]) => Promise<{ code: number; stdout: string; stderr: string }>,
+  ask: (command: string[]) => Promise<{ code: number; stdout: string }>,
+  start: (command: string[]) => Promise<number>,
 ): Promise<ProxyStart> {
-  const state = await run([provider, `container`, `inspect`, `-f`, `{{.State.Running}}`, `traefik`])
-  if (state.code === 0 && state.stdout.trim() === `true`) return `running`
-  if (provider === `podman`) return `manual`
-  const up = await run(PROXY_UP)
-  if (up.code !== 0) throw new Error(`Could not start Traefik:\n${up.stderr.trim()}`)
+  const state = await ask([provider, `container`, `inspect`, `-f`, `{{.State.Running}}`, `traefik`])
+  const exists = state.code === 0
+  if (exists && state.stdout.trim() === `true`) return `running`
+  if (!exists && provider === `podman`) return `manual`
+  const command = exists ? [provider, `start`, `traefik`] : PROXY_UP
+  const code = await start(command)
+  if (code !== 0) {
+    throw new Error(`Could not start Traefik: ${command.join(` `)} exited with ${code}`)
+  }
   return `started`
 }
 
@@ -99,8 +108,16 @@ if (import.meta.main) {
   }
   // `--start` is `deno task dev`'s first step.
   if (Deno.args.includes(`--start`)) {
-    const result = await startProxy(provider, (command) => runCommand(command))
+    const result = await startProxy(
+      provider,
+      (command) => runCommand(command),
+      async ([program, ...args]) =>
+        (await new Deno.Command(program, { args, stdout: `inherit`, stderr: `inherit` }).output())
+          .code,
+    )
     if (result === `started`) console.log(`Started Traefik`)
-    if (result === `manual`) console.log(`Traefik is not running: start it with deno task proxy:start`)
+    if (result === `manual`) {
+      console.log(`Traefik is not running: start it with deno task proxy:start`)
+    }
   }
 }

@@ -41,9 +41,24 @@ export function projectSlug(name: string): string {
   return slug
 }
 
-/** Replaces the value of `key` on its own line; the rest of the file stays as written. */
-function setValue(text: string, key: string, value: string): string {
-  return text.replace(new RegExp(`^${key}=.*$`, `m`), `${key}=${value}`)
+/**
+ * Replaces `old`, the value `key` holds, with `value` on the last line that sets `key`: the one
+ * Compose reads. The line is found by the parser's own rules (`export`, spaces around `=`), and
+ * everything around the value (quotes, a trailing `# note`) stays as written.
+ */
+function setValue(text: string, key: string, old: string, value: string): string {
+  const lines = text.split(`\n`)
+  const at = lines.findLastIndex((line) => key in parseEnvValues(line, ENV_PATH))
+  const eq = lines[at].indexOf(`=`)
+  lines[at] = lines[at].slice(0, eq + 1) + lines[at].slice(eq + 1).replace(old, value)
+  return lines.join(`\n`)
+}
+
+/** Keys whose new value does not reach data made with the old one. */
+export const KEEPS_OLD_DATA: Record<string, string> = {
+  AUTH_PEPPER:
+    `accounts already in the local database cannot sign in; deno task db:reset starts clean`,
+  GRAFANA_PASS: `Grafana keeps its old admin password until its volume is removed`,
 }
 
 /**
@@ -62,12 +77,12 @@ export function prepareEnv(
   const values = parseEnvValues(text, ENV_PATH)
   const changed: string[] = []
   if (current === undefined && project !== undefined) {
-    text = setValue(text, `PROJECT`, project)
+    text = setValue(text, `PROJECT`, values.PROJECT, project)
     changed.push(`PROJECT`)
   }
   for (const [key, bytes] of Object.entries(SECRETS)) {
     if (key in values && values[key] === placeholders[key]) {
-      text = setValue(text, key, random(bytes))
+      text = setValue(text, key, values[key], random(bytes))
       changed.push(key)
     }
   }
@@ -83,6 +98,30 @@ async function readIfExists(path: string): Promise<string | undefined> {
   }
 }
 
+/**
+ * The value of `--name`, `undefined` when the flag is absent.
+ * @throws {Error} When the flag has no value after it.
+ */
+export function nameFlag(args: string[]): string | undefined {
+  const at = args.indexOf(`--name`)
+  if (at === -1) return undefined
+  const name = args[at + 1]
+  if (name === undefined || name.startsWith(`--`)) {
+    throw new Error(`--name needs a value: --name "My Product"`)
+  }
+  return name
+}
+
+/**
+ * Writes through a temporary file and a rename, so a crash never leaves the file cut short.
+ * `mode` applies to a new file only.
+ */
+async function writeSafely(path: string, text: string, mode?: number): Promise<void> {
+  const temporary = `${path}.tmp`
+  await Deno.writeTextFile(temporary, text, mode === undefined ? {} : { mode })
+  await Deno.rename(temporary, path)
+}
+
 /** The project name: the flag, else the folder's name, asked first on a terminal. */
 function askProject(flag: string | undefined, yes: boolean): string {
   if (flag !== undefined) return projectSlug(flag)
@@ -92,21 +131,32 @@ function askProject(flag: string | undefined, yes: boolean): string {
 }
 
 if (import.meta.main) {
-  const args = Deno.args
-  const nameAt = args.indexOf(`--name`)
-  const name = nameAt === -1 ? undefined : args[nameAt + 1]
+  let name
+  try {
+    name = nameFlag(Deno.args)
+  } catch (error) {
+    console.error((error as Error).message)
+    Deno.exit(1)
+  }
   const current = await readIfExists(ENV_PATH)
-  const project = current === undefined ? askProject(name, args.includes(`--yes`)) : undefined
+  const project = current === undefined ? askProject(name, Deno.args.includes(`--yes`)) : undefined
   const { text, changed } = prepareEnv(await Deno.readTextFile(EXAMPLE_PATH), current, project)
 
   if (current === undefined) console.log(`Created ${ENV_PATH}`)
   if (changed.length > 0) {
-    await Deno.writeTextFile(ENV_PATH, text)
+    await writeSafely(ENV_PATH, text)
     console.log(`Set ${changed.join(`, `)} in ${ENV_PATH}`)
+  }
+  if (current !== undefined) {
+    for (const key of changed) {
+      if (key in KEEPS_OLD_DATA) console.warn(`Note: ${key} is new, so ${KEEPS_OLD_DATA[key]}.`)
+    }
   }
 
   if (await readIfExists(VAPID_PATH) === undefined) {
-    await Deno.writeTextFile(VAPID_PATH, JSON.stringify((await generateVapidKeyPair()).keys))
+    // The private key: readable by its owner only, as deploy.ts writes it on the server.
+    const keys = JSON.stringify((await generateVapidKeyPair()).keys)
+    await writeSafely(VAPID_PATH, keys, 0o600)
     console.log(`Created the web push keys in ${VAPID_PATH}`)
   }
 
