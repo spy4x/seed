@@ -269,12 +269,12 @@ describe("the public website", () => {
     const footer = element(html, "footer")!
 
     const nav = [...header.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)]
-      .map((match) => [match[1].replace(/<[^>]+>/g, "").trim(), hrefOf(match[0])])
+      .map((match) => [linkText(match[1]), hrefOf(match[0])])
     expect(nav).toEqual(expect.arrayContaining([
       ["Features", "/features"],
       ["Compare", "/compare"],
       ["Pricing", "/pricing"],
-      ["Hire me", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
+      ["Hire me (opens antonshubin.com)", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
       ["GitHub", REPOSITORY_URL],
       ["Try the demo", `${spa}/sign-up`],
     ]))
@@ -283,7 +283,7 @@ describe("the public website", () => {
     expect(header).not.toContain(`href="${site}/sign-`)
   })
 
-  it("marks the header's Hire me as leaving the site, with an icon after its label", async () => {
+  it("marks the header's Hire me as leaving the site: an icon after its label, and words for a screen reader", async () => {
     const header = element((await page("/")).html, "header")!
     const inner = (href: string) =>
       [...header.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)]
@@ -292,7 +292,11 @@ describe("the public website", () => {
     // Once in the desktop row and once in the mobile panel.
     const hire = inner(HIRE_PAGE_URL.replaceAll("&", "&amp;"))
     expect(hire).toHaveLength(2)
-    for (const link of hire) expect(link).toMatch(/Hire me\s*<svg\b[^>]*aria-hidden="true"/)
+    for (const link of hire) {
+      expect(link).toMatch(
+        /Hire me\s*<svg\b[^>]*aria-hidden="true"[\s\S]*<\/svg>\s*<span class="sr-only"> \(opens antonshubin\.com\)<\/span>\s*$/,
+      )
+    }
     for (const link of inner("/pricing")) expect(link).not.toContain("<svg")
   })
 
