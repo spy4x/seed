@@ -3,8 +3,10 @@ import { expect } from "@std/expect"
 import {
   containerProvider,
   ensureProxyNetwork,
+  PROXY_UP,
   type RunContainerCli,
   runContainerCli,
+  startProxy,
 } from "./proxy-network.ts"
 
 function fakeCli(existing: Set<string>, createCode = 0) {
@@ -62,4 +64,45 @@ Deno.test("a CONTAINER_PROVIDER that names neither engine is refused, not replac
   expect(() => containerProvider({ CONTAINER_PROVIDER: `Podman` })).toThrow(
     `CONTAINER_PROVIDER must be "docker" or "podman", not "Podman"`,
   )
+})
+
+function fakeEngine(running: string, upCode = 0) {
+  const calls: string[] = []
+  const run = (command: string[]) => {
+    calls.push(command.join(` `))
+    if (command[1] === `container`) {
+      return Promise.resolve({ code: running === `` ? 1 : 0, stdout: `${running}\n`, stderr: `` })
+    }
+    return Promise.resolve({ code: upCode, stdout: ``, stderr: `port 80 taken` })
+  }
+  return { calls, run }
+}
+
+Deno.test("startProxy leaves a running Traefik alone", async () => {
+  const engine = fakeEngine(`true`)
+  expect(await startProxy(`docker`, engine.run)).toBe(`running`)
+  expect(engine.calls).toEqual([`docker container inspect -f {{.State.Running}} traefik`])
+})
+
+Deno.test("startProxy starts Traefik when it is stopped or missing", async () => {
+  for (const state of [`false`, ``]) {
+    const engine = fakeEngine(state)
+    expect(await startProxy(`docker`, engine.run)).toBe(`started`)
+    expect(engine.calls[1]).toBe(PROXY_UP.join(` `))
+  }
+})
+
+Deno.test("startProxy starts nothing under Podman", async () => {
+  const engine = fakeEngine(``)
+  expect(await startProxy(`podman`, engine.run)).toBe(`manual`)
+  expect(engine.calls).toEqual([`podman container inspect -f {{.State.Running}} traefik`])
+})
+
+Deno.test("startProxy fails with what the engine printed", async () => {
+  await expect(startProxy(`docker`, fakeEngine(``, 1).run)).rejects.toThrow(`port 80 taken`)
+})
+
+Deno.test("PROXY_UP is the command proxy:start runs", async () => {
+  const tasks = await Deno.readTextFile(`deno.jsonc`)
+  expect(tasks).toContain(`deno task proxy:network && ${PROXY_UP.join(` `)}"`)
 })

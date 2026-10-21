@@ -67,28 +67,29 @@ server you run.
 
 ## Quick start
 
-Requires [Deno](https://deno.com) 2, Docker and the [GitHub CLI](https://cli.github.com) (or use
-GitHub's "Use this template" button and clone the result).
+Requires [Deno](https://deno.com) 2 and Docker. The services run in Docker; the tasks that set
+them up run on Deno. The [GitHub CLI](https://cli.github.com) is optional: GitHub's "Use this
+template" button and a clone do the same as the first line.
 
 ```sh
 gh repo create my-product --template spy4x/seed --private --clone
 cd my-product
-cp infra/envs/.env.example infra/envs/.env
+deno task init
+deno task dev
 ```
 
-Before going on, fill in the secrets in `infra/envs/.env` (`KV_PASSWORD` is the Valkey password;
-Valkey and the API both refuse to start without it, `openssl rand -hex 24` makes one). It runs on
-Docker; to use Podman, set `CONTAINER_PROVIDER=podman` (`proxy:start` and `proxy:stop` still call
-Docker).
+`init` copies `infra/envs/.env.example` to `infra/envs/.env`, generates every secret and the web
+push keys, and asks for the project name. `dev` starts Traefik, unless one already runs, then
+Postgres, Valkey, the API, the worker, the SPA and the monitoring. Then open http://app.localhost.
 
-```sh
-deno task vapid-key:create   # web push keys → infra/configs/vapid.json
-deno task proxy:start        # Traefik
-deno task dev                # Postgres, Valkey, API, worker, SPA and the monitoring
+Or ask your AI agent:
+
+```text
+Create my new product "Acme" from https://github.com/spy4x/seed and run it locally
 ```
 
-Then open `http://<DOMAIN>` from the env file: http://app.localhost with the values in
-`infra/envs/.env.example`.
+To use Podman, set `CONTAINER_PROVIDER=podman` in the env file and start Traefik with
+`deno task proxy:start`, which calls Docker.
 
 To keep taking Seed's fixes and features in your product later, see
 [docs/products.md](docs/products.md).

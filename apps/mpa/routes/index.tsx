@@ -69,11 +69,13 @@ const PROOF = [
 export const QUICK_START = [
   `gh repo create my-product --template spy4x/seed --private --clone`,
   `cd my-product`,
-  `cp infra/envs/.env.example infra/envs/.env`,
-  `deno task vapid-key:create`,
-  `deno task proxy:start`,
+  `deno task init`,
   `deno task dev`,
 ] as const
+
+/** What a reader can paste into an AI agent instead of typing the quick start. */
+export const AI_PROMPT =
+  `Create my new product "Acme" from https://github.com/spy4x/seed and run it locally`
 
 const WORKS_TODAY = [
   `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, 2FA with an authenticator app`,
@@ -201,8 +203,9 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
               class="lg:absolute lg:bottom-0 lg:left-0 lg:z-10 lg:w-2xl"
               caption={
                 <span>
-                  Before <code class="font-mono">proxy:start</code>, fill in the secrets in{" "}
-                  <code class="font-mono">infra/envs/.env</code>.
+                  <code class="font-mono">init</code> writes{" "}
+                  <code class="font-mono">infra/envs/.env</code>{" "}
+                  with every secret filled in. Or ask your AI agent: <AiPrompt />
                 </span>
               }
             >
@@ -414,16 +417,20 @@ function QuickStart(): JSX.Element {
           <SectionIntro
             id="quick-start-title"
             eyebrow="Quick start"
-            title="Running locally in six commands"
+            title="Running locally in four commands"
           />
-          <p class="text-muted">You need Deno 2, Docker and the GitHub CLI.</p>
+          <p class="text-muted">You need Deno 2 and Docker.</p>
           <p class="text-muted text-pretty">
-            Fill in the secrets in <code class="font-mono text-foreground">infra/envs/.env</code>
-            {" "}
-            after the copy, then open{" "}
+            <code class="font-mono text-foreground">init</code>{" "}
+            copies the env file and generates every secret and the web push keys;{" "}
+            <code class="font-mono text-foreground">dev</code>{" "}
+            starts Traefik and everything else. Then open{" "}
             <code class="font-mono text-foreground">http://app.localhost</code>. The{" "}
             <a href={`${REPOSITORY_URL}#readme`} class="text-primary underline">README</a>{" "}
-            lists every secret and how to deploy.
+            lists every setting and how to deploy.
+          </p>
+          <p class="text-muted text-pretty">
+            Or ask your AI agent: <AiPrompt />
           </p>
         </div>
         <WindowFrame variant="terminal" title="Terminal" class="min-w-0 lg:col-span-7">
@@ -432,6 +439,11 @@ function QuickStart(): JSX.Element {
       </div>
     </Band>
   )
+}
+
+/** The AI prompt as one block of code that a single click selects whole. */
+function AiPrompt(): JSX.Element {
+  return <code class="font-mono text-foreground select-all">{AI_PROMPT}</code>
 }
 
 function Status(): JSX.Element {

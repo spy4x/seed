@@ -7,7 +7,7 @@ import AppWrapper from "./routes/_app.tsx"
 import Admin, { ADMIN_HEAD } from "./routes/admin.tsx"
 import Compare from "./routes/compare.tsx"
 import Features from "./routes/features.tsx"
-import Home, { HOME_HEAD, QUICK_START } from "./routes/index.tsx"
+import Home, { AI_PROMPT, HOME_HEAD, QUICK_START } from "./routes/index.tsx"
 import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
 import Privacy, { PRIVACY_HEAD } from "./routes/privacy.tsx"
 import Terms, { TERMS_HEAD } from "./routes/terms.tsx"
@@ -197,12 +197,16 @@ describe("the public website", () => {
     for (const line of QUICK_START) expect(line, line).not.toContain("#")
   })
 
-  it("tells the reader under the hero's commands to fill in the secrets first", async () => {
+  it("says under the hero's commands that init fills in the secrets, and gives the AI prompt", async () => {
     const { html } = await page("/")
 
     const caption = html.match(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/)?.[1]
       .replace(/<[^>]+>/g, "")
-    expect(caption).toBe("Before proxy:start, fill in the secrets in infra/envs/.env.")
+    expect(caption).toBe(
+      `init writes infra/envs/.env with every secret filled in. Or ask your AI agent: ${
+        AI_PROMPT.replaceAll(`"`, `&quot;`)
+      }`,
+    )
   })
 
   it("gives the billing and realtime cards a picture of the app", async () => {
