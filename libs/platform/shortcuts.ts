@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "preact/hooks"
 import { signal } from "@preact/signals"
 import { createHotkeyMatcher, isApplePlatform } from "@spy4x/platform/browser/hotkeys"
+import { browserStorage } from "@spy4x/platform/browser/storage"
 import type { KeyValueStore } from "@spy4x/platform/universal/key-value-store"
 
 /** A shortcut to bind: its presses, such as `"?"` or `"g n"`, and what they do. */
@@ -74,4 +75,15 @@ export function createSingleKeysSetting(storage: KeyValueStore) {
       else storage.setItem(SINGLE_KEYS_KEY, "off")
     },
   }
+}
+
+/** This device's single-key switch, shared by every app of the product: the SPA and the admin app. */
+export const singleKeys = createSingleKeysSetting(browserStorage())
+
+/**
+ * Whether the device has a fine pointer, so a keyboard is likely: the account menu lists
+ * "Keyboard shortcuts" only then. Read when asked, and true where the browser cannot say.
+ */
+export function hasFinePointer(): boolean {
+  return globalThis.matchMedia?.("(any-pointer: fine)").matches ?? true
 }

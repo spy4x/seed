@@ -21,8 +21,13 @@ import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
-import { adminShortcutRows, adminSingleKeys, focusListFilter, hasFinePointer } from "./shortcuts.ts"
-import { type createSingleKeysSetting, useShortcuts } from "@platform/shortcuts.ts"
+import { adminShortcutRows, focusListFilter } from "./shortcuts.ts"
+import {
+  type createSingleKeysSetting,
+  hasFinePointer,
+  singleKeys as deviceSingleKeys,
+  useShortcuts,
+} from "@platform/shortcuts.ts"
 import { activeRows } from "@ui/shortcuts.tsx"
 
 export interface AppProps {
@@ -43,7 +48,7 @@ export interface AppProps {
  * one sidebar entry per module (`modules/registry.ts`) and the pages each module registers.
  */
 export function App(
-  { store, theme, toasts, modules = ADMIN_MODULES, operatorFormat, singleKeys = adminSingleKeys }:
+  { store, theme, toasts, modules = ADMIN_MODULES, operatorFormat, singleKeys = deviceSingleKeys }:
     AppProps,
 ): JSX.Element {
   const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])

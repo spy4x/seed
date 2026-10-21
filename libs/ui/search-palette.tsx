@@ -141,8 +141,9 @@ export function emptyLabel(query: string, onDevice: boolean): string {
  * Before anything is typed it lists the current group's most recent notes, then the actions. A
  * query lists the notes that match (from `searchNotes`), then the person's groups whose name
  * matches, then the matching actions. When the notes come from the device, their heading and the
- * no-results line say so. "New note" asks for the New note dialog rather than a page. An action the person cannot take now is not listed: "New note" and
- * "New tag" need a group they may write to, and "New group" needs the server.
+ * no-results line say so. "New note" asks for the New note dialog rather than a page. An action
+ * the person cannot take now is not listed: "New note" and "New tag" need a group they may write
+ * to, and "New group" needs the server.
  */
 export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   const root = useRef<HTMLDivElement>(null)

@@ -1,5 +1,3 @@
-import { browserStorage } from "@spy4x/platform/browser/storage"
-import { createSingleKeysSetting } from "@platform/shortcuts.ts"
 import { generalRows, SHORTCUT_GROUPS, type ShortcutRow } from "@ui/shortcuts.tsx"
 import type { AdminModule } from "./modules/types.ts"
 
@@ -67,12 +65,4 @@ export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
 /** Focuses the first search field of the page, the list's own. */
 export function focusListFilter(): void {
   document.querySelector<HTMLInputElement>("main input[type=search]")?.focus()
-}
-
-/** The single-key shortcuts' switch of this device; on until turned off here. */
-export const adminSingleKeys = createSingleKeysSetting(browserStorage())
-
-/** Whether the device has a fine pointer, so a keyboard is likely; read when asked. */
-export function hasFinePointer(): boolean {
-  return globalThis.matchMedia?.("(any-pointer: fine)").matches ?? true
 }
