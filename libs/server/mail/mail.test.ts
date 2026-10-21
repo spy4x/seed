@@ -241,6 +241,43 @@ describe("signInMethodChangedMail", () => {
   })
 })
 
+describe("signInMethodChangedMail for a passkey", () => {
+  const brand = { webAppUrl: "https://app.example.com" }
+  const at = new Date("2026-10-15T14:03:00Z")
+
+  it("says a passkey was added, and to remove it and change the password if it was someone else", () => {
+    const mail = signInMethodChangedMail(brand, {
+      to: "ann@example.com",
+      provider: "A passkey",
+      linked: true,
+      at,
+      passkey: true,
+    })
+    expect(mail.subject).toBe("A passkey was added to your account")
+    expect(mail.text).toContain(
+      "A passkey was added to your account at app.example.com on October 15, 2026 at 14:03 UTC.",
+    )
+    expect(mail.text).toContain(
+      "If this wasn't you, remove the passkey on your profile page and change your password.",
+    )
+    expect(mail.html).toContain(`href="https://app.example.com/"`)
+  })
+
+  it("says a passkey was removed, and to add it again if it was someone else", () => {
+    const mail = signInMethodChangedMail(brand, {
+      to: "ann@example.com",
+      provider: "A passkey",
+      linked: false,
+      at,
+      passkey: true,
+    })
+    expect(mail.subject).toBe("A passkey was removed from your account")
+    expect(mail.text).toContain(
+      "If this wasn't you, sign in, change your password and add your passkey again.",
+    )
+  })
+})
+
 describe("emailCodeMail", () => {
   const mail = emailCodeMail(
     { webAppUrl: "https://app.example.com" },
