@@ -1,10 +1,15 @@
 /**
  * The invitation page (`/groups/:groupId/invitations/new`) drawn on the server by the real view over
  * the real stores: which group's plan it follows, where a refusal shows, and what a person who may
- * not invite, or is not in the group, sees instead of the form.
+ * not invite, or is not in the group, sees instead of the form. In a browser DOM (happy-dom): what
+ * opening and leaving the page reads and forgets.
  */
+import "@preact/signals"
 import { expect } from "@std/expect"
-import { afterEach, describe, it } from "@std/testing/bdd"
+import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
+import { Window } from "happy-dom"
+import { render as draw } from "preact"
+import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
 import { Router } from "wouter-preact"
 import { FREE_PLAN_ID, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
@@ -186,5 +191,107 @@ describe("InvitationNewView", () => {
 
     expect(html).not.toContain(`name="acceptSeatPrice"`)
     expect(html).toContain("Confirm the higher price")
+  })
+})
+
+describe("InvitationNewView in the browser", () => {
+  const window = new Window({ url: `http://app.localhost/groups/${known.id}/invitations/new` })
+  const NAMES = ["document", "location", "history", "getComputedStyle"] as const
+  const own = Object.fromEntries(
+    NAMES.map((name) => [name, (globalThis as Record<string, unknown>)[name]]),
+  )
+  const real = { open: invitationsStore.open, load: billingStore.load }
+  /** What the page asked the stores to read: the group's invitations, and its plan. */
+  let reads: string[] = []
+  let root: HTMLElement | null = null
+
+  beforeAll(() => {
+    // Preact draws into `document`, the router reads `location` and `history`, and a dialog reads
+    // the page's style.
+    Object.assign(globalThis, {
+      document: window.document,
+      location: window.location,
+      history: window.history,
+      getComputedStyle: window.getComputedStyle.bind(window),
+    })
+    // The reads are recorded instead of sent, so the page never reaches a server.
+    invitationsStore.open = (groupId: string) => {
+      reads.push(`invitations ${groupId}`)
+      return Promise.resolve()
+    }
+    billingStore.load = (groupId: string) => {
+      reads.push(`plan ${groupId}`)
+      return Promise.resolve()
+    }
+  })
+
+  afterAll(async () => {
+    Object.assign(globalThis, own)
+    invitationsStore.open = real.open
+    billingStore.load = real.load
+    await window.happyDOM.close()
+  })
+
+  afterEach(async () => {
+    if (root) await act(() => draw(null, root!))
+    root?.remove()
+    root = null
+    reads = []
+    groupsStore.reset()
+    billingStore.reset()
+    invitationsStore.reset()
+  })
+
+  async function mount(): Promise<void> {
+    groupsStore.groups.value = [known]
+    root = window.document.createElement("div") as unknown as HTMLElement
+    window.document.body.appendChild(root as never)
+    await act(() => draw(<InvitationNewView groupId={known.id} />, root!))
+  }
+
+  it("forgets the new link and the form when the page is left, so the link is shown once", async () => {
+    await mount()
+    await act(() => {
+      invitationsStore.draft.value = { ...invitationsStore.draft.value, email: "ann@example.com" }
+      invitationsStore.created.value = {
+        link: "http://app.localhost/invite/shown-once",
+        mailAsked: false,
+        mailSent: false,
+      }
+    })
+    expect(root!.textContent).toContain("http://app.localhost/invite/shown-once")
+
+    await act(() => draw(null, root!))
+
+    expect(invitationsStore.created.value).toBe(null)
+    expect(invitationsStore.draft.value.email).toBe("")
+  })
+
+  it("reads the group's plan when the page opens, and not again when the group's page read it", async () => {
+    await mount()
+    expect(reads).toEqual([`invitations ${known.id}`, `plan ${known.id}`])
+    await act(() => draw(null, root!))
+    root?.remove()
+    reads = []
+
+    billingStore.current.value = {
+      groupId: known.id,
+      billing: {
+        enabled: true,
+        planId: PRO_PLAN_ID,
+        status: null,
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        canManage: true,
+        subscribed: false,
+        hasCustomer: false,
+        trialEnd: null,
+        notice: null,
+        seatPrice: null,
+      },
+    }
+    await mount()
+
+    expect(reads).toEqual([`invitations ${known.id}`])
   })
 })

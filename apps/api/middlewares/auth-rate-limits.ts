@@ -43,7 +43,7 @@ export async function emailCodeBudgetKey(email: string): Promise<string> {
 }
 
 /**
- * Sign-up code mails one client, an IP address or an IPv6 /64, may have sent to one address per
+ * Sign-up code mails one client, an IPv4 address or an IPv6 /48, may have sent to one address per
  * {@link SIGN_UP_CODE_WINDOW_MS}: a sign-up or a new code for one. Keyed by the address and the
  * client together, so a stranger who starts sign-ups for an address spends only their own share,
  * and the address's owner, from their own network, still gets a code.
@@ -76,13 +76,25 @@ export async function signUpCodeBudgetKeys(
 }
 
 /**
- * The client a request counts as for {@link SIGN_UP_CODE_MAILS_PER_CLIENT}: its IP address, or its
- * IPv6 /64, read the same way as for the per-IP limits (`X-Real-IP`, else the connection).
+ * The IPv6 network one client counts as for {@link SIGN_UP_CODE_MAILS_PER_CLIENT}: a /48, wider than
+ * the /64 of the per-IP limits. A free tunnel broker hands anyone a /48, which holds 65,536 /64s, so
+ * per /64 one stranger could spend the address's whole {@link SIGN_UP_CODE_MAILS_PER_ADDRESS}; per
+ * /48 that stranger gets one share. Neighbours behind one /48 share it too, which costs them at most
+ * a wait for a sign-up code to one address.
+ */
+export const SIGN_UP_CLIENT_IPV6_PREFIX = 48
+
+/**
+ * The client a request counts as for {@link SIGN_UP_CODE_MAILS_PER_CLIENT}: its IPv4 address, or its
+ * IPv6 /48 ({@link SIGN_UP_CLIENT_IPV6_PREFIX}), read the same way as for the per-IP limits
+ * (`X-Real-IP`, else the connection).
  */
 export function signUpClient(c: Context<APIContext>): string {
   // `c.env` is what `deno serve` hands Hono, the same object the per-IP limits read.
   const remoteAddr = denoServeRemoteAddr({ req: c.req.raw, env: c.env } as RateLimitContext)
-  return clientIpBucket(clientIp(c.req.raw, remoteAddr, "x-real-ip"))
+  return clientIpBucket(clientIp(c.req.raw, remoteAddr, "x-real-ip"), {
+    ipv6Prefix: SIGN_UP_CLIENT_IPV6_PREFIX,
+  })
 }
 
 /**

@@ -616,7 +616,7 @@ describe("the groups list on the device", () => {
     release()
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    expect(painted).toEqual([])
+    expect(painted).toStrictEqual([])
   })
 
   it("shows the device's groups before the server has answered", async () => {
@@ -630,11 +630,12 @@ describe("the groups list on the device", () => {
 
     const reading = store.refresh()
     await new Promise((resolve) => setTimeout(resolve, 0))
-    expect(store.groups.value.map((g) => g.name)).toEqual(["Team"])
+    // The whole saved row, not only its name: a paint that keeps the name but not the rest is wrong.
+    expect(store.groups.value).toStrictEqual([item("g-1", "1", "Team")])
 
     slow.resolve({ groups: [item("g-1", "2", "Renamed")], nextCursor: null })
     await reading
-    expect(store.groups.value.map((g) => g.name)).toEqual(["Renamed"])
+    expect(store.groups.value).toStrictEqual([item("g-1", "2", "Renamed")])
   })
 
   it("keeps nothing on a device whose local-data module is off", async () => {

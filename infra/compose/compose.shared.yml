@@ -76,6 +76,63 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # Pools the API's and the worker's connections in transaction mode: however many of them run,
+  # Postgres sees at most PGBOUNCER_POOL_SIZE connections from them (docs/stack.md, "Database
+  # connections"). What needs one session for longer than a transaction skips it: `migrate` holds
+  # an advisory lock across statements, and the API's LISTEN connection waits for notifications, so
+  # both go to `db` directly. No published port, and on the project's own network only.
+  pgbouncer:
+    container_name: ${PROJECT}-pgbouncer
+    # Pinned by digest as well as version: every query of the API and the worker passes through it.
+    image: docker.io/edoburu/pgbouncer:v1.25.2-p0@sha256:7d7a27d9e90985cab5cf42256f5c13a3120baa4b055b69df37beb272b89b2340
+    restart: unless-stopped
+    # The image's own `postgres` user, written down so that an image that changes it cannot run
+    # PgBouncer as root.
+    user: "70:70"
+    # The image's entrypoint writes pgbouncer.ini and the password file from these, inside the
+    # container. The password is the database's own (DB_PASS): PgBouncer checks the apps' SCRAM
+    # login with it and logs in to Postgres with it.
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASS}
+      - AUTH_TYPE=scram-sha-256
+      - POOL_MODE=transaction
+      # Connections to Postgres. With Postgres' max_connections=30 this leaves room for the
+      # LISTEN connection, migrate, postgres-exporter, the backup and a psql session.
+      - DEFAULT_POOL_SIZE=${PGBOUNCER_POOL_SIZE:-20}
+      - MAX_DB_CONNECTIONS=${PGBOUNCER_POOL_SIZE:-20}
+      # Connections from the apps: 10 per API process, 10 per worker, 1 per one-off script.
+      - MAX_CLIENT_CONN=${PGBOUNCER_MAX_CLIENT_CONN:-200}
+      # postgres.js prepares every query by name. PgBouncer 1.21+ tracks those names per client
+      # and prepares them again on whichever server connection a transaction lands on.
+      - MAX_PREPARED_STATEMENTS=200
+    deploy:
+      resources:
+        limits:
+          # Defaults, so an env file written before this service existed still deploys.
+          cpus: '${PGBOUNCER_CPU_LIMIT:-0.5}'
+          memory: '${PGBOUNCER_MEM_LIMIT:-64M}'
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # PgBouncer answers once it listens; Postgres behind it is `db`'s own healthcheck.
+      test: [ 'CMD', 'pg_isready', '-h', '127.0.0.1', '-p', '5432', '-d', '${DB_NAME}', '-U', '${DB_USER}' ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+
   kv:
     container_name: ${PROJECT}-kv
     image: valkey/valkey:8.1
@@ -587,6 +644,8 @@ services:
       - HOME=/home/deno
       - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
+      # Postgres itself, not PgBouncer: the runner's advisory lock is held by one session for the
+      # whole run, which transaction pooling would not keep.
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=${DB_USER}
@@ -638,8 +697,11 @@ services:
       - DENO_LOG=${DENO_LOG}
       # The API is on the shared `proxy` network too, where a plain service name such as `db` is
       # answered by any project's container of that name. The container's own name is unique.
-      - DB_HOST=${PROJECT}-db
+      # Queries go through PgBouncer; LISTEN goes to Postgres directly (DB_DIRECT_*).
+      - DB_HOST=${PROJECT}-pgbouncer
       - DB_PORT=5432
+      - DB_DIRECT_HOST=${PROJECT}-db
+      - DB_DIRECT_PORT=5432
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
       - DB_NAME=${DB_NAME}
@@ -689,6 +751,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
     healthcheck:
@@ -725,8 +789,8 @@ services:
   # Drains outbox_events, announces committed group changes to the API (pg_notify, which the API
   # turns into a live hint for other tabs) and sweeps expired idempotency keys. Same build as the
   # API, so both run one image; only the command differs. No port: nothing connects to it.
-  # Connections: the worker's pool (max 10) plus the API's (max 10, plus one LISTEN connection)
-  # plus postgres-exporter stay under the db's max_connections=30.
+  # Connections: the worker's pool (max 10) goes to PgBouncer, which shares its pool to Postgres
+  # with the API's (docs/stack.md, "Database connections").
   worker:
     container_name: ${PROJECT}-worker
     restart: unless-stopped
@@ -748,7 +812,9 @@ services:
       - DOMAIN=${DOMAIN}
       - DENO_DIR=/tmp/deno-cache
       - DENO_LOG=${DENO_LOG}
-      - DB_HOST=db
+      # Through PgBouncer: the worker sends NOTIFY, which works in a transaction, and LISTENs to
+      # nothing.
+      - DB_HOST=pgbouncer
       - DB_PORT=5432
       - DB_USER=${DB_USER}
       - DB_PASS=${DB_PASS}
@@ -782,6 +848,8 @@ services:
           memory: '${WORKER_MEM_LIMIT:-256M}'
     depends_on:
       db:
+        condition: service_healthy
+      pgbouncer:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully

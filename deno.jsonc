@@ -65,6 +65,7 @@
     "deps:update": "deno outdated -r -u -i",
     "update:ubuntu": "sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean && sudo apt --fix-broken install && sudo do-release-upgrade",
     "vapid-key:create": "deno run -W=infra/configs/vapid.json ./infra/scripts/vapid-keys-create.ts",
+    "load": "deno run -R=./infra/envs --allow-run=docker,podman ./tests/load/run.ts", // k6 load scenarios against the local dev stack, and the Postgres numbers; see docs/capacity.md
     "video:admin": "deno run -A docs/screenshots/admin-video.ts", // records the website's admin panel video from a local stack, see the script
     "compose": "deno run -R=./infra,./.volumes --allow-run=docker,podman --allow-net=127.0.0.1,0.0.0.0 ./infra/scripts/compose.ts", // reads .volumes to refuse starting Postgres 18 beside unmoved Postgres 16 data; binds the host ports the project publishes, for a moment, to refuse a start when one is taken
     "db:upgrade-18": "deno run -R=./infra,./.volumes,./.db-upgrade -W=./.db-upgrade --allow-run=docker,podman ./infra/scripts/db-upgrade-18.ts", // once per server: moves the data from Postgres 16 to 18, see docs/postgres-18-upgrade.md
@@ -157,20 +158,20 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.80.0 (idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
+    // spy4x/ts-libs 1.85.0 (idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
     // the redirect-path check of sign-in's `next`, the password check without a session, billing,
     // the provider's name and picture, the healthcheck's HTTP mode, a key giving up its address).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
-    "@spy4x/validation": "jsr:@spy4x/validation@1.80.0",
-    "@spy4x/platform": "jsr:@spy4x/platform@1.83.0",
-    "@spy4x/server": "jsr:@spy4x/server@1.80.0",
-    "@spy4x/realtime": "jsr:@spy4x/realtime@1.80.0",
-    "@spy4x/integrations": "jsr:@spy4x/integrations@1.80.0",
-    "@spy4x/email": "jsr:@spy4x/email@1.80.0",
-    "@spy4x/net": "jsr:@spy4x/net@1.80.0",
-    "@spy4x/billing": "jsr:@spy4x/billing@1.80.0",
-    "@spy4x/time": "jsr:@spy4x/time@1.80.0",
+    "@spy4x/validation": "jsr:@spy4x/validation@1.85.0",
+    "@spy4x/platform": "jsr:@spy4x/platform@1.85.0",
+    "@spy4x/server": "jsr:@spy4x/server@1.85.0",
+    "@spy4x/realtime": "jsr:@spy4x/realtime@1.85.0",
+    "@spy4x/integrations": "jsr:@spy4x/integrations@1.85.0",
+    "@spy4x/email": "jsr:@spy4x/email@1.85.0",
+    "@spy4x/net": "jsr:@spy4x/net@1.85.0",
+    "@spy4x/billing": "jsr:@spy4x/billing@1.85.0",
+    "@spy4x/time": "jsr:@spy4x/time@1.85.0",
 
     // apps/api
     "hono": "jsr:@hono/hono@4.13.8",
@@ -216,7 +217,7 @@
     "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@8.9.0",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.83.0",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.85.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components (spy4x/preact-components#121)
     "arktype": "npm:arktype@2.2.3",

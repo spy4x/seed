@@ -19,6 +19,7 @@ import {
   SignInMethods,
   type SignInMethodsProps,
 } from "./sign-in-methods.tsx"
+import { SCREEN_PATHS } from "./progressive.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -302,6 +303,18 @@ describe("ConfirmSignUpScreen", () => {
     expect(main).not.toBe(second)
     expect(back).toBe(main)
     expect(create).toBe(second)
+  })
+
+  // happy-dom draws no layout, so the width is read from the class that sets it.
+  it("spans the card with going back, and with Back to sign in once nothing is left to confirm (class check: no layout here)", async () => {
+    await mount(<ConfirmSignUpScreen {...confirmProps([])} />)
+    expect(find("[data-e2e=confirm-sign-up-back]").classList.contains("w-full")).toBe(true)
+
+    await mount(<ConfirmSignUpScreen {...confirmProps([], { pending: null })} />)
+    const back = [...find("[data-e2e=confirm-sign-up-gone]").querySelectorAll("a")]
+      .find((link) => link.textContent?.trim() === "Back to sign in")
+    expect(back?.getAttribute("href")).toBe(SCREEN_PATHS.signIn)
+    expect(back?.classList.contains("w-full")).toBe(true)
   })
 
   it("tells the app which answer was given", async () => {

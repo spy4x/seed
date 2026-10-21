@@ -199,10 +199,10 @@ queues the `auth.sign-up-code-mail` job and sets the signed HttpOnly cookie `pas
 `/api/auth/password/sign-up`). It does that for every well-formed address and never asks whether an
 account uses it, so the answer, the work and the mail are the same for a free and a taken address.
 It spends the sign-up code budgets (`ratelimit-sign-up-code`, spy4x/template#494): three mails an
-hour to the address from one client (an IP, or an IPv6 /64), and ten an hour to the address from all
-clients together. A client past its three spends nothing of the ten, so a stranger who keeps signing
-an address up cannot lock its owner out, and the account's own budget (`ratelimit-email-code`) is
-never touched. The nightly cleanup deletes expired codes from `auth_challenges`. The worker mails
+hour to the address from one client (an IPv4 address, or an IPv6 /48), and ten an hour to the
+address from all clients together. A client past its three spends nothing of the ten, so a
+stranger who keeps signing an address up cannot lock its owner out, and the account's own budget
+(`ratelimit-email-code`) is never touched. The nightly cleanup deletes expired codes from `auth_challenges`. The worker mails
 `emailCodeMail` with a code of `libs/server/auth/sign-up-requests.ts` (a challenge of purpose
 `app.sign-up` bound to the waiting sign-up and the address, 5 guesses over all its codes). `POST
 /api/auth/password/sign-up/verify` with `{ code }`: the right code for a free address creates the
