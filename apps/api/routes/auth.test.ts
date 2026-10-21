@@ -1451,14 +1451,31 @@ describe("auth routes prove the address before a sign-up creates anything (#142)
     expect(calls).toEqual(Array(SIGN_UP_CODE_MAILS_PER_CLIENT + 1).fill("requestSignUp"))
   })
 
-  it("counts every address of an IPv6 /64 as one client", async () => {
+  it("counts every /64 of one IPv6 /48 as one client (#176)", async () => {
     const { app } = buildApp(null)
     const statuses = []
     for (let attempt = 0; attempt <= SIGN_UP_CODE_MAILS_PER_CLIENT; attempt++) {
-      statuses.push((await send(app, signUp, from(`2001:db8::${attempt + 1}`))).status)
+      // A different /64 each time, all inside 2001:db8:1::/48, as one tunnel broker's /48 gives.
+      statuses.push((await send(app, signUp, from(`2001:db8:1:${attempt + 1}::1`))).status)
     }
+    const nextNetwork = await send(app, signUp, from(`2001:db8:2::1`))
 
     expect(statuses).toEqual([...Array(SIGN_UP_CODE_MAILS_PER_CLIENT).fill(200), 429])
+    expect(nextNetwork.status).toBe(200)
+  })
+
+  it("leaves the address's owner a code after a stranger signs it up from every /64 of one /48 (#176)", async () => {
+    const { app, calls } = buildApp(null)
+    const stranger = []
+    // More /64s than the address's whole total, so per /64 the stranger would spend all of it.
+    for (let network = 1; network <= SIGN_UP_CODE_MAILS_PER_ADDRESS + 1; network++) {
+      stranger.push((await send(app, signUp, from(`2001:db8:1:${network.toString(16)}::1`))).status)
+    }
+    const owner = await send(app, signUp, from(`2001:db8:feed::7`))
+
+    expect(stranger.filter((status) => status === 200)).toHaveLength(SIGN_UP_CODE_MAILS_PER_CLIENT)
+    expect(owner.status).toBe(200)
+    expect(calls).toEqual(Array(SIGN_UP_CODE_MAILS_PER_CLIENT + 1).fill("requestSignUp"))
   })
 
   it("caps sign-up codes to one address from many networks together", async () => {
