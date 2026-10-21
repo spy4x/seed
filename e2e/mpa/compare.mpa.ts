@@ -3,7 +3,7 @@ import { expect, type Page, test } from "@playwright/test"
 import { AxeBuilder } from "@axe-core/playwright"
 
 /** The table's accessible name: its caption, which also names the region it scrolls in. */
-const CAPTION = "Capabilities of Seed and five other SaaS starters, checked on 16 October 2026"
+const CAPTION = "Capabilities of Seed and five other SaaS starters, checked on 16 Oct 2026"
 const PRODUCTS = [
   "Seed",
   "ShipFast",

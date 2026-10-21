@@ -5,6 +5,7 @@ import { Button } from "@spy4x/preact-ui/button"
 import { type ComparisonRow, ComparisonTable } from "@spy4x/preact-ui/comparison-table"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
 import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { useFormat } from "@spy4x/preact-ui/format"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { Band } from "../components/band.tsx"
 import { type Alternative, CompareAlternatives } from "../components/compare-alternatives.tsx"
@@ -28,8 +29,11 @@ import { define } from "../utils.ts"
  * `dateModified` and the sitemap's `lastmod`. Re-check at least every three months.
  */
 export const CHECKED_ON = `2026-10-16`
-/** {@link CHECKED_ON} as people read it. */
-const CHECKED_ON_TEXT = `16 October 2026`
+
+/** {@link CHECKED_ON} as the hero's "Checked" line shows it, so the page names the day one way. */
+function useCheckedOn(): string {
+  return useFormat().utc().date(CHECKED_ON)
+}
 
 /** The page's title and description, as search results and social previews show them. */
 export const COMPARE_HEAD = {
@@ -313,6 +317,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
 }
 
 function Table(): JSX.Element {
+  const checkedOn = useCheckedOn()
   return (
     <Band id="table" labelledBy="table-title">
       <div class="flex flex-col gap-12">
@@ -323,12 +328,14 @@ function Table(): JSX.Element {
           lead="Rows are capabilities, as each product's own pages describe them. Seed's column is highlighted; its gaps are listed like everyone else's."
         />
         <ComparisonTable
-          caption="Capabilities of Seed and five other SaaS starters, checked on 16 October 2026"
+          caption={`Capabilities of Seed and five other SaaS starters, checked on ${checkedOn}`}
           products={PRODUCTS}
           rows={ROWS}
           checkedOn={new Date(`${CHECKED_ON}T00:00:00Z`)}
           locale="en-GB"
           labels={{
+            // The table formats its own date in long form; the page's one form replaces it.
+            checkedOn: () => `Checked on ${checkedOn}.`,
             yesMeaning: `the product's own pages say it is included`,
             partialMeaning: `included with the limit named under the row`,
             noMeaning: `its own pages do not list it; it may exist undocumented or arrive later`,
@@ -364,7 +371,7 @@ function Table(): JSX.Element {
             ShipFast's prices are the ones its{" "}
             <a href="https://shipfa.st/" class="text-primary underline">sales page</a> showed on
             {" "}
-            {CHECKED_ON_TEXT}.
+            {checkedOn}.
           </li>
           <li>
             For Seed's features in detail, see{" "}
@@ -378,6 +385,7 @@ function Table(): JSX.Element {
 }
 
 function Alternatives(): JSX.Element {
+  const checkedOn = useCheckedOn()
   return (
     <Band tone="alt" id="alternatives" labelledBy="alternatives-title">
       <div class="flex flex-col gap-12">
@@ -387,7 +395,7 @@ function Alternatives(): JSX.Element {
           title="When another starter fits better"
           lead="If one of these fits you better, use it. Each card names its price, licence, stack and hosting, and links the pages they come from."
         />
-        <CompareAlternatives items={ALTERNATIVES} checkedOn={CHECKED_ON_TEXT} />
+        <CompareAlternatives items={ALTERNATIVES} checkedOn={checkedOn} />
       </div>
     </Band>
   )
