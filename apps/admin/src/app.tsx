@@ -21,6 +21,9 @@ import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
+import { adminShortcutRows, adminSingleKeys, focusListFilter, hasFinePointer } from "./shortcuts.ts"
+import { type createSingleKeysSetting, useShortcuts } from "@platform/shortcuts.ts"
+import { activeRows } from "@ui/shortcuts.tsx"
 
 export interface AppProps {
   store: AdminStore
@@ -30,6 +33,8 @@ export interface AppProps {
   modules?: readonly AdminModule[]
   /** The operator's own date format; one over `store.request` by default. Tests pass their own. */
   operatorFormat?: OperatorFormat
+  /** The single-key shortcuts' switch; this device's by default. Tests pass their own. */
+  singleKeys?: ReturnType<typeof createSingleKeysSetting>
 }
 
 /**
@@ -38,7 +43,8 @@ export interface AppProps {
  * one sidebar entry per module (`modules/registry.ts`) and the pages each module registers.
  */
 export function App(
-  { store, theme, toasts, modules = ADMIN_MODULES, operatorFormat }: AppProps,
+  { store, theme, toasts, modules = ADMIN_MODULES, operatorFormat, singleKeys = adminSingleKeys }:
+    AppProps,
 ): JSX.Element {
   const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])
   const session = store.session.value
@@ -83,6 +89,16 @@ export function App(
       },
     [user?.id, modules],
   )
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const shortcutRows = adminShortcutRows({
+    modules,
+    path,
+    navigate,
+    openShortcuts: () => setShortcutsOpen(true),
+    focusListFilter,
+  })
+  // Bound only in the signed-in shell, which draws the list too.
+  useShortcuts(user && hasAdminAccess(user) ? activeRows(shortcutRows, singleKeys.on.value) : [])
   const toastr = <Toastr toasts={toasts.list.value} onDismiss={toasts.remove} dataE2E="toasts" />
 
   if (session.step === "loading") {
@@ -132,6 +148,15 @@ export function App(
         theme={theme}
         onSignOut={store.signOut}
         navigate={navigate}
+        shortcuts={{
+          rows: shortcutRows,
+          open: shortcutsOpen,
+          onOpen: () => setShortcutsOpen(true),
+          onClose: () => setShortcutsOpen(false),
+          singleKeys: singleKeys.on.value,
+          onSingleKeys: singleKeys.set,
+          inMenu: hasFinePointer(),
+        }}
       >
         <Switch>
           {modules.flatMap((module) =>
