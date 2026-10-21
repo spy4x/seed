@@ -10,6 +10,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import type { GuestSwitchState, OnboardingSteps } from "@domain/identity"
 import {
+  demoWipeLine,
   GuestSignOutDialog,
   GuestTakenScreen,
   type GuestTakenScreenProps,
@@ -206,6 +207,7 @@ describe("GuestTakenScreen", () => {
     await mount(<GuestTakenScreen {...props} />)
     const radios = [...document.querySelectorAll<HTMLInputElement>("input[type=radio]")]
     expect(radios.map((radio) => radio.checked)).toEqual([false, false, false])
+    expect(find("[data-e2e=taken-submit]").textContent).toBe("Continue")
     await submit("[data-e2e=taken-submit]")
     expect(find("[role=alert]").textContent).toContain("Choose what happens")
     expect(calls).toEqual([])
@@ -254,6 +256,12 @@ describe("GuestTakenScreen", () => {
     expect(document.querySelector("[data-e2e=taken-password]")).toBeNull()
     await submit("[data-e2e=taken-submit]")
     expect(calls).toEqual([["keep"]])
+  })
+})
+
+describe("demoWipeLine", () => {
+  it("keeps the wipe time on one line", () => {
+    expect(demoWipeLine("2:00 PM")).toContain("at 2:00\u00a0PM,")
   })
 })
 

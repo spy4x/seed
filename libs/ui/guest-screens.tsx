@@ -196,7 +196,9 @@ export function NoAccountYet(
 
 /** The sentence a demo guest reads in the banner: when the wipe comes, in their own time. */
 export function demoWipeLine(wipeTime: string): string {
-  return `This is a guest account on a public demo. Everything here is wiped every night at ${wipeTime}, with or without a sign-in method. Add one to see how keeping an account works.`
+  // A no-break space keeps "2:00 PM" on one line.
+  const time = wipeTime.replace(/\s/g, "\u00a0")
+  return `This is a guest account on a public demo. Everything here is wiped every night at ${time}, with or without a sign-in method. Add one to see how keeping an account works.`
 }
 
 /** The banner's sentence for a guest account outside the demo. */
@@ -555,7 +557,9 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
     ? "Switch and delete guest data"
     : choice === "keep"
     ? "Keep the guest account"
-    : "Switch and move my groups"
+    : choice === "move"
+    ? "Switch and move my groups"
+    : "Continue"
   return (
     <Stack gap="xl">
       <Stack gap="sm">
