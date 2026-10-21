@@ -289,7 +289,7 @@ describe("GroupBillingPanel", () => {
     expect(has("[data-e2e=billing-checkout]")).toBe(false)
   })
 
-  it("shows a member who is not the owner the plan and who can change it, and not one button", async () => {
+  it("shows a member who is not the owner the plan and who can change it, with no status and not one button", async () => {
     for (const billing of [FREE_OWNER, TRIAL_OWNER, PRO_OWNER, ENDING_OWNER, PAST_DUE_OWNER]) {
       const app = calls()
       await mount(panel(asMember(billing), app.props))
@@ -298,6 +298,7 @@ describe("GroupBillingPanel", () => {
       )
       expect(root!.querySelectorAll("button, a[href], form").length).toBe(0)
       expect(has("[data-e2e=billing-notice]")).toBe(false)
+      expect(has("[data-e2e=billing-status]")).toBe(false)
       await act(() => render(null, root!))
     }
   })
@@ -308,12 +309,14 @@ describe("GroupBillingPanel", () => {
     expect(root!.querySelectorAll("button, a[href]").length).toBe(0)
   })
 
-  it("says Stripe is confirming the payment while the owner is back from checkout and the group is still free", async () => {
+  it("says Stripe is confirming the payment only while the owner is back from checkout and the group is still free", async () => {
     await mount(panel(FREE_OWNER, { confirming: true }))
     expect(find("[data-e2e=billing-confirming]").textContent).toBe(
       "Stripe is confirming the payment. This page updates by itself.",
     )
     await rerender(panel(PRO_OWNER, { confirming: true }))
+    expect(has("[data-e2e=billing-confirming]")).toBe(false)
+    await rerender(panel(FREE_OWNER))
     expect(has("[data-e2e=billing-confirming]")).toBe(false)
   })
 

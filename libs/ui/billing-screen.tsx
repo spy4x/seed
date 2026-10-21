@@ -159,7 +159,10 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
   const total = seats && formatMoney(seats.amount * seats.seats, seats.currency)
   const periodEnd = billing.currentPeriodEnd && billingDate(billing.currentPeriodEnd)
 
-  const status = state === BillingState.TRIAL
+  // The renewal date and a failed payment are the owner's business, as the payment notice is.
+  const status = !owner
+    ? null
+    : state === BillingState.TRIAL
     ? "Trial"
     : state === BillingState.PRO && periodEnd
     ? `Renews on ${periodEnd}`
