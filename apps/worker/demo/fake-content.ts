@@ -126,7 +126,7 @@ export const THEMES: readonly Theme[] = [
       {
         title: `Pricing page feedback`,
         body:
-          `Five customers said the per-seat price is clear. Two missed that the owner counts as a seat, so it is worth one more line under the price.`,
+          `Five customers said the per-member price is clear. Two missed that the owner counts as a member, so it is worth one more line under the price.`,
       },
       {
         title: `Release notes for 2.4`,
@@ -156,7 +156,7 @@ export const THEMES: readonly Theme[] = [
       {
         title: `Ideas for the referral program`,
         body:
-          `A free month for both sides is what everyone does. Could we give an extra seat instead? Cheaper for us, more useful for a team.`,
+          `A free month for both sides is what everyone does. Could we give an extra member instead? Cheaper for us, more useful for a group.`,
       },
       {
         title: `Mobile app beta checklist`,

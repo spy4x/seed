@@ -270,8 +270,8 @@ function MemberItem(
           <div class="flex flex-col gap-4">
             <p class="text-sm text-muted">
               They lose access right away, on every device. What they wrote stays in the group. If
-              this is their only group, they get a new empty one named "Personal". A team link they
-              still hold lets them back in from another account, so revoke such links too.
+              this is their only group, they get a new empty one named "Personal". An invitation
+              link they still hold lets them back in from another account, so revoke such links too.
             </p>
             <ErrorState focusOnAppear message={removeError} dataE2E="group-member-remove-error" />
           </div>

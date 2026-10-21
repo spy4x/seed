@@ -85,7 +85,12 @@ async function page(path: string, app = handler): Promise<{ status: number; html
 /** The `<a>` whose text is `text`, or `undefined`: its whole opening tag, to read `href` from. */
 function linkNamed(html: string, text: string): string | undefined {
   return [...html.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)]
-    .find((match) => match[1].replace(/<[^>]+>/g, "").trim() === text)?.[0]
+    .find((match) => linkText(match[1]) === text)?.[0]
+}
+
+/** A link's text as a reader hears it: its tags dropped and its whitespace collapsed. */
+function linkText(inner: string): string {
+  return inner.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
 }
 
 function hrefOf(tag: string | undefined): string | undefined {
@@ -264,18 +269,35 @@ describe("the public website", () => {
     const footer = element(html, "footer")!
 
     const nav = [...header.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)]
-      .map((match) => [match[1].replace(/<[^>]+>/g, "").trim(), hrefOf(match[0])])
+      .map((match) => [linkText(match[1]), hrefOf(match[0])])
     expect(nav).toEqual(expect.arrayContaining([
       ["Features", "/features"],
       ["Compare", "/compare"],
       ["Pricing", "/pricing"],
-      ["Hire me", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
+      ["Hire me (opens antonshubin.com)", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
       ["GitHub", REPOSITORY_URL],
       ["Try the demo", `${spa}/sign-up`],
     ]))
     expect(linkNamed(header, "Sign in")).toBeUndefined()
     expect(hrefOf(linkNamed(footer, "Sign in"))).toBe(`${spa}/sign-in`)
     expect(header).not.toContain(`href="${site}/sign-`)
+  })
+
+  it("marks the header's Hire me as leaving the site: an icon after its label, and words for a screen reader", async () => {
+    const header = element((await page("/")).html, "header")!
+    const inner = (href: string) =>
+      [...header.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)]
+        .filter((match) => hrefOf(match[0]) === href).map((match) => match[1])
+
+    // Once in the desktop row and once in the mobile panel.
+    const hire = inner(HIRE_PAGE_URL.replaceAll("&", "&amp;"))
+    expect(hire).toHaveLength(2)
+    for (const link of hire) {
+      expect(link).toMatch(
+        /Hire me\s*<svg\b[^>]*aria-hidden="true"[\s\S]*<\/svg>\s*<span class="sr-only"> \(opens antonshubin\.com\)<\/span>\s*$/,
+      )
+    }
+    for (const link of inner("/pricing")) expect(link).not.toContain("<svg")
   })
 
   const ogCards: [string, OgImageKey][] = [
@@ -321,8 +343,8 @@ describe("the public website", () => {
     ])
     expect(row("2FA (authenticator app)")?.values).toEqual(["Yes", "No", "Yes", "Yes", "No", "No"])
     expect(row("Passkeys")?.values).toEqual(["No", "No", "Yes", "Yes", "No", "No"])
-    expect(row("Teams with roles")).toEqual({
-      capability: "Teams with roles",
+    expect(row("Groups with roles")).toEqual({
+      capability: "Groups with roles",
       note: "Next.js SaaS Starter: Owner and Member only",
       values: ["Yes", "No", "Yes", "Yes", "Partial", "No"],
     })
@@ -342,16 +364,57 @@ describe("the public website", () => {
     }
   })
 
-  it("calls 2FA and per-seat billing by one name in the website's own words on every page", async () => {
+  it("calls 2FA, groups and per-member billing by one name, the app's, on every page", async () => {
     for (const { path } of SITE_PAGES) {
       const { html } = await page(path)
-      // The demo's plan cards quote the app's plan catalog, which names things as the app does.
-      const text = html.replace(/<section id="demo-plans"[\s\S]*?<\/section>/, " ")
-        .replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")
+      // What a reader hears or a crawler reads: the text, and the alt, title, label and meta words.
+      const words = [...html.matchAll(/\b(?:alt|title|aria-label|content)="([^"]*)"/g)]
+        .map((match) => match[1])
+      // "Product team" is the name of a sample group the admin panel video shows.
+      const text = [html.replace(/<[^>]+>/g, " "), ...words].join(" ")
+        .replaceAll("Product team", " ").replace(/\s+/g, " ")
 
       expect(text, path).not.toMatch(/second factor/i)
-      expect(text, path).not.toMatch(/per[- ]member/i)
+      expect(text, path).not.toMatch(/\b(?:teams?|seats?)\b/i)
+      expect(text, path).not.toMatch(/server you own/i)
     }
+  })
+
+  it('names every link for where it goes, never a bare "Learn more"', async () => {
+    // The generic texts Lighthouse's "Links do not have descriptive text" audit flags.
+    const generic =
+      /^(?:click here|click this|go|here|information|learn more|more|more info|more information|read more|right here|see more|start|this)$/i
+    for (const { path } of SITE_PAGES) {
+      const { html } = await page(path)
+      const names = [...html.matchAll(/<a\b[^>]*>([\s\S]*?)<\/a>/g)].map((match) =>
+        linkText(match[1])
+      )
+
+      expect(names.filter((name) => generic.test(name)), path).toEqual([])
+    }
+  })
+
+  it("tells the footer's two links to antonshubin.com apart by what each opens", async () => {
+    const footer = element((await page("/")).html, "footer")!
+
+    expect(hrefOf(linkNamed(footer, "Hire me for an MVP"))).toBe(
+      HIRE_PAGE_URL.replaceAll("&", "&amp;"),
+    )
+    expect(hrefOf(linkNamed(footer, "About Anton"))).toBe("https://antonshubin.com")
+    expect(linkNamed(footer, "Hire me")).toBeUndefined()
+  })
+
+  it("says /compare's check day one way, as its hero's Checked line does", async () => {
+    const { html } = await page("/compare")
+    const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")
+    const day = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeZone: "UTC" })
+      .format(new Date(`2026-10-16T00:00:00Z`))
+
+    const days = text.match(
+      /\b\d{1,2} (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{4}\b/g,
+    )
+    expect(days?.length).toBeGreaterThan(2)
+    expect(new Set(days)).toEqual(new Set([day]))
   })
 
   it("links the home page to the MVP offer on antonshubin.com, with text that says so", async () => {
@@ -504,7 +567,10 @@ describe("the public website", () => {
     for (const card of ["way-use", "way-run", "way-hire"]) expect(html).toContain(`id="${card}"`)
     expect(html).toContain(">$0</span>")
     expect(html).toContain(">From $8,000</span>")
-    expect(hrefOf(linkNamed(html, "See how it works"))).toBe(HIRE_PAGE_URL.replaceAll("&", "&amp;"))
+    // It leaves the site, so its name says where it goes.
+    expect(hrefOf(linkNamed(html, "See how it works (opens antonshubin.com)"))).toBe(
+      HIRE_PAGE_URL.replaceAll("&", "&amp;"),
+    )
     expect(html).toContain(`<link rel="canonical" href="${site}/pricing"`)
   })
 
