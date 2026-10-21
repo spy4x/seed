@@ -284,14 +284,14 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       author={SITE_AUTHOR}
       updated={CHECKED_ON}
       labels={{ updated: `Checked` }}
+      note={
+        <>
+          I build Seed, so I am not neutral. Every claim about another product links to its source,
+          and the table shows where Seed is weaker. A row out of date?{" "}
+          <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">Open an issue</a>.
+        </>
+      }
     >
-      <p class="max-w-2xl text-muted text-pretty">
-        I build Seed, so I am not neutral. To make up for it, every claim about another product
-        links to the page I read it on, and the table shows where Seed is weaker. Products change;
-        if a row is out of date,{" "}
-        <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">open an issue</a>{" "}
-        and I will fix it.
-      </p>
       <div class="mt-2 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button
           href={demoHref}

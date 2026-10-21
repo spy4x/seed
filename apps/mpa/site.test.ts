@@ -815,7 +815,7 @@ describe("the public website", () => {
     }
   })
 
-  it("draws no dated line on the home page, and keeps the date out of /compare's own lead", async () => {
+  it("draws no dated line on the home page, keeps the date out of /compare's lead and puts its disclosure under the byline", async () => {
     const { html: home } = await page("/")
     const { html: compare } = await page("/compare")
 
@@ -824,8 +824,13 @@ describe("the public website", () => {
       compare.indexOf(`data-e2e="page-hero"`),
       compare.indexOf(`data-e2e="page-hero-meta"`),
     )
-    expect(hero).toContain("Products change; if a row is out of date")
+    expect(hero).toContain("Here it is side by side with five other SaaS starters")
     expect(hero).not.toContain("<time")
+    expect(hero).not.toContain("I am not neutral")
+    const note = compare.slice(compare.indexOf(`data-e2e="page-hero-meta"`))
+      .match(/<p [^>]*data-e2e="page-hero-note"[^>]*>([\s\S]*?)<\/p>/)?.[1]
+    expect(note).toContain("I build Seed, so I am not neutral.")
+    expect(note).toContain("A row out of date?")
   })
 
   it("takes each page's title and description in the page list from the page's own head", async () => {
