@@ -380,7 +380,7 @@ describe(`one customer in the admin app`, () => {
   it(`shows the stored subscription, the last payment and the operator history`, async () => {
     await mount(<AdminBillingCustomerScreen {...customerProps([])} />)
     const summary = find(`[data-e2e=admin-billing-summary]`).textContent
-    expect(summary).toContain(`Pro, 4 seats`)
+    expect(summary).toContain(`Pro, 4 members`)
     expect(summary).toContain(`4 × €9.00 = €36.00`)
     expect(summary).toContain(day(`2026-03-03T12:00:00.000Z`))
     // The page header keeps one line, so the address lives in the summary, where it wraps.
@@ -551,7 +551,7 @@ describe(`one customer in the admin app`, () => {
         })}
       />,
     )
-    expect(find(`[data-e2e=admin-billing-summary]`).textContent).toContain(`Pro, 4 seats`)
+    expect(find(`[data-e2e=admin-billing-summary]`).textContent).toContain(`Pro, 4 members`)
     await press(`[data-e2e=admin-billing-payment-error]`, `Try again`)
     expect(calls).toEqual([[`retry payment`]])
   })
