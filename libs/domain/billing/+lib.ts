@@ -649,7 +649,7 @@ export function assertCanManageBilling(role: GroupRole | null): void {
 // #endregion Authorization
 
 // #region Request schemas
-/** `POST /api/groups/:groupId/billing/checkout`, and the pricing page's form: the plan chosen. */
+/** `POST /api/groups/:groupId/billing/checkout`, from the Plan and billing tab: the plan chosen. */
 export const billingCheckoutRequestSchema = type({ planId: "0 < string <= 64", "+": "reject" })
 export type BillingCheckoutRequest = typeof billingCheckoutRequestSchema.infer
 // #endregion Request schemas

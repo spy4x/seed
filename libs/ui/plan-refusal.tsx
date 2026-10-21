@@ -45,9 +45,9 @@ export interface PlanRefusalNoticeProps {
 }
 
 /**
- * Why the group's plan refused an action, shown where the action was. The owner gets a "See plans"
- * link to the group's pricing page; anyone else is told to ask the owner, as only the owner can
- * change the plan. Focus moves to the notice, so a keyboard or screen reader user hears it.
+ * Why the group's plan refused an action, shown where the action was. The owner gets an "Open Plan
+ * and billing" link to the group's Plan and billing tab; anyone else is told to ask the owner, as
+ * only the owner can change the plan. Focus moves to the notice, so a keyboard or screen reader user hears it.
  */
 export function PlanRefusalNotice(
   { groupId, refusal, groupName, navigate }: PlanRefusalNoticeProps,
