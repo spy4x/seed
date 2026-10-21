@@ -438,10 +438,20 @@ describe("the public website", () => {
       .map(([, href, number]) => ({ href, number }))
     expect(links.length).toBeGreaterThan(0)
     for (const { href, number } of links) expect(href).toBe(`${REPOSITORY_URL}/issues/${number}`)
-    // Passkeys is not built yet, and its issue is the place to follow it.
+    // Downloading an account's data is not built yet, and its issue is the place to follow it.
     expect(html).toMatch(
-      new RegExp(`Passkeys \\(<a href="${REPOSITORY_URL}/issues/222"[^>]*>issue #222</a>\\)`),
+      new RegExp(
+        `Downloading an account's data \\(<a href="${REPOSITORY_URL}/issues/229"[^>]*>issue #229</a>\\)`,
+      ),
     )
+  })
+
+  it("lists passkeys on /features as built, not under Not built yet", async () => {
+    const { html } = await page("/features")
+
+    expect(html).toContain(`or sign in with a passkey.`)
+    expect(html).toContain(`Google and GitHub sign-in, passkeys, 2FA`)
+    expect(html).not.toContain(`issues/222`)
   })
 
   it("ends /features with its questions, listed under On this page and in its structured data", async () => {
