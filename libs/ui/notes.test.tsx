@@ -821,7 +821,7 @@ describe("NoteEditorScreen", () => {
     expect(html).not.toContain("There is no such note")
   })
 
-  it("shows the owner the note cap with a link to the group's pricing page", () => {
+  it("shows the owner the note cap with a link to the group's Plan and billing tab", () => {
     const capped: PlanRefusal = {
       code: "PLAN_LIMIT_REACHED",
       entitlement: "maxNotes",
@@ -840,7 +840,7 @@ describe("NoteEditorScreen", () => {
     expect(html).toContain(`href="${GROUP_PATHS.billing(groupId)}"`)
   })
 
-  it("tells a member who cannot upgrade to ask the owner, and gives no pricing link", () => {
+  it("tells a member who cannot upgrade to ask the owner, and gives no link to the plan", () => {
     const capped: PlanRefusal = {
       code: "PLAN_LIMIT_REACHED",
       entitlement: "maxNotes",
