@@ -2726,6 +2726,11 @@
           "npm:vite@7.3.6"
         ]
       },
+      "libs/platform": {
+        "dependencies": [
+          "npm:happy-dom@20.14.5"
+        ]
+      },
       "libs/ui": {
         "dependencies": [
           "npm:happy-dom@20.14.5",

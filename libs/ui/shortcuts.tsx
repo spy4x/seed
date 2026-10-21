@@ -1,0 +1,115 @@
+import type { JSX } from "preact"
+import { parseHotkey } from "@spy4x/platform/browser/hotkeys"
+import { ShortcutsDialog } from "@spy4x/preact-ui/shortcuts-dialog"
+import { ToggleField } from "@spy4x/preact-ui/toggle-field"
+
+/**
+ * One row of an app's keyboard shortcuts: what the "Keyboard shortcuts" dialog lists and, with
+ * `run`, what the keys do. A row without `run` is listed only, because something else binds its
+ * keys: `Modal` closes on Escape, the search palette binds Ctrl K and `/`, the New note dialog
+ * binds Enter. The app binds the rest with `useShortcuts` (`libs/platform/shortcuts.ts`).
+ */
+export interface ShortcutRow {
+  /** One combination (`"?"`, `"mod+k"`) or a sequence of presses (`"g n"`), as `Kbd` takes it. */
+  keys: string
+  /** What it does, as the dialog lists it. */
+  description: string
+  /** The heading it is listed under: one of {@link SHORTCUT_GROUPS}. */
+  group: string
+  /** What the keys do. Left out, the row is listed only. */
+  run?: () => void
+}
+
+/** The headings of the shortcuts dialog, in the order the rows of an app use them. */
+export const SHORTCUT_GROUPS = {
+  general: "General",
+  goTo: "Go to",
+  newNote: "In New note",
+  page: "This page",
+} as const
+
+/** The words of the shortcuts dialog and its entry in the account menu. */
+export const SHORTCUT_TEXT = {
+  title: "Keyboard shortcuts",
+  menuEntry: "Keyboard shortcuts",
+  show: "Show keyboard shortcuts",
+  close: "Close a dialog or menu",
+  inFields: "Shortcuts don't work while you type in a field.",
+  switchLabel: "Single-key shortcuts",
+  off: "Single-key shortcuts are off on this device.",
+} as const
+
+/** The rows every app starts with: `?` opens the list, and Escape closes what is open. */
+export function generalRows(openShortcuts: () => void): ShortcutRow[] {
+  return [
+    {
+      keys: "?",
+      description: SHORTCUT_TEXT.show,
+      group: SHORTCUT_GROUPS.general,
+      run: openShortcuts,
+    },
+    { keys: "esc", description: SHORTCUT_TEXT.close, group: SHORTCUT_GROUPS.general },
+  ]
+}
+
+/**
+ * Whether the off switch turns these keys off: every press is a plain key, with no Control,
+ * Command or `mod`. Escape, Enter and Ctrl K keep working, because they type nothing and a person
+ * who cannot avoid pressing single keys by accident still needs them (WCAG 2.1.4).
+ */
+export function isSingleKey(keys: string): boolean {
+  return keys.split(" ").every((press) => {
+    const hotkey = parseHotkey(press)
+    return !hotkey.mod && !hotkey.ctrl && !hotkey.meta && !hotkey.alt &&
+      hotkey.key !== "escape" && hotkey.key !== "enter"
+  })
+}
+
+/** The rows that work now: all of them, or without the single keys when those are off. */
+export function activeRows(rows: readonly ShortcutRow[], singleKeys: boolean): ShortcutRow[] {
+  return singleKeys ? [...rows] : rows.filter((row) => !isSingleKey(row.keys))
+}
+
+/** Props of {@link ShortcutsList}. */
+export interface ShortcutsProps {
+  /** The app's registry: every row the dialog lists, and with `run`, what the keys do. */
+  rows: readonly ShortcutRow[]
+  /** Whether the "Keyboard shortcuts" dialog is open. */
+  open: boolean
+  onOpen: () => void
+  onClose: () => void
+  /** Whether the single-key shortcuts are on, on this device. */
+  singleKeys: boolean
+  onSingleKeys: (on: boolean) => void
+}
+
+/**
+ * The "Keyboard shortcuts" dialog: the rows that work now ({@link activeRows}), the same list the
+ * app binds, so it never shows a key that does nothing. Its footer says when shortcuts do not
+ * work and holds the switch that turns the single keys off on this device.
+ */
+export function ShortcutsList(
+  { rows, open, onClose, singleKeys, onSingleKeys }: ShortcutsProps,
+): JSX.Element {
+  const active = activeRows(rows, singleKeys)
+  return (
+    <ShortcutsDialog
+      open={open}
+      onClose={onClose}
+      shortcuts={active}
+      title={SHORTCUT_TEXT.title}
+      class="sm:max-w-lg"
+      footer={
+        <div class="w-full" data-e2e="shortcuts-footer">
+          <ToggleField
+            id="single-key-shortcuts"
+            label={SHORTCUT_TEXT.switchLabel}
+            value={singleKeys}
+            onToggle={onSingleKeys}
+            description={singleKeys ? SHORTCUT_TEXT.inFields : SHORTCUT_TEXT.off}
+          />
+        </div>
+      }
+    />
+  )
+}

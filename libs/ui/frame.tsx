@@ -27,7 +27,8 @@ import {
   ScreenForm,
   TAG_PATHS,
 } from "./progressive.tsx"
-import { openSearch, SEARCH_HOTKEYS } from "./search-palette.tsx"
+import { openSearch, searchHotkeys } from "./search-palette.tsx"
+import { SHORTCUT_TEXT, ShortcutsList, type ShortcutsProps } from "./shortcuts.tsx"
 
 /**
  * The daily destinations, in the order the rail and the phone tab bar show them. Four at most, so
@@ -79,13 +80,30 @@ export function displayName(user: FrameUser): string {
 /**
  * The search's entry, drawn by the library as the rail's other cells and the sheet's other rows. It
  * names the palette's keys, so the rail's tooltip reads "Search (Ctrl K)" and a screen reader hears
- * them; the palette binds them itself.
+ * them; the palette binds them itself. `/` is named only while the single keys are on.
  */
-const SEARCH_ENTRY: RailItem = {
-  key: "search",
-  label: "Search",
-  Icon: IconSearch,
-  keyshortcuts: SEARCH_HOTKEYS,
+function searchEntry(slashKey: boolean): RailItem {
+  return { key: "search", label: "Search", Icon: IconSearch, keyshortcuts: searchHotkeys(slashKey) }
+}
+
+/** An app's keyboard shortcuts, as the frame draws them; see {@link ShortcutsList}. */
+export interface FrameShortcuts extends ShortcutsProps {
+  /**
+   * Whether the account menu lists "Keyboard shortcuts". The app passes whether the device has a
+   * fine pointer (`(any-pointer: fine)`): a phone without a keyboard has no use for the list.
+   */
+  inMenu: boolean
+}
+
+/** The account menu's "Keyboard shortcuts" entry, when the frame has shortcuts to list. */
+export function shortcutsMenuItems(shortcuts: FrameShortcuts | undefined) {
+  return shortcuts?.inMenu
+    ? [{
+      label: SHORTCUT_TEXT.menuEntry,
+      onClick: shortcuts.onOpen,
+      dataE2E: "account-shortcuts",
+    }]
+    : []
 }
 
 /**
@@ -96,12 +114,14 @@ const SEARCH_ENTRY: RailItem = {
  *   cell with its tooltip that opens `search`.
  * - The middle is the destinations ({@link navItems}).
  * - The bottom is the connection while it is not live, Notifications with its unread count, and the
- *   account menu (Profile, Theme, Sign out).
+ *   account menu (Profile, Keyboard shortcuts on a device with a fine pointer, Theme, Sign out).
  *
  * On a phone the tab bar's last slot is "Account": the avatar with the unread count, opening a sheet
  * with "Search", the groups ({@link GroupSheet}), Notifications and the account's choices.
  * Choosing "Search" there closes the sheet, which gives focus back to "Account", and then opens
  * the palette; closing the palette gives focus back to "Account" again.
+ *
+ * `shortcuts` draws the "Keyboard shortcuts" dialog; the app binds the keys ({@link ShortcutsList}).
  *
  * `search` is drawn once, at the end of the page's column, with no trigger of its own (such as
  * `SearchPalette`, which binds Ctrl K and `/` itself). Both "Search" entries open it by clicking
@@ -127,6 +147,7 @@ export function AppFrame(
     banner,
     unreadCount,
     search,
+    shortcuts,
     wide = false,
     children,
   }: {
@@ -144,6 +165,8 @@ export function AppFrame(
     unreadCount?: number
     /** The search palette, drawn once. Left out, the frame has no search. */
     search?: ComponentChildren
+    /** The app's keyboard shortcuts and their dialog. Left out, the frame binds none. */
+    shortcuts?: FrameShortcuts
     /** Gives the page the wider column (64 rem), for a data table that needs it. */
     wide?: boolean
     children: ComponentChildren
@@ -155,6 +178,7 @@ export function AppFrame(
   // A person known only by the address would read it twice.
   const email = user.email && user.email !== name ? user.email : undefined
   const hasSearch = search !== undefined
+  const searchItem = searchEntry(shortcuts?.singleKeys ?? true)
   const searchRoot = useRef<HTMLDivElement>(null)
   const sheetSearch = useRef<HTMLDivElement>(null)
   const open = () => openSearch(searchRoot.current)
@@ -177,7 +201,7 @@ export function AppFrame(
               <div class="flex flex-col gap-2">
                 {hasSearch && (
                   <div ref={sheetSearch} data-e2e="shell-search-sheet">
-                    <RailEntry item={SEARCH_ENTRY} place="sheet" navigate={openFromSheet} />
+                    <RailEntry item={searchItem} place="sheet" navigate={openFromSheet} />
                   </div>
                 )}
                 {groupPicker && <GroupSheet {...groupPicker} navigate={navigate} />}
@@ -188,7 +212,7 @@ export function AppFrame(
                 {groupPicker && <GroupPicker {...groupPicker} navigate={navigate} />}
                 {hasSearch && (
                   <div data-e2e="shell-search-rail">
-                    <RailEntry item={SEARCH_ENTRY} place="rail" navigate={open} />
+                    <RailEntry item={searchItem} place="rail" navigate={open} />
                   </div>
                 )}
               </div>
@@ -199,7 +223,7 @@ export function AppFrame(
         : { href: SCREEN_PATHS.notifications, unread: unreadCount }}
       account={{
         user: { name, email },
-        items: [{ label: "Profile", href: SCREEN_PATHS.profile }],
+        items: [{ label: "Profile", href: SCREEN_PATHS.profile }, ...shortcutsMenuItems(shortcuts)],
         theme: theme?.preference.value,
         onThemeChange: theme && ((choice) => theme.set(choice)),
         signOut: { label: "Sign out", onClick: onSignOut },
@@ -210,6 +234,7 @@ export function AppFrame(
     >
       {children}
       {hasSearch && <div ref={searchRoot}>{search}</div>}
+      {shortcuts && <ShortcutsList {...shortcuts} />}
     </AppShell>
   )
 }

@@ -11,7 +11,8 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { AuthCard } from "./auth-screen.tsx"
-import type { FrameTheme } from "./frame.tsx"
+import { type FrameShortcuts, type FrameTheme, shortcutsMenuItems } from "./frame.tsx"
+import { ShortcutsList } from "./shortcuts.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
 /**
@@ -82,7 +83,7 @@ export interface AdminNavItem {
  * language and `docs/design/ui-layout.md` rule 6 give a page of tables and dashboards.
  */
 export function AdminShell(
-  { navItems, currentPath, operator, theme, onSignOut, navigate, children }: {
+  { navItems, currentPath, operator, theme, onSignOut, navigate, shortcuts, children }: {
     navItems: readonly AdminNavItem[]
     /** The address of the page shown; the entry whose page it is, or is under, is marked. */
     currentPath: string
@@ -91,6 +92,8 @@ export function AdminShell(
     theme?: FrameTheme
     onSignOut: () => void
     navigate?: Navigate
+    /** The admin app's keyboard shortcuts and their dialog. Left out, the shell binds none. */
+    shortcuts?: FrameShortcuts
     children: ComponentChildren
   },
 ): JSX.Element {
@@ -105,6 +108,7 @@ export function AdminShell(
           name: operator.name,
           email: operator.email && operator.email !== operator.name ? operator.email : undefined,
         },
+        items: shortcutsMenuItems(shortcuts),
         theme: theme?.preference.value,
         onThemeChange: theme && ((choice) => theme.set(choice)),
         signOut: { label: "Sign out", onClick: onSignOut },
@@ -114,6 +118,7 @@ export function AdminShell(
       labels={{ nav: "Admin sections" }}
     >
       {children}
+      {shortcuts && <ShortcutsList {...shortcuts} />}
     </AppShell>
   )
 }
