@@ -132,7 +132,9 @@ export async function runCompose(args: string[], host: ComposeHost): Promise<num
 
   // Compose removes a network whose definition changed and starts the containers it does not
   // recreate without their service names. Nothing is left to restart once they are all removed.
-  const dryRun = await ask("--dry-run", "up", "-d");
+  // A project with no container yet has no network to recreate, and on a fresh machine its dry
+  // run never returns (seen with Compose 2.40: it waits on services that a dry run never starts).
+  const dryRun = containers?.length === 0 ? undefined : await ask("--dry-run", "up", "-d");
   const networks = networksToRecreate(`${dryRun?.stdout ?? ""}\n${dryRun?.stderr ?? ""}`);
   if (networks.length > 0) {
     host.log(
