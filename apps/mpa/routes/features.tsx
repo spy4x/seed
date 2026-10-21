@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import type { JSX } from "preact"
 import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
@@ -502,6 +503,7 @@ export default define.page(function Features({ state }) {
               ))}
             </FeatureTier>
           ))}
+          {/* Seed's own site: see docs/start-a-product.md */}
           <a
             href="/compare"
             class="inline-flex items-center gap-1 self-start py-2 text-lg font-medium text-primary hover:underline"

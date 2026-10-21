@@ -43,6 +43,7 @@ export interface RobotsPolicy {
  * choice is plain to read. `Google-Extended` is never blocked: it also decides whether Gemini may
  * use the site in its answers. A product built on Seed changes this to choose differently.
  */
+// Seed's own site: see docs/start-a-product.md
 export const ROBOTS_POLICY: RobotsPolicy = {
   allowBots: [`OAI-SearchBot`, `PerplexityBot`, `Claude-SearchBot`, `Bingbot`],
   disallow: [FORM_ACTIONS.subscribeConfirm, FORM_ACTIONS.unsubscribe],

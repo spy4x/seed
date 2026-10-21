@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import { IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { FaqList } from "@spy4x/preact-ui/faq-list"

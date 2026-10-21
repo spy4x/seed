@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import { type FreshContext, HttpError } from "fresh"
 import { Button } from "@spy4x/preact-ui/button"
 import { HIRE_PAGE_URL } from "./hire.ts"

@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import { HIRE_PAGE_URL } from "../hire.ts"
 import { define } from "../utils.ts"
 

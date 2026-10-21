@@ -9,8 +9,11 @@ Deno, Postgres, Docker Compose. Work in progress.**
 [![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
+<!-- Seed's own site: see docs/start-a-product.md -->
+
 [**Try the live demo →**](https://app.seedsaas.com) · [Website](https://seedsaas.com) ·
-[Architecture](docs/architecture.md) · [Deploy](docs/deploy.md) · [All docs](docs/README.md)
+[Architecture](docs/architecture.md) · [Deploy](docs/deploy.md) · [All docs](docs/README.md) ·
+[Start a product](docs/start-a-product.md)
 
 <img src="docs/screenshots/sign-up-flow.gif" alt="A new user signs up with an e-mail address and a password, types the code the app mailed to that address, lands on the profile page with a Get started checklist, opens Edit name, types the first name Alex and the last name Rivera, and saves; a green toast confirms the profile was updated." width="800">
 
@@ -138,6 +141,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the rules and [docs/handoff.md](docs/
 traps in this codebase.
 
 ## Built by
+
+<!-- Seed's own site: see docs/start-a-product.md -->
 
 I'm [Anton Shubin](https://antonshubin.com), a senior full-stack engineer and tech lead.
 Seed is the foundation I build client SaaS MVPs on. Need an MVP built for your product?

@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import type { JSX } from "preact"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { Shot } from "./shot.tsx"

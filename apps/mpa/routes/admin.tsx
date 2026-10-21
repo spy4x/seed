@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import type { ComponentType, JSX } from "preact"
 import {
   IconArrowDown,

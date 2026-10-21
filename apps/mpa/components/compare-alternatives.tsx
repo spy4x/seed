@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 import type { JSX } from "preact"
 
 /** A page of another product's site that the comparison was checked against. */

@@ -46,6 +46,8 @@ Event names are kebab-case. Umami stores the page of every event, so a name neve
 
 ## Events
 
+<!-- Seed's own site: see docs/start-a-product.md (hire-me, compare-source) -->
+
 | Event                     | Properties                    | When                                                                                 |
 | ------------------------- | ----------------------------- | ------------------------------------------------------------------------------------ |
 | `try-demo`                | `from`                        | A link to the demo's sign-up: header, hero, closing band, 404 page, footer           |

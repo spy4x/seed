@@ -1,3 +1,4 @@
+// Seed's own site: see docs/start-a-product.md
 /** The product this website promotes, as every page names it. */
 export const SITE_NAME = `Seed`
 

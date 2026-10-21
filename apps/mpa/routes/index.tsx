@@ -44,6 +44,7 @@ import {
 } from "../site.tsx"
 import { define } from "../utils.ts"
 
+// Seed's own site: see docs/start-a-product.md (also the llms.txt summary)
 /** The home page's title and description, as search results and social previews show them. */
 export const HOME_HEAD = {
   title: `Seed: free open-source SaaS starter and boilerplate`,
@@ -477,6 +478,7 @@ function Status(): JSX.Element {
   )
 }
 
+// Seed's own site: see docs/start-a-product.md
 function WhoBuilds(): JSX.Element {
   return (
     <Band id="who" labelledBy="who-title" width="3xl">
@@ -578,6 +580,7 @@ function Questions(): JSX.Element {
                   <code>Request</code>, Web Crypto, ES modules), start fast and need few
                   dependencies, so there is less to update and less that breaks. If your team lives
                   in the Next.js ecosystem, a Next.js starter will suit you better;{" "}
+                  {/* Seed's own site: see docs/start-a-product.md */}
                   <a href="/compare" class="text-primary underline">the comparison</a>{" "}
                   names good ones.
                 </p>
@@ -610,6 +613,7 @@ export default define.page(function Home({ state }) {
       <OneServer />
       <QuickStart />
       <Status />
+      {/* Seed's own site: see docs/start-a-product.md */}
       <FoundersHandoff />
       <WhoBuilds />
       {state.newsletter && <Newsletter />}

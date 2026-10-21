@@ -38,6 +38,7 @@ export const SITE_PAGES: readonly SitePage[] = [
   sitePage(`/`, HOME_HEAD),
   sitePage(`/features`, FEATURES_HEAD, FEATURES_UPDATED),
   sitePage(`/admin`, ADMIN_HEAD, ADMIN_UPDATED),
+  // Seed's own site: see docs/start-a-product.md
   sitePage(`/compare`, COMPARE_HEAD, CHECKED_ON),
   sitePage(`/pricing`, PRICING_HEAD, PRICING_UPDATED),
   sitePage(`/subscribe`, SUBSCRIBE_HEAD),
