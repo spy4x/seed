@@ -27,80 +27,110 @@ export interface NoteWidgetHandlerDependencies {
   groups: GroupRoleLookup
 }
 
-/**
- * The periods of the request, after the same check the notes list makes: every member reads, and
- * a person who is not a member is told the group does not exist.
- */
-async function readablePeriods(
-  { groups }: NoteWidgetHandlerDependencies,
-  data: NoteWidgetPayload,
-): Promise<OverviewPeriods> {
-  assertCanReadNotes(await groups.roleOf(data.groupId, data.actor.userId))
-  return noteWidgetPeriods(data)
-}
+/** One widget's request once the membership is settled: the group, the days and the zone. */
+export type NoteWidgetRequest = Omit<NoteWidgetPayload, "actor">
 
 /** Whether the group existed for the whole previous period, so a comparison is fair. */
 async function comparable(
-  { overview }: NoteWidgetHandlerDependencies,
-  data: NoteWidgetPayload,
+  overview: NoteOverviewRepository,
+  request: NoteWidgetRequest,
   periods: OverviewPeriods,
 ): Promise<boolean> {
-  const start = await overview.startDay(data.groupId, data.timeZone)
+  const start = await overview.startDay(request.groupId, request.timeZone)
   return start !== null && start <= periods.previous.from
 }
 
 /** "Notes": the live notes at the end of the range, and at the end of the period before it. */
-export function createNoteTotalWidgetHandler(
-  dependencies: NoteWidgetHandlerDependencies,
-): QueryHandler<NoteTotalWidgetQuery> {
-  return async ({ data }): Promise<CountWidgetResult> => {
-    const periods = await readablePeriods(dependencies, data)
-    const totalOn = async (day: string) =>
-      (await dependencies.overview.dailyTotals(
-        data.groupId,
-        { from: day, to: day },
-        data.timeZone,
-      ))[0]
-    return {
-      current: await totalOn(periods.current.to),
-      previous: await comparable(dependencies, data, periods)
-        ? await totalOn(periods.previous.to)
-        : null,
-    }
+export async function readNoteTotal(
+  overview: NoteOverviewRepository,
+  request: NoteWidgetRequest,
+): Promise<CountWidgetResult> {
+  const periods = noteWidgetPeriods(request)
+  const totalOn = async (day: string) =>
+    (await overview.dailyTotals(request.groupId, { from: day, to: day }, request.timeZone))[0]
+  return {
+    current: await totalOn(periods.current.to),
+    previous: await comparable(overview, request, periods)
+      ? await totalOn(periods.previous.to)
+      : null,
   }
 }
 
 /** "Notes added": the notes created in the range, and in the period before it. */
-export function createNoteAddedWidgetHandler(
-  dependencies: NoteWidgetHandlerDependencies,
-): QueryHandler<NoteAddedWidgetQuery> {
-  return async ({ data }): Promise<CountWidgetResult> => {
-    const periods = await readablePeriods(dependencies, data)
-    const { overview } = dependencies
-    return {
-      current: await overview.added(data.groupId, periods.current, data.timeZone),
-      previous: await comparable(dependencies, data, periods)
-        ? await overview.added(data.groupId, periods.previous, data.timeZone)
-        : null,
-    }
+export async function readNoteAdded(
+  overview: NoteOverviewRepository,
+  request: NoteWidgetRequest,
+): Promise<CountWidgetResult> {
+  const periods = noteWidgetPeriods(request)
+  return {
+    current: await overview.added(request.groupId, periods.current, request.timeZone),
+    previous: await comparable(overview, request, periods)
+      ? await overview.added(request.groupId, periods.previous, request.timeZone)
+      : null,
   }
 }
 
 /** "Notes over time": the daily totals of the range, and of the period before it. */
+export async function readNoteSeries(
+  overview: NoteOverviewRepository,
+  request: NoteWidgetRequest,
+): Promise<SeriesWidgetResult> {
+  const periods = noteWidgetPeriods(request)
+  return {
+    days: daysOf(periods.current),
+    current: await overview.dailyTotals(request.groupId, periods.current, request.timeZone),
+    previous: await comparable(overview, request, periods)
+      ? await overview.dailyTotals(request.groupId, periods.previous, request.timeZone)
+      : null,
+  }
+}
+
+/**
+ * Each note widget's reader, by widget id. The member's handlers below and the operator area's
+ * route (`routes/admin/groups.ts`) both read through these; each decides first who may.
+ */
+export const NOTE_WIDGET_READERS: Readonly<
+  Record<
+    string,
+    (overview: NoteOverviewRepository, request: NoteWidgetRequest) => Promise<unknown>
+  >
+> = {
+  [NOTE_WIDGET_IDS.total]: readNoteTotal,
+  [NOTE_WIDGET_IDS.added]: readNoteAdded,
+  [NOTE_WIDGET_IDS.series]: readNoteSeries,
+}
+
+/**
+ * A handler that makes the notes list's check first: every member reads, and a person who is not
+ * a member is told the group does not exist, before anything is read.
+ */
+function forMembers<R>(
+  { overview, groups }: NoteWidgetHandlerDependencies,
+  read: (overview: NoteOverviewRepository, request: NoteWidgetRequest) => Promise<R>,
+) {
+  return async ({ data }: { data: NoteWidgetPayload }): Promise<R> => {
+    assertCanReadNotes(await groups.roleOf(data.groupId, data.actor.userId))
+    const { actor: _actor, ...request } = data
+    return await read(overview, request)
+  }
+}
+
+export function createNoteTotalWidgetHandler(
+  dependencies: NoteWidgetHandlerDependencies,
+): QueryHandler<NoteTotalWidgetQuery> {
+  return forMembers(dependencies, readNoteTotal)
+}
+
+export function createNoteAddedWidgetHandler(
+  dependencies: NoteWidgetHandlerDependencies,
+): QueryHandler<NoteAddedWidgetQuery> {
+  return forMembers(dependencies, readNoteAdded)
+}
+
 export function createNoteSeriesWidgetHandler(
   dependencies: NoteWidgetHandlerDependencies,
 ): QueryHandler<NoteSeriesWidgetQuery> {
-  return async ({ data }): Promise<SeriesWidgetResult> => {
-    const periods = await readablePeriods(dependencies, data)
-    const { overview } = dependencies
-    return {
-      days: daysOf(periods.current),
-      current: await overview.dailyTotals(data.groupId, periods.current, data.timeZone),
-      previous: await comparable(dependencies, data, periods)
-        ? await overview.dailyTotals(data.groupId, periods.previous, data.timeZone)
-        : null,
-    }
-  }
+  return forMembers(dependencies, readNoteSeries)
 }
 
 /** What the widget operations need from the app: the query bus, one function per widget. */

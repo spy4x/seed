@@ -138,6 +138,8 @@ export interface AdminGroupScreenProps {
   pending: boolean
   /** The operator confirmed the open dialog's action. */
   onAction: (action: AdminGroupAction) => void
+  /** The read-only "Overview widgets" section (`AdminGroupOverview`), under the header card. */
+  overview?: ComponentChildren
   navigate?: Navigate
 }
 
@@ -300,6 +302,8 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
           </Notice>
         )}
       </div>
+
+      {props.overview}
 
       {/* One row that scrolls sideways on a phone; the arrow keys still move between tabs. */}
       <Tabs
