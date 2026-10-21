@@ -57,6 +57,8 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   `apps/mpa/routes/index.tsx`, `routes/features.tsx`, `routes/admin.tsx`, `routes/pricing.tsx`.
 - **Replace** the `llms.txt` summary. It is the home page's description, `HOME_HEAD` in
   `apps/mpa/routes/index.tsx`; the page list follows `apps/mpa/pages.ts` by itself.
+- **Set** the licence line in `llms.txt`: the "Source code" entry in `apps/mpa/routes/llms.txt.ts`
+  says the code is under the MIT licence. Name the product's own licence, or drop the line.
 - **Replace** the privacy policy and terms, written for seedsaas.com and its demo:
   `apps/mpa/routes/privacy.tsx`, `apps/mpa/routes/terms.tsx`.
 - **Set** `SITE_NAME` and `REPOSITORY_URL` in `apps/mpa/brand.ts`.
@@ -67,6 +69,21 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   and `apps/mpa/admin-video.ts`.
 - **Replace** the browser frames titled `app.seedsaas.com/…` in `apps/mpa/routes/index.tsx`,
   `apps/mpa/routes/features.tsx` and `apps/mpa/components/features-visuals.tsx`.
+
+## The product's name in the apps
+
+The SPA and the admin app say "Seed" in the browser tab, the installed app's name and the brand
+mark. **Replace** each with the product's name:
+
+- `apps/spa/index.html`: the `<title>` and the `apple-mobile-web-app-title` meta.
+- `apps/spa/vite.config.ts`: `name` and `short_name` in the web app manifest.
+- `apps/admin/index.html`: the `<title>` (`Admin · Seed`).
+- `libs/ui/frame.tsx`: the `name` of the `BrandMark` in the app frame.
+- `libs/ui/admin-frame.tsx`: `ADMIN_PRODUCT`, which names the admin's tab titles and brand mark.
+
+These tests check the name and change with it: `libs/ui/admin-frame.test.tsx`,
+`libs/ui/account.test.tsx` (the brand mark), `e2e/pwa.e2e.ts` (the manifest's names) and
+`e2e/app-shell-parity.e2e.ts` (the admin tab title).
 
 ## Settings
 
