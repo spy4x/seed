@@ -16,7 +16,8 @@ check ──┬── build ────────┐
         ├── integration   │   (Postgres and Valkey services)
         ├── backup-restore│   (Postgres service)
         └── e2e-mpa ──────┴── e2e-spa ──┬── e2e-smoke   (pull request and tag)
-                                        └── e2e-full    (push to `main`)
+               │                        └── e2e-full    (push to `main`)
+               └── lighthouse
 ```
 
 - `check` runs `deno task check`: format, lint, type check and unit tests.
@@ -30,6 +31,10 @@ check ──┬── build ────────┐
   them (docs/backups.md).
 - `e2e-mpa` and `e2e-spa` run the website's browser tests and the SPA behind nginx
   (`e2e/mpa/run.sh`, `e2e/spa/run.sh`).
+- `lighthouse` runs `deno task lighthouse` (`apps/mpa/lighthouse/run.sh`): the website's pages,
+  built and served behind nginx with gzip, must score at least 95 for performance and 100 for
+  accessibility, best practices and SEO in Lighthouse mobile. The pages are listed in
+  `apps/mpa/lighthouse/lighthouserc.json`.
 - `e2e-smoke` runs the product's smoke set on every pull request and tag:
   `deno task e2e:local --smoke --max-failures=3`, the script a developer runs, against the Postgres
   and Valkey services (`E2E_SERVICES=environment`). The set is `SMOKE_SPECS` in
@@ -93,7 +98,7 @@ image, so there is no worker image. How to cut a release: [the deploy guide](dep
 ## Changing the Deno version
 
 Change the tag in every `image: denoland/deno:<version>` line of `ci.yml`, and the release URL and
-SHA-256 in the four Playwright steps (`e2e-mpa`, `e2e-spa`, `e2e-smoke`, `e2e-full`). Keep them
+SHA-256 in the five Playwright steps (`e2e-mpa`, `e2e-spa`, `e2e-smoke`, `e2e-full`, `lighthouse`). Keep them
 equal to `DENO_VERSION` in `infra/envs/.env.example` and `Dockerfile.base`.
 
 ## Running the steps locally

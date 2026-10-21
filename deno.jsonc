@@ -30,7 +30,7 @@
   "allowScripts": ["npm:@tailwindcss/oxide@4.1.12"],
   "minimumDependencyAge": { "age": "1440", "exclude": ["jsr:@spy4x/*", "npm:@jsr/spy4x__*"] },
   "tasks": {
-    "init": "deno run -R=. -W=infra/envs/.env,infra/configs/vapid.json ./infra/scripts/init.ts", // once after cloning: the env file with generated secrets, and the web push keys; see the script
+    "init": "deno run -R=. -W=infra/envs/.env,infra/envs/.env.tmp,infra/configs/vapid.json,infra/configs/vapid.json.tmp ./infra/scripts/init.ts", // once after cloning: the env file with generated secrets, and the web push keys; see the script
     "dev": "deno run -R=./infra --allow-run=docker,podman ./infra/scripts/proxy-network.ts --start && deno run compose up -d", // starts Traefik unless one runs, then the development environment
     "build": "deno task spa:build", // builds the SPA for production (CI's `build` step)
 
@@ -54,6 +54,7 @@
     "mpa:build": "deno task --cwd apps/mpa build",
     "mpa:start": "deno task --cwd apps/mpa start",
     "mpa:check": "deno task --cwd apps/mpa check",
+    "lighthouse": "apps/mpa/lighthouse/run.sh", // the public website's Lighthouse budget, on a built MPA; see the script
     // #endregion apps/mpa
 
     // #region Scripts

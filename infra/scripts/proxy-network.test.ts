@@ -66,40 +66,53 @@ Deno.test("a CONTAINER_PROVIDER that names neither engine is refused, not replac
   )
 })
 
-function fakeEngine(running: string, upCode = 0) {
+/** `running` is what `inspect` prints: `true`, `false`, or `` for no such container. */
+function fakeEngine(running: string, startCode = 0) {
   const calls: string[] = []
-  const run = (command: string[]) => {
+  const ask = (command: string[]) => {
     calls.push(command.join(` `))
-    if (command[1] === `container`) {
-      return Promise.resolve({ code: running === `` ? 1 : 0, stdout: `${running}\n`, stderr: `` })
-    }
-    return Promise.resolve({ code: upCode, stdout: ``, stderr: `port 80 taken` })
+    return Promise.resolve({ code: running === `` ? 1 : 0, stdout: `${running}\n` })
   }
-  return { calls, run }
+  const start = (command: string[]) => {
+    calls.push(command.join(` `))
+    return Promise.resolve(startCode)
+  }
+  return { calls, ask, start }
 }
+
+const INSPECT = `container inspect -f {{.State.Running}} traefik`
 
 Deno.test("startProxy leaves a running Traefik alone", async () => {
   const engine = fakeEngine(`true`)
-  expect(await startProxy(`docker`, engine.run)).toBe(`running`)
-  expect(engine.calls).toEqual([`docker container inspect -f {{.State.Running}} traefik`])
+  expect(await startProxy(`docker`, engine.ask, engine.start)).toBe(`running`)
+  expect(engine.calls).toEqual([`docker ${INSPECT}`])
 })
 
-Deno.test("startProxy starts Traefik when it is stopped or missing", async () => {
-  for (const state of [`false`, ``]) {
-    const engine = fakeEngine(state)
-    expect(await startProxy(`docker`, engine.run)).toBe(`started`)
-    expect(engine.calls[1]).toBe(PROXY_UP.join(` `))
+Deno.test("startProxy creates Traefik like proxy:start when there is none", async () => {
+  const engine = fakeEngine(``)
+  expect(await startProxy(`docker`, engine.ask, engine.start)).toBe(`started`)
+  expect(engine.calls).toEqual([`docker ${INSPECT}`, PROXY_UP.join(` `)])
+})
+
+Deno.test("startProxy starts a stopped Traefik as it is, whichever project made it", async () => {
+  for (const provider of [`docker`, `podman`] as const) {
+    const engine = fakeEngine(`false`)
+    expect(await startProxy(provider, engine.ask, engine.start)).toBe(`started`)
+    expect(engine.calls).toEqual([`${provider} ${INSPECT}`, `${provider} start traefik`])
   }
 })
 
-Deno.test("startProxy starts nothing under Podman", async () => {
+Deno.test("startProxy creates nothing under Podman", async () => {
   const engine = fakeEngine(``)
-  expect(await startProxy(`podman`, engine.run)).toBe(`manual`)
-  expect(engine.calls).toEqual([`podman container inspect -f {{.State.Running}} traefik`])
+  expect(await startProxy(`podman`, engine.ask, engine.start)).toBe(`manual`)
+  expect(engine.calls).toEqual([`podman ${INSPECT}`])
 })
 
-Deno.test("startProxy fails with what the engine printed", async () => {
-  await expect(startProxy(`docker`, fakeEngine(``, 1).run)).rejects.toThrow(`port 80 taken`)
+Deno.test("startProxy fails, naming the command, when the start fails", async () => {
+  const engine = fakeEngine(``, 1)
+  await expect(startProxy(`docker`, engine.ask, engine.start)).rejects.toThrow(
+    `${PROXY_UP.join(` `)} exited with 1`,
+  )
 })
 
 Deno.test("PROXY_UP is the command proxy:start runs", async () => {
