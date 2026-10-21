@@ -144,6 +144,12 @@ describe("the New note dialog", () => {
     expect(find<HTMLInputElement>("[data-e2e=new-note-title]").value).toBe("Buy milk")
   })
 
+  it("focuses the title when the groups arrive after the dialog opened", async () => {
+    const calls = await draw({ groups: [], groupId: null })
+    await draw({}, calls)
+    expect(focused()).toBe("new-note-title")
+  })
+
   it("adds on Enter, and adds and opens on Ctrl Enter", async () => {
     const calls = await draw()
     await submit()

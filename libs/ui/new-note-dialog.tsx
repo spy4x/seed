@@ -105,12 +105,30 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
   const chosen = groups.find((candidate) => candidate.id === groupId)
 
   // Focus goes to the field to fix, or back to the title once an add has finished. A pending form
-  // is disabled, which drops focus, so the effect runs when `pending` turns off.
+  // is disabled, which drops focus, so the effect runs when `pending` turns off. It runs again when
+  // the groups arrive after the dialog opened, and it waits a microtask: this effect runs before
+  // `Modal`'s own, and a field in a dialog that is not shown yet cannot take focus.
   useEffect(() => {
     if (!open || pending) return
-    const target = errors.group && !errors.title ? group.current : title.current
-    target?.focus()
-  }, [open, pending, errors.title, errors.group, errors.form, errors.plan, added?.noteId])
+    let live = true
+    queueMicrotask(() => {
+      if (!live) return
+      const target = errors.group && !errors.title ? group.current : title.current
+      target?.focus()
+    })
+    return () => {
+      live = false
+    }
+  }, [
+    open,
+    pending,
+    groups.length,
+    errors.title,
+    errors.group,
+    errors.form,
+    errors.plan,
+    added?.noteId,
+  ])
 
   const onKeyDown = (event: JSX.TargetedKeyboardEvent<HTMLInputElement>) => {
     if (!matchesHotkey(parseHotkey("mod+enter"), event, isApplePlatform())) return
