@@ -19,6 +19,12 @@ import {
   type UserPushTokenPublic,
 } from "@domain/identity"
 import { AccountDelete, type AccountDeleteProps } from "./account-delete.tsx"
+import {
+  GuestAccountDelete,
+  type GuestAccountDeleteProps,
+  GuestAccountRow,
+  GuestSignInMethods,
+} from "./guest-profile.tsx"
 import { PageHeader, TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { type Navigate, PROFILE_ANCHORS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
@@ -186,6 +192,11 @@ export interface ProfileScreenProps {
    * with its title. Without it the page has none.
    */
   onboarding?: ComponentChildren
+  /**
+   * Set for a guest account (#224), which has no sign-in method: the Profile says so with a way to
+   * keep it, shows no password or two-factor rows, and deletes with a typed word.
+   */
+  guest?: GuestAccountDeleteProps
   navigate?: Navigate
 }
 
@@ -233,6 +244,7 @@ export function ProfileScreen(
     onRemovePush,
     accountDeletion,
     onboarding,
+    guest,
     navigate,
   }: ProfileScreenProps,
 ): JSX.Element {
@@ -360,6 +372,7 @@ export function ProfileScreen(
 
       <SettingGroup title="Account">
         <SettingList>
+          {guest && <GuestAccountRow navigate={navigate} />}
           <SettingRow
             label="Name"
             value={<span data-e2e="profile-name">{name || "Not set"}</span>}
@@ -405,8 +418,10 @@ export function ProfileScreen(
 
       {preferences && <PreferencesGroup {...preferences} />}
 
+      {guest && <GuestSignInMethods navigate={navigate} />}
+
       {/* The first-steps card links here (`PROFILE_ANCHORS`); the header above is sticky. */}
-      <div id={PROFILE_ANCHORS.security} class="scroll-mt-16">
+      <div id={PROFILE_ANCHORS.security} class="scroll-mt-16" hidden={guest !== undefined}>
         <SettingGroup title="Security">
           <SettingList>
             <SettingRow
@@ -476,7 +491,7 @@ export function ProfileScreen(
         </SettingGroup>
       </div>
 
-      {methods && <SignInMethods {...methods} providerProof={providerProof} />}
+      {methods && !guest && <SignInMethods {...methods} providerProof={providerProof} />}
       {devices && <SignedInDevices {...devices} />}
 
       {apiTokens && <ApiTokens {...apiTokens} />}
@@ -545,7 +560,8 @@ export function ProfileScreen(
         </SettingGroup>
       </div>
 
-      {accountDeletion && (
+      {guest && <GuestAccountDelete {...guest} />}
+      {accountDeletion && !guest && (
         <AccountDelete
           {...accountDeletion}
           twoFactor={user.mfa === UserMFAStatus.CONFIGURED}
