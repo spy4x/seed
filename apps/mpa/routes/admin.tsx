@@ -41,8 +41,8 @@ export const ADMIN_HEAD = {
 /** The visible heading and lead, which the video's JSON-LD and sitemap entry repeat. */
 export const ADMIN_HERO = {
   title: `An admin panel for the people who run your product`,
-  lead: `Seed ships an operator area on its own host. Your team finds a person, sees their ` +
-    `sign-in methods, sessions and teams, and helps them: ends a session, sends a ` +
+  lead: `Seed ships an operator area on its own host. Your operators find a person, see their ` +
+    `sign-in methods, sessions and groups, and helps them: ends a session, sends a ` +
     `password-reset link, refunds a payment. Every action asks first and lands in the audit log.`,
 } as const
 
@@ -64,7 +64,7 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
     name: `Dashboard`,
     Icon: IconHome,
     text: `The product at a glance over the last 30 days: people, sign-ups, who is active, ` +
-      `teams and notes.`,
+      `groups and notes.`,
   },
   {
     name: `Users`,
@@ -75,8 +75,8 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
   {
     name: `Groups`,
     Icon: IconFolder,
-    text: `Every team (a "group" in the app), its owner and its members. Manage members and ` +
-      `invitations, or hand a team to another member.`,
+    text: `Every group, its owner and its members. Manage members and ` +
+      `invitations, or hand a group to another member.`,
   },
   {
     name: `Billing`,
@@ -92,7 +92,7 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
   {
     name: `Audit log`,
     Icon: IconShieldCheck,
-    text: `Every sign-in, account change, team change and operator action, newest first. ` +
+    text: `Every sign-in, account change, group change and operator action, newest first. ` +
       `Export it as CSV.`,
   },
   {
@@ -113,11 +113,11 @@ const ROLES: readonly { name: string; text: string }[] = [
   {
     name: `Operator`,
     text: `Day-to-day support: find people, end sessions, send password-reset links, manage ` +
-      `teams.`,
+      `groups.`,
   },
   {
     name: `Supervisor`,
-    text: `Also refunds payments, cancels a subscription at once and hands a team to another ` +
+    text: `Also refunds payments, cancels a subscription at once and hands a group to another ` +
       `member.`,
   },
   { name: `Administrator`, text: `Also gives roles, any role below their own.` },
@@ -307,7 +307,7 @@ function Transcript(): JSX.Element {
         <ol class="flex list-decimal flex-col gap-3 pl-6">
           {ADMIN_VIDEO.transcript.map((line) => <li key={line} class="text-pretty">{line}</li>)}
         </ol>
-        <p class="text-muted">The people and teams in the video are made-up sample data.</p>
+        <p class="text-muted">The people and groups in the video are made-up sample data.</p>
         <TextLink
           href={ADMIN_VIDEO.mp4}
           e2e="admin-video-download"

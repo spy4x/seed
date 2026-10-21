@@ -35,7 +35,7 @@ const CHECKED_ON_TEXT = `16 October 2026`
 export const COMPARE_HEAD = {
   title: `Seed vs ShipFast, Supastarter, Makerkit and Open SaaS`,
   description: `An honest, dated comparison of SaaS starters and boilerplates: price, licence, ` +
-    `hosting, 2FA, teams, per-seat billing, admin, offline. Sources linked.`,
+    `hosting, 2FA, groups, per-member billing, admin, offline. Sources linked.`,
 } as const
 
 /** The columns of the table, Seed first: the table highlights the first one as ours. */
@@ -86,12 +86,12 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`no`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
-    capability: `Teams with roles`,
+    capability: `Groups with roles`,
     note: `Next.js SaaS Starter: Owner and Member only`,
     values: [`yes`, `no`, `yes`, `yes`, `partial`, `no`],
   },
   {
-    capability: `Per-seat billing`,
+    capability: `Per-member billing`,
     values: [`yes`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
@@ -100,7 +100,7 @@ const ROWS: readonly ComparisonRow[] = [
   },
   {
     capability: `Admin area`,
-    note: `Next.js SaaS Starter: a team's own dashboard`,
+    note: `Next.js SaaS Starter: a dashboard for each group`,
     values: [`yes`, `no`, `yes`, `yes`, `partial`, `yes`],
   },
   {
@@ -151,7 +151,7 @@ const ALTERNATIVES: readonly Alternative[] = [
     stack: `Next.js; MongoDB or Supabase`,
     hosting: `Vercel named as the free option`,
     pickWhen: `you want a Next.js landing page with payments and a blog live this weekend, ` +
-      `and you sell to single users rather than teams.`,
+      `and you sell to single users rather than groups.`,
     sources: [
       { label: `Sales page`, href: `https://shipfa.st/` },
       { label: `Licence`, href: `https://shipfa.st/license` },
@@ -180,7 +180,7 @@ const ALTERNATIVES: readonly Alternative[] = [
     stack: `Next.js, React Router or TanStack Start; Supabase, Drizzle or Prisma`,
     hosting: `Not stated on the pages read`,
     pickWhen:
-      `you want a team-ready kit on Supabase or Next.js with passkeys, translations and a CMS, ` +
+      `you want a multi-tenant kit on Supabase or Next.js with passkeys, translations and a CMS, ` +
       `and you are happy with a paid licence.`,
     sources: [
       { label: `Pricing`, href: `https://makerkit.dev/pricing` },
@@ -197,7 +197,7 @@ const ALTERNATIVES: readonly Alternative[] = [
     licence: `MIT`,
     stack: `Next.js, Postgres, Drizzle`,
     hosting: `Vercel, in its production guide`,
-    pickWhen: `you want a small, readable Next.js base with Stripe and teams, and plan to build ` +
+    pickWhen: `you want a small, readable Next.js base with Stripe and groups, and plan to build ` +
       `the rest yourself.`,
     sources: [{ label: `README`, href: `https://github.com/nextjs/saas-starter` }],
   },
@@ -276,7 +276,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       class="site-glow"
       eyebrow="Compare"
       title="How Seed compares to other SaaS starters"
-      lead="Seed is a free, MIT-licensed SaaS starter for products used by teams, and it runs on one server you rent. Here it is side by side with five other SaaS starters and boilerplates."
+      lead="Seed is a free, MIT-licensed SaaS starter for products used by groups of people, and it runs on one server you rent. Here it is side by side with five other SaaS starters and boilerplates."
       author={SITE_AUTHOR}
       updated={CHECKED_ON}
       labels={{ updated: `Checked` }}
@@ -343,14 +343,14 @@ function Table(): JSX.Element {
           }
           fit={
             <>
-              Seed is not for you if you want to deploy to Vercel or serverless functions, if your
-              team works in Next.js and React and wants to stay there, or if you need translations,
+              Seed is not for you if you want to deploy to Vercel or serverless functions, if you
+              work in Next.js and React and want to stay there, or if you need translations,
               passkeys, file uploads or a payment provider other than Stripe this month. It is also
               a young project with one maintainer and no community forum yet, while the Next.js SaaS
               Starter and Open SaaS each have more than 16,000 GitHub stars. Seed is for you if you
-              build a product for teams, want sign-in, roles, per-seat billing and operations
-              settled before your first feature, and want to control the server and own the code
-              outright.
+              build a product for groups of people, want sign-in, roles, per-member billing and
+              operations settled before your first feature, and want to control the server and own
+              the code outright.
             </>
           }
         />

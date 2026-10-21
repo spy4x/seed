@@ -46,8 +46,8 @@ export const FEATURES_UPDATED = `2026-10-21`
 
 /** The page's title and description, as search results and social previews show them. */
 export const FEATURES_HEAD = {
-  title: `Seed features: auth, teams, billing, offline, admin`,
-  description: `What Seed ships: 2FA and social sign-in, teams with roles, per-seat Stripe ` +
+  title: `Seed features: auth, groups, billing, offline, admin`,
+  description: `What Seed ships: 2FA and social sign-in, groups with roles, per-member Stripe ` +
     `billing, realtime, an offline app, an admin area, monitoring and backups.`,
 } as const
 
@@ -78,8 +78,8 @@ const TIERS: readonly Tier[] = [
   {
     id: `settled`,
     eyebrow: `Settled for you`,
-    title: `A SaaS starter with teams and billing already wired`,
-    lead: `Accounts, teams and money: the parts every product needs before its first feature, ` +
+    title: `A SaaS starter with groups and billing already wired`,
+    lead: `Accounts, groups and money: the parts every product needs before its first feature, ` +
       `and the ones that are easiest to get wrong.`,
     status: `Tested in CI. Google and GitHub sign-in and Stripe need your own keys, so they are ` +
       `off in the demo.`,
@@ -114,24 +114,24 @@ const TIERS: readonly Tier[] = [
       },
       {
         id: `teams`,
-        nav: `Teams and roles`,
-        eyebrow: `Teams`,
-        title: `Teams with roles, from the first minute`,
-        lead: `Every account gets a personal team at sign-up. People make shared teams, invite ` +
+        nav: `Groups and roles`,
+        eyebrow: `Groups`,
+        title: `Groups with roles, from the first minute`,
+        lead: `Every account gets a personal group at sign-up. People make shared groups, invite ` +
           `others, give them roles from viewer to owner and hand ownership over in one step. A ` +
-          `deleted team can be brought back for 30 days, and each team keeps an activity log.`,
+          `deleted group can be brought back for 30 days, and each group keeps an activity log.`,
         facts: [
-          `The team is the one tenancy boundary: personal and shared data pass the same check`,
-          `In the app and its code, a team is called a group`,
+          `The group is the one tenancy boundary: personal and shared data pass the same check`,
+          `The app, its code and this site all call it a group`,
           `No second permission model to keep in sync with the first`,
           `Invitations, role changes and ownership transfer, each with its own tests`,
         ],
-        code: { label: `Read the teams domain`, href: source(`libs/domain/groups/`) },
+        code: { label: `Read the groups domain`, href: source(`libs/domain/groups/`) },
         visual: (
           <WindowFrame variant="browser" title="app.seedsaas.com/groups">
             <Shot
               name="activity"
-              alt="A team's activity log: who added which note or tag, and when, with a link to open each note."
+              alt="A group's activity log: who added which note or tag, and when, with a link to open each note."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
@@ -139,16 +139,16 @@ const TIERS: readonly Tier[] = [
       },
       {
         id: `billing`,
-        nav: `Per-seat billing`,
+        nav: `Per-member billing`,
         eyebrow: `Money`,
-        title: `Per-seat billing, through Stripe`,
+        title: `Per-member billing, through Stripe`,
         lead:
           `People see a pricing table, a free plan with limits and a 14-day trial of the paid ` +
           `plan. The owner sees what one more member costs before inviting them, and a clear ` +
           `notice with a date when a card fails.`,
         facts: [
           `Stripe Checkout and the customer portal; the webhook is the only source of the plan`,
-          `Per-seat quantities that follow the member count`,
+          `Quantities that follow the member count`,
           `A grace period after a failed payment, 7 days by default`,
           `Plan limits checked on the server, not only in the app`,
           <span key="catalog">
@@ -162,7 +162,7 @@ const TIERS: readonly Tier[] = [
           <WindowFrame variant="browser" title="app.seedsaas.com/groups">
             <Shot
               name="billing"
-              alt="A sample team's members and its plan, at the demo's example prices: Pro, active, €36.00 a month for 4 members at €9.00 each, with a button to manage billing."
+              alt="A sample group's members and its plan, at the demo's example prices: Pro, active, €36.00 a month for 4 members at €9.00 each, with a button to manage billing."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
@@ -205,8 +205,7 @@ const TIERS: readonly Tier[] = [
         nav: `Realtime`,
         eyebrow: `Realtime`,
         title: `Changes show up without a reload`,
-        lead:
-          `A teammate's change appears in every open tab of the team, and a laptop that wakes ` +
+        lead: `A member's change appears in every open tab of the group, and a laptop that wakes ` +
           `from sleep catches up on what it missed.`,
         facts: [
           `A standard WebSocket, with a sequence on every change`,
@@ -241,7 +240,7 @@ const TIERS: readonly Tier[] = [
         nav: `Notifications`,
         eyebrow: `Notifications`,
         title: `Notifications in the app, on the phone and the desktop`,
-        lead: `People get a notice when they are invited, given a new role or handed a team, in ` +
+        lead: `People get a notice when they are invited, given a new role or handed a group, in ` +
           `the app and as a web push on their phone or desktop.`,
         facts: [
           `Web push with your own keys, made by one task: deno task vapid-key:create`,
@@ -256,7 +255,7 @@ const TIERS: readonly Tier[] = [
           <WindowFrame variant="browser" title="app.seedsaas.com/notifications">
             <Shot
               name="notifications"
-              alt="The notifications page: three unread notices about a new team owner, a role change and an invitation, each row opening what it is about."
+              alt="The notifications page: three unread notices about a new group owner, a role change and an invitation, each row opening what it is about."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>
@@ -298,7 +297,7 @@ const TIERS: readonly Tier[] = [
     id: `operations`,
     eyebrow: `Operations`,
     title: `Run it, watch it, support the people on it`,
-    lead: `One server you rent, the tools to see what it does, and an area where your team ` +
+    lead: `One server you rent, the tools to see what it does, and an area where your operators ` +
       `helps the people who use your product.`,
     status: `Every module below ships today. What is not built yet is listed under each.`,
     features: [
@@ -309,8 +308,8 @@ const TIERS: readonly Tier[] = [
         title: `An admin area for your operators`,
         lead: (
           <>
-            Your team finds a person by name or address and sees their sign-in methods, sessions,
-            teams and history. From the same place they manage teams, refund a payment, look after
+            Your operators find a person by name or address and see their sign-in methods, sessions,
+            groups and history. From the same place they manage groups, refund a payment, look after
             the newsletter's subscribers, check the system's health and run a failed job again.{" "}
             <a
               href="/admin"
@@ -439,7 +438,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       class="site-glow"
       eyebrow="Features"
       title="Everything Seed ships, and what it does not yet"
-      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, 2FA, teams with roles, per-seat Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
+      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
       author={SITE_AUTHOR}
       updated={FEATURES_UPDATED}
     >

@@ -77,7 +77,7 @@ test.describe(`without JavaScript`, () => {
     await expect(transcript.locator(`ol > li`)).toHaveCount(SHOTS)
     await expect(transcript).toContainText(`Music plays under the video. There is no speech.`)
     await expect(transcript).toContainText(
-      `The people and teams in the video are made-up sample data.`,
+      `The people and groups in the video are made-up sample data.`,
     )
 
     const download = transcript.locator(`[data-e2e=admin-video-download]`)
