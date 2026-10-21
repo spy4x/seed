@@ -64,8 +64,10 @@ describe("parsing a tag request", () => {
     const base = { groupId, id, name: "Work", color: "#1d4ed8", version: 1 }
 
     expect(() => parseTagRequest(tagCreatePayloadSchema, { ...base, name: "  " })).toThrow()
+    // The update payload, which takes `version`: the create payload would refuse that key first.
+    expect(parseTagRequest(tagUpdatePayloadSchema, base).color).toBe("#1d4ed8")
     for (const color of ["blue", "#1d4ed", "#1d4ed8ff", "1d4ed8", "#gggggg"]) {
-      expect(() => parseTagRequest(tagCreatePayloadSchema, { ...base, color })).toThrow()
+      expect(() => parseTagRequest(tagUpdatePayloadSchema, { ...base, color })).toThrow("color")
     }
     expect(() => parseTagRequest(tagUpdatePayloadSchema, { ...base, version: undefined })).toThrow()
   })
