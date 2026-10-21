@@ -101,7 +101,9 @@ test.describe("group screens in the shared column", () => {
     }
   })
 
-  test("groups, settings, activity, pricing and import pass axe-core and fit a phone and a desktop", async ({ page, request }) => {
+  test("groups, each tab of a group and import pass axe-core and fit a phone and a desktop", async ({ page, request }) => {
+    // Six screens at two widths, each through axe-core on the dev server, outgrow the default 30 s.
+    test.setTimeout(90_000)
     const owner = "e2e_groups_layout_owner@example.com"
     const admin = "e2e_groups_layout_admin@example.com"
     for (const email of [owner, admin]) await cleanup(request, email)
