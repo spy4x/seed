@@ -136,6 +136,11 @@ export interface AdminGroupDetail {
   invitations: AdminGroupInvitation[]
   /** The newest {@link ADMIN_GROUP_ACTIVITY_LIMIT} entries of the activity log, newest first. */
   activity: AdminGroupActivityEvent[]
+  /**
+   * When the group was made from an export file, and by whom (`null` once that account is gone);
+   * `null` for a group created empty.
+   */
+  imported: { at: string; by: AdminGroupPerson | null } | null
 }
 
 /** Whether the list shows active groups, groups in the trash, or both. */

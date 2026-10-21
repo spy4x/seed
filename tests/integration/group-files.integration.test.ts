@@ -5,6 +5,7 @@ import { PlanError } from "@domain/billing"
 import { GROUP_EXPORT_VERSION, GroupError, GroupImportError, GroupRole } from "@domain/groups"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { PostgresGroupPorter } from "@server/groups/postgres-group-porter.ts"
+import { readAdminGroup } from "@server/groups/admin-groups.ts"
 import { portable } from "@server/groups/portable.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
@@ -176,6 +177,10 @@ Deno.test("an export imported by another person gives the same notes and tags un
     ])
     const outbox = await sql`SELECT 1 FROM outbox_events WHERE group_id = ${copy}`
     expect(outbox.length).toBe(1)
+
+    // The admin panel says the copy was imported, and by whom; the source was created empty.
+    expect((await readAdminGroup(sql, copy))?.imported?.by?.id).toBe(importer)
+    expect((await readAdminGroup(sql, source.groupId))?.imported).toBe(null)
   })
 })
 
