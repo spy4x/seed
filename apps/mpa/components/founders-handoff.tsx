@@ -1,7 +1,7 @@
 // Seed's own site: see docs/start-a-product.md
 import type { JSX } from "preact"
 import { Button } from "@spy4x/preact-ui/button"
-import { IconArrowRight } from "@spy4x/preact-icons"
+import { IconExternalLink } from "@spy4x/preact-icons"
 import { HIRE_PAGE_URL } from "../hire.ts"
 import { Band } from "./band.tsx"
 
@@ -19,7 +19,7 @@ export function FoundersHandoff(): JSX.Element {
           </h2>
           <p class="text-muted text-pretty">
             I'm Anton, the person who builds Seed. Founders hire me to turn an idea into a live
-            product that people can sign up for and pay for. Because sign-up, teams and payments
+            product that people can sign up for and pay for. Because sign-up, groups and payments
             already exist, your budget goes to what makes your product different.
           </p>
         </div>
@@ -32,7 +32,8 @@ export function FoundersHandoff(): JSX.Element {
           data-umami-event="hire-me"
           data-umami-event-from="home"
         >
-          See how it works and what it costs <IconArrowRight class="size-5" aria-hidden="true" />
+          See how it works and what it costs <IconExternalLink class="size-5" aria-hidden="true" />
+          <span class="sr-only">(opens antonshubin.com)</span>
         </Button>
       </div>
     </Band>

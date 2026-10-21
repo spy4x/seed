@@ -24,7 +24,7 @@ export interface Alternative {
 
 export interface CompareAlternativesProps {
   items: readonly Alternative[]
-  /** The day the sources were read, as people read it, such as `16 October 2026`. */
+  /** The day the sources were read, as people read it, such as `16 Oct 2026`. */
   checkedOn: string
 }
 

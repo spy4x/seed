@@ -36,10 +36,10 @@ export type OgImageKey =
 export const OG_IMAGES: Record<OgImageKey, { headline: string; line: string }> = {
   home: {
     headline: `The groundwork of your SaaS, already built.`,
-    line: `Seed · open source · MIT · one server you own`,
+    line: `Seed · open source · MIT · one server you rent`,
   },
   features: {
-    headline: `Auth, teams, billing, offline, admin.`,
+    headline: `Auth, groups, billing, offline, admin.`,
     line: `Everything Seed ships, and what it does not yet`,
   },
   admin: {
@@ -113,7 +113,7 @@ const SITE_FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC` })
 
 /** What Seed is, in the words of the home page's lead, for the product's structured data. */
 const SOFTWARE_DESCRIPTION = `Seed is a free, MIT-licensed SaaS starter with sign-in and ` +
-  `two-factor authentication (2FA), teams with roles, per-seat Stripe billing, realtime, an ` +
+  `two-factor authentication (2FA), groups with roles, per-member Stripe billing, realtime, an ` +
   `offline app and an admin area.`
 
 /** The id of Seed's one product entity, which every page's structured data points at. */
@@ -198,7 +198,12 @@ export const NAV_LINKS = [
   { label: `Features`, href: `/features` },
   { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
   { label: `Pricing`, href: `/pricing` },
-  { label: `Hire me`, href: HIRE_PAGE_URL },
+  {
+    label: `Hire me`,
+    href: HIRE_PAGE_URL,
+    external: true,
+    externalHint: `(opens antonshubin.com)`,
+  },
   { label: `GitHub`, href: REPOSITORY_URL, Icon: IconGitHub },
 ] as const
 
@@ -389,7 +394,7 @@ function footerGroups(spa: { signIn: string; signUp: string }): SiteFooterGroup[
       // Seed's own site: see docs/start-a-product.md
       title: `Company`,
       links: [
-        { label: `Hire me`, href: HIRE_PAGE_URL, external: true },
+        { label: `Hire me for an MVP`, href: HIRE_PAGE_URL, external: true },
         { label: `About Anton`, href: AUTHOR_URL, external: true },
         { label: `Privacy`, href: `/privacy` },
         { label: `Terms`, href: `/terms` },
