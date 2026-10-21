@@ -42,7 +42,7 @@ export const ADMIN_HEAD = {
 export const ADMIN_HERO = {
   title: `An admin panel for the people who run your product`,
   lead: `Seed ships an operator area on its own host. Your operators find a person, see their ` +
-    `sign-in methods, sessions and groups, and helps them: ends a session, sends a ` +
+    `sign-in methods, sessions and groups, and help them: ends a session, sends a ` +
     `password-reset link, refunds a payment. Every action asks first and lands in the audit log.`,
 } as const
 

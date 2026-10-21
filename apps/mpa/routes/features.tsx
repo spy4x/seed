@@ -298,7 +298,7 @@ const TIERS: readonly Tier[] = [
     eyebrow: `Operations`,
     title: `Run it, watch it, support the people on it`,
     lead: `One server you rent, the tools to see what it does, and an area where your operators ` +
-      `helps the people who use your product.`,
+      `help the people who use your product.`,
     status: `Every module below ships today. What is not built yet is listed under each.`,
     features: [
       {
