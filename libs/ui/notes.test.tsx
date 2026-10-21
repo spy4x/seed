@@ -205,7 +205,7 @@ describe("NotesScreen", () => {
     const html = renderToString(<NotesScreen {...listDefaults} notes={[authored]} />)
 
     expect(html).toContain(`href="${NOTE_PATHS.note(groceries.id)}"`)
-    expect(html).toMatch(/data-e2e="note-author"[^>]*>.*Maya Chen<\/span><\/span>/)
+    expect(html).toMatch(/data-e2e="note-author"[^>]*>Maya Chen<\/span>/)
     expect(html).toContain(`datetime="${groceries.updatedAt}"`)
     expect(html).toContain(`datetime="${authored.createdAt}"`)
     expect(html).toContain("Updated")

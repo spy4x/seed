@@ -536,13 +536,8 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
             leaving(moving)
             props.onMove?.({ toGroupId, noteIds: [moving.id] })
           }}
-          onCancel={() => {
-            setMoving(null)
-            // The dialog was opened from the row's menu, whose trigger takes focus back.
-            page.current
-              ?.querySelector<HTMLElement>(`[data-e2e=note-${moving.id}] [data-e2e=note-menu]`)
-              ?.focus()
-          }}
+          // The dialog gives focus back to the row's menu it was opened from.
+          onCancel={() => setMoving(null)}
         />
       )}
     </ListPage>
@@ -830,9 +825,9 @@ function NoteItem(
           }
           <span class="flex min-w-0 max-w-full items-center gap-2 whitespace-nowrap">
             {note.authorName && (
-              <span class="flex min-w-0 items-center gap-2" data-e2e="note-author">
+              <span class="flex min-w-0 items-center gap-2">
                 <Avatar name={note.authorName} alt="" size="xs" class="size-5 text-[10px]" />
-                <span class="truncate">{note.authorName}</span>
+                <span class="truncate" data-e2e="note-author">{note.authorName}</span>
               </span>
             )}
             {note.authorName && phoneStamp.at && (
