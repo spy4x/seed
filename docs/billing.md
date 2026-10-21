@@ -119,8 +119,9 @@ Only the owner checks out, so joining someone else's group never uses a person's
 handover trial after a transfer of ownership ("Transfer of ownership" below) carries the old owner's
 paid time and does not use the new owner's trial. The checkout decides on the server; the client
 cannot ask for a trial. `GET /api/billing/trial` answers the signed-in person's own `{ enabled,
-used, days }`, and the page that creates a group says from it whether a trial comes with the new
-group. The admin panel shows when a person's trial was used, on the person's Overview tab.
+used, groupId, days }`: the page that creates a group says from it whether a trial comes with the
+new group, and the Plan and billing tab still offers the trial to the group that holds it, whose
+checkout claims it again. The admin panel shows when a person's trial was used, on the person's Overview tab.
 
 `BILLING_TRIAL_REQUIRES_CARD` decides whether the trial's checkout asks for a card. It is `true`
 by default: a trial with a card converts on its own, and a person who cannot pay does not get one.

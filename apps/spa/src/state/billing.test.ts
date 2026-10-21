@@ -203,7 +203,12 @@ describe("billing store", () => {
   })
 
   it("reads the person's own trial, and keeps none from an answer it cannot read", async () => {
-    const trial = { enabled: true, used: true, days: 14 }
+    const trial = {
+      enabled: true,
+      used: true,
+      groupId: "019a0000-0000-7000-8000-000000000001",
+      days: 14,
+    }
     const { store, calls } = harness(
       { ok: true, status: 200, data: { trial } },
       { ok: true, status: 200, data: { trial: { enabled: true, used: "no", days: 14 } } },

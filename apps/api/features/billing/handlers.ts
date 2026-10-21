@@ -130,13 +130,17 @@ export function createBillingCheckoutHandler(
 export function createBillingTrialHandler(
   { billing, provider }: BillingHandlerDependencies,
 ): QueryHandler<BillingTrialQuery> {
-  return async ({ data }) => ({
-    trial: {
-      enabled: provider !== null,
-      used: provider !== null && await billing.trialUsed(data.actor.userId),
-      days: provider === null ? 0 : LONGEST_TRIAL_DAYS,
-    },
-  })
+  return async ({ data }) => {
+    const groupId = provider === null ? null : await billing.trialGroupOf(data.actor.userId)
+    return {
+      trial: {
+        enabled: provider !== null,
+        used: groupId !== null,
+        groupId,
+        days: provider === null ? 0 : LONGEST_TRIAL_DAYS,
+      },
+    }
+  }
 }
 
 /** The new owner's trial after a transfer: the old owner's remaining plan time, or none. */
