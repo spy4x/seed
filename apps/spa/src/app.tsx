@@ -36,6 +36,7 @@ import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView
 import { GroupsView } from "./views/GroupsView.tsx"
 import { SubscribeView, SubscriptionConfirmView, UnsubscribeView } from "./views/SubscribeViews.tsx"
 import { GroupEditorView } from "./views/GroupEditorView.tsx"
+import { GroupImportView } from "./views/GroupImportView.tsx"
 import { NotificationsView } from "./views/NotificationsView.tsx"
 import { GroupActivityView } from "./views/GroupActivityView.tsx"
 import { InstallOffer } from "./views/InstallOffer.tsx"
@@ -102,6 +103,7 @@ const PAGES: {
   "/unsubscribe": () => <UnsubscribeView />,
   "/groups": () => <GroupsView />,
   "/groups/new": () => <GroupEditorView key="new" />,
+  "/groups/import": () => <GroupImportView />,
   "/groups/:groupId/invitations/new": (params) => (
     <InvitationNewView key={params.groupId} groupId={params.groupId} />
   ),

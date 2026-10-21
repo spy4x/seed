@@ -16,6 +16,7 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import {
   canDelete,
+  canExportGroup,
   canLeave,
   canManageInvitations,
   canMutateNotes,
@@ -164,6 +165,15 @@ export interface GroupEditorScreenProps {
   onMoveAllTargetChange?: () => void
   /** The move dialog closed: the app forgets the finished move and any error. */
   onMoveAllClose?: () => void
+  /**
+   * Downloads the group's export file. The menu offers "Export group…" to the owner only, and
+   * disables it while the device is offline.
+   */
+  onExport?: () => void
+  /** The export's file is being prepared: the menu item says so. */
+  exporting?: boolean
+  /** The last export failed: the page says so above the form, with "Try again". */
+  exportFailed?: boolean
 }
 
 /** Which of the header menu's dialogs is open. */
@@ -181,8 +191,8 @@ const BACK = { href: SCREEN_PATHS.groups, label: "Back to groups" }
  * form with "Cancel" and "Create group". An existing group shows its name as the title, the form
  * (read-only text for someone who may not change it, with the footer only while a field differs
  * from what is saved), then the members with "Invite people", the pending invitations and the
- * plan. Its "More actions" menu switches to the group, opens its activity, and holds transfer,
- * move, leave and delete, each behind a dialog.
+ * plan. Its "More actions" menu switches to the group, opens its activity, downloads the owner's
+ * export file, and holds transfer, move, leave and delete, each behind a dialog.
  */
 export function GroupEditorScreen(props: GroupEditorScreenProps): JSX.Element {
   const { group, navigate } = props
@@ -268,6 +278,10 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     moveAllRefusal = null,
     onMoveAllClose,
     onMoveAllTargetChange,
+    onExport,
+    exporting = false,
+    exportFailed = false,
+    offline = false,
   } = props
   const [dialog, setDialog] = useState<Dialog | null>(null)
   const close = () => {
@@ -327,6 +341,20 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
           text="Transfer ownership"
           hint={subscriptionBlocks}
           hintDataE2E="group-transfer-why"
+        />
+      </DropdownItem>
+    ),
+    onExport && canExportGroup(group.role) && (
+      <DropdownItem
+        key="export"
+        disabled={offline || exporting}
+        dataE2E="group-export"
+        onClick={onExport}
+      >
+        <MenuText
+          text={exporting ? "Preparing…" : "Export group…"}
+          hint={offline ? "You are offline" : null}
+          hintDataE2E="group-export-why"
         />
       </DropdownItem>
     ),
@@ -401,6 +429,22 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
           menuDataE2E="group-menu"
         />
       </div>
+
+      {exportFailed && (
+        <div data-e2e="group-export-failed">
+          <Notice
+            tone="danger"
+            urgent
+            action={onExport && (
+              <Button size="sm" variant="secondary" disabled={offline} onClick={onExport}>
+                Try again
+              </Button>
+            )}
+          >
+            We could not prepare the file. Nothing in your group changed.
+          </Notice>
+        </div>
+      )}
 
       {
         /* The fields follow the header with no heading of their own, as on the create page: the

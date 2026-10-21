@@ -119,6 +119,8 @@ export function afterSignIn(next: string | null): string {
 export const GROUP_PATHS = {
   /** The create page: the group editor with no group yet. */
   new: "/groups/new",
+  /** The page that makes a new group from an export file. */
+  import: "/groups/import",
   /** The group's page: its editor, members and plan. */
   settings: (groupId: string) => `/groups/${encodeURIComponent(groupId)}`,
   /** The group's activity log, for its admins and owner. */
