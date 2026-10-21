@@ -125,7 +125,7 @@ describe("the Keyboard shortcuts dialog", () => {
   })
 })
 
-describe("isSingleKey", () => {
+describe("isSingleKey and activeRows", () => {
   it("is true for plain keys and their sequences, false for Ctrl, Escape and Enter", () => {
     expect(["?", "/", "n", "g n"].map(isSingleKey)).toEqual([true, true, true, true])
     expect(["mod+k", "esc", "enter", "mod+enter", "ctrl+g"].map(isSingleKey))
