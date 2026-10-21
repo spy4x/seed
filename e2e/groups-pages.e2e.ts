@@ -1,7 +1,7 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
-import { createGroup, groupLink, openGroup } from "./fixtures/groups.ts"
+import { createGroup, groupLink, openGroup, openGroupTab } from "./fixtures/groups.ts"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
@@ -90,7 +90,7 @@ test.describe("group list and settings pages", () => {
     }
   })
 
-  test("neither page scrolls sideways at 375 px", async ({ page, request }) => {
+  test("the groups list and a group's General and Members tabs do not scroll sideways at 375 px", async ({ page, request }) => {
     const email = "e2e_groups_pages_narrow@example.com"
     const password = "Passw0rd!"
     const cleanup = async ({ soft = false } = {}) => {
@@ -130,6 +130,10 @@ test.describe("group list and settings pages", () => {
       expect(await overflow()).toBeLessThanOrEqual(0)
 
       await groupLink(page, longName).click()
+      await expect(page.getByRole("tab", { name: "General", exact: true }))
+        .toHaveAttribute("aria-selected", "true")
+      expect(await overflow()).toBeLessThanOrEqual(0)
+      await openGroupTab(page, "Members")
       await expect(page.getByRole("heading", { level: 2, name: /^Members/ })).toBeVisible()
       expect(await overflow()).toBeLessThanOrEqual(0)
     } finally {

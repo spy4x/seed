@@ -38,6 +38,8 @@ async function personPage(browser: Browser, email: string): Promise<Page> {
 
 test.describe("group activity", () => {
   test("an admin reads what happened and follows a note; an editor and a viewer are refused", async ({ page, browser, request }) => {
+    // Four people sign in, and two of them open two pages each: past the default 30 s on a dev server.
+    test.setTimeout(60_000)
     const owner = "e2e_activity_owner@example.com"
     const admin = "e2e_activity_admin@example.com"
     const editor = "e2e_activity_editor@example.com"
