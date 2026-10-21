@@ -41,7 +41,7 @@ export const ADMIN_VIDEO = {
     `Groups lists every group with its owner, the largest first. The operator opens Product team and sees its members.`,
     `Billing shows €450.00 a month from seven paying groups, one of them past due. The operator opens Research lab, whose history shows a refunded payment with the operator's note.`,
     `Newsletter shows 90 subscribers, 46 who joined in the last 30 days, 3 issues sent and a chart of the list growing.`,
-    `System says everything is working: the database, the cache, the job queue, the backups and the migrations are all OK, and the API runs release v2.0.0 with its commit.`,
+    `System says everything is working: the database, the cache, the job queue, the backups and the migrations are all OK, and the API card shows its version and commit.`,
     `From the account menu, the operator switches the theme from dark to light.`,
     `An end card: "Free and MIT-licensed. The code is on GitHub."`,
   ],
