@@ -179,6 +179,19 @@ function focused(): string | undefined {
   return element?.getAttribute("data-e2e") ?? element?.tagName
 }
 
+/**
+ * Whether each link or button whose text is one of `labels` is at least 44 px tall on a phone.
+ * happy-dom draws no layout, so this reads the class that sets the height (`min-h-11`).
+ */
+function tapTargets(labels: string[]): Record<string, boolean> {
+  const controls = [...root!.querySelectorAll("a, button")]
+  return Object.fromEntries(labels.map((label) => {
+    const control = controls.find((element) => element.textContent?.trim() === label)
+    if (!control) throw new Error(`no link or button reads ${label}`)
+    return [label, control.classList.contains("min-h-11")]
+  }))
+}
+
 /** Records every call made to the function it hands out. */
 function spy<A extends unknown[]>(): { calls: A[]; fn: (...args: A) => void } {
   const calls: A[] = []
@@ -1152,6 +1165,15 @@ describe("InviteForm", () => {
     expect(navigate.calls).toEqual([[GROUP_PATHS.settings(groupId)]])
   })
 
+  it("gives Cancel, Create invitation and Done a 44 px tap target on a phone (class check: no layout here)", async () => {
+    await mount(<InviteForm {...defaults} />)
+    expect(tapTargets(["Cancel", "Create invitation"]))
+      .toEqual({ "Cancel": true, "Create invitation": true })
+
+    await rerender(<InviteForm {...defaults} created={created} />)
+    expect(tapTargets(["Done"])).toEqual({ "Done": true })
+  })
+
   it("shows why a create did not start above the buttons, and moves focus to it", async () => {
     await mount(<InviteForm {...defaults} />)
     await rerender(<InviteForm {...defaults} formError="No connection." />)
@@ -1432,6 +1454,15 @@ describe("InvitationScreen", () => {
     expect(find(`a[href="${SCREEN_PATHS.groups}"]`).textContent).toBe("Go to your groups")
   })
 
+  it("gives Accept, Decline and Go to your groups a 44 px tap target on a phone (class check: no layout here)", async () => {
+    await mount(<InvitationScreen invitation={preview} loading={false} />)
+    expect(tapTargets(["Accept invitation", "Decline"]))
+      .toEqual({ "Accept invitation": true, "Decline": true })
+
+    await rerender(<InvitationScreen invitation={null} loading={false} error="It expired." />)
+    expect(tapTargets(["Go to your groups"])).toEqual({ "Go to your groups": true })
+  })
+
   it("moves focus to a refused answer's message", async () => {
     await mount(<InvitationScreen invitation={preview} loading={false} />)
     await rerender(<InvitationScreen invitation={preview} loading={false} answerError="Used up." />)
@@ -1469,6 +1500,11 @@ describe("MyInvitationsSection", () => {
     await rerender(page([second], "i-2"))
     await rerender(page([]))
     expect(focused()).toBe("page-action")
+  })
+
+  it("gives each invitation's Accept and Decline a 44 px tap target on a phone (class check: no layout here)", async () => {
+    await mount(<MyInvitationsSection invitations={[preview]} />)
+    expect(tapTargets(["Accept", "Decline"])).toEqual({ "Accept": true, "Decline": true })
   })
 
   it("draws nothing when there are none", async () => {

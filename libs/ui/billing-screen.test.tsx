@@ -397,6 +397,21 @@ describe("billing screens in the browser", () => {
     expect(document.activeElement?.getAttribute("data-e2e")).toBe("billing-error")
   })
 
+  // happy-dom draws no layout, so the 44 px a phone needs is read from the class that sets it.
+  it("gives See plans and Manage billing a 44 px tap target on a phone (class check: no layout here)", async () => {
+    // A free group the provider knows already: both actions sit in the plan's row.
+    await mount(<BillingCard groupId={groupId} billing={{ ...FREE_OWNER, hasCustomer: true }} />)
+    const controls = [...root!.querySelectorAll("a, button")]
+    const tapTarget = (label: string) => {
+      const control = controls.find((element) => element.textContent?.trim() === label)
+      if (!control) throw new Error(`no link or button reads ${label}`)
+      return control.classList.contains("min-h-11")
+    }
+
+    expect({ seePlans: tapTarget("See plans"), manage: tapTarget("Manage billing") })
+      .toEqual({ seePlans: true, manage: true })
+  })
+
   it("moves focus to a refused portal's message", async () => {
     await mount(<BillingCard groupId={groupId} billing={PRO_OWNER} />)
 
