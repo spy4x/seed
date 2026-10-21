@@ -10,13 +10,20 @@ import { useUndoToast } from "./use-undo-toast.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = { document: globalThis.document }
+const ownNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator")
 
 beforeAll(() => {
   Object.assign(globalThis, { document: window.document })
+  // A PC, so `mod` is Control and the key reads "Ctrl+Z" on every machine that runs the tests.
+  Object.defineProperty(globalThis, "navigator", {
+    value: { platform: "Linux x86_64" },
+    configurable: true,
+  })
 })
 
 afterAll(async () => {
   Object.assign(globalThis, own)
+  if (ownNavigator) Object.defineProperty(globalThis, "navigator", ownNavigator)
   await window.happyDOM.close()
 })
 
@@ -45,6 +52,23 @@ function fakeStore() {
   return { store, undo, undone }
 }
 
+/** Presses a key the way a person does, with Control held (`mod` outside Apple platforms). */
+async function pressCtrl(
+  key: string,
+  target: { dispatchEvent(event: Event): boolean } = window.document.body as never,
+): Promise<void> {
+  await act(() => {
+    target.dispatchEvent(
+      new window.KeyboardEvent("keydown", {
+        key,
+        ctrlKey: true,
+        bubbles: true,
+        cancelable: true,
+      }) as unknown as Event,
+    )
+  })
+}
+
 function Host({ store }: { store: typeof notesStore }) {
   useUndoToast(store)
   return null
@@ -66,7 +90,7 @@ describe("useUndoToast", () => {
 
     const [toast] = toasts.list.value
     expect(toasts.list.value).toHaveLength(1)
-    expect(toast.body).toBe(`"Milk" was deleted.`)
+    expect(toast.body).toBe(`"Milk" was deleted. Press Ctrl+Z to undo.`)
     expect(toast.dataE2E).toBe("note-undo-toast")
     expect(toast.duration).toBeGreaterThan(9_000)
     expect(toast.duration).toBeLessThanOrEqual(10_000)
@@ -76,13 +100,38 @@ describe("useUndoToast", () => {
     expect(undone).toEqual(["n1"])
   })
 
+  it("takes the note back with Ctrl Z while the offer lasts, and not in a text field or after", async () => {
+    const { store, undo, undone } = fakeStore()
+    await mount(store)
+    await pressCtrl("z")
+    expect(undone).toEqual([])
+
+    await act(() => {
+      undo.value = { id: "n1", title: "Milk", until: Date.now() + 10_000 }
+    })
+    const field = window.document.createElement("input")
+    window.document.body.appendChild(field)
+    await pressCtrl("z", field as never)
+    field.remove()
+    expect(undone).toEqual([])
+
+    await pressCtrl("z")
+    expect(undone).toEqual(["n1"])
+
+    await act(() => {
+      undo.value = null
+    })
+    await pressCtrl("z")
+    expect(undone).toEqual(["n1"])
+  })
+
   it("takes the toast away once the offer ends", async () => {
     const { store, undo } = fakeStore()
     await mount(store)
     await act(() => {
       undo.value = { id: "n1", title: "", until: Date.now() + 10_000 }
     })
-    expect(toasts.list.value[0].body).toBe("The note was deleted.")
+    expect(toasts.list.value[0].body).toBe("The note was deleted. Press Ctrl+Z to undo.")
 
     await act(() => {
       undo.value = null

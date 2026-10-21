@@ -12,7 +12,8 @@ export interface SpaShortcutPorts {
 
 /**
  * The SPA's keyboard shortcuts, the one list the "Keyboard shortcuts" dialog shows and the frame
- * binds. Search's keys and the New note dialog's are bound by those components and listed here;
+ * binds. Search's keys, the New note dialog's and Undo's (`useUndoToast`) are bound where they act
+ * and listed here;
  * Activity is listed and bound only while the rail shows it.
  */
 export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
@@ -29,6 +30,7 @@ export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
     { keys: "mod+k", description: "Search notes and groups", group: general },
     { keys: "/", description: "Search notes and groups", group: general },
     { keys: "n", description: "New note", group: general, run: ports.openNewNote },
+    { keys: "mod+z", description: "Undo deleting a note, while its toast shows", group: general },
     close,
     go("g n", "Notes", NOTE_PATHS.list),
     go("g t", "Tags", TAG_PATHS.list),

@@ -41,8 +41,8 @@ describe("SPA keyboard shortcuts", () => {
     expect(seen).toEqual({ navigated: [], newNote: 1, shortcuts: 1 })
   })
 
-  it("lists search's keys and the New note dialog's without binding them here", () => {
+  it("lists search's keys, Undo's and the New note dialog's without binding them here", () => {
     const listed = rows(null).list.filter((row) => !row.run).map((row) => row.keys)
-    expect(listed).toEqual(["mod+k", "/", "esc", "enter", "mod+enter"])
+    expect(listed).toEqual(["mod+k", "/", "mod+z", "esc", "enter", "mod+enter"])
   })
 })
