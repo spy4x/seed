@@ -57,6 +57,8 @@ export interface NoteRow {
    * members are not read yet, and the row shows no author.
    */
   authorName?: string
+  /** The author's own name for the avatar's initials, when `authorName` is "You". */
+  authorAvatarName?: string
 }
 
 /** A member the "Author" menu offers. */
@@ -826,7 +828,12 @@ function NoteItem(
           <span class="flex min-w-0 max-w-full items-center gap-2 whitespace-nowrap">
             {note.authorName && (
               <span class="flex min-w-0 items-center gap-2">
-                <Avatar name={note.authorName} alt="" size="xs" class="size-5 text-[10px]" />
+                <Avatar
+                  name={note.authorAvatarName ?? note.authorName}
+                  alt=""
+                  size="xs"
+                  class="size-5 text-[10px]"
+                />
                 <span class="truncate" data-e2e="note-author">{note.authorName}</span>
               </span>
             )}

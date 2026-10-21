@@ -117,6 +117,9 @@ export function NotesView() {
           ...note,
           authorId: note.createdByUserId === null ? null : String(note.createdByUserId),
           authorName: personName(note.createdByUserId, youId, members),
+          authorAvatarName: note.createdByUserId === youId
+            ? members?.find((member) => member.userId === youId)?.name.trim() || undefined
+            : undefined,
         }))}
         tags={tagsStore.tags.value}
         filters={filters}

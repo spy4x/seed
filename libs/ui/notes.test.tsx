@@ -195,6 +195,14 @@ describe("NotesScreen", () => {
     expect(html).toContain(`aria-label="More actions"`)
   })
 
+  it("draws the person's own initials beside You on their rows", () => {
+    const mine = { ...groceries, authorId: "1", authorName: "You", authorAvatarName: "Maya Chen" }
+    const html = renderToString(<NotesScreen {...listDefaults} notes={[mine]} />)
+
+    expect(html).toMatch(/data-e2e="note-author"[^>]*>You<\/span>/)
+    expect(html).toMatch(/>MC</)
+  })
+
   it("shows each note as a row with a link to its page, its author, when it changed and when it was made, and no excerpt", () => {
     const authored = {
       ...groceries,
