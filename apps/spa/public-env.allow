@@ -9,3 +9,5 @@ SPA_REALTIME realtime
 SPA_OFFLINE offline
 # The public demo (docs/demo.md): `true` shows the demo line on the sign-in and sign-up pages.
 SPA_DEMO demo
+# Guest accounts (docs/guests.md): `false` hides "Try it now"; unset or anything else shows it.
+SPA_GUEST guest
