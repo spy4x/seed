@@ -146,7 +146,11 @@ export function createGroupImportStore(ports: GroupFilePorts = browserPorts) {
       return
     }
     if (chosen.size > GROUP_IMPORT_MAX_BYTES) {
-      tooLarge()
+      state.value = {
+        step: "refused",
+        problems: [{ kind: "too_large", maxBytes: GROUP_IMPORT_MAX_BYTES }],
+        total: 1,
+      }
       return
     }
     const mine = ticket
@@ -154,16 +158,6 @@ export function createGroupImportStore(ports: GroupFilePorts = browserPorts) {
     if (mine !== ticket) return
     file = { text }
     await check()
-  }
-
-  function tooLarge(): void {
-    ticket++
-    file = null
-    state.value = {
-      step: "refused",
-      problems: [{ kind: "too_large", maxBytes: GROUP_IMPORT_MAX_BYTES }],
-      total: 1,
-    }
   }
 
   /** Creates the group; resolves to it, or `null` when the import was refused or failed. */
@@ -217,7 +211,6 @@ export function createGroupImportStore(ports: GroupFilePorts = browserPorts) {
     importFailed,
     attempt,
     choose,
-    tooLarge,
     retry: check,
     importNow,
     reset,

@@ -142,13 +142,21 @@ describe("GroupImportScreen", () => {
     expect(chosen.calls.at(-1)?.[0]?.name).toBe("family.json")
   })
 
-  it("tells the app when the picker refuses a file over the limit", async () => {
-    const tooLarge = spy<[]>()
-    await mount(<GroupImportScreen {...defaults} maxBytes={4} onTooLarge={tooLarge.fn} />)
+  it("hands a file over the limit to the app and says the size only once", async () => {
+    const chosen = spy<[File | null]>()
+    await mount(<GroupImportScreen {...defaults} maxBytes={4} onFile={chosen.fn} />)
     await pick(
       new window.File(["12345"], "big.json", { type: "application/json" }) as unknown as File,
     )
-    expect(tooLarge.calls).toHaveLength(1)
+    expect(chosen.calls.at(-1)?.[0]?.name).toBe("big.json")
+    await rerender(
+      <GroupImportScreen
+        {...defaults}
+        maxBytes={4}
+        state={{ step: "refused", problems: [{ kind: "too_large", maxBytes: 4 }], total: 1 }}
+      />,
+    )
+    expect(root!.textContent!.split("The file is larger than").length - 1).toBe(1)
   })
 
   it("says it is checking, then moves focus to what the file holds and prefills the name", async () => {

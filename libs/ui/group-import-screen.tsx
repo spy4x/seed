@@ -45,8 +45,6 @@ export interface GroupImportScreenProps {
   attempt?: number
   /** A file was chosen; `null` when the person removed it. */
   onFile?: (file: File | null) => void
-  /** The picker refused the file as larger than `maxBytes`. */
-  onTooLarge?: () => void
   /** Checks the same file again, after a check that did not answer. */
   onRetryCheck?: () => void
   onChooseAnother?: () => void
@@ -152,22 +150,17 @@ export function GroupImportScreen(props: GroupImportScreenProps): JSX.Element {
             id={FILE_INPUT_ID}
             name="file"
             accept=".json,application/json"
-            maxSize={maxBytes}
+            // No size limit here: the app checks the size, so the refusal is said once, in the
+            // notice below.
             label="Export file"
             hint={`A .json file exported from a group, up to ${megabytes(maxBytes)} MB.`}
             disabled={importing}
             previews={false}
             labels={{
               browse: "Choose a file",
-              tooLarge: () => `The file is larger than ${megabytes(maxBytes)} MB.`,
               wrongType: () => "This is not a group export file.",
             }}
             onFiles={(files) => props.onFile?.(files[0] ?? null)}
-            onReject={(rejections) => {
-              if (rejections.some((rejection) => rejection.reason === "too-large")) {
-                props.onTooLarge?.()
-              }
-            }}
           />
         </div>
         <p role="status" aria-live="polite" class="sr-only" data-e2e="group-import-status">

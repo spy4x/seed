@@ -51,7 +51,6 @@ export function GroupImportView() {
       maxBytes={GROUP_IMPORT_MAX_BYTES}
       attempt={store.attempt.value}
       onFile={(file) => void store.choose(file)}
-      onTooLarge={() => store.tooLarge()}
       onRetryCheck={() => void store.retry()}
       onChooseAnother={() => store.reset()}
       onImport={() =>
