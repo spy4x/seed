@@ -248,12 +248,19 @@ function Step(
         <Stack data-e2e="group-import-refused">
           {title}
           <Notice tone="danger" live={false}>
-            <ul class="list-disc space-y-1 pl-4">
-              {shown.map((problem, index) => (
-                <li key={index} data-e2e="group-import-problem">{problemText(problem)}</li>
-              ))}
-              {more > 0 && <li data-e2e="group-import-more">and {more} more</li>}
-            </ul>
+            {
+              // One reason reads as a sentence; a list of one draws a lone bullet.
+              shown.length === 1 && more <= 0
+                ? <p data-e2e="group-import-problem">{problemText(shown[0])}</p>
+                : (
+                  <ul class="list-disc space-y-1 pl-4">
+                    {shown.map((problem, index) => (
+                      <li key={index} data-e2e="group-import-problem">{problemText(problem)}</li>
+                    ))}
+                    {more > 0 && <li data-e2e="group-import-more">and {more} more</li>}
+                  </ul>
+                )
+            }
           </Notice>
           {chooseAnother}
         </Stack>
@@ -277,13 +284,16 @@ function Step(
         <ScreenForm pending={importing} onSubmit={() => props.onImport?.()}>
           <Stack>
             <div data-e2e="group-import-checked">{title}</div>
-            {props.importFailed && (
-              <div data-e2e="group-import-failed">
-                <Notice tone="danger" urgent>
-                  The import stopped and nothing was saved. Try again.
-                </Notice>
-              </div>
-            )}
+            {
+              // Offline, the offline notice says why; "Try again" would only fail again.
+              props.importFailed && !offline && (
+                <div data-e2e="group-import-failed">
+                  <Notice tone="danger" urgent>
+                    The import stopped and nothing was saved. Try again.
+                  </Notice>
+                </div>
+              )
+            }
             <Field id="group-import-name" label="Name" error={props.nameError} required>
               <Input
                 name="name"

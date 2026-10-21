@@ -227,6 +227,17 @@ describe("GroupImportScreen", () => {
     expect(another.calls).toHaveLength(1)
   })
 
+  it("says a single reason as a sentence, not a list of one", async () => {
+    await mount(
+      <GroupImportScreen
+        {...defaults}
+        state={{ step: "refused", problems: [{ kind: "newer_version" }], total: 1 }}
+      />,
+    )
+    expect(find("[data-e2e=group-import-problem]").tagName).toBe("P")
+    expect(has("[data-e2e=group-import-refused] ul")).toBe(false)
+  })
+
   it("moves focus to the new, empty picker when the page starts over", async () => {
     await mount(
       <GroupImportScreen {...defaults} state={{ step: "refused", problems: [], total: 0 }} />,
@@ -276,9 +287,11 @@ describe("GroupImportScreen", () => {
     expect(has("[data-e2e=group-import-offline]")).toBe(true)
   })
 
-  it("keeps Import group disabled offline", async () => {
-    await mount(<GroupImportScreen {...defaults} state={checked} name="F" offline />)
+  it("keeps Import group disabled offline, with the offline notice in place of a failed import's", async () => {
+    await mount(<GroupImportScreen {...defaults} state={checked} name="F" importFailed offline />)
     expect(find<HTMLButtonElement>("[data-e2e=group-import-submit]").disabled).toBe(true)
+    expect(has("[data-e2e=group-import-offline]")).toBe(true)
+    expect(has("[data-e2e=group-import-failed]")).toBe(false)
   })
 })
 
