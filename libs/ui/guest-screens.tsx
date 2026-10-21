@@ -449,8 +449,11 @@ export interface GuestTakenScreenProps {
   navigate?: Navigate
 }
 
-/** "Google", "GitHub", a passkey, or the address, as the page's title names the other account. */
-function takenTitle(state: GuestSwitchState): string {
+/**
+ * "Google", "GitHub", a passkey, or the address, as the first line names the other account. It is
+ * a sentence under the title, not the title: a page title stays on one line and truncates.
+ */
+function takenWho(state: GuestSwitchState): string {
   const provider = state.method in OAUTH_PROVIDER_NAMES
     ? OAUTH_PROVIDER_NAMES[state.method as OAuthProviderId]
     : null
@@ -556,9 +559,10 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
   return (
     <Stack gap="xl">
       <Stack gap="sm">
-        <PageHeader title={takenTitle(state)} titleDataE2E="taken-title" />
-        <p class="text-sm text-muted">
-          Your guest account was not changed. Choose what happens to what you made as a guest.
+        <PageHeader title="Linked to another account" titleDataE2E="taken-title" />
+        <p class="text-sm text-muted" data-e2e="taken-who">
+          {takenWho(state)}. Your guest account was not changed. Choose what happens to what you
+          made as a guest.
         </p>
       </Stack>
       <ScreenForm pending={busy} onSubmit={submit} class={FORM_WIDTH}>

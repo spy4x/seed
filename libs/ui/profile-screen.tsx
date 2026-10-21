@@ -389,30 +389,33 @@ export function ProfileScreen(
               </Button>
             }
           />
-          <SettingRow
-            label="E-mail address"
-            value={
-              <EmailValue
-                email={email}
-                provider={providerOnly === null ? null : providerOnlyNames(
-                  methods?.methods?.filter((method) => method.kind !== "passkey"),
-                ) ?? ""}
-              />
-            }
-            action={
-              <Button
-                href={SCREEN_PATHS.email}
-                navigate={navigate}
-                variant="secondary"
-                size="sm"
-                class={TOUCH_TARGET}
-                data-e2e="profile-email-link"
-              >
-                {email?.email === null ? "Add" : "Change"}{" "}
-                <span class="sr-only">e-mail address</span>
-              </Button>
-            }
-          />
+          {/* A guest adds an address on /keep, which the account type row leads to (#224). */}
+          {!guest && (
+            <SettingRow
+              label="E-mail address"
+              value={
+                <EmailValue
+                  email={email}
+                  provider={providerOnly === null ? null : providerOnlyNames(
+                    methods?.methods?.filter((method) => method.kind !== "passkey"),
+                  ) ?? ""}
+                />
+              }
+              action={
+                <Button
+                  href={SCREEN_PATHS.email}
+                  navigate={navigate}
+                  variant="secondary"
+                  size="sm"
+                  class={TOUCH_TARGET}
+                  data-e2e="profile-email-link"
+                >
+                  {email?.email === null ? "Add" : "Change"}{" "}
+                  <span class="sr-only">e-mail address</span>
+                </Button>
+              }
+            />
+          )}
         </SettingList>
       </SettingGroup>
 

@@ -861,6 +861,25 @@ describe("ProfileScreen for an account without a password", () => {
     expect(find("[data-e2e=password-open]").textContent).toBe("Set password")
   })
 
+  it("shows a guest the account type and no e-mail row, with one solid Keep your account", async () => {
+    await mount(
+      <ProfileScreen
+        {...profile}
+        email={{ email: null, proven: false, pending: null }}
+        methods={methodsProps([], { methods: [] })}
+        guest={{ pending: false, error: null, onDelete: () => {} }}
+      />,
+    )
+
+    expect(find("[data-e2e=profile-account-type]").textContent).toContain("Guest account")
+    expect(document.querySelector("[data-e2e=profile-email-link]")).toBeNull()
+    expect(document.body.textContent).not.toContain("You sign in with your username")
+    // The account row and the empty sign-in methods lead to /keep too, but not as primaries.
+    for (const name of ["profile-keep", "methods-keep"]) {
+      expect(find(`[data-e2e=${name}]`).className, name).not.toMatch(/\bbg-primary\b/)
+    }
+  })
+
   it("sets a first password after a Google sign-in a moment ago, asking for no current one", async () => {
     const asked: string[] = []
     await mount(

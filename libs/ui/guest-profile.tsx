@@ -27,6 +27,7 @@ export function GuestAccountRow({ navigate }: { navigate?: Navigate }): JSX.Elem
         <Button
           href={GUEST_PATHS.keep}
           navigate={navigate}
+          variant="secondary"
           size="sm"
           class={TOUCH_TARGET}
           data-e2e="profile-keep"
@@ -53,7 +54,12 @@ export function GuestSignInMethods({ navigate }: { navigate?: Navigate }): JSX.E
           inset
           description="Add one so you can sign in on another device."
           action={
-            <Button href={GUEST_PATHS.keep} navigate={navigate} data-e2e="methods-keep">
+            <Button
+              href={GUEST_PATHS.keep}
+              navigate={navigate}
+              variant="secondary"
+              data-e2e="methods-keep"
+            >
               {KEEP_LABEL}
             </Button>
           }

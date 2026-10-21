@@ -211,6 +211,21 @@ describe("GuestTakenScreen", () => {
     expect(calls).toEqual([])
   })
 
+  it("names the other account in the line under a short title, which never truncates it", async () => {
+    const { props } = takenProps()
+    await mount(<GuestTakenScreen {...props} />)
+    expect(find("[data-e2e=taken-title]").textContent).toBe("Linked to another account")
+    expect(find("[data-e2e=taken-who]").textContent).toContain(
+      "a***@example.com already has an account.",
+    )
+    await act(() =>
+      render(<GuestTakenScreen {...props} state={{ ...TAKEN, method: "github" }} />, root!)
+    )
+    expect(find("[data-e2e=taken-who]").textContent).toContain(
+      "GitHub is already linked to another account.",
+    )
+  })
+
   it("moves the groups only with the other account's password", async () => {
     const { props, calls } = takenProps()
     await mount(<GuestTakenScreen {...props} />)
