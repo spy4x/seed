@@ -631,7 +631,7 @@ Deno.test("the development seed adds the operator's refund, blocks and a recent 
     const refund = record!.history.find((entry) =>
       entry.event === BILLING_AUDIT_EVENTS.paymentRefunded
     )
-    expect(refund?.operator).toBe("Dev Operator")
+    expect(refund?.operator).toBe("Maya Chen")
     expect(refund?.amount?.amount).toBeGreaterThan(0)
     const blocks = await sql`
       SELECT 1 FROM auth_audits WHERE event_type = ${AuthAuditEventType.USER_BLOCKED}

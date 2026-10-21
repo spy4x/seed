@@ -186,7 +186,7 @@ async function ensureAdmin(
 ): Promise<{ id: number; created: boolean }> {
   const key = await db.authStore.findKey(PASSWORD_METHOD, DEV_ADMIN_EMAIL)
   const id = key ? key.userId : await signUp(db, pepper, DEV_ADMIN_EMAIL, password)
-  if (!key) await setName(sql, id, `Dev`, `Operator`)
+  if (!key) await setName(sql, id, `Maya`, `Chen`)
   await prove(db, DEV_ADMIN_EMAIL)
   await db.admin.setRoleByAddress(DEV_ADMIN_EMAIL, UserRole.ADMIN, SEED_ACTOR)
   return { id, created: !key }

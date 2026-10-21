@@ -26,7 +26,7 @@ export function AdminVideoPlayer(): JSX.Element {
         data-e2e="admin-video"
         data-analytics-video="admin-video"
       >
-        <source src={ADMIN_VIDEO.webm} type={`video/webm; codecs="av01.0.08M.08"`} />
+        <source src={ADMIN_VIDEO.webm} type={`video/webm; codecs="av01.0.08M.08, opus"`} />
         <source src={ADMIN_VIDEO.mp4} type="video/mp4" />
         <a
           href={ADMIN_VIDEO.mp4}
