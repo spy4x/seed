@@ -19,7 +19,6 @@ import { themeStore } from "../state/theme.ts"
 import { newNoteStore } from "../state/new-note.ts"
 import { spaShortcutRows } from "./shortcuts.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
-import { activeRows } from "@ui/shortcuts.tsx"
 import type { SessionUser } from "../state/session.ts"
 import {
   callQuery,
@@ -170,7 +169,7 @@ export function AppShell(
     openNewNote: newNoteStore.show,
     activityGroupId: current && canViewActivity(current.role) ? current.id : null,
   })
-  useShortcuts(activeRows(rows, singleKeys.on.value))
+  useShortcuts(rows, singleKeys.on.value)
   const open = async (choice: SearchChoice) => {
     if (choice.kind === "page") return navigate(choice.href)
     if (choice.kind === "new-note") return newNoteStore.show()

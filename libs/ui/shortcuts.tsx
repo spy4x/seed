@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
-import { parseHotkey } from "@spy4x/platform/browser/hotkeys"
+import { activeShortcuts } from "@spy4x/preact-ui/hotkeys"
 import { ShortcutsDialog } from "@spy4x/preact-ui/shortcuts-dialog"
 import { ToggleField } from "@spy4x/preact-ui/toggle-field"
 
@@ -53,24 +53,6 @@ export function generalRows(openShortcuts: () => void): ShortcutRow[] {
   ]
 }
 
-/**
- * Whether the off switch turns these keys off: every press is a plain key, with no Control,
- * Command or `mod`. Escape, Enter and Ctrl K keep working, because they type nothing and a person
- * who cannot avoid pressing single keys by accident still needs them (WCAG 2.1.4).
- */
-export function isSingleKey(keys: string): boolean {
-  return keys.split(" ").every((press) => {
-    const hotkey = parseHotkey(press)
-    return !hotkey.mod && !hotkey.ctrl && !hotkey.meta && !hotkey.alt &&
-      hotkey.key !== "escape" && hotkey.key !== "enter"
-  })
-}
-
-/** The rows that work now: all of them, or without the single keys when those are off. */
-export function activeRows(rows: readonly ShortcutRow[], singleKeys: boolean): ShortcutRow[] {
-  return singleKeys ? [...rows] : rows.filter((row) => !isSingleKey(row.keys))
-}
-
 /** Props of {@link ShortcutsList}. */
 export interface ShortcutsProps {
   /** The app's registry: every row the dialog lists, and with `run`, what the keys do. */
@@ -85,7 +67,7 @@ export interface ShortcutsProps {
 }
 
 /**
- * The "Keyboard shortcuts" dialog: the rows that work now ({@link activeRows}), the same list the
+ * The "Keyboard shortcuts" dialog: the rows that work now (preact-ui's `activeShortcuts`), the same list the
  * app binds, so it never shows a key that does nothing. Its footer says when shortcuts do not
  * work and holds the switch that turns the single keys off on this device; the dialog keeps its
  * height while it is open after the switch is pressed, so the switch stays under the pointer.
@@ -93,7 +75,7 @@ export interface ShortcutsProps {
 export function ShortcutsList(
   { rows, open, onClose, singleKeys, onSingleKeys }: ShortcutsProps,
 ): JSX.Element {
-  const active = activeRows(rows, singleKeys)
+  const active = activeShortcuts(rows, singleKeys)
   // The switch drops or restores rows, and the dialog is centred, so it would jump away from the
   // pointer. A press on the switch pins the dialog's height until it closes, and the footer keeps
   // to the bottom (`[&>footer]:mt-auto`), so the switch stays where it was.

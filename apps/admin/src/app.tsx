@@ -28,7 +28,6 @@ import {
   singleKeys as deviceSingleKeys,
   useShortcuts,
 } from "@platform/shortcuts.ts"
-import { activeRows } from "@ui/shortcuts.tsx"
 
 export interface AppProps {
   store: AdminStore
@@ -103,7 +102,7 @@ export function App(
     focusListFilter,
   })
   // Bound only in the signed-in shell, which draws the list too.
-  useShortcuts(user && hasAdminAccess(user) ? activeRows(shortcutRows, singleKeys.on.value) : [])
+  useShortcuts(user && hasAdminAccess(user) ? shortcutRows : [], singleKeys.on.value)
   const toastr = <Toastr toasts={toasts.list.value} onDismiss={toasts.remove} dataE2E="toasts" />
 
   if (session.step === "loading") {

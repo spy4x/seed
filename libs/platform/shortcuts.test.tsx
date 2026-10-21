@@ -1,6 +1,7 @@
 /**
- * `useShortcuts` in a browser DOM (happy-dom): which key presses run a shortcut and which are left
- * alone, and the single-key switch kept on this device.
+ * `useShortcuts` in a browser DOM (happy-dom): which rows it binds through preact-ui's
+ * `useHotkeys`, what the single-key switch unbinds, and the switch kept on this device. Where a
+ * press is left alone (fields, input methods, dialogs, menus) is `useHotkeys`'s own, tested there.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
@@ -30,18 +31,26 @@ afterEach(async () => {
   root = null
 })
 
-function Bindings({ rows }: { rows: readonly BoundShortcut[] }) {
-  useShortcuts(rows)
+function Bindings({ rows, singleKeys }: { rows: readonly BoundShortcut[]; singleKeys: boolean }) {
+  useShortcuts(rows, singleKeys)
   return null
 }
 
-/** Binds `n`, `?`, `g n` and `g g`, and returns what ran, by keys. */
-async function mount(): Promise<string[]> {
+/**
+ * Binds `n`, `?`, `g n`, `g g` and `mod+k`, lists `esc` without binding it, and returns what ran,
+ * by keys.
+ */
+async function mount(singleKeys = true): Promise<string[]> {
   const ran: string[] = []
-  const rows = ["n", "?", "g n", "g g"].map((keys) => ({ keys, run: () => void ran.push(keys) }))
+  const rows = ["n", "?", "g n", "g g", "mod+k"].map((keys) => ({
+    keys,
+    run: () => void ran.push(keys),
+  }))
   root = document.createElement("div")
   document.body.append(root)
-  await act(() => render(<Bindings rows={[...rows, { keys: "esc" }]} />, root!))
+  await act(() =>
+    render(<Bindings rows={[...rows, { keys: "esc" }]} singleKeys={singleKeys} />, root!)
+  )
   return ran
 }
 
@@ -49,7 +58,7 @@ async function mount(): Promise<string[]> {
 function press(
   key: string,
   target: EventTarget = document.body,
-  init: { isComposing?: boolean } = {},
+  init: { ctrlKey?: boolean } = {},
 ): KeyboardEvent {
   const event = new window.KeyboardEvent("keydown", {
     key,
@@ -82,46 +91,13 @@ describe("useShortcuts", () => {
     expect(ran).toEqual(["g n", "g g"])
   })
 
-  it("does nothing while the person types in a field", async () => {
-    const ran = await mount()
-    const field = document.createElement("input")
-    document.body.append(field)
-    const event = press("n", field)
-    press("g", field)
-    press("n", field)
+  it("binds no single key while single keys are off, and keeps Ctrl K", async () => {
+    const ran = await mount(false)
+    for (const key of ["n", "?", "g", "n", "g", "g"]) press(key)
     expect(ran).toEqual([])
-    expect(event.defaultPrevented).toBe(false)
-  })
-
-  it("does nothing while an input method composes text", async () => {
-    const ran = await mount()
-    press("n", document.body, { isComposing: true })
-    expect(ran).toEqual([])
-  })
-
-  it("does nothing inside another dialog or menu", async () => {
-    const ran = await mount()
-    const dialog = document.createElement("div")
-    dialog.setAttribute("role", "dialog")
-    const button = document.createElement("button")
-    dialog.append(button)
-    document.body.append(dialog)
-    press("?", button)
-    press("n", button)
-    const menu = document.createElement("div")
-    menu.setAttribute("role", "menu")
-    document.body.append(menu)
-    press("n", menu)
-    expect(ran).toEqual([])
-  })
-
-  it("does nothing for a key another handler already took", async () => {
-    const ran = await mount()
-    const taken = (event: Event) => event.preventDefault()
-    document.body.addEventListener("keydown", taken)
-    press("n")
-    document.body.removeEventListener("keydown", taken)
-    expect(ran).toEqual([])
+    const event = press("k", document.body, { ctrlKey: true })
+    expect(ran).toEqual(["mod+k"])
+    expect(event.defaultPrevented).toBe(true)
   })
 
   it("binds nothing for a row that is only listed", async () => {
@@ -129,16 +105,6 @@ describe("useShortcuts", () => {
     const event = press("Escape")
     expect(ran).toEqual([])
     expect(event.defaultPrevented).toBe(false)
-  })
-
-  it("stops listening once the rows that had a key are gone", async () => {
-    const ran = await mount()
-    await act(() =>
-      render(<Bindings rows={[{ keys: "?", run: () => void ran.push("?") }]} />, root!)
-    )
-    press("n")
-    press("?")
-    expect(ran).toEqual(["?"])
   })
 })
 

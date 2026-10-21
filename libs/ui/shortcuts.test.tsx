@@ -7,14 +7,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
-import {
-  activeRows,
-  isSingleKey,
-  SHORTCUT_GROUPS,
-  SHORTCUT_TEXT,
-  type ShortcutRow,
-  ShortcutsList,
-} from "./shortcuts.tsx"
+import { SHORTCUT_GROUPS, SHORTCUT_TEXT, type ShortcutRow, ShortcutsList } from "./shortcuts.tsx"
 import { shortcutsMenuItems } from "./frame.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -136,18 +129,6 @@ describe("the Keyboard shortcuts dialog's height", () => {
     expect(dialog.style.minHeight).toMatch(/^\d+px$/)
     await mount(false, ROWS, false)
     expect(dialog.style.minHeight).toBe("")
-  })
-})
-
-describe("isSingleKey and activeRows", () => {
-  it("is true for plain keys and their sequences, false for Ctrl, Escape and Enter", () => {
-    expect(["?", "/", "n", "g n"].map(isSingleKey)).toEqual([true, true, true, true])
-    expect(["mod+k", "esc", "enter", "mod+enter", "ctrl+g"].map(isSingleKey))
-      .toEqual([false, false, false, false, false])
-  })
-
-  it("keeps every row while single keys are on", () => {
-    expect(activeRows(ROWS, true)).toEqual(ROWS)
   })
 })
 

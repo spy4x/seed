@@ -1,6 +1,5 @@
-import { useEffect, useRef } from "preact/hooks"
 import { signal } from "@preact/signals"
-import { createHotkeyMatcher, isApplePlatform } from "@spy4x/platform/browser/hotkeys"
+import { activeShortcuts, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import { browserStorage } from "@spy4x/platform/browser/storage"
 import type { KeyValueStore } from "@spy4x/platform/universal/key-value-store"
 
@@ -10,52 +9,22 @@ export interface BoundShortcut {
   run?: () => void
 }
 
-/** The open modal `<dialog>`, or `null`; `null` too where `:modal` cannot be matched. */
-function openModal(): Element | null {
-  try {
-    return document.querySelector("dialog:modal")
-  } catch {
-    return null
-  }
-}
-
 /**
- * Binds every row with `run`: a press, or a sequence of presses one second apart at most, runs
- * it. Nothing runs while the person types in a field or composes text through an input method,
- * inside a dialog or menu, or while a modal dialog is open, so `?` and `n` never open on top of
- * another dialog. `g` alone does nothing; it waits for the next key.
+ * Binds every row with `run` through preact-ui's `useHotkeys`, and, while `singleKeys` is off,
+ * only the rows that are not single keys (`activeShortcuts`): Ctrl K and Escape keep working, `?`,
+ * `/`, `n` and the `g` sequences do not. A row without `run` is listed only. `useHotkeys` leaves
+ * fields, input methods, dialogs, menus and an open modal alone, and `g` alone waits for the next
+ * key.
+ *
+ * @param rows The app's shortcuts.
+ * @param singleKeys Whether single-key shortcuts are on, on this device.
  */
-export function useShortcuts(rows: readonly BoundShortcut[]): void {
-  const latest = useRef(rows)
-  latest.current = rows
-  const bound = rows.filter((row) => row.run).map((row) => row.keys).join("\n")
-  useEffect(() => {
-    if (bound === "") return
-    const keys = bound.split("\n")
-    const match = createHotkeyMatcher<string, KeyboardEvent>(
-      keys.map((combo) => ({ id: combo, keys: combo.split(" ") })),
-      {
-        apple: isApplePlatform(),
-        ignore: (event) => {
-          if (event.defaultPrevented) return true
-          // The target can be the document, which has no `closest`.
-          const target = event.target as Partial<Element> | null
-          return target?.closest?.("dialog, [role=dialog], [role=menu]") != null ||
-            openModal() !== null
-        },
-      },
-    )
-    const listener = (event: KeyboardEvent) => {
-      const id = match(event)
-      if (id === undefined) return
-      const row = latest.current.find((candidate) => candidate.keys === id && candidate.run)
-      if (!row?.run) return
-      event.preventDefault()
-      row.run()
-    }
-    document.addEventListener("keydown", listener)
-    return () => document.removeEventListener("keydown", listener)
-  }, [bound])
+export function useShortcuts(rows: readonly BoundShortcut[], singleKeys: boolean): void {
+  useHotkeys(
+    activeShortcuts(rows, singleKeys).flatMap(({ keys, run }) =>
+      run ? [{ keys, handler: () => run() }] : []
+    ),
+  )
 }
 
 /** Where the single-key setting is kept on this device. */
