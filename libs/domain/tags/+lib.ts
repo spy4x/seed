@@ -1,7 +1,7 @@
 import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
-import { canMutateNotes, canRead, GroupRole } from "@domain/groups"
+import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
 import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 
@@ -337,7 +337,20 @@ export type TagExportEntry = typeof tagExportEntrySchema.infer
 
 /** Checks one tag of a file with the rules of a create. Throws `TagError("INVALID_REQUEST")`. */
 export function parseTagExportEntry(value: unknown): TagExportEntry {
+  const shape = tagExportEntrySchema(value)
+  if (shape instanceof type.errors) {
+    throw new TagError("INVALID_REQUEST", plainEntryProblem(shape, "tag", TAG_EXPORT_LABELS))
+  }
   return parseTagRequest(tagExportEntrySchema, value) as TagExportEntry
+}
+
+/** What a refusal calls each field of a tag in a file. */
+const TAG_EXPORT_LABELS = {
+  id: "id",
+  name: "name",
+  color: "colour",
+  createdAt: "creation date",
+  updatedAt: "last change date",
 }
 
 /**

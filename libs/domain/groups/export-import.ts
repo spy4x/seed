@@ -1,3 +1,4 @@
+import type { ArkErrors } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
 import { canRead, type GroupColor, GroupError, GroupRole, type GroupSummary } from "./+lib.ts"
@@ -25,8 +26,18 @@ export const GROUP_EXPORT_VERSION = 1
  */
 export const GROUP_IMPORT_MAX_BYTES = 5 * 1024 * 1024
 
-/** The most problems a refused file reports one by one; the rest are only counted. */
+/**
+ * The most problems a refused file reports. The check stops reading the file at this many, so a
+ * file of a million bad entries costs no more than one of twenty.
+ */
 export const GROUP_IMPORT_PROBLEMS_MAX = 20
+
+/**
+ * The most entries of one kind a file may hold. A longer list is refused before any entry of it is
+ * read: the entries are checked one by one on the API's only thread, and a 5 MiB file can hold
+ * about 1.7 million empty ones.
+ */
+export const GROUP_IMPORT_ENTRIES_MAX = 50_000
 
 /** The audit and change events an export and an import write. */
 export const GROUP_FILE_EVENTS = {
@@ -58,7 +69,8 @@ export type GroupImportProblem =
 
 /**
  * A file the import refuses. Nothing is written. `problems` holds at most
- * {@link GROUP_IMPORT_PROBLEMS_MAX}; `total` counts them all.
+ * {@link GROUP_IMPORT_PROBLEMS_MAX}, the first ones found; `total` is how many were found before
+ * the check stopped reading.
  */
 export class GroupImportError extends Error {
   readonly code = "IMPORT_REFUSED"
@@ -219,4 +231,32 @@ export interface GroupFilePorter {
     actorId: number,
     allowances: MoveAllAllowances,
   ): Promise<GroupImportResult>
+}
+
+/**
+ * One plain sentence for the first problem arktype found in an entry of an export file, for a
+ * person who never saw the file's insides: "the text is missing", not "body must be a string (was
+ * missing)". `noun` names the entry ("note"); `labels` names its fields ("body": "text"), and
+ * `"tagIds[]"` names one item of a list field.
+ */
+export function plainEntryProblem(
+  errors: ArkErrors,
+  noun: string,
+  labels: Readonly<Record<string, string>>,
+): string {
+  const error = errors[0]
+  const [key, item] = Array.from(error.path, String)
+  if (key === undefined) return `it is not a ${noun}`
+  const label = (item === undefined ? labels[key] : labels[`${key}[]`]) ?? `"${key}"`
+  if (error.code === "required") return `the ${label} is missing`
+  if (error.code === "predicate" && error.expected === "removed") {
+    return `it holds "${key}", which a ${noun} does not have`
+  }
+  if (error.expected === "a string") return `the ${label} must be text`
+  if (error.expected === "an array") return `the ${label} must be a list`
+  if (error.expected?.startsWith("an ISO 8601")) return `the ${label} must be a date and time`
+  if (error.code === "predicate" && error.expected) {
+    return `the ${label} must be ${error.expected.replaceAll(`"`, "")}`
+  }
+  return `the ${label} is not valid`
 }

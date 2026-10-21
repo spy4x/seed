@@ -21,6 +21,7 @@ import {
   noteRestoreRequestSchema,
   noteUpdateRequestSchema,
   NoteVersionConflictError,
+  parseNoteExportEntry,
   parseNoteMoveRequest,
   parseNoteRequest,
   parseNoteSearchRequest,
@@ -316,5 +317,36 @@ describe(`parseNoteSearchRequest`, () => {
   it(`refuses a payload with any field but q`, () => {
     expect(() => parseNoteSearchRequest({ q: `plan`, groupId: `x` })).toThrow(NoteError)
     expect(() => parseNoteSearchRequest({ q: 12 })).toThrow(NoteError)
+  })
+})
+
+describe("reading a note from an export file", () => {
+  const entry = {
+    id: "0199f2a0-0000-7000-8000-000000000001",
+    title: "Groceries",
+    body: "",
+    tagIds: [],
+    createdAt: "2026-10-01T09:00:00.000Z",
+    updatedAt: "2026-10-01T09:00:00.000Z",
+  }
+  const problem = (value: unknown) => {
+    try {
+      parseNoteExportEntry(value)
+    } catch (error) {
+      if (error instanceof NoteError) return error.message
+      throw error
+    }
+    throw new Error(`The entry was accepted`)
+  }
+
+  it("names a missing, mistyped or too long field in plain words", () => {
+    const { body: _body, ...withoutBody } = entry
+    expect(problem(withoutBody)).toBe(`the text is missing`)
+    expect(problem({ ...entry, title: 5 })).toBe(`the title must be text`)
+    expect(problem({ ...entry, title: `x`.repeat(NOTE_TITLE_MAX_LENGTH + 1) })).toBe(
+      `Note title must contain 1 to ${NOTE_TITLE_MAX_LENGTH} characters`,
+    )
+    expect(problem({ ...entry, tagIds: [`nope`] })).toBe(`the tag id is not valid`)
+    expect(problem({ ...entry, extra: 1 })).toBe(`it holds "extra", which a note does not have`)
   })
 })

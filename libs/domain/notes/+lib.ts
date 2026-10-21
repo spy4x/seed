@@ -3,7 +3,7 @@ import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
-import { canMutateNotes, canRead, GroupRole } from "@domain/groups"
+import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
 
 /**
  * Notes: the reference aggregate. A note belongs to one group; every member of the group reads it,
@@ -650,6 +650,21 @@ export type NoteExportEntry = typeof noteExportEntrySchema.infer
  * characters, at most {@link NOTE_TAG_MAX} tags. Throws `NoteError("INVALID_REQUEST")`.
  */
 export function parseNoteExportEntry(value: unknown): NoteExportEntry {
+  const shape = noteExportEntrySchema(value)
+  if (shape instanceof type.errors) {
+    throw new NoteError("INVALID_REQUEST", plainEntryProblem(shape, "note", NOTE_EXPORT_LABELS))
+  }
   return parseNoteRequest(noteExportEntrySchema, value) as NoteExportEntry
+}
+
+/** What a refusal calls each field of a note in a file. */
+const NOTE_EXPORT_LABELS = {
+  id: "id",
+  title: "title",
+  body: "text",
+  tagIds: "tags",
+  "tagIds[]": "tag id",
+  createdAt: "creation date",
+  updatedAt: "last change date",
 }
 // #endregion Export file
