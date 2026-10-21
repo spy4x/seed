@@ -114,8 +114,11 @@ export interface PasskeyOperations {
     state: AppAuthState,
     response: RegistrationResponse,
   ): Promise<{ outcome: PasskeyAddOutcome; keyId?: number; name?: string }>
-  /** Renames passkey `keyId` of the person. `false` when they have no such passkey. */
-  rename(state: AppAuthState, keyId: number, name: string): Promise<boolean>
+  /**
+   * Renames passkey `keyId` of the person and writes the audit row that names both names. `false`
+   * when they have no such passkey.
+   */
+  rename(c: Context, state: AppAuthState, keyId: number, name: string): Promise<boolean>
   /**
    * Options for signing in with any passkey of the site (the picker and autofill). With
    * `current`, options for signing in again as that person, which confirms a step the others
@@ -274,7 +277,23 @@ export function createPasskeyOperations(
       }
     },
 
-    rename: ({ user }, keyId, name) => db.passkeys.rename(user.id, keyId, name),
+    rename(c, { user }, keyId, name) {
+      return db.begin(async (tx) => {
+        const previous = await tx.passkeys.rename(user.id, keyId, name)
+        if (previous === null) return false
+        if (previous !== name) {
+          await tx.authAudit.insert(
+            own.auditRow(
+              c,
+              user.id,
+              AuthAuditEventType.SIGN_IN_METHOD_RENAMED,
+              `${passkeyIdentifier(name)} from=${previous}`,
+            ),
+          )
+        }
+        return true
+      })
+    },
 
     async signInOptions(current) {
       const { rp } = required()

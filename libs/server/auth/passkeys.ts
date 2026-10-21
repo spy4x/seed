@@ -117,19 +117,27 @@ export async function recordPasskeyUse(
   `
 }
 
-/** Renames passkey `keyId` of `userId`. `false` when the person has no such passkey. */
+/**
+ * Renames passkey `keyId` of `userId` and gives back the name it had, for the audit row. `null`
+ * when the person has no such passkey.
+ */
 export async function renamePasskey(
   sql: postgres.Sql,
   userId: number,
   keyId: number,
   name: string,
-): Promise<boolean> {
-  const rows = await sql`
-    UPDATE auth_passkeys SET name = ${name}
-    WHERE key_id = ${keyId} AND user_id = ${userId}
-    RETURNING key_id
+): Promise<string | null> {
+  const [row] = await sql<{ previous: string }[]>`
+    UPDATE auth_passkeys AS passkey SET name = ${name}
+    FROM (
+      SELECT key_id, name FROM auth_passkeys
+      WHERE key_id = ${keyId} AND user_id = ${userId}
+      FOR UPDATE
+    ) AS old
+    WHERE passkey.key_id = old.key_id
+    RETURNING old.name AS previous
   `
-  return rows.length === 1
+  return row?.previous ?? null
 }
 
 /**

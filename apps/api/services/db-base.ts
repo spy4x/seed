@@ -300,7 +300,7 @@ export class AppDbBase extends DbServiceBase {
       find: (credentialId: string): Promise<StoredPasskey | null> => findPasskey(sql, credentialId),
       recordUse: (keyId: number, use: { counter: number; backedUp: boolean }): Promise<void> =>
         recordPasskeyUse(sql, keyId, use),
-      rename: (userId: number, keyId: number, name: string): Promise<boolean> =>
+      rename: (userId: number, keyId: number, name: string): Promise<string | null> =>
         renamePasskey(sql, userId, keyId, name),
     }
   }

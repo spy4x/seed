@@ -88,6 +88,7 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.USER_ROLE_CHANGED]: "warning",
   [AuthAuditEventType.PASSWORD_RESET_SENT]: "neutral",
   [AuthAuditEventType.USERS_EXPORTED]: "neutral",
+  [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "neutral",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
@@ -121,6 +122,7 @@ export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.USER_ROLE_CHANGED]: "Role changed",
   [AuthAuditEventType.PASSWORD_RESET_SENT]: "Password-reset link sent by an operator",
   [AuthAuditEventType.USERS_EXPORTED]: "Exported the user list",
+  [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "Passkey renamed",
 }
 
 /**

@@ -300,7 +300,8 @@ under `passkey:<ceremony>:…<challenge>` and takes it with the atomic `take`, s
 once. The relying party is the web app's host and origin (`config.webAppUrl`). The routes are
 `apps/api/routes/auth-passkeys.ts`: `POST /api/auth/passkeys/add/options` asks for the password or
 the proof above, `POST /api/auth/passkeys` stores the passkey named after the browser
-(`deviceName`, " 2" on a clash), `PATCH /api/auth/passkeys/:id` renames it, and
+(`deviceName`, " 2" on a clash), `PATCH /api/auth/passkeys/:id` renames it
+(writing `SIGN_IN_METHOD_RENAMED` with both names), and
 `DELETE /api/auth/methods/:id` removes it like any method. `POST /api/auth/passkeys/sign-in` (with
 `/options`) signs in with any passkey of the site and owes no authenticator code, except to restore
 an account that waits to be deleted with two-factor on; an unknown credential answers 404 with

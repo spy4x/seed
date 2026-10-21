@@ -401,6 +401,12 @@ export enum AuthAuditEventType {
    * holds many people; `identifier` names the operator and the filter (`operator:<id> q=ada`).
    */
   USERS_EXPORTED = 24,
+  /**
+   * The person renamed one of their passkeys (#222). `identifier` names both names:
+   * `passkey name=<new> from=<old>`. Numbers 25 to 29 are the billing events of
+   * `@domain/billing/admin.ts`.
+   */
+  SIGN_IN_METHOD_RENAMED = 30,
 }
 
 export const authAuditBaseSchema = type({
@@ -430,6 +436,7 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.USER_ROLE_CHANGED,
     AuthAuditEventType.PASSWORD_RESET_SENT,
     AuthAuditEventType.USERS_EXPORTED,
+    AuthAuditEventType.SIGN_IN_METHOD_RENAMED,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",

@@ -295,7 +295,7 @@ Deno.test("the same passkey cannot be added twice, to the same or another accoun
   })
 })
 
-Deno.test("a passkey is renamed by its owner only, to a name of 1 to 64 characters", async () => {
+Deno.test("a passkey is renamed by its owner only, to a name of 1 to 64 characters, and the trail says so", async () => {
   await withSchema(async (sql) => {
     const app = buildApp(sql)
     const ada = await passwordAccount(app, "ada@example.com")
@@ -314,6 +314,20 @@ Deno.test("a passkey is renamed by its owner only, to a name of 1 to 64 characte
     expect(other.status).toBe(404)
     expect(await other.json()).toEqual({ error: PASSKEY_NOT_FOUND })
     expect(await sql`SELECT name FROM auth_passkeys`).toEqual([{ name: "Work laptop" }])
+    // The same name again changes nothing, so the trail gets one row for the one rename.
+    expect((await ada.visitor.patch(`/auth/passkeys/${keyId}`, { name: "Work laptop" })).status)
+      .toBe(200)
+    const renames = (await audit(sql, ada.id))
+      .filter(([type]) => type === AuthAuditEventType.SIGN_IN_METHOD_RENAMED)
+    expect(renames).toEqual([[
+      AuthAuditEventType.SIGN_IN_METHOD_RENAMED,
+      "passkey name=Work laptop from=Firefox on Linux",
+    ]])
+    expect(
+      (await audit(sql, bob.id)).filter(([type]) =>
+        type === AuthAuditEventType.SIGN_IN_METHOD_RENAMED
+      ),
+    ).toEqual([])
   })
 })
 

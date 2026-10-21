@@ -145,7 +145,7 @@ export function createPasskeyRoute(
         if (!KEY_ID.test(raw)) return c.json({ error: PASSKEY_NOT_FOUND }, 404)
         const name = parsePasskeyName(await readApiJson(c))
         if (name === null) return c.json({ error: PASSKEY_NAME_INVALID }, 400)
-        if (!(await passkeys.rename(c.get("auth")!, Number(raw), name))) {
+        if (!(await passkeys.rename(c, c.get("auth")!, Number(raw), name))) {
           return c.json({ error: PASSKEY_NOT_FOUND }, 404)
         }
         return c.json({ name })
