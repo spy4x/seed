@@ -99,7 +99,7 @@ test.describe("keyboard shortcuts", () => {
     }
   })
 
-  test("the single-key switch stays under the pointer when it is turned off and on", async ({ page, request }) => {
+  test("the single-key switch stays under the pointer, and off it unbinds n and the g sequences but not Ctrl K", async ({ page, request }) => {
     const email = address("switch")
     try {
       await signUp(request, email)
@@ -110,6 +110,12 @@ test.describe("keyboard shortcuts", () => {
         const list = page.getByRole("dialog", { name: "Keyboard shortcuts" })
         const toggle = list.getByRole("switch", { name: "Single-key shortcuts" })
         await expect(toggle).toBeVisible()
+        // The dialog slides in; measure once its opening animation has finished.
+        await list.evaluate((dialog) =>
+          Promise.all(
+            dialog.getAnimations({ subtree: true }).map((animation) => animation.finished),
+          )
+        )
         const before = await toggle.boundingBox()
         await toggle.click()
         await expect(toggle).toHaveAttribute("aria-checked", "false")
@@ -121,6 +127,20 @@ test.describe("keyboard shortcuts", () => {
         await page.keyboard.press("Escape")
         await expect(list).toBeHidden()
       }
+
+      // Off, `n` and the `g` sequences do nothing; Ctrl K still opens search.
+      await press(page, "?")
+      const list = page.getByRole("dialog", { name: "Keyboard shortcuts" })
+      await list.getByRole("switch", { name: "Single-key shortcuts" }).click()
+      await page.keyboard.press("Escape")
+      await expect(list).toBeHidden()
+      const url = page.url()
+      await press(page, "n")
+      await press(page, "g t")
+      await expect(page.locator("[data-e2e=new-note-dialog]")).toBeHidden()
+      expect(page.url()).toBe(url)
+      await press(page, "Control+k")
+      await expect(page.locator("dialog[data-e2e=search]")).toBeVisible()
     } finally {
       await cleanup(request, email)
     }
