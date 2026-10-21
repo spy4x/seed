@@ -5,6 +5,7 @@ import { PlanError } from "@domain/billing"
 import {
   GROUP_EXPORT_FORMAT,
   GROUP_EXPORT_VERSION,
+  GROUP_IMPORT_ENTRIES_MAX,
   GROUP_IMPORT_PROBLEMS_MAX,
   GroupImportError,
 } from "@domain/groups"
@@ -15,6 +16,7 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
   groupFileParts,
   parseGroupFile,
+  portable,
   type PortableAggregate,
   writeGroupFile,
 } from "./portable.ts"
@@ -133,11 +135,51 @@ describe("parseGroupFile", () => {
       .toMatchObject({ where: "Note 2" })
   })
 
-  it("reports the first problems one by one and counts them all", () => {
-    const notes = Array.from({ length: GROUP_IMPORT_PROBLEMS_MAX + 5 }, () => ({ title: 1 }))
-    const { problems, total } = problemsOf(file({ notes }))
-    expect(problems).toHaveLength(GROUP_IMPORT_PROBLEMS_MAX)
-    expect(total).toBe(GROUP_IMPORT_PROBLEMS_MAX + 5)
+  it("stops reading entries once it has found as many problems as it reports", () => {
+    let read = 0
+    const counting = portable({
+      ...notePortable,
+      parse: (value) => {
+        read++
+        return notePortable.parse(value)
+      },
+    })
+    const notes = Array.from({ length: GROUP_IMPORT_PROBLEMS_MAX + 500 }, () => ({ title: 1 }))
+    try {
+      parseGroupFile(file({ notes, tags: [] }), [tagPortable, counting])
+      throw new Error("The file was accepted")
+    } catch (error) {
+      if (!(error instanceof GroupImportError)) throw error
+      expect(error.problems).toHaveLength(GROUP_IMPORT_PROBLEMS_MAX)
+      expect(error.total).toBe(GROUP_IMPORT_PROBLEMS_MAX)
+    }
+    expect(read).toBe(GROUP_IMPORT_PROBLEMS_MAX)
+  })
+
+  it("refuses a list longer than an import takes without reading any entry of it", () => {
+    let read = 0
+    const counting = portable({
+      ...notePortable,
+      parse: (value) => {
+        read++
+        return notePortable.parse(value)
+      },
+    })
+    const notes = Array.from({ length: GROUP_IMPORT_ENTRIES_MAX + 1 }, () => ({}))
+    try {
+      parseGroupFile(file({ notes, tags: [] }), [tagPortable, counting])
+      throw new Error("The file was accepted")
+    } catch (error) {
+      if (!(error instanceof GroupImportError)) throw error
+      expect(error.problems).toEqual([{
+        kind: "invalid",
+        where: "Notes",
+        problem: `the file holds ${
+          GROUP_IMPORT_ENTRIES_MAX + 1
+        } notes, and an import takes at most ${GROUP_IMPORT_ENTRIES_MAX}`,
+      }])
+    }
+    expect(read).toBe(0)
   })
 })
 

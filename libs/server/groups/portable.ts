@@ -4,6 +4,7 @@ import type { LimitKey } from "@domain/billing"
 import {
   GROUP_EXPORT_FORMAT,
   GROUP_EXPORT_VERSION,
+  GROUP_IMPORT_ENTRIES_MAX,
   GROUP_IMPORT_PROBLEMS_MAX,
   type GroupExportSettings,
   type GroupFilePart,
@@ -98,9 +99,10 @@ function messageOf(error: unknown): string {
 
 /**
  * Checks a whole export file against every registered aggregate and answers it parsed, or throws
- * {@link GroupImportError} with every problem found (the first
- * {@link GROUP_IMPORT_PROBLEMS_MAX} of them, and the count). A file that is not an export, or is
- * from a newer version, is refused before its parts are read. Nothing here reads the database.
+ * {@link GroupImportError} with the problems found. Reading stops at
+ * {@link GROUP_IMPORT_PROBLEMS_MAX} problems, and a list longer than
+ * {@link GROUP_IMPORT_ENTRIES_MAX} is refused unread. A file that is not an export, or is from a
+ * newer version, is refused before its parts are read. Nothing here reads the database.
  */
 export function parseGroupFile(
   value: unknown,
@@ -116,13 +118,12 @@ export function parseGroupFile(
   if (version > GROUP_EXPORT_VERSION) throw new GroupImportError([{ kind: "newer_version" }])
 
   const problems: GroupImportProblem[] = []
-  let total = 0
-  const report = (where: string, problem: string) => {
-    total++
+  const report: Report = (where, problem) => {
     if (problems.length < GROUP_IMPORT_PROBLEMS_MAX) {
       problems.push({ kind: "invalid", where, problem })
     }
   }
+  report.full = () => problems.length >= GROUP_IMPORT_PROBLEMS_MAX
 
   for (const key of Object.keys(value)) {
     if (!FILE_KEYS.includes(key)) {
@@ -145,17 +146,24 @@ export function parseGroupFile(
       if (!known.has(kind)) report("The file", `it holds "${kind}", which this app does not know`)
     }
     for (const aggregate of aggregates) {
+      if (report.full()) break
       entries.set(aggregate.kind, parseEntries(aggregate, parts[aggregate.kind] ?? [], report))
     }
   }
 
-  if (total > 0) throw new GroupImportError(problems, total)
+  if (problems.length > 0) throw new GroupImportError(problems)
   return { settings: settings!, entries }
+}
+
+/** Records one problem; `full` says the file has as many as it reports, so reading may stop. */
+interface Report {
+  (where: string, problem: string): void
+  full(): boolean
 }
 
 function parseSettings(
   value: unknown,
-  report: (where: string, problem: string) => void,
+  report: Report,
 ): GroupExportSettings | null {
   const where = "Group settings"
   if (!isRecord(value)) {
@@ -183,17 +191,27 @@ function parseSettings(
 function parseEntries(
   aggregate: PortableAggregate,
   value: unknown,
-  report: (where: string, problem: string) => void,
+  report: Report,
 ): PortableEntry[] {
   const label = capitalized(aggregate.one)
   if (!Array.isArray(value)) {
     report(capitalized(aggregate.other), `${aggregate.kind} must be a list`)
     return []
   }
+  // Counted before a single entry is read: each read is synchronous work on the API's thread.
+  if (value.length > GROUP_IMPORT_ENTRIES_MAX) {
+    report(
+      capitalized(aggregate.other),
+      `the file holds ${value.length} ${aggregate.other}, and an import takes at most ` +
+        `${GROUP_IMPORT_ENTRIES_MAX}`,
+    )
+    return []
+  }
   const parsed: PortableEntry[] = []
   const ids = new Set<string>()
   let valid = true
-  value.forEach((item, index) => {
+  for (const [index, item] of value.entries()) {
+    if (report.full()) return parsed
     try {
       const entry = aggregate.parse(item)
       if (ids.has(entry.id)) {
@@ -206,7 +224,7 @@ function parseEntries(
       report(`${label} ${index + 1}`, messageOf(error))
       valid = false
     }
-  })
+  }
   // The checks across entries read every entry, so they run only once each one is valid.
   if (valid) {
     for (const { index, problem } of aggregate.check?.(parsed) ?? []) {
