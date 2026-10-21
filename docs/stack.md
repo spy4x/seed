@@ -43,7 +43,8 @@ Defined in `infra/compose/`:
   published port. It queries through PgBouncer ("Database connections" below). `WORKER_CPU_LIMIT`
   and `WORKER_MEM_LIMIT` default to 0.5 CPU and 256M.
 - **Traefik** - reverse proxy, in `infra/compose/compose.proxy.yml`, started by
-  `deno task proxy:start` for local work and in production alike.
+  `deno task proxy:start` in production and by `deno task dev` locally, unless a container named
+  `traefik` already runs (another project's, or a shared one).
 - **vmagent, Vector, postgres-exporter** - collect this project's metrics and logs and send them
   on; see "Monitoring" below. They always run, and so does **socket-proxy**, through which Vector
   reads the Docker API ("The Docker socket" below).
