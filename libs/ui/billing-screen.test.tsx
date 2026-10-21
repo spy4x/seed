@@ -330,10 +330,10 @@ describe("GroupBillingPanel", () => {
     expect(root!.querySelectorAll("button, a[href]").length).toBe(0)
   })
 
-  it("says Stripe is confirming the payment only while the owner is back from checkout and the group is still free", async () => {
+  it("says Stripe is confirming the plan only while the owner is back from checkout and the group is still free", async () => {
     await mount(panel(FREE_OWNER, { confirming: true }))
     expect(find("[data-e2e=billing-confirming]").textContent).toBe(
-      "Stripe is confirming the payment. This page updates by itself.",
+      "Stripe is confirming your plan. This page updates by itself.",
     )
     await rerender(panel(PRO_OWNER, { confirming: true }))
     expect(has("[data-e2e=billing-confirming]")).toBe(false)

@@ -282,7 +282,7 @@ function PlanSummary(props: GroupBillingPanelProps & { billing: GroupBilling }):
         {body && <div class="text-sm text-muted">{body}</div>}
         {confirming && state === BillingState.FREE && (
           <p role="status" class="text-sm text-muted" data-e2e="billing-confirming">
-            Stripe is confirming the payment. This page updates by itself.
+            Stripe is confirming your plan. This page updates by itself.
           </p>
         )}
         {action && <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">{action}</div>}

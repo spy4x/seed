@@ -336,7 +336,7 @@ that neither misses one.
    **Upgrade to Pro** once their trial is used). The API asks Stripe for a checkout session with the
    group's id as its reference and sends the browser there.
 2. Stripe takes the payment and returns the browser to the tab, at
-   `/groups/:groupId/billing?checkout=done`. The tab says Stripe is confirming the payment, and
+   `/groups/:groupId/billing?checkout=done`. The tab says Stripe is confirming the plan, and
    says "You're on Pro" in a toast once the webhook below has changed the plan. The portal and a
    cancelled checkout return to the tab too.
 3. Stripe posts `customer.subscription.created` to `POST /api/webhooks/billing`. The API checks the
