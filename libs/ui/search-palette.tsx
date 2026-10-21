@@ -9,7 +9,7 @@ import {
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import { type GroupRole } from "@domain/groups"
 import { ROLE_TEXT } from "./groups-screen.tsx"
-import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS, TAG_PATHS } from "./progressive.tsx"
+import { GROUP_PATHS, SCREEN_PATHS, TAG_PATHS } from "./progressive.tsx"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -42,6 +42,8 @@ export type SearchChoice =
   | { kind: "group"; groupId: string }
   /** Go to a page of the app. */
   | { kind: "page"; href: string }
+  /** Open the New note dialog, which adds a note without leaving the page. */
+  | { kind: "new-note" }
 
 /** Props of {@link SearchPalette}. */
 export interface SearchPaletteProps {
@@ -59,6 +61,11 @@ export interface SearchPaletteProps {
   online: boolean
   /** Called with what the person picked, after the palette has closed. */
   onSelect: (choice: SearchChoice) => void
+  /**
+   * Whether `/` opens the palette too. Defaults to `true`; `false` while the person turned the
+   * single-key shortcuts off on this device. Ctrl K (⌘K) always does.
+   */
+  slashKey?: boolean
 }
 
 /**
@@ -66,6 +73,11 @@ export interface SearchPaletteProps {
  * field.
  */
 export const SEARCH_HOTKEYS: readonly string[] = ["mod+k", "/"]
+
+/** The keys that open the search now: `/` only while the single-key shortcuts are on. */
+export function searchHotkeys(slashKey: boolean): readonly string[] {
+  return slashKey ? SEARCH_HOTKEYS : SEARCH_HOTKEYS.filter((keys) => keys !== "/")
+}
 
 /** The fewest characters a note search takes; one letter finds too much. The API holds the same. */
 export const NOTE_QUERY_MIN = 2
@@ -129,13 +141,14 @@ export function emptyLabel(query: string, onDevice: boolean): string {
  * Before anything is typed it lists the current group's most recent notes, then the actions. A
  * query lists the notes that match (from `searchNotes`), then the person's groups whose name
  * matches, then the matching actions. When the notes come from the device, their heading and the
- * no-results line say so. An action the person cannot take now is not listed: "New note" and
- * "New tag" need a group they may write to, and "New group" needs the server.
+ * no-results line say so. "New note" asks for the New note dialog rather than a page. An action
+ * the person cannot take now is not listed: "New note" and "New tag" need a group they may write
+ * to, and "New group" needs the server.
  */
 export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   const root = useRef<HTMLDivElement>(null)
   useHotkeys(
-    SEARCH_HOTKEYS.map((keys) =>
+    searchHotkeys(props.slashKey ?? true).map((keys) =>
       hotkeyClickBinding(keys, () => trigger(root.current), () => root.current)
     ),
   )
@@ -231,7 +244,16 @@ function actionOptions(
   })
   const inGroup = currentGroup?.canWrite ? `In ${currentGroup.name}` : null
   return [
-    ...(inGroup ? [page("new-note", "New note", NOTE_PATHS.new, inGroup)] : []),
+    // The same dialog as `n`: the note is added without leaving the page.
+    ...(inGroup
+      ? [{
+        id: "action-new-note",
+        label: "New note",
+        detail: inGroup,
+        group: HEADINGS.actions,
+        choice: { kind: "new-note" } as const,
+      }]
+      : []),
     ...(inGroup ? [page("new-tag", "New tag", TAG_PATHS.new, inGroup)] : []),
     ...(online ? [page("new-group", "New group", GROUP_PATHS.new)] : []),
     page("notifications", "Open notifications", SCREEN_PATHS.notifications),

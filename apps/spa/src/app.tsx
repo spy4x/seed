@@ -45,6 +45,7 @@ import { notificationsStore } from "./state/notifications.ts"
 import { invitationsStore } from "./state/invitations.ts"
 import { onboardingStore } from "./state/onboarding.ts"
 import { preferencesState } from "./state/preferences.ts"
+import { newNoteStore } from "./state/new-note.ts"
 import { PricingView } from "./views/BillingViews.tsx"
 import { billingStore } from "./state/billing.ts"
 import { NoteEditorView } from "./views/NoteEditorView.tsx"
@@ -233,6 +234,7 @@ export function App() {
       notificationsStore.reset()
       onboardingStore.reset()
       preferencesState.reset()
+      newNoteStore.reset()
       return
     }
     // The REST read is the pull: it runs at start-up, after every reconnect and for every push
