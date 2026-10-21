@@ -130,4 +130,5 @@ Deno.test("a temporary file left by a crash does not bring its mode along", () =
     await Deno.chmod(`${dir}/vapid.json.tmp`, 0o644)
     await writeSafely(`${dir}/vapid.json`, `{}`, 0o600)
     expect(await modeOf(`${dir}/vapid.json`)).toBe(0o600)
+    expect([...Deno.readDirSync(dir)].map((entry) => entry.name)).toEqual([`vapid.json`])
   }))

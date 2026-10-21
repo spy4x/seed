@@ -102,7 +102,7 @@ if (import.meta.main) {
     console.error(`infra/envs/.env is missing. Run: deno task init`)
     Deno.exit(1)
   })
-  // One plain line on failure, not a stack trace: Docker's own output is already above it.
+  // One plain line on failure, not a stack trace; the start shows Docker's own output above it.
   try {
     const provider = containerProvider(envVars)
     if (await ensureProxyNetwork(provider, runContainerCli)) {
