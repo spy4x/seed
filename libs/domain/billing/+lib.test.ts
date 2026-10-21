@@ -1,4 +1,5 @@
 import { expect } from "@std/expect"
+import { ONE_DAY_IN_MILLISECONDS as DAY } from "@spy4x/platform/universal/time-constants"
 import { describe, it } from "@std/testing/bdd"
 import { SubscriptionStatus } from "@spy4x/billing"
 import { GroupRole } from "@domain/groups"
@@ -35,7 +36,6 @@ import {
 /** When the first payment failed in the tests below. */
 const FAILED_AT = new Date("2026-10-01T10:00:00Z")
 const NOW = new Date("2026-10-02T10:00:00Z")
-const DAY = 24 * 60 * 60 * 1000
 
 const subscription = (status: BillingStatus, planId: string | null = PRO_PLAN_ID) =>
   ({

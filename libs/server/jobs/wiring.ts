@@ -1,4 +1,5 @@
 import type postgres from "postgres"
+import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { nextUtcHour } from "@spy4x/platform/universal/time"
 import {
   attemptFailureLine,
@@ -73,8 +74,6 @@ import {
   OUTBOX_CLEANUP_JOB,
   OUTBOX_RETENTION_DAYS,
 } from "./jobs.ts"
-
-const DAY_MS = 24 * 60 * 60_000
 
 /** The hour, in UTC, at which the nightly jobs first run. */
 const NIGHTLY_HOUR_UTC = 3
@@ -157,7 +156,7 @@ export function createOutboxProcessor(
       fallback: provider ? new SeatSyncPublisher(sql, notifier) : notifier,
     }),
     {
-      repeatEveryMs: { [OUTBOX_CLEANUP_JOB]: DAY_MS },
+      repeatEveryMs: { [OUTBOX_CLEANUP_JOB]: ONE_DAY_IN_MILLISECONDS },
       repeatAfterGiveUp: true,
       onAttemptFailed: (failure) => mail.log(attemptFailureLine(failure)),
       ...JOB_RETRY,
