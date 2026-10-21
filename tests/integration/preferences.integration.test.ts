@@ -52,6 +52,7 @@ const berlin: Preferences = {
   locale: `de-DE`,
   timeZone: `Europe/Berlin`,
   hourCycle: `h23`,
+  overview: [],
 }
 
 Deno.test(`preferences: a save writes the next version, and one on an older version is refused`, async () => {
