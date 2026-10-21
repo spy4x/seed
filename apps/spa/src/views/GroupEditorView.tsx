@@ -14,6 +14,7 @@ import { membersStore } from "../state/members.ts"
 import { selectionStore } from "../state/selection.ts"
 import { billingStore } from "../state/billing.ts"
 import { invitationsStore } from "../state/invitations.ts"
+import { groupExportStore } from "../state/group-files.ts"
 import { GroupBillingCard } from "./BillingViews.tsx"
 import { toasts } from "../state/toasts.ts"
 import { isSpaPath } from "./spa-paths.ts"
@@ -213,6 +214,9 @@ function ExistingGroup({ groupId }: { groupId: string }) {
       saving={working?.groupId === groupId && working.action === "save"}
       offline={offlineNow()}
       onSave={() => void saveAndAnnounce(store, groupId, toasts)}
+      onExport={() => void groupExportStore.download(groupId)}
+      exporting={groupExportStore.exporting.value === groupId}
+      exportFailed={groupExportStore.failed.value === groupId}
       onDiscard={() => store.discard()}
       isLastGroup={store.groups.value.length <= 1}
       hasSubscription={billingOurs?.subscribed ?? false}

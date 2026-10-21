@@ -48,8 +48,8 @@ import { define } from "../utils.ts"
 /** The home page's title and description, as search results and social previews show them. */
 export const HOME_HEAD = {
   title: `Seed: free open-source SaaS starter and boilerplate`,
-  description: `Free, MIT-licensed SaaS starter: sign-in with 2FA, teams with roles, per-seat ` +
-    `Stripe billing, realtime and an offline app. Deno, Postgres, Docker Compose.`,
+  description: `Free, MIT-licensed SaaS starter: sign-in with 2FA, groups with roles, per-member ` +
+    `Stripe billing, realtime, offline. Deno, Postgres, Docker Compose.`,
 } as const
 
 /**
@@ -77,8 +77,9 @@ export const QUICK_START = [
 
 const WORKS_TODAY = [
   `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, 2FA with an authenticator app`,
-  `Teams with members, roles, invitations and ownership transfer`,
-  `Per-seat billing with trials, through Stripe`,
+  `Groups with members, roles, invitations and ownership transfer`,
+  `Exporting a group to a file, and importing one as a new group`,
+  `Per-member billing with trials, through Stripe`,
   `The list of signed-in devices, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
   `Realtime, the offline app and web push`,
@@ -106,8 +107,8 @@ const FAQ = [
     id: `faq-stack`,
     question: `Why Deno and Preact instead of Next.js?`,
     answerText: `They run on web standards (fetch, Request, Web Crypto, ES modules), start fast ` +
-      `and need few dependencies, so there is less to update and less that breaks. If your team ` +
-      `lives in the Next.js ecosystem, a Next.js starter will suit you better; the comparison ` +
+      `and need few dependencies, so there is less to update and less that breaks. If you work ` +
+      `in the Next.js ecosystem, a Next.js starter will suit you better; the comparison ` +
       `names good ones.`,
   },
   {
@@ -120,7 +121,7 @@ const FAQ = [
     id: `faq-production`,
     question: `Is it production-ready?`,
     answerText: `The parts listed under "Works today" have tests in CI: every pull request ` +
-      `runs the sign-in, profile, notes and teams tests, and the full suite runs after each ` +
+      `runs the sign-in, profile, notes and groups tests, and the full suite runs after each ` +
       `merge. Seed as a whole is still a work in progress; read the status list before you ` +
       `rely on a part.`,
   },
@@ -163,7 +164,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
             </h1>
             <p class="text-lg text-muted text-pretty">
               Seed is a free, MIT-licensed SaaS starter with sign-in and two-factor authentication
-              (2FA), teams with roles, per-seat Stripe billing, realtime, an offline app and an
+              (2FA), groups with roles, per-member Stripe billing, realtime, an offline app and an
               admin area. You deploy it to one Linux server you rent with Docker Compose.
             </p>
             <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
@@ -214,7 +215,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
             >
               <Shot
                 name="notes"
-                alt="The notes screen of the Seed web app: a list of a team's notes with their tags and when each changed, and a button to add one."
+                alt="The notes screen of the Seed web app: a list of a group's notes with their tags and when each changed, and a button to add one."
                 sizes="(min-width: 1024px) 960px, 100vw"
                 priority
               />
@@ -240,7 +241,7 @@ function BillingCrop(): JSX.Element {
           <Shot
             name="billing"
             kind="mobile"
-            alt="A sample team's plan in the demo app, at the demo's example prices: Pro, active, €36.00 a month with its renewal date, a button to manage billing, and a note that 4 members pay €9.00 each a month, the owner included."
+            alt="A sample group's plan in the demo app, at the demo's example prices: Pro, active, €36.00 a month with its renewal date, a button to manage billing, and a note that 4 members pay €9.00 each a month, the owner included."
             sizes="390px"
           />
         </div>
@@ -265,6 +266,7 @@ function Features(): JSX.Element {
             title="Sign-in that is done"
             Icon={IconShieldCheck}
             href="/features#sign-in"
+            linkLabel="How sign-in works"
             wide
             media={
               <Shot
@@ -279,19 +281,21 @@ function Features(): JSX.Element {
           </FeatureCard>
           <FeatureCard
             id="feature-billing"
-            title="Per-seat billing"
+            title="Per-member billing"
             Icon={IconCreditCard}
             href="/features#billing"
+            linkLabel="How billing works"
             media={<BillingCrop />}
           >
-            Stripe subscriptions per team: a free plan with limits, a paid plan per seat, trials, a
-            grace period when a card fails. The owner confirms the price before each invite.
+            Stripe subscriptions per group: a free plan with limits, a paid plan per member, trials,
+            a grace period when a card fails. The owner confirms the price before each invite.
           </FeatureCard>
           <FeatureCard
             id="feature-realtime"
             title="Realtime and offline"
             Icon={IconZap}
             href="/features#realtime"
+            linkLabel="How realtime and offline work"
             media={
               <div class="h-94 overflow-hidden">
                 {/* As wide as the card up to 416 px, so the Save button is never cut. */}
@@ -310,9 +314,10 @@ function Features(): JSX.Element {
           </FeatureCard>
           <FeatureCard
             id="feature-teams"
-            title="Teams from day one"
+            title="Groups from day one"
             Icon={IconUsers}
             href="/features#teams"
+            linkLabel="How groups work"
             wide
             media={
               <div class="aspect-[1280/470] overflow-hidden lg:flex lg:aspect-auto lg:h-94 lg:justify-center lg:bg-canvas">
@@ -321,7 +326,7 @@ function Features(): JSX.Element {
                   <div class="lg:w-[1024px] lg:-translate-x-[221.6px]">
                     <Shot
                       name="group-members"
-                      alt="The members of a team, each with their role, a button to invite people, and one member's menu open: Make Viewer, Make Admin, Remove from group."
+                      alt="The members of a group, each with their role, a button to invite people, and one member's menu open: Make Viewer, Make Admin, Remove from group."
                       sizes="(min-width: 1024px) 1024px, 100vw"
                     />
                   </div>
@@ -329,8 +334,8 @@ function Features(): JSX.Element {
               </div>
             }
           >
-            Every account gets a team at sign-up. Invite people, give them roles from viewer to
-            owner, hand ownership over, restore a deleted team for 30 days.
+            Every account gets a group at sign-up. Invite people, give them roles from viewer to
+            owner, hand ownership over, restore a deleted group for 30 days.
           </FeatureCard>
           {/* The card draws its own link; Umami counts a click on anything inside this wrapper. */}
           <div class="contents" data-umami-event="home-admin-card">
@@ -339,9 +344,10 @@ function Features(): JSX.Element {
               title="An admin area"
               Icon={IconServer}
               href="/admin"
+              linkLabel="Tour the admin panel"
             >
-              Operators find a person, manage teams, refund a payment and check the system's health.
-              On its own host, with every action confirmed and logged.
+              Operators find a person, manage groups, refund a payment and check the system's
+              health. On its own host, with every action confirmed and logged.
             </FeatureCard>
           </div>
           <FeatureCard
@@ -349,6 +355,7 @@ function Features(): JSX.Element {
             title="A public website"
             Icon={IconGlobe}
             href="/features#website"
+            linkLabel="What the website includes"
           >
             This site: server-rendered, works with JavaScript turned off, with pricing from your
             plan catalog, legal pages and a double opt-in newsletter.
@@ -578,8 +585,8 @@ function Questions(): JSX.Element {
                 <p>
                   They run on web standards (<code>fetch</code>,{" "}
                   <code>Request</code>, Web Crypto, ES modules), start fast and need few
-                  dependencies, so there is less to update and less that breaks. If your team lives
-                  in the Next.js ecosystem, a Next.js starter will suit you better;{" "}
+                  dependencies, so there is less to update and less that breaks. If you work in the
+                  Next.js ecosystem, a Next.js starter will suit you better;{" "}
                   {/* Seed's own site: see docs/start-a-product.md */}
                   <a href="/compare" class="text-primary underline">the comparison</a>{" "}
                   names good ones.

@@ -74,7 +74,8 @@ const NOTES: { title: string; body: string; tags: TagName[]; author: Person }[] 
   },
   {
     title: "Interview notes: three design agencies",
-    body: "All three bill per seat and hate per-seat pricing. Two of them work offline on trains.",
+    body:
+      "All three bill per member and hate per-member pricing. Two of them work offline on trains.",
     tags: ["Research"],
     author: MARGARET,
   },
@@ -123,13 +124,13 @@ const OG_CARDS: OgCard[] = [
     file: "home",
     eyebrow: "Open-source SaaS foundation",
     title: "The groundwork of your SaaS, already built.",
-    sub: "Seed · open source · MIT · one server you own",
+    sub: "Seed · open source · MIT · one server you rent",
     shot: "shots/notes-dark-1280.webp",
   },
   {
     file: "features",
     eyebrow: "Features",
-    title: "Auth, teams, billing, offline, admin.",
+    title: "Auth, groups, billing, offline, admin.",
     sub: "Everything Seed ships, and what it does not yet",
     shot: "shots/group-members-dark-1280.webp",
   },

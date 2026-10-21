@@ -1,6 +1,6 @@
 import type { Context } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
-import { GroupError, GroupErrorCode } from "@domain/groups"
+import { GroupError, GroupErrorCode, GroupImportError } from "@domain/groups"
 import { AccessError } from "@domain/identity"
 import { PlanError, type PlanErrorCode, toPlanRefusal } from "@domain/billing"
 import { TagError } from "@domain/tags"
@@ -14,6 +14,7 @@ export type GroupFeatureErrorCode =
   | "IDEMPOTENCY_IN_PROGRESS"
   | "IDEMPOTENCY_KEY_INVALID"
   | "IDEMPOTENCY_KEY_REUSED"
+  | "IMPORT_REFUSED"
   | "INTERNAL_ERROR"
   | "MFA_REQUIRED"
   | PlanErrorCode
@@ -48,6 +49,7 @@ const ERROR_DEFINITIONS: Record<GroupFeatureErrorCode, ErrorDefinition> = {
     status: 422,
     message: "Idempotency key was already used for a different request",
   },
+  IMPORT_REFUSED: { status: 422, message: "The file cannot be imported" },
   INTERNAL_ERROR: { status: 500, message: "Internal server error" },
   INVALID_CURSOR: { status: 400, message: "Group list cursor is invalid" },
   INVALID_REQUEST: { status: 400, message: "Request is invalid" },
@@ -99,7 +101,8 @@ export function groupErrorResponse(c: Context<APIContext>, error: unknown): Resp
     }, 429)
   }
   const code = error instanceof GroupFeatureError || error instanceof GroupError ||
-      error instanceof AccessError || error instanceof PlanError
+      error instanceof AccessError || error instanceof PlanError ||
+      error instanceof GroupImportError
     ? error.code
     : error instanceof IdempotencyError
     ? IDEMPOTENCY_CODES[error.code]
@@ -115,6 +118,10 @@ export function groupErrorResponse(c: Context<APIContext>, error: unknown): Resp
       requestId: c.get("requestId") || "unknown",
       // A plan refusal names the feature or cap, so the client draws the upgrade prompt from it.
       ...(error instanceof PlanError ? toPlanRefusal(error) : {}),
+      // A refused file says what is wrong with it, so the import page can list it.
+      ...(error instanceof GroupImportError
+        ? { problems: error.problems, total: error.total }
+        : {}),
     },
   }, definition.status)
 }

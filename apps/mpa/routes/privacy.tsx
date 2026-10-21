@@ -17,7 +17,7 @@ export const PRIVACY_HEAD = {
   title: `Privacy: what Seed's demo and site keep`,
   description: `What seedsaas.com and the Seed demo store about you, why, for how long, and ` +
     `how to delete it. No ads, no tracking cookies, no data sold.`,
-  updated: `2026-10-20`,
+  updated: `2026-10-21`,
 } as const
 
 /**
@@ -32,7 +32,7 @@ export default define.page(function Privacy({ state }) {
       title="Privacy"
       headTitle={PRIVACY_HEAD.title}
       description={PRIVACY_HEAD.description}
-      updated="20 October 2026"
+      updated="21 October 2026"
       sections={PRIVACY_SECTIONS}
     >
       <p>
@@ -169,8 +169,9 @@ export default define.page(function Privacy({ state }) {
         unsubscribe link in any of its mails.
       </p>
       <p>
-        There is no way to download your data from the app yet. To get a copy, write to me through
-        {" "}
+        The owner of a group can export it to a file from the group's page, with its notes and tags.
+        There is no way yet to download the rest of your account's data. To get a copy, write to me
+        through{" "}
         <a href={AUTHOR_URL}>antonshubin.com</a>. Do not keep anything important in the demo: it is
         a demo, and its data may be reset.
       </p>

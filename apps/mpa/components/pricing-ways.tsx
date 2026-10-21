@@ -1,6 +1,6 @@
 // Seed's own site: see docs/start-a-product.md
 import type { ComponentChildren, JSX } from "preact"
-import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
+import { IconExternalLink, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { REPOSITORY_URL } from "../brand.ts"
 import { HIRE_PAGE_URL, HIRE_PRICES } from "../hire.ts"
@@ -114,7 +114,8 @@ export function PricingWays(): JSX.Element {
                 data-umami-event="hire-me"
                 data-umami-event-from="pricing"
               >
-                See how it works <IconArrowRight class="size-5" aria-hidden="true" />
+                See how it works <IconExternalLink class="size-5" aria-hidden="true" />
+                <span class="sr-only">(opens antonshubin.com)</span>
               </Button>
             }
           >

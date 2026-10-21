@@ -1,5 +1,5 @@
 {
   "tasks": {
-    "check": "deno check postgres-tag-repository.ts tag-movable.ts"
+    "check": "deno check postgres-tag-repository.ts tag-movable.ts tag-portable.ts"
   }
 }

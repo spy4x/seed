@@ -3,7 +3,7 @@ import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
-import { canMutateNotes, canRead, GroupRole } from "@domain/groups"
+import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
 
 /**
  * Notes: the reference aggregate. A note belongs to one group; every member of the group reads it,
@@ -627,3 +627,49 @@ export interface GroupRoleLookup {
   roleOf(groupId: string, userId: number): Promise<GroupRole | null>
 }
 // #endregion Ports
+
+// #region Export file
+/**
+ * One note in a group's export file (`docs/aggregates.md`, "Making an aggregate exportable"): its
+ * id in the file, its text, the ids of its tags in the file, and when it was written. Who wrote it
+ * stays out: the file holds no person. The dates come back on import, so the list keeps its order.
+ */
+export const noteExportEntrySchema = type({
+  id: UUID_PATTERN,
+  title: "string",
+  body: "string",
+  tagIds: type(UUID_PATTERN).array(),
+  createdAt: "string.date.iso.parse",
+  updatedAt: "string.date.iso.parse",
+  "+": "reject",
+})
+export type NoteExportEntry = typeof noteExportEntrySchema.infer
+
+/**
+ * Checks one note of a file with the rules of a create ({@link parseNoteRequest}): lengths, the
+ * characters, at most {@link NOTE_TAG_MAX} tags. Throws `NoteError("INVALID_REQUEST")`.
+ */
+export function parseNoteExportEntry(value: unknown): NoteExportEntry {
+  // The schema checks every item of a list, so a huge `tagIds` is refused before it runs.
+  const tagIds = (value as { tagIds?: unknown } | null)?.tagIds
+  if (Array.isArray(tagIds) && tagIds.length > NOTE_TAG_MAX) {
+    throw new NoteError("INVALID_REQUEST", `A note can carry at most ${NOTE_TAG_MAX} tags`)
+  }
+  const shape = noteExportEntrySchema(value)
+  if (shape instanceof type.errors) {
+    throw new NoteError("INVALID_REQUEST", plainEntryProblem(shape, "note", NOTE_EXPORT_LABELS))
+  }
+  return parseNoteRequest(noteExportEntrySchema, value) as NoteExportEntry
+}
+
+/** What a refusal calls each field of a note in a file. */
+const NOTE_EXPORT_LABELS = {
+  id: "id",
+  title: "title",
+  body: "text",
+  tagIds: "tags",
+  "tagIds[]": "tag id",
+  createdAt: "creation date",
+  updatedAt: "last change date",
+}
+// #endregion Export file

@@ -3,7 +3,7 @@
 # Seed
 
 **The groundwork of your SaaS, already built. A free, MIT-licensed starter: sign-in with a second
-factor, teams with roles, per-seat Stripe billing, realtime, an offline app and an admin area.
+factor, groups with roles, per-member Stripe billing, realtime, an offline app and an admin area.
 Deno, Postgres, Docker Compose. Work in progress.**
 
 [![CI](https://ci.antonshubin.com/api/badges/15/status.svg)](https://ci.antonshubin.com/repos/15)

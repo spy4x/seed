@@ -80,7 +80,7 @@ export function OfflinePair(): JSX.Element {
         <Shot
           name="notes"
           kind="mobile"
-          alt="The same app installed on a phone, showing the team's notes."
+          alt="The same app installed on a phone, showing the group's notes."
           sizes="160px"
         />
       </WindowFrame>

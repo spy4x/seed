@@ -1,6 +1,6 @@
 import { Hono } from "hono"
 import type postgres from "postgres"
-import { GroupRole } from "@domain/groups"
+import { GROUP_FILE_EVENTS, GroupRole } from "@domain/groups"
 import { UserRole } from "@domain/identity"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { createPasswordHasher, type PasswordHasher } from "@spy4x/server/sign-in"
@@ -229,6 +229,16 @@ async function seedGroups(
       UPDATE audit_events SET created_at = ${created}
       WHERE group_id = ${groupId} AND event_kind = ${GROUP_CREATED}
     `
+    // An imported group's log starts with the import, as a real one does.
+    if (group.imported) {
+      const items = { notes: group.notes.length, tags: group.tags.length }
+      await sql`UPDATE groups SET imported_at = ${created} WHERE id = ${groupId}`
+      await sql`
+        UPDATE audit_events SET event_kind = ${GROUP_FILE_EVENTS.imported},
+          details = ${sql.json({ ...items, count: items.notes + items.tags })}
+        WHERE group_id = ${groupId} AND event_kind = ${GROUP_CREATED}
+      `
+    }
     if (backdateGroups) {
       await sql`
         UPDATE groups SET created_at = ${created}, updated_at = ${created} WHERE id = ${groupId}

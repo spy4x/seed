@@ -5,6 +5,7 @@ import {
   assertCanReadTags,
   assertCanWriteTags,
   assertTagRoom,
+  parseTagExportEntry,
   parseTagRequest,
   TAG_MAX_PER_GROUP,
   TAG_NAME_MAX_LENGTH,
@@ -74,5 +75,38 @@ describe("who may use tags", () => {
     expect(() => assertCanWriteTags(GroupRole.EDITOR)).not.toThrow()
     expect(() => assertCanWriteTags(GroupRole.VIEWER)).toThrow("Only an editor")
     expect(() => assertCanReadTags(null)).toThrow("Group not found")
+  })
+})
+
+describe("reading a tag from an export file", () => {
+  const entry = {
+    id,
+    name: "Home",
+    color: "blue",
+    createdAt: "2026-10-01T09:00:00.000Z",
+    updatedAt: "2026-10-01T09:00:00.000Z",
+  }
+  const problem = (value: unknown) => {
+    try {
+      parseTagExportEntry(value)
+    } catch (error) {
+      if (error instanceof Error) return error.message
+      throw error
+    }
+    throw new Error(`The entry was accepted`)
+  }
+
+  it("names a missing field, a bad colour and a bad date in plain words", () => {
+    const { name: _name, ...withoutName } = entry
+    expect(problem(withoutName)).toBe(`the name is missing`)
+    expect(problem({ ...entry, color: `pink` })).toBe(
+      `the colour must be blue, gray, green, orange, purple or red`,
+    )
+    expect(problem({ ...entry, updatedAt: `soon` })).toBe(
+      `the last change date must be a date and time`,
+    )
+    expect(problem({ ...entry, name: `x`.repeat(TAG_NAME_MAX_LENGTH + 1) })).toBe(
+      `Tag name must contain 1 to ${TAG_NAME_MAX_LENGTH} characters`,
+    )
   })
 })

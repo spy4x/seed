@@ -372,6 +372,38 @@ register, or its rows stay behind and are lost when the group is deleted.
 
 The counts go into the audit events, which the activity page words as "N items".
 
+## Making an aggregate exportable
+
+The owner of a group downloads it as one JSON file (`GET /api/groups/:groupId/export`), and anyone
+who may create a group makes a new group from such a file (`POST /api/groups/import/check`, then
+`POST /api/groups/import`). The file holds the group's settings and one list per registered
+aggregate under `aggregates`, keyed by the aggregate's `kind`. An aggregate that does not register
+is left out of every export, so a person who leaves with their file loses it.
+
+1. In the domain, write the entry's schema with arktype and a parser that reuses the aggregate's
+   own field rules (`noteExportEntrySchema` and `parseNoteExportEntry` in `libs/domain/notes/`). An
+   entry has an `id`, the fields a person wrote, and the ids of what it points at. Never a person, a
+   secret, a version or a deleted row. Refuse unknown fields (`"+": "reject"`): the file's version
+   says what it may hold.
+2. Write a `PortableAggregate` (`libs/server/groups/portable.ts`) next to the repository, as
+   `libs/server/notes/note-portable.ts` does:
+   - `kind`, and the nouns `one` and `other` the import page counts it with. Never rename `kind`:
+     files people keep name it.
+   - `limit`, the plan cap its count goes under, if one does. The importer checks a new group's
+     plan against the file's count.
+   - `parse`, one entry; `check`, what is wrong across entries (a duplicate name).
+   - `read(sql, groupId)`, the group's live rows in pages, so a large group is never held whole.
+   - `write(tx, entries, context)`, inside the import's transaction: every row gets a new id from
+     `uuidV7()`, is stamped with `context.changeSequence`, and maps what it points at with
+     `context.newIdOf(kind, fileId)`. It returns the new id of each entry by its id in the file.
+3. Add it to `PORTABLE_AGGREGATES` in `apps/api/services/db-base.ts`. The order is the order of the
+   writes, so an aggregate others point at (tags) comes before them (notes).
+4. A change to an entry's shape that an older file cannot satisfy raises `GROUP_EXPORT_VERSION`
+   (`libs/domain/groups/export-import.ts`) and keeps reading the older version. A file from a newer
+   version is refused.
+5. Add the aggregate to `tests/integration/group-files.integration.test.ts`: the round trip gives
+   the same contents under new ids, and a failure halfway writes nothing.
+
 ## Adding a setting to a group
 
 A setting is a property of the group itself, such as its description, colour and emoji. It is not

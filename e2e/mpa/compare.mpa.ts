@@ -3,7 +3,7 @@ import { expect, type Page, test } from "@playwright/test"
 import { AxeBuilder } from "@axe-core/playwright"
 
 /** The table's accessible name: its caption, which also names the region it scrolls in. */
-const CAPTION = "Capabilities of Seed and five other SaaS starters, checked on 16 October 2026"
+const CAPTION = "Capabilities of Seed and five other SaaS starters, checked on 16 Oct 2026"
 const PRODUCTS = [
   "Seed",
   "ShipFast",
@@ -73,6 +73,39 @@ test.describe("without JavaScript", () => {
       scroll: scroller.scrollWidth,
     }))
     expect(box.scroll).toBeGreaterThan(box.client)
+  })
+
+  test("on a 390 × 700 phone both hero buttons and the byline show without scrolling, the disclosure under them", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 700 })
+    await page.goto("/compare")
+    const hero = page.locator("[data-e2e=page-hero]")
+    const demo = hero.locator("[data-e2e=compare-try-demo]")
+    await expect(demo).toBeInViewport({ ratio: 1 })
+    await expect(hero.getByRole("link", { name: "View on GitHub" })).toBeInViewport({ ratio: 1 })
+    const meta = hero.locator("[data-e2e=page-hero-meta]")
+    await expect(meta).toBeInViewport({ ratio: 1 })
+    // The disclosure is the hero's note, after the byline: above the buttons it pushed them down.
+    const note = hero.locator("[data-e2e=page-hero-note]")
+    await expect(note).toContainText("I build Seed, so I am not neutral.")
+    const [metaBox, noteBox] = [await meta.boundingBox(), await note.boundingBox()]
+    expect(noteBox!.y).toBeGreaterThanOrEqual(metaBox!.y + metaBox!.height)
+  })
+
+  test("at 390 px no capability label in the table wraps to more than two lines", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto("/compare")
+    const table = page.getByRole("table", { name: CAPTION })
+    // The label is the header's first text node; the note under it is a block of its own.
+    const lines = await table.locator("tbody th[scope=row]").evaluateAll((headers) =>
+      headers.map((header) => {
+        const range = document.createRange()
+        range.selectNodeContents(header.firstChild!)
+        const tops = new Set([...range.getClientRects()].map((rect) => Math.round(rect.top)))
+        return `${header.firstChild!.textContent}: ${tops.size}`
+      })
+    )
+    expect(lines.length).toBeGreaterThan(10)
+    expect(lines.filter((line) => Number(line.split(": ").pop()) > 2)).toEqual([])
   })
 })
 

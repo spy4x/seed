@@ -365,16 +365,25 @@ describe("ConfirmSignUpScreen", () => {
 
   it("shows the provider's picture, name and address side by side, the picture decorative", async () => {
     const picture = "https://lh3.googleusercontent.com/a/ada=s96-c"
-    // happy-dom loads no image, so every one looks finished with no pixels, which `Avatar` reads
-    // as a picture that failed before the page ran. Give this one the width a loaded one has.
-    const images = window.HTMLImageElement.prototype
-    const width = Object.getOwnPropertyDescriptor(images, "naturalWidth")
-    Object.defineProperty(images, "naturalWidth", { configurable: true, get: () => 96 })
-    await mount(
-      <ConfirmSignUpScreen
-        {...confirmProps([], { pending: { ...waiting, name: "Ada Lovelace", avatarUrl: picture } })}
-      />,
-    )
+    // happy-dom loads no image, so every one reads as finished and empty, which the Avatar takes
+    // for a failure on mount. In a browser the picture is still loading then.
+    const complete = Object.getOwnPropertyDescriptor(window.HTMLImageElement.prototype, "complete")
+    Object.defineProperty(window.HTMLImageElement.prototype, "complete", {
+      configurable: true,
+      get: () => false,
+    })
+    try {
+      await mount(
+        <ConfirmSignUpScreen
+          {...confirmProps([], {
+            pending: { ...waiting, name: "Ada Lovelace", avatarUrl: picture },
+          })}
+        />,
+      )
+    } finally {
+      if (complete) Object.defineProperty(window.HTMLImageElement.prototype, "complete", complete)
+      else delete (window.HTMLImageElement.prototype as { complete?: boolean }).complete
+    }
 
     const identity = find("[data-e2e=confirm-sign-up-identity]")
     expect(find("[data-e2e=confirm-sign-up-name]").textContent).toBe("Ada Lovelace")
@@ -390,8 +399,6 @@ describe("ConfirmSignUpScreen", () => {
     expect(avatar.querySelector("img")).toBe(null)
     expect(avatar.textContent).toBe("AL")
     expect(avatar.getAttribute("aria-hidden")).toBe("true")
-    if (width) Object.defineProperty(images, "naturalWidth", width)
-    else delete (images as { naturalWidth?: number }).naturalWidth
   })
 
   it("falls back to the name's initials without a picture, and to an icon without a name", async () => {

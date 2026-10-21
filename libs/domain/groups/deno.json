@@ -2,6 +2,6 @@
   "exports": "./+lib.ts",
   "tasks": {
     "check": "deno check +lib.ts",
-    "test": "deno test +lib.test.ts activity.test.ts move-all.test.ts"
+    "test": "deno test +lib.test.ts activity.test.ts move-all.test.ts export-import.test.ts"
   }
 }

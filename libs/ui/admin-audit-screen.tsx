@@ -65,6 +65,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   "group.invitation_declined": "Invitation declined",
   "group.data_moved_out": "Group data moved out",
   "group.data_moved_in": "Group data moved in",
+  "group.exported": "Group exported",
+  "group.imported": "Group imported",
   "note.created": "Note added",
   "note.deleted": "Note deleted",
   "note.restored": "Note restored",

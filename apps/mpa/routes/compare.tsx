@@ -5,6 +5,7 @@ import { Button } from "@spy4x/preact-ui/button"
 import { type ComparisonRow, ComparisonTable } from "@spy4x/preact-ui/comparison-table"
 import { FaqList } from "@spy4x/preact-ui/faq-list"
 import { faqPageJsonLd } from "@spy4x/platform/universal/seo"
+import { useFormat } from "@spy4x/preact-ui/format"
 import { PageHero } from "@spy4x/preact-ui/page-hero"
 import { Band } from "../components/band.tsx"
 import { type Alternative, CompareAlternatives } from "../components/compare-alternatives.tsx"
@@ -28,14 +29,17 @@ import { define } from "../utils.ts"
  * `dateModified` and the sitemap's `lastmod`. Re-check at least every three months.
  */
 export const CHECKED_ON = `2026-10-16`
-/** {@link CHECKED_ON} as people read it. */
-const CHECKED_ON_TEXT = `16 October 2026`
+
+/** {@link CHECKED_ON} as the hero's "Checked" line shows it, so the page names the day one way. */
+function useCheckedOn(): string {
+  return useFormat().utc().date(CHECKED_ON)
+}
 
 /** The page's title and description, as search results and social previews show them. */
 export const COMPARE_HEAD = {
   title: `Seed vs ShipFast, Supastarter, Makerkit and Open SaaS`,
   description: `An honest, dated comparison of SaaS starters and boilerplates: price, licence, ` +
-    `hosting, 2FA, teams, per-seat billing, admin, offline. Sources linked.`,
+    `hosting, 2FA, groups, per-member billing, admin, offline. Sources linked.`,
 } as const
 
 /** The columns of the table, Seed first: the table highlights the first one as ours. */
@@ -65,7 +69,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `no`, `no`, `partial`, `yes`, `yes`],
   },
   {
-    capability: `Email and password sign-in`,
+    capability: `Password sign-in`,
     values: [`yes`, `no`, `yes`, `yes`, `yes`, `yes`],
   },
   {
@@ -78,7 +82,7 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`yes`, `yes`, `yes`, `yes`, `no`, `yes`],
   },
   {
-    capability: `2FA (authenticator app)`,
+    capability: `App-based 2FA`,
     values: [`yes`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
@@ -86,21 +90,21 @@ const ROWS: readonly ComparisonRow[] = [
     values: [`no`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
-    capability: `Teams with roles`,
+    capability: `Groups with roles`,
     note: `Next.js SaaS Starter: Owner and Member only`,
     values: [`yes`, `no`, `yes`, `yes`, `partial`, `no`],
   },
   {
-    capability: `Per-seat billing`,
+    capability: `Per-member billing`,
     values: [`yes`, `no`, `yes`, `yes`, `no`, `no`],
   },
   {
-    capability: `Payments besides Stripe`,
+    capability: `Non-Stripe payments`,
     values: [`no`, `yes`, `yes`, `yes`, `no`, `yes`],
   },
   {
     capability: `Admin area`,
-    note: `Next.js SaaS Starter: a team's own dashboard`,
+    note: `Next.js SaaS Starter: a dashboard for each group`,
     values: [`yes`, `no`, `yes`, `yes`, `partial`, `yes`],
   },
   {
@@ -151,7 +155,7 @@ const ALTERNATIVES: readonly Alternative[] = [
     stack: `Next.js; MongoDB or Supabase`,
     hosting: `Vercel named as the free option`,
     pickWhen: `you want a Next.js landing page with payments and a blog live this weekend, ` +
-      `and you sell to single users rather than teams.`,
+      `and you sell to single users rather than groups.`,
     sources: [
       { label: `Sales page`, href: `https://shipfa.st/` },
       { label: `Licence`, href: `https://shipfa.st/license` },
@@ -180,7 +184,7 @@ const ALTERNATIVES: readonly Alternative[] = [
     stack: `Next.js, React Router or TanStack Start; Supabase, Drizzle or Prisma`,
     hosting: `Not stated on the pages read`,
     pickWhen:
-      `you want a team-ready kit on Supabase or Next.js with passkeys, translations and a CMS, ` +
+      `you want a multi-tenant kit on Supabase or Next.js with passkeys, translations and a CMS, ` +
       `and you are happy with a paid licence.`,
     sources: [
       { label: `Pricing`, href: `https://makerkit.dev/pricing` },
@@ -197,7 +201,7 @@ const ALTERNATIVES: readonly Alternative[] = [
     licence: `MIT`,
     stack: `Next.js, Postgres, Drizzle`,
     hosting: `Vercel, in its production guide`,
-    pickWhen: `you want a small, readable Next.js base with Stripe and teams, and plan to build ` +
+    pickWhen: `you want a small, readable Next.js base with Stripe and groups, and plan to build ` +
       `the rest yourself.`,
     sources: [{ label: `README`, href: `https://github.com/nextjs/saas-starter` }],
   },
@@ -276,18 +280,18 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       class="site-glow"
       eyebrow="Compare"
       title="How Seed compares to other SaaS starters"
-      lead="Seed is a free, MIT-licensed SaaS starter for products used by teams, and it runs on one server you rent. Here it is side by side with five other SaaS starters and boilerplates."
+      lead="Seed is a free, MIT-licensed SaaS starter for products used by groups of people, and it runs on one server you rent. Here it is side by side with five other SaaS starters and boilerplates."
       author={SITE_AUTHOR}
       updated={CHECKED_ON}
       labels={{ updated: `Checked` }}
+      note={
+        <>
+          I build Seed, so I am not neutral. Every claim about another product links to its source,
+          and the table shows where Seed is weaker. A row out of date?{" "}
+          <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">Open an issue</a>.
+        </>
+      }
     >
-      <p class="max-w-2xl text-muted text-pretty">
-        I build Seed, so I am not neutral. To make up for it, every claim about another product
-        links to the page I read it on, and the table shows where Seed is weaker. Products change;
-        if a row is out of date,{" "}
-        <a href={`${REPOSITORY_URL}/issues`} class="text-primary underline">open an issue</a>{" "}
-        and I will fix it.
-      </p>
       <div class="mt-2 flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button
           href={demoHref}
@@ -313,6 +317,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
 }
 
 function Table(): JSX.Element {
+  const checkedOn = useCheckedOn()
   return (
     <Band id="table" labelledBy="table-title">
       <div class="flex flex-col gap-12">
@@ -323,12 +328,14 @@ function Table(): JSX.Element {
           lead="Rows are capabilities, as each product's own pages describe them. Seed's column is highlighted; its gaps are listed like everyone else's."
         />
         <ComparisonTable
-          caption="Capabilities of Seed and five other SaaS starters, checked on 16 October 2026"
+          caption={`Capabilities of Seed and five other SaaS starters, checked on ${checkedOn}`}
           products={PRODUCTS}
           rows={ROWS}
           checkedOn={new Date(`${CHECKED_ON}T00:00:00Z`)}
           locale="en-GB"
           labels={{
+            // The table formats its own date in long form; the page's one form replaces it.
+            checkedOn: () => `Checked on ${checkedOn}.`,
             yesMeaning: `the product's own pages say it is included`,
             partialMeaning: `included with the limit named under the row`,
             noMeaning: `its own pages do not list it; it may exist undocumented or arrive later`,
@@ -343,28 +350,28 @@ function Table(): JSX.Element {
           }
           fit={
             <>
-              Seed is not for you if you want to deploy to Vercel or serverless functions, if your
-              team works in Next.js and React and wants to stay there, or if you need translations,
+              Seed is not for you if you want to deploy to Vercel or serverless functions, if you
+              work in Next.js and React and want to stay there, or if you need translations,
               passkeys, file uploads or a payment provider other than Stripe this month. It is also
               a young project with one maintainer and no community forum yet, while the Next.js SaaS
               Starter and Open SaaS each have more than 16,000 GitHub stars. Seed is for you if you
-              build a product for teams, want sign-in, roles, per-seat billing and operations
-              settled before your first feature, and want to control the server and own the code
-              outright.
+              build a product for groups of people, want sign-in, roles, per-member billing and
+              operations settled before your first feature, and want to control the server and own
+              the code outright.
             </>
           }
         />
         <ul class="flex max-w-3xl list-disc flex-col gap-2 pl-6 text-sm text-muted">
           <li>
-            Seed's gaps (passkeys, magic links, translations, file uploads, data export) are not
-            built yet; do not choose Seed for them today. The{" "}
+            Seed's gaps (passkeys, magic links, translations, file uploads, downloading an account's
+            data) are not built yet; do not choose Seed for them today. The{" "}
             <a href="/#status" class="text-primary underline">status list</a> says what works.
           </li>
           <li>
             ShipFast's prices are the ones its{" "}
             <a href="https://shipfa.st/" class="text-primary underline">sales page</a> showed on
             {" "}
-            {CHECKED_ON_TEXT}.
+            {checkedOn}.
           </li>
           <li>
             For Seed's features in detail, see{" "}
@@ -378,6 +385,7 @@ function Table(): JSX.Element {
 }
 
 function Alternatives(): JSX.Element {
+  const checkedOn = useCheckedOn()
   return (
     <Band tone="alt" id="alternatives" labelledBy="alternatives-title">
       <div class="flex flex-col gap-12">
@@ -387,7 +395,7 @@ function Alternatives(): JSX.Element {
           title="When another starter fits better"
           lead="If one of these fits you better, use it. Each card names its price, licence, stack and hosting, and links the pages they come from."
         />
-        <CompareAlternatives items={ALTERNATIVES} checkedOn={CHECKED_ON_TEXT} />
+        <CompareAlternatives items={ALTERNATIVES} checkedOn={checkedOn} />
       </div>
     </Band>
   )

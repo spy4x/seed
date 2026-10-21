@@ -392,6 +392,18 @@ export async function readAdminGroup(
     ORDER BY i.created_at DESC, i.id DESC
     LIMIT ${ADMIN_GROUP_INVITATION_LIMIT}
   `
+  const [imported] = await sql<
+    {
+      at: Date
+      creatorId: number | null
+      creatorName: string | null
+      creatorEmail: string | null
+    }[]
+  >`
+    SELECT g.imported_at AS at, ${personColumns(sql, `c`, `creator`)}
+    FROM groups g LEFT JOIN users c ON c.id = g.created_by_user_id
+    WHERE g.id = ${groupId} AND g.imported_at IS NOT NULL
+  `
   const activity = await sql<ActivityRowRaw[]>`
     SELECT
       a.id::text AS id, a.event_kind AS kind, a.created_at AS at,
@@ -419,6 +431,14 @@ export async function readAdminGroup(
         status: billing.status,
         cancelAtPeriodEnd: billing.cancelAtPeriodEnd,
         currentPeriodEnd: billing.currentPeriodEnd?.toISOString() ?? null,
+      }
+      : null,
+    imported: imported
+      ? {
+        at: imported.at.toISOString(),
+        by: imported.creatorId === null
+          ? null
+          : toPerson(imported.creatorId, imported.creatorName, imported.creatorEmail),
       }
       : null,
     members: members.map((row): AdminGroupMember => ({
