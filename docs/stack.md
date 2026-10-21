@@ -23,8 +23,9 @@ what is running and how it is deployed.
 
 Defined in `infra/compose/`:
 
-- **Postgres** - authoritative store. No PgBouncer; connection pooling is
-  handled by the driver.
+- **Postgres** - authoritative store.
+- **PgBouncer** - pools the API's and the worker's connections to Postgres in transaction mode;
+  see "Database connections" below. No published port, on the project's own network only.
 - **Valkey** - cache for display data (sessions and every authentication decision come from
   Postgres). The host needs `sysctl vm.overcommit_memory=1`. Postgres and Valkey are published on
   `127.0.0.1` only, through `DB_HOST_PORT` and `KV_HOST_PORT`, and Valkey requires `KV_PASSWORD`
@@ -39,9 +40,8 @@ Defined in `infra/compose/`:
 - **Worker** - `apps/worker` in the API's image (same Dockerfile and build context) with its own
   command. It drains `outbox_events`, announces committed group changes with `pg_notify` (the API
   turns each into a live hint for other tabs) and sweeps expired idempotency keys hourly. No
-  published port. Its pool (at most 10 connections) plus the API's (at most 10, plus one `LISTEN`
-  connection) and postgres-exporter stay under Postgres' `max_connections=30`; raise that before
-  raising either pool. `WORKER_CPU_LIMIT` and `WORKER_MEM_LIMIT` default to 0.5 CPU and 256M.
+  published port. It queries through PgBouncer ("Database connections" below). `WORKER_CPU_LIMIT`
+  and `WORKER_MEM_LIMIT` default to 0.5 CPU and 256M.
 - **Traefik** - reverse proxy, in `infra/compose/compose.proxy.yml`, started by
   `deno task proxy:start` for local work and in production alike.
 - **vmagent, Vector, postgres-exporter** - collect this project's metrics and logs and send them
@@ -53,10 +53,40 @@ Defined in `infra/compose/`:
   resources). Behind the `host-monitoring` compose profile, off by default so a shared server
   does not get a second copy of its own monitoring. vmagent keeps their scrape jobs and shows
   them as down while they are off.
-- Images are pinned to a version tag, none to a digest; change a pin on purpose, not by a moving
-  `latest`. The one moving tag is the nginx base of the SPA and admin images
+- Images are pinned to a version tag, and PgBouncer's to a digest too, since every query passes
+  through it; change a pin on purpose, not by a moving `latest`. The one moving tag is the nginx base of the SPA and admin images
   (`nginx-unprivileged:stable-alpine`).
 - Traefik router, service and middleware names all end in `-${PROJECT}`.
+
+## Database connections
+
+Postgres allows 30 connections (`max_connections=30` in `compose.shared.yml`). Each API process and
+the worker keep a pool of up to 10 connections, so a second API replica or a second worker would
+use them up. PgBouncer stands between: the apps connect to it, and it shares a fixed number of
+connections to Postgres among them, lending one for each transaction.
+
+| Client                           | Connects to | Pool                                      | Why                                                            |
+| -------------------------------- | ----------- | ----------------------------------------- | -------------------------------------------------------------- |
+| API queries (`sql`)              | PgBouncer   | 10 per API process                        | Ordinary queries and transactions                              |
+| Worker                           | PgBouncer   | 10                                        | Ordinary queries; its `pg_notify` runs inside a transaction    |
+| API `LISTEN` (`listenSql`)       | Postgres    | 1 per API process                         | A listener needs one session for as long as it runs            |
+| `migrate`                        | Postgres    | 1, while it runs                          | The runner's advisory lock belongs to one session              |
+| postgres-exporter, backup        | Postgres    | 1 each                                    | Monitoring and `pg_dump`, outside the apps                     |
+| PgBouncer to Postgres            | Postgres    | `PGBOUNCER_POOL_SIZE` (20)                | Shared by every API process and worker                         |
+
+PgBouncer accepts up to `PGBOUNCER_MAX_CLIENT_CONN` (200) connections from the apps. 20 to
+PgBouncer plus the direct ones leave a few of Postgres' 30 free for a `psql` session; raise
+`max_connections` before raising `PGBOUNCER_POOL_SIZE`. The API reads PgBouncer's address from
+`DB_HOST` and Postgres' from `DB_DIRECT_HOST` and `DB_DIRECT_PORT`; with those unset, as in the
+local browser run and CI, which have no PgBouncer, the listener uses `DB_HOST`.
+
+Transaction mode means a session setting lasts one transaction only: use `SET LOCAL` inside
+`sql.begin`, never `SET`, a session advisory lock or `LISTEN` on `sql`. postgres.js prepares every
+query by name; PgBouncer tracks those names (`max_prepared_statements=200`, PgBouncer 1.21 and
+later) and prepares a statement again on whichever server connection a transaction lands on.
+Without it, queries fail with `prepared statement "…" does not exist`. The other way, `prepare:
+false` on the client, is not an option `@spy4x/server/db` passes on, and it would plan every query
+again on every call.
 
 ## Monitoring
 
