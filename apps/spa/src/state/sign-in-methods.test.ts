@@ -426,7 +426,7 @@ describe("adding and renaming passkeys", () => {
     expect(second.error.value).toBe(PASSKEY_NOT_SAVED)
   })
 
-  it("renames a passkey in the list, and rejects with the server's reason when refused", async () => {
+  it("renames a passkey in the list and clears the added notice, and rejects with the server's reason when refused", async () => {
     const passkey: SignInMethod = {
       id: 9,
       kind: "passkey",
@@ -439,10 +439,13 @@ describe("adding and renaming passkeys", () => {
     const store = createSignInMethodsStore(http)
     await store.load()
 
+    store.passkeyStatus.value = { kind: "added", keyId: 9, name: "Chrome on Linux" }
     await store.renamePasskey(9, "Work laptop")
     expect(store.methods.value?.find((method) => method.id === 9)?.passkey?.name).toBe(
       "Work laptop",
     )
+    // The notice that offered the rename goes with it.
+    expect(store.passkeyStatus.value).toBeNull()
 
     const refusing = createSignInMethodsStore(fakeHttp([passkey], {
       renamePasskey: () => Promise.resolve({ ok: false, error: "Give the passkey a name" }),

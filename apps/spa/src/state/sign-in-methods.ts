@@ -283,6 +283,8 @@ export function createSignInMethodsStore(
   async function renamePasskey(methodId: number, name: string): Promise<void> {
     const answer = await attempt(() => http.renamePasskey(methodId, name))
     if (!answer.ok) throw new Error(answer.error)
+    // "Passkey added as …. Rename it if you like." is done once it has its new name.
+    passkeyStatus.value = null
     methods.value =
       methods.value?.map((method) =>
         method.id === methodId && method.passkey
