@@ -58,6 +58,25 @@ CREATE TABLE auth_keys (
 CREATE INDEX auth_keys_user_id_idx ON auth_keys (user_id);
 CREATE INDEX auth_keys_email_idx ON auth_keys (email) WHERE email IS NOT NULL;
 
+-- #222: what only a passkey key has. See migration 2026_11_24_0001_auth_passkeys.sql.
+CREATE TABLE auth_passkeys (
+    key_id INT4 PRIMARY KEY,
+    user_id INT4 NOT NULL,
+    public_key BYTEA NOT NULL,
+    counter INT8 DEFAULT 0 NOT NULL,
+    transports TEXT[] DEFAULT '{}' NOT NULL,
+    backed_up BOOLEAN DEFAULT false NOT NULL,
+    name TEXT NOT NULL,
+    last_used_at TIMESTAMPTZ,
+    CONSTRAINT auth_passkeys_key_fkey FOREIGN KEY (key_id, user_id)
+        REFERENCES auth_keys (id, user_id) ON DELETE CASCADE,
+    CONSTRAINT auth_passkeys_public_key_check CHECK (octet_length(public_key) BETWEEN 1 AND 2048),
+    CONSTRAINT auth_passkeys_counter_check CHECK (counter BETWEEN 0 AND 4294967295),
+    CONSTRAINT auth_passkeys_name_check CHECK (length(name) BETWEEN 1 AND 64)
+);
+
+CREATE INDEX auth_passkeys_user_id_idx ON auth_passkeys (user_id);
+
 -- Status: 1 = active, 2 = expired, 3 = signed out. Second factor: 1 = not required, 2 = pending,
 -- 3 = completed. The values of SessionStatus and SecondFactorStatus in @spy4x/server/sign-in.
 CREATE TABLE auth_sessions (
