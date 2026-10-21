@@ -187,13 +187,13 @@ function AuthorshipLine({ authorship }: { authorship: NoteAuthorship }): JSX.Ele
   const format = useFormat()
   const by = (name: string | undefined) => name ? ` by ${name}` : ""
   return (
-    <p class="flex flex-wrap gap-x-2 text-sm text-muted" data-e2e="note-authorship">
+    <p class="flex flex-col text-sm text-muted sm:flex-row sm:gap-2" data-e2e="note-authorship">
       <span>
         Created{by(authorship.createdBy)}, <OnDay at={authorship.createdAt} />
       </span>
       {authorship.updatedAt !== authorship.createdAt && (
         <>
-          <span aria-hidden="true">·</span>
+          <span aria-hidden="true" class="hidden sm:inline">·</span>
           <span>
             Updated{by(authorship.updatedBy)}, <When at={authorship.updatedAt} />
             <span class="sr-only">({format.exact(authorship.updatedAt)})</span>
@@ -242,7 +242,7 @@ function Editor(props: WithGroup): JSX.Element {
   const [asking, setAsking] = useState(false)
   const [choosingGroup, setChoosingGroup] = useState(false)
   const hasMenu = note !== null && (moveTargets.length > 0 || props.onDelete !== undefined)
-  const title = useRef<HTMLInputElement>(null)
+  const title = useRef<HTMLTextAreaElement>(null)
   useEffect(() => {
     if (errors.title) title.current?.focus()
   }, [errors.title])
@@ -257,8 +257,9 @@ function Editor(props: WithGroup): JSX.Element {
           navigate={navigate}
           title={note ? note.savedTitle : "New note"}
           heading={
-            <input
+            <textarea
               ref={title}
+              rows={1}
               id="note-title"
               data-e2e="note-title"
               name="title"
@@ -266,11 +267,18 @@ function Editor(props: WithGroup): JSX.Element {
               aria-invalid={errors.title ? "true" : undefined}
               aria-describedby={errors.title ? "note-title-error" : undefined}
               autocomplete="off"
-              placeholder={note ? "Untitled note" : "New note"}
-              class="-mx-2 block w-full min-w-0 rounded-md border-0 bg-transparent px-2 py-0 text-xl font-semibold text-foreground placeholder:text-muted hover:bg-hover focus:bg-surface focus:outline-hidden focus-visible:ring-2 focus-visible:ring-focus sm:text-2xl"
+              placeholder="Title"
+              class="-mx-2 block w-full min-w-0 resize-none overflow-hidden rounded-md border-0 bg-transparent px-2 py-0 text-xl font-semibold text-foreground field-sizing-content placeholder:text-muted hover:bg-hover focus:bg-surface focus:outline-hidden focus-visible:ring-2 focus-visible:ring-focus sm:text-2xl"
               maxLength={NOTE_TITLE_MAX_LENGTH}
               value={value.title}
-              onInput={(e) => onChange?.({ ...value, title: e.currentTarget.value })}
+              // A title is one line that wraps: Enter saves, as it would in a one-line field.
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return
+                e.preventDefault()
+                e.currentTarget.form?.requestSubmit()
+              }}
+              onInput={(e) =>
+                onChange?.({ ...value, title: e.currentTarget.value.replace(/\r?\n/g, " ") })}
               required
             />
           }

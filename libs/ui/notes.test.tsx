@@ -927,7 +927,7 @@ describe("NoteEditorScreen", () => {
     )
 
     // The title is typed into the heading itself, so the page shows it once and has no Title field.
-    expect(html).toMatch(/<h1\b[^>]*title="New note"[^>]*><input\b[^>]*data-e2e="note-title"/)
+    expect(html).toMatch(/<h1\b[^>]*title="New note"[^>]*><textarea\b[^>]*data-e2e="note-title"/)
     expect(html).toContain(`aria-label="Title"`)
     expect(html).not.toContain(">Title<")
     expect(html).toMatch(/data-e2e="notes-group"[^>]*>Team</)
@@ -943,7 +943,9 @@ describe("NoteEditorScreen", () => {
       <NoteEditorScreen {...editing} value={{ ...groceries, title: "Groceries and more" }} />,
     )
 
-    expect(html).toMatch(/<h1\b[^>]*title="Groceries"[^>]*><input\b[^>]*value="Groceries and more"/)
+    expect(html).toMatch(
+      /<h1\b[^>]*title="Groceries"[^>]*><textarea\b[^>]*>Groceries and more<\/textarea>/,
+    )
     expect(html.match(/Groceries and more/g)).toHaveLength(1)
     expect(html).not.toContain(">Edit note<")
   })
@@ -1138,6 +1140,27 @@ describe("NoteEditorScreen in the browser", () => {
 
     expect(change.calls).toEqual([[{ title: "Trip", body: "" }]])
     expect(await submit("[data-e2e=note-title]")).toBe(true)
+    expect(save.calls).toHaveLength(1)
+  })
+
+  it("saves when the person presses Enter in the title, which never holds a line break", async () => {
+    const change = spy<[{ title: string; body: string }]>()
+    const save = spy<[]>()
+    await mount(<NoteEditorScreen {...editorDefaults} onChange={change.fn} onSave={save.fn} />)
+
+    await type("[data-e2e=note-title]", "Trip\nto Japan")
+    expect(change.calls).toEqual([[{ title: "Trip to Japan", body: "" }]])
+
+    const enter = new window.KeyboardEvent("keydown", {
+      key: "Enter",
+      bubbles: true,
+      cancelable: true,
+    })
+    await act(async () => {
+      find("[data-e2e=note-title]").dispatchEvent(enter as unknown as Event)
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(enter.defaultPrevented).toBe(true)
     expect(save.calls).toHaveLength(1)
   })
 

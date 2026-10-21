@@ -824,22 +824,26 @@ function NoteItem(
           // The meta line: the author, when it changed (on a phone), then its tags.
         }
         <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
-          {note.authorName && (
-            <span class="flex min-w-0 items-center gap-2" data-e2e="note-author">
-              <Avatar name={note.authorName} alt="" size="xs" class="size-5 text-[10px]" />
-              <span class="truncate">{note.authorName}</span>
-            </span>
-          )}
-          {phoneStamp.at && (
-            <>
-              {note.authorName && <span aria-hidden="true" class="sm:hidden">·</span>}
-              <Stamp
-                label={phoneStamp.label}
-                at={phoneStamp.at}
-                class="sm:hidden"
-              />
-            </>
-          )}
+          {
+            // The author and, on a phone, the time stay on one line: a long name truncates rather
+            // than leave the separator hanging at the end of a line.
+          }
+          <span class="flex min-w-0 max-w-full items-center gap-2 whitespace-nowrap">
+            {note.authorName && (
+              <span class="flex min-w-0 items-center gap-2" data-e2e="note-author">
+                <Avatar name={note.authorName} alt="" size="xs" class="size-5 text-[10px]" />
+                <span class="truncate">{note.authorName}</span>
+              </span>
+            )}
+            {note.authorName && phoneStamp.at && (
+              <span aria-hidden="true" class="sm:hidden">
+                ·
+              </span>
+            )}
+            {phoneStamp.at && (
+              <Stamp label={phoneStamp.label} at={phoneStamp.at} class="shrink-0 sm:hidden" />
+            )}
+          </span>
           <NoteTags tagIds={note.tagIds} tags={tags} max={ROW_TAGS} />
         </div>
       </div>
