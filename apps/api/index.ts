@@ -1,5 +1,5 @@
 import { createApiApp } from "./app.ts"
-import { db, sql } from "@api/services/db.ts"
+import { db, listenSql, sql } from "@api/services/db.ts"
 import { config } from "@api/services/config.ts"
 import { log } from "@api/services/log.ts"
 import { parseAuth, signIn } from "@api/services/auth.ts"
@@ -390,9 +390,9 @@ if (config.isDev) {
 }
 
 // Group changes and access losses announced by Postgres become hints on the open sockets.
-await listenForGroupNews(sql, realtime, log)
+await listenForGroupNews(listenSql, realtime, log)
 // A change to a person's inbox becomes a hint on their sockets; the page reads the count.
-await listenForInboxNews(sql, realtime)
+await listenForInboxNews(listenSql, realtime)
 // Sockets whose session was signed out, expired or lost its second factor while open are closed
 // within this interval; the per-request check already refuses their frames.
 realtime.startRevalidation(REALTIME_REVALIDATE_INTERVAL_MS)

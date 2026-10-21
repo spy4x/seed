@@ -2,6 +2,7 @@ import postgres from "postgres"
 import { createSqlFromEnv, type Sql } from "@spy4x/server/db"
 import { publicAPICache } from "./cache.ts"
 import { AppDbBase } from "./db-base.ts"
+import { directDbEnv } from "./db-direct.ts"
 // import { getLatestMetrics } from "../routes/metric.ts"
 
 /**
@@ -14,10 +15,27 @@ export const sql: Sql = (() => {
   const client = createSqlFromEnv(Deno.env.toObject(), {
     transform: postgres.camel,
     applicationName: "app-backend",
-    // The driver's own default (postgres@3.4.7 src/index.js:449) was 10, not the
-    // package's default of 15; compose limits Postgres to max_connections=30 and both
-    // this pool and the worker's draw from it, so the old ceiling is kept explicitly.
+    // In Compose these are connections to PgBouncer, which holds the connections to Postgres
+    // (docs/stack.md, "Database connections"). 10 is the driver's own default
+    // (postgres@3.4.7 src/index.js:449), kept explicitly over the package's 15.
     max: 10,
+  })
+  if (!client) {
+    throw new Error("Missing environment variable: DB_HOST")
+  }
+  return client
+})()
+
+/**
+ * The client `LISTEN` runs on, and nothing else: it connects to Postgres directly, past
+ * PgBouncer (`directDbEnv`). The driver opens one connection of its own for every channel listened
+ * to, so this pool never opens another.
+ */
+export const listenSql: Sql = (() => {
+  const client = createSqlFromEnv(directDbEnv(Deno.env.toObject()), {
+    transform: postgres.camel,
+    applicationName: "app-backend-listen",
+    max: 1,
   })
   if (!client) {
     throw new Error("Missing environment variable: DB_HOST")
