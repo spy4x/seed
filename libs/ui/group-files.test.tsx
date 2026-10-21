@@ -243,7 +243,8 @@ describe("GroupImportScreen", () => {
       <GroupImportScreen {...defaults} state={{ step: "refused", problems: [], total: 0 }} />,
     )
     await rerender(<GroupImportScreen {...defaults} attempt={1} />)
-    expect(document.activeElement).toBe(find("input[type=file]"))
+    // A boolean, not the two nodes: a failed check would print a diff of two DOM trees.
+    expect(document.activeElement === find("input[type=file]")).toBe(true)
   })
 
   it("explains a file over a new group's plan with the cap and the file's count", async () => {

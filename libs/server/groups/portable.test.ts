@@ -80,7 +80,8 @@ describe("parseGroupFile", () => {
   })
 
   it("refuses a value that is not a group export", () => {
-    for (const value of [null, [], "text", { format: "other" }, file({}, { version: "1" })]) {
+    const others = [null, [], "text", { format: "other", version: 1 }, file({}, { version: "1" })]
+    for (const value of others) {
       expect(problemsOf(value).problems).toEqual([{ kind: "not_export" }])
     }
   })

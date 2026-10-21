@@ -257,11 +257,16 @@ Deno.test("a refused file, a file over the plan and a failure halfway write noth
       PlanError,
     )
     // An aggregate that fails after the group and the tags are written takes them back with it.
+    let reached = false
     const failing = portable({
       ...tagPortable,
       kind: "notes",
+      check: undefined,
       parse: (value) => value as { id: string },
-      write: () => Promise.reject(new Error("disk full")),
+      write: () => {
+        reached = true
+        return Promise.reject(new Error("disk full"))
+      },
     })
     await attempt(
       () =>
@@ -272,5 +277,6 @@ Deno.test("a refused file, a file over the plan and a failure halfway write noth
         ),
       Error,
     )
+    expect(reached).toBe(true)
   })
 })
