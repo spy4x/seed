@@ -78,6 +78,7 @@ export const QUICK_START = [
 const WORKS_TODAY = [
   `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, 2FA with an authenticator app`,
   `Teams with members, roles, invitations and ownership transfer`,
+  `Exporting a team to a file, and importing one as a new team`,
   `Per-seat billing with trials, through Stripe`,
   `The list of signed-in devices, and account deletion with a 7‑day undo`,
   `Personal API tokens`,

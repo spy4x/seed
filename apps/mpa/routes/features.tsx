@@ -189,6 +189,21 @@ const TIERS: readonly Tier[] = [
           href: source(`libs/server/auth/account-deletion.ts`),
         },
       },
+      {
+        id: `export`,
+        nav: `Export and import`,
+        eyebrow: `Export`,
+        title: `Your data leaves with you`,
+        lead: `Export any group to an open JSON file, and import it later as a new group. The ` +
+          `original group is never overwritten.`,
+        facts: [
+          `The owner exports; anyone who may create a group imports`,
+          `The whole file is checked before anything is written, then imported in one step`,
+          `Every note and tag gets a new id, so an import never collides with what is there`,
+          `Each aggregate registers its own part of the file`,
+        ],
+        code: { label: `Read the export code`, href: source(`libs/server/groups/portable.ts`) },
+      },
     ],
   },
   {
