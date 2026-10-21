@@ -252,6 +252,23 @@ const TIERS: readonly Tier[] = [
         visual: <OfflinePair />,
       },
       {
+        id: `shortcuts`,
+        nav: `Keyboard shortcuts`,
+        eyebrow: `Keyboard`,
+        title: `Keyboard shortcuts in the app and the admin area`,
+        lead:
+          `Press ? to see every shortcut. N adds a note from any page without leaving it, and ` +
+          `G then a letter opens a section. Shortcuts stay out of the way while you type in a ` +
+          `field.`,
+        facts: [
+          `Ctrl K (⌘K on a Mac) or / opens search`,
+          `One list per app binds the keys and fills the ? dialog, so it never shows a key that does nothing`,
+          `Single-key shortcuts can be turned off on a device; Ctrl K and Escape keep working`,
+          `In the admin area, G then a letter opens each module`,
+        ],
+        code: { label: `Read the shortcuts code`, href: source(`libs/ui/shortcuts.tsx`) },
+      },
+      {
         id: `push`,
         nav: `Notifications`,
         eyebrow: `Notifications`,
