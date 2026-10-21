@@ -61,7 +61,8 @@ an old id writes it as a literal string.
 ## The guard
 
 `tests/no-uuid-v4.test.ts` runs in `deno task check`. It reads every text file, whatever its
-extension (code, SQL, shell, HTML, configuration, documents), and fails on a call that makes a version 4 id, in TypeScript or
-SQL, and on a pattern or helper that accepts only version 4. Two old migrations are allowed by
-their exact names, because applied migrations are history; a new migration is checked. The two
-secrets above are allowed by their exact line, so a second call in either file fails.
+extension (code, SQL, shell, HTML, configuration, documents), and fails on a call that makes a
+version 4 id, in TypeScript or SQL, and on a pattern or helper that accepts only version 4. Two old
+migrations are allowed by their exact names, because applied migrations are history; a new migration
+is checked. The two secrets above are allowed by their exact line, so a second call in either file
+fails.

@@ -1,4 +1,5 @@
 import { type } from "arktype"
+import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
 import { canManageBilling, canRead, GroupRole } from "@domain/groups"
@@ -159,8 +160,6 @@ const PAID_STATUSES: ReadonlySet<BillingStatus> = new Set([
  */
 export const DEFAULT_GRACE_DAYS = 7
 
-const DAY_MS = 24 * 60 * 60 * 1000
-
 /** A group's subscription as this app stores it. */
 export interface StoredSubscription {
   groupId: string
@@ -209,7 +208,7 @@ export function graceEndsAt(subscription: StoredSubscription, graceDays: number)
   if (subscription.status !== BillingStatus.PastDue) return null
   if (subscription.pastDueSince === null) return new Date(0)
   if (!subscription.everActive) return subscription.pastDueSince
-  return new Date(subscription.pastDueSince.getTime() + graceDays * DAY_MS)
+  return new Date(subscription.pastDueSince.getTime() + graceDays * ONE_DAY_IN_MILLISECONDS)
 }
 
 /**
@@ -271,7 +270,7 @@ export function billingNoticeKindOf(
   if (accessEnd !== null && now.getTime() >= accessEnd.getTime()) return null
   if (subscription.cancelAtPeriodEnd) return BillingNoticeKind.PlanEnding
   if (subscription.status !== BillingStatus.Trialing || accessEnd === null) return null
-  const noticeFrom = accessEnd.getTime() - TRIAL_NOTICE_DAYS * DAY_MS
+  const noticeFrom = accessEnd.getTime() - TRIAL_NOTICE_DAYS * ONE_DAY_IN_MILLISECONDS
   return now.getTime() >= noticeFrom ? BillingNoticeKind.TrialEnding : null
 }
 
@@ -298,7 +297,7 @@ export function billingNoticeOf(
     ? graceEndsAt(subscription, graceDays)
     : accessEndsAt(subscription) ?? subscription.currentPeriodEnd
   if (at === null) return null
-  const daysLeft = Math.max(0, Math.ceil((at.getTime() - now.getTime()) / DAY_MS))
+  const daysLeft = Math.max(0, Math.ceil((at.getTime() - now.getTime()) / ONE_DAY_IN_MILLISECONDS))
   return { kind, at, daysLeft }
 }
 
@@ -334,7 +333,7 @@ export function handoverTrialDays(
     .filter((date): date is Date => date !== null)
   if (ends.length === 0) return null
   const end = Math.min(...ends.map((date) => date.getTime()))
-  return Math.ceil((end - now.getTime()) / DAY_MS)
+  return Math.ceil((end - now.getTime()) / ONE_DAY_IN_MILLISECONDS)
 }
 
 /**

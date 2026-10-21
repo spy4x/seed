@@ -7,7 +7,12 @@ import {
   PostgresOutboxRepository,
   scheduleOutboxEvent,
 } from "@spy4x/server/outbox"
-import { JOB_AGGREGATE, JOB_AGGREGATE_ID, OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
+import {
+  JOB_AGGREGATE,
+  JOB_AGGREGATE_ID,
+  LEGACY_JOB_AGGREGATE_ID,
+  OUTBOX_CLEANUP_JOB,
+} from "@server/jobs/jobs.ts"
 import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
 import { JOB_RETRY } from "@server/jobs/job-failures.ts"
 import {
@@ -23,7 +28,7 @@ import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
-import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
 import { expectVersion7Ids } from "./ids.ts"
 
 const JOB = {
@@ -510,6 +515,50 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
       await insert(groupId, userId, 3)
       await insert(null, null, 4)
     })
+  })
+})
+
+Deno.test("the nightly cleanup and its fixed job id", async (t) => {
+  await withSchema(async (sql) => {
+    /** The cleanup rows still waiting to run, with the id each one carries. */
+    const waitingCleanups = () =>
+      sql<{ aggregateId: string }[]>`
+        SELECT aggregate_id::text AS aggregate_id FROM outbox_events
+        WHERE event_kind = ${OUTBOX_CLEANUP_JOB} AND processed_at IS NULL
+      `
+
+    await t.step("a database with no chain starts one under the version 7 id", async () => {
+      await scheduleNightlyJobs(sql, new Date())
+      const waiting = await waitingCleanups()
+      expect(waiting).toEqual([{ aggregateId: JOB_AGGREGATE_ID }])
+      expect(isUuid(waiting[0].aggregateId, 7)).toBe(true)
+      await sql`DELETE FROM outbox_events`
+    })
+
+    await t.step(
+      "a chain stored under the old id is found, runs, and no second chain starts beside it",
+      async () => {
+        await sql`
+          INSERT INTO outbox_events (
+            id, event_kind, aggregate_type, aggregate_id, aggregate_version, available_at
+          ) VALUES (
+            ${uuidV7()}, ${OUTBOX_CLEANUP_JOB}, ${JOB_AGGREGATE}, ${LEGACY_JOB_AGGREGATE_ID}, 1,
+            now() - interval '1 minute'
+          )
+        `
+        // The worker starts: twice, as a restart would.
+        await scheduleNightlyJobs(sql, new Date())
+        await scheduleNightlyJobs(sql, new Date())
+        expect(await waitingCleanups()).toEqual([{ aggregateId: LEGACY_JOB_AGGREGATE_ID }])
+
+        const result = await createOutboxProcessor(sql, mailOff(sql)).drainOnce()
+        expect(result).toEqual({ claimed: 1, published: 1, failed: 0 })
+
+        // The next night's run keeps the stored id, and a later start still adds nothing.
+        await scheduleNightlyJobs(sql, new Date())
+        expect(await waitingCleanups()).toEqual([{ aggregateId: LEGACY_JOB_AGGREGATE_ID }])
+      },
+    )
   })
 })
 

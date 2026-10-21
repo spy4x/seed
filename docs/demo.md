@@ -58,8 +58,8 @@ updates the demo in the same PR:
   the seed's raw SQL, which writes the past the app's own code cannot (`apps/worker/demo/history.ts`
   and `seed.ts`: `users`, `auth_*`, `group_members`, `audit_events`, `subscriptions`,
   `billing_*`, `subscriber*`, `user_totp`, `backup_status`); fix it there. The seed dates rows after
-  writing them, so it then renumbers the `audit_events` and `auth_audits` rows written since it started
-  to follow their times (`orderIdsByTime`), because feeds sort by id.
+  writing them, so it then renumbers the `audit_events` and `auth_audits` rows written since it
+  started to follow their times (`orderIdsByTime`), because feeds sort by id.
 - **The tests**: `tests/integration/demo-seed.integration.test.ts` checks that the wipe leaves
   every table but the kept ones empty, that the seed's counts match the fake data, what a new
   account's sample groups hold, and what the admin's dashboard, billing and newsletter read from

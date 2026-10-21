@@ -56,7 +56,7 @@ name another): `SSH_TO_SERVER`, `PATH_ON_SERVER` and, when Deno is not on the se
 every server file that differs from your checkout, one edited on the server or newer there too, and
 deletes the ones your checkout no longer has; env files and the web push keys are never touched. So
 deploying an older commit is a full rollback of the code. It does not roll back the database or
-Valkey: before rolling back, read traps 10 and 11 in [docs/handoff.md](handoff.md).
+Valkey: before rolling back, read traps 10 and 11 in [the handoff](handoff.md).
 
 The deploy stops when your working tree has uncommitted changes, untracked files included, and
 lists them: the copy sends files as they are on disk, so the server would run code that matches no
@@ -67,7 +67,7 @@ them anyway.
 keeps its data in a directory of its own, so the first deploy of this version stops at "Starting
 the app" with a message that says why, and the old containers keep serving. Run
 `deno task db:upgrade-18` on the server to move the data and finish the deploy:
-[docs/postgres-18-upgrade.md](postgres-18-upgrade.md) has the steps, the outage to expect and
+[The Postgres 18 upgrade guide](postgres-18-upgrade.md) has the steps, the outage to expect and
 the way back.
 
 `deno task deploy` needs no manual step on a new server: it creates `infra/configs/vapid.json`
@@ -119,8 +119,9 @@ directly, without passing the proxy. The API refuses such a request when it name
 (`X-Real-IP` and the like): only Traefik, which must keep the container name `traefik`, and the
 project's own website may, as `PROXY_HOSTS` in the API's environment lists them. So a neighbour
 cannot pose as many visitors to dodge the sign-in limits, though it can still call the API as one.
-Share a server only between projects you trust alike. On that network a project addresses its own services by container name (`<PROJECT>-api`,
-`<PROJECT>-db`), never by a plain service name such as `api`, which any project would answer.
+Share a server only between projects you trust alike. On that network a project addresses its own
+services by container name (`<PROJECT>-api`, `<PROJECT>-db`), never by a plain service name such as
+`api`, which any project would answer.
 
 With the `host-monitoring` profile, turn it on in one project only: its containers watch the whole
 host.
@@ -138,7 +139,7 @@ git push origin v1.2.3
 ```
 
 The pipeline refuses a tag whose commit is not on `main`. Setup and the steps:
-[docs/woodpecker-ci-setup.md](woodpecker-ci-setup.md#releases).
+[the CI guide](woodpecker-ci-setup.md#releases).
 
 **Release images are public.** A new Docker Hub repository is public unless the account says
 otherwise, and the API image holds the whole source tree, not only the build output. A private

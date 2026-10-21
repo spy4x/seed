@@ -5,19 +5,19 @@ The local stack beyond the README's quick start, every task, and the browser tes
 ## The local stack
 
 Compose joins every service that Traefik routes to a Docker network named `proxy`. `proxy:start` and
-`dev` create it when it is missing (`deno task proxy:network` does only that) and leave an existing one
-alone, so a fresh machine needs no extra command.
+`dev` create it when it is missing (`deno task proxy:network` does only that) and leave an existing
+one alone, so a fresh machine needs no extra command.
 
 Metrics and logs go to VictoriaMetrics and VictoriaLogs, with Grafana on top at
-`http://localhost:3000` ([Admin consoles](deploy.md#admin-consoles)). `COMPOSE_PROFILES=monitoring` in the
-env file runs those three in this project; without it, `VM_REMOTE_WRITE_URL` and `VLOGS_URL` send
-the same metrics and logs to a monitoring server you already have.
-[docs/stack.md](stack.md#monitoring) describes both modes.
-node-exporter and cAdvisor watch the whole host, so they are off by default: add `host-monitoring`
-to `COMPOSE_PROFILES` to start them too.
+`http://localhost:3000` ([Admin consoles](deploy.md#admin-consoles)). `COMPOSE_PROFILES=monitoring`
+in the env file runs those three in this project; without it, `VM_REMOTE_WRITE_URL` and `VLOGS_URL`
+send the same metrics and logs to a monitoring server you already have.
+[The stack guide](stack.md#monitoring) describes both modes. node-exporter and cAdvisor watch the
+whole host, so they are off by default: add `host-monitoring` to `COMPOSE_PROFILES` to start them
+too.
 
-To try the MPA in Compose, see [The SPA and the MPA](apps.md#the-spa-and-the-mpa). Stop the proxy with
-`deno task proxy:stop`. Compose applies pending migrations on every start, in the one-shot
+To try the MPA in Compose, see [The SPA and the MPA](apps.md#the-spa-and-the-mpa). Stop the proxy
+with `deno task proxy:stop`. Compose applies pending migrations on every start, in the one-shot
 `migrate` service that the API and the worker wait for; a failed migration stops the start. To apply
 them from the host instead, for an API run outside Compose, use the values from your `.env` and the
 port Compose publishes:
@@ -64,8 +64,8 @@ Current tasks come from [`deno.jsonc`](../deno.jsonc).
 | `deno task deploy`           | Copy the production files to the server and start them |
 | `deno task db:upgrade-18`    | Once per server: move the data from Postgres 16 to 18  |
 
-Run individual app tasks with `api:*`, `spa:*`, `admin:*`, or `mpa:*`. Deno workspace members inherit shared
-imports and tooling settings from root `deno.jsonc`.
+Run individual app tasks with `api:*`, `spa:*`, `admin:*`, or `mpa:*`. Deno workspace members
+inherit shared imports and tooling settings from root `deno.jsonc`.
 
 ## Checks
 
@@ -89,10 +89,10 @@ deno task e2e:report                       # open the report of the last run
 ```
 
 The specs that start the app with no network, `e2e/offline.e2e.ts`, `e2e/local-data.e2e.ts` and
-`e2e/search-offline.e2e.ts`, run against the built SPA, the image a deploy serves, and every other spec
-against the dev server ([docs/offline.md](offline.md), "The app shell", says why). A run that
-needs both makes two Playwright passes, the dev server first and then the built SPA in its place,
-so `deno task e2e:local` alone still runs every spec. It fails when either pass fails, and its last
+`e2e/search-offline.e2e.ts`, run against the built SPA, the image a deploy serves, and every other
+spec against the dev server ([the offline guide](offline.md), "The app shell", says why). A run that
+needs both makes two Playwright passes, the dev server first and then the built SPA in its place, so
+`deno task e2e:local` alone still runs every spec. It fails when either pass fails, and its last
 lines give the counts of each pass. The report of the second pass is in `e2e/report/offline`, which
 `deno task e2e:report` does not open. An argument that is not a spec path goes to both passes.
 `E2E_SPA=dev` or `E2E_SPA=built` puts every spec asked for on that one server.
@@ -106,7 +106,7 @@ one.
 
 A merge needs the pull-request check, so that check runs a smoke set; the whole suite runs after
 the merge. Every step of the pipeline, browser tests or not, is listed in
-[docs/woodpecker-ci-setup.md](woodpecker-ci-setup.md).
+[the CI guide](woodpecker-ci-setup.md).
 
 | When                    | Step        | Specs                                                      |
 | ----------------------- | ----------- | ---------------------------------------------------------- |
@@ -134,7 +134,7 @@ in a red step may be incomplete: run the specs here for the rest. Before you add
 set, run it ten times in a row (`deno task e2e:local e2e/<spec> --repeat-each=10`): one that fails
 once on a healthy branch blocks every pull request.
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for the rules, and [docs/handoff.md](handoff.md) for
+See [CONTRIBUTING.md](../CONTRIBUTING.md) for the rules, and [the handoff](handoff.md) for
 the state of the migration and the traps in this codebase. To add a product feature, follow
-[docs/aggregates.md](aggregates.md): it walks through every file of the notes aggregate, in
+[the aggregate guide](aggregates.md): it walks through every file of the notes aggregate, in
 order.

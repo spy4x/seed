@@ -7,6 +7,7 @@
  */
 
 import type postgres from "postgres"
+import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
   type AdminBillingCounts,
@@ -26,7 +27,6 @@ import {
 import { likeContains } from "@spy4x/server/db"
 
 const PASSWORD_METHOD = `password`
-const DAY_MS = 24 * 60 * 60 * 1000
 /** A subscription that still runs: it may renew, bill again or be cancelled. */
 const LIVE = [BillingStatus.Trialing, BillingStatus.Active, BillingStatus.PastDue]
 /** A subscription that pays: its list price counts toward monthly revenue. */
@@ -37,7 +37,7 @@ export async function readAdminBillingFigures(
   sql: postgres.Sql,
   now: Date,
 ): Promise<AdminBillingFigures> {
-  const soon = new Date(now.getTime() + 7 * DAY_MS)
+  const soon = new Date(now.getTime() + 7 * ONE_DAY_IN_MILLISECONDS)
   const rows = await sql<
     {
       planId: string | null
