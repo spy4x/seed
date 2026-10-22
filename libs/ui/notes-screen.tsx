@@ -811,7 +811,7 @@ function NoteItem(
             <Link
               href={NOTE_PATHS.note(note.id)}
               navigate={navigate}
-              class="text-foreground after:absolute after:inset-0 focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-inset"
+              class="block min-h-6 text-foreground after:absolute after:inset-0 focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-focus focus-visible:after:ring-inset"
             >
               {note.title}
             </Link>
@@ -856,7 +856,10 @@ function NoteItem(
     </div>
   )
   return (
-    <li class="relative transition-colors hover:bg-hover" data-e2e={`note-${note.id}`}>
+    <li
+      class="flex min-h-14 items-stretch transition-colors hover:bg-hover"
+      data-e2e={`note-${note.id}`}
+    >
       {selecting
         // While selecting, the whole row is the tick box's label: a tap anywhere on it ticks.
         ? (
@@ -873,10 +876,19 @@ function NoteItem(
           </Checkbox>
         )
         : (
-          <div class="flex min-h-14 items-start gap-3 px-4 py-3 sm:px-6">
-            {summary}
-            {menu && <div class="relative -my-2 -mr-2 shrink-0">{menu}</div>}
-          </div>
+          // Two areas side by side that never overlap: the title's link covers the summary (its
+          // `after:` box stops at the summary's edge) and the menu has a column of its own, 8 px
+          // clear of it.
+          <>
+            <div
+              class={`relative flex min-w-0 flex-1 py-3 pl-4 sm:pl-6 ${
+                menu ? "pr-2" : "pr-4 sm:pr-6"
+              }`}
+            >
+              {summary}
+            </div>
+            {menu && <div class="flex shrink-0 items-center px-2 sm:pr-4">{menu}</div>}
+          </>
         )}
     </li>
   )

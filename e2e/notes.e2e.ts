@@ -1,4 +1,5 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
+import { AxeBuilder } from "@axe-core/playwright"
 import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
@@ -10,6 +11,9 @@ const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 const password = "Passw0rd!"
 
 const VIEWER = 1
+
+/** The WCAG A and AA rules axe-core checks a page against. */
+const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]
 
 async function cleanup(request: APIRequestContext, email: string): Promise<void> {
   const response = await request.post(`${apiBase}/api/test/cleanup-user`, {
@@ -423,6 +427,66 @@ test.describe("notes in a shared group", () => {
       await expect(title).toHaveValue("Theirs")
       await expect(page.getByRole("alertdialog", { name: "Leave without saving?" })).toHaveCount(0)
       await expect(page.locator("[data-e2e=note-conflict]")).toHaveCount(0)
+    } finally {
+      await context.close()
+      await cleanup(request, owner)
+    }
+  })
+})
+
+test.describe("the notes list", () => {
+  test("each row's link and menu are separate targets, with no axe-core failure on a phone or a desktop", async ({ browser, request }) => {
+    const owner = "e2e_notes_list_targets@example.com"
+    await cleanup(request, owner)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      await signUp(request, owner)
+      const page = await context.newPage()
+      await signInOnline(page, owner)
+      const { groupId } = await (await page.request.get(`${apiBase}/api/groups/selected`)).json()
+      const titles = [
+        "Quarterly planning notes for the team offsite, with every open question in one place",
+        "Groceries",
+        "Trip",
+      ]
+      for (const title of titles) {
+        const note = await page.request.post(`${apiBase}/api/groups/${groupId}/notes`, {
+          headers,
+          data: { id: uuidV7(), title, body: "" },
+        })
+        expect(note.status(), await note.text()).toBe(201)
+      }
+
+      const rows = page.locator("[data-e2e=note-list] > li")
+      // Tall enough that no row sits under the phone's fixed tab bar: axe-core's target-size
+      // rule counts a control the bar covers as too small, wherever the page happens to scroll.
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 2400 })
+        await gotoApp(page, "/notes", rows.first())
+        // The account's own sample notes are listed too.
+        for (const title of titles) await expect(rows.filter({ hasText: title })).toHaveCount(1)
+        const { violations } = await new AxeBuilder({ page }).include("main").withTags(WCAG_TAGS)
+          .analyze()
+        expect(
+          violations.flatMap((violation) =>
+            violation.nodes.map((node) => `${violation.id}: ${node.target.join(" ")}`)
+          ),
+          `the notes list at ${width} px`,
+        ).toEqual([])
+
+        // The title's link area ends before the menu begins, on every row.
+        for (const row of await rows.all()) {
+          const link = await row.locator("[data-e2e=note-item-title] a").evaluate((element) => {
+            const after = getComputedStyle(element, "::after")
+            const area = element.closest("li > div")!.getBoundingClientRect()
+            return { position: after.position, right: area.right }
+          })
+          const menu = (await row.locator("[data-e2e=note-menu]").boundingBox())!
+          expect(link.position, `${width} px`).toBe("absolute")
+          expect(menu.x - link.right, `gap at ${width} px`).toBeGreaterThanOrEqual(8)
+          expect(menu.width, `menu at ${width} px`).toBeGreaterThanOrEqual(width < 640 ? 44 : 36)
+        }
+      }
     } finally {
       await context.close()
       await cleanup(request, owner)
