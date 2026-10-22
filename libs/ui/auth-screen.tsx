@@ -134,19 +134,29 @@ export interface AuthScreenProps {
    * token, and the app runs the request that waits for a pick.
    */
   passkeyAutofill?: boolean
+  /**
+   * Sends a sign-in link (#391): "Email me a sign-in link" on sign-in, "Email me a sign-up link" on
+   * sign-up, in the other ways in. Called with what the login field holds, as typed: the app sends
+   * the link when it is an address and opens the link page otherwise. Left out: no such button.
+   */
+  onEmailLink?: (login: string) => void
+  /** The link is being sent: its button says so. */
+  linkBusy?: boolean
 }
 
 /** What the sign-in screen says about the last sign-in on this browser. */
 export interface LastSignInHint {
-  method: SignInMethod["kind"]
+  /** A linked method, or `link` for a sign-in link (#391), which is never a linked method. */
+  method: SignInMethod["kind"] | "link"
   /** The address, already masked (`j***@example.com`), or `null` when none was kept. */
   email: string | null
 }
 
 /** The name of a sign-in method in a sentence. */
-const METHOD_NAMES: Record<SignInMethod["kind"], string> = {
+const METHOD_NAMES: Record<LastSignInHint["method"], string> = {
   password: "your password",
   passkey: "a passkey",
+  link: "an e-mail link",
   ...OAUTH_PROVIDER_NAMES,
 }
 
@@ -200,7 +210,7 @@ function LastSignIn(
  * is only for a page that places the card in a wider column of its own.
  */
 export function AuthCard(
-  { title, description, below, after, children, e2e, class: className }: {
+  { title, description, below, after, children, e2e, class: className, focusTitle = false }: {
     title: string
     description?: ComponentChildren
     /** A block of its own under the card, before `after`, such as the guest entry on sign-in. */
@@ -209,14 +219,30 @@ export function AuthCard(
     children: ComponentChildren
     e2e?: string
     class?: string
+    /**
+     * The heading takes focus when the card appears, so a screen reader reads a state that has no
+     * field to focus, such as "Check your inbox".
+     */
+    focusTitle?: boolean
   },
 ): JSX.Element {
+  const heading = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    // After the app's route announcer, which focuses the heading of a new page in the same flush.
+    if (focusTitle) queueMicrotask(() => heading.current?.focus())
+  }, [focusTitle])
   return (
     <div class={`flex w-full flex-col gap-6 ${className ?? ""}`}>
       <Card class="w-full" data-e2e={e2e}>
         <div class="flex flex-col gap-6 p-6 sm:p-8 [&_button[type=submit]]:w-full">
           <header class="flex flex-col gap-1">
-            <h1 class="text-xl font-semibold">{title}</h1>
+            <h1
+              ref={heading}
+              tabIndex={focusTitle ? -1 : undefined}
+              class="text-xl font-semibold"
+            >
+              {title}
+            </h1>
             {description && <p class="text-sm text-muted">{description}</p>}
           </header>
           {children}
@@ -267,9 +293,12 @@ export function AuthScreen(
     passkeyBusy = false,
     passkeyAutofill = false,
     guest = false,
+    onEmailLink,
+    linkBusy = false,
   }: AuthScreenProps,
 ): JSX.Element {
   const copy = COPY[screen]
+  const form = useRef<HTMLDivElement>(null)
   const tryFirst = guest && screen === "sign-up"
 
   if (screen === "one-time-code" && !isMfaRequired) {
@@ -299,6 +328,28 @@ export function AuthScreen(
 
   // A passkey signs in to an account that exists: sign-up offers none.
   const passkeyButton = screen === "sign-in" && onPasskey !== undefined
+  const linkButton = screen !== "one-time-code" && onEmailLink !== undefined && (
+    <li>
+      <Button
+        type="button"
+        variant="secondary"
+        class="w-full"
+        busy={linkBusy}
+        busyLabel="Sending…"
+        disabled={busy}
+        // The form keeps its own fields, so the press reads what the login field holds.
+        onClick={() =>
+          onEmailLink(
+            form.current?.querySelector<HTMLInputElement>(
+              `input[name="${FIELD_NAMES[screen].login}"]`,
+            )?.value.trim() ?? "",
+          )}
+        data-e2e={screen === "sign-in" ? "link-sign-in" : "link-sign-up"}
+      >
+        {screen === "sign-in" ? "Email me a sign-in link" : "Email me a sign-up link"}
+      </Button>
+    </li>
+  )
   const card = (
     <AuthCard
       title={copy.title}
@@ -315,35 +366,38 @@ export function AuthScreen(
           <WordDivider>or create an account</WordDivider>
         </>
       )}
-      <AuthForm
-        submitVariant={tryFirst ? "secondary" : "primary"}
-        mode={screen === "one-time-code" ? "sign-in" : screen}
-        step={screen === "one-time-code" ? "one-time-code" : "credentials"}
-        busy={busy}
-        error={error}
-        labels={{
-          login: LOGIN_LABELS[screen],
-          signUp: "Create account",
-          submitCode: "Continue",
-          codeHint: "Six digits from your authenticator app.",
-        }}
-        names={FIELD_NAMES[screen]}
-        passkeyAutofill={passkeyAutofill}
-        onSignIn={onSignIn}
-        onSignUp={onSignUp}
-        onOneTimeCode={onOneTimeCode}
-        footer={screen === "sign-in"
-          ? (
-            <p class="text-center text-sm">
-              <Link href={SCREEN_PATHS.forgotPassword} navigate={navigate} class="pc-link">
-                Forgot your password?
-              </Link>
-            </p>
-          )
-          : undefined}
-      />
-      {screen !== "one-time-code" && (providers.length > 0 || passkeyButton) && (
+      <div ref={form} class="contents">
+        <AuthForm
+          submitVariant={tryFirst ? "secondary" : "primary"}
+          mode={screen === "one-time-code" ? "sign-in" : screen}
+          step={screen === "one-time-code" ? "one-time-code" : "credentials"}
+          busy={busy}
+          error={error}
+          labels={{
+            login: LOGIN_LABELS[screen],
+            signUp: "Create account",
+            submitCode: "Continue",
+            codeHint: "Six digits from your authenticator app.",
+          }}
+          names={FIELD_NAMES[screen]}
+          passkeyAutofill={passkeyAutofill}
+          onSignIn={onSignIn}
+          onSignUp={onSignUp}
+          onOneTimeCode={onOneTimeCode}
+          footer={screen === "sign-in"
+            ? (
+              <p class="text-center text-sm">
+                <Link href={SCREEN_PATHS.forgotPassword} navigate={navigate} class="pc-link">
+                  Forgot your password?
+                </Link>
+              </p>
+            )
+            : undefined}
+        />
+      </div>
+      {screen !== "one-time-code" && (providers.length > 0 || passkeyButton || linkButton) && (
         <ul class="flex flex-col gap-3 border-t border-subtle pt-6" aria-label="Other ways in">
+          {screen === "sign-up" && linkButton}
           {passkeyButton && (
             <li>
               <Button
@@ -360,6 +414,7 @@ export function AuthScreen(
               </Button>
             </li>
           )}
+          {screen === "sign-in" && linkButton}
           {providers.map((provider) => (
             <li key={provider}>
               {/* A plain link, with no `navigate`: the browser must leave the app for the provider. */}
