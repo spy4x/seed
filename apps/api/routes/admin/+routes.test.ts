@@ -146,6 +146,14 @@ const ROUTES = [
   { method: "GET", path: "/admin/billing/0199f0a0-0000-7000-8000-000000000001" },
   { method: "GET", path: "/admin/billing/0199f0a0-0000-7000-8000-000000000001/payment" },
   { method: "POST", path: "/admin/billing/0199f0a0-0000-7000-8000-000000000001/refund" },
+  { method: "GET", path: "/admin/jobs?state=failed" },
+  { method: "GET", path: "/admin/jobs/repeating" },
+  { method: "GET", path: "/admin/jobs/0199f0a0-0000-7000-8000-000000000002" },
+  { method: "POST", path: "/admin/jobs/0199f0a0-0000-7000-8000-000000000002/retry" },
+  { method: "POST", path: "/admin/jobs/0199f0a0-0000-7000-8000-000000000002/run-now" },
+  { method: "POST", path: "/admin/jobs/0199f0a0-0000-7000-8000-000000000002/cancel" },
+  { method: "POST", path: "/admin/jobs/repeating/outbox.cleanup/run-now" },
+  { method: "POST", path: "/admin/jobs/retry-failed" },
 ]
 
 function send(
@@ -248,6 +256,7 @@ describe("operator area routes", () => {
       "billing",
       "newsletter",
       "audit",
+      "jobs",
       "system",
       "api-tokens",
     ])

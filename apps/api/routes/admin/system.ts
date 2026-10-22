@@ -1,13 +1,8 @@
 import { Hono } from "hono"
 import { deadline } from "@std/async/deadline"
 import type { MiddlewareHandler } from "hono"
-import { type } from "arktype"
 import {
-  ADMIN_FAILED_JOBS_LIMIT,
-  type AdminFailedJob,
   AdminHealth,
-  AdminJobRetryOutcome,
-  type AdminSystemJobKind,
   type AdminSystemSnapshot,
   backupHealth,
   queueHealth,
@@ -17,33 +12,22 @@ import type { DatabaseFacts, QueueCounts } from "@server/jobs/admin-system.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
 
-export const ADMIN_JOB_NOT_FOUND = "No failed job has this id. It may have been run again already."
-export const ADMIN_JOB_SUPERSEDED =
-  "A newer run of this job is already waiting, so this one is not run again."
-
 /**
  * How long the page waits for the database or the cache to answer before it counts it as down, and
  * for each of its database reads before it shows that part as an error.
  */
 export const CACHE_PROBE_TIMEOUT_MS = 2_000
 
-/** A job's id in the path: the outbox row's UUID. */
-const jobId = type(`string.uuid`)
-
 /** When this process started: the API's uptime is counted from it. */
 const PROCESS_STARTED_AT = new Date(performance.timeOrigin)
 
-/** The System page's reads, and running a failed job again. */
+/** The System page's reads. */
 export interface AdminSystemStore {
   databaseConnected(): Promise<boolean>
   database(): Promise<DatabaseFacts>
   queue(): Promise<QueueCounts>
-  jobKinds(): Promise<AdminSystemJobKind[]>
-  failedJobs(limit: number): Promise<AdminFailedJob[]>
   lastBackup(): Promise<Date | null>
   migrations(): Promise<{ applied: number; latest: string | null; latestAt: Date | null }>
-  /** Runs the job again and writes the operator's audit entry, in one transaction. */
-  retryJob(id: string, operatorId: number, requestId: string | null): Promise<AdminJobRetryOutcome>
 }
 
 /** What the System routes call. */
@@ -97,16 +81,14 @@ export async function readSystemSnapshot(
     timed(() => system.databaseConnected(), timeout),
     timed(() => dependencies.cacheConnected(), timeout),
   ])
-  const [facts, queue, jobs, failedJobs, backup, migrations] = db.ok
+  const [facts, queue, backup, migrations] = db.ok
     ? await Promise.all([
       attempt(() => system.database(), timeout),
       attempt(() => system.queue(), timeout),
-      attempt(() => system.jobKinds(), timeout),
-      attempt(() => system.failedJobs(ADMIN_FAILED_JOBS_LIMIT), timeout),
       attempt(() => system.lastBackup(), timeout),
       attempt(() => system.migrations(), timeout),
     ])
-    : [null, null, null, null, undefined, null]
+    : [null, null, undefined, null]
 
   const database = {
     health: db.ok && facts ? AdminHealth.OK : AdminHealth.ERROR,
@@ -153,8 +135,6 @@ export async function readSystemSnapshot(
     database,
     cache: cacheCard,
     queue: queueCard,
-    jobs: jobs ?? [],
-    failedJobs: failedJobs ?? [],
     backup: backupCard,
     migrations: migrationsCard,
     build: {
@@ -168,41 +148,21 @@ export async function readSystemSnapshot(
 
 /**
  * The System routes of the operator area (#429), mounted at `/api/admin` behind the gate in
- * `+routes.ts`: only an operator with a full session reaches them, and a write passes its
- * cross-site checks first.
+ * `+routes.ts`: only an operator with a full session reaches them.
  *
- * - `GET /system` is the snapshot: each part of the stack with its status, the queue, the failed
- *   jobs, the backup, the migrations and the build. Names and states only: no environment value,
- *   address of a service or secret.
- * - `POST /system/jobs/:id/retry` takes no body and runs the failed job again: `{ retried: true }`.
- *   It writes an audit entry naming the operator. 404 when no failed job has the id (a group change
- *   is never run again: out of order it could undo a later one); 409 when a newer run waits.
+ * - `GET /system` is the snapshot: each part of the stack with its status, the queue, the backup,
+ *   the migrations and the build. Names and states only: no environment value, address of a
+ *   service or secret. The jobs themselves are the Jobs module's (`jobs.ts`, #394).
  */
 export function createAdminSystemRoutes(
   dependencies: AdminSystemRouteDependencies,
 ): Hono<APIContext> {
-  const { limit, system } = dependencies
+  const { limit } = dependencies
   return new Hono<APIContext>()
     .get(`/system`, limit, async (c) => c.json(await readSystemSnapshot(dependencies)))
-    .post(`/system/jobs/:id/retry`, limit, async (c) => {
-      const id = jobId(c.req.param(`id`))
-      if (id instanceof type.errors) return c.json({ error: ADMIN_JOB_NOT_FOUND }, 404)
-      const outcome = await system.retryJob(
-        id.toLowerCase(),
-        c.get(`auth`)!.user.id,
-        c.get(`requestId`) ?? null,
-      )
-      switch (outcome) {
-        case AdminJobRetryOutcome.NotFound:
-          return c.json({ error: ADMIN_JOB_NOT_FOUND }, 404)
-        case AdminJobRetryOutcome.Superseded:
-          return c.json({ error: ADMIN_JOB_SUPERSEDED }, 409)
-      }
-      return c.json({ retried: true })
-    })
 }
 
-/** The System module: the health of the stack, the job queue and running a failed job again. */
+/** The System module: the health of the stack and the job queue. */
 export const systemAdminModule: AdminApiModule = {
   id: `system`,
   routes: ({ db, limit, now, cacheConnected, build }) =>
@@ -216,12 +176,8 @@ export const systemAdminModule: AdminApiModule = {
         databaseConnected: () => db.isConnected(),
         database: () => db.adminSystem.database(),
         queue: () => db.adminSystem.queue(),
-        jobKinds: () => db.adminSystem.jobKinds(),
-        failedJobs: (size) => db.adminSystem.failedJobs(size),
         lastBackup: () => db.adminSystem.lastBackup(),
         migrations: () => db.adminSystem.migrations(),
-        retryJob: (id, operatorId, requestId) =>
-          db.begin((tx) => tx.adminSystem.retryJob(id, operatorId, requestId)),
       },
     }),
 }
