@@ -70,7 +70,8 @@ export interface AuthRouteDependencies {
    * Queues a sign-in link for a normalised address, with the checked page to open after sign-in
    * (#391). The same work for every address: the link decides what happens once it is opened.
    */
-  requestSignInLink(email: string, next: string | null): Promise<void>
+  /** `requestedBy`: the guest account that asks, kept by the link only for that guest; else `null`. */
+  requestSignInLink(email: string, next: string | null, requestedBy: number | null): Promise<void>
   /** Persistent count of wrong e-mail codes per user, with a growing lock. */
   emailCodeFailures: Lockout
   /** Queues a mail with a new code for `email`, the address the user's account must prove. */
@@ -440,7 +441,12 @@ export function createAuthRoute(
       if (!decision.allowed) {
         return tooMany(c, decision.retryAfterMs, signInLinksTooMany(decision.retryAfterMs))
       }
-      await requestSignInLink(email, pageOrNull(validationResult.data.next))
+      const asker = c.get("auth")?.user
+      await requestSignInLink(
+        email,
+        pageOrNull(validationResult.data.next),
+        asker?.guestSince ? asker.id : null,
+      )
       return c.json(SIGN_IN_LINK_REQUESTED)
     })
     // A POST the link page sends when the person presses Continue: opening the link spends nothing,

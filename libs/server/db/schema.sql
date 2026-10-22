@@ -892,6 +892,7 @@ CREATE TABLE sign_in_link_requests (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL,
     next TEXT,
+    requested_by_user_id INT4 REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     CONSTRAINT sign_in_link_requests_email_check CHECK (length(email) BETWEEN 3 AND 254),
     CONSTRAINT sign_in_link_requests_next_check CHECK (length(next) BETWEEN 1 AND 2048)

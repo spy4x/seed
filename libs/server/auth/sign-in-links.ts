@@ -55,6 +55,11 @@ export interface SignInLinkRequest {
   email: string
   /** The page to open after sign-in, already checked, or `null`. */
   next: string | null
+  /**
+   * The guest account that asked for the link, or `null`. Only that guest keeps its account through
+   * the link; any other browser that opens it gets the address's own account.
+   */
+  requestedBy: number | null
 }
 
 /** The `sign_in_link_requests` table over `sql`, a pool or a transaction. */
@@ -63,15 +68,16 @@ export function signInLinkRequests(sql: Sql) {
     /** Writes a new request. */
     create: async (request: SignInLinkRequest): Promise<void> => {
       await sql`
-        INSERT INTO sign_in_link_requests (id, email, next)
-        VALUES (${request.id}, ${request.email}, ${request.next})
+        INSERT INTO sign_in_link_requests (id, email, next, requested_by_user_id)
+        VALUES (${request.id}, ${request.email}, ${request.next}, ${request.requestedBy})
       `
     },
     /** The request with this id, or `null`. Any other id is `null`. */
     find: async (id: string): Promise<SignInLinkRequest | null> => {
       if (!UUID_PATTERN.test(id)) return null
       const [row] = await sql<SignInLinkRequest[]>`
-        SELECT id, email, next FROM sign_in_link_requests WHERE id = ${id}
+        SELECT id, email, next, requested_by_user_id AS "requestedBy"
+        FROM sign_in_link_requests WHERE id = ${id}
       `
       return row ?? null
     },

@@ -994,7 +994,11 @@ export function createSignIn(options: SignInOptions): SignIn {
   ): Promise<SignInLinkRedemption> {
     const { email, next } = link
     const state = c.get("auth") as AppAuthState | null | undefined
-    const guest = state?.user.guestSince ? state : null
+    // Only the guest who asked for the link keeps their account through it. Any other guest who
+    // opens it gets what a signed-out browser gets, and their guest account stays as it was:
+    // otherwise a stranger could mail a guest a link to the stranger's address and, by signing in
+    // with it later, own the guest's data.
+    const guest = state?.user.guestSince && link.requestedBy === state.user.id ? state : null
     const owner = await db.authStore.findUserIdByProvenEmail(email)
     if (owner === null) {
       if (await db.authStore.findKey(PASSWORD_METHOD, email)) {

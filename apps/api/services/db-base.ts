@@ -575,9 +575,12 @@ export class AppDbBase extends DbServiceBase {
     const sql = this.sql
     return {
       ...signInLinkRequests(sql),
-      /** Queues a link to `email`, already normalised, that opens `next` after sign-in. */
-      queue: (email: string, next: string | null): Promise<void> =>
-        enqueueSignInLinkMail(sql, email, next),
+      /**
+       * Queues a link to `email`, already normalised, that opens `next` after sign-in, asked for
+       * by the guest `requestedBy` or by someone with no guest account (`null`).
+       */
+      queue: (email: string, next: string | null, requestedBy: number | null = null) =>
+        enqueueSignInLinkMail(sql, email, next, requestedBy),
     }
   }
 

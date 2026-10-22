@@ -30,7 +30,12 @@ function memoryRequests(...rows: SignInLinkRequest[]) {
   }
 }
 
-const ann = (id: string): SignInLinkRequest => ({ id, email: "ann@example.com", next: "/notes" })
+const ann = (id: string): SignInLinkRequest => ({
+  id,
+  email: "ann@example.com",
+  next: "/notes",
+  requestedBy: null,
+})
 
 describe("sign-in links", () => {
   it("spends a link once: the first use answers its request, the second nothing", async () => {
@@ -84,7 +89,12 @@ describe("sign-in links", () => {
 
   it("leaves another address's link working when one address's link is used", async () => {
     const store = new MemoryAuthStore()
-    const bob: SignInLinkRequest = { id: BOB, email: "bob@example.com", next: null }
+    const bob: SignInLinkRequest = {
+      id: BOB,
+      email: "bob@example.com",
+      next: null,
+      requestedBy: null,
+    }
     const requests = memoryRequests(ann(ANN_FIRST), bob)
     const annLink = await issueSignInLink(store, ann(ANN_FIRST), NOW)
     const bobLink = await issueSignInLink(store, bob, NOW)
