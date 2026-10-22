@@ -10,14 +10,15 @@ import { guestRefusal, refusedAction } from "./guest-refusal.ts"
  * the page out. The server refuses a request whose page names another user than the session's
  * (`requireBoundUser`), so a stale tab never writes to the account that signed in beside it.
  */
-export async function apiFetch<T>(
+export function apiFetch<T>(
   path: string,
   init?: RequestInit,
 ): ReturnType<typeof send<T>> {
-  const result = await apiAsUser<T>(path, init)
-  // A guest refused an action that needs a sign-in method (#224): the frame says so.
-  if (!result.ok && result.error.code === GUEST_REFUSAL_CODE) {
-    guestRefusal.value = refusedAction(path) ?? "other"
-  }
-  return result
+  return apiAsUser<T>(path, init).then((result) => {
+    // A guest refused an action that needs a sign-in method (#224): the frame says so.
+    if (!result.ok && result.error.code === GUEST_REFUSAL_CODE) {
+      guestRefusal.value = refusedAction(path) ?? "other"
+    }
+    return result
+  })
 }
