@@ -1,0 +1,12 @@
+390 light member trigger 44
+390 light empty chart card 150
+390 light admin trigger 44
+1440 light member trigger 36
+1440 light empty chart card 142
+1440 light admin trigger 36
+390 dark member trigger 44
+390 dark empty chart card 150
+390 dark admin trigger 44
+1440 dark member trigger 36
+1440 dark empty chart card 142
+1440 dark admin trigger 36
