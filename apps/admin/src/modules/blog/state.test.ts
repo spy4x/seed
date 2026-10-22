@@ -210,7 +210,7 @@ it(`keeps a refused action's dialog open with the reason`, async () => {
   })
 })
 
-it(`deletes with the version read, and leaves nothing to guard`, async () => {
+it(`deletes with the version read, says so, and lets the page leave without asking`, async () => {
   const { state, calls, toasts } = build((path) =>
     path.endsWith(`/delete`) ? Promise.resolve(ok({ deleted: true })) : undefined
   )

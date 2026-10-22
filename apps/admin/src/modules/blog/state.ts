@@ -429,8 +429,6 @@ export function createBlogState(
         return false
       }
       dialog.value = NO_DIALOG
-      // Nothing is left to guard: the editor starts over, so leaving asks nothing.
-      editor.value = freshEditor(ports.newId())
       toasts.success({ body: `Post deleted.`, dataE2E: `admin-blog-toast` })
       return true
     },
