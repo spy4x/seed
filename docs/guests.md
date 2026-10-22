@@ -28,8 +28,9 @@ Signing out of a guest account asks first, since the account cannot be opened ag
 
 ## Security
 
-- A guest is a user like any other inside the group boundary: every route and handler checks
-  membership as before, and a guest can reach no group but their own.
+- A guest is a member like any other: every route and handler checks membership as before. A
+  guest can join another person's group by accepting an invitation link, and on the demo a guest
+  starts in the sample groups.
 - Starting a guest never takes over a session: a browser with any session gets nothing new.
 - Keeping by a provider or an e-mail address that another account owns never signs the guest into
   it without that account's password (and code); a provider sign-in proves the provider account.

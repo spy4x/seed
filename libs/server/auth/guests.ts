@@ -251,7 +251,9 @@ export async function dropGuestSwitch(sql: postgres.Sql, userId: number): Promis
  * Moves every live group guest `guestId` owns to account `targetId`, in the caller's transaction:
  * the owner's membership, the owner column, and the guest's name on what they wrote become the
  * other account's, and each group records an ownership change so open pages update. A guest
- * cannot invite, so nobody else is a member of these groups and no membership can clash. Answers
+ * cannot invite, so the groups a guest created have no other member; a group a guest was handed
+ * after joining it by link can, and the move then fails as a whole if `targetId` is already one of
+ * its members. Answers
  * how many groups moved. The caller deletes the guest afterwards.
  */
 export async function moveGuestGroups(
