@@ -289,8 +289,8 @@ function Features(): JSX.Element {
             }
           >
             Email and password with verification codes, password reset, Google and GitHub sign-in,
-            passkeys, guest accounts, and 2FA with an authenticator app. Sessions you can see and
-            end.
+            passkeys, sign-in links by email, guest accounts, and 2FA with an authenticator app.
+            Sessions you can see and end.
           </FeatureCard>
           <FeatureCard
             id="feature-billing"
