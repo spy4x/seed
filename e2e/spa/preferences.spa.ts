@@ -50,12 +50,15 @@ test("a region format and clock saved on the profile write the dates of the buil
     await page.getByRole("option", { name: /German \(Germany\)/ }).click()
     await pick(page, "preferences-clock-h12")
 
-    // The example on the profile and a note's exact time on another screen are German with a
-    // 12-hour clock.
+    // The example on the profile and every exact time of a note's row on another screen (when it
+    // changed and when it was made) are German with a 12-hour clock.
     await expect(example).toContainText(GERMAN_12_HOUR_FULL)
     await gotoApp(page, "/notes", page.locator("[data-e2e=note-new]"))
-    await expect(page.locator(`[data-e2e=note-${noteId}] time`))
-      .toHaveAttribute("title", GERMAN_12_HOUR_EXACT)
+    const times = page.locator(`[data-e2e=note-${noteId}] time`)
+    await expect(times.first()).toBeAttached()
+    const all = await times.all()
+    expect(all.length).toBeGreaterThan(1)
+    for (const time of all) await expect(time).toHaveAttribute("title", GERMAN_12_HOUR_EXACT)
   } finally {
     await cleanup({ soft: true })
   }

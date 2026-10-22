@@ -167,8 +167,12 @@ export class NotesTags {
       .locator("[data-e2e=note-tag]")
   }
 
-  filterChip(name: string): Locator {
-    return this.page.locator("[data-e2e=notes-tag-filter]").getByText(name, { exact: true })
+  /** Ticks or unticks a tag in the list's Tags menu, then closes the menu. */
+  async toggleTagFilter(name: string): Promise<void> {
+    await this.page.locator("[data-e2e=filter-tags]").click()
+    // An item's name is the tag's name, then how many notes carry it.
+    await this.page.getByRole("menuitemcheckbox", { name: new RegExp(`^${name}\\b`) }).click()
+    await this.page.keyboard.press("Escape")
   }
 
   pickerChip(name: string): Locator {

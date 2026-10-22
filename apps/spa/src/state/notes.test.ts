@@ -594,7 +594,7 @@ describe("notes store", () => {
         canUpgrade: true,
       })
 
-    it("offers Undo for ten seconds after a delete, for the note that was deleted", async () => {
+    it("offers Undo for eight seconds after a delete, for the note that was deleted", async () => {
       const { store } = harness({ pages: [{ notes: [item("a", 2, "Plan")], nextCursor: null }] })
       await store.open(groupId, null)
       const before = Date.now()
@@ -603,8 +603,8 @@ describe("notes store", () => {
 
       expect(store.undo.value?.id).toBe("a")
       expect(store.undo.value?.title).toBe("Plan")
-      expect(store.undo.value!.until - before).toBeGreaterThanOrEqual(10_000)
-      expect(store.undo.value!.until - Date.now()).toBeLessThanOrEqual(10_000)
+      expect(store.undo.value!.until - before).toBeGreaterThanOrEqual(8_000)
+      expect(store.undo.value!.until - Date.now()).toBeLessThanOrEqual(8_000)
     })
 
     it("offers no Undo for a delete that was refused", async () => {

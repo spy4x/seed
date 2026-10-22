@@ -5,13 +5,18 @@ import { NoteEditorScreen } from "@ui/note-editor-screen.tsx"
 import { moveTargetsOf } from "@ui/notes-screen.tsx"
 import { NOTE_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
+import { membersStore } from "../state/members.ts"
 import { notesStore } from "../state/notes.ts"
+import { sessionState } from "../state/session.ts"
+import { toasts } from "../state/toasts.ts"
 import { tagsStore } from "../state/tags.ts"
 import { selectionStore } from "../state/selection.ts"
 import { OfflineStatus } from "../modules.ts"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { isSpaPath } from "./spa-paths.ts"
+import { personName } from "./note-people.ts"
+import { movedToast } from "./note-toasts.ts"
 
 /**
  * Wires the note page to the notes store: `/notes/new` (no `noteId`) creates a note in the
@@ -30,6 +35,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
     if (groupId) {
       void store.open(groupId, noteId)
       void tagsStore.open(groupId)
+      void membersStore.open(groupId)
     }
   }, [groupId, noteId])
 
@@ -48,6 +54,12 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   const readingNote = !creating && editing === null && !missing && listError === null
   const errors = creating ? store.createErrors.value : store.editErrors.value
   const loading = groupsStore.loading.value || groupId === null || readingNote
+  const saved = editing ? store.notes.value.find((note) => note.id === editing.id) : undefined
+  const youId = sessionState.value.user?.id ?? null
+  const members = membersStore.groupId.value === groupId ? membersStore.members.value : null
+  const moveTargets = membership && canMutateNotes(membership.role)
+    ? moveTargetsOf(groupsStore.groups.value, membership.id)
+    : []
   // A route change focuses the loading page's heading, which the note's own heading then replaces,
   // leaving focus on the page body. Once the note shows, lost focus goes to its heading.
   const wasLoading = useRef(loading)
@@ -79,8 +91,13 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
           version: editing.version,
           conflict: editing.conflict,
           // The heading names the note as saved, so typing a new title does not rename the page.
-          savedTitle: store.notes.value.find((note) => note.id === editing.id)?.title ??
-            editing.title,
+          savedTitle: saved?.title ?? editing.title,
+        }}
+        authorship={saved && {
+          createdAt: saved.createdAt,
+          createdBy: personName(saved.createdByUserId, youId, members),
+          updatedAt: saved.updatedAt,
+          updatedBy: personName(saved.updatedByUserId, youId, members),
         }}
         value={editing ?? store.draft.value}
         tags={tagsStore.tags.value}
@@ -94,19 +111,38 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
         onSave={async () => {
           if (creating) {
             const note = await store.create()
-            if (note) navigate(NOTE_PATHS.note(note.id))
-          } else if (await store.save()) navigate(NOTE_PATHS.list)
+            if (!note) return
+            toasts.success({
+              title: "Note created",
+              body: `"${note.title}" was created.`,
+              dataE2E: "note-created",
+            })
+            navigate(NOTE_PATHS.note(note.id))
+          } else if (editing) {
+            const title = editing.title.trim()
+            if (!await store.save()) return
+            toasts.success({
+              title: "Note saved",
+              body: `"${title}" was saved.`,
+              dataE2E: "note-saved",
+            })
+            navigate(NOTE_PATHS.list)
+          }
         }}
         onReloadLatest={() => void store.reloadLatest()}
         deleting={store.deleting.value !== null}
         onDelete={async () => {
           if (editing && await store.remove(editing)) navigate(NOTE_PATHS.list)
         }}
-        moveTargets={membership && canMutateNotes(membership.role)
-          ? moveTargetsOf(groupsStore.groups.value, membership.id)
-          : []}
+        moveTargets={moveTargets}
         onMove={async (toGroupId) => {
-          if (editing && await store.move(toGroupId, [editing.id])) navigate(NOTE_PATHS.list)
+          if (!editing || !await store.move(toGroupId, [editing.id])) return
+          const target = moveTargets.find((group) => group.id === toGroupId)
+          toasts.success({
+            ...movedToast(1, target?.name ?? "the other group"),
+            dataE2E: "note-moved",
+          })
+          navigate(NOTE_PATHS.list)
         }}
         moving={store.moving.value}
         moveError={store.moveError.value}

@@ -60,19 +60,38 @@ export function tagDeleteMessage(noteCount: number | undefined): string {
   return `It comes off ${noteCountText(noteCount)}. The notes stay.`
 }
 
-/** The tags of a note as labels, in the order given; ids of tags that are gone are left out. */
+/**
+ * The tags of a note as labels, in the order given; ids of tags that are gone are left out. With
+ * `max`, the labels past it collapse into one "+N" whose tooltip names them.
+ */
 export function NoteTags(
-  { tagIds, tags }: { tagIds: readonly string[] | undefined; tags: readonly TagRow[] },
+  { tagIds, tags, max }: {
+    tagIds: readonly string[] | undefined
+    tags: readonly TagRow[]
+    max?: number
+  },
 ): JSX.Element | null {
-  const shown = tags.filter((tag) => tagIds?.includes(tag.id))
-  if (shown.length === 0) return null
+  const all = tags.filter((tag) => tagIds?.includes(tag.id))
+  if (all.length === 0) return null
+  const shown = max === undefined ? all : all.slice(0, max)
+  const rest = all.slice(shown.length)
   return (
-    <ul class="flex flex-wrap gap-1" aria-label="Tags" data-e2e="note-tags">
+    <ul class="flex flex-wrap items-center gap-1" aria-label="Tags" data-e2e="note-tags">
       {shown.map((tag) => (
         <li key={tag.id} data-e2e="note-tag">
           <TagBadge tag={tag} />
         </li>
       ))}
+      {rest.length > 0 && (
+        <li
+          class="text-xs text-muted"
+          title={rest.map((tag) => tag.name).join(", ")}
+          data-e2e="note-tags-more"
+        >
+          <span aria-hidden="true">+{rest.length}</span>
+          <span class="sr-only">and {rest.map((tag) => tag.name).join(", ")}</span>
+        </li>
+      )}
     </ul>
   )
 }
@@ -93,16 +112,19 @@ const CHIP_ROW =
  * `sm` up it wraps.
  */
 export function TagChips(
-  { tags, value, onChange, label, dataE2E }: {
+  { tags, value, onChange, label, showLabel, dataE2E }: {
     tags: readonly TagRow[]
     value: readonly string[]
     onChange: (ids: string[]) => void
     label: string
+    /** Draws `label` above the chips, as a form field's label, not only for screen readers. */
+    showLabel?: boolean
     dataE2E: string
   },
 ): JSX.Element {
   return (
-    <div data-e2e={dataE2E}>
+    <div class="flex flex-col gap-2" data-e2e={dataE2E}>
+      {showLabel && <p class="text-sm font-medium text-foreground" aria-hidden="true">{label}</p>}
       <ToggleChips
         label={label}
         options={tags.map((tag) => ({ value: tag.id, label: tag.name }))}

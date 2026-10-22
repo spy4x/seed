@@ -5,12 +5,14 @@ import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
-import { Input, Textarea } from "@spy4x/preact-ui/input"
+import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
+import { Textarea } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { NOTE_BODY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH } from "@domain/notes"
 import {
   ListEmpty,
+  MoveNoteDialog,
   type MoveTarget,
   type NoteDraft,
   type NoteFormErrors,
@@ -20,6 +22,17 @@ import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { NoteTags, TagChips, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+
+/**
+ * Who made a note and when, and who changed it last and when, as the page's header line names
+ * them: "You", a member's name, or "Former member". A name left out is not known yet.
+ */
+export interface NoteAuthorship {
+  createdAt: string
+  createdBy?: string
+  updatedAt: string
+  updatedBy?: string
+}
 
 /** The note a page edits: its id, the version the edit started from, and whether it moved on. */
 export interface NoteTarget {
@@ -76,14 +89,17 @@ export interface NoteEditorScreenProps {
   moveError?: string | null
   /** The group's tags, offered as a picker under the text. Left out or empty, there is none. */
   tags?: readonly TagRow[]
+  /** Who made the note and changed it last, shown under the title. Left out on the create page. */
+  authorship?: NoteAuthorship | null
   navigate?: Navigate
 }
 
 /**
  * One note on a page of its own: the form to create it or edit it, and for a viewer the note as
- * text. The header has a back button and, on an existing note, a menu to move it to another group
- * or delete it (after a confirmation). Save and Cancel sit in the form's footer under the text:
- * Save full width on a phone, at the right from `sm` up.
+ * text. The title is typed into the page's heading itself, so it shows once. The header has a back
+ * button and, on an existing note, a menu to move it to another group or delete it (after a
+ * confirmation); under it, who made the note and who changed it last. Save and Cancel sit in the
+ * form's footer under the text: Save full width on a phone, at the right from `sm` up.
  */
 export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
   const { group, notFound, navigate } = props
@@ -162,9 +178,35 @@ function EditorPage({ children }: { children?: ComponentChildren }): JSX.Element
 /** The header's back link: to the list, which `navigate` follows without a page load. */
 const BACK = { href: NOTE_PATHS.list, label: "Back to notes" }
 
+/**
+ * The header's second line on an existing note: "Created by Maya Chen, 12 Mar 2026 · Updated by
+ * You, 3 hours ago", or only the first half for a note nobody changed since. Each moment's exact
+ * time is its tooltip.
+ */
+function AuthorshipLine({ authorship }: { authorship: NoteAuthorship }): JSX.Element {
+  const format = useFormat()
+  const by = (name: string | undefined) => name ? ` by ${name}` : ""
+  return (
+    <p class="flex flex-col text-sm text-muted sm:flex-row sm:gap-2" data-e2e="note-authorship">
+      <span>
+        Created{by(authorship.createdBy)}, <OnDay at={authorship.createdAt} />
+      </span>
+      {authorship.updatedAt !== authorship.createdAt && (
+        <>
+          <span aria-hidden="true" class="hidden sm:inline">·</span>
+          <span>
+            Updated{by(authorship.updatedBy)}, <When at={authorship.updatedAt} />
+            <span class="sr-only">({format.exact(authorship.updatedAt)})</span>
+          </span>
+        </>
+      )}
+    </p>
+  )
+}
+
 /** A viewer's page: the note as text, with nothing to change. */
 function ReadOnlyNote(
-  { note, value, group, navigate, tags }: NoteEditorScreenProps,
+  { note, value, group, navigate, tags, authorship }: NoteEditorScreenProps,
 ): JSX.Element {
   return (
     <EditorPage>
@@ -176,6 +218,7 @@ function ReadOnlyNote(
         subtitleDataE2E="notes-group"
         titleDataE2E="note-read-title"
       />
+      {note && authorship && <AuthorshipLine authorship={authorship} />}
       <p class="text-sm text-muted" data-e2e="note-read-only">
         {note
           ? "You can read this note. Only an editor can change it."
@@ -197,46 +240,82 @@ function Editor(props: WithGroup): JSX.Element {
   const { group, note, value, onChange, errors, saving, onSave, navigate } = props
   const moveTargets = props.onMove ? props.moveTargets ?? [] : []
   const [asking, setAsking] = useState(false)
+  const [choosingGroup, setChoosingGroup] = useState(false)
   const hasMenu = note !== null && (moveTargets.length > 0 || props.onDelete !== undefined)
+  const title = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (errors.title) title.current?.focus()
+  }, [errors.title])
   return (
-    <EditorPage>
-      <PageHeader
-        back={BACK}
-        navigate={navigate}
-        title={note ? note.savedTitle : "New note"}
-        subtitle={group.name}
-        subtitleDataE2E="notes-group"
-        menuDataE2E="note-menu"
-        menu={hasMenu && (
-          <>
-            {moveTargets.map((target) => (
-              <DropdownItem
-                key={target.id}
-                onClick={() => props.onMove?.(target.id)}
-                disabled={props.moving}
-                dataE2E="note-move"
-              >
-                Move to {target.name}
-              </DropdownItem>
-            ))}
-            {props.onDelete && (
-              <DropdownItem
-                onClick={() => setAsking(true)}
-                disabled={props.deleting}
-                danger
-                dataE2E="note-delete"
-              >
-                Delete
-              </DropdownItem>
-            )}
-          </>
-        )}
-      />
-      <ScreenForm
-        pending={saving}
-        onSubmit={onSave}
-      >
+    <ScreenForm
+      pending={saving}
+      onSubmit={onSave}
+    >
+      <EditorPage>
+        <PageHeader
+          back={BACK}
+          navigate={navigate}
+          title={note ? note.savedTitle : "New note"}
+          heading={
+            <textarea
+              ref={title}
+              rows={1}
+              id="note-title"
+              data-e2e="note-title"
+              name="title"
+              aria-label="Title"
+              aria-invalid={errors.title ? "true" : undefined}
+              aria-describedby={errors.title ? "note-title-error" : undefined}
+              autocomplete="off"
+              placeholder="Title"
+              class="-mx-2 block w-full min-w-0 resize-none overflow-hidden rounded-md border-0 bg-transparent px-2 py-0 text-xl font-semibold text-foreground field-sizing-content placeholder:text-muted hover:bg-hover focus:bg-surface focus:outline-hidden focus-visible:ring-2 focus-visible:ring-focus sm:text-2xl"
+              maxLength={NOTE_TITLE_MAX_LENGTH}
+              value={value.title}
+              // A title is one line that wraps: Enter saves, as it would in a one-line field.
+              onKeyDown={(e) => {
+                if (e.key !== "Enter") return
+                e.preventDefault()
+                e.currentTarget.form?.requestSubmit()
+              }}
+              onInput={(e) =>
+                onChange?.({ ...value, title: e.currentTarget.value.replace(/\r?\n/g, " ") })}
+              required
+            />
+          }
+          subtitle={group.name}
+          subtitleDataE2E="notes-group"
+          menuDataE2E="note-menu"
+          menu={hasMenu && (
+            <>
+              {moveTargets.length > 0 && (
+                <DropdownItem
+                  onClick={() => setChoosingGroup(true)}
+                  disabled={props.moving}
+                  dataE2E="note-move"
+                >
+                  Move to group…
+                </DropdownItem>
+              )}
+              {props.onDelete && (
+                <DropdownItem
+                  onClick={() => setAsking(true)}
+                  disabled={props.deleting}
+                  danger
+                  dataE2E="note-delete"
+                >
+                  Delete
+                </DropdownItem>
+              )}
+            </>
+          )}
+        />
         <Stack>
+          {note && props.authorship && <AuthorshipLine authorship={props.authorship} />}
+          {errors.title && (
+            <p id="note-title-error" class="text-sm text-danger" data-e2e="note-title-error">
+              {errors.title}
+            </p>
+          )}
           <NoteFields
             groupId={group.id}
             value={value}
@@ -285,7 +364,18 @@ function Editor(props: WithGroup): JSX.Element {
             </Button>
           </div>
         </Stack>
-      </ScreenForm>
+      </EditorPage>
+      {choosingGroup && note && (
+        <MoveNoteDialog
+          note={{ title: note.savedTitle }}
+          moveTargets={moveTargets}
+          onMove={(toGroupId) => {
+            setChoosingGroup(false)
+            props.onMove?.(toGroupId)
+          }}
+          onCancel={() => setChoosingGroup(false)}
+        />
+      )}
       {asking && note && (
         <ConfirmDialog
           title="Delete this note?"
@@ -301,14 +391,13 @@ function Editor(props: WithGroup): JSX.Element {
           onCancel={() => setAsking(false)}
         />
       )}
-    </EditorPage>
+    </ScreenForm>
   )
 }
 
 /**
- * The title and text of a note form, with the form's error under them. The title is the page's
- * large first line; the text grows with what is typed. When the title gets an error, focus moves
- * to it, so a keyboard or screen reader user lands on what to fix.
+ * The text and tags of a note form, with the form's error under them; the title is in the page's
+ * heading. The text grows with what is typed.
  */
 function NoteFields(
   { groupId, value, onChange, errors, tags, navigate }: {
@@ -320,26 +409,8 @@ function NoteFields(
     navigate?: Navigate
   },
 ): JSX.Element {
-  const title = useRef<HTMLInputElement>(null)
-  useEffect(() => {
-    if (errors.title) title.current?.focus()
-  }, [errors.title])
   return (
     <Stack>
-      <Field id="note-title" label="Title" error={errors.title} required>
-        <Input
-          ref={title}
-          data-e2e="note-title"
-          name="title"
-          autocomplete="off"
-          placeholder="What is this note about?"
-          class="text-lg font-semibold"
-          maxLength={NOTE_TITLE_MAX_LENGTH}
-          value={value.title}
-          onInput={(e) => onChange?.({ ...value, title: e.currentTarget.value })}
-          required
-        />
-      </Field>
       <Field id="note-body" label="Text">
         <Textarea
           data-e2e="note-body"
@@ -357,6 +428,7 @@ function NoteFields(
           value={value.tagIds ?? []}
           onChange={(tagIds) => onChange?.({ ...value, tagIds })}
           label="Tags"
+          showLabel
           dataE2E="note-tags-picker"
         />
       )}

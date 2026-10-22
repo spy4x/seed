@@ -102,7 +102,10 @@ test.describe("notes in a shared group", () => {
       await ownerPage.locator("[data-e2e=page-back]").click()
       await expect(ownerTitles).toHaveText(["Groceries"])
       await expect(memberTitles).toHaveText(["Groceries"], { timeout: 5_000 })
-      await expect(memberPage.locator("[data-e2e=note-item-body]")).toHaveText(["milk"])
+      // Each row names who wrote it: "You" for the author, the author's name for everyone else.
+      await expect(ownerPage.locator("[data-e2e=note-author]")).toHaveText(["You"])
+      await expect(memberPage.locator("[data-e2e=note-author]")).toHaveCount(1, { timeout: 5_000 })
+      await expect(memberPage.locator("[data-e2e=note-author]")).not.toHaveText(["You"])
 
       // The create went over the socket, as a command with an idempotency key.
       const command = framesSent.map((payload) => JSON.parse(payload)).find(

@@ -11,6 +11,7 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteDraft, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
+import { NO_NOTE_FILTERS, type NoteFilters } from "./notes-filter.ts"
 import { NOTE_PATHS, TAG_PATHS } from "./progressive.tsx"
 import { colorName, colorStyle, tagDeleteMessage } from "./tag-parts.tsx"
 import { TagEditorScreen, type TagEditorScreenProps } from "./tag-editor-screen.tsx"
@@ -163,8 +164,13 @@ const notesDefaults: NotesScreenProps = {
   loading: false,
   listError: null,
   tags,
-  tagFilter: [],
-  onTagFilterChange: () => {},
+  filters: NO_NOTE_FILTERS,
+  onFiltersChange: () => {},
+}
+
+/** The list's filters with these tags chosen, matched as `match` says. */
+function tagged(tagIds: string[], match: NoteFilters["match"] = "any"): NoteFilters {
+  return { ...NO_NOTE_FILTERS, tagIds, match }
 }
 
 const editorDefaults: NoteEditorScreenProps = {
@@ -633,39 +639,57 @@ describe("NotesScreen tags", () => {
     expect(count(`${row(plan)} [data-e2e=note-tags]`)).toBe(0)
   })
 
-  it("shows only the notes that have every filtered tag", async () => {
-    await mount(<NotesScreen {...notesDefaults} tagFilter={[home.id]} />)
+  it("shows the notes with any of the chosen tags, or with all of them", async () => {
+    await mount(<NotesScreen {...notesDefaults} filters={tagged([home.id, urgent.id])} />)
     expect(count(row(groceries))).toBe(1)
     expect(count(row(trip))).toBe(1)
     expect(count(row(plan))).toBe(0)
 
-    await rerender(<NotesScreen {...notesDefaults} tagFilter={[home.id, urgent.id]} />)
+    await rerender(<NotesScreen {...notesDefaults} filters={tagged([home.id, urgent.id], "all")} />)
     expect(count(row(groceries))).toBe(1)
     expect(count(row(trip))).toBe(0)
   })
 
-  it("reports the filter the person picks, and says so when no note has the tags", async () => {
-    const change = spy<[string[]]>()
-    await mount(<NotesScreen {...notesDefaults} onTagFilterChange={change.fn} />)
-    await clickText("Urgent", "[data-e2e=notes-tag-filter]")
-    expect(change.calls).toEqual([[[urgent.id]]])
+  it("reports the tag the person ticks in the Tags menu, with how many notes carry each", async () => {
+    const change = spy<[NoteFilters]>()
+    await mount(<NotesScreen {...notesDefaults} onFiltersChange={change.fn} />)
+    await click("[data-e2e=filter-tags]")
+    const items = [...document.querySelectorAll("[role=menuitemcheckbox]")]
+    expect(items.map((item) => item.textContent)).toEqual(["Urgent1", "Home2"])
+    await clickOn(items[0])
+    expect(change.calls.map(([filters]) => filters.tagIds)).toEqual([[urgent.id]])
+  })
 
-    const clear = spy<[string[]]>()
+  it("switches the Tags menu between any and all of the chosen tags", async () => {
+    const change = spy<[NoteFilters]>()
+    await mount(
+      <NotesScreen {...notesDefaults} filters={tagged([urgent.id])} onFiltersChange={change.fn} />,
+    )
+    await click("[data-e2e=filter-tags]")
+    await click("[data-e2e=notes-tags-all]")
+    expect(change.calls.map(([filters]) => [filters.match, filters.tagIds])).toEqual([
+      ["all", [urgent.id]],
+    ])
+  })
+
+  it("says no note matches the filters, and clears them as one change", async () => {
+    const clear = spy<[]>()
     await mount(
       <NotesScreen
         {...notesDefaults}
         notes={[plan]}
-        tagFilter={[urgent.id]}
-        onTagFilterChange={clear.fn}
+        filters={tagged([urgent.id])}
+        onClearFilters={clear.fn}
       />,
     )
-    expect(find("body").textContent).toContain("No notes have all these tags.")
-    await click("[data-e2e=notes-tag-filter-clear]")
-    expect(clear.calls).toEqual([[[]]])
+    expect(find("body").textContent).toContain("No notes match these filters")
+    expect(find("body").textContent).toContain("Try fewer tags or another author.")
+    await click("[data-e2e=notes-filters-clear]")
+    expect(clear.calls).toEqual([[]])
   })
 
   it("ignores a filtered tag that no longer exists instead of hiding every note", async () => {
-    await mount(<NotesScreen {...notesDefaults} tagFilter={["gone"]} />)
+    await mount(<NotesScreen {...notesDefaults} filters={tagged(["gone"])} />)
     expect(count(row(groceries))).toBe(1)
     expect(count(row(plan))).toBe(1)
   })
@@ -683,15 +707,6 @@ describe("NotesScreen tags", () => {
     expect(await click("[data-e2e=notes-tags]")).toBe(true)
     expect(navigate.calls).toEqual([[TAG_PATHS.list]])
   })
-
-  it("lays the filter out as one row that scrolls sideways on a phone and wraps from sm up", async () => {
-    await mount(<NotesScreen {...notesDefaults} />)
-    const row = find("[data-e2e=notes-tag-filter] [role=group]").className.split(" ")
-    expect(row).toEqual(
-      expect.arrayContaining(["flex-nowrap", "overflow-x-auto", "*:shrink-0", "sm:flex-wrap"]),
-    )
-    expect(row).not.toContain("flex-wrap")
-  })
 })
 
 describe("NoteEditorScreen tags", () => {
@@ -704,6 +719,18 @@ describe("NoteEditorScreen tags", () => {
       body: "milk",
       tagIds: [urgent.id, home.id],
     }]])
+  })
+
+  it("labels the picker Tags on the page and ticks the chosen tags with a check mark", async () => {
+    await mount(<NoteEditorScreen {...editorDefaults} />)
+    const picker = find("[data-e2e=note-tags-picker]")
+    expect(picker.firstElementChild?.textContent).toBe("Tags")
+    expect(picker.querySelector("[role=group]")?.getAttribute("aria-label")).toBe("Tags")
+    const urgentChip = [...picker.querySelectorAll("button")].find((b) =>
+      b.textContent === "Urgent"
+    )
+    expect(urgentChip?.getAttribute("aria-pressed")).toBe("true")
+    expect(urgentChip?.querySelector("svg")).not.toBeNull()
   })
 
   it("takes a tag off when the person unticks it", async () => {
