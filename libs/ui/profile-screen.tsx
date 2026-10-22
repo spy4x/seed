@@ -287,6 +287,7 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
       href={SCREEN_PATHS.profile}
       sections={sections}
       current={section}
+      defaultSection="account"
       navigate={navigate}
       intro={
         <div class="flex min-w-0 items-center gap-3" data-e2e="profile-intro">
@@ -299,8 +300,8 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
       }
     >
       {
-        /* On `/profile` the layout shows Account beside the list from `md` up and hides it on a
-        phone, where the list is the page. */
+        /* On `/profile` the layout shows Account, with its heading, beside the list from `md` up
+        and hides it on a phone, where the list is the page. */
       }
       <ProfileSection
         {...props}
