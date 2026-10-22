@@ -105,7 +105,7 @@ Deno.test("activity: a tag's changes read as sentences that name the tag", () =>
   expect(say("tag.updated", { details: { name: "Job", from: "Work" } })).toBe(
     "Ada renamed the tag “Work” to “Job”",
   )
-  expect(say("tag.updated", { details: { name: "Job", color: "red" } })).toBe(
+  expect(say("tag.updated", { details: { name: "Job", color: "#b91c1c" } })).toBe(
     "Ada changed the colour of the tag “Job”",
   )
   expect(say("tag.updated", { details: { name: "Job" } })).toBe("Ada changed the tag “Job”")

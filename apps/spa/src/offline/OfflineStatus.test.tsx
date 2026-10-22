@@ -62,7 +62,7 @@ describe("OfflineStatus", () => {
       entityId: "t-1",
       kind: "update",
       baseVersion: 1,
-      payload: { groupId: "g-1", name: "Mine", color: "red" },
+      payload: { groupId: "g-1", name: "Mine", color: "#b91c1c" },
       attempted: true,
       status: "conflict",
       queuedAt: "2026-10-01T08:00:00.000Z",
@@ -73,7 +73,7 @@ describe("OfflineStatus", () => {
           id: "t-1",
           groupId: "g-1",
           name: "Theirs",
-          color: "blue",
+          color: "#1d4ed8",
           version: 2,
           changeSequence: "2",
           createdByUserId: 7,
@@ -87,8 +87,8 @@ describe("OfflineStatus", () => {
     await mountStrip(storage)
 
     expect(root!.querySelector("[data-e2e=tag-sync-conflict]")).not.toBeNull()
-    expect(root!.querySelector("[data-e2e=conflict-mine]")?.textContent).toBe("Mine (red)")
-    expect(root!.querySelector("[data-e2e=conflict-theirs]")?.textContent).toBe("Theirs (blue)")
+    expect(root!.querySelector("[data-e2e=conflict-mine]")?.textContent).toBe("Mine (Red)")
+    expect(root!.querySelector("[data-e2e=conflict-theirs]")?.textContent).toBe("Theirs (Blue)")
     expect(text()).toContain("Tag Mine")
   })
 
@@ -99,7 +99,7 @@ describe("OfflineStatus", () => {
       entityId: "t-1",
       kind: "create",
       baseVersion: 0,
-      payload: { groupId: "g-1", name: "Mine", color: "red" },
+      payload: { groupId: "g-1", name: "Mine", color: "#b91c1c" },
       attempted: false,
       status: "pending",
       queuedAt: "2026-10-01T08:00:00.000Z",

@@ -1,9 +1,16 @@
 import { type Type, type } from "arktype"
 import type { Command, Query } from "@spy4x/platform/cqrs"
 import type { Actor } from "@domain/identity"
-import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
+import {
+  canMutateNotes,
+  canRead,
+  GroupRole,
+  legacyExportColor,
+  plainEntryProblem,
+} from "@domain/groups"
 import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
+import { hexColor } from "@spy4x/platform/universal/color"
 
 /**
  * Tags: the second reference aggregate, and the parent of notes. A tag belongs to one group, has a
@@ -23,14 +30,13 @@ export const TAG_NAME_MAX_LENGTH = 40
 export const TAG_MAX_PER_GROUP = 100
 
 /**
- * The colours a tag can have. They are the names of the colours of the UI library's `Badge`, which
- * draws a tag; the domain keeps only the names, so it needs no UI import.
+ * A tag's colour: any `#rrggbb`, kept in lower case. The screens draw the tag's name on it in black
+ * or white, whichever reads better (`readableTextColor`), so no colour makes a name unreadable.
  */
-export const TAG_COLORS = ["gray", "red", "orange", "green", "blue", "purple"] as const
-export type TagColor = typeof TAG_COLORS[number]
+export type TagColor = string
 
-/** The colour a new tag has when the person picks none. */
-export const DEFAULT_TAG_COLOR: TagColor = "gray"
+/** The colour a new tag has when the person picks none: the gray of the colour picker's presets. */
+export const DEFAULT_TAG_COLOR: TagColor = "#4b5563"
 
 /**
  * The outbox event kinds a tag change is recorded under. Each rides on the group's change log, like
@@ -103,6 +109,11 @@ export interface Tag {
   updatedAt: Date
 }
 
+/** A tag in its group's list, with how many of the group's notes carry it; deleted notes do not count. */
+export interface ListedTag extends Tag {
+  noteCount: number
+}
+
 /** What a delete leaves: the tag's id, the version it had and the group's change sequence. */
 export interface DeletedTag {
   id: string
@@ -112,7 +123,8 @@ export interface DeletedTag {
 }
 
 // #region Request schemas
-const colorField = type.enumerated(...TAG_COLORS)
+/** A `#rrggbb` in either case, stored in lower case so the same colour is always the same text. */
+const colorField = hexColor.pipe((color) => color.toLowerCase())
 const versionField = { version: "number.integer >= 1" } as const
 const tagFields = { name: "string", color: colorField } as const
 const groupIdField = { groupId: UUID_PATTERN } as const
@@ -256,8 +268,8 @@ export interface TagListPayload {
   groupId: string
 }
 
-export class TagListQuery implements Query<TagListPayload, { tags: Tag[] }> {
-  __resultType?: { tags: Tag[] }
+export class TagListQuery implements Query<TagListPayload, { tags: ListedTag[] }> {
+  __resultType?: { tags: ListedTag[] }
   constructor(public data: TagListPayload) {}
 }
 
@@ -304,8 +316,8 @@ export interface TagDeleteInput {
  * they call it; a write checks again inside its transaction, as a role can change in between.
  */
 export interface TagRepository {
-  /** The group's tags, by name. */
-  list(groupId: string): Promise<Tag[]>
+  /** The group's tags, by name, each with its note count. */
+  list(groupId: string): Promise<ListedTag[]>
   get(groupId: string, id: string): Promise<Tag | null>
   /**
    * Throws `ID_ALREADY_EXISTS` when the id holds a different tag, `TAG_NAME_TAKEN` when another
@@ -335,8 +347,14 @@ export const tagExportEntrySchema = type({
 })
 export type TagExportEntry = typeof tagExportEntrySchema.infer
 
-/** Checks one tag of a file with the rules of a create. Throws `TagError("INVALID_REQUEST")`. */
-export function parseTagExportEntry(value: unknown): TagExportEntry {
+/**
+ * Checks one tag of a file with the rules of a create, reading an old colour name as its hex.
+ * Throws `TagError("INVALID_REQUEST")`.
+ */
+export function parseTagExportEntry(entry: unknown): TagExportEntry {
+  const value = typeof entry === "object" && entry !== null && "color" in entry
+    ? { ...entry, color: legacyExportColor(entry.color) }
+    : entry
   const shape = tagExportEntrySchema(value)
   if (shape instanceof type.errors) {
     throw new TagError("INVALID_REQUEST", plainEntryProblem(shape, "tag", TAG_EXPORT_LABELS))

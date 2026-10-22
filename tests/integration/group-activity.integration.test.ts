@@ -90,7 +90,7 @@ Deno.test("activity: every command of a group writes the event its log shows", a
     await repository.rename(groupId, "Crew", owner, "req-1")
     await repository.updateDetails(
       groupId,
-      { description: "Ours", color: "blue", emoji: null },
+      { description: "Ours", color: "#1d4ed8", emoji: null },
       admin,
     )
     await repository.changeMemberRole(groupId, editor, GroupRole.ADMIN, owner)

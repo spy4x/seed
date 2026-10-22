@@ -4,6 +4,7 @@ import {
   assertCanWriteTags,
   assertTagRoom,
   type DeletedTag,
+  type ListedTag,
   type Tag,
   TAG_EVENTS,
   type TagCreateInput,
@@ -86,11 +87,17 @@ function isNameTaken(error: unknown): boolean {
 export class PostgresTagRepository implements TagRepository {
   constructor(private readonly sql: postgres.Sql) {}
 
-  async list(groupId: string): Promise<Tag[]> {
-    const rows = await this.sql<TagRow[]>`
-      SELECT ${this.columns()} FROM tags WHERE group_id = ${groupId} ORDER BY lower(name), id
+  /** Counts each tag's live notes through `idx_note_tags_tag`; a deleted note does not count. */
+  async list(groupId: string): Promise<ListedTag[]> {
+    const rows = await this.sql<(TagRow & { noteCount: number })[]>`
+      SELECT ${this.columns()}, (
+        SELECT count(*)::int FROM note_tags
+        JOIN notes ON notes.id = note_tags.note_id AND notes.deleted_at IS NULL
+        WHERE note_tags.tag_id = tags.id
+      ) AS note_count
+      FROM tags WHERE group_id = ${groupId} ORDER BY lower(name), id
     `
-    return rows.map(toTag)
+    return rows.map((row) => ({ ...toTag(row), noteCount: row.noteCount }))
   }
 
   async get(groupId: string, id: string): Promise<Tag | null> {

@@ -20,7 +20,7 @@ function tag(id: string, version = 1, name = id): TagItem {
     id,
     groupId,
     name,
-    color: "gray",
+    color: "#4b5563",
     version,
     changeSequence: "1",
     createdByUserId: 1,
@@ -110,7 +110,7 @@ function refused(code: string) {
   return new RealtimeRequestError("conflict", "refused", { code })
 }
 
-const newTag = { groupId, name: "Urgent", color: "red" as const }
+const newTag = { groupId, name: "Urgent", color: "#b91c1c" as const }
 const newNote = { groupId, title: "Plan", body: "", tagIds: ["t-1"] }
 
 describe("tags created offline", () => {
@@ -122,8 +122,8 @@ describe("tags created offline", () => {
     const shown = await tags.overlay([tag("t-0")], groupId)
 
     expect(shown.map((t) => [t.id, t.name, t.color])).toEqual([
-      ["t-1", "Urgent", "red"],
-      ["t-0", "t-0", "gray"],
+      ["t-1", "Urgent", "#b91c1c"],
+      ["t-0", "t-0", "#4b5563"],
     ])
   })
 
@@ -133,13 +133,13 @@ describe("tags created offline", () => {
     await tags.outbox.submit({
       kind: "update",
       entityId: "t-0",
-      payload: { groupId, name: "Renamed", color: "blue" },
+      payload: { groupId, name: "Renamed", color: "#1d4ed8" },
       version: 1,
     })
 
     const [shown] = await tags.overlay([tag("t-0")], groupId)
 
-    expect([shown.name, shown.color]).toEqual(["Renamed", "blue"])
+    expect([shown.name, shown.color]).toEqual(["Renamed", "#1d4ed8"])
   })
 
   it("send a rename as tag.update on the version it started from", async () => {
@@ -148,7 +148,7 @@ describe("tags created offline", () => {
     await tags.outbox.submit({
       kind: "update",
       entityId: "t-0",
-      payload: { groupId, name: "Renamed", color: "blue" },
+      payload: { groupId, name: "Renamed", color: "#1d4ed8" },
       version: 3,
     })
     state.online = true
@@ -158,7 +158,7 @@ describe("tags created offline", () => {
 
     expect(sent).toEqual([{
       name: "tag.update",
-      payload: { groupId, id: "t-0", name: "Renamed", color: "blue", version: 3 },
+      payload: { groupId, id: "t-0", name: "Renamed", color: "#1d4ed8", version: 3 },
     }])
   })
 
@@ -168,7 +168,7 @@ describe("tags created offline", () => {
     await tags.outbox.submit({
       kind: "delete",
       entityId: "t-0",
-      payload: { groupId, name: "Old", color: "gray" },
+      payload: { groupId, name: "Old", color: "#4b5563" },
       version: 4,
     })
     state.online = true
@@ -260,7 +260,7 @@ describe("tag failures", () => {
     await tags.outbox.submit({
       kind: "update",
       entityId: "t-0",
-      payload: { groupId, name: "Mine", color: "red" },
+      payload: { groupId, name: "Mine", color: "#b91c1c" },
       version: 1,
     })
     state.online = true
@@ -282,7 +282,7 @@ describe("tag failures", () => {
     await tags.outbox.submit({
       kind: "update",
       entityId: "t-0",
-      payload: { groupId, name: "Mine", color: "red" },
+      payload: { groupId, name: "Mine", color: "#b91c1c" },
       version: 1,
     })
     state.online = true

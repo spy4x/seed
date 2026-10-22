@@ -107,10 +107,10 @@ export const THEMES: readonly Theme[] = [
     name: `Product team`,
     members: [9, 13],
     tags: [
-      { name: `roadmap`, color: `blue` },
-      { name: `bug`, color: `red` },
-      { name: `idea`, color: `purple` },
-      { name: `done`, color: `green` },
+      { name: `roadmap`, color: `#1d4ed8` },
+      { name: `bug`, color: `#b91c1c` },
+      { name: `idea`, color: `#7e22ce` },
+      { name: `done`, color: `#15803d` },
     ],
     notes: [
       {
@@ -169,9 +169,9 @@ export const THEMES: readonly Theme[] = [
     name: `Marketing`,
     members: [5, 8],
     tags: [
-      { name: `blog`, color: `orange` },
-      { name: `social`, color: `blue` },
-      { name: `launch`, color: `purple` },
+      { name: `blog`, color: `#c2410c` },
+      { name: `social`, color: `#1d4ed8` },
+      { name: `launch`, color: `#7e22ce` },
     ],
     notes: [
       {
@@ -219,10 +219,10 @@ export const THEMES: readonly Theme[] = [
     name: `Engineering`,
     members: [8, 12],
     tags: [
-      { name: `infra`, color: `gray` },
-      { name: `incident`, color: `red` },
-      { name: `rfc`, color: `blue` },
-      { name: `tech-debt`, color: `orange` },
+      { name: `infra`, color: `#4b5563` },
+      { name: `incident`, color: `#b91c1c` },
+      { name: `rfc`, color: `#1d4ed8` },
+      { name: `tech-debt`, color: `#c2410c` },
     ],
     notes: [
       {
@@ -276,9 +276,9 @@ export const THEMES: readonly Theme[] = [
     name: `Book club`,
     members: [4, 7],
     tags: [
-      { name: `to-read`, color: `blue` },
-      { name: `finished`, color: `green` },
-      { name: `favourite`, color: `purple` },
+      { name: `to-read`, color: `#1d4ed8` },
+      { name: `finished`, color: `#15803d` },
+      { name: `favourite`, color: `#7e22ce` },
     ],
     notes: [
       {
@@ -314,9 +314,9 @@ export const THEMES: readonly Theme[] = [
     name: `Home renovation`,
     members: [1, 2],
     tags: [
-      { name: `kitchen`, color: `orange` },
-      { name: `budget`, color: `red` },
-      { name: `done`, color: `green` },
+      { name: `kitchen`, color: `#c2410c` },
+      { name: `budget`, color: `#b91c1c` },
+      { name: `done`, color: `#15803d` },
     ],
     notes: [
       {
@@ -358,9 +358,9 @@ export const THEMES: readonly Theme[] = [
     name: `Trip to Japan`,
     members: [2, 3],
     tags: [
-      { name: `booking`, color: `blue` },
-      { name: `food`, color: `orange` },
-      { name: `must-see`, color: `purple` },
+      { name: `booking`, color: `#1d4ed8` },
+      { name: `food`, color: `#c2410c` },
+      { name: `must-see`, color: `#7e22ce` },
     ],
     notes: [
       {
@@ -402,9 +402,9 @@ export const THEMES: readonly Theme[] = [
     name: `Design studio`,
     members: [4, 6],
     tags: [
-      { name: `client`, color: `blue` },
-      { name: `review`, color: `orange` },
-      { name: `approved`, color: `green` },
+      { name: `client`, color: `#1d4ed8` },
+      { name: `review`, color: `#c2410c` },
+      { name: `approved`, color: `#15803d` },
     ],
     notes: [
       {
@@ -441,8 +441,8 @@ export const THEMES: readonly Theme[] = [
     name: `Running club`,
     members: [6, 10],
     tags: [
-      { name: `race`, color: `red` },
-      { name: `training`, color: `blue` },
+      { name: `race`, color: `#b91c1c` },
+      { name: `training`, color: `#1d4ed8` },
     ],
     notes: [
       {
@@ -475,9 +475,9 @@ export const THEMES: readonly Theme[] = [
     name: `Wedding planning`,
     members: [1, 2],
     tags: [
-      { name: `venue`, color: `purple` },
-      { name: `guests`, color: `blue` },
-      { name: `budget`, color: `red` },
+      { name: `venue`, color: `#7e22ce` },
+      { name: `guests`, color: `#1d4ed8` },
+      { name: `budget`, color: `#b91c1c` },
     ],
     notes: [
       {
@@ -503,9 +503,9 @@ export const THEMES: readonly Theme[] = [
     name: `Research lab`,
     members: [5, 8],
     tags: [
-      { name: `paper`, color: `blue` },
-      { name: `data`, color: `green` },
-      { name: `meeting`, color: `orange` },
+      { name: `paper`, color: `#1d4ed8` },
+      { name: `data`, color: `#15803d` },
+      { name: `meeting`, color: `#c2410c` },
     ],
     notes: [
       {
@@ -537,9 +537,9 @@ export const THEMES: readonly Theme[] = [
     name: `Support team`,
     members: [4, 7],
     tags: [
-      { name: `urgent`, color: `red` },
-      { name: `billing`, color: `orange` },
-      { name: `faq`, color: `green` },
+      { name: `urgent`, color: `#b91c1c` },
+      { name: `billing`, color: `#c2410c` },
+      { name: `faq`, color: `#15803d` },
     ],
     notes: [
       {
@@ -572,9 +572,9 @@ export const THEMES: readonly Theme[] = [
     name: `Community garden`,
     members: [6, 9],
     tags: [
-      { name: `planting`, color: `green` },
-      { name: `tools`, color: `gray` },
-      { name: `events`, color: `purple` },
+      { name: `planting`, color: `#15803d` },
+      { name: `tools`, color: `#4b5563` },
+      { name: `events`, color: `#7e22ce` },
     ],
     notes: [
       {
@@ -600,9 +600,9 @@ export const THEMES: readonly Theme[] = [
     name: `Podcast`,
     members: [1, 3],
     tags: [
-      { name: `episode`, color: `blue` },
-      { name: `guest`, color: `purple` },
-      { name: `edit`, color: `orange` },
+      { name: `episode`, color: `#1d4ed8` },
+      { name: `guest`, color: `#7e22ce` },
+      { name: `edit`, color: `#c2410c` },
     ],
     notes: [
       {
@@ -630,9 +630,9 @@ export const THEMES: readonly Theme[] = [
     name: `Family`,
     members: [2, 4],
     tags: [
-      { name: `school`, color: `blue` },
-      { name: `home`, color: `green` },
-      { name: `trips`, color: `orange` },
+      { name: `school`, color: `#1d4ed8` },
+      { name: `home`, color: `#15803d` },
+      { name: `trips`, color: `#c2410c` },
     ],
     notes: [
       {
@@ -707,7 +707,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Flat 4B`,
     members: [1, 2],
-    tags: [{ name: `bills`, color: `orange` }],
+    tags: [{ name: `bills`, color: `#c2410c` }],
     notes: [
       {
         title: `Cleaning rota`,
@@ -722,7 +722,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Climbing crew`,
     members: [2, 3],
-    tags: [{ name: `trip`, color: `green` }],
+    tags: [{ name: `trip`, color: `#15803d` }],
     notes: [
       { title: `Gym times`, body: `Tuesday 7 pm works for everyone but Sam. Friday as a backup.` },
       { title: `Gear to borrow`, body: `Two harnesses spare, no size 42 shoes. Chalk is shared.` },
@@ -732,7 +732,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Thesis group`,
     members: [2, 3],
-    tags: [{ name: `deadline`, color: `red` }, { name: `reading`, color: `blue` }],
+    tags: [{ name: `deadline`, color: `#b91c1c` }, { name: `reading`, color: `#1d4ed8` }],
     notes: [
       {
         title: `Draft deadlines`,
@@ -747,7 +747,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Side project`,
     members: [1, 2],
-    tags: [{ name: `idea`, color: `purple` }],
+    tags: [{ name: `idea`, color: `#7e22ce` }],
     notes: [
       {
         title: `Name ideas`,
@@ -759,7 +759,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Wedding guests`,
     members: [1, 2],
-    tags: [{ name: `rsvp`, color: `red` }],
+    tags: [{ name: `rsvp`, color: `#b91c1c` }],
     notes: [
       {
         title: `Who still has to answer`,
@@ -771,7 +771,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Study group`,
     members: [2, 3],
-    tags: [{ name: `exam`, color: `red` }],
+    tags: [{ name: `exam`, color: `#b91c1c` }],
     notes: [
       {
         title: `Topics we split`,
@@ -784,7 +784,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Band practice`,
     members: [2, 3],
-    tags: [{ name: `setlist`, color: `orange` }],
+    tags: [{ name: `setlist`, color: `#c2410c` }],
     notes: [
       { title: `Setlist for the 14th`, body: `Open fast, the slow one third, the cover last.` },
       { title: `Rehearsal room`, body: `Booked Wednesdays 8–10 pm until the end of the month.` },
@@ -793,7 +793,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Volunteers`,
     members: [2, 3],
-    tags: [{ name: `shift`, color: `blue` }],
+    tags: [{ name: `shift`, color: `#1d4ed8` }],
     notes: [
       { title: `Food bank shifts`, body: `Saturday mornings need two more people from next week.` },
       { title: `Van keys`, body: `With the front desk. Sign the sheet when you take them.` },
@@ -802,7 +802,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Supper club`,
     members: [2, 3],
-    tags: [{ name: `menu`, color: `orange` }],
+    tags: [{ name: `menu`, color: `#c2410c` }],
     notes: [
       { title: `Next host`, body: `Dawit, then Ingrid. Theme for March: one pot only.` },
       {
@@ -814,7 +814,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Garden plot 12`,
     members: [1, 2],
-    tags: [{ name: `sowing`, color: `green` }],
+    tags: [{ name: `sowing`, color: `#15803d` }],
     notes: [
       { title: `What we planted`, body: `Garlic in the back row, broad beans along the fence.` },
       { title: `Watering`, body: `Every other evening in a dry week. The tap is by the shed.` },
@@ -823,7 +823,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Board games night`,
     members: [2, 3],
-    tags: [{ name: `to-buy`, color: `purple` }],
+    tags: [{ name: `to-buy`, color: `#7e22ce` }],
     notes: [
       { title: `Games we own`, body: `Catan, Azul, Codenames, and the long one nobody finishes.` },
       { title: `Next host`, body: `Second Friday at Jun's. Snacks rotate, the host makes tea.` },
@@ -832,7 +832,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Kids' school`,
     members: [1, 2],
-    tags: [{ name: `forms`, color: `orange` }],
+    tags: [{ name: `forms`, color: `#c2410c` }],
     notes: [
       {
         title: `Forms to sign`,
@@ -844,7 +844,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Hiking Patagonia`,
     members: [2, 3],
-    tags: [{ name: `booking`, color: `blue` }],
+    tags: [{ name: `booking`, color: `#1d4ed8` }],
     notes: [
       { title: `Refugios`, body: `Two nights booked, one waitlisted. Pay the rest by the 1st.` },
       {
@@ -857,7 +857,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Freelance clients`,
     members: [1, 2],
-    tags: [{ name: `invoice`, color: `green` }],
+    tags: [{ name: `invoice`, color: `#15803d` }],
     notes: [
       { title: `Invoices due`, body: `Two sent, one overdue by a week. Send a friendly reminder.` },
       { title: `Rates`, body: `Day rate up 10% from January; tell existing clients in December.` },
@@ -866,7 +866,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Language exchange`,
     members: [2, 3],
-    tags: [{ name: `topic`, color: `purple` }],
+    tags: [{ name: `topic`, color: `#7e22ce` }],
     notes: [
       { title: `This week's topic`, body: `Food from home. Half in English, half in Portuguese.` },
       { title: `Where we meet`, body: `The café by the station, Thursday 6:30 pm, upstairs.` },
@@ -875,7 +875,7 @@ export const SMALL_THEMES: readonly Theme[] = [
   {
     name: `Home studio`,
     members: [1, 2],
-    tags: [{ name: `gear`, color: `gray` }],
+    tags: [{ name: `gear`, color: `#4b5563` }],
     notes: [
       {
         title: `Acoustic panels`,

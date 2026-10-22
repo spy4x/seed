@@ -28,7 +28,7 @@ function tagEntry(entityId: string, status: "pending" | "conflict", groupId = "g
     key: `key-${entityId}`,
     entityId,
     kind: "create",
-    payload: { groupId, name: entityId, color: "red" },
+    payload: { groupId, name: entityId, color: "#b91c1c" },
     baseVersion: 0,
     attempted: false,
     status,

@@ -10,10 +10,10 @@ import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
-import { RadioGroup } from "@spy4x/preact-ui/radio"
-import { TAG_COLORS, TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
+import { ColorField } from "@spy4x/preact-ui/color-field"
+import { TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
 import { ListEmpty, type NotesGroup } from "./notes-screen.tsx"
-import { TagBadge, type TagRow } from "./tag-parts.tsx"
+import { TagBadge, tagDeleteMessage, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
 
 /** What the tag's fields show: what the person typed, or the tag as saved. */
@@ -62,16 +62,6 @@ export interface TagEditorScreenProps {
   /** The device has no network; the tag is saved on it and sent later, which the page says. */
   offline?: boolean
   navigate?: Navigate
-}
-
-/** The words the colour choices are announced as. */
-export const TAG_COLOR_LABELS: Record<TagColor, string> = {
-  gray: "Grey",
-  red: "Red",
-  orange: "Orange",
-  green: "Green",
-  blue: "Blue",
-  purple: "Purple",
 }
 
 /** How long a read may take before the page says it is loading, so a fast one never flickers. */
@@ -259,22 +249,19 @@ function Editor(props: WithGroup): JSX.Element {
                   required
                 />
               </Field>
-              <RadioGroup
-                legend="Colour"
-                name="color"
-                data-e2e="tag-color"
-                // Each choice is drawn as a badge in its colour, so the person sees what the tag
-                // will look like; the colour's name stays the choice's accessible name.
-                options={TAG_COLORS.map((color) => ({
-                  value: color,
-                  label: <TagBadge tag={{ id: color, name: TAG_COLOR_LABELS[color], color }} />,
-                }))}
-                value={value.color}
-                onChange={(picked) => {
-                  const color = TAG_COLORS.find((candidate) => candidate === picked)
-                  if (color) onChange?.({ ...value, color })
-                }}
-              />
+              <div data-e2e="tag-color">
+                <ColorField
+                  name="color"
+                  value={value.color}
+                  onChange={(color) => {
+                    if (color) onChange?.({ ...value, color })
+                  }}
+                  // The chip as the lists will draw it, with the name typed so far.
+                  preview={() => (
+                    <TagBadge tag={{ name: value.name.trim() || "Tag name", color: value.color }} />
+                  )}
+                />
+              </div>
             </Stack>
           </fieldset>
           <ErrorState message={errors.form} />
@@ -322,8 +309,8 @@ function Editor(props: WithGroup): JSX.Element {
       </ScreenForm>
       {asking && tag && (
         <ConfirmDialog
-          title={`Delete "${tag.name}"?`}
-          message="The tag is taken off every note that has it. The notes stay as they are."
+          title={`Delete tag "${tag.name}"?`}
+          message={tagDeleteMessage(tag.noteCount)}
           confirmLabel="Delete tag"
           cancelLabel="Cancel"
           tone="danger"

@@ -44,7 +44,7 @@ test.describe("tags", () => {
       await expect.poll(async () => (await serverTags(page, groupId)).map((t) => t.name).sort())
         .toEqual(["Home", "Urgent"])
       expect((await serverTags(page, groupId)).find((t) => t.name === "Home")?.color)
-        .toBe("blue")
+        .toBe("#1d4ed8")
       await tags.toNotes()
 
       await notes.create("Groceries", ["Home", "Urgent"])
@@ -74,12 +74,23 @@ test.describe("tags", () => {
       await expect(notes.titles).toHaveCount(3)
       await expect(page).not.toHaveURL(/tag=|match=/)
 
-      // Deleting a tag takes it off the notes and leaves the notes (the integration test proves
-      // their versions stay); a toast names it and counts its notes, and focus moves to the next
-      // tag's menu, not to the page's body.
+      // Each tag's row counts its notes, and the count opens the notes list filtered by the tag.
       const before = await serverNotes(page, groupId)
       await notes.page.locator("[data-e2e=notes-menu]").click()
       await notes.page.locator("[data-e2e=notes-tags]").click()
+      const homeCount = tags.row("Home").locator("[data-e2e=tag-note-count]")
+      await expect(homeCount).toHaveText("2 notes")
+      await expect(homeCount).toHaveAccessibleName("Show the 2 notes tagged Home")
+      await expect(tags.row("Urgent").locator("[data-e2e=tag-note-count]")).toHaveText("1 note")
+      const home = (await serverTags(page, groupId)).find((t) => t.name === "Home")!
+      await homeCount.click()
+      await expect(page).toHaveURL(`/notes?tag=${home.id}`)
+      await notes.page.locator("[data-e2e=notes-menu]").click()
+      await notes.page.locator("[data-e2e=notes-tags]").click()
+
+      // Deleting a tag takes it off the notes and leaves the notes (the integration test proves
+      // their versions stay); a toast names it and counts its notes, and focus moves to the next
+      // tag's menu, not to the page's body.
       await tags.remove("Urgent")
       await expect(page.locator("[data-e2e=tag-deleted]"))
         .toContainText(`"Urgent" was deleted and taken off 1 note.`)
@@ -170,7 +181,7 @@ test.describe("tags", () => {
       await expect.poll(async () => (await serverTags(page, groupId)).map((t) => t.name))
         .toEqual(["Errands"])
       const [tag] = await serverTags(page, groupId)
-      expect(tag.color).toBe("green")
+      expect(tag.color).toBe("#15803d")
       await expect.poll(async () => (await serverNotes(page, groupId)).map((n) => n.tagIds))
         .toEqual([[tag.id]])
 

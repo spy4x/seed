@@ -134,7 +134,9 @@ export class TagsPage {
   private async fill(name: string, color?: string): Promise<void> {
     await this.page.locator("[data-e2e=tag-name]").fill(name)
     if (color) {
-      await this.page.locator("[data-e2e=tag-color]").getByLabel(color, { exact: true }).check()
+      // The swatch drawn over the hidden radio takes the click, as a person's would.
+      await this.page.locator("[data-e2e=tag-color]").getByTitle(color, { exact: true }).click()
+      await expect(this.page.getByRole("radio", { name: color, exact: true })).toBeChecked()
     }
   }
 

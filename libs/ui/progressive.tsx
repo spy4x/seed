@@ -30,6 +30,8 @@ export const NOTE_PATHS = {
   new: "/notes/new",
   /** One note's page. */
   note: (noteId: string) => `/notes/${noteId}`,
+  /** The list filtered to the notes that carry one tag (`?tag=`, which the list reads). */
+  tagged: (tagId: string) => `/notes?tag=${encodeURIComponent(tagId)}`,
 } as const
 
 /** Where the tags pages live. Tags are the SPA's: the website has no session. */

@@ -26,7 +26,7 @@ const AGGREGATES = [tagPortable, notePortable]
 const at = "2026-10-01T09:00:00.000Z"
 
 function tag(name: string, id = uuidV7()) {
-  return { id, name, color: "blue", createdAt: at, updatedAt: at }
+  return { id, name, color: "#1d4ed8", createdAt: at, updatedAt: at }
 }
 
 function note(title: string, tagIds: string[] = [], id = uuidV7()) {
@@ -38,7 +38,7 @@ function file(aggregates: Record<string, unknown>, overrides: Record<string, unk
     format: GROUP_EXPORT_FORMAT,
     version: GROUP_EXPORT_VERSION,
     exportedAt: at,
-    group: { name: "Family", description: "", color: "green", emoji: null },
+    group: { name: "Family", description: "", color: "#15803d", emoji: null },
     aggregates,
     ...overrides,
   }
@@ -65,7 +65,7 @@ describe("parseGroupFile", () => {
     expect(parsed.settings).toEqual({
       name: "Family",
       description: "",
-      color: "green",
+      color: "#15803d",
       emoji: null,
     })
     expect(parsed.entries.get("tags")?.length).toBe(1)
@@ -74,6 +74,29 @@ describe("parseGroupFile", () => {
       ["notes", 2],
       ["tags", 1],
     ])
+  })
+
+  it("reads a version 1 file's old colour names as the hex the migration gave them", () => {
+    const parsed = parseGroupFile(
+      file({ tags: [{ ...tag("Work"), color: "blue" }] }, {
+        version: 1,
+        group: { name: "Family", description: "", color: "green", emoji: null },
+      }),
+      AGGREGATES,
+    )
+    expect(parsed.settings.color).toBe("#15803d")
+    expect(
+      parsed.entries.get("tags")?.map((entry) => (entry as unknown as { color: string }).color),
+    )
+      .toEqual(["#1d4ed8"])
+  })
+
+  it("still refuses a colour that is neither hex nor an old colour name", () => {
+    expect(
+      problemsOf(file({ tags: [{ ...tag("Work"), color: "teal" }] }, {
+        group: { name: "Family", description: "", color: "lime", emoji: null },
+      })).problems.length,
+    ).toBe(2)
   })
 
   it("treats a kind the file leaves out as empty", () => {

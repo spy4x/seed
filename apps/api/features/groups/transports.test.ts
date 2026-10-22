@@ -1089,7 +1089,7 @@ describe("transferring ownership over REST", () => {
   })
 })
 
-const DETAILS = { description: "Our trips", color: "blue", emoji: "🏕️" }
+const DETAILS = { description: "Our trips", color: "#1d4ed8", emoji: "🏕️" }
 
 describe("editing a group's details over REST", () => {
   for (const person of PEOPLE) {
@@ -1103,7 +1103,7 @@ describe("editing a group's details over REST", () => {
         expect((await response.json()).group).toMatchObject(DETAILS)
         expect([groups.description, groups.color, groups.emoji]).toEqual([
           "Our trips",
-          "blue",
+          "#1d4ed8",
           "🏕️",
         ])
       } else {
@@ -1124,13 +1124,14 @@ describe("editing a group's details over REST", () => {
     expect(groups.writes).toBe(0)
   })
 
-  it("refuses a colour outside the palette, a second emoji, a long description or an extra field", async () => {
+  it("refuses a colour that is no hex, a second emoji, a long description or an extra field", async () => {
     const { groups, buses } = stack()
     const send = rest(buses, OWNER)
 
     for (
       const body of [
-        { ...DETAILS, color: "#ff0000" },
+        { ...DETAILS, color: "blue" },
+        { ...DETAILS, color: "#ff00" },
         { ...DETAILS, emoji: "🏕️🏕️" },
         { ...DETAILS, emoji: "a" },
         // One grapheme, but 41 characters: the column holds 32, so it must be a 400, not a 500.
@@ -1149,7 +1150,7 @@ describe("editing a group's details over REST", () => {
   it("clears the details when they are sent empty", async () => {
     const { groups, buses } = stack()
     groups.description = "Old"
-    groups.color = "red"
+    groups.color = "#b91c1c"
     groups.emoji = "🔥"
 
     const response = await rest(buses, OWNER)("PUT", `/${groupId}/details`, {
@@ -1199,7 +1200,7 @@ describe("editing a group's details over the socket", () => {
     })
   }
 
-  it("refuses a colour outside the palette and changes nothing", async () => {
+  it("refuses a colour that is no hex and changes nothing", async () => {
     const { groups, buses } = stack()
     const ws = socket(buses, OWNER)
 

@@ -42,7 +42,7 @@ const home: TagItem = {
   id: "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002",
   groupId,
   name: "Home",
-  color: "blue",
+  color: "#1d4ed8",
   version: 1,
   changeSequence: "1",
   createdByUserId: 1,

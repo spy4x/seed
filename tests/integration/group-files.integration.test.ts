@@ -35,13 +35,13 @@ async function seed(sql: postgres.Sql) {
   const owner = await insertUser(sql)
   const groupId = uuidV7()
   await groups.create(
-    { id: groupId, name: "Family", description: "Our home", color: "green", emoji: "🏡" },
+    { id: groupId, name: "Family", description: "Our home", color: "#15803d", emoji: "🏡" },
     owner,
   )
   const home = uuidV7()
   const work = uuidV7()
-  await tags.create({ groupId, id: home, name: "Home", color: "blue" }, owner)
-  await tags.create({ groupId, id: work, name: "Work", color: "red" }, owner)
+  await tags.create({ groupId, id: home, name: "Home", color: "#1d4ed8" }, owner)
+  await tags.create({ groupId, id: work, name: "Work", color: "#b91c1c" }, owner)
   const noteIds = [uuidV7(), uuidV7(), uuidV7(), uuidV7()]
   await notes.create(
     { groupId, id: noteIds[0], title: "Groceries", body: "Milk", tagIds: [home] },
@@ -143,7 +143,7 @@ Deno.test("an export imported by another person gives the same notes and tags un
     expect(group).toMatchObject({
       name: "Family",
       description: "Our home",
-      color: "green",
+      color: "#15803d",
       emoji: "🏡",
       ownerUserId: importer,
       createdByUserId: importer,
