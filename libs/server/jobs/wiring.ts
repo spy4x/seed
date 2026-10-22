@@ -6,6 +6,7 @@ import {
   OutboxProcessor,
   PostgresOutboxRepository,
 } from "@spy4x/server/outbox"
+import { nextCronRun } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
 import { SeatSyncPublisher } from "../billing/seat-sync.ts"
 import { GroupChangeNotifier } from "../groups/group-change-notify.ts"
@@ -45,8 +46,6 @@ import { type JobDefinition, type JobDeps, JOBS } from "./registry.ts"
  * `jobs` is {@link JOBS} unless a test passes its own list.
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
- * @throws Error when a job repeats on a cron schedule: the processor cannot run one until
- * `@spy4x/server/outbox` has `repeatCron` (spy4x/ts-libs#742).
  */
 export function createOutboxProcessor(
   sql: postgres.Sql,
@@ -72,13 +71,6 @@ export function createOutboxProcessor(
   const twice = kinds.filter((kind, index) => kinds.indexOf(kind) !== index)
   if (twice.length > 0) throw new Error(`Two jobs share a kind: ${[...new Set(twice)].join(`, `)}`)
   const { repeatEveryMs, repeatCron } = repeatSchedules(jobs)
-  if (Object.keys(repeatCron).length > 0) {
-    throw new Error(
-      `Cron schedules need repeatCron in @spy4x/server/outbox (spy4x/ts-libs#742): ${
-        Object.keys(repeatCron).join(`, `)
-      }`,
-    )
-  }
   return new OutboxProcessor(
     new PostgresOutboxRepository(sql),
     new JobPublisher({
@@ -88,6 +80,7 @@ export function createOutboxProcessor(
     }),
     {
       repeatEveryMs,
+      repeatCron,
       repeatAfterGiveUp: true,
       onAttemptFailed: (failure) => mail.log(attemptFailureLine(failure)),
       ...JOB_RETRY,
@@ -114,7 +107,8 @@ export function repeatSchedules(jobs: readonly JobDefinition[]): {
  * Starts the chain of every repeating job unless a run of it is already waiting, under
  * `JOB_AGGREGATE_ID` or `LEGACY_JOB_AGGREGATE_ID`, so the worker calls it at every start and two
  * workers starting together still leave one chain. A job repeating every so many milliseconds
- * first runs at its `startAt`, or at once; the nightly cleanup at the next 03:00 UTC. The processor
+ * first runs at once; a cron job at its next matching minute, so the nightly
+ * cleanup at the next 03:00 UTC. The processor
  * closes a row it gives up and writes the next run itself, so a chain never stays stopped; one an
  * operator cancelled starts again here. A row an older worker gave up was closed by migration
  * `2026_11_01_0001_close_given_up_outbox_rows.sql`, and this then writes a fresh one.
@@ -125,7 +119,7 @@ export async function startRepeatingJobs(
   jobs: readonly JobDefinition[] = JOBS,
 ): Promise<void> {
   for (const { kind, repeat } of jobs) {
-    if (!repeat || `cron` in repeat) continue
+    if (!repeat) continue
     // A chain started under the old id is still this job: a second one would run beside it.
     const legacy = await sql`
       SELECT 1 FROM outbox_events
@@ -139,7 +133,7 @@ export async function startRepeatingJobs(
     await ensureScheduledOutboxEvent(
       sql,
       { eventKind: kind, aggregateType: JOB_AGGREGATE, aggregateId: JOB_AGGREGATE_ID },
-      repeat.startAt ? { at: repeat.startAt(now) } : { inMs: 0 },
+      `cron` in repeat ? { at: nextCronRun(repeat.cron, now) } : { inMs: 0 },
     )
   }
 }

@@ -21,7 +21,7 @@ import {
   SUBSCRIBER_SEND_ISSUE_JOB,
   SUBSCRIBER_WELCOME_MAIL_JOB,
 } from "./subscriber-mail.ts"
-import { defineJob, describeRepeat, type JobDefinition, jobLabel, JOBS } from "./registry.ts"
+import { defineJob, describeRepeat, jobLabel, JOBS } from "./registry.ts"
 import { createOutboxProcessor, repeatSchedules } from "./wiring.ts"
 
 /** Every kind the product queues today; a new job adds its kind here and an entry to `JOBS`. */
@@ -62,15 +62,11 @@ describe(`job registry`, () => {
     }
   })
 
-  it(`repeats only the nightly cleanup, daily, first at 03:00 UTC`, () => {
+  it(`repeats only the nightly cleanup, every day at 03:00 UTC`, () => {
     expect(repeatSchedules(JOBS)).toEqual({
-      repeatEveryMs: { [OUTBOX_CLEANUP_JOB]: ONE_DAY_IN_MILLISECONDS },
-      repeatCron: {},
+      repeatEveryMs: {},
+      repeatCron: { [OUTBOX_CLEANUP_JOB]: `0 3 * * *` },
     })
-    const cleanup = JOBS.find((job) => job.kind === OUTBOX_CLEANUP_JOB)!
-    const repeat = cleanup.repeat as { startAt: (now: Date) => Date }
-    expect(repeat.startAt(new Date(`2026-10-23T05:00:00Z`)).toISOString())
-      .toBe(`2026-10-24T03:00:00.000Z`)
   })
 
   it(`names a kind by its label, and an unknown kind by itself`, () => {
@@ -88,11 +84,15 @@ describe(`defineJob`, () => {
       .toBe(`blog.publish`)
   })
 
-  it(`refuses a blank label, a repeat under a second, an empty cron and a bad table`, () => {
+  it(`refuses a blank label, a repeat under a second, a cron it cannot read and a bad table`, () => {
     const base = { kind: `a.b`, handler: noop }
     expect(() => defineJob({ ...base, label: `  ` })).toThrow(`needs a label`)
     expect(() => defineJob({ ...base, label: `Job`, repeat: { everyMs: 999 } })).toThrow(`everyMs`)
-    expect(() => defineJob({ ...base, label: `Job`, repeat: { cron: ` ` } })).toThrow(`cron`)
+    expect(() => defineJob({ ...base, label: `Job`, repeat: { cron: ` ` } })).toThrow(`a.b`)
+    expect(() => defineJob({ ...base, label: `Job`, repeat: { cron: `0 24 * * *` } }))
+      .toThrow(`hour`)
+    expect(defineJob({ ...base, label: `Job`, repeat: { cron: `@weekly` } }).repeat)
+      .toEqual({ cron: `@weekly` })
     expect(() => defineJob({ ...base, label: `Job`, about: { userIn: `users; DROP` } }))
       .toThrow(`userIn`)
   })
@@ -105,27 +105,14 @@ describe(`describeRepeat`, () => {
     expect(describeRepeat({ everyMs: 3_600_000 })).toBe(`Every hour`)
     expect(describeRepeat({ everyMs: 90 * 60_000 })).toBe(`Every 90 minutes`)
     expect(describeRepeat({ everyMs: 30_000 })).toBe(`Every 30 seconds`)
-    expect(describeRepeat({ cron: `0 3 * * *` })).toBe(`0 3 * * *`)
+  })
+
+  it(`says a cron schedule in words`, () => {
+    expect(describeRepeat({ cron: `0 3 * * *` })).toBe(`Every day at 03:00 UTC`)
   })
 })
 
 describe(`createOutboxProcessor`, () => {
-  it(`refuses a cron job until the outbox can repeat one, naming it`, () => {
-    const jobs: JobDefinition[] = [
-      defineJob({
-        kind: `reports.weekly`,
-        label: `Weekly report`,
-        handler: noop,
-        repeat: { cron: `@weekly` },
-      }),
-    ]
-    const sql = {} as postgres.Sql
-    const mail = { store: {} as never, sender: null, brand: { webAppUrl: `` }, log: () => {} }
-    expect(() => createOutboxProcessor(sql, mail, null, null, 0, true, null, jobs))
-      .toThrow(`reports.weekly`)
-    expect(createOutboxProcessor(sql, mail, null, null, 0, true, null, [])).toBeDefined()
-  })
-
   it(`refuses two jobs of one kind, naming the kind`, () => {
     const job = defineJob({ kind: `reports.daily`, label: `Daily report`, handler: noop })
     const sql = {} as postgres.Sql

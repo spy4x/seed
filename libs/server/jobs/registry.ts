@@ -10,8 +10,8 @@
 
 import type postgres from "postgres"
 import { stepsJob } from "@spy4x/server/outbox"
+import { describeCron, parseCron } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
-import { nextUtcHour } from "@spy4x/platform/universal/time"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { BillingNoticeKind } from "@domain/billing"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
@@ -63,12 +63,12 @@ export interface JobDeps {
 
 /**
  * How a job repeats. `everyMs`: each run, once it succeeded or was given up, writes the next one
- * that long after; the first run is at `startAt(now)`, or at once without it. `cron`: five fields in
- * UTC or an alias such as `@daily` (docs/jobs.md). Either way the worker starts the chain once, at
- * start-up, and a restart adds no second one.
+ * that long after; the first run is at once. `cron`: five fields in UTC or an alias such as
+ * `@daily` (docs/jobs.md); each run is at the next matching minute. Either way the worker starts
+ * the chain once, at start-up, and a restart adds no second one.
  */
 export type JobRepeat =
-  | { everyMs: number; startAt?: (now: Date) => Date }
+  | { everyMs: number }
   | { cron: string }
 
 /**
@@ -123,8 +123,12 @@ export function defineJob(definition: JobDefinition): JobDefinition {
   ) {
     throw new RangeError(`job ${kind}: everyMs must be a whole number of at least 1000`)
   }
-  if (repeat && `cron` in repeat && repeat.cron.trim() === ``) {
-    throw new RangeError(`job ${kind}: cron must not be empty`)
+  if (repeat && `cron` in repeat) {
+    try {
+      parseCron(repeat.cron)
+    } catch (error) {
+      throw new RangeError(`job ${kind}: ${(error as Error).message}`)
+    }
   }
   if (about && `userIn` in about && !TABLE.test(about.userIn)) {
     throw new RangeError(`job ${kind}: userIn must be a table name`)
@@ -152,8 +156,7 @@ export const JOBS: readonly JobDefinition[] = [
   defineJob({
     kind: OUTBOX_CLEANUP_JOB,
     label: `Nightly cleanup`,
-    // Becomes `{ cron: "0 3 * * *" }` once @spy4x/server/outbox has `repeatCron` (ts-libs#742).
-    repeat: { everyMs: ONE_DAY_IN_MILLISECONDS, startAt: (now) => nextUtcHour(now, 3) },
+    repeat: { cron: `0 3 * * *` },
     handler: ({ sql, provider, mail }) =>
       stepsJob(`nightly cleanup`, cleanupSteps(sql, provider, mail.log), mail.log),
   }),
@@ -275,11 +278,11 @@ const UNITS: [ms: number, one: string, many: string][] = [
 ]
 
 /**
- * A schedule in words: `Every day`, `Every 15 minutes`. A cron schedule shows its expression until
- * `describeCron` from `@spy4x/time/cron` is released (ts-libs#742).
+ * A schedule in words: `Every day`, `Every 15 minutes`, or for a cron schedule
+ * `Every day at 03:00 UTC` (`describeCron`).
  */
 export function describeRepeat(repeat: JobRepeat): string {
-  if (`cron` in repeat) return repeat.cron
+  if (`cron` in repeat) return describeCron(repeat.cron)
   const [ms, one, many] = UNITS.find(([unit]) => repeat.everyMs % unit === 0) ??
     UNITS[UNITS.length - 1]
   const count = Math.round(repeat.everyMs / ms)

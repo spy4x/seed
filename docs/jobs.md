@@ -49,14 +49,15 @@ await sql.begin(async (tx) => {
 
 Give the definition a `repeat`:
 
-- `{ everyMs: 60 * 60_000 }` runs every hour, the first run when the worker first starts.
-  `startAt: (now) => Date` moves the first run, such as `nextUtcHour(now, 3)`.
-- `{ cron: "0 3 * * *" }` runs on a cron schedule in UTC. **Not yet:** the worker refuses a cron job
-  until `@spy4x/server/outbox` ships `repeatCron` (https://github.com/spy4x/ts-libs/issues/742).
+- `{ cron: "0 3 * * *" }` runs on a cron schedule in UTC: five fields (minute, hour, day of month,
+  month, day of week) or an alias such as `@daily` (`@spy4x/time/cron`). `defineJob` refuses an
+  expression it cannot read. The admin shows it in words, such as "Every day at 03:00 UTC".
+- `{ everyMs: 60 * 60_000 }` runs every hour, the first run at once.
 
-The worker writes the first run when it starts (`startRepeatingJobs`), once per kind. After each run,
-whether it succeeded or was given up, it writes the next one. So a repeating job has one waiting row
-at a time.
+The worker writes the first run when it starts (`startRepeatingJobs`), once per kind: a cron job at
+its next matching minute. After each run, whether it succeeded or was given up, it writes the next
+one. So a repeating job has one waiting row at a time. The nightly cleanup (`outbox.cleanup`) runs
+at `0 3 * * *`.
 
 ## Failures
 
