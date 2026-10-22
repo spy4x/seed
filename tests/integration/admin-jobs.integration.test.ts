@@ -315,17 +315,20 @@ Deno.test("jobs: refuses to run again a group change, a live, done, cancelled or
   })
 })
 
-Deno.test("jobs: two presses of run again at once run a failed job once", async () => {
+Deno.test("jobs: a second run again while the first is uncommitted waits, then finds nothing", async () => {
   await withSchema(async (sql) => {
     const op = await operator(sql)
     const db = new AppDbBase({ sql })
     const id = await outbox(sql, failed)
-    const outcomes = await Promise.all([
-      db.begin((tx) => tx.adminJobs.retry(id, op, null)),
-      db.begin((tx) => tx.adminJobs.retry(id, op, null)),
-    ])
+    let second: Promise<AdminJobActionOutcome> | null = null
+    await db.begin(async (tx) => {
+      expect(await tx.adminJobs.retry(id, op, null)).toBe(AdminJobActionOutcome.Done)
+      // The second press reads the row while the first has not committed yet.
+      second = db.begin((other) => other.adminJobs.retry(id, op, null))
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    })
 
-    expect(outcomes.sort()).toEqual([AdminJobActionOutcome.Done, AdminJobActionOutcome.NotFound])
+    expect(await second).toBe(AdminJobActionOutcome.NotFound)
     expect(await audits(sql)).toHaveLength(1)
   })
 })
