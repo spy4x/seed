@@ -255,6 +255,7 @@ Deno.test("a link request writes the same rows and sends the same mail for a kno
       work.push({ subject: mail.subject, lines: mail.text!.split("\n\n").length })
     }
 
+    expect(fixture.sender.sent).toHaveLength(2)
     expect(work[1]).toEqual(work[0])
     expect(await fixture.count("sign_in_link_requests")).toBe(2)
     // Nothing of an account yet: the unknown address got no user, session or audit row.
