@@ -1,7 +1,8 @@
 # Backups
 
-With `backup` in `COMPOSE_PROFILES`, a `backup` container saves the database and
-`infra/configs/vapid.json` (the web push keys, which exist on the server only) into a
+With `backup` in `COMPOSE_PROFILES`, a `backup` container saves the database,
+`infra/configs/vapid.json` (the web push keys, which exist on the server only) and the bundled file
+store ([files.md](files.md)) into a
 [restic](https://restic.net) repository when it starts and every 24 hours after. Each database
 snapshot is a full `pg_dump`; restic encrypts it and stores only what changed since the last one.
 Every snapshot of the last two days is kept, then one per day for a week, one per week for a month
@@ -9,9 +10,14 @@ and one per month for half a year. Each snapshot carries the project's `PROJECT`
 the clean-up, the snapshot list and the restore look at that project's snapshots only. The profile
 is off until you set it up, so a new product has no backup before these steps are done.
 
-It saves the database and the web push keys only. Valkey is a cache, and the template bundles no
-file store: nothing in it keeps files yet. A product that adds uploads adds their store and its
-backup. The env file is not in the backup: keep your own copy of it.
+It saves nothing else. Valkey is a cache. The env file is not in the backup: keep your own copy of
+it, since the file store's key is in it.
+
+The file store is Garage's directory, `.volumes/garage`: its data blocks and the copies of its
+metadata database that Garage writes every hour (`meta/snapshots`, the two newest). The live
+metadata database is left out, since it changes under a copy. A restore therefore stands at the
+newest hourly copy: a file uploaded after it, and before the backup ran, comes back as data without
+a name, and Garage drops it. A product on another S3 store relies on that store's own backups.
 
 ## Set it up
 
@@ -96,6 +102,42 @@ not overwritten. On the server, in the app's directory, with `<db>` for `DB_NAME
 
 5. When the restored data has proven right, drop `<db>_before_restore` by hand.
 
+### The file store
+
+Restore the files from the same backup run as the database, so the database names no file the
+store lacks. On the server, in the app's directory:
+
+1. Stop Garage and set its directory aside:
+
+   ```sh
+   deno task compose stop garage
+   sudo mv .volumes/garage .volumes/garage-before-restore
+   ```
+
+2. List the file store's snapshots and restore the one taken with the database's (the times
+   match):
+
+   ```sh
+   deno task compose run --rm backup restic snapshots --host <project> --tag files
+   mkdir restored-files
+   deno task compose run --rm -v "$PWD/restored-files:/restored:z" backup \
+     restic restore <snapshot id> --target /restored
+   ```
+
+3. Put the blocks back, and the newest metadata copy in place of the database. Nothing else of
+   `meta` is needed: Garage starts a fresh layout for the node and finds the blocks by their hash.
+
+   ```sh
+   sudo mkdir -p .volumes/garage/meta
+   sudo mv restored-files/run/files/data .volumes/garage/data
+   sudo cp "$(ls -d restored-files/run/files/meta/snapshots/* | tail -n 1)/db.sqlite" \
+     .volumes/garage/meta/db.sqlite
+   sudo chown -R root:root .volumes/garage && rm -r restored-files
+   deno task compose up -d garage
+   ```
+
+4. When the files have proven right, delete `.volumes/garage-before-restore`.
+
 ### On a new server
 
 A new server's backup container would save its empty database as soon as it starts, once a day,
@@ -120,7 +162,8 @@ restore is done:
    rmdir restored-keys
    ```
 
-4. Put `backup` back into `COMPOSE_PROFILES` and deploy again.
+4. Restore the file store with the steps above, from the same night as the database.
+5. Put `backup` back into `COMPOSE_PROFILES` and deploy again.
 
 To rehearse a restore without touching the live database, create a spare one and name it:
 `deno task compose run --rm -e PGDATABASE=<spare> backup restore <snapshot id>`.

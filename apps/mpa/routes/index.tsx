@@ -95,7 +95,7 @@ const WORKS_TODAY = [
 const NOT_BUILT = [
   `Magic links`,
   `Translations: the app is English only`,
-  `File uploads: no file store is bundled yet`,
+  `File uploads: the S3 file store is bundled, no screen uses it yet`,
   `Downloading an account's data`,
 ] as const
 

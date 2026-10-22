@@ -17,6 +17,7 @@ Pick the guide that fits. The [README](../README.md) has the pitch and the quick
 - [Sign in with Google and GitHub](sign-in-providers.md): registering the providers and what a
   person gets.
 - [Backups](backups.md): set up, restore, rehearse.
+- [The file store](files.md): Garage or another S3 store, signed uploads and downloads.
 - [Capacity](capacity.md): load tests and how many users one server carries.
 - [Postgres 18 upgrade](postgres-18-upgrade.md): once per server that ran Postgres 16.
 - [Billing](billing.md)
