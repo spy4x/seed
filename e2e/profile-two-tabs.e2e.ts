@@ -129,3 +129,61 @@ test.describe("profile over the socket", () => {
     }
   })
 })
+
+test.describe("a dialog's button row", () => {
+  test("stacks Cancel over Save at full width on a phone, and lines them up at the right on a desktop", async ({ page, request }) => {
+    const email = "e2e_dialog_actions_user@example.com"
+    const password = "Passw0rd!"
+    const cleanup = async () => {
+      const response = await request.post(`${apiBase}/api/test/cleanup-user`, {
+        data: { login: email },
+      })
+      expect.soft(response.status(), await response.text()).toBe(200)
+    }
+    await cleanup()
+    try {
+      const signUp = await signUpWithCode(request, `${apiBase}/api/auth/password/sign-up`, {
+        headers,
+        data: { email, password },
+      })
+      expect(signUp.ok()).toBe(true)
+      await signIn(page, email, password)
+
+      const dialog = page.locator("dialog[data-e2e=profile-dialog]")
+      const cancel = dialog.getByRole("button", { name: "Cancel", exact: true })
+      const save = dialog.locator("[data-e2e=profile-save]")
+      for (const width of [390, 1440]) {
+        await page.setViewportSize({ width, height: 844 })
+        const edit = page.locator("[data-e2e=profile-edit]")
+        await gotoApp(page, "/profile/account", edit)
+        await edit.click()
+        await expect(save).toBeVisible()
+        const form = await save.evaluate((button) => {
+          const box = button.closest("form")!.getBoundingClientRect()
+          return { left: box.left, right: box.right }
+        })
+        const c = (await cancel.boundingBox())!
+        const s = (await save.boundingBox())!
+        if (width < 640) {
+          // One column, each button as wide as the form, the submit last, at the bottom.
+          for (const box of [c, s]) {
+            expect(box.x, `left at ${width} px`).toBeCloseTo(form.left, 0)
+            expect(box.x + box.width, `right at ${width} px`).toBeCloseTo(form.right, 0)
+          }
+          expect(s.y, `Save under Cancel at ${width} px`).toBeGreaterThan(c.y + c.height)
+        } else {
+          // One line at the form's right edge, Cancel then Save.
+          expect(Math.abs(s.y - c.y), `one line at ${width} px`).toBeLessThan(1)
+          expect(s.x, `Save after Cancel at ${width} px`).toBeGreaterThan(c.x + c.width)
+          expect(s.x + s.width, `right-aligned at ${width} px`).toBeCloseTo(form.right, 0)
+          expect(c.width + s.width, `natural width at ${width} px`)
+            .toBeLessThan((form.right - form.left) / 2)
+        }
+        await cancel.click()
+        await expect(dialog).not.toBeVisible()
+      }
+    } finally {
+      await cleanup()
+    }
+  })
+})
