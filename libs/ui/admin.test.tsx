@@ -338,7 +338,13 @@ const detail: AdminUserDetail = {
   }],
   trialUsedAt: null,
   preferences: {
-    value: { theme: "dark", locale: "en-GB", timeZone: "Europe/Berlin", hourCycle: null },
+    value: {
+      theme: "dark",
+      locale: "en-GB",
+      timeZone: "Europe/Berlin",
+      hourCycle: null,
+      overview: [],
+    },
     version: 3,
     updatedAt: "2026-10-12T10:00:00.000Z",
     firstTimeZone: "Europe/Berlin",

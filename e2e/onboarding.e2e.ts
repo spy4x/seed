@@ -1,6 +1,6 @@
 import { type APIRequestContext, type Page } from "@playwright/test"
 import { expect, test } from "./fixtures/stack.ts"
-import { gotoApp, openProfile, signIn } from "./fixtures/app.ts"
+import { gotoApp, signIn } from "./fixtures/app.ts"
 import { signUpInPage } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
@@ -31,7 +31,7 @@ function onboardingAnswers(page: Page): { count: number } {
   return answers
 }
 
-/** Signs up through the form, as a new person does, and lands on the home page. */
+/** Signs up through the form, as a new person does, and lands on the notes list. */
 async function signUpInBrowser(page: Page, email: string): Promise<void> {
   await signUpInPage(page, email, password, page.locator("[data-e2e=shell-ws-status]"))
   await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
@@ -43,11 +43,18 @@ const card = (page: Page) => page.locator("[data-e2e=onboarding]")
 const step = (page: Page, title: string) =>
   card(page).getByRole("listitem").filter({ hasText: title })
 
-/** Opens the home page through the navigation, which makes the card read the steps again. */
+const notesHeading = (page: Page) =>
+  page.getByRole("heading", { level: 1, name: "Notes", exact: true })
+
+/**
+ * Opens the notes list, where the card lives, through the navigation by way of another page, so
+ * the card mounts again and reads the steps again.
+ */
 async function openHome(page: Page): Promise<void> {
+  await nav(page).getByRole("link", { name: "Groups" }).click()
+  await expect(page.getByRole("heading", { level: 1, name: "Groups", exact: true })).toBeVisible()
   await nav(page).getByRole("link", { name: "Notes" }).click()
-  await expect(page.getByRole("heading", { level: 1, name: "Notes", exact: true })).toBeVisible()
-  await openProfile(page)
+  await expect(notesHeading(page)).toBeVisible()
 }
 
 /** Presses Tab until the control named `name` has focus, as a keyboard user reaches it. */
@@ -84,17 +91,14 @@ test.describe("first steps", () => {
       await expect.poll(() => answers.count).toBeGreaterThan(before)
       await expect(step(page, "Write your first note")).toContainText("To do:")
 
-      // The person writes a note of their own. The card belongs to the home page only.
-      await nav(page).getByRole("link", { name: "Notes" }).click()
-      await expect(page.getByRole("heading", { level: 1, name: "Notes", exact: true }))
-        .toBeVisible()
-      await expect(card(page)).toHaveCount(0)
+      // The person writes a note of their own. The card belongs to the notes list only.
       await page.locator("[data-e2e=note-new]").click()
       await page.locator("[data-e2e=note-title]").fill("My first note")
       await page.locator("[data-e2e=note-save]").click()
       await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+      await expect(card(page)).toHaveCount(0)
 
-      await openProfile(page)
+      await openHome(page)
       await expect(step(page, "Write your first note")).toContainText("Done:")
       await expect(step(page, "Invite someone to your group")).toContainText("To do:")
     } finally {
@@ -112,13 +116,13 @@ test.describe("first steps", () => {
 
       await card(page).getByRole("button", { name: "Dismiss" }).click()
       await expect(card(page)).toHaveCount(0)
-      await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeFocused()
+      await expect(notesHeading(page)).toBeFocused()
 
       // The same browser, loaded again.
       const answers = onboardingAnswers(page)
-      await gotoApp(page, "/", page.locator("[data-e2e=shell-ws-status]"))
+      await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
       await expect.poll(() => answers.count).toBeGreaterThan(0)
-      await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
+      await expect(notesHeading(page)).toBeVisible()
       await expect(card(page)).toHaveCount(0)
 
       // Another device of the same person.
@@ -126,7 +130,7 @@ test.describe("first steps", () => {
       const secondAnswers = onboardingAnswers(second)
       await signIn(second, email, password)
       await expect.poll(() => secondAnswers.count).toBeGreaterThan(0)
-      await expect(second.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
+      await expect(notesHeading(second)).toBeVisible()
       await expect(card(second)).toHaveCount(0)
     } finally {
       await other.close()
@@ -170,7 +174,7 @@ test.describe("first steps", () => {
       await expect(card(page).getByRole("heading", { name: "Get started" })).toBeFocused()
 
       const answers = onboardingAnswers(page)
-      await gotoApp(page, "/", card(page))
+      await gotoApp(page, "/notes", card(page))
       await expect.poll(() => answers.count).toBeGreaterThan(0)
       await expect(offer).toHaveCount(0)
     } finally {
@@ -195,7 +199,7 @@ test.describe("first steps", () => {
       await expect(offer).toHaveCount(0)
       await expect(card(page).getByRole("heading", { name: "Get started" })).toBeFocused()
       const answers = onboardingAnswers(page)
-      await gotoApp(page, "/", card(page))
+      await gotoApp(page, "/notes", card(page))
       await expect.poll(() => answers.count).toBeGreaterThan(0)
       await expect(offer).toHaveCount(0)
     } finally {

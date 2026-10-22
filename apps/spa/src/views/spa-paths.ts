@@ -14,7 +14,6 @@ export const SPA_ROUTES = {
   "/totp": { open: true },
   "/forgot-password": { open: true },
   "/reset-password": { open: true },
-  "/email": { open: false },
   "/subscribe": { open: true },
   "/subscribe/confirm": { open: true },
   "/unsubscribe": { open: true },
@@ -33,6 +32,9 @@ export const SPA_ROUTES = {
   // An invitation is answered once signed in or signed up.
   "/invite/:token": { open: false },
   "/notifications": { open: false },
+  // `/overview` opens the selected group's overview.
+  "/overview": { open: false },
+  "/overview/:groupId": { open: false },
   "/tags": { open: false },
   // Before the tag's page, or "new" would be read as a tag's id.
   "/tags/new": { open: false },
@@ -43,7 +45,9 @@ export const SPA_ROUTES = {
   // The create-only API token page. Not `/api-tokens/new`: the proxy sends every address that
   // starts with `/api` to the API, so a reload there would never reach the SPA.
   "/tokens/new": { open: false },
-  // The profile says "sign in" to a signed-out visitor instead of sending them away.
+  // The profile: the list of its sections, and one section (`/profile/security`).
+  "/profile/:section?": { open: false },
+  // The home page opens the notes; signed out, the notes send the visitor to sign-in.
   "/": { open: true },
 } as const satisfies Record<string, { open: boolean }>
 
@@ -92,4 +96,9 @@ const GROUP_TAB = /^(\/groups\/[^/]+)\/(members|billing|activity)$/
 export function announcedPage(path: string): string {
   const [pathname, query = ""] = path.split(/(?=[?#])/, 2)
   return pathname.replace(GROUP_TAB, "$1") + query
+}
+
+/** Whether `path` is the profile or one of its sections. */
+export function isProfilePath(path: string): boolean {
+  return section(path) === "profile"
 }

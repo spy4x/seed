@@ -18,6 +18,7 @@ import { useUndoToast } from "./use-undo-toast.ts"
 import { personName } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
 import { OfflineStatus } from "../modules.ts"
+import { OnboardingView } from "./OnboardingView.tsx"
 
 /** The filter parameters "Clear filters" takes out of the address; search and sort stay. */
 const FILTER_PARAMS = ["tag", "match", "author", "mine"]
@@ -109,6 +110,8 @@ export function NotesView() {
           onResolved={() => void store.refresh().catch(() => {})}
         />
       )}
+      {/* The first steps sit above the list, where a new account lands after sign-in. */}
+      <OnboardingView />
       <NotesScreen
         group={membership
           ? { id: membership.id, name: membership.name, canWrite: canMutateNotes(membership.role) }

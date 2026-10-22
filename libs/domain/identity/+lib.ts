@@ -683,8 +683,10 @@ export const OAUTH_PAGES = {
   confirmSignUp: "/sign-up/confirm",
   /** Asks for the authenticator code a provider sign-in still owes. */
   oneTimeCode: "/totp",
-  /** The profile: where sign-in lands without a `next`, and where linking reports. */
-  profile: "/",
+  /** The app's home, which opens the notes: where sign-in lands without a `next`. */
+  home: "/",
+  /** The profile's sign-in methods: where linking a provider reports how it ended. */
+  signInMethods: "/profile/security",
 } as const
 
 /** The query parameter that carries an {@link OAuthNotice}. */

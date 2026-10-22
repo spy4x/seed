@@ -225,7 +225,7 @@ spy4x/template#142, prove their address with the `auth.email-code-mail` job (req
 `email_code_requests`, never the code). The worker issues an 8-character code with
 `@spy4x/server/auth/email-code` (only a hash is stored, 10 minutes, single use, 5 guesses per code)
 and mails it. Until the code is entered, every signed-in page of the SPA shows a banner linking to
-`/email`. `GET /api/auth/email` answers `{ email, proven, pending }`; `POST /api/auth/email/verify`
+`/profile/account?verify`, which opens the e-mail dialog at its code. `GET /api/auth/email` answers `{ email, proven, pending }`; `POST /api/auth/email/verify`
 takes `{ code }`; `POST /api/auth/email/send` asks for a new code (3 mails an hour per address,
 `ratelimit-email-code` in Valkey, which sign-ups never spend); codes come from `createEmailProof`
 and are bound to the user and the address, so another account proving the same address cannot spend
@@ -355,8 +355,8 @@ address links it again after a reset. Since spy4x/template#142 a password sign-u
 squat an address: the account exists only once the code mailed to the address is entered.
 
 An account whose address is not proven cannot invite (spy4x/template#411): creating an invitation,
-by link or by address, is refused with `ADDRESS_NOT_PROVEN` (403) and "Verify your e-mail address on
-the E-mail page before you invite anyone.", which the SPA shows above the invitation form's buttons
+by link or by address, is refused with `ADDRESS_NOT_PROVEN` (403) and "Verify your e-mail address in
+your profile before you invite anyone.", which the SPA shows above the invitation form's buttons
 with a "Verify e-mail" button. The reset removes no members, so without this a squatter could let a
 second account of theirs into the first group and keep it there after the owner's reset. The reset
 that proves the address also revokes every pending invitation the account made, in every group

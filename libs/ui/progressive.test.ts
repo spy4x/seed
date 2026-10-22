@@ -12,7 +12,7 @@ import {
 describe("the next page of a sign-in", () => {
   it("keeps a page of this app", () => {
     expect(checkedNext("/notes/abc?from=link")).toBe("/notes/abc?from=link")
-    expect(checkedNext("/email")).toBe("/email")
+    expect(checkedNext("/profile/account")).toBe("/profile/account")
   })
 
   it("falls back to the notes list for another site, a backslash or an API path", () => {
@@ -39,8 +39,8 @@ describe("the next page of a sign-in", () => {
     expect(withNext(SCREEN_PATHS.signIn, null)).toBe("/sign-in")
   })
 
-  it("goes to next after sign-in, or to the profile without one", () => {
+  it("goes to next after sign-in, or to the notes list without one", () => {
     expect(afterSignIn("/notes/abc")).toBe("/notes/abc")
-    expect(afterSignIn(null)).toBe(SCREEN_PATHS.profile)
+    expect(afterSignIn(null)).toBe(NOTE_PATHS.list)
   })
 })

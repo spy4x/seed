@@ -27,6 +27,7 @@ const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
   getComputedStyle: globalThis.getComputedStyle,
+  CSS: globalThis.CSS,
   location: globalThis.location,
 }
 
@@ -35,6 +36,7 @@ beforeAll(() => {
     document: window.document,
     FormData: window.FormData,
     getComputedStyle: window.getComputedStyle.bind(window),
+    CSS: window.CSS,
     // A link asks whether its address is this page's own before it hands a click to the router.
     location: window.location,
   })
@@ -606,7 +608,7 @@ describe("SignInMethods", () => {
 
     expect(isOpen("sign-in-method-unlink-confirm")).toBe(true)
     expect(find("[data-e2e=provider-proof-google]").getAttribute("href"))
-      .toBe("/api/auth/google/start?next=%2F")
+      .toBe("/api/auth/google/start?next=%2Fprofile%2Fsecurity")
     expect(document.querySelectorAll("[data-e2e=sign-in-method-unlink-password]").length).toBe(0)
     expect(document.querySelectorAll("[data-e2e=sign-in-method-unlink-submit]").length).toBe(0)
     expect(asked).toEqual([])
@@ -695,7 +697,7 @@ describe("SignInMethods", () => {
     expect(isOpen("sign-in-method-link-dialog")).toBe(true)
     // A plain link out of the app, which comes back to the profile.
     expect(find("[data-e2e=provider-proof-google]").getAttribute("href"))
-      .toBe("/api/auth/google/start?next=%2F")
+      .toBe("/api/auth/google/start?next=%2Fprofile%2Fsecurity")
     expect(document.querySelectorAll("[data-e2e=sign-in-method-link-password]").length).toBe(0)
   })
 
@@ -816,6 +818,7 @@ describe("ProfileScreen for an account without a password", () => {
     pending: { profile: false, password: false, totp: false, push: false },
     enrolment: null,
     pushDevices: [],
+    section: "security",
   } as unknown as ProfileScreenProps
   const onlyGoogle = { ...google, current: true, canUnlink: false }
 
@@ -848,15 +851,25 @@ describe("ProfileScreen for an account without a password", () => {
   })
 
   it("offers a change of address and a first password", async () => {
+    const methods = methodsProps([], { methods: [onlyGoogle] })
+    const emailChange = {
+      values: { code: "", email: "", password: "" },
+      onValueChange: () => {},
+      errors: { verify: null, send: null, change: null },
+      notices: { send: null },
+      pending: { verify: false, send: false, change: false },
+    }
     await mount(
-      <ProfileScreen {...profile} methods={methodsProps([], { methods: [onlyGoogle] })} />,
+      <ProfileScreen {...profile} section="account" methods={methods} emailChange={emailChange} />,
     )
 
-    const page = document.body.textContent ?? ""
-    expect(page).not.toContain("You sign in with your username")
-    expect(page).not.toContain("cannot be changed here")
-    expect(page).toContain("gia@example.com")
-    expect(find("[data-e2e=profile-email-link]").textContent).toBe("Change e-mail address")
+    const account = document.body.textContent ?? ""
+    expect(account).not.toContain("You sign in with your username")
+    expect(account).not.toContain("cannot be changed here")
+    expect(find("[data-e2e=email-current]").textContent).toBe("gia@example.com")
+    expect(find("[data-e2e=email-change-open]").textContent).toBe("Change e-mail address")
+
+    await mount(<ProfileScreen {...profile} methods={methods} />)
     expect(find("[data-e2e=password-none]").textContent).toBe("None. You sign in with Google.")
     expect(find("[data-e2e=password-open]").textContent).toBe("Set password")
   })
@@ -942,18 +955,17 @@ describe("ProfileScreen for an account without a password", () => {
 
     // A plain link out of the app, which comes back to the profile.
     expect(find("[data-e2e=provider-proof-google]").getAttribute("href"))
-      .toBe("/api/auth/google/start?next=%2F")
+      .toBe("/api/auth/google/start?next=%2Fprofile%2Fsecurity")
     expect(find("[data-e2e=provider-proof-needed]").textContent).toContain("within 5 minutes")
     expect(document.querySelectorAll("[data-e2e=password-new]").length).toBe(0)
     expect(document.querySelectorAll("[data-e2e=password-save]").length).toBe(0)
   })
 
-  it("keeps both changes for an account that has a password", async () => {
+  it("keeps the password change, asking for the current one, for an account that has a password", async () => {
     await mount(
       <ProfileScreen {...profile} methods={methodsProps([], { methods: [password, google] })} />,
     )
 
-    expect(find("[data-e2e=profile-email-link]").textContent).toBe("Change e-mail address")
     expect(find("[data-e2e=password-open]").textContent).toBe("Change password")
     expect(document.querySelectorAll("[data-e2e=password-none]").length).toBe(0)
     await click("[data-e2e=password-open]")
@@ -974,6 +986,7 @@ describe("ProfileScreen for an account without a password", () => {
     await mount(
       <ProfileScreen
         {...profile}
+        section="danger-zone"
         methods={methodsProps([], { methods: [onlyGoogle] })}
         providerProofFresh
         accountDeletion={{ ...deletion, onDelete: () => void asked.push("delete") }}
@@ -994,6 +1007,7 @@ describe("ProfileScreen for an account without a password", () => {
     await mount(
       <ProfileScreen
         {...profile}
+        section="danger-zone"
         methods={methodsProps([], { methods: [onlyGoogle] })}
         accountDeletion={deletion}
       />,
@@ -1002,7 +1016,7 @@ describe("ProfileScreen for an account without a password", () => {
     await click("[data-e2e=account-delete-open]")
 
     expect(find("[data-e2e=provider-proof-google]").getAttribute("href"))
-      .toBe("/api/auth/google/start?next=%2F")
+      .toBe("/api/auth/google/start?next=%2Fprofile%2Fdanger-zone")
     expect(document.querySelectorAll("[data-e2e=account-delete-password]").length).toBe(0)
     expect(document.querySelectorAll("[data-e2e=account-delete-submit]").length).toBe(0)
   })
@@ -1011,6 +1025,7 @@ describe("ProfileScreen for an account without a password", () => {
     await mount(
       <ProfileScreen
         {...profile}
+        section="danger-zone"
         methods={methodsProps([], { methods: [password, google] })}
         accountDeletion={deletion}
       />,

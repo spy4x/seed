@@ -51,7 +51,7 @@ test.describe("passkeys", () => {
       const { cdp, authenticatorId } = await virtualAuthenticator(page)
 
       await signIn(page, email, password)
-      await openProfile(page)
+      await openProfile(page, "security")
       await page.locator("[data-e2e=sign-in-method-add-passkey]").click()
       await page.locator("[data-e2e=sign-in-method-link-password]").fill(password)
       await page.locator("[data-e2e=sign-in-method-link-submit]").click()
@@ -67,8 +67,8 @@ test.describe("passkeys", () => {
       // no pick, answers that request as soon as the sign-in page makes it.
       await page.context().clearCookies()
       await gotoApp(page, "/sign-in", page.locator("[data-e2e=shell-ws-status]"))
-      await expect(page).toHaveURL("/")
-      await openProfile(page)
+      await expect(page).toHaveURL("/notes")
+      await openProfile(page, "security")
       await expect(page.locator("[data-e2e=sign-in-method-passkey]"))
         .toContainText("Used on this device")
 
@@ -82,9 +82,9 @@ test.describe("passkeys", () => {
         "autocomplete",
         "username",
       )
-      await gotoApp(page, "/", page.locator("[data-e2e=shell-ws-status]"), async () => {
+      await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"), async () => {
         await page.locator("[data-e2e=passkey-sign-in]").click()
-        await page.waitForURL("/")
+        await page.waitForURL("/notes")
       })
     } finally {
       await cleanup(request, email, true)
