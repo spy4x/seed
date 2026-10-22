@@ -3,9 +3,12 @@ import { useLocation } from "wouter-preact"
 import { canMutateNotes } from "@domain/groups"
 import { TagsScreen } from "@ui/tags-screen.tsx"
 import { groupsStore } from "../state/groups.ts"
+import { notesStore } from "../state/notes.ts"
 import { selectionStore } from "../state/selection.ts"
 import { tagsStore } from "../state/tags.ts"
+import { toasts } from "../state/toasts.ts"
 import { OfflineStatus } from "../modules.ts"
+import { deleteAndAnnounce } from "./tag-delete.ts"
 
 /**
  * Wires the tags page to the tags store for `/tags`. The tags are those of the person's selected
@@ -35,7 +38,9 @@ export function TagsView() {
         tags={store.tags.value}
         loading={store.loading.value || groupsStore.loading.value || groupId === null}
         listError={store.listError.value}
-        onDelete={canWrite ? (id) => void store.remove(id) : undefined}
+        onDelete={canWrite
+          ? (id) => void deleteAndAnnounce(store, id, notesStore, toasts)
+          : undefined}
         navigate={navigate}
       />
     </>

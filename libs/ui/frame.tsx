@@ -60,7 +60,7 @@ export interface FrameUser {
   email?: string | null
 }
 
-/** A theme the person can choose in the account menu; `"system"` follows the device. */
+/** A theme the person can choose; `"system"` follows the device. */
 export type ThemeChoice = "system" | "light" | "dark"
 
 /**
@@ -116,7 +116,8 @@ export function shortcutsMenuItems(shortcuts: FrameShortcuts | undefined) {
  *   cell with its tooltip that opens `search`.
  * - The middle is the destinations ({@link navItems}).
  * - The bottom is the connection while it is not live, Notifications with its unread count, and the
- *   account menu (Profile, Keyboard shortcuts on a device with a fine pointer, Theme, Sign out).
+ *   account menu: the person's name and portrait, which open the profile, then Keyboard shortcuts
+ *   on a device with a fine pointer, then Sign out. The theme is chosen on the profile only.
  *
  * On a phone the tab bar's last slot is "Account": the avatar with the unread count, opening a sheet
  * with "Search", the groups ({@link GroupSheet}), Notifications and the account's choices.
@@ -140,7 +141,6 @@ export function shortcutsMenuItems(shortcuts: FrameShortcuts | undefined) {
 export function AppFrame(
   {
     user,
-    theme,
     connection,
     currentPath,
     navigate,
@@ -154,8 +154,6 @@ export function AppFrame(
     children,
   }: {
     user: FrameUser
-    /** The theme store; left out, the account menu offers no theme. */
-    theme?: FrameTheme
     connection?: ConnectionStatus
     /** The address of the page shown: its entry is marked, and a page inside a section marks it. */
     currentPath?: string
@@ -225,9 +223,8 @@ export function AppFrame(
         : { href: SCREEN_PATHS.notifications, unread: unreadCount }}
       account={{
         user: { name, email },
-        items: [{ label: "Profile", href: SCREEN_PATHS.profile }, ...shortcutsMenuItems(shortcuts)],
-        theme: theme?.preference.value,
-        onThemeChange: theme && ((choice) => theme.set(choice)),
+        headerHref: SCREEN_PATHS.profile,
+        items: shortcutsMenuItems(shortcuts),
         signOut: { label: "Sign out", onClick: onSignOut },
       }}
       connection={connection}

@@ -200,16 +200,6 @@ function texts(selector: string): string[] {
   })
 }
 
-/** A theme store's slice, recording every choice. */
-function themeSpy(preference: "system" | "light" | "dark" = "system") {
-  const chosen: string[] = []
-  return {
-    chosen,
-    preference: { value: preference },
-    set: (value: string) => void chosen.push(value),
-  }
-}
-
 /** The labels of the rail's navigation entries, without their tooltip copies. */
 function railLabels(): string[] {
   return texts('[data-e2e=rail-shell-rail] a[data-e2e="rail-shell-entry"]')
@@ -254,6 +244,8 @@ async function clickControl(
   return event.defaultPrevented
 }
 
+/** The account menu's header row as its text reads: the portrait's initials, the name, the address. */
+const HEADER = "ALAda Lovelaceada@example.com"
 /** The rail's account trigger, which `AppShell` draws with `AccountMenu`'s default hook. */
 const ACCOUNT = "[data-e2e=rail-shell-bottom] [data-e2e=account-menu-button]"
 /** The account section of the phone's sheet. */
@@ -504,13 +496,14 @@ describe("AppFrame", () => {
     atTop()
   })
 
-  it("names the account entry after the person, shows their name and address, and offers Profile, Theme and Sign out", async () => {
-    await mount(<AppFrame user={ada} onSignOut={() => {}} theme={themeSpy()}>page</AppFrame>)
+  it("names the account entry after the person, heads its menu with their name and address, and offers Sign out with no Profile or Theme item", async () => {
+    await mount(<AppFrame user={ada} onSignOut={() => {}}>page</AppFrame>)
     expect(find(ACCOUNT).getAttribute("aria-label")).toBe("Account: Ada Lovelace")
     expect(find("[data-e2e=account-menu-header]").textContent).toContain(
       "Ada Lovelaceada@example.com",
     )
-    expect(menuItems(ACCOUNT)).toEqual(["Profile", "System", "Light", "Dark", "Sign out"])
+    expect(menuItems(ACCOUNT)).toEqual([HEADER, "Sign out"])
+    expect(document.querySelector("[data-e2e=app-shell-sheet-theme]")).toBe(null)
   })
 
   it("names a person with no name by their e-mail address, written once", async () => {
@@ -540,35 +533,16 @@ describe("AppFrame", () => {
     expect(signOut.calls).toHaveLength(2)
   })
 
-  it("opens Profile from the account menu and the sheet through navigate, and leaves a Ctrl-click to the browser", async () => {
+  it("opens the profile from the name and portrait in the account menu and the sheet through navigate, and leaves a Ctrl-click to the browser", async () => {
     const navigate = spy<[string]>()
     await mount(<AppFrame user={ada} onSignOut={() => {}} navigate={navigate.fn}>page</AppFrame>)
     const menu = "[data-e2e=app-shell-account] [role=menu]"
 
-    expect(control(menu, "Profile").getAttribute("href")).toBe(SCREEN_PATHS.profile)
-    expect(await clickControl(menu, "Profile")).toBe(true)
-    expect(await clickControl(menu, "Profile", { ctrlKey: true })).toBe(false)
-    expect(await clickControl(SHEET_ACCOUNT, "Profile")).toBe(true)
+    expect(control(menu, HEADER).getAttribute("href")).toBe(SCREEN_PATHS.profile)
+    expect(await clickControl(menu, HEADER)).toBe(true)
+    expect(await clickControl(menu, HEADER, { ctrlKey: true })).toBe(false)
+    expect(await clickControl(SHEET_ACCOUNT, HEADER)).toBe(true)
     expect(navigate.calls).toEqual([[SCREEN_PATHS.profile], [SCREEN_PATHS.profile]])
-  })
-
-  it("checks the current theme in the account menu and stores the one chosen", async () => {
-    const theme = themeSpy("system")
-    await mount(<AppFrame user={ada} onSignOut={() => {}} theme={theme}>page</AppFrame>)
-
-    await click(ACCOUNT)
-    const menu = menuOf(ACCOUNT)
-    const checked = () =>
-      [...menu.querySelectorAll("[data-e2e=account-menu-theme] [role=menuitemradio]")]
-        .map((item) => item.getAttribute("aria-checked"))
-    expect(checked()).toEqual(["true", "false", "false"])
-    await act(() => {
-      menu.querySelector("[data-e2e=account-menu-theme-dark]")!.dispatchEvent(
-        new window.MouseEvent("click", { bubbles: true, button: 0 }) as unknown as Event,
-      )
-    })
-
-    expect(theme.chosen).toEqual(["dark"])
   })
 
   it("shows the current group as a 40 px tile with its initial, named for a screen reader, with its role in the rail's own tooltip and the rail's focus ring", async () => {

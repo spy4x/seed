@@ -85,7 +85,8 @@ test.describe("auth profile ws push flow", () => {
       await firstNameField.fill(firstName)
       await lastNameField.fill(lastName)
       await page.locator("[data-e2e=profile-save]").click()
-      await page.locator("[data-e2e=profile-saved]").getByText("Saved", { exact: true }).waitFor()
+      await page.locator("[data-e2e=profile-saved]").getByText("Profile saved", { exact: true })
+        .waitFor()
       await expect(page.locator("[data-e2e=profile-dialog]")).toHaveCount(0)
       await expect(page.locator("[data-e2e=profile-name]")).toHaveText(`${firstName} ${lastName}`)
 

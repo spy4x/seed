@@ -15,7 +15,6 @@ import { notesStore } from "../state/notes.ts"
 import { notificationsStore } from "../state/notifications.ts"
 import { createNoteSearch } from "../state/search.ts"
 import { selectionStore } from "../state/selection.ts"
-import { themeStore } from "../state/theme.ts"
 import { newNoteStore } from "../state/new-note.ts"
 import { spaShortcutRows } from "./shortcuts.ts"
 import { hasFinePointer, singleKeys, useShortcuts } from "@platform/shortcuts.ts"
@@ -217,7 +216,6 @@ export function AppShell(
         lastName: user.lastName,
         email: emailStore.status.value?.email,
       }}
-      theme={themeStore}
       // The profile's Account section offers the code itself; the banner would only repeat it
       // there. With nothing to show it is left out, because the frame keeps a margin under any
       // banner it gets.

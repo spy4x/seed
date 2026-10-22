@@ -46,7 +46,7 @@ import {
 } from "@domain/identity"
 import type { PushPublicKeyResponse } from "@domain/identity"
 import { SESSIONS_FAILURE } from "@ui/signed-in-devices.tsx"
-import { SIGN_IN_METHODS_FAILURE } from "@ui/sign-in-methods.tsx"
+import { SIGN_IN_METHODS_FAILURE, signInMethodName } from "@ui/sign-in-methods.tsx"
 import { apiTokensHttp, createApiTokensStore } from "../state/api-tokens.ts"
 import { passwordChangedMessage } from "./password-changed-message.ts"
 import { isProviderProofFresh, withPasskeyProof } from "./provider-proof-fresh.ts"
@@ -193,6 +193,8 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
 
   /** Unlinks one method. When this device signed in with it, the page reloads signed out. */
   const unlinkMethod = async (methodId: number, password?: string) => {
+    // Named before the list is read again without it.
+    const method = methods.methods.value?.find((candidate) => candidate.id === methodId)
     const result = await methods.unlink(methodId, password)
     if (result === "signed-out") {
       location.href = SCREEN_PATHS.signIn
@@ -202,7 +204,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     // The devices that signed in with it were signed out.
     void loadDevices()
     toasts.success({
-      title: "Unlinked",
+      title: method ? `${signInMethodName(method.kind)} unlinked` : "Sign-in method unlinked",
       body: "The devices that signed in with it were signed out.",
       dataE2E: "sign-in-method-unlinked",
     })
@@ -245,7 +247,11 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       setProfileError(result.error || PROFILE_FAILURES.profile)
       return
     }
-    toasts.success({ title: "Saved", body: "Your profile was updated.", dataE2E: "profile-saved" })
+    toasts.success({
+      title: "Profile saved",
+      body: "Your profile was updated.",
+      dataE2E: "profile-saved",
+    })
   }
 
   const submitPassword = async () => {
@@ -480,7 +486,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
             setEmailValues(NO_EMAIL_VALUES)
             setEmailSendNotice(null)
             toasts.success({
-              title: "Verified",
+              title: "E-mail verified",
               body: "Your e-mail address is verified.",
               dataE2E: "email-verified",
             })
@@ -580,7 +586,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
           void tokens.revoke(id).then((revoked) => {
             if (revoked) {
               toasts.success({
-                title: "Revoked",
+                title: "Token revoked",
                 body: "That token no longer works.",
                 dataE2E: "api-token-revoked",
               })
