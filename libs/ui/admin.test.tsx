@@ -466,11 +466,18 @@ describe("one person in the admin app", () => {
       eventType: AuthAuditEventType.SIGN_IN_METHOD_LINKED,
       identifier: "google ada@example.com",
     }
+    // Only a rename's identifier names an old name: any other passkey row reads as one name.
+    const removed = {
+      ...signedIn,
+      id: 5,
+      eventType: AuthAuditEventType.SIGN_IN_METHOD_UNLINKED,
+      identifier: "passkey name=Desk from=home",
+    }
     await mount(
       <AdminUserScreen
         {...userProps([], {
           tab: "activity",
-          detail: { ...detail, audits: [renamed, signedIn, linked] },
+          detail: { ...detail, audits: [renamed, signedIn, linked, removed] },
         })}
       />,
     )
@@ -483,6 +490,8 @@ describe("one person in the admin app", () => {
     // An identifier of another shape is shown as stored.
     expect(find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_LINKED}]`).textContent)
       .toContain("google ada@example.com")
+    expect(find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_UNLINKED}]`).textContent)
+      .toContain('Passkey "Desk from=home"')
   })
 
   it("colours each activity entry by what happened, the block alone as a danger", async () => {
