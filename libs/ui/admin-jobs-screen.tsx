@@ -106,17 +106,17 @@ function useLate(pending: boolean, ms = 300): boolean {
 
 /** What the run's "When" says: its next run while it waits, else when it started or ended. */
 /**
- * A moment as the job pages show it: `3 hours ago` for the past, and the exact time for the
- * future, such as a run that waits until 03:00. The relative wording has no future form, so a
- * waiting run would otherwise read "a moment ago".
+ * A moment as the job pages show it: `3 hours ago` for the past, `in 6 days` for the future, the
+ * exact time on hover. preact-ui's `When` has no future form, so a waiting run would read "a
+ * moment ago".
  */
 function When({ at, class: className }: { at: string; class?: string }): JSX.Element {
   const format = useFormat()
   const instant = new Date(at)
   if (!(instant.valueOf() > Date.now())) return <Ago at={at} class={className} />
   return (
-    <time class={className} dateTime={instant.toISOString()}>
-      {format.exact(at)}
+    <time class={className} dateTime={instant.toISOString()} title={format.exact(at)}>
+      {format.relative(at)}
     </time>
   )
 }
@@ -469,6 +469,7 @@ function Repeating(props: AdminJobsScreenProps): JSX.Element {
             : <span class="font-medium">{job.label}</span>}
           <span class="font-mono text-xs text-muted wrap-anywhere">{job.kind}</span>
           <span class="text-xs text-muted sm:hidden">{job.schedule}</span>
+          {job.lastFailed && <span class="text-xs text-danger sm:hidden">Last run failed</span>}
         </div>
       ),
     },
@@ -532,7 +533,7 @@ function Repeating(props: AdminJobsScreenProps): JSX.Element {
           `[&_:is(th,td)]:px-4`,
           `max-sm:[&_:is(th,td)]:px-3`,
           `max-sm:[&_:is(th,td):nth-child(2)]:hidden`,
-          `max-sm:[&_:is(th,td):nth-child(4)]:hidden`,
+          `max-sm:[&_:is(th,td):nth-child(3)]:hidden`,
         ].join(` `)}
         columns={columns}
         rows={repeating}
