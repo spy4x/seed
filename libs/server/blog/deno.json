@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "check": "deno check postgres-blog-repository.ts public-blog.ts blog-publish-job.ts render.ts sample-posts.ts",
+    "test": "deno test render.test.ts"
+  }
+}

@@ -67,6 +67,8 @@ import {
 } from "./subscriber-mail.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import { JOB_RETRY } from "./job-failures.ts"
+import { blogPublishJob } from "../blog/blog-publish-job.ts"
+import { BLOG_PUBLISH_JOB } from "@domain/blog"
 import { cleanUpGuests } from "../auth/guests.ts"
 import {
   JOB_AGGREGATE,
@@ -154,6 +156,7 @@ export function createOutboxProcessor(
           setup: subscribers,
         }),
         [SUBSCRIBER_SEND_ISSUE_JOB]: subscriberSendIssueJob({ sql, ...mail, setup: subscribers }),
+        [BLOG_PUBLISH_JOB]: blogPublishJob({ sql, ...mail, setup: subscribers }),
       },
       fallback: provider ? new SeatSyncPublisher(sql, notifier) : notifier,
     }),

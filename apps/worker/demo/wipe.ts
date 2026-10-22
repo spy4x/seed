@@ -2,11 +2,13 @@ import type postgres from "postgres"
 
 /**
  * The tables the nightly wipe keeps: the migration history, so the schema is not migrated again,
- * and the backup service's last good backup (`infra/backup/backup.sh`), which is about the server,
- * not the demo. Every other table in the schema is emptied, a new one included, so a table added
- * later needs no change here unless it must survive the wipe (docs/demo.md).
+ * the backup service's last good backup (`infra/backup/backup.sh`), which is about the server,
+ * not the demo, and the blog's posts, which are the real posts of the product's website, not demo
+ * data. Every other table in the schema is emptied, a new one included, so a table added later
+ * needs no change here unless it must survive the wipe (docs/demo.md). A kept table must not
+ * reference an emptied one: `TRUNCATE ... CASCADE` would empty it too.
  */
-export const KEPT_TABLES: readonly string[] = [`migrations`, `backup_status`]
+export const KEPT_TABLES: readonly string[] = [`migrations`, `backup_status`, `blog_posts`]
 
 /** How long the wipe waits for a lock before it gives up, instead of stalling the worker. */
 const LOCK_TIMEOUT = `30s`
