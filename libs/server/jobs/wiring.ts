@@ -51,6 +51,11 @@ import {
   signUpCodeMailJob,
 } from "./sign-up-code-mail.ts"
 import {
+  removeStaleSignInLinkRequests,
+  SIGN_IN_LINK_MAIL_JOB,
+  signInLinkMailJob,
+} from "./sign-in-link-mail.ts"
+import {
   PASSWORD_RESET_MAIL_JOB,
   type PasswordResetMailDeps,
   passwordResetMailJob,
@@ -132,6 +137,7 @@ export function createOutboxProcessor(
         [PASSWORD_RESET_MAIL_JOB]: passwordResetMailJob({ sql, ...mail }),
         [EMAIL_CODE_MAIL_JOB]: emailCodeMailJob({ sql, ...mail }),
         [SIGN_UP_CODE_MAIL_JOB]: signUpCodeMailJob({ sql, ...mail }),
+        [SIGN_IN_LINK_MAIL_JOB]: signInLinkMailJob({ sql, ...mail }),
         [ACCOUNT_DELETION_MAIL_JOB]: accountDeletionMailJob({ sql, ...mail }),
         [ACCOUNT_RESTORED_MAIL_JOB]: accountRestoredMailJob({ sql, ...mail }),
         [API_TOKEN_CREATED_MAIL_JOB]: apiTokenCreatedMailJob({ sql, ...mail }),
@@ -187,6 +193,10 @@ function cleanupSteps(
     ["remove unsent e-mail code requests", async () => {
       const staleCodes = await removeStaleEmailCodeRequests(sql)
       if (staleCodes > 0) console.log(`Removed ${staleCodes} unsent e-mail code request(s)`)
+    }],
+    ["remove unused sign-in links", async () => {
+      const links = await removeStaleSignInLinkRequests(sql)
+      if (links > 0) console.log(`Removed ${links} unused sign-in link request(s)`)
     }],
     ["remove expired sign-ups", async () => {
       const signUps = await removeExpiredSignUps(sql)

@@ -86,6 +86,7 @@ const openLimits: AuthRateLimits = {
   resetByAddress: allowed,
   emailCodeByAddress: allowed,
   signUpCode: allowed,
+  signInLink: allowed,
   emailChangeByUser: allowed,
   emailChangeByAddress: allowed,
 }

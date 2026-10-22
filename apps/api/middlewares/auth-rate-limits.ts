@@ -99,6 +99,31 @@ export function signUpClient(c: Context<APIContext>): string {
 }
 
 /**
+ * Sign-in links one client, as {@link signUpClient} counts it, may have sent to one address per
+ * {@link SIGN_IN_LINK_WINDOW_MS} (#391). Keyed by the address and the client together, like the
+ * sign-up codes: a stranger who keeps asking for an address's links spends only their own share.
+ */
+export const SIGN_IN_LINK_MAILS_PER_CLIENT = 3
+
+/** Sign-in links all clients together may have sent to one address per window. */
+export const SIGN_IN_LINK_MAILS_PER_ADDRESS = 10
+
+/** The window of both sign-in link budgets: one hour. */
+export const SIGN_IN_LINK_WINDOW_MS = 60 * 60_000
+
+/** The store prefix of both sign-in link budgets. */
+export const SIGN_IN_LINK_STORE = `ratelimit-sign-in-link`
+
+/** The keys of one address's sign-in link budgets: hashes, never the address. */
+export async function signInLinkBudgetKeys(
+  email: string,
+  client: string,
+): Promise<{ address: string; client: string }> {
+  const hash = await sha256Hex(email)
+  return { address: `auth-sign-in-link:${hash}`, client: `auth-sign-in-link:${hash}:${client}` }
+}
+
+/**
  * Code mails one account may send to an address it wants to move to, per
  * {@link EMAIL_CHANGE_ACCOUNT_WINDOW_MS}, whatever the address. The account pays, not the address:
  * the address may belong to someone else, whose own budget must stay theirs.
@@ -166,6 +191,12 @@ export interface AuthRateLimits {
    * `emailCodeByAddress` when the store fails.
    */
   signUpCode(c: Context<APIContext>, email: string): Promise<RateLimitDecision>
+  /**
+   * Spends one of the client's {@link SIGN_IN_LINK_MAILS_PER_CLIENT} sign-in links to the address,
+   * then one of the address's {@link SIGN_IN_LINK_MAILS_PER_ADDRESS}, as `signUpCode` does, and
+   * refuses the same way when the store fails.
+   */
+  signInLink(c: Context<APIContext>, email: string): Promise<RateLimitDecision>
   /**
    * Spends one of the account's {@link EMAIL_CHANGE_MAILS_PER_ACCOUNT} code mails to a new address,
    * and refuses the same way as `emailCodeByAddress` when the store fails.
@@ -294,6 +325,18 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     limit: SIGN_UP_CODE_MAILS_PER_ADDRESS,
     clock,
   })
+  // The same two budgets for sign-in links (#391), in a store of their own.
+  const linkStore = store(SIGN_IN_LINK_STORE)
+  const linkByClient = createStoreLimiter(linkStore, {
+    windowMs: SIGN_IN_LINK_WINDOW_MS,
+    limit: SIGN_IN_LINK_MAILS_PER_CLIENT,
+    clock,
+  })
+  const linkByAddress = createStoreLimiter(linkStore, {
+    windowMs: SIGN_IN_LINK_WINDOW_MS,
+    limit: SIGN_IN_LINK_MAILS_PER_ADDRESS,
+    clock,
+  })
   // Keyed by the account, so asking to move to someone else's address spends only the asker's.
   const emailChange = createStoreLimiter(store("ratelimit-email-change"), {
     windowMs: EMAIL_CHANGE_ACCOUNT_WINDOW_MS,
@@ -352,6 +395,12 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       const own = await signUpByClient.check(keys.client)
       if (!own.allowed) return own
       return await signUpByAddress.check(keys.address)
+    },
+    signInLink: async (c, email) => {
+      const keys = await signInLinkBudgetKeys(email, signUpClient(c))
+      const own = await linkByClient.check(keys.client)
+      if (!own.allowed) return own
+      return await linkByAddress.check(keys.address)
     },
     guestStart: async (c) => await guest.check(`auth-guest:${signUpClient(c)}`),
     emailChangeByUser: async (userId) => await emailChange.check(`auth-email-change:${userId}`),

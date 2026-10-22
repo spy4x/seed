@@ -619,6 +619,43 @@ export interface SignUpGuestTakenResponse {
   guestTaken: true
 }
 
+/** How long a sign-in link works, in minutes (#391). Each link works once. */
+export const SIGN_IN_LINK_MINUTES = 15
+
+/**
+ * The `auth_keys.method` of the key a sign-in link signs in through (#391), and the `identifier` of
+ * the audit rows a link writes. It holds no secret: an account gets one such key, and a link proves
+ * the mailbox each time. It is no sign-in method a person links or unlinks.
+ */
+export const SIGN_IN_LINK_METHOD = "email-link"
+
+/**
+ * The body of `POST /api/auth/link`: the address the link goes to, and the page to open after
+ * sign-in, which the API checks again.
+ */
+export const authSignInLinkSchema = authEmailSchema.and({
+  "next?": "string <= 2048",
+})
+export type AuthSignInLink = typeof authSignInLinkSchema.infer
+
+/** The body of `POST /api/auth/link/redeem`: the token from the link, as the page read it. */
+export const authSignInLinkRedeemSchema = type({
+  token: "0 < string <= 256",
+})
+export type AuthSignInLinkRedeem = typeof authSignInLinkRedeemSchema.infer
+
+/** What `POST /api/auth/link/redeem` answers when the link signed someone in (#391). */
+export interface SignInLinkRedeemed {
+  /** The address the link proved, for the sign-in page's "last time" hint. */
+  email: string
+  /** The page to open: the one asked for when the link was requested, already checked. */
+  next: string | null
+  /** The link made a new account, or kept a guest's (`false` for an existing account). */
+  created: boolean
+  /** The account has an authenticator app: its code comes next. */
+  secondFactorPending: boolean
+}
+
 /** What `GET /auth/sign-up/pending` answers: the sign-up that waits, or `null` when none does. */
 export interface PendingSignUpResponse {
   pending: PendingSignUp | null
@@ -680,6 +717,11 @@ export interface SignInMethodsResponse {
    * {@link PROVIDER_PROOF_MINUTES} minutes ago. `null` for any other session.
    */
   providerProofUntil: string | null
+  /**
+   * The account has a proven address, so a sign-in link reaches it (#391): an account with no
+   * password can confirm a step with a link sign-in of a moment ago.
+   */
+  emailLink: boolean
 }
 
 /**

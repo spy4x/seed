@@ -13,10 +13,13 @@ import {
   authPasswordForgotSchema,
   authPasswordResetSchema,
   authPasswordSetSchema,
+  authSignInLinkRedeemSchema,
+  authSignInLinkSchema,
   authSignInSchema,
   authSignUpSchema,
   authTotpDisconnectSchema,
   emailToVerify,
+  type SignInLinkRedeemed,
   signInMethodProofSchema,
   type SignUpAccountExistsResponse,
   type SignUpGuestTakenResponse,
@@ -29,8 +32,10 @@ import {
   EmailVerifyOutcome,
   PasswordSetOutcome,
   type SignIn,
+  SignInLinkOutcome,
   SignUpOutcome,
 } from "@api/services/sign-in.ts"
+import { pageOrNull } from "@api/services/oauth-sign-in.ts"
 import { UserSignedOutEvent } from "@api/cqrs/events.ts"
 import { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
@@ -61,6 +66,11 @@ export interface AuthRouteDependencies {
    * in with the address, so this call does the same work either way.
    */
   requestPasswordReset(email: string): Promise<void>
+  /**
+   * Queues a sign-in link for a normalised address, with the checked page to open after sign-in
+   * (#391). The same work for every address: the link decides what happens once it is opened.
+   */
+  requestSignInLink(email: string, next: string | null): Promise<void>
   /** Persistent count of wrong e-mail codes per user, with a growing lock. */
   emailCodeFailures: Lockout
   /** Queues a mail with a new code for `email`, the address the user's account must prove. */
@@ -84,6 +94,30 @@ export const SIGN_UP_EXPIRED = "This sign-up expired. Start again."
 
 /** The answer when the address's code budget is spent; the same for every address. */
 export const SIGN_UP_CODES_TOO_MANY = "Too many codes for this address, try again later."
+
+/** The answer to a link request that was accepted: the same for every address (#391). */
+export const SIGN_IN_LINK_REQUESTED = { success: true }
+
+/** The answer to an address `normalizeEmail` refuses, on the link request. */
+export const SIGN_IN_LINK_BAD_ADDRESS = "Enter an e-mail address, such as name@example.com."
+
+/** The answer when the address's link budget is spent; the same for every address. */
+export function signInLinksTooMany(retryAfterMs: number): string {
+  const minutes = Math.max(1, Math.ceil(retryAfterMs / 60_000))
+  return `Too many links were asked for this address. Try again in ${minutes} ${
+    minutes === 1 ? "minute" : "minutes"
+  }.`
+}
+
+/** The answer to a link that is unknown, expired or used: one answer for all. */
+export const SIGN_IN_LINK_REFUSED = "This link no longer works."
+
+/**
+ * The answer when an account signs in with the link's address by password but never confirmed
+ * it: the link proved the mailbox, not that account. Told only to whoever holds the mailbox.
+ */
+export const SIGN_IN_LINK_UNCONFIRMED =
+  "An account uses this address but never confirmed it. Reset its password to sign in."
 
 /** The answer to a reset link that cannot be used. */
 export const PASSWORD_RESET_REFUSED = "This link is invalid, used or expired. Ask for a new one."
@@ -223,6 +257,7 @@ export function createAuthRoute(
     totpFailures,
     passwordFailures,
     requestPasswordReset,
+    requestSignInLink,
     emailCodeFailures,
     requestEmailCode,
   }: AuthRouteDependencies,
@@ -389,6 +424,56 @@ export function createAuthRoute(
       }
       await requestPasswordReset(email)
       return c.json(PASSWORD_RESET_REQUESTED)
+    })
+    // Sign-in and sign-up by e-mail link (#391). The same work and answer for every well-formed
+    // address, as for a sign-up: whether an account uses it is decided only when the link is used.
+    .post(`/link`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
+      const body = await readApiJson(c)
+      const validationResult = validate(authSignInLinkSchema, body)
+      if (validationResult.error) {
+        return c.json({ error: validationResult.error.description }, 400)
+      }
+      const email = normalizeEmail(validationResult.data.email)
+      if (email === null) return c.json({ error: SIGN_IN_LINK_BAD_ADDRESS }, 400)
+      // Spent for every address, known or not; a stranger spends only their own share.
+      const decision = await rateLimits.signInLink(c, email)
+      if (!decision.allowed) {
+        return tooMany(c, decision.retryAfterMs, signInLinksTooMany(decision.retryAfterMs))
+      }
+      await requestSignInLink(email, pageOrNull(validationResult.data.next))
+      return c.json(SIGN_IN_LINK_REQUESTED)
+    })
+    // A POST the link page sends when the person presses Continue: opening the link spends nothing,
+    // so a mail scanner that follows it leaves it working.
+    .post(`/link/redeem`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
+      const body = await readApiJson(c)
+      const validationResult = validate(authSignInLinkRedeemSchema, body)
+      if (validationResult.error) {
+        return c.json({ error: validationResult.error.description }, 400)
+      }
+      const result = await signIn.redeemSignInLink(c, validationResult.data.token)
+      switch (result.outcome) {
+        case SignInLinkOutcome.SignedIn:
+        case SignInLinkOutcome.Created:
+        case SignInLinkOutcome.GuestKept: {
+          const answer: SignInLinkRedeemed = {
+            email: result.email,
+            next: pageOrNull(result.next),
+            created: result.outcome !== SignInLinkOutcome.SignedIn,
+            secondFactorPending:
+              result.signedIn.session.secondFactor === SecondFactorStatus.Pending,
+          }
+          return c.json(answer)
+        }
+        case SignInLinkOutcome.GuestTaken: {
+          const answer: SignUpGuestTakenResponse = { guestTaken: true }
+          return c.json(answer)
+        }
+        case SignInLinkOutcome.Unconfirmed:
+          return c.json({ error: SIGN_IN_LINK_UNCONFIRMED }, 409)
+        case SignInLinkOutcome.Refused:
+          return c.json({ error: SIGN_IN_LINK_REFUSED }, 410)
+      }
     })
     .post(`/password/reset`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
       const body = await readApiJson(c)

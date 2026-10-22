@@ -99,6 +99,7 @@ const openAuthLimits: AuthRateLimits = {
   resetByAddress: notCalled,
   emailCodeByAddress: notCalled,
   signUpCode: notCalled,
+  signInLink: notCalled,
   emailChangeByUser: notCalled,
   emailChangeByAddress: notCalled,
 }

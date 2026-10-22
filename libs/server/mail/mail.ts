@@ -17,7 +17,7 @@
 
 import { createConsoleSender, type EmailSender } from "@spy4x/email/sender"
 import { createSmtpSender, type SmtpOptions } from "@spy4x/email/smtp"
-import { escapeHtml, htmlWrap } from "@spy4x/email/html"
+import { DEFAULT_HTML_SHELL_THEME, emailButton, escapeHtml, htmlWrap } from "@spy4x/email/html"
 import type { EmailMessage } from "@spy4x/email/message"
 import type { Sql } from "@spy4x/server/db"
 import { billingDate, BillingNoticeKind } from "@domain/billing"
@@ -127,6 +127,47 @@ export function passwordResetMail(
         `<p>${escapeHtml(asked)}</p>`,
         `<p>${escapeHtml(open)}</p>`,
         `<p><a href="${escapeHtml(link)}">Choose a new password</a></p>`,
+        `<p>${escapeHtml(once)}</p>`,
+        `<p>${escapeHtml(ignore)}</p>`,
+      ].join("\n"),
+    ),
+  }
+}
+
+/**
+ * The mail that carries a sign-in link (#391). The same mail whether or not an account uses the
+ * address: the link signs in to the account, or creates one. It says that opening the link does
+ * nothing until the person presses Continue, so the extra press reads as expected.
+ */
+export function signInLinkMail(
+  brand: MailBrand,
+  { to, link, validMinutes, at }: { to: string; link: string; validMinutes: number; at: Date },
+): EmailMessage {
+  const host = new URL(brand.webAppUrl).host
+  const asked = `Someone asked to sign in to ${host} with this address on ${
+    MAIL_TIME.format(at)
+  } UTC.`
+  const open =
+    `Open this link within ${validMinutes} minutes to sign in. If no account uses this address yet, it creates one.`
+  const once =
+    "The link works once. Opening it shows a page with a Continue button: nothing happens until you press it."
+  const ignore =
+    "If you did not ask for this, ignore this mail. Nobody can sign in without the link."
+  return {
+    to,
+    subject: `Your sign-in link for ${host}`,
+    text: `${asked}\n\n${open}\n\n${link}\n\n${once}\n\n${ignore}\n`,
+    html: mailHtml(
+      brand,
+      [
+        `<p>${escapeHtml(asked)}</p>`,
+        `<p>${escapeHtml(open)}</p>`,
+        emailButton({
+          href: link,
+          label: `Sign in to ${host}`,
+          background: DEFAULT_HTML_SHELL_THEME.linkColor,
+          color: "#ffffff",
+        }),
         `<p>${escapeHtml(once)}</p>`,
         `<p>${escapeHtml(ignore)}</p>`,
       ].join("\n"),

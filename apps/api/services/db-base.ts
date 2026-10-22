@@ -37,6 +37,8 @@ import { emailChanges } from "@server/auth/email-verification.ts"
 import type { Lockout } from "@spy4x/server/lockout"
 import { createPasswordCheckFailures } from "./password-locked.ts"
 import { signUpRequests } from "@server/auth/sign-up-requests.ts"
+import { signInLinkRequests } from "@server/auth/sign-in-links.ts"
+import { enqueueSignInLinkMail } from "@server/jobs/sign-in-link-mail.ts"
 import { enqueueSignUpCodeMail } from "@server/jobs/sign-up-code-mail.ts"
 import {
   accountDeletionBlockers,
@@ -565,6 +567,17 @@ export class AppDbBase extends DbServiceBase {
       ...signUpRequests(sql),
       /** Queues a code mail to the address of the waiting sign-up `id`. */
       queueCode: (id: string): Promise<void> => enqueueSignUpCodeMail(sql, id),
+    }
+  }
+
+  /** Sign-in links (#391): the requests, and queueing a link's mail. */
+  get signInLink() {
+    const sql = this.sql
+    return {
+      ...signInLinkRequests(sql),
+      /** Queues a link to `email`, already normalised, that opens `next` after sign-in. */
+      queue: (email: string, next: string | null): Promise<void> =>
+        enqueueSignInLinkMail(sql, email, next),
     }
   }
 
