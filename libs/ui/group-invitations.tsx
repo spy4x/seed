@@ -271,7 +271,7 @@ export function InviteForm(
         }
         <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
-            href={GROUP_PATHS.settings(groupId)}
+            href={GROUP_PATHS.members(groupId)}
             navigate={navigate}
             variant="ghost"
             class="min-h-11 w-full sm:min-h-9 sm:w-auto"

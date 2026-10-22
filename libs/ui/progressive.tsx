@@ -127,9 +127,13 @@ export const GROUP_PATHS = {
   new: "/groups/new",
   /** The page that makes a new group from an export file. */
   import: "/groups/import",
-  /** The group's page: its editor, members and plan. */
+  /** The group's page on its General tab: the name, description, emoji and colour. */
   settings: (groupId: string) => `/groups/${encodeURIComponent(groupId)}`,
-  /** The group's activity log, for its admins and owner. */
+  /** The group's Members tab: the members and the pending invitations. */
+  members: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/members`,
+  /** The group's Plan and billing tab: what it pays, and the owner's way to change it. */
+  billing: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/billing`,
+  /** The group's Activity tab, its log, for its admins and owner. */
   activity: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/activity`,
   /** The page that makes an invitation to the group, then shows its link once. */
   invite: (groupId: string) => `/groups/${encodeURIComponent(groupId)}/invitations/new`,

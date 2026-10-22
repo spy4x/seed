@@ -32,7 +32,7 @@ export interface GroupMoveAllFormProps {
    * `error`. It belongs to the target that was picked then: `onTargetChange` clears it.
    */
   refusal?: PlanRefusal | null
-  /** Follows the notice's "See plans" link without a page load. */
+  /** Follows the notice's "Open Plan and billing" link without a page load. */
   navigate?: Navigate
   /** The finished move, or `null` while there is none. */
   result?: MoveAllResult | null

@@ -3,6 +3,7 @@ import { expect, test } from "./fixtures/stack.ts"
 import { gotoApp, signIn } from "./fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
+import { openGroupTab } from "./fixtures/groups.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
@@ -37,6 +38,8 @@ async function personPage(browser: Browser, email: string): Promise<Page> {
 
 test.describe("group activity", () => {
   test("an admin reads what happened and follows a note; an editor and a viewer are refused", async ({ page, browser, request }) => {
+    // Four people sign in, and two of them open two pages each: past the default 30 s on a dev server.
+    test.setTimeout(60_000)
     const owner = "e2e_activity_owner@example.com"
     const admin = "e2e_activity_admin@example.com"
     const editor = "e2e_activity_editor@example.com"
@@ -73,11 +76,9 @@ test.describe("group activity", () => {
       })
       expect(note.status(), await note.text()).toBe(201)
 
-      // The owner reaches the log from the settings menu.
+      // The owner reaches the log from the group page's Activity tab.
       await gotoApp(page, `/groups/${groupId}`, page.locator("[data-e2e=group-general-name]"))
-      await page.getByRole("button", { name: "More actions" }).click()
-      await page.getByRole("menuitem", { name: "Activity" }).click()
-      await expect(page).toHaveURL(`/groups/${groupId}/activity`)
+      await openGroupTab(page, "Activity")
       const list = page.locator("[data-e2e=activity-list]")
       await expect(list).toContainText("renamed the group from “Team” to “Crew”")
       await expect(list).toContainText("added the note “Plan”")
@@ -109,8 +110,7 @@ test.describe("group activity", () => {
         const refused = await other.request.get(`${apiBase}/api/groups/${groupId}/activity`)
         expect(refused.status()).toBe(403)
         await gotoApp(other, `/groups/${groupId}`, other.locator("[data-e2e=group-general-name]"))
-        await other.getByRole("button", { name: "More actions" }).click()
-        await expect(other.getByRole("menuitem", { name: "Activity" })).toHaveCount(0)
+        await expect(other.getByRole("tab", { name: "Activity" })).toHaveCount(0)
       }
     } finally {
       for (const other of extra) await other.context().close()

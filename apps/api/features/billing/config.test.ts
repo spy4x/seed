@@ -55,7 +55,7 @@ describe("billing configuration", () => {
           membersOf: () => Promise.resolve(1),
           handedOver: () => Promise.resolve(false),
           claimTrial: () => Promise.resolve(true),
-          trialUsed: () => Promise.resolve(false),
+          trialGroupOf: () => Promise.resolve(null),
         },
         groups: { roleOf: () => Promise.resolve(GroupRole.OWNER) },
         provider: configured.provider,

@@ -58,9 +58,9 @@ test.describe("group invitations", () => {
       expect(upgraded.status(), await upgraded.text()).toBe(200)
 
       await signIn(page, admin, password)
-      await gotoApp(page, `/groups/${groupId}`, settingsReady(page))
-      // "Invite people" opens the group's invitation page, not a dialog.
-      await page.getByRole("link", { name: "Invite people" }).click()
+      await gotoApp(page, `/groups/${groupId}/members`, settingsReady(page))
+      // "Invite", in the Members tab's header, opens the group's invitation page, not a dialog.
+      await page.getByRole("link", { name: "Invite", exact: true }).click()
       await expect(page).toHaveURL(`/groups/${groupId}/invitations/new`)
       const section = page.locator("main")
       await expect(section.locator("[data-e2e=invitation-new-title]")).toHaveText("New invitation")
@@ -84,7 +84,7 @@ test.describe("group invitations", () => {
       const link = await section.locator("[data-e2e=invitation-created] code").textContent()
       expect(link).toMatch(/\/invite\/[A-Za-z0-9_-]{43}$/)
       await section.locator("[data-e2e=invitation-done]").click()
-      await expect(page).toHaveURL(`/groups/${groupId}`)
+      await expect(page).toHaveURL(`/groups/${groupId}/members`)
       await expect(page.locator("[data-e2e=group-section-invitations] [data-e2e=invitation]"))
         .toHaveCount(1)
       const invitePath = new URL(link!).pathname
@@ -111,7 +111,7 @@ test.describe("group invitations", () => {
       await gotoApp(inviteePage, `/groups/${groupId}`, settingsReady(inviteePage))
       await expect(inviteePage.locator("[data-e2e=group-general-role]")).toHaveText("Editor")
 
-      await gotoApp(page, `/groups/${groupId}`, settingsReady(page))
+      await gotoApp(page, `/groups/${groupId}/members`, settingsReady(page))
       await expect(page.locator("[data-e2e=group-member]")).toHaveCount(3)
       await expect(page.locator("[data-e2e=invitation]")).toContainText("used 1 of 2")
     } finally {

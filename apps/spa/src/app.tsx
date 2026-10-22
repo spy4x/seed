@@ -35,10 +35,9 @@ import { EmailView } from "./views/EmailView.tsx"
 import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView.tsx"
 import { GroupsView } from "./views/GroupsView.tsx"
 import { SubscribeView, SubscriptionConfirmView, UnsubscribeView } from "./views/SubscribeViews.tsx"
-import { GroupEditorView } from "./views/GroupEditorView.tsx"
+import { GroupEditorView, GroupPage } from "./views/GroupEditorView.tsx"
 import { GroupImportView } from "./views/GroupImportView.tsx"
 import { NotificationsView } from "./views/NotificationsView.tsx"
-import { GroupActivityView } from "./views/GroupActivityView.tsx"
 import { OverviewRedirect, OverviewView } from "./views/OverviewView.tsx"
 import { InstallOffer } from "./views/InstallOffer.tsx"
 import { InvitationView } from "./views/InvitationView.tsx"
@@ -47,7 +46,6 @@ import { invitationsStore } from "./state/invitations.ts"
 import { onboardingStore } from "./state/onboarding.ts"
 import { preferencesState } from "./state/preferences.ts"
 import { newNoteStore } from "./state/new-note.ts"
-import { PricingView } from "./views/BillingViews.tsx"
 import { billingStore } from "./state/billing.ts"
 import { NoteEditorView } from "./views/NoteEditorView.tsx"
 import { NotesView } from "./views/NotesView.tsx"
@@ -58,7 +56,7 @@ import { ApiTokenNewView } from "./views/ApiTokenNewView.tsx"
 import { InvitationNewView } from "./views/InvitationNewView.tsx"
 import { AppShell, PublicFrame } from "./views/AppShell.tsx"
 import { signInRedirect } from "./views/sign-in-gate.ts"
-import { SPA_ROUTE_PATHS, type SpaRoutePath } from "./views/spa-paths.ts"
+import { announcedPage, SPA_ROUTE_PATHS, type SpaRoutePath } from "./views/spa-paths.ts"
 import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { FormatContext } from "@spy4x/preact-ui/format"
 
@@ -109,13 +107,11 @@ const PAGES: {
   "/groups/:groupId/invitations/new": (params) => (
     <InvitationNewView key={params.groupId} groupId={params.groupId} />
   ),
-  "/groups/:groupId": (params) => <GroupEditorView key={params.groupId} groupId={params.groupId} />,
-  "/groups/:groupId/activity": (params) => <GroupActivityView groupId={params.groupId} />,
-  "/groups/:groupId/pricing": (params) => <PricingView groupId={params.groupId} />,
   "/groups/:groupId/notes": (params) => <OpenIfSelected groupId={params.groupId} />,
   "/groups/:groupId/notes/:noteId": (params) => (
     <OpenIfSelected groupId={params.groupId} noteId={params.noteId} />
   ),
+  "/groups/:groupId/:tab?": (params) => <GroupPage groupId={params.groupId} tab={params.tab} />,
   "/invite/:token": (params) => <InvitationView key={params.token} token={params.token} />,
   "/notifications": () => <NotificationsView />,
   "/overview": () => <OverviewRedirect />,
@@ -167,7 +163,7 @@ function Frame() {
   // document body when signing out swaps the shell. The app has no page titles yet, so the tab's
   // title stays.
   const [path] = useLocation()
-  useRouteAnnouncer({ path })
+  useRouteAnnouncer({ path: announcedPage(path) })
   if (session.user && !session.isMfaRequired) {
     return (
       <AppShell user={session.user} wsStatus={connectionDisplay(session)}>
@@ -283,6 +279,10 @@ export function App() {
       <Toastr
         toasts={toasts.list.value}
         onDismiss={toasts.remove}
+        // From `md` up, where the rail replaces the phone's tab bar, the stack sits at the bottom
+        // right, clear of the page header's "More actions" menu (#236); on a phone it stays at
+        // the top, clear of the tab bar.
+        class="md:top-auto! md:bottom-(--toastr-gap)!"
         dataE2E="toasts"
       />
       <SWUpdater />

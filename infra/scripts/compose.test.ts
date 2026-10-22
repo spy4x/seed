@@ -154,7 +154,7 @@ Deno.test("a product that fails to start fails the deploy and the optional servi
 
 Deno.test("when Compose would recreate the network, the images are built, every container is removed, then the product starts first", async () => {
   const dryRun = " Network app_default Removing \n Network app_default Removed \n";
-  const h = host({}, { config: CONFIG, dryRun });
+  const h = host({}, { config: CONFIG, dryRun, ps: row("api", "running") });
   expect(await runCompose(["up", "-d", "--build"], h)).toBe(0);
   expect(h.ran).toEqual([
     "proxy network",
@@ -168,7 +168,12 @@ Deno.test("when Compose would recreate the network, the images are built, every 
 
 Deno.test("when the images cannot be built for a network change, no container is removed", async () => {
   const dryRun = " Network app_default Removing \n";
-  const h = host({}, { config: CONFIG, dryRun, exit: (line) => line === "build" ? 2 : 0 });
+  const h = host({}, {
+    config: CONFIG,
+    dryRun,
+    ps: row("api", "running"),
+    exit: (line) => line === "build" ? 2 : 0,
+  });
   expect(await runCompose(["up", "-d", "--build"], h)).toBe(2);
   expect(h.ran).toEqual(["proxy network", "build deno-base", "build"]);
   expect(h.errors.join("\n")).toContain("No container was stopped");
@@ -177,6 +182,13 @@ Deno.test("when the images cannot be built for a network change, no container is
 Deno.test("a network that only has to be created removes nothing", async () => {
   const h = host({}, { config: CONFIG, dryRun: " Network app_default Creating \n" });
   expect(await runCompose(["up", "-d"], h)).toBe(0);
+  expect(h.ran).toEqual(["proxy network", "build deno-base", "up -d db migrate api spa", "up -d"]);
+});
+
+Deno.test("a project with no container yet starts without the dry run, which never returns on a fresh machine", async () => {
+  const h = host({}, { config: CONFIG, ps: "" });
+  expect(await runCompose(["up", "-d"], h)).toBe(0);
+  expect(h.asked).not.toContain("--dry-run up -d");
   expect(h.ran).toEqual(["proxy network", "build deno-base", "up -d db migrate api spa", "up -d"]);
 });
 

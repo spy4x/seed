@@ -102,7 +102,6 @@ export const PLANS: readonly Plan[] = [
       "Unlimited notes",
       "Up to 50 members",
       "Promote members to editor or admin",
-      "Priority support",
     ],
     entitlements: {
       features: { memberRoles: true },
@@ -508,17 +507,24 @@ export interface PersonTrial {
   enabled: boolean
   /** The person's trial went to a group already. */
   used: boolean
+  /** The group the trial went to, or `null` while it is unused. */
+  groupId: string | null
   /** The longest trial of a paid plan, in days; 0 when no plan has one. */
   days: number
 }
 
-const personTrialSchema = type({ enabled: "boolean", used: "boolean", days: "number.integer >= 0" })
+const personTrialSchema = type({
+  enabled: "boolean",
+  used: "boolean",
+  groupId: "string | null",
+  days: "number.integer >= 0",
+})
 
 /** Reads a {@link PersonTrial} back from the API's JSON; `null` when it is not one. */
 export function readPersonTrial(value: unknown): PersonTrial | null {
   const trial = personTrialSchema(value)
   if (trial instanceof type.errors) return null
-  return { enabled: trial.enabled, used: trial.used, days: trial.days }
+  return { enabled: trial.enabled, used: trial.used, groupId: trial.groupId, days: trial.days }
 }
 
 /** The longest trial any paid plan starts with, in days. */
@@ -650,7 +656,7 @@ export function assertCanManageBilling(role: GroupRole | null): void {
 // #endregion Authorization
 
 // #region Request schemas
-/** `POST /api/groups/:groupId/billing/checkout`, and the pricing page's form: the plan chosen. */
+/** `POST /api/groups/:groupId/billing/checkout`, from the Plan and billing tab: the plan chosen. */
 export const billingCheckoutRequestSchema = type({ planId: "0 < string <= 64", "+": "reject" })
 export type BillingCheckoutRequest = typeof billingCheckoutRequestSchema.infer
 // #endregion Request schemas
@@ -745,8 +751,8 @@ export interface BillingRepository {
    * groups at once never both get it.
    */
   claimTrial(userId: number, groupId: string): Promise<boolean>
-  /** Whether the person's trial went to a group already. */
-  trialUsed(userId: number): Promise<boolean>
+  /** The group the person's trial went to, or `null` while it is unused. */
+  trialGroupOf(userId: number): Promise<string | null>
 }
 
 /** The actor's role in a group, or `null` when they are not an active member of an active group. */

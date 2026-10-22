@@ -49,7 +49,7 @@ export function onboardingSteps(
       done: steps.memberInvited,
       action: {
         label: "Invite someone",
-        href: groupId ? GROUP_PATHS.settings(groupId) : SCREEN_PATHS.groups,
+        href: groupId ? GROUP_PATHS.members(groupId) : SCREEN_PATHS.groups,
         navigate,
       },
     },

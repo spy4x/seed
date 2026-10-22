@@ -98,7 +98,7 @@ export function InvitationNewView({ groupId }: { groupId: string }) {
         created={created}
         onDone={() => {
           invites.closeGroup()
-          navigate(GROUP_PATHS.settings(groupId))
+          navigate(GROUP_PATHS.members(groupId))
         }}
         navigate={navigate}
       />

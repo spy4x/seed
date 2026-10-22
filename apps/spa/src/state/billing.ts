@@ -18,6 +18,10 @@ export type BillingFetch = <T>(url: string, init?: RequestInit) => Promise<ApiRe
 const OFFLINE = "The server is out of reach. Try again."
 const UNREADABLE = "The plan could not be read."
 const UNSAFE_PAGE = "The payment provider answered with an address this app does not open."
+const CHECKOUT_UNREACHABLE =
+  "Could not open Stripe's checkout. Check your connection and try again."
+const PORTAL_UNREACHABLE =
+  "Could not open Stripe's billing page. Check your connection and try again."
 
 function billingPath(groupId: string, action = ""): string {
   return `/api/groups/${encodeURIComponent(groupId)}/billing${action}`
@@ -74,7 +78,13 @@ export function createBillingStore(
     }
   }
 
-  async function open(groupId: string, action: string, body?: unknown): Promise<void> {
+  /** Asks the API for the provider's page; `unreachable` is said when the call never arrives. */
+  async function open(
+    groupId: string,
+    action: string,
+    unreachable: string,
+    body?: unknown,
+  ): Promise<void> {
     if (pending.value) return
     pending.value = true
     error.value = null
@@ -97,7 +107,7 @@ export function createBillingStore(
       leaving = true
       leave(url)
     } catch (_unreachable) {
-      error.value = { groupId, message: OFFLINE, id: ++refusals }
+      error.value = { groupId, message: unreachable, id: ++refusals }
     } finally {
       if (!leaving) pending.value = false
     }
@@ -105,12 +115,12 @@ export function createBillingStore(
 
   /** Opens the provider's checkout for `planId`. */
   function checkout(groupId: string, planId: string): Promise<void> {
-    return open(groupId, "/checkout", { planId })
+    return open(groupId, "/checkout", CHECKOUT_UNREACHABLE, { planId })
   }
 
   /** Opens the provider's portal, where the owner changes the card or plan, or cancels. */
   function portal(groupId: string): Promise<void> {
-    return open(groupId, "/portal")
+    return open(groupId, "/portal", PORTAL_UNREACHABLE)
   }
 
   /** The person's own trial, for the create-group page; `null` until read or when unreadable. */

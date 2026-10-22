@@ -113,12 +113,17 @@ export function nameFlag(args: string[]): string | undefined {
 }
 
 /**
- * Writes through a temporary file and a rename, so a crash never leaves the file cut short.
- * `mode` applies to a new file only.
+ * Writes through a temporary file and a rename, so a crash never leaves the file cut short. An
+ * existing file keeps its mode; `mode` is for a new file. A symlink is replaced by a regular file,
+ * since its target may lie outside what the task may write.
  */
-async function writeSafely(path: string, text: string, mode?: number): Promise<void> {
+export async function writeSafely(path: string, text: string, mode?: number): Promise<void> {
   const temporary = `${path}.tmp`
-  await Deno.writeTextFile(temporary, text, mode === undefined ? {} : { mode })
+  // `stat` follows a link, so its replacement takes the target's mode, never the link's 0777.
+  const keep = (await Deno.stat(path).catch(() => undefined))?.mode
+  const wanted = keep == null ? mode : keep & 0o777
+  // Deno sets this mode as given, past the umask and on a temporary file left by a crash too.
+  await Deno.writeTextFile(temporary, text, wanted === undefined ? {} : { mode: wanted })
   await Deno.rename(temporary, path)
 }
 

@@ -15,7 +15,7 @@ Deno, Postgres, Docker Compose. Work in progress.**
 [Architecture](docs/architecture.md) · [Deploy](docs/deploy.md) · [All docs](docs/README.md) ·
 [Start a product](docs/start-a-product.md)
 
-<img src="docs/screenshots/sign-up-flow.gif" alt="A new user signs up with an e-mail address and a password, types the code the app mailed to that address, lands on the profile page with a Get started checklist, opens Edit name, types the first name Alex and the last name Rivera, and saves; a green toast confirms the profile was updated." width="800">
+<a href="https://antonshubin.com/tools/seed"><img src="media/demo/poster.webp" alt="Demo video, 1 minute: Seed is cloned into an empty folder, deno task init writes the env file, deno task dev starts the stack, then a team's notes, a new tagged note, the group's members and the admin panel's view of a teammate. Opens the video on antonshubin.com." width="800"></a>
 
 </div>
 

@@ -1252,7 +1252,7 @@ Deno.test("one billing trial per person against Postgres", async (t) => {
         const winner = claims[0] ? first : second
         expect(await billing.claimTrial(owner, winner)).toBe(true)
         expect(await billing.claimTrial(owner, winner === first ? second : first)).toBe(false)
-        expect(await billing.trialUsed(owner)).toBe(true)
+        expect(await billing.trialGroupOf(owner)).toBe(winner)
       },
     )
 
@@ -1267,7 +1267,7 @@ Deno.test("one billing trial per person against Postgres", async (t) => {
         `
         expect(await billing.claimTrial(owner, shared)).toBe(true)
 
-        expect(await billing.trialUsed(invited)).toBe(false)
+        expect(await billing.trialGroupOf(invited)).toBeNull()
         expect(await billing.claimTrial(invited, own)).toBe(true)
       },
     )

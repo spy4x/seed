@@ -135,8 +135,8 @@ has its own address, a back link to the list and room for a long text. The edito
 for both modes: `/<entity>/new` shows it with empty fields and "Create", `/<entity>/:id` with the
 saved fields, and its Save and Discard only while a field differs from what is saved. Groups are
 the second example: `groups-screen.tsx` lists them, each row one link to its editor, and
-`group-editor-screen.tsx` serves `/groups/new` and `/groups/:id`, with the members and the plan
-under the form. An entity that is created and never edited, such as an API token or an invitation,
+`group-editor-screen.tsx` serves `/groups/new` and `/groups/:id`, with the members, the plan and
+the activity log on tabs of their own (`/groups/:id/members`, `/billing`, `/activity`). An entity that is created and never edited, such as an API token or an invitation,
 gets a create-only page instead (`api-token-new-screen.tsx` at `/tokens/new`,
 `invitation-new-screen.tsx` at `/groups/:groupId/invitations/new`): the form, then, once it exists,
 its secret or link shown once on the same page with a copy control and Done. Leaving before Done

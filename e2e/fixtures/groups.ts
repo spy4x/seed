@@ -31,6 +31,24 @@ export async function openGroup(page: Page, name: string): Promise<void> {
   await expect(page.locator("[data-e2e=group-general-name]")).toHaveText(name)
 }
 
+/** The address part each tab of a group's page adds to `/groups/:groupId`. */
+const TAB_PATHS = {
+  "General": "",
+  "Members": "/members",
+  "Plan and billing": "/billing",
+  "Activity": "/activity",
+}
+
+/** Opens a tab of the open group's page by its name, the way a person does, and waits for its address. */
+export async function openGroupTab(page: Page, tab: keyof typeof TAB_PATHS): Promise<void> {
+  await page.getByRole("tab", { name: tab, exact: true }).click()
+  await expect(page).toHaveURL(new RegExp(`/groups/[0-9a-f-]{36}${TAB_PATHS[tab]}$`))
+  await expect(page.getByRole("tab", { name: tab, exact: true })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  )
+}
+
 /**
  * Creates a group named `name` from the groups page's "New group", and resolves on the new group's
  * page, which takes the create page's place in the history.

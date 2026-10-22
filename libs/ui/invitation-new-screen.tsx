@@ -41,7 +41,7 @@ export interface InvitationNewScreenProps
 export function InvitationNewScreen(props: InvitationNewScreenProps): JSX.Element {
   const { groupId, group, loading, error = null, offline = false, created, navigate } = props
   const waited = useWaited(loading && !group)
-  const back = { href: GROUP_PATHS.settings(groupId), label: "Back to the group" }
+  const back = { href: GROUP_PATHS.members(groupId), label: "Back to the members" }
   if (group && created) {
     return (
       <Stack gap="xl">

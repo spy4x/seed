@@ -1,0 +1,34 @@
+WEBVTT
+
+00:02.503 --> 00:09.729
+Clone Seed into a new folder, sped up 4×
+
+00:09.729 --> 00:15.244
+One command writes the env file with fresh secrets
+
+00:15.244 --> 00:19.410
+deno task dev builds and starts every service, sped up 29×
+
+00:19.410 --> 00:22.544
+Every service is up
+
+00:22.544 --> 00:25.878
+The app, with a team's sample notes and tags
+
+00:25.878 --> 00:32.657
+Write a note and tag it
+
+00:32.657 --> 00:37.004
+Create it, and the whole team can read it
+
+00:37.004 --> 00:43.206
+Every group has members, each with a role
+
+00:43.206 --> 00:49.535
+The admin panel, on its own host: find a teammate
+
+00:49.535 --> 00:55.471
+Their sessions, groups and activity, at a glance
+
+00:55.471 --> 00:58.290
+The new note now leads the team's list

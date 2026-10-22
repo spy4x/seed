@@ -1,14 +1,14 @@
 import { expect, test } from "./fixtures/stack.ts"
 import { signIn } from "./fixtures/app.ts"
 import { BILLING_WEBHOOK_PATH, stripeSignature, subscriptionEvent } from "./fixtures/billing.ts"
-import { createGroup } from "./fixtures/groups.ts"
+import { createGroup, openGroupTab } from "./fixtures/groups.ts"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 const apiBase = "http://app.localhost"
 const headers = { origin: apiBase, "sec-fetch-site": "same-origin" }
 
 test.describe("group billing", () => {
-  test("the owner upgrades a group to Pro, and the page shows it once the signed webhook arrives", async ({ page, request }) => {
+  test("the owner starts a group's Pro trial, and the page shows it once the signed webhook arrives", async ({ page, request }) => {
     const email = "e2e_billing_owner@example.com"
     const password = "Passw0rd!"
     const cleanup = async ({ soft = false } = {}) => {
@@ -32,19 +32,22 @@ test.describe("group billing", () => {
         .getByRole("link", { name: "Groups" }).click()
       await createGroup(page, "Club")
       const groupId = new URL(page.url()).pathname.replace("/groups/", "")
+      await openGroupTab(page, "Plan and billing")
       const plan = page.locator("[data-e2e=billing-plan]")
       await expect(plan).toHaveAttribute("data-plan", "free")
 
-      await page.getByRole("link", { name: "See plans" }).click()
-      await expect(page).toHaveURL(`/groups/${groupId}/pricing`)
       // The development provider's checkout is no page of its own: it sends the browser straight
-      // back to the checkout's success URL, the group's settings, as Stripe does once paid.
-      await page.getByRole("button", { name: "Choose Pro" }).click()
-      await expect(page).toHaveURL(`/groups/${groupId}`)
+      // back to the checkout's success URL, the Plan and billing tab, as Stripe does once paid.
+      await page.getByRole("button", { name: "Start 14-day free trial (opens Stripe)" }).click()
+      // The tab drops the success URL's query, so a reload does not say it again.
+      await expect(page).toHaveURL(`/groups/${groupId}/billing`)
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
       await expect(plan).toHaveAttribute("data-plan", "free")
+      await expect(page.locator("[data-e2e=billing-confirming]")).toBeVisible()
+      // While Stripe confirms, a second checkout could be paid twice: none is offered.
+      await expect(page.locator("[data-e2e=billing-checkout]")).toHaveCount(0)
 
-      const body = subscriptionEvent({ reference: groupId })
+      const body = subscriptionEvent({ reference: groupId, status: "trialing" })
       const delivered = await request.post(`${apiBase}${BILLING_WEBHOOK_PATH}`, {
         headers: {
           "content-type": "application/json",
@@ -56,7 +59,9 @@ test.describe("group billing", () => {
 
       // No reload: the plan change reaches the open page through the group's change hint.
       await expect(plan).toHaveAttribute("data-plan", "pro")
-      await expect(page.getByRole("button", { name: /manage/i })).toBeVisible()
+      await expect(page.locator("[data-e2e=billing-upgraded]"))
+        .toContainText("Your 14-day Pro trial has started")
+      await expect(page.getByRole("button", { name: "Change card (opens Stripe)" })).toBeVisible()
 
       const replayed = await request.post(`${apiBase}${BILLING_WEBHOOK_PATH}`, {
         headers: { "content-type": "application/json", "stripe-signature": "t=1,v1=00" },
@@ -98,9 +103,9 @@ test.describe("group billing", () => {
       await expect(page).toHaveURL(/\/groups\/[0-9a-f-]{36}$/)
       const groupId = new URL(page.url()).pathname.replace("/groups/", "")
 
-      await page.getByRole("link", { name: "See plans" }).click()
-      await page.getByRole("button", { name: "Choose Pro" }).click()
-      await expect(page).toHaveURL(`/groups/${groupId}`)
+      await openGroupTab(page, "Plan and billing")
+      await page.getByRole("button", { name: "Start 14-day free trial (opens Stripe)" }).click()
+      await expect(page).toHaveURL(`/groups/${groupId}/billing`)
 
       await groups.click()
       await page.locator("[data-e2e=group-new]").click()

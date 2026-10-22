@@ -2,6 +2,7 @@ import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconPlus } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
+import { Link } from "@spy4x/preact-ui/link"
 import { Card } from "@spy4x/preact-ui/card"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
@@ -14,6 +15,7 @@ import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
+import { Tabs } from "@spy4x/preact-ui/tabs"
 import {
   canDelete,
   canExportGroup,
@@ -33,11 +35,11 @@ import { type GroupRow, ROLE_TEXT } from "./groups-screen.tsx"
 import { type GroupMemberRow, GroupMembersSection, type MemberError } from "./group-members.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
-import { PageHeader } from "@spy4x/preact-ui/page-header"
+import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { transferCandidates } from "./group-transfer.tsx"
 import type { PersonTrial, PlanRefusal } from "@domain/billing"
 import { GroupMoveAllForm, type MoveAllResult } from "./group-move-all.tsx"
-import { type MoveTarget, NavigateItem } from "./notes-screen.tsx"
+import type { MoveTarget } from "./notes-screen.tsx"
 import { GROUP_PATHS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
 
@@ -60,9 +62,35 @@ export interface GroupEditorErrors {
   form?: string | null
 }
 
+/** The tabs of a group's page, each at an address of its own (`GROUP_TAB_PATHS`). */
+export enum GroupTab {
+  GENERAL = "general",
+  MEMBERS = "members",
+  BILLING = "billing",
+  ACTIVITY = "activity",
+}
+
+/** Where each tab of a group's page lives. */
+export const GROUP_TAB_PATHS: Record<GroupTab, (groupId: string) => string> = {
+  [GroupTab.GENERAL]: GROUP_PATHS.settings,
+  [GroupTab.MEMBERS]: GROUP_PATHS.members,
+  [GroupTab.BILLING]: GROUP_PATHS.billing,
+  [GroupTab.ACTIVITY]: GROUP_PATHS.activity,
+}
+
+/** The tab an address's last part names (`members` of `/groups/:id/members`), or `null`. */
+export function groupTabOf(part: string | undefined): GroupTab | null {
+  if (part === undefined) return GroupTab.GENERAL
+  return part !== GroupTab.GENERAL && Object.values(GroupTab).includes(part as GroupTab)
+    ? part as GroupTab
+    : null
+}
+
 export interface GroupEditorScreenProps {
   /** The page creates a group (`/groups/new`) rather than editing one (`/groups/:groupId`). */
   creating?: boolean
+  /** The tab of an existing group's page that is open. Defaults to General. */
+  tab?: GroupTab
   /** The group being edited, or `null` on the create page, while it is read, or when it is not one of the person's. */
   group: GroupRow | null
   /** Whether this group is the person's current group, the one the notes show. */
@@ -137,8 +165,10 @@ export interface GroupEditorScreenProps {
    * Left out, or with billing off, it says nothing about plans.
    */
   trial?: PersonTrial | null
-  /** The plan section (`BillingCard`), drawn under the members; left out, there is none. */
+  /** The Plan and billing tab's content (`GroupBillingPanel`). */
   billing?: ComponentChildren
+  /** The Activity tab's content (`GroupActivityPanel`), for the admins and the owner. */
+  activity?: ComponentChildren
   /** The pending invitations (`PendingInvitations`), drawn under the members. */
   pendingInvitations?: ComponentChildren
   /**
@@ -188,10 +218,11 @@ const BACK = { href: SCREEN_PATHS.groups, label: "Back to groups" }
 
 /**
  * One group's page, and the page that creates one: the same form in both. `/groups/new` shows the
- * form with "Cancel" and "Create group". An existing group shows its name as the title, the form
- * (read-only text for someone who may not change it, with the footer only while a field differs
- * from what is saved), then the members with "Invite people", the pending invitations and the
- * plan. Its "More actions" menu switches to the group, opens its activity, downloads the owner's
+ * form with "Cancel" and "Create group". An existing group shows its mark, name and the person's
+ * role, then four tabs, each at its own address: General (the form, or read-only text for someone
+ * who may not change it, with the footer only while a field differs from what is saved), Members
+ * (with "Invite" in the header for the owner and admins), Plan and billing, and Activity (for the
+ * admins and the owner). Its "More actions" menu switches to the group, downloads the owner's
  * export file, and holds transfer, move, leave and delete, each behind a dialog.
  */
 export function GroupEditorScreen(props: GroupEditorScreenProps): JSX.Element {
@@ -267,7 +298,9 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     leaving = false,
     leaveError = null,
     onLeave,
+    tab = GroupTab.GENERAL,
     billing,
+    activity,
     pendingInvitations,
     transfer,
     moveTargets = [],
@@ -317,16 +350,6 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
       <DropdownItem key="switch" dataE2E="group-switch" onClick={onSwitch}>
         Switch to this group
       </DropdownItem>
-    ),
-    canViewActivity(group.role) && (
-      <NavigateItem
-        key="activity"
-        href={GROUP_PATHS.activity(group.id)}
-        navigate={navigate}
-        dataE2E="group-activity-open"
-      >
-        Activity
-      </NavigateItem>
     ),
   ].filter(Boolean)
   const handing = [
@@ -410,8 +433,60 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
     </>
   ))
 
+  // On a phone the tab row scrolls sideways: the open tab is brought into view, so Activity, the
+  // last one, is not left cut off at the edge when its address is opened.
+  const tabRow = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    tabRow.current?.querySelector("[role=tab][aria-selected=true]")?.scrollIntoView?.({
+      block: "nearest",
+      inline: "nearest",
+    })
+  }, [tab])
+
+  // The member count says what a per-member plan bills for, so it leads to the plan.
+  const count = memberCount ?? members?.length ?? group.memberCount
+  const countText = count === undefined || count === null
+    ? null
+    : `${count} ${count === 1 ? "member" : "members"}`
+  const tabs = [
+    { id: GroupTab.GENERAL, label: "General" },
+    { id: GroupTab.MEMBERS, label: "Members" },
+    { id: GroupTab.BILLING, label: "Plan and billing" },
+    // Left out for a role that may not read the log, unless its address was opened anyway.
+    ...(canViewActivity(group.role) || tab === GroupTab.ACTIVITY
+      ? [{ id: GroupTab.ACTIVITY, label: "Activity" }]
+      : []),
+  ].map((item) => ({
+    id: `group-tab-${item.id}`,
+    label: item.label,
+    content: item.id !== tab
+      ? null
+      : item.id === GroupTab.GENERAL
+      ? (canRename(group.role) ? <GroupForm {...props} /> : <GroupDetailsText group={group} />)
+      : item.id === GroupTab.MEMBERS
+      ? (
+        <GroupMembersSection
+          groupId={group.id}
+          actorRole={group.role}
+          members={members}
+          memberCount={memberCount}
+          error={membersError}
+          pendingUserId={memberPendingId}
+          memberError={memberError}
+          onRoleChange={onRoleChange}
+          onRemove={onRemoveMember}
+          navigate={navigate}
+        >
+          {pendingInvitations}
+        </GroupMembersSection>
+      )
+      : item.id === GroupTab.BILLING
+      ? billing
+      : activity,
+  }))
+
   return (
-    <Stack gap="xl">
+    <Stack>
       <div ref={header}>
         <PageHeader
           title={group.name}
@@ -420,11 +495,38 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
           subtitle={
             <>
               <span data-e2e="group-general-role">{ROLE_TEXT[group.role]}</span>
+              {countText && (
+                <>
+                  {" · "}
+                  {tab === GroupTab.BILLING
+                    ? <span data-e2e="group-member-count">{countText}</span>
+                    : (
+                      <Link
+                        href={GROUP_PATHS.billing(group.id)}
+                        navigate={navigate}
+                        class="pc-link"
+                        aria-label={`${countText}: see the plan and billing`}
+                        data-e2e="group-member-count"
+                      >
+                        {countText}
+                      </Link>
+                    )}
+                </>
+              )}
               {current && <span data-e2e="group-current">&nbsp;· your current group</span>}
             </>
           }
           back={BACK}
           navigate={navigate}
+          action={tab === GroupTab.MEMBERS && canManageInvitations(group.role) && (
+            <PageAction
+              label="Invite"
+              Icon={IconPlus}
+              href={GROUP_PATHS.invite(group.id)}
+              navigate={navigate}
+              dataE2E="invite-open"
+            />
+          )}
           menu={menu}
           menuDataE2E="group-menu"
         />
@@ -446,41 +548,20 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
         </div>
       )}
 
-      {
-        /* The fields follow the header with no heading of their own, as on the create page: the
-        group's page is its editor, and the sections below it are the ones that need a name. */
-      }
-      {canRename(group.role) ? <GroupForm {...props} /> : <GroupDetailsText group={group} />}
-
-      <GroupMembersSection
-        groupId={group.id}
-        actorRole={group.role}
-        members={members}
-        memberCount={memberCount}
-        error={membersError}
-        pendingUserId={memberPendingId}
-        memberError={memberError}
-        onRoleChange={onRoleChange}
-        onRemove={onRemoveMember}
-        navigate={navigate}
-        action={canManageInvitations(group.role) && (
-          <Button
-            href={GROUP_PATHS.invite(group.id)}
-            navigate={navigate}
-            variant="outline"
-            size="sm"
-            class="min-h-11 sm:min-h-9"
-            data-e2e="invite-open"
-          >
-            <IconPlus class="size-4" aria-hidden="true" />
-            Invite people
-          </Button>
-        )}
-      >
-        {pendingInvitations}
-      </GroupMembersSection>
-
-      {billing}
+      {/* One row that scrolls sideways on a phone; the arrow keys still move between tabs. */}
+      <div ref={tabRow}>
+        <Tabs
+          tabs={tabs}
+          active={`group-tab-${tab}`}
+          onChange={(id) =>
+            navigate?.(GROUP_TAB_PATHS[id.replace("group-tab-", "") as GroupTab](group.id))}
+          lazy
+          label={`About ${group.name}`}
+          listClass="flex-nowrap overflow-x-auto pb-px"
+          panelClass="pt-6"
+          tabDataE2E="group-tab"
+        />
+      </div>
 
       {dialog === Dialog.TRANSFER && canHandOver && (
         <Modal

@@ -1,7 +1,15 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
 import { parseEnvValues } from "./env-file.ts"
-import { KEEPS_OLD_DATA, nameFlag, prepareEnv, projectSlug, randomHex, SECRETS } from "./init.ts"
+import {
+  KEEPS_OLD_DATA,
+  nameFlag,
+  prepareEnv,
+  projectSlug,
+  randomHex,
+  SECRETS,
+  writeSafely,
+} from "./init.ts"
 
 const example = await Deno.readTextFile(`infra/envs/.env.example`)
 const fake = (bytes: number) => `x`.repeat(bytes * 2)
@@ -86,3 +94,41 @@ Deno.test("--name needs a value", () => {
   expect(() => nameFlag([`--name`])).toThrow(`--name needs a value`)
   expect(() => nameFlag([`--name`, `--yes`])).toThrow(`--name needs a value`)
 })
+
+/** Runs `body` in a fresh folder under tests/ (gitignored), removed afterwards. */
+async function inScratch(body: (dir: string) => Promise<void>) {
+  const dir = await Deno.makeTempDir({ dir: `tests`, prefix: `.scratch-init-` })
+  try {
+    await body(dir)
+  } finally {
+    await Deno.remove(dir, { recursive: true })
+  }
+}
+
+const modeOf = async (path: string) => (await Deno.stat(path)).mode! & 0o777
+
+Deno.test("a safe write creates the file with the mode asked for, and leaves no temporary file", () =>
+  inScratch(async (dir) => {
+    await writeSafely(`${dir}/vapid.json`, `{}`, 0o600)
+    expect(await Deno.readTextFile(`${dir}/vapid.json`)).toBe(`{}`)
+    expect(await modeOf(`${dir}/vapid.json`)).toBe(0o600)
+    expect([...Deno.readDirSync(dir)].map((entry) => entry.name)).toEqual([`vapid.json`])
+  }))
+
+Deno.test("a safe write keeps the mode of the file it replaces", () =>
+  inScratch(async (dir) => {
+    await Deno.writeTextFile(`${dir}/.env`, `A=1`)
+    await Deno.chmod(`${dir}/.env`, 0o600)
+    await writeSafely(`${dir}/.env`, `A=2`)
+    expect(await Deno.readTextFile(`${dir}/.env`)).toBe(`A=2`)
+    expect(await modeOf(`${dir}/.env`)).toBe(0o600)
+  }))
+
+Deno.test("a temporary file left by a crash does not bring its mode along", () =>
+  inScratch(async (dir) => {
+    await Deno.writeTextFile(`${dir}/vapid.json.tmp`, `half`, { mode: 0o644 })
+    await Deno.chmod(`${dir}/vapid.json.tmp`, 0o644)
+    await writeSafely(`${dir}/vapid.json`, `{}`, 0o600)
+    expect(await modeOf(`${dir}/vapid.json`)).toBe(0o600)
+    expect([...Deno.readDirSync(dir)].map((entry) => entry.name)).toEqual([`vapid.json`])
+  }))

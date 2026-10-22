@@ -92,8 +92,8 @@ export function createBillingCheckoutHandler(
     }
     const result = await provider.createCheckout({
       planId: data.planId,
-      successUrl: appUrl(dependencies, `/groups/${data.groupId}`),
-      cancelUrl: appUrl(dependencies, `/groups/${data.groupId}/pricing`),
+      successUrl: appUrl(dependencies, `/groups/${data.groupId}/billing?checkout=done`),
+      cancelUrl: appUrl(dependencies, `/groups/${data.groupId}/billing`),
       reference: data.groupId,
       // A per-member plan starts with a seat for every member; the worker keeps it in step after.
       ...(plan.perSeat ? { quantity: await dependencies.billing.membersOf(data.groupId) } : {}),
@@ -130,13 +130,17 @@ export function createBillingCheckoutHandler(
 export function createBillingTrialHandler(
   { billing, provider }: BillingHandlerDependencies,
 ): QueryHandler<BillingTrialQuery> {
-  return async ({ data }) => ({
-    trial: {
-      enabled: provider !== null,
-      used: provider !== null && await billing.trialUsed(data.actor.userId),
-      days: provider === null ? 0 : LONGEST_TRIAL_DAYS,
-    },
-  })
+  return async ({ data }) => {
+    const groupId = provider === null ? null : await billing.trialGroupOf(data.actor.userId)
+    return {
+      trial: {
+        enabled: provider !== null,
+        used: groupId !== null,
+        groupId,
+        days: provider === null ? 0 : LONGEST_TRIAL_DAYS,
+      },
+    }
+  }
 }
 
 /** The new owner's trial after a transfer: the old owner's remaining plan time, or none. */
@@ -166,7 +170,7 @@ export function createBillingPortalHandler(
     if (!customerId) throw new BillingError("NO_SUBSCRIPTION", "The group has never paid")
     const result = await provider.createPortalSession({
       customerId,
-      returnUrl: appUrl(dependencies, `/groups/${data.groupId}`),
+      returnUrl: appUrl(dependencies, `/groups/${data.groupId}/billing`),
     })
     if (!result.ok) {
       dependencies.log("error: billing portal failed", result.error)
