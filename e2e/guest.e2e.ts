@@ -81,3 +81,37 @@ test(`keeping a guest account by e-mail keeps its user id and drops the banner`,
     await cleanup(request, email)
   }
 })
+
+test(`a guest who opens a sign-in link asked for in another browser stays the same guest`, async ({ page, request }) => {
+  const email = `e2e-guest-link-${uuidV7().slice(-8)}@example.com`
+  try {
+    await tryItNow(page)
+    const guest = await me(page)
+    // Another browser asks for the link: the `request` context shares no cookie with the page.
+    const asked = await request.post(`${apiBase}/api/auth/link`, {
+      headers: { origin: apiBase, "sec-fetch-site": `same-origin` },
+      data: { email },
+    })
+    expect(asked.ok(), await asked.text()).toBe(true)
+    let link = ``
+    await expect.poll(async () => {
+      link = (await lastMail(request, lastMailUrl, email))?.text.match(/https?:\/\/\S+/)?.[0] ?? ``
+      return link
+    }, { timeout: 20_000, message: `the worker mails the sign-in link` }).not.toBe(``)
+
+    const go = page.locator(`[data-e2e=sign-in-link-continue]`)
+    const url = new URL(link)
+    await gotoApp(page, url.pathname + url.hash, go)
+    await expect(page.locator(`[data-e2e=sign-in-link-guest]`)).toBeVisible()
+    await go.click()
+
+    await expect(
+      page.getByRole(`heading`, { level: 1, name: `This link was asked for in another browser` }),
+    ).toBeVisible()
+    await expect(page.locator(`[data-e2e=sign-in-link-new]`)).toBeFocused()
+    expect(await me(page)).toMatchObject({ id: guest.id, guestSince: guest.guestSince })
+  } finally {
+    await deleteGuest(page)
+    await cleanup(request, email)
+  }
+})

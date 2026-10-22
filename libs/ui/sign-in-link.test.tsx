@@ -270,6 +270,35 @@ describe("LinkOpenScreen in the browser", () => {
       await act(() => render(null, root!))
     }
   })
+
+  it("tells a guest what Continue does to the guest account, and nobody else", async () => {
+    await mount(<LinkOpenScreen {...openDefaults} guest />)
+
+    expect(find("[data-e2e=sign-in-link-guest]").textContent?.replace(/\s+/g, " ")).toBe(
+      "You are using the app as a guest. Continuing keeps this guest account under the link's address, or asks you first if that address already has an account.",
+    )
+    expect(focused()).toBe("sign-in-link-continue")
+    // A guest has no other account to stay signed in to.
+    expect(root!.querySelector("[data-e2e=sign-in-link-stay]")).toBeNull()
+
+    await rerender(<LinkOpenScreen {...openDefaults} />)
+    expect(root!.querySelector("[data-e2e=sign-in-link-guest]")).toBeNull()
+  })
+
+  it("tells a guest a link from another browser left the guest account as it was, focused on a new link", async () => {
+    await mount(<LinkOpenScreen {...openDefaults} state="askedElsewhere" next="/notes" />)
+
+    expect(find("h1").textContent).toBe("This link was asked for in another browser")
+    expect(text()).toContain(
+      "It did not sign you in, and your guest account is as it was. Ask for a new link in this browser to sign in here.",
+    )
+    expect(focused()).toBe("sign-in-link-new")
+    expect(find("[data-e2e=sign-in-link-new]").getAttribute("href"))
+      .toBe("/sign-in/link?next=%2Fnotes")
+    const back = [...root!.querySelectorAll("a")].find((a) => a.textContent === "Back to the app")
+    expect(back?.getAttribute("href")).toBe("/")
+    expect(root!.querySelector("[data-e2e=sign-in-link-continue]")).toBeNull()
+  })
 })
 
 const authDefaults: AuthScreenProps = {

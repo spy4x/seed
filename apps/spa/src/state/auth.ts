@@ -3,6 +3,7 @@ import {
   type AccountDeletionStatus,
   type ApiSuccessResponse,
   type ExistingAccountAnswer,
+  SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
   type SignedInDevice,
   type SignedInDevicesResponse,
   type SignInLinkRedeemed,
@@ -383,6 +384,8 @@ export type SignInLinkRedeemAnswer =
   | { ok: false; guestTaken: true }
   /** The link was used, expired or never sent: a new one is the only way on. */
   | { ok: false; refused: true }
+  /** A guest opened a link another browser asked for: it is spent, and the guest stays as before. */
+  | { ok: false; askedElsewhere: true }
   /** Refused with a message; `offline` when the request never left, and the link is not spent. */
   | { ok: false; error?: string; offline?: boolean }
 
@@ -398,6 +401,9 @@ export async function redeemSignInLink(token: string): Promise<SignInLinkRedeemA
     return { ok: false, offline: true }
   }
   if (!result.ok) {
+    if (result.error.code === SIGN_IN_LINK_ASKED_ELSEWHERE_CODE) {
+      return { ok: false, askedElsewhere: true }
+    }
     return result.status === 410
       ? { ok: false, refused: true }
       : { ok: false, error: result.error.message }

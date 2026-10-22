@@ -201,13 +201,38 @@ export type LinkOpenState =
   | "ready"
   /** The API refused the token: used, expired, or never sent. */
   | "refused"
+  /** A guest opened a link another browser asked for: it is spent, and the guest stays as before. */
+  | "askedElsewhere"
   /** The address carries no token. */
   | "incomplete"
+
+/** The words of each state of the link page that offers only a new link. */
+const LINK_DEAD_ENDS = {
+  refused: {
+    e2e: "sign-in-link-refused",
+    title: "This link no longer works",
+    description:
+      `Sign-in links work once, for ${SIGN_IN_LINK_MINUTES} minutes. Ask for a new one and use the newest mail.`,
+  },
+  askedElsewhere: {
+    e2e: "sign-in-link-elsewhere",
+    title: "This link was asked for in another browser",
+    description:
+      "It did not sign you in, and your guest account is as it was. Ask for a new link in this browser to sign in here.",
+  },
+  incomplete: {
+    e2e: "sign-in-link-incomplete",
+    title: "This link is incomplete",
+    description: "Open the link from the mail again, or ask for a new one.",
+  },
+} as const
 
 export interface LinkOpenScreenProps {
   state: LinkOpenState
   /** The address of the account this browser is signed in to, or `null` when signed out. */
   signedInAs: string | null
+  /** A guest account is open in this browser. */
+  guest?: boolean
   busy: boolean
   /** Why the last press failed; the link is not spent. */
   error: string | null
@@ -223,7 +248,8 @@ export interface LinkOpenScreenProps {
  * it, signing in, or signing up when no account uses the address.
  */
 export function LinkOpenScreen(
-  { state, signedInAs, busy, error, onContinue, next = null, navigate }: LinkOpenScreenProps,
+  { state, signedInAs, guest = false, busy, error, onContinue, next = null, navigate }:
+    LinkOpenScreenProps,
 ): JSX.Element {
   const primary = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -232,19 +258,23 @@ export function LinkOpenScreen(
   }, [state])
 
   if (state !== "ready") {
-    const refused = state === "refused"
+    const { e2e, title, description } = LINK_DEAD_ENDS[state]
     return (
       <AuthCard
-        title={refused ? "This link no longer works" : "This link is incomplete"}
-        description={refused
-          ? `Sign-in links work once, for ${SIGN_IN_LINK_MINUTES} minutes. Ask for a new one and use the newest mail.`
-          : "Open the link from the mail again, or ask for a new one."}
-        e2e={refused ? "sign-in-link-refused" : "sign-in-link-incomplete"}
-        after={refused && (
-          <Link href={SCREEN_PATHS.signIn} navigate={navigate} class="pc-link font-medium">
-            Back to sign in
-          </Link>
-        )}
+        title={title}
+        description={description}
+        e2e={e2e}
+        after={state === "refused"
+          ? (
+            <Link href={SCREEN_PATHS.signIn} navigate={navigate} class="pc-link font-medium">
+              Back to sign in
+            </Link>
+          )
+          : state === "askedElsewhere" && (
+            <Link href={SCREEN_PATHS.home} navigate={navigate} class="pc-link font-medium">
+              Back to the app
+            </Link>
+          )}
       >
         <div ref={primary}>
           <Button
@@ -270,6 +300,12 @@ export function LinkOpenScreen(
           You are signed in as{" "}
           <strong class="wrap-anywhere font-medium">{signedInAs}</strong>. Continuing signs you in
           with the link's account instead.
+        </p>
+      )}
+      {guest && (
+        <p class="text-sm" data-e2e="sign-in-link-guest">
+          You are using the app as a guest. Continuing keeps this guest account under the link's
+          address, or asks you first if that address already has an account.
         </p>
       )}
       <ScreenForm pending={busy} onSubmit={onContinue}>

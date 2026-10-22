@@ -158,12 +158,12 @@ export function LinkOpenView() {
     }
     setBusy(false)
     if ("guestTaken" in result) navigate(GUEST_PATHS.keepTaken, { replace: true })
-    else if ("refused" in result) {
+    else if ("refused" in result || "askedElsewhere" in result) {
       // "Send a new link" opens the form with the address this tab asked for, not the inbox state.
       const sent = readSentLink()
       if (sent) handOffAddress(sent.email)
       forgetSentLink()
-      setState("refused")
+      setState("refused" in result ? "refused" : "askedElsewhere")
     } else {
       setError(
         result.offline
@@ -178,6 +178,7 @@ export function LinkOpenView() {
     <LinkOpenScreen
       state={state}
       signedInAs={signedIn ? status?.email ?? "another account" : null}
+      guest={guest}
       busy={busy}
       error={error}
       onContinue={() => void redeem()}
