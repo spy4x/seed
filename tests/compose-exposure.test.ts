@@ -230,8 +230,8 @@ Deno.test("every container and every image a project builds is named after the p
     expect({ name, container: service.container_name })
       .toEqual({ name, container: `\${PROJECT}-${name}` })
     if (!service.build) continue
-    // The backup image starts from the database's image instead: the test below holds it to that.
-    if (name === "backup") continue
+    // The database and backup images start from Postgres instead: the test below holds them to it.
+    if (name === "db" || name === "backup") continue
     // The base image is the one built image with a name; every other build starts from it.
     if (name === "deno-base") expect(service.image).toBe(base)
     else {expect({ name, args: service.build.args }).toEqual({
@@ -250,8 +250,10 @@ Deno.test("every container and every image a project builds is named after the p
 Deno.test("the backup image is built on the database's own Postgres image", async () => {
   // pg_dump refuses a server newer than itself, so the two must move together.
   const { db, backup } = await services("shared")
-  expect(db.image).toMatch(/^postgres:\d/)
-  expect(backup.build?.args).toEqual([`POSTGRES_IMAGE=docker.io/library/${db.image}`])
+  expect(db.build?.args).toEqual([
+    expect.stringMatching(/^POSTGRES_IMAGE=docker\.io\/library\/postgres:\d/),
+  ])
+  expect(backup.build?.args).toEqual(db.build?.args)
 })
 
 Deno.test("PgBouncer publishes no port and is on the project's own network only", async () => {

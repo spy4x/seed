@@ -5,8 +5,12 @@ services:
   # region Storages
   db:
     container_name: ${PROJECT}-db
-    # The same 18 minor as CI and the local browser run: tests/compose-postgres.test.ts.
-    image: postgres:18.6
+    # The same 18 minor as CI and the local browser run: tests/compose-postgres.test.ts. Built with
+    # the old zone names browsers still report (infra/postgres/Dockerfile).
+    build:
+      context: ../postgres
+      args:
+        - POSTGRES_IMAGE=docker.io/library/postgres:18.6
     restart: unless-stopped
     command: [ 
         'postgres', 

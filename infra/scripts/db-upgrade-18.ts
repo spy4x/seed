@@ -437,7 +437,8 @@ export function engineSteps(
     log: host.log,
     interrupted: host.interrupted,
     state: async () => upgradeState(await host.facts(), await majorVersion()),
-    pull: () => compose(`pull`, `db`),
+    // The database image is built on Postgres 18 (infra/postgres/Dockerfile): building it fetches it.
+    pull: () => compose(`build`, `--pull`, `db`),
     async build() {
       const { buildBase } = plan([`build`])
       if (buildBase) await show(buildBase)
