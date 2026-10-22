@@ -241,20 +241,20 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
 }
 
 /**
- * The plan of the phone billing screenshot, from the empty canvas above its "Plan" heading to the
- * canvas below its footnote: at most 390 px wide, so the card shows it whole at about its real size.
- * It sits in the middle of the card's picture area on the same canvas colour.
+ * The plan of the phone billing screenshot, from the empty canvas above its "Plan and billing"
+ * heading to the canvas below the "Pro plan" card: at most 390 px wide, so the card shows it whole
+ * at about its real size. It sits in the middle of the card's picture area on the same canvas colour.
  */
 function BillingCrop(): JSX.Element {
   return (
     <div class="flex h-94 items-center overflow-hidden bg-canvas">
-      <div class="aspect-[390/364] w-full max-w-[390px] overflow-hidden">
-        {/* 412 to 776 px down the 390×844 screenshot, clear of the borders above and below. */}
-        <div class="-translate-y-[48.815%]">
+      <div class="aspect-[390/208] w-full max-w-[390px] overflow-hidden">
+        {/* 144 to 352 px down the 390×844 screenshot, clear of the borders above and below. */}
+        <div class="-translate-y-[17.062%]">
           <Shot
             name="billing"
             kind="mobile"
-            alt="A sample group's plan in the demo app, at the demo's example prices: Pro, active, €36.00 a month with its renewal date, a button to manage billing, and a note that 4 members pay €9.00 each a month, the owner included."
+            alt="A sample group's plan in the demo app, at the demo's example prices: Pro plan with its renewal date, €36.00 a month, for 4 members at €9.00 each, the owner included."
             sizes="390px"
           />
         </div>
