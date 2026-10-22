@@ -461,9 +461,11 @@ A widget shows counts only, never an item's content or who did it.
    line. A number takes `WidgetStat` and a neutral `changeText` line; a chart takes `LineChart`
    with a one-sentence summary as its caption and the previous period dashed.
 4. **Registry.** Add the list and the drawings to `OVERVIEW_WIDGETS` and `OVERVIEW_VIEWS`
-   (`libs/ui/overview-widgets.ts`). The SPA's overview and the admin group page both read it, so
-   the admin shows the new widget without a change. A person's saved layout gets the new widget at
-   the end, shown.
+   (`libs/ui/overview-widgets.ts`). The SPA's overview and the admin group page both read it. The
+   admin page's numbers come from `createAdminGroups().widget` (`apps/api/routes/admin/groups.ts`),
+   which knows only the readers it is given: add the aggregate's readers next to
+   `NOTE_WIDGET_READERS` there, or the admin card shows its error. A person's saved layout gets the
+   new widget at the end, shown.
 5. **Tests.** The handler's tests (`widgets.test.ts`): a stranger gets `GROUP_NOT_FOUND` and
    nothing is read, and only the named group is read. The repository against Postgres
    (`tests/integration/note-overview.integration.test.ts`), with another group's rows that must

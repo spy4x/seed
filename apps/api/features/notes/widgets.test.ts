@@ -12,7 +12,7 @@ import {
   createNoteWidgetOperations,
 } from "./widgets.ts"
 
-const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d112001"
+const groupId = "0199c3a0-0000-7000-8000-000000000003"
 const actor = {
   userId: 7,
   userMfa: UserMFAStatus.NOT_CONFIGURED,
