@@ -124,7 +124,7 @@ async function submit(selector: string): Promise<void> {
 }
 
 describe("ApiTokenNewView", () => {
-  it("creates the token for the first group, forgets the secret on Done and opens the profile", async () => {
+  it("creates the token for the first group, forgets the secret on Done and opens API tokens", async () => {
     const { store, sent, location } = await page()
 
     await type("[data-e2e=api-token-name]", "Zapier")
@@ -137,7 +137,7 @@ describe("ApiTokenNewView", () => {
       find("[data-e2e=api-token-done]").click()
     })
     expect(store.created.value).toBe(null)
-    expect(location.history.at(-1)).toBe("/")
+    expect(location.history.at(-1)).toBe("/profile/api-tokens")
     // The address and the history never held the secret.
     expect(location.history.join(" ")).not.toContain(SECRET)
   })

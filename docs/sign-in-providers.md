@@ -1,8 +1,9 @@
 # Sign in with Google and GitHub
 
 Both are off until you set their credentials: the sign-in and sign-up pages then show a "Continue
-with …" link for each provider that is on, and the profile gets a "Sign-in methods" card. A
-provider is on only when both of its variables are set in the env file.
+with …" link for each provider that is on, and the profile's "Sign-in and security" section
+(`/profile/security`) lists it under "Ways to sign in". A provider is on only when both of its
+variables are set in the env file.
 
 | Provider | Where to register                                                         | Variables                                  | Callback URL to register                    |
 | -------- | ------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------- |

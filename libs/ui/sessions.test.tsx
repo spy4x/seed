@@ -17,6 +17,7 @@ const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
   getComputedStyle: globalThis.getComputedStyle,
+  CSS: globalThis.CSS,
 }
 
 beforeAll(() => {
@@ -24,6 +25,7 @@ beforeAll(() => {
     document: window.document,
     FormData: window.FormData,
     getComputedStyle: window.getComputedStyle.bind(window),
+    CSS: window.CSS,
   })
 })
 
@@ -235,6 +237,7 @@ describe("ProfileScreen password dialog", () => {
     pending: { profile: false, password: false, totp: false, push: false },
     enrolment: null,
     pushDevices: [],
+    section: "security",
   } as unknown as ProfileScreenProps
 
   it("offers signing out of the other devices, ticked by default, and reports a change", async () => {

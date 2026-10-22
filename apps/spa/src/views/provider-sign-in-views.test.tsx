@@ -19,7 +19,6 @@ import { toasts } from "../state/toasts.ts"
 import { AuthView } from "./AuthView.tsx"
 import { ConfirmSignUpView } from "./ConfirmSignUpView.tsx"
 import { ProfileView } from "./ProfileView.tsx"
-import { EmailView } from "./EmailView.tsx"
 import { emailStore } from "../state/email.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -27,6 +26,7 @@ const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
   getComputedStyle: globalThis.getComputedStyle,
+  CSS: globalThis.CSS,
   location: globalThis.location,
   fetch: globalThis.fetch,
   localStorage: Object.getOwnPropertyDescriptor(globalThis, "localStorage"),
@@ -40,6 +40,7 @@ beforeAll(() => {
     document: window.document,
     FormData: window.FormData,
     getComputedStyle: window.getComputedStyle.bind(window),
+    CSS: window.CSS,
     location: window.location,
   })
   Object.defineProperty(globalThis, "localStorage", { configurable: true, get: () => kept })
@@ -274,7 +275,7 @@ describe("the profile page", () => {
       } as NonNullable<typeof signedOut.user>,
     }
 
-    await open("/", <ProfileView />)
+    await open("/profile/security", <ProfileView section="security" />)
 
     expect(calls).toContain("GET /api/auth/methods")
     expect(text("[data-e2e=sign-in-method-google]")).toContain("gia@example.com")
@@ -319,7 +320,7 @@ describe("the profile page", () => {
       [503, { error: "down" }],
       bodies,
     )
-    await open("/", <ProfileView />)
+    await open("/profile/danger-zone", <ProfileView section="danger-zone" />)
 
     await press("[data-e2e=account-delete-open]")
     await submit("[data-e2e=account-delete-submit]")
@@ -335,7 +336,7 @@ describe("the profile page", () => {
       [503, { error: "down" }],
       bodies,
     )
-    await open("/", <ProfileView />)
+    await open("/profile/security", <ProfileView section="security" />)
 
     await press("[data-e2e=password-open]")
     await type("[data-e2e=password-new]", "battery-staple")
@@ -358,7 +359,7 @@ describe("the profile page", () => {
       [503, { error: "down" }],
       bodies,
     )
-    await open("/", <ProfileView />)
+    await open("/profile/security", <ProfileView section="security" />)
     await press("[data-e2e=password-open]")
     await type("[data-e2e=password-new]", "battery-staple")
 
@@ -394,7 +395,7 @@ describe("the profile page", () => {
       [503, { error: "down" }],
       bodies,
     )
-    await open("/", <ProfileView />)
+    await open("/profile/security", <ProfileView section="security" />)
 
     await press("[data-e2e=sign-in-method-link-github]")
     await type("[data-e2e=sign-in-method-link-password]", "Passw0rd!")
@@ -406,7 +407,7 @@ describe("the profile page", () => {
 
   it("offers the way back to Google, and no form, once the sign-in is no longer recent", async () => {
     const calls = api(signedInWithGoogle(LONG_AGO), [503, { error: "down" }])
-    await open("/", <ProfileView />)
+    await open("/profile/danger-zone", <ProfileView section="danger-zone" />)
 
     await press("[data-e2e=account-delete-open]")
 
@@ -426,7 +427,7 @@ describe("the profile page", () => {
       bodies,
     )
     emailStore.reset()
-    await open("/email", <EmailView />)
+    await open("/profile/account", <ProfileView section="account" />)
 
     await press("[data-e2e=email-change-open]")
     expect(document.querySelectorAll("[data-e2e=email-password]").length).toBe(0)
@@ -439,7 +440,7 @@ describe("the profile page", () => {
   it("asks for no sign-in methods while nobody is signed in", async () => {
     const calls = api({})
 
-    await open("/", <ProfileView />)
+    await open("/profile/security", <ProfileView section="security" />)
 
     expect(calls).not.toContain("GET /api/auth/methods")
   })
@@ -447,12 +448,15 @@ describe("the profile page", () => {
   it("says that a provider account linked a second time was linked already, not that it failed", async () => {
     api({})
 
-    const history = await open("/?oauth=link-exists", <ProfileView />)
+    const history = await open(
+      "/profile/security?oauth=link-exists",
+      <ProfileView section="security" />,
+    )
 
     expect(toasts.list.value.map((toast) => [toast.title, toast.body])).toEqual([
       ["Sign-in method already linked", OAUTH_NOTICES["link-exists"]],
     ])
     // Said once: the notice leaves the address, so a reload does not say it again.
-    expect(history.at(-1)).toBe("/")
+    expect(history.at(-1)).toBe("/profile/security")
   })
 })

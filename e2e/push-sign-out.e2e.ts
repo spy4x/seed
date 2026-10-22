@@ -56,7 +56,7 @@ async function holdsSubscription(page: Page): Promise<boolean> {
 async function signInWithNotifications(page: Page, user: string): Promise<void> {
   await fakePushManager(page)
   await signIn(page, user, password)
-  await openProfile(page)
+  await openProfile(page, "notifications")
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready
   })
@@ -68,7 +68,7 @@ async function signInWithNotifications(page: Page, user: string): Promise<void> 
 async function signOutFromMenu(page: Page): Promise<void> {
   await page.locator("[data-e2e=account-menu-button]").click()
   await page.getByRole("menuitem", { name: "Sign out" }).click()
-  await page.locator("[data-e2e=signin-required]").waitFor()
+  await page.locator("[data-e2e=auth-form-login]").waitFor()
 }
 
 test.describe("push subscription at sign-out", () => {

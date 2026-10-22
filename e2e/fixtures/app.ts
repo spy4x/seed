@@ -107,20 +107,25 @@ export async function submitAuthForm(page: Page, url: string, ready: Locator): P
   })
 }
 
-/** Signs `email` in through the form and waits until the app has booted on its home page. */
+/** Signs `email` in through the form and waits until the app has booted on the notes list. */
 export async function signIn(page: Page, email: string, password: string): Promise<void> {
   await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
   await page.locator("[data-e2e=auth-form-login]").fill(email)
   await page.locator("[data-e2e=auth-form-password]").fill(password)
-  await submitAuthForm(page, "/", page.locator("[data-e2e=shell-ws-status]"))
+  await submitAuthForm(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
 }
 
 /**
  * Opens the profile the way a person does on a wide window: the name and portrait at the top of
- * the sidebar's account menu, which go through the app's router. Waits for the page's heading.
+ * the sidebar's account menu, which go through the app's router, then the section `section` from
+ * the profile's list when one is named. Waits for the page's heading, then the section's.
  */
-export async function openProfile(page: Page): Promise<void> {
+export async function openProfile(page: Page, section?: string): Promise<void> {
   await page.locator("[data-e2e=account-menu-button]").click()
   await page.locator("[data-e2e=account-menu-header]").click()
   await page.getByRole("heading", { level: 1, name: "Profile" }).waitFor()
+  if (!section) return
+  await page.locator(`[data-e2e=settings-nav-${section}]`).click()
+  await page.waitForURL(`/profile/${section}`)
+  await page.locator("[data-e2e=settings-heading]").waitFor()
 }

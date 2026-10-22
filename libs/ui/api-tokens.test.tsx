@@ -19,6 +19,7 @@ const own = {
   FormData: globalThis.FormData,
   location: globalThis.location,
   getComputedStyle: globalThis.getComputedStyle,
+  CSS: globalThis.CSS,
 }
 
 beforeAll(() => {
@@ -27,6 +28,7 @@ beforeAll(() => {
     FormData: window.FormData,
     location: window.location,
     getComputedStyle: window.getComputedStyle.bind(window),
+    CSS: window.CSS,
   })
 })
 
@@ -234,9 +236,10 @@ describe("ApiTokens", () => {
 })
 
 describe("ProfileScreen API tokens", () => {
-  it("draws the section after the signed-in devices when the app passes it", async () => {
+  it("draws the tokens on their own profile section, without the signed-in devices", async () => {
     await mount(
       <ProfileScreen
+        section="api-tokens"
         onRemovePush={() => {}}
         user={{ firstName: "Ada", lastName: "Lovelace", mfa: UserMFAStatus.NOT_CONFIGURED }}
         isMfaRequired={false}
@@ -267,9 +270,8 @@ describe("ProfileScreen API tokens", () => {
       />,
     )
 
-    const sections = [...document.querySelectorAll("section[data-e2e]")].map((section) =>
-      section.getAttribute("data-e2e")
-    )
-    expect(sections.indexOf("api-tokens")).toBe(sections.indexOf("sessions") + 1)
+    expect(find("[data-e2e=settings-heading]").textContent).toBe("API tokens")
+    expect(document.querySelector(`[data-e2e=api-token-${writer.id}]`)).not.toBeNull()
+    expect(document.querySelector("[data-e2e=sessions]")).toBeNull()
   })
 })

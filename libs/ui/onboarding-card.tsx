@@ -10,7 +10,7 @@ import {
   GROUP_PATHS,
   type Navigate,
   NOTE_PATHS,
-  PROFILE_ANCHORS,
+  profilePath,
   SCREEN_PATHS,
 } from "./progressive.tsx"
 
@@ -58,21 +58,14 @@ export function onboardingSteps(
       title: "Turn on notifications",
       description: "Add this device to hear about changes while the app is closed.",
       done: steps.notificationsOn,
-      // No `navigate`: a link within this page, which the browser follows by scrolling.
-      action: {
-        label: "Turn on notifications",
-        href: `${SCREEN_PATHS.profile}#${PROFILE_ANCHORS.pushDevices}`,
-      },
+      action: { label: "Turn on notifications", href: profilePath("notifications"), navigate },
     },
     {
       id: "two-factor",
       title: "Set up two-factor sign-in",
       description: "An authenticator app keeps your account yours if the password leaks.",
       done: steps.twoFactorOn,
-      action: {
-        label: "Set up two-factor",
-        href: `${SCREEN_PATHS.profile}#${PROFILE_ANCHORS.security}`,
-      },
+      action: { label: "Set up two-factor", href: profilePath("security"), navigate },
     },
   ]
 }

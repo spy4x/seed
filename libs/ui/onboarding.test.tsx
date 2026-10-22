@@ -137,7 +137,7 @@ describe("first-steps card", () => {
     expect(lines[2]).toContain("Invite someone to your group")
     expect(lines[3]).toContain("Turn on notifications")
     expect(lines[4]).toContain("Set up two-factor sign-in")
-    expect(control("Verify e-mail").getAttribute("href")).toBe("/email")
+    expect(control("Verify e-mail").getAttribute("href")).toBe("/profile/account?verify")
   })
 
   it("ticks a step when its fact arrives and moves the action to the next open step", async () => {
@@ -171,11 +171,11 @@ describe("first-steps card", () => {
     }
 
     expect(hrefs).toEqual([
-      "/email",
+      "/profile/account?verify",
       "/notes/new",
       "/groups/g-1/members",
-      "/#push-devices",
-      "/#security",
+      "/profile/notifications",
+      "/profile/security",
     ])
   })
 
@@ -190,7 +190,7 @@ describe("first-steps card", () => {
 
     await press("Verify e-mail")
 
-    expect(calls.routed).toEqual(["/email"])
+    expect(calls.routed).toEqual(["/profile/account?verify"])
   })
 
   it("calls the app when Dismiss is pressed, and keeps the card until the app removes it", async () => {

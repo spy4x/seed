@@ -31,8 +31,7 @@ function address(name: string): string {
 
 /** Opens the profile's danger zone and its deletion dialog. */
 async function openDeletion(page: Page): Promise<void> {
-  await gotoApp(page, "/", page.locator("[data-e2e=danger-zone]"))
-  await page.locator("[data-e2e=danger-zone] summary").click()
+  await gotoApp(page, "/profile/danger-zone", page.locator("[data-e2e=danger-zone]"))
   await page.locator("[data-e2e=account-delete-open]").click()
   await expect(page.locator("[data-e2e=account-delete-dialog]")).toBeVisible()
 }
@@ -66,7 +65,6 @@ test("deleting my account signs me out on every device, and signing in during th
     expect((await page.request.get(`${apiBase}/api/auth/me`)).status()).toBe(401)
 
     await signIn(page, email, password)
-    await expect(page.locator("[data-e2e=danger-zone]")).toBeAttached()
     expect((await page.request.get(`${apiBase}/api/auth/me`)).status()).toBe(200)
     // The other device's session ended with the request: the restore brings back the account,
     // not that session. It is not asked during the wait, since a request refused for a deleted
