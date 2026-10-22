@@ -6,6 +6,7 @@ import {
   type SignedInDevice,
   type SignedInDevicesResponse,
   type SignUpAccountExistsResponse,
+  type SignUpGuestTakenResponse,
   type TotpConnectStartResponse,
   type User,
   UserMFAStatus,
@@ -269,6 +270,8 @@ export type SignUpVerifyAnswer =
   | SignUpStepAnswer
   /** An account already uses the address. Nothing was created; the sign-up is gone. */
   | { ok: false; accountExists: ExistingAccountAnswer }
+  /** A guest's address belongs to another account: the choice waits on `/keep/taken` (#224). */
+  | { ok: false; guestTaken: true }
 
 /**
  * Enters the code of the waiting sign-up. The right one for a free address creates the account and
@@ -277,7 +280,7 @@ export type SignUpVerifyAnswer =
 export async function verifySignUp(code: string): Promise<SignUpVerifyAnswer> {
   let result
   try {
-    result = await apiFetch<SessionUser | SignUpAccountExistsResponse>(
+    result = await apiFetch<SessionUser | SignUpAccountExistsResponse | SignUpGuestTakenResponse>(
       "/api/auth/password/sign-up/verify",
       { method: "POST", body: JSON.stringify({ code }) },
     )
@@ -287,6 +290,7 @@ export async function verifySignUp(code: string): Promise<SignUpVerifyAnswer> {
   if (result.ok && "accountExists" in result.data) {
     return { ok: false, accountExists: result.data.accountExists }
   }
+  if (result.ok && "guestTaken" in result.data) return { ok: false, guestTaken: true }
   if (!result.ok && result.status === 410) return { ok: false, expired: true }
   const signedIn = await handleAuthResponse(
     result as Awaited<ReturnType<typeof apiFetch<SessionUser | PendingSecondFactor>>>,
@@ -538,10 +542,16 @@ export async function readAccountDeletionBlockers(): Promise<
 
 /**
  * Asks the server to delete the account, with the password and, when two-factor is on, a code.
- * On success the server has ended every session of this person, so the page is signed out too.
+ * On success the server has ended every session of this person, so the page is signed out too,
+ * after `leave` has moved it to a page open to anyone: signed out on a page for signed-in people,
+ * the app would send it to sign-in with that page as next.
  * `blocked` means groups stop it: {@link readAccountDeletionBlockers} names them.
  */
-export async function deleteAccount(password: string | undefined, otp?: string): Promise<
+export async function deleteAccount(
+  password: string | undefined,
+  otp?: string,
+  leave?: () => void,
+): Promise<
   | { ok: true; deleteAfter: Date }
   | { ok: false; blocked: boolean; error: string }
 > {
@@ -553,6 +563,7 @@ export async function deleteAccount(password: string | undefined, otp?: string):
   if (!result.ok) {
     return { ok: false, blocked: result.status === 409, error: result.error.message }
   }
+  leave?.()
   sessionState.value = { ...sessionState.value, user: null, isMfaRequired: false }
   return { ok: true, deleteAfter: new Date(result.data.deleteAfter) }
 }

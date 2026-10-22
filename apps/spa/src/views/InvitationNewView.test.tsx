@@ -14,10 +14,12 @@ import { renderToString } from "preact-render-to-string"
 import { Router } from "wouter-preact"
 import { FREE_PLAN_ID, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
+import type { User } from "@domain/identity"
 import { VIEWERS_ONLY_HINT } from "@ui/group-invitations.tsx"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { invitationsStore } from "../state/invitations.ts"
+import { sessionState } from "../state/session.ts"
 import { InvitationNewView } from "./InvitationNewView.tsx"
 
 const known = {
@@ -59,6 +61,21 @@ describe("InvitationNewView", () => {
     expect(html).toContain("Create invitation")
     expect(html).toContain(`href="/groups/${known.id}/members"`)
     expect(html).not.toContain("<dialog")
+  })
+
+  it("refuses a guest at once with the reason and Keep your account, and draws no form", () => {
+    sessionState.value = {
+      ...sessionState.value,
+      user: { id: 7, guestSince: new Date("2026-10-21T00:00:00.000Z") } as User,
+    }
+    try {
+      const html = renderInvite()
+      expect(html).toContain("Inviting needs a sign-in method")
+      expect(html).toContain(`href="/keep"`)
+      expect(html).not.toContain("invitation-form")
+    } finally {
+      sessionState.value = { ...sessionState.value, user: null }
+    }
   })
 
   it("says the group does not exist, and shows no other group, for a group the person is not in", () => {
@@ -160,8 +177,8 @@ describe("InvitationNewView", () => {
     expect(other).not.toContain(`id="invitation-seat-price-error"`)
   })
 
-  it("shows a refusal for the creator's unverified address above the buttons with a way to the E-mail page, not at the invitee's address", () => {
-    const message = "Verify your e-mail address on the E-mail page before you invite anyone."
+  it("shows a refusal for the creator's unverified address above the buttons with a way to the profile, not at the invitee's address", () => {
+    const message = "Verify your e-mail address in your profile before you invite anyone."
     invitationsStore.createError.value = { message, code: "ADDRESS_NOT_PROVEN", plan: null }
 
     const html = renderInvite(GroupRole.OWNER)
@@ -170,7 +187,7 @@ describe("InvitationNewView", () => {
     const notice = start < 0 ? "" : html.slice(start, html.indexOf(`data-e2e="invitation-create"`))
 
     expect(notice).toContain(message)
-    expect(notice).toContain(`href="/email"`)
+    expect(notice).toContain(`href="/profile/account?verify"`)
     expect(html.match(new RegExp(message, "g"))).toHaveLength(1)
     expect(email).not.toBe("")
     expect(email).not.toContain("aria-invalid")

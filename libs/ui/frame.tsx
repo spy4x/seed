@@ -2,11 +2,11 @@ import type { ComponentChildren, JSX } from "preact"
 import { useRef } from "preact/hooks"
 import { canViewActivity } from "@domain/groups"
 import {
+  IconChartPie,
   IconClock,
   IconDocumentText,
   IconSearch,
   IconSprout,
-  IconTag,
   IconUsers,
 } from "@spy4x/preact-icons"
 import {
@@ -23,6 +23,7 @@ import {
   GROUP_PATHS,
   type Navigate,
   NOTE_PATHS,
+  OVERVIEW_PATHS,
   SCREEN_PATHS,
   ScreenForm,
   TAG_PATHS,
@@ -33,12 +34,13 @@ import { SHORTCUT_TEXT, ShortcutsList, type ShortcutsProps } from "./shortcuts.t
 /**
  * The daily destinations, in the order the rail and the phone tab bar show them. Four at most, so
  * the phone bar keeps its last slot for the Account sheet. Activity belongs to the selected group and
- * shows only while there is one whose log the person may read. Profile is in the account menu.
+ * shows only while there is one whose log the person may read. Profile and Tags are in the account
+ * menu; Tags is in Notes' "More actions" too.
  */
 export function navItems(activityGroupId: string | null): AppShellItem[] {
   return [
+    { key: "overview", label: "Overview", href: OVERVIEW_PATHS.root, Icon: IconChartPie },
     { key: "notes", label: "Notes", href: NOTE_PATHS.list, Icon: IconDocumentText },
-    { key: "tags", label: "Tags", href: TAG_PATHS.list, Icon: IconTag },
     ...(activityGroupId === null ? [] : [{
       key: "activity",
       label: "Activity",
@@ -224,7 +226,7 @@ export function AppFrame(
       account={{
         user: { name, email },
         headerHref: SCREEN_PATHS.profile,
-        items: shortcutsMenuItems(shortcuts),
+        items: [{ label: "Tags", href: TAG_PATHS.list }, ...shortcutsMenuItems(shortcuts)],
         signOut: { label: "Sign out", onClick: onSignOut },
       }}
       connection={connection}
@@ -245,7 +247,7 @@ export function AppFrame(
 function Brand({ navigate }: { navigate?: Navigate }): JSX.Element {
   return (
     <Link
-      href={SCREEN_PATHS.profile}
+      href={SCREEN_PATHS.home}
       navigate={navigate}
       class="flex shrink-0 items-center gap-2 rounded-md"
     >

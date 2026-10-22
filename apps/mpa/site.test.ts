@@ -177,7 +177,7 @@ describe("the public website", () => {
 
     expect(status).toBe(200)
     expect(headingOne(html)).toBe("The groundwork of your SaaS, already built.")
-    expect(hrefOf(linkNamed(html, "Try the live demo"))).toBe(`${spa}/sign-up`)
+    expect(hrefOf(linkNamed(html, "Try the live demo"))).toBe(`${spa}/try`)
     expect(hrefOf(linkNamed(html, "View on GitHub"))).toBe(REPOSITORY_URL)
     expect(html).toContain(`<title>Seed: free open-source SaaS starter and boilerplate</title>`)
     expect(html).toContain(`<link rel="canonical" href="${site}/"`)
@@ -280,7 +280,7 @@ describe("the public website", () => {
       ["Pricing", "/pricing"],
       ["Hire me (opens antonshubin.com)", HIRE_PAGE_URL.replaceAll("&", "&amp;")],
       ["GitHub", REPOSITORY_URL],
-      ["Try the demo", `${spa}/sign-up`],
+      ["Try the demo", `${spa}/try`],
     ]))
     expect(linkNamed(header, "Sign in")).toBeUndefined()
     expect(hrefOf(linkNamed(footer, "Sign in"))).toBe(`${spa}/sign-in`)
@@ -453,9 +453,9 @@ describe("the public website", () => {
   it("lists passkeys on /features as built, not under Not built yet", async () => {
     const { html } = await page("/features")
 
-    expect(html).toContain(`or sign in with a passkey.`)
+    expect(html).toContain(`or sign in with a passkey, or try the app first`)
     expect(html).toContain(`Passkeys: only the public key is stored`)
-    expect(html).toContain(`Google and GitHub sign-in, passkeys, 2FA`)
+    expect(html).toContain(`Google and GitHub sign-in, passkeys, guest accounts, 2FA`)
     expect(html).not.toContain(`issues/222`)
   })
 
@@ -679,7 +679,7 @@ describe("the public website", () => {
     }
   })
 
-  it("sends a plan chosen without JavaScript to the SPA's sign-up", async () => {
+  it("sends a plan chosen without JavaScript to the app's /try, which opens the demo as a guest", async () => {
     const response = await handler(
       new Request(`${site}/pricing`, {
         method: "POST",
@@ -690,7 +690,7 @@ describe("the public website", () => {
     )
 
     expect(response.status).toBe(303)
-    expect(response.headers.get("location")).toBe(`${spa}/sign-up`)
+    expect(response.headers.get("location")).toBe(`${spa}/try`)
   })
 
   for (const [path, title] of [["/privacy", "Privacy"], ["/terms", "Terms"]]) {
@@ -794,8 +794,38 @@ describe("the public website", () => {
       "/pricing": "2026-10-21T00:00:00.000Z",
       "/subscribe": undefined,
       "/privacy": "2026-10-21T00:00:00.000Z",
-      "/terms": "2026-10-16T00:00:00.000Z",
+      "/terms": "2026-10-21T00:00:00.000Z",
     })
+  })
+
+  it("marks every link to the app's /try outside the footer nofollow, since opening it makes an account", async () => {
+    for (const path of ["/", "/features", "/pricing", "/compare"]) {
+      const { html } = await page(path)
+      const outsideFooter = html.slice(0, html.indexOf("<footer"))
+      const links = [...outsideFooter.matchAll(/<a\b[^>]*>/g)].map((match) => match[0])
+        .filter((tag) => hrefOf(tag) === `${spa}/try`)
+      expect(links.length, path).toBeGreaterThan(0)
+      for (const tag of links) expect(tag, path).toMatch(/\brel="nofollow"/)
+    }
+  })
+
+  it("answers on the home page whether Seed can be tried without an account, answer first", async () => {
+    const { html } = await page("/")
+    const faq = jsonLdGraph(html).find((entity) => entity["@type"] === "FAQPage")!
+    const question = (faq.mainEntity as { name: string; acceptedAnswer: { text: string } }[])
+      .find((entry) => entry.name === "Can I try it without an account?")!
+
+    expect(question.acceptedAnswer.text).toMatch(
+      /^Yes\. Try the live demo opens the app in a guest account/,
+    )
+    expect(html).toContain(`Guest accounts: try the app with one click`)
+  })
+
+  it("says on the privacy page that a guest account's cookie lasts a year from its last use", async () => {
+    const { html } = await page("/privacy")
+
+    expect(html).toContain(`two months, or for a guest account one year`)
+    expect(html).toContain(`A guest account that stays empty is deleted after 7 days`)
   })
 
   it("shows on each legal page the same day its sitemap entry carries", async () => {

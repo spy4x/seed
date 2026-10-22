@@ -11,7 +11,7 @@ import { SavedCopyNotice } from "@spy4x/preact-system/saved-copy-notice"
 import { type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { API_TOKEN_PATHS, type Navigate } from "./progressive.tsx"
-import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
+import { SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFormat, When } from "@spy4x/preact-ui/format"
 
 export interface ApiTokensProps {
@@ -65,11 +65,7 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
   )
 
   return (
-    <SettingGroup
-      title="API tokens"
-      description="Let a script or another service use one of your groups without your password. Changing or resetting your password revokes every token."
-      dataE2E="api-tokens"
-    >
+    <div class="flex flex-col gap-4" data-e2e="api-tokens">
       <ErrorState message={error} />
       <SavedCopyNotice
         savedAt={savedAt}
@@ -117,6 +113,9 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
                 />
               ))}
             </SettingList>
+            <p class="text-sm text-muted">
+              Changing or resetting your password revokes every token.
+            </p>
             {newButton && <div>{newButton}</div>}
           </>
         )}
@@ -136,7 +135,7 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
           }}
         />
       )}
-    </SettingGroup>
+    </div>
   )
 }
 

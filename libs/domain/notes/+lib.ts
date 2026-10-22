@@ -5,6 +5,8 @@ import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
 
+export * from "./overview.ts"
+
 /**
  * Notes: the reference aggregate. A note belongs to one group; every member of the group reads it,
  * and an editor or above writes it. `docs/aggregates.md` walks through every file it needs.

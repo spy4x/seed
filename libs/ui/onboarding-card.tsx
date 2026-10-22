@@ -6,11 +6,12 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { OnboardingChecklist, type OnboardingStep } from "@spy4x/preact-ui/onboarding-checklist"
 import { Tour, type TourStep } from "@spy4x/preact-ui/tour"
 import type { OnboardingSteps } from "@domain/identity"
+import { GUEST_PATHS, KEEP_LABEL, KEEP_STEP } from "./guest-screens.tsx"
 import {
   GROUP_PATHS,
   type Navigate,
   NOTE_PATHS,
-  PROFILE_ANCHORS,
+  profilePath,
   SCREEN_PATHS,
 } from "./progressive.tsx"
 
@@ -20,14 +21,16 @@ export const ONBOARDING_FAILURE = "Could not save that. Try again."
 /**
  * The first steps in the order a new person takes them, each with the link to the page that does
  * it. `groupId` is the person's selected group, where an invitation is made; without one the
- * step opens the groups page.
+ * step opens the groups page. For a guest (#224) the e-mail step is "Keep your account", and
+ * the invitation and notification steps wait until the account is kept, since both are refused.
  */
 export function onboardingSteps(
   steps: OnboardingSteps,
   groupId: string | null,
   navigate?: Navigate,
+  guest = false,
 ): OnboardingStep[] {
-  return [
+  const all: OnboardingStep[] = [
     {
       id: "email",
       title: "Verify your e-mail address",
@@ -58,23 +61,25 @@ export function onboardingSteps(
       title: "Turn on notifications",
       description: "Add this device to hear about changes while the app is closed.",
       done: steps.notificationsOn,
-      // No `navigate`: a link within this page, which the browser follows by scrolling.
-      action: {
-        label: "Turn on notifications",
-        href: `${SCREEN_PATHS.profile}#${PROFILE_ANCHORS.pushDevices}`,
-      },
+      action: { label: "Turn on notifications", href: profilePath("notifications"), navigate },
     },
     {
       id: "two-factor",
       title: "Set up two-factor sign-in",
       description: "An authenticator app keeps your account yours if the password leaks.",
       done: steps.twoFactorOn,
-      action: {
-        label: "Set up two-factor",
-        href: `${SCREEN_PATHS.profile}#${PROFILE_ANCHORS.security}`,
-      },
+      action: { label: "Set up two-factor", href: profilePath("security"), navigate },
     },
   ]
+  if (!guest) return all
+  const keep: OnboardingStep = {
+    id: "keep",
+    title: KEEP_STEP.title,
+    description: KEEP_STEP.text,
+    done: false,
+    action: { label: KEEP_LABEL, href: GUEST_PATHS.keep, navigate },
+  }
+  return [keep, ...all.filter((step) => step.id === "note")]
 }
 
 /** The link of the side navigation that opens `href`; hidden on a phone, where a step is a sheet. */
@@ -133,6 +138,8 @@ export interface OnboardingCardProps {
   groupId: string | null
   /** The app's router, for the steps that open another page. */
   navigate?: Navigate
+  /** The person is a guest (#224): the steps lead to keeping the account first. */
+  guest?: boolean
   /** Called by Dismiss and, once every step is done, by Finish. The app stops rendering the card. */
   onDismiss: () => void
   /** Why the last Dismiss or tour answer was not saved, shown under the card. */
@@ -169,6 +176,7 @@ export function OnboardingCard(
     steps,
     groupId,
     navigate,
+    guest = false,
     onDismiss,
     error = null,
     tourOffered,
@@ -199,7 +207,7 @@ export function OnboardingCard(
       <Stack gap="sm">
         <OnboardingChecklist
           title="Get started"
-          steps={onboardingSteps(steps, groupId, navigate)}
+          steps={onboardingSteps(steps, groupId, navigate, guest)}
           onDismiss={onDismiss}
           description={tourOffered
             ? (

@@ -7,10 +7,20 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
 
 /**
  * Display preferences follow the person to every device (#163): a theme picked on the laptop paints
- * the phone dark, and a time zone saved on the laptop shows on the phone without a reload. The
- * laptop, now in another zone than the one picked, offers to switch back. A region format and a
- * clock saved on the profile write the dates on other screens and in the admin app.
+ * the phone dark, and a time zone picked on the laptop, saved as it is picked, shows on the phone
+ * without a reload. The laptop, now in another zone than the one picked, offers to switch back. A
+ * region format and a clock saved on the profile write the dates on other screens and in the admin
+ * app. A save refused because another device saved first is covered by `libs/ui/preferences.test.tsx`.
  */
+
+/**
+ * Picks a choice of a chip group by its radio's hook. The radio is visually hidden inside its
+ * label, so the click goes to the label, as a person's does.
+ */
+async function pick(page: Page, hook: string): Promise<void> {
+  await page.locator("label", { has: page.locator(`[data-e2e=${hook}]`) }).click()
+  await expect(page.locator(`[data-e2e=${hook}]`)).toBeChecked()
+}
 
 const appBase = "http://app.localhost"
 const adminBase = "http://admin.localhost"
@@ -25,18 +35,21 @@ async function cleanup(request: APIRequestContext, email: string) {
   expect.soft(response.status(), await response.text()).toBe(200)
 }
 
-/** Signs the person in on a device of its own and opens the profile page. */
-async function openOnDevice(device: BrowserContext, email: string): Promise<Page> {
+/** Signs the person in on a device of its own and opens the profile section `section`. */
+async function openOnDevice(
+  device: BrowserContext,
+  email: string,
+  section: "region" | "appearance",
+): Promise<Page> {
   const page = await device.newPage()
   await signIn(page, email, password)
-  await openProfile(page)
-  await expect(page.locator("[data-e2e=preferences]")).toBeVisible()
+  await openProfile(page, section)
   return page
 }
 
 test.describe("preferences across devices", () => {
   test("a theme and a time zone picked on one device show on the other", async ({ browser, request }) => {
-    // Two devices, a sign-up by code and four dialogs: longer than the default 30 seconds.
+    // Two devices, a sign-up by code and five changes: longer than the default 30 seconds.
     test.setTimeout(120_000)
     const email = `e2e-preferences-${uuidV7().slice(-8)}@example.com`
     let laptop: BrowserContext | null = null
@@ -50,70 +63,51 @@ test.describe("preferences across devices", () => {
 
       laptop = await browser.newContext({ timezoneId: "Europe/Berlin", locale: "en-GB" })
       phone = await browser.newContext({ timezoneId: "Asia/Tokyo", locale: "en-GB" })
-      const onLaptop = await openOnDevice(laptop, email)
-      const onPhone = await openOnDevice(phone, email)
-      await expect(onPhone.locator("[data-e2e=preferences-time-zone]")).toContainText(
-        "Automatic: same as this device — Tokyo, Asia",
-      )
+      const onLaptop = await openOnDevice(laptop, email, "appearance")
+      const onPhone = await openOnDevice(phone, email, "region")
+      const phoneZone = onPhone.getByRole("combobox", { name: "Time zone" })
+      await expect(phoneZone).toHaveValue(/^Automatic: Tokyo, Asia/)
 
-      // The theme changes at once from its row's menu, here and on the other device.
-      await onLaptop.getByRole("button", { name: "Change theme" }).click()
-      await onLaptop.locator("[data-e2e=preferences-theme-dark]").click()
+      // The theme changes at once when it is picked, here and on the other device.
+      await pick(onLaptop, "preferences-theme-dark")
       await expect(onLaptop.locator("html")).toHaveClass(/\bdark\b/)
       await expect(onPhone.locator("html")).toHaveClass(/\bdark\b/)
-      await expect(onPhone.locator("[data-e2e=preferences-theme]")).toContainText("Dark")
 
-      // A zone saved in the dialog on the laptop shows on the phone without a reload.
-      await onLaptop.locator("[data-e2e=preferences-change-timeZone]").click()
+      // A zone picked on the laptop is saved at once, with no Save button, and shows on the phone
+      // without a reload.
+      await onLaptop.locator("[data-e2e=settings-nav-region]").click()
+      await expect(onLaptop).toHaveURL("/profile/region")
       const zone = onLaptop.getByRole("combobox", { name: "Time zone" })
-      await expect(zone).toBeFocused()
-      // Escape closes an open list, not the dialog around it.
+      // Escape closes an open list and keeps the value.
       await zone.fill("Tok")
       await expect(onLaptop.getByRole("option", { name: /^Tokyo, Asia/ })).toBeVisible()
       await zone.press("Escape")
       await expect(onLaptop.getByRole("option", { name: /^Tokyo, Asia/ })).toBeHidden()
-      await expect(onLaptop.locator("[data-e2e=preferences-dialog]")).toBeVisible()
       await zone.fill("Tokyo")
       await onLaptop.getByRole("option", { name: /^Tokyo, Asia/ }).click()
-      await onLaptop.locator("[data-e2e=preferences-save]").click()
-      await expect(onLaptop.locator("[data-e2e=preferences-dialog]")).toBeHidden()
-      await expect(onPhone.locator("[data-e2e=preferences-time-zone]")).toContainText(
-        "Tokyo, Asia · GMT+9",
-      )
-      await expect(onPhone.locator("[data-e2e=preferences-time-zone]")).not.toContainText(
-        "Automatic",
-      )
+      await expect(phoneZone).toHaveValue("Tokyo, Asia · GMT+9")
 
       // The laptop is in Berlin, not Tokyo: it offers to switch, and keeping Tokyo hides the offer.
       const other = onLaptop.locator("[data-e2e=preferences-other-zone]")
       await expect(other).toContainText("This device is on Berlin time")
       await onLaptop.locator("[data-e2e=preferences-keep-zone]").click()
       await expect(other).toBeHidden()
-      await expect(onLaptop.locator("[data-e2e=preferences-change-timeZone]")).toBeFocused()
+      // The focus goes on to the clock, and the zone's list stays closed.
+      await expect(onLaptop.locator("[data-e2e=preferences-clock-format]")).toBeFocused()
+      await expect(onLaptop.getByRole("option", { name: /^Tokyo, Asia/ })).toBeHidden()
 
-      // Two devices edit different fields at once: the second save is refused with a notice, and
-      // the first device's change is not overwritten.
-      await onLaptop.locator("[data-e2e=preferences-change-clock]").click()
-      await onLaptop.locator("[data-e2e=preferences-clock-select]").selectOption("h12")
-      await onPhone.locator("[data-e2e=preferences-change-formats]").click()
+      // Each device's change reaches the other and keeps what the other saved.
       await onPhone.getByRole("combobox", { name: "Formats" }).fill("Italian")
       await onPhone.getByRole("option", { name: /Italian \(Italy\)/ }).click()
-      await onPhone.locator("[data-e2e=preferences-save]").click()
-      await expect(onPhone.locator("[data-e2e=preferences-dialog]")).toBeHidden()
-      await expect(onLaptop.locator("[data-e2e=preferences-formats]")).toContainText("Italian")
-      await onLaptop.locator("[data-e2e=preferences-save]").click()
-      await expect(onLaptop.locator("[data-e2e=preferences-conflict]")).toBeVisible()
-      await expect(onPhone.locator("[data-e2e=preferences-formats]")).toContainText("Italian")
-      await expect(onPhone.locator("[data-e2e=preferences-clock]")).not.toContainText("12-hour")
-
-      // A theme picked on another device while the dialog is open does not refuse its save.
-      await onLaptop.locator("[data-e2e=preferences-clock-select]").selectOption("h12")
-      await onPhone.getByRole("button", { name: "Change theme" }).click()
-      await onPhone.locator("[data-e2e=preferences-theme-light]").click()
-      await expect(onLaptop.locator("html")).not.toHaveClass(/\bdark\b/)
-      await onLaptop.locator("[data-e2e=preferences-save]").click()
-      await expect(onLaptop.locator("[data-e2e=preferences-dialog]")).toBeHidden()
-      await expect(onPhone.locator("[data-e2e=preferences-clock]")).toContainText("12-hour")
+      await expect(onLaptop.getByRole("combobox", { name: "Formats" })).toHaveValue(
+        /Italian \(Italy\)/,
+      )
+      await pick(onLaptop, "preferences-clock-h12")
+      await expect(onPhone.locator("[data-e2e=preferences-clock-h12]")).toBeChecked()
+      await expect(onPhone.getByRole("combobox", { name: "Formats" })).toHaveValue(
+        /Italian \(Italy\)/,
+      )
+      await expect(phoneZone).toHaveValue("Tokyo, Asia · GMT+9")
     } finally {
       await laptop?.close()
       await phone?.close()
@@ -140,7 +134,7 @@ test.describe("preferences across devices", () => {
 
       // The device's own format is English with a 24-hour clock.
       device = await browser.newContext({ timezoneId: "Europe/Berlin", locale: "en-GB" })
-      const page = await openOnDevice(device, email)
+      const page = await openOnDevice(device, email, "region")
       const groupId = uuidV7()
       const group = await page.request.post(`${appBase}/api/groups`, {
         headers,
@@ -156,22 +150,19 @@ test.describe("preferences across devices", () => {
       const example = page.locator("[data-e2e=preferences-example]")
       await expect(example).toContainText(ENGLISH_FULL)
 
-      await page.locator("[data-e2e=preferences-change-formats]").click()
       await page.getByRole("combobox", { name: "Formats" }).fill("German (Germany)")
       await page.getByRole("option", { name: /German \(Germany\)/ }).click()
-      await page.locator("[data-e2e=preferences-clock-select]").selectOption("h12")
-      await page.locator("[data-e2e=preferences-save]").click()
-      await expect(page.locator("[data-e2e=preferences-dialog]")).toBeHidden()
+      await pick(page, "preferences-clock-h12")
 
-      // Outside the dialog the dates are German with a 12-hour clock: the example under "Language
-      // and region", a note's exact time on another screen, and both again after a reload.
+      // The dates are German with a 12-hour clock: the sample line of "Language and region", a
+      // note's exact time on another screen, and both again after a reload.
       await expect(example).toContainText(GERMAN_12_HOUR_FULL)
       await openNotes(page, "Format team")
       const changed = page.locator(`[data-e2e=note-${noteId}] time`)
       await expect(changed).toHaveAttribute("title", GERMAN_12_HOUR_EXACT)
       await page.reload()
       await expect(changed).toHaveAttribute("title", GERMAN_12_HOUR_EXACT)
-      await openProfile(page)
+      await openProfile(page, "region")
       await expect(example).toContainText(GERMAN_12_HOUR_FULL)
 
       // The admin app, on a device of the same region, writes the operator's own row that way too.

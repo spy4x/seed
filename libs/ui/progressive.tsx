@@ -56,6 +56,8 @@ export const API_TOKEN_PATHS = {
 
 /** The pages these screens link to. */
 export const SCREEN_PATHS = {
+  /** The app's home, which opens the notes. */
+  home: "/",
   signIn: "/sign-in",
   signUp: "/sign-up",
   /** Asks "Create a new account?" after a provider sign-in nobody here is known by. */
@@ -64,21 +66,43 @@ export const SCREEN_PATHS = {
   signUpCode: "/sign-up/code",
   oneTimeCode: "/totp",
   forgotPassword: "/forgot-password",
-  profile: "/",
+  /** The profile: its list of sections on a phone, its first section from `md` up. */
+  profile: "/profile",
   groups: "/groups",
   /** The in-app inbox. */
   notifications: "/notifications",
-  /** The e-mail address: its code, a new code, a change. */
-  email: "/email",
+  /**
+   * The e-mail address, on the profile's Account section, with the dialog open at its code while an
+   * address waits for one.
+   */
+  email: "/profile/account?verify",
   /** Asks for the address to send news to. */
   subscribe: "/subscribe",
 } as const
 
-/**
- * The parts of the profile page that the first-steps card links to. The profile is the home page,
- * where the card is, so these are links within the page and the browser scrolls to them itself.
- */
-export const PROFILE_ANCHORS = { security: "security", pushDevices: "push-devices" } as const
+/** The profile's sections, in the order its navigation lists them. */
+export const PROFILE_SECTIONS = [
+  "account",
+  "security",
+  "region",
+  "appearance",
+  "notifications",
+  "api-tokens",
+  "danger-zone",
+] as const
+
+/** One section of the profile, the last part of its address. */
+export type ProfileSectionId = typeof PROFILE_SECTIONS[number]
+
+/** Whether `value` names a section of the profile. */
+export function isProfileSection(value: string): value is ProfileSectionId {
+  return (PROFILE_SECTIONS as readonly string[]).includes(value)
+}
+
+/** Where each section of the profile lives: `/profile/<section>`. */
+export function profilePath(section: ProfileSectionId): string {
+  return `${SCREEN_PATHS.profile}/${section}`
+}
 
 /**
  * The query parameter that carries the page a signed-out person asked for through sign-in, so
@@ -112,10 +136,16 @@ export function withNext(path: string, next: string | null): string {
   return next ? `${path}?${new URLSearchParams({ [NEXT_PARAM]: next })}` : path
 }
 
-/** Where a finished sign-in goes: the checked `next`, or the profile without one. */
+/** Where a finished sign-in goes: the checked `next`, or the notes list without one. */
 export function afterSignIn(next: string | null): string {
-  return next ?? SCREEN_PATHS.profile
+  return next ?? NOTE_PATHS.list
 }
+
+/** Where the group overview lives: `/overview` opens the selected group's. */
+export const OVERVIEW_PATHS = {
+  root: "/overview",
+  group: (groupId: string) => `/overview/${encodeURIComponent(groupId)}`,
+} as const
 
 /** Where a group's own pages live. */
 export const GROUP_PATHS = {

@@ -7,10 +7,12 @@ import { canManageInvitations, type InvitationErrorCode } from "@domain/groups"
 import { SeatPriceConfirm } from "@ui/billing-screen.tsx"
 import { EMPTY_INVITATION_DRAFT } from "@ui/group-invitations.tsx"
 import { InvitationNewScreen } from "@ui/invitation-new-screen.tsx"
+import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { GROUP_PATHS } from "@ui/progressive.tsx"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { invitationsStore } from "../state/invitations.ts"
+import { isGuestSession } from "../state/guest.ts"
 import { isSpaPath } from "./spa-paths.ts"
 
 const network = createOnlineStatus()
@@ -53,7 +55,7 @@ export function InvitationNewView({ groupId }: { groupId: string }) {
   const seatRefused = !!billing?.seatPrice &&
     createFailure?.code === ("SEAT_PRICE_NOT_ACCEPTED" satisfies InvitationErrorCode)
   // The creator's own address is not verified: no field of the form can fix that, so the message
-  // stands above the buttons, with the way to the E-mail page, rather than at the invitee's address.
+  // stands above the buttons, with the way to the profile, rather than at the invitee's address.
   const unproven = createFailure?.code === ("ADDRESS_NOT_PROVEN" satisfies InvitationErrorCode)
   const created = invites.created.value
   const draft = invites.draft.value
@@ -62,6 +64,17 @@ export function InvitationNewView({ groupId }: { groupId: string }) {
     draft.expiresInDays !== EMPTY_INVITATION_DRAFT.expiresInDays ||
     draft.maxUses !== EMPTY_INVITATION_DRAFT.maxUses ||
     invites.acceptSeatPrice.value
+
+  // A guest cannot invite yet (#224): the refusal shows at once, before any form is filled in.
+  if (isGuestSession()) {
+    return (
+      <GuestRefusalDialog
+        action="invite"
+        navigate={navigate}
+        onClose={() => navigate(GROUP_PATHS.members(groupId), { replace: true })}
+      />
+    )
+  }
 
   return (
     <>

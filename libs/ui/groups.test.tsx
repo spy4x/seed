@@ -1212,8 +1212,8 @@ describe("InviteForm", () => {
     expect(root!.textContent).not.toContain("Full.")
   })
 
-  it("shows a refusal for the creator's unverified address as a focused notice that leads to the E-mail page", async () => {
-    const message = "Verify your e-mail address on the E-mail page before you invite anyone."
+  it("shows a refusal for the creator's unverified address as a focused notice that leads to the profile", async () => {
+    const message = "Verify your e-mail address in your profile before you invite anyone."
     const went: string[] = []
     await mount(<InviteForm {...defaults} navigate={(to) => went.push(to)} />)
     await rerender(

@@ -15,6 +15,7 @@ import {
   type RateLimitContext,
   userThenIp,
 } from "@spy4x/platform/rate-limit/hono"
+import { GUEST_STARTS_PER_HOUR } from "@domain/identity"
 import type { APIContext } from "../_types.ts"
 import type { AppAuthState } from "../services/sign-in.ts"
 
@@ -136,6 +137,13 @@ export interface AuthRateLimits {
    * `/totp/connect/finish` share one budget. Only failed checks (status 400 and above) spend it.
    */
   otpByUser: MiddlewareHandler<APIContext>
+  /**
+   * Spends one of the client's {@link GUEST_STARTS_PER_HOUR} new guest accounts an hour (#224),
+   * counted per address as the sign-up mails are (an IPv6 client by its prefix), and says whether
+   * it was allowed. Refuses the same way as `emailCodeByAddress` when the store fails: this budget
+   * stands between a script and a database full of empty accounts.
+   */
+  guestStart(c: Context<APIContext>): Promise<RateLimitDecision>
   /** Normal limit per signed-in user, else per client IP, for every other auth route. */
   normal: MiddlewareHandler<APIContext>
   /**
@@ -182,8 +190,8 @@ export interface AuthRateLimitSettings {
   /**
    * Builds the store one limiter keeps its budgets in. `name` is that limiter's own key prefix:
    * `ratelimit-strict`, `ratelimit-otp`, `ratelimit-reset`, `ratelimit-email-code`,
-   * `ratelimit-sign-up-code`, `ratelimit-email-change`, `ratelimit-email-change-address` or
-   * `ratelimit-normal`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
+   * `ratelimit-sign-up-code`, `ratelimit-email-change`, `ratelimit-email-change-address`,
+   * `ratelimit-guest` or `ratelimit-normal`. Production passes `createRedisRateLimitStore` over Valkey; tests pass an
    * in-process store.
    */
   store: (name: string) => RateLimitStore
@@ -298,6 +306,12 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
     limit: EMAIL_CHANGE_MAILS_PER_ADDRESS,
     clock,
   })
+  // An hour long, so a script cannot fill the database with empty accounts.
+  const guest = createStoreLimiter(store("ratelimit-guest"), {
+    windowMs: 60 * 60_000,
+    limit: GUEST_STARTS_PER_HOUR,
+    clock,
+  })
   const normal = failOpenLimiter(
     createStoreLimiter(store("ratelimit-normal"), { windowMs, limit: settings.limit, clock }),
     { limit: settings.limit, onError: settings.onStoreError },
@@ -339,6 +353,7 @@ export function createAuthRateLimits(settings: AuthRateLimitSettings): AuthRateL
       if (!own.allowed) return own
       return await signUpByAddress.check(keys.address)
     },
+    guestStart: async (c) => await guest.check(`auth-guest:${signUpClient(c)}`),
     emailChangeByUser: async (userId) => await emailChange.check(`auth-email-change:${userId}`),
     emailChangeByAddress: async (email) =>
       await emailChangeAddress.check(`auth-email-change-address:${await sha256Hex(email)}`),

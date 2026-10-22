@@ -7,6 +7,7 @@ import { OAUTH_PAGES } from "@domain/identity"
 import {
   announcedPage,
   isMembersOnlyPath,
+  isProfilePath,
   isSpaPath,
   SPA_ROUTE_PATHS,
   SPA_ROUTES,
@@ -28,7 +29,8 @@ describe("isSpaPath", () => {
         "/invite/AbC_9",
         "/sign-in",
         "/totp",
-        "/email",
+        "/profile",
+        "/profile/security",
         "/subscribe",
         "/subscribe/confirm",
         "/unsubscribe",
@@ -78,6 +80,7 @@ describe("isMembersOnlyPath", () => {
       "/sign-up/confirm",
       "/sign-up/code",
       "/sign-in",
+      "/try",
       "/totp",
       "/forgot-password",
       "/reset-password",
@@ -90,11 +93,19 @@ describe("isMembersOnlyPath", () => {
 })
 
 describe("the pages a provider's callback redirects to", () => {
-  it("are all routed, and open to a person who is not signed in yet", () => {
-    for (const path of Object.values(OAUTH_PAGES)) {
+  it("are all routed, and open to a person who is not signed in yet, but a guest's keep pages", () => {
+    // A provider sends a guest back to `/keep` or `/keep/taken` with the guest's session (#224).
+    const guestOnly: string[] = [OAUTH_PAGES.keep, OAUTH_PAGES.keepTaken]
+    const { signInMethods: _linking, ...pages } = OAUTH_PAGES
+    for (const path of Object.values(pages)) {
       expect(SPA_ROUTE_PATHS as string[], path).toContain(path)
-      expect(isMembersOnlyPath(path), path).toBe(false)
+      expect(isMembersOnlyPath(path), path).toBe(guestOnly.includes(path))
     }
+  })
+
+  it("sends a finished link to the profile's sign-in methods, a members' page", () => {
+    expect(routeFor(OAUTH_PAGES.signInMethods)).toBe("/profile/:section?")
+    expect(isMembersOnlyPath(OAUTH_PAGES.signInMethods)).toBe(true)
   })
 })
 
@@ -144,6 +155,18 @@ describe("the route order", () => {
     }
     expect(routeFor("/groups/abc/activity")).toBe("/groups/:groupId/:tab?")
     expect(routeFor("/groups/abc/notes")).toBe("/groups/:groupId/notes")
+  })
+})
+
+describe("the profile's routes", () => {
+  it("draws the profile and each of its sections from one route", () => {
+    for (const path of ["/profile", "/profile/account", "/profile/danger-zone"]) {
+      expect(routeFor(path), path).toBe("/profile/:section?")
+      expect(isProfilePath(path), path).toBe(true)
+    }
+    for (const path of ["/", "/notes", "/profiles"]) {
+      expect(isProfilePath(path), path).toBe(false)
+    }
   })
 })
 

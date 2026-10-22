@@ -31,7 +31,7 @@ import { GroupSelectedEvent } from "../../cqrs/events.ts"
 
 /** Why an account whose address is not proven may not invite; the SPA shows it under the form. */
 export const INVITE_NEEDS_PROVEN_EMAIL =
-  "Verify your e-mail address on the E-mail page before you invite anyone."
+  "Verify your e-mail address in your profile before you invite anyone."
 
 /** The path of an invitation's page in both apps. */
 export function invitationPath(token: string): string {

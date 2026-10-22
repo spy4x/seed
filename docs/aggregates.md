@@ -437,6 +437,40 @@ event. Follow the details command (`group.updateDetails`, spy4x/template#134) fi
    member's socket, and their pages read the group again. Test it with two pages and a count of
    page loads, as `e2e/groups-details.e2e.ts` does.
 
+## Adding a widget to the overview
+
+The group overview (`/overview/:groupId`, spy4x/seed#219) is a page of widgets: numbers and charts
+about the group over a range of days. Each aggregate offers its own; the notes' are the reference.
+A widget shows counts only, never an item's content or who did it.
+
+1. **Definition.** Add the widget to the aggregate's list in its domain package, as `NOTE_WIDGETS`
+   in `libs/domain/notes/overview.ts` does: a stable `id` (a saved layout keeps it, so it never
+   changes), a `title`, a `size` (`stat` for a number, `full` for a chart), `canView(role)` and the
+   `operation` that answers it. Answer a number with `CountWidgetResult` and a chart with
+   `SeriesWidgetResult` from `@domain/groups`, both with the period before the range, or `null`
+   when the group did not exist for all of it.
+2. **Query and handler.** One query class per widget, carrying the group, the range and the zone,
+   and a handler that makes the same membership check as the aggregate's list before it reads
+   anything (`apps/api/features/notes/widgets.ts`): a stranger is told the group does not exist.
+   The numbers come from a read-only repository that reads one group only
+   (`libs/server/notes/note-overview.ts`), with days cut at midnight in the person's zone. Register
+   the handler in `apps/api/cqrs/+init.ts` and the operation in `apps/api/services/realtimeHub.ts`.
+3. **Drawing.** Add a `WidgetView` to the aggregate's drawings in `libs/ui`
+   (`NOTE_WIDGET_VIEWS` in `libs/ui/note-widgets.tsx`): what a screen reader hears while it loads,
+   the error, and `draw`, which turns the data into the card's caption and content, or one empty
+   line. A number takes `WidgetStat` and a neutral `changeText` line; a chart takes `LineChart`
+   with a one-sentence summary as its caption and the previous period dashed.
+4. **Registry.** Add the list and the drawings to `OVERVIEW_WIDGETS` and `OVERVIEW_VIEWS`
+   (`libs/ui/overview-widgets.ts`). The SPA's overview and the admin group page both read it. The
+   admin page's numbers come from `createAdminGroups().widget` (`apps/api/routes/admin/groups.ts`),
+   which knows only the readers it is given: add the aggregate's readers next to
+   `NOTE_WIDGET_READERS` there, or the admin card shows its error. A person's saved layout gets the
+   new widget at the end, shown.
+5. **Tests.** The handler's tests (`widgets.test.ts`): a stranger gets `GROUP_NOT_FOUND` and
+   nothing is read, and only the named group is read. The repository against Postgres
+   (`tests/integration/note-overview.integration.test.ts`), with another group's rows that must
+   not count. The drawing in `libs/ui/overview.test.tsx`.
+
 ## Telling a person in their inbox
 
 A change that a person should hear about, and did not make themselves, writes a notification

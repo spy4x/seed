@@ -1,3 +1,4 @@
+import type postgres from "postgres"
 import { DbServiceBase, type RowCache, type Sql } from "@spy4x/server/db"
 import type { AuthSessionRecord, AuthStore } from "@spy4x/server/auth"
 import { createPostgresAuthStore, createPostgresSessionStore } from "@spy4x/server/auth/postgres"
@@ -30,6 +31,7 @@ import { noteMovable } from "@server/notes/note-movable.ts"
 import { tagMovable } from "@server/tags/tag-movable.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
+import { PostgresNoteOverview } from "@server/notes/note-overview.ts"
 import { PostgresBillingRepository } from "@server/billing/postgres-billing-repository.ts"
 import { emailChanges } from "@server/auth/email-verification.ts"
 import type { Lockout } from "@spy4x/server/lockout"
@@ -54,6 +56,23 @@ import {
   type SignInMethodChange,
 } from "@server/jobs/sign-in-method-mail.ts"
 import { touchUserSeen } from "@server/auth/sessions.ts"
+import {
+  createGuestIdentity,
+  deleteGuest,
+  dropGuestSwitch,
+  findGuestSwitch,
+  guestHoldings,
+  guestStats,
+  type GuestSwitch,
+  isGuestUser,
+  keepGuest,
+  moveGuestGroups,
+  recordGuestEvent,
+  remindGuest,
+  renewGuestSession,
+  saveGuestSwitch,
+} from "@server/auth/guests.ts"
+import type { GuestEventKind, GuestReminderKind } from "@domain/identity"
 import {
   findPasskey,
   insertPasskey,
@@ -223,6 +242,11 @@ export class AppDbBase extends DbServiceBase {
   /** The notes repository. Built per access, like `group`, so inside `begin()` it uses the transaction. */
   get note(): PostgresNoteRepository {
     return new PostgresNoteRepository(this.sql)
+  }
+
+  /** The numbers behind the notes' overview widgets. Built per access, like `note`. */
+  get noteOverview(): PostgresNoteOverview {
+    return new PostgresNoteOverview(this.sql)
   }
 
   /** The tags repository. Built per access, like `note`. */
@@ -402,6 +426,45 @@ export class AppDbBase extends DbServiceBase {
       waiting: (userId: number): Promise<boolean> => isAccountDeletionWaiting(sql, userId),
       /** Records that a sign-in restored the account and queues the mail that says so. */
       restored: (userId: number): Promise<void> => scheduleAccountRestoredMail(sql, userId),
+    }
+  }
+
+  /**
+   * Guest accounts (#224, `@server/auth/guests.ts`). Built per access, like `group`, so inside
+   * `begin()` every write joins the transaction. Keeping a guest also drops the cached `users` row,
+   * whose `guestSince` the profile shows.
+   */
+  get guests() {
+    const sql = this.sql
+    const cache = this.userCache
+    const transaction = () => {
+      if (!("savepoint" in sql)) throw new Error("A guest change must run inside begin()")
+      return sql as unknown as postgres.TransactionSql
+    }
+    return {
+      createIdentity: () => createGuestIdentity(sql),
+      isGuest: (userId: number) => isGuestUser(sql, userId),
+      event: (kind: GuestEventKind) => recordGuestEvent(sql, kind),
+      keep: async (userId: number, keyId: number, sessionEnd: Date): Promise<boolean> => {
+        const kept = await keepGuest(sql, userId, keyId, sessionEnd)
+        if (kept) await cache.delete(userId)
+        return kept
+      },
+      renew: (userId: number, sessionId: number, now?: Date) =>
+        renewGuestSession(sql, userId, sessionId, now),
+      remind: (userId: number, kind: GuestReminderKind) => remindGuest(sql, userId, kind),
+      holdings: (userId: number) => guestHoldings(sql, userId),
+      saveSwitch: (userId: number, sw: GuestSwitch) => saveGuestSwitch(sql, userId, sw),
+      findSwitch: (userId: number) => findGuestSwitch(sql, userId),
+      dropSwitch: (userId: number) => dropGuestSwitch(sql, userId),
+      moveGroups: (guestId: number, targetId: number) =>
+        moveGuestGroups(transaction(), guestId, targetId),
+      delete: async (userId: number): Promise<boolean> => {
+        const deleted = await deleteGuest(transaction(), userId)
+        if (deleted) await cache.delete(userId)
+        return deleted
+      },
+      stats: (since?: Date) => guestStats(sql, since),
     }
   }
 

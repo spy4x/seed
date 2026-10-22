@@ -1,7 +1,16 @@
-import { expect, test } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
 import { gotoApp, openProfile, signIn } from "../fixtures/app.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "../fixtures/sign-up.ts"
+
+/**
+ * Picks a choice of a chip group by its radio's hook. The radio is visually hidden inside its
+ * label, so the click goes to the label, as a person's does.
+ */
+async function pick(page: Page, hook: string): Promise<void> {
+  await page.locator("label", { has: page.locator(`[data-e2e=${hook}]`) }).click()
+  await expect(page.locator(`[data-e2e=${hook}]`)).toBeChecked()
+}
 
 /**
  * A region format and a clock saved on the profile write the dates of the built SPA. The bundle must
@@ -35,14 +44,11 @@ test("a region format and clock saved on the profile write the dates of the buil
     })
     expect(note.status(), await note.text()).toBe(201)
 
-    await openProfile(page)
+    await openProfile(page, "region")
     const example = page.locator("[data-e2e=preferences-example]")
-    await page.locator("[data-e2e=preferences-change-formats]").click()
     await page.getByRole("combobox", { name: "Formats" }).fill("German (Germany)")
     await page.getByRole("option", { name: /German \(Germany\)/ }).click()
-    await page.locator("[data-e2e=preferences-clock-select]").selectOption("h12")
-    await page.locator("[data-e2e=preferences-save]").click()
-    await expect(page.locator("[data-e2e=preferences-dialog]")).toBeHidden()
+    await pick(page, "preferences-clock-h12")
 
     // The example on the profile and a note's exact time on another screen are German with a
     // 12-hour clock.

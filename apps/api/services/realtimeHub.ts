@@ -1,4 +1,6 @@
-import type { Actor } from "@domain/identity"
+import { type Actor, GuestReminderKind } from "@domain/identity"
+import { RealtimeRequestError } from "@spy4x/realtime"
+import { guestRefusal } from "../middlewares/guest-limits.ts"
 import type { Operations } from "@spy4x/realtime/operations"
 import { createGroupOperations } from "../features/groups/operations.ts"
 import { createOnboardingOperations } from "../features/onboarding/operations.ts"
@@ -7,6 +9,7 @@ import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
 import { createTagOperations } from "../features/tags/operations.ts"
 import { createNoteOperations } from "../features/notes/operations.ts"
+import { createNoteWidgetOperations } from "../features/notes/widgets.ts"
 import { signIn } from "./auth.ts"
 import { commandBus } from "./commandBus.ts"
 import { db } from "./db.ts"
@@ -54,12 +57,24 @@ export const operations: Operations<Actor> = {
     device: (command) => commandBus.execute(command),
   }),
   ...createPushOperations({
-    register: (command) => commandBus.execute(command),
+    // A guest needs a sign-in method first (#224), on the socket as over REST.
+    register: async (command) => {
+      if (await db.guests.isGuest(command.data.actor.userId)) {
+        const { error } = guestRefusal("push")
+        throw new RealtimeRequestError("forbidden", error.message, error)
+      }
+      return await commandBus.execute(command)
+    },
     remove: (command) => commandBus.execute(command),
     list: (query) => queryBus.execute(query),
   }),
   ...createNoteOperations({
-    create: (command) => commandBus.execute(command),
+    create: async (command) => {
+      const created = await commandBus.execute(command)
+      // A guest's first note gets the reminder to keep it (#224); sent once, and only to guests.
+      await signIn.guests.remind(command.data.actor.userId, GuestReminderKind.FirstNote)
+      return created
+    },
     update: (command) => commandBus.execute(command),
     delete: (command) => commandBus.execute(command),
     restore: (command) => commandBus.execute(command),
@@ -69,6 +84,11 @@ export const operations: Operations<Actor> = {
     locate: (query) => queryBus.execute(query),
     search: (query) => queryBus.execute(query),
     cursor: noteListCursor,
+  }),
+  ...createNoteWidgetOperations({
+    total: (query) => queryBus.execute(query),
+    added: (query) => queryBus.execute(query),
+    series: (query) => queryBus.execute(query),
   }),
   ...createTagOperations({
     create: (command) => commandBus.execute(command),

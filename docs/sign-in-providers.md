@@ -1,8 +1,9 @@
 # Sign in with Google and GitHub
 
 Both are off until you set their credentials: the sign-in and sign-up pages then show a "Continue
-with …" link for each provider that is on, and the profile gets a "Sign-in methods" card. A
-provider is on only when both of its variables are set in the env file.
+with …" link for each provider that is on, and the profile's "Sign-in and security" section
+(`/profile/security`) lists it under "Ways to sign in". A provider is on only when both of its
+variables are set in the env file.
 
 | Provider | Where to register                                                         | Variables                                  | Callback URL to register                    |
 | -------- | ------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------- |
@@ -26,6 +27,9 @@ What a person gets:
 - A provider account joins an existing account by its e-mail address only when both sides have
   verified that address. An address the provider has not verified never links: that person is
   asked whether to create a new account, like anyone unknown.
+- A guest ([guest accounts](guests.md)) links a provider on `/keep` without the password step,
+  since a guest has none; the provider account then keeps the guest account. One that already
+  signs in to another account here offers the choice on `/keep/taken` instead.
 - On the profile, a person links and unlinks providers. A provider account links whatever its
   e-mail address, and linking never changes another person's confirmed account; one that already
   signs in to another account here is refused, and the page says so. The last way into an account

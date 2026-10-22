@@ -165,9 +165,9 @@ test("a signed-in walk through the app meets no refusal under the content securi
 
     // The sign-up code proved the address, so the profile offers two-factor auth: its QR code is
     // the one image the app builds as a `data:` address.
-    await gotoApp(page, "/email", page.locator("[data-e2e=email-state]"))
+    await gotoApp(page, "/profile/account", page.locator("[data-e2e=email-state]"))
     await expect(page.locator("[data-e2e=email-state]")).toHaveText("Verified")
-    await gotoApp(page, "/", page.locator("[data-e2e=totp-start]"))
+    await gotoApp(page, "/profile/security", page.locator("[data-e2e=totp-start]"))
     await page.locator("[data-e2e=totp-start]").click()
     await page.locator("[data-e2e=totp-start-password]").fill(password)
     await page.locator("[data-e2e=totp-start-submit]").click()

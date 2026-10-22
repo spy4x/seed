@@ -36,25 +36,28 @@ test.describe("auth profile ws push flow", () => {
       )
       await page.locator("[data-e2e=auth-form-login]").fill(email)
       await page.locator("[data-e2e=auth-form-password]").fill(password)
-      await submitAuthForm(page, "/", page.locator("[data-e2e=shell-ws-status]"))
+      await submitAuthForm(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
-      // The signed-in layout: the skip link is the first thing Tab reaches. The profile is the
-      // home page and belongs to no navigation entry: it opens from the account menu.
+      // The signed-in layout: the skip link is the first thing Tab reaches. A sign-in lands on the
+      // notes list, whose entry is the current one.
       await page.keyboard.press("Tab")
       await expect(page.locator("[data-e2e=rail-shell-skip-link]")).toBeFocused()
       const nav = page.getByRole("navigation", { name: "Main navigation" })
-      await expect(nav.locator("[aria-current=page]")).toHaveCount(0)
+      await expect(nav.getByRole("link", { name: "Notes" })).toHaveAttribute("aria-current", "page")
 
       // Nav links go through the router: a click keeps the page instead of reloading it, and a
       // Ctrl-click (Cmd on macOS) is left to the browser, which opens the link in a new tab. The
       // entry of the page shown is marked as the current one.
       await page.evaluate(() => Object.assign(globalThis, { e2ePageMarker: true }))
-      await nav.getByRole("link", { name: "Notes" }).click()
-      await expect(nav.getByRole("link", { name: "Notes" })).toHaveAttribute("aria-current", "page")
+      await nav.getByRole("link", { name: "Groups" }).click()
+      await expect(nav.getByRole("link", { name: "Groups" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      )
       expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
       const newTab = page.context().waitForEvent("page", { timeout: 5_000 })
-      await nav.getByRole("link", { name: "Tags" }).click({ modifiers: ["ControlOrMeta"] })
+      await nav.getByRole("link", { name: "Notes" }).click({ modifiers: ["ControlOrMeta"] })
       await (await newTab).close()
 
       // Profile in the account menu goes through the router too.
@@ -62,8 +65,10 @@ test.describe("auth profile ws push flow", () => {
       await expect(page.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
       expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
 
+      // A wide window opens the first section, Account, beside the list of sections.
       await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
-      await expect(page.getByRole("heading", { level: 2, name: "Push devices" })).toBeVisible()
+      await expect(page.locator("[data-e2e=settings-section] [data-e2e=profile-name]"))
+        .toBeVisible()
       // Cancelling the name dialog drops what was typed and the error it caused.
       const firstNameField = page.locator("[data-e2e=profile-first-name]")
       const lastNameField = page.locator("[data-e2e=profile-last-name]")
@@ -89,9 +94,16 @@ test.describe("auth profile ws push flow", () => {
       await expect(page.locator("[data-e2e=profile-dialog]")).toHaveCount(0)
       await expect(page.locator("[data-e2e=profile-name]")).toHaveText(`${firstName} ${lastName}`)
 
+      // The push devices have a section of their own, which keeps the page.
+      await page.locator("[data-e2e=settings-nav-notifications]").click()
+      await expect(page).toHaveURL("/profile/notifications")
+      await expect(page.getByRole("heading", { level: 2, name: "Push notifications" }))
+        .toBeVisible()
+      expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
+
       await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
-      await page.locator("[data-e2e=signin-required]").waitFor()
+      await page.locator("[data-e2e=auth-form-login]").waitFor()
 
       const me = await page.request.get("/api/auth/me")
       expect(me.status()).toBe(401)
@@ -129,7 +141,7 @@ test.describe("auth profile ws push flow", () => {
         .not.toBeNull()
       await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
-      await page.locator("[data-e2e=signin-required]").waitFor()
+      await page.locator("[data-e2e=auth-form-login]").waitFor()
 
       await signInPage()
       const last = page.locator("[data-e2e=last-sign-in]")

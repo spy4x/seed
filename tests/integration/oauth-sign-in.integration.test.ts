@@ -174,6 +174,11 @@ function buildApp(
       logError: (message) => void logged.push(message),
     }),
   )
+  // "Try it now" (#224): a guest account signed in on the browser that asks.
+  app.post("/guest", async (c) => {
+    const started = await signIn.guests.start(c, c.get("auth"))
+    return c.json({ userId: "signedIn" in started ? started.signedIn.user.id : null })
+  })
   // The password sign-up and sign-in, for accounts that exist before a provider is used.
   app.post("/password/sign-up", async (c) => {
     const { email } = await c.req.json()
@@ -1024,7 +1029,7 @@ Deno.test("the profile links a provider whose verified address is the account's 
     expect(link.status).toBe(200)
     const answer = await owner.through("google", "ada", (await link.json()).url)
 
-    expect(target(answer)).toBe("/?oauth=linked")
+    expect(target(answer)).toBe("/profile/security?oauth=linked")
     const listed = await methodsOf(owner)
     // Still the password session: linking signs nobody in again.
     expect(listed.methods.map((method) => [method.kind, method.current]))
@@ -1035,6 +1040,60 @@ Deno.test("the profile links a provider whose verified address is the account's 
       AuthAuditEventType.SIGN_IN_METHOD_LINKED,
       "oauth:google",
     ])
+  })
+})
+
+/** The guest's row: its id and whether it is a guest still. */
+async function guestRow(sql: postgres.Sql, id: number): Promise<{ guest: boolean } | undefined> {
+  const [row] = await sql<{ guest: boolean }[]>`
+    SELECT guest_since IS NOT NULL AS guest FROM users WHERE id = ${id}`
+  return row
+}
+
+Deno.test("a guest keeps the account with Google, with no password asked, and the same user id", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const guest = browser(app)
+    const { userId } = await (await guest.post("/guest")).json()
+    expect(await guestRow(sql, userId)).toEqual({ guest: true })
+
+    const link = await guest.post("/auth/methods/google/link", {})
+    expect(link.status).toBe(200)
+    expect(target(await guest.through("google", "ada", (await link.json()).url)))
+      .toBe("/keep?oauth=kept")
+
+    expect(await guestRow(sql, userId)).toEqual({ guest: false })
+    expect(await accounts(sql)).toEqual({ authUsers: 1, profiles: 1 })
+    expect((await methodsOf(guest)).methods.map((method) => method.kind)).toContain("google")
+    const later = browser(app)
+    expect(target(await later.through("google", "ada"))).toBe("/")
+    const [{ id }] = await sql<{ id: number }[]>`SELECT id FROM users`
+    expect(id).toBe(userId)
+  })
+})
+
+Deno.test("a guest's Google that signs in to another account offers the switch and merges nothing", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const owner = browser(app)
+    expect(target(await owner.through("google", "ada"))).toBe("/sign-up/confirm")
+    expect((await owner.post("/auth/sign-up/confirm")).status).toBe(201)
+    const before = await accounts(sql)
+
+    const guest = browser(app)
+    const { userId } = await (await guest.post("/guest")).json()
+    const link = await guest.post("/auth/methods/google/link", {})
+    expect(target(await guest.through("google", "ada", (await link.json()).url)))
+      .toBe("/keep/taken")
+
+    expect(await guestRow(sql, userId)).toEqual({ guest: true })
+    expect(await accounts(sql)).toEqual({
+      authUsers: before.authUsers + 1,
+      profiles: before.profiles + 1,
+    })
+    const [{ switches }] = await sql<{ switches: number }[]>`
+      SELECT count(*)::int AS switches FROM guest_switches WHERE guest_user_id = ${userId}`
+    expect(switches).toBe(1)
   })
 })
 
@@ -1049,10 +1108,10 @@ Deno.test("the profile links a provider account whatever its address, and it the
 
     const google = await owner.post("/auth/methods/google/link", { password: PASSWORD })
     expect(target(await owner.through("google", "work", (await google.json()).url)))
-      .toBe("/?oauth=linked")
+      .toBe("/profile/security?oauth=linked")
     const github = await owner.post("/auth/methods/github/link", { password: PASSWORD })
     expect(target(await owner.through("github", "loose", (await github.json()).url)))
-      .toBe("/?oauth=linked")
+      .toBe("/profile/security?oauth=linked")
 
     expect((await methodsOf(owner)).methods.map((method) => method.kind))
       .toEqual(["password", "google", "github"])
@@ -1090,7 +1149,7 @@ Deno.test("linking a provider account that signs in to another account changes n
     const link = await ada.post("/auth/methods/google/link", { password: PASSWORD })
     const answer = await ada.through("google", "bob", (await link.json()).url)
 
-    expect(target(answer)).toBe("/?oauth=link-taken")
+    expect(target(answer)).toBe("/profile/security?oauth=link-taken")
     // Ada is still Ada, with her one method, and no session of Bob's was left behind.
     expect((await methodsOf(ada)).methods.map((method) => method.kind)).toEqual(["password"])
     expect((await app.db.authStore.listKeys(adaId)).length).toBe(1)
@@ -1117,7 +1176,7 @@ Deno.test("Alice links a Google account whose verified address is Bob's and Bob'
     const link = await alice.post("/auth/methods/google/link", { password: PASSWORD })
     const answer = await alice.through("google", "stray", (await link.json()).url)
 
-    expect(target(answer)).toBe("/?oauth=linked")
+    expect(target(answer)).toBe("/profile/security?oauth=linked")
     expect((await methodsOf(alice)).methods.map((method) => method.kind))
       .toEqual(["password", "google"])
     // Bob keeps his one key, proven as before, and nothing was written about him.
@@ -1151,7 +1210,7 @@ Deno.test("linking the same provider account a second time says so and records n
     const again = await owner.post("/auth/methods/google/link", { password: PASSWORD })
     const answer = await owner.through("google", "ada", (await again.json()).url)
 
-    expect(target(answer)).toBe("/?oauth=link-exists")
+    expect(target(answer)).toBe("/profile/security?oauth=link-exists")
     expect(await audit(sql, ownerId)).toEqual(recorded)
     expect((await app.db.authStore.listKeys(ownerId)).length).toBe(2)
   })
@@ -1197,7 +1256,7 @@ Deno.test("linking that takes an unconfirmed account's address records it on tha
 
     const link = await owner.post("/auth/methods/google/link", { password: PASSWORD })
     expect(target(await owner.through("google", "mine", (await link.json()).url)))
-      .toBe("/?oauth=linked")
+      .toBe("/profile/security?oauth=linked")
 
     expect(await app.db.authStore.listKeys(squatter.id)).toEqual([])
     expect((await audit(sql, squatter.id)).at(-1)).toEqual([
@@ -1232,8 +1291,10 @@ Deno.test("a link belongs to the person who started it", async () => {
     const otherId = await provenPasswordAccount(app, other, "eve@example.com")
     flowOf(other)
 
-    expect(target(await signedOut.through("google", "ada", url))).toBe("/?oauth=failed")
-    expect(target(await other.through("google", "ada", url))).toBe("/?oauth=failed")
+    expect(target(await signedOut.through("google", "ada", url))).toBe(
+      "/profile/security?oauth=failed",
+    )
+    expect(target(await other.through("google", "ada", url))).toBe("/profile/security?oauth=failed")
 
     expect((await methodsOf(owner)).methods.map((method) => method.kind)).toEqual(["password"])
     expect((await signedOut.get("/auth/methods")).status).toBe(401)
@@ -1257,7 +1318,7 @@ Deno.test("a session that still owes its second factor cannot finish a link", as
       if (name.startsWith("oauth_connect_")) half.cookies.set(name, value)
     }
 
-    expect(target(await half.through("google", "work", url))).toBe("/?oauth=failed")
+    expect(target(await half.through("google", "work", url))).toBe("/profile/security?oauth=failed")
 
     expect((await app.db.authStore.listKeys(ownerId)).length).toBe(1)
   })
@@ -1593,7 +1654,7 @@ Deno.test("linking and unlinking a provider each mail the proven address once, n
 
     const link = await owner.post("/auth/methods/google/link", { password: PASSWORD })
     expect(target(await owner.through("google", "ada", (await link.json()).url)))
-      .toBe("/?oauth=linked")
+      .toBe("/profile/security?oauth=linked")
     await mails.runQueued()
 
     expect(mails.sent.map((mail) => [mail.to, mail.subject])).toEqual([
@@ -1636,10 +1697,10 @@ Deno.test("a reset of an address nobody proved removes the providers linked befo
     const { id } = await signedUp.json()
     const google = await mallory.post("/auth/methods/google/link", { password: PASSWORD })
     expect(target(await mallory.through("google", "mallory", (await google.json()).url)))
-      .toBe("/?oauth=linked")
+      .toBe("/profile/security?oauth=linked")
     const github = await mallory.post("/auth/methods/github/link", { password: PASSWORD })
     expect(target(await mallory.through("github", "loose", (await github.json()).url)))
-      .toBe("/?oauth=linked")
+      .toBe("/profile/security?oauth=linked")
     expect((await app.db.authStore.listKeys(id)).map((key) => key.method))
       .toEqual(["password", "oauth:google", "oauth:github"])
 
@@ -1688,7 +1749,7 @@ Deno.test("a reset of an address that was proven before keeps the linked provide
     const adaId = await provenPasswordAccount(app, ada, "ada@example.com")
     const link = await ada.post("/auth/methods/google/link", { password: PASSWORD })
     expect(target(await ada.through("google", "work", (await link.json()).url)))
-      .toBe("/?oauth=linked")
+      .toBe("/profile/security?oauth=linked")
 
     expect(await resetByLink(app, "ada@example.com")).toBe(true)
 

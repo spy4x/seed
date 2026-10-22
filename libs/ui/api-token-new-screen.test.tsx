@@ -140,13 +140,13 @@ function pageProps(
 }
 
 describe("ApiTokenNewScreen", () => {
-  it("is a page titled New API token with a way back to the profile, never a dialog", async () => {
+  it("is a page titled New API token with a way back to API tokens, never a dialog", async () => {
     await mount(<ApiTokenNewScreen {...pageProps([])} />)
 
     expect(find("h1").textContent).toBe("New API token")
     const back = find("[data-e2e=page-back]")
-    expect(back.getAttribute("href")).toBe("/")
-    expect(back.getAttribute("aria-label")).toBe("Back to profile")
+    expect(back.getAttribute("href")).toBe("/profile/api-tokens")
+    expect(back.getAttribute("aria-label")).toBe("Back to API tokens")
     expect(count("dialog")).toBe(0)
   })
 
@@ -166,13 +166,13 @@ describe("ApiTokenNewScreen", () => {
     expect(find("[data-e2e=api-token-create]").textContent).toBe("Create token")
   })
 
-  it("leaves through Cancel to the profile without creating anything", async () => {
+  it("leaves through Cancel to API tokens without creating anything", async () => {
     const calls: unknown[][] = []
     await mount(<ApiTokenNewScreen {...pageProps(calls)} />)
 
-    expect(find("[data-e2e=api-token-cancel]").getAttribute("href")).toBe("/")
+    expect(find("[data-e2e=api-token-cancel]").getAttribute("href")).toBe("/profile/api-tokens")
     await click("[data-e2e=api-token-cancel]")
-    expect(calls).toEqual([["navigate", "/"]])
+    expect(calls).toEqual([["navigate", "/profile/api-tokens"]])
   })
 
   it("asks for the current password in a labelled password field a manager can fill", async () => {
@@ -254,7 +254,7 @@ describe("ApiTokenNewScreen", () => {
     expect(find("[data-e2e=api-token-no-group]").textContent).toContain(
       "You are not in a group you can make a token for.",
     )
-    expect(find("[data-e2e=api-token-no-group] a").getAttribute("href")).toBe("/")
+    expect(find("[data-e2e=api-token-no-group] a").getAttribute("href")).toBe("/profile/api-tokens")
     expect(count("form")).toBe(0)
   })
 

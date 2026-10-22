@@ -4,7 +4,14 @@ import { useEffect, useState } from "preact/hooks"
 import { SWUpdater } from "@spy4x/preact-system/sw-updater"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Toastr } from "@spy4x/preact-ui/toastr"
-import { Route, type StringRouteParams, Switch, useLocation, useSearch } from "wouter-preact"
+import {
+  Redirect,
+  Route,
+  type StringRouteParams,
+  Switch,
+  useLocation,
+  useSearch,
+} from "wouter-preact"
 import { useRouteAnnouncer } from "@spy4x/preact-system/route-announcer"
 import { canSignOut, sessionState } from "./state/session.ts"
 import { bootstrapSession, settleOwedSignOut } from "./state/auth.ts"
@@ -31,13 +38,14 @@ import { toasts } from "./state/toasts.ts"
 import { AuthView } from "./views/AuthView.tsx"
 import { ConfirmSignUpView } from "./views/ConfirmSignUpView.tsx"
 import { SignUpCodeView } from "./views/SignUpCodeView.tsx"
-import { EmailView } from "./views/EmailView.tsx"
+import { GuestTakenView, KeepView, TryView } from "./views/GuestViews.tsx"
 import { ForgotPasswordView, ResetPasswordView } from "./views/PasswordResetView.tsx"
 import { GroupsView } from "./views/GroupsView.tsx"
 import { SubscribeView, SubscriptionConfirmView, UnsubscribeView } from "./views/SubscribeViews.tsx"
 import { GroupEditorView, GroupPage } from "./views/GroupEditorView.tsx"
 import { GroupImportView } from "./views/GroupImportView.tsx"
 import { NotificationsView } from "./views/NotificationsView.tsx"
+import { OverviewRedirect, OverviewView } from "./views/OverviewView.tsx"
 import { InstallOffer } from "./views/InstallOffer.tsx"
 import { InvitationView } from "./views/InvitationView.tsx"
 import { notificationsStore } from "./state/notifications.ts"
@@ -55,7 +63,12 @@ import { ApiTokenNewView } from "./views/ApiTokenNewView.tsx"
 import { InvitationNewView } from "./views/InvitationNewView.tsx"
 import { AppShell, PublicFrame } from "./views/AppShell.tsx"
 import { signInRedirect } from "./views/sign-in-gate.ts"
-import { announcedPage, SPA_ROUTE_PATHS, type SpaRoutePath } from "./views/spa-paths.ts"
+import {
+  announcedPage,
+  isProfilePath,
+  SPA_ROUTE_PATHS,
+  type SpaRoutePath,
+} from "./views/spa-paths.ts"
 import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { FormatContext } from "@spy4x/preact-ui/format"
 
@@ -93,10 +106,12 @@ const PAGES: {
   "/sign-up/confirm": () => <ConfirmSignUpView />,
   "/sign-up/code": () => <SignUpCodeView />,
   "/sign-in": () => <AuthView key="sign-in" screen="sign-in" />,
+  "/try": () => <TryView />,
+  "/keep": () => <KeepView />,
+  "/keep/taken": () => <GuestTakenView />,
   "/totp": () => <AuthView key="one-time-code" screen="one-time-code" />,
   "/forgot-password": () => <ForgotPasswordView />,
   "/reset-password": () => <ResetPasswordView />,
-  "/email": () => <EmailView />,
   "/subscribe": () => <SubscribeView />,
   "/subscribe/confirm": () => <SubscriptionConfirmView />,
   "/unsubscribe": () => <UnsubscribeView />,
@@ -113,6 +128,8 @@ const PAGES: {
   "/groups/:groupId/:tab?": (params) => <GroupPage groupId={params.groupId} tab={params.tab} />,
   "/invite/:token": (params) => <InvitationView key={params.token} token={params.token} />,
   "/notifications": () => <NotificationsView />,
+  "/overview": () => <OverviewRedirect />,
+  "/overview/:groupId": (params) => <OverviewView key={params.groupId} groupId={params.groupId} />,
   "/tags": () => <TagsView />,
   "/tags/new": () => <TagEditorView key="new" />,
   "/tags/:tagId": (params) => <TagEditorView key={params.tagId} tagId={params.tagId} />,
@@ -120,7 +137,8 @@ const PAGES: {
   "/notes/new": () => <NoteEditorView key="new" />,
   "/notes/:noteId": (params) => <NoteEditorView key={params.noteId} noteId={params.noteId} />,
   "/tokens/new": () => <ApiTokenNewView />,
-  "/": () => <ProfileView />,
+  "/profile/:section?": (params) => <ProfileView section={params.section} />,
+  "/": () => <Redirect to={NOTE_PATHS.list} replace />,
 }
 
 /** One `<Route>` per row of the route table, in its order. */
@@ -160,7 +178,9 @@ function Frame() {
   // document body when signing out swaps the shell. The app has no page titles yet, so the tab's
   // title stays.
   const [path] = useLocation()
-  useRouteAnnouncer({ path: announcedPage(path) })
+  // Moving between the profile's sections, the settings layout moves focus to the new section's
+  // heading itself; the announcer leaves it there.
+  useRouteAnnouncer({ path: announcedPage(path), keepPageFocus: isProfilePath(path) })
   if (session.user && !session.isMfaRequired) {
     return (
       <AppShell user={session.user} wsStatus={connectionDisplay(session)}>

@@ -14,6 +14,7 @@ export * from "./invitations.ts"
 export * from "./move-all.ts"
 export * from "./admin-groups.ts"
 export * from "./export-import.ts"
+export * from "./overview.ts"
 
 /**
  * The aggregate a group's changes are recorded and announced under: the `aggregate_type` of its

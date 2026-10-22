@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks"
-import { useLocation, useSearch } from "wouter-preact"
+import { Redirect, useLocation, useSearch } from "wouter-preact"
 import { decodeBase64Url } from "@std/encoding"
 import {
   PROFILE_FAILURES,
@@ -9,8 +9,8 @@ import {
   type TotpEnrolment,
 } from "@ui/profile-screen.tsx"
 import type { AccountDeleteErrors, AccountDeleteValues } from "@ui/account-delete.tsx"
-import { SCREEN_PATHS } from "@ui/progressive.tsx"
-import { OnboardingView } from "./OnboardingView.tsx"
+import { EMAIL_FAILURES, type EmailMessages, type EmailValues } from "@ui/email-screen.tsx"
+import { isProfileSection, type ProfileSectionId, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { TwoFactorProof } from "@ui/two-factor.ts"
 import {
   changePassword,
@@ -24,6 +24,8 @@ import {
   totpConnectStart,
   totpDisconnect,
 } from "../state/auth.ts"
+import { deleteGuestAccount, isGuestSession } from "../state/guest.ts"
+import { guestRefusal } from "../state/guest-refusal.ts"
 import { sessionState } from "../state/session.ts"
 import { emailStore } from "../state/email.ts"
 import { apiFetch } from "../state/api.ts"
@@ -62,21 +64,36 @@ import { preferencesState } from "../state/preferences.ts"
 import { usePreferencesProps } from "./preferences-props.ts"
 
 const NO_DELETE_VALUES: AccountDeleteValues = { password: "", otp: "" }
+const NO_EMAIL_VALUES: EmailValues = { code: "", email: "", password: "" }
+const NO_EMAIL_MESSAGES: EmailMessages = { verify: null, send: null, change: null }
 const NO_DELETE_ERRORS: AccountDeleteErrors = { form: null }
 const CODE_MISSING = "Enter the code from your authenticator app"
 
-/**
- * Wires `ProfileScreen` to this app's session store, the auth calls and the push endpoints. Holds
- * what the user types, what is in flight and what failed; the screen only draws it.
- */
 /** Adding a passkey needs the server: the card says so while the device is offline. */
 const network = createOnlineStatus()
 
-export function ProfileView() {
-  const [, navigate] = useLocation()
+/**
+ * Wires `ProfileScreen` to this app's session store, the auth calls, the e-mail store and the push
+ * endpoints, for `/profile` and `/profile/<section>`. Holds what the user types, what is in flight
+ * and what failed; the screen only draws it. An address with no such section goes back to
+ * `/profile`.
+ */
+export function ProfileView({ section }: { section?: string }) {
+  if (section !== undefined && !isProfileSection(section)) {
+    return <Redirect to={SCREEN_PATHS.profile} replace />
+  }
+  return <ProfileSections section={section} />
+}
+
+function ProfileSections({ section }: { section?: ProfileSectionId }) {
+  const [path, navigate] = useLocation()
   const search = useSearch()
   const session = sessionState.value
   const preferences = usePreferencesProps()
+  const [emailValues, setEmailValues] = useState(NO_EMAIL_VALUES)
+  const [emailErrors, setEmailErrors] = useState(NO_EMAIL_MESSAGES)
+  const [emailSendNotice, setEmailSendNotice] = useState<string | null>(null)
+  const [emailPending, setEmailPending] = useState({ verify: false, send: false, change: false })
   const [values, setValues] = useState<ProfileValues>({
     firstName: session.user?.firstName || "",
     lastName: session.user?.lastName || "",
@@ -103,6 +120,7 @@ export function ProfileView() {
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [blockers, setBlockers] = useState<AccountDeletionBlocker[] | null>(null)
   const [signOutOthers, setSignOutOthers] = useState(true)
+  const [guestDeleteError, setGuestDeleteError] = useState<string | null>(null)
   // Both lists are kept on the device and shown, with their time, when the server is unreachable.
   const [devices] = useState(() => createDevicesStore(listSessions, localReads))
   const [devicesBusy, setDevicesBusy] = useState(false)
@@ -137,6 +155,7 @@ export function ProfileView() {
     if (!session.user || session.isMfaRequired) return
     // A change made in another tab reaches this page as a hint that runs the same read.
     void profileStore.refresh().catch(() => {})
+    void emailStore.refresh()
     apiFetch<PushPublicKeyResponse>("/api/push/public-key").then((res) => {
       if (res.ok) setPushPublicKey(res.data.publicKey)
     })
@@ -146,15 +165,29 @@ export function ProfileView() {
   }, [session.user?.id, session.isMfaRequired])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
+  // A switch from a guest account (#224) lands here with `?moved=`, the groups that came along.
   useEffect(() => {
-    const notice = oauthNotice(new URLSearchParams(search).get(OAUTH_NOTICE_PARAM))
+    const query = new URLSearchParams(search)
+    const moved = Number(query.get("moved"))
+    if (query.has("moved")) {
+      toasts.success({
+        title: "Signed in to your account",
+        body: moved > 0
+          ? `${moved} ${moved === 1 ? "group" : "groups"} moved from your guest account.`
+          : "Your guest account was deleted.",
+        dataE2E: "guest-switched",
+      })
+      navigate(SCREEN_PATHS.profile, { replace: true })
+      return
+    }
+    const notice = oauthNotice(query.get(OAUTH_NOTICE_PARAM))
     if (!notice) return
     const toast = { body: OAUTH_NOTICES[notice], dataE2E: `sign-in-method-${notice}` }
     if (notice === "linked") toasts.success({ title: "Sign-in method linked", ...toast })
     else if (notice === "link-exists") {
       toasts.info({ title: "Sign-in method already linked", ...toast })
     } else toasts.error({ title: "Sign-in method not linked", ...toast })
-    navigate(SCREEN_PATHS.profile, { replace: true })
+    navigate(path, { replace: true })
   }, [search])
 
   /** Unlinks one method. When this device signed in with it, the page reloads signed out. */
@@ -338,6 +371,11 @@ export function ProfileView() {
   }
 
   const registerPush = async () => {
+    // Before the browser asks for permission: the server refuses a guest's device anyway (#224).
+    if (isGuestSession()) {
+      guestRefusal.value = "push"
+      return
+    }
     if (!pushPublicKey) return
     setPushError(null)
     setPushBusy(true)
@@ -364,7 +402,24 @@ export function ProfileView() {
     setPushBusy(true)
     const result = await profileStore.removePush(deviceId)
     setPushBusy(false)
-    if (!result.ok) setPushError(result.error || PROFILE_FAILURES.push)
+    if (!result.ok) setPushError(result.error || PROFILE_FAILURES.pushRemove)
+  }
+
+  /** Runs one e-mail form's call: clears its message, marks it busy, then shows what came back. */
+  const runEmail = async (
+    form: keyof EmailMessages,
+    call: () => ReturnType<typeof emailStore.send>,
+    onDone: (message: string) => void,
+  ) => {
+    setEmailErrors((current) => ({ ...current, [form]: null }))
+    setEmailPending((current) => ({ ...current, [form]: true }))
+    const outcome = await call()
+    setEmailPending((current) => ({ ...current, [form]: false }))
+    if (!outcome.ok) {
+      setEmailErrors((current) => ({ ...current, [form]: outcome.error || EMAIL_FAILURES[form] }))
+      return
+    }
+    onDone(outcome.message)
   }
 
   /** Reads the groups that stop the deletion; a failed read shows the form, which checks again. */
@@ -396,7 +451,10 @@ export function ProfileView() {
     }
     setDeleteErrors(NO_DELETE_ERRORS)
     setDeleteBusy(true)
-    const result = await deleteAccount(password, twoFactor ? otp : undefined)
+    // Signed out on this page for signed-in people, the app would send the person to sign-in with
+    // this page as next: the page moves to sign-in first.
+    const leave = () => navigate(SCREEN_PATHS.signIn, { replace: true })
+    const result = await deleteAccount(password, twoFactor ? otp : undefined, leave)
     setDeleteBusy(false)
     if (!result.ok) {
       if (result.blocked) await loadBlockers()
@@ -407,7 +465,6 @@ export function ProfileView() {
       }
       return
     }
-    navigate(SCREEN_PATHS.signIn, { replace: true })
     toasts.success({
       title: "Account deleted",
       body: `It goes for good on ${
@@ -417,16 +474,76 @@ export function ProfileView() {
     })
   }
 
+  const submitGuestDelete = async (confirm: string) => {
+    setGuestDeleteError(null)
+    setDeleteBusy(true)
+    const result = await deleteGuestAccount(confirm)
+    setDeleteBusy(false)
+    if (!result.ok) return setGuestDeleteError(result.error)
+    navigate(SCREEN_PATHS.signUp, { replace: true })
+    toasts.success({
+      title: "Guest account deleted",
+      body: "Everything in it is gone.",
+      dataE2E: "guest-deleted",
+    })
+  }
+
   return (
     <ProfileScreen
+      section={section ?? null}
       user={session.user}
-      // The first steps show on the home page, where a new account lands, under its header.
-      onboarding={<OnboardingView />}
+      guest={isGuestSession(session.user)
+        ? {
+          pending: deleteBusy,
+          error: guestDeleteError,
+          onDelete: (confirm) => void submitGuestDelete(confirm),
+        }
+        : undefined}
+      emailChange={{
+        values: emailValues,
+        onValueChange: (field, value) =>
+          setEmailValues((current) => ({ ...current, [field]: value })),
+        errors: emailErrors,
+        notices: { send: emailSendNotice },
+        pending: emailPending,
+        onVerify: () =>
+          void runEmail("verify", () => emailStore.verify(emailValues.code), () => {
+            setEmailValues(NO_EMAIL_VALUES)
+            setEmailSendNotice(null)
+            toasts.success({
+              title: "E-mail verified",
+              body: "Your e-mail address is verified.",
+              dataE2E: "email-verified",
+            })
+          }),
+        onSend: () =>
+          void runEmail("send", () => emailStore.send(), (message) => setEmailSendNotice(message)),
+        onChange: () =>
+          void runEmail(
+            "change",
+            () =>
+              emailStore.change(
+                emailValues.email,
+                providerProof ? undefined : emailValues.password,
+              ),
+            () => {
+              setEmailValues(NO_EMAIL_VALUES)
+              setEmailSendNotice(null)
+            },
+          ),
+        onClose: () => {
+          setEmailValues(NO_EMAIL_VALUES)
+          setEmailErrors(NO_EMAIL_MESSAGES)
+          setEmailSendNotice(null)
+        },
+      }}
+      openEmailCode={new URLSearchParams(search).has("verify")}
       onSetPassword={submitFirstPassword}
       providerProofFresh={providerProofFresh}
       providerProof={providerProof}
       isMfaRequired={session.isMfaRequired}
       email={emailStore.status.value}
+      onRetryEmail={emailStore.loadFailed.value ? () => void emailStore.refresh() : undefined}
       values={values}
       onValueChange={setValue}
       errors={{

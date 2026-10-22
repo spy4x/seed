@@ -20,7 +20,15 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { type ApiAnswer, errorMessage } from "./api.ts"
 import { readFormBody } from "@spy4x/server/http/bounded-body"
 import { API_BODIES, FORM_LIMITS } from "./forms.ts"
-import { REPOSITORY_URL, SITE_NAME, SiteFrame, type SitePageHead, spaLinks } from "./site.tsx"
+import {
+  REPOSITORY_URL,
+  SITE_NAME,
+  SiteFrame,
+  type SitePageHead,
+  spaLinks,
+  TRY_ENTRY,
+  TRY_REL,
+} from "./site.tsx"
 import { define, type State } from "./utils.ts"
 
 /**
@@ -298,7 +306,7 @@ function renderOff(
             <Button href={`${REPOSITORY_URL}/releases`} data-e2e="newsletter-off-releases">
               <IconGitHub class="size-5" /> Releases on GitHub
             </Button>
-            <Button href={spa.signUp} variant="outline">Try the live demo</Button>
+            <Button href={spa.try} rel={TRY_REL} variant="outline">{TRY_ENTRY.label}</Button>
           </div>
         </div>
       </NewsletterBand>

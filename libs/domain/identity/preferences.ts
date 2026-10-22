@@ -24,12 +24,25 @@ const timeZoneSchema = type(`string <= ${NAME_MAX_LENGTH}`).narrow((value, conte
 /** A region format from the picker's list, such as `de-DE`. */
 const localeSchema = type.enumerated(...REGION_FORMAT_LOCALES)
 
+/** The most entries a group overview layout keeps: far more widgets than any product has. */
+export const OVERVIEW_LAYOUT_MAX_ENTRIES = 32
+
+/**
+ * The group overview's layout (#219): widget ids in the person's order, each with whether the
+ * person hid it. Ids only, never what a widget shows. Ids the app no longer has are dropped when
+ * the page reads it (`mergeLayout`), so an old record still reads.
+ */
+const overviewLayoutSchema = type({ id: `string <= ${NAME_MAX_LENGTH}`, hidden: `boolean` })
+  .array()
+  .atMostLength(OVERVIEW_LAYOUT_MAX_ENTRIES)
+
 /** The record's shape. Every key has a default, so a record saved before a key existed reads. */
 export const preferencesSchema = type({
   theme: `'system' | 'light' | 'dark'`,
   locale: localeSchema.or(`null`),
   timeZone: timeZoneSchema.or(`null`),
   hourCycle: `'h12' | 'h23' | null`,
+  overview: overviewLayoutSchema,
 })
 
 export type Preferences = typeof preferencesSchema.infer
@@ -43,13 +56,15 @@ export const DEFAULT_PREFERENCES: Preferences = {
   locale: null,
   timeZone: null,
   hourCycle: null,
+  overview: [],
 }
 
 /**
- * The largest value the server stores, in bytes of JSON. The four keys need about 100, so the row
- * cannot be used as free storage.
+ * The largest value the server stores, in bytes of JSON. The display keys need about 100, and an
+ * overview layout of 32 widgets with ids of about 30 characters about 1,800 (the widget ids of
+ * today are 11 to 15 characters), so the row cannot be used as free storage.
  */
-export const PREFERENCES_MAX_BYTES = 512
+export const PREFERENCES_MAX_BYTES = 2048
 
 /** The checks the server and the SPA share: the schema, the defaults, the cap and the version. */
 export const preferencesDefinition = defineSettings<Preferences>(preferencesSchema, {

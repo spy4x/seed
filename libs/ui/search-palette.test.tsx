@@ -186,9 +186,38 @@ describe("SearchPalette", () => {
       "New note | In Home",
       "New tag | In Home",
       "New group",
+      "Open overview",
       "Open notifications",
       "Open profile | Name, e-mail address, password, two-factor sign-in",
     ])
+  })
+
+  it("lists the open page's own commands first among the actions, and hands back the picked one", async () => {
+    const { picked } = await mount({
+      pageCommands: [
+        { id: "overview-range", label: "Change date range" },
+        { id: "overview-customise", label: "Customise overview" },
+      ],
+    })
+    await open()
+
+    expect(listed().slice(listed().indexOf("# Actions"), listed().indexOf("# Actions") + 3))
+      .toEqual(["# Actions", "Change date range", "Customise overview"])
+
+    await type("customise")
+    const row = [...document.querySelectorAll("[role=option]")]
+      .find((candidate) => text(candidate).startsWith("Customise overview"))!
+    await act(() => {
+      row.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+    })
+    expect(picked).toEqual([{ kind: "command", id: "overview-customise" }])
+  })
+
+  it("offers Open overview only while there is a current group", async () => {
+    await mount({ currentGroup: null })
+    await open()
+
+    expect(listed()).not.toContain("Open overview")
   })
 
   it("lists matching notes with their group, then groups, then actions, with the role and the current group", async () => {
@@ -278,6 +307,19 @@ describe("SearchPalette", () => {
       expect(rows.some((row) => row.startsWith(action))).toBe(false)
     }
     expect(rows).toContain("Open notifications")
+  })
+
+  it("offers a guest Keep your account for the words a person would try, and nobody else", async () => {
+    await mount({ guest: true })
+    await open()
+    await type("register")
+    expect(listed().some((row) => row.startsWith("Keep your account"))).toBe(true)
+
+    await act(() => render(null, root!))
+    await mount()
+    await open()
+    await type("register")
+    expect(listed().some((row) => row.startsWith("Keep your account"))).toBe(false)
   })
 
   it("shows the error line when the search fails", async () => {

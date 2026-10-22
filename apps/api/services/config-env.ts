@@ -29,6 +29,8 @@ export const envSchema = type({
   KV_PASSWORD: "string > 0",
   /** `https://<key>@<host>/<project>` of an error tracker; unset or empty turns reporting off. */
   "ERROR_REPORT_DSN?": "string",
+  /** Guest accounts (#224, docs/guests.md): on unless `false`. */
+  "GUEST_MODE?": "string",
   /** Sign-in with Google is on only when both are set (docs/sign-in-providers.md). */
   "GOOGLE_CLIENT_ID?": "string",
   "GOOGLE_CLIENT_SECRET?": "string",

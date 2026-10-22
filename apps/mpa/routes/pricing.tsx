@@ -19,6 +19,8 @@ import {
   type SitePageHead,
   softwareJsonLd,
   spaLinks,
+  TRY_ENTRY,
+  TRY_REL,
 } from "../site.tsx"
 import { define } from "../utils.ts"
 
@@ -75,11 +77,11 @@ function pricingJsonLd(origin: string): unknown[] {
 /**
  * `GET` shows what Seed costs and, below, the demo app's plans. `POST` is where a plan's "Try in
  * the demo" form goes without JavaScript: plans are chosen inside the app, so it sends the visitor
- * to the app's sign-up.
+ * to the app's `/try`, which opens the demo as a guest account (#224).
  */
 export const handler = define.handlers({
   POST(ctx) {
-    return ctx.redirect(spaLinks(ctx.state.spaOrigin).signUp, 303)
+    return ctx.redirect(spaLinks(ctx.state.spaOrigin).try, 303)
   },
 })
 
@@ -106,13 +108,14 @@ export default define.page(function Pricing({ state }) {
       >
         <div class="flex w-full flex-col gap-4 pt-2 sm:w-auto sm:flex-row">
           <Button
-            href={spa.signUp}
+            href={spa.try}
+            rel={TRY_REL}
             size="lg"
             data-e2e="pricing-try-demo"
             data-umami-event="try-demo"
             data-umami-event-from="hero"
           >
-            Try the live demo
+            {TRY_ENTRY.label}
           </Button>
           <Button
             href={REPOSITORY_URL}
@@ -148,7 +151,7 @@ export default define.page(function Pricing({ state }) {
           />
         </div>
       </Band>
-      <CtaBand demoHref={spa.signUp} />
+      <CtaBand demoHref={spa.try} />
     </SiteFrame>
   )
 })

@@ -13,12 +13,12 @@ import { SiteHeader } from "@spy4x/preact-system/site-header"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { createFormatters } from "@spy4x/time/format"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
-import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME } from "./brand.ts"
+import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY } from "./brand.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
 import { HIRE_PAGE_URL } from "./hire.ts"
 import type { State } from "./utils.ts"
 
-export { AUTHOR_URL, REPOSITORY_URL, SITE_NAME }
+export { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY }
 
 /** The pages that have an Open Graph image of their own, at `/og/<key>.png`. */
 export type OgImageKey =
@@ -67,13 +67,21 @@ export function ogImageAlt(key: OgImageKey): string {
 /** The size of every Open Graph image, in pixels. */
 export const OG_IMAGE_SIZE = { width: 1200, height: 630 } as const
 
-/** The SPA's sign-in and sign-up pages: the website has no session, the product signs people in. */
-export function spaLinks(spaOrigin: string): { signIn: string; signUp: string } {
+/**
+ * The SPA's sign-in and sign-up pages, and `/try`, which starts a guest account (#224): the
+ * website has no session, the product signs people in. A link to `try` carries `rel="nofollow"`
+ * ({@link TRY_REL}), and the app's `robots.txt` keeps crawlers off it.
+ */
+export function spaLinks(spaOrigin: string): { signIn: string; signUp: string; try: string } {
   return {
     signIn: `${spaOrigin}${SCREEN_PATHS.signIn}`,
     signUp: `${spaOrigin}${SCREEN_PATHS.signUp}`,
+    try: `${spaOrigin}/try`,
   }
 }
+
+/** The `rel` of every link to the app's `/try`: opening it makes an account, so no crawler should. */
+export const TRY_REL = `nofollow`
 
 // Seed's own site: see docs/start-a-product.md
 /**
@@ -253,7 +261,8 @@ export function SiteFrame(
         links={NAV_LINKS}
         actions={
           <Button
-            href={spa.signUp}
+            href={spa.try}
+            rel={TRY_REL}
             size="sm"
             data-e2e="site-try-demo"
             data-umami-event="try-demo"
@@ -368,7 +377,7 @@ export function LegalPage(
 }
 
 /** The footer's link columns: the product, the source, and the person and rules behind it. */
-function footerGroups(spa: { signIn: string; signUp: string }): SiteFooterGroup[] {
+function footerGroups(spa: { signIn: string; try: string }): SiteFooterGroup[] {
   return [
     {
       title: `Product`,
@@ -377,7 +386,8 @@ function footerGroups(spa: { signIn: string; signUp: string }): SiteFooterGroup[
         { label: `Admin panel`, href: `/admin` },
         { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
         { label: `Pricing`, href: `/pricing` },
-        { label: `Try the demo`, href: spa.signUp },
+        // The library's footer links take no `rel`; the app's robots.txt keeps crawlers off `/try`.
+        { label: `Try the demo`, href: spa.try },
         { label: `Sign in`, href: spa.signIn },
       ],
     },

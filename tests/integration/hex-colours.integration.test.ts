@@ -13,7 +13,7 @@ import { applyMigrations, migrationNames } from "./migrations.ts"
  * (recipe in docs/handoff.md); it fails when they are missing rather than skipping.
  */
 
-const HEX_MIGRATION = "2026_11_26_0001_hex_colours.sql"
+const HEX_MIGRATION = "2026_11_27_0001_hex_colours.sql"
 
 Deno.test("the hex colour migration turns every palette name into the hex an import reads it as", async () => {
   const settings = buildPostgresOptions(requireDbConnection())

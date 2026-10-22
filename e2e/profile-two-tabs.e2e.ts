@@ -74,7 +74,7 @@ test.describe("profile over the socket", () => {
         route.connectToServer()
         openSockets.push(route)
       })
-      await gotoApp(second, "/", second.locator("[data-e2e=shell-ws-status]"))
+      await gotoApp(second, "/notes", second.locator("[data-e2e=shell-ws-status]"))
       await openProfile(second)
       await expect(second.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
       await expect(second.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")

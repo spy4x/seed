@@ -22,7 +22,7 @@ export const GROUP_EXPORT_VERSION = 1
 
 /**
  * The six colour names tags and groups had before any `#rrggbb` was allowed (#329), with the hex
- * the migration `2026_11_26_0001_hex_colours.sql` gave each. A version 1 file written before then
+ * the migration `2026_11_27_0001_hex_colours.sql` gave each. A version 1 file written before then
  * names its colours this way, so an import reads them through {@link legacyExportColor}.
  */
 export const LEGACY_COLORS: Readonly<Record<string, string>> = {
