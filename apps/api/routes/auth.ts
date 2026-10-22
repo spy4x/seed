@@ -19,6 +19,7 @@ import {
   emailToVerify,
   signInMethodProofSchema,
   type SignUpAccountExistsResponse,
+  type SignUpGuestTakenResponse,
   type User,
   UserMFAStatus,
   type WaitingPasswordSignUpResponse,
@@ -43,7 +44,7 @@ import { PasswordLockedError, passwordLockedMessage } from "@api/services/passwo
 /** What the auth routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface AuthRouteDependencies {
   /** Without the provider sign-in: `auth-oauth.ts` has those routes. */
-  signIn: Omit<SignIn, "oauth" | "passkeys">
+  signIn: Omit<SignIn, "oauth" | "passkeys" | "guests">
   /** Announces a sign-out, so the person's open sockets close. Audit rows are not events (#191). */
   emit(event: UserSignedOutEvent): void
   mutationGuards: MutationGuards
@@ -304,7 +305,10 @@ export function createAuthRoute(
       // sign-up budgets, not the account's own: a stranger's sign-ups must not lock its owner out.
       const decision = await rateLimits.signUpCode(c, email)
       if (!decision.allowed) return tooMany(c, decision.retryAfterMs, SIGN_UP_CODES_TOO_MANY)
-      if (!(await signIn.requestSignUp(c, email, validationResult.data.password))) {
+      // A guest's sign-up keeps the guest account instead of making a new one (#224).
+      const state = c.get("auth")
+      const guestUserId = state?.user.guestSince ? state.user.id : null
+      if (!(await signIn.requestSignUp(c, email, validationResult.data.password, guestUserId))) {
         return c.json({ error: "This password cannot be used. Try another one." }, 400)
       }
       return c.json(SIGN_UP_REQUESTED)
@@ -329,7 +333,12 @@ export function createAuthRoute(
         const result = await signIn.completeSignUp(c, validationResult.data.code)
         switch (result.outcome) {
           case SignUpOutcome.Created:
+          case SignUpOutcome.GuestKept:
             return signInAnswer(c, result.signedIn)
+          case SignUpOutcome.GuestTaken: {
+            const answer: SignUpGuestTakenResponse = { guestTaken: true }
+            return c.json(answer)
+          }
           case SignUpOutcome.AccountExists: {
             const { password, providers } = result.account
             const answer: SignUpAccountExistsResponse = {

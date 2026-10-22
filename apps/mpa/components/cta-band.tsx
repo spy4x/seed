@@ -1,6 +1,7 @@
 import type { JSX } from "preact"
 import { Button } from "@spy4x/preact-ui/button"
 import { IconArrowRight, IconGitHub } from "@spy4x/preact-icons"
+import { TRY_ENTRY, TRY_REL } from "../site.tsx"
 import { REPOSITORY_URL } from "../brand.ts"
 import { Band } from "./band.tsx"
 import { SectionIntro } from "./section-intro.tsx"
@@ -13,7 +14,7 @@ interface CtaBandText {
 /** The demo first, GitHub second: for a page about what the product does. */
 interface DemoAsk extends CtaBandText {
   ask?: "demo"
-  /** The SPA's sign-up page: the live demo. */
+  /** The app's `/try`: the live demo, opened as a guest account (#224). */
   demoHref: string
 }
 
@@ -31,7 +32,7 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
   const {
     title = "See it working in a minute",
     lead =
-      "The demo is the app you get on day one. Sign up and start in groups full of sample notes.",
+      "The demo is the app you get on day one. Open it without signing up and start in groups full of sample notes.",
   } = props
   const github = (variant: "primary" | "outline") => (
     <Button
@@ -68,11 +69,12 @@ export function CtaBand(props: CtaBandProps): JSX.Element {
             <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
               <Button
                 href={props.demoHref}
+                rel={TRY_REL}
                 size="lg"
                 data-umami-event="try-demo"
                 data-umami-event-from="cta"
               >
-                Try the live demo
+                {TRY_ENTRY.label}
               </Button>
               {github("outline")}
             </div>

@@ -27,6 +27,8 @@ export enum AdminActionKind {
   ChangeRole = 5,
   /** Mail the "Forgot password" link to the person's password address (#425). */
   SendPasswordReset = 6,
+  /** Delete a guest account (#224) with everything in it, at once. Guests only. */
+  DeleteGuest = 7,
 }
 
 /** What an action needs besides its kind: the session to end, or the role to give. */
@@ -59,6 +61,8 @@ export enum AdminActOutcome {
    * one, operator or stranger, mails one inbox more often than it allows.
    */
   TooManyResets = 10,
+  /** A guest delete of an account that is no guest. */
+  NotGuest = 11,
 }
 
 /** How many rows the CSV export reads from the database at a time. */
@@ -242,6 +246,18 @@ export function createAdmin(
             )
             break
           }
+          case AdminActionKind.DeleteGuest:
+            // Only a guest: a full account goes through its owner's delete and its grace period.
+            if (!(await tx.guests.delete(targetId))) return AdminActOutcome.NotGuest
+            await tx.authAudit.insert(
+              auditRow(
+                c,
+                actor.user.id,
+                AuthAuditEventType.GUEST_DELETED_BY_OPERATOR,
+                `user:${targetId}`,
+              ),
+            )
+            break
         }
         return AdminActOutcome.Done
       })

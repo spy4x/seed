@@ -814,7 +814,7 @@ describe("ProfileScreen", () => {
     expect(find("[data-e2e=settings-heading]").textContent).toBe("Sign-in and security")
   })
 
-  it("shows only the open section, and on the list's own address Account where a phone hides it", async () => {
+  it("shows only the open section, and on the list's own address Account, headed, where a phone hides it", async () => {
     const has = (selector: string) => document.querySelector(selector) !== null
     await mount(<ProfileScreen {...profileDefaults} section="security" emailChange={emailChange} />)
     expect(has("[data-e2e=password-open]")).toBe(true)
@@ -823,7 +823,10 @@ describe("ProfileScreen", () => {
     await rerender(<ProfileScreen {...profileDefaults} section={null} />)
     expect(has("[data-e2e=password-open]")).toBe(false)
     expect(has("[data-e2e=settings-section].max-md\\:hidden [data-e2e=profile-edit]")).toBe(true)
-    expect(has("[data-e2e=settings-heading]")).toBe(false)
+    expect(
+      find("[data-e2e=settings-section].max-md\\:hidden [data-e2e=settings-heading]").textContent,
+    )
+      .toBe("Account")
     expect(has("[aria-current=page]")).toBe(false)
   })
 

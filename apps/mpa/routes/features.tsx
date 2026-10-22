@@ -35,6 +35,8 @@ import {
   type SitePageHead,
   softwareJsonLd,
   spaLinks,
+  TRY_ENTRY,
+  TRY_REL,
 } from "../site.tsx"
 import { define } from "../utils.ts"
 
@@ -92,13 +94,16 @@ const TIERS: readonly Tier[] = [
         lead:
           `People sign up with an email address and a password, prove the address with a code ` +
           `sent by email, reset a forgotten password, continue with Google or GitHub, or sign in ` +
-          `with a passkey. An authenticator app adds two-factor authentication (2FA). They see every device they are signed in on ` +
+          `with a passkey, or try the app first in a guest account and add a sign-in method later. ` +
+          `An authenticator app adds two-factor authentication (2FA). They see every device they are signed in on ` +
           `and can sign the others out. Changing a sign-in method asks for proof and sends a mail.`,
         facts: [
           `Passwords hashed with PBKDF2-SHA-256 through Web Crypto, 600,000 rounds by default`,
           `Signed session cookies, and an audit trail of every sign-in event`,
           `Personal API tokens, stored only as keyed hashes`,
           `Passkeys: only the public key is stored, and each sign-in challenge works once`,
+          `Guest accounts (anonymous sign-in): a visitor starts with one click and no sign-in ` +
+          `method, then adds an email and password, Google, GitHub or a passkey to the same account`,
           `Wrong passwords counted per sign-in name, with a short lock, from any network address`,
         ],
         notYet: [{ label: `Magic links` }],
@@ -486,7 +491,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       class="site-glow"
       eyebrow="Features"
       title="Everything Seed ships, and what it does not yet"
-      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
+      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
       author={SITE_AUTHOR}
       updated={FEATURES_UPDATED}
       note='Seed is a work in progress, built in public. What is not built yet is marked "Not built yet" next to the claim it limits, with its issue when one is open.'
@@ -494,12 +499,13 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       <div class="flex w-full flex-col gap-4 sm:w-auto sm:flex-row">
         <Button
           href={demoHref}
+          rel={TRY_REL}
           size="lg"
           data-e2e="features-try-demo"
           data-umami-event="try-demo"
           data-umami-event-from="hero"
         >
-          Try the live demo
+          {TRY_ENTRY.label}
         </Button>
         <Button
           href={REPOSITORY_URL}
@@ -534,7 +540,7 @@ export default define.page(function Features({ state }) {
   ]
   return (
     <SiteFrame state={state} path="/features" head={head}>
-      <Hero demoHref={spa.signUp} />
+      <Hero demoHref={spa.try} />
       <div class="mx-auto grid w-full max-w-6xl gap-12 px-4 py-12 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-16">
         <div class="lg:col-span-3 xl:col-span-2">
           <OnThisPage links={nav} />
@@ -569,7 +575,7 @@ export default define.page(function Features({ state }) {
           />
         </div>
       </Band>
-      <CtaBand demoHref={spa.signUp} />
+      <CtaBand demoHref={spa.try} />
     </SiteFrame>
   )
 })

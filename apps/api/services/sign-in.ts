@@ -131,6 +131,7 @@ import {
   type ExistingAccount,
   SIGN_UP_TTL_MINUTES,
   signUpExpiry,
+  type SignUpRequest,
 } from "@server/auth/sign-up-requests.ts"
 import { createOAuthOperations, type OAuthOperations, type OAuthOptions } from "./oauth-sign-in.ts"
 import {
@@ -139,6 +140,7 @@ import {
   type PasskeyOptions,
 } from "./passkey-sign-in.ts"
 import { PasswordLockedError } from "./password-locked.ts"
+import { createGuestOperations, type GuestOperations } from "./guest-sign-in.ts"
 
 /** Longest username, in characters (code points), after normalisation. */
 export const USERNAME_MAX_LENGTH = 50
@@ -223,6 +225,8 @@ export interface SignInOptions {
   oauth?: OAuthOptions
   /** Sign-in with passkeys (`passkey-sign-in.ts`). Left out, passkeys are off. */
   passkeys?: PasskeyOptions
+  /** Guest accounts (#224, `guest-sign-in.ts`): one click into the app. Left out, on. */
+  guests?: boolean
 }
 
 /** What {@link SignIn.deleteAccount} did. */
@@ -242,13 +246,21 @@ export enum SignUpOutcome {
   WrongCode = 3,
   /** No sign-up waits: it took too long, the code was guessed at too often, or none was started. */
   Expired = 4,
+  /** A guest's sign-up (#224): the address and password were added to the guest, now kept. */
+  GuestKept = 5,
+  /**
+   * A guest's sign-up whose address belongs to an account with a password: nothing changed, and
+   * the switch page offers to sign in to that account with its password.
+   */
+  GuestTaken = 6,
 }
 
 /** The answer of {@link SignIn.completeSignUp}. */
 export type SignUpCompletion =
   | { outcome: SignUpOutcome.Created; signedIn: SignedIn }
   | { outcome: SignUpOutcome.AccountExists; email: string; account: ExistingAccount }
-  | { outcome: SignUpOutcome.WrongCode | SignUpOutcome.Expired }
+  | { outcome: SignUpOutcome.GuestKept; signedIn: SignedIn }
+  | { outcome: SignUpOutcome.WrongCode | SignUpOutcome.Expired | SignUpOutcome.GuestTaken }
 
 /** A sign-up waiting for its code, as the page that asks for the code reads it back. */
 export interface WaitingSignUp {
@@ -288,7 +300,12 @@ export interface SignIn {
    * the same answer for every address: it never asks whether an account uses `email`, which must
    * be normalised already. `false` only for a password the hasher refuses.
    */
-  requestSignUp(c: Context, email: string, password: string): Promise<boolean>
+  requestSignUp(
+    c: Context,
+    email: string,
+    password: string,
+    guestUserId?: number | null,
+  ): Promise<boolean>
   /** The sign-up the request's cookie names while it waits, or `null`. */
   waitingSignUp(c: Context): Promise<WaitingSignUp | null>
   /**
@@ -460,6 +477,8 @@ export interface SignIn {
   oauth: OAuthOperations
   /** Adding passkeys and signing in with them (`passkey-sign-in.ts`). */
   passkeys: PasskeyOperations
+  /** Guest accounts: one click into the app, kept later with a sign-in method (#224). */
+  guests: GuestOperations
 }
 
 /**
@@ -507,11 +526,11 @@ function deviceOf(c: Context): SessionDevice {
 /** Builds the app's sign-in over the package building blocks. */
 export function createSignIn(options: SignInOptions): SignIn {
   const { db } = options
-  const sessionsOver = (store: SessionStore<AuthSessionRecord>) =>
+  const sessionsOver = (store: SessionStore<AuthSessionRecord>, minutes = options.sessionMinutes) =>
     new SessionManager<AuthSessionRecord>({
       store,
       pepper: options.pepper,
-      durationMinutes: options.sessionMinutes,
+      durationMinutes: minutes,
     })
   const sessions = sessionsOver(db.sessionStore)
   const cookie = new SessionCookie({ secret: options.cookieSecret, secure: options.secureCookie })
@@ -588,7 +607,15 @@ export function createSignIn(options: SignInOptions): SignIn {
   ) =>
     await packageAuth.parseAuth(c, async () => {
       const state = c.get("auth")
-      if (state) touchSession(state.session.id, state.session.userId)
+      if (state) {
+        touchSession(state.session.id, state.session.userId)
+        // A guest's session is the only way back in, so a day of use renews it to a year (#224).
+        if (state.user.guestSince) {
+          await guests.renew(c, state).catch((error) => {
+            console.error("error: cannot renew a guest's session", error)
+          })
+        }
+      }
       await next()
     })
   const auth: Auth<AuthSessionRecord, User> = { ...packageAuth, parseAuth }
@@ -684,7 +711,22 @@ export function createSignIn(options: SignInOptions): SignIn {
       ),
     })
 
+  // The guest operations call the password and code checks the returned object defines; they run
+  // only on requests, long after `api` below is assigned.
+  const guests = createGuestOperations({
+    db,
+    enabled: options.guests ?? true,
+    sessionsOver,
+    sessionMinutes: options.sessionMinutes,
+    cookie,
+    auditRow,
+    deviceOf,
+    checkPassword: (userId, password) => api.checkPassword(userId, password),
+    verifyTotpCode: (state, code) => api.verifyTotpCode(state as AppAuthState, code),
+  })
+
   const oauth = createOAuthOperations(options.oauth, {
+    guests,
     db,
     sessionsOver,
     cookie,
@@ -711,6 +753,7 @@ export function createSignIn(options: SignInOptions): SignIn {
   })
 
   const passkeys = createPasskeyOperations(options.passkeys, {
+    guests,
     db,
     sessionsOver,
     cookie,
@@ -757,6 +800,66 @@ export function createSignIn(options: SignInOptions): SignIn {
     return user
   }
 
+  /**
+   * The right code of a guest's sign-up (#224): the address and password become the guest's first
+   * sign-in method, so the account is kept with the same user id and everything in it. The
+   * browser must still carry that guest's session. When an account already uses the address and
+   * has a password, nothing changes and the switch page asks for that password; one without a
+   * password is answered as a sign-up is, with how it signs in.
+   */
+  async function keepGuestByAddress(
+    c: Context,
+    request: SignUpRequest,
+    now: Date,
+  ): Promise<SignUpCompletion> {
+    const state = c.get("auth") as AppAuthState | null | undefined
+    const guestId = request.guestUserId!
+    if (!state || state.user.id !== guestId || !state.user.guestSince) {
+      await endSignUp(c, request.id)
+      return { outcome: SignUpOutcome.Expired }
+    }
+    const account = await accountUsing(db.authStore, request.email)
+    if (account !== null) {
+      await endSignUp(c, request.id)
+      const key = account.password
+        ? await db.authStore.findKey(PASSWORD_METHOD, request.email)
+        : null
+      if (key && key.userId !== guestId) {
+        await guests.taken(guestId, key, true)
+        return { outcome: SignUpOutcome.GuestTaken }
+      }
+      return { outcome: SignUpOutcome.AccountExists, email: request.email, account }
+    }
+    try {
+      const kept = await db.begin(async (tx) => {
+        await tx.lockUser(guestId)
+        const key = await tx.authStore.addKey(guestId, {
+          method: PASSWORD_METHOD,
+          subject: request.email,
+          email: request.email,
+          secret: request.secret,
+          provenAt: now,
+        })
+        if (!(await guests.keep(c, tx, guestId, key.id, PASSWORD_METHOD))) return null
+        await tx.signUpRequest.remove(request.id)
+        return await tx.user.findOne({ id: guestId })
+      })
+      deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)
+      if (!kept) return { outcome: SignUpOutcome.Expired }
+      return {
+        outcome: SignUpOutcome.GuestKept,
+        signedIn: { user: kept, session: state.session },
+      }
+    } catch (error) {
+      // Another account took the address between the check and the write.
+      if (error instanceof AuthConflictError) {
+        await endSignUp(c, request.id)
+        return { outcome: SignUpOutcome.Expired }
+      }
+      throw error
+    }
+  }
+
   const signUpCookie = createSignedPayloadCodec({
     secret: options.cookieSecret,
     purpose: "app.password-sign-up",
@@ -794,10 +897,11 @@ export function createSignIn(options: SignInOptions): SignIn {
     deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)
   }
 
-  return {
+  const api: SignIn = {
     auth,
     oauth,
     passkeys,
+    guests,
 
     async signUp(c, rawEmail, password, firstGroupId = uuidV7()) {
       // Checked here too, so a refused address opens no transaction and makes no provider.
@@ -849,7 +953,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       return { user: created.user, session: created.session }
     },
 
-    async requestSignUp(c, email, password) {
+    async requestSignUp(c, email, password, guestUserId = null) {
       // Hashed before anything is written, as `signUp` does, so no pool connection waits on it.
       let secret: string
       try {
@@ -860,7 +964,13 @@ export function createSignIn(options: SignInOptions): SignIn {
       }
       const id = uuidV7()
       await db.begin(async (tx) => {
-        await tx.signUpRequest.create({ id, email, secret, expiresAt: signUpExpiry(new Date()) })
+        await tx.signUpRequest.create({
+          id,
+          email,
+          secret,
+          expiresAt: signUpExpiry(new Date()),
+          guestUserId,
+        })
         await tx.signUpRequest.queueCode(id)
       })
       await setSignUpCookie(c, id)
@@ -911,6 +1021,7 @@ export function createSignIn(options: SignInOptions): SignIn {
         if (account === null) return { outcome: SignUpOutcome.Expired }
         return { outcome: SignUpOutcome.AccountExists, email: request.email, account }
       }
+      if (request.guestUserId) return await keepGuestByAddress(c, request, now)
       if (await accountUsing(db.authStore, request.email)) return await existing()
 
       let created
@@ -1503,6 +1614,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       })
     },
   }
+  return api
 }
 
 /**

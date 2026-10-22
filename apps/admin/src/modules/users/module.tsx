@@ -94,7 +94,8 @@ function UserView(
       onCloseDialog={state.closeDialog}
       actionError={dialog.error}
       pending={dialog.pending}
-      onAction={(_action, input) => state.act(input)}
+      onAction={(_action, input) =>
+        void state.act(input).then((gone) => gone && context.navigate(ADMIN_PATHS.users))}
       navigate={context.navigate}
     />
   )

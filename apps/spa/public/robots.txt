@@ -1,0 +1,3 @@
+User-agent: *
+# Opening /try makes a guest account (#224): crawlers keep away.
+Disallow: /try

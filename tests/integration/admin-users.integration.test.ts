@@ -2,7 +2,7 @@
 import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
-import { AuthAuditEventType, UserRole } from "@domain/identity"
+import { AuthAuditEventType, GuestEventKind, UserRole } from "@domain/identity"
 import { ADMIN_NO_FILTER, type AdminUserFilter } from "@domain/identity"
 import { apiTokenRows } from "@server/api-tokens/api-tokens.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
@@ -724,5 +724,77 @@ Deno.test("the role script writes an audit row naming itself, and none when noth
     expect(await auditsOf(sql, id, AuthAuditEventType.USER_ROLE_CHANGED)).toEqual([
       "cli:user-role from viewer to operator",
     ])
+  })
+})
+
+Deno.test("an operator deletes a guest account at once, never a full one, with the audit row on the operator", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const operator = await signUp(app, "ops@example.com")
+    const guest = await signUp(app, "guest@example.com")
+    const full = await signUp(app, "ada@example.com")
+    await new AppDbBase({ sql }).admin.setRoleByAddress(
+      "ops@example.com",
+      UserRole.OPERATOR,
+      "test",
+    )
+    await sql`UPDATE users SET guest_since = now() WHERE id = ${guest.id}`
+
+    const refused = await operator.request("POST", `/act/${full.id}/${AdminActionKind.DeleteGuest}`)
+    expect(await refused.json()).toEqual({ outcome: AdminActOutcome.NotGuest })
+    const done = await operator.request("POST", `/act/${guest.id}/${AdminActionKind.DeleteGuest}`)
+    expect(await done.json()).toEqual({ outcome: AdminActOutcome.Done })
+
+    const left = await sql<{ id: number }[]>`SELECT id FROM auth_users ORDER BY id`
+    expect(left.map((row) => row.id)).toEqual([operator.id, full.id].sort((a, b) => a - b))
+    const audits = await sql<{ userId: number; eventType: number; identifier: string }[]>`
+      SELECT user_id, event_type, identifier FROM auth_audits
+      WHERE event_type = ${AuthAuditEventType.GUEST_DELETED_BY_OPERATOR}
+    `
+    expect(audits).toEqual([{
+      userId: operator.id,
+      eventType: AuthAuditEventType.GUEST_DELETED_BY_OPERATOR,
+      identifier: `user:${guest.id}`,
+    }])
+  })
+})
+
+Deno.test("the user list shows guest accounts or full ones, and marks a guest", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const guest = await signUp(app, "guest@example.com")
+    await signUp(app, "ada@example.com")
+    await sql`UPDATE users SET guest_since = now() WHERE id = ${guest.id}`
+    const db = new AppDbBase({ sql })
+    const emails = async (filter: Partial<AdminUserFilter>) =>
+      (await db.admin.list({ ...ADMIN_NO_FILTER, ...filter }, 10)).users.map((user) => user.email)
+
+    expect(await emails({ account: "guest" })).toEqual(["guest@example.com"])
+    expect(await emails({ account: "full" })).toEqual(["ada@example.com"])
+    expect((await emails({})).sort()).toEqual(["ada@example.com", "guest@example.com"])
+    const rows = (await db.admin.list(ADMIN_NO_FILTER, 10)).users
+    expect(rows.find((row) => row.id === guest.id)!.guestSince).not.toBeNull()
+    expect(rows.find((row) => row.id !== guest.id)!.guestSince).toBeNull()
+  })
+})
+
+Deno.test("the dashboard counts guest accounts started, kept and cleaned up over its days", async () => {
+  await withSchema(async (sql) => {
+    const db = new AppDbBase({ sql })
+    for (const kind of [GuestEventKind.Created, GuestEventKind.Created, GuestEventKind.Kept]) {
+      await db.guests.event(kind)
+    }
+    await db.guests.event(GuestEventKind.CleanedUp)
+    // An event older than the dashboard's days is left out.
+    await sql`
+      INSERT INTO guest_events (id, kind, created_at)
+      VALUES (${uuidV7()}, 1, now() - interval '40 days')
+    `
+
+    expect((await readAdminStats(sql, new Date())).guests).toEqual({
+      created: 2,
+      kept: 1,
+      cleanedUp: 1,
+    })
   })
 })

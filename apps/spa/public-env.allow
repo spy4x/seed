@@ -9,3 +9,8 @@ SPA_REALTIME realtime
 SPA_OFFLINE offline
 # The public demo (docs/demo.md): `true` shows the demo line on the sign-in and sign-up pages.
 SPA_DEMO demo
+# Guest accounts (docs/guests.md): `false` hides "Try it now"; unset or anything else shows it.
+SPA_GUEST guest
+# The public website's host (MPA_DOMAIN), such as `www.example.com`: the legal pages the line under
+# "Try it now" links to. Unset: the line names them without links.
+SPA_SITE site

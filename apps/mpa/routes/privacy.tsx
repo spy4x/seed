@@ -77,6 +77,13 @@ export default define.page(function Privacy({ state }) {
           itself), the email address and the name if you add them, and the second-factor secret if
           you turn it on.
         </li>
+        <li>
+          If you try the app without an account: a guest account, with no address and no password.
+          Its sign-ins are recorded like any other account's. To keep one network from making more
+          than five an hour, the server counts new guest accounts per network address for an hour. A
+          guest account that stays empty is deleted after 7 days, and one unused for a year is
+          deleted with everything in it.
+        </li>
         <li>What you create: groups, who is in them, invitations, notes and their tags.</li>
         <li>
           A record of each sign-in, with the time, your IP address and your browser's user agent,
@@ -131,7 +138,8 @@ export default define.page(function Privacy({ state }) {
       <h2 id="cookies">Cookies and your browser</h2>
       <p>
         The demo sets two cookies when you sign in. Signing out removes them; otherwise they last as
-        long as the session, two months.
+        long as the session: two months, or for a guest account one year, counted again from each
+        day you use it.
       </p>
       <ul>
         <li>

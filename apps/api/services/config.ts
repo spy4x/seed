@@ -20,6 +20,8 @@ export class Config {
   }
   timeZone = env.TIMEZONE
   authSessionDurationMin = 60 * 24 * 30 * 2 // 2 months
+  /** "Try it now": one click into the app as a guest (#224). On unless `GUEST_MODE=false`. */
+  guestMode = env.GUEST_MODE !== "false"
   rateLimiter = {
     windowMs: env.RATE_LIMITER_WINDOW_MS,
     strictLimit: env.RATE_LIMITER_STRICT_LIMIT,
