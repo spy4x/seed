@@ -30,10 +30,10 @@ import { signOutRedirect } from "./sign-in-gate.ts"
 import { UnsentSignOut } from "./UnsentSignOut.tsx"
 import { GUEST_PATHS, GuestBanner, GuestSignOutDialog } from "@ui/guest-screens.tsx"
 import {
-  demoWipeTime,
   hideGuestBanner,
   isGuestBannerHidden,
   isGuestSession,
+  nextPacificMidnight,
 } from "../state/guest.ts"
 import { demoMode } from "../state/demo.ts"
 import { guestRefusal } from "../state/guest-refusal.ts"
@@ -256,7 +256,7 @@ export function AppShell(
       banner={guest
         ? location.startsWith(GUEST_PATHS.keep) || bannerHidden.value ? undefined : (
           <GuestBanner
-            wipeTime={demoMode.value ? demoWipeTime() : null}
+            wipeAt={demoMode.value ? nextPacificMidnight(new Date()) : null}
             navigate={navigate}
             onDismiss={() => {
               hideGuestBanner(user.id)

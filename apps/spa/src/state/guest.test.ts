@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { refusedAction } from "./guest-refusal.ts"
-import { demoWipeTime, hideGuestBanner, isGuestBannerHidden, nextPacificMidnight } from "./guest.ts"
+import { hideGuestBanner, isGuestBannerHidden, nextPacificMidnight } from "./guest.ts"
 
 /** A `Storage` in memory, or one whose every call throws, as a blocked one does. */
 function memoryStorage(blocked = false): Storage {
@@ -34,10 +34,6 @@ describe("the demo's nightly wipe", () => {
     // In July Los Angeles is UTC-7.
     expect(nextPacificMidnight(new Date("2026-07-15T20:00:00Z")).toISOString())
       .toBe("2026-07-16T07:00:00.000Z")
-  })
-
-  it("is shown in the visitor's own time zone", () => {
-    expect(demoWipeTime(new Date("2026-01-15T20:00:00Z"), "en-GB", "Europe/Berlin")).toBe("9:00")
   })
 })
 

@@ -9,6 +9,7 @@ import {
 import { apiFetch } from "./api.ts"
 import { bootstrapSession } from "./auth.ts"
 import { sessionState } from "./session.ts"
+import { addDays, isoDateInTz, resolveWallClock } from "@spy4x/time/tz"
 
 /**
  * Guest accounts (#224) in the SPA: starting one from `/try`, the choice after a sign-in method
@@ -177,40 +178,14 @@ export function takeKeep(): KeepPending | null {
   }
 }
 
-/**
- * The demo's nightly wipe in the visitor's own time, such as "09:00": the wipe runs at midnight
- * Pacific time (docs/demo.md). `now` picks the night, so the time follows daylight saving.
- */
-export function demoWipeTime(now = new Date(), locale?: string, timeZone?: string): string {
-  const next = nextPacificMidnight(now)
-  return new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit", timeZone }).format(
-    next,
-  )
-}
+/** The zone whose midnight the demo's nightly wipe runs at (docs/demo.md). */
+const DEMO_WIPE_ZONE = "America/Los_Angeles"
 
-/** The next midnight in `America/Los_Angeles` after `now`. */
+/**
+ * The demo's next nightly wipe after `now`: the next midnight in Los Angeles, so it follows
+ * daylight saving. The banner shows it in the person's own time through the app's formatter.
+ */
 export function nextPacificMidnight(now: Date): Date {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Los_Angeles",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(now)
-  const get = (type: string) => Number(parts.find((part) => part.type === type)!.value)
-  // The Pacific wall clock now, read as if it were UTC, and the gap to the real UTC instant.
-  const wall = Date.UTC(
-    get("year"),
-    get("month") - 1,
-    get("day"),
-    get("hour"),
-    get("minute"),
-    get("second"),
-  )
-  const offset = wall - Math.floor(now.getTime() / 1000) * 1000
-  const midnight = Date.UTC(get("year"), get("month") - 1, get("day") + 1)
-  return new Date(midnight - offset)
+  const tomorrow = addDays(isoDateInTz(now, DEMO_WIPE_ZONE), 1, DEMO_WIPE_ZONE)
+  return resolveWallClock(tomorrow, "00:00", DEMO_WIPE_ZONE).instant
 }

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Field } from "@spy4x/preact-ui/field"
+import { useFormat } from "@spy4x/preact-ui/format"
 import { Input } from "@spy4x/preact-ui/input"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
@@ -207,15 +208,17 @@ export const GUEST_BANNER_TEXT =
 
 /**
  * The guest banner (#224), in the frame's banner slot: what a guest account is, and the way to
- * keep it. `wipeTime` is the demo's nightly wipe in the visitor's own time, on the demo only.
+ * keep it. `wipeAt` is the demo's next nightly wipe, on the demo only; the banner shows it in the
+ * person's own time and clock.
  */
 export function GuestBanner(
-  { wipeTime, onDismiss, navigate }: {
-    wipeTime: string | null
+  { wipeAt, onDismiss, navigate }: {
+    wipeAt: Date | null
     onDismiss: () => void
     navigate?: Navigate
   },
 ): JSX.Element {
+  const format = useFormat()
   return (
     <Notice
       live={false}
@@ -234,7 +237,7 @@ export function GuestBanner(
         </Button>
       }
     >
-      {wipeTime ? demoWipeLine(wipeTime) : GUEST_BANNER_TEXT}
+      {wipeAt ? demoWipeLine(format.time(wipeAt)) : GUEST_BANNER_TEXT}
     </Notice>
   )
 }

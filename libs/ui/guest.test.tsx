@@ -9,8 +9,11 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import type { GuestSwitchState, OnboardingSteps } from "@domain/identity"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import {
   demoWipeLine,
+  GuestBanner,
   GuestSignOutDialog,
   GuestTakenScreen,
   type GuestTakenScreenProps,
@@ -256,6 +259,20 @@ describe("GuestTakenScreen", () => {
     expect(document.querySelector("[data-e2e=taken-password]")).toBeNull()
     await submit("[data-e2e=taken-submit]")
     expect(calls).toEqual([["keep"]])
+  })
+})
+
+describe("GuestBanner", () => {
+  it("shows the demo's wipe in the person's own zone and clock, through the app's formatter", async () => {
+    // Midnight in Los Angeles on 16 January is 08:00 UTC, 09:00 in Berlin.
+    await mount(
+      <FormatContext.Provider
+        value={createFormatters({ locale: "en-GB", timeZone: "Europe/Berlin" })}
+      >
+        <GuestBanner wipeAt={new Date("2026-01-16T08:00:00Z")} onDismiss={() => {}} />
+      </FormatContext.Provider>,
+    )
+    expect(find("[data-e2e=guest-banner]").textContent).toContain("every night at 09:00,")
   })
 })
 
