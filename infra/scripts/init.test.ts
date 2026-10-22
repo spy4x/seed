@@ -91,6 +91,10 @@ Deno.test("the file store's key and secrets take the form Garage accepts", () =>
   expect(values.S3_ACCESS_KEY_ID).toMatch(/^GK[0-9a-f]{24}$/)
   expect(values.S3_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/)
   expect(values.GARAGE_RPC_SECRET).toMatch(/^[0-9a-f]{64}$/)
+  const placeholders = parseEnvValues(example, `.env.example`)
+  for (const key of [`S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `GARAGE_RPC_SECRET`]) {
+    expect(values[key], key).not.toBe(placeholders[key])
+  }
 })
 
 Deno.test("the pepper and the Grafana password carry a warning, the others do not", () => {
