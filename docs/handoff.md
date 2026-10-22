@@ -193,6 +193,22 @@ address proven before keeps them. Limits: the IP limit of the other anonymous au
 requests an hour per address (`ratelimit-reset` in Valkey, keyed by a hash of the address, refusing
 when Valkey is down).
 
+**Sign-in links (#391).** `POST /api/auth/link` with `{ email, next? }` answers the same body for
+every valid address, writes a row to `sign_in_link_requests` and queues the `auth.sign-in-link-mail`
+job, whose worker issues the secret (`randomBase64Url`, 32 bytes, a challenge of
+`@spy4x/server/auth` stored as a hash, 15 minutes) and mails `/sign-in/link/open#token=<id>.<secret>`
+in the same step. The token rides in the fragment, so no request, log or `Referer` carries it, and
+the page strips it with `history.replaceState`. Opening the page spends nothing, because mail
+scanners open links; Continue sends `POST /api/auth/link/redeem` with `{ token }`. One link used
+stops every other link of the address. The link signs in the owner of a proven address, or creates
+an account (proven) for a new one; an unproven password key on the address refuses it (409), since
+the link proves the mailbox, not that account. Sessions run on a per-user `email-link` key with no
+secret, which `GET /api/auth/methods` never lists (its `emailLink` says whether a link reaches the
+account) and which counts as provider proof like a passkey. A second factor still applies. Limits: 3
+links an hour per client share and 10 per address (`ratelimit-sign-in-link`). Code:
+`libs/server/auth/sign-in-links.ts`, `libs/server/jobs/sign-in-link-mail.ts`,
+`apps/api/services/sign-in.ts` (`redeemSignInLink`).
+
 **Sign-up proves the address first (spy4x/template#142).** `POST /api/auth/password/sign-up` hashes
 the password, writes a waiting sign-up to `sign_up_requests` (10 minutes, `SIGN_UP_CODE_MINUTES`),
 queues the `auth.sign-up-code-mail` job and sets the signed HttpOnly cookie `password_sign_up` (path
