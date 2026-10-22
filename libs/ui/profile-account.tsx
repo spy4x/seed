@@ -1,6 +1,7 @@
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
@@ -209,7 +210,7 @@ export function AccountSection(
               />
             </Field>
             <ErrorState message={nameEdit.error} />
-            <Cluster justify="end">
+            <DialogActions>
               <Button type="button" variant="ghost" onClick={cancelName}>Cancel</Button>
               <Button
                 type="submit"
@@ -219,7 +220,7 @@ export function AccountSection(
               >
                 Save
               </Button>
-            </Cluster>
+            </DialogActions>
           </Stack>
         </ScreenForm>
       </Modal>

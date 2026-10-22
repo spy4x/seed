@@ -2,11 +2,12 @@ import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconLockClosed } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { Card } from "@spy4x/preact-ui/card"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
@@ -146,7 +147,7 @@ export function GuestAccountDelete(
                 data-e2e="guest-delete-word"
               />
             </Field>
-            <Cluster justify="end">
+            <DialogActions>
               <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
               <Button
                 type="submit"
@@ -156,7 +157,7 @@ export function GuestAccountDelete(
               >
                 Delete for good
               </Button>
-            </Cluster>
+            </DialogActions>
           </Stack>
         </ScreenForm>
       </Modal>
@@ -212,7 +213,7 @@ export function GuestRefusalDialog(
       cancelLabel="Close"
       dataE2E="guest-refusal"
       footer={
-        <Cluster justify="end">
+        <>
           <Button type="button" variant="ghost" onClick={onClose} data-e2e="guest-refusal-close">
             Not now
           </Button>
@@ -224,7 +225,7 @@ export function GuestRefusalDialog(
           >
             {KEEP_LABEL}
           </Button>
-        </Cluster>
+        </>
       }
     >
       <p id="guest-refusal-text">{copy.text}</p>

@@ -2,11 +2,12 @@ import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { InlineEdit } from "@spy4x/preact-ui/inline-edit"
 import { Input } from "@spy4x/preact-ui/input"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { OnDay, When } from "@spy4x/preact-ui/format"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
@@ -349,9 +350,9 @@ export function SignInMethods(
           ? (
             <Stack>
               <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
-              <Cluster justify="end">
+              <DialogActions>
                 <Button type="button" variant="ghost" onClick={closeLink}>Close</Button>
-              </Cluster>
+              </DialogActions>
             </Stack>
           )
           : (
@@ -385,7 +386,7 @@ export function SignInMethods(
                     </>
                   )}
                 <ErrorState message={error} />
-                <Cluster justify="end">
+                <DialogActions>
                   <Button type="button" variant="ghost" onClick={closeLink}>Cancel</Button>
                   <Button
                     ref={continueButton}
@@ -398,7 +399,7 @@ export function SignInMethods(
                       ? ` to ${OAUTH_PROVIDER_NAMES[linking]}`
                       : ""}
                   </Button>
-                </Cluster>
+                </DialogActions>
               </Stack>
             </ScreenForm>
           )}
@@ -435,9 +436,9 @@ export function SignInMethods(
               ? (
                 <>
                   <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
-                  <Cluster justify="end">
+                  <DialogActions>
                     <Button type="button" variant="ghost" onClick={closeUnlink}>Close</Button>
-                  </Cluster>
+                  </DialogActions>
                 </>
               )
               : (
@@ -462,7 +463,7 @@ export function SignInMethods(
                       </Field>
                     )}
                     <ErrorState message={error} />
-                    <Cluster justify="end">
+                    <DialogActions>
                       <Button type="button" variant="ghost" onClick={closeUnlink}>Cancel</Button>
                       <Button
                         type="submit"
@@ -473,7 +474,7 @@ export function SignInMethods(
                       >
                         {confirming.kind === "passkey" ? "Remove passkey" : "Unlink"}
                       </Button>
-                    </Cluster>
+                    </DialogActions>
                   </Stack>
                 </ScreenForm>
               )}

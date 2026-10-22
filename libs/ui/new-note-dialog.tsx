@@ -5,11 +5,12 @@ import type { PlanRefusal } from "@domain/billing"
 import { IconCheck } from "@spy4x/preact-icons"
 import { NOTE_TITLE_MAX_LENGTH } from "@domain/notes"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input, Select } from "@spy4x/preact-ui/input"
 import { Kbd } from "@spy4x/preact-ui/kbd"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
@@ -150,7 +151,7 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
         ? (
           <Stack>
             <p class="text-sm text-muted" data-e2e="new-note-no-group">{NEW_NOTE_TEXT.noGroup}</p>
-            <Cluster justify="end">
+            <DialogActions>
               <Button
                 href={GROUP_PATHS.new}
                 navigate={(href) => {
@@ -161,7 +162,7 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
               >
                 {NEW_NOTE_TEXT.newGroup}
               </Button>
-            </Cluster>
+            </DialogActions>
           </Stack>
         )
         : (
@@ -249,7 +250,7 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
                   />
                 )
                 : <ErrorState message={errors.form ?? null} />}
-              <Cluster justify="end">
+              <DialogActions>
                 <Button
                   type="submit"
                   data-e2e="new-note-submit"
@@ -258,7 +259,7 @@ export function NewNoteDialog(props: NewNoteDialogProps): JSX.Element {
                 >
                   {NEW_NOTE_TEXT.add}
                 </Button>
-              </Cluster>
+              </DialogActions>
             </Stack>
           </ScreenForm>
         )}

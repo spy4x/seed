@@ -4,6 +4,7 @@ import { formatMoney } from "@spy4x/platform/universal/money"
 import { timeAgo } from "@spy4x/platform/universal/time"
 import { IconExternalLink } from "@spy4x/preact-icons"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
@@ -702,7 +703,7 @@ function ActionDialog(
               )
               : <ErrorState message={actionError.message} dataE2E="admin-billing-dialog-error" />
           )}
-          <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <DialogActions>
             <Button type="button" variant="ghost" onClick={onCloseDialog}>Close</Button>
             <Button
               type="submit"
@@ -713,7 +714,7 @@ function ActionDialog(
             >
               {copy.submit}
             </Button>
-          </div>
+          </DialogActions>
         </Stack>
       </ScreenForm>
     </Modal>

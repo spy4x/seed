@@ -1,9 +1,10 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { Field } from "@spy4x/preact-ui/field"
 import { Select } from "@spy4x/preact-ui/input"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import type { PlanRefusal } from "@domain/billing"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import type { MoveTarget } from "./notes-screen.tsx"
@@ -113,7 +114,7 @@ export function GroupMoveAllForm(
             />
           )
           : <ErrorState focusOnAppear message={error} dataE2E="group-move-all-error" />}
-        <Cluster gap="md" class="justify-end">
+        <DialogActions>
           <Button
             type="button"
             variant="ghost"
@@ -132,7 +133,7 @@ export function GroupMoveAllForm(
           >
             Move everything
           </Button>
-        </Cluster>
+        </DialogActions>
       </Stack>
     </ScreenForm>
   )
@@ -160,7 +161,7 @@ function Done(
           {groupName}" to "
           {result.toName}". Notes you deleted earlier stay in this group and are deleted with it.
         </p>
-        <Cluster gap="md" class="justify-end">
+        <DialogActions>
           <Button
             type="button"
             variant="ghost"
@@ -181,7 +182,7 @@ function Done(
               Delete "{groupName}"...
             </Button>
           )}
-        </Cluster>
+        </DialogActions>
       </Stack>
     </div>
   )

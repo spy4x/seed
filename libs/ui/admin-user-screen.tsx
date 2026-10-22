@@ -4,6 +4,7 @@ import { timeAgo } from "@spy4x/platform/universal/time"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { Card } from "@spy4x/preact-ui/card"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
@@ -794,7 +795,7 @@ function ActionDialog(
             onChange={(value) => setRole(Number(value) as UserRole)}
           />
           <ErrorState message={actionError} />
-          <Cluster justify="end">
+          <DialogActions>
             <Button type="button" variant="ghost" onClick={onCloseDialog}>Cancel</Button>
             <Button
               type="submit"
@@ -806,7 +807,7 @@ function ActionDialog(
             >
               {copy.submit}
             </Button>
-          </Cluster>
+          </DialogActions>
         </Stack>
       </ScreenForm>
     </Modal>

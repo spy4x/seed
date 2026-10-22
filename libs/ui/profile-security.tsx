@@ -3,11 +3,12 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import { encodeBase64 } from "@std/encoding"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
@@ -255,9 +256,9 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
           ? (
             <Stack>
               <ProviderProofNotice proof={providerProof} next={HERE} />
-              <Cluster justify="end">
+              <DialogActions>
                 <Button type="button" variant="ghost" onClick={cancelPassword}>Close</Button>
-              </Cluster>
+              </DialogActions>
             </Stack>
           )
           : (
@@ -346,19 +347,19 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   </div>
                 )}
                 <ErrorState message={errors.password} />
-                <DialogButtons
-                  onCancel={cancelPassword}
-                  submit={
-                    <Button
-                      type="submit"
-                      data-e2e="password-save"
-                      busy={pending.password}
-                      busyLabel="Updating…"
-                    >
-                      {providerProof ? "Set password" : "Change password"}
-                    </Button>
-                  }
-                />
+                <DialogActions>
+                  <Button type="button" variant="ghost" onClick={cancelPassword}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    data-e2e="password-save"
+                    busy={pending.password}
+                    busyLabel="Updating…"
+                  >
+                    {providerProof ? "Set password" : "Change password"}
+                  </Button>
+                </DialogActions>
               </Stack>
             </ScreenForm>
           )}
@@ -375,9 +376,9 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
           ? (
             <Stack>
               <ProviderProofNotice proof={providerProof} next={HERE} />
-              <Cluster justify="end">
+              <DialogActions>
                 <Button type="button" variant="ghost" onClick={cancelEnable}>Close</Button>
-              </Cluster>
+              </DialogActions>
             </Stack>
           )
           : (
@@ -409,19 +410,19 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   </Field>
                 )}
                 <ErrorState message={errors.totp} />
-                <DialogButtons
-                  onCancel={cancelEnable}
-                  submit={
-                    <Button
-                      type="submit"
-                      data-e2e="totp-start-submit"
-                      busy={pending.totp}
-                      busyLabel="Preparing…"
-                    >
-                      Continue
-                    </Button>
-                  }
-                />
+                <DialogActions>
+                  <Button type="button" variant="ghost" onClick={cancelEnable}>
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    data-e2e="totp-start-submit"
+                    busy={pending.totp}
+                    busyLabel="Preparing…"
+                  >
+                    Continue
+                  </Button>
+                </DialogActions>
               </Stack>
             </ScreenForm>
           )}
@@ -467,19 +468,19 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                 />
               </Field>
               <ErrorState message={errors.totp} />
-              <DialogButtons
-                onCancel={() => props.onCancelTotp?.()}
-                submit={
-                  <Button
-                    type="submit"
-                    data-e2e="totp-connect-finish"
-                    busy={pending.totp}
-                    busyLabel="Turning on…"
-                  >
-                    Turn on
-                  </Button>
-                }
-              />
+              <DialogActions>
+                <Button type="button" variant="ghost" onClick={() => props.onCancelTotp?.()}>
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  data-e2e="totp-connect-finish"
+                  busy={pending.totp}
+                  busyLabel="Turning on…"
+                >
+                  Turn on
+                </Button>
+              </DialogActions>
             </Stack>
           </ScreenForm>
         </Modal>
@@ -535,36 +536,24 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                 )}
             </Field>
             <ErrorState message={errors.totp} />
-            <DialogButtons
-              onCancel={cancelDisable}
-              submit={
-                <Button
-                  type="submit"
-                  variant="danger"
-                  data-e2e="totp-disable-submit"
-                  busy={pending.totp}
-                  busyLabel="Turning off…"
-                >
-                  Turn off
-                </Button>
-              }
-            />
+            <DialogActions>
+              <Button type="button" variant="ghost" onClick={cancelDisable}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="danger"
+                data-e2e="totp-disable-submit"
+                busy={pending.totp}
+                busyLabel="Turning off…"
+              >
+                Turn off
+              </Button>
+            </DialogActions>
           </Stack>
         </ScreenForm>
       </Modal>
     </>
-  )
-}
-
-/** Cancel and the form's submit, at the end of a dialog's form. */
-function DialogButtons(
-  { onCancel, submit }: { onCancel: () => void; submit: JSX.Element },
-): JSX.Element {
-  return (
-    <Cluster justify="end">
-      <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>
-      {submit}
-    </Cluster>
   )
 }
 

@@ -751,7 +751,7 @@ export function GuestSignOutDialog(
       cancelLabel="Cancel"
       dataE2E="guest-sign-out"
       footer={
-        <Cluster justify="end">
+        <>
           <Button type="button" variant="ghost" onClick={onCancel} data-e2e="guest-sign-out-cancel">
             Cancel
           </Button>
@@ -766,7 +766,7 @@ export function GuestSignOutDialog(
           <Button type="button" onClick={onKeep} data-e2e="guest-sign-out-keep">
             {KEEP_LABEL}
           </Button>
-        </Cluster>
+        </>
       }
     >
       <p id="guest-sign-out-text">
