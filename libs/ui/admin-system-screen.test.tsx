@@ -15,6 +15,7 @@ const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
   getComputedStyle: globalThis.getComputedStyle,
+  location: globalThis.location,
 }
 
 beforeAll(() => {
@@ -22,6 +23,8 @@ beforeAll(() => {
     document: window.document,
     FormData: window.FormData,
     getComputedStyle: window.getComputedStyle.bind(window),
+    // A link hands a click to `navigate` only for an address of the page's own origin.
+    location: window.location,
   })
 })
 

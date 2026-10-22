@@ -432,7 +432,7 @@ function Repeating(props: AdminJobsScreenProps): JSX.Element {
           <LoadingSkeleton rows={3} />
         </div>
       )
-      : <></>
+      : <div />
   }
   const columns: DataTableColumn<AdminRepeatingJob, never>[] = [
     {
