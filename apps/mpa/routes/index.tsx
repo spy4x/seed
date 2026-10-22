@@ -228,7 +228,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
             >
               <Shot
                 name="notes"
-                alt="The notes screen of the Seed web app: a list of a group's notes with their tags and when each changed, and a button to add one."
+                alt="The notes screen of the Seed web app: a search box, filters by tag and author, a Created by me filter and a sort menu above a list of a group's notes, each with its author, its tags, when it was updated and when it was created, and a New note button."
                 sizes="(min-width: 1024px) 960px, 100vw"
                 priority
               />
