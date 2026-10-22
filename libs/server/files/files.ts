@@ -8,11 +8,20 @@
  *    PUT that the store accepts only with exactly that type and size.
  * 2. The browser PUTs the file and tells the API it is done.
  * 3. {@link FileStore.confirmUpload} reads what arrived: its size, its type and its first bytes. A
- *    file that is not what was signed is deleted and refused.
- * 4. {@link FileStore.signDownload} signs a GET that the browser saves as an attachment.
+ *    file that is not what was signed is deleted and refused. This catches a mistake, not a
+ *    deliberate swap: the upload URL stays valid for {@link FILE_URL_SECONDS} after it is signed,
+ *    so its holder can PUT other bytes of the same size and type after the confirm. That window
+ *    closes before the first feature stores files (https://github.com/spy4x/seed/issues/401).
+ * 4. {@link FileStore.signDownload} signs a GET with the type the feature confirmed: an image is
+ *    shown in place, any other file is saved as an attachment.
+ *
+ * What keeps a file from running as a page of the app is not the byte check but how it is served:
+ * the forced `Content-Type`, `X-Content-Type-Options: nosniff`, the sandbox policy on every answer
+ * of the store's route, and the attachment disposition for anything but an image.
  *
  * Two clients, one bucket: the API reaches the store at `S3_ENDPOINT`, and browsers at
- * `S3_PUBLIC_ENDPOINT`. A signature covers the host, so each URL is signed for the host that uses it.
+ * `S3_PUBLIC_ENDPOINT`. A signature covers the host, so each URL is signed for the host that uses
+ * it.
  *
  * @module
  */
@@ -134,7 +143,9 @@ export interface FileStore {
   signUpload(key: string, rule: FileRule, file: FileFacts): Promise<FileResult<SignedUpload>>
   /**
    * Checks what was uploaded under `key` against what was signed: its size, its type and its
-   * first bytes. A file that fails is deleted, so it is never served.
+   * first bytes, and deletes a file that fails. It catches a wrong file, not a swap: until the
+   * upload URL expires its holder can replace a confirmed file with other bytes of the same size
+   * and type (see the module's notes).
    */
   confirmUpload(key: string, signed: FileFacts): Promise<FileResult<FileFacts>>
   /**

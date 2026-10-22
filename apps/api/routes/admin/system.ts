@@ -22,8 +22,8 @@ export const ADMIN_JOB_SUPERSEDED =
   "A newer run of this job is already waiting, so this one is not run again."
 
 /**
- * How long the page waits for the database, the cache or the file store to answer before it counts it as down, and
- * for each of its database reads before it shows that part as an error.
+ * How long the page waits for the database, the cache or the file store to answer before it
+ * counts it as down, and for each of its database reads before it shows that part as an error.
  */
 export const CACHE_PROBE_TIMEOUT_MS = 2_000
 

@@ -26,7 +26,12 @@ no file passes through the API. Nothing in the template uploads a file yet; note
 3. The browser PUTs the file and tells the API it is done.
 4. `files.confirmUpload(key, signed)` reads what arrived: its size, its type and its first 512
    bytes. A file that is not what was signed is deleted and refused. Only a confirmed file goes
-   into the feature's table.
+   into the feature's table. The check catches a mistake, not a deliberate swap: the upload URL
+   stays valid for five minutes, so whoever holds it can PUT other bytes of the same size and type
+   after the confirm. That window closes before the first feature stores files
+   ([#401](https://github.com/spy4x/seed/issues/401)). What keeps a file from running as a page of
+   the app is how it is served: the forced type, `nosniff`, the sandbox policy and the attachment
+   disposition below.
 5. `files.signDownload(key, { contentType, filename })` signs a GET for five minutes. The store
    answers with the confirmed type, never the stored one; an image is shown in place, and any other
    file is saved as an attachment under its name.
@@ -64,7 +69,7 @@ signature covers the host. Both use path-style addresses (`<endpoint>/<bucket>/<
 - Browsers reach it on the app's own host: Traefik sends `https://<DOMAIN>/<bucket>/…` to Garage
   and everything else to the SPA, so uploads are same-origin and the bucket needs no CORS rules.
   Every answer on that path carries `Content-Security-Policy: sandbox; default-src 'none'` and
-  `X-Content-Type-Options: nosniff`, so a file never runs as a page of the app's origin.
+  `X-Content-Type-Options: nosniff`, so a browser does not run a file as a page of the app's origin.
 - The bucket is private: every request needs a signature, and only the API holds the key. Garage's
   admin port is not published.
 - A new `S3_ACCESS_KEY_ID` is added next to the old key, which keeps its access. To retire the

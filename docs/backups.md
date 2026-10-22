@@ -16,8 +16,8 @@ it, since the file store's key is in it.
 The file store is Garage's directory, `.volumes/garage`: its data blocks and the copies of its
 metadata database that Garage writes every hour (`meta/snapshots`, the two newest). The live
 metadata database is left out, since it changes under a copy. A restore therefore stands at the
-newest hourly copy: a file uploaded after it, and before the backup ran, comes back as data without
-a name, and Garage drops it. A product on another S3 store relies on that store's own backups.
+newest hourly copy: a file uploaded after it, and before the backup ran, is missing from the
+restored store, although the restored database can still name it. A product on another S3 store relies on that store's own backups.
 
 ## Set it up
 
@@ -104,8 +104,10 @@ not overwritten. On the server, in the app's directory, with `<db>` for `DB_NAME
 
 ### The file store
 
-Restore the files from the same backup run as the database, so the database names no file the
-store lacks. On the server, in the app's directory:
+Restore the files from the same backup run as the database. Even then the two can disagree: a file
+uploaded in the hour before the backup can be named by the restored database but missing from the
+restored store, since the store comes back as its newest hourly metadata copy. On the server, in
+the app's directory:
 
 1. Stop Garage and set its directory aside:
 
