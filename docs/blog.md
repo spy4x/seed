@@ -15,6 +15,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/sample-posts.ts`         | Three sample posts for `deno task db:seed` in development.                             |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |
 | `apps/api/routes/blog.ts`                  | `/api/blog/*`, public: `posts?topic=`, `posts/:slug`, `topics`, `feed`.               |
+| `apps/mpa/routes/blog/`, `apps/mpa/blog.ts` | The public pages, below.                                                             |
 
 ## The life of a post
 
@@ -45,6 +46,27 @@ again, not when two runs race (the post is locked). The send itself is the newsl
 
 Emailing needs mail subscriptions on and `MPA_DOMAIN` set; otherwise the admin API refuses a list
 with `NEWSLETTER_OFF`, and `GET /api/admin/blog/newsletter` says `enabled: false`.
+
+## On the public website
+
+The website (`apps/mpa`) renders every blog page on its server, with no JavaScript needed:
+
+| Address        | What                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------ |
+| `/blog`        | Every live post, newest first; topics as `?topic=` links, whose canonical address stays `/blog`.        |
+| `/blog/<slug>` | One post: trail, dates, reading time, cover, "In short", the body, one call to action and "Read next". |
+| `/rss.xml`     | RSS 2.0 of the newest posts with their full HTML.                                                      |
+
+`apps/mpa/blog.ts` reads the public API and checks each answer's shape. A post that is not live
+answers 404 "This post is not here". With no live post, `/blog` says so and keeps out of search
+results, and the Blog link, the RSS link, the sitemap entries and the `llms.txt` section stay
+hidden; the website asks the API at most once a minute whether a post is live
+(`blogLinkMiddleware`). Each post page carries `BlogPosting` and `BreadcrumbList` JSON-LD and
+`og:type` `article`.
+
+The Lighthouse run (`deno task lighthouse`) measures `/blog` and the sample post `hello-world`.
+It needs no database: `apps/mpa/lighthouse/blog-api.ts` answers the public routes with the dev
+seed's published post.
 
 ## What the website never sees
 
