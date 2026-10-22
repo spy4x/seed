@@ -147,11 +147,12 @@ Deno.test("an HTML page uploaded as a PNG is refused and deleted", async () => {
   expect(internal.objects.has(`k`)).toBe(false)
 })
 
-Deno.test("an upload of another size or stored type than signed is refused and deleted", async () => {
+Deno.test("an upload of another size, another stored type or no stored type is refused and deleted", async () => {
   for (
     const [stored, signed, error] of [
       [{ bytes: PNG, contentType: `image/png` }, { contentType: `image/png`, size: 99 }, 2],
       [{ bytes: PNG, contentType: `image/jpeg` }, { contentType: `image/png`, size: 12 }, 1],
+      [{ bytes: PNG }, { contentType: `image/png`, size: 12 }, 1],
     ] as const
   ) {
     const internal = fakeStore(new Map([[`k`, stored]]))

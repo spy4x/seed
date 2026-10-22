@@ -94,5 +94,7 @@ Deno.test("the API environment refuses a file store endpoint that is not a URL",
 
   expect(() => readApiEnv(createEnvReader({ ...withKv, S3_ENDPOINT: `garage:3900` })))
     .toThrow(`S3_ENDPOINT`)
+  expect(() => readApiEnv(createEnvReader({ ...withKv, S3_PUBLIC_ENDPOINT: `localhost` })))
+    .toThrow(`S3_PUBLIC_ENDPOINT`)
   expect(readApiEnv(createEnvReader(withKv)).S3_BUCKET).toBe(`app-files`)
 })
