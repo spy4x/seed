@@ -51,7 +51,10 @@ test.describe("auth profile ws push flow", () => {
       // entry of the page shown is marked as the current one.
       await page.evaluate(() => Object.assign(globalThis, { e2ePageMarker: true }))
       await nav.getByRole("link", { name: "Groups" }).click()
-      await expect(nav.getByRole("link", { name: "Groups" })).toHaveAttribute("aria-current", "page")
+      await expect(nav.getByRole("link", { name: "Groups" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      )
       expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
       const newTab = page.context().waitForEvent("page", { timeout: 5_000 })
       await nav.getByRole("link", { name: "Notes" }).click({ modifiers: ["ControlOrMeta"] })
