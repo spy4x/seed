@@ -254,6 +254,25 @@ Deno.test("jobs: runs a repeating job now on its one chain, and starts a cancell
   })
 })
 
+Deno.test("jobs: two presses of run now on a stopped repeating job start one chain", async () => {
+  await withSchema(async (sql) => {
+    const op = await operator(sql)
+    const db = new AppDbBase({ sql })
+    const runNow = (tx: AppDbBase) => tx.adminJobs.runRepeatingNow("outbox.cleanup", op, null)
+    let second: Promise<{ outcome: AdminJobActionOutcome; id: string | null }> | null = null
+    let first: string | null = null
+    await db.begin(async (tx) => {
+      first = (await runNow(tx)).id
+      // The second press looks for a waiting run while the first's is not committed yet.
+      second = db.begin(runNow)
+      await new Promise((resolve) => setTimeout(resolve, 300))
+    })
+
+    expect(await second).toEqual({ outcome: AdminJobActionOutcome.Done, id: first })
+    expect(await sql`SELECT 1 FROM outbox_events WHERE processed_at IS NULL`).toHaveLength(1)
+  })
+})
+
 Deno.test("jobs: running a failed job again resets it and writes the operator's audit row", async () => {
   await withSchema(async (sql) => {
     const op = await operator(sql)
