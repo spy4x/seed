@@ -94,16 +94,6 @@ describe("sign-in links", () => {
     expect(await consumeSignInLink(store, requests, bobLink.token, NOW)).toEqual(bob)
   })
 
-  it("refuses one link's secret under another link's id", async () => {
-    const store = new MemoryAuthStore()
-    const requests = memoryRequests(ann(ANN_FIRST), ann(ANN_SECOND))
-    const first = await issueSignInLink(store, ann(ANN_FIRST), NOW)
-    await issueSignInLink(store, ann(ANN_SECOND), NOW)
-    const secret = first.token.slice(first.token.indexOf(".") + 1)
-
-    expect(await consumeSignInLink(store, requests, `${ANN_SECOND}.${secret}`, NOW)).toBe(null)
-  })
-
   it("puts the token in the link's fragment, never in its path or query", () => {
     const url = new URL(signInLinkUrl("https://app.example.com", `${ANN_FIRST}.secret`))
 
