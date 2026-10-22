@@ -1,5 +1,6 @@
 import {
   type DeletedTag,
+  type ListedTag,
   parseTagRequest,
   type Tag,
   TagCreateCommand,
@@ -23,7 +24,7 @@ export interface TagOperationDependencies {
   update(command: TagUpdateCommand): Promise<{ tag: Tag }>
   delete(command: TagDeleteCommand): Promise<{ tag: DeletedTag }>
   get(query: TagGetQuery): Promise<{ tag: Tag }>
-  list(query: TagListQuery): Promise<{ tags: Tag[] }>
+  list(query: TagListQuery): Promise<{ tags: ListedTag[] }>
 }
 
 /**

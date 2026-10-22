@@ -418,8 +418,8 @@ event. Follow the details command (`group.updateDetails`, spy4x/template#134) fi
    folder, so they need no edit.
 2. **Domain.** Add the field to `Group` and `GroupSummary` in `libs/domain/groups/+lib.ts`, one
    parser per field that throws `GroupError` with `INVALID_REQUEST`, and a limit constant the screen
-   can import. A colour is stored as a palette name and checked against `GROUP_COLORS`, never a hex
-   value. Settings that change together share one command so one request is one audit row.
+   can import. A colour is a lower-case `#rrggbb`, checked with `isHexColor`
+   (`@spy4x/platform/universal/color`) and drawn with `readableTextColor` text on it. Settings that change together share one command so one request is one audit row.
 3. **Repository.** Add the column to the selects and to `toGroup` and `toSummary`. The write locks
    the member's row, checks the role, updates, then calls `audit()` and `recordChange()` in the
    same transaction. That outbox row is the change event.

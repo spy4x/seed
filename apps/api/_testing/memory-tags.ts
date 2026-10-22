@@ -1,6 +1,7 @@
 import {
   assertTagRoom,
   type DeletedTag,
+  type ListedTag,
   type Tag,
   type TagCreateInput,
   type TagDeleteInput,
@@ -28,10 +29,16 @@ export class MemoryTagRepository implements TagRepository {
     if (notes) notes.knowsTag = (groupId, id) => this.tags.get(id)?.groupId === groupId
   }
 
-  list(groupId: string): Promise<Tag[]> {
+  /** The notes' count comes from the live notes only, as in Postgres; without notes it is 0. */
+  list(groupId: string): Promise<ListedTag[]> {
+    const live = [...(this.notes?.notes.values() ?? [])]
     return Promise.resolve(
       [...this.tags.values()].filter((tag) => tag.groupId === groupId)
-        .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase())),
+        .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()))
+        .map((tag) => ({
+          ...tag,
+          noteCount: live.filter((note) => note.tagIds.includes(tag.id)).length,
+        })),
     )
   }
 

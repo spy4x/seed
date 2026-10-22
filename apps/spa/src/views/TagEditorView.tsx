@@ -53,7 +53,9 @@ export function TagEditorView({ tagId = null }: { tagId?: string | null }) {
   // Once the group is known, a fresh read of the groups (after a reconnect, say) must not take
   // the form away: only the first read of the group, or of an edited tag, is loading.
   const groupLoading = !membership && (groupsStore.loading.value || groupId === null)
-  const saved = tag ? { id: tag.id, name: tag.name, color: tag.color } : null
+  const saved = tag
+    ? { id: tag.id, name: tag.name, color: tag.color, noteCount: tag.noteCount }
+    : null
   return (
     <>
       {groupId && (

@@ -1,13 +1,13 @@
 import { Hono } from "hono"
 import type { Context, MiddlewareHandler } from "hono"
 import { isUuid } from "@spy4x/platform/universal/uuid"
-import { type Tag, TagListQuery } from "@domain/tags"
+import { type ListedTag, TagListQuery } from "@domain/tags"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import type { APIContext } from "../_types.ts"
 import { tagErrorResponse, TagFeatureError } from "../features/tags/errors.ts"
 
 export interface TagsRouteDependencies {
-  list(query: TagListQuery): Promise<{ tags: Tag[] }>
+  list(query: TagListQuery): Promise<{ tags: ListedTag[] }>
 }
 
 /**

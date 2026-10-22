@@ -38,7 +38,7 @@ function note(id: string, group = groupId): NoteItem {
 }
 
 function tag(id: string, group = groupId): TagItem {
-  return { id, groupId: group, name: `Tag ${id}`, color: "gray", ...stamps }
+  return { id, groupId: group, name: `Tag ${id}`, color: "#4b5563", ...stamps }
 }
 
 /** One browser: its IndexedDB, and the storage the layer opens on it. The queues are in memory. */
@@ -221,7 +221,7 @@ describe("an answer that arrives after the sign-out", () => {
     const creatingTag = layer.tags.outbox.submit({
       kind: "create",
       entityId: "late-tag",
-      payload: { groupId, name: "Late", color: "gray" },
+      payload: { groupId, name: "Late", color: "#4b5563" },
     })
     await settle()
     expect(sends.length).toBe(1)

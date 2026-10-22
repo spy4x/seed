@@ -168,14 +168,14 @@ describe("group CQRS handlers", () => {
         id: summary.id,
         name: "Trips",
         description: "Our trips",
-        color: "purple",
+        color: "#7e22ce",
         emoji: "🏕️",
       }),
     )
 
     expect(repository.createInput).toMatchObject({
       description: "Our trips",
-      color: "purple",
+      color: "#7e22ce",
       emoji: "🏕️",
     })
   })

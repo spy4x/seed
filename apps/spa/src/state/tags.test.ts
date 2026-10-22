@@ -10,7 +10,7 @@ function item(id: string, name = id, version = 1): TagItem {
     id,
     groupId,
     name,
-    color: "gray",
+    color: "#4b5563",
     version,
     changeSequence: "1",
     createdByUserId: 1,
@@ -77,11 +77,27 @@ describe("tags store", () => {
     expect((await store.save())?.id).toBe("new-1")
     expect(calls).toEqual([{
       name: "create",
-      input: { groupId, id: "new-1", name: "Cherry", color: "gray" },
+      input: { groupId, id: "new-1", name: "Cherry", color: "#4b5563" },
     }])
     expect(store.tags.value.map((tag) => tag.name)).toEqual(["alpha", "Beta", "Cherry"])
     expect(store.form.value?.id).toBe("new-1")
     expect(store.unsaved.value).toBe(false)
+  })
+
+  it("keeps a tag's note count through a save, which does not send it, and counts a new tag at 0", async () => {
+    const { store } = harness({
+      fetchList: () => Promise.resolve([{ ...item("a", "alpha"), noteCount: 4 }]),
+    })
+    await store.open(groupId)
+    store.startEdit("a")
+    store.change({ ...store.form.value!, name: "Alpha" })
+    expect((await store.save())?.noteCount).toBe(4)
+    expect(store.tags.value.find((tag) => tag.id === "a")?.noteCount).toBe(4)
+
+    store.startCreate()
+    store.change({ ...store.form.value!, name: "Cherry" })
+    await store.save()
+    expect(store.tags.value.find((tag) => tag.id === "new-1")?.noteCount).toBe(0)
   })
 
   it("keeps what was typed into the create form when the create page opens again", async () => {
@@ -100,11 +116,11 @@ describe("tags store", () => {
     store.change({ ...store.form.value!, name: "Errands" })
     await store.open("g-2")
     expect(store.form.value).toMatchObject({ id: null, name: "Errands" })
-    store.change({ ...store.form.value!, color: "green" })
+    store.change({ ...store.form.value!, color: "#15803d" })
     expect((await store.save())?.name).toBe("Errands")
     expect(calls).toEqual([{
       name: "create",
-      input: { groupId: "g-2", id: "new-1", name: "Errands", color: "green" },
+      input: { groupId: "g-2", id: "new-1", name: "Errands", color: "#15803d" },
     }])
   })
 
@@ -121,10 +137,10 @@ describe("tags store", () => {
     await store.open(groupId)
     store.startEdit("b")
     expect(store.unsaved.value).toBe(false)
-    store.change({ ...store.form.value!, color: "red" })
+    store.change({ ...store.form.value!, color: "#b91c1c" })
     expect(store.unsaved.value).toBe(true)
     store.revert()
-    expect(store.form.value).toMatchObject({ id: "b", name: "Beta", color: "gray" })
+    expect(store.form.value).toMatchObject({ id: "b", name: "Beta", color: "#4b5563" })
     expect(store.unsaved.value).toBe(false)
   })
 
@@ -159,7 +175,7 @@ describe("tags store", () => {
     await store.save()
     expect(calls[0]).toEqual({
       name: "update",
-      input: { groupId, id: "b", name: "Gamma", color: "gray", version: 1 },
+      input: { groupId, id: "b", name: "Gamma", color: "#4b5563", version: 1 },
     })
   })
 

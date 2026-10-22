@@ -18,6 +18,11 @@ export interface TagItem {
   updatedByUserId: number | null
   createdAt: string
   updatedAt: string
+  /**
+   * How many live notes carry the tag. The list read sends it; a create or save does not, so the
+   * store keeps the count it had (0 for a new tag).
+   */
+  noteCount?: number
 }
 
 /** What the tags store needs from the outside. Injected so tests need no network. */
@@ -225,9 +230,11 @@ export function createTagsStore(dependencies: TagsDependencies) {
           color: current.color,
           version: current.version,
         })
-      tags.value = sorted([tag, ...tags.value.filter((existing) => existing.id !== tag.id)])
-      form.value = toForm(tag)
-      return tag
+      const known = byId.value.get(tag.id)?.noteCount ?? (current.id === null ? 0 : undefined)
+      const saved = known === undefined ? tag : { ...tag, noteCount: known }
+      tags.value = sorted([saved, ...tags.value.filter((existing) => existing.id !== tag.id)])
+      form.value = toForm(saved)
+      return saved
     } catch (cause) {
       const code = tagCode(cause)
       if (code === "TAG_NAME_TAKEN") {

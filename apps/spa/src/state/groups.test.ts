@@ -194,12 +194,12 @@ describe("groups store", () => {
       pages: [{ groups: [item("a", "1")], nextCursor: null }],
     })
     await store.refresh()
-    store.edit(null, { name: "  Trip  ", description: " Hikes ", color: "green", emoji: "🏕️" })
+    store.edit(null, { name: "  Trip  ", description: " Hikes ", color: "#15803d", emoji: "🏕️" })
 
     const group = await store.create()
 
     expect(created).toEqual([
-      { id: "new-id", name: "Trip", description: "Hikes", color: "green", emoji: "🏕️" },
+      { id: "new-id", name: "Trip", description: "Hikes", color: "#15803d", emoji: "🏕️" },
     ])
     expect(group?.id).toBe("new-id")
     expect(store.groups.value.map((group) => group.id)).toEqual(["new-id", "a"])
@@ -256,25 +256,25 @@ describe("groups store", () => {
   })
 
   it("shows a group as saved until something is typed, and counts only real changes as unsaved", async () => {
-    const saved = { ...item("a", "1", "Home"), description: "Flat", color: "blue" as const }
+    const saved = { ...item("a", "1", "Home"), description: "Flat", color: "#1d4ed8" as const }
     const { store } = harness({ pages: [{ groups: [saved], nextCursor: null }] })
     await store.refresh()
 
     expect(store.draft("a")).toEqual({
       name: "Home",
       description: "Flat",
-      color: "blue",
+      color: "#1d4ed8",
       emoji: "",
     })
     store.edit("a", { ...store.draft("a"), name: "Home  ", emoji: " " })
     expect(store.unsaved("a")).toBe(false)
-    store.edit("a", { ...store.draft("a"), color: "red" })
+    store.edit("a", { ...store.draft("a"), color: "#b91c1c" })
     expect(store.unsaved("a")).toBe(true)
     expect(store.unsaved(null)).toBe(false)
 
     store.discard()
 
-    expect(store.draft("a").color).toBe("blue")
+    expect(store.draft("a").color).toBe("#1d4ed8")
     expect(store.unsaved("a")).toBe(false)
   })
 
@@ -323,17 +323,17 @@ describe("groups store", () => {
       updateDetails: (input) => {
         sent.push(input)
         return Promise.resolve({
-          group: { ...item("a", "2"), description: "Flat", color: "green" },
+          group: { ...item("a", "2"), description: "Flat", color: "#15803d" },
         })
       },
     })
     await store.refresh()
-    store.edit("a", { name: "a", description: "Flat", color: "green", emoji: "" })
+    store.edit("a", { name: "a", description: "Flat", color: "#15803d", emoji: "" })
 
     expect(await store.save("a")).toBe(true)
 
-    expect(sent).toEqual([{ groupId: "a", description: "Flat", color: "green", emoji: null }])
-    expect(store.groups.value[0]).toMatchObject({ description: "Flat", color: "green" })
+    expect(sent).toEqual([{ groupId: "a", description: "Flat", color: "#15803d", emoji: null }])
+    expect(store.groups.value[0]).toMatchObject({ description: "Flat", color: "#15803d" })
   })
 
   it("keeps what was typed and shows the server's reason under the form when a save is refused", async () => {
