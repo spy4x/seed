@@ -371,12 +371,24 @@ async function lock(
   return row
 }
 
-/** Queues the post's `blog.publish` job in the write's transaction. */
+/**
+ * Queues the post's `blog.publish` job in the write's transaction. The job table holds one row per
+ * post and run time (`aggregate_version` is the time in milliseconds), so scheduling again for a
+ * time whose job still waits adds nothing: that job publishes the post.
+ */
 async function queuePublishJob(
   tx: postgres.TransactionSql,
   id: string,
   when: { at: Date } | { inMs: number },
 ): Promise<void> {
+  if (`at` in when) {
+    const [waiting] = await tx`
+      SELECT 1 FROM outbox_events
+      WHERE aggregate_type = ${JOB_AGGREGATE} AND aggregate_id = ${id}
+        AND aggregate_version = ${when.at.getTime()} AND event_kind = ${BLOG_PUBLISH_JOB}
+    `
+    if (waiting) return
+  }
   await scheduleOutboxEvent(
     tx,
     { eventKind: BLOG_PUBLISH_JOB, aggregateType: JOB_AGGREGATE, aggregateId: id },

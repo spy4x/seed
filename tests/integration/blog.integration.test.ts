@@ -441,3 +441,24 @@ Deno.test(`blog: the admin reads the confirmed subscribers of every list`, async
     ])
   })
 })
+
+Deno.test(`blog: scheduling again for the same time keeps the one job waiting`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const id = uuidV7()
+    const at = LATER()
+    await blog.create(id, fields(`same-time`), maya)
+    await blog.publish(id, 1, at, null, maya)
+    await blog.unschedule(id, 2, maya)
+
+    const again = await blog.publish(id, 3, at, null, maya)
+
+    expect(again.status).toBe(`scheduled`)
+    const [{ jobs }] = await sql<{ jobs: number }[]>`
+      SELECT COUNT(*)::int AS jobs FROM outbox_events
+      WHERE event_kind = ${BLOG_PUBLISH_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
+    `
+    expect(jobs).toBe(1)
+  })
+})
