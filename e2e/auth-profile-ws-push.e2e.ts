@@ -64,7 +64,8 @@ test.describe("auth profile ws push flow", () => {
 
       // A wide window opens the first section, Account, beside the list of sections.
       await expect(page.getByRole("heading", { level: 1, name: "Profile" })).toBeVisible()
-      await expect(page.getByRole("heading", { level: 2, name: "Account" })).toBeVisible()
+      await expect(page.locator("[data-e2e=settings-section] [data-e2e=profile-name]"))
+        .toBeVisible()
       // Cancelling the name dialog drops what was typed and the error it caused.
       const firstNameField = page.locator("[data-e2e=profile-first-name]")
       const lastNameField = page.locator("[data-e2e=profile-last-name]")
