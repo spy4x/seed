@@ -38,7 +38,6 @@ export const handler = define.handlers({
     if (!found) return renderNotFound(ctx)
     const { post, readNext } = found
     const origin = ctx.state.webAppOrigin
-    const url = `${origin}${postPath(post.slug)}`
     const cover = post.coverUrl === null ? null : { url: post.coverUrl, alt: post.coverAlt ?? `` }
     return ctx.render(
       <SiteFrame

@@ -9,6 +9,8 @@ export function Prose(
   { html, as = "div", class: className }: { html: string; as?: "div" | "article"; class?: string },
 ): JSX.Element {
   const Tag = as
+  // The API's HTML from the safe Markdown renderer, as the library's Prose takes it.
+  // deno-lint-ignore react-no-danger
   return <Tag class={`pc-prose ${className ?? ""}`} dangerouslySetInnerHTML={{ __html: html }} />
 }
 
