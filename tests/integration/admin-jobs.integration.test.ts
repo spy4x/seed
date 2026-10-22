@@ -275,7 +275,7 @@ Deno.test("jobs: two presses of run now on a stopped repeating job start one cha
   })
 })
 
-Deno.test("jobs: the nightly cleanup run now runs, then waits for the next 03:00 UTC", async () => {
+Deno.test("jobs: the nightly cleanup run now, or cancelled and restarted, waits for the next 03:00 UTC", async () => {
   await withSchema(async (sql) => {
     const op = await operator(sql)
     const db = new AppDbBase({ sql })
@@ -299,6 +299,13 @@ Deno.test("jobs: the nightly cleanup run now runs, then waits for the next 03:00
     expect(await db.begin((tx) => tx.adminJobs.cancel(next.id, op, null)))
       .toBe(AdminJobActionOutcome.Done)
     await startRepeatingJobs(sql)
+    const [restarted] = await waiting()
+    expect(restarted).toEqual({ id: expect.any(String), at3: true, ahead: true })
+
+    // Run now from the run's own page does the same.
+    expect(await db.begin((tx) => tx.adminJobs.runNow(restarted.id, op, null)))
+      .toBe(AdminJobActionOutcome.Done)
+    expect(await processor.drainOnce()).toEqual({ claimed: 1, published: 1, failed: 0 })
     expect(await waiting()).toEqual([{ id: expect.any(String), at3: true, ahead: true }])
   })
 })
