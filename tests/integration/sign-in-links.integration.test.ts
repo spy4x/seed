@@ -397,7 +397,7 @@ Deno.test("a link refuses a deleted account like a used link", async () => {
   })
 })
 
-Deno.test("a guest who opens a link someone else asked for never hands that person the guest account", async () => {
+Deno.test("a guest who opens a link someone else asked for keeps their guest session and user id", async () => {
   await withFixture(async (fixture) => {
     const asker = fixture.browser()
     const token = await fixture.linkFor(asker, "mallory@example.com")
@@ -406,16 +406,28 @@ Deno.test("a guest who opens a link someone else asked for never hands that pers
     const guestId = (await victim.call("GET", "/auth/me")).body.id as number
 
     const redeemed = await victim.call("POST", "/auth/link/redeem", { token })
-    // The asker signs in with a new link to the same address, as an attacker would.
-    const again = await fixture.linkFor(asker, "mallory@example.com")
-    await asker.call("POST", "/auth/link/redeem", { token: again })
 
-    // The victim got the address's own new account; their guest account gained no address.
-    expect(redeemed).toMatchObject({ status: 200, body: { created: true } })
-    const victimNow = (await victim.call("GET", "/auth/me")).body.id as number
-    const askerNow = (await asker.call("GET", "/auth/me")).body.id as number
-    expect(askerNow).toBe(victimNow)
-    expect(askerNow).not.toBe(guestId)
+    // Still the same guest, on the one session the guest had: a guest key has no secret, so a
+    // lost session would lose the account for good.
+    expect(await victim.call("GET", "/auth/me")).toMatchObject({
+      status: 200,
+      body: { id: guestId, guestSince: expect.any(String) },
+    })
+    expect(await fixture.sql`SELECT 1 FROM auth_sessions WHERE user_id = ${guestId}`)
+      .toHaveLength(1)
+    // A refusal of its own, which the link page words, and the link is spent: no account came of it.
+    expect(redeemed).toMatchObject({
+      status: 403,
+      body: { code: "SIGN_IN_LINK_ASKED_ELSEWHERE" },
+    })
+    expect((await asker.call("POST", "/auth/link/redeem", { token })).status).toBe(410)
+    expect(await fixture.count("auth_users")).toBe(1)
+    // The asker signs in with a new link to the same address, as an attacker would, and gets the
+    // address's own account; the guest account gained no address.
+    await asker.call("POST", "/auth/link/redeem", {
+      token: await fixture.linkFor(asker, "mallory@example.com"),
+    })
+    expect((await asker.call("GET", "/auth/me")).body.id).not.toBe(guestId)
     expect(
       await fixture.sql`SELECT 1 FROM auth_keys WHERE user_id = ${guestId} AND email IS NOT NULL`,
     ).toHaveLength(0)

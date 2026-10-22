@@ -202,7 +202,10 @@ the page strips it with `history.replaceState`. Opening the page spends nothing,
 scanners open links; Continue sends `POST /api/auth/link/redeem` with `{ token }`. One link used
 stops every other link of the address. The link signs in the owner of a proven address, or creates
 an account (proven) for a new one; an unproven password key on the address refuses it (409), since
-the link proves the mailbox, not that account. Sessions run on a per-user `email-link` key with no
+the link proves the mailbox, not that account. A guest uses only a link that guest asked for
+(`sign_in_link_requests.requested_by_user_id`): any other link is spent and refused with 403 and the
+code `SIGN_IN_LINK_ASKED_ELSEWHERE`, and the guest's session stays, since a guest key has no secret
+and a replaced session would lose the account. Sessions run on a per-user `email-link` key with no
 secret, which `GET /api/auth/methods` never lists (its `emailLink` says whether a link reaches the
 account) and which counts as provider proof like a passkey. A second factor still applies. Limits: 3
 links an hour per client share and 10 per address (`ratelimit-sign-in-link`). Code:

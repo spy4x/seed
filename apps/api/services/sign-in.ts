@@ -284,6 +284,11 @@ export enum SignInLinkOutcome {
    * mailbox, not that account, so nothing happens. A password reset proves it.
    */
   Unconfirmed = 6,
+  /**
+   * A guest opened a link another browser asked for: nothing changed, the guest's session stays,
+   * and the link is spent. A guest key has no secret, so a session lost here loses the account.
+   */
+  AskedElsewhere = 7,
 }
 
 /** The answer of {@link SignIn.redeemSignInLink}. */
@@ -297,7 +302,12 @@ export type SignInLinkRedemption =
     next: string | null
   }
   | { outcome: SignInLinkOutcome.GuestTaken; next: string | null }
-  | { outcome: SignInLinkOutcome.Refused | SignInLinkOutcome.Unconfirmed }
+  | {
+    outcome:
+      | SignInLinkOutcome.Refused
+      | SignInLinkOutcome.Unconfirmed
+      | SignInLinkOutcome.AskedElsewhere
+  }
 
 /** A sign-up waiting for its code, as the page that asks for the code reads it back. */
 export interface WaitingSignUp {
@@ -363,8 +373,9 @@ export interface SignIn {
   /**
    * Spends a sign-in link's token (#391) and signs in to the account that owns its address, or
    * makes one with the address proven. An account with an authenticator app still owes its code.
-   * A guest keeps their account with the address, or is offered the switch when another account
-   * owns it. A session the browser held before is replaced.
+   * A guest who asked for the link keeps their account with the address, or is offered the switch
+   * when another account owns it; any other guest is refused and keeps their session. A full
+   * account's session the browser held before is replaced.
    *
    * @param firstGroupId The id of a new account's first group. Defaults to a random UUID.
    */
@@ -974,6 +985,8 @@ export function createSignIn(options: SignInOptions): SignIn {
   /**
    * What a spent link does (#391), for the link's normalised address `email`:
    *
+   * - **A guest who did not ask for the link** is refused, and nothing changes: replacing the
+   *   guest's session would lose the guest account for good, since a guest key has no secret.
    * - **An owner of the proven address** is signed in, as a password would sign them in: a blocked
    *   account is refused, one waiting to be deleted is restored (or owes its code first), and an
    *   authenticator app is still owed. A guest is offered the switch to that account instead.
@@ -994,11 +1007,13 @@ export function createSignIn(options: SignInOptions): SignIn {
   ): Promise<SignInLinkRedemption> {
     const { email, next } = link
     const state = c.get("auth") as AppAuthState | null | undefined
-    // Only the guest who asked for the link keeps their account through it. Any other guest who
-    // opens it gets what a signed-out browser gets, and their guest account stays as it was:
-    // otherwise a stranger could mail a guest a link to the stranger's address and, by signing in
-    // with it later, own the guest's data.
-    const guest = state?.user.guestSince && link.requestedBy === state.user.id ? state : null
+    // A guest uses only a link the guest asked for. Attaching the address of someone else's link
+    // would let that person, signing in with it later, own the guest's data; signing the browser
+    // in instead would end the guest's only session and lose the account.
+    if (state?.user.guestSince && link.requestedBy !== state.user.id) {
+      return { outcome: SignInLinkOutcome.AskedElsewhere }
+    }
+    const guest = state?.user.guestSince ? state : null
     const owner = await db.authStore.findUserIdByProvenEmail(email)
     if (owner === null) {
       if (await db.authStore.findKey(PASSWORD_METHOD, email)) {

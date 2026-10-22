@@ -656,6 +656,12 @@ export interface SignInLinkRedeemed {
   secondFactorPending: boolean
 }
 
+/**
+ * The `code` of the refusal `POST /api/auth/link/redeem` answers a guest whose link another browser
+ * asked for (#391). The link is spent and the guest's session stays as it was.
+ */
+export const SIGN_IN_LINK_ASKED_ELSEWHERE_CODE = "SIGN_IN_LINK_ASKED_ELSEWHERE"
+
 /** What `GET /auth/sign-up/pending` answers: the sign-up that waits, or `null` when none does. */
 export interface PendingSignUpResponse {
   pending: PendingSignUp | null

@@ -19,6 +19,7 @@ import {
   authSignUpSchema,
   authTotpDisconnectSchema,
   emailToVerify,
+  SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
   type SignInLinkRedeemed,
   signInMethodProofSchema,
   type SignUpAccountExistsResponse,
@@ -69,8 +70,8 @@ export interface AuthRouteDependencies {
   /**
    * Queues a sign-in link for a normalised address, with the checked page to open after sign-in
    * (#391). The same work for every address: the link decides what happens once it is opened.
+   * `requestedBy` is the guest account that asks, else `null`: a guest uses only a link it asked for.
    */
-  /** `requestedBy`: the guest account that asks, kept by the link only for that guest; else `null`. */
   requestSignInLink(email: string, next: string | null, requestedBy: number | null): Promise<void>
   /** Persistent count of wrong e-mail codes per user, with a growing lock. */
   emailCodeFailures: Lockout
@@ -119,6 +120,13 @@ export const SIGN_IN_LINK_REFUSED = "This link no longer works."
  */
 export const SIGN_IN_LINK_UNCONFIRMED =
   "An account uses this address but never confirmed it. Reset its password to sign in."
+
+/**
+ * The answer to a guest who opens a link another browser asked for, with the code
+ * `SIGN_IN_LINK_ASKED_ELSEWHERE_CODE`: the link is spent, and the guest stays signed in as before.
+ */
+export const SIGN_IN_LINK_ASKED_ELSEWHERE =
+  "This link was asked for in another browser. Ask for a new one in this browser."
 
 /** The answer to a reset link that cannot be used. */
 export const PASSWORD_RESET_REFUSED = "This link is invalid, used or expired. Ask for a new one."
@@ -479,6 +487,11 @@ export function createAuthRoute(
           return c.json({ error: SIGN_IN_LINK_UNCONFIRMED }, 409)
         case SignInLinkOutcome.Refused:
           return c.json({ error: SIGN_IN_LINK_REFUSED }, 410)
+        case SignInLinkOutcome.AskedElsewhere:
+          return c.json(
+            { error: SIGN_IN_LINK_ASKED_ELSEWHERE, code: SIGN_IN_LINK_ASKED_ELSEWHERE_CODE },
+            403,
+          )
       }
     })
     .post(`/password/reset`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {

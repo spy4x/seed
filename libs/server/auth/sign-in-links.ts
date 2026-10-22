@@ -57,7 +57,8 @@ export interface SignInLinkRequest {
   next: string | null
   /**
    * The guest account that asked for the link, or `null`. Only that guest keeps its account through
-   * the link; any other browser that opens it gets the address's own account.
+   * the link; another guest who opens it is refused, and a browser with no guest gets the address's
+   * own account.
    */
   requestedBy: number | null
 }
