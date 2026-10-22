@@ -22,6 +22,8 @@ import { clickLike, typeLike } from "./human-mouse.ts"
 const BASE_URL = Deno.env.get("BASE_URL") ?? "http://app.localhost"
 const OUT_DIR = new URL(".", import.meta.url).pathname
 const VIEWPORT = { width: 1280, height: 800 }
+/** The sign-in still's viewport: 16:10 like {@link VIEWPORT}, tall enough for the whole page. */
+const SIGN_IN_VIEWPORT = { width: 1440, height: 900 }
 const THEMES = ["light", "dark"] as const
 type Theme = typeof THEMES[number]
 
@@ -77,10 +79,15 @@ async function captureStills(browser: Browser, theme: Theme): Promise<Record<str
   const context = await newContext(browser, theme, 2)
   try {
     const page = await context.newPage()
+    // The sign-in page is taller than the 800 px viewport, so it is shot on a larger one of the
+    // same 16:10 shape: the whole card, the guest offer and the sign-up link, with room below.
+    await page.setViewportSize(SIGN_IN_VIEWPORT)
     await page.goto("/sign-in")
     await page.getByRole("heading", { level: 1, name: "Welcome back" }).waitFor()
+    await page.getByText("Create an account", { exact: true }).waitFor()
     await page.waitForTimeout(500)
     const signIn = await page.screenshot()
+    await page.setViewportSize(VIEWPORT)
     await page.locator("[data-e2e=auth-form-login]").fill(DEMO.email)
     await page.locator("[data-e2e=auth-form-password]").fill(DEMO.password)
     await page.locator("[data-e2e=auth-form-submit]").click()
@@ -266,8 +273,10 @@ async function recordFlow(browser: Browser, dir: string): Promise<Recording> {
   try {
     await context.addInitScript(`window.__demoPointerStart = ${JSON.stringify(pointer)}`)
     await context.addInitScript({ path: new URL("pointer.js", import.meta.url).pathname })
-    page = await context.newPage()
+    // The video starts when the page is made, so the clock does too: the trim then cuts the
+    // whole first load, "Loading…" included.
     const started = Date.now()
+    page = await context.newPage()
     await page.goto("/sign-up")
     await page.getByRole("heading", { level: 1, name: "Create your account" }).waitFor()
     await page.mouse.move(pointer.x, pointer.y)
