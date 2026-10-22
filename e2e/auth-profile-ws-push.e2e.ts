@@ -93,7 +93,8 @@ test.describe("auth profile ws push flow", () => {
       // The push devices have a section of their own, which keeps the page.
       await page.locator("[data-e2e=settings-nav-notifications]").click()
       await expect(page).toHaveURL("/profile/notifications")
-      await expect(page.getByRole("heading", { level: 2, name: "Notifications" })).toBeVisible()
+      await expect(page.getByRole("heading", { level: 2, name: "Push notifications" }))
+        .toBeVisible()
       expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
 
       await page.locator("[data-e2e=account-menu-button]").click()

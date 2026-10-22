@@ -112,7 +112,7 @@ export const PROFILE_SECTION_TEXT: Record<
   },
   appearance: { label: "Appearance", description: "How the app looks on this device." },
   notifications: {
-    label: "Notifications",
+    label: "Push notifications",
     description: "Devices that get a notification when something changes in your groups.",
   },
   "api-tokens": {
@@ -145,8 +145,10 @@ export interface ProfileScreenProps {
   onCancelProfile?: () => void
   /** The e-mail dialog's state and calls (Account). Without it the address has no button. */
   emailChange?: EmailChangeProps
-  /** Opens the e-mail dialog at its code when the Account section first shows. */
+  /** Opens the e-mail dialog at its code, whenever this turns true while an address waits for one. */
   openEmailCode?: boolean
+  /** Given only when the address could not be read: Account shows the failure and a retry. */
+  onRetryEmail?: () => void
   onChangePassword?: () => void
   /**
    * Called when an account with no password submits its first one, which `values.newPassword`
@@ -296,16 +298,18 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
         </div>
       }
     >
-      {section && (
-        <ProfileSection
-          {...props}
-          section={section}
-          user={user}
-          name={name}
-          providerOnly={providerOnly}
-          providerProof={providerProof}
-        />
-      )}
+      {
+        /* On `/profile` the layout shows Account beside the list from `md` up and hides it on a
+        phone, where the list is the page. */
+      }
+      <ProfileSection
+        {...props}
+        section={section ?? "account"}
+        user={user}
+        name={name}
+        providerOnly={providerOnly}
+        providerProof={providerProof}
+      />
     </SettingsLayout>
   )
 }
@@ -342,6 +346,7 @@ function ProfileSection(
           ) ?? ""}
           emailChange={props.emailChange}
           openEmailCode={props.openEmailCode}
+          onRetryEmail={props.onRetryEmail}
           providerProof={providerProof}
         />
       )

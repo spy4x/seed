@@ -21,6 +21,7 @@ export const EMAIL_FAILURES = {
   verify: "Could not check the code",
   send: "Could not send a new code",
   change: "Could not change the address",
+  load: "Your e-mail address could not be read.",
 } as const
 
 /**
@@ -72,6 +73,20 @@ export function EmailBanner(
       Verify <strong class="wrap-anywhere">{breakableAddress(email!)}</strong>{" "}
       with the code we mail there.
     </Notice>
+  )
+}
+
+/** Stands in for the e-mail address when it could not be read: the message, and a way to try again. */
+export function EmailUnavailable({ onRetry }: { onRetry: () => void }): JSX.Element {
+  return (
+    <Stack data-e2e="email-unavailable">
+      <ErrorState message={EMAIL_FAILURES.load} />
+      <div>
+        <Button type="button" variant="secondary" data-e2e="email-retry" onClick={onRetry}>
+          Try again
+        </Button>
+      </div>
+    </Stack>
   )
 }
 

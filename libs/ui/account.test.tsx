@@ -814,15 +814,17 @@ describe("ProfileScreen", () => {
     expect(find("[data-e2e=settings-heading]").textContent).toBe("Sign-in and security")
   })
 
-  it("shows only the open section, and on the list's own address none", async () => {
-    await mount(<ProfileScreen {...profileDefaults} section="account" emailChange={emailChange} />)
-    expect(document.querySelector("[data-e2e=profile-edit]")).not.toBeNull()
-    expect(document.querySelector("[data-e2e=password-open]")).toBeNull()
+  it("shows only the open section, and on the list's own address Account where a phone hides it", async () => {
+    const has = (selector: string) => document.querySelector(selector) !== null
+    await mount(<ProfileScreen {...profileDefaults} section="security" emailChange={emailChange} />)
+    expect(has("[data-e2e=password-open]")).toBe(true)
+    expect(has("[data-e2e=profile-edit]")).toBe(false)
 
     await rerender(<ProfileScreen {...profileDefaults} section={null} />)
-    expect(document.querySelector("[data-e2e=profile-edit]")).toBeNull()
-    expect(document.querySelector("[data-e2e=settings-heading]")).toBeNull()
-    expect(document.querySelector("[aria-current=page]")).toBeNull()
+    expect(has("[data-e2e=password-open]")).toBe(false)
+    expect(has("[data-e2e=settings-section].max-md\\:hidden [data-e2e=profile-edit]")).toBe(true)
+    expect(has("[data-e2e=settings-heading]")).toBe(false)
+    expect(has("[aria-current=page]")).toBe(false)
   })
 
   it("says in the list whether two-factor is on", async () => {
@@ -1514,7 +1516,8 @@ const emailChange = emailDefaults
 /** The Account section with its e-mail address and dialog, built over the defaults. */
 function account(
   props: Partial<EmailChangeProps> & {
-    status?: EmailStatus
+    /** `null` while the address has not been read yet. */
+    status?: EmailStatus | null
     providerProof?: ProviderProof | null
     openEmailCode?: boolean
   } = {},
@@ -1555,6 +1558,14 @@ describe("the e-mail address on the Account section", () => {
     expect(change.calls).toEqual([["code", "Ab3_x-9Q"]])
     expect(await submit("[data-e2e=email-code]")).toBe(true)
     expect(verify.calls).toHaveLength(1)
+  })
+
+  it("opens at the code once the address arrives, when the ask came before it", async () => {
+    await mount(account({ status: null, openEmailCode: true }))
+
+    await rerender(account({ status: unproven, openEmailCode: true }))
+
+    expect(isOpen("email-change-dialog")).toBe(true)
   })
 
   it("offers Enter code on the row while the address waits for one, opening the dialog at the code", async () => {

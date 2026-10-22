@@ -10,7 +10,13 @@ import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { type EmailStatus, emailToVerify } from "@domain/identity"
-import { type EmailChangeProps, EmailDialog, EmailState, type EmailStep } from "./email-screen.tsx"
+import {
+  type EmailChangeProps,
+  EmailDialog,
+  EmailState,
+  type EmailStep,
+  EmailUnavailable,
+} from "./email-screen.tsx"
 import { profilePath, ScreenForm } from "./progressive.tsx"
 import type { ProviderProof } from "./provider-proof.tsx"
 
@@ -48,6 +54,11 @@ export interface AccountSectionProps {
   emailChange?: EmailChangeProps
   /** Opens the e-mail dialog at its code on the first render, while an address waits for one. */
   openEmailCode?: boolean
+  /**
+   * Given only when the address could not be read: the row gives way to the failure and a way to
+   * read it again.
+   */
+  onRetryEmail?: () => void
   /** What an account with no password confirms an address change with. */
   providerProof?: ProviderProof | null
 }
@@ -59,16 +70,19 @@ export interface AccountSectionProps {
  * code.
  */
 export function AccountSection(
-  { name, nameEdit, email, providerOnly, emailChange, openEmailCode, providerProof }:
+  { name, nameEdit, email, providerOnly, emailChange, openEmailCode, onRetryEmail, providerProof }:
     AccountSectionProps,
 ): JSX.Element {
   const [editingName, setEditingName] = useState(false)
   const firstName = useRef<HTMLInputElement>(null)
   const lastName = useRef<HTMLInputElement>(null)
   const target = email ? emailToVerify(email) : null
-  const [emailStep, setEmailStep] = useState<EmailStep | null>(
-    openEmailCode && target ? "code" : null,
-  )
+  const [emailStep, setEmailStep] = useState<EmailStep | null>(null)
+  // A link asks for the code (`?verify`): open it whenever that ask arrives, also while the section
+  // stays on screen, and once the address it is for has been read.
+  useEffect(() => {
+    if (openEmailCode && target) setEmailStep("code")
+  }, [openEmailCode, Boolean(target)])
   const cancelName = () => {
     setEditingName(false)
     nameEdit.onCancel?.()
@@ -103,37 +117,40 @@ export function AccountSection(
             </Button>
           }
         />
-        <SettingRow
-          label="E-mail address"
-          value={<EmailValue email={email} provider={providerOnly} />}
-          action={email && emailChange && (
-            <Cluster gap="sm" justify="end">
-              {target && (
+        {!email && onRetryEmail ? null : (
+          <SettingRow
+            label="E-mail address"
+            value={<EmailValue email={email} provider={providerOnly} />}
+            action={email && emailChange && (
+              <Cluster gap="sm" justify="end">
+                {target && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    class={TOUCH_TARGET}
+                    data-e2e="email-code-open"
+                    onClick={() => setEmailStep("code")}
+                  >
+                    Enter code
+                  </Button>
+                )}
                 <Button
                   type="button"
+                  variant="secondary"
                   size="sm"
                   class={TOUCH_TARGET}
-                  data-e2e="email-code-open"
-                  onClick={() => setEmailStep("code")}
+                  data-e2e="email-change-open"
+                  onClick={() => setEmailStep("address")}
                 >
-                  Enter code
+                  {email.email === null ? "Add" : "Change"}{" "}
+                  <span class="sr-only">e-mail address</span>
                 </Button>
-              )}
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                class={TOUCH_TARGET}
-                data-e2e="email-change-open"
-                onClick={() => setEmailStep("address")}
-              >
-                {email.email === null ? "Add" : "Change"}{" "}
-                <span class="sr-only">e-mail address</span>
-              </Button>
-            </Cluster>
-          )}
-        />
+              </Cluster>
+            )}
+          />
+        )}
       </SettingList>
+      {!email && onRetryEmail && <EmailUnavailable onRetry={onRetryEmail} />}
 
       <Modal
         open={editingName}

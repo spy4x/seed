@@ -64,8 +64,6 @@ import { usePreferencesProps } from "./preferences-props.ts"
 const NO_DELETE_VALUES: AccountDeleteValues = { password: "", otp: "" }
 const NO_EMAIL_VALUES: EmailValues = { code: "", email: "", password: "" }
 const NO_EMAIL_MESSAGES: EmailMessages = { verify: null, send: null, change: null }
-/** From this width up the profile shows a section beside its navigation: Tailwind's `md`. */
-const WIDE = "(min-width: 48rem)"
 const NO_DELETE_ERRORS: AccountDeleteErrors = { form: null }
 const CODE_MISSING = "Enter the code from your authenticator app"
 
@@ -75,9 +73,8 @@ const network = createOnlineStatus()
 /**
  * Wires `ProfileScreen` to this app's session store, the auth calls, the e-mail store and the push
  * endpoints, for `/profile` and `/profile/<section>`. Holds what the user types, what is in flight
- * and what failed; the screen only draws it. `/profile` shows the list of sections on a phone and
- * the first section on a wider screen, and follows a turn of the device from one to the other; an
- * address with no such section goes back to `/profile`.
+ * and what failed; the screen only draws it. An address with no such section goes back to
+ * `/profile`.
  */
 export function ProfileView({ section }: { section?: string }) {
   if (section !== undefined && !isProfileSection(section)) {
@@ -86,26 +83,11 @@ export function ProfileView({ section }: { section?: string }) {
   return <ProfileSections section={section} />
 }
 
-/** Whether the window is wide enough to show a section beside the list, kept up to date. */
-function useWide(): boolean {
-  const [query] = useState(() => typeof matchMedia === "function" ? matchMedia(WIDE) : null)
-  const [wide, setWide] = useState(query?.matches ?? false)
-  useEffect(() => {
-    if (!query) return
-    const follow = () => setWide(query.matches)
-    query.addEventListener("change", follow)
-    return () => query.removeEventListener("change", follow)
-  }, [])
-  return wide
-}
-
 function ProfileSections({ section }: { section?: ProfileSectionId }) {
   const [path, navigate] = useLocation()
   const search = useSearch()
   const session = sessionState.value
   const preferences = usePreferencesProps()
-  const wide = useWide()
-  const current = section ?? (wide ? "account" : null)
   const [emailValues, setEmailValues] = useState(NO_EMAIL_VALUES)
   const [emailErrors, setEmailErrors] = useState(NO_EMAIL_MESSAGES)
   const [emailSendNotice, setEmailSendNotice] = useState<string | null>(null)
@@ -472,7 +454,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
 
   return (
     <ProfileScreen
-      section={current}
+      section={section ?? null}
       user={session.user}
       emailChange={{
         values: emailValues,
@@ -518,6 +500,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       providerProof={providerProof}
       isMfaRequired={session.isMfaRequired}
       email={emailStore.status.value}
+      onRetryEmail={emailStore.loadFailed.value ? () => void emailStore.refresh() : undefined}
       values={values}
       onValueChange={setValue}
       errors={{

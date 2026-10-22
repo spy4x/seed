@@ -1,6 +1,6 @@
 /**
  * The profile page wired to the app's stores, in a browser DOM (happy-dom): which section an
- * address opens, on a phone and on a wide screen, and that the first-steps card is not here but on
+ * address opens, the e-mail code a link asks for, and that the first-steps card is not here but on
  * the notes list (`NotesView.test.tsx`). Every read the page starts gets a refusal, so the page
  * never reaches a server.
  */
@@ -10,10 +10,11 @@ import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
-import { Router } from "wouter-preact"
+import { Route, Router } from "wouter-preact"
 import { memoryLocation } from "wouter-preact/memory-location"
 import { act } from "preact/test-utils"
 import { type OnboardingStatus, UserMFAStatus, UserRole } from "@domain/identity"
+import { emailStore } from "../state/email.ts"
 import { onboardingStore } from "../state/onboarding.ts"
 import { sessionState } from "../state/session.ts"
 import { ProfileView } from "./ProfileView.tsx"
@@ -30,7 +31,6 @@ const NAMES = [
   "Element",
   "fetch",
   "CSS",
-  "matchMedia",
 ] as const
 const own = Object.fromEntries(
   NAMES.map((name) => [name, (globalThis as Record<string, unknown>)[name]]),
@@ -59,8 +59,6 @@ beforeAll(() => {
     globalThis,
     Object.fromEntries(NAMES.map((name) => {
       if (name === "fetch") return [name, refuse]
-      // Deno has no media queries: each test that needs a wide screen sets its own answer.
-      if (name === "matchMedia") return [name, undefined]
       const value = (window as unknown as Record<string, unknown>)[name]
       return [
         name,
@@ -105,37 +103,29 @@ afterEach(async () => {
   if (root) await act(() => render(null, root!))
   root?.remove()
   root = null
+  emailStore.reset()
 })
 
-/** The view at `path`, with a router that records where the app went. */
+/** The view at `path`, with a router that records where the app went and can move it. */
 async function open(path: string, view: VNode) {
-  const { hook, history } = memoryLocation({ path, record: true })
+  const { hook, history, navigate } = memoryLocation({ path, record: true })
   root = window.document.createElement("div") as unknown as HTMLElement
   window.document.body.appendChild(root as never)
   await act(() => render(<Router hook={hook}>{view}</Router>, root!))
-  return history
+  return { history, go: (to: string) => act(() => navigate(to)) }
 }
 
-/** The media query the page reads, as a screen of that width answers it; `turn` changes the width. */
-function screen(wide: boolean) {
-  const listeners = new Set<() => void>()
-  const query = {
-    matches: wide,
-    addEventListener: (_: string, listener: () => void) => void listeners.add(listener),
-    removeEventListener: (_: string, listener: () => void) => void listeners.delete(listener),
-  }
-  Object.assign(globalThis, { matchMedia: () => query })
-  return {
-    turn: async (to: boolean) => {
-      query.matches = to
-      await act(() => listeners.forEach((listener) => listener()))
-    },
-  }
-}
+/** The page as the app routes it, so a move between its addresses keeps it mounted. */
+const ROUTED = (
+  <Route path="/profile/:section?">
+    {(params) => <ProfileView section={params.section} />}
+  </Route>
+)
+
+/** Lets the page's refused reads settle. */
+const settle = () => act(() => new Promise((done) => setTimeout(done, 0)))
 
 describe("ProfileView", () => {
-  afterEach(() => void Object.assign(globalThis, { matchMedia: undefined }))
-
   it("opens the section its address names, alone, and shows no first-steps card", async () => {
     await open("/profile/security", <ProfileView section="security" />)
 
@@ -146,34 +136,52 @@ describe("ProfileView", () => {
     expect(root!.querySelector("[data-e2e=onboarding]")).toBe(null)
   })
 
-  it("lists the sections and opens none at /profile on a phone", async () => {
-    screen(false)
-    await open("/profile", <ProfileView />)
+  it("lists the sections at /profile and draws Account in the column a phone hides", async () => {
+    const { history } = await open("/profile", <ProfileView />)
 
     expect(root!.querySelector("[data-e2e=settings-nav]")).not.toBe(null)
-    expect(root!.querySelector("[data-e2e=settings-heading]")).toBe(null)
-  })
-
-  it("opens Account beside the list at /profile on a wide screen, without moving the address", async () => {
-    screen(true)
-    const history = await open("/profile", <ProfileView />)
-
-    expect(root!.querySelector("[data-e2e=settings-heading]")?.textContent).toBe("Account")
+    const column = root!.querySelector("[data-e2e=settings-section]")
+    expect(column?.className).toContain("max-md:hidden")
+    expect(column?.querySelector("[data-e2e=profile-name]")?.textContent).toBe("Ada Lovelace")
     expect(history.at(-1)).toBe("/profile")
   })
 
-  it("shows the list again at /profile when a wide screen turns narrow", async () => {
-    const { turn } = screen(true)
-    await open("/profile", <ProfileView />)
+  it("opens the e-mail code when a link asks for it while Account stays on screen", async () => {
+    emailStore.status.value = { email: "ada@example.com", proven: false, pending: null }
+    const { go } = await open("/profile", ROUTED)
+    const dialog = () =>
+      root!.querySelector<HTMLDialogElement>("dialog[data-e2e=email-change-dialog]")
+    expect(dialog()?.open ?? false).toBe(false)
 
-    await turn(false)
+    await go("/profile/account?verify")
 
-    expect(root!.querySelector("[data-e2e=settings-heading]")).toBe(null)
-    expect(root!.querySelector("[data-e2e=settings-nav]")).not.toBe(null)
+    expect(dialog()?.open).toBe(true)
+    expect(root!.querySelector("[data-e2e=email-code]")).not.toBe(null)
+  })
+
+  it("shows why the address is missing, with a retry, when it could not be read", async () => {
+    const reads: string[] = []
+    const refuse = globalThis.fetch
+    globalThis.fetch = (input, init) => {
+      reads.push(String(input))
+      return refuse(input, init)
+    }
+    try {
+      await open("/profile/account", <ProfileView section="account" />)
+      await settle()
+
+      expect(root!.querySelector("[data-e2e=email-unavailable] [role=alert]")?.textContent)
+        .toBe("Your e-mail address could not be read.")
+      const before = reads.filter((url) => url.endsWith("/api/auth/email")).length
+      await act(() => root!.querySelector<HTMLElement>("[data-e2e=email-retry]")!.click())
+      expect(reads.filter((url) => url.endsWith("/api/auth/email")).length).toBe(before + 1)
+    } finally {
+      globalThis.fetch = refuse
+    }
   })
 
   it("sends an address with no such section back to /profile", async () => {
-    const history = await open("/profile/billing", <ProfileView section="billing" />)
+    const { history } = await open("/profile/billing", <ProfileView section="billing" />)
 
     expect(history.at(-1)).toBe("/profile")
   })
