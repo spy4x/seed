@@ -7,6 +7,7 @@ import {
   type GuestStartResponse,
   type GuestSwitchResponse,
   guestSwitchSchema,
+  guestTooManyMessage,
 } from "@domain/identity"
 import { readApiJson } from "@api/services/json-body.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
@@ -70,7 +71,7 @@ export function createGuestRoute(
         if (!decision.allowed) {
           const seconds = Math.ceil(decision.retryAfterMs / 1000)
           c.header("Retry-After", String(seconds))
-          return c.json({ error: GUEST_ANSWERS.tooMany, retryAfterSeconds: seconds }, 429)
+          return c.json({ error: guestTooManyMessage(seconds), retryAfterSeconds: seconds }, 429)
         }
         const started = await guests.start(c, c.get("auth"))
         if (started.outcome === GuestStartOutcome.Off) {

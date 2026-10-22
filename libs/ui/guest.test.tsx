@@ -206,7 +206,7 @@ function takenProps(over: Partial<GuestTakenScreenProps> = {}) {
 }
 
 describe("GuestTakenScreen", () => {
-  it("selects no choice, and a submit without one asks for it and changes nothing", async () => {
+  it("selects no choice, and a submit without one asks for it at the choice and changes nothing", async () => {
     const { props, calls } = takenProps()
     await mount(<GuestTakenScreen {...props} />)
     const radios = [...document.querySelectorAll<HTMLInputElement>("input[type=radio]")]
@@ -214,6 +214,7 @@ describe("GuestTakenScreen", () => {
     expect(find("[data-e2e=taken-submit]").textContent).toBe("Continue")
     await submit("[data-e2e=taken-submit]")
     expect(find("[role=alert]").textContent).toContain("Choose what happens")
+    expect((document.activeElement as HTMLInputElement | null)?.value).toBe("move")
     expect(calls).toEqual([])
   })
 
@@ -296,6 +297,21 @@ describe("GuestBanner", () => {
       </FormatContext.Provider>,
     )
     expect(find("[data-e2e=guest-banner]").textContent).toContain("every night at 09:00,")
+  })
+  it("moves focus to the page's heading after Hide this message", async () => {
+    let hidden = false
+    await mount(
+      <>
+        {!hidden && <GuestBanner wipeAt={null} onDismiss={() => (hidden = true)} />}
+        <main>
+          <h1>Notes</h1>
+        </main>
+      </>,
+    )
+    await click("[aria-label='Hide this message']")
+    await act(() => new Promise((resolve) => setTimeout(resolve, 0)))
+    expect(hidden).toBe(true)
+    expect(document.activeElement?.tagName).toBe("H1")
   })
 })
 

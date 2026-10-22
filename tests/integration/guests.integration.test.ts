@@ -637,6 +637,12 @@ Deno.test("the hourly limit refuses a sixth guest from one network with the wait
     expect(answers.map((answer) => answer.status)).toEqual([201, 201, 201, 201, 201, 429])
     expect(Number(answers[5].retryAfter)).toBeGreaterThan(60 * 59)
     expect(answers[5].body.retryAfterSeconds).toBe(Number(answers[5].retryAfter))
+    // The sentence says the real wait in minutes, under a title that already says what happened.
+    expect(answers[5].body.error).toBe(
+      `Try again in ${
+        Math.ceil(Number(answers[5].retryAfter) / 60)
+      } minutes, or create an account with your e-mail address.`,
+    )
     // Another network is not counted with it.
     expect((await fixture.browser("203.0.113.10").call("POST", "/auth/guest")).status).toBe(201)
   }, { rateLimits: { guestStart: limits.guestStart } })

@@ -132,10 +132,22 @@ export interface GuestSwitchResponse {
 /** The body of `POST /api/auth/guest/delete`: the word {@link GUEST_DELETE_WORD}, typed. */
 export const guestDeleteSchema = type({ confirm: "0 < string <= 50" }).onUndeclaredKey("reject")
 
+/**
+ * The refusal of a guest start once the network made too many (#224), with the real wait in whole
+ * minutes; an unknown wait reads as an hour. The screen's title already says what happened.
+ */
+export function guestTooManyMessage(retryAfterSeconds: number | null): string {
+  if (retryAfterSeconds === null || !(retryAfterSeconds > 0)) return GUEST_ANSWERS.tooMany
+  const minutes = Math.max(1, Math.ceil(retryAfterSeconds / 60))
+  return `Try again in ${minutes} ${
+    minutes === 1 ? "minute" : "minutes"
+  }, or create an account with your e-mail address.`
+}
+
 /** The API's sentences for the guest routes, so the screens show the same words. */
 export const GUEST_ANSWERS = {
   off: "Trying the app without an account is turned off here. Create an account instead.",
-  tooMany: "Too many new accounts from your network. Try again in an hour.",
+  tooMany: "Try again in an hour, or create an account with your e-mail address.",
   wrongPassword: "That password is not right. Try again.",
   wrongCode: "That code did not work. Try again.",
   expired: "This choice has timed out. Add the sign-in method again.",

@@ -140,6 +140,14 @@ export function TryScreen({ state, onRetry, navigate }: TryScreenProps): JSX.Ele
   }
 }
 
+/** Focuses the page's first heading, making it focusable first; nothing when there is none. */
+function focusPageHeading(page: Document): void {
+  const heading = page.querySelector<HTMLElement>("main h1") ?? page.querySelector("h1")
+  if (!heading) return
+  if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1
+  heading.focus()
+}
+
 /** The website's legal pages, as full addresses: the website is on a host of its own. */
 export interface TryLegalLinks {
   terms: string
@@ -241,26 +249,35 @@ export function GuestBanner(
   },
 ): JSX.Element {
   const format = useFormat()
+  const box = useRef<HTMLDivElement>(null)
+  const dismiss = () => {
+    const page = box.current?.ownerDocument
+    onDismiss()
+    // The banner leaves with the focus in it: the page's heading takes it, not the page body.
+    if (page) setTimeout(() => focusPageHeading(page), 0)
+  }
   return (
-    <Notice
-      live={false}
-      data-e2e="guest-banner"
-      onDismiss={onDismiss}
-      dismissLabel="Hide this message"
-      action={
-        <Button
-          href={GUEST_PATHS.keep}
-          navigate={navigate}
-          variant="outline"
-          size="sm"
-          data-e2e="guest-banner-keep"
-        >
-          {KEEP_LABEL}
-        </Button>
-      }
-    >
-      {wipeAt ? demoWipeLine(format.time(wipeAt)) : GUEST_BANNER_TEXT}
-    </Notice>
+    <div ref={box} class="contents">
+      <Notice
+        live={false}
+        data-e2e="guest-banner"
+        onDismiss={dismiss}
+        dismissLabel="Hide this message"
+        action={
+          <Button
+            href={GUEST_PATHS.keep}
+            navigate={navigate}
+            variant="outline"
+            size="sm"
+            data-e2e="guest-banner-keep"
+          >
+            {KEEP_LABEL}
+          </Button>
+        }
+      >
+        {wipeAt ? demoWipeLine(format.time(wipeAt)) : GUEST_BANNER_TEXT}
+      </Notice>
+    </div>
   )
 }
 
@@ -511,6 +528,7 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
   const { state, busy, error, navigate } = props
   const [choice, setChoice] = useState<GuestTakenChoice | null>(null)
   const [missing, setMissing] = useState(false)
+  const choiceGroup = useRef<HTMLDivElement>(null)
   const [confirming, setConfirming] = useState<{ password?: string; otp?: string } | null>(null)
   const failure = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -548,7 +566,12 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
     otp: state.needsCode ? String(data.get("otp") ?? "") : undefined,
   })
   const submit = (data: FormData) => {
-    if (choice === null) return setMissing(true)
+    if (choice === null) {
+      setMissing(true)
+      // The error is about the choice: focus goes to its first option, where the arrows move on.
+      choiceGroup.current?.querySelector<HTMLInputElement>("input[type=radio]")?.focus()
+      return
+    }
     if (choice === "keep") return props.onKeep()
     const given = proof(data)
     if (choice === "delete") return setConfirming(given)
@@ -596,7 +619,7 @@ export function GuestTakenScreen(props: GuestTakenScreenProps): JSX.Element {
       </Stack>
       <ScreenForm pending={busy} onSubmit={submit} class={FORM_WIDTH}>
         <Stack gap="lg">
-          <div>
+          <div ref={choiceGroup}>
             <RadioGroup
               legend="What happens to this guest account"
               name="choice"
