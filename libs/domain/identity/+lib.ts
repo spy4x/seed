@@ -908,10 +908,15 @@ export interface AdminUserListResponse {
 
 /** One way the person signs in, as the operator sees it: never a secret. */
 export interface AdminSignInMethod {
-  /** `password`, `oauth:google`, `oauth:github`, `email-code`, or `passkey`. */
+  /** `password`, `oauth:google`, `oauth:github`, `email-code`, `passkey` or `email-link`. */
   method: string
   /** A passkey's name and last use (#222), on a passkey row only. */
   passkey?: { name: string; lastUsedAt: string | null }
+  /**
+   * On the `email-link` row only (#391): when a sign-in link last signed the person in or up, or
+   * `null` when the audit keeps no such row. ISO 8601.
+   */
+  lastUsedAt?: string | null
   /** The address the key holds, or `null`. */
   email: string | null
   /** When the address was proven, or `null` when it was not. ISO 8601. */

@@ -26,6 +26,7 @@ import {
   type AdminUserDetail,
   AuthAuditEventType,
   canChangeRoles,
+  SIGN_IN_LINK_METHOD,
   type UserRole,
 } from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
@@ -518,7 +519,20 @@ function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
         <li key={`${method.method}-${method.createdAt}`} class={ROW}>
           <span class="font-medium">{methodName(method.method)}</span>
           {method.email && <span class="text-sm text-muted wrap-anywhere">{method.email}</span>}
-          {method.passkey
+          {method.method === SIGN_IN_LINK_METHOD
+            ? (
+              // A sign-in link is no stored method: when one was last used, read-only (#391).
+              <span class="text-sm text-muted" data-e2e="admin-user-email-link">
+                {method.lastUsedAt
+                  ? (
+                    <>
+                      Last used <When at={method.lastUsedAt} />
+                    </>
+                  )
+                  : "Not used yet"}
+              </span>
+            )
+            : method.passkey
             ? (
               // A passkey proves no address: its name and dates, read-only (#222).
               <span class="text-sm text-muted wrap-anywhere" data-e2e="admin-user-passkey">
@@ -644,6 +658,17 @@ export function auditDetail(eventType: number | null, identifier: string): strin
   return named ? `Passkey "${named[1]}"` : identifier
 }
 
+/**
+ * The title of a sign-in or sign-up row that a sign-in link wrote (#391), which names the method
+ * itself: "Signed in with an e-mail link". `null` for every other row.
+ */
+export function linkAuditTitle(eventType: number | null, identifier: string | null): string | null {
+  if (identifier !== SIGN_IN_LINK_METHOD) return null
+  if (eventType === AuthAuditEventType.SIGNED_IN) return "Signed in with an e-mail link"
+  if (eventType === AuthAuditEventType.SIGNED_UP) return "Signed up with an e-mail link"
+  return null
+}
+
 /** The newest rows of the person's audit trail, newest first, on a timeline. */
 function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
   return (
@@ -652,13 +677,14 @@ function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
       empty="Nothing recorded."
       dataE2E="admin-user-audits"
       items={detail.audits.map((audit) => {
+        const linkTitle = linkAuditTitle(audit.eventType, audit.identifier)
         const parts = [
-          audit.identifier && auditDetail(audit.eventType, audit.identifier),
+          !linkTitle && audit.identifier && auditDetail(audit.eventType, audit.identifier),
           audit.ip && `from ${audit.ip}`,
         ].filter(Boolean)
         return {
           id: audit.id,
-          title: AUDIT_EVENTS[audit.eventType] ??
+          title: linkTitle ?? AUDIT_EVENTS[audit.eventType] ??
             BILLING_AUDIT_LABELS[audit.eventType as number as BillingAuditEvent] ?? "Other event",
           at: audit.createdAt,
           when: timeAgo(audit.createdAt),
@@ -702,6 +728,7 @@ function methodName(method: string): string {
   if (method === "oauth:github") return "GitHub"
   if (method === "email-code") return "E-mail code"
   if (method === "passkey") return "Passkey"
+  if (method === SIGN_IN_LINK_METHOD) return "E-mail link"
   return method
 }
 
