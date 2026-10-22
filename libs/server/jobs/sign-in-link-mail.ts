@@ -18,8 +18,9 @@ export const SIGN_IN_LINK_MAIL_JOB = "auth.sign-in-link-mail"
 
 /**
  * Queues a sign-in link for `email`, already normalised, with the checked page `next` to open
- * after sign-in, asked for by the guest account `requestedBy` or by someone with none (`null`). The same two writes for every address, known or not, so neither the answer nor
- * its timing tells which. The request row is written before its job, and the job points at it.
+ * after sign-in, asked for by the guest account `requestedBy` or by someone with none (`null`).
+ * The same two writes for every address, known or not, so neither the answer nor its timing tells
+ * which. The request row is written before its job, and the job points at it.
  */
 export async function enqueueSignInLinkMail(
   sql: postgres.Sql,
