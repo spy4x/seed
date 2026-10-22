@@ -250,9 +250,8 @@ describe("SignInMethods with passkeys", () => {
 
     expect(find("[data-e2e=provider-proof-fresh]").textContent).toContain("a moment ago")
     expect(document.querySelector("[data-e2e=sign-in-method-link-password]")).toBe(null)
-    const next = find("[data-e2e=sign-in-method-link-submit]")
-    expect(next.textContent).toBe("Continue")
-    expect(document.activeElement).toBe(next)
+    expect(find("[data-e2e=sign-in-method-link-submit]").textContent).toBe("Continue")
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("sign-in-method-link-submit")
     expect(asked).toEqual([])
     await click("[data-e2e=sign-in-method-link-submit]")
     expect(asked).toEqual([["add", undefined]])
