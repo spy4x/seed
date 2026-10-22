@@ -54,7 +54,7 @@ test.describe("auth profile ws push flow", () => {
       await expect(nav.getByRole("link", { name: "Notes" })).toHaveAttribute("aria-current", "page")
       expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
       const newTab = page.context().waitForEvent("page", { timeout: 5_000 })
-      await nav.getByRole("link", { name: "Tags" }).click({ modifiers: ["ControlOrMeta"] })
+      await nav.getByRole("link", { name: "Groups" }).click({ modifiers: ["ControlOrMeta"] })
       await (await newTab).close()
 
       // Profile in the account menu goes through the router too.
