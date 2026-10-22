@@ -282,7 +282,7 @@ describe("LinkOpenScreen in the browser", () => {
     expect(root!.querySelector("[data-e2e=sign-in-link-stay]")).toBeNull()
 
     await rerender(<LinkOpenScreen {...openDefaults} />)
-    expect(root!.querySelector("[data-e2e=sign-in-link-guest]")).toBeNull()
+    expect(text()).not.toContain("You are using the app as a guest")
   })
 
   it("tells a guest a link from another browser left the guest account as it was, focused on a new link", async () => {
