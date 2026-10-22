@@ -183,7 +183,7 @@ const TIERS: readonly Tier[] = [
           <WindowFrame variant="browser" title="app.seedsaas.com/groups">
             <Shot
               name="billing"
-              alt="A sample group's members and its plan, at the demo's example prices: Pro, active, €36.00 a month for 4 members at €9.00 each, with a button to manage billing."
+              alt="A sample group's plan and billing tab, at the demo's example prices: Pro plan with its renewal date, €36.00 a month, for 4 members at €9.00 each, the owner included, with buttons to change the card, view invoices and cancel the plan."
               sizes="(min-width: 1280px) 440px, (min-width: 768px) 672px, 100vw"
             />
           </WindowFrame>

@@ -3,7 +3,7 @@ import { AxeBuilder } from "@axe-core/playwright"
 
 const REPOSITORY = `https://github.com/spy4x/seed`
 /** What the page says about the video: its length, its sound, and one line per shot. */
-const SECONDS = 60
+const SECONDS = 58
 const SHOTS = 12
 const MP4_SIZE = `5 MB`
 

@@ -429,7 +429,7 @@ const SCREENS = [
 ] as const
 
 /** The seeded customer the Billing shot opens: the one whose history holds a refund. */
-const CUSTOMER = "Research lab"
+const CUSTOMER = "Community garden"
 
 const H = VIEWPORT.height
 /** The caption bar's height: a zoom centres its region in the frame above it. */
@@ -729,6 +729,11 @@ async function play(
       await unzoom(page)
       await clickLike(page, pointer, page.getByRole("link", { name: "Product team" }), H)
       await page.getByRole("heading", { level: 1, name: "Product team" }).waitFor()
+      // The group's overview widgets come before its tabs, so the page scrolls them to the top.
+      await page.locator("[data-e2e=admin-group-members] > li").nth(3).waitFor()
+      await page.locator("[data-e2e=admin-group-tab]").first().evaluate((tab) =>
+        tab.scrollIntoView({ block: "start" })
+      )
       await moveLike(page, pointer, { x: 900, y: 200 })
     })
     // Its tabs and first members, by name and address.
