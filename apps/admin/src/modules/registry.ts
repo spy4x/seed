@@ -8,6 +8,7 @@
 import { apiTokensModule } from "./api-tokens/module.tsx"
 import { auditModule } from "./audit/module.tsx"
 import { billingModule } from "./billing/module.tsx"
+import { blogModule } from "./blog/module.tsx"
 import { dashboardModule } from "./dashboard/module.tsx"
 import { groupsModule } from "./groups/module.tsx"
 import { newsletterModule } from "./newsletter/module.tsx"
@@ -21,6 +22,7 @@ export const ADMIN_MODULES: readonly AdminModule[] = [
   groupsModule,
   billingModule,
   newsletterModule,
+  blogModule,
   auditModule,
   systemModule,
   apiTokensModule,

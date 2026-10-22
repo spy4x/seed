@@ -70,6 +70,7 @@ import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
 import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
 import { mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
 import { createSubscribersRoute } from "./routes/subscribers.ts"
+import { createPublicBlogReads, createPublicBlogRoute } from "./routes/blog.ts"
 import { createSubscriberRateLimits } from "./middlewares/subscriber-rate-limits.ts"
 import { DEFAULT_PROXY_HOSTS } from "./middlewares/proxy-peer.ts"
 import { createProxyPeers } from "@spy4x/server/http/trusted-proxy"
@@ -380,6 +381,8 @@ app.route(
     expectedOrigin,
   }),
 )
+// The public website reads the blog's live posts; drafts and scheduled posts are never answered.
+app.route("/blog", createPublicBlogRoute(createPublicBlogReads(sql)))
 // Visitors subscribe to mail. The worker signs and sends every mail; this checks the links.
 app.route(
   "/subscribers",
