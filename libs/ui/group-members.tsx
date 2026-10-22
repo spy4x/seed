@@ -74,7 +74,7 @@ export interface GroupMembersSectionProps {
   onRemove?: (userId: number) => void
   /** Follows the upgrade link of a plan refusal; without it, the browser does. */
   navigate?: Navigate
-  /** Drawn beside the heading: the section's one action, such as "Invite people". */
+  /** Drawn beside the heading: the section's one action, such as "Invite". */
   action?: ComponentChildren
   /** Drawn under the list: the pending invitations. */
   children?: ComponentChildren
@@ -105,7 +105,7 @@ export function GroupMembersSection(
   const header = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLUListElement>(null)
   // A removed member's menu goes with their row: focus moves to the next row's menu, else to the
-  // section's action ("Invite people"), else to the heading.
+  // section's action ("Invite"), else to the heading.
   useFocusAfterRemoval(
     list,
     members?.map((member) => member.userId) ?? null,
