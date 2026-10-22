@@ -63,7 +63,7 @@ test.describe(`without JavaScript`, () => {
     const src = (await still.locator(`img`).getAttribute(`src`))!
     expect((await page.request.get(src)).status(), src).toBe(200)
     const watch = section.locator(`[data-e2e=features-admin-watch]`)
-    await expect(watch).toHaveText(`Watch it in 60 seconds`)
+    await expect(watch).toHaveText(`Watch it in 58 seconds`)
     await expect(watch).toHaveAttribute(`href`, `/admin`)
   })
 
