@@ -247,7 +247,11 @@ function SystemBody(
             {migrations.latestAt ? <When at={migrations.latestAt} /> : "Never"}
           </Fact>
         </StatusCard>
-        <StatusCard title="API build" dataE2E="admin-system-build">
+        <StatusCard
+          title="API build"
+          dataE2E="admin-system-build"
+          class="sm:col-span-2 xl:col-span-3"
+        >
           <Fact label="Version">{build.version ?? "Development build"}</Fact>
           <Fact label="Commit">
             <span class="font-mono text-xs">
@@ -271,17 +275,19 @@ function SystemBody(
  * The hint goes after the facts' `<dl>`, never inside it: a `<dl>` holds only `dt` and `dd` groups.
  */
 function StatusCard(
-  { title, health, dataE2E, hint, children }: {
+  { title, health, dataE2E, hint, class: className, children }: {
     title: string
     health?: AdminHealth
     dataE2E: string
     /** One quiet line under the facts, such as when the card warns. */
     hint?: ComponentChildren
+    /** Extra classes on the card, such as a column span. */
+    class?: string
     children: ComponentChildren
   },
 ): JSX.Element {
   return (
-    <Card data-e2e={dataE2E}>
+    <Card data-e2e={dataE2E} class={className}>
       <CardHeader
         title={title}
         headingLevel={2}
