@@ -30,6 +30,7 @@ const berlin: Preferences = {
   locale: `de-DE`,
   timeZone: `Europe/Berlin`,
   hourCycle: `h23`,
+  overview: [],
 }
 
 /** `db.preferences` in memory: one row per person, the write a compare-and-set like the SQL. */

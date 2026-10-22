@@ -349,7 +349,8 @@ function Features(): JSX.Element {
             }
           >
             Every account gets a group at sign-up. Invite people, give them roles from viewer to
-            owner, hand ownership over, restore a deleted group for 30 days.
+            owner, hand ownership over, restore a deleted group for 30 days. Each group has an
+            overview of its key numbers.
           </FeatureCard>
           {/* The card draws its own link; Umami counts a click on anything inside this wrapper. */}
           <div class="contents" data-umami-event="home-admin-card">

@@ -96,10 +96,11 @@ export default define.page(function Privacy({ state }) {
         </li>
         <li>
           Your display preferences: the theme, the region format, the time zone and the clock you
-          pick on your profile, so every device you sign in on shows dates the same way. The time
-          zone and region format of the device you first signed in on are kept too, as the ones you
-          signed up with. The operators of the demo see your preferences and that first time zone on
-          your account; deleting the account deletes them.
+          pick on your profile, so every device you sign in on shows dates the same way, and which
+          widgets of a group's overview you hid and in what order you put them. The time zone and
+          region format of the device you first signed in on are kept too, as the ones you signed up
+          with. The operators of the demo see your preferences and that first time zone on your
+          account; deleting the account deletes them.
         </li>
         <li>
           What the people in your groups see of you: everyone in a group sees your name, your role

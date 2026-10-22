@@ -7,6 +7,7 @@ const valid: Preferences = {
   locale: `de-DE`,
   timeZone: `Europe/Berlin`,
   hourCycle: `h23`,
+  overview: [],
 }
 
 Deno.test(`preferences: accepts a listed region format, a known zone and a clock`, () => {
@@ -44,4 +45,25 @@ Deno.test(`preferences: a record saved before a key existed reads with that key'
     version: 4,
     value: { ...DEFAULT_PREFERENCES, theme: `light` },
   })
+})
+
+Deno.test(`preferences: keeps an overview layout of widget ids and hidden flags`, () => {
+  const overview = [{ id: `notes.total`, hidden: true }, { id: `notes.added`, hidden: false }]
+  expect(preferencesDefinition.parse({ ...valid, overview })).toEqual({
+    ok: true,
+    value: { ...valid, overview },
+  })
+})
+
+Deno.test(`preferences: refuses an overview layout past 32 entries or with a malformed entry`, () => {
+  const entries = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({ id: `widget.${i}`, hidden: false }))
+  expect(preferencesDefinition.parse({ ...valid, overview: entries(32) }).ok).toBe(true)
+  expect(preferencesDefinition.parse({ ...valid, overview: entries(33) }).ok).toBe(false)
+  expect(preferencesDefinition.parse({ ...valid, overview: [{ id: `a`, hidden: `no` }] }).ok)
+    .toBe(false)
+  expect(
+    preferencesDefinition.parse({ ...valid, overview: [{ id: `a`.repeat(65), hidden: true }] }).ok,
+  )
+    .toBe(false)
 })

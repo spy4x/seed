@@ -1,16 +1,33 @@
 import type { JSX } from "preact"
-import { useEffect, useMemo } from "preact/hooks"
+import { useEffect, useMemo, useState } from "preact/hooks"
 import { useLocation, useSearch } from "wouter-preact"
 import { IconFolder } from "@spy4x/preact-icons"
 import { type AdminGroupFilter, adminGroupFilterQuery, parseAdminGroupFilter } from "@domain/groups"
 import { ADMIN_GROUP_PATHS, AdminGroupsListScreen } from "@ui/admin-groups-list.tsx"
 import { AdminGroupScreen } from "@ui/admin-groups-detail.tsx"
+import { AdminGroupOverview } from "@ui/admin-group-overview.tsx"
+import { OVERVIEW_DEFAULT_PRESET } from "@ui/overview-screen.tsx"
+import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "@ui/overview-widgets.ts"
+import type { DateRangeChoice } from "@spy4x/preact-ui/date-range-search"
+import { rangeForPreset } from "@spy4x/preact-ui/date-range"
+import { useFormat } from "@spy4x/preact-ui/format"
+import { createAdminOverviewState } from "./overview.ts"
 import { operatorOf } from "../../state.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { createGroupsState, type GroupsState } from "./state.ts"
 
 /** One groups state per signed-in session: a new session starts with an empty list. */
 const states = new WeakMap<AdminContext, GroupsState>()
+const overviews = new WeakMap<AdminContext, ReturnType<typeof createAdminOverviewState>>()
+
+function overviewState(context: AdminContext) {
+  let state = overviews.get(context)
+  if (!state) {
+    state = createAdminOverviewState(context.request)
+    overviews.set(context, state)
+  }
+  return state
+}
 
 function groupsState(context: AdminContext): GroupsState {
   let state = states.get(context)
@@ -66,6 +83,17 @@ function GroupView(
   const dialog = state.dialog.value
   const current = group.groupId === groupId
   const tab = new URLSearchParams(search).get(`tab`) ?? `members`
+  const overview = overviewState(context)
+  const timeZone = useFormat().timeZone
+  const now = useMemo(() => new Date(), [groupId])
+  const [range, setRange] = useState<DateRangeChoice>(() => ({
+    preset: OVERVIEW_DEFAULT_PRESET,
+    range: rangeForPreset(OVERVIEW_DEFAULT_PRESET, { now, timeZone }),
+  }))
+  useEffect(() => {
+    if (groupId !== null) overview.open({ groupId, range: range.range, timeZone })
+  }, [groupId, range.range.from, range.range.to, timeZone])
+  const loads = overview.loads.value
   return (
     <AdminGroupScreen
       detail={current ? group.detail : null}
@@ -82,6 +110,23 @@ function GroupView(
       actionError={dialog.error}
       pending={dialog.pending}
       onAction={(action) => state.act(action)}
+      overview={current && group.detail && (
+        <AdminGroupOverview
+          groupName={group.detail.group.name}
+          range={range}
+          timeZone={timeZone}
+          now={now}
+          onRangeChange={setRange}
+          widgets={OVERVIEW_WIDGETS.map((widget) => ({
+            id: widget.id,
+            title: widget.title,
+            size: widget.size,
+            load: loads[widget.id] ?? { status: `loading` },
+          }))}
+          views={OVERVIEW_VIEWS}
+          onRetry={overview.retry}
+        />
+      )}
       navigate={context.navigate}
     />
   )

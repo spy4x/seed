@@ -14,6 +14,8 @@ import type { AppDbBase } from "@api/services/db-base.ts"
 import { readFeatureJson } from "@api/services/json-body.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
+import { NoteError, parseNoteWidgetRequest } from "@domain/notes"
+import { NOTE_WIDGET_READERS, type NoteWidgetRequest } from "../../features/notes/widgets.ts"
 
 /** What the group routes call: the reads and the three actions, over the app's database. */
 export interface AdminGroupsService {
@@ -34,6 +36,11 @@ export interface AdminGroupsService {
     groupId: string,
     userId: number,
   ): Promise<AdminGroupActOutcome>
+  /**
+   * One overview widget's data for the group, as a member reads it: counts only. `null` for a
+   * group or a widget that does not exist.
+   */
+  widget(groupId: string, widgetId: string, request: NoteWidgetRequest): Promise<unknown | null>
 }
 
 export interface AdminGroupsRouteDependencies {
@@ -111,6 +118,8 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   take no body; `POST /groups/:id/transfer` takes `{ userId }`. Each answers the group's page,
  *   `{ group }`, as it reads after the change, and writes the group's audit row naming the
  *   operator. Like the people actions they ask for no password (owner's decision, 2026-10-15).
+ * - `GET /groups/:id/widgets/:widgetId?from=&to=&timeZone=` is one overview widget's data in the
+ *   default layout, the same counts a member's overview shows (#219). Never a member's layout.
  */
 export function createAdminGroupsRoutes(
   dependencies: AdminGroupsRouteDependencies,
@@ -137,6 +146,25 @@ export function createAdminGroupsRoutes(
       const detail = isUuid(groupId) ? await groups.detail(groupId) : null
       if (!detail) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
       return c.json(detail)
+    })
+    .get(`/groups/:id/widgets/:widgetId`, limit, async (c) => {
+      const groupId = c.req.param(`id`)
+      if (!isUuid(groupId)) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      let request: NoteWidgetRequest
+      try {
+        request = parseNoteWidgetRequest({
+          groupId,
+          from: c.req.query(`from`),
+          to: c.req.query(`to`),
+          timeZone: c.req.query(`timeZone`),
+        })
+      } catch (error) {
+        if (error instanceof NoteError) return c.json({ error: error.message }, 400)
+        throw error
+      }
+      const data = await groups.widget(groupId, c.req.param(`widgetId`), request)
+      if (data === null) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      return c.json(data)
     })
     .post(`/groups/:id/invitations/:invitationId/revoke`, limit, async (c) => {
       const groupId = c.req.param(`id`)
@@ -191,6 +219,15 @@ export function createAdminGroups(db: AppDbBase, pageSize: number): AdminGroupsS
       db.adminGroups.removeMember(operator, groupId, userId),
     transferOwnership: (operator, groupId, userId) =>
       db.adminGroups.transferOwnership(operator, groupId, userId),
+    async widget(groupId, widgetId, request) {
+      // Every aggregate's readers, by widget id: the notes' are the only ones so far.
+      const read = Object.hasOwn(NOTE_WIDGET_READERS, widgetId)
+        ? NOTE_WIDGET_READERS[widgetId]
+        : undefined
+      const overview = db.noteOverview
+      if (!read || await overview.startDay(groupId, request.timeZone) === null) return null
+      return await read(overview, request)
+    },
   }
 }
 

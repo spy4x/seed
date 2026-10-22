@@ -1,4 +1,5 @@
 import type { NoteHandlerDependencies } from "../features/notes/handlers.ts"
+import type { NoteWidgetHandlerDependencies } from "../features/notes/widgets.ts"
 import { db } from "../services/db.ts"
 
 /**
@@ -10,4 +11,10 @@ export const noteDependencies: NoteHandlerDependencies = {
   groups: {
     roleOf: async (groupId, userId) => (await db.group.getForMember(groupId, userId))?.role ?? null,
   },
+}
+
+/** What the note widget handlers run on: the same role lookup, and the widgets' numbers. */
+export const noteWidgetDependencies: NoteWidgetHandlerDependencies = {
+  overview: db.noteOverview,
+  groups: noteDependencies.groups,
 }

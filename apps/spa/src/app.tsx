@@ -45,6 +45,7 @@ import { SubscribeView, SubscriptionConfirmView, UnsubscribeView } from "./views
 import { GroupEditorView, GroupPage } from "./views/GroupEditorView.tsx"
 import { GroupImportView } from "./views/GroupImportView.tsx"
 import { NotificationsView } from "./views/NotificationsView.tsx"
+import { OverviewRedirect, OverviewView } from "./views/OverviewView.tsx"
 import { InstallOffer } from "./views/InstallOffer.tsx"
 import { InvitationView } from "./views/InvitationView.tsx"
 import { notificationsStore } from "./state/notifications.ts"
@@ -127,6 +128,8 @@ const PAGES: {
   "/groups/:groupId/:tab?": (params) => <GroupPage groupId={params.groupId} tab={params.tab} />,
   "/invite/:token": (params) => <InvitationView key={params.token} token={params.token} />,
   "/notifications": () => <NotificationsView />,
+  "/overview": () => <OverviewRedirect />,
+  "/overview/:groupId": (params) => <OverviewView key={params.groupId} groupId={params.groupId} />,
   "/tags": () => <TagsView />,
   "/tags/new": () => <TagEditorView key="new" />,
   "/tags/:tagId": (params) => <TagEditorView key={params.tagId} tagId={params.tagId} />,
