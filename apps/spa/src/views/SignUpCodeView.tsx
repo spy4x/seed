@@ -20,6 +20,8 @@ import {
 } from "../state/auth.ts"
 import { handOffAddress } from "../state/address-handoff.ts"
 import { sessionState } from "../state/session.ts"
+import { isGuestSession } from "../state/guest.ts"
+import { GUEST_PATHS } from "@ui/guest-screens.tsx"
 
 /** The message of a refused request, or the offline one when it never left the browser. */
 function failure(answer: SignUpStepAnswer, fallback: string): string {
@@ -44,6 +46,8 @@ export function SignUpCodeView() {
   const [resendNotice, setResendNotice] = useState<string | null>(null)
   const [resendError, setResendError] = useState<string | null>(null)
   const session = sessionState.value
+  // A guest has a session but no sign-in method yet: the code step keeps that account (#224).
+  const guest = isGuestSession(session.user)
 
   useEffect(() => {
     let shown = true
@@ -59,7 +63,13 @@ export function SignUpCodeView() {
     const answer = await verifySignUp(code)
     setBusy(false)
     if (answer.ok) {
-      location.href = afterSignIn(next)
+      // A guest keeping the account goes back to `/keep`, which says so; anyone else reloads in.
+      if (guest) navigate(next ?? GUEST_PATHS.keep, { replace: true })
+      else location.href = afterSignIn(next)
+      return
+    }
+    if ("guestTaken" in answer) {
+      navigate(GUEST_PATHS.keepTaken, { replace: true })
       return
     }
     if ("accountExists" in answer) {
@@ -97,7 +107,7 @@ export function SignUpCodeView() {
 
   return (
     <SignUpCodeScreen
-      isSignedIn={session.user !== null && !session.isMfaRequired}
+      isSignedIn={session.user !== null && !session.isMfaRequired && !guest}
       pending={pending}
       exists={exists}
       minutes={SIGN_UP_CODE_MINUTES}

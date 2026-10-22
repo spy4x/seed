@@ -309,6 +309,19 @@ describe("SearchPalette", () => {
     expect(rows).toContain("Open notifications")
   })
 
+  it("offers a guest Keep your account for the words a person would try, and nobody else", async () => {
+    await mount({ guest: true })
+    await open()
+    await type("register")
+    expect(listed().some((row) => row.startsWith("Keep your account"))).toBe(true)
+
+    await act(() => render(null, root!))
+    await mount()
+    await open()
+    await type("register")
+    expect(listed().some((row) => row.startsWith("Keep your account"))).toBe(false)
+  })
+
   it("shows the error line when the search fails", async () => {
     await mount(
       {},

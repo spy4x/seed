@@ -1,4 +1,4 @@
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
@@ -61,6 +61,11 @@ export interface AccountSectionProps {
   onRetryEmail?: () => void
   /** What an account with no password confirms an address change with. */
   providerProof?: ProviderProof | null
+  /**
+   * A guest's account type row (#224), drawn first. With it the e-mail row is left out: a guest
+   * adds an address on `/keep`, which that row leads to.
+   */
+  guestRow?: ComponentChildren
 }
 
 /**
@@ -70,8 +75,17 @@ export interface AccountSectionProps {
  * code.
  */
 export function AccountSection(
-  { name, nameEdit, email, providerOnly, emailChange, openEmailCode, onRetryEmail, providerProof }:
-    AccountSectionProps,
+  {
+    name,
+    nameEdit,
+    email,
+    providerOnly,
+    emailChange,
+    openEmailCode,
+    onRetryEmail,
+    providerProof,
+    guestRow,
+  }: AccountSectionProps,
 ): JSX.Element {
   const [editingName, setEditingName] = useState(false)
   const firstName = useRef<HTMLInputElement>(null)
@@ -101,6 +115,7 @@ export function AccountSection(
   return (
     <>
       <SettingList>
+        {guestRow}
         <SettingRow
           label="Name"
           value={<span data-e2e="profile-name">{name || "Not set"}</span>}
@@ -117,7 +132,7 @@ export function AccountSection(
             </Button>
           }
         />
-        {!email && onRetryEmail ? null : (
+        {guestRow || (!email && onRetryEmail) ? null : (
           <SettingRow
             label="E-mail address"
             value={<EmailValue email={email} provider={providerOnly} />}
@@ -150,7 +165,7 @@ export function AccountSection(
           />
         )}
       </SettingList>
-      {!email && onRetryEmail && <EmailUnavailable onRetry={onRetryEmail} />}
+      {!guestRow && !email && onRetryEmail && <EmailUnavailable onRetry={onRetryEmail} />}
 
       <Modal
         open={editingName}

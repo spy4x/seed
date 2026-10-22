@@ -114,7 +114,7 @@ function fakeSignIn(
   succeed = true,
   secondFactor = SecondFactorStatus.NotRequired,
   logins: string[] = [],
-): Omit<SignIn, "oauth" | "passkeys"> {
+): Omit<SignIn, "oauth" | "passkeys" | "guests"> {
   const signedIn = (): Promise<SignedIn> => {
     const { user, session } = buildAuthData({ session: { secondFactor } })
     return Promise.resolve({ user, session })

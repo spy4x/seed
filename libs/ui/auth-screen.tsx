@@ -7,10 +7,18 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
 import { type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
+import { NoAccountYet, TryItNow, type TryLegalLinks, WordDivider } from "./guest-screens.tsx"
 
 /** The public demo's one line on sign-in and sign-up (docs/demo.md). */
 export const DEMO_NOTE =
   `This is a public demo, wiped every night. A new account starts with sample data to explore.`
+
+/** The same line while guest accounts are on (#224): it names both ways in. */
+export const DEMO_GUEST_NOTE =
+  `This is a public demo, wiped every night. Every new account, guest or not, starts with sample data to explore.`
+
+/** The sign-up card's sentence while "Try it now" is offered above the form. */
+const TRY_FIRST_DESCRIPTION = "Try the app first, or sign up with an e-mail address."
 
 /** The three screens `AuthScreen` draws: the two credential modes, and the second factor. */
 export type AuthScreenKind = AuthMode | "one-time-code"
@@ -105,12 +113,22 @@ export interface AuthScreenProps {
    */
   demo?: boolean
   /**
+   * The website's terms and privacy notice, which the line under "Try it now" links to (#224).
+   * Left out, as without a website, the line names them without links.
+   */
+  legal?: TryLegalLinks | null
+  /**
    * Signs in with a passkey (#222): "Sign in with a passkey" is the first of the other ways in on
    * the sign-in screen. Left out, as in a browser without passkeys, there is no such button.
    */
   onPasskey?: () => void
   /** The passkey sign-in waits for the device: its button says so. */
   passkeyBusy?: boolean
+  /**
+   * Guest accounts are on (#224): sign-up opens with "Try it now", the page's one accent button,
+   * and sign-in ends with "No account yet?" under the card. Left out: neither is shown.
+   */
+  guest?: boolean
   /**
    * The browser offers passkeys in the login field's autofill: the field gets the `webauthn`
    * token, and the app runs the request that waits for a pick.
@@ -182,9 +200,11 @@ function LastSignIn(
  * is only for a page that places the card in a wider column of its own.
  */
 export function AuthCard(
-  { title, description, after, children, e2e, class: className }: {
+  { title, description, below, after, children, e2e, class: className }: {
     title: string
     description?: ComponentChildren
+    /** A block of its own under the card, before `after`, such as the guest entry on sign-in. */
+    below?: ComponentChildren
     after?: ComponentChildren
     children: ComponentChildren
     e2e?: string
@@ -202,6 +222,7 @@ export function AuthCard(
           {children}
         </div>
       </Card>
+      {below}
       {after && <p class="text-center text-sm text-muted">{after}</p>}
     </div>
   )
@@ -241,12 +262,15 @@ export function AuthScreen(
     lastSignIn = null,
     onForgetLastSignIn,
     demo = false,
+    legal = null,
     onPasskey,
     passkeyBusy = false,
     passkeyAutofill = false,
+    guest = false,
   }: AuthScreenProps,
 ): JSX.Element {
   const copy = COPY[screen]
+  const tryFirst = guest && screen === "sign-up"
 
   if (screen === "one-time-code" && !isMfaRequired) {
     return (
@@ -276,9 +300,23 @@ export function AuthScreen(
   // A passkey signs in to an account that exists: sign-up offers none.
   const passkeyButton = screen === "sign-in" && onPasskey !== undefined
   const card = (
-    <AuthCard title={copy.title} description={copy.description} after={after}>
+    <AuthCard
+      title={copy.title}
+      description={tryFirst ? TRY_FIRST_DESCRIPTION : copy.description}
+      below={guest && screen === "sign-in" && (
+        <NoAccountYet demo={demo} navigate={navigate} next={next} />
+      )}
+      after={after}
+    >
       {screen === "sign-in" && <LastSignIn last={lastSignIn} onForget={onForgetLastSignIn} />}
+      {tryFirst && (
+        <>
+          <TryItNow navigate={navigate} next={next} legal={legal} />
+          <WordDivider>or create an account</WordDivider>
+        </>
+      )}
       <AuthForm
+        submitVariant={tryFirst ? "secondary" : "primary"}
         mode={screen === "one-time-code" ? "sign-in" : screen}
         step={screen === "one-time-code" ? "one-time-code" : "credentials"}
         busy={busy}
@@ -343,7 +381,7 @@ export function AuthScreen(
     <div class="flex w-full flex-col gap-6">
       {demo && screen !== "one-time-code" && (
         // Standing information, read before the form: no live region announces it.
-        <Notice live={false} data-e2e="demo-notice">{DEMO_NOTE}</Notice>
+        <Notice live={false} data-e2e="demo-notice">{guest ? DEMO_GUEST_NOTE : DEMO_NOTE}</Notice>
       )}
       {card}
     </div>

@@ -74,6 +74,9 @@ export async function refusalWithoutProof(
   const body = validate(signInMethodProofSchema, await readApiJson(c))
   if (body.error) return c.json({ error: body.error.description }, 400)
   const { password } = body.data
+  // A guest has no sign-in method to prove: the session is the account's only way in, and adding
+  // the first method is what keeping the account means (#224). A kept account is proven as before.
+  if (state.user.guestSince) return null
   if (await signIn.hasPassword(state.user.id)) {
     if (password === undefined) return c.json({ error: "Invalid password" }, 400)
     try {
@@ -178,13 +181,13 @@ export function createOAuthRoute(
         const result = await oauth.callback(c, id, c.get("auth"))
         if (result.kind === "confirm") return c.redirect(page(OAUTH_PAGES.confirmSignUp), 302)
         if (result.kind === "notice") {
-          return c.redirect(
-            withNotice(
-              result.linking ? OAUTH_PAGES.signInMethods : OAUTH_PAGES.signIn,
-              result.notice,
-            ),
-            302,
-          )
+          if (result.notice === "guest-taken") return c.redirect(page(OAUTH_PAGES.keepTaken), 302)
+          const reportTo = result.notice === "kept"
+            ? OAUTH_PAGES.keep
+            : result.linking
+            ? OAUTH_PAGES.signInMethods
+            : OAUTH_PAGES.signIn
+          return c.redirect(withNotice(reportTo, result.notice), 302)
         }
         const owesCode = result.signedIn.session.secondFactor === SecondFactorStatus.Pending
         return c.redirect(

@@ -4,7 +4,7 @@ import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 // The public website is plain links and forms: a visitor needs no script to get through it.
 test.use({ javaScriptEnabled: false })
 
-test("a visitor without JavaScript goes from the home page to pricing, to sign-up and subscribes", async ({ page }) => {
+test("a visitor without JavaScript goes from the home page to pricing, to the demo and subscribes", async ({ page }) => {
   await page.goto("/")
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     "The groundwork of your SaaS, already built.",
@@ -17,9 +17,9 @@ test("a visitor without JavaScript goes from the home page to pricing, to sign-u
     "Seed is free. Here is what it costs to run.",
   )
 
-  // Choosing a plan posts to the website, which sends the visitor to the app's sign-up.
+  // Choosing a plan posts to the website, which sends the visitor to the app's /try (#224).
   await page.getByRole("button", { name: "Try in the demo: Pro" }).click()
-  await expect(page).toHaveURL(/\/sign-up$/)
+  await expect(page).toHaveURL(/\/try$/)
 
   // A fresh address each run: the per-address limit allows three confirm mails an hour.
   const email = `mpa-site-${uuidV7().slice(-8)}@example.com`

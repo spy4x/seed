@@ -40,6 +40,7 @@ interface UserRowRaw {
   blockedAt: Date | null
   createdAt: Date
   lastSeenAt: Date | null
+  guestSince: Date | null
 }
 
 /**
@@ -50,6 +51,7 @@ interface UserRowRaw {
 function userColumns(sql: postgres.Sql) {
   return sql`
     u.id, u.first_name, u.last_name, u.role, u.blocked_at, u.created_at, u.last_seen_at,
+    u.guest_since,
     (
       SELECT COALESCE(k.email, CASE WHEN k.method = ${PASSWORD_METHOD} THEN k.subject END)
       FROM auth_keys k
@@ -70,6 +72,7 @@ function toRow(row: UserRowRaw): AdminUserRow {
     blockedAt: row.blockedAt?.toISOString() ?? null,
     createdAt: row.createdAt.toISOString(),
     lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
+    guestSince: row.guestSince?.toISOString() ?? null,
   }
 }
 
@@ -124,6 +127,8 @@ function userWhere(sql: postgres.Sql, filter: AdminUserFilter) {
   if (filter.role !== null) where = sql`${where} AND u.role = ${filter.role}`
   if (filter.blocked === "blocked") where = sql`${where} AND u.blocked_at IS NOT NULL`
   if (filter.blocked === "active") where = sql`${where} AND u.blocked_at IS NULL`
+  if (filter.account === "guest") where = sql`${where} AND u.guest_since IS NOT NULL`
+  if (filter.account === "full") where = sql`${where} AND u.guest_since IS NULL`
   return where
 }
 

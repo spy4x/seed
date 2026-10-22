@@ -1,10 +1,11 @@
 import { expect } from "@std/expect"
 import { afterEach, describe, it } from "@std/testing/bdd"
-import type { User } from "@domain/identity"
+import { GUEST_REFUSAL_CODE, type User } from "@domain/identity"
 import { GroupRole } from "@domain/groups"
 import { EMPTY_INVITATION_DRAFT } from "@ui/group-invitations.tsx"
 import { createInvitationsStore, type InvitationFetch } from "./invitations.ts"
 import { sessionState } from "./session.ts"
+import { guestRefusal } from "./guest-refusal.ts"
 
 const token = "A".repeat(43)
 
@@ -95,6 +96,23 @@ describe("invitations store", () => {
     expect(store.createError.value?.message).toBe("Full")
     expect(store.createError.value?.plan).toEqual(plan)
     expect(store.created.value).toBeNull()
+  })
+
+  it("hands a guest's refused invite to the frame's refusal dialog", async () => {
+    const { store } = harness({
+      "GET /api/groups/g-1/invitations": [200, { invitations: [] }],
+      "POST /api/groups/g-1/invitations": [
+        403,
+        { error: { message: "Add a sign-in method first.", code: GUEST_REFUSAL_CODE } },
+      ],
+    })
+    await store.open("g-1")
+    try {
+      expect(await store.create()).toBe(false)
+      expect(guestRefusal.value).toBe("invite")
+    } finally {
+      guestRefusal.value = null
+    }
   })
 
   it("posts the creator's price confirmation, keeps the refusal's code and forgets it when the page closes", async () => {

@@ -2,7 +2,7 @@
  * Stands in for the SPA in the MPA's browser tests (`e2e/mpa/run.sh`): answers every address on
  * the app's host with one page that is plainly not the website. The tests need the app's host to
  * exist, so a mailed link that points at it by mistake shows this page instead of the website's
- * form, and so the pricing form's redirect to `/sign-up` lands somewhere. Reads `SPA_PORT`.
+ * form, and so the pricing form's redirect to `/try` lands somewhere. Reads `SPA_PORT`.
  *
  * It also stands in for Umami (`MPA_UMAMI_ORIGIN` in `run.sh`): its `/script.js` defines
  * `umami.track` and keeps every call in `__umamiEvents`, where `analytics.mpa.ts` reads them, so no

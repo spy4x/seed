@@ -24,6 +24,8 @@ import {
   totpConnectStart,
   totpDisconnect,
 } from "../state/auth.ts"
+import { deleteGuestAccount, isGuestSession } from "../state/guest.ts"
+import { guestRefusal } from "../state/guest-refusal.ts"
 import { sessionState } from "../state/session.ts"
 import { emailStore } from "../state/email.ts"
 import { apiFetch } from "../state/api.ts"
@@ -118,6 +120,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   const [deleteBusy, setDeleteBusy] = useState(false)
   const [blockers, setBlockers] = useState<AccountDeletionBlocker[] | null>(null)
   const [signOutOthers, setSignOutOthers] = useState(true)
+  const [guestDeleteError, setGuestDeleteError] = useState<string | null>(null)
   // Both lists are kept on the device and shown, with their time, when the server is unreachable.
   const [devices] = useState(() => createDevicesStore(listSessions, localReads))
   const [devicesBusy, setDevicesBusy] = useState(false)
@@ -162,8 +165,22 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   }, [session.user?.id, session.isMfaRequired])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
+  // A switch from a guest account (#224) lands here with `?moved=`, the groups that came along.
   useEffect(() => {
-    const notice = oauthNotice(new URLSearchParams(search).get(OAUTH_NOTICE_PARAM))
+    const query = new URLSearchParams(search)
+    const moved = Number(query.get("moved"))
+    if (query.has("moved")) {
+      toasts.success({
+        title: "Signed in to your account",
+        body: moved > 0
+          ? `${moved} ${moved === 1 ? "group" : "groups"} moved from your guest account.`
+          : "Your guest account was deleted.",
+        dataE2E: "guest-switched",
+      })
+      navigate(SCREEN_PATHS.profile, { replace: true })
+      return
+    }
+    const notice = oauthNotice(query.get(OAUTH_NOTICE_PARAM))
     if (!notice) return
     const toast = { body: OAUTH_NOTICES[notice], dataE2E: `sign-in-method-${notice}` }
     if (notice === "linked") toasts.success({ title: "Sign-in method linked", ...toast })
@@ -354,6 +371,11 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   }
 
   const registerPush = async () => {
+    // Before the browser asks for permission: the server refuses a guest's device anyway (#224).
+    if (isGuestSession()) {
+      guestRefusal.value = "push"
+      return
+    }
     if (!pushPublicKey) return
     setPushError(null)
     setPushBusy(true)
@@ -452,10 +474,31 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     })
   }
 
+  const submitGuestDelete = async (confirm: string) => {
+    setGuestDeleteError(null)
+    setDeleteBusy(true)
+    const result = await deleteGuestAccount(confirm)
+    setDeleteBusy(false)
+    if (!result.ok) return setGuestDeleteError(result.error)
+    navigate(SCREEN_PATHS.signUp, { replace: true })
+    toasts.success({
+      title: "Guest account deleted",
+      body: "Everything in it is gone.",
+      dataE2E: "guest-deleted",
+    })
+  }
+
   return (
     <ProfileScreen
       section={section ?? null}
       user={session.user}
+      guest={isGuestSession(session.user)
+        ? {
+          pending: deleteBusy,
+          error: guestDeleteError,
+          onDelete: (confirm) => void submitGuestDelete(confirm),
+        }
+        : undefined}
       emailChange={{
         values: emailValues,
         onValueChange: (field, value) =>

@@ -12,15 +12,18 @@ import { Router } from "wouter-preact"
 import { memoryLocation } from "wouter-preact/memory-location"
 import { type ApiToken, ApiTokenAccess, type ApiTokenCreateRequest } from "@domain/api-tokens"
 import { GroupRole } from "@domain/groups"
+import type { User } from "@domain/identity"
 import { API_TOKEN_OFFLINE } from "@ui/api-token-new-screen.tsx"
 import { createApiTokensStore } from "../state/api-tokens.ts"
 import { groupsStore } from "../state/groups.ts"
+import { sessionState } from "../state/session.ts"
 import { ApiTokenNewView } from "./ApiTokenNewView.tsx"
 
 const window = new Window({ url: "http://app.localhost/tokens/new" })
 const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
+  getComputedStyle: globalThis.getComputedStyle,
   location: globalThis.location,
   window: globalThis.window,
 }
@@ -30,6 +33,8 @@ beforeAll(() => {
   Object.assign(globalThis, {
     document: window.document,
     FormData: window.FormData,
+    // The guest refusal is a dialog, which reads the page's styles.
+    getComputedStyle: window.getComputedStyle.bind(window),
     location: window.location,
     window,
   })
@@ -140,6 +145,24 @@ describe("ApiTokenNewView", () => {
     expect(location.history.at(-1)).toBe("/profile/api-tokens")
     // The address and the history never held the secret.
     expect(location.history.join(" ")).not.toContain(SECRET)
+  })
+
+  it("refuses a guest at once, with no password field, and Not now goes back to the API tokens", async () => {
+    sessionState.value = {
+      ...sessionState.value,
+      user: { id: 7, guestSince: new Date("2026-10-21T00:00:00.000Z") } as User,
+    }
+    try {
+      const { location } = await page()
+      expect(document.body.textContent).toContain("API tokens need a sign-in method")
+      expect(document.querySelectorAll("[data-e2e=api-token-password]").length).toBe(0)
+      await act(() => {
+        find("[data-e2e=guest-refusal-close]").click()
+      })
+      expect(location.history.at(-1)).toBe("/profile/api-tokens")
+    } finally {
+      sessionState.value = { ...sessionState.value, user: null }
+    }
   })
 
   it("sends nothing while offline and says why under the form", async () => {

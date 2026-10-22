@@ -88,6 +88,11 @@ Deno.test("the api container receives each sign-in provider's client id and secr
   }
 })
 
+// Without it `GUEST_MODE=false` in `.env` would leave guest accounts on: the API never sees it.
+Deno.test("the api container receives the guest mode switch", async () => {
+  expect(await environmentOf("api")).toContain("GUEST_MODE")
+})
+
 /** The check of every service that runs on Deno: `apps/healthcheck.ts`, before its optional path. */
 const DENO_HEALTHCHECK = [
   "CMD",

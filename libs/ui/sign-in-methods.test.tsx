@@ -874,6 +874,56 @@ describe("ProfileScreen for an account without a password", () => {
     expect(find("[data-e2e=password-open]").textContent).toBe("Set password")
   })
 
+  it("shows a guest the account type with no e-mail row, one way to keep it under security, and the typed-word delete", async () => {
+    const guest = { pending: false, error: null, onDelete: () => {} }
+    const email = { email: null, proven: false, pending: null }
+    await mount(
+      <ProfileScreen
+        {...profile}
+        section="account"
+        email={email}
+        methods={methodsProps([], { methods: [] })}
+        guest={guest}
+      />,
+    )
+
+    expect(find("[data-e2e=profile-account-type]").textContent).toContain("Guest account")
+    expect(document.querySelectorAll("[data-e2e=email-change-open]").length).toBe(0)
+    expect(document.body.textContent).not.toContain("You sign in with your username")
+    // The account row leads to /keep, but not as a primary.
+    expect(find("[data-e2e=profile-keep]").className).not.toMatch(/\bbg-accent-900\b/)
+
+    await act(() => render(null, root!))
+    await mount(
+      <ProfileScreen
+        {...profile}
+        section="security"
+        email={email}
+        methods={methodsProps([], { methods: [] })}
+        guest={guest}
+      />,
+    )
+
+    // In place of the password, two-factor and methods rows: one way to keep the account.
+    expect(find("[data-e2e=methods-keep]").className).not.toMatch(/\bbg-accent-900\b/)
+    expect(document.querySelectorAll("[data-e2e=password-open]").length).toBe(0)
+    expect(document.body.textContent).not.toContain("Two-factor off")
+
+    await act(() => render(null, root!))
+    await mount(
+      <ProfileScreen
+        {...profile}
+        section="danger-zone"
+        email={email}
+        methods={methodsProps([], { methods: [] })}
+        guest={guest}
+      />,
+    )
+
+    // A guest deletes with a typed word, not the password form.
+    expect(document.querySelectorAll("[data-e2e=guest-delete-open]").length).toBe(1)
+  })
+
   it("sets a first password after a Google sign-in a moment ago, asking for no current one", async () => {
     const asked: string[] = []
     await mount(

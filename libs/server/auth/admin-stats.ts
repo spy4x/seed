@@ -10,6 +10,7 @@ import type postgres from "postgres"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { recentIsoDates } from "@spy4x/time/date"
 import { ADMIN_STATS_DAYS, type AdminDailyCount, type AdminStats } from "@domain/identity"
+import { guestStats } from "./guests.ts"
 
 /** The {@link ADMIN_STATS_DAYS} UTC days that end on `now`'s day, oldest first. */
 export function statsDays(now: Date): string[] {
@@ -97,6 +98,7 @@ export async function readAdminStats(
   const twoWeeksAgo = new Date(now.getTime() - 14 * ONE_DAY_IN_MILLISECONDS)
 
   const live = await liveCounts(sql, exactBelow)
+  const guests = await guestStats(sql, from)
   const [counts] = await sql<{ blocked: number; newThisWeek: number; newWeekBefore: number }[]>`
     SELECT
       (SELECT COUNT(*) FROM users WHERE blocked_at IS NOT NULL AND deleted_at IS NULL)::int
@@ -150,5 +152,6 @@ export async function readAdminStats(
     notes: live.counts.notes,
     signUpsPerDay: fillDays(days, of("sign-ups")),
     activePerDay,
+    guests,
   }
 }

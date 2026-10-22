@@ -72,6 +72,18 @@ describe("the SPA's runtime configuration", () => {
     }
   })
 
+  it("turns guest accounts off for false only, so an unset switch keeps them on", async () => {
+    for (
+      const [value, guest] of [[`"false"`, false], [`false`, false], [`"FALSE"`, false], [
+        `""`,
+        true,
+      ], [`"true"`, true]]
+    ) {
+      const config = await loadRuntimeConfig(serving(`{"guest":${value}}`).fetcher)
+      expect(config).toEqual({ guest })
+    }
+  })
+
   it("reads the module switches, written as booleans or as the container's text", async () => {
     const asBooleans = await loadRuntimeConfig(serving(`{"realtime":false,"offline":true}`).fetcher)
     const asText = await loadRuntimeConfig(serving(`{"realtime":"false","offline":"true"}`).fetcher)

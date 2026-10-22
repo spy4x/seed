@@ -12,6 +12,8 @@ Pick the guide that fits. The [README](../README.md) has the pitch and the quick
   deletes, replaces or sets.
 - [Deploy and operate](deploy.md): certificates, the deploy, consoles, several projects on one
   server, releases.
+- [Guest accounts](guests.md): "Try it now" without signing up, keeping the account, the limits
+  and the clean-up.
 - [Sign in with Google and GitHub](sign-in-providers.md): registering the providers and what a
   person gets.
 - [Backups](backups.md): set up, restore, rehearse.

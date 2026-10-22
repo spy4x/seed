@@ -8,7 +8,9 @@ import {
   type InvitationPreviewRow,
   type InvitationRow,
 } from "@ui/group-invitations.tsx"
+import { GUEST_REFUSAL_CODE } from "@domain/identity"
 import { fetchAsUser } from "./realtime-call.ts"
+import { guestRefusal, refusedAction } from "./guest-refusal.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
@@ -78,6 +80,8 @@ export function createInvitationsStore(
         typeof (error as { code?: unknown }).code === "string"
       ? (error as { code: string }).code
       : null
+    // A guest refused an invite (#224): the frame shows the refusal, as `apiFetch` does for others.
+    if (code === GUEST_REFUSAL_CODE) guestRefusal.value = refusedAction(url) ?? "other"
     return {
       ok: false,
       status: response.status,

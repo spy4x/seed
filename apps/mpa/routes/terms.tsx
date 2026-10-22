@@ -15,7 +15,7 @@ export const TERMS_HEAD = {
   title: `Terms of the free Seed demo`,
   description: `The rules of the free Seed demo: what it is, what it is not, and what is not ` +
     `allowed in it.`,
-  updated: `2026-10-16`,
+  updated: `2026-10-21`,
 } as const
 
 /** The few rules of the live demo. A product built on Seed writes its own. */
@@ -27,7 +27,7 @@ export default define.page(function Terms({ state }) {
       title="Terms"
       headTitle={TERMS_HEAD.title}
       description={TERMS_HEAD.description}
-      updated="16 October 2026"
+      updated="21 October 2026"
       sections={TERMS_SECTIONS}
     >
       <h2 id="what">What the demo is</h2>
@@ -40,6 +40,11 @@ export default define.page(function Terms({ state }) {
       <p>
         What you put in the demo stays yours. Its data may be reset, so keep nothing important in
         it. The <a href="/privacy">privacy page</a> says what is stored.
+      </p>
+      <p>
+        You can try the demo without an account. A guest account lives only in the browser that made
+        it: if that browser's data is cleared, or you sign out before adding a sign-in method, the
+        account is gone and cannot be restored, not even by support.
       </p>
       <h2 id="not-allowed">What is not allowed</h2>
       <ul>

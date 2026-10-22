@@ -17,6 +17,7 @@ import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   ADMIN_DEFAULT_SORT,
   ADMIN_SEARCH_MAX_LENGTH,
+  type AdminAccountFilter,
   type AdminBlockedFilter,
   type AdminUserFilter,
   type AdminUserListResponse,
@@ -36,6 +37,12 @@ const ROLE_CHIPS = [UserRole.VIEWER, UserRole.OPERATOR, UserRole.SUPERVISOR, Use
 const STATUS_CHIPS: { value: Exclude<AdminBlockedFilter, "any">; label: string }[] = [
   { value: "active", label: "Active" },
   { value: "blocked", label: "Blocked" },
+]
+
+/** Guest accounts (#224), made with one click and no sign-in method, or every other account. */
+const ACCOUNT_CHIPS: { value: AdminAccountFilter; label: string }[] = [
+  { value: "guest", label: "Guests" },
+  { value: "full", label: "With sign-in" },
 ]
 
 /** A role as a person reads it: `Operator`. */
@@ -140,7 +147,8 @@ export function AdminUsersScreen(
     createdAt: user.createdAt,
     user,
   }))
-  const filtered = filter.query !== "" || filter.role !== null || filter.blocked !== "any"
+  const filtered = filter.query !== "" || filter.role !== null || filter.blocked !== "any" ||
+    filter.account !== undefined
 
   return (
     <Stack>
@@ -202,6 +210,23 @@ export function AdminUsersScreen(
                 onSearch({ ...filter, blocked: (value ?? "any") as AdminBlockedFilter, page: 1 })}
             />
           </FilterChips>
+          <FilterChips label="Account" dataE2E="admin-users-account">
+            <ToggleChips
+              mode="single"
+              label="Account"
+              class="flex-nowrap sm:flex-wrap"
+              options={ACCOUNT_CHIPS}
+              value={filter.account ?? null}
+              onChange={(value) => {
+                const { account: _old, ...rest } = filter
+                onSearch({
+                  ...rest,
+                  ...(value ? { account: value as AdminAccountFilter } : {}),
+                  page: 1,
+                })
+              }}
+            />
+          </FilterChips>
           <FilterChips label="Role" dataE2E="admin-users-role">
             <ToggleChips
               mode="single"
@@ -222,8 +247,10 @@ export function AdminUsersScreen(
               variant="ghost"
               size="sm"
               data-e2e="admin-users-clear"
-              onClick={() =>
-                onSearch({ ...filter, query: "", role: null, blocked: "any", page: 1 })}
+              onClick={() => {
+                const { account: _old, ...rest } = filter
+                onSearch({ ...rest, query: "", role: null, blocked: "any", page: 1 })
+              }}
             >
               Clear filters
             </Button>
@@ -368,6 +395,11 @@ function PersonCell(
           >
             {adminUserName(user)}
           </Link>
+          {user.guestSince && (
+            <span data-e2e="admin-user-guest">
+              <Badge text="Guest" color="gray" type="outline" />
+            </span>
+          )}
           {self && (
             <span data-e2e="admin-user-you">
               <Badge text="You" color="gray" type="outline" />
