@@ -627,6 +627,22 @@ function Groups(
   )
 }
 
+const PASSKEY_RENAMED = /^passkey name=(.*?) from=(.*)$/
+const PASSKEY_NAMED = /^passkey name=(.*)$/
+
+/**
+ * An audit row's stored identifier as an operator reads it: a passkey rename as `From "Old" to
+ * "New"`, any other passkey row as `Passkey "Name"`. Anything else stays as stored, since the
+ * server's format is also what the audit search matches.
+ */
+export function auditDetail(eventType: number | null, identifier: string): string {
+  const renamed = eventType === AuthAuditEventType.SIGN_IN_METHOD_RENAMED &&
+    PASSKEY_RENAMED.exec(identifier)
+  if (renamed) return `From "${renamed[2]}" to "${renamed[1]}"`
+  const named = PASSKEY_NAMED.exec(identifier)
+  return named ? `Passkey "${named[1]}"` : identifier
+}
+
 /** The newest rows of the person's audit trail, newest first, on a timeline. */
 function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
   return (
@@ -635,7 +651,10 @@ function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
       empty="Nothing recorded."
       dataE2E="admin-user-audits"
       items={detail.audits.map((audit) => {
-        const parts = [audit.identifier, audit.ip && `from ${audit.ip}`].filter(Boolean)
+        const parts = [
+          audit.identifier && auditDetail(audit.eventType, audit.identifier),
+          audit.ip && `from ${audit.ip}`,
+        ].filter(Boolean)
         return {
           id: audit.id,
           title: AUDIT_EVENTS[audit.eventType] ??

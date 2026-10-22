@@ -368,6 +368,34 @@ describe("audit log screen", () => {
     expect(table.className.split(" ")).toContain("[&_:is(th,td)]:px-3")
   })
 
+  it("reads a passkey rename as from the old name to the new one, in the table and the timeline", async () => {
+    const renamed = {
+      ...signedIn,
+      key: "account-6",
+      event: accountAuditEvent(AuthAuditEventType.SIGN_IN_METHOD_RENAMED),
+      identifier: "passkey name=MacBook Air from=Work laptop",
+    }
+    const passkeySignIn = { ...signedIn, key: "account-7", identifier: "passkey name=MacBook Air" }
+    const entries = [renamed, passkeySignIn, signedIn]
+    const mounted = await mount(<AdminAuditScreen {...props([], { entries })} />)
+    const details = () =>
+      [...document.querySelectorAll("[data-e2e=admin-audit-detail]")].map((cell) =>
+        cell.firstElementChild!.textContent
+      )
+
+    expect(details()).toEqual([
+      'From "Work laptop" to "MacBook Air"',
+      'Passkey "MacBook Air"',
+      "ada@example.com",
+    ])
+
+    await act(() =>
+      render(<AdminAuditScreen {...props([], { entries, view: "timeline" })} />, mounted)
+    )
+    expect(find("[data-e2e=admin-audit-entry-account-6]").textContent)
+      .toContain('From "Work laptop" to "MacBook Air"')
+  })
+
   it("tells an empty log from a filter that matches nothing, without a dashed box", async () => {
     await mount(<AdminAuditScreen {...props([], { entries: [] })} />)
     expect(find("[data-e2e=admin-audit-empty]").textContent).toContain("Nothing recorded yet")

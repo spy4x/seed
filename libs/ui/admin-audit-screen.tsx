@@ -36,7 +36,7 @@ import {
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { ADMIN_GROUP_PATHS } from "./admin-groups-list.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
-import { AUDIT_EVENTS, auditTone } from "./admin-user-screen.tsx"
+import { AUDIT_EVENTS, auditDetail, auditTone } from "./admin-user-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useFormat } from "@spy4x/preact-ui/format"
 
@@ -390,9 +390,11 @@ function PersonLink(
 
 /** What an entry names besides its people: the group, the method or token, the job. */
 function detailOf(entry: AdminAuditEntry): string | null {
+  const event = parseAuditEvent(entry.event)
   const parts = [
     entry.group && `Group ${entry.group.name}`,
-    entry.identifier,
+    entry.identifier &&
+    auditDetail(event?.source === "account" ? event.eventType : null, entry.identifier),
     entry.jobKind && `Job ${entry.jobKind}`,
   ].filter(Boolean)
   return parts.length > 0 ? parts.join(" · ") : null
