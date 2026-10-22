@@ -287,6 +287,16 @@ async function lockChain(sql: postgres.Sql, kind: string, aggregateId: string): 
 }
 
 /**
+ * A row's version as of now, in epoch milliseconds. The outbox writes a repeating job's next run
+ * with its run time as its version, and a cron job's next run after an early one is the very time
+ * the moved row was first due. So cancel and run now give the row the time of the action, and the
+ * next run (written by the worker, or by its start-up after a cancel) never collides with it.
+ */
+function versionNow(sql: postgres.Sql) {
+  return sql`(extract(epoch FROM now()) * 1000)::bigint`
+}
+
+/**
  * Cancels the waiting job `id`: marks it processed and cancelled, so no worker claims it and the
  * cleanup removes it a week later, and writes the operator's audit row. Only a row that waits and
  * no worker holds: a running, finished, failed or cancelled one is
@@ -303,7 +313,7 @@ export async function cancelJob(
 ): Promise<AdminJobActionOutcome> {
   const [row] = await sql<{ kind: string }[]>`
     UPDATE outbox_events
-    SET processed_at = now(), cancelled_at = now()
+    SET processed_at = now(), cancelled_at = now(), aggregate_version = ${versionNow(sql)}
     WHERE id = ${id} AND aggregate_type = ${JOB_AGGREGATE}
       AND processed_at IS NULL AND NOT ${running(sql)}
     RETURNING event_kind AS kind
@@ -329,7 +339,7 @@ export async function runJobNow(
 ): Promise<AdminJobActionOutcome> {
   const [row] = await sql<{ kind: string }[]>`
     UPDATE outbox_events
-    SET available_at = now()
+    SET available_at = now(), aggregate_version = ${versionNow(sql)}
     WHERE id = ${id} AND aggregate_type = ${JOB_AGGREGATE}
       AND processed_at IS NULL AND attempt_count < ${JOB_RETRY.maxAttempts}
       AND NOT ${running(sql)}
@@ -359,7 +369,7 @@ export async function runRepeatingNow(
   const chain = [JOB_AGGREGATE_ID, LEGACY_JOB_AGGREGATE_ID]
   const [moved] = await sql<{ id: string }[]>`
     UPDATE outbox_events
-    SET available_at = now()
+    SET available_at = now(), aggregate_version = ${versionNow(sql)}
     WHERE event_kind = ${kind} AND aggregate_type = ${JOB_AGGREGATE}
       AND aggregate_id = ANY(${chain}::uuid[])
       AND processed_at IS NULL AND attempt_count < ${JOB_RETRY.maxAttempts}
@@ -381,7 +391,7 @@ export async function runRepeatingNow(
         id, event_kind, aggregate_type, aggregate_id, aggregate_version, available_at
       )
       SELECT ${id}, ${kind}, ${JOB_AGGREGATE}, ${JOB_AGGREGATE_ID},
-        (extract(epoch FROM now()) * 1000)::bigint, now()
+        ${versionNow(sql)}, now()
     `
   }
   await audit(sql, ADMIN_JOB_RUN_NOW_KIND, id, kind, operatorId, requestId)

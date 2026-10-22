@@ -12,6 +12,8 @@ import {
 } from "@domain/identity"
 import { JOB_AGGREGATE, JOB_AGGREGATE_ID } from "@server/jobs/jobs.ts"
 import { readJob } from "@server/jobs/admin-jobs.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
+import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
@@ -270,6 +272,34 @@ Deno.test("jobs: two presses of run now on a stopped repeating job start one cha
 
     expect(await second).toEqual({ outcome: AdminJobActionOutcome.Done, id: first })
     expect(await sql`SELECT 1 FROM outbox_events WHERE processed_at IS NULL`).toHaveLength(1)
+  })
+})
+
+Deno.test("jobs: the nightly cleanup run now runs, then waits for the next 03:00 UTC", async () => {
+  await withSchema(async (sql) => {
+    const op = await operator(sql)
+    const db = new AppDbBase({ sql })
+    const mail = { store: createPostgresAuthStore(sql), sender: null, brand: { webAppUrl: `` } }
+    const processor = createOutboxProcessor(sql, { ...mail, log: () => {} })
+    const waiting = () =>
+      sql<{ id: string; at3: boolean; ahead: boolean }[]>`
+        SELECT id, to_char(available_at AT TIME ZONE 'UTC', 'HH24:MI') = '03:00' AS at3,
+          available_at > now() AS ahead
+        FROM outbox_events WHERE event_kind = 'outbox.cleanup' AND processed_at IS NULL
+      `
+    await startRepeatingJobs(sql)
+    expect(await waiting()).toEqual([{ id: expect.any(String), at3: true, ahead: true }])
+
+    await db.begin((tx) => tx.adminJobs.runRepeatingNow("outbox.cleanup", op, null))
+    expect(await processor.drainOnce()).toEqual({ claimed: 1, published: 1, failed: 0 })
+    const [next] = await waiting()
+    expect(next).toEqual({ id: expect.any(String), at3: true, ahead: true })
+
+    // Cancelled before it ran, the chain starts again at the worker's next start.
+    expect(await db.begin((tx) => tx.adminJobs.cancel(next.id, op, null)))
+      .toBe(AdminJobActionOutcome.Done)
+    await startRepeatingJobs(sql)
+    expect(await waiting()).toEqual([{ id: expect.any(String), at3: true, ahead: true }])
   })
 })
 
