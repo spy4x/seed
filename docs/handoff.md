@@ -421,8 +421,9 @@ that port, as `e2e:local` does.
 Some browsers still report a zone by its old name: `Asia/Saigon`, `Asia/Calcutta`, `Europe/Kiev`.
 The stock Debian `postgres` image refuses those in `AT TIME ZONE`, because Debian 13 moved them to
 `tzdata-legacy`, so every per-day count failed for those people. The `db` service is built from
-`infra/postgres/Dockerfile`, which adds that package. CI and `e2e:local` run the Alpine image,
-which has the old names, so they never showed the failure.
+`infra/postgres/Dockerfile`, which copies the names Debian lacks from the Alpine image of the same
+release, so no build needs a Debian mirror. CI and `e2e:local` run the Alpine image, which has the
+old names, so they never showed the failure.
 
 ## Running it
 

@@ -75,7 +75,11 @@ Deno.test("the Compose database is built on a Postgres 18 minor version", async 
 Deno.test("the Compose database image adds the old zone names browsers report", async () => {
   expect((await dbService()).build?.context).toBe("../postgres")
   const dockerfile = await read("infra/postgres/Dockerfile")
-  expect(dockerfile).toMatch(/apt-get install [^\n]*\btzdata-legacy\b/)
+  // Copied from the Alpine image without overwriting Debian's own files: no build needs a mirror.
+  expect(dockerfile).toMatch(/^FROM docker\.io\/library\/postgres:[\w.]+-alpine AS zones$/m)
+  expect(dockerfile).toMatch(/^COPY --from=zones \/usr\/share\/zoneinfo (\S+)$/m)
+  expect(dockerfile).toMatch(/\bcp -an\b[^\n]* \/usr\/share\/zoneinfo\//)
+  expect(dockerfile).not.toMatch(/apt-get/)
 })
 
 Deno.test("Compose, CI, the local browser run and the docs name the same Postgres 18 minor", async () => {
