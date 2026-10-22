@@ -1,6 +1,7 @@
 import type { ComponentChildren } from "preact"
 import { changeText } from "@spy4x/preact-charts/change"
 import { LineChart } from "@spy4x/preact-charts/line-chart"
+import { niceStep, ticks } from "@spy4x/preact-charts/scales"
 import { WidgetStat } from "@spy4x/preact-ui/widget-card"
 import type { Formatters } from "@spy4x/time/format"
 import type { CountWidgetResult, OverviewPeriods, SeriesWidgetResult } from "@domain/groups"
@@ -29,6 +30,29 @@ export interface WidgetView {
   loadingLabel: string
   errorMessage: string
   draw(data: unknown, context: WidgetDrawContext): WidgetDrawing
+}
+
+/**
+ * The chart's Y axis for counts up to `top`: a domain whose top is itself a tick, so no tick or
+ * gridline is drawn above the plot, and whole-number steps only. Uses the chart's own `ticks`, so
+ * the steps here are the steps it draws.
+ */
+export function countAxis(top: number): { max: number; steps: number } {
+  const high = Math.max(1, Math.ceil(top))
+  for (let steps = 5; steps >= 1; steps--) {
+    // The chart picks its step from the domain's span, so a top rounded up to one step may get a
+    // coarser step: round again to that one until the two agree (two or three rounds at most).
+    let step = niceStep(high, steps)
+    for (let round = 0; round < 8 && Number.isInteger(step); round++) {
+      const max = Math.ceil(high / step) * step
+      const drawn = ticks(0, max, steps)
+      if (drawn.at(-1) === max && drawn.every((tick) => Number.isInteger(tick))) {
+        return { max, steps }
+      }
+      step = niceStep(max, steps)
+    }
+  }
+  return { max: high, steps: 1 }
 }
 
 /** "previous 30 days", "previous day": the period a comparison names. */
@@ -100,7 +124,7 @@ const series: WidgetView = {
     const summary = first === last
       ? `${format.number(last)} all through the range`
       : `From ${format.number(first)} to ${format.number(last)}`
-    const top = Math.max(1, ...values)
+    const axis = countAxis(Math.max(...values))
     return {
       status: "ready",
       caption: summary,
@@ -123,9 +147,8 @@ const series: WidgetView = {
               : []),
           ]}
           height={220}
-          yDomain={[0, top]}
-          // Notes come whole: fewer steps than notes, so no tick reads 0.2.
-          yTicks={Math.min(5, top)}
+          yDomain={[0, axis.max]}
+          yTicks={axis.steps}
           xFormat={(x) => day(format, typeof x === "string" ? x : x.toISOString().slice(0, 10))}
           yFormat={(value) => format.number(value)}
           ariaLabel={`Notes over time. ${summary}.`}

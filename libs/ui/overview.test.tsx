@@ -11,6 +11,7 @@ import { useState } from "preact/hooks"
 import { act } from "preact/test-utils"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import type { LayoutEntry } from "@spy4x/preact-ui/layout-customiser"
+import { ticks } from "@spy4x/preact-charts/scales"
 import { createFormatters } from "@spy4x/time/format"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 import {
@@ -21,6 +22,7 @@ import {
 } from "./overview-screen.tsx"
 import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "./overview-widgets.ts"
 import { AdminGroupOverview } from "./admin-group-overview.tsx"
+import { countAxis } from "./note-widgets.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -217,6 +219,55 @@ describe("the group overview", () => {
     expect(document.querySelectorAll(`${card(series)} [data-chart-table] tbody tr`)).toHaveLength(3)
   })
 
+  it("draws no tick of the chart's axis above the plot", async () => {
+    await mount({
+      ...READY,
+      [series]: {
+        status: "ready",
+        data: { days: DAYS, current: [28, 40, 45], previous: [20, 22, 28] },
+        savedAt: null,
+      },
+    })
+
+    const labels = [...document.querySelectorAll<HTMLElement>(`${card(series)} span.tabular-nums`)]
+    expect(labels.at(-1)?.textContent).toBe("50")
+    expect(labels.map((label) => label.style.top).filter((top) => top.startsWith("-")))
+      .toEqual([])
+  })
+
+  it("keeps every count axis's top a whole tick, at or above the largest count", () => {
+    const wrong: number[] = []
+    for (let top = 0; top <= 2000; top++) {
+      const axis = countAxis(top)
+      const drawn = ticks(0, axis.max, axis.steps)
+      const fits = axis.max >= Math.max(1, top) && drawn.at(-1) === axis.max &&
+        drawn.every((tick) => Number.isInteger(tick) && tick >= 0 && tick <= axis.max)
+      if (!fits) wrong.push(top)
+    }
+    expect(wrong).toEqual([])
+  })
+
+  it("draws an empty chart as one line at a number's height", async () => {
+    await mount({
+      ...READY,
+      [series]: {
+        status: "ready",
+        data: { days: DAYS, current: [0, 0, 0], previous: [0, 0, 0] },
+        savedAt: null,
+      },
+    })
+
+    expect(document.querySelectorAll(`${card(series)} .min-h-60`).length).toBe(0)
+  })
+
+  it("gives the range picker's trigger a 44 px touch target on a phone", async () => {
+    await mount()
+
+    expect(find("[data-e2e=overview-range]").parentElement!.className).toContain(
+      "[&>button]:min-h-11",
+    )
+  })
+
   it("labels the chart's axis in whole notes when the group has only a few", async () => {
     await mount({
       ...READY,
@@ -325,11 +376,14 @@ describe("the group overview", () => {
     expect(seen).toMatchObject({ resets: 1, copies: 1 })
   })
 
-  it("greets an empty group with New note for a person who can add one", async () => {
+  it("greets an empty group with New note for a person who can add one, its label always shown", async () => {
     await mount(READY, { emptyGroup: { canCreate: true } })
 
     expect(text("[data-e2e=overview-empty-group]")).toContain("No notes in Acme Studio yet")
-    expect(find("[data-e2e=overview-new-note]").getAttribute("href")).toBe("/notes/new")
+    const action = find("[data-e2e=overview-new-note]")
+    expect(action.getAttribute("href")).toBe("/notes/new")
+    expect(action.textContent).toBe("New note")
+    expect(action.querySelectorAll(".sr-only, [class*='sr-only']").length).toBe(0)
   })
 
   it("offers a viewer of an empty group no New note", async () => {

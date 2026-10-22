@@ -14,9 +14,8 @@ import {
   type LayoutEntry,
 } from "@spy4x/preact-ui/layout-customiser"
 import { Stack } from "@spy4x/preact-ui/layout"
-import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
+import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { DashboardGrid, WidgetCard, type WidgetSize } from "@spy4x/preact-ui/widget-card"
-import { IconPlus } from "@spy4x/preact-icons"
 import type { Formatters } from "@spy4x/time/format"
 import { type OverviewPeriods, overviewPeriods } from "@domain/groups"
 import type { WidgetView } from "./note-widgets.tsx"
@@ -198,13 +197,17 @@ export function OverviewScreen(props: OverviewScreenProps): JSX.Element {
                     title={`No notes in ${group.name} yet`}
                     description="The overview fills in as people in the group add notes."
                     action={props.emptyGroup.canCreate && (
-                      <PageAction
-                        label="New note"
-                        Icon={IconPlus}
+                      // A labelled button, not the header's PageAction, which shrinks to an icon
+                      // on a phone.
+                      <Button
                         href={NOTE_PATHS.new}
                         navigate={navigate}
-                        dataE2E="overview-new-note"
-                      />
+                        variant="outline"
+                        class="min-h-11 sm:min-h-9"
+                        data-e2e="overview-new-note"
+                      >
+                        New note
+                      </Button>
                     )}
                   />
                 </Card>
@@ -282,6 +285,9 @@ export function OverviewRangeRow(props: OverviewRangeRowProps): JSX.Element {
   return (
     <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
       <DateRangePicker
+        // The picker takes a class for its root only; its trigger is the root's one direct button.
+        // 44 px tall on a phone, the house touch target, 36 px from `sm` like the other controls.
+        class="[&>button]:min-h-11 sm:[&>button]:min-h-9"
         range={props.range.range}
         selectedPreset={props.range.preset}
         presets={OVERVIEW_PRESETS}
@@ -366,7 +372,8 @@ function OverviewWidgetCard(
   return (
     <WidgetCard
       title={widget.title}
-      size={widget.size}
+      // An empty chart is one line: it takes a number's height, not the chart's.
+      size={drawing?.status === "empty" ? "stat" : widget.size}
       status={drawing ? drawing.status : load.status === "error" ? "error" : "loading"}
       caption={savedAt === null ? drawing?.caption : `As of ${format.time(savedAt)}`}
       loadingLabel={view.loadingLabel}
