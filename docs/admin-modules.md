@@ -19,6 +19,7 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | `billing`    | Billing       | `/billing`, `/billing/:groupId` |                               | `/api/admin/billing/*`  |
 | `newsletter` | Newsletter    | `/newsletter`             |                                     | `/api/admin/newsletter/*` |
 | `audit`      | Audit log     | `/audit`                  |                                     | `/api/admin/audit*`     |
+| `jobs`       | Jobs          | `/jobs`, `/jobs/:id`      |                                     | `/api/admin/jobs*`      |
 | `system`     | System        | `/system`                 |                                     | `/api/admin/system*`    |
 | `api-tokens` | API tokens    | `/api-tokens`             | API tokens, Devices, Notifications  | `/api/admin/api-tokens*` |
 
