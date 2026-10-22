@@ -19,6 +19,7 @@ import {
   type GuestTakenScreenProps,
   KeepScreen,
   type KeepScreenProps,
+  TryItNow,
   TryScreen,
 } from "./guest-screens.tsx"
 import { GuestAccountDelete, GuestRefusalDialog } from "./guest-profile.tsx"
@@ -259,6 +260,28 @@ describe("GuestTakenScreen", () => {
     expect(document.querySelector("[data-e2e=taken-password]")).toBeNull()
     await submit("[data-e2e=taken-submit]")
     expect(calls).toEqual([["keep"]])
+  })
+})
+
+describe("TryItNow", () => {
+  it("links the terms and the privacy notice to the website's pages, and names them plainly without one", async () => {
+    await mount(
+      <TryItNow
+        legal={{
+          terms: "https://www.example.com/terms",
+          privacy: "https://www.example.com/privacy",
+        }}
+      />,
+    )
+    const links = [...find("[data-e2e=try-terms]").querySelectorAll("a")]
+    expect(links.map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+      ["terms", "https://www.example.com/terms"],
+      ["privacy notice", "https://www.example.com/privacy"],
+    ])
+
+    await act(() => render(<TryItNow />, root!))
+    expect(find("[data-e2e=try-it-now]").querySelectorAll("a[href*=terms]").length).toBe(0)
+    expect(find("[data-e2e=try-it-now]").textContent).toContain("terms and privacy notice")
   })
 })
 

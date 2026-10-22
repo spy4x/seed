@@ -140,9 +140,31 @@ export function TryScreen({ state, onRetry, navigate }: TryScreenProps): JSX.Ele
   }
 }
 
+/** The website's legal pages, as full addresses: the website is on a host of its own. */
+export interface TryLegalLinks {
+  terms: string
+  privacy: string
+}
+
+/** The line under "Try it now", with the legal pages as links when the website is known. */
+function TryTermsLine({ legal }: { legal: TryLegalLinks | null }): JSX.Element {
+  if (!legal) return <p class="text-xs text-muted">{TRY_TERMS_LINE}</p>
+  return (
+    <p class="text-xs text-muted" data-e2e="try-terms">
+      By continuing you agree to the{" "}
+      <a href={legal.terms} class="underline hover:text-foreground">terms</a> and{" "}
+      <a href={legal.privacy} class="underline hover:text-foreground">privacy notice</a>.
+    </p>
+  )
+}
+
 /** The "Try it now" block at the top of the sign-up card: the page's one accent button. */
 export function TryItNow(
-  { navigate, next = null }: { navigate?: Navigate; next?: string | null },
+  { navigate, next = null, legal = null }: {
+    navigate?: Navigate
+    next?: string | null
+    legal?: TryLegalLinks | null
+  },
 ): JSX.Element {
   return (
     <div class="flex flex-col gap-2" data-e2e="try-it-now">
@@ -150,7 +172,7 @@ export function TryItNow(
         Try it now
       </Button>
       <p class="text-sm text-muted">{TRY_LINE}</p>
-      <p class="text-xs text-muted">{TRY_TERMS_LINE}</p>
+      <TryTermsLine legal={legal} />
     </div>
   )
 }

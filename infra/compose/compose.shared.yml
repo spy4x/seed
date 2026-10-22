@@ -882,6 +882,8 @@ services:
       # The public demo (docs/demo.md) shows its line on the sign-in and sign-up pages.
       - SPA_DEMO=${DEMO_MODE:-}
       - SPA_GUEST=${GUEST_MODE:-}
+      # The website's host, for the legal pages the line under "Try it now" links to (#224).
+      - SPA_SITE=${MPA_DOMAIN:-}
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z

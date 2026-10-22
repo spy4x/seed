@@ -7,7 +7,8 @@ and the notes stay as they are. Firebase and Supabase call the same feature anon
 
 It is on by default. `GUEST_MODE=false` in the env file turns it off: the API refuses to start a
 guest (404) and the SPA hides every "Try it now" (`SPA_GUEST`, set from `GUEST_MODE` by
-`infra/compose/compose.shared.yml`).
+`infra/compose/compose.shared.yml`). The line under "Try it now" links to the website's terms and privacy notice at `MPA_DOMAIN`
+(`SPA_SITE`); without a website it names them without links.
 
 ## How it works
 

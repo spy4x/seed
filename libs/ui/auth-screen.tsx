@@ -7,7 +7,7 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
 import { type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
-import { NoAccountYet, TryItNow, WordDivider } from "./guest-screens.tsx"
+import { NoAccountYet, TryItNow, type TryLegalLinks, WordDivider } from "./guest-screens.tsx"
 
 /** The public demo's one line on sign-in and sign-up (docs/demo.md). */
 export const DEMO_NOTE =
@@ -112,6 +112,11 @@ export interface AuthScreenProps {
    * sign-up says so.
    */
   demo?: boolean
+  /**
+   * The website's terms and privacy notice, which the line under "Try it now" links to (#224).
+   * Left out, as without a website, the line names them without links.
+   */
+  legal?: TryLegalLinks | null
   /**
    * Signs in with a passkey (#222): "Sign in with a passkey" is the first of the other ways in on
    * the sign-in screen. Left out, as in a browser without passkeys, there is no such button.
@@ -257,6 +262,7 @@ export function AuthScreen(
     lastSignIn = null,
     onForgetLastSignIn,
     demo = false,
+    legal = null,
     onPasskey,
     passkeyBusy = false,
     passkeyAutofill = false,
@@ -305,7 +311,7 @@ export function AuthScreen(
       {screen === "sign-in" && <LastSignIn last={lastSignIn} onForget={onForgetLastSignIn} />}
       {tryFirst && (
         <>
-          <TryItNow navigate={navigate} next={next} />
+          <TryItNow navigate={navigate} next={next} legal={legal} />
           <WordDivider>or create an account</WordDivider>
         </>
       )}

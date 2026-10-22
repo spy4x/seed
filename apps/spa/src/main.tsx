@@ -11,7 +11,7 @@ import { loadRuntimeConfig } from "./runtime-config.ts"
 import { install } from "./install.ts"
 import { configureModules } from "./modules.ts"
 import { themeStore } from "./state/theme.ts"
-import { demoMode, guestMode } from "./state/demo.ts"
+import { demoMode, guestMode, siteOrigin, siteOriginOf } from "./state/demo.ts"
 
 // Follows the system light/dark setting until the person picks one in the account menu.
 // `index.html` paints the stored choice before this runs.
@@ -28,6 +28,7 @@ const config = await loadRuntimeConfig()
 configureModules(config)
 demoMode.value = config.demo === true
 guestMode.value = config.guest !== false
+siteOrigin.value = siteOriginOf(config.site, config.env)
 
 // Without a DSN this does nothing and the page makes no request to any tracker.
 startErrorReporting(

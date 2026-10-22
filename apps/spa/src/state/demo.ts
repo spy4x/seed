@@ -11,3 +11,24 @@ export const demoMode = signal(false)
  * container sets `GUEST_MODE=false`. The API refuses a guest too when it is off.
  */
 export const guestMode = signal(true)
+
+/**
+ * The public website's origin, such as `https://www.example.com`, from `/config.json`'s `site`
+ * (`MPA_DOMAIN`), or `null` without a website. The line under "Try it now" links to its terms and
+ * privacy notice (#224).
+ */
+export const siteOrigin = signal<string | null>(null)
+
+/**
+ * The website's origin from its host and the environment: plain HTTP only in development, as the
+ * API reads `MPA_DOMAIN` (`readSiteUrl`). An empty or unusable host gives `null`.
+ */
+export function siteOriginOf(site: string | undefined, env: string | undefined): string | null {
+  const host = site?.trim() ?? ""
+  if (host === "" || host.includes("://")) return null
+  try {
+    return new URL(`http${env === "dev" ? "" : "s"}://${host}`).origin
+  } catch (_invalid) {
+    return null
+  }
+}
