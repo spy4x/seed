@@ -302,6 +302,21 @@ describe("admin job page", () => {
     expect(events).toEqual([["act", "runNow"]])
   })
 
+  it("names the time a waiting run is due rather than a distance from now", async () => {
+    const waiting = {
+      ...failedJob,
+      state: AdminJobState.Scheduled,
+      dueAt: "2030-03-04T03:00:00.000Z",
+      finishedAt: null,
+      errorCode: null,
+    }
+    await mount(jobPage({ job: waiting }).node)
+
+    const due = find(`[data-e2e="admin-job-facts"] time[datetime="2030-03-04T03:00:00.000Z"]`)
+    expect(due.textContent).toContain("2030")
+    expect(due.textContent).not.toContain("ago")
+  })
+
   it("offers no action but copying the id on a finished run", async () => {
     await mount(jobPage({ job: { ...failedJob, state: AdminJobState.Done, errorCode: null } }).node)
 

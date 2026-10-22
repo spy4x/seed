@@ -9,7 +9,7 @@ import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
-import { OnDay, When } from "@spy4x/preact-ui/format"
+import { OnDay, useFormat, When as Ago } from "@spy4x/preact-ui/format"
 import { Input } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
@@ -105,6 +105,22 @@ function useLate(pending: boolean, ms = 300): boolean {
 }
 
 /** What the run's "When" says: its next run while it waits, else when it started or ended. */
+/**
+ * A moment as the job pages show it: `3 hours ago` for the past, and the exact time for the
+ * future, such as a run that waits until 03:00. The relative wording has no future form, so a
+ * waiting run would otherwise read "a moment ago".
+ */
+function When({ at, class: className }: { at: string; class?: string }): JSX.Element {
+  const format = useFormat()
+  const instant = new Date(at)
+  if (!(instant.valueOf() > Date.now())) return <Ago at={at} class={className} />
+  return (
+    <time class={className} dateTime={instant.toISOString()}>
+      {format.exact(at)}
+    </time>
+  )
+}
+
 function WhenCell({ job }: { job: AdminJobRow }): JSX.Element {
   if (jobWaits(job.state)) {
     return (
