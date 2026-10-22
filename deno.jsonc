@@ -165,9 +165,10 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.88.0 (passkeys, idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
+    // spy4x/ts-libs 1.90.0 (passkeys, idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
     // the redirect-path check of sign-in's `next`, the password check without a session, billing,
-    // the provider's name and picture, the healthcheck's HTTP mode, a key giving up its address).
+    // the provider's name and picture, the healthcheck's HTTP mode, a key giving up its address,
+    // safe Markdown and reading time).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
     "@spy4x/validation": "jsr:@spy4x/validation@1.90.0",
@@ -224,7 +225,7 @@
     "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@10.6.0",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.88.0",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.90.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components (spy4x/preact-components#121)
     "arktype": "npm:arktype@2.2.3",
