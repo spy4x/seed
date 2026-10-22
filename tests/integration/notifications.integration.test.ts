@@ -401,7 +401,8 @@ Deno.test("notifications: the worker's nightly cleanup runs the purge of old not
       log: () => {},
     })
 
-    await startRepeatingJobs(sql)
+    // Started two days ago: its first 03:00 UTC run is due, and the next one it writes differs.
+    await startRepeatingJobs(sql, new Date(Date.now() - 2 * 86_400_000))
     await sql`
       UPDATE outbox_events SET available_at = now() - interval '1 second'
       WHERE event_kind = ${OUTBOX_CLEANUP_JOB} AND processed_at IS NULL
