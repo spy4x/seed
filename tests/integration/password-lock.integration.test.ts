@@ -114,6 +114,7 @@ async function buildApp(sql: postgres.Sql) {
       totpFailures: openLockout,
       passwordFailures: createPasswordFailures({ sql, clock }),
       requestPasswordReset: () => Promise.resolve(),
+      requestSignInLink: () => Promise.resolve(),
       emailCodeFailures: openLockout,
       requestEmailCode: () => Promise.resolve(),
     }),

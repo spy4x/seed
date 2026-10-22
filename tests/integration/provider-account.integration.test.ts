@@ -178,6 +178,7 @@ function buildApp(sql: postgres.Sql, people: Record<string, ProviderPerson>) {
       passwordFailures: createPasswordFailures({ sql }),
       emailCodeFailures: createEmailCodeFailures({ sql }),
       requestPasswordReset: () => Promise.resolve(),
+      requestSignInLink: () => Promise.resolve(),
       requestEmailCode: (userId, email) =>
         sendEmailCode(
           db.authStore,
