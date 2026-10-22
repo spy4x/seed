@@ -306,14 +306,26 @@ describe("AuthScreen's sign-in link button", () => {
     expect(otherWaysIn()).toEqual(["passkey-sign-in", "link-sign-in", "provider-google"])
   })
 
-  it("comes first on sign-up, and the list shows with no provider at all", async () => {
+  it("comes first on sign-up, before the providers", async () => {
     const link = spy<[string]>()
-    await mount(<AuthScreen {...authDefaults} screen="sign-up" onEmailLink={link.fn} />)
+    await mount(
+      <AuthScreen
+        {...authDefaults}
+        screen="sign-up"
+        providers={["google"]}
+        onEmailLink={link.fn}
+      />,
+    )
 
     await press("[data-e2e=link-sign-up]")
 
     expect(link.calls).toEqual([[""]])
     expect(find("[data-e2e=link-sign-up]").textContent).toBe("Email me a sign-up link")
+    expect(otherWaysIn()).toEqual(["link-sign-up", "provider-google"])
+  })
+
+  it("shows the other ways in with no provider or passkey at all", async () => {
+    await mount(<AuthScreen {...authDefaults} screen="sign-up" onEmailLink={() => {}} />)
     expect(otherWaysIn()).toEqual(["link-sign-up"])
   })
 
