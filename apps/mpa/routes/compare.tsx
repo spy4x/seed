@@ -125,7 +125,7 @@ const ROWS: readonly ComparisonRow[] = [
   },
   {
     capability: `Blog`,
-    values: [`no`, `yes`, `yes`, `yes`, `no`, `yes`],
+    values: [`yes`, `yes`, `yes`, `yes`, `no`, `yes`],
   },
   {
     capability: `Audit log`,

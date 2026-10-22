@@ -414,11 +414,12 @@ const TIERS: readonly Tier[] = [
         eyebrow: `Website`,
         title: `A public website to adapt`,
         lead: `This site: fast, server-rendered and usable with JavaScript turned off, with ` +
-          `pricing, legal pages and a newsletter.`,
+          `pricing, legal pages, a blog and a newsletter.`,
         facts: [
           `Fresh on the server; every action a real link or form`,
           `Pricing read from the app's plan catalog`,
           `A newsletter with double opt-in and one-click unsubscribe`,
+          `A blog written in the admin panel, with topics, an RSS feed and article structured data`,
           `sitemap.xml, robots.txt, canonical links and Open Graph images`,
           `Optional cookieless analytics in your own Umami, with an event on every call to action`,
         ],
