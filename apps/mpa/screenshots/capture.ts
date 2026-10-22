@@ -655,6 +655,10 @@ async function captureConflict(
     await saveTitle(seeded.grace, seeded, noteId, "Checkout fails for EU VAT numbers with spaces")
     await page.context().setOffline(false)
     await page.locator("[data-e2e=offline-status] li").first().waitFor({ timeout: 30_000 })
+    // The editor's "Note saved" toast would cover the list; the picture is about the conflict.
+    const saved = page.locator("[data-e2e=note-saved]")
+    if (await saved.isVisible()) await saved.getByRole("button").click()
+    await saved.waitFor({ state: "detached" })
     await snap(page, `offline-conflict-${theme}-desktop`)
   } finally {
     await page.context().close()
