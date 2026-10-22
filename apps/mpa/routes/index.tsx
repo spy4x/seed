@@ -80,7 +80,7 @@ export const AI_PROMPT =
   `Create my new product "Acme" from https://github.com/spy4x/seed and run it locally`
 
 const WORKS_TODAY = [
-  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, 2FA with an authenticator app`,
+  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, magic links, 2FA with an authenticator app`,
   `Guest accounts: try the app with one click, keep the account by adding a sign-in method`,
   `Groups with members, roles, invitations and ownership transfer`,
   `Exporting a group to a file, and importing one as a new group`,
@@ -93,7 +93,6 @@ const WORKS_TODAY = [
 ] as const
 
 const NOT_BUILT = [
-  `Magic links`,
   `Translations: the app is English only`,
   `File uploads: no file store is bundled yet`,
   `Downloading an account's data`,

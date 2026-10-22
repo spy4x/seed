@@ -94,7 +94,7 @@ const TIERS: readonly Tier[] = [
         lead:
           `People sign up with an email address and a password, prove the address with a code ` +
           `sent by email, reset a forgotten password, continue with Google or GitHub, or sign in ` +
-          `with a passkey, or try the app first in a guest account and add a sign-in method later. ` +
+          `with a passkey or a link sent by email, or try the app first in a guest account and add a sign-in method later. ` +
           `An authenticator app adds two-factor authentication (2FA). They see every device they are signed in on ` +
           `and can sign the others out. Changing a sign-in method asks for proof and sends a mail.`,
         facts: [
@@ -102,11 +102,12 @@ const TIERS: readonly Tier[] = [
           `Signed session cookies, and an audit trail of every sign-in event`,
           `Personal API tokens, stored only as keyed hashes`,
           `Passkeys: only the public key is stored, and each sign-in challenge works once`,
+          `Magic links: one link signs in or signs up, works once, for 15 minutes, and is stored ` +
+          `only as a hash`,
           `Guest accounts (anonymous sign-in): a visitor starts with one click and no sign-in ` +
           `method, then adds an email and password, Google, GitHub or a passkey to the same account`,
           `Wrong passwords counted per sign-in name, with a short lock, from any network address`,
         ],
-        notYet: [{ label: `Magic links` }],
         code: { label: `Read the sign-in code`, href: source(`apps/api/services/sign-in.ts`) },
         visual: (
           <WindowFrame variant="browser" title="app.seedsaas.com/profile/security">

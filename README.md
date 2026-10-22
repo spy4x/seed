@@ -39,8 +39,8 @@ on the [open issues](https://github.com/spy4x/seed/issues).
 - **Tenancy from day one.** Every user gets a group at sign-up; every group uses the same IDs,
   membership checks and roles, from viewer to owner. A group can be renamed, deleted and, for 30
   days, restored, and a person always keeps at least one.
-- **Auth that is done.** Sign-up, sign-in, sessions and an authenticator-app second factor, with
-  PBKDF2-SHA-256 password hashes. Web push subscriptions are built in too.
+- **Auth that is done.** Sign-up, sign-in (also by a link sent by e-mail), sessions and an
+  authenticator-app second factor, with PBKDF2-SHA-256 password hashes. Web push subscriptions are built in too.
 - **Offline-first SPA.** The SPA keeps the last notes and groups in IndexedDB (the shared data
   cache), opens with no network, and queues note writes with their idempotency keys. It sends them
   on reconnect and shows a stale write as a conflict to settle, never as a silent overwrite. The
