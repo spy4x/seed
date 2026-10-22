@@ -54,10 +54,10 @@ id, its author's account id or address, or its newsletter.
 
 ## Markdown
 
-Bodies are rendered on the server by `renderBlogBody` (`libs/server/blog/render.ts`). Until the
-safe Markdown renderer of spy4x/ts-libs#743 is released, it escapes the text and keeps paragraphs,
-so nothing is interpreted. With the release, the same function renders Markdown with raw HTML
-escaped, links limited to `https:`, `http:`, `mailto:` and relative paths, and ids on headings.
+Bodies are rendered on the server by `renderBlogBody` (`libs/server/blog/render.ts`), which calls
+`renderMarkdown` from `@spy4x/platform/universal/markdown`: GitHub-flavoured Markdown with raw
+HTML escaped, links limited to `https:`, `http:`, `mailto:` and relative paths, and ids on
+headings. The reading time is `readingMinutes` from `@spy4x/platform/universal/text`.
 
 ## Demo and development
 
