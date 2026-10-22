@@ -53,10 +53,15 @@ test("two sign-ups of one address: the first code signs in, the second finds the
     )
 
     await firstPage.locator("[data-e2e=sign-up-code-input]").fill(firstCode)
-    await gotoApp(firstPage, "/", firstPage.locator("[data-e2e=shell-ws-status]"), async () => {
-      await firstPage.locator("[data-e2e=sign-up-code-submit]").click()
-      await firstPage.waitForURL("/")
-    })
+    await gotoApp(
+      firstPage,
+      "/notes",
+      firstPage.locator("[data-e2e=shell-ws-status]"),
+      async () => {
+        await firstPage.locator("[data-e2e=sign-up-code-submit]").click()
+        await firstPage.waitForURL("/notes")
+      },
+    )
 
     await secondPage.locator("[data-e2e=sign-up-code-input]").fill(secondCode)
     await secondPage.locator("[data-e2e=sign-up-code-submit]").click()

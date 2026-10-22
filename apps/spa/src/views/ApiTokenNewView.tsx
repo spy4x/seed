@@ -3,7 +3,7 @@ import { useLocation } from "wouter-preact"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { API_TOKEN_OFFLINE, ApiTokenNewScreen } from "@ui/api-token-new-screen.tsx"
-import { SCREEN_PATHS } from "@ui/progressive.tsx"
+import { profilePath } from "@ui/progressive.tsx"
 import { apiTokensHttp, type ApiTokensStore, createApiTokensStore } from "../state/api-tokens.ts"
 import { groupsStore } from "../state/groups.ts"
 import { isSpaPath } from "./spa-paths.ts"
@@ -42,7 +42,7 @@ export function ApiTokenNewView(
 
   const done = () => {
     store.dismissSecret()
-    navigate(SCREEN_PATHS.profile)
+    navigate(profilePath("api-tokens"))
   }
 
   return (

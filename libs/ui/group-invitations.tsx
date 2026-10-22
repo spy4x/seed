@@ -98,7 +98,7 @@ export interface InviteFormProps {
   formError?: string | null
   /**
    * The create was refused because the creator's own address is not verified: the message, shown
-   * above the buttons as a notice with a way to the E-mail page.
+   * above the buttons as a notice with a way to the profile's Account section.
    */
   addressRefusal?: string | null
   /** Creates an invitation from the draft. */
@@ -710,7 +710,7 @@ export function MyInvitationsSection(
 
 /**
  * A create refused because the creator's own address is not verified: the API's sentence and the
- * way to the E-mail page. It takes focus when it appears, as `PlanRefusalNotice` does.
+ * way to the profile's Account section. It takes focus when it appears, as `PlanRefusalNotice` does.
  */
 function AddressRefusalNotice(
   { message, navigate }: { message: string; navigate?: Navigate },
@@ -744,9 +744,8 @@ function AddressRefusalNotice(
 function NotForYou({ navigate }: { navigate?: Navigate }): JSX.Element {
   return (
     <p class="text-sm text-muted" data-e2e="invitation-not-for-you">
-      This invitation was sent to another e-mail address. If the address is yours, confirm it on the
-      {" "}
-      <Link href={SCREEN_PATHS.email} navigate={navigate} class="pc-link">E-mail page</Link>{" "}
+      This invitation was sent to another e-mail address. If the address is yours, confirm it in
+      your <Link href={SCREEN_PATHS.email} navigate={navigate} class="pc-link">profile</Link>{" "}
       first, or sign in with the account that uses it.
     </p>
   )

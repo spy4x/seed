@@ -10,6 +10,7 @@ import { tagsStore } from "../state/tags.ts"
 import { selectionStore } from "../state/selection.ts"
 import { useUndoToast } from "./use-undo-toast.ts"
 import { OfflineStatus } from "../modules.ts"
+import { OnboardingView } from "./OnboardingView.tsx"
 
 /**
  * Wires the notes list to the notes store for `/notes`. The notes are those of the person's
@@ -54,6 +55,8 @@ export function NotesView() {
           onResolved={() => void store.refresh().catch(() => {})}
         />
       )}
+      {/* The first steps sit above the list, where a new account lands after sign-in. */}
+      <OnboardingView />
       <NotesScreen
         group={membership
           ? { id: membership.id, name: membership.name, canWrite: canMutateNotes(membership.role) }

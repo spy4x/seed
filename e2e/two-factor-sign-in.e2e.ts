@@ -31,12 +31,12 @@ test.describe("two-factor sign-in", () => {
       expect(signUp.ok()).toBe(true)
 
       // Two-factor auth needs a proven address; the sign-up code proved it.
-      await gotoApp(page, "/email", page.locator("[data-e2e=email-state]"))
+      await gotoApp(page, "/profile/account", page.locator("[data-e2e=email-state]"))
       await expect(page.locator("[data-e2e=email-state]")).toHaveText("Verified")
 
       // Turn two-factor auth on through the profile screen and read the secret it shows.
       // Without an authenticator app the page offers Enable only, never Disable next to it.
-      await gotoApp(page, "/", page.locator("[data-e2e=totp-start]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=totp-start]"))
       await expect(page.locator("[data-e2e=totp-disable]")).toHaveCount(0)
       await page.locator("[data-e2e=totp-start]").click()
       // Turning it on asks for the password first (#406).
@@ -53,18 +53,16 @@ test.describe("two-factor sign-in", () => {
 
       await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
-      await page.locator("[data-e2e=signin-required]").waitFor()
+      await page.locator("[data-e2e=auth-form-login]").waitFor()
 
       // Password step: the app reloads onto the code screen, which must still ask for the code.
       await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
       await page.locator("[data-e2e=auth-form-login]").fill(email)
       await page.locator("[data-e2e=auth-form-password]").fill(password)
       await submitAuthForm(page, "/totp", page.locator("[data-e2e=auth-form-code]"))
-      await gotoApp(
-        page,
-        "/",
-        page.getByRole("heading", { level: 1, name: "Enter your one-time code" }),
-      )
+      // A page for signed-in people sends a session that owes its code to the code page.
+      await gotoApp(page, "/notes", page.locator("[data-e2e=auth-form-code]"))
+      await expect(page).toHaveURL("/totp?next=%2Fnotes")
       await gotoApp(page, "/totp", page.locator("[data-e2e=auth-form-code]"))
       await expect(page.getByRole("heading", { level: 1, name: "No code needed" }))
         .toHaveCount(0)
@@ -73,7 +71,11 @@ test.describe("two-factor sign-in", () => {
       // server accepts one step ahead.
       const step = Math.max(currentStep(), enrolStep + 1)
       await page.locator("[data-e2e=auth-form-code]").fill(await totpCode(secret, step))
-      await submitAuthForm(page, "/", page.getByRole("heading", { level: 1, name: "Profile" }))
+      await submitAuthForm(
+        page,
+        "/notes",
+        page.getByRole("heading", { level: 1, name: "Notes", exact: true }),
+      )
 
       const me = await page.request.get("/api/auth/me")
       expect(me.status()).toBe(200)

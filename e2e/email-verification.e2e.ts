@@ -58,36 +58,35 @@ test("a new account proves its address with the mailed code before it exists, th
       .toBeVisible()
     await expect(page.locator("[data-e2e=sign-up-code-input]")).toBeFocused()
     await page.locator("[data-e2e=sign-up-code-input]").fill(code)
-    await gotoApp(page, "/", page.locator("[data-e2e=shell-ws-status]"), async () => {
+    await gotoApp(page, "/notes", page.locator("[data-e2e=shell-ws-status]"), async () => {
       await page.locator("[data-e2e=sign-up-code-submit]").click()
-      await page.waitForURL("/")
+      await page.waitForURL("/notes")
     })
 
     // The code proved the address: no page asks for it again.
     await expect(page.locator("[data-e2e=email-banner]")).toHaveCount(0)
-    await gotoApp(page, "/email", page.locator("[data-e2e=email-state]"))
+    await gotoApp(page, "/profile/account", page.locator("[data-e2e=email-state]"))
     await expect(page.locator("[data-e2e=email-state]")).toHaveText("Verified")
 
-    // A change waits for the new address's code; until then the account keeps the old one.
-    await gotoApp(page, "/email", page.locator("[data-e2e=email-change-open]"))
+    // A change moves the dialog on to the code mailed to the new address; until the code is
+    // entered the account keeps the old one.
     await page.locator("[data-e2e=email-change-open]").click()
     await page.locator("[data-e2e=email-new]").fill(next)
     await page.locator("[data-e2e=email-password]").fill(password)
     await page.locator("[data-e2e=email-change]").click()
-    await expect(page.locator("[data-e2e=email-change-notice]")).toBeVisible()
-    await expect(page.locator("[data-e2e=email-change-dialog]")).toHaveCount(0)
-    await expect(page.locator("[data-e2e=email-current]")).toContainText(email)
     await expect(page.locator("[data-e2e=email-verify-card]")).toContainText(next)
+    await expect(page.locator("[data-e2e=email-code]")).toBeFocused()
+    await expect(page.locator("[data-e2e=email-current]")).toContainText(email)
 
     await enterCode(page, await codeFor(request, next))
     await expect(page.locator("[data-e2e=email-verified]")).toContainText("E-mail verified")
+    await expect(page.locator("[data-e2e=email-change-dialog]")).toBeHidden()
     await expect(page.locator("[data-e2e=email-current]")).toContainText(next)
-    await expect(page.locator("[data-e2e=email-verify-card]")).toHaveCount(0)
 
     // The new address signs in; the old one no longer does.
     await page.locator("[data-e2e=account-menu-button]").click()
     await page.getByRole("menuitem", { name: "Sign out" }).click()
-    // Signing out leaves the e-mail page for plain sign-in: whoever signs in next must not be
+    // Signing out leaves the profile for plain sign-in: whoever signs in next must not be
     // sent back to this person's page.
     await expect(page).toHaveURL("/sign-in")
     await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))

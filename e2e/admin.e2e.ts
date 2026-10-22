@@ -125,7 +125,7 @@ test.describe("the admin app", () => {
 
       // The person's open page signs out, and their session is gone. The API closes their sockets
       // at once; its 15-second recheck of every socket would too, so this does not tell the two apart.
-      await expect(page.locator("[data-e2e=signin-required]")).toBeVisible({ timeout: 8_000 })
+      await expect(page.locator("[data-e2e=auth-form-login]")).toBeVisible({ timeout: 8_000 })
       expect((await page.request.get(`${appBase}/api/auth/me`)).status()).toBe(401)
       await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
 

@@ -132,7 +132,7 @@ async function userIdOnDevice(page: Page): Promise<number> {
 
 async function signOut(page: Page): Promise<void> {
   await askToSignOut(page)
-  await page.locator("[data-e2e=signin-required]").waitFor()
+  await page.locator("[data-e2e=auth-form-login]").waitFor()
 }
 
 /** Chooses Sign out in the account menu, which may first ask about unsent changes. */
@@ -193,7 +193,7 @@ test.describe("the app with the local-data module switched off", () => {
       await gotoApp(page, `${groupPath}/billing`, page.locator("[data-e2e=billing-plan]"))
       await gotoApp(page, `${groupPath}/activity`, page.locator("[data-e2e=activity-list]"))
       await gotoApp(page, "/notifications", page.getByRole("heading", { level: 1 }))
-      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=session-current]"))
       await expect(page.locator("[data-e2e=sessions-saved-copy]")).toBeEmpty()
 
       expect(await databases(page)).toEqual([])
@@ -282,19 +282,21 @@ test.describe("the app with no network, after one visit online", () => {
       await gotoApp(page, "/notifications", notifications.first())
       const notificationsOnline = await notifications.allTextContents()
 
-      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=session-current]"))
+      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toBeEmpty()
+      await gotoApp(page, "/profile/api-tokens", page.locator("[data-e2e=api-token-create-open]"))
       await page.locator("[data-e2e=api-token-create-open]").click()
       await page.locator("[data-e2e=api-token-name]").fill("Kept token")
       await page.locator("[data-e2e=api-token-password]").fill(password)
       await page.locator("[data-e2e=api-token-create]").click()
       await page.locator("[data-e2e=api-token-done]").click()
-      await expect(page).toHaveURL("/")
+      await expect(page).toHaveURL("/profile/api-tokens")
       const tokens = page.locator("[data-e2e=api-token-details]")
       await expect(tokens).toHaveCount(1)
       // Once more, so the copy on the device holds the token just made.
-      await gotoApp(page, "/", tokens)
-      await expect(page.locator("[data-e2e=sessions-saved-copy]")).toBeEmpty()
+      await gotoApp(page, "/profile/api-tokens", tokens)
       await expect(page.locator("[data-e2e=api-tokens-saved-copy]")).toBeEmpty()
+      await gotoApp(page, "/profile/account", page.locator("[data-e2e=profile-name]"))
       const name = await page.locator("[data-e2e=profile-name]").textContent()
 
       await context.setOffline(true)
@@ -317,13 +319,15 @@ test.describe("the app with no network, after one visit online", () => {
       await openOffline(page, "/notifications")
       await expect(notifications).toHaveText(notificationsOnline)
 
-      await openOffline(page, "/")
+      await openOffline(page, "/profile/account")
       await expect(page.locator("[data-e2e=profile-name]")).toHaveText(name ?? "")
+      await openOffline(page, "/profile/security")
       await expect(page.locator("[data-e2e=session-current]")).toBeVisible()
       await expect(page.locator("[data-e2e=sessions-saved-copy]")).toHaveAttribute(
         "data-saved-at",
         /^\d{4}-/,
       )
+      await openOffline(page, "/profile/api-tokens")
       await expect(page.locator("[data-e2e=api-tokens]")).toContainText("Kept token")
       await expect(page.locator("[data-e2e=api-tokens-saved-copy]")).toHaveAttribute(
         "data-saved-at",
@@ -453,11 +457,11 @@ test.describe("what a device keeps", () => {
       await expect.poll(() => recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
       await context.route("**/api/call/note.update", (route) => route.abort("internetdisconnected"))
       await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
-      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=session-current]"))
 
       await askToSignOut(page)
       await page.locator("[data-e2e=unsent-sign-out-anyway]").click()
-      await page.locator("[data-e2e=signin-required]").waitFor()
+      await page.locator("[data-e2e=auth-form-login]").waitFor()
 
       await expect.poll(() => databases(page)).toEqual([])
       // Only what finishes a sign-out and the device's own answers may stay (`KEPT_KEYS`).
@@ -482,7 +486,7 @@ test.describe("what a device keeps", () => {
       const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
       await context.route("**/api/call/note.update", (route) => route.abort("internetdisconnected"))
       await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
-      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=session-current]"))
 
       await askToSignOut(page)
       const dialog = page.getByRole("dialog", { name: "You have 1 unsent change" })
@@ -495,7 +499,7 @@ test.describe("what a device keeps", () => {
       await expect(page.locator("[data-e2e=session-current]")).toBeAttached()
 
       await context.unroute("**/api/call/note.update")
-      await page.locator("[data-e2e=signin-required]").waitFor({ timeout: 30_000 })
+      await page.locator("[data-e2e=auth-form-login]").waitFor({ timeout: 30_000 })
 
       expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(0)
       const api = await browser.newContext({ baseURL: test.info().project.use.baseURL })
@@ -524,7 +528,7 @@ test.describe("what a device keeps", () => {
       const { page, groupId, noteId, userId } = await deviceWithNote(context, request, user)
       await context.route("**/api/call/note.update", (route) => route.abort("internetdisconnected"))
       await queueAsEarlierVersion(page, userId, editQueuedLastWeek(groupId, noteId))
-      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=session-current]"))
 
       await askToSignOut(page)
       await page.locator("[data-e2e=unsent-dialog]").waitFor()
@@ -532,7 +536,7 @@ test.describe("what a device keeps", () => {
 
       await expect(page.locator("[data-e2e=unsent-dialog]")).toHaveCount(0)
       // A fresh start asks the server who is signed in, so a sign-out in flight cannot pass.
-      await gotoApp(page, "/", page.locator("[data-e2e=session-current]"))
+      await gotoApp(page, "/profile/security", page.locator("[data-e2e=session-current]"))
       expect(await recordsIn(page, `offline:user:${userId}:outbox`)).toBe(1)
     } finally {
       await context.close()
@@ -622,7 +626,7 @@ test.describe("what a device keeps", () => {
       await gotoApp(page, "/notes", page.locator("[data-e2e=note-list]"))
 
       await expect(page.locator("[data-e2e=note-list]")).toContainText("Before the update")
-      await expect(page.locator("[data-e2e=signin-required]")).toHaveCount(0)
+      await expect(page.locator("[data-e2e=auth-form-login]")).toHaveCount(0)
       expect(await recordsIn(page, `reads:${userId}`)).toBeGreaterThan(0)
       expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBeGreaterThan(0)
     } finally {
@@ -689,7 +693,7 @@ test.describe("what a device keeps", () => {
 
       // The session ends elsewhere: the cookie is gone, and the server says so at the next start.
       await context.clearCookies()
-      await gotoApp(page, "/", page.locator("[data-e2e=signin-required]"))
+      await gotoApp(page, "/notes", page.locator("[data-e2e=auth-form-login]"))
 
       expect(await recordsIn(page, `reads:${userId}`)).toBe(0)
       expect(await recordsIn(page, `offline:user:${userId}:notes`)).toBe(0)

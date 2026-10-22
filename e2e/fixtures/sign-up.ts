@@ -92,8 +92,8 @@ export async function signUpInPage(
   const field = page.locator(`[data-e2e=sign-up-code-input]`)
   await expect(field).toBeFocused()
   await field.fill(await nextCode(page.request, lastMailUrl, email, before))
-  await gotoApp(page, `/`, ready, async () => {
+  await gotoApp(page, `/notes`, ready, async () => {
     await page.locator(`[data-e2e=sign-up-code-submit]`).click()
-    await page.waitForURL(`/`)
+    await page.waitForURL(`/notes`)
   })
 }

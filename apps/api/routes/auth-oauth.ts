@@ -179,7 +179,10 @@ export function createOAuthRoute(
         if (result.kind === "confirm") return c.redirect(page(OAUTH_PAGES.confirmSignUp), 302)
         if (result.kind === "notice") {
           return c.redirect(
-            withNotice(result.linking ? OAUTH_PAGES.profile : OAUTH_PAGES.signIn, result.notice),
+            withNotice(
+              result.linking ? OAUTH_PAGES.signInMethods : OAUTH_PAGES.signIn,
+              result.notice,
+            ),
             302,
           )
         }
@@ -188,7 +191,7 @@ export function createOAuthRoute(
           page(
             owesCode
               ? withNext(OAUTH_PAGES.oneTimeCode, result.next)
-              : result.next ?? OAUTH_PAGES.profile,
+              : result.next ?? OAUTH_PAGES.home,
           ),
           302,
         )
