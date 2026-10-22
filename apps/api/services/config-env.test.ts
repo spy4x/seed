@@ -17,7 +17,23 @@ const REQUIRED_ENV: Record<string, string> = {
   DOMAIN: "app.localhost",
   KV_HOSTNAME: "kv",
   KV_PORT: "6379",
+  S3_ENDPOINT: "http://app-garage:3900",
+  S3_PUBLIC_ENDPOINT: "http://app.localhost",
+  S3_REGION: "garage",
+  S3_BUCKET: "app-files",
+  S3_ACCESS_KEY_ID: "GK000000000000000000000000",
+  S3_SECRET_ACCESS_KEY: "test-only-secret",
 }
+
+/** The file store's settings: the API refuses to start without any one of them. */
+const S3_NAMES = [
+  "S3_ENDPOINT",
+  "S3_PUBLIC_ENDPOINT",
+  "S3_REGION",
+  "S3_BUCKET",
+  "S3_ACCESS_KEY_ID",
+  "S3_SECRET_ACCESS_KEY",
+]
 
 Deno.test("the API environment is refused without KV_PASSWORD, and the error names it", () => {
   expect(() => readApiEnv(createEnvReader(REQUIRED_ENV))).toThrow(`KV_PASSWORD`)
@@ -61,4 +77,22 @@ Deno.test("the API environment starts without any sign-in provider and carries o
   }))
   expect([set.GOOGLE_CLIENT_ID, set.GOOGLE_CLIENT_SECRET]).toEqual([`g-id`, `g-secret`])
   expect([set.GITHUB_CLIENT_ID, set.GITHUB_CLIENT_SECRET]).toEqual([`h-id`, `h-secret`])
+})
+
+Deno.test("the API environment is refused without each file store setting, and names it", () => {
+  const withKv: Record<string, string> = { ...REQUIRED_ENV, KV_PASSWORD: `kv-secret` }
+
+  for (const name of S3_NAMES) {
+    const { [name]: _, ...without } = withKv
+    expect(() => readApiEnv(createEnvReader(without)), name).toThrow(name)
+    expect(() => readApiEnv(createEnvReader({ ...withKv, [name]: `` })), name).toThrow(name)
+  }
+})
+
+Deno.test("the API environment refuses a file store endpoint that is not a URL", () => {
+  const withKv = { ...REQUIRED_ENV, KV_PASSWORD: `kv-secret` }
+
+  expect(() => readApiEnv(createEnvReader({ ...withKv, S3_ENDPOINT: `garage:3900` })))
+    .toThrow(`S3_ENDPOINT`)
+  expect(readApiEnv(createEnvReader(withKv)).S3_BUCKET).toBe(`app-files`)
 })

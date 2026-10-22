@@ -161,7 +161,7 @@ function SystemBody(
     onOpenRetry: (job: AdminFailedJob) => void
   },
 ): JSX.Element {
-  const { database, cache, queue, backup, migrations, build } = snapshot
+  const { database, cache, fileStore, queue, backup, migrations, build } = snapshot
   const summary = SUMMARY[snapshot.health] ?? SUMMARY[AdminHealth.ERROR]
   return (
     <>
@@ -190,6 +190,11 @@ function SystemBody(
         <StatusCard title="Cache (Valkey)" health={cache.health} dataE2E="admin-system-cache">
           <Fact label="Reachable">
             {cache.reachable ? `Yes, in ${cache.latencyMs} ms` : "No answer"}
+          </Fact>
+        </StatusCard>
+        <StatusCard title="File store (S3)" health={fileStore.health} dataE2E="admin-system-files">
+          <Fact label="Reachable">
+            {fileStore.reachable ? `Yes, in ${fileStore.latencyMs} ms` : "No answer"}
           </Fact>
         </StatusCard>
         <StatusCard

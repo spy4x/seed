@@ -1,6 +1,9 @@
 import { type EnvReader, loadConfig } from "@spy4x/server/config"
 import { type } from "arktype"
 
+/** An http:// or https:// address with a host, such as `http://app-garage:3900`. */
+const HTTP_URL = /^https?:\/\/\S+$/
+
 /** The environment variables the API needs; a missing or blank one stops it from starting. */
 export const envSchema = type({
   ENV: "'dev' | 'prod'",
@@ -27,6 +30,16 @@ export const envSchema = type({
   KV_HOSTNAME: "string > 0",
   KV_PORT: "string.integer.parse",
   KV_PASSWORD: "string > 0",
+  /**
+   * The file store (docs/files.md). The API reaches it at S3_ENDPOINT; browsers at
+   * S3_PUBLIC_ENDPOINT, the address the URLs it signs for them name.
+   */
+  S3_ENDPOINT: HTTP_URL,
+  S3_PUBLIC_ENDPOINT: HTTP_URL,
+  S3_REGION: "string > 0",
+  S3_BUCKET: "string > 0",
+  S3_ACCESS_KEY_ID: "string > 0",
+  S3_SECRET_ACCESS_KEY: "string > 0",
   /** `https://<key>@<host>/<project>` of an error tracker; unset or empty turns reporting off. */
   "ERROR_REPORT_DSN?": "string",
   /** Guest accounts (#224, docs/guests.md): on unless `false`. */
