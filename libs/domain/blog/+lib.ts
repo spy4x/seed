@@ -150,6 +150,11 @@ export interface BlogNewsletterResponse {
   /** False when mail subscriptions or the public website's address are not set up. */
   enabled: boolean
   lists: BlogNewsletterList[]
+  /**
+   * The public website's address, such as `https://example.com`, for the editor's "View on
+   * website"; `null` while `MPA_DOMAIN` is unset. Answered with the newsletter off too.
+   */
+  siteUrl: string | null
 }
 
 /** One post in a public list: what the blog index, sitemap and "Read next" show. */
