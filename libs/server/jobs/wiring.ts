@@ -44,6 +44,7 @@ import { type JobDefinition, type JobDeps, JOBS } from "./registry.ts"
  *
  * `jobs` is {@link JOBS} unless a test passes its own list.
  *
+ * @throws Error when two jobs share a kind: one handler would silently replace the other.
  * @throws Error when a job repeats on a cron schedule: the processor cannot run one until
  * `@spy4x/server/outbox` has `repeatCron` (spy4x/ts-libs#742).
  */
@@ -67,6 +68,9 @@ export function createOutboxProcessor(
     trialRequiresCard,
     sampleData,
   }
+  const kinds = jobs.map((job) => job.kind)
+  const twice = kinds.filter((kind, index) => kinds.indexOf(kind) !== index)
+  if (twice.length > 0) throw new Error(`Two jobs share a kind: ${[...new Set(twice)].join(`, `)}`)
   const { repeatEveryMs, repeatCron } = repeatSchedules(jobs)
   if (Object.keys(repeatCron).length > 0) {
     throw new Error(

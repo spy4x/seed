@@ -125,4 +125,12 @@ describe(`createOutboxProcessor`, () => {
       .toThrow(`reports.weekly`)
     expect(createOutboxProcessor(sql, mail, null, null, 0, true, null, [])).toBeDefined()
   })
+
+  it(`refuses two jobs of one kind, naming the kind`, () => {
+    const job = defineJob({ kind: `reports.daily`, label: `Daily report`, handler: noop })
+    const sql = {} as postgres.Sql
+    const mail = { store: {} as never, sender: null, brand: { webAppUrl: `` }, log: () => {} }
+    expect(() => createOutboxProcessor(sql, mail, null, null, 0, true, null, [job, job]))
+      .toThrow(`Two jobs share a kind: reports.daily`)
+  })
 })
