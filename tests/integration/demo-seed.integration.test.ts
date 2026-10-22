@@ -29,7 +29,7 @@ import {
   seedWorkspace,
 } from "../../apps/worker/demo/seed.ts"
 import { KEPT_TABLES, wipeDatabase } from "../../apps/worker/demo/wipe.ts"
-import { seedSamplePosts } from "@server/blog/sample-posts.ts"
+import { SAMPLE_POSTS, seedSamplePosts } from "@server/blog/sample-posts.ts"
 import { isDemoSeeded, resetDemo } from "../../apps/worker/demo/run.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
@@ -432,7 +432,7 @@ Deno.test("the demo seed fails when sign-up refuses an account that does not exi
   })
 })
 
-Deno.test("the wipe empties every table but the kept ones, and never reuses an id", async () => {
+Deno.test("the wipe empties every table but the kept ones, keeps the blog, and never reuses an id", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     await sql`INSERT INTO backup_status (target, succeeded_at) VALUES ('database', now())`
@@ -456,6 +456,11 @@ Deno.test("the wipe empties every table but the kept ones, and never reuses an i
         expect({ name, rows }).toEqual({ name, rows: 0 })
       }
     }
+
+    const [{ posts }] = await sql<
+      { posts: number }[]
+    >`SELECT COUNT(*)::int AS posts FROM blog_posts`
+    expect(posts).toBe(SAMPLE_POSTS.length)
 
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const [{ after }] = await sql<{ after: number }[]>`SELECT min(id) AS after FROM users`
