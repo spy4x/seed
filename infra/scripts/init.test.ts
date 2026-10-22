@@ -7,18 +7,21 @@ import {
   prepareEnv,
   projectSlug,
   randomHex,
+  SECRET_PREFIXES,
   SECRETS,
   writeSafely,
 } from "./init.ts"
 
 const example = await Deno.readTextFile(`infra/envs/.env.example`)
 const fake = (bytes: number) => `x`.repeat(bytes * 2)
+/** The value `prepareEnv` writes for `key` with the fake generator. */
+const faked = (key: string) => (SECRET_PREFIXES[key] ?? ``) + fake(SECRETS[key])
 
 Deno.test("a fresh env file gets the project name and every secret", () => {
   const { text, changed } = prepareEnv(example, undefined, `acme`, fake)
   const values = parseEnvValues(text, `.env`)
   expect(values.PROJECT).toBe(`acme`)
-  for (const key of Object.keys(SECRETS)) expect(values[key], key).toBe(fake(SECRETS[key]))
+  for (const key of Object.keys(SECRETS)) expect(values[key], key).toBe(faked(key))
   expect(changed).toEqual([`PROJECT`, ...Object.keys(SECRETS)])
 })
 
@@ -81,6 +84,13 @@ Deno.test("a key set twice: the line Compose reads is replaced, the other is kep
   const { text } = prepareEnv(example, old, undefined, fake)
   expect(text).toContain(`KV_PASSWORD=mine\nKV_PASSWORD=${fake(SECRETS.KV_PASSWORD)}\n`)
   expect(parseEnvValues(text, `.env`).KV_PASSWORD).toBe(fake(SECRETS.KV_PASSWORD))
+})
+
+Deno.test("the file store's key and secrets take the form Garage accepts", () => {
+  const values = parseEnvValues(prepareEnv(example, undefined, `acme`).text, `.env`)
+  expect(values.S3_ACCESS_KEY_ID).toMatch(/^GK[0-9a-f]{24}$/)
+  expect(values.S3_SECRET_ACCESS_KEY).toMatch(/^[0-9a-f]{64}$/)
+  expect(values.GARAGE_RPC_SECRET).toMatch(/^[0-9a-f]{64}$/)
 })
 
 Deno.test("the pepper and the Grafana password carry a warning, the others do not", () => {
