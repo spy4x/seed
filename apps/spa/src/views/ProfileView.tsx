@@ -133,7 +133,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   const providerProofFresh = isProviderProofFresh(methods.providerProofUntil.value)
   /** Set when the account has no password: what confirms its deletion in place of one. */
   const providerProof = withPasskeyProof(
-    providerProofOf(methods.methods.value, providerProofFresh),
+    providerProofOf(methods.methods.value, providerProofFresh, methods.emailLink.value),
     methods,
   )
 
@@ -578,6 +578,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       preferences={preferences}
       methods={{
         methods: methods.methods.value,
+        emailLink: methods.emailLink.value,
         available: methods.available.value,
         pending: methods.pending.value,
         error: methods.error.value === "" ? SIGN_IN_METHODS_FAILURE : methods.error.value,

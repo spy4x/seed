@@ -19,10 +19,13 @@ import {
 import {
   checkTotp,
   type PasskeySignInAnswer,
+  requestSignInLink,
   signIn,
   signInWithPasskey,
   signUp,
 } from "../state/auth.ts"
+import { rememberSentLink } from "../state/sign-in-link.ts"
+import { linkRequestFailure } from "./SignInLinkViews.tsx"
 import { listProviders } from "../state/sign-in-methods.ts"
 import { lastSignIn, lastSignInHint } from "../state/last-sign-in.ts"
 import { takeHandedOffAddress } from "../state/address-handoff.ts"
@@ -169,6 +172,28 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
     )
   }
 
+  /**
+   * "Email me a sign-in link" (#391): with an address in the field it sends the link and opens
+   * "Check your inbox"; with a username or nothing, it opens the link page with the field to fill.
+   */
+  const [linkBusy, setLinkBusy] = useState(false)
+  const emailLink = async (login: string) => {
+    if (!login.includes("@")) {
+      navigate(withNext(SCREEN_PATHS.signInLink, next))
+      return
+    }
+    setError(null)
+    setLinkBusy(true)
+    const answer = await requestSignInLink(login, next)
+    setLinkBusy(false)
+    if (!answer.ok) {
+      setError(linkRequestFailure(answer))
+      return
+    }
+    rememberSentLink({ email: login, sentAt: Date.now() })
+    navigate(withNext(SCREEN_PATHS.signInLink, next))
+  }
+
   return (
     <AuthScreen
       screen={screen}
@@ -192,6 +217,8 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
       onPasskey={passkeys ? () => void passkeySignIn() : undefined}
       passkeyBusy={passkeyBusy}
       passkeyAutofill={autofill}
+      onEmailLink={(login) => void emailLink(login)}
+      linkBusy={linkBusy}
       onSignIn={({ login, password }: AuthCredentials) => attempt(() => signIn(login, password))}
       onSignUp={({ login, password }: AuthCredentials) => void requestSignUp(login, password)}
       onOneTimeCode={(code) => attempt(() => checkTotp(code))}
