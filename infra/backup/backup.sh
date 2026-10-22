@@ -15,7 +15,9 @@
 # PROJECT names the project: every snapshot carries it as its host, and the clean-up, the snapshot
 # list and `restore latest` look at this project's snapshots only, so two projects that share a
 # repository by mistake do not delete or load each other's. VAPID_FILE, when set, names the web
-# push keys (infra/configs/vapid.json), saved with the database in every run.
+# push keys (infra/configs/vapid.json), saved with the database in every run. FILES_DIR, when set,
+# names the bundled file store's directory (Garage's, .volumes/garage, docs/files.md): its data and
+# its metadata snapshots are saved too, when the store has written any.
 set -euo pipefail
 
 # The dump's name inside every snapshot.
@@ -92,6 +94,13 @@ backup_once() {
   if [ -n "${VAPID_FILE:-}" ]; then
     restic backup --host "$PROJECT" --tag vapid --stdin-filename "$VAPID_NAME" --stdin \
       <"$VAPID_FILE" || explain_lock || return
+  fi
+  # The files: Garage's blocks, and the snapshots of its metadata it writes every hour. The live
+  # metadata database changes under a copy, so it is left out; a restore takes the newest snapshot.
+  if [ -n "${FILES_DIR:-}" ] && [ -d "$FILES_DIR/data" ] && [ -d "$FILES_DIR/meta/snapshots" ]; then
+    log "Saving the file store."
+    restic backup --host "$PROJECT" --tag files -- "$FILES_DIR/data" "$FILES_DIR/meta/snapshots" ||
+      explain_lock || return
   fi
   # Grouped by the project and the file, so this project's database, its keys and every other
   # host's snapshots are thinned apart. Every snapshot of the last two days stays (a restart makes
