@@ -377,12 +377,12 @@ Deno.test("a restore whose psql exits with an error fails", async () => {
   )
 })
 
-Deno.test("fetching the image asks the engine for the db service only and fails when the engine does", async () => {
+Deno.test("fetching the image builds the db service only, fetching its base, and fails when the engine does", async () => {
   const h = host()
   await engineSteps(VALUES, DUMP, h).pull()
-  expect(h.ran).toEqual(["pull db"])
+  expect(h.ran).toEqual(["build --pull db"])
   const offline = host({ show: () => 1 })
-  await expect(engineSteps(VALUES, DUMP, offline).pull()).rejects.toThrow("pull db failed (exit 1)")
+  await expect(engineSteps(VALUES, DUMP, offline).pull()).rejects.toThrow("build --pull db failed (exit 1)")
 })
 
 Deno.test("Postgres 16 is stopped with time to finish, then Postgres 18 starts alone and must answer as 18", async () => {

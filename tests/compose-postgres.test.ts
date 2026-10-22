@@ -22,6 +22,7 @@ const COMPOSE = "infra/compose/compose.shared.yml"
 /** Every file that names the Postgres image, and how many times it must. */
 const IMAGE_PLACES = [
   COMPOSE,
+  "infra/postgres/Dockerfile",
   ".woodpecker/ci.yml",
   "infra/scripts/e2e-local.sh",
   "docs/handoff.md",
@@ -40,6 +41,7 @@ export function pinnedMinor(tag: string): string | undefined {
 
 interface DbService {
   image?: string
+  build?: { context?: string; args?: string[] }
   volumes?: string[]
   command?: string[]
 }
@@ -59,13 +61,21 @@ Deno.test("only an exact Postgres 18 minor counts as pinned", () => {
   }
 })
 
-Deno.test("the Compose database is pinned to a Postgres 18 minor version", async () => {
-  const image = (await dbService()).image ?? ""
-  expect(image.startsWith("postgres:")).toBe(true)
+Deno.test("the Compose database is built on a Postgres 18 minor version", async () => {
+  const args = (await dbService()).build?.args ?? []
+  const image = /^POSTGRES_IMAGE=docker\.io\/library\/(postgres:.+)$/.exec(args[0] ?? "")?.[1] ?? ""
   expect({ image, minor: pinnedMinor(image.slice("postgres:".length)) }).not.toEqual({
     image,
     minor: undefined,
   })
+})
+
+// Browsers still report old zone names (`Asia/Saigon`, `Asia/Calcutta`), and the stock Debian
+// image refuses them in `AT TIME ZONE`, so every per-day count fails for those people.
+Deno.test("the Compose database image adds the old zone names browsers report", async () => {
+  expect((await dbService()).build?.context).toBe("../postgres")
+  const dockerfile = await read("infra/postgres/Dockerfile")
+  expect(dockerfile).toMatch(/apt-get install [^\n]*\btzdata-legacy\b/)
 })
 
 Deno.test("Compose, CI, the local browser run and the docs name the same Postgres 18 minor", async () => {
