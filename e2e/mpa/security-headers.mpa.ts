@@ -54,9 +54,9 @@ test("a visitor walks the website and its forms without a refusal under the cont
   expect(await page.evaluate(() => document.styleSheets.length)).toBeGreaterThan(0)
 
   await page.goto("/pricing")
-  // A form that the website answers with a redirect.
+  // A form that the website answers with a redirect, to the app's /try.
   await page.getByRole("button", { name: "Try in the demo: Pro" }).click()
-  await expect(page).toHaveURL(/\/sign-up$/)
+  await expect(page).toHaveURL(/\/try$/)
 
   const email = `mpa-csp-${uuidV7().slice(-8)}@example.com`
   await page.goto("/privacy")
