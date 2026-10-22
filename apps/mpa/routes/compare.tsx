@@ -115,8 +115,7 @@ const ROWS: readonly ComparisonRow[] = [
   },
   {
     capability: `Background jobs`,
-    note: `Seed: parts not built yet`,
-    values: [`partial`, `no`, `yes`, `no`, `no`, `yes`],
+    values: [`yes`, `no`, `yes`, `no`, `no`, `yes`],
   },
   {
     capability: `File uploads`,

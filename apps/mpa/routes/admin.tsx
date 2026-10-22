@@ -4,6 +4,7 @@ import {
   IconArrowDown,
   IconArrowRight,
   IconCheck,
+  IconClock,
   IconCreditCard,
   IconFolder,
   IconHome,
@@ -96,10 +97,15 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
       `Export it as CSV.`,
   },
   {
+    name: `Jobs`,
+    Icon: IconClock,
+    text: `Every background job and how each run went. Run a failed job again, run one now or ` +
+      `cancel it.`,
+  },
+  {
     name: `System`,
     Icon: IconServer,
-    text: `The health of the database, the cache, the job queue and the backup. Run a failed ` +
-      `job again.`,
+    text: `The health of the database, the cache, the job queue and the backup.`,
   },
   {
     name: `API tokens`,
@@ -223,7 +229,7 @@ function Modules(): JSX.Element {
         <SectionIntro
           id="modules-title"
           eyebrow="Modules"
-          title="Eight modules, one per job"
+          title="Nine modules, one per job"
           lead={
             <>
               Each module is one entry in the admin's icon rail. Add your own by copying one: the
