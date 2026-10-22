@@ -1,7 +1,6 @@
 import type postgres from "postgres"
 import type { AuthStore } from "@spy4x/server/auth"
 import type { EmailSender } from "@spy4x/email/sender"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { emailToVerify } from "@domain/identity"
 import {
   EMAIL_CODE_TTL_MINUTES,
@@ -10,7 +9,7 @@ import {
   sendEmailCode,
 } from "../auth/email-verification.ts"
 import { emailCodeMail, type MailBrand } from "../mail/mail.ts"
-import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The job that mails one code that proves an e-mail address. */
@@ -31,11 +30,7 @@ export async function enqueueEmailCodeMail(
 ): Promise<void> {
   const id = uuidV7()
   await sql`INSERT INTO email_code_requests (id, user_id, email) VALUES (${id}, ${userId}, ${email})`
-  await scheduleOutboxEvent(
-    sql,
-    { eventKind: EMAIL_CODE_MAIL_JOB, aggregateType: JOB_AGGREGATE, aggregateId: id },
-    { inMs: 0 },
-  )
+  await enqueueJob(sql, EMAIL_CODE_MAIL_JOB, id, { inMs: 0 })
 }
 
 /** What the code mail job needs. */

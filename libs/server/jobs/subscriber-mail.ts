@@ -2,7 +2,6 @@ import type postgres from "postgres"
 import type { EmailMessage } from "@spy4x/email/message"
 import type { EmailSender } from "@spy4x/email/sender"
 import { button, paragraph, renderLetter } from "@spy4x/email/letter"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { sendIssue } from "@spy4x/server/subscribers"
 import {
   createPostgresSendLog,
@@ -17,7 +16,7 @@ import {
   subscriberUnsubscribeLink,
 } from "../subscribers/subscribers.ts"
 import type { MailBrand } from "../mail/mail.ts"
-import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** Mails a confirm link to an address that asked to join a list. */
@@ -50,11 +49,7 @@ export async function enqueueSubscriberMail(
 ): Promise<void> {
   const id = uuidV7()
   await sql`INSERT INTO subscription_requests (id, list_id, email) VALUES (${id}, ${list}, ${email})`
-  await scheduleOutboxEvent(
-    sql,
-    { eventKind: job, aggregateType: JOB_AGGREGATE, aggregateId: id },
-    { inMs: 0 },
-  )
+  await enqueueJob(sql, job, id, { inMs: 0 })
 }
 
 /** What the subscriber jobs need. */

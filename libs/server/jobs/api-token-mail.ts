@@ -1,9 +1,8 @@
 import type postgres from "postgres"
 import type { EmailSender } from "@spy4x/email/sender"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { ApiTokenAccess } from "@domain/api-tokens"
 import { apiTokenCreatedMail, type MailBrand } from "../mail/mail.ts"
-import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { enqueueJob, type JobHandler } from "./jobs.ts"
 
 /** The job that tells a person an API token was created. Its aggregate id is the token's id. */
 export const API_TOKEN_CREATED_MAIL_JOB = "api-token.created-mail"
@@ -13,11 +12,7 @@ export const API_TOKEN_CREATED_MAIL_JOB = "api-token.created-mail"
  * is queued exactly when the token exists.
  */
 export async function enqueueApiTokenCreatedMail(tx: postgres.Sql, tokenId: string): Promise<void> {
-  await scheduleOutboxEvent(
-    tx,
-    { aggregateType: JOB_AGGREGATE, aggregateId: tokenId, eventKind: API_TOKEN_CREATED_MAIL_JOB },
-    { inMs: 0 },
-  )
+  await enqueueJob(tx, API_TOKEN_CREATED_MAIL_JOB, tokenId, { inMs: 0 })
 }
 
 /** What the token mail job needs. */

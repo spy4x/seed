@@ -18,7 +18,7 @@ import {
   PostgresInvitationRepository,
 } from "@server/groups/postgres-invitation-repository.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
-import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
 import { expectVersion7Ids } from "./ids.ts"
 
@@ -263,7 +263,7 @@ Deno.test("seats of a group billed per member follow its members", async (t) => 
       await sql`UPDATE users SET deleted_at = now() WHERE id = ${other.editor}`
 
       // The nightly job, due now.
-      await scheduleNightlyJobs(sql)
+      await startRepeatingJobs(sql)
       await sql`
         UPDATE outbox_events SET available_at = now() - interval '1 second'
         WHERE event_kind = ${OUTBOX_CLEANUP_JOB} AND processed_at IS NULL

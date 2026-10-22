@@ -2,7 +2,7 @@ import type postgres from "postgres"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { randomBase64Url } from "@spy4x/platform/tokens"
 import { ADMIN_MIN_ROLE } from "@domain/identity"
-import { scheduleNightlyJobs } from "@server/jobs/wiring.ts"
+import { startRepeatingJobs } from "@server/jobs/wiring.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import { AppDbBase } from "../../api/services/db-base.ts"
 import { demoDataSeed } from "./reset.ts"
@@ -47,5 +47,5 @@ export async function resetDemo(
     subscribers: options.subscribers,
     now,
   })
-  await scheduleNightlyJobs(sql, now)
+  await startRepeatingJobs(sql, now)
 }

@@ -1,10 +1,9 @@
 import type postgres from "postgres"
 import type { AuthStore } from "@spy4x/server/auth"
 import type { EmailSender } from "@spy4x/email/sender"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { issueSignUpCode, SIGN_UP_TTL_MINUTES, signUpRequests } from "../auth/sign-up-requests.ts"
 import { emailCodeMail, type MailBrand } from "../mail/mail.ts"
-import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The job that mails one code to the address of a waiting sign-up (#142). */
@@ -18,11 +17,7 @@ export const SIGN_UP_CODE_MAIL_JOB = "auth.sign-up-code-mail"
 export async function enqueueSignUpCodeMail(sql: postgres.Sql, signUpId: string): Promise<void> {
   const id = uuidV7()
   await sql`INSERT INTO sign_up_code_requests (id, sign_up_id) VALUES (${id}, ${signUpId})`
-  await scheduleOutboxEvent(
-    sql,
-    { eventKind: SIGN_UP_CODE_MAIL_JOB, aggregateType: JOB_AGGREGATE, aggregateId: id },
-    { inMs: 0 },
-  )
+  await enqueueJob(sql, SIGN_UP_CODE_MAIL_JOB, id, { inMs: 0 })
 }
 
 /** What the sign-up code mail job needs. */

@@ -12,7 +12,7 @@ import {
   PostgresInvitationRepository,
 } from "@server/groups/postgres-invitation-repository.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
-import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { purgeOldAuditEvents } from "@server/groups/purge-audit-events.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
@@ -403,7 +403,7 @@ Deno.test("retention: the worker's nightly cleanup job deletes events past a yea
       log: () => {},
     })
 
-    await scheduleNightlyJobs(sql)
+    await startRepeatingJobs(sql)
     await sql`
       UPDATE outbox_events SET available_at = now() - interval '1 second'
       WHERE event_kind = ${OUTBOX_CLEANUP_JOB} AND processed_at IS NULL

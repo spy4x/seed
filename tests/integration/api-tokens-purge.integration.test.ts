@@ -9,7 +9,7 @@ import { API_TOKEN_PURGE_GRACE_DAYS, ApiTokenAccess } from "@domain/api-tokens"
 import { AuthAuditEventType } from "@domain/identity"
 import { purgeExpiredApiTokens } from "@server/api-tokens/purge-expired-api-tokens.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
-import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { team } from "./group-team.ts"
 
 /**
@@ -252,7 +252,7 @@ Deno.test("purge: the worker's nightly cleanup deletes long-expired tokens and a
       log: () => {},
     })
 
-    await scheduleNightlyJobs(sql)
+    await startRepeatingJobs(sql)
     await sql`
       UPDATE outbox_events SET available_at = now() - interval '1 second'
       WHERE event_kind = ${OUTBOX_CLEANUP_JOB} AND processed_at IS NULL
