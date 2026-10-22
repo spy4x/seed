@@ -89,10 +89,12 @@ of an unknown address and the 500 of an error. A WebSocket upgrade passes throug
 
 ## The MPA's policy
 
-The MPA's pages load one stylesheet from their own origin and no script, inline block, image or
-font, so the policy is the helper's default with nothing added: `'self'` for `default-src`,
-`script-src`, `style-src` and `connect-src`; `'self'` and `data:` for `img-src`; `object-src
-'none'`; `base-uri 'self'`; `frame-ancestors 'none'`.
+The MPA's pages load one stylesheet from their own origin and no script, inline block or font,
+so the policy is the helper's default with one source added: `'self'` for `default-src`,
+`script-src`, `style-src` and `connect-src`; `'self'`, `data:` and `https:` for `img-src`;
+`object-src 'none'`; `base-uri 'self'`; `frame-ancestors 'none'`. `https:` is there for the blog
+([blog.md](blog.md)): a post's cover and the images in its body are `https:` addresses wherever the
+operator keeps them. Only operators write posts, and an image runs no code.
 
 With analytics on (`MPA_UMAMI_ORIGIN`, [analytics.md](analytics.md)), `script-src` and
 `connect-src` also allow the Umami origin: its tracker loads from there and sends its events there.

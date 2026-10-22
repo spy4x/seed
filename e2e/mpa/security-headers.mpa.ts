@@ -11,7 +11,7 @@ function expectSecurityHeaders(response: APIResponse) {
   const headers = response.headers()
   // The website has its own host here, so its forms may also redirect to the app's.
   expect(headers["content-security-policy"]).toBe(
-    `default-src 'self'; script-src 'self' ${UMAMI}; style-src 'self'; img-src 'self' data:; ` +
+    `default-src 'self'; script-src 'self' ${UMAMI}; style-src 'self'; img-src 'self' data: https:; ` +
       `connect-src 'self' ${UMAMI}; object-src 'none'; base-uri 'self'; ` +
       `form-action 'self' ${SPA}; ` +
       "frame-ancestors 'none'",
