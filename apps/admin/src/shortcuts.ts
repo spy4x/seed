@@ -9,6 +9,7 @@ export const ADMIN_GO_KEYS: Readonly<Record<string, string>> = {
   billing: "b",
   newsletter: "m",
   audit: "a",
+  jobs: "j",
   system: "s",
   "api-tokens": "k",
 }
@@ -20,6 +21,7 @@ export const LIST_FILTER_MODULES: ReadonlySet<string> = new Set([
   "billing",
   "newsletter",
   "audit",
+  "jobs",
 ])
 
 /** What the admin app's shortcuts act on. */

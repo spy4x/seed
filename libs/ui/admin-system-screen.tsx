@@ -5,11 +5,9 @@ import { timeAgo } from "@spy4x/platform/universal/time"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
-import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
-import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
-import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Stack } from "@spy4x/preact-ui/layout"
+import { Link } from "@spy4x/preact-ui/link"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
@@ -18,12 +16,12 @@ import {
   ADMIN_BACKUP_WARNING_HOURS,
   ADMIN_FAILED_JOBS_DAYS,
   ADMIN_QUEUE_LATE_WARNING_MINUTES,
-  type AdminFailedJob,
   AdminHealth,
-  type AdminSystemJobKind,
   type AdminSystemSnapshot,
 } from "@domain/identity"
 import { When } from "@spy4x/preact-ui/format"
+import { ADMIN_JOB_PATHS } from "./admin-jobs-screen.tsx"
+import type { Navigate } from "./progressive.tsx"
 
 const NUMBER = new Intl.NumberFormat("en")
 
@@ -67,21 +65,14 @@ export interface AdminSystemScreenProps {
   /** A reading is in flight. */
   pending: boolean
   onRefresh: () => void
-  /** The failed job whose confirmation is open, or `null`. */
-  retrying: AdminFailedJob | null
-  /** Why the API refused to run it again, or `null`. */
-  retryError: string | null
-  retryPending: boolean
-  onOpenRetry: (job: AdminFailedJob) => void
-  onCloseRetry: () => void
-  onRetry: (job: AdminFailedJob) => void
+  navigate?: Navigate
 }
 
 /**
  * The System page (#429): the health of the stack as status cards with an OK, Warning or Error
- * badge (database, cache, job queue, backup, migrations, build), each job's last and next run, and
- * the jobs that gave up, each of which can be run again after a confirmation. Names and states
- * only: no setting, address of a service or secret reaches this page.
+ * badge (database, cache, job queue, backup, migrations, build). The queue's card links to the Jobs
+ * module (#394), at its failed runs while any failed. Names and states only: no setting, address
+ * of a service or secret reaches this page.
  */
 export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
   const { snapshot, error } = props
@@ -123,43 +114,15 @@ export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
         : (
           <>
             <ErrorState message={error} dataE2E="admin-system-error" />
-            <SystemBody snapshot={snapshot} onOpenRetry={props.onOpenRetry} />
+            <SystemBody snapshot={snapshot} navigate={props.navigate} />
           </>
         )}
-      {props.retrying && (
-        <ConfirmDialog
-          title="Run this job again"
-          confirmLabel="Run again"
-          busy={props.retryPending}
-          busyLabel="Starting…"
-          onConfirm={() => {
-            props.onRetry(props.retrying!)
-            return false
-          }}
-          onCancel={props.onCloseRetry}
-          dataE2E="admin-retry-dialog"
-          confirmDataE2E="admin-retry-confirm"
-        >
-          <Stack>
-            <p class="text-sm text-muted">
-              The job <span class="font-mono text-foreground">{props.retrying.kind}</span>{" "}
-              gave up after {props.retrying.attempts}{" "}
-              {props.retrying.attempts === 1 ? "attempt" : "attempts"}. It runs once more now, with
-              a fresh set of attempts. The audit log records that you started it.
-            </p>
-            <ErrorState message={props.retryError} dataE2E="admin-retry-error" />
-          </Stack>
-        </ConfirmDialog>
-      )}
     </Stack>
   )
 }
 
 function SystemBody(
-  { snapshot, onOpenRetry }: {
-    snapshot: AdminSystemSnapshot
-    onOpenRetry: (job: AdminFailedJob) => void
-  },
+  { snapshot, navigate }: { snapshot: AdminSystemSnapshot; navigate?: Navigate },
 ): JSX.Element {
   const { database, cache, queue, backup, migrations, build } = snapshot
   const summary = SUMMARY[snapshot.health] ?? SUMMARY[AdminHealth.ERROR]
@@ -201,6 +164,16 @@ function SystemBody(
               Warns when a job waits more than {ADMIN_QUEUE_LATE_WARNING_MINUTES}{" "}
               minutes or any job failed.
             </>
+          }
+          footer={
+            <Link
+              href={queue.failed > 0 ? ADMIN_JOB_PATHS.failed : ADMIN_JOB_PATHS.list}
+              navigate={navigate}
+              class="pc-link text-sm font-medium"
+              data-e2e="admin-system-open-jobs"
+            >
+              Open Jobs
+            </Link>
           }
         >
           <Fact label="Due now">
@@ -255,8 +228,6 @@ function SystemBody(
           </Fact>
         </StatusCard>
       </section>
-      <JobsCard jobs={snapshot.jobs} />
-      <FailedJobsCard jobs={snapshot.failedJobs} onOpenRetry={onOpenRetry} />
     </>
   )
 }
@@ -266,12 +237,14 @@ function SystemBody(
  * The hint goes after the facts' `<dl>`, never inside it: a `<dl>` holds only `dt` and `dd` groups.
  */
 function StatusCard(
-  { title, health, dataE2E, hint, children }: {
+  { title, health, dataE2E, hint, footer, children }: {
     title: string
     health?: AdminHealth
     dataE2E: string
     /** One quiet line under the facts, such as when the card warns. */
     hint?: ComponentChildren
+    /** A link under the hint, to where the card's subject is handled. */
+    footer?: ComponentChildren
     children: ComponentChildren
   },
 ): JSX.Element {
@@ -285,6 +258,7 @@ function StatusCard(
       <CardBody class="flex flex-col gap-3">
         <dl class="flex flex-col gap-2">{children}</dl>
         {hint && <p class="text-xs text-muted">{hint}</p>}
+        {footer}
       </CardBody>
     </Card>
   )
@@ -296,148 +270,5 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
       <dt class="text-sm text-muted">{label}</dt>
       <dd class="text-sm font-medium wrap-anywhere">{children}</dd>
     </div>
-  )
-}
-
-function JobsCard({ jobs }: { jobs: readonly AdminSystemJobKind[] }): JSX.Element {
-  const columns: DataTableColumn<AdminSystemJobKind, never>[] = [
-    {
-      id: "kind",
-      header: "Job",
-      render: (job) => <span class="font-mono text-sm">{job.kind}</span>,
-    },
-    {
-      id: "last",
-      header: "Last run",
-      render: (job) =>
-        job.lastRunAt
-          ? (
-            <span class="flex flex-wrap items-center gap-2 text-sm">
-              <When at={job.lastRunAt} />
-              {job.lastFailed
-                ? <Badge text="Failed" color="red" type="outline" />
-                : <Badge text="Done" color="green" type="outline" />}
-            </span>
-          )
-          : <span class="text-sm text-muted">Not yet</span>,
-    },
-    {
-      id: "next",
-      header: "Next run",
-      render: (job) =>
-        job.nextRunAt
-          ? (
-            <span class="text-sm">
-              <When at={job.nextRunAt} />
-            </span>
-          )
-          : <span class="text-sm text-muted">None waiting</span>,
-    },
-  ]
-  return (
-    <Card data-e2e="admin-system-jobs">
-      <CardHeader title="Jobs" headingLevel={2} />
-      <CardBody>
-        <DataTable
-          columns={columns}
-          rows={jobs}
-          // No 300 px blank under a short table or its empty state.
-          class="[&>div:first-child]:min-h-0"
-          sort={[]}
-          onSortChange={() => {}}
-          caption="Each job's last and next run"
-          captionHidden
-          rowKey={(job) => job.kind}
-          empty={<EmptyState inset title="No job has run yet" />}
-        />
-      </CardBody>
-    </Card>
-  )
-}
-
-function FailedJobsCard(
-  { jobs, onOpenRetry }: {
-    jobs: readonly AdminFailedJob[]
-    onOpenRetry: (job: AdminFailedJob) => void
-  },
-): JSX.Element {
-  const columns: DataTableColumn<AdminFailedJob, never>[] = [
-    {
-      id: "kind",
-      header: "Job",
-      render: (job) => <span class="font-mono text-sm wrap-anywhere">{job.kind}</span>,
-    },
-    {
-      id: "error",
-      header: "Error",
-      render: (job) => (
-        <span class="flex flex-col text-sm">
-          <span class="font-mono wrap-anywhere">{job.errorCode}</span>
-          <span class="text-xs text-muted">
-            after {job.attempts} {job.attempts === 1 ? "attempt" : "attempts"}
-          </span>
-        </span>
-      ),
-    },
-    {
-      id: "failed",
-      header: "Gave up",
-      render: (job) => (
-        <span class="whitespace-nowrap text-sm">
-          <When at={job.failedAt} />
-        </span>
-      ),
-    },
-    {
-      id: "action",
-      header: "Action",
-      render: (job) =>
-        job.retryable
-          ? (
-            <Button
-              size="sm"
-              variant="secondary"
-              data-e2e={`admin-retry-${job.id}`}
-              aria-label={`Run ${job.kind} again`}
-              onClick={() => onOpenRetry(job)}
-            >
-              Run again
-            </Button>
-          )
-          : <span class="text-xs text-muted">Cannot be run again</span>,
-    },
-  ]
-  return (
-    <Card data-e2e="admin-system-failed">
-      <CardHeader
-        title={`Failed jobs, last ${ADMIN_FAILED_JOBS_DAYS} days`}
-        headingLevel={2}
-        action={<span class="text-sm text-muted">{NUMBER.format(jobs.length)}</span>}
-      />
-      <CardBody>
-        <p class="mb-3 text-sm text-muted">
-          A group change is never run again: out of order it could undo a later one. Nor is a job
-          whose newer run already waits.
-        </p>
-        <DataTable
-          columns={columns}
-          rows={jobs}
-          // No 300 px blank under a short table or its empty state.
-          class="[&>div:first-child]:min-h-0"
-          sort={[]}
-          onSortChange={() => {}}
-          caption="Jobs that gave up"
-          captionHidden
-          rowKey={(job) => job.id}
-          empty={
-            <EmptyState
-              inset
-              title="No job failed"
-              description="Every job finished or is waiting."
-            />
-          }
-        />
-      </CardBody>
-    </Card>
   )
 }

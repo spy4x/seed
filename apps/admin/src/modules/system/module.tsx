@@ -14,7 +14,7 @@ const states = new WeakMap<AdminContext, SystemState>()
 function systemState(context: AdminContext): SystemState {
   let state = states.get(context)
   if (!state) {
-    state = createSystemState(context.request, context.toasts)
+    state = createSystemState(context.request)
     states.set(context, state)
   }
   return state
@@ -25,27 +25,20 @@ function SystemView({ context }: { context: AdminContext }): JSX.Element {
   const state = systemState(context)
   useEffect(() => {
     state.refresh()
-    return () => state.closeRetry()
   }, [state])
   const read = state.read.value
-  const retry = state.retry.value
   return (
     <AdminSystemScreen
       snapshot={read.snapshot}
       error={read.error}
       pending={read.pending}
       onRefresh={() => state.refresh()}
-      retrying={retry.job}
-      retryError={retry.error}
-      retryPending={retry.pending}
-      onOpenRetry={state.openRetry}
-      onCloseRetry={state.closeRetry}
-      onRetry={() => state.confirmRetry()}
+      navigate={context.navigate}
     />
   )
 }
 
-/** The health of the services behind the product, and running a failed job again (#429). */
+/** The health of the services behind the product (#429); the jobs are the Jobs module's. */
 export const systemModule: AdminModule = {
   id: `system`,
   nav: { name: `System`, href: SYSTEM_PATH, Icon: IconServer },
