@@ -45,7 +45,7 @@ async function warmUp(browser: Browser, api: APIRequestContext, baseURL: string,
     await gotoApp(page, `/groups/${groupId}`, page.locator("[data-e2e=group-general-name]"))
     await gotoApp(page, "/notes", page.locator("[data-e2e=note-new]"))
     await gotoApp(page, `/notes/${noteId}`, page.locator("[data-e2e=note-title]"))
-    await gotoApp(page, "/email", page.locator("[data-e2e=email-current]"))
+    await gotoApp(page, "/profile/account", page.locator("[data-e2e=email-current]"))
     await page.waitForLoadState("networkidle")
   } catch (error) {
     // The warm-up's own error is the one to report; a cleanup that fails as well is added to it.

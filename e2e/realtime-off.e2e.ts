@@ -76,7 +76,7 @@ async function signInBrowser(page: Page, email: string): Promise<void> {
   await gotoApp(page, "/sign-in", page.locator("[data-e2e=auth-form-login]"))
   await page.locator("[data-e2e=auth-form-login]").fill(email)
   await page.locator("[data-e2e=auth-form-password]").fill(password)
-  await submitAuthForm(page, "/", page.locator("[data-e2e=shell-ws-status]"))
+  await submitAuthForm(page, "/notes", page.locator("[data-e2e=shell-ws-status]"))
 }
 
 test.describe("the app with the WebSocket module switched off", () => {
@@ -92,7 +92,7 @@ test.describe("the app with the WebSocket module switched off", () => {
       // Sign out and in again, through the forms.
       await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
-      await page.locator("[data-e2e=signin-required]").waitFor()
+      await page.locator("[data-e2e=auth-form-login]").waitFor()
       await signInBrowser(page, email)
 
       // A group.

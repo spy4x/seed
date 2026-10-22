@@ -1,16 +1,16 @@
 import { useState } from "preact/hooks"
-import type { PreferencesGroupProps } from "@ui/preferences.tsx"
+import type { PreferencesProps } from "@ui/preferences.tsx"
 import { PREFERENCES_FAILURES } from "@ui/preferences.tsx"
 import { preferencesState } from "../state/preferences.ts"
 import { themeStore } from "../state/theme.ts"
 
 /**
- * The props of the profile page's "Language and region" group, wired to the page's preferences
- * store and theme store. The theme row writes the theme store, which saves to the server and paints
- * at once, offline too; the dialog's Save waits for the server's answer, on the version its values
- * were made on, and is refused at once without a connection.
+ * The props of the profile's "Language and region" and "Appearance" sections, wired to the
+ * preferences store and the theme store. A theme choice writes the theme store, which saves to the
+ * server and paints at once, offline too; a region change is saved as it is made, on the version
+ * its values were made on, and is refused at once without a connection.
  */
-export function usePreferencesProps(): PreferencesGroupProps {
+export function usePreferencesProps(): PreferencesProps {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const state = preferencesState
@@ -38,9 +38,5 @@ export function usePreferencesProps(): PreferencesGroupProps {
     },
     onUseDeviceZone: () => void state.useDeviceZone(),
     onKeepZone: state.keepZone,
-    onCloseDialog: () => {
-      setError(null)
-      state.dismissConflict()
-    },
   }
 }

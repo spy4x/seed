@@ -20,10 +20,11 @@ describe("where a visit goes before sign-in is finished", () => {
       .toBe("/sign-in?next=%2Fnotes%3Fcursor%3Dx")
   })
 
-  it("sends the groups and the e-mail pages to sign-in too", () => {
+  it("sends the groups and the profile pages to sign-in too", () => {
     expect(signInRedirect("/groups", "", signedOut)).toBe("/sign-in?next=%2Fgroups")
     expect(signInRedirect("/groups/g1", "", signedOut)).toBe("/sign-in?next=%2Fgroups%2Fg1")
-    expect(signInRedirect("/email", "", signedOut)).toBe("/sign-in?next=%2Femail")
+    expect(signInRedirect("/profile/account", "", signedOut))
+      .toBe("/sign-in?next=%2Fprofile%2Faccount")
   })
 
   it("sends the tags and the notifications pages to sign-in, with the page as next", () => {
@@ -61,7 +62,7 @@ describe("where a visit goes before sign-in is finished", () => {
 describe("where a sign-out goes first", () => {
   it("leaves a page for signed-in people for plain sign-in, with no next", () => {
     expect(signOutRedirect("/notes/abc", "")).toBe("/sign-in")
-    expect(signOutRedirect("/email", "")).toBe("/sign-in")
+    expect(signOutRedirect("/profile/account", "")).toBe("/sign-in")
     expect(signOutRedirect("/groups/g1", "x=1")).toBe("/sign-in")
     expect(signOutRedirect("/tags", "")).toBe("/sign-in")
     expect(signOutRedirect("/notifications", "")).toBe("/sign-in")

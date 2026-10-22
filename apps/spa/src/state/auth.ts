@@ -542,10 +542,16 @@ export async function readAccountDeletionBlockers(): Promise<
 
 /**
  * Asks the server to delete the account, with the password and, when two-factor is on, a code.
- * On success the server has ended every session of this person, so the page is signed out too.
+ * On success the server has ended every session of this person, so the page is signed out too,
+ * after `leave` has moved it to a page open to anyone: signed out on a page for signed-in people,
+ * the app would send it to sign-in with that page as next.
  * `blocked` means groups stop it: {@link readAccountDeletionBlockers} names them.
  */
-export async function deleteAccount(password: string | undefined, otp?: string): Promise<
+export async function deleteAccount(
+  password: string | undefined,
+  otp?: string,
+  leave?: () => void,
+): Promise<
   | { ok: true; deleteAfter: Date }
   | { ok: false; blocked: boolean; error: string }
 > {
@@ -557,6 +563,7 @@ export async function deleteAccount(password: string | undefined, otp?: string):
   if (!result.ok) {
     return { ok: false, blocked: result.status === 409, error: result.error.message }
   }
+  leave?.()
   sessionState.value = { ...sessionState.value, user: null, isMfaRequired: false }
   return { ok: true, deleteAfter: new Date(result.data.deleteAfter) }
 }

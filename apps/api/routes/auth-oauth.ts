@@ -185,7 +185,7 @@ export function createOAuthRoute(
           const reportTo = result.notice === "kept"
             ? OAUTH_PAGES.keep
             : result.linking
-            ? OAUTH_PAGES.profile
+            ? OAUTH_PAGES.signInMethods
             : OAUTH_PAGES.signIn
           return c.redirect(withNotice(reportTo, result.notice), 302)
         }
@@ -194,7 +194,7 @@ export function createOAuthRoute(
           page(
             owesCode
               ? withNext(OAUTH_PAGES.oneTimeCode, result.next)
-              : result.next ?? OAUTH_PAGES.profile,
+              : result.next ?? OAUTH_PAGES.home,
           ),
           302,
         )

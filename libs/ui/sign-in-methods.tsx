@@ -1,4 +1,4 @@
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -12,7 +12,7 @@ import { OnDay, When } from "@spy4x/preact-ui/format"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-row"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
-import { SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { profilePath, ScreenForm } from "./progressive.tsx"
 import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 
 /** The message shown when linking or unlinking failed without a message of its own. */
@@ -99,6 +99,12 @@ export interface SignInMethodsProps {
   passkeyStatus?: PasskeyAddStatus | null
   /** Renames a passkey; a rejection keeps the field open with the typed name. */
   onRenamePasskey?: (methodId: number, name: string) => Promise<void>
+  /**
+   * The password's row: its action ("Change", or "Set" for an account without one), and the value
+   * shown while the account has no password, which then gets a row of its own. Left out, the
+   * password is listed like any method, without an action.
+   */
+  password?: { action: ComponentChildren; none: ComponentChildren }
 }
 
 /**
@@ -126,6 +132,7 @@ export function SignInMethods(
     online = true,
     passkeyStatus = null,
     onRenamePasskey,
+    password: passwordRow,
   }: SignInMethodsProps,
 ): JSX.Element {
   /** The method whose unlink dialog is open. */
@@ -200,10 +207,10 @@ export function SignInMethods(
     list.current?.focus()
   }, [confirming])
 
+  const hasPassword = methods?.some((method) => method.kind === "password") ?? false
   return (
     <SettingGroup
-      title="Sign-in methods"
-      description="The ways you can sign in to this account."
+      title="Ways to sign in"
       dataE2E="sign-in-methods"
     >
       <div ref={message} tabIndex={-1} data-e2e="sign-in-methods-error">
@@ -232,6 +239,14 @@ export function SignInMethods(
         : (
           <div ref={list} tabIndex={-1} data-e2e="sign-in-methods-list">
             <SettingList>
+              {passwordRow && !hasPassword && (
+                <SettingRow
+                  dataE2E="sign-in-method-password"
+                  label="Password"
+                  value={passwordRow.none}
+                  action={passwordRow.action}
+                />
+              )}
               {(sorted ?? []).map((method) => (
                 <SettingRow
                   key={method.id}
@@ -245,22 +260,24 @@ export function SignInMethods(
                       onRename={onRenamePasskey}
                     />
                   }
-                  action={method.canUnlink && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      class={TOUCH_TARGET}
-                      data-e2e={method.kind === "passkey"
-                        ? `sign-in-method-remove-passkey-${method.id}`
-                        : `sign-in-method-unlink-${method.kind}`}
-                      disabled={pending}
-                      onClick={() => setConfirming(method)}
-                    >
-                      {method.kind === "passkey" ? "Remove" : "Unlink"}{" "}
-                      <span class="sr-only">{shownName(method)}</span>
-                    </Button>
-                  )}
+                  action={method.kind === "password" && passwordRow
+                    ? passwordRow.action
+                    : method.canUnlink && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        class={TOUCH_TARGET}
+                        data-e2e={method.kind === "passkey"
+                          ? `sign-in-method-remove-passkey-${method.id}`
+                          : `sign-in-method-unlink-${method.kind}`}
+                        disabled={pending}
+                        onClick={() => setConfirming(method)}
+                      >
+                        {method.kind === "passkey" ? "Remove" : "Unlink"}{" "}
+                        <span class="sr-only">{shownName(method)}</span>
+                      </Button>
+                    )}
                 />
               ))}
             </SettingList>
@@ -323,7 +340,7 @@ export function SignInMethods(
         {providerProof
           ? (
             <Stack>
-              <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+              <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
               <Cluster justify="end">
                 <Button type="button" variant="ghost" onClick={closeLink}>Close</Button>
               </Cluster>
@@ -401,7 +418,7 @@ export function SignInMethods(
             {providerProof && !providerProof.fresh
               ? (
                 <>
-                  <ProviderProofNotice proof={providerProof} next={SCREEN_PATHS.profile} />
+                  <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
                   <Cluster justify="end">
                     <Button type="button" variant="ghost" onClick={closeUnlink}>Close</Button>
                   </Cluster>

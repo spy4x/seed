@@ -13,7 +13,7 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { API_TOKEN_EXPIRY_DAYS, type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
-import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { type Navigate, profilePath, ScreenForm } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
 
 /**
@@ -83,7 +83,7 @@ const ACCESS_OPTIONS = [
   { value: ApiTokenAccess.WRITE, label: "Read and write" },
 ]
 
-const BACK = { href: SCREEN_PATHS.profile, label: "Back to profile" }
+const BACK = { href: profilePath("api-tokens"), label: "Back to API tokens" }
 
 /**
  * `/tokens/new`: makes an API token. A token is never edited, so this page only creates. First the
@@ -125,7 +125,7 @@ export function ApiTokenNewScreen(props: ApiTokenNewScreenProps): JSX.Element {
                 headingLevel={2}
                 title="You are not in a group you can make a token for."
                 action={
-                  <Button href={SCREEN_PATHS.profile} navigate={navigate} variant="outline">
+                  <Button href={profilePath("api-tokens")} navigate={navigate} variant="outline">
                     Back to profile
                   </Button>
                 }
@@ -231,7 +231,7 @@ function CreateForm(
             }
             <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
-                href={SCREEN_PATHS.profile}
+                href={profilePath("api-tokens")}
                 navigate={navigate}
                 variant="ghost"
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"

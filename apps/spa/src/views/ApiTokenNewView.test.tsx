@@ -129,7 +129,7 @@ async function submit(selector: string): Promise<void> {
 }
 
 describe("ApiTokenNewView", () => {
-  it("creates the token for the first group, forgets the secret on Done and opens the profile", async () => {
+  it("creates the token for the first group, forgets the secret on Done and opens API tokens", async () => {
     const { store, sent, location } = await page()
 
     await type("[data-e2e=api-token-name]", "Zapier")
@@ -142,12 +142,12 @@ describe("ApiTokenNewView", () => {
       find("[data-e2e=api-token-done]").click()
     })
     expect(store.created.value).toBe(null)
-    expect(location.history.at(-1)).toBe("/")
+    expect(location.history.at(-1)).toBe("/profile/api-tokens")
     // The address and the history never held the secret.
     expect(location.history.join(" ")).not.toContain(SECRET)
   })
 
-  it("refuses a guest at once, with no password field, and Not now goes back to the profile", async () => {
+  it("refuses a guest at once, with no password field, and Not now goes back to the API tokens", async () => {
     sessionState.value = {
       ...sessionState.value,
       user: { id: 7, guestSince: new Date("2026-10-21T00:00:00.000Z") } as User,
@@ -159,7 +159,7 @@ describe("ApiTokenNewView", () => {
       await act(() => {
         find("[data-e2e=guest-refusal-close]").click()
       })
-      expect(location.history.at(-1)).toBe("/")
+      expect(location.history.at(-1)).toBe("/profile/api-tokens")
     } finally {
       sessionState.value = { ...sessionState.value, user: null }
     }

@@ -109,7 +109,7 @@ const TIERS: readonly Tier[] = [
         notYet: [{ label: `Magic links` }],
         code: { label: `Read the sign-in code`, href: source(`apps/api/services/sign-in.ts`) },
         visual: (
-          <WindowFrame variant="browser" title="app.seedsaas.com/profile">
+          <WindowFrame variant="browser" title="app.seedsaas.com/profile/security">
             <Shot
               name="profile-security"
               alt="The security page of a profile: the sign-in methods, two-factor authentication (2FA) and the open sessions."

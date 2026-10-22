@@ -3,7 +3,7 @@ import { useEffect } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 import { useLocation, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
-import { GROUP_PATHS, NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
 import { type SearchChoice, SearchPalette } from "@ui/search-palette.tsx"
@@ -251,8 +251,9 @@ export function AppShell(
         lastName: user.lastName,
         email: emailStore.status.value?.email,
       }}
-      // The e-mail page itself asks for the code; the banner would only repeat it there. With
-      // nothing to show it is left out, because the frame keeps a margin under any banner it gets.
+      // The profile's Account section offers the code itself; the banner would only repeat it
+      // there, and `/profile` shows that section from `md` up. With nothing to show it is left
+      // out, because the frame keeps a margin under any banner it gets.
       banner={guest
         ? location.startsWith(GUEST_PATHS.keep) || bannerHidden.value ? undefined : (
           <GuestBanner
@@ -264,7 +265,8 @@ export function AppShell(
             }}
           />
         )
-        : location === SCREEN_PATHS.email || !showsEmailBanner(emailStore.status.value)
+        : location === profilePath("account") || location === SCREEN_PATHS.profile ||
+            !showsEmailBanner(emailStore.status.value)
         ? undefined
         : <EmailBanner status={emailStore.status.value} navigate={navigate} />}
       connection={wsStatus}

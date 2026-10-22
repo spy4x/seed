@@ -103,7 +103,7 @@ test.describe("groups over the socket", () => {
 
       await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
-      await page.locator("[data-e2e=signin-required]").waitFor()
+      await page.locator("[data-e2e=auth-form-login]").waitFor()
 
       // The session is gone, so the upgrade is refused: 401, not a socket.
       const upgrade = await page.request.get(`${apiBase}/api/ws`, {
@@ -130,16 +130,16 @@ test.describe("groups over the socket", () => {
 
       // A second tab of the same browser shares the session cookie and opens its own socket.
       const other = await page.context().newPage()
-      await gotoApp(other, "/", other.locator("[data-e2e=shell-ws-status]"))
+      await gotoApp(other, "/notes", other.locator("[data-e2e=shell-ws-status]"))
       await expect(other.locator("[data-e2e=shell-ws-status]")).toHaveText("Online")
 
       await page.locator("[data-e2e=account-menu-button]").click()
       await page.getByRole("menuitem", { name: "Sign out" }).click()
-      await page.locator("[data-e2e=signin-required]").waitFor()
+      await page.locator("[data-e2e=auth-form-login]").waitFor()
 
       // The API closes the other tab's socket when the session ends, so it does not have to wait
       // for the 15 second sweep.
-      await expect(other.locator("[data-e2e=signin-required]")).toBeVisible({ timeout: 5_000 })
+      await expect(other.locator("[data-e2e=auth-form-login]")).toBeVisible({ timeout: 5_000 })
     } finally {
       await request.post(`${apiBase}/api/test/cleanup-user`, { data: { login: email } })
     }
@@ -205,7 +205,7 @@ test.describe("groups over the socket", () => {
 
       await request.post(`${apiBase}/api/test/cleanup-user`, { data: { login: email } })
 
-      await expect(page.locator("[data-e2e=signin-required]")).toBeVisible({ timeout: 30_000 })
+      await expect(page.locator("[data-e2e=auth-form-login]")).toBeVisible({ timeout: 30_000 })
     } finally {
       await request.post(`${apiBase}/api/test/cleanup-user`, { data: { login: email } })
     }
