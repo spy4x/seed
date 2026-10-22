@@ -84,7 +84,9 @@ async function captureStills(browser: Browser, theme: Theme): Promise<Record<str
     await page.locator("[data-e2e=auth-form-login]").fill(DEMO.email)
     await page.locator("[data-e2e=auth-form-password]").fill(DEMO.password)
     await page.locator("[data-e2e=auth-form-submit]").click()
-    await page.waitForURL(`${BASE_URL}/`)
+    await notesLoaded(page)
+    await page.locator("[data-e2e=account-menu-button]").click()
+    await page.locator("[data-e2e=account-menu-header]").click()
     await page.locator("[data-e2e=profile-name]", {
       hasText: `${DEMO.firstName} ${DEMO.lastName}`,
     }).waitFor()
@@ -220,22 +222,33 @@ interface Recording {
   video: string
   /** Seconds of blank start to trim. */
   trim: number
-  /** Seconds into the video, from its start, between which the profile was still loading. */
+  /** Seconds into the video, from its start, between which the notes page was still loading. */
   loading: [number, number]
 }
 
-/** Waits until the profile shows everything it loads: the group, the e-mail and the checklist. */
-async function profileLoaded(page: Page, email: string): Promise<void> {
+/**
+ * Waits until the notes page, where a new account lands, shows what it loads: the group and the
+ * first-steps checklist.
+ */
+async function notesLoaded(page: Page): Promise<void> {
+  await page.waitForURL(`${BASE_URL}/notes`)
   await page.getByRole("button", { name: /^Group: / }).waitFor()
-  await page.getByText(email, { exact: true }).filter({ visible: true }).first().waitFor()
   await page.locator("[data-e2e=onboarding]").waitFor()
 }
 
+/** Waits until the profile shows everything it loads: the group and the e-mail. */
+async function profileLoaded(page: Page, email: string): Promise<void> {
+  await page.waitForURL(/\/profile/)
+  await page.getByRole("button", { name: /^Group: / }).waitFor()
+  await page.getByText(email, { exact: true }).filter({ visible: true }).first().waitFor()
+}
+
 /**
- * Records sign-up with an address, a password and the mailed code, then naming the profile, the
- * way a person does it, with a drawn pointer.
+ * Records sign-up with an address, a password and the mailed code, the notes page the new account
+ * lands on, then naming the profile from the account menu, the way a person does it, with a drawn
+ * pointer.
  * The GIF is recorded in the light theme; the stills cover both.
- * Returns the WebM path, how many seconds of blank start to trim, and when the profile loaded.
+ * Returns the WebM path, how many seconds of blank start to trim, and when the notes page loaded.
  */
 async function recordFlow(browser: Browser, dir: string): Promise<Recording> {
   const context = await browser.newContext({
@@ -275,16 +288,22 @@ async function recordFlow(browser: Browser, dir: string): Promise<Recording> {
     await typeLike(page, pointer, codeInput, code, h)
     await page.waitForTimeout(400)
     await clickLike(page, pointer, page.locator("[data-e2e=sign-up-code-submit]"), h)
-    // From the click until the profile has loaded, the page shows parts of it (the group chip as
-    // a bare chevron, the e-mail as "–"); the GIF leaves that stretch out.
+    // From the click until the notes page has loaded, the page shows parts of it (the group chip
+    // as a bare chevron, no checklist yet); the GIF leaves that stretch out.
     const clicked = (Date.now() - started) / 1000
-    await page.waitForURL(`${BASE_URL}/`)
-    await profileLoaded(page, DEMO.email)
+    await notesLoaded(page)
     // A moment for the last paint to reach the video.
     await page.waitForTimeout(300)
     loading = [clicked + 0.1, (Date.now() - started) / 1000]
+    await page.waitForTimeout(1200)
+
+    // The account menu's header opens the profile, where the person names themselves.
+    await clickLike(page, pointer, page.locator("[data-e2e=account-menu-button]"), h)
+    await page.waitForTimeout(500)
+    await clickLike(page, pointer, page.locator("[data-e2e=account-menu-header]"), h)
+    await profileLoaded(page, DEMO.email)
     const edit = page.locator("[data-e2e=profile-edit]")
-    await page.waitForTimeout(1000)
+    await page.waitForTimeout(800)
 
     await clickLike(page, pointer, edit, h)
     await page.locator("[data-e2e=profile-first-name]").waitFor()
@@ -294,7 +313,7 @@ async function recordFlow(browser: Browser, dir: string): Promise<Recording> {
     await typeLike(page, pointer, page.locator("[data-e2e=profile-last-name]"), DEMO.lastName, h)
     await page.waitForTimeout(400)
     await clickLike(page, pointer, page.locator("[data-e2e=profile-save]"), h)
-    await page.locator("[data-e2e=profile-saved]").getByText("Saved", { exact: true }).waitFor()
+    await page.locator("[data-e2e=profile-saved]").getByText("Profile saved", { exact: true }).waitFor()
     await page.waitForTimeout(1800)
   } finally {
     await context.close()
