@@ -1,5 +1,5 @@
-import type { ComponentChildren, JSX } from "preact"
-import { useEffect, useState } from "preact/hooks"
+import type { ComponentChildren, JSX, RefObject } from "preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { IconArrowPath, IconPlayCircle } from "@spy4x/preact-icons"
 import { Badge, type BadgeColor, type BadgeType } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -221,6 +221,25 @@ export interface AdminJobsScreenProps {
  * the repeating jobs with their schedules. A run's name opens its page. Names, states, attempts,
  * error classes and times only: a job keeps no data and no error message.
  */
+/**
+ * Moves focus to `target` once an action went through: it was pending and is now closed with no
+ * error. The button that started it is often gone by then (a run done again has no "Run again"),
+ * so focus would fall to the page's body. A cancel or a refusal leaves focus where the dialog puts
+ * it.
+ */
+function useFocusAfterAction(
+  open: boolean,
+  pending: boolean,
+  error: string | null,
+  target: RefObject<HTMLElement>,
+): void {
+  const wasPending = useRef(false)
+  useEffect(() => {
+    if (wasPending.current && !pending && !open && error === null) target.current?.focus()
+    wasPending.current = pending
+  }, [open, pending, error])
+}
+
 export function AdminJobsScreen(props: AdminJobsScreenProps): JSX.Element {
   const failed = props.list?.counts.failed ?? 0
   return (
@@ -257,6 +276,8 @@ export function AdminJobsScreen(props: AdminJobsScreenProps): JSX.Element {
 
 function Runs(props: AdminJobsScreenProps): JSX.Element {
   const { filter, list, error, navigate } = props
+  const count = useRef<HTMLParagraphElement>(null)
+  useFocusAfterAction(props.confirm !== null, props.confirmPending, props.confirmError, count)
   const late = useLate(list === null && !error)
   const filtered = filter.query !== `` || filter.state !== `all`
   const clear = () => props.onSearch({ query: ``, state: `all`, page: 1 })
@@ -332,7 +353,13 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
         : (
           <>
             <ErrorState message={error} />
-            <p class="text-sm text-muted" data-e2e="admin-jobs-count" aria-live="polite">
+            <p
+              ref={count}
+              tabIndex={-1}
+              class="text-sm text-muted"
+              data-e2e="admin-jobs-count"
+              aria-live="polite"
+            >
               {`${NUMBER.format(list.total)} ${list.total === 1 ? `job` : `jobs`}`}
             </p>
             {list.total === 0 && filter.state === `failed` && filter.query === ``
@@ -603,6 +630,8 @@ function Time({ at, none = `Not yet` }: { at: string | null; none?: string }): J
 export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
   const { job, error, navigate } = props
   const back = { href: ADMIN_JOB_PATHS.list, label: `Jobs` }
+  const facts = useRef<HTMLElement>(null)
+  useFocusAfterAction(props.dialog !== null, props.pending, props.dialogError, facts)
 
   if (!job) {
     return (
@@ -708,6 +737,9 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <dl
+          ref={facts as RefObject<HTMLDListElement>}
+          tabIndex={-1}
+          aria-label="Details"
           class="grid grid-cols-1 content-start gap-4 rounded-xl border border-subtle bg-surface p-4 sm:grid-cols-[9rem_1fr]"
           data-e2e="admin-job-facts"
         >
