@@ -48,4 +48,26 @@ describe("admin keyboard shortcuts", () => {
     expect(seen.shortcuts).toBe(1)
     expect(list.some((row) => row.keys === "n" || row.description.includes("note"))).toBe(false)
   })
+
+  it("writes a new post with c on the blog's list only", () => {
+    const onList = rows("/blog")
+    onList.list.find((row) => row.keys === "c")!.run!()
+    expect(onList.seen.navigated).toEqual(["/blog/new"])
+    expect(rows("/blog/new").list.some((row) => row.keys === "c")).toBe(false)
+    expect(rows("/users").list.some((row) => row.keys === "c")).toBe(false)
+  })
+
+  it("binds / to the blog list's search", () => {
+    const onList = rows("/blog")
+    onList.list.find((row) => row.keys === "/")!.run!()
+    expect(onList.seen.filters).toBe(1)
+  })
+
+  it("lists Ctrl S in the blog's editor and nowhere else", () => {
+    const listed = (path: string) => rows(path).list.some((row) => row.keys === "mod+s")
+    expect(listed("/blog/new")).toBe(true)
+    expect(listed("/blog/0195f0b4-3c1e-7a00-8000-000000000001")).toBe(true)
+    expect(listed("/blog")).toBe(false)
+    expect(listed("/users/7")).toBe(false)
+  })
 })

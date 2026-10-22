@@ -20,8 +20,19 @@ export const LIST_FILTER_MODULES: ReadonlySet<string> = new Set([
   "groups",
   "billing",
   "newsletter",
+  "blog",
   "audit",
 ])
+
+/** A page's own actions, by the page's address: `c` writes a new post from the blog's list. */
+export const ADMIN_PAGE_ACTIONS: Readonly<
+  Record<string, readonly { keys: string; description: string; href: string }[]>
+> = {
+  "/blog": [{ keys: "c", description: "New post", href: "/blog/new" }],
+}
+
+/** The pages whose save button takes Ctrl S (Command S on a Mac): the blog's editor. */
+const SAVE_PAGES = /^\/blog\/[^/]+$/
 
 /** What the admin app's shortcuts act on. */
 export interface AdminShortcutPorts {
@@ -37,8 +48,9 @@ export interface AdminShortcutPorts {
 
 /**
  * The admin app's keyboard shortcuts, the one list its "Keyboard shortcuts" dialog shows and its
- * shell binds: `?` and Escape, a `g` sequence per module shown, named as the rail names it, and
- * `/` while a list with a search field is open. There is no New note: operators write no notes.
+ * shell binds: `?` and Escape, a `g` sequence per module shown, named as the rail names it, `/`
+ * while a list with a search field is open, and the open page's own actions (`c` on the blog's
+ * list; Ctrl S, listed, in its editor). There is no New note: operators write no notes.
  */
 export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
   const goTo = ports.modules.flatMap((module): ShortcutRow[] => {
@@ -60,7 +72,17 @@ export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
       run: ports.focusListFilter,
     }]
     : []
-  return [...generalRows(ports.openShortcuts), ...goTo, ...filter]
+  const actions = (ADMIN_PAGE_ACTIONS[ports.path] ?? []).map((action): ShortcutRow => ({
+    keys: action.keys,
+    description: action.description,
+    group: SHORTCUT_GROUPS.page,
+    run: () => ports.navigate(action.href),
+  }))
+  // Listed only: the save button binds the key itself, while it is shown and enabled.
+  const save: ShortcutRow[] = SAVE_PAGES.test(ports.path)
+    ? [{ keys: "mod+s", description: "Save the post", group: SHORTCUT_GROUPS.page }]
+    : []
+  return [...generalRows(ports.openShortcuts), ...goTo, ...filter, ...actions, ...save]
 }
 
 /** Focuses the first search field of the page, the list's own. */
