@@ -226,7 +226,13 @@ describe(`AdminPreferencesGroup`, () => {
         <AdminPreferencesGroup
           now={NOW}
           preferences={{
-            value: { theme: `dark`, locale: `de-DE`, timeZone: `Asia/Tokyo`, hourCycle: `h12` },
+            value: {
+              theme: `dark`,
+              locale: `de-DE`,
+              timeZone: `Asia/Tokyo`,
+              hourCycle: `h12`,
+              overview: [],
+            },
             version: 3,
             updatedAt: `2026-10-12T09:00:00.000Z`,
             firstTimeZone: `Europe/Berlin`,

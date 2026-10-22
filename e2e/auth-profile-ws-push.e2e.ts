@@ -50,8 +50,11 @@ test.describe("auth profile ws push flow", () => {
       // Ctrl-click (Cmd on macOS) is left to the browser, which opens the link in a new tab. The
       // entry of the page shown is marked as the current one.
       await page.evaluate(() => Object.assign(globalThis, { e2ePageMarker: true }))
-      await nav.getByRole("link", { name: "Tags" }).click()
-      await expect(nav.getByRole("link", { name: "Tags" })).toHaveAttribute("aria-current", "page")
+      await nav.getByRole("link", { name: "Groups" }).click()
+      await expect(nav.getByRole("link", { name: "Groups" })).toHaveAttribute(
+        "aria-current",
+        "page",
+      )
       expect(await page.evaluate(() => "e2ePageMarker" in globalThis)).toBe(true)
       const newTab = page.context().waitForEvent("page", { timeout: 5_000 })
       await nav.getByRole("link", { name: "Notes" }).click({ modifiers: ["ControlOrMeta"] })

@@ -9,7 +9,7 @@ import {
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import { type GroupRole } from "@domain/groups"
 import { ROLE_TEXT } from "./groups-screen.tsx"
-import { GROUP_PATHS, SCREEN_PATHS, TAG_PATHS } from "./progressive.tsx"
+import { GROUP_PATHS, OVERVIEW_PATHS, SCREEN_PATHS, TAG_PATHS } from "./progressive.tsx"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -44,6 +44,14 @@ export type SearchChoice =
   | { kind: "page"; href: string }
   /** Open the New note dialog, which adds a note without leaving the page. */
   | { kind: "new-note" }
+  /** Run one of the open page's own commands, by its id. */
+  | { kind: "command"; id: string }
+
+/** A command of the open page that the palette lists, such as "Change date range". */
+export interface PageCommand {
+  id: string
+  label: string
+}
 
 /** Props of {@link SearchPalette}. */
 export interface SearchPaletteProps {
@@ -59,6 +67,8 @@ export interface SearchPaletteProps {
   currentGroup: { id: string; name: string; canWrite: boolean } | null
   /** Whether the server can be reached: "New group" needs it. */
   online: boolean
+  /** The open page's own commands, listed first among the actions. */
+  pageCommands?: readonly PageCommand[]
   /** Called with what the person picked, after the palette has closed. */
   onSelect: (choice: SearchChoice) => void
   /**
@@ -158,7 +168,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   latest.current = props
 
   const search = async (query: string, signal: AbortSignal): Promise<SearchOption[]> => {
-    const { groups, currentGroup, online } = latest.current
+    const { groups, currentGroup, online, pageCommands = [] } = latest.current
     const text = query.trim()
     const asksNotes = text === "" || Array.from(text).length >= NOTE_QUERY_MIN
     const answer = asksNotes
@@ -188,7 +198,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       group: HEADINGS.groups,
       choice: { kind: "group", groupId: group.id },
     }))
-    const actions = rankOptions(actionOptions(currentGroup, online), text)
+    const actions = rankOptions(actionOptions(currentGroup, online, pageCommands), text)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
       setEmpty(asksNotes ? emptyLabel(text, answer.onDevice) : SHORT_QUERY_LABEL)
@@ -234,6 +244,7 @@ function noteDetail(note: SearchNote, groupName: string | undefined): string | u
 function actionOptions(
   currentGroup: SearchPaletteProps["currentGroup"],
   online: boolean,
+  pageCommands: readonly PageCommand[],
 ): SearchOption[] {
   const page = (id: string, label: string, href: string, detail?: string): SearchOption => ({
     id: `action-${id}`,
@@ -244,6 +255,12 @@ function actionOptions(
   })
   const inGroup = currentGroup?.canWrite ? `In ${currentGroup.name}` : null
   return [
+    ...pageCommands.map((command): SearchOption => ({
+      id: `command-${command.id}`,
+      label: command.label,
+      group: HEADINGS.actions,
+      choice: { kind: "command", id: command.id },
+    })),
     // The same dialog as `n`: the note is added without leaving the page.
     ...(inGroup
       ? [{
@@ -256,6 +273,7 @@ function actionOptions(
       : []),
     ...(inGroup ? [page("new-tag", "New tag", TAG_PATHS.new, inGroup)] : []),
     ...(online ? [page("new-group", "New group", GROUP_PATHS.new)] : []),
+    ...(currentGroup ? [page("overview", "Open overview", OVERVIEW_PATHS.root)] : []),
     page("notifications", "Open notifications", SCREEN_PATHS.notifications),
     page(
       "profile",

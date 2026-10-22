@@ -71,6 +71,12 @@ function buildApp(
     transferOwnership: (actor, groupId, userId) => (
       calls.push([`transfer`, actor, groupId, userId]), Promise.resolve(outcome)
     ),
+    widget: (groupId, widgetId, request) => (
+      calls.push([`widget`, groupId, widgetId, request]),
+        Promise.resolve(
+          groupId === GROUP_ID && widgetId === `notes.total` ? { current: 3, previous: 1 } : null,
+        )
+    ),
   }
   const route = createAdminRoute({
     auth: testSessionGuards(),
@@ -94,6 +100,11 @@ const ROUTES: Route[] = [
   { method: `POST`, path: `/admin/groups/${GROUP_ID}/invitations/${INVITATION_ID}/revoke` },
   { method: `POST`, path: `/admin/groups/${GROUP_ID}/members/42/remove` },
   { method: `POST`, path: `/admin/groups/${GROUP_ID}/transfer`, body: { userId: 42 } },
+  {
+    method: `GET`,
+    path:
+      `/admin/groups/${GROUP_ID}/widgets/notes.total?from=2026-10-01&to=2026-10-21&timeZone=Europe%2FBerlin`,
+  },
 ]
 
 function send(
@@ -243,4 +254,45 @@ describe(`operator area group routes`, () => {
       expect(calls.map((call) => call[0])).toEqual([`remove`])
     })
   }
+
+  it(`answers an overview widget's counts for the days and the zone the address names`, async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, ROUTES[6])
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ current: 3, previous: 1 })
+    expect(calls).toEqual([[`widget`, GROUP_ID, `notes.total`, {
+      groupId: GROUP_ID,
+      range: { from: `2026-10-01`, to: `2026-10-21` },
+      timeZone: `Europe/Berlin`,
+    }]])
+  })
+
+  it(`answers 404 for a widget or a group that does not exist`, async () => {
+    const { app } = buildApp()
+    const unknown = await send(app, {
+      method: `GET`,
+      path: `/admin/groups/${GROUP_ID}/widgets/nope?from=2026-10-01&to=2026-10-21&timeZone=UTC`,
+    })
+    expect(unknown.status).toBe(404)
+  })
+
+  it(`answers 400 for a reversed range, a range past a year or an unknown zone, reading nothing`, async () => {
+    const { app, calls } = buildApp()
+    for (
+      const query of [
+        `from=2026-10-21&to=2026-10-01&timeZone=UTC`,
+        `from=2024-01-01&to=2026-10-21&timeZone=UTC`,
+        `from=2026-10-01&to=2026-10-21&timeZone=Mars/Olympus`,
+        `from=2026-10-01&timeZone=UTC`,
+      ]
+    ) {
+      const response = await send(app, {
+        method: `GET`,
+        path: `/admin/groups/${GROUP_ID}/widgets/notes.total?${query}`,
+      })
+      expect(response.status).toBe(400)
+    }
+    expect(calls).toEqual([])
+  })
 })

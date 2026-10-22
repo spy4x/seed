@@ -139,6 +139,12 @@ export function afterSignIn(next: string | null): string {
   return next ?? NOTE_PATHS.list
 }
 
+/** Where the group overview lives: `/overview` opens the selected group's. */
+export const OVERVIEW_PATHS = {
+  root: "/overview",
+  group: (groupId: string) => `/overview/${encodeURIComponent(groupId)}`,
+} as const
+
 /** Where a group's own pages live. */
 export const GROUP_PATHS = {
   /** The create page: the group editor with no group yet. */

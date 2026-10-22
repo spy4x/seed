@@ -13,6 +13,9 @@ export const READ_KEYS = {
   notifications: (cursor: string | null) => `notifications:${cursor ?? ""}`,
   unreadCount: "notifications:unread",
   activity: (groupId: string, cursor: string | null) => `activity:${groupId}:${cursor ?? ""}`,
+  /** One overview widget's answer for one range of days, cut in one zone. */
+  overviewWidget: (groupId: string, widgetId: string, request: string) =>
+    `overview:${groupId}:${widgetId}:${request}`,
   billing: (groupId: string) => `billing:${groupId}`,
   apiTokens: "api-tokens",
   devices: "devices",

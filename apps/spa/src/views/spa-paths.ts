@@ -32,6 +32,9 @@ export const SPA_ROUTES = {
   // An invitation is answered once signed in or signed up.
   "/invite/:token": { open: false },
   "/notifications": { open: false },
+  // `/overview` opens the selected group's overview.
+  "/overview": { open: false },
+  "/overview/:groupId": { open: false },
   "/tags": { open: false },
   // Before the tag's page, or "new" would be read as a tag's id.
   "/tags/new": { open: false },

@@ -103,6 +103,7 @@ import { groupLeaveHandler } from "@api/cqrs/command-handlers/group-leave.ts"
 import { groupMoveAllHandler } from "@api/cqrs/command-handlers/group-move-all.ts"
 import { groupTransferHandler } from "@api/cqrs/command-handlers/group-transfer.ts"
 import {
+  NoteAddedWidgetQuery,
   NoteCreateCommand,
   NoteDeleteCommand,
   NoteGetQuery,
@@ -111,6 +112,8 @@ import {
   NoteMoveCommand,
   NoteRestoreCommand,
   NoteSearchQuery,
+  NoteSeriesWidgetQuery,
+  NoteTotalWidgetQuery,
   NoteUpdateCommand,
 } from "@domain/notes"
 import {
@@ -131,6 +134,11 @@ import { noteDeleteHandler } from "@api/cqrs/command-handlers/note-delete.ts"
 import { noteRestoreHandler } from "@api/cqrs/command-handlers/note-restore.ts"
 import { noteMoveHandler } from "@api/cqrs/command-handlers/note-move.ts"
 import { noteListHandler } from "@api/cqrs/query-handlers/note-list.ts"
+import {
+  noteAddedWidgetHandler,
+  noteSeriesWidgetHandler,
+  noteTotalWidgetHandler,
+} from "@api/cqrs/query-handlers/note-widgets.ts"
 import { noteGetHandler } from "@api/cqrs/query-handlers/note-get.ts"
 import { noteLocateHandler } from "@api/cqrs/query-handlers/note-locate.ts"
 import { noteSearchHandler } from "@api/cqrs/query-handlers/note-search.ts"
@@ -257,6 +265,9 @@ queryBus.register(NoteListQuery, noteListHandler)
 queryBus.register(NoteGetQuery, noteGetHandler)
 queryBus.register(NoteLocateQuery, noteLocateHandler)
 queryBus.register(NoteSearchQuery, noteSearchHandler)
+queryBus.register(NoteTotalWidgetQuery, noteTotalWidgetHandler)
+queryBus.register(NoteAddedWidgetQuery, noteAddedWidgetHandler)
+queryBus.register(NoteSeriesWidgetQuery, noteSeriesWidgetHandler)
 queryBus.register(TagListQuery, tagListHandler)
 queryBus.register(TagGetQuery, tagGetHandler)
 queryBus.register(BillingGetQuery, billingGetHandler)
