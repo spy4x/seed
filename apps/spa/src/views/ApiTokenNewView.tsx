@@ -7,6 +7,8 @@ import { profilePath } from "@ui/progressive.tsx"
 import { apiTokensHttp, type ApiTokensStore, createApiTokensStore } from "../state/api-tokens.ts"
 import { groupsStore } from "../state/groups.ts"
 import { isSpaPath } from "./spa-paths.ts"
+import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
+import { isGuestSession } from "../state/guest.ts"
 
 const network = createOnlineStatus()
 
@@ -43,6 +45,17 @@ export function ApiTokenNewView(
   const done = () => {
     store.dismissSecret()
     navigate(profilePath("api-tokens"))
+  }
+
+  // A guest has no password to confirm a token with (#224): the refusal shows at once.
+  if (isGuestSession()) {
+    return (
+      <GuestRefusalDialog
+        action="api-token"
+        navigate={navigate}
+        onClose={() => navigate(profilePath("api-tokens"), { replace: true })}
+      />
+    )
   }
 
   return (

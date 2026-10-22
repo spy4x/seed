@@ -20,6 +20,7 @@ const ACTION_PATHS: Record<AdminAction, (input: AdminActionInput) => string> = {
   "end-session": (input) => `sessions/${input.sessionId}/end`,
   "change-role": () => "role",
   "password-reset": () => "password-reset",
+  "delete-guest": () => "guest/delete",
 }
 
 /** What the toast says after each action went through. */
@@ -31,6 +32,7 @@ const ACTION_DONE: Record<AdminAction, (name: string, input: AdminActionInput) =
   "change-role": (name, input) =>
     `${name} is now ${input.role === undefined ? "on a new role" : USER_ROLE_NAMES[input.role]}.`,
   "password-reset": (name) => `A password-reset link is on its way to ${name}.`,
+  "delete-guest": (name) => `The guest account ${name} is deleted.`,
 }
 
 export interface UsersListState {
@@ -109,14 +111,15 @@ export function createUsersState(request: AdminFetch, toasts: ToastStore) {
      * Sends the open dialog's action. It asks for no password: the API records the operator in the
      * audit trail. On success the dialog closes, a toast says what happened, and the person is read
      * again, so their sessions, status and activity show the change. A role change sends the role
-     * picked in the dialog; ending one session sends the session the dialog was opened for.
+     * picked in the dialog; ending one session sends the session the dialog was opened for. A
+     * deleted guest is not read again: it answers `true`, and the page goes back to the list.
      */
-    async act(picked: AdminActionInput = {}): Promise<void> {
+    async act(picked: AdminActionInput = {}): Promise<boolean> {
       const { action, sessionId, pending } = dialog.value
       const { userId, detail } = person.value
-      if (!action || pending || userId === null) return
-      if (action === "end-session" && sessionId === null) return
-      if (action === "change-role" && picked.role === undefined) return
+      if (!action || pending || userId === null) return false
+      if (action === "end-session" && sessionId === null) return false
+      if (action === "change-role" && picked.role === undefined) return false
       const input: AdminActionInput = { ...picked, sessionId: sessionId ?? undefined }
       dialog.value = { action, sessionId, error: null, pending: true }
       const result = await request<{ user: AdminUserRow }>(
@@ -125,13 +128,15 @@ export function createUsersState(request: AdminFetch, toasts: ToastStore) {
       )
       if (!result.ok) {
         dialog.value = { action, sessionId, error: result.error.message, pending: false }
-        return
+        return false
       }
       dialog.value = NO_DIALOG
       const user = result.data?.user ?? detail?.user
       const name = user ? adminUserName(user) : "The person"
       toasts.success({ body: ACTION_DONE[action](name, input), dataE2E: "admin-action-toast" })
+      if (action === "delete-guest") return true
       await state.loadPerson(userId)
+      return false
     },
   }
   return state

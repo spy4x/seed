@@ -691,6 +691,8 @@ services:
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      # Guest accounts, "Try it now" (docs/guests.md): on unless `false`.
+      - GUEST_MODE=${GUEST_MODE:-}
       - DENO_DIR=/tmp/deno-cache
       # The port apps/healthcheck.ts probes.
       - HEALTHCHECK_PORT=${API_PORT}
@@ -879,6 +881,9 @@ services:
       - SPA_OFFLINE=${SPA_OFFLINE:-}
       # The public demo (docs/demo.md) shows its line on the sign-in and sign-up pages.
       - SPA_DEMO=${DEMO_MODE:-}
+      - SPA_GUEST=${GUEST_MODE:-}
+      # The website's host, for the legal pages the line under "Try it now" links to (#224).
+      - SPA_SITE=${MPA_DOMAIN:-}
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z

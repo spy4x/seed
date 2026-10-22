@@ -28,6 +28,16 @@ import {
 } from "../modules.ts"
 import { signOutRedirect } from "./sign-in-gate.ts"
 import { UnsentSignOut } from "./UnsentSignOut.tsx"
+import { GUEST_PATHS, GuestBanner, GuestSignOutDialog } from "@ui/guest-screens.tsx"
+import {
+  hideGuestBanner,
+  isGuestBannerHidden,
+  isGuestSession,
+  nextPacificMidnight,
+} from "../state/guest.ts"
+import { demoMode } from "../state/demo.ts"
+import { guestRefusal } from "../state/guest-refusal.ts"
+import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { overviewPageActions } from "./OverviewView.tsx"
 
 /** The overview's commands in the palette, while the overview is open. */
@@ -76,22 +86,42 @@ const searchNotes = createNoteSearch({
  * The person's own sign-out: at once when nothing waits in the offline queue, as before; otherwise
  * it first asks, in `dialog`, whether to send the queued writes before signing out.
  */
-function useSignOut(): { onSignOut: () => void; dialog: ComponentChildren } {
+function useSignOut(guest: boolean): { onSignOut: () => void; dialog: ComponentChildren } {
   const signOutNow = useSignOutNow()
   const [, navigate] = useLocation()
   const wait = useSignal<UnsentWait | null>(null)
+  // A guest is asked first (#224): signing out of an account with no sign-in method loses it.
+  const askingGuest = useSignal(false)
   const close = () => {
     wait.value?.dispose()
     wait.value = null
   }
   useEffect(() => close, [])
+  const signOutChecked = () => {
+    const watched = watchUnsentChanges()
+    if (watched) wait.value = watched
+    else signOutNow()
+  }
   return {
     onSignOut: () => {
-      const watched = watchUnsentChanges()
-      if (watched) wait.value = watched
-      else signOutNow()
+      if (guest) askingGuest.value = true
+      else signOutChecked()
     },
-    dialog: wait.value
+    dialog: askingGuest.value
+      ? (
+        <GuestSignOutDialog
+          onCancel={() => askingGuest.value = false}
+          onKeep={() => {
+            askingGuest.value = false
+            navigate(GUEST_PATHS.keep)
+          }}
+          onSignOut={() => {
+            askingGuest.value = false
+            signOutChecked()
+          }}
+        />
+      )
+      : wait.value
       ? (
         <UnsentSignOut
           wait={wait.value}
@@ -172,7 +202,10 @@ export function AppShell(
   },
 ) {
   const [location, navigate] = useLocation()
-  const { onSignOut, dialog } = useSignOut()
+  const guest = isGuestSession(user)
+  const { onSignOut, dialog } = useSignOut(guest)
+  // Hidden on this browser once dismissed; the profile keeps its own entry to the same page.
+  const bannerHidden = useSignal(guest && isGuestBannerHidden(user.id))
   const groups = groupsStore.groups.value
   const current = groups.find((group) => group.id === selectionStore.groupId.value)
   const shortcutsOpen = useSignal(false)
@@ -208,6 +241,7 @@ export function AppShell(
           pageCommands={overviewPageActions.value ? OVERVIEW_COMMANDS : undefined}
           onSelect={(choice) => void open(choice)}
           slashKey={singleKeys.on.value}
+          guest={guest}
         />
       }
       shortcuts={{
@@ -229,15 +263,27 @@ export function AppShell(
         },
       }}
       user={{
-        firstName: user.firstName,
+        // With no name and no address the menu would read "User"; a guest is named for what it is.
+        firstName: guest && !user.firstName && !user.lastName ? "Guest" : user.firstName,
         lastName: user.lastName,
         email: emailStore.status.value?.email,
       }}
       // The profile's Account section offers the code itself; the banner would only repeat it
       // there, and `/profile` shows that section from `md` up. With nothing to show it is left
       // out, because the frame keeps a margin under any banner it gets.
-      banner={location === profilePath("account") || location === SCREEN_PATHS.profile ||
-          !showsEmailBanner(emailStore.status.value)
+      banner={guest
+        ? location.startsWith(GUEST_PATHS.keep) || bannerHidden.value ? undefined : (
+          <GuestBanner
+            wipeAt={demoMode.value ? nextPacificMidnight(new Date()) : null}
+            navigate={navigate}
+            onDismiss={() => {
+              hideGuestBanner(user.id)
+              bannerHidden.value = true
+            }}
+          />
+        )
+        : location === profilePath("account") || location === SCREEN_PATHS.profile ||
+            !showsEmailBanner(emailStore.status.value)
         ? undefined
         : <EmailBanner status={emailStore.status.value} navigate={navigate} />}
       connection={wsStatus}
@@ -248,6 +294,13 @@ export function AppShell(
     >
       {children}
       {dialog}
+      {guestRefusal.value && (
+        <GuestRefusalDialog
+          action={guestRefusal.value}
+          navigate={navigate}
+          onClose={() => guestRefusal.value = null}
+        />
+      )}
       <NewNoteLayer navigate={navigate} />
     </AppFrame>
   )

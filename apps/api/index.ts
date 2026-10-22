@@ -9,6 +9,9 @@ import { ONE_HOUR_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constan
 import { startIntervalRunner } from "@spy4x/platform/server/interval-runner"
 import { createAuthRoute } from "./routes/auth.ts"
 import { createOAuthRoute } from "./routes/auth-oauth.ts"
+import { createGuestRoute } from "./routes/auth-guest.ts"
+import { GUEST_LIMITED_PATHS, refuseGuests } from "./middlewares/guest-limits.ts"
+import { type GuestLimitedAction, GuestReminderKind } from "@domain/identity"
 import { createPasskeyRoute } from "./routes/auth-passkeys.ts"
 import { createPushNotificationRoute } from "./routes/pushNotification.ts"
 import { createUsersRoute } from "./routes/users.ts"
@@ -113,6 +116,15 @@ const app = await createApiApp({
   }),
 })
 
+// Before every route: a guest (#224) needs a sign-in method before inviting, push, API tokens,
+// uploads or checkout. The socket's `push.register` checks the same in `realtimeHub.ts`.
+for (const [action, paths] of Object.entries(GUEST_LIMITED_PATHS)) {
+  const remind = action === "invite"
+    ? (userId: number) => signIn.guests.remind(userId, GuestReminderKind.Invite)
+    : undefined
+  app.on("POST", [...paths], refuseGuests(action as GuestLimitedAction, remind))
+}
+
 app.route(
   "/health",
   createHealthRoute({
@@ -143,6 +155,7 @@ app.route(
   }),
 )
 app.route("/auth", createPasskeyRoute({ signIn, mutationGuards, rateLimits }))
+app.route("/auth", createGuestRoute({ signIn, mutationGuards, rateLimits }))
 app.route(
   "/auth",
   createAuthRoute({
@@ -260,7 +273,11 @@ app.route("/call", createCallRoute({ operations, mapError: toRequestError, log, 
 app.route(
   "/groups/:groupId/notes",
   createNotesRoute({
-    create: (command) => commandBus.execute(command),
+    create: async (command) => {
+      const created = await commandBus.execute(command)
+      await signIn.guests.remind(command.data.actor.userId, GuestReminderKind.FirstNote)
+      return created
+    },
     update: (command) => commandBus.execute(command),
     delete: (command) => commandBus.execute(command),
     restore: (command) => commandBus.execute(command),

@@ -47,10 +47,10 @@ test.describe(`without JavaScript`, () => {
     expect(hrefs.every((href) => href.startsWith(REPOSITORY))).toBe(true)
   })
 
-  test(`the demo button opens the app's sign-up`, async ({ page }) => {
+  test(`the demo button opens the app's /try, which starts a guest account`, async ({ page }) => {
     await page.goto(`/features`)
     await page.locator(`[data-e2e=features-try-demo]`).click()
-    await expect(page).toHaveURL(/\/sign-up$/)
+    await expect(page).toHaveURL(/\/try$/)
   })
 
   test(`the admin section shows a still of the admin panel linked to /admin, with a link to watch it`, async ({ page }) => {

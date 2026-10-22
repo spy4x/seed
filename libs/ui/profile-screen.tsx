@@ -15,6 +15,12 @@ import { AccountDelete, type AccountDeleteProps } from "./account-delete.tsx"
 import { ApiTokens, type ApiTokensProps } from "./api-tokens.tsx"
 import type { EmailChangeProps } from "./email-screen.tsx"
 import {
+  GuestAccountDelete,
+  type GuestAccountDeleteProps,
+  GuestAccountRow,
+  GuestSignInMethods,
+} from "./guest-profile.tsx"
+import {
   AppearanceSection,
   type PreferencesProps,
   RegionSection,
@@ -31,7 +37,7 @@ import {
   SCREEN_PATHS,
 } from "./progressive.tsx"
 import { type ProviderProof, providerProofOf } from "./provider-proof.tsx"
-import type { SignedInDevicesProps } from "./signed-in-devices.tsx"
+import { SignedInDevices, type SignedInDevicesProps } from "./signed-in-devices.tsx"
 import { signInMethodName, type SignInMethodsProps } from "./sign-in-methods.tsx"
 import type { TwoFactorProof } from "./two-factor.ts"
 
@@ -212,6 +218,11 @@ export interface ProfileScreenProps {
    * come from this screen's own props.
    */
   accountDeletion?: Omit<AccountDeleteProps, "twoFactor" | "navigate" | "providerProof">
+  /**
+   * Set for a guest account (#224), which has no sign-in method: the Profile says so with a way to
+   * keep it, shows no password or two-factor rows, and deletes with a typed word.
+   */
+  guest?: GuestAccountDeleteProps
   navigate?: Navigate
 }
 
@@ -274,8 +285,9 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
     ...PROFILE_SECTION_TEXT[id],
     href: profilePath(id),
     tone: id === "danger-zone" ? "danger" : undefined,
+    // A guest has no two-factor to turn on (#224).
     value: id === "security"
-      ? twoFactorOn ? "Two-factor on" : "Two-factor off"
+      ? props.guest ? undefined : twoFactorOn ? "Two-factor on" : "Two-factor off"
       : id === "appearance" && props.preferences
       ? THEME_NAMES[props.preferences.value.theme]
       : undefined,
@@ -349,9 +361,20 @@ function ProfileSection(
           openEmailCode={props.openEmailCode}
           onRetryEmail={props.onRetryEmail}
           providerProof={providerProof}
+          guestRow={props.guest && <GuestAccountRow navigate={props.navigate} />}
         />
       )
     case "security":
+      // A guest has no password, two-factor or method to list: one way to keep the account, then
+      // the signed-in devices.
+      if (props.guest) {
+        return (
+          <>
+            <GuestSignInMethods navigate={props.navigate} />
+            {props.devices && <SignedInDevices {...props.devices} />}
+          </>
+        )
+      }
       return (
         <SecuritySection
           mfa={user.mfa}
@@ -394,6 +417,7 @@ function ProfileSection(
     case "api-tokens":
       return props.apiTokens ? <ApiTokens {...props.apiTokens} /> : null
     case "danger-zone":
+      if (props.guest) return <GuestAccountDelete {...props.guest} />
       return props.accountDeletion
         ? (
           <AccountDelete

@@ -125,6 +125,7 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 - [The three apps](docs/apps.md): the SPA, the admin app and the public website.
 - [Deploy and operate](docs/deploy.md): certificates, the deploy, consoles, several projects on one
   server, releases.
+- [Guest accounts](docs/guests.md)
 - [Sign in with Google and GitHub](docs/sign-in-providers.md)
 - [Backups](docs/backups.md): set up, restore, rehearse.
 - [Development](docs/development.md): every task and the browser tests.

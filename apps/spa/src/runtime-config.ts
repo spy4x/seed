@@ -8,7 +8,9 @@ import { loadRuntimeConfig as loadConfigFile } from "@spy4x/platform/browser/run
  *
  * `realtime` and `offline` switch the WebSocket module and the local-data module off when they are
  * `false` (`apps/spa/src/modules.ts`, ADR 003); both run by default. `demo` is `true` only while
- * the public demo is on (docs/demo.md); any other value leaves it off.
+ * the public demo is on (docs/demo.md); any other value leaves it off. `guest` is `false` only
+ * when guest accounts are off (docs/guests.md); "Try it now" shows otherwise. `site` is the public
+ * website's host (`MPA_DOMAIN`), whose legal pages the line under "Try it now" links to.
  */
 const RuntimeConfigSchema = type({
   "env?": "string",
@@ -16,6 +18,8 @@ const RuntimeConfigSchema = type({
   "realtime?": moduleSwitch("realtime"),
   "offline?": moduleSwitch("offline"),
   "demo?": type("unknown").pipe((value): boolean => String(value) === "true"),
+  "guest?": type("unknown").pipe((value): boolean => String(value).toLowerCase() !== "false"),
+  "site?": "string",
 }).onUndeclaredKey("delete")
 
 /**

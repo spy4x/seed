@@ -12,6 +12,7 @@ import {
   type AdminDailyCount,
   type AdminStatChange,
   type AdminStats,
+  type GuestStats,
 } from "@domain/identity"
 import { useFormat } from "@spy4x/preact-ui/format"
 
@@ -132,6 +133,7 @@ function DashboardBody({ stats }: { stats: AdminStats }): JSX.Element {
           <Kpi label="Notes" value={NUMBER.format(stats.notes)} tone="neutral" />
         </KpiGrid>
       </section>
+      {stats.guests && <GuestKpis guests={stats.guests} days={stats.signUpsPerDay.length} />}
       <div class="grid gap-4 lg:grid-cols-2">
         <DailyChart
           title="Sign-ups per day"
@@ -194,5 +196,36 @@ function DailyChart(
         />
       </CardBody>
     </Card>
+  )
+}
+
+/**
+ * Guest accounts (#224) over the dashboard's days: how many were made with one click, how many of
+ * them got a sign-in method, and how many the clean-up deleted.
+ */
+function GuestKpis({ guests, days }: { guests: GuestStats; days: number }): JSX.Element {
+  return (
+    <section aria-labelledby="admin-guests-title" data-e2e="admin-dashboard-guests">
+      <h2 id="admin-guests-title" class="mb-2 text-sm font-medium text-muted">
+        Guest accounts, last {days} days
+      </h2>
+      <KpiGrid minWidth="11rem">
+        <Kpi label="Started" value={NUMBER.format(guests.created)} tone="neutral" />
+        <Kpi
+          label="Kept"
+          value={NUMBER.format(guests.kept)}
+          sub={guests.created > 0
+            ? `${Math.round((guests.kept / guests.created) * 100)}% of started`
+            : "None started yet"}
+          tone="neutral"
+        />
+        <Kpi
+          label="Cleaned up"
+          value={NUMBER.format(guests.cleanedUp)}
+          sub="Empty after 7 days, or unused for a year"
+          tone="neutral"
+        />
+      </KpiGrid>
+    </section>
   )
 }

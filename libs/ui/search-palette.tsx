@@ -76,6 +76,11 @@ export interface SearchPaletteProps {
    * single-key shortcuts off on this device. Ctrl K (⌘K) always does.
    */
   slashKey?: boolean
+  /**
+   * The person is a guest (#224): "Keep your account" leads the actions, found by the words a
+   * person would try ("sign up", "register", "save").
+   */
+  guest?: boolean
 }
 
 /**
@@ -168,7 +173,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
   latest.current = props
 
   const search = async (query: string, signal: AbortSignal): Promise<SearchOption[]> => {
-    const { groups, currentGroup, online, pageCommands = [] } = latest.current
+    const { groups, currentGroup, online, guest = false, pageCommands = [] } = latest.current
     const text = query.trim()
     const asksNotes = text === "" || Array.from(text).length >= NOTE_QUERY_MIN
     const answer = asksNotes
@@ -198,7 +203,7 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       group: HEADINGS.groups,
       choice: { kind: "group", groupId: group.id },
     }))
-    const actions = rankOptions(actionOptions(currentGroup, online, pageCommands), text)
+    const actions = rankOptions(actionOptions(currentGroup, online, pageCommands, guest), text)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
       setEmpty(asksNotes ? emptyLabel(text, answer.onDevice) : SHORT_QUERY_LABEL)
@@ -245,6 +250,7 @@ function actionOptions(
   currentGroup: SearchPaletteProps["currentGroup"],
   online: boolean,
   pageCommands: readonly PageCommand[],
+  guest = false,
 ): SearchOption[] {
   const page = (id: string, label: string, href: string, detail?: string): SearchOption => ({
     id: `action-${id}`,
@@ -255,6 +261,14 @@ function actionOptions(
   })
   const inGroup = currentGroup?.canWrite ? `In ${currentGroup.name}` : null
   return [
+    ...(guest
+      ? [page(
+        "keep",
+        "Keep your account",
+        "/keep",
+        "Sign up, register or save this guest account with a sign-in method",
+      )]
+      : []),
     ...pageCommands.map((command): SearchOption => ({
       id: `command-${command.id}`,
       label: command.label,
