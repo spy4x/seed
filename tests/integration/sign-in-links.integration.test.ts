@@ -29,6 +29,7 @@ import type { AuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits
 import type { APIContext } from "../../apps/api/_types.ts"
 import { createOutboxProcessor } from "../../libs/server/jobs/wiring.ts"
 import { SIGN_IN_LINK_PATH } from "../../libs/server/auth/sign-in-links.ts"
+import { readAdminUserParts } from "../../libs/server/auth/admin-users.ts"
 import { applyMigrations } from "./migrations.ts"
 
 /**
@@ -292,6 +293,10 @@ Deno.test("a link signs in to the owner of its address, once, through the link k
       { eventType: AuthAuditEventType.SIGNED_IN, identifier: SIGN_IN_LINK_METHOD },
     ])
     expect(await fixture.count("sign_in_link_requests")).toBe(0)
+    // The operator sees the link among the ways in, with when it was last used.
+    const { methods } = await readAdminUserParts(fixture.sql, owner)
+    expect(methods.find((method) => method.method === SIGN_IN_LINK_METHOD)?.lastUsedAt)
+      .toEqual(expect.any(String))
   })
 })
 
