@@ -5,6 +5,7 @@ import { Kpi, KpiGrid } from "@spy4x/preact-charts/kpi"
 import { LineChart } from "@spy4x/preact-charts/line-chart"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
@@ -577,7 +578,7 @@ function ActionDialog(
         <Stack>
           <p class="text-sm text-muted wrap-anywhere">{copy.text(dialog.email)}</p>
           <ErrorState message={error} />
-          <Cluster justify="end">
+          <DialogActions>
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
             <Button
               type="submit"
@@ -588,7 +589,7 @@ function ActionDialog(
             >
               {copy.submit}
             </Button>
-          </Cluster>
+          </DialogActions>
         </Stack>
       </ScreenForm>
     </Modal>

@@ -320,7 +320,7 @@ export function PendingInvitations(
   const wrapper = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLUListElement>(null)
   // A revoked invitation's menu goes with its row: focus moves to the next row's menu, else to the
-  // main button of the section around this one ("Invite people" of the members).
+  // main button of the section around this one ("Invite" of the members).
   useFocusAfterRemoval(
     list,
     invitations?.map((invitation) => invitation.id) ?? null,

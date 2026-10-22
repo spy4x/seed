@@ -2,10 +2,11 @@ import { Fragment, type JSX } from "preact"
 import { useEffect } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { type EmailStatus, emailToVerify } from "@domain/identity"
@@ -219,7 +220,7 @@ export function EmailDialog(
                     required
                   />
                 </Field>
-                <Cluster justify="end">
+                <DialogActions>
                   <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
                   <Button
                     type="submit"
@@ -229,7 +230,7 @@ export function EmailDialog(
                   >
                     Confirm address
                   </Button>
-                </Cluster>
+                </DialogActions>
               </Stack>
             </ScreenForm>
             <ScreenForm pending={pending.send} onSubmit={onSend}>
@@ -262,9 +263,9 @@ export function EmailDialog(
         ? (
           <Stack>
             <ProviderProofNotice proof={providerProof} next={next} />
-            <Cluster justify="end">
+            <DialogActions>
               <Button type="button" variant="ghost" onClick={close}>Close</Button>
-            </Cluster>
+            </DialogActions>
           </Stack>
         )
         : (
@@ -306,7 +307,7 @@ export function EmailDialog(
                 )}
               {/* The API's refusal names no field: the password, the address or the limit. */}
               <ErrorState message={errors.change} />
-              <Cluster justify="end">
+              <DialogActions>
                 <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
                 <Button
                   type="submit"
@@ -316,7 +317,7 @@ export function EmailDialog(
                 >
                   Send code
                 </Button>
-              </Cluster>
+              </DialogActions>
             </Stack>
           </ScreenForm>
         )}

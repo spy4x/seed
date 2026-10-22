@@ -230,6 +230,33 @@ describe("SignInMethods with passkeys", () => {
     expect(asked).toEqual([["add", undefined]])
   })
 
+  it("offers Continue, with focus on it, once a sign-in from the open dialog made the proof fresh", async () => {
+    const asked: unknown[] = []
+    const card = (fresh: boolean) => (
+      <SignInMethods
+        {...methodsProps(asked, {
+          methods: [laptop, google],
+          providerProof: { providers: ["google"], passkeys: true, fresh, onPasskey: () => {} },
+        })}
+      />
+    )
+    const mounted = await mount(card(false))
+    await click("[data-e2e=sign-in-method-add-passkey]")
+    expect(isOpen("sign-in-method-link-dialog")).toBe(true)
+    expect(document.querySelector("[data-e2e=sign-in-method-link-submit]")).toBe(null)
+    find("[data-e2e=provider-proof-passkey]").focus()
+
+    await act(() => render(card(true), mounted))
+
+    expect(find("[data-e2e=provider-proof-fresh]").textContent).toContain("a moment ago")
+    expect(document.querySelector("[data-e2e=sign-in-method-link-password]")).toBe(null)
+    expect(find("[data-e2e=sign-in-method-link-submit]").textContent).toBe("Continue")
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("sign-in-method-link-submit")
+    expect(asked).toEqual([])
+    await click("[data-e2e=sign-in-method-link-submit]")
+    expect(asked).toEqual([["add", undefined]])
+  })
+
   it("waits for the device, then says nothing was added and puts focus back on the button", async () => {
     const status = (passkeyStatus: PasskeyAddStatus | null) => (
       <SignInMethods {...methodsProps([], { passkeyStatus })} />

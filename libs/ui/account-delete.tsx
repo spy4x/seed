@@ -1,11 +1,12 @@
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import {
   ACCOUNT_DELETION_GRACE_DAYS,
@@ -156,9 +157,9 @@ export function AccountDelete(
           ? (
             <Stack>
               <ProviderProofNotice proof={providerProof} next={profilePath("danger-zone")} />
-              <Cluster justify="end">
+              <DialogActions>
                 <Button type="button" variant="ghost" onClick={close}>Close</Button>
-              </Cluster>
+              </DialogActions>
             </Stack>
           )
           : (
@@ -211,7 +212,7 @@ export function AccountDelete(
                   </Field>
                 )}
                 <ErrorState message={errors.form} />
-                <Cluster justify="end">
+                <DialogActions>
                   <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
                   <Button
                     type="submit"
@@ -222,7 +223,7 @@ export function AccountDelete(
                   >
                     Delete my account
                   </Button>
-                </Cluster>
+                </DialogActions>
               </Stack>
             </ScreenForm>
           )}
@@ -262,9 +263,9 @@ function BlockerList(
           </li>
         ))}
       </ul>
-      <Cluster justify="end">
+      <DialogActions>
         <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
-      </Cluster>
+      </DialogActions>
     </Stack>
   )
 }

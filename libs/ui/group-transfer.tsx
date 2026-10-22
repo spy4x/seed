@@ -1,10 +1,11 @@
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input, Select } from "@spy4x/preact-ui/input"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import { canTransfer, type GroupRole } from "@domain/groups"
 import { type GroupMemberRow, memberLabel } from "./group-members.tsx"
 import { ScreenForm } from "./progressive.tsx"
@@ -166,7 +167,7 @@ export function GroupTransferForm(
         <div ref={message} tabIndex={-1} data-e2e="group-transfer-error">
           <ErrorState message={error && error.field === null ? error.message : null} />
         </div>
-        <Cluster justify="end">
+        <DialogActions>
           <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
           <Button
             type="submit"
@@ -177,7 +178,7 @@ export function GroupTransferForm(
           >
             Transfer ownership
           </Button>
-        </Cluster>
+        </DialogActions>
       </Stack>
     </ScreenForm>
   )

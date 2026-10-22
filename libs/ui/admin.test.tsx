@@ -445,23 +445,53 @@ describe("one person in the admin app", () => {
     expect(row.querySelector("button")).toBeNull()
   })
 
-  it("shows a passkey rename in the activity with the new and the old name", async () => {
+  it("reads a passkey rename in the activity as from the old name to the new one", async () => {
     const renamed = {
       id: 2,
       eventType: AuthAuditEventType.SIGN_IN_METHOD_RENAMED,
-      identifier: "passkey name=Work laptop from=Chrome on macOS",
-      ip: null,
+      identifier: "passkey name=MacBook Air from=Work laptop",
+      ip: "203.0.113.5",
       createdAt: "2026-10-14T10:00:00.000Z",
+    }
+    const signedIn = {
+      ...renamed,
+      id: 3,
+      eventType: AuthAuditEventType.SIGNED_IN,
+      identifier: "passkey name=MacBook Air",
+      ip: null,
+    }
+    const linked = {
+      ...signedIn,
+      id: 4,
+      eventType: AuthAuditEventType.SIGN_IN_METHOD_LINKED,
+      identifier: "google ada@example.com",
+    }
+    // Only a rename's identifier names an old name: any other passkey row reads as one name.
+    const removed = {
+      ...signedIn,
+      id: 5,
+      eventType: AuthAuditEventType.SIGN_IN_METHOD_UNLINKED,
+      identifier: "passkey name=Desk from=home",
     }
     await mount(
       <AdminUserScreen
-        {...userProps([], { tab: "activity", detail: { ...detail, audits: [renamed] } })}
+        {...userProps([], {
+          tab: "activity",
+          detail: { ...detail, audits: [renamed, signedIn, linked, removed] },
+        })}
       />,
     )
 
     const entry = find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_RENAMED}]`)
     expect(entry.textContent).toContain("Passkey renamed")
-    expect(entry.textContent).toContain("passkey name=Work laptop from=Chrome on macOS")
+    expect(entry.textContent).toContain('From "Work laptop" to "MacBook Air" · from 203.0.113.5')
+    expect(find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGNED_IN}]`).textContent)
+      .toContain('Passkey "MacBook Air"')
+    // An identifier of another shape is shown as stored.
+    expect(find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_LINKED}]`).textContent)
+      .toContain("google ada@example.com")
+    expect(find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGN_IN_METHOD_UNLINKED}]`).textContent)
+      .toContain('Passkey "Desk from=home"')
   })
 
   it("colours each activity entry by what happened, the block alone as a danger", async () => {

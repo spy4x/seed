@@ -2,11 +2,12 @@ import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
+import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { InlineEdit } from "@spy4x/preact-ui/inline-edit"
 import { Input } from "@spy4x/preact-ui/input"
-import { Cluster, Stack } from "@spy4x/preact-ui/layout"
+import { Stack } from "@spy4x/preact-ui/layout"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { OnDay, When } from "@spy4x/preact-ui/format"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
@@ -168,9 +169,17 @@ export function SignInMethods(
     else onLink(provider)
   }
   const submitLink = () => {
-    if (linking === "passkey") onAddPasskey?.(password)
-    else if (linking) onLink(linking, password)
+    const typed = providerProof ? undefined : password
+    if (linking === "passkey") onAddPasskey?.(typed)
+    else if (linking) onLink(linking, typed)
   }
+  // Signing in again from the open dialog takes away the button that had focus: "Continue",
+  // which now finishes the step, takes it. The device asks for a fresh press, so nothing runs
+  // on its own.
+  const continueButton = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (providerProof?.fresh && linking !== null) continueButton.current?.focus()
+  }, [providerProof?.fresh])
   // The device's dialog took over, or the add ended: the password dialog has done its job.
   const addButton = useRef<HTMLButtonElement>(null)
   const status = useRef<HTMLParagraphElement>(null)
@@ -337,13 +346,13 @@ export function SignInMethods(
         cancelLabel="Close"
         dataE2E="sign-in-method-link-dialog"
       >
-        {providerProof
+        {providerProof && !providerProof.fresh
           ? (
             <Stack>
               <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
-              <Cluster justify="end">
+              <DialogActions>
                 <Button type="button" variant="ghost" onClick={closeLink}>Close</Button>
-              </Cluster>
+              </DialogActions>
             </Stack>
           )
           : (
@@ -352,27 +361,35 @@ export function SignInMethods(
               onSubmit={submitLink}
             >
               <Stack>
-                <p class="text-sm text-muted">
-                  {linking === "passkey"
-                    ? "A passkey is another way to sign in, so your password is asked first."
-                    : "A linked account is another way to sign in, so your password is asked first."}
-                </p>
-                <Field id="sign-in-method-link-password" label="Password" required>
-                  <Input
-                    ref={passwordInput}
-                    data-e2e="sign-in-method-link-password"
-                    name="password"
-                    type="password"
-                    autocomplete="current-password"
-                    value={password}
-                    onInput={(e) => setPassword(e.currentTarget.value)}
-                    required
-                  />
-                </Field>
+                {providerProof
+                  // Signed in again a moment ago, from this dialog: the proof is that sign-in.
+                  ? <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
+                  : (
+                    <>
+                      <p class="text-sm text-muted">
+                        {linking === "passkey"
+                          ? "A passkey is another way to sign in, so your password is asked first."
+                          : "A linked account is another way to sign in, so your password is asked first."}
+                      </p>
+                      <Field id="sign-in-method-link-password" label="Password" required>
+                        <Input
+                          ref={passwordInput}
+                          data-e2e="sign-in-method-link-password"
+                          name="password"
+                          type="password"
+                          autocomplete="current-password"
+                          value={password}
+                          onInput={(e) => setPassword(e.currentTarget.value)}
+                          required
+                        />
+                      </Field>
+                    </>
+                  )}
                 <ErrorState message={error} />
-                <Cluster justify="end">
+                <DialogActions>
                   <Button type="button" variant="ghost" onClick={closeLink}>Cancel</Button>
                   <Button
+                    ref={continueButton}
                     type="submit"
                     data-e2e="sign-in-method-link-submit"
                     busy={pending}
@@ -382,7 +399,7 @@ export function SignInMethods(
                       ? ` to ${OAUTH_PROVIDER_NAMES[linking]}`
                       : ""}
                   </Button>
-                </Cluster>
+                </DialogActions>
               </Stack>
             </ScreenForm>
           )}
@@ -419,9 +436,9 @@ export function SignInMethods(
               ? (
                 <>
                   <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
-                  <Cluster justify="end">
+                  <DialogActions>
                     <Button type="button" variant="ghost" onClick={closeUnlink}>Close</Button>
-                  </Cluster>
+                  </DialogActions>
                 </>
               )
               : (
@@ -446,7 +463,7 @@ export function SignInMethods(
                       </Field>
                     )}
                     <ErrorState message={error} />
-                    <Cluster justify="end">
+                    <DialogActions>
                       <Button type="button" variant="ghost" onClick={closeUnlink}>Cancel</Button>
                       <Button
                         type="submit"
@@ -457,7 +474,7 @@ export function SignInMethods(
                       >
                         {confirming.kind === "passkey" ? "Remove passkey" : "Unlink"}
                       </Button>
-                    </Cluster>
+                    </DialogActions>
                   </Stack>
                 </ScreenForm>
               )}
