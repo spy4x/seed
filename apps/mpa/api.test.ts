@@ -133,15 +133,15 @@ describe("createApi without an API that answers", () => {
 })
 
 describe("errorMessage", () => {
-  it("reads both error shapes the API answers with", () => {
-    expect(errorMessage({ status: 401, body: { error: "Invalid token" } }, "x")).toBe(
-      "Invalid token",
-    )
+  it("reads the message of the API's error body, and the fallback for any other body", () => {
     const conflict = {
       status: 409,
-      body: { error: { code: "VERSION_CONFLICT", message: "Changed by someone else" } },
+      body: {
+        error: { code: "conflict", message: "Changed by someone else", reason: "VERSION_CONFLICT" },
+      },
     }
     expect(errorMessage(conflict, "x")).toBe("Changed by someone else")
+    expect(errorMessage({ status: 401, body: { error: "Invalid token" } }, "x")).toBe("x")
     expect(errorMessage({ status: 502, body: null }, "Sign in failed")).toBe("Sign in failed")
   })
 })

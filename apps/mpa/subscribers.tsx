@@ -191,7 +191,9 @@ function stepOf<S extends string>(
 ): { state: S | "error"; email?: string } {
   const body = answer.body
   if (!isRecord(body)) return { state: "error" }
-  const state = known.find((candidate) => candidate === body.state)
+  // A refused link answers an error whose reason names the state (docs/api-errors.md).
+  const said = isRecord(body.error) ? body.error.reason : body.state
+  const state = known.find((candidate) => candidate === said)
   if (!state) return { state: "error" }
   return typeof body.email === "string" ? { state, email: body.email } : { state }
 }
