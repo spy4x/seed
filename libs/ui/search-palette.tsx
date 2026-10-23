@@ -4,12 +4,20 @@ import {
   CommandPalette,
   type CommandPaletteLabels,
   type CommandPaletteOption,
+  matchOptions,
   rankOptions,
 } from "@spy4x/preact-ui/command-palette"
 import { hotkeyClickBinding, useHotkeys } from "@spy4x/preact-ui/hotkeys"
 import { type GroupRole } from "@domain/groups"
 import { ROLE_TEXT } from "./groups-screen.tsx"
-import { GROUP_PATHS, OVERVIEW_PATHS, SCREEN_PATHS, TAG_PATHS } from "./progressive.tsx"
+import {
+  GROUP_PATHS,
+  OVERVIEW_PATHS,
+  profilePath,
+  SCREEN_PATHS,
+  TAG_PATHS,
+} from "./progressive.tsx"
+import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -203,7 +211,8 @@ export function SearchPalette(props: SearchPaletteProps): JSX.Element {
       group: HEADINGS.groups,
       choice: { kind: "group", groupId: group.id },
     }))
-    const actions = rankOptions(actionOptions(currentGroup, online, pageCommands, guest), text)
+    // Actions match their aliases too, in any word order, with a typo or in the other layout.
+    const actions = matchOptions(actionOptions(currentGroup, online, pageCommands, guest), text)
     // A stale answer is dropped by the palette; its words must not replace the current ones.
     if (!signal.aborted) {
       setEmpty(asksNotes ? emptyLabel(text, answer.onDevice) : SHORT_QUERY_LABEL)
@@ -252,10 +261,17 @@ function actionOptions(
   pageCommands: readonly PageCommand[],
   guest = false,
 ): SearchOption[] {
-  const page = (id: string, label: string, href: string, detail?: string): SearchOption => ({
+  const page = (
+    id: string,
+    label: string,
+    href: string,
+    detail?: string,
+    aliases?: readonly string[],
+  ): SearchOption => ({
     id: `action-${id}`,
     label,
     detail,
+    aliases,
     group: HEADINGS.actions,
     choice: { kind: "page", href },
   })
@@ -294,6 +310,13 @@ function actionOptions(
       "Open profile",
       SCREEN_PATHS.profile,
       "Name, e-mail address, password, two-factor sign-in",
+    ),
+    page(
+      "download-data",
+      "Download my data",
+      `${profilePath("account")}#${DATA_EXPORT_ANCHOR}`,
+      "A ZIP of your profile, groups and notes",
+      [`export my data`, `GDPR`, `archive`, `takeout`, `скачать данные`, `экспорт данных`],
     ),
   ]
 }
