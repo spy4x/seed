@@ -37,7 +37,10 @@ const ABOUT_ID = `01927f3e-6b2a-7c3d-8e4f-000000000001`
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()
 const noop = () => async () => {}
 
-/** A registry of three jobs: one about a person, one repeating, one that mails. */
+/**
+ * A registry of four jobs: one about a person that mails, one repeating, one about a group, and
+ * one the admin may not cancel.
+ */
 const REGISTRY = [
   defineJob({
     kind: `auth.password-reset-mail`,
@@ -56,6 +59,12 @@ const REGISTRY = [
     kind: `billing.seat-sync`,
     label: `Seat count sync`,
     about: { group: true },
+    handler: noop,
+  }),
+  defineJob({
+    kind: `blog.publish`,
+    label: `Publish a blog post`,
+    cannotCancel: `Unschedule the post on the Blog page.`,
     handler: noop,
   }),
 ]
@@ -267,6 +276,18 @@ describe(`jobs routes`, () => {
       expect((await send(app, `POST`, `/jobs/${JOB_ID}/${path}`)).status).toBe(404)
     })
   }
+
+  it(`refuses to cancel a kind the registry marks, with its reason, and says so on its page`, async () => {
+    const waiting = { ...failed, kind: `blog.publish`, state: AdminJobState.Scheduled }
+    const { app } = buildApp({ outcome: AdminJobActionOutcome.NotCancellable, record: waiting })
+    const response = await send(app, `POST`, `/jobs/${JOB_ID}/cancel`)
+
+    expect(response.status).toBe(409)
+    expect((await response.json()).error).toBe(`Unschedule the post on the Blog page.`)
+    expect((await (await send(app, `GET`, `/jobs/${JOB_ID}`)).json()).cancellable).toBe(false)
+    expect((await (await send(buildApp().app, `GET`, `/jobs/${JOB_ID}`)).json()).cancellable)
+      .toBe(true)
+  })
 
   it(`answers 409 to run again when a newer run of the job already waits`, async () => {
     const { app } = buildApp({ outcome: AdminJobActionOutcome.Superseded })

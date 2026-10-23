@@ -85,7 +85,8 @@ export function jobMatch(query: string, registry: readonly JobDefinition[]): Adm
  * - `GET /jobs/repeating`: each repeating job with its schedule, last run and next run.
  * - `GET /jobs/:id`: one run, with what it is about.
  * - `POST /jobs/:id/retry`, `/run-now`, `/cancel`: the action, then `{ job }` as it is now. 404
- *   for an id no job has; 409 when the job's state no longer allows it, or another run waits.
+ *   for an id no job has; 409 when the job's state no longer allows it, another run waits, or its
+ *   kind may not be cancelled (the registry's `cannotCancel`, sent as the error).
  * - `POST /jobs/repeating/:kind/run-now`: the repeating job's next run becomes due now. 409 while
  *   it runs.
  * - `POST /jobs/retry-failed`: every failed job runs again, up to {@link ADMIN_JOBS_RETRY_ALL_MAX}.
@@ -116,6 +117,7 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
       label: job?.label ?? record.kind,
       repeats: job?.repeat ? describeRepeat(job.repeat) : null,
       sendsMail: job?.sendsMail === true,
+      cancellable: !job?.cannotCancel,
       about: await about(record),
       keptUntil: record.finishedAt
         ? new Date(Date.parse(record.finishedAt) + OUTBOX_RETENTION_DAYS * DAY_MS).toISOString()
@@ -137,6 +139,9 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
       return c.json({ error: ADMIN_JOB_SUPERSEDED }, 409)
     }
     if (!record) return c.json({ error: ADMIN_JOB_NOT_FOUND }, 404)
+    if (outcome === AdminJobActionOutcome.NotCancellable) {
+      return c.json({ error: definition(record.kind)?.cannotCancel ?? ADMIN_JOB_STALE }, 409)
+    }
     if (outcome === AdminJobActionOutcome.NotFound) return c.json({ error: ADMIN_JOB_STALE }, 409)
     return c.json({ job: await detail(record) })
   }

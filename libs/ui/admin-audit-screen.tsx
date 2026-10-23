@@ -17,6 +17,7 @@ import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import type { BillingAuditEvent } from "@domain/billing"
+import { BLOG_AUDIT_KINDS } from "@domain/blog"
 import { ACTIVITY_KINDS } from "@domain/groups"
 import {
   accountAuditEvent,
@@ -82,6 +83,14 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [ADMIN_JOB_RUN_NOW_KIND]: "Job run now by an operator",
   [ADMIN_JOB_CANCELLED_KIND]: "Job cancelled by an operator",
   [ADMIN_AUDIT_EXPORTED_KIND]: "Audit log exported by an operator",
+  [BLOG_AUDIT_KINDS.created]: "Blog post created",
+  [BLOG_AUDIT_KINDS.updated]: "Blog post saved",
+  [BLOG_AUDIT_KINDS.published]: "Blog post published",
+  [BLOG_AUDIT_KINDS.scheduled]: "Blog post scheduled",
+  [BLOG_AUDIT_KINDS.unscheduled]: "Blog post unscheduled",
+  [BLOG_AUDIT_KINDS.unpublished]: "Blog post unpublished",
+  [BLOG_AUDIT_KINDS.urlChanged]: "Blog post URL changed",
+  [BLOG_AUDIT_KINDS.deleted]: "Blog post deleted",
 }
 
 /**

@@ -53,11 +53,12 @@ apps/worker   Drains outbox_events and announces group changes (pg_notify); swee
 
 libs/platform  empty. Its primitives come from spy4x/ts-libs on JSR (@spy4x/platform,
                @spy4x/server, @spy4x/realtime and the rest).
-libs/domain    one member per aggregate: api-tokens, billing, groups, identity, notes,
+libs/domain    one member per aggregate: api-tokens, billing, blog, groups, identity, notes,
                notifications, subscribers, tags (enums, policy, commands and queries).
                May depend on platform only.
 libs/server    db (migrations and schema.sql), auth, jobs and mail, and one Postgres member per
-               aggregate: api-tokens, billing, groups, notes, notifications, subscribers, tags.
+               aggregate: api-tokens, billing, blog (docs/blog.md), groups, notes, notifications,
+               subscribers, tags.
                Database access, outbox, key-value store, config, request logging and the sign-in
                core come from @spy4x/server/*.
 libs/ui        The product screens (alias @ui/) of the SPA and the admin app; the MPA renders

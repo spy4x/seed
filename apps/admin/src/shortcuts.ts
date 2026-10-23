@@ -8,6 +8,7 @@ export const ADMIN_GO_KEYS: Readonly<Record<string, string>> = {
   groups: "g",
   billing: "b",
   newsletter: "m",
+  blog: "p",
   audit: "a",
   jobs: "j",
   system: "s",

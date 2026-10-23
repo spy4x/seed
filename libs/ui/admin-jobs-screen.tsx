@@ -735,7 +735,7 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
         action={primary}
         menu={
           <>
-            {waits && (
+            {waits && job.cancellable && (
               <DropdownItem
                 danger
                 dataE2E="admin-job-cancel"

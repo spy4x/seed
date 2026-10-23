@@ -34,6 +34,7 @@ import {
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { JOB_RETRY } from "./job-failures.ts"
 import { JOB_AGGREGATE, JOB_AGGREGATE_ID, LEGACY_JOB_AGGREGATE_ID } from "./jobs.ts"
+import { type JobDefinition, jobDefinition, JOBS } from "./registry.ts"
 
 /** A row as the reads return it, before the API adds the registry's label. */
 export type AdminJobRecord = Omit<AdminJobRow, "label"> & { aggregateId: string }
@@ -301,7 +302,8 @@ function versionNow(sql: postgres.Sql) {
  * cleanup removes it a week later, and writes the operator's audit row. Only a row that waits and
  * no worker holds: a running, finished, failed or cancelled one is
  * {@link AdminJobActionOutcome.NotFound}. A cancelled repeating job writes no next run; the worker
- * starts its chain again when it next starts.
+ * starts its chain again when it next starts. A kind the registry marks `cannotCancel` is
+ * {@link AdminJobActionOutcome.NotCancellable} and stays as it is.
  *
  * Inside a transaction only, so the cancel and its audit row are written together.
  */
@@ -310,7 +312,15 @@ export async function cancelJob(
   id: string,
   operatorId: number,
   requestId: string | null,
+  jobs: readonly JobDefinition[] = JOBS,
 ): Promise<AdminJobActionOutcome> {
+  const [found] = await sql<{ kind: string }[]>`
+    SELECT event_kind AS kind FROM outbox_events
+    WHERE id = ${id} AND aggregate_type = ${JOB_AGGREGATE}
+  `
+  if (found && jobDefinition(found.kind, jobs)?.cannotCancel) {
+    return AdminJobActionOutcome.NotCancellable
+  }
   const [row] = await sql<{ kind: string }[]>`
     UPDATE outbox_events
     SET processed_at = now(), cancelled_at = now(), aggregate_version = ${versionNow(sql)}

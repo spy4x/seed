@@ -26,6 +26,7 @@ const job: AdminJobDetail = {
   errorCode: `MailSendError`,
   repeats: null,
   sendsMail: true,
+  cancellable: true,
   about: null,
   keptUntil: `2026-11-19T11:00:00.000Z`,
 }

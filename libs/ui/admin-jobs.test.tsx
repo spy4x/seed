@@ -112,6 +112,7 @@ const failedJob: AdminJobDetail = {
   errorCode: "MailSendError",
   repeats: null,
   sendsMail: true,
+  cancellable: true,
   about: null,
   keptUntil: "2026-10-27T11:00:00.000Z",
 }
@@ -322,6 +323,22 @@ describe("admin job page", () => {
     expect(has(`[data-e2e="admin-job-cancel"]`)).toBe(true)
     await click(find(`[data-e2e="admin-job-run-now"]`))
     expect(events).toEqual([["act", "runNow"]])
+  })
+
+  it("offers no Cancel for a waiting job the admin may not cancel", async () => {
+    const waiting = {
+      ...failedJob,
+      state: AdminJobState.Scheduled,
+      sendsMail: false,
+      cancellable: false,
+      finishedAt: null,
+      errorCode: null,
+    }
+    const { node } = jobPage({ job: waiting })
+    await mount(node)
+
+    expect(has(`[data-e2e="admin-job-run-now"]`)).toBe(true)
+    expect(has(`[data-e2e="admin-job-cancel"]`)).toBe(false)
   })
 
   it("says how far ahead a waiting run is due, never that it ran a moment ago", async () => {
