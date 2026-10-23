@@ -12,6 +12,8 @@ import Pricing, { handler as pricing, PRICING_HEAD } from "./routes/pricing.tsx"
 import Privacy, { PRIVACY_HEAD } from "./routes/privacy.tsx"
 import Terms, { TERMS_HEAD } from "./routes/terms.tsx"
 import { handler as mvp } from "./routes/mvp.ts"
+import ApiDocs from "./routes/docs/api.tsx"
+import { handler as docs } from "./routes/docs/index.ts"
 import { handler as robots } from "./routes/robots.txt.ts"
 import { handler as subscribe } from "./routes/subscribe/index.ts"
 import { handler as theme } from "./routes/theme.js.ts"
@@ -57,6 +59,8 @@ function siteWith(newsletter: () => boolean, siteConfig: MpaConfig = config) {
     .route("/pricing", { component: view(Pricing), handler: pricing })
     .get("/mvp", mvp.GET!)
     .route("/privacy", { component: view(Privacy) })
+    .route("/docs/api", { component: view(ApiDocs) })
+    .get("/docs", docs.GET!)
     .route("/terms", { component: view(Terms) })
     .get("/subscribe", subscribe.GET!)
     .get("/robots.txt", robots.GET!)
@@ -702,6 +706,26 @@ describe("the public website", () => {
     )
   })
 
+  it("shows the API reference from docs/token-api.md, with its sections and the footer link to it", async () => {
+    const { status, html } = await page("/docs/api")
+
+    expect(status).toBe(200)
+    expect(headingOne(html)).toBe("API reference")
+    expect(html).toContain(`<h2 id="quick-start">Quick start</h2>`)
+    expect(hrefOf(linkNamed(html, "Quick start"))).toBe("#quick-start")
+    expect(hrefOf(linkNamed(html, "API docs"))).toBe("/docs/api")
+    expect(hrefOf(linkNamed(html, "docs/token-api.md"))).toBe(
+      `${REPOSITORY_URL}/blob/main/docs/token-api.md`,
+    )
+  })
+
+  it("answers /docs with a permanent redirect to the API reference", async () => {
+    const response = await handler(new Request(`${site}/docs`), info)
+
+    expect(response.status).toBe(301)
+    expect(response.headers.get("location")).toBe("/docs/api")
+  })
+
   it("sends every hire link on the site to the hire page, and none to /mvp", async () => {
     // The listed pages, and the not-found page every unknown address gets.
     for (const path of [...SITE_PAGES.map((entry) => entry.path), "/no-such-page"]) {
@@ -835,6 +859,7 @@ describe("the public website", () => {
         "/admin",
         "/compare",
         "/pricing",
+        "/docs/api",
         "/subscribe",
         "/privacy",
         "/terms",
@@ -854,6 +879,7 @@ describe("the public website", () => {
       "/": undefined,
       "/features": "2026-10-21T00:00:00.000Z",
       "/admin": "2026-10-21T00:00:00.000Z",
+      "/docs/api": "2026-10-23T00:00:00.000Z",
       "/compare": "2026-10-16T00:00:00.000Z",
       "/pricing": "2026-10-21T00:00:00.000Z",
       "/subscribe": undefined,

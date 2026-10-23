@@ -154,6 +154,20 @@ describe("ApiTokens", () => {
     )
   })
 
+  it("links to the API docs in a new tab, with or without tokens, and not without a website", async () => {
+    const docsHref = "https://www.example.com/docs/api"
+    for (const tokens of [undefined, []]) {
+      await mount(<ApiTokens {...tokensProps([], { ...(tokens && { tokens }), docsHref })} />)
+      const link = find("[data-e2e=api-tokens-docs]")
+      expect(link.getAttribute("href")).toBe(docsHref)
+      expect(link.getAttribute("target")).toBe("_blank")
+      expect(link.textContent).toBe("How to use a token, opens in a new tab")
+    }
+
+    await mount(<ApiTokens {...tokensProps([], { docsHref: null })} />)
+    expect(document.querySelector("[data-e2e=api-tokens-docs]")).toBeNull()
+  })
+
   it("revokes a token only after the person confirms", async () => {
     const calls: unknown[][] = []
     await mount(<ApiTokens {...tokensProps(calls)} />)
