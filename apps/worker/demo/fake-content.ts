@@ -184,7 +184,7 @@ export const THEMES: readonly Theme[] = [
   },
   {
     name: `Engineering`,
-    members: [8, 12],
+    members: [6, 8],
     tags: [
       { name: `infra`, color: `#4b5563` },
       { name: `incident`, color: `#b91c1c` },
@@ -406,7 +406,7 @@ export const THEMES: readonly Theme[] = [
   },
   {
     name: `Running club`,
-    members: [6, 10],
+    members: [6, 8],
     tags: [
       { name: `race`, color: `#b91c1c` },
       { name: `training`, color: `#1d4ed8` },
@@ -537,7 +537,7 @@ export const THEMES: readonly Theme[] = [
   },
   {
     name: `Community garden`,
-    members: [6, 9],
+    members: [6, 8],
     tags: [
       { name: `planting`, color: `#15803d` },
       { name: `tools`, color: `#4b5563` },

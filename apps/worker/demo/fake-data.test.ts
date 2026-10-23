@@ -184,6 +184,16 @@ Deno.test("recent sign-ups share small groups, and the video's person edits in o
   expect(claire).toHaveLength(1)
 })
 
+Deno.test("Product team, which the admin video opens from the top of Groups, is the largest group", () => {
+  for (const seed of [1, 7, 42, 20261020, 20261023]) {
+    const sizes = fakeDemoData(seed, NOW).groups.map((group) => [group.name, group.members.length])
+    const largest = Math.max(...sizes.map(([, size]) => size as number))
+    expect(sizes.filter(([, size]) => size === largest).map(([name]) => name)).toEqual([
+      `Product team`,
+    ])
+  }
+})
+
 Deno.test("subscriptions include paying, past-due, cancelled, ending and trial groups", () => {
   const { subscriptions } = fakeDemoData(1, NOW)
   const statuses = subscriptions.map((s) => s.status)
