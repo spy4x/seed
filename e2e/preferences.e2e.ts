@@ -158,7 +158,10 @@ test.describe("preferences across devices", () => {
       // note's exact time on another screen, and both again after a reload.
       await expect(example).toContainText(GERMAN_12_HOUR_FULL)
       await openNotes(page, "Format team")
-      const changed = page.locator(`[data-e2e=note-${noteId}] time`)
+      // A row draws a phone stamp (hidden at this width), "Updated" and "Created"; each <time> titles
+      // the exact moment, so the first one on screen is enough.
+      const changed = page.locator(`[data-e2e=note-${noteId}] time`).filter({ visible: true })
+        .first()
       await expect(changed).toHaveAttribute("title", GERMAN_12_HOUR_EXACT)
       await page.reload()
       await expect(changed).toHaveAttribute("title", GERMAN_12_HOUR_EXACT)
