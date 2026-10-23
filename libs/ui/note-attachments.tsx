@@ -16,6 +16,9 @@ export const ATTACH_BUTTON_ID = "note-attachments-attach"
 /** The file types the chooser offers; the browser and the API refuse any other. */
 const ACCEPT = ATTACHMENT_TYPES.join(",")
 
+/** An error under the list, in the section's column: one line per refused file. */
+const INLINE_ERROR = "mx-0 max-w-none whitespace-pre-line text-left text-sm"
+
 /** Each plan's file rules, for the count before the group's room is read. */
 const DEFAULT_PER_NOTE = 10
 
@@ -201,12 +204,12 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
             labels={props.creating ? { waiting: "Uploads when you create the note" } : undefined}
           />
         )}
-      {props.refusals.length > 0 && (
-        <div data-e2e="note-attachments-refusals">
-          <ErrorState message={props.refusals.join(" ")} />
-        </div>
-      )}
-      {problem && <ErrorState message={problem} />}
+      <ErrorState
+        message={props.refusals.join("\n")}
+        class={INLINE_ERROR}
+        dataE2E="note-attachments-refusals"
+      />
+      <ErrorState message={problem} class={INLINE_ERROR} focusOnAppear />
       {props.plan && (
         <PlanRefusalNotice
           groupId={props.groupId}
