@@ -157,6 +157,12 @@ const ROUTES = [
   { method: "GET", path: "/admin/blog/posts" },
   { method: "POST", path: "/admin/blog/posts/0199f0a0-0000-7000-8000-000000000001/publish" },
   { method: "POST", path: "/admin/blog/preview" },
+  { method: "GET", path: "/admin/groups/0199f0a0-0000-7000-8000-000000000001/files" },
+  {
+    method: "POST",
+    path:
+      "/admin/groups/0199f0a0-0000-7000-8000-000000000001/files/0199f0a0-0000-7000-8000-000000000002/remove",
+  },
 ]
 
 function send(

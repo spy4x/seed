@@ -8,11 +8,10 @@ import {
   type AttachmentCaps,
   AttachmentError,
   type AttachmentRepository,
-  type GroupAttachment,
   NoteError,
   type PendingAttachmentUpload,
 } from "@domain/notes"
-import { canManageBilling, type GroupRole } from "@domain/groups"
+import { canManageBilling, type GroupRole, OPERATOR_DETAIL } from "@domain/groups"
 import {
   GroupNotActiveError,
   lockActorRole,
@@ -98,26 +97,6 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
       `
     )[0]
     return row ? { ...toAttachment(row), objectKey: row.objectKey } : null
-  }
-
-  /** Every file of the group, deleted notes' included, newest first: the operator's list. */
-  async listForGroup(groupId: string): Promise<(GroupAttachment & { objectKey: string })[]> {
-    const rows = await this.sql<
-      (AttachmentRow & { noteTitle: string; noteDeleted: boolean })[]
-    >`
-      SELECT ${this.sql.unsafe(COLUMNS)}, notes.title AS note_title,
-        notes.deleted_at IS NOT NULL AS note_deleted
-      FROM note_attachments
-      JOIN notes ON notes.id = note_attachments.note_id
-      WHERE notes.group_id = ${groupId}
-      ORDER BY note_attachments.created_at DESC, note_attachments.id DESC
-    `
-    return rows.map((row) => ({
-      ...toAttachment(row),
-      objectKey: row.objectKey,
-      noteTitle: row.noteTitle,
-      noteDeleted: row.noteDeleted,
-    }))
   }
 
   /** Counts deleted notes' files too: they keep their room until the notes are purged. */
@@ -227,24 +206,9 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
   async remove(groupId: string, id: string, actorId: number, requestId?: string): Promise<string> {
     return await this.sql.begin(async (tx: postgres.TransactionSql) => {
       await lockWriter(tx, groupId, actorId)
-      return await removeRow(tx, groupId, id, actorId, requestId, {})
-    })
-  }
-
-  /**
-   * An operator's removal from the admin area: no membership is needed, the audit row says it was
-   * the operator's. Throws `ATTACHMENT_NOT_FOUND`.
-   */
-  async removeAsOperator(
-    groupId: string,
-    id: string,
-    operatorId: number,
-    operatorDetail: string,
-  ): Promise<string> {
-    return await this.sql.begin(async (tx: postgres.TransactionSql) => {
-      return await removeRow(tx, groupId, id, operatorId, undefined, { [operatorDetail]: true }, {
-        allowDeletedNote: true,
-      })
+      const key = await removeAttachmentRow(tx, groupId, id, actorId, { requestId })
+      if (key === null) throw new AttachmentError("ATTACHMENT_NOT_FOUND", "File not found")
+      return key
     })
   }
 
@@ -274,27 +238,30 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
   }
 }
 
-/** Deletes one file row of the group (the trigger queues its object) and records the change. */
-async function removeRow(
+/**
+ * Deletes one file of the group's live notes (the trigger queues its object), records the change
+ * and writes the audit row. An operator's removal (`operator`) also reaches a note in the trash and
+ * marks the row as the operator's. Returns the stored key, or `null` when there is no such file.
+ * The caller has locked the group and checked who may act.
+ */
+export async function removeAttachmentRow(
   tx: postgres.TransactionSql,
   groupId: string,
   id: string,
   actorId: number,
-  requestId: string | undefined,
-  extra: Record<string, unknown>,
-  options: { allowDeletedNote?: boolean } = {},
-): Promise<string> {
-  const allowDeleted = options.allowDeletedNote === true
+  options: { requestId?: string; operator?: boolean } = {},
+): Promise<string | null> {
+  const operator = options.operator === true
   const row = (
     await tx<{ objectKey: string; name: string; noteId: string; title: string }[]>`
       DELETE FROM note_attachments USING notes
       WHERE note_attachments.id = ${id} AND notes.id = note_attachments.note_id
-        AND notes.group_id = ${groupId} AND (notes.deleted_at IS NULL OR ${allowDeleted})
+        AND notes.group_id = ${groupId} AND (notes.deleted_at IS NULL OR ${operator})
       RETURNING note_attachments.object_key, note_attachments.name, note_attachments.note_id,
         notes.title
     `
   )[0]
-  if (!row) throw new AttachmentError("ATTACHMENT_NOT_FOUND", "File not found")
+  if (!row) return null
   try {
     await recordGroupChange(tx, groupId, actorId, ATTACHMENT_EVENTS.removed)
   } catch (error) {
@@ -307,10 +274,14 @@ async function removeRow(
     eventKind: ATTACHMENT_EVENTS.removed,
     actorId,
     groupId,
-    requestId,
+    requestId: options.requestId,
     entityType: "note",
     entityId: row.noteId,
-    details: { name: row.name.slice(0, 100), title: row.title.slice(0, 100), ...extra },
+    details: {
+      name: row.name.slice(0, 100),
+      title: row.title.slice(0, 100),
+      ...(operator ? { [OPERATOR_DETAIL]: 1 } : {}),
+    },
   })
   return row.objectKey
 }

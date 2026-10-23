@@ -1,7 +1,7 @@
 /**
  * The operator area's reads and writes over groups (#426): the searchable group list, one group's
- * page, and the three actions an operator takes on a group (revoke an invitation, remove a member,
- * transfer ownership).
+ * page, its files, and the actions an operator takes on a group (revoke an invitation, remove a
+ * member, transfer ownership, remove a file).
  *
  * Nothing written inside a group leaves here: no note or tag text, no group description, no note
  * title from the activity log, no invitation token or its hash. Counts and account facts only.
@@ -22,10 +22,12 @@ import { BillingStatus, FREE_PLAN_ID } from "@domain/billing"
 import {
   ADMIN_GROUP_ACTIVITY_LIMIT,
   ADMIN_GROUP_DEFAULT_SORT,
+  ADMIN_GROUP_FILE_LIMIT,
   ADMIN_GROUP_INVITATION_LIMIT,
   ADMIN_GROUP_TRANSFER_ROLE,
   type AdminGroupActivityEvent,
   type AdminGroupDetail,
+  type AdminGroupFiles,
   type AdminGroupFilter,
   type AdminGroupInvitation,
   type AdminGroupMember,
@@ -42,6 +44,7 @@ import {
 import type { UserRole } from "@domain/identity"
 import { handOverBilling } from "@server/billing/handover.ts"
 import { apiTokenRows } from "@server/api-tokens/api-tokens.ts"
+import { removeAttachmentRow } from "@server/notes/postgres-attachment-repository.ts"
 import { writeAuditEvent } from "./audit.ts"
 import { recordAccessChange } from "./group-change-log.ts"
 import { notifyOwnershipReceived, notifyRemoved } from "./group-notifications.ts"
@@ -349,9 +352,23 @@ export async function readAdminGroup(
   `
   if (!group) return null
   const [counts] = await sql<
-    { deletedNotes: number; tags: number; pendingInvitations: number }[]
+    {
+      deletedNotes: number
+      tags: number
+      pendingInvitations: number
+      files: number
+      fileBytes: string
+    }[]
   >`
     SELECT
+      (
+        SELECT COUNT(*)::int FROM note_attachments a JOIN notes n ON n.id = a.note_id
+        WHERE n.group_id = ${groupId}
+      ) AS files,
+      (
+        SELECT COALESCE(SUM(a.size_bytes), 0)::text FROM note_attachments a
+        JOIN notes n ON n.id = a.note_id WHERE n.group_id = ${groupId}
+      ) AS file_bytes,
       (
         SELECT COUNT(*)::int FROM notes WHERE group_id = ${groupId} AND deleted_at IS NOT NULL
       ) AS deleted_notes,
@@ -424,6 +441,8 @@ export async function readAdminGroup(
       deletedNotes: counts.deletedNotes,
       tags: counts.tags,
       pendingInvitations: counts.pendingInvitations,
+      files: counts.files,
+      fileBytes: Number(counts.fileBytes),
     },
     billing: billing
       ? {
@@ -684,6 +703,81 @@ export async function transferOwnershipAsOperator(
   }
 }
 
+/**
+ * The group's newest {@link ADMIN_GROUP_FILE_LIMIT} files, those of notes in the trash included,
+ * with the group's totals. Their type, size, uploader and date only, never a name or a title.
+ * `null` when there is no such group.
+ */
+export async function readAdminGroupFiles(
+  sql: postgres.Sql,
+  groupId: string,
+): Promise<Pick<AdminGroupFiles, "files"> & { total: number; bytes: number } | null> {
+  const [group] = await sql`SELECT 1 FROM groups WHERE id = ${groupId}`
+  if (!group) return null
+  const rows = await sql<
+    {
+      id: string
+      contentType: string
+      size: number
+      createdAt: Date
+      noteDeleted: boolean
+      uploaderId: number | null
+      uploaderName: string | null
+      uploaderEmail: string | null
+    }[]
+  >`
+    SELECT
+      a.id, a.content_type, a.size_bytes AS size, a.created_at,
+      (n.deleted_at IS NOT NULL) AS note_deleted,
+      ${personColumns(sql, `u`, `uploader`)}
+    FROM note_attachments a
+    JOIN notes n ON n.id = a.note_id
+    LEFT JOIN users u ON u.id = a.created_by_user_id
+    WHERE n.group_id = ${groupId}
+    ORDER BY a.created_at DESC, a.id DESC
+    LIMIT ${ADMIN_GROUP_FILE_LIMIT}
+  `
+  const [totals] = await sql<{ files: number; bytes: string }[]>`
+    SELECT COUNT(*)::int AS files, COALESCE(SUM(a.size_bytes), 0)::text AS bytes
+    FROM note_attachments a JOIN notes n ON n.id = a.note_id
+    WHERE n.group_id = ${groupId}
+  `
+  return {
+    files: rows.map((row) => ({
+      id: row.id,
+      contentType: row.contentType,
+      size: row.size,
+      uploader: row.uploaderId === null
+        ? null
+        : toPerson(row.uploaderId, row.uploaderName, row.uploaderEmail),
+      createdAt: row.createdAt.toISOString(),
+      noteDeleted: row.noteDeleted,
+    })),
+    total: totals.files,
+    bytes: Number(totals.bytes),
+  }
+}
+
+/**
+ * Removes one file of the group, from a live note or one in the trash, and writes the group's
+ * audit row marked as the operator's. Its object is queued for deletion, and the worker's nightly
+ * clean-up deletes it. A group in the trash is left as it is.
+ */
+export async function removeFileAsOperator(
+  sql: postgres.Sql,
+  operator: AdminGroupOperator,
+  groupId: string,
+  fileId: string,
+): Promise<AdminGroupActOutcome> {
+  return await sql.begin(async (tx) => {
+    const group = await lockGroup(tx, groupId)
+    if (!group) return AdminGroupActOutcome.NotFound
+    if (group.deleted) return AdminGroupActOutcome.GroupDeleted
+    const key = await removeAttachmentRow(tx, groupId, fileId, operator.id, { operator: true })
+    return key === null ? AdminGroupActOutcome.NotFound : AdminGroupActOutcome.Done
+  }) as AdminGroupActOutcome
+}
+
 /** Every read and action of this module over one `sql` client: the shape `db.adminGroups` gives. */
 export function adminGroupRows(sql: postgres.Sql) {
   return {
@@ -695,5 +789,8 @@ export function adminGroupRows(sql: postgres.Sql) {
       removeMemberAsOperator(sql, operator, groupId, userId),
     transferOwnership: (operator: AdminGroupOperator, groupId: string, userId: number) =>
       transferOwnershipAsOperator(sql, operator, groupId, userId),
+    files: (groupId: string) => readAdminGroupFiles(sql, groupId),
+    removeFile: (operator: AdminGroupOperator, groupId: string, fileId: string) =>
+      removeFileAsOperator(sql, operator, groupId, fileId),
   }
 }

@@ -233,12 +233,6 @@ export interface PendingAttachmentUpload {
   size: number
 }
 
-/** A stored file of a group, with its note, for the operator's list. */
-export interface GroupAttachment extends Attachment {
-  noteTitle: string
-  noteDeleted: boolean
-}
-
 /** What a confirmed file may not pass: the plan's caps (`null` for none) and the note's cap. */
 export interface AttachmentCaps {
   maxFiles: number | null

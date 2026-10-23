@@ -1,7 +1,12 @@
 import { expect } from "@std/expect"
 import { it } from "@std/testing/bdd"
 import { createToastStore } from "@spy4x/preact-signals/toast"
-import { ADMIN_GROUP_NO_FILTER, type AdminGroupDetail, GroupRole } from "@domain/groups"
+import {
+  ADMIN_GROUP_NO_FILTER,
+  type AdminGroupDetail,
+  type AdminGroupFiles,
+  GroupRole,
+} from "@domain/groups"
 import { UserRole } from "@domain/identity"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { createGroupsState } from "./state.ts"
@@ -88,6 +93,7 @@ it(`sends each confirmed action to its path, toasts, and shows the group the API
 
   expect(calls).toEqual([
     `GET /api/admin/groups/${GROUP_ID}`,
+    `GET /api/admin/groups/${GROUP_ID}/files`,
     `POST /api/admin/groups/${GROUP_ID}/members/43/remove`,
     `POST /api/admin/groups/${GROUP_ID}/invitations/${INVITATION_ID}/revoke`,
     `POST /api/admin/groups/${GROUP_ID}/transfer {"userId":43}`,
@@ -132,4 +138,50 @@ it(`sends nothing more on a second confirm while the action is on its way`, asyn
   answer(ok({ group: after }))
   await first
   expect(calls.filter((call) => call.startsWith(`POST`)).length).toBe(1)
+})
+
+it(`reads the files beside the group, removes one, and reads the group again for its counts`, async () => {
+  const FILE_ID = `0199c3a0-0000-7000-8000-000000000003`
+  const usage = { files: 1, bytes: 10, maxFiles: 100, maxBytes: 1000 }
+  const before = { files: [{ id: FILE_ID }], usage } as AdminGroupFiles
+  const emptied = { files: [], usage: { ...usage, files: 0, bytes: 0 } } as AdminGroupFiles
+  let removed = false
+  const { request, calls } = fakeRequest((path, init) => {
+    if (init?.method === `POST`) {
+      removed = true
+      return Promise.resolve(ok(emptied))
+    }
+    if (path.endsWith(`/files`)) return Promise.resolve(ok(removed ? emptied : before))
+    return undefined
+  })
+  const toasts = createToastStore()
+  const state = createGroupsState(request, toasts)
+  await state.loadGroup(GROUP_ID)
+  expect(state.files.value).toEqual({ groupId: GROUP_ID, files: before, error: null })
+
+  state.openDialog({ kind: `removeFile`, fileId: FILE_ID })
+  await state.act({ kind: `removeFile`, fileId: FILE_ID })
+
+  expect(calls.slice(2)).toEqual([
+    `POST /api/admin/groups/${GROUP_ID}/files/${FILE_ID}/remove`,
+    `GET /api/admin/groups/${GROUP_ID}`,
+    `GET /api/admin/groups/${GROUP_ID}/files`,
+  ])
+  expect(state.files.value.files).toEqual(emptied)
+  expect(state.group.value.detail).toBe(detail)
+  expect(toasts.list.value.map((toast) => toast.body)).toEqual([`The file is removed from Family.`])
+})
+
+it(`keeps the group's page when its files fail to load, with their own message`, async () => {
+  const { request } = fakeRequest((path) =>
+    path.endsWith(`/files`) ? Promise.resolve(fail(500, `The files did not load`)) : undefined
+  )
+  const state = createGroupsState(request, createToastStore())
+  await state.loadGroup(GROUP_ID)
+  expect(state.group.value.detail).toBe(detail)
+  expect(state.files.value).toEqual({
+    groupId: GROUP_ID,
+    files: null,
+    error: `The files did not load`,
+  })
 })

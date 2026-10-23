@@ -1,7 +1,7 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
-import { ADMIN_GROUP_NO_FILTER, type AdminGroupDetail } from "@domain/groups"
+import { ADMIN_GROUP_NO_FILTER, type AdminGroupDetail, type AdminGroupFiles } from "@domain/groups"
 import { UserRole } from "@domain/identity"
 import { AdminGroupActOutcome } from "@server/groups/admin-groups.ts"
 import type { APIContext } from "../../_types.ts"
@@ -17,6 +17,7 @@ import {
 } from "../../_testing/mutation-requests.ts"
 import { createAdminRoute } from "./+routes.ts"
 import {
+  ADMIN_GROUP_FILE_NOT_FOUND,
   ADMIN_GROUP_NOT_FOUND,
   type AdminGroupsService,
   createAdminGroupsRoutes,
@@ -24,6 +25,19 @@ import {
 
 const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
 const INVITATION_ID = `0199c3a0-0000-7000-8000-000000000002`
+const FILE_ID = `0199c3a0-0000-7000-8000-000000000003`
+
+const files: AdminGroupFiles = {
+  files: [{
+    id: FILE_ID,
+    contentType: `application/pdf`,
+    size: 700,
+    uploader: { id: 42, name: `Ada Lovelace`, email: `ada@example.com` },
+    createdAt: `2026-10-02T10:00:00.000Z`,
+    noteDeleted: false,
+  }],
+  usage: { files: 1, bytes: 700, maxFiles: 100, maxBytes: 200 * 1024 * 1024 },
+}
 
 const detail: AdminGroupDetail = {
   group: {
@@ -39,7 +53,7 @@ const detail: AdminGroupDetail = {
     lastActivityAt: null,
     deletedAt: null,
   },
-  counts: { notes: 3, deletedNotes: 0, tags: 1, pendingInvitations: 1 },
+  counts: { notes: 3, deletedNotes: 0, tags: 1, pendingInvitations: 1, files: 1, fileBytes: 700 },
   billing: null,
   members: [],
   invitations: [],
@@ -77,6 +91,10 @@ function buildApp(
           groupId === GROUP_ID && widgetId === `notes.total` ? { current: 3, previous: 1 } : null,
         )
     ),
+    files: (id) => (calls.push([`files`, id]), Promise.resolve(id === GROUP_ID ? files : null)),
+    removeFile: (actor, groupId, fileId) => (
+      calls.push([`removeFile`, actor, groupId, fileId]), Promise.resolve(outcome)
+    ),
   }
   const route = createAdminRoute({
     auth: testSessionGuards(),
@@ -100,6 +118,8 @@ const ROUTES: Route[] = [
   { method: `POST`, path: `/admin/groups/${GROUP_ID}/invitations/${INVITATION_ID}/revoke` },
   { method: `POST`, path: `/admin/groups/${GROUP_ID}/members/42/remove` },
   { method: `POST`, path: `/admin/groups/${GROUP_ID}/transfer`, body: { userId: 42 } },
+  { method: `GET`, path: `/admin/groups/${GROUP_ID}/files` },
+  { method: `POST`, path: `/admin/groups/${GROUP_ID}/files/${FILE_ID}/remove` },
   {
     method: `GET`,
     path:
@@ -257,7 +277,7 @@ describe(`operator area group routes`, () => {
 
   it(`answers an overview widget's counts for the days and the zone the address names`, async () => {
     const { app, calls } = buildApp()
-    const response = await send(app, ROUTES[6])
+    const response = await send(app, ROUTES[8])
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ current: 3, previous: 1 })
@@ -294,5 +314,42 @@ describe(`operator area group routes`, () => {
       expect(response.status).toBe(400)
     }
     expect(calls).toEqual([])
+  })
+
+  it(`answers the group's files and room, and 404 for a group that is not there`, async () => {
+    const { app, calls } = buildApp()
+    expect(await (await send(app, ROUTES[6])).json()).toEqual(files)
+    const missing = `/admin/groups/0199c3a0-0000-7000-8000-00000000000f/files`
+    expect((await send(app, { method: `GET`, path: missing })).status).toBe(404)
+    expect((await send(app, { method: `GET`, path: `/admin/groups/abc/files` })).status).toBe(404)
+    expect(calls.map((call) => call[0])).toEqual([`files`, `files`])
+  })
+
+  it(`removes a file as the operator and answers the files as they read now`, async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, ROUTES[7])
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual(files)
+    expect(calls).toEqual([
+      [`removeFile`, { id: 7, role: UserRole.OPERATOR }, GROUP_ID, FILE_ID],
+      [`files`, GROUP_ID],
+    ])
+  })
+
+  it(`answers 404 for a file id that cannot exist or is gone, and 409 in a group in the trash`, async () => {
+    const bad = buildApp()
+    const path = `/admin/groups/${GROUP_ID}/files/abc/remove`
+    expect((await send(bad.app, { method: `POST`, path })).status).toBe(404)
+    expect(bad.calls).toEqual([])
+
+    const gone = buildApp(operator(), { outcome: AdminGroupActOutcome.NotFound })
+    const response = await send(gone.app, ROUTES[7])
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: ADMIN_GROUP_FILE_NOT_FOUND })
+
+    const trashed = buildApp(operator(), { outcome: AdminGroupActOutcome.GroupDeleted })
+    expect((await send(trashed.app, ROUTES[7])).status).toBe(409)
+    expect(trashed.calls.map((call) => call[0])).toEqual([`removeFile`])
   })
 })

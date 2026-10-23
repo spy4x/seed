@@ -1,4 +1,5 @@
 import type { ComponentChildren, JSX } from "preact"
+import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { timeAgo } from "@spy4x/platform/universal/time"
 import { IconEllipsisVertical } from "@spy4x/preact-icons"
 import { Avatar } from "@spy4x/preact-ui/avatar"
@@ -23,6 +24,8 @@ import {
   ADMIN_GROUP_TRANSFER_ROLE,
   type AdminGroupActivityEvent,
   type AdminGroupDetail,
+  type AdminGroupFile,
+  type AdminGroupFiles,
   type AdminGroupInvitation,
   type AdminGroupMember,
   type AdminInvitationState,
@@ -54,15 +57,17 @@ export type AdminGroupDialog =
   | { kind: "remove"; userId: number }
   | { kind: "revoke"; invitationId: string }
   | { kind: "transfer" }
+  | { kind: "removeFile"; fileId: string }
 
 /** An action the operator confirmed, with everything the API needs for it. */
 export type AdminGroupAction =
   | { kind: "remove"; userId: number }
   | { kind: "revoke"; invitationId: string }
   | { kind: "transfer"; userId: number }
+  | { kind: "removeFile"; fileId: string }
 
 /** The group page's tabs, in order. */
-export const ADMIN_GROUP_TABS = [`members`, `invitations`, `activity`] as const
+export const ADMIN_GROUP_TABS = [`members`, `invitations`, `files`, `activity`] as const
 
 const NUMBER = new Intl.NumberFormat(`en`)
 
@@ -140,6 +145,10 @@ export interface AdminGroupScreenProps {
   pending: boolean
   /** The operator confirmed the open dialog's action. */
   onAction: (action: AdminGroupAction) => void
+  /** The group's files, or `null` while they load or when they could not be read. */
+  files: AdminGroupFiles | null
+  /** Why the files could not be read, or `null`. */
+  filesError: string | null
   /** The read-only "Overview widgets" section (`AdminGroupOverview`), under the header card. */
   overview?: ComponentChildren
   navigate?: Navigate
@@ -147,8 +156,8 @@ export interface AdminGroupScreenProps {
 
 /**
  * One group in the admin app (#426): a header card with its owner, plan and counts, then tabs for
- * its members, its invitations and its activity. An operator removes a member or revokes an
- * invitation from the row's menu; a supervisor hands the group to another member from the page's
+ * its members, its invitations, its files and its activity. An operator removes a member, revokes
+ * an invitation or removes a file from the row's menu; a supervisor hands the group to another member from the page's
  * menu. Each is confirmed in a dialog and recorded in the group's activity with the operator's
  * name. Nothing written inside the group shows here: counts only.
  */
@@ -199,6 +208,11 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
       id: `invitations`,
       label: <TabLabel text="Invitations" count={pending.length} />,
       content: <Invitations {...props} detail={detail} deleted={deleted} />,
+    },
+    {
+      id: `files`,
+      label: <TabLabel text="Files" count={counts.files} />,
+      content: <Files {...props} deleted={deleted} />,
     },
     {
       id: `activity`,
@@ -254,6 +268,10 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
           </Fact>
           <Fact label="Tags">{NUMBER.format(counts.tags)}</Fact>
           <Fact label="Open invitations">{NUMBER.format(counts.pendingInvitations)}</Fact>
+          <Fact label="Files">
+            {NUMBER.format(counts.files)}
+            <span class="font-normal text-muted">{` · ${formatBytes(counts.fileBytes)}`}</span>
+          </Fact>
           <Fact label="Owner">
             <Link
               href={ADMIN_PATHS.user(group.owner.id)}
@@ -527,6 +545,93 @@ function Invitations(
   )
 }
 
+/** What a stored file is, in a word: the operator never sees its name. */
+function fileKind(contentType: string): string {
+  return contentType === `application/pdf` ? `PDF` : `Image`
+}
+
+/** "37 of 100 files · 41 MB of 200 MB", or without "of" for a cap the plan does not set. */
+function filesUsage(usage: AdminGroupFiles["usage"]): string {
+  const files = usage.maxFiles === null
+    ? `${NUMBER.format(usage.files)} files`
+    : `${NUMBER.format(usage.files)} of ${NUMBER.format(usage.maxFiles)} files`
+  const bytes = usage.maxBytes === null
+    ? formatBytes(usage.bytes)
+    : `${formatBytes(usage.bytes)} of ${formatBytes(usage.maxBytes)}`
+  return `${files} · ${bytes}`
+}
+
+/** A file's line: its kind and size, so a row and its menu can be told apart without a name. */
+function fileLabel(file: AdminGroupFile): string {
+  return `${fileKind(file.contentType)} · ${formatBytes(file.size)}`
+}
+
+/**
+ * The group's newest files, newest first: kind, size, uploader and date, and whether the note is in
+ * the trash. Never a file's name or its note's title, which are written inside the group.
+ */
+function Files(
+  { files, filesError, deleted, onOpenDialog, navigate }: AdminGroupScreenProps & {
+    deleted: boolean
+  },
+): JSX.Element {
+  if (!files) {
+    return filesError
+      ? <ErrorState message={filesError} dataE2E="admin-group-files-error" />
+      : (
+        <div role="status" aria-label="Loading the files">
+          <LoadingSkeleton rows={3} />
+        </div>
+      )
+  }
+  return (
+    <Stack gap="sm">
+      <Rows empty="No files." dataE2E="admin-group-files">
+        {files.files.map((file) => (
+          <li key={file.id} class={ROW} data-e2e={`admin-group-file-${file.id}`}>
+            <div class="flex min-w-0 flex-1 basis-48 flex-col">
+              <span class="font-medium">{fileLabel(file)}</span>
+              <span class="text-sm text-muted wrap-anywhere">
+                {file.uploader
+                  ? (
+                    <Link
+                      href={ADMIN_PATHS.user(file.uploader.id)}
+                      navigate={navigate}
+                      class="pc-link"
+                    >
+                      {adminGroupPersonName(file.uploader)}
+                    </Link>
+                  )
+                  : `A deleted account`}
+                {`, `}
+                <When at={file.createdAt} />
+              </span>
+            </div>
+            {file.noteDeleted && <Badge text="Note in trash" color="gray" type="outline" />}
+            {!deleted && (
+              <RowMenu
+                label={`Actions for the ${fileLabel(file)} file`}
+                dataE2E="admin-group-file-menu"
+              >
+                <DropdownItem
+                  danger
+                  dataE2E="admin-group-remove-file-open"
+                  onClick={() => onOpenDialog({ kind: `removeFile`, fileId: file.id })}
+                >
+                  Remove file
+                </DropdownItem>
+              </RowMenu>
+            )}
+          </li>
+        ))}
+      </Rows>
+      <p class="text-sm text-muted" data-e2e="admin-group-files-usage">
+        {filesUsage(files.usage)}
+      </p>
+    </Stack>
+  )
+}
+
 /** The newest entries of the group's activity log, newest first, on a timeline. */
 function Activity({ events }: { events: readonly AdminGroupActivityEvent[] }): JSX.Element {
   return (
@@ -571,6 +676,14 @@ function dialogCopy(
           `Nobody can join ${detail.group.name} with it any more. People who already joined stay.`,
         submit: `Revoke`,
         busy: `Revoking…`,
+      }
+    case `removeFile`:
+      return {
+        title: `Remove this file?`,
+        text:
+          `The members of ${detail.group.name} will no longer see it. Its note stays. The group's activity records that the support team removed it.`,
+        submit: `Remove file`,
+        busy: `Removing…`,
       }
     case `transfer`:
       return {

@@ -177,7 +177,14 @@ Deno.test(`a group's page carries counts, members, invitations and activity but 
     expect(JSON.stringify(detail)).not.toContain(SECRET)
     expect(JSON.stringify(detail)).not.toContain(tokenHashOf(pending))
     expect(JSON.stringify(detail)).not.toContain(noteId)
-    expect(detail.counts).toEqual({ notes: 1, deletedNotes: 1, tags: 1, pendingInvitations: 1 })
+    expect(detail.counts).toEqual({
+      notes: 1,
+      deletedNotes: 1,
+      tags: 1,
+      pendingInvitations: 1,
+      files: 0,
+      fileBytes: 0,
+    })
     expect(detail.members.map((member) => member.role)).toEqual([
       GroupRole.OWNER,
       GroupRole.ADMIN,
@@ -377,5 +384,57 @@ Deno.test(`a supervisor transfers a group only to its own member; an operator, a
     expect(await rows.transferOwnership(supervisor, groupId, owner)).toBe(
       AdminGroupActOutcome.Outranked,
     )
+  })
+})
+
+Deno.test(`an operator sees a group's files without their names and removes one, from the trash too`, async () => {
+  await withSchema(async (sql) => {
+    const { groupId, owner, editor } = await team(sql)
+    const operator = { id: await operatorUser(sql, UserRole.OPERATOR), role: UserRole.OPERATOR }
+    const live = uuidV7()
+    const trashed = uuidV7()
+    await sql`
+      INSERT INTO notes (id, group_id, title, body, change_sequence, deleted_at) VALUES
+        (${live}, ${groupId}, ${`${SECRET} title`}, '', 1, NULL),
+        (${trashed}, ${groupId}, ${`${SECRET} old`}, '', 2, now())
+    `
+    const [first, second] = [uuidV7(), uuidV7()]
+    await sql`
+      INSERT INTO note_attachments (
+        id, note_id, object_key, name, content_type, size_bytes, created_by_user_id, created_at
+      ) VALUES
+        (${first}, ${live}, ${`attachments/${first}`}, ${`${SECRET}.pdf`}, 'application/pdf', 700,
+          ${editor}, now() - interval '1 hour'),
+        (${second}, ${trashed}, ${`attachments/${second}`}, ${`${SECRET}.png`}, 'image/png', 300,
+          ${owner}, now())
+    `
+    const rows = adminGroupRows(sql)
+
+    const files = await rows.files(groupId)
+    expect(JSON.stringify(files)).not.toContain(SECRET)
+    expect(files?.files.map((file) => [file.id, file.noteDeleted, file.uploader?.id])).toEqual([
+      [second, true, owner],
+      [first, false, editor],
+    ])
+    expect([files?.total, files?.bytes]).toEqual([2, 1000])
+    expect((await rows.find(groupId))?.counts).toMatchObject({ files: 2, fileBytes: 1000 })
+
+    expect(await rows.removeFile(operator, groupId, second)).toBe(AdminGroupActOutcome.Done)
+    expect(await rows.removeFile(operator, groupId, second)).toBe(AdminGroupActOutcome.NotFound)
+    expect(await rows.removeFile(operator, uuidV7(), first)).toBe(AdminGroupActOutcome.NotFound)
+    const [audit] = await sql<{ actorUserId: number; details: Record<string, unknown> }[]>`
+      SELECT actor_user_id, details FROM audit_events
+      WHERE group_id = ${groupId} AND event_kind = 'note.attachment.removed'
+    `
+    expect(audit.actorUserId).toBe(operator.id)
+    expect(audit.details[OPERATOR_DETAIL]).toBe(1)
+    const queued =
+      await sql`SELECT 1 FROM file_deletions WHERE object_key = ${`attachments/${second}`}`
+    expect(queued).toHaveLength(1)
+
+    await sql`UPDATE groups SET deleted_at = now() WHERE id = ${groupId}`
+    expect(await rows.removeFile(operator, groupId, first)).toBe(AdminGroupActOutcome.GroupDeleted)
+    expect((await rows.files(groupId))?.total).toBe(1)
+    expect(await rows.files(uuidV7())).toBe(null)
   })
 })
