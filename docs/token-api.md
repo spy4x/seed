@@ -1,4 +1,4 @@
-# API
+# API reference
 
 A personal API token lets a script or another service work with one of your groups without your
 password. The API covers notes for now: list them, read one, and create one.
@@ -8,8 +8,8 @@ password. The API covers notes for now: list them, read one, and create one.
 1. In the app, open **Profile → API tokens** and press **New token**. Pick the group, the access
    and how long it lasts, enter your password and press **Create token**.
 2. Copy the token. It is shown once.
-3. Find the group's id: open the group in the app, and the id is in the address bar,
-   `/groups/<group-id>`.
+3. Find the group's id: open the group in the app. The address reads `/groups/<group-id>/…`, and
+   the id is the part right after `/groups/`.
 4. List the group's notes:
 
 ```sh
@@ -71,7 +71,8 @@ A token stops working, at once, when:
 - it expires;
 - you revoke it;
 - you change your password, or reset a forgotten one: that revokes every token you have;
-- you leave the group, are removed from it, or the group is deleted.
+- you leave the group, are removed from it, or the group is deleted;
+- an operator of the service revokes it, or blocks or deletes your account.
 
 Then create a new token. The app lists only tokens that still work.
 
@@ -80,7 +81,7 @@ Then create a new token. The app lists only tokens that still work.
 - **Address:** `https://app.example.com/api/v1`, the same host as the app.
 - **Token:** the header `Authorization: Bearer <your-token>`. A token starts with `tpl_`.
 - **Format:** JSON in and out. Send `Content-Type: application/json` with a body.
-- **Ids:** every id is a UUID.
+- **Ids:** groups, notes and tags have UUIDs. A person's id, such as `createdByUserId`, is a number.
 
 ## List notes
 
@@ -130,7 +131,7 @@ curl -X POST \
 ```
 
 **Retrying is safe.** Because you make the id, sending the same create again does not make a
-second note: the answer is `200` with the note that exists. You may also send an `Idempotency-Key`
+second note: the answer is `200` with the note that exists, as long as nobody has changed it since. You may also send an `Idempotency-Key`
 header, 1 to 128 characters, with a new value for each new note: a retry with the same key gets the
 first answer back.
 
@@ -156,17 +157,19 @@ Every other error answers with this body:
 { "error": { "code": "TOKEN_INVALID", "message": "...", "requestId": "..." } }
 ```
 
-- **400** `INVALID_REQUEST`: Something in the request is missing or malformed. The message says what.
+- **400** `INVALID_REQUEST`: Something in the request is missing or malformed. Check the ids in the path,
+  `limit`, and the JSON body and its lengths against this page.
 - **400** `INVALID_CURSOR`: The cursor is not valid. Pass `nextCursor` exactly as you got it.
-- **400** `IDEMPOTENCY_KEY_INVALID`: The `Idempotency-Key` header is empty or longer than 128 characters.
+- **400** `IDEMPOTENCY_KEY_INVALID`: The `Idempotency-Key` header is empty, longer than 128 characters, or
+  not plain printable ASCII.
 - **401** `TOKEN_INVALID`: The token is missing, revoked or expired. Check the header, or create a new token.
 - **402** `PLAN_LIMIT_REACHED`: The group has reached its plan's limit. An owner of the group can change the plan.
-- **402** `PLAN_FEATURE_MISSING`: The group's plan does not include this.
 - **403** `TOKEN_SCOPE`: The token cannot do that: it is read only, or it was made for another group.
 - **403** `ROLE_INSUFFICIENT`: Your role in the group cannot create notes. Ask an owner to make you an editor.
-- **404** `GROUP_NOT_FOUND`: No group with this id, or you are not in it.
+- **404** `GROUP_NOT_FOUND`: No group with this id.
 - **404** `NOTE_NOT_FOUND`: No note with this id in this group.
-- **409** `ID_ALREADY_EXISTS`: Another note already has this id. Make a new UUID version 7.
+- **409** `ID_ALREADY_EXISTS`: Another note already has this id, or the note was changed after you
+  created it. For a new note, make a new UUID version 7.
 - **409** `IDEMPOTENCY_IN_PROGRESS`: The first request with this key is still running. Wait a moment, then retry.
 - **422** `IDEMPOTENCY_KEY_REUSED`: This key was already used for a different request. Use a new key for each new note.
 - **500** `INTERNAL_ERROR`: Something failed on the server. Try again later; if it keeps failing, report the error.

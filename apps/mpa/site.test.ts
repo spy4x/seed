@@ -710,7 +710,7 @@ describe("the public website", () => {
     const { status, html } = await page("/docs/api")
 
     expect(status).toBe(200)
-    expect(headingOne(html)).toBe("API")
+    expect(headingOne(html)).toBe("API reference")
     expect(html).toContain(`<h2 id="quick-start">Quick start</h2>`)
     expect(hrefOf(linkNamed(html, "Quick start"))).toBe("#quick-start")
     expect(hrefOf(linkNamed(html, "API docs"))).toBe("/docs/api")

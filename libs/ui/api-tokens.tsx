@@ -53,7 +53,7 @@ export function ApiDocsLink(
     >
       {children}
       <IconExternalLink class="size-4" aria-hidden="true" />
-      <span class="sr-only">(API docs, opens in a new tab)</span>
+      <span class="sr-only">{" (opens in a new tab)"}</span>
     </a>
   )
 }

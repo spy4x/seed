@@ -16,7 +16,7 @@ export default define.page(function ApiDocs({ state }) {
     <LegalPage
       state={state}
       path={API_DOCS_PATH}
-      title="API"
+      title="API reference"
       headTitle={API_DOCS_HEAD.title}
       description={API_DOCS_HEAD.description}
       updated="23 October 2026"

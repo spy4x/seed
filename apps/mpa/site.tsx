@@ -360,8 +360,8 @@ function legalPageJsonLd(
 
 /**
  * A legal page of the demo: its title, a notice that it is a template a product must adapt (or
- * `lead` in its place), and its text in one reading column. Headings, lists and links inside `children` get the page's prose
- * styles.
+ * `lead` in its place), and its text in one reading column. Headings, lists and links inside
+ * `children` get the page's prose styles.
  */
 export function LegalPage(
   { state, path, title, headTitle, description, updated, sections, lead, children }: LegalPageProps,
