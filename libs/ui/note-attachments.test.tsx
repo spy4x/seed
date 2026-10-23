@@ -184,7 +184,7 @@ describe(`note attachments section`, () => {
     expect(document.activeElement?.id).toBe(ATTACH_BUTTON_ID)
   })
 
-  it(`shows why a removal failed and keeps the row`, async () => {
+  it(`shows why a removal failed`, async () => {
     const sentence = `Could not remove scan.pdf. Check your connection and try again.`
     const remove = spy<[string], Promise<string | null>>(Promise.resolve(sentence))
     await mount(<NoteAttachments {...base} items={[pdf]} onRemove={remove.fn} />)
