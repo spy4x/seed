@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import { useState } from "preact/hooks"
-import { IconKey } from "@spy4x/preact-icons"
+import { IconExternalLink, IconKey } from "@spy4x/preact-icons"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
@@ -32,6 +32,30 @@ export interface ApiTokensProps {
   /** Revokes one token, after the person confirmed. */
   onRevoke: (tokenId: string) => void
   navigate?: Navigate
+  /** The API reference on the product's website; without one, no link to it shows. */
+  docsHref?: string | null
+}
+
+/**
+ * A link to the API reference, which opens in a new tab: on the create page a same-tab link would
+ * lose a half-filled form, or the secret that is shown once.
+ */
+export function ApiDocsLink(
+  { href, dataE2E, children }: { href: string; dataE2E: string; children: string },
+): JSX.Element {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="pc-link inline-flex items-center gap-1"
+      data-e2e={dataE2E}
+    >
+      {children}
+      <IconExternalLink class="size-4" aria-hidden="true" />
+      <span class="sr-only">(API docs, opens in a new tab)</span>
+    </a>
+  )
 }
 
 /**
@@ -50,7 +74,7 @@ const API_TOKENS_SAVED_COPY_LABELS = {
  * new token's secret once.
  */
 export function ApiTokens(props: ApiTokensProps): JSX.Element {
-  const { tokens, canCreate, error, revoking, savedAt, navigate } = props
+  const { tokens, canCreate, error, revoking, savedAt, navigate, docsHref } = props
   const [asking, setAsking] = useState<ApiToken | null>(null)
 
   const newButton = canCreate && (
@@ -62,6 +86,12 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
     >
       New token
     </Button>
+  )
+
+  const docsLine = docsHref && (
+    <p class="text-sm text-muted">
+      <ApiDocsLink href={docsHref} dataE2E="api-tokens-docs">How to use a token</ApiDocsLink>
+    </p>
   )
 
   return (
@@ -76,17 +106,20 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
         ? <p class="text-sm text-muted">Loading your tokens…</p>
         : tokens.length === 0
         ? (
-          <Card>
-            {/* Inside the section's own card, like every other section, not a dashed box. */}
-            <EmptyState
-              icon={<IconKey class="size-6" />}
-              title="No API tokens"
-              headingLevel={3}
-              inset
-              description="A token acts as you in one group, read only or read and write."
-              action={newButton || undefined}
-            />
-          </Card>
+          <>
+            <Card>
+              {/* Inside the section's own card, like every other section, not a dashed box. */}
+              <EmptyState
+                icon={<IconKey class="size-6" />}
+                title="No API tokens"
+                headingLevel={3}
+                inset
+                description="A token acts as you in one group, read only or read and write."
+                action={newButton || undefined}
+              />
+            </Card>
+            {docsLine}
+          </>
         )
         : (
           <>
@@ -116,6 +149,7 @@ export function ApiTokens(props: ApiTokensProps): JSX.Element {
             <p class="text-sm text-muted">
               Changing or resetting your password revokes every token.
             </p>
+            {docsLine}
             {newButton && <div>{newButton}</div>}
           </>
         )}

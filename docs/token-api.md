@@ -156,22 +156,20 @@ Every other error answers with this body:
 { "error": { "code": "TOKEN_INVALID", "message": "...", "requestId": "..." } }
 ```
 
-| Status | Code                      | What it means, and what to do                                                           |
-| ------ | ------------------------- | --------------------------------------------------------------------------------------- |
-| 400    | `INVALID_REQUEST`         | Something in the request is missing or malformed. The message says what.                |
-| 400    | `INVALID_CURSOR`          | The cursor is not valid. Pass `nextCursor` exactly as you got it.                       |
-| 400    | `IDEMPOTENCY_KEY_INVALID` | The `Idempotency-Key` header is empty or longer than 128 characters.                    |
-| 401    | `TOKEN_INVALID`           | The token is missing, revoked or expired. Check the header, or create a new token.      |
-| 402    | `PLAN_LIMIT_REACHED`      | The group has reached its plan's limit. An owner of the group can change the plan.      |
-| 402    | `PLAN_FEATURE_MISSING`    | The group's plan does not include this.                                                 |
-| 403    | `TOKEN_SCOPE`             | The token cannot do that: it is read only, or it was made for another group.            |
-| 403    | `ROLE_INSUFFICIENT`       | Your role in the group cannot create notes. Ask an owner to make you an editor.         |
-| 404    | `GROUP_NOT_FOUND`         | No group with this id, or you are not in it.                                            |
-| 404    | `NOTE_NOT_FOUND`          | No note with this id in this group.                                                     |
-| 409    | `ID_ALREADY_EXISTS`       | Another note already has this id. Make a new UUID version 7.                            |
-| 409    | `IDEMPOTENCY_IN_PROGRESS` | The first request with this key is still running. Wait a moment, then retry.            |
-| 422    | `IDEMPOTENCY_KEY_REUSED`  | This key was already used for a different request. Use a new key for each new note.     |
-| 500    | `INTERNAL_ERROR`          | Something failed on the server. Try again later; if it keeps failing, report the error. |
+- **400** `INVALID_REQUEST`: Something in the request is missing or malformed. The message says what.
+- **400** `INVALID_CURSOR`: The cursor is not valid. Pass `nextCursor` exactly as you got it.
+- **400** `IDEMPOTENCY_KEY_INVALID`: The `Idempotency-Key` header is empty or longer than 128 characters.
+- **401** `TOKEN_INVALID`: The token is missing, revoked or expired. Check the header, or create a new token.
+- **402** `PLAN_LIMIT_REACHED`: The group has reached its plan's limit. An owner of the group can change the plan.
+- **402** `PLAN_FEATURE_MISSING`: The group's plan does not include this.
+- **403** `TOKEN_SCOPE`: The token cannot do that: it is read only, or it was made for another group.
+- **403** `ROLE_INSUFFICIENT`: Your role in the group cannot create notes. Ask an owner to make you an editor.
+- **404** `GROUP_NOT_FOUND`: No group with this id, or you are not in it.
+- **404** `NOTE_NOT_FOUND`: No note with this id in this group.
+- **409** `ID_ALREADY_EXISTS`: Another note already has this id. Make a new UUID version 7.
+- **409** `IDEMPOTENCY_IN_PROGRESS`: The first request with this key is still running. Wait a moment, then retry.
+- **422** `IDEMPOTENCY_KEY_REUSED`: This key was already used for a different request. Use a new key for each new note.
+- **500** `INTERNAL_ERROR`: Something failed on the server. Try again later; if it keeps failing, report the error.
 
 Every error carries a `requestId`. Quote it when you ask for help.
 

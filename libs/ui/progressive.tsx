@@ -54,6 +54,9 @@ export const API_TOKEN_PATHS = {
   new: "/tokens/new",
 } as const
 
+/** The API reference, a page of the product's website (`apps/mpa/routes/docs/api.tsx`). */
+export const API_DOCS_PATH = "/docs/api"
+
 /** The pages these screens link to. */
 export const SCREEN_PATHS = {
   /** The app's home, which opens the notes. */
