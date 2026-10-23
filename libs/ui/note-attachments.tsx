@@ -1,9 +1,10 @@
 import type { JSX } from "preact"
-import { useEffect, useRef, useState } from "preact/hooks"
+import { useRef, useState } from "preact/hooks"
 import { type AttachmentItem, AttachmentList } from "@spy4x/preact-ui/attachment-list"
 import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { FileInput } from "@spy4x/preact-ui/file-input"
+import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import type { PlanRefusal } from "@domain/billing"
 import { ATTACHMENT_TYPES, type AttachmentUsage } from "@domain/notes"
@@ -103,13 +104,12 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
     batch.current.push(...files)
   }
 
-  // The list leaves the page with its last file, so it cannot move focus itself: the section
-  // moves it to "Attach files".
-  useEffect(() => {
-    if (removingId === null || items.length > 0) return
-    setRemovingId(null)
-    attachButton()?.focus()
-  }, [removingId, items.length])
+  // A control that leaves the section with focus on it, such as the list with its last file, hands
+  // focus to "Attach files". Inside the list, the list itself moves focus to the next row first.
+  useFocusFallback(
+    section,
+    () => section.current?.querySelector<HTMLElement>(`#${ATTACH_BUTTON_ID}`),
+  )
 
   if (readOnly && items.length === 0) return null
   const perNote = usage?.maxPerNote ?? DEFAULT_PER_NOTE
@@ -223,7 +223,7 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
           class={`text-sm ${quota.warn ? "text-warning" : "text-muted"}`}
           data-e2e="note-attachments-quota"
         >
-          {quota.text}
+          {quota.warn && <strong class="font-medium">Almost full.</strong>} {quota.text}
         </p>
       )}
       <p role="status" class="sr-only" data-e2e="note-attachments-status">

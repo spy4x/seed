@@ -239,6 +239,17 @@ describe(`note attachments section`, () => {
     expect(has(`[data-e2e=note-attachments]`)).toBe(false)
   })
 
+  it(`says in words, not only in colour, that the group's room is almost full`, async () => {
+    await mount(<NoteAttachments {...base} usage={{ ...base.usage!, files: 90 }} />)
+    expect(find(`[data-e2e=note-attachments-quota]`).textContent).toBe(
+      `Almost full. Family uses 90 of 100 files and 41 MB of 200 MB.`,
+    )
+    await act(() => render(<NoteAttachments {...base} />, root!))
+    expect(find(`[data-e2e=note-attachments-quota]`).textContent?.trim()).toBe(
+      `Family uses 37 of 100 files and 41 MB of 200 MB.`,
+    )
+  })
+
   it(`names each refused file and announces a finished upload`, async () => {
     await mount(
       <NoteAttachments
