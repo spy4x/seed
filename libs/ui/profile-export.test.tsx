@@ -7,6 +7,8 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import { type DataExportJson, DataExportStatus, type DataExportView } from "@domain/identity"
 import {
   DATA_EXPORT_ANCHOR,
@@ -37,10 +39,15 @@ afterEach(async () => {
   root = null
 })
 
+/** One region format for every date, whatever the host's locale: "30 Oct 2026". */
+const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC`, hourCycle: null })
+
 async function mount(node: VNode): Promise<HTMLElement> {
   root = document.createElement(`div`)
   document.body.append(root)
-  await act(() => render(node, root!))
+  await act(() =>
+    render(<FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>, root!)
+  )
   return root
 }
 
