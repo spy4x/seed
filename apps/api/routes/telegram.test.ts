@@ -2,13 +2,15 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { Hono, type MiddlewareHandler } from "hono"
 import type { TelegramLinkCodeResponse } from "@domain/identity"
+import { SecondFactorStatus } from "@spy4x/server/sign-in"
+import { UserMFAStatus } from "@domain/identity"
 import { TelegramReceive } from "@server/telegram/setup.ts"
+import { GUEST_LIMITED_PATHS, refuseGuests } from "../middlewares/guest-limits.ts"
 import type { APIContext } from "../_types.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
 import {
   API_URL,
   crossSiteHeaders,
-  mountRoute,
   sameOriginHeaders,
   testMutationGuards,
   testSessionGuards,
@@ -92,7 +94,7 @@ const CODE: TelegramLinkCodeResponse = {
   url: `https://t.me/seed_bot?start=7_${`c`.repeat(32)}`,
 }
 
-function settings(enabled: boolean) {
+function settings(enabled: boolean, auth = buildAuthData({ user: { id: 7 } })) {
   const calls: unknown[][] = []
   const route = createTelegramRoute({
     auth: testSessionGuards(),
@@ -108,7 +110,16 @@ function settings(enabled: boolean) {
       unlink: (_c, userId) => (calls.push([`unlink`, userId]), Promise.resolve(true)),
     },
   })
-  return { app: mountRoute(`/telegram`, route, buildAuthData({ user: { id: 7 } })), calls }
+  // Mounted as `index.ts` mounts it: the guest refusal on the paths it lists, then the route.
+  const app = new Hono<APIContext>().basePath(`/api`)
+  app.use(`*`, async (c, next) => {
+    c.set(`requestId`, `req-test-1`)
+    c.set(`auth`, auth)
+    await next()
+  })
+  app.on(`POST`, [...GUEST_LIMITED_PATHS.telegram], refuseGuests(`telegram`))
+  app.route(`/telegram`, route)
+  return { app, calls }
 }
 
 describe(`the person's Telegram routes`, () => {
@@ -136,6 +147,40 @@ describe(`the person's Telegram routes`, () => {
 
     expect(response.status).toBe(404)
     expect(await response.json()).toEqual({ error: TELEGRAM_OFF })
+  })
+
+  it(`refuse a code to a session that has not passed its second factor`, async () => {
+    const { app, calls } = settings(
+      true,
+      buildAuthData({
+        user: { id: 7, mfa: UserMFAStatus.CONFIGURED },
+        session: { secondFactor: SecondFactorStatus.Pending },
+      }),
+    )
+
+    const response = await app.request(`${API_URL}/telegram/code`, {
+      method: `POST`,
+      headers: sameOriginHeaders,
+    })
+
+    expect(response.status).toBe(401)
+    expect(calls).toEqual([])
+  })
+
+  it(`refuse a code to a guest, with the typed guest refusal`, async () => {
+    const { app, calls } = settings(
+      true,
+      buildAuthData({ user: { id: 7, guestSince: new Date(`2026-12-01T00:00:00Z`) } }),
+    )
+
+    const response = await app.request(`${API_URL}/telegram/code`, {
+      method: `POST`,
+      headers: sameOriginHeaders,
+    })
+
+    expect(response.status).toBe(403)
+    expect(await response.json()).toMatchObject({ error: { action: `telegram` } })
+    expect(calls).toEqual([])
   })
 
   it(`refuse a code or an unlink a cross-site page asks for`, async () => {
