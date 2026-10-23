@@ -65,6 +65,8 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
       "## Why\n\nIt is **fast**.\n\n<script>window.hacked = true</script>",
     )
     await ops.locator("[data-e2e=admin-blog-description]").fill("A post written from the keys.")
+    await ops.getByRole("button", { name: "Add point" }).click()
+    await ops.getByLabel("Key point 1", { exact: true }).fill("Written from the keys")
 
     // A `g` shortcut with unsaved text asks first; "Keep editing" keeps the page and the text.
     await ops.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
@@ -95,6 +97,7 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
     await expect(preview.locator("strong")).toHaveText("fast")
     await expect(preview.getByRole("heading", { level: 2, name: "Why" })).toBeVisible()
     await expect(preview.getByRole("heading", { level: 2, name: title })).toBeVisible()
+    await expect(preview.getByRole("heading", { level: 3, name: "In short" })).toBeVisible()
     // The page's outline and the rest of axe-core's checks hold on the Preview tab.
     const axe = await new AxeBuilder({ page: ops })
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"])

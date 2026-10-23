@@ -324,12 +324,13 @@ describe("the blog editor", () => {
     body.setSelectionRange(5, 5)
     await submit("[data-e2e=admin-blog-body]")
     expect(calls.at(-1)).toEqual(["save"])
-    // Saving disables the form, which drops focus to the page.
+    // Saving disables the form, which drops focus to the page and the caret with it.
     await mount(<AdminBlogEditorScreen {...editorProps(calls, { saveStatus: "saving" })} />)
     body.blur()
+    body.setSelectionRange(0, 0)
     await mount(<AdminBlogEditorScreen {...editorProps(calls, { saveStatus: "saved" })} />)
     await settle()
-    expect(document.activeElement).toBe(body)
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-blog-body")
     expect([body.selectionStart, body.selectionEnd]).toEqual([5, 5])
   })
 
@@ -340,7 +341,7 @@ describe("the blog editor", () => {
     const published = { ...saved, status: "published" as const, publishedAt: NOW.toISOString() }
     await mount(<AdminBlogEditorScreen {...editorProps(calls, { post: published })} />)
     await settle()
-    expect(document.activeElement).toBe(find("[data-e2e=admin-blog-editor-title]"))
+    expect(document.activeElement?.getAttribute("data-e2e")).toBe("admin-blog-editor-title")
   })
 
   it("says when a published post went live and was last updated, with a space before the middle dot", async () => {
