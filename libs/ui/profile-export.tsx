@@ -1,10 +1,11 @@
 import type { JSX } from "preact"
+import { useEffect, useRef } from "preact/hooks"
+import { IconSpinner } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { OnDay, useFormat } from "@spy4x/preact-ui/format"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingRow } from "@spy4x/preact-ui/setting-row"
-import { StatusMark } from "@spy4x/preact-ui/status-mark"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { DataExportStatus, type DataExportView } from "@domain/identity"
 
@@ -33,16 +34,24 @@ export interface DataExportRowProps {
   now?: number
 }
 
-const NEVER_ASKED = "A ZIP of your profile, groups and notes, as JSON and CSV files."
+const NEVER_ASKED = "A ZIP of your profile, groups and notes, as JSON and CSV files. It takes a " +
+  "few minutes, and we e-mail you when it is ready."
 
 /**
  * The Account section's "Your data" row (#229): the newest export's state and the one action it
  * allows. The value is a live region from the first render, so "Preparing your file" and the file
- * turning ready are read out without moving focus.
+ * turning ready are read out without moving focus. When a request takes the focused action away,
+ * focus moves to the value instead of falling to the page.
  */
 export function DataExportRow(props: DataExportRowProps): JSX.Element {
-  const { exportState, pending, onRequest } = props
+  const { exportState, pending } = props
   const now = props.now ?? Date.now()
+  const status = useRef<HTMLDivElement>(null)
+  const asked = useRef(false)
+  const onRequest = () => {
+    asked.current = true
+    props.onRequest()
+  }
   const ask = (label: string, dataE2E: string) => (
     <Button
       id={DATA_EXPORT_ANCHOR}
@@ -68,10 +77,12 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
     switch (exportState.status) {
       case DataExportStatus.Preparing:
         value = (
-          <StatusMark
-            status="wip"
-            label="Preparing your file. We will e-mail you and send a notification when it is ready."
-          />
+          <span class="flex items-start gap-2">
+            <IconSpinner class="mt-px size-4 shrink-0 text-selected" />
+            <span>
+              Preparing your file. We will e-mail you and send a notification when it is ready.
+            </span>
+          </span>
         )
         break
       case DataExportStatus.Ready:
@@ -125,13 +136,30 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
     }
   }
 
+  // A request whose control went away hands focus to the value; one refused keeps its control, and
+  // its error takes focus instead.
+  useEffect(() => {
+    if (!asked.current || pending) return
+    if (action) {
+      asked.current = false
+      return
+    }
+    const page = status.current?.ownerDocument
+    const active = page?.activeElement
+    if (active && active !== page?.body && active.isConnected) return
+    asked.current = false
+    status.current?.focus()
+  })
+
   return (
     <SettingRow
       label="Your data"
       dataE2E="data-export-row"
       value={
         <div
+          ref={status}
           role="status"
+          class="rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
           id={action ? undefined : DATA_EXPORT_ANCHOR}
           tabIndex={action ? undefined : -1}
           data-e2e="data-export-state"

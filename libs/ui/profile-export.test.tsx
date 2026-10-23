@@ -51,6 +51,13 @@ async function mount(node: VNode): Promise<HTMLElement> {
   return root
 }
 
+/** Renders `node` in place of what `mount` drew, the way an app re-renders with new props. */
+async function rerender(node: VNode): Promise<void> {
+  await act(() =>
+    render(<FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>, root!)
+  )
+}
+
 function find<T extends Element = HTMLElement>(selector: string): T {
   const element = document.querySelector(selector)
   if (!element) throw new Error(`nothing matches ${selector}`)
@@ -105,7 +112,8 @@ describe(`DataExportRow`, () => {
     const { node, requests } = row()
     await mount(node)
     expect(text(`[data-e2e=data-export-state]`)).toBe(
-      `A ZIP of your profile, groups and notes, as JSON and CSV files.`,
+      `A ZIP of your profile, groups and notes, as JSON and CSV files. It takes a few minutes, ` +
+        `and we e-mail you when it is ready.`,
     )
     expect(find(`[data-e2e=data-export-request]`).id).toBe(DATA_EXPORT_ANCHOR)
     await click(`[data-e2e=data-export-request]`)
@@ -119,6 +127,39 @@ describe(`DataExportRow`, () => {
     expect(button.getAttribute(`aria-busy`) === `true` || button.disabled).toBe(true)
     await click(`[data-e2e=data-export-request]`)
     expect(requests).toEqual([])
+  })
+
+  it(`keeps focus on the row when a keyboard request takes its button away`, async () => {
+    const { node } = row()
+    await mount(node)
+    find(`[data-e2e=data-export-request]`).focus()
+    await click(`[data-e2e=data-export-request]`)
+    await rerender(row({ pending: true }).node)
+    await rerender(row({ exportState: view(DataExportStatus.Preparing) }).node)
+
+    expect(document.activeElement === find(`[data-e2e=data-export-state]`)).toBe(true)
+  })
+
+  it(`keeps focus on the row when Prepare a new file takes the ready file's actions away`, async () => {
+    const ready = view(DataExportStatus.Ready, { nextRequestAt: new Date(NOW - 1) })
+    await mount(row({ exportState: ready }).node)
+    find(`[data-e2e=data-export-again]`).focus()
+    await click(`[data-e2e=data-export-again]`)
+    await rerender(row({ exportState: ready, pending: true }).node)
+    await rerender(row({ exportState: view(DataExportStatus.Preparing) }).node)
+
+    expect(document.activeElement === find(`[data-e2e=data-export-state]`)).toBe(true)
+  })
+
+  it(`leaves focus alone when a refused request keeps its button`, async () => {
+    const { node } = row()
+    await mount(node)
+    find(`[data-e2e=data-export-request]`).focus()
+    await click(`[data-e2e=data-export-request]`)
+    await rerender(row({ pending: true }).node)
+    await rerender(row({ error: { kind: `network` } }).node)
+
+    expect(document.activeElement === find(`[data-e2e=data-export-request]`)).toBe(true)
   })
 
   it(`announces a file in preparation in a live region and offers no action`, async () => {
