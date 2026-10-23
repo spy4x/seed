@@ -88,7 +88,11 @@ export default define.page(function Privacy({ state }) {
           guest account that stays empty is deleted after 7 days, and one unused for a year is
           deleted with everything in it.
         </li>
-        <li>What you create: groups, who is in them, invitations, notes and their tags.</li>
+        <li>
+          What you create: groups, who is in them, invitations, notes, their tags and the images and
+          PDFs attached to them. Attached files are kept in the app's own file store. A removed file
+          is deleted from it, at once or within a day.
+        </li>
         <li>
           A record of each sign-in, with the time, your IP address and your browser's user agent,
           and a record of changes with the time, so problems and break-ins can be traced.
@@ -176,15 +180,15 @@ export default define.page(function Privacy({ state }) {
         over or cancel the plan.
       </p>
       <p>
-        Deleting the account removes the groups you own with their notes, your sessions, your
-        profile and settings, and your push addresses. What you wrote in a group someone else owns
-        stays there, shown as written by "Deleted user". To leave the newsletter, use the
-        unsubscribe link in any of its mails.
+        Deleting the account removes the groups you own with their notes and attached files, your
+        sessions, your profile and settings, and your push addresses. What you wrote in a group
+        someone else owns stays there, shown as written by "Deleted user". To leave the newsletter,
+        use the unsubscribe link in any of its mails.
       </p>
       <p>
-        The owner of a group can export it to a file from the group's page, with its notes and tags.
-        There is no way yet to download the rest of your account's data. To get a copy, write to me
-        through{" "}
+        The owner of a group can export it to a file from the group's page, with its notes and tags;
+        attached files are not in it. There is no way yet to download the rest of your account's
+        data. To get a copy, write to me through{" "}
         <a href={AUTHOR_URL}>antonshubin.com</a>. Do not keep anything important in the demo: it is
         a demo, and its data may be reset.
       </p>

@@ -119,8 +119,8 @@ const ROWS: readonly ComparisonRow[] = [
   },
   {
     capability: `File uploads`,
-    note: `Seed: the file store is built; no upload screen yet. Makerkit: Supabase kit only`,
-    values: [`partial`, `no`, `yes`, `partial`, `no`, `yes`],
+    note: `Seed: images and PDFs on notes. Makerkit: Supabase kit only`,
+    values: [`yes`, `no`, `yes`, `partial`, `no`, `yes`],
   },
   {
     capability: `Blog`,
@@ -170,7 +170,7 @@ const ALTERNATIVES: readonly Alternative[] = [
     licence: `Paid; no redistribution without the author's permission`,
     stack: `Next.js, Nuxt or TanStack Start; Prisma or Drizzle`,
     hosting: `Vercel and serverless, or Docker`,
-    pickWhen: `you need translations, file uploads or a payment provider other than Stripe ` +
+    pickWhen: `you need translations or a payment provider other than Stripe ` +
       `now, and want paid support.`,
     sources: [
       { label: `Sales page`, href: `https://supastarter.dev/` },
@@ -352,20 +352,19 @@ function Table(): JSX.Element {
           fit={
             <>
               Seed is not for you if you want to deploy to Vercel or serverless functions, if you
-              work in Next.js and React and want to stay there, or if you need translations, file
-              uploads or a payment provider other than Stripe this month. It is also a young project
-              with one maintainer and no community forum yet, while the Next.js SaaS Starter and
-              Open SaaS each have more than 16,000 GitHub stars. Seed is for you if you build a
-              product for groups of people, want sign-in, roles, per-member billing and operations
-              settled before your first feature, and want to control the server and own the code
-              outright.
+              work in Next.js and React and want to stay there, or if you need translations or a
+              payment provider other than Stripe this month. It is also a young project with one
+              maintainer and no community forum yet, while the Next.js SaaS Starter and Open SaaS
+              each have more than 16,000 GitHub stars. Seed is for you if you build a product for
+              groups of people, want sign-in, roles, per-member billing and operations settled
+              before your first feature, and want to control the server and own the code outright.
             </>
           }
         />
         <ul class="flex max-w-3xl list-disc flex-col gap-2 pl-6 text-sm text-muted">
           <li>
-            Seed's gaps (translations, file uploads, downloading an account's data) are not built
-            yet; do not choose Seed for them today. The{" "}
+            Seed's gaps (translations, downloading an account's data) are not built yet; do not
+            choose Seed for them today. The{" "}
             <a href="/#status" class="text-primary underline">status list</a> says what works.
           </li>
           <li>

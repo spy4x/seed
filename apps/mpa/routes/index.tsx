@@ -84,6 +84,7 @@ const WORKS_TODAY = [
   `Guest accounts: try the app with one click, keep the account by adding a sign-in method`,
   `Groups with members, roles, invitations and ownership transfer`,
   `Exporting a group to a file, and importing one as a new group`,
+  `Images and PDFs attached to notes, within each plan's room`,
   `Per-member billing with trials, through Stripe`,
   `The list of signed-in devices, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
@@ -94,7 +95,6 @@ const WORKS_TODAY = [
 
 const NOT_BUILT = [
   `Translations: the app is English only`,
-  `File uploads: the S3 file store is bundled, no screen uses it yet`,
   `Downloading an account's data`,
 ] as const
 
