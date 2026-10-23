@@ -128,16 +128,25 @@ Deno.test("note attachments against Postgres", async (t) => {
       expect(await attachments.usage(groupId)).toEqual({ files: 2, bytes: 200 })
     })
 
-    await t.step("two files confirmed at once into the last place: one is added", async () => {
-      const { add, upload, editor, admin, attachments, groupId } = await setUp(sql)
-      const caps = { ...NO_CAPS, maxFiles: 1 }
-      const results = await Promise.allSettled([
-        add(upload(editor), caps),
-        add(upload(admin), caps),
-      ])
-      expect(results.map((result) => result.status).sort()).toEqual(["fulfilled", "rejected"])
-      expect((await attachments.usage(groupId)).files).toBe(1)
-    })
+    await t.step(
+      "two files confirmed at once into the group's last place: one is added",
+      async () => {
+        const { add, upload, editor, admin, attachments, groupId, notes, owner } = await setUp(sql)
+        // On two notes, so only the group's lock stands between the two counts.
+        const other = (await notes.create(
+          { groupId, id: uuidV7(), title: "Other", body: "" },
+          owner,
+          null,
+        )).note
+        const caps = { ...NO_CAPS, maxFiles: 1 }
+        const results = await Promise.allSettled([
+          add(upload(editor), caps),
+          add(upload(admin, 100, other.id), caps),
+        ])
+        expect(results.map((result) => result.status).sort()).toEqual(["fulfilled", "rejected"])
+        expect((await attachments.usage(groupId)).files).toBe(1)
+      },
+    )
 
     await t.step("removing a file queues its object for deletion", async () => {
       const { add, upload, editor, viewer, attachments, groupId } = await setUp(sql)
