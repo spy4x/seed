@@ -392,7 +392,7 @@ test.describe("notes in a shared group", () => {
     }
   })
 
-  test("a change to the group while a note is open leaves the page and its focus in place", async ({ browser, request }) => {
+  test("a change to the group while a note is open leaves the page and its focus in place, and the palette attaches from the button", async ({ browser, request }) => {
     const owner = "e2e_notes_focus_kept@example.com"
     await cleanup(request, owner)
     const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
@@ -422,6 +422,17 @@ test.describe("notes in a shared group", () => {
       })
       expect(renamed.ok(), await renamed.text()).toBe(true)
       await expect(page.locator("[data-e2e=notes-group]")).toHaveText("Focus team 2")
+      await expect(attach).toBeFocused()
+
+      // The palette's "Attach files to this note" opens the chooser and leaves focus on the button,
+      // not where it was before the palette opened.
+      await page.locator("[data-e2e=note-body]").focus()
+      const chooser = page.waitForEvent("filechooser")
+      await page.keyboard.press("Control+k")
+      const palette = page.locator("[data-e2e=search]")
+      await palette.getByRole("combobox").fill("Attach files")
+      await palette.getByRole("option").filter({ hasText: "Attach files to this note" }).click()
+      await chooser
       await expect(attach).toBeFocused()
     } finally {
       await context.close()

@@ -88,7 +88,15 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   useEffect(() => {
     if (!canWrite) return
     noteEditorPageActions.value = {
-      attach: () => document.getElementById(ATTACH_BUTTON_ID)?.click(),
+      // Focus lands on the button too, so the person is there once the chooser closes. The palette
+      // sends focus back where it was as its dialog closes, so the move waits for that close.
+      attach: () => {
+        const button = document.getElementById(ATTACH_BUTTON_ID)
+        button?.click()
+        const focus = () => setTimeout(() => button?.focus())
+        if (!document.querySelector("dialog[open]")) return focus()
+        document.addEventListener("close", focus, { capture: true, once: true })
+      },
     }
     return () => noteEditorPageActions.value = null
   }, [canWrite])
