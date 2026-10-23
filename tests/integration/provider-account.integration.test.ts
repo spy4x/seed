@@ -18,7 +18,7 @@ import { enabledOAuthProviders } from "../../apps/api/services/oauth-providers.t
 import { createTotpFailures } from "../../apps/api/services/totp-failures.ts"
 import { createEmailCodeFailures } from "../../apps/api/services/email-code-failures.ts"
 import { createPasswordFailures } from "../../apps/api/services/password-failures.ts"
-import { createOAuthRoute } from "../../apps/api/routes/auth-oauth.ts"
+import { createOAuthRoute, METHOD_IS_LAST } from "../../apps/api/routes/auth-oauth.ts"
 import {
   createAuthRoute,
   EMAIL_ALREADY_CARRIED,
@@ -391,6 +391,40 @@ Deno.test("an account made with Google moves to a new address once its code is e
     const [{ held }] = await sql`
       SELECT count(*)::int AS held FROM auth_keys WHERE email = 'ada@new.example'`
     expect(held).toBe(0)
+  })
+})
+
+Deno.test("an account made with Google unlinks it once another method holds a proven address, which a sign-in link then reaches", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const { ada, userId } = await googleAccount(app)
+    expect((await ada.post("/auth/email/change", { email: "ada@new.example" })).status).toBe(200)
+    await ada.post("/auth/email/verify", { code: app.codes.get("ada@new.example") })
+    const [google] = (await methodsOf(ada)).methods
+    expect([google.kind, google.canUnlink]).toEqual(["google", true])
+
+    const unlinked = await ada.delete(`/auth/methods/${google.id}`, {})
+
+    expect(unlinked.status).toBe(200)
+    expect(await unlinked.json()).toEqual({ signedOut: true })
+    // A sign-in link finds its account by the proven address: it is still this one.
+    expect(await app.db.authStore.findUserIdByProvenEmail("ada@new.example")).toBe(userId)
+  })
+})
+
+Deno.test("an account made with Google cannot unlink it while Google alone holds its proven address", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql, { ada: ADA })
+    const { ada } = await googleAccount(app)
+    // A new address waiting for its code is no way in yet.
+    expect((await ada.post("/auth/email/change", { email: "ada@new.example" })).status).toBe(200)
+    const [google] = (await methodsOf(ada)).methods
+    expect([google.kind, google.canUnlink]).toEqual(["google", false])
+
+    const unlinked = await ada.delete(`/auth/methods/${google.id}`, {})
+
+    expect(await refusal(unlinked, 409)).toBe(METHOD_IS_LAST)
+    expect((await methodsOf(ada)).methods.map((method) => method.kind)).toEqual(["google"])
   })
 })
 

@@ -706,7 +706,10 @@ export interface SignInMethod {
   email: string | null
   /** This device signed in with it, so unlinking it signs this device out. */
   current: boolean
-  /** A provider method or passkey that is not the last way in. The password is never unlinked. */
+  /**
+   * A provider method or passkey that is not the last way in. An address another key holds proven
+   * is a way in, through a sign-in link. The password is never unlinked.
+   */
   canUnlink: boolean
   /** The passkey's name and dates, on a passkey row only. */
   passkey?: PasskeyDetails
