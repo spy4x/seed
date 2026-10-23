@@ -2,6 +2,7 @@ import type { JSX } from "preact"
 import type { PublicBlogPostSummary } from "@domain/blog"
 import { IconCheck } from "@spy4x/preact-icons"
 import { badgeClasses } from "@spy4x/preact-ui/badge"
+import { PostList } from "@spy4x/preact-ui/post-list"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import {
   BLOG_INTRO,
@@ -12,7 +13,6 @@ import {
   postPath,
   RSS_PATH,
 } from "../../blog.ts"
-import { PostList } from "../../components/pending-library.tsx"
 import { NewsletterForm, PERSON_JSON_LD, SITE_NAME, SiteFrame } from "../../site.tsx"
 import { define } from "../../utils.ts"
 
