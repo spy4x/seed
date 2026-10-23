@@ -146,10 +146,16 @@ CREATE TABLE users (
     -- once a guest keeps the account. `guest_visit_days` counts the days the guest used the app.
     guest_since TIMESTAMPTZ,
     guest_visit_days INT2 DEFAULT 0 NOT NULL,
+    -- #228: the person's profile picture, kept in the file store as `pictures/<picture_id>`.
+    -- `NULL` while they have none. `picture_type` is the type the store confirmed.
+    picture_id UUID,
+    picture_type VARCHAR(20),
     CONSTRAINT users_role_check CHECK (role >= 1 AND role <= 4),
     CONSTRAINT users_mfa_check CHECK (mfa = ANY (ARRAY[1, 2, 3])),
     CONSTRAINT users_id_auth_users_fkey FOREIGN KEY (id) REFERENCES auth_users (id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT users_picture_id_unique UNIQUE (picture_id),
+    CONSTRAINT users_picture_check CHECK ((picture_id IS NULL) = (picture_type IS NULL))
 );
 
 COMMENT ON COLUMN users.role IS '1=viewer, 2=operator, 3=supervisor, 4=administrator';
@@ -733,7 +739,7 @@ CREATE TABLE auth_audits (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]))
 );
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
@@ -996,12 +1002,13 @@ CREATE TABLE note_attachments (
 CREATE INDEX idx_note_attachments_note ON note_attachments (note_id, created_at, id);
 CREATE INDEX idx_note_attachments_created_by ON note_attachments (created_by_user_id);
 
--- An upload that was signed. The browser PUTs to `staging_key`; the confirm settles this row
+-- An upload that was signed, by any feature: a note attachment's names its note, a profile
+-- picture's (#228) has none. The browser PUTs to `staging_key`; the confirm settles this row
 -- first (`settled_at`), so one upload is confirmed at most once, and only by `user_id`. The id is
--- the attachment's id once confirmed. The worker deletes rows older than a day.
-CREATE TABLE note_attachment_uploads (
+-- the file's id once confirmed. The worker deletes rows older than a day.
+CREATE TABLE file_uploads (
     id UUID PRIMARY KEY,
-    note_id UUID NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+    note_id UUID REFERENCES notes(id) ON DELETE CASCADE,
     user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     staging_key VARCHAR(200) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -1011,13 +1018,13 @@ CREATE TABLE note_attachment_uploads (
     -- When the upload was confirmed or cancelled; NULL while it waits. A settled row stays until
     -- the clean-up, so the hourly upload budget still counts it.
     settled_at TIMESTAMPTZ(3),
-    CONSTRAINT note_attachment_uploads_staging_key_unique UNIQUE (staging_key),
-    CONSTRAINT note_attachment_uploads_size_check CHECK (size_bytes >= 1)
+    CONSTRAINT file_uploads_staging_key_unique UNIQUE (staging_key),
+    CONSTRAINT file_uploads_size_check CHECK (size_bytes >= 1)
 );
 
-CREATE INDEX idx_note_attachment_uploads_note ON note_attachment_uploads (note_id);
-CREATE INDEX idx_note_attachment_uploads_user ON note_attachment_uploads (user_id);
-CREATE INDEX idx_note_attachment_uploads_created ON note_attachment_uploads (created_at);
+CREATE INDEX idx_file_uploads_note ON file_uploads (note_id);
+CREATE INDEX idx_file_uploads_user ON file_uploads (user_id);
+CREATE INDEX idx_file_uploads_created ON file_uploads (created_at);
 
 -- Stored objects to delete. No foreign key, so the demo's nightly wipe keeps it (KEPT_TABLES) and
 -- a deleted row's object is still found. The worker deletes the object, then the row.
@@ -1037,3 +1044,19 @@ $$;
 CREATE TRIGGER note_attachments_queue_deletion
     AFTER DELETE ON note_attachments
     FOR EACH ROW EXECUTE FUNCTION queue_note_attachment_deletion();
+
+CREATE FUNCTION queue_user_picture_deletion() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.picture_id IS NOT NULL
+        AND (TG_OP = 'DELETE' OR NEW.picture_id IS DISTINCT FROM OLD.picture_id) THEN
+        INSERT INTO file_deletions (object_key) VALUES ('pictures/' || OLD.picture_id)
+        ON CONFLICT DO NOTHING;
+    END IF;
+    RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER users_queue_picture_deletion
+    AFTER UPDATE OF picture_id OR DELETE ON users
+    FOR EACH ROW EXECUTE FUNCTION queue_user_picture_deletion();
