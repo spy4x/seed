@@ -208,6 +208,7 @@ describe("the blog index", () => {
     expect(metaContent(body, "robots")).toBe("noindex, nofollow")
     expect(header(body)).not.toContain(`href="/blog"`)
     expect(body).not.toContain(`application/rss+xml`)
+    expect(body).not.toContain(`data-e2e="blog-rss"`)
   })
 
   it("offers no form on an empty blog while the newsletter is off", async () => {
