@@ -124,6 +124,35 @@ export interface AdminGroupCounts {
   deletedNotes: number
   tags: number
   pendingInvitations: number
+  /** Files on the group's notes, those in the trash included, and their bytes. */
+  files: number
+  fileBytes: number
+}
+
+/** The most files the operator's Files tab lists, newest first. */
+export const ADMIN_GROUP_FILE_LIMIT = 200
+
+/**
+ * One file on a note of the group, as the operator sees it: its type, size, uploader and date.
+ * Never its name or its note's title: those are written inside the group.
+ */
+export interface AdminGroupFile {
+  id: string
+  contentType: string
+  size: number
+  /** `null` once the account is gone. */
+  uploader: AdminGroupPerson | null
+  createdAt: string
+  /** The file's note is in the trash; the file goes when the note is purged. */
+  noteDeleted: boolean
+}
+
+/** The answer of `GET /api/admin/groups/:id/files`. */
+export interface AdminGroupFiles {
+  /** The newest {@link ADMIN_GROUP_FILE_LIMIT} files. */
+  files: AdminGroupFile[]
+  /** Every file of the group and the plan's caps for them, `null` for none. */
+  usage: { files: number; bytes: number; maxFiles: number | null; maxBytes: number | null }
 }
 
 /** The answer of `GET /api/admin/groups/:id`. */

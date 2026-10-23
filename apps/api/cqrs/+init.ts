@@ -1,4 +1,21 @@
 import { commandBus } from "@api/services/commandBus.ts"
+import {
+  AttachmentCancelCommand,
+  AttachmentConfirmCommand,
+  AttachmentDownloadQuery,
+  AttachmentListQuery,
+  AttachmentRemoveCommand,
+  AttachmentSignCommand,
+} from "@domain/notes"
+import {
+  createAttachmentCancelHandler,
+  createAttachmentConfirmHandler,
+  createAttachmentDownloadHandler,
+  createAttachmentListHandler,
+  createAttachmentRemoveHandler,
+  createAttachmentSignHandler,
+} from "../features/notes/attachments.ts"
+import { attachmentDependencies } from "./attachment-dependencies.ts"
 import { queryBus } from "@api/services/queryBus.ts"
 import { subscribe } from "@api/services/eventBus.ts"
 import { sql } from "@api/services/db.ts"
@@ -243,6 +260,13 @@ commandBus.register(NoteDeleteCommand, noteDeleteHandler)
 commandBus.register(NoteRestoreCommand, noteRestoreHandler)
 commandBus.register(NoteMoveCommand, noteMoveHandler)
 commandBus.register(TagCreateCommand, tagCreateHandler)
+commandBus.register(AttachmentSignCommand, createAttachmentSignHandler(attachmentDependencies))
+commandBus.register(
+  AttachmentConfirmCommand,
+  createAttachmentConfirmHandler(attachmentDependencies),
+)
+commandBus.register(AttachmentRemoveCommand, createAttachmentRemoveHandler(attachmentDependencies))
+commandBus.register(AttachmentCancelCommand, createAttachmentCancelHandler(attachmentDependencies))
 commandBus.register(TagUpdateCommand, tagUpdateHandler)
 commandBus.register(TagDeleteCommand, tagDeleteHandler)
 commandBus.register(BillingCheckoutCommand, billingCheckoutHandler)
@@ -269,6 +293,8 @@ queryBus.register(NoteTotalWidgetQuery, noteTotalWidgetHandler)
 queryBus.register(NoteAddedWidgetQuery, noteAddedWidgetHandler)
 queryBus.register(NoteSeriesWidgetQuery, noteSeriesWidgetHandler)
 queryBus.register(TagListQuery, tagListHandler)
+queryBus.register(AttachmentListQuery, createAttachmentListHandler(attachmentDependencies))
+queryBus.register(AttachmentDownloadQuery, createAttachmentDownloadHandler(attachmentDependencies))
 queryBus.register(TagGetQuery, tagGetHandler)
 queryBus.register(BillingGetQuery, billingGetHandler)
 queryBus.register(BillingTrialQuery, billingTrialHandler)

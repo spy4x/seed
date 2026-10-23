@@ -160,6 +160,20 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       ORDER BY notes.created_at, notes.id`,
   },
   {
+    // The files the person attached, in groups they still belong to: what each is, never its
+    // bytes, which stay in the app's file store and open from the note.
+    name: `note_attachments`,
+    columns: [`id`, `noteId`, `groupId`, `name`, `contentType`, `sizeBytes`, `createdAt`],
+    rows: (sql, userId) =>
+      sql`SELECT note_attachments.id, note_attachments.note_id, notes.group_id,
+        note_attachments.name, note_attachments.content_type, note_attachments.size_bytes,
+        note_attachments.created_at
+      FROM note_attachments JOIN notes ON notes.id = note_attachments.note_id
+      WHERE note_attachments.created_by_user_id = ${userId}
+        AND notes.group_id IN (${memberOf(sql, userId)})
+      ORDER BY note_attachments.created_at, note_attachments.id`,
+  },
+  {
     name: `tags`,
     columns: [`id`, `groupId`, `name`, `color`, `createdAt`, `updatedAt`],
     rows: (sql, userId) =>

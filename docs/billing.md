@@ -237,7 +237,12 @@ answers.
 | `memberRoles`  | feature | no      | yes     | Promoting a member (`GroupMemberRoleCommand`)                |
 | `maxNotes`     | limit   | 10      | no cap  | Creating a note (`NoteCreateCommand`), or moving notes into the group (`NoteMoveCommand`; the gate reserves room for one, the repository counts all)                 |
 | `maxMembers`   | limit   | 3       | 50      | Inviting (`GroupInvitationCreateCommand`) and accepting      |
-| `storageBytes` | limit   | 50 MiB  | 10 GiB  | Not yet: the key ships for attachments (#225)                |
+| `maxAttachments` | limit | 100     | no cap  | Signing and confirming a note attachment (`attachment.sign`, `attachment.confirm`): the files of every note of the group |
+| `storageBytes` | limit   | 200 MiB | 10 GiB  | The same two: the bytes of those files                        |
+
+Each plan also has `attachments` (`maxFileBytes` 2 MiB, `maxPerNote` 10 on both plans), the rules
+for one file and one note ([files.md](files.md), "Note attachments"). They are not caps a plan
+sells, so they hold with billing off too.
 
 A limit of `null` means no cap.
 

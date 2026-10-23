@@ -507,6 +507,22 @@ describe("the public website", () => {
     for (const html of [home, features]) expect(html).not.toMatch(/>\s*Magic links\s*</)
   })
 
+  it("lists note attachments as built on the home page, /features, /compare and /pricing (#225)", async () => {
+    const home = (await page("/")).html
+    const features = (await page("/features")).html
+    const { rows } = comparisonTable((await page("/compare")).html)
+    const pricing = (await page("/pricing")).html
+
+    expect(home).toContain(`Images and PDFs attached to notes`)
+    expect(features).toContain(`notes keep images and PDFs in it`)
+    expect(rows.find((row) => row.capability === "File uploads")?.values[0]).toBe("Yes")
+    expect(pricing).toContain(`100 files, 200 MB in all`)
+    for (const html of [home, features]) {
+      expect(html).not.toContain(`no screen uses`)
+      expect(html).not.toContain(`issues/225`)
+    }
+  })
+
   it("ends /features with its questions, listed under On this page and in its structured data", async () => {
     const { html } = await page("/features")
     const graph = jsonLdGraph(html)

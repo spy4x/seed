@@ -31,9 +31,11 @@ export type FeatureKey =
  * - `maxMembers`: members of the group, the owner included. Creating an invitation and accepting
  *   one count against it; a pending invitation takes no seat.
  * - `maxNotes`: notes in the group that are not deleted.
- * - `storageBytes`: bytes of attachments. Attachments (#157) are not built yet; only the key ships.
+ * - `maxAttachments`: files attached to the group's notes, deleted notes' files included until the
+ *   notes are purged.
+ * - `storageBytes`: bytes of those files.
  */
-export type LimitKey = "maxMembers" | "maxNotes" | "storageBytes"
+export type LimitKey = "maxMembers" | "maxNotes" | "maxAttachments" | "storageBytes"
 
 /** What a plan allows: which features it includes, and how much of each count, `null` for no cap. */
 export interface Entitlements {
@@ -44,7 +46,17 @@ export interface Entitlements {
 /** What a deployment that takes no payments allows every group: everything, with no cap. */
 export const UNLIMITED: Entitlements = {
   features: { memberRoles: true },
-  limits: { maxMembers: null, maxNotes: null, storageBytes: null },
+  limits: { maxMembers: null, maxNotes: null, maxAttachments: null, storageBytes: null },
+}
+
+/**
+ * The rules for one file and one note: the largest file, and how many files one note holds. They
+ * hold with billing off too: they protect the store and the note page, they are not what a plan
+ * sells. A plan may raise them.
+ */
+export interface AttachmentRules {
+  maxFileBytes: number
+  maxPerNote: number
 }
 
 /** What a command needs from the group's plan: a feature it includes, or room under a cap. */
@@ -62,6 +74,8 @@ export interface Plan {
   features: string[]
   /** What the plan allows. The server checks these; `features` above is only the pricing text. */
   entitlements: Entitlements
+  /** The plan's {@link AttachmentRules}. */
+  attachments: AttachmentRules
   /**
    * Days of free trial this plan offers; `0` for none. Each person gets one trial, whichever group
    * they first open a checkout for (docs/billing.md, "Trials").
@@ -83,11 +97,17 @@ export const PLANS: readonly Plan[] = [
     amount: 0,
     currency: "EUR",
     description: "For trying things out.",
-    features: ["Up to 10 notes", "Up to 3 members"],
+    features: ["Up to 10 notes", "Up to 3 members", "100 files, 200 MB in all"],
     entitlements: {
       features: { memberRoles: false },
-      limits: { maxMembers: 3, maxNotes: 10, storageBytes: 50 * 1024 * 1024 },
+      limits: {
+        maxMembers: 3,
+        maxNotes: 10,
+        maxAttachments: 100,
+        storageBytes: 200 * 1024 * 1024,
+      },
     },
+    attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
     trialDays: 0,
     perSeat: false,
   },
@@ -100,13 +120,20 @@ export const PLANS: readonly Plan[] = [
     features: [
       "Billed per member, the owner included",
       "Unlimited notes",
+      "Unlimited files, 10 GB in all",
       "Up to 50 members",
       "Promote members to editor or admin",
     ],
     entitlements: {
       features: { memberRoles: true },
-      limits: { maxMembers: 50, maxNotes: null, storageBytes: 10 * 1024 * 1024 * 1024 },
+      limits: {
+        maxMembers: 50,
+        maxNotes: null,
+        maxAttachments: null,
+        storageBytes: 10 * 1024 * 1024 * 1024,
+      },
     },
+    attachments: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
     trialDays: 14,
     perSeat: true,
   },
@@ -127,6 +154,14 @@ export function findPlan(id: string): Plan | null {
 export function entitlementsOf(planId: string, billingEnabled: boolean): Entitlements {
   if (!billingEnabled) return UNLIMITED
   return (findPlan(planId) ?? PLANS[0]).entitlements
+}
+
+/**
+ * The file rules of a group's plan. With billing off every group has the free plan's: unlike the
+ * caps of {@link entitlementsOf}, they are never lifted.
+ */
+export function attachmentRulesOf(planId: string, billingEnabled: boolean): AttachmentRules {
+  return ((billingEnabled ? findPlan(planId) : null) ?? PLANS[0]).attachments
 }
 
 /** The outbox event kind a plan change is recorded under, on the group's change log. */

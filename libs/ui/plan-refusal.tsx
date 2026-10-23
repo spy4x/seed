@@ -24,6 +24,11 @@ const REFUSAL_TEXT: Record<
     title: `${who} has reached its member limit`,
     message: `Its plan allows up to ${limit} members.`,
   }),
+  maxAttachments: (limit, who) => ({
+    title: `${who} has reached its file limit`,
+    message:
+      `Its plan holds up to ${limit} files across all notes. Remove a file from any note to make room.`,
+  }),
   storageBytes: (_limit, who) => ({
     title: `${who} has used all its storage`,
     message: "Its plan has no room for more files.",

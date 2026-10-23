@@ -46,6 +46,8 @@ export const ACTIVITY_KINDS = [
   "note.restored",
   "note.moved_out",
   "note.moved_in",
+  "note.attachment.added",
+  "note.attachment.removed",
   "tag.created",
   "tag.updated",
   "tag.deleted",
@@ -268,6 +270,18 @@ export function describeActivity(
     }
     case "note.moved_in":
       return `${who} moved ${counted(details.count, "note")} here from another group`
+    case "note.attachment.added": {
+      const name = quoted(details.name)
+      const title = quoted(details.title)
+      const file = name ? `the file ${name}` : "a file"
+      return title ? `${who} attached ${file} to ${title}` : `${who} attached ${file}`
+    }
+    case "note.attachment.removed": {
+      const name = quoted(details.name)
+      const title = quoted(details.title)
+      const file = name ? `the file ${name}` : "a file"
+      return title ? `${who} removed ${file} from ${title}` : `${who} removed ${file}`
+    }
     case "tag.created": {
       const name = quoted(details.name)
       return name ? `${who} added the tag ${name}` : `${who} added a tag`

@@ -7,6 +7,7 @@ import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/g
 import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 
 export * from "./overview.ts"
+export * from "./attachments.ts"
 
 /**
  * Notes: the reference aggregate. A note belongs to one group; every member of the group reads it,

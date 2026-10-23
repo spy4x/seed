@@ -5,6 +5,7 @@ import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
   ADMIN_GROUPS_PAGE_SIZE,
   type AdminGroupDetail,
+  type AdminGroupFiles,
   type AdminGroupListResponse,
   adminGroupTransferSchema,
   parseAdminGroupFilter,
@@ -15,6 +16,8 @@ import { readFeatureJson } from "@api/services/json-body.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
 import { NoteError, parseNoteWidgetRequest } from "@domain/notes"
+import { entitlementsOf } from "@domain/billing"
+import { createPlanOf } from "../../features/billing/config.ts"
 import { NOTE_WIDGET_READERS, type NoteWidgetRequest } from "../../features/notes/widgets.ts"
 import { codeForStatus, errorResponse, validationResponse } from "../../services/error-response.ts"
 
@@ -42,6 +45,13 @@ export interface AdminGroupsService {
    * group or a widget that does not exist.
    */
   widget(groupId: string, widgetId: string, request: NoteWidgetRequest): Promise<unknown | null>
+  /** The group's files and its plan's caps for them; `null` for a group that does not exist. */
+  files(groupId: string): Promise<AdminGroupFiles | null>
+  removeFile(
+    operator: AdminGroupOperator,
+    groupId: string,
+    fileId: string,
+  ): Promise<AdminGroupActOutcome>
 }
 
 export interface AdminGroupsRouteDependencies {
@@ -51,6 +61,7 @@ export interface AdminGroupsRouteDependencies {
 }
 
 export const ADMIN_GROUP_NOT_FOUND = `Group not found`
+export const ADMIN_GROUP_FILE_NOT_FOUND = `File not found. Someone may have removed it already.`
 
 /** The answer to each outcome other than done: its status and the sentence the page shows. */
 const REFUSALS: Record<
@@ -119,6 +130,10 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   take no body; `POST /groups/:id/transfer` takes `{ userId }`. Each answers the group's page,
  *   `{ group }`, as it reads after the change, and writes the group's audit row naming the
  *   operator. Like the people actions they ask for no password (owner's decision, 2026-10-15).
+ * - `GET /groups/:id/files` is the group's newest files and its room, `AdminGroupFiles`: each
+ *   file's type, size, uploader and date, never its name or its note's title, and no download.
+ *   `POST /groups/:id/files/:fileId/remove` removes one, from a note in the trash too, and answers
+ *   the files as they read after it.
  * - `GET /groups/:id/widgets/:widgetId?from=&to=&timeZone=` is one overview widget's data in the
  *   default layout, the same counts a member's overview shows (#219). Never a member's layout.
  */
@@ -169,6 +184,30 @@ export function createAdminGroupsRoutes(
       if (data === null) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(data)
     })
+    .get(`/groups/:id/files`, limit, async (c) => {
+      const groupId = c.req.param(`id`)
+      const files = isUuid(groupId) ? await groups.files(groupId) : null
+      if (!files) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      return c.json(files)
+    })
+    .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
+      const groupId = c.req.param(`id`)
+      const fileId = c.req.param(`fileId`)
+      if (!isUuid(groupId) || !isUuid(fileId)) {
+        return c.json({ error: ADMIN_GROUP_FILE_NOT_FOUND }, 404)
+      }
+      const outcome = await groups.removeFile(operatorOf(c), groupId, fileId)
+      if (outcome === AdminGroupActOutcome.NotFound) {
+        return c.json({ error: ADMIN_GROUP_FILE_NOT_FOUND }, 404)
+      }
+      if (outcome !== AdminGroupActOutcome.Done) {
+        const { status, error } = REFUSALS[outcome]
+        return c.json({ error }, status)
+      }
+      const files = await groups.files(groupId)
+      if (!files) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      return c.json(files)
+    })
     .post(`/groups/:id/invitations/:invitationId/revoke`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       const invitationId = c.req.param(`invitationId`)
@@ -208,8 +247,17 @@ export function createAdminGroupsRoutes(
     })
 }
 
+/** The group's plan's caps on its files, `null` for none. */
+export type AdminFileCaps = (
+  groupId: string,
+) => Promise<{ maxFiles: number | null; maxBytes: number | null }>
+
 /** The operator area's group service over the app's database. It reads nothing until called. */
-export function createAdminGroups(db: AppDbBase, pageSize: number): AdminGroupsService {
+export function createAdminGroups(
+  db: AppDbBase,
+  pageSize: number,
+  fileCaps: AdminFileCaps,
+): AdminGroupsService {
   return {
     async list(filter) {
       const { groups, total } = await db.adminGroups.list(filter, pageSize)
@@ -222,6 +270,13 @@ export function createAdminGroups(db: AppDbBase, pageSize: number): AdminGroupsS
       db.adminGroups.removeMember(operator, groupId, userId),
     transferOwnership: (operator, groupId, userId) =>
       db.adminGroups.transferOwnership(operator, groupId, userId),
+    async files(groupId) {
+      const files = await db.adminGroups.files(groupId)
+      if (!files) return null
+      const caps = await fileCaps(groupId)
+      return { files: files.files, usage: { files: files.total, bytes: files.bytes, ...caps } }
+    },
+    removeFile: (operator, groupId, fileId) => db.adminGroups.removeFile(operator, groupId, fileId),
     async widget(groupId, widgetId, request) {
       // Every aggregate's readers, by widget id: the notes' are the only ones so far.
       const read = Object.hasOwn(NOTE_WIDGET_READERS, widgetId)
@@ -237,6 +292,16 @@ export function createAdminGroups(db: AppDbBase, pageSize: number): AdminGroupsS
 /** The groups module: the list, one group and the operator's actions on it. */
 export const groupsAdminModule: AdminApiModule = {
   id: `groups`,
-  routes: ({ db, limit }) =>
-    createAdminGroupsRoutes({ limit, groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE) }),
+  routes: ({ db, limit, billing }) => {
+    // Read on the first call: the routes are built before any database is reached.
+    const fileCaps: AdminFileCaps = async (groupId) => {
+      const plan = await createPlanOf(db.billing, billing)(groupId)
+      const { limits } = entitlementsOf(plan, billing.provider !== null)
+      return { maxFiles: limits.maxAttachments, maxBytes: limits.storageBytes }
+    }
+    return createAdminGroupsRoutes({
+      limit,
+      groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE, fileCaps),
+    })
+  },
 }

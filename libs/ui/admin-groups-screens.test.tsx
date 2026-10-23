@@ -11,6 +11,7 @@ import { act } from "preact/test-utils"
 import {
   ADMIN_GROUP_NO_FILTER,
   type AdminGroupDetail,
+  type AdminGroupFiles,
   type AdminGroupMember,
   type AdminGroupRow,
   GroupRole,
@@ -290,7 +291,14 @@ const colleague: AdminGroupMember = {
 
 const detail: AdminGroupDetail = {
   group: family,
-  counts: { notes: 12, deletedNotes: 2, tags: 4, pendingInvitations: 1 },
+  counts: {
+    notes: 12,
+    deletedNotes: 2,
+    tags: 4,
+    pendingInvitations: 1,
+    files: 2,
+    fileBytes: 2_500_000,
+  },
   billing: null,
   members: [owner, colleague, editor],
   invitations: [
@@ -332,10 +340,35 @@ const detail: AdminGroupDetail = {
 const operator = { id: 7, role: UserRole.OPERATOR }
 const supervisor = { id: 7, role: UserRole.SUPERVISOR }
 
+const FILE_ID = `0199c3a0-0000-7000-8000-000000000005`
+const files: AdminGroupFiles = {
+  files: [
+    {
+      id: FILE_ID,
+      contentType: `application/pdf`,
+      size: 1_500_000,
+      uploader: { id: 43, name: `Grace Hopper`, email: `grace@example.com` },
+      createdAt: `2026-10-12T10:00:00.000Z`,
+      noteDeleted: false,
+    },
+    {
+      id: `0199c3a0-0000-7000-8000-000000000006`,
+      contentType: `image/png`,
+      size: 1_000_000,
+      uploader: null,
+      createdAt: `2026-10-11T10:00:00.000Z`,
+      noteDeleted: true,
+    },
+  ],
+  usage: { files: 2, bytes: 2_500_000, maxFiles: 100, maxBytes: 200 * 1024 * 1024 },
+}
+
 function groupProps(calls: unknown[][], props: Partial<AdminGroupScreenProps> = {}) {
   return {
     detail,
     error: null,
+    files,
+    filesError: null,
     operator,
     tab: `members`,
     onTab: (tab) => void calls.push([`tab`, tab]),
@@ -433,6 +466,61 @@ describe(`one group in the admin app`, () => {
     const activity = await shown(`activity`, `[data-e2e=admin-group-activity]`)
     expect(activity.textContent).toContain(`Bob Builder`)
     expect(activity.textContent).toContain(`By an operator`)
+  })
+
+  it(`lists each file's kind, size, uploader and note state, with the group's room, and no name`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files` })} />)
+    const list = find(`[role=tabpanel] [data-e2e=admin-group-files]`)
+    const first = list.querySelector(`[data-e2e=admin-group-file-${FILE_ID}]`)!
+    expect(first.textContent).toContain(`PDF · 1.4 MB`)
+    expect(first.querySelector(`a[href='/users/43']`)?.textContent).toBe(`Grace Hopper`)
+    expect(first.textContent).not.toContain(`Note in trash`)
+    expect(list.textContent).toContain(`A deleted account`)
+    expect(list.textContent).toContain(`Note in trash`)
+    expect(find(`[data-e2e=admin-group-files-usage]`).textContent).toBe(
+      `2 of 100 files · 2.4 MB of 200 MB`,
+    )
+    expect(find(`[data-e2e=admin-group-counts]`).textContent).toContain(`Files2 · 2.4 MB`)
+  })
+
+  it(`opens a file's removal from its row and confirms it, and offers none in the trash`, async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminGroupScreen {...groupProps(calls, { tab: `files` })} />)
+    await click(`[data-e2e=admin-group-file-${FILE_ID}] [data-e2e=admin-group-remove-file-open]`)
+    await mount(
+      <AdminGroupScreen
+        {...groupProps(calls, { tab: `files`, dialog: { kind: `removeFile`, fileId: FILE_ID } })}
+      />,
+    )
+    expect(find(`[data-e2e=admin-group-dialog]`).textContent).toContain(
+      `The members of Family will no longer see it.`,
+    )
+    await submit(`[data-e2e=admin-group-action-submit]`)
+    expect(calls).toEqual([
+      [`open`, { kind: `removeFile`, fileId: FILE_ID }],
+      [`action`, { kind: `removeFile`, fileId: FILE_ID }],
+    ])
+
+    const trashed = { ...detail, group: { ...family, deletedAt: `2026-10-15T10:00:00.000Z` } }
+    await mount(<AdminGroupScreen {...groupProps([], { detail: trashed, tab: `files` })} />)
+    expect(has(`[data-e2e=admin-group-remove-file-open]`)).toBe(false)
+  })
+
+  it(`shows the files loading, the API's message when they fail, and an empty list`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: null })} />)
+    expect(has(`[role=status][aria-label='Loading the files']`)).toBe(true)
+    await mount(
+      <AdminGroupScreen
+        {...groupProps([], { tab: `files`, files: null, filesError: `The files did not load` })}
+      />,
+    )
+    expect(find(`[data-e2e=admin-group-files-error]`).textContent).toContain(
+      `The files did not load`,
+    )
+    const empty = { files: [], usage: { files: 0, bytes: 0, maxFiles: null, maxBytes: null } }
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: empty })} />)
+    expect(find(`[data-e2e=admin-group-files]`).textContent).toContain(`No files.`)
+    expect(find(`[data-e2e=admin-group-files-usage]`).textContent).toBe(`0 files · 0 B`)
   })
 
   it(`colours what removes access as a warning and what adds it as good news`, () => {

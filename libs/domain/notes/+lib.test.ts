@@ -4,6 +4,9 @@ import { GroupRole } from "@domain/groups"
 import {
   assertCanReadNotes,
   assertCanWriteNotes,
+  ATTACHMENT_NAME_MAX_LENGTH,
+  AttachmentError,
+  attachmentSignPayloadSchema,
   NOTE_BODY_MAX_LENGTH,
   NOTE_MOVE_MAX,
   NOTE_SEARCH_MAX_LENGTH,
@@ -21,6 +24,7 @@ import {
   noteRestoreRequestSchema,
   noteUpdateRequestSchema,
   NoteVersionConflictError,
+  parseAttachmentRequest,
   parseNoteExportEntry,
   parseNoteMoveRequest,
   parseNoteRequest,
@@ -356,5 +360,38 @@ describe("reading a note from an export file", () => {
       `A note can carry at most ${NOTE_TAG_MAX} tags`,
     )
     expect(performance.now() - started).toBeLessThan(1_000)
+  })
+})
+
+describe("parseAttachmentRequest", () => {
+  const sign = (name: string, extra: Record<string, unknown> = {}) =>
+    parseAttachmentRequest(attachmentSignPayloadSchema, {
+      groupId: uuidV7(),
+      noteId: uuidV7(),
+      name,
+      contentType: "image/png",
+      size: 10,
+      ...extra,
+    })
+
+  it("trims a file name and keeps one of the longest length", () => {
+    expect(sign("  scan.png ").name).toBe("scan.png")
+    const longest = "й".repeat(ATTACHMENT_NAME_MAX_LENGTH)
+    expect(sign(longest).name).toBe(longest)
+  })
+
+  it("refuses an empty, too long or invisible name, an unknown field and a size below one", () => {
+    for (
+      const bad of [
+        () => sign("   "),
+        () => sign("a".repeat(ATTACHMENT_NAME_MAX_LENGTH + 1)),
+        () => sign("scan\u0000.png"),
+        () => sign("scan\u202e.png"),
+        () => sign("scan.png", { extra: true }),
+        () => sign("scan.png", { size: 0 }),
+      ]
+    ) {
+      expect(bad).toThrow(AttachmentError)
+    }
   })
 })

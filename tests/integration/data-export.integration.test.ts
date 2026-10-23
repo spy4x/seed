@@ -170,6 +170,39 @@ Deno.test("data export: leaves out other people's notes, tags and groups, even i
   })
 })
 
+Deno.test("data export: lists the files the person attached, never another person's or the stored key", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor, owner } = await team(sql)
+    const shared = await note(sql, groupId, owner, `Owner's note`)
+    const [mine, theirs] = [uuidV7(), uuidV7()]
+    await sql`
+      INSERT INTO note_attachments (
+        id, note_id, object_key, name, content_type, size_bytes, created_by_user_id
+      ) VALUES
+        (${mine}, ${shared}, ${`attachments/${mine}`}, 'scan.pdf', 'application/pdf', 700, ${editor}),
+        (${theirs}, ${shared}, ${`attachments/${theirs}`}, 'owner.png', 'image/png', 300, ${owner})
+    `
+
+    const files = unzip(await buildDataExport(sql, editor, new Date()))
+    const rows = JSON.parse(files[`data.json`]).sections.note_attachments
+
+    expect(rows).toEqual([expect.objectContaining({
+      id: mine,
+      noteId: shared,
+      groupId,
+      name: `scan.pdf`,
+      contentType: `application/pdf`,
+      sizeBytes: 700,
+    })])
+    const text = Object.values(files).join(`\n`)
+    expect(text).not.toContain(`owner.png`)
+    expect(text).not.toContain(`attachments/${mine}`)
+    expect(files[`note_attachments.csv`].split(`\r\n`)[0]).toBe(
+      `\uFEFFid,noteId,groupId,name,contentType,sizeBytes,createdAt`,
+    )
+  })
+})
+
 Deno.test("data export: holds no secret, token, hash or key, nor another person's address", async () => {
   await withSchema(async (sql) => {
     const { groupId, editor } = await team(sql)

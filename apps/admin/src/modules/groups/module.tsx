@@ -81,6 +81,7 @@ function GroupView(
   }, [groupId])
   const group = state.group.value
   const dialog = state.dialog.value
+  const files = state.files.value
   const current = group.groupId === groupId
   const tab = new URLSearchParams(search).get(`tab`) ?? `members`
   const overview = overviewState(context)
@@ -99,6 +100,8 @@ function GroupView(
       detail={current ? group.detail : null}
       error={groupId === null ? `Group not found` : current ? group.error : null}
       operator={operatorOf(context.operator)}
+      files={files.groupId === groupId ? files.files : null}
+      filesError={files.groupId === groupId ? files.error : null}
       tab={tab}
       onTab={(next) =>
         context.navigate(next === `members` ? path : `${path}?tab=${encodeURIComponent(next)}`, {
@@ -132,7 +135,7 @@ function GroupView(
   )
 }
 
-/** Every group, and one group's page with its members, invitations and activity (#426). */
+/** Every group, and one group's page with its members, invitations, files and activity (#426). */
 export const groupsModule: AdminModule = {
   id: `groups`,
   nav: { name: `Groups`, href: ADMIN_GROUP_PATHS.list, Icon: IconFolder },

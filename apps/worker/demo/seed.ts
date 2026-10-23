@@ -11,6 +11,9 @@ import { type AuditEventInput, writeAuditEvent } from "@server/groups/audit.ts"
 import { PostgresInvitationRepository } from "@server/groups/postgres-invitation-repository.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { AppDbBase } from "../../api/services/db-base.ts"
+import type { ServerFiles } from "@server/files/files.ts"
+import { attachmentObjectKey } from "@domain/notes"
+import { sampleFile } from "./sample-files.ts"
 import { createSignIn } from "../../api/services/sign-in.ts"
 import {
   fakeDemoData,
@@ -149,6 +152,7 @@ export async function seedWorkspace(
   userId: number,
   dataSeed: number,
   now = new Date(),
+  files: Pick<ServerFiles, "put"> | null = null,
 ): Promise<void> {
   const [{ groups }] = await sql<{ groups: number }[]>`
     SELECT COUNT(*)::int AS groups FROM group_members WHERE user_id = ${userId}
@@ -165,7 +169,7 @@ export async function seedWorkspace(
   const idOf = (member: FakeMember) => member === `you` ? userId : ids.get(people[member]) ?? null
   const at: At = (ago) => new Date(now.getTime() - ago * 60_000)
   const firstAudit = await lastId(sql, `audit_events`)
-  const groupIds = await seedGroups(db, sql, fakeWorkspace(dataSeed), idOf, at, false)
+  const groupIds = await seedGroups(db, sql, fakeWorkspace(dataSeed), idOf, at, false, files)
   await orderIdsByTime(
     sql,
     `audit_events`,
@@ -212,6 +216,7 @@ async function seedGroups(
   idOf: (member: FakeMember) => number | null,
   at: At,
   backdateGroups: boolean,
+  files: Pick<ServerFiles, "put"> | null = null,
 ): Promise<(string | null)[]> {
   const invitations = new PostgresInvitationRepository(sql)
   const ids: (string | null)[] = []
@@ -311,6 +316,29 @@ async function seedGroups(
           updated_by_user_id = ${note.edit ? writer(note.edit.by) : author}
         WHERE id = ${id}
       `
+      // A note's sample files: stored, then added as its author confirmed them.
+      for (const file of files ? note.files ?? [] : []) {
+        const fileId = uuidV7()
+        const key = attachmentObjectKey(fileId)
+        const sample = sampleFile(file.kind, note.title)
+        await files!.put(key, sample.bytes)
+        await db.attachment.add(
+          groupId,
+          {
+            id: fileId,
+            noteId: id,
+            userId: author,
+            stagingKey: key,
+            name: file.name,
+            contentType: sample.contentType,
+            size: sample.bytes.length,
+          },
+          key,
+          { maxFiles: null, maxBytes: null, maxPerNote: Infinity },
+          author,
+        )
+        await sql`UPDATE note_attachments SET created_at = ${when} WHERE id = ${fileId}`
+      }
       await dateAudit(sql, id, when)
     }
     for (const invitation of group.invitations) {
