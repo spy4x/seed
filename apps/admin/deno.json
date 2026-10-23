@@ -4,11 +4,12 @@
     "check": "deno check src/main.tsx vite.config.ts",
     "dev": "deno run -A --node-modules-dir=auto npm:vite@7.3.6 ."
   },
-  // The versions apps/spa uses, so both apps build with the same tools.
+  // The versions apps/spa uses, so both apps build and test with the same tools.
   "imports": {
     "@deno/vite-plugin": "npm:@deno/vite-plugin@2.0.4",
     "@preact/preset-vite": "npm:@preact/preset-vite@2.10.2",
     "@tailwindcss/vite": "npm:@tailwindcss/vite@4.1.12",
+    "happy-dom": "npm:happy-dom@20.14.5",
     "tailwindcss": "npm:tailwindcss@4.1.12",
     "tailwindcss/": "npm:/tailwindcss@4.1.12/",
     "tailwindcss/plugin": "npm:/tailwindcss@4.1.12/plugin.js",

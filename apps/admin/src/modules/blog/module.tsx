@@ -1,6 +1,6 @@
 import type { JSX } from "preact"
 import { useEffect, useMemo } from "preact/hooks"
-import { useSearch } from "wouter-preact"
+import { useLocation, useSearch } from "wouter-preact"
 import { IconPencilSquare } from "@spy4x/preact-icons"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { parseBlogStatusFilter } from "@domain/blog"
@@ -72,6 +72,10 @@ function BlogEditorView(
 ): JSX.Element {
   const state = blogState(context)
   const id = params.id
+  // The router's own navigate, for the guard's "Leave" and for moves that keep or drop nothing
+  // unsaved: the create page's address change after a save, and the list after a delete. Anything
+  // else goes through `context.navigate`, which asks first while edits are unsaved.
+  const [, go] = useLocation()
   useEffect(() => {
     const open = state.editor.value
     // The create page just saved this post and moved to its address: it is open already.
@@ -88,7 +92,7 @@ function BlogEditorView(
   /** After the create page's first save, the page moves to the post's own address. */
   const settle = (saved: { id: string } | null) => {
     if (saved && id === undefined) {
-      context.navigate(ADMIN_BLOG_PATHS.post(saved.id), { replace: true })
+      go(ADMIN_BLOG_PATHS.post(saved.id), { replace: true })
     }
   }
   return (
@@ -125,7 +129,7 @@ function BlogEditorView(
         onUnpublish={() => void state.unpublish()}
         onChangeUrl={(slug) => void state.changeUrl(slug)}
         onDelete={async () => {
-          if (await state.remove()) context.navigate(ADMIN_BLOG_PATHS.list)
+          if (await state.remove()) go(ADMIN_BLOG_PATHS.list)
         }}
         now={state.now()}
         navigate={context.navigate}
@@ -133,7 +137,8 @@ function BlogEditorView(
       <UnsavedGuard
         when={state.unsaved()}
         owns={(url) => url.origin === globalThis.location?.origin}
-        navigate={context.navigate}
+        navigate={go}
+        leaveGuard={context.leaveGuard}
         labels={{
           title: `Leave without saving?`,
           message: `Your changes to this post are lost.`,

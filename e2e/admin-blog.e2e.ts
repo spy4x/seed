@@ -64,6 +64,18 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
       "## Why\n\nIt is **fast**.\n\n<script>window.hacked = true</script>",
     )
     await ops.locator("[data-e2e=admin-blog-description]").fill("A post written from the keys.")
+
+    // A `g` shortcut with unsaved text asks first; "Keep editing" keeps the page and the text.
+    await ops.evaluate(() => (document.activeElement as HTMLElement | null)?.blur())
+    await ops.keyboard.press("g")
+    await ops.keyboard.press("u")
+    const leave = ops.getByRole("alertdialog", { name: "Leave without saving?" })
+    await expect(leave).toBeVisible()
+    await leave.getByRole("button", { name: "Keep editing" }).click()
+    await expect(leave).toBeHidden()
+    await expect(ops).toHaveURL(`${adminBase}/blog/new`)
+    await expect(ops.locator("[data-e2e=admin-blog-title-field]")).toHaveValue(title)
+
     await ops.keyboard.press("ControlOrMeta+s")
     await expect(ops.locator("[data-e2e=admin-blog-saved]")).toHaveText("Saved")
     await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}$/)
