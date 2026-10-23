@@ -414,7 +414,7 @@ function ProfileSection(
         <>
           <SettingGroup
             title="Push notifications"
-            description="Devices that get a notification when something changes in your groups."
+            description="Browsers and phones that show a notice even while the app is closed."
           >
             <PushDevicesSection
               devices={props.pushDevices}
