@@ -8,6 +8,7 @@ import {
   apiTokenCreatedMail,
   billingNoticeMail,
   createMailSender,
+  dataExportReadyMail,
   emailCodeMail,
   invitationMail,
   mailOffWarning,
@@ -225,6 +226,22 @@ describe("accountRestoredMail", () => {
     expect(mail.text).toContain("app.example.com was restored by a sign-in")
     expect(mail.text).toContain("If this wasn't you, sign in, delete your account again and change")
     expect(mail.html).toContain(`href="https://app.example.com/sign-in"`)
+  })
+})
+
+describe("dataExportReadyMail", () => {
+  const mail = dataExportReadyMail({ webAppUrl: "https://app.example.com" }, {
+    to: "ann@example.com",
+    expiresAt: new Date("2026-10-30T10:00:00Z"),
+  })
+
+  it("says until when the file waits, links to the profile and never to the file", () => {
+    expect(mail.subject).toBe("Your data is ready")
+    expect(mail.text).toContain("Download it from your profile until")
+    expect(mail.text).toContain("2026")
+    expect(mail.html).toContain(`href="https://app.example.com/profile/account"`)
+    expect(`${mail.text}${mail.html}`).not.toContain("data-export")
+    expect(mail.text).toContain("If you did not ask for this, change your password")
   })
 })
 

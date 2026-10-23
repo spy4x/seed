@@ -301,6 +301,33 @@ export function accountRestoredMail(brand: MailBrand, { to }: { to: string }): E
 }
 
 /**
+ * The mail that tells a person their data export is ready (#229). It links to the profile, never
+ * to the file: the download needs the person's session.
+ */
+export function dataExportReadyMail(
+  brand: MailBrand,
+  { to, expiresAt }: { to: string; expiresAt: Date },
+): EmailMessage {
+  const ready = `Download it from your profile until ${billingDate(expiresAt)}.`
+  const notYou =
+    "If you did not ask for this, change your password and sign out of your other devices."
+  const link = new URL("/profile/account", brand.webAppUrl).href
+  return {
+    to,
+    subject: "Your data is ready",
+    text: `${ready}\n\n${link}\n\n${notYou}\n`,
+    html: mailHtml(
+      brand,
+      [
+        `<p>${escapeHtml(ready)}</p>`,
+        `<p><a href="${escapeHtml(link)}">Open your profile</a></p>`,
+        `<p>${escapeHtml(notYou)}</p>`,
+      ].join("\n"),
+    ),
+  }
+}
+
+/**
  * A moment as the account mails write it, before " UTC": `October 15, 2026 at 14:03`, the date in
  * the form {@link billingDate} gives.
  */
