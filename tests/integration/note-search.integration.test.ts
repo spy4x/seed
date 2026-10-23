@@ -123,5 +123,17 @@ Deno.test("the note search against Postgres", async (t) => {
         expect(hit.snippet).toBe("(Draft) Budget for the roadmap items.")
       },
     )
+
+    await t.step(
+      "a snippet of a whole body that starts and ends with a path has no ellipsis",
+      async () => {
+        const { groupId, owner } = await team(sql)
+        await write(groupId, owner, "Paths", "/usr/bin holds the tools of /opt/")
+
+        const [hit] = await notes.searchForMember(owner, "tools", NOTE_SEARCH_LIMIT)
+
+        expect(hit.snippet).toBe("/usr/bin holds the tools of /opt/")
+      },
+    )
   })
 })
