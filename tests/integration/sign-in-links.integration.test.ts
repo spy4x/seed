@@ -434,6 +434,32 @@ Deno.test("a guest who opens a link someone else asked for keeps their guest ses
   })
 })
 
+Deno.test("a guest who opens someone else's link to an existing account is refused, with no switch into it", async () => {
+  await withFixture(async (fixture) => {
+    // The stranger's own account, and a link to it that the stranger hands a guest.
+    await fixture.account("mallory@example.com")
+    const token = await fixture.linkFor(fixture.browser(), "mallory@example.com")
+    const victim = fixture.browser()
+    await victim.call("POST", "/auth/guest")
+    const guestId = (await victim.call("GET", "/auth/me")).body.id as number
+
+    const redeemed = await victim.call("POST", "/auth/link/redeem", { token })
+
+    expect(redeemed).toMatchObject({
+      status: 403,
+      body: { code: "SIGN_IN_LINK_ASKED_ELSEWHERE" },
+    })
+    expect(await victim.call("GET", "/auth/guest/switch")).toEqual({
+      status: 200,
+      body: { switch: null },
+    })
+    expect(await victim.call("GET", "/auth/me")).toMatchObject({
+      status: 200,
+      body: { id: guestId, guestSince: expect.any(String) },
+    })
+  })
+})
+
 Deno.test("a link refuses a blocked account like a used link", async () => {
   await withFixture(async (fixture) => {
     const owner = await fixture.account("ada@example.com")
