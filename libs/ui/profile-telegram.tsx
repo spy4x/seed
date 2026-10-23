@@ -1,5 +1,7 @@
 import type { JSX } from "preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
+import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { CopyBlock } from "@spy4x/preact-ui/copy-block"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { OnDay } from "@spy4x/preact-ui/format"
@@ -12,7 +14,6 @@ import {
   type TelegramLinkCodeResponse,
   type TelegramStatusResponse,
 } from "@domain/identity"
-import { ScreenForm } from "./progressive.tsx"
 
 /** The messages shown when a Telegram call failed without a message of its own. */
 export const TELEGRAM_FAILURES = {
@@ -35,6 +36,7 @@ export interface TelegramLinkProps {
   onLink: () => void
   /** The person closed the dialog: the app stops waiting for the link. */
   onCloseCode: () => void
+  /** The person confirmed "Unlink" in its dialog. */
   onUnlink: () => void
 }
 
@@ -42,13 +44,35 @@ export interface TelegramLinkProps {
  * The profile's Telegram row (#269), under Notifications: whether the person's Telegram account
  * is linked, with "Link Telegram" or "Unlink". Linking opens a dialog with the code: "Open
  * Telegram" sends it in one tap, and the message to send by hand is there to copy for another
- * device. The app closes the dialog once the bot has linked the account. Nothing is drawn while
- * the bot is off and nothing is linked, or before the status is known.
+ * device. The app closes the dialog once the bot has linked the account. Unlinking asks first,
+ * since undoing it takes a new code and a trip to Telegram.
+ *
+ * Focus: closing the dialog returns it to "Link Telegram" (the dialog's own restore). A link or an
+ * unlink swaps that row's button for the other one, so focus moves to the new button. Nothing is
+ * drawn while the bot is off and nothing is linked, or before the status is known.
  */
 export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
   const { status, code, error, pending } = props
+  const [confirming, setConfirming] = useState(false)
+  const linkButton = useRef<HTMLButtonElement>(null)
+  const unlinkButton = useRef<HTMLButtonElement>(null)
+  const linkedAt = status?.linkedAt ?? null
+  const seen = useRef<{ linkedAt: string | null } | null>(null)
+  useEffect(() => {
+    // The first status read is no change of the person's: focus stays where it is. The unlink's
+    // dialog goes in the render that swaps the buttons, so its own focus restore runs before this.
+    const before = seen.current
+    seen.current = status ? { linkedAt } : null
+    if (!before || !status || Boolean(before.linkedAt) === Boolean(linkedAt)) return
+    if (linkedAt) unlinkButton.current?.focus()
+    else {
+      setConfirming(false)
+      linkButton.current?.focus()
+    }
+  }, [status === null, linkedAt])
+
   if (!status) return error ? <ErrorState message={error} /> : null
-  if (!status.enabled && !status.linkedAt) return null
+  if (!status.enabled && !linkedAt) return null
   const bot = status.botUsername ? `@${status.botUsername}` : "the bot"
   return (
     <SettingGroup
@@ -56,50 +80,71 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
       description={`Get your notifications in a chat with ${bot}, and use its commands there.`}
       dataE2E="telegram"
     >
-      <ErrorState message={error} />
+      {!(confirming && linkedAt) && <ErrorState message={error} />}
       <SettingList>
         <SettingRow
-          label="Telegram"
+          label="Chat"
           dataE2E="telegram-status"
-          value={status.linkedAt
+          value={linkedAt
             ? (
               <>
-                Linked <OnDay at={status.linkedAt} />
+                Linked <OnDay at={linkedAt} />
               </>
             )
             : "Not linked"}
-          action={status.linkedAt
+          action={linkedAt
             ? (
-              <ScreenForm pending={pending} onSubmit={props.onUnlink}>
-                <Button
-                  type="submit"
-                  variant="ghost"
-                  size="sm"
-                  class={TOUCH_TARGET}
-                  data-e2e="telegram-unlink"
-                  disabled={pending}
-                >
-                  Unlink <span class="sr-only">Telegram</span>
-                </Button>
-              </ScreenForm>
+              <Button
+                ref={unlinkButton}
+                type="button"
+                variant="ghost"
+                size="sm"
+                class={TOUCH_TARGET}
+                data-e2e="telegram-unlink"
+                onClick={() => setConfirming(true)}
+              >
+                Unlink <span class="sr-only">Telegram</span>
+              </Button>
             )
             : (
-              <ScreenForm pending={pending} onSubmit={props.onLink}>
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  size="sm"
-                  class={TOUCH_TARGET}
-                  data-e2e="telegram-link"
-                  busy={pending}
-                  busyLabel="Working…"
-                >
-                  Link Telegram
-                </Button>
-              </ScreenForm>
+              <Button
+                ref={linkButton}
+                type="button"
+                variant="secondary"
+                data-e2e="telegram-link"
+                onClick={props.onLink}
+                busy={pending}
+                busyLabel="Working…"
+              >
+                Link Telegram
+              </Button>
             )}
         />
       </SettingList>
+      {confirming && linkedAt && (
+        <ConfirmDialog
+          title="Unlink Telegram?"
+          tone="danger"
+          confirmLabel="Unlink"
+          busy={pending}
+          busyLabel="Unlinking…"
+          onConfirm={() => {
+            props.onUnlink()
+            return false
+          }}
+          onCancel={() => setConfirming(false)}
+          dataE2E="telegram-unlink-dialog"
+          confirmDataE2E="telegram-unlink-confirm"
+        >
+          <Stack>
+            <p class="text-sm text-muted">
+              Your notifications stop reaching Telegram, and {bot}{" "}
+              can no longer act for you there. To link it again you need a new code.
+            </p>
+            <ErrorState message={error} />
+          </Stack>
+        </ConfirmDialog>
+      )}
       <Modal
         open={code !== null}
         onClose={props.onCloseCode}
@@ -127,7 +172,6 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
             <div data-e2e="telegram-code">
               <CopyBlock
                 text={`/link ${code.code}`}
-                singleLine
                 textLabel="Message to send"
                 copyLabel="Copy message"
                 copiedLabel="Message copied"

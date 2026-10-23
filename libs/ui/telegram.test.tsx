@@ -63,6 +63,10 @@ function find<T extends Element = HTMLElement>(selector: string): T {
 
 const has = (selector: string) => document.querySelector(selector) !== null
 
+/** What has focus, by its `data-e2e` hook: an element would not print in a failed assertion. */
+const focused = () =>
+  document.activeElement?.getAttribute("data-e2e") ?? document.activeElement?.tagName
+
 async function click(selector: string): Promise<void> {
   await act(() => {
     find(selector).dispatchEvent(
@@ -82,6 +86,7 @@ async function submit(selector: string): Promise<void> {
 }
 
 const ON: TelegramStatusResponse = { enabled: true, botUsername: "seed_bot", linkedAt: null }
+const LINKED: TelegramStatusResponse = { ...ON, linkedAt: "2026-12-04T10:00:00Z" }
 const CODE: TelegramLinkCodeResponse = {
   code: `7_${"c".repeat(32)}`,
   expiresAt: "2026-12-04T10:10:00.000Z",
@@ -111,7 +116,7 @@ describe("the profile's Telegram row", () => {
     const calls: string[] = []
     await mount(<TelegramLink {...linkProps(calls)} />)
     expect(find("[data-e2e=telegram-status]").textContent).toContain("Not linked")
-    await submit("[data-e2e=telegram-link]")
+    await click("[data-e2e=telegram-link]")
     expect(calls).toEqual(["link"])
 
     await mount(<TelegramLink {...linkProps(calls, { code: CODE })} />)
@@ -119,16 +124,58 @@ describe("the profile's Telegram row", () => {
     expect(find("[data-e2e=telegram-code]").textContent).toContain(`/link ${CODE.code}`)
   })
 
-  it("offers Unlink once linked, and sends it", async () => {
+  it("returns focus to Link Telegram when the code dialog closes", async () => {
+    await mount(<TelegramLink {...linkProps([])} />)
+    find("[data-e2e=telegram-link]").focus()
+
+    await mount(<TelegramLink {...linkProps([], { code: CODE })} />)
+    await mount(<TelegramLink {...linkProps([])} />)
+
+    expect(focused()).toBe("telegram-link")
+  })
+
+  it("moves focus to Unlink once the bot has linked the account", async () => {
+    await mount(<TelegramLink {...linkProps([])} />)
+    find("[data-e2e=telegram-link]").focus()
+    await mount(<TelegramLink {...linkProps([], { code: CODE })} />)
+
+    await mount(<TelegramLink {...linkProps([], { status: LINKED })} />)
+
+    expect(focused()).toBe("telegram-unlink")
+  })
+
+  it("leaves focus alone when the first status arrives already linked", async () => {
+    await mount(<TelegramLink {...linkProps([], { status: null })} />)
+    await mount(<TelegramLink {...linkProps([], { status: LINKED })} />)
+
+    expect(focused()).toBe("BODY")
+  })
+
+  it("asks before unlinking, sends the unlink only once confirmed, and refocuses Link Telegram", async () => {
     const calls: string[] = []
-    await mount(
-      <TelegramLink
-        {...linkProps(calls, { status: { ...ON, linkedAt: "2026-12-04T10:00:00Z" } })}
-      />,
-    )
+    await mount(<TelegramLink {...linkProps(calls, { status: LINKED })} />)
     expect(has("[data-e2e=telegram-link]")).toBe(false)
-    await submit("[data-e2e=telegram-unlink]")
+
+    await click("[data-e2e=telegram-unlink]")
+    expect(calls).toEqual([])
+    expect(find("[data-e2e=telegram-unlink-dialog]").textContent).toContain("Unlink Telegram?")
+    await click("[data-e2e=telegram-unlink-confirm]")
     expect(calls).toEqual(["unlink"])
+
+    await mount(<TelegramLink {...linkProps(calls)} />)
+    expect(has("[data-e2e=telegram-unlink-dialog]")).toBe(false)
+    expect(focused()).toBe("telegram-link")
+  })
+
+  it("keeps the person's link when they cancel the unlink", async () => {
+    const calls: string[] = []
+    await mount(<TelegramLink {...linkProps(calls, { status: LINKED })} />)
+    await click("[data-e2e=telegram-unlink]")
+
+    await click("[data-e2e=telegram-unlink-dialog] button:not([data-e2e=telegram-unlink-confirm])")
+
+    expect(calls).toEqual([])
+    expect(has("[data-e2e=telegram-unlink-dialog]")).toBe(false)
   })
 
   it("still lets a linked person unlink after the bot was turned off", async () => {
