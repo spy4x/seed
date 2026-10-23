@@ -65,6 +65,11 @@ export const userBaseSchema = type({
    * includes a guest who kept the account. Optional for the same reason as `blockedAt`.
    */
   "guestSince?": "Date | null",
+  /**
+   * The person's profile picture (#228, `pictureUrl`), or `null` for none. Optional for the same
+   * reason as `blockedAt`: only `picture.confirm` and `picture.remove` set it.
+   */
+  "pictureId?": "string | null",
 })
 export type UserBase = typeof userBaseSchema.infer
 
@@ -432,6 +437,12 @@ export enum AuthAuditEventType {
    * (`telegram:<id>`), or by an operator (`operator:<id> telegram:<id>`).
    */
   TELEGRAM_UNLINKED = 35,
+  /**
+   * An operator removed the person's profile picture (#228). `identifier` names the operator
+   * (`operator:<id>`). The person's own changes of it are {@link PROFILE_UPDATED} rows with the
+   * `identifier` `picture`.
+   */
+  PICTURE_REMOVED_BY_OPERATOR = 36,
 }
 
 export const authAuditBaseSchema = type({
@@ -467,6 +478,7 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.GUEST_DELETED_BY_OPERATOR,
     AuthAuditEventType.TELEGRAM_LINKED,
     AuthAuditEventType.TELEGRAM_UNLINKED,
+    AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",
@@ -915,6 +927,8 @@ export interface AdminUserRow {
   lastSeenAt: string | null
   /** When a guest account (#224) was started, or `null` (or absent) for a full account. */
   guestSince?: string | null
+  /** Their profile picture (#228); `null` or absent for none. */
+  pictureId?: string | null
 }
 
 /** The answer of `GET /api/admin/users`. */
@@ -1171,6 +1185,7 @@ export * from "./preferences.ts"
 export * from "./guests.ts"
 export * from "./data-export.ts"
 export * from "./telegram.ts"
+export * from "./profile-picture.ts"
 
 /**
  * One push device of a person, as the operator area shows it (#427): never the endpoint or the

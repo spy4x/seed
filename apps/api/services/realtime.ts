@@ -11,7 +11,7 @@ import {
 } from "@spy4x/realtime"
 import { createOperationDispatcher, type Operations } from "@spy4x/realtime/operations"
 import { GROUP_AGGREGATE, GroupError } from "@domain/groups"
-import { AccessError, type Actor, userChangeGroupId } from "@domain/identity"
+import { AccessError, type Actor, PictureError, userChangeGroupId } from "@domain/identity"
 import { AttachmentError, NoteError, NoteVersionConflictError } from "@domain/notes"
 import { TagError, TagVersionConflictError } from "@domain/tags"
 import { PlanError, toPlanRefusal } from "@domain/billing"
@@ -83,6 +83,11 @@ export function toRequestError(error: unknown): RealtimeRequestError | null {
       limit: error.limit,
     })
   }
+  if (error instanceof PictureError) {
+    return new RealtimeRequestError(PICTURE_ERROR_CODES[error.code], error.message, {
+      code: error.code,
+    })
+  }
   if (error instanceof PlanError) {
     // The socket's codes are closed, so a plan refusal is `forbidden` and names itself in details.
     return new RealtimeRequestError("forbidden", error.message, toPlanRefusal(error))
@@ -146,6 +151,21 @@ const ATTACHMENT_ERROR_CODES: Record<
   FILE_TYPE: "bad_request",
   INVALID_REQUEST: "bad_request",
   NOTE_FULL: "conflict",
+  UPLOADS_PENDING: "conflict",
+  UPLOAD_BUDGET: "rate_limited",
+  UPLOAD_NOT_FOUND: "not_found",
+}
+
+const PICTURE_ERROR_CODES: Record<
+  PictureError["code"],
+  "bad_request" | "not_found" | "conflict" | "rate_limited"
+> = {
+  FILE_CONTENT: "bad_request",
+  FILE_MISSING: "bad_request",
+  FILE_TOO_LARGE: "bad_request",
+  FILE_TYPE: "bad_request",
+  INVALID_REQUEST: "bad_request",
+  PICTURE_NOT_FOUND: "not_found",
   UPLOADS_PENDING: "conflict",
   UPLOAD_BUDGET: "rate_limited",
   UPLOAD_NOT_FOUND: "not_found",

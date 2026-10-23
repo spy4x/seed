@@ -164,6 +164,11 @@ export interface FileStore {
   signDownload(key: string, file: { contentType: string; filename: string }): Promise<string>
   /** Deletes `key`; a missing one is not an error. */
   delete(key: string): Promise<void>
+  /**
+   * The bytes of a confirmed file, read whole into memory, or `null` when it is gone. Only for a
+   * small file, such as a profile picture of 1 MiB at most, that a page of another host shows.
+   */
+  read(key: string): Promise<Uint8Array | null>
   /** Whether the store answers, for the health route and the operator's System page. */
   isReachable(): Promise<boolean>
 }
@@ -224,6 +229,12 @@ export function createFileStore(
     },
     delete(key) {
       return internal.delete(bucket, key)
+    },
+    async read(key) {
+      const info = await internal.head(bucket, key)
+      if (info === null) return null
+      if (info.size === 0) return new Uint8Array()
+      return await internal.getRange(bucket, key, 0, info.size - 1)
     },
     async isReachable() {
       try {
