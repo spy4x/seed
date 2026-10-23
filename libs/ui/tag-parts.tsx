@@ -104,7 +104,7 @@ const CHIP_ROW =
   "-mx-4 -my-1 flex-nowrap overflow-x-auto px-4 py-1 *:shrink-0 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0"
 
 /**
- * A row of chips, one per tag, pressed for the tags in `value`. It is the note page's picker and
+ * A row of chips, one per tag in its colour, pressed for the tags in `value`. It is the note page's picker and
  * the notes list's filter: only the group's label and the wording differ.
  *
  * On a phone the row scrolls sideways instead of wrapping into many lines, and runs to the edges
@@ -127,7 +127,7 @@ export function TagChips(
       {showLabel && <p class="text-sm font-medium text-foreground" aria-hidden="true">{label}</p>}
       <ToggleChips
         label={label}
-        options={tags.map((tag) => ({ value: tag.id, label: tag.name }))}
+        options={tags.map((tag) => ({ value: tag.id, label: tag.name, color: tag.color }))}
         value={[...value]}
         onChange={onChange}
         class={CHIP_ROW}
