@@ -76,7 +76,11 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   // The open note is read once the list is: until then it is neither found nor missing.
   const readingNote = !creating && editing === null && !missing && listError === null
   const errors = creating ? store.createErrors.value : store.editErrors.value
-  const loading = groupsStore.loading.value || groupId === null || readingNote
+  // Only the first read of the groups counts: a later one runs after every change to a group (an
+  // upload, a removal, another member's edit), and drawing the loading page for it would throw the
+  // person's focus and place away.
+  const loading = (groupsStore.loading.value && membership === undefined) || groupId === null ||
+    readingNote
   const saved = editing ? store.notes.value.find((note) => note.id === editing.id) : undefined
   const youId = sessionState.value.user?.id ?? null
   const members = membersStore.groupId.value === groupId ? membersStore.members.value : null

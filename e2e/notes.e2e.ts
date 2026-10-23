@@ -392,6 +392,43 @@ test.describe("notes in a shared group", () => {
     }
   })
 
+  test("a change to the group while a note is open leaves the page and its focus in place", async ({ browser, request }) => {
+    const owner = "e2e_notes_focus_kept@example.com"
+    await cleanup(request, owner)
+    const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    try {
+      await signUp(request, owner)
+      const groupId = uuidV7()
+      const created = await request.post(`${apiBase}/api/groups`, {
+        headers,
+        data: { id: groupId, name: "Focus team" },
+      })
+      expect(created.status(), await created.text()).toBe(201)
+      const page = await context.newPage()
+      await signInOnline(page, owner)
+      await openNotes(page, "Focus team")
+      await page.locator("[data-e2e=note-new]").click()
+      await page.locator("[data-e2e=note-title]").fill("Trip to Porto")
+      await page.locator("[data-e2e=note-save]").click()
+      await expect(page).toHaveURL(/\/notes\/[0-9a-f-]{36}$/)
+      const attach = page.getByRole("button", { name: "Attach files" })
+      await attach.focus()
+
+      // An upload, a removal or another member's change re-reads the person's groups. The page
+      // stays drawn while that read runs, so focus stays on the control the person was on.
+      const renamed = await page.request.patch(`${apiBase}/api/groups/${groupId}`, {
+        headers,
+        data: { name: "Focus team 2" },
+      })
+      expect(renamed.ok(), await renamed.text()).toBe(true)
+      await expect(page.locator("[data-e2e=notes-group]")).toHaveText("Focus team 2")
+      await expect(attach).toBeFocused()
+    } finally {
+      await context.close()
+      await cleanup(request, owner)
+    }
+  })
+
   test('after a refused save, "Load the latest version" loads the server\'s text instead of asking to leave', async ({ browser, request }) => {
     const owner = "e2e_notes_conflict@example.com"
     await cleanup(request, owner)
