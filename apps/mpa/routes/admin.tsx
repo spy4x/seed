@@ -71,8 +71,8 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
   {
     name: `Users`,
     Icon: IconUsers,
-    text: `Everyone with an account. Open a person to block them, end a session or send a ` +
-      `password-reset link.`,
+    text: `Everyone with an account. Open a person to block them, end a session, send a ` +
+      `password-reset link or see the copies of their data they asked for.`,
   },
   {
     name: `Groups`,

@@ -442,12 +442,30 @@ describe("the public website", () => {
       .map(([, href, number]) => ({ href, number }))
     expect(links.length).toBeGreaterThan(0)
     for (const { href, number } of links) expect(href).toBe(`${REPOSITORY_URL}/issues/${number}`)
-    // Downloading an account's data is not built yet, and its issue is the place to follow it.
+    // Translations are not built yet, and their issue is the place to follow them.
     expect(html).toMatch(
       new RegExp(
-        `Downloading an account's data \\(<a href="${REPOSITORY_URL}/issues/229"[^>]*>issue #229</a>\\)`,
+        `Translations: the app is English only \\(<a href="${REPOSITORY_URL}/issues/216"[^>]*>issue #216</a>\\)`,
       ),
     )
+  })
+
+  it("lists Download my data as built on the home page, /features, /compare and /privacy (#229)", async () => {
+    const home = (await page("/")).html
+    const features = (await page("/features")).html
+    const compare = (await page("/compare")).html
+    const privacy = (await page("/privacy")).html
+
+    expect(home).toContain(`a download of your own data`)
+    expect(features).toContain(`Download my data: a ZIP of JSON and CSV files`)
+    expect(privacy).toContain(`choose Download my data in your profile`)
+    for (const html of [home, features, compare, privacy]) {
+      expect(html).not.toContain(`issues/229`)
+      expect(html).not.toContain(`Downloading an account&#39;s data`)
+      expect(html).not.toContain(`downloading an account&#39;s data`)
+      expect(html).not.toContain(`Downloading an account's data`)
+      expect(html).not.toContain(`downloading an account's data`)
+    }
   })
 
   it("lists passkeys on /features as built, not under Not built yet", async () => {

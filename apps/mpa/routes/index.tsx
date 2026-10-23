@@ -85,7 +85,7 @@ const WORKS_TODAY = [
   `Groups with members, roles, invitations and ownership transfer`,
   `Exporting a group to a file, and importing one as a new group`,
   `Per-member billing with trials, through Stripe`,
-  `The list of signed-in devices, and account deletion with a 7‑day undo`,
+  `The list of signed-in devices, a download of your own data, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
   `Realtime, the offline app and web push`,
   `The admin area`,
@@ -95,7 +95,6 @@ const WORKS_TODAY = [
 const NOT_BUILT = [
   `Translations: the app is English only`,
   `File uploads: the S3 file store is bundled, no screen uses it yet`,
-  `Downloading an account's data`,
 ] as const
 
 /** The questions, with each answer as plain text for the FAQ's structured data. */

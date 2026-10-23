@@ -182,11 +182,13 @@ export default define.page(function Privacy({ state }) {
         unsubscribe link in any of its mails.
       </p>
       <p>
-        The owner of a group can export it to a file from the group's page, with its notes and tags.
-        There is no way yet to download the rest of your account's data. To get a copy, write to me
-        through{" "}
-        <a href={AUTHOR_URL}>antonshubin.com</a>. Do not keep anything important in the demo: it is
-        a demo, and its data may be reset.
+        To get a copy of your data, choose Download my data in your profile. The app prepares a ZIP
+        of JSON and CSV files with your profile, settings, sign-in methods, sessions, the groups you
+        belong to and the notes and tags you wrote in them, and tells you by e-mail and in the app
+        when it is ready. You can ask for one file a day, and each file is deleted after 7 days. It
+        holds nothing other people wrote. The owner of a group can also export the whole group to a
+        file from the group's page. Do not keep anything important in the demo: it is a demo, and
+        its data may be reset.
       </p>
       <h2 id="questions">Questions</h2>
       <p>
