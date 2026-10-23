@@ -43,6 +43,7 @@ import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { expectVersion7Ids } from "./ids.ts"
+import { checkedError } from "../../apps/api/_testing/api-error.ts"
 
 /**
  * Personal API tokens (#167) against a real Postgres, through the real sign-in, the real token
@@ -541,8 +542,12 @@ Deno.test("creating a token needs the account's password: none, a wrong one and 
           ...(password === undefined ? {} : { password }),
         }),
       })
-      const body = (await response.json()) as { code?: string; error?: string }
-      return { status: response.status, code: body.code, ...(says ? { error: body.error } : {}) }
+      const error = checkedError(await response.json())
+      return {
+        status: response.status,
+        code: error.reason,
+        ...(says ? { error: error.message } : {}),
+      }
     }
 
     expect(await create(ada)).toEqual({ status: 400, code: "INVALID_REQUEST" })
@@ -586,10 +591,9 @@ Deno.test("wrong passwords at a token create count on the account's lock, which 
           password,
         }),
       })
-      const body = (await response.json()) as { code?: string }
       return {
         status: response.status,
-        code: body.code,
+        code: checkedError(await response.json()).reason,
         retryAfter: response.headers.get("retry-after"),
       }
     }
