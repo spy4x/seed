@@ -197,6 +197,38 @@ describe(`saving from the dialog`, () => {
     expect(backend.row?.value).toEqual({ ...DEFAULT_PREFERENCES, locale: `it-IT` })
   })
 
+  it(`keeps a second change made while the first is on its way, and shows both at once`, async () => {
+    const backend = server()
+    const laptop = device(backend)
+    await open(laptop)
+    // The person picks Formats, then the clock before the first answer is back: the screen builds
+    // each change on what it shows and on the version it holds.
+    const base = laptop.state.version.value
+    const first = laptop.state.saveDraft(base, {
+      locale: `de-DE`,
+      timeZone: null,
+      hourCycle: null,
+    })
+    expect(laptop.state.value.value.locale).toBe(`de-DE`)
+    const shown = laptop.state.value.value
+    const second = laptop.state.saveDraft(laptop.state.version.value, {
+      locale: shown.locale,
+      timeZone: shown.timeZone,
+      hourCycle: `h12`,
+    })
+    expect(laptop.state.value.value.hourCycle).toBe(`h12`)
+
+    expect(await first).toEqual({ ok: true })
+    expect(await second).toEqual({ ok: true })
+    expect(laptop.state.conflict.value).toBe(null)
+    expect(backend.row?.value).toEqual({
+      ...DEFAULT_PREFERENCES,
+      locale: `de-DE`,
+      hourCycle: `h12`,
+    })
+    expect(laptop.state.value.value).toEqual(backend.row?.value)
+  })
+
   it(`saves a draft made on the version held, and announces nothing on the saving device`, async () => {
     const backend = server({ lateHints: true })
     const laptop = device(backend)
