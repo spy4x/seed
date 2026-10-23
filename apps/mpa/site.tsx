@@ -13,6 +13,7 @@ import { SiteHeader } from "@spy4x/preact-system/site-header"
 import { breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
 import { createFormatters } from "@spy4x/time/format"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
+import { BLOG_NAME, BLOG_PATH, RSS_PATH } from "./blog.ts"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY } from "./brand.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
 import { HIRE_PAGE_URL } from "./hire.ts"
@@ -170,6 +171,13 @@ export interface SitePageHead {
   noindex?: boolean
   /** Which Open Graph image the page shares with. Defaults to the home page's. */
   og?: OgImageKey
+  /**
+   * An image of the page's own, such as a blog post's cover, shared instead of {@link og}. Its size
+   * is not known, so none is stated.
+   */
+  image?: { url: string; alt: string }
+  /** The Open Graph type: `article` for a blog post. Defaults to `website`. */
+  ogType?: `website` | `article`
   /** Structured data about the page, such as a FAQ or the software, for its JSON-LD graph. */
   jsonLd?: readonly unknown[]
 }
@@ -188,7 +196,7 @@ export interface SiteFrameProps {
    * The request's state: the website's own origin for canonical links, the SPA's for actions, and
    * whether the footer offers the newsletter.
    */
-  state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter">
+  state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter" | "blog">
   /** The page's path on this website, such as `/pricing`, for its canonical address. */
   path: string
   head: SitePageHead
@@ -201,9 +209,10 @@ export interface SiteFrameProps {
 }
 
 // Seed's own site: see docs/start-a-product.md (the hire link)
-/** The header's links, in display order. */
+/** The header's links, in display order. The Blog link joins them once a post is live. */
 export const NAV_LINKS = [
   { label: `Features`, href: `/features` },
+  { label: `Blog`, href: BLOG_PATH },
   { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
   { label: `Pricing`, href: `/pricing` },
   {
@@ -226,6 +235,7 @@ export function SiteFrame(
 ): JSX.Element {
   const spa = spaLinks(state.spaOrigin)
   const og = head.og ?? `home`
+  const blog = state.blog === true
   return (
     <>
       <Head>
@@ -233,15 +243,24 @@ export function SiteFrame(
           title={pageTitle(head.title)}
           description={head.description}
           canonical={`${state.webAppOrigin}${path}`}
-          ogImage={`${state.webAppOrigin}/og/${og}.png`}
-          imageAlt={ogImageAlt(og)}
-          imageWidth={OG_IMAGE_SIZE.width}
-          imageHeight={OG_IMAGE_SIZE.height}
+          ogType={head.ogType}
+          ogImage={head.image?.url ?? `${state.webAppOrigin}/og/${og}.png`}
+          imageAlt={head.image?.alt ?? ogImageAlt(og)}
+          imageWidth={head.image ? undefined : OG_IMAGE_SIZE.width}
+          imageHeight={head.image ? undefined : OG_IMAGE_SIZE.height}
           siteName={SITE_NAME}
           locale="en_US"
           noindex={head.noindex}
           jsonLd={head.jsonLd}
         />
+        {blog && (
+          <link
+            rel="alternate"
+            type="application/rss+xml"
+            title={BLOG_NAME}
+            href={`${state.webAppOrigin}${RSS_PATH}`}
+          />
+        )}
       </Head>
       <a
         href="#main"
@@ -258,7 +277,7 @@ export function SiteFrame(
             <BrandMark Icon={IconSprout} name="Seed" />
           </a>
         }
-        links={NAV_LINKS}
+        links={blog ? NAV_LINKS : NAV_LINKS.filter(({ href }) => href !== BLOG_PATH)}
         actions={
           <Button
             href={spa.try}
@@ -284,7 +303,7 @@ export function SiteFrame(
             </p>
           </div>
         }
-        groups={footerGroups(spa)}
+        groups={footerGroups(spa, blog)}
         aside={state.newsletter && footerNewsletter ? <FooterNewsletter /> : undefined}
         bottom={
           <p>
@@ -376,14 +395,18 @@ export function LegalPage(
   )
 }
 
-/** The footer's link columns: the product, the source, and the person and rules behind it. */
-function footerGroups(spa: { signIn: string; try: string }): SiteFooterGroup[] {
+/**
+ * The footer's link columns: the product, the source, and the person and rules behind it. The Blog
+ * link is there once a post is live.
+ */
+function footerGroups(spa: { signIn: string; try: string }, blog: boolean): SiteFooterGroup[] {
   return [
     {
       title: `Product`,
       links: [
         { label: `Features`, href: `/features` },
         { label: `Admin panel`, href: `/admin` },
+        ...(blog ? [{ label: `Blog`, href: BLOG_PATH }] : []),
         { label: `Compare`, href: `/compare` }, // Seed's own site: see docs/start-a-product.md
         { label: `Pricing`, href: `/pricing` },
         // The library's footer links take no `rel`; the app's robots.txt keeps crawlers off `/try`.
@@ -413,7 +436,7 @@ function footerGroups(spa: { signIn: string; try: string }): SiteFooterGroup[] {
   ]
 }
 
-/** The footer's newsletter form: a real `<form method="post">`, so it works without JavaScript. */
+/** The footer's newsletter: a heading, one line on what it sends, and {@link NewsletterForm}. */
 function FooterNewsletter(): JSX.Element {
   return (
     <section aria-labelledby="footer-news" class="flex flex-col gap-3">
@@ -421,27 +444,39 @@ function FooterNewsletter(): JSX.Element {
       <p class="text-sm text-muted">
         A short email when {SITE_NAME} changes. You confirm by email first; one click unsubscribes.
       </p>
-      <form
-        method="post"
-        action={FORM_ACTIONS.subscribe}
-        class="flex gap-2"
-        data-analytics-submit="newsletter-subscribe"
-      >
-        <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
-        <label for="footer-email" class="sr-only">Email address</label>
-        <Input
-          id="footer-email"
-          name="email"
-          type="email"
-          autocomplete="email"
-          placeholder="you@example.com"
-          required
-          data-e2e="footer-subscribe-email"
-        />
-        <Button type="submit" variant="secondary" data-e2e="footer-subscribe-submit">
-          Subscribe
-        </Button>
-      </form>
+      <NewsletterForm id="footer" />
     </section>
+  )
+}
+
+/**
+ * The newsletter's one-field form: a real `<form method="post">` to the subscribe page, so it
+ * works without JavaScript. `id` names its field (`<id>-email`) and its `data-e2e` hooks, so two
+ * forms never share an id; a page shows at most one besides the footer's, and hides the footer's
+ * then (`SiteFrameProps.footerNewsletter`).
+ */
+export function NewsletterForm({ id }: { id: string }): JSX.Element {
+  return (
+    <form
+      method="post"
+      action={FORM_ACTIONS.subscribe}
+      class="flex gap-2"
+      data-analytics-submit="newsletter-subscribe"
+    >
+      <input type="hidden" name="list" value={DEFAULT_SUBSCRIBER_LIST} />
+      <label for={`${id}-email`} class="sr-only">Email address</label>
+      <Input
+        id={`${id}-email`}
+        name="email"
+        type="email"
+        autocomplete="email"
+        placeholder="you@example.com"
+        required
+        data-e2e={`${id}-subscribe-email`}
+      />
+      <Button type="submit" variant="secondary" data-e2e={`${id}-subscribe-submit`}>
+        Subscribe
+      </Button>
+    </form>
   )
 }

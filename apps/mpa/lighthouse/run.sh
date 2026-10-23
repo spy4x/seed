@@ -2,7 +2,8 @@
 # The Lighthouse check of the public website (`deno task lighthouse`): every page in
 # lighthouserc.json must score, in Lighthouse mobile, at least 95 for performance and 100 for
 # accessibility, best practices and SEO, the median of three runs ("Design gate" in the global
-# agent rules). Starts the built MPA (`deno task mpa:build` first) on port 48410, nginx with gzip in
+# agent rules). Starts the blog API stand-in (blog-api.ts) on 48412, the built MPA (`deno task
+# mpa:build` first) on port 48410, nginx with gzip in
 # front of it on 48411 (nginx.conf), and Lighthouse CI. Reports land in .lighthouseci/.
 # CI runs this script (.woodpecker/ci.yml); run it the same way on a machine, from the repository
 # root. Needs nginx, and a Chromium: `CHROME_PATH`, or the newest one Playwright installed.
@@ -43,8 +44,15 @@ wait_for() { # <name> <pid> <url>
   return 1
 }
 
-# Production mode, with example hosts: the pages render without the API.
-ENV=prod DOMAIN=app.example.com MPA_DOMAIN=www.example.com API_URL=http://127.0.0.1:9 \
+# The blog's pages read the API: blog-api.ts answers its public routes with the dev seed's
+# published post, so /blog and that post are measured with content. Every other API address
+# answers 404, and the pages render without it.
+timeout 900 deno run --allow-net=127.0.0.1 "$HERE/blog-api.ts" 48412 >"$SCRATCH/api.log" 2>&1 &
+PIDS+=($!)
+wait_for api "${PIDS[-1]}" http://127.0.0.1:48412/api/blog/posts
+
+# Production mode, with example hosts.
+ENV=prod DOMAIN=app.example.com MPA_DOMAIN=www.example.com API_URL=http://127.0.0.1:48412 \
   timeout 900 deno serve --allow-all --port 48410 --host 127.0.0.1 apps/mpa/_fresh/server.js \
   >"$SCRATCH/mpa.log" 2>&1 &
 PIDS+=($!)

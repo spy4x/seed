@@ -8,7 +8,9 @@
         "http://127.0.0.1:48411/compare",
         "http://127.0.0.1:48411/admin",
         "http://127.0.0.1:48411/privacy",
-        "http://127.0.0.1:48411/subscribe"
+        "http://127.0.0.1:48411/subscribe",
+        "http://127.0.0.1:48411/blog",
+        "http://127.0.0.1:48411/blog/hello-world"
       ],
       "numberOfRuns": 3,
       "settings": {

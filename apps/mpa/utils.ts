@@ -12,6 +12,11 @@ export interface State {
   spaOrigin: string
   /** Whether the API takes newsletter subscriptions; `false` hides every newsletter form. */
   newsletter: boolean
+  /**
+   * Whether the blog has a live post (`blogLinkMiddleware`); `false` hides the Blog link and the
+   * RSS link from every page.
+   */
+  blog?: boolean
   /** Where page views and events go; `undefined` leaves the tracker out of every page. */
   analytics?: AnalyticsConfig
 }

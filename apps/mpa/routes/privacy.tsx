@@ -17,7 +17,7 @@ export const PRIVACY_HEAD = {
   title: `Privacy: what Seed's demo and site keep`,
   description: `What seedsaas.com and the Seed demo store about you, why, for how long, and ` +
     `how to delete it. No ads, no tracking cookies, no data sold.`,
-  updated: `2026-10-21`,
+  updated: `2026-10-23`,
 } as const
 
 /**
@@ -32,7 +32,7 @@ export default define.page(function Privacy({ state }) {
       title="Privacy"
       headTitle={PRIVACY_HEAD.title}
       description={PRIVACY_HEAD.description}
-      updated="21 October 2026"
+      updated="23 October 2026"
       sections={PRIVACY_SECTIONS}
     >
       <p>
@@ -45,6 +45,10 @@ export default define.page(function Privacy({ state }) {
         {new URL(state.webAppOrigin).host}{" "}
         sets no cookies. The server keeps request logs, with your IP address, to run and fix the
         site. If you subscribe, it keeps your email address and when you confirmed it.
+      </p>
+      <p>
+        The blog and its RSS feed work the same way and keep nothing more. A post's pictures may
+        load from another site, which then sees your IP address, as any site you visit does.
       </p>
       <h2 id="statistics">Visitor statistics</h2>
       {state.analytics

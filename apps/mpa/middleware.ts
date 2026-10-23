@@ -12,20 +12,23 @@ import { securityHeaderList, withSecurityHeaders } from "@spy4x/server/http/secu
 /**
  * The header set `securityHeaders` of `@spy4x/server` sends; the helper itself is Hono middleware
  * and the MPA runs on Fresh. A page here loads one stylesheet from its own origin and no script,
- * inline block, image or font, so the policy is the library's strictest: everything from `'self'`
- * only, no plugins and no framing. Its `Referrer-Policy: no-referrer` also covers the newsletter
- * pages, whose address carries a token.
+ * inline block or font, so the policy is the library's strictest: everything from `'self'` only,
+ * no plugins and no framing, images aside (below). Its `Referrer-Policy: no-referrer` also covers
+ * the newsletter pages, whose address carries a token.
  *
  * Two things widen it. The pricing page's form posts to the MPA, which redirects to the SPA's
  * sign-up, and a browser applies `form-action` to that redirect too: on a domain of its own the
  * MPA therefore allows the SPA's origin there. With analytics on, the Umami origin is allowed in
- * `script-src` (its tracker) and `connect-src` (the events it sends), and nowhere else.
+ * `script-src` (its tracker) and `connect-src` (the events it sends), and nowhere else. A blog
+ * post's cover and the images in its body are `https:` addresses wherever the operator keeps them,
+ * so `img-src` allows any `https:` image. Only operators write posts, and an image runs no code.
  */
 function securityHeaderSet(config: MpaConfig): Promise<[string, string][]> {
   const umami = config.analytics?.origin
   return securityHeaderList({
     extraSources: {
       ...(config.apiOrigin === config.webAppOrigin ? {} : { formAction: [config.apiOrigin] }),
+      imgSrc: [`https:`],
       ...(umami ? { scriptSrc: [umami], connectSrc: [umami] } : {}),
     },
   })
