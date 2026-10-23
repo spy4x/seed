@@ -13,6 +13,7 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { API_TOKEN_EXPIRY_DAYS, type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
+import { ApiDocsLink } from "./api-tokens.tsx"
 import { type Navigate, profilePath, ScreenForm } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
 
@@ -65,6 +66,8 @@ export interface ApiTokenNewScreenProps {
   /** Done, after the secret: the app forgets it and goes back to the profile. */
   onDone: () => void
   navigate?: Navigate
+  /** The API reference on the product's website; without one, no link to it shows. */
+  docsHref?: string | null
 }
 
 /** The words a create needs a connection for; the notice and a refused submit say the same. */
@@ -91,13 +94,13 @@ const BACK = { href: profilePath("api-tokens"), label: "Back to API tokens" }
  * page shows its secret, once, with a copy control and Done, which goes back to the profile.
  */
 export function ApiTokenNewScreen(props: ApiTokenNewScreenProps): JSX.Element {
-  const { groups, created, navigate } = props
+  const { groups, created, navigate, docsHref } = props
   const waited = useWaited(groups === null)
   if (created) {
     return (
       <Stack gap="xl">
         <PageHeader title="Copy your token" titleDataE2E="api-token-new-title" />
-        <CreatedSecret secret={created.secret} onDone={props.onDone} />
+        <CreatedSecret secret={created.secret} onDone={props.onDone} docsHref={docsHref} />
       </Stack>
     )
   }
@@ -109,6 +112,12 @@ export function ApiTokenNewScreen(props: ApiTokenNewScreenProps): JSX.Element {
         back={BACK}
         navigate={navigate}
       />
+      {docsHref && (
+        <p class="text-sm text-muted">
+          A token lets a script use one group through the API.{" "}
+          <ApiDocsLink href={docsHref} dataE2E="api-token-docs">Read the API docs</ApiDocsLink>
+        </p>
+      )}
       {groups === null
         ? waited && (
           <div data-e2e="api-token-loading">
@@ -257,10 +266,13 @@ function CreateForm(
 }
 
 /**
- * The secret, once: a warning that it will not be shown again, a copy control and Done. Focus
- * moves to the copy control, the one thing to do next.
+ * The secret, once: a warning that it will not be shown again, a copy control, how to send it
+ * (with a link to the reference's quick start) and Done. Focus moves to the copy control, the one
+ * thing to do next.
  */
-function CreatedSecret({ secret, onDone }: { secret: string; onDone: () => void }): JSX.Element {
+function CreatedSecret(
+  { secret, onDone, docsHref }: { secret: string; onDone: () => void; docsHref?: string | null },
+): JSX.Element {
   const box = useRef<HTMLDivElement>(null)
   useEffect(() => {
     box.current?.querySelector<HTMLButtonElement>("button")?.focus()
@@ -273,6 +285,14 @@ function CreatedSecret({ secret, onDone }: { secret: string; onDone: () => void 
       <div ref={box} data-e2e="api-token-secret">
         <CopyBlock text={secret} copyLabel="Copy token" copiedLabel="Token copied" />
       </div>
+      {docsHref && (
+        <p class="text-sm text-muted">
+          Send it as <code>Authorization: Bearer &lt;your token&gt;</code>.{" "}
+          <ApiDocsLink href={`${docsHref}#quick-start`} dataE2E="api-token-secret-docs">
+            See the quick start
+          </ApiDocsLink>
+        </p>
+      )}
       <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <Button
           type="button"

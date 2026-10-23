@@ -229,6 +229,31 @@ describe("ApiTokenNewScreen", () => {
     expect(calls).toEqual([["done"]])
   })
 
+  it("links to the API docs in a new tab on the form and to the quick start beside the secret", async () => {
+    const docsHref = "https://www.example.com/docs/api"
+    await mount(<ApiTokenNewScreen {...pageProps([], { docsHref })} />)
+    const form = find("[data-e2e=api-token-docs]")
+    expect(form.getAttribute("href")).toBe(docsHref)
+    expect(form.getAttribute("target")).toBe("_blank")
+
+    await mount(
+      <ApiTokenNewScreen {...pageProps([], { docsHref, created: { token, secret: SECRET } })} />,
+    )
+    const secret = find("[data-e2e=api-token-secret-docs]")
+    expect(secret.getAttribute("href")).toBe(`${docsHref}#quick-start`)
+    // A same-tab link would leave the page and lose the secret, shown once.
+    expect(secret.getAttribute("target")).toBe("_blank")
+    // Focus still lands on the copy control, not on the link.
+    expect(document.activeElement?.closest("[data-e2e=api-token-secret]")).not.toBe(null)
+  })
+
+  it("shows no API docs link without a website", async () => {
+    await mount(<ApiTokenNewScreen {...pageProps([])} />)
+    expect(count("[data-e2e=api-token-docs]")).toBe(0)
+    await mount(<ApiTokenNewScreen {...pageProps([], { created: { token, secret: SECRET } })} />)
+    expect(count("[data-e2e=api-token-secret-docs]")).toBe(0)
+  })
+
   it("never draws the secret again once the app has forgotten it", async () => {
     await mount(<ApiTokenNewScreen {...pageProps([], { created: { token, secret: SECRET } })} />)
     await mount(<ApiTokenNewScreen {...pageProps([])} />)

@@ -15,6 +15,7 @@ import { createFormatters } from "@spy4x/time/format"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { BLOG_NAME, BLOG_PATH, RSS_PATH } from "./blog.ts"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY } from "./brand.ts"
+import { API_DOCS_PATH } from "./api-docs.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
 import { HIRE_PAGE_URL } from "./hire.ts"
 import type { State } from "./utils.ts"
@@ -328,6 +329,8 @@ export interface LegalPageProps extends Omit<SiteFrameProps, "head"> {
   updated: string
   /** The page's `h2` anchors, for its table of contents. */
   sections: readonly { label: string; href: string }[]
+  /** Shown under the date in place of the legal notice, on a page that is not a legal one. */
+  lead?: ComponentChildren
 }
 
 /**
@@ -356,12 +359,12 @@ function legalPageJsonLd(
 }
 
 /**
- * A legal page of the demo: its title, a notice that it is a template a product must adapt, and
- * its text in one reading column. Headings, lists and links inside `children` get the page's prose
- * styles.
+ * A legal page of the demo: its title, a notice that it is a template a product must adapt (or
+ * `lead` in its place), and its text in one reading column. Headings, lists and links inside
+ * `children` get the page's prose styles.
  */
 export function LegalPage(
-  { state, path, title, headTitle, description, updated, sections, children }: LegalPageProps,
+  { state, path, title, headTitle, description, updated, sections, lead, children }: LegalPageProps,
 ): JSX.Element {
   return (
     <SiteFrame
@@ -377,10 +380,12 @@ export function LegalPage(
         <header class="flex max-w-3xl flex-col gap-4">
           <h1 class="text-3xl font-semibold tracking-tight lg:text-4xl">{title}</h1>
           <p class="font-mono text-sm text-muted">Last changed {updated}</p>
-          <Notice title="A starting point, not legal advice">
-            This page covers the live demo of {SITE_NAME}. A product built on {SITE_NAME}{" "}
-            must adapt it to what it really stores and does, and have it checked.
-          </Notice>
+          {lead ?? (
+            <Notice title="A starting point, not legal advice">
+              This page covers the live demo of {SITE_NAME}. A product built on {SITE_NAME}{" "}
+              must adapt it to what it really stores and does, and have it checked.
+            </Notice>
+          )}
         </header>
         <div class="grid gap-8 lg:grid-cols-4">
           <div class="lg:order-2">
@@ -420,6 +425,7 @@ function footerGroups(spa: { signIn: string; try: string }, blog: boolean): Site
         { label: `Source on GitHub`, href: REPOSITORY_URL, external: true },
         { label: `Report an issue`, href: `${REPOSITORY_URL}/issues`, external: true },
         { label: `Quick start`, href: `/#quick-start` },
+        { label: `API docs`, href: API_DOCS_PATH },
         { label: `What works today`, href: `/#status` },
       ],
     },

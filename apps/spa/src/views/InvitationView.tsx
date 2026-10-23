@@ -24,7 +24,7 @@ async function joined(
   return true
 }
 
-/** The page an invitation link opens. The sign-in gate sends a signed-out visitor to sign in first. */
+/** The page an invitation link opens. The sign-in gate sends a signed-out visitor to sign up first. */
 export function InvitationView({ token }: { token: string }) {
   const [, navigate] = useLocation()
   const store = invitationsStore

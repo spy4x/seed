@@ -138,3 +138,13 @@ Deno.test("each Deno service checks its health with the Deno script, on its own 
     expect(service.environment, `${name} in ${file}`).toContain(`HEALTHCHECK_PORT=${port}`)
   }
 })
+
+// Without the password the demo seeds no administrator; without the pepper the worker refuses to
+// start. The API never reads the password, so it does not get it.
+Deno.test("the worker container receives the demo administrator's password and the API's pepper", async () => {
+  const names = await environmentOf("worker")
+
+  expect(names).toContain("DEMO_ADMIN_PASSWORD")
+  expect(names).toContain("AUTH_PEPPER")
+  expect(await environmentOf("api")).not.toContain("DEMO_ADMIN_PASSWORD")
+})

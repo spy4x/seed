@@ -6,6 +6,8 @@
 !libs/**
 !infra/**
 !deno.jsonc
+# The MPA renders the API reference from this file.
+!docs/token-api.md
 !deno.lock
 
 # 3. Bonus step: ignore any unnecessary files that may be inside those allowed directories in Step #2

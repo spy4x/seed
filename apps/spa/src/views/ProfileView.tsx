@@ -50,6 +50,8 @@ import type { PushPublicKeyResponse } from "@domain/identity"
 import { SESSIONS_FAILURE } from "@ui/signed-in-devices.tsx"
 import { SIGN_IN_METHODS_FAILURE, signInMethodName } from "@ui/sign-in-methods.tsx"
 import { apiTokensHttp, createApiTokensStore } from "../state/api-tokens.ts"
+import { siteOrigin } from "../state/demo.ts"
+import { apiDocsHref } from "./api-docs-href.ts"
 import { createDataExportStore, DATA_EXPORT_DOWNLOAD_PATH } from "../state/data-export.ts"
 import { notificationsStore } from "../state/notifications.ts"
 import { DataExportStatus } from "@domain/identity"
@@ -668,6 +670,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         error: tokens.errors.value.list,
         revoking: tokens.pending.value.revoke,
         navigate,
+        docsHref: apiDocsHref(siteOrigin.value),
         onRevoke: (id) =>
           void tokens.revoke(id).then((revoked) => {
             if (revoked) {
