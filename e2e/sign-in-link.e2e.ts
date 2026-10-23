@@ -50,7 +50,9 @@ test("a new address signs up by the mailed link, which works once", async ({ pag
     await expect(page).toHaveURL("/sign-in/link")
     await expect(page.locator("[data-e2e=sign-in-link-sent]")).toContainText(email)
     await expect(page.getByRole("heading", { name: "Check your inbox" })).toBeFocused()
-    await expect(page.locator("[data-e2e=sign-in-link-wait]")).toContainText("send a new link in")
+    await expect(page.locator("[data-e2e=resend-button-waiting]")).toContainText(
+      "send a new link in",
+    )
 
     const link = await linkFor(request, email)
     expect(link).toMatch(/^\/sign-in\/link\/open#token=/)

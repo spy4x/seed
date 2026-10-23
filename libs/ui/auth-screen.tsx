@@ -142,6 +142,8 @@ export interface AuthScreenProps {
   onEmailLink?: (login: string) => void
   /** The link is being sent: its button says so. */
   linkBusy?: boolean
+  /** The login field's starting value, such as an address another page handed back. */
+  defaultLogin?: string
 }
 
 /** What the sign-in screen says about the last sign-in on this browser. */
@@ -295,10 +297,12 @@ export function AuthScreen(
     guest = false,
     onEmailLink,
     linkBusy = false,
+    defaultLogin,
   }: AuthScreenProps,
 ): JSX.Element {
   const copy = COPY[screen]
-  const form = useRef<HTMLDivElement>(null)
+  // What the login field holds, as typed: the link button sends it.
+  const login = useRef(defaultLogin ?? "")
   const tryFirst = guest && screen === "sign-up"
 
   if (screen === "one-time-code" && !isMfaRequired) {
@@ -337,13 +341,7 @@ export function AuthScreen(
         busy={linkBusy}
         busyLabel="Sending…"
         disabled={busy}
-        // The form keeps its own fields, so the press reads what the login field holds.
-        onClick={() =>
-          onEmailLink(
-            form.current?.querySelector<HTMLInputElement>(
-              `input[name="${FIELD_NAMES[screen].login}"]`,
-            )?.value.trim() ?? "",
-          )}
+        onClick={() => onEmailLink(login.current.trim())}
         data-e2e={screen === "sign-in" ? "link-sign-in" : "link-sign-up"}
       >
         {screen === "sign-in" ? "Email me a sign-in link" : "Email me a sign-up link"}
@@ -366,35 +364,35 @@ export function AuthScreen(
           <WordDivider>or create an account</WordDivider>
         </>
       )}
-      <div ref={form} class="contents">
-        <AuthForm
-          submitVariant={tryFirst ? "secondary" : "primary"}
-          mode={screen === "one-time-code" ? "sign-in" : screen}
-          step={screen === "one-time-code" ? "one-time-code" : "credentials"}
-          busy={busy}
-          error={error}
-          labels={{
-            login: LOGIN_LABELS[screen],
-            signUp: "Create account",
-            submitCode: "Continue",
-            codeHint: "Six digits from your authenticator app.",
-          }}
-          names={FIELD_NAMES[screen]}
-          passkeyAutofill={passkeyAutofill}
-          onSignIn={onSignIn}
-          onSignUp={onSignUp}
-          onOneTimeCode={onOneTimeCode}
-          footer={screen === "sign-in"
-            ? (
-              <p class="text-center text-sm">
-                <Link href={SCREEN_PATHS.forgotPassword} navigate={navigate} class="pc-link">
-                  Forgot your password?
-                </Link>
-              </p>
-            )
-            : undefined}
-        />
-      </div>
+      <AuthForm
+        submitVariant={tryFirst ? "secondary" : "primary"}
+        mode={screen === "one-time-code" ? "sign-in" : screen}
+        step={screen === "one-time-code" ? "one-time-code" : "credentials"}
+        busy={busy}
+        error={error}
+        labels={{
+          login: LOGIN_LABELS[screen],
+          signUp: "Create account",
+          submitCode: "Continue",
+          codeHint: "Six digits from your authenticator app.",
+        }}
+        names={FIELD_NAMES[screen]}
+        passkeyAutofill={passkeyAutofill}
+        defaultLogin={defaultLogin}
+        onLoginInput={(value) => (login.current = value)}
+        onSignIn={onSignIn}
+        onSignUp={onSignUp}
+        onOneTimeCode={onOneTimeCode}
+        footer={screen === "sign-in"
+          ? (
+            <p class="text-center text-sm">
+              <Link href={SCREEN_PATHS.forgotPassword} navigate={navigate} class="pc-link">
+                Forgot your password?
+              </Link>
+            </p>
+          )
+          : undefined}
+      />
       {screen !== "one-time-code" && (providers.length > 0 || passkeyButton || linkButton) && (
         <ul class="flex flex-col gap-3 border-t border-subtle pt-6" aria-label="Other ways in">
           {screen === "sign-up" && linkButton}

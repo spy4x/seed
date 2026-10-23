@@ -125,9 +125,7 @@ const requestDefaults: LinkRequestScreenProps = {
   error: null,
   pending: false,
   onSubmit: () => {},
-  waitSeconds: 0,
   resending: false,
-  resends: 0,
   onResend: () => {},
   onDifferentAddress: () => {},
 }
@@ -172,20 +170,23 @@ describe("LinkRequestScreen in the browser", () => {
 
   it("says to check the inbox with focus on its heading, and offers no new link while the wait runs", async () => {
     await mount(
-      <LinkRequestScreen {...requestDefaults} sentTo="ada@example.com" waitSeconds={45} />,
+      <LinkRequestScreen
+        {...requestDefaults}
+        sentTo="ada@example.com"
+        readyAt={Date.now() + 44_500}
+      />,
     )
 
     expect(focused()).toBe("H1")
     expect(find("h1").textContent).toBe("Check your inbox")
     expect(text()).toContain("We sent a sign-in link to ada@example.com. It works once, for 15")
-    expect(find("[data-e2e=sign-in-link-wait]").textContent?.replace(/\s+/g, " ")).toBe(
+    // The ticking number is never announced.
+    expect(find("[aria-live=off]").textContent).toBe(
       "Not there? Check your spam folder. You can send a new link in 45 seconds.",
     )
-    // The ticking number is never announced.
-    expect(find("[data-e2e=sign-in-link-wait] [aria-live=off]").textContent).toContain("45")
-    expect(root!.querySelector("[data-e2e=sign-in-link-resend]")).toBeNull()
+    expect(text()).not.toContain("Send a new link")
     // The next step is in the mail app: no primary button.
-    expect(root!.querySelector("button[type=submit]")).toBeNull()
+    expect(root!.querySelectorAll("button[type=submit]")).toHaveLength(0)
   })
 
   it("offers a new link once the wait ends, and moves focus to the line saying it is on its way", async () => {
@@ -193,13 +194,16 @@ describe("LinkRequestScreen in the browser", () => {
     const sent = { ...requestDefaults, sentTo: "ada@example.com", onResend: resend.fn }
     await mount(<LinkRequestScreen {...sent} />)
 
-    await press("[data-e2e=sign-in-link-resend]")
-    await rerender(<LinkRequestScreen {...sent} resends={1} waitSeconds={60} />)
+    expect(find("[data-e2e=resend-button-send]").textContent).toBe("Send a new link")
+    await press("[data-e2e=resend-button-send]")
+    await rerender(<LinkRequestScreen {...sent} readyAt={Date.now() + 60_000} />)
 
     expect(resend.calls).toHaveLength(1)
-    expect(focused()).toBe("sign-in-link-resent")
-    expect(find("[data-e2e=sign-in-link-resent]").getAttribute("role")).toBe("status")
-    expect(root!.querySelector("[data-e2e=sign-in-link-resend]")).toBeNull()
+    expect(focused()).toBe("resend-button-sent")
+    expect(find("[data-e2e=resend-button-sent]").textContent).toBe(
+      "A new link is on its way. Earlier links still work until one is used.",
+    )
+    expect(text()).not.toContain("Send a new link")
   })
 
   it("goes back to the form, focused on the address, after Use a different address", async () => {
@@ -333,6 +337,18 @@ describe("AuthScreen's sign-in link button", () => {
     expect(link.calls).toEqual([["ada@example.com"]])
     expect(find("[data-e2e=link-sign-in]").textContent).toBe("Email me a sign-in link")
     expect(otherWaysIn()).toEqual(["passkey-sign-in", "link-sign-in", "provider-google"])
+  })
+
+  it("sends an address handed back to the form without it being typed again", async () => {
+    const link = spy<[string]>()
+    await mount(
+      <AuthScreen {...authDefaults} defaultLogin="ada@example.com" onEmailLink={link.fn} />,
+    )
+
+    expect(find<HTMLInputElement>("input[name=login]").value).toBe("ada@example.com")
+    await press("[data-e2e=link-sign-in]")
+
+    expect(link.calls).toEqual([["ada@example.com"]])
   })
 
   it("comes first on sign-up, before the providers", async () => {

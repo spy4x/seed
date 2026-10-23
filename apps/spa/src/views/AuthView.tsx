@@ -53,17 +53,15 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
   const [last, setLast] = useState(() => lastSignInHint())
   const [providers, setProviders] = useState<OAuthProviderId[]>([])
   // An address another page handed over (#142): "Sign in instead" after a sign-up found its
-  // account, or "Use a different address" back to the sign-up form. The form's fields are its
-  // own, so the address goes into the field it renders, and focus to the field after it.
+  // account, or "Use a different address" back to the sign-up form. It fills the login field, and
+  // focus goes to the field after it.
+  const [handed] = useState(() => (screen === "one-time-code" ? null : takeHandedOffAddress()))
   useEffect(() => {
-    if (screen === "one-time-code") return
-    const email = takeHandedOffAddress()
-    if (email === null) return
+    if (handed === null) return
     const field = document.querySelector<HTMLInputElement>(
       `input[name="${screen === "sign-in" ? "login" : "email"}"]`,
     )
     if (!field) return
-    field.value = email
     const password = field.form?.querySelector<HTMLInputElement>(`input[type="password"]`)
     // After the app's route announcer, whose effect runs after this one in the same flush and
     // moves focus to the page's heading on every route change.
@@ -219,6 +217,7 @@ export function AuthView({ screen }: { screen: AuthScreenKind }) {
       passkeyAutofill={autofill}
       onEmailLink={(login) => void emailLink(login)}
       linkBusy={linkBusy}
+      defaultLogin={handed ?? undefined}
       onSignIn={({ login, password }: AuthCredentials) => attempt(() => signIn(login, password))}
       onSignUp={({ login, password }: AuthCredentials) => void requestSignUp(login, password)}
       onOneTimeCode={(code) => attempt(() => checkTotp(code))}

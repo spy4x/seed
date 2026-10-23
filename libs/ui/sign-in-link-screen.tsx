@@ -5,6 +5,7 @@ import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { Input } from "@spy4x/preact-ui/input"
 import { Link } from "@spy4x/preact-ui/link"
+import { ResendButton } from "@spy4x/preact-ui/resend-button"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
@@ -37,12 +38,13 @@ export interface LinkRequestScreenProps {
   error: string | null
   pending: boolean
   onSubmit: () => void
-  /** Seconds until a new link may be asked for; `0` offers "Send a new link". */
-  waitSeconds: number
-  /** A new link is being sent. */
+  /**
+   * When a new link may be asked for, in milliseconds since the epoch; until then the line counts
+   * down. Left out or past: "Send a new link" shows.
+   */
+  readyAt?: number
+  /** A new link is being sent. Once it went out, the new `readyAt` says so to the person. */
   resending: boolean
-  /** How many new links were sent from this page: each one says so and takes focus. */
-  resends: number
   onResend: () => void
   /** "Use a different address": the app returns to the form, keeping the address. */
   onDifferentAddress: () => void
@@ -113,15 +115,10 @@ export function LinkRequestScreen(props: LinkRequestScreenProps): JSX.Element {
 
 /** "Check your inbox": no primary action, since the next step is in the mail app. */
 function CheckInbox(
-  { sentTo, error, waitSeconds, resending, resends, onResend, onDifferentAddress }:
+  { sentTo, error, readyAt, resending, onResend, onDifferentAddress }:
     & LinkRequestScreenProps
     & { sentTo: string },
 ): JSX.Element {
-  const resent = useRef<HTMLParagraphElement>(null)
-  useEffect(() => {
-    // The button that had focus is gone while the wait starts again.
-    if (resends > 0) resent.current?.focus()
-  }, [resends])
   return (
     <AuthCard
       title="Check your inbox"
@@ -152,43 +149,17 @@ function CheckInbox(
     >
       <p class="text-sm">Open it on this device to sign in here.</p>
       <div class="flex flex-col gap-3">
-        {waitSeconds > 0
-          ? (
-            <p class="text-sm text-muted" data-e2e="sign-in-link-wait">
-              Not there? Check your spam folder. You can send a new link in{" "}
-              <span aria-live="off">
-                {waitSeconds} {waitSeconds === 1 ? "second" : "seconds"}
-              </span>.
-            </p>
-          )
-          : (
-            <p class="text-sm text-muted">
-              Not there? Check your spam folder, or{" "}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                class={TOUCH_TARGET}
-                busy={resending}
-                busyLabel="Sending…"
-                data-e2e="sign-in-link-resend"
-                onClick={onResend}
-              >
-                Send a new link
-              </Button>
-            </p>
-          )}
-        {resends > 0 && (
-          <p
-            ref={resent}
-            tabIndex={-1}
-            role="status"
-            class="text-sm"
-            data-e2e="sign-in-link-resent"
-          >
-            A new link is on its way. Earlier links still work until one is used.
-          </p>
-        )}
+        <ResendButton
+          onResend={onResend}
+          busy={resending}
+          readyAt={readyAt}
+          label="Send a new link"
+          waitingText={(seconds) =>
+            `Not there? Check your spam folder. You can send a new link in ${seconds} ${
+              seconds === 1 ? "second" : "seconds"
+            }.`}
+          sentText="A new link is on its way. Earlier links still work until one is used."
+        />
         <ErrorState message={error} focusOnAppear dataE2E="sign-in-link-error" />
       </div>
     </AuthCard>

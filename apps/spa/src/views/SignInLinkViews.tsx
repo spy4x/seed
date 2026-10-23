@@ -24,11 +24,6 @@ export function linkRequestFailure(answer: SignInLinkRequestAnswer): string {
   return answer.offline ? SIGN_UP_OFFLINE : answer.error || SIGN_IN_LINK_MESSAGES.sendFailed
 }
 
-/** Seconds left of the wait after a link sent at `sentAt`, at `now`. */
-export function secondsLeft(sentAt: number, now: number): number {
-  return Math.max(0, Math.ceil((sentAt + SIGN_IN_LINK_COOLDOWN_SECONDS * 1000 - now) / 1000))
-}
-
 /**
  * Wires `LinkRequestScreen` (#391). The address a link went to and when are kept for the tab
  * (`sessionStorage`), so a reload stays on "Check your inbox" with its wait; "Use a different
@@ -43,15 +38,6 @@ export function LinkRequestView() {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [resending, setResending] = useState(false)
-  const [resends, setResends] = useState(0)
-  const [now, setNow] = useState(Date.now)
-  const wait = sent ? secondsLeft(sent.sentAt, now) : 0
-
-  useEffect(() => {
-    if (wait === 0) return
-    const tick = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(tick)
-  }, [wait === 0])
 
   const send = async (address: string) => {
     const answer = await requestSignInLink(address, next)
@@ -59,7 +45,6 @@ export function LinkRequestView() {
     const kept = { email: address, sentAt: Date.now() }
     rememberSentLink(kept)
     setSent(kept)
-    setNow(kept.sentAt)
     return answer
   }
 
@@ -80,8 +65,7 @@ export function LinkRequestView() {
     setResending(true)
     const answer = await send(sent.email)
     setResending(false)
-    if (answer.ok) setResends((count) => count + 1)
-    else setError(linkRequestFailure(answer))
+    if (!answer.ok) setError(linkRequestFailure(answer))
   }
 
   return (
@@ -93,14 +77,12 @@ export function LinkRequestView() {
       error={error}
       pending={pending}
       onSubmit={() => void submit()}
-      waitSeconds={wait}
+      readyAt={sent ? sent.sentAt + SIGN_IN_LINK_COOLDOWN_SECONDS * 1000 : undefined}
       resending={resending}
-      resends={resends}
       onResend={() => void resend()}
       onDifferentAddress={() => {
         forgetSentLink()
         setSent(null)
-        setResends(0)
         setError(null)
       }}
       next={next}
