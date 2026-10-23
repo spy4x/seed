@@ -33,10 +33,11 @@ a token of its own: one token takes updates by polling or by webhook, never both
   a code, which lasts 10 minutes, works once and replaces the person's previous code.
 - "Open Telegram" opens `t.me/<bot>?start=<code>`, so pressing Start sends the code. On another
   device the person sends `/link <code>` instead.
-- The bot does not link at once. It names the account the code belongs to (the first name, or the
-  address masked) and links only after a "Link" press by the same Telegram user. A `t.me` link
-  someone else made therefore cannot attach your Telegram to their account without you seeing
-  whose it is.
+- The bot does not link at once. It names the account the code belongs to (the first name and
+  the address masked, such as "Ada's account (a•••@example.com)") and links only after a "Link"
+  press by the same Telegram user. A `t.me` link someone else made therefore cannot attach your
+  Telegram to their account without you seeing whose it is. The address is always shown, because
+  anyone can copy a first name.
 - After the press, the bot links the Telegram account to the person, with an audit row, and the
   app closes the dialog. A wrong, used or expired code is refused, and so is a Telegram account
   linked to someone else. Linking a second Telegram account replaces the first, with an unlink
@@ -44,7 +45,8 @@ a token of its own: one token takes updates by polling or by webhook, never both
 - A code sent in a group is spent without linking, because others in the group could read it.
 - `/unlink` in the chat, "Unlink" on the profile (after a confirmation), or an operator's "Unlink
   Telegram" in the admin panel ends it, each with an audit row. A password reset or change ends
-  it too, in the same transaction that revokes the API tokens.
+  it too, in the same transaction that revokes the API tokens, and deletes every link code and
+  waiting "Link" press the person had.
 - Guests cannot link: they are asked to keep their account first.
 
 A linked account is an `auth_keys` row with the method `telegram` and the Telegram user id as its
@@ -96,8 +98,14 @@ The router, the client, the webhook handler and polling are `@spy4x/integrations
   and the binding together, so someone who knows only a user id cannot use up a person's tries.
   Making a code deletes the person's older ones, needs a full session, second factor included,
   and spends the stricter per-user rate limit.
-- A linked chat acts as its person with the second factor counted as passed, as an API token
-  does, because the session that linked it had passed it.
+- A link code and a waiting "Link" press are `auth_challenges` rows whose subject starts with the
+  user id: `<user id>:<digest of the binding>` and `<user id>:<Telegram user id>`. A password reset
+  or change deletes both, so one prepared with a stolen session cannot link after the owner has
+  recovered the account.
+- A linked chat acts as its person with the second factor counted as passed, because the session
+  that linked it had passed it. Unlike an API token, a chat has no group and no read-only scope:
+  it can do anything its person can. So a product must not offer in the bot any command the app
+  guards with a fresh password or code, such as changing the address or deleting the account.
 - Seed keeps the Telegram user id only: no Telegram name, no messages. A product that turns the
   bot on adds it to its privacy page, for example: "Your Telegram user ID (a number, not your
   phone number), only if you link Telegram. Unlinking removes it." Seed's own demo runs without
