@@ -556,31 +556,6 @@ export function normalizeUsername(raw: unknown): string | null {
  * The `auth_audits` row of an action by `userId` in this request. The address is read as the API
  * always read it, trusting `X-Forwarded-For` and `X-Real-IP` from the proxy in front of it.
  */
-/**
- * Ends the person's Telegram link (#269), with its audit row naming why and which Telegram
- * account: `password-reset telegram:<id>`. Nothing when none is linked.
- */
-async function unlinkTelegramOf(
-  tx: AppDbBase,
-  c: Context | undefined,
-  userId: number,
-  reason: string,
-): Promise<void> {
-  const telegramUserId = await tx.telegram.unlink(userId)
-  if (telegramUserId === null) return
-  const eventType = AuthAuditEventType.TELEGRAM_UNLINKED
-  const identifier = `${reason} telegram:${telegramUserId}`
-  await tx.authAudit.insert(
-    c ? auditRow(c, userId, eventType, identifier) : {
-      userId,
-      eventType,
-      identifier,
-      ip: null,
-      userAgent: null,
-    },
-  )
-}
-
 export function auditRow(
   c: Context,
   userId: number,
@@ -595,6 +570,33 @@ export function auditRow(
     ip: request.ip || null,
     userAgent: request.userAgent || null,
   }
+}
+
+/**
+ * Ends the person's Telegram link (#269), with its audit row naming why and which Telegram
+ * account: `password-reset telegram:<id>`, and every link code and "Link" press made before, so
+ * one prepared with a stolen session cannot link after the recovery.
+ */
+async function unlinkTelegramOf(
+  tx: AppDbBase,
+  c: Context | undefined,
+  userId: number,
+  reason: string,
+): Promise<void> {
+  await tx.telegram.dropPending(userId)
+  const telegramUserId = await tx.telegram.unlink(userId)
+  if (telegramUserId === null) return
+  const eventType = AuthAuditEventType.TELEGRAM_UNLINKED
+  const identifier = `${reason} telegram:${telegramUserId}`
+  await tx.authAudit.insert(
+    c ? auditRow(c, userId, eventType, identifier) : {
+      userId,
+      eventType,
+      identifier,
+      ip: null,
+      userAgent: null,
+    },
+  )
 }
 
 /** The device a request comes from, as a new session records it. */

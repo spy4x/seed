@@ -281,7 +281,21 @@ const PEPPER = `integration-test-only-pepper-0123456789`
 const COOKIE_SECRET = `integration-test-only-cookie-secret-0123456789`
 const PASSWORD = `Passw0rd!`
 
-Deno.test(`telegram: a password reset and a password change each end the link, with an audit row`, async () => {
+/**
+ * What an attacker with the person's session leaves behind for later: a "Link" press for their
+ * own Telegram, prepared from a code, and a fresh code kept unsent.
+ */
+async function prepareForLater(
+  accounts: ReturnType<typeof services>[`accounts`],
+  links: TelegramLinkService,
+  userId: number,
+  telegramUserId: number,
+) {
+  const press = await links.prepare((await accounts.issueCode(userId))!.code, telegramUserId)
+  return { press: press!.token, code: (await accounts.issueCode(userId))!.code }
+}
+
+Deno.test(`telegram: a password reset and a password change each end the link, with an audit row, and every code and Link press made before`, async () => {
   await withSchema(async (sql) => {
     const { db, accounts, links } = services(sql, { now: T0 })
     const signIn = createSignIn({
@@ -320,6 +334,7 @@ Deno.test(`telegram: a password reset and a password change each end the link, w
       { id: number }[]
     >`SELECT id FROM auth_keys WHERE subject = 'ada@example.com'`
     await db.authStore.proveKey(key.id, new Date())
+    const adaLater = await prepareForLater(accounts, links, ada, TG + 2)
     const issued = (await issuePasswordReset(db.authStore, `ada@example.com`, new Date()))!
     expect(await signIn.resetPassword(`ada@example.com`, issued.code, `Reset-Passw0rd`)).toBe(true)
     expect(await links.account(TG)).toBeNull()
@@ -327,11 +342,18 @@ Deno.test(`telegram: a password reset and a password change each end the link, w
       eventType: AuthAuditEventType.TELEGRAM_UNLINKED,
       identifier: `password-reset telegram:${TG}`,
     })
+    expect(await links.link(adaLater.press, TG + 2)).toBe(`invalid`)
+    expect(await linkWith(links, adaLater.code, TG + 3)).toBe(`invalid`)
+    expect(await linkedTelegram(sql, ada)).toEqual([])
 
     const bob = await signUp(`bob@example.com`)
     await linkWith(links, (await accounts.issueCode(bob))!.code, TG + 1)
+    const bobLater = await prepareForLater(accounts, links, bob, TG + 4)
     expect((await app.request(`http://local/change/${bob}`, { method: `POST` })).status).toBe(200)
     expect(await links.account(TG + 1)).toBeNull()
+    expect(await links.link(bobLater.press, TG + 4)).toBe(`invalid`)
+    expect(await linkWith(links, bobLater.code, TG + 5)).toBe(`invalid`)
+    expect(await linkedTelegram(sql, bob)).toEqual([])
     expect(
       (await audits(sql, bob)).filter((row) =>
         row.eventType === AuthAuditEventType.TELEGRAM_UNLINKED

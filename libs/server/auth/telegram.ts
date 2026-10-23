@@ -16,9 +16,11 @@
  * cannot use up a person's attempts. Issuing a code deletes the person's older ones.
  *
  * A code sent to the bot does not link at once: it names the account and asks for a "Link" press,
- * which spends a second challenge ({@link TELEGRAM_CONFIRM_PURPOSE}) bound to that Telegram user.
- * A `t.me` link someone else made therefore cannot attach a person's Telegram to their account
- * unseen.
+ * which spends a second challenge ({@link TELEGRAM_CONFIRM_PURPOSE}) whose subject is
+ * `<user id>:<Telegram user id>`, so only that Telegram user's press reaches it. A `t.me` link
+ * someone else made therefore cannot attach a person's Telegram to their account unseen. Both
+ * challenges start with the user id, so a password reset ends every one the person has
+ * ({@link telegramLinks}' `dropPending`).
  *
  * Reads no environment and imports no singleton: the API and the worker both use it.
  *
@@ -73,6 +75,11 @@ export interface TelegramAccount {
 /** The stored form of a secret: SHA-256 of the purpose, the user and the secret. */
 function hashSecret(purpose: string, userId: number, secret: string): Promise<string> {
   return sha256Hex(`${purpose}\n${userId}\n${secret}`)
+}
+
+/** The challenge subject of a "Link" press: the account, then the Telegram user who may press. */
+function confirmSubject(userId: number, telegramUserId: number): string {
+  return `${userId}:${telegramUserId}`
 }
 
 /** The challenge subject of a code: the user id, then a digest of its binding. */
@@ -139,7 +146,7 @@ export async function issueTelegramConfirmToken(
   const nonce = randomBase64Url(NONCE_BYTES)
   await store.issueChallenge({
     purpose: TELEGRAM_CONFIRM_PURPOSE,
-    subject: String(telegramUserId),
+    subject: confirmSubject(userId, telegramUserId),
     secretHash: await hashSecret(TELEGRAM_CONFIRM_PURPOSE, userId, nonce),
     expiresAt: new Date(now.getTime() + TELEGRAM_LINK_MINUTES * 60_000),
     now,
@@ -160,7 +167,7 @@ export async function consumeTelegramConfirmToken(
   const userId = Number(match[1])
   const outcome = await store.attemptChallenge({
     purpose: TELEGRAM_CONFIRM_PURPOSE,
-    subject: String(telegramUserId),
+    subject: confirmSubject(userId, telegramUserId),
     secretHash: await hashSecret(TELEGRAM_CONFIRM_PURPOSE, userId, match[2]),
     maxAttempts: DEFAULT_CODE_MAX_ATTEMPTS,
     now,
@@ -244,6 +251,19 @@ export function telegramLinks(sql: Sql) {
       await sql`
         DELETE FROM auth_challenges
         WHERE purpose = ${TELEGRAM_LINK_PURPOSE} AND subject LIKE ${`${userId}:%`}
+      `
+    },
+
+    /**
+     * Deletes the person's link codes and the "Link" presses waiting for a Telegram user, so
+     * nothing made before links. A password reset or change calls it: one made with a stolen
+     * session must not link after the owner has recovered the account.
+     */
+    async dropPending(userId: number): Promise<void> {
+      await sql`
+        DELETE FROM auth_challenges
+        WHERE purpose IN (${TELEGRAM_LINK_PURPOSE}, ${TELEGRAM_CONFIRM_PURPOSE})
+          AND subject LIKE ${`${userId}:%`}
       `
     },
 
