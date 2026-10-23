@@ -91,6 +91,11 @@ import {
 } from "@server/subscribers/subscribers.ts"
 import { createPostgresSubscriberStore } from "@spy4x/server/subscribers/postgres"
 import { createErrorReporter } from "@spy4x/platform"
+import { systemEnv } from "@spy4x/server/config"
+import { readTelegramSetup, telegramOffNote } from "@server/telegram/setup.ts"
+import { createTelegramRoute, createTelegramWebhookRoute } from "./routes/telegram.ts"
+import { createTelegramAccounts, createTelegramRuntime } from "./services/telegram.ts"
+import { createTelegramProduct } from "./telegram/commands.ts"
 import "./cqrs/+init.ts"
 
 const REALTIME_REVALIDATE_INTERVAL_MS = 15_000
@@ -352,6 +357,39 @@ app.route(
     log,
   }),
 )
+// The Telegram bot (#269, docs/telegram.md): off without TELEGRAM_BOT_TOKEN, and then nothing here
+// calls Telegram. A setting that cannot work stops the API now, not at the first message.
+const telegramSetup = readTelegramSetup(systemEnv, config.isDev ? "dev" : "prod")
+const telegramNote = telegramOffNote(telegramSetup)
+if (telegramNote) log(telegramNote)
+const telegram = telegramSetup
+  ? createTelegramRuntime({
+    setup: telegramSetup,
+    db,
+    store: kv,
+    webAppUrl: config.webAppUrl,
+    product: createTelegramProduct({ queryBus }),
+    log,
+  })
+  : null
+app.route(
+  "/telegram",
+  createTelegramRoute({
+    auth: signIn.auth,
+    mutationGuards,
+    limit: rateLimits.normal,
+    codeLimit: rateLimits.strictByUser,
+    telegram: createTelegramAccounts({ db, botUsername: telegramSetup?.username ?? null }),
+  }),
+)
+// No session and no origin check: Telegram calls it, and its secret header is the only proof.
+app.route("/webhooks/telegram", createTelegramWebhookRoute(telegram?.webhook ?? null))
+// Fail-open: a Telegram that is down never holds the API back. Polling runs until the process ends.
+if (telegram) {
+  telegram.start(new AbortController().signal).catch((error) =>
+    log("error: the Telegram bot did not start", error)
+  )
+}
 // Before the groups route: it shares `/groups`, and its own routes match none of these paths.
 app.route(
   "/groups",
