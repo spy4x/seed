@@ -128,7 +128,7 @@ Deno.test("note attachments against Postgres", async (t) => {
     await t.step("a waiting upload is claimed once, by the person who signed it", async () => {
       const { attachments, upload, editor, admin } = await setUp(sql)
       const pending = upload(editor)
-      await attachments.createUpload(pending)
+      await attachments.createUpload(pending, ATTACHMENT_UPLOAD_BUDGET)
 
       expect(await attachments.claimUpload(pending.id, admin)).toBeNull()
       const claims = await Promise.all([
@@ -271,6 +271,51 @@ Deno.test("note attachments against Postgres", async (t) => {
       },
     )
 
+    await t.step(
+      "200 signs sent at once by one person pass neither the waiting cap nor the hourly budget",
+      async () => {
+        const context = await setUp(sql)
+        const { attachments } = context
+        const MiB = 1024 * 1024
+        /** Sends 200 signs at once; how many were signed, and the codes of the refused ones. */
+        const burst = async (userId: number, size: number, budget?: AttachmentUploadBudget) => {
+          const files = signing(sql, context, budget)
+          const results = await Promise.allSettled(
+            Array.from({ length: 200 }, () => files.sign(userId, size)),
+          )
+          const refused = results.flatMap((result) =>
+            result.status === `rejected` ? [result.reason.code] : []
+          )
+          return { signed: 200 - refused.length, refused: [...new Set(refused)] }
+        }
+
+        // Twenty 2 MiB uploads wait, well inside the default budget.
+        expect(await burst(context.editor, 2 * MiB)).toEqual({
+          signed: 20,
+          refused: [`UPLOADS_PENDING`],
+        })
+        expect(await attachments.countPending(context.editor)).toBe(20)
+        // Ten files an hour, fewer than the waiting cap.
+        expect(await burst(context.admin, 100, { files: 10, bytes: 50 * MiB })).toEqual({
+          signed: 10,
+          refused: [`UPLOAD_BUDGET`],
+        })
+        expect(await attachments.signedInLastHour(context.admin)).toEqual({
+          files: 10,
+          bytes: 1000,
+        })
+        // 15 MiB an hour holds seven 2 MiB uploads.
+        expect(await burst(context.onlyHere, 2 * MiB, { files: 50, bytes: 15 * MiB })).toEqual({
+          signed: 7,
+          refused: [`UPLOAD_BUDGET`],
+        })
+        expect(await attachments.signedInLastHour(context.onlyHere)).toEqual({
+          files: 7,
+          bytes: 14 * MiB,
+        })
+      },
+    )
+
     await t.step("removing a file queues its object for deletion", async () => {
       const { add, upload, editor, viewer, attachments, groupId } = await setUp(sql)
       const added = await add(upload(editor))
@@ -305,8 +350,8 @@ Deno.test("note attachments against Postgres", async (t) => {
         const { attachments, upload, editor, add, groupId } = await setUp(sql)
         const old = upload(editor)
         const fresh = upload(editor)
-        await attachments.createUpload(old)
-        await attachments.createUpload(fresh)
+        await attachments.createUpload(old, ATTACHMENT_UPLOAD_BUDGET)
+        await attachments.createUpload(fresh, ATTACHMENT_UPLOAD_BUDGET)
         await sql`
           UPDATE note_attachment_uploads SET created_at = now() - interval '25 hours'
           WHERE id = ${old.id}

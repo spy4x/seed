@@ -38,7 +38,6 @@ const FREE = PLANS[0]
 /** Attachments in memory: one live note in {@link GROUP}. */
 function memoryAttachments() {
   const pending = new Map<string, PendingAttachmentUpload>()
-  const signed: PendingAttachmentUpload[] = []
   const stored = new Map<string, Attachment & { objectKey: string; groupId: string }>()
   const forgotten: string[] = []
   const added: string[] = []
@@ -60,22 +59,12 @@ function memoryAttachments() {
       }),
     countForNote: (noteId) =>
       Promise.resolve([...stored.values()].filter((a) => a.noteId === noteId).length),
-    countPending: (userId) =>
-      Promise.resolve([...pending.values()].filter((p) => p.userId === userId).length),
-    signedInLastHour: (userId) => {
-      const own = signed.filter((upload) => upload.userId === userId)
-      return Promise.resolve({
-        files: own.length,
-        bytes: own.reduce((sum, upload) => sum + upload.size, 0),
-      })
-    },
     releaseUpload: (id, userId) => {
       if (pending.get(id)?.userId === userId) pending.delete(id)
       return Promise.resolve()
     },
     createUpload: (upload) => {
       pending.set(upload.id, upload)
-      signed.push(upload)
       return Promise.resolve()
     },
     claimUpload: (id, userId) => {
@@ -245,7 +234,7 @@ Deno.test("a viewer and a stranger are refused before anything is signed", async
   expect(calls).toEqual([])
 })
 
-Deno.test("each file rule refuses before signing: type, size, a full note and too many waiting", async () => {
+Deno.test("each file rule refuses before signing: type, size and a full note", async () => {
   const typed = setUp()
   await expect(typed.signAs(EDITOR, { name: `photo.heic`, contentType: `image/heic` })).rejects
     .toMatchObject({ code: `FILE_TYPE` })
@@ -257,10 +246,6 @@ Deno.test("each file rule refuses before signing: type, size, a full note and to
   const full = setUp({ rules: { maxPerNote: 1 } })
   await full.confirmAs(EDITOR, (await full.signAs(EDITOR)).id)
   await expect(full.signAs(EDITOR)).rejects.toMatchObject({ code: `NOTE_FULL`, limit: 1 })
-
-  const busy = setUp()
-  for (let i = 0; i < 20; i++) await busy.signAs(EDITOR)
-  await expect(busy.signAs(EDITOR)).rejects.toMatchObject({ code: `UPLOADS_PENDING` })
 })
 
 Deno.test("a group at its plan's file or byte cap is refused with the plan's answer", async () => {

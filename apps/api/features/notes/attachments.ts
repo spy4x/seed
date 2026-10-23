@@ -8,7 +8,6 @@ import {
   assertCanReadNotes,
   assertCanWriteNotes,
   type Attachment,
-  ATTACHMENT_PENDING_MAX,
   ATTACHMENT_TYPES,
   AttachmentCancelCommand,
   attachmentCancelPayloadSchema,
@@ -73,7 +72,8 @@ function refusalError(refusal: FileRefusal, rules: AttachmentRules): AttachmentE
 /**
  * `attachment.sign`: an editor asks to upload one file to a live note. The type, the size, the
  * note's count and the group's caps are checked before anything is signed; the confirm checks them
- * all again, on the stored bytes and under the group's lock.
+ * all again, on the stored bytes and under the group's lock. The person's waiting uploads and
+ * hourly budget are checked as the upload is kept, under the person's lock.
  */
 export function createAttachmentSignHandler(
   { attachments, groups, files, plans, budget }: AttachmentHandlerDependencies,
@@ -93,18 +93,6 @@ export function createAttachmentSignHandler(
         rules.maxPerNote,
       )
     }
-    if (await attachments.countPending(data.actor.userId) >= ATTACHMENT_PENDING_MAX) {
-      throw new AttachmentError("UPLOADS_PENDING", "Finish the uploads already started first")
-    }
-    // The plan caps what a group keeps; this caps how fast one person writes to the store, with
-    // billing on or off, so nobody fills the server's disk with uploads (the public demo included).
-    const signed = await attachments.signedInLastHour(data.actor.userId)
-    if (signed.files >= budget.files || signed.bytes + data.size > budget.bytes) {
-      throw new AttachmentError(
-        "UPLOAD_BUDGET",
-        "You have uploaded as much as an hour allows. Try again later",
-      )
-    }
     const usage = await attachments.usage(data.groupId)
     const room = { maxFiles: limits.maxAttachments, maxBytes: limits.storageBytes }
     // Refused here with the same answer the confirm would give, so no upload is spent on it.
@@ -117,6 +105,9 @@ export function createAttachmentSignHandler(
     const upload = await files.signUpload(rule, { contentType: data.contentType, size: data.size })
     if (!upload.success) throw refusalError(upload.error, rules)
     const id = uuidV7()
+    // Refused past the person's waiting uploads or hourly budget. The plan caps what a group keeps;
+    // the budget caps how fast one person writes to the store, with billing on or off, so nobody
+    // fills the server's disk with uploads (the public demo included).
     await attachments.createUpload({
       id,
       noteId: data.noteId,
@@ -125,7 +116,7 @@ export function createAttachmentSignHandler(
       name: data.name,
       contentType: data.contentType,
       size: data.size,
-    })
+    }, budget)
     return { id, url: upload.output.url, headers: upload.output.headers }
   }
 }

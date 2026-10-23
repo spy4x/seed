@@ -292,16 +292,15 @@ export interface AttachmentRepository {
   usage(groupId: string): Promise<{ files: number; bytes: number }>
   /** How many files the note holds. */
   countForNote(noteId: string): Promise<number>
-  /**
-   * How many uploads the person signed in the last {@link ATTACHMENT_PENDING_MINUTES} minutes and
-   * neither confirmed nor cancelled.
-   */
-  countPending(userId: number): Promise<number>
-  /** The uploads the person signed in the last hour, settled or not, and their declared bytes. */
-  signedInLastHour(userId: number): Promise<{ files: number; bytes: number }>
   /** Settles the person's waiting upload without a file: it stops counting as waiting. */
   releaseUpload(id: string, userId: number): Promise<void>
-  createUpload(upload: PendingAttachmentUpload): Promise<void>
+  /**
+   * Keeps the person's new waiting upload. It locks the person first and counts after the lock, so
+   * signs sent at once wait for each other and each counts the ones before it.
+   * @throws {AttachmentError} `UPLOADS_PENDING` when {@link ATTACHMENT_PENDING_MAX} uploads wait,
+   * `UPLOAD_BUDGET` when this one would pass `budget`.
+   */
+  createUpload(upload: PendingAttachmentUpload, budget: AttachmentUploadBudget): Promise<void>
   /**
    * Takes the person's waiting upload, so a second confirm of it finds nothing: the row is settled
    * as it is read, and kept for the hourly budget. `null` when it is not there, is settled already

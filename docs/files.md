@@ -61,7 +61,9 @@ table `note_attachments`, with the operations `attachment.sign`, `.confirm`, `.c
   cancelled. An older one can no longer be uploaded, so an abandoned upload never locks anyone out.
 - **Upload budget.** Whatever the plan, and with billing off too, one person signs at most 50
   uploads and 50 MiB an hour, counted on every signed upload, confirmed or not. More is refused
-  with `UPLOAD_BUDGET` (a 429 over HTTP). This is what stops one account, a guest of the public demo
+  with `UPLOAD_BUDGET` (a 429 over HTTP). The waiting count, the budget and the new row are one
+  transaction that locks the person's row first, so signs sent at once wait for each other and
+  each counts the ones before it. This is what stops one account, a guest of the public demo
   included, from filling the server's disk; the plan's caps only limit what a group keeps. A
   server sets its own with `ATTACHMENT_UPLOAD_FILES_PER_HOUR` and
   `ATTACHMENT_UPLOAD_BYTES_PER_HOUR` (whole numbers; empty for the defaults). Each account has

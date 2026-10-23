@@ -4,11 +4,13 @@ import {
   assertCanWriteNotes,
   type Attachment,
   ATTACHMENT_EVENTS,
+  ATTACHMENT_PENDING_MAX,
   ATTACHMENT_PENDING_MINUTES,
   ATTACHMENT_UPLOAD_HOURS,
   type AttachmentCaps,
   AttachmentError,
   type AttachmentRepository,
+  type AttachmentUploadBudget,
   NoteError,
   type PendingAttachmentUpload,
 } from "@domain/notes"
@@ -117,6 +119,10 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
     return count
   }
 
+  /**
+   * How many uploads the person signed in the last {@link ATTACHMENT_PENDING_MINUTES} minutes and
+   * neither confirmed nor cancelled.
+   */
   async countPending(userId: number): Promise<number> {
     const [{ count }] = await this.sql<{ count: number }[]>`
       SELECT count(*)::int AS count FROM note_attachment_uploads
@@ -126,6 +132,7 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
     return count
   }
 
+  /** The uploads the person signed in the last hour, settled or not, and their declared bytes. */
   async signedInLastHour(userId: number): Promise<{ files: number; bytes: number }> {
     const [row] = await this.sql<{ files: number; bytes: string }[]>`
       SELECT count(*)::int AS files, coalesce(sum(size_bytes), 0)::text AS bytes
@@ -142,15 +149,33 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
     `
   }
 
-  async createUpload(upload: PendingAttachmentUpload): Promise<void> {
-    await this.sql`
-      INSERT INTO note_attachment_uploads (
-        id, note_id, user_id, staging_key, name, content_type, size_bytes
-      ) VALUES (
-        ${upload.id}, ${upload.noteId}, ${upload.userId}, ${upload.stagingKey}, ${upload.name},
-        ${upload.contentType}, ${upload.size}
-      )
-    `
+  async createUpload(
+    upload: PendingAttachmentUpload,
+    budget: AttachmentUploadBudget,
+  ): Promise<void> {
+    await this.sql.begin(async (tx: postgres.TransactionSql) => {
+      // The person's row, as `add` locks the group's: a second sign waits here, then counts this one.
+      await tx`SELECT 1 FROM users WHERE id = ${upload.userId} FOR NO KEY UPDATE`
+      const repository = new PostgresAttachmentRepository(tx)
+      if (await repository.countPending(upload.userId) >= ATTACHMENT_PENDING_MAX) {
+        throw new AttachmentError("UPLOADS_PENDING", "Finish the uploads already started first")
+      }
+      const signed = await repository.signedInLastHour(upload.userId)
+      if (signed.files >= budget.files || signed.bytes + upload.size > budget.bytes) {
+        throw new AttachmentError(
+          "UPLOAD_BUDGET",
+          "You have uploaded as much as an hour allows. Try again later",
+        )
+      }
+      await tx`
+        INSERT INTO note_attachment_uploads (
+          id, note_id, user_id, staging_key, name, content_type, size_bytes
+        ) VALUES (
+          ${upload.id}, ${upload.noteId}, ${upload.userId}, ${upload.stagingKey}, ${upload.name},
+          ${upload.contentType}, ${upload.size}
+        )
+      `
+    })
   }
 
   async claimUpload(id: string, userId: number): Promise<PendingAttachmentUpload | null> {
