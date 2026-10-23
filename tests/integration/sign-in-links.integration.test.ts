@@ -285,7 +285,10 @@ Deno.test("a link signs in to the owner of its address, once, through the link k
       },
     })
     expect(await person.call("GET", "/auth/me")).toMatchObject({ status: 200, body: { id: owner } })
-    expect(again).toEqual({ status: 410, body: { error: SIGN_IN_LINK_REFUSED } })
+    expect(again).toMatchObject({
+      status: 410,
+      body: { error: { code: "not_found", message: SIGN_IN_LINK_REFUSED } },
+    })
     const [session] = await fixture.sql<{ method: string }[]>`
       SELECT k.method FROM auth_sessions s JOIN auth_keys k ON k.id = s.key_id
       WHERE s.user_id = ${owner}
@@ -372,7 +375,10 @@ Deno.test("a link leaves alone an account that signs in with the address but nev
 
     const redeemed = await person.call("POST", "/auth/link/redeem", { token })
 
-    expect(redeemed).toEqual({ status: 409, body: { error: SIGN_IN_LINK_UNCONFIRMED } })
+    expect(redeemed).toMatchObject({
+      status: 409,
+      body: { error: { code: "conflict", message: SIGN_IN_LINK_UNCONFIRMED } },
+    })
     expect((await person.call("GET", "/auth/me")).status).toBe(401)
     expect(await fixture.count("auth_users")).toBe(1)
     const keys = await fixture.sql<{ method: string; provenAt: Date | null }[]>`
@@ -389,9 +395,9 @@ Deno.test("a link refuses a deleted account like a used link", async () => {
     const person = fixture.browser()
     const token = await fixture.linkFor(person, "ada@example.com")
 
-    expect(await person.call("POST", "/auth/link/redeem", { token })).toEqual({
+    expect(await person.call("POST", "/auth/link/redeem", { token })).toMatchObject({
       status: 410,
-      body: { error: SIGN_IN_LINK_REFUSED },
+      body: { error: { code: "not_found", message: SIGN_IN_LINK_REFUSED } },
     })
     expect(await fixture.count("auth_sessions")).toBe(0)
   })
@@ -418,7 +424,7 @@ Deno.test("a guest who opens a link someone else asked for keeps their guest ses
     // A refusal of its own, which the link page words, and the link is spent: no account came of it.
     expect(redeemed).toMatchObject({
       status: 403,
-      body: { code: "SIGN_IN_LINK_ASKED_ELSEWHERE" },
+      body: { error: { code: "forbidden", reason: "SIGN_IN_LINK_ASKED_ELSEWHERE" } },
     })
     expect((await asker.call("POST", "/auth/link/redeem", { token })).status).toBe(410)
     expect(await fixture.count("auth_users")).toBe(1)
@@ -447,7 +453,7 @@ Deno.test("a guest who opens someone else's link to an existing account is refus
 
     expect(redeemed).toMatchObject({
       status: 403,
-      body: { code: "SIGN_IN_LINK_ASKED_ELSEWHERE" },
+      body: { error: { code: "forbidden", reason: "SIGN_IN_LINK_ASKED_ELSEWHERE" } },
     })
     expect(await victim.call("GET", "/auth/guest/switch")).toEqual({
       status: 200,
@@ -467,9 +473,9 @@ Deno.test("a link refuses a blocked account like a used link", async () => {
     const person = fixture.browser()
     const token = await fixture.linkFor(person, "ada@example.com")
 
-    expect(await person.call("POST", "/auth/link/redeem", { token })).toEqual({
+    expect(await person.call("POST", "/auth/link/redeem", { token })).toMatchObject({
       status: 410,
-      body: { error: SIGN_IN_LINK_REFUSED },
+      body: { error: { code: "not_found", message: SIGN_IN_LINK_REFUSED } },
     })
     expect(await fixture.count("auth_sessions")).toBe(0)
   })
