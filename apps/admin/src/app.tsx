@@ -3,6 +3,7 @@ import type { JSX } from "preact"
 import { useEffect, useMemo, useState } from "preact/hooks"
 import { LoadingSpinner } from "@spy4x/preact-ui/loading-spinner"
 import { Toastr } from "@spy4x/preact-ui/toastr"
+import { createLeaveGuard } from "@spy4x/preact-ui/unsaved-guard"
 import type { createThemeStore } from "@spy4x/preact-signals/theme"
 import type { ToastStore } from "@spy4x/preact-signals/toast"
 import { Redirect, Route, Switch, useLocation } from "wouter-preact"
@@ -22,6 +23,7 @@ import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
 import { adminShortcutRows, focusListFilter } from "./shortcuts.ts"
+import { guardNavigate } from "./leave.ts"
 import {
   type createSingleKeysSetting,
   hasFinePointer,
@@ -53,6 +55,10 @@ export function App(
   const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])
   const session = store.session.value
   const [path, navigate] = useLocation()
+  // Shortcuts, the sidebar and modules navigate through this one, so a page with unsaved changes
+  // asks before any of them leaves it (`leave.ts`).
+  const leaveGuard = useMemo(createLeaveGuard, [])
+  const leave = useMemo(() => guardNavigate(leaveGuard, navigate), [leaveGuard, navigate])
   const user = session.step === "signed-in" ? session.user : null
   // The tab says "Users · Admin · Seed", so an operator never mistakes it for the product's.
   const title = user && hasAdminAccess(user)
@@ -87,7 +93,8 @@ export function App(
         request: store.request,
         toasts,
         operator: user,
-        navigate,
+        navigate: leave,
+        leaveGuard,
         personTabs: adminPersonTabs(modules),
         format: () => own.format.value,
       },
@@ -97,7 +104,7 @@ export function App(
   const shortcutRows = adminShortcutRows({
     modules,
     path,
-    navigate,
+    navigate: leave,
     openShortcuts: () => setShortcutsOpen(true),
     focusListFilter,
   })
@@ -151,7 +158,7 @@ export function App(
         operator={{ name: operatorName(user, email), email }}
         theme={theme}
         onSignOut={store.signOut}
-        navigate={navigate}
+        navigate={leave}
         shortcuts={{
           rows: shortcutRows,
           open: shortcutsOpen,

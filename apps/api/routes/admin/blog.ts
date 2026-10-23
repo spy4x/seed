@@ -77,6 +77,8 @@ export interface AdminBlogRouteDependencies {
    * set, since the issue links to the post there.
    */
   newsletterEnabled: boolean
+  /** The public website's address (`MPA_DOMAIN`), for the editor's "View on website"; `null` unset. */
+  siteUrl: string | null
   now(): Date
 }
 
@@ -143,14 +145,14 @@ function actorOf(c: Context<APIContext>): BlogActor {
  * - `POST /blog/posts/:id/change-url` takes `{ version, slug }`.
  * - `GET /blog/topics` lists every topic in use, for the editor's topic field.
  * - `POST /blog/preview` takes `{ bodyMd }` and answers it rendered as the public page renders it.
- * - `GET /blog/newsletter` answers whether a post can be emailed, and each list's confirmed
- *   subscribers, for the publish dialog.
+ * - `GET /blog/newsletter` answers whether a post can be emailed, each list's confirmed
+ *   subscribers, for the publish dialog, and the website's address for "View on website".
  *
  * A refusal answers `{ error, code }`, plus `field` when it is about one field and
  * `currentVersion` on a version conflict.
  */
 export function createAdminBlogRoutes(
-  { limit, blog, newsletterEnabled, now }: AdminBlogRouteDependencies,
+  { limit, blog, newsletterEnabled, siteUrl, now }: AdminBlogRouteDependencies,
 ): Hono<APIContext> {
   /** The post id in the path, or a refusal: an id that is no UUID is no post. */
   const idOf = (c: Context<APIContext>): string => {
@@ -247,6 +249,7 @@ export function createAdminBlogRoutes(
       const answer: BlogNewsletterResponse = {
         enabled: newsletterEnabled,
         lists: newsletterEnabled ? await blog.confirmedSubscribers() : [],
+        siteUrl,
       }
       return c.json(answer)
     })
@@ -287,11 +290,12 @@ export function blogNewsletterEnabled(setup: SubscribersSetup | null): boolean {
 /** The blog module: posts, publishing and the newsletter send (#395). */
 export const blogAdminModule: AdminApiModule = {
   id: `blog`,
-  routes: ({ sql, subscribers, limit, now }) =>
+  routes: ({ sql, subscribers, limit, now, siteUrl }) =>
     createAdminBlogRoutes({
       limit,
       now,
       blog: createAdminBlog(sql),
       newsletterEnabled: blogNewsletterEnabled(subscribers),
+      siteUrl,
     }),
 }

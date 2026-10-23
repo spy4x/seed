@@ -14,6 +14,8 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
 | `libs/server/blog/sample-posts.ts`         | Three sample posts for `deno task db:seed` in development.                             |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |
+| `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`) and the editor (`/blog/new`, `/blog/:id`).        |
+| `libs/ui/admin-blog-*.tsx`                 | Their screens: the list, the editor and its dialogs.                                  |
 | `apps/api/routes/blog.ts`                  | `/api/blog/*`, public: `posts?topic=`, `posts/:slug`, `topics`, `feed`.               |
 
 ## The life of a post
@@ -54,6 +56,16 @@ with `NEWSLETTER_OFF`, and `GET /api/admin/blog/newsletter` says `enabled: false
 The public routes answer only posts that are published and due. A draft, a scheduled post or an
 unpublished one is a 404, like an address that never existed. No public answer carries a post's
 id, its author's account id or address, or its newsletter.
+
+## The editor
+
+The list filters by status (the address keeps it, `?status=`) and searches by title or slug; `c`
+opens a new post. The editor saves with Ctrl S (Command S on a Mac). The slug follows the title
+until it is typed by hand or the post is first published. The Preview tab asks the API to render
+the body (`POST /api/admin/blog/preview`), so it shows exactly what the website will; the admin
+app never renders Markdown itself. A scheduled post keeps its newsletter list when it is
+published now or moved to another time: the editor names the list in every publish call, since
+the API reads a missing list as "no email".
 
 ## Markdown
 

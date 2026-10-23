@@ -65,7 +65,11 @@ const operator = () => buildAuthData({ user: { id: 7, role: UserRole.OPERATOR } 
  */
 function buildApp(
   auth: APIContext["Variables"]["auth"] = operator(),
-  { newsletterEnabled = true, fail = null as Error | null } = {},
+  {
+    newsletterEnabled = true,
+    fail = null as Error | null,
+    siteUrl = `https://www.example.com` as string | null,
+  } = {},
 ) {
   const calls: unknown[][] = []
   const write = (name: string) => (...args: unknown[]) => {
@@ -95,7 +99,13 @@ function buildApp(
     auth: testSessionGuards(),
     mutationGuards: testMutationGuards,
     modules: [
-      createAdminBlogRoutes({ limit: passThrough, blog, newsletterEnabled, now: () => NOW }),
+      createAdminBlogRoutes({
+        limit: passThrough,
+        blog,
+        newsletterEnabled,
+        siteUrl,
+        now: () => NOW,
+      }),
     ],
   })
   return { app: mountRoute(`/admin`, route, auth), calls }
@@ -291,17 +301,21 @@ describe(`operator area: blog routes`, () => {
     expect(calls).toEqual([])
   })
 
-  it(`answers the confirmed subscribers per list only while the newsletter is on`, async () => {
+  it(`answers the confirmed subscribers per list only while the newsletter is on, and the website's address always`, async () => {
     const on = buildApp()
     expect(await (await request(on.app, `GET`, `/newsletter`)).json()).toEqual({
       enabled: true,
       lists: [{ list: `news`, confirmed: 12 }],
+      siteUrl: `https://www.example.com`,
     })
     const off = buildApp(operator(), { newsletterEnabled: false })
     expect(await (await request(off.app, `GET`, `/newsletter`)).json()).toEqual({
       enabled: false,
       lists: [],
+      siteUrl: `https://www.example.com`,
     })
+    const unset = buildApp(operator(), { siteUrl: null })
+    expect((await (await request(unset.app, `GET`, `/newsletter`)).json()).siteUrl).toBe(null)
     expect(off.calls).toEqual([])
   })
 

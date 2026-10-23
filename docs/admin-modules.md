@@ -18,7 +18,7 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | `groups`     | Groups        | `/groups`, `/groups/:id`  |                                     | `/api/admin/groups/*`   |
 | `billing`    | Billing       | `/billing`, `/billing/:groupId` |                               | `/api/admin/billing/*`  |
 | `newsletter` | Newsletter    | `/newsletter`             |                                     | `/api/admin/newsletter/*` |
-| `blog`       | Blog          | `/blog` (coming soon)     |                                     | `/api/admin/blog/*`     |
+| `blog`       | Blog          | `/blog`, `/blog/new`, `/blog/:id` |                                     | `/api/admin/blog/*`     |
 | `audit`      | Audit log     | `/audit`                  |                                     | `/api/admin/audit*`     |
 | `jobs`       | Jobs          | `/jobs`, `/jobs/:id`      |                                     | `/api/admin/jobs*`      |
 | `system`     | System        | `/system`                 |                                     | `/api/admin/system*`    |
