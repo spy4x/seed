@@ -12,7 +12,7 @@ import {
 import { createOperationDispatcher, type Operations } from "@spy4x/realtime/operations"
 import { GROUP_AGGREGATE, GroupError } from "@domain/groups"
 import { AccessError, type Actor, userChangeGroupId } from "@domain/identity"
-import { NoteError, NoteVersionConflictError } from "@domain/notes"
+import { AttachmentError, NoteError, NoteVersionConflictError } from "@domain/notes"
 import { TagError, TagVersionConflictError } from "@domain/tags"
 import { PlanError, toPlanRefusal } from "@domain/billing"
 import { IdempotencyError } from "@spy4x/server/idempotency"
@@ -77,6 +77,12 @@ export function toRequestError(error: unknown): RealtimeRequestError | null {
       : { code: error.code }
     return new RealtimeRequestError(TAG_ERROR_CODES[error.code], error.message, details)
   }
+  if (error instanceof AttachmentError) {
+    return new RealtimeRequestError(ATTACHMENT_ERROR_CODES[error.code], error.message, {
+      code: error.code,
+      limit: error.limit,
+    })
+  }
   if (error instanceof PlanError) {
     // The socket's codes are closed, so a plan refusal is `forbidden` and names itself in details.
     return new RealtimeRequestError("forbidden", error.message, toPlanRefusal(error))
@@ -127,6 +133,21 @@ const NOTE_ERROR_CODES: Record<
   SAME_GROUP: "bad_request",
   SEARCH_RATE_LIMITED: "rate_limited",
   VERSION_CONFLICT: "conflict",
+}
+
+const ATTACHMENT_ERROR_CODES: Record<
+  AttachmentError["code"],
+  "bad_request" | "not_found" | "conflict"
+> = {
+  ATTACHMENT_NOT_FOUND: "not_found",
+  FILE_CONTENT: "bad_request",
+  FILE_MISSING: "bad_request",
+  FILE_TOO_LARGE: "bad_request",
+  FILE_TYPE: "bad_request",
+  INVALID_REQUEST: "bad_request",
+  NOTE_FULL: "conflict",
+  UPLOADS_PENDING: "conflict",
+  UPLOAD_NOT_FOUND: "not_found",
 }
 
 const TAG_ERROR_CODES: Record<

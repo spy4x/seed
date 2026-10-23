@@ -13,6 +13,7 @@ import { readSubscribersSetup, subscribersOffWarning } from "@server/subscribers
 // The API's own reading of the billing variables, so both processes run one provider.
 import { readBillingSetup } from "@server/billing/setup.ts"
 import { isDemoMode } from "@server/auth/demo-accounts.ts"
+import { type FileStore, fileStoreSettingsFrom, s3FileStore } from "@server/files/files.ts"
 import { AppDbBase } from "../api/services/db-base.ts"
 import { demoDataSeed, startDemoReset } from "./demo/reset.ts"
 import { isDemoSeeded, resetDemo } from "./demo/run.ts"
@@ -28,6 +29,15 @@ const sql = createSqlFromEnv(Deno.env.toObject(), {
 })
 if (!sql) {
   console.error("❌ Missing environment variable: DB_HOST")
+  Deno.exit(1)
+}
+
+// The nightly clean-up deletes removed files and abandoned uploads from the file store.
+let files: FileStore
+try {
+  files = s3FileStore(fileStoreSettingsFrom(Deno.env))
+} catch (error) {
+  console.error(`❌ ${(error as Error).message}`)
   Deno.exit(1)
 }
 
@@ -81,8 +91,18 @@ const processor = createOutboxProcessor(
   billingSetup.graceDays,
   billingSetup.trialRequiresCard,
   demo
-    ? (userId) => seedWorkspace(new AppDbBase({ sql }), sql, userId, demoDataSeed(new Date()))
+    ? (userId) =>
+      seedWorkspace(
+        new AppDbBase({ sql }),
+        sql,
+        userId,
+        demoDataSeed(new Date()),
+        new Date(),
+        files,
+      )
     : null,
+  undefined,
+  files,
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run

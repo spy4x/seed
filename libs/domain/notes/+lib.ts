@@ -6,6 +6,7 @@ import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
 
 export * from "./overview.ts"
+export * from "./attachments.ts"
 
 /**
  * Notes: the reference aggregate. A note belongs to one group; every member of the group reads it,

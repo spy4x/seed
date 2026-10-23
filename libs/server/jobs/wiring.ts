@@ -16,6 +16,7 @@ import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import { JOB_RETRY } from "./job-failures.ts"
 import { JOB_AGGREGATE, JOB_AGGREGATE_ID, LEGACY_JOB_AGGREGATE_ID } from "./jobs.ts"
 import { type JobDefinition, type JobDeps, JOBS } from "./registry.ts"
+import type { FileStore } from "../files/files.ts"
 
 /**
  * The worker's outbox processor: group changes go to the notifier, and jobs to the handlers of
@@ -56,6 +57,7 @@ export function createOutboxProcessor(
   trialRequiresCard = true,
   sampleData: StarterDataPlan["sampleData"] = null,
   jobs: readonly JobDefinition[] = JOBS,
+  files: FileStore | null = null,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {
@@ -66,6 +68,7 @@ export function createOutboxProcessor(
     graceDays,
     trialRequiresCard,
     sampleData,
+    files,
   }
   const kinds = jobs.map((job) => job.kind)
   const twice = kinds.filter((kind, index) => kinds.indexOf(kind) !== index)

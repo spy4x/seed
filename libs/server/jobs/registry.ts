@@ -10,6 +10,7 @@
 
 import type postgres from "postgres"
 import { stepsJob } from "@spy4x/server/outbox"
+import type { FileStore } from "../files/files.ts"
 import { describeCron, parseCron } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
@@ -62,6 +63,8 @@ export interface JobDeps {
   graceDays: number
   trialRequiresCard: boolean
   sampleData: StarterDataPlan["sampleData"]
+  /** The file store, or `null` in a test that runs without one. */
+  files: FileStore | null
 }
 
 /**
@@ -165,8 +168,8 @@ export const JOBS: readonly JobDefinition[] = [
     kind: OUTBOX_CLEANUP_JOB,
     label: `Nightly cleanup`,
     repeat: { cron: `0 3 * * *` },
-    handler: ({ sql, provider, mail }) =>
-      stepsJob(`nightly cleanup`, cleanupSteps(sql, provider, mail.log), mail.log),
+    handler: ({ sql, provider, mail, files }) =>
+      stepsJob(`nightly cleanup`, cleanupSteps(sql, provider, mail.log, files), mail.log),
   }),
   defineJob({
     kind: SEAT_SYNC_JOB,

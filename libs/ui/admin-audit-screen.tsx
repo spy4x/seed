@@ -73,6 +73,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   "group.imported": "Group imported",
   "note.created": "Note added",
   "note.deleted": "Note deleted",
+  "note.attachment.added": "File attached",
+  "note.attachment.removed": "Removed a file",
   "note.restored": "Note restored",
   "note.moved_out": "Notes moved out",
   "note.moved_in": "Notes moved in",
