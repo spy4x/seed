@@ -556,6 +556,31 @@ export function normalizeUsername(raw: unknown): string | null {
  * The `auth_audits` row of an action by `userId` in this request. The address is read as the API
  * always read it, trusting `X-Forwarded-For` and `X-Real-IP` from the proxy in front of it.
  */
+/**
+ * Ends the person's Telegram link (#269), with its audit row naming why and which Telegram
+ * account: `password-reset telegram:<id>`. Nothing when none is linked.
+ */
+async function unlinkTelegramOf(
+  tx: AppDbBase,
+  c: Context | undefined,
+  userId: number,
+  reason: string,
+): Promise<void> {
+  const telegramUserId = await tx.telegram.unlink(userId)
+  if (telegramUserId === null) return
+  const eventType = AuthAuditEventType.TELEGRAM_UNLINKED
+  const identifier = `${reason} telegram:${telegramUserId}`
+  await tx.authAudit.insert(
+    c ? auditRow(c, userId, eventType, identifier) : {
+      userId,
+      eventType,
+      identifier,
+      ip: null,
+      userAgent: null,
+    },
+  )
+}
+
 export function auditRow(
   c: Context,
   userId: number,
@@ -1478,6 +1503,7 @@ export function createSignIn(options: SignInOptions): SignIn {
             "password-change",
             { ip: request.ip || null, userAgent: request.userAgent || null },
           )
+          await unlinkTelegramOf(tx, c, user.id, "password-change")
           return { session, revokedTokens }
         })
       const outcome: { changed?: Awaited<ReturnType<typeof run>> } = {}
@@ -1530,6 +1556,10 @@ export function createSignIn(options: SignInOptions): SignIn {
         // A token create holds this row while it checks the password and inserts (#293), so the
         // revoke below runs after it and ends its token too.
         await tx.lockUser(user.id)
+        // A linked Telegram chat acts as the person too (#269): one linked with a stolen session
+        // goes, as the tokens below do. First, so the key clean-up of an unproven address does
+        // not take it without its audit row.
+        await unlinkTelegramOf(tx, c, user.id, "password-reset")
         // The link reached the mailbox, so the address is proven: this user now owns it. Another
         // user owning it already is a refusal; the code stays spent.
         if (key.provenAt === null) {
