@@ -333,6 +333,15 @@ describe("the blog editor", () => {
     expect([body.selectionStart, body.selectionEnd]).toEqual([5, 5])
   })
 
+  it("moves focus to the page title once publishing closes the dialog", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...editorProps(calls, { dialog: "publish" })} />)
+    await clickOn(button("Publish"))
+    const published = { ...saved, status: "published" as const, publishedAt: NOW.toISOString() }
+    await mount(<AdminBlogEditorScreen {...editorProps(calls, { post: published })} />)
+    await settle()
+    expect(document.activeElement).toBe(find("[data-e2e=admin-blog-editor-title]"))
+  })
 
   it("says when a published post went live and was last updated, with a space before the middle dot", async () => {
     const post = {

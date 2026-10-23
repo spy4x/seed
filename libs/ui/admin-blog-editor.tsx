@@ -373,6 +373,27 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
     return () => clearTimeout(timer)
   }, [saving])
 
+  // Publishing, unscheduling or unpublishing removes the button that opened the dialog, so focus
+  // would fall to the page's body. Once a dialog has closed and the post's status has moved, focus
+  // goes to the page's title instead. A dialog closed without a change gives focus back itself.
+  const statusAtDialog = useRef<BlogPostStatus | null>(null)
+  const dialogWasOpen = useRef(false)
+  useEffect(() => {
+    const opened = props.dialog !== null && !dialogWasOpen.current
+    dialogWasOpen.current = props.dialog !== null
+    if (opened) statusAtDialog.current = status
+    if (props.dialog !== null) return
+    const before = statusAtDialog.current
+    if (before === null || before === status) return
+    statusAtDialog.current = null
+    const title = root.current?.ownerDocument.querySelector<HTMLElement>(
+      `[data-e2e=admin-blog-editor-title]`,
+    )
+    if (!title) return
+    title.tabIndex = -1
+    title.focus()
+  }, [status, props.dialog])
+
   const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
   const openPreview = (next: string) => {
     setTab(next)

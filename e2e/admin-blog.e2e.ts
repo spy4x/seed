@@ -111,6 +111,8 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
     await ops.getByRole("button", { name: "Schedule" }).click()
     await expect(ops.locator("[data-e2e=toasts]")).toContainText("Scheduled for")
     await expect(ops.locator("[data-e2e=admin-blog-publishing]")).toContainText("Goes live")
+    // "Publish…" is gone with the draft, so focus goes to the page's title, not to the page.
+    await expect(ops.locator("[data-e2e=admin-blog-editor-title]")).toBeFocused()
 
     // Published now from More actions; the slug is locked from then on.
     await ops.locator("[data-e2e=admin-blog-menu]").click()
