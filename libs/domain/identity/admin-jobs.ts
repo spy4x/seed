@@ -153,6 +153,8 @@ export interface AdminJobDetail extends AdminJobRow {
   repeats: string | null
   /** It sends mail: the admin asks before running it again or now. */
   sendsMail: boolean
+  /** An operator may cancel it while it waits; `false` for a kind whose own page stops it. */
+  cancellable: boolean
   /** What it is about, while that still exists and the job names it; otherwise `null`. */
   about: AdminJobAbout | null
   /** When the nightly cleanup removes a finished run. `null` while it waits. */
@@ -185,6 +187,8 @@ export enum AdminJobActionOutcome {
   NotFound = 2,
   /** Another run of the same job waits already: a second one would run it twice. */
   Superseded = 3,
+  /** The job's kind may not be cancelled from the admin (`cannotCancel` in the registry). */
+  NotCancellable = 4,
 }
 
 /** The answer of every action route: the run as it is now, or `null` for a repeating job's start. */

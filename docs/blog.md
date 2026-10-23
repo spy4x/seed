@@ -21,6 +21,9 @@ Operators write posts in the admin app; the public website shows the published o
 - **Publish now** makes the post live at once. **Schedule** sets `publish_at` and queues a
   `blog.publish` job for that time; the job publishes it. Moving the time or unscheduling leaves
   the old job in place: when it runs it finds the post not due, or a draft, and does nothing.
+- In the admin's Jobs module, **Run now** on a scheduled post's job publishes nothing early: the
+  run finds the post not due and queues the job for the post's time again, unless another run
+  waits. **Cancel** is refused for `blog.publish`; Unschedule on the Blog page stops a post.
 - `published_at` is set the first time a post goes live and never moves, so unpublishing and
   publishing again keeps the date readers saw. From then on the slug is locked; **Change URL**
   changes it, and old links stop working (there are no redirects).

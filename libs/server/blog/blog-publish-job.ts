@@ -52,7 +52,9 @@ export function blogTeaserIssue(
  * The `blog.publish` job, about one post. In one transaction that locks the post, it:
  *
  * 1. publishes a scheduled post whose time has come. A post unscheduled, deleted or moved to a
- *    later time since the job was queued is left alone: the job of its new time publishes it.
+ *    later time since the job was queued is left alone: the job of its new time publishes it. A
+ *    run before the post's time with no other run waiting (the admin's Run now) queues one for
+ *    that time, so the post still goes live then.
  * 2. queues the post's newsletter issue when the post is live, has a list and has never been
  *    emailed, and records when and to how many confirmed subscribers. That record is written in
  *    the same transaction as the issue's job, so a retried, repeated or concurrent run, or
@@ -71,6 +73,16 @@ export function blogPublishJob(deps: BlogPublishJobDeps): JobHandler {
         FOR UPDATE
       `
       if (!post) return
+      if (post.status === `scheduled` && !post.due && post.publishAt) {
+        // Run early (the admin's Run now): queue the run at the post's time, unless one waits.
+        const [waiting] = await tx`
+          SELECT 1 FROM outbox_events
+          WHERE aggregate_type = ${JOB_AGGREGATE} AND aggregate_id = ${post.id}
+            AND event_kind = ${BLOG_PUBLISH_JOB} AND processed_at IS NULL AND id <> ${event.id}
+        `
+        if (!waiting) await enqueueJob(tx, BLOG_PUBLISH_JOB, post.id, { at: post.publishAt })
+        return
+      }
       let live = post.status === `published`
       if (post.status === `scheduled` && post.due) {
         await tx`

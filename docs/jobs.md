@@ -24,7 +24,8 @@ the admin's Jobs module.
    ```
 
    `about` names a table whose `id` is the job's `aggregateId` and that has a `user_id` column, or
-   `{ group: true }` when the `aggregateId` is a group's id. The worker refuses to start with two
+   `{ group: true }` when the `aggregateId` is a group's id. `cannotCancel` (why, and what to do
+   instead) hides Cancel for a kind whose own page stops it. The worker refuses to start with two
    jobs of one kind or an invalid definition.
 3. Queue it with `enqueueJob` where the change happens (below).
 4. Test the handler next to it, and add the kind to `libs/server/jobs/registry.test.ts` if the test
@@ -80,7 +81,10 @@ Running, Waiting to retry, Failed, Done or Cancelled. An operator can:
   job moves its waiting run, or starts it again if it was cancelled; it never writes a second
   waiting run.
 - **Cancel** a run that waits and is not running. A cancelled repeating job starts again the next
-  time the worker starts.
+  time the worker starts. A kind with `cannotCancel` in the registry has no Cancel, and the API
+  refuses it with that text: `blog.publish` is stopped by unscheduling the post on the Blog page.
+  Run now on a `blog.publish` run before the post's time publishes nothing and queues the run
+  for that time again ([blog.md](blog.md)).
 
 Each action is guarded in SQL against a worker that takes the run at the same moment, and is
 written to the audit log. Group changes (`note.created` and the like) are not jobs and are not

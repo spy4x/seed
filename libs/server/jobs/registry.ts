@@ -89,6 +89,11 @@ export interface JobDefinition {
   handler: (deps: JobDeps) => JobHandler
   /** The job sends mail: running it again may mail someone twice, so the admin asks first. */
   sendsMail?: boolean
+  /**
+   * Set when an operator must not cancel a waiting run: why, and what to do instead. The admin's
+   * Jobs module then hides Cancel, and the API refuses it with this text.
+   */
+  cannotCancel?: string
   repeat?: JobRepeat
   about?: JobAbout
 }
@@ -261,6 +266,8 @@ export const JOBS: readonly JobDefinition[] = [
   defineJob({
     kind: BLOG_PUBLISH_JOB,
     label: `Publish a blog post`,
+    cannotCancel: `To stop a scheduled post, unschedule it on the Blog page. ` +
+      `Cancelling its job would leave the post scheduled with nothing to publish it.`,
     handler: (deps) => blogPublishJob({ ...mailDeps(deps), setup: deps.subscribers }),
   }),
 ]
