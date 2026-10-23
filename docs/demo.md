@@ -33,18 +33,28 @@ delays or fails a sign-up, and a failed job is retried. An account that is in an
 its first one has its sample groups already and gets nothing more, so a retry or a second sign-in
 adds nothing. The population's fake people get none.
 
-**The admin panel is not part of the demo.** Its host still runs, but the demo seeds no operator
-account, so nobody outside can sign in to it. A public operator account would show every visitor's
-address, IP address and devices to anyone, and each admin action would need its own demo rule.
-The admin panel is shown in a video on the website instead. The owner decided this on 2026-10-20:
-"My decision is admin panel, not for a demo, but we need a good video about it." In development,
-`deno task db:seed` adds `admin@example.com`, an administrator, so the admin app can be tried
-locally, with what an operator did over the weeks (blocks, a reset mail, a refund, time given,
-exports) and a finished backup, so the System page shows a healthy server. The development
-billing provider answers a customer's last payment from the seeded subscription
+**The admin panel is not part of the demo.** Its host still runs, but the demo gives visitors no
+operator account, so nobody outside can sign in to it. A public operator account would show every
+visitor's address, IP address and devices to anyone, and each admin action would need its own demo
+rule. The admin panel is shown in a video on the website instead. The owner decided this on
+2026-10-20: "My decision is admin panel, not for a demo, but we need a good video about it."
+
+The owner keeps a private administrator there: set `DEMO_ADMIN_PASSWORD` (8 to 50 characters) in
+the server's env file, which is encrypted, and deploy. Every reset then creates `admin@example.com`
+with that password first, hashed with the API's `AUTH_PEPPER` (the worker receives both), and it
+signs in to the admin app. A changed password takes effect at the next reset. The worker refuses
+to start when the password breaks the rule or the pepper is missing. This administrator is the one
+operator the reset tolerates: any other makes the worker wipe and seed again within a minute, and
+so does the administrator missing while the setting is on. The reset seeds no operator history
+or backup for it, so the admin panel shows the demo as it is. Unset, the demo has no operator.
+
+In development, `deno task db:seed` adds `admin@example.com`, an administrator, so the admin app
+can be tried locally, with what an operator did over the weeks (blocks, a reset mail, a refund,
+time given, exports) and a finished backup, so the System page shows a healthy server. The
+development billing provider answers a customer's last payment from the seeded subscription
 (`libs/server/billing/fake-payments.ts`): nothing for a trial, every seat's price at the start of
 the period, and refunded once the operator's refund is on record. The public demo gets
-neither: it has no operator, and its server's own backup service records the backups.
+neither: it has no operator history, and its server's own backup service records the backups.
 
 ## When the database changes
 
