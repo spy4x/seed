@@ -20,6 +20,7 @@ import {
 } from "./notes-screen.tsx"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
+import { NoteAttachments, type NoteAttachmentsProps } from "./note-attachments.tsx"
 import { NoteTags, TagChips, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 
@@ -91,8 +92,19 @@ export interface NoteEditorScreenProps {
   tags?: readonly TagRow[]
   /** Who made the note and changed it last, shown under the title. Left out on the create page. */
   authorship?: NoteAuthorship | null
+  /**
+   * The note's files, drawn under the tags. Left out, the page has no attachments section. A
+   * viewer's page shows the list only.
+   */
+  attachments?: NoteAttachmentsSlot | null
   navigate?: Navigate
 }
+
+/** What the page passes on to {@link NoteAttachments}; the group and the mode come from the page. */
+export type NoteAttachmentsSlot = Omit<
+  NoteAttachmentsProps,
+  "groupId" | "groupName" | "readOnly" | "creating" | "navigate"
+>
 
 /**
  * One note on a page of its own: the form to create it or edit it, and for a viewer the note as
@@ -206,7 +218,7 @@ function AuthorshipLine({ authorship }: { authorship: NoteAuthorship }): JSX.Ele
 
 /** A viewer's page: the note as text, with nothing to change. */
 function ReadOnlyNote(
-  { note, value, group, navigate, tags, authorship }: NoteEditorScreenProps,
+  { note, value, group, navigate, tags, authorship, attachments }: NoteEditorScreenProps,
 ): JSX.Element {
   return (
     <EditorPage>
@@ -230,6 +242,15 @@ function ReadOnlyNote(
         </p>
       )}
       {note && <NoteTags tagIds={value.tagIds} tags={tags ?? []} />}
+      {note && group && attachments && (
+        <NoteAttachments
+          {...attachments}
+          groupId={group.id}
+          groupName={group.name}
+          readOnly
+          navigate={navigate}
+        />
+      )}
     </EditorPage>
   )
 }
@@ -324,6 +345,15 @@ function Editor(props: WithGroup): JSX.Element {
             tags={props.tags ?? []}
             navigate={navigate}
           />
+          {props.attachments && (
+            <NoteAttachments
+              {...props.attachments}
+              groupId={group.id}
+              groupName={group.name}
+              creating={note === null}
+              navigate={navigate}
+            />
+          )}
           {note?.conflict && (
             <p class="text-sm" data-e2e="note-conflict">
               <Link

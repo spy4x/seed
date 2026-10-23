@@ -65,8 +65,9 @@ const billingSetup = readBillingSetup(systemEnv, Deno.env.get("ENV") === "dev" ?
   webhooks: false,
 })
 
-// A person's data export (docs/data-export.md) is built here and kept in the file store. Without
-// its settings the export jobs fail and are retried, so a fixed env file still delivers them.
+// A person's data export (docs/data-export.md) is built here and kept in the file store, and the
+// nightly clean-up deletes removed attachments and abandoned uploads from it. Without its settings
+// the export jobs fail and are retried, so a fixed env file still delivers them.
 const filesSetup = readServerFilesSetup(Deno.env)
 if (!filesSetup.success) console.warn(filesSetup.error)
 const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
@@ -100,7 +101,15 @@ const processor = createOutboxProcessor(
   billingSetup.graceDays,
   billingSetup.trialRequiresCard,
   demo
-    ? (userId) => seedWorkspace(new AppDbBase({ sql }), sql, userId, demoDataSeed(new Date()))
+    ? (userId) =>
+      seedWorkspace(
+        new AppDbBase({ sql }),
+        sql,
+        userId,
+        demoDataSeed(new Date()),
+        new Date(),
+        files,
+      )
     : null,
   undefined,
   files,

@@ -179,8 +179,24 @@ async function signUpVisitor(sql: postgres.Sql, email: string): Promise<number> 
   return user.user.id
 }
 
+/** A file store that keeps what the seed puts in a map, by key. Nothing opens a socket. */
+function fakeFiles() {
+  const stored = new Map<string, string>()
+  return {
+    stored,
+    put: (key: string, bytes: Uint8Array) => {
+      stored.set(key, String(bytes.length))
+      return Promise.resolve()
+    },
+  }
+}
+
 /** Runs the worker's queued jobs once, with the demo's sample groups on, as the worker does. */
-async function drainJobs(sql: postgres.Sql, dataSeed = OPTIONS.dataSeed): Promise<void> {
+async function drainJobs(
+  sql: postgres.Sql,
+  dataSeed = OPTIONS.dataSeed,
+  files = fakeFiles(),
+): Promise<void> {
   const db = new AppDbBase({ sql })
   const mail = {
     store: createPostgresAuthStore(sql),
@@ -195,7 +211,7 @@ async function drainJobs(sql: postgres.Sql, dataSeed = OPTIONS.dataSeed): Promis
     null,
     0,
     true,
-    (userId) => seedWorkspace(db, sql, userId, dataSeed),
+    (userId) => seedWorkspace(db, sql, userId, dataSeed, new Date(), files),
   )
   // One batch at a time, until every queued job ran: the population queues theirs too.
   for (;;) {
@@ -341,7 +357,8 @@ Deno.test("a visitor who signs up to the demo gets sample groups once and opens 
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const userId = await signUpVisitor(sql, "visitor@example.net")
-    await drainJobs(sql)
+    const files = fakeFiles()
+    await drainJobs(sql, OPTIONS.dataSeed, files)
 
     const sample = fakeWorkspace(OPTIONS.dataSeed)
     const owned = sample.find((group) => group.owner === "you")!
@@ -384,6 +401,15 @@ Deno.test("a visitor who signs up to the demo gets sample groups once and opens 
       SELECT 1 FROM notes WHERE title = ${WELCOME_NOTE_TITLE} AND created_by_user_id = ${userId}
     `
     expect(welcome).toHaveLength(1)
+    // The sample notes' files: stored, and on the notes of the visitor's groups.
+    const attached = await sql<{ objectKey: string }[]>`
+      SELECT a.object_key FROM note_attachments a JOIN notes n ON n.id = a.note_id
+      WHERE n.group_id IN (SELECT group_id FROM group_members WHERE user_id = ${userId})
+    `
+    const sampleFiles = sample.flatMap((group) => group.notes.flatMap((note) => note.files ?? []))
+    expect(sampleFiles.length).toBeGreaterThan(0)
+    expect(attached.length).toBe(sampleFiles.length)
+    expect([...files.stored.keys()].sort()).toEqual(attached.map((row) => row.objectKey).sort())
 
     // A retried job and a second sign-in add nothing.
     const before = await count(sql)
@@ -393,6 +419,10 @@ Deno.test("a visitor who signs up to the demo gets sample groups once and opens 
     expect(await canSignIn(sql, "visitor@example.net", PASSWORD)).toBe(true)
     await drainJobs(sql)
     expect({ ...await count(sql), activeSessions: 0 }).toEqual({ ...before, activeSessions: 0 })
+    const [{ files: after }] = await sql<{ files: number }[]>`
+      SELECT COUNT(*)::int AS files FROM note_attachments
+    `
+    expect(after).toBe(attached.length)
   })
 })
 
@@ -432,15 +462,24 @@ Deno.test("the demo seed fails when sign-up refuses an account that does not exi
   })
 })
 
-Deno.test("the wipe empties every table but the kept ones, keeps the blog, and never reuses an id", async () => {
+Deno.test("the wipe empties every table but the kept ones, keeps the blog, queues every stored file for deletion, and never reuses an id", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     await sql`INSERT INTO backup_status (target, succeeded_at) VALUES ('database', now())`
     const [{ before }] = await sql<{ before: number }[]>`SELECT max(id) AS before FROM users`
     // The website's real posts, by an account the wipe removes.
     await seedSamplePosts(sql, before)
+    // A visitor's sample groups, whose files' objects the wipe queues for deletion.
+    await signUpVisitor(sql, "wiped@example.net")
+    await drainJobs(sql)
+    const keys = await sql<{ objectKey: string }[]>`SELECT object_key FROM note_attachments`
+    expect(keys.length).toBeGreaterThan(0)
 
     const wiped = await wipeDatabase(sql)
+    const queued = await sql<{ objectKey: string }[]>`SELECT object_key FROM file_deletions`
+    expect(queued.map((row) => row.objectKey).sort()).toEqual(
+      keys.map((row) => row.objectKey).sort(),
+    )
 
     const tables = await sql<{ name: string }[]>`
       SELECT tablename AS name FROM pg_tables WHERE schemaname = current_schema()

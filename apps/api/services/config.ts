@@ -1,9 +1,20 @@
+import { ATTACHMENT_UPLOAD_BUDGET } from "@domain/notes"
 import { readApiEnv } from "./config-env.ts"
 
 const env = readApiEnv()
 // loadConfig names a failing variable but not the rule it broke, so this one says it outright.
 if (env.AUTH_COOKIE_SECRET.length < 32) {
   throw new Error("AUTH_COOKIE_SECRET must be at least 32 characters (openssl rand -hex 32)")
+}
+
+/** A setting that is a whole number, or `fallback` when it is unset or empty. */
+function wholeNumber(name: string, value: string | undefined, fallback: number): number {
+  if (value === undefined || value.trim() === "") return fallback
+  const number = Number(value)
+  if (!Number.isSafeInteger(number) || number < 0) {
+    throw new Error(`${name} must be a whole number, 0 or more`)
+  }
+  return number
 }
 
 export class Config {
@@ -22,6 +33,19 @@ export class Config {
   authSessionDurationMin = 60 * 24 * 30 * 2 // 2 months
   /** "Try it now": one click into the app as a guest (#224). On unless `GUEST_MODE=false`. */
   guestMode = env.GUEST_MODE !== "false"
+  /** What one person may upload to note attachments per hour (docs/files.md, "Upload budget"). */
+  attachmentUploadBudget = {
+    files: wholeNumber(
+      "ATTACHMENT_UPLOAD_FILES_PER_HOUR",
+      env.ATTACHMENT_UPLOAD_FILES_PER_HOUR,
+      ATTACHMENT_UPLOAD_BUDGET.files,
+    ),
+    bytes: wholeNumber(
+      "ATTACHMENT_UPLOAD_BYTES_PER_HOUR",
+      env.ATTACHMENT_UPLOAD_BYTES_PER_HOUR,
+      ATTACHMENT_UPLOAD_BUDGET.bytes,
+    ),
+  }
   rateLimiter = {
     windowMs: env.RATE_LIMITER_WINDOW_MS,
     strictLimit: env.RATE_LIMITER_STRICT_LIMIT,

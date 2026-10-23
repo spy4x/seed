@@ -30,6 +30,7 @@ import { tagPortable } from "@server/tags/tag-portable.ts"
 import { noteMovable } from "@server/notes/note-movable.ts"
 import { tagMovable } from "@server/tags/tag-movable.ts"
 import { PostgresTagRepository } from "@server/tags/postgres-tag-repository.ts"
+import { PostgresAttachmentRepository } from "@server/notes/postgres-attachment-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { PostgresNoteOverview } from "@server/notes/note-overview.ts"
 import { PostgresBillingRepository } from "@server/billing/postgres-billing-repository.ts"
@@ -266,6 +267,10 @@ export class AppDbBase extends DbServiceBase {
   /** The tags repository. Built per access, like `note`. */
   get tag(): PostgresTagRepository {
     return new PostgresTagRepository(this.sql)
+  }
+
+  get attachment(): PostgresAttachmentRepository {
+    return new PostgresAttachmentRepository(this.sql)
   }
 
   /** Each group's subscription and customer. Built per access, like `group`. */

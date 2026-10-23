@@ -1,6 +1,7 @@
 import type postgres from "postgres"
 import { type JobStep, PostgresOutboxRepository } from "@spy4x/server/outbox"
 import type { BillingProvider } from "@spy4x/billing"
+import { cleanUpAttachments } from "../notes/attachment-cleanup.ts"
 import { queueSeatDrift } from "../billing/seat-sync.ts"
 import { purgeDeadInvitations } from "../groups/purge-dead-invitations.ts"
 import { purgeDeletedNotes } from "../notes/purge-deleted-notes.ts"
@@ -81,6 +82,17 @@ export function cleanupSteps(
     ["purge deleted notes", async () => {
       const notes = await purgeDeletedNotes(sql)
       if (notes.removed > 0) console.log(`Removed ${notes.removed} deleted note(s) for good`)
+    }],
+    // After the purges above, so the files of notes and groups they removed go tonight.
+    ["clean up note attachments", async () => {
+      if (!files) return
+      const done = await cleanUpAttachments(sql, files)
+      if (done.uploads + done.staging + done.deleted > 0) {
+        console.log(
+          `Forgot ${done.uploads} unconfirmed upload(s), deleted ${done.staging} staging ` +
+            `object(s) and ${done.deleted} removed file(s)`,
+        )
+      }
     }],
     ["purge dead invitations", async () => {
       const invitations = await purgeDeadInvitations(sql)

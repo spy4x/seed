@@ -8,6 +8,7 @@ import { createPreferencesOperations } from "../features/preferences/operations.
 import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
 import { createTagOperations } from "../features/tags/operations.ts"
+import { createAttachmentOperations } from "../features/notes/attachments.ts"
 import { createNoteOperations } from "../features/notes/operations.ts"
 import { createNoteWidgetOperations } from "../features/notes/widgets.ts"
 import { signIn } from "./auth.ts"
@@ -89,6 +90,14 @@ export const operations: Operations<Actor> = {
     total: (query) => queryBus.execute(query),
     added: (query) => queryBus.execute(query),
     series: (query) => queryBus.execute(query),
+  }),
+  ...createAttachmentOperations({
+    sign: (command) => commandBus.execute(command),
+    confirm: (command) => commandBus.execute(command),
+    cancel: (command) => commandBus.execute(command),
+    remove: (command) => commandBus.execute(command),
+    list: (query) => queryBus.execute(query),
+    download: (query) => queryBus.execute(query),
   }),
   ...createTagOperations({
     create: (command) => commandBus.execute(command),

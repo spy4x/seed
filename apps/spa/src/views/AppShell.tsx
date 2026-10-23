@@ -39,6 +39,7 @@ import { demoMode } from "../state/demo.ts"
 import { guestRefusal } from "../state/guest-refusal.ts"
 import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { overviewPageActions } from "./OverviewView.tsx"
+import { noteEditorPageActions } from "./NoteEditorView.tsx"
 
 /** The overview's commands in the palette, while the overview is open. */
 const OVERVIEW_COMMANDS = [
@@ -46,11 +47,22 @@ const OVERVIEW_COMMANDS = [
   { id: "overview-customise", label: "Customise overview" },
 ] as const
 
-/** Runs the overview command `id` of {@link OVERVIEW_COMMANDS} on the open overview. */
-function runOverviewCommand(id: string): void {
+/** The note page's command in the palette, while a note an editor can change is open. */
+const NOTE_COMMANDS = [{ id: "note-attach", label: "Attach files to this note" }] as const
+
+/** The open page's commands in the palette, if it has any. */
+function pageCommands() {
+  if (overviewPageActions.value) return OVERVIEW_COMMANDS
+  if (noteEditorPageActions.value) return NOTE_COMMANDS
+  return undefined
+}
+
+/** Runs the page command `id` of {@link pageCommands} on the open page. */
+function runPageCommand(id: string): void {
   const actions = overviewPageActions.value
   if (id === "overview-range") actions?.openRange()
   if (id === "overview-customise") actions?.openCustomise()
+  if (id === "note-attach") noteEditorPageActions.value?.attach()
 }
 
 /**
@@ -220,7 +232,7 @@ export function AppShell(
   const open = async (choice: SearchChoice) => {
     if (choice.kind === "page") return navigate(choice.href)
     if (choice.kind === "new-note") return newNoteStore.show()
-    if (choice.kind === "command") return runOverviewCommand(choice.id)
+    if (choice.kind === "command") return runPageCommand(choice.id)
     if (choice.kind === "group") return navigate(GROUP_PATHS.settings(choice.groupId))
     // Straight to the note: never the editor's "Note in another group" page in between.
     if (choice.groupId !== selectionStore.groupId.value) {
@@ -238,7 +250,7 @@ export function AppShell(
             ? { id: current.id, name: current.name, canWrite: canMutateNotes(current.role) }
             : null}
           online={wsStatus === "open"}
-          pageCommands={overviewPageActions.value ? OVERVIEW_COMMANDS : undefined}
+          pageCommands={pageCommands()}
           onSelect={(choice) => void open(choice)}
           slashKey={singleKeys.on.value}
           guest={guest}

@@ -7,6 +7,7 @@ import {
   assertCanManageBilling,
   assertFeature,
   assertRoomFor,
+  attachmentRulesOf,
   billingDate,
   BillingError,
   BillingNoticeKind,
@@ -428,5 +429,15 @@ describe("billing domain", () => {
     expect(readPlanRefusal({ ...body, entitlement: "maxSeats" })).toBeNull()
     expect(readPlanRefusal({ ...body, entitlement: "toString" })).toBeNull()
     expect(readPlanRefusal(null)).toBeNull()
+  })
+
+  it("keeps the file rules with billing off and takes each plan's own with billing on", () => {
+    const free = PLANS.find((plan) => plan.id === FREE_PLAN_ID)!
+    const pro = PLANS.find((plan) => plan.id === PRO_PLAN_ID)!
+    expect(free.attachments).toEqual({ maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 })
+    expect(free.entitlements.limits.maxAttachments).toBe(100)
+    expect(attachmentRulesOf(PRO_PLAN_ID, false)).toBe(free.attachments)
+    expect(attachmentRulesOf(PRO_PLAN_ID, true)).toBe(pro.attachments)
+    expect(attachmentRulesOf("unknown", true)).toBe(free.attachments)
   })
 })

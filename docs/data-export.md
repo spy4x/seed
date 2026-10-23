@@ -40,6 +40,8 @@ Only what is about the person or made by them, never another person's data or a 
 - the groups they belong to, by name and role, never the other members;
 - the notes and tags they created in groups they still belong to, never the ones others wrote.
   Notes in a group they left stay out: they can no longer read them in the app either;
+- the files they attached to notes in those groups: name, type, size and note, never the bytes
+  (they stay in the file store and open from the note) and never the stored key;
 - what they did in their groups, without the details that can name other people;
 - invitations they sent (without the invited address) and accepted, their notifications, API
   tokens (without the token or its hash), the subscriptions of groups they own, their newsletter

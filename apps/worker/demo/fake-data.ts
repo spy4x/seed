@@ -81,6 +81,8 @@ export interface FakeNote {
   createdAgo: number
   /** Who last changed it, and when; `null` when nobody did. */
   edit: { by: FakeMember; ago: number } | null
+  /** Files on the note, attached by its author when it was written. Only sample groups have any. */
+  files?: { name: string; kind: `png` | `pdf` }[]
 }
 
 export interface FakeGroup {
@@ -735,7 +737,7 @@ export function fakeWorkspace(seed: number): FakeGroup[] {
     .filter((i) => i !== VIDEO_PERSON_INDEX)
   const taken = new Set<string>()
   return YOUR_ROLES.map(([index, role]) =>
-    fakeGroup(
+    withSampleFiles(fakeGroup(
       tools,
       THEMES[index],
       people,
@@ -743,6 +745,20 @@ export function fakeWorkspace(seed: number): FakeGroup[] {
       tools.int(7, 40) * DAY + tools.int(0, DAY),
       role,
       taken,
-    )
+    ))
   )
+}
+
+/** A photo and a PDF on the group's first note, and a photo on its second, named after them. */
+function withSampleFiles(group: FakeGroup): FakeGroup {
+  const slug = (title: string) =>
+    title.toLowerCase().normalize(`NFKD`).replace(/[^a-z0-9]+/g, `-`).replace(/^-|-$/g, ``) ||
+    `note`
+  const notes = group.notes.map((note, index) => {
+    if (index > 1) return note
+    const files: NonNullable<FakeNote["files"]> = [{ name: `${slug(note.title)}.png`, kind: `png` }]
+    if (index === 0) files.push({ name: `${slug(note.title)}.pdf`, kind: `pdf` })
+    return { ...note, files }
+  })
+  return { ...group, notes }
 }
