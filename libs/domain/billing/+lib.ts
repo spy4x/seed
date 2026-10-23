@@ -97,7 +97,7 @@ export const PLANS: readonly Plan[] = [
     amount: 0,
     currency: "EUR",
     description: "For trying things out.",
-    features: ["Up to 10 notes", "Up to 3 members"],
+    features: ["Up to 10 notes", "Up to 3 members", "100 files, 200 MB in all"],
     entitlements: {
       features: { memberRoles: false },
       limits: {
@@ -120,6 +120,7 @@ export const PLANS: readonly Plan[] = [
     features: [
       "Billed per member, the owner included",
       "Unlimited notes",
+      "Unlimited files, 10 GB in all",
       "Up to 50 members",
       "Promote members to editor or admin",
     ],
