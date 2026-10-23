@@ -103,7 +103,7 @@ carries an `idempotencyKey` runs once per user and key.
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `apps/api/features/notes/list.ts`       | One page of the list, with its cursor. Both transports call it, so they cannot drift apart.                                                                 |
 | `apps/api/features/notes/operations.ts`     | The operations `note.create`, `note.update`, `note.delete`, `note.restore`, `note.move` (commands) and `note.list`, `note.get`, `note.locate` (queries): parse the payload, dispatch. `note.locate` finds the group of a note by its id alone, for a link to a note of another of the person's groups: it answers only a member, and `NOTE_NOT_FOUND` otherwise. |
-| `apps/api/features/notes/errors.ts`     | REST error codes and statuses. A version conflict answers 409 with `currentVersion`.                                                                        |
+| `apps/api/features/notes/errors.ts`     | REST error codes and statuses. A version conflict answers 409 with `details.currentVersion` (docs/api-errors.md).                                                                        |
 | `apps/api/routes/notes.ts`              | `GET`, `POST`, `PATCH`, `DELETE` and `POST /:noteId/restore` under `/api/groups/:groupId/notes`, with the same-origin guard on writes and an optional `Idempotency-Key` header.         |
 | `apps/api/services/note-list-cursor.ts` | The cursor codec, keyed from the cookie secret.                                                                                                             |
 

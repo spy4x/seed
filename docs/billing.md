@@ -266,18 +266,22 @@ a role refusal (403):
 ```json
 {
   "error": {
-    "code": "PLAN_LIMIT_REACHED",
+    "code": "forbidden",
     "message": "The group has reached its plan's limit",
-    "entitlement": "maxNotes",
-    "limit": 10,
-    "canUpgrade": true
+    "reason": "PLAN_LIMIT_REACHED",
+    "details": {
+      "code": "PLAN_LIMIT_REACHED",
+      "entitlement": "maxNotes",
+      "limit": 10,
+      "canUpgrade": true
+    }
   }
 }
 ```
 
-`code` is `PLAN_FEATURE_MISSING` or `PLAN_LIMIT_REACHED`. `canUpgrade` is true only for the owner,
-the one person who can change the plan. The socket's error codes are a closed set, so over the
-socket the refusal is `forbidden`, with the same fields in `details`. `readPlanRefusal` reads either
+`reason` is `PLAN_FEATURE_MISSING` or `PLAN_LIMIT_REACHED`. `canUpgrade` is true only for the
+owner, the one person who can change the plan. The socket answers the same: `forbidden`, with the
+same fields in `details` ([api-errors.md](api-errors.md)). `readPlanRefusal` reads either
 one back. The SPA then shows `PlanRefusalNotice`: the owner gets a link to the group's Plan and
 billing tab, and anyone else is told to ask the owner.
 
