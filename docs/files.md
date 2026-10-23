@@ -6,9 +6,8 @@ product needs no outside service. Moving to another S3 store, such as Hetzner Ob
 change of settings.
 
 Browsers upload and download with signed URLs: the API signs, the store checks the signature, and
-no file passes through the API. Note attachments use it (below); profile pictures
-([#228](https://github.com/spy4x/seed/issues/228)) and data exports
-([#229](https://github.com/spy4x/seed/issues/229)) build on it.
+no file passes through the API. Note attachments and profile pictures use it (below); data
+exports ([#229](https://github.com/spy4x/seed/issues/229)) build on it.
 
 ## How a feature uses it
 
@@ -55,8 +54,10 @@ table `note_attachments`, with the operations `attachment.sign`, `.confirm`, `.c
 `.list` and `.download`.
 
 - **Sign.** The handler checks the role, the live note and every limit, signs the upload and
-  keeps a row in `note_attachment_uploads` for the person who asked, with the staging key. One
-  person has at most 20 uploads waiting (`ATTACHMENT_PENDING_MAX`): signed in the last ten
+  keeps a row in `file_uploads` for the person who asked, with the staging key. Every feature's
+  signed uploads share that table (`libs/server/files/upload-ledger.ts`), so the waiting count and
+  the budget below count note attachments and profile pictures together. One person has at most
+  20 uploads waiting (`ATTACHMENT_PENDING_MAX`): signed in the last ten
   minutes (`ATTACHMENT_PENDING_MINUTES`, the URL's five and five more) and neither confirmed nor
   cancelled. An older one can no longer be uploaded, so an abandoned upload never locks anyone out.
 - **Upload budget.** Whatever the plan, and with billing off too, one person signs at most 50
@@ -91,6 +92,33 @@ table `note_attachments`, with the operations `attachment.sign`, `.confirm`, `.c
   and an operator can remove one ([admin-modules.md](admin-modules.md)).
 - **Exports.** A group's JSON export (`group.exported`) holds notes and tags only. A person's data
   export ([data-export.md](data-export.md)) lists the files they attached, without their bytes.
+
+## Profile pictures
+
+A person may put a picture where their initials are ([#228](https://github.com/spy4x/seed/issues/228)):
+a JPEG, PNG or WebP of 1 MiB at most (`PICTURE_TYPES`, `PICTURE_MAX_BYTES` in
+`libs/domain/identity/profile-picture.ts`). Nothing resizes it: every avatar crops it to a circle
+with CSS. The handlers are `apps/api/features/profile/picture.ts`, with the operations
+`picture.sign`, `.confirm`, `.cancel` and `.remove`; the person is always the session's.
+
+- **Sign** checks the type and size, signs the upload and keeps it in `file_uploads` with no note,
+  under the same waiting count and hourly budget as attachments.
+- **Confirm** settles that row for the same person, moves the bytes to `pictures/<id>` and checks
+  them, then sets `users.picture_id` and `picture_type` with an audit row (`PROFILE_UPDATED`,
+  `picture`). The picture it replaced is deleted from the store at once; when the store does not
+  answer, a trigger on `users` has queued it in `file_deletions` for the worker. The same trigger
+  queues the picture of an account deleted for good.
+- **Remove** clears the picture the same way. An operator removes one from the person's page in
+  the admin app (`POST /api/admin/users/:id/picture/remove`, audited as
+  `PICTURE_REMOVED_BY_OPERATOR`); the worker deletes its file. An operator never uploads one.
+- **Showing it.** Every avatar's `src` is `/api/pictures/<id>`: for a signed-in person who may see
+  it (their own, or a member's of a group they share), that answers a redirect to a five-minute
+  signed URL, which a browser may keep for four minutes. Anyone else gets a 404, as for a picture
+  that does not exist. A new picture has a new id, so nothing stale shows. The admin app's host
+  may not load the store's (its `img-src` is `'self'`), so its avatars use
+  `/api/admin/users/pictures/<id>`, which answers the bytes themselves with the store's sandbox
+  policy and `nosniff`. With another S3 store on an origin of its own, the SPA's `img-src` must
+  allow that origin too, or every avatar shows initials.
 
 ## Where it runs
 
