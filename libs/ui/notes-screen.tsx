@@ -22,6 +22,7 @@ import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { NoteTags, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
 import {
+  defaultDirection,
   filterNotes,
   NO_NOTE_FILTERS,
   NOTE_SORTS,
@@ -638,7 +639,11 @@ function NotesFilterBar(
         sort={{
           options: [...NOTE_SORTS],
           value: filters.sort,
-          onChange: (sort) => onChange({ sort: sort as NoteSort }),
+          // A new order starts in its own direction, so Title after a date is not Z–A.
+          onChange: (sort) =>
+            onChange({ sort: sort as NoteSort, direction: defaultDirection(sort as NoteSort) }),
+          direction: filters.direction,
+          onDirectionChange: (direction) => onChange({ direction }),
         }}
         onClear={onClear}
         count={<span data-e2e="notes-count">{count}</span>}

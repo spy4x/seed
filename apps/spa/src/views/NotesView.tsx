@@ -5,7 +5,7 @@ import { copyToClipboard } from "@spy4x/platform/browser/clipboard"
 import { useLocation, useSearchParams } from "wouter-preact"
 import { canMutateNotes } from "@domain/groups"
 import { moveTargetsOf, NotesScreen } from "@ui/notes-screen.tsx"
-import { NOTE_SORTS, type NoteFilters, type NoteSort } from "@ui/notes-filter.ts"
+import { defaultDirection, NOTE_SORTS, type NoteFilters, type NoteSort } from "@ui/notes-filter.ts"
 import { NOTE_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
 import { membersStore } from "../state/members.ts"
@@ -28,7 +28,8 @@ const FILTER_PARAMS = ["tag", "match", "author", "mine"]
  * selected group (the selection store); the group's name and the person's role come from the
  * groups store, and the authors' names from the members store. The search, filters and order live
  * in the address: `?q=`, `?tag=` (repeated, one per tag), `?match=all`, `?author=<userId>`,
- * `?mine=1` and `?sort=created|title`. Writing happens on a note's own page, see `NoteEditorView`.
+ * `?mine=1`, `?sort=created|title` and `?dir=asc|desc`, the last only when it is not the order's
+ * own direction. Writing happens on a note's own page, see `NoteEditorView`.
  */
 export function NotesView() {
   const [, navigate] = useLocation()
@@ -51,6 +52,8 @@ export function NotesView() {
   const mine = useSignal<string | number | null>("")
   const match = useSignal<string | number | null>("any")
   const sort = useSignal<string | number | null>("updated")
+  // Empty while the order runs its own way (`defaultDirection`), so the address stays clean.
+  const dir = useSignal<string | number | null>("")
   useUrlFilters({
     q: { signal: q, urlParam: "q", initialValue: "" },
     author: { signal: author, urlParam: "author", initialValue: "" },
@@ -67,6 +70,12 @@ export function NotesView() {
       initialValue: "updated",
       parser: (v) => NOTE_SORTS.some((option) => option.value === v) ? v : "updated",
     },
+    dir: {
+      signal: dir,
+      urlParam: "dir",
+      initialValue: "",
+      parser: (v) => v === "asc" || v === "desc" ? v : "",
+    },
   })
   const [params, setParams] = useSearchParams()
   const filters: NoteFilters = {
@@ -76,6 +85,9 @@ export function NotesView() {
     author: author.value ? String(author.value) : null,
     mine: mine.value === "1",
     sort: (sort.value ?? "updated") as NoteSort,
+    direction: dir.value === "asc" || dir.value === "desc"
+      ? dir.value
+      : defaultDirection((sort.value ?? "updated") as NoteSort),
   }
   const setTags = (ids: readonly string[]) =>
     setParams((previous) => {
@@ -134,6 +146,7 @@ export function NotesView() {
             mine.value = next.mine ? "1" : ""
             match.value = next.match
             sort.value = next.sort
+            dir.value = next.direction === defaultDirection(next.sort) ? "" : next.direction
           })
         }}
         onClearFilters={() =>
