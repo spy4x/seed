@@ -181,6 +181,8 @@ export interface NotesScreenProps {
   /** The person's own id, for "Created by me". Left out, there is no such toggle. */
   youId?: string | null
   navigate?: Navigate
+  /** Drawn right under the page header, above the list: the app's first-steps card. */
+  intro?: ComponentChildren
 }
 
 /** "1 note", "42 notes". */
@@ -263,6 +265,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
     return (
       <ListPage>
         <PageHeader title="Notes" />
+        {props.intro}
         <ListEmpty
           title={loading ? "Loading the group…" : "This group does not exist."}
           action={!loading && (
@@ -433,6 +436,7 @@ export function NotesScreen(props: NotesScreenProps): JSX.Element {
           </>
         }
       />
+      {props.intro}
       <Stack>
         {!group.canWrite && (
           <p class="text-sm text-muted" data-e2e="notes-read-only">

@@ -7,7 +7,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/../.."
 ENGINE=${CONTAINER_PROVIDER:-docker}
-POSTGRES_IMAGE=$(sed -n 's/^ *- POSTGRES_IMAGE=//p' infra/compose/compose.shared.yml)
+# The first match: the db and the backup services each name the image (the same one).
+POSTGRES_IMAGE=$(sed -n '/^ *- POSTGRES_IMAGE=/{s///p;q;}' infra/compose/compose.shared.yml)
 [ -n "$POSTGRES_IMAGE" ] || { echo "FAILED: compose.shared.yml names no POSTGRES_IMAGE"; exit 1; }
 
 NAME="backup-test-$(date +%s)-$$"
