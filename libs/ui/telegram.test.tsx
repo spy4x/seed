@@ -127,6 +127,7 @@ describe("the profile's Telegram row", () => {
   it("returns focus to Link Telegram when the code dialog closes", async () => {
     await mount(<TelegramLink {...linkProps([])} />)
     find("[data-e2e=telegram-link]").focus()
+    await click("[data-e2e=telegram-link]")
 
     await mount(<TelegramLink {...linkProps([], { code: CODE })} />)
     await mount(<TelegramLink {...linkProps([])} />)

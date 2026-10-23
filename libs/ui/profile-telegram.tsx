@@ -95,6 +95,7 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
           action={linkedAt
             ? (
               <Button
+                key="unlink"
                 ref={unlinkButton}
                 type="button"
                 variant="ghost"
@@ -108,6 +109,7 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
             )
             : (
               <Button
+                key="link"
                 ref={linkButton}
                 type="button"
                 variant="secondary"
