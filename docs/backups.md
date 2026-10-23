@@ -17,7 +17,8 @@ The file store is Garage's directory, `.volumes/garage`: its data blocks and the
 metadata database that Garage writes every hour (`meta/snapshots`, the two newest). The live
 metadata database is left out, since it changes under a copy. A restore therefore stands at the
 newest hourly copy: a file uploaded after it, and before the backup ran, is missing from the
-restored store, although the restored database can still name it. A product on another S3 store relies on that store's own backups.
+restored store, although the restored database can still name it. A product on another S3 store
+relies on that store's own backups.
 
 ## Set it up
 
