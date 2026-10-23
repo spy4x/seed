@@ -252,7 +252,7 @@ describe("the people actions of the operator area", () => {
     const response = await send(app, ROUTES[5])
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(ADMIN_NO_PICTURE)
+    expect(await apiError(response)).toMatchObject({ code: `conflict`, message: ADMIN_NO_PICTURE })
   })
 
   it("answers a picture's bytes as its type, never as a page, and 404 for one that is not there", async () => {

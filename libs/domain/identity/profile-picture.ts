@@ -2,6 +2,7 @@ import { type Type, type } from "arktype"
 import type { Command } from "@spy4x/platform/cqrs"
 import type { RequestInfo } from "@spy4x/platform/request-info"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
+import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 import type { Actor, User } from "./+lib.ts"
 
 /**
@@ -35,7 +36,12 @@ export type PictureErrorCode =
   | `PICTURE_NOT_FOUND`
 
 export class PictureError extends Error {
-  constructor(public readonly code: PictureErrorCode, message: string) {
+  constructor(
+    public readonly code: PictureErrorCode,
+    message: string,
+    /** Each failed field's code and rule, when a schema refused the request. */
+    public readonly fields?: FieldErrors,
+  ) {
     super(message)
     this.name = `PictureError`
   }
@@ -60,7 +66,9 @@ export const pictureUploadPayloadSchema = type({ id: UUID_PATTERN, "+": `reject`
 /** Validates `value` against `schema`. Throws `PictureError("INVALID_REQUEST")`. */
 export function parsePictureRequest<S extends Type<object>>(schema: S, value: unknown): S["infer"] {
   const result = schema(value)
-  if (result instanceof type.errors) throw new PictureError(`INVALID_REQUEST`, result.summary)
+  if (result instanceof type.errors) {
+    throw new PictureError(`INVALID_REQUEST`, result.summary, fieldErrors(result))
+  }
   return result as S["infer"]
 }
 

@@ -93,7 +93,7 @@ export function toRequestError(error: unknown): RealtimeRequestError | null {
   if (error instanceof PictureError) {
     return new RealtimeRequestError(PICTURE_ERROR_CODES[error.code], error.message, {
       code: error.code,
-    })
+    }, { reason: error.code, fields: error.fields })
   }
   if (error instanceof PlanError) {
     // The socket's codes are closed, so a plan refusal is `forbidden` and names itself in details.

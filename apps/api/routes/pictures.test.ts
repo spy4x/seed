@@ -2,6 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
 import type { APIContext } from "../_types.ts"
+import { apiError } from "../_testing/api-error.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
 import { API_URL, mountRoute, testSessionGuards } from "../_testing/mutation-requests.ts"
 import { createPictureRoute, PICTURE_NOT_FOUND, PICTURE_REDIRECT_SECONDS } from "./pictures.ts"
@@ -53,7 +54,8 @@ describe(`GET /api/pictures/:pictureId`, () => {
     for (const id of [THEIRS, `not-an-id`]) {
       const response = await app.request(`${API_URL}/pictures/${id}`)
       expect(response.status).toBe(404)
-      expect(await response.json()).toEqual({ error: PICTURE_NOT_FOUND })
+      const { requestId: _, ...error } = await apiError(response)
+      expect(error).toEqual({ code: `not_found`, message: PICTURE_NOT_FOUND })
     }
     expect(calls.filter(([kind]) => kind === `sign`)).toEqual([])
     // An id that is no UUID never reaches the database, where it would not cast.

@@ -260,7 +260,9 @@ export function createAdminUsersRoutes(
       const pictureId = c.req.param(`pictureId`)
       const picture = isUuid(pictureId) ? await dependencies.picture(pictureId) : null
       const bytes = picture && await dependencies.readFile(pictureObjectKey(picture.id))
-      if (!picture || !bytes) return c.json({ error: PICTURE_NOT_FOUND }, 404)
+      if (!picture || !bytes) {
+        return errorResponse(c, `not_found`, { message: PICTURE_NOT_FOUND })
+      }
       return pictureBody(picture, bytes)
     })
     .get(`/users/:id/data-exports`, dependencies.limit, async (c) => {

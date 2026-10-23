@@ -21,6 +21,7 @@ import type { GroupErrorCode, InvitationErrorCode } from "@domain/groups"
 import type {
   AccessErrorCode,
   GUEST_REFUSAL_CODE,
+  PictureErrorCode,
   SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
 } from "@domain/identity"
 import type { AttachmentErrorCode, NoteErrorCode } from "@domain/notes"
@@ -77,6 +78,7 @@ export type ErrorReason =
   | AttachmentErrorCode
   | NoteErrorCode
   | NotificationErrorCode
+  | PictureErrorCode
   | PlanErrorCode
   | SubscriberTokenRefusal
   | TagErrorCode

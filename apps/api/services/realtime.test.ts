@@ -4,7 +4,14 @@ import { drainMicrotasks, FakeClock, FakeSocket } from "@spy4x/realtime/testing"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { GroupError } from "@domain/groups"
 import { AttachmentError, NoteError, NoteVersionConflictError } from "@domain/notes"
-import { AccessError, type Actor, UserMFAStatus } from "@domain/identity"
+import {
+  AccessError,
+  type Actor,
+  parsePictureRequest,
+  PictureError,
+  pictureSignPayloadSchema,
+  UserMFAStatus,
+} from "@domain/identity"
 import type { OperationCall } from "@spy4x/realtime/operations"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { buildAuthData } from "../_testing/fake-auth.ts"
@@ -513,8 +520,20 @@ describe("toRequestError", () => {
     expect(reason(new GroupError("GROUP_NOT_FOUND", "x"))).toBe("GROUP_NOT_FOUND")
     expect(reason(new AttachmentError("FILE_TOO_LARGE", "x", 10))).toBe("FILE_TOO_LARGE")
     expect(reason(new IdempotencyError("KEY_REUSED", "x"))).toBe("IDEMPOTENCY_KEY_REUSED")
+    expect(reason(new PictureError("UPLOAD_BUDGET", "x"))).toBe("UPLOAD_BUDGET")
     const fields = { title: { code: "maxLength", values: { rule: 3 } } }
     expect(toRequestError(new NoteError("INVALID_REQUEST", "x", fields))?.fields).toEqual(fields)
+    const picture = (() => {
+      try {
+        return parsePictureRequest(pictureSignPayloadSchema, { contentType: "image/png", size: 0 })
+      } catch (error) {
+        return toRequestError(error)
+      }
+    })()
+    expect(picture).toMatchObject({ code: "bad_request", reason: "INVALID_REQUEST" })
+    expect((picture as RealtimeRequestError).fields).toEqual({
+      size: { code: "min", values: { rule: 1 } },
+    })
   })
 
   it("does not describe an unexpected failure", () => {
