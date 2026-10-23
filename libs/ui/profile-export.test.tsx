@@ -129,6 +129,17 @@ describe(`DataExportRow`, () => {
     expect(requests).toEqual([])
   })
 
+  it(`keeps Prepare a new file focusable but asks nothing while a request is on its way`, async () => {
+    const ready = view(DataExportStatus.Ready, { nextRequestAt: new Date(NOW - 1) })
+    const { node, requests } = row({ exportState: ready, pending: true })
+    await mount(node)
+    const again = find<HTMLButtonElement>(`[data-e2e=data-export-again]`)
+    // A disabled button drops focus to the page in a browser; aria-disabled keeps it in place.
+    expect([again.disabled, again.getAttribute(`aria-disabled`)]).toEqual([false, `true`])
+    await click(`[data-e2e=data-export-again]`)
+    expect(requests).toEqual([])
+  })
+
   it(`keeps focus on the row when a keyboard request takes its button away`, async () => {
     const { node } = row()
     await mount(node)

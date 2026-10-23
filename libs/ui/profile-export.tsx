@@ -1,11 +1,12 @@
 import type { JSX } from "preact"
-import { useEffect, useRef } from "preact/hooks"
+import { useRef } from "preact/hooks"
 import { IconSpinner } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { OnDay, useFormat } from "@spy4x/preact-ui/format"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingRow } from "@spy4x/preact-ui/setting-row"
+import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { DataExportStatus, type DataExportView } from "@domain/identity"
 
@@ -40,20 +41,27 @@ const NEVER_ASKED = "A ZIP of your profile, groups and notes, as JSON and CSV fi
 /**
  * The Account section's "Your data" row (#229): the newest export's state and the one action it
  * allows. The value is a live region from the first render, so "Preparing your file" and the file
- * turning ready are read out without moving focus. When a request takes the focused action away,
- * focus moves to the value instead of falling to the page.
+ * turning ready are read out without moving focus. When a render takes the focused control away,
+ * such as a request that leaves the file in preparation, focus moves to the value instead of
+ * falling to the page.
  */
 export function DataExportRow(props: DataExportRowProps): JSX.Element {
   const { exportState, pending } = props
   const now = props.now ?? Date.now()
   const status = useRef<HTMLDivElement>(null)
-  const asked = useRef(false)
+  const askButton = useRef<HTMLButtonElement>(null)
+  // When a render removes the focused control (the row's button, or "Prepare a new file." inside
+  // the value), focus moves to the value in that same commit, so it never rests on the page. The
+  // value keeps `tabIndex={-1}` in every state, so a script can always focus it and Tab never does.
+  const focusStatus = () => status.current
+  useFocusFallback(askButton, focusStatus)
+  useFocusFallback(status, focusStatus)
   const onRequest = () => {
-    asked.current = true
-    props.onRequest()
+    if (!pending) props.onRequest()
   }
   const ask = (label: string, dataE2E: string) => (
     <Button
+      ref={askButton}
       id={DATA_EXPORT_ANCHOR}
       type="button"
       variant="secondary"
@@ -100,7 +108,7 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
                   class="pc-link inline-flex min-h-11 items-center sm:min-h-0"
                   data-e2e="data-export-again"
                   onClick={onRequest}
-                  disabled={pending}
+                  aria-disabled={pending || undefined}
                 >
                   Prepare a new file.
                 </button>
@@ -136,21 +144,6 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
     }
   }
 
-  // A request whose control went away hands focus to the value; one refused keeps its control, and
-  // its error takes focus instead.
-  useEffect(() => {
-    if (!asked.current || pending) return
-    if (action) {
-      asked.current = false
-      return
-    }
-    const page = status.current?.ownerDocument
-    const active = page?.activeElement
-    if (active && active !== page?.body && active.isConnected) return
-    asked.current = false
-    status.current?.focus()
-  })
-
   return (
     <SettingRow
       label="Your data"
@@ -161,7 +154,7 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
           role="status"
           class="rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus"
           id={action ? undefined : DATA_EXPORT_ANCHOR}
-          tabIndex={action ? undefined : -1}
+          tabIndex={-1}
           data-e2e="data-export-state"
         >
           {value}
