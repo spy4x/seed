@@ -195,6 +195,29 @@ Deno.test("data export: holds no secret, token, hash or key, nor another person'
   })
 })
 
+Deno.test("data export: keeps an operator's action on the person but not the operator's address or browser", async () => {
+  await withSchema(async (sql) => {
+    const { editor } = await team(sql)
+    await sql`
+      INSERT INTO auth_audits (user_id, event_type, identifier, ip, user_agent) VALUES
+        (${editor}, 1, 'operator:1', '198.51.100.77', 'OperatorBrowser/1.0'),
+        (${editor}, 1, ${`own@example.com`}, '192.0.2.10', 'MyBrowser/2.0')
+    `
+
+    const files = unzip(await buildDataExport(sql, editor, new Date()))
+    const text = Object.values(files).join(`\n`)
+
+    expect(text).not.toContain(`198.51.100.77`)
+    expect(text).not.toContain(`OperatorBrowser/1.0`)
+    // The person's own sign-in keeps its address and browser, and the operator's row stays.
+    const activity = JSON.parse(files[`data.json`]).sections.account_activity
+    expect(activity).toContainEqual(
+      expect.objectContaining({ ip: `192.0.2.10`, userAgent: `MyBrowser/2.0` }),
+    )
+    expect(activity).toContainEqual(expect.objectContaining({ ip: null, userAgent: null }))
+  })
+})
+
 Deno.test("data export: one request a day; a second, even at the same moment, gets the first", async () => {
   await withSchema(async (sql) => {
     const { editor, viewer } = await team(sql)

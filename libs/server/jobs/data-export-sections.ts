@@ -94,11 +94,18 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       ORDER BY id`,
   },
   {
-    // `identifier` is left out: on an operator's action it names the operator.
+    // `identifier` is left out: on an operator's action it names the operator. An action an
+    // operator or the server's command line took on the person keeps its row, so the person sees
+    // it happened, but not the address and browser it came from: those are the operator's.
     name: `account_activity`,
     columns: [`eventType`, `ip`, `userAgent`, `createdAt`],
     rows: (sql, userId) =>
-      sql`SELECT event_type, ip, user_agent, created_at
+      sql`SELECT event_type,
+        CASE WHEN identifier LIKE 'operator:%' OR identifier LIKE 'cli:%' THEN NULL ELSE ip END
+          AS ip,
+        CASE WHEN identifier LIKE 'operator:%' OR identifier LIKE 'cli:%' THEN NULL
+          ELSE user_agent END AS user_agent,
+        created_at
       FROM auth_audits WHERE user_id = ${userId} AND deleted_at IS NULL
       ORDER BY created_at, id`,
   },
