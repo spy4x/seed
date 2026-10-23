@@ -281,6 +281,7 @@ CREATE TABLE outbox_events (
     processed_at TIMESTAMPTZ,
     last_error_code VARCHAR(64),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    cancelled_at TIMESTAMPTZ,
     CONSTRAINT outbox_events_kind_check CHECK (length(btrim(event_kind)) BETWEEN 1 AND 64),
     CONSTRAINT outbox_events_aggregate_type_check CHECK (
         length(btrim(aggregate_type)) BETWEEN 1 AND 64

@@ -1,11 +1,10 @@
 import type postgres from "postgres"
 import type { EmailSender } from "@spy4x/email/sender"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { AuthAuditEventType, OAUTH_PROVIDER_NAMES, oauthProviderId } from "@domain/identity"
 import { type MailBrand, signInMethodChangedMail } from "../mail/mail.ts"
 import { PASSKEY_METHOD } from "../auth/passkeys.ts"
-import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { enqueueJob, type JobHandler } from "./jobs.ts"
 
 /**
  * The job that tells a person a sign-in method was linked to their account or unlinked from it
@@ -34,11 +33,7 @@ export async function scheduleSignInMethodMail(
     INSERT INTO sign_in_method_changes (id, user_id, event_type, method)
     VALUES (${id}, ${userId}, ${change}, ${method})
   `
-  await scheduleOutboxEvent(
-    tx,
-    { aggregateType: JOB_AGGREGATE, aggregateId: id, eventKind: SIGN_IN_METHOD_MAIL_JOB },
-    { inMs: 0 },
-  )
+  await enqueueJob(tx, SIGN_IN_METHOD_MAIL_JOB, id, { inMs: 0 })
 }
 
 /** What the sign-in method mail job needs. */

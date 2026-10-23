@@ -4,6 +4,7 @@ import {
   IconArrowDown,
   IconArrowRight,
   IconCheck,
+  IconClock,
   IconCreditCard,
   IconFolder,
   IconHome,
@@ -35,7 +36,7 @@ import { define } from "../utils.ts"
 export const ADMIN_HEAD = {
   title: `Admin panel for your SaaS: users, billing, audit log`,
   description: `Seed's admin panel: find a person, end their sessions, refund a payment, ` +
-    `run a failed job again. Every action asks first and is logged. Free, MIT.`,
+    `run a failed job again. Risky actions ask first; all are logged. Free, MIT.`,
 } as const
 
 /** The visible heading and lead, which the video's JSON-LD and sitemap entry repeat. */
@@ -43,7 +44,8 @@ export const ADMIN_HERO = {
   title: `An admin panel for the people who run your product`,
   lead: `Seed ships an operator area on its own host. Your operators find a person, see their ` +
     `sign-in methods, sessions and groups, and help them: ends a session, sends a ` +
-    `password-reset link, refunds a payment. Every action asks first and lands in the audit log.`,
+    `password-reset link, refunds a payment. Risky actions ask first, and every action lands ` +
+    `in the audit log.`,
 } as const
 
 /** The day this page last changed, for the sitemap's `lastmod`. */
@@ -96,10 +98,15 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
       `Export it as CSV.`,
   },
   {
+    name: `Jobs`,
+    Icon: IconClock,
+    text: `Every background job and how each run went. Run a failed job again, run one now or ` +
+      `cancel it.`,
+  },
+  {
     name: `System`,
     Icon: IconServer,
-    text: `The health of the database, the cache, the job queue and the backup. Run a failed ` +
-      `job again.`,
+    text: `The health of the database, the cache, the job queue and the backup.`,
   },
   {
     name: `API tokens`,
@@ -126,7 +133,7 @@ const ROLES: readonly { name: string; text: string }[] = [
 const GUARANTEES = [
   `Signing in to the admin asks for a 2FA code from every operator who has turned 2FA on.`,
   `Anyone below operator gets "page not found", as if the admin did not exist.`,
-  `Every action asks first and is written to the audit log.`,
+  `Risky actions ask first, and every action is written to the audit log.`,
   `The admin reads counts and account facts, never the content of a person's notes.`,
 ] as const
 
@@ -223,7 +230,7 @@ function Modules(): JSX.Element {
         <SectionIntro
           id="modules-title"
           eyebrow="Modules"
-          title="Eight modules, one per job"
+          title="Nine modules, one per job"
           lead={
             <>
               Each module is one entry in the admin's icon rail. Add your own by copying one: the

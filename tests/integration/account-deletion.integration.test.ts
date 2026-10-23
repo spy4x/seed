@@ -19,7 +19,7 @@ import {
   HardDeleteOutcome,
 } from "../../libs/server/auth/account-deletion.ts"
 import { issuePasswordReset } from "../../libs/server/auth/password-reset.ts"
-import { createOutboxProcessor, scheduleNightlyJobs } from "../../libs/server/jobs/wiring.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "../../libs/server/jobs/wiring.ts"
 import {
   ACCOUNT_DELETION_MAIL_JOB,
   ACCOUNT_HARD_DELETE_JOB,
@@ -758,7 +758,8 @@ Deno.test("deleting one's own account", async (t) => {
             log: (line) => void nightly.push(line),
           })
           await sql`DELETE FROM outbox_events`
-          await scheduleNightlyJobs(sql)
+          // Started two days ago: its first 03:00 UTC run is due, and the next one it writes differs.
+          await startRepeatingJobs(sql, new Date(Date.now() - 2 * 86_400_000))
           await sql`UPDATE outbox_events SET available_at = now()`
 
           expect(await processor.drainOnce()).toEqual({ claimed: 1, published: 0, failed: 1 })

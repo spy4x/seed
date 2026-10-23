@@ -546,28 +546,23 @@ milliseconds) to every socket of that user. The SPA's pull answers that hint wit
    a `change.hint` with the sequence for every member's open sockets. `pg_notify` reaches only the
    API instances listening at that moment; a push missed that way is caught by the pull after the
    next reconnect.
-5. A job is an outbox row with `aggregate_type = 'job'`, no group and no payload, claimed once its
-   `available_at` has come. `scheduleOutboxEvent` (from `@spy4x/server/outbox`) writes one, in the
-   transaction of the change that needs it. Add a handler to the `JobPublisher` (from
-   `@spy4x/server/outbox`) in `libs/server/jobs/wiring.ts`; it reads what it needs from the
-   database. A failing job backs off (1 s, 2 s, 4 s, up to 15 minutes) and after 20 attempts, about
-   two and a half hours, is given up (`JOB_RETRY` in `libs/server/jobs/job-failures.ts`). The row is
-   then closed: `processed_at` is set and the error's class stays in `last_error_code`, until the
-   cleanup removes the row a week later. The worker logs each attempt that fails with the row's
-   kind, the attempt, the stage and the error's class, never its message, and the last one as
-   `abandoned` (`onAttemptFailed`): search the worker's log for that word. Two things are not
-   logged. An attempt lost with a worker that died mid-run is retried after its lease without a
-   line, unless it was the last one, which is logged with stage `lease`. And the line is written
-   after the row is closed, so a worker that dies between the two leaves the closed row as the only
-   trace, for those seven days. A repeating job is listed in `repeatEveryMs`: a run that succeeds or
-   is given up writes the next one (`repeatAfterGiveUp`). The worker starts one, `outbox.cleanup`,
-   at 03:00 UTC and then daily: it removes outbox rows processed more than 7 days ago and runs every
-   purge, each as its own step (`cleanupSteps`). A step that throws is logged with its message and
-   stops no other step; the job is then retried like any other. Rows that a worker from before this
-   (10 attempts, never closed) had given up are closed by migration
-   `2026_11_01_0001_close_given_up_outbox_rows.sql`, so the worker with 20 attempts sends none of
-   them late; a cleanup row among them is closed too, and the worker writes a fresh one when it
-   starts.
+5. A job is an outbox row with `aggregate_type = 'job'`, no group and no payload:
+   [jobs.md](jobs.md) says how to add one (`defineJob` in `libs/server/jobs/registry.ts`), queue a
+   run (`enqueueJob`) and make it repeat. A failing job backs off up to 15 minutes and after 20
+   attempts is given up (`JOB_RETRY` in `libs/server/jobs/job-failures.ts`): the row is closed and
+   keeps the error's class in `last_error_code` until the cleanup removes it a week later. The
+   worker logs each failed attempt with the row's kind, the attempt, the stage and the error's
+   class, never its message, and the last one as `abandoned`. Two things are not logged. An attempt
+   lost with a worker that died mid-run is retried after its lease without a line, unless it was
+   the last one, which is logged with stage `lease`. And the line is written after the row is
+   closed, so a worker that dies between the two leaves the closed row as the only trace, for those
+   seven days. The nightly cleanup (`outbox.cleanup`, 03:00 UTC) removes outbox rows processed more
+   than 7 days ago and runs every purge, each as its own step (`cleanupSteps` in
+   `libs/server/jobs/cleanup.ts`); a step that throws is logged and stops no other step. Rows that a
+   worker from before this (10 attempts, never closed) had given up are closed by migration
+   `2026_11_01_0001_close_given_up_outbox_rows.sql`. A cancelled run (from the admin's Jobs module)
+   is closed with `cancelled_at` set; the worker writes a fresh run of a cancelled repeating job
+   when it starts.
 6. A listener on the in-process event bus that throws is isolated, logged as one JSON line with the
    event and listener names and the request id, and counted in `event_listener_failures_total`
    (a `createCounter` from `@spy4x/platform/universal/metrics`). Register listeners with `subscribe`
