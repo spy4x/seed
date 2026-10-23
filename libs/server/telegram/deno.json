@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "check": "deno check setup.ts",
+    "test": "deno test setup.test.ts"
+  }
+}

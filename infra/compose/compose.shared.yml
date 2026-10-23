@@ -762,6 +762,13 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       # Guest accounts, "Try it now" (docs/guests.md): on unless `false`.
       - GUEST_MODE=${GUEST_MODE:-}
+      # The Telegram bot (docs/telegram.md): off while the token is unset. Only the API takes the
+      # webhook, so only it receives the webhook secret.
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-}
+      - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET:-}
+      - TELEGRAM_POLLING=${TELEGRAM_POLLING:-}
+      - TELEGRAM_API_URL=${TELEGRAM_API_URL:-}
       - DENO_DIR=/tmp/deno-cache
       # The port apps/healthcheck.ts probes.
       - HEALTHCHECK_PORT=${API_PORT}
@@ -927,6 +934,12 @@ services:
       - S3_BUCKET=${S3_BUCKET:-${PROJECT}-files}
       - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID:-}
       - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY:-}
+      # The Telegram bot (docs/telegram.md): the worker sends notifications to linked chats. It
+      # takes no webhook, so it gets no webhook secret.
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME:-}
+      - TELEGRAM_POLLING=${TELEGRAM_POLLING:-}
+      - TELEGRAM_API_URL=${TELEGRAM_API_URL:-}
     deploy:
       resources:
         limits:

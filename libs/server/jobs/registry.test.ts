@@ -23,6 +23,7 @@ import { SIGN_IN_METHOD_MAIL_JOB } from "./sign-in-method-mail.ts"
 import { SIGN_UP_CODE_MAIL_JOB } from "./sign-up-code-mail.ts"
 import { SIGN_IN_LINK_MAIL_JOB } from "./sign-in-link-mail.ts"
 import { STARTER_DATA_JOB } from "./starter-data.ts"
+import { TELEGRAM_NOTIFICATION_JOB } from "./telegram-notification.ts"
 import {
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_SEND_ISSUE_JOB,
@@ -48,6 +49,7 @@ const QUEUED_KINDS = [
   DATA_EXPORT_BUILD_JOB,
   DATA_EXPORT_MAIL_JOB,
   DATA_EXPORT_EXPIRE_JOB,
+  TELEGRAM_NOTIFICATION_JOB,
   ...Object.values(BILLING_NOTICE_JOBS),
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_WELCOME_MAIL_JOB,

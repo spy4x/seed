@@ -189,6 +189,10 @@ export const GUEST_REFUSALS: Record<GuestLimitedAction | "other", { title: strin
       title: "Paid plans need a sign-in method",
       text: "A plan is billed to an account you can sign in to again. Add a sign-in method first.",
     },
+    telegram: {
+      title: "Telegram needs a sign-in method",
+      text: "A linked chat acts as you from outside the browser. Add a sign-in method first.",
+    },
     other: { title: "This needs a sign-in method", text: GUEST_REFUSAL_MESSAGE },
   }
 

@@ -15,5 +15,6 @@ export function refusedAction(path: string): GuestLimitedAction | null {
   if (parts.includes("import")) return "upload"
   if (parts.includes("tokens")) return "api-token"
   if (parts.includes("push")) return "push"
+  if (parts.includes("telegram")) return "telegram"
   return null
 }

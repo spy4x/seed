@@ -54,6 +54,7 @@ import { createDataExportStore, DATA_EXPORT_DOWNLOAD_PATH } from "../state/data-
 import { notificationsStore } from "../state/notifications.ts"
 import { DataExportStatus } from "@domain/identity"
 import { DATA_EXPORT_ANCHOR } from "@ui/profile-export.tsx"
+import { createTelegramStore, telegramHttp } from "../state/telegram.ts"
 import { passwordChangedMessage } from "./password-changed-message.ts"
 import { isProviderProofFresh, withPasskeyProof } from "./provider-proof-fresh.ts"
 import { supportsPasskeys } from "@spy4x/platform/browser/passkey"
@@ -133,6 +134,18 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   const online = network.online.value
   const [tokens] = useState(() => createApiTokensStore(apiTokensHttp, localReads))
   const [dataExport] = useState(() => createDataExportStore())
+  const [telegram] = useState(() =>
+    createTelegramStore(telegramHttp, {
+      onLinked: () =>
+        toasts.success({
+          title: "Telegram linked",
+          body: "Your notifications come to Telegram now.",
+          dataE2E: "telegram-linked",
+        }),
+    })
+  )
+  // The wait for the bot stops with the page.
+  useEffect(() => () => telegram.closeCode(), [])
   const groups = groupsStore.groups.value
   const exportPreparing = dataExport.current.value?.status === DataExportStatus.Preparing
 
@@ -169,6 +182,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     void methods.load()
     void tokens.load()
     void dataExport.load()
+    void telegram.load()
   }, [session.user?.id, session.isMfaRequired])
 
   // While the file is prepared: the inbox notice the worker writes moves the bell's count, which
@@ -691,6 +705,15 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
         error: dataExport.error.value,
         onRequest: () => void dataExport.request(),
         downloadHref: DATA_EXPORT_DOWNLOAD_PATH,
+      }}
+      telegram={{
+        status: telegram.status.value,
+        code: telegram.code.value,
+        error: telegram.error.value,
+        pending: telegram.pending.value,
+        onLink: () => void telegram.link(),
+        onCloseCode: telegram.closeCode,
+        onUnlink: () => void telegram.unlink(),
       }}
       accountDeletion={{
         blockers,

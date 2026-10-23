@@ -13,6 +13,7 @@ import {
 import { roleChangeIdentifier } from "@server/auth/admin-users.ts"
 import type { AppDbBase } from "./db-base.ts"
 import { type AppAuthState, auditRow } from "./sign-in.ts"
+import { telegramIdentifier } from "./telegram.ts"
 
 /** What an operator may do to a person (#146). */
 export enum AdminActionKind {
@@ -29,6 +30,8 @@ export enum AdminActionKind {
   SendPasswordReset = 6,
   /** Delete a guest account (#224) with everything in it, at once. Guests only. */
   DeleteGuest = 7,
+  /** Unlink the person's Telegram account (#269): its chat stops acting for them. */
+  UnlinkTelegram = 8,
 }
 
 /** What an action needs besides its kind: the session to end, or the role to give. */
@@ -46,7 +49,10 @@ export enum AdminActOutcome {
   Self = 3,
   /** The person's role is the operator's own or higher. */
   Outranked = 4,
-  /** A block of a blocked person, an unblock of one who is not, or the role they already have. */
+  /**
+   * A block of a blocked person, an unblock of one who is not, the role they already have, or an
+   * unlink of a Telegram account that is not linked.
+   */
   Unchanged = 5,
   /** A role change by anyone but an administrator. */
   NotAdministrator = 6,
@@ -243,6 +249,19 @@ export function createAdmin(
             await tx.admin.queuePasswordReset(email)
             await tx.authAudit.insert(
               auditRow(c, targetId, AuthAuditEventType.PASSWORD_RESET_SENT, identifier),
+            )
+            break
+          }
+          case AdminActionKind.UnlinkTelegram: {
+            const telegramUserId = await tx.telegram.unlink(targetId)
+            if (telegramUserId === null) return AdminActOutcome.Unchanged
+            await tx.authAudit.insert(
+              auditRow(
+                c,
+                targetId,
+                AuthAuditEventType.TELEGRAM_UNLINKED,
+                `${identifier} ${telegramIdentifier(telegramUserId)}`,
+              ),
             )
             break
           }

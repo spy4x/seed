@@ -22,6 +22,8 @@ Pick the guide that fits. The [README](../README.md) has the pitch and the quick
 - [Capacity](capacity.md): load tests and how many users one server carries.
 - [Postgres 18 upgrade](postgres-18-upgrade.md): once per server that ran Postgres 16.
 - [Billing](billing.md)
+- [Telegram bot](telegram.md): BotFather, the webhook, linking a chat, and adding a product's
+  commands.
 - [Offline](offline.md): the SPA's local data and write queue, and how to remove it.
 - [Security headers](security-headers.md)
 

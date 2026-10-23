@@ -40,6 +40,7 @@ COPY libs/server/notes/deno.json ./libs/server/notes/deno.json
 COPY libs/server/tags/deno.json ./libs/server/tags/deno.json
 COPY libs/server/notifications/deno.json ./libs/server/notifications/deno.json
 COPY libs/server/subscribers/deno.json ./libs/server/subscribers/deno.json
+COPY libs/server/telegram/deno.json ./libs/server/telegram/deno.json
 COPY libs/platform/deno.json ./libs/platform/deno.json
 COPY libs/ui/deno.json ./libs/ui/deno.json
 

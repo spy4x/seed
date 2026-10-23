@@ -3,7 +3,7 @@ import { expect } from "@std/expect"
 import type postgres from "postgres"
 import { unzipSync } from "fflate"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { DataExportStatus } from "@domain/identity"
+import { DataExportStatus, TELEGRAM_METHOD } from "@domain/identity"
 import { NotificationKind } from "@domain/notifications"
 import {
   DATA_EXPORT_BUILD_JOB,
@@ -225,6 +225,28 @@ Deno.test("data export: holds no secret, token, hash or key, nor another person'
     ) {
       expect({ name, rows: data[name].length }).toEqual({ name, rows: 1 })
     }
+  })
+})
+
+Deno.test("data export: lists the person's linked Telegram account and when it was linked, not as a sign-in method, and no one else's", async () => {
+  await withSchema(async (sql) => {
+    const { groupId, editor, owner } = await team(sql)
+    await signInRows(sql, editor, groupId)
+    await sql`
+      INSERT INTO auth_keys (user_id, method, subject, created_at)
+      VALUES (${editor}, ${TELEGRAM_METHOD}, '900000001', '2026-10-20T08:00:00Z'),
+        (${owner}, ${TELEGRAM_METHOD}, '900000002', now())
+    `
+
+    const files = unzip(await buildDataExport(sql, editor, new Date()))
+    const data = JSON.parse(files[`data.json`]).sections
+
+    expect(data.telegram).toEqual([
+      { telegramUserId: `900000001`, linkedAt: `2026-10-20T08:00:00.000Z` },
+    ])
+    expect(data.sign_in_methods.map((row: { method: string }) => row.method)).toEqual([`password`])
+    expect(files[`telegram.csv`].split(`\r\n`)[0]).toBe(`﻿telegramUserId,linkedAt`)
+    expect(Object.values(files).join(`\n`)).not.toContain(`900000002`)
   })
 })
 

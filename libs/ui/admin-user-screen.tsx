@@ -27,6 +27,7 @@ import {
   AuthAuditEventType,
   canChangeRoles,
   SIGN_IN_LINK_METHOD,
+  TELEGRAM_METHOD,
   type UserRole,
 } from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
@@ -45,6 +46,7 @@ export type AdminAction =
   | "change-role"
   | "password-reset"
   | "delete-guest"
+  | "unlink-telegram"
 
 /** What an action needs besides its name: the session to end, or the role to give. */
 export interface AdminActionInput {
@@ -95,6 +97,8 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.GUEST_STARTED]: "neutral",
   [AuthAuditEventType.GUEST_KEPT]: "success",
   [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "warning",
+  [AuthAuditEventType.TELEGRAM_LINKED]: "neutral",
+  [AuthAuditEventType.TELEGRAM_UNLINKED]: "warning",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
@@ -132,6 +136,8 @@ export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.GUEST_STARTED]: "Started as a guest",
   [AuthAuditEventType.GUEST_KEPT]: "Kept the guest account",
   [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "Deleted a guest account",
+  [AuthAuditEventType.TELEGRAM_LINKED]: "Telegram account linked",
+  [AuthAuditEventType.TELEGRAM_UNLINKED]: "Telegram account unlinked",
 }
 
 /**
@@ -187,6 +193,13 @@ const ACTIONS: Record<
       "The account and everything in it are deleted at once, with no grace period. Support never restores a guest account: it has no sign-in method to prove whose it was.",
     submit: "Delete guest account",
     busy: "Deleting…",
+  },
+  "unlink-telegram": {
+    title: (name) => `Unlink the Telegram account of ${name}`,
+    text:
+      "Their Telegram chat stops getting their notifications and can no longer act for them. They can link it again from their profile.",
+    submit: "Unlink Telegram",
+    busy: "Unlinking…",
   },
 }
 
@@ -314,6 +327,14 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
           {address === null && <span class="text-xs text-muted">No password with an address</span>}
         </span>
       </DropdownItem>
+      {telegramOf(detail) && (
+        <DropdownItem
+          dataE2E="admin-unlink-telegram-open"
+          onClick={() => props.onOpenDialog("unlink-telegram")}
+        >
+          Unlink Telegram
+        </DropdownItem>
+      )}
       {user.guestSince && (
         <DropdownItem
           dataE2E="admin-delete-guest-open"
@@ -483,6 +504,7 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
 
 function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.Element {
   const { user } = detail
+  const telegram = telegramOf(detail)
   return (
     <Stack>
       <SettingGroup title="Account">
@@ -494,6 +516,17 @@ function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.
           <SettingRow
             label="Last seen"
             value={user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}
+          />
+          <SettingRow
+            label="Telegram"
+            dataE2E="admin-user-telegram"
+            value={telegram
+              ? (
+                <>
+                  Linked <When at={telegram.createdAt} />
+                </>
+              )
+              : "Not linked"}
           />
           <SettingRow
             label="Billing trial"
@@ -512,10 +545,20 @@ function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.
   )
 }
 
+/**
+ * The person's linked Telegram account (#269), or `undefined`. It is no way in, so the Sign-in
+ * methods tab leaves it out and the Overview shows it.
+ */
+export function telegramOf(
+  detail: Pick<AdminUserDetail, "methods">,
+): AdminUserDetail["methods"][number] | undefined {
+  return detail.methods.find((method) => method.method === TELEGRAM_METHOD)
+}
+
 function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
   return (
     <Rows empty="No way to sign in." dataE2E="admin-user-methods">
-      {detail.methods.map((method) => (
+      {detail.methods.filter((method) => method.method !== TELEGRAM_METHOD).map((method) => (
         <li key={`${method.method}-${method.createdAt}`} class={ROW}>
           <span class="font-medium">{methodName(method.method)}</span>
           {method.email && <span class="text-sm text-muted wrap-anywhere">{method.email}</span>}

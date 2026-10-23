@@ -89,6 +89,7 @@ const WORKS_TODAY = [
   `The list of signed-in devices, a download of your own data, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
   `Realtime, the offline app and web push`,
+  `A Telegram bot: notifications in a chat, and your own commands in one file`,
   `The admin area`,
   `The outbox worker, the newsletter and this website`,
 ] as const
