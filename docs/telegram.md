@@ -106,7 +106,8 @@ The router, the client, the webhook handler and polling are `@spy4x/integrations
   that linked it had passed it. Unlike an API token, a chat has no group and no read-only scope:
   it can do anything its person can. So a product must not offer in the bot any command the app
   guards with a fresh password or code, such as changing the address or deleting the account.
-- Seed keeps the Telegram user id only: no Telegram name, no messages. A product that turns the
+- Seed keeps the Telegram user id only: no Telegram name, no messages. The person's data export
+  ([data-export.md](data-export.md)) lists it with the time it was linked. A product that turns the
   bot on adds it to its privacy page, for example: "Your Telegram user ID (a number, not your
   phone number), only if you link Telegram. Unlinking removes it." Seed's own demo runs without
   a bot, so its page does not list it.

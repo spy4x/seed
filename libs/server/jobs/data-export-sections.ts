@@ -13,6 +13,7 @@
  */
 
 import type postgres from "postgres"
+import { TELEGRAM_METHOD } from "@domain/identity"
 
 /** One kind of row in the export. */
 export interface DataExportSection {
@@ -73,6 +74,7 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       FROM user_preferences WHERE user_id = ${userId}`,
   },
   {
+    // A linked Telegram account is an `auth_keys` row too, but no way in: it has its own section.
     name: `sign_in_methods`,
     columns: [`id`, `method`, `email`, `provenAt`, `passkeyName`, `lastUsedAt`, `createdAt`],
     rows: (sql, userId) =>
@@ -80,7 +82,7 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
         auth_passkeys.name AS passkey_name, auth_passkeys.last_used_at, auth_keys.created_at
       FROM auth_keys
       LEFT JOIN auth_passkeys ON auth_passkeys.key_id = auth_keys.id
-      WHERE auth_keys.user_id = ${userId}
+      WHERE auth_keys.user_id = ${userId} AND auth_keys.method <> ${TELEGRAM_METHOD}
       ORDER BY auth_keys.id`,
   },
   {
@@ -117,6 +119,15 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       sql`SELECT device_id, created_at, deleted_at AS removed_at
       FROM user_push_tokens WHERE user_id = ${userId}
       ORDER BY id`,
+  },
+  {
+    // The linked Telegram account (#269, docs/telegram.md): Seed keeps its user id only, no
+    // Telegram name and no messages.
+    name: `telegram`,
+    columns: [`telegramUserId`, `linkedAt`],
+    rows: (sql, userId) =>
+      sql`SELECT subject AS telegram_user_id, created_at AS linked_at
+      FROM auth_keys WHERE user_id = ${userId} AND method = ${TELEGRAM_METHOD}`,
   },
   {
     name: `groups`,

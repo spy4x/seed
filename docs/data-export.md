@@ -34,8 +34,9 @@ A row still not ready a day after it was asked for reads as failed, and the pers
 Only what is about the person or made by them, never another person's data or a secret:
 
 - their profile, preferences, sign-in methods (without secrets), sessions, account activity
-  (without the address and browser of an operator's or the command line's action on them) and
-  push devices (without the push address and its keys);
+  (without the address and browser of an operator's or the command line's action on them), push
+  devices (without the push address and its keys) and their linked Telegram account (its user id
+  and when it was linked);
 - the groups they belong to, by name and role, never the other members;
 - the notes and tags they created in groups they still belong to, never the ones others wrote.
   Notes in a group they left stay out: they can no longer read them in the app either;
