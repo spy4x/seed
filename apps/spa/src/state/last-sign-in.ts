@@ -15,7 +15,7 @@ export const lastSignIn: LastSignInStore = createLastSignIn("last-sign-in")
 export function lastSignInHint(store: LastSignInStore = lastSignIn): LastSignInHint | null {
   const kept = store.read()
   if (!kept) return null
-  const method = kept.method === "password" || kept.method === "passkey"
+  const method = kept.method === "password" || kept.method === "passkey" || kept.method === "link"
     ? kept.method
     : oauthProviderId(kept.method)
   return method === null ? null : { method, email: kept.email }

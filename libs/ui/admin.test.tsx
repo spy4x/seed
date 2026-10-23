@@ -494,6 +494,50 @@ describe("one person in the admin app", () => {
       .toContain('Passkey "Desk from=home"')
   })
 
+  it("lists the e-mail link as when it was last used, with no proof badge (#391)", async () => {
+    const link = {
+      method: "email-link",
+      email: null,
+      provenAt: null,
+      createdAt: "2026-10-02T10:00:00.000Z",
+      lastUsedAt: "2026-10-14T10:00:00.000Z",
+    }
+    await mount(
+      <AdminUserScreen
+        {...userProps([], { tab: "methods", detail: { ...detail, methods: [link] } })}
+      />,
+    )
+
+    const row = find("[role=tabpanel] [data-e2e=admin-user-methods] li")
+    expect(row.textContent).toContain("E-mail link")
+    expect(find("[data-e2e=admin-user-email-link]").textContent).toMatch(/^Last used .+/)
+    expect(row.textContent).not.toMatch(/proven/i)
+  })
+
+  it("names a sign-in and a sign-up by e-mail link in the activity's titles (#391)", async () => {
+    const signedUp = {
+      id: 2,
+      eventType: AuthAuditEventType.SIGNED_UP,
+      identifier: "email-link",
+      ip: "203.0.113.5",
+      createdAt: "2026-10-14T10:00:00.000Z",
+    }
+    const signedIn = { ...signedUp, id: 3, eventType: AuthAuditEventType.SIGNED_IN }
+    await mount(
+      <AdminUserScreen
+        {...userProps([], { tab: "activity", detail: { ...detail, audits: [signedUp, signedIn] } })}
+      />,
+    )
+
+    const up = find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGNED_UP}]`).textContent
+    const into = find(`[data-e2e=admin-audit-${AuthAuditEventType.SIGNED_IN}]`).textContent
+    expect(up).toContain("Signed up with an e-mail link")
+    expect(into).toContain("Signed in with an e-mail link")
+    // The title names the method, so the stored identifier is not repeated under it.
+    expect(into).not.toContain("email-link")
+    expect(into).toContain("from 203.0.113.5")
+  })
+
   it("colours each activity entry by what happened, the block alone as a danger", async () => {
     const tones = {
       neutral: [AuthAuditEventType.SIGNED_IN, AuthAuditEventType.API_TOKEN_USED],

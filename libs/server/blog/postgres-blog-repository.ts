@@ -1,5 +1,4 @@
 import type postgres from "postgres"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { likeContains } from "@spy4x/server/db"
 import {
   ADMIN_BLOG_LIST_MAX,
@@ -17,7 +16,7 @@ import {
   type BlogTopic,
   BlogVersionConflictError,
 } from "@domain/blog"
-import { JOB_AGGREGATE } from "../jobs/jobs.ts"
+import { enqueueJob, JOB_AGGREGATE } from "../jobs/jobs.ts"
 
 /** The operator behind a write, for its audit row. */
 export interface BlogActor {
@@ -389,9 +388,10 @@ async function queuePublishJob(
     `
     if (waiting) return
   }
-  await scheduleOutboxEvent(
+  await enqueueJob(
     tx,
-    { eventKind: BLOG_PUBLISH_JOB, aggregateType: JOB_AGGREGATE, aggregateId: id },
+    BLOG_PUBLISH_JOB,
+    id,
     when,
   )
 }

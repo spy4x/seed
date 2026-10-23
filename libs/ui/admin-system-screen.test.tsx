@@ -1,13 +1,13 @@
 /**
- * The System screen (#429), driven in a browser DOM (happy-dom): each card's state, the failed
- * jobs and the confirmation that runs one again.
+ * The System screen (#429), driven in a browser DOM (happy-dom): each card's state, and the queue
+ * card's way to the Jobs module.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
-import { type AdminFailedJob, AdminHealth, type AdminSystemSnapshot } from "@domain/identity"
+import { AdminHealth, type AdminSystemSnapshot } from "@domain/identity"
 import { AdminSystemScreen, type AdminSystemScreenProps } from "./admin-system-screen.tsx"
 
 const window = new Window({ url: "http://admin.localhost/system" })
@@ -15,6 +15,7 @@ const own = {
   document: globalThis.document,
   FormData: globalThis.FormData,
   getComputedStyle: globalThis.getComputedStyle,
+  location: globalThis.location,
 }
 
 beforeAll(() => {
@@ -22,6 +23,8 @@ beforeAll(() => {
     document: window.document,
     FormData: window.FormData,
     getComputedStyle: window.getComputedStyle.bind(window),
+    // A link hands a click to `navigate` only for an address of the page's own origin.
+    location: window.location,
   })
 })
 
@@ -70,22 +73,6 @@ function state(card: string): string | null | undefined {
   return document.querySelector(`[data-e2e=${card}] [data-health]`)?.getAttribute("data-health")
 }
 
-const mailJob: AdminFailedJob = {
-  id: "01927f3e-6b2a-7c3d-8e4f-5a6b7c8d9e0f",
-  kind: "mail.password_reset",
-  attempts: 20,
-  errorCode: "MailSendError",
-  failedAt: "2026-10-16T08:00:00.000Z",
-  retryable: true,
-}
-
-const noteChange: AdminFailedJob = {
-  ...mailJob,
-  id: "01927f3e-6b2a-7c3d-8e4f-5a6b7c8d9e10",
-  kind: "note.created",
-  retryable: false,
-}
-
 const snapshot: AdminSystemSnapshot = {
   health: AdminHealth.ERROR,
   checkedAt: "2026-10-16T09:00:00.000Z",
@@ -108,13 +95,6 @@ const snapshot: AdminSystemSnapshot = {
     retrying: 0,
     failed: 2,
   },
-  jobs: [{
-    kind: "outbox.cleanup",
-    lastRunAt: "2026-10-16T03:00:00.000Z",
-    lastFailed: false,
-    nextRunAt: "2026-10-17T03:00:00.000Z",
-  }],
-  failedJobs: [mailJob, noteChange],
   backup: { health: AdminHealth.OK, succeededAt: "2026-10-16T03:00:00.000Z" },
   migrations: {
     health: AdminHealth.OK,
@@ -139,12 +119,7 @@ function props(
     error: null,
     pending: false,
     onRefresh: () => calls.push(["refresh"]),
-    retrying: null,
-    retryError: null,
-    retryPending: false,
-    onOpenRetry: (job) => calls.push(["open", job.id]),
-    onCloseRetry: () => calls.push(["close"]),
-    onRetry: (job) => calls.push(["retry", job.id]),
+    navigate: (href) => calls.push(["navigate", href]),
     ...overrides,
   }
 }
@@ -177,33 +152,25 @@ describe("system screen", () => {
     expect(build).not.toContain("abc1234def5678")
   })
 
-  it("lists the failed jobs, and offers Run again only for one that may run again", async () => {
+  it("opens Jobs at its failed runs from the queue card while any failed", async () => {
     const calls: unknown[][] = []
     await mount(<AdminSystemScreen {...props(calls)} />)
-    const failed = find("[data-e2e=admin-system-failed]")
+    expect(find("[data-e2e=admin-system-open-jobs]").getAttribute("href")).toBe(
+      "/jobs?state=failed",
+    )
+    await click("[data-e2e=admin-system-open-jobs]")
+    expect(calls).toEqual([["navigate", "/jobs?state=failed"]])
 
-    expect(failed.textContent).toContain("MailSendError")
-    expect(has(`[data-e2e=admin-retry-${noteChange.id}]`)).toBe(false)
-    expect(failed.textContent).toContain("Cannot be run again")
-    await click(`[data-e2e=admin-retry-${mailJob.id}]`)
-    expect(calls).toEqual([["open", mailJob.id]])
+    const healthy = { ...snapshot, queue: { ...snapshot.queue, failed: 0 } }
+    await mount(<AdminSystemScreen {...props([], { snapshot: healthy })} />)
+    expect(find("[data-e2e=admin-system-open-jobs]").getAttribute("href")).toBe("/jobs")
   })
 
-  it("runs the job again only once the dialog is confirmed", async () => {
-    const calls: unknown[][] = []
-    await mount(<AdminSystemScreen {...props(calls, { retrying: mailJob })} />)
+  it("lists no job cards: the jobs are the Jobs module's", async () => {
+    await mount(<AdminSystemScreen {...props([])} />)
 
-    expect(find("[data-e2e=admin-retry-dialog]").textContent).toContain("mail.password_reset")
-    expect(calls).toEqual([])
-    await click("[data-e2e=admin-retry-confirm]")
-    expect(calls).toEqual([["retry", mailJob.id]])
-  })
-
-  it("shows why the API refused inside the dialog", async () => {
-    const message = "A newer run of this job is already waiting, so this one is not run again."
-    await mount(<AdminSystemScreen {...props([], { retrying: mailJob, retryError: message })} />)
-
-    expect(find("[data-e2e=admin-retry-error]").textContent).toContain(message)
+    expect(has("[data-e2e=admin-system-jobs]")).toBe(false)
+    expect(has("[data-e2e=admin-system-failed]")).toBe(false)
   })
 
   it("reads the stack again on Check again", async () => {
@@ -224,27 +191,11 @@ describe("system screen", () => {
     expect(find("[data-e2e=admin-system-error]").textContent).toContain("Down.")
   })
 
-  it("says so when no job failed", async () => {
-    await mount(
-      <AdminSystemScreen {...props([], { snapshot: { ...snapshot, failedJobs: [] } })} />,
-    )
-
-    expect(find("[data-e2e=admin-system-failed]").textContent).toContain("No job failed")
-  })
-
   it("keeps each part's hint after its list of facts, never inside it", async () => {
     await mount(<AdminSystemScreen {...props([])} />)
 
     expect(document.querySelectorAll("dl p")).toHaveLength(0)
     const hints = [...document.querySelectorAll("dl + p")].map((hint) => hint.textContent)
     expect(hints).toHaveLength(2)
-  })
-
-  it("draws an empty table without a dashed box", async () => {
-    await mount(
-      <AdminSystemScreen {...props([], { snapshot: { ...snapshot, failedJobs: [] } })} />,
-    )
-
-    expect(document.querySelector(".border-dashed") === null).toBe(true)
   })
 })

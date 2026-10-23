@@ -80,7 +80,7 @@ export const AI_PROMPT =
   `Create my new product "Acme" from https://github.com/spy4x/seed and run it locally`
 
 const WORKS_TODAY = [
-  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, 2FA with an authenticator app`,
+  `Sign-up, sign-in, email verification, password reset, Google and GitHub sign-in, passkeys, magic links, 2FA with an authenticator app`,
   `Guest accounts: try the app with one click, keep the account by adding a sign-in method`,
   `Groups with members, roles, invitations and ownership transfer`,
   `Exporting a group to a file, and importing one as a new group`,
@@ -93,7 +93,6 @@ const WORKS_TODAY = [
 ] as const
 
 const NOT_BUILT = [
-  `Magic links`,
   `Translations: the app is English only`,
   `File uploads: the S3 file store is bundled, no screen uses it yet`,
   `Downloading an account's data`,
@@ -290,8 +289,8 @@ function Features(): JSX.Element {
             }
           >
             Email and password with verification codes, password reset, Google and GitHub sign-in,
-            passkeys, guest accounts, and 2FA with an authenticator app. Sessions you can see and
-            end.
+            passkeys, sign-in links by email, guest accounts, and 2FA with an authenticator app.
+            Sessions you can see and end.
           </FeatureCard>
           <FeatureCard
             id="feature-billing"

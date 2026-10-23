@@ -49,6 +49,16 @@ test("a region format and clock saved on the profile write the dates of the buil
     await page.getByRole("combobox", { name: "Formats" }).fill("German (Germany)")
     await page.getByRole("option", { name: /German \(Germany\)/ }).click()
     await pick(page, "preferences-clock-h12")
+    // The screen shows a change before the server has it, and the clock is sent only once the
+    // format's save is answered: leave the page only when the server holds both.
+    const { id: userId } = await (await page.request.get("/api/auth/me")).json()
+    await expect.poll(async () => {
+      const stored = await page.request.post("/api/call/preferences.get", {
+        headers: { ...headers, "content-type": "application/json", "x-realtime-user": `${userId}` },
+        data: "null",
+      })
+      return (await stored.json()).result?.value
+    }).toMatchObject({ locale: "de-DE", hourCycle: "h12" })
 
     // The example on the profile and every exact time of a note's row on another screen (when it
     // changed and when it was made) are German with a 12-hour clock.

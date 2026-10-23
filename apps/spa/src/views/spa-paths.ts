@@ -11,6 +11,9 @@ export const SPA_ROUTES = {
   // The code mailed to the address a sign-up gave, before the account is created (#142).
   "/sign-up/code": { open: true },
   "/sign-in": { open: true },
+  // Asks for a sign-in link, and the page the link opens, which a signed-in person may open too (#391).
+  "/sign-in/link": { open: true },
+  "/sign-in/link/open": { open: true },
   // Starts a guest account with one POST as it opens (#224); the app's robots.txt keeps it unlisted.
   "/try": { open: true },
   // A guest adds a sign-in method to keep the account, or answers the method being taken (#224).

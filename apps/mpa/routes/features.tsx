@@ -93,7 +93,8 @@ const TIERS: readonly Tier[] = [
         title: `Sign-in that is done`,
         lead:
           `People sign up with an email address and a password, prove the address with a code ` +
-          `sent by email, reset a forgotten password, continue with Google or GitHub, or sign in ` +
+          `sent by email, reset a forgotten password, continue with Google or GitHub, get a ` +
+          `sign-in link by email that also signs them up, or sign in ` +
           `with a passkey, or try the app first in a guest account and add a sign-in method later. ` +
           `An authenticator app adds two-factor authentication (2FA). They see every device they are signed in on ` +
           `and can sign the others out. Changing a sign-in method asks for proof and sends a mail.`,
@@ -102,11 +103,12 @@ const TIERS: readonly Tier[] = [
           `Signed session cookies, and an audit trail of every sign-in event`,
           `Personal API tokens, stored only as keyed hashes`,
           `Passkeys: only the public key is stored, and each sign-in challenge works once`,
+          `Magic links: one link signs in or signs up, works once, for 15 minutes, and is stored ` +
+          `only as a hash`,
           `Guest accounts (anonymous sign-in): a visitor starts with one click and no sign-in ` +
           `method, then adds an email and password, Google, GitHub or a passkey to the same account`,
           `Wrong passwords counted per sign-in name, with a short lock, from any network address`,
         ],
-        notYet: [{ label: `Magic links` }],
         code: { label: `Read the sign-in code`, href: source(`apps/api/services/sign-in.ts`) },
         visual: (
           <WindowFrame variant="browser" title="app.seedsaas.com/profile/security">
@@ -320,13 +322,14 @@ const TIERS: readonly Tier[] = [
         eyebrow: `Background work`,
         title: `Work that survives a crash`,
         lead: `Mail and notifications go out even when the server restarts halfway, because the ` +
-          `work is saved before it is done.`,
+          `work is saved before it is done. Your own jobs run now, later or on a schedule.`,
         facts: [
           `Each command writes its event in the same database transaction as the change`,
           `A worker drains that outbox and sends mail, push and live updates`,
-          `A failed attempt is retried with growing waits and logged with its cause`,
+          `A job is one definition: a name, a handler and, if it repeats, its schedule`,
+          `A failed attempt is retried with growing waits; operators see every run in the admin`,
         ],
-        code: { label: `Read the worker`, href: source(`apps/worker/+main.ts`) },
+        code: { label: `Read docs/jobs.md`, href: source(`docs/jobs.md`) },
         visual: <OutboxDiagram />,
       },
       {
@@ -363,7 +366,8 @@ const TIERS: readonly Tier[] = [
           <>
             Your operators find a person by name or address and see their sign-in methods, sessions,
             groups and history. From the same place they manage groups, refund a payment, look after
-            the newsletter's subscribers, check the system's health and run a failed job again.{" "}
+            the newsletter's subscribers, see every background job, run a failed one again and check
+            the system's health.{" "}
             <a
               href="/admin"
               class="font-medium text-primary underline"
@@ -377,8 +381,8 @@ const TIERS: readonly Tier[] = [
         ),
         facts: [
           `A separate app on its own host, with its own session cookie`,
-          `Eight modules, from the dashboard to API tokens`,
-          `Every action asks first and is written to the audit log`,
+          `Nine modules, from the dashboard to API tokens`,
+          `Risky actions ask first, and every action is written to the audit log`,
         ],
         notYet: [
           { label: `Translations: the admin app is English only`, issue: issue(275) },
@@ -493,7 +497,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       class="site-glow"
       eyebrow="Features"
       title="Everything Seed ships, and what it does not yet"
-      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
+      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
       author={SITE_AUTHOR}
       updated={FEATURES_UPDATED}
       note='Seed is a work in progress, built in public. What is not built yet is marked "Not built yet" next to the claim it limits, with its issue when one is open.'

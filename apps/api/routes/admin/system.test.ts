@@ -1,19 +1,11 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
-import {
-  ADMIN_FAILED_JOBS_LIMIT,
-  type AdminFailedJob,
-  AdminHealth,
-  AdminJobRetryOutcome,
-  type AdminSystemSnapshot,
-  UserRole,
-} from "@domain/identity"
+import { AdminHealth, type AdminSystemSnapshot, UserRole } from "@domain/identity"
 import type { APIContext } from "../../_types.ts"
 import { buildAuthData } from "../../_testing/fake-auth.ts"
 import {
   API_URL,
-  crossSiteHeaders,
   mountRoute,
   sameOriginHeaders,
   sameOriginWithoutCookieHeaders,
@@ -21,26 +13,11 @@ import {
   testSessionGuards,
 } from "../../_testing/mutation-requests.ts"
 import { createAdminRoute } from "./+routes.ts"
-import {
-  ADMIN_JOB_NOT_FOUND,
-  ADMIN_JOB_SUPERSEDED,
-  type AdminSystemStore,
-  createAdminSystemRoutes,
-} from "./system.ts"
+import { type AdminSystemStore, createAdminSystemRoutes } from "./system.ts"
 
 const NOW = new Date("2026-10-16T09:00:00.000Z")
-const JOB_ID = "01927f3e-6b2a-7c3d-8e4f-5a6b7c8d9e0f"
 const PROBE_TIMEOUT_MS = 30
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()
-
-const failedJob: AdminFailedJob = {
-  id: JOB_ID,
-  kind: "mail.password_reset",
-  attempts: 20,
-  errorCode: "MailSendError",
-  failedAt: "2026-10-16T08:00:00.000Z",
-  retryable: true,
-}
 
 interface Options {
   role?: UserRole
@@ -54,7 +31,6 @@ interface Options {
   oldestDueAt?: Date | null
   failed?: number
   lastBackup?: Date | null
-  outcome?: AdminJobRetryOutcome
 }
 
 function buildApp(options: Options = {}) {
@@ -77,16 +53,6 @@ function buildApp(options: Options = {}) {
         failed: options.failed ?? 0,
         now: NOW,
       })),
-    jobKinds: () =>
-      Promise.resolve([{
-        kind: "outbox.cleanup",
-        lastRunAt: "2026-10-16T08:30:00.000Z",
-        lastFailed: false,
-        nextRunAt: "2026-10-16T09:30:00.000Z",
-      }]),
-    failedJobs: (
-      limit,
-    ) => (calls.push(["failedJobs", limit]), Promise.resolve(options.failed ? [failedJob] : [])),
     lastBackup: () =>
       Promise.resolve(
         options.lastBackup === undefined
@@ -99,10 +65,6 @@ function buildApp(options: Options = {}) {
         latest: "2026_11_14_0001_backup_status",
         latestAt: new Date("2026-10-15T00:00:00.000Z"),
       }),
-    retryJob: (id, operatorId, requestId) => (
-      calls.push(["retryJob", id, operatorId, requestId]),
-        Promise.resolve(options.outcome ?? AdminJobRetryOutcome.Retried)
-    ),
   }
   const route = createAdminSystemRoutes({
     limit: passThrough,
@@ -150,7 +112,7 @@ async function snapshot(options: Options = {}) {
 }
 
 describe("system routes", () => {
-  for (const [method, path] of [["GET", "/system"], ["POST", `/system/jobs/${JOB_ID}/retry`]]) {
+  for (const [method, path] of [["GET", "/system"]]) {
     it(`answers 404 to a viewer on ${method} ${path} and reads nothing`, async () => {
       const { app, calls } = buildApp({ role: UserRole.VIEWER })
       const response = await send(app, method, path)
@@ -174,8 +136,6 @@ describe("system routes", () => {
     ["databaseConnected", (body) => body.database.reachable, {}],
     ["database", (body) => body.database.health, {}],
     ["queue", (body) => body.queue.health, {}],
-    ["jobKinds", (body) => body.jobs.length, {}],
-    ["failedJobs", (body) => body.failedJobs.length, { failed: 1 }],
     ["lastBackup", (body) => body.backup.health, {}],
     ["migrations", (body) => body.migrations.health, {}],
   ]
@@ -223,10 +183,8 @@ describe("system routes", () => {
       "cache",
       "checkedAt",
       "database",
-      "failedJobs",
       "fileStore",
       "health",
-      "jobs",
       "migrations",
       "queue",
     ])
@@ -257,22 +215,6 @@ describe("system routes", () => {
       "latestAt",
     ])
     expect(Object.keys(body.build).sort()).toEqual(["commit", "runtime", "startedAt", "version"])
-    expect(body.jobs).toHaveLength(1)
-    expect(Object.keys(body.jobs[0]).sort()).toEqual([
-      "kind",
-      "lastFailed",
-      "lastRunAt",
-      "nextRunAt",
-    ])
-    expect(body.failedJobs).toHaveLength(1)
-    expect(Object.keys(body.failedJobs[0]).sort()).toEqual([
-      "attempts",
-      "errorCode",
-      "failedAt",
-      "id",
-      "kind",
-      "retryable",
-    ])
   })
 
   it("shows the database as an error and reads nothing from it when it does not answer", async () => {
@@ -309,59 +251,15 @@ describe("system routes", () => {
     expect(body.health).toBe(AdminHealth.WARNING)
   })
 
-  it("lists the failed jobs and warns while any is left", async () => {
-    const { app, calls } = buildApp({ failed: 1 })
-    const body = await (await send(app, "GET", "/system")).json()
+  it("warns while any job failed", async () => {
+    const body = await snapshot({ failed: 1 })
 
-    expect(body.failedJobs).toEqual([failedJob])
     expect(body.queue).toMatchObject({ failed: 1, health: AdminHealth.WARNING })
-    expect(calls).toContainEqual(["failedJobs", ADMIN_FAILED_JOBS_LIMIT])
   })
 
   it("shows a missing backup as an error", async () => {
     const body = await snapshot({ lastBackup: null })
 
     expect(body.backup).toEqual({ health: AdminHealth.ERROR, succeededAt: null })
-  })
-
-  it("runs a failed job again for the operator and names them and the request", async () => {
-    const { app, calls } = buildApp()
-    const response = await send(app, "POST", `/system/jobs/${JOB_ID.toUpperCase()}/retry`)
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ retried: true })
-    expect(calls).toEqual([["retryJob", JOB_ID, 7, "req-test-1"]])
-  })
-
-  it("answers 404 for an id that is no UUID and touches nothing", async () => {
-    const { app, calls } = buildApp()
-    const response = await send(app, "POST", `/system/jobs/1%20OR%201=1/retry`)
-
-    expect(response.status).toBe(404)
-    expect(calls).toEqual([])
-  })
-
-  it("answers 404 when no failed job has the id", async () => {
-    const { app } = buildApp({ outcome: AdminJobRetryOutcome.NotFound })
-    const response = await send(app, "POST", `/system/jobs/${JOB_ID}/retry`)
-
-    expect(response.status).toBe(404)
-    expect((await response.json()).error).toBe(ADMIN_JOB_NOT_FOUND)
-  })
-
-  it("answers 409 when a newer run of the job already waits", async () => {
-    const { app } = buildApp({ outcome: AdminJobRetryOutcome.Superseded })
-    const response = await send(app, "POST", `/system/jobs/${JOB_ID}/retry`)
-
-    expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(ADMIN_JOB_SUPERSEDED)
-  })
-
-  it("refuses a cross-site retry before it reaches the job", async () => {
-    const { app, calls } = buildApp()
-    const response = await send(app, "POST", `/system/jobs/${JOB_ID}/retry`, crossSiteHeaders)
-
-    expect(response.status).toBe(403)
-    expect(calls).toEqual([])
   })
 })

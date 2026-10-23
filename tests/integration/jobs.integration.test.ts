@@ -13,7 +13,7 @@ import {
   LEGACY_JOB_AGGREGATE_ID,
   OUTBOX_CLEANUP_JOB,
 } from "@server/jobs/jobs.ts"
-import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { JOB_RETRY } from "@server/jobs/job-failures.ts"
 import {
   enqueuePasswordResetMail,
@@ -62,13 +62,17 @@ async function withSchema(body: (sql: postgres.Sql) => Promise<void>): Promise<v
 
 /**
  * Moves every stored time `minutes` into the past. The claim reads the database clock, so this is
- * what the clock reaching those times looks like.
+ * what the clock reaching those times looks like. A job row's version is its run time in epoch
+ * milliseconds, so it moves too: otherwise a cron job's next run, at the same 03:00 the moved row
+ * was written for, would collide with it.
  */
 async function advanceClock(sql: postgres.Sql, minutes: number): Promise<void> {
   await sql`
     UPDATE outbox_events
     SET available_at = available_at - make_interval(mins => ${minutes}),
-        processed_at = processed_at - make_interval(mins => ${minutes})
+        processed_at = processed_at - make_interval(mins => ${minutes}),
+        aggregate_version = CASE WHEN aggregate_type = 'job'
+          THEN aggregate_version - ${minutes * 60_000} ELSE aggregate_version END
   `
 }
 
@@ -90,6 +94,12 @@ async function skipWait(sql: postgres.Sql): Promise<number> {
 }
 
 const BRAND = { webAppUrl: "http://app.localhost" }
+
+/**
+ * A worker start two days ago: the nightly cleanup's first run, at the 03:00 UTC after it, is due
+ * at once, and the run it writes next (the 03:00 after now) is a different time.
+ */
+const twoDaysAgo = () => new Date(Date.now() - 2 * 86_400_000)
 
 /** The reset mail settings of a worker whose mail is off. */
 function mailOff(sql: postgres.Sql) {
@@ -382,8 +392,8 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
         await insertChange(3, null) // not processed: kept
 
         // The worker's own start-up and processor, so what the worker wires is what is tested.
-        await scheduleNightlyJobs(sql, new Date())
-        await scheduleNightlyJobs(sql, new Date())
+        await startRepeatingJobs(sql, twoDaysAgo())
+        await startRepeatingJobs(sql, twoDaysAgo())
         const [{ count: queued }] = await sql<{ count: number }[]>`
           SELECT count(*)::int AS count FROM outbox_events WHERE event_kind = ${OUTBOX_CLEANUP_JOB}
         `
@@ -399,12 +409,13 @@ Deno.test("delayed and repeating jobs in Postgres", async (t) => {
       `
         expect(versions.map((row) => row.version)).toEqual(["2", "3"])
 
-        const [next] = await sql<{ hours: number; count: number }[]>`
-        SELECT round(extract(epoch FROM available_at - now()) / 3600)::int AS hours,
+        const [next] = await sql<{ at3: boolean; ahead: boolean; count: number }[]>`
+        SELECT to_char(available_at AT TIME ZONE 'UTC', 'HH24:MI') = '03:00' AS at3,
+          available_at > now() AS ahead,
           (SELECT count(*)::int FROM outbox_events WHERE event_kind = ${OUTBOX_CLEANUP_JOB}) AS count
         FROM outbox_events WHERE event_kind = ${OUTBOX_CLEANUP_JOB} AND processed_at IS NULL
       `
-        expect(next).toEqual({ hours: 24, count: 2 })
+        expect(next).toEqual({ at3: true, ahead: true, count: 2 })
       },
     )
 
@@ -528,7 +539,7 @@ Deno.test("the nightly cleanup and its fixed job id", async (t) => {
       `
 
     await t.step("a database with no chain starts one under the version 7 id", async () => {
-      await scheduleNightlyJobs(sql, new Date())
+      await startRepeatingJobs(sql, twoDaysAgo())
       const waiting = await waitingCleanups()
       expect(waiting).toEqual([{ aggregateId: JOB_AGGREGATE_ID }])
       expect(isUuid(waiting[0].aggregateId, 7)).toBe(true)
@@ -547,15 +558,15 @@ Deno.test("the nightly cleanup and its fixed job id", async (t) => {
           )
         `
         // The worker starts: twice, as a restart would.
-        await scheduleNightlyJobs(sql, new Date())
-        await scheduleNightlyJobs(sql, new Date())
+        await startRepeatingJobs(sql, twoDaysAgo())
+        await startRepeatingJobs(sql, twoDaysAgo())
         expect(await waitingCleanups()).toEqual([{ aggregateId: LEGACY_JOB_AGGREGATE_ID }])
 
         const result = await createOutboxProcessor(sql, mailOff(sql)).drainOnce()
         expect(result).toEqual({ claimed: 1, published: 1, failed: 0 })
 
         // The next night's run keeps the stored id, and a later start still adds nothing.
-        await scheduleNightlyJobs(sql, new Date())
+        await startRepeatingJobs(sql, twoDaysAgo())
         expect(await waitingCleanups()).toEqual([{ aggregateId: LEGACY_JOB_AGGREGATE_ID }])
       },
     )
@@ -574,9 +585,10 @@ Deno.test("the worker's processor when a job keeps failing", async (t) => {
     })
     const HOUR_MS = 60 * 60_000
     const cleanupRows = () =>
-      sql<{ attemptCount: number; processed: boolean; hours: number }[]>`
+      sql<{ attemptCount: number; processed: boolean; at3: boolean; ahead: boolean }[]>`
         SELECT attempt_count, processed_at IS NOT NULL AS processed,
-          round(extract(epoch FROM available_at - now()) / 3600)::int AS hours
+          to_char(available_at AT TIME ZONE 'UTC', 'HH24:MI') = '03:00' AS at3,
+          available_at > now() AS ahead
         FROM outbox_events WHERE event_kind = ${OUTBOX_CLEANUP_JOB} ORDER BY created_at, id
       `
 
@@ -654,7 +666,7 @@ Deno.test("the worker's processor when a job keeps failing", async (t) => {
           ...mailOff(sql),
           log: (line) => logged.push(line),
         })
-        await scheduleNightlyJobs(sql, new Date())
+        await startRepeatingJobs(sql, twoDaysAgo())
         await skipWait(sql)
         // The second step of the cleanup reads this table; the group purge runs five steps later.
         await sql`ALTER TABLE password_reset_requests RENAME TO password_reset_requests_gone`
@@ -697,8 +709,13 @@ Deno.test("the worker's processor when a job keeps failing", async (t) => {
             `abandoned at publish after ${JOB_RETRY.maxAttempts} attempts: Error`,
         )
         expect(await cleanupRows()).toEqual([
-          { attemptCount: JOB_RETRY.maxAttempts, processed: true, hours: expect.any(Number) },
-          { attemptCount: 0, processed: false, hours: 24 },
+          {
+            attemptCount: JOB_RETRY.maxAttempts,
+            processed: true,
+            at3: expect.any(Boolean),
+            ahead: expect.any(Boolean),
+          },
+          { attemptCount: 0, processed: false, at3: true, ahead: true },
         ])
         await sql`ALTER TABLE password_reset_requests_gone RENAME TO password_reset_requests`
       },
@@ -742,16 +759,15 @@ Deno.test("the worker's processor when a job keeps failing", async (t) => {
           ),
         )
         // The worker starts: twice, as a restart would.
-        await scheduleNightlyJobs(sql, new Date())
-        await scheduleNightlyJobs(sql, new Date())
+        await startRepeatingJobs(sql, twoDaysAgo())
+        await startRepeatingJobs(sql, twoDaysAgo())
 
         const rows = await cleanupRows()
         expect(rows.map((row) => [row.attemptCount, row.processed])).toEqual([
           [10, true],
           [0, false],
         ])
-        expect(rows[1].hours).toBeGreaterThanOrEqual(0)
-        expect(rows[1].hours).toBeLessThanOrEqual(24)
+        expect(rows[1].at3).toBe(true)
         expect(
           await sql`
             SELECT last_error_code FROM outbox_events

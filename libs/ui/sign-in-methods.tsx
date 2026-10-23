@@ -56,6 +56,11 @@ export type PasskeyAddStatus =
 export interface SignInMethodsProps {
   /** The account's ways in; `null` while the list is not known yet. */
   methods: readonly SignInMethod[] | null
+  /**
+   * A sign-in link reaches the account (#391). It is no linked method, so the list never shows
+   * it; an account with no other way in is told it signs in with a link.
+   */
+  emailLink?: boolean
   /** The providers that are on and not linked yet: each gets a "Link" button. */
   available: readonly OAuthProviderId[]
   /** A link or an unlink is in flight: every button waits. */

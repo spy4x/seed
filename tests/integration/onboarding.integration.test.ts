@@ -5,7 +5,7 @@ import { markOnboarding, readOnboarding } from "@server/auth/onboarding.ts"
 import { PostgresGroupRepository } from "@server/groups/postgres-group-repository.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { scheduleStarterData, WELCOME_NOTE_TITLE } from "@server/jobs/starter-data.ts"
-import { UserMFAStatus } from "@domain/identity"
+import { SIGN_IN_LINK_METHOD, UserMFAStatus } from "@domain/identity"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
@@ -131,6 +131,18 @@ Deno.test("each first step is done exactly when the person's own data says so", 
         emailVerified: true,
       })
     })
+
+    await t.step(
+      "a sign-up by link ticks the e-mail step: the link proved the address",
+      async () => {
+        const linked = await newAccount(sql, "cid@example.com")
+        await sql`INSERT INTO auth_email_owners (email, user_id)
+        VALUES ('cid@example.com', ${linked.userId})`
+        await sql`UPDATE auth_keys SET method = ${SIGN_IN_LINK_METHOD}, subject = ${uuidV7()},
+        proven_at = now() WHERE user_id = ${linked.userId}`
+        expect((await readOnboarding(sql, linked.userId))?.steps.emailVerified).toBe(true)
+      },
+    )
 
     await t.step(
       "a note of their own ticks the note step, and stays ticked in the trash",

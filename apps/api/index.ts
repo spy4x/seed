@@ -50,7 +50,9 @@ import {
   createAuthRateLimits,
   EMAIL_CODE_STORE,
   emailCodeBudgetKey,
+  SIGN_IN_LINK_STORE,
   SIGN_UP_CODE_STORE,
+  signInLinkBudgetKeys,
   signUpCodeBudgetKeys,
 } from "./middlewares/auth-rate-limits.ts"
 import { commandBus } from "./services/commandBus.ts"
@@ -68,6 +70,7 @@ import { isCacheConnected, kv } from "./services/cache.ts"
 import { files } from "./services/files.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
+import { enqueueSignInLinkMail } from "@server/jobs/sign-in-link-mail.ts"
 import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
 import { mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
 import { createSubscribersRoute } from "./routes/subscribers.ts"
@@ -169,6 +172,8 @@ app.route(
     totpFailures: createTotpFailures({ sql }),
     passwordFailures: createPasswordFailures({ sql }),
     requestPasswordReset: (email) => enqueuePasswordResetMail(sql, email),
+    requestSignInLink: (email, next, requestedBy) =>
+      enqueueSignInLinkMail(sql, email, next, requestedBy),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
   }),
@@ -424,6 +429,10 @@ if (config.isDev) {
         const keys = await signUpCodeBudgetKeys(email, client)
         await signUp.delete(keys.address)
         await signUp.delete(keys.client)
+        const links = createRedisRateLimitStore(kv, { keyPrefix: SIGN_IN_LINK_STORE })
+        const linkKeys = await signInLinkBudgetKeys(email, client)
+        await links.delete(linkKeys.address)
+        await links.delete(linkKeys.client)
       },
     }),
   )

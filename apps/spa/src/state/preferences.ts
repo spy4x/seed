@@ -71,8 +71,18 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
    * order the hint and the save's answer arrive in, so it is never announced.
    */
   const own = new Set<number>()
-  /** Dialog saves on their way: a record read meanwhile may be one of them. */
+  /** Dialog saves on their way or waiting their turn: a record read meanwhile may be one of them. */
   let drafting = 0
+  /** The last dialog draft not yet answered: shown at once, as the store shows its own saves. */
+  const draft = signal<RegionDraft | null>(null)
+  /** Dialog saves go out one at a time, each after the answer to the one before. */
+  let queue: Promise<unknown> = Promise.resolve()
+  /**
+   * The version each of this device's dialog saves was made on, mapped to the version its answer
+   * made. A draft made while an earlier one was on its way was built on what that one saved, so it
+   * is sent on the version that one made, not refused as if another device had saved meanwhile.
+   */
+  const saved = new Map<number, number>()
   let wasSaving = false
   // Every save of the store (the theme, "Use Tokyo time") ends with the version it made held.
   effect(() => {
@@ -81,15 +91,20 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
     wasSaving = saving
   })
 
+  /** The record with every change still on its way: the store's own saves and the dialog's. */
+  const shown = computed<Preferences>(() =>
+    draft.value ? { ...store.value.value, ...draft.value } : store.value.value
+  )
+
   /** Every date and time on screen, in the person's settings. */
-  const format = computed(() => createFormatters(store.value.value, { device: device.value }))
+  const format = computed(() => createFormatters(shown.value, { device: device.value }))
 
   /**
    * This device's zone when the person pinned another one and has not chosen to keep it: the Time
    * zone row then offers to switch. `null` when the zone is automatic, or the two agree.
    */
   const otherZone = computed(() => {
-    const chosen = store.value.value.timeZone
+    const chosen = shown.value.timeZone
     const here = device.value.timeZone
     if (chosen === null || chosen === here || kept.value === here) return null
     return here
@@ -134,31 +149,50 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
   /**
    * Saves the dialog's draft on the version it was made on, so a change another device saved
    * meanwhile is never overwritten: the server refuses it, and {@link conflict} holds the record
-   * that won. Without a connection nothing is sent.
+   * that won. Without a connection nothing is sent. The draft shows at once; a second one made
+   * before the first is answered waits for that answer and is sent on the version it made.
    */
-  async function saveDraft(baseVersion: number, draft: RegionDraft): Promise<DraftSaveOutcome> {
+  function saveDraft(baseVersion: number, next: RegionDraft): Promise<DraftSaveOutcome> {
     announcement.value = ``
     draftConflict.value = null
-    if (!dependencies.online()) return { ok: false, reason: `offline` }
+    if (!dependencies.online()) return Promise.resolve({ ok: false, reason: `offline` })
+    const checked = preferencesDefinition.parse({ ...store.value.peek(), ...next })
+    if (!checked.ok) return Promise.resolve({ ok: false, reason: `invalid` })
     const signedIn = person
-    const checked = preferencesDefinition.parse({ ...store.value.peek(), ...draft })
-    if (!checked.ok) return { ok: false, reason: `invalid` }
-    let answer: SettingsSaveResult<unknown>
     drafting++
+    draft.value = next
+    const turn = queue.then(() => sendDraft(signedIn, baseVersion, checked.value)).finally(() => {
+      if (--drafting > 0 || signedIn !== person) return
+      draft.value = null
+      saved.clear()
+    })
+    queue = turn.catch(() => {})
+    return turn
+  }
+
+  /** Sends one dialog draft; {@link saveDraft} runs these one after another. */
+  async function sendDraft(
+    signedIn: number,
+    baseVersion: number,
+    value: Preferences,
+  ): Promise<DraftSaveOutcome> {
+    if (signedIn !== person) return { ok: false, reason: `failed` }
+    let version = baseVersion
+    while (saved.has(version)) version = saved.get(version)!
+    let answer: SettingsSaveResult<unknown>
     try {
       answer = await dependencies.command<SettingsSaveResult<unknown>>(`preferences.save`, {
-        version: baseVersion,
-        value: checked.value,
+        version,
+        value,
       })
     } catch (_error) {
       return { ok: false, reason: `failed` }
-    } finally {
-      drafting--
     }
     if (signedIn !== person) return { ok: false, reason: `failed` }
     if (answer.ok) {
-      const saved = preferencesDefinition.resolve(answer.settings)
-      own.add(saved.version)
+      const record = preferencesDefinition.resolve(answer.settings)
+      own.add(record.version)
+      saved.set(version, record.version)
       store.apply(answer.settings)
       return { ok: true }
     }
@@ -187,6 +221,8 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
     person++
     store.reset()
     own.clear()
+    saved.clear()
+    draft.value = null
     draftConflict.value = null
     announcement.value = ``
     kept.value = null
@@ -195,7 +231,7 @@ export function createPreferencesState(dependencies: PreferencesDependencies) {
 
   return {
     /** The record with any change still on its way: what the screen shows. */
-    value: computed(() => store.value.value),
+    value: shown,
     loaded: store.loaded,
     saving: store.saving,
     /** The version the shown record has; a dialog's draft is saved on it. */

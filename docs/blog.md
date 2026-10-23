@@ -10,7 +10,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/domain/blog/+lib.ts`                 | Shapes, limits, request schemas, field checks, errors, audit kinds.                   |
 | `libs/server/blog/postgres-blog-repository.ts` | The admin's reads and writes, each write with its audit row in one transaction.   |
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
-| `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job, and `queueDueBlogJobs`, which gives lost jobs back.           |
+| `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
 | `libs/server/blog/sample-posts.ts`         | Three sample posts for `deno task db:seed` in development.                             |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |
@@ -22,6 +22,9 @@ Operators write posts in the admin app; the public website shows the published o
 - **Publish now** makes the post live at once. **Schedule** sets `publish_at` and queues a
   `blog.publish` job for that time; the job publishes it. Moving the time or unscheduling leaves
   the old job in place: when it runs it finds the post not due, or a draft, and does nothing.
+- In the admin's Jobs module, **Run now** on a scheduled post's job publishes nothing early: the
+  run finds the post not due and queues the job for the post's time again, unless another run
+  waits. **Cancel** is refused for `blog.publish`; Unschedule on the Blog page stops a post.
 - `published_at` is set the first time a post goes live and never moves, so unpublishing and
   publishing again keeps the date readers saw. From then on the slug is locked; **Change URL**
   changes it, and old links stop working (there are no redirects).

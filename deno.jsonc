@@ -168,7 +168,7 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.90.0 (passkeys, idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
+    // spy4x/ts-libs 1.90.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
     // the redirect-path check of sign-in's `next`, the password check without a session, billing,
     // the provider's name and picture, the healthcheck's HTTP mode, a key giving up its address,
     // safe Markdown and reading time).
