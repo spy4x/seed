@@ -60,6 +60,8 @@ export interface FrameUser {
   lastName: string
   /** The address the account signs in with; left out or `null` while unknown or for a username. */
   email?: string | null
+  /** Their profile picture's address (#228), shown in the account entry; left out for initials. */
+  avatarUrl?: string
 }
 
 /** A theme the person can choose; `"system"` follows the device. */
@@ -224,7 +226,7 @@ export function AppFrame(
         ? undefined
         : { href: SCREEN_PATHS.notifications, unread: unreadCount }}
       account={{
-        user: { name, email },
+        user: { name, email, avatarUrl: user.avatarUrl },
         headerHref: SCREEN_PATHS.profile,
         items: [{ label: "Tags", href: TAG_PATHS.list }, ...shortcutsMenuItems(shortcuts)],
         signOut: { label: "Sign out", onClick: onSignOut },

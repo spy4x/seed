@@ -24,6 +24,7 @@ import { createAdminRoute } from "./+routes.ts"
 import {
   ADMIN_EXPORT_CROSS_SITE,
   ADMIN_NO_PASSWORD,
+  ADMIN_NO_PICTURE,
   ADMIN_NOT_ADMINISTRATOR,
   ADMIN_ROLE_TOO_HIGH,
   ADMIN_SAME_ROLE,
@@ -60,6 +61,7 @@ function buildApp(
     retryAfterMs = undefined as number | undefined,
     rows = [[person]] as AdminUserRow[][],
     exportError = undefined as Error | undefined,
+    pictures = new Map<string, { contentType: string; bytes: Uint8Array }>(),
   } = {},
 ) {
   const calls: unknown[][] = []
@@ -94,19 +96,31 @@ function buildApp(
         emit: (event) => emitted.push(event),
         now: () => new Date("2026-10-16T09:00:00.000Z"),
         dataExports: (userId) => (calls.push(["dataExports", userId]), Promise.resolve([])),
+        picture: (id) => {
+          const stored = pictures.get(id)
+          return Promise.resolve(stored ? { id, contentType: stored.contentType } : null)
+        },
+        readFile: (key) =>
+          Promise.resolve(pictures.get(key.replace(/^pictures\//, ""))?.bytes ?? null),
       }),
     ],
   })
   return { app: mountRoute("/admin", route, auth), calls, emitted }
 }
 
-/** Every path #425 adds. */
+const PICTURE = "0190a000-0000-7000-8000-0000000000a1"
+/** A WebP's first bytes, as the store would answer them. */
+const PICTURE_BYTES = new Uint8Array([82, 73, 70, 70, 0, 0, 0, 0, 87, 69, 66, 80])
+
+/** Every path #425 adds, and the profile picture's (#228). */
 const ROUTES = [
   { method: "POST", path: "/admin/users/42/sessions/9/end" },
   { method: "POST", path: "/admin/users/42/role", body: { role: UserRole.OPERATOR } },
   { method: "POST", path: "/admin/users/42/password-reset" },
   { method: "GET", path: "/admin/users/export.csv?q=ada" },
   { method: "GET", path: "/admin/users/42/data-exports" },
+  { method: "POST", path: "/admin/users/42/picture/remove" },
+  { method: "GET", path: `/admin/users/pictures/${PICTURE}` },
 ]
 
 function send(
@@ -220,6 +234,39 @@ describe("the people actions of the operator area", () => {
         status,
         error,
       ])
+    }
+  })
+
+  it("removes the person's profile picture through the service and closes no socket", async () => {
+    const { app, calls, emitted } = buildApp()
+    const response = await send(app, ROUTES[5])
+
+    expect(response.status).toBe(200)
+    expect(calls).toEqual([["act", 7, 42, AdminActionKind.RemovePicture, undefined]])
+    expect(emitted).toEqual([])
+  })
+
+  it("answers 409 to a picture removal for someone with no picture", async () => {
+    const { app } = buildApp(administrator(), { outcome: AdminActOutcome.Unchanged })
+    const response = await send(app, ROUTES[5])
+
+    expect(response.status).toBe(409)
+    expect((await response.json()).error).toBe(ADMIN_NO_PICTURE)
+  })
+
+  it("answers a picture's bytes as its type, never as a page, and 404 for one that is not there", async () => {
+    const pictures = new Map([[PICTURE, { contentType: "image/webp", bytes: PICTURE_BYTES }]])
+    const { app } = buildApp(administrator(), { pictures })
+    const response = await send(app, ROUTES[6])
+
+    expect(response.status).toBe(200)
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(PICTURE_BYTES)
+    expect(response.headers.get("content-type")).toBe("image/webp")
+    expect(response.headers.get("x-content-type-options")).toBe("nosniff")
+    expect(response.headers.get("content-security-policy")).toBe("sandbox; default-src 'none'")
+    for (const id of ["0190a000-0000-7000-8000-0000000000a2", "abc"]) {
+      const missing = await send(app, { method: "GET", path: `/admin/users/pictures/${id}` })
+      expect([id, missing.status]).toEqual([id, 404])
     }
   })
 

@@ -32,6 +32,8 @@ export enum AdminActionKind {
   DeleteGuest = 7,
   /** Unlink the person's Telegram account (#269): its chat stops acting for them. */
   UnlinkTelegram = 8,
+  /** Remove the person's profile picture (#228); their initials show instead. */
+  RemovePicture = 9,
 }
 
 /** What an action needs besides its kind: the session to end, or the role to give. */
@@ -262,6 +264,15 @@ export function createAdmin(
                 AuthAuditEventType.TELEGRAM_UNLINKED,
                 `${identifier} ${telegramIdentifier(telegramUserId)}`,
               ),
+            )
+            break
+          }
+          case AdminActionKind.RemovePicture: {
+            // The `users` trigger queues the object; the worker deletes it from the store.
+            const removed = await tx.pictures.set(targetId, null)
+            if (!removed?.previous) return AdminActOutcome.Unchanged
+            await tx.authAudit.insert(
+              auditRow(c, targetId, AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR, identifier),
             )
             break
           }

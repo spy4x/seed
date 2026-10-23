@@ -79,8 +79,9 @@ export default define.page(function Privacy({ state }) {
       <ul>
         <li>
           Your account: the username, the password as a salted hash only (never the password
-          itself), the email address and the name if you add them, and the second-factor secret if
-          you turn it on.
+          itself), the email address and the name if you add them, the profile picture if you upload
+          one, and the second-factor secret if you turn it on. A replaced or removed picture is
+          deleted from the app's file store, at once or within a day.
         </li>
         <li>
           If you try the app without an account: a guest account, with no address and no password.
@@ -112,9 +113,9 @@ export default define.page(function Privacy({ state }) {
           account; deleting the account deletes them.
         </li>
         <li>
-          What the people in your groups see of you: everyone in a group sees your name, your role
-          there and the group's notes. The group's owner and its admins also see the address you
-          sign in with and when you were last active.
+          What the people in your groups see of you: everyone in a group sees your name, your
+          profile picture, your role there and the group's notes. The group's owner and its admins
+          also see the address you sign in with and when you were last active.
         </li>
         <li>
           A group's activity log: who did what in the group and when. The group's owner and its

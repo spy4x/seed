@@ -5,7 +5,7 @@ import type postgres from "postgres"
  * the backup service's last good backup (`infra/backup/backup.sh`), which is about the server,
  * not the demo, the blog's posts, which are the real posts of the product's website, not demo
  * data, and the queue of stored files to delete, which the wipe fills with every attachment's
- * object so the nightly clean-up empties the file store too. Every other table in the schema is emptied, a new one included, so a table added later
+ * object and profile picture so the nightly clean-up empties the file store too. Every other table in the schema is emptied, a new one included, so a table added later
  * needs no change here unless it must survive the wipe (docs/demo.md). A kept table must not
  * reference an emptied one: `TRUNCATE ... CASCADE` would empty it too.
  */
@@ -34,10 +34,15 @@ export async function wipeDatabase(sql: postgres.Sql): Promise<string[]> {
       ORDER BY tablename
     `
     const names = rows.map((row) => row.name)
-    // TRUNCATE fires no row trigger, so the attachments' objects are queued here, in the same
-    // transaction, for the clean-up to delete from the store.
+    // TRUNCATE fires no row trigger, so the attachments' objects and the profile pictures are
+    // queued here, in the same transaction, for the clean-up to delete from the store.
     await tx`
       INSERT INTO file_deletions (object_key) SELECT object_key FROM note_attachments
+      ON CONFLICT DO NOTHING
+    `
+    await tx`
+      INSERT INTO file_deletions (object_key)
+      SELECT 'pictures/' || picture_id FROM users WHERE picture_id IS NOT NULL
       ON CONFLICT DO NOTHING
     `
     if (names.length > 0) {

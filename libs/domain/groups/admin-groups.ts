@@ -64,6 +64,8 @@ export interface AdminGroupListResponse {
 
 /** One member of a group, as the operator sees them. */
 export interface AdminGroupMember extends AdminGroupPerson {
+  /** Their profile picture (#228); `null` or absent for none. */
+  pictureId?: string | null
   role: GroupRole
   /** The person's role in the product, which decides whether an operator may act on them. */
   userRole: UserRole

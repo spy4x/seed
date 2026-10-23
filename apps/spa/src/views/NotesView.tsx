@@ -15,7 +15,7 @@ import { tagsStore } from "../state/tags.ts"
 import { selectionStore } from "../state/selection.ts"
 import { toasts } from "../state/toasts.ts"
 import { useUndoToast } from "./use-undo-toast.ts"
-import { personName } from "./note-people.ts"
+import { personName, personPicture } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
 import { OfflineStatus } from "../modules.ts"
 import { OnboardingView } from "./OnboardingView.tsx"
@@ -132,6 +132,7 @@ export function NotesView() {
           ...note,
           authorId: note.createdByUserId === null ? null : String(note.createdByUserId),
           authorName: personName(note.createdByUserId, youId, members),
+          authorPictureUrl: personPicture(note.createdByUserId, members),
           authorAvatarName: note.createdByUserId === youId
             ? members?.find((member) => member.userId === youId)?.name.trim() || undefined
             : undefined,

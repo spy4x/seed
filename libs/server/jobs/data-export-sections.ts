@@ -52,13 +52,15 @@ export const DATA_EXPORT_SECTIONS: readonly DataExportSection[] = [
       `trialUsedAt`,
       `onboardingDismissedAt`,
       `onboardingTourSeenAt`,
+      `pictureId`,
     ],
     rows: (sql, userId) =>
       sql`SELECT users.first_name, users.last_name, users.created_at, users.last_login_at,
         users.last_seen_at, user_totp.confirmed_at AS two_factor_on_since,
         user_settings.selected_group_id, email_changes.email AS pending_email,
         account_deletions.delete_after AS deletion_scheduled_for, users.guest_since,
-        users.trial_used_at, users.onboarding_dismissed_at, users.onboarding_tour_seen_at
+        users.trial_used_at, users.onboarding_dismissed_at, users.onboarding_tour_seen_at,
+        users.picture_id
       FROM users
       LEFT JOIN user_totp ON user_totp.user_id = users.id
       LEFT JOIN user_settings ON user_settings.user_id = users.id

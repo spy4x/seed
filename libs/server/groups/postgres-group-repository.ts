@@ -93,6 +93,7 @@ interface GroupListRow extends GroupSummaryRow {
 interface MemberSummaryRow extends postgres.Row {
   userId: number
   name: string
+  pictureId: string | null
   email?: string | null
   lastSeenAt?: Date | null
   role: GroupRole
@@ -800,6 +801,7 @@ export class PostgresGroupRepository implements GroupRepository {
       SELECT
         group_members.user_id,
         btrim(concat_ws(' ', users.first_name, users.last_name)) AS name,
+        users.picture_id,
         ${
       emails
         ? this.sql`(

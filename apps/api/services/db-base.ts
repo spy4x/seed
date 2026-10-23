@@ -1,4 +1,12 @@
 import type postgres from "postgres"
+import type { AttachmentUploadBudget } from "@domain/notes"
+import {
+  anyPicture,
+  readablePicture,
+  setUserPicture,
+  type StoredPicture,
+} from "@server/auth/profile-pictures.ts"
+import { type LedgerUpload, reserveUpload, settleUpload } from "@server/files/upload-ledger.ts"
 import { DbServiceBase, type RowCache, type Sql } from "@spy4x/server/db"
 import type { AuthSessionRecord, AuthStore } from "@spy4x/server/auth"
 import { createPostgresAuthStore, createPostgresSessionStore } from "@spy4x/server/auth/postgres"
@@ -514,6 +522,32 @@ export class AppDbBase extends DbServiceBase {
       /** Keeps the first device's zone and region format: the ones the person signed up with. */
       recordFirstDevice: (userId: number, device: PreferencesDevice): Promise<void> =>
         recordFirstDevice(sql, userId, device),
+    }
+  }
+
+  /**
+   * Profile pictures (#228, `@server/auth/profile-pictures.ts`) and their signed uploads in the
+   * ledger every feature shares (`@server/files/upload-ledger.ts`). Built per access, like `group`,
+   * so inside `begin()` every write joins the transaction. A change of picture also drops the
+   * cached `users` row, which the session and the profile show.
+   */
+  get pictures() {
+    const sql = this.sql
+    const cache = this.userCache
+    return {
+      reserve: (upload: LedgerUpload, budget: AttachmentUploadBudget) =>
+        reserveUpload(sql, upload, budget),
+      claim: (id: string, userId: number) => settleUpload(sql, id, userId, `picture`),
+      release: async (id: string, userId: number): Promise<void> => {
+        await settleUpload(sql, id, userId, `picture`)
+      },
+      set: async (userId: number, picture: StoredPicture | null) => {
+        const result = await setUserPicture(sql, userId, picture)
+        if (result) await cache.delete(userId)
+        return result
+      },
+      readable: (pictureId: string, viewerId: number) => readablePicture(sql, pictureId, viewerId),
+      any: (pictureId: string) => anyPicture(sql, pictureId),
     }
   }
 

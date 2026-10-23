@@ -4,8 +4,6 @@ import {
   assertCanWriteNotes,
   type Attachment,
   ATTACHMENT_EVENTS,
-  ATTACHMENT_PENDING_MAX,
-  ATTACHMENT_PENDING_MINUTES,
   ATTACHMENT_UPLOAD_HOURS,
   type AttachmentCaps,
   AttachmentError,
@@ -21,6 +19,12 @@ import {
   recordGroupChange,
 } from "@server/groups/group-change-log.ts"
 import { writeAuditEvent } from "@server/groups/audit.ts"
+import {
+  countPendingUploads,
+  reserveUpload,
+  settleUpload,
+  uploadsInLastHour,
+} from "@server/files/upload-ledger.ts"
 
 interface AttachmentRow extends postgres.Row, Attachment {
   objectKey: string
@@ -119,74 +123,39 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
     return count
   }
 
-  /**
-   * How many uploads the person signed in the last {@link ATTACHMENT_PENDING_MINUTES} minutes and
-   * neither confirmed nor cancelled.
-   */
+  /** See {@link countPendingUploads}: every feature's waiting uploads count. */
   async countPending(userId: number): Promise<number> {
-    const [{ count }] = await this.sql<{ count: number }[]>`
-      SELECT count(*)::int AS count FROM note_attachment_uploads
-      WHERE user_id = ${userId} AND settled_at IS NULL
-        AND created_at > now() - make_interval(mins => ${ATTACHMENT_PENDING_MINUTES})
-    `
-    return count
+    return await countPendingUploads(this.sql, userId)
   }
 
-  /** The uploads the person signed in the last hour, settled or not, and their declared bytes. */
+  /** See {@link uploadsInLastHour}: every feature's uploads count. */
   async signedInLastHour(userId: number): Promise<{ files: number; bytes: number }> {
-    const [row] = await this.sql<{ files: number; bytes: string }[]>`
-      SELECT count(*)::int AS files, coalesce(sum(size_bytes), 0)::text AS bytes
-      FROM note_attachment_uploads
-      WHERE user_id = ${userId} AND created_at > now() - interval '1 hour'
-    `
-    return { files: row.files, bytes: Number(row.bytes) }
+    return await uploadsInLastHour(this.sql, userId)
   }
 
   async releaseUpload(id: string, userId: number): Promise<void> {
-    await this.sql`
-      UPDATE note_attachment_uploads SET settled_at = now()
-      WHERE id = ${id} AND user_id = ${userId} AND settled_at IS NULL
-    `
+    await settleUpload(this.sql, id, userId, `attachment`)
   }
 
   async createUpload(
     upload: PendingAttachmentUpload,
     budget: AttachmentUploadBudget,
   ): Promise<void> {
-    await this.sql.begin(async (tx: postgres.TransactionSql) => {
-      // The person's row, as `add` locks the group's: a second sign waits here, then counts this one.
-      await tx`SELECT 1 FROM users WHERE id = ${upload.userId} FOR NO KEY UPDATE`
-      const repository = new PostgresAttachmentRepository(tx)
-      if (await repository.countPending(upload.userId) >= ATTACHMENT_PENDING_MAX) {
-        throw new AttachmentError("UPLOADS_PENDING", "Finish the uploads already started first")
-      }
-      const signed = await repository.signedInLastHour(upload.userId)
-      if (signed.files >= budget.files || signed.bytes + upload.size > budget.bytes) {
-        throw new AttachmentError(
-          "UPLOAD_BUDGET",
-          "You have uploaded as much as an hour allows. Try again later",
-        )
-      }
-      await tx`
-        INSERT INTO note_attachment_uploads (
-          id, note_id, user_id, staging_key, name, content_type, size_bytes
-        ) VALUES (
-          ${upload.id}, ${upload.noteId}, ${upload.userId}, ${upload.stagingKey}, ${upload.name},
-          ${upload.contentType}, ${upload.size}
-        )
-      `
-    })
+    const refusal = await reserveUpload(this.sql, upload, budget)
+    if (refusal === `UPLOADS_PENDING`) {
+      throw new AttachmentError("UPLOADS_PENDING", "Finish the uploads already started first")
+    }
+    if (refusal === `UPLOAD_BUDGET`) {
+      throw new AttachmentError(
+        "UPLOAD_BUDGET",
+        "You have uploaded as much as an hour allows. Try again later",
+      )
+    }
   }
 
   async claimUpload(id: string, userId: number): Promise<PendingAttachmentUpload | null> {
-    const row = (
-      await this.sql<PendingAttachmentUpload[]>`
-        UPDATE note_attachment_uploads SET settled_at = now()
-        WHERE id = ${id} AND user_id = ${userId} AND settled_at IS NULL
-        RETURNING id, note_id, user_id, staging_key, name, content_type, size_bytes AS size
-      `
-    )[0]
-    return row ?? null
+    const upload = await settleUpload(this.sql, id, userId, `attachment`)
+    return upload && { ...upload, noteId: upload.noteId! }
   }
 
   async add(
@@ -275,7 +244,7 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
    */
   async removeStaleUploads(now: Date = new Date()): Promise<string[]> {
     const rows = await this.sql<{ stagingKey: string }[]>`
-      DELETE FROM note_attachment_uploads
+      DELETE FROM file_uploads
       WHERE created_at < ${now}::timestamptz - make_interval(hours => ${ATTACHMENT_UPLOAD_HOURS})
       RETURNING staging_key
     `
