@@ -138,9 +138,7 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
               )}
             </ol>
           </nav>
-          {post.topic && (
-            <p class="font-mono text-sm font-medium uppercase text-primary">{post.topic}</p>
-          )}
+          {post.topic && <p class="font-mono text-sm font-medium text-primary">{post.topic}</p>}
           <h1 class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
             {post.title}
           </h1>
