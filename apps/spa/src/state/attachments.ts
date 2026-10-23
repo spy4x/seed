@@ -30,6 +30,8 @@ export interface AttachmentRow {
   thumbnailSrc?: string
   /** Why the upload failed, in the danger tone. */
   error?: string
+  /** Who attached a confirmed file: `null` for a former member, absent before it is confirmed. */
+  createdByUserId?: number | null
 }
 
 /** What the store calls; tests pass fakes, the app passes {@link attachmentsCalls}. */
@@ -107,6 +109,7 @@ function readyRow(attachment: Attachment): AttachmentRow {
     size: attachment.size,
     type: attachment.contentType,
     status: `ready`,
+    createdByUserId: attachment.createdByUserId,
   }
 }
 
@@ -140,6 +143,8 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
   const files = new Map<string, File>()
   const aborts = new Map<string, AbortController>()
   let opened = 0
+  /** The note {@link created} just named: the page that opens it next keeps its uploads. */
+  let adopted: string | null = null
 
   const update = (id: string, change: Partial<AttachmentRow>) => {
     rows.value = rows.value.map((row) => row.id === id ? { ...row, ...change } : row)
@@ -169,6 +174,9 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
 
   /** Shows the files of `note` in `group`, or none for a note not created yet (`null`). */
   async function open(group: string, note: string | null): Promise<void> {
+    const keep = note !== null && note === adopted && group === groupId.value
+    adopted = null
+    if (keep) return
     const read = ++opened
     for (const row of rows.value) drop(row.id)
     groupId.value = group
@@ -204,6 +212,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
     if (noteId.value !== null || group === null) return
     const read = opened
     noteId.value = note
+    adopted = note
     const flushed = flush()
     try {
       const result = await dependencies.list({ groupId: group, noteId: note })

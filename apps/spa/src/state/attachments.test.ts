@@ -183,6 +183,28 @@ describe(`note attachments store`, () => {
     expect(store.usage.value).toMatchObject({ maxFiles: 100 })
   })
 
+  it(`keeps a new note's uploads when its own page opens it after the create`, async () => {
+    const put = deferred()
+    const { dependencies } = fakeCalls({ put: () => put.promise })
+    const store = createAttachmentsStore(dependencies)
+    await store.open(GROUP, null)
+    store.add([file(`scan.pdf`)])
+    void store.created(NOTE)
+    await settle()
+    expect(store.rows.value.map((row) => row.status)).toEqual([`uploading`])
+
+    // The create page navigates to the note's page, which opens the same note.
+    await store.open(GROUP, NOTE)
+    expect(store.rows.value.map((row) => row.status)).toEqual([`uploading`])
+    put.resolve()
+    await settle()
+    expect(store.rows.value.map((row) => row.status)).toEqual([`ready`])
+
+    // Opened again later, the note is read afresh.
+    await store.open(GROUP, NOTE)
+    expect(store.rows.value).toEqual([])
+  })
+
   it(`waits without a network and sends what waits once it is back`, async () => {
     const { dependencies, calls, setOnline } = fakeCalls()
     const store = createAttachmentsStore(dependencies)

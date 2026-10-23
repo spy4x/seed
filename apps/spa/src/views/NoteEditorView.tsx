@@ -1,7 +1,10 @@
+import { signal } from "@preact/signals"
 import { useEffect, useRef } from "preact/hooks"
 import { useLocation } from "wouter-preact"
 import { canMutateNotes } from "@domain/groups"
 import { NoteEditorScreen } from "@ui/note-editor-screen.tsx"
+import { ATTACH_BUTTON_ID } from "@ui/note-attachments.tsx"
+import { attachmentsStore } from "../state/attachments.ts"
 import { moveTargetsOf } from "@ui/notes-screen.tsx"
 import { NOTE_PATHS } from "@ui/progressive.tsx"
 import { groupsStore } from "../state/groups.ts"
@@ -17,6 +20,19 @@ import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { isSpaPath } from "./spa-paths.ts"
 import { personName } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
+
+/** The palette's "Attach files to this note" while a note page an editor can change is open. */
+export const noteEditorPageActions = signal<{ attach(): void } | null>(null)
+
+/** Downloads `url`: an image opens in a new tab (it is served inline), any other file saves. */
+function openDownload(url: string, type: string): void {
+  if (!type.startsWith("image/")) return location.assign(url)
+  const link = document.createElement("a")
+  link.href = url
+  link.target = "_blank"
+  link.rel = "noopener"
+  link.click()
+}
 
 /**
  * Wires the note page to the notes store: `/notes/new` (no `noteId`) creates a note in the
@@ -36,8 +52,15 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
       void store.open(groupId, noteId)
       void tagsStore.open(groupId)
       void membersStore.open(groupId)
+      void attachmentsStore.open(groupId, noteId)
     }
   }, [groupId, noteId])
+  // Files that waited for the network upload once it is back.
+  useEffect(() => {
+    const flush = () => void attachmentsStore.flush()
+    addEventListener("online", flush)
+    return () => removeEventListener("online", flush)
+  }, [])
 
   const membership = groupId
     ? groupsStore.groups.value.find((group) => group.id === groupId)
@@ -57,6 +80,15 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   const saved = editing ? store.notes.value.find((note) => note.id === editing.id) : undefined
   const youId = sessionState.value.user?.id ?? null
   const members = membersStore.groupId.value === groupId ? membersStore.members.value : null
+  const canWrite = membership !== undefined && canMutateNotes(membership.role)
+  useEffect(() => {
+    if (!canWrite) return
+    noteEditorPageActions.value = {
+      attach: () => document.getElementById(ATTACH_BUTTON_ID)?.click(),
+    }
+    return () => noteEditorPageActions.value = null
+  }, [canWrite])
+  const attachments = attachmentsStore.groupId.value === groupId ? attachmentsStore : null
   const moveTargets = membership && canMutateNotes(membership.role)
     ? moveTargetsOf(groupsStore.groups.value, membership.id)
     : []
@@ -99,6 +131,31 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
           updatedAt: saved.updatedAt,
           updatedBy: personName(saved.updatedByUserId, youId, members),
         }}
+        attachments={attachments && {
+          items: attachments.rows.value.map((row) => ({
+            ...row,
+            detail: row.status === "ready" && row.createdByUserId !== undefined
+              ? personName(row.createdByUserId, youId, members)
+              : undefined,
+          })),
+          usage: attachments.usage.value,
+          refusals: attachments.refusals.value,
+          plan: attachments.plan.value,
+          announcement: attachments.announcement.value,
+          onAdd: attachments.add,
+          onCancel: attachments.cancel,
+          onRetry: (id) => void attachments.retry(id),
+          onRemove: attachments.remove,
+          onDownload: async (id) => {
+            const row = attachments.rows.value.find((item) => item.id === id)
+            try {
+              openDownload(await attachments.link(id), row?.type ?? "")
+              return null
+            } catch (cause) {
+              return cause instanceof Error ? cause.message : "This link expired. Try again."
+            }
+          },
+        }}
         value={editing ?? store.draft.value}
         tags={tagsStore.tags.value}
         onChange={(value) => {
@@ -112,6 +169,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
           if (creating) {
             const note = await store.create()
             if (!note) return
+            void attachmentsStore.created(note.id)
             toasts.success({
               title: "Note created",
               body: `"${note.title}" was created.`,
