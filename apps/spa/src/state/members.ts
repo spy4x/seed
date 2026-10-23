@@ -9,6 +9,7 @@ import {
   transferErrorField,
 } from "@ui/group-transfer.tsx"
 import { apiAsUser, fetchAsUser } from "./realtime-call.ts"
+import { readApiError } from "@domain/errors"
 import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
@@ -253,7 +254,7 @@ export const membersHttp: MembersDependencies = {
     const result = await apiAsUser<{ members: MemberItem[]; memberCount: number }>(
       `/api/groups/${encodeURIComponent(groupId)}/members`,
     )
-    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.reason)
     return result.data
   },
   setRole: (input) => callCommand("group.setRole", input),
@@ -273,17 +274,16 @@ export const membersHttp: MembersDependencies = {
       throw new TransferRefused("The server is out of reach. Try again.", undefined)
     }
     if (response.ok) return
-    const error = (await response.json().catch(() => null) as { error?: unknown } | null)?.error
-    const { code, message } = typeof error === "object" && error !== null
-      ? error as { code?: unknown; message?: unknown }
-      : {}
+    const error = readApiError(await response.json().catch(() => null))
+    // A refusal without a reason comes from the shared guards or the catch-all, whose sentence
+    // was not written for this dialog.
     throw new TransferRefused(
-      typeof message === "string"
-        ? message
+      error?.reason !== undefined
+        ? error.message
         : response.status === 429
         ? "Too many attempts. Wait a few minutes, then try again."
         : "Something went wrong. Try again.",
-      typeof code === "string" ? code : undefined,
+      error?.reason,
     )
   },
 }

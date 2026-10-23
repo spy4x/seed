@@ -9,6 +9,7 @@ import {
   type InvitationRow,
 } from "@ui/group-invitations.tsx"
 import { GUEST_REFUSAL_CODE } from "@domain/identity"
+import { readApiError } from "@domain/errors"
 import { fetchAsUser } from "./realtime-call.ts"
 import { guestRefusal, refusedAction } from "./guest-refusal.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
@@ -47,7 +48,7 @@ function groupPath(groupId: string, rest = ""): string {
  * admins, and the one behind a link or sent to the person's address, with accept and decline.
  *
  * It calls `fetch` itself instead of `apiFetch`: a plan refusal names its entitlement and limit
- * beside `error.code` and `error.message`, and `apiFetch` keeps only those two. The created link
+ * in `error.details`, which `apiFetch` leaves out. The created link
  * is kept in memory only, and dropped when the page closes, since it is never shown again.
  */
 export function createInvitationsStore(
@@ -71,21 +72,17 @@ export function createInvitationsStore(
     const response = await fetchAsUser(url, init, fetch)
     const json: unknown = await response.json().catch(() => null)
     if (response.ok) return { ok: true, data: json as T }
-    const error = (json as { error?: unknown } | null)?.error
-    const message = typeof error === "object" && error !== null &&
-        typeof (error as { message?: unknown }).message === "string"
-      ? (error as { message: string }).message
-      : "Something went wrong. Try again."
-    const code = typeof error === "object" && error !== null &&
-        typeof (error as { code?: unknown }).code === "string"
-      ? (error as { code: string }).code
-      : null
+    const error = readApiError(json)
+    const code = error?.reason ?? null
+    // A refusal without a reason comes from the shared guards or the catch-all, whose sentence
+    // was not written for these screens.
+    const message = code !== null && error ? error.message : "Something went wrong. Try again."
     // A guest refused an invite (#224): the frame shows the refusal, as `apiFetch` does for others.
     if (code === GUEST_REFUSAL_CODE) guestRefusal.value = refusedAction(url) ?? "other"
     return {
       ok: false,
       status: response.status,
-      failure: { message, code, plan: readPlanRefusal(error) },
+      failure: { message, code, plan: readPlanRefusal(error?.details) },
     }
   }
 

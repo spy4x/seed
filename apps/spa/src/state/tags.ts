@@ -337,7 +337,7 @@ function sorted(all: TagItem[]): TagItem[] {
 export const onlineTags: TagsDependencies = {
   async fetchList(groupId) {
     const result = await apiAsUser<{ tags: TagItem[] }>(`/api/groups/${groupId}/tags`)
-    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.reason)
     return result.data.tags
   },
   create: (input) => callCommand("tag.create", input),

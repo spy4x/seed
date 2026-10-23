@@ -63,7 +63,7 @@ async function call<T>(
   const result = await request
   return result.ok
     ? { ok: true, data: result.data }
-    : { ok: false, error: result.error.message, status: result.status, code: result.error.code }
+    : { ok: false, error: result.error.message, status: result.status, code: result.error.reason }
 }
 
 /** The create form as it opens: the first group, read only, the default lifetime. */

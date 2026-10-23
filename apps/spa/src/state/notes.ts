@@ -708,7 +708,7 @@ export const onlineNotes: NotesDependencies = {
     if (cursor) query.set("cursor", cursor)
     if (deleted) query.set("deleted", "true")
     const result = await apiAsUser<NotePage>(`/api/groups/${groupId}/notes?${query}`)
-    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.reason)
     return result.data
   },
   get: (groupId, id) => callQuery("note.get", { groupId, id }),
