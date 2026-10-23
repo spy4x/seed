@@ -429,7 +429,7 @@ const SCREENS = [
 ] as const
 
 /** The seeded customer the Billing shot opens: the one whose history holds a refund. */
-const CUSTOMER = "Community garden"
+const CUSTOMER = "Design studio"
 
 const H = VIEWPORT.height
 /** The caption bar's height: a zoom centres its region in the frame above it. */
