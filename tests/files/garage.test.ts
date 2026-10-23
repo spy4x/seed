@@ -5,7 +5,7 @@
  * passing without a store.
  */
 import { expect } from "@std/expect"
-import { FileRefusal, fileRule, s3FileStore } from "@server/files/files.ts"
+import { FileRefusal, fileRule, s3FileStore, s3ServerFiles } from "@server/files/files.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 function setting(name: string): string {
@@ -90,4 +90,35 @@ Deno.test("an HTML page uploaded under a PNG's signature is refused and deleted"
 
 Deno.test("the store answers as reachable", async () => {
   expect(await store().isReachable()).toBe(true)
+})
+
+Deno.test("a file the server made is stored, downloaded as an attachment, and deleted", async () => {
+  const files = store()
+  const server = s3ServerFiles({
+    endpoint: setting(`S3_ENDPOINT`),
+    region: setting(`S3_REGION`),
+    bucket: setting(`S3_BUCKET`),
+    accessKeyId: setting(`S3_ACCESS_KEY_ID`),
+    secretAccessKey: setting(`S3_SECRET_ACCESS_KEY`),
+  })
+  const key = `data-exports/${uuidV7()}.zip`
+  const zip = new Uint8Array([0x50, 0x4b, 0x05, 0x06, ...new Array(18).fill(0)])
+
+  await server.put(key, zip)
+  const signed = await files.signDownload(key, {
+    contentType: `application/zip`,
+    filename: `my.zip`,
+  })
+  const download = await fetch(signed)
+  expect(download.status).toBe(200)
+  expect(download.headers.get(`content-type`)).toBe(`application/zip`)
+  expect(download.headers.get(`content-disposition`)).toMatch(/^attachment; filename="my.zip"/)
+  expect(new Uint8Array(await download.arrayBuffer())).toEqual(zip)
+
+  // Nothing under the prefix is old enough yet; then everything is.
+  expect(await server.deleteOlderThan(`data-exports/`, new Date(Date.now() - 60_000))).toBe(0)
+  expect(await server.deleteOlderThan(`data-exports/`, new Date(Date.now() + 60_000))).toBe(1)
+  const gone = await fetch(signed)
+  await gone.body?.cancel()
+  expect(gone.status).toBe(404)
 })

@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check files.ts",
-    "test": "deno test files.test.ts"
+    "check": "deno check files.ts settings.ts",
+    "test": "deno test files.test.ts settings.test.ts"
   }
 }

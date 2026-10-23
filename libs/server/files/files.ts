@@ -235,3 +235,54 @@ export function s3FileStore(settings: FileStoreSettings): FileStore {
     settings.bucket,
   )
 }
+
+/**
+ * What a worker job needs to keep a file it made itself, such as a data export (#229): no browser
+ * takes part, so nothing is signed and nothing is confirmed. `deleteOlderThan` removes every object
+ * under `prefix` stored before `before`, the safety net for a file whose row or job was lost.
+ */
+export interface ServerFiles {
+  put(key: string, body: Uint8Array): Promise<void>
+  delete(key: string): Promise<void>
+  deleteOlderThan(prefix: string, before: Date): Promise<number>
+}
+
+/** {@link ServerFiles} over the store's internal client. */
+export function createServerFiles(
+  store: Pick<S3Storage, `upload` | `delete` | `list`>,
+  bucket: string,
+): ServerFiles {
+  return {
+    put: (key, body) => store.upload(bucket, key, body),
+    delete: (key) => store.delete(bucket, key),
+    async deleteOlderThan(prefix, before) {
+      let removed = 0
+      let continuationToken: string | undefined
+      do {
+        const page = await store.list(bucket, prefix, { continuationToken })
+        for (const object of page.objects) {
+          if (object.lastModified && object.lastModified < before) {
+            await store.delete(bucket, object.key)
+            removed++
+          }
+        }
+        continuationToken = page.continuationToken
+      } while (continuationToken)
+      return removed
+    },
+  }
+}
+
+/** {@link ServerFiles} for `settings`, reaching the store at `endpoint` as the API does. */
+export function s3ServerFiles(settings: Omit<FileStoreSettings, `publicEndpoint`>): ServerFiles {
+  return createServerFiles(
+    new S3Storage({
+      endpoint: settings.endpoint,
+      region: settings.region,
+      accessKeyId: settings.accessKeyId,
+      secretAccessKey: settings.secretAccessKey,
+      forcePathStyle: true,
+    }),
+    settings.bucket,
+  )
+}
