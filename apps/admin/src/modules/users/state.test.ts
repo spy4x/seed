@@ -184,3 +184,33 @@ it("asks the API to mail a password-reset link, and toasts it", async () => {
     "A password-reset link is on its way to Grace Hopper.",
   ])
 })
+
+it("reads a person's data exports, dropping an answer for a person the page has left", async () => {
+  let release: (value: AdminApiResult<unknown>) => void = () => {}
+  const late = new Promise<AdminApiResult<unknown>>((resolve) => release = resolve)
+  const { request, calls } = fakeRequest((path) =>
+    path === `/api/admin/users/7/data-exports`
+      ? late
+      : path === `/api/admin/users/42/data-exports`
+      ? Promise.resolve(ok({ exports: [{ id: `b` }] }))
+      : undefined
+  )
+  const state = createUsersState(request, createToastStore())
+  const first = state.loadDataExports(7)
+  await state.loadDataExports(42)
+  release(ok({ exports: [{ id: `a` }] }))
+  await first
+
+  expect(calls).toEqual([
+    `GET /api/admin/users/7/data-exports`,
+    `GET /api/admin/users/42/data-exports`,
+  ])
+  expect(state.dataExports.value).toEqual({ userId: 42, exports: [{ id: `b` }], error: null })
+})
+
+it("shows the API's message when a person's data exports cannot be read", async () => {
+  const { request } = fakeRequest(() => Promise.resolve(fail(500, "Could not load.")))
+  const state = createUsersState(request, createToastStore())
+  await state.loadDataExports(42)
+  expect(state.dataExports.value).toEqual({ userId: 42, exports: null, error: "Could not load." })
+})

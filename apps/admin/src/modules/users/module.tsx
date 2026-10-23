@@ -11,6 +11,7 @@ import {
 import { ADMIN_PATHS } from "@ui/admin-frame.tsx"
 import { AdminUsersScreen } from "@ui/admin-users-screen.tsx"
 import { AdminUserScreen } from "@ui/admin-user-screen.tsx"
+import { AdminPersonDataExportsPanel } from "@ui/admin-person-data-exports.tsx"
 import { operatorOf } from "../../state.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { createUsersState, type UsersState } from "./state.ts"
@@ -101,6 +102,24 @@ function UserView(
   )
 }
 
+/** The person's "Data exports" tab (#229): read when it opens. */
+function DataExportsTab(
+  { context, userId }: { context: AdminContext; userId: number },
+): JSX.Element {
+  const state = usersState(context)
+  useEffect(() => {
+    state.loadDataExports(userId)
+  }, [userId])
+  const panel = state.dataExports.value
+  const current = panel.userId === userId
+  return (
+    <AdminPersonDataExportsPanel
+      exports={current ? panel.exports : null}
+      error={current ? panel.error : null}
+    />
+  )
+}
+
 /** Everyone with an account, and one person's page with its actions (#146, #424). */
 export const usersModule: AdminModule = {
   id: `users`,
@@ -108,5 +127,12 @@ export const usersModule: AdminModule = {
   routes: [
     { path: ADMIN_PATHS.users, View: UsersView },
     { path: `/users/:id`, View: UserView },
+  ],
+  personTabs: [
+    {
+      id: `data-exports`,
+      label: `Data exports`,
+      render: ({ context, userId }) => <DataExportsTab context={context} userId={userId} />,
+    },
   ],
 }
