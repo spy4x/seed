@@ -38,8 +38,8 @@ no file passes through the API. Nothing in the template uploads a file yet; note
    file is saved as an attachment under its name.
 
 Keys are the feature's choice, such as `notes/<group id>/<file id>`, with UUID version 7 ids,
-never under `uploads/tmp/`. The authorization check (who may upload to or read a key) belongs to the feature's handler, as for any
-other command.
+never under `uploads/tmp/`. The authorization check (who may upload to or read a key) belongs to the
+feature's handler, as for any other command.
 
 ## Where it runs
 
