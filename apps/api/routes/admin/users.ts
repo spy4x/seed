@@ -7,6 +7,7 @@ import {
   ADMIN_USERS_PAGE_SIZE,
   adminUserRoleSchema,
   type AdminUserRow,
+  type DataExportView,
   parseAdminUserFilter,
   USER_ROLE_NAMES,
 } from "@domain/identity"
@@ -19,6 +20,7 @@ import {
   createAdmin,
 } from "@api/services/admin.ts"
 import { readApiJson } from "@api/services/json-body.ts"
+import { listDataExports } from "@server/auth/data-export.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
 
@@ -30,6 +32,8 @@ export interface AdminUsersRouteDependencies {
   emit(event: UserSignedOutEvent): void
   /** The clock the export's file name reads. */
   now?: () => Date
+  /** The person's data exports (#229), newest first: what and when, never the file. */
+  dataExports(userId: number): Promise<DataExportView[]>
 }
 
 export const ADMIN_USER_NOT_FOUND = "User not found"
@@ -120,6 +124,8 @@ function serialIdOf(raw: string): number | null {
  * - `GET /users?q=&role=&blocked=&sort=&page=` lists people: `{ users, total, page, pageSize }`.
  *   `sort` is `key:direction` rules, such as `name:asc,createdAt:desc` (#424).
  * - `GET /users/:id` is one person: `{ user, methods, sessions, groups, audits }`.
+ * - `GET /users/:id/data-exports` is the person's data exports (#229): `{ exports }`, their
+ *   status, size and dates. The operator never gets the file: it holds the person's private notes.
  * - `GET /users/export.csv?q=&role=&blocked=&sort=` is every person the filter matches, on all its
  *   pages, as CSV, read in batches and streamed (#425). It writes an audit row on the operator, so
  *   it answers 403 unless `Sec-Fetch-Site` is `same-origin`: the session cookie is `SameSite=Lax`,
@@ -225,6 +231,11 @@ export function createAdminUsersRoutes(
       if (!detail) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
       return c.json(detail)
     })
+    .get(`/users/:id/data-exports`, dependencies.limit, async (c) => {
+      const id = serialIdOf(c.req.param("id"))
+      if (id === null) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      return c.json({ exports: await dependencies.dataExports(id) })
+    })
     .post(`/users/:id/sessions/:sessionId/end`, dependencies.limit, async (c) => {
       const sessionId = serialIdOf(c.req.param("sessionId"))
       if (sessionId === null) return c.json({ error: ADMIN_SESSION_NOT_FOUND }, 404)
@@ -245,11 +256,12 @@ export function createAdminUsersRoutes(
 /** The people module: the list, one person and the actions on them. */
 export const usersAdminModule: AdminApiModule = {
   id: `users`,
-  routes: ({ db, limit, resetByAddress, emit, now }) =>
+  routes: ({ db, sql, limit, resetByAddress, emit, now }) =>
     createAdminUsersRoutes({
       limit,
       emit,
       now,
+      dataExports: (userId) => listDataExports(sql, userId, now()),
       admin: createAdmin({ db, pageSize: ADMIN_USERS_PAGE_SIZE, resetByAddress, now }),
     }),
 }

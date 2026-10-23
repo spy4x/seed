@@ -1429,6 +1429,11 @@ Deno.test("a provider that was switched off does not count as a way in", async (
     await visitor.through("google", "ada")
     const user = await (await visitor.post("/auth/sign-up/confirm")).json()
     expect(target(await visitor.through("github", "ada"))).toBe("/")
+    // GitHub's key holds the address too, and a proven address is a way in through a sign-in link
+    // (seed#406). Taken off, only the switched-off provider is left to count.
+    const github = (await both.db.authStore.listKeys(user.id))
+      .find((key) => key.method === "oauth:github")!
+    expect(await both.db.authStore.releaseKeyEmail!(user.id, github.id)).toBe(true)
 
     // The same database, with GitHub's credentials removed from the configuration.
     const googleOnly = buildApp(sql, { ada: ADA }, ["google"])
@@ -1513,8 +1518,12 @@ Deno.test("a password key that holds no password does not count as a way in", as
     expect((await methodsOf(withGoogle)).methods.map((method) => [method.kind, method.canUnlink]))
       .toEqual([["password", false], ["google", true]])
 
-    // The key stays, without a password anybody could sign in with.
+    // The key stays, without a password anybody could sign in with. Its proven address goes too:
+    // a proven address is a way in through a sign-in link (seed#406), which is not this case.
     await sql`UPDATE auth_keys SET secret = NULL WHERE user_id = ${ownerId} AND method = 'password'`
+    const password = (await app.db.authStore.listKeys(ownerId))
+      .find((key) => key.method === "password")!
+    expect(await app.db.authStore.releaseKeyEmail!(ownerId, password.id)).toBe(true)
 
     const { methods } = await methodsOf(withGoogle)
     expect(methods.map((method) => [method.kind, method.canUnlink])).toEqual([["google", false]])

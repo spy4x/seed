@@ -66,3 +66,20 @@ test("a keyboard user skips the header: the first Tab shows the skip link and En
   await expect(page).toHaveURL(/#main$/)
   await expect(page.getByRole("main")).toBeFocused()
 })
+
+test("the home page's billing card offers its plan picture at every width, each under 30 KB", async ({ page }) => {
+  await page.goto("/")
+  const image = page.getByRole("article", { name: "Per-member billing" }).locator("picture")
+  const srcsets = await image.locator("source, img").evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("srcset")!)
+  )
+  const files = srcsets.flatMap((srcset) =>
+    srcset.split(",").map((part) => part.trim().split(" ")[0])
+  )
+  expect(files).toHaveLength(4)
+  for (const file of files) {
+    const response = await page.request.get(file)
+    expect(response.status(), file).toBe(200)
+    expect((await response.body()).byteLength, file).toBeLessThan(30 * 1024)
+  }
+})

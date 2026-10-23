@@ -8,6 +8,7 @@ import {
   FileRefusal,
   fileRule,
   type ObjectStore,
+  STAGING_PREFIX,
 } from "./files.ts"
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0x0d])
@@ -47,6 +48,14 @@ function fakeStore(objects = new Map<string, Stored>(), fail = false) {
       const [, key, start, end] = args
       return Promise.resolve(objects.get(key)?.bytes.slice(start, end + 1) ?? new Uint8Array())
     },
+    copy(...args) {
+      record(`copy`, args)
+      const [, from, to] = args
+      const object = objects.get(from)
+      if (!object) throw new StorageError(`request_failed`, `copy failed with HTTP 404`)
+      objects.set(to, { ...object, bytes: object.bytes.slice() })
+      return Promise.resolve()
+    },
     delete(...args) {
       record(`delete`, args)
       objects.delete(args[1])
@@ -71,25 +80,31 @@ Deno.test("a rule refuses a type whose bytes the store cannot check, and a limit
   expect(() => fileRule([`image/png`], 1.5)).toThrow(`limit`)
 })
 
-Deno.test("an upload is signed with the exact type and size, on the browser's client, for five minutes", async () => {
+Deno.test("an upload is signed to a new staging key with the exact type and size, on the browser's client, for five minutes", async () => {
   const internal = fakeStore()
   const browser = fakeStore()
   const files = createFileStore(internal.store, browser.store, `app-files`)
 
-  const signed = await files.signUpload(`a/b`, images, { contentType: `image/png`, size: 12 })
+  const signed = await files.signUpload(images, { contentType: `image/png`, size: 12 })
+  const again = await files.signUpload(images, { contentType: `image/png`, size: 12 })
+  if (!signed.success || !again.success) throw new Error(`refused`)
+  const { stagingKey } = signed.output
 
-  expect(signed).toEqual({
-    success: true,
-    output: { url: `https://app.example.test/put/a/b`, headers: { "content-type": `image/png` } },
+  expect(stagingKey).toMatch(/^uploads\/tmp\/[0-9a-f-]{36}$/)
+  expect(again.output.stagingKey).not.toBe(stagingKey)
+  expect(signed.output).toEqual({
+    url: `https://app.example.test/put/${stagingKey}`,
+    headers: { "content-type": `image/png` },
+    stagingKey,
   })
-  expect(browser.calls).toEqual([{
+  expect(browser.calls[0]).toEqual({
     method: `presignPut`,
-    args: [`app-files`, `a/b`, {
+    args: [`app-files`, stagingKey, {
       contentType: `image/png`,
       contentLength: 12,
       expiresIn: FILE_URL_SECONDS,
     }],
-  }])
+  })
   expect(internal.calls).toEqual([])
 })
 
@@ -98,7 +113,7 @@ Deno.test("an upload of another type is refused before anything is signed", asyn
   const files = createFileStore(fakeStore().store, browser.store, `app-files`)
 
   for (const contentType of [`text/html`, `application/pdf`, `IMAGE/PNG`]) {
-    expect(await files.signUpload(`k`, images, { contentType, size: 10 }))
+    expect(await files.signUpload(images, { contentType, size: 10 }))
       .toEqual({ success: false, error: FileRefusal.Type })
   }
   expect(browser.calls).toEqual([])
@@ -109,7 +124,7 @@ Deno.test("a hand-built rule that names a type the bytes cannot confirm signs no
   const files = createFileStore(fakeStore().store, browser.store, `app-files`)
   const loose = { types: [`text/html`], maxBytes: 1000 }
 
-  expect(await files.signUpload(`k`, loose, { contentType: `text/html`, size: 10 }))
+  expect(await files.signUpload(loose, { contentType: `text/html`, size: 10 }))
     .toEqual({ success: false, error: FileRefusal.Type })
   expect(browser.calls).toEqual([])
 })
@@ -119,35 +134,50 @@ Deno.test("an upload larger than the limit, empty, or of no whole size is refuse
   const files = createFileStore(fakeStore().store, browser.store, `app-files`)
 
   for (const size of [1001, 0, -1, 2.5, Number.NaN]) {
-    expect(await files.signUpload(`k`, images, { contentType: `image/png`, size }))
+    expect(await files.signUpload(images, { contentType: `image/png`, size }))
       .toEqual({ success: false, error: FileRefusal.Size })
   }
-  expect(await files.signUpload(`k`, images, { contentType: `image/png`, size: 1000 }))
+  expect(await files.signUpload(images, { contentType: `image/png`, size: 1000 }))
     .toMatchObject({ success: true })
   expect(browser.calls.length).toBe(1)
 })
 
-Deno.test("an upload is confirmed when its size, type and first bytes are what was signed", async () => {
-  const internal = fakeStore(new Map([[`k`, { bytes: PNG, contentType: `image/png` }]]))
+const STAGED = `${STAGING_PREFIX}0190a000-0000-7000-8000-000000000000`
+
+Deno.test("a confirmed upload is moved from its staging key to the feature's key, and the copy is checked", async () => {
+  const internal = fakeStore(new Map([[STAGED, { bytes: PNG, contentType: `image/png` }]]))
   const files = createFileStore(internal.store, fakeStore().store, `app-files`)
   const signed = { contentType: `image/png`, size: PNG.length }
 
-  expect(await files.confirmUpload(`k`, signed)).toEqual({ success: true, output: signed })
-  expect(internal.objects.has(`k`)).toBe(true)
+  expect(await files.confirmUpload(STAGED, `k`, signed)).toEqual({ success: true, output: signed })
+  expect([...internal.objects.keys()]).toEqual([`k`])
+  expect(internal.calls.find((call) => call.method === `copy`)?.args)
+    .toEqual([`app-files`, STAGED, `k`])
   expect(internal.calls.find((call) => call.method === `getRange`)?.args)
     .toEqual([`app-files`, `k`, 0, 511])
 })
 
-Deno.test("an HTML page uploaded as a PNG is refused and deleted", async () => {
-  const internal = fakeStore(new Map([[`k`, { bytes: HTML, contentType: `image/png` }]]))
+Deno.test("an HTML page uploaded as a PNG is refused, and neither copy is kept", async () => {
+  const internal = fakeStore(new Map([[STAGED, { bytes: HTML, contentType: `image/png` }]]))
   const files = createFileStore(internal.store, fakeStore().store, `app-files`)
 
-  expect(await files.confirmUpload(`k`, { contentType: `image/png`, size: HTML.length }))
+  expect(await files.confirmUpload(STAGED, `k`, { contentType: `image/png`, size: HTML.length }))
     .toEqual({ success: false, error: FileRefusal.Content })
-  expect(internal.objects.has(`k`)).toBe(false)
+  expect(internal.objects.size).toBe(0)
 })
 
-Deno.test("an upload of another size, another stored type or no stored type is refused and deleted", async () => {
+Deno.test("confirm refuses a staging key outside the staging prefix and a feature key inside it", async () => {
+  const internal = fakeStore(new Map([[`notes/a`, { bytes: PNG, contentType: `image/png` }]]))
+  const files = createFileStore(internal.store, fakeStore().store, `app-files`)
+  const signed = { contentType: `image/png`, size: PNG.length }
+
+  await expect(files.confirmUpload(`notes/a`, `notes/b`, signed)).rejects.toThrow(STAGING_PREFIX)
+  await expect(files.confirmUpload(STAGED, `${STAGING_PREFIX}x`, signed)).rejects
+    .toThrow(STAGING_PREFIX)
+  expect(internal.calls).toEqual([])
+})
+
+Deno.test("an upload of another size, another stored type or no stored type is refused, and neither copy is kept", async () => {
   for (
     const [stored, signed, error] of [
       [{ bytes: PNG, contentType: `image/png` }, { contentType: `image/png`, size: 99 }, 2],
@@ -155,11 +185,11 @@ Deno.test("an upload of another size, another stored type or no stored type is r
       [{ bytes: PNG }, { contentType: `image/png`, size: 12 }, 1],
     ] as const
   ) {
-    const internal = fakeStore(new Map([[`k`, stored]]))
+    const internal = fakeStore(new Map([[STAGED, stored]]))
     const files = createFileStore(internal.store, fakeStore().store, `app-files`)
 
-    expect(await files.confirmUpload(`k`, signed)).toEqual({ success: false, error })
-    expect(internal.objects.has(`k`)).toBe(false)
+    expect(await files.confirmUpload(STAGED, `k`, signed)).toEqual({ success: false, error })
+    expect(internal.objects.size).toBe(0)
   }
 })
 
@@ -167,7 +197,7 @@ Deno.test("confirming a key nothing was uploaded to reports it missing and delet
   const internal = fakeStore()
   const files = createFileStore(internal.store, fakeStore().store, `app-files`)
 
-  expect(await files.confirmUpload(`k`, { contentType: `image/png`, size: 12 }))
+  expect(await files.confirmUpload(STAGED, `k`, { contentType: `image/png`, size: 12 }))
     .toEqual({ success: false, error: FileRefusal.Missing })
   expect(internal.calls.map((call) => call.method)).toEqual([`head`])
 })

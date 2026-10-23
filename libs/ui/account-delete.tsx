@@ -16,6 +16,7 @@ import {
 } from "@domain/identity"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { GROUP_PATHS, type Navigate, profilePath, ScreenForm } from "./progressive.tsx"
+import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
 import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 import { SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFormat } from "@spy4x/preact-ui/format"
@@ -122,7 +123,24 @@ export function AccountDelete(
       <dl>
         <SettingRow
           label="Delete my account"
-          value={`Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
+          value={
+            <span class="flex flex-col gap-1">
+              <span>
+                {`Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
+              </span>
+              <span>
+                Want a copy first?{" "}
+                <Link
+                  href={`${profilePath("account")}#${DATA_EXPORT_ANCHOR}`}
+                  navigate={navigate}
+                  class="pc-link"
+                  data-e2e="account-delete-export-link"
+                >
+                  Download your data
+                </Link>.
+              </span>
+            </span>
+          }
           action={
             <Button
               type="button"

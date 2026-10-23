@@ -944,3 +944,19 @@ CREATE INDEX idx_blog_posts_topic_published
     ON blog_posts (topic, published_at DESC) WHERE status = 'published';
 -- The admin list, most recently changed first.
 CREATE INDEX idx_blog_posts_updated ON blog_posts (updated_at DESC, id DESC);
+
+-- #229: a person's data exports. See migration 2026_12_01_0001_data_exports.sql.
+CREATE TABLE data_exports (
+    id UUID PRIMARY KEY,
+    user_id INT4 NOT NULL REFERENCES auth_users(id) ON DELETE CASCADE,
+    requested_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    ready_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
+    expired_at TIMESTAMPTZ,
+    size_bytes INT8,
+    CONSTRAINT data_exports_ready_check
+        CHECK ((ready_at IS NULL) = (expires_at IS NULL) AND (ready_at IS NULL) = (size_bytes IS NULL)),
+    CONSTRAINT data_exports_size_check CHECK (size_bytes >= 0)
+);
+
+CREATE INDEX idx_data_exports_user_requested ON data_exports (user_id, requested_at DESC);

@@ -123,5 +123,30 @@ Deno.test("the note search against Postgres", async (t) => {
         expect(hit.snippet).toBe("(Draft) Budget for the roadmap items.")
       },
     )
+
+    await t.step(
+      "a snippet of a whole body that starts with a path has no ellipsis",
+      async () => {
+        const { groupId, owner } = await team(sql)
+        await write(groupId, owner, "Paths", "/usr/bin holds the tools of /opt/")
+
+        const [hit] = await notes.searchForMember(owner, "tools", NOTE_SEARCH_LIMIT)
+
+        expect(hit.snippet).toBe("/usr/bin holds the tools of /opt/")
+      },
+    )
+
+    await t.step(
+      "a note found by its title shows its short body whole, a path's punctuation included",
+      async () => {
+        const { groupId, owner } = await team(sql)
+        // With no match in the body, the snippet is the body's start with its punctuation kept.
+        await write(groupId, owner, "Paths", "/usr/bin holds the tools.")
+
+        const [hit] = await notes.searchForMember(owner, "paths", NOTE_SEARCH_LIMIT)
+
+        expect(hit.snippet).toBe("/usr/bin holds the tools.")
+      },
+    )
   })
 })

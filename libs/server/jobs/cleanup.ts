@@ -17,6 +17,8 @@ import { removeStaleSignInLinkRequests } from "./sign-in-link-mail.ts"
 import { removeStalePasswordResetRequests } from "./password-reset-mail.ts"
 import { removeStaleSubscriptionRequests } from "./subscriber-mail.ts"
 import { OUTBOX_RETENTION_DAYS } from "./jobs.ts"
+import type { ServerFiles } from "../files/files.ts"
+import { removeExpiredDataExports } from "./data-export.ts"
 
 /**
  * The parts of the nightly cleanup, in the order they run. Each removes only what is due, so one
@@ -26,6 +28,7 @@ export function cleanupSteps(
   sql: postgres.Sql,
   provider: BillingProvider | null,
   log: (line: string) => void,
+  files: ServerFiles | null = null,
 ): JobStep[] {
   return [
     ["remove old processed outbox rows", async () => {
@@ -101,6 +104,10 @@ export function cleanupSteps(
       if (accounts.failed > 0) {
         throw new Error(`${accounts.failed} account(s) due for deletion were not deleted`)
       }
+    }],
+    ["delete data export files past their days", async () => {
+      const removed = await removeExpiredDataExports(sql, files)
+      if (removed > 0) console.log(`Deleted ${removed} data export file(s) a lost job left`)
     }],
     ["queue seat syncs for drifted groups", async () => {
       if (!provider) return

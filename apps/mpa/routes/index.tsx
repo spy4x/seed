@@ -85,7 +85,7 @@ const WORKS_TODAY = [
   `Groups with members, roles, invitations and ownership transfer`,
   `Exporting a group to a file, and importing one as a new group`,
   `Per-member billing with trials, through Stripe`,
-  `The list of signed-in devices, and account deletion with a 7‑day undo`,
+  `The list of signed-in devices, a download of your own data, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
   `Realtime, the offline app and web push`,
   `The admin area`,
@@ -95,7 +95,6 @@ const WORKS_TODAY = [
 const NOT_BUILT = [
   `Translations: the app is English only`,
   `File uploads: the S3 file store is bundled, no screen uses it yet`,
-  `Downloading an account's data`,
 ] as const
 
 /** The questions, with each answer as plain text for the FAQ's structured data. */
@@ -240,23 +239,21 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
 }
 
 /**
- * The plan of the phone billing screenshot, from the empty canvas above its "Plan and billing"
- * heading to the canvas below the "Pro plan" card: at most 390 px wide, so the card shows it whole
- * at about its real size. It sits in the middle of the card's picture area on the same canvas colour.
+ * The plan alone, captured on a phone from the empty canvas above its "Plan and billing" heading to
+ * the canvas below the "Pro plan" card: at most 390 px wide, so the card shows it whole at about its
+ * real size. It sits in the middle of the card's picture area on the same canvas colour.
  */
 function BillingCrop(): JSX.Element {
   return (
     <div class="flex h-94 items-center overflow-hidden bg-canvas">
-      <div class="aspect-[390/208] w-full max-w-[390px] overflow-hidden">
-        {/* 144 to 352 px down the 390×844 screenshot, clear of the borders above and below. */}
-        <div class="-translate-y-[17.062%]">
-          <Shot
-            name="billing"
-            kind="mobile"
-            alt="A sample group's plan in the demo app, at the demo's example prices: Pro plan with its renewal date, €36.00 a month, for 4 members at €9.00 each, the owner included."
-            sizes="390px"
-          />
-        </div>
+      <div class="w-full max-w-[390px]">
+        <Shot
+          name="billing-plan"
+          kind="mobile"
+          height={416}
+          alt="A sample group's plan in the demo app, at the demo's example prices: Pro plan with its renewal date, €36.00 a month, for 4 members at €9.00 each, the owner included."
+          sizes="390px"
+        />
       </div>
     </div>
   )

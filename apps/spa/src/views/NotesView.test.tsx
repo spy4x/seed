@@ -108,7 +108,7 @@ afterEach(async () => {
 })
 
 describe("NotesView", () => {
-  it("shows the first-steps card at the top of the page, above the notes heading", async () => {
+  it("shows the first-steps card under the notes heading, which starts the page", async () => {
     const { hook } = memoryLocation({ path: "/notes" })
     root = window.document.createElement("div") as unknown as HTMLElement
     window.document.body.appendChild(root as never)
@@ -125,6 +125,7 @@ describe("NotesView", () => {
     const heading = root.querySelector("h1")
     expect(card).not.toBe(null)
     expect(heading).not.toBe(null)
-    expect(card!.compareDocumentPosition(heading!) & 4).toBe(4)
+    // The page header comes first (AGENTS.md, "One page header"); the card follows it.
+    expect(heading!.compareDocumentPosition(card!) & 4).toBe(4)
   })
 })

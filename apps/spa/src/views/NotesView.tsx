@@ -110,9 +110,9 @@ export function NotesView() {
           onResolved={() => void store.refresh().catch(() => {})}
         />
       )}
-      {/* The first steps sit above the list, where a new account lands after sign-in. */}
-      <OnboardingView />
       <NotesScreen
+        // The first steps sit under the page header, where a new account lands after sign-in.
+        intro={<OnboardingView />}
         group={membership
           ? { id: membership.id, name: membership.name, canWrite: canMutateNotes(membership.role) }
           : null}
