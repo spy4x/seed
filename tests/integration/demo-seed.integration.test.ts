@@ -23,6 +23,7 @@ import {
   VIDEO_PERSON_INDEX,
 } from "../../apps/worker/demo/fake-data.ts"
 import {
+  createAdmin,
   type DemoSeedOptions,
   seedDemo,
   SeedRefusedError,
@@ -520,7 +521,7 @@ Deno.test("an operator account left in the demo makes the worker seed it again",
     await seedDemo(new AppDbBase({ sql }), sql, { ...DEV_OPTIONS, dataSeed: 20261020 })
     expect(await isDemoSeeded(sql, DAY)).toBe(false)
 
-    await resetDemo(sql, { subscribers: SUBSCRIBERS }, DAY)
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
     expect(await isDemoSeeded(sql, DAY)).toBe(true)
     expect(await sql`SELECT 1 FROM auth_keys WHERE email = ${DEV_ADMIN_EMAIL}`).toHaveLength(0)
   })
@@ -529,7 +530,7 @@ Deno.test("an operator account left in the demo makes the worker seed it again",
 Deno.test("the reset wipes, seeds again and schedules the nightly cleanup", async () => {
   await withSchema(async (sql) => {
     expect(await isDemoSeeded(sql, DAY)).toBe(false)
-    await resetDemo(sql, { subscribers: SUBSCRIBERS }, DAY)
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
     const first = await count(sql)
     expect(await isDemoSeeded(sql, DAY)).toBe(true)
     // The next day's population is not there yet, so a start then seeds at once.
@@ -537,11 +538,71 @@ Deno.test("the reset wipes, seeds again and schedules the nightly cleanup", asyn
     expect(await sql`SELECT 1 FROM users WHERE role >= ${UserRole.OPERATOR}`).toHaveLength(0)
 
     await signUpVisitor(sql, "visitor@example.net")
-    await resetDemo(sql, { subscribers: SUBSCRIBERS }, DAY)
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
 
     expect(await count(sql)).toEqual(first)
     const cleanup = await sql`SELECT 1 FROM outbox_events WHERE event_kind = ${OUTBOX_CLEANUP_JOB}`
     expect(cleanup.length).toBe(1)
+  })
+})
+
+/** The owner's private administrator on the demo, as the worker reads it from the env. */
+const DEMO_ADMIN = { pepper: PEPPER, password: PASSWORD }
+
+Deno.test("the reset seeds the private administrator, who signs in with the API's pepper", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: DEMO_ADMIN }, DAY)
+
+    expect(await canSignIn(sql, DEV_ADMIN_EMAIL, PASSWORD)).toBe(true)
+    const account = await accountOf(sql, DEV_ADMIN_EMAIL)
+    expect(account.role).toBe(UserRole.ADMIN)
+    expect(account.provenAt).not.toBeNull()
+    // The only operator, so the worker keeps the demo; without the setting it is a leaked one.
+    expect(await sql`SELECT 1 FROM users WHERE role >= ${UserRole.OPERATOR}`).toHaveLength(1)
+    expect(await isDemoSeeded(sql, DAY, true)).toBe(true)
+    expect(await isDemoSeeded(sql, DAY, false)).toBe(false)
+    // No operator history or fake backup: the admin panel shows the demo as it is.
+    expect(
+      await sql`SELECT 1 FROM auth_audits WHERE event_type = ${AuthAuditEventType.USER_BLOCKED}`,
+    ).toHaveLength(0)
+    expect(await readLastBackup(sql)).toBeNull()
+
+    // The next reset wipes it and makes it again, with the same password.
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: DEMO_ADMIN }, DAY)
+    expect(await canSignIn(sql, DEV_ADMIN_EMAIL, PASSWORD)).toBe(true)
+  })
+})
+
+Deno.test("with the private administrator, any other operator still makes the worker seed again", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: DEMO_ADMIN }, DAY)
+    await signUpVisitor(sql, "visitor@example.net")
+    await new AppDbBase({ sql }).admin.setRoleByAddress(
+      "visitor@example.net",
+      UserRole.OPERATOR,
+      "test",
+    )
+
+    expect(await isDemoSeeded(sql, DAY, true)).toBe(false)
+  })
+})
+
+Deno.test("a demo without the private administrator is seeded again once it is configured", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
+
+    expect(await isDemoSeeded(sql, DAY, false)).toBe(true)
+    expect(await isDemoSeeded(sql, DAY, true)).toBe(false)
+  })
+})
+
+Deno.test("the private administrator is never made from an account a visitor holds", async () => {
+  await withSchema(async (sql) => {
+    await signUpVisitor(sql, DEV_ADMIN_EMAIL)
+    const db = new AppDbBase({ sql })
+
+    await expect(createAdmin(db, sql, PEPPER, `${PASSWORD}x`)).rejects.toThrow(SeedRefusedError)
+    expect((await accountOf(sql, DEV_ADMIN_EMAIL)).role).toBe(UserRole.VIEWER)
   })
 })
 
@@ -713,7 +774,7 @@ Deno.test("the development seed adds the operator's refund, blocks and a recent 
     const refund = record!.history.find((entry) =>
       entry.event === BILLING_AUDIT_EVENTS.paymentRefunded
     )
-    expect(refund?.operator).toBe("Maya Chen")
+    expect(refund?.operator).toBe("Emma Walsh")
     expect(refund?.amount?.amount).toBeGreaterThan(0)
     const blocks = await sql`
       SELECT 1 FROM auth_audits WHERE event_type = ${AuthAuditEventType.USER_BLOCKED}

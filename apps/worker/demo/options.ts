@@ -39,3 +39,33 @@ export function readSeedOptions(env: Record<string, string | undefined>): SeedOp
   }
   return { pepper, password }
 }
+
+/** The public demo's private administrator: its password and the API's pepper. */
+export interface DemoAdmin {
+  pepper: string
+  password: string
+}
+
+/**
+ * Reads the public demo's private administrator (docs/demo.md): `DEMO_ADMIN_PASSWORD`, with the
+ * API's `AUTH_PEPPER` to hash it so the API accepts it. `null` when the demo is off or the password
+ * is unset, so no administrator is seeded. The worker reads it at start, so a bad value stops it
+ * there instead of seeding nobody in silence.
+ *
+ * @throws {SeedConfigError} When the password is set but breaks sign-up's rule, or the pepper is
+ * missing or short.
+ */
+export function readDemoAdmin(env: Record<string, string | undefined>): DemoAdmin | null {
+  const password = env.DEMO_ADMIN_PASSWORD ?? ``
+  if (!isDemoMode(env) || password === ``) return null
+  if (!authPasswordSchema.allows({ password })) {
+    throw new SeedConfigError(`DEMO_ADMIN_PASSWORD must be 8 to 50 characters`)
+  }
+  const pepper = env.AUTH_PEPPER ?? ``
+  if (pepper.length < 32) {
+    throw new SeedConfigError(
+      `AUTH_PEPPER must be set to the API's value (32 characters or more) for DEMO_ADMIN_PASSWORD`,
+    )
+  }
+  return { pepper, password }
+}

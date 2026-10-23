@@ -135,6 +135,11 @@ export function readNext(source: { get(name: string): unknown }): string | null 
   return typeof value === "string" && value !== "" ? checkedNext(value) : null
 }
 
+/** Whether `path` (a checked `next`) is an invitation's page, `/invite/<token>`. */
+export function isInvitationPath(path: string | null): boolean {
+  return path?.startsWith(`/invite/`) ?? false
+}
+
 /** `path` with `next` as its query, or `path` alone without one. */
 export function withNext(path: string, next: string | null): string {
   return next ? `${path}?${new URLSearchParams({ [NEXT_PARAM]: next })}` : path

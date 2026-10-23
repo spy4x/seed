@@ -150,6 +150,24 @@ describe("AuthScreen in the browser", () => {
     expect(code.calls).toEqual([["012345"]])
   })
 
+  it("names the invitation on sign-up and sign-in, and keeps it in the link to the other", async () => {
+    const next = "/invite/AbC_9"
+    await mount(<AuthScreen {...authDefaults} screen="sign-up" next={next} guest />)
+    expect(find("h1").textContent).toBe("You're invited to a group")
+    expect(find("a[href^='/sign-in']").getAttribute("href")).toBe("/sign-in?next=%2Finvite%2FAbC_9")
+    // Joining needs an account: no guest "Try it now" competes with the form.
+    expect(root!.querySelector("[data-e2e=try-it-now]")).toBeNull()
+
+    await rerender(<AuthScreen {...authDefaults} screen="sign-in" next={next} guest />)
+    expect(find("h1").textContent).toBe("You're invited to a group")
+    expect(find("h1 + p").textContent).toBe("Sign in to see the invitation and join.")
+    expect(root!.querySelector("[data-e2e=no-account-yet]")).toBeNull()
+    expect(find("a[href^='/sign-up']").getAttribute("href")).toBe("/sign-up?next=%2Finvite%2FAbC_9")
+
+    await rerender(<AuthScreen {...authDefaults} screen="sign-in" next="/notes" />)
+    expect(find("h1").textContent).toBe("Welcome back")
+  })
+
   it("shows no demo line while the demo is off", async () => {
     await mount(<AuthScreen {...authDefaults} />)
     expect(root!.querySelector("[data-e2e=demo-notice]")).toBeNull()

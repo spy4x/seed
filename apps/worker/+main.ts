@@ -18,6 +18,7 @@ import { isDemoMode } from "@server/auth/demo-accounts.ts"
 import { AppDbBase } from "../api/services/db-base.ts"
 import { demoDataSeed, startDemoReset } from "./demo/reset.ts"
 import { isDemoSeeded, resetDemo } from "./demo/run.ts"
+import { type DemoAdmin, readDemoAdmin } from "./demo/options.ts"
 import { seedWorkspace } from "./demo/seed.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
 import { readServerFilesSetup } from "@server/files/settings.ts"
@@ -83,6 +84,16 @@ const telegram = telegramSetup
 
 // The public demo (docs/demo.md) gives every new account its own sample groups.
 const demo = isDemoMode(Deno.env.toObject())
+// The owner's private administrator on the demo, when `DEMO_ADMIN_PASSWORD` is set. A bad value
+// stops the worker here.
+let demoAdmin: DemoAdmin | null = null
+try {
+  demoAdmin = readDemoAdmin(Deno.env.toObject())
+} catch (error) {
+  // A SeedConfigError: it names the variable, never its value.
+  console.error(`❌ ${(error as Error).message}`)
+  Deno.exit(1)
+}
 
 // A committed group change is announced on a Postgres channel; the API process, which holds the
 // sockets, turns it into a hint for the group's members. The same table holds jobs: a row that
@@ -142,9 +153,9 @@ function reportSweepFailure(error: unknown): void {
 if (demo) {
   startDemoReset({
     signal,
-    isSeeded: () => isDemoSeeded(sql),
+    isSeeded: () => isDemoSeeded(sql, new Date(), demoAdmin !== null),
     reset: async () => {
-      await resetDemo(sql, { subscribers: subscribersSetup })
+      await resetDemo(sql, { subscribers: subscribersSetup, admin: demoAdmin })
       console.log("Demo wiped and seeded again")
     },
     now: () => new Date(),

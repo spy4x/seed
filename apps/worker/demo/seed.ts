@@ -189,11 +189,30 @@ async function ensureAdmin(
   password: string,
 ): Promise<{ id: number; created: boolean }> {
   const key = await db.authStore.findKey(PASSWORD_METHOD, DEV_ADMIN_EMAIL)
-  const id = key ? key.userId : await signUp(db, pepper, DEV_ADMIN_EMAIL, password)
-  if (!key) await setName(sql, id, `Maya`, `Chen`)
+  if (!key) return { id: await createAdmin(db, sql, pepper, password), created: true }
   await prove(db, DEV_ADMIN_EMAIL)
   await db.admin.setRoleByAddress(DEV_ADMIN_EMAIL, UserRole.ADMIN, SEED_ACTOR)
-  return { id, created: !key }
+  return { id: key.userId, created: false }
+}
+
+/**
+ * Signs {@link DEV_ADMIN_EMAIL} up, names, proves and makes it an admin. Answers its user id. The
+ * public demo's reset calls it right after the wipe: an account that holds the address already was
+ * made by a visitor in between, so it is refused, never promoted.
+ *
+ * @throws {SeedRefusedError} When the address has an account already.
+ */
+export async function createAdmin(
+  db: AppDbBase,
+  sql: postgres.Sql,
+  pepper: string,
+  password: string,
+): Promise<number> {
+  const id = await signUp(db, pepper, DEV_ADMIN_EMAIL, password)
+  await setName(sql, id, `Emma`, `Walsh`)
+  await prove(db, DEV_ADMIN_EMAIL)
+  await db.admin.setRoleByAddress(DEV_ADMIN_EMAIL, UserRole.ADMIN, SEED_ACTOR)
+  return id
 }
 
 /**
