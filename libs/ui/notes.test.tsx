@@ -685,22 +685,30 @@ describe("NotesScreen filter bar", () => {
     expect(count(`[data-e2e=note-${mine.id}]`)).toBe(1)
   })
 
-  it("offers the three orders and reports the one the person picks", async () => {
+  it("offers the three orders and both directions, and reports what the person picks", async () => {
     const change = spy<[NoteFilters]>()
     await mount(<NotesScreen {...filtered} onFiltersChange={change.fn} />)
     const sort = [...find("[data-e2e=notes-filter-bar]").querySelectorAll("button")]
       .find((button) => button.textContent?.includes("Last updated"))
     if (!sort) throw new Error("no sort button reads Last updated")
+    expect(sort.textContent).toContain("Newest first")
     await clickOn(sort)
 
     const items = [...sort.parentElement!.querySelectorAll("[role=menuitemradio]")]
     expect(items.map((item) => item.textContent)).toEqual([
       "Last updated",
       "Date created",
-      "Title (A–Z)",
+      "Title",
+      "Oldest first",
+      "Newest first",
     ])
+    await clickOn(items[3])
+    expect(last(change)).toMatchObject({ direction: "asc" })
+    // A new order starts in its own direction: Title from A to Z.
     await clickOn(items[2])
-    expect(last(change)?.sort).toBe("title")
+    expect(last(change)).toMatchObject({ sort: "title", direction: "asc" })
+    await clickOn(items[1])
+    expect(last(change)).toMatchObject({ sort: "created", direction: "desc" })
   })
 
   it("names the search when nothing matches it, and clears only the search", async () => {

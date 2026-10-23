@@ -16,6 +16,7 @@ import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import {
   ADMIN_DEFAULT_SORT,
+  ADMIN_PICTURE_PATH,
   ADMIN_SEARCH_MAX_LENGTH,
   type AdminAccountFilter,
   type AdminBlockedFilter,
@@ -23,6 +24,7 @@ import {
   type AdminUserListResponse,
   type AdminUserRow,
   type AdminUserSortKey,
+  pictureUrl,
   USER_ROLE_NAMES,
   UserRole,
 } from "@domain/identity"
@@ -384,7 +386,11 @@ function PersonCell(
     // At least 12rem wide: on a phone the table scrolls sideways instead of squeezing the name
     // into a column a few letters wide.
     <div class="flex min-w-48 items-center gap-3">
-      <Avatar name={adminUserName(user)} size="sm" />
+      <Avatar
+        name={adminUserName(user)}
+        src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
+        size="sm"
+      />
       <div class="flex min-w-0 flex-col">
         <span class="flex flex-wrap items-center gap-2">
           <Link

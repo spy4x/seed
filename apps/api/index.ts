@@ -26,6 +26,7 @@ import { createNotesRoute } from "./routes/notes.ts"
 import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
 import { createDataExportRoute } from "./routes/data-export.ts"
+import { createPictureRoute } from "./routes/pictures.ts"
 import {
   latestDataExport,
   readyDataExportFile,
@@ -239,6 +240,15 @@ app.route(
     signDownload: files.signDownload,
   }),
 )
+app.route(
+  "/pictures",
+  createPictureRoute({
+    auth: signIn.auth,
+    limit: rateLimits.normal,
+    readable: (pictureId, viewerId) => db.pictures.readable(pictureId, viewerId),
+    signDownload: files.signDownload,
+  }),
+)
 // The mail subscriptions' keys, read once for the public routes and the operator area.
 const subscribersSetup = readSubscribersSetup(Deno.env, config.isDev ? "dev" : "prod")
 const subscribersWarning = subscribersOffWarning(subscribersSetup)
@@ -261,6 +271,7 @@ app.route(
       cursorSecret: config.authCookieSecret,
       cacheConnected: isCacheConnected,
       fileStoreReachable: files.isReachable,
+      readFile: files.read,
       build: config.build,
       billing: billingSetup,
     }).concat(

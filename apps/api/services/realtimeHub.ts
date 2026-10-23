@@ -9,6 +9,7 @@ import { createProfileOperations } from "../features/profile/operations.ts"
 import { createPushOperations } from "../features/push/operations.ts"
 import { createTagOperations } from "../features/tags/operations.ts"
 import { createAttachmentOperations } from "../features/notes/attachments.ts"
+import { createPictureOperations } from "../features/profile/picture.ts"
 import { createNoteOperations } from "../features/notes/operations.ts"
 import { createNoteWidgetOperations } from "../features/notes/widgets.ts"
 import { signIn } from "./auth.ts"
@@ -98,6 +99,12 @@ export const operations: Operations<Actor> = {
     remove: (command) => commandBus.execute(command),
     list: (query) => queryBus.execute(query),
     download: (query) => queryBus.execute(query),
+  }),
+  ...createPictureOperations({
+    sign: (command) => commandBus.execute(command),
+    confirm: (command) => commandBus.execute(command),
+    cancel: (command) => commandBus.execute(command),
+    remove: (command) => commandBus.execute(command),
   }),
   ...createTagOperations({
     create: (command) => commandBus.execute(command),

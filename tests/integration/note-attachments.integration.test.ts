@@ -111,7 +111,7 @@ function signing(
     /** Moves every upload of `userId` `minutes` into the past. */
     age: (userId: number, minutes: number) =>
       sql`
-        UPDATE note_attachment_uploads
+        UPDATE file_uploads
         SET created_at = created_at - make_interval(mins => ${minutes})
         WHERE user_id = ${userId}
       `,
@@ -353,7 +353,7 @@ Deno.test("note attachments against Postgres", async (t) => {
         await attachments.createUpload(old, ATTACHMENT_UPLOAD_BUDGET)
         await attachments.createUpload(fresh, ATTACHMENT_UPLOAD_BUDGET)
         await sql`
-          UPDATE note_attachment_uploads SET created_at = now() - interval '25 hours'
+          UPDATE file_uploads SET created_at = now() - interval '25 hours'
           WHERE id = ${old.id}
         `
         const added = await add(upload(editor))

@@ -18,6 +18,7 @@ import {
   TAG_PATHS,
 } from "./progressive.tsx"
 import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
+import { PICTURE_BUTTON_ID } from "./profile-picture.tsx"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -317,6 +318,13 @@ function actionOptions(
       `${profilePath("account")}#${DATA_EXPORT_ANCHOR}`,
       "A ZIP of your profile, groups and notes",
       [`export my data`, `GDPR`, `archive`, `takeout`, `скачать данные`, `экспорт данных`],
+    ),
+    page(
+      "change-picture",
+      "Change profile picture",
+      `${profilePath("account")}#${PICTURE_BUTTON_ID}`,
+      "JPEG, PNG or WebP, up to 1 MB",
+      [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],
     ),
   ]
 }

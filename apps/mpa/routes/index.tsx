@@ -86,7 +86,7 @@ const WORKS_TODAY = [
   `Exporting a group to a file, and importing one as a new group`,
   `Images and PDFs attached to notes, within each plan's room`,
   `Per-member billing with trials, through Stripe`,
-  `The list of signed-in devices, a download of your own data, and account deletion with a 7‑day undo`,
+  `A profile picture, the list of signed-in devices, a download of your own data, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
   `Realtime, the offline app and web push`,
   `A Telegram bot: notifications in a chat, and your own commands in one file`,

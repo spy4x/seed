@@ -22,10 +22,12 @@ import { Tabs } from "@spy4x/preact-ui/tabs"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import type { BillingAuditEvent } from "@domain/billing"
 import {
+  ADMIN_PICTURE_PATH,
   adminGrantableRoles,
   type AdminUserDetail,
   AuthAuditEventType,
   canChangeRoles,
+  pictureUrl,
   SIGN_IN_LINK_METHOD,
   TELEGRAM_METHOD,
   type UserRole,
@@ -47,6 +49,7 @@ export type AdminAction =
   | "password-reset"
   | "delete-guest"
   | "unlink-telegram"
+  | "remove-picture"
 
 /** What an action needs besides its name: the session to end, or the role to give. */
 export interface AdminActionInput {
@@ -99,6 +102,7 @@ const AUDIT_TONES: Record<AuthAuditEventType, TimelineTone> = {
   [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "warning",
   [AuthAuditEventType.TELEGRAM_LINKED]: "neutral",
   [AuthAuditEventType.TELEGRAM_UNLINKED]: "warning",
+  [AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR]: "warning",
 }
 
 /** An audit event's tone on the Activity timeline; an event this page does not know is neutral. */
@@ -138,6 +142,7 @@ export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
   [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "Deleted a guest account",
   [AuthAuditEventType.TELEGRAM_LINKED]: "Telegram account linked",
   [AuthAuditEventType.TELEGRAM_UNLINKED]: "Telegram account unlinked",
+  [AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR]: "Profile picture removed by an operator",
 }
 
 /**
@@ -200,6 +205,12 @@ const ACTIONS: Record<
       "Their Telegram chat stops getting their notifications and can no longer act for them. They can link it again from their profile.",
     submit: "Unlink Telegram",
     busy: "Unlinking…",
+  },
+  "remove-picture": {
+    title: () => "Remove their profile picture?",
+    text: "Their initials show instead, everywhere. They can upload a new one.",
+    submit: "Remove picture",
+    busy: "Removing…",
   },
 }
 
@@ -335,6 +346,14 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
           Unlink Telegram
         </DropdownItem>
       )}
+      {user.pictureId && (
+        <DropdownItem
+          dataE2E="admin-remove-picture-open"
+          onClick={() => props.onOpenDialog("remove-picture")}
+        >
+          Remove profile picture
+        </DropdownItem>
+      )}
       {user.guestSince && (
         <DropdownItem
           dataE2E="admin-delete-guest-open"
@@ -388,7 +407,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
       <PageHeader
         title={name}
         subtitle={adminUserSubtitle(user) ?? undefined}
-        mark={<Avatar name={name} size="md" />}
+        mark={<Avatar name={name} src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)} size="md" />}
         back={back}
         navigate={navigate}
         menu={menu || undefined}
@@ -509,6 +528,20 @@ function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.
     <Stack>
       <SettingGroup title="Account">
         <SettingList>
+          <SettingRow
+            label="Profile picture"
+            dataE2E="admin-user-picture"
+            value={user.pictureId
+              ? (
+                <Avatar
+                  name={adminUserName(user)}
+                  src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
+                  size="lg"
+                  alt=""
+                />
+              )
+              : "None"}
+          />
           <SettingRow label="Address" value={user.email ?? "None"} />
           <SettingRow label="Role" value={roleLabel(user.role)} />
           <SettingRow label="Status" value={user.blockedAt ? "Blocked" : "Active"} />

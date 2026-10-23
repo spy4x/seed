@@ -475,6 +475,13 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog, queue
     await drainJobs(sql)
     const keys = await sql<{ objectKey: string }[]>`SELECT object_key FROM note_attachments`
     expect(keys.length).toBeGreaterThan(0)
+    // A profile picture's object is queued too (#228); the seed gives nobody one.
+    const picture = uuidV7()
+    await sql`
+      UPDATE users SET picture_id = ${picture}, picture_type = 'image/webp'
+      WHERE id = (SELECT min(id) FROM users)
+    `
+    keys.push({ objectKey: `pictures/${picture}` })
 
     const wiped = await wipeDatabase(sql)
     const queued = await sql<{ objectKey: string }[]>`SELECT object_key FROM file_deletions`

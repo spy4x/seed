@@ -1,0 +1,146 @@
+import { signal } from "@preact/signals"
+import { RealtimeRequestError } from "@spy4x/realtime"
+import { formatBytes } from "@spy4x/platform/universal/format-number"
+import type { FileRejection } from "@spy4x/preact-ui/file-input"
+import { PICTURE_MAX_BYTES, type SignedPictureUpload, type User } from "@domain/identity"
+import { callCommand } from "../modules.ts"
+import { putWithProgress } from "./attachments.ts"
+import { sessionState } from "./session.ts"
+
+/** What the picture store needs from the outside. Injected so tests need no socket or store. */
+export interface PictureDependencies {
+  sign(input: { contentType: string; size: number }): Promise<SignedPictureUpload>
+  /** PUTs the file to the signed URL; rejects on failure. */
+  put(upload: SignedPictureUpload, file: File): Promise<void>
+  confirm(input: { id: string }): Promise<{ user: User }>
+  cancel(input: { id: string }): Promise<{ id: string }>
+  remove(): Promise<{ user: User }>
+  /** Whether the browser believes it is online. */
+  online(): boolean
+  /** A local URL that shows `file` before it is uploaded, and its release. */
+  preview(file: File): string
+  release(url: string): void
+  /** The person the server answered; the session takes it, so every avatar follows at once. */
+  setUser(user: User): void
+}
+
+const NETWORK = `Could not upload your picture. Check your connection and try again.`
+const OFFLINE = `You are offline. Upload your picture once you are back online.`
+const REMOVE_FAILED = `Could not remove your picture. Check your connection and try again.`
+
+function typeError(name: string): string {
+  return `${name} is not a JPEG, PNG or WebP image. Choose one of those.`
+}
+
+function sizeError(name: string, size: number): string {
+  return `${name} is ${formatBytes(size)}. Choose an image of ${
+    formatBytes(PICTURE_MAX_BYTES)
+  } or less.`
+}
+
+/** The server's refusal of `file`, in the row's words. */
+function refusalOf(error: unknown, file: File): string {
+  const code = error instanceof RealtimeRequestError
+    ? (error.details as { code?: unknown } | undefined)?.code
+    : undefined
+  switch (code) {
+    case `FILE_TYPE`:
+      return typeError(file.name)
+    case `FILE_TOO_LARGE`:
+      return sizeError(file.name, file.size)
+    case `FILE_CONTENT`:
+      return `${file.name} is not really an image, so it was not used. Choose another file.`
+    case `UPLOADS_PENDING`:
+      return `Finish the uploads already started first, then try again.`
+    case `UPLOAD_BUDGET`:
+      return `You have uploaded as much as an hour allows. Try again later.`
+  }
+  return NETWORK
+}
+
+/**
+ * The Account section's profile picture (#228). A chosen image shows in the row at once, is signed,
+ * PUT straight to the store and confirmed; the answer is the person, which the session takes. A
+ * refusal brings the previous picture back. A signed upload that is not confirmed is cancelled on
+ * the server, so it stops counting as waiting.
+ */
+export function createPictureStore(dependencies: PictureDependencies) {
+  const status = signal<`idle` | `uploading` | `removing`>(`idle`)
+  const error = signal<string | null>(null)
+  const announcement = signal(``)
+  /** The chosen image while it uploads; `null` otherwise. */
+  const preview = signal<string | null>(null)
+
+  function refuse(message: string): void {
+    announcement.value = ``
+    error.value = message
+  }
+
+  async function choose(file: File): Promise<void> {
+    if (status.value !== `idle`) return
+    if (!dependencies.online()) return refuse(OFFLINE)
+    error.value = null
+    announcement.value = ``
+    status.value = `uploading`
+    const shown = dependencies.preview(file)
+    preview.value = shown
+    let signed: SignedPictureUpload | null = null
+    try {
+      signed = await dependencies.sign({ contentType: file.type, size: file.size })
+      await dependencies.put(signed, file)
+      const { user } = await dependencies.confirm({ id: signed.id })
+      signed = null
+      dependencies.setUser(user)
+      announcement.value = `Profile picture saved.`
+    } catch (cause) {
+      refuse(refusalOf(cause, file))
+    } finally {
+      // Its failure only leaves the upload waiting until it expires.
+      if (signed) await dependencies.cancel({ id: signed.id }).catch(() => {})
+      preview.value = null
+      dependencies.release(shown)
+      status.value = `idle`
+    }
+  }
+
+  /** The browser refused the file before anything was sent. */
+  function reject(rejection: FileRejection): void {
+    const { file } = rejection
+    refuse(
+      rejection.reason === `too-large` ? sizeError(file.name, file.size) : typeError(file.name),
+    )
+  }
+
+  async function remove(): Promise<void> {
+    if (status.value !== `idle`) return
+    error.value = null
+    announcement.value = ``
+    status.value = `removing`
+    try {
+      const { user } = await dependencies.remove()
+      dependencies.setUser(user)
+      announcement.value = `Profile picture removed.`
+    } catch {
+      refuse(REMOVE_FAILED)
+    } finally {
+      status.value = `idle`
+    }
+  }
+
+  return { status, error, announcement, preview, choose, reject, remove }
+}
+
+export type PictureStore = ReturnType<typeof createPictureStore>
+
+/** The picture operations over the app's calls port, and the browser's PUT. */
+export const pictureCalls: PictureDependencies = {
+  sign: (input) => callCommand(`picture.sign`, input),
+  put: (upload, file) => putWithProgress(upload, file, () => {}, new AbortController().signal),
+  confirm: (input) => callCommand(`picture.confirm`, input),
+  cancel: (input) => callCommand(`picture.cancel`, input),
+  remove: () => callCommand(`picture.remove`, undefined),
+  online: () => navigator.onLine,
+  preview: (file) => URL.createObjectURL(file),
+  release: (url) => URL.revokeObjectURL(url),
+  setUser: (user) => sessionState.value = { ...sessionState.value, user },
+}

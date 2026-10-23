@@ -274,6 +274,7 @@ interface MemberRowRaw {
   memberId: number
   memberName: string
   memberEmail: string | null
+  pictureId: string | null
   role: GroupRole
   userRole: UserRole
   blocked: boolean
@@ -392,7 +393,8 @@ export async function readAdminGroup(
   const members = await sql<MemberRowRaw[]>`
     SELECT
       ${personColumns(sql, `u`, `member`)},
-      m.role, u.role AS user_role, (u.blocked_at IS NOT NULL) AS blocked, m.created_at AS joined_at
+      u.picture_id, m.role, u.role AS user_role, (u.blocked_at IS NOT NULL) AS blocked,
+      m.created_at AS joined_at
     FROM group_members m
     JOIN users u ON u.id = m.user_id
     WHERE m.group_id = ${groupId}
@@ -462,6 +464,7 @@ export async function readAdminGroup(
       : null,
     members: members.map((row): AdminGroupMember => ({
       ...toPerson(row.memberId, row.memberName, row.memberEmail),
+      pictureId: row.pictureId,
       role: row.role,
       userRole: row.userRole,
       blocked: row.blocked,
