@@ -793,7 +793,7 @@ function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null 
       {post.status === `published` && post.publishedAt && (
         <p>
           Published {format.date(post.publishedAt)}
-          {post.contentUpdatedAt && <>· Updated {format.date(post.contentUpdatedAt)}</>}.
+          {post.contentUpdatedAt && <>{` · `}Updated {format.date(post.contentUpdatedAt)}</>}.
         </p>
       )}
       {post.newsletterSentAt !== null

@@ -315,6 +315,19 @@ describe("the blog editor", () => {
     expect(preview.textContent).toContain("In short")
   })
 
+  it("says when a published post went live and was last updated, with a space before the middle dot", async () => {
+    const post = {
+      ...saved,
+      status: "published" as const,
+      publishedAt: "2026-10-01T10:00:00.000Z",
+      contentUpdatedAt: "2026-10-20T10:00:00.000Z",
+    }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { post })} />)
+    expect(find("[data-e2e=admin-blog-publishing]").textContent).toMatch(
+      /^Published [^·]*\S · Updated [^·]+\./,
+    )
+  })
+
   it("publishes a draft now without email until the box is ticked", async () => {
     const calls: unknown[][] = []
     await mount(<AdminBlogEditorScreen {...editorProps(calls, { dialog: "publish" })} />)
