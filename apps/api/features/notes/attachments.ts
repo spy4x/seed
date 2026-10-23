@@ -10,6 +10,8 @@ import {
   type Attachment,
   ATTACHMENT_PENDING_MAX,
   ATTACHMENT_TYPES,
+  AttachmentCancelCommand,
+  attachmentCancelPayloadSchema,
   AttachmentConfirmCommand,
   attachmentConfirmPayloadSchema,
   attachmentDownloadPayloadSchema,
@@ -24,6 +26,7 @@ import {
   type AttachmentRepository,
   AttachmentSignCommand,
   attachmentSignPayloadSchema,
+  type AttachmentUploadBudget,
   type GroupRoleLookup,
   NoteError,
   parseAttachmentRequest,
@@ -42,6 +45,8 @@ export interface AttachmentHandlerDependencies {
   groups: GroupRoleLookup
   files: FileStore
   plans: AttachmentPlans
+  /** What one person may sign per hour, whatever the plan. */
+  budget: AttachmentUploadBudget
 }
 
 /** The file store's refusal, as the attachment's error. */
@@ -71,7 +76,7 @@ function refusalError(refusal: FileRefusal, rules: AttachmentRules): AttachmentE
  * all again, on the stored bytes and under the group's lock.
  */
 export function createAttachmentSignHandler(
-  { attachments, groups, files, plans }: AttachmentHandlerDependencies,
+  { attachments, groups, files, plans, budget }: AttachmentHandlerDependencies,
 ): CommandHandler<AttachmentSignCommand> {
   return async ({ data }): Promise<SignedAttachmentUpload> => {
     const role = await groups.roleOf(data.groupId, data.actor.userId)
@@ -91,6 +96,15 @@ export function createAttachmentSignHandler(
     if (await attachments.countPending(data.actor.userId) >= ATTACHMENT_PENDING_MAX) {
       throw new AttachmentError("UPLOADS_PENDING", "Finish the uploads already started first")
     }
+    // The plan caps what a group keeps; this caps how fast one person writes to the store, with
+    // billing on or off, so nobody fills the server's disk with uploads (the public demo included).
+    const signed = await attachments.signedInLastHour(data.actor.userId)
+    if (signed.files >= budget.files || signed.bytes + data.size > budget.bytes) {
+      throw new AttachmentError(
+        "UPLOAD_BUDGET",
+        "You have uploaded as much as an hour allows. Try again later",
+      )
+    }
     const usage = await attachments.usage(data.groupId)
     const room = { maxFiles: limits.maxAttachments, maxBytes: limits.storageBytes }
     // Refused here with the same answer the confirm would give, so no upload is spent on it.
@@ -100,19 +114,19 @@ export function createAttachmentSignHandler(
     if (room.maxBytes !== null && usage.bytes + data.size > room.maxBytes) {
       throw planRefusal(role as GroupRole, "storageBytes", room.maxBytes)
     }
-    const signed = await files.signUpload(rule, { contentType: data.contentType, size: data.size })
-    if (!signed.success) throw refusalError(signed.error, rules)
+    const upload = await files.signUpload(rule, { contentType: data.contentType, size: data.size })
+    if (!upload.success) throw refusalError(upload.error, rules)
     const id = uuidV7()
     await attachments.createUpload({
       id,
       noteId: data.noteId,
       userId: data.actor.userId,
-      stagingKey: signed.output.stagingKey,
+      stagingKey: upload.output.stagingKey,
       name: data.name,
       contentType: data.contentType,
       size: data.size,
     })
-    return { id, url: signed.output.url, headers: signed.output.headers }
+    return { id, url: upload.output.url, headers: upload.output.headers }
   }
 }
 
@@ -238,10 +252,24 @@ export function createAttachmentDownloadHandler(
   }
 }
 
+/**
+ * `attachment.cancel`: the person drops an upload they signed, so it stops counting as waiting.
+ * Only their own, and only while it waits; anything else is left as it is.
+ */
+export function createAttachmentCancelHandler(
+  { attachments }: Pick<AttachmentHandlerDependencies, "attachments">,
+): CommandHandler<AttachmentCancelCommand> {
+  return async ({ data }): Promise<{ id: string }> => {
+    await attachments.releaseUpload(data.id, data.actor.userId)
+    return { id: data.id }
+  }
+}
+
 /** What the attachment operations need from the app: the buses. */
 export interface AttachmentOperationDependencies {
   sign(command: AttachmentSignCommand): Promise<SignedAttachmentUpload>
   confirm(command: AttachmentConfirmCommand): Promise<{ attachment: Attachment }>
+  cancel(command: AttachmentCancelCommand): Promise<{ id: string }>
   remove(command: AttachmentRemoveCommand): Promise<{ id: string }>
   list(query: AttachmentListQuery): Promise<AttachmentListResult>
   download(query: AttachmentDownloadQuery): Promise<{ url: string }>
@@ -268,6 +296,13 @@ export function createAttachmentOperations(
         return await dependencies.confirm(
           new AttachmentConfirmCommand({ actor, ...input, requestId, idempotencyKey }),
         )
+      },
+    },
+    "attachment.cancel": {
+      kind: "command",
+      handle: async ({ actor, payload }) => {
+        const input = parseAttachmentRequest(attachmentCancelPayloadSchema, payload)
+        return await dependencies.cancel(new AttachmentCancelCommand({ actor, ...input }))
       },
     },
     "attachment.remove": {

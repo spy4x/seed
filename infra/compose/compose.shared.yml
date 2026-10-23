@@ -762,6 +762,9 @@ services:
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
       # Guest accounts, "Try it now" (docs/guests.md): on unless `false`.
       - GUEST_MODE=${GUEST_MODE:-}
+      # The hourly upload budget of note attachments (docs/files.md): empty for the defaults.
+      - ATTACHMENT_UPLOAD_FILES_PER_HOUR=${ATTACHMENT_UPLOAD_FILES_PER_HOUR:-}
+      - ATTACHMENT_UPLOAD_BYTES_PER_HOUR=${ATTACHMENT_UPLOAD_BYTES_PER_HOUR:-}
       # The Telegram bot (docs/telegram.md): off while the token is unset. Only the API takes the
       # webhook, so only it receives the webhook secret.
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}

@@ -137,7 +137,7 @@ const NOTE_ERROR_CODES: Record<
 
 const ATTACHMENT_ERROR_CODES: Record<
   AttachmentError["code"],
-  "bad_request" | "not_found" | "conflict"
+  "bad_request" | "not_found" | "conflict" | "rate_limited"
 > = {
   ATTACHMENT_NOT_FOUND: "not_found",
   FILE_CONTENT: "bad_request",
@@ -147,6 +147,7 @@ const ATTACHMENT_ERROR_CODES: Record<
   INVALID_REQUEST: "bad_request",
   NOTE_FULL: "conflict",
   UPLOADS_PENDING: "conflict",
+  UPLOAD_BUDGET: "rate_limited",
   UPLOAD_NOT_FOUND: "not_found",
 }
 

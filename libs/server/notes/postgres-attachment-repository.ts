@@ -4,6 +4,7 @@ import {
   assertCanWriteNotes,
   type Attachment,
   ATTACHMENT_EVENTS,
+  ATTACHMENT_PENDING_MINUTES,
   ATTACHMENT_UPLOAD_HOURS,
   type AttachmentCaps,
   AttachmentError,
@@ -61,7 +62,7 @@ async function lockWriter(
  * Note attachments in Postgres. A file belongs to a note and is in the note's group; every read
  * joins the note, so a file of another group, or of a deleted note, is never found.
  *
- * `add` counts after its insert, in the transaction that holds the group's row locked
+ * `add` counts before its insert, in the transaction that holds the group's row locked
  * (`lockActorRole`), so two confirms into one group wait for each other and the second counts the
  * first. Deleting a row, here or through a note's or group's delete, queues its object in
  * `file_deletions` (a trigger), which the worker empties.
@@ -118,9 +119,27 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
 
   async countPending(userId: number): Promise<number> {
     const [{ count }] = await this.sql<{ count: number }[]>`
-      SELECT count(*)::int AS count FROM note_attachment_uploads WHERE user_id = ${userId}
+      SELECT count(*)::int AS count FROM note_attachment_uploads
+      WHERE user_id = ${userId} AND settled_at IS NULL
+        AND created_at > now() - make_interval(mins => ${ATTACHMENT_PENDING_MINUTES})
     `
     return count
+  }
+
+  async signedInLastHour(userId: number): Promise<{ files: number; bytes: number }> {
+    const [row] = await this.sql<{ files: number; bytes: string }[]>`
+      SELECT count(*)::int AS files, coalesce(sum(size_bytes), 0)::text AS bytes
+      FROM note_attachment_uploads
+      WHERE user_id = ${userId} AND created_at > now() - interval '1 hour'
+    `
+    return { files: row.files, bytes: Number(row.bytes) }
+  }
+
+  async releaseUpload(id: string, userId: number): Promise<void> {
+    await this.sql`
+      UPDATE note_attachment_uploads SET settled_at = now()
+      WHERE id = ${id} AND user_id = ${userId} AND settled_at IS NULL
+    `
   }
 
   async createUpload(upload: PendingAttachmentUpload): Promise<void> {
@@ -137,7 +156,8 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
   async claimUpload(id: string, userId: number): Promise<PendingAttachmentUpload | null> {
     const row = (
       await this.sql<PendingAttachmentUpload[]>`
-        DELETE FROM note_attachment_uploads WHERE id = ${id} AND user_id = ${userId}
+        UPDATE note_attachment_uploads SET settled_at = now()
+        WHERE id = ${id} AND user_id = ${userId} AND settled_at IS NULL
         RETURNING id, note_id, user_id, staging_key, name, content_type, size_bytes AS size
       `
     )[0]
@@ -225,8 +245,8 @@ export class PostgresAttachmentRepository implements AttachmentRepository {
   }
 
   /**
-   * Deletes uploads signed more than {@link ATTACHMENT_UPLOAD_HOURS} hours before `now` and never
-   * confirmed, and returns their staging keys.
+   * Deletes uploads signed more than {@link ATTACHMENT_UPLOAD_HOURS} hours before `now`, settled or
+   * not, and returns their staging keys.
    */
   async removeStaleUploads(now: Date = new Date()): Promise<string[]> {
     const rows = await this.sql<{ stagingKey: string }[]>`

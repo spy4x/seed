@@ -2,10 +2,15 @@
 import { expect } from "@std/expect"
 import type postgres from "postgres"
 import { PlanError } from "@domain/billing"
+import { GroupRole } from "@domain/groups"
 import {
   ATTACHMENT_EVENTS,
+  ATTACHMENT_UPLOAD_BUDGET,
+  AttachmentCancelCommand,
   type AttachmentCaps,
   AttachmentError,
+  AttachmentSignCommand,
+  type AttachmentUploadBudget,
   NoteError,
   type PendingAttachmentUpload,
 } from "@domain/notes"
@@ -13,6 +18,11 @@ import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { PostgresAttachmentRepository } from "@server/notes/postgres-attachment-repository.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { cleanUpAttachments } from "@server/notes/attachment-cleanup.ts"
+import type { FileStore } from "@server/files/files.ts"
+import {
+  createAttachmentCancelHandler,
+  createAttachmentSignHandler,
+} from "../../apps/api/features/notes/attachments.ts"
 import { purgeDeletedNotes } from "@server/notes/purge-deleted-notes.ts"
 import { team, withSchema } from "./group-team.ts"
 
@@ -44,6 +54,68 @@ async function setUp(sql: postgres.Sql) {
   const add = (pending: PendingAttachmentUpload, caps = NO_CAPS, actor = pending.userId) =>
     attachments.add(members.groupId, pending, `attachments/${pending.id}`, caps, actor)
   return { ...members, notes, attachments, note, upload, add }
+}
+
+/**
+ * The sign and cancel handlers over Postgres, with billing off: the group's plan sets no file or
+ * byte cap. The file store signs anything.
+ */
+function signing(
+  sql: postgres.Sql,
+  context: { groupId: string; note: { id: string } },
+  budget: AttachmentUploadBudget = ATTACHMENT_UPLOAD_BUDGET,
+) {
+  const attachments = new PostgresAttachmentRepository(sql)
+  let staged = 0
+  const files = {
+    signUpload: (_rule: unknown, file: { contentType: string }) =>
+      Promise.resolve({
+        success: true,
+        output: {
+          url: `https://files.example.test/${++staged}`,
+          headers: { "content-type": file.contentType },
+          stagingKey: `uploads/tmp/${uuidV7()}`,
+        },
+      }),
+  } as unknown as FileStore
+  const dependencies = {
+    attachments,
+    files,
+    groups: { roleOf: () => Promise.resolve(GroupRole.EDITOR) },
+    plans: {
+      of: () =>
+        Promise.resolve({
+          limits: { maxAttachments: null, storageBytes: null } as never,
+          rules: { maxFileBytes: 2 * 1024 * 1024, maxPerNote: 10 },
+        }),
+    },
+    budget,
+  }
+  const sign = createAttachmentSignHandler(dependencies)
+  const cancel = createAttachmentCancelHandler(dependencies)
+  const actor = (userId: number) => ({ userId }) as never
+  return {
+    sign: (userId: number, size = 100) =>
+      sign(
+        new AttachmentSignCommand({
+          actor: actor(userId),
+          groupId: context.groupId,
+          noteId: context.note.id,
+          name: `scan.pdf`,
+          contentType: `application/pdf`,
+          size,
+        }),
+      ),
+    cancel: (userId: number, id: string) =>
+      cancel(new AttachmentCancelCommand({ actor: actor(userId), groupId: context.groupId, id })),
+    /** Moves every upload of `userId` `minutes` into the past. */
+    age: (userId: number, minutes: number) =>
+      sql`
+        UPDATE note_attachment_uploads
+        SET created_at = created_at - make_interval(mins => ${minutes})
+        WHERE user_id = ${userId}
+      `,
+  }
 }
 
 async function queued(sql: postgres.Sql): Promise<string[]> {
@@ -145,6 +217,57 @@ Deno.test("note attachments against Postgres", async (t) => {
         ])
         expect(results.map((result) => result.status).sort()).toEqual(["fulfilled", "rejected"])
         expect((await attachments.usage(groupId)).files).toBe(1)
+      },
+    )
+
+    await t.step(
+      "with billing off, one person cannot sign more than the hourly upload budget",
+      async () => {
+        const context = await setUp(sql)
+        const { editor, admin, attachments } = context
+        const files = signing(sql, context, { files: 3, bytes: 10 * 1024 * 1024 })
+        const first = await files.sign(editor)
+        // A confirmed upload still counts: the budget is what was signed, not what waits.
+        await attachments.claimUpload(first.id, editor)
+        await files.sign(editor)
+        await files.sign(editor)
+        await expect(files.sign(editor)).rejects.toMatchObject({ code: `UPLOAD_BUDGET` })
+        // Another person has a budget of their own.
+        await files.sign(admin)
+        // An hour later the budget is whole again.
+        await files.age(editor, 61)
+        await files.sign(editor)
+
+        const bytes = signing(sql, context, { files: 50, bytes: 250 })
+        await bytes.sign(admin, 100)
+        await expect(bytes.sign(admin, 100)).rejects.toMatchObject({ code: `UPLOAD_BUDGET` })
+        await bytes.sign(context.onlyHere, 250)
+      },
+    )
+
+    await t.step(
+      "25 cancelled or abandoned uploads still let the person sign a new file",
+      async () => {
+        const context = await setUp(sql)
+        const { editor, admin } = context
+        const files = signing(sql, context)
+        // Cancelled, as the page does for a cancel and before each retry.
+        for (let i = 0; i < 25; i++) {
+          const signed = await files.sign(editor)
+          await files.cancel(editor, signed.id)
+        }
+        await files.sign(editor)
+        // Abandoned with no cancel: twenty wait, then nothing more is signed until their URLs have
+        // expired, and then it is again.
+        for (let i = 0; i < 19; i++) await files.sign(admin)
+        await files.sign(admin)
+        await expect(files.sign(admin)).rejects.toMatchObject({ code: `UPLOADS_PENDING` })
+        await files.age(admin, 11)
+        await files.sign(admin)
+        // A person cancels only their own upload.
+        const theirs = await files.sign(editor)
+        await files.cancel(admin, theirs.id)
+        expect(await context.attachments.claimUpload(theirs.id, editor)).not.toBeNull()
       },
     )
 

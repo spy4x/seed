@@ -51,17 +51,30 @@ feature's handler, as for any other command.
 A note keeps images (JPEG, PNG, WebP, GIF) and PDFs. Every member of the group reads them; an
 editor or above adds and removes them, as for the note. The domain is
 `libs/domain/notes/attachments.ts`, the handlers `apps/api/features/notes/attachments.ts` and the
-table `note_attachments`, with the operations `attachment.sign`, `.confirm`, `.remove`, `.list` and
-`.download`.
+table `note_attachments`, with the operations `attachment.sign`, `.confirm`, `.cancel`, `.remove`,
+`.list` and `.download`.
 
 - **Sign.** The handler checks the role, the live note and every limit, signs the upload and
   keeps a row in `note_attachment_uploads` for the person who asked, with the staging key. One
-  person has at most 20 uploads waiting (`ATTACHMENT_PENDING_MAX`).
-- **Confirm.** The handler takes that row in one `DELETE ... RETURNING` for the same person, so a
-  second confirm of the same upload, or one by somebody else, finds nothing. The store then moves
-  the bytes to `attachments/<id>` and checks them; the row is added in a transaction that locks
-  the group, checks the role again and counts the limits after the lock. A file refused at that
-  point is deleted from the store.
+  person has at most 20 uploads waiting (`ATTACHMENT_PENDING_MAX`): signed in the last ten
+  minutes (`ATTACHMENT_PENDING_MINUTES`, the URL's five and five more) and neither confirmed nor
+  cancelled. An older one can no longer be uploaded, so an abandoned upload never locks anyone out.
+- **Upload budget.** Whatever the plan, and with billing off too, one person signs at most 50
+  uploads and 50 MiB an hour, counted on every signed upload, confirmed or not. More is refused
+  with `UPLOAD_BUDGET` (a 429 over HTTP). This is what stops one account, a guest of the public demo
+  included, from filling the server's disk; the plan's caps only limit what a group keeps. A
+  server sets its own with `ATTACHMENT_UPLOAD_FILES_PER_HOUR` and
+  `ATTACHMENT_UPLOAD_BYTES_PER_HOUR` (whole numbers; empty for the defaults). Each account has
+  its own budget, and one client address can start 5 guest accounts an hour
+  (`GUEST_STARTS_PER_HOUR`), so a stranger's ceiling grows with the accounts they open: 250
+  uploads and 250 MiB in the first hour from one address, more as the accounts pile up.
+- **Cancel.** The page cancels the person's own waiting upload when they cancel it, before a
+  retry and when they open another note, so it stops counting as waiting at once.
+- **Confirm.** The handler settles that row in one `UPDATE ... RETURNING` for the same person, so
+  a second confirm of the same upload, or one by somebody else, finds nothing. The row stays for
+  the budget. The store then moves the bytes to `attachments/<id>` and checks them; the row is
+  added in a transaction that locks the group, checks the role again and counts the limits under
+  the lock, before the insert. A file refused at that point is deleted from the store.
 - **Limits** come from the group's plan (`PLANS` in `libs/domain/billing`): `maxAttachments` and
   `storageBytes` for the group, refused as a plan limit, and `attachments` (`maxFileBytes`,
   `maxPerNote`) for one file and one note. With billing off the group's caps are lifted like every
@@ -70,7 +83,7 @@ table `note_attachments`, with the operations `attachment.sign`, `.confirm`, `.r
   (foreign keys with `ON DELETE CASCADE`), queues its object in `file_deletions` (a trigger). A
   removal deletes the object at once when the store answers. The worker's nightly clean-up
   (`libs/server/notes/attachment-cleanup.ts`) deletes every queued object, forgets uploads signed
-  more than a day ago and never confirmed, and deletes staging objects older than a day.
+  more than a day ago, confirmed or not, and deletes staging objects older than a day.
 - **Downloads** are signed for a member of the file's group only: every read joins the note and
   its group. The admin app lists a group's files by type, size, uploader and date, never by name,
   and an operator can remove one ([admin-modules.md](admin-modules.md)).

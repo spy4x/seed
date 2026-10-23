@@ -18,7 +18,7 @@ const DELETION_BATCH = 500
 
 /**
  * The nightly clean-up of note attachments. It forgets uploads that were signed over
- * {@link ATTACHMENT_UPLOAD_HOURS} hours before `now` and never confirmed, deletes staging objects
+ * {@link ATTACHMENT_UPLOAD_HOURS} hours before `now`, confirmed or not, deletes staging objects
  * older than that, and deletes the objects of removed files (`file_deletions`, filled by the
  * database whenever a file's row goes, a note's or group's purge and an account's deletion
  * included). Running it twice deletes nothing more.

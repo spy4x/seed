@@ -996,8 +996,8 @@ CREATE TABLE note_attachments (
 CREATE INDEX idx_note_attachments_note ON note_attachments (note_id, created_at, id);
 CREATE INDEX idx_note_attachments_created_by ON note_attachments (created_by_user_id);
 
--- An upload that was signed and not yet confirmed. The browser PUTs to `staging_key`; the confirm
--- deletes this row first, so one upload is confirmed at most once, and only by `user_id`. The id is
+-- An upload that was signed. The browser PUTs to `staging_key`; the confirm settles this row
+-- first (`settled_at`), so one upload is confirmed at most once, and only by `user_id`. The id is
 -- the attachment's id once confirmed. The worker deletes rows older than a day.
 CREATE TABLE note_attachment_uploads (
     id UUID PRIMARY KEY,
@@ -1008,6 +1008,9 @@ CREATE TABLE note_attachment_uploads (
     content_type VARCHAR(100) NOT NULL,
     size_bytes INT4 NOT NULL,
     created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- When the upload was confirmed or cancelled; NULL while it waits. A settled row stays until
+    -- the clean-up, so the hourly upload budget still counts it.
+    settled_at TIMESTAMPTZ(3),
     CONSTRAINT note_attachment_uploads_staging_key_unique UNIQUE (staging_key),
     CONSTRAINT note_attachment_uploads_size_check CHECK (size_bytes >= 1)
 );

@@ -25,11 +25,35 @@ export const ATTACHMENT_TYPES = [
 export const ATTACHMENT_NAME_MAX_LENGTH = 255
 
 /**
- * The most uploads one person may have signed and not confirmed at once. A signed upload takes
- * room in the store before any quota counts it; this keeps one person from filling the staging
- * area until the nightly clean-up.
+ * The most uploads one person may have waiting at once: signed in the last
+ * {@link ATTACHMENT_PENDING_MINUTES} minutes, and neither confirmed nor cancelled. A signed upload
+ * takes room in the store before any quota counts it; this keeps one person from filling the
+ * staging area until the nightly clean-up.
  */
 export const ATTACHMENT_PENDING_MAX = 20
+
+/**
+ * How long a signed upload counts as waiting: its URL's five minutes and five more for a slow
+ * confirm. An older one can no longer be uploaded, so it never locks its person out.
+ */
+export const ATTACHMENT_PENDING_MINUTES = 10
+
+/**
+ * What one person may sign per hour, whatever the group's plan: `files` uploads and `bytes` in
+ * all, counting every signed upload, confirmed or not. Plans cap a group's stored files; this caps
+ * how fast anyone, a guest of the public demo included, can write to the store. Each server sets
+ * its own with `ATTACHMENT_UPLOAD_FILES_PER_HOUR` and `ATTACHMENT_UPLOAD_BYTES_PER_HOUR`.
+ */
+export interface AttachmentUploadBudget {
+  files: number
+  bytes: number
+}
+
+/** The budget a server has unless its settings say otherwise: 50 files or 50 MiB an hour. */
+export const ATTACHMENT_UPLOAD_BUDGET: AttachmentUploadBudget = {
+  files: 50,
+  bytes: 50 * 1024 * 1024,
+}
 
 /** How long an unconfirmed upload is kept before the worker deletes it: one day. */
 export const ATTACHMENT_UPLOAD_HOURS = 24
@@ -54,6 +78,7 @@ export type AttachmentErrorCode =
   | "INVALID_REQUEST"
   | "NOTE_FULL"
   | "UPLOADS_PENDING"
+  | "UPLOAD_BUDGET"
   | "UPLOAD_NOT_FOUND"
 
 /**
@@ -115,6 +140,12 @@ export const attachmentSignPayloadSchema = type({
 })
 /** `attachment.confirm`: the upload `attachment.sign` answered, once the PUT is done. */
 export const attachmentConfirmPayloadSchema = type({
+  ...groupIdField,
+  id: UUID_PATTERN,
+  "+": "reject",
+})
+/** `attachment.cancel`: the person drops an upload they signed and will not confirm. */
+export const attachmentCancelPayloadSchema = type({
   ...groupIdField,
   id: UUID_PATTERN,
   "+": "reject",
@@ -194,6 +225,12 @@ export class AttachmentConfirmCommand
   constructor(public data: AttachmentIdPayload) {}
 }
 
+/** Releases the person's own waiting upload, so it no longer counts as waiting. */
+export class AttachmentCancelCommand implements Command<AttachmentIdPayload, { id: string }> {
+  __resultType?: { id: string }
+  constructor(public data: AttachmentIdPayload) {}
+}
+
 export class AttachmentRemoveCommand implements Command<AttachmentIdPayload, { id: string }> {
   __resultType?: { id: string }
   constructor(public data: AttachmentIdPayload) {}
@@ -255,17 +292,26 @@ export interface AttachmentRepository {
   usage(groupId: string): Promise<{ files: number; bytes: number }>
   /** How many files the note holds. */
   countForNote(noteId: string): Promise<number>
-  /** How many uploads the person has signed and not confirmed. */
+  /**
+   * How many uploads the person signed in the last {@link ATTACHMENT_PENDING_MINUTES} minutes and
+   * neither confirmed nor cancelled.
+   */
   countPending(userId: number): Promise<number>
+  /** The uploads the person signed in the last hour, settled or not, and their declared bytes. */
+  signedInLastHour(userId: number): Promise<{ files: number; bytes: number }>
+  /** Settles the person's waiting upload without a file: it stops counting as waiting. */
+  releaseUpload(id: string, userId: number): Promise<void>
   createUpload(upload: PendingAttachmentUpload): Promise<void>
   /**
-   * Takes the person's waiting upload, so a second confirm of it finds nothing: the row is deleted
-   * as it is read. `null` when it is not there or is another person's.
+   * Takes the person's waiting upload, so a second confirm of it finds nothing: the row is settled
+   * as it is read, and kept for the hourly budget. `null` when it is not there, is settled already
+   * or is another person's.
    */
   claimUpload(id: string, userId: number): Promise<PendingAttachmentUpload | null>
   /**
    * Adds a confirmed file under `objectKey`, in one transaction that checks the actor's role and
-   * the note on the locked rows, counts the caps after the insert and records the change. Throws
+   * the note on the locked rows, counts the caps before the insert, under the group's lock, and
+   * records the change. Throws
    * `NoteError` (`GROUP_NOT_FOUND`, `ROLE_INSUFFICIENT`, `NOTE_NOT_FOUND`), `AttachmentError`
    * (`NOTE_FULL`) or a `PlanError` (`maxAttachments`, `storageBytes`), and adds nothing then.
    */

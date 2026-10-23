@@ -1,5 +1,6 @@
 import { commandBus } from "@api/services/commandBus.ts"
 import {
+  AttachmentCancelCommand,
   AttachmentConfirmCommand,
   AttachmentDownloadQuery,
   AttachmentListQuery,
@@ -7,6 +8,7 @@ import {
   AttachmentSignCommand,
 } from "@domain/notes"
 import {
+  createAttachmentCancelHandler,
   createAttachmentConfirmHandler,
   createAttachmentDownloadHandler,
   createAttachmentListHandler,
@@ -264,6 +266,7 @@ commandBus.register(
   createAttachmentConfirmHandler(attachmentDependencies),
 )
 commandBus.register(AttachmentRemoveCommand, createAttachmentRemoveHandler(attachmentDependencies))
+commandBus.register(AttachmentCancelCommand, createAttachmentCancelHandler(attachmentDependencies))
 commandBus.register(TagUpdateCommand, tagUpdateHandler)
 commandBus.register(TagDeleteCommand, tagDeleteHandler)
 commandBus.register(BillingCheckoutCommand, billingCheckoutHandler)

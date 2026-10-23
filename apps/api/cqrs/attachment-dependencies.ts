@@ -4,6 +4,7 @@ import { createPlanOf } from "../features/billing/config.ts"
 import { billingSetup } from "../services/billing.ts"
 import { db } from "../services/db.ts"
 import { files } from "../services/files.ts"
+import { config } from "../services/config.ts"
 
 const billingEnabled = billingSetup.provider !== null
 const planOf = createPlanOf(db.billing, billingSetup)
@@ -16,6 +17,7 @@ const planOf = createPlanOf(db.billing, billingSetup)
 export const attachmentDependencies: AttachmentHandlerDependencies = {
   attachments: db.attachment,
   files,
+  budget: config.attachmentUploadBudget,
   groups: {
     roleOf: async (groupId, userId) => (await db.group.getForMember(groupId, userId))?.role ?? null,
   },

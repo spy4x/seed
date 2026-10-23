@@ -94,6 +94,7 @@ export const operations: Operations<Actor> = {
   ...createAttachmentOperations({
     sign: (command) => commandBus.execute(command),
     confirm: (command) => commandBus.execute(command),
+    cancel: (command) => commandBus.execute(command),
     remove: (command) => commandBus.execute(command),
     list: (query) => queryBus.execute(query),
     download: (query) => queryBus.execute(query),

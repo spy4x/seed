@@ -4,6 +4,7 @@ import { type AttachmentRules, type Entitlements, PlanError, PLANS } from "@doma
 import { GroupRole } from "@domain/groups"
 import {
   type Attachment,
+  ATTACHMENT_UPLOAD_BUDGET,
   AttachmentConfirmCommand,
   AttachmentDownloadQuery,
   AttachmentError,
@@ -11,6 +12,7 @@ import {
   AttachmentRemoveCommand,
   type AttachmentRepository,
   AttachmentSignCommand,
+  type AttachmentUploadBudget,
   type PendingAttachmentUpload,
 } from "@domain/notes"
 import { FileRefusal, type FileStore } from "@server/files/files.ts"
@@ -36,6 +38,7 @@ const FREE = PLANS[0]
 /** Attachments in memory: one live note in {@link GROUP}. */
 function memoryAttachments() {
   const pending = new Map<string, PendingAttachmentUpload>()
+  const signed: PendingAttachmentUpload[] = []
   const stored = new Map<string, Attachment & { objectKey: string; groupId: string }>()
   const forgotten: string[] = []
   const added: string[] = []
@@ -59,8 +62,20 @@ function memoryAttachments() {
       Promise.resolve([...stored.values()].filter((a) => a.noteId === noteId).length),
     countPending: (userId) =>
       Promise.resolve([...pending.values()].filter((p) => p.userId === userId).length),
+    signedInLastHour: (userId) => {
+      const own = signed.filter((upload) => upload.userId === userId)
+      return Promise.resolve({
+        files: own.length,
+        bytes: own.reduce((sum, upload) => sum + upload.size, 0),
+      })
+    },
+    releaseUpload: (id, userId) => {
+      if (pending.get(id)?.userId === userId) pending.delete(id)
+      return Promise.resolve()
+    },
     createUpload: (upload) => {
       pending.set(upload.id, upload)
+      signed.push(upload)
       return Promise.resolve()
     },
     claimUpload: (id, userId) => {
@@ -156,6 +171,7 @@ function setUp(
     confirm?: FileRefusal | null
     limits?: Partial<Entitlements["limits"]>
     rules?: Partial<AttachmentRules>
+    budget?: AttachmentUploadBudget
   } = {},
 ) {
   const memory = memoryAttachments()
@@ -178,6 +194,7 @@ function setUp(
           rules: { ...FREE.attachments, ...options.rules },
         }),
     },
+    budget: options.budget ?? ATTACHMENT_UPLOAD_BUDGET,
   }
   const sign = createAttachmentSignHandler(dependencies)
   const confirm = createAttachmentConfirmHandler(dependencies)
