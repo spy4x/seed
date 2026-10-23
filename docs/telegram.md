@@ -33,11 +33,18 @@ a token of its own: one token takes updates by polling or by webhook, never both
   a code, which lasts 10 minutes, works once and replaces the person's previous code.
 - "Open Telegram" opens `t.me/<bot>?start=<code>`, so pressing Start sends the code. On another
   device the person sends `/link <code>` instead.
-- The bot links the Telegram account to the person, with an audit row, and the app closes the
-  dialog. A wrong, used or expired code is refused, and so is a Telegram account linked to someone
-  else.
-- `/unlink` in the chat, "Unlink" on the profile (after a confirmation), or an operator's "Unlink Telegram" in the admin
-  panel ends it, each with an audit row.
+- The bot does not link at once. It names the account the code belongs to (the first name, or the
+  address masked) and links only after a "Link" press by the same Telegram user. A `t.me` link
+  someone else made therefore cannot attach your Telegram to their account without you seeing
+  whose it is.
+- After the press, the bot links the Telegram account to the person, with an audit row, and the
+  app closes the dialog. A wrong, used or expired code is refused, and so is a Telegram account
+  linked to someone else. Linking a second Telegram account replaces the first, with an unlink
+  row for it.
+- A code sent in a group is spent without linking, because others in the group could read it.
+- `/unlink` in the chat, "Unlink" on the profile (after a confirmation), or an operator's "Unlink
+  Telegram" in the admin panel ends it, each with an audit row. A password reset or change ends
+  it too, in the same transaction that revokes the API tokens.
 - Guests cannot link: they are asked to keep their account first.
 
 A linked account is an `auth_keys` row with the method `telegram` and the Telegram user id as its
@@ -84,8 +91,11 @@ The router, the client, the webhook handler and polling are `@spy4x/integrations
 
 - The webhook takes no session. The secret header, compared in constant time before the body is
   read, is its only proof.
-- A link code is 24 random bytes, works once, lasts 10 minutes and counts failed tries. Making one
-  needs a full session, second factor included, and spends the stricter per-user rate limit.
+- A link code is `<user id>_<binding>_<secret>`, 96 and 144 random bits, at most 52 characters.
+  It works once, lasts 10 minutes and counts failed tries. Its challenge is found by the user id
+  and the binding together, so someone who knows only a user id cannot use up a person's tries.
+  Making a code deletes the person's older ones, needs a full session, second factor included,
+  and spends the stricter per-user rate limit.
 - A linked chat acts as its person with the second factor counted as passed, as an API token
   does, because the session that linked it had passed it.
 - Seed keeps the Telegram user id only: no Telegram name, no messages. A product that turns the
