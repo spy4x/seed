@@ -23,7 +23,7 @@ import type {
   GUEST_REFUSAL_CODE,
   SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
 } from "@domain/identity"
-import type { NoteErrorCode } from "@domain/notes"
+import type { AttachmentErrorCode, NoteErrorCode } from "@domain/notes"
 import type { NotificationErrorCode } from "@domain/notifications"
 import type { SubscriberTokenRefusal } from "@domain/subscribers"
 import type { TagErrorCode } from "@domain/tags"
@@ -74,6 +74,7 @@ export type ErrorReason =
   | BlogErrorCode
   | GroupErrorCode
   | InvitationErrorCode
+  | AttachmentErrorCode
   | NoteErrorCode
   | NotificationErrorCode
   | PlanErrorCode

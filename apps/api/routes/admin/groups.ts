@@ -187,25 +187,25 @@ export function createAdminGroupsRoutes(
     .get(`/groups/:id/files`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       const files = isUuid(groupId) ? await groups.files(groupId) : null
-      if (!files) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(files)
     })
     .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       const fileId = c.req.param(`fileId`)
       if (!isUuid(groupId) || !isUuid(fileId)) {
-        return c.json({ error: ADMIN_GROUP_FILE_NOT_FOUND }, 404)
+        return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
       }
       const outcome = await groups.removeFile(operatorOf(c), groupId, fileId)
       if (outcome === AdminGroupActOutcome.NotFound) {
-        return c.json({ error: ADMIN_GROUP_FILE_NOT_FOUND }, 404)
+        return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
       }
       if (outcome !== AdminGroupActOutcome.Done) {
         const { status, error } = REFUSALS[outcome]
-        return c.json({ error }, status)
+        return errorResponse(c, codeForStatus(status), { message: error, status })
       }
       const files = await groups.files(groupId)
-      if (!files) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(files)
     })
     .post(`/groups/:id/invitations/:invitationId/revoke`, limit, async (c) => {

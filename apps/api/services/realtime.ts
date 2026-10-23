@@ -88,7 +88,7 @@ export function toRequestError(error: unknown): RealtimeRequestError | null {
     return new RealtimeRequestError(ATTACHMENT_ERROR_CODES[error.code], error.message, {
       code: error.code,
       limit: error.limit,
-    })
+    }, { reason: error.code })
   }
   if (error instanceof PlanError) {
     // The socket's codes are closed, so a plan refusal is `forbidden` and names itself in details.

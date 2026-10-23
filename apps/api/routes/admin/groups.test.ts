@@ -347,7 +347,10 @@ describe(`operator area group routes`, () => {
     const gone = buildApp(operator(), { outcome: AdminGroupActOutcome.NotFound })
     const response = await send(gone.app, ROUTES[7])
     expect(response.status).toBe(404)
-    expect(await response.json()).toEqual({ error: ADMIN_GROUP_FILE_NOT_FOUND })
+    expect(await apiError(response)).toMatchObject({
+      code: `not_found`,
+      message: ADMIN_GROUP_FILE_NOT_FOUND,
+    })
 
     const trashed = buildApp(operator(), { outcome: AdminGroupActOutcome.GroupDeleted })
     expect((await send(trashed.app, ROUTES[7])).status).toBe(409)
