@@ -33,6 +33,8 @@ export const NotificationKind = {
    * `title` and `text`, both fixed sentences of the app, never anything the person wrote.
    */
   GuestReminder: "guest.reminder",
+  /** The person's data export is ready (#229). Its payload carries `expiresAt`, an ISO date. */
+  DataExportReady: "account.data_export_ready",
 } as const
 
 /**
@@ -160,6 +162,14 @@ function text(value: unknown, fallback: string): string {
   return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback
 }
 
+/** A day as a notification sentence writes it: `30 Oct 2026`. */
+const EXPORT_DAY = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+})
+
 function article(word: string): string {
   return /^[aeiou]/.test(word) ? "an" : "a"
 }
@@ -190,6 +200,12 @@ export function describeNotification(
       return `${text(payload.title, "Keep your account")}. ${
         text(payload.text, "Add a sign-in method to keep it.")
       }`
+    case NotificationKind.DataExportReady: {
+      const until = new Date(text(payload.expiresAt, ""))
+      return Number.isNaN(until.getTime())
+        ? "Your data is ready. Download it from your profile."
+        : `Your data is ready. Download it from your profile until ${EXPORT_DAY.format(until)}.`
+    }
     default:
       return "You have a new notification."
   }

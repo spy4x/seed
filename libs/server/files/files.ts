@@ -162,20 +162,10 @@ export interface FileStore {
    * answers with that type, never the stored one, and with {@link downloadDisposition}.
    */
   signDownload(key: string, file: { contentType: string; filename: string }): Promise<string>
-  /**
-   * Stores bytes the server made itself under `key`, such as sample files or an export. Nothing a
-   * browser sent comes this way: that is `signUpload` and `confirmUpload`.
-   */
-  put(key: string, file: { bytes: Uint8Array<ArrayBuffer>; contentType: string }): Promise<void>
   /** Deletes `key`; a missing one is not an error. */
   delete(key: string): Promise<void>
   /** Whether the store answers, for the health route and the operator's System page. */
   isReachable(): Promise<boolean>
-  /**
-   * Deletes staging objects last written before `before`: uploads never confirmed, and bytes PUT
-   * to an upload URL after its confirm. Returns how many it deleted.
-   */
-  removeStaging(before: Date): Promise<number>
 }
 
 /**
@@ -232,37 +222,8 @@ export function createFileStore(
         responseContentDisposition: downloadDisposition(file.contentType, file.filename),
       })
     },
-    async put(key, file) {
-      const url = await internal.presignPut(bucket, key, {
-        contentType: file.contentType,
-        contentLength: file.bytes.length,
-        expiresIn: FILE_URL_SECONDS,
-      })
-      const response = await fetch(url, {
-        method: `PUT`,
-        headers: { "content-type": file.contentType },
-        body: file.bytes,
-      })
-      await response.body?.cancel()
-      if (!response.ok) throw new Error(`The file store refused ${key}: HTTP ${response.status}`)
-    },
     delete(key) {
       return internal.delete(bucket, key)
-    },
-    async removeStaging(before) {
-      let removed = 0
-      let continuationToken: string | undefined
-      do {
-        const page = await internal.list(bucket, STAGING_PREFIX, { continuationToken })
-        for (const object of page.objects) {
-          // A store that reports no date is treated as new: the next run deletes it.
-          if (object.lastModified === undefined || object.lastModified >= before) continue
-          await internal.delete(bucket, object.key)
-          removed++
-        }
-        continuationToken = page.continuationToken
-      } while (continuationToken !== undefined)
-      return removed
     },
     async isReachable() {
       try {
@@ -272,35 +233,6 @@ export function createFileStore(
         return false
       }
     },
-  }
-}
-
-/**
- * The file store's settings from the environment (`S3_ENDPOINT` and the rest, docs/files.md), for
- * a process that only reaches the store itself, such as the worker: browsers' URLs are signed for
- * the same address.
- * @throws {Error} Naming every setting that is missing.
- */
-export function fileStoreSettingsFrom(
-  env: { get(name: string): string | undefined },
-): FileStoreSettings {
-  const names = [
-    `S3_ENDPOINT`,
-    `S3_REGION`,
-    `S3_BUCKET`,
-    `S3_ACCESS_KEY_ID`,
-    `S3_SECRET_ACCESS_KEY`,
-  ]
-  const missing = names.filter((name) => !env.get(name))
-  if (missing.length > 0) throw new Error(`Missing environment variables: ${missing.join(`, `)}`)
-  const endpoint = env.get(`S3_ENDPOINT`)!
-  return {
-    endpoint,
-    publicEndpoint: endpoint,
-    region: env.get(`S3_REGION`)!,
-    bucket: env.get(`S3_BUCKET`)!,
-    accessKeyId: env.get(`S3_ACCESS_KEY_ID`)!,
-    secretAccessKey: env.get(`S3_SECRET_ACCESS_KEY`)!,
   }
 }
 
@@ -320,6 +252,57 @@ export function s3FileStore(settings: FileStoreSettings): FileStore {
   return createFileStore(
     client(settings.endpoint),
     client(settings.publicEndpoint),
+    settings.bucket,
+  )
+}
+
+/**
+ * What a worker job needs to keep a file it made itself, such as a data export (#229): no browser
+ * takes part, so nothing is signed and nothing is confirmed. `deleteOlderThan` removes every object
+ * under `prefix` stored before `before`, the safety net for a file whose row or job was lost.
+ */
+export interface ServerFiles {
+  put(key: string, body: Uint8Array): Promise<void>
+  delete(key: string): Promise<void>
+  deleteOlderThan(prefix: string, before: Date): Promise<number>
+}
+
+/** {@link ServerFiles} over the store's internal client. */
+export function createServerFiles(
+  store: Pick<S3Storage, `upload` | `delete` | `list`>,
+  bucket: string,
+): ServerFiles {
+  return {
+    put: (key, body) => store.upload(bucket, key, body),
+    delete: (key) => store.delete(bucket, key),
+    async deleteOlderThan(prefix, before) {
+      let removed = 0
+      let continuationToken: string | undefined
+      do {
+        const page = await store.list(bucket, prefix, { continuationToken })
+        for (const object of page.objects) {
+          if (object.lastModified && object.lastModified < before) {
+            await store.delete(bucket, object.key)
+            removed++
+          }
+        }
+        continuationToken = page.continuationToken
+      } while (continuationToken)
+      return removed
+    },
+  }
+}
+
+/** {@link ServerFiles} for `settings`, reaching the store at `endpoint` as the API does. */
+export function s3ServerFiles(settings: Omit<FileStoreSettings, `publicEndpoint`>): ServerFiles {
+  return createServerFiles(
+    new S3Storage({
+      endpoint: settings.endpoint,
+      region: settings.region,
+      accessKeyId: settings.accessKeyId,
+      secretAccessKey: settings.secretAccessKey,
+      forcePathStyle: true,
+    }),
     settings.bucket,
   )
 }

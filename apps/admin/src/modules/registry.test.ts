@@ -27,7 +27,12 @@ it("opens one of a module's own pages from its sidebar entry, and no page twice"
 
 it("collects the modules' person tabs in registry order, each id once and none the page's", () => {
   const tabs = adminPersonTabs(ADMIN_MODULES)
-  expect(tabs.map((tab) => tab.label)).toEqual(["API tokens", "Devices", "Notifications"])
+  expect(tabs.map((tab) => tab.label)).toEqual([
+    "Data exports",
+    "API tokens",
+    "Devices",
+    "Notifications",
+  ])
   const ids = [...ADMIN_USER_TABS, ...tabs.map((tab) => tab.id)]
   expect(new Set(ids).size).toBe(ids.length)
 })

@@ -142,13 +142,11 @@ function fakeFiles(confirm: FileRefusal | null = null) {
       record(`signDownload`, key, file)
       return Promise.resolve(`https://app.example.test/get/${key}`)
     },
-    put: () => Promise.resolve(),
     delete(key) {
       record(`delete`, key)
       return Promise.resolve()
     },
     isReachable: () => Promise.resolve(true),
-    removeStaging: () => Promise.resolve(0),
   }
   return { files, calls }
 }

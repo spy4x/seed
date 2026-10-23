@@ -36,6 +36,12 @@ no file passes through the API. Note attachments use it (below); profile picture
    answers with the confirmed type, never the stored one; an image is shown in place, and any other
    file is saved as an attachment under its name.
 
+A file the server makes itself, such as a person's data export ([data-export.md](data-export.md)),
+needs no signed upload: the worker stores it with `put(key, body)` of `s3ServerFiles` (the same
+module), deletes it with `delete(key)` and sweeps old ones with `deleteOlderThan(prefix, before)`.
+The worker reads the same settings as the API, without `S3_PUBLIC_ENDPOINT`
+(`readServerFilesSetup`).
+
 Keys are the feature's choice, such as `notes/<group id>/<file id>`, with UUID version 7 ids,
 never under `uploads/tmp/`. The authorization check (who may upload to or read a key) belongs to the
 feature's handler, as for any other command.
@@ -68,7 +74,8 @@ table `note_attachments`, with the operations `attachment.sign`, `.confirm`, `.r
 - **Downloads** are signed for a member of the file's group only: every read joins the note and
   its group. The admin app lists a group's files by type, size, uploader and date, never by name,
   and an operator can remove one ([admin-modules.md](admin-modules.md)).
-- **Not in a group's export.** The JSON export (`group.exported`) holds notes and tags only.
+- **Exports.** A group's JSON export (`group.exported`) holds notes and tags only. A person's data
+  export ([data-export.md](data-export.md)) lists the files they attached, without their bytes.
 
 ## Where it runs
 

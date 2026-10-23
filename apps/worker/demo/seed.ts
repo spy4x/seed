@@ -11,7 +11,7 @@ import { type AuditEventInput, writeAuditEvent } from "@server/groups/audit.ts"
 import { PostgresInvitationRepository } from "@server/groups/postgres-invitation-repository.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { AppDbBase } from "../../api/services/db-base.ts"
-import type { FileStore } from "@server/files/files.ts"
+import type { ServerFiles } from "@server/files/files.ts"
 import { attachmentObjectKey } from "@domain/notes"
 import { sampleFile } from "./sample-files.ts"
 import { createSignIn } from "../../api/services/sign-in.ts"
@@ -152,7 +152,7 @@ export async function seedWorkspace(
   userId: number,
   dataSeed: number,
   now = new Date(),
-  files: Pick<FileStore, "put"> | null = null,
+  files: Pick<ServerFiles, "put"> | null = null,
 ): Promise<void> {
   const [{ groups }] = await sql<{ groups: number }[]>`
     SELECT COUNT(*)::int AS groups FROM group_members WHERE user_id = ${userId}
@@ -216,7 +216,7 @@ async function seedGroups(
   idOf: (member: FakeMember) => number | null,
   at: At,
   backdateGroups: boolean,
-  files: Pick<FileStore, "put"> | null = null,
+  files: Pick<ServerFiles, "put"> | null = null,
 ): Promise<(string | null)[]> {
   const invitations = new PostgresInvitationRepository(sql)
   const ids: (string | null)[] = []
@@ -321,7 +321,7 @@ async function seedGroups(
         const fileId = uuidV7()
         const key = attachmentObjectKey(fileId)
         const sample = sampleFile(file.kind, note.title)
-        await files!.put(key, sample)
+        await files!.put(key, sample.bytes)
         await db.attachment.add(
           groupId,
           {

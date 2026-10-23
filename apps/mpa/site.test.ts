@@ -212,11 +212,29 @@ describe("the public website", () => {
   it("gives the billing and realtime cards a picture of the app", async () => {
     const { html } = await page("/")
 
-    for (const [id, shot] of [["feature-billing", "billing"], ["feature-realtime", "realtime-a"]]) {
+    for (
+      const [id, shot] of [["feature-billing", "billing-plan"], ["feature-realtime", "realtime-a"]]
+    ) {
       const start = html.indexOf(`aria-labelledby="${id}"`)
       const card = html.slice(start, html.indexOf(`role="article"`, start + 1))
       expect(card, id).toContain(`/shots/${shot}-light-`)
     }
+  })
+
+  it("draws the billing card from the plan-only picture, 780×416 at its widest", async () => {
+    const { html } = await page("/")
+    const start = html.indexOf(`aria-labelledby="feature-billing"`)
+    const card = html.slice(start, html.indexOf(`role="article"`, start + 1))
+
+    // 780×416 is the plan alone; the whole phone screen it was cut from is 780×1688.
+    expect(card).toMatch(/<img[^>]*width="780"[^>]*height="416"/)
+    const files = [...new Set(card.match(/\/shots\/[a-z-]+-\d+\.webp/g))]
+    expect(files.sort()).toEqual([
+      `/shots/billing-plan-dark-390.webp`,
+      `/shots/billing-plan-dark-780.webp`,
+      `/shots/billing-plan-light-390.webp`,
+      `/shots/billing-plan-light-780.webp`,
+    ])
   })
 
   it("names a page after its own title, then the site, when the title does not name Seed", async () => {
@@ -442,12 +460,30 @@ describe("the public website", () => {
       .map(([, href, number]) => ({ href, number }))
     expect(links.length).toBeGreaterThan(0)
     for (const { href, number } of links) expect(href).toBe(`${REPOSITORY_URL}/issues/${number}`)
-    // Downloading an account's data is not built yet, and its issue is the place to follow it.
+    // Translations are not built yet, and their issue is the place to follow them.
     expect(html).toMatch(
       new RegExp(
-        `Downloading an account's data \\(<a href="${REPOSITORY_URL}/issues/229"[^>]*>issue #229</a>\\)`,
+        `Translations: the app is English only \\(<a href="${REPOSITORY_URL}/issues/216"[^>]*>issue #216</a>\\)`,
       ),
     )
+  })
+
+  it("lists Download my data as built on the home page, /features, /compare and /privacy (#229)", async () => {
+    const home = (await page("/")).html
+    const features = (await page("/features")).html
+    const compare = (await page("/compare")).html
+    const privacy = (await page("/privacy")).html
+
+    expect(home).toContain(`a download of your own data`)
+    expect(features).toContain(`Download my data: a ZIP of JSON and CSV files`)
+    expect(privacy).toContain(`choose Download my data in your profile`)
+    for (const html of [home, features, compare, privacy]) {
+      expect(html).not.toContain(`issues/229`)
+      expect(html).not.toContain(`Downloading an account&#39;s data`)
+      expect(html).not.toContain(`downloading an account&#39;s data`)
+      expect(html).not.toContain(`Downloading an account's data`)
+      expect(html).not.toContain(`downloading an account's data`)
+    }
   })
 
   it("lists passkeys on /features as built, not under Not built yet", async () => {

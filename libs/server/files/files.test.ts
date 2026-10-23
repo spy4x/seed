@@ -7,7 +7,6 @@ import {
   FILE_URL_SECONDS,
   FileRefusal,
   fileRule,
-  fileStoreSettingsFrom,
   type ObjectStore,
   STAGING_PREFIX,
 } from "./files.ts"
@@ -241,84 +240,4 @@ Deno.test("the store counts as reachable only when a listing succeeds", async ()
 
   expect(await up.isReachable()).toBe(true)
   expect(await down.isReachable()).toBe(false)
-})
-
-Deno.test("the staging sweep deletes only objects written before the cut-off, on every page", async () => {
-  const { store, calls } = fakeStore()
-  const old = new Date(`2026-01-01T00:00:00Z`)
-  const fresh = new Date(`2026-01-03T00:00:00Z`)
-  const pages = [
-    {
-      objects: [{ key: `${STAGING_PREFIX}a`, size: 1, lastModified: old }, {
-        key: `${STAGING_PREFIX}b`,
-        size: 1,
-        lastModified: fresh,
-      }],
-      continuationToken: `next`,
-    },
-    {
-      objects: [{ key: `${STAGING_PREFIX}c`, size: 1, lastModified: old }, {
-        key: `${STAGING_PREFIX}d`,
-        size: 1,
-      }],
-    },
-  ]
-  store.list = (_bucket, prefix, options) => {
-    calls.push({ method: `list`, args: [prefix, options?.continuationToken] })
-    return Promise.resolve(pages[options?.continuationToken ? 1 : 0])
-  }
-  const files = createFileStore(store, store, `files`)
-
-  const removed = await files.removeStaging(new Date(`2026-01-02T00:00:00Z`))
-
-  expect(removed).toBe(2)
-  expect(calls.map((call) => [call.method, ...call.args])).toEqual([
-    [`list`, STAGING_PREFIX, undefined],
-    [`delete`, `files`, `${STAGING_PREFIX}a`],
-    [`list`, STAGING_PREFIX, `next`],
-    [`delete`, `files`, `${STAGING_PREFIX}c`],
-  ])
-})
-
-Deno.test("the server's own bytes are PUT to a signed URL, and a refusal throws", async () => {
-  const { store } = fakeStore()
-  const files = createFileStore(store, store, `files`)
-  const sent: { url: string; init?: RequestInit }[] = []
-  const realFetch = globalThis.fetch
-  let status = 200
-  globalThis.fetch = (url, init) => {
-    sent.push({ url: String(url), init })
-    return Promise.resolve(new Response(null, { status }))
-  }
-  try {
-    await files.put(`attachments/x`, { bytes: PNG.slice(), contentType: `image/png` })
-    expect(sent[0].url).toBe(`https://app.example.test/put/attachments/x`)
-    expect(sent[0].init).toMatchObject({ method: `PUT`, headers: { "content-type": `image/png` } })
-    status = 403
-    await expect(files.put(`attachments/y`, { bytes: PNG.slice(), contentType: `image/png` }))
-      .rejects.toThrow(`HTTP 403`)
-  } finally {
-    globalThis.fetch = realFetch
-  }
-})
-
-Deno.test("the store's settings come from the environment, and every missing one is named", () => {
-  const env = new Map([
-    [`S3_ENDPOINT`, `http://garage:3900`],
-    [`S3_REGION`, `garage`],
-    [`S3_BUCKET`, `files`],
-    [`S3_ACCESS_KEY_ID`, `id`],
-  ])
-  expect(() => fileStoreSettingsFrom(env)).toThrow(
-    `Missing environment variables: S3_SECRET_ACCESS_KEY`,
-  )
-  env.set(`S3_SECRET_ACCESS_KEY`, `secret`)
-  expect(fileStoreSettingsFrom(env)).toEqual({
-    endpoint: `http://garage:3900`,
-    publicEndpoint: `http://garage:3900`,
-    region: `garage`,
-    bucket: `files`,
-    accessKeyId: `id`,
-    secretAccessKey: `secret`,
-  })
 })

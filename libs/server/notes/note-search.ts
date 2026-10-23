@@ -26,7 +26,9 @@ export function prefixQuery(text: string): string | null {
 /**
  * A row of the search query: the hit, and where its snippet sits in the body. `ts_headline` drops
  * the punctuation before the first word and after the last, so `lead` and `tail` carry the body's
- * own, and the snippet starts or ends the body when it does with them.
+ * own, and the snippet starts or ends the body when it does with them. A token such as the path
+ * `/usr/bin` keeps its punctuation, so `lead` and `tail` are empty when the snippet already starts
+ * or ends the body without them.
  */
 interface SearchRow {
   id: string
@@ -66,10 +68,12 @@ export async function searchNotesForMember(
         found.title,
         found.updated_at,
         found.snippet,
-        found.lead,
-        found.tail,
-        found.body = '' OR starts_with(found.body, found.lead || found.snippet) AS starts_body,
-        found.body = '' OR
+        CASE WHEN starts_with(found.body, found.snippet) THEN '' ELSE found.lead END AS lead,
+        CASE WHEN right(found.body, length(found.snippet)) = found.snippet THEN '' ELSE found.tail
+          END AS tail,
+        starts_with(found.body, found.snippet) OR
+          starts_with(found.body, found.lead || found.snippet) AS starts_body,
+        right(found.body, length(found.snippet)) = found.snippet OR
           right(found.body, length(found.snippet || found.tail)) = found.snippet || found.tail
           AS ends_body
       FROM (

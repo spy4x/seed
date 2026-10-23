@@ -69,6 +69,21 @@ test("a new address signs up by the mailed link, which works once", async ({ pag
   }
 })
 
+test("Back to sign in opens the sign-in form with the address typed on the link page", async ({ page }) => {
+  const email = `e2e-link-back-${uuidV7().slice(-8)}@example.com`
+  const button = page.locator("[data-e2e=link-sign-in]")
+  await gotoApp(page, "/sign-in", button)
+  await button.click()
+  await expect(page).toHaveURL("/sign-in/link")
+  await page.locator("[data-e2e=sign-in-link-email]").fill(email)
+
+  await page.locator("[data-e2e=sign-in-link-back]").click()
+
+  await expect(page).toHaveURL("/sign-in")
+  await expect(page.locator("[data-e2e=auth-form-login]")).toHaveValue(email)
+  await expect(page.locator("[data-e2e=auth-form-password]")).toBeFocused()
+})
+
 test("an account signs in by a link asked for on the link page, and sign-in names it next time", async ({ page, request }) => {
   const email = `e2e-link-known-${uuidV7().slice(-8)}@example.com`
   await cleanup(request, email)

@@ -1,6 +1,6 @@
 import type postgres from "postgres"
 import { ATTACHMENT_UPLOAD_HOURS } from "@domain/notes"
-import type { FileStore } from "@server/files/files.ts"
+import { type ServerFiles, STAGING_PREFIX } from "@server/files/files.ts"
 import { PostgresAttachmentRepository } from "./postgres-attachment-repository.ts"
 
 /** What one clean-up run did. */
@@ -27,12 +27,13 @@ const DELETION_BATCH = 500
  */
 export async function cleanUpAttachments(
   sql: postgres.Sql,
-  files: Pick<FileStore, "delete" | "removeStaging">,
+  files: Pick<ServerFiles, "delete" | "deleteOlderThan">,
   now: Date = new Date(),
 ): Promise<AttachmentCleanupResult> {
   const repository = new PostgresAttachmentRepository(sql)
   const uploads = (await repository.removeStaleUploads(now)).length
-  const staging = await files.removeStaging(
+  const staging = await files.deleteOlderThan(
+    STAGING_PREFIX,
     new Date(now.getTime() - ATTACHMENT_UPLOAD_HOURS * 60 * 60_000),
   )
   let deleted = 0

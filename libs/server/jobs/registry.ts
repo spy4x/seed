@@ -10,7 +10,6 @@
 
 import type postgres from "postgres"
 import { stepsJob } from "@spy4x/server/outbox"
-import type { FileStore } from "../files/files.ts"
 import { describeCron, parseCron } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
@@ -29,6 +28,15 @@ import {
   accountRestoredMailJob,
 } from "./account-deletion.ts"
 import { API_TOKEN_CREATED_MAIL_JOB, apiTokenCreatedMailJob } from "./api-token-mail.ts"
+import type { ServerFiles } from "../files/files.ts"
+import {
+  DATA_EXPORT_BUILD_JOB,
+  DATA_EXPORT_EXPIRE_JOB,
+  DATA_EXPORT_MAIL_JOB,
+  dataExportBuildJob,
+  dataExportExpireJob,
+  dataExportMailJob,
+} from "./data-export.ts"
 import { billingNoticeMailJob } from "./billing-notice-mail.ts"
 import { cleanupSteps } from "./cleanup.ts"
 import { EMAIL_CODE_MAIL_JOB, emailCodeMailJob } from "./email-code-mail.ts"
@@ -63,8 +71,8 @@ export interface JobDeps {
   graceDays: number
   trialRequiresCard: boolean
   sampleData: StarterDataPlan["sampleData"]
-  /** The file store, or `null` in a test that runs without one. */
-  files: FileStore | null
+  /** Where the worker keeps the files it makes, or `null` without file store settings. */
+  files: ServerFiles | null
 }
 
 /**
@@ -235,6 +243,27 @@ export const JOBS: readonly JobDefinition[] = [
     label: `Account deletion for good`,
     about: { userIn: `account_deletions` },
     handler: ({ sql, mail }) => accountHardDeleteJob({ sql, log: mail.log }),
+  }),
+  defineJob({
+    kind: DATA_EXPORT_BUILD_JOB,
+    label: `Data export`,
+    about: { userIn: `data_exports` },
+    handler: ({ sql, files }) => dataExportBuildJob({ sql, files }),
+  }),
+  defineJob({
+    kind: DATA_EXPORT_MAIL_JOB,
+    label: `Data export ready email`,
+    sendsMail: true,
+    about: { userIn: `data_exports` },
+    handler: (deps) => dataExportMailJob(mailDeps(deps)),
+  }),
+  defineJob({
+    kind: DATA_EXPORT_EXPIRE_JOB,
+    label: `Data export expiry`,
+    about: { userIn: `data_exports` },
+    cannotCancel: `Cancelling it would keep the person's file past its days. ` +
+      `The nightly cleanup deletes it a day later anyway.`,
+    handler: ({ sql, files }) => dataExportExpireJob({ sql, files }),
   }),
   defineJob({
     kind: STARTER_DATA_JOB,

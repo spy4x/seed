@@ -184,8 +184,8 @@ function fakeFiles() {
   const stored = new Map<string, string>()
   return {
     stored,
-    put: (key: string, file: { contentType: string }) => {
-      stored.set(key, file.contentType)
+    put: (key: string, bytes: Uint8Array) => {
+      stored.set(key, String(bytes.length))
       return Promise.resolve()
     },
   }

@@ -168,10 +168,11 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.91.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
-    // the redirect-path check of sign-in's `next`, the password check without a session, billing,
-    // the provider's name and picture, the healthcheck's HTTP mode, a key giving up its address,
-    // safe Markdown and reading time, copying an object inside the S3 store).
+    // spy4x/ts-libs 1.91.0 (cron schedules, passkeys, idempotency, keyset cursor, lockout, offline
+    // outbox, e-mail proof, the redirect-path check of sign-in's `next`, the password check without
+    // a session, billing, the provider's name and picture, the healthcheck's HTTP mode, a key
+    // giving up its address, safe Markdown and reading time, copying an object inside the S3
+    // store).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
     "@spy4x/validation": "jsr:@spy4x/validation@1.91.0",
@@ -194,9 +195,9 @@
     // client
     // spy4x/preact-components 10.8.0. Every package is published at one version together, so all
     // six move in one change, and so does the npm copy of `@spy4x/preact-system` further down
-    // (the Playwright config imports it under that name). They take preact and the signals packages as caret ranges, so the
-    // versions below are the one copy that loads. wouter-preact must stay on the version they pin,
-    // or two copies load.
+    // (the Playwright config imports it under that name). They take preact and the signals
+    // packages as caret ranges, so the versions below are the one copy that loads. wouter-preact
+    // must stay on the version they pin, or two copies load.
     "@spy4x/preact-charts": "jsr:@spy4x/preact-charts@10.8.0",
     "@spy4x/preact-icons": "jsr:@spy4x/preact-icons@10.8.0",
     "@spy4x/preact-signals": "jsr:@spy4x/preact-signals@10.8.0",
@@ -215,7 +216,8 @@
     "@std/fs": "jsr:@std/fs@1.0.24",
     "@std/expect": "jsr:@std/expect@1.0.17",
     "@std/testing": "jsr:@std/testing@1.0.16",
-    // docs/screenshots/admin-video.ts renders the video's cards; the same version as apps/spa and libs/ui.
+    // docs/screenshots/admin-video.ts renders the video's cards; the same version as apps/spa and
+    // libs/ui.
     "preact-render-to-string": "npm:preact-render-to-string@6.7.0",
     "@std/encoding": "jsr:@std/encoding@1.0.11",
     "@std/jsonc": "jsr:@std/jsonc@1.0.3",
@@ -230,14 +232,18 @@
     // from it. It moves with the `@spy4x/*` packages.
     "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.91.0",
 
-    // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components (spy4x/preact-components#121)
+    // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components
+    // (spy4x/preact-components#121)
     "arktype": "npm:arktype@2.2.3",
 
     // server/kv
     "@iuioiua/redis": "jsr:@iuioiua/redis@1.1.10",
 
     // server/db
-    "postgres": "npm:postgres@3.4.7"
+    "postgres": "npm:postgres@3.4.7",
+
+    // server/jobs: the person's data export is a ZIP (#229); no shared library writes one.
+    "fflate": "npm:fflate@0.8.2"
     // #endregion Dependencies
   },
   "exclude": [

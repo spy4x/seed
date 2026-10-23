@@ -198,8 +198,9 @@ Deno.test("note attachments against Postgres", async (t) => {
             deleted.push(key)
             return Promise.resolve()
           },
-          removeStaging: (before: Date) => {
+          deleteOlderThan: (prefix: string, before: Date) => {
             sweeps.push(before)
+            expect(prefix).toBe(`uploads/tmp/`)
             return Promise.resolve(0)
           },
         }

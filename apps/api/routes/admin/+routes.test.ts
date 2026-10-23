@@ -108,7 +108,7 @@ function buildApp(
   const modules = ADMIN_API_MODULES.map((module) => {
     switch (module.id) {
       case `users`:
-        return createAdminUsersRoutes({ ...context, admin })
+        return createAdminUsersRoutes({ ...context, admin, dataExports: () => Promise.resolve([]) })
       case `dashboard`:
         return createAdminStatsRoutes({
           limit: passThrough,

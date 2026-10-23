@@ -27,6 +27,7 @@ import {
   THEME_NAMES,
 } from "./preferences.tsx"
 import { AccountSection } from "./profile-account.tsx"
+import type { DataExportRowProps } from "./profile-export.tsx"
 import { PushDevicesSection } from "./profile-notifications.tsx"
 import { SecuritySection } from "./profile-security.tsx"
 import {
@@ -107,7 +108,7 @@ export const PROFILE_SECTION_TEXT: Record<
   ProfileSectionId,
   { label: string; description: string }
 > = {
-  account: { label: "Account", description: "Your name and e-mail address." },
+  account: { label: "Account", description: "Your name, e-mail address and a copy of your data." },
   security: {
     label: "Sign-in and security",
     description: "How you sign in, and where your account is signed in.",
@@ -223,6 +224,8 @@ export interface ProfileScreenProps {
    * keep it, shows no password or two-factor rows, and deletes with a typed word.
    */
   guest?: GuestAccountDeleteProps
+  /** The Account section's "Your data" row (#229). Without it the row is left out. */
+  dataExport?: DataExportRowProps
   navigate?: Navigate
 }
 
@@ -363,6 +366,7 @@ function ProfileSection(
           onRetryEmail={props.onRetryEmail}
           providerProof={providerProof}
           guestRow={props.guest && <GuestAccountRow navigate={props.navigate} />}
+          dataExport={props.dataExport}
         />
       )
     case "security":

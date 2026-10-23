@@ -27,7 +27,8 @@ export function linkRequestFailure(answer: SignInLinkRequestAnswer): string {
 /**
  * Wires `LinkRequestScreen` (#391). The address a link went to and when are kept for the tab
  * (`sessionStorage`), so a reload stays on "Check your inbox" with its wait; "Use a different
- * address" forgets them. An address handed over by the sign-in page fills the field.
+ * address" forgets them. An address handed over by the sign-in page fills the field, and "Back to
+ * sign in" hands the typed one back (#406).
  */
 export function LinkRequestView() {
   const [, navigate] = useLocation()
@@ -84,6 +85,10 @@ export function LinkRequestView() {
         forgetSentLink()
         setSent(null)
         setError(null)
+      }}
+      onBackToSignIn={() => {
+        const typed = email.trim()
+        if (typed) handOffAddress(typed)
       }}
       next={next}
       navigate={navigate}

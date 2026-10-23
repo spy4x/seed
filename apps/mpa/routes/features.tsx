@@ -197,14 +197,14 @@ const TIERS: readonly Tier[] = [
         eyebrow: `Privacy`,
         title: `Accounts people can leave`,
         lead:
-          `People delete their account from the profile and have 7 days to change their mind. ` +
-          `Read notifications are deleted after 90 days.`,
+          `People download a copy of their data and delete their account from the profile, with ` +
+          `7 days to change their mind. Read notifications are deleted after 90 days.`,
         facts: [
+          `Download my data: a ZIP of JSON and CSV files, prepared in the background, kept 7 days`,
           `Deletion waits 7 days; signing in again cancels it`,
           `Nightly clean-up of read notifications, dead invitations and old audit events`,
         ],
         notYet: [
-          { label: `Downloading an account's data`, issue: issue(229) },
           { label: `Translations: the app is English only`, issue: issue(216) },
         ],
         code: {

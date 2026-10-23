@@ -13,11 +13,12 @@ import { readSubscribersSetup, subscribersOffWarning } from "@server/subscribers
 // The API's own reading of the billing variables, so both processes run one provider.
 import { readBillingSetup } from "@server/billing/setup.ts"
 import { isDemoMode } from "@server/auth/demo-accounts.ts"
-import { type FileStore, fileStoreSettingsFrom, s3FileStore } from "@server/files/files.ts"
 import { AppDbBase } from "../api/services/db-base.ts"
 import { demoDataSeed, startDemoReset } from "./demo/reset.ts"
 import { isDemoSeeded, resetDemo } from "./demo/run.ts"
 import { seedWorkspace } from "./demo/seed.ts"
+import { s3ServerFiles } from "@server/files/files.ts"
+import { readServerFilesSetup } from "@server/files/settings.ts"
 
 const sql = createSqlFromEnv(Deno.env.toObject(), {
   transform: postgres.camel,
@@ -29,15 +30,6 @@ const sql = createSqlFromEnv(Deno.env.toObject(), {
 })
 if (!sql) {
   console.error("❌ Missing environment variable: DB_HOST")
-  Deno.exit(1)
-}
-
-// The nightly clean-up deletes removed files and abandoned uploads from the file store.
-let files: FileStore
-try {
-  files = s3FileStore(fileStoreSettingsFrom(Deno.env))
-} catch (error) {
-  console.error(`❌ ${(error as Error).message}`)
   Deno.exit(1)
 }
 
@@ -70,6 +62,13 @@ if (subscribersWarning) console.warn(subscribersWarning)
 const billingSetup = readBillingSetup(systemEnv, Deno.env.get("ENV") === "dev" ? "dev" : "prod", {
   webhooks: false,
 })
+
+// A person's data export (docs/data-export.md) is built here and kept in the file store, and the
+// nightly clean-up deletes removed attachments and abandoned uploads from it. Without its settings
+// the export jobs fail and are retried, so a fixed env file still delivers them.
+const filesSetup = readServerFilesSetup(Deno.env)
+if (!filesSetup.success) console.warn(filesSetup.error)
+const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
 
 // The public demo (docs/demo.md) gives every new account its own sample groups.
 const demo = isDemoMode(Deno.env.toObject())

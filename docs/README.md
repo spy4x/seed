@@ -18,6 +18,7 @@ Pick the guide that fits. The [README](../README.md) has the pitch and the quick
   person gets.
 - [Backups](backups.md): set up, restore, rehearse.
 - [The file store](files.md): Garage or another S3 store, signed uploads and downloads.
+- [A person's data export](data-export.md): Download my data, what the ZIP holds and how it expires.
 - [Capacity](capacity.md): load tests and how many users one server carries.
 - [Postgres 18 upgrade](postgres-18-upgrade.md): once per server that ran Postgres 16.
 - [Billing](billing.md)

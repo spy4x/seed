@@ -1360,6 +1360,51 @@ async function openDeletion(): Promise<void> {
   await click("[data-e2e=account-delete-open]")
 }
 
+describe("the Your data row on the Account section", () => {
+  const dataExport = {
+    exportState: null,
+    pending: false,
+    error: null,
+    onRequest: () => {},
+    downloadHref: "/api/account/data-export/download",
+  }
+
+  it("lists Your data last in the Account section, and leaves it out without the app's wiring", async () => {
+    await mount(
+      <ProfileScreen
+        {...profileDefaults}
+        section="account"
+        emailChange={emailChange}
+        dataExport={dataExport}
+      />,
+    )
+    const rows = [...document.querySelectorAll("[data-e2e=data-export-row]")]
+    expect(rows).toHaveLength(1)
+    // The last row of the same list as the name.
+    const list = find("[data-e2e=profile-name]").closest("dl")
+    expect(list?.lastElementChild === rows[0]).toBe(true)
+
+    await rerender(
+      <ProfileScreen {...profileDefaults} section="account" emailChange={emailChange} />,
+    )
+    expect(document.querySelectorAll("[data-e2e=data-export-row]")).toHaveLength(0)
+  })
+
+  it("shows a refused request under the list", async () => {
+    await mount(
+      <ProfileScreen
+        {...profileDefaults}
+        section="account"
+        emailChange={emailChange}
+        dataExport={{ ...dataExport, error: { kind: "network" } }}
+      />,
+    )
+    expect(find("[data-e2e=data-export-error]").textContent).toContain(
+      "Could not ask for your file.",
+    )
+  })
+})
+
 describe("deleting the account from the profile", () => {
   it("shows Delete account as a section of its own, and leaves it empty without the app's wiring", async () => {
     await mount(withDeletion())
@@ -1370,6 +1415,14 @@ describe("deleting the account from the profile", () => {
 
     await rerender(<ProfileScreen {...profileDefaults} section="danger-zone" />)
     expect(document.querySelector("[data-e2e=danger-zone]")).toBeNull()
+  })
+
+  it("offers a copy of the person's data before they delete, linking to the Account section's row", async () => {
+    await mount(withDeletion())
+
+    const link = find<HTMLAnchorElement>("[data-e2e=account-delete-export-link]")
+    expect(link.textContent).toBe("Download your data")
+    expect(link.getAttribute("href")).toBe(`${profilePath("account")}#your-data`)
   })
 
   it("sets the danger zone apart as a card with a danger-coloured border", async () => {

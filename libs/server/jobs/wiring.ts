@@ -16,7 +16,7 @@ import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import { JOB_RETRY } from "./job-failures.ts"
 import { JOB_AGGREGATE, JOB_AGGREGATE_ID, LEGACY_JOB_AGGREGATE_ID } from "./jobs.ts"
 import { type JobDefinition, type JobDeps, JOBS } from "./registry.ts"
-import type { FileStore } from "../files/files.ts"
+import type { ServerFiles } from "../files/files.ts"
 
 /**
  * The worker's outbox processor: group changes go to the notifier, and jobs to the handlers of
@@ -44,7 +44,8 @@ import type { FileStore } from "../files/files.ts"
  * With `subscribers`, the subscriber jobs sign and mail confirm links, welcomes and issues. Without
  * it, they drop what they find.
  *
- * `jobs` is {@link JOBS} unless a test passes its own list.
+ * `jobs` is {@link JOBS} unless a test passes its own list. `files` is where the data export jobs
+ * keep the person's file; without it they fail and are retried (docs/data-export.md).
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
@@ -57,7 +58,7 @@ export function createOutboxProcessor(
   trialRequiresCard = true,
   sampleData: StarterDataPlan["sampleData"] = null,
   jobs: readonly JobDefinition[] = JOBS,
-  files: FileStore | null = null,
+  files: ServerFiles | null = null,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {

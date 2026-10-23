@@ -189,6 +189,7 @@ describe("SearchPalette", () => {
       "Open overview",
       "Open notifications",
       "Open profile | Name, e-mail address, password, two-factor sign-in",
+      "Download my data | A ZIP of your profile, groups and notes",
     ])
   })
 
@@ -320,6 +321,23 @@ describe("SearchPalette", () => {
     await open()
     await type("register")
     expect(listed().some((row) => row.startsWith("Keep your account"))).toBe(false)
+  })
+
+  it("finds Download my data by the words a person would try, and opens the Account section's row", async () => {
+    const { picked } = await mount()
+    for (const query of ["GDPR", "export", "скачать данные", "archive"]) {
+      await open()
+      await type(query)
+      const row = [...document.querySelectorAll("[role=option]")]
+        .find((candidate) => text(candidate).startsWith("Download my data"))
+      expect(row, query).toBeDefined()
+      await act(() => {
+        row!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+      })
+    }
+    expect(picked).toEqual(
+      Array(4).fill({ kind: "page", href: "/profile/account#your-data" }),
+    )
   })
 
   it("shows the error line when the search fails", async () => {

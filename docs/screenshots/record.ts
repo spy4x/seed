@@ -4,9 +4,11 @@
  * running app, with neutral demo data.
  *
  * Needs the app reachable as one origin (API under /api, SPA everywhere else) on a throw-away
- * database in development mode: the run first deletes the demo user through the development route
- * `/api/test/cleanup-user`; the GIF signs that user up, reading the mailed code
- * from the development route `/api/test/last-mail`, and the stills sign that user in.
+ * database in development mode: the run deletes the demo user through the development route
+ * `/api/test/cleanup-user` before it starts and again when it ends, also when it fails, so a later
+ * capture of that database (the admin panel video's Users list) never shows it; the GIF signs that
+ * user up, reading the mailed code from the development route `/api/test/last-mail`, and the
+ * stills sign that user in.
  * `deno task dev` behind `deno task proxy:start` serves it at http://app.localhost. Also needs
  * `ffmpeg` on the PATH for the GIF.
  *
@@ -52,18 +54,28 @@ function newContext(browser: Browser, theme: Theme, scale: number): Promise<Brow
   })
 }
 
-/**
- * Deletes the demo user a previous run left, through the development route, and waits for the
- * first load of both signed-out pages, which is slow while the dev server bundles dependencies.
- */
-async function warmUp(browser: Browser): Promise<void> {
+/** Deletes the demo user, if there is one, through the development route. */
+async function deleteDemoUser(browser: Browser): Promise<void> {
   const context = await newContext(browser, "light", 1)
   try {
-    const page = await context.newPage()
-    const cleanup = await page.request.post("/api/test/cleanup-user", {
+    const cleanup = await context.request.post("/api/test/cleanup-user", {
       data: { login: DEMO.email },
     })
     if (!cleanup.ok()) throw new Error(`cleanup-user answered ${cleanup.status()}`)
+  } finally {
+    await context.close()
+  }
+}
+
+/**
+ * Deletes the demo user a previous run left, and waits for the first load of both signed-out
+ * pages, which is slow while the dev server bundles dependencies.
+ */
+async function warmUp(browser: Browser): Promise<void> {
+  await deleteDemoUser(browser)
+  const context = await newContext(browser, "light", 1)
+  try {
+    const page = await context.newPage()
     const pages = [["/sign-in", "Welcome back"], ["/sign-up", "Create your account"]]
     for (const [path, name] of pages) {
       await page.goto(path)
@@ -377,6 +389,10 @@ try {
   if (!darkProfile) throw new Error("no dark profile capture")
   await Deno.writeFile(`${OUT_DIR}social-preview.png`, await socialPreview(browser, darkProfile))
 } finally {
-  await browser.close()
-  await Deno.remove(videoDir, { recursive: true })
+  try {
+    await deleteDemoUser(browser)
+  } finally {
+    await browser.close()
+    await Deno.remove(videoDir, { recursive: true })
+  }
 }

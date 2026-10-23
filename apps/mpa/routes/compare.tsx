@@ -363,8 +363,7 @@ function Table(): JSX.Element {
         />
         <ul class="flex max-w-3xl list-disc flex-col gap-2 pl-6 text-sm text-muted">
           <li>
-            Seed's gaps (translations, downloading an account's data) are not built yet; do not
-            choose Seed for them today. The{" "}
+            Seed's gap (translations) is not built yet; do not choose Seed for it today. The{" "}
             <a href="/#status" class="text-primary underline">status list</a> says what works.
           </li>
           <li>

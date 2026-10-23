@@ -919,8 +919,9 @@ services:
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}
-      # The file store, as the API reaches it: the nightly clean-up deletes removed files and
-      # abandoned uploads (docs/files.md).
+      # The file store (docs/files.md): the worker keeps a person's data export there
+      # (docs/data-export.md) and deletes removed attachments and abandoned uploads. The same store
+      # and key as the API's.
       - S3_ENDPOINT=${S3_ENDPOINT:-http://${PROJECT}-garage:3900}
       - S3_REGION=${S3_REGION:-garage}
       - S3_BUCKET=${S3_BUCKET:-${PROJECT}-files}

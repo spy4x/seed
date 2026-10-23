@@ -33,7 +33,8 @@ What a person gets:
 - On the profile, a person links and unlinks providers. A provider account links whatever its
   e-mail address, and linking never changes another person's confirmed account; one that already
   signs in to another account here is refused, and the page says so. The last way into an account
-  cannot be unlinked, and unlinking a method signs out the devices that signed in with it.
+  cannot be unlinked; an address another method holds proven counts as a way in, since a sign-in
+  link reaches it. Unlinking a method signs out the devices that signed in with it.
   Unlinking asks for the password, or for a provider sign-in of a moment ago when the account has
   none, as linking does. Every link and unlink is mailed to the account's proven address.
 - Linking differs from signing up in one case. When the provider has verified an address that

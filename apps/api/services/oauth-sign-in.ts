@@ -38,7 +38,8 @@
  *   its address only when the provider vouches for it and nobody else has proven it; adding such
  *   a key deletes another user's unproven claim to that address, as a sign-up does, and that
  *   user gets the same audit row.
- * - **Unlinking.** Only a provider method, and never the last way in. The key's sessions end with
+ * - **Unlinking.** Only a provider method, and never the last way in. An address another key holds
+ *   proven counts as a way in, since a sign-in link reaches it (#406). The key's sessions end with
  *   it through the foreign key, so unlinking the method this device signed in with signs it out.
  * - **A sign-in a moment ago stands in for the password (#384).** An account made with a provider
  *   has no password to confirm a deletion, a first password or a new address with. Its proof is
@@ -400,6 +401,10 @@ export function createOAuthOperations(
       const kind = kindOf(key)
       return kind === null ? [] : [{ key, kind }]
     })
+    // A sign-in link reaches the account while another key holds its address proven: the address
+    // stays the account's after `key` goes, so the link still finds it (#406).
+    const linkOutlives = (key: AuthKey) =>
+      keys.some((other) => other.id !== key.id && other.email !== null && other.provenAt !== null)
     return {
       methods: ways.map(({ key, kind }) => ({
         id: key.id,
@@ -407,7 +412,7 @@ export function createOAuthOperations(
         // An older account's password key carries a username and no address.
         email: key.email ?? (kind === "password" ? key.subject : null),
         current: key.id === currentKeyId,
-        canUnlink: kind !== "password" && ways.length > 1,
+        canUnlink: kind !== "password" && (ways.length > 1 || linkOutlives(key)),
         passkey: kind === "passkey" ? passkeyOf(key.id) : undefined,
       })),
       available: [...enabled.keys()].filter((id) => !ways.some((way) => way.kind === id)),
