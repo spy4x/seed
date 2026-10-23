@@ -158,8 +158,7 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
           <Stack>
             <p class="text-sm text-muted">
               Open the chat with <strong class="text-foreground">{bot}</strong>{" "}
-              and press Start. That sends your code, and this window closes once your account is
-              linked.
+              and press Start, then Link. This window closes once your account is linked.
             </p>
             <Button
               href={code.url}
