@@ -733,6 +733,17 @@ describe("NoteEditorScreen tags", () => {
     expect(urgentChip?.querySelector("svg")).not.toBeNull()
   })
 
+  it("draws each tag chip in the tag's own colour, filled when ticked and as a dot when not", async () => {
+    await mount(<NoteEditorScreen {...editorDefaults} />)
+    const chip = (name: string) =>
+      [...find("[data-e2e=note-tags-picker]").querySelectorAll("button")].find((b) =>
+        b.textContent === name
+      )!
+    expect(chip("Urgent").getAttribute("style")).toContain(`background-color:${urgent.color}`)
+    expect(chip("Home").querySelector("span[aria-hidden=true]")?.getAttribute("style"))
+      .toContain(`background-color:${home.color}`)
+  })
+
   it("takes a tag off when the person unticks it", async () => {
     const change = spy<[NoteDraft]>()
     await mount(<NoteEditorScreen {...editorDefaults} onChange={change.fn} />)
