@@ -239,7 +239,7 @@ describe("dataExportReadyMail", () => {
     expect(mail.subject).toBe("Your data is ready")
     expect(mail.text).toContain("Download it from your profile until")
     expect(mail.text).toContain("2026")
-    expect(mail.html).toContain(`href="https://app.example.com/profile/account"`)
+    expect(mail.html).toContain(`href="https://app.example.com/profile/account#your-data"`)
     expect(`${mail.text}${mail.html}`).not.toContain("data-export")
     expect(mail.text).toContain("If you did not ask for this, change your password")
   })

@@ -311,7 +311,7 @@ export function dataExportReadyMail(
   const ready = `Download it from your profile until ${billingDate(expiresAt)}.`
   const notYou =
     "If you did not ask for this, change your password and sign out of your other devices."
-  const link = new URL("/profile/account", brand.webAppUrl).href
+  const link = new URL("/profile/account#your-data", brand.webAppUrl).href
   return {
     to,
     subject: "Your data is ready",
