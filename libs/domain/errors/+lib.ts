@@ -96,3 +96,35 @@ export const apiErrorBodySchema = type({
 
 /** An error body; see {@link apiErrorBodySchema}. */
 export type ApiErrorBody = typeof apiErrorBodySchema.infer
+
+/** What an error body says: `code`, `message` and the optional parts. */
+export type ApiErrorAnswer = ApiErrorBody[`error`]
+
+/** {@link apiErrorBodySchema} that drops a part a newer server added and this client does not know. */
+const readableErrorBody = type({
+  error: {
+    "+": `delete`,
+    code: type.enumerated(...ERROR_CODES),
+    message: `string`,
+    "reason?": `string`,
+    "fields?": fieldErrorsSchema,
+    "details?": `unknown`,
+    "requestId?": `string`,
+  },
+})
+
+/**
+ * The one reader of an error body for a client that calls `fetch` itself, such as one that needs
+ * `details`, which `apiFetch` leaves out. `null` for a body in any other shape, such as a proxy's
+ * page or an empty body: the answer is not the API's.
+ *
+ * @example
+ * ```ts
+ * const error = readApiError(await response.json().catch(() => null))
+ * if (error?.reason === `IMPORT_REFUSED`) showProblems(error.details)
+ * ```
+ */
+export function readApiError(body: unknown): ApiErrorAnswer | null {
+  const read = readableErrorBody(body)
+  return read instanceof type.errors ? null : read.error
+}
