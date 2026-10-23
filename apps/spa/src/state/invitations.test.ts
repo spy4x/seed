@@ -169,6 +169,23 @@ describe("invitations store", () => {
     expect(store.revokeError.value).toEqual({ invitationId: "i-2", message: "Only the owner" })
   })
 
+  it("words a refusal of the shared guards in its own sentence, not in theirs", async () => {
+    const { store } = harness({
+      "GET /api/groups/g-1/invitations": [200, { invitations: [row] }],
+      "DELETE /api/groups/g-1/invitations/i-1": [429, {
+        error: { code: "rate_limited", message: "Too many requests" },
+      }],
+    })
+    await store.open("g-1")
+
+    expect(await store.revoke("i-1")).toBe(false)
+
+    expect(store.revokeError.value).toEqual({
+      invitationId: "i-1",
+      message: "Something went wrong. Try again.",
+    })
+  })
+
   it("previews a link and says why it no longer works in the API's words", async () => {
     const { store, calls } = harness({
       "POST /api/invitations/preview": [410, {
