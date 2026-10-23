@@ -32,6 +32,7 @@ COPY libs/server/api-tokens/deno.json ./libs/server/api-tokens/deno.json
 COPY libs/server/auth/deno.json ./libs/server/auth/deno.json
 COPY libs/server/billing/deno.json ./libs/server/billing/deno.json
 COPY libs/server/blog/deno.json ./libs/server/blog/deno.json
+COPY libs/server/files/deno.json ./libs/server/files/deno.json
 COPY libs/server/groups/deno.json ./libs/server/groups/deno.json
 COPY libs/server/jobs/deno.json ./libs/server/jobs/deno.json
 COPY libs/server/mail/deno.json ./libs/server/mail/deno.json

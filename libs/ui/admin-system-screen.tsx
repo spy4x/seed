@@ -161,7 +161,7 @@ function SystemBody(
     onOpenRetry: (job: AdminFailedJob) => void
   },
 ): JSX.Element {
-  const { database, cache, queue, backup, migrations, build } = snapshot
+  const { database, cache, fileStore, queue, backup, migrations, build } = snapshot
   const summary = SUMMARY[snapshot.health] ?? SUMMARY[AdminHealth.ERROR]
   return (
     <>
@@ -190,6 +190,11 @@ function SystemBody(
         <StatusCard title="Cache (Valkey)" health={cache.health} dataE2E="admin-system-cache">
           <Fact label="Reachable">
             {cache.reachable ? `Yes, in ${cache.latencyMs} ms` : "No answer"}
+          </Fact>
+        </StatusCard>
+        <StatusCard title="File store (S3)" health={fileStore.health} dataE2E="admin-system-files">
+          <Fact label="Reachable">
+            {fileStore.reachable ? `Yes, in ${fileStore.latencyMs} ms` : "No answer"}
           </Fact>
         </StatusCard>
         <StatusCard
@@ -242,7 +247,11 @@ function SystemBody(
             {migrations.latestAt ? <When at={migrations.latestAt} /> : "Never"}
           </Fact>
         </StatusCard>
-        <StatusCard title="API build" dataE2E="admin-system-build">
+        <StatusCard
+          title="API build"
+          dataE2E="admin-system-build"
+          class="sm:col-span-2 xl:col-span-3"
+        >
           <Fact label="Version">{build.version ?? "Development build"}</Fact>
           <Fact label="Commit">
             <span class="font-mono text-xs">
@@ -266,17 +275,19 @@ function SystemBody(
  * The hint goes after the facts' `<dl>`, never inside it: a `<dl>` holds only `dt` and `dd` groups.
  */
 function StatusCard(
-  { title, health, dataE2E, hint, children }: {
+  { title, health, dataE2E, hint, class: className, children }: {
     title: string
     health?: AdminHealth
     dataE2E: string
     /** One quiet line under the facts, such as when the card warns. */
     hint?: ComponentChildren
+    /** Extra classes on the card, such as a column span. */
+    class?: string
     children: ComponentChildren
   },
 ): JSX.Element {
   return (
-    <Card data-e2e={dataE2E}>
+    <Card data-e2e={dataE2E} class={className}>
       <CardHeader
         title={title}
         headingLevel={2}

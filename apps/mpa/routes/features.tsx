@@ -397,12 +397,13 @@ const TIERS: readonly Tier[] = [
         facts: [
           `Traefik in front, with automatic certificates`,
           `Postgres and Valkey beside the apps`,
+          `Garage, an S3 file store, with signed upload and download links`,
           `VictoriaMetrics, VictoriaLogs and Grafana, with alerts`,
           `An opt-in daily encrypted restic backup of the database, and a written restore`,
           `Release images published from CI when you push a version tag`,
         ],
         notYet: [{
-          label: `File uploads: no file store is bundled yet`,
+          label: `File uploads: no screen uses the file store yet`,
           issue: issue(225),
         }],
         code: { label: `Read the Compose files`, href: source(`infra/compose/`) },

@@ -32,6 +32,8 @@ Defined in `infra/compose/`:
   (`--requirepass`; the API sends it with `AUTH` on every connect and reconnect, and neither the API
   nor Valkey starts without it). The password reaches the container through its environment, so it
   is not in the command line; the healthcheck reads it from `REDISCLI_AUTH`.
+- **Garage** - the file store, an S3 server, with the `files` profile: [files.md](files.md).
+  Browsers reach its bucket at `https://<DOMAIN>/<bucket>/` with signed URLs; no port is published.
 - **Migrate** - one-shot: runs `deno task db:migrate` in the API's image on every `compose up`,
   then exits. The API and the worker wait for it to exit with 0 (`service_completed_successfully`),
   so a deploy never serves traffic on the old schema, and a failed migration fails the deploy. With
