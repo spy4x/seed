@@ -8,6 +8,8 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import {
   ADMIN_JOB_NO_FILTER,
   type AdminJobDetail,
@@ -136,6 +138,17 @@ const cleanup: AdminRepeatingJob = {
 }
 
 type Events = unknown[][]
+
+/** `node` in a British, 24-hour format, so a clock time reads `03:00` whatever the machine's. */
+function inGB(node: VNode): VNode {
+  return (
+    <FormatContext.Provider
+      value={createFormatters({ locale: "en-GB", timeZone: "UTC", hourCycle: null })}
+    >
+      {node}
+    </FormatContext.Provider>
+  )
+}
 
 /** The list with `overrides`, recording every search, ask and run it reports. */
 function jobsPage(overrides: Partial<AdminJobsScreenProps> = {}) {
@@ -266,6 +279,15 @@ describe("admin repeating jobs", () => {
     }]])
   })
 
+  it("says the UTC clock time a repeating job would have run at when asked to run it now", async () => {
+    const confirm = { kind: "runRepeating", job: { ...cleanup, sendsMail: true } } as const
+    await mount(inGB(jobsPage({ tab: "repeating", confirm }).node))
+
+    expect(text(`[data-e2e="admin-jobs-confirm"]`)).toContain(
+      "runs now instead of at 21 Oct, 03:00 UTC.",
+    )
+  })
+
   it("shows Running in place of Run now while a worker holds the run", async () => {
     await mount(jobsPage({ tab: "repeating", repeating: [{ ...cleanup, running: true }] }).node)
 
@@ -315,6 +337,19 @@ describe("admin job page", () => {
     const due = find(`[data-e2e="admin-job-facts"] time[datetime="2030-03-04T03:00:00.000Z"]`)
     expect(due.textContent).toMatch(/^in \d+ years?$/)
     expect(due.getAttribute("title")).toContain("2030")
+  })
+
+  it("says the UTC clock time a waiting run was due at when asked to run it now", async () => {
+    const waiting = {
+      ...failedJob,
+      state: AdminJobState.Scheduled,
+      dueAt: "2030-03-04T03:00:00.000Z",
+    }
+    await mount(inGB(jobPage({ job: waiting, dialog: "runNow" }).node))
+
+    expect(text(`[data-e2e="admin-job-dialog"]`)).toContain(
+      "runs now instead of at 4 Mar, 03:00 UTC.",
+    )
   })
 
   it("offers no action but copying the id on a finished run", async () => {

@@ -121,6 +121,19 @@ function When({ at, class: className }: { at: string; class?: string }): JSX.Ele
   )
 }
 
+/**
+ * A moment as a UTC clock time, `28 Oct, 03:00 UTC`, the way the schedules are written. The run-now
+ * confirmations say it, since "instead of at in 2 hours" does not read.
+ */
+function AtClock({ at }: { at: string }): JSX.Element {
+  const utc = useFormat().utc()
+  return (
+    <time dateTime={new Date(at).toISOString()} title={utc.exact(at)}>
+      {`${utc.dayMonth(at)}, ${utc.time(at)} UTC`}
+    </time>
+  )
+}
+
 function WhenCell({ job }: { job: AdminJobRow }): JSX.Element {
   if (jobWaits(job.state)) {
     return (
@@ -585,7 +598,7 @@ function ListConfirm(
               {confirm.job.nextRunAt && (
                 <>
                   {` instead of at `}
-                  <When at={confirm.job.nextRunAt} />
+                  <AtClock at={confirm.job.nextRunAt} />
                 </>
               )}. A repeating job keeps its schedule after this run.
             </>
@@ -836,7 +849,7 @@ function JobConfirm(
       body: (
         <>
           {job.label} runs now instead of at{" "}
-          <When at={job.dueAt} />. A repeating job keeps its schedule after this run.
+          <AtClock at={job.dueAt} />. A repeating job keeps its schedule after this run.
         </>
       ),
       confirm: `Run now`,
