@@ -380,7 +380,7 @@ const TIERS: readonly Tier[] = [
         facts: [
           `A separate app on its own host, with its own session cookie`,
           `Nine modules, from the dashboard to API tokens`,
-          `Every action asks first and is written to the audit log`,
+          `Risky actions ask first, and every action is written to the audit log`,
         ],
         notYet: [
           { label: `Translations: the admin app is English only`, issue: issue(275) },
