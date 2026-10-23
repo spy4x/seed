@@ -51,6 +51,12 @@ export type SubscriptionConfirmState = `confirm` | `done` | `expired` | `invalid
 /** What an unsubscribe link page shows, the same way. */
 export type UnsubscribeState = `confirm` | `done` | `not-recognised` | `error`
 
+/**
+ * The states a token route answers as an error, carried as its `reason`: the link is malformed,
+ * expired or not one of ours, or the link was used too often.
+ */
+export type SubscriberTokenRefusal = `invalid` | `expired` | `not-recognised` | `limited`
+
 // The newsletter module of the operator area (#428): `/api/admin/newsletter/...`.
 
 /** How many subscribers one page of the operator's list holds. */

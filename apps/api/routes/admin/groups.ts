@@ -16,6 +16,7 @@ import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
 import { NoteError, parseNoteWidgetRequest } from "@domain/notes"
 import { NOTE_WIDGET_READERS, type NoteWidgetRequest } from "../../features/notes/widgets.ts"
+import { codeForStatus, errorResponse, validationResponse } from "../../services/error-response.ts"
 
 /** What the group routes call: the reads and the three actions, over the app's database. */
 export interface AdminGroupsService {
@@ -130,10 +131,10 @@ export function createAdminGroupsRoutes(
   async function answer(c: Context<APIContext>, groupId: string, outcome: AdminGroupActOutcome) {
     if (outcome !== AdminGroupActOutcome.Done) {
       const { status, error } = REFUSALS[outcome]
-      return c.json({ error }, status)
+      return errorResponse(c, codeForStatus(status), { message: error, status: status })
     }
     const group = await groups.detail(groupId)
-    if (!group) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+    if (!group) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
     return c.json({ group })
   }
 
@@ -144,12 +145,12 @@ export function createAdminGroupsRoutes(
     .get(`/groups/:id`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       const detail = isUuid(groupId) ? await groups.detail(groupId) : null
-      if (!detail) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      if (!detail) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(detail)
     })
     .get(`/groups/:id/widgets/:widgetId`, limit, async (c) => {
       const groupId = c.req.param(`id`)
-      if (!isUuid(groupId)) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      if (!isUuid(groupId)) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       let request: NoteWidgetRequest
       try {
         request = parseNoteWidgetRequest({
@@ -159,18 +160,20 @@ export function createAdminGroupsRoutes(
           timeZone: c.req.query(`timeZone`),
         })
       } catch (error) {
-        if (error instanceof NoteError) return c.json({ error: error.message }, 400)
+        if (error instanceof NoteError) {
+          return errorResponse(c, `bad_request`, { message: error.message })
+        }
         throw error
       }
       const data = await groups.widget(groupId, c.req.param(`widgetId`), request)
-      if (data === null) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      if (data === null) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(data)
     })
     .post(`/groups/:id/invitations/:invitationId/revoke`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       const invitationId = c.req.param(`invitationId`)
       if (!isUuid(groupId) || !isUuid(invitationId)) {
-        return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+        return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       }
       return await answer(
         c,
@@ -182,21 +185,21 @@ export function createAdminGroupsRoutes(
       const groupId = c.req.param(`id`)
       const userId = userIdOf(c.req.param(`userId`))
       if (!isUuid(groupId) || userId === null) {
-        return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+        return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       }
       return await answer(c, groupId, await groups.removeMember(operatorOf(c), groupId, userId))
     })
     .post(`/groups/:id/transfer`, limit, async (c) => {
       const groupId = c.req.param(`id`)
-      if (!isUuid(groupId)) return c.json({ error: ADMIN_GROUP_NOT_FOUND }, 404)
+      if (!isUuid(groupId)) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       let body: unknown
       try {
         body = await readFeatureJson(c, (message) => new Error(message))
       } catch (error) {
-        return c.json({ error: (error as Error).message }, 400)
+        return errorResponse(c, `bad_request`, { message: (error as Error).message })
       }
       const input = adminGroupTransferSchema(body)
-      if (input instanceof type.errors) return c.json({ error: input.summary }, 400)
+      if (input instanceof type.errors) return validationResponse(c, input)
       return await answer(
         c,
         groupId,

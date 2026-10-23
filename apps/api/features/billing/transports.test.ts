@@ -24,6 +24,7 @@ import {
   createBillingPortalHandler,
   createBillingTrialHandler,
 } from "./handlers.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 /**
  * The billing route over the real handlers on buses with the session gate, as the API wires them.
@@ -177,7 +178,7 @@ const PRO: StoredSubscription = {
 }
 
 async function code(response: Response): Promise<string> {
-  return ((await response.json()) as { error: { code: string } }).error.code
+  return (await apiError(response)).reason ?? ``
 }
 
 describe("billing over REST", () => {

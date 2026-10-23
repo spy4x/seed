@@ -12,6 +12,7 @@ import { pushSubscribeRequestSchema, pushUnsubscribeRequestSchema } from "@spy4x
 import { validate } from "@spy4x/validation"
 import { readApiJson } from "@api/services/json-body.ts"
 import { AccessError } from "@domain/identity"
+import { errorResponse, validationResponse } from "../services/error-response.ts"
 
 /** What the push routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface PushNotificationRouteDependencies {
@@ -38,7 +39,7 @@ export function createPushNotificationRoute(
       const body = await readApiJson(c)
       const validationResult = validate(pushSubscribeRequestSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const { subscription, deviceId } = validationResult.data
       try {
@@ -54,7 +55,9 @@ export function createPushNotificationRoute(
         return c.json({ userPushToken })
       } catch (error) {
         // The session ended while the body was on its way, as at a password reset (#409).
-        if (error instanceof AccessError) return c.json({ error: "Not authenticated" }, 401)
+        if (error instanceof AccessError) {
+          return errorResponse(c, `unauthorized`, { message: "Not authenticated" })
+        }
         throw error
       }
     })
@@ -62,7 +65,7 @@ export function createPushNotificationRoute(
       const body = await readApiJson(c)
       const validationResult = validate(pushUnsubscribeRequestSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const { deviceId } = validationResult.data
       await remove(

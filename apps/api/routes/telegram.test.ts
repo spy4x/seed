@@ -3,7 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import { Hono, type MiddlewareHandler } from "hono"
 import type { TelegramLinkCodeResponse } from "@domain/identity"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
-import { UserMFAStatus } from "@domain/identity"
+import { GUEST_REFUSAL_CODE, UserMFAStatus } from "@domain/identity"
 import { TelegramReceive } from "@server/telegram/setup.ts"
 import { GUEST_LIMITED_PATHS, refuseGuests } from "../middlewares/guest-limits.ts"
 import type { APIContext } from "../_types.ts"
@@ -19,6 +19,7 @@ import type { AppDbBase } from "../services/db-base.ts"
 import { createTelegramRuntime } from "../services/telegram.ts"
 import { fakeTelegramOptions, textUpdate } from "../telegram/fake-telegram.ts"
 import { createTelegramRoute, createTelegramWebhookRoute, TELEGRAM_OFF } from "./telegram.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const SECRET = `w`.repeat(40)
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()
@@ -80,7 +81,7 @@ describe(`the Telegram webhook`, () => {
     const off = new Hono<APIContext>().route(`/w`, createTelegramWebhookRoute(null))
     const response = await off.request(`http://local/w`, { method: `POST`, body: `{}` })
     expect(response.status).toBe(404)
-    expect(await response.json()).toEqual({ error: TELEGRAM_OFF })
+    expect((await apiError(response)).message).toBe(TELEGRAM_OFF)
 
     const { post, sent } = webhook(TelegramReceive.Polling)
     expect((await post(SECRET)).status).toBe(404)
@@ -146,7 +147,7 @@ describe(`the person's Telegram routes`, () => {
     })
 
     expect(response.status).toBe(404)
-    expect(await response.json()).toEqual({ error: TELEGRAM_OFF })
+    expect((await apiError(response)).message).toBe(TELEGRAM_OFF)
   })
 
   it(`refuse a code to a session that has not passed its second factor`, async () => {
@@ -179,7 +180,10 @@ describe(`the person's Telegram routes`, () => {
     })
 
     expect(response.status).toBe(403)
-    expect(await response.json()).toMatchObject({ error: { action: `telegram` } })
+    expect(await apiError(response)).toMatchObject({
+      reason: GUEST_REFUSAL_CODE,
+      details: { action: `telegram` },
+    })
     expect(calls).toEqual([])
   })
 

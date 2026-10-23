@@ -3,6 +3,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { TagError, type TagErrorCode, TagVersionConflictError } from "@domain/tags"
 import { AccessError } from "@domain/identity"
 import type { APIContext } from "../../_types.ts"
+import { codeForStatus, errorResponse, fieldsOf } from "../../services/error-response.ts"
 
 export type TagFeatureErrorCode =
   | TagErrorCode
@@ -47,12 +48,13 @@ export function tagErrorResponse(c: Context<APIContext>, error: unknown): Respon
       ? error.code
       : "INTERNAL_ERROR"
   const definition = ERROR_DEFINITIONS[code]
-  return c.json({
-    error: {
-      code,
-      message: definition.message,
-      requestId: c.get("requestId") || "unknown",
-      ...(error instanceof TagVersionConflictError ? { currentVersion: error.currentVersion } : {}),
-    },
-  }, definition.status)
+  return errorResponse(c, codeForStatus(definition.status), {
+    message: definition.message,
+    reason: code,
+    status: definition.status,
+    fields: fieldsOf(error),
+    details: error instanceof TagVersionConflictError
+      ? { currentVersion: error.currentVersion }
+      : undefined,
+  })
 }

@@ -8,6 +8,7 @@ import type { SignIn } from "@api/services/sign-in.ts"
 import type { ApiTokens } from "@api/services/api-tokens.ts"
 import { readApiJson } from "@api/services/json-body.ts"
 import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
+import { codeForStatus, errorResponse } from "../services/error-response.ts"
 
 /** What the token management routes call. `index.ts` passes the app's singletons. */
 export interface ApiTokensRouteDependencies {
@@ -45,7 +46,8 @@ const STATUS = {
  *   any signed-in step (#406). The owner is mailed that a token was created.
  * - `DELETE /:id` revokes one: `{ success: true }`, or 404 when the person has no such token.
  *
- * A refusal answers `{ error, code }`, the message the web app shows.
+ * A refusal answers the API's error body (docs/api-errors.md): the message the web app shows, the
+ * token code as its `reason`, and the failed fields when the body did not fit the schema.
  */
 export function createApiTokensRoute(dependencies: ApiTokensRouteDependencies): Hono<APIContext> {
   return new Hono<APIContext>()
@@ -53,13 +55,18 @@ export function createApiTokensRoute(dependencies: ApiTokensRouteDependencies): 
       // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
       if (error instanceof PasswordLockedError) {
         c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
-        return c.json({
-          error: passwordLockedMessage(error.retryAfterMs),
-          code: "PASSWORD_LOCKED",
-        }, 429)
+        return errorResponse(c, `rate_limited`, {
+          message: passwordLockedMessage(error.retryAfterMs),
+          reason: "PASSWORD_LOCKED",
+        })
       }
       if (!(error instanceof ApiTokenError)) throw error
-      return c.json({ error: error.message, code: error.code }, STATUS[error.code])
+      return errorResponse(c, codeForStatus(STATUS[error.code]), {
+        message: error.message,
+        reason: error.code,
+        status: STATUS[error.code],
+        fields: error.fields,
+      })
     })
     .use(dependencies.auth.isAuthenticated2FA)
     .use(dependencies.mutationGuards.signedIn)

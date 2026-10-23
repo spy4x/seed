@@ -35,6 +35,7 @@ import { auditRow } from "@api/services/sign-in.ts"
 import type { AppDbBase } from "@api/services/db-base.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
+import { errorResponse } from "../../services/error-response.ts"
 
 export const NEWSLETTER_INVALID_ADDRESS = `Enter a valid e-mail address`
 export const NEWSLETTER_NOT_LISTED = `This address is not on the list`
@@ -131,17 +132,25 @@ export function createAdminNewsletterRoutes(
         searchBodySchema,
         await readJsonBody(c, { maxBytes: SEARCH_MAX_BYTES }),
       )
-      if (checked.error) return c.json({ error: NEWSLETTER_INVALID_SEARCH }, 400)
+      if (checked.error) {
+        return errorResponse(c, `bad_request`, { message: NEWSLETTER_INVALID_SEARCH })
+      }
       const { q = ``, status = ``, page = `` } = checked.data
       const filter = parseAdminSubscriberFilter(new URLSearchParams({ q, status, page }))
       return c.json(await newsletter.list(filter))
     })
     .get(`/newsletter/sends`, limit, async (c) => c.json(await newsletter.sends()))
     .post(`/newsletter/subscribers/remove`, limit, async (c) => {
-      if (!newsletter.enabled) return c.json({ error: NEWSLETTER_OFF }, 503)
+      if (!newsletter.enabled) {
+        return errorResponse(c, `internal`, { message: NEWSLETTER_OFF, status: 503 })
+      }
       const email = await addressOf(c)
-      if (email === null) return c.json({ error: NEWSLETTER_INVALID_ADDRESS }, 400)
-      if (!await newsletter.find(email)) return c.json({ error: NEWSLETTER_NOT_LISTED }, 404)
+      if (email === null) {
+        return errorResponse(c, `bad_request`, { message: NEWSLETTER_INVALID_ADDRESS })
+      }
+      if (!await newsletter.find(email)) {
+        return errorResponse(c, `not_found`, { message: NEWSLETTER_NOT_LISTED })
+      }
       await audit(
         c,
         AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED,
@@ -151,13 +160,17 @@ export function createAdminNewsletterRoutes(
       return c.json({ removed: true })
     })
     .post(`/newsletter/subscribers/resend`, limit, async (c) => {
-      if (!newsletter.enabled) return c.json({ error: NEWSLETTER_OFF }, 503)
+      if (!newsletter.enabled) {
+        return errorResponse(c, `internal`, { message: NEWSLETTER_OFF, status: 503 })
+      }
       const email = await addressOf(c)
-      if (email === null) return c.json({ error: NEWSLETTER_INVALID_ADDRESS }, 400)
+      if (email === null) {
+        return errorResponse(c, `bad_request`, { message: NEWSLETTER_INVALID_ADDRESS })
+      }
       const found = await newsletter.find(email)
-      if (!found) return c.json({ error: NEWSLETTER_NOT_LISTED }, 404)
+      if (!found) return errorResponse(c, `not_found`, { message: NEWSLETTER_NOT_LISTED })
       if (found.status === `confirmed`) {
-        return c.json({ error: NEWSLETTER_ALREADY_CONFIRMED }, 409)
+        return errorResponse(c, `conflict`, { message: NEWSLETTER_ALREADY_CONFIRMED })
       }
       await audit(
         c,

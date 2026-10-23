@@ -61,7 +61,7 @@ export const operations: Operations<Actor> = {
     register: async (command) => {
       if (await db.guests.isGuest(command.data.actor.userId)) {
         const { error } = guestRefusal("push")
-        throw new RealtimeRequestError("forbidden", error.message, error)
+        throw new RealtimeRequestError(error.code, error.message, error.details, error)
       }
       return await commandBus.execute(command)
     },

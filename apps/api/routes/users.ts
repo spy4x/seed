@@ -11,6 +11,7 @@ import { requestInfoFromContext } from "@spy4x/platform/request-info"
 import { NOT_AUTHENTICATED, SECOND_FACTOR_REQUIRED } from "@spy4x/server/sign-in"
 import type { ErrorHandler } from "hono"
 import { readApiJson } from "@api/services/json-body.ts"
+import { errorResponse, validationResponse } from "../services/error-response.ts"
 
 /** What the users routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface UsersRouteDependencies {
@@ -37,7 +38,7 @@ export function createUsersRoute(dependencies: UsersRouteDependencies): Hono<API
       const body = await readApiJson(c)
       const validationResult = validate(userProfileBaseSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const result = await dependencies.updateProfile(
         new UserProfileUpdateCommand({
@@ -60,7 +61,7 @@ export function createUsersRoute(dependencies: UsersRouteDependencies): Hono<API
 const accessErrorAs401: ErrorHandler<APIContext> = (error, c) => {
   if (error instanceof AccessError) {
     const message = error.code === "MFA_REQUIRED" ? SECOND_FACTOR_REQUIRED : NOT_AUTHENTICATED
-    return c.json({ error: message }, 401)
+    return errorResponse(c, `unauthorized`, { message: message })
   }
   throw error
 }

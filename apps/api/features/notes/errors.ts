@@ -6,6 +6,7 @@ import { PlanError, type PlanErrorCode, toPlanRefusal } from "@domain/billing"
 import { TagError } from "@domain/tags"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import type { APIContext } from "../../_types.ts"
+import { codeForStatus, errorResponse, fieldsOf } from "../../services/error-response.ts"
 
 export type NoteFeatureErrorCode =
   | NoteErrorCode
@@ -89,16 +90,16 @@ export function noteErrorResponse(c: Context<APIContext>, error: unknown): Respo
       ? error.code
       : "INTERNAL_ERROR"
   const definition = ERROR_DEFINITIONS[code]
-  return c.json({
-    error: {
-      code,
-      message: definition.message,
-      requestId: c.get("requestId") || "unknown",
-      ...(error instanceof NoteVersionConflictError
-        ? { currentVersion: error.currentVersion }
-        : {}),
-      // A plan refusal names the feature or cap, so the client draws the upgrade prompt from it.
-      ...(error instanceof PlanError ? toPlanRefusal(error) : {}),
-    },
-  }, definition.status)
+  return errorResponse(c, codeForStatus(definition.status), {
+    message: definition.message,
+    reason: code,
+    status: definition.status,
+    fields: fieldsOf(error),
+    // A plan refusal names the feature or cap, so the client draws the upgrade prompt from it.
+    details: error instanceof NoteVersionConflictError
+      ? { currentVersion: error.currentVersion }
+      : error instanceof PlanError
+      ? toPlanRefusal(error)
+      : undefined,
+  })
 }

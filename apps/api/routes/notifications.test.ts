@@ -19,6 +19,7 @@ import {
   createNotificationUnreadCountHandler,
 } from "../features/notifications/handlers.ts"
 import { createNotificationsRoute } from "./notifications.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const cursor = await createNotificationCursor("a-test-secret-that-is-long-enough-123456")
 
@@ -124,7 +125,7 @@ describe("GET /notifications", () => {
       `/notifications?cursor=${encodeURIComponent(first.nextCursor)}`,
     )
     expect(other.status).toBe(400)
-    expect((await other.json()).error.code).toBe("INVALID_CURSOR")
+    expect((await apiError(other)).reason).toBe("INVALID_CURSOR")
     const forged = await app.request("/notifications?cursor=nonsense")
     expect(forged.status).toBe(400)
   })
@@ -141,11 +142,11 @@ describe("GET /notifications", () => {
     for (const limit of ["0", "51", "abc", "-1"]) {
       const response = await app.request(`/notifications?limit=${limit}`)
       expect(response.status).toBe(400)
-      expect((await response.json()).error.code).toBe("INVALID_REQUEST")
+      expect((await apiError(response)).reason).toBe("INVALID_REQUEST")
     }
     const anonymous = await buildApp(null).request("/notifications")
     expect(anonymous.status).toBe(401)
-    expect((await anonymous.json()).error.code).toBe("AUTH_REQUIRED")
+    expect((await apiError(anonymous)).reason).toBe("AUTH_REQUIRED")
   })
 })
 
@@ -202,7 +203,7 @@ describe("POST /notifications/:id/read", () => {
       })
 
       expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("REQUEST_ORIGIN_INVALID")
+      expect((await apiError(response)).reason).toBe("REQUEST_ORIGIN_INVALID")
     }
   })
 })

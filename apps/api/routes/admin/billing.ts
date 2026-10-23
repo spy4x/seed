@@ -42,6 +42,7 @@ import {
 import { readFeatureJson } from "@api/services/json-body.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule, AdminModuleContext } from "./module.ts"
+import { errorResponse, validationResponse } from "../../services/error-response.ts"
 
 /** The answer to every customer route while billing is off (decision 10 of #196). */
 export const ADMIN_BILLING_OFF = `Billing is not set up`
@@ -134,13 +135,18 @@ function resultUnknown(error: BillingError): boolean {
 /** The answer to a failed provider call: `unknown` when it may have acted, else `refused`. */
 function providerFailure(c: Context<APIContext>, error: BillingError) {
   if (resultUnknown(error)) {
-    return c.json({ error: ADMIN_BILLING_UNKNOWN, code: `result_unknown` as const }, 502)
+    return errorResponse(c, `internal`, {
+      message: ADMIN_BILLING_UNKNOWN,
+      reason: `result_unknown` as const,
+      status: 502,
+    })
   }
   const reason = error.message.replace(/[.\s]+$/, ``)
-  return c.json({
-    error: `Stripe refused this: ${reason}. Nothing changed.`,
-    code: `provider_refused` as const,
-  }, 502)
+  return errorResponse(c, `internal`, {
+    message: `Stripe refused this: ${reason}. Nothing changed.`,
+    reason: `provider_refused` as const,
+    status: 502,
+  })
 }
 
 /** The name the provider's idempotency key carries, so one key never serves two actions. */
@@ -190,10 +196,10 @@ export function createAdminBillingRoutes(
     try {
       body = await readFeatureJson(c, (message) => new Error(message))
     } catch (error) {
-      return c.json({ error: (error as Error).message }, 400)
+      return errorResponse(c, `bad_request`, { message: (error as Error).message })
     }
     const input = schema(body)
-    if (input instanceof type.errors) return c.json({ error: input.summary }, 400)
+    if (input instanceof type.errors) return validationResponse(c, input)
     return input
   }
 
@@ -225,20 +231,20 @@ export function createAdminBillingRoutes(
     untilOf?: (body: T, record: AdminBillingRecord) => Date,
   ): Promise<Response> {
     const groupId = c.req.param(`groupId`) ?? ``
-    if (!isUuid(groupId)) return c.json({ error: ADMIN_BILLING_NOT_FOUND }, 404)
-    if (billing === null) return c.json({ error: ADMIN_BILLING_OFF }, 404)
+    if (!isUuid(groupId)) return errorResponse(c, `not_found`, { message: ADMIN_BILLING_NOT_FOUND })
+    if (billing === null) return errorResponse(c, `not_found`, { message: ADMIN_BILLING_OFF })
     const body = await readBody(c, schema)
     if (body instanceof Response) return body
     const kind = actionOf(body)
     const { user } = c.get(`auth`)!
     if (ADMIN_BILLING_SUPERVISOR_ACTIONS.has(kind) && user.role < UserRole.SUPERVISOR) {
       const error = ADMIN_BILLING_SUPERVISOR[kind as keyof typeof ADMIN_BILLING_SUPERVISOR]
-      return c.json({ error }, 403)
+      return errorResponse(c, `forbidden`, { message: error })
     }
     const record = await store.record(groupId)
-    if (!record) return c.json({ error: ADMIN_BILLING_NOT_FOUND }, 404)
+    if (!record) return errorResponse(c, `not_found`, { message: ADMIN_BILLING_NOT_FOUND })
     if (await store.isOwnerOrMember(groupId, user.id)) {
-      return c.json({ error: ADMIN_BILLING_MEMBER }, 403)
+      return errorResponse(c, `forbidden`, { message: ADMIN_BILLING_MEMBER })
     }
     const claim = await store.claim({
       idempotencyKey: body.idempotencyKey,
@@ -248,7 +254,7 @@ export function createAdminBillingRoutes(
       until: untilOf?.(body, record),
     })
     if (claim.outcome === AdminBillingClaimOutcome.Conflict) {
-      return c.json({ error: ADMIN_BILLING_KEY_REUSED }, 409)
+      return errorResponse(c, `conflict`, { message: ADMIN_BILLING_KEY_REUSED })
     }
     const claimed = claim.outcome === AdminBillingClaimOutcome.Claimed
     // A retry skips the state check: the first try may have changed the state already, and the
@@ -256,7 +262,7 @@ export function createAdminBillingRoutes(
     const refusal = claimed ? adminBillingActionRefusal(kind, record.customer) : null
     if (refusal !== null) {
       await store.release(body.idempotencyKey)
-      return c.json({ error: refusal }, 409)
+      return errorResponse(c, `conflict`, { message: refusal })
     }
     const plan = await act({
       body,
@@ -301,24 +307,24 @@ export function createAdminBillingRoutes(
     })
     .get(`/billing/:groupId`, limit, async (c) => {
       const groupId = c.req.param(`groupId`)
-      if (billing === null) return c.json({ error: ADMIN_BILLING_OFF }, 404)
+      if (billing === null) return errorResponse(c, `not_found`, { message: ADMIN_BILLING_OFF })
       const record = isUuid(groupId) ? await store.record(groupId) : null
-      if (!record) return c.json({ error: ADMIN_BILLING_NOT_FOUND }, 404)
+      if (!record) return errorResponse(c, `not_found`, { message: ADMIN_BILLING_NOT_FOUND })
       return c.json(await detailOf(record, billing, c.get(`auth`)!.user.id))
     })
     .get(`/billing/:groupId/payment`, limit, async (c) => {
       const groupId = c.req.param(`groupId`)
-      if (billing === null) return c.json({ error: ADMIN_BILLING_OFF }, 404)
+      if (billing === null) return errorResponse(c, `not_found`, { message: ADMIN_BILLING_OFF })
       const record = isUuid(groupId) ? await store.record(groupId) : null
-      if (!record) return c.json({ error: ADMIN_BILLING_NOT_FOUND }, 404)
+      if (!record) return errorResponse(c, `not_found`, { message: ADMIN_BILLING_NOT_FOUND })
       const read = await billing.provider.readLastPayment({
         subscriptionId: record.providerSubscriptionId,
       })
       if (!read.ok) {
-        return c.json(
-          { error: `Stripe did not give the last payment. Try again in a moment.` },
-          502,
-        )
+        return errorResponse(c, `internal`, {
+          message: `Stripe did not give the last payment. Try again in a moment.`,
+          status: 502,
+        })
       }
       return c.json({ payment: read.value === null ? null : paymentOf(read.value) })
     })
@@ -335,10 +341,11 @@ export function createAdminBillingRoutes(
           })
           if (!read.ok) {
             if (claimed) await store.release(body.idempotencyKey)
-            return c.json({
-              error: `Stripe did not give the last payment, so nothing was refunded. Try again.`,
-              code: `provider_refused`,
-            }, 502)
+            return errorResponse(c, `internal`, {
+              message: `Stripe did not give the last payment, so nothing was refunded. Try again.`,
+              reason: `provider_refused`,
+              status: 502,
+            })
           }
           const payment = read.value
           const refusal = payment === null
@@ -350,7 +357,7 @@ export function createAdminBillingRoutes(
             : null
           if (refusal !== null || payment === null) {
             if (claimed) await store.release(body.idempotencyKey)
-            return c.json({ error: refusal }, 409)
+            return errorResponse(c, `conflict`, { message: refusal ?? ADMIN_BILLING_NO_PAYMENT })
           }
           const refund = await settings.provider.refundPayment({
             paymentId: payment.id,

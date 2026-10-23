@@ -42,6 +42,7 @@ import {
   createAdminBillingRoutes,
 } from "./billing.ts"
 import type { AdminModuleContext } from "./module.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const GROUP = `0199f0a0-0000-7000-8000-000000000001`
 const NOW = new Date(`2026-10-17T12:00:00.000Z`)
@@ -245,7 +246,7 @@ describe(`operator billing routes`, () => {
       const response = await post(app, path, body)
 
       expect(response.status).toBe(403)
-      expect((await response.json()).error).toBe(ADMIN_BILLING_MEMBER)
+      expect((await apiError(response)).message).toBe(ADMIN_BILLING_MEMBER)
       expect(calls).toEqual([])
       expect(claims).toEqual([])
     })
@@ -256,7 +257,7 @@ describe(`operator billing routes`, () => {
     const response = await post(app, `refund`, ACTIONS()[0].body)
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error).toBe(ADMIN_BILLING_SUPERVISOR.refund)
+    expect((await apiError(response)).message).toBe(ADMIN_BILLING_SUPERVISOR.refund)
     expect(calls).toEqual([])
   })
 
@@ -264,7 +265,7 @@ describe(`operator billing routes`, () => {
     const { app, calls, audits } = buildApp({ role: UserRole.OPERATOR })
     const now = await post(app, `cancel`, ACTIONS()[3].body)
     expect(now.status).toBe(403)
-    expect((await now.json()).error).toBe(ADMIN_BILLING_SUPERVISOR.cancel_now)
+    expect((await apiError(now)).message).toBe(ADMIN_BILLING_SUPERVISOR.cancel_now)
     expect(calls).toEqual([])
 
     const later = await post(app, `cancel`, ACTIONS()[2].body)
@@ -297,7 +298,7 @@ describe(`operator billing routes`, () => {
     const response = await post(app, `refund`, { idempotencyKey: uuidV7(), paymentId: `pi_other` })
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(ADMIN_BILLING_PAYMENT_CHANGED)
+    expect((await apiError(response)).message).toBe(ADMIN_BILLING_PAYMENT_CHANGED)
     expect(calls.filter(([name]) => name === `refundPayment`)).toEqual([])
     expect(audits).toEqual([])
   })
@@ -308,11 +309,15 @@ describe(`operator billing routes`, () => {
       failure: { code: `network_error`, message: `timed out`, status: null },
     })
     const response = await post(app, `refund`, ACTIONS()[0].body)
-    const answer = await response.json()
+    const answer = await apiError(response)
 
     expect(response.status).toBe(502)
-    expect(answer).toEqual({ error: ADMIN_BILLING_UNKNOWN, code: `result_unknown` })
-    expect(answer.error).not.toContain(`Nothing changed`)
+    expect(answer).toMatchObject({
+      code: `internal`,
+      message: ADMIN_BILLING_UNKNOWN,
+      reason: `result_unknown`,
+    })
+    expect(answer.message).not.toContain(`Nothing changed`)
     expect(audits).toEqual([])
   })
 
@@ -323,7 +328,7 @@ describe(`operator billing routes`, () => {
     })
     const response = await post(app, `undo-cancel`, { idempotencyKey: uuidV7() })
 
-    expect((await response.json()).code).toBe(`result_unknown`)
+    expect((await apiError(response)).reason).toBe(`result_unknown`)
   })
 
   it(`says nothing changed when Stripe refuses the request`, async () => {
@@ -338,9 +343,9 @@ describe(`operator billing routes`, () => {
     })
     const response = await post(app, `undo-cancel`, { idempotencyKey: uuidV7() })
 
-    expect(await response.json()).toEqual({
-      error: `Stripe refused this: Stripe answered 400: No such sub. Nothing changed.`,
-      code: `provider_refused`,
+    expect(await apiError(response)).toMatchObject({
+      message: `Stripe refused this: Stripe answered 400: No such sub. Nothing changed.`,
+      reason: `provider_refused`,
     })
   })
 
@@ -349,7 +354,7 @@ describe(`operator billing routes`, () => {
     const response = await post(app, `time`, ACTIONS()[1].body)
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(ADMIN_BILLING_KEY_REUSED)
+    expect((await apiError(response)).message).toBe(ADMIN_BILLING_KEY_REUSED)
     expect(calls).toEqual([])
   })
 
@@ -397,7 +402,7 @@ describe(`operator billing routes`, () => {
     expect(await customers.json()).toEqual({ enabled: false })
     const action = await post(app, `undo-cancel`, { idempotencyKey: uuidV7() })
     expect(action.status).toBe(404)
-    expect((await action.json()).error).toBe(ADMIN_BILLING_OFF)
+    expect((await apiError(action)).message).toBe(ADMIN_BILLING_OFF)
     expect(calls).toEqual([])
   })
 

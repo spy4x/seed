@@ -11,6 +11,7 @@ import { refusalWithoutProof } from "./auth-oauth.ts"
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { AuthRateLimits } from "../middlewares/auth-rate-limits.ts"
+import { errorResponse } from "../services/error-response.ts"
 
 /** What the passkey routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface PasskeyRouteDependencies {
@@ -52,15 +53,19 @@ export function createPasskeyRoute(
   const { passkeys } = signIn
   const { isAuthenticated2FA } = signIn.auth
   const off = (c: Context<APIContext>) =>
-    passkeys.enabled() ? null : c.json({ error: PASSKEYS_OFF }, 404)
+    passkeys.enabled() ? null : errorResponse(c, `not_found`, { message: PASSKEYS_OFF })
 
   /** Answers a finished sign-in as a password sign-in does: 202 while a code is owed. */
   const signInAnswer = async (c: Context<APIContext>, current?: AppAuthState) => {
     const body = validate(authenticationResponseSchema, await readApiJson(c))
-    if (body.error) return c.json({ error: PASSKEY_REFUSED }, 400)
+    if (body.error) return errorResponse(c, `bad_request`, { message: PASSKEY_REFUSED })
     const result = await passkeys.signIn(c, body.data, current)
-    if (result.kind === "unknown") return c.json({ error: PASSKEY_UNKNOWN, unknown: true }, 404)
-    if (result.kind === "refused") return c.json({ error: PASSKEY_REFUSED }, 400)
+    if (result.kind === "unknown") {
+      return errorResponse(c, `not_found`, { message: PASSKEY_UNKNOWN, details: { unknown: true } })
+    }
+    if (result.kind === "refused") {
+      return errorResponse(c, `bad_request`, { message: PASSKEY_REFUSED })
+    }
     if (result.signedIn.session.secondFactor === SecondFactorStatus.Pending) {
       return c.json({ secondFactor: "Pending" }, 202)
     }
@@ -121,13 +126,13 @@ export function createPasskeyRoute(
         const refusal = off(c)
         if (refusal) return refusal
         const body = validate(registrationResponseSchema, await readApiJson(c))
-        if (body.error) return c.json({ error: PASSKEY_NOT_SAVED }, 400)
+        if (body.error) return errorResponse(c, `bad_request`, { message: PASSKEY_NOT_SAVED })
         const { outcome, keyId, name } = await passkeys.add(c, c.get("auth")!, body.data)
         if (outcome === PasskeyAddOutcome.AlreadyYours) {
-          return c.json({ error: PASSKEY_ALREADY_YOURS }, 409)
+          return errorResponse(c, `conflict`, { message: PASSKEY_ALREADY_YOURS })
         }
         if (outcome !== PasskeyAddOutcome.Added || !keyId || !name) {
-          return c.json({ error: PASSKEY_NOT_SAVED }, 400)
+          return errorResponse(c, `bad_request`, { message: PASSKEY_NOT_SAVED })
         }
         return c.json({ keyId, name } satisfies PasskeyAdded, 201)
       },
@@ -142,11 +147,11 @@ export function createPasskeyRoute(
         const refusal = off(c)
         if (refusal) return refusal
         const raw = c.req.param("id")
-        if (!KEY_ID.test(raw)) return c.json({ error: PASSKEY_NOT_FOUND }, 404)
+        if (!KEY_ID.test(raw)) return errorResponse(c, `not_found`, { message: PASSKEY_NOT_FOUND })
         const name = parsePasskeyName(await readApiJson(c))
-        if (name === null) return c.json({ error: PASSKEY_NAME_INVALID }, 400)
+        if (name === null) return errorResponse(c, `bad_request`, { message: PASSKEY_NAME_INVALID })
         if (!(await passkeys.rename(c, c.get("auth")!, Number(raw), name))) {
-          return c.json({ error: PASSKEY_NOT_FOUND }, 404)
+          return errorResponse(c, `not_found`, { message: PASSKEY_NOT_FOUND })
         }
         return c.json({ name })
       },

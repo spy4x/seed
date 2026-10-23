@@ -2,6 +2,7 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { PublicBlogPost } from "@domain/blog"
 import { BLOG_POST_NOT_FOUND, createPublicBlogRoute, type PublicBlogReads } from "./blog.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const post: PublicBlogPost = {
   slug: `hello-world`,
@@ -49,7 +50,7 @@ describe(`public blog routes`, () => {
     const response = await app.request(`/posts/a-draft`)
 
     expect(response.status).toBe(404)
-    expect(await response.json()).toEqual({ error: BLOG_POST_NOT_FOUND })
+    expect((await apiError(response)).message).toBe(BLOG_POST_NOT_FOUND)
   })
 
   it(`answers 404 for an address that is no slug, without reading the database`, async () => {

@@ -28,6 +28,7 @@ import { ADMIN_OUTRANKED, ADMIN_SELF, createAdminUsersRoutes } from "./users.ts"
 import { createAdminStatsRoutes } from "./dashboard.ts"
 import { ADMIN_API_MODULES } from "./registry.ts"
 import type { AdminModuleContext } from "./module.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const target: AdminUserRow = {
   id: 42,
@@ -320,7 +321,7 @@ describe("operator area routes", () => {
     const response = await send(app, ROUTES[3])
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error).toBe(ADMIN_SELF)
+    expect((await apiError(response)).message).toBe(ADMIN_SELF)
     expect(emitted).toEqual([])
   })
 
@@ -329,7 +330,7 @@ describe("operator area routes", () => {
     const response = await send(app, ROUTES[5])
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error).toBe(ADMIN_OUTRANKED)
+    expect((await apiError(response)).message).toBe(ADMIN_OUTRANKED)
     expect(emitted).toEqual([])
   })
 

@@ -12,6 +12,7 @@ import { TagError } from "@domain/tags"
 import type { APIContext } from "../_types.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
 import { createNotesRoute, type NotesRouteDependencies } from "./notes.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const noteId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
@@ -147,8 +148,8 @@ describe("notes route", () => {
     })
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toMatchObject({
-      code: "TAG_LIMIT_REACHED",
+    expect(await apiError(response)).toMatchObject({
+      reason: "TAG_LIMIT_REACHED",
       message: "The other group has no room for these notes' tags",
     })
   })
@@ -265,6 +266,6 @@ describe("notes route", () => {
     const response = await request("GET", `${groupId}/notes`)
 
     expect(response.status).toBe(401)
-    expect((await response.json()).error.code).toBe("AUTH_REQUIRED")
+    expect((await apiError(response)).reason).toBe("AUTH_REQUIRED")
   })
 })

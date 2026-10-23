@@ -45,6 +45,7 @@ import {
 } from "./handlers.ts"
 import { createNoteOperations } from "./operations.ts"
 import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
+import { checkedError } from "../../_testing/api-error.ts"
 
 /**
  * Every transport over one pair of buses, as the API wires them. The socket and the call route
@@ -241,7 +242,7 @@ function callRoute(buses: ReturnType<typeof stack>["buses"], userId: number): Tr
     })
     const body = await response.json()
     if (response.ok) return { kind: "server.result", payload: body.result } as Answer
-    return { kind: "server.error", ...body.error } as Answer
+    return { kind: "server.error", ...checkedError(body) } as Answer
   }
   return {
     command: (name, payload) => send(name, payload, { "idempotency-key": `key-${name}` }),
@@ -1030,7 +1031,7 @@ describe("notes over the REST reads", () => {
     const text = await response.text()
 
     expect(response.status).toBe(404)
-    expect(JSON.parse(text).error.code).toBe("GROUP_NOT_FOUND")
+    expect(checkedError(JSON.parse(text)).reason).toBe("GROUP_NOT_FOUND")
     expect(text).not.toContain(noteId)
   })
 })

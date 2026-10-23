@@ -21,6 +21,7 @@ import {
 } from "../_testing/mutation-requests.ts"
 import { createApiTokensRoute } from "./api-tokens.ts"
 import { PasswordLockedError } from "../services/password-locked.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const tokenId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111009"
@@ -109,7 +110,7 @@ describe("API token routes", () => {
     const response = await post(app, withoutPassword)
 
     expect(response.status).toBe(400)
-    expect((await response.json() as { code: string }).code).toBe("INVALID_REQUEST")
+    expect((await apiError(response)).reason).toBe("INVALID_REQUEST")
     expect(calls.filter(([name]) => name === "create")).toEqual([])
   })
 
@@ -118,7 +119,10 @@ describe("API token routes", () => {
     const response = await post(app, valid)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: "Wrong password", code: "PASSWORD_INVALID" })
+    expect(await apiError(response)).toMatchObject({
+      message: "Wrong password",
+      reason: "PASSWORD_INVALID",
+    })
   })
 
   it("answers a create while the account's wrong passwords lock it with 429 and the time to wait", async () => {
@@ -127,9 +131,10 @@ describe("API token routes", () => {
 
     expect(response.status).toBe(429)
     expect(response.headers.get("retry-after")).toBe("91")
-    expect(await response.json()).toEqual({
-      error: "Too many wrong passwords. Try again in 2 minutes.",
-      code: "PASSWORD_LOCKED",
+    expect(await apiError(response)).toMatchObject({
+      code: "rate_limited",
+      message: "Too many wrong passwords. Try again in 2 minutes.",
+      reason: "PASSWORD_LOCKED",
     })
   })
 
@@ -148,9 +153,22 @@ describe("API token routes", () => {
     const response = await post(app, { ...valid, name: " " })
 
     expect(response.status).toBe(400)
-    const body = await response.json() as { error: unknown; code: string }
-    expect(typeof body.error).toBe("string")
-    expect(body.code).toBe("INVALID_REQUEST")
+    const error = await apiError(response)
+    expect(typeof error.message).toBe("string")
+    expect(error.reason).toBe("INVALID_REQUEST")
+    expect(calls.filter(([name]) => name === "create")).toEqual([])
+  })
+
+  it("names each field a create request failed on, with its code", async () => {
+    const { app, calls } = buildApp()
+    const response = await post(app, { ...valid, name: 7 })
+
+    expect(response.status).toBe(400)
+    expect(await apiError(response)).toMatchObject({
+      code: "bad_request",
+      reason: "INVALID_REQUEST",
+      fields: { name: { code: "domain" } },
+    })
     expect(calls.filter(([name]) => name === "create")).toEqual([])
   })
 
@@ -161,7 +179,10 @@ describe("API token routes", () => {
     const full = buildApp(undefined, new ApiTokenError("TOO_MANY_TOKENS", "Too many tokens"))
     const response = await post(full.app, valid)
     expect(response.status).toBe(409)
-    expect(await response.json()).toEqual({ error: "Too many tokens", code: "TOO_MANY_TOKENS" })
+    expect(await apiError(response)).toMatchObject({
+      message: "Too many tokens",
+      reason: "TOO_MANY_TOKENS",
+    })
   })
 
   it("revokes one of the person's tokens, and answers 404 for any other id", async () => {

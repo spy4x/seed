@@ -59,6 +59,8 @@ import {
 } from "./handlers.ts"
 import { createTagOperations } from "./operations.ts"
 import { isUuid, uuidV7 } from "@spy4x/platform/universal/uuid"
+import { apiError } from "../../_testing/api-error.ts"
+import { checkedError } from "../../_testing/api-error.ts"
 
 /**
  * Tags over every transport, as the API wires them: one pair of buses, the gates and the real
@@ -211,7 +213,7 @@ function callRoute(stack: Stack, userId: number): Transport {
     })
     const body = await response.json()
     if (response.ok) return { kind: "server.result", payload: body.result } as Answer
-    return { kind: "server.error", ...body.error } as Answer
+    return { kind: "server.error", ...checkedError(body) } as Answer
   }
   return {
     command: (name, payload) => send(name, payload, { "idempotency-key": `key-${name}` }),
@@ -568,7 +570,7 @@ describe("tags over the call route", () => {
     })
 
     expect(response.status).toBe(400)
-    expect((await response.json()).error).toMatchObject({
+    expect(await apiError(response)).toMatchObject({
       code: "bad_request",
       details: { code: "INVALID_REQUEST" },
     })

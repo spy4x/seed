@@ -13,6 +13,7 @@ import type { APIContext } from "../_types.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
 import { createGroupActivityHandler } from "../features/groups/activity.ts"
 import { createGroupActivityRoute } from "./group-activity.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
 const cursor = await createActivityCursor("a-test-secret-that-is-long-enough-123456")
@@ -86,14 +87,14 @@ describe("GET /groups/:groupId/activity", () => {
     it(`refuses the ${name} with ROLE_INSUFFICIENT`, async () => {
       const response = await get(buildApp(role).app)
       expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+      expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
     })
   }
 
   it(`tells a stranger the group does not exist`, async () => {
     const response = await get(buildApp(null).app)
     expect(response.status).toBe(404)
-    expect((await response.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(response)).reason).toBe("GROUP_NOT_FOUND")
   })
 
   it(`refuses a request with no session`, async () => {
@@ -118,10 +119,10 @@ describe("GET /groups/:groupId/activity", () => {
     for (const limit of [`0`, `101`, `abc`]) {
       const response = await get(app, `?limit=${limit}`)
       expect(response.status).toBe(400)
-      expect((await response.json()).error.code).toBe("INVALID_REQUEST")
+      expect((await apiError(response)).reason).toBe("INVALID_REQUEST")
     }
     const forged = await get(app, `?cursor=forged`)
     expect(forged.status).toBe(400)
-    expect((await forged.json()).error.code).toBe("INVALID_CURSOR")
+    expect((await apiError(forged)).reason).toBe("INVALID_CURSOR")
   })
 })

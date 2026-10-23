@@ -3,6 +3,7 @@ import type { BillingEvent, BillingProvider } from "@spy4x/billing"
 import { readBoundedBody } from "@spy4x/net/bounded-body"
 import type { BillingApplyOutcome } from "@domain/billing"
 import type { APIContext } from "../_types.ts"
+import { errorResponse } from "../services/error-response.ts"
 
 /** The largest webhook body read. Stripe's events are a few KiB; this leaves room and no more. */
 export const MAX_WEBHOOK_BODY_BYTES = 512 * 1024
@@ -30,12 +31,12 @@ export function createBillingWebhookRoute(
 ): Hono<APIContext> {
   return new Hono<APIContext>().post("/", async (c) => {
     const provider = dependencies.provider
-    if (!provider) return c.json({ error: "Billing is off" }, 404)
+    if (!provider) return errorResponse(c, `not_found`, { message: "Billing is off" })
     let body: Uint8Array
     try {
       body = await readBoundedBody(c.req.raw, { maxBytes: MAX_WEBHOOK_BODY_BYTES })
     } catch {
-      return c.json({ error: "Body unreadable or too large" }, 400)
+      return errorResponse(c, `bad_request`, { message: "Body unreadable or too large" })
     }
     const parsed = await provider.parseEvent(body, c.req.raw.headers)
     if (!parsed.ok) {
@@ -43,7 +44,7 @@ export function createBillingWebhookRoute(
         dependencies.log("warn: billing webhook with an unreadable payload", parsed.message)
         return c.json({ received: true })
       }
-      return c.json({ error: "Signature rejected" }, 400)
+      return errorResponse(c, `bad_request`, { message: "Signature rejected" })
     }
     if (parsed.event === null) return c.json({ received: true })
     try {
@@ -54,7 +55,7 @@ export function createBillingWebhookRoute(
       return c.json({ received: true, outcome })
     } catch (error) {
       dependencies.log("error: billing event failed to apply", error)
-      return c.json({ error: "Not applied" }, 500)
+      return errorResponse(c, `internal`, { message: "Not applied" })
     }
   })
 }

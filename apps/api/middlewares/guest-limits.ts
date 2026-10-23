@@ -6,10 +6,18 @@ import {
   type GuestRefusal,
 } from "@domain/identity"
 import type { APIContext } from "../_types.ts"
+import { errorResponse } from "../services/error-response.ts"
 
-/** The body of a guest refusal for `action`: 403, with a code the screens recognise. */
+/** The body of a guest refusal for `action`: 403, with a reason the screens recognise. */
 export function guestRefusal(action: GuestLimitedAction): GuestRefusal {
-  return { error: { code: GUEST_REFUSAL_CODE, message: GUEST_REFUSAL_MESSAGE, action } }
+  return {
+    error: {
+      code: `forbidden`,
+      message: GUEST_REFUSAL_MESSAGE,
+      reason: GUEST_REFUSAL_CODE,
+      details: { action },
+    },
+  }
 }
 
 /**
@@ -27,7 +35,8 @@ export function refuseGuests(
     const user = c.get("auth")?.user
     if (!user?.guestSince) return await next()
     await onRefused?.(user.id).catch(() => {})
-    return c.json(guestRefusal(action), 403)
+    const { error } = guestRefusal(action)
+    return errorResponse(c, error.code, error)
   }
 }
 

@@ -3,6 +3,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { GroupError, InvitationError, type InvitationErrorCode } from "@domain/groups"
 import type { APIContext } from "../../_types.ts"
 import { groupErrorResponse } from "./errors.ts"
+import { codeForStatus, errorResponse } from "../../services/error-response.ts"
 
 const INVITATION_STATUSES: Record<InvitationErrorCode, ContentfulStatusCode> = {
   ADDRESS_NOT_PROVEN: 403,
@@ -35,11 +36,5 @@ export function invitationErrorResponse(c: Context<APIContext>, error: unknown):
     : undefined
   if (!status) return groupErrorResponse(c, error)
   const { code, message } = error as InvitationError | GroupError
-  return c.json({
-    error: {
-      code,
-      message,
-      requestId: c.get("requestId") || "unknown",
-    },
-  }, status)
+  return errorResponse(c, codeForStatus(status), { message, reason: code, status })
 }

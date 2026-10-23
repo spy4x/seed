@@ -1,7 +1,6 @@
 import { Hono } from "hono"
 import type { Actor } from "@domain/identity"
 import {
-  CALL_ERROR_STATUS,
   createCallHandler,
   type OperationErrorMapper,
   type Operations,
@@ -9,6 +8,7 @@ import {
 import { createSameOriginMutationGuard } from "@spy4x/server/http/same-origin"
 import { actorFromAuth } from "../cqrs/actor.ts"
 import type { APIContext } from "../_types.ts"
+import { errorResponse } from "../services/error-response.ts"
 
 export interface CallRouteDependencies {
   /** The table the socket serves too (`services/realtimeHub.ts`). */
@@ -32,8 +32,9 @@ export interface CallRouteDependencies {
  * cookie, and the `Origin` check on a write (every call is a `POST`, so every call is checked).
  * The library's handler then refuses a call whose `X-Realtime-User` is not the session's user and a
  * command without an `Idempotency-Key`, and the session gate on the buses decides whether the
- * session is strong enough. Answers follow the library's contract: `{ result }`, or
- * `{ error: { code, message, details? } }` with the socket's code.
+ * session is strong enough. Answers follow the library's contract: `{ result }`, or the API's one
+ * error body `{ error: { code, message, reason?, fields?, details? } }` with the socket's code
+ * (docs/api-errors.md).
  */
 export function createCallRoute(dependencies: CallRouteDependencies): Hono<APIContext> {
   // The handler takes a web `Request`; the session `parseAuth` found travels beside it.
@@ -50,11 +51,7 @@ export function createCallRoute(dependencies: CallRouteDependencies): Hono<APICo
     expectedOrigin: dependencies.expectedOrigin,
     // A signed-out caller is answered by the handler (`unauthorized`), not by this guard.
     requireSessionCookie: false,
-    onReject: (c) =>
-      c.json(
-        { error: { code: "forbidden", message: "Request origin is invalid" } },
-        CALL_ERROR_STATUS.forbidden as 403,
-      ),
+    onReject: (c) => errorResponse(c, `forbidden`, { message: "Request origin is invalid" }),
   })
   return new Hono<APIContext>().all("*", requireSameOrigin, (c) => {
     const auth = c.get("auth")

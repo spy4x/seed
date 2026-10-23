@@ -7,6 +7,7 @@ import { TagError } from "@domain/tags"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { APIContext } from "../../_types.ts"
 import { PasswordLockedError, passwordLockedMessage } from "../../services/password-locked.ts"
+import { codeForStatus, errorResponse } from "../../services/error-response.ts"
 
 export type GroupFeatureErrorCode =
   | GroupErrorCode
@@ -92,13 +93,10 @@ export function groupErrorResponse(c: Context<APIContext>, error: unknown): Resp
   // (#406): the refusal says when to try again.
   if (error instanceof PasswordLockedError) {
     c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
-    return c.json({
-      error: {
-        code: "PASSWORD_LOCKED",
-        message: passwordLockedMessage(error.retryAfterMs),
-        requestId: c.get("requestId") || "unknown",
-      },
-    }, 429)
+    return errorResponse(c, `rate_limited`, {
+      message: passwordLockedMessage(error.retryAfterMs),
+      reason: `PASSWORD_LOCKED`,
+    })
   }
   const code = error instanceof GroupFeatureError || error instanceof GroupError ||
       error instanceof AccessError || error instanceof PlanError ||
@@ -111,17 +109,16 @@ export function groupErrorResponse(c: Context<APIContext>, error: unknown): Resp
     ? error.code
     : "INTERNAL_ERROR"
   const definition = ERROR_DEFINITIONS[code]
-  return c.json({
-    error: {
-      code,
-      message: definition.message,
-      requestId: c.get("requestId") || "unknown",
-      // A plan refusal names the feature or cap, so the client draws the upgrade prompt from it.
-      ...(error instanceof PlanError ? toPlanRefusal(error) : {}),
-      // A refused file says what is wrong with it, so the import page can list it.
-      ...(error instanceof GroupImportError
-        ? { problems: error.problems, total: error.total }
-        : {}),
-    },
-  }, definition.status)
+  return errorResponse(c, codeForStatus(definition.status), {
+    message: definition.message,
+    reason: code,
+    status: definition.status,
+    // A plan refusal names the feature or cap, so the client draws the upgrade prompt from it; a
+    // refused file says what is wrong with it, so the import page can list it.
+    details: error instanceof PlanError
+      ? toPlanRefusal(error)
+      : error instanceof GroupImportError
+      ? { problems: error.problems, total: error.total }
+      : undefined,
+  })
 }

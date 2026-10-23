@@ -8,6 +8,7 @@ import { SOCKET_USER_PROTOCOL } from "@domain/identity"
 import type { APIContext } from "../_types.ts"
 import type { Realtime } from "./realtime.ts"
 import type { AppAuthState, SignIn } from "./sign-in.ts"
+import { errorResponse } from "./error-response.ts"
 
 /** The `user.<id>` subprotocol the handshake offered, or `null` when it offered none. */
 export function offeredUserProtocol(request: Request): string | null {
@@ -59,14 +60,16 @@ export function createSocketRoute(deps: SocketRouteDependencies): Hono<APIContex
       (c) => {
         const auth = c.get("auth")
         if (!auth) {
-          return c.json({ error: "Not authenticated" }, 401)
+          return errorResponse(c, `unauthorized`, { message: "Not authenticated" })
         }
         if (c.req.header("upgrade")?.toLowerCase() !== "websocket") {
-          return c.json({ error: "Upgrade required" }, 426)
+          return errorResponse(c, `bad_request`, { message: "Upgrade required", status: 426 })
         }
         const claimed = offeredUserProtocol(c.req.raw)?.slice(SOCKET_USER_PROTOCOL.length)
         if (!isBoundToUser(claimed, auth.user.id)) {
-          return c.json({ error: "The session belongs to another user" }, 401)
+          return errorResponse(c, `unauthorized`, {
+            message: "The session belongs to another user",
+          })
         }
         return upgrade(c, auth)
       },

@@ -211,6 +211,7 @@ describe("realtime socket service", () => {
         requestId: "r1",
         code: "conflict",
         message: "Group id is already in use",
+        reason: "ID_ALREADY_EXISTS",
         details: { code: "ID_ALREADY_EXISTS" },
       },
       { kind: "server.error", requestId: "r2", code: "internal", message: "internal error" },
