@@ -121,7 +121,7 @@ export const PROFILE_SECTION_TEXT: Record<
   appearance: { label: "Appearance", description: "How the app looks on this device." },
   notifications: {
     label: "Notifications",
-    description: "Where you hear when something changes in your groups.",
+    description: "Where you get a notice when something changes in your groups.",
   },
   "api-tokens": {
     label: "API tokens",

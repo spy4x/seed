@@ -36,7 +36,7 @@ a token of its own: one token takes updates by polling or by webhook, never both
 - The bot links the Telegram account to the person, with an audit row, and the app closes the
   dialog. A wrong, used or expired code is refused, and so is a Telegram account linked to someone
   else.
-- `/unlink` in the chat, "Unlink" on the profile, or an operator's "Unlink Telegram" in the admin
+- `/unlink` in the chat, "Unlink" on the profile (after a confirmation), or an operator's "Unlink Telegram" in the admin
   panel ends it, each with an audit row.
 - Guests cannot link: they are asked to keep their account first.
 
@@ -88,4 +88,7 @@ The router, the client, the webhook handler and polling are `@spy4x/integrations
   needs a full session, second factor included, and spends the stricter per-user rate limit.
 - A linked chat acts as its person with the second factor counted as passed, as an API token
   does, because the session that linked it had passed it.
-- Seed keeps the Telegram user id only: no Telegram name, no messages.
+- Seed keeps the Telegram user id only: no Telegram name, no messages. A product that turns the
+  bot on adds it to its privacy page, for example: "Your Telegram user ID (a number, not your
+  phone number), only if you link Telegram. Unlinking removes it." Seed's own demo runs without
+  a bot, so its page does not list it.
