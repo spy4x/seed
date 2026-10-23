@@ -28,6 +28,7 @@ COPY libs/domain/notes/deno.json ./libs/domain/notes/deno.json
 COPY libs/domain/tags/deno.json ./libs/domain/tags/deno.json
 COPY libs/domain/notifications/deno.json ./libs/domain/notifications/deno.json
 COPY libs/domain/subscribers/deno.json ./libs/domain/subscribers/deno.json
+COPY libs/domain/errors/deno.json ./libs/domain/errors/deno.json
 COPY libs/server/api-tokens/deno.json ./libs/server/api-tokens/deno.json
 COPY libs/server/auth/deno.json ./libs/server/auth/deno.json
 COPY libs/server/billing/deno.json ./libs/server/billing/deno.json
