@@ -275,8 +275,9 @@ export function LinkOpenScreen(
       )}
       {guest && (
         <p class="text-sm" data-e2e="sign-in-link-guest">
-          You are using the app as a guest. Continuing keeps this guest account under the link's
-          address, or asks you first if that address already has an account.
+          You are using the app as a guest. If you asked for this link in this browser, continuing
+          keeps this guest account under the link's address, or asks you first if that address
+          already has an account.
         </p>
       )}
       <ScreenForm pending={busy} onSubmit={onContinue}>
