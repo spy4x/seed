@@ -38,6 +38,7 @@ export const ADMIN_OUTRANKED = "You cannot do this to someone whose role is your
 export const ADMIN_ALREADY_BLOCKED = "This user is already blocked"
 export const ADMIN_NOT_BLOCKED = "This user is not blocked"
 export const ADMIN_SAME_ROLE = "This user already has that role"
+export const ADMIN_NO_TELEGRAM = "This user has no Telegram account linked"
 export const ADMIN_NOT_ADMINISTRATOR = "Only an administrator can change a role"
 export const ADMIN_ROLE_TOO_HIGH = "You can only give a role below your own"
 export const ADMIN_SESSION_NOT_FOUND = "Session not found"
@@ -67,6 +68,7 @@ const UNCHANGED: Partial<Record<AdminActionKind, string>> = {
   [AdminActionKind.Block]: ADMIN_ALREADY_BLOCKED,
   [AdminActionKind.Unblock]: ADMIN_NOT_BLOCKED,
   [AdminActionKind.ChangeRole]: ADMIN_SAME_ROLE,
+  [AdminActionKind.UnlinkTelegram]: ADMIN_NO_TELEGRAM,
 }
 
 const ACTIONS = {
@@ -75,6 +77,7 @@ const ACTIONS = {
   "sessions/end": AdminActionKind.EndSessions,
   "password-reset": AdminActionKind.SendPasswordReset,
   "guest/delete": AdminActionKind.DeleteGuest,
+  "telegram/unlink": AdminActionKind.UnlinkTelegram,
 } as const
 
 /** The actions after which the person's sockets close: their sessions changed or ended. */
@@ -124,9 +127,10 @@ function serialIdOf(raw: string): number | null {
  *   pages, as CSV, read in batches and streamed (#425). It writes an audit row on the operator, so
  *   it answers 403 unless `Sec-Fetch-Site` is `same-origin`: the session cookie is `SameSite=Lax`,
  *   which another site's link or top-level navigation still carries.
- * - `POST /users/:id/block`, `/unblock`, `/sessions/end`, `/password-reset` and `/guest/delete`
- *   (#224: a guest account only, deleted at once; the audit row is the operator's) take no body and
- *   answer `{ user }`. `/sessions/:sessionId/end` ends one session. `/role` takes `{ role }`.
+ * - `POST /users/:id/block`, `/unblock`, `/sessions/end`, `/password-reset`, `/guest/delete`
+ *   (#224: a guest account only, deleted at once; the audit row is the operator's) and
+ *   `/telegram/unlink` (#269: 409 when none is linked) take no body and answer `{ user }`.
+ *   `/sessions/:sessionId/end` ends one session. `/role` takes `{ role }`.
  *   They ask for no fresh password or code: the owner chose the audit trail over a confirmation
  *   password (2026-10-15). Each writes an audit row on the person naming the operator. Block
  *   refuses every sign-in, ends every session and closes the person's sockets; ending sessions

@@ -21,6 +21,7 @@ const ACTION_PATHS: Record<AdminAction, (input: AdminActionInput) => string> = {
   "change-role": () => "role",
   "password-reset": () => "password-reset",
   "delete-guest": () => "guest/delete",
+  "unlink-telegram": () => "telegram/unlink",
 }
 
 /** What the toast says after each action went through. */
@@ -33,6 +34,7 @@ const ACTION_DONE: Record<AdminAction, (name: string, input: AdminActionInput) =
     `${name} is now ${input.role === undefined ? "on a new role" : USER_ROLE_NAMES[input.role]}.`,
   "password-reset": (name) => `A password-reset link is on its way to ${name}.`,
   "delete-guest": (name) => `The guest account ${name} is deleted.`,
+  "unlink-telegram": (name) => `The Telegram account of ${name} is unlinked.`,
 }
 
 export interface UsersListState {
