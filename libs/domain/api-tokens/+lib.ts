@@ -1,6 +1,7 @@
 import { type } from "arktype"
 import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
 import { isUuid } from "@spy4x/platform/universal/uuid"
+import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 
 /**
  * Personal API tokens (#167): a person lets a script or another service use the API in one of
@@ -115,6 +116,8 @@ export class ApiTokenError extends Error {
   constructor(
     public readonly code: ApiTokenErrorCode,
     message: string,
+    /** Each failed field's code and rule, when a schema refused the request. */
+    public readonly fields?: FieldErrors,
   ) {
     super(message)
     this.name = "ApiTokenError"
@@ -131,7 +134,7 @@ export class ApiTokenError extends Error {
 export function parseApiTokenCreateRequest(body: unknown): ApiTokenCreateRequest {
   const result = apiTokenCreateRequestSchema(body)
   if (result instanceof type.errors) {
-    throw new ApiTokenError("INVALID_REQUEST", result.summary)
+    throw new ApiTokenError("INVALID_REQUEST", result.summary, fieldErrors(result))
   }
   const name = result.name.trim()
   const length = Array.from(name).length

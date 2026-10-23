@@ -4,6 +4,7 @@ import type { Actor } from "@domain/identity"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { canMutateNotes, canRead, GroupRole, plainEntryProblem } from "@domain/groups"
+import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 
 export * from "./overview.ts"
 
@@ -69,6 +70,8 @@ export class NoteError extends Error {
   constructor(
     public readonly code: NoteErrorCode,
     message: string,
+    /** Each failed field's code and rule, when a schema refused the request. */
+    public readonly fields?: FieldErrors,
   ) {
     super(message)
     this.name = "NoteError"
@@ -222,7 +225,7 @@ export const noteListPayloadSchema = type({
 export function parseNoteRequest<S extends Type<object>>(schema: S, value: unknown): S["infer"] {
   const result = schema(value)
   if (result instanceof type.errors) {
-    throw new NoteError("INVALID_REQUEST", result.summary)
+    throw new NoteError("INVALID_REQUEST", result.summary, fieldErrors(result))
   }
   const parsed = result as S["infer"] & { title?: string; body?: string; tagIds?: string[] }
   if (parsed.tagIds !== undefined && new Set(parsed.tagIds).size > NOTE_TAG_MAX) {
@@ -287,7 +290,9 @@ export function parseNoteMoveRequest<S extends Type<{ toGroupId: string; noteIds
   fromGroupId: string,
 ): S["infer"] {
   const result = schema(value)
-  if (result instanceof type.errors) throw new NoteError("INVALID_REQUEST", result.summary)
+  if (result instanceof type.errors) {
+    throw new NoteError("INVALID_REQUEST", result.summary, fieldErrors(result))
+  }
   const parsed = result as S["infer"]
   if (parsed.noteIds.length < 1 || parsed.noteIds.length > NOTE_MOVE_MAX) {
     throw new NoteError("INVALID_REQUEST", `Move 1 to ${NOTE_MOVE_MAX} notes at a time`)
