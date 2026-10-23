@@ -21,6 +21,7 @@ import {
 import { profilePath, ScreenForm } from "./progressive.tsx"
 import type { ProviderProof } from "./provider-proof.tsx"
 import { DataExportErrorState, DataExportRow, type DataExportRowProps } from "./profile-export.tsx"
+import { PictureErrorState, PictureRow, type PictureRowProps } from "./profile-picture.tsx"
 
 /** What the name dialog shows: the typed names, their errors and whether a save is in flight. */
 export interface NameEditProps {
@@ -70,10 +71,12 @@ export interface AccountSectionProps {
   guestRow?: ComponentChildren
   /** The "Your data" row (#229). Without it the section has none. */
   dataExport?: DataExportRowProps
+  /** The "Profile picture" row (#228), above the name. Without it the section has none. */
+  picture?: PictureRowProps
 }
 
 /**
- * The profile's Account section: the name, edited in a dialog, the e-mail address, changed in
+ * The profile's Account section: the profile picture (#228), the name, edited in a dialog, the e-mail address, changed in
  * one dialog that asks for the new address and the password, then for the code mailed there. While
  * an address waits for its code the row offers "Enter code" too, which opens the same dialog at the
  * code. Last, "Your data": a copy of everything the app keeps about the person (#229).
@@ -90,6 +93,7 @@ export function AccountSection(
     providerProof,
     guestRow,
     dataExport,
+    picture,
   }: AccountSectionProps,
 ): JSX.Element {
   const [editingName, setEditingName] = useState(false)
@@ -121,6 +125,7 @@ export function AccountSection(
     <>
       <SettingList>
         {guestRow}
+        {picture && <PictureRow {...picture} />}
         <SettingRow
           label="Name"
           value={<span data-e2e="profile-name">{name || "Not set"}</span>}
@@ -172,6 +177,7 @@ export function AccountSection(
         {dataExport && <DataExportRow {...dataExport} />}
       </SettingList>
       {!guestRow && !email && onRetryEmail && <EmailUnavailable onRetry={onRetryEmail} />}
+      {picture && <PictureErrorState error={picture.error} />}
       {dataExport && <DataExportErrorState error={dataExport.error} />}
 
       <Modal

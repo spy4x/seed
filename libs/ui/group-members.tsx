@@ -7,6 +7,7 @@ import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import type { PlanRefusal } from "@domain/billing"
 import { assignableRoles, canRemoveMember, type GroupRole } from "@domain/groups"
+import { pictureUrl } from "@domain/identity"
 import { ROLE_TEXT } from "./groups-screen.tsx"
 import { useSucceeded } from "@spy4x/preact-ui/use-succeeded"
 import { useFreshError } from "@spy4x/preact-ui/use-fresh-error"
@@ -26,6 +27,8 @@ export interface GroupMemberRow {
    * the owner and admins; for anyone else it is absent and the row shows no address.
    */
   email?: string | null
+  /** Their profile picture (#228); `null` or absent for initials. */
+  pictureId?: string | null
   role: GroupRole
   /**
    * When they were last active, as an ISO string, or `null` if not recorded. Like `email`, the API
@@ -196,7 +199,7 @@ function MemberItem(
       data-user-id={member.userId}
     >
       <div class="flex min-w-0 items-center gap-3">
-        <Avatar name={label} alt="" size="sm" />
+        <Avatar name={label} src={pictureUrl(member.pictureId)} alt="" size="sm" />
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <span class="flex min-w-0 items-center gap-2 text-sm">
             <span

@@ -59,6 +59,8 @@ export interface NoteRow {
   authorName?: string
   /** The author's own name for the avatar's initials, when `authorName` is "You". */
   authorAvatarName?: string
+  /** The author's profile picture (#228), in place of the initials. */
+  authorPictureUrl?: string
 }
 
 /** A member the "Author" menu offers. */
@@ -834,6 +836,7 @@ function NoteItem(
               <span class="flex min-w-0 items-center gap-2">
                 <Avatar
                   name={note.authorAvatarName ?? note.authorName}
+                  src={note.authorPictureUrl}
                   alt=""
                   size="xs"
                   class="size-5 text-[10px]"

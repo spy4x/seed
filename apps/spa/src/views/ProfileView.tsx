@@ -52,8 +52,10 @@ import { SIGN_IN_METHODS_FAILURE, signInMethodName } from "@ui/sign-in-methods.t
 import { apiTokensHttp, createApiTokensStore } from "../state/api-tokens.ts"
 import { createDataExportStore, DATA_EXPORT_DOWNLOAD_PATH } from "../state/data-export.ts"
 import { notificationsStore } from "../state/notifications.ts"
-import { DataExportStatus } from "@domain/identity"
+import { DataExportStatus, pictureUrl } from "@domain/identity"
 import { DATA_EXPORT_ANCHOR } from "@ui/profile-export.tsx"
+import { PICTURE_BUTTON_ID } from "@ui/profile-picture.tsx"
+import { createPictureStore, pictureCalls } from "../state/profile-picture.ts"
 import { createTelegramStore, telegramHttp } from "../state/telegram.ts"
 import { passwordChangedMessage } from "./password-changed-message.ts"
 import { isProviderProofFresh, withPasskeyProof } from "./provider-proof-fresh.ts"
@@ -134,6 +136,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   const online = network.online.value
   const [tokens] = useState(() => createApiTokensStore(apiTokensHttp, localReads))
   const [dataExport] = useState(() => createDataExportStore())
+  const [picture] = useState(() => createPictureStore(pictureCalls))
   const [telegram] = useState(() =>
     createTelegramStore(telegramHttp, {
       onLinked: () =>
@@ -210,6 +213,12 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       timer = setTimeout(() => {
         if (location.hash === `#${DATA_EXPORT_ANCHOR}`) {
           document.getElementById(DATA_EXPORT_ANCHOR)?.focus()
+        }
+        // The palette's "Change profile picture" opens the chooser too, still within its keypress.
+        if (location.hash === `#${PICTURE_BUTTON_ID}`) {
+          const button = document.getElementById(PICTURE_BUTTON_ID)
+          button?.focus()
+          button?.click()
         }
       }, 0)
     }
@@ -699,6 +708,18 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       }}
       onRegisterPush={registerPush}
       onRemovePush={removePush}
+      picture={{
+        name: [session.user?.firstName, session.user?.lastName].filter(Boolean).join(" ") ||
+          emailStore.status.value?.email || "",
+        src: picture.preview.value ?? pictureUrl(session.user?.pictureId),
+        hasPicture: Boolean(session.user?.pictureId),
+        status: picture.status.value,
+        error: picture.error.value,
+        announcement: picture.announcement.value,
+        onChoose: (file) => void picture.choose(file),
+        onReject: picture.reject,
+        onRemove: () => void picture.remove(),
+      }}
       dataExport={{
         exportState: dataExport.current.value,
         pending: dataExport.pending.value,

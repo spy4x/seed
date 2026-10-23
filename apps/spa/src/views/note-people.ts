@@ -1,7 +1,18 @@
+import { pictureUrl } from "@domain/identity"
+
 /** A member as the notes screens need them: the members store's rows fit. */
 export interface NotePerson {
   userId: number
   name: string
+  pictureId?: string | null
+}
+
+/** The address of the profile picture of the member with `userId`, or `undefined` for initials. */
+export function personPicture(
+  userId: number | null,
+  members: readonly NotePerson[] | null,
+): string | undefined {
+  return pictureUrl(members?.find((member) => member.userId === userId)?.pictureId)
 }
 
 /**

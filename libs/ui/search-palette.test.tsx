@@ -190,6 +190,7 @@ describe("SearchPalette", () => {
       "Open notifications",
       "Open profile | Name, e-mail address, password, two-factor sign-in",
       "Download my data | A ZIP of your profile, groups and notes",
+      "Change profile picture | JPEG, PNG or WebP, up to 1 MB",
     ])
   })
 
@@ -321,6 +322,23 @@ describe("SearchPalette", () => {
     await open()
     await type("register")
     expect(listed().some((row) => row.startsWith("Keep your account"))).toBe(false)
+  })
+
+  it("finds Change profile picture by avatar, photo and фото, and opens the row's chooser", async () => {
+    const { picked } = await mount()
+    for (const query of ["avatar", "photo", "фото"]) {
+      await open()
+      await type(query)
+      const row = [...document.querySelectorAll("[role=option]")]
+        .find((candidate) => text(candidate).startsWith("Change profile picture"))
+      expect(row, query).toBeDefined()
+      await act(() => {
+        row!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }) as unknown as Event)
+      })
+    }
+    expect(picked).toEqual(
+      Array(3).fill({ kind: "page", href: "/profile/account#profile-picture-choose" }),
+    )
   })
 
   it("finds Download my data by the words a person would try, and opens the Account section's row", async () => {
