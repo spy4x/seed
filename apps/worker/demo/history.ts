@@ -12,7 +12,7 @@ import {
   BillingStatus,
   PRO_PLAN_ID,
 } from "@domain/billing"
-import { AuthAuditEventType } from "@domain/identity"
+import { AuthAuditEventType, SIGN_IN_LINK_METHOD } from "@domain/identity"
 import { PASSKEY_METHOD, passkeyIdentifier } from "@server/auth/passkeys.ts"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { BACKUP_TARGET_DATABASE } from "@server/jobs/admin-system.ts"
@@ -199,10 +199,14 @@ export async function writePeople(
       blocked_at: user.blockedAgo === null ? null : at(user.blockedAgo).toISOString(),
       first_group_name: user.firstGroupName,
     })
+    // Someone without Google or GitHub asks for a sign-in link now and then (#391).
+    const linkSignIns = user.provider ? [] : user.signIns.filter((_, n) => n % 3 === 1)
     for (const [n, signIn] of user.signIns.entries()) {
       // Someone with Google or GitHub uses it for every other sign-in.
       const method = user.provider && signIn.ago < user.providerAgo && n % 2 === 0
         ? user.provider
+        : linkSignIns.includes(signIn)
+        ? SIGN_IN_LINK_METHOD
         : null
       audits.push(
         audit(
@@ -224,6 +228,19 @@ export async function writePeople(
           user.devices[0],
         ),
       )
+    }
+    if (linkSignIns.length > 0) {
+      // The key link sessions run on, made by the first link the person used. No secret, no address.
+      const first = at(Math.max(...linkSignIns.map((signIn) => signIn.ago)))
+      providerKeys.push({
+        userId: id,
+        method: SIGN_IN_LINK_METHOD,
+        subject: uuidV7(),
+        email: null,
+        provenAt: null,
+        createdAt: first,
+        updatedAt: first,
+      })
     }
     if (user.provider) {
       const linked = at(user.providerAgo)

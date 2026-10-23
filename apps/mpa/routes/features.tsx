@@ -93,7 +93,8 @@ const TIERS: readonly Tier[] = [
         title: `Sign-in that is done`,
         lead:
           `People sign up with an email address and a password, prove the address with a code ` +
-          `sent by email, reset a forgotten password, continue with Google or GitHub, or sign in ` +
+          `sent by email, reset a forgotten password, continue with Google or GitHub, get a ` +
+          `sign-in link by email that also signs them up, or sign in ` +
           `with a passkey, or try the app first in a guest account and add a sign-in method later. ` +
           `An authenticator app adds two-factor authentication (2FA). They see every device they are signed in on ` +
           `and can sign the others out. Changing a sign-in method asks for proof and sends a mail.`,
@@ -102,11 +103,12 @@ const TIERS: readonly Tier[] = [
           `Signed session cookies, and an audit trail of every sign-in event`,
           `Personal API tokens, stored only as keyed hashes`,
           `Passkeys: only the public key is stored, and each sign-in challenge works once`,
+          `Magic links: one link signs in or signs up, works once, for 15 minutes, and is stored ` +
+          `only as a hash`,
           `Guest accounts (anonymous sign-in): a visitor starts with one click and no sign-in ` +
           `method, then adds an email and password, Google, GitHub or a passkey to the same account`,
           `Wrong passwords counted per sign-in name, with a short lock, from any network address`,
         ],
-        notYet: [{ label: `Magic links` }],
         code: { label: `Read the sign-in code`, href: source(`apps/api/services/sign-in.ts`) },
         visual: (
           <WindowFrame variant="browser" title="app.seedsaas.com/profile/security">
@@ -494,7 +496,7 @@ function Hero({ demoHref }: { demoHref: string }): JSX.Element {
       class="site-glow"
       eyebrow="Features"
       title="Everything Seed ships, and what it does not yet"
-      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
+      lead="Seed is a free, MIT-licensed SaaS starter with email, Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA, groups with roles, per-member Stripe billing, realtime updates, an offline app, an admin area, monitoring and optional daily encrypted backups. Each section below links to its code."
       author={SITE_AUTHOR}
       updated={FEATURES_UPDATED}
       note='Seed is a work in progress, built in public. What is not built yet is marked "Not built yet" next to the claim it limits, with its issue when one is open.'

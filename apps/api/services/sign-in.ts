@@ -109,6 +109,7 @@ import {
   AuthAuditEventType,
   type EmailStatus,
   emailToVerify,
+  SIGN_IN_LINK_METHOD,
   type SignedInDevice,
   type User,
   UserMFAStatus,
@@ -141,6 +142,7 @@ import {
 } from "./passkey-sign-in.ts"
 import { PasswordLockedError } from "./password-locked.ts"
 import { createGuestOperations, type GuestOperations } from "./guest-sign-in.ts"
+import { consumeSignInLink, type SignInLinkRequest } from "@server/auth/sign-in-links.ts"
 
 /** Longest username, in characters (code points), after normalisation. */
 export const USERNAME_MAX_LENGTH = 50
@@ -262,6 +264,51 @@ export type SignUpCompletion =
   | { outcome: SignUpOutcome.GuestKept; signedIn: SignedIn }
   | { outcome: SignUpOutcome.WrongCode | SignUpOutcome.Expired | SignUpOutcome.GuestTaken }
 
+/** What {@link SignIn.redeemSignInLink} did with a link (#391). */
+export enum SignInLinkOutcome {
+  /** The link's address belongs to an account: it is signed in, its second factor still owed. */
+  SignedIn = 1,
+  /** No account used the address: a new one is made with it proven, and signed in. */
+  Created = 2,
+  /** A guest's link to a new address: the address became the guest's, now kept (#224). */
+  GuestKept = 3,
+  /**
+   * A guest's link to an address another account owns: nothing changed, and the switch page asks
+   * what happens to the guest's work.
+   */
+  GuestTaken = 4,
+  /** Unknown, expired or used; or the account is blocked or gone. One answer for all. */
+  Refused = 5,
+  /**
+   * An account signs in with the address by password but never proved it: the link proves the
+   * mailbox, not that account, so nothing happens. A password reset proves it.
+   */
+  Unconfirmed = 6,
+  /**
+   * A guest opened a link another browser asked for: nothing changed, the guest's session stays,
+   * and the link is spent. A guest key has no secret, so a session lost here loses the account.
+   */
+  AskedElsewhere = 7,
+}
+
+/** The answer of {@link SignIn.redeemSignInLink}. */
+export type SignInLinkRedemption =
+  | {
+    outcome: SignInLinkOutcome.SignedIn | SignInLinkOutcome.Created | SignInLinkOutcome.GuestKept
+    signedIn: SignedIn
+    /** The address the link proved. */
+    email: string
+    /** The page to open next, as the request stored it. */
+    next: string | null
+  }
+  | { outcome: SignInLinkOutcome.GuestTaken; next: string | null }
+  | {
+    outcome:
+      | SignInLinkOutcome.Refused
+      | SignInLinkOutcome.Unconfirmed
+      | SignInLinkOutcome.AskedElsewhere
+  }
+
 /** A sign-up waiting for its code, as the page that asks for the code reads it back. */
 export interface WaitingSignUp {
   email: string
@@ -323,6 +370,16 @@ export interface SignIn {
    * @param firstGroupId The id of the person's first group. Defaults to a random UUID.
    */
   completeSignUp(c: Context, code: string, firstGroupId?: string): Promise<SignUpCompletion>
+  /**
+   * Spends a sign-in link's token (#391) and signs in to the account that owns its address, or
+   * makes one with the address proven. An account with an authenticator app still owes its code.
+   * A guest who asked for the link keeps their account with the address, or is offered the switch
+   * when another account owns it; any other guest is refused and keeps their session. A full
+   * account's session the browser held before is replaced.
+   *
+   * @param firstGroupId The id of a new account's first group. Defaults to a random UUID.
+   */
+  redeemSignInLink(c: Context, token: string, firstGroupId?: string): Promise<SignInLinkRedemption>
   /**
    * Checks the password of the account that signs in with `login`, an address or an older
    * account's username, then starts a session, records the time and writes the audit row in one
@@ -897,6 +954,171 @@ export function createSignIn(options: SignInOptions): SignIn {
     deleteCookie(c, PASSWORD_SIGN_UP_COOKIE, signUpCookieOptions)
   }
 
+  /**
+   * The key a sign-in link signs user `userId` in through (#391), added the first time. It holds
+   * no secret and no address: the link proved the mailbox, and the account's own keys hold its
+   * address. Its sessions show as e-mail-link sessions, and a link sign-up's key carries the new
+   * address itself (see {@link signInByLink}).
+   */
+  async function linkKeyOf(tx: AppDbBase, userId: number): Promise<AuthKey> {
+    const keys = await tx.authStore.listKeys(userId)
+    return keys.find((key) => key.method === SIGN_IN_LINK_METHOD) ??
+      await tx.authStore.addKey(userId, {
+        method: SIGN_IN_LINK_METHOD,
+        subject: uuidV7(),
+        email: null,
+        secret: null,
+        provenAt: null,
+      })
+  }
+
+  /** Sets the cookie of a new session and ends the one the browser held before, if any. */
+  async function replaceSession(
+    c: Context,
+    previous: AppAuthState | null | undefined,
+    started: { session: AuthSessionRecord; cookieValue: string },
+  ): Promise<void> {
+    await cookie.set(c, started.session, started.cookieValue)
+    if (previous) await sessions.deleteForUser(previous.user.id, previous.session.id)
+  }
+
+  /**
+   * What a spent link does (#391), for the link's normalised address `email`:
+   *
+   * - **A guest who did not ask for the link** is refused, and nothing changes: replacing the
+   *   guest's session would lose the guest account for good, since a guest key has no secret.
+   * - **An owner of the proven address** is signed in, as a password would sign them in: a blocked
+   *   account is refused, one waiting to be deleted is restored (or owes its code first), and an
+   *   authenticator app is still owed. A guest is offered the switch to that account instead.
+   * - **A password key that claims the address without having proven it** is left alone: the link
+   *   proves the mailbox, not that account, whose password may be someone else's.
+   * - **Nobody** has the address: a new account is made with a link key that carries it, proven;
+   *   a guest keeps theirs with that key instead (#224).
+   *
+   * When someone proves the address between the read and the write, the write fails and this runs
+   * once more, then finds that owner.
+   */
+  async function signInByLink(
+    c: Context,
+    link: SignInLinkRequest,
+    now: Date,
+    firstGroupId: string,
+    retried = false,
+  ): Promise<SignInLinkRedemption> {
+    const { email, next } = link
+    const state = c.get("auth") as AppAuthState | null | undefined
+    // A guest uses only a link the guest asked for. Attaching the address of someone else's link
+    // would let that person, signing in with it later, own the guest's data; signing the browser
+    // in instead would end the guest's only session and lose the account.
+    if (state?.user.guestSince && link.requestedBy !== state.user.id) {
+      return { outcome: SignInLinkOutcome.AskedElsewhere }
+    }
+    const guest = state?.user.guestSince ? state : null
+    const owner = await db.authStore.findUserIdByProvenEmail(email)
+    if (owner === null) {
+      if (await db.authStore.findKey(PASSWORD_METHOD, email)) {
+        return { outcome: SignInLinkOutcome.Unconfirmed }
+      }
+      const linkKey = {
+        method: SIGN_IN_LINK_METHOD,
+        subject: uuidV7(),
+        email,
+        secret: null,
+        provenAt: now,
+      }
+      try {
+        if (guest) {
+          const kept = await db.begin(async (tx) => {
+            await tx.lockUser(guest.user.id)
+            const key = await tx.authStore.addKey(guest.user.id, linkKey)
+            if (!(await guests.keep(c, tx, guest.user.id, key.id, SIGN_IN_LINK_METHOD))) return null
+            return await tx.user.findOne({ id: guest.user.id })
+          })
+          if (!kept) return { outcome: SignInLinkOutcome.Refused }
+          return {
+            outcome: SignInLinkOutcome.GuestKept,
+            signedIn: { user: kept, session: guest.session },
+            email,
+            next,
+          }
+        }
+        const created = await db.begin(async (tx) => {
+          const signedUp = await tx.authStore.createUserWithKey(linkKey)
+          const started = await sessionsOver(tx.sessionStore).create({
+            userId: signedUp.user.id,
+            keyId: signedUp.key.id,
+            secondFactor: SecondFactorStatus.NotRequired,
+          }, deviceOf(c))
+          const user = await createProfile(
+            c,
+            tx,
+            signedUp.user.id,
+            SIGN_IN_LINK_METHOD,
+            firstGroupId,
+          )
+          return { user, ...started }
+        })
+        await replaceSession(c, state, created)
+        return {
+          outcome: SignInLinkOutcome.Created,
+          signedIn: { user: created.user, session: created.session },
+          email,
+          next,
+        }
+      } catch (error) {
+        if (error instanceof AuthConflictError && !retried) {
+          return await signInByLink(c, link, now, firstGroupId, true)
+        }
+        throw error
+      }
+    }
+
+    if (guest) {
+      const key = await db.begin((tx) => linkKeyOf(tx, owner))
+      await guests.taken(guest.user.id, { id: key.id, userId: owner, method: key.method }, false)
+      return { outcome: SignInLinkOutcome.GuestTaken, next }
+    }
+    const authUser = await db.authStore.findUser(owner)
+    if (!authUser || authUser.deletedAt !== null) return { outcome: SignInLinkOutcome.Refused }
+    if (await db.admin.isBlocked(owner)) return { outcome: SignInLinkOutcome.Refused }
+    const waiting = await waitingForCode(owner)
+    let secondFactor: SecondFactorStatus
+    if (waiting) {
+      secondFactor = SecondFactorStatus.Pending
+    } else {
+      if (!(await restoreIfWaiting(c, owner))) return { outcome: SignInLinkOutcome.Refused }
+      try {
+        secondFactor = await signInSecondFactor(authUser)
+      } catch (error) {
+        if (error instanceof MissingProfileError) return { outcome: SignInLinkOutcome.Refused }
+        throw error
+      }
+    }
+    // The session, the last sign-in time and the audit row are kept or undone together.
+    const started = await db.begin(async (tx) => {
+      const key = await linkKeyOf(tx, owner)
+      const begun = await sessionsOver(tx.sessionStore).create({
+        userId: owner,
+        keyId: key.id,
+        secondFactor,
+      }, deviceOf(c))
+      const user = waiting ??
+        await tx.user.updateOne({ id: owner, data: { lastLoginAt: new Date() } })
+      if (!user) throw new Error("User not found")
+      await tx.authAudit.insert(
+        auditRow(c, owner, AuthAuditEventType.SIGNED_IN, SIGN_IN_LINK_METHOD),
+      )
+      return { user, ...begun }
+    })
+    await replaceSession(c, state, started)
+    return {
+      outcome: SignInLinkOutcome.SignedIn,
+      signedIn: { user: started.user, session: started.session },
+      email,
+      next,
+    }
+  }
+
   const api: SignIn = {
     auth,
     oauth,
@@ -1058,6 +1280,14 @@ export function createSignIn(options: SignInOptions): SignIn {
       }
     },
 
+    async redeemSignInLink(c, token, firstGroupId = uuidV7()) {
+      const now = new Date()
+      // Spent outside any transaction, so the link is used up whatever follows.
+      const link = await consumeSignInLink(db.authStore, db.signInLink, token, now)
+      if (link === null) return { outcome: SignInLinkOutcome.Refused }
+      return await signInByLink(c, link, now, firstGroupId)
+    },
+
     async signIn(c, login, password) {
       // Either path runs exactly one hash verification, so neither tells an unknown login apart.
       const provider = normalizeEmail(login) === null ? signInByUsername : signInByAddress
@@ -1152,7 +1382,13 @@ export function createSignIn(options: SignInOptions): SignIn {
       }
       const { qrCodeSvg } = totpEnrolment(secret, {
         issuer: accountPart(options.totpIssuer, "App"),
-        label: accountPart(key.subject, `user ${user.id}`),
+        // A link key's subject is an id: the account's address names it instead (#391).
+        label: accountPart(
+          key.method === SIGN_IN_LINK_METHOD
+            ? (await readEmailStatus(db.emailChange, db.authStore, user.id)).email ?? ""
+            : key.subject,
+          `user ${user.id}`,
+        ),
       })
       return { error: null, qrcode: qrCodeSvg, secret }
     },

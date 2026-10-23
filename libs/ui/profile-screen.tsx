@@ -275,10 +275,10 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
   }
 
   const name = `${user.firstName} ${user.lastName}`.trim()
-  const providerOnly = providerOnlyNames(methods?.methods)
+  const providerOnly = providerOnlyNames(methods?.methods, methods?.emailLink)
   const providerProof = props.providerProof !== undefined
     ? props.providerProof
-    : providerProofOf(methods?.methods, props.providerProofFresh ?? false)
+    : providerProofOf(methods?.methods, props.providerProofFresh ?? false, methods?.emailLink)
   const twoFactorOn = user.mfa === UserMFAStatus.CONFIGURED
   const sections: SettingsSection[] = PROFILE_SECTIONS.map((id) => ({
     id,
@@ -356,6 +356,7 @@ function ProfileSection(
           email={props.email ?? null}
           providerOnly={providerOnly === null ? null : providerOnlyNames(
             props.methods?.methods?.filter((method) => method.kind !== "passkey"),
+            props.methods?.emailLink,
           ) ?? ""}
           emailChange={props.emailChange}
           openEmailCode={props.openEmailCode}
@@ -433,12 +434,15 @@ function ProfileSection(
 
 /**
  * The ways in of an account that has no password ("Google", "Google and GitHub", "a passkey"),
- * or `null` for an account with one, or while the sign-in methods are not known.
+ * or `null` for an account with one, or while the sign-in methods are not known. An account with
+ * no linked method signs in with "a sign-in link" when `emailLink` says one reaches it (#391).
  */
 export function providerOnlyNames(
   methods: readonly SignInMethod[] | null | undefined,
+  emailLink = false,
 ): string | null {
-  if (!methods || methods.length === 0) return null
+  if (!methods) return null
+  if (methods.length === 0) return emailLink ? "a sign-in link" : null
   if (methods.some((method) => method.kind === "password")) return null
   const passkeys = methods.filter((method) => method.kind === "passkey").length
   return [

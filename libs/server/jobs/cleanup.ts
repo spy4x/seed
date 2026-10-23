@@ -13,6 +13,7 @@ import { cleanUpGuests } from "../auth/guests.ts"
 import { removeStaleEmailCodeRequests } from "./email-code-mail.ts"
 import { removeExpiredAuthChallenges } from "./auth-challenges.ts"
 import { removeExpiredSignUps } from "./sign-up-code-mail.ts"
+import { removeStaleSignInLinkRequests } from "./sign-in-link-mail.ts"
 import { removeStalePasswordResetRequests } from "./password-reset-mail.ts"
 import { removeStaleSubscriptionRequests } from "./subscriber-mail.ts"
 import { OUTBOX_RETENTION_DAYS } from "./jobs.ts"
@@ -38,6 +39,10 @@ export function cleanupSteps(
     ["remove unsent e-mail code requests", async () => {
       const staleCodes = await removeStaleEmailCodeRequests(sql)
       if (staleCodes > 0) console.log(`Removed ${staleCodes} unsent e-mail code request(s)`)
+    }],
+    ["remove unused sign-in links", async () => {
+      const links = await removeStaleSignInLinkRequests(sql)
+      if (links > 0) console.log(`Removed ${links} unused sign-in link request(s)`)
     }],
     ["remove expired sign-ups", async () => {
       const signUps = await removeExpiredSignUps(sql)

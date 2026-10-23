@@ -16,6 +16,7 @@ import { OUTBOX_CLEANUP_JOB } from "./jobs.ts"
 import { PASSWORD_RESET_MAIL_JOB } from "./password-reset-mail.ts"
 import { SIGN_IN_METHOD_MAIL_JOB } from "./sign-in-method-mail.ts"
 import { SIGN_UP_CODE_MAIL_JOB } from "./sign-up-code-mail.ts"
+import { SIGN_IN_LINK_MAIL_JOB } from "./sign-in-link-mail.ts"
 import { STARTER_DATA_JOB } from "./starter-data.ts"
 import {
   SUBSCRIBER_CONFIRM_MAIL_JOB,
@@ -32,6 +33,7 @@ const QUEUED_KINDS = [
   PASSWORD_RESET_MAIL_JOB,
   EMAIL_CODE_MAIL_JOB,
   SIGN_UP_CODE_MAIL_JOB,
+  SIGN_IN_LINK_MAIL_JOB,
   SIGN_IN_METHOD_MAIL_JOB,
   API_TOKEN_CREATED_MAIL_JOB,
   ACCOUNT_DELETION_MAIL_JOB,

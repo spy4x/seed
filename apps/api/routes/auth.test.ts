@@ -7,6 +7,7 @@ import {
   PasswordSetOutcome,
   type SignedIn,
   type SignIn,
+  SignInLinkOutcome,
   SignUpOutcome,
 } from "../services/sign-in.ts"
 import {
@@ -36,6 +37,8 @@ import {
   EMAIL_CHANGE_MAILS_PER_ADDRESS,
   EMAIL_CODE_MAILS_PER_ADDRESS,
   RESET_MAILS_PER_ADDRESS,
+  SIGN_IN_LINK_MAILS_PER_ADDRESS,
+  SIGN_IN_LINK_MAILS_PER_CLIENT,
   SIGN_UP_CODE_MAILS_PER_ADDRESS,
   SIGN_UP_CODE_MAILS_PER_CLIENT,
 } from "../middlewares/auth-rate-limits.ts"
@@ -61,6 +64,10 @@ import {
   PROVIDER_PROOF_REQUIRED,
   SESSION_IS_CURRENT,
   SESSION_NOT_FOUND,
+  SIGN_IN_LINK_BAD_ADDRESS,
+  SIGN_IN_LINK_REFUSED,
+  SIGN_IN_LINK_REQUESTED,
+  SIGN_IN_LINK_UNCONFIRMED,
   SIGN_UP_CODES_TOO_MANY,
   SIGN_UP_EXPIRED,
   SIGN_UP_REQUESTED,
@@ -136,6 +143,17 @@ function fakeSignIn(
       return succeed
         ? { outcome: SignUpOutcome.Created, signedIn: await signedIn() }
         : { outcome: SignUpOutcome.WrongCode }
+    },
+    redeemSignInLink: async () => {
+      calls.push("redeemSignInLink")
+      return succeed
+        ? {
+          outcome: SignInLinkOutcome.SignedIn,
+          signedIn: await signedIn(),
+          email: "alice@example.com",
+          next: "/notes",
+        }
+        : { outcome: SignInLinkOutcome.Refused }
     },
     signIn: (_c, login) => (
       calls.push("signIn"), logins.push(login), succeed ? signedIn() : Promise.resolve(null)
@@ -250,6 +268,8 @@ function buildApp(
   const mailed: string[] = []
   /** Every address a reset link was queued for, as the route passed it. */
   const queued: string[] = []
+  /** Every sign-in link the route queued: the address and the page to open after. */
+  const links: { email: string; next: string | null }[] = []
   /** What the route handed `signUp` and `signIn` as the address or login. */
   const logins: string[] = []
   /** Every sign-out the route announced. */
@@ -265,6 +285,9 @@ function buildApp(
     requestPasswordReset: (email) => (
       calls.push("requestPasswordReset"), queued.push(email), Promise.resolve()
     ),
+    requestSignInLink: (email, next) => (
+      calls.push("requestSignInLink"), links.push({ email, next }), Promise.resolve()
+    ),
     emailCodeFailures: fakeTotpFailures(codeFailureCalls, codeLockedForMs),
     requestEmailCode: (_userId, email) => (mailed.push(email), Promise.resolve()),
   })
@@ -275,6 +298,7 @@ function buildApp(
     codeFailureCalls,
     passwordFailureCalls,
     queued,
+    links,
     logins,
     mailed,
     emitted,
@@ -341,6 +365,18 @@ const anonymousRoutes: (MutationCase & { operation: string })[] = [
     operation: "requestPasswordReset",
   },
   { method: "POST", path: "/auth/password/reset", body: resetBody, operation: "resetPassword" },
+  {
+    method: "POST",
+    path: "/auth/link",
+    body: { email: "alice@example.com" },
+    operation: "requestSignInLink",
+  },
+  {
+    method: "POST",
+    path: "/auth/link/redeem",
+    body: { token: "a-token-from-the-link" },
+    operation: "redeemSignInLink",
+  },
 ]
 
 /**
@@ -653,6 +689,7 @@ describe("auth routes rate-limit", () => {
         totpFailures: fakeTotpFailures([]),
         passwordFailures: fakeTotpFailures([]),
         requestPasswordReset: () => Promise.resolve(),
+        requestSignInLink: () => Promise.resolve(),
         emailCodeFailures: fakeTotpFailures([]),
         requestEmailCode: () => Promise.resolve(),
       }),
@@ -1340,6 +1377,163 @@ describe("auth routes reset a password by e-mail link", () => {
 
     expect(response.status).toBe(400)
     expect(calls).toEqual([])
+  })
+})
+
+describe("auth routes sign in and sign up by e-mail link (#391)", () => {
+  const request = anonymousRoutes.find((route) => route.path === "/auth/link")!
+  const redeem = anonymousRoutes.find((route) => route.path === "/auth/link/redeem")!
+  /** The headers of an anonymous request from `ip`. */
+  const from = (ip: string) => ({ ...sameOriginWithoutCookieHeaders, "x-real-ip": ip })
+  const askFor = (body: unknown, ip = "192.0.2.1") => ({ route: { ...request, body }, ip })
+
+  it("answers the same for every address and queues the link with the address normalised", async () => {
+    const { app, links } = buildApp(null)
+    const answers = []
+    for (const email of ["  Known@Example.com ", "nobody@example.com"]) {
+      const { route, ip } = askFor({ email })
+      const response = await send(app, route, from(ip))
+      answers.push({ status: response.status, body: await response.json() })
+    }
+
+    expect(answers).toEqual([
+      { status: 200, body: SIGN_IN_LINK_REQUESTED },
+      { status: 200, body: SIGN_IN_LINK_REQUESTED },
+    ])
+    expect(links.map((link) => link.email)).toEqual(["known@example.com", "nobody@example.com"])
+  })
+
+  it("keeps a page of the app as the link's next page and drops any other", async () => {
+    const { app, links } = buildApp(null)
+    for (const next of ["/notes?tag=work", "//evil.example.com", "/api/auth/me"]) {
+      const { route, ip } = askFor({ email: "alice@example.com", next })
+      await send(app, route, from(ip))
+    }
+
+    expect(links.map((link) => link.next)).toEqual(["/notes?tag=work", null, null])
+  })
+
+  it("refuses an address it cannot normalise, and queues nothing", async () => {
+    const { app, links } = buildApp(null)
+    const { route, ip } = askFor({ email: "not an address" })
+    const response = await send(app, route, from(ip))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: SIGN_IN_LINK_BAD_ADDRESS })
+    expect(links).toEqual([])
+  })
+
+  it("leaves the address's owner a link after a stranger keeps asking for it", async () => {
+    const { app, links } = buildApp(null)
+    const stranger = []
+    for (let attempt = 0; attempt <= SIGN_IN_LINK_MAILS_PER_ADDRESS; attempt++) {
+      const { route } = askFor({ email: "alice@example.com" })
+      stranger.push((await send(app, route, from("192.0.2.1"))).status)
+    }
+    const owner = await send(
+      app,
+      askFor({ email: "alice@example.com" }).route,
+      from("198.51.100.7"),
+    )
+
+    expect(stranger).toEqual([
+      ...Array(SIGN_IN_LINK_MAILS_PER_CLIENT).fill(200),
+      ...Array(SIGN_IN_LINK_MAILS_PER_ADDRESS + 1 - SIGN_IN_LINK_MAILS_PER_CLIENT).fill(429),
+    ])
+    expect(owner.status).toBe(200)
+    expect(links).toHaveLength(SIGN_IN_LINK_MAILS_PER_CLIENT + 1)
+  })
+
+  it("caps one address's links from many networks together, and says how long to wait", async () => {
+    const { app } = buildApp(null)
+    const statuses = []
+    for (let network = 1; statuses.length < SIGN_IN_LINK_MAILS_PER_ADDRESS; network++) {
+      for (let mail = 0; mail < SIGN_IN_LINK_MAILS_PER_CLIENT; mail++) {
+        const { route } = askFor({ email: "alice@example.com" })
+        statuses.push((await send(app, route, from(`192.0.2.${network}`))).status)
+      }
+    }
+    const refused = await send(
+      app,
+      askFor({ email: "alice@example.com" }).route,
+      from("198.51.100.7"),
+    )
+    const otherAddress = await send(
+      app,
+      askFor({ email: "bob@example.com" }).route,
+      from("198.51.100.7"),
+    )
+
+    expect(statuses.slice(0, SIGN_IN_LINK_MAILS_PER_ADDRESS)).not.toContain(429)
+    expect(refused.status).toBe(429)
+    expect(refused.headers.get("retry-after")).not.toBe(null)
+    expect((await refused.json()).error).toMatch(
+      /^Too many links were asked for this address\. Try again in \d+ minutes?\.$/,
+    )
+    expect(otherAddress.status).toBe(200)
+  })
+
+  it("answers a used, expired or unknown link with one refusal", async () => {
+    const { app } = buildApp(null, { succeed: false })
+    const response = await send(app, redeem, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(410)
+    expect(await response.json()).toEqual({ error: SIGN_IN_LINK_REFUSED })
+  })
+
+  it("answers a signed-in link with the address, the next page and whether a code is owed", async () => {
+    const { app } = buildApp(null, { secondFactor: SecondFactorStatus.Pending })
+    const response = await send(app, redeem, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({
+      email: "alice@example.com",
+      next: "/notes",
+      created: false,
+      secondFactorPending: true,
+    })
+  })
+
+  it("says a new account was made, and sends a guest whose address is taken to the switch", async () => {
+    const created = buildApp(null, {
+      signIn: {
+        redeemSignInLink: async () => ({
+          outcome: SignInLinkOutcome.Created,
+          signedIn: buildAuthData(),
+          email: "new@example.com",
+          next: null,
+        }),
+      },
+    })
+    const taken = buildApp(null, {
+      signIn: {
+        redeemSignInLink: () =>
+          Promise.resolve({ outcome: SignInLinkOutcome.GuestTaken, next: null }),
+      },
+    })
+
+    const made = await send(created.app, redeem, sameOriginWithoutCookieHeaders)
+    const switched = await send(taken.app, redeem, sameOriginWithoutCookieHeaders)
+
+    expect(await made.json()).toEqual({
+      email: "new@example.com",
+      next: null,
+      created: true,
+      secondFactorPending: false,
+    })
+    expect(await switched.json()).toEqual({ guestTaken: true })
+  })
+
+  it("tells the mailbox's holder that an unconfirmed account uses the address", async () => {
+    const { app } = buildApp(null, {
+      signIn: {
+        redeemSignInLink: () => Promise.resolve({ outcome: SignInLinkOutcome.Unconfirmed }),
+      },
+    })
+    const response = await send(app, redeem, sameOriginWithoutCookieHeaders)
+
+    expect(response.status).toBe(409)
+    expect(await response.json()).toEqual({ error: SIGN_IN_LINK_UNCONFIRMED })
   })
 })
 

@@ -39,6 +39,7 @@ import {
 } from "./password-reset-mail.ts"
 import { SIGN_IN_METHOD_MAIL_JOB, signInMethodMailJob } from "./sign-in-method-mail.ts"
 import { SIGN_UP_CODE_MAIL_JOB, signUpCodeMailJob } from "./sign-up-code-mail.ts"
+import { SIGN_IN_LINK_MAIL_JOB, signInLinkMailJob } from "./sign-in-link-mail.ts"
 import { STARTER_DATA_JOB, starterDataJob, type StarterDataPlan } from "./starter-data.ts"
 import {
   SUBSCRIBER_CONFIRM_MAIL_JOB,
@@ -191,6 +192,12 @@ export const JOBS: readonly JobDefinition[] = [
     label: `Sign-up code email`,
     sendsMail: true,
     handler: (deps) => signUpCodeMailJob(mailDeps(deps)),
+  }),
+  defineJob({
+    kind: SIGN_IN_LINK_MAIL_JOB,
+    label: `Sign-in link email`,
+    sendsMail: true,
+    handler: (deps) => signInLinkMailJob(mailDeps(deps)),
   }),
   defineJob({
     kind: SIGN_IN_METHOD_MAIL_JOB,

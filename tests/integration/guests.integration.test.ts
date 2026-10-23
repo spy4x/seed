@@ -86,6 +86,7 @@ const openLimits: AuthRateLimits = {
   resetByAddress: allowed,
   emailCodeByAddress: allowed,
   signUpCode: allowed,
+  signInLink: allowed,
   emailChangeByUser: allowed,
   emailChangeByAddress: allowed,
 }
@@ -171,6 +172,7 @@ async function withFixture(
         totpFailures: openLockout,
         passwordFailures: openLockout,
         requestPasswordReset: () => Promise.resolve(),
+        requestSignInLink: () => Promise.resolve(),
         emailCodeFailures: openLockout,
         requestEmailCode: () => Promise.resolve(),
       }),

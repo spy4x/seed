@@ -86,6 +86,7 @@ export const signInMethodsHttp: SignInMethodsHttp = {
       methods: result.data.methods,
       available: result.data.available,
       providerProofUntil: result.data.providerProofUntil ?? null,
+      emailLink: result.data.emailLink ?? false,
     }
   },
   async link(provider, password) {
@@ -154,6 +155,8 @@ export function createSignInMethodsStore(
    * cannot give a password for; `null` when it does not.
    */
   const providerProofUntil = signal<string | null>(null)
+  /** The account has a proven address, so a sign-in link reaches it (#391). */
+  const emailLink = signal(false)
   /** Why the last link or unlink failed; empty when the server gave no reason. */
   const error = signal<string | null>(null)
   /**
@@ -188,6 +191,7 @@ export function createSignInMethodsStore(
     methods.value = answer.methods
     available.value = answer.available
     providerProofUntil.value = answer.providerProofUntil
+    emailLink.value = answer.emailLink
     loadError.value = null
   }
 
@@ -321,6 +325,7 @@ export function createSignInMethodsStore(
     methods,
     available,
     providerProofUntil,
+    emailLink,
     error,
     loadError,
     loading,
