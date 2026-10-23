@@ -56,6 +56,8 @@ describe(`GET /api/pictures/:pictureId`, () => {
       expect(await response.json()).toEqual({ error: PICTURE_NOT_FOUND })
     }
     expect(calls.filter(([kind]) => kind === `sign`)).toEqual([])
+    // An id that is no UUID never reaches the database, where it would not cast.
+    expect(calls.filter(([kind]) => kind === `readable`)).toEqual([[`readable`, THEIRS, 7]])
   })
 
   it(`answers 401 without a session and looks nothing up`, async () => {

@@ -54,7 +54,6 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
     removeButton,
     () => actions.current?.querySelector<HTMLElement>(`#${PICTURE_BUTTON_ID}`),
   )
-  const busy = status !== "idle"
   return (
     <SettingRow
       label="Profile picture"
@@ -96,7 +95,6 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
                 data-e2e="profile-picture-remove"
                 busy={status === "removing"}
                 busyLabel="Removing…"
-                disabled={busy}
                 onClick={() => setConfirming(true)}
               >
                 Remove <span class="sr-only">profile picture</span>

@@ -440,7 +440,7 @@ start admin env VITE_ENV=dev deno task admin:dev --port "$ADMIN_PORT" --strictPo
 wait_for admin "${PIDS[-1]}" 120 answers "http://127.0.0.1:$ADMIN_PORT/"
 log "starting the admin proxy on 127.0.0.1:$ADMIN_FRONT_PORT"
 start admin-proxy env FRONT_PORT="$ADMIN_FRONT_PORT" API_PORT="$API_PORT" SPA_PORT="$ADMIN_PORT" \
-  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT,S3_BUCKET \
+  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT,FILES_PORT,S3_BUCKET \
   infra/scripts/e2e-local-proxy.ts
 wait_for admin-proxy "${PIDS[-1]}" 30 answers "http://127.0.0.1:$ADMIN_FRONT_PORT/"
 
