@@ -50,10 +50,10 @@ export function createTelegramLinkService(
       db.begin(async (tx) => {
         const userId = await consumeTelegramLinkCode(tx.authStore, code, now())
         if (userId === null) return null
-        const name = await tx.telegram.describe(userId)
-        if (name === null) return null
+        const label = await tx.telegram.describe(userId)
+        if (label === null) return null
         const token = await issueTelegramConfirmToken(tx.authStore, userId, telegramUserId, now())
-        return { name, token }
+        return { ...label, token }
       }),
 
     spend: async (code) => {

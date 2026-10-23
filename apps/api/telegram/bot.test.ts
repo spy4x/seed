@@ -3,6 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import { GroupSelectedQuery } from "@domain/groups"
 import { type Actor, UserMFAStatus } from "@domain/identity"
 import { NoteListQuery } from "@domain/notes"
+import type { TelegramAccountLabel } from "@server/auth/telegram.ts"
 import { BOT_TEXT, createSeedBot, menuCommands, type TelegramLinkService } from "./bot.ts"
 import { createTelegramProduct } from "./commands.ts"
 import type { TelegramProduct } from "./extension.ts"
@@ -11,12 +12,15 @@ import { callbackUpdate, fakeTelegram, TELEGRAM_USER_ID, textUpdate } from "./fa
 const USER_ID = 42
 const CODE = `42_${`a`.repeat(32)}`
 const groupId = `7b6d8d6c-1af5-7f04-8ae4-b1ee5d111002`
+const ADA: TelegramAccountLabel = { firstName: `Ada`, maskedAddress: `a•••@example.com` }
+const ASK =
+  `Press "Link" only if it is your own account. If you did not ask for this, ignore this message.`
 
 /**
  * Links kept in memory: a code works once and only from its Telegram user's "Link" press, as the
  * database's do.
  */
-function memoryLinks(linked = false) {
+function memoryLinks(linked = false, label = ADA) {
   const codes = new Set([CODE])
   const tokens = new Map<string, number>()
   let owner: number | null = linked ? TELEGRAM_USER_ID : null
@@ -32,7 +36,7 @@ function memoryLinks(linked = false) {
       if (!codes.delete(code)) return Promise.resolve(null)
       const token = `${USER_ID}_${tokens.size}`
       tokens.set(token, telegramUserId)
-      return Promise.resolve({ name: `Ada`, token })
+      return Promise.resolve({ ...label, token })
     },
     spend: (code) => (codes.delete(code), Promise.resolve()),
     link: (token, telegramUserId) => {
@@ -81,17 +85,30 @@ function bot(
 }
 
 describe(`Seed's Telegram bot`, () => {
-  it(`names the account a /start code links to, and links only after the Link press`, async () => {
+  it(`names the account a /start code links to by first name and masked address, and links only after the Link press`, async () => {
     const links = memoryLinks()
     const { handle, press, button, sent } = bot({ links })
 
     await handle(`/start ${CODE}`)
     expect(links.linked()).toBe(false)
-    expect(sent()).toEqual([BOT_TEXT.confirm(`Ada`)])
+    expect(sent()).toEqual([
+      `Link this Telegram to Ada's account on app.example.com (a•••@example.com)? ${ASK}`,
+    ])
 
     await press(button())
     expect(links.linked()).toBe(true)
     expect(sent().at(-1)).toBe(BOT_TEXT.linked)
+  })
+
+  it(`says so when the account a code links to has neither a first name nor an address`, async () => {
+    const { handle, sent } = bot({
+      links: memoryLinks(false, { firstName: ``, maskedAddress: null }),
+    })
+
+    await handle(`/start ${CODE}`)
+    expect(sent()).toEqual([
+      `Link this Telegram to an account on app.example.com with no name or address? ${ASK}`,
+    ])
   })
 
   it(`links nothing when another Telegram user presses the Link button`, async () => {

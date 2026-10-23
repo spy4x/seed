@@ -19,15 +19,14 @@ import {
 } from "@spy4x/integrations/telegram"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
 import { TELEGRAM_LINK_MINUTES, type UserMFAStatus } from "@domain/identity"
+import type { TelegramAccountLabel } from "@server/auth/telegram.ts"
 import type { TelegramAccount, TelegramAccountHandler, TelegramProduct } from "./extension.ts"
 
 /** How a link code sent to the bot ended. */
 export type TelegramLinkResult = `linked` | `already` | `taken` | `invalid`
 
 /** A code the bot checked: whose account it links, and the token of its "Link" button. */
-export interface TelegramPreparedLink {
-  /** The account's first name, or its address masked. */
-  name: string
+export interface TelegramPreparedLink extends TelegramAccountLabel {
   token: string
 }
 
@@ -81,8 +80,11 @@ export const BOT_TEXT = {
   privateOnly: `Send me that in a private chat.`,
   codeSpent:
     `That code was sent where others can read it, so it no longer works. Make a new one in the app and send it to me in a private chat.`,
-  confirm: (name: string) =>
-    `This code links this Telegram account to the account of ${name}. Press "Link" only if that is your own account.`,
+  /** `app` is the app's host name, as the mails name the product. */
+  confirm: ({ firstName, maskedAddress }: TelegramAccountLabel, app: string) =>
+    `Link this Telegram to ${firstName ? `${firstName}'s account` : `an account`} on ${app}${
+      maskedAddress ? ` (${maskedAddress})` : firstName ? `` : ` with no name or address`
+    }? Press "Link" only if it is your own account. If you did not ask for this, ignore this message.`,
   unlinked: `Unlinked. This chat gets no more notifications from your account.`,
   notLinked: `This Telegram account is not linked to an account.`,
   howToLink: (settingsUrl: string) =>
@@ -124,6 +126,7 @@ function isPrivate(ctx: TelegramContext): boolean {
 export function createSeedBot(deps: SeedBotDeps): TelegramBot {
   const { client, links, product } = deps
   const settingsUrl = new URL(TELEGRAM_SETTINGS_PATH, deps.webAppUrl).href
+  const app = new URL(deps.webAppUrl).host
   const conversations = product.conversations ?? {}
   const bot = new TelegramBot({
     client,
@@ -168,7 +171,7 @@ export function createSeedBot(deps: SeedBotDeps): TelegramBot {
     }
     const prepared = await links.prepare(code, ctx.from.id)
     if (!prepared) return void await ctx.reply(BOT_TEXT.invalid)
-    await ctx.reply(BOT_TEXT.confirm(prepared.name), {
+    await ctx.reply(BOT_TEXT.confirm(prepared, app), {
       reply_markup: {
         inline_keyboard: [[{ text: `Link`, callback_data: `${LINK_CALLBACK}:${prepared.token}` }]],
       },

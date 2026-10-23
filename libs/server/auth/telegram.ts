@@ -175,6 +175,14 @@ export async function consumeTelegramConfirmToken(
   return outcome === ChallengeOutcome.Matched ? userId : null
 }
 
+/** Whose account a "Link" press names. */
+export interface TelegramAccountLabel {
+  /** The first name, or empty when none is set. */
+  firstName: string
+  /** The address masked (`a•••@example.com`), or `null` when the account has none. */
+  maskedAddress: string | null
+}
+
 /** A Telegram account a link removed: from this person, or from an account awaiting deletion. */
 export interface TelegramReleased {
   userId: number
@@ -268,10 +276,10 @@ export function telegramLinks(sql: Sql) {
     },
 
     /**
-     * What a "Link" press names: the person's first name, or else their address masked
-     * (`a•••@example.com`), so they see whose account a code belongs to. `null` when gone.
+     * Whose account a "Link" press names: the first name, which anyone can copy, and the address
+     * masked, which they cannot. `null` when the account is gone.
      */
-    async describe(userId: number): Promise<string | null> {
+    async describe(userId: number): Promise<TelegramAccountLabel | null> {
       const [row] = await sql<{ firstName: string | null; email: string | null }[]>`
         SELECT u.first_name, (
           SELECT k.email FROM auth_keys k
@@ -281,8 +289,10 @@ export function telegramLinks(sql: Sql) {
         WHERE u.id = ${userId} AND u.deleted_at IS NULL AND u.blocked_at IS NULL
       `
       if (!row) return null
-      if (row.firstName?.trim()) return row.firstName.trim()
-      return row.email ? maskAddress(row.email) : `your account`
+      return {
+        firstName: row.firstName?.trim() ?? ``,
+        maskedAddress: row.email ? maskAddress(row.email) : null,
+      }
     },
 
     /** Unlinks Telegram user `telegramUserId`: the account it was linked to, or `null`. */

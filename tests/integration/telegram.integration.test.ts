@@ -195,14 +195,19 @@ Deno.test(`telegram: an operator unlinks a person's chat, with an audit row nami
   })
 })
 
-Deno.test(`telegram: a code names the account it links, and only its Telegram user's press links`, async () => {
+Deno.test(`telegram: a code names the account it links by first name and masked address, and only its Telegram user's press links`, async () => {
   await withSchema(async (sql) => {
     const { accounts, links } = services(sql, { now: T0 })
     const ada = await insertUser(sql)
     await sql`UPDATE users SET first_name = 'Ada' WHERE id = ${ada}`
+    await sql`
+      INSERT INTO auth_keys (user_id, method, subject, email)
+      VALUES (${ada}, 'password', 'ada@example.com', 'ada@example.com')
+    `
 
     const prepared = await links.prepare((await accounts.issueCode(ada))!.code, TG)
-    expect(prepared?.name).toBe(`Ada`)
+    expect(prepared && { firstName: prepared.firstName, maskedAddress: prepared.maskedAddress })
+      .toEqual({ firstName: `Ada`, maskedAddress: `a•••@example.com` })
     expect(await linkedTelegram(sql, ada)).toEqual([])
 
     expect(await links.link(prepared!.token, TG + 1)).toBe(`invalid`)
