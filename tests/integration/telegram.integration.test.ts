@@ -315,6 +315,11 @@ Deno.test(`telegram: a password reset and a password change each end the link, w
 
     const ada = await signUp(`ada@example.com`)
     await linkWith(links, (await accounts.issueCode(ada))!.code, TG)
+    // A proven address, so the reset's clean-up of an unproven one does not remove the link too.
+    const [key] = await sql<
+      { id: number }[]
+    >`SELECT id FROM auth_keys WHERE subject = 'ada@example.com'`
+    await db.authStore.proveKey(key.id, new Date())
     const issued = (await issuePasswordReset(db.authStore, `ada@example.com`, new Date()))!
     expect(await signIn.resetPassword(`ada@example.com`, issued.code, `Reset-Passw0rd`)).toBe(true)
     expect(await links.account(TG)).toBeNull()
