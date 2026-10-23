@@ -27,12 +27,25 @@ export const ADMIN_AUDIT_SEARCH_MAX = 100
 /** The `audit_events.event_kind` of an operator running a failed job again (#429). */
 export const ADMIN_JOB_RETRIED_KIND = "system.job_retried"
 
+/** The `audit_events.event_kind` of an operator running a waiting job now (#394). */
+export const ADMIN_JOB_RUN_NOW_KIND = "system.job_run_now"
+
+/** The `audit_events.event_kind` of an operator cancelling a waiting job (#394). */
+export const ADMIN_JOB_CANCELLED_KIND = "system.job_cancelled"
+
+/** The operator's actions on a job: each entry's details name the job's kind. */
+export const ADMIN_JOB_AUDIT_KINDS: readonly string[] = [
+  ADMIN_JOB_RETRIED_KIND,
+  ADMIN_JOB_RUN_NOW_KIND,
+  ADMIN_JOB_CANCELLED_KIND,
+]
+
 /** The `audit_events.event_kind` of an operator downloading the log as a file (#429). */
 export const ADMIN_AUDIT_EXPORTED_KIND = "system.audit_exported"
 
 /** The kinds of `audit_events` an operator writes, so the operator filter finds them. */
 export const ADMIN_OPERATOR_ACTIVITY_KINDS: readonly string[] = [
-  ADMIN_JOB_RETRIED_KIND,
+  ...ADMIN_JOB_AUDIT_KINDS,
   ADMIN_AUDIT_EXPORTED_KIND,
   ...Object.values(BLOG_AUDIT_KINDS),
 ]
@@ -175,7 +188,7 @@ export interface AdminAuditEntry {
   identifier: string | null
   ip: string | null
   userAgent: string | null
-  /** The job an operator ran again, for {@link ADMIN_JOB_RETRIED_KIND}. */
+  /** The job an operator acted on, for each of {@link ADMIN_JOB_AUDIT_KINDS}. */
   jobKind: string | null
 }
 

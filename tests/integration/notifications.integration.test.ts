@@ -11,7 +11,7 @@ import {
 import { createNotification } from "@server/notifications/create-notification.ts"
 import { PostgresNotificationRepository } from "@server/notifications/postgres-notification-repository.ts"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
-import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { purgeNotifications } from "@server/notifications/purge-notifications.ts"
 import { listenForInboxNews } from "../../apps/api/services/inbox-news.ts"
 import { insertUser, team, withSchema } from "./group-team.ts"
@@ -401,7 +401,8 @@ Deno.test("notifications: the worker's nightly cleanup runs the purge of old not
       log: () => {},
     })
 
-    await scheduleNightlyJobs(sql)
+    // Started two days ago: its first 03:00 UTC run is due, and the next one it writes differs.
+    await startRepeatingJobs(sql, new Date(Date.now() - 2 * 86_400_000))
     await sql`
       UPDATE outbox_events SET available_at = now() - interval '1 second'
       WHERE event_kind = ${OUTBOX_CLEANUP_JOB} AND processed_at IS NULL

@@ -320,13 +320,14 @@ const TIERS: readonly Tier[] = [
         eyebrow: `Background work`,
         title: `Work that survives a crash`,
         lead: `Mail and notifications go out even when the server restarts halfway, because the ` +
-          `work is saved before it is done.`,
+          `work is saved before it is done. Your own jobs run now, later or on a schedule.`,
         facts: [
           `Each command writes its event in the same database transaction as the change`,
           `A worker drains that outbox and sends mail, push and live updates`,
-          `A failed attempt is retried with growing waits and logged with its cause`,
+          `A job is one definition: a name, a handler and, if it repeats, its schedule`,
+          `A failed attempt is retried with growing waits; operators see every run in the admin`,
         ],
-        code: { label: `Read the worker`, href: source(`apps/worker/+main.ts`) },
+        code: { label: `Read docs/jobs.md`, href: source(`docs/jobs.md`) },
         visual: <OutboxDiagram />,
       },
       {
@@ -363,7 +364,8 @@ const TIERS: readonly Tier[] = [
           <>
             Your operators find a person by name or address and see their sign-in methods, sessions,
             groups and history. From the same place they manage groups, refund a payment, look after
-            the newsletter's subscribers, check the system's health and run a failed job again.{" "}
+            the newsletter's subscribers, see every background job, run a failed one again and check
+            the system's health.{" "}
             <a
               href="/admin"
               class="font-medium text-primary underline"
@@ -377,8 +379,8 @@ const TIERS: readonly Tier[] = [
         ),
         facts: [
           `A separate app on its own host, with its own session cookie`,
-          `Eight modules, from the dashboard to API tokens`,
-          `Every action asks first and is written to the audit log`,
+          `Nine modules, from the dashboard to API tokens`,
+          `Risky actions ask first, and every action is written to the audit log`,
         ],
         notYet: [
           { label: `Translations: the admin app is English only`, issue: issue(275) },

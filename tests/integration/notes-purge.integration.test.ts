@@ -3,7 +3,7 @@ import { expect } from "@std/expect"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import { NOTE_RESTORE_DAYS } from "@domain/notes"
 import { OUTBOX_CLEANUP_JOB } from "@server/jobs/jobs.ts"
-import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { PostgresNoteRepository } from "@server/notes/postgres-note-repository.ts"
 import { purgeDeletedNotes } from "@server/notes/purge-deleted-notes.ts"
 import { team, withSchema } from "./group-team.ts"
@@ -89,7 +89,8 @@ Deno.test("the purge of deleted notes against Postgres", async (t) => {
         log: () => {},
       })
 
-      await scheduleNightlyJobs(sql)
+      // Started two days ago: its first 03:00 UTC run is due, and the next one it writes differs.
+      await startRepeatingJobs(sql, new Date(Date.now() - 2 * 86_400_000))
       await sql`
         UPDATE outbox_events SET available_at = now() - interval '1 second'
         WHERE event_kind = ${OUTBOX_CLEANUP_JOB} AND processed_at IS NULL

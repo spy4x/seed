@@ -10,9 +10,8 @@ import {
   renderLetter,
   UNSUBSCRIBE_PLACEHOLDER,
 } from "@spy4x/email/letter"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import type { MailBrand } from "../mail/mail.ts"
-import { JOB_AGGREGATE } from "./jobs.ts"
+import { enqueueJob } from "./jobs.ts"
 import { SUBSCRIBER_SEND_ISSUE_JOB } from "./subscriber-mail.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -84,9 +83,5 @@ export async function queueSubscriberIssue(
       SET subject = EXCLUDED.subject, html = EXCLUDED.html, text = EXCLUDED.text
     RETURNING id
   `
-  await scheduleOutboxEvent(
-    sql,
-    { eventKind: SUBSCRIBER_SEND_ISSUE_JOB, aggregateType: JOB_AGGREGATE, aggregateId: row.id },
-    { inMs: 0 },
-  )
+  await enqueueJob(sql, SUBSCRIBER_SEND_ISSUE_JOB, row.id, { inMs: 0 })
 }

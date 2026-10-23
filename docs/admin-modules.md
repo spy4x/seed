@@ -20,6 +20,7 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | `newsletter` | Newsletter    | `/newsletter`             |                                     | `/api/admin/newsletter/*` |
 | `blog`       | Blog          | `/blog` (coming soon)     |                                     | `/api/admin/blog/*`     |
 | `audit`      | Audit log     | `/audit`                  |                                     | `/api/admin/audit*`     |
+| `jobs`       | Jobs          | `/jobs`, `/jobs/:id`      |                                     | `/api/admin/jobs*`      |
 | `system`     | System        | `/system`                 |                                     | `/api/admin/system*`    |
 | `api-tokens` | API tokens    | `/api-tokens`             | API tokens, Devices, Notifications  | `/api/admin/api-tokens*` |
 

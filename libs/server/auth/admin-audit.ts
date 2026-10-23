@@ -14,7 +14,7 @@ import {
   accountAuditEvent,
   activityAuditEvent,
   ADMIN_AUDIT_EXPORTED_KIND,
-  ADMIN_JOB_RETRIED_KIND,
+  ADMIN_JOB_AUDIT_KINDS,
   ADMIN_OPERATOR_ACTIVITY_KINDS,
   type AdminAuditEntry,
   type AdminAuditFilter,
@@ -218,7 +218,7 @@ function activityBranch(
       NULL::int2 AS event_type, event_kind AS kind, NULL::text AS identifier, NULL::text AS ip,
       NULL::text AS user_agent, target_user_id AS person_id, actor_user_id AS actor_id,
       group_id, entity_type,
-      CASE WHEN event_kind = ${ADMIN_JOB_RETRIED_KIND}
+      CASE WHEN event_kind = ANY(${ADMIN_JOB_AUDIT_KINDS as string[]})
         THEN left(details->>'kind', 64) END AS job_kind
     FROM audit_events
     WHERE ${where}
