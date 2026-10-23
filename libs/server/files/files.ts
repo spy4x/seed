@@ -152,8 +152,8 @@ export interface FileStore {
   signUpload(rule: FileRule, file: FileFacts): Promise<FileResult<SignedUpload>>
   /**
    * Moves the upload at `stagingKey` to `key` and checks the moved file against what was signed:
-   * its size, its type and its first bytes. A file that fails is deleted. The staging object is
-   * deleted either way, and later PUTs to its URL never reach `key`.
+   * its size, its type and its first bytes. A file that fails is deleted. After a successful copy
+   * the staging object is deleted too, and later PUTs to its URL never reach `key`.
    * @throws {Error} When `stagingKey` is not under {@link STAGING_PREFIX} or `key` is.
    */
   confirmUpload(stagingKey: string, key: string, signed: FileFacts): Promise<FileResult<FileFacts>>
