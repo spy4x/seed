@@ -340,6 +340,39 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
     )
   }, [errors])
 
+  // A save disables the form, which drops focus out of the field being typed in. Once it is done,
+  // the field and its caret come back, so the next words typed after Ctrl S land where they were
+  // meant to. A save refused with a field error leaves focus to the error instead.
+  const resume = useRef<{ id: string; start: number | null; end: number | null } | null>(null)
+  const save = () => {
+    const field = root.current?.ownerDocument.activeElement
+    resume.current = field && root.current?.contains(field) && field.id &&
+        (field.tagName === `INPUT` || field.tagName === `TEXTAREA`)
+      ? {
+        id: field.id,
+        start: (field as HTMLInputElement).selectionStart,
+        end: (field as HTMLInputElement).selectionEnd,
+      }
+      : null
+    props.onSave()
+  }
+  useEffect(() => {
+    const back = resume.current
+    if (saving || back === null) return
+    resume.current = null
+    if (firstBlogError(errors) !== null) return
+    // A task later, after the app's route announcer: the first save of a new post moves the page
+    // to the post's own address in the same round of effects, and the announcer would otherwise
+    // take focus to the page's heading after this.
+    const timer = setTimeout(() => {
+      const field = root.current?.querySelector<HTMLInputElement>(`[id="${back.id}"]`)
+      if (!field) return
+      field.focus()
+      if (back.start !== null) field.setSelectionRange(back.start, back.end ?? back.start)
+    })
+    return () => clearTimeout(timer)
+  }, [saving])
+
   const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
   const openPreview = (next: string) => {
     setTab(next)
@@ -439,7 +472,7 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
   const words = blogWordCount(value.bodyMd)
   return (
     <>
-      <ScreenForm pending={saving} onSubmit={props.onSave}>
+      <ScreenForm pending={saving} onSubmit={save}>
         <Stack>
           <PageHeader
             back={BACK}

@@ -77,9 +77,17 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
     await expect(ops).toHaveURL(`${adminBase}/blog/new`)
     await expect(ops.locator("[data-e2e=admin-blog-title-field]")).toHaveValue(title)
 
+    // Ctrl S from the end of the body; the words typed after it land in the body, after the
+    // page moved to the post's own address.
+    const body = ops.locator("[data-e2e=admin-blog-body]")
+    await body.click()
+    await ops.keyboard.press("ControlOrMeta+End")
     await ops.keyboard.press("ControlOrMeta+s")
     await expect(ops.locator("[data-e2e=admin-blog-saved]")).toHaveText("Saved")
     await expect(ops).toHaveURL(/\/blog\/[0-9a-f-]{36}$/)
+    await expect(body).toBeFocused()
+    await ops.keyboard.type("\n\nMore after the save.")
+    await expect(body).toHaveValue(/<\/script>\n\nMore after the save\.$/)
 
     // The preview is the API's render: the Markdown is HTML, the raw script stays text.
     await ops.getByRole("tab", { name: "Preview" }).click()

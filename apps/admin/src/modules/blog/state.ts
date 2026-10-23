@@ -278,7 +278,7 @@ export function createBlogState(
      * Checks the fields first in the page's words. Answers the saved post, or `null` when nothing
      * was saved.
      */
-    async save(): Promise<BlogPost | null> {
+    async save(beforeShow?: (saved: BlogPost) => void): Promise<BlogPost | null> {
       const open = editor.value
       if (open.saveStatus === `saving` || open.conflict) return null
       const errors = blogDraftErrors(open.value)
@@ -309,6 +309,7 @@ export function createBlogState(
         }
         return null
       }
+      beforeShow?.(result.data.post)
       show(result.data.post)
       return result.data.post
     },

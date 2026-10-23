@@ -71,7 +71,7 @@ function BlogEditorView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
 ): JSX.Element {
   const state = blogState(context)
-  const id = params.id
+  const id = params.id === `new` ? undefined : params.id
   // The router's own navigate, for the guard's "Leave" and for moves that keep or drop nothing
   // unsaved: the create page's address change after a save, and the list after a delete. Anything
   // else goes through `context.navigate`, which asks first while edits are unsaved.
@@ -109,7 +109,9 @@ function BlogEditorView(
         saveStatus={editor.saveStatus}
         conflict={editor.conflict}
         onReload={() => void state.reload()}
-        onSave={async () => settle(await state.save())}
+        // The address moves before the editor shows the save, so the app's route announcer is done
+        // before the editor gives focus back to the field being typed in.
+        onSave={() => void state.save(settle)}
         significantUpdate={editor.significantUpdate}
         onSignificantUpdate={state.setSignificantUpdate}
         topics={state.topics.value}
@@ -156,8 +158,8 @@ export const blogModule: AdminModule = {
   nav: { name: `Blog`, href: ADMIN_BLOG_PATHS.list, Icon: IconPencilSquare },
   routes: [
     { path: ADMIN_BLOG_PATHS.list, View: BlogListView },
-    // Before `/blog/:id`, which would take "new" for an id.
-    { path: ADMIN_BLOG_PATHS.create, View: BlogEditorView },
+    // One route for `/blog/new` and `/blog/:id`, so the first save's move to the post's address
+    // keeps the same editor mounted, and with it the field and caret being typed in.
     { path: `/blog/:id`, View: BlogEditorView },
   ],
 }

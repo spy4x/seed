@@ -316,6 +316,24 @@ describe("the blog editor", () => {
       .toEqual(["H2 Jobs explained", "H3 In short", "H2 Why"])
   })
 
+  it("gives the field and its caret back once a save is done, so typing goes on there", async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminBlogEditorScreen {...editorProps(calls)} />)
+    const body = find<HTMLTextAreaElement>("[data-e2e=admin-blog-body]")
+    body.focus()
+    body.setSelectionRange(5, 5)
+    await submit("[data-e2e=admin-blog-body]")
+    expect(calls.at(-1)).toEqual(["save"])
+    // Saving disables the form, which drops focus to the page.
+    await mount(<AdminBlogEditorScreen {...editorProps(calls, { saveStatus: "saving" })} />)
+    body.blur()
+    await mount(<AdminBlogEditorScreen {...editorProps(calls, { saveStatus: "saved" })} />)
+    await settle()
+    expect(document.activeElement).toBe(body)
+    expect([body.selectionStart, body.selectionEnd]).toEqual([5, 5])
+  })
+
+
   it("says when a published post went live and was last updated, with a space before the middle dot", async () => {
     const post = {
       ...saved,
