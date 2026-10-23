@@ -195,7 +195,7 @@
     // apps/tgbot
 
     // client
-    // spy4x/preact-components 10.9.0. Every package is published at one version together, so all
+    // spy4x/preact-components 10.10.0. Every package is published at one version together, so all
     // six move in one change, and so does the npm copy of `@spy4x/preact-system` further down
     // (the Playwright config imports it under that name). They take preact and the signals
     // packages as caret ranges, so the versions below are the one copy that loads. wouter-preact
