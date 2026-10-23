@@ -6,8 +6,9 @@
  * Needs the app reachable as one origin (API under /api, SPA everywhere else) on a throw-away
  * database in development mode: the run deletes the demo user through the development route
  * `/api/test/cleanup-user` before it starts and again when it ends, also when it fails, so a later
- * capture of that database (the admin panel video's Users list) never shows it; the GIF signs that user up, reading the mailed code
- * from the development route `/api/test/last-mail`, and the stills sign that user in.
+ * capture of that database (the admin panel video's Users list) never shows it; the GIF signs that
+ * user up, reading the mailed code from the development route `/api/test/last-mail`, and the
+ * stills sign that user in.
  * `deno task dev` behind `deno task proxy:start` serves it at http://app.localhost. Also needs
  * `ffmpeg` on the PATH for the GIF.
  *
