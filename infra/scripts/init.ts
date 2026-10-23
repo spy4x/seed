@@ -21,12 +21,20 @@ const VAPID_PATH = `infra/configs/vapid.json`
 /** The secrets `.env.example` gives a placeholder, and how many random bytes each one gets. */
 export const SECRETS: Record<string, number> = {
   KV_PASSWORD: 24,
+  // The file store's key and Garage's RPC secret (docs/files.md): Garage takes a key id of GK and
+  // 24 hex characters, and 64 hex characters for each secret.
+  S3_ACCESS_KEY_ID: 12,
+  S3_SECRET_ACCESS_KEY: 32,
+  GARAGE_RPC_SECRET: 32,
   GRAFANA_PASS: 24,
   AUTH_COOKIE_SECRET: 32,
   AUTH_PEPPER: 32,
   // The API takes 8 to 50 characters: 20 bytes are 40 hex characters.
   SEED_PASSWORD: 20,
 }
+
+/** What goes before the random part of a secret, for the ones whose form is fixed. */
+export const SECRET_PREFIXES: Record<string, string> = { S3_ACCESS_KEY_ID: `GK` }
 
 /** Hex, as `openssl rand -hex` makes it: no character a shell or a flag parser reads specially. */
 export const randomHex = (bytes: number) => encodeHex(crypto.getRandomValues(new Uint8Array(bytes)))
@@ -82,7 +90,7 @@ export function prepareEnv(
   }
   for (const [key, bytes] of Object.entries(SECRETS)) {
     if (key in values && values[key] === placeholders[key]) {
-      text = setValue(text, key, values[key], random(bytes))
+      text = setValue(text, key, values[key], (SECRET_PREFIXES[key] ?? ``) + random(bytes))
       changed.push(key)
     }
   }

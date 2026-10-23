@@ -31,6 +31,15 @@ services:
       # comment there for why it is required.
       - 'traefik.http.routers.api-${PROJECT}.middlewares=strip-cf-ip-${PROJECT}'
 
+  # Only with COMPOSE_PROFILES=files. Overrides compose.shared.yml's files router by name; plain
+  # HTTP for DOMAIN already redirects through the spa service's http router.
+  garage:
+    labels:
+      - "traefik.docker.network=proxy"
+      - "traefik.http.routers.files-${PROJECT}.entrypoints=websecure"
+      - "traefik.http.routers.files-${PROJECT}.tls=true"
+      - "traefik.http.routers.files-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
+
   spa:
     networks:
       - proxy

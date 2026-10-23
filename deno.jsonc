@@ -18,6 +18,7 @@
     "./libs/server/api-tokens",
     "./libs/server/auth",
     "./libs/server/billing",
+    "./libs/server/files",
     "./libs/server/groups",
     "./libs/server/jobs",
     "./libs/server/mail",
@@ -110,6 +111,7 @@
     "test:integration": "ENV=test deno test --no-prompt -E -N -R=./libs/server/db/migrations,./libs/server/db/schema.sql tests/integration",
     "e2e": "PLAYWRIGHT_HTML_OUTPUT_DIR=./e2e/report deno run -A --node-modules-dir npm:playwright@1.57.0 test",
     "test:backup": "bash infra/backup/test-local.sh", // backs a database up and restores it, in containers of its own; see the script
+    "test:files": "bash tests/files/run.sh", // the file store against a Garage container of its own: upload, confirm, download, delete; see the script
     "e2e:local": "bash infra/scripts/e2e-local.sh", // the same specs against a stack of its own on spare ports; see the script
     "e2e:report": "PLAYWRIGHT_HTML_OUTPUT_DIR=./e2e/report deno run -A --node-modules-dir npm:playwright@1.57.0 show-report",
     "fix": {
@@ -153,6 +155,7 @@
     "@server/api-tokens/": "./libs/server/api-tokens/",
     "@server/auth/": "./libs/server/auth/",
     "@server/billing/": "./libs/server/billing/",
+    "@server/files/": "./libs/server/files/",
     "@server/groups/": "./libs/server/groups/",
     "@server/jobs/": "./libs/server/jobs/",
     "@server/mail/": "./libs/server/mail/",
@@ -165,9 +168,10 @@
     // #endregion Aliases
 
     // #region Dependencies
-    // spy4x/ts-libs 1.88.0 (passkeys, idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
+    // spy4x/ts-libs 1.90.0 (passkeys, idempotency, keyset cursor, lockout, offline outbox, e-mail proof,
     // the redirect-path check of sign-in's `next`, the password check without a session, billing,
-    // the provider's name and picture, the healthcheck's HTTP mode, a key giving up its address).
+    // the provider's name and picture, the healthcheck's HTTP mode, a key giving up its address,
+    // safe Markdown and reading time).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
     "@spy4x/validation": "jsr:@spy4x/validation@1.90.0",
@@ -224,7 +228,7 @@
     "@jsr/spy4x__preact-system": "npm:@jsr/spy4x__preact-system@10.8.0",
     // The npm name of `@spy4x/platform` above, for the same reason: every e2e spec takes `uuidV7`
     // from it. It moves with the `@spy4x/*` packages.
-    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.88.0",
+    "@jsr/spy4x__platform": "npm:@jsr/spy4x__platform@1.90.0",
 
     // shared/types — 2.2.3 matches spy4x/ts-libs and spy4x/preact-components (spy4x/preact-components#121)
     "arktype": "npm:arktype@2.2.3",

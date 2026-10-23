@@ -295,6 +295,12 @@ export ADMIN_DOMAIN="admin.localhost:$ADMIN_FRONT_PORT"
 export DEV_EMAIL=dev@example.com
 export TIMEZONE=Etc/UTC
 export AUTH_COOKIE_SECRET AUTH_PEPPER
+# The API refuses to start without the file store's settings (docs/files.md). No browser test
+# uploads a file yet, so they name a store that is not there; the health route calls it degraded.
+export S3_ENDPOINT=http://127.0.0.1:9 S3_PUBLIC_ENDPOINT=http://127.0.0.1:9 S3_REGION=garage
+export S3_BUCKET=e2e-files S3_ACCESS_KEY_ID=GK000000000000000000000000
+S3_SECRET_ACCESS_KEY=$(openssl rand -hex 32)
+export S3_SECRET_ACCESS_KEY
 export RATE_LIMITER_WINDOW_MS=60000
 export RATE_LIMITER_STRICT_LIMIT=1000
 export RATE_LIMITER_LIMIT=5000

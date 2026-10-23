@@ -157,6 +157,8 @@ Deno.test("planDeploy runs the key step with the configured Deno", () => {
 const EXAMPLE_SECRETS = [
   "DB_PASS",
   "KV_PASSWORD",
+  "S3_SECRET_ACCESS_KEY",
+  "GARAGE_RPC_SECRET",
   "GRAFANA_PASS",
   "AUTH_COOKIE_SECRET",
   "AUTH_PEPPER",

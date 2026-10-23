@@ -58,6 +58,9 @@ export interface AdminSystemCache {
   latencyMs: number
 }
 
+/** The file store (S3, docs/files.md): whether the API reaches it. The same facts as the cache. */
+export type AdminSystemFileStore = AdminSystemCache
+
 /** The job and outbox queue as one table holds it (`outbox_events`). */
 export interface AdminSystemQueue {
   health: AdminHealth
@@ -147,6 +150,7 @@ export interface AdminSystemSnapshot {
   checkedAt: string
   database: AdminSystemDatabase
   cache: AdminSystemCache
+  fileStore: AdminSystemFileStore
   queue: AdminSystemQueue
   jobs: AdminSystemJobKind[]
   failedJobs: AdminFailedJob[]
