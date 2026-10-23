@@ -20,25 +20,26 @@ no file passes through the API. Nothing in the template uploads a file yet; note
    types whose bytes the store can check are allowed (`SNIFFABLE_CONTENT_TYPES` of
    `@spy4x/server/storage`: PNG, JPEG, GIF, WebP, PDF, ZIP, plain text, CSV, JSON). SVG and HTML are
    not among them: both can carry script.
-2. `files.signUpload(key, rule, { contentType, size })` refuses another type or a size over the
-   limit, and otherwise answers a URL and the header to PUT with. Type and size are signed, so the
-   store refuses any other. The URL lasts five minutes.
+2. `files.signUpload(rule, { contentType, size })` refuses another type or a size over the limit,
+   and otherwise answers a URL, the header to PUT with, and the `stagingKey` the file lands on
+   (`uploads/tmp/<UUID v7>`). Type and size are signed, so the store refuses any other. The URL
+   lasts five minutes. Keep the staging key with the person who asked for it, so nobody else can
+   confirm it.
 3. The browser PUTs the file and tells the API it is done.
-4. `files.confirmUpload(key, signed)` reads what arrived: its size, its type and its first 512
-   bytes. A file that is not what was signed is deleted and refused. Only a confirmed file goes
-   into the feature's table. The check catches a mistake, not a deliberate swap: the upload URL
-   stays valid for five minutes, so whoever holds it can PUT other bytes of the same size and type
-   after the confirm. That window closes before the first feature stores files
-   ([#401](https://github.com/spy4x/seed/issues/401)). What keeps a file from running as a page of
-   the app is how it is served: the forced type, `nosniff`, the sandbox policy and the attachment
-   disposition below.
+4. `files.confirmUpload(stagingKey, key, signed)` copies the staging object, inside the store, to
+   the feature's `key`, deletes the staging object, and reads the copy: its size, its type and its
+   first 512 bytes. A file that is not what was signed is deleted and refused. Only a confirmed
+   file goes into the feature's table. Confirmed bytes cannot be replaced: no browser ever had a
+   URL for `key`, and a PUT to the old upload URL lands on the staging key again, never on the
+   confirmed file. What keeps a file from running as a page of the app is how it is served: the
+   forced type, `nosniff`, the sandbox policy and the attachment disposition below.
 5. `files.signDownload(key, { contentType, filename })` signs a GET for five minutes. The store
    answers with the confirmed type, never the stored one; an image is shown in place, and any other
    file is saved as an attachment under its name.
 
-Keys are the feature's choice, such as `notes/<group id>/<file id>`, with UUID version 7 ids. The
-authorization check (who may upload to or read a key) belongs to the feature's handler, as for any
-other command.
+Keys are the feature's choice, such as `notes/<group id>/<file id>`, with UUID version 7 ids,
+never under `uploads/tmp/`. The authorization check (who may upload to or read a key) belongs to the
+feature's handler, as for any other command.
 
 ## Where it runs
 
@@ -89,5 +90,6 @@ can. The store's own backups replace the ones above.
 
 `libs/server/files/files.test.ts` checks the rules against a fake store. `deno task test:files`
 starts a Garage container of its own and uploads, confirms, downloads and deletes a file through
-signed URLs, and checks that the store refuses a larger body, another type, and an HTML page sent
+signed URLs, checks that bytes PUT to the upload URL after the confirm do not change the file, and
+checks that the store refuses a larger body, another type, and an HTML page sent
 as a PNG. CI does not run it, since its steps have no container tool.
