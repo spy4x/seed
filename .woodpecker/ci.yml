@@ -139,9 +139,10 @@ steps:
     # Lighthouse mobile, every page apps/mpa/lighthouse/lighthouserc.json lists scores at least 95
     # for performance and 100 for accessibility, best practices and SEO. apps/mpa/lighthouse/run.sh
     # serves the built MPA behind nginx with gzip, as the CDN serves it in production. After
-    # e2e-mpa: the steps share one checkout, and both build the MPA into apps/mpa/_fresh. After
-    # e2e-spa too: both run `deno install`, and two installs into one node_modules at once leave
-    # a package half written ("Cannot find module" in pipelines 386 and 404).
+    # e2e-mpa: the steps share one checkout, and both build the MPA into apps/mpa/_fresh. Before
+    # e2e-spa, which waits for it: e2e-spa, e2e-smoke and e2e-full all run `deno install`, and two
+    # installs into one node_modules at once leave a package half written ("Cannot find module" in
+    # pipelines 386 and 404).
     image: mcr.microsoft.com/playwright:v1.57.0-noble@sha256:3bed4b1a12f2338642f3d8cba28e291deef3c66bd4a964bbeb3e57bbff511dbd
     commands:
       # npm's newest `deno` package lags the binary, so take the pinned release itself.
@@ -155,7 +156,7 @@ steps:
       - deno install --frozen
       - deno task mpa:build
       - deno task lighthouse
-    depends_on: [e2e-mpa, e2e-spa]
+    depends_on: [e2e-mpa]
 
   e2e-spa:
     # The SPA behind nginx, as production serves it: the security headers nginx.conf adds, and a
@@ -207,7 +208,7 @@ steps:
     # The steps share one checkout. This one builds the SPA into apps/spa/dist, as `build` does,
     # and both run scripts keep the API's vapid.json in the repository root while they run, so it
     # waits for those two steps instead of running beside them.
-    depends_on: [build, e2e-mpa]
+    depends_on: [build, e2e-mpa, lighthouse]
 
   e2e-smoke:
     # The product's browser tests a pull request must pass: the smoke set, `SMOKE_SPECS` in
