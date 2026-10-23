@@ -542,6 +542,7 @@ Deno.test("creating a token needs the account's password: none, a wrong one and 
           ...(password === undefined ? {} : { password }),
         }),
       })
+      if (response.ok) return { status: response.status, code: undefined, error: undefined }
       const error = checkedError(await response.json())
       return {
         status: response.status,
