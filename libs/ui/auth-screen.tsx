@@ -6,7 +6,7 @@ import { Card } from "@spy4x/preact-ui/card"
 import { Link } from "@spy4x/preact-ui/link"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
-import { type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
+import { isInvitationPath, type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
 import { NoAccountYet, TryItNow, type TryLegalLinks, WordDivider } from "./guest-screens.tsx"
 
 /** The public demo's one line on sign-in and sign-up (docs/demo.md). */
@@ -19,6 +19,15 @@ export const DEMO_GUEST_NOTE =
 
 /** The sign-up card's sentence while "Try it now" is offered above the form. */
 const TRY_FIRST_DESCRIPTION = "Try the app first, or sign up with an e-mail address."
+
+/**
+ * What sign-up and sign-in say while `next` is an invitation: the person followed an invitation
+ * link signed out, most often without an account yet.
+ */
+const INVITED_COPY = {
+  title: "You're invited to a group",
+  description: "Create an account to see the invitation and join, or sign in if you have one.",
+}
 
 /** The three screens `AuthScreen` draws: the two credential modes, and the second factor. */
 export type AuthScreenKind = AuthMode | "one-time-code"
@@ -300,10 +309,12 @@ export function AuthScreen(
     defaultLogin,
   }: AuthScreenProps,
 ): JSX.Element {
-  const copy = COPY[screen]
+  const invited = screen !== "one-time-code" && isInvitationPath(next)
+  const copy = invited ? { ...COPY[screen], ...INVITED_COPY } : COPY[screen]
   // What the login field holds, as typed: the link button sends it.
   const login = useRef(defaultLogin ?? "")
-  const tryFirst = guest && screen === "sign-up"
+  // An invitation is answered with an account, so "Try it now" does not compete with sign-up.
+  const tryFirst = guest && screen === "sign-up" && !invited
 
   if (screen === "one-time-code" && !isMfaRequired) {
     return (
