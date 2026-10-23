@@ -20,6 +20,21 @@ ALTER TABLE file_uploads
     RENAME CONSTRAINT note_attachment_uploads_staging_key_unique TO file_uploads_staging_key_unique;
 ALTER TABLE file_uploads
     RENAME CONSTRAINT note_attachment_uploads_size_check TO file_uploads_size_check;
+-- Postgres 18 names each NOT NULL constraint after its table too.
+ALTER TABLE file_uploads
+    RENAME CONSTRAINT note_attachment_uploads_id_not_null TO file_uploads_id_not_null;
+ALTER TABLE file_uploads
+    RENAME CONSTRAINT note_attachment_uploads_user_id_not_null TO file_uploads_user_id_not_null;
+ALTER TABLE file_uploads
+    RENAME CONSTRAINT note_attachment_uploads_staging_key_not_null TO file_uploads_staging_key_not_null;
+ALTER TABLE file_uploads
+    RENAME CONSTRAINT note_attachment_uploads_name_not_null TO file_uploads_name_not_null;
+ALTER TABLE file_uploads
+    RENAME CONSTRAINT note_attachment_uploads_content_type_not_null TO file_uploads_content_type_not_null;
+ALTER TABLE file_uploads
+    RENAME CONSTRAINT note_attachment_uploads_size_bytes_not_null TO file_uploads_size_bytes_not_null;
+ALTER TABLE file_uploads
+    RENAME CONSTRAINT note_attachment_uploads_created_at_not_null TO file_uploads_created_at_not_null;
 ALTER INDEX idx_note_attachment_uploads_note RENAME TO idx_file_uploads_note;
 ALTER INDEX idx_note_attachment_uploads_user RENAME TO idx_file_uploads_user;
 ALTER INDEX idx_note_attachment_uploads_created RENAME TO idx_file_uploads_created;

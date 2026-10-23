@@ -184,7 +184,7 @@ Deno.test("a confirm moves the bytes to pictures/<id>, deletes the old picture a
   expect(emitted.map((event) => event.data.user.pictureId)).toEqual([id])
 })
 
-Deno.test("only the person who signed a picture confirms it, and only once", async () => {
+Deno.test("only the person who signed a picture confirms it", async () => {
   const { sign, confirm } = setUp()
   const { id } = await sign(7)
   expect(await refusal(confirm(id, 8))).toBe(`UPLOAD_NOT_FOUND`)
