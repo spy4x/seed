@@ -17,8 +17,13 @@ export type AttachmentRowStatus = "uploading" | "waiting" | "checking" | "failed
 
 /** One row of the note's files, in the shape preact-ui's `AttachmentList` draws. */
 export interface AttachmentRow {
-  /** The file's id once the server confirmed it; a local id before. */
+  /**
+   * The row's id, which never changes: the file's id for a file read from the server, a local id
+   * for one chosen here, kept after its confirm so the row is not drawn anew and keeps focus.
+   */
   id: string
+  /** The stored file's id, once the server confirmed it. */
+  fileId?: string
   name: string
   size: number
   type: string
@@ -105,6 +110,7 @@ function sizeError(name: string, size: number, max: number): string {
 function readyRow(attachment: Attachment): AttachmentRow {
   return {
     id: attachment.id,
+    fileId: attachment.id,
     name: attachment.name,
     size: attachment.size,
     type: attachment.contentType,
@@ -164,7 +170,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
     )
     await Promise.all(images.map(async (row) => {
       try {
-        const { url } = await dependencies.download({ groupId: group, id: row.id })
+        const { url } = await dependencies.download({ groupId: group, id: row.fileId ?? row.id })
         if (isCurrent(read)) update(row.id, { src: url, thumbnailSrc: url })
       } catch {
         // The row stays without its thumbnail; its menu can still download it.
@@ -297,7 +303,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
       if (!isCurrent(read)) return
       files.delete(id)
       aborts.delete(id)
-      rows.value = rows.value.map((row) => row.id === id ? readyRow(attachment) : row)
+      rows.value = rows.value.map((row) => row.id === id ? { ...readyRow(attachment), id } : row)
       if (usage.value) {
         usage.value = {
           ...usage.value,
@@ -357,7 +363,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
     const group = groupId.value
     if (!row || row.status !== `ready` || group === null) return null
     try {
-      await dependencies.remove({ groupId: group, id })
+      await dependencies.remove({ groupId: group, id: row.fileId ?? id })
     } catch (cause) {
       const code = cause instanceof RealtimeRequestError
         ? (cause.details as { code?: unknown } | undefined)?.code
@@ -383,9 +389,10 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
    */
   async function link(id: string): Promise<string> {
     const group = groupId.value
+    const row = rows.value.find((item) => item.id === id)
     if (group === null) throw new Error(`This link expired. Try again.`)
     try {
-      return (await dependencies.download({ groupId: group, id })).url
+      return (await dependencies.download({ groupId: group, id: row?.fileId ?? id })).url
     } catch {
       throw new Error(`This link expired. Try again.`)
     }

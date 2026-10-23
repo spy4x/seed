@@ -138,6 +138,27 @@ describe(`note attachments store`, () => {
     expect(store.announcement.value).toBe(`scan.pdf uploaded`)
   })
 
+  it(`keeps an uploaded file's row id after its confirm, and links and removes it by the stored id`, async () => {
+    const { dependencies, calls } = fakeCalls()
+    const store = createAttachmentsStore(dependencies)
+    await store.open(GROUP, NOTE)
+    store.add([file(`scan.pdf`)])
+    const rowId = store.rows.value[0].id
+    await settle()
+    await settle()
+    const [row] = store.rows.value
+    expect(row.status).toBe(`ready`)
+    // The same row, so the page does not draw it anew and the focus in it stays.
+    expect(row.id).toBe(rowId)
+    expect(row.fileId).not.toBe(rowId)
+
+    await store.link(row.id)
+    expect(await store.remove(row.id)).toBeNull()
+    expect(calls).toContain(`download ${row.fileId}`)
+    expect(calls).toContain(`remove ${row.fileId}`)
+    expect(store.rows.value).toEqual([])
+  })
+
   it(`refuses a type, a size and a full note before anything is sent, naming each file`, async () => {
     const full = Array.from(
       { length: 9 },
