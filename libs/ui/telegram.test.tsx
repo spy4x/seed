@@ -75,16 +75,6 @@ async function click(selector: string): Promise<void> {
   })
 }
 
-async function submit(selector: string): Promise<void> {
-  const form = find(selector).closest("form")!
-  await act(async () => {
-    form.dispatchEvent(
-      new window.SubmitEvent("submit", { bubbles: true, cancelable: true }) as unknown as Event,
-    )
-    await new Promise((resolve) => setTimeout(resolve, 0))
-  })
-}
-
 const ON: TelegramStatusResponse = { enabled: true, botUsername: "seed_bot", linkedAt: null }
 const LINKED: TelegramStatusResponse = { ...ON, linkedAt: "2026-12-04T10:00:00Z" }
 const CODE: TelegramLinkCodeResponse = {
