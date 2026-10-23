@@ -71,6 +71,10 @@ function fakeCalls(overrides: Partial<AttachmentDependencies> = {}) {
       calls.push(`confirm ${id}`)
       return Promise.resolve({ attachment: attachment(id, `scan.pdf`) })
     },
+    cancel: ({ id }) => {
+      calls.push(`cancel ${id}`)
+      return Promise.resolve({ id })
+    },
     remove: ({ id }) => {
       calls.push(`remove ${id}`)
       return Promise.resolve({ id })
@@ -320,6 +324,40 @@ describe(`note attachments store`, () => {
     expect(aborted).toBe(true)
     expect(store.rows.value).toEqual([])
     expect(calls.some((call) => call.startsWith(`confirm`))).toBe(false)
+  })
+
+  it(`lets the server go of a signed upload before a retry and on a cancel`, async () => {
+    let tries = 0
+    const { dependencies, calls } = fakeCalls({
+      put: (upload, _file, _onProgress, signal) => {
+        calls.push(`put ${upload.id}`)
+        if (++tries === 1) return Promise.reject(new Error(`network`))
+        return new Promise((_resolve, reject) =>
+          signal.addEventListener(`abort`, () => reject(new DOMException(`canceled`, `AbortError`)))
+        )
+      },
+    })
+    const store = createAttachmentsStore(dependencies)
+    await store.open(GROUP, NOTE)
+    store.add([file(`scan.pdf`)])
+    await settle()
+    const first = `0199c3a0-0000-7000-8000-000000000101`
+    const second = `0199c3a0-0000-7000-8000-000000000102`
+
+    void store.retry(store.rows.value[0].id)
+    await settle()
+    expect(calls).toEqual([
+      `list ${NOTE}`,
+      `sign scan.pdf`,
+      `put ${first}`,
+      `cancel ${first}`,
+      `sign scan.pdf`,
+      `put ${second}`,
+    ])
+
+    store.cancel(store.rows.value[0].id)
+    await settle()
+    expect(calls.at(-1)).toBe(`cancel ${second}`)
   })
 
   it(`removes a file and frees its room; a failure keeps the row and says what to do`, async () => {

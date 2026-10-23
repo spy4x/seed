@@ -57,6 +57,8 @@ export interface AttachmentDependencies {
     signal: AbortSignal,
   ): Promise<void>
   confirm(input: { groupId: string; id: string }): Promise<{ attachment: Attachment }>
+  /** Drops a signed upload that will not be confirmed, so it stops counting as waiting. */
+  cancel(input: { groupId: string; id: string }): Promise<unknown>
   remove(input: { groupId: string; id: string }): Promise<unknown>
   download(input: { groupId: string; id: string }): Promise<{ url: string }>
   /** Whether a call made now reaches the server. */
@@ -94,6 +96,8 @@ function refusalOf(error: unknown, name: string, size: number): string {
       } files. ${name} was not attached.`
     case `UPLOADS_PENDING`:
       return `${name} waits: finish the uploads already started first.`
+    case `UPLOAD_BUDGET`:
+      return `${name} was not attached: you have uploaded as much as an hour allows. Try again later.`
   }
   return error instanceof Error && error.message ? error.message : `Upload failed.`
 }
@@ -148,6 +152,8 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
   const announcement = signal(``)
   const files = new Map<string, File>()
   const aborts = new Map<string, AbortController>()
+  /** The signed upload of each row that has one and is not confirmed yet. */
+  const signedUploads = new Map<string, string>()
   let opened = 0
   /** The note {@link created} just named: the page that opens it next keeps its uploads. */
   let adopted: string | null = null
@@ -155,11 +161,22 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
   const update = (id: string, change: Partial<AttachmentRow>) => {
     rows.value = rows.value.map((row) => row.id === id ? { ...row, ...change } : row)
   }
+  /** Tells the server a row's signed upload will not be confirmed. */
+  const release = (id: string) => {
+    const upload = signedUploads.get(id)
+    const group = groupId.value
+    signedUploads.delete(id)
+    if (upload === undefined || group === null) return
+    // A cancel that does not arrive costs nothing: the upload stops counting as waiting once its
+    // URL has expired.
+    void dependencies.cancel({ groupId: group, id: upload }).catch(() => undefined)
+  }
   const drop = (id: string) => {
     rows.value = rows.value.filter((row) => row.id !== id)
     files.delete(id)
     aborts.get(id)?.abort()
     aborts.delete(id)
+    release(id)
   }
   const isCurrent = (read: number) => read === opened
 
@@ -283,6 +300,8 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
     const note = noteId.value
     const read = opened
     if (!file || group === null || note === null) return
+    // A retry signs anew: the failed try's upload is let go first.
+    release(id)
     const abort = new AbortController()
     aborts.set(id, abort)
     update(id, { status: `uploading`, progress: 0, error: undefined })
@@ -294,6 +313,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
         contentType: file.type,
         size: file.size,
       })
+      signedUploads.set(id, signed.id)
       await dependencies.put(signed, file, (progress) => {
         if (isCurrent(read)) update(id, { progress })
       }, abort.signal)
@@ -303,6 +323,7 @@ export function createAttachmentsStore(dependencies: AttachmentDependencies) {
       if (!isCurrent(read)) return
       files.delete(id)
       aborts.delete(id)
+      signedUploads.delete(id)
       rows.value = rows.value.map((row) => row.id === id ? { ...readyRow(attachment), id } : row)
       if (usage.value) {
         usage.value = {
@@ -455,6 +476,7 @@ export const attachmentsCalls: AttachmentDependencies = {
   sign: (input) => callCommand(`attachment.sign`, input),
   put: putWithProgress,
   confirm: (input) => callCommand(`attachment.confirm`, input),
+  cancel: (input) => callCommand(`attachment.cancel`, input),
   remove: (input) => callCommand(`attachment.remove`, input),
   download: (input) => callQuery(`attachment.download`, input),
   canCall,
