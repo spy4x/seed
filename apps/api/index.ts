@@ -65,6 +65,7 @@ import { toRequestError } from "./services/realtime.ts"
 import { createCallRoute } from "./routes/call.ts"
 import { createHealthRoute } from "./routes/health.ts"
 import { isCacheConnected, kv } from "./services/cache.ts"
+import { files } from "./services/files.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import { enqueuePasswordResetMail } from "@server/jobs/password-reset-mail.ts"
 import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
@@ -130,6 +131,7 @@ app.route(
   createHealthRoute({
     isDbConnected: () => db.isConnected(),
     isCacheConnected,
+    isFileStoreReachable: files.isReachable,
   }),
 )
 // The browser sends the web app's origin; behind the TLS-terminating proxy the API sees `http://`.
@@ -228,6 +230,7 @@ app.route(
       now: () => new Date(),
       cursorSecret: config.authCookieSecret,
       cacheConnected: isCacheConnected,
+      fileStoreReachable: files.isReachable,
       build: config.build,
       billing: billingSetup,
     }).concat(

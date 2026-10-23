@@ -219,6 +219,7 @@ const SERVICES = [
   `VictoriaLogs`,
   `Grafana`,
   `Alertmanager`,
+  `Garage file store`,
   `restic backups`,
 ] as const
 

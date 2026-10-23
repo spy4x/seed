@@ -9,6 +9,8 @@ services:
     user: "0:0"  # Run as root in dev mode for Podman compatibility
     environment:
       - ENV=dev
+      # Development serves plain HTTP, so browsers sign against http:// (docs/files.md).
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT:-http://${DOMAIN}}
     security_opt:
       - label=disable
     healthcheck:

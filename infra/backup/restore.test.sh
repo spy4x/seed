@@ -46,6 +46,12 @@ export RESTIC_REPOSITORY="$work/repository" RESTIC_PASSWORD=test-only
 # This project's name, the health file and a stand-in for the web push keys: no real key.
 export PROJECT=backup-test-a BACKUP_OK_FILE="$work/backup-ok" VAPID_FILE="$work/vapid.json"
 printf '{"publicKey":"test-only","privateKey":"test-only"}\n' >"$VAPID_FILE"
+# A stand-in for Garage's directory: one block, one metadata snapshot, and the live database.
+export FILES_DIR="$work/files"
+mkdir -p "$FILES_DIR/data/ab" "$FILES_DIR/meta/snapshots/2026-10-23T00:00:00Z"
+printf 'block' >"$FILES_DIR/data/ab/block"
+printf 'snapshot' >"$FILES_DIR/meta/snapshots/2026-10-23T00:00:00Z/db.sqlite"
+printf 'live' >"$FILES_DIR/meta/db.sqlite"
 OTHER_PROJECT=backup-test-b
 
 sql() { psql --no-psqlrc --quiet --tuples-only --no-align --set ON_ERROR_STOP=1 --dbname "$1" --command "$2"; }
@@ -128,6 +134,12 @@ createdb --maintenance-db=postgres "$BROKEN"
 if PGDATABASE=$BROKEN "$BACKUP" restore "$(newest short_id)"; then failed="not failed"; else failed=failed; fi
 check "a restore whose dump breaks off half-way fails and leaves the database empty" \
   "failed, 0 tables" "$failed, $(tables "$BROKEN") tables"
+
+# The file store's blocks and metadata snapshots are saved; its live database is not.
+files_dump() { restic dump --host "$PROJECT" --tag files latest "$FILES_DIR/$1" 2>/dev/null || echo missing; }
+check "a backup saves the file store's blocks and metadata snapshots, not its live database" \
+  "block snapshot missing" \
+  "$(files_dump data/ab/block) $(files_dump meta/snapshots/2026-10-23T00:00:00Z/db.sqlite) $(files_dump meta/db.sqlite)"
 
 # The web push keys are saved with the database, and come back as they were.
 check "a backup saves the web push keys, and they come back unchanged" \
