@@ -163,6 +163,22 @@ describe("the API's app", () => {
     }
   })
 
+  it("answers an unknown address, a guard's refusal and a failed route in the one error body", async () => {
+    const { get } = await buildApp()
+
+    const [unknown, refused, broken] = [
+      await get("/no-such-route"),
+      await get("/notifications", "8"),
+      await get("/broken"),
+    ]
+
+    expect(await apiError(unknown)).toMatchObject({ code: "not_found", message: "Not found" })
+    expect((await apiError(refused)).code).toBe("unauthorized")
+    const failure = await apiError(broken)
+    expect(failure).toMatchObject({ code: "internal", message: "Request failed" })
+    expect(JSON.stringify(failure)).not.toContain("a route failed")
+  })
+
   it("refuses a client address named by a container that is not the proxy, on every route", async () => {
     const app = await createApiApp({
       write: () => {},
