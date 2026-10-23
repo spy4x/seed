@@ -14,6 +14,7 @@
 #     by default here; `deno task compose` runs Docker by default);
 #   - the API, the worker and the Vite dev server of this checkout (`E2E_SPA=built` puts the
 #     built SPA there instead, see below);
+#   - a file store in memory for the API (`e2e-local-files.ts`), so a spec can upload a file;
 #   - a proxy that serves them at one origin, `http://app.localhost:<port>`, and sets the client
 #     address headers itself, as Traefik does (`e2e-local-proxy.ts`);
 #   - the admin app's Vite dev server, and a second proxy that serves it with the API at
@@ -288,8 +289,8 @@ else
 fi
 
 # After the containers start: an engine that listens on the ports it publishes holds them by now.
-PORTS=$(spare_ports 5)
-read -r API_PORT SPA_PORT FRONT_PORT ADMIN_PORT ADMIN_FRONT_PORT <<<"$PORTS"
+PORTS=$(spare_ports 6)
+read -r API_PORT SPA_PORT FRONT_PORT ADMIN_PORT ADMIN_FRONT_PORT FILES_PORT <<<"$PORTS"
 # The installed nginx listens where apps/spa/nginx.conf says.
 [ "$BUILT_SERVER" = nginx ] && SPA_PORT=8080
 
@@ -301,10 +302,11 @@ export ADMIN_DOMAIN="admin.localhost:$ADMIN_FRONT_PORT"
 export DEV_EMAIL=dev@example.com
 export TIMEZONE=Etc/UTC
 export AUTH_COOKIE_SECRET AUTH_PEPPER
-# The API refuses to start without the file store's settings (docs/files.md). No browser test
-# uploads a file yet, so they name a store that is not there; the health route calls it degraded.
-export S3_ENDPOINT=http://127.0.0.1:9 S3_PUBLIC_ENDPOINT=http://127.0.0.1:9 S3_REGION=garage
-export S3_BUCKET=e2e-files S3_ACCESS_KEY_ID=GK000000000000000000000000
+# The file store's settings (docs/files.md). The API talks to the store in memory; the browser
+# reaches it through the proxy on the app's origin, as on a deploy. The worker gets a store that
+# is not there (below), so it finishes no data export and the specs see one in preparation.
+export S3_ENDPOINT=http://127.0.0.1:$FILES_PORT S3_PUBLIC_ENDPOINT=http://app.localhost:$FRONT_PORT
+export S3_REGION=garage S3_BUCKET=e2e-files S3_ACCESS_KEY_ID=GK000000000000000000000000
 S3_SECRET_ACCESS_KEY=$(openssl rand -hex 32)
 export S3_SECRET_ACCESS_KEY
 export RATE_LIMITER_WINDOW_MS=60000
@@ -324,13 +326,19 @@ else
   timeout 120 deno task vapid-key:create >/dev/null && mv infra/configs/vapid.json vapid.json
 fi
 
+log "starting the file store on 127.0.0.1:$FILES_PORT"
+start files env FILES_PORT="$FILES_PORT" deno run --allow-net=127.0.0.1 \
+  --allow-env=FILES_PORT,S3_BUCKET infra/scripts/e2e-local-files.ts
+wait_for files "${PIDS[-1]}" 30 answers "http://127.0.0.1:$FILES_PORT/$S3_BUCKET"
+
 log "starting the API on 127.0.0.1:$API_PORT"
 start api deno serve --allow-all --port "$API_PORT" --host 127.0.0.1 apps/api/index.ts
 wait_for api "${PIDS[-1]}" 60 answers "http://127.0.0.1:$API_PORT/api/health"
 
 # The worker sends the mails the specs read back and announces changes to other tabs.
 log "starting the worker"
-start worker deno run --allow-all apps/worker/+main.ts
+start worker env S3_ENDPOINT=http://127.0.0.1:9 S3_PUBLIC_ENDPOINT=http://127.0.0.1:9 \
+  deno run --allow-all apps/worker/+main.ts
 wait_for worker "${PIDS[-1]}" 60 grep -q "Worker started" "$SCRATCH/worker.log"
 
 # Builds an image with this run's label. In the foreground: a signal is acted on when the build
@@ -421,7 +429,8 @@ start_spa "${PASS_SERVER[0]}"
 
 log "starting the proxy on 127.0.0.1:$FRONT_PORT"
 start proxy env FRONT_PORT="$FRONT_PORT" API_PORT="$API_PORT" SPA_PORT="$SPA_PORT" \
-  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT \
+  FILES_PORT="$FILES_PORT" \
+  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT,FILES_PORT,S3_BUCKET \
   infra/scripts/e2e-local-proxy.ts
 wait_for proxy "${PIDS[-1]}" 30 answers "http://127.0.0.1:$FRONT_PORT/api/health"
 
@@ -431,7 +440,7 @@ start admin env VITE_ENV=dev deno task admin:dev --port "$ADMIN_PORT" --strictPo
 wait_for admin "${PIDS[-1]}" 120 answers "http://127.0.0.1:$ADMIN_PORT/"
 log "starting the admin proxy on 127.0.0.1:$ADMIN_FRONT_PORT"
 start admin-proxy env FRONT_PORT="$ADMIN_FRONT_PORT" API_PORT="$API_PORT" SPA_PORT="$ADMIN_PORT" \
-  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT \
+  deno run --allow-net=127.0.0.1 --allow-env=FRONT_PORT,API_PORT,SPA_PORT,S3_BUCKET \
   infra/scripts/e2e-local-proxy.ts
 wait_for admin-proxy "${PIDS[-1]}" 30 answers "http://127.0.0.1:$ADMIN_FRONT_PORT/"
 
