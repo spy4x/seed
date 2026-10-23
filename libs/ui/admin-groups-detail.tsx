@@ -32,7 +32,7 @@ import {
   describeActivity,
   GroupRole,
 } from "@domain/groups"
-import type { UserRole } from "@domain/identity"
+import { ADMIN_PICTURE_PATH, pictureUrl, type UserRole } from "@domain/identity"
 import { ADMIN_BILLING_PATHS } from "./admin-billing-list.tsx"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import {
@@ -439,7 +439,7 @@ function Members(
           canActOnMember(operator, member)
         return (
           <li key={member.id} class={ROW} data-e2e={`admin-group-member-${member.id}`}>
-            <Avatar name={name} size="sm" />
+            <Avatar name={name} src={pictureUrl(member.pictureId, ADMIN_PICTURE_PATH)} size="sm" />
             <div class="flex min-w-0 flex-1 basis-48 flex-col">
               <Link
                 href={ADMIN_PATHS.user(member.id)}

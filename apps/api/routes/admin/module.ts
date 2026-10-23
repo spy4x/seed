@@ -1,3 +1,4 @@
+import type { FileStore } from "@server/files/files.ts"
 import type { Hono, MiddlewareHandler } from "hono"
 import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import type postgres from "postgres"
@@ -36,6 +37,8 @@ export interface AdminModuleContext {
   cacheConnected(): Promise<boolean>
   /** Whether the file store answers, for the System page (#392). */
   fileStoreReachable(): Promise<boolean>
+  /** Reads a small file from the file store (`FileStore.read`). */
+  readFile: FileStore["read"]
   /** The release tag and commit the API was built from, or `null` each for a local build (#429). */
   build: { version: string | null; commit: string | null }
   /**

@@ -42,6 +42,7 @@ interface UserRowRaw {
   createdAt: Date
   lastSeenAt: Date | null
   guestSince: Date | null
+  pictureId: string | null
 }
 
 /**
@@ -52,7 +53,7 @@ interface UserRowRaw {
 function userColumns(sql: postgres.Sql) {
   return sql`
     u.id, u.first_name, u.last_name, u.role, u.blocked_at, u.created_at, u.last_seen_at,
-    u.guest_since,
+    u.guest_since, u.picture_id,
     (
       SELECT COALESCE(k.email, CASE WHEN k.method = ${PASSWORD_METHOD} THEN k.subject END)
       FROM auth_keys k
@@ -74,6 +75,7 @@ function toRow(row: UserRowRaw): AdminUserRow {
     createdAt: row.createdAt.toISOString(),
     lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
     guestSince: row.guestSince?.toISOString() ?? null,
+    pictureId: row.pictureId,
   }
 }
 
