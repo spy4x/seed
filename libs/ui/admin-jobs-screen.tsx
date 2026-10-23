@@ -736,10 +736,12 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
     <Stack>
       <PageHeader
         title={job.label}
+        // The header truncates its subtitle; a long code name wraps instead, so a phone shows it
+        // whole.
         subtitle={
-          <span class="flex flex-wrap items-center gap-2">
+          <span class="flex flex-wrap items-center gap-2 whitespace-normal">
             <JobStateBadge state={job.state} />
-            <span class="font-mono text-xs wrap-anywhere">{job.kind}</span>
+            <span class="min-w-0 font-mono text-xs wrap-anywhere">{job.kind}</span>
           </span>
         }
         back={back}
