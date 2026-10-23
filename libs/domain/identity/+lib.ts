@@ -422,6 +422,16 @@ export enum AuthAuditEventType {
    * own rows go with the account: `identifier` is `user:<id>` of the deleted guest.
    */
   GUEST_DELETED_BY_OPERATOR = 33,
+  /**
+   * The person linked a Telegram account (#269): its chat gets their notifications and its
+   * messages to the bot act as them. `identifier` is `telegram:<Telegram user id>`.
+   */
+  TELEGRAM_LINKED = 34,
+  /**
+   * The Telegram account was unlinked: by the person, in the app or with `/unlink` in the chat
+   * (`telegram:<id>`), or by an operator (`operator:<id> telegram:<id>`).
+   */
+  TELEGRAM_UNLINKED = 35,
 }
 
 export const authAuditBaseSchema = type({
@@ -455,6 +465,8 @@ export const authAuditBaseSchema = type({
     AuthAuditEventType.GUEST_STARTED,
     AuthAuditEventType.GUEST_KEPT,
     AuthAuditEventType.GUEST_DELETED_BY_OPERATOR,
+    AuthAuditEventType.TELEGRAM_LINKED,
+    AuthAuditEventType.TELEGRAM_UNLINKED,
   ),
   identifier: "string <= 320 | null = null",
   ip: "string <= 45 | null = null",
@@ -914,7 +926,10 @@ export interface AdminUserListResponse {
 
 /** One way the person signs in, as the operator sees it: never a secret. */
 export interface AdminSignInMethod {
-  /** `password`, `oauth:google`, `oauth:github`, `email-code`, `passkey` or `email-link`. */
+  /**
+   * `password`, `oauth:google`, `oauth:github`, `email-code`, `passkey`, `email-link`, or
+   * `telegram` for a linked Telegram account (#269), which is no way in.
+   */
   method: string
   /** A passkey's name and last use (#222), on a passkey row only. */
   passkey?: { name: string; lastUsedAt: string | null }
@@ -1151,6 +1166,7 @@ export * from "./admin-system.ts"
 export * from "./admin-jobs.ts"
 export * from "./preferences.ts"
 export * from "./guests.ts"
+export * from "./telegram.ts"
 
 /**
  * One push device of a person, as the operator area shows it (#427): never the endpoint or the

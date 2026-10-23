@@ -57,6 +57,8 @@ CREATE TABLE auth_keys (
 
 CREATE INDEX auth_keys_user_id_idx ON auth_keys (user_id);
 CREATE INDEX auth_keys_email_idx ON auth_keys (email) WHERE email IS NOT NULL;
+-- #269: one linked Telegram account per account. See migration 2026_12_04_0001_telegram.sql.
+CREATE UNIQUE INDEX auth_keys_one_telegram_idx ON auth_keys (user_id) WHERE method = 'telegram';
 
 -- #222: what only a passkey key has. See migration 2026_11_25_0001_auth_passkeys.sql.
 CREATE TABLE auth_passkeys (
@@ -720,7 +722,7 @@ CREATE INDEX idx_api_tokens_group_id ON api_tokens (group_id);
 
 -- The audit rows of an account: sign-in, sign-out, profile, sessions and personal API tokens. See
 -- migration 2026_01_26_0002_auth_profiles_audit.sql and, for the event types, the migrations that
--- widen the check (the last is 2026_11_25_0001_auth_passkeys.sql). `identifier` is plain
+-- widen the check (the last is 2026_12_04_0001_telegram.sql). `identifier` is plain
 -- text with no foreign key, so a row outlives what it names.
 CREATE TABLE auth_audits (
     id SERIAL PRIMARY KEY,
@@ -733,7 +735,7 @@ CREATE TABLE auth_audits (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]))
 );
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
@@ -944,3 +946,16 @@ CREATE INDEX idx_blog_posts_topic_published
     ON blog_posts (topic, published_at DESC) WHERE status = 'published';
 -- The admin list, most recently changed first.
 CREATE INDEX idx_blog_posts_updated ON blog_posts (updated_at DESC, id DESC);
+
+-- #269: a notification on its way to the person's Telegram chat. See migration
+-- 2026_12_04_0001_telegram.sql. The worker's job names this row, reads the notification and the
+-- link when it runs, and deletes the row once the message is sent.
+CREATE TABLE telegram_messages (
+    id UUID PRIMARY KEY,
+    user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    notification_id BIGINT NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_telegram_messages_user_id ON telegram_messages (user_id);
+CREATE INDEX idx_telegram_messages_notification_id ON telegram_messages (notification_id);
