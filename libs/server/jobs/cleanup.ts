@@ -16,6 +16,7 @@ import { removeExpiredSignUps } from "./sign-up-code-mail.ts"
 import { removeStaleSignInLinkRequests } from "./sign-in-link-mail.ts"
 import { removeStalePasswordResetRequests } from "./password-reset-mail.ts"
 import { removeStaleSubscriptionRequests } from "./subscriber-mail.ts"
+import { removeStaleTelegramMessages } from "./telegram-notification.ts"
 import { OUTBOX_RETENTION_DAYS } from "./jobs.ts"
 import type { ServerFiles } from "../files/files.ts"
 import { removeExpiredDataExports } from "./data-export.ts"
@@ -46,6 +47,10 @@ export function cleanupSteps(
     ["remove unused sign-in links", async () => {
       const links = await removeStaleSignInLinkRequests(sql)
       if (links > 0) console.log(`Removed ${links} unused sign-in link request(s)`)
+    }],
+    ["remove unsent Telegram messages", async () => {
+      const messages = await removeStaleTelegramMessages(sql)
+      if (messages > 0) console.log(`Removed ${messages} unsent Telegram message(s)`)
     }],
     ["remove expired sign-ups", async () => {
       const signUps = await removeExpiredSignUps(sql)

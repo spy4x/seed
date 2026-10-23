@@ -103,6 +103,7 @@ import {
   setUserRoleByAddress,
 } from "@server/auth/admin-users.ts"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
+import { type TelegramLinks, telegramLinks } from "@server/auth/telegram.ts"
 import { removeAllPushTokensOf } from "./push-token-store.ts"
 import { adminGroupRows } from "@server/groups/admin-groups.ts"
 import {
@@ -548,6 +549,14 @@ export class AppDbBase extends DbServiceBase {
       /** The dashboard's counts and 30-day series as of `now` (#424). */
       stats: (now: Date) => readAdminStats(sql, now),
     }
+  }
+
+  /**
+   * Linked Telegram accounts (#269, `@server/auth/telegram.ts`). Built per access, like `group`,
+   * so inside `begin()` it uses the transaction.
+   */
+  get telegram(): TelegramLinks {
+    return telegramLinks(this.sql)
   }
 
   /** The operator area's group reads and actions (`@server/groups/admin-groups.ts`, #426). */

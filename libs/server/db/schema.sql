@@ -720,7 +720,7 @@ CREATE INDEX idx_api_tokens_group_id ON api_tokens (group_id);
 
 -- The audit rows of an account: sign-in, sign-out, profile, sessions and personal API tokens. See
 -- migration 2026_01_26_0002_auth_profiles_audit.sql and, for the event types, the migrations that
--- widen the check (the last is 2026_11_25_0001_auth_passkeys.sql). `identifier` is plain
+-- widen the check (the last is 2026_12_04_0001_telegram.sql). `identifier` is plain
 -- text with no foreign key, so a row outlives what it names.
 CREATE TABLE auth_audits (
     id SERIAL PRIMARY KEY,
@@ -733,7 +733,7 @@ CREATE TABLE auth_audits (
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMPTZ,
     CONSTRAINT auth_audits_event_type_check
-        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33]))
+        CHECK (event_type = ANY (ARRAY[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35]))
 );
 
 CREATE INDEX idx_auth_audits_user_created_at ON auth_audits (user_id, created_at DESC);
@@ -960,3 +960,16 @@ CREATE TABLE data_exports (
 );
 
 CREATE INDEX idx_data_exports_user_requested ON data_exports (user_id, requested_at DESC);
+
+-- #269: a notification on its way to the person's Telegram chat. See migration
+-- 2026_12_04_0001_telegram.sql. The worker's job names this row, reads the notification and the
+-- link when it runs, and deletes the row once the message is sent.
+CREATE TABLE telegram_messages (
+    id UUID PRIMARY KEY,
+    user_id INT4 NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    notification_id BIGINT NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX idx_telegram_messages_user_id ON telegram_messages (user_id);
+CREATE INDEX idx_telegram_messages_notification_id ON telegram_messages (notification_id);

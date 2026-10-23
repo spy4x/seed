@@ -27,6 +27,7 @@
     "./libs/server/tags",
     "./libs/server/notifications",
     "./libs/server/subscribers",
+    "./libs/server/telegram",
     "./libs/ui"
   ],
   "nodeModulesDir": "auto",
@@ -164,6 +165,7 @@
     "@server/tags/": "./libs/server/tags/",
     "@server/notifications/": "./libs/server/notifications/",
     "@server/subscribers/": "./libs/server/subscribers/",
+    "@server/telegram/": "./libs/server/telegram/",
     "@platform/": "./libs/platform/",
     // #endregion Aliases
 

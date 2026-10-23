@@ -51,6 +51,11 @@ import { SIGN_UP_CODE_MAIL_JOB, signUpCodeMailJob } from "./sign-up-code-mail.ts
 import { SIGN_IN_LINK_MAIL_JOB, signInLinkMailJob } from "./sign-in-link-mail.ts"
 import { STARTER_DATA_JOB, starterDataJob, type StarterDataPlan } from "./starter-data.ts"
 import {
+  TELEGRAM_NOTIFICATION_JOB,
+  type TelegramNotificationDeps,
+  telegramNotificationJob,
+} from "./telegram-notification.ts"
+import {
   SUBSCRIBER_CONFIRM_MAIL_JOB,
   SUBSCRIBER_SEND_ISSUE_JOB,
   SUBSCRIBER_WELCOME_MAIL_JOB,
@@ -73,6 +78,8 @@ export interface JobDeps {
   sampleData: StarterDataPlan["sampleData"]
   /** Where the worker keeps the files it makes, or `null` without file store settings. */
   files: ServerFiles | null
+  /** Sends to Telegram, or `null` while the bot is off (#269). */
+  telegram: TelegramNotificationDeps["client"]
 }
 
 /**
@@ -271,6 +278,18 @@ export const JOBS: readonly JobDefinition[] = [
     about: { userIn: `starter_data_requests` },
     handler: ({ sql, provider, graceDays, sampleData }) =>
       starterDataJob(sql, { billingEnabled: provider !== null, graceDays, sampleData }),
+  }),
+  defineJob({
+    kind: TELEGRAM_NOTIFICATION_JOB,
+    label: `Telegram notification`,
+    about: { userIn: `telegram_messages` },
+    handler: ({ sql, mail, telegram }) =>
+      telegramNotificationJob({
+        sql,
+        client: telegram,
+        webAppUrl: mail.brand.webAppUrl,
+        log: mail.log,
+      }),
   }),
   ...[BillingNoticeKind.TrialEnding, BillingNoticeKind.PaymentFailed, BillingNoticeKind.PlanEnding]
     .map((notice) =>

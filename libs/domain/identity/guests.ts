@@ -36,7 +36,13 @@ export const GUEST_REFUSAL_CODE = "GUEST_NEEDS_SIGN_IN_METHOD"
 export const GUEST_REFUSAL_MESSAGE = "This needs a sign-in method. Add one to your account first."
 
 /** The actions a guest cannot take until the account is kept. */
-export type GuestLimitedAction = "invite" | "push" | "api-token" | "upload" | "billing"
+export type GuestLimitedAction =
+  | "invite"
+  | "push"
+  | "api-token"
+  | "upload"
+  | "billing"
+  | "telegram"
 
 /** The body of a guest refusal: `{ error: { code, message, action } }`. */
 export interface GuestRefusal {
