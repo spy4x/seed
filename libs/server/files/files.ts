@@ -5,13 +5,14 @@
  * A feature names what it accepts in a {@link FileRule}: the types and the largest size. Then:
  *
  * 1. {@link FileStore.signUpload} checks the browser's type and size against the rule and signs a
- *    PUT that the store accepts only with exactly that type and size.
+ *    PUT to a new staging key under {@link STAGING_PREFIX}, which the store accepts only with
+ *    exactly that type and size.
  * 2. The browser PUTs the file and tells the API it is done.
- * 3. {@link FileStore.confirmUpload} reads what arrived: its size, its type and its first bytes. A
- *    file that is not what was signed is deleted and refused. This catches a mistake, not a
- *    deliberate swap: the upload URL stays valid for {@link FILE_URL_SECONDS} after it is signed,
- *    so its holder can PUT other bytes of the same size and type after the confirm. That window
- *    closes before the first feature stores files (https://github.com/spy4x/seed/issues/401).
+ * 3. {@link FileStore.confirmUpload} copies the staging object, inside the store, to the feature's
+ *    key, deletes the staging object, and checks the copy: its size, its type and its first bytes.
+ *    A copy that is not what was signed is deleted and refused. No browser ever had a URL for the
+ *    feature's key, so the bytes checked are the bytes kept: a PUT to the old upload URL lands
+ *    on the staging key, never on a confirmed file.
  * 4. {@link FileStore.signDownload} signs a GET with the type the feature confirmed: an image is
  *    shown in place, any other file is saved as an attachment.
  *
@@ -32,11 +33,12 @@ import {
   SNIFF_BYTES,
   SNIFFABLE_CONTENT_TYPES,
 } from "@spy4x/server/storage"
+import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The S3 calls the file store makes. `S3Storage` has them all; a test passes a fake. */
 export type ObjectStore = Pick<
   S3Storage,
-  `presignPut` | `presignGet` | `head` | `getRange` | `delete` | `list`
+  `presignPut` | `presignGet` | `head` | `getRange` | `copy` | `delete` | `list`
 >
 
 /** The file store's settings, read from the API's environment (`apps/api/services/config.ts`). */
@@ -75,16 +77,23 @@ export enum FileRefusal {
   Content = 4,
 }
 
-/** A signed upload: the browser PUTs the file to `url` with these headers. */
+/**
+ * A signed upload: the browser PUTs the file to `url` with these headers. `stagingKey` is where it
+ * lands; the feature keeps it with the upload's owner and passes it to `confirmUpload`.
+ */
 export interface SignedUpload {
   url: string
   headers: { "content-type": string }
+  stagingKey: string
 }
 
 /** `{ success, output, error }`: the value, or why the file was refused. */
 export type FileResult<T> =
   | { success: true; output: T; error?: undefined }
   | { success: false; output?: undefined; error: FileRefusal }
+
+/** Where browser uploads land until they are confirmed. A feature's keys are never under it. */
+export const STAGING_PREFIX = `uploads/tmp/`
 
 /** How long a signed upload or download stays valid: five minutes. */
 export const FILE_URL_SECONDS = 300
@@ -139,15 +148,15 @@ export function downloadDisposition(contentType: string, filename: string): stri
 /** The file store a feature uses. */
 export interface FileStore {
   readonly bucket: string
-  /** Signs one browser upload of `file` under `key`, when `rule` accepts it. */
-  signUpload(key: string, rule: FileRule, file: FileFacts): Promise<FileResult<SignedUpload>>
+  /** Signs one browser upload of `file` to a new staging key, when `rule` accepts it. */
+  signUpload(rule: FileRule, file: FileFacts): Promise<FileResult<SignedUpload>>
   /**
-   * Checks what was uploaded under `key` against what was signed: its size, its type and its
-   * first bytes, and deletes a file that fails. It catches a wrong file, not a swap: until the
-   * upload URL expires its holder can replace a confirmed file with other bytes of the same size
-   * and type (see the module's notes).
+   * Moves the upload at `stagingKey` to `key` and checks the moved file against what was signed:
+   * its size, its type and its first bytes. A file that fails is deleted. The staging object is
+   * deleted either way, and later PUTs to its URL never reach `key`.
+   * @throws {Error} When `stagingKey` is not under {@link STAGING_PREFIX} or `key` is.
    */
-  confirmUpload(key: string, signed: FileFacts): Promise<FileResult<FileFacts>>
+  confirmUpload(stagingKey: string, key: string, signed: FileFacts): Promise<FileResult<FileFacts>>
   /**
    * Signs one download of `key`, a file `confirmUpload` accepted as `contentType`. The store
    * answers with that type, never the stored one, and with {@link downloadDisposition}.
@@ -170,17 +179,28 @@ export function createFileStore(
 ): FileStore {
   return {
     bucket,
-    async signUpload(key, rule, file) {
+    async signUpload(rule, file) {
       const refusal = breaks(rule, file)
       if (refusal !== null) return { success: false, error: refusal }
-      const url = await browser.presignPut(bucket, key, {
+      const stagingKey = `${STAGING_PREFIX}${uuidV7()}`
+      const url = await browser.presignPut(bucket, stagingKey, {
         contentType: file.contentType,
         contentLength: file.size,
         expiresIn: FILE_URL_SECONDS,
       })
-      return { success: true, output: { url, headers: { "content-type": file.contentType } } }
+      const headers = { "content-type": file.contentType }
+      return { success: true, output: { url, headers, stagingKey } }
     },
-    async confirmUpload(key, signed) {
+    async confirmUpload(stagingKey, key, signed) {
+      if (!stagingKey.startsWith(STAGING_PREFIX) || key.startsWith(STAGING_PREFIX)) {
+        throw new Error(`confirmUpload moves a key under ${STAGING_PREFIX} to one outside it`)
+      }
+      if (await internal.head(bucket, stagingKey) === null) {
+        return { success: false, error: FileRefusal.Missing }
+      }
+      await internal.copy(bucket, stagingKey, key)
+      await internal.delete(bucket, stagingKey)
+      // The checks read the copy: nothing a browser PUTs from here on can change it.
       const info = await internal.head(bucket, key)
       if (info === null) return { success: false, error: FileRefusal.Missing }
       let refusal: FileRefusal | null = null

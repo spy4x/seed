@@ -45,10 +45,14 @@ Deno.test("a file is uploaded, confirmed, downloaded and deleted through signed 
   const key = `test/${uuidV7()}`
   const signed = { contentType: `image/png`, size: PNG.length }
 
-  const upload = await files.signUpload(key, images, signed)
+  const upload = await files.signUpload(images, signed)
   if (!upload.success) throw new Error(`refused: ${upload.error}`)
-  expect(await put(upload.output.url, `image/png`, PNG)).toBe(200)
-  expect(await files.confirmUpload(key, signed)).toEqual({ success: true, output: signed })
+  const { url, stagingKey } = upload.output
+  expect(await put(url, `image/png`, PNG)).toBe(200)
+  expect(await files.confirmUpload(stagingKey, key, signed)).toEqual({
+    success: true,
+    output: signed,
+  })
 
   const download = await fetch(await files.signDownload(key, { ...signed, filename: `a.png` }))
   expect(download.status).toBe(200)
@@ -57,19 +61,44 @@ Deno.test("a file is uploaded, confirmed, downloaded and deleted through signed 
   expect(new Uint8Array(await download.arrayBuffer())).toEqual(PNG)
 
   await files.delete(key)
-  expect(await files.confirmUpload(key, signed))
+  expect(await files.confirmUpload(stagingKey, key, signed))
     .toEqual({ success: false, error: FileRefusal.Missing })
+})
+
+Deno.test("bytes PUT to the upload URL after the confirm never reach the confirmed file", async () => {
+  const files = store()
+  const key = `test/${uuidV7()}`
+  const signed = { contentType: `image/png`, size: PNG.length }
+  const upload = await files.signUpload(images, signed)
+  if (!upload.success) throw new Error(`refused: ${upload.error}`)
+  const { url, stagingKey } = upload.output
+
+  try {
+    expect(await put(url, `image/png`, PNG)).toBe(200)
+    expect(await files.confirmUpload(stagingKey, key, signed))
+      .toEqual({ success: true, output: signed })
+    const html = new TextEncoder().encode(`<html><script>alert(1)</script></html>`)
+    expect(await put(url, `image/png`, html.slice(0, PNG.length))).toBe(200)
+
+    const download = await fetch(await files.signDownload(key, { ...signed, filename: `a.png` }))
+    expect(new Uint8Array(await download.arrayBuffer())).toEqual(PNG)
+  } finally {
+    await files.delete(key)
+    await files.delete(stagingKey)
+  }
 })
 
 Deno.test("the store refuses a body larger than signed, and another type than signed", async () => {
   const files = store()
   const key = `test/${uuidV7()}`
-  const upload = await files.signUpload(key, images, { contentType: `image/png`, size: 8 })
+  const upload = await files.signUpload(images, { contentType: `image/png`, size: 8 })
   if (!upload.success) throw new Error(`refused: ${upload.error}`)
 
   expect(await put(upload.output.url, `image/png`, PNG)).toBeGreaterThanOrEqual(400)
   expect(await put(upload.output.url, `text/html`, PNG.slice(0, 8))).toBeGreaterThanOrEqual(400)
-  expect(await files.confirmUpload(key, { contentType: `image/png`, size: 8 }))
+  expect(
+    await files.confirmUpload(upload.output.stagingKey, key, { contentType: `image/png`, size: 8 }),
+  )
     .toEqual({ success: false, error: FileRefusal.Missing })
 })
 
@@ -78,14 +107,18 @@ Deno.test("an HTML page uploaded under a PNG's signature is refused and deleted"
   const key = `test/${uuidV7()}`
   const html = new TextEncoder().encode(`<html><script>alert(1)</script></html>`)
   const signed = { contentType: `image/png`, size: html.length }
-  const upload = await files.signUpload(key, images, signed)
+  const upload = await files.signUpload(images, signed)
   if (!upload.success) throw new Error(`refused: ${upload.error}`)
+  const { url, stagingKey } = upload.output
 
-  expect(await put(upload.output.url, `image/png`, html)).toBe(200)
-  expect(await files.confirmUpload(key, signed))
+  expect(await put(url, `image/png`, html)).toBe(200)
+  expect(await files.confirmUpload(stagingKey, key, signed))
     .toEqual({ success: false, error: FileRefusal.Content })
-  expect(await files.confirmUpload(key, signed))
+  expect(await files.confirmUpload(stagingKey, key, signed))
     .toEqual({ success: false, error: FileRefusal.Missing })
+  const download = await fetch(await files.signDownload(key, { ...signed, filename: `a.png` }))
+  await download.body?.cancel()
+  expect(download.status).toBe(404)
 })
 
 Deno.test("the store answers as reachable", async () => {
