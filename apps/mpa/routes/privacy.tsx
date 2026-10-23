@@ -8,6 +8,7 @@ const PRIVACY_SECTIONS = [
   { label: `What the demo stores`, href: `#stores` },
   { label: `Cookies and your browser`, href: `#cookies` },
   { label: `What it does not do`, href: `#does-not` },
+  { label: `A copy of your data`, href: `#copy` },
   { label: `Deleting your data`, href: `#deleting` },
   { label: `Questions`, href: `#questions` },
 ] as const
@@ -167,6 +168,18 @@ export default define.page(function Privacy({ state }) {
         It does not sell your data and shows no ads. Outside the app, your data goes only to the
         providers named above. Inside it, the people in your groups see what is listed above.
       </p>
+      <h2 id="copy">A copy of your data</h2>
+      <p>
+        To get a copy of your data, choose Download my data in your profile. The app prepares a ZIP
+        of JSON and CSV files with your profile, settings, sign-in methods, sessions, the groups you
+        belong to and the notes and tags you wrote in them, and tells you by e-mail and in the app
+        when it is ready. You can ask for one file a day, and each file is deleted after 7 days. It
+        holds nothing other people wrote. The owner of a group can also export the whole group to a
+        file from the group's page.
+      </p>
+      <p>
+        Do not keep anything important in the demo: it is a demo, and its data may be reset.
+      </p>
       <h2 id="deleting">Deleting your data</h2>
       <p>
         You can delete your account from your profile in the app. It asks for your password, and for
@@ -180,15 +193,6 @@ export default define.page(function Privacy({ state }) {
         profile and settings, and your push addresses. What you wrote in a group someone else owns
         stays there, shown as written by "Deleted user". To leave the newsletter, use the
         unsubscribe link in any of its mails.
-      </p>
-      <p>
-        To get a copy of your data, choose Download my data in your profile. The app prepares a ZIP
-        of JSON and CSV files with your profile, settings, sign-in methods, sessions, the groups you
-        belong to and the notes and tags you wrote in them, and tells you by e-mail and in the app
-        when it is ready. You can ask for one file a day, and each file is deleted after 7 days. It
-        holds nothing other people wrote. The owner of a group can also export the whole group to a
-        file from the group's page. Do not keep anything important in the demo: it is a demo, and
-        its data may be reset.
       </p>
       <h2 id="questions">Questions</h2>
       <p>

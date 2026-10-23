@@ -108,7 +108,7 @@ export const PROFILE_SECTION_TEXT: Record<
   ProfileSectionId,
   { label: string; description: string }
 > = {
-  account: { label: "Account", description: "Your name and e-mail address." },
+  account: { label: "Account", description: "Your name, e-mail address and a copy of your data." },
   security: {
     label: "Sign-in and security",
     description: "How you sign in, and where your account is signed in.",
