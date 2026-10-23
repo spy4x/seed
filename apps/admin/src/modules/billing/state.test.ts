@@ -38,8 +38,8 @@ const BEFORE = `2026-10-17T10:00:00.000Z`
 const AFTER = `2026-10-17T10:00:30.000Z`
 
 const ok = <T>(data: T, status = 200) => ({ ok: true, status, data }) as AdminApiResult<T>
-const fail = <T>(status: number, message: string, code?: string) =>
-  ({ ok: false, status, error: { message, code } }) as AdminApiResult<T>
+const fail = <T>(status: number, message: string, reason?: string) =>
+  ({ ok: false, status, error: { message, reason } }) as AdminApiResult<T>
 
 type Answer = (path: string, init?: RequestInit) => AdminApiResult<unknown> | undefined
 

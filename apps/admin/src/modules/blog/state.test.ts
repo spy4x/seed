@@ -7,8 +7,10 @@ import { blogListHref } from "./module.tsx"
 import { createBlogState } from "./state.ts"
 
 const ok = <T>(data: T, status = 200) => ({ ok: true, status, data }) as AdminApiResult<T>
-const fail = <T>(status: number, message: string, code?: string) =>
-  ({ ok: false, status, error: { status, message, ...(code && { code }) } }) as AdminApiResult<T>
+const fail = <T>(status: number, message: string, reason?: string) =>
+  ({ ok: false, status, error: { status, message, ...(reason && { reason }) } }) as AdminApiResult<
+    T
+  >
 
 const ID = `0195f0b4-3c1e-7a00-8000-0000000000aa`
 

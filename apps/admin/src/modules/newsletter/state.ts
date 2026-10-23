@@ -11,6 +11,7 @@ import {
 } from "@domain/subscribers"
 import type { AdminSubscriberAction, AdminSubscriberDialog } from "@ui/admin-newsletter-screen.tsx"
 import { ADMIN_FAILURE, type AdminFetch, post } from "../../state.ts"
+import { readApiError } from "@domain/errors"
 
 const API = `/api/admin/newsletter`
 
@@ -167,8 +168,8 @@ export function createNewsletterState(
           headers: { "content-type": `application/json` },
         })
         if (!response.ok) {
-          const body = await response.json().catch(() => null) as { error?: unknown } | null
-          const message = typeof body?.error === `string` ? body.error : ADMIN_FAILURE
+          const message = readApiError(await response.json().catch(() => null))?.message ??
+            ADMIN_FAILURE
           toasts.error({ body: message, dataE2E: `admin-export-error` })
           return
         }
