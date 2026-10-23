@@ -1,11 +1,12 @@
-import { NEXT_PARAM, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
+import { isInvitationPath, NEXT_PARAM, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
 import type { SessionState } from "../state/session.ts"
 import { isMembersOnlyPath } from "./spa-paths.ts"
 
 /**
  * Where a visit to `path` goes when the session is not fully signed in: to sign-in, or to the code
  * page while the code is owed, with the page as `next` (its `search` too, given without the `?`)
- * so sign-in returns there. `null` when the page stays: the session is signed in, or the page is
+ * so sign-in returns there. An invitation goes to sign-up instead: most invited people have no
+ * account yet, and sign-up links to sign-in for those who do. `null` when the page stays: the session is signed in, or the page is
  * open to anyone, which the route table says (`spa-paths.ts`). The MPA's pages answer the same way
  * on the server (`signInPath`).
  */
@@ -16,7 +17,12 @@ export function signInRedirect(
 ): string | null {
   if ((session.user && !session.isMfaRequired) || !isMembersOnlyPath(path)) return null
   const page = search ? `${path}?${search}` : path
-  return withNext(session.isMfaRequired ? SCREEN_PATHS.oneTimeCode : SCREEN_PATHS.signIn, page)
+  const target = session.isMfaRequired
+    ? SCREEN_PATHS.oneTimeCode
+    : isInvitationPath(path)
+    ? SCREEN_PATHS.signUp
+    : SCREEN_PATHS.signIn
+  return withNext(target, page)
 }
 
 /**

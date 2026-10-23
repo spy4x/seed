@@ -92,7 +92,14 @@ test.describe("group invitations", () => {
       const context = await browser.newContext({ baseURL: test.info().project.use.baseURL })
       inviteePage = await context.newPage()
       await gotoApp(inviteePage, invitePath, inviteePage.locator("[data-e2e=auth-form-login]"))
-      await expect(inviteePage).toHaveURL(`/sign-in?${new URLSearchParams({ next: invitePath })}`)
+      // Most invited people have no account yet: the link opens sign-up, which names the
+      // invitation, and its "Sign in" link keeps it for those who have one.
+      const nextQuery = new URLSearchParams({ next: invitePath })
+      await expect(inviteePage).toHaveURL(`/sign-up?${nextQuery}`)
+      await expect(inviteePage.locator("h1")).toHaveText("You're invited to a group")
+      await inviteePage.getByRole("link", { name: "Sign in", exact: true }).click()
+      await expect(inviteePage).toHaveURL(`/sign-in?${nextQuery}`)
+      await expect(inviteePage.locator("h1")).toHaveText("You're invited to a group")
       await inviteePage.locator("[data-e2e=auth-form-login]").fill(invitee)
       await inviteePage.locator("[data-e2e=auth-form-password]").fill(password)
       const card = inviteePage.locator("[data-e2e=invitation-card]")
