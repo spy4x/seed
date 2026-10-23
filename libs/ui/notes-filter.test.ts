@@ -1,7 +1,7 @@
 /** `filterNotes`: what the notes list keeps and in which order, from the notes it holds. */
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { filterNotes, NO_NOTE_FILTERS, type NoteFilters } from "./notes-filter.ts"
+import { defaultDirection, filterNotes, NO_NOTE_FILTERS, type NoteFilters } from "./notes-filter.ts"
 
 const design = "tag-design"
 const plans = "tag-plans"
@@ -53,11 +53,38 @@ describe("filterNotes", () => {
   })
 
   it("orders by title from A to Z", () => {
-    expect(titles({ sort: "title" })).toEqual([
+    expect(titles({ sort: "title", direction: "asc" })).toEqual([
       "Q4 planning: hiring and budget",
       "Welcome",
       "Список покупок",
     ])
+  })
+
+  it("runs each order the other way: oldest first, or Z to A", () => {
+    expect(titles({ direction: "asc" })).toEqual([
+      "Welcome",
+      "Список покупок",
+      "Q4 planning: hiring and budget",
+    ])
+    expect(titles({ sort: "title", direction: "desc" })).toEqual([
+      "Список покупок",
+      "Welcome",
+      "Q4 planning: hiring and budget",
+    ])
+  })
+
+  it("puts an undated note last whichever way the dates run", () => {
+    const undated = [...notes, { title: "Undated", body: "", tagIds: [], authorId: "1" }]
+    for (const direction of ["asc", "desc"] as const) {
+      const order = filterNotes(undated, { ...NO_NOTE_FILTERS, direction }, context)
+      expect(order.at(-1)?.title).toBe("Undated")
+    }
+  })
+
+  it("starts dates newest first and titles A to Z", () => {
+    expect(defaultDirection("updated")).toBe("desc")
+    expect(defaultDirection("created")).toBe("desc")
+    expect(defaultDirection("title")).toBe("asc")
   })
 
   it("finds words in the title or the text, in any order, by the start of a word", () => {
