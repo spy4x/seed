@@ -17,6 +17,8 @@ import { AppDbBase } from "../api/services/db-base.ts"
 import { demoDataSeed, startDemoReset } from "./demo/reset.ts"
 import { isDemoSeeded, resetDemo } from "./demo/run.ts"
 import { seedWorkspace } from "./demo/seed.ts"
+import { s3ServerFiles } from "@server/files/files.ts"
+import { readServerFilesSetup } from "@server/files/settings.ts"
 
 const sql = createSqlFromEnv(Deno.env.toObject(), {
   transform: postgres.camel,
@@ -61,6 +63,12 @@ const billingSetup = readBillingSetup(systemEnv, Deno.env.get("ENV") === "dev" ?
   webhooks: false,
 })
 
+// A person's data export (docs/data-export.md) is built here and kept in the file store. Without
+// its settings the export jobs fail and are retried, so a fixed env file still delivers them.
+const filesSetup = readServerFilesSetup(Deno.env)
+if (!filesSetup.success) console.warn(filesSetup.error)
+const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
+
 // The public demo (docs/demo.md) gives every new account its own sample groups.
 const demo = isDemoMode(Deno.env.toObject())
 
@@ -83,6 +91,8 @@ const processor = createOutboxProcessor(
   demo
     ? (userId) => seedWorkspace(new AppDbBase({ sql }), sql, userId, demoDataSeed(new Date()))
     : null,
+  undefined,
+  files,
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run

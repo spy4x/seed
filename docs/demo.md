@@ -71,6 +71,10 @@ updates the demo in the same PR:
   `billing_*`, `subscriber*`, `user_totp`, `backup_status`); fix it there. The seed dates rows after
   writing them, so it then renumbers the `audit_events` and `auth_audits` rows written since it
   started to follow their times (`orderIdsByTime`), because feeds sort by id.
+- **Data exports** need no change: the wipe empties `data_exports`, the seed writes none (a ready
+  row would have no file behind it), and the nightly clean-up deletes the files the wipe left in
+  the file store. A new table that holds a person's data adds a section to the export instead
+  ([data-export.md](data-export.md)).
 - **The tests**: `tests/integration/demo-seed.integration.test.ts` checks that the wipe leaves
   every table but the kept ones empty, that the seed's counts match the fake data, what a new
   account's sample groups hold, and what the admin's dashboard, billing and newsletter read from

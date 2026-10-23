@@ -50,6 +50,10 @@ import type { PushPublicKeyResponse } from "@domain/identity"
 import { SESSIONS_FAILURE } from "@ui/signed-in-devices.tsx"
 import { SIGN_IN_METHODS_FAILURE, signInMethodName } from "@ui/sign-in-methods.tsx"
 import { apiTokensHttp, createApiTokensStore } from "../state/api-tokens.ts"
+import { createDataExportStore, DATA_EXPORT_DOWNLOAD_PATH } from "../state/data-export.ts"
+import { notificationsStore } from "../state/notifications.ts"
+import { DataExportStatus } from "@domain/identity"
+import { DATA_EXPORT_ANCHOR } from "@ui/profile-export.tsx"
 import { passwordChangedMessage } from "./password-changed-message.ts"
 import { isProviderProofFresh, withPasskeyProof } from "./provider-proof-fresh.ts"
 import { supportsPasskeys } from "@spy4x/platform/browser/passkey"
@@ -128,7 +132,9 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   const [passkeysSupported] = useState(() => supportsPasskeys())
   const online = network.online.value
   const [tokens] = useState(() => createApiTokensStore(apiTokensHttp, localReads))
+  const [dataExport] = useState(() => createDataExportStore())
   const groups = groupsStore.groups.value
+  const exportPreparing = dataExport.current.value?.status === DataExportStatus.Preparing
 
   const providerProofFresh = isProviderProofFresh(methods.providerProofUntil.value)
   /** Set when the account has no password: what confirms its deletion in place of one. */
@@ -162,7 +168,46 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     void loadDevices()
     void methods.load()
     void tokens.load()
+    void dataExport.load()
   }, [session.user?.id, session.isMfaRequired])
+
+  // While the file is prepared: the inbox notice the worker writes moves the bell's count, which
+  // reads the export again; a slow read every half minute covers a page without its socket.
+  const unread = notificationsStore.unreadCount.value
+  useEffect(() => {
+    if (exportPreparing) void dataExport.load()
+  }, [unread])
+  useEffect(() => {
+    if (!exportPreparing) return
+    const timer = setInterval(() => void dataExport.load(), 30_000)
+    return () => clearInterval(timer)
+  }, [exportPreparing])
+
+  // `/profile/account#your-data` (the delete section's link, the palette) lands on the row's control.
+  // The router's own navigations fire `pushState`, so the palette's command lands here even when
+  // the Account section is already open.
+  const exportRead = dataExport.current.value !== undefined
+  useEffect(() => {
+    if (section !== "account" || !exportRead) return
+    // After the settings layout has focused the section's heading, which it does on the same turn.
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const focusAnchor = () => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        if (location.hash === `#${DATA_EXPORT_ANCHOR}`) {
+          document.getElementById(DATA_EXPORT_ANCHOR)?.focus()
+        }
+      }, 0)
+    }
+    focusAnchor()
+    addEventListener("pushState", focusAnchor)
+    addEventListener("hashchange", focusAnchor)
+    return () => {
+      clearTimeout(timer)
+      removeEventListener("pushState", focusAnchor)
+      removeEventListener("hashchange", focusAnchor)
+    }
+  }, [section, exportRead])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
   // A switch from a guest account (#224) lands here with `?moved=`, the groups that came along.
@@ -640,6 +685,13 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       }}
       onRegisterPush={registerPush}
       onRemovePush={removePush}
+      dataExport={{
+        exportState: dataExport.current.value,
+        pending: dataExport.pending.value,
+        error: dataExport.error.value,
+        onRequest: () => void dataExport.request(),
+        downloadHref: DATA_EXPORT_DOWNLOAD_PATH,
+      }}
       accountDeletion={{
         blockers,
         values: deleteValues,

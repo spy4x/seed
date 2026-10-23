@@ -240,7 +240,10 @@
     "@iuioiua/redis": "jsr:@iuioiua/redis@1.1.10",
 
     // server/db
-    "postgres": "npm:postgres@3.4.7"
+    "postgres": "npm:postgres@3.4.7",
+
+    // server/jobs: the person's data export is a ZIP (#229); no shared library writes one.
+    "fflate": "npm:fflate@0.8.2"
     // #endregion Dependencies
   },
   "exclude": [

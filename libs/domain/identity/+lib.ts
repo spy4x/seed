@@ -1154,6 +1154,7 @@ export * from "./admin-system.ts"
 export * from "./admin-jobs.ts"
 export * from "./preferences.ts"
 export * from "./guests.ts"
+export * from "./data-export.ts"
 
 /**
  * One push device of a person, as the operator area shows it (#427): never the endpoint or the
