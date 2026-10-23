@@ -57,8 +57,6 @@ CREATE TABLE auth_keys (
 
 CREATE INDEX auth_keys_user_id_idx ON auth_keys (user_id);
 CREATE INDEX auth_keys_email_idx ON auth_keys (email) WHERE email IS NOT NULL;
--- #269: one linked Telegram account per account. See migration 2026_12_04_0001_telegram.sql.
-CREATE UNIQUE INDEX auth_keys_one_telegram_idx ON auth_keys (user_id) WHERE method = 'telegram';
 
 -- #222: what only a passkey key has. See migration 2026_11_25_0001_auth_passkeys.sql.
 CREATE TABLE auth_passkeys (

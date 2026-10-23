@@ -1,8 +1,9 @@
 -- #269: Telegram. A linked Telegram account is a row of `auth_keys` with `method = 'telegram'` and
 -- the Telegram user id as `subject`, so the unique `(method, subject)` keeps one Telegram account
 -- on one account here. It is no sign-in method: nobody signs in with it. An account links one
--- Telegram account at most.
-CREATE UNIQUE INDEX auth_keys_one_telegram_idx ON auth_keys (user_id) WHERE method = 'telegram';
+-- Telegram account at most: the link replaces the one before under a lock on the person's row
+-- (`telegramLinks().link`), because `auth_keys` is the auth package's table and takes no index of
+-- ours.
 
 -- A notification on its way to the person's Telegram chat. The worker's job names this row (a job
 -- names a UUID, a notification has a number), reads the notification and the link when it runs,
