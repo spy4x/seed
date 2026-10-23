@@ -27,6 +27,7 @@ interface Options {
   hang?: keyof AdminSystemStore
   databaseConnected?: boolean
   cache?: () => Promise<boolean>
+  files?: () => Promise<boolean>
   oldestDueAt?: Date | null
   failed?: number
   lastBackup?: Date | null
@@ -70,6 +71,7 @@ function buildApp(options: Options = {}) {
     now: () => NOW,
     system,
     cacheConnected: options.cache ?? (() => Promise.resolve(true)),
+    fileStoreReachable: options.files ?? (() => Promise.resolve(true)),
     build: { version: "v1.2.3", commit: "abc1234" },
     runtime: "Deno/2.9.7",
     startedAt: new Date("2026-10-16T08:00:00.000Z"),
@@ -157,6 +159,7 @@ describe("system routes", () => {
       version: "18.6",
     })
     expect(body.cache).toMatchObject({ health: AdminHealth.OK, reachable: true })
+    expect(body.fileStore).toMatchObject({ health: AdminHealth.OK, reachable: true })
     expect(body.queue.health).toBe(AdminHealth.OK)
     expect(body.backup).toEqual({
       health: AdminHealth.OK,
@@ -180,6 +183,7 @@ describe("system routes", () => {
       "cache",
       "checkedAt",
       "database",
+      "fileStore",
       "health",
       "migrations",
       "queue",
@@ -193,6 +197,7 @@ describe("system routes", () => {
       "version",
     ])
     expect(Object.keys(body.cache).sort()).toEqual(["health", "latencyMs", "reachable"])
+    expect(Object.keys(body.fileStore).sort()).toEqual(["health", "latencyMs", "reachable"])
     expect(Object.keys(body.queue).sort()).toEqual([
       "due",
       "failed",
@@ -228,6 +233,14 @@ describe("system routes", () => {
     expect(body.cache.health).toBe(AdminHealth.ERROR)
     expect(body.cache.reachable).toBe(false)
     expect(body.cache.latencyMs).toBeGreaterThanOrEqual(PROBE_TIMEOUT_MS - 5)
+    expect(body.health).toBe(AdminHealth.ERROR)
+  })
+
+  it("shows the file store as an error, and the stack with it, when it does not answer", async () => {
+    const body = await snapshot({ files: () => Promise.resolve(false) })
+
+    expect(body.fileStore).toMatchObject({ health: AdminHealth.ERROR, reachable: false })
+    expect(body.cache.health).toBe(AdminHealth.OK)
     expect(body.health).toBe(AdminHealth.ERROR)
   })
 

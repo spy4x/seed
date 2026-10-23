@@ -62,6 +62,7 @@ Current tasks come from [`deno.jsonc`](../deno.jsonc).
 | `deno task e2e`              | Playwright end-to-end tests                            |
 | `deno task e2e:local`        | The same tests against a stack of its own              |
 | `deno task test:backup`      | Back up and restore a database in its own containers   |
+| `deno task test:files`       | The file store against a Garage container of its own   |
 | `deno task db:migrate`       | Apply the SQL migrations in `libs/server/db`           |
 | `deno task db:reset`         | Drop, migrate and seed a dev database (`ENV=dev` only) |
 | `deno task spa:build`        | Build the SPA                                          |

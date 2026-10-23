@@ -1,0 +1,16 @@
+# The bundled file store (docs/files.md), one Garage node. The RPC secret, the key and the bucket
+# come from the environment (infra/compose/compose.shared.yml, service `garage`).
+metadata_dir = "/var/lib/garage/meta"
+data_dir = "/var/lib/garage/data"
+db_engine = "sqlite"
+replication_factor = 1
+# A consistent copy of the metadata database every hour, in meta/snapshots; Garage keeps the two
+# newest. The backup saves these, never the live database (docs/backups.md).
+metadata_auto_snapshot_interval = "1h"
+rpc_bind_addr = "[::]:3901"
+rpc_public_addr = "127.0.0.1:3901"
+
+[s3_api]
+# S3_REGION must say the same.
+s3_region = "garage"
+api_bind_addr = "[::]:3900"

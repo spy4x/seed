@@ -85,6 +85,7 @@ const snapshot: AdminSystemSnapshot = {
     startedAt: "2026-10-10T00:00:00.000Z",
   },
   cache: { health: AdminHealth.ERROR, reachable: false, latencyMs: 2000 },
+  fileStore: { health: AdminHealth.OK, reachable: true, latencyMs: 4 },
   queue: {
     health: AdminHealth.WARNING,
     due: 1,
@@ -129,6 +130,8 @@ describe("system screen", () => {
 
     expect(state("admin-system-database")).toBe("ok")
     expect(state("admin-system-cache")).toBe("error")
+    expect(state("admin-system-files")).toBe("ok")
+    expect(find("[data-e2e=admin-system-files]").textContent).toContain("Yes, in 4 ms")
     expect(state("admin-system-queue")).toBe("warning")
     expect(state("admin-system-backup")).toBe("ok")
     expect(state("admin-system-migrations")).toBe("ok")

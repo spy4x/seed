@@ -128,6 +128,7 @@ app, and [`docs/screenshots/admin-video.ts`](docs/screenshots/admin-video.ts)
 - [Guest accounts](docs/guests.md)
 - [Sign in with Google and GitHub](docs/sign-in-providers.md)
 - [Backups](docs/backups.md): set up, restore, rehearse.
+- [The file store](docs/files.md): Garage or another S3 store, signed uploads and downloads.
 - [Development](docs/development.md): every task and the browser tests.
 - [Adding a feature](docs/aggregates.md): every file of the notes aggregate, in order.
 - [Everything else](docs/README.md)

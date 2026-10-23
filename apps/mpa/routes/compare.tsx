@@ -119,8 +119,8 @@ const ROWS: readonly ComparisonRow[] = [
   },
   {
     capability: `File uploads`,
-    note: `Makerkit: Supabase kit only`,
-    values: [`no`, `no`, `yes`, `partial`, `no`, `yes`],
+    note: `Seed: the file store is built; no upload screen yet. Makerkit: Supabase kit only`,
+    values: [`partial`, `no`, `yes`, `partial`, `no`, `yes`],
   },
   {
     capability: `Blog`,

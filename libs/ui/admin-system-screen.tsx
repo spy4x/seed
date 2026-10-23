@@ -125,7 +125,7 @@ export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
 function SystemBody(
   { snapshot, navigate }: { snapshot: AdminSystemSnapshot; navigate?: Navigate },
 ): JSX.Element {
-  const { database, cache, queue, backup, migrations, build } = snapshot
+  const { database, cache, fileStore, queue, backup, migrations, build } = snapshot
   const summary = SUMMARY[snapshot.health] ?? SUMMARY[AdminHealth.ERROR]
   return (
     <>
@@ -162,6 +162,15 @@ function SystemBody(
           facts={[{
             label: `Reachable`,
             value: cache.reachable ? `Yes, in ${cache.latencyMs} ms` : "No answer",
+          }]}
+        />
+        <StatusCard
+          title="File store (S3)"
+          health={fileStore.health}
+          dataE2E="admin-system-files"
+          facts={[{
+            label: `Reachable`,
+            value: fileStore.reachable ? `Yes, in ${fileStore.latencyMs} ms` : "No answer",
           }]}
         />
         <StatusCard
@@ -237,6 +246,7 @@ function SystemBody(
         <StatusCard
           title="API build"
           dataE2E="admin-system-build"
+          class="sm:col-span-2 xl:col-span-3"
           facts={[
             { label: `Version`, value: build.version ?? "Development build" },
             {
@@ -264,7 +274,7 @@ function SystemBody(
  * The hint goes after the facts' `<dl>`, never inside it: a `<dl>` holds only `dt` and `dd` groups.
  */
 function StatusCard(
-  { title, health, dataE2E, hint, footer, facts }: {
+  { title, health, dataE2E, hint, footer, class: className, facts }: {
     title: string
     health?: AdminHealth
     dataE2E: string
@@ -274,10 +284,12 @@ function StatusCard(
     footer?: ComponentChildren
     /** The card's facts, as `FactList` shows them. */
     facts: readonly Fact[]
+    /** Extra classes on the card, such as a column span. */
+    class?: string
   },
 ): JSX.Element {
   return (
-    <Card data-e2e={dataE2E}>
+    <Card data-e2e={dataE2E} class={className}>
       <CardHeader
         title={title}
         headingLevel={2}

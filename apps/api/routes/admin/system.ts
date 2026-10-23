@@ -13,8 +13,8 @@ import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
 
 /**
- * How long the page waits for the database or the cache to answer before it counts it as down, and
- * for each of its database reads before it shows that part as an error.
+ * How long the page waits for the database, the cache or the file store to answer before it
+ * counts it as down, and for each of its database reads before it shows that part as an error.
  */
 export const CACHE_PROBE_TIMEOUT_MS = 2_000
 
@@ -35,6 +35,7 @@ export interface AdminSystemRouteDependencies {
   limit: MiddlewareHandler<APIContext>
   system: AdminSystemStore
   cacheConnected(): Promise<boolean>
+  fileStoreReachable(): Promise<boolean>
   build: { version: string | null; commit: string | null }
   now(): Date
   /** The runtime's name and version; `navigator.userAgent` by default, such as `Deno/2.9.7`. */
@@ -77,9 +78,10 @@ export async function readSystemSnapshot(
   const { system } = dependencies
   const now = dependencies.now()
   const timeout = dependencies.probeTimeoutMs ?? CACHE_PROBE_TIMEOUT_MS
-  const [db, cache] = await Promise.all([
+  const [db, cache, files] = await Promise.all([
     timed(() => system.databaseConnected(), timeout),
     timed(() => dependencies.cacheConnected(), timeout),
+    timed(() => dependencies.fileStoreReachable(), timeout),
   ])
   const [facts, queue, backup, migrations] = db.ok
     ? await Promise.all([
@@ -102,6 +104,11 @@ export async function readSystemSnapshot(
     health: cache.ok ? AdminHealth.OK : AdminHealth.ERROR,
     reachable: cache.ok,
     latencyMs: cache.ms,
+  }
+  const fileStoreCard = {
+    health: files.ok ? AdminHealth.OK : AdminHealth.ERROR,
+    reachable: files.ok,
+    latencyMs: files.ms,
   }
   const queueCard = {
     health: queue ? queueHealth(queue.oldestDueAt, queue.failed, queue.now) : AdminHealth.ERROR,
@@ -127,6 +134,7 @@ export async function readSystemSnapshot(
     health: worstHealth(
       database.health,
       cacheCard.health,
+      fileStoreCard.health,
       queueCard.health,
       backupCard.health,
       migrationsCard.health,
@@ -134,6 +142,7 @@ export async function readSystemSnapshot(
     checkedAt: now.toISOString(),
     database,
     cache: cacheCard,
+    fileStore: fileStoreCard,
     queue: queueCard,
     backup: backupCard,
     migrations: migrationsCard,
@@ -165,11 +174,12 @@ export function createAdminSystemRoutes(
 /** The System module: the health of the stack and the job queue. */
 export const systemAdminModule: AdminApiModule = {
   id: `system`,
-  routes: ({ db, limit, now, cacheConnected, build }) =>
+  routes: ({ db, limit, now, cacheConnected, fileStoreReachable, build }) =>
     createAdminSystemRoutes({
       limit,
       now,
       cacheConnected,
+      fileStoreReachable,
       build,
       // Read at call time: the routes are built before any request, and with no database in tests.
       system: {
