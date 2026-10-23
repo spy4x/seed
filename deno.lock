@@ -29,7 +29,7 @@
     "jsr:@spy4x/platform@1.90.0": "1.90.0",
     "jsr:@spy4x/platform@^1.90.0": "1.90.0",
     "jsr:@spy4x/preact-charts@10.6.0": "10.6.0",
-    "jsr:@spy4x/preact-cn@^10.6.0": "10.7.0",
+    "jsr:@spy4x/preact-cn@^10.6.0": "10.8.0",
     "jsr:@spy4x/preact-icons@10.6.0": "10.6.0",
     "jsr:@spy4x/preact-icons@^10.6.0": "10.6.0",
     "jsr:@spy4x/preact-signals@10.6.0": "10.6.0",
@@ -359,8 +359,8 @@
         "npm:tailwind-merge"
       ]
     },
-    "@spy4x/preact-cn@10.7.0": {
-      "integrity": "ef66e6712605552a759d561d4d2a8596397688ad47e508a78076ee7d2d48bce4",
+    "@spy4x/preact-cn@10.8.0": {
+      "integrity": "f709d7b1e765f2dcc5acdeb2506377ea75c541daa665696570588a0c56eed3c8",
       "dependencies": [
         "npm:tailwind-merge"
       ]

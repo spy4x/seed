@@ -180,6 +180,67 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
+
+  # The file store (docs/files.md): Garage, which speaks the S3 API. Only with
+  # COMPOSE_PROFILES=files; without the profile the API uses the S3 store S3_ENDPOINT names.
+  # `--single-node --default-bucket` lays out the one node and creates the key and the bucket from
+  # the environment on every start; a start with both already there changes nothing. The image is
+  # the `garage` binary alone, with no shell. The bucket is private: every request needs a
+  # signature, and only the API holds the key.
+  garage:
+    container_name: ${PROJECT}-garage
+    profiles: [files]
+    image: docker.io/dxflrs/garage:v2.4.1@sha256:9c96caa2612d3411acc5b0e6701fb238dbfba33e533a6d7d3d811a4b12d0d020
+    restart: unless-stopped
+    command: [ '/garage', 'server', '--single-node', '--default-bucket' ]
+    volumes:
+      - ../../infra/configs/garage.toml:/etc/garage.toml:ro,z
+      # Shared label (`z`): the backup service reads it too.
+      - ../../.volumes/garage:/var/lib/garage:z
+    # `${…:-}`, not `${…:?}`: Compose interpolates profiled services too, so `:?` would stop a
+    # project without the profile. Garage itself refuses to start without them.
+    environment:
+      - GARAGE_RPC_SECRET=${GARAGE_RPC_SECRET:-}
+      - GARAGE_DEFAULT_ACCESS_KEY=${S3_ACCESS_KEY_ID:-}
+      - GARAGE_DEFAULT_SECRET_KEY=${S3_SECRET_ACCESS_KEY:-}
+      - GARAGE_DEFAULT_BUCKET=${S3_BUCKET:-${PROJECT}-files}
+    deploy:
+      resources:
+        limits:
+          cpus: '${GARAGE_CPU_LIMIT:-0.5}'
+          memory: '${GARAGE_MEM_LIMIT:-256M}'
+    healthcheck:
+      test: [ 'CMD', '/garage', 'bucket', 'info', '${S3_BUCKET:-${PROJECT}-files}' ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'
+    # Browsers upload and download with signed URLs on the app's own host (S3_PUBLIC_ENDPOINT),
+    # path-style: https://DOMAIN/<bucket>/<key>. Same origin as the SPA, so the bucket needs no
+    # CORS. Only paths under the bucket reach Garage, and every answer carries a sandbox policy
+    # and nosniff, so a file never runs as a page of this origin. The priority beats the SPA's
+    # catch-all router.
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.files-${PROJECT}.rule=Host(`${DOMAIN}`) && PathPrefix(`/${S3_BUCKET:-${PROJECT}-files}/`)'
+      - 'traefik.http.routers.files-${PROJECT}.priority=1000'
+      - 'traefik.http.routers.files-${PROJECT}.entrypoints=web'
+      - 'traefik.http.routers.files-${PROJECT}.service=files-${PROJECT}'
+      - 'traefik.http.routers.files-${PROJECT}.middlewares=files-headers-${PROJECT}'
+      - "traefik.http.middlewares.files-headers-${PROJECT}.headers.customresponseheaders.Content-Security-Policy=sandbox; default-src 'none'"
+      - 'traefik.http.middlewares.files-headers-${PROJECT}.headers.customresponseheaders.X-Content-Type-Options=nosniff'
+      - 'traefik.http.services.files-${PROJECT}.loadbalancer.server.port=3900'
+      - 'traefik.docker.network=proxy'
+    networks:
+      - default
+      - proxy
   # endregion Storages
 
   # region Monitoring
@@ -576,10 +637,14 @@ services:
         bind:
           create_host_path: false
           selinux: z
+      # The bundled file store's blocks and metadata snapshots (docs/backups.md), read only. Empty
+      # without the `files` profile, and then nothing of it is saved.
+      - ../../.volumes/garage:/run/files:ro,z
     environment:
       # The host of every snapshot this project saves (infra/backup/backup.sh).
       - PROJECT=${PROJECT}
       - VAPID_FILE=/run/vapid.json
+      - FILES_DIR=/run/files
       # The image's home belongs to its postgres user, not to the user above.
       - RESTIC_CACHE_DIR=/tmp/restic-cache
       - PGHOST=db
@@ -749,6 +814,14 @@ services:
       # shared `proxy` network that sends such a header is refused
       # (apps/api/middlewares/proxy-peer.ts).
       - PROXY_HOSTS=traefik,${PROJECT}-mpa
+      # The file store (docs/files.md). Empty ones stop the API with an error naming them. The
+      # endpoint defaults to the bundled Garage; the public one is what browsers sign against.
+      - S3_ENDPOINT=${S3_ENDPOINT:-http://${PROJECT}-garage:3900}
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT:-https://${DOMAIN}}
+      - S3_REGION=${S3_REGION:-garage}
+      - S3_BUCKET=${S3_BUCKET:-${PROJECT}-files}
+      - S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID:-}
+      - S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY:-}
     deploy:
       resources:
         limits:
