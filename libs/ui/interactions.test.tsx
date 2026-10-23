@@ -160,6 +160,7 @@ describe("AuthScreen in the browser", () => {
 
     await rerender(<AuthScreen {...authDefaults} screen="sign-in" next={next} guest />)
     expect(find("h1").textContent).toBe("You're invited to a group")
+    expect(find("h1 + p").textContent).toBe("Sign in to see the invitation and join.")
     expect(root!.querySelector("[data-e2e=no-account-yet]")).toBeNull()
     expect(find("a[href^='/sign-up']").getAttribute("href")).toBe("/sign-up?next=%2Finvite%2FAbC_9")
 
