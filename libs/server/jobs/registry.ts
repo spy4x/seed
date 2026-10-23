@@ -14,8 +14,10 @@ import { describeCron, parseCron } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
 import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
 import { BillingNoticeKind } from "@domain/billing"
+import { BLOG_PUBLISH_JOB } from "@domain/blog"
 import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
 import { SEAT_SYNC_JOB, seatSyncJob } from "../billing/seat-sync.ts"
+import { blogPublishJob } from "../blog/blog-publish-job.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import {
   ACCOUNT_DELETION_MAIL_JOB,
@@ -254,6 +256,12 @@ export const JOBS: readonly JobDefinition[] = [
     label: `Newsletter issue`,
     sendsMail: true,
     handler: (deps) => subscriberSendIssueJob({ ...mailDeps(deps), setup: deps.subscribers }),
+  }),
+  // Queues the newsletter issue but mails no one itself, and a second run queues nothing more.
+  defineJob({
+    kind: BLOG_PUBLISH_JOB,
+    label: `Publish a blog post`,
+    handler: (deps) => blogPublishJob({ ...mailDeps(deps), setup: deps.subscribers }),
   }),
 ]
 

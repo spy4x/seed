@@ -10,7 +10,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/domain/blog/+lib.ts`                 | Shapes, limits, request schemas, field checks, errors, audit kinds.                   |
 | `libs/server/blog/postgres-blog-repository.ts` | The admin's reads and writes, each write with its audit row in one transaction.   |
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
-| `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job, and `queueDueBlogJobs`, which gives lost jobs back.           |
+| `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
 | `libs/server/blog/sample-posts.ts`         | Three sample posts for `deno task db:seed` in development.                             |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |

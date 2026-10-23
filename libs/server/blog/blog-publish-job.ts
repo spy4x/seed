@@ -1,5 +1,4 @@
 import type postgres from "postgres"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { isSubscriberList } from "@domain/subscribers"
 import { BLOG_PUBLISH_JOB } from "@domain/blog"
 import type { MailBrand } from "../mail/mail.ts"
@@ -10,7 +9,7 @@ import {
   type SubscriberIssue,
   subscriberIssueSchema,
 } from "../jobs/subscriber-issue.ts"
-import { JOB_AGGREGATE, type JobHandler } from "../jobs/jobs.ts"
+import { enqueueJob, JOB_AGGREGATE, type JobHandler } from "../jobs/jobs.ts"
 import type { BlogPostRow } from "./postgres-blog-repository.ts"
 
 /** What the `blog.publish` job needs. */
@@ -125,9 +124,10 @@ export async function queueDueBlogJobs(sql: postgres.Sql): Promise<number> {
       )
   `
   for (const post of posts) {
-    await scheduleOutboxEvent(
+    await enqueueJob(
       sql,
-      { eventKind: BLOG_PUBLISH_JOB, aggregateType: JOB_AGGREGATE, aggregateId: post.id },
+      BLOG_PUBLISH_JOB,
+      post.id,
       post.status === `scheduled` && post.publishAt ? { at: post.publishAt } : { inMs: 0 },
     )
   }
