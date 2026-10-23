@@ -24,9 +24,15 @@ const TRY_FIRST_DESCRIPTION = "Try the app first, or sign up with an e-mail addr
  * What sign-up and sign-in say while `next` is an invitation: the person followed an invitation
  * link signed out, most often without an account yet.
  */
-const INVITED_COPY = {
-  title: "You're invited to a group",
-  description: "Create an account to see the invitation and join, or sign in if you have one.",
+const INVITED_COPY: Record<AuthMode, { title: string; description: string }> = {
+  "sign-in": {
+    title: "You're invited to a group",
+    description: "Sign in to see the invitation and join.",
+  },
+  "sign-up": {
+    title: "You're invited to a group",
+    description: "Create an account to see the invitation and join, or sign in if you have one.",
+  },
 }
 
 /** The three screens `AuthScreen` draws: the two credential modes, and the second factor. */
@@ -310,10 +316,10 @@ export function AuthScreen(
   }: AuthScreenProps,
 ): JSX.Element {
   const invited = screen !== "one-time-code" && isInvitationPath(next)
-  const copy = invited ? { ...COPY[screen], ...INVITED_COPY } : COPY[screen]
+  const copy = invited ? { ...COPY[screen], ...INVITED_COPY[screen as AuthMode] } : COPY[screen]
   // What the login field holds, as typed: the link button sends it.
   const login = useRef(defaultLogin ?? "")
-  // An invitation is answered with an account, so "Try it now" does not compete with sign-up.
+  // An invitation is answered with an account, so no guest entry competes with the form.
   const tryFirst = guest && screen === "sign-up" && !invited
 
   if (screen === "one-time-code" && !isMfaRequired) {
@@ -363,7 +369,7 @@ export function AuthScreen(
     <AuthCard
       title={copy.title}
       description={tryFirst ? TRY_FIRST_DESCRIPTION : copy.description}
-      below={guest && screen === "sign-in" && (
+      below={guest && screen === "sign-in" && !invited && (
         <NoAccountYet demo={demo} navigate={navigate} next={next} />
       )}
       after={after}

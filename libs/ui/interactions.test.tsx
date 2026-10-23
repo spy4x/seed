@@ -158,8 +158,9 @@ describe("AuthScreen in the browser", () => {
     // Joining needs an account: no guest "Try it now" competes with the form.
     expect(root!.querySelector("[data-e2e=try-it-now]")).toBeNull()
 
-    await rerender(<AuthScreen {...authDefaults} screen="sign-in" next={next} />)
+    await rerender(<AuthScreen {...authDefaults} screen="sign-in" next={next} guest />)
     expect(find("h1").textContent).toBe("You're invited to a group")
+    expect(root!.querySelector("[data-e2e=no-account-yet]")).toBeNull()
     expect(find("a[href^='/sign-up']").getAttribute("href")).toBe("/sign-up?next=%2Finvite%2FAbC_9")
 
     await rerender(<AuthScreen {...authDefaults} screen="sign-in" next="/notes" />)
