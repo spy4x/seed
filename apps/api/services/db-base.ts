@@ -37,6 +37,8 @@ import { emailChanges } from "@server/auth/email-verification.ts"
 import type { Lockout } from "@spy4x/server/lockout"
 import { createPasswordCheckFailures } from "./password-locked.ts"
 import { signUpRequests } from "@server/auth/sign-up-requests.ts"
+import { signInLinkRequests } from "@server/auth/sign-in-links.ts"
+import { enqueueSignInLinkMail } from "@server/jobs/sign-in-link-mail.ts"
 import { enqueueSignUpCodeMail } from "@server/jobs/sign-up-code-mail.ts"
 import {
   accountDeletionBlockers,
@@ -122,13 +124,24 @@ import {
 } from "@server/auth/admin-audit.ts"
 import {
   readDatabaseFacts,
-  readFailedJobs,
-  readJobKinds,
   readLastBackup,
   readMigrations,
   readQueueCounts,
-  retryFailedJob,
 } from "@server/jobs/admin-system.ts"
+import {
+  type AdminJobMatch,
+  cancelJob,
+  listJobs,
+  readJob,
+  readJobGroup,
+  readJobUser,
+  readRepeatingRuns,
+  retryFailedJobs,
+  retryJob,
+  runJobNow,
+  runRepeatingNow,
+} from "@server/jobs/admin-jobs.ts"
+import type { AdminJobFilter } from "@domain/identity"
 
 /** A user's authenticator-app enrolment, one row of `user_totp`. */
 export interface UserTotp {
@@ -568,6 +581,20 @@ export class AppDbBase extends DbServiceBase {
     }
   }
 
+  /** Sign-in links (#391): the requests, and queueing a link's mail. */
+  get signInLink() {
+    const sql = this.sql
+    return {
+      ...signInLinkRequests(sql),
+      /**
+       * Queues a link to `email`, already normalised, that opens `next` after sign-in, asked for
+       * by the guest `requestedBy` or by someone with no guest account (`null`).
+       */
+      queue: (email: string, next: string | null, requestedBy: number | null = null) =>
+        enqueueSignInLinkMail(sql, email, next, requestedBy),
+    }
+  }
+
   get user() {
     const cache = this.userCache
     const cached = this.buildMethods<User, UserBase, Partial<UserBase>>(`users`, cache)
@@ -678,22 +705,40 @@ export class AppDbBase extends DbServiceBase {
     }
   }
 
-  /**
-   * The operator area's System page (`@server/jobs/admin-system.ts`, #429). Built per access, like
-   * `group`: `retryJob` belongs inside `begin()`, beside its audit row.
-   */
+  /** The operator area's System page (`@server/jobs/admin-system.ts`, #429). */
   get adminSystem() {
     const sql = this.sql
     return {
       database: () => readDatabaseFacts(sql),
       queue: () => readQueueCounts(sql),
-      jobKinds: () => readJobKinds(sql),
-      failedJobs: (limit: number) => readFailedJobs(sql, limit),
       lastBackup: () => readLastBackup(sql),
       migrations: () => readMigrations(sql),
-      /** Runs the failed job again and writes the operator's audit row. Inside `begin()` only. */
-      retryJob: (id: string, operatorId: number, requestId: string | null) =>
-        retryFailedJob(sql, id, operatorId, requestId),
+    }
+  }
+
+  /**
+   * The operator area's Jobs module (`@server/jobs/admin-jobs.ts`, #394). Built per access, like
+   * `group`: each action belongs inside `begin()`, beside its audit row.
+   */
+  get adminJobs() {
+    const sql = this.sql
+    return {
+      list: (filter: AdminJobFilter, match: AdminJobMatch | null) => listJobs(sql, filter, match),
+      job: (id: string) => readJob(sql, id),
+      user: (table: string, aggregateId: string) => readJobUser(sql, table, aggregateId),
+      group: (groupId: string) => readJobGroup(sql, groupId),
+      repeating: (kinds: readonly string[]) => readRepeatingRuns(sql, kinds),
+      /** Inside `begin()` only, as every action below. */
+      retry: (id: string, operatorId: number, requestId: string | null) =>
+        retryJob(sql, id, operatorId, requestId),
+      retryAll: (operatorId: number, requestId: string | null, limit: number) =>
+        retryFailedJobs(sql, operatorId, requestId, limit),
+      runNow: (id: string, operatorId: number, requestId: string | null) =>
+        runJobNow(sql, id, operatorId, requestId),
+      runRepeatingNow: (kind: string, operatorId: number, requestId: string | null) =>
+        runRepeatingNow(sql, kind, operatorId, requestId),
+      cancel: (id: string, operatorId: number, requestId: string | null) =>
+        cancelJob(sql, id, operatorId, requestId),
     }
   }
 

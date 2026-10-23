@@ -23,6 +23,8 @@ import {
 import { SAMPLE_POSTS, seedSamplePosts } from "@server/blog/sample-posts.ts"
 import { SUBSCRIBER_SEND_ISSUE_JOB } from "@server/jobs/subscriber-mail.ts"
 import { createOutboxProcessor } from "@server/jobs/wiring.ts"
+import { cancelJob, runJobNow } from "@server/jobs/admin-jobs.ts"
+import { AdminJobActionOutcome } from "@domain/identity"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import { createAdminBlog } from "../../apps/api/routes/admin/blog.ts"
@@ -95,7 +97,29 @@ function fields(slug: string, extra: Partial<BlogPostFields> = {}): BlogPostFiel
 
 /** The job's event for post `id`, as the processor hands it to the handler. */
 function jobEvent(id: string): OutboxEvent {
-  return { aggregateId: id, eventKind: BLOG_PUBLISH_JOB } as OutboxEvent
+  return { id: uuidV7(), aggregateId: id, eventKind: BLOG_PUBLISH_JOB } as OutboxEvent
+}
+
+/** Runs every due outbox row once, as the worker does, with the newsletter set up. */
+async function drain(sql: postgres.Sql): Promise<void> {
+  const processor = createOutboxProcessor(
+    sql,
+    { store: createPostgresAuthStore(sql), sender: null, brand: BRAND, log: () => {} },
+    null,
+    SETUP,
+  )
+  await processor.drainOnce()
+}
+
+/** The `blog.publish` rows of post `id` that still wait: their ids and due times. */
+async function waitingJobs(
+  sql: postgres.Sql,
+  id: string,
+): Promise<{ id: string; availableAt: Date; cancelledAt: Date | null }[]> {
+  return await sql`
+    SELECT id, available_at, cancelled_at FROM outbox_events
+    WHERE event_kind = ${BLOG_PUBLISH_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
+  `
 }
 
 /** The audit kinds written about post `id`, oldest first. */
@@ -460,5 +484,45 @@ Deno.test(`blog: scheduling again for the same time keeps the one job waiting`, 
       WHERE event_kind = ${BLOG_PUBLISH_JOB} AND aggregate_id = ${id} AND processed_at IS NULL
     `
     expect(jobs).toBe(1)
+  })
+})
+
+Deno.test(`blog: Run now on a post's job still publishes the post at its time`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const id = uuidV7()
+    const at = LATER()
+    await blog.create(id, fields(`run-now`), maya)
+    await blog.publish(id, 1, at, null, maya)
+    const [first] = await waitingJobs(sql, id)
+
+    const outcome = await sql.begin((tx) => runJobNow(tx, first.id, maya.userId, null))
+    await drain(sql)
+
+    expect(outcome).toBe(AdminJobActionOutcome.Done)
+    expect((await blog.get(id))!.status).toBe(`scheduled`)
+    const waiting = await waitingJobs(sql, id)
+    expect(waiting.map((job) => job.availableAt.getTime())).toEqual([at.getTime()])
+    await makeDue(sql, id)
+    await drain(sql)
+    expect((await blog.get(id))!.status).toBe(`published`)
+  })
+})
+
+Deno.test(`blog: Cancel on a post's job is refused, and the post keeps its job`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const id = uuidV7()
+    await blog.create(id, fields(`no-cancel`), maya)
+    await blog.publish(id, 1, LATER(), null, maya)
+    const [job] = await waitingJobs(sql, id)
+
+    const outcome = await sql.begin((tx) => cancelJob(tx, job.id, maya.userId, null))
+
+    expect(outcome).toBe(AdminJobActionOutcome.NotCancellable)
+    expect(await waitingJobs(sql, id)).toEqual([{ ...job, cancelledAt: null }])
+    expect((await blog.get(id))!.status).toBe(`scheduled`)
   })
 })

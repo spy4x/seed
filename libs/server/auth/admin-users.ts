@@ -21,6 +21,7 @@ import {
   type AdminUserRow,
   type AdminUserSortKey,
   AuthAuditEventType,
+  SIGN_IN_LINK_METHOD,
   USER_ROLE_NAMES,
   type UserRole,
 } from "@domain/identity"
@@ -201,10 +202,16 @@ export async function readAdminUserParts(sql: postgres.Sql, userId: number): Pro
       createdAt: Date
       passkeyName: string | null
       passkeyLastUsedAt: Date | null
+      linkLastUsedAt: Date | null
     }[]
   >`
     SELECT k.method, k.email, k.proven_at, k.created_at,
-      p.name AS passkey_name, p.last_used_at AS passkey_last_used_at
+      p.name AS passkey_name, p.last_used_at AS passkey_last_used_at,
+      CASE WHEN k.method = ${SIGN_IN_LINK_METHOD} THEN (
+        SELECT max(a.created_at) FROM auth_audits a
+        WHERE a.user_id = k.user_id AND a.identifier = ${SIGN_IN_LINK_METHOD}
+          AND a.event_type IN (${AuthAuditEventType.SIGNED_IN}, ${AuthAuditEventType.SIGNED_UP})
+      ) END AS link_last_used_at
     FROM auth_keys k LEFT JOIN auth_passkeys p ON p.key_id = k.id
     WHERE k.user_id = ${userId} ORDER BY k.id
   `
@@ -244,6 +251,9 @@ export async function readAdminUserParts(sql: postgres.Sql, userId: number): Pro
         name: row.passkeyName,
         lastUsedAt: row.passkeyLastUsedAt?.toISOString() ?? null,
       },
+      ...(row.method === SIGN_IN_LINK_METHOD
+        ? { lastUsedAt: row.linkLastUsedAt?.toISOString() ?? null }
+        : {}),
     })),
     groups: groups.map((row) => ({ id: row.id, name: row.name, role: row.role })),
     audits: audits.map((row) => ({

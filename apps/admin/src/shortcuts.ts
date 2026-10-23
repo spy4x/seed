@@ -10,6 +10,7 @@ export const ADMIN_GO_KEYS: Readonly<Record<string, string>> = {
   newsletter: "m",
   blog: "p",
   audit: "a",
+  jobs: "j",
   system: "s",
   "api-tokens": "k",
 }
@@ -22,6 +23,7 @@ export const LIST_FILTER_MODULES: ReadonlySet<string> = new Set([
   "newsletter",
   "blog",
   "audit",
+  "jobs",
 ])
 
 /** A page's own actions, by the page's address: `c` writes a new post from the blog's list. */

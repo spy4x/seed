@@ -619,6 +619,49 @@ export interface SignUpGuestTakenResponse {
   guestTaken: true
 }
 
+/** How long a sign-in link works, in minutes (#391). Each link works once. */
+export const SIGN_IN_LINK_MINUTES = 15
+
+/**
+ * The `auth_keys.method` of the key a sign-in link signs in through (#391), and the `identifier` of
+ * the audit rows a link writes. It holds no secret: an account gets one such key, and a link proves
+ * the mailbox each time. It is no sign-in method a person links or unlinks.
+ */
+export const SIGN_IN_LINK_METHOD = "email-link"
+
+/**
+ * The body of `POST /api/auth/link`: the address the link goes to, and the page to open after
+ * sign-in, which the API checks again.
+ */
+export const authSignInLinkSchema = authEmailSchema.and({
+  "next?": "string <= 2048",
+})
+export type AuthSignInLink = typeof authSignInLinkSchema.infer
+
+/** The body of `POST /api/auth/link/redeem`: the token from the link, as the page read it. */
+export const authSignInLinkRedeemSchema = type({
+  token: "0 < string <= 256",
+})
+export type AuthSignInLinkRedeem = typeof authSignInLinkRedeemSchema.infer
+
+/** What `POST /api/auth/link/redeem` answers when the link signed someone in (#391). */
+export interface SignInLinkRedeemed {
+  /** The address the link proved, for the sign-in page's "last time" hint. */
+  email: string
+  /** The page to open: the one asked for when the link was requested, already checked. */
+  next: string | null
+  /** The link made a new account, or kept a guest's (`false` for an existing account). */
+  created: boolean
+  /** The account has an authenticator app: its code comes next. */
+  secondFactorPending: boolean
+}
+
+/**
+ * The `code` of the refusal `POST /api/auth/link/redeem` answers a guest whose link another browser
+ * asked for (#391). The link is spent and the guest's session stays as it was.
+ */
+export const SIGN_IN_LINK_ASKED_ELSEWHERE_CODE = "SIGN_IN_LINK_ASKED_ELSEWHERE"
+
 /** What `GET /auth/sign-up/pending` answers: the sign-up that waits, or `null` when none does. */
 export interface PendingSignUpResponse {
   pending: PendingSignUp | null
@@ -680,6 +723,11 @@ export interface SignInMethodsResponse {
    * {@link PROVIDER_PROOF_MINUTES} minutes ago. `null` for any other session.
    */
   providerProofUntil: string | null
+  /**
+   * The account has a proven address, so a sign-in link reaches it (#391): an account with no
+   * password can confirm a step with a link sign-in of a moment ago.
+   */
+  emailLink: boolean
 }
 
 /**
@@ -866,10 +914,15 @@ export interface AdminUserListResponse {
 
 /** One way the person signs in, as the operator sees it: never a secret. */
 export interface AdminSignInMethod {
-  /** `password`, `oauth:google`, `oauth:github`, `email-code`, or `passkey`. */
+  /** `password`, `oauth:google`, `oauth:github`, `email-code`, `passkey` or `email-link`. */
   method: string
   /** A passkey's name and last use (#222), on a passkey row only. */
   passkey?: { name: string; lastUsedAt: string | null }
+  /**
+   * On the `email-link` row only (#391): when a sign-in link last signed the person in or up, or
+   * `null` when the audit keeps no such row. ISO 8601.
+   */
+  lastUsedAt?: string | null
   /** The address the key holds, or `null`. */
   email: string | null
   /** When the address was proven, or `null` when it was not. ISO 8601. */
@@ -1095,6 +1148,7 @@ export function adminUsersExportPath(filter: AdminUserFilter): string {
 // #429: the audit log and the System page of the operator area.
 export * from "./admin-audit.ts"
 export * from "./admin-system.ts"
+export * from "./admin-jobs.ts"
 export * from "./preferences.ts"
 export * from "./guests.ts"
 

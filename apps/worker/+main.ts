@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import postgres from "postgres"
 import { createSqlFromEnv } from "@spy4x/server/db"
-import { createOutboxProcessor, scheduleNightlyJobs } from "@server/jobs/wiring.ts"
+import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
 import { PostgresIdempotencyStore } from "@spy4x/server/idempotency"
 import { startIdempotencySweep } from "./idempotency-sweep.ts"
@@ -87,7 +87,7 @@ const processor = createOutboxProcessor(
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run
 // that is given up is closed by the processor, which writes the next night's run itself.
-await scheduleNightlyJobs(sql)
+await startRepeatingJobs(sql)
 // A scheduled post whose job was lost (a restored backup, the demo's wipe) gets it back.
 await queueDueBlogJobs(sql)
 

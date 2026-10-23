@@ -209,7 +209,11 @@ async function readLogin(
     return c.json({ error: validation.error.description }, 400)
   }
   const key = await findPasswordKey(deps, validation.data.login)
-  return { userId: key ? key.userId : null, email: normalizeEmail(validation.data.login) }
+  const email = normalizeEmail(validation.data.login)
+  // An account a sign-in link made has no password key: its proven address finds it (#391).
+  const userId = key?.userId ??
+    (email === null ? null : await deps.db.authStore.findUserIdByProvenEmail(email))
+  return { userId, email }
 }
 
 /** Deletes the user `userId` and every row that references them or a group they own. */

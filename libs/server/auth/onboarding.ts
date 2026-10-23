@@ -9,7 +9,12 @@
 
 import type postgres from "postgres"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
-import { type OnboardingMark, type OnboardingStatus, UserMFAStatus } from "@domain/identity"
+import {
+  type OnboardingMark,
+  type OnboardingStatus,
+  SIGN_IN_LINK_METHOD,
+  UserMFAStatus,
+} from "@domain/identity"
 
 interface OnboardingRow extends postgres.Row {
   emailVerified: boolean
@@ -27,7 +32,8 @@ interface OnboardingRow extends postgres.Row {
  *
  * Each step is a fact another feature already keeps, so nothing has to remember to tick it:
  *
- * - the address: the password key carries an address and a code proved it;
+ * - the address: the password key, or the key of a sign-up by link, carries an address that a code
+ *   or the link proved;
  * - a note: the person created one. The welcome note of a new account
  *   (`@server/jobs/starter-data.ts`) is created in their name and does not count: its id is the id
  *   of their `starter_data_requests` row. A note in the trash still counts, so deleting the first
@@ -45,7 +51,7 @@ export async function readOnboarding(
       EXISTS (
         SELECT 1 FROM auth_keys
         WHERE auth_keys.user_id = users.id
-          AND auth_keys.method = ${PASSWORD_METHOD}
+          AND auth_keys.method IN (${PASSWORD_METHOD}, ${SIGN_IN_LINK_METHOD})
           AND auth_keys.email IS NOT NULL
           AND auth_keys.proven_at IS NOT NULL
       ) AS "emailVerified",

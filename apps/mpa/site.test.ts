@@ -455,8 +455,20 @@ describe("the public website", () => {
 
     expect(html).toContain(`or sign in with a passkey, or try the app first`)
     expect(html).toContain(`Passkeys: only the public key is stored`)
-    expect(html).toContain(`Google and GitHub sign-in, passkeys, guest accounts, 2FA`)
+    expect(html).toContain(`Google and GitHub sign-in, passkeys, magic links, guest accounts, 2FA`)
     expect(html).not.toContain(`issues/222`)
+  })
+
+  it("lists magic links as built on the home page, /features and /compare (#391)", async () => {
+    const home = (await page("/")).html
+    const features = (await page("/features")).html
+    const { rows } = comparisonTable((await page("/compare")).html)
+
+    expect(home).toContain(`passkeys, magic links, 2FA`)
+    expect(features).toContain(`Magic links: one link signs in or signs up`)
+    expect(rows.find((row) => row.capability === "Magic links")?.values[0]).toBe("Yes")
+    // No "Not built yet" list, and no "gaps" line, names them any more.
+    for (const html of [home, features]) expect(html).not.toMatch(/>\s*Magic links\s*</)
   })
 
   it("ends /features with its questions, listed under On this page and in its structured data", async () => {

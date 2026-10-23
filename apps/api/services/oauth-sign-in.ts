@@ -81,6 +81,7 @@ import {
   type OAuthSignInResult,
 } from "@spy4x/server/auth/oauth"
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
+import { hasProvenAddress } from "@server/auth/email-verification.ts"
 import {
   SecondFactorStatus,
   type SessionCookie,
@@ -98,6 +99,7 @@ import {
   type PendingSignUp,
   PROVIDER_PROOF_MINUTES,
   providerAvatarUrl,
+  SIGN_IN_LINK_METHOD,
   type SignInMethod,
   type SignInMethodsResponse,
   type User,
@@ -155,7 +157,7 @@ const connectCookieSchema = type({ state: "string > 0" })
  * `next` when it is a page of the web app, else `null`: `safeRedirectPath`'s rules, and no `/api`
  * path. The same check the SPA's sign-in pages make (`checkedNext`).
  */
-function pageOrNull(next: string | null | undefined): string | null {
+export function pageOrNull(next: string | null | undefined): string | null {
   if (!next) return null
   return safeRedirectPath(next, { fallback: "", refuse: ["/api"] }) || null
 }
@@ -383,7 +385,7 @@ export function createOAuthOperations(
     keys: AuthKey[],
     currentKeyId: number,
     passkeys: readonly PasskeySummary[],
-  ): Omit<SignInMethodsResponse, "providerProofUntil"> {
+  ): Omit<SignInMethodsResponse, "providerProofUntil" | "emailLink"> {
     const passkeyOf = (keyId: number) => {
       const found = passkeys.find((passkey) => passkey.keyId === keyId)
       return found
@@ -554,8 +556,12 @@ export function createOAuthOperations(
 
   async function proofUntil({ session }: AppAuthState): Promise<Date | null> {
     const key = await db.authStore.findKeyById(session.keyId)
-    // A passkey sign-in proves as much as a provider's (#222): the device verified the person.
-    if (!key || !(key.method.startsWith("oauth:") || key.method === PASSKEY_METHOD)) return null
+    // A passkey sign-in proves as much as a provider's (#222): the device verified the person. A
+    // sign-in link proves the mailbox, which is what a reset link proves too (#391).
+    const proves = key &&
+      (key.method.startsWith("oauth:") || key.method === PASSKEY_METHOD ||
+        key.method === SIGN_IN_LINK_METHOD)
+    if (!proves) return null
     // The session row the request carries has no start time; the devices list has it.
     const started = (await sessions.listForUser(session.userId))
       .find((row) => row.id === session.id)?.createdAt
@@ -791,6 +797,7 @@ export function createOAuthOperations(
           await db.passkeys.list(user.id),
         ),
         providerProofUntil: (await proofUntil(state))?.toISOString() ?? null,
+        emailLink: await hasProvenAddress(db.authStore, user.id),
       }
     },
 

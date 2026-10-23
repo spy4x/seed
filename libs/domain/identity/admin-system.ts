@@ -1,6 +1,7 @@
 /**
- * The operator area's System page (#429): how each part of the stack is doing, the job queue and
- * its failed jobs, the latest backup, the running build and the database's migrations. Types only,
+ * The operator area's System page (#429): how each part of the stack is doing, the job queue, the
+ * latest backup, the running build and the database's migrations. The jobs themselves are the
+ * Jobs module's (`admin-jobs.ts`, #394). Types only,
  * plus the thresholds that turn a reading into a status; the SQL is
  * `libs/server/jobs/admin-system.ts`.
  *
@@ -28,10 +29,8 @@ export function worstHealth(...states: AdminHealth[]): AdminHealth {
 export const ADMIN_QUEUE_LATE_WARNING_MINUTES = 5
 /** A job that waits past this many minutes after it was due is an error: the worker is down. */
 export const ADMIN_QUEUE_LATE_ERROR_MINUTES = 30
-/** How far back the page counts and lists failed jobs. Older processed rows are deleted anyway. */
+/** How far back the page counts failed jobs. Older processed rows are deleted anyway. */
 export const ADMIN_FAILED_JOBS_DAYS = 7
-/** How many failed jobs the page lists, newest first. */
-export const ADMIN_FAILED_JOBS_LIMIT = 50
 /** A backup older than this many hours warns: the daily run was missed once. */
 export const ADMIN_BACKUP_WARNING_HOURS = 26
 /** A backup older than this many hours is an error: the daily run was missed twice. */
@@ -78,43 +77,6 @@ export interface AdminSystemQueue {
   failed: number
 }
 
-/** One kind of job: its last run and its next. */
-export interface AdminSystemJobKind {
-  kind: string
-  /** When a run of this kind last finished, well or not. ISO 8601. */
-  lastRunAt: string | null
-  /** Whether that run failed. */
-  lastFailed: boolean
-  /** When the next run is due, or `null` with none waiting. ISO 8601. */
-  nextRunAt: string | null
-}
-
-/** A job, or another outbox row such as a group change, the worker gave up on. */
-export interface AdminFailedJob {
-  /** The outbox row's id, a UUID. */
-  id: string
-  kind: string
-  attempts: number
-  /** The error's name, as the worker recorded it; never its message. */
-  errorCode: string
-  failedAt: string
-  /**
-   * An operator may run it again: it is a job, not a group change (whose order matters), and no
-   * newer run of the same job waits already.
-   */
-  retryable: boolean
-}
-
-/** What running a failed job again came to. */
-export enum AdminJobRetryOutcome {
-  /** The job waits for the worker again, with its attempts reset. */
-  Retried = 1,
-  /** No failed job has that id: it never failed, it was run again already, or it is gone. */
-  NotFound = 2,
-  /** A newer run of the same job waits already; a second one would run it twice. */
-  Superseded = 3,
-}
-
 /** The latest backup the backup service recorded. */
 export interface AdminSystemBackup {
   health: AdminHealth
@@ -152,8 +114,6 @@ export interface AdminSystemSnapshot {
   cache: AdminSystemCache
   fileStore: AdminSystemFileStore
   queue: AdminSystemQueue
-  jobs: AdminSystemJobKind[]
-  failedJobs: AdminFailedJob[]
   backup: AdminSystemBackup
   migrations: AdminSystemMigrations
   build: AdminSystemBuild
