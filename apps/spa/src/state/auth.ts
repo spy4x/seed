@@ -3,8 +3,10 @@ import {
   type AccountDeletionStatus,
   type ApiSuccessResponse,
   type ExistingAccountAnswer,
+  SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
   type SignedInDevice,
   type SignedInDevicesResponse,
+  type SignInLinkRedeemed,
   type SignUpAccountExistsResponse,
   type SignUpGuestTakenResponse,
   type TotpConnectStartResponse,
@@ -347,6 +349,76 @@ export async function resetPassword(
   })
   if (!result.ok) return { ok: false, error: result.error.message }
   return { ok: true }
+}
+
+/**
+ * The message of a refused request, or `undefined` when the server failed: a 5xx answer, such as a
+ * proxy's page during a deploy, carries no message worth showing, so the screen says its own.
+ */
+function ownMessage(result: { status: number; error: { message: string } }): string | undefined {
+  return result.status >= 500 ? undefined : result.error.message
+}
+
+/** How asking for a sign-in link ended (#391). */
+export type SignInLinkRequestAnswer =
+  | { ok: true }
+  /** Refused: `field` when the address itself was, `offline` when the request never left. */
+  | { ok: false; error?: string; field?: boolean; offline?: boolean }
+
+/**
+ * Asks for a sign-in link to `email`, opening `next` once used. The answer is the same whether or
+ * not an account uses the address; the link signs in, or signs up when none does.
+ */
+export async function requestSignInLink(
+  email: string,
+  next: string | null,
+): Promise<SignInLinkRequestAnswer> {
+  try {
+    const result = await apiFetch<ApiSuccessResponse>("/api/auth/link", {
+      method: "POST",
+      body: JSON.stringify(next === null ? { email } : { email, next }),
+    })
+    if (result.ok) return { ok: true }
+    return { ok: false, error: ownMessage(result), field: result.status === 400 }
+  } catch (_unreachable) {
+    return { ok: false, offline: true }
+  }
+}
+
+/** How pressing Continue on a sign-in link's page ended (#391). */
+export type SignInLinkRedeemAnswer =
+  | { ok: true; answer: SignInLinkRedeemed }
+  /** A guest's link reached an address another account uses: the choice waits on `/keep/taken`. */
+  | { ok: false; guestTaken: true }
+  /** The link was used, expired or never sent: a new one is the only way on. */
+  | { ok: false; refused: true }
+  /** A guest opened a link another browser asked for: it is spent, and the guest stays as before. */
+  | { ok: false; askedElsewhere: true }
+  /** Refused with a message; `offline` when the request never left, and the link is not spent. */
+  | { ok: false; error?: string; offline?: boolean }
+
+/** Spends the sign-in link `token`: signs in, or signs up when no account uses its address. */
+export async function redeemSignInLink(token: string): Promise<SignInLinkRedeemAnswer> {
+  let result
+  try {
+    result = await apiFetch<SignInLinkRedeemed | SignUpGuestTakenResponse>(
+      "/api/auth/link/redeem",
+      { method: "POST", body: JSON.stringify({ token }) },
+    )
+  } catch (_unreachable) {
+    return { ok: false, offline: true }
+  }
+  if (!result.ok) {
+    if (result.error.code === SIGN_IN_LINK_ASKED_ELSEWHERE_CODE) {
+      return { ok: false, askedElsewhere: true }
+    }
+    return result.status === 410
+      ? { ok: false, refused: true }
+      : { ok: false, error: ownMessage(result) }
+  }
+  if ("guestTaken" in result.data) return { ok: false, guestTaken: true }
+  setSignOutOwed(false)
+  return { ok: true, answer: result.data }
 }
 
 /**

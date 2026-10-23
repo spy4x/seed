@@ -39,7 +39,7 @@ import {
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { ADMIN_GROUP_PATHS } from "./admin-groups-list.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
-import { AUDIT_EVENTS, auditDetail, auditTone } from "./admin-user-screen.tsx"
+import { AUDIT_EVENTS, auditDetail, auditTone, linkAuditTitle } from "./admin-user-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useFormat } from "@spy4x/preact-ui/format"
 
@@ -84,12 +84,16 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [ADMIN_AUDIT_EXPORTED_KIND]: "Audit log exported by an operator",
 }
 
-/** What an entry's event is called; an event this page does not know shows its code. */
-export function auditEventLabel(event: string): string {
+/**
+ * What an entry's event is called; an event this page does not know shows its code. A sign-in or
+ * sign-up by e-mail link names the method in the title (#391), from the entry's `identifier`.
+ */
+export function auditEventLabel(event: string, identifier: string | null = null): string {
   const parsed = parseAuditEvent(event)
   if (!parsed) return event
   if (parsed.source === "account") {
-    return AUDIT_EVENTS[parsed.eventType as AuthAuditEventType] ??
+    return linkAuditTitle(parsed.eventType, identifier) ??
+      AUDIT_EVENTS[parsed.eventType as AuthAuditEventType] ??
       BILLING_AUDIT_LABELS[parsed.eventType as BillingAuditEvent] ??
       `Account event ${parsed.eventType}`
   }
@@ -396,10 +400,12 @@ function PersonLink(
 /** What an entry names besides its people: the group, the method or token, the job. */
 function detailOf(entry: AdminAuditEntry): string | null {
   const event = parseAuditEvent(entry.event)
+  const eventType = event?.source === "account" ? event.eventType : null
   const parts = [
     entry.group && `Group ${entry.group.name}`,
-    entry.identifier &&
-    auditDetail(event?.source === "account" ? event.eventType : null, entry.identifier),
+    // A link row's title already names the method.
+    entry.identifier && !linkAuditTitle(eventType, entry.identifier) &&
+    auditDetail(eventType, entry.identifier),
     entry.jobKind && `Job ${entry.jobKind}`,
   ].filter(Boolean)
   return parts.length > 0 ? parts.join(" · ") : null
@@ -525,7 +531,7 @@ function AuditTable(
       render: (entry) => (
         <Cell>
           <span class="font-medium" data-e2e="admin-audit-event-label">
-            {auditEventLabel(entry.event)}
+            {auditEventLabel(entry.event, entry.identifier)}
           </span>
           {entry.byOperator && (
             <span>
@@ -603,7 +609,7 @@ function AuditTimeline(
           const detail = detailOf(entry)
           return {
             id: entry.key,
-            title: auditEventLabel(entry.event),
+            title: auditEventLabel(entry.event, entry.identifier),
             at: entry.at,
             when: <span title={format.utc().exact(entry.at)}>{timeAgo(entry.at)}</span>,
             tone: entryTone(entry),

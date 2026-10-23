@@ -51,6 +51,7 @@ function fakeHttp(
         methods,
         available: ["github"],
         providerProofUntil: PROOF_UNTIL,
+        emailLink: false,
       })
     },
     link(provider, password) {
@@ -170,7 +171,13 @@ describe("the sign-in methods store", () => {
     let until: string | null = PROOF_UNTIL
     const http = fakeHttp([google], {
       list: () =>
-        Promise.resolve({ ok: true, methods: [google], available: [], providerProofUntil: until }),
+        Promise.resolve({
+          ok: true,
+          methods: [google],
+          available: [],
+          providerProofUntil: until,
+          emailLink: false,
+        }),
       link: () => Promise.resolve({ ok: false, error: "Sign in with your provider again" }),
     })
     const store = createSignInMethodsStore(http, () => {})
@@ -248,7 +255,13 @@ describe("the sign-in methods store", () => {
     let until: string | null = PROOF_UNTIL
     const http = fakeHttp([google], {
       list: () =>
-        Promise.resolve({ ok: true, methods: [google], available: [], providerProofUntil: until }),
+        Promise.resolve({
+          ok: true,
+          methods: [google],
+          available: [],
+          providerProofUntil: until,
+          emailLink: false,
+        }),
       unlink: () => Promise.resolve({ ok: false, error: "Sign in with your provider again" }),
     })
     const store = createSignInMethodsStore(http)

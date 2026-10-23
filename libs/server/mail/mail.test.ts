@@ -14,6 +14,7 @@ import {
   MailTransport,
   passwordResetMail,
   readMailSetup,
+  signInLinkMail,
   signInMethodChangedMail,
   SMTP_KEYS,
 } from "./mail.ts"
@@ -130,6 +131,29 @@ describe("passwordResetMail", () => {
   it("wraps the HTML in the shared shell, branded with the app's host", () => {
     expect(mail.html).toMatch(/^<!doctype html>/)
     expect(mail.html).toContain(">app.example.com</a>")
+  })
+})
+
+describe("signInLinkMail", () => {
+  const link = "https://app.example.com/sign-in/link/open#token=abc.def"
+  const mail = signInLinkMail(
+    { webAppUrl: "https://app.example.com" },
+    { to: "ann@example.com", link, validMinutes: 15, at: new Date("2026-10-23T14:03:00Z") },
+  )
+
+  it("carries the link, its fifteen minutes and when it was asked for, in the text and the HTML", () => {
+    expect(mail.to).toBe("ann@example.com")
+    expect(mail.subject).toBe("Your sign-in link for app.example.com")
+    expect(mail.text).toContain(`\n${link}\n`)
+    expect(mail.text).toContain("within 15 minutes")
+    expect(mail.text).toContain("on October 23, 2026 at 14:03 UTC")
+    expect(mail.html).toContain(`href="${link}"`)
+    expect(mail.html).toContain("Sign in to app.example.com")
+  })
+
+  it("says the link creates an account for a new address and waits for Continue", () => {
+    expect(mail.text).toContain("If no account uses this address yet, it creates one.")
+    expect(mail.text).toContain("nothing happens until you press it")
   })
 })
 

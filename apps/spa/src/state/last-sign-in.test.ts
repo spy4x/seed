@@ -33,6 +33,16 @@ describe("the last sign-in of this browser", () => {
     expect(raw()).not.toContain("ada.lovelace")
   })
 
+  it("reads back a sign-in by e-mail link, which no linked method lists (#391)", async () => {
+    const { kept } = store()
+    kept.remember("link", "ada@example.com")
+
+    // The check after sign-in finds no linked method in use and keeps the link.
+    await rememberSignIn(signedIn, () => Promise.resolve({ ok: true, methods: [] }), kept)
+
+    expect(lastSignInHint(kept)).toEqual({ method: "link", email: "a***@example.com" })
+  })
+
   it("asks nothing and remembers nothing while nobody is signed in or a code is still owed", async () => {
     const { kept } = store()
     let asked = 0

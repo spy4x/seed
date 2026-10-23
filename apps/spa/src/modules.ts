@@ -349,9 +349,17 @@ const KEPT_KEYS: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Deletes every `localStorage` key of the app but {@link KEPT_KEYS}, and all of `sessionStorage`:
- * the selected group, the socket's cursors, the kept time zone, the remembered user. Blocked
- * storage holds nothing to delete.
+ * What a sign-out leaves in this tab's `sessionStorage`: the sign-in link the tab just asked for,
+ * so "Check your inbox" survives the reload of a signed-out page, which wipes the device (#391).
+ */
+const KEPT_SESSION_KEYS: ReadonlySet<string> = new Set([
+  "sign-in-link:sent", // `state/sign-in-link.ts`
+])
+
+/**
+ * Deletes every `localStorage` key of the app but {@link KEPT_KEYS}, and every `sessionStorage` key
+ * but {@link KEPT_SESSION_KEYS}: the selected group, the socket's cursors, the kept time zone, the
+ * remembered user. Blocked storage holds nothing to delete.
  */
 export function clearBrowserStorage(): void {
   try {
@@ -362,7 +370,11 @@ export function clearBrowserStorage(): void {
     // Nothing is stored where the browser refuses storage.
   }
   try {
-    sessionStorage.clear()
+    const keys: string[] = []
+    for (let index = 0; index < sessionStorage.length; index++) {
+      keys.push(sessionStorage.key(index)!)
+    }
+    for (const key of keys) if (!KEPT_SESSION_KEYS.has(key)) sessionStorage.removeItem(key)
   } catch (_blocked) {
     // As above.
   }
@@ -595,7 +607,7 @@ function deleteDatabases(
  * Signing out on this device (#206): deletes everything the app keeps in the browser, so the next
  * person on a shared device finds nothing of the last one. Every IndexedDB database goes, the
  * queue of unsent writes included, and so does every `localStorage` key but the few
- * {@link KEPT_KEYS}, and `sessionStorage`. What the server owns comes back at the next sign-in.
+ * {@link KEPT_KEYS}, and `sessionStorage` but {@link KEPT_SESSION_KEYS}. What the server owns comes back at the next sign-in.
  * The app calls it whenever the page settles with nobody signed in: after the account menu's
  * sign-out, a start whose session ended (401), and a sign-out by the server. Resolves once every
  * deletion was tried; it never rejects.

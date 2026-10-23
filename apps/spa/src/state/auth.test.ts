@@ -1,10 +1,12 @@
 import { expect } from "@std/expect"
 import { afterEach, beforeEach, describe, it } from "@std/testing/bdd"
-import { type User, UserMFAStatus } from "@domain/identity"
+import { SIGN_IN_LINK_ASKED_ELSEWHERE_CODE, type User, UserMFAStatus } from "@domain/identity"
 import {
   bootstrapSession,
   confirmProviderSignUp,
   deleteAccount,
+  redeemSignInLink,
+  requestSignInLink,
   signIn,
   signOut,
   totpConnectFinish,
@@ -580,5 +582,61 @@ describe("deleteAccount", () => {
       error: "Invalid password",
     })
     expect(sessionState.value.user?.id).toBe(1)
+  })
+})
+
+describe("redeemSignInLink", () => {
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  /** Makes every request answer `status` with the JSON `payload`. */
+  function answers(status: number, payload: unknown) {
+    globalThis.fetch = () =>
+      Promise.resolve(
+        new Response(JSON.stringify(payload), {
+          status,
+          headers: { "content-type": "application/json" },
+        }),
+      )
+  }
+
+  it("tells a link another browser asked for apart from a used link and any other refusal", async () => {
+    answers(403, { error: "Asked for elsewhere", code: SIGN_IN_LINK_ASKED_ELSEWHERE_CODE })
+    expect(await redeemSignInLink("token")).toEqual({ ok: false, askedElsewhere: true })
+
+    answers(410, { error: "This link no longer works." })
+    expect(await redeemSignInLink("token")).toEqual({ ok: false, refused: true })
+
+    // The origin guard's 403 carries no such code: it stays a failure with the API's words.
+    answers(403, { error: "Forbidden" })
+    expect(await redeemSignInLink("token")).toEqual({ ok: false, error: "Forbidden" })
+  })
+
+  it("passes on no message of a server failure, so the page shows its own", async () => {
+    answers(500, {})
+    expect(await redeemSignInLink("token")).toEqual({ ok: false, error: undefined })
+  })
+})
+
+describe("requestSignInLink", () => {
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  it("passes on no message of a server failure, and the API's words for a refusal", async () => {
+    globalThis.fetch = () => Promise.resolve(new Response("Bad Gateway", { status: 502 }))
+    expect(await requestSignInLink("ann@example.com", null)).toEqual({
+      ok: false,
+      error: undefined,
+      field: false,
+    })
+
+    globalThis.fetch = () => Promise.resolve(Response.json({ error: "Too many" }, { status: 429 }))
+    expect(await requestSignInLink("ann@example.com", null)).toEqual({
+      ok: false,
+      error: "Too many",
+      field: false,
+    })
   })
 })
