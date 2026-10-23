@@ -50,6 +50,7 @@ import type { PushPublicKeyResponse } from "@domain/identity"
 import { SESSIONS_FAILURE } from "@ui/signed-in-devices.tsx"
 import { SIGN_IN_METHODS_FAILURE, signInMethodName } from "@ui/sign-in-methods.tsx"
 import { apiTokensHttp, createApiTokensStore } from "../state/api-tokens.ts"
+import { createTelegramStore, telegramHttp } from "../state/telegram.ts"
 import { passwordChangedMessage } from "./password-changed-message.ts"
 import { isProviderProofFresh, withPasskeyProof } from "./provider-proof-fresh.ts"
 import { supportsPasskeys } from "@spy4x/platform/browser/passkey"
@@ -128,6 +129,18 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
   const [passkeysSupported] = useState(() => supportsPasskeys())
   const online = network.online.value
   const [tokens] = useState(() => createApiTokensStore(apiTokensHttp, localReads))
+  const [telegram] = useState(() =>
+    createTelegramStore(telegramHttp, {
+      onLinked: () =>
+        toasts.success({
+          title: "Telegram linked",
+          body: "Your notifications come to Telegram now.",
+          dataE2E: "telegram-linked",
+        }),
+    })
+  )
+  // The wait for the bot stops with the page.
+  useEffect(() => () => telegram.closeCode(), [])
   const groups = groupsStore.groups.value
 
   const providerProofFresh = isProviderProofFresh(methods.providerProofUntil.value)
@@ -162,6 +175,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
     void loadDevices()
     void methods.load()
     void tokens.load()
+    void telegram.load()
   }, [session.user?.id, session.isMfaRequired])
 
   // A link started here comes back from the provider with `?oauth=`: say how it ended, once.
@@ -640,6 +654,15 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       }}
       onRegisterPush={registerPush}
       onRemovePush={removePush}
+      telegram={{
+        status: telegram.status.value,
+        code: telegram.code.value,
+        error: telegram.error.value,
+        pending: telegram.pending.value,
+        onLink: () => void telegram.link(),
+        onCloseCode: telegram.closeCode,
+        onUnlink: () => void telegram.unlink(),
+      }}
       accountDeletion={{
         blockers,
         values: deleteValues,

@@ -5,6 +5,7 @@ import { Button } from "@spy4x/preact-ui/button"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { Cluster } from "@spy4x/preact-ui/layout"
 import { SettingsLayout, type SettingsSection } from "@spy4x/preact-system/settings-layout"
+import { SettingGroup } from "@spy4x/preact-ui/setting-row"
 import {
   type EmailStatus,
   type SignInMethod,
@@ -28,6 +29,7 @@ import {
 } from "./preferences.tsx"
 import { AccountSection } from "./profile-account.tsx"
 import { PushDevicesSection } from "./profile-notifications.tsx"
+import { TelegramLink, type TelegramLinkProps } from "./profile-telegram.tsx"
 import { SecuritySection } from "./profile-security.tsx"
 import {
   type Navigate,
@@ -118,8 +120,8 @@ export const PROFILE_SECTION_TEXT: Record<
   },
   appearance: { label: "Appearance", description: "How the app looks on this device." },
   notifications: {
-    label: "Push notifications",
-    description: "Devices that get a notification when something changes in your groups.",
+    label: "Notifications",
+    description: "Where you hear when something changes in your groups.",
   },
   "api-tokens": {
     label: "API tokens",
@@ -213,6 +215,8 @@ export interface ProfileScreenProps {
    */
   onRegisterPush?: () => void
   onRemovePush: (deviceId: string) => void
+  /** Telegram (#269), under Notifications. Without it, or while the bot is off, no row shows. */
+  telegram?: TelegramLinkProps
   /**
    * The "Delete account" section. Without it the section is empty. `twoFactor` and `navigate`
    * come from this screen's own props.
@@ -407,13 +411,21 @@ function ProfileSection(
       return props.preferences ? <AppearanceSection {...props.preferences} /> : null
     case "notifications":
       return (
-        <PushDevicesSection
-          devices={props.pushDevices}
-          error={errors.push}
-          pending={pending.push}
-          onRegister={props.onRegisterPush}
-          onRemove={props.onRemovePush}
-        />
+        <>
+          <SettingGroup
+            title="Push notifications"
+            description="Devices that get a notification when something changes in your groups."
+          >
+            <PushDevicesSection
+              devices={props.pushDevices}
+              error={errors.push}
+              pending={pending.push}
+              onRegister={props.onRegisterPush}
+              onRemove={props.onRemovePush}
+            />
+          </SettingGroup>
+          {props.telegram && <TelegramLink {...props.telegram} />}
+        </>
       )
     case "api-tokens":
       return props.apiTokens ? <ApiTokens {...props.apiTokens} /> : null
