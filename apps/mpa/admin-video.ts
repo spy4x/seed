@@ -23,7 +23,7 @@ export const ADMIN_VIDEO = {
   /** The MP4's size, as the download link names it. */
   mp4Size: `5 MB`,
   /** When the recording was published, with its timezone, for the JSON-LD and the sitemap. */
-  uploadDate: `2026-10-23T22:49:25+07:00`,
+  uploadDate: `2026-10-23T23:46:43+07:00`,
   /** What a viewer hears, in the line under the player, in its label and above the transcript. */
   sound: {
     line: `Music, no speech`,
@@ -41,7 +41,7 @@ export const ADMIN_VIDEO = {
     `Groups lists every group with its owner, the largest first. The operator opens Product team and sees its members.`,
     `Billing shows €369.00 a month from seven paying groups, one of them past due. The operator opens Design studio, whose history shows a refunded payment with the operator's note.`,
     `Newsletter shows 90 subscribers, 50 who joined in the last 30 days, 3 issues sent and a chart of the list growing.`,
-    `System says everything is working: the database, the cache, the job queue, the backups and the migrations are all OK, and the API card shows its version and commit.`,
+    `System says everything is working: the database, the cache, the file store, the job queue, the backups and the migrations are all OK.`,
     `From the account menu, the operator switches the theme from dark to light.`,
     `An end card: "Free and MIT-licensed. The code is on GitHub."`,
   ],
