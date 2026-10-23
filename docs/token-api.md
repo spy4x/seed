@@ -131,7 +131,8 @@ curl -X POST \
 ```
 
 **Retrying is safe.** Because you make the id, sending the same create again does not make a
-second note: the answer is `200` with the note that exists, as long as nobody has changed it since. You may also send an `Idempotency-Key`
+second note: the answer is `200` with the note that exists, as long as nobody has changed it
+since. You may also send an `Idempotency-Key`
 header, 1 to 128 characters, with a new value for each new note: a retry with the same key gets the
 first answer back.
 

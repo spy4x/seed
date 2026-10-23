@@ -161,7 +161,7 @@ describe("ApiTokens", () => {
       const link = find("[data-e2e=api-tokens-docs]")
       expect(link.getAttribute("href")).toBe(docsHref)
       expect(link.getAttribute("target")).toBe("_blank")
-      expect(link.textContent).toBe("How to use a token (opens in a new tab)")
+      expect(link.textContent).toBe("How to use a token, opens in a new tab")
     }
 
     await mount(<ApiTokens {...tokensProps([], { docsHref: null })} />)
