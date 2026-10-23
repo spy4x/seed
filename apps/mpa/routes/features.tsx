@@ -294,13 +294,15 @@ const TIERS: readonly Tier[] = [
         id: `push`,
         nav: `Notifications`,
         eyebrow: `Notifications`,
-        title: `Notifications in the app, on the phone and the desktop`,
+        title: `Notifications in the app, on the phone, the desktop and Telegram`,
         lead: `People get a notice when they are invited, given a new role or handed a group, in ` +
-          `the app and as a web push on their phone or desktop.`,
+          `the app, as a web push on their phone or desktop, and in Telegram once they link it.`,
         facts: [
           `Web push with your own keys, made by one task: deno task vapid-key:create`,
           `An unread count in the app, and "Mark all as read"`,
           `Each device's push subscription listed on the profile`,
+          `A Telegram bot, off until you set its token: linked with a one-time code, and your ` +
+          `product's own commands added in one file`,
         ],
         code: {
           label: `Read the web push service`,

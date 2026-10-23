@@ -126,6 +126,10 @@ export default define.page(function Privacy({ state }) {
         <li>
           Your browser's push address, only if you allow notifications. Turning them off removes it.
         </li>
+        <li>
+          Your Telegram account's number, only if you link Telegram, so the bot can send you your
+          notifications. Unlinking removes it. Your Telegram name and messages are not kept.
+        </li>
         <li>Your email address, if you subscribe to the newsletter.</li>
         <li>
           If billing is on and you choose a paid plan, Stripe takes the payment. The demo keeps only

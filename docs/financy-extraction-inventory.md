@@ -63,9 +63,11 @@ Currency and money handling
 (`libs/shared/{helpers/currency*,helpers/currency-converter*,constants/currency*}`,
 `apps/api/services/{currency,exchange-rate-provider}.ts`,
 `apps/api/workers/exchange-rate-fetcher.ts`), account balances
-(`libs/shared/helpers/account-balance.ts`), the Telegram bot (`apps/api/services/telegram/*`,
-`apps/api/handlers/telegram/*`, `apps/api/workers/telegram-polling.ts`), and every
-`docs/features/*.md` describing budgets, transactions and dashboards.
+(`libs/shared/helpers/account-balance.ts`), the Telegram bot's finance commands
+(`apps/api/handlers/telegram/*`), and every `docs/features/*.md` describing budgets, transactions
+and dashboards. The bot itself, linking a chat and its notifications are Seed's now
+([telegram.md](telegram.md)): Financy registers its commands in `apps/api/telegram/commands.ts`
+and drops its own `apps/api/services/telegram/*` and `apps/api/workers/telegram-polling.ts`.
 
 One caveat: **money-as-integers** is a template-level convention worth documenting even though the
 currency code itself stays behind. Financy's helpers are a good reference for the arithmetic.
