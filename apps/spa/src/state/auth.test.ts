@@ -6,6 +6,7 @@ import {
   confirmProviderSignUp,
   deleteAccount,
   redeemSignInLink,
+  requestSignInLink,
   signIn,
   signOut,
   totpConnectFinish,
@@ -610,5 +611,32 @@ describe("redeemSignInLink", () => {
     // The origin guard's 403 carries no such code: it stays a failure with the API's words.
     answers(403, { error: "Forbidden" })
     expect(await redeemSignInLink("token")).toEqual({ ok: false, error: "Forbidden" })
+  })
+
+  it("passes on no message of a server failure, so the page shows its own", async () => {
+    answers(500, {})
+    expect(await redeemSignInLink("token")).toEqual({ ok: false, error: undefined })
+  })
+})
+
+describe("requestSignInLink", () => {
+  afterEach(() => {
+    globalThis.fetch = realFetch
+  })
+
+  it("passes on no message of a server failure, and the API's words for a refusal", async () => {
+    globalThis.fetch = () => Promise.resolve(new Response("Bad Gateway", { status: 502 }))
+    expect(await requestSignInLink("ann@example.com", null)).toEqual({
+      ok: false,
+      error: undefined,
+      field: false,
+    })
+
+    globalThis.fetch = () => Promise.resolve(Response.json({ error: "Too many" }, { status: 429 }))
+    expect(await requestSignInLink("ann@example.com", null)).toEqual({
+      ok: false,
+      error: "Too many",
+      field: false,
+    })
   })
 })

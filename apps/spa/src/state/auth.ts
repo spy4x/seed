@@ -351,6 +351,14 @@ export async function resetPassword(
   return { ok: true }
 }
 
+/**
+ * The message of a refused request, or `undefined` when the server failed: a 5xx answer, such as a
+ * proxy's page during a deploy, carries no message worth showing, so the screen says its own.
+ */
+function ownMessage(result: { status: number; error: { message: string } }): string | undefined {
+  return result.status >= 500 ? undefined : result.error.message
+}
+
 /** How asking for a sign-in link ended (#391). */
 export type SignInLinkRequestAnswer =
   | { ok: true }
@@ -371,7 +379,7 @@ export async function requestSignInLink(
       body: JSON.stringify(next === null ? { email } : { email, next }),
     })
     if (result.ok) return { ok: true }
-    return { ok: false, error: result.error.message, field: result.status === 400 }
+    return { ok: false, error: ownMessage(result), field: result.status === 400 }
   } catch (_unreachable) {
     return { ok: false, offline: true }
   }
@@ -406,7 +414,7 @@ export async function redeemSignInLink(token: string): Promise<SignInLinkRedeemA
     }
     return result.status === 410
       ? { ok: false, refused: true }
-      : { ok: false, error: result.error.message }
+      : { ok: false, error: ownMessage(result) }
   }
   if ("guestTaken" in result.data) return { ok: false, guestTaken: true }
   setSignOutOwed(false)
