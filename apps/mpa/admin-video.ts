@@ -34,10 +34,10 @@ export const ADMIN_VIDEO = {
   transcript: [
     `A title card: "Seed's admin panel, built for support work."`,
     `The Dashboard shows the last 30 days: people, new sign-ups, who is active, groups, notes and guest accounts, then zooms in on the chart of active people per day.`,
-    `On Users, the operator types "novak" into the search. The list narrows to three people, Priya Novak among them.`,
-    `Priya Novak's page opens. Its Sessions tab lists her two signed-in devices: Firefox on Windows and Safari on iPhone.`,
+    `On Users, the operator types "hartley" into the search. The list narrows to three people, Claire Hartley among them.`,
+    `Claire Hartley's page opens. Its Sessions tab lists her two signed-in devices: Firefox on Windows and Safari on iPhone.`,
     `The operator chooses "End all". A dialog asks them to confirm; they confirm, and the list empties.`,
-    `The audit log's newest row reads "Sessions ended", about Priya Novak, done by the operator.`,
+    `The audit log's newest row reads "Sessions ended", about Claire Hartley, done by the operator.`,
     `Groups lists every group with its owner, the largest first. The operator opens Product team and sees its members.`,
     `Billing shows €333.00 a month from seven paying groups, one of them past due. The operator opens Community garden, whose history shows a refunded payment with the operator's note.`,
     `Newsletter shows 90 subscribers, 37 who joined in the last 30 days, 3 issues sent and a chart of the list growing.`,

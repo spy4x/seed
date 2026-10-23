@@ -32,7 +32,7 @@
  *   deno task video:admin
  * ```
  *
- * First the seeded person the video follows, Priya Novak, gets a password the way a person
+ * First the seeded person the video follows, Claire Hartley, gets a password the way a person
  * does: the product app mails her a reset code (read back through the development-only
  * `/api/test/last-mail`), and the reset sets a new random password. She then signs in from a phone
  * and a desktop browser, so her page has sessions to end. Then `admin@example.com` signs in and the
@@ -90,7 +90,7 @@ const POSTER = { width: 1280, height: 800 }
 const FPS = 30
 const ADMIN_EMAIL = "admin@example.com"
 /** The seeded person the support case follows, and what the operator types to find her. */
-const PERSON = { name: "Priya Novak", email: "priya.novak@example.com", search: "novak" }
+const PERSON = { name: "Claire Hartley", email: "claire.hartley@example.com", search: "hartley" }
 
 /** One screencast frame on disk and when it was painted, in seconds. */
 interface Frame {
@@ -636,15 +636,15 @@ async function play(
   await page.getByRole("heading", { level: 1, name: "Users" }).waitFor()
   await moveLike(page, pointer, { x: 1100, y: 700 })
 
-  // 2. Users: the search narrows the list to the Novaks, zoomed in on the field and the results.
+  // 2. Users: the search narrows the list to the Hartleys, zoomed in on the field and the results.
   await shot("Find anyone by name or address", async () => {
     await pause(page, 500)
     const field = page.getByLabel("Name or address")
     await typeLike(page, pointer, field, PERSON.search, H)
     await pause(page, 300)
     await page.keyboard.press("Enter")
-    // The seed has three people named Novak; the list narrows to them.
-    await page.getByText(/^[2-5] people$/).waitFor()
+    // The seed has exactly three people named Hartley; the list narrows to them.
+    await page.getByText(/^3 people$/).waitFor()
     await pause(page, 500)
     const last = page.locator("table tbody tr").last().locator("td").first()
     await zoomOn(page, union(await box(field), await box(last)))

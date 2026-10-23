@@ -667,15 +667,15 @@ Deno.test("the demo seed's history fills the admin panel's screens", async (t) =
     await t.step(
       "the video's person has two sessions: Firefox on Windows and Safari on iPhone",
       async () => {
-        const priya = fakeDemoData(OPTIONS.dataSeed, NOW).users[VIDEO_PERSON_INDEX]
+        const claire = fakeDemoData(OPTIONS.dataSeed, NOW).users[VIDEO_PERSON_INDEX]
 
         const sessions = await sql<{ deviceName: string }[]>`
         SELECT s.device_name FROM auth_sessions s
-        JOIN auth_keys k ON k.user_id = s.user_id AND k.subject = ${priya.email}
+        JOIN auth_keys k ON k.user_id = s.user_id AND k.subject = ${claire.email}
         WHERE s.status = ${SessionStatus.Active}
         ORDER BY s.device_name
       `
-        expect(priya.email).toBe("priya.novak@example.com")
+        expect(claire.email).toBe("claire.hartley@example.com")
         expect(sessions.map((s) => s.deviceName)).toEqual([
           "Firefox on Windows",
           "Safari on iPhone",
