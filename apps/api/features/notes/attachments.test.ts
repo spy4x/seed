@@ -263,7 +263,7 @@ Deno.test("a group at its plan's file or byte cap is refused with the plan's ans
   await bytes.signAs(EDITOR, { size: 500 })
 })
 
-Deno.test("a plan that raises the limits lets larger and more files in, with no other change", async () => {
+Deno.test("a plan that raises the file size limit lets a larger file in, with no other change", async () => {
   const raised = setUp({ rules: { maxFileBytes: 5 * MB } })
   const signed = await raised.signAs(EDITOR, { size: 3 * MB })
   expect(raised.pending.get(signed.id)?.size).toBe(3 * MB)
