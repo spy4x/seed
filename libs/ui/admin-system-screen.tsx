@@ -6,6 +6,7 @@ import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { type Fact, FactList } from "@spy4x/preact-ui/fact-list"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
@@ -136,25 +137,33 @@ function SystemBody(
         class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
         data-e2e="admin-system-cards"
       >
-        <StatusCard title="Database" health={database.health} dataE2E="admin-system-database">
-          <Fact label="Reachable">
-            {database.reachable ? `Yes, in ${database.latencyMs} ms` : "No answer"}
-          </Fact>
-          <Fact label="Size">
-            {database.sizeBytes === null ? "Unknown" : formatBytes(database.sizeBytes)}
-          </Fact>
-          <Fact label="Version">
-            {database.version ? `Postgres ${database.version}` : "Unknown"}
-          </Fact>
-          <Fact label="Up since">
-            {database.startedAt ? <When at={database.startedAt} /> : "Unknown"}
-          </Fact>
-        </StatusCard>
-        <StatusCard title="Cache (Valkey)" health={cache.health} dataE2E="admin-system-cache">
-          <Fact label="Reachable">
-            {cache.reachable ? `Yes, in ${cache.latencyMs} ms` : "No answer"}
-          </Fact>
-        </StatusCard>
+        <StatusCard
+          title="Database"
+          health={database.health}
+          dataE2E="admin-system-database"
+          facts={[{
+            label: `Reachable`,
+            value: database.reachable ? `Yes, in ${database.latencyMs} ms` : "No answer",
+          }, {
+            label: `Size`,
+            value: database.sizeBytes === null ? "Unknown" : formatBytes(database.sizeBytes),
+          }, {
+            label: `Version`,
+            value: database.version ? `Postgres ${database.version}` : "Unknown",
+          }, {
+            label: `Up since`,
+            value: database.startedAt ? <When at={database.startedAt} /> : "Unknown",
+          }]}
+        />
+        <StatusCard
+          title="Cache (Valkey)"
+          health={cache.health}
+          dataE2E="admin-system-cache"
+          facts={[{
+            label: `Reachable`,
+            value: cache.reachable ? `Yes, in ${cache.latencyMs} ms` : "No answer",
+          }]}
+        />
         <StatusCard
           title="Job queue"
           health={queue.health}
@@ -175,22 +184,29 @@ function SystemBody(
               Open Jobs
             </Link>
           }
-        >
-          <Fact label="Due now">
-            {NUMBER.format(queue.due)}
-            {queue.oldestDueAt && (
-              <span class="ml-1 text-muted">
-                · oldest <When at={queue.oldestDueAt} />
-              </span>
-            )}
-          </Fact>
-          <Fact label="Running">{NUMBER.format(queue.running)}</Fact>
-          <Fact label="Waiting to retry">{NUMBER.format(queue.retrying)}</Fact>
-          <Fact label="Scheduled">{NUMBER.format(queue.scheduled)}</Fact>
-          <Fact label={`Failed, last ${ADMIN_FAILED_JOBS_DAYS} days`}>
-            {NUMBER.format(queue.failed)}
-          </Fact>
-        </StatusCard>
+          facts={[
+            {
+              label: `Due now`,
+              value: (
+                <>
+                  {NUMBER.format(queue.due)}
+                  {queue.oldestDueAt && (
+                    <span class="ml-1 text-muted">
+                      · oldest <When at={queue.oldestDueAt} />
+                    </span>
+                  )}
+                </>
+              ),
+            },
+            { label: `Running`, value: NUMBER.format(queue.running) },
+            { label: `Waiting to retry`, value: NUMBER.format(queue.retrying) },
+            { label: `Scheduled`, value: NUMBER.format(queue.scheduled) },
+            {
+              label: `Failed, last ${ADMIN_FAILED_JOBS_DAYS} days`,
+              value: NUMBER.format(queue.failed),
+            },
+          ]}
+        />
         <StatusCard
           title="Backup"
           health={backup.health}
@@ -201,32 +217,43 @@ function SystemBody(
               {ADMIN_BACKUP_ERROR_HOURS}.
             </>
           }
-        >
-          <Fact label="Last success">
-            {backup.succeededAt ? <When at={backup.succeededAt} /> : "None recorded"}
-          </Fact>
-        </StatusCard>
-        <StatusCard title="Migrations" health={migrations.health} dataE2E="admin-system-migrations">
-          <Fact label="Applied">{NUMBER.format(migrations.applied)}</Fact>
-          <Fact label="Newest">
-            <span class="font-mono text-xs wrap-anywhere">{migrations.latest ?? "None"}</span>
-          </Fact>
-          <Fact label="Applied at">
-            {migrations.latestAt ? <When at={migrations.latestAt} /> : "Never"}
-          </Fact>
-        </StatusCard>
-        <StatusCard title="API build" dataE2E="admin-system-build">
-          <Fact label="Version">{build.version ?? "Development build"}</Fact>
-          <Fact label="Commit">
-            <span class="font-mono text-xs">
-              {build.commit ? build.commit.slice(0, 12) : "Unknown"}
-            </span>
-          </Fact>
-          <Fact label="Runtime">{build.runtime}</Fact>
-          <Fact label="Up since">
-            <When at={build.startedAt} />
-          </Fact>
-        </StatusCard>
+          facts={[{
+            label: `Last success`,
+            value: backup.succeededAt ? <When at={backup.succeededAt} /> : "None recorded",
+          }]}
+        />
+        <StatusCard
+          title="Migrations"
+          health={migrations.health}
+          dataE2E="admin-system-migrations"
+          facts={[{ label: `Applied`, value: NUMBER.format(migrations.applied) }, {
+            label: `Newest`,
+            value: <span class="font-mono text-xs">{migrations.latest ?? "None"}</span>,
+          }, {
+            label: `Applied at`,
+            value: migrations.latestAt ? <When at={migrations.latestAt} /> : "Never",
+          }]}
+        />
+        <StatusCard
+          title="API build"
+          dataE2E="admin-system-build"
+          facts={[
+            { label: `Version`, value: build.version ?? "Development build" },
+            {
+              label: `Commit`,
+              value: (
+                <span class="font-mono text-xs">
+                  {build.commit ? build.commit.slice(0, 12) : "Unknown"}
+                </span>
+              ),
+            },
+            { label: `Runtime`, value: build.runtime },
+            {
+              label: `Up since`,
+              value: <When at={build.startedAt} />,
+            },
+          ]}
+        />
       </section>
     </>
   )
@@ -237,7 +264,7 @@ function SystemBody(
  * The hint goes after the facts' `<dl>`, never inside it: a `<dl>` holds only `dt` and `dd` groups.
  */
 function StatusCard(
-  { title, health, dataE2E, hint, footer, children }: {
+  { title, health, dataE2E, hint, footer, facts }: {
     title: string
     health?: AdminHealth
     dataE2E: string
@@ -245,7 +272,8 @@ function StatusCard(
     hint?: ComponentChildren
     /** A link under the hint, to where the card's subject is handled. */
     footer?: ComponentChildren
-    children: ComponentChildren
+    /** The card's facts, as `FactList` shows them. */
+    facts: readonly Fact[]
   },
 ): JSX.Element {
   return (
@@ -256,19 +284,11 @@ function StatusCard(
         action={health === undefined ? undefined : <HealthBadge health={health} />}
       />
       <CardBody class="flex flex-col gap-3">
-        <dl class="flex flex-col gap-2">{children}</dl>
+        {/* The rows pad themselves; the card already does at its edges. */}
+        <FactList facts={facts} class="-my-3" />
         {hint && <p class="text-xs text-muted">{hint}</p>}
         {footer}
       </CardBody>
     </Card>
-  )
-}
-
-function Fact({ label, children }: { label: string; children: ComponentChildren }): JSX.Element {
-  return (
-    <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-      <dt class="text-sm text-muted">{label}</dt>
-      <dd class="text-sm font-medium wrap-anywhere">{children}</dd>
-    </div>
   )
 }

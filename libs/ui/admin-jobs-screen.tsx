@@ -1,4 +1,4 @@
-import type { ComponentChildren, JSX, RefObject } from "preact"
+import type { JSX, RefObject } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconArrowPath, IconPlayCircle } from "@spy4x/preact-icons"
 import { Badge, type BadgeColor, type BadgeType } from "@spy4x/preact-ui/badge"
@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { DataTable, type DataTableColumn } from "@spy4x/preact-ui/data-table"
 import { DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
+import { FactList } from "@spy4x/preact-ui/fact-list"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { OnDay, useFormat, When as Ago } from "@spy4x/preact-ui/format"
@@ -632,21 +633,6 @@ export interface AdminJobScreenProps {
   navigate?: Navigate
 }
 
-/** One fact of the summary: its label on the left, or above it on a phone. */
-function Fact(
-  { label, children, hint }: { label: string; children: ComponentChildren; hint?: string },
-): JSX.Element {
-  return (
-    <>
-      <dt class="text-sm text-muted">{label}</dt>
-      <dd class="min-w-0 text-sm font-medium wrap-anywhere max-sm:-mt-3">
-        {children}
-        {hint && <span class="mt-1 block text-xs font-normal text-muted">{hint}</span>}
-      </dd>
-    </>
-  )
-}
-
 function Time({ at, none = `Not yet` }: { at: string | null; none?: string }): JSX.Element {
   return at ? <When at={at} /> : <span class="text-muted">{none}</span>
 }
@@ -768,53 +754,50 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
       />
 
       <div class="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <dl
-          ref={facts as RefObject<HTMLDListElement>}
+        <section
+          ref={facts as RefObject<HTMLElement>}
           tabIndex={-1}
           aria-label="Details"
-          class="grid grid-cols-1 content-start gap-4 rounded-xl border border-subtle bg-surface p-4 sm:grid-cols-[9rem_1fr]"
+          class="rounded-xl border border-subtle bg-surface px-4 py-1"
           data-e2e="admin-job-facts"
         >
-          <Fact label="Job">{job.label}</Fact>
-          <Fact label="Status">
-            <JobStateBadge state={job.state} />
-          </Fact>
-          <Fact label="Repeats">{job.repeats ?? `No`}</Fact>
-          <Fact label="Created">
-            <Time at={job.createdAt} />
-          </Fact>
-          <Fact label="Due at">
-            <Time at={job.dueAt} />
-          </Fact>
-          <Fact label="Started">
-            <Time at={job.startedAt} />
-          </Fact>
-          <Fact label="Finished">
-            <Time at={job.finishedAt} />
-          </Fact>
-          <Fact label="Attempts">{attemptsLine(job)}</Fact>
-          <Fact label="Last error" hint="The error type only. The message is not stored.">
-            {job.errorCode
-              ? <span class="font-mono" data-e2e="admin-job-error-code">{job.errorCode}</span>
-              : <span class="text-muted">None</span>}
-          </Fact>
-          <Fact label="About">
-            {job.about
-              ? (
-                <Link
-                  href={job.about.type === `user`
-                    ? ADMIN_PATHS.user(job.about.id)
-                    : ADMIN_GROUP_PATHS.group(job.about.id)}
-                  navigate={navigate}
-                  class="pc-link"
-                  data-e2e="admin-job-about"
-                >
-                  {job.about.name} →
-                </Link>
-              )
-              : <span class="text-muted">Nothing linked</span>}
-          </Fact>
-        </dl>
+          <FactList
+            facts={[
+              { label: `Job`, value: job.label },
+              { label: `Status`, value: <JobStateBadge state={job.state} /> },
+              { label: `Repeats`, value: job.repeats ?? `No` },
+              { label: `Created`, value: <Time at={job.createdAt} /> },
+              { label: `Due at`, value: <Time at={job.dueAt} /> },
+              { label: `Started`, value: <Time at={job.startedAt} /> },
+              { label: `Finished`, value: <Time at={job.finishedAt} /> },
+              { label: `Attempts`, value: attemptsLine(job) },
+              {
+                label: `Last error`,
+                value: job.errorCode
+                  ? <span class="font-mono" data-e2e="admin-job-error-code">{job.errorCode}</span>
+                  : <span class="text-muted">None</span>,
+                hint: `The error type only. The message is not stored.`,
+              },
+              {
+                label: `About`,
+                value: job.about
+                  ? (
+                    <Link
+                      href={job.about.type === `user`
+                        ? ADMIN_PATHS.user(job.about.id)
+                        : ADMIN_GROUP_PATHS.group(job.about.id)}
+                      navigate={navigate}
+                      class="pc-link"
+                      data-e2e="admin-job-about"
+                    >
+                      {job.about.name} →
+                    </Link>
+                  )
+                  : <span class="text-muted">Nothing linked</span>,
+              },
+            ]}
+          />
+        </section>
         <section aria-label="What happened" class="rounded-xl border border-subtle bg-surface p-4">
           <Timeline items={timeline} label="What happened" />
         </section>
