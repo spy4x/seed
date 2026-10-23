@@ -186,7 +186,7 @@ test.describe("notes in a shared group", () => {
       ]
       for (const response of refused) {
         expect(response.status()).toBe(403)
-        expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+        expect((await response.json()).error.reason).toBe("ROLE_INSUFFICIENT")
       }
 
       // The viewer still reads it, unchanged.

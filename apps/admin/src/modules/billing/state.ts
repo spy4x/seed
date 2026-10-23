@@ -98,10 +98,10 @@ const NO_CUSTOMER: BillingCustomerState = {
  * Whether a failed action may still have happened: no answer at all, or an answer the API marks
  * as unclear, or a server failure that is not Stripe's plain refusal.
  */
-export function resultUnknown(result: { status: number; error: { code?: string } }): boolean {
+export function resultUnknown(result: { status: number; error: { reason?: string } }): boolean {
   if (result.status === 0) return true
-  if (result.error.code === `result_unknown`) return true
-  return result.status >= 500 && result.error.code !== `provider_refused`
+  if (result.error.reason === `result_unknown`) return true
+  return result.status >= 500 && result.error.reason !== `provider_refused`
 }
 
 /** The request of each action: its path under `/api/admin/billing/:groupId/` and its body. */

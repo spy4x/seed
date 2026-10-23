@@ -22,6 +22,7 @@ import {
   type AdminGroupsService,
   createAdminGroupsRoutes,
 } from "./groups.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
 const INVITATION_ID = `0199c3a0-0000-7000-8000-000000000002`
@@ -187,7 +188,7 @@ describe(`operator area group routes`, () => {
     expect(await (await send(app, ROUTES[2])).json()).toEqual(detail)
     const missing = await send(app, { method: `GET`, path: `/admin/groups/not-a-uuid` })
     expect(missing.status).toBe(404)
-    expect(await missing.json()).toEqual({ error: ADMIN_GROUP_NOT_FOUND })
+    expect((await apiError(missing)).message).toBe(ADMIN_GROUP_NOT_FOUND)
     expect(calls).toEqual([[`detail`, GROUP_ID]])
   })
 
@@ -269,7 +270,7 @@ describe(`operator area group routes`, () => {
       const response = await send(app, ROUTES[4])
 
       expect(response.status).toBe(status)
-      expect(typeof (await response.json()).error).toBe(`string`)
+      expect(typeof (await apiError(response)).message).toBe(`string`)
       // A refusal reads nothing more: the page keeps the group it has.
       expect(calls.map((call) => call[0])).toEqual([`remove`])
     })
@@ -346,7 +347,10 @@ describe(`operator area group routes`, () => {
     const gone = buildApp(operator(), { outcome: AdminGroupActOutcome.NotFound })
     const response = await send(gone.app, ROUTES[7])
     expect(response.status).toBe(404)
-    expect(await response.json()).toEqual({ error: ADMIN_GROUP_FILE_NOT_FOUND })
+    expect(await apiError(response)).toMatchObject({
+      code: `not_found`,
+      message: ADMIN_GROUP_FILE_NOT_FOUND,
+    })
 
     const trashed = buildApp(operator(), { outcome: AdminGroupActOutcome.GroupDeleted })
     expect((await send(trashed.app, ROUTES[7])).status).toBe(409)

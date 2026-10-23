@@ -19,8 +19,13 @@ function harness(answer: () => Response | Promise<Response>) {
 }
 
 describe("subscribers api", () => {
-  it("reads a refused confirm link's state from the body of its 400", async () => {
-    const { api } = harness(() => Response.json({ state: "expired" }, { status: 400 }))
+  it("reads a refused confirm link's state from the reason of its 400", async () => {
+    const { api } = harness(() =>
+      Response.json(
+        { error: { code: "bad_request", message: "This link has expired.", reason: "expired" } },
+        { status: 400 },
+      )
+    )
 
     expect(await api.previewConfirm("news", "t")).toEqual({ state: "expired" })
   })
@@ -33,7 +38,12 @@ describe("subscribers api", () => {
   })
 
   it("reads a state it does not know, a body that is not JSON and a network failure as error", async () => {
-    const limited = harness(() => Response.json({ state: "limited" }, { status: 429 }))
+    const limited = harness(() =>
+      Response.json(
+        { error: { code: "rate_limited", message: "Too many tries.", reason: "limited" } },
+        { status: 429 },
+      )
+    )
     const broken = harness(() => new Response("<html>", { status: 502 }))
     const offline = harness(() => Promise.reject(new TypeError("Failed to fetch")))
 
@@ -54,7 +64,10 @@ describe("subscribers api", () => {
 
   it("passes on the API's message when it refuses a subscribe", async () => {
     const { api } = harness(() =>
-      Response.json({ error: "Enter a valid e-mail address" }, { status: 400 })
+      Response.json(
+        { error: { code: "bad_request", message: "Enter a valid e-mail address" } },
+        { status: 400 },
+      )
     )
 
     expect(await api.subscribe("nope", "news"))

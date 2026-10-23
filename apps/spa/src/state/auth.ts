@@ -409,7 +409,7 @@ export async function redeemSignInLink(token: string): Promise<SignInLinkRedeemA
     return { ok: false, offline: true }
   }
   if (!result.ok) {
-    if (result.error.code === SIGN_IN_LINK_ASKED_ELSEWHERE_CODE) {
+    if (result.error.reason === SIGN_IN_LINK_ASKED_ELSEWHERE_CODE) {
       return { ok: false, askedElsewhere: true }
     }
     return result.status === 410
@@ -529,7 +529,7 @@ export async function listSessions(): Promise<
       ok: false,
       error: result.error.message,
       status: result.status,
-      code: result.error.code,
+      code: result.error.reason,
     }
   }
   return { ok: true, sessions: result.data.sessions }

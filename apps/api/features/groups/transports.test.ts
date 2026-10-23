@@ -54,6 +54,8 @@ import { createGroupOperations } from "./operations.ts"
  */
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import { PasswordLockedError } from "../../services/password-locked.ts"
+import { apiError } from "../../_testing/api-error.ts"
+import { checkedError } from "../../_testing/api-error.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002"
 const VIEWER = 2
@@ -214,7 +216,7 @@ function callRoute(buses: GroupsRouteDependencies, userId: number) {
     })
     const body = await response.json()
     if (response.ok) return { kind: "server.result", payload: body.result }
-    return { kind: "server.error", ...body.error }
+    return { kind: "server.error", ...checkedError(body) }
   }
   return {
     command: (name: string, payload: unknown) =>
@@ -248,7 +250,7 @@ describe("renaming a group over REST", () => {
         expect(groups.name).toBe("Trip")
       } else {
         expect(response.status).toBe(403)
-        expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+        expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
         expect(groups.writes).toBe(0)
       }
     })
@@ -271,7 +273,7 @@ describe("renaming a group over REST", () => {
     const response = await rest(buses, STRANGER)("PATCH", `/${groupId}`, { name: "Trip" })
 
     expect(response.status).toBe(404)
-    expect((await response.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(response)).reason).toBe("GROUP_NOT_FOUND")
     expect(groups.writes).toBe(0)
   })
 
@@ -300,7 +302,7 @@ describe("deleting a group over REST", () => {
         expect(groups.deleted).toBe(true)
       } else {
         expect(response.status).toBe(403)
-        expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+        expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
         expect(groups.deleted).toBe(false)
         expect(groups.writes).toBe(0)
       }
@@ -314,7 +316,7 @@ describe("deleting a group over REST", () => {
     const response = await rest(buses, OWNER)("DELETE", `/${groupId}`)
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error.code).toBe("LAST_GROUP")
+    expect((await apiError(response)).reason).toBe("LAST_GROUP")
     expect(groups.deleted).toBe(false)
   })
 
@@ -325,8 +327,8 @@ describe("deleting a group over REST", () => {
     const response = await rest(buses, OWNER)("DELETE", `/${groupId}`)
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toMatchObject({
-      code: "GROUP_SUBSCRIBED",
+    expect(await apiError(response)).toMatchObject({
+      reason: "GROUP_SUBSCRIBED",
       message: "Cancel the group's subscription in the billing portal before deleting it",
     })
     expect(groups.deleted).toBe(false)
@@ -338,7 +340,7 @@ describe("deleting a group over REST", () => {
     const response = await rest(buses, STRANGER)("DELETE", `/${groupId}`)
 
     expect(response.status).toBe(404)
-    expect((await response.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(response)).reason).toBe("GROUP_NOT_FOUND")
     expect(groups.deleted).toBe(false)
   })
 })
@@ -356,7 +358,7 @@ describe("restoring a group over REST", () => {
         expect(groups.deleted).toBe(false)
       } else {
         expect(response.status).toBe(403)
-        expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+        expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
         expect(groups.deleted).toBe(true)
         expect(groups.writes).toBe(0)
       }
@@ -370,7 +372,7 @@ describe("restoring a group over REST", () => {
     const response = await rest(buses, STRANGER)("POST", `/${groupId}/restore`)
 
     expect(response.status).toBe(404)
-    expect((await response.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(response)).reason).toBe("GROUP_NOT_FOUND")
     expect(groups.deleted).toBe(true)
   })
 
@@ -556,7 +558,7 @@ describe("a write from another site", () => {
 
     for (const response of responses) {
       expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("REQUEST_ORIGIN_INVALID")
+      expect((await apiError(response)).reason).toBe("REQUEST_ORIGIN_INVALID")
     }
     expect(groups.writes).toBe(0)
   })
@@ -572,7 +574,7 @@ describe("a write from another site", () => {
 
     for (const response of [renamed, deleted, restored]) {
       expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("REQUEST_ORIGIN_INVALID")
+      expect((await apiError(response)).reason).toBe("REQUEST_ORIGIN_INVALID")
     }
     expect(groups.writes).toBe(0)
     expect(groups.name).toBe("Team")
@@ -610,7 +612,7 @@ describe("the members of a group over REST", () => {
     }
     const stranger = await rest(buses, STRANGER)("GET", `/${groupId}/members`)
     expect(stranger.status).toBe(404)
-    expect((await stranger.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(stranger)).reason).toBe("GROUP_NOT_FOUND")
   })
 
   for (const person of MANAGERS) {
@@ -632,7 +634,7 @@ describe("the members of a group over REST", () => {
         expect(groups.writes).toBe(1)
       } else {
         expect(response.status).toBe(403)
-        expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+        expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
         expect(groups.writes).toBe(0)
       }
     })
@@ -648,7 +650,7 @@ describe("the members of a group over REST", () => {
         expect(groups.writes).toBe(1)
       } else {
         expect(response.status).toBe(403)
-        expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+        expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
         expect(groups.writes).toBe(0)
       }
     })
@@ -664,7 +666,7 @@ describe("the members of a group over REST", () => {
         expect(groups.writes).toBe(1)
       } else {
         expect(response.status).toBe(409)
-        expect((await response.json()).error.code).toBe("LAST_OWNER")
+        expect((await apiError(response)).reason).toBe("LAST_OWNER")
         expect(groups.writes).toBe(0)
       }
     })
@@ -683,7 +685,7 @@ describe("the members of a group over REST", () => {
 
     for (const response of [demoted, removed]) {
       expect(response.status).toBe(409)
-      expect((await response.json()).error.code).toBe("LAST_OWNER")
+      expect((await apiError(response)).reason).toBe("LAST_OWNER")
     }
     expect(promoted.status).toBe(400)
     expect(groups.writes).toBe(0)
@@ -697,11 +699,11 @@ describe("the members of a group over REST", () => {
     const leaving = await rest(buses, STRANGER)("POST", `/${groupId}/leave`)
 
     expect(stranger.status).toBe(404)
-    expect((await stranger.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(stranger)).reason).toBe("GROUP_NOT_FOUND")
     expect(missing.status).toBe(404)
-    expect((await missing.json()).error.code).toBe("MEMBER_NOT_FOUND")
+    expect((await apiError(missing)).reason).toBe("MEMBER_NOT_FOUND")
     expect(leaving.status).toBe(404)
-    expect((await leaving.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(leaving)).reason).toBe("GROUP_NOT_FOUND")
     expect(groups.writes).toBe(0)
   })
 
@@ -712,7 +714,7 @@ describe("the members of a group over REST", () => {
     const response = await rest(buses, VIEWER)("POST", `/${groupId}/leave`)
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error.code).toBe("LAST_GROUP")
+    expect((await apiError(response)).reason).toBe("LAST_GROUP")
   })
 
   it("refuses a malformed user id or role", async () => {
@@ -753,11 +755,9 @@ describe("a role change on the free plan", () => {
         role: GroupRole.EDITOR,
       })
       expect(response.status).toBe(402)
-      expect((await response.json()).error).toMatchObject({
-        code: "PLAN_FEATURE_MISSING",
-        entitlement: "memberRoles",
-        limit: null,
-        canUpgrade,
+      expect(await apiError(response)).toMatchObject({
+        reason: "PLAN_FEATURE_MISSING",
+        details: { entitlement: "memberRoles", limit: null, canUpgrade },
       })
     }
     expect(groups.writes).toBe(0)
@@ -792,11 +792,11 @@ describe("a role change on the free plan", () => {
         role: GroupRole.ADMIN,
       })
 
-      expect([plan, demoteOwner.status, (await demoteOwner.json()).error.code])
+      expect([plan, demoteOwner.status, (await apiError(demoteOwner)).reason])
         .toEqual([plan, 409, "LAST_OWNER"])
-      expect([plan, pastRights.status, (await pastRights.json()).error.code])
+      expect([plan, pastRights.status, (await apiError(pastRights)).reason])
         .toEqual([plan, 403, "ROLE_INSUFFICIENT"])
-      expect([plan, promoteGone.status, (await promoteGone.json()).error.code])
+      expect([plan, promoteGone.status, (await apiError(promoteGone)).reason])
         .toEqual([plan, 404, "MEMBER_NOT_FOUND"])
       expect(groups.writes).toBe(0)
     }
@@ -810,8 +810,8 @@ describe("a role change on the free plan", () => {
     const editor = await change(EDITOR)
     const stranger = await change(STRANGER)
 
-    expect([editor.status, (await editor.json()).error.code]).toEqual([403, "ROLE_INSUFFICIENT"])
-    expect([stranger.status, (await stranger.json()).error.code]).toEqual([404, "GROUP_NOT_FOUND"])
+    expect([editor.status, (await apiError(editor)).reason]).toEqual([403, "ROLE_INSUFFICIENT"])
+    expect([stranger.status, (await apiError(stranger)).reason]).toEqual([404, "GROUP_NOT_FOUND"])
   })
 
   it("refuses a promotion over the socket, naming the feature in the details", async () => {
@@ -972,7 +972,7 @@ describe("transferring ownership over REST", () => {
     )
 
     expect(response.status).toBe(400)
-    expect((await response.json()).error.code).toBe("PASSWORD_INVALID")
+    expect((await apiError(response)).reason).toBe("PASSWORD_INVALID")
     expect(groups.writes).toBe(0)
     expect(transferred).toEqual([])
   })
@@ -988,8 +988,8 @@ describe("transferring ownership over REST", () => {
 
     expect(response.status).toBe(429)
     expect(response.headers.get("retry-after")).toBe("91")
-    const { error } = await response.json()
-    expect(error.code).toBe("PASSWORD_LOCKED")
+    const error = await apiError(response)
+    expect(error.reason).toBe("PASSWORD_LOCKED")
     expect(error.message).toBe("Too many wrong passwords. Try again in 2 minutes.")
     expect(groups.writes).toBe(0)
     expect(transferred).toEqual([])
@@ -1005,7 +1005,7 @@ describe("transferring ownership over REST", () => {
     )
 
     expect(response.status).toBe(400)
-    expect((await response.json()).error.code).toBe("NAME_MISMATCH")
+    expect((await apiError(response)).reason).toBe("NAME_MISMATCH")
     expect(passwordChecks).toEqual([])
     expect(groups.writes).toBe(0)
   })
@@ -1022,7 +1022,7 @@ describe("transferring ownership over REST", () => {
 
     for (const { user, to, status, code } of cases) {
       const response = await rest(buses, user)("POST", `/${groupId}/transfer`, transfer(to))
-      expect({ user, to, status: response.status, code: (await response.json()).error.code })
+      expect({ user, to, status: response.status, code: (await apiError(response)).reason })
         .toEqual({ user, to, status, code })
     }
     expect(passwordChecks).toEqual([])
@@ -1042,7 +1042,7 @@ describe("transferring ownership over REST", () => {
     ) {
       const response = await owner("POST", `/${groupId}/transfer`, body)
       expect(response.status).toBe(400)
-      expect((await response.json()).error.code).toBe("INVALID_REQUEST")
+      expect((await apiError(response)).reason).toBe("INVALID_REQUEST")
     }
     expect(groups.writes).toBe(0)
   })
@@ -1058,7 +1058,7 @@ describe("transferring ownership over REST", () => {
     )
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error.code).toBe("REQUEST_ORIGIN_INVALID")
+    expect((await apiError(response)).reason).toBe("REQUEST_ORIGIN_INVALID")
     expect(limit.spent).toBe(0)
     expect(groups.writes).toBe(0)
   })
@@ -1108,7 +1108,7 @@ describe("editing a group's details over REST", () => {
         ])
       } else {
         expect(response.status).toBe(403)
-        expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+        expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
         expect(groups.writes).toBe(0)
       }
     })
@@ -1120,7 +1120,7 @@ describe("editing a group's details over REST", () => {
     const response = await rest(buses, STRANGER)("PUT", `/${groupId}/details`, DETAILS)
 
     expect(response.status).toBe(404)
-    expect((await response.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(response)).reason).toBe("GROUP_NOT_FOUND")
     expect(groups.writes).toBe(0)
   })
 

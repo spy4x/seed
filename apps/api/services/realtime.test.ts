@@ -3,8 +3,15 @@ import { describe, it } from "@std/testing/bdd"
 import { drainMicrotasks, FakeClock, FakeSocket } from "@spy4x/realtime/testing"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { GroupError } from "@domain/groups"
-import { NoteError, NoteVersionConflictError } from "@domain/notes"
-import { AccessError, type Actor, UserMFAStatus } from "@domain/identity"
+import { AttachmentError, NoteError, NoteVersionConflictError } from "@domain/notes"
+import {
+  AccessError,
+  type Actor,
+  parsePictureRequest,
+  PictureError,
+  pictureSignPayloadSchema,
+  UserMFAStatus,
+} from "@domain/identity"
 import type { OperationCall } from "@spy4x/realtime/operations"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { buildAuthData } from "../_testing/fake-auth.ts"
@@ -211,6 +218,7 @@ describe("realtime socket service", () => {
         requestId: "r1",
         code: "conflict",
         message: "Group id is already in use",
+        reason: "ID_ALREADY_EXISTS",
         details: { code: "ID_ALREADY_EXISTS" },
       },
       { kind: "server.error", requestId: "r2", code: "internal", message: "internal error" },
@@ -505,6 +513,27 @@ describe("toRequestError", () => {
     const error = toRequestError(new NoteVersionConflictError(5))
     expect(error?.code).toBe("conflict")
     expect(error?.details).toEqual({ code: "VERSION_CONFLICT", currentVersion: 5 })
+  })
+
+  it("names each domain failure's own code as the reason, and a field failure's fields", () => {
+    const reason = (error: unknown) => toRequestError(error)?.reason
+    expect(reason(new GroupError("GROUP_NOT_FOUND", "x"))).toBe("GROUP_NOT_FOUND")
+    expect(reason(new AttachmentError("FILE_TOO_LARGE", "x", 10))).toBe("FILE_TOO_LARGE")
+    expect(reason(new IdempotencyError("KEY_REUSED", "x"))).toBe("IDEMPOTENCY_KEY_REUSED")
+    expect(reason(new PictureError("UPLOAD_BUDGET", "x"))).toBe("UPLOAD_BUDGET")
+    const fields = { title: { code: "maxLength", values: { rule: 3 } } }
+    expect(toRequestError(new NoteError("INVALID_REQUEST", "x", fields))?.fields).toEqual(fields)
+    const picture = (() => {
+      try {
+        return parsePictureRequest(pictureSignPayloadSchema, { contentType: "image/png", size: 0 })
+      } catch (error) {
+        return toRequestError(error)
+      }
+    })()
+    expect(picture).toMatchObject({ code: "bad_request", reason: "INVALID_REQUEST" })
+    expect((picture as RealtimeRequestError).fields).toEqual({
+      size: { code: "min", values: { rule: 1 } },
+    })
   })
 
   it("does not describe an unexpected failure", () => {

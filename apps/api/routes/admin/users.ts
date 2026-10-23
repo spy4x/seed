@@ -28,6 +28,7 @@ import { PICTURE_NOT_FOUND, pictureBody } from "../pictures.ts"
 import { pictureObjectKey } from "@domain/identity"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
+import { codeForStatus, errorResponse, validationResponse } from "../../services/error-response.ts"
 
 /** What the people routes call. */
 export interface AdminUsersRouteDependencies {
@@ -168,7 +169,7 @@ export function createAdminUsersRoutes(
   /** Runs `action` on the person in the path and answers what came of it. */
   async function act(c: Context<APIContext>, action: AdminActionKind, input?: AdminActInput) {
     const targetId = serialIdOf(c.req.param("id") ?? ``)
-    if (targetId === null) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+    if (targetId === null) return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
     const { outcome, user, retryAfterMs } = await admin.act(
       c,
       c.get("auth")!,
@@ -178,13 +179,18 @@ export function createAdminUsersRoutes(
     )
     if (outcome === AdminActOutcome.TooManyResets) {
       c.header("Retry-After", String(Math.ceil((retryAfterMs ?? 0) / 1000)))
-      return c.json({ error: ADMIN_TOO_MANY_RESETS }, 429)
+      return errorResponse(c, `rate_limited`, { message: ADMIN_TOO_MANY_RESETS })
     }
     if (outcome === AdminActOutcome.Unchanged) {
-      return c.json({ error: UNCHANGED[action] ?? ADMIN_USER_NOT_FOUND }, 409)
+      return errorResponse(c, `conflict`, { message: UNCHANGED[action] ?? ADMIN_USER_NOT_FOUND })
     }
     const refusal = REFUSALS[outcome]
-    if (refusal) return c.json({ error: refusal.error }, refusal.status)
+    if (refusal) {
+      return errorResponse(c, codeForStatus(refusal.status), {
+        message: refusal.error,
+        status: refusal.status,
+      })
+    }
     if (CLOSES_SOCKETS.has(action)) {
       // Closes the person's sockets: their sessions are gone, and a blocked person has no right.
       emit(
@@ -207,7 +213,7 @@ export function createAdminUsersRoutes(
       // A GET the mutation guards let through, yet it writes an audit row in the operator's name.
       // The admin app's download link is same-origin; a missing header is refused too.
       if (c.req.header(`sec-fetch-site`) !== `same-origin`) {
-        return c.json({ error: ADMIN_EXPORT_CROSS_SITE }, 403)
+        return errorResponse(c, `forbidden`, { message: ADMIN_EXPORT_CROSS_SITE })
       }
       const filter = parseAdminUserFilter(new URL(c.req.url).searchParams)
       const batches = await admin.export(c, c.get("auth")!, filter)
@@ -247,29 +253,33 @@ export function createAdminUsersRoutes(
     .get(`/users/:id`, dependencies.limit, async (c) => {
       const id = serialIdOf(c.req.param("id"))
       const detail = id === null ? null : await admin.detail(id)
-      if (!detail) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      if (!detail) return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
       return c.json(detail)
     })
     .get(`/users/pictures/:pictureId`, dependencies.limit, async (c) => {
       const pictureId = c.req.param(`pictureId`)
       const picture = isUuid(pictureId) ? await dependencies.picture(pictureId) : null
       const bytes = picture && await dependencies.readFile(pictureObjectKey(picture.id))
-      if (!picture || !bytes) return c.json({ error: PICTURE_NOT_FOUND }, 404)
+      if (!picture || !bytes) {
+        return errorResponse(c, `not_found`, { message: PICTURE_NOT_FOUND })
+      }
       return pictureBody(picture, bytes)
     })
     .get(`/users/:id/data-exports`, dependencies.limit, async (c) => {
       const id = serialIdOf(c.req.param("id"))
-      if (id === null) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      if (id === null) return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
       return c.json({ exports: await dependencies.dataExports(id) })
     })
     .post(`/users/:id/sessions/:sessionId/end`, dependencies.limit, async (c) => {
       const sessionId = serialIdOf(c.req.param("sessionId"))
-      if (sessionId === null) return c.json({ error: ADMIN_SESSION_NOT_FOUND }, 404)
+      if (sessionId === null) {
+        return errorResponse(c, `not_found`, { message: ADMIN_SESSION_NOT_FOUND })
+      }
       return await act(c, AdminActionKind.EndSession, { sessionId })
     })
     .post(`/users/:id/role`, dependencies.limit, async (c) => {
       const validation = validate(adminUserRoleSchema, await readApiJson(c))
-      if (validation.error) return c.json({ error: validation.error.description }, 400)
+      if (validation.error) return validationResponse(c, validation.error.details)
       return await act(c, AdminActionKind.ChangeRole, { role: validation.data.role })
     })
 

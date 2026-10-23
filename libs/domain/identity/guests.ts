@@ -44,15 +44,20 @@ export type GuestLimitedAction =
   | "billing"
   | "telegram"
 
-/** The body of a guest refusal: `{ error: { code, message, action } }`. */
+/** The body of a guest refusal: `forbidden`, with the guest reason and the refused action. */
 export interface GuestRefusal {
-  error: { code: typeof GUEST_REFUSAL_CODE; message: string; action: GuestLimitedAction }
+  error: {
+    code: "forbidden"
+    message: string
+    reason: typeof GUEST_REFUSAL_CODE
+    details: { action: GuestLimitedAction }
+  }
 }
 
 /** Whether an API answer's body is a guest refusal. */
 export function isGuestRefusal(body: unknown): body is GuestRefusal {
-  const error = (body as { error?: { code?: unknown } } | null)?.error
-  return typeof error === "object" && error !== null && error.code === GUEST_REFUSAL_CODE
+  const error = (body as { error?: { reason?: unknown } } | null)?.error
+  return typeof error === "object" && error !== null && error.reason === GUEST_REFUSAL_CODE
 }
 
 /** What the dashboard counts: guest accounts made, kept and deleted by the clean-up. */

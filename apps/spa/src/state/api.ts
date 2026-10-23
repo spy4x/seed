@@ -16,7 +16,7 @@ export function apiFetch<T>(
 ): ReturnType<typeof send<T>> {
   return apiAsUser<T>(path, init).then((result) => {
     // A guest refused an action that needs a sign-in method (#224): the frame says so.
-    if (!result.ok && result.error.code === GUEST_REFUSAL_CODE) {
+    if (!result.ok && result.error.reason === GUEST_REFUSAL_CODE) {
       guestRefusal.value = refusedAction(path) ?? "other"
     }
     return result

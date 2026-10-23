@@ -23,6 +23,7 @@ import { OUTBOX_RETENTION_DAYS } from "@server/jobs/jobs.ts"
 import { describeRepeat, type JobDefinition, JOBS } from "@server/jobs/registry.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
+import { errorResponse } from "../../services/error-response.ts"
 
 export const ADMIN_JOB_NOT_FOUND =
   `No job has this id. It may have been removed a week after it finished.`
@@ -128,7 +129,9 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
   type Action = `retry` | `runNow` | `cancel`
   const act = (action: Action) => async (c: Context<APIContext>) => {
     const id = jobId(c.req.param(`id`))
-    if (id instanceof type.errors) return c.json({ error: ADMIN_JOB_NOT_FOUND }, 404)
+    if (id instanceof type.errors) {
+      return errorResponse(c, `not_found`, { message: ADMIN_JOB_NOT_FOUND })
+    }
     const outcome = await jobs[action](
       id.toLowerCase(),
       c.get(`auth`)!.user.id,
@@ -136,13 +139,17 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
     )
     const record = await jobs.job(id.toLowerCase())
     if (outcome === AdminJobActionOutcome.Superseded) {
-      return c.json({ error: ADMIN_JOB_SUPERSEDED }, 409)
+      return errorResponse(c, `conflict`, { message: ADMIN_JOB_SUPERSEDED })
     }
-    if (!record) return c.json({ error: ADMIN_JOB_NOT_FOUND }, 404)
+    if (!record) return errorResponse(c, `not_found`, { message: ADMIN_JOB_NOT_FOUND })
     if (outcome === AdminJobActionOutcome.NotCancellable) {
-      return c.json({ error: definition(record.kind)?.cannotCancel ?? ADMIN_JOB_STALE }, 409)
+      return errorResponse(c, `conflict`, {
+        message: definition(record.kind)?.cannotCancel ?? ADMIN_JOB_STALE,
+      })
     }
-    if (outcome === AdminJobActionOutcome.NotFound) return c.json({ error: ADMIN_JOB_STALE }, 409)
+    if (outcome === AdminJobActionOutcome.NotFound) {
+      return errorResponse(c, `conflict`, { message: ADMIN_JOB_STALE })
+    }
     return c.json({ job: await detail(record) })
   }
 
@@ -181,13 +188,17 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
     })
     .post(`/jobs/repeating/:kind/run-now`, limit, async (c) => {
       const job = definition(c.req.param(`kind`))
-      if (!job?.repeat) return c.json({ error: ADMIN_REPEATING_JOB_NOT_FOUND }, 404)
+      if (!job?.repeat) {
+        return errorResponse(c, `not_found`, { message: ADMIN_REPEATING_JOB_NOT_FOUND })
+      }
       const { outcome } = await jobs.runRepeatingNow(
         job.kind,
         c.get(`auth`)!.user.id,
         c.get(`requestId`) ?? null,
       )
-      if (outcome !== AdminJobActionOutcome.Done) return c.json({ error: ADMIN_JOB_RUNNING }, 409)
+      if (outcome !== AdminJobActionOutcome.Done) {
+        return errorResponse(c, `conflict`, { message: ADMIN_JOB_RUNNING })
+      }
       return c.json({ job: null })
     })
     .post(`/jobs/retry-failed`, limit, async (c) => {
@@ -200,9 +211,11 @@ export function createAdminJobsRoutes(dependencies: AdminJobsRouteDependencies):
     })
     .get(`/jobs/:id`, limit, async (c) => {
       const id = jobId(c.req.param(`id`))
-      if (id instanceof type.errors) return c.json({ error: ADMIN_JOB_NOT_FOUND }, 404)
+      if (id instanceof type.errors) {
+        return errorResponse(c, `not_found`, { message: ADMIN_JOB_NOT_FOUND })
+      }
       const record = await jobs.job(id.toLowerCase())
-      if (!record) return c.json({ error: ADMIN_JOB_NOT_FOUND }, 404)
+      if (!record) return errorResponse(c, `not_found`, { message: ADMIN_JOB_NOT_FOUND })
       return c.json(await detail(record))
     })
     .post(`/jobs/:id/retry`, limit, act(`retry`))

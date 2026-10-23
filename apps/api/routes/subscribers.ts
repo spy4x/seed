@@ -1,5 +1,7 @@
 import { Hono } from "hono"
 import type { Context } from "hono"
+import type { ContentfulStatusCode } from "hono/utils/http-status"
+import type { ErrorCode } from "@domain/errors"
 import { validate } from "@spy4x/validation"
 import { parseBareAddress } from "@spy4x/email/address"
 import { readJsonBody } from "@spy4x/server/http/bounded-body"
@@ -20,6 +22,7 @@ import {
   isSubscriberList,
   SUBSCRIBER_TOKEN_MAX_LENGTH,
   type SubscriberList,
+  type SubscriberTokenRefusal,
   subscribeSchema,
   subscriptionConfirmSchema,
 } from "@domain/subscribers"
@@ -33,6 +36,7 @@ import {
 } from "@server/subscribers/subscribers.ts"
 import type { APIContext } from "../_types.ts"
 import type { SubscriberRateLimits } from "../middlewares/subscriber-rate-limits.ts"
+import { errorResponse, validationResponse } from "../services/error-response.ts"
 
 /** A subscribe body is an address and a list name: 4 KiB holds any real one. */
 export const SUBSCRIBE_MAX_BYTES = 4 * 1024
@@ -126,17 +130,23 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
   return new Hono<APIContext>()
     .get(`/`, (c) => c.json({ enabled: deps.setup !== null }))
     .use(`*`, async (c, next) => {
-      if (!deps.setup) return c.json({ error: SUBSCRIBERS_OFF }, 503)
+      if (!deps.setup) {
+        return errorResponse(c, `internal`, { message: SUBSCRIBERS_OFF, status: 503 })
+      }
       await next()
     })
     .post(`/`, sameOrigin, deps.rateLimits.subscribeByIp, async (c) => {
       const body = await readJsonBody(c, { maxBytes: SUBSCRIBE_MAX_BYTES })
       const checked = validate(subscribeSchema, body)
-      if (checked.error) return c.json({ error: checked.error.description }, 400)
+      if (checked.error) return validationResponse(c, checked.error.details)
       const { list } = checked.data
-      if (!isSubscriberList(list)) return c.json({ error: SUBSCRIBE_UNKNOWN_LIST }, 400)
+      if (!isSubscriberList(list)) {
+        return errorResponse(c, `bad_request`, { message: SUBSCRIBE_UNKNOWN_LIST })
+      }
       const email = parseBareAddress(checked.data.email.trim())
-      if (email === null) return c.json({ error: SUBSCRIBE_INVALID_ADDRESS }, 400)
+      if (email === null) {
+        return errorResponse(c, `bad_request`, { message: SUBSCRIBE_INVALID_ADDRESS })
+      }
       // Spent for every address, listed or not. Over it, the answer is the same and nothing is
       // written, so an inbox gets at most a few confirm mails an hour, whoever asks.
       const decision = await deps.rateLimits.mailByRecipient(email)
@@ -146,9 +156,10 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
     .get(`/confirm`, deps.rateLimits.tokenByIp, async (c) => {
       noStore(c)
       const link = linkQuery(c)
-      if (!link) return c.json({ state: `invalid` }, 400)
+      if (!link) return tokenRefusal(c, `invalid`)
       const preview = await previewConfirmation(link.token, await flowsFor(deps.setup!, link.list))
-      return c.json(preview, preview.state === `confirm` ? 200 : 400)
+      // A preview that failed on our side keeps the 400 it always had.
+      return preview.state === `confirm` ? c.json(preview) : tokenRefusal(c, preview.state, 400)
     })
     .post(`/confirm`, sameOrigin, deps.rateLimits.tokenByIp, async (c) => {
       noStore(c)
@@ -157,7 +168,7 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
         await readJsonBody(c, { maxBytes: SUBSCRIBE_MAX_BYTES }),
       )
       if (checked.error || !isSubscriberList(checked.data.list)) {
-        return c.json({ state: `invalid` }, 400)
+        return tokenRefusal(c, `invalid`)
       }
       const { list, token } = checked.data
       const outcome = await confirmSubscription(token, await flowsFor(deps.setup!, list))
@@ -165,7 +176,7 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
         await outcome.mails
         return c.json({ state: `done` })
       }
-      return c.json({ state: outcome.state }, outcome.state === `error` ? 500 : 400)
+      return tokenRefusal(c, outcome.state)
     })
     .get(`/unsubscribe`, (c) => {
       noStore(c)
@@ -180,7 +191,7 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
       noStore(c)
       const link = linkQuery(c)
       if (!link || !isCurrentSubscriberToken(link.token)) {
-        return c.json({ state: `not-recognised` }, 404)
+        return tokenRefusal(c, `not-recognised`)
       }
       const preview = await previewUnsubscribe(link.token, await flowsFor(deps.setup!, link.list))
       return unsubscribeAnswer(c, preview)
@@ -193,7 +204,7 @@ export function createSubscribersRoute(deps: SubscribersRouteDependencies): Hono
         !isSubscriberList(list) || !token || token.length > SUBSCRIBER_TOKEN_MAX_LENGTH ||
         !isCurrentSubscriberToken(token)
       ) {
-        return c.json({ state: `not-recognised` }, 404)
+        return tokenRefusal(c, `not-recognised`)
       }
       return unsubscribeAnswer(c, await unsubscribe(token, await flowsFor(deps.setup!, list)))
     })
@@ -211,12 +222,39 @@ function unsubscribeAnswer(
     case `confirm`:
     case `done`:
       return c.json(outcome)
-    case `not-recognised`:
-      return c.json({ state: outcome.state }, 404)
     case `limited`:
       c.header(`Retry-After`, String(Math.ceil(outcome.retryAfterMs / 1000)))
-      return c.json({ state: outcome.state }, 429)
-    case `error`:
-      return c.json({ state: outcome.state }, 500)
+      return tokenRefusal(c, outcome.state)
+    default:
+      return tokenRefusal(c, outcome.state)
   }
+}
+
+/** How a token route answers each refused state: its code, status and English sentence. */
+const TOKEN_REFUSALS: Record<
+  SubscriberTokenRefusal | `error`,
+  { code: ErrorCode; status: ContentfulStatusCode; message: string }
+> = {
+  invalid: { code: `bad_request`, status: 400, message: `This link is not valid.` },
+  expired: { code: `bad_request`, status: 400, message: `This link has expired.` },
+  "not-recognised": { code: `not_found`, status: 404, message: `This link is not recognised.` },
+  limited: { code: `rate_limited`, status: 429, message: `Too many tries. Try again later.` },
+  error: { code: `internal`, status: 500, message: `Request failed` },
+}
+
+/**
+ * A token route's refusal: the error body with the state as its `reason`, which the confirm and
+ * unsubscribe pages read. A failure on our side carries no reason.
+ */
+function tokenRefusal(
+  c: Context<APIContext>,
+  state: SubscriberTokenRefusal | `error`,
+  status = TOKEN_REFUSALS[state].status,
+): Response {
+  const { code, message } = TOKEN_REFUSALS[state]
+  return errorResponse(c, code, {
+    message,
+    status,
+    ...(state === `error` ? {} : { reason: state }),
+  })
 }

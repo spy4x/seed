@@ -29,6 +29,7 @@ import {
   createAdminAuditRoutes,
 } from "./audit.ts"
 import { ADMIN_EXPORT_CROSS_SITE } from "./users.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const SECRET = "test-only-cursor-secret-0123456789abcdef"
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()
@@ -172,7 +173,7 @@ describe("audit log routes", () => {
     const response = await get(app, `/audit?person=bob&cursor=${encodeURIComponent(first.next)}`)
 
     expect(response.status).toBe(400)
-    expect((await response.json()).error).toBe(ADMIN_AUDIT_BAD_CURSOR)
+    expect((await apiError(response)).message).toBe(ADMIN_AUDIT_BAD_CURSOR)
     expect(calls).toHaveLength(1)
   })
 
@@ -248,7 +249,7 @@ describe("audit log routes", () => {
       const response = await app.request(`${API_URL}/admin/audit/export.csv`, { headers })
 
       expect(response.status).toBe(403)
-      expect((await response.json()).error).toBe(ADMIN_EXPORT_CROSS_SITE)
+      expect((await apiError(response)).message).toBe(ADMIN_EXPORT_CROSS_SITE)
       // The service lists and writes the audit row, so no call means no read and no export row.
       expect(calls).toEqual([])
     })

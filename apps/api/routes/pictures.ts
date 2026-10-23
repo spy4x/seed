@@ -4,6 +4,7 @@ import type { StoredPicture } from "@server/auth/profile-pictures.ts"
 import type { FileStore } from "@server/files/files.ts"
 import { pictureObjectKey } from "@domain/identity"
 import type { APIContext } from "../_types.ts"
+import { errorResponse } from "../services/error-response.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
 
 /** The answer for a picture the viewer may not see, and for one that is not there. */
@@ -25,7 +26,7 @@ export async function pictureRedirect(
   picture: StoredPicture | null,
   signDownload: FileStore[`signDownload`],
 ): Promise<Response> {
-  if (!picture) return c.json({ error: PICTURE_NOT_FOUND }, 404)
+  if (!picture) return errorResponse(c, `not_found`, { message: PICTURE_NOT_FOUND })
   const url = await signDownload(pictureObjectKey(picture.id), {
     contentType: picture.contentType,
     filename: `picture`,

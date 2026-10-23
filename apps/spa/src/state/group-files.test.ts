@@ -110,7 +110,12 @@ describe("group import store", () => {
     const refused = createGroupImportStore(
       harness({
         "POST /api/groups/import/check": [422, {
-          error: { code: "IMPORT_REFUSED", problems, total: 1 },
+          error: {
+            code: "bad_request",
+            message: "The file cannot be imported",
+            reason: "IMPORT_REFUSED",
+            details: { problems, total: 1 },
+          },
         }],
       }).ports,
     )
@@ -121,10 +126,15 @@ describe("group import store", () => {
       harness({
         "POST /api/groups/import/check": [402, {
           error: {
-            code: "PLAN_LIMIT_REACHED",
-            entitlement: "maxNotes",
-            limit: 2,
-            canUpgrade: true,
+            code: "forbidden",
+            message: "The group has reached its plan's limit",
+            reason: "PLAN_LIMIT_REACHED",
+            details: {
+              code: "PLAN_LIMIT_REACHED",
+              entitlement: "maxNotes",
+              limit: 2,
+              canUpgrade: true,
+            },
           },
         }],
       }).ports,

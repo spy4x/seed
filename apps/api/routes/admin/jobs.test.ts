@@ -31,6 +31,7 @@ import {
   createAdminJobsRoutes,
   jobMatch,
 } from "./jobs.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const JOB_ID = `01927f3e-6b2a-7c3d-8e4f-5a6b7c8d9e0f`
 const ABOUT_ID = `01927f3e-6b2a-7c3d-8e4f-000000000001`
@@ -247,7 +248,7 @@ describe(`jobs routes`, () => {
     const { app } = buildApp({ record: null })
     const response = await send(app, `GET`, `/jobs/${JOB_ID}`)
     expect(response.status).toBe(404)
-    expect((await response.json()).error).toBe(ADMIN_JOB_NOT_FOUND)
+    expect((await apiError(response)).message).toBe(ADMIN_JOB_NOT_FOUND)
   })
 
   for (const [path, name] of [[`retry`, `retry`], [`run-now`, `runNow`], [`cancel`, `cancel`]]) {
@@ -268,7 +269,7 @@ describe(`jobs routes`, () => {
       const response = await send(app, `POST`, `/jobs/${JOB_ID}/${path}`)
 
       expect(response.status).toBe(409)
-      expect((await response.json()).error).toBe(ADMIN_JOB_STALE)
+      expect((await apiError(response)).message).toBe(ADMIN_JOB_STALE)
     })
 
     it(`${path}: answers 404 when no job has the id`, async () => {
@@ -283,7 +284,7 @@ describe(`jobs routes`, () => {
     const response = await send(app, `POST`, `/jobs/${JOB_ID}/cancel`)
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(`Unschedule the post on the Blog page.`)
+    expect((await apiError(response)).message).toBe(`Unschedule the post on the Blog page.`)
     expect((await (await send(app, `GET`, `/jobs/${JOB_ID}`)).json()).cancellable).toBe(false)
     expect((await (await send(buildApp().app, `GET`, `/jobs/${JOB_ID}`)).json()).cancellable)
       .toBe(true)
@@ -294,7 +295,7 @@ describe(`jobs routes`, () => {
     const response = await send(app, `POST`, `/jobs/${JOB_ID}/retry`)
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(ADMIN_JOB_SUPERSEDED)
+    expect((await apiError(response)).message).toBe(ADMIN_JOB_SUPERSEDED)
   })
 
   it(`lists each repeating job with its schedule in words, last run and next run`, async () => {
@@ -332,7 +333,7 @@ describe(`jobs routes`, () => {
     const response = await send(app, `POST`, `/jobs/repeating/outbox.cleanup/run-now`)
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(ADMIN_JOB_RUNNING)
+    expect((await apiError(response)).message).toBe(ADMIN_JOB_RUNNING)
   })
 
   it(`runs every failed job again, up to the cap, and says how many`, async () => {

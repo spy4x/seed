@@ -233,16 +233,17 @@ unreachable. That is:
 
 - no answer at all: no network, a connection that fails, a socket that is not open;
 - an answer taken for one the API did not write: a 502, 503, 504 or any other 5xx, a 404 or a
-  429, each without an error code in its body. The proxy in front of the API answers these for a few
+  429, each without a reason in its body. The proxy in front of the API answers these for a few
   seconds while the API's container is replaced by a deploy.
 
 The rule is the library's (`isForeignAnswer` in `@spy4x/realtime`, which the calls port follows
-too), and it reads only the status and `error.code`. The feature routes answer their errors as
-`{ error: { code, message } }`. So a 404 with a code is the API saying the thing is gone, and
-deletes the copy; a 404 without one is the proxy, and the copy both answers and stays. A 5xx with a
-code is the server struggling: the screen shows the error and the copy stays. The feature routes
-answer an error they did not expect with 500 and the code `INTERNAL_ERROR`; the calls route
-(`/api/call/<name>`) and the socket answer theirs with the code `internal`. A 401 or a 403 is a
+too), and it reads only the status and the code it is given. Every error of the API has one body
+([api-errors.md](api-errors.md)); a REST read hands its `reason`, the feature's own code, to
+`ReadRefused`. So a 404 with a reason is the API saying the thing is gone, and deletes the copy; a
+404 without one is the proxy, and the copy both answers and stays. A 5xx with a reason is the
+server struggling: the screen shows the error and the copy stays. The feature routes answer an error
+they did not expect with 500 and the reason `INTERNAL_ERROR`; the calls route (`/api/call/<name>`)
+and the socket answer theirs with the code `internal`. A 401 or a 403 is a
 refusal with or without a code.
 
 The notes and tags lists follow the same rule, although their copy is not in the read cache: their
@@ -251,11 +252,10 @@ proxy's 502 shows the saved notes or tags with the queued writes on top, and a 4
 API's own 404 for a group deletes what the device kept of that group's notes or tags. The queue is
 not touched.
 
-Not every answer of the API carries a code, and the page cannot tell those from a proxy's:
+Not every answer of the API carries a reason, and the page cannot tell those from a proxy's:
 
-- the rate limiter answers 429 with `{ error: "<message>" }`, and so do the auth routes for their
-  errors (the devices list is one of them);
-- an error that no route handled is a plain-text 500.
+- the rate limiter's 429 and the auth routes' errors (the devices list is one of them) have none;
+- an error that no route handled is a 500 with the code `internal` and no reason.
 
 With a saved copy, the page shows the copy with its "saved at" time for these too, and not "Too
 many requests" or the error. Nothing is deleted, and the next read asks the server again. When the

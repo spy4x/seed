@@ -114,13 +114,12 @@ export function createApi(
 }
 
 /**
- * The message of an API error, from either shape the API answers with: `{ error: "…" }`, as the
- * subscriber routes do, or `{ error: { code, message } }`.
+ * The message of an API error, from the one shape the API answers with:
+ * `{ error: { code, message, … } }` (docs/api-errors.md).
  */
 export function errorMessage(answer: ApiAnswer, fallback: string): string {
   if (!isRecord(answer.body)) return fallback
   const { error } = answer.body
-  if (typeof error === "string") return error
   if (isRecord(error) && typeof error.message === "string") return error.message
   return fallback
 }

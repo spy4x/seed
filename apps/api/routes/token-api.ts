@@ -24,6 +24,7 @@ import {
 } from "../features/notes/list.ts"
 import { readFeatureJson } from "@api/services/json-body.ts"
 import { parseListLimit } from "@api/services/list-limit.ts"
+import { codeForStatus, errorResponse } from "../services/error-response.ts"
 
 /** The context of a token request: the token that `authenticate` accepted. */
 export interface TokenApiContext {
@@ -152,13 +153,12 @@ function tokenApiErrorResponse(c: Context<TokenApiContext>, error: unknown): Res
     return noteErrorResponse(c as unknown as Context<APIContext>, error)
   }
   const definition = TOKEN_ERRORS[error.code]
-  return c.json({
-    error: {
-      code: error.code,
-      message: definition.message,
-      requestId: c.get("requestId") || "unknown",
-    },
-  }, definition.status)
+  return errorResponse(c, codeForStatus(definition.status), {
+    message: definition.message,
+    reason: error.code,
+    status: definition.status,
+    fields: error.fields,
+  })
 }
 
 function groupIdOf(c: Context<TokenApiContext>): string {

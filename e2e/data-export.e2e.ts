@@ -46,7 +46,7 @@ test("asking for my data shows it in preparation, keeps it after a reload, and r
 
     const again = await page.request.post(`${apiBase}/api/account/data-export`, { headers })
     expect(again.status()).toBe(429)
-    expect((await again.json()).code).toBe("TOO_SOON")
+    expect((await again.json()).error.reason).toBe("TOO_SOON")
     // Nothing is ready, so the download address answers 404 and signs nothing.
     const download = await page.request.get(`${apiBase}/api/account/data-export/download`, {
       headers,

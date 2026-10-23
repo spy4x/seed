@@ -141,10 +141,10 @@ first answer back.
 Each token can make up to 100 requests a minute, and each address up to 100 refused requests a
 minute. These are the defaults; the operator of the service may set others.
 
-Past a limit the answer is `429`, with a body of its own:
+Past a limit the answer is `429`, in the same body as every other error:
 
 ```json
-{ "error": "Too many requests, please try again later." }
+{ "error": { "code": "rate_limited", "message": "Too many requests, please try again later.", "requestId": "..." } }
 ```
 
 Wait for the number of seconds in the `Retry-After` header, then try again. Every answer also
@@ -155,8 +155,13 @@ carries `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`.
 Every other error answers with this body:
 
 ```json
-{ "error": { "code": "TOKEN_INVALID", "message": "...", "requestId": "..." } }
+{ "error": { "code": "unauthorized", "message": "...", "reason": "TOKEN_INVALID", "requestId": "..." } }
 ```
+
+`code` is one of `bad_request`, `unauthorized`, `forbidden`, `not_found`, `conflict`,
+`rate_limited`, `internal` and `timeout`. `reason` names the refusal more finely; these are the
+reasons this API answers with. A request whose body does not fit also carries `fields`: each
+failed field's path with its code and rule.
 
 - **400** `INVALID_REQUEST`: Something in the request is missing or malformed. Check the ids in the path,
   `limit`, and the JSON body and its lengths against this page.

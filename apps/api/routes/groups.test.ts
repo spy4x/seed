@@ -21,6 +21,7 @@ import { IdempotencyError } from "@spy4x/server/idempotency"
 import { createGroupGetHandler } from "../features/groups/handlers.ts"
 import { createGroupsRoute, GroupsRouteDependencies } from "./groups.ts"
 import { buildAuthData } from "../_testing/fake-auth.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const id = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
 const now = new Date("2026-08-18T10:00:00.000Z")
@@ -190,7 +191,7 @@ describe("groups route", () => {
 
     for (const response of [created, renamed]) {
       expect(response.status).toBe(400)
-      expect((await response.json()).error.code).toBe("INVALID_REQUEST")
+      expect((await apiError(response)).reason).toBe("INVALID_REQUEST")
     }
     expect(deps.createCommand).toBe(null)
   })
@@ -207,8 +208,9 @@ describe("groups route", () => {
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({
       error: {
-        code: "INVALID_REQUEST",
+        code: "bad_request",
         message: "Request is invalid",
+        reason: "INVALID_REQUEST",
         requestId: "req-groups-1",
       },
     })
@@ -391,8 +393,9 @@ describe("groups route", () => {
     expect(response.status).toBe(401)
     expect(await response.json()).toEqual({
       error: {
-        code: "MFA_REQUIRED",
+        code: "unauthorized",
         message: "Complete MFA to access groups",
+        reason: "MFA_REQUIRED",
         requestId: "req-groups-1",
       },
     })
@@ -427,7 +430,7 @@ describe("groups route", () => {
       })
 
       expect(response.status).toBe(400)
-      expect((await response.json()).error.code).toBe("INVALID_REQUEST")
+      expect((await apiError(response)).reason).toBe("INVALID_REQUEST")
       expect(deps.createCommand).toBe(null)
     })
 
@@ -441,7 +444,7 @@ describe("groups route", () => {
       })
 
       expect(response.status).toBe(401)
-      expect((await response.json()).error.code).toBe("MFA_REQUIRED")
+      expect((await apiError(response)).reason).toBe("MFA_REQUIRED")
       expect(deps.createCommand).toBe(null)
     })
   })
@@ -461,8 +464,9 @@ describe("groups route", () => {
     expect(response.status).toBe(409)
     expect(await response.json()).toEqual({
       error: {
-        code: "ID_ALREADY_EXISTS",
+        code: "conflict",
         message: "Group id is already in use",
+        reason: "ID_ALREADY_EXISTS",
         requestId: "req-groups-1",
       },
     })
@@ -479,8 +483,9 @@ describe("groups route", () => {
     expect(response.status).toBe(500)
     expect(await response.json()).toEqual({
       error: {
-        code: "INTERNAL_ERROR",
+        code: "internal",
         message: "Internal server error",
+        reason: "INTERNAL_ERROR",
         requestId: "req-groups-1",
       },
     })
@@ -490,8 +495,9 @@ describe("groups route", () => {
 describe("groups route same-origin guard", () => {
   const originRefused = {
     error: {
-      code: "REQUEST_ORIGIN_INVALID",
+      code: "forbidden",
       message: "Request origin is invalid",
+      reason: "REQUEST_ORIGIN_INVALID",
       requestId: "req-groups-1",
     },
   }
@@ -581,8 +587,9 @@ describe("groups route same-origin guard", () => {
     expect(response.status).toBe(401)
     expect(await response.json()).toEqual({
       error: {
-        code: "AUTH_REQUIRED",
+        code: "unauthorized",
         message: "Authentication required",
+        reason: "AUTH_REQUIRED",
         requestId: "req-groups-1",
       },
     })
@@ -630,8 +637,9 @@ describe("groups route caps the JSON body", () => {
     expect(response.status).toBe(400)
     expect(await response.json()).toEqual({
       error: {
-        code: "INVALID_REQUEST",
+        code: "bad_request",
         message: "Request is invalid",
+        reason: "INVALID_REQUEST",
         requestId: "req-groups-1",
       },
     })
@@ -669,7 +677,7 @@ describe("groups route idempotency", () => {
       const response = await post(buildApp(deps), { "idempotency-key": "key-1" })
 
       expect(response.status).toBe(status)
-      expect((await response.json()).error.code).toBe(code)
+      expect((await apiError(response)).reason).toBe(code)
     })
   }
 })

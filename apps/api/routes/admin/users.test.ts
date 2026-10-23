@@ -32,6 +32,7 @@ import {
   ADMIN_TOO_MANY_RESETS,
   createAdminUsersRoutes,
 } from "./users.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 /**
  * The people actions of #425 behind the real operator gate: one session, a role, a reset link and
@@ -197,7 +198,7 @@ describe("the people actions of the operator area", () => {
     const missing = buildApp(administrator(), { outcome: AdminActOutcome.SessionNotFound })
     const response = await send(missing.app, ROUTES[0])
     expect(response.status).toBe(404)
-    expect((await response.json()).error).toBe(ADMIN_SESSION_NOT_FOUND)
+    expect((await apiError(response)).message).toBe(ADMIN_SESSION_NOT_FOUND)
     expect(missing.emitted).toEqual([])
   })
 
@@ -229,7 +230,7 @@ describe("the people actions of the operator area", () => {
     for (const [outcome, status, error] of cases) {
       const { app } = buildApp(administrator(), { outcome })
       const response = await send(app, ROUTES[1])
-      expect([outcome, response.status, (await response.json()).error]).toEqual([
+      expect([outcome, response.status, (await apiError(response)).message]).toEqual([
         outcome,
         status,
         error,
@@ -251,7 +252,7 @@ describe("the people actions of the operator area", () => {
     const response = await send(app, ROUTES[5])
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(ADMIN_NO_PICTURE)
+    expect(await apiError(response)).toMatchObject({ code: `conflict`, message: ADMIN_NO_PICTURE })
   })
 
   it("answers a picture's bytes as its type, never as a page, and 404 for one that is not there", async () => {
@@ -284,7 +285,7 @@ describe("the people actions of the operator area", () => {
     const response = await send(app, ROUTES[2])
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(ADMIN_NO_PASSWORD)
+    expect((await apiError(response)).message).toBe(ADMIN_NO_PASSWORD)
   })
 
   it("answers 429 with Retry-After when the address has had its reset links for now", async () => {
@@ -296,7 +297,7 @@ describe("the people actions of the operator area", () => {
 
     expect(response.status).toBe(429)
     expect(response.headers.get("retry-after")).toBe("62")
-    expect((await response.json()).error).toBe(ADMIN_TOO_MANY_RESETS)
+    expect((await apiError(response)).message).toBe(ADMIN_TOO_MANY_RESETS)
   })
 
   it("answers 500, not a file of headers only, when the export's first read fails", async () => {
@@ -344,7 +345,7 @@ describe("the people actions of the operator area", () => {
       const response = await send(app, ROUTES[3], headers)
 
       expect(response.status).toBe(403)
-      expect((await response.json()).error).toBe(ADMIN_EXPORT_CROSS_SITE)
+      expect((await apiError(response)).message).toBe(ADMIN_EXPORT_CROSS_SITE)
       // The service writes the audit row, so no call means no row.
       expect(calls).toEqual([])
     }

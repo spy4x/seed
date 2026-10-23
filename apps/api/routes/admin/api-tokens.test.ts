@@ -27,6 +27,7 @@ import {
 import { ADMIN_OUTRANKED, ADMIN_SELF, ADMIN_USER_NOT_FOUND } from "./users.ts"
 import { ADMIN_API_MODULES } from "./registry.ts"
 import type { AdminModuleContext } from "./module.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const TOKEN_ID = "01920000-0000-7000-8000-000000000001"
 
@@ -175,7 +176,7 @@ describe("the api-tokens module's routes", () => {
     for (const route of ROUTES.slice(3, 6)) {
       const response = await send(app, route)
       expect(response.status).toBe(404)
-      expect((await response.json()).error).toBe(ADMIN_USER_NOT_FOUND)
+      expect((await apiError(response)).message).toBe(ADMIN_USER_NOT_FOUND)
     }
     const bad = await send(app, { method: "GET", path: "/admin/users/abc/devices" })
     expect(bad.status).toBe(404)
@@ -195,7 +196,7 @@ describe("the api-tokens module's routes", () => {
     const response = await send(app, { method: "POST", path: "/admin/api-tokens/42/revoke" })
 
     expect(response.status).toBe(404)
-    expect((await response.json()).error).toBe(ADMIN_TOKEN_NOT_FOUND)
+    expect((await apiError(response)).message).toBe(ADMIN_TOKEN_NOT_FOUND)
     expect(calls).toEqual([])
   })
 
@@ -211,7 +212,7 @@ describe("the api-tokens module's routes", () => {
       const response = await send(app, ROUTES[2])
 
       expect(response.status).toBe(status)
-      expect((await response.json()).error).toBe(error)
+      expect((await apiError(response)).message).toBe(error)
     })
   }
 
@@ -238,7 +239,7 @@ describe("the api-tokens module's routes", () => {
       const response = await send(app, ROUTES[6])
 
       expect(response.status).toBe(status)
-      expect((await response.json()).error).toBe(error)
+      expect((await apiError(response)).message).toBe(error)
       expect(emitted).toEqual([])
     })
   }

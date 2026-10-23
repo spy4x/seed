@@ -131,7 +131,10 @@ it(`saves the export under today's name, posting with the session cookie`, async
 
 it(`says why the export failed and saves nothing`, async () => {
   const { request } = fakeRequest()
-  const refused = new Response(JSON.stringify({ error: `Too many requests` }), { status: 429 })
+  const refused = Response.json(
+    { error: { code: `rate_limited`, message: `Too many requests` } },
+    { status: 429 },
+  )
   for (
     const [answer, message] of [
       [refused, `Too many requests`],

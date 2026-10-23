@@ -33,6 +33,7 @@ import { sendEmailCode } from "../../libs/server/auth/email-verification.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { checkedError } from "../../apps/api/_testing/api-error.ts"
 
 /**
  * What an account made with Google can do without a password (#384): delete itself, set a first
@@ -273,7 +274,7 @@ async function emailOf(visitor: Browser): Promise<EmailStatus> {
 /** The body of a refusal, after checking its status. */
 async function refusal(response: Response, status = 400): Promise<string> {
   expect(response.status).toBe(status)
-  return (await response.json()).error
+  return checkedError(await response.json()).message
 }
 
 Deno.test("an account made with Google deletes itself after a Google sign-in a moment ago", async () => {

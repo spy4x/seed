@@ -21,6 +21,7 @@ import { createGroupsRoute, type GroupsRouteDependencies } from "../../routes/gr
 import { Realtime } from "../../services/realtime.ts"
 import { createGroupMoveAllHandler } from "./handlers.ts"
 import { createGroupOperations } from "./operations.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 /**
  * Moving all of a group's data over both transports, on the bus as the API wires it (session gate,
@@ -170,7 +171,7 @@ describe("moving all of a group's data over REST", () => {
     const response = await rest(buses, VIEWER_OF_SOURCE)(`/${FROM}/move-all`, { toGroupId: TO })
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+    expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
     expect(calls).toEqual([])
   })
 
@@ -180,7 +181,7 @@ describe("moving all of a group's data over REST", () => {
     const response = await rest(buses, VIEWER_OF_TARGET)(`/${FROM}/move-all`, { toGroupId: TO })
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error.code).toBe("ROLE_INSUFFICIENT")
+    expect((await apiError(response)).reason).toBe("ROLE_INSUFFICIENT")
     expect(calls).toEqual([])
   })
 
@@ -190,7 +191,7 @@ describe("moving all of a group's data over REST", () => {
     const response = await rest(buses, STRANGER_TO_TARGET)(`/${FROM}/move-all`, { toGroupId: TO })
 
     expect(response.status).toBe(404)
-    expect((await response.json()).error.code).toBe("GROUP_NOT_FOUND")
+    expect((await apiError(response)).reason).toBe("GROUP_NOT_FOUND")
     expect(calls).toEqual([])
   })
 
@@ -200,7 +201,7 @@ describe("moving all of a group's data over REST", () => {
     const response = await rest(buses, EDITOR)(`/${FROM}/move-all`, { toGroupId: FROM })
 
     expect(response.status).toBe(400)
-    expect((await response.json()).error.code).toBe("SAME_GROUP")
+    expect((await apiError(response)).reason).toBe("SAME_GROUP")
     expect(calls).toEqual([])
   })
 
@@ -213,7 +214,7 @@ describe("moving all of a group's data over REST", () => {
     })
 
     expect(response.status).toBe(400)
-    expect((await response.json()).error.code).toBe("INVALID_REQUEST")
+    expect((await apiError(response)).reason).toBe("INVALID_REQUEST")
     expect(calls).toEqual([])
   })
 
@@ -236,8 +237,8 @@ describe("moving all of a group's data over REST", () => {
     const response = await rest(buses, EDITOR)(`/${FROM}/move-all`, { toGroupId: TO })
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toMatchObject({
-      code: "TAG_LIMIT_REACHED",
+    expect(await apiError(response)).toMatchObject({
+      reason: "TAG_LIMIT_REACHED",
       message: "The other group has no room for this group's tags",
     })
   })
@@ -258,8 +259,9 @@ describe("moving all of a group's data over REST", () => {
     const response = await rest(buses, EDITOR)(`/${FROM}/move-all`, { toGroupId: TO })
 
     expect(response.status).toBe(402)
-    expect(await response.json()).toMatchObject({
-      error: { code: "PLAN_LIMIT_REACHED", entitlement: "maxNotes", limit: 10, canUpgrade: true },
+    expect(await apiError(response)).toMatchObject({
+      reason: "PLAN_LIMIT_REACHED",
+      details: { code: "PLAN_LIMIT_REACHED", entitlement: "maxNotes", limit: 10, canUpgrade: true },
     })
   })
 

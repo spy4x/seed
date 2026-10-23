@@ -17,6 +17,7 @@ import type { APIContext } from "../../apps/api/_types.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { checkedError } from "../../apps/api/_testing/api-error.ts"
 
 /**
  * The short lock per sign-in name after repeated wrong passwords (#387), against a real Postgres:
@@ -146,7 +147,7 @@ async function buildApp(sql: postgres.Sql) {
     return {
       status: response.status,
       retryAfter: response.headers.get("retry-after"),
-      body: response.status === 200 ? "the profile" : await response.json(),
+      body: response.status === 200 ? "the profile" : refusal(await response.json()),
     }
   }
   /** Signs in with the right password and answers a client that sends this session's cookie. */
@@ -168,11 +169,20 @@ async function buildApp(sql: postgres.Sql) {
       return {
         status: response.status,
         retryAfter: response.headers.get("retry-after"),
-        body: await response.json(),
+        body: response.ok ? await response.json() : refusal(await response.json()),
       }
     }
   }
   return { clock, attempt, session }
+}
+
+/**
+ * A refusal's code and message: the parts two answers must share. The request's own id differs
+ * between any two requests, so it is left out.
+ */
+function refusal(body: unknown): { code: string; message: string } {
+  const { code, message } = checkedError(body)
+  return { code, message }
 }
 
 Deno.test("repeated wrong passwords lock one account for a short time", async (t) => {
@@ -202,7 +212,10 @@ Deno.test("repeated wrong passwords lock one account for a short time", async (t
         expect(wrong).toEqual({
           status: 429,
           retryAfter: "60",
-          body: { error: "Too many wrong passwords. Try again in 1 minute." },
+          body: {
+            code: "rate_limited",
+            message: "Too many wrong passwords. Try again in 1 minute.",
+          },
         })
         expect(await attempt("ada@example.com", PASSWORD)).toEqual(wrong)
       },
@@ -280,10 +293,11 @@ Deno.test("an account with a password turns two-factor on only with that passwor
 
     await t.step("none and a wrong one are refused, and no set-up starts", async () => {
       expect((await post("/auth/totp/connect/start", {})).body).toEqual({
-        error: "Invalid password",
+        code: "bad_request",
+        message: "Invalid password",
       })
       expect((await post("/auth/totp/connect/start", { password: "wrong-guess" })).body)
-        .toEqual({ error: "Invalid password" })
+        .toEqual({ code: "bad_request", message: "Invalid password" })
       expect(await sql`SELECT 1 FROM user_totp`).toEqual([])
     })
 
@@ -323,7 +337,10 @@ Deno.test("wrong passwords at every signed-in step share one lock per account (#
         const locked = {
           status: 429,
           retryAfter: "60",
-          body: { error: "Too many wrong passwords. Try again in 1 minute." },
+          body: {
+            code: "rate_limited",
+            message: "Too many wrong passwords. Try again in 1 minute.",
+          },
         }
         expect(await post("/auth/totp/disconnect", { password: PASSWORD })).toEqual(locked)
         expect(await post("/auth/totp/connect/start", { password: PASSWORD })).toEqual(locked)

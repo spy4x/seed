@@ -9,6 +9,11 @@ import { createAdminHostGate } from "./middlewares/admin-host.ts"
 import { type IsProxyPeer, requireProxyForForwardedHeaders } from "@spy4x/server/http/trusted-proxy"
 import { denoServeRemoteAddr } from "@spy4x/platform/rate-limit/hono"
 import type { APIContext } from "./_types.ts"
+import {
+  errorResponse,
+  libraryRefusals,
+  unhandledErrorResponse,
+} from "./services/error-response.ts"
 
 /**
  * The API's app before any route is mounted: the base path, the security headers, the request log
@@ -27,6 +32,10 @@ import type { APIContext } from "./_types.ts"
  * route's answer, on the refusal of the page-user check, on the 404 of an unknown address and on
  * the 500 of an error. The API answers JSON and no page, so the policy is the library's strictest,
  * with nothing added (docs/security-headers.md).
+ *
+ * The 404 of an unknown address and the answer to an error no route handled use the API's one
+ * error body too (docs/api-errors.md), and so does every refusal of a shared library's middleware
+ * (`libraryRefusals`), so a client never meets a second error shape.
  */
 export async function createApiApp(
   options: BaseMiddlewareOptions & { adminHost?: string | null; isProxyPeer: IsProxyPeer },
@@ -34,7 +43,11 @@ export async function createApiApp(
   const { adminHost = null, isProxyPeer, ...base } = options
   const app = new Hono<APIContext>().basePath("/api")
   app.use("*", await securityHeaders())
+  app.use("*", libraryRefusals)
   applyBaseMiddleware(app, base)
+  // After the base middleware, which sets a plain-text handler of its own.
+  app.onError((error, c) => unhandledErrorResponse(c, error))
+  app.notFound((c) => errorResponse(c, `not_found`, { message: `Not found` }))
   app.use(
     "*",
     requireProxyForForwardedHeaders<APIContext>(isProxyPeer, { remoteAddr: denoServeRemoteAddr }),

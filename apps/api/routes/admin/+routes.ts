@@ -4,6 +4,7 @@ import type { APIContext } from "../../_types.ts"
 import type { MutationGuards } from "../../middlewares/mutation-guards.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
 import { ADMIN_NOT_FOUND } from "./module.ts"
+import { errorResponse } from "../../services/error-response.ts"
 
 export { ADMIN_NOT_FOUND } from "./module.ts"
 
@@ -27,12 +28,14 @@ export function createAdminRoute(dependencies: AdminRouteDependencies): Hono<API
     .use(dependencies.auth.isAuthenticated2FA)
     // Before anything else answers: below operator, no path tells anything apart.
     .use(async (c, next) => {
-      if (!canOpenAdmin(c.get("auth")!.user.role)) return c.json({ error: ADMIN_NOT_FOUND }, 404)
+      if (!canOpenAdmin(c.get("auth")!.user.role)) {
+        return errorResponse(c, `not_found`, { message: ADMIN_NOT_FOUND })
+      }
       await next()
     })
     .use(dependencies.mutationGuards.signedIn)
   for (const module of dependencies.modules) route.route(`/`, module)
   // Every other path under the area, for operators too: the same 404 as below operator.
-  route.all(`*`, (c) => c.json({ error: ADMIN_NOT_FOUND }, 404))
+  route.all(`*`, (c) => errorResponse(c, `not_found`, { message: ADMIN_NOT_FOUND }))
   return route
 }

@@ -24,7 +24,7 @@ async function call(
   result: ReturnType<typeof apiFetch<{ export: DataExportJson | null }>>,
 ): Promise<DataExportCall> {
   const answer = await result
-  if (!answer.ok) return { ok: false, status: answer.status, code: answer.error.code }
+  if (!answer.ok) return { ok: false, status: answer.status, code: answer.error.reason }
   return { ok: true, export: answer.data.export ? parseDataExportJson(answer.data.export) : null }
 }
 

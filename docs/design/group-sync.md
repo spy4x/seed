@@ -611,8 +611,9 @@ drops.
 - Mutation CSRF: same-origin `Origin`/Fetch Metadata validation.
 - IDs: lowercase canonical UUID strings. Version, sequence, and authorization revision values are
   non-negative decimal strings.
-- Error envelope: `{ "error": { "code": string, "message": string, "requestId": string,
-  "details"?: object } }`.
+- Error envelope: the API's one error body, `{ "error": { "code", "message", "reason"?,
+  "fields"?, "details"?, "requestId"? } }` ([api-errors.md](../api-errors.md)). The codes named
+  below, such as `LAST_OWNER`, are its `reason`.
 - Unknown fields are rejected, consistent with current strict schema configuration
   (`libs/shared/types/+index.ts:1-3`).
 - `413 PAYLOAD_TOO_LARGE` applies before full JSON parsing when `Content-Length` exceeds the limit

@@ -30,6 +30,7 @@ import {
   NEWSLETTER_NOT_LISTED,
   NEWSLETTER_OFF,
 } from "./newsletter.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const confirmed: AdminSubscriberRow = {
   email: `ada@example.com`,
@@ -240,7 +241,7 @@ describe(`operator area: newsletter routes`, () => {
       })
 
       expect(response.status).toBe(400)
-      expect((await response.json()).error).toBe(NEWSLETTER_INVALID_SEARCH)
+      expect((await apiError(response)).message).toBe(NEWSLETTER_INVALID_SEARCH)
       expect(calls).toEqual([])
     })
   }
@@ -283,7 +284,7 @@ describe(`operator area: newsletter routes`, () => {
     const response = await post(app, `remove`, { email: `nobody@example.com` })
 
     expect(response.status).toBe(404)
-    expect((await response.json()).error).toBe(NEWSLETTER_NOT_LISTED)
+    expect((await apiError(response)).message).toBe(NEWSLETTER_NOT_LISTED)
     expect(calls).toEqual([[`find`, `nobody@example.com`]])
     expect(audits).toEqual([])
   })
@@ -296,7 +297,7 @@ describe(`operator area: newsletter routes`, () => {
       const response = await post(app, `remove`, body)
 
       expect(response.status).toBe(400)
-      expect((await response.json()).error).toBe(NEWSLETTER_INVALID_ADDRESS)
+      expect((await apiError(response)).message).toBe(NEWSLETTER_INVALID_ADDRESS)
       expect(calls).toEqual([])
       expect(audits).toEqual([])
     })
@@ -308,7 +309,7 @@ describe(`operator area: newsletter routes`, () => {
     for (const path of [`remove`, `resend`]) {
       const response = await post(app, path, { email: pending.email })
       expect(response.status).toBe(503)
-      expect((await response.json()).error).toBe(NEWSLETTER_OFF)
+      expect((await apiError(response)).message).toBe(NEWSLETTER_OFF)
     }
     expect(calls).toEqual([])
     expect(audits).toEqual([])
@@ -330,7 +331,7 @@ describe(`operator area: newsletter routes`, () => {
     const response = await post(app, `resend`, { email: confirmed.email })
 
     expect(response.status).toBe(409)
-    expect((await response.json()).error).toBe(NEWSLETTER_ALREADY_CONFIRMED)
+    expect((await apiError(response)).message).toBe(NEWSLETTER_ALREADY_CONFIRMED)
     expect(calls).toEqual([[`find`, confirmed.email]])
     expect(audits).toEqual([])
   })

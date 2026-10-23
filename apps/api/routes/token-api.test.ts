@@ -23,6 +23,7 @@ import {
 import { createTokenRateLimits } from "../middlewares/token-rate-limits.ts"
 import { createTokenApiRoute } from "./token-api.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { apiError } from "../_testing/api-error.ts"
 
 /**
  * The token API over real buses, the real session gate and the real note handlers, with notes in
@@ -150,7 +151,7 @@ function createNote(app: Hono<APIContext>, token: string | undefined, group = gr
 }
 
 async function errorCode(response: Response): Promise<string> {
-  return ((await response.json()) as { error: { code: string } }).error.code
+  return (await apiError(response)).reason ?? ``
 }
 
 describe("token API", () => {

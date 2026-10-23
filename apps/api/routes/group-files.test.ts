@@ -30,6 +30,7 @@ import {
   type GroupFileRateLimits,
 } from "../features/groups/file-rate-limits.ts"
 import { createGroupFilesRoute } from "./group-files.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const GROUP_ID = uuidV7()
 const OWNER = 7
@@ -164,7 +165,7 @@ describe("group export route", () => {
       const roles: Record<number, GroupRole> = role === undefined ? {} : { [OWNER]: role }
       const response = await app({ roles, porter: streaming }).request(exportRequest())
       expect(response.status).toBe(status)
-      expect((await response.json()).error.code).toBe(code)
+      expect((await apiError(response)).reason).toBe(code)
     }
   })
 
@@ -220,17 +221,18 @@ describe("group import routes", () => {
   it("refuses a file that is not JSON, or too large, as a bad file", async () => {
     const notJson = await app().request(post("/import/check", `{"format":`))
     expect(notJson.status).toBe(422)
-    expect((await notJson.json()).error).toMatchObject({
-      code: "IMPORT_REFUSED",
-      problems: [{ kind: "not_export" }],
+    expect(await apiError(notJson)).toMatchObject({
+      reason: "IMPORT_REFUSED",
+      details: { problems: [{ kind: "not_export" }] },
     })
     const tooLarge = await app().request(
       post("/import/check", JSON.stringify(exportFile([])) + " ".repeat(GROUP_IMPORT_MAX_BYTES)),
     )
     expect(tooLarge.status).toBe(422)
-    expect((await tooLarge.json()).error.problems).toEqual([
-      { kind: "too_large", maxBytes: GROUP_IMPORT_MAX_BYTES },
-    ])
+    expect(((await apiError(tooLarge)).details as { problems: Record<string, unknown>[] }).problems)
+      .toEqual([
+        { kind: "too_large", maxBytes: GROUP_IMPORT_MAX_BYTES },
+      ])
   })
 
   it("refuses a newer or invalid file on import before the database is reached", async () => {
@@ -238,12 +240,15 @@ describe("group import routes", () => {
       post("/import", JSON.stringify({ file: { ...exportFile([]), version: 99 } })),
     )
     expect(newer.status).toBe(422)
-    expect((await newer.json()).error.problems).toEqual([{ kind: "newer_version" }])
+    expect(((await apiError(newer)).details as { problems: Record<string, unknown>[] }).problems)
+      .toEqual([{ kind: "newer_version" }])
     const invalid = await app().request(
       post("/import", JSON.stringify({ name: "Ours", file: exportFile([{ title: 5 }]) })),
     )
     expect(invalid.status).toBe(422)
-    expect((await invalid.json()).error.problems[0]).toMatchObject({ where: "Note 1" })
+    expect(
+      ((await apiError(invalid)).details as { problems: Record<string, unknown>[] }).problems[0],
+    ).toMatchObject({ where: "Note 1" })
   })
 
   it("creates the group with the name given and answers 201", async () => {
@@ -281,7 +286,9 @@ describe("group import routes", () => {
     const response = await app().request(post("/import/check", body))
     expect(performance.now() - started).toBeLessThan(1_000)
     expect(response.status).toBe(422)
-    expect((await response.json()).error.problems[0]).toMatchObject({ where: "Notes" })
+    expect(
+      ((await apiError(response)).details as { problems: Record<string, unknown>[] }).problems[0],
+    ).toMatchObject({ where: "Notes" })
   })
 
   it("stops a person's imports past the hourly budget", async () => {

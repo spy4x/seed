@@ -27,6 +27,7 @@ import {
   SUBSCRIBE_MAX_BYTES,
   SUBSCRIBE_UNKNOWN_LIST,
 } from "./subscribers.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 /** A throwaway secret for these tests only. */
 const SETUP: SubscribersSetup = {
@@ -126,9 +127,9 @@ describe(`POST /api/subscribers`, () => {
     const unknown = await subscribe(app, { email: `ada@example.com`, list: `admin` })
 
     expect(named.status).toBe(400)
-    expect(await named.json()).toEqual({ error: SUBSCRIBE_INVALID_ADDRESS })
+    expect((await apiError(named)).message).toBe(SUBSCRIBE_INVALID_ADDRESS)
     expect(unknown.status).toBe(400)
-    expect(await unknown.json()).toEqual({ error: SUBSCRIBE_UNKNOWN_LIST })
+    expect((await apiError(unknown)).message).toBe(SUBSCRIBE_UNKNOWN_LIST)
     expect(confirmMails).toEqual([])
   })
 
@@ -267,7 +268,7 @@ describe(`confirming a subscription`, () => {
     const response = await confirm(app, { list: `news`, token: forged })
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ state: `invalid` })
+    expect(await apiError(response)).toMatchObject({ code: `bad_request`, reason: `invalid` })
     expect(await store.count()).toBe(0)
   })
 
@@ -398,8 +399,8 @@ describe(`unsubscribing`, () => {
     })
 
     expect([preview.status, post.status]).toEqual([404, 404])
-    expect(await preview.json()).toEqual({ state: `not-recognised` })
-    expect(await post.json()).toEqual({ state: `not-recognised` })
+    expect(await apiError(preview)).toMatchObject({ code: `not_found`, reason: `not-recognised` })
+    expect(await apiError(post)).toMatchObject({ code: `not_found`, reason: `not-recognised` })
     expect(listReads).toBe(0)
     expect(await store.count()).toBe(1)
   })

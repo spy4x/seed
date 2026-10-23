@@ -5,6 +5,7 @@ import { buildAuthData } from "./_testing/fake-auth.ts"
 import { createApiApp } from "./app.ts"
 import { createNotesRoute, type NotesRouteDependencies } from "./routes/notes.ts"
 import type { APIContext } from "./_types.ts"
+import { apiError } from "./_testing/api-error.ts"
 
 type Auth = APIContext["Variables"]["auth"]
 
@@ -95,7 +96,7 @@ describe("the API's app", () => {
     const responses = await Promise.all(READS.map((path) => get(path, "8")))
 
     expect(responses.map((response) => response.status)).toEqual([401, 401, 401])
-    expect((await responses[1].json()).error.code).toBe("unauthorized")
+    expect((await apiError(responses[1])).code).toBe("unauthorized")
     expect(effects).toEqual([])
   })
 
@@ -105,7 +106,7 @@ describe("the API's app", () => {
     const responses = [await write("POST", "/tokens", "8"), await write("DELETE", "/tokens/1", "8")]
 
     expect(responses.map((response) => response.status)).toEqual([401, 401])
-    expect((await responses[0].json()).error.code).toBe("unauthorized")
+    expect((await apiError(responses[0])).code).toBe("unauthorized")
     expect(effects).toEqual([])
   })
 
@@ -135,7 +136,7 @@ describe("the API's app", () => {
     const signedOut = await get("/groups/7b6d8d6c-1af5-4f04-8ae4-b1ee5d111002/notes", "8")
     const open = await get("/notifications", "8")
 
-    expect((await signedOut.json()).error.code).toBe("AUTH_REQUIRED")
+    expect((await apiError(signedOut)).reason).toBe("AUTH_REQUIRED")
     expect(open.status).toBe(200)
     expect(effects).toEqual(["notifications"])
   })
@@ -160,6 +161,22 @@ describe("the API's app", () => {
         "max-age=15552000; includeSubDomains",
       )
     }
+  })
+
+  it("answers an unknown address, a guard's refusal and a failed route in the one error body", async () => {
+    const { get } = await buildApp()
+
+    const [unknown, refused, broken] = [
+      await get("/no-such-route"),
+      await get("/notifications", "8"),
+      await get("/broken"),
+    ]
+
+    expect(await apiError(unknown)).toMatchObject({ code: "not_found", message: "Not found" })
+    expect((await apiError(refused)).code).toBe("unauthorized")
+    const failure = await apiError(broken)
+    expect(failure).toMatchObject({ code: "internal", message: "Request failed" })
+    expect(JSON.stringify(failure)).not.toContain("a route failed")
   })
 
   it("refuses a client address named by a container that is not the proxy, on every route", async () => {

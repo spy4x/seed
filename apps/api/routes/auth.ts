@@ -46,6 +46,7 @@ import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import { readApiJson } from "@api/services/json-body.ts"
 import { passwordFailureSubject } from "@api/services/password-failures.ts"
 import { PasswordLockedError, passwordLockedMessage } from "@api/services/password-locked.ts"
+import { errorResponse, validationResponse } from "../services/error-response.ts"
 
 /** What the auth routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface AuthRouteDependencies {
@@ -215,7 +216,7 @@ export const TOTP_DISCONNECT_PROOF_REQUIRED =
 /** Sets `Retry-After` and answers 429 with `error`. */
 function tooMany(c: Context<APIContext>, retryAfterMs: number, error: string): Response {
   c.header("Retry-After", String(Math.ceil(retryAfterMs / 1000)))
-  return c.json({ error }, 429)
+  return errorResponse(c, `rate_limited`, { message: error })
 }
 
 /**
@@ -233,7 +234,7 @@ async function checkUnderFailureCount(
   const waitMs = await totpFailures.begin(userId)
   if (waitMs > 0) {
     c.header("Retry-After", String(Math.ceil(waitMs / 1000)))
-    return c.json({ error: "Too many wrong codes, try again later." }, 429)
+    return errorResponse(c, `rate_limited`, { message: "Too many wrong codes, try again later." })
   }
   if (!(await check())) {
     await totpFailures.fail(userId)
@@ -305,7 +306,7 @@ export function createAuthRoute(
     .get(`/me`, rateLimits.normal, async (c) => {
       const authData = c.get("auth")
       if (!authData) {
-        return c.json({ error: "User not signed in" }, 401)
+        return errorResponse(c, `unauthorized`, { message: "User not signed in" })
       }
       // 202, like `password/check`: the session still owes its second factor. A reloaded page
       // learns that here, since it has no memory of the sign-in response.
@@ -315,7 +316,7 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authSignInSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const { login, password } = validationResult.data
       // Counted per name and before the password is looked at, whatever address the request comes
@@ -327,7 +328,7 @@ export function createAuthRoute(
       const signedIn = await signIn.signIn(c, login, password)
       if (!signedIn) {
         await passwordFailures.fail(subject)
-        return c.json({ error: "Invalid e-mail, username or password" }, 401)
+        return errorResponse(c, `unauthorized`, { message: "Invalid e-mail, username or password" })
       }
       await passwordFailures.refund(subject)
       return signInAnswer(c, signedIn)
@@ -339,11 +340,11 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authSignUpSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const email = normalizeEmail(validationResult.data.email)
       if (email === null) {
-        return c.json({ error: "Enter a valid e-mail address" }, 400)
+        return errorResponse(c, `bad_request`, { message: "Enter a valid e-mail address" })
       }
       // Spent for every address, known or not, so a refusal tells nothing about an account. The
       // sign-up budgets, not the account's own: a stranger's sign-ups must not lock its owner out.
@@ -353,7 +354,9 @@ export function createAuthRoute(
       const state = c.get("auth")
       const guestUserId = state?.user.guestSince ? state.user.id : null
       if (!(await signIn.requestSignUp(c, email, validationResult.data.password, guestUserId))) {
-        return c.json({ error: "This password cannot be used. Try another one." }, 400)
+        return errorResponse(c, `bad_request`, {
+          message: "This password cannot be used. Try another one.",
+        })
       }
       return c.json(SIGN_UP_REQUESTED)
     })
@@ -372,7 +375,7 @@ export function createAuthRoute(
         const body = await readApiJson(c)
         const validationResult = validate(authEmailCodeSchema, body)
         if (validationResult.error) {
-          return c.json({ error: validationResult.error.description }, 400)
+          return validationResponse(c, validationResult.error.details)
         }
         const result = await signIn.completeSignUp(c, validationResult.data.code)
         switch (result.outcome) {
@@ -391,9 +394,9 @@ export function createAuthRoute(
             return c.json(answer)
           }
           case SignUpOutcome.WrongCode:
-            return c.json({ error: EMAIL_CODE_REFUSED }, 400)
+            return errorResponse(c, `bad_request`, { message: EMAIL_CODE_REFUSED })
           case SignUpOutcome.Expired:
-            return c.json({ error: SIGN_UP_EXPIRED }, 410)
+            return errorResponse(c, `not_found`, { message: SIGN_UP_EXPIRED, status: 410 })
         }
       },
     )
@@ -404,10 +407,14 @@ export function createAuthRoute(
       rateLimits.normal,
       async (c) => {
         const waiting = await signIn.waitingSignUp(c)
-        if (waiting === null) return c.json({ error: SIGN_UP_EXPIRED }, 410)
+        if (waiting === null) {
+          return errorResponse(c, `not_found`, { message: SIGN_UP_EXPIRED, status: 410 })
+        }
         const decision = await rateLimits.signUpCode(c, waiting.email)
         if (!decision.allowed) return tooMany(c, decision.retryAfterMs, SIGN_UP_CODES_TOO_MANY)
-        if (!(await signIn.resendSignUpCode(c))) return c.json({ error: SIGN_UP_EXPIRED }, 410)
+        if (!(await signIn.resendSignUpCode(c))) {
+          return errorResponse(c, `not_found`, { message: SIGN_UP_EXPIRED, status: 410 })
+        }
         return c.json({ success: true })
       },
     )
@@ -419,17 +426,19 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authPasswordForgotSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const email = normalizeEmail(validationResult.data.email)
       if (email === null) {
-        return c.json({ error: "Enter a valid e-mail address" }, 400)
+        return errorResponse(c, `bad_request`, { message: "Enter a valid e-mail address" })
       }
       // Spent for every address, known or not, so a refusal tells nothing about an account.
       const decision = await rateLimits.resetByAddress(email)
       if (!decision.allowed) {
         c.header("Retry-After", String(Math.ceil(decision.retryAfterMs / 1000)))
-        return c.json({ error: "Too many reset links for this address, try again later." }, 429)
+        return errorResponse(c, `rate_limited`, {
+          message: "Too many reset links for this address, try again later.",
+        })
       }
       await requestPasswordReset(email)
       return c.json(PASSWORD_RESET_REQUESTED)
@@ -440,10 +449,12 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authSignInLinkSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const email = normalizeEmail(validationResult.data.email)
-      if (email === null) return c.json({ error: SIGN_IN_LINK_BAD_ADDRESS }, 400)
+      if (email === null) {
+        return errorResponse(c, `bad_request`, { message: SIGN_IN_LINK_BAD_ADDRESS })
+      }
       // Spent for every address, known or not; a stranger spends only their own share.
       const decision = await rateLimits.signInLink(c, email)
       if (!decision.allowed) {
@@ -463,7 +474,7 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authSignInLinkRedeemSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const result = await signIn.redeemSignInLink(c, validationResult.data.token)
       switch (result.outcome) {
@@ -484,25 +495,25 @@ export function createAuthRoute(
           return c.json(answer)
         }
         case SignInLinkOutcome.Unconfirmed:
-          return c.json({ error: SIGN_IN_LINK_UNCONFIRMED }, 409)
+          return errorResponse(c, `conflict`, { message: SIGN_IN_LINK_UNCONFIRMED })
         case SignInLinkOutcome.Refused:
-          return c.json({ error: SIGN_IN_LINK_REFUSED }, 410)
+          return errorResponse(c, `not_found`, { message: SIGN_IN_LINK_REFUSED, status: 410 })
         case SignInLinkOutcome.AskedElsewhere:
-          return c.json(
-            { error: SIGN_IN_LINK_ASKED_ELSEWHERE, code: SIGN_IN_LINK_ASKED_ELSEWHERE_CODE },
-            403,
-          )
+          return errorResponse(c, `forbidden`, {
+            message: SIGN_IN_LINK_ASKED_ELSEWHERE,
+            reason: SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
+          })
       }
     })
     .post(`/password/reset`, mutationGuards.anonymous, rateLimits.strictByIp, async (c) => {
       const body = await readApiJson(c)
       const validationResult = validate(authPasswordResetSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const { email, code, newPassword } = validationResult.data
       if (!(await signIn.resetPassword(email, code, newPassword, c))) {
-        return c.json({ error: PASSWORD_RESET_REFUSED }, 400)
+        return errorResponse(c, `bad_request`, { message: PASSWORD_RESET_REFUSED })
       }
       return c.json({ success: true })
     })
@@ -511,24 +522,24 @@ export function createAuthRoute(
     .post(`/totp/check`, rateLimits.otpByUser, async (c) => {
       const authData = c.get("auth")
       if (!authData) {
-        return c.json({ error: "User not signed in" }, 401)
+        return errorResponse(c, `unauthorized`, { message: "User not signed in" })
       }
       const body = await readApiJson(c)
       try {
         const validationResult = validate(authOTPSchema, body)
         if (validationResult.error) {
-          return c.json({ error: validationResult.error.description }, 400)
+          return validationResponse(c, validationResult.error.details)
         }
         const outcome = await checkUnderFailureCount(
           c,
           totpFailures,
           authData.user.id,
           () => signIn.checkTotp(c, authData, validationResult.data.otp),
-          () => c.json({ error: "Invalid token" }, 401),
+          () => errorResponse(c, `unauthorized`, { message: "Invalid token" }),
         )
         return outcome === true ? c.json(authData.user) : outcome
       } catch (_error) {
-        return c.json({ error: "Invalid request format" }, 400)
+        return errorResponse(c, `bad_request`, { message: "Invalid request format" })
       }
     })
     // Asks for what the deletion asks (#406): the password, or for an account without one a
@@ -538,7 +549,7 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(signInMethodProofSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const authData = c.get("auth")!
       const { password } = validationResult.data
@@ -546,14 +557,14 @@ export function createAuthRoute(
         if (
           password === undefined || !(await signIn.checkPassword(authData.user.id, password))
         ) {
-          return c.json({ error: "Invalid password" }, 400)
+          return errorResponse(c, `bad_request`, { message: "Invalid password" })
         }
       } else if (!(await signIn.confirmedByProvider(authData))) {
-        return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+        return errorResponse(c, `bad_request`, { message: PROVIDER_PROOF_REQUIRED })
       }
       const { error, qrcode, secret } = await signIn.connectTotpStart(authData)
       if (error) {
-        return c.json({ error }, 400)
+        return errorResponse(c, `bad_request`, { message: error })
       }
       return c.json({ qrcode, secret })
     })
@@ -561,7 +572,7 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authOTPSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const authData = c.get("auth")!
       const outcome = await checkUnderFailureCount(
@@ -569,7 +580,7 @@ export function createAuthRoute(
         totpFailures,
         authData.user.id,
         () => signIn.connectTotpFinish(authData, validationResult.data.otp),
-        () => c.json({ error: "Code is incorrect" }, 400),
+        () => errorResponse(c, `bad_request`, { message: "Code is incorrect" }),
       )
       return outcome === true ? c.json({ success: true }) : outcome
     })
@@ -580,7 +591,7 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authTotpDisconnectSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const authData = c.get("auth")!
       const { password, otp } = validationResult.data
@@ -590,17 +601,17 @@ export function createAuthRoute(
           totpFailures,
           authData.user.id,
           () => signIn.verifyTotpCode(authData, otp),
-          () => c.json({ error: "Code is incorrect" }, 400),
+          () => errorResponse(c, `bad_request`, { message: "Code is incorrect" }),
         )
         if (outcome !== true) return outcome
       } else if (password === undefined) {
-        return c.json({ error: TOTP_DISCONNECT_PROOF_REQUIRED }, 400)
+        return errorResponse(c, `bad_request`, { message: TOTP_DISCONNECT_PROOF_REQUIRED })
       } else if (!(await signIn.checkPassword(authData.user.id, password))) {
-        return c.json({ error: "Invalid password" }, 400)
+        return errorResponse(c, `bad_request`, { message: "Invalid password" })
       }
       const isSuccess = await signIn.disconnectTotp(authData)
       if (!isSuccess) {
-        return c.json({ error: "OTP already disabled for your account" }, 400)
+        return errorResponse(c, `bad_request`, { message: "OTP already disabled for your account" })
       }
       return c.json({ success: true })
     })
@@ -613,7 +624,9 @@ export function createAuthRoute(
       const authData = c.get("auth")!
       const status = await signIn.emailStatus(authData)
       const email = emailToVerify(status)
-      if (email === null) return c.json({ error: EMAIL_NOTHING_TO_VERIFY }, 400)
+      if (email === null) {
+        return errorResponse(c, `bad_request`, { message: EMAIL_NOTHING_TO_VERIFY })
+      }
       if (status.pending !== null) {
         const decision = await spendChangeMail(rateLimits, authData.user.id, email)
         if (!decision.allowed) return tooMany(c, decision.retryAfterMs, EMAIL_CHANGE_TOO_MANY)
@@ -634,7 +647,7 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authEmailCodeSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const authData = c.get("auth")!
       const waitMs = await emailCodeFailures.begin(authData.user.id)
@@ -642,12 +655,14 @@ export function createAuthRoute(
       const outcome = await signIn.verifyEmail(c, authData, validationResult.data.code)
       if (outcome === EmailVerifyOutcome.WrongCode) {
         await emailCodeFailures.fail(authData.user.id)
-        return c.json({ error: EMAIL_CODE_REFUSED }, 400)
+        return errorResponse(c, `bad_request`, { message: EMAIL_CODE_REFUSED })
       }
       await emailCodeFailures.refund(authData.user.id)
-      if (outcome === EmailVerifyOutcome.Taken) return c.json({ error: EMAIL_TAKEN }, 409)
+      if (outcome === EmailVerifyOutcome.Taken) {
+        return errorResponse(c, `conflict`, { message: EMAIL_TAKEN })
+      }
       if (outcome === EmailVerifyOutcome.NothingToVerify) {
-        return c.json({ error: EMAIL_NOTHING_TO_VERIFY }, 400)
+        return errorResponse(c, `bad_request`, { message: EMAIL_NOTHING_TO_VERIFY })
       }
       // A new address signed the other devices out (#406): their sockets close now. Proving the
       // address the account has ends none, and the hub then finds nothing to close.
@@ -658,24 +673,26 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authEmailChangeSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const authData = c.get("auth")!
       const { email: rawEmail, password } = validationResult.data
       const email = normalizeEmail(rawEmail)
-      if (email === null) return c.json({ error: "Enter a valid e-mail address" }, 400)
+      if (email === null) {
+        return errorResponse(c, `bad_request`, { message: "Enter a valid e-mail address" })
+      }
       const outcome = await signIn.requestEmailChange(authData, password, email)
       if (outcome === EmailChangeOutcome.WrongPassword) {
-        return c.json({ error: "Invalid password" }, 400)
+        return errorResponse(c, `bad_request`, { message: "Invalid password" })
       }
       if (outcome === EmailChangeOutcome.ProofRequired) {
-        return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+        return errorResponse(c, `bad_request`, { message: PROVIDER_PROOF_REQUIRED })
       }
       if (outcome === EmailChangeOutcome.InvalidEmail) {
-        return c.json({ error: "Enter a valid e-mail address" }, 400)
+        return errorResponse(c, `bad_request`, { message: "Enter a valid e-mail address" })
       }
       if (outcome === EmailChangeOutcome.AlreadyCarried) {
-        return c.json({ error: EMAIL_ALREADY_CARRIED }, 400)
+        return errorResponse(c, `bad_request`, { message: EMAIL_ALREADY_CARRIED })
       }
       if (outcome === EmailChangeOutcome.Kept) {
         return c.json({ success: true, message: "Your address stays as it is." })
@@ -693,7 +710,7 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authPasswordChangeSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const { password, newPassword, signOutOthers = true } = validationResult.data
       const authData = c.get("auth")!
@@ -705,7 +722,7 @@ export function createAuthRoute(
         signOutOthers,
       )
       if (!changed) {
-        return c.json({ error: "Invalid password" }, 400)
+        return errorResponse(c, `bad_request`, { message: "Invalid password" })
       }
       // The other devices' sockets close now rather than at the next periodic check.
       if (signOutOthers) emitSignOut(c, authData.user.id)
@@ -718,27 +735,29 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(authPasswordSetSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const authData = c.get("auth")!
       const { newPassword, otp } = validationResult.data
       // With two-factor on, the code is asked as the deletion asks it: the new password is
       // accepted as proof to turn two-factor off, so it must not cost less than the code.
       if (authData.user.mfa === UserMFAStatus.CONFIGURED) {
-        if (otp === undefined) return c.json({ error: PASSWORD_SET_CODE_REQUIRED }, 400)
+        if (otp === undefined) {
+          return errorResponse(c, `bad_request`, { message: PASSWORD_SET_CODE_REQUIRED })
+        }
         // The cheap refusals first, so a code is not spent on a request that sets nothing.
         if (await signIn.hasPassword(authData.user.id)) {
-          return c.json({ error: PASSWORD_ALREADY_SET }, 400)
+          return errorResponse(c, `bad_request`, { message: PASSWORD_ALREADY_SET })
         }
         if (!(await signIn.confirmedByProvider(authData))) {
-          return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+          return errorResponse(c, `bad_request`, { message: PROVIDER_PROOF_REQUIRED })
         }
         const checked = await checkUnderFailureCount(
           c,
           totpFailures,
           authData.user.id,
           () => signIn.verifyTotpCode(authData, otp),
-          () => c.json({ error: "Code is incorrect" }, 400),
+          () => errorResponse(c, `bad_request`, { message: "Code is incorrect" }),
         )
         if (checked !== true) return checked
       }
@@ -754,7 +773,7 @@ export function createAuthRoute(
         [PasswordSetOutcome.NoAddress]: PASSWORD_NEEDS_ADDRESS,
         [PasswordSetOutcome.Refused]: PASSWORD_SET_REFUSED,
       }
-      return c.json({ error: refusals[outcome] }, 400)
+      return errorResponse(c, `bad_request`, { message: refusals[outcome] })
     })
     .get(`/sessions`, rateLimits.normal, async (c) => {
       return c.json({ sessions: await signIn.listSessions(c.get("auth")!) })
@@ -771,11 +790,13 @@ export function createAuthRoute(
       const raw = c.req.param("id")
       const sessionId = SESSION_ID.test(raw) ? Number(raw) : 0
       if (sessionId < 1 || sessionId > MAX_SESSION_ID) {
-        return c.json({ error: SESSION_NOT_FOUND }, 404)
+        return errorResponse(c, `not_found`, { message: SESSION_NOT_FOUND })
       }
-      if (sessionId === authData.session.id) return c.json({ error: SESSION_IS_CURRENT }, 400)
+      if (sessionId === authData.session.id) {
+        return errorResponse(c, `bad_request`, { message: SESSION_IS_CURRENT })
+      }
       if (!(await signIn.endSession(c, authData, sessionId))) {
-        return c.json({ error: SESSION_NOT_FOUND }, 404)
+        return errorResponse(c, `not_found`, { message: SESSION_NOT_FOUND })
       }
       emitSignOut(c, authData.user.id)
       return c.json({ success: true })
@@ -791,36 +812,48 @@ export function createAuthRoute(
       const body = await readApiJson(c)
       const validationResult = validate(accountDeleteSchema, body)
       if (validationResult.error) {
-        return c.json({ error: validationResult.error.description }, 400)
+        return validationResponse(c, validationResult.error.details)
       }
       const authData = c.get("auth")!
       const { password, otp } = validationResult.data
       const blockers = await signIn.accountDeletionBlockers(authData)
-      if (blockers.length > 0) return c.json({ error: ACCOUNT_DELETE_BLOCKED, blockers }, 409)
+      if (blockers.length > 0) {
+        return errorResponse(c, `conflict`, {
+          message: ACCOUNT_DELETE_BLOCKED,
+          details: { blockers },
+        })
+      }
       if (await signIn.hasPassword(authData.user.id)) {
         if (
           password === undefined || !(await signIn.checkPassword(authData.user.id, password))
         ) {
-          return c.json({ error: "Invalid password" }, 400)
+          return errorResponse(c, `bad_request`, { message: "Invalid password" })
         }
       } else if (!(await signIn.confirmedByProvider(authData))) {
-        return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+        return errorResponse(c, `bad_request`, { message: PROVIDER_PROOF_REQUIRED })
       }
       if (authData.user.mfa === UserMFAStatus.CONFIGURED) {
-        if (otp === undefined) return c.json({ error: ACCOUNT_DELETE_CODE_REQUIRED }, 400)
+        if (otp === undefined) {
+          return errorResponse(c, `bad_request`, { message: ACCOUNT_DELETE_CODE_REQUIRED })
+        }
         const outcome = await checkUnderFailureCount(
           c,
           totpFailures,
           authData.user.id,
           () => signIn.verifyTotpCode(authData, otp),
-          () => c.json({ error: "Code is incorrect" }, 400),
+          () => errorResponse(c, `bad_request`, { message: "Code is incorrect" }),
         )
         if (outcome !== true) return outcome
       }
       const result = await signIn.deleteAccount(c, authData)
       if (result.blockers) {
-        if (result.blockers.length === 0) return c.json({ error: "User not signed in" }, 401)
-        return c.json({ error: ACCOUNT_DELETE_BLOCKED, blockers: result.blockers }, 409)
+        if (result.blockers.length === 0) {
+          return errorResponse(c, `unauthorized`, { message: "User not signed in" })
+        }
+        return errorResponse(c, `conflict`, {
+          message: ACCOUNT_DELETE_BLOCKED,
+          details: { blockers: result.blockers },
+        })
       }
       emit(
         new UserSignedOutEvent({

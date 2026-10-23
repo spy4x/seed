@@ -73,6 +73,7 @@ import {
   SIGN_UP_REQUESTED,
   TOTP_DISCONNECT_PROOF_REQUIRED,
 } from "./auth.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 /** When the fake sign-in's waiting sign-up stops working. */
 const WAITING_UNTIL = new Date("2026-10-17T10:10:00.000Z")
@@ -970,7 +971,7 @@ describe("auth routes ask for proof before turning two-factor off", () => {
       const response = await send(app, disconnect(body), sameOriginHeaders)
 
       expect(response.status).toBe(400)
-      if (body) expect(await response.json()).toEqual({ error: TOTP_DISCONNECT_PROOF_REQUIRED })
+      if (body) expect((await apiError(response)).message).toBe(TOTP_DISCONNECT_PROOF_REQUIRED)
       expect(calls).toEqual([])
     })
   }
@@ -980,7 +981,7 @@ describe("auth routes ask for proof before turning two-factor off", () => {
     const response = await send(app, disconnect({ password: "wrong-horse" }), sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect((await apiError(response)).message).toBe("Invalid password")
     expect(calls).toEqual(["checkPassword"])
   })
 
@@ -1008,7 +1009,7 @@ describe("auth routes ask for proof before turning two-factor off", () => {
     const response = await send(app, disconnect({ otp: "123456" }), sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: "Code is incorrect" })
+    expect((await apiError(response)).message).toBe("Code is incorrect")
     expect(calls).toEqual(["verifyTotpCode"])
     expect(failureCalls).toEqual(["begin", "fail"])
   })
@@ -1043,7 +1044,7 @@ describe("auth routes ask for proof before turning two-factor on (#406)", () => 
     const response = await send(app, start({}), sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect((await apiError(response)).message).toBe("Invalid password")
     expect(calls).toEqual([])
   })
 
@@ -1052,7 +1053,7 @@ describe("auth routes ask for proof before turning two-factor on (#406)", () => 
     const response = await send(app, start({ password: "wrong-horse" }), sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect((await apiError(response)).message).toBe("Invalid password")
     expect(calls).toEqual(["checkPassword"])
   })
 
@@ -1072,7 +1073,7 @@ describe("auth routes ask for proof before turning two-factor on (#406)", () => 
     const response = await send(app, start({}), sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: PROVIDER_PROOF_REQUIRED })
+    expect((await apiError(response)).message).toBe(PROVIDER_PROOF_REQUIRED)
     expect(calls).toEqual([])
   })
 
@@ -1129,8 +1130,8 @@ describe("auth routes refuse a password step while the account's wrong passwords
 
       expect(response.status).toBe(429)
       expect(response.headers.get("retry-after")).toBe("91")
-      expect(await response.json()).toEqual({
-        error: "Too many wrong passwords. Try again in 2 minutes.",
+      expect(await apiError(response)).toMatchObject({
+        message: "Too many wrong passwords. Try again in 2 minutes.",
       })
       expect(calls.filter((call) => call !== "accountDeletionBlockers")).toEqual([])
       expect(mailed).toEqual([])
@@ -1180,8 +1181,8 @@ describe("auth routes lock a sign-in name after repeated wrong passwords", () =>
     expect(statuses).toEqual([401, 401, 401, 401, 401, 401])
     expect(locked.status).toBe(429)
     expect(locked.headers.get("retry-after")).toBe("60")
-    expect(await locked.json()).toEqual({
-      error: "Too many wrong passwords. Try again in 1 minute.",
+    expect(await apiError(locked)).toMatchObject({
+      message: "Too many wrong passwords. Try again in 1 minute.",
     })
     // The seventh request never reached the password check.
     expect(calls).toHaveLength(6)
@@ -1251,8 +1252,8 @@ describe("auth routes lock a sign-in name after repeated wrong passwords", () =>
 
     expect(response.status).toBe(429)
     expect(response.headers.get("retry-after")).toBe("91")
-    expect(await response.json()).toEqual({
-      error: "Too many wrong passwords. Try again in 2 minutes.",
+    expect(await apiError(response)).toMatchObject({
+      message: "Too many wrong passwords. Try again in 2 minutes.",
     })
     expect(passwordFailureCalls).toEqual(["begin"])
     expect(calls).toEqual([])
@@ -1362,7 +1363,7 @@ describe("auth routes reset a password by e-mail link", () => {
     const response = await send(app, reset, sameOriginWithoutCookieHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: PASSWORD_RESET_REFUSED })
+    expect((await apiError(response)).message).toBe(PASSWORD_RESET_REFUSED)
     expect(calls).toEqual(["resetPassword"])
   })
 
@@ -1419,7 +1420,7 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
     const response = await send(app, route, from(ip))
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: SIGN_IN_LINK_BAD_ADDRESS })
+    expect((await apiError(response)).message).toBe(SIGN_IN_LINK_BAD_ADDRESS)
     expect(links).toEqual([])
   })
 
@@ -1467,7 +1468,7 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
     expect(statuses.slice(0, SIGN_IN_LINK_MAILS_PER_ADDRESS)).not.toContain(429)
     expect(refused.status).toBe(429)
     expect(refused.headers.get("retry-after")).not.toBe(null)
-    expect((await refused.json()).error).toMatch(
+    expect((await apiError(refused)).message).toMatch(
       /^Too many links were asked for this address\. Try again in \d+ minutes?\.$/,
     )
     expect(otherAddress.status).toBe(200)
@@ -1478,7 +1479,7 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
     const response = await send(app, redeem, sameOriginWithoutCookieHeaders)
 
     expect(response.status).toBe(410)
-    expect(await response.json()).toEqual({ error: SIGN_IN_LINK_REFUSED })
+    expect((await apiError(response)).message).toBe(SIGN_IN_LINK_REFUSED)
   })
 
   it("answers a signed-in link with the address, the next page and whether a code is owed", async () => {
@@ -1533,7 +1534,7 @@ describe("auth routes sign in and sign up by e-mail link (#391)", () => {
     const response = await send(app, redeem, sameOriginWithoutCookieHeaders)
 
     expect(response.status).toBe(409)
-    expect(await response.json()).toEqual({ error: SIGN_IN_LINK_UNCONFIRMED })
+    expect((await apiError(response)).message).toBe(SIGN_IN_LINK_UNCONFIRMED)
   })
 })
 
@@ -1616,12 +1617,16 @@ describe("auth routes prove the address before a sign-up creates anything (#142)
       refusals.push({
         status: refused.status,
         retryAfter: refused.headers.get("retry-after"),
-        body: await refused.json(),
+        // Only the request's own id may differ between the two addresses.
+        body: { ...await apiError(refused), requestId: undefined },
       })
     }
 
     expect(refusals[0].status).toBe(429)
-    expect(refusals[0].body).toEqual({ error: SIGN_UP_CODES_TOO_MANY })
+    expect(refusals[0].body).toMatchObject({
+      code: "rate_limited",
+      message: SIGN_UP_CODES_TOO_MANY,
+    })
     expect(refusals[1]).toEqual(refusals[0])
     expect(calls).toEqual(Array(2 * SIGN_UP_CODE_MAILS_PER_CLIENT).fill("requestSignUp"))
   })
@@ -1744,7 +1749,7 @@ describe("auth routes prove the address before a sign-up creates anything (#142)
     const response = await send(app, verify, sameOriginWithoutCookieHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: EMAIL_CODE_REFUSED })
+    expect((await apiError(response)).message).toBe(EMAIL_CODE_REFUSED)
   })
 
   it("answers 410 when no sign-up waits for a code", async () => {
@@ -1754,7 +1759,7 @@ describe("auth routes prove the address before a sign-up creates anything (#142)
     const response = await send(app, verify, sameOriginWithoutCookieHeaders)
 
     expect(response.status).toBe(410)
-    expect(await response.json()).toEqual({ error: SIGN_UP_EXPIRED })
+    expect((await apiError(response)).message).toBe(SIGN_UP_EXPIRED)
   })
 
   it("sends no new code when no sign-up waits", async () => {
@@ -1817,7 +1822,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     const response = await send(app, verify, sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: EMAIL_CODE_REFUSED })
+    expect((await apiError(response)).message).toBe(EMAIL_CODE_REFUSED)
     expect(codeFailureCalls).toEqual(["begin", "fail"])
   })
 
@@ -1838,7 +1843,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     const response = await send(app, verify, sameOriginHeaders)
 
     expect(response.status).toBe(409)
-    expect(await response.json()).toEqual({ error: EMAIL_TAKEN })
+    expect((await apiError(response)).message).toBe(EMAIL_TAKEN)
     expect(codeFailureCalls).toEqual(["begin", "refund"])
   })
 
@@ -1864,7 +1869,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     const response = await send(app, sendCode, sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: EMAIL_NOTHING_TO_VERIFY })
+    expect((await apiError(response)).message).toBe(EMAIL_NOTHING_TO_VERIFY)
     expect(mailed).toEqual([])
   })
 
@@ -1924,7 +1929,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     expect(owner.mailed).toEqual([owned])
     expect(strangerStatuses).toEqual([...Array(EMAIL_CHANGE_MAILS_PER_ACCOUNT).fill(200), 429])
     // The same words as a refused change, so a refusal tells nothing about who owns the address.
-    expect(await resend.json()).toEqual({ error: EMAIL_CHANGE_TOO_MANY })
+    expect((await apiError(resend)).message).toBe(EMAIL_CHANGE_TOO_MANY)
   })
 
   it(`answers change mail ${EMAIL_CHANGE_MAILS_PER_ADDRESS + 1} to one address from as many accounts with 429, and leaves the owner a code and a reset link`, async () => {
@@ -1951,7 +1956,7 @@ describe("auth routes prove an e-mail address with a code", () => {
 
     expect(responses.map((response) => response.status))
       .toEqual([...Array(EMAIL_CHANGE_MAILS_PER_ADDRESS).fill(200), 429])
-    expect(await responses.at(-1)!.json()).toEqual({ error: EMAIL_CHANGE_TOO_MANY })
+    expect(await apiError(responses.at(-1)!)).toMatchObject({ message: EMAIL_CHANGE_TOO_MANY })
     expect(strangerMails).toBe(EMAIL_CHANGE_MAILS_PER_ADDRESS)
     expect(code.status).toBe(200)
     expect(owner.mailed).toEqual([owned])
@@ -2041,7 +2046,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     )
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: PROVIDER_PROOF_REQUIRED })
+    expect((await apiError(response)).message).toBe(PROVIDER_PROOF_REQUIRED)
     expect(mailed).toEqual([])
   })
 
@@ -2056,7 +2061,7 @@ describe("auth routes prove an e-mail address with a code", () => {
     )
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: EMAIL_ALREADY_CARRIED })
+    expect((await apiError(response)).message).toBe(EMAIL_ALREADY_CARRIED)
     expect(mailed).toEqual([])
   })
 
@@ -2128,7 +2133,10 @@ describe("deleting one's own account", () => {
     const response = await send(app, deleteRoute, sameOriginHeaders)
 
     expect(response.status).toBe(409)
-    expect(await response.json()).toEqual({ error: ACCOUNT_DELETE_BLOCKED, blockers: [blocker] })
+    expect(await apiError(response)).toMatchObject({
+      message: ACCOUNT_DELETE_BLOCKED,
+      details: { blockers: [blocker] },
+    })
     expect(calls).toEqual([])
   })
 
@@ -2137,7 +2145,7 @@ describe("deleting one's own account", () => {
     const response = await send(app, deleteRoute, sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect((await apiError(response)).message).toBe("Invalid password")
     expect(calls).toEqual(["accountDeletionBlockers", "checkPassword"])
     expect(emitted).toEqual([])
   })
@@ -2163,7 +2171,7 @@ describe("deleting one's own account", () => {
     const response = await send(app, { ...deleteRoute, body: {} }, sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: PROVIDER_PROOF_REQUIRED })
+    expect((await apiError(response)).message).toBe(PROVIDER_PROOF_REQUIRED)
     expect(calls).toEqual(["accountDeletionBlockers"])
     expect(emitted).toEqual([])
   })
@@ -2175,7 +2183,7 @@ describe("deleting one's own account", () => {
     const response = await send(app, { ...deleteRoute, body: {} }, sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: "Invalid password" })
+    expect((await apiError(response)).message).toBe("Invalid password")
     expect(calls).toEqual(["accountDeletionBlockers"])
   })
 
@@ -2184,7 +2192,7 @@ describe("deleting one's own account", () => {
     const response = await send(app, deleteRoute, sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: ACCOUNT_DELETE_CODE_REQUIRED })
+    expect((await apiError(response)).message).toBe(ACCOUNT_DELETE_CODE_REQUIRED)
     expect(calls).toEqual(["accountDeletionBlockers", "checkPassword"])
   })
 
@@ -2242,7 +2250,7 @@ describe("deleting one's own account", () => {
     const response = await send(app, deleteRoute, sameOriginHeaders)
 
     expect(response.status).toBe(409)
-    expect((await response.json()).blockers).toEqual([blocker])
+    expect((await apiError(response)).details).toEqual({ blockers: [blocker] })
     expect(emitted).toEqual([])
   })
 
@@ -2316,7 +2324,7 @@ describe("a first password", () => {
       const response = await send(app, setRoute, sameOriginHeaders)
 
       expect(response.status).toBe(400)
-      expect(await response.json()).toEqual({ error: message })
+      expect((await apiError(response)).message).toBe(message)
     })
   }
 })
@@ -2389,8 +2397,8 @@ describe("signed-in devices", () => {
 
     expect(foreign.status).toBe(404)
     expect(missing.status).toBe(404)
-    expect(await foreign.json()).toEqual({ error: SESSION_NOT_FOUND })
-    expect(await missing.json()).toEqual({ error: SESSION_NOT_FOUND })
+    expect((await apiError(foreign)).message).toBe(SESSION_NOT_FOUND)
+    expect((await apiError(missing)).message).toBe(SESSION_NOT_FOUND)
     expect(emitted).toEqual([])
   })
 
@@ -2399,7 +2407,7 @@ describe("signed-in devices", () => {
     const response = await send(app, endRoute("1"), sameOriginHeaders)
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: SESSION_IS_CURRENT })
+    expect((await apiError(response)).message).toBe(SESSION_IS_CURRENT)
     expect(calls).toEqual([])
     expect(emitted).toEqual([])
   })
@@ -2410,7 +2418,7 @@ describe("signed-in devices", () => {
       const response = await send(app, endRoute(id), sameOriginHeaders)
 
       expect(response.status).toBe(404)
-      expect(await response.json()).toEqual({ error: SESSION_NOT_FOUND })
+      expect((await apiError(response)).message).toBe(SESSION_NOT_FOUND)
       expect(calls).toEqual([])
     })
   }

@@ -32,6 +32,7 @@ Pick the guide that fits. The [README](../README.md) has the pitch and the quick
 - [Development](development.md): the local stack, every task, the browser tests and what CI runs.
 - [Adding a feature](aggregates.md): every file of the notes aggregate, in order.
 - [Ids](ids.md): every id is a UUID version 7.
+- [API errors](api-errors.md): the one error body every API answer that is not a success has.
 - [Admin modules](admin-modules.md)
 - [Woodpecker CI setup](woodpecker-ci-setup.md)
 - [Handoff](handoff.md): the map of the repository, decisions made, traps.

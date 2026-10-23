@@ -13,6 +13,7 @@ import {
   type WidgetDefinition,
 } from "@domain/groups"
 import { NoteError } from "./+lib.ts"
+import { fieldErrors } from "@spy4x/validation"
 
 /**
  * The notes' widgets on the group overview (#219). Every member of the group sees them, as every
@@ -81,7 +82,9 @@ export function parseNoteWidgetRequest(
   value: unknown,
 ): Omit<NoteWidgetPayload, "actor"> {
   const result = noteWidgetPayloadSchema(value)
-  if (result instanceof type.errors) throw new NoteError("INVALID_REQUEST", result.summary)
+  if (result instanceof type.errors) {
+    throw new NoteError("INVALID_REQUEST", result.summary, fieldErrors(result))
+  }
   const range = { from: result.from, to: result.to }
   if (!overviewPeriods(range)) {
     throw new NoteError("INVALID_REQUEST", "The range must be up to a year of days in order")
