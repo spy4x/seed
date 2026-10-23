@@ -6,6 +6,7 @@ import {
   adminUserFilterQuery,
   type AdminUserListResponse,
   type AdminUserRow,
+  type DataExportJson,
   USER_ROLE_NAMES,
 } from "@domain/identity"
 import type { AdminAction, AdminActionInput } from "@ui/admin-user-screen.tsx"
@@ -60,6 +61,13 @@ export interface UsersDialogState {
   pending: boolean
 }
 
+/** The person's "Data exports" tab: whose it is, what the API answered and why it failed. */
+export interface UsersDataExportsState {
+  userId: number | null
+  exports: DataExportJson[] | null
+  error: string | null
+}
+
 const NO_DIALOG: UsersDialogState = { action: null, sessionId: null, error: null, pending: false }
 
 /**
@@ -70,11 +78,27 @@ export function createUsersState(request: AdminFetch, toasts: ToastStore) {
   const list = signal<UsersListState>({ filter: null, list: null, pending: false, error: null })
   const person = signal<UsersPersonState>({ userId: null, detail: null, error: null })
   const dialog = signal<UsersDialogState>(NO_DIALOG)
+  const dataExports = signal<UsersDataExportsState>({ userId: null, exports: null, error: null })
 
   const state = {
     list,
     person,
     dialog,
+    dataExports,
+
+    /** Reads the person's data exports (#229), dropping an answer for a person the page has left. */
+    async loadDataExports(userId: number): Promise<void> {
+      if (dataExports.value.userId !== userId) {
+        dataExports.value = { userId, exports: null, error: null }
+      }
+      const result = await request<{ exports: DataExportJson[] }>(
+        `/api/admin/users/${userId}/data-exports`,
+      )
+      if (dataExports.value.userId !== userId) return
+      dataExports.value = result.ok
+        ? { userId, exports: result.data.exports, error: null }
+        : { userId, exports: null, error: result.error.message }
+    },
 
     async loadList(filter: AdminUserFilter): Promise<void> {
       list.value = { ...list.value, filter, pending: true, error: null }

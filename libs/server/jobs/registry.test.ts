@@ -11,6 +11,11 @@ import {
   ACCOUNT_RESTORED_MAIL_JOB,
 } from "./account-deletion.ts"
 import { API_TOKEN_CREATED_MAIL_JOB } from "./api-token-mail.ts"
+import {
+  DATA_EXPORT_BUILD_JOB,
+  DATA_EXPORT_EXPIRE_JOB,
+  DATA_EXPORT_MAIL_JOB,
+} from "./data-export.ts"
 import { EMAIL_CODE_MAIL_JOB } from "./email-code-mail.ts"
 import { OUTBOX_CLEANUP_JOB } from "./jobs.ts"
 import { PASSWORD_RESET_MAIL_JOB } from "./password-reset-mail.ts"
@@ -41,6 +46,9 @@ const QUEUED_KINDS = [
   ACCOUNT_RESTORED_MAIL_JOB,
   ACCOUNT_HARD_DELETE_JOB,
   STARTER_DATA_JOB,
+  DATA_EXPORT_BUILD_JOB,
+  DATA_EXPORT_MAIL_JOB,
+  DATA_EXPORT_EXPIRE_JOB,
   TELEGRAM_NOTIFICATION_JOB,
   ...Object.values(BILLING_NOTICE_JOBS),
   SUBSCRIBER_CONFIRM_MAIL_JOB,

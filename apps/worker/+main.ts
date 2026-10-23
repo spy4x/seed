@@ -2,7 +2,6 @@
 import postgres from "postgres"
 import { createSqlFromEnv } from "@spy4x/server/db"
 import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
-import { JOBS } from "@server/jobs/registry.ts"
 import { TelegramClient } from "@spy4x/integrations/telegram"
 import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
@@ -20,6 +19,8 @@ import { AppDbBase } from "../api/services/db-base.ts"
 import { demoDataSeed, startDemoReset } from "./demo/reset.ts"
 import { isDemoSeeded, resetDemo } from "./demo/run.ts"
 import { seedWorkspace } from "./demo/seed.ts"
+import { s3ServerFiles } from "@server/files/files.ts"
+import { readServerFilesSetup } from "@server/files/settings.ts"
 
 const sql = createSqlFromEnv(Deno.env.toObject(), {
   transform: postgres.camel,
@@ -64,6 +65,12 @@ const billingSetup = readBillingSetup(systemEnv, Deno.env.get("ENV") === "dev" ?
   webhooks: false,
 })
 
+// A person's data export (docs/data-export.md) is built here and kept in the file store. Without
+// its settings the export jobs fail and are retried, so a fixed env file still delivers them.
+const filesSetup = readServerFilesSetup(Deno.env)
+if (!filesSetup.success) console.warn(filesSetup.error)
+const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
+
 // Notifications also go to a linked Telegram chat (#269, docs/telegram.md) while the bot is on. The
 // worker only sends, so it needs no webhook secret.
 const telegramSetup = readTelegramSetup(systemEnv, Deno.env.get("ENV") === "dev" ? "dev" : "prod", {
@@ -95,7 +102,8 @@ const processor = createOutboxProcessor(
   demo
     ? (userId) => seedWorkspace(new AppDbBase({ sql }), sql, userId, demoDataSeed(new Date()))
     : null,
-  JOBS,
+  undefined,
+  files,
   telegram,
 )
 

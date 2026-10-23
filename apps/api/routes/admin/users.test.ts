@@ -93,6 +93,7 @@ function buildApp(
         admin,
         emit: (event) => emitted.push(event),
         now: () => new Date("2026-10-16T09:00:00.000Z"),
+        dataExports: (userId) => (calls.push(["dataExports", userId]), Promise.resolve([])),
       }),
     ],
   })
@@ -105,6 +106,7 @@ const ROUTES = [
   { method: "POST", path: "/admin/users/42/role", body: { role: UserRole.OPERATOR } },
   { method: "POST", path: "/admin/users/42/password-reset" },
   { method: "GET", path: "/admin/users/export.csv?q=ada" },
+  { method: "GET", path: "/admin/users/42/data-exports" },
 ]
 
 function send(
@@ -152,6 +154,16 @@ describe("the people actions of the operator area", () => {
       expect(calls).toEqual([])
     })
   }
+
+  it("lists the person's data exports, and answers 404 for an id that is no number", async () => {
+    const { app, calls } = buildApp()
+    const listed = await send(app, { method: "GET", path: "/admin/users/42/data-exports" })
+    expect(listed.status).toBe(200)
+    expect(await listed.json()).toEqual({ exports: [] })
+    const bad = await send(app, { method: "GET", path: "/admin/users/abc/data-exports" })
+    expect(bad.status).toBe(404)
+    expect(calls).toEqual([["dataExports", 42]])
+  })
 
   it("ends one session of the person, then closes their sockets", async () => {
     const { app, calls, emitted } = buildApp()

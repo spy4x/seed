@@ -184,6 +184,19 @@ const listDefaults: NotesScreenProps = {
 }
 
 describe("NotesScreen", () => {
+  it("draws its intro between the page header and the notes", () => {
+    const html = renderToString(
+      <NotesScreen {...listDefaults} intro={<section data-e2e="intro">Get started</section>} />,
+    )
+
+    const header = html.indexOf("</h1>")
+    const intro = html.indexOf(`data-e2e="intro"`)
+    const list = html.indexOf(`data-e2e="note-list"`)
+    expect(header).toBeGreaterThan(-1)
+    expect(intro).toBeGreaterThan(header)
+    expect(list).toBeGreaterThan(intro)
+  })
+
   it("heads the page with Notes, the group's name under it, and New note opening the create page", () => {
     const html = renderToString(<NotesScreen {...listDefaults} />)
 

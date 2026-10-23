@@ -25,6 +25,12 @@ import { createGroupFileRateLimits } from "./features/groups/file-rate-limits.ts
 import { createNotesRoute } from "./routes/notes.ts"
 import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
+import { createDataExportRoute } from "./routes/data-export.ts"
+import {
+  latestDataExport,
+  readyDataExportFile,
+  requestDataExport,
+} from "@server/auth/data-export.ts"
 import { createAdminRoute } from "./routes/admin/+routes.ts"
 import { adminModuleRoutes } from "./routes/admin/registry.ts"
 import { createAdminOwnPreferencesRoute } from "./routes/admin/own-preferences.ts"
@@ -218,6 +224,19 @@ app.route(
     limit: rateLimits.normal,
     passwordLimit: rateLimits.strictByUser,
     tokens: apiTokens,
+  }),
+)
+// A person's copy of their data (#229): asked for here, built by the worker, kept in the file store.
+app.route(
+  "/account/data-export",
+  createDataExportRoute({
+    auth: signIn.auth,
+    mutationGuards,
+    limit: rateLimits.normal,
+    latest: (userId) => latestDataExport(sql, userId),
+    request: (userId) => requestDataExport(sql, userId),
+    readyFile: (userId) => readyDataExportFile(sql, userId),
+    signDownload: files.signDownload,
   }),
 )
 // The mail subscriptions' keys, read once for the public routes and the operator area.

@@ -40,7 +40,8 @@ A screen that fails is listed at the end and the run exits 1; the others are sti
 | `notes`            | desktop and mobile  | 1280, 640 / 780, 390 |
 | `profile-security` | desktop             | 1280, 640            |
 | `group-members`    | desktop             | 1280, 640            |
-| `billing`          | desktop and mobile  | 1280, 640 / 780, 390 |
+| `billing`          | desktop             | 1280, 640            |
+| `billing-plan`     | mobile, plan only   | 780, 390             |
 | `notifications`    | desktop             | 1280, 640            |
 | `activity`         | desktop             | 1280, 640            |
 | `sign-in`          | mobile              | 780, 390             |
@@ -48,6 +49,8 @@ A screen that fails is listed at the end and the run exits 1; the others are sti
 | `offline-conflict` | desktop             | 1280, 640            |
 
 Desktop is a 1280×800 viewport at device scale 2, mobile a 390×844 viewport at device scale 3.
+`billing-plan` keeps only the 390×208 part of the phone's billing tab that shows the plan, which is
+all the home page's billing card draws.
 
 ## Size budgets
 

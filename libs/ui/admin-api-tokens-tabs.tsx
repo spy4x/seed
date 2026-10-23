@@ -41,6 +41,7 @@ const KIND_LABELS: Record<string, string> = {
   [NotificationKind.RoleChanged]: "Group role changed",
   [NotificationKind.RemovedFromGroup]: "Removed from a group",
   [NotificationKind.OwnershipReceived]: "Group handed over",
+  [NotificationKind.DataExportReady]: "Data export ready",
 }
 
 /** What a notification kind is called on the person's tab. */

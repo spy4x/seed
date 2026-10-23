@@ -200,8 +200,15 @@ wait_for() { # <name> <pid> <seconds> <check…>
 
 answers() { curl -fsS --max-time 2 -o /dev/null "$1"; }
 
-spare_port() {
-  deno eval 'const l = Deno.listen({ hostname: "127.0.0.1", port: 0 }); console.log(l.addr.port); l.close()'
+# Prints <count> distinct spare ports on one line. Every listener stays open until all are
+# picked, so the system cannot hand one port out twice.
+spare_ports() {
+  deno eval '
+    const open = Array.from({ length: Number(Deno.args[0]) }, () =>
+      Deno.listen({ hostname: "127.0.0.1", port: 0 }))
+    console.log(open.map((listener) => listener.addr.port).join(" "))
+    for (const listener of open) listener.close()
+  ' "$1"
 }
 
 # Fill node_modules before anything else starts, so the API, Vite and Playwright do not each take
@@ -212,13 +219,6 @@ timeout 600 deno install --frozen
 # Throw-away secrets, never printed.
 AUTH_COOKIE_SECRET=$(openssl rand -hex 32)
 AUTH_PEPPER=$(openssl rand -hex 32)
-API_PORT=$(spare_port)
-SPA_PORT=$(spare_port)
-# The installed nginx listens where apps/spa/nginx.conf says.
-[ "$BUILT_SERVER" = nginx ] && SPA_PORT=8080
-FRONT_PORT=$(spare_port)
-ADMIN_PORT=$(spare_port)
-ADMIN_FRONT_PORT=$(spare_port)
 
 if [ "$SERVICES" = containers ]; then
   DB_PASS=$(openssl rand -hex 24)
@@ -286,6 +286,12 @@ else
   ' "$E2E_DB_NAME"
   export DB_NAME=$E2E_DB_NAME
 fi
+
+# After the containers start: an engine that listens on the ports it publishes holds them by now.
+PORTS=$(spare_ports 5)
+read -r API_PORT SPA_PORT FRONT_PORT ADMIN_PORT ADMIN_FRONT_PORT <<<"$PORTS"
+# The installed nginx listens where apps/spa/nginx.conf says.
+[ "$BUILT_SERVER" = nginx ] && SPA_PORT=8080
 
 export ENV=dev
 # The API's origin check compares the browser's Origin with http://$DOMAIN, port included.

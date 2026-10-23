@@ -52,6 +52,16 @@ describe("describeNotification", () => {
     })).toBe("You now own “Family”.")
   })
 
+  it("tells the person their data is ready and until which day", () => {
+    expect(describeNotification({
+      kind: NotificationKind.DataExportReady,
+      payload: { expiresAt: "2026-10-30T10:00:00.000Z" },
+    })).toBe("Your data is ready. Download it from your profile until 30 Oct 2026.")
+    expect(describeNotification({ kind: NotificationKind.DataExportReady, payload: {} })).toBe(
+      "Your data is ready. Download it from your profile.",
+    )
+  })
+
   it("reads a kind it does not know as a neutral line", () => {
     expect(describeNotification({ kind: "from.the.future", payload: {} })).toBe(
       "You have a new notification.",

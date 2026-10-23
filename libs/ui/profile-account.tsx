@@ -20,6 +20,7 @@ import {
 } from "./email-screen.tsx"
 import { profilePath, ScreenForm } from "./progressive.tsx"
 import type { ProviderProof } from "./provider-proof.tsx"
+import { DataExportErrorState, DataExportRow, type DataExportRowProps } from "./profile-export.tsx"
 
 /** What the name dialog shows: the typed names, their errors and whether a save is in flight. */
 export interface NameEditProps {
@@ -67,13 +68,15 @@ export interface AccountSectionProps {
    * adds an address on `/keep`, which that row leads to.
    */
   guestRow?: ComponentChildren
+  /** The "Your data" row (#229). Without it the section has none. */
+  dataExport?: DataExportRowProps
 }
 
 /**
- * The profile's Account section: the name, edited in a dialog, and the e-mail address, changed in
+ * The profile's Account section: the name, edited in a dialog, the e-mail address, changed in
  * one dialog that asks for the new address and the password, then for the code mailed there. While
  * an address waits for its code the row offers "Enter code" too, which opens the same dialog at the
- * code.
+ * code. Last, "Your data": a copy of everything the app keeps about the person (#229).
  */
 export function AccountSection(
   {
@@ -86,6 +89,7 @@ export function AccountSection(
     onRetryEmail,
     providerProof,
     guestRow,
+    dataExport,
   }: AccountSectionProps,
 ): JSX.Element {
   const [editingName, setEditingName] = useState(false)
@@ -165,8 +169,10 @@ export function AccountSection(
             )}
           />
         )}
+        {dataExport && <DataExportRow {...dataExport} />}
       </SettingList>
       {!guestRow && !email && onRetryEmail && <EmailUnavailable onRetry={onRetryEmail} />}
+      {dataExport && <DataExportErrorState error={dataExport.error} />}
 
       <Modal
         open={editingName}

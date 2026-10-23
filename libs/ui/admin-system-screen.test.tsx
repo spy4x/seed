@@ -152,6 +152,13 @@ describe("system screen", () => {
     expect(build).not.toContain("abc1234def5678")
   })
 
+  it("caps the build card's fact list so each label sits beside its value", async () => {
+    await mount(<AdminSystemScreen {...props([])} />)
+
+    const list = find("[data-e2e=admin-system-build] [data-e2e=fact-list]")
+    expect(list.getAttribute("class")).toContain("max-w-xl")
+  })
+
   it("opens Jobs at its failed runs from the queue card while any failed", async () => {
     const calls: unknown[][] = []
     await mount(<AdminSystemScreen {...props(calls)} />)

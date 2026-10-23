@@ -296,8 +296,11 @@ function StatusCard(
         action={health === undefined ? undefined : <HealthBadge health={health} />}
       />
       <CardBody class="flex flex-col gap-3">
-        {/* The rows pad themselves; the card already does at its edges. */}
-        <FactList facts={facts} class="-my-3" />
+        {
+          /* The rows pad themselves; the card already does at its edges. The width cap keeps each
+            label beside its value on a card that spans the page, such as the build's (#407). */
+        }
+        <FactList facts={facts} class="-my-3 max-w-xl" />
         {hint && <p class="text-xs text-muted">{hint}</p>}
         {footer}
       </CardBody>

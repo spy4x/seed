@@ -48,6 +48,8 @@ export interface LinkRequestScreenProps {
   onResend: () => void
   /** "Use a different address": the app returns to the form, keeping the address. */
   onDifferentAddress: () => void
+  /** "Back to sign in" was pressed: the app hands the typed address to the sign-in form. */
+  onBackToSignIn?: () => void
   /** The page to return to after sign-in, already checked by the app. */
   next?: string | null
   navigate?: Navigate
@@ -82,7 +84,9 @@ export function LinkRequestScreen(props: LinkRequestScreenProps): JSX.Element {
           <Link
             href={withNext(SCREEN_PATHS.signIn, next)}
             navigate={props.navigate}
+            onClick={props.onBackToSignIn}
             class="pc-link font-medium"
+            data-e2e="sign-in-link-back"
           >
             Back to sign in
           </Link>

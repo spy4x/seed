@@ -404,6 +404,13 @@ is left out of every export, so a person who leaves with their file loses it.
 5. Add the aggregate to `tests/integration/group-files.integration.test.ts`: the round trip gives
    the same contents under new ids, and a failure halfway writes nothing.
 
+## Putting it in the person's data export
+
+Every row a person made or that is about them goes into their data export
+([data-export.md](data-export.md)): add a section to `DATA_EXPORT_SECTIONS` in
+`libs/server/jobs/data-export-sections.ts`, filtered by the person, without other people's data
+or secrets, and add its rows to `tests/integration/data-export.integration.test.ts`.
+
 ## Adding a setting to a group
 
 A setting is a property of the group itself, such as its description, colour and emoji. It is not
