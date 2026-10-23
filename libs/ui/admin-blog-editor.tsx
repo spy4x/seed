@@ -12,10 +12,13 @@ import { Field } from "@spy4x/preact-ui/field"
 import { useFormat } from "@spy4x/preact-ui/format"
 import { Input, Textarea } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
+import { ListField } from "@spy4x/preact-ui/list-field"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
+import { Prose } from "@spy4x/preact-ui/prose"
 import { Tabs } from "@spy4x/preact-ui/tabs"
+import { TldrBox } from "@spy4x/preact-ui/tldr-box"
 import {
   BLOG_BODY_MAX_LENGTH,
   BLOG_COVER_ALT_MAX_LENGTH,
@@ -34,9 +37,6 @@ import {
   type BlogPostStatus,
   isHttpsUrl,
 } from "@domain/blog"
-// STAND-INS until `@spy4x/preact-ui` 10.8.0: then `@spy4x/preact-ui/list-field`, `/prose` and
-// `/tldr-box`, and `admin-blog-standins.tsx` goes.
-import { ListField, Prose, TldrBox } from "./admin-blog-standins.tsx"
 import { ADMIN_BLOG_PATHS, BlogStatusBadge } from "./admin-blog-list.tsx"
 import { Dialogs } from "./admin-blog-dialogs.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"

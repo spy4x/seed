@@ -5,12 +5,11 @@ import { ConfirmDialog } from "@spy4x/preact-ui/confirm-dialog"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Field } from "@spy4x/preact-ui/field"
 import { useFormat } from "@spy4x/preact-ui/format"
+import { DateTimeField } from "@spy4x/preact-ui/date-time-field"
 import { Input, Select } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN } from "@domain/blog"
-// STAND-IN until `@spy4x/preact-ui` 10.8.0: then `@spy4x/preact-ui/date-time-field`.
-import { DateTimeField } from "./admin-blog-standins.tsx"
 import { type AdminBlogEditorScreenProps, NUMBER } from "./admin-blog-editor.tsx"
 
 /**
