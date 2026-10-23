@@ -98,7 +98,7 @@ function postJsonLd(origin: string, post: PublicBlogPost): unknown[] {
 
 /**
  * The article itself. A post of {@link TOC_MIN_MINUTES} minutes or more with sections gets "On this
- * page" beside it from 1280 px; on a narrower screen the body reads alone.
+ * page" beside it from 1280 px, in the right margin; on a narrower screen the body reads alone.
  */
 function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
   const format = useFormat().utc()
@@ -109,12 +109,12 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
   return (
     <div
       class={`mx-auto w-full px-4 py-12 sm:px-6 lg:px-8 lg:py-16 ${
+        // The reading column stays centred, in line with the bands below; the list sits beside it.
         toc
-          ? "max-w-2xl xl:grid xl:max-w-6xl xl:grid-cols-[minmax(0,42rem)_14rem] xl:justify-center xl:gap-16"
-          : "max-w-2xl"
-      }`}
+          ? "max-w-2xl xl:grid xl:max-w-7xl xl:grid-cols-[minmax(0,1fr)_42rem_minmax(0,1fr)] xl:gap-12"
+          : "max-w-2xl"}`}
     >
-      <article class="flex min-w-0 flex-col gap-6" data-e2e="blog-post">
+      <article class="flex min-w-0 flex-col gap-6 xl:col-start-2" data-e2e="blog-post">
         <header class="flex flex-col gap-4">
           <nav aria-label="Breadcrumb" class="text-sm">
             <ol class="flex flex-wrap items-center gap-2 text-muted">
@@ -142,7 +142,7 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
           <h1 class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
             {post.title}
           </h1>
-          <p class="flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted" data-e2e="blog-post-meta">
+          <p class="flex flex-wrap gap-x-1 gap-y-1 text-sm text-muted" data-e2e="blog-post-meta">
             <span>
               Published <time dateTime={post.publishedAt}>{format.date(post.publishedAt)}</time>
             </span>
@@ -173,7 +173,7 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
         <Prose html={post.html} />
       </article>
       {toc && (
-        <aside class="hidden xl:block" data-e2e="blog-post-toc">
+        <aside class="hidden xl:col-start-3 xl:block" data-e2e="blog-post-toc">
           <OnThisPage links={sections.map(({ id, text }) => ({ label: text, href: `#${id}` }))} />
         </aside>
       )}
