@@ -281,6 +281,7 @@ CREATE TABLE outbox_events (
     processed_at TIMESTAMPTZ,
     last_error_code VARCHAR(64),
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    cancelled_at TIMESTAMPTZ,
     CONSTRAINT outbox_events_kind_check CHECK (length(btrim(event_kind)) BETWEEN 1 AND 64),
     CONSTRAINT outbox_events_aggregate_type_check CHECK (
         length(btrim(aggregate_type)) BETWEEN 1 AND 64
@@ -887,7 +888,7 @@ CREATE TABLE guest_reminders (
     CONSTRAINT guest_reminders_kind_check CHECK (kind BETWEEN 1 AND 3)
 );
 
--- #391: sign-in by e-mail link. See migration 2026_11_28_0001_sign_in_links.sql.
+-- #391: sign-in by e-mail link. See migration 2026_11_29_0001_sign_in_links.sql.
 CREATE TABLE sign_in_link_requests (
     id UUID PRIMARY KEY,
     email TEXT NOT NULL,

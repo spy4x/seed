@@ -1,10 +1,9 @@
 import type postgres from "postgres"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { effectivePlanId, entitlementsOf, PlanError } from "@domain/billing"
 import { NoteError } from "@domain/notes"
 import { PostgresBillingRepository } from "../billing/postgres-billing-repository.ts"
 import { PostgresNoteRepository } from "../notes/postgres-note-repository.ts"
-import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The job that gives a new account its starter data. Its aggregate id is the request's id. */
@@ -30,11 +29,7 @@ export const WELCOME_NOTE_BODY = [
 export async function scheduleStarterData(tx: postgres.Sql, userId: number): Promise<void> {
   const id = uuidV7()
   await tx`INSERT INTO starter_data_requests (id, user_id) VALUES (${id}, ${userId})`
-  await scheduleOutboxEvent(
-    tx,
-    { aggregateType: JOB_AGGREGATE, aggregateId: id, eventKind: STARTER_DATA_JOB },
-    { inMs: 0 },
-  )
+  await enqueueJob(tx, STARTER_DATA_JOB, id, { inMs: 0 })
 }
 
 /** What the job needs to find a group's note cap; the defaults are a deployment without billing. */

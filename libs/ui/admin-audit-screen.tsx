@@ -24,7 +24,10 @@ import {
   ADMIN_AUDIT_EXPORTED_KIND,
   ADMIN_AUDIT_NO_FILTER,
   ADMIN_AUDIT_SEARCH_MAX,
+  ADMIN_JOB_CANCELLED_KIND,
   ADMIN_JOB_RETRIED_KIND,
+  ADMIN_JOB_RUN_NOW_KIND,
+  ADMIN_OPERATOR_ACTIVITY_KINDS,
   type AdminAuditEntry,
   type AdminAuditFilter,
   type AdminAuditOperator,
@@ -76,6 +79,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   "tag.updated": "Tag changed",
   "tag.deleted": "Tag deleted",
   [ADMIN_JOB_RETRIED_KIND]: "Job run again by an operator",
+  [ADMIN_JOB_RUN_NOW_KIND]: "Job run now by an operator",
+  [ADMIN_JOB_CANCELLED_KIND]: "Job cancelled by an operator",
   [ADMIN_AUDIT_EXPORTED_KIND]: "Audit log exported by an operator",
 }
 
@@ -115,7 +120,7 @@ const EVENT_OPTIONS: SelectOption[] = [
     value: activityAuditEvent(kind),
     label: `Group: ${ACTIVITY_LABELS[kind] ?? kind}`,
   })),
-  ...[ADMIN_JOB_RETRIED_KIND, ADMIN_AUDIT_EXPORTED_KIND].map((kind) => ({
+  ...ADMIN_OPERATOR_ACTIVITY_KINDS.map((kind) => ({
     value: activityAuditEvent(kind),
     label: `Operator: ${ACTIVITY_LABELS[kind]}`,
   })),

@@ -1,98 +1,28 @@
 import type postgres from "postgres"
-import { ONE_DAY_IN_MILLISECONDS } from "@spy4x/platform/universal/time-constants"
-import { nextUtcHour } from "@spy4x/platform/universal/time"
 import {
   attemptFailureLine,
   ensureScheduledOutboxEvent,
   JobPublisher,
-  type JobStep,
   OutboxProcessor,
   PostgresOutboxRepository,
-  stepsJob,
 } from "@spy4x/server/outbox"
+import { nextCronRun } from "@spy4x/time/cron"
 import type { BillingProvider } from "@spy4x/billing"
-import { BillingNoticeKind } from "@domain/billing"
-import { BILLING_NOTICE_JOBS } from "../billing/billing-notices.ts"
-import {
-  queueSeatDrift,
-  SEAT_SYNC_JOB,
-  seatSyncJob,
-  SeatSyncPublisher,
-} from "../billing/seat-sync.ts"
+import { SeatSyncPublisher } from "../billing/seat-sync.ts"
 import { GroupChangeNotifier } from "../groups/group-change-notify.ts"
-import { purgeDeadInvitations } from "../groups/purge-dead-invitations.ts"
-import { purgeDeletedNotes } from "../notes/purge-deleted-notes.ts"
-import { purgeDeletedGroups } from "../groups/purge-deleted-groups.ts"
-import { purgeNotifications } from "../notifications/purge-notifications.ts"
-import { purgeOldAuditEvents } from "../groups/purge-audit-events.ts"
-import { purgeExpiredApiTokens } from "../api-tokens/purge-expired-api-tokens.ts"
-import { hardDeleteDueAccounts } from "../auth/account-deletion.ts"
-import {
-  ACCOUNT_DELETION_MAIL_JOB,
-  ACCOUNT_HARD_DELETE_JOB,
-  ACCOUNT_RESTORED_MAIL_JOB,
-  accountDeletionMailJob,
-  accountHardDeleteJob,
-  accountRestoredMailJob,
-} from "./account-deletion.ts"
-import { STARTER_DATA_JOB, starterDataJob, type StarterDataPlan } from "./starter-data.ts"
-import { API_TOKEN_CREATED_MAIL_JOB, apiTokenCreatedMailJob } from "./api-token-mail.ts"
-import { SIGN_IN_METHOD_MAIL_JOB, signInMethodMailJob } from "./sign-in-method-mail.ts"
-import { type BillingNoticeMailDeps, billingNoticeMailJob } from "./billing-notice-mail.ts"
-import {
-  EMAIL_CODE_MAIL_JOB,
-  emailCodeMailJob,
-  removeStaleEmailCodeRequests,
-} from "./email-code-mail.ts"
-import { removeExpiredAuthChallenges } from "./auth-challenges.ts"
-import {
-  removeExpiredSignUps,
-  SIGN_UP_CODE_MAIL_JOB,
-  signUpCodeMailJob,
-} from "./sign-up-code-mail.ts"
-import {
-  removeStaleSignInLinkRequests,
-  SIGN_IN_LINK_MAIL_JOB,
-  signInLinkMailJob,
-} from "./sign-in-link-mail.ts"
-import {
-  PASSWORD_RESET_MAIL_JOB,
-  type PasswordResetMailDeps,
-  passwordResetMailJob,
-  removeStalePasswordResetRequests,
-} from "./password-reset-mail.ts"
-import {
-  removeStaleSubscriptionRequests,
-  SUBSCRIBER_CONFIRM_MAIL_JOB,
-  SUBSCRIBER_SEND_ISSUE_JOB,
-  SUBSCRIBER_WELCOME_MAIL_JOB,
-  subscriberConfirmMailJob,
-  subscriberSendIssueJob,
-  subscriberWelcomeMailJob,
-} from "./subscriber-mail.ts"
+import type { StarterDataPlan } from "./starter-data.ts"
+import type { PasswordResetMailDeps } from "./password-reset-mail.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import { JOB_RETRY } from "./job-failures.ts"
-import { cleanUpGuests } from "../auth/guests.ts"
-import {
-  JOB_AGGREGATE,
-  JOB_AGGREGATE_ID,
-  type JobHandler,
-  LEGACY_JOB_AGGREGATE_ID,
-  OUTBOX_CLEANUP_JOB,
-  OUTBOX_RETENTION_DAYS,
-} from "./jobs.ts"
-
-/** The hour, in UTC, at which the nightly jobs first run. */
-const NIGHTLY_HOUR_UTC = 3
+import { JOB_AGGREGATE, JOB_AGGREGATE_ID, LEGACY_JOB_AGGREGATE_ID } from "./jobs.ts"
+import { type JobDefinition, type JobDeps, JOBS } from "./registry.ts"
 
 /**
- * The worker's outbox processor: group changes go to the notifier, jobs to their handlers, and the
- * nightly cleanup is one row that writes its next run, a day later, once it has succeeded. The
- * cleanup also drops password reset and e-mail code requests whose mail gave up, and removes for
- * good the groups whose 30 days for restoring are over, the invitations dead for over 30 days,
- * the personal API tokens that expired or were revoked over 30 days ago, the audit events older than a year and
- * the accounts whose 7 days of waiting are over (a backstop for their own jobs). Every mail job,
- * the owner's billing notices included, shares one sender and brand.
+ * The worker's outbox processor: group changes go to the notifier, and jobs to the handlers of
+ * {@link JOBS} (`registry.ts`, docs/jobs.md), each built here from the worker's dependencies. A job
+ * that repeats every so many milliseconds writes its next run once it has succeeded or been given
+ * up. The nightly cleanup is such a job (`cleanup.ts`). Every mail job, the owner's billing notices
+ * included, shares one sender and brand.
  *
  * With a billing `provider`, a change to a group's members queues a seat sync, which sets a
  * per-member subscription's quantity to the member count, and the nightly cleanup queues one for
@@ -112,6 +42,10 @@ const NIGHTLY_HOUR_UTC = 3
  *
  * With `subscribers`, the subscriber jobs sign and mail confirm links, welcomes and issues. Without
  * it, they drop what they find.
+ *
+ * `jobs` is {@link JOBS} unless a test passes its own list.
+ *
+ * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
 export function createOutboxProcessor(
   sql: postgres.Sql,
@@ -121,50 +55,32 @@ export function createOutboxProcessor(
   graceDays = 0,
   trialRequiresCard = true,
   sampleData: StarterDataPlan["sampleData"] = null,
+  jobs: readonly JobDefinition[] = JOBS,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
+  const deps: JobDeps = {
+    sql,
+    mail,
+    provider,
+    subscribers,
+    graceDays,
+    trialRequiresCard,
+    sampleData,
+  }
+  const kinds = jobs.map((job) => job.kind)
+  const twice = kinds.filter((kind, index) => kinds.indexOf(kind) !== index)
+  if (twice.length > 0) throw new Error(`Two jobs share a kind: ${[...new Set(twice)].join(`, `)}`)
+  const { repeatEveryMs, repeatCron } = repeatSchedules(jobs)
   return new OutboxProcessor(
     new PostgresOutboxRepository(sql),
     new JobPublisher({
       aggregateType: JOB_AGGREGATE,
-      handlers: {
-        [OUTBOX_CLEANUP_JOB]: stepsJob(
-          `nightly cleanup`,
-          cleanupSteps(sql, provider, mail.log),
-          mail.log,
-        ),
-        [SEAT_SYNC_JOB]: provider ? seatSyncJob({ sql, provider }) : async () => {},
-        [PASSWORD_RESET_MAIL_JOB]: passwordResetMailJob({ sql, ...mail }),
-        [EMAIL_CODE_MAIL_JOB]: emailCodeMailJob({ sql, ...mail }),
-        [SIGN_UP_CODE_MAIL_JOB]: signUpCodeMailJob({ sql, ...mail }),
-        [SIGN_IN_LINK_MAIL_JOB]: signInLinkMailJob({ sql, ...mail }),
-        [ACCOUNT_DELETION_MAIL_JOB]: accountDeletionMailJob({ sql, ...mail }),
-        [ACCOUNT_RESTORED_MAIL_JOB]: accountRestoredMailJob({ sql, ...mail }),
-        [API_TOKEN_CREATED_MAIL_JOB]: apiTokenCreatedMailJob({ sql, ...mail }),
-        [SIGN_IN_METHOD_MAIL_JOB]: signInMethodMailJob({ sql, ...mail }),
-        [ACCOUNT_HARD_DELETE_JOB]: accountHardDeleteJob({ sql, log: mail.log }),
-        [STARTER_DATA_JOB]: starterDataJob(sql, {
-          billingEnabled: provider !== null,
-          graceDays,
-          sampleData,
-        }),
-        ...billingNoticeJobs(sql, mail, { graceDays, trialRequiresCard }),
-        [SUBSCRIBER_CONFIRM_MAIL_JOB]: subscriberConfirmMailJob({
-          sql,
-          ...mail,
-          setup: subscribers,
-        }),
-        [SUBSCRIBER_WELCOME_MAIL_JOB]: subscriberWelcomeMailJob({
-          sql,
-          ...mail,
-          setup: subscribers,
-        }),
-        [SUBSCRIBER_SEND_ISSUE_JOB]: subscriberSendIssueJob({ sql, ...mail, setup: subscribers }),
-      },
+      handlers: Object.fromEntries(jobs.map((job) => [job.kind, job.handler(deps)])),
       fallback: provider ? new SeatSyncPublisher(sql, notifier) : notifier,
     }),
     {
-      repeatEveryMs: { [OUTBOX_CLEANUP_JOB]: ONE_DAY_IN_MILLISECONDS },
+      repeatEveryMs,
+      repeatCron,
       repeatAfterGiveUp: true,
       onAttemptFailed: (failure) => mail.log(attemptFailureLine(failure)),
       ...JOB_RETRY,
@@ -172,137 +88,52 @@ export function createOutboxProcessor(
   )
 }
 
-/**
- * The parts of the nightly cleanup, in the order they run. Each removes only what is due, so one
- * that ran again finds nothing.
- */
-function cleanupSteps(
-  sql: postgres.Sql,
-  provider: BillingProvider | null,
-  log: (line: string) => void,
-): JobStep[] {
-  return [
-    ["remove old processed outbox rows", async () => {
-      const removed = await new PostgresOutboxRepository(sql).removeProcessed(OUTBOX_RETENTION_DAYS)
-      if (removed > 0) console.log(`Removed ${removed} old processed outbox row(s)`)
-    }],
-    ["remove unsent password reset requests", async () => {
-      const stale = await removeStalePasswordResetRequests(sql)
-      if (stale > 0) console.log(`Removed ${stale} unsent password reset request(s)`)
-    }],
-    ["remove unsent e-mail code requests", async () => {
-      const staleCodes = await removeStaleEmailCodeRequests(sql)
-      if (staleCodes > 0) console.log(`Removed ${staleCodes} unsent e-mail code request(s)`)
-    }],
-    ["remove unused sign-in links", async () => {
-      const links = await removeStaleSignInLinkRequests(sql)
-      if (links > 0) console.log(`Removed ${links} unused sign-in link request(s)`)
-    }],
-    ["remove expired sign-ups", async () => {
-      const signUps = await removeExpiredSignUps(sql)
-      if (signUps > 0) console.log(`Removed ${signUps} expired sign-up(s)`)
-    }],
-    // Guest accounts (#224): empty ones a week on, and any unused for a year.
-    ["remove empty and idle guest accounts", async () => {
-      const guests = await cleanUpGuests(sql)
-      if (guests > 0) console.log(`Removed ${guests} empty or idle guest account(s)`)
-    }],
-    ["remove expired codes", async () => {
-      const codes = await removeExpiredAuthChallenges(sql)
-      if (codes > 0) console.log(`Removed ${codes} expired code(s)`)
-    }],
-    ["remove unsent subscription requests", async () => {
-      const staleSubs = await removeStaleSubscriptionRequests(sql)
-      if (staleSubs > 0) console.log(`Removed ${staleSubs} unsent subscription request(s)`)
-    }],
-    ["purge deleted groups", async () => {
-      const groups = await purgeDeletedGroups(sql)
-      if (groups.removed > 0) console.log(`Removed ${groups.removed} deleted group(s) for good`)
-      if (groups.kept > 0) {
-        console.warn(
-          `Kept ${groups.kept} deleted group(s) with a live subscription; cancel it in Stripe`,
-        )
-      }
-    }],
-    ["purge deleted notes", async () => {
-      const notes = await purgeDeletedNotes(sql)
-      if (notes.removed > 0) console.log(`Removed ${notes.removed} deleted note(s) for good`)
-    }],
-    ["purge dead invitations", async () => {
-      const invitations = await purgeDeadInvitations(sql)
-      if (invitations > 0) console.log(`Removed ${invitations} dead group invitation(s)`)
-    }],
-    ["purge expired API tokens", async () => {
-      const tokens = await purgeExpiredApiTokens(sql)
-      if (tokens > 0) console.log(`Removed ${tokens} expired or revoked API token(s) for good`)
-    }],
-    ["purge old audit events", async () => {
-      const audit = await purgeOldAuditEvents(sql)
-      if (audit > 0) console.log(`Removed ${audit} audit event(s) past their retention`)
-    }],
-    ["purge old notifications", async () => {
-      const inbox = await purgeNotifications(sql)
-      if (inbox > 0) console.log(`Removed ${inbox} notification(s) past their retention`)
-    }],
-    ["delete accounts whose wait is over", async () => {
-      const accounts = await hardDeleteDueAccounts(sql, log)
-      if (accounts.deleted > 0) console.log(`Deleted ${accounts.deleted} account(s) for good`)
-      if (accounts.blocked > 0) {
-        console.warn(
-          `Kept ${accounts.blocked} account(s) due for deletion: a shared or paid group`,
-        )
-      }
-      if (accounts.failed > 0) {
-        throw new Error(`${accounts.failed} account(s) due for deletion were not deleted`)
-      }
-    }],
-    ["queue seat syncs for drifted groups", async () => {
-      if (!provider) return
-      const drifted = await queueSeatDrift(sql)
-      if (drifted > 0) console.log(`Queued a seat sync for ${drifted} group(s)`)
-    }],
-  ]
-}
-
-/** One mail job per billing notice. */
-function billingNoticeJobs(
-  sql: postgres.Sql,
-  { sender, brand, log }: Omit<PasswordResetMailDeps, "sql">,
-  billing: Pick<BillingNoticeMailDeps, "graceDays" | "trialRequiresCard">,
-): Record<string, JobHandler> {
-  const kinds = [
-    BillingNoticeKind.TrialEnding,
-    BillingNoticeKind.PaymentFailed,
-    BillingNoticeKind.PlanEnding,
-  ]
-  return Object.fromEntries(
-    kinds.map((kind) => [
-      BILLING_NOTICE_JOBS[kind],
-      billingNoticeMailJob(kind, { sql, sender, brand, log, ...billing }),
-    ]),
-  )
+/** The repeating jobs' schedules, split the way the processor takes them. */
+export function repeatSchedules(jobs: readonly JobDefinition[]): {
+  repeatEveryMs: Record<string, number>
+  repeatCron: Record<string, string>
+} {
+  const repeatEveryMs: Record<string, number> = {}
+  const repeatCron: Record<string, string> = {}
+  for (const { kind, repeat } of jobs) {
+    if (!repeat) continue
+    if (`cron` in repeat) repeatCron[kind] = repeat.cron
+    else repeatEveryMs[kind] = repeat.everyMs
+  }
+  return { repeatEveryMs, repeatCron }
 }
 
 /**
- * Starts the nightly cleanup chain at the next 03:00 UTC unless a run is already waiting, under
- * `JOB_AGGREGATE_ID` or `LEGACY_JOB_AGGREGATE_ID`. The processor closes a cleanup row it gives up and writes the next run itself, so a chain never
- * stays stopped; a row an older worker gave up was closed by migration
+ * Starts the chain of every repeating job unless a run of it is already waiting, under
+ * `JOB_AGGREGATE_ID` or `LEGACY_JOB_AGGREGATE_ID`, so the worker calls it at every start and two
+ * workers starting together still leave one chain. A job repeating every so many milliseconds
+ * first runs at once; a cron job at its next matching minute, so the nightly
+ * cleanup at the next 03:00 UTC. The processor
+ * closes a row it gives up and writes the next run itself, so a chain never stays stopped; one an
+ * operator cancelled starts again here. A row an older worker gave up was closed by migration
  * `2026_11_01_0001_close_given_up_outbox_rows.sql`, and this then writes a fresh one.
  */
-export async function scheduleNightlyJobs(sql: postgres.Sql, now = new Date()): Promise<void> {
-  // A chain started under the old id is still the nightly cleanup: a second one would run beside it.
-  const legacy = await sql`
-    SELECT 1 FROM outbox_events
-    WHERE event_kind = ${OUTBOX_CLEANUP_JOB}
-      AND aggregate_type = ${JOB_AGGREGATE}
-      AND aggregate_id = ${LEGACY_JOB_AGGREGATE_ID}
-      AND processed_at IS NULL
-    LIMIT 1
-  `
-  if (legacy.length > 0) return
-  await ensureScheduledOutboxEvent(
-    sql,
-    { eventKind: OUTBOX_CLEANUP_JOB, aggregateType: JOB_AGGREGATE, aggregateId: JOB_AGGREGATE_ID },
-    { at: nextUtcHour(now, NIGHTLY_HOUR_UTC) },
-  )
+export async function startRepeatingJobs(
+  sql: postgres.Sql,
+  now = new Date(),
+  jobs: readonly JobDefinition[] = JOBS,
+): Promise<void> {
+  for (const { kind, repeat } of jobs) {
+    if (!repeat) continue
+    // A chain started under the old id is still this job: a second one would run beside it.
+    const legacy = await sql`
+      SELECT 1 FROM outbox_events
+      WHERE event_kind = ${kind}
+        AND aggregate_type = ${JOB_AGGREGATE}
+        AND aggregate_id = ${LEGACY_JOB_AGGREGATE_ID}
+        AND processed_at IS NULL
+      LIMIT 1
+    `
+    if (legacy.length > 0) continue
+    await ensureScheduledOutboxEvent(
+      sql,
+      { eventKind: kind, aggregateType: JOB_AGGREGATE, aggregateId: JOB_AGGREGATE_ID },
+      `cron` in repeat ? { at: nextCronRun(repeat.cron, now) } : { inMs: 0 },
+    )
+  }
 }

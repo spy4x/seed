@@ -10,6 +10,7 @@ import { auditModule } from "./audit/module.tsx"
 import { billingModule } from "./billing/module.tsx"
 import { dashboardModule } from "./dashboard/module.tsx"
 import { groupsModule } from "./groups/module.tsx"
+import { jobsModule } from "./jobs/module.tsx"
 import { newsletterModule } from "./newsletter/module.tsx"
 import { systemModule } from "./system/module.tsx"
 import type { AdminModule, AdminPersonTab } from "./types.ts"
@@ -22,6 +23,7 @@ export const ADMIN_MODULES: readonly AdminModule[] = [
   billingModule,
   newsletterModule,
   auditModule,
+  jobsModule,
   systemModule,
   apiTokensModule,
 ]

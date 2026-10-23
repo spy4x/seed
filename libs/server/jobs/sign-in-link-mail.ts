@@ -1,7 +1,6 @@
 import type postgres from "postgres"
 import type { AuthStore } from "@spy4x/server/auth"
 import type { EmailSender } from "@spy4x/email/sender"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
   issueSignInLink,
@@ -11,7 +10,7 @@ import {
   signInLinkUrl,
 } from "../auth/sign-in-links.ts"
 import { type MailBrand, signInLinkMail } from "../mail/mail.ts"
-import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { enqueueJob, type JobHandler } from "./jobs.ts"
 
 /** The job that mails one sign-in link (#391). */
 export const SIGN_IN_LINK_MAIL_JOB = "auth.sign-in-link-mail"
@@ -30,11 +29,7 @@ export async function enqueueSignInLinkMail(
 ): Promise<void> {
   const id = uuidV7()
   await signInLinkRequests(sql).create({ id, email, next, requestedBy })
-  await scheduleOutboxEvent(
-    sql,
-    { eventKind: SIGN_IN_LINK_MAIL_JOB, aggregateType: JOB_AGGREGATE, aggregateId: id },
-    { inMs: 0 },
-  )
+  await enqueueJob(sql, SIGN_IN_LINK_MAIL_JOB, id, { inMs: 0 })
 }
 
 /** What the sign-in link mail job needs. */

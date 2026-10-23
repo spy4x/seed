@@ -298,7 +298,7 @@ that mention `restore`:
    one row, because a restore adds a live row exactly as a create does.
 4. **Transports.** `POST /:id/restore` (empty body), `?deleted=true` on the list, the socket command
    `<kind>.restore` and the `deleted` flag of `<kind>.list`.
-5. **Purge.** The worker's nightly cleanup (`libs/server/jobs/wiring.ts`) calls a
+5. **Purge.** The worker's nightly cleanup (`libs/server/jobs/cleanup.ts`) calls a
    `purgeDeleted<Kind>` that hard-deletes rows deleted more than the restore window ago. It takes
    `now` as a parameter, so a test sets the clock. Notes use 30 days (`NOTE_RESTORE_DAYS`). Anything
    that hangs off the row, such as attachments, must be removed with it, or the purge leaves

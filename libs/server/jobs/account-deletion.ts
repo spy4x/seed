@@ -1,13 +1,12 @@
 import type postgres from "postgres"
 import type { EmailSender } from "@spy4x/email/sender"
-import { scheduleOutboxEvent } from "@spy4x/server/outbox"
 import {
   type AccountDeletionRequest,
   hardDeleteAccount,
   HardDeleteOutcome,
 } from "../auth/account-deletion.ts"
 import { accountDeletionMail, accountRestoredMail, type MailBrand } from "../mail/mail.ts"
-import { JOB_AGGREGATE, type JobHandler } from "./jobs.ts"
+import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
 /** The job that deletes one account for good once its wait is over. */
@@ -28,13 +27,8 @@ export async function scheduleAccountDeletionJobs(
   tx: postgres.Sql,
   request: AccountDeletionRequest,
 ): Promise<void> {
-  const event = { aggregateType: JOB_AGGREGATE, aggregateId: request.id }
-  await scheduleOutboxEvent(tx, { ...event, eventKind: ACCOUNT_DELETION_MAIL_JOB }, { inMs: 0 })
-  await scheduleOutboxEvent(
-    tx,
-    { ...event, eventKind: ACCOUNT_HARD_DELETE_JOB },
-    { at: request.deleteAfter },
-  )
+  await enqueueJob(tx, ACCOUNT_DELETION_MAIL_JOB, request.id, { inMs: 0 })
+  await enqueueJob(tx, ACCOUNT_HARD_DELETE_JOB, request.id, { at: request.deleteAfter })
 }
 
 /** What the delete-for-good job needs. */
@@ -110,11 +104,7 @@ export function accountDeletionMailJob(deps: AccountDeletionMailDeps): JobHandle
 export async function scheduleAccountRestoredMail(tx: postgres.Sql, userId: number): Promise<void> {
   const id = uuidV7()
   await tx`INSERT INTO account_restorations (id, user_id) VALUES (${id}, ${userId})`
-  await scheduleOutboxEvent(
-    tx,
-    { aggregateType: JOB_AGGREGATE, aggregateId: id, eventKind: ACCOUNT_RESTORED_MAIL_JOB },
-    { inMs: 0 },
-  )
+  await enqueueJob(tx, ACCOUNT_RESTORED_MAIL_JOB, id, { inMs: 0 })
 }
 
 /**
