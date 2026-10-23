@@ -206,6 +206,17 @@ describe("LinkRequestScreen in the browser", () => {
     expect(text()).not.toContain("Send a new link")
   })
 
+  it("tells the app when Back to sign in is pressed, so it can hand the address over", async () => {
+    const back = spy<[]>()
+    await mount(
+      <LinkRequestScreen {...requestDefaults} email="ada@example.com" onBackToSignIn={back.fn} />,
+    )
+
+    await press("[data-e2e=sign-in-link-back]")
+
+    expect(back.calls).toHaveLength(1)
+  })
+
   it("goes back to the form, focused on the address, after Use a different address", async () => {
     const back = spy<[]>()
     const sent = { ...requestDefaults, email: "ada@example.com", onDifferentAddress: back.fn }
