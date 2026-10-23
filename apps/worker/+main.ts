@@ -2,6 +2,9 @@
 import postgres from "postgres"
 import { createSqlFromEnv } from "@spy4x/server/db"
 import { createOutboxProcessor, startRepeatingJobs } from "@server/jobs/wiring.ts"
+import { JOBS } from "@server/jobs/registry.ts"
+import { TelegramClient } from "@spy4x/integrations/telegram"
+import { readTelegramSetup } from "@server/telegram/setup.ts"
 import { queueDueBlogJobs } from "@server/blog/blog-publish-job.ts"
 import { PostgresIdempotencyStore } from "@spy4x/server/idempotency"
 import { startIdempotencySweep } from "./idempotency-sweep.ts"
@@ -61,6 +64,15 @@ const billingSetup = readBillingSetup(systemEnv, Deno.env.get("ENV") === "dev" ?
   webhooks: false,
 })
 
+// Notifications also go to a linked Telegram chat (#269, docs/telegram.md) while the bot is on. The
+// worker only sends, so it needs no webhook secret.
+const telegramSetup = readTelegramSetup(systemEnv, Deno.env.get("ENV") === "dev" ? "dev" : "prod", {
+  webhook: false,
+})
+const telegram = telegramSetup
+  ? new TelegramClient({ token: telegramSetup.token, apiBaseUrl: telegramSetup.apiBaseUrl })
+  : null
+
 // The public demo (docs/demo.md) gives every new account its own sample groups.
 const demo = isDemoMode(Deno.env.toObject())
 
@@ -83,6 +95,8 @@ const processor = createOutboxProcessor(
   demo
     ? (userId) => seedWorkspace(new AppDbBase({ sql }), sql, userId, demoDataSeed(new Date()))
     : null,
+  JOBS,
+  telegram,
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run

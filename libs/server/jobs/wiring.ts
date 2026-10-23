@@ -43,7 +43,8 @@ import { type JobDefinition, type JobDeps, JOBS } from "./registry.ts"
  * With `subscribers`, the subscriber jobs sign and mail confirm links, welcomes and issues. Without
  * it, they drop what they find.
  *
- * `jobs` is {@link JOBS} unless a test passes its own list.
+ * `jobs` is {@link JOBS} unless a test passes its own list. With `telegram`, a notification also
+ * goes to the person's linked Telegram chat (#269); without it, those jobs send nothing.
  *
  * @throws Error when two jobs share a kind: one handler would silently replace the other.
  */
@@ -56,6 +57,7 @@ export function createOutboxProcessor(
   trialRequiresCard = true,
   sampleData: StarterDataPlan["sampleData"] = null,
   jobs: readonly JobDefinition[] = JOBS,
+  telegram: JobDeps["telegram"] = null,
 ): OutboxProcessor {
   const notifier = new GroupChangeNotifier(sql)
   const deps: JobDeps = {
@@ -66,6 +68,7 @@ export function createOutboxProcessor(
     graceDays,
     trialRequiresCard,
     sampleData,
+    telegram,
   }
   const kinds = jobs.map((job) => job.kind)
   const twice = kinds.filter((kind, index) => kinds.indexOf(kind) !== index)
