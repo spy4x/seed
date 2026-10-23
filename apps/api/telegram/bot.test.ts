@@ -6,17 +6,21 @@ import { NoteListQuery } from "@domain/notes"
 import { BOT_TEXT, createSeedBot, menuCommands, type TelegramLinkService } from "./bot.ts"
 import { createTelegramProduct } from "./commands.ts"
 import type { TelegramProduct } from "./extension.ts"
-import { fakeTelegram, TELEGRAM_USER_ID, textUpdate } from "./fake-telegram.ts"
+import { callbackUpdate, fakeTelegram, TELEGRAM_USER_ID, textUpdate } from "./fake-telegram.ts"
 
 const USER_ID = 42
 const CODE = `42_${`a`.repeat(32)}`
 const groupId = `7b6d8d6c-1af5-7f04-8ae4-b1ee5d111002`
 
-/** Links kept in memory: a code links once, as the database's do. */
-function memoryLinks(linked = false): TelegramLinkService & { linked: () => boolean } {
+/**
+ * Links kept in memory: a code works once and only from its Telegram user's "Link" press, as the
+ * database's do.
+ */
+function memoryLinks(linked = false) {
   const codes = new Set([CODE])
+  const tokens = new Map<string, number>()
   let owner: number | null = linked ? TELEGRAM_USER_ID : null
-  return {
+  const links: TelegramLinkService & { linked: () => boolean } = {
     linked: () => owner !== null,
     account: (telegramUserId) =>
       Promise.resolve(
@@ -24,8 +28,16 @@ function memoryLinks(linked = false): TelegramLinkService & { linked: () => bool
           ? { userId: USER_ID, firstName: `Ada`, mfa: UserMFAStatus.NOT_CONFIGURED }
           : null,
       ),
-    link: (code, telegramUserId) => {
-      if (!codes.delete(code)) return Promise.resolve(`invalid`)
+    prepare: (code, telegramUserId) => {
+      if (!codes.delete(code)) return Promise.resolve(null)
+      const token = `${USER_ID}_${tokens.size}`
+      tokens.set(token, telegramUserId)
+      return Promise.resolve({ name: `Ada`, token })
+    },
+    spend: (code) => (codes.delete(code), Promise.resolve()),
+    link: (token, telegramUserId) => {
+      if (tokens.get(token) !== telegramUserId) return Promise.resolve(`invalid`)
+      tokens.delete(token)
       owner = telegramUserId
       return Promise.resolve(`linked`)
     },
@@ -35,6 +47,7 @@ function memoryLinks(linked = false): TelegramLinkService & { linked: () => bool
       return Promise.resolve(was)
     },
   }
+  return links
 }
 
 function bot(
@@ -51,43 +64,71 @@ function bot(
     links,
     product,
   })
+  /** The data of the "Link" button in the last message that had one. */
+  const button = () => {
+    const withButton = telegram.calls.filter((call) => call.params.reply_markup).at(-1)
+    const markup = withButton?.params.reply_markup as
+      | { inline_keyboard: { callback_data: string }[][] }
+      | undefined
+    return markup?.inline_keyboard[0][0].callback_data ?? ``
+  }
   return {
     ...telegram,
+    button,
     handle: (text: string, chat?: string) => seed.handleUpdate(textUpdate(text, { chat })),
+    press: (data: string, from?: number) => seed.handleUpdate(callbackUpdate(data, { from })),
   }
 }
 
 describe(`Seed's Telegram bot`, () => {
-  it(`links the account with the code a t.me link sends as /start, and says so`, async () => {
+  it(`names the account a /start code links to, and links only after the Link press`, async () => {
     const links = memoryLinks()
-    const { handle, sent } = bot({ links })
+    const { handle, press, button, sent } = bot({ links })
 
     await handle(`/start ${CODE}`)
+    expect(links.linked()).toBe(false)
+    expect(sent()).toEqual([BOT_TEXT.confirm(`Ada`)])
 
+    await press(button())
     expect(links.linked()).toBe(true)
-    expect(sent()).toEqual([BOT_TEXT.linked])
+    expect(sent().at(-1)).toBe(BOT_TEXT.linked)
   })
 
-  it(`refuses a code used once already, and links nothing with it`, async () => {
+  it(`links nothing when another Telegram user presses the Link button`, async () => {
     const links = memoryLinks()
-    const { handle, sent } = bot({ links })
+    const { handle, press, button, sent } = bot({ links })
     await handle(`/link ${CODE}`)
+
+    await press(button(), TELEGRAM_USER_ID + 1)
+
+    expect(links.linked()).toBe(false)
+    expect(sent().at(-1)).toBe(BOT_TEXT.invalid)
+  })
+
+  it(`refuses a code used once already, and offers no Link button for it`, async () => {
+    const links = memoryLinks()
+    const { handle, press, button, sent, calls } = bot({ links })
+    await handle(`/link ${CODE}`)
+    await press(button())
     await links.unlink(TELEGRAM_USER_ID)
+    const buttons = calls.filter((call) => call.params.reply_markup).length
 
     await handle(`/link ${CODE}`)
 
     expect(links.linked()).toBe(false)
-    expect(sent()).toEqual([BOT_TEXT.linked, BOT_TEXT.invalid])
+    expect(sent().at(-1)).toBe(BOT_TEXT.invalid)
+    expect(calls.filter((call) => call.params.reply_markup)).toHaveLength(buttons)
   })
 
-  it(`refuses to link in a group chat, where the code would be seen by others`, async () => {
+  it(`spends a code sent in a group, where others could read it, and links nothing`, async () => {
     const links = memoryLinks()
     const { handle, sent } = bot({ links })
 
     await handle(`/link ${CODE}`, `group`)
+    await handle(`/link ${CODE}`)
 
     expect(links.linked()).toBe(false)
-    expect(sent()).toEqual([BOT_TEXT.privateOnly])
+    expect(sent()).toEqual([BOT_TEXT.codeSpent, BOT_TEXT.invalid])
   })
 
   it(`unlinks with /unlink, after which a product command no longer acts`, async () => {

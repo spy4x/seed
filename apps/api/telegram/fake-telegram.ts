@@ -70,3 +70,24 @@ export function textUpdate(
     },
   } as TelegramUpdate
 }
+
+/** A press of the button carrying `data`, by {@link TELEGRAM_USER_ID} unless `from` says. */
+export function callbackUpdate(
+  data: string,
+  { from = TELEGRAM_USER_ID, chat = `private` }: { from?: number; chat?: string } = {},
+): TelegramUpdate {
+  return {
+    update_id: nextUpdate++,
+    callback_query: {
+      id: String(nextUpdate),
+      from: { id: from, is_bot: false, first_name: `Ada` },
+      data,
+      message: {
+        message_id: nextUpdate,
+        date: 1_790_000_000,
+        chat: { id: chat === `private` ? from : -100_200, type: chat },
+        text: ``,
+      },
+    },
+  } as TelegramUpdate
+}

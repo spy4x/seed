@@ -4,13 +4,21 @@
  *
  * A link is a row of `auth_keys` with method {@link TELEGRAM_METHOD} and the Telegram user id as
  * its subject: the unique `(method, subject)` keeps one Telegram account on one account, and
- * `auth_keys_one_telegram_idx` one Telegram account per account. The row holds no secret.
+ * {@link telegramLinks}' `link`, under a lock on the person's row, one Telegram account per
+ * account. The row holds no secret.
  *
- * A link code is a challenge of `@spy4x/server/auth`: 192 random bits as base64url, stored only as
- * a SHA-256, {@link TELEGRAM_LINK_MINUTES} minutes, deleted when it matches, so a code works once.
- * Its subject is the user id, so a new code replaces the last one. The code the person sends the
- * bot is `<user id>_<secret>`: only letters, digits, `_` and `-`, which a `t.me/<bot>?start=`
- * link carries as it is.
+ * A link code is a challenge of `@spy4x/server/auth`, {@link TELEGRAM_LINK_MINUTES} minutes,
+ * deleted when it matches, so a code works once. The code the person sends the bot is
+ * `<user id>_<binding>_<secret>`: 96 and 144 random bits as base64url, at most 52 characters of
+ * letters, digits, `_` and `-`, which a `t.me/<bot>?start=` link (64 at most) carries as it is.
+ * The challenge's subject is `<user id>:<SHA-256 of the binding>`, as `@spy4x/server/auth`'s bound
+ * e-mail codes do: someone who knows only a user id reaches no challenge, so their wrong guesses
+ * cannot use up a person's attempts. Issuing a code deletes the person's older ones.
+ *
+ * A code sent to the bot does not link at once: it names the account and asks for a "Link" press,
+ * which spends a second challenge ({@link TELEGRAM_CONFIRM_PURPOSE}) bound to that Telegram user.
+ * A `t.me` link someone else made therefore cannot attach a person's Telegram to their account
+ * unseen.
  *
  * Reads no environment and imports no singleton: the API and the worker both use it.
  *
@@ -26,11 +34,23 @@ import { TELEGRAM_LINK_MINUTES, TELEGRAM_METHOD, type UserMFAStatus } from "@dom
 /** The challenge purpose of a link code. */
 export const TELEGRAM_LINK_PURPOSE = `app.telegram-link`
 
-/** Random bytes in a code's secret: 192 bits, 32 base64url characters. */
-const SECRET_BYTES = 24
+/** The challenge purpose of a "Link" press after a code. */
+export const TELEGRAM_CONFIRM_PURPOSE = `app.telegram-confirm`
 
-/** A code as the bot reads it: the user id, `_`, then the secret. */
-const CODE = /^([1-9]\d{0,9})_([A-Za-z0-9_-]{32})$/
+/** Random bytes in a code's binding: 96 bits, 16 base64url characters. */
+const BINDING_BYTES = 12
+
+/** Random bytes in a code's secret: 144 bits, 24 base64url characters. */
+const SECRET_BYTES = 18
+
+/** Random bytes in a "Link" button's nonce: 96 bits, 16 base64url characters. */
+const NONCE_BYTES = 12
+
+/** A code as the bot reads it: the user id, the binding and the secret, joined by `_`. */
+const CODE = /^([1-9]\d{0,9})_([A-Za-z0-9_-]{16})_([A-Za-z0-9_-]{24})$/
+
+/** A "Link" button's token: the user id and the nonce. */
+const TOKEN = /^([1-9]\d{0,9})_([A-Za-z0-9_-]{16})$/
 
 /** How a link ended. */
 export enum TelegramLinkOutcome {
@@ -51,31 +71,41 @@ export interface TelegramAccount {
 }
 
 /** The stored form of a secret: SHA-256 of the purpose, the user and the secret. */
-function hashSecret(userId: number, secret: string): Promise<string> {
-  return sha256Hex(`${TELEGRAM_LINK_PURPOSE}\n${userId}\n${secret}`)
+function hashSecret(purpose: string, userId: number, secret: string): Promise<string> {
+  return sha256Hex(`${purpose}\n${userId}\n${secret}`)
 }
 
-/** Issues a new link code for `userId`; the one issued before stops working. */
+/** The challenge subject of a code: the user id, then a digest of its binding. */
+async function codeSubject(userId: number, binding: string): Promise<string> {
+  return `${userId}:${await sha256Hex(`${TELEGRAM_LINK_PURPOSE}\nbinding\n${binding}`)}`
+}
+
+/**
+ * Issues a new link code for `userId`. Call {@link telegramLinks}' `dropCodes` first, in the same
+ * transaction, so the person's older codes stop working.
+ */
 export async function issueTelegramLinkCode(
   store: AuthStore,
   userId: number,
   now = new Date(),
 ): Promise<{ code: string; expiresAt: Date }> {
+  const binding = randomBase64Url(BINDING_BYTES)
   const secret = randomBase64Url(SECRET_BYTES)
   const expiresAt = new Date(now.getTime() + TELEGRAM_LINK_MINUTES * 60_000)
   await store.issueChallenge({
     purpose: TELEGRAM_LINK_PURPOSE,
-    subject: String(userId),
-    secretHash: await hashSecret(userId, secret),
+    subject: await codeSubject(userId, binding),
+    secretHash: await hashSecret(TELEGRAM_LINK_PURPOSE, userId, secret),
     expiresAt,
     now,
   })
-  return { code: `${userId}_${secret}`, expiresAt }
+  return { code: `${userId}_${binding}_${secret}`, expiresAt }
 }
 
 /**
  * Spends a link code: the user id once, when the code is live. Expired, used, malformed or wrong:
- * `null`, one answer for all. A wrong secret counts against the code, which dies after a few.
+ * `null`, one answer for all. A wrong secret counts against that code only, which dies after a
+ * few.
  */
 export async function consumeTelegramLinkCode(
   store: AuthStore,
@@ -88,12 +118,60 @@ export async function consumeTelegramLinkCode(
   const userId = Number(match[1])
   const outcome = await store.attemptChallenge({
     purpose: TELEGRAM_LINK_PURPOSE,
-    subject: String(userId),
-    secretHash: await hashSecret(userId, match[2]),
+    subject: await codeSubject(userId, match[2]),
+    secretHash: await hashSecret(TELEGRAM_LINK_PURPOSE, userId, match[3]),
     maxAttempts: DEFAULT_CODE_MAX_ATTEMPTS,
     now,
   })
   return outcome === ChallengeOutcome.Matched ? userId : null
+}
+
+/**
+ * The token of a "Link" button for Telegram user `telegramUserId` and account `userId`, valid
+ * {@link TELEGRAM_LINK_MINUTES} minutes. Only a press by that Telegram user spends it.
+ */
+export async function issueTelegramConfirmToken(
+  store: AuthStore,
+  userId: number,
+  telegramUserId: number,
+  now = new Date(),
+): Promise<string> {
+  const nonce = randomBase64Url(NONCE_BYTES)
+  await store.issueChallenge({
+    purpose: TELEGRAM_CONFIRM_PURPOSE,
+    subject: String(telegramUserId),
+    secretHash: await hashSecret(TELEGRAM_CONFIRM_PURPOSE, userId, nonce),
+    expiresAt: new Date(now.getTime() + TELEGRAM_LINK_MINUTES * 60_000),
+    now,
+  })
+  return `${userId}_${nonce}`
+}
+
+/** Spends a "Link" button's token pressed by `telegramUserId`: the account it links, or `null`. */
+export async function consumeTelegramConfirmToken(
+  store: AuthStore,
+  token: unknown,
+  telegramUserId: number,
+  now = new Date(),
+): Promise<number | null> {
+  if (typeof token !== `string`) return null
+  const match = TOKEN.exec(token.trim())
+  if (!match) return null
+  const userId = Number(match[1])
+  const outcome = await store.attemptChallenge({
+    purpose: TELEGRAM_CONFIRM_PURPOSE,
+    subject: String(telegramUserId),
+    secretHash: await hashSecret(TELEGRAM_CONFIRM_PURPOSE, userId, match[2]),
+    maxAttempts: DEFAULT_CODE_MAX_ATTEMPTS,
+    now,
+  })
+  return outcome === ChallengeOutcome.Matched ? userId : null
+}
+
+/** A Telegram account a link removed: from this person, or from an account awaiting deletion. */
+export interface TelegramReleased {
+  userId: number
+  telegramUserId: string
 }
 
 /** The `auth_keys` rows of method {@link TELEGRAM_METHOD} over `sql`, a pool or a transaction. */
@@ -125,31 +203,66 @@ export function telegramLinks(sql: Sql) {
      * account waiting to be deleted moves. Inside a transaction: the person's row is locked, so
      * two links at once leave one.
      */
-    async link(userId: number, telegramUserId: number): Promise<TelegramLinkOutcome> {
+    async link(
+      userId: number,
+      telegramUserId: number,
+    ): Promise<{ outcome: TelegramLinkOutcome; released: TelegramReleased[] }> {
       const [user] = await sql`
         SELECT 1 FROM users
         WHERE id = ${userId} AND deleted_at IS NULL AND blocked_at IS NULL
         FOR UPDATE
       `
-      if (!user) return TelegramLinkOutcome.AccountGone
+      if (!user) return { outcome: TelegramLinkOutcome.AccountGone, released: [] }
       const subject = String(telegramUserId)
       const [owner] = await sql<{ userId: number; deleted: boolean }[]>`
         SELECT k.user_id, u.deleted_at IS NOT NULL AS deleted FROM auth_keys k
         JOIN users u ON u.id = k.user_id
         WHERE k.method = ${TELEGRAM_METHOD} AND k.subject = ${subject}
       `
-      if (owner?.userId === userId) return TelegramLinkOutcome.AlreadyLinked
-      if (owner && !owner.deleted) return TelegramLinkOutcome.Taken
+      if (owner?.userId === userId) {
+        return { outcome: TelegramLinkOutcome.AlreadyLinked, released: [] }
+      }
+      if (owner && !owner.deleted) return { outcome: TelegramLinkOutcome.Taken, released: [] }
       // An account waiting to be deleted lets its Telegram account go to the one linking it now.
-      await sql`
+      const released = await sql<{ userId: number; subject: string }[]>`
         DELETE FROM auth_keys
         WHERE method = ${TELEGRAM_METHOD} AND (user_id = ${userId} OR subject = ${subject})
+        RETURNING user_id, subject
       `
       await sql`
         INSERT INTO auth_keys (user_id, method, subject)
         VALUES (${userId}, ${TELEGRAM_METHOD}, ${subject})
       `
-      return TelegramLinkOutcome.Linked
+      return {
+        outcome: TelegramLinkOutcome.Linked,
+        released: released.map((row) => ({ userId: row.userId, telegramUserId: row.subject })),
+      }
+    },
+
+    /** Deletes the person's link codes, so only the one issued next works. */
+    async dropCodes(userId: number): Promise<void> {
+      await sql`
+        DELETE FROM auth_challenges
+        WHERE purpose = ${TELEGRAM_LINK_PURPOSE} AND subject LIKE ${`${userId}:%`}
+      `
+    },
+
+    /**
+     * What a "Link" press names: the person's first name, or else their address masked
+     * (`a•••@example.com`), so they see whose account a code belongs to. `null` when gone.
+     */
+    async describe(userId: number): Promise<string | null> {
+      const [row] = await sql<{ firstName: string | null; email: string | null }[]>`
+        SELECT u.first_name, (
+          SELECT k.email FROM auth_keys k
+          WHERE k.user_id = u.id AND k.email IS NOT NULL ORDER BY k.id LIMIT 1
+        ) AS email
+        FROM users u
+        WHERE u.id = ${userId} AND u.deleted_at IS NULL AND u.blocked_at IS NULL
+      `
+      if (!row) return null
+      if (row.firstName?.trim()) return row.firstName.trim()
+      return row.email ? maskAddress(row.email) : `your account`
     },
 
     /** Unlinks Telegram user `telegramUserId`: the account it was linked to, or `null`. */
@@ -175,3 +288,10 @@ export function telegramLinks(sql: Sql) {
 }
 
 export type TelegramLinks = ReturnType<typeof telegramLinks>
+
+/** `ada@example.com` as `a•••@example.com`: enough to recognise, not enough to collect. */
+export function maskAddress(email: string): string {
+  const at = email.lastIndexOf(`@`)
+  if (at < 1) return `•••`
+  return `${email[0]}•••${email.slice(at)}`
+}

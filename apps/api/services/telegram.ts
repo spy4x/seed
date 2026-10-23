@@ -22,7 +22,9 @@ import {
   type TelegramStatusResponse,
 } from "@domain/identity"
 import {
+  consumeTelegramConfirmToken,
   consumeTelegramLinkCode,
+  issueTelegramConfirmToken,
   issueTelegramLinkCode,
   TelegramLinkOutcome,
 } from "@server/auth/telegram.ts"
@@ -44,11 +46,40 @@ export function createTelegramLinkService(
   return {
     account: (telegramUserId) => db.telegram.account(telegramUserId),
 
-    link: (code, telegramUserId) =>
+    prepare: (code, telegramUserId) =>
       db.begin(async (tx) => {
         const userId = await consumeTelegramLinkCode(tx.authStore, code, now())
+        if (userId === null) return null
+        const name = await tx.telegram.describe(userId)
+        if (name === null) return null
+        const token = await issueTelegramConfirmToken(tx.authStore, userId, telegramUserId, now())
+        return { name, token }
+      }),
+
+    spend: async (code) => {
+      await consumeTelegramLinkCode(db.authStore, code, now())
+    },
+
+    link: (token, telegramUserId) =>
+      db.begin(async (tx) => {
+        const userId = await consumeTelegramConfirmToken(
+          tx.authStore,
+          token,
+          telegramUserId,
+          now(),
+        )
         if (userId === null) return `invalid`
-        const outcome = await tx.telegram.link(userId, telegramUserId)
+        const { outcome, released } = await tx.telegram.link(userId, telegramUserId)
+        // The Telegram account this one replaces, or one an account awaiting deletion let go.
+        for (const gone of released) {
+          await tx.authAudit.insert({
+            userId: gone.userId,
+            eventType: AuthAuditEventType.TELEGRAM_UNLINKED,
+            identifier: telegramIdentifier(gone.telegramUserId),
+            ip: null,
+            userAgent: null,
+          })
+        }
         if (outcome === TelegramLinkOutcome.Linked) {
           await tx.authAudit.insert({
             userId,
@@ -109,7 +140,10 @@ export function createTelegramAccounts(
 
     async issueCode(userId) {
       if (botUsername === null) return null
-      const { code, expiresAt } = await issueTelegramLinkCode(db.authStore, userId, now())
+      const { code, expiresAt } = await db.begin(async (tx) => {
+        await tx.telegram.dropCodes(userId)
+        return await issueTelegramLinkCode(tx.authStore, userId, now())
+      })
       return { code, expiresAt: expiresAt.toISOString(), url: telegramStartUrl(botUsername, code) }
     },
 

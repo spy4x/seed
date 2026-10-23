@@ -24,14 +24,28 @@ import type { TelegramAccount, TelegramAccountHandler, TelegramProduct } from ".
 /** How a link code sent to the bot ended. */
 export type TelegramLinkResult = `linked` | `already` | `taken` | `invalid`
 
+/** A code the bot checked: whose account it links, and the token of its "Link" button. */
+export interface TelegramPreparedLink {
+  /** The account's first name, or its address masked. */
+  name: string
+  token: string
+}
+
 /** What the bot reads and changes about links. */
 export interface TelegramLinkService {
   /** The live, unblocked account Telegram user `telegramUserId` is linked to, or `null`. */
   account(
     telegramUserId: number,
   ): Promise<{ userId: number; firstName: string; mfa: UserMFAStatus } | null>
-  /** Spends `code` and links Telegram user `telegramUserId` to the account it names. */
-  link(code: string, telegramUserId: number): Promise<TelegramLinkResult>
+  /**
+   * Spends `code` and, when it was live, issues a "Link" button for Telegram user
+   * `telegramUserId` that names the account. `null` for a code that does not work.
+   */
+  prepare(code: string, telegramUserId: number): Promise<TelegramPreparedLink | null>
+  /** Spends `code` without linking: it was sent where others can read it. */
+  spend(code: string): Promise<void>
+  /** Spends a "Link" button's token pressed by `telegramUserId`, and links the account. */
+  link(token: string, telegramUserId: number): Promise<TelegramLinkResult>
   /** Unlinks Telegram user `telegramUserId` from their account; `false` when none was linked. */
   unlink(telegramUserId: number): Promise<boolean>
 }
@@ -49,6 +63,9 @@ export interface SeedBotDeps {
   product: TelegramProduct
 }
 
+/** The `callback_data` prefix of the "Link" button. */
+export const LINK_CALLBACK = `tglink`
+
 /** Where the person makes a link code in the app. */
 export const TELEGRAM_SETTINGS_PATH = `/profile/notifications`
 
@@ -62,6 +79,10 @@ export const BOT_TEXT = {
   invalid:
     `That code does not work. It may be mistyped, used already or older than ${TELEGRAM_LINK_MINUTES} minutes. Make a new one in the app.`,
   privateOnly: `Send me that in a private chat.`,
+  codeSpent:
+    `That code was sent where others can read it, so it no longer works. Make a new one in the app and send it to me in a private chat.`,
+  confirm: (name: string) =>
+    `This code links this Telegram account to the account of ${name}. Press "Link" only if that is your own account.`,
   unlinked: `Unlinked. This chat gets no more notifications from your account.`,
   notLinked: `This Telegram account is not linked to an account.`,
   howToLink: (settingsUrl: string) =>
@@ -138,11 +159,20 @@ export function createSeedBot(deps: SeedBotDeps): TelegramBot {
     if (account) await handler(ctx, account)
   }
 
-  async function link(ctx: TelegramContext, code: string): Promise<void> {
+  /** Checks a code and asks for a "Link" press that names the account; never links at once. */
+  async function prepare(ctx: TelegramContext, code: string): Promise<void> {
     if (!ctx.from) return
-    if (!isPrivate(ctx)) return void await ctx.reply(BOT_TEXT.privateOnly)
-    const result = await links.link(code, ctx.from.id)
-    await ctx.reply(BOT_TEXT[result])
+    if (!isPrivate(ctx)) {
+      await links.spend(code)
+      return void await ctx.reply(BOT_TEXT.codeSpent)
+    }
+    const prepared = await links.prepare(code, ctx.from.id)
+    if (!prepared) return void await ctx.reply(BOT_TEXT.invalid)
+    await ctx.reply(BOT_TEXT.confirm(prepared.name), {
+      reply_markup: {
+        inline_keyboard: [[{ text: `Link`, callback_data: `${LINK_CALLBACK}:${prepared.token}` }]],
+      },
+    })
   }
 
   for (const command of product.commands) bot.command(command.name, asAccount(command.handler))
@@ -162,15 +192,19 @@ export function createSeedBot(deps: SeedBotDeps): TelegramBot {
   }
 
   return bot
+    .callback(LINK_CALLBACK, async (ctx) => {
+      if (!ctx.from || !isPrivate(ctx)) return
+      await ctx.reply(BOT_TEXT[await links.link(ctx.args, ctx.from.id)])
+    })
     .command(`start`, async (ctx) => {
       // `t.me/<bot>?start=<code>` sends the code this way.
-      if (ctx.args) return await link(ctx, ctx.args)
+      if (ctx.args) return await prepare(ctx, ctx.args)
       if (!ctx.from || !isPrivate(ctx)) return
       const account = await links.account(ctx.from.id)
       await ctx.reply(account ? BOT_TEXT.hello(account.firstName) : BOT_TEXT.howToLink(settingsUrl))
     })
     .command(`link`, async (ctx) => {
-      if (ctx.args) return await link(ctx, ctx.args)
+      if (ctx.args) return await prepare(ctx, ctx.args)
       await ctx.reply(BOT_TEXT.howToLink(settingsUrl))
     })
     .command(`unlink`, async (ctx) => {

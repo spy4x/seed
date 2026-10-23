@@ -15,6 +15,9 @@ import {
   createTelegramLinkService,
 } from "../../apps/api/services/telegram.ts"
 import { fakeTelegram } from "../../apps/api/telegram/fake-telegram.ts"
+import type { TelegramLinkService } from "../../apps/api/telegram/bot.ts"
+import { createSignIn } from "../../apps/api/services/sign-in.ts"
+import { issuePasswordReset } from "../../libs/server/auth/password-reset.ts"
 import { insertUser, withSchema } from "./group-team.ts"
 
 /**
@@ -27,6 +30,13 @@ import { insertUser, withSchema } from "./group-team.ts"
 
 const T0 = new Date(`2026-12-04T10:00:00.000Z`)
 const TG = 7_001
+
+/** A code sent to the bot, then the "Link" press by the same Telegram user. */
+async function linkWith(links: TelegramLinkService, code: string, telegramUserId: number) {
+  const prepared = await links.prepare(code, telegramUserId)
+  if (!prepared) return `invalid`
+  return await links.link(prepared.token, telegramUserId)
+}
 
 function services(sql: postgres.Sql, at: { now: Date }) {
   const db = new AppDbBase({ sql })
@@ -59,12 +69,12 @@ Deno.test(`telegram: a code links the chat once, with its audit row, and a reuse
 
     const code = await accounts.issueCode(ada)
     expect(code?.url).toBe(`https://t.me/seed_bot?start=${code?.code}`)
-    expect(await links.link(code!.code, TG)).toBe(`linked`)
+    expect(await linkWith(links, code!.code, TG)).toBe(`linked`)
     expect(await linkedTelegram(sql, ada)).toEqual([String(TG)])
     expect((await accounts.status(ada)).linkedAt).not.toBeNull()
 
     await links.unlink(TG)
-    expect(await links.link(code!.code, TG)).toBe(`invalid`)
+    expect(await linkWith(links, code!.code, TG)).toBe(`invalid`)
     expect(await linkedTelegram(sql, ada)).toEqual([])
     expect((await audits(sql, ada)).map((row) => row.eventType)).toEqual([
       AuthAuditEventType.TELEGRAM_LINKED,
@@ -81,10 +91,10 @@ Deno.test(`telegram: a code older than ten minutes, or one a newer code replaced
 
     const old = await accounts.issueCode(ada)
     const fresh = await accounts.issueCode(ada)
-    expect(await links.link(old!.code, TG)).toBe(`invalid`)
+    expect(await linkWith(links, old!.code, TG)).toBe(`invalid`)
 
     at.now = new Date(T0.getTime() + 10 * 60_000 + 1_000)
-    expect(await links.link(fresh!.code, TG)).toBe(`invalid`)
+    expect(await linkWith(links, fresh!.code, TG)).toBe(`invalid`)
     expect(await linkedTelegram(sql, ada)).toEqual([])
   })
 })
@@ -94,9 +104,9 @@ Deno.test(`telegram: a chat linked to one person is refused for another until it
     const { accounts, links } = services(sql, { now: T0 })
     const ada = await insertUser(sql)
     const bob = await insertUser(sql)
-    expect(await links.link((await accounts.issueCode(ada))!.code, TG)).toBe(`linked`)
+    expect(await linkWith(links, (await accounts.issueCode(ada))!.code, TG)).toBe(`linked`)
 
-    expect(await links.link((await accounts.issueCode(bob))!.code, TG)).toBe(`taken`)
+    expect(await linkWith(links, (await accounts.issueCode(bob))!.code, TG)).toBe(`taken`)
     expect(await linkedTelegram(sql, bob)).toEqual([])
     expect(await linkedTelegram(sql, ada)).toEqual([String(TG)])
   })
@@ -132,7 +142,7 @@ Deno.test(`telegram: a notification reaches the linked chat, and none is sent af
     await notify()
     expect(await run()).toBe(0)
 
-    await links.link((await accounts.issueCode(ada))!.code, TG)
+    await linkWith(links, (await accounts.issueCode(ada))!.code, TG)
     await notify()
     expect(await run()).toBe(1)
     const [message] = telegram.calls.filter((call) => call.method === `sendMessage`)
@@ -158,7 +168,7 @@ Deno.test(`telegram: an operator unlinks a person's chat, with an audit row nami
     const ada = await insertUser(sql)
     const operator = await insertUser(sql)
     await sql`UPDATE users SET role = ${UserRole.OPERATOR} WHERE id = ${operator}`
-    await links.link((await accounts.issueCode(ada))!.code, TG)
+    await linkWith(links, (await accounts.issueCode(ada))!.code, TG)
     const admin = createAdmin({
       db,
       pageSize: 10,
@@ -182,5 +192,149 @@ Deno.test(`telegram: an operator unlinks a person's chat, with an audit row nami
       eventType: AuthAuditEventType.TELEGRAM_UNLINKED,
       identifier: `operator:${operator} telegram:${TG}`,
     })
+  })
+})
+
+Deno.test(`telegram: a code names the account it links, and only its Telegram user's press links`, async () => {
+  await withSchema(async (sql) => {
+    const { accounts, links } = services(sql, { now: T0 })
+    const ada = await insertUser(sql)
+    await sql`UPDATE users SET first_name = 'Ada' WHERE id = ${ada}`
+
+    const prepared = await links.prepare((await accounts.issueCode(ada))!.code, TG)
+    expect(prepared?.name).toBe(`Ada`)
+    expect(await linkedTelegram(sql, ada)).toEqual([])
+
+    expect(await links.link(prepared!.token, TG + 1)).toBe(`invalid`)
+    expect(await linkedTelegram(sql, ada)).toEqual([])
+    expect(await links.link(prepared!.token, TG)).toBe(`linked`)
+    expect(await linkedTelegram(sql, ada)).toEqual([String(TG)])
+  })
+})
+
+Deno.test(`telegram: wrong codes made from a person's user id leave their live code and the next one working`, async () => {
+  await withSchema(async (sql) => {
+    const { accounts, links } = services(sql, { now: T0 })
+    const ada = await insertUser(sql)
+    const live = (await accounts.issueCode(ada))!.code
+
+    for (let guess = 0; guess < 6; guess++) {
+      const forged = `${ada}_${`${guess}`.padStart(16, `b`)}_${`c`.repeat(24)}`
+      expect(await links.prepare(forged, TG + 1)).toBeNull()
+    }
+    expect(await linkWith(links, live, TG)).toBe(`linked`)
+    await links.unlink(TG)
+    expect(await linkWith(links, (await accounts.issueCode(ada))!.code, TG)).toBe(`linked`)
+  })
+})
+
+Deno.test(`telegram: linking a second Telegram account records the first one's unlink`, async () => {
+  await withSchema(async (sql) => {
+    const { accounts, links } = services(sql, { now: T0 })
+    const ada = await insertUser(sql)
+    await linkWith(links, (await accounts.issueCode(ada))!.code, TG)
+
+    expect(await linkWith(links, (await accounts.issueCode(ada))!.code, TG + 1)).toBe(`linked`)
+
+    expect(await linkedTelegram(sql, ada)).toEqual([String(TG + 1)])
+    expect(await audits(sql, ada)).toEqual([
+      { eventType: AuthAuditEventType.TELEGRAM_LINKED, identifier: `telegram:${TG}` },
+      { eventType: AuthAuditEventType.TELEGRAM_UNLINKED, identifier: `telegram:${TG}` },
+      { eventType: AuthAuditEventType.TELEGRAM_LINKED, identifier: `telegram:${TG + 1}` },
+    ])
+  })
+})
+
+Deno.test(`telegram: a blocked or deleted person's chat gets no message`, async () => {
+  await withSchema(async (sql) => {
+    const { accounts, links } = services(sql, { now: T0 })
+    const telegram = fakeTelegram()
+    const job = telegramNotificationJob({
+      sql,
+      client: telegram.client,
+      webAppUrl: `https://app.example.com`,
+      log: () => {},
+    })
+    for (const column of [`blocked_at`, `deleted_at`]) {
+      const person = await insertUser(sql)
+      const chat = column === `blocked_at` ? TG : TG + 1
+      await linkWith(links, (await accounts.issueCode(person))!.code, chat)
+      await sql.begin((tx) =>
+        createNotification(tx, {
+          userId: person,
+          kind: NotificationKind.RoleChanged,
+          payload: { groupName: `Team`, from: `editor`, to: `viewer` },
+          link: `/groups`,
+        })
+      )
+      await sql`UPDATE users SET ${sql(column)} = now() WHERE id = ${person}`
+      const [{ id }] = await sql<{ id: string }[]>`SELECT id FROM telegram_messages`
+      await job({ aggregateId: id } as Parameters<JobHandler>[0])
+    }
+
+    expect(telegram.sent()).toEqual([])
+    expect(await sql`SELECT 1 FROM telegram_messages`).toHaveLength(0)
+  })
+})
+
+const PEPPER = `integration-test-only-pepper-0123456789`
+const COOKIE_SECRET = `integration-test-only-cookie-secret-0123456789`
+const PASSWORD = `Passw0rd!`
+
+Deno.test(`telegram: a password reset and a password change each end the link, with an audit row`, async () => {
+  await withSchema(async (sql) => {
+    const { db, accounts, links } = services(sql, { now: T0 })
+    const signIn = createSignIn({
+      db,
+      pepper: PEPPER,
+      cookieSecret: COOKIE_SECRET,
+      secureCookie: false,
+      sessionMinutes: 60,
+      totpIssuer: `example.test`,
+    })
+    const app = new Hono()
+      .post(`/sign-up`, async (c) => {
+        const { email } = await c.req.json()
+        return c.json((await signIn.signUp(c, email, PASSWORD))!.user)
+      })
+      .post(`/change/:id`, async (c) =>
+        c.json(
+          await signIn.changePassword(
+            c,
+            { user: { id: Number(c.req.param(`id`)) } } as never,
+            PASSWORD,
+            `Changed-Passw0rd`,
+            false,
+          ),
+        ))
+    const signUp = async (email: string) =>
+      ((await (await app.request(`http://local/sign-up`, {
+        method: `POST`,
+        body: JSON.stringify({ email }),
+      })).json()) as { id: number }).id
+
+    const ada = await signUp(`ada@example.com`)
+    await linkWith(links, (await accounts.issueCode(ada))!.code, TG)
+    const issued = (await issuePasswordReset(db.authStore, `ada@example.com`, new Date()))!
+    expect(await signIn.resetPassword(`ada@example.com`, issued.code, `Reset-Passw0rd`)).toBe(true)
+    expect(await links.account(TG)).toBeNull()
+    expect((await audits(sql, ada)).at(-1)).toEqual({
+      eventType: AuthAuditEventType.TELEGRAM_UNLINKED,
+      identifier: `password-reset telegram:${TG}`,
+    })
+
+    const bob = await signUp(`bob@example.com`)
+    await linkWith(links, (await accounts.issueCode(bob))!.code, TG + 1)
+    expect((await app.request(`http://local/change/${bob}`, { method: `POST` })).status).toBe(200)
+    expect(await links.account(TG + 1)).toBeNull()
+    expect(
+      (await audits(sql, bob)).filter((row) =>
+        row.eventType === AuthAuditEventType.TELEGRAM_UNLINKED
+      ),
+    )
+      .toEqual([{
+        eventType: AuthAuditEventType.TELEGRAM_UNLINKED,
+        identifier: `password-change telegram:${TG + 1}`,
+      }])
   })
 })
