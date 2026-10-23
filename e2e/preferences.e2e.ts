@@ -188,6 +188,47 @@ test.describe("preferences across devices", () => {
   })
 })
 
+test.describe("preferences from the keyboard", () => {
+  test("Tab out of the open Formats and Time zone lists goes to the next control (#412)", async ({ browser, request }) => {
+    const email = `e2e-preferences-tab-${uuidV7().slice(-8)}@example.com`
+    let device: BrowserContext | null = null
+    try {
+      const signUp = await signUpWithCode(request, `${appBase}/api/auth/password/sign-up`, {
+        headers,
+        data: { email, password },
+      })
+      expect(signUp.ok(), await signUp.text()).toBe(true)
+      device = await browser.newContext({ timezoneId: "Europe/Berlin", locale: "en-GB" })
+      const page = await openOnDevice(device, email, "region")
+      const formats = page.getByRole("combobox", { name: "Formats" })
+      const zone = page.getByRole("combobox", { name: "Time zone" })
+
+      for (
+        const [field, next] of [
+          [formats, zone],
+          [zone, page.locator("[data-e2e=preferences-clock-format]")],
+        ] as const
+      ) {
+        await field.click()
+        await expect(field).toHaveAttribute("aria-expanded", "true")
+        // Only a list taller than its box is a tab stop in Chrome: the case this is about.
+        const scrolls = await field.evaluate((input) => {
+          const list = document.getElementById(input.getAttribute("aria-controls") ?? "")
+          return list !== null && list.scrollHeight > list.clientHeight
+        })
+        expect(scrolls).toBe(true)
+
+        await field.press("Tab")
+
+        await expect(next).toBeFocused()
+      }
+    } finally {
+      await device?.close()
+      await cleanup(request, email)
+    }
+  })
+})
+
 /** A full date and time in British English with a 24-hour clock: `Saturday, 17 October 2026 at 05:28`. */
 const ENGLISH_FULL = /(Mon|Tues|Wednes|Thurs|Fri|Satur|Sun)day, \d{1,2} \S+ \d{4} at \d{2}:\d{2}\./
 
