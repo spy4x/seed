@@ -487,18 +487,20 @@ async function zoomOn(page: Page, region: Box, least = 1.6): Promise<void> {
 /**
  * Zooms so that `region` ends exactly where the caption starts, as large as the frame allows (at
  * most 2×), centred across. Nothing below `region` shows above the caption, so the caption never
- * cuts a card or a row in half. `region` is measured at 1×.
+ * cuts a card or a row in half. Never below 1×, which would shrink the page and leave the frame's
+ * edges empty: a `region` taller than the frame starts at its top and runs under the caption.
+ * `region` is measured at 1×.
  */
 async function fillAboveCaption(page: Page, region: Box): Promise<void> {
   const room = H - CAPTION
-  const s = Math.min(2, (VIEWPORT.width - 80) / region.width, room / region.height)
+  const s = Math.max(1, Math.min(2, (VIEWPORT.width - 80) / region.width, room / region.height))
   const tx = VIEWPORT.width / 2
   const x = Math.min(
     Math.max(region.x + region.width / 2, tx / s),
     VIEWPORT.width - (VIEWPORT.width - tx) / s,
   )
   const y = region.y + region.height / 2
-  const ty = room - s * region.height / 2
+  const ty = Math.max(room - s * region.height / 2, s * region.height / 2)
   await video(
     page,
     `__video.zoom(${s.toFixed(3)}, ${Math.round(x)}, ${Math.round(y)}, ${tx}, ${Math.round(ty)})`,
@@ -789,14 +791,19 @@ async function play(
   })
   await unzoom(page)
 
-  // 9. System: from its title to the last row of services, which ends where the caption starts.
+  // 9. System: from its title to the second row of services, which ends where the caption starts.
+  // The third row, the API build, runs under the caption: three rows would need a zoom below 1×.
   await clickLike(page, pointer, page.getByRole("link", { name: "System" }), H)
   await page.getByRole("heading", { level: 1, name: "System" }).waitFor()
   await page.locator("[data-e2e=admin-system-summary]").waitFor()
   await page.locator("[data-e2e=admin-system-build]").getByText(VERSION).waitFor()
   const systemTitle = await box(page.getByRole("heading", { level: 1, name: "System" }))
   const services = await box(page.locator("[data-e2e=admin-system-cards]"))
-  const system = union({ ...systemTitle, y: systemTitle.y - 16 }, services)
+  const secondRow = await box(page.locator("[data-e2e=admin-system-migrations]"))
+  const system = union({ ...systemTitle, y: systemTitle.y - 16 }, {
+    ...services,
+    height: secondRow.y + secondRow.height - services.y,
+  })
   await fillAboveCaption(page, system)
   await pause(page, 600)
   await moveLike(page, pointer, { x: 1100, y: 690 })
