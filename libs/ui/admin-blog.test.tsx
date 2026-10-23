@@ -298,7 +298,7 @@ describe("the blog editor", () => {
     expect(find("[data-e2e=admin-blog-settings]").textContent).toContain("Add a slug.")
   })
 
-  it("asks the API for the preview when the Preview tab opens, and shows its HTML", async () => {
+  it("asks the API for the preview when the Preview tab opens, and shows its HTML under an h2 title", async () => {
     const calls: unknown[][] = []
     await mount(<AdminBlogEditorScreen {...editorProps(calls)} />)
     await clickOn(find("#preview-tab"))
@@ -311,8 +311,9 @@ describe("the blog editor", () => {
       />,
     )
     const preview = find("[data-e2e=admin-blog-preview]")
-    expect(preview.querySelector("h2")?.textContent).toBe("Why")
-    expect(preview.textContent).toContain("In short")
+    // The page's h1 is "Edit post": the preview's title is an h2, its key points an h3.
+    expect([...preview.querySelectorAll("h1, h2, h3")].map((h) => `${h.tagName} ${h.textContent}`))
+      .toEqual(["H2 Jobs explained", "H3 In short", "H2 Why"])
   })
 
   it("says when a published post went live and was last updated, with a space before the middle dot", async () => {

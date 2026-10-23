@@ -576,9 +576,10 @@ function PreviewPanel(props: AdminBlogEditorScreenProps): JSX.Element {
       {value.topic.trim() && (
         <p class="text-xs font-semibold uppercase tracking-wide text-muted">{value.topic.trim()}</p>
       )}
-      <p class="text-3xl font-bold tracking-tight text-foreground wrap-anywhere">
+      {/* h2 under the page's h1 "Edit post", so the key points' h3 does not skip a level. */}
+      <h2 class="text-3xl font-bold tracking-tight text-foreground wrap-anywhere">
         {value.title.trim() || `Untitled`}
-      </p>
+      </h2>
       <TldrBox items={points} headingLevel={3} />
       {preview.html.trim()
         ? <Prose html={preview.html} />

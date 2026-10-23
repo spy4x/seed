@@ -1,4 +1,5 @@
 import type { BrowserContext, Page } from "@playwright/test"
+import { AxeBuilder } from "@axe-core/playwright"
 import { expect, test } from "./fixtures/stack.ts"
 import { uuidV7 } from "@jsr/spy4x__platform/universal/uuid"
 import { signUpWithCode } from "./fixtures/sign-up.ts"
@@ -84,7 +85,14 @@ test("an operator writes, previews, schedules, publishes and deletes a post from
     await ops.getByRole("tab", { name: "Preview" }).click()
     const preview = ops.locator("[data-e2e=admin-blog-preview]")
     await expect(preview.locator("strong")).toHaveText("fast")
-    await expect(preview.locator("h2")).toHaveText("Why")
+    await expect(preview.getByRole("heading", { level: 2, name: "Why" })).toBeVisible()
+    await expect(preview.getByRole("heading", { level: 2, name: title })).toBeVisible()
+    // The page's outline and the rest of axe-core's checks hold on the Preview tab.
+    const axe = await new AxeBuilder({ page: ops })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"])
+      .analyze()
+    expect(axe.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(", ")}`))
+      .toEqual([])
     await expect(preview.locator("script")).toHaveCount(0)
     expect(await ops.evaluate(() => (globalThis as { hacked?: boolean }).hacked)).toBeUndefined()
 
