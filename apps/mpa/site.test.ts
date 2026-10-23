@@ -212,11 +212,29 @@ describe("the public website", () => {
   it("gives the billing and realtime cards a picture of the app", async () => {
     const { html } = await page("/")
 
-    for (const [id, shot] of [["feature-billing", "billing"], ["feature-realtime", "realtime-a"]]) {
+    for (
+      const [id, shot] of [["feature-billing", "billing-plan"], ["feature-realtime", "realtime-a"]]
+    ) {
       const start = html.indexOf(`aria-labelledby="${id}"`)
       const card = html.slice(start, html.indexOf(`role="article"`, start + 1))
       expect(card, id).toContain(`/shots/${shot}-light-`)
     }
+  })
+
+  it("draws the billing card from the plan-only picture, 780×416 at its widest", async () => {
+    const { html } = await page("/")
+    const start = html.indexOf(`aria-labelledby="feature-billing"`)
+    const card = html.slice(start, html.indexOf(`role="article"`, start + 1))
+
+    // 780×416 is the plan alone; the whole phone screen it was cut from is 780×1688.
+    expect(card).toMatch(/<img[^>]*width="780"[^>]*height="416"/)
+    const files = [...new Set(card.match(/\/shots\/[a-z-]+-\d+\.webp/g))]
+    expect(files.sort()).toEqual([
+      `/shots/billing-plan-dark-390.webp`,
+      `/shots/billing-plan-dark-780.webp`,
+      `/shots/billing-plan-light-390.webp`,
+      `/shots/billing-plan-light-780.webp`,
+    ])
   })
 
   it("names a page after its own title, then the site, when the title does not name Seed", async () => {

@@ -434,8 +434,8 @@ async function scrollToTop(target: Locator): Promise<void> {
   })
 }
 
-/** Waits until the page is still, then writes the master PNG. */
-async function snap(page: Page, name: string): Promise<void> {
+/** Waits until the page is still, then writes the master PNG, of `clip` alone when given. */
+async function snap(page: Page, name: string, clip?: Clip): Promise<void> {
   await page.addStyleTag({ content: STEADY_CSS })
   await page.waitForLoadState("networkidle")
   await page.evaluate(() => document.fonts.ready)
@@ -445,7 +445,20 @@ async function snap(page: Page, name: string): Promise<void> {
   const viewport = page.viewportSize()!
   await page.mouse.move(viewport.width - 2, viewport.height / 2)
   await page.waitForTimeout(300)
-  await page.screenshot({ path: `${MASTERS}/${name}.png`, animations: "disabled", caret: "hide" })
+  await page.screenshot({
+    path: `${MASTERS}/${name}.png`,
+    animations: "disabled",
+    caret: "hide",
+    clip,
+  })
+}
+
+/** A part of the viewport, in CSS pixels. */
+interface Clip {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 /** A screen that only reads: opened in each theme and form, waited for, and arranged. */
@@ -453,6 +466,18 @@ interface Screen {
   name: string
   forms: Form[]
   open(page: Page, seeded: Seeded): Promise<void>
+  /** The part of the viewport the picture keeps; the whole viewport when absent. */
+  clip?: Clip
+}
+
+/** The group's Plan and billing tab, scrolled so the tab's title sits at the top. */
+async function openBilling(page: Page, seeded: Seeded): Promise<void> {
+  await gotoApp(
+    page,
+    `/groups/${seeded.groupId}/billing`,
+    page.locator("[data-e2e=billing-plan][data-plan=pro]"),
+  )
+  await scrollToTop(page.locator("[data-e2e=group-section-billing]"))
 }
 
 const SCREENS: Screen[] = [
@@ -490,17 +515,16 @@ const SCREENS: Screen[] = [
   },
   {
     name: "billing",
-    forms: ["desktop", "mobile"],
-    async open(page, seeded) {
-      await gotoApp(
-        page,
-        `/groups/${seeded.groupId}/billing`,
-        page.locator("[data-e2e=billing-plan][data-plan=pro]"),
-      )
-      // The Plan and billing tab, from its title down; the home page's billing card crops it on a
-      // phone at close to its real size.
-      await scrollToTop(page.locator("[data-e2e=group-section-billing]"))
-    },
+    forms: ["desktop"],
+    open: openBilling,
+  },
+  {
+    // The home page's billing card: the plan alone, on a phone, from the canvas above its
+    // "Plan and billing" title to the canvas below the "Pro plan" card.
+    name: "billing-plan",
+    forms: ["mobile"],
+    open: openBilling,
+    clip: { x: 0, y: 144, width: 390, height: 208 },
   },
   {
     name: "notifications",
@@ -555,7 +579,7 @@ async function captureScreens(browser: Browser, contexts: BrowserContext[], seed
           })
           try {
             await screen.open(page, seeded)
-            await snap(page, name)
+            await snap(page, name, screen.clip)
           } finally {
             await page.context().close()
           }

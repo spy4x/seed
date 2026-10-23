@@ -19,6 +19,8 @@ export interface ShotProps {
   /** The screenshot's name in `static/shots/`, such as `notes`. */
   name: string
   kind?: ShotKind
+  /** The height at the widest width, for a picture cropped from its kind's viewport. */
+  height?: number
   /** What the screen shows, for a reader who cannot see it. */
   alt: string
   /** How wide the image is drawn, for the browser's choice of file. */
@@ -36,6 +38,7 @@ export function Shot(
   {
     name,
     kind = "desktop",
+    height = SIZES[kind].height,
     alt,
     sizes = "(min-width: 1024px) 1024px, 100vw",
     priority = false,
@@ -55,7 +58,7 @@ export function Shot(
         srcset={shotSrcset(name, "light", kind)}
         sizes={sizes}
         width={width}
-        height={SIZES[kind].height}
+        height={height}
         alt={alt}
         class={`block h-auto w-full ${className}`}
         {...(priority
