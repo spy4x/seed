@@ -179,10 +179,13 @@ function randomTools(seed: number) {
     }
     return out
   }
-  /** A time between `from` and `to` minutes ago (`from >= to`), nearer `from` with `early`. */
+  /**
+   * A time between `from` and `to` minutes ago (`from >= to`), nearer `from` with `early`. Never
+   * in the future: with `from < 0` it is now, or the row would sort after rows written later.
+   */
   const between = (from: number, to: number, early = false) => {
     const share = early ? random() ** 2 : random()
-    return Math.round(from - Math.max(0, from - to) * share)
+    return Math.max(0, Math.round(from - Math.max(0, from - to) * share))
   }
   return { random, int, pick, chance, sample, between }
 }

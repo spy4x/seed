@@ -709,16 +709,25 @@ async function outOfOrder(
   return rows
 }
 
-Deno.test("the seeds' audit rows have ids in the order of their times", async () => {
-  await withSchema(async (sql) => {
-    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
-    await signUpVisitor(sql, "visitor@example.net")
-    await drainJobs(sql)
+Deno.test("the seeds' audit rows are never after now and have ids in the order of their times", async () => {
+  // A Friday that passed, and the Tuesday that dated a GitHub link 50 minutes after now (#469).
+  for (const now of [new Date("2026-10-23T12:00:00Z"), new Date("2026-10-27T18:25:59Z")]) {
+    await withSchema(async (sql) => {
+      await seedDemo(new AppDbBase({ sql }), sql, { ...DEV_OPTIONS, now })
+      for (const table of ["audit_events", "auth_audits"]) {
+        const [{ latest }] = await sql<{ latest: Date }[]>`
+          SELECT max(created_at) AS latest FROM ${sql(table)}
+        `
+        expect(latest.getTime()).toBeLessThanOrEqual(now.getTime())
+      }
+      await signUpVisitor(sql, "visitor@example.net")
+      await drainJobs(sql)
 
-    // Feeds and billing histories sort by id: a row out of order would jump back in time.
-    expect(await outOfOrder(sql, "audit_events")).toBe(0)
-    expect(await outOfOrder(sql, "auth_audits")).toBe(0)
-  })
+      // Feeds and billing histories sort by id: a row out of order would jump back in time.
+      expect(await outOfOrder(sql, "audit_events")).toBe(0)
+      expect(await outOfOrder(sql, "auth_audits")).toBe(0)
+    })
+  }
 })
 
 Deno.test("the development billing provider tells the seeded customers' payments", async () => {
