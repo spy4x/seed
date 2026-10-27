@@ -84,6 +84,7 @@ function buildApp(
               version: 0,
               updatedAt: null,
               firstTimeZone: null,
+              firstLocale: null,
             },
           }
           : null,

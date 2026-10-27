@@ -27,6 +27,7 @@ const actor = actorOf(7)
 const signal = new AbortController().signal
 const berlin: Preferences = {
   theme: `dark`,
+  language: null,
   locale: `de-DE`,
   timeZone: `Europe/Berlin`,
   hourCycle: `h23`,
@@ -144,6 +145,26 @@ describe(`preferences operations`, () => {
     expect(result.reason).toBe(`invalid`)
     expect(rows.size).toBe(0)
     expect(hints).toEqual([])
+  })
+
+  it(`stores a listed language, and refuses one off the list as invalid, writing nothing`, async () => {
+    const { call, rows } = harness()
+
+    for (const language of [`../../etc/passwd`, `fr`, `__proto__`]) {
+      const refused = await call(`preferences.save`, {
+        version: 0,
+        value: { ...berlin, language },
+      }) as { ok: boolean; reason: string }
+      expect(refused).toMatchObject({ ok: false, reason: `invalid` })
+    }
+    expect(rows.size).toBe(0)
+
+    expect(await call(`preferences.save`, { version: 0, value: { ...berlin, language: `ar` } }))
+      .toMatchObject({ ok: true })
+    expect(await call(`preferences.get`, undefined)).toEqual({
+      version: 1,
+      value: { ...berlin, language: `ar` },
+    })
   })
 
   it(`writes only the session's person, whatever id the payload names`, async () => {

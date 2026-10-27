@@ -830,6 +830,7 @@ describe(`the person page's groups`, () => {
         version: 0,
         updatedAt: null,
         firstTimeZone: null,
+        firstLocale: null,
       },
     }
     const props: AdminUserScreenProps = {
