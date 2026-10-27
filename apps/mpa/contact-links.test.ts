@@ -81,7 +81,7 @@ describe("contact links on the website", () => {
 
   it("draws no Contact column and no organization while there are no links", async () => {
     const html = await home([])
-    expect(contactColumn(html)).toEqual([])
+    expect(html.slice(html.lastIndexOf("<footer"))).not.toContain(">Contact<")
     expect(jsonLdGraph(html).map((node) => node["@type"])).not.toContain("Organization")
   })
 })
