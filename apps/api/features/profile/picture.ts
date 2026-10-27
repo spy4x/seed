@@ -60,7 +60,7 @@ export const PICTURE_AUDIT_IDENTIFIER = `picture`
 function refusalError(refusal: FileRefusal): PictureError {
   switch (refusal) {
     case FileRefusal.Type:
-      return new PictureError(`FILE_TYPE`, `A picture is a JPEG, PNG or WebP image`)
+      return new PictureError(`FILE_TYPE`, `A picture is a JPEG, PNG, WebP or HEIC image`)
     case FileRefusal.Size:
       return new PictureError(`FILE_TOO_LARGE`, `A picture can be up to ${PICTURE_MAX_BYTES} bytes`)
     case FileRefusal.Missing:

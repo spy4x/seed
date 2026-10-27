@@ -86,7 +86,8 @@ updates the demo in the same PR:
   the file store. A new table that holds a person's data adds a section to the export instead
   ([data-export.md](data-export.md)).
 - **Profile pictures** (#228) need no change either: the seed gives nobody a picture, so every
-  avatar shows initials, and the wipe queues every picture a visitor uploaded for the clean-up.
+  avatar shows initials, and the wipe queues every picture a visitor uploaded for the clean-up,
+  with the original and every processed width in `images` and `image_variants` (#464).
 - **The tests**: `tests/integration/demo-seed.integration.test.ts` checks that the wipe leaves
   every table but the kept ones empty, that the seed's counts match the fake data, what a new
   account's sample groups hold, and what the admin's dashboard, billing and newsletter read from

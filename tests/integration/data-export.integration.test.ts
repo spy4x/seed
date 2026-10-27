@@ -47,6 +47,7 @@ function memoryFiles() {
   const stored = new Map<string, Uint8Array>()
   const files: ServerFiles = {
     put: (key, body) => (stored.set(key, body), Promise.resolve()),
+    read: (key) => Promise.resolve(stored.get(key) ?? null),
     delete: (key) => (stored.delete(key), Promise.resolve()),
     deleteOlderThan: () => Promise.resolve(0),
   }

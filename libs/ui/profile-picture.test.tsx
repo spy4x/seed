@@ -85,7 +85,7 @@ describe("profile picture row", () => {
     expect(chooser().textContent).toBe("Upload profile picture")
     expect(removeCount()).toBe(0)
     expect(find("[data-e2e=profile-picture-row]").textContent).toContain(
-      "JPEG, PNG or WebP, up to 1 MB.",
+      "JPEG, PNG, WebP or HEIC, up to 10 MB.",
     )
   })
 
@@ -132,9 +132,9 @@ describe("profile picture row", () => {
 
   it("moves focus to a refusal when it appears", async () => {
     await mount(<PictureErrorState error={null} />)
-    await mount(<PictureErrorState error="photo.heic is not a JPEG, PNG or WebP image." />)
+    await mount(<PictureErrorState error="photo.gif is not a JPEG, PNG, WebP or HEIC image." />)
     const error = find("[data-e2e=profile-picture-error]")
-    expect(error.textContent).toContain("photo.heic is not a JPEG, PNG or WebP image.")
+    expect(error.textContent).toContain("photo.gif is not a JPEG, PNG, WebP or HEIC image.")
     expect(error.contains(document.activeElement)).toBe(true)
   })
 })

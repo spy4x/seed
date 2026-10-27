@@ -61,7 +61,7 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
       value={
         <span class="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
           <Avatar name={name} src={src} size="lg" alt="" class="shrink-0" />
-          <span class="text-sm text-muted">JPEG, PNG or WebP, up to 1 MB.</span>
+          <span class="text-sm text-muted">JPEG, PNG, WebP or HEIC, up to 10 MB.</span>
           <span role="status" class="sr-only" data-e2e="profile-picture-status">
             {announcement}
           </span>

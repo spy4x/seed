@@ -99,7 +99,9 @@ function buildApp(
         dataExports: (userId) => (calls.push(["dataExports", userId]), Promise.resolve([])),
         picture: (id) => {
           const stored = pictures.get(id)
-          return Promise.resolve(stored ? { id, contentType: stored.contentType } : null)
+          return Promise.resolve(
+            stored ? { id, contentType: stored.contentType, objectKey: `pictures/${id}` } : null,
+          )
         },
         readFile: (key) =>
           Promise.resolve(pictures.get(key.replace(/^pictures\//, ""))?.bytes ?? null),

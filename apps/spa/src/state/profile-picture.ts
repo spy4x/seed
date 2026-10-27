@@ -29,7 +29,7 @@ const OFFLINE = `You are offline. Upload your picture once you are back online.`
 const REMOVE_FAILED = `Could not remove your picture. Check your connection and try again.`
 
 function typeError(name: string): string {
-  return `${name} is not a JPEG, PNG or WebP image. Choose one of those.`
+  return `${name} is not a JPEG, PNG, WebP or HEIC image. Choose one of those.`
 }
 
 function sizeError(name: string, size: number): string {

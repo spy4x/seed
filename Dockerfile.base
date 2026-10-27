@@ -8,8 +8,10 @@ FROM docker.io/denoland/deno:alpine-${DENO_VERSION}
 
 WORKDIR /app
 
-# Install common system dependencies
-RUN apk add --no-cache git curl bash libstdc++ libgcc
+# Install common system dependencies. The worker processes uploaded images with the `vips` command
+# line (docs/files.md, #464): `vips-tools` (libvips 8.15 or newer), `vips-heif` to read HEIC, and
+# `libheif-aom` to write AVIF.
+RUN apk add --no-cache git curl bash libstdc++ libgcc vips-tools vips-heif libheif-aom
 
 # Copy dependency manifests for better layer caching. Every workspace member of deno.jsonc needs a
 # line here, or older Deno versions fail `deno install` (tests/dockerfile-base.test.ts checks it).

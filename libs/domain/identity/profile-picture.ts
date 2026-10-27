@@ -8,15 +8,15 @@ import type { Actor, User } from "./+lib.ts"
 /**
  * Profile pictures (#228, docs/files.md): a person's own picture in place of their initials. It is
  * uploaded like a note attachment (signed, PUT straight to the store, confirmed), counts against
- * the same waiting uploads and hourly budget, and is shown at a fixed size with CSS: nothing
- * resizes it.
+ * the same waiting uploads and hourly budget. The worker turns it into upright widths with no
+ * metadata (#464, docs/files.md), and avatars show the narrowest WebP.
  */
 
 /** The types a picture may be: those a browser shows and whose first bytes the store checks. */
-export const PICTURE_TYPES = [`image/jpeg`, `image/png`, `image/webp`] as const
+export const PICTURE_TYPES = [`image/jpeg`, `image/png`, `image/webp`, `image/heic`] as const
 
-/** The largest picture kept: 1 MiB. */
-export const PICTURE_MAX_BYTES = 1024 * 1024
+/** The largest picture taken: 10 MiB, room for a phone's photo. Only its small widths are kept. */
+export const PICTURE_MAX_BYTES = 10 * 1024 * 1024
 
 /** Where a confirmed picture is kept. No browser is ever given a URL to write it. */
 export function pictureObjectKey(id: string): string {

@@ -323,7 +323,7 @@ function actionOptions(
       "change-picture",
       "Change profile picture",
       `${profilePath("account")}#${PICTURE_BUTTON_ID}`,
-      "JPEG, PNG or WebP, up to 1 MB",
+      "JPEG, PNG, WebP or HEIC, up to 10 MB",
       [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],
     ),
   ]

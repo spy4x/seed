@@ -99,6 +99,7 @@ const ON_MAIN: readonly string[] = [
   "2026_12_04_0001_telegram.sql",
   "2026_12_04_0002_note_attachments.sql",
   "2026_12_05_0001_profile_pictures.sql",
+  "2026_12_06_0001_images.sql",
 ]
 
 // `.no_transaction.sql` is the runner's ending for a statement that cannot run in a transaction.
