@@ -143,9 +143,16 @@ every avatar shows its narrowest WebP, cropped to a circle with CSS. The handler
 - **Showing it.** Every avatar's `src` is `/api/pictures/<id>`: for a signed-in person who may see
   it (their own, or a member's of a group they share), that answers a redirect to a five-minute
   signed URL of its narrowest WebP, which a browser may keep for four minutes. Until the worker
-  has made it (seconds), and for a refused picture, it answers 404 and the avatar shows initials;
-  the original is never served. A picture kept before processing existed is served as stored. Anyone else gets a 404, as for a picture
-  that does not exist. A new picture has a new id, so nothing stale shows. The admin app's host
+  has made it (seconds), and for a refused picture, it answers 404; the original is never served.
+  A picture kept before processing existed is served as stored. Anyone else gets a 404, as for a
+  picture that does not exist.
+- **Its state.** `users.picture_state` (`PictureState`) is Preparing from Confirm until the job
+  sets it to Ready or Refused, in its transaction, and announces it on the `user_picture` channel
+  (`libs/server/auth/picture-state.ts`). The API turns that into the person's profile hint, so
+  every page they have open reads the profile again. Pages ask for the picture only once it is
+  ready (`shownPictureId`), and the group's members list leaves one out until then, so nobody
+  waits on a 404. The profile row says "Preparing your picture…" meanwhile, and "We could not use
+  that picture. Choose another." after a refusal, both in its status region. A new picture has a new id, so nothing stale shows. The admin app's host
   may not load the store's (its `img-src` is `'self'`), so its avatars use
   `/api/admin/users/pictures/<id>`, which answers the bytes themselves with the store's sandbox
   policy and `nosniff`. With another S3 store on an origin of its own, the SPA's `img-src` must

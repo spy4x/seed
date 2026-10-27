@@ -54,7 +54,7 @@ import { siteOrigin } from "../state/demo.ts"
 import { apiDocsHref } from "./api-docs-href.ts"
 import { createDataExportStore, DATA_EXPORT_DOWNLOAD_PATH } from "../state/data-export.ts"
 import { notificationsStore } from "../state/notifications.ts"
-import { DataExportStatus, pictureUrl } from "@domain/identity"
+import { DataExportStatus, PictureState, pictureUrl, shownPictureId } from "@domain/identity"
 import { DATA_EXPORT_ANCHOR } from "@ui/profile-export.tsx"
 import { PICTURE_BUTTON_ID } from "@ui/profile-picture.tsx"
 import { createPictureStore, pictureCalls } from "../state/profile-picture.ts"
@@ -714,8 +714,13 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
       picture={{
         name: [session.user?.firstName, session.user?.lastName].filter(Boolean).join(" ") ||
           emailStore.status.value?.email || "",
-        src: picture.preview.value ?? pictureUrl(session.user?.pictureId),
+        src: picture.preview.value ?? pictureUrl(shownPictureId(session.user)),
         hasPicture: Boolean(session.user?.pictureId),
+        state: session.user?.pictureState === PictureState.Preparing
+          ? "preparing"
+          : session.user?.pictureState === PictureState.Refused
+          ? "refused"
+          : null,
         status: picture.status.value,
         error: picture.error.value,
         announcement: picture.announcement.value,

@@ -18,6 +18,39 @@ export const PICTURE_TYPES = [`image/jpeg`, `image/png`, `image/webp`, `image/he
 /** The largest picture taken: 10 MiB, room for a phone's photo. Only its small widths are kept. */
 export const PICTURE_MAX_BYTES = 10 * 1024 * 1024
 
+/**
+ * The type a picture is uploaded as. A desktop browser that does not know HEIC gives a `.heic` or
+ * `.heif` file no type, or `image/heif`; those go as HEIC, and the API still checks the bytes.
+ */
+export function pictureContentType(file: { name: string; type: string }): string {
+  if ((PICTURE_TYPES as readonly string[]).includes(file.type)) return file.type
+  return /\.hei[cf]$/i.test(file.name) ? `image/heic` : file.type
+}
+
+/** Where a person's picture stands once it is confirmed (#464); `null` while they have none. */
+export enum PictureState {
+  /** The worker is making its small widths; nothing is shown yet. */
+  Preparing = 1,
+  /** Its widths are made, and it is shown. */
+  Ready = 2,
+  /** The worker could not use it (not an image, or too many pixels); nothing is shown. */
+  Refused = 3,
+}
+
+/**
+ * The picture to show for `user`: its id once ready, or `null` while it is prepared, after it was
+ * refused, or when there is none, so an `Avatar` shows the initials instead of asking for a picture
+ * that is not there.
+ */
+export function shownPictureId(
+  user: { pictureId?: string | null; pictureState?: PictureState | null } | null | undefined,
+): string | null {
+  if (!user?.pictureId) return null
+  return user.pictureState === PictureState.Preparing || user.pictureState === PictureState.Refused
+    ? null
+    : user.pictureId
+}
+
 /** Where a confirmed picture is kept. No browser is ever given a URL to write it. */
 export function pictureObjectKey(id: string): string {
   return `pictures/${id}`

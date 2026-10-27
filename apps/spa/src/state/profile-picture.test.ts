@@ -69,6 +69,12 @@ describe(`profile picture store`, () => {
     ])
   })
 
+  it(`signs a HEIC photo the browser gave no type as HEIC`, async () => {
+    const { store, calls } = setUp()
+    await store.choose(file(`IMG_0001.HEIC`, ``))
+    expect(calls[0]).toBe(`sign image/heic 1000`)
+  })
+
   it(`names a file whose bytes are not an image, and cancels its signed upload`, async () => {
     const { store, calls, users } = setUp({
       confirm: () =>

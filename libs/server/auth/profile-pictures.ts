@@ -1,5 +1,5 @@
 import type postgres from "postgres"
-import { pictureObjectKey, type User } from "@domain/identity"
+import { pictureObjectKey, PictureState, type User } from "@domain/identity"
 import { queueImage } from "../files/images.ts"
 
 /** The person's picture as the store keeps it, or `null` when they have none. */
@@ -38,9 +38,9 @@ const servable = (sql: postgres.Sql) => sql`(images.id IS NULL OR variant.object
 
 /**
  * Sets the live person's picture (#228), or clears it with `null`, and answers the person and the
- * id of the picture it replaced. A new picture is queued for processing (#464). The `users`
- * trigger queues the replaced picture's object and image for deletion. `null` when there is no
- * live person. Inside a transaction: the row is locked first, so two changes at once each see the
+ * id of the picture it replaced. A new picture is queued for processing (#464) and stays
+ * `PictureState.Preparing` until the worker is done. The `users` trigger queues the replaced
+ * picture's object and image for deletion. `null` when there is no live person. Inside a transaction: the row is locked first, so two changes at once each see the
  * picture the other left.
  */
 export async function setUserPicture(
@@ -56,6 +56,7 @@ export async function setUserPicture(
     UPDATE users SET
       picture_id = ${picture?.id ?? null},
       picture_type = ${picture?.contentType ?? null},
+      picture_state = ${picture ? PictureState.Preparing : null},
       updated_at = now()
     WHERE id = ${userId}
     RETURNING *

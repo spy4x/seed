@@ -65,6 +65,7 @@ import {
 import { commandBus } from "./services/commandBus.ts"
 import { queryBus } from "./services/queryBus.ts"
 import { listenForInboxNews } from "./services/inbox-news.ts"
+import { listenForPictureStates } from "@server/auth/picture-state.ts"
 import { listenForGroupNews } from "./services/group-news.ts"
 import { groupListCursor } from "./services/group-list-cursor.ts"
 import { noteListCursor } from "./services/note-list-cursor.ts"
@@ -516,6 +517,8 @@ if (config.isDev) {
 await listenForGroupNews(listenSql, realtime, log)
 // A change to a person's inbox becomes a hint on their sockets; the page reads the count.
 await listenForInboxNews(listenSql, realtime)
+// A picture the worker made ready or refused (#464) becomes a hint; the page reads the profile.
+await listenForPictureStates(listenSql, (userId) => realtime.notifyUserChange(userId))
 // Sockets whose session was signed out, expired or lost its second factor while open are closed
 // within this interval; the per-request check already refuses their frames.
 realtime.startRevalidation(REALTIME_REVALIDATE_INTERVAL_MS)

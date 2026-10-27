@@ -801,7 +801,8 @@ export class PostgresGroupRepository implements GroupRepository {
       SELECT
         group_members.user_id,
         btrim(concat_ws(' ', users.first_name, users.last_name)) AS name,
-        users.picture_id,
+        -- A picture still prepared or refused (#464) is not shown: the initials are.
+        CASE WHEN coalesce(users.picture_state, 2) = 2 THEN users.picture_id END AS picture_id,
         ${
       emails
         ? this.sql`(

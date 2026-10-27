@@ -52,3 +52,11 @@ BEGIN
     RETURN NULL;
 END;
 $$;
+
+-- Where a person's picture stands (`PictureState` of @domain/identity): 1 while the worker prepares
+-- it, 2 once it is shown, 3 when it was refused. A picture kept before this change is ready.
+ALTER TABLE users ADD COLUMN picture_state SMALLINT;
+UPDATE users SET picture_state = 2 WHERE picture_id IS NOT NULL;
+ALTER TABLE users ADD CONSTRAINT users_picture_state_check CHECK (
+    (picture_id IS NULL) = (picture_state IS NULL) AND picture_state BETWEEN 1 AND 3
+);

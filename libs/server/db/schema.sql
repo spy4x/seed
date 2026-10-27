@@ -150,12 +150,17 @@ CREATE TABLE users (
     -- `NULL` while they have none. `picture_type` is the type the store confirmed.
     picture_id UUID,
     picture_type VARCHAR(20),
+    -- #464: where the picture stands (`PictureState`): 1 preparing, 2 ready, 3 refused.
+    picture_state SMALLINT,
     CONSTRAINT users_role_check CHECK (role >= 1 AND role <= 4),
     CONSTRAINT users_mfa_check CHECK (mfa = ANY (ARRAY[1, 2, 3])),
     CONSTRAINT users_id_auth_users_fkey FOREIGN KEY (id) REFERENCES auth_users (id)
         ON DELETE CASCADE,
     CONSTRAINT users_picture_id_unique UNIQUE (picture_id),
-    CONSTRAINT users_picture_check CHECK ((picture_id IS NULL) = (picture_type IS NULL))
+    CONSTRAINT users_picture_check CHECK ((picture_id IS NULL) = (picture_type IS NULL)),
+    CONSTRAINT users_picture_state_check CHECK (
+        (picture_id IS NULL) = (picture_state IS NULL) AND picture_state BETWEEN 1 AND 3
+    )
 );
 
 COMMENT ON COLUMN users.role IS '1=viewer, 2=operator, 3=supervisor, 4=administrator';

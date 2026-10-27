@@ -70,6 +70,8 @@ export const userBaseSchema = type({
    * reason as `blockedAt`: only `picture.confirm` and `picture.remove` set it.
    */
   "pictureId?": "string | null",
+  /** Where that picture stands (#464, `PictureState`), or `null` for none. Optional likewise. */
+  "pictureState?": "1 | 2 | 3 | null",
 })
 export type UserBase = typeof userBaseSchema.infer
 

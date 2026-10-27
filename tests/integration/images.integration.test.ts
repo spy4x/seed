@@ -6,7 +6,9 @@ import { ImageRefusal, type processImage } from "@spy4x/server/images"
 import type { ServerFiles } from "@server/files/files.ts"
 import { imageProcessJob, type ImageScratch } from "@server/files/images.ts"
 import { readablePicture, setUserPicture } from "@server/auth/profile-pictures.ts"
-import { insertUser, withSchema } from "./group-team.ts"
+import { listenForPictureStates } from "@server/auth/picture-state.ts"
+import { PictureState } from "@domain/identity"
+import { insertUser, team, withSchema } from "./group-team.ts"
 
 /**
  * Image processing (#464, docs/files.md) against a real Postgres built from schema.sql, with the
@@ -80,6 +82,13 @@ async function personWithPicture(sql: postgres.Sql, stored: Map<string, Uint8Arr
   }
 }
 
+async function stateOf(sql: postgres.Sql, userId: number) {
+  const [row] = await sql<{ pictureState: number | null }[]>`
+    SELECT picture_state FROM users WHERE id = ${userId}
+  `
+  return row.pictureState
+}
+
 async function variantsOf(sql: postgres.Sql, id: string) {
   return await sql<{ objectKey: string; contentType: string; width: number }[]>`
     SELECT object_key, content_type, width FROM image_variants WHERE image_id = ${id}
@@ -91,7 +100,8 @@ Deno.test("a new picture is queued, and the job stores its variants and deletes 
   await withSchema(async (sql) => {
     const { files, stored } = memoryFiles()
     const { scratch, written } = memoryScratch()
-    const { id, event } = await personWithPicture(sql, stored)
+    const { userId, id, event } = await personWithPicture(sql, stored)
+    expect(await stateOf(sql, userId)).toBe(PictureState.Preparing)
     const [queued] = await sql<{ count: number }[]>`
       SELECT count(*)::int AS count FROM outbox_events
       WHERE event_kind = 'files.image-process' AND aggregate_id = ${id}
@@ -152,7 +162,7 @@ Deno.test("a refused image keeps no variant and loses its original", async () =>
   await withSchema(async (sql) => {
     const { files, stored } = memoryFiles()
     const { scratch, written } = memoryScratch()
-    const { id, event } = await personWithPicture(sql, stored)
+    const { userId, id, event } = await personWithPicture(sql, stored)
 
     await imageProcessJob({
       sql,
@@ -161,6 +171,7 @@ Deno.test("a refused image keeps no variant and loses its original", async () =>
       process: fakeProcess(written, ImageRefusal.Format),
     })(event)
 
+    expect(await stateOf(sql, userId)).toBe(PictureState.Refused)
     expect(stored.size).toBe(0)
     expect(await variantsOf(sql, id)).toEqual([])
     const [image] = await sql<{ refused: number }[]>`SELECT refused FROM images WHERE id = ${id}`
@@ -206,7 +217,7 @@ Deno.test("a picture kept before images were processed is served as stored", asy
   await withSchema(async (sql) => {
     const userId = await insertUser(sql)
     const id = uuidV7()
-    await sql`UPDATE users SET picture_id = ${id}, picture_type = 'image/png' WHERE id = ${userId}`
+    await sql`UPDATE users SET picture_id = ${id}, picture_type = 'image/png', picture_state = 2 WHERE id = ${userId}`
 
     expect(await readablePicture(sql, id, userId)).toEqual({
       id,
@@ -236,5 +247,48 @@ Deno.test("replacing a processed picture queues its original and every variant f
       `pictures/${id}/960.webp`,
     ])
     expect(await variantsOf(sql, id)).toEqual([])
+  })
+})
+
+Deno.test("a processed picture becomes ready, and the person's open pages are told", async () => {
+  await withSchema(async (sql) => {
+    const { files, stored } = memoryFiles()
+    const { scratch, written } = memoryScratch()
+    const { userId, event } = await personWithPicture(sql, stored)
+    const heard: number[] = []
+    const told = Promise.withResolvers<void>()
+    const stop = await listenForPictureStates(sql, (id) => {
+      heard.push(id)
+      if (id === userId) told.resolve()
+    })
+    try {
+      await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+      const timer = setTimeout(() => told.reject(new Error(`no announcement within 5 s`)), 5000)
+      await told.promise.finally(() => clearTimeout(timer))
+    } finally {
+      await stop()
+    }
+
+    expect(await stateOf(sql, userId)).toBe(PictureState.Ready)
+    expect(heard).toContain(userId)
+  })
+})
+
+Deno.test("a group lists a member's picture only once it is ready", async () => {
+  await withSchema(async (sql) => {
+    const { files, stored } = memoryFiles()
+    const { scratch, written } = memoryScratch()
+    const { repository, groupId, owner, editor } = await team(sql)
+    const id = uuidV7()
+    stored.set(`pictures/${id}`, new TextEncoder().encode(`png`))
+    await sql.begin((tx) => setUserPicture(tx, editor, { id, contentType: `image/png` }))
+    const pictureOf = async () =>
+      (await repository.listMembers(groupId, owner))!.members
+        .find((member) => member.userId === editor)!.pictureId
+
+    expect(await pictureOf()).toBeNull()
+    const event = { aggregateId: id } as Parameters<ReturnType<typeof imageProcessJob>>[0]
+    await imageProcessJob({ sql, files, scratch, process: fakeProcess(written) })(event)
+    expect(await pictureOf()).toBe(id)
   })
 })

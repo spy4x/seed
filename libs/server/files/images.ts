@@ -5,7 +5,8 @@
  * A feature that keeps a photo calls {@link queueImage} in the transaction that keeps it. The
  * worker's {@link IMAGE_PROCESS_JOB} then reads the original from the store, runs `processImage` of
  * `@spy4x/server/images` on it, stores the variants under `<original key>/<width>.<avif|webp>`,
- * records them in `image_variants`, and deletes the original last.
+ * records them in `image_variants`, marks the owner's picture ready (or refused) and tells their
+ * open pages, and deletes the original last.
  *
  * @module
  */
@@ -14,6 +15,8 @@ import type postgres from "postgres"
 import { type ImageRefusal, processImage } from "@spy4x/server/images"
 import { enqueueJob, type JobHandler } from "../jobs/jobs.ts"
 import type { ServerFiles } from "./files.ts"
+import { PictureState } from "@domain/identity"
+import { announcePictureState } from "../auth/picture-state.ts"
 
 /** The job that processes one image. Its `aboutId` is the `images` row's id. */
 export const IMAGE_PROCESS_JOB = `files.image-process`
@@ -99,6 +102,13 @@ export function imageProcessJob(deps: ImageProcessJobDeps): JobHandler {
       `
       if (!row || row.processedAt) return !row
       await tx`UPDATE images SET processed_at = now(), refused = ${refused} WHERE id = ${id}`
+      const owners = await tx<{ id: number }[]>`
+        UPDATE users SET updated_at = now(),
+          picture_state = ${refused === null ? PictureState.Ready : PictureState.Refused}
+        WHERE picture_id = ${id}
+        RETURNING id
+      `
+      for (const owner of owners) await announcePictureState(tx, owner.id)
       for (const variant of variants) {
         await tx`
           INSERT INTO image_variants (object_key, image_id, content_type, width, height)
