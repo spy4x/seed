@@ -651,6 +651,20 @@ function Files(
   const byId = new Map((files?.files ?? []).map((file) => [file.id, file]))
   const removingId = dialog?.kind === `removeFile` && pending ? dialog.fileId : null
 
+  // A removal that empties the list unmounts it, and with it the row focus would move to: focus
+  // goes to the search field instead, or to the empty state once the group has no file at all.
+  const removing = useRef(false)
+  const empty = useRef<HTMLDivElement>(null)
+  const emptied = files !== null && items.length === 0
+  if (removingId !== null) removing.current = true
+  useEffect(() => {
+    if (!removing.current || removingId !== null) return
+    removing.current = false
+    if (!emptied) return
+    const field = search.current?.querySelector<HTMLElement>(`#${FILE_SEARCH_ID}`)
+    ;(field ?? empty.current)?.focus()
+  }, [removingId, emptied])
+
   const body = (() => {
     if (!files) {
       return filesError
@@ -668,9 +682,11 @@ function Files(
     }
     if (none) {
       return (
-        <Card data-e2e="admin-group-files">
-          <EmptyState inset description="No files yet." />
-        </Card>
+        <div ref={empty} tabIndex={-1} class="rounded-xl">
+          <Card data-e2e="admin-group-files">
+            <EmptyState inset description="No files yet." />
+          </Card>
+        </div>
       )
     }
     if (items.length === 0) {

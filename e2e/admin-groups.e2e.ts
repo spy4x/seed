@@ -286,7 +286,8 @@ test.describe(`the admin app's groups`, () => {
       ])
       expect(download.suggestedFilename()).toBe(`abusive-${id}.png`)
 
-      // Removing it asks first, names the file, and leaves nothing that matches.
+      // Removing it asks first, names the file, and leaves nothing that matches: focus goes back
+      // to the search field, since the row it would move to is gone.
       await ops.getByRole(`button`, { name: `Actions for abusive-${id}.png` }).click()
       await ops.getByRole(`menuitem`, { name: `Remove file` }).click()
       await expect(ops.locator(`[data-e2e=admin-group-dialog]`)).toContainText(
@@ -295,6 +296,7 @@ test.describe(`the admin app's groups`, () => {
       await ops.locator(`[data-e2e=admin-group-action-submit]`).click()
       await expect(ops.locator(`[data-e2e=toasts]`)).toContainText(`The file is removed`)
       await expect(count).toHaveText(`No files match “ABUSIVE”`)
+      await expect(ops.getByLabel(`File name`)).toBeFocused()
 
       // The audit log names the operator's open and download of the file.
       await ops.goto(`${adminBase}/audit`)

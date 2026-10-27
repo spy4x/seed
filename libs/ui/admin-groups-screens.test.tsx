@@ -612,6 +612,33 @@ describe(`one group in the admin app`, () => {
     expect(document.activeElement?.getAttribute(`aria-label`)).toBe(`Actions for IMG_0001.png`)
   })
 
+  it(`moves focus to the search field when a removal leaves no file that matches`, async () => {
+    const removing = { dialog: { kind: `removeFile`, fileId: FILE_ID } as const, pending: true }
+    const filter = { query: `receipt`, page: 1 }
+    const found = { ...files, files: [files.files[0]], total: 1, query: `receipt` }
+    await mount(
+      <AdminGroupScreen
+        {...groupProps([], { tab: `files`, files: found, fileFilter: filter, ...removing })}
+      />,
+    )
+    const none = { ...found, files: [], total: 0 }
+    await mount(
+      <AdminGroupScreen {...groupProps([], { tab: `files`, files: none, fileFilter: filter })} />,
+    )
+    expect(document.activeElement?.id).toBe(`admin-group-files-q`)
+  })
+
+  it(`moves focus to the empty state when a removal takes the group's last file`, async () => {
+    const removing = { dialog: { kind: `removeFile`, fileId: FILE_ID } as const, pending: true }
+    const last = { ...files, files: [files.files[0]], total: 1 }
+    await mount(
+      <AdminGroupScreen {...groupProps([], { tab: `files`, files: last, ...removing })} />,
+    )
+    const gone = { ...last, files: [], total: 0, usage: { ...last.usage, files: 0 } }
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: gone })} />)
+    expect(document.activeElement?.textContent).toContain(`No files yet.`)
+  })
+
   it(`keeps the search while the files load, and offers a retry when they fail`, async () => {
     const calls: unknown[][] = []
     const filter = { query: `receipt`, page: 1 }
