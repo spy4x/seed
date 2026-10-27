@@ -190,7 +190,8 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   first, with the group's room: `AdminGroupFiles`. Each file's name, type, size, uploader, date
  *   and its note's title (#478). `POST /groups/:id/files/:fileId/remove?q=&page=` removes one,
  *   from a note in the trash too, and answers that page of the files as it reads after it.
- * - `GET /groups/:id/files/:fileId/thumbnail` is an image's bytes for its 40 px tile, not audited;
+ * - `GET /groups/:id/files/:fileId/thumbnail` is the whole original image, shown as a 40 px tile, and
+ *   writes no audit row;
  *   any other file is 404 here. `…/open` is the file shown in place (an image; anything else is
  *   saved) and `…/download` the file saved as an attachment: each writes an audit row naming the
  *   operator before it answers, and answers 403 unless `Sec-Fetch-Site` is `same-origin`, since a

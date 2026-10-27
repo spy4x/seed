@@ -76,4 +76,6 @@ and the title of the note it sits in, and lets the operator open or download the
 find and remove abusive content (#478). Its bytes come through the admin API
 (`/api/admin/groups/:id/files/:fileId/thumbnail`, `/open` and `/download`), because the admin host's
 `img-src 'self'` cannot load the file store. Every open and every download writes an audit row
-naming the operator and the file, which the Audit log shows; the 40 px thumbnails are not audited.
+naming the operator and the file, which the Audit log shows. The thumbnail route writes no row,
+yet it serves the whole original image (the 40 px tile scales it down), so an operator who opens
+the thumbnail's address sees the full image without an audit row.
