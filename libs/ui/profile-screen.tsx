@@ -119,7 +119,7 @@ export const PROFILE_SECTION_TEXT: Record<
   },
   region: {
     label: "Language and region",
-    description: "How dates, times and numbers are written. The app stays in English.",
+    description: "Your language, and how dates, times and numbers look.",
   },
   appearance: { label: "Appearance", description: "How the app looks on this device." },
   notifications: {
