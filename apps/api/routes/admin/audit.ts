@@ -122,6 +122,7 @@ interface AuditCsvRow {
   ip: string
   userAgent: string
   job: string
+  file: string
 }
 
 const CSV_COLUMNS: CsvColumn<AuditCsvRow>[] = [
@@ -138,6 +139,7 @@ const CSV_COLUMNS: CsvColumn<AuditCsvRow>[] = [
   { key: `ip`, header: `IP address` },
   { key: `userAgent`, header: `Device` },
   { key: `job`, header: `Job` },
+  { key: `file`, header: `File` },
 ]
 
 function csvRowOf(entry: AdminAuditEntry): AuditCsvRow {
@@ -155,6 +157,7 @@ function csvRowOf(entry: AdminAuditEntry): AuditCsvRow {
     ip: entry.ip ?? ``,
     userAgent: entry.userAgent ?? ``,
     job: entry.jobKind ?? ``,
+    file: entry.fileName ?? ``,
   }
 }
 

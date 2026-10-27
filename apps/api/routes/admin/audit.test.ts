@@ -47,6 +47,7 @@ const entry: AdminAuditEntry = {
   ip: "192.0.2.10",
   userAgent: "Firefox",
   jobKind: null,
+  fileName: null,
 }
 
 const nextKey: AdminAuditPageKey = {
@@ -221,7 +222,7 @@ describe("audit log routes", () => {
     expect(header.startsWith("Time (UTC),Event,Person id,Person")).toBe(true)
     expect(row).toBe(
       "2026-10-16T09:00:00.000Z,signed_in,42,Ada Lovelace,ada@example.com,42,Ada Lovelace,no,," +
-        "ada@example.com,192.0.2.10,Firefox,",
+        "ada@example.com,192.0.2.10,Firefox,,",
     )
     expect(calls).toEqual([
       ["list", { ...ADMIN_AUDIT_NO_FILTER, event: "account:2" }, ADMIN_AUDIT_EXPORT_MAX, null],

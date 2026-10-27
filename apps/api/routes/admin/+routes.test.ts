@@ -173,6 +173,11 @@ const ROUTES = [
     path:
       "/admin/groups/0199f0a0-0000-7000-8000-000000000001/files/0199f0a0-0000-7000-8000-000000000002/remove",
   },
+  ...[`thumbnail`, `open`, `download`].map((access) => ({
+    method: "GET",
+    path:
+      `/admin/groups/0199f0a0-0000-7000-8000-000000000001/files/0199f0a0-0000-7000-8000-000000000002/${access}`,
+  })),
 ]
 
 function send(

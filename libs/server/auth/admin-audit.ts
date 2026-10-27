@@ -3,8 +3,9 @@
  * paged by a keyset so a page never shifts when new entries arrive. Who may call this is the API's
  * business (`apps/api/routes/admin/audit.ts`); nothing here checks it.
  *
- * Never reads `audit_events.details`: a group entry's details can hold a note's title or a tag's
- * name, and the operator area shows no content.
+ * Never reads `audit_events.details`, but for two facts of the operator's own entries: a job's kind,
+ * and the name of a file an operator opened or downloaded (#478). Any other group entry's details
+ * can hold a note's title or a tag's name, and the operator area shows no content.
  *
  * @module
  */
@@ -14,6 +15,7 @@ import {
   accountAuditEvent,
   activityAuditEvent,
   ADMIN_AUDIT_EXPORTED_KIND,
+  ADMIN_FILE_AUDIT_KINDS,
   ADMIN_JOB_AUDIT_KINDS,
   ADMIN_OPERATOR_ACTIVITY_KINDS,
   type AdminAuditEntry,
@@ -79,6 +81,7 @@ interface EntryRaw {
   groupName: string | null
   entityType: string | null
   jobKind: string | null
+  fileName: string | null
 }
 
 /** The time of an entry as the page key carries it: UTC, to the microsecond. */
@@ -183,7 +186,7 @@ function accountBranch(
       user_id AS person_id, NULL::int4 AS actor_id,
       CASE WHEN event_type IN ${sql([...BILLING_AUDIT_EVENT_TYPES])}
         THEN substring(identifier FROM ${BILLING_GROUP_PATTERN})::uuid END AS group_id,
-      NULL::text AS entity_type, NULL::text AS job_kind
+      NULL::text AS entity_type, NULL::text AS job_kind, NULL::text AS file_name
     FROM auth_audits
     WHERE ${where}
     ORDER BY created_at DESC, id DESC
@@ -211,15 +214,17 @@ function activityBranch(
     const people = personIds(sql, filter.person)
     where = sql`${where} AND (actor_user_id IN (${people}) OR target_user_id IN (${people}))`
   }
-  // Only the job's kind leaves `details`, and only for the operator's own entry: every other
-  // entry's details can quote content.
+  // Only the job's kind and an opened file's name leave `details`, and only for the operator's own
+  // entries: every other entry's details can quote content.
   return sql`(
     SELECT 'activity' AS source, id::text AS id, created_at, ${atKey(sql, "created_at")} AS at_key,
       NULL::int2 AS event_type, event_kind AS kind, NULL::text AS identifier, NULL::text AS ip,
       NULL::text AS user_agent, target_user_id AS person_id, actor_user_id AS actor_id,
       group_id, entity_type,
       CASE WHEN event_kind = ANY(${ADMIN_JOB_AUDIT_KINDS as string[]})
-        THEN left(details->>'kind', 64) END AS job_kind
+        THEN left(details->>'kind', 64) END AS job_kind,
+      CASE WHEN event_kind = ANY(${ADMIN_FILE_AUDIT_KINDS as string[]})
+        THEN left(details->>'name', 100) END AS file_name
     FROM audit_events
     WHERE ${where}
     ORDER BY created_at DESC, id DESC
@@ -330,6 +335,7 @@ function toEntry(row: EntryRaw, people: Map<number, AdminAuditPerson>): AdminAud
       ip: row.ip,
       userAgent: row.userAgent,
       jobKind: null,
+      fileName: null,
     }
   }
   if (row.source === "account") {
@@ -349,6 +355,7 @@ function toEntry(row: EntryRaw, people: Map<number, AdminAuditPerson>): AdminAud
       ip: row.ip,
       userAgent: row.userAgent,
       jobKind: null,
+      fileName: null,
     }
   }
   const kind = row.kind ?? ""
@@ -365,6 +372,7 @@ function toEntry(row: EntryRaw, people: Map<number, AdminAuditPerson>): AdminAud
     ip: null,
     userAgent: null,
     jobKind: row.jobKind,
+    fileName: row.fileName,
   }
 }
 

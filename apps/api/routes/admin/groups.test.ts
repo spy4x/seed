@@ -3,7 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import type { MiddlewareHandler } from "hono"
 import { ADMIN_GROUP_NO_FILTER, type AdminGroupDetail, type AdminGroupFiles } from "@domain/groups"
 import { UserRole } from "@domain/identity"
-import { AdminGroupActOutcome } from "@server/groups/admin-groups.ts"
+import { AdminGroupActOutcome, type AdminGroupStoredFile } from "@server/groups/admin-groups.ts"
 import type { APIContext } from "../../_types.ts"
 import { buildAuthData } from "../../_testing/fake-auth.ts"
 import {
@@ -17,6 +17,7 @@ import {
 } from "../../_testing/mutation-requests.ts"
 import { createAdminRoute } from "./+routes.ts"
 import {
+  ADMIN_GROUP_FILE_CROSS_SITE,
   ADMIN_GROUP_FILE_NOT_FOUND,
   ADMIN_GROUP_NOT_FOUND,
   type AdminGroupsService,
@@ -28,17 +29,53 @@ const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
 const INVITATION_ID = `0199c3a0-0000-7000-8000-000000000002`
 const FILE_ID = `0199c3a0-0000-7000-8000-000000000003`
 
+const IMAGE_ID = `0199c3a0-0000-7000-8000-000000000004`
+const SVG_ID = `0199c3a0-0000-7000-8000-000000000005`
+
 const files: AdminGroupFiles = {
   files: [{
     id: FILE_ID,
+    name: `receipt.pdf`,
     contentType: `application/pdf`,
     size: 700,
     uploader: { id: 42, name: `Ada Lovelace`, email: `ada@example.com` },
     createdAt: `2026-10-02T10:00:00.000Z`,
+    noteTitle: `Taxes`,
     noteDeleted: false,
   }],
+  total: 1,
+  page: 1,
+  pageSize: 25,
+  query: ``,
   usage: { files: 1, bytes: 700, maxFiles: 100, maxBytes: 200 * 1024 * 1024 },
 }
+
+/** The group's stored files by id: a PDF, a PNG, and an SVG no upload accepts today. */
+const STORED: Record<string, AdminGroupStoredFile> = {
+  [FILE_ID]: {
+    id: FILE_ID,
+    name: `receipt.pdf`,
+    contentType: `application/pdf`,
+    objectKey: `attachments/${FILE_ID}`,
+    noteId: `0199c3a0-0000-7000-8000-0000000000aa`,
+  },
+  [IMAGE_ID]: {
+    id: IMAGE_ID,
+    name: `IMG_0001.png`,
+    contentType: `image/png`,
+    objectKey: `attachments/${IMAGE_ID}`,
+    noteId: `0199c3a0-0000-7000-8000-0000000000aa`,
+  },
+  [SVG_ID]: {
+    id: SVG_ID,
+    name: `logo.svg`,
+    contentType: `image/svg+xml`,
+    objectKey: `attachments/${SVG_ID}`,
+    noteId: `0199c3a0-0000-7000-8000-0000000000aa`,
+  },
+}
+
+const BYTES = new Uint8Array([1, 2, 3])
 
 const detail: AdminGroupDetail = {
   group: {
@@ -68,7 +105,11 @@ const operator = () => buildAuthData({ user: { id: 7, role: UserRole.OPERATOR } 
 
 function buildApp(
   auth: APIContext["Variables"]["auth"] = operator(),
-  { outcome = AdminGroupActOutcome.Done } = {},
+  {
+    outcome = AdminGroupActOutcome.Done,
+    stored = true,
+    auditFails = false,
+  }: { outcome?: AdminGroupActOutcome; stored?: boolean; auditFails?: boolean } = {},
 ) {
   const calls: unknown[][] = []
   const groups: AdminGroupsService = {
@@ -92,7 +133,18 @@ function buildApp(
           groupId === GROUP_ID && widgetId === `notes.total` ? { current: 3, previous: 1 } : null,
         )
     ),
-    files: (id) => (calls.push([`files`, id]), Promise.resolve(id === GROUP_ID ? files : null)),
+    files: (id, filter) => (
+      calls.push([`files`, id, filter]), Promise.resolve(id === GROUP_ID ? files : null)
+    ),
+    file: (groupId, fileId) => (
+      calls.push([`file`, groupId, fileId]),
+        Promise.resolve(groupId === GROUP_ID ? STORED[fileId] ?? null : null)
+    ),
+    readFile: (key) => (calls.push([`readFile`, key]), Promise.resolve(stored ? BYTES : null)),
+    recordFileAccess: (actor, groupId, file, access) => {
+      calls.push([`audit`, actor, groupId, file.id, access])
+      return auditFails ? Promise.reject(new Error(`the database is down`)) : Promise.resolve()
+    },
     removeFile: (actor, groupId, fileId) => (
       calls.push([`removeFile`, actor, groupId, fileId]), Promise.resolve(outcome)
     ),
@@ -126,6 +178,9 @@ const ROUTES: Route[] = [
     path:
       `/admin/groups/${GROUP_ID}/widgets/notes.total?from=2026-10-01&to=2026-10-21&timeZone=Europe%2FBerlin`,
   },
+  { method: `GET`, path: `/admin/groups/${GROUP_ID}/files/${IMAGE_ID}/thumbnail` },
+  { method: `GET`, path: `/admin/groups/${GROUP_ID}/files/${IMAGE_ID}/open` },
+  { method: `GET`, path: `/admin/groups/${GROUP_ID}/files/${FILE_ID}/download` },
 ]
 
 function send(
@@ -324,6 +379,14 @@ describe(`operator area group routes`, () => {
     expect((await send(app, { method: `GET`, path: missing })).status).toBe(404)
     expect((await send(app, { method: `GET`, path: `/admin/groups/abc/files` })).status).toBe(404)
     expect(calls.map((call) => call[0])).toEqual([`files`, `files`])
+    expect(calls[0]).toEqual([`files`, GROUP_ID, { query: ``, page: 1 }])
+  })
+
+  it(`passes the file-name search and the page the address asks for`, async () => {
+    const { app, calls } = buildApp()
+    const path = `/admin/groups/${GROUP_ID}/files?q=%20receipt%20&page=3`
+    expect((await send(app, { method: `GET`, path })).status).toBe(200)
+    expect(calls).toEqual([[`files`, GROUP_ID, { query: `receipt`, page: 3 }]])
   })
 
   it(`removes a file as the operator and answers the files as they read now`, async () => {
@@ -334,8 +397,15 @@ describe(`operator area group routes`, () => {
     expect(await response.json()).toEqual(files)
     expect(calls).toEqual([
       [`removeFile`, { id: 7, role: UserRole.OPERATOR }, GROUP_ID, FILE_ID],
-      [`files`, GROUP_ID],
+      [`files`, GROUP_ID, { query: ``, page: 1 }],
     ])
+  })
+
+  it(`answers the page of files the removal was made from`, async () => {
+    const { app, calls } = buildApp()
+    const path = `/admin/groups/${GROUP_ID}/files/${FILE_ID}/remove?q=receipt&page=2`
+    expect((await send(app, { method: `POST`, path })).status).toBe(200)
+    expect(calls.at(-1)).toEqual([`files`, GROUP_ID, { query: `receipt`, page: 2 }])
   })
 
   it(`answers 404 for a file id that cannot exist or is gone, and 409 in a group in the trash`, async () => {
@@ -355,5 +425,125 @@ describe(`operator area group routes`, () => {
     const trashed = buildApp(operator(), { outcome: AdminGroupActOutcome.GroupDeleted })
     expect((await send(trashed.app, ROUTES[7])).status).toBe(409)
     expect(trashed.calls.map((call) => call[0])).toEqual([`removeFile`])
+  })
+
+  it(`serves an image's thumbnail in place with the store's safety headers, and audits nothing`, async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, ROUTES[9])
+
+    expect(response.status).toBe(200)
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(BYTES)
+    expect(response.headers.get(`content-type`)).toBe(`image/png`)
+    expect(response.headers.get(`content-disposition`)).toMatch(/^inline; filename="IMG_0001.png"/)
+    expect(response.headers.get(`x-content-type-options`)).toBe(`nosniff`)
+    expect(response.headers.get(`content-security-policy`)).toBe(`sandbox; default-src 'none'`)
+    expect(calls).toEqual([[`file`, GROUP_ID, IMAGE_ID], [`readFile`, `attachments/${IMAGE_ID}`]])
+  })
+
+  it(`has no thumbnail for a PDF or an SVG, without reading the store`, async () => {
+    for (const id of [FILE_ID, SVG_ID]) {
+      const { app, calls } = buildApp()
+      const path = `/admin/groups/${GROUP_ID}/files/${id}/thumbnail`
+      expect((await send(app, { method: `GET`, path })).status).toBe(404)
+      expect(calls).toEqual([[`file`, GROUP_ID, id]])
+    }
+  })
+
+  it(`opens an image in place and writes the operator's audit row before it answers`, async () => {
+    const { app, calls } = buildApp()
+    const response = await send(app, ROUTES[10])
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get(`content-disposition`)).toMatch(/^inline;/)
+    expect(response.headers.get(`cache-control`)).toBe(`no-store`)
+    expect(calls).toEqual([
+      [`file`, GROUP_ID, IMAGE_ID],
+      [`readFile`, `attachments/${IMAGE_ID}`],
+      [`audit`, { id: 7, role: UserRole.OPERATOR }, GROUP_ID, IMAGE_ID, `open`],
+    ])
+  })
+
+  it(`saves a PDF or an SVG that is opened, never shows it on the admin host`, async () => {
+    for (const [id, type] of [[FILE_ID, `application/pdf`], [SVG_ID, `image/svg+xml`]]) {
+      const { app, calls } = buildApp()
+      const path = `/admin/groups/${GROUP_ID}/files/${id}/open`
+      const response = await send(app, { method: `GET`, path })
+      expect(response.status).toBe(200)
+      expect(response.headers.get(`content-type`)).toBe(type)
+      expect(response.headers.get(`content-disposition`)).toMatch(/^attachment;/)
+      expect(response.headers.get(`x-content-type-options`)).toBe(`nosniff`)
+      expect(response.headers.get(`content-security-policy`)).toBe(`sandbox; default-src 'none'`)
+      expect(calls.at(-1)).toEqual([
+        `audit`,
+        { id: 7, role: UserRole.OPERATOR },
+        GROUP_ID,
+        id,
+        `open`,
+      ])
+    }
+  })
+
+  it(`downloads any file, an image too, as an attachment under its name, with an audit row`, async () => {
+    for (const id of [FILE_ID, IMAGE_ID]) {
+      const { app, calls } = buildApp()
+      const path = `/admin/groups/${GROUP_ID}/files/${id}/download`
+      const response = await send(app, { method: `GET`, path })
+      expect(response.status).toBe(200)
+      expect(response.headers.get(`content-disposition`)).toBe(
+        `attachment; filename="${STORED[id].name}"; filename*=UTF-8''${STORED[id].name}`,
+      )
+      expect(calls.at(-1)).toEqual([
+        `audit`,
+        { id: 7, role: UserRole.OPERATOR },
+        GROUP_ID,
+        id,
+        `download`,
+      ])
+    }
+  })
+
+  it(`refuses an open or a download another site starts, before reading or auditing anything`, async () => {
+    for (const route of [ROUTES[10], ROUTES[11]]) {
+      for (const site of [`cross-site`, `same-site`, `none`, null]) {
+        const { app, calls } = buildApp()
+        const headers: Record<string, string> = { ...sameOriginHeaders }
+        if (site === null) delete headers[`sec-fetch-site`]
+        else headers[`sec-fetch-site`] = site
+        const response = await send(app, route, headers)
+        expect(response.status).toBe(403)
+        expect((await apiError(response)).message).toBe(ADMIN_GROUP_FILE_CROSS_SITE)
+        expect(calls).toEqual([])
+      }
+    }
+  })
+
+  it(`finds a file only through its own group's path, and audits no file it did not serve`, async () => {
+    const { app, calls } = buildApp()
+    const other = `0199c3a0-0000-7000-8000-00000000000f`
+    for (
+      const path of [
+        `/admin/groups/${other}/files/${IMAGE_ID}/open`,
+        `/admin/groups/${GROUP_ID}/files/0199c3a0-0000-7000-8000-00000000000e/download`,
+        `/admin/groups/${GROUP_ID}/files/not-a-uuid/open`,
+      ]
+    ) {
+      const response = await send(app, { method: `GET`, path })
+      expect(response.status).toBe(404)
+      expect((await apiError(response)).message).toBe(ADMIN_GROUP_FILE_NOT_FOUND)
+    }
+    expect(calls.map((call) => call[0])).toEqual([`file`, `file`])
+  })
+
+  it(`answers 404 and writes no audit row when the store no longer has the file`, async () => {
+    const { app, calls } = buildApp(operator(), { stored: false })
+    expect((await send(app, ROUTES[11])).status).toBe(404)
+    expect(calls.map((call) => call[0])).toEqual([`file`, `readFile`])
+  })
+
+  it(`serves nothing when the audit row cannot be written`, async () => {
+    const { app } = buildApp(operator(), { auditFails: true })
+    const response = await send(app, ROUTES[11])
+    expect(response.status).toBe(500)
+    expect(response.headers.get(`content-disposition`)).toBe(null)
   })
 })
