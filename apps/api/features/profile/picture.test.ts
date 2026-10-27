@@ -159,7 +159,7 @@ Deno.test("a picture is signed to a staging key and kept in the ledger with no n
   expect(uploads.get(signed.id)).toMatchObject({ noteId: null, userId: 7, size: 1000 })
 })
 
-Deno.test("a GIF, a PDF and a file over 10 MiB are refused before anything is kept", async () => {
+Deno.test("a GIF, a PDF and a file over the limit are refused before anything is kept", async () => {
   const { sign, uploads } = setUp()
   expect(await refusal(sign(7, `image/gif`))).toBe(`FILE_TYPE`)
   expect(await refusal(sign(7, `application/pdf`))).toBe(`FILE_TYPE`)

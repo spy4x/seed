@@ -47,7 +47,7 @@ function memoryScratch() {
   return { scratch, written }
 }
 
-/** A fake `processImage` that writes a 480 px AVIF and WebP of the input, or refuses it. */
+/** A fake `processImage` that writes AVIF and WebP 960 and 480 px wide, or refuses the input. */
 function fakeProcess(
   written: Map<string, Uint8Array>,
   refusal: ImageRefusal | null = null,
@@ -56,11 +56,13 @@ function fakeProcess(
   return async (_input, dir) => {
     await during()
     if (refusal !== null) return { success: false, error: refusal }
-    const output = (["avif", "webp"] as const).map((extension) => {
-      const path = `${dir}/480.${extension}`
-      written.set(path, new TextEncoder().encode(`${extension} bytes`))
-      return { path, type: `image/${extension}` as const, width: 480, height: 360 }
-    })
+    const output = (["avif", "webp"] as const).flatMap((extension) =>
+      [960, 480].map((width) => {
+        const path = `${dir}/${width}.${extension}`
+        written.set(path, new TextEncoder().encode(`${extension} bytes`))
+        return { path, type: `image/${extension}` as const, width, height: width * 3 / 4 }
+      })
+    )
     return { success: true, output }
   }
 }
@@ -101,10 +103,14 @@ Deno.test("a new picture is queued, and the job stores its variants and deletes 
     expect([...stored.keys()].sort()).toEqual([
       `pictures/${id}/480.avif`,
       `pictures/${id}/480.webp`,
+      `pictures/${id}/960.avif`,
+      `pictures/${id}/960.webp`,
     ])
     expect(await variantsOf(sql, id)).toEqual([
       { objectKey: `pictures/${id}/480.avif`, contentType: `image/avif`, width: 480 },
       { objectKey: `pictures/${id}/480.webp`, contentType: `image/webp`, width: 480 },
+      { objectKey: `pictures/${id}/960.avif`, contentType: `image/avif`, width: 960 },
+      { objectKey: `pictures/${id}/960.webp`, contentType: `image/webp`, width: 960 },
     ])
     expect(written.size).toBe(0)
   })
@@ -120,8 +126,8 @@ Deno.test("running the job twice stores nothing again and adds no row", async ()
     await job(event)
     await job(event)
 
-    expect(puts.length).toBe(2)
-    expect((await variantsOf(sql, id)).length).toBe(2)
+    expect(puts.length).toBe(4)
+    expect((await variantsOf(sql, id)).length).toBe(4)
     expect(stored.has(`pictures/${id}`)).toBe(false)
   })
 })
@@ -210,6 +216,8 @@ Deno.test("replacing a processed picture queues its original and every variant f
       `pictures/${id}`,
       `pictures/${id}/480.avif`,
       `pictures/${id}/480.webp`,
+      `pictures/${id}/960.avif`,
+      `pictures/${id}/960.webp`,
     ])
     expect(await variantsOf(sql, id)).toEqual([])
   })
