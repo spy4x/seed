@@ -995,6 +995,7 @@ services:
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z
+      - ../../i18n:/app/i18n:z
       - ../../deno.jsonc:/app/deno.jsonc:z
     user: "1000:1000"
     deploy:
