@@ -158,7 +158,7 @@ Deno.test("running the job twice stores nothing again and adds no row", async ()
   })
 })
 
-Deno.test("a refused image keeps no variant and loses its original", async () => {
+Deno.test("a refused image keeps no variant, loses its original and is marked refused", async () => {
   await withSchema(async (sql) => {
     const { files, stored } = memoryFiles()
     const { scratch, written } = memoryScratch()
