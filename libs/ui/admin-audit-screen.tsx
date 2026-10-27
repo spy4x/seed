@@ -18,6 +18,7 @@ import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import type { BillingAuditEvent } from "@domain/billing"
 import { BLOG_AUDIT_KINDS } from "@domain/blog"
+import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
 import { ACTIVITY_KINDS } from "@domain/groups"
 import {
   accountAuditEvent,
@@ -93,6 +94,10 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [BLOG_AUDIT_KINDS.unpublished]: "Blog post unpublished",
   [BLOG_AUDIT_KINDS.urlChanged]: "Blog post URL changed",
   [BLOG_AUDIT_KINDS.deleted]: "Blog post deleted",
+  [CONTACT_LINK_AUDIT_KINDS.created]: "Contact link added",
+  [CONTACT_LINK_AUDIT_KINDS.updated]: "Contact link changed",
+  [CONTACT_LINK_AUDIT_KINDS.deleted]: "Contact link removed",
+  [CONTACT_LINK_AUDIT_KINDS.reordered]: "Contact links reordered",
 }
 
 /**
