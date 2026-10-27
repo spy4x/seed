@@ -1,5 +1,6 @@
 import type { ComponentChildren, JSX } from "preact"
 import { Head } from "fresh/runtime"
+import type { PublicContactLink } from "@domain/contact-links"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { IconGitHub, IconSprout } from "@spy4x/preact-icons"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
@@ -17,6 +18,7 @@ import { BLOG_NAME, BLOG_PATH, RSS_PATH } from "./blog.ts"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY } from "./brand.ts"
 import { API_DOCS_PATH } from "./api-docs.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
+import { contactFooterLinks } from "./contact-links.ts"
 import { HIRE_PAGE_URL } from "./hire.ts"
 import type { State } from "./utils.ts"
 
@@ -197,7 +199,7 @@ export interface SiteFrameProps {
    * The request's state: the website's own origin for canonical links, the SPA's for actions, and
    * whether the footer offers the newsletter.
    */
-  state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter" | "blog">
+  state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter" | "blog" | "contactLinks">
   /** The page's path on this website, such as `/pricing`, for its canonical address. */
   path: string
   head: SitePageHead
@@ -304,7 +306,7 @@ export function SiteFrame(
             </p>
           </div>
         }
-        groups={footerGroups(spa, blog)}
+        groups={footerGroups(spa, blog, state.contactLinks ?? [])}
         aside={state.newsletter && footerNewsletter ? <FooterNewsletter /> : undefined}
         bottom={
           <p>
@@ -401,10 +403,17 @@ export function LegalPage(
 }
 
 /**
- * The footer's link columns: the product, the source, and the person and rules behind it. The Blog
- * link is there once a post is live.
+ * The footer's link columns: the product, the source, the person and rules behind it, and, once the
+ * operator has added any, the contact links. The Blog link is there once a post is live.
  */
-function footerGroups(spa: { signIn: string; try: string }, blog: boolean): SiteFooterGroup[] {
+function footerGroups(
+  spa: { signIn: string; try: string },
+  blog: boolean,
+  contactLinks: readonly PublicContactLink[],
+): SiteFooterGroup[] {
+  const contact: SiteFooterGroup[] = contactLinks.length > 0
+    ? [{ title: `Contact`, links: contactFooterLinks(contactLinks) }]
+    : []
   return [
     {
       title: `Product`,
@@ -439,6 +448,7 @@ function footerGroups(spa: { signIn: string; try: string }, blog: boolean): Site
         { label: `Terms`, href: `/terms` },
       ],
     },
+    ...contact,
   ]
 }
 
