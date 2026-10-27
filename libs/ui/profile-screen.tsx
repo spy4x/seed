@@ -25,7 +25,7 @@ import {
   AppearanceSection,
   type PreferencesProps,
   RegionSection,
-  THEME_NAMES,
+  themeName,
 } from "./preferences.tsx"
 import type { PictureRowProps } from "./profile-picture.tsx"
 import { AccountSection } from "./profile-account.tsx"
@@ -44,6 +44,7 @@ import { type ProviderProof, providerProofOf } from "./provider-proof.tsx"
 import { SignedInDevices, type SignedInDevicesProps } from "./signed-in-devices.tsx"
 import { signInMethodName, type SignInMethodsProps } from "./sign-in-methods.tsx"
 import type { TwoFactorProof } from "./two-factor.ts"
+import { useAppText } from "./i18n.ts"
 
 /** The messages shown when an action failed without a message of its own. */
 export const PROFILE_FAILURES = {
@@ -246,6 +247,7 @@ export interface ProfileScreenProps {
  */
 export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
   const { section, user, isMfaRequired, email = null, methods, navigate } = props
+  const t = useAppText()
 
   if (isMfaRequired) {
     return (
@@ -299,7 +301,7 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
     value: id === "security"
       ? props.guest ? undefined : twoFactorOn ? "Two-factor on" : "Two-factor off"
       : id === "appearance" && props.preferences
-      ? THEME_NAMES[props.preferences.value.theme]
+      ? themeName(t, props.preferences.value.theme)
       : undefined,
   }))
 

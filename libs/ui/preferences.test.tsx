@@ -228,6 +228,7 @@ describe(`AdminPreferencesGroup`, () => {
           preferences={{
             value: {
               theme: `dark`,
+              language: `de`,
               locale: `de-DE`,
               timeZone: `Asia/Tokyo`,
               hourCycle: `h12`,
@@ -236,17 +237,44 @@ describe(`AdminPreferencesGroup`, () => {
             version: 3,
             updatedAt: `2026-10-12T09:00:00.000Z`,
             firstTimeZone: `Europe/Berlin`,
+            firstLocale: `en-US`,
           }}
         />
       </FormatContext.Provider>,
     )
 
     expect($(`[data-e2e="admin-user-preferences-theme"]`)?.textContent).toContain(`Dark`)
+    const language = $(`[data-e2e="admin-user-preferences-language"] [lang="de"]`)
+    expect(language?.textContent).toBe(`German (Deutsch)`)
     expect($(`[data-e2e="admin-user-preferences-formats"]`)?.textContent).toContain(
       `German (Germany)`,
     )
     expect(document.body.textContent).toContain(`Tokyo, Asia · GMT+9`)
     expect(document.body.textContent).toContain(`21:05 there now`)
     expect(document.querySelector(`button`)).toBeNull()
+  })
+
+  it(`names the region format and zone a person signed up with while theirs are automatic`, async () => {
+    await mount(
+      <FormatContext.Provider value={createFormatters({ locale: `en-GB`, timeZone: `UTC` })}>
+        <AdminPreferencesGroup
+          now={NOW}
+          preferences={{
+            value: DEFAULT_PREFERENCES,
+            version: 0,
+            updatedAt: null,
+            firstTimeZone: `Europe/Berlin`,
+            firstLocale: `pt-BR`,
+          }}
+        />
+      </FormatContext.Provider>,
+    )
+
+    expect($(`[data-e2e="admin-user-preferences-language"]`)?.textContent).toContain(
+      `Automatic: same as their device`,
+    )
+    expect($(`[data-e2e="admin-user-preferences-formats"]`)?.textContent).toContain(
+      `Automatic: same as their device (signed up with Portuguese (Brazil))`,
+    )
   })
 })

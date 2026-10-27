@@ -30,24 +30,34 @@ import {
 } from "./progressive.tsx"
 import { openSearch, searchHotkeys } from "./search-palette.tsx"
 import { SHORTCUT_TEXT, ShortcutsList, type ShortcutsProps } from "./shortcuts.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAppText } from "./i18n.ts"
 
 /**
  * The daily destinations, in the order the rail and the phone tab bar show them. Four at most, so
  * the phone bar keeps its last slot for the Account sheet. Activity belongs to the selected group and
  * shows only while there is one whose log the person may read. Profile and Tags are in the account
- * menu; Tags is in Notes' "More actions" too.
+ * menu; Tags is in Notes' "More actions" too. Labels come from `t`, the app's translator.
  */
-export function navItems(activityGroupId: string | null): AppShellItem[] {
+export function navItems(
+  activityGroupId: string | null,
+  t: Translator<string>,
+): AppShellItem[] {
   return [
-    { key: "overview", label: "Overview", href: OVERVIEW_PATHS.root, Icon: IconChartPie },
-    { key: "notes", label: "Notes", href: NOTE_PATHS.list, Icon: IconDocumentText },
+    {
+      key: "overview",
+      label: t.t("Frame.overview"),
+      href: OVERVIEW_PATHS.root,
+      Icon: IconChartPie,
+    },
+    { key: "notes", label: t.t("Frame.notes"), href: NOTE_PATHS.list, Icon: IconDocumentText },
     ...(activityGroupId === null ? [] : [{
       key: "activity",
-      label: "Activity",
+      label: t.t("Frame.activity"),
       href: GROUP_PATHS.activity(activityGroupId),
       Icon: IconClock,
     }]),
-    { key: "groups", label: "Groups", href: SCREEN_PATHS.groups, Icon: IconUsers },
+    { key: "groups", label: t.t("Frame.groups"), href: SCREEN_PATHS.groups, Icon: IconUsers },
   ]
 }
 
@@ -76,9 +86,12 @@ export interface FrameTheme {
   set(preference: ThemeChoice): void
 }
 
-/** The user's full name, else the e-mail address, else "User": how the account entry names them. */
-export function displayName(user: FrameUser): string {
-  return `${user.firstName} ${user.lastName}`.trim() || user.email || "User"
+/**
+ * The user's full name, else the e-mail address, else `fallback` ("User" in the person's
+ * language): how the account entry names them.
+ */
+export function displayName(user: FrameUser, fallback = "User"): string {
+  return `${user.firstName} ${user.lastName}`.trim() || user.email || fallback
 }
 
 /**
@@ -86,8 +99,8 @@ export function displayName(user: FrameUser): string {
  * names the palette's keys, so the rail's tooltip reads "Search (Ctrl K)" and a screen reader hears
  * them; the palette binds them itself. `/` is named only while the single keys are on.
  */
-function searchEntry(slashKey: boolean): RailItem {
-  return { key: "search", label: "Search", Icon: IconSearch, keyshortcuts: searchHotkeys(slashKey) }
+function searchEntry(slashKey: boolean, label: string): RailItem {
+  return { key: "search", label, Icon: IconSearch, keyshortcuts: searchHotkeys(slashKey) }
 }
 
 /** An app's keyboard shortcuts, as the frame draws them; see {@link ShortcutsList}. */
@@ -99,11 +112,17 @@ export interface FrameShortcuts extends ShortcutsProps {
   inMenu: boolean
 }
 
-/** The account menu's "Keyboard shortcuts" entry, when the frame has shortcuts to list. */
-export function shortcutsMenuItems(shortcuts: FrameShortcuts | undefined) {
+/**
+ * The account menu's "Keyboard shortcuts" entry, when the frame has shortcuts to list; `label` is
+ * the entry's name in the person's language.
+ */
+export function shortcutsMenuItems(
+  shortcuts: FrameShortcuts | undefined,
+  label: string = SHORTCUT_TEXT.menuEntry,
+) {
   return shortcuts?.inMenu
     ? [{
-      label: SHORTCUT_TEXT.menuEntry,
+      label,
       onClick: shortcuts.onOpen,
       dataE2E: "account-shortcuts",
       // Shown, and announced as `aria-keyshortcuts`, only while `?` works.
@@ -176,13 +195,14 @@ export function AppFrame(
     children: ComponentChildren
   },
 ): JSX.Element {
+  const t = useAppText()
   const selected = groupPicker?.groups.find((group) => group.id === groupPicker.selectedId)
   const activityGroupId = selected && canViewActivity(selected.role) ? selected.id : null
-  const name = displayName(user)
+  const name = displayName(user, t.t("Frame.user"))
   // A person known only by the address would read it twice.
   const email = user.email && user.email !== name ? user.email : undefined
   const hasSearch = search !== undefined
-  const searchItem = searchEntry(shortcuts?.singleKeys ?? true)
+  const searchItem = searchEntry(shortcuts?.singleKeys ?? true, t.t("Frame.search"))
   const searchRoot = useRef<HTMLDivElement>(null)
   const sheetSearch = useRef<HTMLDivElement>(null)
   const open = () => openSearch(searchRoot.current)
@@ -195,7 +215,7 @@ export function AppFrame(
   }
   return (
     <AppShell
-      items={navItems(activityGroupId)}
+      items={navItems(activityGroupId, t)}
       currentPath={currentPath}
       navigate={navigate}
       switcher={groupPicker || hasSearch
@@ -228,8 +248,11 @@ export function AppFrame(
       account={{
         user: { name, email, avatarUrl: user.avatarUrl },
         headerHref: SCREEN_PATHS.profile,
-        items: [{ label: "Tags", href: TAG_PATHS.list }, ...shortcutsMenuItems(shortcuts)],
-        signOut: { label: "Sign out", onClick: onSignOut },
+        items: [
+          { label: t.t("Frame.tags"), href: TAG_PATHS.list },
+          ...shortcutsMenuItems(shortcuts, t.t("Frame.shortcuts")),
+        ],
+        signOut: { label: t.t("Frame.signOut"), onClick: onSignOut },
       }}
       connection={connection}
       banner={banner}
@@ -264,7 +287,7 @@ function SignOutForm({ onSignOut }: { onSignOut: () => void }): JSX.Element {
   return (
     <ScreenForm onSubmit={onSignOut}>
       <Button type="submit" variant="ghost" data-e2e="signout">
-        Sign out
+        {useAppText().t("Frame.signOut")}
       </Button>
     </ScreenForm>
   )
