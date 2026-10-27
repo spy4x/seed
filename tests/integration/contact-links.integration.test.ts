@@ -138,7 +138,7 @@ Deno.test(`refuses a write at an old version, and a reorder that misses a link`,
   })
 })
 
-Deno.test(`keeps at most the website's number of links, also when two operators add at once`, async () => {
+Deno.test(`keeps at most the website's number of links`, async () => {
   await withSchema(async (sql) => {
     const links = new PostgresContactLinks(sql)
     const actor = await operator(sql)
