@@ -167,6 +167,7 @@ export default defineConfig({
         "!../../libs/domain/**",
         "!../../libs/platform/**",
         "!../../libs/ui/**",
+        "!../../i18n/**",
       ],
     },
   },

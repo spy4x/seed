@@ -72,6 +72,9 @@ import {
 } from "./views/spa-paths.ts"
 import { NOTE_PATHS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { FormatContext } from "@spy4x/preact-ui/format"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { languages } from "./i18n.ts"
+import "./state/page-language.ts"
 
 /**
  * An old `/groups/:groupId/notes…` link. It selects nothing: a link must not change the selection,
@@ -286,26 +289,29 @@ export function App() {
     sessionState.value.isMfaRequired,
   ])
 
-  // Every date and time on every screen is written in the person's own settings.
+  // Every date and time on every screen is written in the person's own settings, and every word in
+  // their language.
   return (
-    <FormatContext.Provider value={preferencesState.format.value}>
-      {!ready || !sessionState.value.isReady
-        ? (
-          <main>
-            <LoadingSpinner size="lg" label="Loading…" class="min-h-dvh bg-canvas" />
-          </main>
-        )
-        : <Frame />}
-      <Toastr
-        toasts={toasts.list.value}
-        onDismiss={toasts.remove}
-        // From `md` up, where the rail replaces the phone's tab bar, the stack sits at the bottom
-        // right, clear of the page header's "More actions" menu (#236); on a phone it stays at
-        // the top, clear of the tab bar.
-        class="md:top-auto! md:bottom-(--toastr-gap)!"
-        dataE2E="toasts"
-      />
-      <SWUpdater />
-    </FormatContext.Provider>
+    <I18nContext.Provider value={languages.translator.value}>
+      <FormatContext.Provider value={preferencesState.format.value}>
+        {!ready || !sessionState.value.isReady
+          ? (
+            <main>
+              <LoadingSpinner size="lg" label="Loading…" class="min-h-dvh bg-canvas" />
+            </main>
+          )
+          : <Frame />}
+        <Toastr
+          toasts={toasts.list.value}
+          onDismiss={toasts.remove}
+          // From `md` up, where the rail replaces the phone's tab bar, the stack sits at the bottom
+          // right, clear of the page header's "More actions" menu (#236); on a phone it stays at
+          // the top, clear of the tab bar.
+          class="md:top-auto! md:bottom-(--toastr-gap)!"
+          dataE2E="toasts"
+        />
+        <SWUpdater />
+      </FormatContext.Provider>
+    </I18nContext.Provider>
   )
 }
