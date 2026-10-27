@@ -164,6 +164,9 @@ const ROUTES = [
   { method: "GET", path: "/admin/blog/posts" },
   { method: "POST", path: "/admin/blog/posts/0199f0a0-0000-7000-8000-000000000001/publish" },
   { method: "POST", path: "/admin/blog/preview" },
+  { method: "GET", path: "/admin/contact-links" },
+  { method: "POST", path: "/admin/contact-links/order" },
+  { method: "POST", path: "/admin/contact-links/0199f0a0-0000-7000-8000-000000000001/delete" },
   { method: "GET", path: "/admin/groups/0199f0a0-0000-7000-8000-000000000001/files" },
   {
     method: "POST",
@@ -272,6 +275,7 @@ describe("operator area routes", () => {
       "billing",
       "newsletter",
       "blog",
+      "contact-links",
       "audit",
       "jobs",
       "system",

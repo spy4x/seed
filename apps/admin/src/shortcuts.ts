@@ -9,6 +9,7 @@ export const ADMIN_GO_KEYS: Readonly<Record<string, string>> = {
   billing: "b",
   newsletter: "m",
   blog: "p",
+  "contact-links": "l",
   audit: "a",
   jobs: "j",
   system: "s",
@@ -26,11 +27,15 @@ export const LIST_FILTER_MODULES: ReadonlySet<string> = new Set([
   "jobs",
 ])
 
-/** A page's own actions, by the page's address: `c` writes a new post from the blog's list. */
+/**
+ * A page's own actions, by the page's address: `c` writes a new post from the blog's list and
+ * adds a link from the contact links.
+ */
 export const ADMIN_PAGE_ACTIONS: Readonly<
   Record<string, readonly { keys: string; description: string; href: string }[]>
 > = {
   "/blog": [{ keys: "c", description: "New post", href: "/blog/new" }],
+  "/contact-links": [{ keys: "c", description: "Add link", href: "/contact-links/new" }],
 }
 
 /** The pages whose save button takes Ctrl S (Command S on a Mac): the blog's editor. */
