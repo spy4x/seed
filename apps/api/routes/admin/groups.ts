@@ -99,8 +99,9 @@ function bareType(contentType: string): string {
 }
 
 /**
- * A stored file's bytes on the admin host: its confirmed type, never sniffed, under the store's
- * own sandbox policy, so even a file that is markup never runs as a page of the operator area.
+ * A stored file's bytes on the admin host: its confirmed type, never sniffed. It sets the store's
+ * sandbox policy, but the app-wide `securityHeaders` replaces it for now (spy4x/ts-libs#772); a
+ * file that is markup is never shown in place, only saved.
  */
 function fileBody(
   file: AdminGroupStoredFile,
@@ -196,8 +197,8 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   saved) and `…/download` the file saved as an attachment: each writes an audit row naming the
  *   operator before it answers, and answers 403 unless `Sec-Fetch-Site` is `same-origin`, since a
  *   GET that writes the operator's audit row must not be one another site can start. A file is
- *   found only through its own group's path. Every answer carries the confirmed type, `nosniff` and
- *   a sandbox policy, as the file store's own answers do.
+ *   found only through its own group's path. Every answer carries the confirmed type and `nosniff`;
+ *   its sandbox policy is replaced by the app's own for now (spy4x/ts-libs#772).
  * - `GET /groups/:id/widgets/:widgetId?from=&to=&timeZone=` is one overview widget's data in the
  *   default layout, the same counts a member's overview shows (#219). Never a member's layout.
  */
