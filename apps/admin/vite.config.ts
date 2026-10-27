@@ -79,6 +79,11 @@ export default defineConfig({
     alias: [{
       find: /^@ui\//,
       replacement: fromFileUrl(new URL("../../libs/ui/", import.meta.url)),
+    }, {
+      // The catalogs (#216): Vite reads JSON itself; the Deno plugin's dev server answers a JSON
+      // module of the workspace with an error.
+      find: /^@i18n\//,
+      replacement: fromFileUrl(new URL("../../i18n/", import.meta.url)),
     }],
   },
   optimizeDeps: {
