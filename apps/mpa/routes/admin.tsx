@@ -78,8 +78,8 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
   {
     name: `Groups`,
     Icon: IconFolder,
-    text: `Every group, its owner and its members. Manage members and ` +
-      `invitations, or hand a group to another member.`,
+    text: `Every group, its owner, its members and its files. Manage members and ` +
+      `invitations, find and remove a file, or hand a group to another member.`,
   },
   {
     name: `Billing`,

@@ -117,8 +117,11 @@ table `note_attachments`, with the operations `attachment.sign`, `.confirm`, `.c
   (`libs/server/notes/attachment-cleanup.ts`) deletes every queued object, forgets uploads signed
   more than a day ago, confirmed or not, and deletes staging objects older than a day.
 - **Downloads** are signed for a member of the file's group only: every read joins the note and
-  its group. The admin app lists a group's files by type, size, uploader and date, never by name,
-  and an operator can remove one ([admin-modules.md](admin-modules.md)).
+  its group. The admin app lists a group's files by name, with the note's title, the uploader and
+  the date, searches and pages them, and an operator can open, download or remove one
+  ([admin-modules.md](admin-modules.md)). Its bytes go through the admin API with the store's
+  sandbox policy and `nosniff`: only a JPEG, PNG, WebP or GIF is shown in place, any other file is
+  saved, and each open or download is audited.
 - **Exports.** A group's JSON export (`group.exported`) holds notes and tags only. A person's data
   export ([data-export.md](data-export.md)) lists the files they attached, without their bytes.
 

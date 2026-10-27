@@ -177,7 +177,8 @@ export interface AdminGroupScreenProps {
  * its members, its invitations, its files and its activity. An operator removes a member, revokes
  * an invitation or removes a file from the row's menu; a supervisor hands the group to another member from the page's
  * menu. Each is confirmed in a dialog and recorded in the group's activity with the operator's
- * name. Nothing written inside the group shows here: counts only.
+ * name. Nothing written inside the group shows here but its files' names and their notes' titles,
+ * which an operator needs to find a file a report names (#478).
  */
 export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
   const { detail, error, operator, navigate } = props

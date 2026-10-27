@@ -71,4 +71,9 @@ a signed-in session with its second factor, then the operator role or above (any
 are mounted after those checks. A path no module answers is 404 too.
 
 A module never answers the content of a person's notes or any other aggregate's text: the operator
-area reads counts and account facts only.
+area reads counts and account facts only. One exception: a group's Files tab shows each file's name
+and the title of the note it sits in, and lets the operator open or download the file, so they can
+find and remove abusive content (#478). Its bytes come through the admin API
+(`/api/admin/groups/:id/files/:fileId/thumbnail`, `/open` and `/download`), because the admin host's
+`img-src 'self'` cannot load the file store. Every open and every download writes an audit row
+naming the operator and the file, which the Audit log shows; the 40 px thumbnails are not audited.
