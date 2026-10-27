@@ -8,6 +8,7 @@
  * @module
  */
 
+import { IMAGE_PROCESS_JOB, imageProcessJob, type ImageScratch } from "../files/images.ts"
 import type postgres from "postgres"
 import { stepsJob } from "@spy4x/server/outbox"
 import { describeCron, parseCron } from "@spy4x/time/cron"
@@ -80,6 +81,8 @@ export interface JobDeps {
   files: ServerFiles | null
   /** Sends to Telegram, or `null` while the bot is off (#269). */
   telegram: TelegramNotificationDeps["client"]
+  /** Where image processing works on disk, or `null` when the worker has none (#464). */
+  imageScratch: ImageScratch | null
 }
 
 /**
@@ -250,6 +253,12 @@ export const JOBS: readonly JobDefinition[] = [
     label: `Account deletion for good`,
     about: { userIn: `account_deletions` },
     handler: ({ sql, mail }) => accountHardDeleteJob({ sql, log: mail.log }),
+  }),
+  defineJob({
+    kind: IMAGE_PROCESS_JOB,
+    label: `Image processing`,
+    handler: ({ sql, files, imageScratch }) =>
+      imageProcessJob({ sql, files, scratch: imageScratch }),
   }),
   defineJob({
     kind: DATA_EXPORT_BUILD_JOB,

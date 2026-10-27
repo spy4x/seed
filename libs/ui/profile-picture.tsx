@@ -9,13 +9,26 @@ import { Cluster } from "@spy4x/preact-ui/layout"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
+import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { PICTURE_MAX_BYTES, PICTURE_TYPES } from "@domain/identity"
 
 /** The id of "Upload" or "Change", which the palette's "Change profile picture" presses. */
 export const PICTURE_BUTTON_ID = "profile-picture-choose"
 
-/** The types the chooser offers; the browser and the API refuse any other. */
-export const PICTURE_ACCEPT = PICTURE_TYPES.join(",")
+/**
+ * The types the chooser offers; the browser and the API refuse any other. The extensions let a
+ * HEIC photo through on a desktop browser that gives it no type.
+ */
+export const PICTURE_ACCEPT = [...PICTURE_TYPES, ".heic", ".heif"].join(",")
+
+/** The rule for the file, as the row and the search palette show it. */
+export const PICTURE_RULE = `JPEG, PNG, WebP or HEIC, up to ${formatBytes(PICTURE_MAX_BYTES)}`
+
+/** What the row says while the worker prepares the new picture (#464). */
+export const PICTURE_PREPARING = "Preparing your picture…"
+
+/** What the row says when the worker could not use the picture (#464). */
+export const PICTURE_REFUSED = "We could not use that picture. Choose another."
 
 /** What the "Profile picture" row takes. */
 export interface PictureRowProps {
@@ -25,6 +38,8 @@ export interface PictureRowProps {
   src?: string
   /** A picture is saved, so the row offers "Change" and "Remove". */
   hasPicture: boolean
+  /** The saved picture is still being prepared, or could not be used; `null` once shown. */
+  state?: "preparing" | "refused" | null
   /** What is in flight: an upload, a removal, or nothing. */
   status: "idle" | "uploading" | "removing"
   /** The last refusal, under the list; `null` for none. */
@@ -46,7 +61,12 @@ export interface PictureRowProps {
  * after a removal, focus moves to it instead of falling to the page.
  */
 export function PictureRow(props: PictureRowProps): JSX.Element {
-  const { name, src, hasPicture, status, announcement } = props
+  const { name, src, hasPicture, status, announcement, state = null } = props
+  const note = state === "preparing"
+    ? PICTURE_PREPARING
+    : state === "refused"
+    ? PICTURE_REFUSED
+    : null
   const [confirming, setConfirming] = useState(false)
   const removeButton = useRef<HTMLButtonElement>(null)
   const actions = useRef<HTMLDivElement>(null)
@@ -61,9 +81,22 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
       value={
         <span class="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
           <Avatar name={name} src={src} size="lg" alt="" class="shrink-0" />
-          <span class="text-sm text-muted">JPEG, PNG or WebP, up to 1 MB.</span>
-          <span role="status" class="sr-only" data-e2e="profile-picture-status">
-            {announcement}
+          <span class="flex flex-col gap-1">
+            <span class="text-sm text-muted">{PICTURE_RULE}.</span>
+            {
+              /* The state is visible and read out; the store's announcements are read out only. */
+            }
+            <span
+              role="status"
+              class={note === null
+                ? "sr-only"
+                : state === "refused"
+                ? "text-sm font-medium text-danger"
+                : "text-sm font-medium"}
+              data-e2e="profile-picture-status"
+            >
+              {note ?? announcement}
+            </span>
           </span>
         </span>
       }

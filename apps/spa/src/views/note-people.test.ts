@@ -1,7 +1,8 @@
 /** `personName`: how the notes screens name a note's author and last editor. */
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
-import { personName } from "./note-people.ts"
+import { PictureState } from "@domain/identity"
+import { personName, personPicture } from "./note-people.ts"
 
 const members = [
   { userId: 1, name: "Anna Bell" },
@@ -32,5 +33,24 @@ describe("personName", () => {
 
   it("names nobody while the members are not read yet, rather than a wrong name", () => {
     expect(personName(7, 1, null)).toBeUndefined()
+  })
+})
+
+describe("personPicture", () => {
+  const listed = [{ userId: 1, name: "Anna Bell", pictureId: null }, {
+    userId: 7,
+    name: "Maya Chen",
+    pictureId: `p7`,
+  }]
+
+  it("shows the person's own picture from their session once ready, whatever the list read", () => {
+    const you = { id: 1, pictureId: `mine`, pictureState: PictureState.Ready }
+    expect(personPicture(1, listed, you)).toBe(`/api/pictures/mine`)
+    expect(personPicture(1, listed, { ...you, pictureState: PictureState.Preparing }))
+      .toBeUndefined()
+  })
+
+  it("shows another member's picture from the list", () => {
+    expect(personPicture(7, listed, { id: 1, pictureId: null })).toBe(`/api/pictures/p7`)
   })
 })

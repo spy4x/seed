@@ -27,7 +27,7 @@ services:
   worker:
     user: "0:0"  # Run as root in dev mode for Podman compatibility, like the api
     # Restarts on a code change, as `deno task api:dev` does for the API.
-    command: [ 'deno', 'run', '--watch', '--allow-sys', '--allow-env', '--allow-net', 'apps/worker/+main.ts' ]
+    command: [ 'deno', 'run', '--watch', '--allow-sys', '--allow-env', '--allow-net', '--allow-read=/tmp/images', '--allow-write=/tmp/images', '--allow-run=vips,vipsheader', 'apps/worker/+main.ts' ]
     security_opt:
       - label=disable
 

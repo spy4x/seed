@@ -1,4 +1,4 @@
-import { pictureUrl } from "@domain/identity"
+import { type PictureState, pictureUrl, shownPictureId } from "@domain/identity"
 
 /** A member as the notes screens need them: the members store's rows fit. */
 export interface NotePerson {
@@ -7,11 +7,17 @@ export interface NotePerson {
   pictureId?: string | null
 }
 
-/** The address of the profile picture of the member with `userId`, or `undefined` for initials. */
+/**
+ * The address of the profile picture of the member with `userId`, or `undefined` for initials.
+ * The person's own comes from `you`, their session, which follows their picture as soon as it is
+ * ready (#464); the members list is read again only on the group's changes.
+ */
 export function personPicture(
   userId: number | null,
   members: readonly NotePerson[] | null,
+  you?: { id: number; pictureId?: string | null; pictureState?: PictureState | null } | null,
 ): string | undefined {
+  if (you && userId === you.id) return pictureUrl(shownPictureId(you))
   return pictureUrl(members?.find((member) => member.userId === userId)?.pictureId)
 }
 

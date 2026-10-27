@@ -3,7 +3,7 @@ import { useEffect } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 import { useLocation, useSearch } from "wouter-preact"
 import { canMutateNotes, canViewActivity } from "@domain/groups"
-import { pictureUrl } from "@domain/identity"
+import { pictureUrl, shownPictureId } from "@domain/identity"
 import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
@@ -280,7 +280,7 @@ export function AppShell(
         firstName: guest && !user.firstName && !user.lastName ? "Guest" : user.firstName,
         lastName: user.lastName,
         email: emailStore.status.value?.email,
-        avatarUrl: pictureUrl(user.pictureId),
+        avatarUrl: pictureUrl(shownPictureId(user)),
       }}
       // The profile's Account section offers the code itself; the banner would only repeat it
       // there, and `/profile` shows that section from `md` up. With nothing to show it is left

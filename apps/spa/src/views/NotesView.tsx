@@ -132,7 +132,7 @@ export function NotesView() {
           ...note,
           authorId: note.createdByUserId === null ? null : String(note.createdByUserId),
           authorName: personName(note.createdByUserId, youId, members),
-          authorPictureUrl: personPicture(note.createdByUserId, members),
+          authorPictureUrl: personPicture(note.createdByUserId, members, sessionState.value.user),
           authorAvatarName: note.createdByUserId === youId
             ? members?.find((member) => member.userId === youId)?.name.trim() || undefined
             : undefined,

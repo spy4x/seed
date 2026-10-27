@@ -8,15 +8,48 @@ import type { Actor, User } from "./+lib.ts"
 /**
  * Profile pictures (#228, docs/files.md): a person's own picture in place of their initials. It is
  * uploaded like a note attachment (signed, PUT straight to the store, confirmed), counts against
- * the same waiting uploads and hourly budget, and is shown at a fixed size with CSS: nothing
- * resizes it.
+ * the same waiting uploads and hourly budget. The worker turns it into upright widths with no
+ * metadata (#464, docs/files.md), and avatars show the narrowest WebP.
  */
 
 /** The types a picture may be: those a browser shows and whose first bytes the store checks. */
-export const PICTURE_TYPES = [`image/jpeg`, `image/png`, `image/webp`] as const
+export const PICTURE_TYPES = [`image/jpeg`, `image/png`, `image/webp`, `image/heic`] as const
 
-/** The largest picture kept: 1 MiB. */
-export const PICTURE_MAX_BYTES = 1024 * 1024
+/** The largest picture taken: 10 MiB, room for a phone's photo. Only its small widths are kept. */
+export const PICTURE_MAX_BYTES = 10 * 1024 * 1024
+
+/**
+ * The type a picture is uploaded as. A desktop browser that does not know HEIC gives a `.heic` or
+ * `.heif` file no type, or `image/heif`; those go as HEIC, and the API still checks the bytes.
+ */
+export function pictureContentType(file: { name: string; type: string }): string {
+  if ((PICTURE_TYPES as readonly string[]).includes(file.type)) return file.type
+  return /\.hei[cf]$/i.test(file.name) ? `image/heic` : file.type
+}
+
+/** Where a person's picture stands once it is confirmed (#464); `null` while they have none. */
+export enum PictureState {
+  /** The worker is making its small widths; nothing is shown yet. */
+  Preparing = 1,
+  /** Its widths are made, and it is shown. */
+  Ready = 2,
+  /** The worker could not use it (not an image, or too many pixels); nothing is shown. */
+  Refused = 3,
+}
+
+/**
+ * The picture to show for `user`: its id once ready, or `null` while it is prepared, after it was
+ * refused, or when there is none, so an `Avatar` shows the initials instead of asking for a picture
+ * that is not there.
+ */
+export function shownPictureId(
+  user: { pictureId?: string | null; pictureState?: PictureState | null } | null | undefined,
+): string | null {
+  if (!user?.pictureId) return null
+  return user.pictureState === PictureState.Preparing || user.pictureState === PictureState.Refused
+    ? null
+    : user.pictureId
+}
 
 /** Where a confirmed picture is kept. No browser is ever given a URL to write it. */
 export function pictureObjectKey(id: string): string {

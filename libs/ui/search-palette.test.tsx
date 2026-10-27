@@ -190,7 +190,7 @@ describe("SearchPalette", () => {
       "Open notifications",
       "Open profile | Name, e-mail address, password, two-factor sign-in",
       "Download my data | A ZIP of your profile, groups and notes",
-      "Change profile picture | JPEG, PNG or WebP, up to 1 MB",
+      "Change profile picture | JPEG, PNG, WebP or HEIC, up to 10 MB",
     ])
   })
 

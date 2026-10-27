@@ -150,12 +150,17 @@ CREATE TABLE users (
     -- `NULL` while they have none. `picture_type` is the type the store confirmed.
     picture_id UUID,
     picture_type VARCHAR(20),
+    -- #464: where the picture stands (`PictureState`): 1 preparing, 2 ready, 3 refused.
+    picture_state SMALLINT,
     CONSTRAINT users_role_check CHECK (role >= 1 AND role <= 4),
     CONSTRAINT users_mfa_check CHECK (mfa = ANY (ARRAY[1, 2, 3])),
     CONSTRAINT users_id_auth_users_fkey FOREIGN KEY (id) REFERENCES auth_users (id)
         ON DELETE CASCADE,
     CONSTRAINT users_picture_id_unique UNIQUE (picture_id),
-    CONSTRAINT users_picture_check CHECK ((picture_id IS NULL) = (picture_type IS NULL))
+    CONSTRAINT users_picture_check CHECK ((picture_id IS NULL) = (picture_type IS NULL)),
+    CONSTRAINT users_picture_state_check CHECK (
+        (picture_id IS NULL) = (picture_state IS NULL) AND picture_state BETWEEN 1 AND 3
+    )
 );
 
 COMMENT ON COLUMN users.role IS '1=viewer, 2=operator, 3=supervisor, 4=administrator';
@@ -1045,6 +1050,45 @@ CREATE TRIGGER note_attachments_queue_deletion
     AFTER DELETE ON note_attachments
     FOR EACH ROW EXECUTE FUNCTION queue_note_attachment_deletion();
 
+-- #464: an uploaded photo, keyed by its original's object, and the AVIF and WebP widths the
+-- worker made of it. `refused` is the processor's reason when it made none. A deleted row queues
+-- its object for deletion; a replaced or removed picture takes its image along.
+CREATE TABLE images (
+    id UUID PRIMARY KEY,
+    object_key VARCHAR(200) NOT NULL,
+    processed_at TIMESTAMPTZ(3),
+    refused SMALLINT,
+    created_at TIMESTAMPTZ(3) DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT images_object_key_unique UNIQUE (object_key)
+);
+
+CREATE TABLE image_variants (
+    object_key VARCHAR(200) PRIMARY KEY,
+    image_id UUID NOT NULL REFERENCES images (id) ON DELETE CASCADE,
+    content_type VARCHAR(20) NOT NULL,
+    width INTEGER NOT NULL,
+    height INTEGER NOT NULL,
+    CONSTRAINT image_variants_size_check CHECK (width > 0 AND height > 0)
+);
+
+CREATE INDEX idx_image_variants_image ON image_variants (image_id);
+
+CREATE FUNCTION queue_image_object_deletion() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    INSERT INTO file_deletions (object_key) VALUES (OLD.object_key) ON CONFLICT DO NOTHING;
+    RETURN NULL;
+END;
+$$;
+
+CREATE TRIGGER images_queue_deletion
+    AFTER DELETE ON images
+    FOR EACH ROW EXECUTE FUNCTION queue_image_object_deletion();
+
+CREATE TRIGGER image_variants_queue_deletion
+    AFTER DELETE ON image_variants
+    FOR EACH ROW EXECUTE FUNCTION queue_image_object_deletion();
+
 CREATE FUNCTION queue_user_picture_deletion() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
@@ -1052,6 +1096,7 @@ BEGIN
         AND (TG_OP = 'DELETE' OR NEW.picture_id IS DISTINCT FROM OLD.picture_id) THEN
         INSERT INTO file_deletions (object_key) VALUES ('pictures/' || OLD.picture_id)
         ON CONFLICT DO NOTHING;
+        DELETE FROM images WHERE id = OLD.picture_id;
     END IF;
     RETURN NULL;
 END;

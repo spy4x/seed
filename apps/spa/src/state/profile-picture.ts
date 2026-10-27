@@ -2,7 +2,12 @@ import { signal } from "@preact/signals"
 import { RealtimeRequestError } from "@spy4x/realtime"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import type { FileRejection } from "@spy4x/preact-ui/file-input"
-import { PICTURE_MAX_BYTES, type SignedPictureUpload, type User } from "@domain/identity"
+import {
+  PICTURE_MAX_BYTES,
+  pictureContentType,
+  type SignedPictureUpload,
+  type User,
+} from "@domain/identity"
 import { callCommand } from "../modules.ts"
 import { putWithProgress } from "./attachments.ts"
 import { sessionState } from "./session.ts"
@@ -29,7 +34,7 @@ const OFFLINE = `You are offline. Upload your picture once you are back online.`
 const REMOVE_FAILED = `Could not remove your picture. Check your connection and try again.`
 
 function typeError(name: string): string {
-  return `${name} is not a JPEG, PNG or WebP image. Choose one of those.`
+  return `${name} is not a JPEG, PNG, WebP or HEIC image. Choose one of those.`
 }
 
 function sizeError(name: string, size: number): string {
@@ -86,7 +91,7 @@ export function createPictureStore(dependencies: PictureDependencies) {
     preview.value = shown
     let signed: SignedPictureUpload | null = null
     try {
-      signed = await dependencies.sign({ contentType: file.type, size: file.size })
+      signed = await dependencies.sign({ contentType: pictureContentType(file), size: file.size })
       await dependencies.put(signed, file)
       const { user } = await dependencies.confirm({ id: signed.id })
       signed = null

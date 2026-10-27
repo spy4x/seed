@@ -24,6 +24,16 @@ async function givePicture(sql: postgres.Sql, userId: number): Promise<string> {
   return id
 }
 
+/** Marks picture `id` processed into one WebP width, as the worker would (#464). */
+async function processed(sql: postgres.Sql, id: string) {
+  await sql`UPDATE images SET processed_at = now() WHERE id = ${id}`
+  await sql`
+    INSERT INTO image_variants (object_key, image_id, content_type, width, height)
+    VALUES (${`pictures/${id}/480.webp`}, ${id}, ${WEBP}, 480, 480)
+  `
+  return { id, contentType: WEBP, objectKey: `pictures/${id}/480.webp` }
+}
+
 function pictureUpload(userId: number, size = 1000): LedgerUpload {
   const id = uuidV7()
   return {
@@ -42,12 +52,10 @@ Deno.test("profile pictures against Postgres", async (t) => {
     await t.step("shows a picture to its owner and group mates, never to a stranger", async () => {
       const { owner, editor, stranger, groupId } = await team(sql)
       const picture = await givePicture(sql, editor)
+      const shown = await processed(sql, picture)
 
-      expect(await readablePicture(sql, picture, editor)).toEqual({
-        id: picture,
-        contentType: WEBP,
-      })
-      expect(await readablePicture(sql, picture, owner)).toEqual({ id: picture, contentType: WEBP })
+      expect(await readablePicture(sql, picture, editor)).toEqual(shown)
+      expect(await readablePicture(sql, picture, owner)).toEqual(shown)
       expect(await readablePicture(sql, picture, stranger)).toBe(null)
       expect(await readablePicture(sql, uuidV7(), editor)).toBe(null)
 
@@ -59,7 +67,8 @@ Deno.test("profile pictures against Postgres", async (t) => {
     await t.step("hides the picture of a deleted account, from the operator area too", async () => {
       const { owner, viewer } = await team(sql)
       const picture = await givePicture(sql, viewer)
-      expect(await anyPicture(sql, picture)).toEqual({ id: picture, contentType: WEBP })
+      const shown = await processed(sql, picture)
+      expect(await anyPicture(sql, picture)).toEqual(shown)
 
       await sql`UPDATE users SET deleted_at = now() WHERE id = ${viewer}`
       expect(await readablePicture(sql, picture, owner)).toBe(null)

@@ -85,8 +85,29 @@ describe("profile picture row", () => {
     expect(chooser().textContent).toBe("Upload profile picture")
     expect(removeCount()).toBe(0)
     expect(find("[data-e2e=profile-picture-row]").textContent).toContain(
-      "JPEG, PNG or WebP, up to 1 MB.",
+      "JPEG, PNG, WebP or HEIC, up to 10 MB.",
     )
+  })
+
+  it("says the new picture is being prepared, visibly and in its status region", async () => {
+    await mount(<PictureRow {...row({ hasPicture: true, state: "preparing" })} />)
+    const status = find("[data-e2e=profile-picture-status]")
+    expect(status.getAttribute("role")).toBe("status")
+    expect(status.textContent).toBe("Preparing your picture…")
+    expect(status.className).not.toContain("sr-only")
+  })
+
+  it("says a refused picture could not be used, visibly and in its status region", async () => {
+    await mount(<PictureRow {...row({ hasPicture: true, state: "refused" })} />)
+    const status = find("[data-e2e=profile-picture-status]")
+    expect(status.textContent).toBe("We could not use that picture. Choose another.")
+    expect(status.className).not.toContain("sr-only")
+  })
+
+  it("offers HEIC by its extension too, for a browser that gives it no type", async () => {
+    await mount(<PictureRow {...row()} />)
+    const input = find<HTMLInputElement>(`input[type=file]`)
+    expect(input.accept.split(",")).toEqual(expect.arrayContaining([".heic", ".heif"]))
   })
 
   it("offers Change and Remove once a picture is saved, and hides Remove while one uploads", async () => {
@@ -132,9 +153,9 @@ describe("profile picture row", () => {
 
   it("moves focus to a refusal when it appears", async () => {
     await mount(<PictureErrorState error={null} />)
-    await mount(<PictureErrorState error="photo.heic is not a JPEG, PNG or WebP image." />)
+    await mount(<PictureErrorState error="photo.gif is not a JPEG, PNG, WebP or HEIC image." />)
     const error = find("[data-e2e=profile-picture-error]")
-    expect(error.textContent).toContain("photo.heic is not a JPEG, PNG or WebP image.")
+    expect(error.textContent).toContain("photo.gif is not a JPEG, PNG, WebP or HEIC image.")
     expect(error.contains(document.activeElement)).toBe(true)
   })
 })

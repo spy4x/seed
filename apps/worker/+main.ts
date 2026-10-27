@@ -22,6 +22,7 @@ import { type DemoAdmin, readDemoAdmin } from "./demo/options.ts"
 import { seedWorkspace } from "./demo/seed.ts"
 import { s3ServerFiles } from "@server/files/files.ts"
 import { readServerFilesSetup } from "@server/files/settings.ts"
+import type { ImageScratch } from "@server/files/images.ts"
 
 const sql = createSqlFromEnv(Deno.env.toObject(), {
   transform: postgres.camel,
@@ -72,6 +73,22 @@ const billingSetup = readBillingSetup(systemEnv, Deno.env.get("ENV") === "dev" ?
 const filesSetup = readServerFilesSetup(Deno.env)
 if (!filesSetup.success) console.warn(filesSetup.error)
 const files = filesSetup.success ? s3ServerFiles(filesSetup.output) : null
+
+// Image processing (#464) runs `vips` on files: each run gets a folder of its own under the one
+// directory the worker may read and write (`--allow-read`/`--allow-write` in compose), and removes
+// it when done.
+const IMAGE_SCRATCH_ROOT = `/tmp/images`
+const imageScratch: ImageScratch = {
+  async open(bytes) {
+    await Deno.mkdir(IMAGE_SCRATCH_ROOT, { recursive: true })
+    const dir = await Deno.makeTempDir({ dir: IMAGE_SCRATCH_ROOT })
+    const input = `${dir}/original`
+    await Deno.writeFile(input, bytes)
+    return { dir, input }
+  },
+  read: (path) => Deno.readFile(path),
+  close: (dir) => Deno.remove(dir, { recursive: true }),
+}
 
 // Notifications also go to a linked Telegram chat (#269, docs/telegram.md) while the bot is on. The
 // worker only sends, so it needs no webhook secret.
@@ -125,6 +142,7 @@ const processor = createOutboxProcessor(
   undefined,
   files,
   telegram,
+  imageScratch,
 )
 
 // Starts the nightly chain the first time; a restart finds the waiting row and adds nothing. A run

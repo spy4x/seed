@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check files.ts settings.ts upload-ledger.ts",
+    "check": "deno check files.ts images.ts settings.ts upload-ledger.ts",
     "test": "deno test files.test.ts settings.test.ts"
   }
 }

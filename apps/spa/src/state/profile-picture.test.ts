@@ -69,6 +69,12 @@ describe(`profile picture store`, () => {
     ])
   })
 
+  it(`signs a HEIC photo the browser gave no type as HEIC`, async () => {
+    const { store, calls } = setUp()
+    await store.choose(file(`IMG_0001.HEIC`, ``))
+    expect(calls[0]).toBe(`sign image/heic 1000`)
+  })
+
   it(`names a file whose bytes are not an image, and cancels its signed upload`, async () => {
     const { store, calls, users } = setUp({
       confirm: () =>
@@ -106,12 +112,12 @@ describe(`profile picture store`, () => {
 
   it(`names the file and the rule when the browser refuses it`, () => {
     const { store } = setUp()
-    store.reject({ file: file(`photo.heic`, `image/heic`), reason: `wrong-type` })
+    store.reject({ file: file(`photo.gif`, `image/gif`), reason: `wrong-type` })
     expect(store.error.value).toBe(
-      `photo.heic is not a JPEG, PNG or WebP image. Choose one of those.`,
+      `photo.gif is not a JPEG, PNG, WebP or HEIC image. Choose one of those.`,
     )
-    store.reject({ file: file(`photo.jpg`, `image/jpeg`, 2.4 * 1024 * 1024), reason: `too-large` })
-    expect(store.error.value).toBe(`photo.jpg is 2.4 MB. Choose an image of 1 MB or less.`)
+    store.reject({ file: file(`photo.jpg`, `image/jpeg`, 12.4 * 1024 * 1024), reason: `too-large` })
+    expect(store.error.value).toBe(`photo.jpg is 12.4 MB. Choose an image of 10 MB or less.`)
   })
 
   it(`removes the picture and says so, or says the removal failed`, async () => {

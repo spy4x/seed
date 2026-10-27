@@ -18,7 +18,7 @@ import {
   TAG_PATHS,
 } from "./progressive.tsx"
 import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
-import { PICTURE_BUTTON_ID } from "./profile-picture.tsx"
+import { PICTURE_BUTTON_ID, PICTURE_RULE } from "./profile-picture.tsx"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -323,7 +323,7 @@ function actionOptions(
       "change-picture",
       "Change profile picture",
       `${profilePath("account")}#${PICTURE_BUTTON_ID}`,
-      "JPEG, PNG or WebP, up to 1 MB",
+      PICTURE_RULE,
       [`avatar`, `photo`, `upload picture`, `фото`, `аватар`],
     ),
   ]

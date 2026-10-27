@@ -21,7 +21,9 @@ function buildApp(auth: APIContext["Variables"]["auth"] = buildAuthData({ user: 
     readable: (pictureId, viewerId) => {
       calls.push([`readable`, pictureId, viewerId])
       return Promise.resolve(
-        pictureId === MINE && viewerId === 7 ? { id: MINE, contentType: `image/webp` } : null,
+        pictureId === MINE && viewerId === 7
+          ? { id: MINE, contentType: `image/webp`, objectKey: `pictures/${MINE}/480.webp` }
+          : null,
       )
     },
     signDownload: (key, file) => {
@@ -33,17 +35,17 @@ function buildApp(auth: APIContext["Variables"]["auth"] = buildAuthData({ user: 
 }
 
 describe(`GET /api/pictures/:pictureId`, () => {
-  it(`redirects a person who may see the picture to a signed URL served as its type`, async () => {
+  it(`redirects a person who may see the picture to a signed URL of the object it is shown as`, async () => {
     const { app, calls } = buildApp()
     const response = await app.request(`${API_URL}/pictures/${MINE}`)
     expect(response.status).toBe(302)
     expect(response.headers.get(`location`)).toBe(
-      `https://app.example.com/files/pictures/${MINE}?X-Amz-Signature=abc`,
+      `https://app.example.com/files/pictures/${MINE}/480.webp?X-Amz-Signature=abc`,
     )
     expect(response.headers.get(`cache-control`)).toBe(
       `private, max-age=${PICTURE_REDIRECT_SECONDS}`,
     )
-    expect(calls).toContainEqual([`sign`, `pictures/${MINE}`, {
+    expect(calls).toContainEqual([`sign`, `pictures/${MINE}/480.webp`, {
       contentType: `image/webp`,
       filename: `picture`,
     }])

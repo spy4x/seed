@@ -480,10 +480,19 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog and th
     // A profile picture's object is queued too (#228); the seed gives nobody one.
     const picture = uuidV7()
     await sql`
-      UPDATE users SET picture_id = ${picture}, picture_type = 'image/webp'
+      UPDATE users SET picture_id = ${picture}, picture_type = 'image/webp', picture_state = 2
       WHERE id = (SELECT min(id) FROM users)
     `
     keys.push({ objectKey: `pictures/${picture}` })
+    // And its processed width (#464).
+    await sql`
+      INSERT INTO images (id, object_key, processed_at) VALUES (${picture}, ${`pictures/${picture}`}, now())
+    `
+    await sql`
+      INSERT INTO image_variants (object_key, image_id, content_type, width, height)
+      VALUES (${`pictures/${picture}/480.webp`}, ${picture}, 'image/webp', 480, 480)
+    `
+    keys.push({ objectKey: `pictures/${picture}/480.webp` })
 
     const wiped = await wipeDatabase(sql)
     const queued = await sql<{ objectKey: string }[]>`SELECT object_key FROM file_deletions`

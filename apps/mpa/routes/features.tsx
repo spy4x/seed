@@ -403,7 +403,7 @@ const TIERS: readonly Tier[] = [
         facts: [
           `Traefik in front, with automatic certificates`,
           `Postgres and Valkey beside the apps`,
-          `Garage, an S3 file store: notes keep images and PDFs in it, and people their profile pictures, uploaded on signed links and checked by their bytes`,
+          `Garage, an S3 file store: notes keep images and PDFs in it, and people their profile pictures, uploaded on signed links and checked by their bytes. A photo, HEIC included, becomes small AVIF and WebP widths with its location and other metadata stripped`,
           `VictoriaMetrics, VictoriaLogs and Grafana, with alerts`,
           `An opt-in daily encrypted restic backup of the database, and a written restore`,
           `Release images published from CI when you push a version tag`,

@@ -166,11 +166,23 @@ export interface FileStore {
   delete(key: string): Promise<void>
   /**
    * The bytes of a confirmed file, read whole into memory, or `null` when it is gone. Only for a
-   * small file, such as a profile picture of 1 MiB at most, that a page of another host shows.
+   * small file, such as a profile picture's small width, that a page of another host shows.
    */
   read(key: string): Promise<Uint8Array | null>
   /** Whether the store answers, for the health route and the operator's System page. */
   isReachable(): Promise<boolean>
+}
+
+/** The whole object at `key`, or `null` when it is gone. */
+async function readWhole(
+  store: Pick<S3Storage, `head` | `getRange`>,
+  bucket: string,
+  key: string,
+): Promise<Uint8Array | null> {
+  const info = await store.head(bucket, key)
+  if (info === null) return null
+  if (info.size === 0) return new Uint8Array()
+  return await store.getRange(bucket, key, 0, info.size - 1)
 }
 
 /**
@@ -230,12 +242,7 @@ export function createFileStore(
     delete(key) {
       return internal.delete(bucket, key)
     },
-    async read(key) {
-      const info = await internal.head(bucket, key)
-      if (info === null) return null
-      if (info.size === 0) return new Uint8Array()
-      return await internal.getRange(bucket, key, 0, info.size - 1)
-    },
+    read: (key) => readWhole(internal, bucket, key),
     async isReachable() {
       try {
         await internal.list(bucket, ``, { maxKeys: 1 })
@@ -274,17 +281,20 @@ export function s3FileStore(settings: FileStoreSettings): FileStore {
  */
 export interface ServerFiles {
   put(key: string, body: Uint8Array): Promise<void>
+  /** The bytes of `key`, read whole into memory, or `null` when it is gone. */
+  read(key: string): Promise<Uint8Array | null>
   delete(key: string): Promise<void>
   deleteOlderThan(prefix: string, before: Date): Promise<number>
 }
 
 /** {@link ServerFiles} over the store's internal client. */
 export function createServerFiles(
-  store: Pick<S3Storage, `upload` | `delete` | `list`>,
+  store: Pick<S3Storage, `upload` | `delete` | `list` | `head` | `getRange`>,
   bucket: string,
 ): ServerFiles {
   return {
     put: (key, body) => store.upload(bucket, key, body),
+    read: (key) => readWhole(store, bucket, key),
     delete: (key) => store.delete(bucket, key),
     async deleteOlderThan(prefix, before) {
       let removed = 0

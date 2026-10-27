@@ -22,10 +22,9 @@ import {
 import { readApiJson } from "@api/services/json-body.ts"
 import { listDataExports } from "@server/auth/data-export.ts"
 import { isUuid } from "@spy4x/platform/universal/uuid"
-import type { StoredPicture } from "@server/auth/profile-pictures.ts"
+import type { ShownPicture } from "@server/auth/profile-pictures.ts"
 import type { FileStore } from "@server/files/files.ts"
 import { PICTURE_NOT_FOUND, pictureBody } from "../pictures.ts"
-import { pictureObjectKey } from "@domain/identity"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
 import { codeForStatus, errorResponse, validationResponse } from "../../services/error-response.ts"
@@ -41,7 +40,7 @@ export interface AdminUsersRouteDependencies {
   /** The person's data exports (#229), newest first: what and when, never the file. */
   dataExports(userId: number): Promise<DataExportView[]>
   /** Any live person's profile picture (#228), by its id. */
-  picture(pictureId: string): Promise<StoredPicture | null>
+  picture(pictureId: string): Promise<ShownPicture | null>
   readFile: FileStore["read"]
 }
 
@@ -259,7 +258,7 @@ export function createAdminUsersRoutes(
     .get(`/users/pictures/:pictureId`, dependencies.limit, async (c) => {
       const pictureId = c.req.param(`pictureId`)
       const picture = isUuid(pictureId) ? await dependencies.picture(pictureId) : null
-      const bytes = picture && await dependencies.readFile(pictureObjectKey(picture.id))
+      const bytes = picture && await dependencies.readFile(picture.objectKey)
       if (!picture || !bytes) {
         return errorResponse(c, `not_found`, { message: PICTURE_NOT_FOUND })
       }
