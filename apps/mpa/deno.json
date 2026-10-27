@@ -12,6 +12,7 @@
   "imports": {
     "@/": "./",
     "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@1.1.2",
+    "@spy4x/platform/universal/contact": "jsr:@spy4x/platform@1.94.0/universal/contact",
     "@spy4x/platform/universal/is-record": "jsr:@spy4x/platform@1.94.0/universal/is-record",
     "@spy4x/platform/universal/seo": "jsr:@spy4x/platform@1.94.0/universal/seo",
     "@spy4x/server/http/bounded-body": "jsr:@spy4x/server@1.94.0/http/bounded-body",

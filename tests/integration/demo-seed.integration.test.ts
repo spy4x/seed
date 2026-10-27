@@ -31,6 +31,7 @@ import {
 } from "../../apps/worker/demo/seed.ts"
 import { KEPT_TABLES, wipeDatabase } from "../../apps/worker/demo/wipe.ts"
 import { SAMPLE_POSTS, seedSamplePosts } from "@server/blog/sample-posts.ts"
+import { SAMPLE_CONTACT_LINKS, seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
 import { isDemoSeeded, resetDemo } from "../../apps/worker/demo/run.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
@@ -463,13 +464,14 @@ Deno.test("the demo seed fails when sign-up refuses an account that does not exi
   })
 })
 
-Deno.test("the wipe empties every table but the kept ones, keeps the blog, queues every stored file for deletion, and never reuses an id", async () => {
+Deno.test("the wipe empties every table but the kept ones, keeps the blog and the contact links, queues every stored file for deletion, and never reuses an id", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     await sql`INSERT INTO backup_status (target, succeeded_at) VALUES ('database', now())`
     const [{ before }] = await sql<{ before: number }[]>`SELECT max(id) AS before FROM users`
     // The website's real posts, by an account the wipe removes.
     await seedSamplePosts(sql, before)
+    await seedSampleContactLinks(sql)
     // A visitor's sample groups, whose files' objects the wipe queues for deletion.
     await signUpVisitor(sql, "wiped@example.net")
     await drainJobs(sql)
@@ -517,6 +519,10 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog, queue
       { posts: number }[]
     >`SELECT COUNT(*)::int AS posts FROM blog_posts`
     expect(posts).toBe(SAMPLE_POSTS.length)
+    const [{ links }] = await sql<
+      { links: number }[]
+    >`SELECT COUNT(*)::int AS links FROM contact_links`
+    expect(links).toBe(SAMPLE_CONTACT_LINKS.length)
 
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const [{ after }] = await sql<{ after: number }[]>`SELECT min(id) AS after FROM users`

@@ -7,6 +7,7 @@ import { groupsAdminModule } from "./groups.ts"
 import { billingAdminModule } from "./billing.ts"
 import { newsletterAdminModule } from "./newsletter.ts"
 import { blogAdminModule } from "./blog.ts"
+import { contactLinksAdminModule } from "./contact-links.ts"
 import { auditAdminModule } from "./audit.ts"
 import { jobsAdminModule } from "./jobs.ts"
 import { systemAdminModule } from "./system.ts"
@@ -23,6 +24,7 @@ export const ADMIN_API_MODULES: readonly AdminApiModule[] = [
   billingAdminModule,
   newsletterAdminModule,
   blogAdminModule,
+  contactLinksAdminModule,
   auditAdminModule,
   jobsAdminModule,
   systemAdminModule,

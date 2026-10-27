@@ -11,6 +11,7 @@
     "./libs/domain/groups",
     "./libs/domain/identity",
     "./libs/domain/blog",
+    "./libs/domain/contact-links",
     "./libs/domain/notes",
     "./libs/domain/tags",
     "./libs/domain/notifications",
@@ -24,6 +25,7 @@
     "./libs/server/jobs",
     "./libs/server/mail",
     "./libs/server/blog",
+    "./libs/server/contact-links",
     "./libs/server/notes",
     "./libs/server/tags",
     "./libs/server/notifications",
@@ -150,6 +152,7 @@
     "@domain/groups": "./libs/domain/groups/+lib.ts",
     "@domain/identity": "./libs/domain/identity/+lib.ts",
     "@domain/blog": "./libs/domain/blog/+lib.ts",
+    "@domain/contact-links": "./libs/domain/contact-links/+lib.ts",
     "@domain/notes": "./libs/domain/notes/+lib.ts",
     "@domain/tags": "./libs/domain/tags/+lib.ts",
     "@domain/notifications": "./libs/domain/notifications/+lib.ts",
@@ -163,6 +166,7 @@
     "@server/jobs/": "./libs/server/jobs/",
     "@server/mail/": "./libs/server/mail/",
     "@server/blog/": "./libs/server/blog/",
+    "@server/contact-links/": "./libs/server/contact-links/",
     "@server/notes/": "./libs/server/notes/",
     "@server/tags/": "./libs/server/tags/",
     "@server/notifications/": "./libs/server/notifications/",
@@ -176,7 +180,8 @@
     // outbox, e-mail proof, the redirect-path check of sign-in's `next`, the password check without
     // a session, billing, the provider's name and picture, the healthcheck's HTTP mode, a key
     // giving up its address, safe Markdown and reading time, copying an object inside the S3
-    // store, an error's reason and per-field codes, HEIC by its bytes, image processing).
+    // store, an error's reason and per-field codes, contact channels, HEIC by its bytes, image
+    // processing).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
     "@spy4x/validation": "jsr:@spy4x/validation@1.94.0",

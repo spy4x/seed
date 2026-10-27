@@ -1100,3 +1100,21 @@ $$;
 CREATE TRIGGER users_queue_picture_deletion
     AFTER UPDATE OF picture_id OR DELETE ON users
     FOR EACH ROW EXECUTE FUNCTION queue_user_picture_deletion();
+
+-- #465: the website's contact links. See migration 2026_12_06_0001_contact_links.sql.
+CREATE TABLE contact_links (
+    id UUID PRIMARY KEY,
+    kind VARCHAR(16) NOT NULL,
+    value VARCHAR(2000) NOT NULL,
+    label VARCHAR(60),
+    position INT4 NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    version INT4 DEFAULT 1 NOT NULL,
+    CONSTRAINT contact_links_kind_check CHECK (
+        kind IN ('telegram', 'zalo', 'whatsapp', 'instagram', 'facebook', 'phone', 'email', 'url')
+    ),
+    CONSTRAINT contact_links_position_check CHECK (position >= 0),
+    CONSTRAINT contact_links_position_unique UNIQUE (position) DEFERRABLE INITIALLY DEFERRED,
+    CONSTRAINT contact_links_version_check CHECK (version >= 1)
+);

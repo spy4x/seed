@@ -423,6 +423,7 @@ const TIERS: readonly Tier[] = [
           `Pricing read from the app's plan catalog`,
           `A newsletter with double opt-in and one-click unsubscribe`,
           `A blog written in the admin panel, with topics, an RSS feed and article structured data`,
+          `Contact links set in the admin panel, shown in the footer and the structured data`,
           `sitemap.xml, robots.txt, canonical links and Open Graph images`,
           `Optional cookieless analytics in your own Umami, with an event on every call to action`,
         ],
