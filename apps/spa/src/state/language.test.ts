@@ -6,7 +6,12 @@ import { syncLanguage } from "./language.ts"
 
 /** A preferences slice, a device copy and a page switch, all recorded. */
 function setup(
-  { kept = null, requested = [] as string[] }: { kept?: string | null; requested?: string[] } = {},
+  { kept = null, requested = [] as string[], blocked = false }: {
+    kept?: string | null
+    requested?: string[]
+    /** The device's storage is blocked: it keeps nothing written. */
+    blocked?: boolean
+  } = {},
 ) {
   const loaded = signal(false)
   const value = signal<Preferences>(DEFAULT_PREFERENCES)
@@ -29,7 +34,12 @@ function setup(
       shown.push(language)
       return Promise.resolve(true)
     },
-    kept: { read: () => device.value, write: (language) => device.value = language },
+    kept: {
+      read: () => device.value,
+      write: (language) => {
+        if (!blocked) device.value = language
+      },
+    },
     requested: () => requested,
     numberLocale: signal(`en-GB`),
     setNumberLocale: () => {},
@@ -54,6 +64,11 @@ describe(`syncLanguage`, () => {
     signIn({ language: `de` })
     expect(shown.at(-1)).toBe(`de`)
     expect(device.value).toBe(`de`)
+
+    // A device whose storage is blocked still shows the stored language.
+    const blocked = setup({ kept: `ru`, blocked: true })
+    blocked.signIn({ language: `de` })
+    expect(blocked.shown.at(-1)).toBe(`de`)
   })
 
   it(`follows the browser when the stored language is automatic, and forgets the device's copy`, () => {
