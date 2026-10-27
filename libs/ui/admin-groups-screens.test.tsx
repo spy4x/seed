@@ -636,7 +636,11 @@ describe(`one group in the admin app`, () => {
     )
     const gone = { ...last, files: [], total: 0, usage: { ...last.usage, files: 0 } }
     await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: gone })} />)
-    expect(document.activeElement?.textContent).toContain(`No files yet.`)
+    const focused = document.activeElement
+    expect(focused?.getAttribute(`tabindex`)).toBe(`-1`)
+    expect(focused?.querySelector(`[data-e2e=admin-group-files]`)?.textContent).toContain(
+      `No files yet.`,
+    )
   })
 
   it(`keeps the search while the files load, and offers a retry when they fail`, async () => {
