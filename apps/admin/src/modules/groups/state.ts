@@ -106,12 +106,14 @@ function actionDone(action: AdminGroupAction, detail: AdminGroupDetail | null): 
 }
 
 /**
- * The groups module's state: the list, the open group and the action dialog. Every call goes
- * through the app's `request`, which signs the app out on a 401, so this state never handles one.
+ * The groups module's state: the list, the open group and the action dialog. Every JSON call goes
+ * through the app's `request`, which signs the app out on a 401. A download reads bytes, not JSON,
+ * so it calls `fetch` itself and calls `signedOut` on a 401 the same way.
  */
 export function createGroupsState(
   request: AdminFetch,
   toasts: ToastStore,
+  signedOut: () => void,
   ports: GroupsFilePorts = browserFiles,
 ) {
   const list = signal<GroupsListState>({ filter: null, list: null, pending: false, error: null })
@@ -191,6 +193,7 @@ export function createGroupsState(
           await ports.save(response, file.name)
           return
         }
+        if (response.status === 401) return signedOut()
         notice = response.status === 404
           ? FILE_GONE
           : readApiError(await response.json().catch(() => null))?.message ?? ADMIN_FAILURE

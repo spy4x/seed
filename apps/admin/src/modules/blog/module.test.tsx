@@ -110,6 +110,7 @@ async function openEditor() {
   const navigate = guardNavigate(leaveGuard, memory.navigate)
   const context: AdminContext = {
     request,
+    signedOut: () => {},
     toasts: createToastStore(),
     operator: { id: 7 } as User,
     navigate,

@@ -26,6 +26,11 @@ const detail = {
 } as AdminGroupDetail
 const after = { ...detail, members: [] } as AdminGroupDetail
 
+/** The sign-out of a test that expects none: it fails the test. */
+const stayed = () => {
+  throw new Error(`signed out`)
+}
+
 const ok = <T>(data: T, status = 200) => ({ ok: true, status, data }) as AdminApiResult<T>
 const fail = <T>(status: number, message: string) =>
   ({ ok: false, status, error: { message } }) as AdminApiResult<T>
@@ -50,7 +55,7 @@ function fakeRequest(answer: Answer = () => undefined) {
 
 it(`reads the group list with the search, status and sort in the query`, async () => {
   const { request, calls } = fakeRequest()
-  const state = createGroupsState(request, createToastStore())
+  const state = createGroupsState(request, createToastStore(), stayed)
   await state.loadList({
     ...ADMIN_GROUP_NO_FILTER,
     query: `ada`,
@@ -68,7 +73,7 @@ it(`drops a group list answer for a filter the page has left`, async () => {
       ? new Promise((resolve) => answerFirst = resolve)
       : Promise.resolve(ok({ groups: [], total: 3, page: 1, pageSize: 25 }))
   )
-  const state = createGroupsState(request, createToastStore())
+  const state = createGroupsState(request, createToastStore(), stayed)
   const late = state.loadList(first)
   await state.loadList(ADMIN_GROUP_NO_FILTER)
   answerFirst(ok({ groups: [], total: 99, page: 1, pageSize: 25 }))
@@ -79,7 +84,7 @@ it(`drops a group list answer for a filter the page has left`, async () => {
 it(`sends each confirmed action to its path, toasts, and shows the group the API answered`, async () => {
   const { request, calls } = fakeRequest()
   const toasts = createToastStore()
-  const state = createGroupsState(request, toasts)
+  const state = createGroupsState(request, toasts, stayed)
   await state.loadGroup(GROUP_ID)
 
   state.openDialog({ kind: `remove`, userId: 43 })
@@ -111,7 +116,7 @@ it(`keeps the dialog open with the API's message and no toast when it refuses`, 
     init?.method === `POST` ? Promise.resolve(fail(409, message)) : undefined
   )
   const toasts = createToastStore()
-  const state = createGroupsState(request, toasts)
+  const state = createGroupsState(request, toasts, stayed)
   await state.loadGroup(GROUP_ID)
   state.openDialog({ kind: `remove`, userId: 43 })
   await state.act({ kind: `remove`, userId: 43 })
@@ -129,7 +134,7 @@ it(`sends nothing more on a second confirm while the action is on its way`, asyn
   const { request, calls } = fakeRequest((_path, init) =>
     init?.method === `POST` ? new Promise((resolve) => answer = resolve) : undefined
   )
-  const state = createGroupsState(request, createToastStore())
+  const state = createGroupsState(request, createToastStore(), stayed)
   await state.loadGroup(GROUP_ID)
   state.openDialog({ kind: `remove`, userId: 43 })
   const first = state.act({ kind: `remove`, userId: 43 })
@@ -153,7 +158,7 @@ it(`reads a page of files with its search, and drops an answer for a search the 
       ? Promise.resolve(ok(page))
       : undefined
   )
-  const state = createGroupsState(request, createToastStore())
+  const state = createGroupsState(request, createToastStore(), stayed)
   const stale = state.loadFiles(GROUP_ID, { query: `old`, page: 1 })
   const filter = { query: `rec`, page: 2 }
   await state.loadFiles(GROUP_ID, filter)
@@ -182,7 +187,7 @@ it(`removes a file, answers the same page of files as the dialog closes, then re
     return undefined
   })
   const toasts = createToastStore()
-  const state = createGroupsState(request, toasts)
+  const state = createGroupsState(request, toasts, stayed)
   await state.loadGroup(GROUP_ID)
   await state.loadFiles(GROUP_ID, { query: `rec`, page: 1 })
 
@@ -206,7 +211,7 @@ it(`keeps the files' own message when they fail to load`, async () => {
   const { request } = fakeRequest((path) =>
     path.includes(`/files`) ? Promise.resolve(fail(500, `The files did not load`)) : undefined
   )
-  const state = createGroupsState(request, createToastStore())
+  const state = createGroupsState(request, createToastStore(), stayed)
   await state.loadGroup(GROUP_ID)
   await state.loadFiles(GROUP_ID, { query: ``, page: 1 })
   expect(state.group.value.detail).toBe(detail)
@@ -230,7 +235,7 @@ function filePorts(response: () => Response) {
 
 it(`saves a downloaded file under its own name through the admin API`, async () => {
   const { ports, fetched, saved } = filePorts(() => new Response(`%PDF`))
-  const state = createGroupsState(fakeRequest().request, createToastStore(), ports)
+  const state = createGroupsState(fakeRequest().request, createToastStore(), stayed, ports)
   await state.downloadFile(GROUP_ID, file)
   expect(fetched).toEqual([`/api/admin/groups/${GROUP_ID}/files/${FILE_ID}/download same-origin`])
   expect(saved).toEqual([`receipt.pdf`])
@@ -244,7 +249,7 @@ it(`says a file is gone and reads the list again when its download answers 404`,
       ? Promise.resolve(ok({ files: [], total: 0, page: 1, pageSize: 25, query: ``, usage }))
       : undefined
   )
-  const state = createGroupsState(request, createToastStore(), ports)
+  const state = createGroupsState(request, createToastStore(), stayed, ports)
   await state.loadFiles(GROUP_ID, { query: ``, page: 1 })
   await state.downloadFile(GROUP_ID, file)
   expect(saved).toEqual([])
@@ -259,7 +264,7 @@ it(`shows the API's reason, or a plain failure offline, when a download fails`, 
   const refused = filePorts(() =>
     Response.json({ error: { code: `forbidden`, message: `Not from here` } }, { status: 403 })
   )
-  const state = createGroupsState(fakeRequest().request, createToastStore(), refused.ports)
+  const state = createGroupsState(fakeRequest().request, createToastStore(), stayed, refused.ports)
   await state.loadFiles(GROUP_ID, { query: ``, page: 1 })
   await state.downloadFile(GROUP_ID, file)
   expect(state.files.value.notice).toBe(`Not from here`)
@@ -267,8 +272,21 @@ it(`shows the API's reason, or a plain failure offline, when a download fails`, 
   const offline = filePorts(() => {
     throw new TypeError(`Failed to fetch`)
   })
-  const again = createGroupsState(fakeRequest().request, createToastStore(), offline.ports)
+  const again = createGroupsState(fakeRequest().request, createToastStore(), stayed, offline.ports)
   await again.loadFiles(GROUP_ID, { query: ``, page: 1 })
   await again.downloadFile(GROUP_ID, file)
   expect(again.files.value.notice).toBe(ADMIN_FAILURE)
+})
+
+it(`signs the app out when a download answers 401, as every other call does`, async () => {
+  const { ports, saved } = filePorts(() => Response.json({}, { status: 401 }))
+  let signOuts = 0
+  const state = createGroupsState(fakeRequest().request, createToastStore(), () => {
+    signOuts++
+  }, ports)
+  await state.loadFiles(GROUP_ID, { query: ``, page: 1 })
+  await state.downloadFile(GROUP_ID, file)
+  expect(signOuts).toBe(1)
+  expect(saved).toEqual([])
+  expect(state.files.value.notice).toBe(null)
 })

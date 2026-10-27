@@ -91,6 +91,7 @@ export function App(
     () =>
       user && {
         request: store.request,
+        signedOut: () => store.signedOut(),
         toasts,
         operator: user,
         navigate: leave,

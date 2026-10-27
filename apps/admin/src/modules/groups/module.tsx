@@ -39,7 +39,7 @@ function overviewState(context: AdminContext) {
 function groupsState(context: AdminContext): GroupsState {
   let state = states.get(context)
   if (!state) {
-    state = createGroupsState(context.request, context.toasts)
+    state = createGroupsState(context.request, context.toasts, context.signedOut)
     states.set(context, state)
   }
   return state
