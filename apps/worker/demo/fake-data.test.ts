@@ -25,6 +25,24 @@ Deno.test("fake demo data is the same for the same seed and moment, and differs 
   expect(fakeDemoData(42, NOW)).not.toEqual(fakeDemoData(43, NOW))
 })
 
+Deno.test("no fake time lies after now, on any day of the week", () => {
+  /** Every `…Ago` or `ago` number in `value` below 0 minutes, by its path. */
+  const future = (value: unknown, path = ``): string[] =>
+    Array.isArray(value)
+      ? value.flatMap((item, i) => future(item, `${path}[${i}]`))
+      : value && typeof value === `object`
+      ? Object.entries(value).flatMap(([key, item]) =>
+        /ago$/i.test(key) && typeof item === `number`
+          ? item < 0 ? [`${path}.${key}`] : []
+          : future(item, `${path}.${key}`)
+      )
+      : []
+  for (let day = 0; day < 7; day++) {
+    const now = new Date(NOW.getTime() + day * 24 * 60 * 60_000)
+    for (const seed of [7, 42]) expect(future(fakeDemoData(seed, now))).toEqual([])
+  }
+})
+
 Deno.test("the fake people's names and addresses depend on the seed alone", () => {
   const later = new Date(NOW.getTime() + 9 * 60 * 60_000)
   for (const now of [NOW, later]) {
