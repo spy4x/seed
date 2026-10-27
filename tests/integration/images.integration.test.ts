@@ -87,7 +87,7 @@ async function variantsOf(sql: postgres.Sql, id: string) {
   `
 }
 
-Deno.test("a new picture is queued, and the job stores its variants and deletes the original last", async () => {
+Deno.test("a new picture is queued, and the job stores its variants and deletes the original", async () => {
   await withSchema(async (sql) => {
     const { files, stored } = memoryFiles()
     const { scratch, written } = memoryScratch()
@@ -113,6 +113,22 @@ Deno.test("a new picture is queued, and the job stores its variants and deletes 
       { objectKey: `pictures/${id}/960.webp`, contentType: `image/webp`, width: 960 },
     ])
     expect(written.size).toBe(0)
+  })
+})
+
+Deno.test("a store that fails while the variants are stored keeps the original for the retry", async () => {
+  await withSchema(async (sql) => {
+    const { files, stored } = memoryFiles()
+    const { scratch, written } = memoryScratch()
+    const { id, event } = await personWithPicture(sql, stored)
+    const failing = { ...files, put: () => Promise.reject(new Error(`store down`)) }
+
+    await expect(
+      imageProcessJob({ sql, files: failing, scratch, process: fakeProcess(written) })(event),
+    ).rejects.toThrow(`store down`)
+
+    expect([...stored.keys()]).toEqual([`pictures/${id}`])
+    expect(await variantsOf(sql, id)).toEqual([])
   })
 })
 
