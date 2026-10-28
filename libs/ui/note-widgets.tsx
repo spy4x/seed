@@ -16,6 +16,11 @@ export interface WidgetDrawContext {
   endsToday: boolean
   /** Dates and numbers in the person's settings. */
   format: Formatters
+  /**
+   * Calendar days in UTC with the month names in the person's language, as the overview's range
+   * line writes them. Left out, the region format's, in UTC.
+   */
+  days?: Formatters
 }
 
 /** A widget drawn from its data: what its card shows when the data has arrived. */
@@ -77,10 +82,15 @@ export function previousPeriodName(t: Translator<string>, days: number): string 
   return t.t(`NoteWidgets.previousPeriod`, { count: days })
 }
 
-/** A calendar day (`YYYY-MM-DD`) as the person's region writes it, without moving it by zone. */
-function day(format: Formatters, iso: string, withYear = false): string {
+/** A calendar day (`YYYY-MM-DD`) as the context writes days, without moving it by zone. */
+function day(
+  { format, days }: WidgetDrawContext,
+  iso: string,
+  withYear = false,
+): string {
   const at = `${iso}T00:00:00Z`
-  return withYear ? format.utc().date(at) : format.utc().dayMonth(at)
+  const utc = days ?? format.utc()
+  return withYear ? utc.date(at) : utc.dayMonth(at)
 }
 
 /** The comparison line of a number widget, or nothing when the group is too young for one. */
@@ -113,7 +123,7 @@ const total: WidgetView = {
           {(t) =>
             endsToday
               ? t.t(`NoteWidgets.totalNow`)
-              : t.t(`NoteWidgets.totalOn`, { date: day(format, periods.current.to, true) })}
+              : t.t(`NoteWidgets.totalOn`, { date: day(context, periods.current.to, true) })}
         </Words>
       ),
       content: (
@@ -170,7 +180,8 @@ function seriesSummary(t: Translator<string>, format: Formatters, current: numbe
 const series: WidgetView = {
   loadingKey: `NoteWidgets.seriesLoading`,
   errorKey: `NoteWidgets.seriesError`,
-  draw(data, { periods, format }) {
+  draw(data, context) {
+    const { periods, format } = context
     const result = data as SeriesWidgetResult
     const values = [...result.current, ...(result.previous ?? [])]
     if (values.every((value) => value === 0)) {
@@ -203,7 +214,8 @@ const series: WidgetView = {
               height={220}
               yDomain={[0, axis.max]}
               yTicks={axis.steps}
-              xFormat={(x) => day(format, typeof x === "string" ? x : x.toISOString().slice(0, 10))}
+              xFormat={(x) =>
+                day(context, typeof x === "string" ? x : x.toISOString().slice(0, 10))}
               yFormat={(value) => format.number(value)}
               ariaLabel={t.t(`NoteWidgets.seriesLabel`, {
                 summary: seriesSummary(t, format, result.current),

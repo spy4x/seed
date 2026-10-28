@@ -439,7 +439,7 @@ function OverviewWidgetCard(
 ): JSX.Element {
   const { load } = widget
   const drawing = load.status === "ready"
-    ? view.draw(load.data, { periods, endsToday, format })
+    ? view.draw(load.data, { periods, endsToday, format, days: inLanguage(format, t.language) })
     : null
   const savedAt = load.status === "ready" ? load.savedAt : null
   return (

@@ -541,7 +541,7 @@ describe("the group overview in another language", () => {
 })
 
 describe("the overview's range in the person's language", () => {
-  it("names the months in the chosen language, not in the region format's", async () => {
+  it("names the months in the chosen language, not in the region format's, in the line and the chart", async () => {
     const russian = createTranslator({
       language: "ru",
       catalogs: [{ source: app, translation: appRu }],
@@ -562,5 +562,8 @@ describe("the overview's range in the person's language", () => {
     expect(period).toMatch(
       /^\u2068?22 сент\. – 21 окт\.\u2069?, в сравнении с предыдущими 30 днями$/,
     )
+    const axis = text(card(series))
+    expect(axis).toContain("окт.")
+    expect(axis).not.toMatch(/Sept|Oct\b/)
   })
 })
