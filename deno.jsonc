@@ -185,7 +185,7 @@
     // a session, billing, the provider's name and picture, the healthcheck's HTTP mode, a key
     // giving up its address, safe Markdown and reading time, copying an object inside the S3
     // store, an error's reason and per-field codes, contact channels, HEIC by its bytes, image
-    // processing).
+    // processing, translator-aware formats).
     // hono, postgres and arktype below must stay on the exact versions these packages were
     // published with, or two copies load and their types stop matching.
     "@spy4x/validation": "jsr:@spy4x/validation@1.95.0",
