@@ -891,6 +891,8 @@ OnboardingCard.goToHighlighted	dd4e9b3b30b69a80
 OnboardingCard.inviteAction	9b7639e8de286c00
 OnboardingCard.inviteText	d291a9914d041c9c
 OnboardingCard.inviteTitle	0a46f5a639ca5571
+OnboardingCard.keep	125f55ebeeef85ad
+OnboardingCard.keepText	83776173b40175a0
 OnboardingCard.noteAction	ab0f84062e482605
 OnboardingCard.noteText	753b3dfa2d2b0de6
 OnboardingCard.noteTitle	4f183ab485c8df34
@@ -1393,6 +1395,7 @@ Tags.new	609117d5b0f93302
 Tags.readOnly	f3c87141a97236f4
 Tags.showNotes	d2f9111aac4cef34
 Tags.title	1331275bc537b4c2
+TelegramNotification.open	ed077f3d8125d60d
 UndoToast.deleted	d08f120c2763525c
 UndoToast.deletedUntitled	749d488eaedd15b3
 UndoToast.keyHint	316e656da381105d

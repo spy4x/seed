@@ -252,12 +252,6 @@ export type SignInMethodProof = typeof signInMethodProofSchema.infer
 export const ACCOUNT_DELETION_GRACE_DAYS = 7
 
 /**
- * The author shown for what a deleted account left in a shared group. Its rows keep the content and
- * hold `null` where the author's id was.
- */
-export const DELETED_USER_NAME = "Deleted user"
-
-/**
  * The body of "turn two-factor off": the account's password, or a current authenticator code. A
  * session alone is not enough, since one left open on a shared machine could remove the second
  * factor. An account with no password sends the code.

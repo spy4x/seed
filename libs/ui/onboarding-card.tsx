@@ -8,7 +8,7 @@ import { Tour, type TourStep } from "@spy4x/preact-ui/tour"
 import type { OnboardingSteps } from "@domain/identity"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "./i18n.ts"
-import { GUEST_PATHS, KEEP_LABEL, KEEP_STEP } from "./guest-screens.tsx"
+import { GUEST_PATHS } from "./guest-screens.tsx"
 import {
   GROUP_PATHS,
   type Navigate,
@@ -89,10 +89,10 @@ export function onboardingSteps(
   if (!guest) return all
   const keep: OnboardingStep = {
     id: "keep",
-    title: KEEP_STEP.title,
-    description: KEEP_STEP.text,
+    title: t.t(`OnboardingCard.keep`),
+    description: t.t(`OnboardingCard.keepText`),
     done: false,
-    action: { label: KEEP_LABEL, href: GUEST_PATHS.keep, navigate },
+    action: { label: t.t(`OnboardingCard.keep`), href: GUEST_PATHS.keep, navigate },
   }
   return [keep, ...all.filter((step) => step.id === "note")]
 }

@@ -563,6 +563,8 @@
   "OnboardingCard.tourOffer": "Neu hier? Eine kurze Tour zeigt dir alles.",
   "OnboardingCard.tourStart": "Tour starten",
   "OnboardingCard.tourSkip": "Tour überspringen",
+  "OnboardingCard.keep": "Konto behalten",
+  "OnboardingCard.keepText": "Füge eine Anmeldemethode hinzu, dann kannst du dieses Konto auf jedem Gerät öffnen.",
   "OverviewScreen.last7Days": "Letzte 7 Tage",
   "OverviewScreen.last30Days": "Letzte 30 Tage",
   "OverviewScreen.last90Days": "Letzte 90 Tage",
@@ -1464,6 +1466,7 @@
     "one": "„{name}“ wurde gelöscht und von {count} Notiz entfernt.",
     "other": "„{name}“ wurde gelöscht und von {count} Notizen entfernt."
   },
+  "TelegramNotification.open": "Öffnen",
   "UndoToast.title": "Notiz gelöscht",
   "UndoToast.deleted": "„{title}“ wurde gelöscht.",
   "UndoToast.deletedUntitled": "Die Notiz wurde gelöscht.",

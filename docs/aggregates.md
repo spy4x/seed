@@ -488,10 +488,9 @@ A change that a person should hear about, and did not make themselves, writes a 
    transaction of the change, after the change, so the row exists exactly when the change does.
    The group writers call a helper from `group-notifications.ts` after their `audit()` line.
 2. **A kind, a payload, a link.** Add the kind to `NotificationKind` in
-   `libs/domain/notifications`. Its sentence on screen goes in `notificationSentence`
-   (`libs/ui/notifications-screen.tsx`), with its key in all six `i18n/app/*.json`; a kind
-   missing there shows a generic line. Add it to `describeNotification` too, which writes the
-   Telegram message. The payload holds only the facts the sentence needs, never a note body or an
+   `libs/domain/notifications`. Its sentence goes in `notificationMessage` there, with its key in
+   all six `i18n/app/*.json`; a kind missing there shows a generic line. The inbox and the
+   Telegram message both say that sentence, in the person's language. The payload holds only the facts the sentence needs, never a note body or an
    address. The link is an in-app path; the database and
    `createNotification` both refuse anything else.
 3. **Nothing else.** The row announces itself: `createNotification` sends the Postgres

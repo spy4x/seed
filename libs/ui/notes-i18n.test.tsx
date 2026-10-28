@@ -110,9 +110,6 @@ function readable(): string[] {
 
 /** The data these screens show as it is: titles, names, files, sizes and key names. */
 const DATA = [
-  // Another lane's English, until it moves to the catalog (#275): the account screens'
-  // `PICTURE_RULE`, which the palette's "Change picture" action shows.
-  `JPEG, PNG, WebP or HEIC, up to 10 MB`,
   // The exact time a screen reader hears after "Updated by …, 26 days ago".
   FORMAT.exact(`2026-10-01T10:00:00.000Z`),
   `Groceries`,
@@ -349,7 +346,18 @@ describe(`the notes, tags, search and shortcuts screens in en-XA`, () => {
     })
     await settle()
     expect(english()).toEqual([])
-    expectReached([`Search.notesOnDevice`, `Search.actions`])
+    expectReached([`Search.notesOnDevice`, `Search.actions`, [`ProfilePicture.rule`, {
+      max: `10 MB`,
+    }]])
+    // A query lists the groups too, each with the person's role in it.
+    const field = document.querySelector<HTMLInputElement>(`[data-e2e=search] input`)!
+    field.value = team.name
+    await act(() => {
+      field.dispatchEvent(new window.Event(`input`, { bubbles: true }) as unknown as Event)
+    })
+    await settle()
+    expect(english()).toEqual([])
+    expectReached([`Search.groups`, `Groups.roleOwner`])
   })
   it(`draw the overview's note widgets with no English outside the catalogs`, async () => {
     const periods = overviewPeriods({ from: `2026-10-19`, to: `2026-10-21` })!

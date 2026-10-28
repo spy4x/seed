@@ -6,7 +6,7 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { followLinkClick } from "@spy4x/preact-ui/link"
-import { type Notification, NotificationKind } from "@domain/notifications"
+import { type Notification, notificationMessage } from "@domain/notifications"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import type { Navigate } from "./progressive.tsx"
 import type { Formatters } from "@spy4x/time/format"
@@ -53,30 +53,6 @@ export const NOTIFICATION_MESSAGES = {
 
 const MESSAGE_KEYS: readonly string[] = Object.values(NOTIFICATION_MESSAGES)
 
-/** The sentence of an invitation and of a role change, by the role word the payload names. */
-const ROLE_SENTENCES: Record<string, { invited: string; role: string }> = {
-  viewer: { invited: `NotificationsScreen.invitedViewer`, role: `NotificationsScreen.roleViewer` },
-  editor: { invited: `NotificationsScreen.invitedEditor`, role: `NotificationsScreen.roleEditor` },
-  admin: { invited: `NotificationsScreen.invitedAdmin`, role: `NotificationsScreen.roleAdmin` },
-  owner: { invited: `NotificationsScreen.invitedOwner`, role: `NotificationsScreen.roleOwner` },
-  member: { invited: `NotificationsScreen.invitedMember`, role: `NotificationsScreen.roleMember` },
-}
-
-/**
- * A guest reminder's sentence, by the English title the server stored in its payload (#224): the
- * payload names no reminder kind, so its fixed title picks the translation.
- */
-const GUEST_REMINDER_KEYS: Record<string, string> = {
-  "Keep the note you just wrote": `NotificationsScreen.reminderFirstNote`,
-  "Open this account on your other devices": `NotificationsScreen.reminderThirdVisit`,
-  "Add a sign-in method to invite people": `NotificationsScreen.reminderInvite`,
-}
-
-/** A payload field as text, or `fallback` when it is missing or blank. */
-function field(value: unknown, fallback: string): string {
-  return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback
-}
-
 /**
  * One notification in the person's language: `You were invited to join «Family» as an editor.` The
  * group's name is the person's data, isolated and never translated. A kind this code does not know
@@ -87,37 +63,18 @@ export function notificationSentence(
   format: Formatters,
   { kind, payload }: Pick<Notification, "kind" | "payload">,
 ): ComponentChildren {
-  const withGroup = (key: string) => (
-    <Rich
-      parts={t.parts(key, {
-        group: field(payload.groupName, t.t(`NotificationsScreen.someGroup`)),
-      })}
-      tags={{ group: (text) => <bdi translate={false}>{text}</bdi> }}
-    />
-  )
-  const role = (word: unknown) => ROLE_SENTENCES[field(word, `member`)]
-  switch (kind) {
-    case NotificationKind.InvitationReceived:
-      return withGroup(role(payload.role)?.invited ?? `NotificationsScreen.invited`)
-    case NotificationKind.RoleChanged:
-      return withGroup(role(payload.to)?.role ?? `NotificationsScreen.roleChanged`)
-    case NotificationKind.RemovedFromGroup:
-      return withGroup(`NotificationsScreen.removed`)
-    case NotificationKind.OwnershipReceived:
-      return withGroup(`NotificationsScreen.owned`)
-    case NotificationKind.GuestReminder:
-      return t.t(
-        GUEST_REMINDER_KEYS[field(payload.title, ``)] ?? `NotificationsScreen.reminderKeep`,
-      )
-    case NotificationKind.DataExportReady: {
-      const until = new Date(field(payload.expiresAt, ``))
-      return Number.isNaN(until.getTime())
-        ? t.t(`NotificationsScreen.exportReady`)
-        : t.t(`NotificationsScreen.exportReadyUntil`, { date: format.utc().date(until) })
-    }
-    default:
-      return t.t(`NotificationsScreen.unknown`)
+  const message = notificationMessage({ kind, payload })
+  if (message.group !== undefined) {
+    return (
+      <Rich
+        parts={t.parts(message.key, {
+          group: message.group ?? t.t(`NotificationsScreen.someGroup`),
+        })}
+        tags={{ group: (text) => <bdi translate={false}>{text}</bdi> }}
+      />
+    )
   }
+  return t.t(message.key, message.until && { date: format.utc().date(message.until) })
 }
 
 /**

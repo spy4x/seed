@@ -29,12 +29,6 @@ export const GUEST_PATHS = {
   keepTaken: "/keep/taken",
 } as const
 
-/**
- * The one name of the action, in English, for the onboarding card's step (another #275 lane moves
- * that card into the catalog). This file's screens show `GuestScreens.keep`, the same words.
- */
-export const KEEP_LABEL = "Keep your account"
-
 /** What `/try` shows while and after it starts a guest account. */
 export type TryState =
   | { kind: "working" }
@@ -752,15 +746,6 @@ function OptionLabel(
     </span>
   )
 }
-
-/**
- * What the inbox and the first-steps card say for a guest (#224), with the action's words, in
- * English for the onboarding card's lane of #275 to move into the catalog.
- */
-export const KEEP_STEP = {
-  title: KEEP_LABEL,
-  text: "Add a sign-in method so you can open this account on any device.",
-} as const
 
 /**
  * Asked before a guest signs out (#224): a guest account has no sign-in method, so signing out
