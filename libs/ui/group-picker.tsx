@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { IconCheck, IconChevronDown, IconList, IconPlus } from "@spy4x/preact-icons"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
@@ -6,7 +5,9 @@ import { Link } from "@spy4x/preact-ui/link"
 import { RailCell, railFocusRing } from "@spy4x/preact-system/rail"
 import type { GroupColor, GroupRole } from "@domain/groups"
 import { GroupMark } from "./group-appearance.tsx"
-import { NEW_GROUP_PATH, ROLE_TEXT } from "./groups-screen.tsx"
+import { NEW_GROUP_PATH, roleName } from "./groups-screen.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS } from "./progressive.tsx"
 
 /** One group of the switcher: its name, and the person's role in it. */
@@ -47,13 +48,15 @@ function SwitcherMark({ group }: { group: PickerGroup }): JSX.Element {
 }
 
 /** The switcher's accessible name: `Group: Home`, or the visible `Choose a group` without one. */
-export function switcherLabel(selected: PickerGroup | null): string {
-  return selected ? `Group: ${selected.name}` : "Choose a group"
+export function switcherLabel(t: Translator<string>, selected: PickerGroup | null): string {
+  return selected ? t.t(`GroupPicker.label`, { name: selected.name }) : t.t(`GroupPicker.choose`)
 }
 
 /** The switcher's tooltip: the group's name and the person's role there, `Home · Owner`. */
-export function switcherTip(selected: PickerGroup | null): string {
-  return selected ? `${selected.name} · ${ROLE_TEXT[selected.role]}` : "Choose a group"
+export function switcherTip(t: Translator<string>, selected: PickerGroup | null): string {
+  return selected
+    ? t.t(`GroupPicker.tip`, { name: selected.name, role: roleName(t, selected.role) })
+    : t.t(`GroupPicker.choose`)
 }
 
 /**
@@ -68,11 +71,12 @@ export function switcherTip(selected: PickerGroup | null): string {
 export function GroupPicker(
   { groups, selectedId, onSelect, navigate }: GroupPickerData & { navigate?: Navigate },
 ): JSX.Element {
+  const t = useAppText()
   const selected = groups.find((group) => group.id === selectedId) ?? null
   const tile =
     "flex size-10 items-center justify-center rounded-[var(--radius-primary,0.5rem)] border border-subtle bg-canvas text-sm font-semibold text-muted"
   return (
-    <RailCell tip={switcherTip(selected)}>
+    <RailCell tip={switcherTip(t, selected)}>
       <Dropdown
         trigger={
           <span class={tile} aria-hidden="true">
@@ -83,14 +87,14 @@ export function GroupPicker(
               : <IconChevronDown class="size-5" />}
           </span>
         }
-        triggerLabel={switcherLabel(selected)}
+        triggerLabel={switcherLabel(t, selected)}
         triggerDataE2E="group-picker"
         triggerClasses={`flex size-12 cursor-pointer items-center justify-center rounded-[var(--radius-primary,0.5rem)] hover:bg-canvas ${railFocusRing}`}
         containerClasses="relative flex text-left"
         panelClasses="z-30 w-60 max-w-[calc(100vw-5rem)] left-[calc(100%+1.25rem)] top-0 mt-0"
         horizontal="left"
         vertical="down"
-        menuLabel="Switch group"
+        menuLabel={t.t(`GroupPicker.menu`)}
       >
         {groups.map((group) => (
           <DropdownItem
@@ -100,18 +104,18 @@ export function GroupPicker(
             dataE2E={`group-picker-${group.id}`}
           >
             <SwitcherMark group={group} />
-            <span class="min-w-0 flex-1 truncate">{group.name}</span>
+            <span class="min-w-0 flex-1 truncate" translate={false}>{group.name}</span>
             {/* A space, so a screen reader says "Home Owner", not "HomeOwner"; flex drops it. */}
             {" "}
-            <span class="shrink-0 text-xs text-muted">{ROLE_TEXT[group.role]}</span>
+            <span class="shrink-0 text-xs text-muted">{roleName(t, group.role)}</span>
           </DropdownItem>
         ))}
         {groups.length > 0 && <div role="separator" class="my-1 border-t border-subtle" />}
         <DropdownItem href={SCREEN_PATHS.groups} navigate={navigate} dataE2E="group-picker-all">
-          All groups
+          {t.t(`GroupPicker.all`)}
         </DropdownItem>
         <DropdownItem href={NEW_GROUP_PATH} navigate={navigate} dataE2E="group-picker-new">
-          New group
+          {t.t(`GroupPicker.new`)}
         </DropdownItem>
       </Dropdown>
     </RailCell>
@@ -132,9 +136,12 @@ const sheetLink = `${sheetRow} ${railFocusRing} font-medium text-muted hover:tex
 export function GroupSheet(
   { groups, selectedId, onSelect, navigate }: GroupPickerData & { navigate?: Navigate },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <div class="flex flex-col gap-1" role="group" aria-labelledby="group-sheet-heading">
-      <h3 id="group-sheet-heading" class="px-3 pt-1 text-xs font-medium text-muted">Group</h3>
+      <h3 id="group-sheet-heading" class="px-3 pt-1 text-xs font-medium text-muted">
+        {t.t(`GroupPicker.sheetHeading`)}
+      </h3>
       <ul class="flex flex-col gap-1">
         {groups.map((group) => {
           const current = group.id === selectedId
@@ -154,8 +161,10 @@ export function GroupSheet(
                   {current && <IconCheck class="size-4 text-accent" />}
                 </span>
                 <SwitcherMark group={group} />
-                <span class="min-w-0 flex-1 truncate font-medium">{group.name}</span>{" "}
-                <span class="shrink-0 text-xs text-muted">{ROLE_TEXT[group.role]}</span>
+                <span class="min-w-0 flex-1 truncate font-medium" translate={false}>
+                  {group.name}
+                </span>{" "}
+                <span class="shrink-0 text-xs text-muted">{roleName(t, group.role)}</span>
               </button>
             </li>
           )
@@ -170,7 +179,7 @@ export function GroupSheet(
             data-e2e="group-sheet-all"
           >
             <IconList class="size-6 shrink-0" aria-hidden="true" />
-            All groups
+            {t.t(`GroupPicker.all`)}
           </Link>
         </li>
         <li>
@@ -181,7 +190,7 @@ export function GroupSheet(
             data-e2e="group-sheet-new"
           >
             <IconPlus class="size-6 shrink-0" aria-hidden="true" />
-            New group
+            {t.t(`GroupPicker.new`)}
           </Link>
         </li>
       </ul>

@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX, RefObject } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -12,6 +11,8 @@ import type { PlanRefusal } from "@domain/billing"
 import type { GroupFilePart, GroupImportProblem, GroupImportSummary } from "@domain/groups"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { FORM_WIDTH } from "./tag-editor-screen.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAppText } from "./i18n.ts"
 
 /** Where the import page stands: nothing chosen, a file being checked, checked, or refused. */
 export type GroupImportState =
@@ -53,30 +54,47 @@ export interface GroupImportScreenProps {
   navigate?: Navigate
 }
 
-const BACK = { href: SCREEN_PATHS.groups, label: "Back to groups" }
 const FILE_INPUT_ID = "group-import-file"
 
-/** `124 notes`, `1 tag`. */
-function counted(part: GroupFilePart): string {
+/** `124 notes`, `1 tag`: a kind this app names in the person's language, else the file's own words. */
+function counted(t: Translator<string>, part: GroupFilePart): string {
+  if (part.kind === `notes`) return t.t(`GroupImport.notes`, { count: part.count })
+  if (part.kind === `tags`) return t.t(`GroupImport.tags`, { count: part.count })
   return `${part.count} ${part.count === 1 ? part.one : part.other}`
 }
 
-/** `124 notes, 9 tags` and `124 notes and 9 tags`: the parts of a file, as a sentence says them. */
-export function fileContents(parts: readonly GroupFilePart[], last: ", " | " and "): string {
-  const words = parts.map(counted)
-  if (words.length < 2) return words.join("")
-  return `${words.slice(0, -1).join(", ")}${last}${words[words.length - 1]}`
+/**
+ * `124 notes, 9 tags, settings` and `124 notes and 9 tags`: the parts of a file as a sentence says
+ * them, in the person's language. A `list` ends with "and"; a `unit` list, a run of amounts, does
+ * not. `settings` adds the group's settings as the last part.
+ */
+export function fileContents(
+  t: Translator<string>,
+  parts: readonly GroupFilePart[],
+  type: "list" | "unit",
+  settings = false,
+): string {
+  const words = parts.map((part) => counted(t, part))
+  if (settings) words.push(t.t(`GroupImport.settings`))
+  const format = new Intl.ListFormat(t.language, {
+    style: `long`,
+    type: type === `list` ? `conjunction` : `unit`,
+  })
+  return format.format(words)
 }
 
-/** One reason a file was refused, as a sentence. */
-export function problemText(problem: GroupImportProblem): string {
+/**
+ * One reason a file was refused, as a sentence. A part of the file that is wrong is named in the
+ * server's words, as its other error messages are.
+ */
+export function problemText(t: Translator<string>, problem: GroupImportProblem): string {
   switch (problem.kind) {
     case "newer_version":
-      return "This file comes from a newer version of the app. Update the app, or export again from a matching version."
+      return t.t(`GroupImport.newerVersion`)
     case "not_export":
-      return "This is not a group export file."
+      return t.t(`GroupImport.notExport`)
     case "too_large":
-      return `The file is larger than ${megabytes(problem.maxBytes)} MB.`
+      return t.t(`GroupImport.tooLarge`, { size: megabytes(problem.maxBytes) })
     case "invalid":
       return `${problem.where}: ${problem.problem}.`
   }
@@ -88,19 +106,21 @@ function megabytes(bytes: number): string {
 }
 
 /** What the polite live region says for each step: one sentence, the step's heading. */
-function statusOf(state: GroupImportState): string {
+function statusOf(t: Translator<string>, state: GroupImportState): string {
   switch (state.step) {
     case "choose":
       return ""
     case "checking":
-      return "Checking the file…"
+      return t.t(`GroupImport.checking`)
     case "checked":
-      return `Contains: ${fileContents(state.summary.parts, ", ")}, settings.`
+      return t.t(`GroupImport.contains`, {
+        contents: fileContents(t, state.summary.parts, `unit`, true),
+      })
     case "refused":
     case "plan":
-      return "This file cannot be imported. Nothing was written."
+      return t.t(`GroupImport.refused`)
     case "unchecked":
-      return "We could not check the file."
+      return t.t(`GroupImport.unchecked`)
   }
 }
 
@@ -113,6 +133,7 @@ function statusOf(state: GroupImportState): string {
  */
 export function GroupImportScreen(props: GroupImportScreenProps): JSX.Element {
   const { state, navigate, offline = false, importing = false, maxBytes } = props
+  const t = useAppText()
   const heading = useRef<HTMLHeadingElement>(null)
   const picker = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -124,24 +145,22 @@ export function GroupImportScreen(props: GroupImportScreenProps): JSX.Element {
     if ((props.attempt ?? 0) === first.current) return
     picker.current?.querySelector<HTMLInputElement>("input[type=file]")?.focus()
   }, [props.attempt])
-  const status = statusOf(state)
+  const status = statusOf(t, state)
   return (
     <Stack gap="xl">
       <PageHeader
-        title="Import a group"
+        title={t.t(`GroupImport.title`)}
         titleDataE2E="group-import-title"
-        back={BACK}
+        back={{ href: SCREEN_PATHS.groups, label: t.t(`GroupImport.back`) }}
         navigate={navigate}
       />
       <Stack class={FORM_WIDTH}>
         <p class="text-muted">
-          Create a new group from an export file. Your existing groups stay as they are.
+          {t.t(`GroupImport.intro`)}
         </p>
         {offline && (
           <div data-e2e="group-import-offline">
-            <Notice title="You are offline">
-              Checking and importing a file needs a connection. Your file stays chosen.
-            </Notice>
+            <Notice title={t.t(`GroupImport.offlineTitle`)}>{t.t(`GroupImport.offline`)}</Notice>
           </div>
         )}
         <div ref={picker}>
@@ -153,13 +172,13 @@ export function GroupImportScreen(props: GroupImportScreenProps): JSX.Element {
             accept=".json,application/json"
             // No size limit here: the app checks the size, so the refusal is said once, in the
             // notice below.
-            label="Export file"
-            hint={`A .json file exported from a group, up to ${megabytes(maxBytes)} MB.`}
+            label={t.t(`GroupImport.file`)}
+            hint={t.t(`GroupImport.fileHint`, { size: megabytes(maxBytes) })}
             disabled={importing}
             previews={false}
             labels={{
-              browse: "Choose a file",
-              wrongType: () => "This is not a group export file.",
+              browse: t.t(`GroupImport.browse`),
+              wrongType: () => t.t(`GroupImport.notExport`),
             }}
             onFiles={(files) => props.onFile?.(files[0] ?? null)}
           />
@@ -184,6 +203,7 @@ function Step(
   },
 ): JSX.Element | null {
   const { state, heading, status, offline, importing = false } = props
+  const t = useAppText()
   // The heading is the step's title and where focus goes; the live region above has said it, so
   // the notices under it are no live regions of their own.
   const title = (
@@ -205,7 +225,7 @@ function Step(
         data-e2e="group-import-choose-another"
         onClick={props.onChooseAnother}
       >
-        Choose another file
+        {t.t(`GroupImport.chooseAnother`)}
       </Button>
     </div>
   )
@@ -227,11 +247,11 @@ function Step(
                 data-e2e="group-import-retry"
                 onClick={props.onRetryCheck}
               >
-                Try again
+                {t.t(`GroupImport.retry`)}
               </Button>
             }
           >
-            Check your connection, then try again. Nothing was written.
+            {t.t(`GroupImport.uncheckedHint`)}
           </Notice>
         </Stack>
       )
@@ -245,13 +265,19 @@ function Step(
             {
               // One reason reads as a sentence; a list of one draws a lone bullet.
               shown.length === 1 && more <= 0
-                ? <p data-e2e="group-import-problem">{problemText(shown[0])}</p>
+                ? <p data-e2e="group-import-problem">{problemText(t, shown[0])}</p>
                 : (
                   <ul class="list-disc space-y-1 pl-4">
                     {shown.map((problem, index) => (
-                      <li key={index} data-e2e="group-import-problem">{problemText(problem)}</li>
+                      <li key={index} data-e2e="group-import-problem">
+                        {problemText(t, problem)}
+                      </li>
                     ))}
-                    {more > 0 && <li data-e2e="group-import-more">and {more} more</li>}
+                    {more > 0 && (
+                      <li data-e2e="group-import-more">
+                        {t.t(`GroupImport.more`, { count: more })}
+                      </li>
+                    )}
                   </ul>
                 )
             }
@@ -265,9 +291,8 @@ function Step(
         <Stack>
           {title}
           <div data-e2e="plan-refusal" data-entitlement={state.refusal.entitlement}>
-            <Notice tone="warning" live={false} title="A new group's plan has no room for it">
-              A new group starts on the free plan, which holds up to {state.refusal.limit}{" "}
-              notes. This file has {state.notes}.
+            <Notice tone="warning" live={false} title={t.t(`GroupImport.planTitle`)}>
+              {t.t(`GroupImport.plan`, { count: state.refusal.limit ?? 0, notes: state.notes })}
             </Notice>
           </div>
           {chooseAnother}
@@ -283,12 +308,17 @@ function Step(
               props.importFailed && !offline && (
                 <div data-e2e="group-import-failed">
                   <Notice tone="danger" urgent>
-                    The import stopped and nothing was saved. Try again.
+                    {t.t(`GroupImport.failed`)}
                   </Notice>
                 </div>
               )
             }
-            <Field id="group-import-name" label="Name" error={props.nameError} required>
+            <Field
+              id="group-import-name"
+              label={t.t(`GroupImport.name`)}
+              error={props.nameError}
+              required
+            >
               <Input
                 name="name"
                 data-e2e="group-import-name"
@@ -304,11 +334,11 @@ function Step(
                 type="submit"
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                 busy={importing}
-                busyLabel="Importing…"
+                busyLabel={t.t(`GroupImport.importing`)}
                 disabled={offline}
                 data-e2e="group-import-submit"
               >
-                Import group
+                {t.t(`GroupImport.submit`)}
               </Button>
             </div>
           </Stack>

@@ -11,6 +11,7 @@
  */
 
 import { BLOG_AUDIT_KINDS } from "@domain/blog"
+import { CATALOG_AUDIT_KINDS } from "@domain/catalog"
 import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
 
 /** Which table an entry comes from: a person's trail, or group and system activity. */
@@ -69,6 +70,7 @@ export const ADMIN_OPERATOR_ACTIVITY_KINDS: readonly string[] = [
   ADMIN_AUDIT_EXPORTED_KIND,
   ...Object.values(BLOG_AUDIT_KINDS),
   ...Object.values(CONTACT_LINK_AUDIT_KINDS),
+  ...Object.values(CATALOG_AUDIT_KINDS),
 ]
 
 /** The filter value of an `auth_audits` event type: `account:2`. */

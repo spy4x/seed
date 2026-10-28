@@ -1,5 +1,6 @@
 import { useEffect, useState } from "preact/hooks"
 import { useLocation } from "wouter-preact"
+import { useAppText } from "@ui/i18n.ts"
 import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { entitlementsOf } from "@domain/billing"
@@ -27,6 +28,7 @@ const network = createOnlineStatus()
  */
 export function InvitationNewView({ groupId }: { groupId: string }) {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const invites = invitationsStore
   useEffect(() => network.watch(), [])
   const groups = groupsStore.groups.value
@@ -121,16 +123,16 @@ export function InvitationNewView({ groupId }: { groupId: string }) {
         navigate={navigate}
         labels={created
           ? {
-            title: "Leave without copying?",
-            message: "You will not be able to see this link again.",
-            leave: "Leave",
-            stay: "Stay",
+            title: t.t(`InvitationNew.leaveTitle`),
+            message: t.t(`InvitationNew.leaveMessage`),
+            leave: t.t(`InvitationNew.leave`),
+            stay: t.t(`InvitationNew.stay`),
           }
           : {
-            title: "Discard your changes?",
-            message: "This invitation is not created yet.",
-            leave: "Discard changes",
-            stay: "Keep editing",
+            title: t.t(`InvitationNew.discardTitle`),
+            message: t.t(`InvitationNew.discardMessage`),
+            leave: t.t(`InvitationNew.discardLeave`),
+            stay: t.t(`InvitationNew.discardStay`),
           }}
         onDiscard={() => invites.closeGroup()}
       />

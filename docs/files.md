@@ -72,7 +72,8 @@ the photo, writes a row to `images` and queues the `files.image-process` job.
 - **Showing one.** `responsiveImage` of `@spy4x/platform/universal/srcset` turns a row's variants
   into `srcset`, `sizes`, `width` and `height` for a `<picture>`.
 
-Note attachments are not processed: they are files kept and downloaded as uploaded.
+The catalog's photos are processed this way too; their bytes reach the store through the API
+([catalog.md](catalog.md)). Note attachments are not processed: they are files kept and downloaded as uploaded.
 
 ## Note attachments
 

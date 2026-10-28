@@ -15,7 +15,7 @@ import { Router } from "wouter-preact"
 import { FREE_PLAN_ID, type GroupBilling, PRO_PLAN_ID } from "@domain/billing"
 import { GroupRole } from "@domain/groups"
 import type { User } from "@domain/identity"
-import { VIEWERS_ONLY_HINT } from "@ui/group-invitations.tsx"
+import appEn from "@i18n/app/en.json" with { type: "json" }
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { invitationsStore } from "../state/invitations.ts"
@@ -126,7 +126,7 @@ describe("InvitationNewView", () => {
       notice: null,
       seatPrice: null,
     })
-    const hint = VIEWERS_ONLY_HINT
+    const hint = appEn["GroupInvitations.viewersOnly"]
 
     expect(renderInvite()).not.toContain(hint)
     billingStore.current.value = { groupId: known.id, billing: plan(FREE_PLAN_ID) }

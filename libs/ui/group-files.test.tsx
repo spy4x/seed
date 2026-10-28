@@ -19,6 +19,11 @@ import {
 } from "./group-import-screen.tsx"
 import { GroupsScreen } from "./groups-screen.tsx"
 import { GROUP_PATHS } from "./progressive.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import appEn from "@i18n/app/en.json" with { type: "json" }
+
+/** The screens' English, as an app without another language reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: appEn }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -306,17 +311,18 @@ describe("GroupImportScreen", () => {
 
 describe("group file wording", () => {
   it("says a file's parts as a list and as a sentence", () => {
-    expect(fileContents(parts, ", ")).toBe("124 notes, 1 tag")
-    expect(fileContents([...parts, { kind: "x", count: 2, one: "x", other: "xs" }], " and "))
-      .toBe("124 notes, 1 tag and 2 xs")
+    expect(fileContents(EN, parts, "unit")).toBe("124 notes, 1 tag")
+    expect(fileContents(EN, parts, "unit", true)).toBe("124 notes, 1 tag, settings")
+    expect(fileContents(EN, [...parts, { kind: "x", count: 2, one: "x", other: "xs" }], "list"))
+      .toBe("124 notes, 1 tag, and 2 xs")
   })
 
   it("says each refusal in words", () => {
-    expect(problemText({ kind: "not_export" })).toBe("This is not a group export file.")
-    expect(problemText({ kind: "too_large", maxBytes: GROUP_IMPORT_MAX_BYTES })).toBe(
+    expect(problemText(EN, { kind: "not_export" })).toBe("This is not a group export file.")
+    expect(problemText(EN, { kind: "too_large", maxBytes: GROUP_IMPORT_MAX_BYTES })).toBe(
       "The file is larger than 5 MB.",
     )
-    expect(problemText({ kind: "newer_version" })).toContain("newer version of the app")
+    expect(problemText(EN, { kind: "newer_version" })).toContain("newer version of the app")
   })
 })
 
