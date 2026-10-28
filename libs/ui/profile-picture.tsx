@@ -14,6 +14,7 @@ import { PICTURE_MAX_BYTES, PICTURE_TYPES } from "@domain/identity"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import { type AppText, say } from "./app-text.ts"
 import { useAppText } from "./i18n.ts"
+import type { KeyedMessage } from "./message.ts"
 
 /** The id of "Upload" or "Change", which the palette's "Change profile picture" presses. */
 export const PICTURE_BUTTON_ID = "profile-picture-choose"
@@ -24,11 +25,11 @@ export const PICTURE_BUTTON_ID = "profile-picture-choose"
  */
 export const PICTURE_ACCEPT = [...PICTURE_TYPES, ".heic", ".heif"].join(",")
 
-/**
- * The rule for the file, in English, as the search palette shows it until its lane of #275
- * translates it. The row says it in the person's language (`ProfilePicture.rule`).
- */
-export const PICTURE_RULE = `JPEG, PNG, WebP or HEIC, up to ${formatBytes(PICTURE_MAX_BYTES)}`
+/** The rule for the file, which the row and the search palette's "Change picture" action say. */
+export const PICTURE_RULE: KeyedMessage = {
+  key: `ProfilePicture.rule`,
+  values: { max: formatBytes(PICTURE_MAX_BYTES) },
+}
 
 /** What the "Profile picture" row takes. */
 export interface PictureRowProps {
@@ -85,7 +86,7 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
           <Avatar name={name} src={src} size="lg" alt="" class="shrink-0" />
           <span class="flex flex-col gap-1">
             <span class="text-sm text-muted">
-              {t.t(`ProfilePicture.rule`, { max: formatBytes(PICTURE_MAX_BYTES) })}
+              {t.t(PICTURE_RULE.key, PICTURE_RULE.values)}
             </span>
             {
               /* The state is visible and read out; the store's announcements are read out only. */

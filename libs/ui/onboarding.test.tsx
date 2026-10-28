@@ -443,4 +443,13 @@ describe("first-steps card in another language", () => {
       expect(page).toContain(PSEUDO.t(key))
     }
   })
+
+  it("asks a guest to keep the account in the person's language", async () => {
+    await mount({ guest: true }, PSEUDO)
+
+    expect(untranslated(document.body)).toEqual([])
+    const page = document.body.textContent ?? ""
+    expect(page).toContain(PSEUDO.t("OnboardingCard.keep"))
+    expect(page).toContain(PSEUDO.t("OnboardingCard.keepText"))
+  })
 })

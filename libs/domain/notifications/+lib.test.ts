@@ -1,11 +1,11 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import {
-  describeNotification,
   NOTIFICATION_PAGE_DEFAULT,
   NOTIFICATION_PAGE_MAX,
   NotificationError,
   NotificationKind,
+  notificationMessage,
   parseNotificationId,
   parseNotificationLimit,
 } from "./+lib.ts"
@@ -19,59 +19,45 @@ function codeOf(run: () => unknown): string | undefined {
   }
 }
 
-describe("describeNotification", () => {
-  it("names the group and the role of an invitation", () => {
-    expect(describeNotification({
+describe("notificationMessage", () => {
+  it("picks the invitation's sentence by its role, with the group's name", () => {
+    expect(notificationMessage({
       kind: NotificationKind.InvitationReceived,
       payload: { groupName: "Family", role: "editor" },
-    })).toBe("You were invited to join “Family” as an editor.")
+    })).toEqual({ key: "NotificationsScreen.invitedEditor", group: "Family" })
   })
 
-  it("says a for a role that starts with a consonant", () => {
-    expect(describeNotification({
-      kind: NotificationKind.InvitationReceived,
-      payload: { groupName: "Work", role: "viewer" },
-    })).toBe("You were invited to join “Work” as a viewer.")
-  })
-
-  it("tells the new role after a change", () => {
-    expect(describeNotification({
+  it("tells the new role after a change, and any role it does not know as a change", () => {
+    expect(notificationMessage({
       kind: NotificationKind.RoleChanged,
       payload: { groupName: "Family", from: "viewer", to: "admin" },
-    })).toBe("Your role in “Family” is now an admin.")
+    })).toEqual({ key: "NotificationsScreen.roleAdmin", group: "Family" })
+    expect(notificationMessage({
+      kind: NotificationKind.RoleChanged,
+      payload: { groupName: "Family", to: "captain" },
+    })).toEqual({ key: "NotificationsScreen.roleChanged", group: "Family" })
   })
 
-  it("tells a removal and an ownership transfer", () => {
-    expect(describeNotification({
-      kind: NotificationKind.RemovedFromGroup,
-      payload: { groupName: "Family" },
-    })).toBe("You were removed from “Family”.")
-    expect(describeNotification({
-      kind: NotificationKind.OwnershipReceived,
-      payload: { groupName: "Family" },
-    })).toBe("You now own “Family”.")
+  it("leaves the group's name to the sentence's own words when the payload lost it", () => {
+    expect(notificationMessage({ kind: NotificationKind.RemovedFromGroup, payload: {} }))
+      .toEqual({ key: "NotificationsScreen.removed", group: null })
   })
 
-  it("tells the person their data is ready and until which day", () => {
-    expect(describeNotification({
+  it("names the day the export expires, when it is a date", () => {
+    expect(notificationMessage({
       kind: NotificationKind.DataExportReady,
       payload: { expiresAt: "2026-10-30T10:00:00.000Z" },
-    })).toBe("Your data is ready. Download it from your profile until 30 Oct 2026.")
-    expect(describeNotification({ kind: NotificationKind.DataExportReady, payload: {} })).toBe(
-      "Your data is ready. Download it from your profile.",
-    )
+    })).toEqual({
+      key: "NotificationsScreen.exportReadyUntil",
+      until: new Date("2026-10-30T10:00:00.000Z"),
+    })
+    expect(notificationMessage({ kind: NotificationKind.DataExportReady, payload: {} }))
+      .toEqual({ key: "NotificationsScreen.exportReady" })
   })
 
   it("reads a kind it does not know as a neutral line", () => {
-    expect(describeNotification({ kind: "from.the.future", payload: {} })).toBe(
-      "You have a new notification.",
-    )
-  })
-
-  it("falls back to a word when the payload misses a fact", () => {
-    expect(describeNotification({ kind: NotificationKind.RemovedFromGroup, payload: {} })).toBe(
-      "You were removed from “a group”.",
-    )
+    expect(notificationMessage({ kind: "from.the.future", payload: {} }))
+      .toEqual({ key: "NotificationsScreen.unknown" })
   })
 })
 

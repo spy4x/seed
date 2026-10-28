@@ -12,7 +12,7 @@ import { LayoutCustomiser, type LayoutEntry } from "@spy4x/preact-ui/layout-cust
 import { Stack } from "@spy4x/preact-ui/layout"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { DashboardGrid, WidgetCard, type WidgetSize } from "@spy4x/preact-ui/widget-card"
-import type { Formatters } from "@spy4x/time/format"
+import { createFormatters, type Formatters } from "@spy4x/time/format"
 import {
   createTranslator,
   type MessageValues,
@@ -41,9 +41,9 @@ export const OVERVIEW_PRESETS: readonly { preset: DateRangePreset; key: string }
 let english: Translator<string> | undefined
 
 /**
- * The words of the overview's range row and grid. The admin app draws both too (the admin group
- * page), and its translator holds no `app` keys: a key it does not know reads in English there,
- * instead of as the key itself.
+ * The words of the overview's range row and grid, which the admin app draws too (the admin group
+ * page). Both apps load the `app` catalog; a translator without it, such as an admin screen's in a
+ * test, reads these keys in English instead of as the keys themselves.
  */
 function useOverviewText(): Translator<string> {
   const t = useAppText()
@@ -125,10 +125,34 @@ export interface OverviewScreenProps {
   navigate?: Navigate
 }
 
-/** "22 Sep – 21 Oct": the days the widgets count. */
-export function periodRange(periods: OverviewPeriods, format: Formatters): string {
+/**
+ * The person's formatters, in UTC, with the month names in `language`: the region format's own
+ * when it is in that language ("22 Sept" for en-GB in English), else the language's
+ * ("22 сент." in Russian, whatever the region).
+ */
+function inLanguage(format: Formatters, language: string): Formatters {
+  const spoken = (tag: string) => {
+    try {
+      return new Intl.Locale(tag).language
+    } catch {
+      return tag
+    }
+  }
+  if (spoken(format.locale) === spoken(language)) return format.utc()
+  return createFormatters(
+    { locale: language, timeZone: `UTC`, hourCycle: null },
+    { device: { locale: language, timeZone: `UTC` } },
+  )
+}
+
+/** "22 Sep – 21 Oct": the days the widgets count, with the month names in `language`. */
+export function periodRange(
+  periods: OverviewPeriods,
+  format: Formatters,
+  language: string,
+): string {
   const { from, to } = periods.current
-  const utc = format.utc()
+  const utc = inLanguage(format, language)
   const at = (iso: string) => `${iso}T00:00:00Z`
   const sameYear = from.slice(0, 4) === to.slice(0, 4)
   const start = sameYear ? utc.dayMonth(at(from)) : utc.date(at(from))
@@ -142,7 +166,10 @@ export function periodLine(
   periods: OverviewPeriods,
   format: Formatters,
 ): string {
-  return t.t(`OverviewScreen.period`, { range: periodRange(periods, format), count: periods.days })
+  return t.t(`OverviewScreen.period`, {
+    range: periodRange(periods, format, t.language),
+    count: periods.days,
+  })
 }
 
 /** The calendar day `now` falls on in `timeZone`, `YYYY-MM-DD`. */
@@ -341,7 +368,7 @@ export function OverviewRangeRow(props: OverviewRangeRowProps): JSX.Element {
           preset && preset.preset !== "custom"
             ? t.t(preset.key)
             : periods
-            ? periodRange(periods, format)
+            ? periodRange(periods, format, t.language)
             : t.t(`OverviewScreen.customRange`)}
         dataE2E={props.dataE2E ?? "overview-range"}
       />
@@ -412,7 +439,7 @@ function OverviewWidgetCard(
 ): JSX.Element {
   const { load } = widget
   const drawing = load.status === "ready"
-    ? view.draw(load.data, { periods, endsToday, format })
+    ? view.draw(load.data, { periods, endsToday, format, days: inLanguage(format, t.language) })
     : null
   const savedAt = load.status === "ready" ? load.savedAt : null
   return (
