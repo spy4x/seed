@@ -32,6 +32,8 @@ import {
   catalogItemDraft,
   catalogItemFields,
 } from "./admin-catalog-item.tsx"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 
 const window = new Window({ url: "http://admin.localhost/catalog" })
 const own = {
@@ -244,7 +246,9 @@ describe("the catalog list", () => {
   })
 
   it("says the catalog's currency and languages in words", () => {
-    expect(catalogSettingsLine(SETTINGS)).toBe("Prices in VND · Texts in Tiếng Việt and English")
+    expect(catalogSettingsLine(ADMIN_ENGLISH, SETTINGS)).toBe(
+      "Prices in VND · Texts in Tiếng Việt and English",
+    )
   })
 })
 
@@ -533,5 +537,39 @@ describe("the item editor's checks", () => {
       ok: false,
       field: "price",
     })
+  })
+})
+
+describe("the catalog in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    const categories = [categoryOf(), categoryOf({ id: ITEM, slug: "mu", name: { vi: "Mũ" } })]
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <ListScreen catalog={{ settings: SETTINGS, categories, items: ROWS }} />
+        <AdminCatalogCategoriesScreen
+          categories={categories}
+          languages={SETTINGS.languages}
+          error={null}
+          busy={false}
+          onRetry={() => {}}
+          onMove={() => {}}
+          onDelete={() => {}}
+        />
+        <AdminCatalogCategoryEditorScreen
+          category={null}
+          languages={SETTINGS.languages}
+          loading={false}
+          notFound={false}
+          value={{ name: {}, slug: "", slugEdited: false }}
+          onChange={() => {}}
+          errors={{}}
+          saving={false}
+          onSave={() => {}}
+        />
+      </I18nContext.Provider>,
+    )
+    await clickOn(document.querySelectorAll("[data-e2e=catalog-category-menu]")[1])
+    const data = [`Áo thun`, `Mũ len`, `Áo khoác`, /\b(ao|mu)\b/g]
+    expect(englishLeft(document.body, data)).toEqual([])
   })
 })

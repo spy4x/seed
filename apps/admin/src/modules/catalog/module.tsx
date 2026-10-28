@@ -10,6 +10,7 @@ import {
   AdminCatalogScreen,
 } from "@ui/admin-catalog.tsx"
 import { AdminCatalogItemScreen } from "@ui/admin-catalog-item.tsx"
+import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { type CatalogState, createCatalogState } from "./state.ts"
 
@@ -45,11 +46,12 @@ function CatalogView({ context }: { context: AdminContext }): JSX.Element {
   )
 }
 
-/** Asks before leaving a page with unsaved changes, in the page's own words. */
+/** Asks before leaving a page with unsaved changes, in the page's own words (a catalog key). */
 function Guard(
   { context, when, message }: { context: AdminContext; when: boolean; message: string },
 ): JSX.Element {
   const [, go] = useLocation()
+  const t = useAdminText()
   return (
     <UnsavedGuard
       when={when}
@@ -57,10 +59,10 @@ function Guard(
       navigate={go}
       leaveGuard={context.leaveGuard}
       labels={{
-        title: `Leave without saving?`,
-        message,
-        leave: `Leave`,
-        stay: `Keep editing`,
+        title: t.t(`AdminApp.leaveTitle`),
+        message: t.t(message),
+        leave: t.t(`AdminApp.leave`),
+        stay: t.t(`AdminApp.keepEditing`),
       }}
     />
   )
@@ -118,7 +120,7 @@ function ItemView(
       <Guard
         context={context}
         when={state.itemUnsaved()}
-        message="Your changes to this item are lost."
+        message={`AdminApp.leaveItem`}
       />
     </>
   )
@@ -178,7 +180,7 @@ function CategoryView(
       <Guard
         context={context}
         when={state.categoryUnsaved()}
-        message="Your changes to this category are lost."
+        message={`AdminApp.leaveCategory`}
       />
     </>
   )
@@ -191,7 +193,7 @@ function CategoryView(
 export const catalogModule: AdminModule = {
   id: `catalog`,
   optional: true,
-  nav: { name: `Catalog`, href: ADMIN_CATALOG_PATHS.list, Icon: IconPackage },
+  nav: { name: `AdminNav.catalog`, href: ADMIN_CATALOG_PATHS.list, Icon: IconPackage },
   routes: [
     { path: ADMIN_CATALOG_PATHS.list, View: CatalogView },
     { path: ADMIN_CATALOG_PATHS.categories, View: CategoriesView },

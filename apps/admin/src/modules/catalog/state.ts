@@ -28,6 +28,7 @@ import {
   sameCatalogItemDraft,
 } from "@ui/admin-catalog-item.tsx"
 import { type AdminFetch, post } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 
 const API = `/api/admin/catalog`
 
@@ -213,18 +214,22 @@ export function createCatalogState(
         saving: false,
       }
       void state.load()
-      toast(open.item ? `Item saved.` : `Draft saved. Add its photos, then publish it.`)
+      toast(
+        open.item
+          ? adminText().t(`AdminCatalog.doneItemSaved`)
+          : adminText().t(`AdminCatalog.doneDraftSaved`),
+      )
       return id
     },
 
     /** Saves unsaved changes, then publishes the item. Answers whether it went through. */
     async publish(): Promise<boolean> {
       if (state.itemUnsaved() && await state.saveItem() === null) return false
-      return await state.setStatus(`published`, `Published. The website shows it within a minute.`)
+      return await state.setStatus(`published`, adminText().t(`AdminCatalog.donePublished`))
     },
 
     hide(): Promise<boolean> {
-      return state.setStatus(`hidden`, `Hidden. The website stops showing it within a minute.`)
+      return state.setStatus(`hidden`, adminText().t(`AdminCatalog.doneHidden`))
     },
 
     async setStatus(status: `published` | `hidden`, done: string): Promise<boolean> {
@@ -264,7 +269,7 @@ export function createCatalogState(
       }
       itemEditor.value = blankItem(null)
       await state.load()
-      toast(`Item deleted.`)
+      toast(adminText().t(`AdminCatalog.doneItemDeleted`))
       return true
     },
 
@@ -317,7 +322,7 @@ export function createCatalogState(
       await state.readItem(item.id)
       void state.load()
       if (take.length > problems.length) {
-        toast(take.length === 1 ? `Photo added.` : `Photos added.`)
+        toast(adminText().t(`AdminCatalog.donePhotosAdded`, { count: take.length }))
       }
     },
 
@@ -346,15 +351,23 @@ export function createCatalogState(
       if (from === to || !ids[from] || to < 0 || to >= ids.length) return Promise.resolve(false)
       const [moved] = ids.splice(from, 1)
       ids.splice(to, 0, moved)
-      return state.photoWrite(`/order`, { ids }, to === 0 ? `Cover changed.` : undefined)
+      return state.photoWrite(
+        `/order`,
+        { ids },
+        to === 0 ? adminText().t(`AdminCatalog.doneCover`) : undefined,
+      )
     },
 
     savePhoto(photoId: string, change: { alt: CatalogText; colourId: string | null }) {
-      return state.photoWrite(`/${photoId}`, change, `Photo saved.`)
+      return state.photoWrite(`/${photoId}`, change, adminText().t(`AdminCatalog.donePhotoSaved`))
     },
 
     removePhoto(photoId: string): Promise<boolean> {
-      return state.photoWrite(`/${photoId}/delete`, undefined, `Photo removed.`)
+      return state.photoWrite(
+        `/${photoId}/delete`,
+        undefined,
+        adminText().t(`AdminCatalog.donePhotoRemoved`),
+      )
     },
 
     // #endregion
@@ -415,7 +428,11 @@ export function createCatalogState(
       }
       await state.load()
       state.openCategory(id)
-      toast(category ? `Category saved.` : `Category added.`)
+      toast(
+        category
+          ? adminText().t(`AdminCatalog.doneCategorySaved`)
+          : adminText().t(`AdminCatalog.doneCategoryAdded`),
+      )
       return true
     },
 
@@ -435,7 +452,7 @@ export function createCatalogState(
       return state.write(
         `${API}/categories/${category.id}/delete`,
         { version: category.version },
-        `Category deleted.`,
+        adminText().t(`AdminCatalog.doneCategoryDeleted`),
       )
     },
 
