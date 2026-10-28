@@ -1217,7 +1217,7 @@
   "ProfileScreen.pushFailed": "Не удалось добавить это устройство. Разрешите уведомления для этого сайта в браузере и попробуйте ещё раз.",
   "ProfileScreen.pushRemoveFailed": "Не удалось удалить это устройство. Проверьте подключение и попробуйте ещё раз.",
   "ProfileScreen.account": "Аккаунт",
-  "ProfileScreen.accountText": "Имя, адрес почты и копия ваших данных.",
+  "ProfileScreen.accountText": "Фото, имя, адрес почты и копия ваших данных.",
   "ProfileScreen.security": "Вход и безопасность",
   "ProfileScreen.securityText": "Как вы входите и где выполнен вход в аккаунт.",
   "ProfileScreen.region": "Язык и регион",

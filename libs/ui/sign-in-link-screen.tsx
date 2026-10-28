@@ -137,9 +137,22 @@ export function LinkRequestScreen(props: LinkRequestScreenProps): JSX.Element {
   )
 }
 
-/** "Check your inbox": no primary action, since the next step is in the mail app. */
+/**
+ * "Check your inbox": no primary action, since the next step is in the mail app. Under the card, a
+ * different address and the way back to sign-in.
+ */
 function CheckInbox(
-  { sentTo, error, readyAt, resending, onResend, onDifferentAddress }:
+  {
+    sentTo,
+    error,
+    readyAt,
+    resending,
+    onResend,
+    onDifferentAddress,
+    onBackToSignIn,
+    next,
+    navigate,
+  }:
     & LinkRequestScreenProps
     & { sentTo: string },
 ): JSX.Element {
@@ -162,23 +175,35 @@ function CheckInbox(
       }
       e2e="sign-in-link-sent"
       after={
-        <Rich
-          parts={t.parts(`SignUpCodeScreen.wrongAddress`)}
-          tags={{
-            button: (text) => (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                class={TOUCH_TARGET}
-                data-e2e="sign-in-link-different-address"
-                onClick={onDifferentAddress}
-              >
-                {text}
-              </Button>
-            ),
-          }}
-        />
+        <span class="flex flex-col items-center gap-2">
+          <span>
+            <Rich
+              parts={t.parts(`SignUpCodeScreen.wrongAddress`)}
+              tags={{
+                button: (text) => (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    class={TOUCH_TARGET}
+                    data-e2e="sign-in-link-different-address"
+                    onClick={onDifferentAddress}
+                  >
+                    {text}
+                  </Button>
+                ),
+              }}
+            />
+          </span>
+          <Link
+            href={withNext(SCREEN_PATHS.signIn, next ?? null)}
+            navigate={navigate}
+            onClick={onBackToSignIn}
+            class="pc-link font-medium"
+            data-e2e="sign-in-link-sent-back"
+          >
+            {t.t(`ConfirmSignUpScreen.backToSignIn`)}
+          </Link>
+        </span>
       }
     >
       <p class="text-sm">{t.t(`SignInLinkScreen.openHere`)}</p>

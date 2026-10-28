@@ -117,108 +117,110 @@ export function NotesView() {
     ? moveTargetsOf(groupsStore.groups.value, membership.id)
     : []
   return (
-    <>
-      {groupId && (
-        <OfflineStatus
-          groupId={groupId}
-          onResolved={() => void store.refresh().catch(() => {})}
-        />
-      )}
-      <NotesScreen
-        // The first steps sit under the page header, where a new account lands after sign-in.
-        intro={<OnboardingView />}
-        group={membership
-          ? { id: membership.id, name: membership.name, canWrite: canMutateNotes(membership.role) }
-          : null}
-        notes={store.notes.value.map((note) => ({
-          ...note,
-          authorId: note.createdByUserId === null ? null : String(note.createdByUserId),
-          authorName: personName(t, note.createdByUserId, youId, members),
-          authorPictureUrl: personPicture(note.createdByUserId, members, sessionState.value.user),
-          authorAvatarName: note.createdByUserId === youId
-            ? members?.find((member) => member.userId === youId)?.name.trim() || undefined
-            : undefined,
-        }))}
-        tags={tagsStore.tags.value}
-        filters={filters}
-        onFiltersChange={(next) => {
-          if (next.tagIds.join() !== filters.tagIds.join()) return setTags(next.tagIds)
-          batch(() => {
-            q.value = next.q
-            author.value = next.author ?? ""
-            mine.value = next.mine ? "1" : ""
-            match.value = next.match
-            sort.value = next.sort
-            dir.value = next.direction === defaultDirection(next.sort) ? "" : next.direction
-          })
-        }}
-        onClearFilters={() =>
-          setParams((previous) => {
-            const next = new URLSearchParams(previous)
-            for (const name of FILTER_PARAMS) next.delete(name)
-            return next
-          })}
-        authors={(members ?? []).map((member) => ({
-          id: String(member.userId),
-          name: personName(t, member.userId, null, members) ?? member.name,
-          isYou: member.userId === youId,
-        }))}
-        youId={youId === null ? null : String(youId)}
-        loading={store.loading.value || groupsStore.loading.value || groupId === null}
-        listError={store.listError.value}
-        moveTargets={moveTargets}
-        onMove={async ({ toGroupId, noteIds }) => {
-          if (!await store.move(toGroupId, noteIds)) return
-          const target = moveTargets.find((group) => group.id === toGroupId)
+    <NotesScreen
+      // Under the page header, which comes first on every page: the offline status, then the
+      // first steps, where a new account lands after sign-in.
+      intro={
+        <>
+          {groupId && (
+            <OfflineStatus
+              groupId={groupId}
+              onResolved={() => void store.refresh().catch(() => {})}
+              underHeader
+            />
+          )}
+          <OnboardingView />
+        </>
+      }
+      group={membership
+        ? { id: membership.id, name: membership.name, canWrite: canMutateNotes(membership.role) }
+        : null}
+      notes={store.notes.value.map((note) => ({
+        ...note,
+        authorId: note.createdByUserId === null ? null : String(note.createdByUserId),
+        authorName: personName(t, note.createdByUserId, youId, members),
+        authorPictureUrl: personPicture(note.createdByUserId, members, sessionState.value.user),
+        authorAvatarName: note.createdByUserId === youId
+          ? members?.find((member) => member.userId === youId)?.name.trim() || undefined
+          : undefined,
+      }))}
+      tags={tagsStore.tags.value}
+      filters={filters}
+      onFiltersChange={(next) => {
+        if (next.tagIds.join() !== filters.tagIds.join()) return setTags(next.tagIds)
+        batch(() => {
+          q.value = next.q
+          author.value = next.author ?? ""
+          mine.value = next.mine ? "1" : ""
+          match.value = next.match
+          sort.value = next.sort
+          dir.value = next.direction === defaultDirection(next.sort) ? "" : next.direction
+        })
+      }}
+      onClearFilters={() =>
+        setParams((previous) => {
+          const next = new URLSearchParams(previous)
+          for (const name of FILTER_PARAMS) next.delete(name)
+          return next
+        })}
+      authors={(members ?? []).map((member) => ({
+        id: String(member.userId),
+        name: personName(t, member.userId, null, members) ?? member.name,
+        isYou: member.userId === youId,
+      }))}
+      youId={youId === null ? null : String(youId)}
+      loading={store.loading.value || groupsStore.loading.value || groupId === null}
+      listError={store.listError.value}
+      moveTargets={moveTargets}
+      onMove={async ({ toGroupId, noteIds }) => {
+        if (!await store.move(toGroupId, noteIds)) return
+        const target = moveTargets.find((group) => group.id === toGroupId)
+        toasts.success({
+          ...movedToast(t, noteIds.length, target?.name),
+          dataE2E: "note-moved",
+        })
+      }}
+      moving={store.moving.value}
+      moveError={store.moveError.value}
+      onDelete={(note) => void store.remove(note)}
+      onCopyLink={async (note) => {
+        const copied = await copyToClipboard(
+          new URL(NOTE_PATHS.note(note.id), location.href).href,
+        )
+        if (copied) {
           toasts.success({
-            ...movedToast(t, noteIds.length, target?.name),
-            dataE2E: "note-moved",
+            title: t.t(`NotesView.linkCopied`),
+            body: membership
+              ? t.t(`NotesView.linkCopiedGroup`, { group: membership.name })
+              : t.t(`NotesView.linkCopiedThisGroup`),
+            dataE2E: "note-link-copied",
           })
-        }}
-        moving={store.moving.value}
-        moveError={store.moveError.value}
-        onDelete={(note) => void store.remove(note)}
-        onCopyLink={async (note) => {
-          const copied = await copyToClipboard(
-            new URL(NOTE_PATHS.note(note.id), location.href).href,
-          )
-          if (copied) {
-            toasts.success({
-              title: t.t(`NotesView.linkCopied`),
-              body: membership
-                ? t.t(`NotesView.linkCopiedGroup`, { group: membership.name })
-                : t.t(`NotesView.linkCopiedThisGroup`),
-              dataE2E: "note-link-copied",
-            })
-          } else {
-            toasts.error({
-              title: t.t(`NotesView.copyFailed`),
-              body: t.t(`NotesView.copyFailedHint`),
-            })
-          }
-        }}
-        showDeleted={store.showDeleted.value}
-        onShowDeletedChange={(on) => void store.setShowDeleted(on)}
-        deletedNotes={store.deletedNotes.value}
-        deletedLoading={store.deletedLoading.value}
-        onRestore={async (note) => {
-          const title = store.deletedNotes.value.find((deleted) => deleted.id === note.id)?.title
-          if (await store.restore(note.id)) {
-            toasts.success({
-              title: t.t(`NotesView.restoredTitle`),
-              body: title
-                ? t.t(`NotesView.restored`, { title })
-                : t.t(`NotesView.restoredUntitled`),
-              dataE2E: "note-restored",
-            })
-          }
-        }}
-        restoring={store.restoring.value}
-        restoreError={store.restoreError.value}
-        undoOutcome={store.undoOutcome.value}
-        onUndoFocused={() => store.clearUndoOutcome()}
-        navigate={navigate}
-      />
-    </>
+        } else {
+          toasts.error({
+            title: t.t(`NotesView.copyFailed`),
+            body: t.t(`NotesView.copyFailedHint`),
+          })
+        }
+      }}
+      showDeleted={store.showDeleted.value}
+      onShowDeletedChange={(on) => void store.setShowDeleted(on)}
+      deletedNotes={store.deletedNotes.value}
+      deletedLoading={store.deletedLoading.value}
+      onRestore={async (note) => {
+        const title = store.deletedNotes.value.find((deleted) => deleted.id === note.id)?.title
+        if (await store.restore(note.id)) {
+          toasts.success({
+            title: t.t(`NotesView.restoredTitle`),
+            body: title ? t.t(`NotesView.restored`, { title }) : t.t(`NotesView.restoredUntitled`),
+            dataE2E: "note-restored",
+          })
+        }
+      }}
+      restoring={store.restoring.value}
+      restoreError={store.restoreError.value}
+      undoOutcome={store.undoOutcome.value}
+      onUndoFocused={() => store.clearUndoOutcome()}
+      navigate={navigate}
+    />
   )
 }
