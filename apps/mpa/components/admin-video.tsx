@@ -2,6 +2,7 @@ import type { JSX } from "preact"
 import { IconPlaySolid } from "@spy4x/preact-icons"
 import { WindowFrame } from "@spy4x/preact-ui/window-frame"
 import { ADMIN_VIDEO } from "../admin-video.ts"
+import { useSite } from "../use-site.tsx"
 
 /** The address in the frame's bar: a made-up host, since the public demo has no admin panel. */
 const FRAME_TITLE = `admin.example.com`
@@ -12,6 +13,7 @@ const FRAME_TITLE = `admin.example.com`
  * without JavaScript. Its size is fixed, so nothing moves when the poster arrives.
  */
 export function AdminVideoPlayer(): JSX.Element {
+  const { t } = useSite()
   return (
     <WindowFrame variant="browser" title={FRAME_TITLE}>
       <video
@@ -22,7 +24,10 @@ export function AdminVideoPlayer(): JSX.Element {
         width={ADMIN_VIDEO.width}
         height={ADMIN_VIDEO.height}
         class="block h-auto w-full bg-canvas"
-        aria-label={`The Seed admin panel, a video of ${ADMIN_VIDEO.seconds} seconds ${ADMIN_VIDEO.sound.label}`}
+        aria-label={t.t(`AdminVideo.label`, {
+          seconds: ADMIN_VIDEO.seconds,
+          sound: t.t(`AdminVideo.soundLabel`),
+        })}
         data-e2e="admin-video"
         data-analytics-video="admin-video"
       >
@@ -33,7 +38,7 @@ export function AdminVideoPlayer(): JSX.Element {
           data-umami-event="admin-video-download"
           data-umami-event-from="player"
         >
-          Download the video (MP4, {ADMIN_VIDEO.mp4Size})
+          {t.t(`AdminTour.download`, { size: ADMIN_VIDEO.mp4Size })}
         </a>
       </video>
     </WindowFrame>
@@ -45,9 +50,10 @@ export function AdminVideoPlayer(): JSX.Element {
  * loads only when it nears the screen.
  */
 export function AdminVideoStill(): JSX.Element {
+  const { t, href } = useSite()
   return (
     <a
-      href="/admin"
+      href={href(`/admin`)}
       class="group block rounded-card"
       data-e2e="admin-video-still"
       data-umami-event="features-admin-video"
@@ -59,7 +65,7 @@ export function AdminVideoStill(): JSX.Element {
             src={ADMIN_VIDEO.still}
             width={ADMIN_VIDEO.stillSize.width}
             height={ADMIN_VIDEO.stillSize.height}
-            alt="Watch the admin panel video: the Users page, listing made-up people with their role, status and when they were last seen."
+            alt={t.t(`AdminVideo.stillAlt`)}
             loading="lazy"
             decoding="async"
             class="block h-auto w-full"

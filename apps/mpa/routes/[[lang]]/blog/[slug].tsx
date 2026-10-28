@@ -8,11 +8,11 @@ import { PostList } from "@spy4x/preact-ui/post-list"
 import { Prose } from "@spy4x/preact-ui/prose"
 import { TldrBox } from "@spy4x/preact-ui/tldr-box"
 import { blogPostingJsonLd, breadcrumbListJsonLd } from "@spy4x/platform/universal/seo"
-import { BLOG_NAME, BLOG_PATH, blogId, postPath, readPost, TOC_MIN_MINUTES } from "../../blog.ts"
-import { Band } from "../../components/band.tsx"
-import { CtaBand } from "../../components/cta-band.tsx"
-import { OnThisPage } from "../../components/on-this-page.tsx"
-import { SectionIntro } from "../../components/section-intro.tsx"
+import { BLOG_PATH, blogId, postPath, readPost, TOC_MIN_MINUTES } from "../../../blog.ts"
+import { Band } from "../../../components/band.tsx"
+import { CtaBand } from "../../../components/cta-band.tsx"
+import { OnThisPage } from "../../../components/on-this-page.tsx"
+import { SectionIntro } from "../../../components/section-intro.tsx"
 import {
   NewsletterForm,
   OG_IMAGE_SIZE,
@@ -20,19 +20,29 @@ import {
   SITE_NAME,
   SiteFrame,
   spaLinks,
-} from "../../site.tsx"
-import { define, type State } from "../../utils.ts"
+} from "../../../site.tsx"
+import { define, type State } from "../../../utils.ts"
+import { DEFAULT_LANGUAGE, localePath, siteTranslator } from "../../../languages.ts"
+import { useSite } from "../../../use-site.tsx"
+import { siteEnglishText } from "@ui/site-text.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 
 /** What the page says for a post that is not live, or an address that never was one. */
-export const POST_NOT_FOUND = {
-  title: `This post is not here`,
-  description: `It may have moved or been unpublished.`,
-} as const
+export function postNotFound(t: Translator<string>): { title: string; description: string } {
+  return { title: t.t(`Blog.notFoundTitle`), description: t.t(`Blog.notFoundLead`) }
+}
+
+/** {@link postNotFound} in English. */
+export const POST_NOT_FOUND = postNotFound(siteEnglishText())
 
 /**
  * One live post: its trail, title, dates and reading time, cover, key points and body, then one
  * call to action (the newsletter while it is on, else the demo) and up to three posts to read next.
  * A draft, a scheduled post and an unknown address answer 404 with {@link POST_NOT_FOUND}.
+ *
+ * Posts are written in one language, English, so a post is the same at every language's address:
+ * the frame around it speaks the address's language, the post stays English, and its canonical
+ * address is the one without a prefix, with no alternates.
  */
 export const handler = define.handlers({
   async GET(ctx) {
@@ -41,6 +51,7 @@ export const handler = define.handlers({
     const { post, readNext } = found
     const origin = ctx.state.webAppOrigin
     const cover = post.coverUrl === null ? null : { url: post.coverUrl, alt: post.coverAlt ?? `` }
+    const t = siteTranslator(ctx.state.language)
     return ctx.render(
       <SiteFrame
         state={ctx.state}
@@ -50,7 +61,8 @@ export const handler = define.handlers({
           description: post.description,
           ogType: `article`,
           image: cover ?? undefined,
-          jsonLd: postJsonLd(origin, post),
+          jsonLd: postJsonLd(t, origin, post),
+          oneLanguage: true,
         }}
         footerNewsletter={!ctx.state.newsletter}
       >
@@ -62,7 +74,7 @@ export const handler = define.handlers({
         <PostBody post={post} />
         {ctx.state.newsletter ? <NewsletterBand /> : (
           <CtaBand
-            title={`See ${SITE_NAME} working in a minute`}
+            title={t.t(`Blog.ctaTitle`, { site: SITE_NAME })}
             demoHref={spaLinks(ctx.state.spaOrigin).try}
           />
         )}
@@ -73,7 +85,7 @@ export const handler = define.handlers({
 })
 
 /** The post's structured data: the `BlogPosting` and its trail, Home › Blog › the post. */
-function postJsonLd(origin: string, post: PublicBlogPost): unknown[] {
+function postJsonLd(t: Translator<string>, origin: string, post: PublicBlogPost): unknown[] {
   const url = `${origin}${postPath(post.slug)}`
   return [
     blogPostingJsonLd({
@@ -88,11 +100,15 @@ function postJsonLd(origin: string, post: PublicBlogPost): unknown[] {
       section: post.topic ?? undefined,
       inLanguage: `en`,
       readingMinutes: post.readingMinutes,
-      blog: { id: blogId(origin), name: BLOG_NAME, url: `${origin}${BLOG_PATH}` },
+      blog: {
+        id: blogId(origin),
+        name: t.t(`Blog.name`, { site: SITE_NAME }),
+        url: `${origin}${BLOG_PATH}`,
+      },
     }),
     breadcrumbListJsonLd(url, [
       { name: SITE_NAME, href: `${origin}/` },
-      { name: `Blog`, href: `${origin}${BLOG_PATH}` },
+      { name: t.t(`Blog.title`), href: `${origin}${BLOG_PATH}` },
       { name: post.title },
     ]),
   ]
@@ -103,7 +119,10 @@ function postJsonLd(origin: string, post: PublicBlogPost): unknown[] {
  * page" beside it from 1280 px, in the right margin; on a narrower screen the body reads alone.
  */
 function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
+  const { t, rich, href, language } = useSite()
   const format = useFormat().utc()
+  const blog = href(BLOG_PATH)
+  const time = (iso: string) => (text: string) => <time dateTime={iso}>{text}</time>
   const sections = post.readingMinutes >= TOC_MIN_MINUTES
     ? post.headings.filter(({ depth }) => depth === 2)
     : []
@@ -118,17 +137,19 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
     >
       <article class="flex min-w-0 flex-col gap-6 xl:col-start-2" data-e2e="blog-post">
         <header class="flex flex-col gap-4">
-          <nav aria-label="Breadcrumb" class="text-sm">
+          <nav aria-label={t.t(`Blog.breadcrumb`)} class="text-sm">
             <ol class="flex flex-wrap items-center gap-2 text-muted">
               <li>
-                <a href={BLOG_PATH} class="font-medium text-primary hover:underline">Blog</a>
+                <a href={blog} class="font-medium text-primary hover:underline">
+                  {t.t(`Blog.title`)}
+                </a>
               </li>
               {post.topic && (
                 <>
                   <li aria-hidden="true">›</li>
                   <li>
                     <a
-                      href={`${BLOG_PATH}?${new URLSearchParams({ topic: post.topic })}`}
+                      href={`${blog}?${new URLSearchParams({ topic: post.topic })}`}
                       class="font-medium text-primary hover:underline"
                     >
                       {post.topic}
@@ -138,20 +159,27 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
               )}
             </ol>
           </nav>
+          {language !== DEFAULT_LANGUAGE && (
+            <p class="text-sm text-muted" data-e2e="english-only">{t.t(`Blog.englishPost`)}</p>
+          )}
           {post.topic && <p class="font-mono text-sm font-medium text-primary">{post.topic}</p>}
-          <h1 class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
+          <h1 lang="en" class="text-3xl font-semibold tracking-tight text-balance lg:text-4xl">
             {post.title}
           </h1>
           <p class="flex flex-wrap gap-x-1 gap-y-1 text-sm text-muted" data-e2e="blog-post-meta">
             <span>
-              Published <time dateTime={post.publishedAt}>{format.date(post.publishedAt)}</time>
+              {rich(`Blog.published`, { time: time(post.publishedAt) }, {
+                date: format.date(post.publishedAt),
+              })}
             </span>
             {post.updatedAt && (
               <span>
-                · Updated <time dateTime={post.updatedAt}>{format.date(post.updatedAt)}</time>
+                {rich(`Blog.updated`, { time: time(post.updatedAt) }, {
+                  date: format.date(post.updatedAt),
+                })}
               </span>
             )}
-            <span>· {post.readingMinutes} min read</span>
+            <span>{t.t(`Blog.minutes`, { count: post.readingMinutes })}</span>
             {post.authorName && <span>· {post.authorName}</span>}
           </p>
         </header>
@@ -168,9 +196,11 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
             data-e2e="blog-post-cover"
           />
         )}
-        <TldrBox items={post.tldr} />
-        {/* The API's HTML, rendered by the safe Markdown renderer on the server (docs/blog.md). */}
-        <Prose html={post.html} />
+        <div lang="en" dir="ltr" class="contents">
+          <TldrBox items={post.tldr} />
+          {/* The API's HTML, rendered by the safe Markdown renderer on the server (docs/blog.md). */}
+          <Prose html={post.html} />
+        </div>
       </article>
       {toc && (
         <aside class="hidden xl:col-start-3 xl:block" data-e2e="blog-post-toc">
@@ -183,13 +213,14 @@ function PostBody({ post }: { post: PublicBlogPost }): JSX.Element {
 
 /** The newsletter as the post's one call to action. */
 function NewsletterBand(): JSX.Element {
+  const { t } = useSite()
   return (
     <Band tone="glow" labelledBy="post-news" width="md" class="border-t border-subtle">
       <div class="flex flex-col gap-4" data-e2e="blog-post-newsletter">
         <SectionIntro
           id="post-news"
-          title="Get the next post by email"
-          lead="A short email when a post is out or something ships. You confirm by email first; one click unsubscribes."
+          title={t.t(`Blog.newsTitle`)}
+          lead={t.t(`Blog.newsLead`)}
         />
         <NewsletterForm id="post" />
       </div>
@@ -199,20 +230,23 @@ function NewsletterBand(): JSX.Element {
 
 /** Up to three posts to read next, then the way back to all of them. */
 function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.Element {
+  const { t, href } = useSite()
   return (
     <section
       aria-labelledby={posts.length > 0 ? "read-next" : undefined}
-      aria-label={posts.length > 0 ? undefined : "More posts"}
+      aria-label={posts.length > 0 ? undefined : t.t(`Blog.morePosts`)}
       class="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-12 sm:px-6 lg:py-16"
       data-e2e="blog-read-next"
     >
       {posts.length > 0 && (
         <>
-          <h2 id="read-next" class="text-2xl font-semibold tracking-tight">Read next</h2>
+          <h2 id="read-next" class="text-2xl font-semibold tracking-tight">
+            {t.t(`Blog.readNext`)}
+          </h2>
           <PostList
             headingLevel={3}
             posts={posts.map((post) => ({
-              href: postPath(post.slug),
+              href: href(postPath(post.slug)),
               title: post.title,
               description: post.description,
               publishedAt: post.publishedAt,
@@ -221,18 +255,22 @@ function ReadNext({ posts }: { posts: readonly PublicBlogPostSummary[] }): JSX.E
           />
         </>
       )}
-      <a href={BLOG_PATH} class="self-start font-medium text-primary underline">All posts</a>
+      <a href={href(BLOG_PATH)} class="self-start font-medium text-primary underline">
+        {t.t(`Blog.allPosts`)}
+      </a>
     </section>
   )
 }
 
 /** The 404 of a post that is not live: why, and the way to the posts that are. */
 function renderNotFound(ctx: FreshContext<State>): Response | Promise<Response> {
+  const t = siteTranslator(ctx.state.language)
+  const notFound = postNotFound(t)
   return ctx.render(
     <SiteFrame
       state={ctx.state}
       path={ctx.url.pathname}
-      head={{ ...POST_NOT_FOUND, noindex: true }}
+      head={{ ...notFound, noindex: true }}
     >
       <section
         aria-labelledby="post-missing"
@@ -243,10 +281,10 @@ function renderNotFound(ctx: FreshContext<State>): Response | Promise<Response> 
         <div class="mx-auto flex w-full max-w-md flex-col items-start gap-6 px-4 py-16">
           <p class="font-mono text-6xl font-semibold text-muted" aria-hidden="true">404</p>
           <h1 id="post-missing" class="text-3xl font-semibold tracking-tight">
-            {POST_NOT_FOUND.title}
+            {notFound.title}
           </h1>
-          <p class="text-muted text-pretty">{POST_NOT_FOUND.description}</p>
-          <Button href={BLOG_PATH}>All posts</Button>
+          <p class="text-muted text-pretty">{notFound.description}</p>
+          <Button href={localePath(ctx.state.language, BLOG_PATH)}>{t.t(`Blog.allPosts`)}</Button>
         </div>
       </section>
     </SiteFrame>,

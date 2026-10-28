@@ -23,7 +23,7 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
 
 - **Set** `AUTHOR_URL` in `apps/mpa/brand.ts`: the author's own site.
 - **Delete** `apps/mpa/hire.ts`: the author's prices (`HIRE_PRICES`) and his MVP offer
-  (`HIRE_PAGE_URL`). Its other importers change with it: `apps/mpa/routes/pricing.tsx` (the FAQ
+  (`HIRE_PAGE_URL`). Its other importers change with it: `apps/mpa/routes/[[lang]]/pricing.tsx` (the FAQ
   on how `HIRE_PRICES.mvpFrom` is worked out, and a hire link), `apps/mpa/routes/index.tsx` (the
   link in `WhoBuilds`), `apps/mpa/site.tsx`, `apps/mpa/error-page.tsx`,
   `apps/mpa/components/pricing-ways.tsx` and `apps/mpa/site.test.ts`.
@@ -46,13 +46,13 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
 ## Seed's own pages and copy
 
 - **Delete** `/compare`: named competitors, their prices and the day they were checked. That is
-  `apps/mpa/routes/compare.tsx`, the card component only it uses,
+  `apps/mpa/routes/[[lang]]/compare.tsx`, the card component only it uses,
   `apps/mpa/components/compare-alternatives.tsx`, its entry in `apps/mpa/pages.ts`, its Open
   Graph image `apps/mpa/static/og/compare.png` with the `compare` key of `OG_IMAGES` in
   `apps/mpa/site.tsx`, the `compare-source` event in `docs/analytics.md`, and its browser test
   `e2e/mpa/compare.mpa.ts`. Remove the links to it too, or they lead nowhere: "Compare" in the
   header (`NAV_LINKS`) and footer (`footerGroups`) in `apps/mpa/site.tsx`, "How Seed compares"
-  in `apps/mpa/routes/features.tsx` and "the comparison" in `apps/mpa/routes/index.tsx`.
+  in `apps/mpa/routes/[[lang]]/features.tsx` and "the comparison" in `apps/mpa/routes/index.tsx`.
 - **Replace** the page copy and FAQs of the home, features, admin and pricing pages:
   `apps/mpa/routes/index.tsx`, `routes/features.tsx`, `routes/admin.tsx`, `routes/pricing.tsx`.
 - **Replace** the `llms.txt` summary. It is the home page's description, `HOME_HEAD` in
@@ -60,7 +60,7 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
 - **Set** the licence line in `llms.txt`: the "Source code" entry in `apps/mpa/routes/llms.txt.ts`
   says the code is under the MIT licence. Name the product's own licence, or drop the line.
 - **Replace** the privacy policy and terms, written for seedsaas.com and its demo:
-  `apps/mpa/routes/privacy.tsx`, `apps/mpa/routes/terms.tsx`.
+  `apps/mpa/routes/[[lang]]/privacy.tsx`, `apps/mpa/routes/[[lang]]/terms.tsx`.
 - **Set** `SITE_NAME` and `REPOSITORY_URL` in `apps/mpa/brand.ts`.
 - **Replace** the Open Graph images in `apps/mpa/static/og/`, drawn by
   `apps/mpa/screenshots/og.html`.
@@ -68,7 +68,7 @@ from Seed leave it out. Tests follow the code: `apps/mpa/site.test.ts` and the b
   `apps/mpa/static/video/` and `apps/mpa/media/video/`, taken by `apps/mpa/screenshots/capture.ts`
   and `apps/mpa/admin-video.ts`.
 - **Replace** the browser frames titled `app.seedsaas.com/…` in `apps/mpa/routes/index.tsx`,
-  `apps/mpa/routes/features.tsx` and `apps/mpa/components/features-visuals.tsx`.
+  `apps/mpa/routes/[[lang]]/features.tsx` and `apps/mpa/components/features-visuals.tsx`.
 
 ## The product's name in the apps
 

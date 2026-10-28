@@ -4,9 +4,9 @@ import { App } from "fresh"
 import { setBuildCache } from "fresh/internal"
 import { asset } from "fresh/runtime"
 import { h } from "preact"
-import { handler as subscribe } from "./routes/subscribe/index.ts"
-import { handler as subscriptionConfirm } from "./routes/subscribe/confirm.ts"
-import { handler as unsubscribe } from "./routes/unsubscribe.ts"
+import { handler as subscribe } from "./routes/[[lang]]/subscribe/index.ts"
+import { handler as subscriptionConfirm } from "./routes/[[lang]]/subscribe/confirm.ts"
+import { handler as unsubscribe } from "./routes/[[lang]]/unsubscribe.ts"
 import {
   newsletterPageMiddleware,
   pageMiddleware,
@@ -46,12 +46,12 @@ function appWith(fetch: typeof globalThis.fetch, newsletter: () => boolean = () 
   return new App<State>()
     .use(pageMiddleware(config, fetch, newsletter))
     .get("/page", (ctx) => ctx.html("<p>page</p>"))
-    .get("/subscribe", subscribe.GET!)
-    .post("/subscribe", subscribe.POST!)
-    .get("/subscribe/confirm", subscriptionConfirm.GET!)
-    .post("/subscribe/confirm", subscriptionConfirm.POST!)
-    .get("/unsubscribe", unsubscribe.GET!)
-    .post("/unsubscribe", unsubscribe.POST!)
+    .get("{/:lang}?/subscribe", subscribe.GET!)
+    .post("{/:lang}?/subscribe", subscribe.POST!)
+    .get("{/:lang}?/subscribe/confirm", subscriptionConfirm.GET!)
+    .post("{/:lang}?/subscribe/confirm", subscriptionConfirm.POST!)
+    .get("{/:lang}?/unsubscribe", unsubscribe.GET!)
+    .post("{/:lang}?/unsubscribe", unsubscribe.POST!)
     .handler()
 }
 
@@ -166,7 +166,7 @@ describe("securityHeadersMiddleware", () => {
       .get("/broken", () => {
         throw new Error("a route failed")
       })
-      .post("/subscribe", subscribe.POST!)
+      .post("{/:lang}?/subscribe", subscribe.POST!)
       .handler()
   }
 
@@ -439,6 +439,25 @@ describe("the subscription pages", () => {
     expect(response.headers.get("location")).toBe("/unsubscribe?state=done")
   })
 
+  it("keeps the page's language prefix in the address each finished step redirects to", async () => {
+    const { fetch } = subscribersApi(() => Response.json({ state: "done" }, { status: 202 }))
+    const app = appWith(fetch)
+    const steps = [
+      [
+        formPost("/de/subscribe", { email: "ada@example.com", list: "news" }),
+        "/de/subscribe?state=sent",
+      ],
+      [formPost("/ar/subscribe/confirm", token), "/ar/subscribe/confirm?state=done"],
+      [formPost("/pt-BR/unsubscribe", token), "/pt-BR/unsubscribe?state=done"],
+    ] as const
+
+    for (const [request, location] of steps) {
+      const response = await app(request, info)
+      expect(response.status, request.url).toBe(303)
+      expect(response.headers.get("location"), request.url).toBe(location)
+    }
+  })
+
   it("passes the API's 429 and Retry-After on when unsubscribes come too fast", async () => {
     const { fetch } = subscribersApi(() =>
       Response.json(
@@ -541,7 +560,7 @@ describe("the subscription pages while subscriptions are off", () => {
 
     const handler = new App<State>()
       .use(await newsletterPageMiddleware(config, api))
-      .get("/subscribe", subscribe.GET!)
+      .get("{/:lang}?/subscribe", subscribe.GET!)
       .handler()
     const response = await handler(new Request(`${config.webAppOrigin}/subscribe`), info)
 
@@ -597,7 +616,7 @@ describe("an MPA on its own domain", () => {
   it(`links "Try the demo" to the app's /try at DOMAIN, not to the website's own host`, async () => {
     const response = await new App<State>()
       .use(pageMiddleware(ownDomain, fakeApi(() => Response.json({})).fetch, () => true))
-      .get("/subscribe", subscribe.GET!)
+      .get("{/:lang}?/subscribe", subscribe.GET!)
       .handler()(new Request(`${ownDomain.webAppOrigin}/subscribe`), info)
 
     const page = await response.text()

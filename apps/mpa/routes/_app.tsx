@@ -1,5 +1,6 @@
 import type { JSX } from "preact"
-import { REPOSITORY_URL } from "../brand.ts"
+import { REPOSITORY_URL, SITE_NAME } from "../brand.ts"
+import { DEFAULT_LANGUAGE, siteTranslator } from "../languages.ts"
 import type { State } from "../utils.ts"
 import { define } from "../utils.ts"
 
@@ -8,14 +9,19 @@ import { define } from "../utils.ts"
  * applies only once `/theme.js` adds `dark` for a device that asks for it; without JavaScript the
  * page stays light. The script is a file, not inline, because the content security policy allows
  * scripts from this origin only.
+ *
+ * The page's language (`State.language`, from its address) sets `lang` and `dir`. The words come
+ * from `SiteLanguage` (`use-site.tsx`), which `routes/_layout.tsx` puts around every
+ * page: a context provided here would not reach the page, which Fresh renders apart.
  */
 export default define.page(function App({ Component, state, url }) {
+  const translator = siteTranslator(state.language ?? DEFAULT_LANGUAGE)
   return (
-    <html lang="en" data-theme="ink" class="h-full">
+    <html lang={translator.language} dir={translator.dir} data-theme="ink" class="h-full">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Seed</title>
+        <title>{SITE_NAME}</title>
         {/* The browser's own frame takes the canvas of the palette the device asks for. */}
         <meta name="theme-color" content="#f3f4f6" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#080b10" media="(prefers-color-scheme: dark)" />

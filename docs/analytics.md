@@ -18,7 +18,7 @@ personal data, and the tracker honours Do Not Track. The demo app (the SPA) coun
    page, so it is not a secret.
 3. Create the goals and funnels below in Umami (Reports). Their names are the convention; Umami
    matches nothing by name.
-4. Update the privacy page (`apps/mpa/routes/privacy.tsx`) if your setup differs: it describes
+4. Update the privacy page (`apps/mpa/routes/[[lang]]/privacy.tsx`) if your setup differs: it describes
    this one.
 
 With both values set, every page loads two deferred scripts: Umami's `/script.js` from

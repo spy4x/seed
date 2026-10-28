@@ -1,10 +1,16 @@
 import { createDefine } from "fresh"
 import type { PublicContactLink } from "@domain/contact-links"
+import type { Language } from "@domain/identity"
 import type { Api } from "./api.ts"
 import type { AnalyticsConfig } from "./config.ts"
 
 /** What the middleware hands every route. */
 export interface State {
+  /**
+   * The page's language, from its address (`pathLanguage` in `languages.ts`): the default one
+   * unless the address starts with another served language's prefix.
+   */
+  language: Language
   /** The API, called on behalf of this request. */
   api: Api
   /** The origin the browser sees this app at, as `MpaConfig.webAppOrigin`: links start with it. */

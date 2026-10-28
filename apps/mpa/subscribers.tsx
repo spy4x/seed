@@ -29,7 +29,11 @@ import {
   TRY_ENTRY,
   TRY_REL,
 } from "./site.tsx"
+import { localePath, siteTranslator } from "./languages.ts"
+import { SiteLanguage } from "./use-site.tsx"
 import { define, type State } from "./utils.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { siteEnglishText } from "@ui/site-text.ts"
 
 /**
  * The confirm and unsubscribe pages carry a signed token in their address: no `Referer` leaves
@@ -38,11 +42,13 @@ import { define, type State } from "./utils.ts"
 const NO_REFERRER = { "referrer-policy": "no-referrer" }
 
 /** The pages a mailed link opens: no search engine lists them. */
-const TOKEN_PAGE_HEAD: SitePageHead = {
-  title: `Newsletter`,
-  description: `Confirm or end your subscription to the Seed newsletter.`,
-  noindex: true,
-  og: `subscribe`,
+function tokenPageHead(t: Translator<string>): SitePageHead {
+  return {
+    title: t.t(`NewsletterPage.title`),
+    description: t.t(`NewsletterPage.description`, { site: SITE_NAME }),
+    noindex: true,
+    og: `subscribe`,
+  }
 }
 
 /** The query a finished step redirects to: the page again, with no token in it. */
@@ -51,11 +57,22 @@ const DONE_QUERY = "?state=done"
 /** The query a taken subscribe request redirects to, so a reload does not send it again. */
 const SENT_QUERY = "?state=sent"
 
-export const SUBSCRIBE_HEAD: SitePageHead = {
-  title: `Seed newsletter: what shipped, briefly`,
-  description: `A short email when Seed changes: what shipped, what broke, what I learned ` +
-    `building it. Double opt-in, one-click unsubscribe.`,
-  og: `subscribe`,
+/** The subscribe page's title and description in the language of `t`. */
+export function subscribeHead(t: Translator<string>): SitePageHead {
+  return {
+    title: t.t(`NewsletterPage.subscribeTitle`, { site: SITE_NAME }),
+    description: t.t(`NewsletterPage.subscribeDescription`, { site: SITE_NAME }),
+    og: `subscribe`,
+  }
+}
+
+/** The subscribe page's head in English, for the page list (`pages.ts`). */
+export const SUBSCRIBE_HEAD: SitePageHead = subscribeHead(siteEnglishText())
+
+/** The translator and the addresses of the request's language. */
+function speech(ctx: FreshContext<State>) {
+  const t = siteTranslator(ctx.state.language)
+  return { t, href: (path: string) => localePath(ctx.state.language, path) }
 }
 
 /**
@@ -65,19 +82,22 @@ export const SUBSCRIBE_HEAD: SitePageHead = {
  */
 export const subscribeHandlers = define.handlers({
   GET(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribe, SUBSCRIBE_HEAD)
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribe, subscribeHead)
     const sent = ctx.url.searchParams.get("state") === "sent"
     return renderSubscribe(ctx, { email: "", sent, error: null, status: 200 })
   },
   async POST(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribe, SUBSCRIBE_HEAD)
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribe, subscribeHead)
+    const { t, href } = speech(ctx)
     const body = API_BODIES.subscribe(await readFormBody(ctx.req, FORM_LIMITS))
     const answer = await ctx.state.api.call("POST", "/api/subscribers", body)
-    if (answer.status === 202) return ctx.redirect(`${FORM_ACTIONS.subscribe}${SENT_QUERY}`, 303)
+    if (answer.status === 202) {
+      return ctx.redirect(`${href(FORM_ACTIONS.subscribe)}${SENT_QUERY}`, 303)
+    }
     return renderSubscribe(ctx, {
       email: body.email,
       sent: false,
-      error: errorMessage(answer, SUBSCRIBE_FAILURES.subscribe),
+      error: errorMessage(answer, t.t(SUBSCRIBE_FAILURES.subscribe)),
       status: answer.status,
       retryAfter: answer.retryAfter,
     })
@@ -90,7 +110,7 @@ export const subscribeHandlers = define.handlers({
  */
 export const subscriptionConfirmHandlers = define.handlers({
   async GET(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, TOKEN_PAGE_HEAD)
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, tokenPageHead)
     const { list, token } = linkOf(ctx.url)
     if (ctx.url.searchParams.get("state") === "done") {
       return renderConfirm(ctx, { state: "done", list: "", token: "", status: 200 })
@@ -110,12 +130,12 @@ export const subscriptionConfirmHandlers = define.handlers({
     })
   },
   async POST(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, TOKEN_PAGE_HEAD)
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.subscribeConfirm, tokenPageHead)
     const body = API_BODIES.subscriptionToken(await readFormBody(ctx.req, FORM_LIMITS))
     const answer = await ctx.state.api.call("POST", "/api/subscribers/confirm", body)
     const step = stepOf(answer, CONFIRM_STATES)
     if (step.state === "done") {
-      return ctx.redirect(`${FORM_ACTIONS.subscribeConfirm}${DONE_QUERY}`, 303)
+      return ctx.redirect(`${speech(ctx).href(FORM_ACTIONS.subscribeConfirm)}${DONE_QUERY}`, 303)
     }
     return renderConfirm(ctx, {
       ...step,
@@ -133,7 +153,7 @@ export const subscriptionConfirmHandlers = define.handlers({
  */
 export const unsubscribeHandlers = define.handlers({
   async GET(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.unsubscribe, TOKEN_PAGE_HEAD)
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.unsubscribe, tokenPageHead)
     const { list, token } = linkOf(ctx.url)
     if (ctx.url.searchParams.get("state") === "done") {
       return renderUnsubscribe(ctx, { state: "done", list: "", token: "", status: 200 })
@@ -154,7 +174,7 @@ export const unsubscribeHandlers = define.handlers({
     })
   },
   async POST(ctx) {
-    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.unsubscribe, TOKEN_PAGE_HEAD)
+    if (!ctx.state.newsletter) return renderOff(ctx, FORM_ACTIONS.unsubscribe, tokenPageHead)
     const body = API_BODIES.subscriptionToken(await readFormBody(ctx.req, FORM_LIMITS))
     // The API's unsubscribe reads the token from the query or a form body, never from JSON: it is
     // the RFC 8058 one-click target too.
@@ -163,7 +183,9 @@ export const unsubscribeHandlers = define.handlers({
       `/api/subscribers/unsubscribe?${new URLSearchParams(body)}`,
     )
     const step = stepOf(answer, UNSUBSCRIBE_STATES)
-    if (step.state === "done") return ctx.redirect(`${FORM_ACTIONS.unsubscribe}${DONE_QUERY}`, 303)
+    if (step.state === "done") {
+      return ctx.redirect(`${speech(ctx).href(FORM_ACTIONS.unsubscribe)}${DONE_QUERY}`, 303)
+    }
     return renderUnsubscribe(ctx, {
       ...step,
       ...body,
@@ -231,54 +253,57 @@ function renderSubscribe(
   ctx: FreshContext<State>,
   page: PageStatus & { email: string; sent: boolean; error: string | null },
 ): Response | Promise<Response> {
+  const { t, href } = speech(ctx)
   return ctx.render(
-    <SiteFrame
-      state={ctx.state}
-      path={FORM_ACTIONS.subscribe}
-      head={SUBSCRIBE_HEAD}
-      footerNewsletter={false}
-    >
-      <NewsletterBand wide>
-        <div class="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
-          <section class="flex flex-col gap-4" aria-label="About the newsletter">
-            <BrandMark Icon={IconSprout} name="Seed" />
-            <p class="text-2xl font-semibold tracking-tight text-balance">
-              Get a short email when Seed changes
-            </p>
-            <p class="text-lg text-muted text-pretty">
-              What shipped, what broke and what I learned building it, written by me. No other mail.
-            </p>
-            <ul class="flex flex-col gap-2">
-              {NEWSLETTER_PROMISES.map((promise) => (
-                <li key={promise} class="flex items-start gap-2">
-                  <IconCheck class="mt-1 size-4 shrink-0 text-primary" />
-                  <span class="text-pretty">{promise}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-          <div data-analytics-submit="newsletter-subscribe">
-            <SubscribeForm
-              email={page.email}
-              onEmailChange={() => {}}
-              list={DEFAULT_SUBSCRIBER_LIST}
-              sent={page.sent}
-              error={page.error}
-              pending={false}
-            />
+    <SiteLanguage language={ctx.state.language}>
+      <SiteFrame
+        state={ctx.state}
+        path={FORM_ACTIONS.subscribe}
+        head={subscribeHead(t)}
+        footerNewsletter={false}
+      >
+        <NewsletterBand wide>
+          <div class="grid items-start gap-8 lg:grid-cols-2 lg:gap-16">
+            <section class="flex flex-col gap-4" aria-label={t.t(`NewsletterPage.about`)}>
+              <BrandMark Icon={IconSprout} name={SITE_NAME} />
+              <p class="text-2xl font-semibold tracking-tight text-balance">
+                {t.t(`NewsletterPage.heading`, { site: SITE_NAME })}
+              </p>
+              <p class="text-lg text-muted text-pretty">{t.t(`NewsletterPage.lead`)}</p>
+              <ul class="flex flex-col gap-2">
+                {NEWSLETTER_PROMISES.map((promise) => (
+                  <li key={promise} class="flex items-start gap-2">
+                    <IconCheck class="mt-1 size-4 shrink-0 text-primary" />
+                    <span class="text-pretty">{t.t(promise)}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            <div data-analytics-submit="newsletter-subscribe">
+              <SubscribeForm
+                email={page.email}
+                onEmailChange={() => {}}
+                list={DEFAULT_SUBSCRIBER_LIST}
+                sent={page.sent}
+                error={page.error}
+                pending={false}
+                localize={href}
+              />
+            </div>
+            {page.sent && <AnalyticsView name="newsletter-sent" />}
           </div>
-          {page.sent && <AnalyticsView name="newsletter-sent" />}
-        </div>
-      </NewsletterBand>
-    </SiteFrame>,
+        </NewsletterBand>
+      </SiteFrame>
+    </SiteLanguage>,
     { status: page.status, headers: headersOf(page) },
   )
 }
 
+/** What the newsletter promises, by catalog key. */
 const NEWSLETTER_PROMISES = [
-  `You confirm by a link first, so nobody can sign you up.`,
-  `Every email has a link that unsubscribes you in one click.`,
-  `Your address is used for this newsletter and nothing else.`,
+  `NewsletterPage.promiseConfirm`,
+  `NewsletterPage.promiseUnsubscribe`,
+  `NewsletterPage.promisePrivate`,
 ] as const
 
 /**
@@ -289,30 +314,34 @@ const NEWSLETTER_PROMISES = [
 function renderOff(
   ctx: FreshContext<State>,
   path: string,
-  head: SitePageHead,
+  head: (t: Translator<string>) => SitePageHead,
 ): Response | Promise<Response> {
   const spa = spaLinks(ctx.state.spaOrigin)
+  const { t } = speech(ctx)
   return ctx.render(
-    <SiteFrame state={ctx.state} path={path} head={{ ...head, noindex: true }}>
-      <NewsletterBand>
-        <div class="flex flex-col gap-6" data-e2e="newsletter-off">
-          <h1 class="text-3xl font-semibold tracking-tight">The {SITE_NAME} newsletter</h1>
-          <Notice title="The newsletter is off">
-            This site is not taking newsletter subscriptions right now, and it sends no newsletter
-            while they are off. A confirm or unsubscribe link works again once they are back on.
-          </Notice>
-          <p class="text-muted text-pretty">
-            To hear when Seed changes, watch its releases on GitHub. Or see what it does today.
-          </p>
-          <div class="flex flex-col gap-4 sm:flex-row">
-            <Button href={`${REPOSITORY_URL}/releases`} data-e2e="newsletter-off-releases">
-              <IconGitHub class="size-5" /> Releases on GitHub
-            </Button>
-            <Button href={spa.try} rel={TRY_REL} variant="outline">{TRY_ENTRY.label}</Button>
+    <SiteLanguage language={ctx.state.language}>
+      <SiteFrame state={ctx.state} path={path} head={{ ...head(t), noindex: true }}>
+        <NewsletterBand>
+          <div class="flex flex-col gap-6" data-e2e="newsletter-off">
+            <h1 class="text-3xl font-semibold tracking-tight">
+              {t.t(`NewsletterOff.title`, { site: SITE_NAME })}
+            </h1>
+            <Notice title={t.t(`NewsletterOff.noticeTitle`)}>{t.t(`NewsletterOff.notice`)}</Notice>
+            <p class="text-muted text-pretty">
+              {t.t(`NewsletterOff.lead`, { site: SITE_NAME })}
+            </p>
+            <div class="flex flex-col gap-4 sm:flex-row">
+              <Button href={`${REPOSITORY_URL}/releases`} data-e2e="newsletter-off-releases">
+                <IconGitHub class="size-5" /> {t.t(`NewsletterOff.releases`)}
+              </Button>
+              <Button href={spa.try} rel={TRY_REL} variant="outline">
+                {t.t(TRY_ENTRY.label)}
+              </Button>
+            </div>
           </div>
-        </div>
-      </NewsletterBand>
-    </SiteFrame>,
+        </NewsletterBand>
+      </SiteFrame>
+    </SiteLanguage>,
     { status: 503, headers: NO_REFERRER },
   )
 }
@@ -326,20 +355,24 @@ function renderConfirm(
     token: string
   },
 ): Response | Promise<Response> {
+  const { t, href } = speech(ctx)
   return ctx.render(
-    <SiteFrame state={ctx.state} path={FORM_ACTIONS.subscribeConfirm} head={TOKEN_PAGE_HEAD}>
-      <NewsletterBand>
-        <SubscriptionConfirmScreen
-          state={page.state}
-          email={page.email}
-          list={page.list}
-          token={page.token}
-          error={null}
-          pending={false}
-        />
-        {page.state === "done" && <AnalyticsView name="newsletter-confirmed" />}
-      </NewsletterBand>
-    </SiteFrame>,
+    <SiteLanguage language={ctx.state.language}>
+      <SiteFrame state={ctx.state} path={FORM_ACTIONS.subscribeConfirm} head={tokenPageHead(t)}>
+        <NewsletterBand>
+          <SubscriptionConfirmScreen
+            state={page.state}
+            email={page.email}
+            list={page.list}
+            token={page.token}
+            error={null}
+            pending={false}
+            localize={href}
+          />
+          {page.state === "done" && <AnalyticsView name="newsletter-confirmed" />}
+        </NewsletterBand>
+      </SiteFrame>
+    </SiteLanguage>,
     { status: page.status, headers: headersOf(page, NO_REFERRER) },
   )
 }
@@ -348,20 +381,24 @@ function renderUnsubscribe(
   ctx: FreshContext<State>,
   page: PageStatus & { state: UnsubscribeState; email?: string; list: string; token: string },
 ): Response | Promise<Response> {
+  const { t, href } = speech(ctx)
   return ctx.render(
-    <SiteFrame state={ctx.state} path={FORM_ACTIONS.unsubscribe} head={TOKEN_PAGE_HEAD}>
-      <NewsletterBand>
-        <UnsubscribeScreen
-          state={page.state}
-          email={page.email}
-          list={page.list}
-          token={page.token}
-          error={null}
-          pending={false}
-        />
-        {page.state === "done" && <AnalyticsView name="newsletter-unsubscribed" />}
-      </NewsletterBand>
-    </SiteFrame>,
+    <SiteLanguage language={ctx.state.language}>
+      <SiteFrame state={ctx.state} path={FORM_ACTIONS.unsubscribe} head={tokenPageHead(t)}>
+        <NewsletterBand>
+          <UnsubscribeScreen
+            state={page.state}
+            email={page.email}
+            list={page.list}
+            token={page.token}
+            error={null}
+            pending={false}
+            localize={href}
+          />
+          {page.state === "done" && <AnalyticsView name="newsletter-unsubscribed" />}
+        </NewsletterBand>
+      </SiteFrame>
+    </SiteLanguage>,
     { status: page.status, headers: headersOf(page, NO_REFERRER) },
   )
 }

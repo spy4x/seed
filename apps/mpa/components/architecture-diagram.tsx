@@ -1,5 +1,7 @@
 import type { JSX } from "preact"
+import { useSite } from "../use-site.tsx"
 
+/** A box of the diagram; its title and note are keys of the `site` catalog. */
 interface Box {
   x: number
   y: number
@@ -31,22 +33,29 @@ const WIDE: Layout = {
   height: 360,
   class: "hidden md:block",
   boxes: [
-    { x: 24, y: 40, w: 170, title: "Web app", note: "Preact, in the browser" },
-    { x: 24, y: 120, w: 170, title: "Website", note: "Fresh, like this page" },
-    { x: 250, y: 80, w: 150, title: "API", note: "Hono on Deno", accent: true },
-    { x: 460, y: 80, w: 156, title: "Postgres", note: "every change" },
-    { x: 250, y: 216, w: 150, title: "Worker", note: "the slow work" },
-    { x: 460, y: 216, w: 156, title: "Mail, push", note: "and clean-up" },
+    { x: 24, y: 40, w: 170, title: "Architecture.webApp", note: "Architecture.webAppNote" },
+    { x: 24, y: 120, w: 170, title: "Architecture.website", note: "Architecture.websiteNote" },
+    {
+      x: 250,
+      y: 80,
+      w: 150,
+      title: "Architecture.api",
+      note: "Architecture.apiNote",
+      accent: true,
+    },
+    { x: 460, y: 80, w: 156, title: "Architecture.postgres", note: "Architecture.postgresNote" },
+    { x: 250, y: 216, w: 150, title: "Architecture.worker", note: "Architecture.workerNote" },
+    { x: 460, y: 216, w: 156, title: "Architecture.mail", note: "Architecture.mailNote" },
   ],
   arrows: [
     { d: "M194 68 L246 100" },
     { d: "M194 148 L246 116" },
     { d: "M400 108 L456 108" },
-    { d: "M325 136 L325 212", label: { x: 335, y: 180, text: "events, same transaction" } },
+    { d: "M325 136 L325 212", label: { x: 335, y: 180, text: "Architecture.events" } },
     { d: "M400 244 L456 244" },
   ],
   frame: { w: 624, h: 300 },
-  caption: [{ y: 340, text: "All on one server, behind Traefik, with Valkey and Grafana" }],
+  caption: [{ y: 340, text: "Architecture.caption" }],
 }
 
 const TALL: Layout = {
@@ -54,12 +63,19 @@ const TALL: Layout = {
   height: 470,
   class: "md:hidden",
   boxes: [
-    { x: 24, y: 32, w: 148, title: "Web app", note: "Preact" },
-    { x: 188, y: 32, w: 148, title: "Website", note: "Fresh" },
-    { x: 96, y: 136, w: 168, title: "API", note: "Hono on Deno", accent: true },
-    { x: 24, y: 240, w: 148, title: "Postgres", note: "every change" },
-    { x: 188, y: 240, w: 148, title: "Worker", note: "the slow work" },
-    { x: 188, y: 336, w: 148, title: "Mail, push", note: "and clean-up" },
+    { x: 24, y: 32, w: 148, title: "Architecture.webApp", note: "Architecture.webAppNoteShort" },
+    { x: 188, y: 32, w: 148, title: "Architecture.website", note: "Architecture.websiteNoteShort" },
+    {
+      x: 96,
+      y: 136,
+      w: 168,
+      title: "Architecture.api",
+      note: "Architecture.apiNote",
+      accent: true,
+    },
+    { x: 24, y: 240, w: 148, title: "Architecture.postgres", note: "Architecture.postgresNote" },
+    { x: 188, y: 240, w: 148, title: "Architecture.worker", note: "Architecture.workerNote" },
+    { x: 188, y: 336, w: 148, title: "Architecture.mail", note: "Architecture.mailNote" },
   ],
   arrows: [
     { d: "M98 88 L150 132" },
@@ -70,8 +86,8 @@ const TALL: Layout = {
   ],
   frame: { w: 344, h: 410 },
   caption: [
-    { y: 440, text: "All on one server, behind Traefik," },
-    { y: 460, text: "with Valkey and Grafana" },
+    { y: 440, text: "Architecture.captionTop" },
+    { y: 460, text: "Architecture.captionBottom" },
   ],
 }
 
@@ -79,16 +95,23 @@ const TALL: Layout = {
  * What the diagram shows, for a screen reader. It is an `aria-label`, not an SVG `<title>`: Fresh
  * treats every `<title>` it renders as the page's, so one in the body would replace the head's.
  */
-const DIAGRAM_LABEL = `How Seed fits together: the web app and the website call the API, the API ` +
-  `writes every change and its events to Postgres, and the worker sends mail and push from ` +
-  `those events. Everything runs on one server.`
+const DIAGRAM_LABEL = `Architecture.label`
 
+/**
+ * One layout of the diagram. It is drawn left to right in every language, so a right-to-left page
+ * does not anchor its words outside their boxes. SVG text takes its direction from the CSS
+ * `direction` property, which the HTML `dir` attribute does not set on an SVG element: the
+ * `direction` attribute does.
+ */
 function Diagram({ layout, idPrefix }: { layout: Layout; idPrefix: string }): JSX.Element {
+  const { t } = useSite()
   return (
     <svg
+      dir="ltr"
+      direction="ltr"
       viewBox={`0 0 ${layout.width} ${layout.height}`}
       role="img"
-      aria-label={DIAGRAM_LABEL}
+      aria-label={t.t(DIAGRAM_LABEL)}
       class={`h-auto w-full text-foreground ${layout.class}`}
     >
       <defs>
@@ -123,7 +146,7 @@ function Diagram({ layout, idPrefix }: { layout: Layout; idPrefix: string }): JS
           />
           {arrow.label && (
             <text x={arrow.label.x} y={arrow.label.y} class="fill-current text-[14px]">
-              {arrow.label.text}
+              {t.t(arrow.label.text)}
             </text>
           )}
         </g>
@@ -143,13 +166,13 @@ function Diagram({ layout, idPrefix }: { layout: Layout; idPrefix: string }): JS
             y={box.y + 23}
             class="fill-current text-[17px] font-semibold"
           >
-            {box.title}
+            {t.t(box.title)}
           </text>
-          <text x={box.x + 14} y={box.y + 44} class="arch-note text-[14px]">{box.note}</text>
+          <text x={box.x + 14} y={box.y + 44} class="arch-note text-[14px]">{t.t(box.note)}</text>
         </g>
       ))}
       {layout.caption.map((line) => (
-        <text key={line.y} x="16" y={line.y} class="arch-note text-[14px]">{line.text}</text>
+        <text key={line.y} x="16" y={line.y} class="arch-note text-[14px]">{t.t(line.text)}</text>
       ))}
     </svg>
   )
