@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "check": "deno check postgres-catalog.ts public-catalog.ts setup.ts sample-catalog.ts",
-    "test": "deno test setup.test.ts"
+    "check": "deno check postgres-catalog.ts public-catalog.ts setup.ts sample-catalog.ts tracking.ts",
+    "test": "deno test setup.test.ts tracking.test.ts"
   }
 }

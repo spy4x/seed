@@ -4,6 +4,7 @@ import type {
   CatalogItemFields,
   CatalogItemStatus,
   CatalogSize,
+  CatalogSourceFields,
   CatalogText,
 } from "@domain/catalog"
 import { type CatalogActor, PostgresCatalog } from "./postgres-catalog.ts"
@@ -12,12 +13,21 @@ import { type CatalogActor, PostgresCatalog } from "./postgres-catalog.ts"
  * A small merch shop for local work and the public demo (#466): three categories and six items
  * with colours, sizes, a sold-out size and a sold-out item, in English. Five are published and one
  * is a draft. They have no photos: the website shows its placeholder until an operator adds some.
+ * Four tracking link sources (#483) come with them, with no links yet: an operator makes those.
  * The ids are fixed, so seeding again adds nothing.
  */
 export const SAMPLE_CATALOG_CATEGORIES: readonly (CatalogCategoryFields & { id: string })[] = [
   { id: `019a2f6c-0c00-7000-8000-00000000ca01`, slug: `tops`, name: { en: `Tops` } },
   { id: `019a2f6c-0c00-7000-8000-00000000ca02`, slug: `hoodies`, name: { en: `Hoodies` } },
   { id: `019a2f6c-0c00-7000-8000-00000000ca03`, slug: `accessories`, name: { en: `Accessories` } },
+]
+
+/** The places a small shop shares its items in, for the tracking links (#483). */
+export const SAMPLE_CATALOG_SOURCES: readonly (CatalogSourceFields & { id: string })[] = [
+  { id: `019a2f6c-0c00-7000-8000-00000000cb01`, slug: `facebook-group`, name: `Facebook group` },
+  { id: `019a2f6c-0c00-7000-8000-00000000cb02`, slug: `zalo-group`, name: `Zalo group` },
+  { id: `019a2f6c-0c00-7000-8000-00000000cb03`, slug: `instagram`, name: `Instagram` },
+  { id: `019a2f6c-0c00-7000-8000-00000000cb04`, slug: `friends`, name: `Friends` },
 ]
 
 const [TOPS, HOODIES, ACCESSORIES] = SAMPLE_CATALOG_CATEGORIES.map((category) => category.id)
@@ -173,8 +183,8 @@ export const SAMPLE_CATALOG_ITEMS: readonly SampleCatalogItem[] = [
 const SEED: CatalogActor = { userId: null, requestId: null }
 
 /**
- * Adds {@link SAMPLE_CATALOG_CATEGORIES} and {@link SAMPLE_CATALOG_ITEMS} through the admin's own
- * repository, skipping the ones that exist, and publishes the published ones. With `at`, the rows
+ * Adds {@link SAMPLE_CATALOG_CATEGORIES}, {@link SAMPLE_CATALOG_ITEMS} and
+ * {@link SAMPLE_CATALOG_SOURCES} through the admin's own repository, skipping the ones that exist, and publishes the published ones. With `at`, the rows
  * it adds and their audit rows are dated then: the demo's seed writes its past at a `now` of its
  * own, and no row may be later than it.
  */
@@ -195,6 +205,12 @@ export async function seedSampleCatalog(sql: postgres.Sql, at?: Date): Promise<v
     }
     added.push(sample.id)
   }
+  const sources = new Set((await catalog.listSources()).map((source) => source.id))
+  for (const { id, ...fields } of SAMPLE_CATALOG_SOURCES) {
+    if (sources.has(id)) continue
+    await catalog.createSource(id, fields, SEED)
+    added.push(id)
+  }
   if (!at || added.length === 0) return
   const ids = sql.array(added)
   await sql`
@@ -203,6 +219,10 @@ export async function seedSampleCatalog(sql: postgres.Sql, at?: Date): Promise<v
   await sql`
     UPDATE catalog_items SET created_at = ${at}, updated_at = ${at},
       published_at = CASE WHEN published_at IS NULL THEN NULL ELSE ${at}::timestamptz END
+    WHERE id = ANY(${ids}::uuid[])
+  `
+  await sql`
+    UPDATE catalog_link_sources SET created_at = ${at}, updated_at = ${at}
     WHERE id = ANY(${ids}::uuid[])
   `
   await sql`UPDATE audit_events SET created_at = ${at} WHERE entity_id = ANY(${ids}::uuid[])`

@@ -104,7 +104,7 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
     Icon: IconPackage,
     text: `Items for a shop, off until you turn it on: names and texts in each language, a ` +
       `price, colours, sizes with a size chart, what is sold out, and photos you upload at once ` +
-      `and drag into order.`,
+      `and drag into order. One short link per item and place you share it, counted in Umami.`,
   },
   {
     name: `Audit log`,

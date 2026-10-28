@@ -5,6 +5,8 @@ import { createPublicCatalogRoute, type PublicCatalogReads } from "./catalog.ts"
 
 const PHOTO = `019a2f6c-0c00-7000-8000-00000000c002`
 const BYTES = new Uint8Array([1, 2, 3])
+const CODE = `AbCdEfGh_-1`
+const ITEM_URL = `https://shop.example/shirts/linen?utm_source=zalo-a`
 const catalog: PublicCatalogResponse = {
   settings: { currency: `USD`, languages: [`en`] },
   categories: [],
@@ -22,6 +24,10 @@ function app() {
       return Promise.resolve(
         id === PHOTO && file === `480.webp` ? { bytes: BYTES, contentType: `image/webp` } : null,
       )
+    },
+    link: (code, counted) => {
+      asked.push([`link`, code, counted])
+      return Promise.resolve(code === CODE ? ITEM_URL : null)
     },
   }
   return { route: createPublicCatalogRoute(reads), asked }
@@ -52,5 +58,23 @@ describe(`public catalog routes`, () => {
     const { route, asked } = app()
     expect((await route.request(`/photos/..%2Fsecret/480.webp`)).status).toBe(404)
     expect(asked).toEqual([])
+  })
+
+  it(`answers where a tracking link leads, never cached`, async () => {
+    const { route, asked } = app()
+    const response = await route.request(`/links/${CODE}?counted=1`)
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ location: ITEM_URL })
+    expect(response.headers.get(`cache-control`)).toBe(`no-store`)
+    expect(asked).toEqual([[`link`, CODE, true]])
+  })
+
+  it(`answers 404 for an unknown code, and for one of another shape without reading`, async () => {
+    const { route, asked } = app()
+    expect((await route.request(`/links/ZZZZZZZZZZZ`)).status).toBe(404)
+    expect((await route.request(`/links/short`)).status).toBe(404)
+    expect((await route.request(`/links/${encodeURIComponent(`https://evil.example`)}`)).status)
+      .toBe(404)
+    expect(asked).toEqual([[`link`, `ZZZZZZZZZZZ`, false]])
   })
 })

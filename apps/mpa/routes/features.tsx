@@ -424,7 +424,7 @@ const TIERS: readonly Tier[] = [
           `A newsletter with double opt-in and one-click unsubscribe`,
           `A blog written in the admin panel, with topics, an RSS feed and article structured data`,
           `Contact links set in the admin panel, shown in the footer and the structured data`,
-          `An optional catalog for a shop, edited in the admin panel: items with photos, colours, sizes, a size chart and sold-out sizes, in every language you sell in`,
+          `An optional catalog for a shop, edited in the admin panel: items with photos, colours, sizes, a size chart and sold-out sizes, in every language you sell in, with a short tracking link per item and place you share it`,
           `sitemap.xml, robots.txt, canonical links and Open Graph images`,
           `Optional cookieless analytics in your own Umami, with an event on every call to action`,
         ],

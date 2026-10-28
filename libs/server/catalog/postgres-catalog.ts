@@ -6,6 +6,8 @@ import {
   CATALOG_ITEM_ENTITY,
   CATALOG_ITEMS_MAX,
   CATALOG_PHOTOS_MAX,
+  CATALOG_SOURCE_ENTITY,
+  CATALOG_SOURCES_MAX,
   type CatalogAuditKind,
   type CatalogCategory,
   type CatalogCategoryFields,
@@ -16,9 +18,11 @@ import {
   type CatalogItemFields,
   type CatalogItemRow,
   type CatalogItemStatus,
+  type CatalogLinkSource,
   type CatalogPhoto,
   type CatalogPhotoState,
   type CatalogSize,
+  type CatalogSourceFields,
   type CatalogStock,
   type CatalogText,
   CatalogVersionConflictError,
@@ -188,6 +192,7 @@ export async function readCatalogItem(sql: postgres.Sql, id: string): Promise<Ca
 const SLUG_UNIQUE: Record<string, string> = {
   catalog_items_slug_unique: `Another item has this address. Pick another.`,
   catalog_categories_slug_unique: `Another category has this address. Pick another.`,
+  catalog_link_sources_slug_unique: `Another source has this utm_source. Pick another.`,
 }
 
 /** `error` as `SLUG_TAKEN` when it is a slug's unique violation, else as is. */
@@ -654,6 +659,186 @@ export class PostgresCatalog {
 
   // #endregion
 
+  // #region Sources
+
+  /** Every tracking link source in order, with how many items have a link for each. */
+  listSources(): Promise<CatalogLinkSource[]> {
+    return readSources(this.sql)
+  }
+
+  /**
+   * Adds a source after the others. A create retried with the same id and fields answers the
+   * source the first one made; any other reuse of an id is refused.
+   */
+  async createSource(
+    id: string,
+    fields: CatalogSourceFields,
+    actor: CatalogActor,
+  ): Promise<CatalogLinkSource> {
+    return await this.writeSources(async (tx) => {
+      const [first] = await tx<{ slug: string; name: string; version: number }[]>`
+        SELECT slug, name, version FROM catalog_link_sources WHERE id = ${id}
+      `
+      if (first) {
+        if (first.version === 1 && first.slug === fields.slug && first.name === fields.name) {
+          return (await readSources(tx, id))[0]
+        }
+        throw new CatalogError(`ID_ALREADY_EXISTS`, `A source with this id exists already.`)
+      }
+      const [{ count }] = await tx<{ count: number }[]>`
+        SELECT count(*)::int AS count FROM catalog_link_sources
+      `
+      if (count >= CATALOG_SOURCES_MAX) {
+        throw new CatalogError(
+          `TOO_MANY`,
+          `The catalog keeps ${CATALOG_SOURCES_MAX} sources at most. Delete one first.`,
+        )
+      }
+      await tx`
+        INSERT INTO catalog_link_sources (id, slug, name, position)
+        VALUES (${id}, ${fields.slug}, ${fields.name}, ${count})
+      `
+      await audit(tx, actor, CATALOG_AUDIT_KINDS.sourceCreated, CATALOG_SOURCE_ENTITY, id, {
+        slug: fields.slug,
+      })
+      return (await readSources(tx, id))[0]
+    })
+  }
+
+  /**
+   * Saves the source's name and `utm_source` at `version`. Its links keep their addresses and
+   * carry the new `utm_source` from the next visit on.
+   */
+  async updateSource(
+    id: string,
+    version: number,
+    fields: CatalogSourceFields,
+    actor: CatalogActor,
+  ): Promise<CatalogLinkSource> {
+    return await this.writeSources(async (tx) => {
+      await currentSource(tx, id, version)
+      await tx`
+        UPDATE catalog_link_sources SET slug = ${fields.slug}, name = ${fields.name},
+          updated_at = now(), version = version + 1
+        WHERE id = ${id}
+      `
+      await audit(tx, actor, CATALOG_AUDIT_KINDS.sourceUpdated, CATALOG_SOURCE_ENTITY, id, {
+        slug: fields.slug,
+      })
+      return (await readSources(tx, id))[0]
+    })
+  }
+
+  /** Deletes the source at `version` and its links, whose addresses then answer 404. */
+  async deleteSource(id: string, version: number, actor: CatalogActor): Promise<void> {
+    await this.writeSources(async (tx) => {
+      const row = await currentSource(tx, id, version)
+      const [{ links }] = await tx<{ links: number }[]>`
+        SELECT count(*)::int AS links FROM catalog_tracking_links WHERE source_id = ${id}
+      `
+      await tx`DELETE FROM catalog_link_sources WHERE id = ${id}`
+      await tx`
+        UPDATE catalog_link_sources SET position = position - 1 WHERE position > ${row.position}
+      `
+      await audit(tx, actor, CATALOG_AUDIT_KINDS.sourceDeleted, CATALOG_SOURCE_ENTITY, id, {
+        slug: row.slug,
+        links: String(links),
+      })
+    })
+  }
+
+  /** Puts the sources in the order of `ids`, which must name each once. Versions do not move. */
+  async reorderSources(ids: readonly string[], actor: CatalogActor): Promise<CatalogLinkSource[]> {
+    await this.writeSources(async (tx) => {
+      const rows = await tx<{ id: string }[]>`SELECT id FROM catalog_link_sources`
+      assertSameSet(rows.map((row) => row.id), ids, `sources`)
+      await tx`
+        UPDATE catalog_link_sources AS source SET position = ordered.position - 1
+        FROM unnest(${tx.array([...ids])}::uuid[]) WITH ORDINALITY AS ordered(id, position)
+        WHERE source.id = ordered.id AND source.position <> ordered.position - 1
+      `
+      await tx`
+        INSERT INTO audit_events (event_kind, actor_user_id, request_id, entity_type, details)
+        VALUES (
+          ${CATALOG_AUDIT_KINDS.sourcesReordered}, ${actor.userId}, ${actor.requestId},
+          ${CATALOG_SOURCE_ENTITY}, ${tx.json({ ids: [...ids] })}
+        )
+      `
+    })
+    return await this.listSources()
+  }
+
+  /** Runs `body` in a transaction that holds the sources' write lock. */
+  private async writeSources<T>(body: (tx: Tx) => Promise<T>): Promise<T> {
+    return await this.write(async (tx) => {
+      await tx`LOCK TABLE catalog_link_sources IN SHARE ROW EXCLUSIVE MODE`
+      return await body(tx)
+    })
+  }
+
+  // #endregion
+
+  // #region Tracking links
+
+  /** The item's tracking links, one per source that has one. */
+  async itemLinks(itemId: string): Promise<StoredTrackingLink[]> {
+    return await this.sql<StoredTrackingLink[]>`
+      SELECT ${this.sql.unsafe(LINK_COLUMNS)} FROM catalog_tracking_links l
+      WHERE l.item_id = ${itemId}
+      ORDER BY l.created_at, l.id
+    `
+  }
+
+  /**
+   * The item's link for the source, made with `id` and `code` when it has none. A second call, or
+   * two at once, answer the first link: `created` says whether this call made it, and only that
+   * call writes the audit row. Answers `null` when the item or the source does not exist.
+   */
+  async trackingLink(
+    itemId: string,
+    sourceId: string,
+    made: { id: string; code: string },
+    actor: CatalogActor,
+  ): Promise<TrackingLinkMade | null> {
+    return await this.sql.begin(async (tx) => {
+      // The item and the source stay while the link is made; a deletion waits for this.
+      const [item] = await tx<{ name: CatalogText }[]>`
+        SELECT name FROM catalog_items WHERE id = ${itemId} FOR SHARE
+      `
+      if (!item) return null
+      const [source] = await tx<{ slug: string; name: string }[]>`
+        SELECT slug, name FROM catalog_link_sources WHERE id = ${sourceId} FOR SHARE
+      `
+      if (!source) return null
+      const names = { item: item.name, source: source.name }
+      const [inserted] = await tx<StoredTrackingLink[]>`
+        INSERT INTO catalog_tracking_links (id, item_id, source_id, code)
+        VALUES (${made.id}, ${itemId}, ${sourceId}, ${made.code})
+        ON CONFLICT (item_id, source_id) DO NOTHING
+        RETURNING ${tx.unsafe(LINK_COLUMNS.replaceAll(`l.`, ``))}
+      `
+      if (inserted) {
+        await audit(tx, actor, CATALOG_AUDIT_KINDS.linkCreated, CATALOG_ITEM_ENTITY, itemId, {
+          source: source.slug,
+          code: made.code,
+        })
+        return { link: inserted, created: true, names }
+      }
+      const [existing] = await tx<StoredTrackingLink[]>`
+        SELECT ${tx.unsafe(LINK_COLUMNS)} FROM catalog_tracking_links l
+        WHERE l.item_id = ${itemId} AND l.source_id = ${sourceId}
+      `
+      return { link: existing, created: false, names }
+    }) as TrackingLinkMade | null
+  }
+
+  /** Records that Umami holds the link, under the link's own id. */
+  async markUmamiLinked(id: string): Promise<void> {
+    await this.sql`UPDATE catalog_tracking_links SET umami_link_id = id WHERE id = ${id}`
+  }
+
+  // #endregion
+
   /** Runs `body` in a transaction, answering a slug taken by another as `SLUG_TAKEN`. */
   private async write<T>(body: (tx: Tx) => Promise<T>): Promise<T> {
     try {
@@ -822,6 +1007,64 @@ async function currentCategory(
     SELECT slug, position, version FROM catalog_categories WHERE id = ${id} FOR UPDATE
   `
   if (!row) throw new CatalogError(`CATEGORY_NOT_FOUND`, `This category does not exist any more.`)
+  if (row.version !== version) throw new CatalogVersionConflictError(row.version)
+  return row
+}
+
+/** A tracking link as the database holds it. */
+export interface StoredTrackingLink {
+  id: string
+  sourceId: string
+  code: string
+  /** Set once Umami holds the link, under the link's own id. */
+  umamiLinkId: string | null
+  createdAt: Date
+}
+
+/** What {@link PostgresCatalog.trackingLink} answers. */
+export interface TrackingLinkMade {
+  link: StoredTrackingLink
+  /** Whether this call made the link. */
+  created: boolean
+  /** The item's and the source's names, for the link's name in Umami. */
+  names: { item: CatalogText; source: string }
+}
+
+const LINK_COLUMNS = `l.id, l.source_id, l.code, l.umami_link_id, l.created_at`
+
+async function readSources(sql: postgres.Sql, id?: string): Promise<CatalogLinkSource[]> {
+  const rows = await sql<(Omit<CatalogLinkSource, `createdAt` | `updatedAt`> & {
+    createdAt: Date
+    updatedAt: Date
+  })[]>`
+    SELECT s.id, s.slug, s.name, s.position, s.created_at, s.updated_at, s.version,
+      (SELECT count(*)::int FROM catalog_tracking_links l WHERE l.source_id = s.id) AS link_count
+    FROM catalog_link_sources s
+    ${id === undefined ? sql`` : sql`WHERE s.id = ${id}`}
+    ORDER BY s.position, s.id
+  `
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    position: row.position,
+    linkCount: row.linkCount,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+    version: row.version,
+  }))
+}
+
+/** Locks the source for the rest of the transaction and checks it is still at `version`. */
+async function currentSource(
+  tx: Tx,
+  id: string,
+  version: number,
+): Promise<{ slug: string; position: number }> {
+  const [row] = await tx<{ slug: string; position: number; version: number }[]>`
+    SELECT slug, position, version FROM catalog_link_sources WHERE id = ${id} FOR UPDATE
+  `
+  if (!row) throw new CatalogError(`SOURCE_NOT_FOUND`, `This source does not exist any more.`)
   if (row.version !== version) throw new CatalogVersionConflictError(row.version)
   return row
 }

@@ -4,12 +4,18 @@ import {
   parseCatalogCurrency,
   parseCatalogLanguages,
 } from "@domain/catalog"
+import type { TrackingSetup } from "./tracking.ts"
 
 /** Whether the catalog is on, and how it is set up. */
 export interface CatalogSetup {
   /** `CATALOG=true`. Off, no catalog route answers and the admin app shows no Catalog entry. */
   on: boolean
   settings: CatalogSettings
+  /**
+   * How tracking links are made (#483, `readTrackingSetup`), or `null` while the website's address
+   * is unset. The API reads it beside the catalog's switch.
+   */
+  tracking?: TrackingSetup | null
 }
 
 /** The catalog of a product that does not turn it on. */

@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { slugify } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { IconEllipsisVertical, IconGlobe, IconPlus, IconTrashBin } from "@spy4x/preact-icons"
+import {
+  IconCopy,
+  IconEllipsisVertical,
+  IconGlobe,
+  IconPlus,
+  IconTrashBin,
+} from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
@@ -45,6 +51,7 @@ import {
   type CatalogItem,
   type CatalogItemFields,
   catalogLanguageName,
+  type CatalogLinkSource,
   type CatalogPhoto,
   type CatalogRange,
   type CatalogSettings,
@@ -223,7 +230,20 @@ export interface AdminCatalogItemScreenProps {
   onPhotoMove: (from: number, to: number) => void
   onPhotoSave: (photoId: string, change: { alt: CatalogText; colourId: string | null }) => void
   onPhotoRemove: (photoId: string) => void
+  /** The item's tracking links (#483); left out while items get none. */
+  shareLinks?: CatalogShareLinksState
   navigate?: Navigate
+}
+
+/** What the item page's "Share links" card shows. */
+export interface CatalogShareLinksState {
+  sources: readonly CatalogLinkSource[]
+  /** The short address of each source that has a link, by source id. */
+  links: Readonly<Record<string, string>>
+  /** The source whose link is being made and copied. */
+  copying: string | null
+  /** Makes the source's link when it has none, then copies it. */
+  onCopy: (sourceId: string) => void
 }
 
 const BACK = { href: ADMIN_CATALOG_PATHS.list, label: `Back to the catalog` }
@@ -465,6 +485,14 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
             </Card>
           )}
 
+          {item && props.shareLinks && (
+            <ShareLinks
+              state={props.shareLinks}
+              published={status === `published`}
+              {...{ navigate }}
+            />
+          )}
+
           <ErrorState message={errors.form ?? null} />
           <div
             class="flex gap-2 sm:justify-end"
@@ -528,6 +556,106 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
         />
       )}
     </div>
+  )
+}
+
+/**
+ * One short link per source (#483): the first "Copy link" makes it, later presses copy the same
+ * one. A source's row shows its link once it has one, so it can also be selected by hand.
+ */
+function ShareLinks(
+  { state, published, navigate }: {
+    state: CatalogShareLinksState
+    published: boolean
+    navigate?: Navigate
+  },
+): JSX.Element {
+  return (
+    <Card>
+      <CardHeader
+        title="Share links"
+        headingLevel={2}
+        action={state.sources.length > 0 && (
+          <Button
+            href={ADMIN_CATALOG_PATHS.sources}
+            navigate={navigate}
+            variant="ghost"
+            class="min-h-11 sm:min-h-9"
+            data-e2e="catalog-item-sources"
+          >
+            Edit sources
+          </Button>
+        )}
+      />
+      <CardBody>
+        <Stack>
+          <p class="text-sm text-muted">
+            {state.sources.length === 0
+              ? `Add the places you share items in, such as a Facebook group or a Zalo group. Each gets its own link to this item, so you see which brings visitors.`
+              : `Share each place's own link, so you see which brings visitors.`}
+            {!published && ` The links open the item once it is on the website.`}
+          </p>
+          {state.sources.length === 0
+            ? (
+              <div>
+                <Button
+                  href={ADMIN_CATALOG_PATHS.sourceCreate}
+                  navigate={navigate}
+                  variant="outline"
+                  class="min-h-11 sm:min-h-9"
+                  data-e2e="catalog-item-source-new"
+                >
+                  Add a source
+                </Button>
+              </div>
+            )
+            : (
+              <ul
+                class="-mx-4 divide-y divide-subtle border-y border-subtle sm:-mx-6"
+                data-e2e="catalog-item-links"
+              >
+                {state.sources.map((source) => {
+                  const link = state.links[source.id]
+                  const copying = state.copying === source.id
+                  return (
+                    <li
+                      key={source.id}
+                      class="flex min-h-14 items-center gap-3 px-4 py-3 sm:px-6"
+                      data-e2e="catalog-item-link"
+                    >
+                      <div class="flex min-w-0 flex-1 flex-col gap-1">
+                        <span class="font-medium wrap-anywhere">{source.name}</span>
+                        <span
+                          class={`text-sm text-muted ${
+                            link ? `break-all select-all` : `wrap-anywhere`
+                          }`}
+                          data-e2e="catalog-item-link-url"
+                        >
+                          {link ?? `No link yet · utm_source=${source.slug}`}
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        class="min-h-11 shrink-0 sm:min-h-9"
+                        aria-label={`Copy link for ${source.name}`}
+                        busy={copying}
+                        busyLabel="Copying…"
+                        disabled={state.copying !== null && !copying}
+                        onClick={() => state.onCopy(source.id)}
+                        data-e2e="catalog-item-link-copy"
+                      >
+                        <IconCopy class="size-4" aria-hidden="true" />
+                        Copy link
+                      </Button>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+        </Stack>
+      </CardBody>
+    </Card>
   )
 }
 
