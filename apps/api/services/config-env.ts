@@ -64,3 +64,11 @@ export const envSchema = type({
 export function readApiEnv(reader?: EnvReader) {
   return loadConfig(envSchema, reader)
 }
+
+/**
+ * Whether the SPA runs (docs/deploy.md, "Without the SPA"): on unless `SPA=false`, which closes
+ * every account route on every host but the admin host, sign-up among them.
+ */
+export function isSpaOn(env: { SPA?: string }): boolean {
+  return env.SPA !== "false"
+}
