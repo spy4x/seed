@@ -379,7 +379,19 @@ Deno.test(`blog: refuses a translation that does not name a post in another lang
     })
     await t.step(`itself`, async () => {
       const id = uuidV7()
-      expect(await refused(id, { language: `es`, translationOf: id })).toEqual(refusal)
+      await blog.create(id, fields(`alone`, { language: `es` }), maya)
+      const error = await rejection(
+        blog.update(id, 1, fields(`alone`, { language: `ru`, translationOf: id }), false, maya),
+      )
+      expect([error.code, error.field]).toEqual(refusal)
+    })
+    await t.step(`a post that others translate`, async () => {
+      const ru = uuidV7()
+      await blog.create(ru, fields(`privet`, { language: `ru` }), maya)
+      const error = await rejection(
+        blog.update(english, 1, fields(`hello`, { translationOf: ru }), false, maya),
+      )
+      expect([error.code, error.field]).toEqual(refusal)
     })
   })
 })
