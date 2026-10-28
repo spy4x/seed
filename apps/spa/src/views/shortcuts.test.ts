@@ -7,6 +7,7 @@ import {
   SCREEN_PATHS,
   TAG_PATHS,
 } from "@ui/progressive.tsx"
+import { SHORTCUT_GROUPS } from "@ui/shortcuts.tsx"
 import { spaShortcutRows } from "./shortcuts.ts"
 
 function rows(activityGroupId: string | null, onOverview = false) {
@@ -53,10 +54,10 @@ describe("SPA keyboard shortcuts", () => {
 
   it("opens the range picker with d and Customise with c while the overview is open", () => {
     const { list, seen } = rows(null, true)
-    const page = list.filter((row) => row.group === "This page")
+    const page = list.filter((row) => row.group === SHORTCUT_GROUPS.page)
     expect(page.map((row) => [row.keys, row.description])).toEqual([
-      ["d", "Change date range"],
-      ["c", "Customise overview"],
+      ["d", `Shortcuts.dateRange`],
+      ["c", `Shortcuts.customise`],
     ])
     for (const row of page) row.run!()
     expect(seen).toMatchObject({ range: 1, customise: 1 })

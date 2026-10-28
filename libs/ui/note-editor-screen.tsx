@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -11,19 +10,24 @@ import { Textarea } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { NOTE_BODY_MAX_LENGTH, NOTE_TITLE_MAX_LENGTH } from "@domain/notes"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import {
   ListEmpty,
   MoveNoteDialog,
   type MoveTarget,
+  NoGroup,
   type NoteDraft,
   type NoteFormErrors,
   type NotesGroup,
+  userValue,
 } from "./notes-screen.tsx"
+import { useAppText } from "./i18n.ts"
+import { type Message, messageText } from "./message.ts"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { NoteAttachments, type NoteAttachmentsProps } from "./note-attachments.tsx"
 import { NoteTags, TagChips, type TagRow } from "./tag-parts.tsx"
-import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { type Navigate, NOTE_PATHS, ScreenForm } from "./progressive.tsx"
 
 /**
  * Who made a note and when, and who changed it last and when, as the page's header line names
@@ -88,7 +92,7 @@ export interface NoteEditorScreenProps {
   onMove?: (toGroupId: string) => void
   moving?: boolean
   /** The refusal of the last move, shown under the form. */
-  moveError?: string | null
+  moveError?: Message | null
   /** The group's tags, offered as a picker under the text. Left out or empty, there is none. */
   tags?: readonly TagRow[]
   /** Who made the note and changed it last, shown under the title. Left out on the create page. */
@@ -116,28 +120,29 @@ export type NoteAttachmentsSlot = Omit<
  */
 export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
   const { group, notFound, navigate } = props
+  const t = useAppText()
+  const back = { href: NOTE_PATHS.list, label: t.t(`NoteEditor.back`) }
   if (!group) {
     return (
       <EditorPage>
-        <PageHeader back={BACK} navigate={navigate} title="Note" />
-        <ListEmpty
-          title={props.loading ? "Loading the group…" : "This group does not exist."}
-          action={!props.loading && (
-            <Button href={SCREEN_PATHS.groups} navigate={navigate} variant="outline">
-              Back to groups
-            </Button>
-          )}
-        />
+        <PageHeader back={back} navigate={navigate} title={t.t(`NoteEditor.title`)} />
+        <NoGroup loading={props.loading} navigate={navigate} />
       </EditorPage>
     )
   }
   if (notFound && props.elsewhere) {
     return (
       <EditorPage>
-        <PageHeader back={BACK} navigate={navigate} title="Note in another group" />
+        <PageHeader back={back} navigate={navigate} title={t.t(`NoteEditor.elsewhereTitle`)} />
         <Stack gap="md">
           <p class="text-sm text-muted" data-e2e="note-elsewhere">
-            This note is in {props.elsewhere.name}, another of your groups. You are in {group.name}.
+            <Rich
+              parts={t.parts(`NoteEditor.elsewhere`, {
+                group: props.elsewhere.name,
+                current: group.name,
+              })}
+              tags={{ group: userValue, current: userValue }}
+            />
           </p>
           <div>
             <Button
@@ -145,11 +150,14 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
               class="min-h-11 sm:min-h-9"
               data-e2e="note-switch-group"
               busy={props.switching}
-              busyLabel="Switching…"
+              busyLabel={t.t(`NoteEditor.switching`)}
               disabled={!props.onSwitchGroup}
               onClick={props.onSwitchGroup}
             >
-              Switch to {props.elsewhere.name}
+              <Rich
+                parts={t.parts(`NoteEditor.switchTo`, { group: props.elsewhere.name })}
+                tags={{ group: userValue }}
+              />
             </Button>
           </div>
         </Stack>
@@ -159,14 +167,15 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
   if (notFound) {
     return (
       <EditorPage>
-        <PageHeader back={BACK} navigate={navigate} title="This note does not exist." />
+        <PageHeader back={back} navigate={navigate} title={t.t(`NoteEditor.notFoundTitle`)} />
         {props.errors.form
-          ? <ErrorState message={props.errors.form} />
+          ? <ErrorState message={messageText(t, props.errors.form)} />
           : (
             <p class="text-sm text-muted" data-e2e="note-not-found">
-              There is no such note in{" "}
-              {group.name}. It may have been deleted, or it may be in another of your groups: switch
-              to that group, then open it from its notes.
+              <Rich
+                parts={t.parts(`NoteEditor.notFound`, { group: group.name })}
+                tags={{ group: userValue }}
+              />
             </p>
           )}
       </EditorPage>
@@ -175,8 +184,8 @@ export function NoteEditorScreen(props: NoteEditorScreenProps): JSX.Element {
   if (props.loading) {
     return (
       <EditorPage>
-        <PageHeader back={BACK} navigate={navigate} title="Note" />
-        <ListEmpty title="Loading the note…" />
+        <PageHeader back={back} navigate={navigate} title={t.t(`NoteEditor.title`)} />
+        <ListEmpty title={t.t(`NoteEditor.loading`)} />
       </EditorPage>
     )
   }
@@ -189,7 +198,10 @@ function EditorPage({ children }: { children?: ComponentChildren }): JSX.Element
 }
 
 /** The header's back link: to the list, which `navigate` follows without a page load. */
-const BACK = { href: NOTE_PATHS.list, label: "Back to notes" }
+function useBack(): { href: string; label: string } {
+  const t = useAppText()
+  return { href: NOTE_PATHS.list, label: t.t(`NoteEditor.back`) }
+}
 
 /**
  * The header's second line on an existing note: "Created by Maya Chen, 12 Mar 2026 · Updated by
@@ -198,17 +210,28 @@ const BACK = { href: NOTE_PATHS.list, label: "Back to notes" }
  */
 function AuthorshipLine({ authorship }: { authorship: NoteAuthorship }): JSX.Element {
   const format = useFormat()
-  const by = (name: string | undefined) => name ? ` by ${name}` : ""
+  const t = useAppText()
+  const { createdBy, updatedBy } = authorship
   return (
     <p class="flex flex-col text-sm text-muted sm:flex-row sm:gap-2" data-e2e="note-authorship">
       <span>
-        Created{by(authorship.createdBy)}, <OnDay at={authorship.createdAt} />
+        <Rich
+          parts={createdBy
+            ? t.parts(`NoteEditor.createdBy`, { name: createdBy, date: `` })
+            : t.parts(`NoteEditor.created`, { date: `` })}
+          tags={{ name: userValue, date: () => <OnDay at={authorship.createdAt} /> }}
+        />
       </span>
       {authorship.updatedAt !== authorship.createdAt && (
         <>
           <span aria-hidden="true" class="hidden sm:inline">·</span>
           <span>
-            Updated{by(authorship.updatedBy)}, <When at={authorship.updatedAt} />
+            <Rich
+              parts={updatedBy
+                ? t.parts(`NoteEditor.updatedBy`, { name: updatedBy, date: `` })
+                : t.parts(`NoteEditor.updated`, { date: `` })}
+              tags={{ name: userValue, date: () => <When at={authorship.updatedAt} /> }}
+            />
             <span class="sr-only">({format.exact(authorship.updatedAt)})</span>
           </span>
         </>
@@ -221,24 +244,27 @@ function AuthorshipLine({ authorship }: { authorship: NoteAuthorship }): JSX.Ele
 function ReadOnlyNote(
   { note, value, group, navigate, tags, authorship, attachments }: NoteEditorScreenProps,
 ): JSX.Element {
+  const t = useAppText()
   return (
     <EditorPage>
       <PageHeader
-        back={BACK}
+        back={useBack()}
         navigate={navigate}
-        title={note ? value.title : "New note"}
+        title={note ? value.title : t.t(`NoteEditor.new`)}
         subtitle={group?.name}
         subtitleDataE2E="notes-group"
         titleDataE2E="note-read-title"
       />
       {note && authorship && <AuthorshipLine authorship={authorship} />}
       <p class="text-sm text-muted" data-e2e="note-read-only">
-        {note
-          ? "You can read this note. Only an editor can change it."
-          : "Only an editor can add notes to this group."}
+        {note ? t.t(`NoteEditor.readOnly`) : t.t(`NoteEditor.readOnlyNew`)}
       </p>
       {note && value.body && (
-        <p class="whitespace-pre-wrap break-words text-base" data-e2e="note-read-body">
+        <p
+          class="whitespace-pre-wrap break-words text-base"
+          data-e2e="note-read-body"
+          translate={false}
+        >
           {value.body}
         </p>
       )}
@@ -260,6 +286,7 @@ type WithGroup = NoteEditorScreenProps & { group: NotesGroup }
 
 function Editor(props: WithGroup): JSX.Element {
   const { group, note, value, onChange, errors, saving, onSave, navigate } = props
+  const t = useAppText()
   const moveTargets = props.onMove ? props.moveTargets ?? [] : []
   const [asking, setAsking] = useState(false)
   const [choosingGroup, setChoosingGroup] = useState(false)
@@ -275,9 +302,9 @@ function Editor(props: WithGroup): JSX.Element {
     >
       <EditorPage>
         <PageHeader
-          back={BACK}
+          back={useBack()}
           navigate={navigate}
-          title={note ? note.savedTitle : "New note"}
+          title={note ? note.savedTitle : t.t(`NoteEditor.new`)}
           heading={
             <textarea
               ref={title}
@@ -285,11 +312,11 @@ function Editor(props: WithGroup): JSX.Element {
               id="note-title"
               data-e2e="note-title"
               name="title"
-              aria-label="Title"
+              aria-label={t.t(`NoteEditor.titleLabel`)}
               aria-invalid={errors.title ? "true" : undefined}
               aria-describedby={errors.title ? "note-title-error" : undefined}
               autocomplete="off"
-              placeholder="Title"
+              placeholder={t.t(`NoteEditor.titleLabel`)}
               class="-mx-2 block w-full min-w-0 resize-none overflow-hidden rounded-md border-0 bg-transparent px-2 py-0 text-xl font-semibold text-foreground field-sizing-content placeholder:text-muted hover:bg-hover focus:bg-surface focus:outline-hidden focus-visible:ring-2 focus-visible:ring-focus sm:text-2xl"
               maxLength={NOTE_TITLE_MAX_LENGTH}
               value={value.title}
@@ -315,7 +342,7 @@ function Editor(props: WithGroup): JSX.Element {
                   disabled={props.moving}
                   dataE2E="note-move"
                 >
-                  Move to group…
+                  {t.t(`Notes.moveToGroup`)}
                 </DropdownItem>
               )}
               {props.onDelete && (
@@ -325,7 +352,7 @@ function Editor(props: WithGroup): JSX.Element {
                   danger
                   dataE2E="note-delete"
                 >
-                  Delete
+                  {t.t(`Notes.delete`)}
                 </DropdownItem>
               )}
             </>
@@ -335,7 +362,7 @@ function Editor(props: WithGroup): JSX.Element {
           {note && props.authorship && <AuthorshipLine authorship={props.authorship} />}
           {errors.title && (
             <p id="note-title-error" class="text-sm text-danger" data-e2e="note-title-error">
-              {errors.title}
+              {messageText(t, errors.title)}
             </p>
           )}
           <NoteFields
@@ -357,19 +384,25 @@ function Editor(props: WithGroup): JSX.Element {
           )}
           {note?.conflict && (
             <p class="text-sm" data-e2e="note-conflict">
-              <Link
-                href={NOTE_PATHS.note(note.id)}
-                navigate={props.onReloadLatest ? () => props.onReloadLatest?.() : navigate}
-                class="pc-link"
-                // Acts on this page, so a guard that asks before leaving must let it through.
-                data-unsaved-ok="true"
-              >
-                Load the latest version
-              </Link>{" "}
-              to see what changed. Your text here is kept until you do.
+              <Rich
+                parts={t.parts(`NoteEditor.conflict`)}
+                tags={{
+                  link: (text) => (
+                    <Link
+                      href={NOTE_PATHS.note(note.id)}
+                      navigate={props.onReloadLatest ? () => props.onReloadLatest?.() : navigate}
+                      class="pc-link"
+                      // Acts on this page, so a guard that asks before leaving must let it through.
+                      data-unsaved-ok="true"
+                    >
+                      {text}
+                    </Link>
+                  ),
+                }}
+              />
             </p>
           )}
-          <ErrorState message={props.moveError ?? null} />
+          <ErrorState message={messageText(t, props.moveError)} />
           {
             // The form's footer. On a phone Save is on top at full width, Cancel under it; from
             // `sm` up they are a row at the right, Save last.
@@ -382,16 +415,16 @@ function Editor(props: WithGroup): JSX.Element {
               class="min-h-11 w-full sm:min-h-9 sm:w-auto"
               data-e2e="note-cancel"
             >
-              Cancel
+              {t.t(`NoteEditor.cancel`)}
             </Button>
             <Button
               type="submit"
               class="min-h-11 w-full sm:min-h-9 sm:w-auto"
               data-e2e="note-save"
               busy={saving}
-              busyLabel={note ? "Saving…" : "Creating…"}
+              busyLabel={note ? t.t(`NoteEditor.saving`) : t.t(`NoteEditor.creating`)}
             >
-              {note ? "Save note" : "Create note"}
+              {note ? t.t(`NoteEditor.save`) : t.t(`NoteEditor.create`)}
             </Button>
           </div>
         </Stack>
@@ -409,10 +442,10 @@ function Editor(props: WithGroup): JSX.Element {
       )}
       {asking && note && (
         <ConfirmDialog
-          title="Delete this note?"
-          message={`"${value.title}" will be deleted for everyone in ${group.name}.`}
-          confirmLabel="Delete note"
-          cancelLabel="Cancel"
+          title={t.t(`NoteEditor.deleteTitle`)}
+          message={t.t(`NoteEditor.deleteMessage`, { title: value.title, group: group.name })}
+          confirmLabel={t.t(`NoteEditor.deleteConfirm`)}
+          cancelLabel={t.t(`NoteEditor.cancel`)}
           tone="danger"
           dataE2E="note-delete-dialog"
           onConfirm={() => {
@@ -440,9 +473,10 @@ function NoteFields(
     navigate?: Navigate
   },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <Stack>
-      <Field id="note-body" label="Text">
+      <Field id="note-body" label={t.t(`NoteEditor.text`)}>
         <Textarea
           data-e2e="note-body"
           name="body"
@@ -458,14 +492,14 @@ function NoteFields(
           tags={tags}
           value={value.tagIds ?? []}
           onChange={(tagIds) => onChange?.({ ...value, tagIds })}
-          label="Tags"
+          label={t.t(`NoteEditor.tags`)}
           showLabel
           dataE2E="note-tags-picker"
         />
       )}
       {errors.plan
         ? <PlanRefusalNotice groupId={groupId} refusal={errors.plan} navigate={navigate} />
-        : <ErrorState message={errors.form} />}
+        : <ErrorState message={messageText(t, errors.form)} />}
     </Stack>
   )
 }

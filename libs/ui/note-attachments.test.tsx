@@ -15,6 +15,11 @@ import {
   type NoteAttachmentsProps,
   quotaLine,
 } from "./note-attachments.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+
+/** The `app` catalog's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -266,10 +271,11 @@ describe(`note attachments section`, () => {
 
 describe(`quota line`, () => {
   it(`names the group, its files and its bytes against the plan's caps`, () => {
-    expect(quotaLine(`Family`, base.usage!)).toEqual({
-      text: `Family uses 37 of 100 files and 41 MB of 200 MB.`,
-      warn: false,
-    })
+    const { message, warn } = quotaLine(`Family`, base.usage!)
+    expect(EN.t(message.key, message.values)).toBe(
+      `Family uses 37 of 100 files and 41 MB of 200 MB.`,
+    )
+    expect(warn).toBe(false)
   })
 
   it(`turns to the warning tone from 90 % of either cap`, () => {
@@ -279,8 +285,7 @@ describe(`quota line`, () => {
   })
 
   it(`leaves out a cap the plan does not set`, () => {
-    expect(quotaLine(`Family`, { ...base.usage!, maxFiles: null, maxBytes: null }).text).toBe(
-      `Family uses 37 files and 41 MB.`,
-    )
+    const { message } = quotaLine(`Family`, { ...base.usage!, maxFiles: null, maxBytes: null })
+    expect(EN.t(message.key, message.values)).toBe(`Family uses 37 files and 41 MB.`)
   })
 })

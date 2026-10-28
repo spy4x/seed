@@ -1,6 +1,6 @@
 import { signal } from "@preact/signals"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
-import { NEW_NOTE_TEXT, type NewNoteAdded, type NewNoteErrors } from "@ui/new-note-dialog.tsx"
+import { CHOOSE_GROUP_ERROR, type NewNoteAdded, type NewNoteErrors } from "@ui/new-note-dialog.tsx"
 import { type NoteItem, notesStore } from "./notes.ts"
 
 /** What the New note store needs: the notes store's quick create, and a fresh note id. */
@@ -53,7 +53,7 @@ export function createNewNoteStore(dependencies: NewNoteDependencies) {
   async function add(target: NewNoteTarget | null): Promise<NoteItem | null> {
     if (pending.value) return null
     if (!target) {
-      errors.value = { group: NEW_NOTE_TEXT.chooseGroupError }
+      errors.value = { group: CHOOSE_GROUP_ERROR }
       return null
     }
     pending.value = true

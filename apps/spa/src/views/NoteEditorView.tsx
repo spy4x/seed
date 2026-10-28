@@ -20,6 +20,8 @@ import { pageHeading } from "@spy4x/preact-system/route-announcer"
 import { isSpaPath } from "./spa-paths.ts"
 import { personName } from "./note-people.ts"
 import { movedToast } from "./note-toasts.ts"
+import { useAppText } from "@ui/i18n.ts"
+import { messageText } from "@ui/message.ts"
 
 /** The palette's "Attach files to this note" while a note page an editor can change is open. */
 export const noteEditorPageActions = signal<{ attach(): void } | null>(null)
@@ -45,6 +47,7 @@ function openDownload(url: string, type: string): void {
  */
 export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const store = notesStore
   const groupId = selectionStore.groupId.value
   useEffect(() => {
@@ -139,15 +142,16 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
         }}
         authorship={saved && {
           createdAt: saved.createdAt,
-          createdBy: personName(saved.createdByUserId, youId, members),
+          createdBy: personName(t, saved.createdByUserId, youId, members),
           updatedAt: saved.updatedAt,
-          updatedBy: personName(saved.updatedByUserId, youId, members),
+          updatedBy: personName(t, saved.updatedByUserId, youId, members),
         }}
         attachments={attachments && {
           items: attachments.rows.value.map((row) => ({
             ...row,
+            error: messageText(t, row.error) ?? undefined,
             detail: row.status === "ready" && row.createdByUserId !== undefined
-              ? personName(row.createdByUserId, youId, members)
+              ? personName(t, row.createdByUserId, youId, members)
               : undefined,
           })),
           usage: attachments.usage.value,
@@ -164,7 +168,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
               openDownload(await attachments.link(id), row?.type ?? "")
               return null
             } catch (cause) {
-              return cause instanceof Error ? cause.message : "This link expired. Try again."
+              return cause instanceof Error ? cause.message : `AttachmentMessages.linkExpired`
             }
           },
         }}
@@ -183,8 +187,8 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
             if (!note) return
             void attachmentsStore.created(note.id)
             toasts.success({
-              title: "Note created",
-              body: `"${note.title}" was created.`,
+              title: t.t(`NoteEditorView.createdTitle`),
+              body: t.t(`NoteEditorView.created`, { title: note.title }),
               dataE2E: "note-created",
             })
             navigate(NOTE_PATHS.note(note.id))
@@ -192,8 +196,8 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
             const title = editing.title.trim()
             if (!await store.save()) return
             toasts.success({
-              title: "Note saved",
-              body: `"${title}" was saved.`,
+              title: t.t(`NoteEditorView.savedTitle`),
+              body: t.t(`NoteEditorView.saved`, { title }),
               dataE2E: "note-saved",
             })
             navigate(NOTE_PATHS.list)
@@ -209,7 +213,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
           if (!editing || !await store.move(toGroupId, [editing.id])) return
           const target = moveTargets.find((group) => group.id === toGroupId)
           toasts.success({
-            ...movedToast(1, target?.name ?? "the other group"),
+            ...movedToast(t, 1, target?.name),
             dataE2E: "note-moved",
           })
           navigate(NOTE_PATHS.list)
@@ -223,7 +227,7 @@ export function NoteEditorView({ noteId = null }: { noteId?: string | null }) {
         owns={(url) => isSpaPath(url.pathname)}
         navigate={navigate}
         labels={{
-          message: "Your changes to this note have not been saved. If you leave, they are lost.",
+          message: t.t(`NoteEditorView.unsaved`),
         }}
         onDiscard={() => creating && store.discardDraft()}
       />

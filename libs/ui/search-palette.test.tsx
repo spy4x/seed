@@ -17,6 +17,11 @@ import {
   SearchPalette,
   type SearchPaletteProps,
 } from "./search-palette.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+
+/** The `app` catalog's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -273,7 +278,7 @@ describe("SearchPalette", () => {
     await type(`${"x".repeat(45)}`)
 
     expect(status()).toBe(`No notes or groups match “${"x".repeat(40)}…”.`)
-    expect(emptyLabel("  ab  ", false)).toBe("No notes or groups match “ab”.")
+    expect(emptyLabel(EN, "  ab  ", false)).toBe("No notes or groups match “ab”.")
   })
 
   it("does not search notes for a single character, but still matches groups", async () => {

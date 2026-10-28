@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 /**
  * The notes screens, `NotesScreen` and `NoteEditorScreen`: what they render (server-rendered
  * HTML) and what a person does on them in a browser DOM (happy-dom): open a row's menu, confirm a
@@ -187,7 +186,11 @@ const listDefaults: NotesScreenProps = {
 describe("NotesScreen", () => {
   it("draws its intro between the page header and the notes", () => {
     const html = renderToString(
-      <NotesScreen {...listDefaults} intro={<section data-e2e="intro">Get started</section>} />,
+      <NotesScreen
+        {...listDefaults}
+        // deno-lint-ignore ui-text/no-literal -- a stand-in for the app's own intro
+        intro={<section data-e2e="intro">Get started</section>}
+      />,
     )
 
     const header = html.indexOf("</h1>")
@@ -998,7 +1001,7 @@ describe("NoteEditorScreen", () => {
         authorship={{ ...authorship, updatedAt: authorship.createdAt }}
       />,
     )
-    expect(fresh).toContain("Created by Maya Chen")
+    expect(fresh).toContain("Created by <bdi>Maya Chen</bdi>")
     expect(fresh).not.toContain("Updated by")
   })
 
@@ -1033,7 +1036,7 @@ describe("NoteEditorScreen", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} notFound />)
 
     expect(html).toContain("This note does not exist.")
-    expect(html).toContain("There is no such note in Team")
+    expect(html).toContain("There is no such note in <bdi>Team</bdi>")
     expect(html).toContain(`href="${NOTE_PATHS.list}"`)
     expect(html).not.toContain("<form")
   })
@@ -1064,7 +1067,7 @@ describe("NoteEditorScreen", () => {
   it("keeps the plain not-found page when no other group holds the note", () => {
     const html = renderToString(<NoteEditorScreen {...editorDefaults} notFound elsewhere={null} />)
 
-    expect(html).toContain("There is no such note in Team")
+    expect(html).toContain("There is no such note in <bdi>Team</bdi>")
     expect(html).not.toContain("note-switch-group")
   })
 

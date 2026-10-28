@@ -105,23 +105,27 @@ const PAGE_LIMIT = 100
 /** More pages than a group has notes in this template: a stop for a cursor loop. */
 const MAX_PAGES = 20
 
+/**
+ * What the store says went wrong, as keys of the `app` catalog: the screen shows each in the
+ * person's language (`libs/ui/message.ts`).
+ */
 export const NOTE_MESSAGES = {
-  titleRequired: "Enter a title.",
-  conflict: "Someone changed this note since you opened it.",
-  deleteConflict: "Someone changed that note, so it was not deleted.",
-  gone: "This note was deleted.",
-  load: "Could not load the notes",
-  create: "Could not create the note. Try again.",
-  save: "Could not save the note",
-  delete: "Could not delete the note",
-  move: "Could not move the notes",
-  moveOffline: "Moving notes needs a connection. Try again when you are back online.",
-  moveNone: "Tick the notes you want to move.",
-  moveUnsaved: "Save or discard your changes before moving the note.",
-  restore: "Could not restore the note",
-  restoreOffline: "Restoring a note needs a connection. Try again when you are back online.",
-  restoreGone: "That note is no longer in the deleted notes.",
-  moveGone: "A note you ticked is no longer here, so nothing was moved.",
+  titleRequired: `NoteMessages.titleRequired`,
+  conflict: `NoteMessages.conflict`,
+  deleteConflict: `NoteMessages.deleteConflict`,
+  gone: `NoteMessages.gone`,
+  load: `NoteMessages.load`,
+  create: `NoteMessages.create`,
+  save: `NoteMessages.save`,
+  delete: `NoteMessages.delete`,
+  move: `NoteMessages.move`,
+  moveOffline: `NoteMessages.moveOffline`,
+  moveNone: `NoteMessages.moveNone`,
+  moveUnsaved: `NoteMessages.moveUnsaved`,
+  restore: `NoteMessages.restore`,
+  restoreOffline: `NoteMessages.restoreOffline`,
+  restoreGone: `NoteMessages.restoreGone`,
+  moveGone: `NoteMessages.moveGone`,
 } as const
 
 /** What the group's plan refused, read from the socket's `forbidden` details, or `null`. */

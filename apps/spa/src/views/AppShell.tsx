@@ -42,21 +42,26 @@ import { guestRefusal } from "../state/guest-refusal.ts"
 import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { overviewPageActions } from "./OverviewView.tsx"
 import { noteEditorPageActions } from "./NoteEditorView.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAppText } from "@ui/i18n.ts"
 
-/** The overview's commands in the palette, while the overview is open. */
+/** The overview's commands in the palette, while the overview is open; labels are `app` keys. */
 const OVERVIEW_COMMANDS = [
-  { id: "overview-range", label: "Change date range" },
-  { id: "overview-customise", label: "Customise overview" },
+  { id: "overview-range", label: `Shortcuts.dateRange` },
+  { id: "overview-customise", label: `Shortcuts.customise` },
 ] as const
 
 /** The note page's command in the palette, while a note an editor can change is open. */
-const NOTE_COMMANDS = [{ id: "note-attach", label: "Attach files to this note" }] as const
+const NOTE_COMMANDS = [{ id: "note-attach", label: `AppShell.attachFiles` }] as const
 
-/** The open page's commands in the palette, if it has any. */
-function pageCommands() {
-  if (overviewPageActions.value) return OVERVIEW_COMMANDS
-  if (noteEditorPageActions.value) return NOTE_COMMANDS
-  return undefined
+/** The open page's commands in the palette, if it has any, in the translator's language. */
+function pageCommands(t: Translator<string>) {
+  const commands = overviewPageActions.value
+    ? OVERVIEW_COMMANDS
+    : noteEditorPageActions.value
+    ? NOTE_COMMANDS
+    : undefined
+  return commands?.map((command) => ({ id: command.id, label: t.t(command.label) }))
 }
 
 /** Runs the page command `id` of {@link pageCommands} on the open page. */
@@ -216,6 +221,7 @@ export function AppShell(
   },
 ) {
   const [location, navigate] = useLocation()
+  const t = useAppText()
   const guest = isGuestSession(user)
   const { onSignOut, dialog } = useSignOut(guest)
   // Hidden on this browser once dismissed; the profile keeps its own entry to the same page.
@@ -252,7 +258,7 @@ export function AppShell(
             ? { id: current.id, name: current.name, canWrite: canMutateNotes(current.role) }
             : null}
           online={wsStatus === "open"}
-          pageCommands={pageCommands()}
+          pageCommands={pageCommands(t)}
           onSelect={(choice) => void open(choice)}
           slashKey={singleKeys.on.value}
           guest={guest}

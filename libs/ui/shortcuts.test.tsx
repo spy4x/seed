@@ -7,7 +7,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render } from "preact"
 import { act } from "preact/test-utils"
-import { SHORTCUT_GROUPS, SHORTCUT_TEXT, type ShortcutRow, ShortcutsList } from "./shortcuts.tsx"
+import { SHORTCUT_GROUPS, type ShortcutRow, ShortcutsList } from "./shortcuts.tsx"
 import { shortcutsMenuItems } from "./frame.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -41,12 +41,12 @@ afterEach(async () => {
 
 const run = () => {}
 const ROWS: ShortcutRow[] = [
-  { keys: "?", description: "Show keyboard shortcuts", group: SHORTCUT_GROUPS.general, run },
-  { keys: "mod+k", description: "Search notes and groups", group: SHORTCUT_GROUPS.general },
-  { keys: "/", description: "Search notes and groups", group: SHORTCUT_GROUPS.general },
-  { keys: "esc", description: "Close a dialog or menu", group: SHORTCUT_GROUPS.general },
-  { keys: "g n", description: "Notes", group: SHORTCUT_GROUPS.goTo, run },
-  { keys: "mod+enter", description: "Add and open", group: SHORTCUT_GROUPS.newNote },
+  { keys: "?", description: `Shortcuts.show`, group: SHORTCUT_GROUPS.general, run },
+  { keys: "mod+k", description: `Shortcuts.search`, group: SHORTCUT_GROUPS.general },
+  { keys: "/", description: `Shortcuts.search`, group: SHORTCUT_GROUPS.general },
+  { keys: "esc", description: `Shortcuts.close`, group: SHORTCUT_GROUPS.general },
+  { keys: "g n", description: `Frame.notes`, group: SHORTCUT_GROUPS.goTo, run },
+  { keys: "mod+enter", description: `Shortcuts.addAndOpen`, group: SHORTCUT_GROUPS.newNote },
 ]
 
 /** The dialog open over `rows`; returns the switch's reports. */
@@ -92,7 +92,7 @@ describe("the Keyboard shortcuts dialog", () => {
     ])
     const headings = [...document.querySelectorAll("dialog h3")].map((h) => h.textContent)
     expect(headings).toEqual(["General", "Go to", "In New note"])
-    expect(document.querySelector("dialog h2")?.textContent).toBe(SHORTCUT_TEXT.title)
+    expect(document.querySelector("dialog h2")?.textContent).toBe("Keyboard shortcuts")
   })
 
   it("leaves out the single keys while they are off, and keeps Ctrl K, Escape and Ctrl Enter", async () => {
@@ -103,18 +103,18 @@ describe("the Keyboard shortcuts dialog", () => {
       "Add and open: Ctrl+Enter",
     ])
     expect(document.querySelector("[data-e2e=shortcuts-footer]")?.textContent).toContain(
-      SHORTCUT_TEXT.off,
+      "Single-key shortcuts are off on this device.",
     )
   })
 
   it("says shortcuts skip fields, and its switch reports off", async () => {
     const toggled = await mount(true)
     const footer = document.querySelector("[data-e2e=shortcuts-footer]")!
-    expect(footer.textContent).toContain(SHORTCUT_TEXT.inFields)
+    expect(footer.textContent).toContain("Shortcuts don't work while you type in a field.")
     const toggle = footer.querySelector<HTMLButtonElement>("[role=switch]")!
     expect(toggle.getAttribute("aria-checked")).toBe("true")
     expect(document.getElementById(toggle.getAttribute("aria-labelledby")!)?.textContent)
-      .toBe(SHORTCUT_TEXT.switchLabel)
+      .toBe("Single-key shortcuts")
     await act(() => toggle.click())
     expect(toggled).toEqual([false])
   })
@@ -143,17 +143,17 @@ describe("the account menu's Keyboard shortcuts entry", () => {
   }
 
   it("names ? as its key while single keys are on, and no key while they are off", () => {
-    expect(shortcutsMenuItems({ ...base, inMenu: true })[0]).toMatchObject({
-      label: SHORTCUT_TEXT.menuEntry,
+    expect(shortcutsMenuItems({ ...base, inMenu: true }, "Keyboard shortcuts")[0]).toMatchObject({
+      label: "Keyboard shortcuts",
       onClick: run,
       keyshortcuts: ["?"],
     })
-    expect(shortcutsMenuItems({ ...base, singleKeys: false, inMenu: true })[0].keyshortcuts)
+    expect(shortcutsMenuItems({ ...base, singleKeys: false, inMenu: true }, "")[0].keyshortcuts)
       .toBeUndefined()
   })
 
   it("is left out on a device without a fine pointer", () => {
-    expect(shortcutsMenuItems({ ...base, inMenu: false })).toEqual([])
-    expect(shortcutsMenuItems(undefined)).toEqual([])
+    expect(shortcutsMenuItems({ ...base, inMenu: false }, "")).toEqual([])
+    expect(shortcutsMenuItems(undefined, "")).toEqual([])
   })
 })

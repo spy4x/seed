@@ -9,6 +9,7 @@ import { tagsStore } from "../state/tags.ts"
 import { toasts } from "../state/toasts.ts"
 import { OfflineStatus } from "../modules.ts"
 import { deleteAndAnnounce } from "./tag-delete.ts"
+import { useAppText } from "@ui/i18n.ts"
 
 /**
  * Wires the tags page to the tags store for `/tags`. The tags are those of the person's selected
@@ -16,6 +17,7 @@ import { deleteAndAnnounce } from "./tag-delete.ts"
  */
 export function TagsView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const store = tagsStore
   const groupId = selectionStore.groupId.value
   useEffect(() => {
@@ -39,7 +41,7 @@ export function TagsView() {
         loading={store.loading.value || groupsStore.loading.value || groupId === null}
         listError={store.listError.value}
         onDelete={canWrite
-          ? (id) => void deleteAndAnnounce(store, id, notesStore, toasts)
+          ? (id) => void deleteAndAnnounce(t, store, id, notesStore, toasts)
           : undefined}
         navigate={navigate}
       />

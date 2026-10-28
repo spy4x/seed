@@ -1,6 +1,11 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { deleteAndAnnounce } from "./tag-delete.ts"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+
+/** The `app` catalog's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
 
 const groupId = "019a0000-0000-7000-8000-000000000001"
 const tagId = "019a0000-0000-7000-8000-000000000002"
@@ -15,7 +20,7 @@ function tags(deleted = true) {
       removed.push(id)
       return Promise.resolve(deleted)
     },
-  } as unknown as Parameters<typeof deleteAndAnnounce>[0]
+  } as unknown as Parameters<typeof deleteAndAnnounce>[1]
   return { store, removed }
 }
 
@@ -25,16 +30,16 @@ function notes(tagIds: string[][], { forGroup = groupId, loading = false } = {})
     groupId: { value: forGroup },
     loading: { value: loading },
     notes: { value: tagIds.map((ids) => ({ tagIds: ids })) },
-  } as unknown as Parameters<typeof deleteAndAnnounce>[2]
+  } as unknown as Parameters<typeof deleteAndAnnounce>[3]
 }
 
 /** Deletes "Urgent" and returns whether it went and the toasts it showed. */
 async function run(
-  tagStore: Parameters<typeof deleteAndAnnounce>[0],
-  noteStore: Parameters<typeof deleteAndAnnounce>[2],
+  tagStore: Parameters<typeof deleteAndAnnounce>[1],
+  noteStore: Parameters<typeof deleteAndAnnounce>[3],
 ) {
   const shown: { title?: string; body?: string; dataE2E?: string }[] = []
-  const done = await deleteAndAnnounce(tagStore, tagId, noteStore, {
+  const done = await deleteAndAnnounce(EN, tagStore, tagId, noteStore, {
     success: (toast) => String(shown.push(toast)),
   })
   return { done, shown }

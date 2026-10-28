@@ -20,7 +20,7 @@ export interface SpaShortcutPorts {
 
 /**
  * The SPA's keyboard shortcuts, the one list the "Keyboard shortcuts" dialog shows and the frame
- * binds. Search's keys, the New note dialog's and Undo's (`useUndoToast`) are bound where they act
+ * binds, each described by a key of the `app` catalog. Search's keys, the New note dialog's and Undo's (`useUndoToast`) are bound where they act
  * and listed here; Activity is listed and bound only while the rail shows it, and the overview's
  * `d` and `c` only while it is open.
  */
@@ -35,37 +35,37 @@ export function spaShortcutRows(ports: SpaShortcutPorts): ShortcutRow[] {
   const [show, close] = generalRows(ports.openShortcuts)
   return [
     show,
-    { keys: "mod+k", description: "Search notes and groups", group: general },
-    { keys: "/", description: "Search notes and groups", group: general },
-    { keys: "n", description: "New note", group: general, run: ports.openNewNote },
-    { keys: "mod+z", description: "Undo deleting a note, while its toast shows", group: general },
+    { keys: "mod+k", description: `Shortcuts.search`, group: general },
+    { keys: "/", description: `Shortcuts.search`, group: general },
+    { keys: "n", description: `Shortcuts.newNoteRow`, group: general, run: ports.openNewNote },
+    { keys: "mod+z", description: `Shortcuts.undo`, group: general },
     close,
-    go("g o", "Overview", OVERVIEW_PATHS.root),
-    go("g n", "Notes", NOTE_PATHS.list),
-    go("g t", "Tags", TAG_PATHS.list),
+    go("g o", `Frame.overview`, OVERVIEW_PATHS.root),
+    go("g n", `Frame.notes`, NOTE_PATHS.list),
+    go("g t", `Frame.tags`, TAG_PATHS.list),
     ...(ports.activityGroupId === null
       ? []
-      : [go("g a", "Activity", GROUP_PATHS.activity(ports.activityGroupId))]),
-    go("g g", "Groups", SCREEN_PATHS.groups),
-    go("g i", "Notifications", SCREEN_PATHS.notifications),
-    go("g p", "Profile", SCREEN_PATHS.profile),
+      : [go("g a", `Frame.activity`, GROUP_PATHS.activity(ports.activityGroupId))]),
+    go("g g", `Frame.groups`, SCREEN_PATHS.groups),
+    go("g i", `Shortcuts.notifications`, SCREEN_PATHS.notifications),
+    go("g p", `Shortcuts.profile`, SCREEN_PATHS.profile),
     ...(ports.overviewPage
       ? [
         {
           keys: "d",
-          description: "Change date range",
+          description: `Shortcuts.dateRange`,
           group: page,
           run: ports.overviewPage.openRange,
         },
         {
           keys: "c",
-          description: "Customise overview",
+          description: `Shortcuts.customise`,
           group: page,
           run: ports.overviewPage.openCustomise,
         },
       ]
       : []),
-    { keys: "enter", description: "Add note", group: newNote },
-    { keys: "mod+enter", description: "Add and open", group: newNote },
+    { keys: "enter", description: `Shortcuts.addNote`, group: newNote },
+    { keys: "mod+enter", description: `Shortcuts.addAndOpen`, group: newNote },
   ]
 }

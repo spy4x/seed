@@ -17,6 +17,11 @@ import { NOTE_PATHS, TAG_PATHS } from "./progressive.tsx"
 import { colorName, colorStyle, tagDeleteMessage } from "./tag-parts.tsx"
 import { TagEditorScreen, type TagEditorScreenProps } from "./tag-editor-screen.tsx"
 import { TagsScreen, type TagsScreenProps } from "./tags-screen.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
+
+/** The `app` catalog's English, as a screen without a provider reads it. */
+const EN = createTranslator({ language: `en`, catalogs: [{ source: app }] })
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -286,8 +291,8 @@ describe("TagsScreen", () => {
     expect(find("[data-e2e=tag-delete-dialog]").textContent).toContain(
       "It comes off 3 notes. The notes stay.",
     )
-    expect(tagDeleteMessage(1)).toBe("It comes off 1 note. The notes stay.")
-    expect(tagDeleteMessage(0)).toBe("No note carries it.")
+    expect(tagDeleteMessage(EN, 1)).toBe("It comes off 1 note. The notes stay.")
+    expect(tagDeleteMessage(EN, 0)).toBe("No note carries it.")
   })
 
   it("links each tag's note count to the notes filtered by that tag, named for a screen reader", async () => {

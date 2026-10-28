@@ -4,6 +4,7 @@ import { LineChart } from "@spy4x/preact-charts/line-chart"
 import { niceStep, ticks } from "@spy4x/preact-charts/scales"
 import { WidgetStat } from "@spy4x/preact-ui/widget-card"
 import type { Formatters } from "@spy4x/time/format"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import type { CountWidgetResult, OverviewPeriods, SeriesWidgetResult } from "@domain/groups"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 
@@ -14,6 +15,8 @@ export interface WidgetDrawContext {
   endsToday: boolean
   /** Dates and numbers in the person's settings. */
   format: Formatters
+  /** The words, in the person's language. */
+  t: Translator<string>
 }
 
 /** A widget drawn from its data: what its card shows when the data has arrived. */
@@ -25,7 +28,10 @@ export interface WidgetDrawing {
   emptyLabel?: string
 }
 
-/** How the overview draws one widget: its words for loading and failing, and its drawing. */
+/**
+ * How the overview draws one widget: the keys in the `app` catalog of its words for loading and
+ * failing, and its drawing.
+ */
 export interface WidgetView {
   loadingLabel: string
   errorMessage: string
@@ -56,8 +62,8 @@ export function countAxis(top: number): { max: number; steps: number } {
 }
 
 /** "previous 30 days", "previous day": the period a comparison names. */
-export function previousPeriodName(days: number): string {
-  return days === 1 ? "previous day" : `previous ${days} days`
+export function previousPeriodName(t: Translator<string>, days: number): string {
+  return t.t(`NoteWidgets.previousPeriod`, { count: days })
 }
 
 /** A calendar day (`YYYY-MM-DD`) as the person's region writes it, without moving it by zone. */
@@ -67,63 +73,69 @@ function day(format: Formatters, iso: string, withYear = false): string {
 }
 
 /** The comparison line of a number widget, or nothing when the group is too young for one. */
-function comparison(result: CountWidgetResult, days: number): ComponentChildren[] {
+function comparison(
+  result: CountWidgetResult,
+  { periods, format, t }: WidgetDrawContext,
+): ComponentChildren[] {
   if (result.previous === null) return []
   return [
-    changeText({ current: result.current, previous: result.previous }, previousPeriodName(days)),
+    changeText(
+      { current: result.current, previous: result.previous },
+      previousPeriodName(t, periods.days),
+      format.locale,
+      t,
+    ),
   ]
 }
 
 const total: WidgetView = {
-  loadingLabel: "Loading the note count",
-  errorMessage: "We could not load the note count. Check your connection and try again.",
-  draw(data, { periods, endsToday, format }) {
+  loadingLabel: `NoteWidgets.totalLoading`,
+  errorMessage: `NoteWidgets.totalError`,
+  draw(data, context) {
+    const { periods, endsToday, format, t } = context
     const result = data as CountWidgetResult
     return {
       status: "ready",
-      caption: endsToday ? "In the group now" : `On ${day(format, periods.current.to, true)}`,
+      caption: endsToday
+        ? t.t(`NoteWidgets.totalNow`)
+        : t.t(`NoteWidgets.totalOn`, { date: day(format, periods.current.to, true) }),
       content: (
-        <WidgetStat
-          value={format.number(result.current)}
-          lines={comparison(result, periods.days)}
-        />
+        <WidgetStat value={format.number(result.current)} lines={comparison(result, context)} />
       ),
     }
   },
 }
 
 const added: WidgetView = {
-  loadingLabel: "Loading the notes added",
-  errorMessage: "We could not load the notes added. Check your connection and try again.",
-  draw(data, { periods, format }) {
+  loadingLabel: `NoteWidgets.addedLoading`,
+  errorMessage: `NoteWidgets.addedError`,
+  draw(data, context) {
+    const { format, t } = context
     const result = data as CountWidgetResult
     return {
       status: "ready",
-      caption: result.current === 0 ? "Nothing added in this range" : "Added in this range",
+      caption: result.current === 0 ? t.t(`NoteWidgets.addedNone`) : t.t(`NoteWidgets.addedSome`),
       content: (
-        <WidgetStat
-          value={format.number(result.current)}
-          lines={comparison(result, periods.days)}
-        />
+        <WidgetStat value={format.number(result.current)} lines={comparison(result, context)} />
       ),
     }
   },
 }
 
 const series: WidgetView = {
-  loadingLabel: "Loading the chart",
-  errorMessage: "We could not load the chart. Check your connection and try again.",
-  draw(data, { periods, format }) {
+  loadingLabel: `NoteWidgets.seriesLoading`,
+  errorMessage: `NoteWidgets.seriesError`,
+  draw(data, { periods, format, t }) {
     const result = data as SeriesWidgetResult
     const values = [...result.current, ...(result.previous ?? [])]
     if (values.every((value) => value === 0)) {
-      return { status: "empty", emptyLabel: "No notes in this range" }
+      return { status: "empty", emptyLabel: t.t(`NoteWidgets.seriesEmpty`) }
     }
     const first = result.current[0] ?? 0
     const last = result.current.at(-1) ?? 0
     const summary = first === last
-      ? `${format.number(last)} all through the range`
-      : `From ${format.number(first)} to ${format.number(last)}`
+      ? t.t(`NoteWidgets.seriesFlat`, { value: format.number(last) })
+      : t.t(`NoteWidgets.seriesFrom`, { first: format.number(first), last: format.number(last) })
     const axis = countAxis(Math.max(...values))
     return {
       status: "ready",
@@ -132,13 +144,13 @@ const series: WidgetView = {
         <LineChart
           series={[
             {
-              name: "This period",
+              name: t.t(`NoteWidgets.seriesCurrent`),
               points: result.days.map((x, i) => ({ x, y: result.current[i] })),
               showPoints: result.days.length <= 31,
             },
             ...(result.previous
               ? [{
-                name: `The ${periods.days === 1 ? "day" : `${periods.days} days`} before`,
+                name: t.t(`NoteWidgets.seriesPrevious`, { count: periods.days }),
                 points: result.days.map((x, i) => ({ x, y: result.previous![i] })),
                 dashed: true,
                 showPoints: false,
@@ -151,8 +163,8 @@ const series: WidgetView = {
           yTicks={axis.steps}
           xFormat={(x) => day(format, typeof x === "string" ? x : x.toISOString().slice(0, 10))}
           yFormat={(value) => format.number(value)}
-          ariaLabel={`Notes over time. ${summary}.`}
-          xLabel="Day"
+          ariaLabel={t.t(`NoteWidgets.seriesLabel`, { summary })}
+          xLabel={t.t(`NoteWidgets.seriesDay`)}
           showLegend={result.previous !== null}
         />
       ),
