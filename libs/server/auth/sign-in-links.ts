@@ -24,7 +24,7 @@ import { type AuthStore, ChallengeOutcome } from "@spy4x/server/auth"
 import { DEFAULT_CODE_MAX_ATTEMPTS } from "@spy4x/server/auth/email-code"
 import { randomBase64Url, sha256Hex } from "@spy4x/platform/tokens"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
-import { SIGN_IN_LINK_MINUTES } from "@domain/identity"
+import { isLanguage, SIGN_IN_LINK_MINUTES } from "@domain/identity"
 
 /** The challenge purpose of a link's secret. */
 export const SIGN_IN_LINK_PURPOSE = "app.sign-in-link"
@@ -61,6 +61,11 @@ export interface SignInLinkRequest {
    * own account.
    */
   requestedBy: number | null
+  /**
+   * The language of the page that asked (#277), which the mail is written in when the address
+   * has no account or its account saved none. Only a language the apps offer, else `null`.
+   */
+  language?: string | null
 }
 
 /** The `sign_in_link_requests` table over `sql`, a pool or a transaction. */
@@ -69,15 +74,18 @@ export function signInLinkRequests(sql: Sql) {
     /** Writes a new request. */
     create: async (request: SignInLinkRequest): Promise<void> => {
       await sql`
-        INSERT INTO sign_in_link_requests (id, email, next, requested_by_user_id)
-        VALUES (${request.id}, ${request.email}, ${request.next}, ${request.requestedBy})
+        INSERT INTO sign_in_link_requests (id, email, next, requested_by_user_id, language)
+        VALUES (
+          ${request.id}, ${request.email}, ${request.next}, ${request.requestedBy},
+          ${isLanguage(request.language) ? request.language : null}
+        )
       `
     },
     /** The request with this id, or `null`. Any other id is `null`. */
     find: async (id: string): Promise<SignInLinkRequest | null> => {
       if (!UUID_PATTERN.test(id)) return null
       const [row] = await sql<SignInLinkRequest[]>`
-        SELECT id, email, next, requested_by_user_id AS "requestedBy"
+        SELECT id, email, next, requested_by_user_id AS "requestedBy", language
         FROM sign_in_link_requests WHERE id = ${id}
       `
       return row ?? null

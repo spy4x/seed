@@ -3,6 +3,7 @@ import type { EmailSender } from "@spy4x/email/sender"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { AuthAuditEventType, OAUTH_PROVIDER_NAMES, oauthProviderId } from "@domain/identity"
 import { type MailBrand, signInMethodChangedMail } from "../mail/mail.ts"
+import { readMailReader } from "../mail/reader.ts"
 import { PASSKEY_METHOD } from "../auth/passkeys.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 
@@ -51,6 +52,7 @@ interface ChangeRow extends postgres.Row {
   method: string
   changedAt: Date
   email: string | null
+  userId: number
 }
 
 /** The provider a key's method names, as people know it; the method itself for anything else. */
@@ -71,7 +73,8 @@ export function signInMethodMailJob(deps: SignInMethodMailDeps): JobHandler {
   return async (event) => {
     const [change] = await sql<ChangeRow[]>`
       SELECT sign_in_method_changes.event_type AS "eventType", sign_in_method_changes.method,
-        sign_in_method_changes.changed_at AS "changedAt", (
+        sign_in_method_changes.changed_at AS "changedAt",
+        sign_in_method_changes.user_id AS "userId", (
           SELECT auth_keys.proven_email FROM auth_keys
           WHERE auth_keys.user_id = sign_in_method_changes.user_id
             AND auth_keys.proven_email IS NOT NULL
@@ -92,6 +95,7 @@ export function signInMethodMailJob(deps: SignInMethodMailDeps): JobHandler {
         linked: change.eventType === AuthAuditEventType.SIGN_IN_METHOD_LINKED,
         at: change.changedAt,
         passkey: change.method === PASSKEY_METHOD,
+        reader: await readMailReader(sql, change.userId),
       }))
       if (!result.ok) {
         deps.log("error: a sign-in method mail was not sent and will be retried")

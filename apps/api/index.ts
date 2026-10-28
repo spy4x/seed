@@ -194,8 +194,8 @@ app.route(
     totpFailures: createTotpFailures({ sql }),
     passwordFailures: createPasswordFailures({ sql }),
     requestPasswordReset: (email) => enqueuePasswordResetMail(sql, email),
-    requestSignInLink: (email, next, requestedBy) =>
-      enqueueSignInLinkMail(sql, email, next, requestedBy),
+    requestSignInLink: (email, next, requestedBy, language) =>
+      enqueueSignInLinkMail(sql, email, next, requestedBy, language),
     emailCodeFailures: createEmailCodeFailures({ sql }),
     requestEmailCode: (userId, email) => enqueueEmailCodeMail(sql, userId, email),
   }),

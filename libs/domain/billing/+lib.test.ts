@@ -8,7 +8,6 @@ import {
   assertFeature,
   assertRoomFor,
   attachmentRulesOf,
-  billingDate,
   BillingError,
   BillingNoticeKind,
   billingNoticeOf,
@@ -252,11 +251,6 @@ describe("billing domain", () => {
       notice: { kind: BillingNoticeKind.TrialEnding, at: ENDS_AT, daysLeft: 1 },
     })
     expect(view(GroupRole.ADMIN)).toMatchObject({ trialEnd: ENDS_AT, notice: null })
-  })
-
-  it("writes a billing date in long English form, on its day in UTC", () => {
-    expect(billingDate(new Date("2026-10-15T23:30:00Z"))).toBe("October 15, 2026")
-    expect(billingDate(new Date("2026-10-16T00:30:00Z"))).toBe("October 16, 2026")
   })
 
   it("reads the billing back from the API's JSON, dates included", () => {

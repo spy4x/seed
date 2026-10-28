@@ -3,6 +3,7 @@ import { expect } from "@std/expect"
 import { Hono } from "hono"
 import postgres from "postgres"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
+import { ENGLISH_READER } from "@server/mail/mail.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { GroupInvitationCreateCommand, GroupRole, InvitationError } from "@domain/groups"
 import { UserMFAStatus } from "@domain/identity"
@@ -46,6 +47,7 @@ function buildInvite(sql: postgres.Sql, db: AppDbBase) {
       sender: null,
       brand: { webAppUrl: "https://app.example.com" },
       byAddress: () => Promise.resolve({ allowed: true } as never),
+      readerOf: () => Promise.resolve(ENGLISH_READER),
       log: () => {},
     },
     emit: () => {},

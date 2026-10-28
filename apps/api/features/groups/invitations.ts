@@ -25,7 +25,7 @@ import {
   type InvitationTarget,
   newInvitationToken,
 } from "@server/groups/postgres-invitation-repository.ts"
-import { invitationMail, type MailBrand } from "@server/mail/mail.ts"
+import { invitationMail, type MailBrand, type MailReader } from "@server/mail/mail.ts"
 import { sha256Hex } from "@spy4x/platform/tokens"
 import { GroupSelectedEvent } from "../../cqrs/events.ts"
 
@@ -71,6 +71,11 @@ export interface InvitationMail {
   brand: MailBrand
   /** Spends one of the address's mails for the hour; a refusal sends nothing. */
   byAddress(email: string): Promise<RateLimitDecision>
+  /**
+   * Who the mail is written for (#277): the inviter's language, zone and format, since the person
+   * invited may have no account yet.
+   */
+  readerOf(userId: number): Promise<MailReader>
   /** Told when a send fails. Gets no address, token or link. */
   log(line: string): void
 }
@@ -94,13 +99,6 @@ export interface InvitationHandlerDependencies {
   seatPriced(groupId: string, actorId: number): Promise<boolean>
   mail: InvitationMail
   emit(event: GroupSelectedEvent): void
-}
-
-const ROLE_NAMES: Record<GroupRole, string> = {
-  [GroupRole.VIEWER]: "a viewer",
-  [GroupRole.EDITOR]: "an editor",
-  [GroupRole.ADMIN]: "an admin",
-  [GroupRole.OWNER]: "the owner",
 }
 
 /**
@@ -160,6 +158,7 @@ export function createInvitationCreateHandler(
         token,
         groupName: created.groupName,
         inviterName: created.invitation.createdBy.name,
+        inviterId: data.actor.userId,
         role: data.role,
         validDays: data.expiresInDays,
       })
@@ -175,6 +174,7 @@ async function sendInvitation(
     token: string
     groupName: string
     inviterName: string
+    inviterId: number
     role: GroupRole
     validDays: number
   },
@@ -188,8 +188,9 @@ async function sendInvitation(
         link: new URL(invitationPath(input.token), mail.brand.webAppUrl).toString(),
         groupName: input.groupName,
         inviterName: input.inviterName,
-        roleName: ROLE_NAMES[input.role],
+        role: input.role,
         validDays: input.validDays,
+        reader: await mail.readerOf(input.inviterId),
       }),
     )
     if (!result.ok) mail.log("error: an invitation mail was not sent")

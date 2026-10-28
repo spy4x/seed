@@ -7,6 +7,7 @@ import {
   passwordResetLink,
 } from "../auth/password-reset.ts"
 import { type MailBrand, passwordResetMail } from "../mail/mail.ts"
+import { readMailReader } from "../mail/reader.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -63,6 +64,7 @@ export function passwordResetMailJob(deps: PasswordResetMailDeps): JobHandler {
           to: issued.email,
           link: passwordResetLink(deps.brand.webAppUrl, issued),
           validMinutes: PASSWORD_RESET_TTL_MINUTES,
+          reader: await readMailReader(sql, issued.userId),
         }),
       )
       if (!result.ok) {

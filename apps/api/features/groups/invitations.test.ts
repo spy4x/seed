@@ -3,6 +3,7 @@ import { describe, it } from "@std/testing/bdd"
 import { sha256Hex } from "@spy4x/platform/tokens"
 import type { EmailSender } from "@spy4x/email/sender"
 import { SecondFactorStatus } from "@spy4x/server/sign-in"
+import { ENGLISH_READER } from "@server/mail/mail.ts"
 import { type Actor, UserMFAStatus } from "@domain/identity"
 import {
   type GroupInvitation,
@@ -103,6 +104,7 @@ function dependencies(
       sender,
       brand: { webAppUrl: "https://app.example.com" },
       byAddress: () => Promise.resolve({ allowed: true } as never),
+      readerOf: () => Promise.resolve(ENGLISH_READER),
       log: () => {},
     },
     emit: (event) => events.push(event),

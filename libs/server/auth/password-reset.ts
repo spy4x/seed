@@ -44,6 +44,8 @@ const CODE_BYTES = 32
 export interface IssuedPasswordReset {
   /** The normalised address the code belongs to and must be sent to. */
   email: string
+  /** The account the code resets, whose saved language the mail is written in. */
+  userId: number
   code: string
   expiresAt: Date
 }
@@ -77,7 +79,7 @@ export async function issuePasswordReset(
     expiresAt,
     now,
   })
-  return { email, code, expiresAt }
+  return { email, userId: key.userId, code, expiresAt }
 }
 
 /**

@@ -352,6 +352,8 @@ export interface SignIn {
     email: string,
     password: string,
     guestUserId?: number | null,
+    /** The asking page's language, for the code mail (#277). */
+    language?: string | null,
   ): Promise<boolean>
   /** The sign-up the request's cookie names while it waits, or `null`. */
   waitingSignUp(c: Context): Promise<WaitingSignUp | null>
@@ -1202,7 +1204,7 @@ export function createSignIn(options: SignInOptions): SignIn {
       return { user: created.user, session: created.session }
     },
 
-    async requestSignUp(c, email, password, guestUserId = null) {
+    async requestSignUp(c, email, password, guestUserId = null, language = null) {
       // Hashed before anything is written, as `signUp` does, so no pool connection waits on it.
       let secret: string
       try {
@@ -1219,6 +1221,7 @@ export function createSignIn(options: SignInOptions): SignIn {
           secret,
           expiresAt: signUpExpiry(new Date()),
           guestUserId,
+          language,
         })
         await tx.signUpRequest.queueCode(id)
       })

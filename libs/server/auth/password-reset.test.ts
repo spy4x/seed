@@ -129,6 +129,7 @@ describe("passwordResetLink", () => {
   it("points at the app's reset page with the address and the code, encoded", () => {
     const link = passwordResetLink("https://app.example.com", {
       email: "ann+test@example.com",
+      userId: 1,
       code: "abc_-123",
       expiresAt: NOW,
     })

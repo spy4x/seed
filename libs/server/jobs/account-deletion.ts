@@ -6,6 +6,7 @@ import {
   HardDeleteOutcome,
 } from "../auth/account-deletion.ts"
 import { accountDeletionMail, accountRestoredMail, type MailBrand } from "../mail/mail.ts"
+import { readMailReader } from "../mail/reader.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -71,8 +72,8 @@ export function accountDeletionMailJob(deps: AccountDeletionMailDeps): JobHandle
   const { sql } = deps
   return async (event) => {
     if (!deps.sender) return
-    const [request] = await sql<{ deleteAfter: Date; email: string | null }[]>`
-      SELECT account_deletions.delete_after AS "deleteAfter", (
+    const [request] = await sql<{ deleteAfter: Date; email: string | null; userId: number }[]>`
+      SELECT account_deletions.delete_after AS "deleteAfter", account_deletions.user_id AS "userId", (
         SELECT auth_keys.proven_email FROM auth_keys
         WHERE auth_keys.user_id = account_deletions.user_id AND auth_keys.proven_email IS NOT NULL
         ORDER BY auth_keys.id
@@ -87,7 +88,11 @@ export function accountDeletionMailJob(deps: AccountDeletionMailDeps): JobHandle
       return
     }
     const result = await deps.sender.send(
-      accountDeletionMail(deps.brand, { to: request.email, deleteAfter: request.deleteAfter }),
+      accountDeletionMail(deps.brand, {
+        to: request.email,
+        deleteAfter: request.deleteAfter,
+        reader: await readMailReader(sql, request.userId),
+      }),
     )
     if (!result.ok) {
       deps.log("error: an account deletion mail was not sent and will be retried")
@@ -116,8 +121,8 @@ export async function scheduleAccountRestoredMail(tx: postgres.Sql, userId: numb
 export function accountRestoredMailJob(deps: AccountDeletionMailDeps): JobHandler {
   const { sql } = deps
   return async (event) => {
-    const [restore] = await sql<{ email: string | null }[]>`
-      SELECT (
+    const [restore] = await sql<{ email: string | null; userId: number }[]>`
+      SELECT account_restorations.user_id AS "userId", (
         SELECT auth_keys.proven_email FROM auth_keys
         WHERE auth_keys.user_id = account_restorations.user_id
           AND auth_keys.proven_email IS NOT NULL
@@ -132,7 +137,10 @@ export function accountRestoredMailJob(deps: AccountDeletionMailDeps): JobHandle
       deps.log("warn: an account restored mail was not sent: the account has no proven address")
     }
     if (deps.sender && restore.email) {
-      const result = await deps.sender.send(accountRestoredMail(deps.brand, { to: restore.email }))
+      const result = await deps.sender.send(accountRestoredMail(deps.brand, {
+        to: restore.email,
+        reader: await readMailReader(sql, restore.userId),
+      }))
       if (!result.ok) {
         deps.log("error: an account restored mail was not sent and will be retried")
         throw new Error("account restored mail not sent")

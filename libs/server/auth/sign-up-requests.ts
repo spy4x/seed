@@ -29,7 +29,12 @@ import { DEFAULT_CODE_MAX_ATTEMPTS, EMAIL_CODE_BYTES } from "@spy4x/server/auth/
 import { PASSWORD_METHOD } from "@spy4x/server/auth/password"
 import { randomBase64Url, sha256Hex } from "@spy4x/platform/tokens"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
-import { type OAuthProviderId, oauthProviderId, SIGN_UP_CODE_MINUTES } from "@domain/identity"
+import {
+  isLanguage,
+  type OAuthProviderId,
+  oauthProviderId,
+  SIGN_UP_CODE_MINUTES,
+} from "@domain/identity"
 
 /** The challenge purpose of a sign-up code. Not the package's own: its codes belong to a user. */
 export const SIGN_UP_PURPOSE = "app.sign-up"
@@ -54,6 +59,11 @@ export interface SignUpRequest {
    * that guest instead of making a new account. `null` or left out for a plain sign-up.
    */
   guestUserId?: number | null
+  /**
+   * The language of the page that asked (#277), which the code mail is written in. Only a language
+   * the apps offer; `null` or left out for English.
+   */
+  language?: string | null
 }
 
 /** When a sign-up asked for at `now`, or given a new code at `now`, stops working. */
@@ -67,10 +77,10 @@ export function signUpRequests(sql: Sql) {
     /** Writes a new waiting sign-up. */
     create: async (request: SignUpRequest): Promise<void> => {
       await sql`
-        INSERT INTO sign_up_requests (id, email, secret, expires_at, guest_user_id)
+        INSERT INTO sign_up_requests (id, email, secret, expires_at, guest_user_id, language)
         VALUES (
           ${request.id}, ${request.email}, ${request.secret}, ${request.expiresAt},
-          ${request.guestUserId ?? null}
+          ${request.guestUserId ?? null}, ${isLanguage(request.language) ? request.language : null}
         )
       `
     },
@@ -78,7 +88,8 @@ export function signUpRequests(sql: Sql) {
     find: async (id: string, now = new Date()): Promise<SignUpRequest | null> => {
       if (!UUID_PATTERN.test(id)) return null
       const [row] = await sql<SignUpRequest[]>`
-        SELECT id, email, secret, expires_at AS "expiresAt", guest_user_id AS "guestUserId"
+        SELECT id, email, secret, expires_at AS "expiresAt", guest_user_id AS "guestUserId",
+          language
         FROM sign_up_requests
         WHERE id = ${id} AND expires_at > ${now}
       `
