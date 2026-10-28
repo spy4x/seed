@@ -20,6 +20,9 @@ import { createFormatters } from "@spy4x/time/format"
 import uiEn from "@spy4x/preact-ui/i18n/en"
 import systemEn from "@spy4x/preact-system/i18n/en"
 import appEn from "@i18n/app/en.json" with { type: "json" }
+import appDe from "@i18n/app/de.json" with { type: "json" }
+import uiDe from "@spy4x/preact-ui/i18n/de"
+import systemDe from "@spy4x/preact-system/i18n/de"
 import {
   AccountDeletionBlockReason,
   type GuestSwitchState,
@@ -72,12 +75,12 @@ afterEach(async () => {
   root = null
 })
 
-/** Renders `node` in the pseudo-language, with the formatters a screen reads dates through. */
-async function mount(node: VNode): Promise<void> {
+/** Renders `node` in `t`, the pseudo-language by default, with the formatters dates go through. */
+async function mount(node: VNode, t: Translator<string> = PSEUDO): Promise<void> {
   root ??= document.body.appendChild(document.createElement("div"))
   await act(() =>
     render(
-      <I18nContext.Provider value={PSEUDO}>
+      <I18nContext.Provider value={t}>
         <FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>
       </I18nContext.Provider>,
       root!,
@@ -89,6 +92,13 @@ const english = [uiEn, systemEn, appEn] as Catalog[]
 const PSEUDO: Translator<string> = createTranslator({
   language: `en-XA`,
   catalogs: english.map((source) => ({ source, translation: pseudoLocalize(source) })),
+})
+const GERMAN: Translator<string> = createTranslator({
+  language: `de`,
+  catalogs: english.map((source, index) => ({
+    source,
+    translation: ([uiDe, systemDe, appDe] as Catalog[])[index],
+  })),
 })
 const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `Europe/Berlin`, hourCycle: `h23` })
 
@@ -438,4 +448,33 @@ describe(`the sign-in and profile screens`, () => {
       expect(englishLeft()).toEqual([])
     })
   }
+})
+
+describe(`what the server answered, said in the screen's own words`, () => {
+  it(`a requested reset link: the neutral German line, with focus on the title`, async () => {
+    await mount(
+      <ForgotPasswordScreen email="" onEmailChange={nothing} sent error={null} pending={false} />,
+      GERMAN,
+    )
+    await act(() => new Promise((done) => setTimeout(done, 0)))
+    const card = document.querySelector(`[data-e2e=forgot-password-sent]`)!
+    expect(card.querySelector(`[role=status]`)!.textContent).toBe(
+      appDe[`PasswordResetScreen.sent`],
+    )
+    expect(document.activeElement).toBe(card.querySelector(`h1`))
+  })
+
+  it(`a new code: the German sentence names the address, kept apart from the text`, async () => {
+    await mount(
+      <ProfileScreen
+        {...profile}
+        openEmailCode
+        emailChange={{ ...profile.emailChange!, notices: { send: `ada@example.com` } }}
+      />,
+      GERMAN,
+    )
+    const notice = document.querySelector(`[data-e2e=email-send-notice]`)!
+    expect(notice.textContent).toBe(`Ein neuer Code ist unterwegs an ada@example.com.`)
+    expect(notice.querySelector(`bdi`)!.textContent).toBe(`ada@example.com`)
+  })
 })
