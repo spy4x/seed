@@ -16,6 +16,7 @@ import { USER_ROLE_ACTOR } from "../../apps/worker/user-role.ts"
 import { createKvStore } from "@spy4x/platform/rate-limit"
 import { createAuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits.ts"
 import { readAdminStats } from "@server/auth/admin-stats.ts"
+import { setUserPicture } from "@server/auth/profile-pictures.ts"
 import { applyMigrations } from "./migrations.ts"
 
 /**
@@ -101,6 +102,8 @@ function buildApp(sql: postgres.Sql) {
     resetByAddress: rateLimits.resetByAddress,
   })
   const hooks: { meanwhile?: (actorId: number) => Promise<unknown> } = {}
+  /** The person whose open tabs each action told to read their profile, by id, or `null`. */
+  const profiles: (number | null)[] = []
   const app = new Hono<APIContext>()
   app.use(signIn.auth.parseAuth)
   app.post("/sign-up", async (c) => {
@@ -120,7 +123,8 @@ function buildApp(sql: postgres.Sql) {
     const input = text ? JSON.parse(text) : undefined
     const auth = c.get("auth")!
     await hooks.meanwhile?.(auth.user.id)
-    const { outcome } = await admin.act(c, auth, Number(c.req.param("id")), kind, input)
+    const { outcome, profile } = await admin.act(c, auth, Number(c.req.param("id")), kind, input)
+    profiles.push(profile?.id ?? null)
     return c.json({ outcome })
   })
   app.post("/export", signIn.auth.isAuthenticated2FA, async (c) => {
@@ -153,7 +157,7 @@ function buildApp(sql: postgres.Sql) {
       return response
     }
   }
-  return { client, admin, rateLimits, hooks }
+  return { client, admin, rateLimits, hooks, profiles }
 }
 
 /** Signs `email` up in a client of its own and answers that client and the user's id. */
@@ -465,6 +469,48 @@ async function auditsOf(sql: postgres.Sql, userId: number, eventType: AuthAuditE
     ORDER BY id
   `.then((rows) => rows.map((row) => row.identifier))
 }
+
+Deno.test("an operator removes a picture with an audit row and a profile hint, and writes nothing when there is none or they are outranked", async () => {
+  await withSchema(async (sql) => {
+    const app = buildApp(sql)
+    const operator = await signUp(app, "ops@example.com")
+    const target = await signUp(app, "ada@example.com")
+    const peer = await signUp(app, "peer@example.com")
+    const db = new AppDbBase({ sql })
+    await db.admin.setRoleByAddress("ops@example.com", UserRole.OPERATOR, "test")
+    await db.admin.setRoleByAddress("peer@example.com", UserRole.OPERATOR, "test")
+    const picture = { id: uuidV7(), contentType: "image/webp" }
+    await sql.begin((tx) => setUserPicture(tx, target.id, picture))
+    await sql.begin((tx) => setUserPicture(tx, peer.id, { ...picture, id: uuidV7() }))
+    const remove = (id: number) =>
+      operator.request("POST", `/act/${id}/${AdminActionKind.RemovePicture}`).then((r) => r.json())
+    const row = async (id: number) =>
+      (await sql<{ pictureId: string | null; updatedAt: Date }[]>`
+        SELECT picture_id, updated_at FROM users WHERE id = ${id}
+      `)[0]
+
+    expect(await remove(target.id)).toEqual({ outcome: AdminActOutcome.Done })
+    const removed = await row(target.id)
+    expect(removed.pictureId).toBe(null)
+    expect(await auditsOf(sql, target.id, AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR))
+      .toEqual([`operator:${operator.id}`])
+
+    // Nothing left to remove: no audit row, and the row is not touched.
+    expect(await remove(target.id)).toEqual({ outcome: AdminActOutcome.Unchanged })
+    expect(await row(target.id)).toEqual(removed)
+    expect(await auditsOf(sql, target.id, AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR))
+      .toEqual([`operator:${operator.id}`])
+
+    // A peer keeps their picture, and no audit row is written on them.
+    expect(await remove(peer.id)).toEqual({ outcome: AdminActOutcome.Outranked })
+    expect((await row(peer.id)).pictureId).not.toBe(null)
+    expect(await auditsOf(sql, peer.id, AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR))
+      .toEqual([])
+
+    // Only the removal that changed something tells the person's open tabs.
+    expect(app.profiles).toEqual([target.id, null, null])
+  })
+})
 
 Deno.test("an administrator gives a role below their own, with an audit row naming them", async () => {
   await withSchema(async (sql) => {

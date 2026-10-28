@@ -8,6 +8,7 @@ import {
   type AdminUserRow,
   AuthAuditEventType,
   canChangeRoles,
+  type User,
   UserRole,
 } from "@domain/identity"
 import { roleChangeIdentifier } from "@server/auth/admin-users.ts"
@@ -73,6 +74,15 @@ export enum AdminActOutcome {
   NotGuest = 11,
 }
 
+/** What came of an operator action, and the person after it when it was done. */
+export interface AdminActResult {
+  outcome: AdminActOutcome
+  user?: AdminUserRow
+  /** The person's profile, when the action changed it: their open tabs are told to read it. */
+  profile?: User
+  retryAfterMs?: number
+}
+
 /** How many rows the CSV export reads from the database at a time. */
 export const ADMIN_EXPORT_BATCH = 500
 
@@ -93,7 +103,7 @@ export interface AdminService {
     targetId: number,
     action: AdminActionKind,
     input?: AdminActInput,
-  ): Promise<{ outcome: AdminActOutcome; user?: AdminUserRow; retryAfterMs?: number }>
+  ): Promise<AdminActResult>
   /**
    * Every person `filter` matches, on all its pages, in batches (#425). The audit row on `actor`
    * is written before the first row is read, so an export that fails half-way is recorded too.
@@ -166,6 +176,7 @@ export function createAdmin(
         }
       }
       let retryAfterMs: number | undefined
+      let profile: User | undefined
       const outcome = await db.begin(async (tx) => {
         // Both rows locked, in id order so two operators acting on each other wait instead of
         // deadlocking. The operator's role is read again under the lock: one lowered, blocked or
@@ -271,6 +282,7 @@ export function createAdmin(
             // The `users` trigger queues the object; the worker deletes it from the store.
             const removed = await tx.pictures.set(targetId, null)
             if (!removed?.previous) return AdminActOutcome.Unchanged
+            profile = removed.user
             await tx.authAudit.insert(
               auditRow(c, targetId, AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR, identifier),
             )
@@ -293,7 +305,7 @@ export function createAdmin(
       })
       if (outcome === AdminActOutcome.TooManyResets) return { outcome, retryAfterMs }
       if (outcome !== AdminActOutcome.Done) return { outcome }
-      return { outcome, user: (await db.admin.find(targetId)) ?? undefined }
+      return { outcome, user: (await db.admin.find(targetId)) ?? undefined, profile }
     },
 
     async export(c, actor, filter) {
