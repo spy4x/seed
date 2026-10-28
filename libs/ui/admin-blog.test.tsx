@@ -24,8 +24,9 @@ import {
   emptyBlogDraft,
   followTitle,
 } from "./admin-blog-editor.tsx"
-import { ADMIN_ENGLISH } from "./admin-pseudo.ts"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: "http://admin.localhost/blog" })
 const own = {
   document: globalThis.document,
@@ -497,5 +498,20 @@ describe("the editor's rules", () => {
     const ok = { ...emptyBlogDraft(), title: "T", slug: "t", description: "D" }
     expect(blogDraftWords(ok)).toEqual({})
     expect(blogDraftWords(ok, true)).toEqual({ bodyMd: "The post is empty." })
+  })
+})
+
+describe("the blog screens in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <>
+          <AdminBlogListScreen {...listProps([])} />
+          <AdminBlogEditorScreen {...editorProps([], { dialog: "publish" })} />
+          <AdminBlogEditorScreen {...editorProps([], { dialog: "delete" })} />
+        </>
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(document.body, [`Hello world`, `News`, /\/blog\/[a-z-]+/g])).toEqual([])
   })
 })

@@ -37,11 +37,24 @@ export const ADMIN_PSEUDO: Translator<string> = createTranslator({
 })
 
 /**
+ * What `Intl` writes in the operator's region format, which is theirs to choose apart from the
+ * language: dates, times, relative times and sizes. A test's formatter is English.
+ */
+const FORMATTED: readonly RegExp[] = [
+  /\b\d{1,2} [A-Z][a-z]{2,8}( \d{4})?(, \d{1,2}:\d{2}(:\d{2})?( ?[ap]m)?)?( (UTC|GMT[+−-]?\d*))?/g,
+  /\b\d{1,2}:\d{2}(:\d{2})?( ?[ap]m)?/g,
+  /\b(\d+|an?) (second|minute|hour|day|week|month|year)s? ago\b/g,
+  /\bin (\d+|an?) (second|minute|hour|day|week|month|year)s?\b/g,
+  /\b(yesterday|today|tomorrow|now)\b/gi,
+  /\b\d+(\.\d+)? (B|kB|KB|MB|GB|TB)\b/g,
+]
+
+/**
  * The English words a person reads under `root` outside the pseudo-language's marks: its text and
  * the names and hints in its attributes. `data` lists what the screen shows as it is (a person's
- * name, an address, a code), which is never translated.
+ * name, an address, a code), which is never translated; what `Intl` formats counts as data too.
  */
-export function englishLeft(root: Element, data: readonly string[] = []): string[] {
+export function englishLeft(root: Element, data: readonly (string | RegExp)[] = []): string[] {
   const texts: string[] = []
   const walker = root.ownerDocument.createTreeWalker(root, 4 /* NodeFilter.SHOW_TEXT */)
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
@@ -59,7 +72,7 @@ export function englishLeft(root: Element, data: readonly string[] = []): string
   return texts.map((text) => text.trim()).filter((text) => {
     // A message split around a value spans several nodes: `⟦… ` before it, ` …⟧` after.
     let rest = text.replaceAll(/⟦[^⟧]*(⟧|$)/g, ``).replace(/^[^⟦]*⟧/, ``)
-    for (const value of data) rest = rest.replaceAll(value, ``)
+    for (const value of [...FORMATTED, ...data]) rest = rest.replaceAll(value, ``)
     return /[A-Za-z]{2,}/.test(rest)
   })
 }

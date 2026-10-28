@@ -25,8 +25,9 @@ import {
   countAxisTop,
   statChange,
 } from "./admin-dashboard-screen.tsx"
-import { ADMIN_ENGLISH } from "./admin-pseudo.ts"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
   document: globalThis.document,
@@ -796,5 +797,27 @@ describe("the admin sign-in", () => {
     await submit("input[name=otp]")
 
     expect(calls).toEqual([["code", "123456"]])
+  })
+})
+
+describe("the dashboard and the people in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <>
+          <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} />
+          <AdminUsersScreen {...listProps([])} />
+          <AdminUserScreen {...userProps([])} />
+          <AdminUserScreen {...userProps([], { tab: "methods" })} />
+          <AdminUserScreen {...userProps([], { tab: "sessions" })} />
+          <AdminUserScreen {...userProps([], { tab: "groups" })} />
+          <AdminUserScreen {...userProps([], { tab: "activity" })} />
+        </>
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(document.body, [
+      ...[`Ada Lovelace`, `AL`, `Grace Hopper`, `GH`, /[a-z]+@example\.com/g],
+      ...[`Firefox on Linux`, `Personal`, `operator:7`, `English (United Kingdom)`],
+    ])).toEqual([])
   })
 })

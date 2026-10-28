@@ -24,8 +24,9 @@ import {
   type AdminAuditScreenProps,
   auditEventLabel,
 } from "./admin-audit-screen.tsx"
-import { ADMIN_ENGLISH as T } from "./admin-pseudo.ts"
+import { ADMIN_ENGLISH as T, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: "http://admin.localhost/audit" })
 const own = {
   document: globalThis.document,
@@ -440,5 +441,26 @@ describe("audit log screen", () => {
     expect(options.map((option) => option.textContent)).toContain(
       "Operator: Cancellation undone by an operator",
     )
+  })
+})
+
+describe("the audit log in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <>
+          <AdminAuditScreen {...props([])} />
+          <AdminAuditScreen {...props([], { view: "timeline" })} />
+        </>
+      </I18nContext.Provider>,
+    )
+    expect(
+      englishLeft(document.body, [
+        `Ada Lovelace`,
+        `Grace Hopper`,
+        `ada@example.com`,
+        `Firefox on Linux`,
+      ]),
+    ).toEqual([])
   })
 })
