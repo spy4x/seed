@@ -14,12 +14,15 @@ import {
 } from "@spy4x/platform/universal/i18n"
 import ui from "@spy4x/preact-ui/i18n/en"
 import system from "@spy4x/preact-system/i18n/en"
-import signals from "@spy4x/preact-signals/i18n/en"
 import charts from "@spy4x/preact-charts/i18n/en"
 import admin from "@i18n/admin/en.json" with { type: "json" }
 
-/** The admin app's catalogs, in the order the app lists them. */
-const CATALOGS = [ui, system, signals, charts, admin] as Catalog[]
+/**
+ * The catalogs the admin screens draw from, in the order the app lists them. The app's state
+ * catalog (`@spy4x/preact-signals`) is left out: no screen here reads it, and `libs/ui` takes no
+ * store package.
+ */
+const CATALOGS = [ui, system, charts, admin] as Catalog[]
 
 /** The admin app's words in English, as a screen's helper takes them. */
 export const ADMIN_ENGLISH: Translator<string> = createTranslator({
