@@ -134,29 +134,31 @@ function actionDone(
   const periodEnd = customer.currentPeriodEnd
     ? billingDate(customer.currentPeriodEnd, format)
     : null
-  const P = `AdminBillingCustomer.`
   switch (action.kind) {
     case `refund`:
       return answer.refunded
-        ? t.t(`${P}doneRefundAmount`, {
+        ? t.t(`AdminBillingCustomer.doneRefundAmount`, {
           amount: formatMoney(answer.refunded.amount, answer.refunded.currency),
           group,
         })
-        : t.t(`${P}doneRefund`, { group })
+        : t.t(`AdminBillingCustomer.doneRefund`, { group })
     case `time`:
       return answer.until
-        ? t.t(`${P}doneTimeUntil`, { group, date: billingDate(answer.until, format) })
-        : t.t(`${P}doneTime`, { group })
+        ? t.t(`AdminBillingCustomer.doneTimeUntil`, {
+          group,
+          date: billingDate(answer.until, format),
+        })
+        : t.t(`AdminBillingCustomer.doneTime`, { group })
     case `cancel`:
       return action.when === `now`
-        ? t.t(`${P}doneCancelNow`, { group })
+        ? t.t(`AdminBillingCustomer.doneCancelNow`, { group })
         : periodEnd
-        ? t.t(`${P}doneCancelOn`, { group, date: periodEnd })
-        : t.t(`${P}doneCancelEnd`, { group })
+        ? t.t(`AdminBillingCustomer.doneCancelOn`, { group, date: periodEnd })
+        : t.t(`AdminBillingCustomer.doneCancelEnd`, { group })
     case `undo`:
       return periodEnd
-        ? t.t(`${P}doneUndoOn`, { group, date: periodEnd })
-        : t.t(`${P}doneUndo`, { group })
+        ? t.t(`AdminBillingCustomer.doneUndoOn`, { group, date: periodEnd })
+        : t.t(`AdminBillingCustomer.doneUndo`, { group })
   }
 }
 
