@@ -3,7 +3,8 @@
  * browser DOM (happy-dom). `en-XA` wraps every catalog message in `⟦ ⟧`: rendered in it, a screen
  * shows no English outside those marks except data (a note's title, a group's name, a file's name,
  * a size, and the dates in `<time>`, which `Intl` words). English left in the code, past the
- * catalog, fails here.
+ * catalog, fails here. The overview's note widgets are drawn on their own, since the overview
+ * screen around them belongs to another lane of #275.
  */
 import { expect } from "@std/expect"
 import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
@@ -18,7 +19,9 @@ import uiEn from "@spy4x/preact-ui/i18n/en"
 import systemEn from "@spy4x/preact-system/i18n/en"
 import chartsEn from "@spy4x/preact-charts/i18n/en"
 import appEn from "@i18n/app/en.json" with { type: "json" }
-import { GroupRole } from "@domain/groups"
+import { GroupRole, overviewPeriods } from "@domain/groups"
+import { NOTE_WIDGET_IDS } from "@domain/notes"
+import { NOTE_WIDGET_VIEWS } from "./note-widgets.tsx"
 import { NO_NOTE_FILTERS } from "./notes-filter.ts"
 import { NotesScreen } from "./notes-screen.tsx"
 import { NoteEditorScreen } from "./note-editor-screen.tsx"
@@ -130,6 +133,8 @@ const DATA = [
   `Esc`,
   `KB`,
   `MB`,
+  // The chart's days, as the person's region writes them.
+  ...[`19`, `20`, `21`].map((d) => FORMAT.utc().dayMonth(`2026-10-${d}T00:00:00Z`)),
 ]
 
 /**
@@ -345,5 +350,35 @@ describe(`the notes, tags, search and shortcuts screens in en-XA`, () => {
     await settle()
     expect(english()).toEqual([])
     expectReached([`Search.notesOnDevice`, `Search.actions`])
+  })
+  it(`draw the overview's note widgets with no English outside the catalogs`, async () => {
+    const periods = overviewPeriods({ from: `2026-10-19`, to: `2026-10-21` })!
+    const context = { periods, endsToday: false, format: FORMAT }
+    const days = [`2026-10-19`, `2026-10-20`, `2026-10-21`]
+    const data = {
+      [NOTE_WIDGET_IDS.total]: { current: 31, previous: 27 },
+      [NOTE_WIDGET_IDS.added]: { current: 0, previous: 11 },
+      [NOTE_WIDGET_IDS.series]: { days, current: [27, 30, 31], previous: [20, 22, 27] },
+    }
+    await mount(
+      <>
+        {Object.entries(data).map(([id, result]) => {
+          const drawing = NOTE_WIDGET_VIEWS[id].draw(result, context)
+          return (
+            <section key={id}>
+              <p>{drawing.caption}</p>
+              {drawing.content}
+            </section>
+          )
+        })}
+      </>,
+    )
+    expect(english()).toEqual([])
+    expectReached([`NoteWidgets.addedNone`])
+    // The card's own lines come as keys, with their English for a screen that has no translator.
+    const total = NOTE_WIDGET_VIEWS[NOTE_WIDGET_IDS.total]
+    expect(total.loadingKey).toBe(`NoteWidgets.totalLoading`)
+    expect(PSEUDO.t(total.loadingKey)).toContain(`⟦`)
+    expect(total.loadingLabel).not.toContain(`NoteWidgets`)
   })
 })

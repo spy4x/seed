@@ -6,7 +6,8 @@
  *
  * @module
  */
-import type { Translator } from "@spy4x/platform/universal/i18n"
+import { createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
+import app from "@i18n/app/en.json" with { type: "json" }
 
 /** A message key of the `app` catalog with the values its sentence names. */
 export interface KeyedMessage {
@@ -24,4 +25,16 @@ export function messageText(
 ): string | null {
   if (message === null || message === undefined || message === ``) return null
   return typeof message === `string` ? t.t(message) : t.t(message.key, message.values)
+}
+
+let english: Translator<string> | undefined
+
+/**
+ * `key` of the `app` catalog in English, whatever the person's language: for search aliases, so a
+ * person who types the English word still finds the entry, and for a string a screen without a
+ * translator shows.
+ */
+export function englishText(key: string, values?: Record<string, string | number>): string {
+  english ??= createTranslator({ language: `en`, catalogs: [{ source: app }] })
+  return english.t(key, values)
 }

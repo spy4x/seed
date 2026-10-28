@@ -20,7 +20,6 @@ import { DashboardGrid, WidgetCard, type WidgetSize } from "@spy4x/preact-ui/wid
 import type { Formatters } from "@spy4x/time/format"
 import { type OverviewPeriods, overviewPeriods } from "@domain/groups"
 import type { WidgetView } from "./note-widgets.tsx"
-import { useAppText } from "./i18n.ts"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 
 /** The ranges the overview offers, in the picker's order. "Last 30 days" is the default. */
@@ -367,9 +366,8 @@ function OverviewWidgetCard(
   },
 ): JSX.Element {
   const { load } = widget
-  const t = useAppText()
   const drawing = load.status === "ready"
-    ? view.draw(load.data, { periods, endsToday, format, t })
+    ? view.draw(load.data, { periods, endsToday, format })
     : null
   const savedAt = load.status === "ready" ? load.savedAt : null
   return (
@@ -379,8 +377,8 @@ function OverviewWidgetCard(
       size={drawing?.status === "empty" ? "stat" : widget.size}
       status={drawing ? drawing.status : load.status === "error" ? "error" : "loading"}
       caption={savedAt === null ? drawing?.caption : `As of ${format.time(savedAt)}`}
-      loadingLabel={t.t(view.loadingLabel)}
-      errorMessage={t.t(view.errorMessage)}
+      loadingLabel={view.loadingLabel}
+      errorMessage={view.errorMessage}
       onRetry={onRetry}
       emptyLabel={drawing?.emptyLabel}
       menu={onHide && (
