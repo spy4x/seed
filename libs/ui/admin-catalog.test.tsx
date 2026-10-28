@@ -544,7 +544,7 @@ describe("the item editor's share links", () => {
     expect(friends.querySelector("[data-e2e=catalog-item-link-url]")!.textContent)
       .toBe("No link yet · utm_source=friends")
     const copy = friends.querySelector<HTMLButtonElement>("[data-e2e=catalog-item-link-copy]")!
-    expect(copy.getAttribute("aria-label")).toBe("Copy the link for Friends")
+    expect(copy.getAttribute("aria-label")).toBe("Copy link for Friends")
     expect(copy.type).toBe("button")
     await clickOn(copy)
     expect(calls).toEqual([["copy", FRIENDS]])

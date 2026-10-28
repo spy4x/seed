@@ -638,7 +638,7 @@ function ShareLinks(
                         type="button"
                         variant="secondary"
                         class="min-h-11 shrink-0 sm:min-h-9"
-                        aria-label={`Copy the link for ${source.name}`}
+                        aria-label={`Copy link for ${source.name}`}
                         busy={copying}
                         busyLabel="Copying…"
                         disabled={state.copying !== null && !copying}
