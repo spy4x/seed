@@ -93,6 +93,7 @@
     "many": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут.",
     "other": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты."
   },
+  "EmailScreen.codeResent": "Новый код отправлен на <email>{email}</email>.",
   "EmailScreen.codeSentKeep": {
     "one": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минуты. Пока вы его не введёте, входите с <current>{current}</current>.",
     "few": "Введите код из письма на <email>{email}</email>. Он сработает один раз в течение {count} минут. Пока вы его не введёте, входите с <current>{current}</current>.",
@@ -379,8 +380,8 @@
   "ProfileScreen.signInTitle": "Войдите, чтобы открыть профиль",
   "ProfileScreen.signInText": "Имя, пароль и устройства появятся здесь после входа.",
   "ProfileScreen.createAccount": "Создать аккаунт",
-  "ProfileScreen.twoFactorOn": "Двухфакторный вход включён",
-  "ProfileScreen.twoFactorOff": "Двухфакторный вход выключен",
+  "ProfileScreen.twoFactorOn": "2FA включена",
+  "ProfileScreen.twoFactorOff": "2FA выключена",
   "ProfileScreen.title": "Профиль",
   "ProfileScreen.noName": "Без имени",
   "ProfileScreen.push": "Push-уведомления",

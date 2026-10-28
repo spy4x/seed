@@ -90,6 +90,7 @@
     "many": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos.",
     "other": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos."
   },
+  "EmailScreen.codeResent": "Um novo código está a caminho de <email>{email}</email>.",
   "EmailScreen.codeSentKeep": {
     "one": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minuto. Até digitá-lo, você continua entrando com <current>{current}</current>.",
     "many": "Digite o código do e-mail enviado para <email>{email}</email>. Ele funciona uma vez, por {count} minutos. Até digitá-lo, você continua entrando com <current>{current}</current>.",

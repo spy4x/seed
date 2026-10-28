@@ -126,6 +126,7 @@ export interface EmailChangeProps {
   onValueChange: (field: keyof EmailValues, value: string) => void
   errors: EmailMessages
   /** What the API said when it accepted "Send a new code". */
+  /** The address a new code just went to, said in the screen's own words; `null` for none. */
   notices: Pick<EmailMessages, "send">
   pending: Record<keyof EmailMessages, boolean>
   onVerify?: () => void
@@ -285,9 +286,12 @@ export function EmailDialog(
                   />
                 </p>
                 <ErrorState message={errors.send} />
-                {notices.send && (
+                {notices.send !== null && (
                   <p class="text-sm" role="status" data-e2e="email-send-notice">
-                    {notices.send}
+                    <Rich
+                      parts={t.parts(`EmailScreen.codeResent`, { email: notices.send })}
+                      tags={{ email: (text) => <bdi translate={false}>{text}</bdi> }}
+                    />
                   </p>
                 )}
               </Stack>

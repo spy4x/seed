@@ -99,6 +99,7 @@
     "many": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة.",
     "other": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة."
   },
+  "EmailScreen.codeResent": "رمز جديد في طريقه إلى <email>{email}</email>.",
   "EmailScreen.codeSentKeep": {
     "zero": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة {count} دقيقة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",
     "one": "أدخل الرمز من الرسالة المرسلة إلى <email>{email}</email>. يعمل مرة واحدة لمدة دقيقة واحدة. ستواصل تسجيل الدخول بـ<current>{current}</current> حتى تدخله.",

@@ -87,6 +87,7 @@
     "one": "Enter the code from the mail to <email>{email}</email>. It works once, for {count} minute.",
     "other": "Enter the code from the mail to <email>{email}</email>. It works once, for {count} minutes."
   },
+  "EmailScreen.codeResent": "A new code is on its way to <email>{email}</email>.",
   "EmailScreen.codeSentKeep": {
     "one": "Enter the code from the mail to <email>{email}</email>. It works once, for {count} minute. You keep signing in with <current>{current}</current> until you enter it.",
     "other": "Enter the code from the mail to <email>{email}</email>. It works once, for {count} minutes. You keep signing in with <current>{current}</current> until you enter it."

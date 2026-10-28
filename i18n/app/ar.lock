@@ -74,6 +74,7 @@ EmailScreen.changeNew	86601b00ef72bdaa
 EmailScreen.changeProvider	fff1a8eb37e9dc69
 EmailScreen.changeTitle	c7beb170cdb0996c
 EmailScreen.close	7d9eb7acb13e2462
+EmailScreen.codeResent	04a62050ab518d53
 EmailScreen.codeSent	d7c410eff9d0ffd2
 EmailScreen.codeSentKeep	cdc2c4bb3e075e2e
 EmailScreen.confirm	a779f807f3fe0356

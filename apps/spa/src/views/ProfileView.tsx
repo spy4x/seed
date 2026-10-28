@@ -42,6 +42,7 @@ import {
   authPasswordChangeSchema,
   authPasswordSchema,
   authPasswordSetSchema,
+  emailToVerify,
   OAUTH_NOTICE_PARAM,
   oauthNotice,
   UserMFAStatus,
@@ -596,7 +597,16 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
             })
           }),
         onSend: () =>
-          void runEmail("send", () => emailStore.send(), (message) => setEmailSendNotice(message)),
+          void runEmail(
+            "send",
+            () => emailStore.send(),
+            // Said in the screen's words with the address the code went to: the API's message is
+            // English only.
+            () => {
+              const status = emailStore.status.value
+              setEmailSendNotice((status && emailToVerify(status)) ?? "")
+            },
+          ),
         onChange: () =>
           void runEmail(
             "change",

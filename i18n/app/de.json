@@ -87,6 +87,7 @@
     "one": "Gib den Code aus der E-Mail an <email>{email}</email> ein. Er funktioniert einmal, {count} Minute lang.",
     "other": "Gib den Code aus der E-Mail an <email>{email}</email> ein. Er funktioniert einmal, {count} Minuten lang."
   },
+  "EmailScreen.codeResent": "Ein neuer Code ist unterwegs an <email>{email}</email>.",
   "EmailScreen.codeSentKeep": {
     "one": "Gib den Code aus der E-Mail an <email>{email}</email> ein. Er funktioniert einmal, {count} Minute lang. Bis du ihn eingibst, meldest du dich weiter mit <current>{current}</current> an.",
     "other": "Gib den Code aus der E-Mail an <email>{email}</email> ein. Er funktioniert einmal, {count} Minuten lang. Bis du ihn eingibst, meldest du dich weiter mit <current>{current}</current> an."
