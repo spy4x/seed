@@ -18,7 +18,7 @@ import {
   AdminSignInScreen,
 } from "@ui/admin-frame.tsx"
 import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from "./state.ts"
-import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
+import { ADMIN_MODULES, adminPersonTabs, shownModules } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
@@ -49,8 +49,14 @@ export interface AppProps {
  * one sidebar entry per module (`modules/registry.ts`) and the pages each module registers.
  */
 export function App(
-  { store, theme, toasts, modules = ADMIN_MODULES, operatorFormat, singleKeys = deviceSingleKeys }:
-    AppProps,
+  {
+    store,
+    theme,
+    toasts,
+    modules: allModules = ADMIN_MODULES,
+    operatorFormat,
+    singleKeys = deviceSingleKeys,
+  }: AppProps,
 ): JSX.Element {
   const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])
   const session = store.session.value
@@ -60,6 +66,24 @@ export function App(
   const leaveGuard = useMemo(createLeaveGuard, [])
   const leave = useMemo(() => guardNavigate(leaveGuard, navigate), [leaveGuard, navigate])
   const user = session.step === "signed-in" ? session.user : null
+  // The optional modules the API has on (`GET /api/admin/modules`), read once per session; `null`
+  // until read. The rail shows an optional module only once it is listed.
+  const [moduleIds, setModuleIds] = useState<ReadonlySet<string> | null>(null)
+  useEffect(() => {
+    setModuleIds(null)
+    if (!user || !hasAdminAccess(user)) return
+    let current = true
+    void store.request<{ ids: string[] }>("/api/admin/modules").then((result) => {
+      if (current) setModuleIds(new Set(result.ok ? result.data.ids : []))
+    })
+    return () => {
+      current = false
+    }
+  }, [user?.id])
+  const modules = useMemo(() => shownModules(allModules, moduleIds ?? new Set()), [
+    allModules,
+    moduleIds,
+  ])
   // The tab says "Users · Admin · Seed", so an operator never mistakes it for the product's.
   const title = user && hasAdminAccess(user)
     ? adminPageTitle(modules.map((module) => module.nav), path)
@@ -96,10 +120,11 @@ export function App(
         operator: user,
         navigate: leave,
         leaveGuard,
-        personTabs: adminPersonTabs(modules),
+        // An optional module adds no person tabs, so the context need not wait for the list.
+        personTabs: adminPersonTabs(allModules.filter((module) => !module.optional)),
         format: () => own.format.value,
       },
-    [user?.id, modules],
+    [user?.id, allModules],
   )
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const shortcutRows = adminShortcutRows({
@@ -171,7 +196,8 @@ export function App(
         }}
       >
         <Switch>
-          {modules.flatMap((module) =>
+          {/* Until the list is read, every module's pages answer, so a link to one never bounces. */}
+          {(moduleIds === null ? allModules : modules).flatMap((module) =>
             module.routes.map(({ path: pattern, View }) => (
               <Route key={`${module.id}:${pattern}`} path={pattern}>
                 {(params) => <View context={context} params={params as Record<string, string>} />}
