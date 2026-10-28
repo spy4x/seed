@@ -891,6 +891,8 @@ OnboardingCard.goToHighlighted	dd4e9b3b30b69a80
 OnboardingCard.inviteAction	9b7639e8de286c00
 OnboardingCard.inviteText	d291a9914d041c9c
 OnboardingCard.inviteTitle	0a46f5a639ca5571
+OnboardingCard.keep	125f55ebeeef85ad
+OnboardingCard.keepText	83776173b40175a0
 OnboardingCard.noteAction	ab0f84062e482605
 OnboardingCard.noteText	753b3dfa2d2b0de6
 OnboardingCard.noteTitle	4f183ab485c8df34

@@ -703,6 +703,8 @@
   "OnboardingCard.tourOffer": "جديد هنا؟ جولة قصيرة تعرّفك على المكان.",
   "OnboardingCard.tourStart": "ابدأ الجولة",
   "OnboardingCard.tourSkip": "تخطَّ الجولة",
+  "OnboardingCard.keep": "احتفظ بحسابك",
+  "OnboardingCard.keepText": "أضف طريقة لتسجيل الدخول لتفتح هذا الحساب على أي جهاز.",
   "OverviewScreen.last7Days": "آخر 7 أيام",
   "OverviewScreen.last30Days": "آخر 30 يومًا",
   "OverviewScreen.last90Days": "آخر 90 يومًا",

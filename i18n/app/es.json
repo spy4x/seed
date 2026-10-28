@@ -598,6 +598,8 @@
   "OnboardingCard.tourOffer": "¿Primera vez aquí? Un recorrido corto te enseña todo.",
   "OnboardingCard.tourStart": "Hacer el recorrido",
   "OnboardingCard.tourSkip": "Saltar el recorrido",
+  "OnboardingCard.keep": "Conservar tu cuenta",
+  "OnboardingCard.keepText": "Añade un método de inicio de sesión para abrir esta cuenta en cualquier dispositivo.",
   "OverviewScreen.last7Days": "Últimos 7 días",
   "OverviewScreen.last30Days": "Últimos 30 días",
   "OverviewScreen.last90Days": "Últimos 90 días",
