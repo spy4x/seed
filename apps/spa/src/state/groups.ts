@@ -28,7 +28,7 @@ import {
   type GroupDraft,
   type GroupEditorErrors,
 } from "@ui/group-editor-screen.tsx"
-import { appText } from "./app-text.ts"
+import { appText } from "../i18n.ts"
 
 /** A group as the API sends it: dates are ISO strings, the sequence a decimal string. */
 export interface GroupItem {

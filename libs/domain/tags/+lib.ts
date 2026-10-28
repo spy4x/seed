@@ -4,6 +4,7 @@ import type { Actor } from "@domain/identity"
 import {
   canMutateNotes,
   canRead,
+  type GroupImportIssue,
   GroupRole,
   legacyExportColor,
   plainEntryProblem,
@@ -179,12 +180,18 @@ export function parseTagRequest<S extends Type<object>>(schema: S, value: unknow
     throw new TagError(
       "INVALID_REQUEST",
       `Tag name must contain 1 to ${TAG_NAME_MAX_LENGTH} characters`,
+      {
+        name: length < 1
+          ? { code: "required" }
+          : { code: "maxLength", values: { rule: TAG_NAME_MAX_LENGTH } },
+      },
     )
   }
   if (hasUnsafeTextCharacters(name)) {
     throw new TagError(
       "INVALID_REQUEST",
       "Tag name must not contain control or invisible characters",
+      { name: { code: "unsafeCharacters" } },
     )
   }
   return { ...parsed, name }
@@ -362,7 +369,11 @@ export function parseTagExportEntry(entry: unknown): TagExportEntry {
     : entry
   const shape = tagExportEntrySchema(value)
   if (shape instanceof type.errors) {
-    throw new TagError("INVALID_REQUEST", plainEntryProblem(shape, "tag", TAG_EXPORT_LABELS))
+    throw new TagError(
+      "INVALID_REQUEST",
+      plainEntryProblem(shape, "tag", TAG_EXPORT_LABELS),
+      fieldErrors(shape),
+    )
   }
   return parseTagRequest(tagExportEntrySchema, value) as TagExportEntry
 }
@@ -383,18 +394,25 @@ const TAG_EXPORT_LABELS = {
  */
 export function tagExportProblems(
   tags: readonly Pick<TagExportEntry, "name">[],
-): { index: number | null; problem: string }[] {
-  const problems: { index: number | null; problem: string }[] = []
+): { index: number | null; problem: string; issue: GroupImportIssue }[] {
+  const problems: { index: number | null; problem: string; issue: GroupImportIssue }[] = []
   if (tags.length > TAG_MAX_PER_GROUP) {
     problems.push({
       index: null,
       problem: `the file holds ${tags.length} tags, and a group holds at most ${TAG_MAX_PER_GROUP}`,
+      issue: { code: "tooManyTags", values: { count: tags.length, max: TAG_MAX_PER_GROUP } },
     })
   }
   const names = new Set<string>()
   tags.forEach((tag, index) => {
     const name = tag.name.toLowerCase()
-    if (names.has(name)) problems.push({ index, problem: `another tag in the file is called this` })
+    if (names.has(name)) {
+      problems.push({
+        index,
+        problem: `another tag in the file is called this`,
+        issue: { code: "duplicateTagName" },
+      })
+    }
     names.add(name)
   })
   return problems

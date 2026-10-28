@@ -3,6 +3,7 @@ import { apiFetch } from "@spy4x/platform/api"
 import { canOpenAdmin, type EmailStatus, type User } from "@domain/identity"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import type { AdminOperator } from "@ui/admin-user-screen.tsx"
+import { type ErrorAnswer, errorText, translatedError } from "@ui/message.ts"
 import { adminText } from "./i18n.ts"
 
 /** One answer of the API: the data, or its status and message. */
@@ -32,13 +33,33 @@ export const post = (body?: unknown): RequestInit => ({
   body: body === undefined ? undefined : JSON.stringify(body),
 })
 
+/**
+ * One call to the API whose refusal says its `message` in the operator's language, translated by
+ * its code through the `errors` catalog (#275), so every module shows it as it is.
+ */
+export async function adminFetch<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<AdminApiResult<T>> {
+  const result = await apiFetch<T>(path, init)
+  return result.ok ? result : { ...result, error: translatedError(adminText(), result.error) }
+}
+
 /** The calls to the API on the admin app's own origin, where the proxy sends `/api`. */
 export const adminHttp: AdminApi = {
-  me: () => apiFetch("/api/auth/me", {}),
-  signIn: (credentials) => apiFetch("/api/auth/password/check", post(credentials)),
-  oneTimeCode: (otp) => apiFetch("/api/auth/totp/check", post({ otp })),
-  signOut: () => apiFetch("/api/auth/sign-out", post()),
-  fetch: (path, init = {}) => apiFetch(path, init),
+  me: () => adminFetch("/api/auth/me"),
+  signIn: (credentials) => adminFetch("/api/auth/password/check", post(credentials)),
+  oneTimeCode: (otp) => adminFetch("/api/auth/totp/check", post({ otp })),
+  signOut: () => adminFetch("/api/auth/sign-out", post()),
+  fetch: adminFetch,
+}
+
+/**
+ * What a refusal `readApiError` read says, in the operator's language; {@link adminFailure} for a
+ * body that is not the API's.
+ */
+export function refusalText(refusal: ErrorAnswer | null): string {
+  return refusal ? errorText(adminText(), refusal) : adminFailure()
 }
 
 /** The message when a call failed without one of its own, as when the network is down. */

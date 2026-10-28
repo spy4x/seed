@@ -78,7 +78,7 @@ describe("invitations store", () => {
     expect(store.created.value).toBeNull()
   })
 
-  it("keeps the API's message and the plan's refusal when a create is refused", async () => {
+  it("words a refused create by its reason and keeps the plan's refusal", async () => {
     const plan = {
       code: "PLAN_LIMIT_REACHED",
       entitlement: "maxMembers",
@@ -95,7 +95,7 @@ describe("invitations store", () => {
 
     expect(await store.create()).toBe(false)
 
-    expect(store.createError.value?.message).toBe("Full")
+    expect(store.createError.value?.message).toBe("The group's plan has no room for more.")
     expect(store.createError.value?.plan).toEqual(plan)
     expect(store.created.value).toBeNull()
   })
@@ -123,7 +123,7 @@ describe("invitations store", () => {
     }
   })
 
-  it("posts the creator's price confirmation, keeps the refusal's code and forgets it when the page closes", async () => {
+  it("posts the creator's price confirmation, words the refusal by its code and forgets it when the page closes", async () => {
     const { store, calls } = harness({
       "GET /api/groups/g-1/invitations": [200, { invitations: [] }],
       "POST /api/groups/g-1/invitations": [400, {
@@ -138,7 +138,7 @@ describe("invitations store", () => {
 
     expect(await store.create()).toBe(false)
     expect(store.createError.value).toEqual({
-      message: "Confirm the price",
+      message: "Confirm that each person who joins adds a member to the group's bill.",
       code: "SEAT_PRICE_NOT_ACCEPTED",
       plan: null,
     })
@@ -166,7 +166,10 @@ describe("invitations store", () => {
     expect(await store.revoke("i-2")).toBe(false)
 
     expect(store.invitations.value?.map((r) => r.id)).toEqual(["i-2"])
-    expect(store.revokeError.value).toEqual({ invitationId: "i-2", message: "Only the owner" })
+    expect(store.revokeError.value).toEqual({
+      invitationId: "i-2",
+      message: "Your role in this group does not allow this.",
+    })
   })
 
   it("words a refusal of the shared guards in its own sentence, not in theirs", async () => {
@@ -186,7 +189,7 @@ describe("invitations store", () => {
     })
   })
 
-  it("previews a link and says why it no longer works in the API's words", async () => {
+  it("previews a link and says why it no longer works, worded by its reason", async () => {
     const { store, calls } = harness({
       "POST /api/invitations/preview": [410, {
         error: {
@@ -200,7 +203,7 @@ describe("invitations store", () => {
     await store.loadPreview(token)
 
     expect(calls[0]).toEqual({ method: "POST", url: "/api/invitations/preview", body: { token } })
-    expect(store.previewError.value).toBe("This invitation has expired")
+    expect(store.previewError.value).toBe("This invitation has expired.")
     expect(store.preview.value).toBeNull()
   })
 

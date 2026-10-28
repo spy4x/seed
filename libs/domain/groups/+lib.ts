@@ -8,6 +8,7 @@ import {
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import { isHexColor } from "@spy4x/platform/universal/color"
 import type { Actor } from "@domain/identity"
+import type { FieldErrors } from "@spy4x/validation"
 
 export * from "./activity.ts"
 export * from "./invitations.ts"
@@ -69,6 +70,8 @@ export class GroupError extends Error {
   constructor(
     public readonly code: GroupErrorCode,
     message: string,
+    /** Each failed field's code and rule, when a field of the request is wrong. */
+    public readonly fields?: FieldErrors,
   ) {
     super(message)
     this.name = "GroupError"
@@ -619,17 +622,22 @@ function hasExactKeys(value: unknown, keys: string[]): value is Record<string, u
  */
 export function parseGroupName(value: unknown): string {
   if (typeof value !== "string") {
-    throw new GroupError("INVALID_REQUEST", "Group name must be a string")
+    throw new GroupError("INVALID_REQUEST", "Group name must be a string", {
+      name: { code: "domain" },
+    })
   }
   const name = value.trim()
   const nameLength = Array.from(name).length
   if (nameLength < 1 || nameLength > 100) {
-    throw new GroupError("INVALID_REQUEST", "Group name must contain 1 to 100 characters")
+    throw new GroupError("INVALID_REQUEST", "Group name must contain 1 to 100 characters", {
+      name: nameLength < 1 ? { code: "required" } : { code: "maxLength", values: { rule: 100 } },
+    })
   }
   if (hasUnsafeTextCharacters(name)) {
     throw new GroupError(
       "INVALID_REQUEST",
       "Group name must not contain control or invisible characters",
+      { name: { code: "unsafeCharacters" } },
     )
   }
   return name
@@ -683,19 +691,23 @@ export function parseRenameGroupRequest(value: unknown): { groupId: string; name
  */
 export function parseGroupDescription(value: unknown): string {
   if (typeof value !== "string") {
-    throw new GroupError("INVALID_REQUEST", "Group description must be a string")
+    throw new GroupError("INVALID_REQUEST", "Group description must be a string", {
+      description: { code: "domain" },
+    })
   }
   const description = value.trim()
   if (Array.from(description).length > GROUP_DESCRIPTION_MAX) {
     throw new GroupError(
       "INVALID_REQUEST",
       `Group description must contain at most ${GROUP_DESCRIPTION_MAX} characters`,
+      { description: { code: "maxLength", values: { rule: GROUP_DESCRIPTION_MAX } } },
     )
   }
   if (hasUnstorableTextCharacters(description)) {
     throw new GroupError(
       "INVALID_REQUEST",
       "Group description must not contain a NUL or a broken character",
+      { description: { code: "unstorableCharacters" } },
     )
   }
   return description
@@ -708,6 +720,7 @@ export function parseGroupColor(value: unknown): GroupColor | null {
   throw new GroupError(
     "INVALID_REQUEST",
     "Group colour must be null or a hex colour like #1a2b3c",
+    { color: { code: "hexColor" } },
   )
 }
 
@@ -722,7 +735,9 @@ const GRAPHEMES = new Intl.Segmenter(undefined, { granularity: "grapheme" })
 export function parseGroupEmoji(value: unknown): string | null {
   if (value === null) return null
   if (typeof value !== "string") {
-    throw new GroupError("INVALID_REQUEST", "Group emoji must be a string or null")
+    throw new GroupError("INVALID_REQUEST", "Group emoji must be a string or null", {
+      emoji: { code: "domain" },
+    })
   }
   const emoji = value.trim()
   if (emoji === "") return null
@@ -733,7 +748,9 @@ export function parseGroupEmoji(value: unknown): string | null {
     graphemes.length !== 1 || !EMOJI_PATTERN.test(emoji) ||
     Array.from(emoji).length > GROUP_EMOJI_MAX
   ) {
-    throw new GroupError("INVALID_REQUEST", "Group emoji must be a single emoji")
+    throw new GroupError("INVALID_REQUEST", "Group emoji must be a single emoji", {
+      emoji: { code: "singleEmoji" },
+    })
   }
   return emoji
 }

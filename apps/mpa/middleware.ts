@@ -1,6 +1,7 @@
 import type { MpaConfig } from "./config.ts"
 import { createApi } from "./api.ts"
 import { renderErrorPage } from "./error-page.tsx"
+import { DEFAULT_LANGUAGE, pathLanguage, segmentLanguage } from "./languages.ts"
 import { createNewsletterStatus } from "./newsletter.ts"
 import { define, type State } from "./utils.ts"
 import { HttpError, staticFiles } from "fresh"
@@ -75,7 +76,8 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
  *    session cookie check, since the MPA has no session;
  * 2. gives the route an API client bound to this request, which presents an MPA on its own domain
  *    to the API as the API's origin once step 1 has passed;
- * 3. tells the route whether the newsletter is on, as `newsletter()` says. It is required, so a
+ * 3. tells the route its language, from the address alone (`pathLanguage`), and whether the
+ *    newsletter is on, as `newsletter()` says. It is required, so a
  *    caller cannot leave the status out by accident: the website starts through
  *    {@link newsletterPageMiddleware}, and where analytics go, if anywhere;
  * 4. answers a form it cannot read with the status `readFormBody` names (413, 408 or 400);
@@ -84,6 +86,10 @@ export async function securityHeadersMiddleware(config: MpaConfig) {
  * 6. lets a browser keep a page but ask again before showing it (`no-cache`, which leaves the
  *    back/forward cache working), and keeps every newsletter answer out of all caches
  *    (`no-store`), since the newsletter pages carry a token in their address.
+ *
+ * Between steps 1 and 2, a `GET` or `HEAD` of an address that ends in a slash answers 301 to the
+ * same address without it, query kept (`/de/pricing/` → `/de/pricing`). Fresh's own
+ * `trailingSlashes("never")` would answer 302.
  *
  * Framing is forbidden by {@link securityHeadersMiddleware}, which runs before this one.
  */
@@ -103,6 +109,15 @@ export function pageMiddleware(
         ctx.url.pathname,
       )
     }
+    const { pathname, search } = ctx.url
+    if (pathname.endsWith(`/`) && pathname !== `/` && READS.includes(ctx.req.method)) {
+      // `ctx.url` and `ctx.redirect` both collapse repeated slashes, so `//evil.com/` stays here.
+      return withPageHeaders(
+        ctx.redirect(`${pathname.replace(/\/+$/, ``) || `/`}${search}`, 301),
+        pathname,
+      )
+    }
+    ctx.state.language = pathLanguage(pathname).language
     ctx.state.webAppOrigin = config.webAppOrigin
     ctx.state.spaOrigin = config.apiOrigin
     ctx.state.api = createApi({
@@ -148,11 +163,14 @@ function remoteAddress(info: Deno.ServeHandlerInfo): string {
   return address.transport === "tcp" || address.transport === "udp" ? address.hostname : ""
 }
 
+/** The methods a trailing slash is redirected for: a 301 would turn a `POST` into a `GET`. */
+const READS = [`GET`, `HEAD`]
+
 const NEWSLETTER_PATHS: string[] = Object.values(FORM_ACTIONS)
 
-function withPageHeaders(response: Response, path: string): Response {
+function withPageHeaders(response: Response, pathname: string): Response {
   const headers = new Headers(response.headers)
-  if (NEWSLETTER_PATHS.includes(path)) {
+  if (NEWSLETTER_PATHS.includes(pathLanguage(pathname).path)) {
     headers.set("cache-control", "no-store")
   } else if (headers.get("content-type")?.startsWith("text/html")) {
     headers.set("cache-control", "no-cache")
@@ -166,6 +184,24 @@ function withPageHeaders(response: Response, path: string): Response {
   Object.assign(answer, { [FRESH_NONCE]: freshNonce(response) })
   return answer
 }
+
+/**
+ * Guards the language segment of every page's address (`routes/[[lang]]/_middleware.ts`), before
+ * the page or anything else reads it: no segment or a served language goes on, the default
+ * language's own prefix answers 301 to the same page without it (`/en/pricing` → `/pricing`, query
+ * kept), and anything else is the 404 page.
+ */
+export const languageMiddleware = define.middleware((ctx) => {
+  // Fresh hands an address without the segment an empty one. An empty segment in the address
+  // itself never arrives: Fresh collapses `//pricing` to `/pricing` before it routes.
+  const asked = segmentLanguage(ctx.params.lang || undefined)
+  if (asked.kind === `missing`) throw new HttpError(404)
+  if (asked.kind === `redirect`) {
+    const path = ctx.url.pathname.slice(`/${DEFAULT_LANGUAGE}`.length) || `/`
+    return new Response(null, { status: 301, headers: { location: `${path}${ctx.url.search}` } })
+  }
+  return ctx.next()
+})
 
 /** What Fresh sends with a static file whose address carries no build id. */
 const FRESH_NO_STORE = "no-cache, no-store, max-age=0, must-revalidate"

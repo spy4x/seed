@@ -11,14 +11,9 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
-import { type Catalog, createTranslator, pseudoLocalize } from "@spy4x/platform/universal/i18n"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { FormatContext } from "@spy4x/preact-ui/format"
 import { createFormatters } from "@spy4x/time/format"
-import uiEn from "@spy4x/preact-ui/i18n/en"
-import systemEn from "@spy4x/preact-system/i18n/en"
-import chartsEn from "@spy4x/preact-charts/i18n/en"
-import appEn from "@i18n/app/en.json" with { type: "json" }
 import { GroupRole, overviewPeriods } from "@domain/groups"
 import { NOTE_WIDGET_IDS } from "@domain/notes"
 import { NOTE_WIDGET_VIEWS } from "./note-widgets.tsx"
@@ -30,6 +25,7 @@ import { TagEditorScreen } from "./tag-editor-screen.tsx"
 import { NewNoteDialog } from "./new-note-dialog.tsx"
 import { generalRows, SHORTCUT_GROUPS, ShortcutsList } from "./shortcuts.tsx"
 import { SearchPalette } from "./search-palette.tsx"
+import { englishLeft, PSEUDO } from "./i18n-testing.ts"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = {
@@ -63,14 +59,6 @@ afterEach(async () => {
   root = null
 })
 
-/** Every catalog the SPA loads, pseudo-localized. */
-const PSEUDO = createTranslator({
-  language: `en-XA`,
-  catalogs: ([uiEn, systemEn, chartsEn, appEn] as Catalog[]).map((source) => ({
-    source,
-    translation: pseudoLocalize(source),
-  })),
-})
 const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `Europe/Berlin`, hourCycle: `h23` })
 
 async function mount(node: VNode): Promise<void> {
@@ -88,24 +76,6 @@ async function mount(node: VNode): Promise<void> {
 /** Lets the search palette's pause in typing pass, and its search and renders finish. */
 async function settle(): Promise<void> {
   await act(() => new Promise((resolve) => setTimeout(resolve, 260)))
-}
-
-/** The page's words a person reads or hears: its text and its labels, dates left out. */
-function readable(): string[] {
-  const texts: string[] = []
-  const walker = document.createTreeWalker(document.body, 4 /* NodeFilter.SHOW_TEXT */)
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (node.parentElement?.closest(`script, style, time`)) continue
-    texts.push(node.textContent ?? ``)
-  }
-  for (const element of document.body.querySelectorAll(`*`)) {
-    if (element.closest(`time`)) continue
-    for (const name of [`aria-label`, `placeholder`, `title`]) {
-      const value = element.getAttribute(name)
-      if (value) texts.push(value)
-    }
-  }
-  return texts.map((text) => text.trim()).filter(Boolean)
 }
 
 /** The data these screens show as it is: titles, names, files, sizes and key names. */
@@ -134,17 +104,9 @@ const DATA = [
   ...[`19`, `20`, `21`].map((d) => FORMAT.utc().dayMonth(`2026-10-${d}T00:00:00Z`)),
 ]
 
-/**
- * The English left on the page once the pseudo-text and the data are taken out. A message split
- * around a value or a tag spans several nodes, and only the first and last carry `⟦` and `⟧`, so a
- * word counts as English only when it has a vowel `en-XA` did not accent.
- */
+/** The English left on the page once the pseudo-text and the data are taken out. */
 function english(): string[] {
-  return readable().filter((text) => {
-    let rest = text.replaceAll(/⟦[^⟧]*(⟧|$)/g, ``).replace(/^[^⟦]*⟧/, ``)
-    for (const data of DATA) rest = rest.replaceAll(data, ``)
-    return (rest.match(/[A-Za-z]{2,}/g) ?? []).some((word) => /[aeiouAEIOU]/.test(word))
-  })
+  return englishLeft(document.body, DATA)
 }
 
 /** The page holds the pseudo-text of every message: the render reached each part checked. */

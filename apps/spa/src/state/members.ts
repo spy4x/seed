@@ -13,7 +13,7 @@ import { readApiError } from "@domain/errors"
 import { callCommand, type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
-import { appText } from "./app-text.ts"
+import { apiErrorText, appText } from "../i18n.ts"
 
 /** A member as the API sends them: `joinedAt` is an ISO string. */
 export interface MemberItem {
@@ -280,7 +280,7 @@ export const membersHttp: MembersDependencies = {
     // was not written for this dialog.
     throw new TransferRefused(
       error?.reason !== undefined
-        ? error.message
+        ? apiErrorText(error)
         : response.status === 429
         ? appText(`GroupTransfer.tooManyAttempts`)
         : appText(`GroupTransfer.somethingWrong`),

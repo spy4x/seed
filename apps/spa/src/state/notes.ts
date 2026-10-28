@@ -2,6 +2,7 @@ import { computed, signal } from "@preact/signals"
 import { ConnectionLostError, describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { type PlanRefusal, readPlanRefusal } from "@domain/billing"
 import { apiAsUser } from "./realtime-call.ts"
+import { refusedField } from "../i18n.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
 import { callCommand, callQuery, canCall, currentLayer, offlineNotes } from "../modules.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
@@ -376,9 +377,10 @@ export function createNotesStore(dependencies: NotesDependencies) {
       draftId.value = dependencies.newId()
       return note
     } catch (cause) {
+      const title = refusedField(cause, "title")
       createErrors.value = {
-        title: null,
-        form: describeError(cause, NOTE_MESSAGES.create),
+        title,
+        form: title ? null : describeError(cause, NOTE_MESSAGES.create),
         plan: planRefusal(cause),
       }
       return null
@@ -406,10 +408,11 @@ export function createNotesStore(dependencies: NotesDependencies) {
       }
       return { note }
     } catch (cause) {
+      const title = refusedField(cause, "title")
       return {
         errors: {
-          title: null,
-          form: describeError(cause, NOTE_MESSAGES.create),
+          title,
+          form: title ? null : describeError(cause, NOTE_MESSAGES.create),
           plan: planRefusal(cause),
         },
       }
@@ -446,9 +449,12 @@ export function createNotesStore(dependencies: NotesDependencies) {
         editing.value = { ...edit, conflict: true }
         editErrors.value = { title: null, form: NOTE_MESSAGES.conflict }
       } else {
+        const title = refusedField(cause, "title")
         editErrors.value = {
-          title: null,
-          form: code === "NOTE_NOT_FOUND"
+          title,
+          form: title
+            ? null
+            : code === "NOTE_NOT_FOUND"
             ? NOTE_MESSAGES.gone
             : describeError(cause, NOTE_MESSAGES.save),
         }

@@ -15,7 +15,7 @@ import {
 import { readApiError } from "@domain/errors"
 import type { AdminGroupAction, AdminGroupDialog } from "@ui/admin-groups-detail.tsx"
 import { adminGroupPersonName } from "@ui/admin-groups-list.tsx"
-import { adminFailure, type AdminFetch, post } from "../../state.ts"
+import { adminFailure, type AdminFetch, post, refusalText } from "../../state.ts"
 import { adminText } from "../../i18n.ts"
 
 export interface GroupsListState {
@@ -198,7 +198,7 @@ export function createGroupsState(
         if (response.status === 401) return signedOut()
         notice = response.status === 404
           ? adminText().t(FILE_GONE)
-          : readApiError(await response.json().catch(() => null))?.message ?? adminFailure()
+          : refusalText(readApiError(await response.json().catch(() => null)))
         if (response.status === 404 && files.value.groupId === groupId && files.value.filter) {
           await loadFiles(groupId, files.value.filter)
         }

@@ -14,15 +14,15 @@ import type {
   SignInMethod,
   SignInMethodsResponse,
 } from "@domain/identity"
-import type { Said } from "@ui/app-text.ts"
+import type { Message } from "@ui/message.ts"
 import type { PasskeyAddStatus } from "@ui/sign-in-methods.tsx"
 import { apiFetch } from "./api.ts"
 import { signInWithPasskey } from "./auth.ts"
 
 /** What the card says when a passkey was refused by the server, or by the device for its reason. */
-export const PASSKEY_NOT_SAVED: Said = { key: `SignInMethods.passkeyNotSaved` }
+export const PASSKEY_NOT_SAVED: Message = { key: `SignInMethods.passkeyNotSaved` }
 /** What the card says when the device already holds one of the person's passkeys. */
-export const PASSKEY_ON_THIS_DEVICE: Said = { key: `SignInMethods.passkeyOnDevice` }
+export const PASSKEY_ON_THIS_DEVICE: Message = { key: `SignInMethods.passkeyOnDevice` }
 
 /** An answer that worked, with what it carried, or one that did not, with the server's reason. */
 type Answer<T> = ({ ok: true } & T) | { ok: false; error: string }
@@ -159,7 +159,7 @@ export function createSignInMethodsStore(
   /** The account has a proven address, so a sign-in link reaches it (#391). */
   const emailLink = signal(false)
   /** Why the last link or unlink failed; empty when the server gave no reason. */
-  const error = signal<Said | null>(null)
+  const error = signal<Message | null>(null)
   /**
    * Why the last read of the list failed; empty when the server gave no reason, as when it cannot
    * be reached. Kept apart from `error`, so a failed read is never told as a failed change.
@@ -250,7 +250,7 @@ export function createSignInMethodsStore(
     pending.value = true
     error.value = null
     passkeyStatus.value = null
-    const failed = async (message: Said) => {
+    const failed = async (message: Message) => {
       // As for a link: a refusal may mean the recent sign-in no longer counts.
       const list = await attempt(http.list)
       if (list.ok) providerProofUntil.value = list.providerProofUntil

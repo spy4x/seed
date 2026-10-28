@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
 import { slugify } from "@spy4x/platform/universal/text"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import type { FieldErrors } from "@spy4x/validation"
 import {
   IconCopy,
   IconEllipsisVertical,
@@ -143,14 +144,29 @@ export function sameCatalogItemDraft(a: CatalogItemDraft, b: CatalogItemDraft): 
 }
 
 /** A range typed in two fields: `null` for two empty ones, else whole numbers or a refusal. */
-function rangeOf(min: string, max: string, field: string, noun: string): CatalogRange | null {
+function rangeOf(
+  min: string,
+  max: string,
+  field: string,
+  noun: `height` | `weight`,
+): CatalogRange | null {
   if (min.trim() === `` && max.trim() === ``) return null
   const [low, high] = [min, max].map((text) => Number(text.trim()))
   if (min.trim() === `` || max.trim() === ``) {
-    throw new CatalogError(`INVALID_REQUEST`, `Enter both ends of the ${noun}, or neither.`, field)
+    throw new CatalogError(
+      `INVALID_REQUEST`,
+      `Enter both ends of the ${noun}, or neither.`,
+      field,
+      { code: `${noun}BothEnds` },
+    )
   }
   if (!Number.isInteger(low) || !Number.isInteger(high)) {
-    throw new CatalogError(`INVALID_REQUEST`, `Enter the ${noun} in whole numbers.`, field)
+    throw new CatalogError(
+      `INVALID_REQUEST`,
+      `Enter the ${noun} in whole numbers.`,
+      field,
+      { code: `${noun}WholeNumbers` },
+    )
   }
   return { min: low, max: high }
 }
@@ -162,10 +178,12 @@ function rangeOf(min: string, max: string, field: string, noun: string): Catalog
 export function catalogItemFields(
   draft: CatalogItemDraft,
   languages: readonly string[],
-): { ok: true; fields: CatalogItemFields } | { ok: false; field: string; message: string } {
+):
+  | { ok: true; fields: CatalogItemFields }
+  | { ok: false; field: string; message: string; failed?: FieldErrors } {
   try {
     if (draft.price === null) {
-      throw new CatalogError(`INVALID_REQUEST`, `Enter the price.`, `price`)
+      throw new CatalogError(`INVALID_REQUEST`, `Enter the price.`, `price`, { code: `required` })
     }
     const sizes = draft.sizes.map((size) => ({
       id: size.id,
@@ -193,7 +211,12 @@ export function catalogItemFields(
     return { ok: true, fields }
   } catch (refusal) {
     if (!(refusal instanceof CatalogError)) throw refusal
-    return { ok: false, field: refusal.field ?? `form`, message: refusal.message }
+    return {
+      ok: false,
+      field: refusal.field ?? `form`,
+      message: refusal.message,
+      ...(refusal.fields && { failed: refusal.fields }),
+    }
   }
 }
 

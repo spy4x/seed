@@ -4,6 +4,7 @@ import { IconExternalLink, IconGitHub } from "@spy4x/preact-icons"
 import { Button } from "@spy4x/preact-ui/button"
 import { REPOSITORY_URL } from "../brand.ts"
 import { HIRE_PAGE_URL, HIRE_PRICES } from "../hire.ts"
+import { useSite } from "../use-site.tsx"
 import { Band } from "./band.tsx"
 import { SectionIntro } from "./section-intro.tsx"
 
@@ -49,21 +50,22 @@ function WayCard(
  * antonshubin.com's MVP page.
  */
 export function PricingWays(): JSX.Element {
+  const { t } = useSite()
   return (
     <Band id="costs" labelledBy="costs-title">
       <div class="flex flex-col gap-12">
         <SectionIntro
           id="costs-title"
-          eyebrow="What you pay"
-          title="Three ways to use Seed, and what each costs"
-          lead="Seed has no paid tier and no licence key. I earn my living building client products on it, so the code stays free."
+          eyebrow={t.t(`PricingWays.eyebrow`)}
+          title={t.t(`PricingWays.title`)}
+          lead={t.t(`PricingWays.lead`)}
         />
         <div class="grid gap-4 md:gap-6 lg:grid-cols-3">
           <WayCard
             id="way-use"
-            title="Use Seed yourself"
+            title={t.t(`PricingWays.useTitle`)}
             price="$0"
-            unit="MIT licence, no account"
+            unit={t.t(`PricingWays.useUnit`)}
             action={
               <Button
                 href={REPOSITORY_URL}
@@ -72,18 +74,17 @@ export function PricingWays(): JSX.Element {
                 data-umami-event="github"
                 data-umami-event-from="ways"
               >
-                <IconGitHub class="size-5" aria-hidden="true" /> View on GitHub
+                <IconGitHub class="size-5" aria-hidden="true" /> {t.t(`HomeHero.github`)}
               </Button>
             }
           >
-            The full source under MIT, every feature, every update. Any number of products,
-            commercial or not, client work included.
+            {t.t(`PricingWays.useText`)}
           </WayCard>
           <WayCard
             id="way-run"
-            title="Run it in production"
-            price="One server"
-            unit="at your host's price"
+            title={t.t(`PricingWays.runTitle`)}
+            price={t.t(`PricingWays.runPrice`)}
+            unit={t.t(`PricingWays.runUnit`)}
             action={
               <Button
                 href={`${REPOSITORY_URL}#production-certificates`}
@@ -92,18 +93,19 @@ export function PricingWays(): JSX.Element {
                 data-umami-event="read-code"
                 data-umami-event-from="deploy-guide"
               >
-                Read the deploy guide
+                {t.t(`PricingWays.runAction`)}
               </Button>
             }
           >
-            Seed runs on one Linux server you rent; several products can share it. Stripe, an email
-            provider and Google or GitHub sign-in are optional, and each bills you directly.
+            {t.t(`PricingWays.runText`)}
           </WayCard>
           <WayCard
             id="way-hire"
-            title="Have me build your MVP on it"
-            price={`From ${HIRE_PRICES.mvpFrom}`}
-            unit={`from ${HIRE_PRICES.mvpWeeks} to a live product`}
+            title={t.t(`PricingWays.hireTitle`)}
+            price={t.t(`PricingWays.hirePrice`, { price: HIRE_PRICES.mvpFrom })}
+            unit={t.t(`PricingWays.hireUnit`, {
+              weeks: t.t(`Hire.weeks`, { count: HIRE_PRICES.mvpWeeks }),
+            })}
             highlighted
             action={
               <Button
@@ -114,22 +116,21 @@ export function PricingWays(): JSX.Element {
                 data-umami-event="hire-me"
                 data-umami-event-from="pricing"
               >
-                See how it works <IconExternalLink class="size-5" aria-hidden="true" />
-                <span class="sr-only">(opens antonshubin.com)</span>
+                {t.t(`PricingWays.hireAction`)}{" "}
+                <IconExternalLink class="size-5" aria-hidden="true" />
+                <span class="sr-only">{t.t(`SiteNav.hireHint`)}</span>
               </Button>
             }
           >
-            Your product from idea to live deployment, on servers in your name. A quote for your
-            scope before any work starts.
+            {t.t(`PricingWays.hireText`)}
           </WayCard>
         </div>
         <p class="max-w-3xl text-sm text-muted text-pretty">
-          Other help is priced openly too: a 60-minute strategy session is{" "}
-          {HIRE_PRICES.strategySession}, and ongoing work is {HIRE_PRICES.hourly} an hour or from
-          {" "}
-          {HIRE_PRICES.retainerFrom}{" "}
-          a month. A price that says "from" becomes a fixed quote after a free call, before any work
-          starts, and a change of scope gets its own quote first.
+          {t.t(`PricingWays.other`, {
+            session: HIRE_PRICES.strategySession,
+            hourly: HIRE_PRICES.hourly,
+            retainer: HIRE_PRICES.retainerFrom,
+          })}
         </p>
       </div>
     </Band>

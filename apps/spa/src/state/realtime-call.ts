@@ -1,3 +1,4 @@
+import { RealtimeRequestError } from "@spy4x/realtime"
 import { REALTIME_USER_HEADER } from "@spy4x/realtime/operations"
 import {
   type AvailableCallPort,
@@ -7,6 +8,8 @@ import {
   withUnauthorizedHook,
 } from "@spy4x/realtime/calls"
 import { apiFetch as send } from "@spy4x/platform/api"
+import { errorText, translatedError } from "@ui/message.ts"
+import { languages } from "../i18n.ts"
 import { sessionState } from "./session.ts"
 
 /**
@@ -64,7 +67,32 @@ export function createAppCallPort(options: AppCallPortOptions): CallPort {
       firstOpenWait: socketFirstOpen && { pending: socketFirstOpen },
     })
     : http
-  return withUnauthorizedHook(port, options.onUnauthorized ?? signOutPage)
+  return withTranslatedErrors(withUnauthorizedHook(port, options.onUnauthorized ?? signOutPage))
+}
+
+/**
+ * `port` whose refusals say their `message` in the page's language, translated by their code
+ * through the `errors` catalog (#275). Code, reason, fields and details stay as the server sent
+ * them, so a store still branches on them; anything else a call rejects with passes through.
+ */
+export function withTranslatedErrors<P extends CallPort>(port: P): P {
+  const translate = async (call: () => Promise<unknown>): Promise<unknown> => {
+    try {
+      return await call()
+    } catch (error) {
+      if (!(error instanceof RealtimeRequestError)) throw error
+      const message = errorText(languages.translator.peek(), error)
+      throw new RealtimeRequestError(error.code, message, error.details, {
+        ...(error.reason !== undefined ? { reason: error.reason } : {}),
+        ...(error.fields !== undefined ? { fields: error.fields } : {}),
+      })
+    }
+  }
+  return {
+    ...port,
+    command: (name, payload, options) => translate(() => port.command(name, payload, options)),
+    query: (name, payload, options) => translate(() => port.query(name, payload, options)),
+  }
 }
 
 /**
@@ -87,13 +115,18 @@ export function canCallAs(
  *
  * A page with nobody signed in names nobody and is never signed out by an answer: the start-up
  * read of `/api/auth/me`, the second-factor step and sign-in itself work as they always did.
+ *
+ * A refusal's `message` comes back in the page's language, translated by its code through the
+ * `errors` catalog (#275), so a store shows it as it is.
  */
 export async function apiAsUser<T>(path: string, init?: RequestInit, fetcher: typeof send = send) {
   const userId = sessionState.value.user?.id
-  if (userId === undefined) return await fetcher<T>(path, init)
-  const result = await fetcher<T>(path, { ...init, headers: asUser(userId, init?.headers) })
-  if (!result.ok && result.status === 401) signOutPage()
-  return result
+  const result = userId === undefined
+    ? await fetcher<T>(path, init)
+    : await fetcher<T>(path, { ...init, headers: asUser(userId, init?.headers) })
+  if (result.ok) return result
+  if (userId !== undefined && result.status === 401) signOutPage()
+  return { ...result, error: translatedError(languages.translator.peek(), result.error) }
 }
 
 /**

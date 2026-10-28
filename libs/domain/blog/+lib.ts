@@ -1,6 +1,7 @@
 import { type } from "arktype"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
+import { type FieldError, type FieldErrors, FORM_FIELD } from "@spy4x/validation"
 
 /**
  * The blog (#395): posts an operator writes in the admin app and the public website shows once
@@ -208,10 +209,16 @@ export class BlogError extends Error {
     public readonly code: BlogErrorCode,
     message: string,
     public readonly field: BlogField | null = null,
+    /** Why it failed, by code, so a screen says it in the person's language (#275). */
+    failed?: FieldError,
   ) {
     super(message)
     this.name = `BlogError`
+    if (failed) this.fields = { [field ?? FORM_FIELD]: failed }
   }
+
+  /** {@link field} (or the whole form) and why it failed, as the API's `fields` names them. */
+  readonly fields?: FieldErrors
 }
 
 /**
@@ -357,9 +364,10 @@ export function isHttpsUrl(url: string): boolean {
 export function parseBlogPostFields(
   input: Pick<BlogPostCreateRequest, Exclude<keyof BlogPostCreateRequest, `id`>>,
 ): BlogPostFields {
-  const fail = (field: BlogField, message: string): never => {
-    throw new BlogError(`INVALID_REQUEST`, message, field)
+  const fail = (field: BlogField, message: string, failed: FieldError): never => {
+    throw new BlogError(`INVALID_REQUEST`, message, field, failed)
   }
+  const tooLong = (rule: number): FieldError => ({ code: `maxLength`, values: { rule } })
   const fields: BlogPostFields = {
     title: input.title.trim(),
     slug: input.slug.trim(),
@@ -384,41 +392,88 @@ export function parseBlogPostFields(
   ]
   for (const [field, text] of texts) {
     if (text !== null && hasUnstorableTextCharacters(text)) {
-      fail(field, `Remove the NUL or broken character from this field.`)
+      fail(field, `Remove the NUL or broken character from this field.`, {
+        code: `unstorableCharacters`,
+      })
     }
   }
-  if (fields.title === ``) fail(`title`, `Enter a title.`)
+  if (fields.title === ``) fail(`title`, `Enter a title.`, { code: `required` })
   if (characters(fields.title) > BLOG_TITLE_MAX_LENGTH) {
-    fail(`title`, `Keep the title to ${BLOG_TITLE_MAX_LENGTH} characters.`)
+    fail(
+      `title`,
+      `Keep the title to ${BLOG_TITLE_MAX_LENGTH} characters.`,
+      tooLong(BLOG_TITLE_MAX_LENGTH),
+    )
   }
   const slugProblem = blogSlugProblem(fields.slug)
-  if (slugProblem) fail(`slug`, slugProblem)
-  if (fields.description === ``) fail(`description`, `Enter a description.`)
+  if (slugProblem) {
+    fail(
+      `slug`,
+      slugProblem,
+      fields.slug === ``
+        ? { code: `required` }
+        : characters(fields.slug) > BLOG_SLUG_MAX_LENGTH
+        ? tooLong(BLOG_SLUG_MAX_LENGTH)
+        : { code: `slug` },
+    )
+  }
+  if (fields.description === ``) fail(`description`, `Enter a description.`, { code: `required` })
   if (characters(fields.description) > BLOG_DESCRIPTION_MAX_LENGTH) {
-    fail(`description`, `Keep the description to ${BLOG_DESCRIPTION_MAX_LENGTH} characters.`)
+    fail(
+      `description`,
+      `Keep the description to ${BLOG_DESCRIPTION_MAX_LENGTH} characters.`,
+      tooLong(BLOG_DESCRIPTION_MAX_LENGTH),
+    )
   }
   if (fields.seoTitle !== null && characters(fields.seoTitle) > BLOG_SEO_TITLE_MAX_LENGTH) {
-    fail(`seoTitle`, `Keep the SEO title to ${BLOG_SEO_TITLE_MAX_LENGTH} characters.`)
+    fail(
+      `seoTitle`,
+      `Keep the SEO title to ${BLOG_SEO_TITLE_MAX_LENGTH} characters.`,
+      tooLong(BLOG_SEO_TITLE_MAX_LENGTH),
+    )
   }
-  if (fields.tldr.length > BLOG_TLDR_MAX) fail(`tldr`, `Keep it to ${BLOG_TLDR_MAX} key points.`)
+  if (fields.tldr.length > BLOG_TLDR_MAX) {
+    fail(`tldr`, `Keep it to ${BLOG_TLDR_MAX} key points.`, {
+      code: `maxItems`,
+      values: { rule: BLOG_TLDR_MAX },
+    })
+  }
   if (fields.tldr.some((point) => characters(point) > BLOG_TLDR_ITEM_MAX_LENGTH)) {
-    fail(`tldr`, `Keep each key point to ${BLOG_TLDR_ITEM_MAX_LENGTH} characters.`)
+    fail(
+      `tldr`,
+      `Keep each key point to ${BLOG_TLDR_ITEM_MAX_LENGTH} characters.`,
+      tooLong(BLOG_TLDR_ITEM_MAX_LENGTH),
+    )
   }
   if (fields.topic !== null && characters(fields.topic) > BLOG_TOPIC_MAX_LENGTH) {
-    fail(`topic`, `Keep the topic to ${BLOG_TOPIC_MAX_LENGTH} characters.`)
+    fail(
+      `topic`,
+      `Keep the topic to ${BLOG_TOPIC_MAX_LENGTH} characters.`,
+      tooLong(BLOG_TOPIC_MAX_LENGTH),
+    )
   }
   if (fields.coverUrl !== null) {
     if (characters(fields.coverUrl) > BLOG_COVER_URL_MAX_LENGTH || !isHttpsUrl(fields.coverUrl)) {
-      fail(`coverUrl`, `Enter a full https:// link to the image.`)
+      fail(`coverUrl`, `Enter a full https:// link to the image.`, { code: `httpsUrl` })
     }
-    if (fields.coverAlt === null) fail(`coverAlt`, `Describe what the image shows.`)
+    if (fields.coverAlt === null) {
+      fail(`coverAlt`, `Describe what the image shows.`, { code: `required` })
+    }
   }
   if (fields.coverAlt !== null && characters(fields.coverAlt) > BLOG_COVER_ALT_MAX_LENGTH) {
-    fail(`coverAlt`, `Keep the cover description to ${BLOG_COVER_ALT_MAX_LENGTH} characters.`)
+    fail(
+      `coverAlt`,
+      `Keep the cover description to ${BLOG_COVER_ALT_MAX_LENGTH} characters.`,
+      tooLong(BLOG_COVER_ALT_MAX_LENGTH),
+    )
   }
   if (fields.coverUrl === null) fields.coverAlt = null
   if (characters(fields.bodyMd) > BLOG_BODY_MAX_LENGTH) {
-    fail(`bodyMd`, `Keep the post to ${BLOG_BODY_MAX_LENGTH} characters.`)
+    fail(
+      `bodyMd`,
+      `Keep the post to ${BLOG_BODY_MAX_LENGTH} characters.`,
+      tooLong(BLOG_BODY_MAX_LENGTH),
+    )
   }
   return fields
 }
@@ -431,10 +486,13 @@ export function parsePublishTime(at: string | undefined, now: Date): Date | null
   if (at === undefined) return null
   const when = new Date(at)
   if (Number.isNaN(when.getTime()) || when.getTime() <= now.getTime()) {
-    throw new BlogError(`INVALID_REQUEST`, `Pick a time in the future.`)
+    throw new BlogError(`INVALID_REQUEST`, `Pick a time in the future.`, null, { code: `future` })
   }
   if (when.getTime() > now.getTime() + BLOG_SCHEDULE_MAX_DAYS * 86_400_000) {
-    throw new BlogError(`INVALID_REQUEST`, `Pick a time within the next five years.`)
+    throw new BlogError(`INVALID_REQUEST`, `Pick a time within the next five years.`, null, {
+      code: `withinYears`,
+      values: { rule: 5 },
+    })
   }
   return when
 }

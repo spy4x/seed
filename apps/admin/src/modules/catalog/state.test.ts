@@ -4,6 +4,7 @@ import { createToastStore } from "@spy4x/preact-signals/toast"
 import type { AdminCatalogResponse, CatalogItem } from "@domain/catalog"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
 import { CATALOG_PREPARING_READS, createCatalogState } from "./state.ts"
+import { languages } from "../../i18n.ts"
 
 const ok = <T>(data: T) => ({ ok: true, status: 200, data }) as AdminApiResult<T>
 const fail = (status: number, message: string, details?: unknown) =>
@@ -231,4 +232,43 @@ it(`adds a source with a client-made id after checking it, and names a refused f
   expect(calls[0]).toBe(
     `POST /api/admin/catalog/sources {"id":"${NEW}","name":"Zalo group A","slug":"zalo-a"}`,
   )
+})
+
+it(`says a refusal of its own checks in the operator's language, under the field`, async () => {
+  const { state, calls } = build()
+  try {
+    expect(await languages.use(`ru`)).toBe(true)
+    await state.openItem(null)
+    const size = {
+      id: `s1`,
+      label: `M`,
+      heightMin: `160`,
+      heightMax: ``,
+      weightMin: ``,
+      weightMax: ``,
+    }
+    state.editItem({
+      ...state.itemEditor.value.value,
+      slug: `ao`,
+      price: 1,
+      name: { vi: `Áo` },
+      sizes: [size],
+    })
+    expect(await state.saveItem()).toBeNull()
+    expect(state.itemEditor.value.errors).toEqual({
+      "size:s1": `Укажите оба края роста или ни одного.`,
+    })
+
+    await state.load()
+    state.openSource(null)
+    state.editSource({ name: `Zalo`, slug: `Zalo A`, slugEdited: true })
+    calls.length = 0
+    expect(await state.saveSource()).toBe(false)
+    expect(state.sourceEditor.value.errors).toEqual({
+      slug: `Используйте только строчные латинские буквы, цифры и дефисы.`,
+    })
+    expect(calls).toEqual([])
+  } finally {
+    await languages.use(`en`)
+  }
 })

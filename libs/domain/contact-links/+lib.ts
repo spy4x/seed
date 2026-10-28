@@ -8,6 +8,7 @@ import {
 } from "@spy4x/platform/universal/contact"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
+import type { FieldError, FieldErrors } from "@spy4x/validation"
 
 /**
  * Contact links (#465): the channels the public website names (Telegram, Zalo, WhatsApp,
@@ -89,10 +90,16 @@ export class ContactLinkError extends Error {
     public readonly code: ContactLinkErrorCode,
     message: string,
     public readonly field: ContactLinkField | null = null,
+    /** Why `field` failed, by code, so a screen says it in the person's language (#275). */
+    failed?: FieldError,
   ) {
     super(message)
     this.name = `ContactLinkError`
+    if (field !== null && failed) this.fields = { [field]: failed }
   }
+
+  /** {@link field} and why it failed, as the API's `fields` names them; absent for none. */
+  readonly fields?: FieldErrors
 }
 
 /** A write named a version the link has moved past; it carries the current one. */
@@ -154,15 +161,20 @@ export function parseContactLinkFields(
   const value = normalizeContactValue(input.kind, input.value)
   const label = input.label?.trim() || null
   if (value === ``) {
-    throw new ContactLinkError(`INVALID_REQUEST`, `Enter where people reach you.`, `value`)
+    throw new ContactLinkError(`INVALID_REQUEST`, `Enter where people reach you.`, `value`, {
+      code: `required`,
+    })
   }
   const problem = contactValueProblem(input.kind, value)
-  if (problem) throw new ContactLinkError(`INVALID_REQUEST`, problem, `value`)
+  if (problem) {
+    throw new ContactLinkError(`INVALID_REQUEST`, problem, `value`, { code: `contactValue` })
+  }
   if (label !== null && hasUnstorableTextCharacters(label)) {
     throw new ContactLinkError(
       `INVALID_REQUEST`,
       `Remove the NUL or broken character from this field.`,
       `label`,
+      { code: `unstorableCharacters` },
     )
   }
   if (label !== null && Array.from(label).length > CONTACT_LABEL_MAX_LENGTH) {
@@ -170,6 +182,7 @@ export function parseContactLinkFields(
       `INVALID_REQUEST`,
       `Keep the label to ${CONTACT_LABEL_MAX_LENGTH} characters.`,
       `label`,
+      { code: `maxLength`, values: { rule: CONTACT_LABEL_MAX_LENGTH } },
     )
   }
   return { kind: input.kind, value, label }

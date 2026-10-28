@@ -12,9 +12,8 @@ import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { PICTURE_MAX_BYTES, PICTURE_TYPES } from "@domain/identity"
 import { Rich } from "@spy4x/preact-ui/i18n"
-import { type AppText, say } from "./app-text.ts"
+import { type KeyedMessage, say } from "./message.ts"
 import { useAppText } from "./i18n.ts"
-import type { KeyedMessage } from "./message.ts"
 
 /** The id of "Upload" or "Change", which the palette's "Change profile picture" presses. */
 export const PICTURE_BUTTON_ID = "profile-picture-choose"
@@ -44,9 +43,9 @@ export interface PictureRowProps {
   /** What is in flight: an upload, a removal, or nothing. */
   status: "idle" | "uploading" | "removing"
   /** The last refusal, under the list; `null` for none. */
-  error: AppText | null
+  error: KeyedMessage | null
   /** Read out by the row's status region: "Profile picture saved." and the like. */
-  announcement: AppText | null
+  announcement: KeyedMessage | null
   /** The person chose an image the browser accepts. */
   onChoose: (file: File) => void
   /** The person chose a file the browser refused: the wrong type or too large. */
@@ -164,7 +163,7 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
 }
 
 /** The row's last refusal, under the list. It takes focus when it appears. */
-export function PictureErrorState({ error }: { error: AppText | null }): JSX.Element {
+export function PictureErrorState({ error }: { error: KeyedMessage | null }): JSX.Element {
   const t = useAppText()
   return (
     <ErrorState

@@ -7,7 +7,7 @@ import { TagError } from "@domain/tags"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import { APIContext } from "../../_types.ts"
 import { PasswordLockedError, passwordLockedMessage } from "../../services/password-locked.ts"
-import { codeForStatus, errorResponse } from "../../services/error-response.ts"
+import { codeForStatus, errorResponse, fieldsOf } from "../../services/error-response.ts"
 
 export type GroupFeatureErrorCode =
   | GroupErrorCode
@@ -113,6 +113,7 @@ export function groupErrorResponse(c: Context<APIContext>, error: unknown): Resp
     message: definition.message,
     reason: code,
     status: definition.status,
+    fields: fieldsOf(error),
     // A plan refusal names the feature or cap, so the client draws the upgrade prompt from it; a
     // refused file says what is wrong with it, so the import page can list it.
     details: error instanceof PlanError

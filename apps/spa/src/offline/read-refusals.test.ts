@@ -144,7 +144,7 @@ describe("the saved notes and tags and the answer of the server", () => {
 
       it("show the error and are kept when the server answers 500 with its error code", async () => {
         const { shownOnline, shownThen, shownOffline } = await afterAnswer(500)
-        expect((shownThen as Error).message).toBe("No")
+        expect((shownThen as Error).message).toBe("Something went wrong on our side. Try again.")
         expect(shownOffline).toEqual(shownOnline)
       })
 

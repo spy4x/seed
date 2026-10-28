@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX, Ref } from "preact"
 import { Button } from "@spy4x/preact-ui/button"
 import { Field } from "@spy4x/preact-ui/field"
@@ -9,13 +8,26 @@ import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
 import { AuthCard } from "./auth-screen.tsx"
 import { FORM_ACTIONS, type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
+import { useSiteText } from "./site-text.ts"
 
-/** The messages shown when a step failed without a message of its own. */
+/**
+ * The messages shown when a step failed without a message of its own, by their key in the `site`
+ * catalog.
+ */
 export const SUBSCRIBE_FAILURES = {
-  subscribe: "Could not send the link",
-  confirm: "Could not confirm the subscription. Try again in a minute.",
-  unsubscribe: "Could not unsubscribe. Try again in a minute.",
+  subscribe: "SubscribeFailure.subscribe",
+  confirm: "SubscribeFailure.confirm",
+  unsubscribe: "SubscribeFailure.unsubscribe",
 } as const
+
+/**
+ * Turns one of the newsletter's own addresses into the page's: the website puts its language's
+ * prefix in front (`/subscribe` → `/de/subscribe`), so a form answers in the language it was sent
+ * from. Without it the addresses stay as they are.
+ */
+export type LocalizePath = (path: string) => string
+
+const samePath: LocalizePath = (path) => path
 
 /**
  * A card with a heading and a sentence, and optionally one link onward. The sentence takes focus
@@ -60,9 +72,6 @@ function Outcome(
  */
 const SUBSCRIBE_WIDTH = "max-w-md"
 
-const SUBSCRIBE_INTRO =
-  "Enter your address. We send a link to confirm it first, and every mail has a link to unsubscribe."
-
 /** An error under a form that the API tied to no field. It takes focus when it appears. */
 function FormError({ error, e2e }: { error: string | null; e2e: string }): JSX.Element | null {
   const message = useFocusOnError<HTMLParagraphElement>(error)
@@ -91,6 +100,7 @@ export interface SubscribeFormProps {
   error: string | null
   pending: boolean
   onSubmit?: () => void
+  localize?: LocalizePath
 }
 
 /**
@@ -99,15 +109,17 @@ export interface SubscribeFormProps {
  * the list, so the form never says which.
  */
 export function SubscribeForm(
-  { email, onEmailChange, list, sent, error, pending, onSubmit }: SubscribeFormProps,
+  { email, onEmailChange, list, sent, error, pending, onSubmit, localize = samePath }:
+    SubscribeFormProps,
 ): JSX.Element {
+  const { t } = useSiteText()
   const field = useFocusOnError<HTMLInputElement>(error)
   const status = useFocusOnChange<HTMLParagraphElement>(sent ? "sent" : "form")
   if (sent) {
     return (
       <Outcome
-        title="Check your inbox"
-        text="A link to confirm your subscription is on its way. It works for three days."
+        title={t("SubscribeForm.sentTitle")}
+        text={t("SubscribeForm.sentText")}
         statusRef={status}
         e2e="subscribe-sent"
         class={SUBSCRIBE_WIDTH}
@@ -116,14 +128,14 @@ export function SubscribeForm(
   }
   return (
     <AuthCard
-      title="Get the news by e-mail"
-      description={SUBSCRIBE_INTRO}
+      title={t("SubscribeForm.title")}
+      description={t("SubscribeForm.intro")}
       class={SUBSCRIBE_WIDTH}
     >
-      <ScreenForm action={FORM_ACTIONS.subscribe} pending={pending} onSubmit={onSubmit}>
+      <ScreenForm action={localize(FORM_ACTIONS.subscribe)} pending={pending} onSubmit={onSubmit}>
         <Stack>
           <input type="hidden" name="list" value={list} />
-          <Field id="subscribe-email" label="E-mail" error={error} required>
+          <Field id="subscribe-email" label={t("SubscribeForm.email")} error={error} required>
             <Input
               ref={field}
               data-e2e="subscribe-email"
@@ -139,17 +151,15 @@ export function SubscribeForm(
             type="submit"
             data-e2e="subscribe-submit"
             busy={pending}
-            busyLabel="Sending…"
+            busyLabel={t("SubscribeForm.sending")}
           >
-            Subscribe
+            {t("SubscribeForm.submit")}
           </Button>
         </Stack>
       </ScreenForm>
     </AuthCard>
   )
 }
-
-const ASK_AGAIN = { href: SCREEN_PATHS.subscribe, label: "Ask for a new link" }
 
 export interface SubscriptionConfirmScreenProps {
   state: SubscriptionConfirmState
@@ -163,6 +173,7 @@ export interface SubscriptionConfirmScreenProps {
   pending: boolean
   onSubmit?: () => void
   navigate?: Navigate
+  localize?: LocalizePath
 }
 
 /**
@@ -171,14 +182,29 @@ export interface SubscriptionConfirmScreenProps {
  * `onSubmit` the app takes the submit over.
  */
 export function SubscriptionConfirmScreen(
-  { state, email, list, token, error, pending, onSubmit, navigate }: SubscriptionConfirmScreenProps,
+  {
+    state,
+    email,
+    list,
+    token,
+    error,
+    pending,
+    onSubmit,
+    navigate,
+    localize = samePath,
+  }: SubscriptionConfirmScreenProps,
 ): JSX.Element {
+  const { t } = useSiteText()
   const status = useFocusOnChange<HTMLParagraphElement>(state)
+  const askAgain = {
+    href: localize(SCREEN_PATHS.subscribe),
+    label: t("SubscriptionConfirm.askAgain"),
+  }
   if (state === "done") {
     return (
       <Outcome
-        title="You are subscribed"
-        text="Thank you. A welcome mail is on its way, with a link to unsubscribe."
+        title={t("SubscriptionConfirm.doneTitle")}
+        text={t("SubscriptionConfirm.doneText")}
         statusRef={status}
         e2e="subscription-confirm-done"
       />
@@ -187,9 +213,9 @@ export function SubscriptionConfirmScreen(
   if (state === "expired") {
     return (
       <Outcome
-        title="This link has expired"
-        text="A confirm link works for three days. Ask for a new one."
-        link={ASK_AGAIN}
+        title={t("SubscriptionConfirm.expiredTitle")}
+        text={t("SubscriptionConfirm.expiredText")}
+        link={askAgain}
         navigate={navigate}
         statusRef={status}
         e2e="subscription-confirm-expired"
@@ -199,9 +225,9 @@ export function SubscriptionConfirmScreen(
   if (state === "invalid" || !list || !token) {
     return (
       <Outcome
-        title="This link does not work"
-        text="Open the link from the mail again, or ask for a new one."
-        link={ASK_AGAIN}
+        title={t("SubscriptionConfirm.invalidTitle")}
+        text={t("SubscriptionConfirm.invalidText")}
+        link={askAgain}
         navigate={navigate}
         statusRef={status}
         e2e="subscription-confirm-invalid"
@@ -210,25 +236,31 @@ export function SubscriptionConfirmScreen(
   }
   return (
     <AuthCard
-      title="Confirm your subscription"
-      description={email ? `Send the news to ${email}?` : "Send the news to your address?"}
+      title={t("SubscriptionConfirm.title")}
+      description={email
+        ? t("SubscriptionConfirm.question", { email })
+        : t("SubscriptionConfirm.questionNoEmail")}
       e2e="subscription-confirm"
     >
-      <ScreenForm action={FORM_ACTIONS.subscribeConfirm} pending={pending} onSubmit={onSubmit}>
+      <ScreenForm
+        action={localize(FORM_ACTIONS.subscribeConfirm)}
+        pending={pending}
+        onSubmit={onSubmit}
+      >
         <Stack>
           <input type="hidden" name="list" value={list} />
           <input type="hidden" name="token" value={token} />
           <FormError
-            error={error ?? (state === "error" ? SUBSCRIBE_FAILURES.confirm : null)}
+            error={error ?? (state === "error" ? t(SUBSCRIBE_FAILURES.confirm) : null)}
             e2e="subscription-confirm-error"
           />
           <Button
             type="submit"
             data-e2e="subscription-confirm-submit"
             busy={pending}
-            busyLabel="Confirming…"
+            busyLabel={t("SubscriptionConfirm.confirming")}
           >
-            Confirm
+            {t("SubscriptionConfirm.submit")}
           </Button>
         </Stack>
       </ScreenForm>
@@ -248,6 +280,7 @@ export interface UnsubscribeScreenProps {
   pending: boolean
   onSubmit?: () => void
   navigate?: Navigate
+  localize?: LocalizePath
 }
 
 /**
@@ -256,15 +289,26 @@ export interface UnsubscribeScreenProps {
  * one-click unsubscribe never sees this page: it posts to the API directly.
  */
 export function UnsubscribeScreen(
-  { state, email, list, token, error, pending, onSubmit, navigate }: UnsubscribeScreenProps,
+  {
+    state,
+    email,
+    list,
+    token,
+    error,
+    pending,
+    onSubmit,
+    navigate,
+    localize = samePath,
+  }: UnsubscribeScreenProps,
 ): JSX.Element {
+  const { t } = useSiteText()
   const status = useFocusOnChange<HTMLParagraphElement>(state)
   if (state === "done") {
     return (
       <Outcome
-        title="You are unsubscribed"
-        text="No more news goes to this address."
-        link={{ href: SCREEN_PATHS.subscribe, label: "Subscribe again" }}
+        title={t("Unsubscribe.doneTitle")}
+        text={t("Unsubscribe.doneText")}
+        link={{ href: localize(SCREEN_PATHS.subscribe), label: t("Unsubscribe.again") }}
         navigate={navigate}
         statusRef={status}
         e2e="unsubscribe-done"
@@ -274,8 +318,8 @@ export function UnsubscribeScreen(
   if (state === "not-recognised" || !list || !token) {
     return (
       <Outcome
-        title="This link does not work"
-        text="The address may already be unsubscribed. Open the link from the latest mail."
+        title={t("SubscriptionConfirm.invalidTitle")}
+        text={t("Unsubscribe.invalidText")}
         statusRef={status}
         e2e="unsubscribe-not-recognised"
       />
@@ -283,27 +327,25 @@ export function UnsubscribeScreen(
   }
   return (
     <AuthCard
-      title="Unsubscribe"
-      description={email
-        ? `Stop sending the news to ${email}?`
-        : "Stop sending the news to your address?"}
+      title={t("Unsubscribe.title")}
+      description={email ? t("Unsubscribe.question", { email }) : t("Unsubscribe.questionNoEmail")}
       e2e="unsubscribe"
     >
-      <ScreenForm action={FORM_ACTIONS.unsubscribe} pending={pending} onSubmit={onSubmit}>
+      <ScreenForm action={localize(FORM_ACTIONS.unsubscribe)} pending={pending} onSubmit={onSubmit}>
         <Stack>
           <input type="hidden" name="list" value={list} />
           <input type="hidden" name="token" value={token} />
           <FormError
-            error={error ?? (state === "error" ? SUBSCRIBE_FAILURES.unsubscribe : null)}
+            error={error ?? (state === "error" ? t(SUBSCRIBE_FAILURES.unsubscribe) : null)}
             e2e="unsubscribe-error"
           />
           <Button
             type="submit"
             data-e2e="unsubscribe-submit"
             busy={pending}
-            busyLabel="Unsubscribing…"
+            busyLabel={t("Unsubscribe.unsubscribing")}
           >
-            Unsubscribe
+            {t("Unsubscribe.submit")}
           </Button>
         </Stack>
       </ScreenForm>

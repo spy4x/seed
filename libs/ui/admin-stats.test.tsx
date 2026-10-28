@@ -16,7 +16,7 @@ import {
   chartPoints,
   STATS_SKELETON_DELAY_MS,
 } from "./admin-stats-screen.tsx"
-import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
+import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 
 const window = new Window({ url: "http://admin.localhost/stats" })
 const own = {

@@ -2,6 +2,7 @@ import { type } from "arktype"
 import { isHexColor } from "@spy4x/platform/universal/color"
 import { hasUnstorableTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
+import type { FieldError, FieldErrors } from "@spy4x/validation"
 
 /**
  * The catalog (#466): categories and items with colours, sizes and photos, which an operator edits
@@ -376,10 +377,16 @@ export class CatalogError extends Error {
     public readonly code: CatalogErrorCode,
     message: string,
     public readonly field: string | null = null,
+    /** Why `field` failed, by code, so a screen says it in the person's language (#275). */
+    failed?: FieldError,
   ) {
     super(message)
     this.name = `CatalogError`
+    if (field !== null && failed) this.fields = { [field]: failed }
   }
+
+  /** {@link field} and why it failed, as the API's `fields` names them; absent for none. */
+  readonly fields?: FieldErrors
 }
 
 /** A write named a version the item or category has moved past; it carries the current one. */
@@ -494,8 +501,17 @@ function characters(text: string): number {
   return Array.from(text).length
 }
 
-function invalid(field: string, message: string): never {
-  throw new CatalogError(`INVALID_REQUEST`, message, field)
+function invalid(field: string, message: string, failed: FieldError): never {
+  throw new CatalogError(`INVALID_REQUEST`, message, field, failed)
+}
+
+/** Why `slug` is no address part, by code, or `null` when it is one. */
+function slugFailure(slug: string): FieldError | null {
+  if (slug === ``) return { code: `required` }
+  if (characters(slug) > CATALOG_SLUG_MAX_LENGTH) {
+    return { code: `maxLength`, values: { rule: CATALOG_SLUG_MAX_LENGTH } }
+  }
+  return CATALOG_SLUG_PATTERN.test(slug) ? null : { code: `slug` }
 }
 
 /** Why `slug` is no address part, or `null` when it is one. */
@@ -532,21 +548,29 @@ export function parseCatalogText(
   const result: CatalogText = {}
   for (const [language, value] of Object.entries(input)) {
     if (!languages.includes(language)) {
-      invalid(rule.field, `The catalog keeps no texts in "${language}".`)
+      invalid(rule.field, `The catalog keeps no texts in "${language}".`, {
+        code: `unknownLanguage`,
+        values: { language },
+      })
     }
     const trimmed = value.trim()
     if (trimmed === ``) continue
     const field = `${rule.field}:${language}`
     if (hasUnstorableTextCharacters(trimmed)) {
-      invalid(field, `Remove the NUL or broken character from this field.`)
+      invalid(field, `Remove the NUL or broken character from this field.`, {
+        code: `unstorableCharacters`,
+      })
     }
     if (characters(trimmed) > rule.max) {
-      invalid(field, `Keep the ${rule.noun} to ${rule.max} characters.`)
+      invalid(field, `Keep the ${rule.noun} to ${rule.max} characters.`, {
+        code: `maxLength`,
+        values: { rule: rule.max },
+      })
     }
     result[language] = trimmed
   }
   if (rule.required && !result[languages[0]]) {
-    invalid(`${rule.field}:${languages[0]}`, `Enter the ${rule.noun}.`)
+    invalid(`${rule.field}:${languages[0]}`, `Enter the ${rule.noun}.`, { code: `required` })
   }
   return result
 }
@@ -599,8 +623,13 @@ function parseRange(
 ): CatalogRange | null {
   if (!input) return null
   const { min, max } = input
-  if (min < 1 || max > top) invalid(field, `Enter a ${noun} from 1 to ${top} ${unit}.`)
-  if (min > max) invalid(field, `Put the lower ${noun} first.`)
+  if (min < 1 || max > top) {
+    invalid(field, `Enter a ${noun} from 1 to ${top} ${unit}.`, {
+      code: `range`,
+      values: { min: 1, max: top },
+    })
+  }
+  if (min > max) invalid(field, `Put the lower ${noun} first.`, { code: `rangeOrder` })
   return { min, max }
 }
 
@@ -653,7 +682,7 @@ export function parseCatalogItemFields(
 ): CatalogItemFields {
   const slug = input.slug.trim()
   const slugProblem = catalogSlugProblem(slug)
-  if (slugProblem) invalid(`slug`, slugProblem)
+  if (slugProblem) invalid(`slug`, slugProblem, slugFailure(slug) ?? { code: `slug` })
   const name = parseCatalogText(input.name, languages, {
     field: `name`,
     noun: `name`,
@@ -672,19 +701,25 @@ export function parseCatalogItemFields(
       max: CATALOG_DETAIL_MAX_LENGTH,
     })
   )
-  if (input.price < 0) invalid(`price`, `Enter a price of 0 or more.`)
-  if (input.price > CATALOG_PRICE_MAX) invalid(`price`, `Enter a lower price.`)
+  if (input.price < 0) {
+    invalid(`price`, `Enter a price of 0 or more.`, { code: `min`, values: { rule: 0 } })
+  }
+  if (input.price > CATALOG_PRICE_MAX) {
+    invalid(`price`, `Enter a lower price.`, { code: `priceTooHigh` })
+  }
 
   const ids = new Set<string>()
   const unique = (id: string, field: string) => {
-    if (ids.has(id.toLowerCase())) invalid(field, `Two entries have the same id. Reload the page.`)
+    if (ids.has(id.toLowerCase())) {
+      invalid(field, `Two entries have the same id. Reload the page.`, { code: `duplicateId` })
+    }
     ids.add(id.toLowerCase())
   }
   const colours = input.colours.map((colour): CatalogColour => {
     const field = `colour:${colour.id.toLowerCase()}`
     unique(colour.id, field)
     const swatch = colour.swatch.trim().toLowerCase()
-    if (!isHexColor(swatch)) invalid(field, `Pick the colour's swatch.`)
+    if (!isHexColor(swatch)) invalid(field, `Pick the colour's swatch.`, { code: `hexColor` })
     const colourName = parseCatalogText(colour.name, languages, {
       field,
       noun: `colour name`,
@@ -698,14 +733,21 @@ export function parseCatalogItemFields(
     const field = `size:${size.id.toLowerCase()}`
     unique(size.id, field)
     const label = size.label.trim()
-    if (label === ``) invalid(field, `Enter the size.`)
+    if (label === ``) invalid(field, `Enter the size.`, { code: `required` })
     if (hasUnstorableTextCharacters(label)) {
-      invalid(field, `Remove the NUL or broken character from this field.`)
+      invalid(field, `Remove the NUL or broken character from this field.`, {
+        code: `unstorableCharacters`,
+      })
     }
     if (characters(label) > CATALOG_SIZE_LABEL_MAX_LENGTH) {
-      invalid(field, `Keep the size to ${CATALOG_SIZE_LABEL_MAX_LENGTH} characters.`)
+      invalid(field, `Keep the size to ${CATALOG_SIZE_LABEL_MAX_LENGTH} characters.`, {
+        code: `maxLength`,
+        values: { rule: CATALOG_SIZE_LABEL_MAX_LENGTH },
+      })
     }
-    if (labels.has(label.toLowerCase())) invalid(field, `This size is in the list already.`)
+    if (labels.has(label.toLowerCase())) {
+      invalid(field, `This size is in the list already.`, { code: `duplicateSize` })
+    }
     labels.add(label.toLowerCase())
     const heightCm = parseRange(size.heightCm, field, `height`, `cm`, CATALOG_HEIGHT_MAX_CM)
     const weightKg = parseRange(size.weightKg, field, `weight`, `kg`, CATALOG_WEIGHT_MAX_KG)
@@ -721,7 +763,9 @@ export function parseCatalogItemFields(
       sizeId: entry.sizeId?.toLowerCase() ?? null,
     }
     const key = catalogCombinationKey(combination)
-    if (!known.has(key)) invalid(`soldOut`, `A sold-out size is not one of this item's.`)
+    if (!known.has(key)) {
+      invalid(`soldOut`, `A sold-out size is not one of this item's.`, { code: `unknownSize` })
+    }
     if (soldKeys.has(key)) continue
     soldKeys.add(key)
     soldOut.push(combination)
@@ -754,7 +798,7 @@ export function parseCatalogCategoryFields(
 ): CatalogCategoryFields {
   const slug = input.slug.trim()
   const slugProblem = catalogSlugProblem(slug)
-  if (slugProblem) invalid(`slug`, slugProblem)
+  if (slugProblem) invalid(`slug`, slugProblem, slugFailure(slug) ?? { code: `slug` })
   const name = parseCatalogText(input.name, languages, {
     field: `name`,
     noun: `name`,
@@ -775,16 +819,21 @@ export function parseCatalogSourceFields(
   input: Omit<CatalogSourceCreateRequest, `id`>,
 ): CatalogSourceFields {
   const name = input.name.trim()
-  if (name === ``) invalid(`name`, `Add the name.`)
+  if (name === ``) invalid(`name`, `Add the name.`, { code: `required` })
   if (hasUnstorableTextCharacters(name)) {
-    invalid(`name`, `Remove the NUL or broken character from this field.`)
+    invalid(`name`, `Remove the NUL or broken character from this field.`, {
+      code: `unstorableCharacters`,
+    })
   }
   if (characters(name) > CATALOG_SOURCE_NAME_MAX_LENGTH) {
-    invalid(`name`, `Keep the name to ${CATALOG_SOURCE_NAME_MAX_LENGTH} characters.`)
+    invalid(`name`, `Keep the name to ${CATALOG_SOURCE_NAME_MAX_LENGTH} characters.`, {
+      code: `maxLength`,
+      values: { rule: CATALOG_SOURCE_NAME_MAX_LENGTH },
+    })
   }
   const slug = input.slug.trim()
   const slugProblem = catalogSlugProblem(slug)
-  if (slugProblem) invalid(`slug`, slugProblem)
+  if (slugProblem) invalid(`slug`, slugProblem, slugFailure(slug) ?? { code: `slug` })
   return { name, slug }
 }
 
