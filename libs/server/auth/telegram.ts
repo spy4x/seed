@@ -277,7 +277,7 @@ export function telegramLinks(sql: Sql) {
 
     /**
      * Whose account a "Link" press names: the first name, which anyone can copy, and the address
-     * masked, which they cannot. `null` when the account is gone.
+     * masked, which makes it harder to imitate but not impossible. `null` when the account is gone.
      */
     async describe(userId: number): Promise<TelegramAccountLabel | null> {
       const [row] = await sql<{ firstName: string | null; email: string | null }[]>`
