@@ -20,6 +20,7 @@
 import postgres from "postgres"
 import { createSqlFromEnv } from "@spy4x/server/db"
 import { normalizeEmail } from "@spy4x/server/auth"
+import { HiddenLine, KeyResult } from "@spy4x/server/sign-in/password-hash"
 import { authPasswordSchema, USER_ROLE_NAMES, UserRole } from "@domain/identity"
 import { setUserRoleByAddress } from "@server/auth/admin-users.ts"
 import { AppDbBase } from "../api/services/db-base.ts"
@@ -124,9 +125,10 @@ export interface SecretInput {
 }
 
 /**
- * Reads one line after writing `prompt`. On a terminal it turns echo off first and on again after,
- * so nothing typed shows, and takes Backspace; Ctrl+C, or Ctrl+D on an empty line, answers `null`.
- * From a pipe it reads the first line. Only the prompt and a line break are written.
+ * Reads one line after writing `prompt`, then a line break. On a terminal it turns echo off first and
+ * on again after, so nothing typed shows, and the library's hidden prompt (`HiddenLine`) takes the
+ * keys: Backspace erases, arrow and other escape sequences are dropped, Ctrl+C or Ctrl+D answers
+ * `null`. From a pipe it reads the first line.
  */
 export async function readSecret(
   input: SecretInput,
@@ -134,26 +136,47 @@ export async function readSecret(
   prompt: string,
 ): Promise<string | null> {
   write(prompt)
-  const terminal = input.isTerminal()
-  if (terminal) input.setRaw(true)
-  const decoder = new TextDecoder()
-  const buffer = new Uint8Array(1024)
-  let text = ``
+  try {
+    return input.isTerminal() ? await readHiddenLine(input) : await readFirstLine(input)
+  } finally {
+    // The Enter typed is not shown, and a pipe's line is not either.
+    write(`\n`)
+  }
+}
+
+/** One line typed with echo off, as `HiddenLine` reads it; the buffers are zeroed after. */
+async function readHiddenLine(input: SecretInput): Promise<string | null> {
+  input.setRaw(true)
+  const line = new HiddenLine()
+  const buffer = new Uint8Array(64)
   try {
     while (true) {
       const read = await input.read(buffer)
-      if (read === null) return text === `` ? null : text
-      for (const char of decoder.decode(buffer.subarray(0, read), { stream: true })) {
-        if (char === `\r` || char === `\n`) return text
-        if (char === `\u0003` || (char === `\u0004` && text === ``)) return null
-        if (char === `\u007f` || char === `\b`) text = text.slice(0, -1)
-        else text += char
+      if (read === null) return null
+      for (const byte of buffer.subarray(0, read)) {
+        const result = line.type(byte)
+        if (result === KeyResult.Cancel) return null
+        if (result === KeyResult.Submit) return new TextDecoder().decode(new Uint8Array(line.bytes))
       }
     }
   } finally {
-    if (terminal) input.setRaw(false)
-    // The Enter typed is not shown, and a pipe's line is not either.
-    write(`\n`)
+    buffer.fill(0)
+    line.bytes.fill(0)
+    input.setRaw(false)
+  }
+}
+
+/** The first line of piped input, without its line break; `null` for no input at all. */
+async function readFirstLine(input: SecretInput): Promise<string | null> {
+  const decoder = new TextDecoder()
+  const buffer = new Uint8Array(1024)
+  let text = ``
+  while (true) {
+    const read = await input.read(buffer)
+    if (read === null) return text === `` ? null : text
+    text += decoder.decode(buffer.subarray(0, read), { stream: true })
+    const end = text.search(/\r?\n/)
+    if (end >= 0) return text.slice(0, end)
   }
 }
 

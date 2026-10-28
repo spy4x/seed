@@ -151,6 +151,11 @@ describe(`readSecret`, () => {
     expect(cancelled.raw).toEqual([true, false])
   })
 
+  it(`drops arrow keys from the password instead of storing their escape sequences`, async () => {
+    const { input } = fakeInput([`abc\u001b[Dd\r`], true)
+    expect(await readSecret(input, () => {}, ``)).toBe(`abcd`)
+  })
+
   it(`reads the first line from a pipe without touching the terminal`, async () => {
     const { input, raw } = fakeInput([`${PASSWORD}\nsomething else\n`], false)
 
