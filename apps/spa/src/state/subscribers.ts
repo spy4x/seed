@@ -1,6 +1,6 @@
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
 import { readApiError } from "@domain/errors"
-import { apiErrorText } from "./app-text.ts"
+import { apiErrorText } from "../i18n.ts"
 
 /** The `fetch` these calls use; tests pass a fake. */
 export type SubscribersFetch = (url: string, init?: RequestInit) => Promise<Response>

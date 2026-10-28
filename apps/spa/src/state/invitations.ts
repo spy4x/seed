@@ -15,7 +15,7 @@ import { guestRefusal, refusedAction } from "./guest-refusal.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
-import { apiErrorText, appText } from "./app-text.ts"
+import { apiErrorText, appText } from "../i18n.ts"
 
 /** `fetch`, or a test's stand-in for it. */
 export type InvitationFetch = (url: string, init?: RequestInit) => Promise<Response>

@@ -9,7 +9,7 @@ import {
   type User,
 } from "@domain/identity"
 import { callCommand } from "../modules.ts"
-import type { AppText } from "@ui/app-text.ts"
+import type { KeyedMessage } from "@ui/message.ts"
 import { putWithProgress } from "./attachments.ts"
 import { sessionState } from "./session.ts"
 
@@ -30,9 +30,9 @@ export interface PictureDependencies {
   setUser(user: User): void
 }
 
-const NETWORK: AppText = { key: `ProfilePicture.network` }
-const OFFLINE: AppText = { key: `ProfilePicture.offline` }
-const REMOVE_FAILED: AppText = { key: `ProfilePicture.removeFailed` }
+const NETWORK: KeyedMessage = { key: `ProfilePicture.network` }
+const OFFLINE: KeyedMessage = { key: `ProfilePicture.offline` }
+const REMOVE_FAILED: KeyedMessage = { key: `ProfilePicture.removeFailed` }
 
 /**
  * A file name inside a sentence, between Unicode isolates: the plain-text `<bdi>`, so a name in
@@ -42,11 +42,11 @@ function isolated(name: string): string {
   return `\u2068${name}\u2069`
 }
 
-function typeError(name: string): AppText {
+function typeError(name: string): KeyedMessage {
   return { key: `ProfilePicture.type`, values: { name: isolated(name) } }
 }
 
-function sizeError(name: string, size: number): AppText {
+function sizeError(name: string, size: number): KeyedMessage {
   return {
     key: `ProfilePicture.size`,
     values: { name: isolated(name), size: formatBytes(size), max: formatBytes(PICTURE_MAX_BYTES) },
@@ -54,7 +54,7 @@ function sizeError(name: string, size: number): AppText {
 }
 
 /** The server's refusal of `file`, in the row's words, by their key in `app`. */
-function refusalOf(error: unknown, file: File): AppText {
+function refusalOf(error: unknown, file: File): KeyedMessage {
   const code = error instanceof RealtimeRequestError
     ? (error.details as { code?: unknown } | undefined)?.code
     : undefined
@@ -81,13 +81,13 @@ function refusalOf(error: unknown, file: File): AppText {
  */
 export function createPictureStore(dependencies: PictureDependencies) {
   const status = signal<`idle` | `uploading` | `removing`>(`idle`)
-  const error = signal<AppText | null>(null)
+  const error = signal<KeyedMessage | null>(null)
   /** What a screen reader hears once a change went through; `null` while there is nothing new. */
-  const announcement = signal<AppText | null>(null)
+  const announcement = signal<KeyedMessage | null>(null)
   /** The chosen image while it uploads; `null` otherwise. */
   const preview = signal<string | null>(null)
 
-  function refuse(message: AppText): void {
+  function refuse(message: KeyedMessage): void {
     announcement.value = null
     error.value = message
   }

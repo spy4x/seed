@@ -12,7 +12,7 @@ import {
 import type { ApiTokenFormValues } from "@ui/api-token-new-screen.tsx"
 import { API_TOKEN_MESSAGES } from "@ui/api-tokens.tsx"
 import { apiFetch } from "./api.ts"
-import { apiErrorText, refusedField } from "./app-text.ts"
+import { apiErrorText, refusedField } from "../i18n.ts"
 import { type LocalReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"

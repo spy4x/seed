@@ -1,20 +1,25 @@
 /**
- * The words a store hands a screen (#275). A store has no translator, so it names a message of the
- * `app` catalog instead of writing the sentence: the key alone, or the key with its values. The
- * screen translates it in the person's language. Text that is no key, such as the API's own
- * message, is shown as it came.
+ * The words a store or a state module hands a screen (#275), and the API's refusals in the
+ * person's language. A store has no translator, so it names a message of the `app` catalog instead
+ * of writing the sentence: the key alone, or the key with its values. The screen translates it in
+ * the person's language. Text that is no key, such as the API's own message, is shown as it came.
  *
  * @module
  */
-import { createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
+import {
+  createTranslator,
+  type MessageValues,
+  type Translator,
+} from "@spy4x/platform/universal/i18n"
 import type { FieldError, FieldErrors } from "@spy4x/validation"
+import type { OAuthNotice } from "@domain/identity"
 import app from "@i18n/app/en.json" with { type: "json" }
 import errors from "@i18n/errors/en.json" with { type: "json" }
 
 /** A message key of the `app` catalog with the values its sentence names. */
 export interface KeyedMessage {
   key: string
-  values?: Record<string, string | number>
+  values?: MessageValues
 }
 
 /** A store's words: a key, a key with its values, or the API's text as it came. */
@@ -29,6 +34,22 @@ export function messageText(
   return typeof message === `string` ? t.t(message) : t.t(message.key, message.values)
 }
 
+/** `message` in the translator's language, or an empty string for none. */
+export function say(t: Translator<string>, message: Message): string {
+  return messageText(t, message) ?? ``
+}
+
+/** What each provider sign-in notice (`?oauth=`) says, by its key in `app`. */
+export const OAUTH_NOTICE_KEYS: Record<OAuthNotice, string> = {
+  failed: `OAuthNotice.failed`,
+  linked: `OAuthNotice.linked`,
+  "link-exists": `OAuthNotice.linkExists`,
+  "link-taken": `OAuthNotice.linkTaken`,
+  busy: `OAuthNotice.busy`,
+  kept: `OAuthNotice.kept`,
+  "guest-taken": `OAuthNotice.guestTaken`,
+}
+
 let english: Translator<string> | undefined
 
 /**
@@ -36,7 +57,7 @@ let english: Translator<string> | undefined
  * person who types the English word still finds the entry, and for a string a screen without a
  * translator shows.
  */
-export function englishText(key: string, values?: Record<string, string | number>): string {
+export function englishText(key: string, values?: MessageValues): string {
   english ??= createTranslator({ language: `en`, catalogs: [{ source: app }] })
   return english.t(key, values)
 }

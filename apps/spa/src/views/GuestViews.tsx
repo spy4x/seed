@@ -17,7 +17,7 @@ import {
   type TryState,
 } from "@ui/guest-screens.tsx"
 import { readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
-import { OAUTH_NOTICE_KEYS, say } from "@ui/app-text.ts"
+import { OAUTH_NOTICE_KEYS, say } from "@ui/message.ts"
 import { useAppText } from "@ui/i18n.ts"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"
 import { bootstrapSession, signUp } from "../state/auth.ts"

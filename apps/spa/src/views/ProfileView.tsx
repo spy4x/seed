@@ -12,7 +12,7 @@ import type { AccountDeleteErrors, AccountDeleteValues } from "@ui/account-delet
 import { EMAIL_FAILURES, type EmailMessages, type EmailValues } from "@ui/email-screen.tsx"
 import { isProfileSection, type ProfileSectionId, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { TwoFactorProof } from "@ui/two-factor.ts"
-import { OAUTH_NOTICE_KEYS, say } from "@ui/app-text.ts"
+import { OAUTH_NOTICE_KEYS, say } from "@ui/message.ts"
 import { useAppText } from "@ui/i18n.ts"
 import {
   changePassword,
@@ -600,7 +600,7 @@ function ProfileSections({ section }: { section?: ProfileSectionId }) {
           void runEmail(
             "send",
             () => emailStore.send(),
-            // Said in the screen's words with the address the code went to: the API's message is
+            // Message in the screen's words with the address the code went to: the API's message is
             // English only.
             () => {
               const status = emailStore.status.value

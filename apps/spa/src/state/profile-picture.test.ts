@@ -1,6 +1,6 @@
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import appEn from "@i18n/app/en.json" with { type: "json" }
-import { type Said, say } from "@ui/app-text.ts"
+import { type Message, say } from "@ui/message.ts"
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { RealtimeRequestError } from "@spy4x/realtime"
@@ -9,7 +9,7 @@ import { createPictureStore, type PictureDependencies } from "./profile-picture.
 
 const EN = createTranslator({ language: "en", catalogs: [{ source: appEn }] })
 /** What the person reads, in English, for a message the store keeps as a key. */
-const read = (said: Said | null) => said && say(EN, said)
+const read = (said: Message | null) => said && say(EN, said)
 
 const PICTURE = `0199c3a0-0000-7000-8000-0000000000a1`
 const file = (name = `photo.jpg`, type = `image/jpeg`, size = 1000) =>
