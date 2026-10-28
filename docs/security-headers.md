@@ -89,12 +89,18 @@ of an unknown address and the 500 of an error. A WebSocket upgrade passes throug
 
 ## The MPA's policy
 
-The MPA's pages load one stylesheet from their own origin and no script, inline block or font,
-so the policy is the helper's default with one source added: `'self'` for `default-src`,
+The MPA's pages load one stylesheet from their own origin and no font, so the policy is the
+helper's default with one source added: `'self'` for `default-src`,
 `script-src`, `style-src` and `connect-src`; `'self'`, `data:` and `https:` for `img-src`;
 `object-src 'none'`; `base-uri 'self'`; `frame-ancestors 'none'`. `https:` is there for the blog
 ([blog.md](blog.md)): a post's cover and the images in its body are `https:` addresses wherever the
 operator keeps them. Only operators write posts, and an image runs no code.
+
+A page Fresh renders also has that render's nonce in `script-src` (`'nonce-…'`): Fresh writes the
+inline script that wakes the page's islands, and every other inline script it renders, with a nonce
+made for that render. `withPageHeaders` keeps the nonce Fresh leaves on the response, and
+`securityHeadersMiddleware` adds it with `withScriptNonce` from `@spy4x/server`. Any other answer
+gets no nonce.
 
 With analytics on (`MPA_UMAMI_ORIGIN`, [analytics.md](analytics.md)), `script-src` and
 `connect-src` also allow the Umami origin: its tracker loads from there and sends its events there.
@@ -114,7 +120,7 @@ because Fresh would answer those outside every middleware, without the headers.
 | ----------------------------------------------------------------------------- | -------------------------------------------------------- | ---------------------------------------- |
 | The API's headers on an answer, a refusal, a 404 and a 500 | `apps/api/app.test.ts` | `deno task check` |
 | The running API's headers on an answer and a 404 | `e2e/spa/security-headers.spa.ts` | `e2e/spa/run.sh` (CI step `e2e-spa`) |
-| The MPA's headers on a page, a 404, a 500 and a refusal                        | `apps/mpa/app.test.ts`                                   | `deno task check`                        |
+| The MPA's headers on a page, a rendered page's nonce, a 404, a 500 and a refusal | `apps/mpa/app.test.ts`                                   | `deno task check`                        |
 | The MPA's headers on real responses; a walk with no refusal under the policy   | `e2e/mpa/security-headers.mpa.ts`                        | `e2e/mpa/run.sh` (CI step `e2e-mpa`)     |
 | The tracker origin the container writes, and what it refuses                   | `tests/spa-runtime-config.test.ts`                       | `deno task check`                        |
 | nginx's real responses and the policy's sources; a signed-in walk with no refusal      | `e2e/spa/security-headers.spa.ts`                        | `e2e/spa/run.sh` (CI step `e2e-spa`)     |
