@@ -296,7 +296,7 @@ function CatalogList(
           </Field>
         </div>
         {/* One row that scrolls sideways on a phone rather than wrapping. */}
-        <div class="-mx-4 flex max-w-[calc(100%+2rem)] items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0">
+        <div class="-mx-4 flex max-w-[calc(100%+2rem)] items-center gap-4 overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0">
           <div data-e2e="catalog-status">
             <ToggleChips
               mode="single"
@@ -317,7 +317,6 @@ function CatalogList(
           <div data-e2e="catalog-sold-out">
             <ToggleChips
               label="Stock"
-              color="red"
               options={[{
                 value: `soldOut`,
                 label: `Sold-out sizes ${NUMBER.format(view.counts.soldOut)}`,

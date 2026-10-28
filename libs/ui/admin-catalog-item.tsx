@@ -473,7 +473,7 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
               href={BACK.href}
               navigate={navigate}
               variant="ghost"
-              class="min-h-11 flex-1 sm:min-h-9 sm:flex-none"
+              class="min-h-11 sm:min-h-9"
             >
               Cancel
             </Button>
