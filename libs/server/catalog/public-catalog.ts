@@ -192,3 +192,33 @@ export async function readPublicPhotoFile(
   `
   return row ? { objectKey, contentType: row.contentType } : null
 }
+
+/** Where a tracking link leads: the published item and the source, by the link's code. */
+export interface TrackingTarget {
+  code: string
+  /** Set once Umami holds the link. */
+  umamiLinkId: string | null
+  itemSlug: string
+  categorySlug: string | null
+  sourceSlug: string
+}
+
+/**
+ * The tracking link with `code` (#483), or `null` when there is none or its item is not
+ * published: a draft's or hidden item's link answers like an unknown one.
+ */
+export async function readTrackingTarget(
+  sql: postgres.Sql,
+  code: string,
+): Promise<TrackingTarget | null> {
+  const [row] = await sql<TrackingTarget[]>`
+    SELECT l.code, l.umami_link_id, i.slug AS item_slug, c.slug AS category_slug,
+      s.slug AS source_slug
+    FROM catalog_tracking_links l
+    JOIN catalog_items i ON i.id = l.item_id
+    LEFT JOIN catalog_categories c ON c.id = i.category_id
+    JOIN catalog_link_sources s ON s.id = l.source_id
+    WHERE l.code = ${code} AND i.status = 'published'
+  `
+  return row ?? null
+}

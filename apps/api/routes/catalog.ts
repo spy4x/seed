@@ -1,12 +1,19 @@
 import { Hono } from "hono"
 import type postgres from "postgres"
 import { isUuid } from "@spy4x/platform/universal/uuid"
-import type { CatalogSettings, PublicCatalogItem, PublicCatalogResponse } from "@domain/catalog"
+import {
+  CATALOG_LINK_CODE_PATTERN,
+  type CatalogSettings,
+  type PublicCatalogItem,
+  type PublicCatalogResponse,
+} from "@domain/catalog"
 import {
   readPublicCatalog,
   readPublicItem,
   readPublicPhotoFile,
+  readTrackingTarget,
 } from "@server/catalog/public-catalog.ts"
+import { trackingLocation, type TrackingSetup, type UmamiLinks } from "@server/catalog/tracking.ts"
 import { errorResponse } from "../services/error-response.ts"
 
 /** The website's reads of the catalog. */
@@ -15,6 +22,11 @@ export interface PublicCatalogReads {
   item(slug: string): Promise<PublicCatalogItem | null>
   /** The bytes and type of one width of a published item's photo, or `null`. */
   photo(id: string, file: string): Promise<{ bytes: Uint8Array; contentType: string } | null>
+  /**
+   * Where the tracking link with `code` sends a visitor (#483), or `null` for an unknown code, an
+   * item that is not published, or tracking off. `counted`: Umami has counted the visit already.
+   */
+  link(code: string, counted: boolean): Promise<string | null>
 }
 
 /**
@@ -28,6 +40,10 @@ export interface PublicCatalogReads {
  *   its photos.
  * - `GET /photos/:id/:file` is one width of a published item's photo, such as `960.webp`. The
  *   website serves it from its own host; the bytes never change for a name, so they are cached.
+ * - `GET /links/:code` is `{ location }`, where the website's `/s/<code>` sends the visitor: Umami's
+ *   counting address, or the item's page tagged with the source (`?counted=1`, or Umami unset or
+ *   down). Only a code in the table answers, and the address is built from the item, so the
+ *   website's redirect cannot be pointed anywhere else. Never cached: Umami may go down.
  */
 export function createPublicCatalogRoute(reads: PublicCatalogReads): Hono {
   const notFound = (c: Parameters<typeof errorResponse>[0]) =>
@@ -37,6 +53,14 @@ export function createPublicCatalogRoute(reads: PublicCatalogReads): Hono {
     .get(`/items/:slug`, async (c) => {
       const item = await reads.item(c.req.param(`slug`))
       return item ? c.json({ item }) : notFound(c)
+    })
+    .get(`/links/:code`, async (c) => {
+      const code = c.req.param(`code`)
+      if (!CATALOG_LINK_CODE_PATTERN.test(code)) return notFound(c)
+      const location = await reads.link(code, c.req.query(`counted`) === `1`)
+      if (!location) return notFound(c)
+      c.header(`cache-control`, `no-store`)
+      return c.json({ location })
     })
     .get(`/photos/:id/:file`, async (c) => {
       const id = c.req.param(`id`)
@@ -60,6 +84,7 @@ export function createPublicCatalogReads(
   sql: postgres.Sql,
   settings: CatalogSettings,
   readFile: (key: string) => Promise<Uint8Array | null>,
+  tracking: { setup: TrackingSetup; umami: UmamiLinks | null } | null = null,
 ): PublicCatalogReads {
   return {
     catalog: () => readPublicCatalog(sql, settings),
@@ -68,6 +93,11 @@ export function createPublicCatalogReads(
       const found = await readPublicPhotoFile(sql, id, file)
       const bytes = found && await readFile(found.objectKey)
       return found && bytes ? { bytes, contentType: found.contentType } : null
+    },
+    async link(code, counted) {
+      if (tracking === null) return null
+      const target = await readTrackingTarget(sql, code)
+      return target && await trackingLocation(target, tracking.setup, tracking.umami, counted)
     },
   }
 }
