@@ -129,6 +129,8 @@ export function createAdminStore(api: AdminApi) {
   return {
     session,
     request,
+    /** Signs the app out after a 401 to a call that did not go through `request`. */
+    signedOut: () => signedOut(),
 
     /** Reads the session the cookie holds, if any. */
     async start(): Promise<void> {

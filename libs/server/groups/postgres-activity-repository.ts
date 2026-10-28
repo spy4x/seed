@@ -9,6 +9,7 @@ import {
   OPERATOR_DETAIL,
   SUPPORT_TEAM_LABEL,
 } from "@domain/groups"
+import { ADMIN_FILE_AUDIT_KINDS } from "@domain/identity"
 
 interface ActivityRow extends postgres.Row {
   id: string
@@ -35,7 +36,9 @@ interface ActivityRow extends postgres.Row {
  *
  * An operator who acted on the group from the admin area is not a member, and the group's admins
  * never learn who they are: a row carrying the operator mark reads {@link SUPPORT_TEAM_LABEL}, with
- * no actor id, and the operator's name and e-mail are never selected for it.
+ * no actor id, and the operator's name and e-mail are never selected for it. An operator opening or
+ * downloading a file (`ADMIN_FILE_AUDIT_KINDS`) is the operator area's audit, not the group's
+ * activity, and is left out.
  *
  * A note the event points at "exists" while it is still in the group and not deleted; a note moved
  * to another group no longer does, so the log never links a reader to a note that left.
@@ -85,6 +88,7 @@ export class PostgresGroupActivityRepository implements GroupActivityRepository 
       LEFT JOIN users AS actor ON actor.id = audit_events.actor_user_id
       LEFT JOIN users AS target ON target.id = audit_events.target_user_id
       WHERE audit_events.group_id = ${groupId}
+        AND audit_events.event_kind <> ALL(${ADMIN_FILE_AUDIT_KINDS as string[]})
         ${page.after ? this.sql`AND audit_events.id < ${page.after.id}::bigint` : this.sql``}
       ORDER BY audit_events.id DESC
       LIMIT ${limit + 1}

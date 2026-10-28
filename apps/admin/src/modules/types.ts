@@ -13,6 +13,8 @@ import type { AdminFetch } from "../state.ts"
 export interface AdminContext {
   /** Calls the API on the app's own origin. A 401 signs the app out; the caller sees the failure. */
   request: AdminFetch
+  /** Signs the app out, as `request` does on a 401, for a call that reads bytes with `fetch`. */
+  signedOut: () => void
   toasts: ToastStore
   /** The signed-in operator. */
   operator: User

@@ -135,12 +135,18 @@ function breaks(rule: FileRule, file: FileFacts): FileRefusal | null {
 
 /**
  * The `Content-Disposition` a download is served with. An image is shown in place (`inline`); any
- * other file is saved (`attachment`), since text that passed the check can still be markup. The
- * name comes twice: an ASCII fallback with quotes, backslashes and control characters replaced,
- * and the full name in UTF-8 (RFC 6266).
+ * other file is saved (`attachment`), since text that passed the check can still be markup. A
+ * caller that must have the file saved, such as a "Download" button, passes `kind`. The name comes
+ * twice: an ASCII fallback with quotes, backslashes and control characters replaced, and the full
+ * name in UTF-8 (RFC 6266).
  */
-export function downloadDisposition(contentType: string, filename: string): string {
-  const kind = bareType(contentType).startsWith(`image/`) ? `inline` : `attachment`
+export function downloadDisposition(
+  contentType: string,
+  filename: string,
+  kind: `inline` | `attachment` = bareType(contentType).startsWith(`image/`)
+    ? `inline`
+    : `attachment`,
+): string {
   const fallback = filename.replace(/[^\x20-\x7e]|["\\]/g, `_`) || `file`
   return `${kind}; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`
 }

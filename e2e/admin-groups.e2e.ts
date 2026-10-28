@@ -6,7 +6,9 @@ import { signUpWithCode } from "./fixtures/sign-up.ts"
 /**
  * The admin app's groups module (#426): an operator finds a group by its name, sees its members,
  * its invitations and its activity, removes a member and revokes an invitation, and the group's
- * activity says an operator did both. The person page links to the group.
+ * activity says an operator did both. The person page links to the group. In the Files tab (#478)
+ * the operator finds a file by its name among many, sees its thumbnail, opens and downloads it,
+ * both written to the audit log, and removes it.
  */
 
 // In double quotes: `deno task e2e:local` adds its ports to these two strings only in that form.
@@ -31,6 +33,42 @@ async function signUp(request: APIRequestContext, email: string) {
     data: { email, password },
   })
   expect(response.ok(), await response.text()).toBe(true)
+}
+
+/** A 1x1 PNG a browser draws. */
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGO4o6EBAAMQAS0ujiXaAAAAAElFTkSuQmCC",
+  "base64",
+)
+
+/** Calls one operation as the signed-in `request`, as the SPA does without a socket. */
+async function call(request: APIRequestContext, userId: number, name: string, data: unknown) {
+  const response = await request.post(`${appBase}/api/call/${name}`, {
+    headers: { ...headers, "x-realtime-user": String(userId), "idempotency-key": uuidV7() },
+    data,
+  })
+  expect(response.ok(), `${name}: ${await response.text()}`).toBe(true)
+  return (await response.json()).result
+}
+
+/** Uploads `name` to the note as the signed-in `request`: sign, PUT the bytes, confirm. */
+async function attach(
+  request: APIRequestContext,
+  userId: number,
+  groupId: string,
+  noteId: string,
+  name: string,
+) {
+  const signed = await call(request, userId, `attachment.sign`, {
+    groupId,
+    noteId,
+    name,
+    contentType: `image/png`,
+    size: PNG.length,
+  })
+  const put = await request.put(signed.url, { headers: signed.headers, data: PNG })
+  expect(put.ok(), await put.text()).toBe(true)
+  await call(request, userId, `attachment.confirm`, { groupId, id: signed.id })
 }
 
 async function signOut(request: APIRequestContext) {
@@ -168,6 +206,107 @@ test.describe(`the admin app's groups`, () => {
     } finally {
       await admin?.close()
       for (const email of [memberEmail, operatorEmail, ownerEmail]) await cleanup(request, email)
+    }
+  })
+
+  test(`an operator finds a file by its name among many, opens and downloads it, both audited, and removes it`, async ({ browser, request }) => {
+    // 27 uploads over the API take longer than the default 30 seconds.
+    test.setTimeout(120_000)
+    const id = uuidV7().slice(-8)
+    const ownerEmail = `e2e-admin-files-owner-${id}@example.com`
+    const operatorEmail = `e2e-admin-files-ops-${id}@example.com`
+    const groupName = `Files team ${id}`
+    let admin: BrowserContext | null = null
+    try {
+      // The owner fills three notes with 27 pictures: more than one page of 25.
+      await signUp(request, ownerEmail)
+      const me = await (await request.get(`${appBase}/api/auth/me`)).json()
+      const groupId = uuidV7()
+      const created = await request.post(`${appBase}/api/groups`, {
+        headers,
+        data: { id: groupId, name: groupName },
+      })
+      expect(created.status(), await created.text()).toBe(201)
+      for (let note = 0; note < 3; note++) {
+        const noteId = uuidV7()
+        const title = note === 0 ? `Trip receipts` : `Album ${note}`
+        await call(request, me.id, `note.create`, { groupId, id: noteId, title, body: `` })
+        for (let file = 0; file < 9; file++) {
+          const name = note === 0 && file === 4 ? `abusive-${id}.png` : `IMG_${note}${file}.png`
+          await attach(request, me.id, groupId, noteId, name)
+        }
+      }
+      await signOut(request)
+      await signUp(request, operatorEmail)
+      await signOut(request)
+      const promoted = await request.post(`${appBase}/api/test/set-role`, {
+        data: { login: operatorEmail, role: OPERATOR },
+      })
+      expect(promoted.ok(), await promoted.text()).toBe(true)
+
+      admin = await browser.newContext({ baseURL: adminBase, acceptDownloads: true })
+      const ops = await admin.newPage()
+      await ops.goto(`${adminBase}/sign-in`)
+      await ops.locator(`[data-e2e=auth-form-login]`).fill(operatorEmail)
+      await ops.locator(`[data-e2e=auth-form-password]`).fill(password)
+      await ops.locator(`[data-e2e=auth-form-submit]`).click()
+      await expect(ops.locator(`[data-e2e=admin-dashboard-title]`)).toBeVisible()
+
+      // The Files tab: a page of 25 named rows with thumbnails, and the pages under them.
+      await ops.goto(`${adminBase}/groups/${groupId}?tab=files`)
+      const count = ops.locator(`[data-e2e=admin-group-files-count]`)
+      await expect(count).toHaveText(`27 files`)
+      const rows = ops.getByRole(`list`, { name: `Files` }).getByRole(`listitem`)
+      await expect(rows).toHaveCount(25)
+      await expect(ops.getByRole(`navigation`, { name: `Pages of files` })).toBeVisible()
+      const thumbnail = rows.first().locator(`img`)
+      await expect(thumbnail).toHaveAttribute(`src`, /\/api\/admin\/groups\/.+\/thumbnail$/)
+      await expect.poll(() => thumbnail.evaluate((image: HTMLImageElement) => image.naturalWidth))
+        .toBe(1)
+
+      // The search finds the file by part of its name; the address keeps it.
+      await ops.getByLabel(`File name`).fill(`ABUSIVE`)
+      await ops.locator(`[data-e2e=admin-group-files-submit]`).click()
+      await expect(count).toHaveText(`1 file matches “ABUSIVE”`)
+      await expect(ops).toHaveURL(/\?tab=files&q=ABUSIVE$/)
+      const row = rows.filter({ hasText: `abusive-${id}.png` })
+      await expect(rows).toHaveCount(1)
+      await expect(row).toContainText(`in “Trip receipts”`)
+
+      // Opening shows the picture in the lightbox; downloading saves it under its name.
+      await ops.getByRole(`button`, { name: `Open abusive-${id}.png` }).click()
+      const shown = ops.locator(`dialog[open] img`)
+      await expect.poll(() => shown.evaluate((image: HTMLImageElement) => image.naturalWidth))
+        .toBe(1)
+      await ops.keyboard.press(`Escape`)
+      await ops.getByRole(`button`, { name: `Actions for abusive-${id}.png` }).click()
+      const [download] = await Promise.all([
+        ops.waitForEvent(`download`),
+        ops.getByRole(`menuitem`, { name: `Download` }).click(),
+      ])
+      expect(download.suggestedFilename()).toBe(`abusive-${id}.png`)
+
+      // Removing it asks first, names the file, and leaves nothing that matches: focus goes back
+      // to the search field, since the row it would move to is gone.
+      await ops.getByRole(`button`, { name: `Actions for abusive-${id}.png` }).click()
+      await ops.getByRole(`menuitem`, { name: `Remove file` }).click()
+      await expect(ops.locator(`[data-e2e=admin-group-dialog]`)).toContainText(
+        `Remove “abusive-${id}.png”?`,
+      )
+      await ops.locator(`[data-e2e=admin-group-action-submit]`).click()
+      await expect(ops.locator(`[data-e2e=toasts]`)).toContainText(`The file is removed`)
+      await expect(count).toHaveText(`No files match “ABUSIVE”`)
+      await expect(ops.getByLabel(`File name`)).toBeFocused()
+
+      // The audit log names the operator's open and download of the file.
+      await ops.goto(`${adminBase}/audit`)
+      const log = ops.locator(`main`)
+      await expect(log).toContainText(`File opened by an operator`)
+      await expect(log).toContainText(`File downloaded by an operator`)
+      await expect(log).toContainText(`abusive-${id}.png`)
+    } finally {
+      await admin?.close()
+      for (const email of [operatorEmail, ownerEmail]) await cleanup(request, email)
     }
   })
 })

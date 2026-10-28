@@ -224,6 +224,10 @@ Deno.test("an image is shown in place and every other file is saved", () => {
   expect(downloadDisposition(`application/pdf`, `a.pdf`)).toMatch(/^attachment;/)
 })
 
+Deno.test("an image a caller must have saved is served as an attachment", () => {
+  expect(downloadDisposition(`image/png`, `a.png`, `attachment`)).toMatch(/^attachment;/)
+})
+
 Deno.test("a file name cannot break out of its header, and keeps its letters in the UTF-8 part", () => {
   expect(downloadDisposition(`text/plain`, `Отчёт "1"\r\n.txt`)).toBe(
     `attachment; filename="_____ _1___.txt"; ` +

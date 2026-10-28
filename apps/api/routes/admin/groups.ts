@@ -3,14 +3,23 @@ import type { MiddlewareHandler } from "hono"
 import { type } from "arktype"
 import { isUuid } from "@spy4x/platform/universal/uuid"
 import {
+  ADMIN_GROUP_FILES_PAGE_SIZE,
   ADMIN_GROUPS_PAGE_SIZE,
   type AdminGroupDetail,
+  type AdminGroupFileAccess,
+  type AdminGroupFileFilter,
   type AdminGroupFiles,
   type AdminGroupListResponse,
   adminGroupTransferSchema,
+  parseAdminGroupFileFilter,
   parseAdminGroupFilter,
 } from "@domain/groups"
-import { AdminGroupActOutcome, type AdminGroupOperator } from "@server/groups/admin-groups.ts"
+import {
+  AdminGroupActOutcome,
+  type AdminGroupOperator,
+  type AdminGroupStoredFile,
+} from "@server/groups/admin-groups.ts"
+import { downloadDisposition } from "@server/files/files.ts"
 import type { AppDbBase } from "@api/services/db-base.ts"
 import { readFeatureJson } from "@api/services/json-body.ts"
 import type { APIContext } from "../../_types.ts"
@@ -45,8 +54,22 @@ export interface AdminGroupsService {
    * group or a widget that does not exist.
    */
   widget(groupId: string, widgetId: string, request: NoteWidgetRequest): Promise<unknown | null>
-  /** The group's files and its plan's caps for them; `null` for a group that does not exist. */
-  files(groupId: string): Promise<AdminGroupFiles | null>
+  /**
+   * One page of the group's files whose name matches the filter, and its plan's caps for them;
+   * `null` for a group that does not exist.
+   */
+  files(groupId: string, filter: AdminGroupFileFilter): Promise<AdminGroupFiles | null>
+  /** The file when it sits on a note of the group, in the trash or not; else `null`. */
+  file(groupId: string, fileId: string): Promise<AdminGroupStoredFile | null>
+  /** The bytes of a stored file, or `null` when the store no longer has it. */
+  readFile(objectKey: string): Promise<Uint8Array | null>
+  /** Writes the audit row of an operator opening or downloading the file. */
+  recordFileAccess(
+    operator: AdminGroupOperator,
+    groupId: string,
+    file: AdminGroupStoredFile,
+    access: `open` | `download`,
+  ): Promise<void>
   removeFile(
     operator: AdminGroupOperator,
     groupId: string,
@@ -62,6 +85,40 @@ export interface AdminGroupsRouteDependencies {
 
 export const ADMIN_GROUP_NOT_FOUND = `Group not found`
 export const ADMIN_GROUP_FILE_NOT_FOUND = `File not found. Someone may have removed it already.`
+export const ADMIN_GROUP_FILE_CROSS_SITE = `The file opens only from the operator area`
+
+/**
+ * The types a browser may show in place on the admin host: raster images, which run nothing. Any
+ * other file, an SVG or a PDF among them, is only ever saved.
+ */
+const SHOWN_TYPES = new Set([`image/jpeg`, `image/png`, `image/webp`, `image/gif`])
+
+/** The type without its parameters, in lower case. */
+function bareType(contentType: string): string {
+  return contentType.split(`;`)[0].trim().toLowerCase()
+}
+
+/**
+ * A stored file's bytes on the admin host: its confirmed type, never sniffed. It sets the store's
+ * sandbox policy, but the app-wide `securityHeaders` replaces it for now (spy4x/ts-libs#772); a
+ * file that is markup is never shown in place, only saved.
+ */
+function fileBody(
+  file: AdminGroupStoredFile,
+  bytes: Uint8Array,
+  disposition: `inline` | `attachment`,
+  cacheControl: string,
+): Response {
+  return new Response(bytes as Uint8Array<ArrayBuffer>, {
+    headers: {
+      "content-type": file.contentType,
+      "content-disposition": downloadDisposition(file.contentType, file.name, disposition),
+      "x-content-type-options": `nosniff`,
+      "content-security-policy": `sandbox; default-src 'none'`,
+      "cache-control": cacheControl,
+    },
+  })
+}
 
 /** The answer to each outcome other than done: its status and the sentence the page shows. */
 const REFUSALS: Record<
@@ -130,10 +187,18 @@ function operatorOf(c: Context<APIContext>): AdminGroupOperator {
  *   take no body; `POST /groups/:id/transfer` takes `{ userId }`. Each answers the group's page,
  *   `{ group }`, as it reads after the change, and writes the group's audit row naming the
  *   operator. Like the people actions they ask for no password (owner's decision, 2026-10-15).
- * - `GET /groups/:id/files` is the group's newest files and its room, `AdminGroupFiles`: each
- *   file's type, size, uploader and date, never its name or its note's title, and no download.
- *   `POST /groups/:id/files/:fileId/remove` removes one, from a note in the trash too, and answers
- *   the files as they read after it.
+ * - `GET /groups/:id/files?q=&page=` is one page of the group's files whose name holds `q`, newest
+ *   first, with the group's room: `AdminGroupFiles`. Each file's name, type, size, uploader, date
+ *   and its note's title (#478). `POST /groups/:id/files/:fileId/remove?q=&page=` removes one,
+ *   from a note in the trash too, and answers that page of the files as it reads after it.
+ * - `GET /groups/:id/files/:fileId/thumbnail` is the whole original image, shown as a 40 px tile, and
+ *   writes no audit row;
+ *   any other file is 404 here. `…/open` is the file shown in place (an image; anything else is
+ *   saved) and `…/download` the file saved as an attachment: each writes an audit row naming the
+ *   operator before it answers, and answers 403 unless `Sec-Fetch-Site` is `same-origin`, since a
+ *   GET that writes the operator's audit row must not be one another site can start. A file is
+ *   found only through its own group's path. Every answer carries the confirmed type and `nosniff`;
+ *   its sandbox policy is replaced by the app's own for now (spy4x/ts-libs#772).
  * - `GET /groups/:id/widgets/:widgetId?from=&to=&timeZone=` is one overview widget's data in the
  *   default layout, the same counts a member's overview shows (#219). Never a member's layout.
  */
@@ -151,6 +216,34 @@ export function createAdminGroupsRoutes(
     const group = await groups.detail(groupId)
     if (!group) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
     return c.json({ group })
+  }
+
+  /**
+   * One file's bytes: an image's tile, the file shown in place, or saved. The file must sit in the
+   * group of the path. Opening and downloading write the audit row first, once the bytes are in
+   * hand: a file the store lost writes none, and a row that cannot be written serves nothing.
+   */
+  async function serveFile(c: Context<APIContext>, access: AdminGroupFileAccess) {
+    const audited = access !== `thumbnail`
+    // A GET the mutation guards let through, yet it writes an audit row in the operator's name.
+    // The admin app's image and fetch are same-origin; a missing header is refused too.
+    if (audited && c.req.header(`sec-fetch-site`) !== `same-origin`) {
+      return errorResponse(c, `forbidden`, { message: ADMIN_GROUP_FILE_CROSS_SITE })
+    }
+    const groupId = c.req.param(`id`) ?? ``
+    const fileId = c.req.param(`fileId`) ?? ``
+    const file = isUuid(groupId) && isUuid(fileId) ? await groups.file(groupId, fileId) : null
+    const shown = file !== null && SHOWN_TYPES.has(bareType(file.contentType))
+    const bytes = file && (shown || access !== `thumbnail`)
+      ? await groups.readFile(file.objectKey)
+      : null
+    if (!file || !bytes) {
+      return errorResponse(c, `not_found`, { message: ADMIN_GROUP_FILE_NOT_FOUND })
+    }
+    if (access === `thumbnail`) return fileBody(file, bytes, `inline`, `private, max-age=86400`)
+    await groups.recordFileAccess(operatorOf(c), groupId, file, access)
+    const disposition = access === `open` && shown ? `inline` : `attachment`
+    return fileBody(file, bytes, disposition, `no-store`)
   }
 
   return new Hono<APIContext>()
@@ -186,10 +279,14 @@ export function createAdminGroupsRoutes(
     })
     .get(`/groups/:id/files`, limit, async (c) => {
       const groupId = c.req.param(`id`)
-      const files = isUuid(groupId) ? await groups.files(groupId) : null
+      const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
+      const files = isUuid(groupId) ? await groups.files(groupId, filter) : null
       if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(files)
     })
+    .get(`/groups/:id/files/:fileId/thumbnail`, limit, (c) => serveFile(c, `thumbnail`))
+    .get(`/groups/:id/files/:fileId/open`, limit, (c) => serveFile(c, `open`))
+    .get(`/groups/:id/files/:fileId/download`, limit, (c) => serveFile(c, `download`))
     .post(`/groups/:id/files/:fileId/remove`, limit, async (c) => {
       const groupId = c.req.param(`id`)
       const fileId = c.req.param(`fileId`)
@@ -204,7 +301,8 @@ export function createAdminGroupsRoutes(
         const { status, error } = REFUSALS[outcome]
         return errorResponse(c, codeForStatus(status), { message: error, status })
       }
-      const files = await groups.files(groupId)
+      const filter = parseAdminGroupFileFilter(new URL(c.req.url).searchParams)
+      const files = await groups.files(groupId, filter)
       if (!files) return errorResponse(c, `not_found`, { message: ADMIN_GROUP_NOT_FOUND })
       return c.json(files)
     })
@@ -257,6 +355,7 @@ export function createAdminGroups(
   db: AppDbBase,
   pageSize: number,
   fileCaps: AdminFileCaps,
+  readFile: AdminGroupsService[`readFile`],
 ): AdminGroupsService {
   return {
     async list(filter) {
@@ -270,12 +369,23 @@ export function createAdminGroups(
       db.adminGroups.removeMember(operator, groupId, userId),
     transferOwnership: (operator, groupId, userId) =>
       db.adminGroups.transferOwnership(operator, groupId, userId),
-    async files(groupId) {
-      const files = await db.adminGroups.files(groupId)
+    async files(groupId, filter) {
+      const files = await db.adminGroups.files(groupId, filter, ADMIN_GROUP_FILES_PAGE_SIZE)
       if (!files) return null
       const caps = await fileCaps(groupId)
-      return { files: files.files, usage: { files: files.total, bytes: files.bytes, ...caps } }
+      return {
+        files: files.files,
+        total: files.total,
+        page: filter.page,
+        pageSize: ADMIN_GROUP_FILES_PAGE_SIZE,
+        query: filter.query,
+        usage: { files: files.all, bytes: files.bytes, ...caps },
+      }
     },
+    file: (groupId, fileId) => db.adminGroups.file(groupId, fileId),
+    readFile,
+    recordFileAccess: (operator, groupId, file, access) =>
+      db.adminGroups.recordFileAccess(operator, groupId, file, access),
     removeFile: (operator, groupId, fileId) => db.adminGroups.removeFile(operator, groupId, fileId),
     async widget(groupId, widgetId, request) {
       // Every aggregate's readers, by widget id: the notes' are the only ones so far.
@@ -292,7 +402,7 @@ export function createAdminGroups(
 /** The groups module: the list, one group and the operator's actions on it. */
 export const groupsAdminModule: AdminApiModule = {
   id: `groups`,
-  routes: ({ db, limit, billing }) => {
+  routes: ({ db, limit, billing, readFile }) => {
     // Read on the first call: the routes are built before any database is reached.
     const fileCaps: AdminFileCaps = async (groupId) => {
       const plan = await createPlanOf(db.billing, billing)(groupId)
@@ -301,7 +411,7 @@ export const groupsAdminModule: AdminApiModule = {
     }
     return createAdminGroupsRoutes({
       limit,
-      groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE, fileCaps),
+      groups: createAdminGroups(db, ADMIN_GROUPS_PAGE_SIZE, fileCaps, readFile),
     })
   },
 }

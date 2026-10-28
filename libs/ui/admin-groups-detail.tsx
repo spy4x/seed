@@ -1,7 +1,9 @@
 import type { ComponentChildren, JSX } from "preact"
+import { useEffect, useRef } from "preact/hooks"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { timeAgo } from "@spy4x/platform/universal/time"
 import { IconEllipsisVertical } from "@spy4x/preact-icons"
+import { type AttachmentItem, AttachmentList } from "@spy4x/preact-ui/attachment-list"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
@@ -10,21 +12,27 @@ import { Card } from "@spy4x/preact-ui/card"
 import { Dropdown, DropdownItem } from "@spy4x/preact-ui/dropdown"
 import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
+import { Field } from "@spy4x/preact-ui/field"
+import { Input } from "@spy4x/preact-ui/input"
 import { Cluster, Stack } from "@spy4x/preact-ui/layout"
 import { Link } from "@spy4x/preact-ui/link"
 import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { Modal } from "@spy4x/preact-ui/modal"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
+import { Pagination } from "@spy4x/preact-ui/pagination"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { Tabs } from "@spy4x/preact-ui/tabs"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { BillingStatus } from "@domain/billing"
 import {
+  ADMIN_GROUP_FILE_SEARCH_MAX_LENGTH,
   ADMIN_GROUP_TRANSFER_ROLE,
   type AdminGroupActivityEvent,
   type AdminGroupDetail,
   type AdminGroupFile,
+  type AdminGroupFileFilter,
+  adminGroupFilePath,
   type AdminGroupFiles,
   type AdminGroupInvitation,
   type AdminGroupMember,
@@ -145,10 +153,20 @@ export interface AdminGroupScreenProps {
   pending: boolean
   /** The operator confirmed the open dialog's action. */
   onAction: (action: AdminGroupAction) => void
-  /** The group's files, or `null` while they load or when they could not be read. */
+  /** One page of the group's files, or `null` while it loads or when it could not be read. */
   files: AdminGroupFiles | null
   /** Why the files could not be read, or `null`. */
   filesError: string | null
+  /** The Files tab's search and page, as the address holds them. */
+  fileFilter: AdminGroupFileFilter
+  /** A new search (on page 1) or another page of the files. */
+  onFileFilter: (filter: AdminGroupFileFilter) => void
+  /** Reads the same page of files again, after a failure. */
+  onRetryFiles: () => void
+  /** Saves the file to the operator's device through the admin API. */
+  onDownloadFile: (file: AdminGroupFile) => void
+  /** Why opening or downloading a file failed, such as a file someone removed, or `null`. */
+  fileNotice: string | null
   /** The read-only "Overview widgets" section (`AdminGroupOverview`), under the header card. */
   overview?: ComponentChildren
   navigate?: Navigate
@@ -159,7 +177,8 @@ export interface AdminGroupScreenProps {
  * its members, its invitations, its files and its activity. An operator removes a member, revokes
  * an invitation or removes a file from the row's menu; a supervisor hands the group to another member from the page's
  * menu. Each is confirmed in a dialog and recorded in the group's activity with the operator's
- * name. Nothing written inside the group shows here: counts only.
+ * name. Nothing written inside the group shows here but its files' names and their notes' titles,
+ * which an operator needs to find a file a report names (#478).
  */
 export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
   const { detail, error, operator, navigate } = props
@@ -212,7 +231,7 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
     {
       id: `files`,
       label: <TabLabel text="Files" count={counts.files} />,
-      content: <Files {...props} deleted={deleted} />,
+      content: <Files {...props} detail={detail} deleted={deleted} />,
     },
     {
       id: `activity`,
@@ -545,11 +564,6 @@ function Invitations(
   )
 }
 
-/** What a stored file is, in a word: the operator never sees its name. */
-function fileKind(contentType: string): string {
-  return contentType === `application/pdf` ? `PDF` : `Image`
-}
-
 /** "37 of 100 files · 41 MB of 200 MB", or without "of" for a cap the plan does not set. */
 function filesUsage(usage: AdminGroupFiles["usage"]): string {
   const files = usage.maxFiles === null
@@ -561,73 +575,220 @@ function filesUsage(usage: AdminGroupFiles["usage"]): string {
   return `${files} · ${bytes}`
 }
 
-/** A file's line: its kind and size, so a row and its menu can be told apart without a name. */
-function fileLabel(file: AdminGroupFile): string {
-  return `${fileKind(file.contentType)} · ${formatBytes(file.size)}`
+/** The images a browser may show on the admin host; the API serves any other file as a download. */
+const SHOWN_TYPES = new Set([`image/jpeg`, `image/png`, `image/webp`, `image/gif`])
+
+/** The longest file name or note title a sentence quotes before it is cut with "…". */
+const QUOTE_MAX = 48
+
+/** `text` cut to {@link QUOTE_MAX} characters, with "…" when it was longer. */
+export function clipped(text: string): string {
+  return text.length > QUOTE_MAX ? `${text.slice(0, QUOTE_MAX).trimEnd()}…` : text
 }
 
 /**
- * The group's newest files, newest first: kind, size, uploader and date, and whether the note is in
- * the trash. Never a file's name or its note's title, which are written inside the group.
+ * Where a file sits and who put it there, after its kind and size: "Ada Lovelace · 3 Oct 2026 ·
+ * in “Trip receipts”", "(in trash)" after a note in the trash.
+ */
+export function fileDetail(file: AdminGroupFile, date: string): string {
+  const uploader = file.uploader ? adminGroupPersonName(file.uploader) : `A deleted account`
+  const note = file.noteTitle.trim()
+    ? `in “${clipped(file.noteTitle.trim())}”`
+    : `in an untitled note`
+  return `${uploader} · ${date} · ${note}${file.noteDeleted ? ` (in trash)` : ``}`
+}
+
+/** "90 files", "3 files match “receipt”", "No files match “xyz”". */
+export function filesCount(files: Pick<AdminGroupFiles, "total" | "query">): string {
+  const { total, query } = files
+  if (!query) return `${NUMBER.format(total)} ${total === 1 ? `file` : `files`}`
+  if (total === 0) return `No files match “${query}”`
+  return `${NUMBER.format(total)} ${total === 1 ? `file matches` : `files match`} “${query}”`
+}
+
+/** The id of the Files tab's search field, where focus goes when the last file of a page leaves. */
+const FILE_SEARCH_ID = `admin-group-files-q`
+
+/**
+ * The group's files (#478): a search by name, how many match, one page of rows with a thumbnail
+ * or a file icon, the name and where the file sits, then the pages and the group's room. An image
+ * opens in the lightbox and any other file downloads; each row's menu downloads or removes it. An
+ * operator sees the names and the notes' titles so they can find the file a report names.
  */
 function Files(
-  { files, filesError, deleted, onOpenDialog, navigate }: AdminGroupScreenProps & {
-    deleted: boolean
-  },
+  props: AdminGroupScreenProps & { detail: AdminGroupDetail; deleted: boolean },
 ): JSX.Element {
-  if (!files) {
-    return filesError
-      ? <ErrorState message={filesError} dataE2E="admin-group-files-error" />
-      : (
-        <div role="status" aria-label="Loading the files">
-          <LoadingSkeleton rows={3} />
+  const { files, filesError, fileFilter, detail, deleted, dialog, pending } = props
+  const format = useFormat()
+  const count = useRef<HTMLParagraphElement>(null)
+  const search = useRef<HTMLDivElement>(null)
+
+  // After a page change the rows are new: the reader starts again at the count above them.
+  const page = files?.page
+  const shown = useRef<number | undefined>(undefined)
+  useEffect(() => {
+    if (page === undefined) return
+    if (shown.current !== undefined && shown.current !== page) count.current?.focus()
+    shown.current = page
+  }, [page])
+
+  // A group with no file has nothing to search: the search, the count and the pages stay away.
+  const none = (files?.usage.files ?? detail.counts.files) === 0
+  const groupId = detail.group.id
+  const items: AttachmentItem[] = (files?.files ?? []).map((file) => {
+    const image = SHOWN_TYPES.has(file.contentType.toLowerCase())
+    return {
+      id: file.id,
+      name: file.name,
+      size: file.size,
+      type: file.contentType,
+      status: `ready`,
+      thumbnailSrc: image ? adminGroupFilePath(groupId, file.id, `thumbnail`) : undefined,
+      src: image ? adminGroupFilePath(groupId, file.id, `open`) : undefined,
+      detail: fileDetail(file, format.date(file.createdAt)),
+    }
+  })
+  const byId = new Map((files?.files ?? []).map((file) => [file.id, file]))
+  const removingId = dialog?.kind === `removeFile` && pending ? dialog.fileId : null
+
+  // A removal that empties the list unmounts it, and with it the row focus would move to: focus
+  // goes to the search field instead, or to the empty state once the group has no file at all.
+  const removing = useRef(false)
+  const empty = useRef<HTMLDivElement>(null)
+  const emptied = files !== null && items.length === 0
+  if (removingId !== null) removing.current = true
+  useEffect(() => {
+    if (!removing.current || removingId !== null) return
+    removing.current = false
+    if (!emptied) return
+    const field = search.current?.querySelector<HTMLElement>(`#${FILE_SEARCH_ID}`)
+    ;(field ?? empty.current)?.focus()
+  }, [removingId, emptied])
+
+  const body = (() => {
+    if (!files) {
+      return filesError
+        ? (
+          <Stack gap="sm" class="items-start" data-e2e="admin-group-files-error">
+            <ErrorState message="Could not load the files. Check your connection, then try again." />
+            <Button variant="secondary" onClick={props.onRetryFiles}>Try again</Button>
+          </Stack>
+        )
+        : (
+          <div role="status" aria-label="Loading the files">
+            <LoadingSkeleton rows={3} />
+          </div>
+        )
+    }
+    if (none) {
+      return (
+        <div ref={empty} tabIndex={-1} class="rounded-xl">
+          <Card data-e2e="admin-group-files">
+            <EmptyState inset description="No files yet." />
+          </Card>
         </div>
       )
-  }
+    }
+    if (items.length === 0) {
+      return (
+        <Card data-e2e="admin-group-files">
+          <EmptyState
+            inset
+            title="No files match"
+            description="Try part of the name, or clear the search."
+          />
+        </Card>
+      )
+    }
+    return (
+      <div data-e2e="admin-group-files">
+        <AttachmentList
+          id="admin-group-files"
+          items={items}
+          labels={{ list: `Files`, removeItem: `Remove file` }}
+          onDownload={(item) => {
+            const file = byId.get(item.id)
+            if (file) props.onDownloadFile(file)
+          }}
+          onRemove={deleted
+            ? undefined
+            : (item) => props.onOpenDialog({ kind: `removeFile`, fileId: item.id })}
+          removingId={removingId}
+          focusAfterLast={() => search.current?.querySelector<HTMLElement>(`#${FILE_SEARCH_ID}`)}
+        />
+      </div>
+    )
+  })()
+
   return (
     <Stack gap="sm">
-      <Rows empty="No files." dataE2E="admin-group-files">
-        {files.files.map((file) => (
-          <li key={file.id} class={ROW} data-e2e={`admin-group-file-${file.id}`}>
-            <div class="flex min-w-0 flex-1 basis-48 flex-col">
-              <span class="font-medium">{fileLabel(file)}</span>
-              <span class="text-sm text-muted wrap-anywhere">
-                {file.uploader
-                  ? (
-                    <Link
-                      href={ADMIN_PATHS.user(file.uploader.id)}
-                      navigate={navigate}
-                      class="pc-link"
-                    >
-                      {adminGroupPersonName(file.uploader)}
-                    </Link>
-                  )
-                  : `A deleted account`}
-                {`, `}
-                <When at={file.createdAt} />
-              </span>
-            </div>
-            {file.noteDeleted && <Badge text="Note in trash" color="gray" type="outline" />}
-            {!deleted && (
-              <RowMenu
-                label={`Actions for the ${fileLabel(file)} file`}
-                dataE2E="admin-group-file-menu"
+      {!none && (
+        <div ref={search}>
+          <ScreenForm
+            pending={files === null && !filesError}
+            onSubmit={(data) =>
+              props.onFileFilter({ query: String(data.get(`q`) ?? ``).trim(), page: 1 })}
+          >
+            {/* Keyed by the query, so going back in history shows the search that page had. */}
+            <div
+              key={fileFilter.query}
+              class="flex flex-wrap items-end gap-3"
+              role="search"
+              aria-label="Search the files"
+            >
+              <div class="min-w-0 flex-1 basis-48 sm:max-w-md">
+                <Field id={FILE_SEARCH_ID} label="File name">
+                  <Input
+                    name="q"
+                    type="search"
+                    data-e2e="admin-group-files-search"
+                    defaultValue={fileFilter.query}
+                    maxLength={ADMIN_GROUP_FILE_SEARCH_MAX_LENGTH}
+                    autocomplete="off"
+                  />
+                </Field>
+              </div>
+              <Button
+                type="submit"
+                data-e2e="admin-group-files-submit"
+                busy={files === null && !filesError}
+                busyLabel="Searching…"
               >
-                <DropdownItem
-                  danger
-                  dataE2E="admin-group-remove-file-open"
-                  onClick={() => onOpenDialog({ kind: `removeFile`, fileId: file.id })}
-                >
-                  Remove file
-                </DropdownItem>
-              </RowMenu>
-            )}
-          </li>
-        ))}
-      </Rows>
-      <p class="text-sm text-muted" data-e2e="admin-group-files-usage">
-        {filesUsage(files.usage)}
-      </p>
+                Search
+              </Button>
+            </div>
+          </ScreenForm>
+        </div>
+      )}
+      {!none && files && (
+        <p
+          ref={count}
+          tabIndex={-1}
+          role="status"
+          class="text-sm text-muted focus:outline-none"
+          data-e2e="admin-group-files-count"
+        >
+          {filesCount(files)}
+        </p>
+      )}
+      {props.fileNotice && (
+        <Notice tone="danger" data-e2e="admin-group-file-notice">{props.fileNotice}</Notice>
+      )}
+      {body}
+      {files && files.total > files.pageSize && (
+        <Pagination
+          page={files.page}
+          pageCount={Math.ceil(files.total / files.pageSize)}
+          onChange={(next) => props.onFileFilter({ query: files.query, page: next })}
+          label="Pages of files"
+          class="self-center"
+        />
+      )}
+      {files && (
+        <p class="text-sm text-muted" data-e2e="admin-group-files-usage">
+          {filesUsage(files.usage)}
+        </p>
+      )}
     </Stack>
   )
 }
@@ -656,6 +817,7 @@ function Activity({ events }: { events: readonly AdminGroupActivityEvent[] }): J
 function dialogCopy(
   dialog: AdminGroupDialog,
   detail: AdminGroupDetail,
+  files: AdminGroupFiles | null,
 ): { title: string; text: string; submit: string; busy: string } {
   switch (dialog.kind) {
     case `remove`: {
@@ -677,14 +839,16 @@ function dialogCopy(
         submit: `Revoke`,
         busy: `Revoking…`,
       }
-    case `removeFile`:
+    case `removeFile`: {
+      const file = files?.files.find((row) => row.id === dialog.fileId)
       return {
-        title: `Remove this file?`,
+        title: file ? `Remove “${clipped(file.name)}”?` : `Remove this file?`,
         text:
           `The members of ${detail.group.name} will no longer see it. Its note stays. The group's activity records that the support team removed it.`,
         submit: `Remove file`,
         busy: `Removing…`,
       }
+    }
     case `transfer`:
       return {
         title: `Transfer ${detail.group.name}`,
@@ -699,11 +863,11 @@ function dialogCopy(
 
 /** The dialog of one action: what it does, the choice a transfer needs, and its button. */
 function ActionDialog(
-  { dialog, detail, candidates, actionError, pending, onAction, onCloseDialog }:
+  { dialog, detail, files, candidates, actionError, pending, onAction, onCloseDialog }:
     & AdminGroupScreenProps
     & { dialog: AdminGroupDialog; detail: AdminGroupDetail; candidates: AdminGroupMember[] },
 ): JSX.Element {
-  const copy = dialogCopy(dialog, detail)
+  const copy = dialogCopy(dialog, detail, files)
   return (
     <Modal
       open

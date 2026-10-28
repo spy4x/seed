@@ -2,7 +2,14 @@ import type { JSX } from "preact"
 import { useEffect, useMemo, useState } from "preact/hooks"
 import { useLocation, useSearch } from "wouter-preact"
 import { IconFolder } from "@spy4x/preact-icons"
-import { type AdminGroupFilter, adminGroupFilterQuery, parseAdminGroupFilter } from "@domain/groups"
+import {
+  type AdminGroupFileFilter,
+  adminGroupFileFilterQuery,
+  type AdminGroupFilter,
+  adminGroupFilterQuery,
+  parseAdminGroupFileFilter,
+  parseAdminGroupFilter,
+} from "@domain/groups"
 import { ADMIN_GROUP_PATHS, AdminGroupsListScreen } from "@ui/admin-groups-list.tsx"
 import { AdminGroupScreen } from "@ui/admin-groups-detail.tsx"
 import { AdminGroupOverview } from "@ui/admin-group-overview.tsx"
@@ -32,7 +39,7 @@ function overviewState(context: AdminContext) {
 function groupsState(context: AdminContext): GroupsState {
   let state = states.get(context)
   if (!state) {
-    state = createGroupsState(context.request, context.toasts)
+    state = createGroupsState(context.request, context.toasts, context.signedOut)
     states.set(context, state)
   }
   return state
@@ -79,11 +86,34 @@ function GroupView(
     state.closeDialog()
     if (groupId !== null) state.loadGroup(groupId)
   }, [groupId])
+  const query = new URLSearchParams(search)
+  const tab = query.get(`tab`) ?? `members`
+  // The Files tab's search and page live in the address too, so Back steps through searches.
+  const fileQuery = tab === `files`
+    ? adminGroupFileFilterQuery(parseAdminGroupFileFilter(query))
+    : ``
+  const fileFilter = useMemo(
+    () => parseAdminGroupFileFilter(new URLSearchParams(fileQuery)),
+    [fileQuery],
+  )
+  useEffect(() => {
+    if (groupId !== null) state.loadFiles(groupId, fileFilter)
+  }, [groupId, fileFilter])
   const group = state.group.value
   const dialog = state.dialog.value
   const files = state.files.value
   const current = group.groupId === groupId
-  const tab = new URLSearchParams(search).get(`tab`) ?? `members`
+  const shownFiles = files.groupId === groupId && files.filter === fileFilter ? files : null
+  const goFiles = (next: AdminGroupFileFilter, replace = false) => {
+    const query = adminGroupFileFilterQuery(next)
+    context.navigate(`${path}?tab=files${query ? `&${query}` : ``}`, { replace })
+  }
+  // A page past the last one, such as after the last file of a page was removed, shows the last.
+  const page = shownFiles?.files
+  useEffect(() => {
+    if (!page || page.files.length > 0 || page.page <= 1 || page.total === 0) return
+    goFiles({ query: page.query, page: Math.ceil(page.total / page.pageSize) }, true)
+  }, [page])
   const overview = overviewState(context)
   const timeZone = useFormat().timeZone
   const now = useMemo(() => new Date(), [groupId])
@@ -100,8 +130,17 @@ function GroupView(
       detail={current ? group.detail : null}
       error={groupId === null ? `Group not found` : current ? group.error : null}
       operator={operatorOf(context.operator)}
-      files={files.groupId === groupId ? files.files : null}
-      filesError={files.groupId === groupId ? files.error : null}
+      files={shownFiles?.files ?? null}
+      filesError={shownFiles?.error ?? null}
+      fileFilter={fileFilter}
+      onFileFilter={(next) => goFiles(next)}
+      onRetryFiles={() => {
+        if (groupId !== null) state.loadFiles(groupId, fileFilter)
+      }}
+      onDownloadFile={(file) => {
+        if (groupId !== null) state.downloadFile(groupId, file)
+      }}
+      fileNotice={shownFiles?.notice ?? null}
       tab={tab}
       onTab={(next) =>
         context.navigate(next === `members` ? path : `${path}?tab=${encodeURIComponent(next)}`, {

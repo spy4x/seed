@@ -5,7 +5,8 @@ import type { GroupColor, GroupRole } from "./+lib.ts"
 
 // ---------------------------------------------------------------------------------------------
 // The operator area's groups module (#426): `/api/admin/groups/...`. Counts and account facts
-// only: no note, tag or description text ever reaches these shapes.
+// only: no note body, tag or description text ever reaches these shapes. The one exception is a
+// file's name and its note's title on the Files tab (#478), so an operator can find a file.
 // ---------------------------------------------------------------------------------------------
 
 /** How many groups one page of the operator's group list shows. */
@@ -131,28 +132,86 @@ export interface AdminGroupCounts {
   fileBytes: number
 }
 
-/** The most files the operator's Files tab lists, newest first. */
-export const ADMIN_GROUP_FILE_LIMIT = 200
+/** How many files one page of the operator's Files tab shows, newest first. */
+export const ADMIN_GROUP_FILES_PAGE_SIZE = 25
+
+/** The longest file-name search the Files tab takes, in characters. */
+export const ADMIN_GROUP_FILE_SEARCH_MAX_LENGTH = 100
 
 /**
- * One file on a note of the group, as the operator sees it: its type, size, uploader and date.
- * Never its name or its note's title: those are written inside the group.
+ * One file on a note of the group, as the operator sees it: its name, type, size, uploader, date
+ * and its note's title. The name and the title are the exception to "counts only": an operator
+ * needs them to find an abusive file among many (#478).
  */
 export interface AdminGroupFile {
   id: string
+  name: string
   contentType: string
   size: number
   /** `null` once the account is gone. */
   uploader: AdminGroupPerson | null
   createdAt: string
+  /** The title of the note the file sits in, at most 100 characters; empty for an untitled note. */
+  noteTitle: string
   /** The file's note is in the trash; the file goes when the note is purged. */
   noteDeleted: boolean
 }
 
-/** The answer of `GET /api/admin/groups/:id/files`. */
+/** The search and page of the Files tab, as the page's address and the API's query carry them. */
+export interface AdminGroupFileFilter {
+  /** Part of a file's name, any case; empty for every file. */
+  query: string
+  /** 1-based. */
+  page: number
+}
+
+/** Every file of the group, first page. */
+export const ADMIN_GROUP_FILE_NO_FILTER: AdminGroupFileFilter = { query: "", page: 1 }
+
+/** Reads the Files tab's search and page (`q`, `page`); anything it does not understand is dropped. */
+export function parseAdminGroupFileFilter(params: URLSearchParams): AdminGroupFileFilter {
+  const query = (params.get("q") ?? "").trim().slice(0, ADMIN_GROUP_FILE_SEARCH_MAX_LENGTH)
+  const pageNumber = Number(params.get("page"))
+  const page = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= 100_000
+    ? pageNumber
+    : 1
+  return { query, page }
+}
+
+/** The query string of `filter`, leaving out every part at its default. No leading `?`. */
+export function adminGroupFileFilterQuery(filter: AdminGroupFileFilter): string {
+  const params = new URLSearchParams()
+  if (filter.query) params.set("q", filter.query)
+  if (filter.page > 1) params.set("page", String(filter.page))
+  return params.toString()
+}
+
+/**
+ * What the admin API answers about one file: its bytes for the 40 px tile (`thumbnail`, images
+ * only, not audited), shown in place (`open`) or saved (`download`), each of the last two audited.
+ */
+export type AdminGroupFileAccess = "thumbnail" | "open" | "download"
+
+/** The admin API's path of one file's bytes: `/api/admin/groups/:id/files/:fileId/open`. */
+export function adminGroupFilePath(
+  groupId: string,
+  fileId: string,
+  access: AdminGroupFileAccess,
+): string {
+  return `/api/admin/groups/${encodeURIComponent(groupId)}/files/${
+    encodeURIComponent(fileId)
+  }/${access}`
+}
+
+/** The answer of `GET /api/admin/groups/:id/files?q=&page=`. */
 export interface AdminGroupFiles {
-  /** The newest {@link ADMIN_GROUP_FILE_LIMIT} files. */
+  /** One page of the files that match `query`, newest first. */
   files: AdminGroupFile[]
+  /** How many files match `query`: every file of the group when it is empty. */
+  total: number
+  page: number
+  pageSize: number
+  query: string
   /** Every file of the group and the plan's caps for them, `null` for none. */
   usage: { files: number; bytes: number; maxFiles: number | null; maxBytes: number | null }
 }
