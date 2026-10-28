@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * Sign-in with a provider, driven in a browser DOM (happy-dom): the "Continue with" links on the
  * auth pages, the question before a provider creates an account, and the profile's sign-in

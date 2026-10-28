@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The admin app's frames, driven in a browser DOM (happy-dom): what the rail holds,
  * what the operator's menu offers and what reaches the app's callbacks.

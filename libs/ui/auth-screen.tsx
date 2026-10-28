@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { type AuthCredentials, AuthForm, type AuthMode } from "@spy4x/preact-system/auth-form"

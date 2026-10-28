@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The app frame and the account screens (profile, e-mail address, sign-in) driven in a browser DOM
  * (happy-dom): what opens, what the app's callbacks receive, and where focus goes.

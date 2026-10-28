@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The New note dialog in a browser DOM (happy-dom): where focus goes when it opens, after an
  * error and after an add; what Enter and Ctrl Enter ask for; and what it shows with no group, one

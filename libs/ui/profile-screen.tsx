@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { IconLockClosed } from "@spy4x/preact-icons"
 import { Avatar } from "@spy4x/preact-ui/avatar"

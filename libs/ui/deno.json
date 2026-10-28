@@ -4,5 +4,12 @@
     "preact-render-to-string": "npm:preact-render-to-string@6.7.0",
     // A browser DOM for the interaction tests: focus, form submission and FormData.
     "happy-dom": "npm:happy-dom@20.14.5"
+  },
+  // Every word a person reads comes from the catalogs (#216): the rule flags an English literal in
+  // a component. A file not translated yet starts with
+  // `// deno-lint-ignore-file ui-text/no-literal`; #275 removes those comments group by group, and
+  // `deno lint` reports the comment as unused once its file is clean.
+  "lint": {
+    "plugins": ["jsr:@spy4x/preact-theme@10.11.0/lint"]
   }
 }

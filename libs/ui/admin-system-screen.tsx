@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { IconRefresh } from "@spy4x/preact-icons"
 import { formatBytes } from "@spy4x/platform/universal/format-number"

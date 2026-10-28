@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The group screens driven in a browser DOM (happy-dom): the groups list, a group's settings with
  * its menu and dialogs, the members, the invitations, the transfer and the invitation page. These

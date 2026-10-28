@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The notes screens, `NotesScreen` and `NoteEditorScreen`: what they render (server-rendered
  * HTML) and what a person does on them in a browser DOM (happy-dom): open a row's menu, confirm a

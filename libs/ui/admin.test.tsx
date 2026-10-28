@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The admin app's screens (#146), driven in a browser DOM (happy-dom): what the search sends, what
  * the list and the person's page offer, what the action dialog sends and where focus goes.
