@@ -170,7 +170,7 @@ const ROWS: CatalogItemRow[] = [
   {
     ...ROW,
     id: SMALL,
-    slug: "ao-khoac",
+    slug: "jacket",
     name: { vi: "Áo khoác" },
     status: "hidden",
     stock: "some-sold-out",
@@ -215,13 +215,14 @@ describe("the catalog list", () => {
       hidden: 1,
       soldOut: 2,
     })
-    expect(ids({ query: "AO" })).toEqual(["ao-thun", "ao-khoac"])
+    expect(ids({ query: "AO" })).toEqual(["ao-thun", "jacket"])
     expect(ids({ query: "thun ao" })).toEqual(["ao-thun"])
+    expect(ids({ query: "khoac" })).toEqual(["jacket"])
     expect(ids({ query: "wool" })).toEqual(["mu-len"])
-    expect(ids({ query: "tops" })).toEqual(["ao-thun", "ao-khoac"])
+    expect(ids({ query: "tops" })).toEqual(["ao-thun", "jacket"])
     expect(ids({ query: "mu-len" })).toEqual(["mu-len"])
     expect(ids({ status: "draft" })).toEqual(["mu-len"])
-    expect(ids({ soldOut: true })).toEqual(["ao-thun", "ao-khoac"])
+    expect(ids({ soldOut: true })).toEqual(["ao-thun", "jacket"])
     // Each chip counts what it would show beside the other filters.
     expect(filterCatalogItems(all, { ...ADMIN_CATALOG_NO_FILTER, soldOut: true }).counts.draft)
       .toBe(0)
