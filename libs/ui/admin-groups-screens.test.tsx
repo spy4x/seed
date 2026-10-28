@@ -28,6 +28,8 @@ import {
 } from "./admin-groups-detail.tsx"
 import { AdminUserScreen, type AdminUserScreenProps } from "./admin-user-screen.tsx"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
   document: globalThis.document,
@@ -850,5 +852,31 @@ describe(`the person page's groups`, () => {
     expect(find(`[data-e2e=admin-user-group-${GROUP_ID}]`).getAttribute(`href`)).toBe(
       `/groups/${GROUP_ID}`,
     )
+  })
+})
+
+describe("the group screens in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminGroupsListScreen {...listProps([])} />
+        <AdminGroupScreen {...groupProps([], { tab: `overview` })} />
+        <AdminGroupScreen {...groupProps([], { tab: `members` })} />
+        <AdminGroupScreen {...groupProps([], { tab: `invitations` })} />
+        <AdminGroupScreen {...groupProps([], { tab: `activity` })} />
+        <AdminGroupScreen
+          {...groupProps([], { tab: `files`, dialog: { kind: `removeFile`, fileId: FILE_ID } })}
+        />
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(document.body, [
+      `Family`,
+      ...[`Ada Lovelace`, `AL`, `Alan Turing`, `AT`, `Grace Hopper`, `GH`],
+      /[a-z]+@example\.com/g,
+      `receipt.pdf`,
+      `IMG_0001.png`,
+      // The groups lane's gap: the activity sentences (`describeActivity`) are English still.
+      `Olga Operator removed Bob Builder from the group`,
+    ])).toEqual([])
   })
 })

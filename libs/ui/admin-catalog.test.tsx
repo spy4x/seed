@@ -41,6 +41,8 @@ import {
   type AdminCatalogSourcesScreenProps,
   TRACKING_OFF_NOTICE,
 } from "./admin-catalog-sources.tsx"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 
 const window = new Window({ url: "http://admin.localhost/catalog" })
 const own = {
@@ -255,7 +257,9 @@ describe("the catalog list", () => {
   })
 
   it("says the catalog's currency and languages in words", () => {
-    expect(catalogSettingsLine(SETTINGS)).toBe("Prices in VND · Texts in Tiếng Việt and English")
+    expect(catalogSettingsLine(ADMIN_ENGLISH, SETTINGS)).toBe(
+      "Prices in VND · Texts in Tiếng Việt and English",
+    )
   })
 })
 
@@ -442,7 +446,7 @@ describe("the link sources list", () => {
     expect(row(0).textContent).toContain("Zalo group A")
     expect(row(0).textContent).toContain("utm_source=zalo-a · 3 links")
     expect(row(1).textContent).toContain("utm_source=friends · 0 links")
-    expect(document.body.textContent).not.toContain(TRACKING_OFF_NOTICE)
+    expect(document.body.textContent).not.toContain(ADMIN_ENGLISH.t(TRACKING_OFF_NOTICE))
   })
 
   it("deletes a source only after the dialog says its shared links stop working", async () => {
@@ -468,7 +472,9 @@ describe("the link sources list", () => {
 
   it("says what to set while items get no links, and offers a first source", async () => {
     await mount(<AdminCatalogSourcesScreen {...props([], { tracking: false, sources: [] })} />)
-    expect(find("[data-e2e=catalog-sources-tracking-off]").textContent).toBe(TRACKING_OFF_NOTICE)
+    expect(find("[data-e2e=catalog-sources-tracking-off]").textContent).toBe(
+      ADMIN_ENGLISH.t(TRACKING_OFF_NOTICE),
+    )
     expect(document.body.textContent).toContain("No sources yet")
   })
 })
@@ -716,5 +722,75 @@ describe("the item editor's checks", () => {
       ok: false,
       field: "price",
     })
+  })
+})
+
+describe("the catalog in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    const categories = [categoryOf(), categoryOf({ id: ITEM, slug: "mu", name: { vi: "Mũ" } })]
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <ListScreen
+          catalog={{ settings: SETTINGS, categories, items: ROWS, sources: [], tracking: true }}
+        />
+        <AdminCatalogCategoriesScreen
+          categories={categories}
+          languages={SETTINGS.languages}
+          error={null}
+          busy={false}
+          onRetry={() => {}}
+          onMove={() => {}}
+          onDelete={() => {}}
+        />
+        <AdminCatalogCategoryEditorScreen
+          category={null}
+          languages={SETTINGS.languages}
+          loading={false}
+          notFound={false}
+          value={{ name: {}, slug: "", slugEdited: false }}
+          onChange={() => {}}
+          errors={{}}
+          saving={false}
+          onSave={() => {}}
+        />
+      </I18nContext.Provider>,
+    )
+    await clickOn(document.querySelectorAll("[data-e2e=catalog-category-menu]")[1])
+    const data = [`Áo thun`, `Mũ len`, `Áo khoác`, /\b(ao|mu)\b/g]
+    expect(englishLeft(document.body, data)).toEqual([])
+  })
+})
+
+describe("the link sources in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    const zalo = sourceOf()
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminCatalogSourcesScreen
+          sources={[zalo, sourceOf({ id: FRIENDS, name: "Friends", slug: "friends" })]}
+          tracking={false}
+          error={null}
+          busy={false}
+          onRetry={() => {}}
+          onMove={() => {}}
+          onDelete={() => {}}
+        />
+        <AdminCatalogSourceEditorScreen
+          source={zalo}
+          loading={false}
+          notFound={false}
+          value={{ name: zalo.name, slug: zalo.slug, slugEdited: true }}
+          onChange={() => {}}
+          errors={{}}
+          saving={false}
+          onSave={() => {}}
+        />
+      </I18nContext.Provider>,
+    )
+    await clickOn(document.querySelectorAll("[data-e2e=catalog-source-menu]")[1])
+    await clickOn(document.querySelectorAll("[data-e2e=catalog-source-delete]")[0])
+    expect(document.querySelector("dialog[open]")).not.toBeNull()
+    const data = [/Zalo group A/g, /Friends/g, /utm_source=[a-z-]+/g, /zalo-a/g, /MPA_DOMAIN/g]
+    expect(englishLeft(document.body, data)).toEqual([])
   })
 })

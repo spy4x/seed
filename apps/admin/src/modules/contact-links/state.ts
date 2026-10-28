@@ -9,6 +9,7 @@ import {
 } from "@domain/contact-links"
 import type { ContactLinkFormErrors, ContactLinkFormValue } from "@ui/admin-contact-links.tsx"
 import { type AdminFetch, post } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 
 const BLANK: ContactLinkFormValue = { kind: `telegram`, value: ``, label: `` }
 
@@ -116,7 +117,7 @@ export function createContactLinksState(
       // The fields now show the link as saved, so nothing is left unsaved.
       state.open(id)
       toasts.success({
-        body: link ? `Link saved.` : `Link added. The website shows it within a minute.`,
+        body: adminText().t(link ? `AdminContactLinks.doneSaved` : `AdminContactLinks.doneAdded`),
         dataE2E: `contact-links-toast`,
       })
       return true
@@ -137,7 +138,7 @@ export function createContactLinksState(
     /** Removes the link. Answers whether it went through. */
     remove(link: ContactLinkRecord): Promise<boolean> {
       return state.write(`/api/admin/contact-links/${link.id}/delete`, { version: link.version }, {
-        toast: `Link removed.`,
+        toast: adminText().t(`AdminContactLinks.doneRemoved`),
       })
     },
 

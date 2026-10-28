@@ -1,6 +1,7 @@
 import type { ComponentType } from "preact"
 import type { IconProps } from "@spy4x/preact-icons"
 import { AdminComingSoon, ComingSoonPanel } from "@ui/admin-frame.tsx"
+import { useAdminText } from "@ui/i18n.ts"
 import type { AdminPersonTab, AdminRoute } from "./types.ts"
 
 /**
@@ -21,13 +22,23 @@ export function comingSoonPage(
   }
 }
 
-/** A person tab that is registered but not built yet. */
+/** A person tab that is registered but not built yet; `label` is a catalog key. */
 export function comingSoonTab(
   { id, label, description }: { id: string; label: string; description: string },
 ): AdminPersonTab {
   return {
     id,
     label,
-    render: () => <ComingSoonPanel title={`${label} is coming soon`} description={description} />,
+    render: () => <ComingSoonTab label={label} description={description} />,
   }
+}
+
+function ComingSoonTab({ label, description }: { label: string; description: string }) {
+  const t = useAdminText()
+  return (
+    <ComingSoonPanel
+      title={t.t(`AdminFrame.comingSoon`, { title: t.t(label) })}
+      description={description}
+    />
+  )
 }

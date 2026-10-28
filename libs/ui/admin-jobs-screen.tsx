@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX, RefObject } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconArrowPath, IconPlayCircle } from "@spy4x/preact-icons"
@@ -35,6 +34,9 @@ import {
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { ADMIN_GROUP_PATHS } from "./admin-groups-list.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** The Jobs module's pages in the admin app. */
 export const ADMIN_JOB_PATHS = {
@@ -44,41 +46,68 @@ export const ADMIN_JOB_PATHS = {
   job: (id: string) => `/jobs/${encodeURIComponent(id)}`,
 } as const
 
-const NUMBER = new Intl.NumberFormat(`en`)
-
-/** Each state's word and badge. The word always shows, so the colour is never the only sign. */
-export const JOB_STATES: Record<
+/**
+ * Each state's word (a catalog key) and badge. The word always shows, so the colour is never the
+ * only sign. `name` is the state's fixed English name for `data-state`.
+ */
+const JOB_STATES: Record<
   AdminJobState,
-  { text: string; color: BadgeColor; type: BadgeType }
+  { name: string; key: string; color: BadgeColor; type: BadgeType }
 > = {
-  [AdminJobState.Scheduled]: { text: `Scheduled`, color: `gray`, type: `outline` },
-  [AdminJobState.Due]: { text: `Due now`, color: `blue`, type: `outline` },
-  [AdminJobState.Running]: { text: `Running`, color: `blue`, type: `filled` },
-  [AdminJobState.Retrying]: { text: `Waiting to retry`, color: `orange`, type: `outline` },
-  [AdminJobState.Failed]: { text: `Failed`, color: `red`, type: `filled` },
-  [AdminJobState.Done]: { text: `Done`, color: `green`, type: `outline` },
-  [AdminJobState.Cancelled]: { text: `Cancelled`, color: `gray`, type: `filled` },
+  [AdminJobState.Scheduled]: {
+    name: `Scheduled`,
+    key: `AdminJobs.scheduled`,
+    color: `gray`,
+    type: `outline`,
+  },
+  [AdminJobState.Due]: { name: `Due now`, key: `AdminJobs.due`, color: `blue`, type: `outline` },
+  [AdminJobState.Running]: {
+    name: `Running`,
+    key: `AdminJobs.running`,
+    color: `blue`,
+    type: `filled`,
+  },
+  [AdminJobState.Retrying]: {
+    name: `Waiting to retry`,
+    key: `AdminJobs.retrying`,
+    color: `orange`,
+    type: `outline`,
+  },
+  [AdminJobState.Failed]: { name: `Failed`, key: `AdminJobs.failed`, color: `red`, type: `filled` },
+  [AdminJobState.Done]: { name: `Done`, key: `AdminJobs.done`, color: `green`, type: `outline` },
+  [AdminJobState.Cancelled]: {
+    name: `Cancelled`,
+    key: `AdminJobs.cancelled`,
+    color: `gray`,
+    type: `filled`,
+  },
 }
 
-/** The label of each state chip. */
-const CHIP_LABELS: Record<AdminJobStateFilter, string> = {
-  all: `All`,
-  failed: `Failed`,
-  retrying: `Waiting to retry`,
-  scheduled: `Scheduled`,
-  running: `Running`,
-  done: `Done`,
-  cancelled: `Cancelled`,
+/** Each state chip's word, alone and with its count once the list has loaded. */
+const CHIP_LABELS: Record<AdminJobStateFilter, { label: string; counted: string }> = {
+  all: { label: `AdminJobs.all`, counted: `AdminJobs.chipAll` },
+  failed: { label: `AdminJobs.failedChip`, counted: `AdminJobs.chipFailed` },
+  retrying: { label: `AdminJobs.retryingChip`, counted: `AdminJobs.chipRetrying` },
+  scheduled: { label: `AdminJobs.scheduledChip`, counted: `AdminJobs.chipScheduled` },
+  running: { label: `AdminJobs.runningChip`, counted: `AdminJobs.chipRunning` },
+  done: { label: `AdminJobs.doneChip`, counted: `AdminJobs.chipDone` },
+  cancelled: { label: `AdminJobs.cancelledChip`, counted: `AdminJobs.chipCancelled` },
 }
 
 /** A run's state as a badge. */
 export function JobStateBadge({ state }: { state: AdminJobState }): JSX.Element {
+  const t = useAdminText()
   const view = JOB_STATES[state] ?? JOB_STATES[AdminJobState.Scheduled]
   return (
-    <span data-e2e="admin-job-state" data-state={view.text}>
-      <Badge text={view.text} color={view.color} type={view.type} />
+    <span data-e2e="admin-job-state" data-state={view.name}>
+      <Badge text={t.t(view.key)} color={view.color} type={view.type} />
     </span>
   )
+}
+
+/** A job's name inside a sentence: the server's words, isolated and never machine-translated. */
+function jobName(text: string): JSX.Element {
+  return <bdi translate={false}>{text}</bdi>
 }
 
 /** A run that waits for its time or a retry, and no worker holds: it may run now or be cancelled. */
@@ -88,8 +117,11 @@ export function jobWaits(state: AdminJobState): boolean {
 }
 
 /** `4 of 20`. */
-function attemptsLine(job: Pick<AdminJobRow, "attempts" | "maxAttempts">): string {
-  return `${NUMBER.format(job.attempts)} of ${NUMBER.format(job.maxAttempts)}`
+function attemptsLine(
+  t: Translator<string>,
+  job: Pick<AdminJobRow, "attempts" | "maxAttempts">,
+): string {
+  return t.t(`AdminJobs.attempts`, { attempts: job.attempts, max: job.maxAttempts })
 }
 
 /** `true` once `pending` has lasted `ms`, so a quick answer shows no flash of a skeleton. */
@@ -129,31 +161,40 @@ function When({ at, class: className }: { at: string; class?: string }): JSX.Ele
  */
 function AtClock({ at }: { at: string }): JSX.Element {
   const utc = useFormat().utc()
+  const t = useAdminText()
   return (
     <time dateTime={new Date(at).toISOString()} title={utc.exact(at)}>
-      {`${utc.dayMonth(at)}, ${utc.time(at)} UTC`}
+      {t.t(`AdminJobs.atClock`, { day: utc.dayMonth(at), time: utc.time(at) })}
     </time>
   )
 }
 
 function WhenCell({ job }: { job: AdminJobRow }): JSX.Element {
+  const t = useAdminText()
+  const label = (text: string) => <span class="text-muted">{text}</span>
   if (jobWaits(job.state)) {
     return (
       <span class="whitespace-nowrap text-sm">
-        <span class="text-muted">Next run</span> <When at={job.dueAt} />
+        <Rich
+          parts={t.parts(`AdminJobs.nextRunAt`)}
+          tags={{ label, when: () => <When at={job.dueAt} /> }}
+        />
       </span>
     )
   }
   if (job.state === AdminJobState.Running) {
     return (
       <span class="whitespace-nowrap text-sm">
-        <span class="text-muted">Started</span> <When at={job.startedAt ?? job.dueAt} />
+        <Rich
+          parts={t.parts(`AdminJobs.startedAt`)}
+          tags={{ label, when: () => <When at={job.startedAt ?? job.dueAt} /> }}
+        />
       </span>
     )
   }
   return job.finishedAt
     ? <When class="whitespace-nowrap text-sm" at={job.finishedAt} />
-    : <span class="text-sm text-muted">Not yet</span>
+    : <span class="text-sm text-muted">{t.t(`AdminJobs.notYet`)}</span>
 }
 
 /**
@@ -168,11 +209,14 @@ const TABLE_CLASS = [
   `max-sm:[&_:is(th,td):nth-child(n+2)]:hidden`,
 ].join(` `)
 
-function runColumns(navigate?: Navigate): DataTableColumn<AdminJobRow, never>[] {
+function runColumns(
+  t: Translator<string>,
+  navigate?: Navigate,
+): DataTableColumn<AdminJobRow, never>[] {
   return [
     {
       id: `job`,
-      header: `Job`,
+      header: t.t(`AdminJobs.job`),
       render: (job) => (
         <div class="flex min-w-0 flex-col gap-1">
           <Link
@@ -191,21 +235,25 @@ function runColumns(navigate?: Navigate): DataTableColumn<AdminJobRow, never>[] 
           )}
           <span class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted sm:hidden">
             <JobStateBadge state={job.state} />
-            <span>{attemptsLine(job)}</span>
+            <span>{attemptsLine(t, job)}</span>
             <WhenCell job={job} />
           </span>
         </div>
       ),
     },
-    { id: `state`, header: `Status`, render: (job) => <JobStateBadge state={job.state} /> },
+    {
+      id: `state`,
+      header: t.t(`AdminJobs.status`),
+      render: (job) => <JobStateBadge state={job.state} />,
+    },
     {
       id: `attempts`,
-      header: `Attempts`,
+      header: t.t(`AdminJobs.attemptsHeader`),
       render: (job) => (
-        <span class="whitespace-nowrap text-sm tabular-nums">{attemptsLine(job)}</span>
+        <span class="whitespace-nowrap text-sm tabular-nums">{attemptsLine(t, job)}</span>
       ),
     },
-    { id: `when`, header: `When`, render: (job) => <WhenCell job={job} /> },
+    { id: `when`, header: t.t(`AdminJobs.when`), render: (job) => <WhenCell job={job} /> },
   ]
 }
 
@@ -273,11 +321,12 @@ function useFocusAfterAction(
 
 export function AdminJobsScreen(props: AdminJobsScreenProps): JSX.Element {
   const failed = props.list?.counts.failed ?? 0
+  const t = useAdminText()
   return (
     <Stack>
       <PageHeader
-        title="Jobs"
-        subtitle="Work the server does in the background, and how each run went."
+        title={t.t(`AdminJobs.title`)}
+        subtitle={t.t(`AdminJobs.subtitle`)}
         titleDataE2E="admin-jobs-title"
         menu={failed > 0
           ? (
@@ -285,19 +334,23 @@ export function AdminJobsScreen(props: AdminJobsScreenProps): JSX.Element {
               dataE2E="admin-jobs-retry-all"
               onClick={() => props.onOpenConfirm({ kind: `retryAll`, count: failed })}
             >
-              Run again all failed ({NUMBER.format(failed)})
+              {t.t(`AdminJobs.retryAll`, { count: failed })}
             </DropdownItem>
           )
           : undefined}
         menuDataE2E="admin-jobs-menu"
       />
       <Tabs
-        label="Jobs"
+        label={t.t(`AdminJobs.title`)}
         active={props.tab}
         onChange={(id) => props.onTab(id as AdminJobsTab)}
         tabs={[
-          { id: `runs`, label: `Runs`, content: <Runs {...props} /> },
-          { id: `repeating`, label: `Repeating`, content: <Repeating {...props} /> },
+          { id: `runs`, label: t.t(`AdminJobs.runs`), content: <Runs {...props} /> },
+          {
+            id: `repeating`,
+            label: t.t(`AdminJobs.repeating`),
+            content: <Repeating {...props} />,
+          },
         ]}
       />
       {props.confirm && <ListConfirm {...props} confirm={props.confirm} />}
@@ -307,6 +360,7 @@ export function AdminJobsScreen(props: AdminJobsScreenProps): JSX.Element {
 
 function Runs(props: AdminJobsScreenProps): JSX.Element {
   const { filter, list, error, navigate } = props
+  const t = useAdminText()
   const count = useRef<HTMLParagraphElement>(null)
   useFocusAfterAction(props.confirm !== null, props.confirmPending, props.confirmError, count)
   const late = useLate(list === null && !error)
@@ -316,7 +370,7 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
     <Stack>
       <div class="flex flex-col gap-4">
         <RadioChips
-          legend="Status"
+          legend={t.t(`AdminJobs.status`)}
           hideLegend
           name="state"
           value={filter.state}
@@ -326,8 +380,8 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
           options={ADMIN_JOB_STATE_FILTERS.map((state) => ({
             value: state,
             label: list
-              ? `${CHIP_LABELS[state]} ${NUMBER.format(list.counts[state])}`
-              : CHIP_LABELS[state],
+              ? t.t(CHIP_LABELS[state].counted, { count: list.counts[state] })
+              : t.t(CHIP_LABELS[state].label),
             inputAttributes: { "data-e2e": `admin-jobs-chip-${state}` },
           }))}
         />
@@ -339,11 +393,11 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
           {/* Keyed by the query, so going back in history shows the search that page had. */}
           <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-              <Field id="admin-jobs-q" label="Job">
+              <Field id="admin-jobs-q" label={t.t(`AdminJobs.job`)}>
                 <Input
                   name="q"
                   type="search"
-                  placeholder="Search by job name"
+                  placeholder={t.t(`AdminJobs.searchPlaceholder`)}
                   data-e2e="admin-jobs-search"
                   defaultValue={filter.query}
                   maxLength={ADMIN_JOB_SEARCH_MAX}
@@ -355,13 +409,13 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
               type="submit"
               data-e2e="admin-jobs-submit"
               busy={props.pending}
-              busyLabel="Searching…"
+              busyLabel={t.t(`AdminJobs.searching`)}
             >
-              Search
+              {t.t(`AdminJobs.search`)}
             </Button>
             {filtered && (
               <Button variant="ghost" data-e2e="admin-jobs-clear" onClick={clear}>
-                Clear filters
+                {t.t(`AdminJobs.clear`)}
               </Button>
             )}
           </div>
@@ -372,12 +426,12 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
         ? error
           ? (
             <div class="flex flex-col items-start gap-3" data-e2e="admin-jobs-error">
-              <ErrorState message="Jobs could not be loaded. Check that the server is running, then try again." />
-              <Button variant="secondary" onClick={props.onReload}>Try again</Button>
+              <ErrorState message={t.t(`AdminJobs.loadError`)} />
+              <Button variant="secondary" onClick={props.onReload}>{t.t(`AdminJobs.retry`)}</Button>
             </div>
           )
           : late && (
-            <div role="status" aria-label="Loading jobs" data-e2e="admin-jobs-loading">
+            <div role="status" aria-label={t.t(`AdminJobs.loading`)} data-e2e="admin-jobs-loading">
               <LoadingSkeleton rows={5} />
             </div>
           )
@@ -391,12 +445,12 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
               data-e2e="admin-jobs-count"
               aria-live="polite"
             >
-              {`${NUMBER.format(list.total)} ${list.total === 1 ? `job` : `jobs`}`}
+              {t.t(`AdminJobs.count`, { count: list.total })}
             </p>
             {list.total === 0 && filter.state === `failed` && filter.query === ``
               ? (
                 <div data-e2e="admin-jobs-none-failed">
-                  <Notice tone="success">No failed jobs.</Notice>
+                  <Notice tone="success">{t.t(`AdminJobs.noneFailed`)}</Notice>
                 </div>
               )
               : (
@@ -404,29 +458,31 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}
-                    columns={runColumns(navigate)}
+                    columns={runColumns(t, navigate)}
                     rows={list.jobs}
                     sort={[]}
                     onSortChange={() => {}}
-                    caption="Job runs"
+                    caption={t.t(`AdminJobs.runsCaption`)}
                     captionHidden
                     rowKey={(job) => job.id}
                     empty={filtered
                       ? (
                         <EmptyState
                           inset
-                          title="Nothing matches"
-                          description="Try another name, or clear the filters."
+                          title={t.t(`AdminJobs.noMatch`)}
+                          description={t.t(`AdminJobs.noMatchHint`)}
                           action={
-                            <Button variant="secondary" onClick={clear}>Clear filters</Button>
+                            <Button variant="secondary" onClick={clear}>
+                              {t.t(`AdminJobs.clear`)}
+                            </Button>
                           }
                         />
                       )
                       : (
                         <EmptyState
                           inset
-                          title="No job has run yet"
-                          description={`Jobs show here once the server schedules one. Finished jobs are kept for ${list.keptDays} days.`}
+                          title={t.t(`AdminJobs.noneYet`)}
+                          description={t.t(`AdminJobs.noneYetHint`, { count: list.keptDays })}
                         />
                       )}
                     paging={{
@@ -434,12 +490,14 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
                       pageSize: list.pageSize,
                       total: list.total,
                       onChange: props.onPage,
-                      label: `Pages of jobs`,
+                      label: t.t(`AdminJobs.pages`),
                     }}
                   />
                 </div>
               )}
-            <p class="text-xs text-muted">Finished jobs are kept for {list.keptDays} days.</p>
+            <p class="text-xs text-muted">
+              {t.t(`AdminJobs.keptDays`, { count: list.keptDays })}
+            </p>
           </>
         )}
     </Stack>
@@ -448,18 +506,21 @@ function Runs(props: AdminJobsScreenProps): JSX.Element {
 
 function Repeating(props: AdminJobsScreenProps): JSX.Element {
   const { repeating, repeatingError, navigate } = props
+  const t = useAdminText()
   const late = useLate(repeating === null && !repeatingError)
   if (repeating === null) {
     return repeatingError
       ? (
         <div class="flex flex-col items-start gap-3" data-e2e="admin-repeating-error">
-          <ErrorState message="Jobs could not be loaded. Check that the server is running, then try again." />
-          <Button variant="secondary" onClick={props.onReloadRepeating}>Try again</Button>
+          <ErrorState message={t.t(`AdminJobs.loadError`)} />
+          <Button variant="secondary" onClick={props.onReloadRepeating}>
+            {t.t(`AdminJobs.retry`)}
+          </Button>
         </div>
       )
       : late
       ? (
-        <div role="status" aria-label="Loading jobs">
+        <div role="status" aria-label={t.t(`AdminJobs.loading`)}>
           <LoadingSkeleton rows={3} />
         </div>
       )
@@ -468,7 +529,7 @@ function Repeating(props: AdminJobsScreenProps): JSX.Element {
   const columns: DataTableColumn<AdminRepeatingJob, never>[] = [
     {
       id: `job`,
-      header: `Job`,
+      header: t.t(`AdminJobs.job`),
       render: (job) => (
         <div class="flex min-w-0 flex-col gap-1">
           {job.nextId
@@ -484,58 +545,60 @@ function Repeating(props: AdminJobsScreenProps): JSX.Element {
             : <span class="font-medium">{job.label}</span>}
           <span class="font-mono text-xs text-muted wrap-anywhere">{job.kind}</span>
           <span class="text-xs text-muted sm:hidden">{job.schedule}</span>
-          {job.lastFailed && <span class="text-xs text-danger sm:hidden">Last run failed</span>}
+          {job.lastFailed && (
+            <span class="text-xs text-danger sm:hidden">{t.t(`AdminJobs.lastRunFailed`)}</span>
+          )}
         </div>
       ),
     },
     {
       id: `schedule`,
-      header: `Schedule`,
+      header: t.t(`AdminJobs.schedule`),
       render: (job) => (
         <span class="text-sm" data-e2e="admin-repeating-schedule">{job.schedule}</span>
       ),
     },
     {
       id: `last`,
-      header: `Last run`,
+      header: t.t(`AdminJobs.lastRun`),
       render: (job) =>
         job.lastRunAt
           ? (
             <span class="flex flex-wrap items-center gap-2 text-sm">
               {job.lastFailed
-                ? <Badge text="Failed" color="red" type="outline" />
-                : <Badge text="Done" color="green" type="outline" />}
+                ? <Badge text={t.t(`AdminJobs.failed`)} color="red" type="outline" />
+                : <Badge text={t.t(`AdminJobs.done`)} color="green" type="outline" />}
               <When at={job.lastRunAt} />
             </span>
           )
-          : <span class="text-sm text-muted">Not yet</span>,
+          : <span class="text-sm text-muted">{t.t(`AdminJobs.notYet`)}</span>,
     },
     {
       id: `next`,
-      header: `Next run`,
+      header: t.t(`AdminJobs.nextRun`),
       render: (job) =>
         job.nextRunAt
           ? <When class="whitespace-nowrap text-sm" at={job.nextRunAt} />
-          : <span class="text-sm text-muted">None waiting</span>,
+          : <span class="text-sm text-muted">{t.t(`AdminJobs.noneWaiting`)}</span>,
     },
     {
       id: `action`,
-      header: `Action`,
+      header: t.t(`AdminJobs.action`),
       render: (job) =>
-        job.running ? <Badge text="Running" color="blue" /> : (
+        job.running ? <Badge text={t.t(`AdminJobs.running`)} color="blue" /> : (
           <Button
             size="sm"
             variant="secondary"
             busy={props.starting === job.kind}
-            busyLabel="Starting…"
+            busyLabel={t.t(`AdminJobs.starting`)}
             data-e2e={`admin-repeating-run-${job.kind}`}
-            aria-label={`Run ${job.label} now`}
+            aria-label={t.t(`AdminJobs.runJobNow`, { job: job.label })}
             onClick={() =>
               job.sendsMail
                 ? props.onOpenConfirm({ kind: `runRepeating`, job })
                 : props.onRunRepeating(job)}
           >
-            Run now
+            {t.t(`AdminJobs.runNow`)}
           </Button>
         ),
     },
@@ -554,14 +617,14 @@ function Repeating(props: AdminJobsScreenProps): JSX.Element {
         rows={repeating}
         sort={[]}
         onSortChange={() => {}}
-        caption="Repeating jobs"
+        caption={t.t(`AdminJobs.repeatingCaption`)}
         captionHidden
         rowKey={(job) => job.kind}
         empty={
           <EmptyState
             inset
-            title="No job repeats"
-            description="A job repeats once its definition has a schedule."
+            title={t.t(`AdminJobs.noRepeats`)}
+            description={t.t(`AdminJobs.noRepeatsHint`)}
           />
         }
       />
@@ -573,17 +636,16 @@ function ListConfirm(
   props: AdminJobsScreenProps & { confirm: AdminJobsConfirm },
 ): JSX.Element {
   const { confirm } = props
+  const t = useAdminText()
   const many = confirm.kind === `retryAll`
   return (
     <ConfirmDialog
       title={many
-        ? `Run ${NUMBER.format(confirm.count)} failed ${
-          confirm.count === 1 ? `job` : `jobs`
-        } again?`
-        : `Run this job now?`}
-      confirmLabel={many ? `Run again` : `Run now`}
+        ? t.t(`AdminJobs.retryAllTitle`, { count: confirm.count })
+        : t.t(`AdminJobs.runNowTitle`)}
+      confirmLabel={t.t(many ? `AdminJobs.runAgain` : `AdminJobs.runNow`)}
       busy={props.confirmPending}
-      busyLabel="Starting…"
+      busyLabel={t.t(`AdminJobs.starting`)}
       onConfirm={() => {
         props.onConfirm(confirm)
         return false
@@ -594,16 +656,17 @@ function ListConfirm(
     >
       <Stack>
         <p class="text-sm text-muted">
-          {many ? `Each runs once more with a fresh set of attempts.` : (
-            <>
-              {confirm.job.label} runs now
-              {confirm.job.nextRunAt && (
-                <>
-                  {` instead of at `}
-                  <AtClock at={confirm.job.nextRunAt} />
-                </>
-              )}. A repeating job keeps its schedule after this run.
-            </>
+          {many ? t.t(`AdminJobs.retryAllText`) : (
+            <Rich
+              parts={t.parts(
+                confirm.job.nextRunAt ? `AdminJobs.runsNowInstead` : `AdminJobs.runsNow`,
+                { job: confirm.job.label },
+              )}
+              tags={{
+                job: jobName,
+                at: () => confirm.job.nextRunAt ? <AtClock at={confirm.job.nextRunAt} /> : null,
+              }}
+            />
           )}
         </p>
         <ErrorState message={props.confirmError} />
@@ -634,8 +697,9 @@ export interface AdminJobScreenProps {
   navigate?: Navigate
 }
 
-function Time({ at, none = `Not yet` }: { at: string | null; none?: string }): JSX.Element {
-  return at ? <When at={at} /> : <span class="text-muted">{none}</span>
+function Time({ at }: { at: string | null }): JSX.Element {
+  const t = useAdminText()
+  return at ? <When at={at} /> : <span class="text-muted">{t.t(`AdminJobs.notYet`)}</span>
 }
 
 /**
@@ -646,23 +710,24 @@ function Time({ at, none = `Not yet` }: { at: string | null; none?: string }): J
  */
 export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
   const { job, error, navigate } = props
-  const back = { href: ADMIN_JOB_PATHS.list, label: `Jobs` }
+  const t = useAdminText()
+  const back = { href: ADMIN_JOB_PATHS.list, label: t.t(`AdminJobs.title`) }
   const facts = useRef<HTMLElement>(null)
   useFocusAfterAction(props.dialog !== null, props.pending, props.dialogError, facts)
 
   if (!job) {
     return (
       <Stack>
-        <PageHeader title="Job" back={back} navigate={navigate} />
+        <PageHeader title={t.t(`AdminJobs.job`)} back={back} navigate={navigate} />
         {error
           ? (
             <div class="flex flex-col items-start gap-3" data-e2e="admin-job-load-error">
               <ErrorState message={error} />
-              <Button variant="secondary" onClick={props.onReload}>Try again</Button>
+              <Button variant="secondary" onClick={props.onReload}>{t.t(`AdminJobs.retry`)}</Button>
             </div>
           )
           : (
-            <div role="status" aria-label="Loading the job">
+            <div role="status" aria-label={t.t(`AdminJobs.loadingJob`)}>
               <LoadingSkeleton rows={5} />
             </div>
           )}
@@ -677,7 +742,7 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
   const primary = failed
     ? (
       <PageAction
-        label={props.pending ? `Starting…` : `Run again`}
+        label={t.t(props.pending ? `AdminJobs.starting` : `AdminJobs.runAgain`)}
         Icon={IconArrowPath}
         hotkey="r"
         disabled={props.pending}
@@ -688,7 +753,7 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
     : waits
     ? (
       <PageAction
-        label={props.pending ? `Starting…` : `Run now`}
+        label={t.t(props.pending ? `AdminJobs.starting` : `AdminJobs.runNow`)}
         Icon={IconPlayCircle}
         hotkey="n"
         disabled={props.pending}
@@ -699,23 +764,28 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
     : undefined
 
   const timeline: TimelineItem[] = [
-    { id: `created`, title: `Created`, at: job.createdAt, when: <When at={job.createdAt} /> },
+    {
+      id: `created`,
+      title: t.t(`AdminJobs.created`),
+      at: job.createdAt,
+      when: <When at={job.createdAt} />,
+    },
   ]
   if (job.startedAt) {
     timeline.push({
       id: `started`,
-      title: `Last try`,
+      title: t.t(`AdminJobs.lastTry`),
       at: job.startedAt,
       when: <When at={job.startedAt} />,
-      description: `Attempt ${attemptsLine(job)}`,
+      description: t.t(`AdminJobs.attempt`, { attempts: job.attempts, max: job.maxAttempts }),
     })
   }
   if (job.finishedAt) {
     const ended = job.state === AdminJobState.Failed
-      ? { title: `Gave up`, tone: `danger` as const }
+      ? { title: t.t(`AdminJobs.gaveUp`), tone: `danger` as const }
       : job.state === AdminJobState.Cancelled
-      ? { title: `Cancelled`, tone: `warning` as const }
-      : { title: `Finished`, tone: `success` as const }
+      ? { title: t.t(`AdminJobs.cancelled`), tone: `warning` as const }
+      : { title: t.t(`AdminJobs.finished`), tone: `success` as const }
     timeline.push({ id: `ended`, ...ended, at: job.finishedAt, when: <When at={job.finishedAt} /> })
   }
 
@@ -742,11 +812,11 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
                 dataE2E="admin-job-cancel"
                 onClick={() => props.onOpenDialog(`cancel`)}
               >
-                Cancel job
+                {t.t(`AdminJobs.cancelJob`)}
               </DropdownItem>
             )}
             <DropdownItem dataE2E="admin-job-copy-id" onClick={() => props.onCopyId(job.id)}>
-              Copy id
+              {t.t(`AdminJobs.copyId`)}
             </DropdownItem>
           </>
         }
@@ -758,29 +828,29 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
         <section
           ref={facts as RefObject<HTMLElement>}
           tabIndex={-1}
-          aria-label="Details"
+          aria-label={t.t(`AdminJobs.details`)}
           class="rounded-xl border border-subtle bg-surface px-4 py-1"
           data-e2e="admin-job-facts"
         >
           <FactList
             facts={[
-              { label: `Job`, value: job.label },
-              { label: `Status`, value: <JobStateBadge state={job.state} /> },
-              { label: `Repeats`, value: job.repeats ?? `No` },
-              { label: `Created`, value: <Time at={job.createdAt} /> },
-              { label: `Due at`, value: <Time at={job.dueAt} /> },
-              { label: `Started`, value: <Time at={job.startedAt} /> },
-              { label: `Finished`, value: <Time at={job.finishedAt} /> },
-              { label: `Attempts`, value: attemptsLine(job) },
+              { label: t.t(`AdminJobs.job`), value: job.label },
+              { label: t.t(`AdminJobs.status`), value: <JobStateBadge state={job.state} /> },
+              { label: t.t(`AdminJobs.repeats`), value: job.repeats ?? t.t(`AdminJobs.no`) },
+              { label: t.t(`AdminJobs.created`), value: <Time at={job.createdAt} /> },
+              { label: t.t(`AdminJobs.dueAt`), value: <Time at={job.dueAt} /> },
+              { label: t.t(`AdminJobs.started`), value: <Time at={job.startedAt} /> },
+              { label: t.t(`AdminJobs.finished`), value: <Time at={job.finishedAt} /> },
+              { label: t.t(`AdminJobs.attemptsHeader`), value: attemptsLine(t, job) },
               {
-                label: `Last error`,
+                label: t.t(`AdminJobs.lastError`),
                 value: job.errorCode
                   ? <span class="font-mono" data-e2e="admin-job-error-code">{job.errorCode}</span>
-                  : <span class="text-muted">None</span>,
-                hint: `The error type only. The message is not stored.`,
+                  : <span class="text-muted">{t.t(`AdminJobs.none`)}</span>,
+                hint: t.t(`AdminJobs.errorHint`),
               },
               {
-                label: `About`,
+                label: t.t(`AdminJobs.about`),
                 value: job.about
                   ? (
                     <Link
@@ -789,23 +859,30 @@ export function AdminJobScreen(props: AdminJobScreenProps): JSX.Element {
                         : ADMIN_GROUP_PATHS.group(job.about.id)}
                       navigate={navigate}
                       class="pc-link"
+                      translate={false}
                       data-e2e="admin-job-about"
                     >
                       {job.about.name} →
                     </Link>
                   )
-                  : <span class="text-muted">Nothing linked</span>,
+                  : <span class="text-muted">{t.t(`AdminJobs.nothingLinked`)}</span>,
               },
             ]}
           />
         </section>
-        <section aria-label="What happened" class="rounded-xl border border-subtle bg-surface p-4">
-          <Timeline items={timeline} label="What happened" />
+        <section
+          aria-label={t.t(`AdminJobs.whatHappened`)}
+          class="rounded-xl border border-subtle bg-surface p-4"
+        >
+          <Timeline items={timeline} label={t.t(`AdminJobs.whatHappened`)} />
         </section>
       </div>
       {job.keptUntil && (
         <p class="text-xs text-muted" data-e2e="admin-job-kept">
-          Kept until <OnDay at={job.keptUntil} />, 7 days after it finished.
+          <Rich
+            parts={t.parts(`AdminJobs.keptUntil`)}
+            tags={{ day: () => <OnDay at={job.keptUntil!} /> }}
+          />
         </p>
       )}
       {props.dialog && <JobConfirm {...props} job={job} dialog={props.dialog} />}
@@ -817,48 +894,38 @@ function JobConfirm(
   props: AdminJobScreenProps & { job: AdminJobDetail; dialog: AdminJobAction },
 ): JSX.Element {
   const { job, dialog } = props
+  const t = useAdminText()
+  const sentence = (key: string) => (
+    <Rich
+      parts={t.parts(key, { job: job.label })}
+      tags={{ job: jobName, at: () => <AtClock at={job.dueAt} /> }}
+    />
+  )
   const copy = {
     retry: {
-      title: `Run this job again?`,
-      body: (
-        <>
-          {job.label}
-          {` `}sends email. If it partly ran before, someone may get it twice. The audit log records
-          that you started it.
-        </>
-      ),
-      confirm: `Run again`,
-      busy: `Starting…`,
+      title: t.t(`AdminJobs.retryTitle`),
+      body: sentence(`AdminJobs.retryText`),
+      confirm: t.t(`AdminJobs.runAgain`),
+      busy: t.t(`AdminJobs.starting`),
     },
     runNow: {
-      title: `Run this job now?`,
-      body: (
-        <>
-          {job.label} runs now instead of at{" "}
-          <AtClock at={job.dueAt} />. A repeating job keeps its schedule after this run.
-        </>
-      ),
-      confirm: `Run now`,
-      busy: `Starting…`,
+      title: t.t(`AdminJobs.runNowTitle`),
+      body: sentence(`AdminJobs.runsNowInstead`),
+      confirm: t.t(`AdminJobs.runNow`),
+      busy: t.t(`AdminJobs.starting`),
     },
     cancel: {
-      title: `Cancel this job?`,
-      body: (
-        <>
-          {job.label}
-          {` `}will not run. A repeating job starts again the next time the worker starts. This
-          cannot be undone.
-        </>
-      ),
-      confirm: `Cancel job`,
-      busy: `Cancelling…`,
+      title: t.t(`AdminJobs.cancelTitle`),
+      body: sentence(`AdminJobs.cancelText`),
+      confirm: t.t(`AdminJobs.cancelJob`),
+      busy: t.t(`AdminJobs.cancelling`),
     },
   }[dialog]
   return (
     <ConfirmDialog
       title={copy.title}
       confirmLabel={copy.confirm}
-      cancelLabel={dialog === `cancel` ? `Keep it` : undefined}
+      cancelLabel={dialog === `cancel` ? t.t(`AdminJobs.keepIt`) : undefined}
       tone={dialog === `cancel` ? `danger` : undefined}
       busy={props.pending}
       busyLabel={copy.busy}

@@ -4,7 +4,7 @@ import { isUuid } from "@spy4x/platform/universal/uuid"
 import { createToastStore } from "@spy4x/preact-signals/toast"
 import { type AdminBillingDetail, BillingStatus, PRO_PLAN_ID } from "@domain/billing"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
-import { ADMIN_BILLING_NO_ANSWER, type BillingClock, createBillingState } from "./state.ts"
+import { type BillingClock, createBillingState } from "./state.ts"
 
 const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
 
@@ -125,7 +125,10 @@ it(`says the result of a refund that got no answer is unknown, never that nothin
 
   const { error, dialog } = state.dialog.value
   expect(dialog).toBe(`refund`)
-  expect(error).toEqual({ unknown: true, message: ADMIN_BILLING_NO_ANSWER })
+  expect(error).toEqual({
+    unknown: true,
+    message: expect.stringContaining(`cannot tell whether this happened`),
+  })
   expect(error!.message).not.toContain(`Nothing changed`)
   expect(error!.message).toContain(`Check the customer in Stripe`)
 })

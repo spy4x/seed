@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconPencilSquare, IconPlus } from "@spy4x/preact-icons"
@@ -23,6 +22,8 @@ import {
   type BlogPostStatus,
 } from "@domain/blog"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** The blog module's pages in the admin app. */
 export const ADMIN_BLOG_PATHS = {
@@ -39,35 +40,29 @@ export interface AdminBlogFilter {
 
 export const ADMIN_BLOG_NO_FILTER: AdminBlogFilter = { status: null, query: `` }
 
-/** The list's message when it could not be read, whatever the cause. */
-export const ADMIN_BLOG_LIST_ERROR = `Posts could not be loaded. Try again in a moment.`
-
-/** The page's subtitle, which the rail's "coming soon" page used too. */
-export const ADMIN_BLOG_SUBTITLE = `Posts on the public website, from draft to published.`
-
-const NUMBER = new Intl.NumberFormat(`en`)
-
-/** Each status's badge, the same in the list and in the editor's header. */
-export const BLOG_STATUS_BADGES: Record<
+/** Each status's badge (its word as a catalog key), the same in the list and in the editor's header. */
+const BLOG_STATUS_BADGES: Record<
   BlogPostStatus,
-  { text: string; color: BadgeColor; type: BadgeType }
+  { key: string; color: BadgeColor; type: BadgeType }
 > = {
-  draft: { text: `Draft`, color: `gray`, type: `filled` },
-  scheduled: { text: `Scheduled`, color: `blue`, type: `outline` },
-  published: { text: `Published`, color: `green`, type: `filled` },
+  draft: { key: `AdminBlog.draft`, color: `gray`, type: `filled` },
+  scheduled: { key: `AdminBlog.scheduled`, color: `blue`, type: `outline` },
+  published: { key: `AdminBlog.published`, color: `green`, type: `filled` },
 }
 
 /** A post's status as its badge. */
 export function BlogStatusBadge({ status }: { status: BlogPostStatus }): JSX.Element {
+  const t = useAdminText()
   const badge = BLOG_STATUS_BADGES[status]
-  return <Badge text={badge.text} color={badge.color} type={badge.type} />
+  return <Badge text={t.t(badge.key)} color={badge.color} type={badge.type} />
 }
 
-const STATUS_CHIPS: { value: BlogPostStatus | `all`; label: string }[] = [
-  { value: `all`, label: `All` },
-  { value: `draft`, label: `Drafts` },
-  { value: `scheduled`, label: `Scheduled` },
-  { value: `published`, label: `Published` },
+/** Each chip: its word alone, and with the count once the list has loaded. */
+const STATUS_CHIPS: { value: BlogPostStatus | `all`; label: string; counted: string }[] = [
+  { value: `all`, label: `AdminBlog.all`, counted: `AdminBlog.chipAll` },
+  { value: `draft`, label: `AdminBlog.drafts`, counted: `AdminBlog.chipDrafts` },
+  { value: `scheduled`, label: `AdminBlog.scheduledChip`, counted: `AdminBlog.chipScheduled` },
+  { value: `published`, label: `AdminBlog.publishedChip`, counted: `AdminBlog.chipPublished` },
 ]
 
 export interface AdminBlogListScreenProps {
@@ -91,6 +86,7 @@ export interface AdminBlogListScreenProps {
  */
 export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Element {
   const { filter, list, pending, error, onFilter, navigate } = props
+  const t = useAdminText()
   const heading = useRef<HTMLHeadingElement>(null)
   // After a search or a chip the list is new: once it arrives, the reader starts again at its
   // count. The first list is no change, so focus stays where it was.
@@ -111,7 +107,7 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
   const none = list !== null && list.counts.all === 0 && filter.query === ``
   const newPost = (
     <PageAction
-      label="New post"
+      label={t.t(`AdminBlog.newPost`)}
       Icon={IconPlus}
       href={ADMIN_BLOG_PATHS.create}
       navigate={navigate}
@@ -122,8 +118,8 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
   return (
     <Stack>
       <PageHeader
-        title="Blog"
-        subtitle={ADMIN_BLOG_SUBTITLE}
+        title={t.t(`AdminBlog.title`)}
+        subtitle={t.t(`AdminBlog.subtitle`)}
         titleDataE2E="admin-blog-title"
         action={newPost}
       />
@@ -133,9 +129,13 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
             <EmptyState
               inset
               icon={<IconPencilSquare class="size-8" aria-hidden="true" />}
-              title="No posts yet"
-              description="Write your first post. It stays a draft until you publish it."
-              action={<Button href={ADMIN_BLOG_PATHS.create} navigate={navigate}>New post</Button>}
+              title={t.t(`AdminBlog.noPosts`)}
+              description={t.t(`AdminBlog.noPostsHint`)}
+              action={
+                <Button href={ADMIN_BLOG_PATHS.create} navigate={navigate}>
+                  {t.t(`AdminBlog.newPost`)}
+                </Button>
+              }
             />
           </Card>
         )
@@ -151,7 +151,7 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
               {/* Keyed by the query, so a cleared filter empties the field too. */}
               <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
                 <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-                  <Field id="admin-blog-q" label="Title or slug">
+                  <Field id="admin-blog-q" label={t.t(`AdminBlog.search`)}>
                     <Input
                       name="q"
                       type="search"
@@ -167,9 +167,9 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
                   variant="secondary"
                   data-e2e="admin-blog-submit"
                   busy={pending && searching}
-                  busyLabel="Searching…"
+                  busyLabel={t.t(`AdminBlog.searching`)}
                 >
-                  Search
+                  {t.t(`AdminBlog.submit`)}
                 </Button>
               </div>
             </ScreenForm>
@@ -181,15 +181,13 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
               >
                 <ToggleChips
                   mode="single"
-                  label="Status"
+                  label={t.t(`AdminBlog.status`)}
                   class="flex-nowrap sm:flex-wrap"
                   options={STATUS_CHIPS.map((chip) => ({
                     value: chip.value,
                     label: list
-                      ? `${chip.label} ${
-                        NUMBER.format(list.counts[chip.value === `all` ? `all` : chip.value])
-                      }`
-                      : chip.label,
+                      ? t.t(chip.counted, { count: list.counts[chip.value] })
+                      : t.t(chip.label),
                   }))}
                   value={filter.status ?? `all`}
                   onChange={(value) =>
@@ -203,8 +201,10 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
 
             {error && (
               <div class="flex flex-col items-center gap-3" data-e2e="admin-blog-error">
-                <ErrorState message={ADMIN_BLOG_LIST_ERROR} />
-                <Button variant="secondary" onClick={props.onRetry}>Try again</Button>
+                <ErrorState message={t.t(`AdminBlog.listError`)} />
+                <Button variant="secondary" onClick={props.onRetry}>
+                  {t.t(`AdminBlog.retry`)}
+                </Button>
               </div>
             )}
 
@@ -216,15 +216,13 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
                 data-e2e="admin-blog-count"
               >
                 {list
-                  ? `${NUMBER.format(list.posts.length)} ${
-                    list.posts.length === 1 ? `post` : `posts`
-                  }`
-                  : `Loading posts`}
+                  ? t.t(`AdminBlog.count`, { count: list.posts.length })
+                  : t.t(`AdminBlog.loading`)}
               </h2>
             )}
             {list === null
               ? !error && (
-                <div role="status" aria-label="Loading posts">
+                <div role="status" aria-label={t.t(`AdminBlog.loading`)}>
                   <LoadingSkeleton rows={5} />
                 </div>
               )
@@ -233,9 +231,9 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}
-                    columns={postColumns(navigate)}
+                    columns={postColumns(t, navigate)}
                     rows={list.posts.map((post) => ({ post }))}
-                    caption="Posts"
+                    caption={t.t(`AdminBlog.posts`)}
                     captionHidden
                     rowKey={(row) => row.post.id}
                     sort={NO_SORT}
@@ -243,15 +241,15 @@ export function AdminBlogListScreen(props: AdminBlogListScreenProps): JSX.Elemen
                     empty={
                       <EmptyState
                         inset
-                        title="Nothing matches"
-                        description="Try another title, or clear the filters."
+                        title={t.t(`AdminBlog.noMatch`)}
+                        description={t.t(`AdminBlog.noMatchHint`)}
                         action={filtered && (
                           <Button
                             variant="ghost"
                             data-e2e="admin-blog-clear"
                             onClick={() => change(ADMIN_BLOG_NO_FILTER)}
                           >
-                            Clear filters
+                            {t.t(`AdminBlog.clear`)}
                           </Button>
                         )}
                       />
@@ -289,47 +287,55 @@ interface PostRow {
 function PublishedCell({ post }: { post: AdminBlogPostRow }): JSX.Element {
   // A phone's row wraps the date with the rest of its line; the table's column keeps it on one.
   const format = useFormat()
+  const t = useAdminText()
   if (post.status === `scheduled` && post.publishAt) {
     return (
       <span class="text-sm sm:whitespace-nowrap">
-        Goes live {format.dateTime(post.publishAt)}
+        {t.t(`AdminBlog.goesLive`, { date: format.dateTime(post.publishAt) })}
       </span>
     )
   }
   if (post.publishedAt) {
     return <span class="text-sm sm:whitespace-nowrap">{format.date(post.publishedAt)}</span>
   }
-  return <span class="text-sm text-muted">Not yet</span>
+  return <span class="text-sm text-muted">{t.t(`AdminBlog.notYet`)}</span>
 }
 
-function postColumns(navigate?: Navigate): DataTableColumn<PostRow, `post`>[] {
+function postColumns(
+  t: Translator<string>,
+  navigate?: Navigate,
+): DataTableColumn<PostRow, `post`>[] {
   return [
     {
       id: `title`,
-      header: `Title`,
+      header: t.t(`AdminBlog.colTitle`),
       render: ({ post }) => <TitleCell post={post} navigate={navigate} />,
     },
     {
       id: `status`,
-      header: `Status`,
+      header: t.t(`AdminBlog.status`),
       render: ({ post }) => <BlogStatusBadge status={post.status} />,
     },
     {
       id: `topic`,
-      header: `Topic`,
+      header: t.t(`AdminBlog.colTopic`),
       render: ({ post }) =>
         post.topic
-          ? <span class="block max-w-40 truncate text-sm" title={post.topic}>{post.topic}</span>
-          : <span class="text-sm text-muted">None</span>,
+          ? (
+            <span class="block max-w-40 truncate text-sm" title={post.topic} translate={false}>
+              {post.topic}
+            </span>
+          )
+          : <span class="text-sm text-muted">{t.t(`AdminBlog.none`)}</span>,
     },
     {
       id: `published`,
-      header: `Published`,
+      header: t.t(`AdminBlog.colPublished`),
       render: ({ post }) => <PublishedCell post={post} />,
     },
     {
       id: `updated`,
-      header: `Updated`,
+      header: t.t(`AdminBlog.colUpdated`),
       render: ({ post }) => (
         <span class="whitespace-nowrap text-sm">
           <When at={post.updatedAt} />
@@ -350,16 +356,19 @@ function TitleCell({ post, navigate }: { post: AdminBlogPostRow; navigate?: Navi
         href={ADMIN_BLOG_PATHS.post(post.id)}
         navigate={navigate}
         class="pc-link line-clamp-2 font-medium wrap-anywhere"
+        translate={false}
         data-e2e="admin-blog-row"
       >
         {post.title}
       </Link>
-      <span class="font-mono text-xs text-muted max-sm:break-all sm:truncate">
-        /blog/{post.slug}
+      {/* A path, no language changes it. The rule knows only translate="no", which Preact cannot set. */}
+      <span class="font-mono text-xs text-muted max-sm:break-all sm:truncate" translate={false}>
+        {/* deno-lint-ignore ui-text/no-literal */}
+        {`/blog/${post.slug}`}
       </span>
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1 sm:hidden">
         <BlogStatusBadge status={post.status} />
-        {post.topic && <span class="text-sm wrap-anywhere">{post.topic}</span>}
+        {post.topic && <span class="text-sm wrap-anywhere" translate={false}>{post.topic}</span>}
         <PublishedCell post={post} />
       </div>
     </div>

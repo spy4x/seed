@@ -24,7 +24,9 @@ import {
   type AdminAuditScreenProps,
   auditEventLabel,
 } from "./admin-audit-screen.tsx"
+import { ADMIN_ENGLISH as T, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: "http://admin.localhost/audit" })
 const own = {
   document: globalThis.document,
@@ -421,17 +423,17 @@ describe("audit log screen", () => {
   })
 
   it("names each event, and shows the code of one it does not know", () => {
-    expect(auditEventLabel(accountAuditEvent(AuthAuditEventType.SIGNED_UP))).toBe("Signed up")
-    expect(auditEventLabel(accountAuditEvent(AuthAuditEventType.SIGNED_IN), "email-link")).toBe(
+    expect(auditEventLabel(T, accountAuditEvent(AuthAuditEventType.SIGNED_UP))).toBe("Signed up")
+    expect(auditEventLabel(T, accountAuditEvent(AuthAuditEventType.SIGNED_IN), "email-link")).toBe(
       "Signed in with an e-mail link",
     )
-    expect(auditEventLabel(activityAuditEvent("note.created"))).toBe("Note added")
-    expect(auditEventLabel(activityAuditEvent("billing.paid"))).toBe("billing.paid")
-    expect(auditEventLabel(accountAuditEvent(999))).toBe("Account event 999")
+    expect(auditEventLabel(T, activityAuditEvent("note.created"))).toBe("Note added")
+    expect(auditEventLabel(T, activityAuditEvent("billing.paid"))).toBe("billing.paid")
+    expect(auditEventLabel(T, accountAuditEvent(999))).toBe("Account event 999")
   })
 
   it("names an operator's billing action, and offers it as a filter", async () => {
-    expect(auditEventLabel(accountAuditEvent(BILLING_AUDIT_EVENTS.paymentRefunded))).toBe(
+    expect(auditEventLabel(T, accountAuditEvent(BILLING_AUDIT_EVENTS.paymentRefunded))).toBe(
       "Payment refunded by an operator",
     )
     await mount(<AdminAuditScreen {...props([])} />)
@@ -439,5 +441,24 @@ describe("audit log screen", () => {
     expect(options.map((option) => option.textContent)).toContain(
       "Operator: Cancellation undone by an operator",
     )
+  })
+})
+
+describe("the audit log in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminAuditScreen {...props([])} />
+        <AdminAuditScreen {...props([], { view: "timeline" })} />
+      </I18nContext.Provider>,
+    )
+    expect(
+      englishLeft(document.body, [
+        `Ada Lovelace`,
+        `Grace Hopper`,
+        `ada@example.com`,
+        `Firefox on Linux`,
+      ]),
+    ).toEqual([])
   })
 })

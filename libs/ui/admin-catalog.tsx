@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
@@ -32,7 +31,9 @@ import {
   catalogText,
 } from "@domain/catalog"
 import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
+import { useAdminText } from "./i18n.ts"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 
 /** The catalog module's pages in the admin app, and the one file address its pages load. */
 export const ADMIN_CATALOG_PATHS = {
@@ -50,34 +51,30 @@ export const ADMIN_CATALOG_PATHS = {
     `/api/admin/catalog/photos/${encodeURIComponent(photoId)}/thumbnail`,
 } as const
 
-/** The list's message when it could not be read, whatever the cause. */
-export const ADMIN_CATALOG_ERROR = `The catalog could not be loaded. Try again in a moment.`
-
 const STATUS_BADGES: Record<CatalogItemStatus, { text: string; color: `green` | `gray` }> = {
-  draft: { text: `Draft`, color: `gray` },
-  published: { text: `On the website`, color: `green` },
-  hidden: { text: `Hidden`, color: `gray` },
+  draft: { text: `AdminCatalog.draft`, color: `gray` },
+  published: { text: `AdminCatalog.published`, color: `green` },
+  hidden: { text: `AdminCatalog.hidden`, color: `gray` },
 }
 
 /** An item's status as a pill: draft, on the website or hidden. */
 export function CatalogStatusBadge({ status }: { status: CatalogItemStatus }): JSX.Element {
+  const t = useAdminText()
   const badge = STATUS_BADGES[status]
-  return <Badge text={badge.text} color={badge.color} type="outline" />
+  return <Badge text={t.t(badge.text)} color={badge.color} type="outline" />
 }
 
 const STOCK_WORDS: Record<CatalogStock, string | null> = {
   "in-stock": null,
-  "some-sold-out": `Some sold out`,
-  "sold-out": `Sold out`,
+  "some-sold-out": `AdminCatalog.someSoldOut`,
+  "sold-out": `AdminCatalog.soldOut`,
 }
 
 /** The catalog's settings in one line: `Prices in VND · Texts in Tiếng Việt and English`. */
-export function catalogSettingsLine(settings: CatalogSettings): string {
-  const names = settings.languages.map(catalogLanguageName)
-  const languages = names.length === 1
-    ? names[0]
-    : `${names.slice(0, -1).join(`, `)} and ${names.at(-1)}`
-  return `Prices in ${settings.currency} · Texts in ${languages}`
+export function catalogSettingsLine(t: Translator<string>, settings: CatalogSettings): string {
+  const languages = new Intl.ListFormat(t.language, { type: `conjunction` })
+    .format(settings.languages.map(catalogLanguageName))
+  return t.t(`AdminCatalog.settings`, { currency: settings.currency, languages })
 }
 
 /** A photo's thumbnail, or a placeholder for an item without one. */
@@ -119,13 +116,11 @@ export const ADMIN_CATALOG_NO_FILTER: AdminCatalogFilter = {
 /** The longest search the list's box takes. */
 export const ADMIN_CATALOG_SEARCH_MAX_LENGTH = 100
 
-const NUMBER = new Intl.NumberFormat(`en`)
-
 const STATUS_CHIPS: { value: CatalogItemStatus | `all`; label: string }[] = [
-  { value: `all`, label: `All` },
-  { value: `draft`, label: `Drafts` },
-  { value: `published`, label: `On the website` },
-  { value: `hidden`, label: `Hidden` },
+  { value: `all`, label: `AdminCatalog.chipAll` },
+  { value: `draft`, label: `AdminCatalog.chipDraft` },
+  { value: `published`, label: `AdminCatalog.chipPublished` },
+  { value: `hidden`, label: `AdminCatalog.chipHidden` },
 ]
 
 /** The items a filter shows, and the counts of its chips. */
@@ -188,17 +183,16 @@ export interface AdminCatalogScreenProps {
  */
 export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element {
   const { catalog, navigate } = props
+  const t = useAdminText()
   return (
     <div class="flex flex-col gap-8">
       <PageHeader
-        title="Catalog"
-        subtitle={catalog
-          ? catalogSettingsLine(catalog.settings)
-          : `What the website's shop shows.`}
+        title={t.t(`AdminCatalog.title`)}
+        subtitle={catalog ? catalogSettingsLine(t, catalog.settings) : t.t(`AdminCatalog.subtitle`)}
         titleDataE2E="catalog-title"
         action={
           <PageAction
-            label="Add item"
+            label={t.t(`AdminCatalog.addItem`)}
             Icon={IconPlus}
             href={ADMIN_CATALOG_PATHS.create}
             navigate={navigate}
@@ -212,14 +206,14 @@ export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element 
               navigate={navigate}
               dataE2E="catalog-categories"
             >
-              Categories
+              {t.t(`AdminCatalog.categories`)}
             </DropdownItem>
             <DropdownItem
               href={ADMIN_CATALOG_PATHS.sources}
               navigate={navigate}
               dataE2E="catalog-sources"
             >
-              Link sources
+              {t.t(`AdminCatalog.sources`)}
             </DropdownItem>
           </>
         }
@@ -228,13 +222,17 @@ export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element 
       <Stack>
         {props.error && (
           <div class="flex flex-col items-center gap-3" data-e2e="catalog-error">
-            <ErrorState message={catalog ? props.error : ADMIN_CATALOG_ERROR} />
-            {!catalog && <Button variant="secondary" onClick={props.onRetry}>Try again</Button>}
+            <ErrorState message={catalog ? props.error : t.t(`AdminCatalog.error`)} />
+            {!catalog && (
+              <Button variant="secondary" onClick={props.onRetry}>
+                {t.t(`AdminCatalog.retry`)}
+              </Button>
+            )}
           </div>
         )}
         {catalog === null
           ? !props.error && (
-            <div role="status" aria-label="Loading the catalog">
+            <div role="status" aria-label={t.t(`AdminCatalog.loading`)}>
               <LoadingSkeleton rows={4} />
             </div>
           )
@@ -242,26 +240,26 @@ export function AdminCatalogScreen(props: AdminCatalogScreenProps): JSX.Element 
           ? catalog.categories.length === 0
             ? (
               <ListEmpty
-                title="Start with a category"
-                description="Every item on the website sits in a category, such as T-shirts or Hoodies. Add one, then add items to it."
+                title={t.t(`AdminCatalog.startTitle`)}
+                description={t.t(`AdminCatalog.startText`)}
                 action={
                   <Button
                     href={ADMIN_CATALOG_PATHS.categoryCreate}
                     navigate={navigate}
                     variant="outline"
                   >
-                    Add category
+                    {t.t(`AdminCatalog.addCategory`)}
                   </Button>
                 }
               />
             )
             : (
               <ListEmpty
-                title="No items yet"
-                description="Add an item with its photos, colours and sizes. It stays a draft until you publish it."
+                title={t.t(`AdminCatalog.emptyTitle`)}
+                description={t.t(`AdminCatalog.emptyText`)}
                 action={
                   <Button href={ADMIN_CATALOG_PATHS.create} navigate={navigate} variant="outline">
-                    Add item
+                    {t.t(`AdminCatalog.addItem`)}
                   </Button>
                 }
               />
@@ -292,12 +290,13 @@ function CatalogList(
   const languages = catalog.settings.languages
   const view = filterCatalogItems(catalog, filter)
   const filtered = filter.query !== `` || filter.status !== null || filter.soldOut
-  const count = `${NUMBER.format(view.items.length)} ${view.items.length === 1 ? `item` : `items`}`
+  const t = useAdminText()
+  const count = t.t(`AdminCatalog.count`, { count: view.items.length })
   return (
     <>
       <div class="flex flex-col gap-3" role="search" data-e2e="catalog-filters">
         <div class="max-w-md">
-          <Field id="catalog-q" label="Name, address or category">
+          <Field id="catalog-q" label={t.t(`AdminCatalog.search`)}>
             <Input
               type="search"
               data-e2e="catalog-search"
@@ -313,11 +312,11 @@ function CatalogList(
           <div data-e2e="catalog-status">
             <ToggleChips
               mode="single"
-              label="Status"
+              label={t.t(`AdminCatalog.status`)}
               class="flex-nowrap sm:flex-wrap"
               options={STATUS_CHIPS.map((chip) => ({
                 value: chip.value,
-                label: `${chip.label} ${NUMBER.format(view.counts[chip.value])}`,
+                label: t.t(chip.label, { count: view.counts[chip.value] }),
               }))}
               value={filter.status ?? `all`}
               onChange={(value) =>
@@ -329,10 +328,10 @@ function CatalogList(
           </div>
           <div data-e2e="catalog-sold-out">
             <ToggleChips
-              label="Stock"
+              label={t.t(`AdminCatalog.stock`)}
               options={[{
                 value: `soldOut`,
-                label: `Sold-out sizes ${NUMBER.format(view.counts.soldOut)}`,
+                label: t.t(`AdminCatalog.chipSoldOut`, { count: view.counts.soldOut }),
               }]}
               value={filter.soldOut ? [`soldOut`] : []}
               onChange={(value) => onFilter({ ...filter, soldOut: value.length > 0 })}
@@ -346,15 +345,15 @@ function CatalogList(
           <Card data-e2e="catalog-nothing">
             <EmptyState
               inset
-              title="Nothing matches"
-              description="Try another name, or clear the filters."
+              title={t.t(`AdminCatalog.nothingTitle`)}
+              description={t.t(`AdminCatalog.nothingText`)}
               action={filtered && (
                 <Button
                   variant="ghost"
                   data-e2e="catalog-clear"
                   onClick={() => onFilter(ADMIN_CATALOG_NO_FILTER)}
                 >
-                  Clear filters
+                  {t.t(`AdminCatalog.clearFilters`)}
                 </Button>
               )}
             />
@@ -387,6 +386,7 @@ function ItemRow(
     navigate?: Navigate
   },
 ): JSX.Element {
+  const t = useAdminText()
   const name = catalogText(item.name, languages)
   const stock = STOCK_WORDS[item.stock]
   return (
@@ -399,15 +399,15 @@ function ItemRow(
           class="pc-link line-clamp-2 font-medium wrap-anywhere"
           data-e2e="catalog-edit"
         >
-          {name}
+          <bdi translate={false}>{name}</bdi>
         </Link>
         <span class="text-sm text-muted wrap-anywhere">
-          {[
-            category ? catalogText(category.name, languages) : `No category`,
-            formatMoney(item.price, currency),
-            item.photoCount === 1 ? `1 photo` : `${item.photoCount} photos`,
-          ].join(` · `)}
-          {stock && <span class="text-danger">{` · ${stock}`}</span>}
+          {category
+            ? <bdi translate={false}>{catalogText(category.name, languages)}</bdi>
+            : t.t(`AdminCatalog.noCategory`)}
+          {` · ${formatMoney(item.price, currency)} · `}
+          {t.t(`AdminCatalog.photos`, { count: item.photoCount })}
+          {stock && <span class="text-danger">{` · ${t.t(stock)}`}</span>}
         </span>
       </div>
       <div class="shrink-0">
@@ -432,8 +432,6 @@ export interface AdminCatalogCategoriesScreenProps {
   navigate?: Navigate
 }
 
-const CATEGORIES_BACK = { href: ADMIN_CATALOG_PATHS.list, label: `Back to the catalog` }
-
 /**
  * The catalog's categories, in the order the website shows them. "Add category" is the page's one
  * action; a category's name opens its editor, and its menu moves it or deletes it behind a
@@ -455,19 +453,20 @@ export function AdminCatalogCategoriesScreen(
     target?.focus()
     setFocusOn(null)
   }, [focusOn, categories, props.busy])
+  const t = useAdminText()
   const nameOf = (category: CatalogCategory) => catalogText(category.name, languages)
 
   return (
     <div ref={page} class="flex flex-col gap-8">
       <PageHeader
-        back={CATEGORIES_BACK}
+        back={{ href: ADMIN_CATALOG_PATHS.list, label: t.t(`AdminCatalogCategories.back`) }}
         navigate={navigate}
-        title="Categories"
-        subtitle="The website shows its items in these groups, in this order."
+        title={t.t(`AdminCatalogCategories.title`)}
+        subtitle={t.t(`AdminCatalogCategories.subtitle`)}
         titleDataE2E="catalog-categories-title"
         action={
           <PageAction
-            label="Add category"
+            label={t.t(`AdminCatalog.addCategory`)}
             Icon={IconPlus}
             href={ADMIN_CATALOG_PATHS.categoryCreate}
             navigate={navigate}
@@ -478,28 +477,32 @@ export function AdminCatalogCategoriesScreen(
       <Stack>
         {props.error && (
           <div class="flex flex-col items-center gap-3" data-e2e="catalog-categories-error">
-            <ErrorState message={categories ? props.error : ADMIN_CATALOG_ERROR} />
-            {!categories && <Button variant="secondary" onClick={props.onRetry}>Try again</Button>}
+            <ErrorState message={categories ? props.error : t.t(`AdminCatalog.error`)} />
+            {!categories && (
+              <Button variant="secondary" onClick={props.onRetry}>
+                {t.t(`AdminCatalog.retry`)}
+              </Button>
+            )}
           </div>
         )}
         {categories === null
           ? !props.error && (
-            <div role="status" aria-label="Loading the categories">
+            <div role="status" aria-label={t.t(`AdminCatalogCategories.loading`)}>
               <LoadingSkeleton rows={3} />
             </div>
           )
           : categories.length === 0
           ? (
             <ListEmpty
-              title="No categories yet"
-              description="Add the groups your items go in, such as T-shirts, Hoodies or Accessories."
+              title={t.t(`AdminCatalogCategories.emptyTitle`)}
+              description={t.t(`AdminCatalogCategories.emptyText`)}
               action={
                 <Button
                   href={ADMIN_CATALOG_PATHS.categoryCreate}
                   navigate={navigate}
                   variant="outline"
                 >
-                  Add category
+                  {t.t(`AdminCatalog.addCategory`)}
                 </Button>
               }
             />
@@ -519,17 +522,19 @@ export function AdminCatalogCategoriesScreen(
                       class="pc-link line-clamp-2 font-medium wrap-anywhere"
                       data-e2e="catalog-category-edit"
                     >
-                      {nameOf(category)}
+                      <bdi translate={false}>{nameOf(category)}</bdi>
                     </Link>
                     <span class="text-sm text-muted wrap-anywhere">
-                      /{category.slug} ·{" "}
-                      {category.itemCount === 1 ? `1 item` : `${category.itemCount} items`}
+                      <bdi translate={false}>/{category.slug}</bdi>
+                      {` · ${t.t(`AdminCatalogCategories.items`, { count: category.itemCount })}`}
                     </span>
                   </div>
                   <div class="relative -my-2 -mr-2 shrink-0">
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
-                      triggerLabel={`Actions for ${nameOf(category)}`}
+                      triggerLabel={t.t(`AdminCatalogCategories.actionsFor`, {
+                        name: nameOf(category),
+                      })}
                       triggerClasses={MENU_TRIGGER_CLASSES}
                       triggerDataE2E="catalog-category-menu"
                     >
@@ -537,7 +542,7 @@ export function AdminCatalogCategoriesScreen(
                         href={ADMIN_CATALOG_PATHS.category(category.id)}
                         navigate={navigate}
                       >
-                        Edit category
+                        {t.t(`AdminCatalogCategories.edit`)}
                       </DropdownItem>
                       {index > 0 && (
                         <DropdownItem
@@ -548,7 +553,7 @@ export function AdminCatalogCategoriesScreen(
                             props.onMove(category.id, -1)
                           }}
                         >
-                          Move up
+                          {t.t(`AdminCatalogCategories.moveUp`)}
                         </DropdownItem>
                       )}
                       {index < categories.length - 1 && (
@@ -560,7 +565,7 @@ export function AdminCatalogCategoriesScreen(
                             props.onMove(category.id, 1)
                           }}
                         >
-                          Move down
+                          {t.t(`AdminCatalogCategories.moveDown`)}
                         </DropdownItem>
                       )}
                       <DropdownItem
@@ -569,7 +574,11 @@ export function AdminCatalogCategoriesScreen(
                         dataE2E="catalog-category-delete"
                         onClick={() => setDeleting(category)}
                       >
-                        {category.itemCount > 0 ? `Move its items to delete it` : `Delete category`}
+                        {t.t(
+                          category.itemCount > 0
+                            ? `AdminCatalogCategories.moveItemsFirst`
+                            : `AdminCatalogCategories.delete`,
+                        )}
                       </DropdownItem>
                     </Dropdown>
                   </div>
@@ -580,10 +589,10 @@ export function AdminCatalogCategoriesScreen(
       </Stack>
       {deleting && categories && (
         <ConfirmDialog
-          title={`Delete "${nameOf(deleting)}"?`}
-          message="It holds no items. The website stops showing it."
-          confirmLabel="Delete category"
-          cancelLabel="Cancel"
+          title={t.t(`AdminCatalogCategories.deleteTitle`, { name: nameOf(deleting) })}
+          message={t.t(`AdminCatalogCategories.deleteText`)}
+          confirmLabel={t.t(`AdminCatalogCategories.delete`)}
+          cancelLabel={t.t(`AdminCatalogCategories.cancel`)}
           tone="danger"
           dataE2E="catalog-category-delete-dialog"
           onCancel={() => setDeleting(null)}
@@ -624,8 +633,6 @@ export interface AdminCatalogCategoryEditorScreenProps {
   navigate?: Navigate
 }
 
-const CATEGORY_BACK = { href: ADMIN_CATALOG_PATHS.categories, label: `Back to categories` }
-
 /** The id of a field of the catalog's forms, for its label and for focus. */
 export function catalogFieldId(field: string): string {
   return `catalog-${field.replace(/[^a-zA-Z0-9-]/g, `-`)}`
@@ -640,6 +647,8 @@ export function AdminCatalogCategoryEditorScreen(
   props: AdminCatalogCategoryEditorScreenProps,
 ): JSX.Element {
   const { category, languages, value, errors, navigate } = props
+  const t = useAdminText()
+  const back = { href: ADMIN_CATALOG_PATHS.categories, label: t.t(`AdminCatalogCategory.back`) }
   const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const first = [...languages.map((language) => `name:${language}`), `slug`]
@@ -650,23 +659,23 @@ export function AdminCatalogCategoryEditorScreen(
   if (props.notFound || (props.loading && !category)) {
     return (
       <Stack gap="xl">
-        <PageHeader back={CATEGORY_BACK} navigate={navigate} title="Category" />
+        <PageHeader back={back} navigate={navigate} title={t.t(`AdminCatalogCategory.title`)} />
         {props.notFound
           ? (
             <div data-e2e="catalog-category-not-found">
               <ListEmpty
-                title="This category does not exist"
-                description="It may have been deleted."
+                title={t.t(`AdminCatalogCategory.notFound`)}
+                description={t.t(`AdminCatalogCategory.notFoundText`)}
                 action={
-                  <Button href={CATEGORY_BACK.href} navigate={navigate} variant="outline">
-                    Back to categories
+                  <Button href={back.href} navigate={navigate} variant="outline">
+                    {back.label}
                   </Button>
                 }
               />
             </div>
           )
           : (
-            <div role="status" aria-label="Loading the category">
+            <div role="status" aria-label={t.t(`AdminCatalogCategory.loading`)}>
               <LoadingSkeleton rows={2} class="max-w-md" />
             </div>
           )}
@@ -685,9 +694,11 @@ export function AdminCatalogCategoryEditorScreen(
     <div ref={root}>
       <Stack gap="xl">
         <PageHeader
-          back={CATEGORY_BACK}
+          back={back}
           navigate={navigate}
-          title={category ? catalogText(category.name, languages) : `New category`}
+          title={category
+            ? catalogText(category.name, languages)
+            : t.t(`AdminCatalogCategory.newTitle`)}
           titleDataE2E="catalog-category-title"
         />
         <ScreenForm pending={props.saving} onSubmit={props.onSave}>
@@ -696,11 +707,14 @@ export function AdminCatalogCategoryEditorScreen(
               <Field
                 key={language}
                 id={catalogFieldId(`name:${language}`)}
-                label={languages.length === 1
-                  ? `Name`
-                  : `Name in ${catalogLanguageName(language)}${index === 0 ? `` : ` (optional)`}`}
+                label={languages.length === 1 ? t.t(`AdminCatalogCategory.name`) : t.t(
+                  index === 0
+                    ? `AdminCatalogCategory.nameIn`
+                    : `AdminCatalogCategory.nameInOptional`,
+                  { language: catalogLanguageName(language) },
+                )}
                 hint={index === 0 && languages.length > 1
-                  ? `Shown when a text has no translation.`
+                  ? t.t(`AdminCatalogCategory.nameHint`)
                   : undefined}
                 error={errors[`name:${language}`]}
                 required={index === 0}
@@ -719,8 +733,8 @@ export function AdminCatalogCategoryEditorScreen(
             ))}
             <Field
               id={catalogFieldId(`slug`)}
-              label="Address"
-              hint="Part of the website's address: lowercase letters, digits and hyphens."
+              label={t.t(`AdminCatalogCategory.slug`)}
+              hint={t.t(`AdminCatalogCategory.slugHint`)}
               error={errors.slug}
               required
             >
@@ -738,21 +752,21 @@ export function AdminCatalogCategoryEditorScreen(
             <ErrorState message={errors.form ?? null} />
             <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
-                href={CATEGORY_BACK.href}
+                href={back.href}
                 navigate={navigate}
                 variant="ghost"
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
               >
-                Cancel
+                {t.t(`AdminCatalogCategory.cancel`)}
               </Button>
               <Button
                 type="submit"
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                 data-e2e="catalog-category-save"
                 busy={props.saving}
-                busyLabel="Saving…"
+                busyLabel={t.t(`AdminCatalogCategory.saving`)}
               >
-                {category ? `Save category` : `Add category`}
+                {t.t(category ? `AdminCatalogCategory.save` : `AdminCatalogCategory.add`)}
               </Button>
             </div>
           </Stack>

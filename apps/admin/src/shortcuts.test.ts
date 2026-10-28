@@ -2,11 +2,13 @@ import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import { ADMIN_MODULES } from "./modules/registry.ts"
 import { adminShortcutRows } from "./shortcuts.ts"
+import { adminText } from "./i18n.ts"
 
 function rows(path: string, modules = ADMIN_MODULES) {
   const seen = { navigated: [] as string[], filters: 0, shortcuts: 0 }
   const list = adminShortcutRows({
     modules,
+    t: adminText(),
     path,
     navigate: (href) => void seen.navigated.push(href),
     openShortcuts: () => void seen.shortcuts++,
@@ -19,7 +21,9 @@ describe("admin keyboard shortcuts", () => {
   it("has one distinct g sequence per module, named and aimed as its rail entry", () => {
     const { list, seen } = rows("/")
     const goTo = list.filter((row) => row.keys.startsWith("g "))
-    expect(goTo.map((row) => row.description)).toEqual(ADMIN_MODULES.map((m) => m.nav.name))
+    expect(goTo.map((row) => row.description)).toEqual(
+      ADMIN_MODULES.map((m) => adminText().t(m.nav.name)),
+    )
     expect(new Set(goTo.map((row) => row.keys)).size).toBe(goTo.length)
     for (const row of goTo) row.run!()
     expect(seen.navigated).toEqual(ADMIN_MODULES.map((m) => m.nav.href))
@@ -28,7 +32,7 @@ describe("admin keyboard shortcuts", () => {
   it("lists the g sequences of the modules shown, in the rail's order", () => {
     const shown = ADMIN_MODULES.slice(0, 2)
     const goTo = rows("/", shown).list.filter((row) => row.keys.startsWith("g "))
-    expect(goTo.map((row) => row.description)).toEqual(shown.map((m) => m.nav.name))
+    expect(goTo.map((row) => row.description)).toEqual(shown.map((m) => adminText().t(m.nav.name)))
   })
 
   it("binds / to the list's search only on a list page", () => {

@@ -13,6 +13,7 @@ import { AdminUsersScreen } from "@ui/admin-users-screen.tsx"
 import { AdminUserScreen } from "@ui/admin-user-screen.tsx"
 import { AdminPersonDataExportsPanel } from "@ui/admin-person-data-exports.tsx"
 import { operatorOf } from "../../state.ts"
+import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { createUsersState, type UsersState } from "./state.ts"
 
@@ -60,6 +61,7 @@ function UsersView({ context }: { context: AdminContext }): JSX.Element {
 function UserView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
 ): JSX.Element {
+  const t = useAdminText()
   const state = usersState(context)
   const [path] = useLocation()
   const search = useSearch()
@@ -75,13 +77,13 @@ function UserView(
   const tab = new URLSearchParams(search).get(`tab`) ?? `overview`
   const extraTabs = userId === null ? [] : context.personTabs.map((extra) => ({
     id: extra.id,
-    label: extra.label,
+    label: t.t(extra.label),
     content: extra.render({ context, userId }),
   }))
   return (
     <AdminUserScreen
       detail={current ? person.detail : null}
-      error={userId === null ? `User not found` : current ? person.error : null}
+      error={userId === null ? t.t(`AdminUser.notFound`) : current ? person.error : null}
       operator={operatorOf(context.operator)}
       tab={tab}
       onTab={(next) =>
@@ -123,7 +125,7 @@ function DataExportsTab(
 /** Everyone with an account, and one person's page with its actions (#146, #424). */
 export const usersModule: AdminModule = {
   id: `users`,
-  nav: { name: `Users`, href: ADMIN_PATHS.users, Icon: IconUsers },
+  nav: { name: `AdminNav.users`, href: ADMIN_PATHS.users, Icon: IconUsers },
   routes: [
     { path: ADMIN_PATHS.users, View: UsersView },
     { path: `/users/:id`, View: UserView },
@@ -131,7 +133,7 @@ export const usersModule: AdminModule = {
   personTabs: [
     {
       id: `data-exports`,
-      label: `Data exports`,
+      label: `AdminPersonTab.dataExports`,
       render: ({ context, userId }) => <DataExportsTab context={context} userId={userId} />,
     },
   ],

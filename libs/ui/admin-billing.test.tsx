@@ -21,7 +21,6 @@ import {
 } from "@domain/billing"
 import { UserRole } from "@domain/identity"
 import {
-  ADMIN_BILLING_LIST_ERROR,
   ADMIN_BILLING_SETUP_URL,
   AdminBillingListScreen,
   type AdminBillingListScreenProps,
@@ -30,10 +29,12 @@ import {
   AdminBillingCustomerScreen,
   type AdminBillingCustomerScreenProps,
 } from "./admin-billing-detail.tsx"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 
 /** A day as the screens write it on this device: the default formatter, with no person's settings. */
 const day = (at: string) => createFormatters().date(at)
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
   document: globalThis.document,
@@ -277,7 +278,7 @@ describe(`the admin billing list`, () => {
     )
     expect(has(`[data-e2e=admin-billing-figures]`)).toBe(true)
     const listError = find(`[data-e2e=admin-billing-error]`).textContent
-    expect(listError).toContain(ADMIN_BILLING_LIST_ERROR)
+    expect(listError).toContain(ADMIN_ENGLISH.t(`AdminBilling.listError`))
     expect(listError).not.toContain(`Server error.`)
     expect(has(`[data-e2e=admin-billing-count]`)).toBe(false)
     expect(calls).toEqual([[`retry`]])
@@ -570,5 +571,21 @@ describe(`one customer in the admin app`, () => {
     )
     await press(`[data-e2e=admin-billing-customer-error]`, `Try again`)
     expect(calls).toEqual([[`retry`]])
+  })
+})
+
+describe("the billing screens in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminBillingListScreen {...listProps([])} />
+        <AdminBillingCustomerScreen {...customerProps([], { dialog: `cancel` })} />
+        <AdminBillingCustomerScreen {...customerProps([], { dialog: `time` })} />
+        <AdminBillingCustomerScreen
+          {...customerProps([], { operator: supervisor, dialog: `refund` })}
+        />
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(document.body, [`Acme Studio`, `Ada Lovelace`, `ada@acme.test`])).toEqual([])
   })
 })

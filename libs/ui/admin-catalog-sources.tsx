@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { slugify } from "@spy4x/platform/universal/text"
@@ -19,20 +18,13 @@ import {
   CATALOG_SOURCE_NAME_MAX_LENGTH,
   type CatalogLinkSource,
 } from "@domain/catalog"
-import {
-  ADMIN_CATALOG_ERROR,
-  ADMIN_CATALOG_PATHS,
-  catalogFieldId,
-  type CatalogFormErrors,
-} from "./admin-catalog.tsx"
+import { ADMIN_CATALOG_PATHS, catalogFieldId, type CatalogFormErrors } from "./admin-catalog.tsx"
+import { useAdminText } from "./i18n.ts"
 import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 
-/** What the sources page says while items get no links: the website's address is unset. */
-export const TRACKING_OFF_NOTICE =
-  `Links need the website's address. Set MPA_DOMAIN in the server's env file and deploy.`
-
-const links = (count: number) => count === 1 ? `1 link` : `${count} links`
+/** The catalog key of what the sources page says while items get no links: no website address. */
+export const TRACKING_OFF_NOTICE = `AdminCatalogSources.trackingOff`
 
 export interface AdminCatalogSourcesScreenProps {
   /** The sources in order, or `null` while they load or when they failed. */
@@ -48,8 +40,6 @@ export interface AdminCatalogSourcesScreenProps {
   navigate?: Navigate
 }
 
-const SOURCES_BACK = { href: ADMIN_CATALOG_PATHS.list, label: `Back to the catalog` }
-
 /**
  * The places the shop shares its items in (#483), each with its own tracking link per item, so
  * Umami can tell which brings visitors. "Add source" is the page's one action; a source's name
@@ -58,6 +48,7 @@ const SOURCES_BACK = { href: ADMIN_CATALOG_PATHS.list, label: `Back to the catal
  */
 export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps): JSX.Element {
   const { sources, navigate } = props
+  const t = useAdminText()
   const [deleting, setDeleting] = useState<CatalogLinkSource | null>(null)
   const [focusOn, setFocusOn] = useState<{ id: string; index: number } | null>(null)
   const page = useRef<HTMLDivElement>(null)
@@ -74,14 +65,14 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
   return (
     <div ref={page} class="flex flex-col gap-8">
       <PageHeader
-        back={SOURCES_BACK}
+        back={{ href: ADMIN_CATALOG_PATHS.list, label: t.t(`AdminCatalogSources.back`) }}
         navigate={navigate}
-        title="Link sources"
-        subtitle="Each place you share items in gets its own link, so you see which brings visitors."
+        title={t.t(`AdminCatalogSources.title`)}
+        subtitle={t.t(`AdminCatalogSources.subtitle`)}
         titleDataE2E="catalog-sources-title"
         action={
           <PageAction
-            label="Add source"
+            label={t.t(`AdminCatalogSources.add`)}
             Icon={IconPlus}
             href={ADMIN_CATALOG_PATHS.sourceCreate}
             navigate={navigate}
@@ -91,32 +82,38 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
       />
       <Stack>
         {!props.tracking && sources !== null && (
-          <Notice tone="info" data-e2e="catalog-sources-tracking-off">{TRACKING_OFF_NOTICE}</Notice>
+          <Notice tone="info" data-e2e="catalog-sources-tracking-off">
+            {t.t(TRACKING_OFF_NOTICE)}
+          </Notice>
         )}
         {props.error && (
           <div class="flex flex-col items-center gap-3" data-e2e="catalog-sources-error">
-            <ErrorState message={sources ? props.error : ADMIN_CATALOG_ERROR} />
-            {!sources && <Button variant="secondary" onClick={props.onRetry}>Try again</Button>}
+            <ErrorState message={sources ? props.error : t.t(`AdminCatalog.error`)} />
+            {!sources && (
+              <Button variant="secondary" onClick={props.onRetry}>
+                {t.t(`AdminCatalog.retry`)}
+              </Button>
+            )}
           </div>
         )}
         {sources === null
           ? !props.error && (
-            <div role="status" aria-label="Loading the sources">
+            <div role="status" aria-label={t.t(`AdminCatalogSources.loading`)}>
               <LoadingSkeleton rows={3} />
             </div>
           )
           : sources.length === 0
           ? (
             <ListEmpty
-              title="No sources yet"
-              description="Add the places you share items in, such as a Facebook group, a Zalo group or Instagram."
+              title={t.t(`AdminCatalogSources.emptyTitle`)}
+              description={t.t(`AdminCatalogSources.emptyText`)}
               action={
                 <Button
                   href={ADMIN_CATALOG_PATHS.sourceCreate}
                   navigate={navigate}
                   variant="outline"
                 >
-                  Add source
+                  {t.t(`AdminCatalogSources.add`)}
                 </Button>
               }
             />
@@ -136,16 +133,21 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
                       class="pc-link line-clamp-2 font-medium wrap-anywhere"
                       data-e2e="catalog-source-edit"
                     >
-                      {source.name}
+                      <bdi translate={false}>{source.name}</bdi>
                     </Link>
                     <span class="text-sm text-muted wrap-anywhere">
-                      utm_source={source.slug} · {links(source.linkCount)}
+                      {/* A query parameter, no language changes it. The rule knows only translate="no", which Preact cannot set. */}
+                      <bdi translate={false}>
+                        {/* deno-lint-ignore ui-text/no-literal */}
+                        {`utm_source=${source.slug}`}
+                      </bdi>
+                      {` · ${t.t(`AdminCatalogSources.links`, { count: source.linkCount })}`}
                     </span>
                   </div>
                   <div class="relative -my-2 -mr-2 shrink-0">
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
-                      triggerLabel={`Actions for ${source.name}`}
+                      triggerLabel={t.t(`AdminCatalogSources.actionsFor`, { name: source.name })}
                       triggerClasses={MENU_TRIGGER_CLASSES}
                       triggerDataE2E="catalog-source-menu"
                     >
@@ -153,7 +155,7 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
                         href={ADMIN_CATALOG_PATHS.source(source.id)}
                         navigate={navigate}
                       >
-                        Edit source
+                        {t.t(`AdminCatalogSources.edit`)}
                       </DropdownItem>
                       {index > 0 && (
                         <DropdownItem
@@ -164,7 +166,7 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
                             props.onMove(source.id, -1)
                           }}
                         >
-                          Move up
+                          {t.t(`AdminCatalogSources.moveUp`)}
                         </DropdownItem>
                       )}
                       {index < sources.length - 1 && (
@@ -176,7 +178,7 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
                             props.onMove(source.id, 1)
                           }}
                         >
-                          Move down
+                          {t.t(`AdminCatalogSources.moveDown`)}
                         </DropdownItem>
                       )}
                       <DropdownItem
@@ -185,7 +187,7 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
                         dataE2E="catalog-source-delete"
                         onClick={() => setDeleting(source)}
                       >
-                        Delete source…
+                        {t.t(`AdminCatalogSources.deleteMenu`)}
                       </DropdownItem>
                     </Dropdown>
                   </div>
@@ -196,14 +198,12 @@ export function AdminCatalogSourcesScreen(props: AdminCatalogSourcesScreenProps)
       </Stack>
       {deleting && sources && (
         <ConfirmDialog
-          title={`Delete "${deleting.name}"?`}
+          title={t.t(`AdminCatalogSources.deleteTitle`, { name: deleting.name })}
           message={deleting.linkCount === 0
-            ? `No item has a link for it yet.`
-            : `Its ${
-              links(deleting.linkCount)
-            } stop working: anyone who opens one sees "Page not found". This cannot be undone.`}
-          confirmLabel="Delete source"
-          cancelLabel="Cancel"
+            ? t.t(`AdminCatalogSources.deleteNoLinks`)
+            : t.t(`AdminCatalogSources.deleteLinks`, { count: deleting.linkCount })}
+          confirmLabel={t.t(`AdminCatalogSources.delete`)}
+          cancelLabel={t.t(`AdminCatalogSources.cancel`)}
           tone="danger"
           dataE2E="catalog-source-delete-dialog"
           onCancel={() => setDeleting(null)}
@@ -241,8 +241,6 @@ export interface AdminCatalogSourceEditorScreenProps {
   navigate?: Navigate
 }
 
-const SOURCE_BACK = { href: ADMIN_CATALOG_PATHS.sources, label: `Back to link sources` }
-
 /**
  * One source on a page of its own: its name, which only the operator sees, and the `utm_source`
  * its links carry, which follows the name until typed. A refused field gets focus.
@@ -251,6 +249,8 @@ export function AdminCatalogSourceEditorScreen(
   props: AdminCatalogSourceEditorScreenProps,
 ): JSX.Element {
   const { source, value, errors, navigate } = props
+  const t = useAdminText()
+  const back = { href: ADMIN_CATALOG_PATHS.sources, label: t.t(`AdminCatalogSource.back`) }
   const root = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const first = [`name`, `slug`].find((field) => errors[field])
@@ -260,23 +260,23 @@ export function AdminCatalogSourceEditorScreen(
   if (props.notFound || (props.loading && !source)) {
     return (
       <Stack gap="xl">
-        <PageHeader back={SOURCE_BACK} navigate={navigate} title="Source" />
+        <PageHeader back={back} navigate={navigate} title={t.t(`AdminCatalogSource.title`)} />
         {props.notFound
           ? (
             <div data-e2e="catalog-source-not-found">
               <ListEmpty
-                title="This source does not exist"
-                description="It may have been deleted."
+                title={t.t(`AdminCatalogSource.notFound`)}
+                description={t.t(`AdminCatalogSource.notFoundText`)}
                 action={
-                  <Button href={SOURCE_BACK.href} navigate={navigate} variant="outline">
-                    Back to link sources
+                  <Button href={back.href} navigate={navigate} variant="outline">
+                    {back.label}
                   </Button>
                 }
               />
             </div>
           )
           : (
-            <div role="status" aria-label="Loading the source">
+            <div role="status" aria-label={t.t(`AdminCatalogSource.loading`)}>
               <LoadingSkeleton rows={2} class="max-w-md" />
             </div>
           )}
@@ -288,17 +288,17 @@ export function AdminCatalogSourceEditorScreen(
     <div ref={root}>
       <Stack gap="xl">
         <PageHeader
-          back={SOURCE_BACK}
+          back={back}
           navigate={navigate}
-          title={source ? source.name : `New source`}
+          title={source ? source.name : t.t(`AdminCatalogSource.newTitle`)}
           titleDataE2E="catalog-source-title"
         />
         <ScreenForm pending={props.saving} onSubmit={props.onSave}>
           <Stack class="max-w-md">
             <Field
               id={catalogFieldId(`name`)}
-              label="Name"
-              hint="Where you share, such as Zalo group A. Only you see it."
+              label={t.t(`AdminCatalogSource.name`)}
+              hint={t.t(`AdminCatalogSource.nameHint`)}
               error={errors.name}
               required
             >
@@ -323,8 +323,8 @@ export function AdminCatalogSourceEditorScreen(
             </Field>
             <Field
               id={catalogFieldId(`slug`)}
-              label="Source tag"
-              hint="Umami lists visits under it as utm_source: lowercase letters, digits and hyphens. It follows the name until you change it."
+              label={t.t(`AdminCatalogSource.slug`)}
+              hint={t.t(`AdminCatalogSource.slugHint`)}
               error={errors.slug}
               required
             >
@@ -341,30 +341,27 @@ export function AdminCatalogSourceEditorScreen(
             </Field>
             {source && source.linkCount > 0 && (
               <p class="text-sm text-muted" data-e2e="catalog-source-links-note">
-                {source.linkCount === 1
-                  ? `Its link keeps its address`
-                  : `Its ${links(source.linkCount)} keep their addresses`}; a new tag applies from
-                the next visit.
+                {t.t(`AdminCatalogSource.linksNote`, { count: source.linkCount })}
               </p>
             )}
             <ErrorState message={errors.form ?? null} />
             <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button
-                href={SOURCE_BACK.href}
+                href={back.href}
                 navigate={navigate}
                 variant="ghost"
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
               >
-                Cancel
+                {t.t(`AdminCatalogSource.cancel`)}
               </Button>
               <Button
                 type="submit"
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                 data-e2e="catalog-source-save"
                 busy={props.saving}
-                busyLabel="Saving…"
+                busyLabel={t.t(`AdminCatalogSource.saving`)}
               >
-                {source ? `Save source` : `Add source`}
+                {t.t(source ? `AdminCatalogSource.save` : `AdminCatalogSources.add`)}
               </Button>
             </div>
           </Stack>

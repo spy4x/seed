@@ -10,6 +10,7 @@ import {
   AdminBlogListScreen,
 } from "@ui/admin-blog-list.tsx"
 import { AdminBlogEditorScreen } from "@ui/admin-blog-editor.tsx"
+import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { type BlogState, createBlogState } from "./state.ts"
 
@@ -70,6 +71,7 @@ function BlogListView({ context }: { context: AdminContext }): JSX.Element {
 function BlogEditorView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
 ): JSX.Element {
+  const t = useAdminText()
   const state = blogState(context)
   const id = params.id === `new` ? undefined : params.id
   // The router's own navigate, for the guard's "Leave" and for moves that keep or drop nothing
@@ -142,10 +144,10 @@ function BlogEditorView(
         navigate={go}
         leaveGuard={context.leaveGuard}
         labels={{
-          title: `Leave without saving?`,
-          message: `Your changes to this post are lost.`,
-          leave: `Leave`,
-          stay: `Keep editing`,
+          title: t.t(`AdminApp.leaveTitle`),
+          message: t.t(`AdminBlogEditor.leaveMessage`),
+          leave: t.t(`AdminApp.leave`),
+          stay: t.t(`AdminApp.keepEditing`),
         }}
       />
     </>
@@ -155,7 +157,7 @@ function BlogEditorView(
 /** Posts on the public website: the list and the editor (#396), over the API of #395. */
 export const blogModule: AdminModule = {
   id: `blog`,
-  nav: { name: `Blog`, href: ADMIN_BLOG_PATHS.list, Icon: IconPencilSquare },
+  nav: { name: `AdminNav.blog`, href: ADMIN_BLOG_PATHS.list, Icon: IconPencilSquare },
   routes: [
     { path: ADMIN_BLOG_PATHS.list, View: BlogListView },
     // One route for `/blog/new` and `/blog/:id`, so the first save's move to the post's address

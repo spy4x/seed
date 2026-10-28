@@ -7,11 +7,12 @@ import {
   type AdminUserListResponse,
   type AdminUserRow,
   type DataExportJson,
-  USER_ROLE_NAMES,
+  UserRole,
 } from "@domain/identity"
 import type { AdminAction, AdminActionInput } from "@ui/admin-user-screen.tsx"
 import { adminUserName } from "@ui/admin-users-screen.tsx"
 import { type AdminFetch, post } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 
 /** Each action's path under `/api/admin/users/:id/`; ending one session names it. */
 const ACTION_PATHS: Record<AdminAction, (input: AdminActionInput) => string> = {
@@ -26,18 +27,26 @@ const ACTION_PATHS: Record<AdminAction, (input: AdminActionInput) => string> = {
   "remove-picture": () => "picture/remove",
 }
 
-/** What the toast says after each action went through. */
-const ACTION_DONE: Record<AdminAction, (name: string, input: AdminActionInput) => string> = {
-  block: (name) => `${name} is blocked and signed out everywhere.`,
-  unblock: (name) => `${name} can sign in again.`,
-  "end-sessions": (name) => `Every session of ${name} has ended.`,
-  "end-session": (name) => `One session of ${name} has ended.`,
-  "change-role": (name, input) =>
-    `${name} is now ${input.role === undefined ? "on a new role" : USER_ROLE_NAMES[input.role]}.`,
-  "password-reset": (name) => `A password-reset link is on its way to ${name}.`,
-  "delete-guest": (name) => `The guest account ${name} is deleted.`,
-  "unlink-telegram": (name) => `The Telegram account of ${name} is unlinked.`,
-  "remove-picture": (name) => `The profile picture of ${name} is removed.`,
+/** The toast after a role change, one sentence per role, so each language words it whole. */
+const ROLE_DONE: Record<UserRole, string> = {
+  [UserRole.VIEWER]: `AdminUser.doneRoleViewer`,
+  [UserRole.OPERATOR]: `AdminUser.doneRoleOperator`,
+  [UserRole.SUPERVISOR]: `AdminUser.doneRoleSupervisor`,
+  [UserRole.ADMIN]: `AdminUser.doneRoleAdmin`,
+}
+
+/** What the toast says after each action went through, as a catalog key. */
+const ACTION_DONE: Record<AdminAction, (input: AdminActionInput) => string> = {
+  block: () => `AdminUser.doneBlock`,
+  unblock: () => `AdminUser.doneUnblock`,
+  "end-sessions": () => `AdminUser.doneEndSessions`,
+  "end-session": () => `AdminUser.doneEndSession`,
+  "change-role": (input) =>
+    (input.role === undefined ? undefined : ROLE_DONE[input.role]) ?? `AdminUser.doneRole`,
+  "password-reset": () => `AdminUser.donePasswordReset`,
+  "delete-guest": () => `AdminUser.doneDeleteGuest`,
+  "unlink-telegram": () => `AdminUser.doneUnlinkTelegram`,
+  "remove-picture": () => `AdminUser.doneRemovePicture`,
 }
 
 export interface UsersListState {
@@ -160,8 +169,12 @@ export function createUsersState(request: AdminFetch, toasts: ToastStore) {
       }
       dialog.value = NO_DIALOG
       const user = result.data?.user ?? detail?.user
-      const name = user ? adminUserName(user) : "The person"
-      toasts.success({ body: ACTION_DONE[action](name, input), dataE2E: "admin-action-toast" })
+      const t = adminText()
+      const name = user ? adminUserName(user, t) : t.t(`AdminUser.thePerson`)
+      toasts.success({
+        body: t.t(ACTION_DONE[action](input), { name }),
+        dataE2E: "admin-action-toast",
+      })
       if (action === "delete-guest") return true
       await state.loadPerson(userId)
       return false

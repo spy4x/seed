@@ -1,8 +1,6 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { IconRefresh } from "@spy4x/preact-icons"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card, CardBody, CardHeader } from "@spy4x/preact-ui/card"
@@ -22,39 +20,42 @@ import {
   type AdminSystemSnapshot,
 } from "@domain/identity"
 import { When } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAdminText } from "./i18n.ts"
 import { ADMIN_JOB_PATHS } from "./admin-jobs-screen.tsx"
 import type { Navigate } from "./progressive.tsx"
 
 const NUMBER = new Intl.NumberFormat("en")
 
-/** Each state's word and colour. The word always shows, so the colour is never the only sign. */
-const HEALTH: Record<AdminHealth, { text: string; color: "green" | "orange" | "red" }> = {
-  [AdminHealth.OK]: { text: "OK", color: "green" },
-  [AdminHealth.WARNING]: { text: "Warning", color: "orange" },
-  [AdminHealth.ERROR]: { text: "Error", color: "red" },
+/**
+ * Each state's word and colour. The word always shows, so the colour is never the only sign.
+ * `name` is the state's fixed English name for `data-health`, which tests and e2e read.
+ */
+const HEALTH: Record<
+  AdminHealth,
+  { name: string; key: string; color: "green" | "orange" | "red" }
+> = {
+  [AdminHealth.OK]: { name: "ok", key: `AdminSystem.ok`, color: "green" },
+  [AdminHealth.WARNING]: { name: "warning", key: `AdminSystem.warning`, color: "orange" },
+  [AdminHealth.ERROR]: { name: "error", key: `AdminSystem.error`, color: "red" },
 }
 
 /** The banner above the cards: the worst state of the stack in one sentence. */
-const SUMMARY: Record<AdminHealth, { tone: "success" | "warning" | "danger"; text: string }> = {
-  [AdminHealth.OK]: { tone: "success", text: "Everything is working." },
-  [AdminHealth.WARNING]: {
-    tone: "warning",
-    text: "Something needs a look soon. The cards marked Warning say what.",
-  },
-  [AdminHealth.ERROR]: {
-    tone: "danger",
-    text: "Something is broken. The cards marked Error say what.",
-  },
+const SUMMARY: Record<AdminHealth, { tone: "success" | "warning" | "danger"; key: string }> = {
+  [AdminHealth.OK]: { tone: "success", key: `AdminSystem.summaryOk` },
+  [AdminHealth.WARNING]: { tone: "warning", key: `AdminSystem.summaryWarning` },
+  [AdminHealth.ERROR]: { tone: "danger", key: `AdminSystem.summaryError` },
 }
 
 /** A state as a badge: `OK`, `Warning` or `Error`. */
 export function HealthBadge(
   { health, dataE2E }: { health: AdminHealth; dataE2E?: string },
 ): JSX.Element {
-  const { text, color } = HEALTH[health] ?? HEALTH[AdminHealth.ERROR]
+  const t = useAdminText()
+  const { name, key, color } = HEALTH[health] ?? HEALTH[AdminHealth.ERROR]
   return (
-    <span data-e2e={dataE2E} data-health={text.toLowerCase()}>
-      <Badge text={text} color={color} />
+    <span data-e2e={dataE2E} data-health={name}>
+      <Badge text={t.t(key)} color={color} />
     </span>
   )
 }
@@ -78,21 +79,23 @@ export interface AdminSystemScreenProps {
  */
 export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
   const { snapshot, error } = props
+  const t = useAdminText()
   return (
     <Stack>
       <PageHeader
-        title="System"
+        title={t.t(`AdminSystem.title`)}
         subtitle={snapshot
           ? (
-            <>
-              Checked <time dateTime={snapshot.checkedAt}>{timeAgo(snapshot.checkedAt)}</time>
-            </>
+            <Rich
+              parts={t.parts(`AdminSystem.checked`)}
+              tags={{ when: () => <When at={snapshot.checkedAt} /> }}
+            />
           )
-          : "The health of the services behind the product."}
+          : t.t(`AdminSystem.subtitle`)}
         titleDataE2E="admin-system-title"
         action={
           <PageAction
-            label={props.pending ? "Checking…" : "Check again"}
+            label={t.t(props.pending ? `AdminSystem.checking` : `AdminSystem.checkAgain`)}
             Icon={IconRefresh}
             onClick={props.onRefresh}
             disabled={props.pending}
@@ -105,11 +108,17 @@ export function AdminSystemScreen(props: AdminSystemScreenProps): JSX.Element {
           ? (
             <div class="flex flex-col items-start gap-3">
               <ErrorState message={error} dataE2E="admin-system-error" />
-              <Button variant="secondary" onClick={props.onRefresh}>Try again</Button>
+              <Button variant="secondary" onClick={props.onRefresh}>
+                {t.t(`AdminSystem.retry`)}
+              </Button>
             </div>
           )
           : (
-            <div role="status" aria-label="Checking the services" data-e2e="admin-system-loading">
+            <div
+              role="status"
+              aria-label={t.t(`AdminSystem.loading`)}
+              data-e2e="admin-system-loading"
+            >
               <LoadingSkeleton rows={6} />
             </div>
           )
@@ -127,63 +136,62 @@ function SystemBody(
   { snapshot, navigate }: { snapshot: AdminSystemSnapshot; navigate?: Navigate },
 ): JSX.Element {
   const { database, cache, fileStore, queue, backup, migrations, build } = snapshot
+  const t = useAdminText()
   const summary = SUMMARY[snapshot.health] ?? SUMMARY[AdminHealth.ERROR]
+  const reachable = (ms: number, ok: boolean) =>
+    ok ? t.t(`AdminSystem.reachableIn`, { ms }) : t.t(`AdminSystem.noAnswer`)
+  const unknown = t.t(`AdminSystem.unknown`)
   return (
     <>
-      <div data-e2e="admin-system-summary" data-health={HEALTH[snapshot.health]?.text}>
-        <Notice tone={summary.tone}>{summary.text}</Notice>
+      <div data-e2e="admin-system-summary" data-health={HEALTH[snapshot.health]?.name}>
+        <Notice tone={summary.tone}>{t.t(summary.key)}</Notice>
       </div>
       <section
-        aria-label="Services"
+        aria-label={t.t(`AdminSystem.services`)}
         class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"
         data-e2e="admin-system-cards"
       >
         <StatusCard
-          title="Database"
+          title={t.t(`AdminSystem.database`)}
           health={database.health}
           dataE2E="admin-system-database"
           facts={[{
-            label: `Reachable`,
-            value: database.reachable ? `Yes, in ${database.latencyMs} ms` : "No answer",
+            label: t.t(`AdminSystem.reachable`),
+            value: reachable(database.latencyMs, database.reachable),
           }, {
-            label: `Size`,
-            value: database.sizeBytes === null ? "Unknown" : formatBytes(database.sizeBytes),
+            label: t.t(`AdminSystem.size`),
+            value: database.sizeBytes === null ? unknown : formatBytes(database.sizeBytes),
           }, {
-            label: `Version`,
-            value: database.version ? `Postgres ${database.version}` : "Unknown",
+            label: t.t(`AdminSystem.version`),
+            value: database.version ? `Postgres ${database.version}` : unknown,
           }, {
-            label: `Up since`,
-            value: database.startedAt ? <When at={database.startedAt} /> : "Unknown",
+            label: t.t(`AdminSystem.upSince`),
+            value: database.startedAt ? <When at={database.startedAt} /> : unknown,
           }]}
         />
         <StatusCard
-          title="Cache (Valkey)"
+          title={t.t(`AdminSystem.cache`)}
           health={cache.health}
           dataE2E="admin-system-cache"
           facts={[{
-            label: `Reachable`,
-            value: cache.reachable ? `Yes, in ${cache.latencyMs} ms` : "No answer",
+            label: t.t(`AdminSystem.reachable`),
+            value: reachable(cache.latencyMs, cache.reachable),
           }]}
         />
         <StatusCard
-          title="File store (S3)"
+          title={t.t(`AdminSystem.fileStore`)}
           health={fileStore.health}
           dataE2E="admin-system-files"
           facts={[{
-            label: `Reachable`,
-            value: fileStore.reachable ? `Yes, in ${fileStore.latencyMs} ms` : "No answer",
+            label: t.t(`AdminSystem.reachable`),
+            value: reachable(fileStore.latencyMs, fileStore.reachable),
           }]}
         />
         <StatusCard
-          title="Job queue"
+          title={t.t(`AdminSystem.queue`)}
           health={queue.health}
           dataE2E="admin-system-queue"
-          hint={
-            <>
-              Warns when a job waits more than {ADMIN_QUEUE_LATE_WARNING_MINUTES}{" "}
-              minutes or any job failed.
-            </>
-          }
+          hint={t.t(`AdminSystem.queueHint`, { count: ADMIN_QUEUE_LATE_WARNING_MINUTES })}
           footer={
             <Link
               href={queue.failed > 0 ? ADMIN_JOB_PATHS.failed : ADMIN_JOB_PATHS.list}
@@ -191,76 +199,88 @@ function SystemBody(
               class="pc-link text-sm font-medium"
               data-e2e="admin-system-open-jobs"
             >
-              Open Jobs
+              {t.t(`AdminSystem.openJobs`)}
             </Link>
           }
           facts={[
             {
-              label: `Due now`,
+              label: t.t(`AdminSystem.dueNow`),
               value: (
                 <>
                   {NUMBER.format(queue.due)}
                   {queue.oldestDueAt && (
                     <span class="ml-1 text-muted">
-                      · oldest <When at={queue.oldestDueAt} />
+                      <Rich
+                        parts={t.parts(`AdminSystem.oldest`)}
+                        tags={{ when: () => <When at={queue.oldestDueAt!} /> }}
+                      />
                     </span>
                   )}
                 </>
               ),
             },
-            { label: `Running`, value: NUMBER.format(queue.running) },
-            { label: `Waiting to retry`, value: NUMBER.format(queue.retrying) },
-            { label: `Scheduled`, value: NUMBER.format(queue.scheduled) },
+            { label: t.t(`AdminSystem.running`), value: NUMBER.format(queue.running) },
+            { label: t.t(`AdminSystem.retrying`), value: NUMBER.format(queue.retrying) },
+            { label: t.t(`AdminSystem.scheduled`), value: NUMBER.format(queue.scheduled) },
             {
-              label: `Failed, last ${ADMIN_FAILED_JOBS_DAYS} days`,
+              label: t.t(`AdminSystem.failedDays`, { count: ADMIN_FAILED_JOBS_DAYS }),
               value: NUMBER.format(queue.failed),
             },
           ]}
         />
         <StatusCard
-          title="Backup"
+          title={t.t(`AdminSystem.backup`)}
           health={backup.health}
           dataE2E="admin-system-backup"
-          hint={
-            <>
-              Warns after {ADMIN_BACKUP_WARNING_HOURS} hours without one, and is an error after{" "}
-              {ADMIN_BACKUP_ERROR_HOURS}.
-            </>
-          }
+          hint={t.t(`AdminSystem.backupHint`, {
+            count: ADMIN_BACKUP_WARNING_HOURS,
+            error: ADMIN_BACKUP_ERROR_HOURS,
+          })}
           facts={[{
-            label: `Last success`,
-            value: backup.succeededAt ? <When at={backup.succeededAt} /> : "None recorded",
+            label: t.t(`AdminSystem.lastSuccess`),
+            value: backup.succeededAt
+              ? <When at={backup.succeededAt} />
+              : t.t(`AdminSystem.noneRecorded`),
           }]}
         />
         <StatusCard
-          title="Migrations"
+          title={t.t(`AdminSystem.migrations`)}
           health={migrations.health}
           dataE2E="admin-system-migrations"
-          facts={[{ label: `Applied`, value: NUMBER.format(migrations.applied) }, {
-            label: `Newest`,
-            value: <span class="font-mono text-xs">{migrations.latest ?? "None"}</span>,
+          facts={[{ label: t.t(`AdminSystem.applied`), value: NUMBER.format(migrations.applied) }, {
+            label: t.t(`AdminSystem.newest`),
+            value: (
+              <span class="font-mono text-xs">
+                {migrations.latest ?? t.t(`AdminSystem.none`)}
+              </span>
+            ),
           }, {
-            label: `Applied at`,
-            value: migrations.latestAt ? <When at={migrations.latestAt} /> : "Never",
+            label: t.t(`AdminSystem.appliedAt`),
+            value: migrations.latestAt
+              ? <When at={migrations.latestAt} />
+              : t.t(`AdminSystem.never`),
           }]}
         />
         <StatusCard
-          title="API build"
+          title={t.t(`AdminSystem.build`)}
           dataE2E="admin-system-build"
           class="sm:col-span-2 xl:col-span-3"
           facts={[
-            { label: `Version`, value: build.version ?? "Development build" },
             {
-              label: `Commit`,
+              label: t.t(`AdminSystem.version`),
+              value: build.version ?? t.t(`AdminSystem.developmentBuild`),
+            },
+            {
+              label: t.t(`AdminSystem.commit`),
               value: (
                 <span class="font-mono text-xs">
-                  {build.commit ? build.commit.slice(0, 12) : "Unknown"}
+                  {build.commit ? build.commit.slice(0, 12) : unknown}
                 </span>
               ),
             },
-            { label: `Runtime`, value: build.runtime },
+            { label: t.t(`AdminSystem.runtime`), value: build.runtime },
             {
-              label: `Up since`,
+              label: t.t(`AdminSystem.upSince`),
               value: <When at={build.startedAt} />,
             },
           ]}

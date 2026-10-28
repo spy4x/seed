@@ -23,6 +23,8 @@ import {
 /** A day as the screens write it on this device: the default formatter, with no person's settings. */
 const day = (at: string) => createFormatters().date(at)
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 const window = new Window({ url: "http://admin.localhost/newsletter" })
 const own = {
   document: globalThis.document,
@@ -347,5 +349,26 @@ describe("operator area: newsletter page", () => {
       .find((element) => element.textContent?.includes("Sent issues"))!
     await clickOn(tab)
     expect(calls).toEqual([["tab", "sends"]])
+  })
+})
+
+describe("the newsletter screen in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminNewsletterScreen
+          {...props([], { dialog: { action: "remove", email: "ann@example.com" } })}
+        />
+        <AdminNewsletterScreen {...props([], { tab: "sends" })} />
+      </I18nContext.Provider>,
+    )
+    expect(
+      englishLeft(document.body, [
+        `ann@example.com`,
+        `cat@example.com`,
+        `First issue`,
+        `2026-10-first`,
+      ]),
+    ).toEqual([])
   })
 })

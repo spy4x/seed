@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 /**
  * The admin app's screens (#146), driven in a browser DOM (happy-dom): what the search sends, what
  * the list and the person's page offer, what the action dialog sends and where focus goes.
@@ -22,11 +21,13 @@ import { AdminUsersScreen, type AdminUsersScreenProps } from "./admin-users-scre
 import { AdminUserScreen, type AdminUserScreenProps, auditTone } from "./admin-user-screen.tsx"
 import {
   AdminDashboardScreen,
-  changeText,
   changeTone,
   countAxisTop,
+  statChange,
 } from "./admin-dashboard-screen.tsx"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
   document: globalThis.document,
@@ -592,7 +593,8 @@ describe("one person in the admin app", () => {
   })
 
   it("adds a module's tab after the page's own and opens it from the address", async () => {
-    const extraTabs = [{ id: "devices", label: "Devices", content: <p>Two phones</p> }]
+    const phones = "Two phones"
+    const extraTabs = [{ id: "devices", label: "Devices", content: <p>{phones}</p> }]
     await mount(<AdminUserScreen {...userProps([], { extraTabs, tab: "devices" })} />)
 
     const labels = [...document.querySelectorAll("[role=tab]")].map((tab) => tab.textContent)
@@ -695,13 +697,10 @@ const stats: AdminStats = {
 
 describe("the admin dashboard", () => {
   it("says a change as its sign and size against the period before", () => {
-    expect(changeText({ current: 12, previous: 9 }, "previous 7 days")).toBe(
-      "+3 vs previous 7 days",
-    )
-    expect(changeText({ current: 1040, previous: 2041 }, "yesterday")).toBe(
-      "−1,001 vs yesterday",
-    )
-    expect(changeText({ current: 5, previous: 5 }, "yesterday")).toBe("No change vs yesterday")
+    const t = ADMIN_ENGLISH
+    expect(statChange(t, { current: 12, previous: 9 }, 7)).toBe("+3 vs previous 7 days")
+    expect(statChange(t, { current: 1040, previous: 2041 }, 1)).toBe("−1,001 vs yesterday")
+    expect(statChange(t, { current: 5, previous: 5 }, 1)).toBe("No change vs yesterday")
   })
 
   it("colours growth as good, a drop as a warning and no change as neutral", () => {
@@ -798,5 +797,25 @@ describe("the admin sign-in", () => {
     await submit("input[name=otp]")
 
     expect(calls).toEqual([["code", "123456"]])
+  })
+})
+
+describe("the dashboard and the people in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminDashboardScreen stats={stats} error={null} onRetry={() => {}} />
+        <AdminUsersScreen {...listProps([])} />
+        <AdminUserScreen {...userProps([])} />
+        <AdminUserScreen {...userProps([], { tab: "methods" })} />
+        <AdminUserScreen {...userProps([], { tab: "sessions" })} />
+        <AdminUserScreen {...userProps([], { tab: "groups" })} />
+        <AdminUserScreen {...userProps([], { tab: "activity" })} />
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(document.body, [
+      ...[`Ada Lovelace`, `AL`, `Grace Hopper`, `GH`, /[a-z]+@example\.com/g],
+      ...[`Firefox on Linux`, `Personal`, `operator:7`, `English (United Kingdom)`],
+    ])).toEqual([])
   })
 })

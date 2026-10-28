@@ -8,7 +8,7 @@ import {
   type AdminRepeatingJob,
 } from "@domain/identity"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
-import { createJobsState, JOB_ACTION_FAILED } from "./state.ts"
+import { createJobsState } from "./state.ts"
 
 const ID = `01920000-0000-7000-8000-000000000001`
 
@@ -122,7 +122,11 @@ it("keeps the dialog open with a message when the action failed for another reas
   state.openDialog(`cancel`)
   await state.act(`cancel`)
 
-  expect(state.dialog.value).toEqual({ dialog: `cancel`, pending: false, error: JOB_ACTION_FAILED })
+  expect(state.dialog.value).toEqual({
+    dialog: `cancel`,
+    pending: false,
+    error: `That did not work. Try again in a moment.`,
+  })
   expect(bodies(toasts)).toEqual([])
 })
 

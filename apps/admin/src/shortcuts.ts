@@ -1,3 +1,4 @@
+import type { Translator } from "@spy4x/platform/universal/i18n"
 import { generalRows, SHORTCUT_GROUPS, type ShortcutRow } from "@ui/shortcuts.tsx"
 import type { AdminModule } from "./modules/types.ts"
 
@@ -30,16 +31,21 @@ export const LIST_FILTER_MODULES: ReadonlySet<string> = new Set([
 
 /**
  * A page's own actions, by the page's address: `c` writes a new post from the blog's list, adds a
- * link from the contact links, and adds an item or a category from the catalog's lists.
+ * link from the contact links, and adds an item or a category from the catalog's lists. Each
+ * description is a catalog key.
  */
 export const ADMIN_PAGE_ACTIONS: Readonly<
   Record<string, readonly { keys: string; description: string; href: string }[]>
 > = {
-  "/blog": [{ keys: "c", description: "New post", href: "/blog/new" }],
-  "/contact-links": [{ keys: "c", description: "Add link", href: "/contact-links/new" }],
-  "/catalog": [{ keys: "c", description: "Add item", href: "/catalog/new" }],
+  "/blog": [{ keys: "c", description: `AdminShortcuts.newPost`, href: "/blog/new" }],
+  "/contact-links": [{
+    keys: "c",
+    description: `AdminShortcuts.addLink`,
+    href: "/contact-links/new",
+  }],
+  "/catalog": [{ keys: "c", description: `AdminShortcuts.addItem`, href: "/catalog/new" }],
   "/catalog/categories": [
-    { keys: "c", description: "Add category", href: "/catalog/categories/new" },
+    { keys: "c", description: `AdminShortcuts.addCategory`, href: "/catalog/categories/new" },
   ],
 }
 
@@ -53,6 +59,8 @@ const SAVE_PAGES = /^\/(blog|catalog)\/(?!categories(\/|$))[^/]+$/
 export interface AdminShortcutPorts {
   /** The modules shown, in the rail's order. */
   modules: readonly AdminModule[]
+  /** The page's translator: the rows' descriptions are catalog keys. */
+  t: Translator<string>
   /** The address of the page shown. */
   path: string
   navigate: (href: string) => void
@@ -73,7 +81,7 @@ export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
     if (key === undefined) return []
     return [{
       keys: `g ${key}`,
-      description: module.nav.name,
+      description: ports.t.t(module.nav.name),
       group: SHORTCUT_GROUPS.goTo,
       run: () => ports.navigate(module.nav.href),
     }]
@@ -82,20 +90,26 @@ export function adminShortcutRows(ports: AdminShortcutPorts): ShortcutRow[] {
   const filter: ShortcutRow[] = list && LIST_FILTER_MODULES.has(list.id)
     ? [{
       keys: "/",
-      description: "Search this list",
+      description: ports.t.t(`AdminShortcuts.searchList`),
       group: SHORTCUT_GROUPS.page,
       run: ports.focusListFilter,
     }]
     : []
   const actions = (ADMIN_PAGE_ACTIONS[ports.path] ?? []).map((action): ShortcutRow => ({
     keys: action.keys,
-    description: action.description,
+    description: ports.t.t(action.description),
     group: SHORTCUT_GROUPS.page,
     run: () => ports.navigate(action.href),
   }))
   // Listed only: the save button binds the key itself, while it is shown and enabled.
   const save: ShortcutRow[] = SAVE_PAGES.test(ports.path)
-    ? [{ keys: "mod+s", description: "Save the post", group: SHORTCUT_GROUPS.page }]
+    ? [{
+      keys: "mod+s",
+      description: ports.t.t(
+        ports.path.startsWith(`/catalog/`) ? `AdminShortcuts.saveItem` : `AdminShortcuts.savePost`,
+      ),
+      group: SHORTCUT_GROUPS.page,
+    }]
     : []
   return [...generalRows(ports.openShortcuts), ...goTo, ...filter, ...actions, ...save]
 }

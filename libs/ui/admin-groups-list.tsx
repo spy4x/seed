@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Avatar } from "@spy4x/preact-ui/avatar"
@@ -30,6 +29,9 @@ import { GroupMark } from "./group-appearance.tsx"
 import { nextSort } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { OnDay, When } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** The groups module's pages in the admin app. */
 export const ADMIN_GROUP_PATHS = {
@@ -38,8 +40,8 @@ export const ADMIN_GROUP_PATHS = {
 } as const
 
 const STATUS_CHIPS: { value: Exclude<AdminGroupStatusFilter, "any">; label: string }[] = [
-  { value: `active`, label: `Active` },
-  { value: `deleted`, label: `In trash` },
+  { value: `active`, label: `AdminGroups.active` },
+  { value: `deleted`, label: `AdminGroups.inTrash` },
 ]
 
 /**
@@ -68,30 +70,35 @@ const TABLE_CLASS = [
 
 const NUMBER = new Intl.NumberFormat(`en`)
 
-/** A group role as a person reads it: `Owner`. */
-export function groupRoleLabel(role: GroupRole): string {
+/** A group role as a person reads it, in the operator's language: `Owner`. */
+export function groupRoleLabel(t: Translator<string>, role: GroupRole): string {
   switch (role) {
     case GroupRole.OWNER:
-      return `Owner`
+      return t.t(`AdminGroups.roleOwner`)
     case GroupRole.ADMIN:
-      return `Admin`
+      return t.t(`AdminGroups.roleAdmin`)
     case GroupRole.EDITOR:
-      return `Editor`
+      return t.t(`AdminGroups.roleEditor`)
     case GroupRole.VIEWER:
-      return `Viewer`
+      return t.t(`AdminGroups.roleViewer`)
     default:
-      return `Member`
+      return t.t(`AdminGroups.roleMember`)
   }
 }
 
 /** A person's name for a list: their full name, or their address before they set one. */
-export function adminGroupPersonName(person: Pick<AdminGroupPerson, "name" | "email">): string {
-  return person.name || person.email || `No name`
+export function adminGroupPersonName(
+  t: Translator<string>,
+  person: Pick<AdminGroupPerson, "name" | "email">,
+): string {
+  return person.name || person.email || t.t(`AdminGroups.noName`)
 }
 
-/** A plan's name as a person reads it: `Free`, `Pro`. */
-export function planLabel(planId: string): string {
-  return planId === FREE_PLAN_ID ? `Free` : planId[0].toUpperCase() + planId.slice(1)
+/** A plan's name as a person reads it: `Free` in the operator's language, `Pro` as named. */
+export function planLabel(t: Translator<string>, planId: string): string {
+  return planId === FREE_PLAN_ID
+    ? t.t(`AdminGroups.free`)
+    : planId[0].toUpperCase() + planId.slice(1)
 }
 
 /** One row of the table: the group, under the keys the server sorts by. */
@@ -126,6 +133,7 @@ export function AdminGroupsListScreen(
   { filter, list, pending, error, onSearch, onPage, navigate }: AdminGroupsListScreenProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
+  const t = useAdminText()
 
   // After a page change the list is new: the reader starts again at its heading.
   const page = list?.page
@@ -148,8 +156,8 @@ export function AdminGroupsListScreen(
   return (
     <Stack>
       <PageHeader
-        title="Groups"
-        subtitle="Every group, its owner and its members. Open a group to manage its members and invitations."
+        title={t.t(`AdminGroups.title`)}
+        subtitle={t.t(`AdminGroups.subtitle`)}
         titleDataE2E="admin-groups-title"
       />
       <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
@@ -161,7 +169,7 @@ export function AdminGroupsListScreen(
           {/* Keyed by the query, so going back in history shows the search that page had. */}
           <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-              <Field id="admin-groups-q" label="Group name, owner or group id">
+              <Field id="admin-groups-q" label={t.t(`AdminGroups.search`)}>
                 <Input
                   name="q"
                   type="search"
@@ -176,19 +184,19 @@ export function AdminGroupsListScreen(
               type="submit"
               data-e2e="admin-groups-submit"
               busy={pending}
-              busyLabel="Searching…"
+              busyLabel={t.t(`AdminGroups.searching`)}
             >
-              Search
+              {t.t(`AdminGroups.submit`)}
             </Button>
           </div>
         </ScreenForm>
         <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
           <div class="flex flex-wrap items-center gap-2" data-e2e="admin-groups-status">
-            <span class="text-sm text-muted" aria-hidden="true">Status</span>
+            <span class="text-sm text-muted" aria-hidden="true">{t.t(`AdminGroups.status`)}</span>
             <ToggleChips
               mode="single"
-              label="Status"
-              options={STATUS_CHIPS}
+              label={t.t(`AdminGroups.status`)}
+              options={STATUS_CHIPS.map((chip) => ({ ...chip, label: t.t(chip.label) }))}
               value={filter.status === `any` ? null : filter.status}
               onChange={(value) =>
                 onSearch({
@@ -205,7 +213,7 @@ export function AdminGroupsListScreen(
               data-e2e="admin-groups-clear"
               onClick={() => onSearch({ ...filter, query: ``, status: `any`, page: 1 })}
             >
-              Clear filters
+              {t.t(`AdminGroups.clear`)}
             </Button>
           )}
         </div>
@@ -214,13 +222,11 @@ export function AdminGroupsListScreen(
       <ErrorState message={error} />
 
       <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-groups-count">
-        {list
-          ? `${NUMBER.format(list.total)} ${list.total === 1 ? `group` : `groups`}`
-          : `Loading groups`}
+        {list ? t.t(`AdminGroups.count`, { count: list.total }) : t.t(`AdminGroups.loading`)}
       </h2>
       {list === null
         ? !error && (
-          <div role="status" aria-label="Loading groups">
+          <div role="status" aria-label={t.t(`AdminGroups.loading`)}>
             <LoadingSkeleton rows={5} />
           </div>
         )
@@ -229,7 +235,7 @@ export function AdminGroupsListScreen(
             <DataTable
               mode="server"
               class={TABLE_CLASS}
-              columns={groupColumns(navigate)}
+              columns={groupColumns(t, navigate)}
               rows={rows}
               sort={filter.sort}
               onSortChange={(sort) =>
@@ -238,16 +244,14 @@ export function AdminGroupsListScreen(
                   sort: nextSort<AdminGroupSortKey>(filter.sort, sort, ADMIN_GROUP_DEFAULT_SORT),
                   page: 1,
                 })}
-              caption="Groups"
+              caption={t.t(`AdminGroups.title`)}
               captionHidden
               rowKey={(row) => row.group.id}
               empty={
                 <EmptyState
                   inset
-                  title="No group matches"
-                  description={filtered
-                    ? `Try another name or address, or clear the filters.`
-                    : `Groups appear here once people sign up.`}
+                  title={t.t(`AdminGroups.noMatch`)}
+                  description={t.t(filtered ? `AdminGroups.noMatchHint` : `AdminGroups.noneYet`)}
                 />
               }
               paging={{
@@ -255,7 +259,7 @@ export function AdminGroupsListScreen(
                 pageSize: list.pageSize,
                 total: list.total,
                 onChange: onPage,
-                label: `Pages of groups`,
+                label: t.t(`AdminGroups.pages`),
               }}
             />
           </div>
@@ -265,30 +269,33 @@ export function AdminGroupsListScreen(
 }
 
 /** The table's columns. The name, member count, last activity and creation sort, on the server. */
-function groupColumns(navigate?: Navigate): DataTableColumn<GroupTableRow, AdminGroupSortKey>[] {
+function groupColumns(
+  t: Translator<string>,
+  navigate?: Navigate,
+): DataTableColumn<GroupTableRow, AdminGroupSortKey>[] {
   return [
     {
       key: `name`,
-      header: `Group`,
+      header: t.t(`AdminGroups.group`),
       sortable: true,
       render: ({ group }) => <GroupCell group={group} navigate={navigate} />,
     },
     {
       id: `owner`,
-      header: `Owner`,
+      header: t.t(`AdminGroups.owner`),
       render: ({ group }) => (
         // One line each, cut with an ellipsis at 11rem; the full text stays in the tooltip. A
         // phone hides this column and shows the owner in the group's cell.
         <div class="flex items-center gap-2">
           {/* Decorative: the name beside it already names the owner. */}
-          <Avatar name={adminGroupPersonName(group.owner)} alt="" size="sm" />
-          <div class="flex w-44 min-w-0 flex-col">
+          <Avatar name={adminGroupPersonName(t, group.owner)} alt="" size="sm" />
+          <div class="flex w-44 min-w-0 flex-col" translate={false}>
             <span
               class="truncate text-sm font-medium"
-              title={adminGroupPersonName(group.owner)}
+              title={adminGroupPersonName(t, group.owner)}
               data-e2e="admin-groups-owner"
             >
-              {adminGroupPersonName(group.owner)}
+              {adminGroupPersonName(t, group.owner)}
             </span>
             {group.owner.email && group.owner.name && (
               <span class="truncate text-xs text-muted" title={group.owner.email}>
@@ -301,23 +308,23 @@ function groupColumns(navigate?: Navigate): DataTableColumn<GroupTableRow, Admin
     },
     {
       key: `memberCount`,
-      header: `Members`,
+      header: t.t(`AdminGroups.members`),
       sortable: true,
       render: ({ memberCount }) => <span class="tabular-nums">{NUMBER.format(memberCount)}</span>,
     },
     {
       id: `notes`,
-      header: `Notes`,
+      header: t.t(`AdminGroups.notes`),
       render: ({ group }) => (
         <span class="tabular-nums text-muted">{NUMBER.format(group.noteCount)}</span>
       ),
     },
     {
       id: `plan`,
-      header: `Plan`,
+      header: t.t(`AdminGroups.plan`),
       render: ({ group }) => (
         <Badge
-          text={planLabel(group.planId)}
+          text={planLabel(t, group.planId)}
           color={group.planId === FREE_PLAN_ID ? `gray` : `purple`}
           type="outline"
         />
@@ -325,16 +332,16 @@ function groupColumns(navigate?: Navigate): DataTableColumn<GroupTableRow, Admin
     },
     {
       key: `lastActivityAt`,
-      header: `Last activity`,
+      header: t.t(`AdminGroups.lastActivity`),
       sortable: true,
       render: ({ lastActivityAt }) =>
         lastActivityAt
           ? <When class="whitespace-nowrap text-sm" at={lastActivityAt} />
-          : <span class="text-sm text-muted">None</span>,
+          : <span class="text-sm text-muted">{t.t(`AdminGroups.none`)}</span>,
     },
     {
       key: `createdAt`,
-      header: `Created`,
+      header: t.t(`AdminGroups.created`),
       sortable: true,
       render: ({ createdAt }) => (
         <OnDay class="whitespace-nowrap text-sm text-muted" at={createdAt} />
@@ -350,7 +357,8 @@ function groupColumns(navigate?: Navigate): DataTableColumn<GroupTableRow, Admin
 function GroupCell(
   { group, navigate }: { group: AdminGroupRow; navigate?: Navigate },
 ): JSX.Element {
-  const owner = adminGroupPersonName(group.owner)
+  const t = useAdminText()
+  const owner = adminGroupPersonName(t, group.owner)
   return (
     // At least 10rem wide on a wider screen: a long name wraps rather than squeezing into a few
     // letters. A phone has no room to spare, so there the name wraps as narrow as it must.
@@ -363,22 +371,30 @@ function GroupCell(
             href={ADMIN_GROUP_PATHS.group(group.id)}
             navigate={navigate}
             class="pc-link font-medium wrap-anywhere"
+            translate={false}
             data-e2e={`admin-group-${group.id}`}
           >
             {group.name}
           </Link>
           {group.deletedAt && (
             <span data-e2e="admin-group-deleted">
-              <Badge text="In trash" color="red" type="outline" />
+              <Badge text={t.t(`AdminGroups.inTrash`)} color="red" type="outline" />
             </span>
           )}
         </div>
         <div class="flex flex-col text-xs text-muted sm:hidden" data-e2e="admin-groups-owner-phone">
           <span class="wrap-anywhere">
-            Owner: <span class="font-medium text-foreground">{owner}</span>
+            <Rich
+              parts={t.parts(`AdminGroups.ownerLine`, { name: owner })}
+              tags={{
+                name: (text) => (
+                  <bdi class="font-medium text-foreground" translate={false}>{text}</bdi>
+                ),
+              }}
+            />
           </span>
           {group.owner.email && group.owner.email !== owner && (
-            <span class="wrap-anywhere">{group.owner.email}</span>
+            <span class="wrap-anywhere" translate={false}>{group.owner.email}</span>
           )}
         </div>
       </div>

@@ -8,8 +8,8 @@ import {
   GroupRole,
 } from "@domain/groups"
 import { UserRole } from "@domain/identity"
-import { ADMIN_FAILURE, type AdminApiResult, type AdminFetch } from "../../state.ts"
-import { createGroupsState, FILE_GONE, type GroupsFilePorts } from "./state.ts"
+import type { AdminApiResult, AdminFetch } from "../../state.ts"
+import { createGroupsState, type GroupsFilePorts } from "./state.ts"
 
 const GROUP_ID = `0199c3a0-0000-7000-8000-000000000001`
 const INVITATION_ID = `0199c3a0-0000-7000-8000-000000000002`
@@ -253,7 +253,7 @@ it(`says a file is gone and reads the list again when its download answers 404`,
   await state.loadFiles(GROUP_ID, { query: ``, page: 1 })
   await state.downloadFile(GROUP_ID, file)
   expect(saved).toEqual([])
-  expect(state.files.value.notice).toBe(FILE_GONE)
+  expect(state.files.value.notice).toBe(`This file is gone. Someone may have removed it already.`)
   expect(calls).toEqual([
     `GET /api/admin/groups/${GROUP_ID}/files`,
     `GET /api/admin/groups/${GROUP_ID}/files`,
@@ -275,7 +275,7 @@ it(`shows the API's reason, or a plain failure offline, when a download fails`, 
   const again = createGroupsState(fakeRequest().request, createToastStore(), stayed, offline.ports)
   await again.loadFiles(GROUP_ID, { query: ``, page: 1 })
   await again.downloadFile(GROUP_ID, file)
-  expect(again.files.value.notice).toBe(ADMIN_FAILURE)
+  expect(again.files.value.notice).toBe(`Something went wrong. Try again.`)
 })
 
 it(`signs the app out when a download answers 401, as every other call does`, async () => {

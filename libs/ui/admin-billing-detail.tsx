@@ -1,8 +1,6 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { IconExternalLink } from "@spy4x/preact-icons"
 import { Button, buttonClasses } from "@spy4x/preact-ui/button"
 import { DialogActions } from "@spy4x/preact-ui/dialog-actions"
@@ -21,7 +19,6 @@ import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import {
   ADMIN_BILLING_NOTE_MAX_LENGTH,
   ADMIN_BILLING_SUPERVISOR_ACTIONS,
-  ADMIN_BILLING_TIME_LABELS,
   ADMIN_BILLING_TIME_LENGTHS,
   type AdminBillingActionKind,
   adminBillingActionRefusal,
@@ -48,9 +45,12 @@ import {
   money,
   perMonth,
 } from "./admin-billing-list.tsx"
-import { useFormat } from "@spy4x/preact-ui/format"
+import { useFormat, When } from "@spy4x/preact-ui/format"
 import type { Formatters } from "@spy4x/time/format"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminBillingOperatorView {
@@ -115,7 +115,18 @@ export interface AdminBillingCustomerScreenProps {
 }
 
 /** The menu item's second line when the operator's role is too low for it (decision 6 of #196). */
-export const NEEDS_SUPERVISOR = `Needs a supervisor`
+const NEEDS_SUPERVISOR = `AdminBillingCustomer.needsSupervisor`
+
+/** Each length of free time as a person reads it, by catalog key. */
+const TIME_LABELS: Record<AdminBillingTimeLength, string> = {
+  "7d": `AdminBillingCustomer.length7d`,
+  "14d": `AdminBillingCustomer.length14d`,
+  "30d": `AdminBillingCustomer.length30d`,
+  "1m": `AdminBillingCustomer.length1m`,
+  "3m": `AdminBillingCustomer.length3m`,
+  "6m": `AdminBillingCustomer.length6m`,
+  "12m": `AdminBillingCustomer.length12m`,
+}
 
 /** Whether `role` may run `action`: refunds and cancelling at once need a supervisor. */
 export function mayRun(role: UserRole, action: AdminBillingActionKind): boolean {
@@ -125,9 +136,10 @@ export function mayRun(role: UserRole, action: AdminBillingActionKind): boolean 
 /** One menu entry of the page: shown or not, and when shown, why it cannot run, if it cannot. */
 interface MenuEntry {
   dialog: AdminBillingDialogKind
+  /** The entry's name, a catalog key. */
   label: string
   danger: boolean
-  /** Shown disabled with this reason, or `null` when it runs. */
+  /** Shown disabled with this reason (a catalog key), or `null` when it runs. */
   disabled: string | null
 }
 
@@ -146,7 +158,7 @@ export function billingMenu(
     adminBillingActionRefusal(action, customer) === null
   const blocked = (actions: AdminBillingActionKind[]): string | null =>
     detail.operatorIsMember
-      ? `You belong to this group`
+      ? `AdminBillingCustomer.youBelong`
       : actions.some((action) => mayRun(operator.role, action))
       ? null
       : NEEDS_SUPERVISOR
@@ -156,20 +168,20 @@ export function billingMenu(
   if (paid === undefined || (paid !== null && !paid.refunded) || payment.error !== null) {
     entries.push({
       dialog: `refund`,
-      label: `Refund the last payment`,
+      label: `AdminBillingCustomer.refundLast`,
       danger: true,
       disabled: blocked([`refund`]) ??
         (payment.error !== null
-          ? `Payment not loaded`
+          ? `AdminBillingCustomer.paymentNotLoaded`
           : paid === undefined
-          ? `Loading the payment`
+          ? `AdminBillingCustomer.loadingPayment`
           : null),
     })
   }
   if (allowed(`time`)) {
     entries.push({
       dialog: `time`,
-      label: `Give time at no charge`,
+      label: `AdminBillingCustomer.giveTime`,
       danger: false,
       disabled: blocked([`time`]),
     })
@@ -177,7 +189,7 @@ export function billingMenu(
   if (allowed(`undo`)) {
     entries.push({
       dialog: `undo`,
-      label: `Undo the cancellation`,
+      label: `AdminBillingCustomer.undoCancel`,
       danger: false,
       disabled: blocked([`undo`]),
     })
@@ -186,7 +198,7 @@ export function billingMenu(
   if (cancels.length > 0) {
     entries.push({
       dialog: `cancel`,
-      label: `Cancel subscription`,
+      label: `AdminBillingCustomer.cancel`,
       danger: true,
       disabled: blocked([...cancels]),
     })
@@ -203,26 +215,29 @@ export function billingMenu(
 export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProps): JSX.Element {
   const { detail, error, navigate } = props
   const format = useFormat()
-  const back = { href: ADMIN_BILLING_PATHS.list, label: `Billing` }
+  const t = useAdminText()
+  const back = { href: ADMIN_BILLING_PATHS.list, label: t.t(`AdminBillingCustomer.back`) }
 
   if (!detail) {
     return (
       <Stack>
-        <PageHeader title="Customer" back={back} navigate={navigate} />
+        <PageHeader title={t.t(`AdminBillingCustomer.title`)} back={back} navigate={navigate} />
         {error
           ? (
             <div class="flex flex-col items-start gap-3" data-e2e="admin-billing-customer-error">
               <ErrorState message={error} />
               <Cluster>
-                <Button variant="secondary" onClick={props.onRetry}>Try again</Button>
+                <Button variant="secondary" onClick={props.onRetry}>
+                  {t.t(`AdminBillingCustomer.retry`)}
+                </Button>
                 <Link href={ADMIN_BILLING_PATHS.list} navigate={navigate} class="pc-link text-sm">
-                  Back to Billing
+                  {t.t(`AdminBillingCustomer.backToBilling`)}
                 </Link>
               </Cluster>
             </div>
           )
           : (
-            <div role="status" aria-label="Loading the group's billing">
+            <div role="status" aria-label={t.t(`AdminBillingCustomer.loading`)}>
               <LoadingSkeleton rows={5} />
             </div>
           )}
@@ -233,18 +248,18 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
   const { customer } = detail
   const view = adminBillingStatus(customer, props.now, detail.graceDays)
   const entries = billingMenu(detail, props.payment, props.operator)
-  const owner = adminGroupPersonName(customer.owner)
+  const owner = adminGroupPersonName(t, customer.owner)
   const stripe = detail.providerUrl && (
     <a
       href={detail.providerUrl}
       target="_blank"
       rel="noopener noreferrer"
       class={buttonClasses(`secondary`, `md`, `max-sm:size-11 max-sm:p-0`)}
-      aria-label="Open in Stripe (opens a new tab)"
+      aria-label={t.t(`AdminBillingCustomer.openStripeLabel`)}
       data-e2e="admin-billing-stripe"
     >
       <IconExternalLink class="size-4" aria-hidden="true" />
-      <span class="max-sm:hidden">Open in Stripe</span>
+      <span class="max-sm:hidden">{t.t(`AdminBillingCustomer.openStripe`)}</span>
     </a>
   )
 
@@ -252,7 +267,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
     <Stack>
       <PageHeader
         title={customer.groupName}
-        subtitle={`Owned by ${owner}`}
+        subtitle={t.t(`AdminBillingCustomer.ownedBy`, { owner })}
         back={back}
         navigate={navigate}
         action={stripe || undefined}
@@ -266,8 +281,8 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
               onClick={() => props.onOpenDialog(entry.dialog)}
             >
               <span class="flex w-full items-center justify-between gap-4">
-                <span>{entry.label}</span>
-                {entry.disabled && <span class="text-xs text-muted">{entry.disabled}</span>}
+                <span>{t.t(entry.label)}</span>
+                {entry.disabled && <span class="text-xs text-muted">{t.t(entry.disabled)}</span>}
               </span>
             </DropdownItem>
           ))
@@ -278,12 +293,12 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
 
       {detail.operatorIsMember && (
         <Notice tone="info" data-e2e="admin-billing-member">
-          You own or belong to this group, so another operator handles its billing.
+          {t.t(`AdminBillingCustomer.member`)}
         </Notice>
       )}
       {customer.groupDeletedAt && customer.status !== BillingStatus.Canceled && (
         <Notice tone="danger" data-e2e="admin-billing-deleted-notice">
-          This group is in the trash but its subscription still bills. Cancel it.
+          {t.t(`AdminBillingCustomer.deleted`)}
         </Notice>
       )}
       {props.waiting && <Waiting waiting={props.waiting} providerUrl={detail.providerUrl} />}
@@ -292,31 +307,34 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
         class="grid grid-cols-1 gap-4 rounded-xl border border-subtle bg-surface p-4 sm:grid-cols-[10rem_1fr]"
         data-e2e="admin-billing-summary"
       >
-        <Fact label="Status">
+        <Fact label={t.t(`AdminBillingCustomer.status`)}>
           <BillingStatusLine view={view} dataE2E="admin-billing-status" />
         </Fact>
-        <Fact label="Plan">{planLine(customer)}</Fact>
-        <Fact label="Per month">
-          <span data-e2e="admin-billing-per-month">{perMonthLine(customer)}</span>
+        <Fact label={t.t(`AdminBillingCustomer.plan`)}>{planLine(t, customer)}</Fact>
+        <Fact label={t.t(`AdminBillingCustomer.perMonth`)}>
+          <span data-e2e="admin-billing-per-month">{perMonthLine(t, customer)}</span>
         </Fact>
-        <Fact label="Last payment">
+        <Fact label={t.t(`AdminBillingCustomer.lastPayment`)}>
           <LastPayment {...props.payment} onRetry={props.onRetryPayment} />
         </Fact>
-        <Fact label="Customer since">
-          {detail.customerSince ? billingDate(detail.customerSince, format) : `Not recorded`}
+        <Fact label={t.t(`AdminBillingCustomer.customerSince`)}>
+          {detail.customerSince
+            ? billingDate(detail.customerSince, format)
+            : t.t(`AdminBillingCustomer.notRecorded`)}
         </Fact>
         {customer.owner.email && (
-          <Fact label="Owner's email">
-            <span class="wrap-anywhere" data-e2e="admin-billing-owner-email">
+          <Fact label={t.t(`AdminBillingCustomer.ownerEmail`)}>
+            <span class="wrap-anywhere" translate={false} data-e2e="admin-billing-owner-email">
               {customer.owner.email}
             </span>
           </Fact>
         )}
-        <Fact label="Group">
+        <Fact label={t.t(`AdminBillingCustomer.group`)}>
           <Link
             href={ADMIN_GROUP_PATHS.group(customer.groupId)}
             navigate={navigate}
             class="pc-link wrap-anywhere"
+            translate={false}
             data-e2e="admin-billing-group"
           >
             {customer.groupName}
@@ -325,22 +343,24 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
       </dl>
 
       <section class="flex flex-col gap-3" aria-labelledby="admin-billing-history">
-        <h2 id="admin-billing-history" class="text-base font-semibold">Billing history</h2>
+        <h2 id="admin-billing-history" class="text-base font-semibold">
+          {t.t(`AdminBillingCustomer.history`)}
+        </h2>
         <Timeline
-          label="Billing history"
-          empty="Nothing recorded."
+          label={t.t(`AdminBillingCustomer.history`)}
+          empty={t.t(`AdminBillingCustomer.nothingRecorded`)}
           dataE2E="admin-billing-history"
           items={detail.history.map((entry) => ({
             id: entry.id,
-            title: historyTitle(entry, format),
+            title: historyTitle(t, entry, format),
             at: entry.at,
-            when: timeAgo(entry.at),
-            description: historyDescription(entry),
+            when: <When at={entry.at} />,
+            description: historyDescription(t, entry),
             tone: historyTone(entry),
           }))}
         />
         <p class="text-sm text-muted">
-          Operator actions only. Invoices, payments and plan changes are in Stripe.
+          {t.t(`AdminBillingCustomer.historyNote`)}
           {detail.providerUrl && (
             <>
               {" "}
@@ -350,7 +370,7 @@ export function AdminBillingCustomerScreen(props: AdminBillingCustomerScreenProp
                 rel="noopener noreferrer"
                 class="pc-link"
               >
-                Open in Stripe
+                {t.t(`AdminBillingCustomer.openStripe`)}
               </a>
             </>
           )}
@@ -373,19 +393,24 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
 }
 
 /** `Pro, 4 members`. */
-function planLine(customer: AdminBillingCustomer): string {
-  const seats = seatsOf(customer)
-  return `${billingPlanName(customer.planId)}, ${seats} ${seats === 1 ? `member` : `members`}`
+function planLine(t: Translator<string>, customer: AdminBillingCustomer): string {
+  return t.t(`AdminBillingCustomer.planLine`, {
+    plan: billingPlanName(t, customer.planId),
+    count: seatsOf(customer),
+  })
 }
 
 /** `4 × €9.00 = €36.00`, or what a trial would pay. */
-function perMonthLine(customer: AdminBillingCustomer): string {
-  const amount = perMonth(customer)
-  if (amount === null) return `Unknown price: Stripe bills a price no plan here maps to`
+function perMonthLine(t: Translator<string>, customer: AdminBillingCustomer): string {
+  const amount = perMonth(t, customer)
+  if (amount === null) return t.t(`AdminBillingCustomer.unknownPrice`)
   if (amount.detail === null) return amount.amount
-  return customer.status === BillingStatus.Trialing
-    ? `${amount.amount} during the trial, ${amount.detail}`
-    : `${amount.detail} = ${amount.amount}`
+  return t.t(
+    customer.status === BillingStatus.Trialing
+      ? `AdminBillingCustomer.duringTrial`
+      : `AdminBillingCustomer.seatsTotal`,
+    { amount: amount.amount, detail: amount.detail },
+  )
 }
 
 /** The last payment line: loading, failed with a retry, none yet, or the amount and its date. */
@@ -393,26 +418,39 @@ function LastPayment(
   { payment, error, onRetry }: AdminBillingPaymentView & { onRetry: () => void },
 ): JSX.Element {
   const format = useFormat()
+  const t = useAdminText()
   if (error !== null) {
     return (
       <span class="flex flex-wrap items-center gap-2" data-e2e="admin-billing-payment-error">
         <span class="font-normal text-danger">{error}</span>
-        <Button variant="ghost" size="sm" onClick={onRetry}>Try again</Button>
+        <Button variant="ghost" size="sm" onClick={onRetry}>
+          {t.t(`AdminBillingCustomer.retry`)}
+        </Button>
       </span>
     )
   }
   if (payment === undefined) {
     return (
-      <span role="status" aria-label="Loading the last payment" class="block w-40">
+      <span
+        role="status"
+        aria-label={t.t(`AdminBillingCustomer.loadingLastPayment`)}
+        class="block w-40"
+      >
         <LoadingSkeleton rows={1} />
       </span>
     )
   }
-  if (payment === null) return <span data-e2e="admin-billing-payment">None yet</span>
+  if (payment === null) {
+    return <span data-e2e="admin-billing-payment">{t.t(`AdminBillingCustomer.noneYet`)}</span>
+  }
+  const key = payment.refunded
+    ? `AdminBillingCustomer.paymentRefunded`
+    : payment.amountRefunded > 0
+    ? `AdminBillingCustomer.paymentPartlyRefunded`
+    : `AdminBillingCustomer.paymentOn`
   return (
     <span data-e2e="admin-billing-payment">
-      {paymentAmount(payment)} on {billingDate(payment.paidAt, format)}
-      {payment.refunded ? `, refunded` : payment.amountRefunded > 0 ? `, partly refunded` : ``}
+      {t.t(key, { amount: paymentAmount(payment), date: billingDate(payment.paidAt, format) })}
     </span>
   )
 }
@@ -421,32 +459,37 @@ function paymentAmount(payment: Pick<AdminBillingPayment, "amount" | "currency">
   return formatMoney(payment.amount, payment.currency)
 }
 
-/** What the operator did, as the history names it. */
+/** What the operator did, as the history names it, in the operator's language. */
 export function historyTitle(
+  t: Translator<string>,
   entry: AdminBillingHistoryEntry,
   format: Pick<Formatters, "date">,
 ): string {
   switch (entry.event) {
     case BILLING_AUDIT_EVENTS.paymentRefunded:
       return entry.amount
-        ? `${formatMoney(entry.amount.amount, entry.amount.currency)} refunded`
-        : `Payment refunded`
+        ? t.t(`AdminBillingCustomer.amountRefunded`, {
+          amount: formatMoney(entry.amount.amount, entry.amount.currency),
+        })
+        : t.t(`AdminBillingCustomer.paymentRefundedTitle`)
     case BILLING_AUDIT_EVENTS.timeGiven:
       return entry.until
-        ? `No charge until ${billingDate(entry.until, format)}`
-        : `Time given at no charge`
+        ? t.t(`AdminBillingCustomer.noChargeUntil`, { date: billingDate(entry.until, format) })
+        : t.t(`AdminBillingCustomer.timeGiven`)
     case BILLING_AUDIT_EVENTS.cancelledAtPeriodEnd:
-      return `Set to cancel at the period's end`
+      return t.t(`AdminBillingCustomer.setToCancel`)
     case BILLING_AUDIT_EVENTS.cancelledNow:
-      return `Cancelled at once`
+      return t.t(`AdminBillingCustomer.cancelledNow`)
     case BILLING_AUDIT_EVENTS.cancellationUndone:
-      return `Cancellation undone`
+      return t.t(`AdminBillingCustomer.cancellationUndone`)
   }
 }
 
-function historyDescription(entry: AdminBillingHistoryEntry): string {
-  const by = `By ${entry.operator ?? `a removed operator`}.`
-  return entry.note ? `${by} Note: ${entry.note}` : by
+function historyDescription(t: Translator<string>, entry: AdminBillingHistoryEntry): string {
+  const by = entry.operator
+    ? t.t(`AdminBillingCustomer.by`, { operator: entry.operator })
+    : t.t(`AdminBillingCustomer.byRemoved`)
+  return entry.note ? `${by} ${t.t(`AdminBillingCustomer.note`, { note: entry.note })}` : by
 }
 
 function historyTone(entry: AdminBillingHistoryEntry): TimelineTone {
@@ -460,20 +503,20 @@ function historyTone(entry: AdminBillingHistoryEntry): TimelineTone {
 function Waiting(
   { waiting, providerUrl }: { waiting: AdminBillingWaiting; providerUrl: string | null },
 ): JSX.Element {
+  const t = useAdminText()
   if (!waiting.timedOut) {
     return (
       <Notice tone="info" data-e2e="admin-billing-waiting">
-        Sent to Stripe, waiting for confirmation. The page updates once Stripe confirms, usually
-        within a minute.
+        {t.t(`AdminBillingCustomer.waiting`)}
       </Notice>
     )
   }
   return (
     <Notice tone="warning" data-e2e="admin-billing-waiting">
-      Stripe has not confirmed yet. Check the customer in Stripe.{" "}
+      {t.t(`AdminBillingCustomer.timedOut`)}{" "}
       {providerUrl && (
         <a href={providerUrl} target="_blank" rel="noopener noreferrer" class="pc-link">
-          Open in Stripe
+          {t.t(`AdminBillingCustomer.openStripe`)}
         </a>
       )}
     </Notice>
@@ -492,23 +535,38 @@ interface DialogCopy {
  * earlier grace or trial end, or nothing more when that end has passed and it is on Free already.
  */
 function periodEndHelp(
+  t: Translator<string>,
   group: string,
   plan: string,
   keptUntil: Date | null,
   periodEnd: string | null,
   now: Date,
   format: Pick<Formatters, "date">,
-): string {
-  const renew = `Its owner can renew it under Manage billing before the period ends.`
+): ComponentChildren {
+  const sentence = (key: string, date?: string) => (
+    <>
+      <Rich
+        parts={t.parts(key, { group, plan, date: date ?? `` })}
+        tags={{ group: groupName }}
+      />{" "}
+      {t.t(`AdminBillingCustomer.renewHint`)}
+    </>
+  )
   if (keptUntil !== null && keptUntil.getTime() <= now.getTime()) {
-    return `${group} is already on Free and is not charged again. ${renew}`
+    return sentence(`AdminBillingCustomer.alreadyFree`)
   }
   if (keptUntil === null || (periodEnd !== null && keptUntil.getTime() === Date.parse(periodEnd))) {
-    return `${group} keeps ${plan} until then and is not charged again. ${renew}`
+    return sentence(`AdminBillingCustomer.keepsUntilThen`)
   }
-  return `${group} keeps ${plan} until ${
-    billingDate(keptUntil.toISOString(), format)
-  } and is not charged again. ${renew}`
+  return sentence(
+    `AdminBillingCustomer.keepsUntil`,
+    billingDate(keptUntil.toISOString(), format),
+  )
+}
+
+/** A group's name inside a sentence: the group's own words, isolated and never machine-translated. */
+function groupName(text: string): JSX.Element {
+  return <bdi translate={false}>{text}</bdi>
 }
 
 /** The dialog of one action: what it does, its choice when it has one, the note and its button. */
@@ -521,10 +579,11 @@ function ActionDialog(
   const { dialog, detail, operator, pending, onAction, onCloseDialog, actionError } = props
   const { customer } = detail
   const format = useFormat()
+  const t = useAdminText()
   const group = customer.groupName
-  const plan = billingPlanName(customer.planId)
+  const plan = billingPlanName(t, customer.planId)
   const price = listPriceOf(customer)
-  const charge = price ? money(price) : `its plan's price`
+  const charge = price ? money(price) : t.t(`AdminBillingCustomer.itsPlanPrice`)
   const periodEnd = customer.currentPeriodEnd
     ? billingDate(customer.currentPeriodEnd, format)
     : null
@@ -542,15 +601,17 @@ function ActionDialog(
     case `refund`: {
       const amount = payment ? paymentAmount(payment) : ``
       copy = {
-        title: `Refund ${amount} to ${group}?`,
-        submit: `Refund ${amount}`,
-        busy: `Refunding…`,
+        title: t.t(`AdminBillingCustomer.refundTitle`, { amount, group }),
+        submit: t.t(`AdminBillingCustomer.refundSubmit`, { amount }),
+        busy: t.t(`AdminBillingCustomer.refunding`),
         danger: true,
       }
       body = payment && (
         <p class="text-sm text-muted">
-          Stripe returns the {amount} paid on {billingDate(payment.paidAt, format)}{" "}
-          to the card it came from. The subscription keeps running; to stop it, cancel it too.
+          {t.t(`AdminBillingCustomer.refundText`, {
+            amount,
+            date: billingDate(payment.paidAt, format),
+          })}
         </p>
       )
       break
@@ -558,15 +619,15 @@ function ActionDialog(
     case `time`: {
       const until = billingDate(noChargeUntil(customer, length, props.now).toISOString(), format)
       copy = {
-        title: `Give ${group} time at no charge`,
-        submit: `Give ${ADMIN_BILLING_TIME_LABELS[length]} at no charge`,
-        busy: `Saving…`,
+        title: t.t(`AdminBillingCustomer.timeTitle`, { group }),
+        submit: t.t(`AdminBillingCustomer.timeSubmit`, { length: t.t(TIME_LABELS[length]) }),
+        busy: t.t(`AdminBillingCustomer.saving`),
         danger: false,
       }
       body = (
         <>
           <RadioGroup
-            legend="For how long"
+            legend={t.t(`AdminBillingCustomer.howLong`)}
             name="length"
             required
             value={length}
@@ -574,12 +635,14 @@ function ActionDialog(
             data-e2e="admin-billing-length"
             options={ADMIN_BILLING_TIME_LENGTHS.map((value) => ({
               value,
-              label: ADMIN_BILLING_TIME_LABELS[value],
+              label: t.t(TIME_LABELS[value]),
             }))}
           />
           <p class="text-sm text-muted" aria-live="polite" data-e2e="admin-billing-until">
-            {group} keeps {plan} and nothing is charged until{" "}
-            {until}. After that, the normal charge of {charge} a month starts again.
+            <Rich
+              parts={t.parts(`AdminBillingCustomer.timeText`, { group, plan, date: until, charge })}
+              tags={{ group: groupName }}
+            />
           </p>
         </>
       )
@@ -587,14 +650,14 @@ function ActionDialog(
     }
     case `cancel`:
       copy = {
-        title: `Cancel ${group}'s subscription?`,
-        submit: `Cancel subscription`,
-        busy: `Cancelling…`,
+        title: t.t(`AdminBillingCustomer.cancelTitle`, { group }),
+        submit: t.t(`AdminBillingCustomer.cancel`),
+        busy: t.t(`AdminBillingCustomer.cancelling`),
         danger: true,
       }
       body = (
         <RadioGroup
-          legend="When"
+          legend={t.t(`AdminBillingCustomer.when`)}
           name="when"
           required
           value={when}
@@ -607,10 +670,11 @@ function ActionDialog(
               label: (
                 <OptionLabel
                   title={periodEnd
-                    ? `At the end of the period, on ${periodEnd}`
-                    : `At the end of the period`}
+                    ? t.t(`AdminBillingCustomer.atPeriodEndOn`, { date: periodEnd })
+                    : t.t(`AdminBillingCustomer.atPeriodEnd`)}
                   help={periodAllowed
                     ? periodEndHelp(
+                      t,
                       group,
                       plan,
                       keptUntil,
@@ -618,7 +682,7 @@ function ActionDialog(
                       props.now,
                       format,
                     )
-                    : `Already set to end then.`}
+                    : t.t(`AdminBillingCustomer.alreadySet`)}
                 />
               ),
             },
@@ -627,10 +691,10 @@ function ActionDialog(
               disabled: !nowAllowed,
               label: (
                 <OptionLabel
-                  title="Now"
+                  title={t.t(`AdminBillingCustomer.now`)}
                   help={nowAllowed
-                    ? `${group} moves to Free at once. The current period is not refunded; refund it separately if needed. The owner is not told.`
-                    : NEEDS_SUPERVISOR}
+                    ? t.t(`AdminBillingCustomer.nowHelp`, { group })
+                    : t.t(NEEDS_SUPERVISOR)}
                 />
               ),
             },
@@ -640,14 +704,16 @@ function ActionDialog(
       break
     case `undo`:
       copy = {
-        title: `Keep ${group}'s subscription?`,
-        submit: `Keep subscription`,
-        busy: `Saving…`,
+        title: t.t(`AdminBillingCustomer.undoTitle`, { group }),
+        submit: t.t(`AdminBillingCustomer.undoSubmit`),
+        busy: t.t(`AdminBillingCustomer.saving`),
         danger: false,
       }
       body = (
         <p class="text-sm text-muted">
-          {plan} renews{periodEnd ? ` on ${periodEnd}` : ``} and is charged {charge} as usual.
+          {periodEnd
+            ? t.t(`AdminBillingCustomer.renewsOn`, { plan, date: periodEnd, charge })
+            : t.t(`AdminBillingCustomer.renews`, { plan, charge })}
         </p>
       )
       break
@@ -658,7 +724,7 @@ function ActionDialog(
       open
       onClose={onCloseDialog}
       title={copy.title}
-      cancelLabel="Close"
+      cancelLabel={t.t(`AdminBillingCustomer.close`)}
       tone={copy.danger ? `danger` : `default`}
       dataE2E="admin-billing-dialog"
     >
@@ -685,8 +751,8 @@ function ActionDialog(
           {body}
           <Field
             id="admin-billing-note"
-            label="Note for the audit log (optional)"
-            hint="Why you did this. Other operators see it in the audit log."
+            label={t.t(`AdminBillingCustomer.noteLabel`)}
+            hint={t.t(`AdminBillingCustomer.noteHint`)}
           >
             <Input
               name="note"
@@ -698,14 +764,20 @@ function ActionDialog(
           {actionError && (
             actionError.unknown
               ? (
-                <Notice tone="warning" title="Result unknown" data-e2e="admin-billing-dialog-error">
+                <Notice
+                  tone="warning"
+                  title={t.t(`AdminBillingCustomer.resultUnknown`)}
+                  data-e2e="admin-billing-dialog-error"
+                >
                   {actionError.message}
                 </Notice>
               )
               : <ErrorState message={actionError.message} dataE2E="admin-billing-dialog-error" />
           )}
           <DialogActions>
-            <Button type="button" variant="ghost" onClick={onCloseDialog}>Close</Button>
+            <Button type="button" variant="ghost" onClick={onCloseDialog}>
+              {t.t(`AdminBillingCustomer.close`)}
+            </Button>
             <Button
               type="submit"
               variant={copy.danger ? `danger` : `primary`}
@@ -723,7 +795,9 @@ function ActionDialog(
 }
 
 /** A radio option's name and the sentence under it. */
-function OptionLabel({ title, help }: { title: string; help: string }): JSX.Element {
+function OptionLabel(
+  { title, help }: { title: string; help: ComponentChildren },
+): JSX.Element {
   return (
     <span class="flex flex-col gap-1">
       <span class="font-medium">{title}</span>

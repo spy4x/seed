@@ -105,9 +105,13 @@ function Operator(
     moduleIds,
   ])
   // The tab says "Users · Admin · Seed", so an operator never mistakes it for the product's.
-  const tag = useT().t(`AdminFrame.tag`)
+  const t = useT()
+  const tag = t.t(`AdminFrame.tag`)
+  // The modules name their rail entries by catalog key; the rail, the tab title and the shortcuts
+  // show them in the page's language.
+  const navItems = modules.map((module) => ({ ...module.nav, name: t.t(module.nav.name) }))
   const title = user && hasAdminAccess(user)
-    ? adminPageTitle(modules.map((module) => module.nav), path, tag)
+    ? adminPageTitle(navItems, path, tag)
     : `${tag} · ${ADMIN_PRODUCT}`
   useRouteAnnouncer({ path, title })
   // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
@@ -176,6 +180,7 @@ function Operator(
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const shortcutRows = adminShortcutRows({
     modules,
+    t,
     path,
     navigate: leave,
     openShortcuts: () => setShortcutsOpen(true),
@@ -186,7 +191,7 @@ function Operator(
   const toastr = <Toastr toasts={toasts.list.value} onDismiss={toasts.remove} dataE2E="toasts" />
 
   if (session.step === "loading") {
-    return <LoadingSpinner size="lg" label="Loading…" class="min-h-dvh bg-canvas" />
+    return <LoadingSpinner size="lg" label={t.t(`AdminApp.loading`)} class="min-h-dvh bg-canvas" />
   }
 
   if (!user || !context) {
@@ -226,7 +231,7 @@ function Operator(
   return (
     <FormatContext.Provider value={own.format.value}>
       <AdminShell
-        navItems={modules.map((module) => module.nav)}
+        navItems={navItems}
         currentPath={path}
         operator={{ name: operatorName(user, email), email }}
         theme={theme}

@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { IconDownload } from "@spy4x/preact-icons"
@@ -30,9 +29,12 @@ import type {
   AdminSubscriberStatus,
   AdminSubscriberStatusFilter,
 } from "@domain/subscribers"
-import { changeText, changeTone, countAxisTop } from "./admin-dashboard-screen.tsx"
+import { changeTone, countAxisTop, statChange } from "./admin-dashboard-screen.tsx"
 import { ScreenForm } from "./progressive.tsx"
 import { OnDay, useFormat, When } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 const NUMBER = new Intl.NumberFormat("en")
 
@@ -52,34 +54,29 @@ export interface AdminSubscriberDialog {
   email: string
 }
 
-const STATUS_CHIPS: { value: AdminSubscriberStatus; label: string }[] = [
-  { value: "confirmed", label: "Confirmed" },
-  { value: "pending", label: "Pending" },
+const STATUS_CHIPS: { value: AdminSubscriberStatus; key: string }[] = [
+  { value: "confirmed", key: `AdminNewsletter.confirmed` },
+  { value: "pending", key: `AdminNewsletter.pending` },
 ]
 
-/** What each action's dialog says and does. */
+/** What each action's dialog says and does, as catalog keys. */
 const ACTIONS: Record<AdminSubscriberAction, {
   title: string
-  text: (email: string) => string
+  text: string
   submit: string
   busy: string
 }> = {
   remove: {
-    title: "Remove this subscriber?",
-    text: (email) =>
-      `${email} stops getting the newsletter, as if they had pressed its unsubscribe link. The ` +
-      `address is erased, and a confirm link mailed to it before now no longer works. They can ` +
-      `subscribe again from the website.`,
-    submit: "Remove",
-    busy: "Removing…",
+    title: `AdminNewsletter.removeTitle`,
+    text: `AdminNewsletter.removeText`,
+    submit: `AdminNewsletter.removeSubmit`,
+    busy: `AdminNewsletter.removing`,
   },
   resend: {
-    title: "Resend the confirm mail?",
-    text: (email) =>
-      `${email} gets a new mail with a link to confirm the subscription. Nothing changes until ` +
-      `they press it.`,
-    submit: "Resend",
-    busy: "Sending…",
+    title: `AdminNewsletter.resendTitle`,
+    text: `AdminNewsletter.resendText`,
+    submit: `AdminNewsletter.resendSubmit`,
+    busy: `AdminNewsletter.sending`,
   },
 }
 
@@ -125,27 +122,28 @@ export interface AdminNewsletterScreenProps {
  * the CSV export.
  */
 export function AdminNewsletterScreen(props: AdminNewsletterScreenProps): JSX.Element {
+  const t = useAdminText()
   const tabs = [
     {
       id: "subscribers",
-      label: "Subscribers",
+      label: t.t(`AdminNewsletter.subscribers`),
       content: <SubscribersTab {...props} />,
     },
     {
       id: "sends",
-      label: "Sent issues",
+      label: t.t(`AdminNewsletter.sentIssues`),
       content: <SendsTab sends={props.sends} error={props.sendsError} />,
     },
   ]
   return (
     <Stack>
       <PageHeader
-        title="Newsletter"
-        subtitle="Who gets the newsletter, and what it sent."
+        title={t.t(`AdminNewsletter.title`)}
+        subtitle={t.t(`AdminNewsletter.subtitle`)}
         titleDataE2E="admin-newsletter-title"
         action={
           <PageAction
-            label={props.exporting ? "Exporting…" : "Export CSV"}
+            label={t.t(props.exporting ? `AdminNewsletter.exporting` : `AdminNewsletter.export`)}
             Icon={IconDownload}
             onClick={props.onExport}
             disabled={props.exporting}
@@ -159,7 +157,7 @@ export function AdminNewsletterScreen(props: AdminNewsletterScreenProps): JSX.El
         active={props.tab}
         onChange={(id) => props.onTab(id as AdminNewsletterTab)}
         lazy
-        label="Newsletter"
+        label={t.t(`AdminNewsletter.title`)}
         panelClass="pt-4"
         tabDataE2E="admin-newsletter-tab"
       />
@@ -186,16 +184,17 @@ function StatsSection(
 ): JSX.Element {
   // The server counts each day in UTC, so its label is that UTC day, in the operator's format.
   const day = useFormat().utc()
+  const t = useAdminText()
   if (stats === null) {
     return error
       ? (
         <div class="flex flex-col items-start gap-3">
           <ErrorState message={error} dataE2E="admin-newsletter-stats-error" />
-          <Button variant="secondary" onClick={onRetry}>Try again</Button>
+          <Button variant="secondary" onClick={onRetry}>{t.t(`AdminNewsletter.retry`)}</Button>
         </div>
       )
       : (
-        <div role="status" aria-label="Loading the numbers">
+        <div role="status" aria-label={t.t(`AdminNewsletter.loadingNumbers`)}>
           <LoadingSkeleton rows={3} />
         </div>
       )
@@ -206,47 +205,43 @@ function StatsSection(
   const growth = last - first
   return (
     <>
-      <section aria-label="Key numbers" data-e2e="admin-newsletter-stats">
+      <section aria-label={t.t(`AdminNewsletter.keyNumbers`)} data-e2e="admin-newsletter-stats">
         <KpiGrid minWidth="11rem">
           <Kpi
-            label="Subscribers"
+            label={t.t(`AdminNewsletter.subscribers`)}
             value={NUMBER.format(stats.confirmed)}
-            sub="Confirmed, getting every issue"
+            sub={t.t(`AdminNewsletter.confirmedHint`)}
             tone="accent"
           />
           <Kpi
-            label="Pending"
+            label={t.t(`AdminNewsletter.pending`)}
             value={NUMBER.format(stats.pending)}
-            sub="Confirm mail on its way"
+            sub={t.t(`AdminNewsletter.pendingHint`)}
             tone="neutral"
           />
           <Kpi
-            label={`Joined, ${ADMIN_STATS_DAYS} days`}
+            label={t.t(`AdminNewsletter.joined`, { count: ADMIN_STATS_DAYS })}
             value={NUMBER.format(stats.joined.current)}
-            sub={changeText(stats.joined, `previous ${ADMIN_STATS_DAYS} days`)}
+            sub={statChange(t, stats.joined, ADMIN_STATS_DAYS)}
             tone={changeTone(stats.joined)}
           />
-          <Kpi label="Issues sent" value={NUMBER.format(stats.issues)} tone="neutral" />
+          <Kpi
+            label={t.t(`AdminNewsletter.issuesSent`)}
+            value={NUMBER.format(stats.issues)}
+            tone="neutral"
+          />
         </KpiGrid>
       </section>
       <Card data-e2e="admin-newsletter-chart">
         <CardHeader
-          title="Subscribers per day"
+          title={t.t(`AdminNewsletter.perDay`)}
           headingLevel={2}
-          action={
-            <span class="text-sm text-muted">
-              {growth === 0
-                ? `No change in ${days.length} days`
-                : `${growth > 0 ? "+" : "−"}${
-                  NUMBER.format(Math.abs(growth))
-                } in ${days.length} days`}
-            </span>
-          }
+          action={<span class="text-sm text-muted">{growthText(t, growth, days.length)}</span>}
         />
         <CardBody>
           <LineChart
             series={[{
-              name: "Subscribers",
+              name: t.t(`AdminNewsletter.subscribers`),
               points: days.map((day) => ({ x: day.day, y: day.count })),
             }]}
             height={220}
@@ -254,8 +249,8 @@ function StatsSection(
             yTicks={5}
             xFormat={(x) => day.dayMonth(typeof x === "string" ? `${x}T00:00:00Z` : x)}
             yFormat={(value) => NUMBER.format(value)}
-            ariaLabel={`Subscribers at the end of each day, the last ${days.length} days`}
-            emptyLabel="Nothing yet"
+            ariaLabel={t.t(`AdminNewsletter.chartLabel`, { count: days.length })}
+            emptyLabel={t.t(`AdminNewsletter.nothingYet`)}
           />
         </CardBody>
       </Card>
@@ -263,10 +258,20 @@ function StatsSection(
   )
 }
 
+/** "+3 in 30 days", "−2 in 30 days" or "No change in 30 days". */
+function growthText(t: Translator<string>, growth: number, days: number): string {
+  if (growth === 0) return t.t(`AdminNewsletter.noChange`, { count: days })
+  return t.t(growth > 0 ? `AdminNewsletter.growthUp` : `AdminNewsletter.growthDown`, {
+    n: Math.abs(growth),
+    count: days,
+  })
+}
+
 /** The search, the status chips and the table of addresses. */
 function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
   const { filter, list, pending, error, onSearch, onPage, onOpenDialog, done } = props
   const heading = useRef<HTMLHeadingElement>(null)
+  const t = useAdminText()
 
   // After a page change or an action the list is new: the reader starts again at its heading. The
   // first page that arrives is no change, so focus stays where it was.
@@ -284,10 +289,8 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
   const filtered = filter.query !== "" || filter.status !== "any"
   return (
     <Stack>
-      <Notice tone="info" title="Unsubscribed addresses are not kept">
-        An address that unsubscribes, or that you remove, is erased at once. The list keeps only a
-        keyed mark that names no address, so no earlier confirm link can add them back. They can
-        still subscribe again from the website.
+      <Notice tone="info" title={t.t(`AdminNewsletter.notKeptTitle`)}>
+        {t.t(`AdminNewsletter.notKeptText`)}
       </Notice>
       <div class="flex flex-col gap-4 rounded-xl border border-subtle bg-surface p-4">
         <ScreenForm
@@ -298,7 +301,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
           {/* Keyed by the query, so the box shows the search the list was loaded with. */}
           <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-              <Field id="admin-newsletter-q" label="Address">
+              <Field id="admin-newsletter-q" label={t.t(`AdminNewsletter.address`)}>
                 <Input
                   name="q"
                   type="search"
@@ -314,19 +317,21 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
               variant="secondary"
               data-e2e="admin-newsletter-submit"
               busy={pending}
-              busyLabel="Searching…"
+              busyLabel={t.t(`AdminNewsletter.searching`)}
             >
-              Search
+              {t.t(`AdminNewsletter.search`)}
             </Button>
           </div>
         </ScreenForm>
         <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
           <div class="flex flex-wrap items-center gap-2" data-e2e="admin-newsletter-status">
-            <span class="text-sm text-muted" aria-hidden="true">Status</span>
+            <span class="text-sm text-muted" aria-hidden="true">
+              {t.t(`AdminNewsletter.status`)}
+            </span>
             <ToggleChips
               mode="single"
-              label="Status"
-              options={STATUS_CHIPS}
+              label={t.t(`AdminNewsletter.status`)}
+              options={STATUS_CHIPS.map((chip) => ({ value: chip.value, label: t.t(chip.key) }))}
               value={filter.status === "any" ? null : filter.status}
               onChange={(value) =>
                 onSearch({
@@ -343,7 +348,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
               data-e2e="admin-newsletter-clear"
               onClick={() => onSearch({ query: "", status: "any", page: 1 })}
             >
-              Clear filters
+              {t.t(`AdminNewsletter.clear`)}
             </Button>
           )}
         </div>
@@ -353,12 +358,12 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
 
       <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-newsletter-count">
         {list
-          ? `${NUMBER.format(list.total)} ${list.total === 1 ? "address" : "addresses"}`
-          : "Loading addresses"}
+          ? t.t(`AdminNewsletter.count`, { count: list.total })
+          : t.t(`AdminNewsletter.loadingAddresses`)}
       </h2>
       {list === null
         ? !error && (
-          <div role="status" aria-label="Loading addresses">
+          <div role="status" aria-label={t.t(`AdminNewsletter.loadingAddresses`)}>
             <LoadingSkeleton rows={5} />
           </div>
         )
@@ -367,26 +372,26 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
             <DataTable
               mode="server"
               class="[&>div:first-child]:min-h-0"
-              columns={subscriberColumns(onOpenDialog)}
+              columns={subscriberColumns(t, onOpenDialog)}
               rows={list.subscribers}
               sort={NO_SORT}
               onSortChange={noSort}
-              caption="Subscribers"
+              caption={t.t(`AdminNewsletter.subscribers`)}
               captionHidden
               rowKey={(row) => row.email}
               empty={filtered
                 ? (
                   <EmptyState
                     inset
-                    title="Nobody matches"
-                    description="Try another address, or clear the filters."
+                    title={t.t(`AdminNewsletter.nobodyMatches`)}
+                    description={t.t(`AdminNewsletter.nobodyMatchesHint`)}
                   />
                 )
                 : (
                   <EmptyState
                     inset
-                    title="No subscribers yet"
-                    description="Addresses show here once someone subscribes on the website."
+                    title={t.t(`AdminNewsletter.noSubscribers`)}
+                    description={t.t(`AdminNewsletter.noSubscribersHint`)}
                   />
                 )}
               paging={{
@@ -394,7 +399,7 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
                 pageSize: list.pageSize,
                 total: list.total,
                 onChange: onPage,
-                label: "Pages of subscribers",
+                label: t.t(`AdminNewsletter.pages`),
               }}
             />
           </div>
@@ -405,12 +410,13 @@ function SubscribersTab(props: AdminNewsletterScreenProps): JSX.Element {
 
 /** The table's columns: the address with its actions, its status and its dates. */
 function subscriberColumns(
+  t: Translator<string>,
   onOpenDialog: (dialog: AdminSubscriberDialog) => void,
 ): DataTableColumn<AdminSubscriberRow, never>[] {
   return [
     {
       id: "email",
-      header: "Address",
+      header: t.t(`AdminNewsletter.address`),
       // The actions sit under the address, so a phone shows them without scrolling sideways.
       render: ({ email, status }) => (
         <Stack gap="xs" class="min-w-48 items-start">
@@ -418,27 +424,33 @@ function subscriberColumns(
             /* At least 12rem wide: on a phone the table scrolls sideways instead of squeezing the
               address into a column a few letters wide. */
           }
-          <span class="font-medium wrap-anywhere" data-e2e="admin-subscriber-email">{email}</span>
+          <span
+            class="font-medium wrap-anywhere"
+            translate={false}
+            data-e2e="admin-subscriber-email"
+          >
+            {email}
+          </span>
           <Cluster gap="xs" class="-ml-2">
             {status === "pending" && (
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`Resend the confirm mail to ${email}`}
+                aria-label={t.t(`AdminNewsletter.resendTo`, { email })}
                 data-e2e="admin-subscriber-resend"
                 onClick={() => onOpenDialog({ action: "resend", email })}
               >
-                Resend
+                {t.t(`AdminNewsletter.resendSubmit`)}
               </Button>
             )}
             <Button
               variant="ghost"
               size="sm"
-              aria-label={`Remove ${email}`}
+              aria-label={t.t(`AdminNewsletter.removeEmail`, { email })}
               data-e2e="admin-subscriber-remove"
               onClick={() => onOpenDialog({ action: "remove", email })}
             >
-              Remove
+              {t.t(`AdminNewsletter.removeSubmit`)}
             </Button>
           </Cluster>
         </Stack>
@@ -446,24 +458,27 @@ function subscriberColumns(
     },
     {
       id: "status",
-      header: "Status",
+      header: t.t(`AdminNewsletter.status`),
       render: ({ status }) =>
         status === "confirmed"
-          ? <Badge text="Confirmed" color="green" />
-          : <Badge text="Pending" color="orange" type="outline" />,
+          ? <Badge text={t.t(`AdminNewsletter.confirmed`)} color="green" />
+          : <Badge text={t.t(`AdminNewsletter.pending`)} color="orange" type="outline" />,
     },
     {
       id: "since",
-      header: "Since",
+      header: t.t(`AdminNewsletter.since`),
       render: (row) => {
         const at = row.confirmedAt ?? row.requestedAt
-        if (!at) return <span class="text-sm text-muted">Unknown</span>
+        if (!at) return <span class="text-sm text-muted">{t.t(`AdminNewsletter.unknown`)}</span>
         return (
           row.confirmedAt
             ? <OnDay class="whitespace-nowrap text-sm text-muted" at={at} />
             : (
               <span class="whitespace-nowrap text-sm text-muted">
-                Asked <When at={at} />
+                <Rich
+                  parts={t.parts(`AdminNewsletter.asked`)}
+                  tags={{ when: () => <When at={at} /> }}
+                />
               </span>
             )
         )
@@ -476,11 +491,12 @@ function subscriberColumns(
 function SendsTab(
   { sends, error }: { sends: readonly AdminNewsletterSend[] | null; error: string | null },
 ): JSX.Element {
+  const t = useAdminText()
   if (sends === null) {
     return error
       ? <ErrorState message={error} dataE2E="admin-newsletter-sends-error" />
       : (
-        <div role="status" aria-label="Loading the sent issues">
+        <div role="status" aria-label={t.t(`AdminNewsletter.loadingSends`)}>
           <LoadingSkeleton rows={4} />
         </div>
       )
@@ -490,18 +506,18 @@ function SendsTab(
       <DataTable
         mode="server"
         class="[&>div:first-child]:min-h-0"
-        columns={SEND_COLUMNS}
+        columns={sendColumns(t)}
         rows={sends}
         sort={NO_SORT}
         onSortChange={noSort}
-        caption="Sent issues"
+        caption={t.t(`AdminNewsletter.sentIssues`)}
         captionHidden
         rowKey={(row) => row.issue}
         empty={
           <EmptyState
             inset
-            title="Nothing sent yet"
-            description="An issue shows here once the send command starts mailing it."
+            title={t.t(`AdminNewsletter.nothingSent`)}
+            description={t.t(`AdminNewsletter.nothingSentHint`)}
           />
         }
       />
@@ -509,50 +525,55 @@ function SendsTab(
   )
 }
 
-/** A count, or a dash when the send log has none. */
-function count(value: number | null): JSX.Element {
-  return value === null
-    ? <span class="text-muted" aria-label="Not recorded">—</span>
-    : <span class="tabular-nums">{NUMBER.format(value)}</span>
+/** The sent issues' columns, in the operator's language. */
+function sendColumns(t: Translator<string>): DataTableColumn<AdminNewsletterSend, never>[] {
+  // A count, or a dash when the send log has none.
+  const count = (value: number | null) =>
+    value === null
+      ? <span class="text-muted" aria-label={t.t(`AdminNewsletter.notRecorded`)}>—</span>
+      : <span class="tabular-nums">{NUMBER.format(value)}</span>
+  return [
+    {
+      id: "subject",
+      header: t.t(`AdminNewsletter.issue`),
+      render: ({ subject, issue }) => (
+        <div class="flex min-w-48 flex-col" translate={false}>
+          <span class="font-medium wrap-anywhere">{subject}</span>
+          <span class="text-sm text-muted wrap-anywhere">{issue}</span>
+        </div>
+      ),
+    },
+    {
+      id: "startedAt",
+      header: t.t(`AdminNewsletter.sent`),
+      render: ({ startedAt }) => <OnDay class="whitespace-nowrap text-sm" at={startedAt} />,
+    },
+    {
+      id: "recipients",
+      header: t.t(`AdminNewsletter.recipients`),
+      render: ({ recipients }) => count(recipients),
+    },
+    { id: "sent", header: t.t(`AdminNewsletter.delivered`), render: ({ sent }) => count(sent) },
+    {
+      id: "failed",
+      header: t.t(`AdminNewsletter.failed`),
+      render: ({ failed }) =>
+        failed !== null && failed > 0
+          ? <Badge text={NUMBER.format(failed)} color="red" />
+          : count(failed),
+    },
+    {
+      id: "state",
+      header: t.t(`AdminNewsletter.state`),
+      render: ({ completedAt, failed }) =>
+        completedAt
+          ? <Badge text={t.t(`AdminNewsletter.finished`)} color="green" type="outline" />
+          : failed !== null && failed > 0
+          ? <Badge text={t.t(`AdminNewsletter.needsRerun`)} color="orange" />
+          : <Badge text={t.t(`AdminNewsletter.sendingState`)} color="blue" type="outline" />,
+    },
+  ]
 }
-
-const SEND_COLUMNS: DataTableColumn<AdminNewsletterSend, never>[] = [
-  {
-    id: "subject",
-    header: "Issue",
-    render: ({ subject, issue }) => (
-      <div class="flex min-w-48 flex-col">
-        <span class="font-medium wrap-anywhere">{subject}</span>
-        <span class="text-sm text-muted wrap-anywhere">{issue}</span>
-      </div>
-    ),
-  },
-  {
-    id: "startedAt",
-    header: "Sent",
-    render: ({ startedAt }) => <OnDay class="whitespace-nowrap text-sm" at={startedAt} />,
-  },
-  { id: "recipients", header: "Recipients", render: ({ recipients }) => count(recipients) },
-  { id: "sent", header: "Delivered", render: ({ sent }) => count(sent) },
-  {
-    id: "failed",
-    header: "Failed",
-    render: ({ failed }) =>
-      failed !== null && failed > 0
-        ? <Badge text={NUMBER.format(failed)} color="red" />
-        : count(failed),
-  },
-  {
-    id: "state",
-    header: "State",
-    render: ({ completedAt, failed }) =>
-      completedAt
-        ? <Badge text="Finished" color="green" type="outline" />
-        : failed !== null && failed > 0
-        ? <Badge text="Needs a rerun" color="orange" />
-        : <Badge text="Sending" color="blue" type="outline" />,
-  },
-]
 
 /** The dialog of one action: what it does, why the API refused it, and its button. */
 function ActionDialog(
@@ -564,31 +585,39 @@ function ActionDialog(
     onClose: () => void
   },
 ): JSX.Element {
+  const t = useAdminText()
   const copy = ACTIONS[dialog.action]
   const danger = dialog.action === "remove"
   return (
     <Modal
       open
       onClose={onClose}
-      title={copy.title}
-      cancelLabel="Close"
+      title={t.t(copy.title)}
+      cancelLabel={t.t(`AdminNewsletter.close`)}
       tone={danger ? "danger" : undefined}
       dataE2E="admin-newsletter-dialog"
     >
       <ScreenForm pending={pending} onSubmit={onConfirm}>
         <Stack>
-          <p class="text-sm text-muted wrap-anywhere">{copy.text(dialog.email)}</p>
+          <p class="text-sm text-muted wrap-anywhere">
+            <Rich
+              parts={t.parts(copy.text, { email: dialog.email })}
+              tags={{ email: (text: string) => <bdi translate={false}>{text}</bdi> }}
+            />
+          </p>
           <ErrorState message={error} />
           <DialogActions>
-            <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={onClose}>
+              {t.t(`AdminNewsletter.cancel`)}
+            </Button>
             <Button
               type="submit"
               variant={danger ? "danger" : "primary"}
               data-e2e="admin-newsletter-confirm"
               busy={pending}
-              busyLabel={copy.busy}
+              busyLabel={t.t(copy.busy)}
             >
-              {copy.submit}
+              {t.t(copy.submit)}
             </Button>
           </DialogActions>
         </Stack>

@@ -1,7 +1,5 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useState } from "preact/hooks"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { Avatar } from "@spy4x/preact-ui/avatar"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
@@ -34,11 +32,15 @@ import {
   type UserRole,
 } from "@domain/identity"
 import { ADMIN_PATHS } from "./admin-frame.tsx"
+import { groupRoleLabel } from "./admin-groups-list.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
 import { adminUserName, adminUserSubtitle, roleColor, roleLabel } from "./admin-users-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { OnDay, When } from "@spy4x/preact-ui/format"
 import { AdminPreferencesGroup } from "./preferences.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** What an operator can do to a person; each is confirmed in a dialog first. */
 export type AdminAction =
@@ -63,9 +65,6 @@ export interface AdminOperator {
   id: number
   role: UserRole
 }
-
-/** What a group role is called in the person's group list. */
-const GROUP_ROLES: Record<number, string> = { 1: "Viewer", 2: "Editor", 3: "Admin", 4: "Owner" }
 
 /**
  * Each audit event's dot on the Activity timeline. Routine events stay neutral; a new or restored
@@ -111,109 +110,106 @@ export function auditTone(eventType: AuthAuditEventType): TimelineTone {
   return AUDIT_TONES[eventType] ?? "neutral"
 }
 
-/** What each audit row says happened; the audit log (#429) uses the same words. */
+/**
+ * What each audit row says happened, as a catalog key per event code: the audit log (#429) uses the
+ * same words. Each title is one whole message, never built from parts.
+ */
 export const AUDIT_EVENTS: Record<AuthAuditEventType, string> = {
-  [AuthAuditEventType.SIGNED_UP]: "Signed up",
-  [AuthAuditEventType.SIGNED_IN]: "Signed in",
-  [AuthAuditEventType.SIGNED_OUT]: "Signed out",
-  [AuthAuditEventType.PROFILE_UPDATED]: "Changed the profile",
-  [AuthAuditEventType.ACCOUNT_DELETION_REQUESTED]: "Asked to delete the account",
-  [AuthAuditEventType.ACCOUNT_RESTORED]: "Restored the account",
-  [AuthAuditEventType.SESSIONS_ENDED]: "Sessions ended",
-  [AuthAuditEventType.API_TOKEN_CREATED]: "Created an API token",
-  [AuthAuditEventType.API_TOKEN_USED]: "Used an API token",
-  [AuthAuditEventType.API_TOKEN_REVOKED]: "API token revoked",
-  [AuthAuditEventType.API_TOKENS_PURGED]: "Expired API token removed",
-  [AuthAuditEventType.API_TOKEN_REFUSED]: "API token refused",
-  [AuthAuditEventType.SIGN_IN_METHOD_LINKED]: "Sign-in method added",
-  [AuthAuditEventType.SIGN_IN_METHOD_UNLINKED]: "Sign-in method removed",
-  [AuthAuditEventType.UNCONFIRMED_ADDRESS_TAKEN]: "Unconfirmed address taken over",
-  [AuthAuditEventType.USER_BLOCKED]: "Blocked by an operator",
-  [AuthAuditEventType.USER_UNBLOCKED]: "Unblocked by an operator",
-  [AuthAuditEventType.PUSH_DEVICE_REMOVED]: "Push device removed by an operator",
-  [AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED]: "Removed a newsletter subscriber",
-  [AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT]: "Resent a newsletter confirm mail",
-  [AuthAuditEventType.NEWSLETTER_SUBSCRIBERS_EXPORTED]: "Exported the newsletter's subscribers",
-  [AuthAuditEventType.USER_ROLE_CHANGED]: "Role changed",
-  [AuthAuditEventType.PASSWORD_RESET_SENT]: "Password-reset link sent by an operator",
-  [AuthAuditEventType.USERS_EXPORTED]: "Exported the user list",
-  [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: "Passkey renamed",
-  [AuthAuditEventType.GUEST_STARTED]: "Started as a guest",
-  [AuthAuditEventType.GUEST_KEPT]: "Kept the guest account",
-  [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: "Deleted a guest account",
-  [AuthAuditEventType.TELEGRAM_LINKED]: "Telegram account linked",
-  [AuthAuditEventType.TELEGRAM_UNLINKED]: "Telegram account unlinked",
-  [AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR]: "Profile picture removed by an operator",
+  [AuthAuditEventType.SIGNED_UP]: `AdminAuditEvent.signedUp`,
+  [AuthAuditEventType.SIGNED_IN]: `AdminAuditEvent.signedIn`,
+  [AuthAuditEventType.SIGNED_OUT]: `AdminAuditEvent.signedOut`,
+  [AuthAuditEventType.PROFILE_UPDATED]: `AdminAuditEvent.profileUpdated`,
+  [AuthAuditEventType.ACCOUNT_DELETION_REQUESTED]: `AdminAuditEvent.deletionRequested`,
+  [AuthAuditEventType.ACCOUNT_RESTORED]: `AdminAuditEvent.accountRestored`,
+  [AuthAuditEventType.SESSIONS_ENDED]: `AdminAuditEvent.sessionsEnded`,
+  [AuthAuditEventType.API_TOKEN_CREATED]: `AdminAuditEvent.apiTokenCreated`,
+  [AuthAuditEventType.API_TOKEN_USED]: `AdminAuditEvent.apiTokenUsed`,
+  [AuthAuditEventType.API_TOKEN_REVOKED]: `AdminAuditEvent.apiTokenRevoked`,
+  [AuthAuditEventType.API_TOKENS_PURGED]: `AdminAuditEvent.apiTokensPurged`,
+  [AuthAuditEventType.API_TOKEN_REFUSED]: `AdminAuditEvent.apiTokenRefused`,
+  [AuthAuditEventType.SIGN_IN_METHOD_LINKED]: `AdminAuditEvent.methodLinked`,
+  [AuthAuditEventType.SIGN_IN_METHOD_UNLINKED]: `AdminAuditEvent.methodUnlinked`,
+  [AuthAuditEventType.UNCONFIRMED_ADDRESS_TAKEN]: `AdminAuditEvent.addressTaken`,
+  [AuthAuditEventType.USER_BLOCKED]: `AdminAuditEvent.userBlocked`,
+  [AuthAuditEventType.USER_UNBLOCKED]: `AdminAuditEvent.userUnblocked`,
+  [AuthAuditEventType.PUSH_DEVICE_REMOVED]: `AdminAuditEvent.pushDeviceRemoved`,
+  [AuthAuditEventType.NEWSLETTER_SUBSCRIBER_REMOVED]: `AdminAuditEvent.subscriberRemoved`,
+  [AuthAuditEventType.NEWSLETTER_CONFIRMATION_RESENT]: `AdminAuditEvent.confirmationResent`,
+  [AuthAuditEventType.NEWSLETTER_SUBSCRIBERS_EXPORTED]: `AdminAuditEvent.subscribersExported`,
+  [AuthAuditEventType.USER_ROLE_CHANGED]: `AdminAuditEvent.roleChanged`,
+  [AuthAuditEventType.PASSWORD_RESET_SENT]: `AdminAuditEvent.resetSent`,
+  [AuthAuditEventType.USERS_EXPORTED]: `AdminAuditEvent.usersExported`,
+  [AuthAuditEventType.SIGN_IN_METHOD_RENAMED]: `AdminAuditEvent.passkeyRenamed`,
+  [AuthAuditEventType.GUEST_STARTED]: `AdminAuditEvent.guestStarted`,
+  [AuthAuditEventType.GUEST_KEPT]: `AdminAuditEvent.guestKept`,
+  [AuthAuditEventType.GUEST_DELETED_BY_OPERATOR]: `AdminAuditEvent.guestDeleted`,
+  [AuthAuditEventType.TELEGRAM_LINKED]: `AdminAuditEvent.telegramLinked`,
+  [AuthAuditEventType.TELEGRAM_UNLINKED]: `AdminAuditEvent.telegramUnlinked`,
+  [AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR]: `AdminAuditEvent.pictureRemoved`,
 }
 
 /**
- * Each action's dialog: its title, which names the person, what it does, and its button. Every
- * dialog but "change-role" only confirms, so it is a `ConfirmDialog` (ui-layout rule 4).
+ * Each action's dialog, as catalog keys: its title, which names the person (`{name}`), what it
+ * does, and its button. Every dialog but "change-role" only confirms, so it is a `ConfirmDialog`
+ * (ui-layout rule 4).
  */
-const ACTIONS: Record<
-  AdminAction,
-  { title: (name: string) => string; text: string; submit: string; busy: string }
-> = {
-  block: {
-    title: (name) => `Block ${name}`,
-    text:
-      "Every session of theirs ends at once and every way in is refused: password, Google, GitHub and API tokens. Their data stays. You can unblock them later.",
-    submit: "Block",
-    busy: "Blocking…",
-  },
-  unblock: {
-    title: (name) => `Unblock ${name}`,
-    text: "They can sign in again, and their API tokens work again.",
-    submit: "Unblock",
-    busy: "Unblocking…",
-  },
-  "end-sessions": {
-    title: (name) => `End all sessions of ${name}`,
-    text: "Every device of theirs is signed out at once. They can sign in again.",
-    submit: "End all sessions",
-    busy: "Ending…",
-  },
-  "end-session": {
-    title: (name) => `End a session of ${name}`,
-    text: "This one device is signed out at once. Their other devices stay signed in.",
-    submit: "End session",
-    busy: "Ending…",
-  },
-  "change-role": {
-    title: (name) => `Change the role of ${name}`,
-    text:
-      "The new role applies to their next request. You can give a role below your own; an administrator is made with the user:role script.",
-    submit: "Change role",
-    busy: "Changing…",
-  },
-  "password-reset": {
-    title: (name) => `Send ${name} a password-reset link`,
-    text:
-      'They get the same mail as from "Forgot password": a link to choose a new password. Their current password keeps working until they do.',
-    submit: "Send link",
-    busy: "Sending…",
-  },
-  "delete-guest": {
-    title: (name) => `Delete the guest account ${name}`,
-    text:
-      "The account and everything in it are deleted at once, with no grace period. Support never restores a guest account: it has no sign-in method to prove whose it was.",
-    submit: "Delete guest account",
-    busy: "Deleting…",
-  },
-  "unlink-telegram": {
-    title: (name) => `Unlink the Telegram account of ${name}`,
-    text:
-      "Their Telegram chat stops getting their notifications and can no longer act for them. They can link it again from their profile.",
-    submit: "Unlink Telegram",
-    busy: "Unlinking…",
-  },
-  "remove-picture": {
-    title: () => "Remove their profile picture?",
-    text: "Their initials show instead, everywhere. They can upload a new one.",
-    submit: "Remove picture",
-    busy: "Removing…",
-  },
-}
+const ACTIONS: Record<AdminAction, { title: string; text: string; submit: string; busy: string }> =
+  {
+    block: {
+      title: `AdminUser.blockTitle`,
+      text: `AdminUser.blockText`,
+      submit: `AdminUser.block`,
+      busy: `AdminUser.blocking`,
+    },
+    unblock: {
+      title: `AdminUser.unblockTitle`,
+      text: `AdminUser.unblockText`,
+      submit: `AdminUser.unblock`,
+      busy: `AdminUser.unblocking`,
+    },
+    "end-sessions": {
+      title: `AdminUser.endSessionsTitle`,
+      text: `AdminUser.endSessionsText`,
+      submit: `AdminUser.endAllSessions`,
+      busy: `AdminUser.ending`,
+    },
+    "end-session": {
+      title: `AdminUser.endSessionTitle`,
+      text: `AdminUser.endSessionText`,
+      submit: `AdminUser.endSession`,
+      busy: `AdminUser.ending`,
+    },
+    "change-role": {
+      title: `AdminUser.changeRoleTitle`,
+      text: `AdminUser.changeRoleText`,
+      submit: `AdminUser.changeRole`,
+      busy: `AdminUser.changing`,
+    },
+    "password-reset": {
+      title: `AdminUser.resetTitle`,
+      text: `AdminUser.resetText`,
+      submit: `AdminUser.sendLink`,
+      busy: `AdminUser.sending`,
+    },
+    "delete-guest": {
+      title: `AdminUser.deleteGuestTitle`,
+      text: `AdminUser.deleteGuestText`,
+      submit: `AdminUser.deleteGuest`,
+      busy: `AdminUser.deleting`,
+    },
+    "unlink-telegram": {
+      title: `AdminUser.unlinkTelegramTitle`,
+      text: `AdminUser.unlinkTelegramText`,
+      submit: `AdminUser.unlinkTelegram`,
+      busy: `AdminUser.unlinking`,
+    },
+    "remove-picture": {
+      title: `AdminUser.removePictureTitle`,
+      text: `AdminUser.removePictureText`,
+      submit: `AdminUser.removePictureSubmit`,
+      busy: `AdminUser.removing`,
+    },
+  }
 
 /** The actions that change nothing the person could lose: their dialog is not red. */
 const CALM_ACTIONS: readonly AdminAction[] = ["unblock", "change-role", "password-reset"]
@@ -290,16 +286,17 @@ export interface AdminUserScreenProps {
  */
 export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
   const { detail, error, operator, dialog, navigate } = props
-  const back = { href: ADMIN_PATHS.users, label: "Users" }
+  const t = useAdminText()
+  const back = { href: ADMIN_PATHS.users, label: t.t(`AdminUser.back`) }
 
   if (!detail) {
     return (
       <Stack>
-        <PageHeader title="User" back={back} navigate={navigate} />
+        <PageHeader title={t.t(`AdminUser.title`)} back={back} navigate={navigate} />
         {error
           ? <ErrorState message={error} dataE2E="admin-user-error" />
           : (
-            <div role="status" aria-label="Loading the person">
+            <div role="status" aria-label={t.t(`AdminUser.loading`)}>
               <LoadingSkeleton rows={4} />
             </div>
           )}
@@ -315,19 +312,19 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
       {user.blockedAt
         ? (
           <DropdownItem dataE2E="admin-unblock-open" onClick={() => props.onOpenDialog("unblock")}>
-            Unblock
+            {t.t(`AdminUser.unblock`)}
           </DropdownItem>
         )
         : (
           <DropdownItem dataE2E="admin-block-open" onClick={() => props.onOpenDialog("block")}>
-            Block
+            {t.t(`AdminUser.block`)}
           </DropdownItem>
         )}
       <DropdownItem
         dataE2E="admin-end-sessions-open"
         onClick={() => props.onOpenDialog("end-sessions")}
       >
-        End all sessions
+        {t.t(`AdminUser.endAllSessions`)}
       </DropdownItem>
       <DropdownItem
         dataE2E="admin-password-reset-open"
@@ -335,8 +332,10 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
         onClick={() => props.onOpenDialog("password-reset")}
       >
         <span class="flex flex-col">
-          Send password-reset link
-          {address === null && <span class="text-xs text-muted">No password with an address</span>}
+          {t.t(`AdminUser.sendReset`)}
+          {address === null && (
+            <span class="text-xs text-muted">{t.t(`AdminUser.noResetAddress`)}</span>
+          )}
         </span>
       </DropdownItem>
       {telegramOf(detail) && (
@@ -344,7 +343,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
           dataE2E="admin-unlink-telegram-open"
           onClick={() => props.onOpenDialog("unlink-telegram")}
         >
-          Unlink Telegram
+          {t.t(`AdminUser.unlinkTelegram`)}
         </DropdownItem>
       )}
       {user.pictureId && (
@@ -352,7 +351,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
           dataE2E="admin-remove-picture-open"
           onClick={() => props.onOpenDialog("remove-picture")}
         >
-          Remove profile picture
+          {t.t(`AdminUser.removePicture`)}
         </DropdownItem>
       )}
       {user.guestSince && (
@@ -360,7 +359,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
           dataE2E="admin-delete-guest-open"
           onClick={() => props.onOpenDialog("delete-guest")}
         >
-          Delete guest account
+          {t.t(`AdminUser.deleteGuest`)}
         </DropdownItem>
       )}
       {canChangeRoles(operator.role) && (
@@ -368,23 +367,23 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
           dataE2E="admin-change-role-open"
           onClick={() => props.onOpenDialog("change-role")}
         >
-          Change role
+          {t.t(`AdminUser.changeRole`)}
         </DropdownItem>
       )}
     </>
   )
 
-  const name = adminUserName(user)
+  const name = adminUserName(user, t)
   const tabs = [
     {
       id: "overview",
-      label: "Overview",
+      label: t.t(`AdminUser.overview`),
       content: <Overview detail={detail} now={props.now ?? new Date()} />,
     },
-    { id: "methods", label: `Sign-in methods`, content: <Methods detail={detail} /> },
+    { id: "methods", label: t.t(`AdminUser.methods`), content: <Methods detail={detail} /> },
     {
       id: "sessions",
-      label: <TabLabel text="Sessions" count={detail.sessions.length} />,
+      label: <TabLabel text={t.t(`AdminUser.sessions`)} count={detail.sessions.length} />,
       content: (
         <Sessions
           detail={detail}
@@ -395,10 +394,10 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
     },
     {
       id: "groups",
-      label: <TabLabel text="Groups" count={detail.groups.length} />,
+      label: <TabLabel text={t.t(`AdminUser.groups`)} count={detail.groups.length} />,
       content: <Groups detail={detail} navigate={navigate} />,
     },
-    { id: "activity", label: "Activity", content: <Activity detail={detail} /> },
+    { id: "activity", label: t.t(`AdminUser.activity`), content: <Activity detail={detail} /> },
     ...(props.extraTabs ?? []),
   ]
   const active = tabs.some((tab) => tab.id === props.tab) ? props.tab : "overview"
@@ -420,49 +419,54 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
         data-e2e="admin-user-card"
       >
         <div class="flex flex-wrap items-center gap-2">
-          <Badge text={roleLabel(user.role)} color={roleColor(user.role)} />
+          <Badge text={roleLabel(t, user.role)} color={roleColor(user.role)} />
           {user.blockedAt
             ? (
               <span data-e2e="admin-user-status">
-                <Badge text="Blocked" color="red" />
+                <Badge text={t.t(`AdminUser.blocked`)} color="red" />
               </span>
             )
             : (
               <span data-e2e="admin-user-status">
-                <Badge text="Active" color="green" />
+                <Badge text={t.t(`AdminUser.active`)} color="green" />
               </span>
             )}
           {user.guestSince && (
             <span data-e2e="admin-user-guest">
-              <Badge text="Guest" color="gray" type="outline" />
+              <Badge text={t.t(`AdminUser.guest`)} color="gray" type="outline" />
             </span>
           )}
-          {operator.id === user.id && <Badge text="You" color="gray" type="outline" />}
+          {operator.id === user.id && (
+            <Badge text={t.t(`AdminUser.you`)} color="gray" type="outline" />
+          )}
         </div>
         {user.guestSince && (
           <p class="text-sm text-muted" data-e2e="admin-user-guest-note">
-            A guest account: made with one click and no sign-in method. Support never restores a
-            guest account.
+            {t.t(`AdminUser.guestNote`)}
           </p>
         )}
         <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Fact label="Created">
+          <Fact label={t.t(`AdminUser.created`)}>
             <When at={user.createdAt} />
           </Fact>
-          <Fact label="Last seen">{user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}</Fact>
-          <Fact label="Sessions">{detail.sessions.length}</Fact>
-          <Fact label="Groups">{detail.groups.length}</Fact>
+          <Fact label={t.t(`AdminUser.lastSeen`)}>
+            {user.lastSeenAt ? <When at={user.lastSeenAt} /> : t.t(`AdminUser.never`)}
+          </Fact>
+          <Fact label={t.t(`AdminUser.sessions`)}>{detail.sessions.length}</Fact>
+          <Fact label={t.t(`AdminUser.groups`)}>{detail.groups.length}</Fact>
         </dl>
         {user.blockedAt && (
           <Notice tone="danger" data-e2e="admin-user-blocked-notice">
-            Blocked{" "}
-            <time dateTime={user.blockedAt}>{timeAgo(user.blockedAt)}</time>. They cannot sign in.
+            <Rich
+              parts={t.parts(`AdminUser.blockedNotice`)}
+              tags={{ when: () => <When at={user.blockedAt!} /> }}
+            />
           </Notice>
         )}
         {/* The operator's own page says nothing about it: the "You" badge already does (rule 3). */}
         {!actOn && operator.id !== user.id && (
           <p class="text-sm text-muted" data-e2e="admin-user-no-actions">
-            Their role is yours or higher, so you cannot act on this account.
+            {t.t(`AdminUser.noActions`)}
           </p>
         )}
       </div>
@@ -479,7 +483,7 @@ export function AdminUserScreen(props: AdminUserScreenProps): JSX.Element {
         active={active}
         onChange={props.onTab}
         lazy
-        label="About this person"
+        label={t.t(`AdminUser.tabs`)}
         listClass="flex-nowrap overflow-x-auto pb-px"
         panelClass="pt-4"
         tabDataE2E="admin-user-tab"
@@ -524,53 +528,62 @@ function Fact({ label, children }: { label: string; children: ComponentChildren 
 
 function Overview({ detail, now }: { detail: AdminUserDetail; now: Date }): JSX.Element {
   const { user } = detail
+  const t = useAdminText()
   const telegram = telegramOf(detail)
   return (
     <Stack>
-      <SettingGroup title="Account">
+      <SettingGroup title={t.t(`AdminUser.account`)}>
         <SettingList>
           <SettingRow
-            label="Profile picture"
+            label={t.t(`AdminUser.picture`)}
             dataE2E="admin-user-picture"
             value={user.pictureId
               ? (
                 <Avatar
-                  name={adminUserName(user)}
+                  name={adminUserName(user, t)}
                   src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
                   size="lg"
                   alt=""
                 />
               )
-              : "None"}
-          />
-          <SettingRow label="Address" value={user.email ?? "None"} />
-          <SettingRow label="Role" value={roleLabel(user.role)} />
-          <SettingRow label="Status" value={user.blockedAt ? "Blocked" : "Active"} />
-          <SettingRow label="Created" value={<When at={user.createdAt} />} />
-          <SettingRow
-            label="Last seen"
-            value={user.lastSeenAt ? <When at={user.lastSeenAt} /> : "Never"}
+              : t.t(`AdminUser.none`)}
           />
           <SettingRow
-            label="Telegram"
+            label={t.t(`AdminUser.address`)}
+            value={user.email ? <span translate={false}>{user.email}</span> : t.t(`AdminUser.none`)}
+          />
+          <SettingRow label={t.t(`AdminUser.role`)} value={roleLabel(t, user.role)} />
+          <SettingRow
+            label={t.t(`AdminUser.status`)}
+            value={t.t(user.blockedAt ? `AdminUser.blocked` : `AdminUser.active`)}
+          />
+          <SettingRow label={t.t(`AdminUser.created`)} value={<When at={user.createdAt} />} />
+          <SettingRow
+            label={t.t(`AdminUser.lastSeen`)}
+            value={user.lastSeenAt ? <When at={user.lastSeenAt} /> : t.t(`AdminUser.never`)}
+          />
+          <SettingRow
+            label={t.t(`AdminUser.telegram`)}
             dataE2E="admin-user-telegram"
             value={telegram
               ? (
-                <>
-                  Linked <When at={telegram.createdAt} />
-                </>
+                <Rich
+                  parts={t.parts(`AdminUser.telegramLinked`)}
+                  tags={{ when: () => <When at={telegram.createdAt} /> }}
+                />
               )
-              : "Not linked"}
+              : t.t(`AdminUser.notLinked`)}
           />
           <SettingRow
-            label="Billing trial"
+            label={t.t(`AdminUser.trial`)}
             value={detail.trialUsedAt
               ? (
-                <>
-                  Used <When at={detail.trialUsedAt} />
-                </>
+                <Rich
+                  parts={t.parts(`AdminUser.trialUsed`)}
+                  tags={{ when: () => <When at={detail.trialUsedAt!} /> }}
+                />
               )
-              : "Not used"}
+              : t.t(`AdminUser.trialNotUsed`)}
           />
         </SettingList>
       </SettingGroup>
@@ -590,44 +603,45 @@ export function telegramOf(
 }
 
 function Methods({ detail }: { detail: AdminUserDetail }): JSX.Element {
+  const t = useAdminText()
+  const lastUsed = (at: string | null | undefined) =>
+    at
+      ? <Rich parts={t.parts(`AdminUser.lastUsed`)} tags={{ when: () => <When at={at} /> }} />
+      : t.t(`AdminUser.notUsedYet`)
   return (
-    <Rows empty="No way to sign in." dataE2E="admin-user-methods">
+    <Rows empty={t.t(`AdminUser.noMethods`)} dataE2E="admin-user-methods">
       {detail.methods.filter((method) => method.method !== TELEGRAM_METHOD).map((method) => (
         <li key={`${method.method}-${method.createdAt}`} class={ROW}>
-          <span class="font-medium">{methodName(method.method)}</span>
-          {method.email && <span class="text-sm text-muted wrap-anywhere">{method.email}</span>}
+          <span class="font-medium">{methodName(t, method.method)}</span>
+          {method.email && (
+            <span class="text-sm text-muted wrap-anywhere" translate={false}>{method.email}</span>
+          )}
           {method.method === SIGN_IN_LINK_METHOD
             ? (
               // A sign-in link is no stored method: when one was last used, read-only (#391).
               <span class="text-sm text-muted" data-e2e="admin-user-email-link">
-                {method.lastUsedAt
-                  ? (
-                    <>
-                      Last used <When at={method.lastUsedAt} />
-                    </>
-                  )
-                  : "Not used yet"}
+                {lastUsed(method.lastUsedAt)}
               </span>
             )
             : method.passkey
             ? (
               // A passkey proves no address: its name and dates, read-only (#222).
               <span class="text-sm text-muted wrap-anywhere" data-e2e="admin-user-passkey">
-                {method.passkey.name} · Added <OnDay at={method.createdAt} /> ·{" "}
-                {method.passkey.lastUsedAt
-                  ? (
-                    <>
-                      Last used <When at={method.passkey.lastUsedAt} />
-                    </>
-                  )
-                  : "Not used yet"}
+                <Rich
+                  parts={t.parts(`AdminUser.passkeyAdded`, { name: method.passkey.name })}
+                  tags={{
+                    name: (text) => <bdi translate={false}>{text}</bdi>,
+                    day: () => <OnDay at={method.createdAt} />,
+                  }}
+                />{" "}
+                · {lastUsed(method.passkey.lastUsedAt)}
               </span>
             )
             : (
               <span class="ml-auto">
                 {method.provenAt
-                  ? <Badge text="Proven" color="green" type="outline" />
-                  : <Badge text="Not proven" color="orange" type="outline" />}
+                  ? <Badge text={t.t(`AdminUser.proven`)} color="green" type="outline" />
+                  : <Badge text={t.t(`AdminUser.notProven`)} color="orange" type="outline" />}
               </span>
             )}
         </li>
@@ -647,24 +661,32 @@ function Sessions(
     onEndAll?: () => void
   },
 ): JSX.Element {
+  const t = useAdminText()
   const list = (
-    <Rows empty="Signed in nowhere." dataE2E="admin-user-sessions">
+    <Rows empty={t.t(`AdminUser.noSessions`)} dataE2E="admin-user-sessions">
       {detail.sessions.map((session) => (
         <li key={session.id} class={ROW} data-e2e={`admin-session-${session.id}`}>
-          <span class="font-medium">{sessionName(session.deviceName)}</span>
+          <span class="font-medium" translate={session.deviceName ? false : undefined}>
+            {sessionName(t, session.deviceName)}
+          </span>
           {session.ipHint && <span class="text-sm text-muted">{session.ipHint}</span>}
           <span class="ml-auto text-xs text-muted">
-            Last active <When at={session.lastUsedAt} />
+            <Rich
+              parts={t.parts(`AdminUser.lastActive`)}
+              tags={{ when: () => <When at={session.lastUsedAt} /> }}
+            />
           </span>
           {onEnd && (
             <Button
               variant="ghost"
               size="sm"
               data-e2e="admin-session-end-open"
-              aria-label={`End the session on ${sessionName(session.deviceName)}`}
+              aria-label={t.t(`AdminUser.endSessionLabel`, {
+                device: sessionName(t, session.deviceName),
+              })}
               onClick={() => onEnd(session.id)}
             >
-              End
+              {t.t(`AdminUser.end`)}
             </Button>
           )}
         </li>
@@ -681,7 +703,7 @@ function Sessions(
           data-e2e="admin-sessions-end-all-open"
           onClick={onEndAll}
         >
-          End all
+          {t.t(`AdminUser.endAll`)}
         </Button>
       </Cluster>
       {list}
@@ -690,28 +712,30 @@ function Sessions(
 }
 
 /** A session's device as a person reads it; a session that named none is "Unknown device". */
-function sessionName(deviceName: string): string {
-  return deviceName || "Unknown device"
+function sessionName(t: Translator<string>, deviceName: string): string {
+  return deviceName || t.t(`AdminUser.unknownDevice`)
 }
 
 /** The person's groups; each name opens the group's page in the groups module (#426). */
 function Groups(
   { detail, navigate }: { detail: AdminUserDetail; navigate?: Navigate },
 ): JSX.Element {
+  const t = useAdminText()
   return (
-    <Rows empty="In no group." dataE2E="admin-user-groups">
+    <Rows empty={t.t(`AdminUser.noGroups`)} dataE2E="admin-user-groups">
       {detail.groups.map((group) => (
         <li key={group.id} class={ROW}>
           <Link
             href={`/groups/${encodeURIComponent(group.id)}`}
             navigate={navigate}
             class="pc-link font-medium wrap-anywhere"
+            translate={false}
             data-e2e={`admin-user-group-${group.id}`}
           >
             {group.name}
           </Link>
           <span class="ml-auto">
-            <Badge text={GROUP_ROLES[group.role] ?? "Member"} color="gray" type="outline" />
+            <Badge text={groupRoleLabel(t, group.role)} color="gray" type="outline" />
           </span>
         </li>
       ))}
@@ -723,48 +747,69 @@ const PASSKEY_RENAMED = /^passkey name=(.*?) from=(.*)$/
 const PASSKEY_NAMED = /^passkey name=(.*)$/
 
 /**
- * An audit row's stored identifier as an operator reads it: a passkey rename as `From "Old" to
- * "New"`, any other passkey row as `Passkey "Name"`. Anything else stays as stored, since the
- * server's format is also what the audit search matches.
+ * An audit row's stored identifier as an operator reads it, in their language: a passkey rename as
+ * `From "Old" to "New"`, any other passkey row as `Passkey "Name"`. Anything else stays as stored,
+ * since the server's format is also what the audit search matches.
  */
-export function auditDetail(eventType: number | null, identifier: string): string {
+export function auditDetail(
+  t: Translator<string>,
+  eventType: number | null,
+  identifier: string,
+): string {
   const renamed = eventType === AuthAuditEventType.SIGN_IN_METHOD_RENAMED &&
     PASSKEY_RENAMED.exec(identifier)
-  if (renamed) return `From "${renamed[2]}" to "${renamed[1]}"`
+  if (renamed) return t.t(`AdminUser.passkeyRenamed`, { from: renamed[2], to: renamed[1] })
   const named = PASSKEY_NAMED.exec(identifier)
-  return named ? `Passkey "${named[1]}"` : identifier
+  return named ? t.t(`AdminUser.passkeyNamed`, { name: named[1] }) : identifier
 }
 
 /**
- * The title of a sign-in or sign-up row that a sign-in link wrote (#391), which names the method
- * itself: "Signed in with an e-mail link". `null` for every other row.
+ * The title key of a sign-in or sign-up row that a sign-in link wrote (#391), which names the
+ * method itself: "Signed in with an e-mail link". `null` for every other row.
  */
 export function linkAuditTitle(eventType: number | null, identifier: string | null): string | null {
   if (identifier !== SIGN_IN_LINK_METHOD) return null
-  if (eventType === AuthAuditEventType.SIGNED_IN) return "Signed in with an e-mail link"
-  if (eventType === AuthAuditEventType.SIGNED_UP) return "Signed up with an e-mail link"
+  if (eventType === AuthAuditEventType.SIGNED_IN) return `AdminAuditEvent.signedInWithLink`
+  if (eventType === AuthAuditEventType.SIGNED_UP) return `AdminAuditEvent.signedUpWithLink`
   return null
+}
+
+/**
+ * What an audit row says happened, in the operator's language: one whole message per event code
+ * (an account event, a billing event, or a sign-in link's own title), or `null` for a code this
+ * page does not know.
+ */
+export function auditEventTitle(
+  t: Translator<string>,
+  eventType: number | null,
+  identifier: string | null,
+): string | null {
+  const key = linkAuditTitle(eventType, identifier) ??
+    AUDIT_EVENTS[eventType as AuthAuditEventType] ??
+    BILLING_AUDIT_LABELS[eventType as BillingAuditEvent]
+  return key ? t.t(key) : null
 }
 
 /** The newest rows of the person's audit trail, newest first, on a timeline. */
 function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
+  const t = useAdminText()
   return (
     <Timeline
-      label="Activity"
-      empty="Nothing recorded."
+      label={t.t(`AdminUser.activity`)}
+      empty={t.t(`AdminUser.nothingRecorded`)}
       dataE2E="admin-user-audits"
       items={detail.audits.map((audit) => {
         const linkTitle = linkAuditTitle(audit.eventType, audit.identifier)
         const parts = [
-          !linkTitle && audit.identifier && auditDetail(audit.eventType, audit.identifier),
-          audit.ip && `from ${audit.ip}`,
+          !linkTitle && audit.identifier && auditDetail(t, audit.eventType, audit.identifier),
+          audit.ip && t.t(`AdminUser.fromIp`, { ip: audit.ip }),
         ].filter(Boolean)
         return {
           id: audit.id,
-          title: linkTitle ?? AUDIT_EVENTS[audit.eventType] ??
-            BILLING_AUDIT_LABELS[audit.eventType as number as BillingAuditEvent] ?? "Other event",
+          title: auditEventTitle(t, audit.eventType, audit.identifier) ??
+            t.t(`AdminUser.otherEvent`),
           at: audit.createdAt,
-          when: timeAgo(audit.createdAt),
+          when: <When at={audit.createdAt} />,
           description: parts.length > 0 ? parts.join(" · ") : undefined,
           tone: auditTone(audit.eventType),
           dataE2E: `admin-audit-${audit.eventType}`,
@@ -798,14 +843,14 @@ function Rows(
   )
 }
 
-/** A sign-in method's key name as a person reads it. */
-function methodName(method: string): string {
-  if (method === "password") return "Password"
+/** A sign-in method's key name as a person reads it, in the operator's language. */
+function methodName(t: Translator<string>, method: string): string {
+  if (method === "password") return t.t(`AdminUser.methodPassword`)
   if (method === "oauth:google") return "Google"
   if (method === "oauth:github") return "GitHub"
-  if (method === "email-code") return "E-mail code"
-  if (method === "passkey") return "Passkey"
-  if (method === SIGN_IN_LINK_METHOD) return "E-mail link"
+  if (method === "email-code") return t.t(`AdminUser.methodEmailCode`)
+  if (method === "passkey") return t.t(`AdminUser.methodPasskey`)
+  if (method === SIGN_IN_LINK_METHOD) return t.t(`AdminUser.methodEmailLink`)
   return method
 }
 
@@ -828,9 +873,10 @@ function ActionDialog(
     onCloseDialog: () => void
   },
 ): JSX.Element {
+  const t = useAdminText()
   const copy = ACTIONS[action]
   const calm = CALM_ACTIONS.includes(action)
-  const title = copy.title(adminUserName(detail.user))
+  const title = t.t(copy.title, { name: adminUserName(detail.user, t) })
   const roles = adminGrantableRoles(operator.role)
   // The person's own role is picked first, so the button changes nothing until another is picked.
   const [role, setRole] = useState<UserRole>(detail.user.role)
@@ -842,9 +888,9 @@ function ActionDialog(
       <ConfirmDialog
         title={title}
         tone={calm ? "default" : "danger"}
-        confirmLabel={copy.submit}
+        confirmLabel={t.t(copy.submit)}
         busy={pending}
-        busyLabel={copy.busy}
+        busyLabel={t.t(copy.busy)}
         onConfirm={() => {
           onAction(action, input)
           // The app closes the dialog once the API answers; a refusal keeps it open with its error.
@@ -855,10 +901,12 @@ function ActionDialog(
         confirmDataE2E="admin-action-submit"
       >
         <Stack>
-          <p class="text-sm text-muted">{copy.text}</p>
+          <p class="text-sm text-muted">{t.t(copy.text)}</p>
           {action === "end-session" && session && (
             <p class="text-sm font-medium" data-e2e="admin-action-session">
-              {sessionName(session.deviceName)}
+              <span translate={session.deviceName ? false : undefined}>
+                {sessionName(t, session.deviceName)}
+              </span>
               {session.ipHint && (
                 <span class="font-normal text-muted">{` · ${session.ipHint}`}</span>
               )}
@@ -866,7 +914,14 @@ function ActionDialog(
           )}
           {action === "password-reset" && address && (
             <p class="text-sm">
-              Sent to <span class="font-medium wrap-anywhere">{address}</span>
+              <Rich
+                parts={t.parts(`AdminUser.sentTo`, { address })}
+                tags={{
+                  address: (text) => (
+                    <bdi class="font-medium wrap-anywhere" translate={false}>{text}</bdi>
+                  ),
+                }}
+              />
             </p>
           )}
           <ErrorState message={actionError} />
@@ -881,35 +936,39 @@ function ActionDialog(
       open
       onClose={onCloseDialog}
       title={title}
-      cancelLabel="Close"
+      cancelLabel={t.t(`AdminUser.close`)}
       dataE2E="admin-action-dialog"
     >
       <ScreenForm pending={pending} onSubmit={() => onAction(action, { role })}>
         <Stack>
-          <p class="text-sm text-muted">{copy.text}</p>
+          <p class="text-sm text-muted">{t.t(copy.text)}</p>
           <RadioGroup
-            legend="Role"
+            legend={t.t(`AdminUser.role`)}
             name="role"
             data-e2e="admin-role-picker"
             options={roles.map((one) => ({
               value: String(one),
-              label: one === detail.user.role ? `${roleLabel(one)} (now)` : roleLabel(one),
+              label: one === detail.user.role
+                ? t.t(`AdminUser.roleNow`, { role: roleLabel(t, one) })
+                : roleLabel(t, one),
             }))}
             value={String(role)}
             onChange={(value) => setRole(Number(value) as UserRole)}
           />
           <ErrorState message={actionError} />
           <DialogActions>
-            <Button type="button" variant="ghost" onClick={onCloseDialog}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={onCloseDialog}>
+              {t.t(`AdminUser.cancel`)}
+            </Button>
             <Button
               type="submit"
               variant="primary"
               data-e2e="admin-action-submit"
               disabled={unchanged}
               busy={pending}
-              busyLabel={copy.busy}
+              busyLabel={t.t(copy.busy)}
             >
-              {copy.submit}
+              {t.t(copy.submit)}
             </Button>
           </DialogActions>
         </Stack>

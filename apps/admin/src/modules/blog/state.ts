@@ -23,6 +23,7 @@ import {
 } from "@ui/admin-blog-editor.tsx"
 import type { Formatters } from "@spy4x/time/format"
 import { type AdminApiResult, type AdminFetch, post as postBody } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 
 const API = `/api/admin/blog`
 
@@ -125,7 +126,7 @@ function refusal(result: AdminApiResult<unknown>): Partial<BlogEditorState> {
   if (result.ok) return {}
   const { reason, message } = result.error
   if (reason === `VERSION_CONFLICT`) return { conflict: true }
-  if (reason === `SLUG_TAKEN`) return { errors: { slug: `Another post already uses this slug.` } }
+  if (reason === `SLUG_TAKEN`) return { errors: { slug: `AdminBlogEditor.slugTaken` } }
   if (reason === `SLUG_LOCKED`) return { errors: { slug: message } }
   return { errors: { form: message } }
 }
@@ -369,17 +370,23 @@ export function createBlogState(
       if (!published) return null
       if (published.status === `scheduled` && published.publishAt) {
         toasts.success({
-          body: `Scheduled for ${format().dateTime(published.publishAt)}.`,
+          body: adminText().t(`AdminBlogEditor.doneScheduled`, {
+            at: format().dateTime(published.publishAt),
+          }),
           dataE2E: `admin-blog-toast`,
         })
       } else {
         // The send is the worker's job, queued with the publish: it starts in a moment.
         const site = state.siteUrl()
         toasts.success({
-          body: choice.list !== null ? `Published. The newsletter email is sending.` : `Published.`,
+          body: adminText().t(
+            choice.list !== null
+              ? `AdminBlogEditor.donePublishedEmail`
+              : `AdminBlogEditor.donePublished`,
+          ),
           ...(site && {
             action: {
-              label: `View post`,
+              label: adminText().t(`AdminBlogEditor.viewPost`),
               onAction: () => ports.open(`${site}/blog/${published.slug}`),
               dataE2E: `admin-blog-toast-view`,
             },
@@ -392,20 +399,26 @@ export function createBlogState(
 
     async unschedule(): Promise<void> {
       if (await act(`unschedule`, {})) {
-        toasts.success({ body: `Unscheduled. It is a draft again.`, dataE2E: `admin-blog-toast` })
+        toasts.success({
+          body: adminText().t(`AdminBlogEditor.doneUnscheduled`),
+          dataE2E: `admin-blog-toast`,
+        })
       }
     },
 
     async unpublish(): Promise<void> {
       if (await act(`unpublish`, {})) {
-        toasts.success({ body: `Unpublished. It is a draft again.`, dataE2E: `admin-blog-toast` })
+        toasts.success({
+          body: adminText().t(`AdminBlogEditor.doneUnpublished`),
+          dataE2E: `admin-blog-toast`,
+        })
       }
     },
 
     async changeUrl(slug: string): Promise<void> {
       if (await act(`change-url`, { slug })) {
         toasts.success({
-          body: `The post's URL is now /blog/${slug}.`,
+          body: adminText().t(`AdminBlogEditor.doneUrl`, { path: `/blog/${slug}` }),
           dataE2E: `admin-blog-toast`,
         })
       }
@@ -430,7 +443,10 @@ export function createBlogState(
         return false
       }
       dialog.value = NO_DIALOG
-      toasts.success({ body: `Post deleted.`, dataE2E: `admin-blog-toast` })
+      toasts.success({
+        body: adminText().t(`AdminBlogEditor.doneDeleted`),
+        dataE2E: `admin-blog-toast`,
+      })
       return true
     },
 

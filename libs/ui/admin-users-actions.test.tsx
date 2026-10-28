@@ -19,6 +19,8 @@ import {
 import { AdminUsersScreen, type AdminUsersScreenProps } from "./admin-users-screen.tsx"
 import { AdminUserScreen, type AdminUserScreenProps } from "./admin-user-screen.tsx"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
   document: globalThis.document,
@@ -381,5 +383,22 @@ describe("one person in the admin app, with the people actions", () => {
     ) {
       expect([title, text?.includes(title)]).toEqual([title, true])
     }
+  })
+})
+
+describe("the person's actions in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminUserScreen {...userProps([], { dialog: "password-reset" })} />
+        <AdminUserScreen {...userProps([], { operator: administrator, dialog: "change-role" })} />
+        <AdminUserScreen {...userProps([], { dialog: "end-session", dialogSessionId: 9 })} />
+        <AdminUserScreen {...userProps([], { dialog: "block" })} />
+        <AdminUserScreen {...userProps([], { dialog: "end-sessions" })} />
+      </I18nContext.Provider>,
+    )
+    expect(
+      englishLeft(document.body, [`Ada Lovelace`, `AL`, `ada@example.com`, `Firefox on Linux`]),
+    ).toEqual([])
   })
 })

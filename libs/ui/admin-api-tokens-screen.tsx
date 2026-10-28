@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX, RefObject } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Avatar } from "@spy4x/preact-ui/avatar"
@@ -26,15 +25,25 @@ import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { adminUserName } from "./admin-users-screen.tsx"
 import type { Navigate } from "./progressive.tsx"
 import { OnDay, When } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** The page's address in the admin app. */
 export const ADMIN_API_TOKENS_PATH = "/api-tokens"
 
 /** What each state is called, on its chip and its badge. */
 const STATE_LABELS: Record<AdminApiTokenState, string> = {
-  live: "Live",
-  expired: "Expired",
-  revoked: "Revoked",
+  live: `AdminApiTokens.live`,
+  expired: `AdminApiTokens.expired`,
+  revoked: `AdminApiTokens.revoked`,
+}
+
+/** The empty list's title, per state picked. */
+const NONE_LABELS: Record<AdminApiTokenState, string> = {
+  live: `AdminApiTokens.noneLive`,
+  expired: `AdminApiTokens.noneExpired`,
+  revoked: `AdminApiTokens.noneRevoked`,
 }
 
 /**
@@ -81,6 +90,7 @@ export interface AdminApiTokensScreenProps {
 export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Element {
   const { filter, list, pending, error, onFilter, onPage } = props
   const heading = useRef<HTMLHeadingElement>(null)
+  const t = useAdminText()
 
   // After a page change the list is new: the reader starts again at its heading.
   const page = list?.page
@@ -95,24 +105,29 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
 
   const chips = ADMIN_API_TOKEN_STATES.map((state) => ({
     value: state,
-    label: list ? `${STATE_LABELS[state]} (${list.counts[state]})` : STATE_LABELS[state],
+    label: list
+      ? t.t(`AdminApiTokens.stateCount`, {
+        state: t.t(STATE_LABELS[state]),
+        count: list.counts[state],
+      })
+      : t.t(STATE_LABELS[state]),
   }))
 
   return (
     <Stack>
       <PageHeader
-        title="API tokens"
-        subtitle="Every API token, whose it is and when it was last used."
+        title={t.t(`AdminApiTokens.title`)}
+        subtitle={t.t(`AdminApiTokens.subtitle`)}
         titleDataE2E="admin-api-tokens-title"
       />
       <div
         class="flex flex-wrap items-center gap-2 rounded-xl border border-subtle bg-surface p-4"
         data-e2e="admin-api-tokens-state"
       >
-        <span class="text-sm text-muted" aria-hidden="true">State</span>
+        <span class="text-sm text-muted" aria-hidden="true">{t.t(`AdminApiTokens.state`)}</span>
         <ToggleChips
           mode="single"
-          label="State"
+          label={t.t(`AdminApiTokens.state`)}
           options={chips}
           value={filter.state}
           onChange={(value) =>
@@ -123,11 +138,11 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
       <ErrorState message={error} />
 
       <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-api-tokens-count">
-        {list ? `${list.total} ${list.total === 1 ? "token" : "tokens"}` : "Loading tokens"}
+        {list ? t.t(`AdminApiTokens.count`, { count: list.total }) : t.t(`AdminApiTokens.loading`)}
       </h2>
       {list === null
         ? !error && (
-          <div role="status" aria-label="Loading tokens">
+          <div role="status" aria-label={t.t(`AdminApiTokens.loading`)}>
             <LoadingSkeleton rows={5} />
           </div>
         )
@@ -136,20 +151,20 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
             <DataTable
               mode="server"
               class={tokenTableClass(true)}
-              columns={tokenColumns({ ...props, withOwner: true })}
+              columns={tokenColumns({ ...props, withOwner: true, t })}
               rows={list.tokens}
               sort={[]}
               onSortChange={() => {}}
-              caption="API tokens"
+              caption={t.t(`AdminApiTokens.title`)}
               captionHidden
               rowKey={(token) => token.id}
               empty={
                 <EmptyState
                   inset
-                  title={filter.state ? `No ${filter.state} tokens` : "No API tokens yet"}
-                  description={filter.state
-                    ? "Pick another state to see the rest."
-                    : "A person makes one on their profile, for a script or an integration."}
+                  title={t.t(filter.state ? NONE_LABELS[filter.state] : `AdminApiTokens.noneYet`)}
+                  description={t.t(
+                    filter.state ? `AdminApiTokens.otherState` : `AdminApiTokens.noneHint`,
+                  )}
                 />
               }
               paging={{
@@ -157,7 +172,7 @@ export function AdminApiTokensScreen(props: AdminApiTokensScreenProps): JSX.Elem
                 pageSize: list.pageSize,
                 total: list.total,
                 onChange: onPage,
-                label: "Pages of tokens",
+                label: t.t(`AdminApiTokens.pages`),
               }}
             />
           </div>
@@ -193,28 +208,36 @@ export function tokenTableClass(withOwner: boolean): string {
  * button. On a phone the name's cell also names the owner and the state ({@link tokenTableClass}).
  */
 export function tokenColumns(
-  { operatorId, onAsk, navigate, withOwner }: {
+  { operatorId, onAsk, navigate, withOwner, t }: {
     operatorId: number
     onAsk: (target: AdminTokensConfirm) => void
     navigate?: Navigate
     withOwner: boolean
+    /** The operator's language. */
+    t: Translator<string>
   },
 ): DataTableColumn<AdminApiToken, never>[] {
+  const never = <span class="text-sm text-muted">{t.t(`AdminApiTokens.never`)}</span>
   const columns: DataTableColumn<AdminApiToken, never>[] = [
     {
       id: "name",
-      header: "Token",
+      header: t.t(`AdminApiTokens.token`),
       render: (token) => (
         <span class="flex min-w-36 flex-col gap-1">
-          <span class="font-medium wrap-anywhere" data-e2e="admin-api-token-name">
+          <span class="font-medium wrap-anywhere" translate={false} data-e2e="admin-api-token-name">
             {token.name}
           </span>
           <span class="flex flex-wrap items-center gap-2 text-sm text-muted">
-            <span class="wrap-anywhere">{token.groupName ?? "Deleted group"}</span>
+            {token.groupName === null
+              ? <span>{t.t(`AdminApiTokens.deletedGroup`)}</span>
+              : <span class="wrap-anywhere" translate={false}>{token.groupName}</span>}
             <AccessBadge access={token.access} />
           </span>
           <span class="text-sm text-muted">
-            Created <Day at={token.createdAt} />
+            <Rich
+              parts={t.parts(`AdminApiTokens.created`)}
+              tags={{ day: () => <Day at={token.createdAt} /> }}
+            />
           </span>
           {/* A phone hides the owner and state columns, so the cell says both. */}
           <span
@@ -224,7 +247,7 @@ export function tokenColumns(
             {withOwner && <OwnerLine token={token} />}
             <span>
               <Badge
-                text={STATE_LABELS[token.state]}
+                text={t.t(STATE_LABELS[token.state])}
                 color={stateColor(token.state)}
                 type="outline"
               />
@@ -235,34 +258,34 @@ export function tokenColumns(
     },
     {
       id: "state",
-      header: "State",
+      header: t.t(`AdminApiTokens.state`),
       render: (token) => <StateBadge state={token.state} />,
     },
     {
       id: "lastUsedAt",
-      header: "Last used",
-      render: (token) =>
-        token.lastUsedAt
-          ? <Ago at={token.lastUsedAt} />
-          : <span class="text-sm text-muted">Never</span>,
+      header: t.t(`AdminApiTokens.lastUsed`),
+      render: (token) => token.lastUsedAt ? <Ago at={token.lastUsedAt} /> : never,
     },
     {
       id: "expiresAt",
-      header: "Expires",
+      header: t.t(`AdminApiTokens.expires`),
       render: (token) =>
         token.revokedAt
           ? (
             <span class="text-sm text-muted">
-              Revoked <Day at={token.revokedAt} />
+              <Rich
+                parts={t.parts(`AdminApiTokens.revokedOn`)}
+                tags={{ day: () => <Day at={token.revokedAt!} /> }}
+              />
             </span>
           )
           : token.expiresAt
           ? <Day at={token.expiresAt} />
-          : <span class="text-sm text-muted">Never</span>,
+          : never,
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t.t(`AdminApiTokens.actions`),
       align: "right",
       render: (token) =>
         token.state === "live" && token.owner.id !== operatorId
@@ -273,10 +296,10 @@ export function tokenColumns(
               // 44 px tall on a phone, the touch target of the house accessibility rules.
               class="max-sm:min-h-11"
               data-e2e={`admin-api-token-revoke-${token.id}`}
-              aria-label={`Revoke ${token.name}`}
+              aria-label={t.t(`AdminApiTokens.revokeLabel`, { name: token.name })}
               onClick={() => onAsk({ kind: "revoke", token })}
             >
-              Revoke
+              {t.t(`AdminApiTokens.revoke`)}
             </Button>
           )
           : null,
@@ -286,7 +309,7 @@ export function tokenColumns(
   return [
     {
       id: "owner",
-      header: "Owner",
+      header: t.t(`AdminApiTokens.owner`),
       render: (token) => <OwnerCell token={token} navigate={navigate} />,
     },
     ...columns,
@@ -321,31 +344,41 @@ export function AdminTokensConfirmDialog(
   },
 ): JSX.Element | null {
   const { target, error, pending } = confirm
+  const t = useAdminText()
   if (!target) return null
+  const strong = (text: string) => (
+    <strong class="wrap-anywhere">
+      <bdi translate={false}>{text}</bdi>
+    </strong>
+  )
   const copy = target.kind === "revoke"
     ? {
-      title: "Revoke this API token",
+      title: t.t(`AdminApiTokens.revokeTitle`),
       text: (
-        <>
-          <strong class="wrap-anywhere">{target.token.name}</strong> of{" "}
-          {adminUserName({ ...target.token.owner })}{" "}
-          stops working at once: every script that uses it is refused. It cannot be turned back on;
-          its owner can make a new one.
-        </>
+        <Rich
+          parts={t.parts(`AdminApiTokens.revokeText`, {
+            token: target.token.name,
+            owner: adminUserName({ ...target.token.owner }, t),
+          })}
+          tags={{
+            token: strong,
+            owner: (text) => <bdi translate={false}>{text}</bdi>,
+          }}
+        />
       ),
-      submit: "Revoke",
-      busy: "Revoking…",
+      submit: t.t(`AdminApiTokens.revoke`),
+      busy: t.t(`AdminApiTokens.revoking`),
     }
     : {
-      title: "Remove this device",
+      title: t.t(`AdminApiTokens.removeDeviceTitle`),
       text: (
-        <>
-          Device <strong>{target.label}</strong>{" "}
-          gets no more push notifications. The person can turn them on again from that device.
-        </>
+        <Rich
+          parts={t.parts(`AdminApiTokens.removeDeviceText`, { device: target.label })}
+          tags={{ device: strong }}
+        />
       ),
-      submit: "Remove",
-      busy: "Removing…",
+      submit: t.t(`AdminApiTokens.remove`),
+      busy: t.t(`AdminApiTokens.removing`),
     }
   return (
     <ConfirmDialog
@@ -373,9 +406,10 @@ export function AdminTokensConfirmDialog(
 /** A token's access, worded and coloured as the person's own token list shows it. */
 export function AccessBadge({ access }: { access: ApiTokenAccess }): JSX.Element {
   const write = access === ApiTokenAccess.WRITE
+  const t = useAdminText()
   return (
     <Badge
-      text={write ? "Read and write" : "Read only"}
+      text={t.t(write ? `AdminApiTokens.readWrite` : `AdminApiTokens.readOnly`)}
       color={write ? "orange" : "gray"}
       type="outline"
     />
@@ -384,9 +418,10 @@ export function AccessBadge({ access }: { access: ApiTokenAccess }): JSX.Element
 
 /** A token's state: a live one is good news, a revoked one stands out, an expired one stays quiet. */
 export function StateBadge({ state }: { state: AdminApiTokenState }): JSX.Element {
+  const t = useAdminText()
   return (
     <span data-e2e={`admin-api-token-state-${state}`}>
-      <Badge text={STATE_LABELS[state]} color={stateColor(state)} type="outline" />
+      <Badge text={t.t(STATE_LABELS[state])} color={stateColor(state)} type="outline" />
     </span>
   )
 }
@@ -401,14 +436,20 @@ function stateColor(state: AdminApiTokenState): "green" | "red" | "gray" {
  * column's, which a phone hides.
  */
 function OwnerLine({ token }: { token: AdminApiToken }): JSX.Element {
-  const name = adminUserName({ ...token.owner })
+  const t = useAdminText()
+  const name = adminUserName({ ...token.owner }, t)
   return (
     <span class="flex flex-col">
       <span class="wrap-anywhere">
-        Owner: <span class="font-medium text-foreground">{name}</span>
+        <Rich
+          parts={t.parts(`AdminApiTokens.ownerLine`, { name })}
+          tags={{
+            name: (text) => <bdi class="font-medium text-foreground" translate={false}>{text}</bdi>,
+          }}
+        />
       </span>
       {token.owner.email && token.owner.email !== name && (
-        <span class="wrap-anywhere">{token.owner.email}</span>
+        <span class="wrap-anywhere" translate={false}>{token.owner.email}</span>
       )}
     </span>
   )
@@ -428,7 +469,7 @@ export function Ago({ at }: { at: string }): JSX.Element {
 function OwnerCell(
   { token, navigate }: { token: AdminApiToken; navigate?: Navigate },
 ): JSX.Element {
-  const name = adminUserName({ ...token.owner })
+  const name = adminUserName({ ...token.owner }, useAdminText())
   return (
     // At least 12rem wide: on a phone the table scrolls sideways instead of squeezing the name.
     <div class="flex min-w-48 items-center gap-3">
@@ -438,13 +479,16 @@ function OwnerCell(
           href={`${ADMIN_PATHS.user(token.owner.id)}?tab=api-tokens`}
           navigate={navigate}
           class="pc-link font-medium wrap-anywhere"
+          translate={false}
           data-e2e={`admin-api-token-owner-${token.owner.id}`}
         >
           {name}
         </Link>
         {/* A person with no name is shown by their address already. */}
         {token.owner.email && token.owner.email !== name && (
-          <span class="text-sm text-muted wrap-anywhere">{token.owner.email}</span>
+          <span class="text-sm text-muted wrap-anywhere" translate={false}>
+            {token.owner.email}
+          </span>
         )}
       </div>
     </div>

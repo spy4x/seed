@@ -123,22 +123,22 @@ function NotificationsTab(
 /** API tokens across people, and a person's tokens, push devices and notifications (#427). */
 export const apiTokensModule: AdminModule = {
   id: `api-tokens`,
-  nav: { name: `API tokens`, href: ADMIN_API_TOKENS_PATH, Icon: IconKey },
+  nav: { name: `AdminNav.apiTokens`, href: ADMIN_API_TOKENS_PATH, Icon: IconKey },
   routes: [{ path: ADMIN_API_TOKENS_PATH, View: ApiTokensView }],
   personTabs: [
     {
       id: `api-tokens`,
-      label: `API tokens`,
+      label: `AdminPersonTab.apiTokens`,
       render: ({ context, userId }) => <TokensTab context={context} userId={userId} />,
     },
     {
       id: `devices`,
-      label: `Devices`,
+      label: `AdminPersonTab.devices`,
       render: ({ context, userId }) => <DevicesTab context={context} userId={userId} />,
     },
     {
       id: `notifications`,
-      label: `Notifications`,
+      label: `AdminPersonTab.notifications`,
       render: ({ context, userId }) => <NotificationsTab context={context} userId={userId} />,
     },
   ],

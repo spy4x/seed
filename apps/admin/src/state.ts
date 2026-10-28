@@ -3,6 +3,7 @@ import { apiFetch } from "@spy4x/platform/api"
 import { canOpenAdmin, type EmailStatus, type User } from "@domain/identity"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import type { AdminOperator } from "@ui/admin-user-screen.tsx"
+import { adminText } from "./i18n.ts"
 
 /** One answer of the API: the data, or its status and message. */
 export type AdminApiResult<T> = Awaited<ReturnType<typeof apiFetch<T>>>
@@ -41,7 +42,9 @@ export const adminHttp: AdminApi = {
 }
 
 /** The message when a call failed without one of its own, as when the network is down. */
-export const ADMIN_FAILURE = "Something went wrong. Try again."
+export function adminFailure(): string {
+  return adminText().t(`AdminApp.failure`)
+}
 
 /** Where the session stands: being read, signed out, owing its code, or signed in. */
 export type AdminSessionStep = "loading" | "credentials" | "one-time-code" | "signed-in"
@@ -85,7 +88,7 @@ export async function attempt<T>(
   try {
     return await call()
   } catch {
-    return { ok: false, status: 0, error: { message: ADMIN_FAILURE } } as AdminApiResult<T>
+    return { ok: false, status: 0, error: { message: adminFailure() } } as AdminApiResult<T>
   }
 }
 
@@ -153,7 +156,7 @@ export function createAdminStore(api: AdminApi) {
       if (result.ok) {
         session.value = { step: "signed-in", user: result.data, busy: false, error: null }
       } else if (result.status === 401) {
-        signedOut("The sign-in expired. Sign in again.")
+        signedOut(adminText().t(`AdminApp.signInExpired`))
       } else {
         session.value = { ...session.value, busy: false, error: result.error.message }
       }

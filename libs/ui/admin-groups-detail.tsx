@@ -1,8 +1,6 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { IconEllipsisVertical } from "@spy4x/preact-icons"
 import { type AttachmentItem, AttachmentList } from "@spy4x/preact-ui/attachment-list"
 import { Avatar } from "@spy4x/preact-ui/avatar"
@@ -54,6 +52,9 @@ import { roleColor, roleLabel } from "./admin-users-screen.tsx"
 import { GroupMark } from "./group-appearance.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useFormat, When } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** The signed-in operator, as far as the page needs them. */
 export interface AdminGroupOperatorView {
@@ -80,24 +81,31 @@ export const ADMIN_GROUP_TABS = [`members`, `invitations`, `files`, `activity`] 
 
 const NUMBER = new Intl.NumberFormat(`en`)
 
+/** Each subscription state's word, by catalog key. */
 const BILLING_STATUS: Record<number, string> = {
-  [BillingStatus.Trialing]: `Trialing`,
-  [BillingStatus.Active]: `Active`,
-  [BillingStatus.PastDue]: `Past due`,
-  [BillingStatus.Canceled]: `Canceled`,
-  [BillingStatus.Incomplete]: `Incomplete`,
-  [BillingStatus.Paused]: `Paused`,
+  [BillingStatus.Trialing]: `AdminGroup.statusTrialing`,
+  [BillingStatus.Active]: `AdminGroup.statusActive`,
+  [BillingStatus.PastDue]: `AdminGroup.statusPastDue`,
+  [BillingStatus.Canceled]: `AdminGroup.statusCanceled`,
+  [BillingStatus.Incomplete]: `AdminGroup.statusIncomplete`,
+  [BillingStatus.Paused]: `AdminGroup.statusPaused`,
 }
 
+/** Each invitation state's word (a catalog key) and colour. */
 const INVITATION_STATES: Record<
   AdminInvitationState,
-  { text: string; color: "green" | "gray" | "orange" | "red" }
+  { key: string; color: "green" | "gray" | "orange" | "red" }
 > = {
-  pending: { text: `Pending`, color: `green` },
-  used: { text: `Used`, color: `gray` },
-  expired: { text: `Expired`, color: `gray` },
-  declined: { text: `Declined`, color: `orange` },
-  revoked: { text: `Revoked`, color: `red` },
+  pending: { key: `AdminGroup.pending`, color: `green` },
+  used: { key: `AdminGroup.used`, color: `gray` },
+  expired: { key: `AdminGroup.expired`, color: `gray` },
+  declined: { key: `AdminGroup.declined`, color: `orange` },
+  revoked: { key: `AdminGroup.revoked`, color: `red` },
+}
+
+/** A user value inside a sentence: isolated for right-to-left text and never machine-translated. */
+function isolated(text: string): JSX.Element {
+  return <bdi translate={false}>{text}</bdi>
 }
 
 /** The menu button of a row: an icon, 44 pixels on a phone. */
@@ -184,16 +192,17 @@ export interface AdminGroupScreenProps {
 export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
   const { detail, error, operator, navigate } = props
   const format = useFormat()
-  const back = { href: ADMIN_GROUP_PATHS.list, label: `Groups` }
+  const t = useAdminText()
+  const back = { href: ADMIN_GROUP_PATHS.list, label: t.t(`AdminGroups.title`) }
 
   if (!detail) {
     return (
       <Stack>
-        <PageHeader title="Group" back={back} navigate={navigate} />
+        <PageHeader title={t.t(`AdminGroup.title`)} back={back} navigate={navigate} />
         {error
           ? <ErrorState message={error} dataE2E="admin-group-error" />
           : (
-            <div role="status" aria-label="Loading the group">
+            <div role="status" aria-label={t.t(`AdminGroup.loading`)}>
               <LoadingSkeleton rows={4} />
             </div>
           )}
@@ -213,7 +222,7 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
       dataE2E="admin-group-transfer-open"
       onClick={() => props.onOpenDialog({ kind: `transfer` })}
     >
-      Transfer ownership
+      {t.t(`AdminGroup.transfer`)}
     </DropdownItem>
   )
   const pending = detail.invitations.filter((invitation) => invitation.state === `pending`)
@@ -221,22 +230,22 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
   const tabs = [
     {
       id: `members`,
-      label: <TabLabel text="Members" count={detail.members.length} />,
+      label: <TabLabel text={t.t(`AdminGroup.members`)} count={detail.members.length} />,
       content: <Members {...props} detail={detail} deleted={deleted} />,
     },
     {
       id: `invitations`,
-      label: <TabLabel text="Invitations" count={pending.length} />,
+      label: <TabLabel text={t.t(`AdminGroup.invitations`)} count={pending.length} />,
       content: <Invitations {...props} detail={detail} deleted={deleted} />,
     },
     {
       id: `files`,
-      label: <TabLabel text="Files" count={counts.files} />,
+      label: <TabLabel text={t.t(`AdminGroup.files`)} count={counts.files} />,
       content: <Files {...props} detail={detail} deleted={deleted} />,
     },
     {
       id: `activity`,
-      label: `Activity`,
+      label: t.t(`AdminGroup.activity`),
       content: <Activity events={detail.activity} />,
     },
   ]
@@ -246,7 +255,7 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
     <Stack>
       <PageHeader
         title={group.name}
-        subtitle={`Owned by ${adminGroupPersonName(group.owner)}`}
+        subtitle={t.t(`AdminGroup.ownedBy`, { owner: adminGroupPersonName(t, group.owner) })}
         mark={<GroupMark color={group.color} emoji={group.emoji} />}
         back={back}
         navigate={navigate}
@@ -261,17 +270,19 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         <div class="flex flex-wrap items-center gap-2">
           <span data-e2e="admin-group-status">
             {deleted
-              ? <Badge text="In trash" color="red" />
-              : <Badge text="Active" color="green" />}
+              ? <Badge text={t.t(`AdminGroup.inTrash`)} color="red" />
+              : <Badge text={t.t(`AdminGroup.active`)} color="green" />}
           </span>
           <Badge
-            text={`${planLabel(group.planId)} plan`}
+            text={t.t(`AdminGroup.planBadge`, { plan: planLabel(t, group.planId) })}
             color={group.planId === `free` ? `gray` : `purple`}
             type="outline"
           />
           {detail.billing && (
             <Badge
-              text={`Subscription ${BILLING_STATUS[detail.billing.status] ?? `unknown`}`.trim()}
+              text={t.t(`AdminGroup.subscription`, {
+                status: t.t(BILLING_STATUS[detail.billing.status] ?? `AdminGroup.statusUnknown`),
+              })}
               color={detail.billing.status === BillingStatus.PastDue ? `orange` : `gray`}
               type="outline"
             />
@@ -279,79 +290,94 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         </div>
         {/* The counts are facts like the dates: no card inside the header card. */}
         <dl class="grid grid-cols-2 gap-4 sm:grid-cols-4" data-e2e="admin-group-counts">
-          <Fact label="Members">{NUMBER.format(detail.members.length)}</Fact>
-          <Fact label="Notes">
+          <Fact label={t.t(`AdminGroup.members`)}>{NUMBER.format(detail.members.length)}</Fact>
+          <Fact label={t.t(`AdminGroup.notes`)}>
             {NUMBER.format(counts.notes)}
             <span class="font-normal text-muted">
-              {` · ${NUMBER.format(counts.deletedNotes)} in trash`}
+              {` · `}
+              {t.t(`AdminGroup.notesInTrash`, { count: counts.deletedNotes })}
             </span>
           </Fact>
-          <Fact label="Tags">{NUMBER.format(counts.tags)}</Fact>
-          <Fact label="Open invitations">{NUMBER.format(counts.pendingInvitations)}</Fact>
-          <Fact label="Files">
+          <Fact label={t.t(`AdminGroup.tags`)}>{NUMBER.format(counts.tags)}</Fact>
+          <Fact label={t.t(`AdminGroup.openInvitations`)}>
+            {NUMBER.format(counts.pendingInvitations)}
+          </Fact>
+          <Fact label={t.t(`AdminGroup.files`)}>
             {NUMBER.format(counts.files)}
             <span class="font-normal text-muted">{` · ${formatBytes(counts.fileBytes)}`}</span>
           </Fact>
-          <Fact label="Owner">
+          <Fact label={t.t(`AdminGroup.owner`)}>
             <Link
               href={ADMIN_PATHS.user(group.owner.id)}
               navigate={navigate}
               class="pc-link"
+              translate={false}
               data-e2e="admin-group-owner"
             >
-              {adminGroupPersonName(group.owner)}
+              {adminGroupPersonName(t, group.owner)}
             </Link>
           </Fact>
-          <Fact label="Created">
+          <Fact label={t.t(`AdminGroup.created`)}>
             <When at={group.createdAt} />
           </Fact>
           {detail.imported && (
-            <Fact label="Imported">
+            <Fact label={t.t(`AdminGroup.imported`)}>
               <span data-e2e="admin-group-imported">
-                <When at={detail.imported.at} />
-                {detail.imported.by && (
-                  <span class="font-normal text-muted">
-                    {" by "}
-                    <Link
-                      href={ADMIN_PATHS.user(detail.imported.by.id)}
-                      navigate={navigate}
-                      class="pc-link"
-                    >
-                      {adminGroupPersonName(detail.imported.by)}
-                    </Link>
-                  </span>
-                )}
+                {detail.imported.by
+                  ? (
+                    <Rich
+                      parts={t.parts(`AdminGroup.importedBy`, {
+                        name: adminGroupPersonName(t, detail.imported.by),
+                      })}
+                      tags={{
+                        when: () => <When at={detail.imported!.at} />,
+                        person: (name: string) => (
+                          <Link
+                            href={ADMIN_PATHS.user(detail.imported!.by!.id)}
+                            navigate={navigate}
+                            class="pc-link font-normal"
+                            translate={false}
+                          >
+                            {name}
+                          </Link>
+                        ),
+                      }}
+                    />
+                  )
+                  : <When at={detail.imported.at} />}
               </span>
             </Fact>
           )}
-          <Fact label="Last activity">
-            {group.lastActivityAt ? <When at={group.lastActivityAt} /> : `None`}
+          <Fact label={t.t(`AdminGroup.lastActivity`)}>
+            {group.lastActivityAt ? <When at={group.lastActivityAt} /> : t.t(`AdminGroup.none`)}
           </Fact>
-          <Fact label="Renews">
+          <Fact label={t.t(`AdminGroup.renews`)}>
             {detail.billing?.currentPeriodEnd
               ? detail.billing.cancelAtPeriodEnd
-                ? `Ends ${format.date(detail.billing.currentPeriodEnd)}`
+                ? t.t(`AdminGroup.endsOn`, { date: format.date(detail.billing.currentPeriodEnd) })
                 : format.date(detail.billing.currentPeriodEnd)
-              : `No subscription`}
+              : t.t(`AdminGroup.noSubscription`)}
           </Fact>
           {detail.billing && (
             // The same subscription the owner sees on the group's Plan and billing tab.
-            <Fact label="Billing">
+            <Fact label={t.t(`AdminGroup.billing`)}>
               <Link
                 href={ADMIN_BILLING_PATHS.customer(group.id)}
                 navigate={navigate}
                 class="pc-link"
                 data-e2e="admin-group-billing"
               >
-                Open the customer
+                {t.t(`AdminGroup.openCustomer`)}
               </Link>
             </Fact>
           )}
         </dl>
         {deleted && (
           <Notice tone="danger" data-e2e="admin-group-deleted-notice">
-            In the trash since{" "}
-            <When at={group.deletedAt!} />. Nothing in it changes until its owner restores it.
+            <Rich
+              parts={t.parts(`AdminGroup.deletedNotice`)}
+              tags={{ when: () => <When at={group.deletedAt!} /> }}
+            />
           </Notice>
         )}
       </div>
@@ -364,7 +390,7 @@ export function AdminGroupScreen(props: AdminGroupScreenProps): JSX.Element {
         active={active}
         onChange={props.onTab}
         lazy
-        label="About this group"
+        label={t.t(`AdminGroup.about`)}
         listClass="flex-nowrap overflow-x-auto pb-px"
         panelClass="pt-4"
         tabDataE2E="admin-group-tab"
@@ -451,10 +477,11 @@ function Members(
     deleted: boolean
   },
 ): JSX.Element {
+  const t = useAdminText()
   return (
-    <Rows empty="No members." dataE2E="admin-group-members">
+    <Rows empty={t.t(`AdminGroup.noMembers`)} dataE2E="admin-group-members">
       {detail.members.map((member) => {
-        const name = adminGroupPersonName(member)
+        const name = adminGroupPersonName(t, member)
         const removable = !deleted && member.role !== GroupRole.OWNER &&
           canActOnMember(operator, member)
         return (
@@ -465,36 +492,47 @@ function Members(
                 href={ADMIN_PATHS.user(member.id)}
                 navigate={navigate}
                 class="pc-link font-medium wrap-anywhere"
+                translate={false}
               >
                 {name}
               </Link>
               {member.email && member.name && (
-                <span class="text-sm text-muted wrap-anywhere">{member.email}</span>
+                <span class="text-sm text-muted wrap-anywhere" translate={false}>
+                  {member.email}
+                </span>
               )}
             </div>
             <Cluster gap="sm">
               <Badge
-                text={groupRoleLabel(member.role)}
+                text={groupRoleLabel(t, member.role)}
                 color={member.role === GroupRole.OWNER ? `purple` : `gray`}
                 type="outline"
               />
               {member.userRole > 1 && (
-                <Badge text={roleLabel(member.userRole)} color={roleColor(member.userRole)} />
+                <Badge text={roleLabel(t, member.userRole)} color={roleColor(member.userRole)} />
               )}
-              {member.blocked && <Badge text="Blocked" color="red" />}
-              {member.id === operator.id && <Badge text="You" color="gray" type="outline" />}
+              {member.blocked && <Badge text={t.t(`AdminGroup.blocked`)} color="red" />}
+              {member.id === operator.id && (
+                <Badge text={t.t(`AdminGroup.you`)} color="gray" type="outline" />
+              )}
             </Cluster>
             <span class="text-xs text-muted">
-              Joined <When at={member.joinedAt} />
+              <Rich
+                parts={t.parts(`AdminGroup.joined`)}
+                tags={{ when: () => <When at={member.joinedAt} /> }}
+              />
             </span>
             {removable && (
-              <RowMenu label={`Actions for ${name}`} dataE2E="admin-group-member-menu">
+              <RowMenu
+                label={t.t(`AdminGroup.memberActions`, { name })}
+                dataE2E="admin-group-member-menu"
+              >
                 <DropdownItem
                   danger
                   dataE2E="admin-group-remove-open"
                   onClick={() => onOpenDialog({ kind: `remove`, userId: member.id })}
                 >
-                  Remove from group
+                  {t.t(`AdminGroup.removeFromGroup`)}
                 </DropdownItem>
               </RowMenu>
             )}
@@ -506,8 +544,8 @@ function Members(
 }
 
 /** Who made the invitation and for whom: an address, or a link anyone may use. */
-function invitationTitle(invitation: AdminGroupInvitation): string {
-  return invitation.email ?? `Link anyone can use`
+function invitationTitle(t: Translator<string>, invitation: AdminGroupInvitation): string {
+  return invitation.email ?? t.t(`AdminGroup.anyoneLink`)
 }
 
 function Invitations(
@@ -516,37 +554,54 @@ function Invitations(
     deleted: boolean
   },
 ): JSX.Element {
+  const t = useAdminText()
   return (
-    <Rows empty="No invitations." dataE2E="admin-group-invitations">
+    <Rows empty={t.t(`AdminGroup.noInvitations`)} dataE2E="admin-group-invitations">
       {detail.invitations.map((invitation) => {
         const state = INVITATION_STATES[invitation.state]
-        const title = invitationTitle(invitation)
+        const title = invitationTitle(t, invitation)
         return (
           <li key={invitation.id} class={ROW} data-e2e={`admin-group-invitation-${invitation.id}`}>
             <div class="flex min-w-0 flex-1 basis-48 flex-col">
-              <span class="font-medium wrap-anywhere">{title}</span>
+              <span
+                class="font-medium wrap-anywhere"
+                translate={invitation.email ? false : undefined}
+              >
+                {title}
+              </span>
               <span class="text-sm text-muted">
-                {invitation.createdBy
-                  ? `By ${adminGroupPersonName(invitation.createdBy)}, `
-                  : `By a deleted account, `}
-                <When at={invitation.createdAt} />
-                {` · used ${invitation.uses} of ${invitation.maxUses}`}
+                <Rich
+                  parts={invitation.createdBy
+                    ? t.parts(`AdminGroup.invitedBy`, {
+                      name: adminGroupPersonName(t, invitation.createdBy),
+                      uses: invitation.uses,
+                      max: invitation.maxUses,
+                    })
+                    : t.parts(`AdminGroup.invitedByDeleted`, {
+                      uses: invitation.uses,
+                      max: invitation.maxUses,
+                    })}
+                  tags={{ when: () => <When at={invitation.createdAt} /> }}
+                />
               </span>
             </div>
             <Cluster gap="sm">
-              <Badge text={groupRoleLabel(invitation.role)} color="gray" type="outline" />
+              <Badge text={groupRoleLabel(t, invitation.role)} color="gray" type="outline" />
               <span data-e2e="admin-group-invitation-state">
-                <Badge text={state.text} color={state.color} />
+                <Badge text={t.t(state.key)} color={state.color} />
               </span>
             </Cluster>
             {invitation.state === `pending` && (
               <span class="text-xs text-muted">
-                Expires <When at={invitation.expiresAt} />
+                <Rich
+                  parts={t.parts(`AdminGroup.expires`)}
+                  tags={{ when: () => <When at={invitation.expiresAt} /> }}
+                />
               </span>
             )}
             {invitation.state === `pending` && !deleted && (
               <RowMenu
-                label={`Actions for the invitation ${title}`}
+                label={t.t(`AdminGroup.invitationActions`, { title })}
                 dataE2E="admin-group-invitation-menu"
               >
                 <DropdownItem
@@ -554,7 +609,7 @@ function Invitations(
                   dataE2E="admin-group-revoke-open"
                   onClick={() => onOpenDialog({ kind: `revoke`, invitationId: invitation.id })}
                 >
-                  Revoke invitation
+                  {t.t(`AdminGroup.revokeInvitation`)}
                 </DropdownItem>
               </RowMenu>
             )}
@@ -566,13 +621,16 @@ function Invitations(
 }
 
 /** "37 of 100 files · 41 MB of 200 MB", or without "of" for a cap the plan does not set. */
-function filesUsage(usage: AdminGroupFiles["usage"]): string {
+function filesUsage(t: Translator<string>, usage: AdminGroupFiles["usage"]): string {
   const files = usage.maxFiles === null
-    ? `${NUMBER.format(usage.files)} files`
-    : `${NUMBER.format(usage.files)} of ${NUMBER.format(usage.maxFiles)} files`
+    ? t.t(`AdminGroup.usageFiles`, { count: usage.files })
+    : t.t(`AdminGroup.usageFilesOf`, { files: usage.files, count: usage.maxFiles })
   const bytes = usage.maxBytes === null
     ? formatBytes(usage.bytes)
-    : `${formatBytes(usage.bytes)} of ${formatBytes(usage.maxBytes)}`
+    : t.t(`AdminGroup.usageBytesOf`, {
+      used: formatBytes(usage.bytes),
+      max: formatBytes(usage.maxBytes),
+    })
   return `${files} · ${bytes}`
 }
 
@@ -591,20 +649,28 @@ export function clipped(text: string): string {
  * Where a file sits and who put it there, after its kind and size: "Ada Lovelace · 3 Oct 2026 ·
  * in “Trip receipts”", "(in trash)" after a note in the trash.
  */
-export function fileDetail(file: AdminGroupFile, date: string): string {
-  const uploader = file.uploader ? adminGroupPersonName(file.uploader) : `A deleted account`
-  const note = file.noteTitle.trim()
-    ? `in “${clipped(file.noteTitle.trim())}”`
-    : `in an untitled note`
-  return `${uploader} · ${date} · ${note}${file.noteDeleted ? ` (in trash)` : ``}`
+export function fileDetail(t: Translator<string>, file: AdminGroupFile, date: string): string {
+  const uploader = file.uploader
+    ? adminGroupPersonName(t, file.uploader)
+    : t.t(`AdminGroup.deletedAccount`)
+  const title = clipped(file.noteTitle.trim())
+  const key = title
+    ? file.noteDeleted ? `AdminGroup.fileInNoteTrash` : `AdminGroup.fileInNote`
+    : file.noteDeleted
+    ? `AdminGroup.fileInUntitledTrash`
+    : `AdminGroup.fileInUntitled`
+  return t.t(key, { uploader, date, title })
 }
 
 /** "90 files", "3 files match “receipt”", "No files match “xyz”". */
-export function filesCount(files: Pick<AdminGroupFiles, "total" | "query">): string {
+export function filesCount(
+  t: Translator<string>,
+  files: Pick<AdminGroupFiles, "total" | "query">,
+): string {
   const { total, query } = files
-  if (!query) return `${NUMBER.format(total)} ${total === 1 ? `file` : `files`}`
-  if (total === 0) return `No files match “${query}”`
-  return `${NUMBER.format(total)} ${total === 1 ? `file matches` : `files match`} “${query}”`
+  if (!query) return t.t(`AdminGroup.filesTotal`, { count: total })
+  if (total === 0) return t.t(`AdminGroup.noFilesMatchQuery`, { query })
+  return t.t(`AdminGroup.filesMatch`, { count: total, query })
 }
 
 /** The id of the Files tab's search field, where focus goes when the last file of a page leaves. */
@@ -621,6 +687,7 @@ function Files(
 ): JSX.Element {
   const { files, filesError, fileFilter, detail, deleted, dialog, pending } = props
   const format = useFormat()
+  const t = useAdminText()
   const count = useRef<HTMLParagraphElement>(null)
   const search = useRef<HTMLDivElement>(null)
 
@@ -646,7 +713,7 @@ function Files(
       status: `ready`,
       thumbnailSrc: image ? adminGroupFilePath(groupId, file.id, `thumbnail`) : undefined,
       src: image ? adminGroupFilePath(groupId, file.id, `open`) : undefined,
-      detail: fileDetail(file, format.date(file.createdAt)),
+      detail: fileDetail(t, file, format.date(file.createdAt)),
     }
   })
   const byId = new Map((files?.files ?? []).map((file) => [file.id, file]))
@@ -671,12 +738,14 @@ function Files(
       return filesError
         ? (
           <Stack gap="sm" class="items-start" data-e2e="admin-group-files-error">
-            <ErrorState message="Could not load the files. Check your connection, then try again." />
-            <Button variant="secondary" onClick={props.onRetryFiles}>Try again</Button>
+            <ErrorState message={t.t(`AdminGroup.filesError`)} />
+            <Button variant="secondary" onClick={props.onRetryFiles}>
+              {t.t(`AdminGroup.retry`)}
+            </Button>
           </Stack>
         )
         : (
-          <div role="status" aria-label="Loading the files">
+          <div role="status" aria-label={t.t(`AdminGroup.loadingFiles`)}>
             <LoadingSkeleton rows={3} />
           </div>
         )
@@ -685,7 +754,7 @@ function Files(
       return (
         <div ref={empty} tabIndex={-1} class="rounded-xl">
           <Card data-e2e="admin-group-files">
-            <EmptyState inset description="No files yet." />
+            <EmptyState inset description={t.t(`AdminGroup.noFilesYet`)} />
           </Card>
         </div>
       )
@@ -695,8 +764,8 @@ function Files(
         <Card data-e2e="admin-group-files">
           <EmptyState
             inset
-            title="No files match"
-            description="Try part of the name, or clear the search."
+            title={t.t(`AdminGroup.noFilesMatch`)}
+            description={t.t(`AdminGroup.noFilesMatchHint`)}
           />
         </Card>
       )
@@ -706,7 +775,7 @@ function Files(
         <AttachmentList
           id="admin-group-files"
           items={items}
-          labels={{ list: `Files`, removeItem: `Remove file` }}
+          labels={{ list: t.t(`AdminGroup.files`), removeItem: t.t(`AdminGroup.removeFile`) }}
           onDownload={(item) => {
             const file = byId.get(item.id)
             if (file) props.onDownloadFile(file)
@@ -735,10 +804,10 @@ function Files(
               key={fileFilter.query}
               class="flex flex-wrap items-end gap-3"
               role="search"
-              aria-label="Search the files"
+              aria-label={t.t(`AdminGroup.searchFiles`)}
             >
               <div class="min-w-0 flex-1 basis-48 sm:max-w-md">
-                <Field id={FILE_SEARCH_ID} label="File name">
+                <Field id={FILE_SEARCH_ID} label={t.t(`AdminGroup.fileName`)}>
                   <Input
                     name="q"
                     type="search"
@@ -753,9 +822,9 @@ function Files(
                 type="submit"
                 data-e2e="admin-group-files-submit"
                 busy={files === null && !filesError}
-                busyLabel="Searching…"
+                busyLabel={t.t(`AdminGroup.searching`)}
               >
-                Search
+                {t.t(`AdminGroup.search`)}
               </Button>
             </div>
           </ScreenForm>
@@ -769,7 +838,7 @@ function Files(
           class="text-sm text-muted focus:outline-none"
           data-e2e="admin-group-files-count"
         >
-          {filesCount(files)}
+          {filesCount(t, files)}
         </p>
       )}
       {props.fileNotice && (
@@ -781,13 +850,13 @@ function Files(
           page={files.page}
           pageCount={Math.ceil(files.total / files.pageSize)}
           onChange={(next) => props.onFileFilter({ query: files.query, page: next })}
-          label="Pages of files"
+          label={t.t(`AdminGroup.filePages`)}
           class="self-center"
         />
       )}
       {files && (
         <p class="text-sm text-muted" data-e2e="admin-group-files-usage">
-          {filesUsage(files.usage)}
+          {filesUsage(t, files.usage)}
         </p>
       )}
     </Stack>
@@ -796,17 +865,18 @@ function Files(
 
 /** The newest entries of the group's activity log, newest first, on a timeline. */
 function Activity({ events }: { events: readonly AdminGroupActivityEvent[] }): JSX.Element {
+  const t = useAdminText()
   return (
     <Timeline
-      label="Activity"
-      empty="Nothing recorded."
+      label={t.t(`AdminGroup.activity`)}
+      empty={t.t(`AdminGroup.nothingRecorded`)}
       dataE2E="admin-group-activity"
       items={events.map((event) => ({
         id: event.id,
         title: describeActivity(event),
         at: event.at,
-        when: timeAgo(event.at),
-        description: event.byOperator ? `By an operator, from the admin area` : undefined,
+        when: <When at={event.at} />,
+        description: event.byOperator ? t.t(`AdminGroup.byOperator`) : undefined,
         tone: activityTone(event.kind),
         dataE2E: `admin-group-event-${event.kind}`,
       }))}
@@ -814,50 +884,58 @@ function Activity({ events }: { events: readonly AdminGroupActivityEvent[] }): J
   )
 }
 
-/** Each dialog's copy: its title, what it does, and its button. */
+/** Each dialog's copy, in the operator's language: its title, what it does, and its button. */
 function dialogCopy(
+  t: Translator<string>,
   dialog: AdminGroupDialog,
   detail: AdminGroupDetail,
   files: AdminGroupFiles | null,
-): { title: string; text: string; submit: string; busy: string } {
+): { title: string; text: ComponentChildren; submit: string; busy: string } {
+  const group = detail.group.name
+  const sentence = (key: string, values: Record<string, string> = {}) => (
+    <Rich parts={t.parts(key, { group, ...values })} tags={{ group: isolated, name: isolated }} />
+  )
   switch (dialog.kind) {
     case `remove`: {
       const member = detail.members.find((row) => row.id === dialog.userId)
-      const name = member ? adminGroupPersonName(member) : `this member`
+      const name = member ? adminGroupPersonName(t, member) : null
       return {
-        title: `Remove ${name}?`,
-        text:
-          `${name} loses access to ${detail.group.name} at once, with their API tokens and the invitations they made for it. What they wrote stays in the group. They get a notice.`,
-        submit: `Remove`,
-        busy: `Removing…`,
+        title: name === null
+          ? t.t(`AdminGroup.removeTitleUnknown`)
+          : t.t(`AdminGroup.removeTitle`, { name }),
+        text: name === null
+          ? sentence(`AdminGroup.removeTextUnknown`)
+          : sentence(`AdminGroup.removeText`, { name }),
+        submit: t.t(`AdminGroup.removeSubmit`),
+        busy: t.t(`AdminGroup.removing`),
       }
     }
     case `revoke`:
       return {
-        title: `Revoke this invitation?`,
-        text:
-          `Nobody can join ${detail.group.name} with it any more. People who already joined stay.`,
-        submit: `Revoke`,
-        busy: `Revoking…`,
+        title: t.t(`AdminGroup.revokeTitle`),
+        text: sentence(`AdminGroup.revokeText`),
+        submit: t.t(`AdminGroup.revokeSubmit`),
+        busy: t.t(`AdminGroup.revoking`),
       }
     case `removeFile`: {
       const file = files?.files.find((row) => row.id === dialog.fileId)
       return {
-        title: file ? `Remove “${clipped(file.name)}”?` : `Remove this file?`,
-        text:
-          `The members of ${detail.group.name} will no longer see it. Its note stays. The group's activity records that the support team removed it.`,
-        submit: `Remove file`,
-        busy: `Removing…`,
+        title: file
+          ? t.t(`AdminGroup.removeFileTitle`, { name: clipped(file.name) })
+          : t.t(`AdminGroup.removeFileTitleUnknown`),
+        text: sentence(`AdminGroup.removeFileText`),
+        submit: t.t(`AdminGroup.removeFile`),
+        busy: t.t(`AdminGroup.removing`),
       }
     }
     case `transfer`:
       return {
-        title: `Transfer ${detail.group.name}`,
-        text: `The member you pick becomes the owner and gets a notice. ${
-          adminGroupPersonName(detail.group.owner)
-        } stays in the group as an admin. A subscription that still renews must be canceled by its owner first.`,
-        submit: `Transfer`,
-        busy: `Transferring…`,
+        title: t.t(`AdminGroup.transferTitle`, { group }),
+        text: sentence(`AdminGroup.transferText`, {
+          name: adminGroupPersonName(t, detail.group.owner),
+        }),
+        submit: t.t(`AdminGroup.transferSubmit`),
+        busy: t.t(`AdminGroup.transferring`),
       }
   }
 }
@@ -868,13 +946,14 @@ function ActionDialog(
     & AdminGroupScreenProps
     & { dialog: AdminGroupDialog; detail: AdminGroupDetail; candidates: AdminGroupMember[] },
 ): JSX.Element {
-  const copy = dialogCopy(dialog, detail, files)
+  const t = useAdminText()
+  const copy = dialogCopy(t, dialog, detail, files)
   return (
     <Modal
       open
       onClose={onCloseDialog}
       title={copy.title}
-      cancelLabel="Close"
+      cancelLabel={t.t(`AdminGroup.close`)}
       tone="danger"
       dataE2E="admin-group-dialog"
     >
@@ -893,19 +972,24 @@ function ActionDialog(
           <p class="text-sm text-muted">{copy.text}</p>
           {dialog.kind === `transfer` && (
             <RadioGroup
-              legend="New owner"
+              legend={t.t(`AdminGroup.newOwner`)}
               name="userId"
               required
               data-e2e="admin-group-transfer-choice"
               options={candidates.map((member) => ({
                 value: member.id,
-                label: `${adminGroupPersonName(member)} (${groupRoleLabel(member.role)})`,
+                label: t.t(`AdminGroup.candidate`, {
+                  name: adminGroupPersonName(t, member),
+                  role: groupRoleLabel(t, member.role),
+                }),
               }))}
             />
           )}
           <ErrorState message={actionError} dataE2E="admin-group-dialog-error" />
           <DialogActions>
-            <Button type="button" variant="ghost" onClick={onCloseDialog}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={onCloseDialog}>
+              {t.t(`AdminGroup.cancel`)}
+            </Button>
             <Button
               type="submit"
               variant="danger"

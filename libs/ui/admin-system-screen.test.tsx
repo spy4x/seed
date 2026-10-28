@@ -8,7 +8,9 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { AdminHealth, type AdminSystemSnapshot } from "@domain/identity"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { AdminSystemScreen, type AdminSystemScreenProps } from "./admin-system-screen.tsx"
+import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 
 const window = new Window({ url: "http://admin.localhost/system" })
 const own = {
@@ -204,5 +206,18 @@ describe("system screen", () => {
     expect(document.querySelectorAll("dl p")).toHaveLength(0)
     const hints = [...document.querySelectorAll("dl + p")].map((hint) => hint.textContent)
     expect(hints).toHaveLength(2)
+  })
+})
+
+describe("system screen in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    const page = await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminSystemScreen {...props([])} />
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(page, [`Postgres`, `Deno`, snapshot.migrations.latest!, `abc1234def56`]))
+      .toEqual([])
+    expect(page.textContent).toContain(ADMIN_PSEUDO.t(`AdminSystem.queueHint`, { count: 5 }))
   })
 })

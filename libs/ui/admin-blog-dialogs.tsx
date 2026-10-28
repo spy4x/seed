@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useState } from "preact/hooks"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"
@@ -11,7 +10,14 @@ import { Input, Select } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { BLOG_SLUG_MAX_LENGTH, BLOG_SLUG_PATTERN } from "@domain/blog"
-import { type AdminBlogEditorScreenProps, NUMBER } from "./admin-blog-editor.tsx"
+import type { AdminBlogEditorScreenProps } from "./admin-blog-editor.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAdminText } from "./i18n.ts"
+
+/** A path inside a sentence: code, isolated, never machine-translated. */
+function path(text: string): JSX.Element {
+  return <bdi class="font-mono" translate={false}>{text}</bdi>
+}
 
 /**
  * The blog editor's dialogs (#396): publish or schedule, unschedule, unpublish, change the URL and
@@ -23,12 +29,13 @@ import { type AdminBlogEditorScreenProps, NUMBER } from "./admin-blog-editor.tsx
 /** The open dialog, if any. */
 export function Dialogs(props: AdminBlogEditorScreenProps): JSX.Element | null {
   const { dialog, post, value } = props
+  const t = useAdminText()
   if (dialog === null) return null
-  const title = (post?.title ?? value.title.trim()) || `Untitled`
+  const title = (post?.title ?? value.title.trim()) || t.t(`AdminBlogDialogs.untitled`)
   const shared = {
     busy: props.dialogPending,
     onCancel: props.onCloseDialog,
-    cancelLabel: `Cancel`,
+    cancelLabel: t.t(`AdminBlogDialogs.cancel`),
   }
   switch (dialog) {
     case `publish`:
@@ -39,12 +46,12 @@ export function Dialogs(props: AdminBlogEditorScreenProps): JSX.Element | null {
       return (
         <ConfirmDialog
           {...shared}
-          title={`Unschedule "${title}"?`}
-          confirmLabel="Unschedule"
+          title={t.t(`AdminBlogDialogs.unscheduleTitle`, { title })}
+          confirmLabel={t.t(`AdminBlogDialogs.unschedule`)}
           onConfirm={props.onUnschedule}
         >
           <DialogBody error={props.dialogError}>
-            It goes back to drafts. A newsletter send you chose is cancelled too.
+            {t.t(`AdminBlogDialogs.unscheduleText`)}
           </DialogBody>
         </ConfirmDialog>
       )
@@ -53,13 +60,12 @@ export function Dialogs(props: AdminBlogEditorScreenProps): JSX.Element | null {
         <ConfirmDialog
           {...shared}
           tone="danger"
-          title={`Unpublish "${title}"?`}
-          confirmLabel="Unpublish"
+          title={t.t(`AdminBlogDialogs.unpublishTitle`, { title })}
+          confirmLabel={t.t(`AdminBlogDialogs.unpublish`)}
           onConfirm={props.onUnpublish}
         >
           <DialogBody error={props.dialogError}>
-            It comes off the website and the RSS feed, and its address stops working. An email
-            already sent stays sent.
+            {t.t(`AdminBlogDialogs.unpublishText`)}
           </DialogBody>
         </ConfirmDialog>
       )
@@ -68,12 +74,12 @@ export function Dialogs(props: AdminBlogEditorScreenProps): JSX.Element | null {
         <ConfirmDialog
           {...shared}
           tone="danger"
-          title={`Delete "${title}"?`}
-          confirmLabel="Delete post"
+          title={t.t(`AdminBlogDialogs.deleteTitle`, { title })}
+          confirmLabel={t.t(`AdminBlogDialogs.deletePost`)}
           onConfirm={props.onDelete}
         >
           <DialogBody error={props.dialogError}>
-            The post and its text are deleted for good. This cannot be undone.
+            {t.t(`AdminBlogDialogs.deleteText`)}
           </DialogBody>
         </ConfirmDialog>
       )
@@ -96,34 +102,40 @@ function DialogBody(
 
 /** The new address of a published post, with the warning that old links break. */
 function ChangeUrlDialog(props: AdminBlogEditorScreenProps): JSX.Element {
+  const t = useAdminText()
   const old = props.post?.slug ?? ``
   const [slug, setSlug] = useState(old)
   const trimmed = slug.trim()
   const problem = trimmed === ``
-    ? `Add a slug.`
+    ? t.t(`AdminBlogDialogs.addSlug`)
     : BLOG_SLUG_PATTERN.test(trimmed)
     ? null
-    : `Use lowercase letters, digits and hyphens only.`
+    : t.t(`AdminBlogDialogs.slugRule`)
   const [tried, setTried] = useState(false)
   return (
     <ConfirmDialog
       busy={props.dialogPending}
       onCancel={props.onCloseDialog}
-      cancelLabel="Cancel"
+      cancelLabel={t.t(`AdminBlogDialogs.cancel`)}
       tone="danger"
-      title="Change this post's URL?"
-      confirmLabel="Change URL"
+      title={t.t(`AdminBlogDialogs.changeUrlTitle`)}
+      confirmLabel={t.t(`AdminBlogDialogs.changeUrl`)}
       onConfirm={() => {
         setTried(true)
         if (problem === null && trimmed !== old) props.onChangeUrl(trimmed)
       }}
     >
       <Stack gap="md">
-        <p>Links to /blog/{old} stop working.</p>
+        <p>
+          <Rich
+            parts={t.parts(`AdminBlogDialogs.linksBreak`, { path: `/blog/${old}` })}
+            tags={{ path }}
+          />
+        </p>
         <Field
           id="blog-new-slug"
-          label="New slug"
-          hint="Lowercase letters, digits and hyphens."
+          label={t.t(`AdminBlogDialogs.newSlug`)}
+          hint={t.t(`AdminBlogDialogs.slugHint`)}
           error={tried ? problem : null}
           required
         >
@@ -158,6 +170,7 @@ function inAnHour(now: Date): string {
 function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): JSX.Element {
   const { dialog, post, value, newsletter, now } = props
   const format = useFormat()
+  const t = useAdminText()
   const [when, setWhen] = useState<`now` | `schedule`>(dialog === `reschedule` ? `schedule` : `now`)
   const [at, setAt] = useState<string | null>(post?.publishAt ?? inAnHour(now))
   const lists = newsletter?.enabled ? newsletter.lists : []
@@ -171,21 +184,23 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
   const canEmail = !sent && (chosen !== undefined || post?.newsletterList != null)
   const scheduling = when === `schedule`
   const late = at === null || new Date(at).getTime() <= now.getTime()
-  const atError = scheduling && tried && late ? `Pick a time in the future.` : null
+  const atError = scheduling && tried && late ? t.t(`AdminBlogDialogs.futureTime`) : null
   const target = list ?? chosen?.list ?? null
   const sending = canEmail && emailing && target !== null
   const confirmLabel = scheduling
-    ? `Schedule`
+    ? t.t(`AdminBlogDialogs.schedule`)
     : sending && chosen
-    ? `Publish and email ${NUMBER.format(chosen.confirmed)}`
-    : `Publish`
+    ? t.t(`AdminBlogDialogs.publishAndEmail`, { count: chosen.confirmed })
+    : t.t(`AdminBlogDialogs.publish`)
   const slug = post?.slug ?? value.slug.trim()
   return (
     <ConfirmDialog
       busy={props.dialogPending}
       onCancel={props.onCloseDialog}
-      cancelLabel="Cancel"
-      title={scheduling ? `Schedule "${props.title}"` : `Publish "${props.title}"?`}
+      cancelLabel={t.t(`AdminBlogDialogs.cancel`)}
+      title={t.t(scheduling ? `AdminBlogDialogs.scheduleTitle` : `AdminBlogDialogs.publishTitle`, {
+        title: props.title,
+      })}
       confirmLabel={confirmLabel}
       onConfirm={() => {
         setTried(true)
@@ -196,12 +211,12 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
       <Stack gap="md">
         {dialog === `publish` && (
           <RadioGroup
-            legend="When"
+            legend={t.t(`AdminBlogDialogs.when`)}
             name="blog-publish-when"
             data-e2e="admin-blog-when"
             options={[
-              { value: `now`, label: `Now` },
-              { value: `schedule`, label: `At a time` },
+              { value: `now`, label: t.t(`AdminBlogDialogs.now`) },
+              { value: `schedule`, label: t.t(`AdminBlogDialogs.atATime`) },
             ]}
             value={when}
             onChange={(next) => setWhen(next === `schedule` ? `schedule` : `now`)}
@@ -211,25 +226,33 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
           ? (
             <DateTimeField
               id="blog-publish-at"
-              label="Date and time"
+              label={t.t(`AdminBlogDialogs.dateTime`)}
               value={at}
               onChange={setAt}
               timeZone={format.timeZone}
               min={now.toISOString()}
-              hint="It goes live on its own at that time."
+              hint={t.t(`AdminBlogDialogs.liveOnItsOwn`)}
               error={atError}
               required
             />
           )
-          : <p>It goes live at /blog/{slug} and joins the RSS feed and sitemap.</p>}
+          : (
+            <p>
+              <Rich
+                parts={t.parts(`AdminBlogDialogs.goesLiveAt`, { path: `/blog/${slug}` })}
+                tags={{ path }}
+              />
+            </p>
+          )}
         {canEmail && chosen && (
           <Stack gap="sm">
             {lists.length > 1 && (
-              <Field id="blog-publish-list" label="Mailing list">
+              <Field id="blog-publish-list" label={t.t(`AdminBlogDialogs.mailingList`)}>
                 <Select
                   options={lists.map((entry) => ({ value: entry.list, label: entry.list }))}
                   value={chosen.list}
-                  onChange={(e) => setList(e.currentTarget.value)}
+                  onChange={(e) =>
+                    setList(e.currentTarget.value)}
                 />
               </Field>
             )}
@@ -238,12 +261,21 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
               data-e2e="admin-blog-email"
               onChange={(e) => setEmailing(e.currentTarget.checked)}
             >
-              Also email this post to {NUMBER.format(chosen.confirmed)} confirmed subscribers
-              {lists.length > 1 ? ` of ${chosen.list}` : ``}
+              {lists.length > 1
+                ? (
+                  <Rich
+                    parts={t.parts(`AdminBlogDialogs.alsoEmailList`, {
+                      count: chosen.confirmed,
+                      list: chosen.list,
+                    })}
+                    tags={{ list: path }}
+                  />
+                )
+                : t.t(`AdminBlogDialogs.alsoEmail`, { count: chosen.confirmed })}
             </Checkbox>
             {emailing && (
               <p class="text-sm text-muted" data-e2e="admin-blog-email-hint">
-                Sent once, when the post goes live. It cannot be unsent.
+                {t.t(`AdminBlogDialogs.sentOnce`)}
               </p>
             )}
           </Stack>

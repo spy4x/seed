@@ -15,6 +15,8 @@ import {
   type AdminContactLinksScreenProps,
 } from "./admin-contact-links.tsx"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 const window = new Window({ url: "http://admin.localhost/contact-links" })
 const own = {
   document: globalThis.document,
@@ -245,5 +247,23 @@ describe("the contact link editor", () => {
     const described = field.getAttribute("aria-describedby") ?? ""
     expect(described.split(" ").map((id) => document.getElementById(id)?.textContent).join(" "))
       .toContain("Enter a Telegram username.")
+  })
+})
+
+describe("the contact links screens in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminContactLinksScreen {...listProps([])} />
+        <AdminContactLinkEditorScreen {...editorProps([])} />
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(document.body, [
+      `my_shop`,
+      `Call us`,
+      ...[`Telegram`, `Zalo`, `WhatsApp`, `Instagram`, `Facebook`],
+      // ts-libs gap: `CONTACT_KIND_NAMES` has these in English only.
+      ...[`Phone`, `Email`, `Website`],
+    ])).toEqual([])
   })
 })

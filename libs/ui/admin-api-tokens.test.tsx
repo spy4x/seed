@@ -30,6 +30,8 @@ import {
 /** A day as the screens write it on this device: the default formatter, with no person's settings. */
 const day = (at: string) => createFormatters().date(at)
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
   document: globalThis.document,
@@ -459,5 +461,48 @@ describe("the person's tabs", () => {
     await mount(<AdminPersonNotificationsPanel data={null} error="User not found" />)
     expect(document.body.textContent).toContain("User not found")
     expect(has(`[role="status"]`)).toBe(false)
+  })
+})
+
+describe("the API tokens screens in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        {tokensPage().node}
+        <AdminPersonTokensPanel
+          data={[live, revoked]}
+          error={null}
+          userId={42}
+          {...actions([])}
+        />
+        <AdminPersonNotificationsPanel
+          data={{
+            notifications: [
+              {
+                id: "2",
+                kind: "group.removed",
+                createdAt: "2026-10-15T10:00:00.000Z",
+                readAt: null,
+              },
+            ],
+            total: 60,
+            unread: 1,
+          }}
+          error={null}
+        />
+      </I18nContext.Provider>,
+    )
+    expect(
+      englishLeft(document.body, [
+        `Ada Lovelace`,
+        `AL`,
+        `ada@example.com`,
+        `ops@example.com`,
+        live.name,
+        revoked.name,
+        mine.name,
+        `Family`,
+      ]),
+    ).toEqual([])
   })
 })

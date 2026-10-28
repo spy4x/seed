@@ -19,11 +19,14 @@ import {
   type AdminBlogEditorScreenProps,
   blogDraftErrors,
   blogDraftOf,
+  blogErrorText,
   blogSlugFromTitle,
   emptyBlogDraft,
   followTitle,
 } from "./admin-blog-editor.tsx"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
 const window = new Window({ url: "http://admin.localhost/blog" })
 const own = {
   document: globalThis.document,
@@ -469,7 +472,13 @@ describe("the editor's rules", () => {
   })
 
   it("checks the fields in the page's words, and the body only for publishing", () => {
-    expect(blogDraftErrors(emptyBlogDraft())).toEqual({
+    const blogDraftWords = (...args: Parameters<typeof blogDraftErrors>) =>
+      Object.fromEntries(
+        Object.entries(blogDraftErrors(...args)).map((
+          [field, key],
+        ) => [field, blogErrorText(ADMIN_ENGLISH, key)]),
+      )
+    expect(blogDraftWords(emptyBlogDraft())).toEqual({
       title: "Add a title.",
       slug: "Add a slug.",
       description: "Add a description.",
@@ -481,13 +490,26 @@ describe("the editor's rules", () => {
       description: "D",
       coverUrl: "http://example.com/a.png",
     }
-    expect(blogDraftErrors(draft)).toEqual({
+    expect(blogDraftWords(draft)).toEqual({
       slug: "Use lowercase letters, digits and hyphens only.",
       coverUrl: "Start the link with https://.",
       coverAlt: "Describe the cover image.",
     })
     const ok = { ...emptyBlogDraft(), title: "T", slug: "t", description: "D" }
-    expect(blogDraftErrors(ok)).toEqual({})
-    expect(blogDraftErrors(ok, true)).toEqual({ bodyMd: "The post is empty." })
+    expect(blogDraftWords(ok)).toEqual({})
+    expect(blogDraftWords(ok, true)).toEqual({ bodyMd: "The post is empty." })
+  })
+})
+
+describe("the blog screens in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        <AdminBlogListScreen {...listProps([])} />
+        <AdminBlogEditorScreen {...editorProps([], { dialog: "publish" })} />
+        <AdminBlogEditorScreen {...editorProps([], { dialog: "delete" })} />
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(document.body, [`Hello world`, `News`, /\/blog\/[a-z-]+/g])).toEqual([])
   })
 })

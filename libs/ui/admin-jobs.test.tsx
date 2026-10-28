@@ -24,6 +24,8 @@ import {
   type AdminJobsScreenProps,
 } from "./admin-jobs-screen.tsx"
 
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
   document: globalThis.document,
@@ -410,5 +412,22 @@ describe("admin job page", () => {
     await mount(jobPage({ dialog: "retry", pending: true }).node)
     await mount(jobPage({ dialog: "retry", dialogError: "That did not work." }).node)
     expect(document.activeElement === find(`[data-e2e="admin-job-facts"]`)).toBe(false)
+  })
+})
+
+describe("the jobs screens in en-XA", () => {
+  it("shows no English outside the catalog: every word is pseudo-language or data", async () => {
+    await mount(
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
+        {jobsPage().node}
+        {jobsPage({ tab: "repeating" }).node}
+        {jobPage({ dialog: "retry" }).node}
+      </I18nContext.Provider>,
+    )
+    expect(englishLeft(document.body, [
+      // Names, kinds, schedules and errors as the server sends them.
+      ...[`Password reset email`, `auth.password-reset-mail`, `MailSendError`],
+      ...[`Nightly cleanup`, `outbox.cleanup`, `Every day`],
+    ])).toEqual([])
   })
 })

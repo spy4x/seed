@@ -22,14 +22,14 @@ import type {
 import { billingDate } from "@ui/admin-billing-list.tsx"
 import { createFormatters, type Formatters } from "@spy4x/time/format"
 import type { AdminApiResult, AdminFetch } from "../../state.ts"
+import { adminText } from "../../i18n.ts"
 
 /**
  * What an action's dialog says when no clear answer came back: the action may have happened in
  * Stripe, so it never says that nothing changed. A retry from the same dialog sends the same
  * idempotency key, so it acts once.
  */
-export const ADMIN_BILLING_NO_ANSWER =
-  `Could not reach the server, so we cannot tell whether this happened. Check the customer in Stripe, or try again: a retry from this dialog acts once.`
+const NO_ANSWER = `AdminBillingCustomer.noAnswer`
 
 /** How long the page waits for Stripe's webhook after an action before it points to Stripe. */
 export const ADMIN_BILLING_WAIT_MS = 2 * 60 * 1000
@@ -129,6 +129,7 @@ function actionDone(
   format: Pick<Formatters, "date">,
 ): string {
   const { customer } = answer.detail
+  const t = adminText()
   const group = customer.groupName
   const periodEnd = customer.currentPeriodEnd
     ? billingDate(customer.currentPeriodEnd, format)
@@ -136,22 +137,28 @@ function actionDone(
   switch (action.kind) {
     case `refund`:
       return answer.refunded
-        ? `${formatMoney(answer.refunded.amount, answer.refunded.currency)} refunded to ${group}.`
-        : `The last payment of ${group} is refunded.`
+        ? t.t(`AdminBillingCustomer.doneRefundAmount`, {
+          amount: formatMoney(answer.refunded.amount, answer.refunded.currency),
+          group,
+        })
+        : t.t(`AdminBillingCustomer.doneRefund`, { group })
     case `time`:
       return answer.until
-        ? `${group} is charged nothing until ${billingDate(answer.until, format)}.`
-        : `${group} got time at no charge.`
+        ? t.t(`AdminBillingCustomer.doneTimeUntil`, {
+          group,
+          date: billingDate(answer.until, format),
+        })
+        : t.t(`AdminBillingCustomer.doneTime`, { group })
     case `cancel`:
       return action.when === `now`
-        ? `${group}'s subscription is cancelled. The group is on Free.`
+        ? t.t(`AdminBillingCustomer.doneCancelNow`, { group })
         : periodEnd
-        ? `${group}'s subscription ends on ${periodEnd}.`
-        : `${group}'s subscription ends at its period's end.`
+        ? t.t(`AdminBillingCustomer.doneCancelOn`, { group, date: periodEnd })
+        : t.t(`AdminBillingCustomer.doneCancelEnd`, { group })
     case `undo`:
       return periodEnd
-        ? `${group}'s subscription renews on ${periodEnd}.`
-        : `${group}'s subscription renews as usual.`
+        ? t.t(`AdminBillingCustomer.doneUndoOn`, { group, date: periodEnd })
+        : t.t(`AdminBillingCustomer.doneUndo`, { group })
   }
 }
 
@@ -293,7 +300,7 @@ export function createBillingState(
           pending: false,
           error: {
             unknown,
-            message: result.status === 0 ? ADMIN_BILLING_NO_ANSWER : result.error.message,
+            message: result.status === 0 ? adminText().t(NO_ANSWER) : result.error.message,
           },
         }
         return

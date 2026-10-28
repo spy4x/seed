@@ -8,6 +8,7 @@ import {
   AdminContactLinkEditorScreen,
   AdminContactLinksScreen,
 } from "@ui/admin-contact-links.tsx"
+import { useAdminText } from "@ui/i18n.ts"
 import type { AdminContext, AdminModule } from "../types.ts"
 import { type ContactLinksState, createContactLinksState } from "./state.ts"
 
@@ -45,6 +46,7 @@ function ContactLinksView({ context }: { context: AdminContext }): JSX.Element {
 function ContactLinkEditorView(
   { context, params }: { context: AdminContext; params: Record<string, string> },
 ): JSX.Element {
+  const t = useAdminText()
   const state = contactLinksState(context)
   const id = params.id === `new` ? null : params.id
   // The router's own navigate: after a save or removal nothing unsaved is left to ask about.
@@ -79,10 +81,10 @@ function ContactLinkEditorView(
         navigate={go}
         leaveGuard={context.leaveGuard}
         labels={{
-          title: `Leave without saving?`,
-          message: `Your changes to this link are lost.`,
-          leave: `Leave`,
-          stay: `Keep editing`,
+          title: t.t(`AdminApp.leaveTitle`),
+          message: t.t(`AdminContactLinks.leaveMessage`),
+          leave: t.t(`AdminApp.leave`),
+          stay: t.t(`AdminApp.keepEditing`),
         }}
       />
     </>
@@ -92,7 +94,11 @@ function ContactLinkEditorView(
 /** The website's contact links: the list and the editor (#465). */
 export const contactLinksModule: AdminModule = {
   id: `contact-links`,
-  nav: { name: `Contact links`, href: ADMIN_CONTACT_LINKS_PATHS.list, Icon: IconChatBubble },
+  nav: {
+    name: `AdminNav.contactLinks`,
+    href: ADMIN_CONTACT_LINKS_PATHS.list,
+    Icon: IconChatBubble,
+  },
   routes: [
     { path: ADMIN_CONTACT_LINKS_PATHS.list, View: ContactLinksView },
     { path: `/contact-links/:id`, View: ContactLinkEditorView },

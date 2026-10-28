@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"
@@ -26,6 +25,8 @@ import {
 } from "@domain/contact-links"
 import { ListCard, ListEmpty, MENU_TRIGGER_CLASSES } from "./notes-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** The contact-links module's pages in the admin app. */
 export const ADMIN_CONTACT_LINKS_PATHS = {
@@ -34,23 +35,21 @@ export const ADMIN_CONTACT_LINKS_PATHS = {
   link: (id: string) => `/contact-links/${encodeURIComponent(id)}`,
 } as const
 
-/** The page's subtitle: what the links are for. */
-export const ADMIN_CONTACT_LINKS_SUBTITLE =
-  `Where people reach you. The website's footer lists them in this order.`
-
-/** The list's message when it could not be read, whatever the cause. */
-export const ADMIN_CONTACT_LINKS_ERROR = `Contact links could not be loaded. Try again in a moment.`
-
-/** What one kind's value field asks for, and an example of it. */
+/** What one kind's value field asks for (a catalog key), and an example of it. */
 const VALUE_FIELDS: Record<ContactKind, { label: string; example: string; inputMode: string }> = {
-  telegram: { label: `Username`, example: `my_shop`, inputMode: `text` },
-  zalo: { label: `Phone number`, example: `0912345678`, inputMode: `tel` },
-  whatsapp: { label: `Phone number`, example: `84912345678`, inputMode: `tel` },
-  instagram: { label: `Username`, example: `my.shop`, inputMode: `text` },
-  facebook: { label: `Page username`, example: `myshop`, inputMode: `text` },
-  phone: { label: `Phone number`, example: `+84912345678`, inputMode: `tel` },
-  email: { label: `Email address`, example: `hello@example.com`, inputMode: `email` },
-  url: { label: `Address`, example: `https://example.com`, inputMode: `url` },
+  telegram: { label: `AdminContactLinks.username`, example: `my_shop`, inputMode: `text` },
+  zalo: { label: `AdminContactLinks.phone`, example: `0912345678`, inputMode: `tel` },
+  whatsapp: { label: `AdminContactLinks.phone`, example: `84912345678`, inputMode: `tel` },
+  instagram: { label: `AdminContactLinks.username`, example: `my.shop`, inputMode: `text` },
+  facebook: { label: `AdminContactLinks.pageUsername`, example: `myshop`, inputMode: `text` },
+  phone: { label: `AdminContactLinks.phone`, example: `+84912345678`, inputMode: `tel` },
+  email: { label: `AdminContactLinks.email`, example: `hello@example.com`, inputMode: `email` },
+  url: { label: `AdminContactLinks.address`, example: `https://example.com`, inputMode: `url` },
+}
+
+/** A value inside a sentence: code-like, isolated, never machine-translated. */
+function literal(text: string): JSX.Element {
+  return <bdi translate={false}>{text}</bdi>
 }
 
 /** The words a link shows: its label, else its value. */
@@ -80,6 +79,7 @@ export interface AdminContactLinksScreenProps {
  */
 export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JSX.Element {
   const { links, navigate } = props
+  const t = useAdminText()
   const [removing, setRemoving] = useState<ContactLinkRecord | null>(null)
   const [focusOn, setFocusOn] = useState<{ id: string; index: number } | null>(null)
   const page = useRef<HTMLDivElement>(null)
@@ -96,12 +96,12 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
   return (
     <div ref={page} class="flex flex-col gap-8">
       <PageHeader
-        title="Contact links"
-        subtitle={ADMIN_CONTACT_LINKS_SUBTITLE}
+        title={t.t(`AdminContactLinks.title`)}
+        subtitle={t.t(`AdminContactLinks.subtitle`)}
         titleDataE2E="contact-links-title"
         action={
           <PageAction
-            label="Add link"
+            label={t.t(`AdminContactLinks.addLink`)}
             Icon={IconPlus}
             href={ADMIN_CONTACT_LINKS_PATHS.create}
             navigate={navigate}
@@ -112,24 +112,28 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
       <Stack>
         {props.error && (
           <div class="flex flex-col items-center gap-3" data-e2e="contact-links-error">
-            <ErrorState message={links ? props.error : ADMIN_CONTACT_LINKS_ERROR} />
-            {!links && <Button variant="secondary" onClick={props.onRetry}>Try again</Button>}
+            <ErrorState message={links ? props.error : t.t(`AdminContactLinks.listError`)} />
+            {!links && (
+              <Button variant="secondary" onClick={props.onRetry}>
+                {t.t(`AdminContactLinks.retry`)}
+              </Button>
+            )}
           </div>
         )}
         {links === null
           ? !props.error && (
-            <div role="status" aria-label="Loading contact links">
+            <div role="status" aria-label={t.t(`AdminContactLinks.loading`)}>
               <LoadingSkeleton rows={3} />
             </div>
           )
           : links.length === 0
           ? (
             <ListEmpty
-              title="No contact links yet"
-              description="Add Telegram, Zalo, a phone number or an email address. The website's footer lists them."
+              title={t.t(`AdminContactLinks.none`)}
+              description={t.t(`AdminContactLinks.noneHint`)}
               action={
                 <Button href={ADMIN_CONTACT_LINKS_PATHS.create} navigate={navigate}>
-                  Add link
+                  {t.t(`AdminContactLinks.addLink`)}
                 </Button>
               }
             />
@@ -147,19 +151,22 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                       href={ADMIN_CONTACT_LINKS_PATHS.link(link.id)}
                       navigate={navigate}
                       class="pc-link line-clamp-2 font-medium wrap-anywhere"
+                      translate={false}
                       data-e2e="contact-link-edit"
                     >
                       {contactLinkText(link)}
                     </Link>
                     <span class="text-sm text-muted wrap-anywhere">
                       {CONTACT_KIND_NAMES[link.kind]}
-                      {link.label !== null && ` · ${link.value}`}
+                      {link.label !== null && <>{` · `}{literal(link.value)}</>}
                     </span>
                   </div>
                   <div class="relative -my-2 -mr-2 shrink-0">
                     <Dropdown
                       trigger={<IconEllipsisVertical class="size-5" />}
-                      triggerLabel={`Actions for ${contactLinkText(link)}`}
+                      triggerLabel={t.t(`AdminContactLinks.actionsFor`, {
+                        name: contactLinkText(link),
+                      })}
                       triggerClasses={MENU_TRIGGER_CLASSES}
                       triggerDataE2E="contact-link-menu"
                     >
@@ -167,7 +174,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                         href={ADMIN_CONTACT_LINKS_PATHS.link(link.id)}
                         navigate={navigate}
                       >
-                        Edit link
+                        {t.t(`AdminContactLinks.edit`)}
                       </DropdownItem>
                       {index > 0 && (
                         <DropdownItem
@@ -178,7 +185,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                             props.onMove(link.id, -1)
                           }}
                         >
-                          Move up
+                          {t.t(`AdminContactLinks.moveUp`)}
                         </DropdownItem>
                       )}
                       {index < links.length - 1 && (
@@ -190,7 +197,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                             props.onMove(link.id, 1)
                           }}
                         >
-                          Move down
+                          {t.t(`AdminContactLinks.moveDown`)}
                         </DropdownItem>
                       )}
                       <DropdownItem
@@ -199,7 +206,7 @@ export function AdminContactLinksScreen(props: AdminContactLinksScreenProps): JS
                         dataE2E="contact-link-remove"
                         onClick={() => setRemoving(link)}
                       >
-                        Remove link
+                        {t.t(`AdminContactLinks.remove`)}
                       </DropdownItem>
                     </Dropdown>
                   </div>
@@ -230,14 +237,13 @@ function RemoveDialog(
     onConfirm: () => void
   },
 ): JSX.Element {
+  const t = useAdminText()
   return (
     <ConfirmDialog
-      title={`Remove "${contactLinkText(link)}"?`}
-      message={`The website stops showing this ${
-        CONTACT_KIND_NAMES[link.kind]
-      } link within a minute.`}
-      confirmLabel="Remove link"
-      cancelLabel="Cancel"
+      title={t.t(`AdminContactLinks.removeTitle`, { name: contactLinkText(link) })}
+      message={t.t(`AdminContactLinks.removeText`, { kind: CONTACT_KIND_NAMES[link.kind] })}
+      confirmLabel={t.t(`AdminContactLinks.remove`)}
+      cancelLabel={t.t(`AdminContactLinks.cancel`)}
       tone="danger"
       dataE2E="contact-link-remove-dialog"
       onCancel={onCancel}
@@ -277,8 +283,6 @@ export interface AdminContactLinkEditorScreenProps {
   navigate?: Navigate
 }
 
-const BACK = { href: ADMIN_CONTACT_LINKS_PATHS.list, label: `Back to contact links` }
-
 /**
  * One contact link on a page of its own, at `/contact-links/new` and `/contact-links/:id`: its
  * kind, its value and an optional label. The value's label and example follow the kind, and once
@@ -288,6 +292,8 @@ export function AdminContactLinkEditorScreen(
   props: AdminContactLinkEditorScreenProps,
 ): JSX.Element {
   const { link, value, errors, navigate } = props
+  const t = useAdminText()
+  const back = { href: ADMIN_CONTACT_LINKS_PATHS.list, label: t.t(`AdminContactLinks.back`) }
   const valueInput = useRef<HTMLInputElement>(null)
   const labelInput = useRef<HTMLInputElement>(null)
   const [asking, setAsking] = useState(false)
@@ -299,23 +305,23 @@ export function AdminContactLinkEditorScreen(
   if (props.notFound || (props.loading && !link)) {
     return (
       <Stack gap="xl">
-        <PageHeader back={BACK} navigate={navigate} title="Contact link" />
+        <PageHeader back={back} navigate={navigate} title={t.t(`AdminContactLinks.link`)} />
         {props.notFound
           ? (
             <div data-e2e="contact-link-not-found">
               <ListEmpty
-                title="This link does not exist"
-                description="It may have been removed."
+                title={t.t(`AdminContactLinks.notFound`)}
+                description={t.t(`AdminContactLinks.notFoundHint`)}
                 action={
-                  <Button href={BACK.href} navigate={navigate} variant="outline">
-                    Back to contact links
+                  <Button href={back.href} navigate={navigate} variant="outline">
+                    {t.t(`AdminContactLinks.back`)}
                   </Button>
                 }
               />
             </div>
           )
           : (
-            <div role="status" aria-label="Loading the link">
+            <div role="status" aria-label={t.t(`AdminContactLinks.loadingLink`)}>
               <LoadingSkeleton rows={2} class="max-w-md" />
             </div>
           )}
@@ -331,9 +337,9 @@ export function AdminContactLinkEditorScreen(
   return (
     <Stack gap="xl">
       <PageHeader
-        back={BACK}
+        back={back}
         navigate={navigate}
-        title={link ? contactLinkText(link) : `New contact link`}
+        title={link ? contactLinkText(link) : t.t(`AdminContactLinks.newLink`)}
         titleDataE2E="contact-link-title"
         menu={link && (
           <DropdownItem
@@ -341,13 +347,13 @@ export function AdminContactLinkEditorScreen(
             onClick={() => setAsking(true)}
             dataE2E="contact-link-editor-remove"
           >
-            Remove link
+            {t.t(`AdminContactLinks.remove`)}
           </DropdownItem>
         )}
       />
       <ScreenForm pending={props.saving} onSubmit={props.onSave}>
         <Stack class="max-w-md">
-          <Field id="contact-link-kind" label="Channel">
+          <Field id="contact-link-kind" label={t.t(`AdminContactLinks.channel`)}>
             <Select
               name="kind"
               data-e2e="contact-link-kind"
@@ -362,8 +368,20 @@ export function AdminContactLinkEditorScreen(
           </Field>
           <Field
             id="contact-link-value"
-            label={field.label}
-            hint={opens ? `Opens ${opens}` : `Such as ${field.example}`}
+            label={t.t(field.label)}
+            hint={opens
+              ? (
+                <Rich
+                  parts={t.parts(`AdminContactLinks.opens`, { href: opens })}
+                  tags={{ href: literal }}
+                />
+              )
+              : (
+                <Rich
+                  parts={t.parts(`AdminContactLinks.suchAs`, { example: field.example })}
+                  tags={{ example: literal }}
+                />
+              )}
             error={errors.value}
             required
           >
@@ -380,10 +398,8 @@ export function AdminContactLinkEditorScreen(
           </Field>
           <Field
             id="contact-link-label"
-            label="Label (optional)"
-            hint={`Shown instead of the value, such as "Order on ${
-              CONTACT_KIND_NAMES[value.kind]
-            }".`}
+            label={t.t(`AdminContactLinks.label`)}
+            hint={t.t(`AdminContactLinks.labelHint`, { kind: CONTACT_KIND_NAMES[value.kind] })}
             error={errors.label}
           >
             <Input
@@ -399,21 +415,21 @@ export function AdminContactLinkEditorScreen(
           <ErrorState message={errors.form ?? null} />
           <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
-              href={BACK.href}
+              href={back.href}
               navigate={navigate}
               variant="ghost"
               class="min-h-11 w-full sm:min-h-9 sm:w-auto"
             >
-              Cancel
+              {t.t(`AdminContactLinks.cancel`)}
             </Button>
             <Button
               type="submit"
               class="min-h-11 w-full sm:min-h-9 sm:w-auto"
               data-e2e="contact-link-save"
               busy={props.saving}
-              busyLabel="Saving…"
+              busyLabel={t.t(`AdminContactLinks.saving`)}
             >
-              {link ? `Save link` : `Add link`}
+              {t.t(link ? `AdminContactLinks.save` : `AdminContactLinks.addLink`)}
             </Button>
           </div>
         </Stack>
