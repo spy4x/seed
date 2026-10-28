@@ -17,8 +17,8 @@ import {
  * The header set `securityHeaders` of `@spy4x/server` sends; the helper itself is Hono middleware
  * and the MPA runs on Fresh. A page here loads one stylesheet from its own origin and no font, so
  * the policy is the library's strictest: everything from `'self'` only, no plugins and no framing,
- * images and Fresh's inline scripts aside (below and {@link securityHeadersMiddleware}). Its `Referrer-Policy: no-referrer` also covers
- * the newsletter pages, whose address carries a token.
+ * images and Fresh's inline scripts aside (below and {@link securityHeadersMiddleware}). Its
+ * `Referrer-Policy: no-referrer` also covers the newsletter pages, whose address carries a token.
  *
  * Two things widen it. The pricing page's form posts to the MPA, which redirects to the SPA's
  * sign-up, and a browser applies `form-action` to that redirect too: on a domain of its own the
