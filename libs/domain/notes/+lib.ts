@@ -230,7 +230,9 @@ export function parseNoteRequest<S extends Type<object>>(schema: S, value: unkno
   }
   const parsed = result as S["infer"] & { title?: string; body?: string; tagIds?: string[] }
   if (parsed.tagIds !== undefined && new Set(parsed.tagIds).size > NOTE_TAG_MAX) {
-    throw new NoteError("INVALID_REQUEST", `A note can carry at most ${NOTE_TAG_MAX} tags`)
+    throw new NoteError("INVALID_REQUEST", `A note can carry at most ${NOTE_TAG_MAX} tags`, {
+      tagIds: { code: "noteTags", values: { rule: NOTE_TAG_MAX } },
+    })
   }
   if (parsed.title === undefined) return parsed
   const title = parsed.title.trim()
@@ -239,22 +241,33 @@ export function parseNoteRequest<S extends Type<object>>(schema: S, value: unkno
     throw new NoteError(
       "INVALID_REQUEST",
       `Note title must contain 1 to ${NOTE_TITLE_MAX_LENGTH} characters`,
+      {
+        title: titleLength < 1
+          ? { code: "required" }
+          : { code: "maxLength", values: { rule: NOTE_TITLE_MAX_LENGTH } },
+      },
     )
   }
   if (Array.from(parsed.body ?? "").length > NOTE_BODY_MAX_LENGTH) {
     throw new NoteError(
       "INVALID_REQUEST",
       `Note body must contain at most ${NOTE_BODY_MAX_LENGTH} characters`,
+      { body: { code: "maxLength", values: { rule: NOTE_BODY_MAX_LENGTH } } },
     )
   }
   if (hasUnstorableTextCharacters(title)) {
     throw new NoteError(
       "INVALID_REQUEST",
       "Note title must not contain a NUL or a broken character",
+      { title: { code: "unstorableCharacters" } },
     )
   }
   if (hasUnstorableTextCharacters(parsed.body ?? "")) {
-    throw new NoteError("INVALID_REQUEST", "Note body must not contain a NUL or a broken character")
+    throw new NoteError(
+      "INVALID_REQUEST",
+      "Note body must not contain a NUL or a broken character",
+      { body: { code: "unstorableCharacters" } },
+    )
   }
   return { ...parsed, title, ...(parsed.tagIds && { tagIds: [...new Set(parsed.tagIds)] }) }
 }
@@ -267,7 +280,7 @@ export function parseNoteRequest<S extends Type<object>>(schema: S, value: unkno
 export function parseNoteSearchRequest(value: unknown): { q: string } {
   const result = noteSearchPayloadSchema(value)
   if (result instanceof type.errors) {
-    throw new NoteError("INVALID_REQUEST", "A search takes one text field, q")
+    throw new NoteError("INVALID_REQUEST", "A search takes one text field, q", fieldErrors(result))
   }
   const q = result.q.trim()
   const length = Array.from(q).length
@@ -275,6 +288,11 @@ export function parseNoteSearchRequest(value: unknown): { q: string } {
     throw new NoteError(
       "INVALID_REQUEST",
       `A search must contain ${NOTE_SEARCH_MIN_LENGTH} to ${NOTE_SEARCH_MAX_LENGTH} characters`,
+      {
+        q: length < NOTE_SEARCH_MIN_LENGTH
+          ? { code: "minLength", values: { rule: NOTE_SEARCH_MIN_LENGTH } }
+          : { code: "maxLength", values: { rule: NOTE_SEARCH_MAX_LENGTH } },
+      },
     )
   }
   return { q }
@@ -661,11 +679,17 @@ export function parseNoteExportEntry(value: unknown): NoteExportEntry {
   // The schema checks every item of a list, so a huge `tagIds` is refused before it runs.
   const tagIds = (value as { tagIds?: unknown } | null)?.tagIds
   if (Array.isArray(tagIds) && tagIds.length > NOTE_TAG_MAX) {
-    throw new NoteError("INVALID_REQUEST", `A note can carry at most ${NOTE_TAG_MAX} tags`)
+    throw new NoteError("INVALID_REQUEST", `A note can carry at most ${NOTE_TAG_MAX} tags`, {
+      tagIds: { code: "noteTags", values: { rule: NOTE_TAG_MAX } },
+    })
   }
   const shape = noteExportEntrySchema(value)
   if (shape instanceof type.errors) {
-    throw new NoteError("INVALID_REQUEST", plainEntryProblem(shape, "note", NOTE_EXPORT_LABELS))
+    throw new NoteError(
+      "INVALID_REQUEST",
+      plainEntryProblem(shape, "note", NOTE_EXPORT_LABELS),
+      fieldErrors(shape),
+    )
   }
   return parseNoteRequest(noteExportEntrySchema, value) as NoteExportEntry
 }

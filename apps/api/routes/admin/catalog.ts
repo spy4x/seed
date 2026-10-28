@@ -280,6 +280,7 @@ export function createAdminCatalogRoutes(
         message: error.message,
         reason: error.code,
         status,
+        fields: error.fields,
         ...(error.field && { details: { field: error.field } }),
       })
     }

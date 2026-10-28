@@ -87,10 +87,14 @@ export function parseNoteWidgetRequest(
   }
   const range = { from: result.from, to: result.to }
   if (!overviewPeriods(range)) {
-    throw new NoteError("INVALID_REQUEST", "The range must be up to a year of days in order")
+    throw new NoteError("INVALID_REQUEST", "The range must be up to a year of days in order", {
+      range: { code: "overviewRange" },
+    })
   }
   if (!isValidTimeZone(result.timeZone)) {
-    throw new NoteError("INVALID_REQUEST", "The time zone is unknown")
+    throw new NoteError("INVALID_REQUEST", "The time zone is unknown", {
+      timeZone: { code: "timeZone" },
+    })
   }
   return { groupId: result.groupId, range, timeZone: result.timeZone }
 }

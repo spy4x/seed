@@ -63,7 +63,7 @@ export function toRequestError(error: unknown): RealtimeRequestError | null {
   if (error instanceof GroupError) {
     return new RealtimeRequestError(GROUP_ERROR_CODES[error.code], error.message, {
       code: error.code,
-    }, { reason: error.code })
+    }, { reason: error.code, fields: error.fields })
   }
   if (error instanceof NoteError) {
     // A version conflict names the version the note is at now, so the client can reread it.
