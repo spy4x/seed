@@ -138,12 +138,18 @@ export function parseApiTokenCreateRequest(body: unknown): ApiTokenCreateRequest
   }
   const name = result.name.trim()
   const length = Array.from(name).length
-  if (
-    length < 1 || length > API_TOKEN_NAME_MAX_LENGTH || hasUnsafeTextCharacters(name)
-  ) {
+  const failed = length < 1
+    ? { code: "required" }
+    : length > API_TOKEN_NAME_MAX_LENGTH
+    ? { code: "maxLength", values: { rule: API_TOKEN_NAME_MAX_LENGTH } }
+    : hasUnsafeTextCharacters(name)
+    ? { code: "unsafeCharacters" }
+    : null
+  if (failed) {
     throw new ApiTokenError(
       "INVALID_REQUEST",
       `Name must be 1 to ${API_TOKEN_NAME_MAX_LENGTH} characters`,
+      { name: failed },
     )
   }
   return { ...result, name }

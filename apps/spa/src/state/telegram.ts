@@ -1,6 +1,6 @@
 import { signal } from "@preact/signals"
 import type { TelegramLinkCodeResponse, TelegramStatusResponse } from "@domain/identity"
-import type { Said } from "@ui/app-text.ts"
+import type { Message } from "@ui/message.ts"
 import { TELEGRAM_FAILURES } from "@ui/profile-telegram.tsx"
 import { apiFetch } from "./api.ts"
 
@@ -50,7 +50,7 @@ export function createTelegramStore(
   /** `null` until the first read answers. */
   const status = signal<TelegramStatusResponse | null>(null)
   const code = signal<TelegramLinkCodeResponse | null>(null)
-  const error = signal<Said | null>(null)
+  const error = signal<Message | null>(null)
   const pending = signal(false)
   /** Grows with every dialog opened or closed, so a wait for an older one stops. */
   let waiting = 0

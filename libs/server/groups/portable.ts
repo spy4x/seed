@@ -9,6 +9,8 @@ import {
   type GroupExportSettings,
   type GroupFilePart,
   GroupImportError,
+  type GroupImportIssue,
+  type GroupImportPlace,
   type GroupImportProblem,
   legacyExportColor,
   parseGroupColor,
@@ -17,6 +19,7 @@ import {
   parseGroupName,
 } from "@domain/groups"
 import { isRecord } from "@spy4x/platform/universal/is-record"
+import { FORM_FIELD } from "@spy4x/validation"
 
 /** Every entity in an export file has an id, which the file's other entities name it by. */
 export interface PortableEntry {
@@ -55,7 +58,9 @@ export interface PortableAggregate<E extends PortableEntry = PortableEntry> {
   /** Checks one entry of a file and returns it. Throws with a message that says what is wrong. */
   parse(value: unknown): E
   /** What is wrong across the file's entries, by index (`null`: the entries as a whole). */
-  check?(entries: readonly E[]): readonly { index: number | null; problem: string }[]
+  check?(
+    entries: readonly E[],
+  ): readonly { index: number | null; problem: string; issue?: GroupImportIssue }[]
   /** The group's entities, in pages, for the file. Never a person, a secret or a deleted row. */
   read(sql: postgres.Sql, groupId: string): AsyncIterable<readonly E[]>
   /**
@@ -98,6 +103,29 @@ function messageOf(error: unknown): string {
   return text.split("\n")[0]
 }
 
+/** The first failed field a domain error names, as an import issue; `undefined` for none. */
+function issueOf(error: unknown): GroupImportIssue | undefined {
+  const fields = error instanceof Error
+    ? (error as { fields?: Record<string, { code: string; values?: Record<string, unknown> }> })
+      .fields
+    : undefined
+  const [first] = Object.entries(fields ?? {})
+  if (!first) return undefined
+  const [path, { code, values = {} }] = first
+  const named: Record<string, string | number> = {}
+  for (const [name, value] of Object.entries(values)) {
+    if (typeof value === "string" || typeof value === "number") named[name] = value
+  }
+  return {
+    code,
+    ...(path !== FORM_FIELD && { field: path }),
+    ...(Object.keys(named).length > 0 && { values: named }),
+  }
+}
+
+const FILE: GroupImportPlace = { part: "file" }
+const SETTINGS: GroupImportPlace = { part: "settings" }
+
 /**
  * Checks a whole export file against every registered aggregate and answers it parsed, or throws
  * {@link GroupImportError} with the problems found. Reading stops at
@@ -119,20 +147,26 @@ export function parseGroupFile(
   if (version > GROUP_EXPORT_VERSION) throw new GroupImportError([{ kind: "newer_version" }])
 
   const problems: GroupImportProblem[] = []
-  const report: Report = (where, problem) => {
+  const report: Report = (where, problem, place, issue) => {
     if (problems.length < GROUP_IMPORT_PROBLEMS_MAX) {
-      problems.push({ kind: "invalid", where, problem })
+      problems.push({ kind: "invalid", where, problem, place, ...(issue && { issue }) })
     }
   }
   report.full = () => problems.length >= GROUP_IMPORT_PROBLEMS_MAX
 
   for (const key of Object.keys(value)) {
     if (!FILE_KEYS.includes(key)) {
-      report("The file", `it holds "${key}", which this app does not know`)
+      report("The file", `it holds "${key}", which this app does not know`, FILE, {
+        code: "unknownKey",
+        values: { key },
+      })
     }
   }
   if (isoDate(value.exportedAt) instanceof type.errors) {
-    report("The file", "exportedAt must be a date and time")
+    report("The file", "exportedAt must be a date and time", FILE, {
+      code: "notDate",
+      field: "exportedAt",
+    })
   }
 
   const settings = parseSettings(value.group, report)
@@ -140,11 +174,19 @@ export function parseGroupFile(
   const parts = value.aggregates
   const entries = new Map<string, readonly PortableEntry[]>()
   if (!isRecord(parts)) {
-    report("The file", "aggregates must be an object")
+    report("The file", "aggregates must be an object", FILE, {
+      code: "notObject",
+      field: "aggregates",
+    })
   } else {
     const known = new Set(aggregates.map((aggregate) => aggregate.kind))
     for (const kind of Object.keys(parts)) {
-      if (!known.has(kind)) report("The file", `it holds "${kind}", which this app does not know`)
+      if (!known.has(kind)) {
+        report("The file", `it holds "${kind}", which this app does not know`, FILE, {
+          code: "unknownKey",
+          values: { key: kind },
+        })
+      }
     }
     for (const aggregate of aggregates) {
       if (report.full()) break
@@ -156,9 +198,12 @@ export function parseGroupFile(
   return { settings: settings!, entries }
 }
 
-/** Records one problem; `full` says the file has as many as it reports, so reading may stop. */
+/**
+ * Records one problem: in English (`where`, `problem`) and by code (`place`, `issue`). `full` says
+ * the file has as many as it reports, so reading may stop.
+ */
 interface Report {
-  (where: string, problem: string): void
+  (where: string, problem: string, place: GroupImportPlace, issue?: GroupImportIssue): void
   full(): boolean
 }
 
@@ -168,17 +213,22 @@ function parseSettings(
 ): GroupExportSettings | null {
   const where = "Group settings"
   if (!isRecord(value)) {
-    report(where, "group must be an object")
+    report(where, "group must be an object", SETTINGS, { code: "notObject", field: "group" })
     return null
   }
   for (const key of Object.keys(value)) {
-    if (!SETTINGS_KEYS.includes(key)) report(where, `"${key}" is not a setting this app knows`)
+    if (!SETTINGS_KEYS.includes(key)) {
+      report(where, `"${key}" is not a setting this app knows`, SETTINGS, {
+        code: "unknownKey",
+        values: { key },
+      })
+    }
   }
   const read = <T>(parse: () => T): T | null => {
     try {
       return parse()
     } catch (error) {
-      report(where, messageOf(error))
+      report(where, messageOf(error), SETTINGS, issueOf(error))
       return null
     }
   }
@@ -195,8 +245,12 @@ function parseEntries(
   report: Report,
 ): PortableEntry[] {
   const label = capitalized(aggregate.one)
+  const list: GroupImportPlace = { part: aggregate.kind }
+  const at = (index: number): GroupImportPlace => ({ part: aggregate.kind, index: index + 1 })
   if (!Array.isArray(value)) {
-    report(capitalized(aggregate.other), `${aggregate.kind} must be a list`)
+    report(capitalized(aggregate.other), `${aggregate.kind} must be a list`, list, {
+      code: "notList",
+    })
     return []
   }
   // Counted before a single entry is read: each read is synchronous work on the API's thread.
@@ -205,6 +259,8 @@ function parseEntries(
       capitalized(aggregate.other),
       `the file holds ${value.length} ${aggregate.other}, and an import takes at most ` +
         `${GROUP_IMPORT_ENTRIES_MAX}`,
+      list,
+      { code: "tooManyEntries", values: { count: value.length, max: GROUP_IMPORT_ENTRIES_MAX } },
     )
     return []
   }
@@ -216,20 +272,30 @@ function parseEntries(
     try {
       const entry = aggregate.parse(item)
       if (ids.has(entry.id)) {
-        report(`${label} ${index + 1}`, `another ${aggregate.one} in the file has the same id`)
+        report(
+          `${label} ${index + 1}`,
+          `another ${aggregate.one} in the file has the same id`,
+          at(index),
+          { code: "duplicateId" },
+        )
         valid = false
       }
       ids.add(entry.id)
       parsed.push(entry)
     } catch (error) {
-      report(`${label} ${index + 1}`, messageOf(error))
+      report(`${label} ${index + 1}`, messageOf(error), at(index), issueOf(error))
       valid = false
     }
   }
   // The checks across entries read every entry, so they run only once each one is valid.
   if (valid) {
-    for (const { index, problem } of aggregate.check?.(parsed) ?? []) {
-      report(index === null ? capitalized(aggregate.other) : `${label} ${index + 1}`, problem)
+    for (const { index, problem, issue } of aggregate.check?.(parsed) ?? []) {
+      report(
+        index === null ? capitalized(aggregate.other) : `${label} ${index + 1}`,
+        problem,
+        index === null ? list : at(index),
+        issue,
+      )
     }
   }
   return parsed

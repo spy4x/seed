@@ -11,7 +11,7 @@ import type { GroupImportState } from "@ui/group-import-screen.tsx"
 import { downloadResponseAsFile } from "@spy4x/platform/browser/download"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { fetchAsUser } from "./realtime-call.ts"
-import { appText } from "./app-text.ts"
+import { appText } from "../i18n.ts"
 
 /** What the export and import stores need from the platform; tests pass fakes. */
 export interface GroupFilePorts {

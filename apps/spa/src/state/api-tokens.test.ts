@@ -98,7 +98,7 @@ describe("API tokens store", () => {
     await tokens.create()
 
     expect(calls).toEqual([])
-    expect(tokens.errors.value.name).toMatch(/^Name must be .*characters\.$/)
+    expect(tokens.errors.value.name).toBe("Use at most 60 characters.")
   })
 
   it("asks for the password on its field and sends nothing without one", async () => {

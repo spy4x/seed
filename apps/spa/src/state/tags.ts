@@ -2,6 +2,7 @@ import { computed, signal } from "@preact/signals"
 import { describeError, RealtimeRequestError } from "@spy4x/realtime"
 import { DEFAULT_TAG_COLOR, TAG_NAME_MAX_LENGTH, type TagColor } from "@domain/tags"
 import { apiAsUser } from "./realtime-call.ts"
+import { refusedField } from "../i18n.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
 import { callCommand, currentLayer, offlineTags } from "../modules.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
@@ -254,9 +255,12 @@ export function createTagsStore(dependencies: TagsDependencies) {
           form: latest && code === "VERSION_CONFLICT" ? TAG_MESSAGES.conflict : TAG_MESSAGES.gone,
         }
       } else {
+        const name = refusedField(cause, "name")
         formErrors.value = {
-          name: null,
-          form: describeError(cause, current.id === null ? TAG_MESSAGES.create : TAG_MESSAGES.save),
+          name,
+          form: name
+            ? null
+            : describeError(cause, current.id === null ? TAG_MESSAGES.create : TAG_MESSAGES.save),
         }
       }
       return null

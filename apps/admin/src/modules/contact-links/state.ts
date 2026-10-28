@@ -8,7 +8,7 @@ import {
   parseContactLinkFields,
 } from "@domain/contact-links"
 import type { ContactLinkFormErrors, ContactLinkFormValue } from "@ui/admin-contact-links.tsx"
-import { type AdminFetch, post } from "../../state.ts"
+import { type AdminFetch, post, refusalText } from "../../state.ts"
 import { adminText } from "../../i18n.ts"
 
 const BLANK: ContactLinkFormValue = { kind: `telegram`, value: ``, label: `` }
@@ -99,7 +99,9 @@ export function createContactLinksState(
         parseContactLinkFields(open.value)
       } catch (refusal) {
         if (!(refusal instanceof ContactLinkError) || refusal.field === `kind`) throw refusal
-        editor.value = { ...open, errors: { [refusal.field ?? `form`]: refusal.message } }
+        // The parser names why by code, so the operator reads it in the app's language.
+        const message = refusalText({ message: refusal.message, fields: refusal.fields })
+        editor.value = { ...open, errors: { [refusal.field ?? `form`]: message } }
         return false
       }
       editor.value = { ...open, errors: {}, saving: true }

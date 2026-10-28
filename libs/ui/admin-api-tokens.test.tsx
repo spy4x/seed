@@ -31,7 +31,7 @@ import {
 const day = (at: string) => createFormatters().date(at)
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
+import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 const window = new Window({ url: "http://admin.localhost/" })
 const own = {
   document: globalThis.document,

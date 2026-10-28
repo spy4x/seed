@@ -12,6 +12,7 @@ import {
 import type { ApiTokenFormValues } from "@ui/api-token-new-screen.tsx"
 import { API_TOKEN_MESSAGES } from "@ui/api-tokens.tsx"
 import { apiFetch } from "./api.ts"
+import { apiErrorText, refusedField } from "../i18n.ts"
 import { type LocalReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
@@ -182,8 +183,9 @@ export function createApiTokensStore(
           )
         } catch (error) {
           if (!(error instanceof ApiTokenError)) throw error
-          // An error is a sentence, so it ends with a full stop; the parser's message has none.
-          name = /[.!?]$/.test(error.message) ? error.message : `${error.message}.`
+          // The parser names the field that failed and why, by code: the screen's language says it.
+          name = refusedField(error, "name") ??
+            apiErrorText({ message: error.message, reason: error.code, fields: error.fields })
         }
       }
       if (request === null || password !== null) {

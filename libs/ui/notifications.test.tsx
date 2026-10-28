@@ -11,7 +11,7 @@ import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
 import { AppFrame } from "./frame.tsx"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import { PSEUDO, untranslated } from "./i18n-testing.ts"
+import { englishLeft, PSEUDO } from "./i18n-testing.ts"
 import {
   NOTIFICATION_MESSAGES,
   type NotificationRow,
@@ -308,7 +308,7 @@ describe("notifications screen in another language", () => {
       time.textContent ?? "",
       time.getAttribute("title") ?? "",
     ])
-    expect(untranslated(root, ["Family", ...times.filter(Boolean)])).toEqual([])
+    expect(englishLeft(root, ["Family", ...times.filter(Boolean)])).toEqual([])
     const page = root.textContent ?? ""
     for (
       const key of [

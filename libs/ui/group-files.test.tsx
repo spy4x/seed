@@ -21,6 +21,9 @@ import { GroupsScreen } from "./groups-screen.tsx"
 import { GROUP_PATHS } from "./progressive.tsx"
 import { createTranslator } from "@spy4x/platform/universal/i18n"
 import appEn from "@i18n/app/en.json" with { type: "json" }
+import appRu from "@i18n/app/ru.json" with { type: "json" }
+import errorsEn from "@i18n/errors/en.json" with { type: "json" }
+import errorsRu from "@i18n/errors/ru.json" with { type: "json" }
 
 /** The screens' English, as an app without another language reads it. */
 const EN = createTranslator({ language: `en`, catalogs: [{ source: appEn }] })
@@ -323,6 +326,31 @@ describe("group file wording", () => {
       "The file is larger than 5 MB.",
     )
     expect(problemText(EN, { kind: "newer_version" })).toContain("newer version of the app")
+  })
+
+  it("says a wrong part of the file in the person's language, by its place and code", () => {
+    const RU = createTranslator({
+      language: `ru`,
+      catalogs: [{ source: appEn, translation: appRu }, {
+        source: errorsEn,
+        translation: errorsRu,
+      }],
+    })
+    const tooLong = {
+      kind: "invalid" as const,
+      where: "Note 3",
+      problem: "the title is too long",
+      place: { part: "notes", index: 3 },
+      issue: { code: "maxLength", field: "title", values: { rule: 200 } },
+    }
+    expect(problemText(RU, tooLong)).toBe("Заметка 3, «title»: Не больше 200 символов.")
+    expect(problemText(RU, { ...tooLong, place: { part: "tags" }, issue: { code: "notList" } }))
+      .toBe("Теги: Здесь должен быть список.")
+    // A server without codes, or a part this app does not know, keeps the server's words.
+    expect(problemText(RU, { ...tooLong, place: undefined })).toBe("Note 3: the title is too long.")
+    expect(problemText(RU, { ...tooLong, place: { part: "invoices", index: 1 } })).toBe(
+      "Note 3: the title is too long.",
+    )
   })
 })
 

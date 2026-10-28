@@ -77,7 +77,7 @@ export function validationResponse(
   })
 }
 
-/** The fields a domain error carries when a schema refused the request, or `undefined`. */
+/** The fields a domain error carries, from a schema or the feature's own check, or `undefined`. */
 export function fieldsOf(error: unknown): FieldErrors | undefined {
   const fields = (error as { fields?: FieldErrors } | null)?.fields
   return error instanceof Error && fields !== undefined ? fields : undefined

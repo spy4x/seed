@@ -29,23 +29,8 @@ import {
 import { AdminUserScreen, type AdminUserScreenProps } from "./admin-user-screen.tsx"
 
 import { I18nContext } from "@spy4x/preact-ui/i18n"
-import { ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
-import { type Catalog, createTranslator, pseudoLocalize } from "@spy4x/platform/universal/i18n"
-import ui from "@spy4x/preact-ui/i18n/en"
-import admin from "@i18n/admin/en.json" with { type: "json" }
-import app from "@i18n/app/en.json" with { type: "json" }
+import { ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 
-/**
- * The admin app's catalogs in `en-XA` with the product's too, which it loads for the parts of the
- * product's screens it draws: the activity's sentences.
- */
-const WITH_APP_PSEUDO = createTranslator({
-  language: `en-XA`,
-  catalogs: ([ui, admin, app] as Catalog[]).map((source) => ({
-    source,
-    translation: pseudoLocalize(source),
-  })),
-})
 const window = new Window({ url: `http://admin.localhost/` })
 const own = {
   document: globalThis.document,
@@ -895,7 +880,7 @@ describe("the group screens in en-XA", () => {
 
   it("tells the activity in the operator's language, each name isolated", async () => {
     await mount(
-      <I18nContext.Provider value={WITH_APP_PSEUDO}>
+      <I18nContext.Provider value={ADMIN_PSEUDO}>
         <AdminGroupScreen {...groupProps([], { tab: `activity` })} />
       </I18nContext.Provider>,
     )

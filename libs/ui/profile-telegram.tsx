@@ -15,7 +15,7 @@ import {
   type TelegramStatusResponse,
 } from "@domain/identity"
 import { Rich } from "@spy4x/preact-ui/i18n"
-import { type Said, say } from "./app-text.ts"
+import { type Message, say } from "./message.ts"
 import { useAppText } from "./i18n.ts"
 
 /** The catalog keys of what shows when a Telegram call failed without a message of its own. */
@@ -32,7 +32,7 @@ export interface TelegramLinkProps {
   /** The code the open dialog shows, or `null` while no dialog is open. */
   code: TelegramLinkCodeResponse | null
   /** Why the last call failed, above the row: the server's words or a catalog key. */
-  error: Said | null
+  error: Message | null
   /** A code or an unlink is in flight. */
   pending: boolean
   /** "Link Telegram": the app makes a code and opens the dialog with it. */
