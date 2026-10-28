@@ -22,6 +22,9 @@ import {
 } from "./overview-screen.tsx"
 import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "./overview-widgets.ts"
 import { AdminGroupOverview } from "./admin-group-overview.tsx"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import type { WidgetView } from "./note-widgets.tsx"
+import { PSEUDO, untranslated } from "./i18n-testing.ts"
 import { countAxis } from "./note-widgets.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -379,7 +382,9 @@ describe("the group overview", () => {
   it("greets an empty group with New note for a person who can add one, its label always shown", async () => {
     await mount(READY, { emptyGroup: { canCreate: true } })
 
-    expect(text("[data-e2e=overview-empty-group]")).toContain("No notes in Acme Studio yet")
+    expect(text("[data-e2e=overview-empty-group]")).toContain(
+      "No notes in \u2068Acme Studio\u2069 yet",
+    )
     const action = find("[data-e2e=overview-new-note]")
     expect(action.getAttribute("href")).toBe("/notes/new")
     expect(action.textContent).toBe("New note")
@@ -437,5 +442,92 @@ describe("the admin group page's overview widgets", () => {
     expect(text("[data-e2e=admin-group-overview]")).toContain("Their layouts are not shown here.")
     expect(document.querySelectorAll("[data-widget-status=ready]")).toHaveLength(3)
     expect(document.querySelectorAll("[data-widget-status] button[aria-haspopup]").length).toBe(0)
+  })
+})
+
+describe("the group overview in another language", () => {
+  /** A widget's words, which its aggregate owns: here already in the pseudo-language. */
+  const VIEW: WidgetView = {
+    loadingLabel: "⟦loading⟧",
+    errorMessage: "⟦failed⟧",
+    draw: () => ({ status: "ready", content: "⟦31⟧" }),
+  }
+
+  it("shows no English outside the catalogs: an en-XA render of the page, its widgets' states and Customise is all pseudo-language or data", async () => {
+    const widget = (id: string, load: OverviewWidgetLoad): OverviewWidget => ({
+      id,
+      title: `⟦${id}⟧`,
+      size: "stat",
+      load,
+    })
+    const page = (props: Partial<OverviewScreenProps>) => (
+      <I18nContext.Provider value={PSEUDO}>
+        <FormatContext.Provider
+          value={createFormatters({ locale: "en-GB", timeZone: "UTC", hourCycle: "h23" })}
+        >
+          <OverviewScreen
+            group={{ id: "g-1", name: "Acme Studio" }}
+            loading={false}
+            range={LAST_30}
+            timeZone="UTC"
+            now={NOW}
+            onRangeChange={() => {}}
+            widgets={[
+              widget("a", { status: "loading" }),
+              widget("b", { status: "error" }),
+              widget("c", { status: "ready", data: {}, savedAt: NOW.getTime() }),
+            ]}
+            views={{ a: VIEW, b: VIEW, c: VIEW }}
+            onRetry={() => {}}
+            onHide={() => {}}
+            layout={[{ id: "a", hidden: false, title: "⟦a⟧" }]}
+            customising
+            onCustomise={() => {}}
+            onCloseCustomise={() => {}}
+            onLayoutChange={() => {}}
+            onResetLayout={() => {}}
+            layoutError="⟦not saved⟧"
+            onCopyLink={() => {}}
+            emptyGroup={{ canCreate: true }}
+            {...props}
+          />
+        </FormatContext.Provider>
+      </I18nContext.Provider>
+    )
+    // Data: the group's name and the days the range covers.
+    const data = ["Acme Studio", "Sept", "Oct"]
+
+    root = document.createElement("div")
+    document.body.append(root)
+    await act(() => render(page({}), root!))
+    expect(untranslated(document.body, data)).toEqual([])
+    let text = document.body.textContent ?? ""
+    for (
+      const key of [
+        "OverviewScreen.title",
+        "OverviewScreen.emptyGroupText",
+        "OverviewScreen.customiseText",
+        "OverviewScreen.last30Days",
+      ]
+    ) {
+      expect(text).toContain(PSEUDO.t(key))
+    }
+    // A widget drawn from the device's saved copy says when that copy was taken.
+    expect(text).toContain(PSEUDO.t("OverviewScreen.asOf", { time: "10:00" }))
+
+    await act(() => render(page({ widgets: [], customising: false, emptyGroup: null }), root!))
+    expect(untranslated(document.body, data)).toEqual([])
+    expect(document.body.textContent).toContain(PSEUDO.t("OverviewScreen.allHidden"))
+
+    await act(() => render(page({ group: null, customising: false }), root!))
+    expect(untranslated(document.body, data)).toEqual([])
+    expect(document.body.textContent).toContain(PSEUDO.t("OverviewScreen.missing"))
+
+    const tooLong = { preset: "custom" as const, range: { from: "2024-01-01", to: "2026-10-21" } }
+    await act(() => render(page({ range: tooLong, customising: false }), root!))
+    expect(untranslated(document.body, data)).toEqual([])
+    text = document.body.textContent ?? ""
+    expect(text).toContain(PSEUDO.t("OverviewScreen.rangeTooLong"))
+    expect(text).toContain(PSEUDO.t("OverviewScreen.customRange"))
   })
 })

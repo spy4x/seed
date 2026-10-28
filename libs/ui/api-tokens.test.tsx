@@ -10,7 +10,11 @@ import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import { type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
 import { UserMFAStatus } from "@domain/identity"
-import { ApiTokens, type ApiTokensProps } from "./api-tokens.tsx"
+import { API_TOKEN_MESSAGES, ApiTokens, type ApiTokensProps } from "./api-tokens.tsx"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
+import { PSEUDO, untranslated } from "./i18n-testing.ts"
 import { ProfileScreen } from "./profile-screen.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -187,7 +191,7 @@ describe("ApiTokens", () => {
     await mount(<ApiTokens {...tokensProps([])} />)
 
     await click(`[data-e2e=api-token-revoke-${reader.id}]`)
-    expect(find("[data-e2e=api-token-revoke-confirm]").textContent).toContain('Revoke "Zapier"?')
+    expect(find("[data-e2e=api-token-revoke-confirm]").textContent).toContain("Revoke “Zapier”?")
   })
 
   it("opens the create page from New token, a link a person can also open in a new tab", async () => {
@@ -287,5 +291,47 @@ describe("ProfileScreen API tokens", () => {
     expect(find("[data-e2e=settings-heading]").textContent).toBe("API tokens")
     expect(document.querySelector(`[data-e2e=api-token-${writer.id}]`)).not.toBeNull()
     expect(document.querySelector("[data-e2e=sessions]")).toBeNull()
+  })
+})
+
+describe("ApiTokens in another language", () => {
+  it("shows no English outside the catalogs: an en-XA render of the list, its states and the revoke question is all pseudo-language or data", async () => {
+    const format = createFormatters({ locale: "en-GB", timeZone: "UTC", hourCycle: "h23" })
+    const inPseudo = (props: Partial<ApiTokensProps>) => (
+      <I18nContext.Provider value={PSEUDO}>
+        <FormatContext.Provider value={format}>
+          <ApiTokens {...tokensProps([], { docsHref: "https://example.com/api", ...props })} />
+        </FormatContext.Provider>
+      </I18nContext.Provider>
+    )
+    // Data: the tokens' and their group's names, and the dates and times the format writes.
+    const data = () =>
+      [
+        "Zapier",
+        "Backup script",
+        "Personal",
+        ...[...document.querySelectorAll("time")].flatMap((time) => [
+          time.textContent ?? "",
+          time.getAttribute("title") ?? "",
+        ]),
+      ].filter(Boolean)
+
+    await mount(inPseudo({ error: API_TOKEN_MESSAGES.failed, savedAt: Date.now() }))
+    await click(`[data-e2e=api-token-revoke-${reader.id}]`)
+    expect(untranslated(document.body, data())).toEqual([])
+    const page = document.body.textContent ?? ""
+    for (
+      const key of ["ApiTokens.failed", "ApiTokens.savedCopyTitle", "ApiTokens.revokeMessage"]
+    ) {
+      expect(page).toContain(PSEUDO.t(key))
+    }
+
+    await mount(inPseudo({ tokens: [] }))
+    expect(untranslated(document.body, data())).toEqual([])
+    expect(document.body.textContent).toContain(PSEUDO.t("ApiTokens.emptyText"))
+
+    await mount(inPseudo({ tokens: null }))
+    expect(untranslated(document.body, data())).toEqual([])
+    expect(document.body.textContent).toContain(PSEUDO.t("ApiTokens.loading"))
   })
 })

@@ -1,5 +1,4 @@
-// deno-lint-ignore-file ui-text/no-literal
-import type { JSX } from "preact"
+import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
@@ -7,10 +6,14 @@ import { EmptyState } from "@spy4x/preact-ui/empty-state"
 import { ErrorState } from "@spy4x/preact-ui/error-state"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { followLinkClick } from "@spy4x/preact-ui/link"
-import { describeNotification, type Notification } from "@domain/notifications"
+import { type Notification, NotificationKind } from "@domain/notifications"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import type { Navigate } from "./progressive.tsx"
-import { When } from "@spy4x/preact-ui/format"
+import type { Formatters } from "@spy4x/time/format"
+import { useFormat, When } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAppText } from "./i18n.ts"
 
 /** One notification as the API sends it: the times are ISO timestamps, `readAt` is `null` unread. */
 export type NotificationRow =
@@ -32,9 +35,89 @@ export interface NotificationsScreenProps {
   onRead: (id: string) => void
   /** Marks every notification read. */
   onReadAll: () => void
-  /** The error of the last read or write, such as an offline server. */
+  /**
+   * The error of the last read or write, such as an offline server: one of
+   * {@link NOTIFICATION_MESSAGES}, or the API's own message.
+   */
   error: string | null
   navigate?: Navigate
+}
+
+/** The messages the notifications store sets when a call failed without one, by their key. */
+export const NOTIFICATION_MESSAGES = {
+  load: `NotificationsScreen.loadFailed`,
+  loadMore: `NotificationsScreen.loadMoreFailed`,
+  read: `NotificationsScreen.readFailed`,
+  readAll: `NotificationsScreen.readAllFailed`,
+} as const
+
+const MESSAGE_KEYS: readonly string[] = Object.values(NOTIFICATION_MESSAGES)
+
+/** The sentence of an invitation and of a role change, by the role word the payload names. */
+const ROLE_SENTENCES: Record<string, { invited: string; role: string }> = {
+  viewer: { invited: `NotificationsScreen.invitedViewer`, role: `NotificationsScreen.roleViewer` },
+  editor: { invited: `NotificationsScreen.invitedEditor`, role: `NotificationsScreen.roleEditor` },
+  admin: { invited: `NotificationsScreen.invitedAdmin`, role: `NotificationsScreen.roleAdmin` },
+  owner: { invited: `NotificationsScreen.invitedOwner`, role: `NotificationsScreen.roleOwner` },
+  member: { invited: `NotificationsScreen.invitedMember`, role: `NotificationsScreen.roleMember` },
+}
+
+/**
+ * A guest reminder's sentence, by the English title the server stored in its payload (#224): the
+ * payload names no reminder kind, so its fixed title picks the translation.
+ */
+const GUEST_REMINDER_KEYS: Record<string, string> = {
+  "Keep the note you just wrote": `NotificationsScreen.reminderFirstNote`,
+  "Open this account on your other devices": `NotificationsScreen.reminderThirdVisit`,
+  "Add a sign-in method to invite people": `NotificationsScreen.reminderInvite`,
+}
+
+/** A payload field as text, or `fallback` when it is missing or blank. */
+function field(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback
+}
+
+/**
+ * One notification in the person's language: `You were invited to join «Family» as an editor.` The
+ * group's name is the person's data, isolated and never translated. A kind this code does not know
+ * (a row written by a newer version) reads as a neutral line.
+ */
+export function notificationSentence(
+  t: Translator<string>,
+  format: Formatters,
+  { kind, payload }: Pick<Notification, "kind" | "payload">,
+): ComponentChildren {
+  const withGroup = (key: string) => (
+    <Rich
+      parts={t.parts(key, {
+        group: field(payload.groupName, t.t(`NotificationsScreen.someGroup`)),
+      })}
+      tags={{ group: (text) => <bdi translate={false}>{text}</bdi> }}
+    />
+  )
+  const role = (word: unknown) => ROLE_SENTENCES[field(word, `member`)]
+  switch (kind) {
+    case NotificationKind.InvitationReceived:
+      return withGroup(role(payload.role)?.invited ?? `NotificationsScreen.invited`)
+    case NotificationKind.RoleChanged:
+      return withGroup(role(payload.to)?.role ?? `NotificationsScreen.roleChanged`)
+    case NotificationKind.RemovedFromGroup:
+      return withGroup(`NotificationsScreen.removed`)
+    case NotificationKind.OwnershipReceived:
+      return withGroup(`NotificationsScreen.owned`)
+    case NotificationKind.GuestReminder:
+      return t.t(
+        GUEST_REMINDER_KEYS[field(payload.title, ``)] ?? `NotificationsScreen.reminderKeep`,
+      )
+    case NotificationKind.DataExportReady: {
+      const until = new Date(field(payload.expiresAt, ``))
+      return Number.isNaN(until.getTime())
+        ? t.t(`NotificationsScreen.exportReady`)
+        : t.t(`NotificationsScreen.exportReadyUntil`, { date: format.utc().date(until) })
+    }
+    default:
+      return t.t(`NotificationsScreen.unknown`)
+  }
 }
 
 /**
@@ -52,6 +135,10 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
   // link followed, another tab) must not take focus from where the person is.
   const readAllPressed = useRef(false)
   const anyUnread = props.unreadCount > 0
+  const t = useAppText()
+  const error = props.error !== null && MESSAGE_KEYS.includes(props.error)
+    ? t.t(props.error)
+    : props.error
   useEffect(() => {
     if (anyUnread || !readAllPressed.current) return
     readAllPressed.current = false
@@ -64,8 +151,10 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
   return (
     <Stack gap="xl">
       <PageHeader
-        title="Notifications"
-        subtitle={props.unreadCount > 0 ? `${props.unreadCount} unread` : undefined}
+        title={t.t(`NotificationsScreen.title`)}
+        subtitle={props.unreadCount > 0
+          ? t.t(`NotificationsScreen.unread`, { count: props.unreadCount })
+          : undefined}
         subtitleDataE2E="notifications-unread"
         action={anyUnread && (
           <Button
@@ -77,11 +166,11 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
             }}
             data-e2e="notifications-read-all"
           >
-            Mark all as read
+            {t.t(`NotificationsScreen.readAll`)}
           </Button>
         )}
       />
-      <ErrorState message={props.error} />
+      <ErrorState message={error} />
       {notifications.length === 0
         ? (
           !props.error && (
@@ -89,10 +178,10 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
               <EmptyState
                 class="border-0 py-8"
                 headingLevel={2}
-                title={props.loading ? "Loading…" : "You are all caught up."}
-                description={props.loading
-                  ? undefined
-                  : "Invitations and changes to your groups show up here."}
+                title={t.t(
+                  props.loading ? `NotificationsScreen.loading` : `NotificationsScreen.empty`,
+                )}
+                description={props.loading ? undefined : t.t(`NotificationsScreen.emptyText`)}
               />
             </Card>
           )
@@ -120,7 +209,9 @@ export function NotificationsScreen(props: NotificationsScreenProps): JSX.Elemen
             onClick={props.onLoadMore}
             data-e2e="notifications-more"
           >
-            {props.loadingMore ? "Loading…" : "Load more"}
+            {t.t(
+              props.loadingMore ? `NotificationsScreen.loading` : `NotificationsScreen.loadMore`,
+            )}
           </Button>
         </div>
       )}
@@ -141,7 +232,8 @@ function NotificationItem(
   },
 ): JSX.Element {
   const unread = notification.readAt === null
-  const sentence = describeNotification(notification)
+  const t = useAppText()
+  const sentence = notificationSentence(t, useFormat(), notification)
   return (
     <li data-e2e={`notification-${notification.id}`} data-unread={unread ? "true" : "false"}>
       <a
@@ -168,7 +260,7 @@ function NotificationItem(
           >
             {unread && (
               <>
-                <span class="sr-only">Unread:</span>
+                <span class="sr-only">{t.t(`NotificationsScreen.unreadMark`)}</span>
                 {" "}
               </>
             )}

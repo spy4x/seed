@@ -27,6 +27,7 @@ import {
 } from "./guest-screens.tsx"
 import { GuestAccountDelete, GuestRefusalDialog } from "./guest-profile.tsx"
 import { onboardingSteps } from "./onboarding-card.tsx"
+import { ENGLISH } from "./i18n-testing.ts"
 
 /** The product's English, as a screen without a provider reads it. */
 const EN = createTranslator({ language: "en", catalogs: [{ source: appEn }] })
@@ -379,11 +380,11 @@ describe("onboardingSteps for a guest", () => {
   }
 
   it("puts Keep your account first and leaves out the steps a guest is refused", () => {
-    expect(onboardingSteps(steps, null, undefined, true).map((step) => step.id)).toEqual([
+    expect(onboardingSteps(ENGLISH, steps, null, undefined, true).map((step) => step.id)).toEqual([
       "keep",
       "note",
     ])
-    expect(onboardingSteps(steps, null).map((step) => step.id)).toEqual([
+    expect(onboardingSteps(ENGLISH, steps, null).map((step) => step.id)).toEqual([
       "email",
       "note",
       "invite",
