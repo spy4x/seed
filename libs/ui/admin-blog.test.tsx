@@ -109,6 +109,14 @@ async function type(selector: string, value: string): Promise<void> {
   })
 }
 
+async function choose(selector: string, value: string): Promise<void> {
+  const field = find<HTMLSelectElement>(selector)
+  field.value = value
+  await act(() => {
+    field.dispatchEvent(new window.Event("change", { bubbles: true }) as unknown as Event)
+  })
+}
+
 async function submit(selector: string): Promise<void> {
   const form = find(selector).closest("form")!
   await act(async () => {
@@ -290,6 +298,42 @@ describe("the blog editor", () => {
     expect(calls).toEqual([["change", { ...blogDraftOf(saved), title: "Jobs, explained" }]])
     await submit("[data-e2e=admin-blog-title-field]")
     expect(calls.at(-1)).toEqual(["save"])
+  })
+
+  it("sets the post's language, and the post it translates from those in other languages (#527)", async () => {
+    const calls: unknown[][] = []
+    const english = {
+      id: "01a184ae-0000-7000-8000-000000000001",
+      title: "Hello world",
+      language: "en" as const,
+    }
+    const german = {
+      id: "01a184ae-0000-7000-8000-000000000002",
+      title: "Hallo",
+      language: "de" as const,
+    }
+    const value = { ...blogDraftOf(saved), language: "de" as const }
+    await mount(
+      <AdminBlogEditorScreen {...editorProps(calls, { value, originals: [english, german] })} />,
+    )
+    const translationOf = find<HTMLSelectElement>(
+      "select[data-e2e=admin-blog-translation-of]",
+    )
+    expect([...translationOf.options].map((option) => option.value)).toEqual(["", english.id])
+
+    await choose(
+      "select[data-e2e=admin-blog-language]",
+      "es",
+    )
+    await choose(
+      "select[data-e2e=admin-blog-translation-of]",
+      english.id,
+    )
+
+    expect(calls).toEqual([
+      ["change", { ...value, language: "es" }],
+      ["change", { ...value, translationOf: english.id }],
+    ])
   })
 
   it("opens the folded settings and focuses the first field in error", async () => {
