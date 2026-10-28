@@ -1537,5 +1537,10 @@
   "AdminUsers.created": "Erstellt",
   "AdminUsers.guest": "Gast",
   "AdminUsers.you": "Du",
-  "AdminUsers.noName": "Kein Name"
+  "AdminUsers.noName": "Kein Name",
+  "AdminBlogEditor.language": "Sprache",
+  "AdminBlogEditor.languageHint": "Die Sprache, in der der Beitrag geschrieben ist. Die Website zeigt ihn im Blog dieser Sprache.",
+  "AdminBlogEditor.translationOf": "Übersetzung von",
+  "AdminBlogEditor.translationOfHint": "Der Beitrag, den dieser übersetzt. Sobald beide live sind, verknüpft die Website sie als Sprachversionen.",
+  "AdminBlogEditor.translationNone": "Keiner: ein eigener Beitrag"
 }

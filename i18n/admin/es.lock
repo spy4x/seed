@@ -460,6 +460,8 @@ AdminBlogEditor.httpsCover	075b3b7f27038bc9
 AdminBlogEditor.keyPoint	83d7697e259de0ab
 AdminBlogEditor.keyPoints	c925a0fbcc77e84b
 AdminBlogEditor.keyPointsHint	33f17428f5a4d128
+AdminBlogEditor.language	a4fe65264ef7dbb3
+AdminBlogEditor.languageHint	e7d7c7caf09f54b5
 AdminBlogEditor.leaveMessage	04f9c31334818d2f
 AdminBlogEditor.loadError	8368b8fb253dfc44
 AdminBlogEditor.loading	07b010c6a2dcc943
@@ -496,6 +498,9 @@ AdminBlogEditor.title	7e8cd2056da73a7f
 AdminBlogEditor.titleHint	180cfb7c9dd88f93
 AdminBlogEditor.topic	7e61847d61d65d9e
 AdminBlogEditor.topicHint	1f67ad44798baf89
+AdminBlogEditor.translationNone	b4a329e2f2ae2426
+AdminBlogEditor.translationOf	2ebdebd300ac461d
+AdminBlogEditor.translationOfHint	fc154c80596d26ee
 AdminBlogEditor.unpublish	2e60b500b6301e1c
 AdminBlogEditor.unsaved	35c5fe43950d9ac1
 AdminBlogEditor.unschedule	c903480a037e7b07

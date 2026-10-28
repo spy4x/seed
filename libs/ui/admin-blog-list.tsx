@@ -19,6 +19,7 @@ import {
   type AdminBlogListResponse,
   type AdminBlogPostRow,
   BLOG_SEARCH_MAX_LENGTH,
+  blogPostPath,
   type BlogPostStatus,
 } from "@domain/blog"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
@@ -363,8 +364,7 @@ function TitleCell({ post, navigate }: { post: AdminBlogPostRow; navigate?: Navi
       </Link>
       {/* A path, no language changes it. The rule knows only translate="no", which Preact cannot set. */}
       <span class="font-mono text-xs text-muted max-sm:break-all sm:truncate" translate={false}>
-        {/* deno-lint-ignore ui-text/no-literal */}
-        {`/blog/${post.slug}`}
+        {blogPostPath(post)}
       </span>
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1 sm:hidden">
         <BlogStatusBadge status={post.status} />

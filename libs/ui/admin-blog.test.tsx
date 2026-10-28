@@ -9,6 +9,8 @@ import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
 import type { AdminBlogListResponse, BlogPost } from "@domain/blog"
+import { LANGUAGES } from "@domain/identity"
+import { languageName } from "@spy4x/preact-ui/language-picker"
 import {
   ADMIN_BLOG_NO_FILTER,
   AdminBlogListScreen,
@@ -127,6 +129,8 @@ const listed: AdminBlogListResponse = {
       title: "Hello world",
       status: "published",
       topic: "News",
+      language: "en",
+      translationOf: null,
       publishAt: "2026-10-01T10:00:00.000Z",
       publishedAt: "2026-10-01T10:00:00.000Z",
       updatedAt: "2026-10-02T10:00:00.000Z",
@@ -210,6 +214,8 @@ const saved: BlogPost = {
   coverUrl: null,
   coverAlt: null,
   bodyMd: "## Why\n\nIt is fast.",
+  language: "en",
+  translationOf: null,
   status: "draft",
   publishAt: null,
   publishedAt: null,
@@ -247,6 +253,7 @@ function editorProps(
     significantUpdate: false,
     onSignificantUpdate: (value) => calls.push(["significant", value]),
     topics: ["Infra"],
+    originals: [],
     newsletter: { enabled: true, lists: [{ list: "news", confirmed: 12 }], siteUrl: null },
     siteUrl: "https://www.example.com",
     preview: null,
@@ -510,6 +517,11 @@ describe("the blog screens in en-XA", () => {
         <AdminBlogEditorScreen {...editorProps([], { dialog: "delete" })} />
       </I18nContext.Provider>,
     )
-    expect(englishLeft(document.body, [`Hello world`, `News`, /\/blog\/[a-z-]+/g])).toEqual([])
+    // A language is named in its own language, as every language picker does: data, not English.
+    const languageNames = LANGUAGES.map((language) => languageName(language))
+    expect(
+      englishLeft(document.body, [`Hello world`, `News`, /\/blog\/[a-z-]+/g, ...languageNames]),
+    )
+      .toEqual([])
   })
 })

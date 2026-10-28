@@ -1588,5 +1588,10 @@
   "AdminUsers.created": "Criada",
   "AdminUsers.guest": "Convidado",
   "AdminUsers.you": "Você",
-  "AdminUsers.noName": "Sem nome"
+  "AdminUsers.noName": "Sem nome",
+  "AdminBlogEditor.language": "Idioma",
+  "AdminBlogEditor.languageHint": "O idioma em que o post está escrito. O site o mostra no blog desse idioma.",
+  "AdminBlogEditor.translationOf": "Tradução de",
+  "AdminBlogEditor.translationOfHint": "O post que este traduz. Quando os dois estiverem publicados, o site liga um ao outro como versões de idioma.",
+  "AdminBlogEditor.translationNone": "Nenhum: um post próprio"
 }

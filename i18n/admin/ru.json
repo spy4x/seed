@@ -1639,5 +1639,10 @@
   "AdminUsers.created": "Создан",
   "AdminUsers.guest": "Гость",
   "AdminUsers.you": "Вы",
-  "AdminUsers.noName": "Без имени"
+  "AdminUsers.noName": "Без имени",
+  "AdminBlogEditor.language": "Язык",
+  "AdminBlogEditor.languageHint": "Язык, на котором написан пост. Сайт покажет его в блоге на этом языке.",
+  "AdminBlogEditor.translationOf": "Перевод поста",
+  "AdminBlogEditor.translationOfHint": "Пост, который переводит этот. Когда оба опубликованы, сайт связывает их как языковые версии.",
+  "AdminBlogEditor.translationNone": "Нет: самостоятельный пост"
 }
