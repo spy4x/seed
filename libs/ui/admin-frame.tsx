@@ -196,6 +196,7 @@ export function ComingSoonPanel(
     Icon?: ComponentType<IconProps>
   },
 ): JSX.Element {
+  const t = useAdminText()
   return (
     // A card with the empty state in its body's place: no dashed box beside the page's solid cards.
     <Card data-e2e="admin-coming-soon">
@@ -205,7 +206,7 @@ export function ComingSoonPanel(
         title={title}
         headingLevel={2}
         description={description}
-        action={<Badge text="Coming soon" color="gray" />}
+        action={<Badge text={t.t("AdminFrame.comingSoonBadge")} color="gray" />}
       />
     </Card>
   )
@@ -273,12 +274,11 @@ export function AdminSignInScreen(
   },
 ): JSX.Element {
   const credentials = step === "credentials"
+  const t = useAdminText()
   return (
     <AuthCard
-      title={credentials ? "Operator sign-in" : "Enter your code"}
-      description={credentials
-        ? "For operators of this product. Sign in with your e-mail address and password."
-        : "Open your authenticator app and enter the six digits it shows."}
+      title={t.t(credentials ? "AdminFrame.signInTitle" : "AdminFrame.codeTitle")}
+      description={t.t(credentials ? "AdminFrame.signInText" : "AdminFrame.codeText")}
       e2e="admin-sign-in"
     >
       <AuthForm
@@ -287,9 +287,9 @@ export function AdminSignInScreen(
         busy={busy}
         error={error}
         labels={{
-          login: "E-mail or username",
-          submitCode: "Continue",
-          codeHint: "Six digits from your authenticator app.",
+          login: t.t("AdminFrame.login"),
+          submitCode: t.t("AdminFrame.continue"),
+          codeHint: t.t("AdminFrame.codeHint"),
         }}
         names={{ login: "login", code: "otp" }}
         onSignIn={onSignIn}

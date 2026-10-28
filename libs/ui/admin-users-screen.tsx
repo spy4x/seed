@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import type { SortRule } from "@spy4x/platform/universal/sort"
@@ -32,33 +31,34 @@ import {
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { OnDay, When } from "@spy4x/preact-ui/format"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
-const ROLE_CHIPS = [UserRole.VIEWER, UserRole.OPERATOR, UserRole.SUPERVISOR, UserRole.ADMIN].map(
-  (role) => ({ value: String(role), label: roleLabel(role) }),
-)
+const ROLES = [UserRole.VIEWER, UserRole.OPERATOR, UserRole.SUPERVISOR, UserRole.ADMIN]
 
-const STATUS_CHIPS: { value: Exclude<AdminBlockedFilter, "any">; label: string }[] = [
-  { value: "active", label: "Active" },
-  { value: "blocked", label: "Blocked" },
-]
-
-/** Guest accounts (#224), made with one click and no sign-in method, or every other account. */
-const ACCOUNT_CHIPS: { value: AdminAccountFilter; label: string }[] = [
-  { value: "guest", label: "Guests" },
-  { value: "full", label: "With sign-in" },
-]
-
-/** A role as a person reads it: `Operator`. */
-export function roleLabel(role: UserRole): string {
-  const name = USER_ROLE_NAMES[role] ?? "unknown"
-  return name[0].toUpperCase() + name.slice(1)
+/** Each role's name, by its catalog key. */
+const ROLE_KEYS: Record<UserRole, string> = {
+  [UserRole.VIEWER]: `AdminUsers.roleViewer`,
+  [UserRole.OPERATOR]: `AdminUsers.roleOperator`,
+  [UserRole.SUPERVISOR]: `AdminUsers.roleSupervisor`,
+  [UserRole.ADMIN]: `AdminUsers.roleAdmin`,
 }
 
-/** A person's name for a list or a heading: their full name, or their address before they set one. */
+/** A role as a person reads it, in the operator's language: `Operator`. */
+export function roleLabel(t: Translator<string>, role: UserRole): string {
+  const key = ROLE_KEYS[role]
+  return key ? t.t(key) : (USER_ROLE_NAMES[role] ?? String(role))
+}
+
+/**
+ * A person's name for a list or a heading: their full name, or their address before they set one,
+ * or "No name" in the operator's language.
+ */
 export function adminUserName(
   user: Pick<AdminUserRow, "firstName" | "lastName" | "email">,
+  t: Translator<string>,
 ): string {
-  return `${user.firstName} ${user.lastName}`.trim() || user.email || "No name"
+  return `${user.firstName} ${user.lastName}`.trim() || user.email || t.t(`AdminUsers.noName`)
 }
 
 /**
@@ -68,7 +68,8 @@ export function adminUserName(
 export function adminUserSubtitle(
   user: Pick<AdminUserRow, "firstName" | "lastName" | "email">,
 ): string | null {
-  return user.email && adminUserName(user) !== user.email ? user.email : null
+  const name = `${user.firstName} ${user.lastName}`.trim() || user.email
+  return user.email && name !== user.email ? user.email : null
 }
 
 /** A role's badge colour: viewers stay quiet, every role above them stands out. */
@@ -132,6 +133,7 @@ export function AdminUsersScreen(
     AdminUsersScreenProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
+  const t = useAdminText()
 
   // After a page change the list is new: the reader starts again at its heading. The first page
   // that arrives is no change, so focus stays where it was.
@@ -144,7 +146,7 @@ export function AdminUsersScreen(
   }, [page])
 
   const rows: UserTableRow[] = (list?.users ?? []).map((user) => ({
-    name: adminUserName(user),
+    name: adminUserName(user, t),
     role: user.role,
     lastSeenAt: user.lastSeenAt,
     createdAt: user.createdAt,
@@ -156,8 +158,8 @@ export function AdminUsersScreen(
   return (
     <Stack>
       <PageHeader
-        title="Users"
-        subtitle="Everyone with an account. Open a person to block them, end a session or send a password-reset link."
+        title={t.t(`AdminUsers.title`)}
+        subtitle={t.t(`AdminUsers.subtitle`)}
         titleDataE2E="admin-users-title"
         action={exportHref && (
           // A plain download: the server streams every page of the filtered list.
@@ -167,7 +169,7 @@ export function AdminUsersScreen(
             variant="secondary"
             data-e2e="admin-users-export"
           >
-            Export CSV
+            {t.t(`AdminUsers.export`)}
           </Button>
         )}
       />
@@ -180,7 +182,7 @@ export function AdminUsersScreen(
           {/* Keyed by the query, so going back in history shows the search that page had. */}
           <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
             <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-              <Field id="admin-users-q" label="Name or address">
+              <Field id="admin-users-q" label={t.t(`AdminUsers.search`)}>
                 <Input
                   name="q"
                   type="search"
@@ -195,30 +197,37 @@ export function AdminUsersScreen(
               type="submit"
               data-e2e="admin-users-submit"
               busy={pending}
-              busyLabel="Searching…"
+              busyLabel={t.t(`AdminUsers.searching`)}
             >
-              Search
+              {t.t(`AdminUsers.submit`)}
             </Button>
           </div>
         </ScreenForm>
         <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <FilterChips label="Status" dataE2E="admin-users-blocked">
+          <FilterChips label={t.t(`AdminUsers.status`)} dataE2E="admin-users-blocked">
             <ToggleChips
               mode="single"
-              label="Status"
+              label={t.t(`AdminUsers.status`)}
               class="flex-nowrap sm:flex-wrap"
-              options={STATUS_CHIPS}
+              options={[
+                { value: `active`, label: t.t(`AdminUsers.active`) },
+                { value: `blocked`, label: t.t(`AdminUsers.blocked`) },
+              ]}
               value={filter.blocked === "any" ? null : filter.blocked}
               onChange={(value) =>
                 onSearch({ ...filter, blocked: (value ?? "any") as AdminBlockedFilter, page: 1 })}
             />
           </FilterChips>
-          <FilterChips label="Account" dataE2E="admin-users-account">
+          <FilterChips label={t.t(`AdminUsers.account`)} dataE2E="admin-users-account">
             <ToggleChips
               mode="single"
-              label="Account"
+              label={t.t(`AdminUsers.account`)}
               class="flex-nowrap sm:flex-wrap"
-              options={ACCOUNT_CHIPS}
+              // Guest accounts (#224), made with one click and no sign-in method, or every other.
+              options={[
+                { value: `guest`, label: t.t(`AdminUsers.guests`) },
+                { value: `full`, label: t.t(`AdminUsers.withSignIn`) },
+              ]}
               value={filter.account ?? null}
               onChange={(value) => {
                 const { account: _old, ...rest } = filter
@@ -230,12 +239,12 @@ export function AdminUsersScreen(
               }}
             />
           </FilterChips>
-          <FilterChips label="Role" dataE2E="admin-users-role">
+          <FilterChips label={t.t(`AdminUsers.role`)} dataE2E="admin-users-role">
             <ToggleChips
               mode="single"
-              label="Role"
+              label={t.t(`AdminUsers.role`)}
               class="flex-nowrap sm:flex-wrap"
-              options={ROLE_CHIPS}
+              options={ROLES.map((role) => ({ value: String(role), label: roleLabel(t, role) }))}
               value={filter.role === null ? null : String(filter.role)}
               onChange={(value) =>
                 onSearch({
@@ -255,7 +264,7 @@ export function AdminUsersScreen(
                 onSearch({ ...rest, query: "", role: null, blocked: "any", page: 1 })
               }}
             >
-              Clear filters
+              {t.t(`AdminUsers.clear`)}
             </Button>
           )}
         </div>
@@ -264,11 +273,11 @@ export function AdminUsersScreen(
       <ErrorState message={error} />
 
       <h2 ref={heading} tabIndex={-1} class="text-sm text-muted" data-e2e="admin-users-count">
-        {list ? `${list.total} ${list.total === 1 ? "person" : "people"}` : "Loading people"}
+        {list ? t.t(`AdminUsers.count`, { count: list.total }) : t.t(`AdminUsers.loading`)}
       </h2>
       {list === null
         ? !error && (
-          <div role="status" aria-label="Loading people">
+          <div role="status" aria-label={t.t(`AdminUsers.loading`)}>
             <LoadingSkeleton rows={5} />
           </div>
         )
@@ -277,19 +286,19 @@ export function AdminUsersScreen(
             <DataTable
               mode="server"
               class="[&>div:first-child]:min-h-0"
-              columns={userColumns(operatorId, navigate)}
+              columns={userColumns(t, operatorId, navigate)}
               rows={rows}
               sort={filter.sort}
               onSortChange={(sort) =>
                 onSearch({ ...filter, sort: nextSort(filter.sort, sort), page: 1 })}
-              caption="People"
+              caption={t.t(`AdminUsers.people`)}
               captionHidden
               rowKey={(row) => row.user.id}
               empty={
                 <EmptyState
                   inset
-                  title="Nobody matches"
-                  description="Try another name or address, or clear the filters."
+                  title={t.t(`AdminUsers.noMatch`)}
+                  description={t.t(`AdminUsers.noMatchHint`)}
                 />
               }
               paging={{
@@ -297,7 +306,7 @@ export function AdminUsersScreen(
                 pageSize: list.pageSize,
                 total: list.total,
                 onChange: onPage,
-                label: "Pages of people",
+                label: t.t(`AdminUsers.pages`),
               }}
             />
           </div>
@@ -308,13 +317,14 @@ export function AdminUsersScreen(
 
 /** The table's columns. Every one but the status sorts, on the server. */
 function userColumns(
+  t: Translator<string>,
   operatorId?: number,
   navigate?: Navigate,
 ): DataTableColumn<UserTableRow, AdminUserSortKey>[] {
   return [
     {
       key: "name",
-      header: "Person",
+      header: t.t(`AdminUsers.person`),
       sortable: true,
       render: ({ user }) => (
         <PersonCell user={user} self={user.id === operatorId} navigate={navigate} />
@@ -322,34 +332,34 @@ function userColumns(
     },
     {
       key: "role",
-      header: "Role",
+      header: t.t(`AdminUsers.role`),
       sortable: true,
-      render: ({ role }) => <Badge text={roleLabel(role)} color={roleColor(role)} />,
+      render: ({ role }) => <Badge text={roleLabel(t, role)} color={roleColor(role)} />,
     },
     {
       id: "status",
-      header: "Status",
+      header: t.t(`AdminUsers.status`),
       render: ({ user }) =>
         user.blockedAt
           ? (
             <span data-e2e="admin-user-blocked">
-              <Badge text="Blocked" color="red" />
+              <Badge text={t.t(`AdminUsers.blocked`)} color="red" />
             </span>
           )
-          : <Badge text="Active" color="green" type="outline" />,
+          : <Badge text={t.t(`AdminUsers.active`)} color="green" type="outline" />,
     },
     {
       key: "lastSeenAt",
-      header: "Last seen",
+      header: t.t(`AdminUsers.lastSeen`),
       sortable: true,
       render: ({ lastSeenAt }) =>
         lastSeenAt
           ? <When class="whitespace-nowrap text-sm" at={lastSeenAt} />
-          : <span class="text-sm text-muted">Never</span>,
+          : <span class="text-sm text-muted">{t.t(`AdminUsers.never`)}</span>,
     },
     {
       key: "createdAt",
-      header: "Created",
+      header: t.t(`AdminUsers.created`),
       sortable: true,
       render: ({ createdAt }) => (
         <OnDay class="whitespace-nowrap text-sm text-muted" at={createdAt} />
@@ -383,12 +393,14 @@ function PersonCell(
   { user, self, navigate }: { user: AdminUserRow; self: boolean; navigate?: Navigate },
 ): JSX.Element {
   const subtitle = adminUserSubtitle(user)
+  const t = useAdminText()
+  const name = adminUserName(user, t)
   return (
     // At least 12rem wide: on a phone the table scrolls sideways instead of squeezing the name
     // into a column a few letters wide.
     <div class="flex min-w-48 items-center gap-3">
       <Avatar
-        name={adminUserName(user)}
+        name={name}
         src={pictureUrl(user.pictureId, ADMIN_PICTURE_PATH)}
         size="sm"
       />
@@ -398,22 +410,25 @@ function PersonCell(
             href={ADMIN_PATHS.user(user.id)}
             navigate={navigate}
             class="pc-link font-medium wrap-anywhere"
+            translate={false}
             data-e2e={`admin-user-${user.id}`}
           >
-            {adminUserName(user)}
+            {name}
           </Link>
           {user.guestSince && (
             <span data-e2e="admin-user-guest">
-              <Badge text="Guest" color="gray" type="outline" />
+              <Badge text={t.t(`AdminUsers.guest`)} color="gray" type="outline" />
             </span>
           )}
           {self && (
             <span data-e2e="admin-user-you">
-              <Badge text="You" color="gray" type="outline" />
+              <Badge text={t.t(`AdminUsers.you`)} color="gray" type="outline" />
             </span>
           )}
         </span>
-        {subtitle && <span class="text-sm text-muted wrap-anywhere">{subtitle}</span>}
+        {subtitle && (
+          <span class="text-sm text-muted wrap-anywhere" translate={false}>{subtitle}</span>
+        )}
       </div>
     </div>
   )

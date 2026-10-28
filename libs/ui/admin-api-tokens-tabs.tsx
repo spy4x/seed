@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useRef } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
@@ -21,6 +20,9 @@ import {
   tokenTableClass,
   useFocusAfterConfirm,
 } from "./admin-api-tokens-screen.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /**
  * A panel's count, as a heading that takes focus after a confirmed revoke or removal, so focus
@@ -38,16 +40,17 @@ function PanelCount(
 
 /** What each notification kind is called; a kind this page does not know shows as stored. */
 const KIND_LABELS: Record<string, string> = {
-  [NotificationKind.InvitationReceived]: "Invitation received",
-  [NotificationKind.RoleChanged]: "Group role changed",
-  [NotificationKind.RemovedFromGroup]: "Removed from a group",
-  [NotificationKind.OwnershipReceived]: "Group handed over",
-  [NotificationKind.DataExportReady]: "Data export ready",
+  [NotificationKind.InvitationReceived]: `AdminPersonTabs.invitationReceived`,
+  [NotificationKind.RoleChanged]: `AdminPersonTabs.roleChanged`,
+  [NotificationKind.RemovedFromGroup]: `AdminPersonTabs.removedFromGroup`,
+  [NotificationKind.OwnershipReceived]: `AdminPersonTabs.ownershipReceived`,
+  [NotificationKind.DataExportReady]: `AdminPersonTabs.dataExportReady`,
 }
 
-/** What a notification kind is called on the person's tab. */
-export function notificationKindLabel(kind: string): string {
-  return KIND_LABELS[kind] ?? kind
+/** What a notification kind is called on the person's tab, in the operator's language. */
+export function notificationKindLabel(t: Translator<string>, kind: string): string {
+  const key = Object.hasOwn(KIND_LABELS, kind) ? KIND_LABELS[kind] : undefined
+  return key ? t.t(key) : kind
 }
 
 /** What every panel shows while it loads or after a failed read. */
@@ -89,8 +92,9 @@ export function AdminPersonTokensPanel(
   props: PanelLoad<AdminApiToken[]> & ActionPanelProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
+  const t = useAdminText()
   useFocusAfterConfirm(props.confirm, heading)
-  const waiting = loadingOrError(props, "Loading API tokens")
+  const waiting = loadingOrError(props, t.t(`AdminPersonTabs.loadingTokens`))
   if (waiting) return waiting
   const tokens = props.data!
   return (
@@ -98,19 +102,23 @@ export function AdminPersonTokensPanel(
       <PanelCount
         headingRef={heading}
         dataE2E="admin-person-api-tokens-count"
-        count={`${tokens.length} ${tokens.length === 1 ? "token" : "tokens"}`}
+        count={t.t(`AdminApiTokens.count`, { count: tokens.length })}
       />
       {tokens.length === 0
-        ? <PanelRows empty="No API tokens." dataE2E="admin-person-api-tokens">{[]}</PanelRows>
+        ? (
+          <PanelRows empty={t.t(`AdminPersonTabs.noTokens`)} dataE2E="admin-person-api-tokens">
+            {[]}
+          </PanelRows>
+        )
         : (
           <div data-e2e="admin-person-api-tokens">
             <DataTable
               class={tokenTableClass(false)}
-              columns={tokenColumns({ ...props, withOwner: false })}
+              columns={tokenColumns({ ...props, withOwner: false, t })}
               rows={tokens}
               sort={[]}
               onSortChange={() => {}}
-              caption="API tokens"
+              caption={t.t(`AdminApiTokens.title`)}
               captionHidden
               rowKey={(token) => token.id}
             />
@@ -133,8 +141,9 @@ export function AdminPersonDevicesPanel(
   props: PanelLoad<AdminPushDevice[]> & ActionPanelProps,
 ): JSX.Element {
   const heading = useRef<HTMLHeadingElement>(null)
+  const t = useAdminText()
   useFocusAfterConfirm(props.confirm, heading)
-  const waiting = loadingOrError(props, "Loading devices")
+  const waiting = loadingOrError(props, t.t(`AdminPersonTabs.loadingDevices`))
   if (waiting) return waiting
   const own = props.userId === props.operatorId
   const devices = props.data!
@@ -143,14 +152,25 @@ export function AdminPersonDevicesPanel(
       <PanelCount
         headingRef={heading}
         dataE2E="admin-person-devices-count"
-        count={`${devices.length} ${devices.length === 1 ? "device" : "devices"}`}
+        count={t.t(`AdminPersonTabs.deviceCount`, { count: devices.length })}
       />
-      <PanelRows empty="No device gets push notifications." dataE2E="admin-person-devices">
+      <PanelRows empty={t.t(`AdminPersonTabs.noDevices`)} dataE2E="admin-person-devices">
         {devices.map((device) => (
           <li key={device.id} class={PANEL_ROW} data-e2e={`admin-person-device-${device.id}`}>
-            <span class="font-medium">Device {device.label}</span>
+            <span class="font-medium">
+              <Rich
+                parts={t.parts(`AdminPersonTabs.device`, { device: device.label })}
+                tags={{ device: (text) => <bdi translate={false}>{text}</bdi> }}
+              />
+            </span>
             <span class="text-sm text-muted">
-              Added <Ago at={device.createdAt} />, renewed <Ago at={device.updatedAt} />
+              <Rich
+                parts={t.parts(`AdminPersonTabs.deviceDates`)}
+                tags={{
+                  added: () => <Ago at={device.createdAt} />,
+                  renewed: () => <Ago at={device.updatedAt} />,
+                }}
+              />
             </span>
             {!own && (
               <span class="ml-auto">
@@ -158,7 +178,7 @@ export function AdminPersonDevicesPanel(
                   variant="ghost"
                   size="sm"
                   data-e2e={`admin-person-device-remove-${device.id}`}
-                  aria-label={`Remove device ${device.label}`}
+                  aria-label={t.t(`AdminPersonTabs.removeDevice`, { device: device.label })}
                   onClick={() =>
                     props.onAsk({
                       kind: "remove-device",
@@ -167,7 +187,7 @@ export function AdminPersonDevicesPanel(
                       label: device.label,
                     })}
                 >
-                  Remove
+                  {t.t(`AdminApiTokens.remove`)}
                 </Button>
               </span>
             )}
@@ -190,7 +210,8 @@ export function AdminPersonDevicesPanel(
 export function AdminPersonNotificationsPanel(
   props: PanelLoad<AdminNotificationsResponse>,
 ): JSX.Element {
-  const waiting = loadingOrError(props, "Loading notifications")
+  const t = useAdminText()
+  const waiting = loadingOrError(props, t.t(`AdminPersonTabs.loadingNotifications`))
   if (waiting) return waiting
   const { notifications, total, unread } = props.data!
   const more = total - notifications.length
@@ -198,9 +219,10 @@ export function AdminPersonNotificationsPanel(
     <Stack>
       <p class="text-sm text-muted" data-e2e="admin-person-notifications-count">
         {total === 0
-          ? "No notifications."
-          : `${total} ${total === 1 ? "notification" : "notifications"}, ${unread} unread.`}
-        {more > 0 && ` The newest ${notifications.length} are below.`}
+          ? t.t(`AdminPersonTabs.noNotifications`)
+          : t.t(`AdminPersonTabs.notificationCount`, { count: total, unread })}
+        {more > 0 &&
+          ` ${t.t(`AdminPersonTabs.newestShown`, { count: notifications.length })}`}
       </p>
       {notifications.length > 0 && (
         <PanelRows empty="" dataE2E="admin-person-notifications">
@@ -210,14 +232,14 @@ export function AdminPersonNotificationsPanel(
               class={PANEL_ROW}
               data-e2e={`admin-person-notification-${notification.id}`}
             >
-              <span class="font-medium">{notificationKindLabel(notification.kind)}</span>
+              <span class="font-medium">{notificationKindLabel(t, notification.kind)}</span>
               <span class="text-sm text-muted">
                 <Ago at={notification.createdAt} />
               </span>
               <span class="ml-auto">
                 {notification.readAt
-                  ? <Badge text="Read" color="gray" type="outline" />
-                  : <Badge text="Unread" color="blue" />}
+                  ? <Badge text={t.t(`AdminPersonTabs.read`)} color="gray" type="outline" />
+                  : <Badge text={t.t(`AdminPersonTabs.unread`)} color="blue" />}
               </span>
             </li>
           ))}

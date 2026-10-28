@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { formatMoney } from "@spy4x/platform/universal/money"
@@ -40,6 +39,9 @@ import { adminGroupPersonName } from "./admin-groups-list.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
 import { useFormat, When } from "@spy4x/preact-ui/format"
 import type { Formatters } from "@spy4x/time/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** The billing module's pages in the admin app. */
 export const ADMIN_BILLING_PATHS = {
@@ -50,30 +52,25 @@ export const ADMIN_BILLING_PATHS = {
 /** Where the billing setup is described, for the action of the "Billing is off" state. */
 export const ADMIN_BILLING_SETUP_URL = `https://github.com/spy4x/seed/blob/main/docs/billing.md`
 
-/** The list's message when it could not be read, whatever the cause. */
-export const ADMIN_BILLING_LIST_ERROR =
-  `Could not load customers. Check your connection and try again.`
-
-/** What the module says while billing is off (decision 10 of #196). */
-export const ADMIN_BILLING_OFF_TEXT =
-  `Every group is on the Free plan. To turn billing on, add the Stripe settings.`
-
-/** What each billing action is called in the audit log and on the person page. */
+/**
+ * What each billing action is called in the audit log and on the person page, as a catalog key per
+ * event code.
+ */
 export const BILLING_AUDIT_LABELS: Record<BillingAuditEvent, string> = {
-  [BILLING_AUDIT_EVENTS.paymentRefunded]: `Payment refunded by an operator`,
-  [BILLING_AUDIT_EVENTS.timeGiven]: `Time given at no charge by an operator`,
-  [BILLING_AUDIT_EVENTS.cancelledAtPeriodEnd]: `Subscription set to cancel by an operator`,
-  [BILLING_AUDIT_EVENTS.cancelledNow]: `Subscription cancelled by an operator`,
-  [BILLING_AUDIT_EVENTS.cancellationUndone]: `Cancellation undone by an operator`,
+  [BILLING_AUDIT_EVENTS.paymentRefunded]: `AdminAuditEvent.paymentRefunded`,
+  [BILLING_AUDIT_EVENTS.timeGiven]: `AdminAuditEvent.timeGiven`,
+  [BILLING_AUDIT_EVENTS.cancelledAtPeriodEnd]: `AdminAuditEvent.cancelAtPeriodEnd`,
+  [BILLING_AUDIT_EVENTS.cancelledNow]: `AdminAuditEvent.cancelledNow`,
+  [BILLING_AUDIT_EVENTS.cancellationUndone]: `AdminAuditEvent.cancellationUndone`,
 }
 
 const STATUS_CHIPS: { value: AdminBillingStatusFilter; label: string }[] = [
-  { value: `paying`, label: `Paying` },
-  { value: `trial`, label: `Trial` },
-  { value: `past_due`, label: `Past due` },
-  { value: `ending`, label: `Ending` },
-  { value: `cancelled`, label: `Cancelled` },
-  { value: `all`, label: `All` },
+  { value: `paying`, label: `AdminBilling.paying` },
+  { value: `trial`, label: `AdminBilling.trial` },
+  { value: `past_due`, label: `AdminBilling.pastDue` },
+  { value: `ending`, label: `AdminBilling.ending` },
+  { value: `cancelled`, label: `AdminBilling.cancelled` },
+  { value: `all`, label: `AdminBilling.all` },
 ]
 
 const NUMBER = new Intl.NumberFormat(`en`)
@@ -88,45 +85,47 @@ export function money(value: Money): string {
   return formatMoney(value.amount, value.currency)
 }
 
-/** The plan's name, `Pro`, or `Unknown plan` for a price no plan maps to. */
-export function billingPlanName(planId: string | null): string {
-  return (planId === null ? null : findPlan(planId))?.name ?? `Unknown plan`
+/** The plan's name, `Pro`, or `Unknown plan` (in the operator's language) for a price no plan maps to. */
+export function billingPlanName(t: Translator<string>, planId: string | null): string {
+  return (planId === null ? null : findPlan(planId))?.name ?? t.t(`AdminBilling.unknownPlan`)
 }
 
-const STATE_BADGES: Record<AdminBillingState, { text: string; color: BadgeColor }> = {
-  [AdminBillingState.Active]: { text: `Active`, color: `green` },
-  [AdminBillingState.Trial]: { text: `Trial`, color: `blue` },
-  [AdminBillingState.PastDue]: { text: `Past due`, color: `orange` },
-  [AdminBillingState.Cancelled]: { text: `Cancelled`, color: `gray` },
-  [AdminBillingState.Incomplete]: { text: `Checkout not finished`, color: `gray` },
-  [AdminBillingState.Paused]: { text: `Paused`, color: `gray` },
+const STATE_BADGES: Record<AdminBillingState, { key: string; color: BadgeColor }> = {
+  [AdminBillingState.Active]: { key: `AdminBilling.active`, color: `green` },
+  [AdminBillingState.Trial]: { key: `AdminBilling.trial`, color: `blue` },
+  [AdminBillingState.PastDue]: { key: `AdminBilling.pastDue`, color: `orange` },
+  [AdminBillingState.Cancelled]: { key: `AdminBilling.cancelled`, color: `gray` },
+  [AdminBillingState.Incomplete]: { key: `AdminBilling.incomplete`, color: `gray` },
+  [AdminBillingState.Paused]: { key: `AdminBilling.paused`, color: `gray` },
 }
 
 /** The status word's badge. A past-due group whose grace is over shows red. */
 export function billingStatusBadge(
+  t: Translator<string>,
   view: AdminBillingStatusView,
 ): { text: string; color: BadgeColor } {
-  const badge = STATE_BADGES[view.state]
-  return view.date?.kind === `on_free_since` ? { ...badge, color: `red` } : badge
+  const { key, color } = STATE_BADGES[view.state]
+  return { text: t.t(key), color: view.date?.kind === `on_free_since` ? `red` : color }
 }
 
 /** The key date beside the status word: `Plan kept until Oct 23, 2026`, or `""` for none. */
 export function billingDatePhrase(
+  t: Translator<string>,
   view: AdminBillingStatusView,
   format: Pick<Formatters, "date">,
 ): string {
   if (view.date === null) return ``
-  const day = billingDate(view.date.at, format)
+  const date = billingDate(view.date.at, format)
   switch (view.date.kind) {
     case `renews`:
-      return `Renews ${day}`
+      return t.t(`AdminBilling.renews`, { date })
     case `ends`:
     case `trial_ends`:
-      return `Ends ${day}`
+      return t.t(`AdminBilling.ends`, { date })
     case `plan_kept_until`:
-      return `Plan kept until ${day}`
+      return t.t(`AdminBilling.planKeptUntil`, { date })
     case `on_free_since`:
-      return `On Free since ${day}`
+      return t.t(`AdminBilling.onFreeSince`, { date })
   }
 }
 
@@ -134,8 +133,9 @@ export function billingDatePhrase(
 export function BillingStatusLine(
   { view, dataE2E }: { view: AdminBillingStatusView; dataE2E?: string },
 ): JSX.Element {
-  const badge = billingStatusBadge(view)
-  const phrase = billingDatePhrase(view, useFormat())
+  const t = useAdminText()
+  const badge = billingStatusBadge(t, view)
+  const phrase = billingDatePhrase(t, view, useFormat())
   return (
     <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-1" data-e2e={dataE2E}>
       <Badge text={badge.text} color={badge.color} />
@@ -149,6 +149,7 @@ export function BillingStatusLine(
  * trial it pays nothing, and the second line says what it would pay. `null` for an unknown price.
  */
 export function perMonth(
+  t: Translator<string>,
   customer: AdminBillingCustomer,
 ): { amount: string; detail: string | null } | null {
   const now = monthlyRevenueOf(customer)
@@ -157,14 +158,18 @@ export function perMonth(
   const seats = seatsOf(customer)
   if (now.amount === 0) {
     const trial = customer.status === BillingStatus.Trialing
-    return { amount: money(now), detail: trial ? `would be ${money(price)}` : null }
+    return {
+      amount: money(now),
+      detail: trial ? t.t(`AdminBilling.wouldBe`, { amount: money(price) }) : null,
+    }
   }
   return {
     amount: money(now),
     detail: seats > 1
-      ? `${NUMBER.format(seats)} × ${
-        money({ amount: price.amount / seats, currency: price.currency })
-      }`
+      ? t.t(`AdminBilling.seatPrice`, {
+        seats: NUMBER.format(seats),
+        price: money({ amount: price.amount / seats, currency: price.currency }),
+      })
       : null,
   }
 }
@@ -205,6 +210,7 @@ export interface AdminBillingListScreenProps {
 export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.Element {
   const { filter, list, pending, error, onSearch, onPage, navigate } = props
   const format = useFormat()
+  const t = useAdminText()
   const heading = useRef<HTMLHeadingElement>(null)
 
   // After a search, a chip or a page change the list is new: once it arrives, the reader starts
@@ -229,8 +235,8 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
 
   const header = (
     <PageHeader
-      title="Billing"
-      subtitle="Who pays, what they pay, and what you earn."
+      title={t.t(`AdminBilling.title`)}
+      subtitle={t.t(`AdminBilling.subtitle`)}
       titleDataE2E="admin-billing-title"
     />
   )
@@ -243,11 +249,12 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
           <EmptyState
             inset
             icon={<IconCreditCard class="size-8" aria-hidden="true" />}
-            title="Billing is off"
-            description={ADMIN_BILLING_OFF_TEXT}
+            // What the module says while billing is off (decision 10 of #196).
+            title={t.t(`AdminBilling.off`)}
+            description={t.t(`AdminBilling.offText`)}
             action={
               <ExternalButton href={ADMIN_BILLING_SETUP_URL} data-e2e="admin-billing-setup">
-                Read the billing setup
+                {t.t(`AdminBilling.readSetup`)}
               </ExternalButton>
             }
           />
@@ -271,11 +278,11 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
             <EmptyState
               inset
               icon={<IconCreditCard class="size-8" aria-hidden="true" />}
-              title="No paid groups yet"
-              description="A group shows here once its owner checks out a paid plan, trial included."
+              title={t.t(`AdminBilling.noneYet`)}
+              description={t.t(`AdminBilling.noneHint`)}
               action={list?.enabled && list.pricingUrl && (
                 <ExternalButton href={list.pricingUrl} data-e2e="admin-billing-pricing">
-                  Open the pricing page
+                  {t.t(`AdminBilling.openPricing`)}
                 </ExternalButton>
               )}
             />
@@ -293,7 +300,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
               {/* Keyed by the query, so going back in history shows the search that page had. */}
               <div key={filter.query} class="flex flex-wrap items-end gap-3" role="search">
                 <div class="min-w-0 flex-1 basis-60 sm:max-w-md">
-                  <Field id="admin-billing-q" label="Group name, owner or group id">
+                  <Field id="admin-billing-q" label={t.t(`AdminBilling.search`)}>
                     <Input
                       name="q"
                       type="search"
@@ -308,9 +315,9 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                   type="submit"
                   data-e2e="admin-billing-submit"
                   busy={pending && searching}
-                  busyLabel="Searching…"
+                  busyLabel={t.t(`AdminBilling.searching`)}
                 >
-                  Search
+                  {t.t(`AdminBilling.submit`)}
                 </Button>
               </div>
             </ScreenForm>
@@ -320,16 +327,21 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                 class="-mx-4 flex max-w-[calc(100%+2rem)] items-center gap-2 overflow-x-auto px-4 sm:mx-0 sm:max-w-full sm:flex-wrap sm:px-0"
                 data-e2e="admin-billing-status"
               >
-                <span class="text-sm text-muted" aria-hidden="true">Status</span>
+                <span class="text-sm text-muted" aria-hidden="true">
+                  {t.t(`AdminBilling.status`)}
+                </span>
                 <ToggleChips
                   mode="single"
-                  label="Status"
+                  label={t.t(`AdminBilling.status`)}
                   class="flex-nowrap sm:flex-wrap"
                   options={STATUS_CHIPS.map((chip) => ({
                     value: chip.value,
                     label: list?.enabled
-                      ? `${chip.label} ${NUMBER.format(list.counts[chip.value])}`
-                      : chip.label,
+                      ? t.t(`AdminBilling.chipCount`, {
+                        label: t.t(chip.label),
+                        count: NUMBER.format(list.counts[chip.value]),
+                      })
+                      : t.t(chip.label),
                   }))}
                   value={filter.status}
                   onChange={(value) =>
@@ -347,15 +359,18 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                   data-e2e="admin-billing-clear"
                   onClick={() => search({ query: ``, status: `paying`, page: 1 })}
                 >
-                  Clear filters
+                  {t.t(`AdminBilling.clear`)}
                 </Button>
               )}
             </div>
 
             {error && (
               <div class="flex flex-col items-center gap-3" data-e2e="admin-billing-error">
-                <ErrorState message={ADMIN_BILLING_LIST_ERROR} />
-                <Button variant="secondary" onClick={props.onRetry}>Try again</Button>
+                {/* The list's message when it could not be read, whatever the cause. */}
+                <ErrorState message={t.t(`AdminBilling.listError`)} />
+                <Button variant="secondary" onClick={props.onRetry}>
+                  {t.t(`AdminBilling.retry`)}
+                </Button>
               </div>
             )}
 
@@ -367,13 +382,13 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                 data-e2e="admin-billing-count"
               >
                 {list?.enabled
-                  ? `${NUMBER.format(list.total)} ${list.total === 1 ? `group` : `groups`}`
-                  : `Loading customers`}
+                  ? t.t(`AdminBilling.count`, { count: list.total })
+                  : t.t(`AdminBilling.loading`)}
               </h2>
             )}
             {list === null
               ? !error && (
-                <div role="status" aria-label="Loading customers">
+                <div role="status" aria-label={t.t(`AdminBilling.loading`)}>
                   <LoadingSkeleton rows={5} />
                 </div>
               )
@@ -382,9 +397,9 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                   <DataTable
                     mode="server"
                     class={TABLE_CLASS}
-                    columns={customerColumns(props.now, list.graceDays, format, navigate)}
+                    columns={customerColumns(t, props.now, list.graceDays, format, navigate)}
                     rows={list.customers.map((customer) => ({ customer }))}
-                    caption="Customers"
+                    caption={t.t(`AdminBilling.customers`)}
                     captionHidden
                     rowKey={(row) => row.customer.groupId}
                     sort={NO_SORT}
@@ -392,14 +407,14 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                     empty={
                       <EmptyState
                         inset
-                        title="No group matches"
-                        description="Try another name or address, or clear the filters."
+                        title={t.t(`AdminBilling.noMatch`)}
+                        description={t.t(`AdminBilling.noMatchHint`)}
                         action={
                           <Button
                             variant="ghost"
                             onClick={() => search({ query: ``, status: `paying`, page: 1 })}
                           >
-                            Clear filters
+                            {t.t(`AdminBilling.clear`)}
                           </Button>
                         }
                       />
@@ -409,7 +424,7 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
                       pageSize: list.pageSize,
                       total: list.total,
                       onChange: turnPage,
-                      label: `Pages of customers`,
+                      label: t.t(`AdminBilling.pages`),
                     }}
                   />
                 </div>
@@ -427,60 +442,65 @@ export function AdminBillingListScreen(props: AdminBillingListScreenProps): JSX.
 function Figures(
   { figures, figuresError, onRetry }: AdminBillingListScreenProps,
 ): JSX.Element {
+  const t = useAdminText()
   if (figuresError) {
     return (
       <div class="flex flex-col items-center gap-3" data-e2e="admin-billing-figures-error">
-        <ErrorState message="Could not count revenue." />
-        <Button variant="secondary" onClick={onRetry}>Try again</Button>
+        <ErrorState message={t.t(`AdminBilling.figuresError`)} />
+        <Button variant="secondary" onClick={onRetry}>{t.t(`AdminBilling.retry`)}</Button>
       </div>
     )
   }
   if (figures === null) {
     return (
-      <div role="status" aria-label="Loading the figures">
+      <div role="status" aria-label={t.t(`AdminBilling.loadingFigures`)}>
         <LoadingSkeleton rows={2} />
       </div>
     )
   }
   return (
-    <section aria-label="Key numbers" class="flex flex-col gap-2" data-e2e="admin-billing-figures">
+    <section
+      aria-label={t.t(`AdminBilling.keyNumbers`)}
+      class="flex flex-col gap-2"
+      data-e2e="admin-billing-figures"
+    >
       {/* Two columns fit a 390px phone; a revenue in several currencies wraps inside its card. */}
       <KpiGrid minWidth="9rem">
         <Kpi
           class="min-w-0 wrap-anywhere"
-          label="Monthly recurring revenue"
+          label={t.t(`AdminBilling.mrr`)}
           value={revenueText(figures.monthlyRevenue)}
-          sub="Active and past-due subscriptions at list price. Trials count as 0."
+          sub={t.t(`AdminBilling.mrrHint`)}
           tone="neutral"
         />
         <Kpi
-          label="Paying groups"
+          label={t.t(`AdminBilling.payingGroups`)}
           value={NUMBER.format(figures.paying)}
-          sub={`${NUMBER.format(figures.pastDue)} past due`}
+          sub={t.t(`AdminBilling.pastDueCount`, { count: figures.pastDue })}
           tone="neutral"
         />
         <Kpi
-          label="In trial"
+          label={t.t(`AdminBilling.inTrial`)}
           value={NUMBER.format(figures.trials)}
-          sub={`${NUMBER.format(figures.trialsEndingSoon)} end in the next 7 days`}
+          sub={t.t(`AdminBilling.trialsEnding`, { count: figures.trialsEndingSoon })}
           tone="neutral"
         />
         <Kpi
-          label="Ending"
+          label={t.t(`AdminBilling.ending`)}
           value={NUMBER.format(figures.ending)}
-          sub="Cancelled, paid until their period ends"
+          sub={t.t(`AdminBilling.endingHint`)}
           tone="neutral"
         />
       </KpiGrid>
       <p class="text-xs text-muted" data-e2e="admin-billing-source">
-        Counted from the subscriptions this app stores, so a change in Stripe shows here once its
-        webhook arrives. {figures.lastEventAt
+        {t.t(`AdminBilling.source`)} {figures.lastEventAt
           ? (
-            <>
-              Last Stripe event <When at={figures.lastEventAt} />.
-            </>
+            <Rich
+              parts={t.parts(`AdminBilling.lastEvent`)}
+              tags={{ when: () => <When at={figures.lastEventAt!} /> }}
+            />
           )
-          : `No Stripe event has arrived yet.`}
+          : t.t(`AdminBilling.noEvent`)}
       </p>
     </section>
   )
@@ -515,14 +535,19 @@ interface CustomerRow {
 const NO_SORT: [] = []
 
 /** When the customer is charged next: the renewal, or the end of a trial; `None` otherwise. */
-function nextCharge(view: AdminBillingStatusView, format: Pick<Formatters, "date">): string {
+function nextCharge(
+  t: Translator<string>,
+  view: AdminBillingStatusView,
+  format: Pick<Formatters, "date">,
+): string {
   return view.date?.kind === `renews` || view.date?.kind === `trial_ends`
     ? billingDate(view.date.at, format)
-    : `None`
+    : t.t(`AdminBilling.none`)
 }
 
 /** The table's columns, in the order the server sorts: past due first, then trials ending soonest. */
 function customerColumns(
+  t: Translator<string>,
   now: Date,
   graceDays: number,
   format: Pick<Formatters, "date">,
@@ -531,7 +556,7 @@ function customerColumns(
   return [
     {
       id: `group`,
-      header: `Group`,
+      header: t.t(`AdminBilling.group`),
       render: ({ customer }) => (
         <GroupCell
           customer={customer}
@@ -542,11 +567,14 @@ function customerColumns(
     },
     {
       id: `owner`,
-      header: `Owner`,
+      header: t.t(`AdminBilling.owner`),
       render: ({ customer }) => (
-        <div class="flex w-44 min-w-0 flex-col">
-          <span class="truncate text-sm font-medium" title={adminGroupPersonName(customer.owner)}>
-            {adminGroupPersonName(customer.owner)}
+        <div class="flex w-44 min-w-0 flex-col" translate={false}>
+          <span
+            class="truncate text-sm font-medium"
+            title={adminGroupPersonName(t, customer.owner)}
+          >
+            {adminGroupPersonName(t, customer.owner)}
           </span>
           {customer.owner.email && customer.owner.name && (
             <span class="truncate text-xs text-muted" title={customer.owner.email}>
@@ -558,7 +586,7 @@ function customerColumns(
     },
     {
       id: `status`,
-      header: `Status`,
+      header: t.t(`AdminBilling.status`),
       render: ({ customer }) => (
         <BillingStatusLine
           view={adminBillingStatus(customer, now, graceDays)}
@@ -568,12 +596,12 @@ function customerColumns(
     },
     {
       id: `perMonth`,
-      header: `Per month`,
+      header: t.t(`AdminBilling.perMonth`),
       align: `right`,
       render: ({ customer }) => {
-        const amount = perMonth(customer)
+        const amount = perMonth(t, customer)
         return amount === null
-          ? <span class="text-sm text-muted">Unknown price</span>
+          ? <span class="text-sm text-muted">{t.t(`AdminBilling.unknownPrice`)}</span>
           : (
             <div class="flex flex-col items-end text-right" data-e2e="admin-billing-row-amount">
               <span class="whitespace-nowrap font-medium tabular-nums">{amount.amount}</span>
@@ -588,10 +616,10 @@ function customerColumns(
     },
     {
       id: `nextCharge`,
-      header: `Next charge`,
+      header: t.t(`AdminBilling.nextCharge`),
       render: ({ customer }) => (
         <span class="whitespace-nowrap text-sm">
-          {nextCharge(adminBillingStatus(customer, now, graceDays), format)}
+          {nextCharge(t, adminBillingStatus(customer, now, graceDays), format)}
         </span>
       ),
     },
@@ -610,7 +638,8 @@ function GroupCell(
     navigate?: Navigate
   },
 ): JSX.Element {
-  const owner = customer.owner.email ?? adminGroupPersonName(customer.owner)
+  const t = useAdminText()
+  const owner = customer.owner.email ?? adminGroupPersonName(t, customer.owner)
   return (
     <div class="flex min-w-40 flex-col gap-1 max-sm:min-w-0">
       <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -619,19 +648,20 @@ function GroupCell(
           navigate={navigate}
           class="pc-link line-clamp-2 font-medium wrap-anywhere"
           title={customer.groupName}
+          translate={false}
           data-e2e={`admin-billing-${customer.groupId}`}
         >
           {customer.groupName}
         </Link>
         {customer.groupDeletedAt && (
           <span data-e2e="admin-billing-deleted">
-            <Badge text="In trash" color="red" type="outline" />
+            <Badge text={t.t(`AdminBilling.inTrash`)} color="red" type="outline" />
           </span>
         )}
       </div>
       <div class="flex flex-col gap-1 sm:hidden" data-e2e="admin-billing-phone">
         <BillingStatusLine view={view} />
-        <span class="text-xs text-muted wrap-anywhere">{owner}</span>
+        <span class="text-xs text-muted wrap-anywhere" translate={false}>{owner}</span>
       </div>
     </div>
   )
@@ -641,13 +671,14 @@ function GroupCell(
 function ExternalButton(
   { href, children, ...rest }: { href: string; children: string; "data-e2e"?: string },
 ): JSX.Element {
+  const t = useAdminText()
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       class={buttonClasses(`secondary`, `md`)}
-      aria-label={`${children} (opens a new tab)`}
+      aria-label={t.t(`AdminBilling.newTab`, { label: children })}
       {...rest}
     >
       <IconExternalLink class="size-4" aria-hidden="true" />

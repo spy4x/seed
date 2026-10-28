@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { slugify } from "@spy4x/platform/universal/text"
@@ -41,6 +40,9 @@ import {
 import { ADMIN_BLOG_PATHS, BlogStatusBadge } from "./admin-blog-list.tsx"
 import { Dialogs } from "./admin-blog-dialogs.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 // #region Pure helpers
 
@@ -152,27 +154,43 @@ export function blogWordCount(markdown: string): number {
   return markdown.match(/\S+/g)?.length ?? 0
 }
 
+/** The catalog keys of the editor's own messages start with this; any other message is the API's. */
+const OWN_MESSAGE = `AdminBlogEditor.`
+
 /**
- * The messages the editor shows before it sends anything, in the page's words. The API checks
+ * The messages the editor shows before it sends anything, as catalog keys: the state that holds
+ * them has no translator, and the screen translates them ({@link blogErrorText}). The API checks
  * every field again. `publishing` adds what only a live post needs: a body.
  */
 export function blogDraftErrors(draft: BlogDraft, publishing = false): BlogFormErrors {
   const errors: BlogFormErrors = {}
   const slug = draft.slug.trim()
-  if (draft.title.trim() === ``) errors.title = `Add a title.`
-  if (slug === ``) errors.slug = `Add a slug.`
-  else if (!BLOG_SLUG_PATTERN.test(slug)) {
-    errors.slug = `Use lowercase letters, digits and hyphens only.`
-  }
-  if (draft.description.trim() === ``) errors.description = `Add a description.`
+  if (draft.title.trim() === ``) errors.title = `AdminBlogEditor.addTitle`
+  if (slug === ``) errors.slug = `AdminBlogEditor.addSlug`
+  else if (!BLOG_SLUG_PATTERN.test(slug)) errors.slug = `AdminBlogEditor.slugRule`
+  if (draft.description.trim() === ``) errors.description = `AdminBlogEditor.addDescription`
   else if (Array.from(draft.description.trim()).length > BLOG_DESCRIPTION_MAX_LENGTH) {
-    errors.description = `Keep it under ${BLOG_DESCRIPTION_MAX_LENGTH} characters.`
+    errors.description = `AdminBlogEditor.descriptionTooLong`
   }
   const cover = draft.coverUrl.trim()
-  if (cover !== `` && !isHttpsUrl(cover)) errors.coverUrl = `Start the link with https://.`
-  if (cover !== `` && draft.coverAlt.trim() === ``) errors.coverAlt = `Describe the cover image.`
-  if (publishing && draft.bodyMd.trim() === ``) errors.bodyMd = `The post is empty.`
+  if (cover !== `` && !isHttpsUrl(cover)) errors.coverUrl = `AdminBlogEditor.httpsCover`
+  if (cover !== `` && draft.coverAlt.trim() === ``) {
+    errors.coverAlt = `AdminBlogEditor.describeCover`
+  }
+  if (publishing && draft.bodyMd.trim() === ``) errors.bodyMd = `AdminBlogEditor.emptyPost`
   return errors
+}
+
+/**
+ * A field's message in the operator's language: the editor's own messages are catalog keys, and
+ * the API's arrive already in words, so they pass through as they are.
+ */
+export function blogErrorText(
+  t: Translator<string>,
+  message: string | undefined,
+): string | undefined {
+  if (message === undefined || !message.startsWith(OWN_MESSAGE)) return message
+  return t.t(message, { count: BLOG_DESCRIPTION_MAX_LENGTH })
 }
 
 /** The first field in error, in the page's order, or `null`. */
@@ -264,8 +282,6 @@ export interface AdminBlogEditorScreenProps {
   navigate?: Navigate
 }
 
-const BACK = { href: ADMIN_BLOG_PATHS.list, label: `Back to blog` }
-
 /**
  * One post's editor (#396): the title and the Markdown body with a Write and a Preview tab in the
  * writing column, and the post's settings in a 20rem column beside it from `lg` up (folded under
@@ -276,14 +292,21 @@ const BACK = { href: ADMIN_BLOG_PATHS.list, label: `Back to blog` }
  */
 export function AdminBlogEditorScreen(props: AdminBlogEditorScreenProps): JSX.Element {
   const { navigate } = props
+  const t = useAdminText()
+  const back = { href: ADMIN_BLOG_PATHS.list, label: t.t(`AdminBlogEditor.back`) }
+  const title = t.t(`AdminBlogEditor.post`)
   if (props.notFound) {
     return (
       <Stack>
-        <PageHeader back={BACK} navigate={navigate} title="Post" />
+        <PageHeader back={back} navigate={navigate} title={title} />
         <EmptyState
-          title="This post does not exist"
-          description="It may have been deleted. The blog lists every post there is."
-          action={<Button href={ADMIN_BLOG_PATHS.list} navigate={navigate}>All posts</Button>}
+          title={t.t(`AdminBlogEditor.notFound`)}
+          description={t.t(`AdminBlogEditor.notFoundHint`)}
+          action={
+            <Button href={ADMIN_BLOG_PATHS.list} navigate={navigate}>
+              {t.t(`AdminBlogEditor.allPosts`)}
+            </Button>
+          }
         />
       </Stack>
     )
@@ -291,10 +314,12 @@ export function AdminBlogEditorScreen(props: AdminBlogEditorScreenProps): JSX.El
   if (props.loadError) {
     return (
       <Stack>
-        <PageHeader back={BACK} navigate={navigate} title="Post" />
+        <PageHeader back={back} navigate={navigate} title={title} />
         <div class="flex flex-col items-center gap-3" data-e2e="admin-blog-load-error">
-          <ErrorState message="This post could not be loaded. Try again in a moment." />
-          <Button variant="secondary" onClick={props.onRetry}>Try again</Button>
+          <ErrorState message={t.t(`AdminBlogEditor.loadError`)} />
+          <Button variant="secondary" onClick={props.onRetry}>
+            {t.t(`AdminBlogEditor.retry`)}
+          </Button>
         </div>
       </Stack>
     )
@@ -302,8 +327,8 @@ export function AdminBlogEditorScreen(props: AdminBlogEditorScreenProps): JSX.El
   if (props.loading) {
     return (
       <Stack>
-        <PageHeader back={BACK} navigate={navigate} title="Post" />
-        <div role="status" aria-label="Loading the post">
+        <PageHeader back={back} navigate={navigate} title={title} />
+        <div role="status" aria-label={t.t(`AdminBlogEditor.loading`)}>
           <LoadingSkeleton rows={6} />
         </div>
       </Stack>
@@ -312,16 +337,20 @@ export function AdminBlogEditorScreen(props: AdminBlogEditorScreenProps): JSX.El
   return <Editor {...props} />
 }
 
-/** The words beside the status: whether what is on the page is saved. */
+/** The words beside the status, as catalog keys: whether what is on the page is saved. */
 const SAVE_WORDS: Record<BlogSaveStatus, string> = {
-  saved: `Saved`,
-  saving: `Saving…`,
-  failed: `Not saved. Check your connection, then save again.`,
-  unsaved: `Not saved yet`,
+  saved: `AdminBlogEditor.saved`,
+  saving: `AdminBlogEditor.saving`,
+  failed: `AdminBlogEditor.saveFailed`,
+  unsaved: `AdminBlogEditor.unsaved`,
 }
 
 function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
-  const { post, value, onChange, errors, navigate } = props
+  const { post, value, onChange, navigate } = props
+  const t = useAdminText()
+  // The fields' messages in the operator's language; the effect below reads which fields have one.
+  const errors = props.errors
+  const message = (field: BlogField) => blogErrorText(t, errors[field])
   const status: BlogPostStatus = post?.status ?? `draft`
   const locked = post?.publishedAt != null
   const [tab, setTab] = useState(`write`)
@@ -401,14 +430,16 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
     if (next === `preview`) props.onPreview()
   }
 
-  const saveLabel = status === `draft` ? `Save draft` : `Save changes`
+  const saveLabel = t.t(
+    status === `draft` ? `AdminBlogEditor.saveDraft` : `AdminBlogEditor.saveChanges`,
+  )
   const saveButton = (extra: string) => (
     <Button
       type="submit"
       variant={status === `draft` ? `secondary` : `primary`}
       class={extra}
       busy={saving}
-      busyLabel="Saving…"
+      busyLabel={t.t(`AdminBlogEditor.saving`)}
       hotkey="mod+s"
       disabled={props.conflict}
       data-e2e="admin-blog-save"
@@ -423,7 +454,7 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
       <div class="flex items-center gap-2">
         {headerSave}
         <PageAction
-          label="Publish…"
+          label={t.t(`AdminBlogEditor.publish`)}
           Icon={IconGlobe}
           disabled={props.conflict || saving}
           onClick={() => props.onOpenDialog(`publish`)}
@@ -441,19 +472,19 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
             onClick={() => props.onOpenDialog(`publish-now`)}
             dataE2E="admin-blog-publish-now"
           >
-            Publish now
+            {t.t(`AdminBlogEditor.publishNow`)}
           </DropdownItem>
           <DropdownItem
             onClick={() => props.onOpenDialog(`reschedule`)}
             dataE2E="admin-blog-reschedule"
           >
-            Change time…
+            {t.t(`AdminBlogEditor.changeTime`)}
           </DropdownItem>
           <DropdownItem
             onClick={() => props.onOpenDialog(`unschedule`)}
             dataE2E="admin-blog-unschedule"
           >
-            Unschedule
+            {t.t(`AdminBlogEditor.unschedule`)}
           </DropdownItem>
         </>
       )}
@@ -464,20 +495,20 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
               href={`${props.siteUrl}/blog/${post.slug}`}
               dataE2E="admin-blog-view"
             >
-              View on website
+              {t.t(`AdminBlogEditor.viewOnSite`)}
             </DropdownItem>
           )}
           <DropdownItem
             onClick={() => props.onOpenDialog(`change-url`)}
             dataE2E="admin-blog-change-url"
           >
-            Change URL…
+            {t.t(`AdminBlogEditor.changeUrl`)}
           </DropdownItem>
           <DropdownItem
             onClick={() => props.onOpenDialog(`unpublish`)}
             dataE2E="admin-blog-unpublish"
           >
-            Unpublish…
+            {t.t(`AdminBlogEditor.unpublish`)}
           </DropdownItem>
         </>
       )}
@@ -486,7 +517,7 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
         onClick={() => props.onOpenDialog(`delete`)}
         dataE2E="admin-blog-delete"
       >
-        Delete post…
+        {t.t(`AdminBlogEditor.deletePost`)}
       </DropdownItem>
     </>
   )
@@ -497,9 +528,9 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
       <ScreenForm pending={saving} onSubmit={save}>
         <Stack>
           <PageHeader
-            back={BACK}
+            back={{ href: ADMIN_BLOG_PATHS.list, label: t.t(`AdminBlogEditor.back`) }}
             navigate={navigate}
-            title={post ? `Edit post` : `New post`}
+            title={t.t(post ? `AdminBlogEditor.editPost` : `AdminBlogEditor.newPost`)}
             titleDataE2E="admin-blog-editor-title"
             subtitle={
               <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -509,7 +540,7 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
                   class={props.saveStatus === `failed` ? `text-danger` : undefined}
                   data-e2e="admin-blog-saved"
                 >
-                  {post || props.saveStatus !== `unsaved` ? SAVE_WORDS[props.saveStatus] : ``}
+                  {post || props.saveStatus !== `unsaved` ? t.t(SAVE_WORDS[props.saveStatus]) : ``}
                 </span>
               </span>
             }
@@ -518,11 +549,15 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
             menuDataE2E="admin-blog-menu"
           />
           {props.conflict && (
-            <Notice tone="warning" title="This post changed" data-e2e="admin-blog-conflict">
+            <Notice
+              tone="warning"
+              title={t.t(`AdminBlogEditor.conflictTitle`)}
+              data-e2e="admin-blog-conflict"
+            >
               <span class="flex flex-wrap items-center gap-3">
-                Someone else changed this post. Reload to see their version.
+                {t.t(`AdminBlogEditor.conflictText`)}
                 <Button type="button" variant="secondary" size="sm" onClick={props.onReload}>
-                  Reload
+                  {t.t(`AdminBlogEditor.reload`)}
                 </Button>
               </span>
             </Notice>
@@ -532,9 +567,9 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
             <Stack>
               <Field
                 id={blogFieldId(`title`)}
-                label="Title"
-                hint="Shown as the page heading and in search results."
-                error={errors.title}
+                label={t.t(`AdminBlogEditor.title`)}
+                hint={t.t(`AdminBlogEditor.titleHint`)}
+                error={message(`title`)}
               >
                 <Input
                   class="text-lg font-semibold"
@@ -546,21 +581,23 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
                 />
               </Field>
               <Stack gap="sm">
-                <span class="text-sm font-medium text-foreground" id="blog-body-label">Post</span>
+                <span class="text-sm font-medium text-foreground" id="blog-body-label">
+                  {t.t(`AdminBlogEditor.post`)}
+                </span>
                 <Tabs
-                  label="Post"
+                  label={t.t(`AdminBlogEditor.post`)}
                   active={tab}
                   onChange={openPreview}
                   tabs={[
                     {
                       id: `write`,
-                      label: `Write`,
+                      label: t.t(`AdminBlogEditor.write`),
                       content: (
                         <Field
                           id={blogFieldId(`bodyMd`)}
-                          label={<span class="sr-only">Post, in Markdown</span>}
-                          hint="Written in Markdown."
-                          error={errors.bodyMd}
+                          label={<span class="sr-only">{t.t(`AdminBlogEditor.bodyLabel`)}</span>}
+                          hint={t.t(`AdminBlogEditor.bodyHint`)}
+                          error={message(`bodyMd`)}
                         >
                           <Textarea
                             data-e2e="admin-blog-body"
@@ -575,14 +612,16 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
                     },
                     {
                       id: `preview`,
-                      label: `Preview`,
+                      label: t.t(`AdminBlogEditor.preview`),
                       content: <PreviewPanel {...props} />,
                     },
                   ]}
                 />
                 <p class="text-sm text-muted" data-e2e="admin-blog-words">
-                  {NUMBER.format(words)} {words === 1 ? `word` : `words`} ·{` `}
-                  {readingMinutes(value.bodyMd)} min read
+                  {t.t(`AdminBlogEditor.wordsRead`, {
+                    count: words,
+                    minutes: readingMinutes(value.bodyMd),
+                  })}
                 </p>
               </Stack>
             </Stack>
@@ -602,22 +641,23 @@ function Editor(props: AdminBlogEditorScreenProps): JSX.Element {
   )
 }
 
-export const NUMBER = new Intl.NumberFormat(`en`)
-
 /** The Preview tab: the body as the public page renders it, in the same `Prose` styles. */
 function PreviewPanel(props: AdminBlogEditorScreenProps): JSX.Element {
   const { preview, value } = props
+  const t = useAdminText()
   if (props.previewError) {
     return (
       <div class="flex flex-col items-center gap-3 py-6" data-e2e="admin-blog-preview-error">
-        <ErrorState message="The preview could not be made. Try again in a moment." />
-        <Button type="button" variant="secondary" onClick={props.onPreview}>Try again</Button>
+        <ErrorState message={t.t(`AdminBlogEditor.previewError`)} />
+        <Button type="button" variant="secondary" onClick={props.onPreview}>
+          {t.t(`AdminBlogEditor.retry`)}
+        </Button>
       </div>
     )
   }
   if (preview === null || props.previewPending) {
     return (
-      <div role="status" aria-label="Rendering the preview" class="py-4">
+      <div role="status" aria-label={t.t(`AdminBlogEditor.rendering`)} class="py-4">
         <LoadingSkeleton rows={6} />
       </div>
     )
@@ -626,6 +666,7 @@ function PreviewPanel(props: AdminBlogEditorScreenProps): JSX.Element {
   return (
     <article
       class="flex flex-col gap-6 rounded-primary border border-subtle bg-surface px-4 py-6 sm:px-8"
+      translate={false}
       data-e2e="admin-blog-preview"
     >
       {value.topic.trim() && (
@@ -633,21 +674,22 @@ function PreviewPanel(props: AdminBlogEditorScreenProps): JSX.Element {
       )}
       {/* h2 under the page's h1 "Edit post", so the key points' h3 does not skip a level. */}
       <h2 class="text-3xl font-bold tracking-tight text-foreground wrap-anywhere">
-        {value.title.trim() || `Untitled`}
+        {value.title.trim() || t.t(`AdminBlogEditor.untitled`)}
       </h2>
       <TldrBox items={points} headingLevel={3} />
       {preview.html.trim()
         ? <Prose html={preview.html} />
-        : <p class="text-muted">The post is empty.</p>}
+        : <p class="text-muted">{t.t(`AdminBlogEditor.emptyPost`)}</p>}
     </article>
   )
 }
 
 /** A field's counter: `112 of 155`, in the warning colour past what search results show. */
 function Counter({ length, shown, id }: { length: number; shown: number; id: string }) {
+  const t = useAdminText()
   return (
     <span id={id} class={`whitespace-nowrap ${length > shown ? `text-warning` : ``}`}>
-      {NUMBER.format(length)} of {shown}
+      {t.t(`AdminBlogEditor.counter`, { length, shown })}
     </span>
   )
 }
@@ -659,13 +701,18 @@ function Counter({ length, shown, id }: { length: number; shown: number; id: str
 function Settings(
   props: AdminBlogEditorScreenProps & { locked: boolean; open: boolean; onToggle: () => void },
 ): JSX.Element {
-  const { value, onChange, errors, locked, post } = props
+  const { value, onChange, locked, post } = props
+  const t = useAdminText()
+  const message = (field: BlogField) => blogErrorText(t, props.errors[field])
   const edit = (patch: Partial<BlogDraft>) => onChange({ ...value, ...patch })
   const description = Array.from(value.description).length
   const seo = Array.from(value.seoTitle).length
   const cover = value.coverUrl.trim()
   return (
-    <aside aria-label="Post settings" class="flex flex-col gap-4 lg:sticky lg:top-6">
+    <aside
+      aria-label={t.t(`AdminBlogEditor.settings`)}
+      class="flex flex-col gap-4 lg:sticky lg:top-6"
+    >
       <button
         type="button"
         class="flex min-h-11 items-center justify-between rounded-primary border border-subtle bg-surface px-4 text-left font-medium text-foreground hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus lg:hidden"
@@ -674,7 +721,7 @@ function Settings(
         data-e2e="admin-blog-settings-toggle"
         onClick={props.onToggle}
       >
-        Post settings
+        {t.t(`AdminBlogEditor.settings`)}
         <IconChevronDown
           class={`size-5 transition-transform ${props.open ? `rotate-180` : ``}`}
           aria-hidden="true"
@@ -688,13 +735,16 @@ function Settings(
         {post && <PublishingFacts {...props} />}
         <Field
           id={blogFieldId(`slug`)}
-          label="Slug"
-          hint={locked
-            ? `Locked since publishing. Change URL… breaks old links.`
-            : `The post's address: /blog/${
-              value.slug || `{slug}`
-            }. Lowercase letters, digits and hyphens.`}
-          error={errors.slug}
+          label={t.t(`AdminBlogEditor.slug`)}
+          hint={locked ? t.t(`AdminBlogEditor.slugLocked`) : (
+            <Rich
+              parts={t.parts(`AdminBlogEditor.slugHint`, {
+                path: `/blog/${value.slug || `{slug}`}`,
+              })}
+              tags={{ path: (text: string) => <bdi translate={false}>{text}</bdi> }}
+            />
+          )}
+          error={message(`slug`)}
         >
           <Input
             class="font-mono text-sm"
@@ -709,14 +759,14 @@ function Settings(
         </Field>
         <Field
           id={blogFieldId(`description`)}
-          label="Description"
+          label={t.t(`AdminBlogEditor.description`)}
           hint={
             <span class="flex justify-between gap-2">
-              <span>One or two sentences for search results and link previews.</span>
+              <span>{t.t(`AdminBlogEditor.descriptionHint`)}</span>
               <Counter length={description} shown={BLOG_DESCRIPTION_SHOWN} id="blog-desc-count" />
             </span>
           }
-          error={errors.description}
+          error={message(`description`)}
         >
           <Textarea
             rows={3}
@@ -728,14 +778,14 @@ function Settings(
         </Field>
         <Field
           id={blogFieldId(`seoTitle`)}
-          label="SEO title (optional)"
+          label={t.t(`AdminBlogEditor.seoTitle`)}
           hint={
             <span class="flex justify-between gap-2">
-              <span>Shown in search results instead of the title. About 60 characters.</span>
+              <span>{t.t(`AdminBlogEditor.seoTitleHint`)}</span>
               <Counter length={seo} shown={BLOG_SEO_TITLE_SHOWN} id="blog-seo-count" />
             </span>
           }
-          error={errors.seoTitle}
+          error={message(`seoTitle`)}
         >
           <Input
             data-e2e="admin-blog-seo-title"
@@ -747,24 +797,24 @@ function Settings(
         </Field>
         <ListField
           id={blogFieldId(`tldr`)}
-          label="Key points"
-          hint="Up to 5 short lines, shown at the top of the post."
+          label={t.t(`AdminBlogEditor.keyPoints`)}
+          hint={t.t(`AdminBlogEditor.keyPointsHint`)}
           value={value.tldr}
           onChange={(tldr) => edit({ tldr })}
           max={BLOG_TLDR_MAX}
           maxLength={BLOG_TLDR_ITEM_MAX_LENGTH}
-          error={errors.tldr}
+          error={message(`tldr`)}
           labels={{
-            item: (n) => `Key point ${n}`,
-            remove: (n) => `Remove key point ${n}`,
-            add: `Add point`,
+            item: (n) => t.t(`AdminBlogEditor.keyPoint`, { n }),
+            remove: (n) => t.t(`AdminBlogEditor.removeKeyPoint`, { n }),
+            add: t.t(`AdminBlogEditor.addPoint`),
           }}
         />
         <Field
           id={blogFieldId(`topic`)}
-          label="Topic"
-          hint="Groups posts on the blog page. Pick one or type a new one."
-          error={errors.topic}
+          label={t.t(`AdminBlogEditor.topic`)}
+          hint={t.t(`AdminBlogEditor.topicHint`)}
+          error={message(`topic`)}
         >
           <Input
             data-e2e="admin-blog-topic"
@@ -780,9 +830,9 @@ function Settings(
         </datalist>
         <Field
           id={blogFieldId(`coverUrl`)}
-          label="Cover image URL"
-          hint="A full https:// link to a wide image, 1200×630. Leave empty for no cover."
-          error={errors.coverUrl}
+          label={t.t(`AdminBlogEditor.coverUrl`)}
+          hint={t.t(`AdminBlogEditor.coverUrlHint`)}
+          error={message(`coverUrl`)}
         >
           <Input
             type="url"
@@ -798,9 +848,9 @@ function Settings(
           <>
             <Field
               id={blogFieldId(`coverAlt`)}
-              label="Cover description"
-              hint="What the image shows, for people who cannot see it."
-              error={errors.coverAlt}
+              label={t.t(`AdminBlogEditor.coverAlt`)}
+              hint={t.t(`AdminBlogEditor.coverAltHint`)}
+              error={message(`coverAlt`)}
             >
               <Input
                 data-e2e="admin-blog-cover-alt"
@@ -820,7 +870,7 @@ function Settings(
               />
             )}
             <p class="text-xs text-muted">
-              An image on another site shows that site your readers' IP addresses.
+              {t.t(`AdminBlogEditor.coverPrivacy`)}
             </p>
           </>
         )}
@@ -836,32 +886,42 @@ function Settings(
 function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null {
   const { post } = props
   const format = useFormat()
+  const t = useAdminText()
   if (!post || post.status === `draft` && post.newsletterSentAt === null) return null
   return (
     <section
-      aria-label="Publishing"
+      aria-label={t.t(`AdminBlogEditor.publishing`)}
       class="flex flex-col gap-2 rounded-primary border border-subtle bg-surface p-4 text-sm"
       data-e2e="admin-blog-publishing"
     >
       {post.status === `scheduled` && post.publishAt && (
-        <p>Goes live {format.dateTime(post.publishAt)}.</p>
+        <p>{t.t(`AdminBlogEditor.goesLive`, { date: format.dateTime(post.publishAt) })}</p>
       )}
       {post.status === `published` && post.publishedAt && (
         <p>
-          Published {format.date(post.publishedAt)}
-          {post.contentUpdatedAt && <>{` · `}Updated {format.date(post.contentUpdatedAt)}</>}.
+          {post.contentUpdatedAt
+            ? t.t(`AdminBlogEditor.publishedUpdated`, {
+              date: format.date(post.publishedAt),
+              updated: format.date(post.contentUpdatedAt),
+            })
+            : t.t(`AdminBlogEditor.publishedOn`, { date: format.date(post.publishedAt) })}
         </p>
       )}
       {post.newsletterSentAt !== null
         ? (
           <p data-e2e="admin-blog-emailed">
-            Emailed to {NUMBER.format(post.newsletterRecipients ?? 0)} on{` `}
-            {format.date(post.newsletterSentAt)}
+            {t.t(`AdminBlogEditor.emailedTo`, {
+              count: post.newsletterRecipients ?? 0,
+              date: format.date(post.newsletterSentAt),
+            })}
           </p>
         )
         : post.newsletterList !== null && (
           <p class="text-muted" data-e2e="admin-blog-will-email">
-            Emailed to the {post.newsletterList} list when it goes live.
+            <Rich
+              parts={t.parts(`AdminBlogEditor.willEmail`, { list: post.newsletterList })}
+              tags={{ list: (text: string) => <bdi translate={false}>{text}</bdi> }}
+            />
           </p>
         )}
       {post.status === `published` && (
@@ -870,7 +930,7 @@ function PublishingFacts(props: AdminBlogEditorScreenProps): JSX.Element | null 
           data-e2e="admin-blog-significant"
           onChange={(e) => props.onSignificantUpdate(e.currentTarget.checked)}
         >
-          Significant update: the next save shows today as the post's Updated date
+          {t.t(`AdminBlogEditor.significant`)}
         </Checkbox>
       )}
     </section>

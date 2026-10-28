@@ -1,8 +1,6 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useState } from "preact/hooks"
 import { IconDownload } from "@spy4x/preact-icons"
-import { timeAgo } from "@spy4x/platform/universal/time"
 import { Badge } from "@spy4x/preact-ui/badge"
 import { Button } from "@spy4x/preact-ui/button"
 import { Card } from "@spy4x/preact-ui/card"
@@ -17,7 +15,6 @@ import { LoadingSkeleton } from "@spy4x/preact-ui/loading-skeleton"
 import { PageAction, PageHeader } from "@spy4x/preact-ui/page-header"
 import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
-import type { BillingAuditEvent } from "@domain/billing"
 import { BLOG_AUDIT_KINDS } from "@domain/blog"
 import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
 import { ACTIVITY_KINDS } from "@domain/groups"
@@ -44,81 +41,94 @@ import {
 import { ADMIN_PATHS } from "./admin-frame.tsx"
 import { ADMIN_GROUP_PATHS } from "./admin-groups-list.tsx"
 import { BILLING_AUDIT_LABELS } from "./admin-billing-list.tsx"
-import { AUDIT_EVENTS, auditDetail, auditTone, linkAuditTitle } from "./admin-user-screen.tsx"
+import {
+  AUDIT_EVENTS,
+  auditDetail,
+  auditEventTitle,
+  auditTone,
+  linkAuditTitle,
+} from "./admin-user-screen.tsx"
 import { type Navigate, ScreenForm } from "./progressive.tsx"
-import { useFormat } from "@spy4x/preact-ui/format"
+import { useFormat, When as Ago } from "@spy4x/preact-ui/format"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { useAdminText } from "./i18n.ts"
 
 /** How the log is drawn: a dense table, or a timeline that reads like a story. */
 export type AdminAuditView = "table" | "timeline"
 
-const VIEW_CHIPS: { value: AdminAuditView; label: string }[] = [
-  { value: "table", label: "Table" },
-  { value: "timeline", label: "Timeline" },
+const VIEW_CHIPS: { value: AdminAuditView; key: string }[] = [
+  { value: "table", key: `AdminAudit.table` },
+  { value: "timeline", key: `AdminAudit.timeline` },
 ]
 
-/** What each group activity and operator action is called in the log. */
+/** What each group activity and operator action is called in the log: one catalog key per code. */
 const ACTIVITY_LABELS: Record<string, string> = {
-  "group.created": "Group created",
-  "group.renamed": "Group renamed",
-  "group.details_updated": "Group details changed",
-  "group.deleted": "Group deleted",
-  "group.restored": "Group restored",
-  "group.member_role_changed": "Member's role changed",
-  "group.member_removed": "Member removed",
-  "group.member_left": "Member left",
-  "group.ownership_transferred": "Ownership transferred",
-  "group.invitation_created": "Invitation sent",
-  "group.invitation_accepted": "Invitation accepted",
-  "group.invitation_revoked": "Invitation withdrawn",
-  "group.invitation_declined": "Invitation declined",
-  "group.data_moved_out": "Group data moved out",
-  "group.data_moved_in": "Group data moved in",
-  "group.exported": "Group exported",
-  "group.imported": "Group imported",
-  "note.created": "Note added",
-  "note.deleted": "Note deleted",
-  "note.attachment.added": "File attached",
-  "note.attachment.removed": "Removed a file",
-  "note.restored": "Note restored",
-  "note.moved_out": "Notes moved out",
-  "note.moved_in": "Notes moved in",
-  "tag.created": "Tag added",
-  "tag.updated": "Tag changed",
-  "tag.deleted": "Tag deleted",
-  [ADMIN_JOB_RETRIED_KIND]: "Job run again by an operator",
-  [ADMIN_JOB_RUN_NOW_KIND]: "Job run now by an operator",
-  [ADMIN_JOB_CANCELLED_KIND]: "Job cancelled by an operator",
-  [ADMIN_AUDIT_EXPORTED_KIND]: "Audit log exported by an operator",
-  [ADMIN_FILE_OPENED_KIND]: "File opened by an operator",
-  [ADMIN_FILE_DOWNLOADED_KIND]: "File downloaded by an operator",
-  [BLOG_AUDIT_KINDS.created]: "Blog post created",
-  [BLOG_AUDIT_KINDS.updated]: "Blog post saved",
-  [BLOG_AUDIT_KINDS.published]: "Blog post published",
-  [BLOG_AUDIT_KINDS.scheduled]: "Blog post scheduled",
-  [BLOG_AUDIT_KINDS.unscheduled]: "Blog post unscheduled",
-  [BLOG_AUDIT_KINDS.unpublished]: "Blog post unpublished",
-  [BLOG_AUDIT_KINDS.urlChanged]: "Blog post URL changed",
-  [BLOG_AUDIT_KINDS.deleted]: "Blog post deleted",
-  [CONTACT_LINK_AUDIT_KINDS.created]: "Contact link added",
-  [CONTACT_LINK_AUDIT_KINDS.updated]: "Contact link changed",
-  [CONTACT_LINK_AUDIT_KINDS.deleted]: "Contact link removed",
-  [CONTACT_LINK_AUDIT_KINDS.reordered]: "Contact links reordered",
+  "group.created": `AdminAuditEvent.groupCreated`,
+  "group.renamed": `AdminAuditEvent.groupRenamed`,
+  "group.details_updated": `AdminAuditEvent.groupDetailsUpdated`,
+  "group.deleted": `AdminAuditEvent.groupDeleted`,
+  "group.restored": `AdminAuditEvent.groupRestored`,
+  "group.member_role_changed": `AdminAuditEvent.memberRoleChanged`,
+  "group.member_removed": `AdminAuditEvent.memberRemoved`,
+  "group.member_left": `AdminAuditEvent.memberLeft`,
+  "group.ownership_transferred": `AdminAuditEvent.ownershipTransferred`,
+  "group.invitation_created": `AdminAuditEvent.invitationCreated`,
+  "group.invitation_accepted": `AdminAuditEvent.invitationAccepted`,
+  "group.invitation_revoked": `AdminAuditEvent.invitationRevoked`,
+  "group.invitation_declined": `AdminAuditEvent.invitationDeclined`,
+  "group.data_moved_out": `AdminAuditEvent.groupDataMovedOut`,
+  "group.data_moved_in": `AdminAuditEvent.groupDataMovedIn`,
+  "group.exported": `AdminAuditEvent.groupExported`,
+  "group.imported": `AdminAuditEvent.groupImported`,
+  "note.created": `AdminAuditEvent.noteCreated`,
+  "note.deleted": `AdminAuditEvent.noteDeleted`,
+  "note.attachment.added": `AdminAuditEvent.fileAttached`,
+  "note.attachment.removed": `AdminAuditEvent.fileRemoved`,
+  "note.restored": `AdminAuditEvent.noteRestored`,
+  "note.moved_out": `AdminAuditEvent.notesMovedOut`,
+  "note.moved_in": `AdminAuditEvent.notesMovedIn`,
+  "tag.created": `AdminAuditEvent.tagCreated`,
+  "tag.updated": `AdminAuditEvent.tagUpdated`,
+  "tag.deleted": `AdminAuditEvent.tagDeleted`,
+  [ADMIN_JOB_RETRIED_KIND]: `AdminAuditEvent.jobRetried`,
+  [ADMIN_JOB_RUN_NOW_KIND]: `AdminAuditEvent.jobRunNow`,
+  [ADMIN_JOB_CANCELLED_KIND]: `AdminAuditEvent.jobCancelled`,
+  [ADMIN_AUDIT_EXPORTED_KIND]: `AdminAuditEvent.auditExported`,
+  [ADMIN_FILE_OPENED_KIND]: `AdminAuditEvent.fileOpened`,
+  [ADMIN_FILE_DOWNLOADED_KIND]: `AdminAuditEvent.fileDownloaded`,
+  [BLOG_AUDIT_KINDS.created]: `AdminAuditEvent.blogCreated`,
+  [BLOG_AUDIT_KINDS.updated]: `AdminAuditEvent.blogUpdated`,
+  [BLOG_AUDIT_KINDS.published]: `AdminAuditEvent.blogPublished`,
+  [BLOG_AUDIT_KINDS.scheduled]: `AdminAuditEvent.blogScheduled`,
+  [BLOG_AUDIT_KINDS.unscheduled]: `AdminAuditEvent.blogUnscheduled`,
+  [BLOG_AUDIT_KINDS.unpublished]: `AdminAuditEvent.blogUnpublished`,
+  [BLOG_AUDIT_KINDS.urlChanged]: `AdminAuditEvent.blogUrlChanged`,
+  [BLOG_AUDIT_KINDS.deleted]: `AdminAuditEvent.blogDeleted`,
+  [CONTACT_LINK_AUDIT_KINDS.created]: `AdminAuditEvent.contactLinkCreated`,
+  [CONTACT_LINK_AUDIT_KINDS.updated]: `AdminAuditEvent.contactLinkUpdated`,
+  [CONTACT_LINK_AUDIT_KINDS.deleted]: `AdminAuditEvent.contactLinkDeleted`,
+  [CONTACT_LINK_AUDIT_KINDS.reordered]: `AdminAuditEvent.contactLinksReordered`,
 }
 
 /**
- * What an entry's event is called; an event this page does not know shows its code. A sign-in or
- * sign-up by e-mail link names the method in the title (#391), from the entry's `identifier`.
+ * What an entry's event is called, in the operator's language: one whole message per event code.
+ * An event this page does not know shows its code. A sign-in or sign-up by e-mail link names the
+ * method in the title (#391), from the entry's `identifier`.
  */
-export function auditEventLabel(event: string, identifier: string | null = null): string {
+export function auditEventLabel(
+  t: Translator<string>,
+  event: string,
+  identifier: string | null = null,
+): string {
   const parsed = parseAuditEvent(event)
   if (!parsed) return event
   if (parsed.source === "account") {
-    return linkAuditTitle(parsed.eventType, identifier) ??
-      AUDIT_EVENTS[parsed.eventType as AuthAuditEventType] ??
-      BILLING_AUDIT_LABELS[parsed.eventType as BillingAuditEvent] ??
-      `Account event ${parsed.eventType}`
+    return auditEventTitle(t, parsed.eventType, identifier) ??
+      t.t(`AdminAudit.accountEvent`, { code: String(parsed.eventType) })
   }
-  return ACTIVITY_LABELS[parsed.kind] ?? parsed.kind
+  const key = ACTIVITY_LABELS[parsed.kind]
+  return key ? t.t(key) : parsed.kind
 }
 
 /** An entry's dot: account events keep the person page's tones; operator actions stand out. */
@@ -132,24 +142,34 @@ function entryTone(entry: AdminAuditEntry): TimelineTone {
 }
 
 /** Every event the filter offers: the account events, then group activity, then operator actions. */
-const EVENT_OPTIONS: SelectOption[] = [
-  ...Object.entries(AUDIT_EVENTS).map(([eventType, label]) => ({
-    value: accountAuditEvent(Number(eventType)),
-    label: `Account: ${label}`,
-  })),
-  ...ACTIVITY_KINDS.map((kind) => ({
-    value: activityAuditEvent(kind),
-    label: `Group: ${ACTIVITY_LABELS[kind] ?? kind}`,
-  })),
-  ...ADMIN_OPERATOR_ACTIVITY_KINDS.map((kind) => ({
-    value: activityAuditEvent(kind),
-    label: `Operator: ${ACTIVITY_LABELS[kind]}`,
-  })),
-  ...Object.entries(BILLING_AUDIT_LABELS).map(([eventType, label]) => ({
-    value: accountAuditEvent(Number(eventType)),
-    label: `Operator: ${label}`,
-  })),
-]
+function eventOptions(t: Translator<string>): SelectOption[] {
+  const label = (key: string, event: string | undefined, code: string) =>
+    t.t(key, { event: event ? t.t(event) : code })
+  return [
+    ...Object.entries(AUDIT_EVENTS).map(([eventType, event]) => ({
+      value: accountAuditEvent(Number(eventType)),
+      label: label(`AdminAudit.optionAccount`, event, eventType),
+    })),
+    ...ACTIVITY_KINDS.map((kind) => ({
+      value: activityAuditEvent(kind),
+      label: label(`AdminAudit.optionGroup`, ACTIVITY_LABELS[kind], kind),
+    })),
+    ...ADMIN_OPERATOR_ACTIVITY_KINDS.map((kind) => ({
+      value: activityAuditEvent(kind),
+      label: label(`AdminAudit.optionOperator`, ACTIVITY_LABELS[kind], kind),
+    })),
+    ...Object.entries(BILLING_AUDIT_LABELS).map(([eventType, event]) => ({
+      value: accountAuditEvent(Number(eventType)),
+      label: label(`AdminAudit.optionOperator`, event, eventType),
+    })),
+  ]
+}
+
+/** "40 entries", "40+ entries match": how many entries the page holds, and whether more wait. */
+function countKey(more: boolean, filtered: boolean): string {
+  if (more) return filtered ? `AdminAudit.countMoreMatch` : `AdminAudit.countMore`
+  return filtered ? `AdminAudit.countMatch` : `AdminAudit.count`
+}
 
 export interface AdminAuditScreenProps {
   /** What the address asked for; the filter form starts from it. */
@@ -185,15 +205,16 @@ export interface AdminAuditScreenProps {
 export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
   const { filter, entries, error, view, navigate } = props
   const filtered = isAdminAuditFiltered(filter)
+  const t = useAdminText()
   return (
     <Stack>
       <PageHeader
-        title="Audit log"
-        subtitle="Every sign-in, account change, group change and operator action, newest first."
+        title={t.t(`AdminAudit.title`)}
+        subtitle={t.t(`AdminAudit.subtitle`)}
         titleDataE2E="admin-audit-title"
         action={
           <PageAction
-            label="Export CSV"
+            label={t.t(`AdminAudit.export`)}
             Icon={IconDownload}
             href={props.exportHref}
             variant="secondary"
@@ -214,16 +235,14 @@ export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 class="text-sm text-muted" data-e2e="admin-audit-count" aria-live="polite">
           {entries === null
-            ? "Loading the log"
-            : `${entries.length}${props.hasMore ? "+" : ""} ${
-              entries.length === 1 ? "entry" : "entries"
-            }${filtered ? " match" : ""}`}
+            ? t.t(`AdminAudit.loading`)
+            : t.t(countKey(props.hasMore, filtered), { count: entries.length })}
         </h2>
         <div data-e2e="admin-audit-view">
           <ToggleChips
             mode="single"
-            label="View"
-            options={VIEW_CHIPS}
+            label={t.t(`AdminAudit.view`)}
+            options={VIEW_CHIPS.map((chip) => ({ value: chip.value, label: t.t(chip.key) }))}
             value={view}
             onChange={(next) => next && props.onView(next as AdminAuditView)}
           />
@@ -232,7 +251,7 @@ export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
 
       {entries === null
         ? !error && (
-          <div role="status" aria-label="Loading the log" data-e2e="admin-audit-loading">
+          <div role="status" aria-label={t.t(`AdminAudit.loading`)} data-e2e="admin-audit-loading">
             <LoadingSkeleton rows={6} />
           </div>
         )
@@ -241,10 +260,10 @@ export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
           <Card data-e2e="admin-audit-empty">
             <EmptyState
               inset
-              title={filtered ? "Nothing matches" : "Nothing recorded yet"}
-              description={filtered
-                ? "Try a wider date range or another person, or clear the filters."
-                : "Sign-ins, account changes and group changes show here as they happen."}
+              title={t.t(filtered ? `AdminAudit.nothingMatches` : `AdminAudit.nothingYet`)}
+              description={t.t(
+                filtered ? `AdminAudit.nothingMatchesHint` : `AdminAudit.nothingYetHint`,
+              )}
             />
           </Card>
         )
@@ -258,10 +277,10 @@ export function AdminAuditScreen(props: AdminAuditScreenProps): JSX.Element {
             variant="secondary"
             data-e2e="admin-audit-more"
             busy={props.loadingMore}
-            busyLabel="Loading…"
+            busyLabel={t.t(`AdminAudit.loadingMore`)}
             onClick={props.onMore}
           >
-            Show older entries
+            {t.t(`AdminAudit.more`)}
           </Button>
         </div>
       )}
@@ -279,12 +298,15 @@ function FilterForm(
   },
 ): JSX.Element {
   // The form's own copy: the address changes only when the operator applies it.
+  const t = useAdminText()
   const [draft, setDraft] = useState(filter)
   const set = (part: Partial<AdminAuditFilter>) => setDraft({ ...draft, ...part })
   const text = (event: Event) => (event.currentTarget as HTMLInputElement).value
   const operatorOptions: SelectOption[] = operators.map((operator) => ({
     value: String(operator.id),
-    label: operator.email ? `${operator.name} (${operator.email})` : operator.name,
+    label: operator.email
+      ? t.t(`AdminAudit.operatorOption`, { name: operator.name, email: operator.email })
+      : operator.name,
   }))
   return (
     <div class="rounded-xl border border-subtle bg-surface p-4">
@@ -292,19 +314,19 @@ function FilterForm(
         pending={pending}
         onSubmit={() => onFilter({ ...draft, person: draft.person.trim(), ip: draft.ip.trim() })}
       >
-        <div class="flex flex-col gap-4" role="search" aria-label="Filter the audit log">
+        <div class="flex flex-col gap-4" role="search" aria-label={t.t(`AdminAudit.filter`)}>
           <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Field id="admin-audit-event" label="Event">
+            <Field id="admin-audit-event" label={t.t(`AdminAudit.event`)}>
               <Select
                 name="event"
                 data-e2e="admin-audit-event"
-                options={EVENT_OPTIONS}
-                placeholder="Every event"
+                options={eventOptions(t)}
+                placeholder={t.t(`AdminAudit.everyEvent`)}
                 value={draft.event ?? ""}
                 onChange={(event) => set({ event: text(event) || null })}
               />
             </Field>
-            <Field id="admin-audit-person" label="Person (name, address or id)">
+            <Field id="admin-audit-person" label={t.t(`AdminAudit.person`)}>
               <Input
                 name="person"
                 type="search"
@@ -315,12 +337,12 @@ function FilterForm(
                 onInput={(event) => set({ person: text(event) })}
               />
             </Field>
-            <Field id="admin-audit-operator" label="Done by operator">
+            <Field id="admin-audit-operator" label={t.t(`AdminAudit.operator`)}>
               <Select
                 name="operator"
                 data-e2e="admin-audit-operator"
                 options={operatorOptions}
-                placeholder="Anyone"
+                placeholder={t.t(`AdminAudit.anyone`)}
                 value={draft.operator === null ? "" : String(draft.operator)}
                 onChange={(event) => {
                   const value = text(event)
@@ -328,7 +350,7 @@ function FilterForm(
                 }}
               />
             </Field>
-            <Field id="admin-audit-from" label="From (UTC day)">
+            <Field id="admin-audit-from" label={t.t(`AdminAudit.from`)}>
               <Input
                 name="from"
                 type="date"
@@ -338,7 +360,7 @@ function FilterForm(
                 onInput={(event) => set({ from: text(event) || null })}
               />
             </Field>
-            <Field id="admin-audit-to" label="To (UTC day, included)">
+            <Field id="admin-audit-to" label={t.t(`AdminAudit.to`)}>
               <Input
                 name="to"
                 type="date"
@@ -348,7 +370,7 @@ function FilterForm(
                 onInput={(event) => set({ to: text(event) || null })}
               />
             </Field>
-            <Field id="admin-audit-ip" label="IP address starts with">
+            <Field id="admin-audit-ip" label={t.t(`AdminAudit.ip`)}>
               <Input
                 name="ip"
                 type="search"
@@ -367,9 +389,9 @@ function FilterForm(
               type="submit"
               data-e2e="admin-audit-apply"
               busy={pending}
-              busyLabel="Filtering…"
+              busyLabel={t.t(`AdminAudit.filtering`)}
             >
-              Apply filters
+              {t.t(`AdminAudit.apply`)}
             </Button>
             {isAdminAuditFiltered(filter) && (
               <Button
@@ -378,7 +400,7 @@ function FilterForm(
                 data-e2e="admin-audit-clear"
                 onClick={() => onFilter(ADMIN_AUDIT_NO_FILTER)}
               >
-                Clear filters
+                {t.t(`AdminAudit.clear`)}
               </Button>
             )}
           </div>
@@ -402,8 +424,13 @@ function PersonLink(
     truncate?: boolean
   },
 ): JSX.Element {
+  const t = useAdminText()
   if (!person) {
-    return <span class="text-muted">{entry.source === "account" ? "Deleted account" : "—"}</span>
+    return (
+      <span class="text-muted">
+        {entry.source === "account" ? t.t(`AdminAudit.deletedAccount`) : "—"}
+      </span>
+    )
   }
   return (
     <Link
@@ -411,6 +438,7 @@ function PersonLink(
       navigate={navigate}
       class={truncate ? "pc-link block truncate font-medium" : "pc-link font-medium wrap-anywhere"}
       title={truncate ? person.name : undefined}
+      translate={false}
       data-e2e={`admin-audit-person-${person.id}`}
     >
       {person.name}
@@ -419,16 +447,16 @@ function PersonLink(
 }
 
 /** What an entry names besides its people: the group, the method or token, the job. */
-function detailOf(entry: AdminAuditEntry): string | null {
+function detailOf(t: Translator<string>, entry: AdminAuditEntry): string | null {
   const event = parseAuditEvent(entry.event)
   const eventType = event?.source === "account" ? event.eventType : null
   const parts = [
-    entry.group && `Group ${entry.group.name}`,
+    entry.group && t.t(`AdminAudit.detailGroup`, { name: entry.group.name }),
     // A link row's title already names the method.
     entry.identifier && !linkAuditTitle(eventType, entry.identifier) &&
-    auditDetail(eventType, entry.identifier),
-    entry.jobKind && `Job ${entry.jobKind}`,
-    entry.fileName && `File “${entry.fileName}”`,
+    auditDetail(t, eventType, entry.identifier),
+    entry.jobKind && t.t(`AdminAudit.detailJob`, { kind: entry.jobKind }),
+    entry.fileName && t.t(`AdminAudit.detailFile`, { name: entry.fileName }),
   ].filter(Boolean)
   return parts.length > 0 ? parts.join(" · ") : null
 }
@@ -445,10 +473,10 @@ function selfDone(entry: AdminAuditEntry): boolean {
 function When({ at }: { at: string }): JSX.Element {
   const format = useFormat()
   return (
-    <time class="flex flex-col whitespace-nowrap" dateTime={at}>
-      <span class="text-sm">{timeAgo(at)}</span>
+    <span class="flex flex-col whitespace-nowrap">
+      <Ago at={at} class="text-sm" />
       <span class="text-xs text-muted">{format.utc().exact(at)}</span>
-    </time>
+    </span>
   )
 }
 
@@ -476,7 +504,9 @@ function PersonCell(
     <div class="flex w-36 min-w-0 flex-col gap-1 text-sm">
       <PersonLink person={person} entry={entry} navigate={navigate} truncate />
       {address && person && person.email !== person.name && (
-        <span class="truncate text-muted" title={person.email ?? undefined}>{person.email}</span>
+        <span class="truncate text-muted" title={person.email ?? undefined} translate={false}>
+          {person.email}
+        </span>
       )}
     </div>
   )
@@ -488,25 +518,21 @@ function PersonCell(
  * links are the columns', which a phone hides.
  */
 function PhonePeople({ entry }: { entry: AdminAuditEntry }): JSX.Element | null {
+  const t = useAdminText()
   const name = (person: AdminAuditPerson | null) =>
-    person?.name ?? (entry.source === "account" ? "Deleted account" : null)
+    person?.name ?? (entry.source === "account" ? t.t(`AdminAudit.deletedAccount`) : null)
+  const who = (text: string) => (
+    <bdi class="font-medium text-foreground" translate={false}>{text}</bdi>
+  )
   // An operator's billing action is about a group, which no person stands for.
   const about = entry.person === null && entry.group ? entry.group.name : name(entry.person)
   const by = selfDone(entry) ? null : name(entry.actor)
   if (!about && !by) return null
   return (
     <span class="text-muted wrap-anywhere sm:hidden" data-e2e="admin-audit-people-phone">
-      {about && (
-        <>
-          About <span class="font-medium text-foreground">{about}</span>
-        </>
-      )}
+      {about && <Rich parts={t.parts(`AdminAudit.phoneAbout`, { about })} tags={{ who }} />}
       {about && by && " · "}
-      {by && (
-        <>
-          by <span class="font-medium text-foreground">{by}</span>
-        </>
-      )}
+      {by && <Rich parts={t.parts(`AdminAudit.phoneBy`, { by })} tags={{ who }} />}
     </span>
   )
 }
@@ -517,7 +543,8 @@ function PhonePeople({ entry }: { entry: AdminAuditEntry }): JSX.Element | null 
  * make the row tall and push the IP address column off the page.
  */
 function DetailCell({ entry }: { entry: AdminAuditEntry }): JSX.Element {
-  const detail = detailOf(entry)
+  const t = useAdminText()
+  const detail = detailOf(t, entry)
   return (
     <div class="flex flex-col gap-1 text-sm sm:w-28" data-e2e="admin-audit-detail">
       <span class="line-clamp-2 wrap-anywhere" title={detail ?? undefined}>{detail ?? "—"}</span>
@@ -545,19 +572,20 @@ const AUDIT_TABLE_CLASS = [
 function AuditTable(
   { entries, navigate }: { entries: readonly AdminAuditEntry[]; navigate?: Navigate },
 ): JSX.Element {
+  const t = useAdminText()
   const columns: DataTableColumn<AdminAuditEntry, never>[] = [
-    { id: "at", header: "When", render: (entry) => <When at={entry.at} /> },
+    { id: "at", header: t.t(`AdminAudit.when`), render: (entry) => <When at={entry.at} /> },
     {
       id: "event",
-      header: "Event",
+      header: t.t(`AdminAudit.event`),
       render: (entry) => (
         <Cell>
           <span class="font-medium" data-e2e="admin-audit-event-label">
-            {auditEventLabel(entry.event, entry.identifier)}
+            {auditEventLabel(t, entry.event, entry.identifier)}
           </span>
           {entry.byOperator && (
             <span>
-              <Badge text="Operator" color="blue" type="outline" />
+              <Badge text={t.t(`AdminAudit.operatorBadge`)} color="blue" type="outline" />
             </span>
           )}
           <PhonePeople entry={entry} />
@@ -566,7 +594,7 @@ function AuditTable(
     },
     {
       id: "person",
-      header: "About",
+      header: t.t(`AdminAudit.about`),
       render: (entry) =>
         entry.person === null && entry.group
           ? (
@@ -575,6 +603,7 @@ function AuditTable(
               navigate={navigate}
               class="pc-link block w-36 truncate text-sm font-medium"
               title={entry.group.name}
+              translate={false}
             >
               {entry.group.name}
             </Link>
@@ -583,20 +612,20 @@ function AuditTable(
     },
     {
       id: "actor",
-      header: "Done by",
+      header: t.t(`AdminAudit.doneBy`),
       render: (entry) =>
         selfDone(entry)
-          ? <span class="text-sm text-muted">Themselves</span>
+          ? <span class="text-sm text-muted">{t.t(`AdminAudit.themselves`)}</span>
           : <PersonCell entry={entry} person={entry.actor} navigate={navigate} />,
     },
     {
       id: "detail",
-      header: "Detail",
+      header: t.t(`AdminAudit.detail`),
       render: (entry) => <DetailCell entry={entry} />,
     },
     {
       id: "ip",
-      header: "IP address",
+      header: t.t(`AdminAudit.ipAddress`),
       // 8rem holds a whole IPv4 address on one line; a longer IPv6 one wraps, never cut.
       render: (entry) => (
         <span class="block font-mono text-sm wrap-anywhere sm:w-32">{entry.ip ?? "—"}</span>
@@ -611,7 +640,7 @@ function AuditTable(
         rows={entries}
         sort={[]}
         onSortChange={() => {}}
-        caption="Audit log, newest first"
+        caption={t.t(`AdminAudit.caption`)}
         captionHidden
         rowKey={(entry) => entry.key}
       />
@@ -622,18 +651,18 @@ function AuditTable(
 function AuditTimeline(
   { entries, navigate }: { entries: readonly AdminAuditEntry[]; navigate?: Navigate },
 ): JSX.Element {
-  const format = useFormat()
+  const t = useAdminText()
   return (
     <div class="rounded-xl border border-subtle bg-surface p-4" data-e2e="admin-audit-timeline">
       <Timeline
-        label="Audit log, newest first"
+        label={t.t(`AdminAudit.caption`)}
         items={entries.map((entry) => {
-          const detail = detailOf(entry)
+          const detail = detailOf(t, entry)
           return {
             id: entry.key,
-            title: auditEventLabel(entry.event, entry.identifier),
+            title: auditEventLabel(t, entry.event, entry.identifier),
             at: entry.at,
-            when: <span title={format.utc().exact(entry.at)}>{timeAgo(entry.at)}</span>,
+            when: <Ago at={entry.at} />,
             tone: entryTone(entry),
             dataE2E: `admin-audit-entry-${entry.key}`,
             description: (
@@ -648,9 +677,19 @@ function AuditTimeline(
                           <span class="text-muted">·</span>
                         </>
                       )}
-                      <span class="text-muted">by</span>
-                      <PersonLink entry={entry} person={entry.actor} navigate={navigate} />
-                      {entry.byOperator && <Badge text="Operator" color="blue" type="outline" />}
+                      <span class="text-muted">
+                        <Rich
+                          parts={t.parts(`AdminAudit.byActor`)}
+                          tags={{
+                            actor: () => (
+                              <PersonLink entry={entry} person={entry.actor} navigate={navigate} />
+                            ),
+                          }}
+                        />
+                      </span>
+                      {entry.byOperator && (
+                        <Badge text={t.t(`AdminAudit.operatorBadge`)} color="blue" type="outline" />
+                      )}
                     </>
                   )}
                 {detail && <span class="text-muted wrap-anywhere">· {detail}</span>}

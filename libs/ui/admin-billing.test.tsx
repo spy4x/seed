@@ -21,7 +21,6 @@ import {
 } from "@domain/billing"
 import { UserRole } from "@domain/identity"
 import {
-  ADMIN_BILLING_LIST_ERROR,
   ADMIN_BILLING_SETUP_URL,
   AdminBillingListScreen,
   type AdminBillingListScreenProps,
@@ -30,6 +29,7 @@ import {
   AdminBillingCustomerScreen,
   type AdminBillingCustomerScreenProps,
 } from "./admin-billing-detail.tsx"
+import { ADMIN_ENGLISH } from "./admin-pseudo.ts"
 
 /** A day as the screens write it on this device: the default formatter, with no person's settings. */
 const day = (at: string) => createFormatters().date(at)
@@ -277,7 +277,7 @@ describe(`the admin billing list`, () => {
     )
     expect(has(`[data-e2e=admin-billing-figures]`)).toBe(true)
     const listError = find(`[data-e2e=admin-billing-error]`).textContent
-    expect(listError).toContain(ADMIN_BILLING_LIST_ERROR)
+    expect(listError).toContain(ADMIN_ENGLISH.t(`AdminBilling.listError`))
     expect(listError).not.toContain(`Server error.`)
     expect(has(`[data-e2e=admin-billing-count]`)).toBe(false)
     expect(calls).toEqual([[`retry`]])

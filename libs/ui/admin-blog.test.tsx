@@ -19,10 +19,12 @@ import {
   type AdminBlogEditorScreenProps,
   blogDraftErrors,
   blogDraftOf,
+  blogErrorText,
   blogSlugFromTitle,
   emptyBlogDraft,
   followTitle,
 } from "./admin-blog-editor.tsx"
+import { ADMIN_ENGLISH } from "./admin-pseudo.ts"
 
 const window = new Window({ url: "http://admin.localhost/blog" })
 const own = {
@@ -469,7 +471,13 @@ describe("the editor's rules", () => {
   })
 
   it("checks the fields in the page's words, and the body only for publishing", () => {
-    expect(blogDraftErrors(emptyBlogDraft())).toEqual({
+    const blogDraftWords = (...args: Parameters<typeof blogDraftErrors>) =>
+      Object.fromEntries(
+        Object.entries(blogDraftErrors(...args)).map((
+          [field, key],
+        ) => [field, blogErrorText(ADMIN_ENGLISH, key)]),
+      )
+    expect(blogDraftWords(emptyBlogDraft())).toEqual({
       title: "Add a title.",
       slug: "Add a slug.",
       description: "Add a description.",
@@ -481,13 +489,13 @@ describe("the editor's rules", () => {
       description: "D",
       coverUrl: "http://example.com/a.png",
     }
-    expect(blogDraftErrors(draft)).toEqual({
+    expect(blogDraftWords(draft)).toEqual({
       slug: "Use lowercase letters, digits and hyphens only.",
       coverUrl: "Start the link with https://.",
       coverAlt: "Describe the cover image.",
     })
     const ok = { ...emptyBlogDraft(), title: "T", slug: "t", description: "D" }
-    expect(blogDraftErrors(ok)).toEqual({})
-    expect(blogDraftErrors(ok, true)).toEqual({ bodyMd: "The post is empty." })
+    expect(blogDraftWords(ok)).toEqual({})
+    expect(blogDraftWords(ok, true)).toEqual({ bodyMd: "The post is empty." })
   })
 })
