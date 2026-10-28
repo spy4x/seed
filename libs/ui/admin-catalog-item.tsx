@@ -1265,7 +1265,9 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                           <button
                             type="button"
                             class={`shrink-0 cursor-zoom-in rounded-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
-                              cover ? `ring-2 ring-accent ring-offset-2 ring-offset-surface` : ``
+                              cover
+                                ? `ring-2 ring-[var(--color-selected,var(--color-accent-900))] ring-offset-2 ring-offset-surface`
+                                : ``
                             }`}
                             aria-label={t.t(`AdminCatalogItem.openPhoto`, {
                               photo: photoLabel(photo),
@@ -1279,7 +1281,9 @@ function Photos(props: AdminCatalogItemScreenProps & { item: CatalogItem }): JSX
                         : (
                           <span
                             class={`shrink-0 rounded-md ${
-                              cover ? `ring-2 ring-accent ring-offset-2 ring-offset-surface` : ``
+                              cover
+                                ? `ring-2 ring-[var(--color-selected,var(--color-accent-900))] ring-offset-2 ring-offset-surface`
+                                : ``
                             }`}
                           >
                             <CatalogThumbnail photoId={null} size="size-16" />

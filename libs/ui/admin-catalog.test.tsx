@@ -672,7 +672,7 @@ describe("the item editor", () => {
       .toEqual([expect.anything(), null])
     expect(rows[0].querySelector("[data-e2e=catalog-item-photo-cover-badge]")!.textContent)
       .toBe("Cover")
-    expect(open.map((one) => one.className.includes("ring-accent"))).toEqual([true, false])
+    expect(open.map((one) => one.className.includes("--color-selected"))).toEqual([true, false])
   })
 
   it("opens a photo full size, moves with the arrow keys, and gives focus back on close", async () => {
