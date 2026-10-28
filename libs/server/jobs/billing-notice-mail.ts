@@ -5,7 +5,6 @@ import {
   BillingNoticeKind,
   billingNoticeKindOf,
   effectivePlanId,
-  findPlan,
   FREE_PLAN_ID,
   graceEndsAt,
   type StoredSubscription,
@@ -13,6 +12,7 @@ import {
 import { trialNoticeAt } from "../billing/billing-notices.ts"
 import { PostgresBillingRepository } from "../billing/postgres-billing-repository.ts"
 import { billingNoticeMail, type MailBrand } from "../mail/mail.ts"
+import { readMailReader } from "../mail/reader.ts"
 import type { JobHandler } from "./jobs.ts"
 
 /** What a billing notice mail job needs. */
@@ -34,6 +34,7 @@ export interface BillingNoticeMailDeps {
 interface OwnerRow extends postgres.Row {
   name: string
   email: string | null
+  userId: number
 }
 
 /**
@@ -79,7 +80,7 @@ export function billingNoticeMailJob(
           ON handed.provider_customer_id = subscriptions.provider_customer_id
         WHERE groups.id = ${groupId} AND groups.deleted_at IS NULL
       )
-      SELECT payer.name, (
+      SELECT payer.name, payer.user_id AS "userId", (
         SELECT auth_keys.proven_email FROM auth_keys
         WHERE auth_keys.user_id = payer.user_id AND auth_keys.proven_email IS NOT NULL
         ORDER BY auth_keys.id
@@ -96,11 +97,12 @@ export function billingNoticeMailJob(
       to: owner.email,
       kind,
       groupName: owner.name,
-      planName: findPlan(subscription.planId ?? "")?.name ?? "paid",
+      planId: subscription.planId,
       at: accessEndsAt(subscription) ?? new Date(runAt),
       link: new URL(`/groups/${encodeURIComponent(groupId)}/billing`, brand.webAppUrl).href,
       planKeptUntil: planKeptUntil(subscription, judgedAt, graceDays),
       trialHasCard: trialRequiresCard,
+      reader: await readMailReader(sql, owner.userId),
     }))
     if (!result.ok) {
       log("error: a billing notice mail was not sent and will be retried")

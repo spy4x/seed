@@ -9,6 +9,7 @@ import {
   sendEmailCode,
 } from "../auth/email-verification.ts"
 import { emailCodeMail, type MailBrand } from "../mail/mail.ts"
+import { readMailReader } from "../mail/reader.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -60,9 +61,10 @@ export function emailCodeMailJob(deps: EmailCodeMailDeps): JobHandler {
     const status = await readEmailStatus(emailChanges(sql), deps.store, request.userId)
     const sender = deps.sender
     if (sender && emailToVerify(status) === request.email) {
+      const reader = await readMailReader(sql, request.userId)
       await sendEmailCode(deps.store, request.userId, request.email, async (to, code) => {
         const result = await sender.send(
-          emailCodeMail(deps.brand, { to, code, validMinutes: EMAIL_CODE_TTL_MINUTES }),
+          emailCodeMail(deps.brand, { to, code, validMinutes: EMAIL_CODE_TTL_MINUTES, reader }),
         )
         if (!result.ok) {
           deps.log("error: an e-mail code was not sent and will be retried")

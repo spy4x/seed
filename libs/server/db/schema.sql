@@ -842,7 +842,10 @@ CREATE TABLE sign_up_requests (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
     -- #224: set when a guest keeps their own account with this address and password.
     guest_user_id INT4 REFERENCES users(id) ON DELETE CASCADE,
-    CONSTRAINT sign_up_requests_email_check CHECK (length(email) BETWEEN 3 AND 254)
+    -- #277: the language of the page that asked, for the code mail.
+    language TEXT,
+    CONSTRAINT sign_up_requests_email_check CHECK (length(email) BETWEEN 3 AND 254),
+    CONSTRAINT sign_up_requests_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
 CREATE INDEX sign_up_requests_expires_at_idx ON sign_up_requests (expires_at);
@@ -906,8 +909,11 @@ CREATE TABLE sign_in_link_requests (
     next TEXT,
     requested_by_user_id INT4 REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    -- #277: the language of the page that asked, for the link mail.
+    language TEXT,
     CONSTRAINT sign_in_link_requests_email_check CHECK (length(email) BETWEEN 3 AND 254),
-    CONSTRAINT sign_in_link_requests_next_check CHECK (length(next) BETWEEN 1 AND 2048)
+    CONSTRAINT sign_in_link_requests_next_check CHECK (length(next) BETWEEN 1 AND 2048),
+    CONSTRAINT sign_in_link_requests_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
 CREATE INDEX idx_sign_in_link_requests_email ON sign_in_link_requests (email);

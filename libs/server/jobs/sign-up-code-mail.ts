@@ -3,6 +3,7 @@ import type { AuthStore } from "@spy4x/server/auth"
 import type { EmailSender } from "@spy4x/email/sender"
 import { issueSignUpCode, SIGN_UP_TTL_MINUTES, signUpRequests } from "../auth/sign-up-requests.ts"
 import { emailCodeMail, type MailBrand } from "../mail/mail.ts"
+import { requestReader } from "../mail/reader.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 
@@ -50,7 +51,13 @@ export function signUpCodeMailJob(deps: SignUpCodeMailDeps): JobHandler {
     if (sender && signUp) {
       const code = await issueSignUpCode(deps.store, signUp)
       const result = await sender.send(
-        emailCodeMail(deps.brand, { to: signUp.email, code, validMinutes: SIGN_UP_TTL_MINUTES }),
+        emailCodeMail(deps.brand, {
+          to: signUp.email,
+          code,
+          validMinutes: SIGN_UP_TTL_MINUTES,
+          // No account is known yet: the mail speaks the language of the page that asked (#277).
+          reader: requestReader(signUp.language),
+        }),
       )
       if (!result.ok) {
         deps.log("error: a sign-up code was not sent and will be retried")

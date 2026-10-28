@@ -1,6 +1,7 @@
 import { entitlementsOf, UNLIMITED } from "@domain/billing"
 import { hasProvenAddress, provenAddressOwner } from "@server/auth/email-verification.ts"
 import { createMailSender, readMailSetup } from "@server/mail/mail.ts"
+import { readMailReader } from "@server/mail/reader.ts"
 import { PostgresInvitationRepository } from "@server/groups/postgres-invitation-repository.ts"
 import { createRedisRateLimitStore } from "@spy4x/server/kv"
 import type { InvitationHandlerDependencies } from "../features/groups/invitations.ts"
@@ -45,6 +46,7 @@ export const invitationDependencies: InvitationHandlerDependencies = {
     sender: createMailSender(readMailSetup(Deno.env), sql),
     brand: { webAppUrl: config.webAppUrl },
     byAddress: invitationRateLimits.mailByAddress,
+    readerOf: (userId) => readMailReader(sql, userId),
     log,
   },
   emit: (event) => eventBus.emit(event),

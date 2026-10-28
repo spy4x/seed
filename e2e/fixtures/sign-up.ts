@@ -7,8 +7,18 @@ import {
 } from "@playwright/test"
 import { gotoApp } from "./app.ts"
 
-/** The subject of the mail that carries a code to prove an address. */
-const CODE_SUBJECT = `Your code to confirm your e-mail address`
+/**
+ * The subject of the mail that carries a code to prove an address, in each language the page can
+ * ask for it in (#277): `EmailCodeMail.subject` of `i18n/mail/<language>.json`.
+ */
+export const CODE_SUBJECTS: Record<string, string> = {
+  en: `Your code to confirm your e-mail address`,
+  ru: `Код для подтверждения адреса электронной почты`,
+  es: `Tu código para confirmar tu correo electrónico`,
+  de: `Dein Code zur Bestätigung deiner E-Mail-Adresse`,
+  "pt-BR": `Seu código para confirmar seu e-mail`,
+  ar: `رمزك لتأكيد بريدك الإلكتروني`,
+}
 
 /** The options `APIRequestContext.post` takes, as the specs pass them to the sign-up route. */
 type PostOptions = NonNullable<Parameters<APIRequestContext["post"]>[1]>
@@ -44,7 +54,8 @@ export async function nextCode(
   let code = ``
   await expect.poll(async () => {
     const mail = await lastMail(api, lastMailUrl, email)
-    if (!mail || mail.subject !== CODE_SUBJECT || mail.text === before?.text) return false
+    if (!mail || !Object.values(CODE_SUBJECTS).includes(mail.subject)) return false
+    if (mail.text === before?.text) return false
     code = mail.text.split(`\n\n`)[1].trim()
     return true
   }, { timeout: 20_000, message: `the worker mails the sign-up code to ${email}` }).toBe(true)

@@ -266,16 +266,6 @@ export function effectivePlanId(
   return findPlan(subscription.planId) ? subscription.planId : FREE_PLAN_ID
 }
 
-const BILLING_DATE = new Intl.DateTimeFormat("en", { dateStyle: "long", timeZone: "UTC" })
-
-/**
- * A date as billing writes it, in the banner and the mail alike: `October 15, 2026`, in UTC, the
- * same on the server and in the browser, and the same form the plan card uses.
- */
-export function billingDate(date: Date): string {
-  return BILLING_DATE.format(date)
-}
-
 /** Days before the end of a trial that its owner is told it is ending. */
 export const TRIAL_NOTICE_DAYS = 3
 

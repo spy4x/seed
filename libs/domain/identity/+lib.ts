@@ -132,8 +132,16 @@ export const authPasswordSchema = type({
 })
 export type AuthPassword = typeof authPasswordSchema.infer
 
+/**
+ * The language of the page that asks for a mail (#277): a sign-up code or a sign-in link, sent
+ * before the server knows whose account the address is. Any short tag is accepted, so an app
+ * that offers a language the server does not yet know still signs up; the server keeps only one
+ * of {@link LANGUAGES}, and English otherwise.
+ */
+const mailLanguageSchema = type({ "language?": "string <= 35" })
+
 /** The body of sign-up. */
-export const authSignUpSchema = authEmailSchema.and(authPasswordSchema)
+export const authSignUpSchema = authEmailSchema.and(authPasswordSchema).and(mailLanguageSchema)
 export type AuthSignUp = typeof authSignUpSchema.infer
 
 /** The body of sign-in. */
@@ -655,7 +663,7 @@ export const SIGN_IN_LINK_METHOD = "email-link"
  */
 export const authSignInLinkSchema = authEmailSchema.and({
   "next?": "string <= 2048",
-})
+}).and(mailLanguageSchema)
 export type AuthSignInLink = typeof authSignInLinkSchema.infer
 
 /** The body of `POST /api/auth/link/redeem`: the token from the link, as the page read it. */

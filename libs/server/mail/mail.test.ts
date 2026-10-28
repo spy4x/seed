@@ -1,7 +1,9 @@
 import { expect } from "@std/expect"
 import { describe, it } from "@std/testing/bdd"
 import type { Sql } from "@spy4x/server/db"
-import { BillingNoticeKind } from "@domain/billing"
+import { BillingNoticeKind, PRO_PLAN_ID } from "@domain/billing"
+import { GroupRole } from "@domain/groups"
+import { LANGUAGES } from "@domain/identity"
 import {
   accountDeletionMail,
   accountRestoredMail,
@@ -12,6 +14,7 @@ import {
   emailCodeMail,
   invitationMail,
   mailOffWarning,
+  type MailReader,
   MailTransport,
   passwordResetMail,
   readMailSetup,
@@ -19,6 +22,9 @@ import {
   signInMethodChangedMail,
   SMTP_KEYS,
 } from "./mail.ts"
+
+/** An English reader in UTC with a 24-hour clock: the dates these tests pin. */
+const EN: MailReader = { language: "en", locale: "en-US", timeZone: "UTC", hourCycle: "h23" }
 
 const env = (values: Record<string, string>) => ({ get: (name: string) => values[name] })
 
@@ -118,7 +124,7 @@ describe("passwordResetMail", () => {
   const link = "https://app.example.com/reset-password?email=ann%40example.com&code=abc"
   const mail = passwordResetMail(
     { webAppUrl: "https://app.example.com" },
-    { to: "ann@example.com", link, validMinutes: 30 },
+    { to: "ann@example.com", reader: EN, link, validMinutes: 30 },
   )
 
   it("carries the link and how long it works in the text and the HTML", () => {
@@ -139,7 +145,13 @@ describe("signInLinkMail", () => {
   const link = "https://app.example.com/sign-in/link/open#token=abc.def"
   const mail = signInLinkMail(
     { webAppUrl: "https://app.example.com" },
-    { to: "ann@example.com", link, validMinutes: 15, at: new Date("2026-10-23T14:03:00Z") },
+    {
+      to: "ann@example.com",
+      reader: EN,
+      link,
+      validMinutes: 15,
+      at: new Date("2026-10-23T14:03:00Z"),
+    },
   )
 
   it("carries the link, its fifteen minutes and when it was asked for, in the text and the HTML", () => {
@@ -147,7 +159,7 @@ describe("signInLinkMail", () => {
     expect(mail.subject).toBe("Your sign-in link for app.example.com")
     expect(mail.text).toContain(`\n${link}\n`)
     expect(mail.text).toContain("within 15 minutes")
-    expect(mail.text).toContain("on October 23, 2026 at 14:03 UTC")
+    expect(mail.text).toContain("on October 23, 2026 at 14:03.")
     expect(mail.html).toContain(`href="${link}"`)
     expect(mail.html).toContain("Sign in to app.example.com")
   })
@@ -161,7 +173,7 @@ describe("signInLinkMail", () => {
 describe("accountDeletionMail", () => {
   const mail = accountDeletionMail(
     { webAppUrl: "https://app.example.com" },
-    { to: "ann@example.com", deleteAfter: new Date("2026-10-11T09:30:00Z") },
+    { to: "ann@example.com", reader: EN, deleteAfter: new Date("2026-10-11T09:30:00Z") },
   )
 
   it("names the day the account goes and says that signing in before then keeps it", () => {
@@ -177,6 +189,7 @@ describe("accountDeletionMail", () => {
 describe("apiTokenCreatedMail", () => {
   const input = {
     to: "ann@example.com",
+    reader: EN,
     name: `Zapier <script>`,
     groupName: "Family & co",
     canWrite: true,
@@ -218,6 +231,7 @@ describe("apiTokenCreatedMail", () => {
 describe("accountRestoredMail", () => {
   const mail = accountRestoredMail({ webAppUrl: "https://app.example.com" }, {
     to: "ann@example.com",
+    reader: EN,
   })
 
   it("says a sign-in restored the account and what to do if it was someone else", () => {
@@ -232,6 +246,7 @@ describe("accountRestoredMail", () => {
 describe("dataExportReadyMail", () => {
   const mail = dataExportReadyMail({ webAppUrl: "https://app.example.com" }, {
     to: "ann@example.com",
+    reader: EN,
     expiresAt: new Date("2026-10-30T10:00:00Z"),
   })
 
@@ -252,6 +267,7 @@ describe("signInMethodChangedMail", () => {
   it("names the linked provider and the time, and says to unlink it if it was someone else", () => {
     const mail = signInMethodChangedMail(brand, {
       to: "ann@example.com",
+      reader: EN,
       provider: "Google",
       linked: true,
       at,
@@ -259,7 +275,7 @@ describe("signInMethodChangedMail", () => {
     expect(mail.to).toBe("ann@example.com")
     expect(mail.subject).toBe("Google was linked to your account")
     expect(mail.text).toContain(
-      "Google was linked to your account at app.example.com on October 15, 2026 at 14:03 UTC.",
+      "Google was linked to your account at app.example.com on October 15, 2026 at 14:03.",
     )
     expect(mail.text).toContain("If this wasn't you, unlink Google on your profile page")
     expect(mail.html).toContain(`href="https://app.example.com/"`)
@@ -268,13 +284,14 @@ describe("signInMethodChangedMail", () => {
   it("names the unlinked provider and the time, and says to change the password if it was someone else", () => {
     const mail = signInMethodChangedMail(brand, {
       to: "ann@example.com",
+      reader: EN,
       provider: "GitHub",
       linked: false,
       at,
     })
     expect(mail.subject).toBe("GitHub was unlinked from your account")
     expect(mail.text).toContain(
-      "GitHub was unlinked from your account at app.example.com on October 15, 2026 at 14:03 UTC.",
+      "GitHub was unlinked from your account at app.example.com on October 15, 2026 at 14:03.",
     )
     expect(mail.text).toContain(
       "If this wasn't you, sign in, change your password and link GitHub again.",
@@ -289,6 +306,7 @@ describe("signInMethodChangedMail for a passkey", () => {
   it("says a passkey was added, and to remove it and change the password if it was someone else", () => {
     const mail = signInMethodChangedMail(brand, {
       to: "ann@example.com",
+      reader: EN,
       provider: "A passkey",
       linked: true,
       at,
@@ -296,7 +314,7 @@ describe("signInMethodChangedMail for a passkey", () => {
     })
     expect(mail.subject).toBe("A passkey was added to your account")
     expect(mail.text).toContain(
-      "A passkey was added to your account at app.example.com on October 15, 2026 at 14:03 UTC.",
+      "A passkey was added to your account at app.example.com on October 15, 2026 at 14:03.",
     )
     expect(mail.text).toContain(
       "If this wasn't you, remove the passkey on your profile page and change your password.",
@@ -307,6 +325,7 @@ describe("signInMethodChangedMail for a passkey", () => {
   it("says a passkey was removed, and to add it again if it was someone else", () => {
     const mail = signInMethodChangedMail(brand, {
       to: "ann@example.com",
+      reader: EN,
       provider: "A passkey",
       linked: false,
       at,
@@ -322,7 +341,7 @@ describe("signInMethodChangedMail for a passkey", () => {
 describe("emailCodeMail", () => {
   const mail = emailCodeMail(
     { webAppUrl: "https://app.example.com" },
-    { to: "ann@example.com", code: "a<b-C9_z", validMinutes: 10 },
+    { to: "ann@example.com", reader: EN, code: "a<b-C9_z", validMinutes: 10 },
   )
 
   it("carries the code and how long it works in the text and the escaped HTML, with no link", () => {
@@ -341,10 +360,11 @@ describe("invitationMail", () => {
     { webAppUrl: "https://app.example.com" },
     {
       to: "bo@example.com",
+      reader: EN,
       link,
       groupName: `<b>Team</b> "A"`,
       inviterName: "Ann",
-      roleName: "editor",
+      role: GroupRole.EDITOR,
       validDays: 7,
     },
   )
@@ -354,7 +374,7 @@ describe("invitationMail", () => {
     expect(mail.subject).toBe(`Invitation to join "<b>Team</b> "A""`)
     expect(mail.text).toContain(link)
     expect(mail.text).toContain(`Ann invited you to join "<b>Team</b> "A"" at app.example.com`)
-    expect(mail.text).toContain("as editor")
+    expect(mail.text).toContain("with the role Editor")
     expect(mail.text).toContain("7 days")
     expect(mail.html).toContain(`href="${link}"`)
   })
@@ -369,14 +389,15 @@ describe("invitationMail", () => {
       { webAppUrl: "https://app.example.com" },
       {
         to: "bo@example.com",
+        reader: EN,
         link,
         groupName: "Team",
         inviterName: " ",
-        roleName: "viewer",
+        role: GroupRole.VIEWER,
         validDays: 1,
       },
     )
-    expect(anonymous.text).toMatch(/^Someone invited you/)
+    expect(anonymous.text).toMatch(/^You are invited to join "Team"/)
   })
 })
 
@@ -386,9 +407,10 @@ describe("billingNoticeMail", () => {
   const mail = (kind: BillingNoticeKind) =>
     billingNoticeMail(brand, {
       to: "ann@example.com",
+      reader: EN,
       kind,
       groupName: "Tea <club>",
-      planName: "Pro",
+      planId: PRO_PLAN_ID,
       at: new Date("2026-10-15T23:30:00Z"),
       link,
       planKeptUntil: new Date("2026-10-22T23:30:00Z"),
@@ -414,9 +436,10 @@ describe("billingNoticeMail", () => {
   it("tells a failed trial's owner the group is already on the free plan", () => {
     const failedTrial = billingNoticeMail(brand, {
       to: "ann@example.com",
+      reader: EN,
       kind: BillingNoticeKind.PaymentFailed,
       groupName: "Tea club",
-      planName: "Pro",
+      planId: PRO_PLAN_ID,
       at: new Date("2026-10-15T23:30:00Z"),
       link,
       planKeptUntil: null,
@@ -438,9 +461,10 @@ describe("billingNoticeMail", () => {
   it("tells the owner of a trial without a card that it ends on the free plan unless one is added", () => {
     const cardless = billingNoticeMail(brand, {
       to: "ann@example.com",
+      reader: EN,
       kind: BillingNoticeKind.TrialEnding,
       groupName: "Tea club",
-      planName: "Pro",
+      planId: PRO_PLAN_ID,
       at: new Date("2026-10-15T23:30:00Z"),
       link,
       planKeptUntil: null,
@@ -466,5 +490,225 @@ describe("billingNoticeMail", () => {
     expect(html).toContain("Tea &lt;club&gt;")
     expect(html).not.toContain("<club>")
     expect(html).toContain(`href="${link}"`)
+  })
+})
+
+const brand = { webAppUrl: "https://app.example.com" }
+const AT = new Date("2026-10-15T14:03:00Z")
+
+/** Every mail the template sends, built for `reader`. */
+function everyMail(reader: MailReader) {
+  const link = "https://app.example.com/x"
+  return [
+    passwordResetMail(brand, { to: "a@example.com", link, validMinutes: 30, reader }),
+    signInLinkMail(brand, { to: "a@example.com", link, validMinutes: 15, at: AT, reader }),
+    emailCodeMail(brand, { to: "a@example.com", code: "ABCD1234", validMinutes: 10, reader }),
+    invitationMail(brand, {
+      to: "a@example.com",
+      link,
+      groupName: "Team",
+      inviterName: "Ann",
+      role: GroupRole.EDITOR,
+      validDays: 7,
+      reader,
+    }),
+    accountDeletionMail(brand, { to: "a@example.com", deleteAfter: AT, reader }),
+    accountRestoredMail(brand, { to: "a@example.com", reader }),
+    dataExportReadyMail(brand, { to: "a@example.com", expiresAt: AT, reader }),
+    signInMethodChangedMail(brand, {
+      to: "a@example.com",
+      provider: "Google",
+      linked: true,
+      at: AT,
+      reader,
+    }),
+    apiTokenCreatedMail(brand, {
+      to: "a@example.com",
+      name: "CI",
+      groupName: "Team",
+      canWrite: true,
+      expiresAt: AT,
+      reader,
+    }),
+    billingNoticeMail(brand, {
+      to: "a@example.com",
+      kind: BillingNoticeKind.TrialEnding,
+      groupName: "Team",
+      planId: PRO_PLAN_ID,
+      at: AT,
+      link,
+      planKeptUntil: null,
+      trialHasCard: true,
+      reader,
+    }),
+  ]
+}
+
+describe("mail in the reader's language (#277)", () => {
+  const english = everyMail(EN)
+
+  for (const language of LANGUAGES) {
+    it(`writes every mail in ${language}, with ${language} on the html element`, () => {
+      const reader: MailReader = { ...EN, language }
+      everyMail(reader).forEach((mail, index) => {
+        expect(mail.html).toContain(`<html lang="${language}"`)
+        // A key the translator did not find is written as the key itself.
+        expect(`${mail.subject}\n${mail.text}`).not.toMatch(/\b[A-Z]\w+Mail\.\w+/)
+        if (language !== "en") {
+          expect(mail.subject).not.toBe(english[index].subject)
+          expect(mail.text).not.toBe(english[index].text)
+        }
+      })
+    })
+  }
+
+  it("writes Arabic right to left, and every other language left to right", () => {
+    for (const mail of everyMail({ ...EN, language: "ar" })) {
+      expect(mail.html).toContain(`<html lang="ar" dir="rtl">`)
+    }
+    for (const mail of everyMail({ ...EN, language: "de" })) {
+      expect(mail.html).toContain(`<html lang="de" dir="ltr">`)
+    }
+  })
+
+  it("signs the mail in the reader's language", () => {
+    const [german] = everyMail({ ...EN, language: "de" })
+    expect(german.html).toContain("— Gesendet von")
+    expect(german.html).not.toContain("Sent by")
+  })
+
+  it("writes a time in the reader's zone and region format, with no UTC suffix", () => {
+    const berlin = signInMethodChangedMail(brand, {
+      to: "a@example.com",
+      provider: "Google",
+      linked: true,
+      at: AT,
+      reader: { language: "de", locale: "de-DE", timeZone: "Europe/Berlin", hourCycle: null },
+    })
+    expect(berlin.text).toContain("am 15. Oktober 2026 um 16:03 mit deinem Konto")
+    expect(berlin.text).not.toContain("UTC")
+
+    const newYork = signInLinkMail(brand, {
+      to: "a@example.com",
+      link: "https://app.example.com/x",
+      validMinutes: 15,
+      at: AT,
+      reader: { language: "en", locale: "en-US", timeZone: "America/New_York", hourCycle: null },
+    })
+    expect(newYork.text).toContain("on October 15, 2026 at 10:03 AM.")
+  })
+
+  it("says a time is in UTC when the reader's zone is unknown", () => {
+    const unknown = signInLinkMail(brand, {
+      to: "a@example.com",
+      link: "https://app.example.com/x",
+      validMinutes: 15,
+      at: AT,
+      reader: { language: "en", locale: "en-GB", timeZone: null, hourCycle: null },
+    })
+    expect(unknown.text).toContain("on 15 October 2026 at 14:03 UTC.")
+  })
+
+  it("writes a day in the reader's zone, where it may already be tomorrow", () => {
+    const lateEvening = new Date("2026-10-15T23:30:00Z")
+    const tokyo = accountDeletionMail(brand, {
+      to: "a@example.com",
+      deleteAfter: lateEvening,
+      reader: { language: "en", locale: "en-GB", timeZone: "Asia/Tokyo", hourCycle: null },
+    })
+    expect(tokyo.subject).toBe("Your account will be deleted on 16 October 2026")
+  })
+
+  it("writes a billing day as the billing screen does: the UTC day, in the reader's format", () => {
+    const [notice] = everyMail({
+      language: "de",
+      locale: "de-DE",
+      timeZone: "Pacific/Auckland",
+      hourCycle: null,
+    }).slice(-1)
+    expect(notice.subject).toBe("Deine Pro-Testphase endet am 15. Oktober 2026")
+  })
+
+  it("names a role and a plan as the app's screens do, in the reader's language", () => {
+    const mails = everyMail({ ...EN, language: "de" })
+    expect(mails[3].text).toContain("mit der Rolle Bearbeiter")
+    expect(mails[9].text).toContain("Die Pro-Testphase")
+  })
+})
+
+describe("mail and a hostile value (#277)", () => {
+  const hostile =
+    `Team\r\nBcc: victim@example.com\n<img src=x onerror=alert(1)>"><a href="javascript:alert(1)">x</a>`
+
+  it("keeps a line break in a value out of the subject, whatever the mail", () => {
+    const invitation = invitationMail(brand, {
+      to: "a@example.com",
+      link: "https://app.example.com/invite/abc",
+      groupName: hostile,
+      inviterName: hostile,
+      role: GroupRole.VIEWER,
+      validDays: 7,
+      reader: EN,
+    })
+    const linked = signInMethodChangedMail(brand, {
+      to: "a@example.com",
+      provider: hostile,
+      linked: true,
+      at: AT,
+      reader: EN,
+    })
+    const billing = billingNoticeMail(brand, {
+      to: "a@example.com",
+      kind: BillingNoticeKind.PlanEnding,
+      groupName: hostile,
+      planId: PRO_PLAN_ID,
+      at: AT,
+      link: "https://app.example.com/groups/1/billing",
+      planKeptUntil: null,
+      trialHasCard: true,
+      reader: EN,
+    })
+    for (const mail of [invitation, linked, billing]) {
+      expect(mail.subject).not.toMatch(/[\r\n]/)
+      expect(mail.text).not.toMatch(/^Bcc:/m)
+    }
+    expect(invitation.subject).toBe(
+      `Invitation to join "Team Bcc: victim@example.com <img src=x onerror=alert(1)>"><a href="javascript:alert(1)">x</a>"`,
+    )
+  })
+
+  it("adds no markup and no link from a value, in any language", () => {
+    for (const language of LANGUAGES) {
+      const mail = invitationMail(brand, {
+        to: "a@example.com",
+        link: "https://app.example.com/invite/abc",
+        groupName: hostile,
+        inviterName: hostile,
+        role: GroupRole.VIEWER,
+        validDays: 7,
+        reader: { ...EN, language },
+      })
+      expect(mail.html).not.toContain("<img")
+      expect(mail.html).not.toContain(`href="javascript`)
+      expect(mail.html).toContain("&lt;img src=x onerror=alert(1)&gt;")
+      // The only links are the template's: the invitation and the brand.
+      expect(mail.html?.match(/href="/g)).toHaveLength(3)
+      // The inviter's name is the one bold span the catalog allows, and stays text inside it.
+      expect(mail.html).toContain("<strong>Team Bcc: victim@example.com &lt;img")
+    }
+  })
+
+  it("escapes the catalog's own text, so a translation cannot add markup either", () => {
+    const mail = invitationMail(brand, {
+      to: "a@example.com",
+      link: "https://app.example.com/invite/abc",
+      groupName: "Team",
+      inviterName: "Ann",
+      role: GroupRole.VIEWER,
+      validDays: 7,
+      reader: EN,
+    })
+    // The quotes around the group's name are the catalog's, not the value's.
+    expect(mail.html).toContain("join &quot;Team&quot; at")
   })
 })

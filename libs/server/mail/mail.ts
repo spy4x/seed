@@ -20,7 +20,23 @@ import { createSmtpSender, type SmtpOptions } from "@spy4x/email/smtp"
 import { DEFAULT_HTML_SHELL_THEME, emailButton, escapeHtml, htmlWrap } from "@spy4x/email/html"
 import type { EmailMessage } from "@spy4x/email/message"
 import type { Sql } from "@spy4x/server/db"
-import { billingDate, BillingNoticeKind } from "@domain/billing"
+import { type Catalog, createTranslator, type Translator } from "@spy4x/platform/universal/i18n"
+import { createFormatters, type Formatters, type HourCycle } from "@spy4x/time/format"
+import { BillingNoticeKind, findPlan, FREE_PLAN_ID, PRO_PLAN_ID } from "@domain/billing"
+import { GroupRole } from "@domain/groups"
+import type { Language } from "@domain/identity"
+import appEn from "@i18n/app/en.json" with { type: "json" }
+import appRu from "@i18n/app/ru.json" with { type: "json" }
+import appEs from "@i18n/app/es.json" with { type: "json" }
+import appDe from "@i18n/app/de.json" with { type: "json" }
+import appPtBR from "@i18n/app/pt-BR.json" with { type: "json" }
+import appAr from "@i18n/app/ar.json" with { type: "json" }
+import mailEn from "@i18n/mail/en.json" with { type: "json" }
+import mailRu from "@i18n/mail/ru.json" with { type: "json" }
+import mailEs from "@i18n/mail/es.json" with { type: "json" }
+import mailDe from "@i18n/mail/de.json" with { type: "json" }
+import mailPtBR from "@i18n/mail/pt-BR.json" with { type: "json" }
+import mailAr from "@i18n/mail/ar.json" with { type: "json" }
 
 /** The variables SMTP needs. All five must be set for production to send mail. */
 export const SMTP_KEYS = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "SMTP_FROM"] as const
@@ -102,36 +118,201 @@ export interface MailBrand {
   webAppUrl: string
 }
 
-/** The one HTML wrapper every mail uses. `body` must already be escaped. */
-export function mailHtml(brand: MailBrand, body: string): string {
-  return htmlWrap({ body, brand: new URL(brand.webAppUrl).host, brandUrl: brand.webAppUrl })
+/**
+ * Who reads a mail (#277): the language it is written in, and the region format, zone and clock
+ * its dates use. {@link readMailReader} reads it for an account.
+ */
+export interface MailReader {
+  language: Language
+  /** The region format, a BCP 47 tag such as `de-DE`. */
+  locale: string
+  /** An IANA zone; `null` when unknown, and a time then says it is in UTC. */
+  timeZone: string | null
+  /** The clock; `null` lets the region format decide. */
+  hourCycle: HourCycle | null
+}
+
+/** A reader nothing is known of: English, in UTC. */
+export const ENGLISH_READER: MailReader = Object.freeze({
+  language: `en`,
+  locale: `en`,
+  timeZone: null,
+  hourCycle: null,
+})
+
+/**
+ * Both catalogs a mail reads, per language: its own words (`mail`) and the names the app already
+ * translates (`app`: roles and plans), so a role reads the same in the mail and on the screen.
+ */
+const CATALOGS: Record<Language, { app?: Catalog; mail?: Catalog }> = {
+  en: {},
+  ru: { app: appRu, mail: mailRu },
+  es: { app: appEs, mail: mailEs },
+  de: { app: appDe, mail: mailDe },
+  "pt-BR": { app: appPtBR, mail: mailPtBR },
+  ar: { app: appAr, mail: mailAr },
+}
+const translators = new Map<Language, Translator<string>>()
+
+/** The mail's words in `language`, made on first use. */
+function translatorFor(language: Language): Translator<string> {
+  let translator = translators.get(language)
+  if (!translator) {
+    const { app, mail } = CATALOGS[language] ?? CATALOGS.en
+    translator = createTranslator({
+      language: CATALOGS[language] ? language : `en`,
+      catalogs: [{ source: appEn, translation: app }, { source: mailEn, translation: mail }],
+    })
+    translators.set(language, translator)
+  }
+  return translator
+}
+
+/** What a builder writes with: the reader's words and the reader's date formats. */
+interface Writer {
+  t: Translator<string>
+  format: Formatters
+  /** A moment with its time of day, in the reader's zone; in UTC, said so, when it is unknown. */
+  moment(at: Date): string
+  /** A day in the reader's zone. */
+  day(at: Date): string
+}
+
+function writerFor(reader: MailReader): Writer {
+  const t = translatorFor(reader.language)
+  // `device` keeps the host's own locale and zone out of the mail: the reader's or UTC, never ours.
+  const format = createFormatters(
+    { locale: reader.locale, timeZone: reader.timeZone, hourCycle: reader.hourCycle },
+    { device: { locale: reader.language, timeZone: `UTC` } },
+  )
+  return {
+    t,
+    format,
+    moment: (at) =>
+      reader.timeZone ? format.dateTime(at, `long`) : `${format.dateTime(at, `long`)} UTC`,
+    day: (at) => format.date(at, `long`),
+  }
+}
+
+/**
+ * A value a person typed (a name, a group), on one line: every line break and other control
+ * character becomes a space. A subject is a mail header, and a line break in one would start a
+ * header of its own.
+ */
+export function oneLine(value: string): string {
+  return value.replace(/[\p{Cc}\u2028\u2029]+/gu, ` `).trim()
+}
+
+/** One block of a mail's body, drawn the same way in the text part and the HTML part. */
+type Block =
+  /** A paragraph from the catalog; a `<strong>` span in it is drawn bold in the HTML. */
+  | { key: string; values?: Record<string, string | number> }
+  /** A link the template made: plain in the text, a link in the HTML. */
+  | { link: string; label: string }
+  /** The call to action: plain in the text, a button in the HTML. */
+  | { button: string; label: string }
+  /** A code to type: alone on its line, large in the HTML. */
+  | { code: string }
+
+/** The tags a catalog message may use, and the element each draws. Any other is plain text. */
+const TAGS: Record<string, string> = { strong: `strong` }
+
+/**
+ * A catalog message as HTML. Every part is escaped, the catalog's own words included, so neither
+ * a value nor a translation can add markup: the only elements are the ones {@link TAGS} names.
+ */
+function messageHtml(t: Translator<string>, key: string, values?: Record<string, string | number>) {
+  return t.parts(key, values).map((part) => {
+    if (typeof part === `string`) return escapeHtml(part)
+    const element = Object.hasOwn(TAGS, part.tag) ? TAGS[part.tag] : null
+    return element ? `<${element}>${escapeHtml(part.text)}</${element}>` : escapeHtml(part.text)
+  }).join(``)
+}
+
+/**
+ * A whole mail in the reader's language: the subject on one line, the text part, and the HTML
+ * part in the shared shell, with `lang` and `dir` so Arabic reads right to left.
+ */
+function compose(
+  brand: MailBrand,
+  w: Writer,
+  to: string,
+  subject: string,
+  blocks: readonly Block[],
+): EmailMessage {
+  const { t } = w
+  const text = blocks.map((block) =>
+    `key` in block
+      ? t.t(block.key, block.values)
+      : `code` in block
+      ? block.code
+      : `link` in block
+      ? block.link
+      : block.button
+  )
+  const html = blocks.map((block) => {
+    if (`key` in block) return `<p>${messageHtml(t, block.key, block.values)}</p>`
+    if (`code` in block) {
+      return `<p style="font-size:24px;font-weight:600;letter-spacing:2px">${
+        escapeHtml(block.code)
+      }</p>`
+    }
+    if (`link` in block) {
+      return `<p><a href="${escapeHtml(block.link)}">${escapeHtml(block.label)}</a></p>`
+    }
+    return emailButton({
+      href: block.button,
+      label: block.label,
+      background: DEFAULT_HTML_SHELL_THEME.linkColor,
+      color: `#ffffff`,
+    })
+  })
+  return {
+    to,
+    subject: oneLine(subject),
+    text: `${text.join(`\n\n`)}\n`,
+    html: mailHtml(brand, html.join(`\n`), t),
+  }
+}
+
+/**
+ * The one HTML wrapper every mail uses. `body` must already be escaped. `t` names the language,
+ * its direction and the signature's words; without it the shell is English.
+ */
+export function mailHtml(brand: MailBrand, body: string, t = translatorFor(`en`)): string {
+  return htmlWrap({
+    body,
+    brand: new URL(brand.webAppUrl).host,
+    brandUrl: brand.webAppUrl,
+    signaturePrefix: t.t(`Mail.sentBy`),
+    lang: t.language,
+    dir: t.dir,
+  })
+}
+
+/** The app's host name, as every mail names the app. */
+function hostOf(brand: MailBrand): string {
+  return new URL(brand.webAppUrl).host
 }
 
 /** The mail that carries a password reset link. */
 export function passwordResetMail(
   brand: MailBrand,
-  { to, link, validMinutes }: { to: string; link: string; validMinutes: number },
+  { to, link, validMinutes, reader }: {
+    to: string
+    link: string
+    validMinutes: number
+    reader: MailReader
+  },
 ): EmailMessage {
-  const host = new URL(brand.webAppUrl).host
-  const asked = `Someone asked to reset the password of your account at ${host}.`
-  const open = `Open this link within ${validMinutes} minutes to choose a new password.`
-  const once = "The link works once, and using it signs you out everywhere."
-  const ignore = "If you did not ask for this, ignore this mail: your password stays as it is."
-  return {
-    to,
-    subject: "Reset your password",
-    text: `${asked}\n\n${open}\n\n${link}\n\n${once}\n\n${ignore}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(asked)}</p>`,
-        `<p>${escapeHtml(open)}</p>`,
-        `<p><a href="${escapeHtml(link)}">Choose a new password</a></p>`,
-        `<p>${escapeHtml(once)}</p>`,
-        `<p>${escapeHtml(ignore)}</p>`,
-      ].join("\n"),
-    ),
-  }
+  const w = writerFor(reader)
+  return compose(brand, w, to, w.t.t(`PasswordResetMail.subject`), [
+    { key: `PasswordResetMail.asked`, values: { host: hostOf(brand) } },
+    { key: `PasswordResetMail.open`, values: { count: validMinutes } },
+    { link, label: w.t.t(`PasswordResetMail.button`) },
+    { key: `PasswordResetMail.once` },
+    { key: `PasswordResetMail.ignore` },
+  ])
 }
 
 /**
@@ -141,38 +322,23 @@ export function passwordResetMail(
  */
 export function signInLinkMail(
   brand: MailBrand,
-  { to, link, validMinutes, at }: { to: string; link: string; validMinutes: number; at: Date },
+  { to, link, validMinutes, at, reader }: {
+    to: string
+    link: string
+    validMinutes: number
+    at: Date
+    reader: MailReader
+  },
 ): EmailMessage {
-  const host = new URL(brand.webAppUrl).host
-  const asked = `Someone asked to sign in to ${host} with this address on ${
-    MAIL_TIME.format(at)
-  } UTC.`
-  const open =
-    `Open this link within ${validMinutes} minutes to sign in. If no account uses this address yet, it creates one.`
-  const once =
-    "The link works once. Opening it shows a page with a Continue button: nothing happens until you press it."
-  const ignore =
-    "If you did not ask for this, ignore this mail. Nobody can sign in without the link."
-  return {
-    to,
-    subject: `Your sign-in link for ${host}`,
-    text: `${asked}\n\n${open}\n\n${link}\n\n${once}\n\n${ignore}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(asked)}</p>`,
-        `<p>${escapeHtml(open)}</p>`,
-        emailButton({
-          href: link,
-          label: `Sign in to ${host}`,
-          background: DEFAULT_HTML_SHELL_THEME.linkColor,
-          color: "#ffffff",
-        }),
-        `<p>${escapeHtml(once)}</p>`,
-        `<p>${escapeHtml(ignore)}</p>`,
-      ].join("\n"),
-    ),
-  }
+  const w = writerFor(reader)
+  const host = hostOf(brand)
+  return compose(brand, w, to, w.t.t(`SignInLinkMail.subject`, { host }), [
+    { key: `SignInLinkMail.asked`, values: { host, when: w.moment(at) } },
+    { key: `SignInLinkMail.open`, values: { count: validMinutes } },
+    { button: link, label: w.t.t(`SignInLinkMail.button`, { host }) },
+    { key: `SignInLinkMail.once` },
+    { key: `SignInLinkMail.ignore` },
+  ])
 }
 
 /**
@@ -181,67 +347,60 @@ export function signInLinkMail(
  */
 export function emailCodeMail(
   brand: MailBrand,
-  { to, code, validMinutes }: { to: string; code: string; validMinutes: number },
+  { to, code, validMinutes, reader }: {
+    to: string
+    code: string
+    validMinutes: number
+    reader: MailReader
+  },
 ): EmailMessage {
-  const host = new URL(brand.webAppUrl).host
-  const asked = `Enter this code at ${host} to confirm this is your e-mail address.`
-  const valid = `It works once, for ${validMinutes} minutes.`
-  const ignore = "If you did not ask for this, ignore this mail: nothing changes."
-  return {
-    to,
-    subject: "Your code to confirm your e-mail address",
-    text: `${asked}\n\n${code}\n\n${valid}\n\n${ignore}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(asked)}</p>`,
-        `<p style="font-size:24px;font-weight:600;letter-spacing:2px">${escapeHtml(code)}</p>`,
-        `<p>${escapeHtml(valid)}</p>`,
-        `<p>${escapeHtml(ignore)}</p>`,
-      ].join("\n"),
-    ),
-  }
+  const w = writerFor(reader)
+  return compose(brand, w, to, w.t.t(`EmailCodeMail.subject`), [
+    { key: `EmailCodeMail.asked`, values: { host: hostOf(brand) } },
+    { code },
+    { key: `EmailCodeMail.valid`, values: { count: validMinutes } },
+    { key: `EmailCodeMail.ignore` },
+  ])
+}
+
+/** Each role's name, by its key in the `app` catalog: the mail names it as the screens do. */
+const ROLE_KEYS: Record<GroupRole, string> = {
+  [GroupRole.VIEWER]: `Groups.roleViewer`,
+  [GroupRole.EDITOR]: `Groups.roleEditor`,
+  [GroupRole.ADMIN]: `Groups.roleAdmin`,
+  [GroupRole.OWNER]: `Groups.roleOwner`,
 }
 
 /**
  * The mail that carries a group invitation's link: the same link its creator sees. Opening it asks
- * the person to sign in or sign up, then to accept or decline.
+ * the person to sign in or sign up, then to accept or decline. It is in the inviter's language,
+ * since the person invited may have no account yet.
  */
 export function invitationMail(
   brand: MailBrand,
-  { to, link, groupName, inviterName, roleName, validDays }: {
+  { to, link, groupName, inviterName, role, validDays, reader }: {
     to: string
     link: string
     groupName: string
     /** Empty when the inviter set no name. */
     inviterName: string
-    /** The role the person gets, such as "editor". */
-    roleName: string
+    /** The role the person gets. */
+    role: GroupRole
     validDays: number
+    reader: MailReader
   },
 ): EmailMessage {
-  const host = new URL(brand.webAppUrl).host
-  const who = inviterName.trim() || "Someone"
-  const invited = `${who} invited you to join "${groupName}" at ${host} as ${roleName}.`
-  const open = `Open this link within ${validDays} days to accept or decline.`
-  const account =
-    "The invitation is for this e-mail address: accept it with the account that uses it."
-  const ignore = "If you do not want to join, ignore this mail."
-  return {
-    to,
-    subject: `Invitation to join "${groupName}"`,
-    text: `${invited}\n\n${open}\n\n${link}\n\n${account}\n\n${ignore}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(invited)}</p>`,
-        `<p>${escapeHtml(open)}</p>`,
-        `<p><a href="${escapeHtml(link)}">Open the invitation</a></p>`,
-        `<p>${escapeHtml(account)}</p>`,
-        `<p>${escapeHtml(ignore)}</p>`,
-      ].join("\n"),
-    ),
-  }
+  const w = writerFor(reader)
+  const group = oneLine(groupName)
+  const who = oneLine(inviterName)
+  const values = { who, group, host: hostOf(brand), role: w.t.t(ROLE_KEYS[role]) }
+  return compose(brand, w, to, w.t.t(`InvitationMail.subject`, { group }), [
+    { key: who ? `InvitationMail.invited` : `InvitationMail.invitedNoName`, values },
+    { key: `InvitationMail.open`, values: { count: validDays } },
+    { link, label: w.t.t(`InvitationMail.button`) },
+    { key: `InvitationMail.account` },
+    { key: `InvitationMail.ignore` },
+  ])
 }
 
 /**
@@ -250,54 +409,32 @@ export function invitationMail(
  */
 export function accountDeletionMail(
   brand: MailBrand,
-  { to, deleteAfter }: { to: string; deleteAfter: Date },
+  { to, deleteAfter, reader }: { to: string; deleteAfter: Date; reader: MailReader },
 ): EmailMessage {
-  const host = new URL(brand.webAppUrl).host
-  const date = billingDate(deleteAfter)
-  const asked = `Your account at ${host} will be deleted for good on ${date}, as you asked.`
-  const keep = "Changed your mind? Sign in before then and your account is restored."
-  const notYou =
-    "If you did not ask for this, sign in now to keep your account, then change your password."
-  const link = new URL("/sign-in", brand.webAppUrl).href
-  return {
-    to,
-    subject: `Your account will be deleted on ${date}`,
-    text: `${asked}\n\n${keep}\n\n${link}\n\n${notYou}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(asked)}</p>`,
-        `<p>${escapeHtml(keep)}</p>`,
-        `<p><a href="${escapeHtml(link)}">Sign in</a></p>`,
-        `<p>${escapeHtml(notYou)}</p>`,
-      ].join("\n"),
-    ),
-  }
+  const w = writerFor(reader)
+  const date = w.day(deleteAfter)
+  return compose(brand, w, to, w.t.t(`AccountDeletionMail.subject`, { date }), [
+    { key: `AccountDeletionMail.asked`, values: { host: hostOf(brand), date } },
+    { key: `AccountDeletionMail.keep` },
+    { link: new URL(`/sign-in`, brand.webAppUrl).href, label: w.t.t(`Mail.signIn`) },
+    { key: `AccountDeletionMail.notYou` },
+  ])
 }
 
 /**
  * The mail sent when a sign-in restores an account that was waiting to be deleted, so a person who
  * did not sign in learns that someone else knows their password.
  */
-export function accountRestoredMail(brand: MailBrand, { to }: { to: string }): EmailMessage {
-  const host = new URL(brand.webAppUrl).host
-  const restored =
-    `Your account at ${host} was restored by a sign-in, so it will no longer be deleted.`
-  const notYou = "If this wasn't you, sign in, delete your account again and change your password."
-  const link = new URL("/sign-in", brand.webAppUrl).href
-  return {
-    to,
-    subject: "Your account was restored",
-    text: `${restored}\n\n${notYou}\n\n${link}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(restored)}</p>`,
-        `<p>${escapeHtml(notYou)}</p>`,
-        `<p><a href="${escapeHtml(link)}">Sign in</a></p>`,
-      ].join("\n"),
-    ),
-  }
+export function accountRestoredMail(
+  brand: MailBrand,
+  { to, reader }: { to: string; reader: MailReader },
+): EmailMessage {
+  const w = writerFor(reader)
+  return compose(brand, w, to, w.t.t(`AccountRestoredMail.subject`), [
+    { key: `AccountRestoredMail.restored`, values: { host: hostOf(brand) } },
+    { key: `AccountRestoredMail.notYou` },
+    { link: new URL(`/sign-in`, brand.webAppUrl).href, label: w.t.t(`Mail.signIn`) },
+  ])
 }
 
 /**
@@ -306,37 +443,18 @@ export function accountRestoredMail(brand: MailBrand, { to }: { to: string }): E
  */
 export function dataExportReadyMail(
   brand: MailBrand,
-  { to, expiresAt }: { to: string; expiresAt: Date },
+  { to, expiresAt, reader }: { to: string; expiresAt: Date; reader: MailReader },
 ): EmailMessage {
-  const ready = `Download it from your profile until ${billingDate(expiresAt)}.`
-  const notYou =
-    "If you did not ask for this, change your password and sign out of your other devices."
-  const link = new URL("/profile/account#your-data", brand.webAppUrl).href
-  return {
-    to,
-    subject: "Your data is ready",
-    text: `${ready}\n\n${link}\n\n${notYou}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(ready)}</p>`,
-        `<p><a href="${escapeHtml(link)}">Open your profile</a></p>`,
-        `<p>${escapeHtml(notYou)}</p>`,
-      ].join("\n"),
-    ),
-  }
+  const w = writerFor(reader)
+  return compose(brand, w, to, w.t.t(`DataExportReadyMail.subject`), [
+    { key: `DataExportReadyMail.ready`, values: { date: w.day(expiresAt) } },
+    {
+      link: new URL(`/profile/account#your-data`, brand.webAppUrl).href,
+      label: w.t.t(`Mail.openProfile`),
+    },
+    { key: `DataExportReadyMail.notYou` },
+  ])
 }
-
-/**
- * A moment as the account mails write it, before " UTC": `October 15, 2026 at 14:03`, the date in
- * the form {@link billingDate} gives.
- */
-const MAIL_TIME = new Intl.DateTimeFormat("en", {
-  dateStyle: "long",
-  timeStyle: "short",
-  hourCycle: "h23",
-  timeZone: "UTC",
-})
 
 /** What the mail about a linked or unlinked sign-in method names. */
 export interface SignInMethodChangedMailInput {
@@ -348,6 +466,7 @@ export interface SignInMethodChangedMailInput {
   at: Date
   /** The method is a passkey (#222), which is added and removed rather than linked. */
   passkey?: boolean
+  reader: MailReader
 }
 
 /**
@@ -358,64 +477,39 @@ export interface SignInMethodChangedMailInput {
  */
 export function signInMethodChangedMail(
   brand: MailBrand,
-  { to, provider, linked, at, passkey = false }: SignInMethodChangedMailInput,
+  { to, provider, linked, at, passkey = false, reader }: SignInMethodChangedMailInput,
 ): EmailMessage {
-  const host = new URL(brand.webAppUrl).host
-  const when = `${MAIL_TIME.format(at)} UTC`
-  // The profile is the web app's first page.
-  const link = new URL("/", brand.webAppUrl).href
-  if (passkey) {
-    const changed = linked
-      ? `A passkey was added to your account at ${host} on ${when}. It can now sign in to it.`
-      : `A passkey was removed from your account at ${host} on ${when}. It no longer signs in to it.`
-    const notYou = linked
-      ? `If this wasn't you, remove the passkey on your profile page and change your password.`
-      : `If this wasn't you, sign in, change your password and add your passkey again.`
-    return methodMail(
-      brand,
-      to,
-      linked ? `A passkey was added to your account` : `A passkey was removed from your account`,
-      [changed, notYou],
-      link,
-    )
-  }
-  const changed = linked
-    ? `${provider} was linked to your account at ${host} on ${when}. It can now sign in to it.`
-    : `${provider} was unlinked from your account at ${host} on ${when}. It no longer signs in to it.`
-  const notYou = linked
-    ? `If this wasn't you, unlink ${provider} on your profile page and change your password.`
-    : `If this wasn't you, sign in, change your password and link ${provider} again.`
-  return methodMail(
-    brand,
-    to,
-    linked
-      ? `${provider} was linked to your account`
-      : `${provider} was unlinked from your account`,
-    [changed, notYou],
-    link,
-  )
-}
-
-/** A sign-in method mail: its paragraphs, then the link to the profile. */
-function methodMail(
-  brand: MailBrand,
-  to: string,
-  subject: string,
-  paragraphs: readonly string[],
-  link: string,
-): EmailMessage {
-  return {
-    to,
-    subject,
-    text: `${paragraphs.join("\n\n")}\n\n${link}\n`,
-    html: mailHtml(
-      brand,
-      [
-        ...paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`),
-        `<p><a href="${escapeHtml(link)}">Open your profile</a></p>`,
-      ].join("\n"),
-    ),
-  }
+  const w = writerFor(reader)
+  const values = { host: hostOf(brand), when: w.moment(at), provider: oneLine(provider) }
+  const [subject, changed, notYou] = passkey
+    ? linked
+      ? [
+        `SignInMethodMail.passkeyAddedSubject`,
+        `SignInMethodMail.passkeyAdded`,
+        `SignInMethodMail.passkeyAddedNotYou`,
+      ]
+      : [
+        `SignInMethodMail.passkeyRemovedSubject`,
+        `SignInMethodMail.passkeyRemoved`,
+        `SignInMethodMail.passkeyRemovedNotYou`,
+      ]
+    : linked
+    ? [
+      `SignInMethodMail.linkedSubject`,
+      `SignInMethodMail.linked`,
+      `SignInMethodMail.linkedNotYou`,
+    ]
+    : [
+      `SignInMethodMail.unlinkedSubject`,
+      `SignInMethodMail.unlinked`,
+      `SignInMethodMail.unlinkedNotYou`,
+    ]
+  return compose(brand, w, to, w.t.t(subject, values), [
+    { key: changed, values },
+    { key: notYou, values },
+    // The profile is the web app's first page.
+    { link: new URL(`/`, brand.webAppUrl).href, label: w.t.t(`Mail.openProfile`) },
+  ])
 }
 
 /** What the mail about a new API token names. Never the token itself. */
@@ -426,6 +520,7 @@ export interface ApiTokenCreatedMailInput {
   canWrite: boolean
   /** `null` for a token that never expires. */
   expiresAt: Date | null
+  reader: MailReader
 }
 
 /**
@@ -435,31 +530,24 @@ export interface ApiTokenCreatedMailInput {
  */
 export function apiTokenCreatedMail(
   brand: MailBrand,
-  { to, name, groupName, canWrite, expiresAt }: ApiTokenCreatedMailInput,
+  { to, name, groupName, canWrite, expiresAt, reader }: ApiTokenCreatedMailInput,
 ): EmailMessage {
-  const host = new URL(brand.webAppUrl).host
-  const created = `An API token named "${name}" was created for your account at ${host}.`
-  const can = `It can ${canWrite ? "read and write" : "read"} the group "${groupName}" and ${
-    expiresAt ? `expires on ${billingDate(expiresAt)}` : "never expires"
-  }.`
-  const notYou =
-    "If this wasn't you, revoke the token on your profile page and change your password, which revokes every API token."
-  // The profile is the web app's first page.
-  const link = new URL("/", brand.webAppUrl).href
-  return {
-    to,
-    subject: "An API token was created",
-    text: `${created}\n\n${can}\n\n${notYou}\n\n${link}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(created)}</p>`,
-        `<p>${escapeHtml(can)}</p>`,
-        `<p>${escapeHtml(notYou)}</p>`,
-        `<p><a href="${escapeHtml(link)}">Open your profile</a></p>`,
-      ].join("\n"),
-    ),
-  }
+  const w = writerFor(reader)
+  const can = canWrite
+    ? expiresAt ? `ApiTokenMail.writeUntil` : `ApiTokenMail.writeForever`
+    : expiresAt
+    ? `ApiTokenMail.readUntil`
+    : `ApiTokenMail.readForever`
+  return compose(brand, w, to, w.t.t(`ApiTokenMail.subject`), [
+    { key: `ApiTokenMail.created`, values: { name: oneLine(name), host: hostOf(brand) } },
+    {
+      key: can,
+      values: { group: oneLine(groupName), date: expiresAt ? w.day(expiresAt) : `` },
+    },
+    { key: `ApiTokenMail.notYou` },
+    // The profile is the web app's first page.
+    { link: new URL(`/`, brand.webAppUrl).href, label: w.t.t(`Mail.openProfile`) },
+  ])
 }
 
 /** What a billing notice mail names. */
@@ -467,7 +555,8 @@ export interface BillingNoticeMailInput {
   to: string
   kind: BillingNoticeKind
   groupName: string
-  planName: string
+  /** The plan's id; its name is the one the app's billing screen shows. */
+  planId: string | null
   /** When the trial or the cancelled plan ends; unused for a failed payment. */
   at: Date
   /** The group's Plan and billing tab, where the owner opens the provider's portal. */
@@ -484,53 +573,53 @@ export interface BillingNoticeMailInput {
    * Unused for the other notices.
    */
   trialHasCard: boolean
+  reader: MailReader
+}
+
+/** Each plan's name, by its key in the `app` catalog, as the billing screen names it. */
+const PLAN_KEYS: Record<string, string> = {
+  [FREE_PLAN_ID]: `GroupBillingPanel.planFree`,
+  [PRO_PLAN_ID]: `GroupBillingPanel.planPro`,
 }
 
 /**
  * The mail that tells a group's owner its trial ends soon, a payment failed, or its cancelled plan
  * ends. Each one says what happens next and where to change it: the provider's portal, reached from
- * the group's page.
+ * the group's page. Its days are UTC days in the reader's region format, as the billing screen
+ * writes them, so the mail and the screen name the same day.
  */
 export function billingNoticeMail(
   brand: MailBrand,
-  { to, kind, groupName, planName, at, link, planKeptUntil, trialHasCard }: BillingNoticeMailInput,
+  { to, kind, groupName, planId, at, link, planKeptUntil, trialHasCard, reader }:
+    BillingNoticeMailInput,
 ): EmailMessage {
-  const group = `"${groupName}"`
-  const date = billingDate(at)
+  const w = writerFor(reader)
+  const utc = w.format.utc()
+  const plan = planId && PLAN_KEYS[planId]
+    ? w.t.t(PLAN_KEYS[planId])
+    : findPlan(planId ?? ``)?.name ?? w.t.t(`BillingNoticeMail.paidPlan`)
+  const values = { plan, group: oneLine(groupName), date: utc.date(at, `long`) }
   const [subject, what, next] = {
     [BillingNoticeKind.TrialEnding]: [
-      `Your ${planName} trial ends on ${date}`,
-      `The ${planName} trial of ${group} ends on ${date}.`,
-      trialHasCard
-        ? `The subscription then starts and is charged. To stop it, cancel it before then from the group's page.`
-        : `Add a card from the group's page before then to keep the plan: the subscription then starts and is charged. Without a card, the group moves to the free plan.`,
+      `BillingNoticeMail.trialSubject`,
+      `BillingNoticeMail.trialWhat`,
+      trialHasCard ? `BillingNoticeMail.trialWithCard` : `BillingNoticeMail.trialWithoutCard`,
     ],
     [BillingNoticeKind.PaymentFailed]: [
-      `A payment for ${planName} failed`,
-      `A payment for the ${planName} plan of ${group} failed.`,
-      planKeptUntil
-        ? `The plan is kept until ${
-          billingDate(planKeptUntil)
-        } while the payment is retried. Update the card from the group's page to keep it.`
-        : `The group is now on the free plan. Update the card from the group's page to get the plan back.`,
+      `BillingNoticeMail.paymentSubject`,
+      `BillingNoticeMail.paymentWhat`,
+      planKeptUntil ? `BillingNoticeMail.paymentKept` : `BillingNoticeMail.paymentFree`,
     ],
     [BillingNoticeKind.PlanEnding]: [
-      `Your ${planName} plan ends on ${date}`,
-      `The ${planName} plan of ${group} was cancelled and ends on ${date}; the group then moves to the free plan.`,
-      `Changed your mind? Renew it from the group's page before then.`,
+      `BillingNoticeMail.planSubject`,
+      `BillingNoticeMail.planWhat`,
+      `BillingNoticeMail.planNext`,
     ],
   }[kind]
-  return {
-    to,
-    subject,
-    text: `${what}\n\n${next}\n\n${link}\n`,
-    html: mailHtml(
-      brand,
-      [
-        `<p>${escapeHtml(what)}</p>`,
-        `<p>${escapeHtml(next)}</p>`,
-        `<p><a href="${escapeHtml(link)}">Open the group</a></p>`,
-      ].join("\n"),
-    ),
-  }
+  const kept = planKeptUntil ? utc.date(planKeptUntil, `long`) : ``
+  return compose(brand, w, to, w.t.t(subject, values), [
+    { key: what, values },
+    { key: next, values: { ...values, date: kept || values.date } },
+    { link, label: w.t.t(`Mail.openGroup`) },
+  ])
 }
