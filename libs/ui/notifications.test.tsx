@@ -10,7 +10,13 @@ import { render } from "preact"
 import { act } from "preact/test-utils"
 import { renderToString } from "preact-render-to-string"
 import { AppFrame } from "./frame.tsx"
-import { type NotificationRow, NotificationsScreen } from "./notifications-screen.tsx"
+import { I18nContext } from "@spy4x/preact-ui/i18n"
+import { PSEUDO, untranslated } from "./i18n-testing.ts"
+import {
+  NOTIFICATION_MESSAGES,
+  type NotificationRow,
+  NotificationsScreen,
+} from "./notifications-screen.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
 const own = { document: globalThis.document }
@@ -58,7 +64,7 @@ describe("notifications screen", () => {
       notifications: [row(2, { link: "/groups/g-1" }), row(1)],
       unreadCount: 2,
     }))
-    expect(page).toContain("You were removed from “Family”.")
+    expect(page).toContain("You were removed from “<bdi>Family</bdi>”.")
     expect(page).toContain(`href="/groups/g-1"`)
     expect(page).toContain("3 hours ago")
   })
@@ -265,5 +271,56 @@ describe("Notifications entry", () => {
 
   it("has no Notifications entry in a frame that was not given a count", () => {
     expect(bells(frame())).toEqual([])
+  })
+})
+
+describe("notifications screen in another language", () => {
+  it("shows no English outside the catalogs: an en-XA render of every kind of notification is all pseudo-language or data", async () => {
+    const kinds: Partial<NotificationRow>[] = [
+      { kind: "invitation.received", payload: { groupName: "Family", role: "editor" } },
+      { kind: "invitation.received", payload: { groupName: "Family", role: "unheard-of" } },
+      { kind: "group.role_changed", payload: { groupName: "Family", from: "viewer", to: "admin" } },
+      { kind: "group.removed", payload: { groupName: "Family" } },
+      { kind: "group.ownership_received", payload: { groupName: "Family" } },
+      { kind: "guest.reminder", payload: { title: "Keep the note you just wrote", text: "…" } },
+      { kind: "account.data_export_ready", payload: { expiresAt: "2026-10-30T00:00:00Z" } },
+      { kind: "from.the.future", payload: {} },
+    ]
+    const root = document.createElement("div")
+    document.body.append(root)
+    await act(() =>
+      render(
+        <I18nContext.Provider value={PSEUDO}>
+          {screen({
+            notifications: kinds.map((parts, index) => row(index + 1, parts)),
+            unreadCount: 8,
+            hasMore: true,
+            onLoadMore: noop,
+            error: NOTIFICATION_MESSAGES.load,
+          })}
+        </I18nContext.Provider>,
+        root,
+      )
+    )
+
+    // Data: the group's name, and the dates and times the format writes.
+    const times = [...root.querySelectorAll("time")].flatMap((time) => [
+      time.textContent ?? "",
+      time.getAttribute("title") ?? "",
+    ])
+    expect(untranslated(root, ["Family", ...times.filter(Boolean)])).toEqual([])
+    const page = root.textContent ?? ""
+    for (
+      const key of [
+        "NotificationsScreen.loadFailed",
+        "NotificationsScreen.reminderFirstNote",
+        "NotificationsScreen.unknown",
+        "NotificationsScreen.loadMore",
+      ]
+    ) {
+      expect(page).toContain(PSEUDO.t(key))
+    }
+    await act(() => render(null, root))
+    root.remove()
   })
 })

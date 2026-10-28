@@ -486,9 +486,12 @@ A change that a person should hear about, and did not make themselves, writes a 
 1. **Same transaction.** Call `createNotification(tx, …)` from `@server/notifications` inside the
    transaction of the change, after the change, so the row exists exactly when the change does.
    The group writers call a helper from `group-notifications.ts` after their `audit()` line.
-2. **A kind, a payload, a link.** Add the kind to `NotificationKind` and its sentence to
-   `describeNotification` in `libs/domain/notifications`. The payload holds only the facts the
-   sentence needs, never a note body or an address. The link is an in-app path; the database and
+2. **A kind, a payload, a link.** Add the kind to `NotificationKind` in
+   `libs/domain/notifications`. Its sentence on screen goes in `notificationSentence`
+   (`libs/ui/notifications-screen.tsx`), with its key in all six `i18n/app/*.json`; a kind
+   missing there shows a generic line. Add it to `describeNotification` too, which writes the
+   Telegram message. The payload holds only the facts the sentence needs, never a note body or an
+   address. The link is an in-app path; the database and
    `createNotification` both refuse anything else.
 3. **Nothing else.** The row announces itself: `createNotification` sends the Postgres
    notification `user_notification` in the same transaction, the API turns it into a hint on the
@@ -537,8 +540,9 @@ person has dismissed the card the page stops asking.
 
 Dismiss and the end of the tour are kept on the person's `users` row (`onboarding_dismissed_at`,
 `onboarding_tour_seen_at`) through the `onboarding.dismiss` and `onboarding.tour-seen` commands, so
-both follow the person to every device. Add a screen to the tour in `TOUR_STEPS`, with the CSS
-selector of the control that opens it.
+both follow the person to every device. Add a screen to the tour in `tourSteps`
+(`libs/ui/onboarding-card.tsx`), with the CSS selector of the control that opens it and its title
+and text keys in all six `i18n/app/*.json`.
 
 ## Showing it in the public demo
 

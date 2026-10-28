@@ -1,40 +1,51 @@
 import { useEffect, useRef } from "preact/hooks"
 import { useLocation, useSearch } from "wouter-preact"
-import {
-  billingDate,
-  BillingStatus,
-  findPlan,
-  FREE_PLAN_ID,
-  type GroupBilling,
-} from "@domain/billing"
-import { GroupBillingPanel } from "@ui/billing-screen.tsx"
+import { BillingStatus, findPlan, FREE_PLAN_ID, type GroupBilling } from "@domain/billing"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import type { Formatters } from "@spy4x/time/format"
+import { GroupBillingPanel, planName } from "@ui/billing-screen.tsx"
+import { useAppText } from "@ui/i18n.ts"
 import { GROUP_PATHS } from "@ui/progressive.tsx"
 import { billingStore } from "../state/billing.ts"
 import { groupsStore } from "../state/groups.ts"
 import { toasts } from "../state/toasts.ts"
+import { preferencesState } from "../state/preferences.ts"
 
 /** The query the checkout's success address carries, so the tab knows the owner just paid. */
 export const CHECKOUT_DONE = "checkout=done"
 
 /**
  * What the toast says once the provider confirmed the owner's checkout: a started trial is no
- * payment, so it names the trial and its end; a paid start names the plan.
+ * payment, so it names the trial and its end; a paid start names the plan. In `t`'s words, the
+ * group's name isolated from the sentence's direction.
  */
 export function checkoutDoneToast(
+  t: Translator<string>,
+  format: Formatters,
   billing: GroupBilling,
   groupName: string,
 ): { title: string; body: string } {
-  const found = findPlan(billing.planId)
-  const plan = found?.name ?? billing.planId
+  const plan = planName(t, billing.planId)
+  const group = `\u2068${groupName}\u2069`
   const trialEnd = billing.status === BillingStatus.Trialing
     ? billing.trialEnd ?? billing.currentPeriodEnd
     : null
   return trialEnd
     ? {
-      title: `Your ${found?.trialDays ?? 14}-day ${plan} trial has started`,
-      body: `"${groupName}" is on ${plan} until ${billingDate(trialEnd)}.`,
+      title: t.t(`GroupBillingView.trialStarted`, {
+        count: findPlan(billing.planId)?.trialDays ?? 14,
+        plan,
+      }),
+      body: t.t(`GroupBillingView.trialUntil`, {
+        group,
+        plan,
+        date: format.utc().date(trialEnd, `long`),
+      }),
     }
-    : { title: `You're on ${plan}`, body: `Stripe confirmed the payment for "${groupName}".` }
+    : {
+      title: t.t(`GroupBillingView.paid`, { plan }),
+      body: t.t(`GroupBillingView.paidText`, { group }),
+    }
 }
 
 /**
@@ -73,6 +84,7 @@ export function GroupBillingView(
   const [, navigate] = useLocation()
   const search = useSearch()
   const { billing, error, errorId } = useGroupBilling(groupId)
+  const t = useAppText()
   useEffect(() => void billingStore.loadTrial(), [])
   const waiting = useRef(new URLSearchParams(search).get("checkout") === "done")
   useEffect(() => {
@@ -82,7 +94,10 @@ export function GroupBillingView(
   useEffect(() => {
     if (!waiting.current || !paid) return
     waiting.current = false
-    toasts.success({ ...checkoutDoneToast(billing, groupName), dataE2E: "billing-upgraded" })
+    toasts.success({
+      ...checkoutDoneToast(t, preferencesState.format.value, billing, groupName),
+      dataE2E: "billing-upgraded",
+    })
   }, [paid])
   return (
     <GroupBillingPanel

@@ -10,24 +10,25 @@ import {
   parseApiTokenCreateRequest,
 } from "@domain/api-tokens"
 import type { ApiTokenFormValues } from "@ui/api-token-new-screen.tsx"
+import { API_TOKEN_MESSAGES } from "@ui/api-tokens.tsx"
 import { apiFetch } from "./api.ts"
 import { type LocalReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
 
-/** The message shown when reading or revoking failed without a message of its own. */
-export const API_TOKENS_FAILURE = "Something went wrong with your API tokens."
+/** The message shown when reading or revoking failed without a message of its own, by its key. */
+export const API_TOKENS_FAILURE = API_TOKEN_MESSAGES.failed
 
-/** The message under the form when a create failed without a message of its own. */
-export const CREATE_FAILURE = "Could not create the token. Try again."
+/** The message under the form when a create failed without a message of its own, by its key. */
+export const CREATE_FAILURE = API_TOKEN_MESSAGES.createFailed
 
-/** The message under the name when the form is sent without one. */
-export const NAME_MISSING = "Enter a name."
+/** The message under the name when the form is sent without one, by its key. */
+export const NAME_MISSING = API_TOKEN_MESSAGES.nameMissing
 
-/** The message under the password when the form is sent without one. */
-export const PASSWORD_MISSING = "Enter your password to create a token."
+/** The message under the password when the form is sent without one, by its key. */
+export const PASSWORD_MISSING = API_TOKEN_MESSAGES.passwordMissing
 
-/** One call's outcome: the data, or the message to show. */
+/** One call's outcome: the data, or the message to show (the API's, or a catalog key). */
 export type ApiTokensResult<T> = { ok: true; data: T } | {
   ok: false
   error: string

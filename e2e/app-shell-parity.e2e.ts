@@ -17,7 +17,7 @@ const password = "Passw0rd!"
 const OPERATOR = 2
 
 /**
- * The onboarding tour's targets in the rail's bottom zone, as `TOUR_STEPS` in
+ * The onboarding tour's targets in the rail's bottom zone, as `tourSteps` in
  * `libs/ui/onboarding-card.tsx` names them (its unit test pins the same strings). A step whose
  * target matches nothing loses its spotlight without failing anything else.
  */

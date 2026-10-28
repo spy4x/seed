@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -14,7 +13,9 @@ import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import { RadioGroup } from "@spy4x/preact-ui/radio"
 import { API_TOKEN_EXPIRY_DAYS, type ApiToken, ApiTokenAccess } from "@domain/api-tokens"
-import { ApiDocsLink } from "./api-tokens.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { API_TOKEN_MESSAGES, ApiDocsLink, tokenMessage } from "./api-tokens.tsx"
+import { useAppText } from "./i18n.ts"
 import { type Navigate, profilePath, ScreenForm } from "./progressive.tsx"
 import { FORM_WIDTH, useWaited } from "./tag-editor-screen.tsx"
 
@@ -36,7 +37,10 @@ export interface ApiTokenGroupOption {
   name: string
 }
 
-/** The create form's errors: one per field that can be refused, and one for the form. */
+/**
+ * The create form's errors: one per field that can be refused, and one for the form. Each is one of
+ * {@link API_TOKEN_MESSAGES}, shown in the person's language, or the API's own message.
+ */
 export interface ApiTokenFormErrors {
   name: string | null
   /** The password is missing or not the current one. */
@@ -71,23 +75,12 @@ export interface ApiTokenNewScreenProps {
   docsHref?: string | null
 }
 
-/** The words a create needs a connection for; the notice and a refused submit say the same. */
-export const API_TOKEN_OFFLINE =
-  "Creating a token needs a connection. Try again when you are back online."
+/**
+ * The words a create needs a connection for, by key; the notice and a refused submit say the same.
+ */
+export const API_TOKEN_OFFLINE = API_TOKEN_MESSAGES.offline
 
 const NEVER = "never"
-
-const EXPIRY_OPTIONS = [
-  ...API_TOKEN_EXPIRY_DAYS.map((days) => ({ value: String(days), label: `${days} days` })),
-  { value: NEVER, label: "Never" },
-]
-
-const ACCESS_OPTIONS = [
-  { value: ApiTokenAccess.READ, label: "Read only" },
-  { value: ApiTokenAccess.WRITE, label: "Read and write" },
-]
-
-const BACK = { href: profilePath("api-tokens"), label: "Back to API tokens" }
 
 /**
  * `/tokens/new`: makes an API token. A token is never edited, so this page only creates. First the
@@ -97,10 +90,11 @@ const BACK = { href: profilePath("api-tokens"), label: "Back to API tokens" }
 export function ApiTokenNewScreen(props: ApiTokenNewScreenProps): JSX.Element {
   const { groups, created, navigate, docsHref } = props
   const waited = useWaited(groups === null)
+  const t = useAppText()
   if (created) {
     return (
       <Stack gap="xl">
-        <PageHeader title="Copy your token" titleDataE2E="api-token-new-title" />
+        <PageHeader title={t.t(`ApiTokenNewScreen.copyTitle`)} titleDataE2E="api-token-new-title" />
         <CreatedSecret secret={created.secret} onDone={props.onDone} docsHref={docsHref} />
       </Stack>
     )
@@ -108,21 +102,23 @@ export function ApiTokenNewScreen(props: ApiTokenNewScreenProps): JSX.Element {
   return (
     <Stack gap="xl">
       <PageHeader
-        title="New API token"
+        title={t.t(`ApiTokenNewScreen.title`)}
         titleDataE2E="api-token-new-title"
-        back={BACK}
+        back={{ href: profilePath("api-tokens"), label: t.t(`ApiTokenNewScreen.back`) }}
         navigate={navigate}
       />
       {docsHref && (
         <p class="text-sm text-muted">
-          A token lets a script use one group through the API.{" "}
-          <ApiDocsLink href={docsHref} dataE2E="api-token-docs">Read the API docs</ApiDocsLink>
+          {t.t(`ApiTokenNewScreen.intro`)}{" "}
+          <ApiDocsLink href={docsHref} dataE2E="api-token-docs">
+            {t.t(`ApiTokenNewScreen.docs`)}
+          </ApiDocsLink>
         </p>
       )}
       {groups === null
         ? waited && (
           <div data-e2e="api-token-loading">
-            <p role="status" class="sr-only">Loading your groups…</p>
+            <p role="status" class="sr-only">{t.t(`ApiTokenNewScreen.loadingGroups`)}</p>
             <LoadingSkeleton rows={1} class={FORM_WIDTH} />
           </div>
         )
@@ -133,10 +129,10 @@ export function ApiTokenNewScreen(props: ApiTokenNewScreenProps): JSX.Element {
               <EmptyState
                 inset
                 headingLevel={2}
-                title="You are not in a group you can make a token for."
+                title={t.t(`ApiTokenNewScreen.noGroup`)}
                 action={
                   <Button href={profilePath("api-tokens")} navigate={navigate} variant="outline">
-                    Back to profile
+                    {t.t(`ApiTokenNewScreen.backToProfile`)}
                   </Button>
                 }
               />
@@ -154,6 +150,7 @@ function CreateForm(
     & { groups: readonly ApiTokenGroupOption[] },
 ): JSX.Element {
   const box = useRef<HTMLDivElement>(null)
+  const t = useAppText()
   // A refused submit lands the person on the first field to fix, or on the message under the form.
   useEffect(() => {
     const first = errors.name ? "name" : errors.password ? "password" : null
@@ -164,7 +161,7 @@ function CreateForm(
     <>
       {offline && (
         <div data-e2e="api-token-offline" class={FORM_WIDTH}>
-          <Notice title="You are offline">{API_TOKEN_OFFLINE}</Notice>
+          <Notice title={t.t(`ApiTokenNewScreen.offlineTitle`)}>{t.t(API_TOKEN_OFFLINE)}</Notice>
         </div>
       )}
       <ScreenForm pending={pending} onSubmit={onCreate}>
@@ -172,9 +169,9 @@ function CreateForm(
           <Stack>
             <Field
               id="api-token-name"
-              label="Name"
-              hint={`So you can tell your tokens apart, such as "Backup script".`}
-              error={errors.name}
+              label={t.t(`ApiTokenNewScreen.name`)}
+              hint={t.t(`ApiTokenNewScreen.nameHint`)}
+              error={tokenMessage(t, errors.name)}
               required
             >
               <Input
@@ -187,7 +184,7 @@ function CreateForm(
               />
             </Field>
             <RadioGroup
-              legend="Group"
+              legend={t.t(`ApiTokenNewScreen.group`)}
               name="groupId"
               data-e2e="api-token-group"
               options={groups.map((group) => ({ value: group.id, label: group.name }))}
@@ -195,10 +192,13 @@ function CreateForm(
               onChange={(value) => onValueChange("groupId", value)}
             />
             <RadioGroup
-              legend="Access"
+              legend={t.t(`ApiTokenNewScreen.access`)}
               name="access"
               data-e2e="api-token-access"
-              options={ACCESS_OPTIONS}
+              options={[
+                { value: ApiTokenAccess.READ, label: t.t(`ApiTokens.readOnly`) },
+                { value: ApiTokenAccess.WRITE, label: t.t(`ApiTokens.readWrite`) },
+              ]}
               value={values.access}
               onChange={(value) =>
                 onValueChange(
@@ -209,19 +209,25 @@ function CreateForm(
                 )}
             />
             <RadioGroup
-              legend="Expires after"
+              legend={t.t(`ApiTokenNewScreen.expiresAfter`)}
               name="expiresInDays"
               data-e2e="api-token-expiry"
-              options={EXPIRY_OPTIONS}
+              options={[
+                ...API_TOKEN_EXPIRY_DAYS.map((count) => ({
+                  value: String(count),
+                  label: t.t(`ApiTokenNewScreen.days`, { count }),
+                })),
+                { value: NEVER, label: t.t(`ApiTokenNewScreen.never`) },
+              ]}
               value={values.expiresInDays === null ? NEVER : String(values.expiresInDays)}
               onChange={(value) =>
                 onValueChange("expiresInDays", value === NEVER ? null : Number(value))}
             />
             <Field
               id="api-token-password"
-              label="Your password"
-              hint="A token works without your password, so creating one asks for it."
-              error={errors.password}
+              label={t.t(`ApiTokenNewScreen.password`)}
+              hint={t.t(`ApiTokenNewScreen.passwordHint`)}
+              error={tokenMessage(t, errors.password)}
               required
             >
               <Input
@@ -234,7 +240,11 @@ function CreateForm(
                 required
               />
             </Field>
-            <ErrorState focusOnAppear message={errors.form} dataE2E="api-token-error" />
+            <ErrorState
+              focusOnAppear
+              message={tokenMessage(t, errors.form)}
+              dataE2E="api-token-error"
+            />
             {
               // On a phone the primary button is on top at full width, Cancel under it; from `sm`
               // up they are a row at the right, the primary button last.
@@ -247,16 +257,16 @@ function CreateForm(
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                 data-e2e="api-token-cancel"
               >
-                Cancel
+                {t.t(`ApiTokenNewScreen.cancel`)}
               </Button>
               <Button
                 type="submit"
                 class="min-h-11 w-full sm:min-h-9 sm:w-auto"
                 data-e2e="api-token-create"
                 busy={pending}
-                busyLabel="Creating…"
+                busyLabel={t.t(`ApiTokenNewScreen.creating`)}
               >
-                Create token
+                {t.t(`ApiTokenNewScreen.create`)}
               </Button>
             </div>
           </Stack>
@@ -275,22 +285,30 @@ function CreatedSecret(
   { secret, onDone, docsHref }: { secret: string; onDone: () => void; docsHref?: string | null },
 ): JSX.Element {
   const box = useRef<HTMLDivElement>(null)
+  const t = useAppText()
   useEffect(() => {
     box.current?.querySelector<HTMLButtonElement>("button")?.focus()
   }, [])
   return (
     <Stack class={FORM_WIDTH}>
-      <p class="text-sm">
-        Copy this token now and keep it somewhere safe. You will not be able to see it again.
-      </p>
+      <p class="text-sm">{t.t(`ApiTokenNewScreen.copyNow`)}</p>
       <div ref={box} data-e2e="api-token-secret">
-        <CopyBlock text={secret} copyLabel="Copy token" copiedLabel="Token copied" />
+        <CopyBlock
+          text={secret}
+          copyLabel={t.t(`ApiTokenNewScreen.copy`)}
+          copiedLabel={t.t(`ApiTokenNewScreen.copied`)}
+        />
       </div>
       {docsHref && (
         <p class="text-sm text-muted">
-          Send it as <code>Authorization: Bearer &lt;your token&gt;</code>.{" "}
+          <Rich
+            parts={t.parts(`ApiTokenNewScreen.sendAs`, {
+              header: `Authorization: Bearer <${t.t(`ApiTokenNewScreen.yourToken`)}>`,
+            })}
+            tags={{ code: (text) => <code>{text}</code> }}
+          />{" "}
           <ApiDocsLink href={`${docsHref}#quick-start`} dataE2E="api-token-secret-docs">
-            See the quick start
+            {t.t(`ApiTokenNewScreen.quickStart`)}
           </ApiDocsLink>
         </p>
       )}
@@ -301,7 +319,7 @@ function CreatedSecret(
           data-e2e="api-token-done"
           onClick={onDone}
         >
-          Done
+          {t.t(`ApiTokenNewScreen.done`)}
         </Button>
       </div>
     </Stack>
