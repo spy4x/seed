@@ -1,6 +1,6 @@
 import { AuthAuditEventType } from "@domain/identity"
 import {
-  PICTURE_AUDIT_IDENTIFIER,
+  pictureAuditIdentifier,
   type PictureHandlerDependencies,
 } from "../features/profile/picture.ts"
 import { config } from "../services/config.ts"
@@ -29,7 +29,7 @@ export const pictureDependencies: PictureHandlerDependencies = {
         await tx.authAudit.insert({
           userId,
           eventType: AuthAuditEventType.PROFILE_UPDATED,
-          identifier: PICTURE_AUDIT_IDENTIFIER,
+          identifier: pictureAuditIdentifier(picture),
           ip: request.ip || null,
           userAgent: request.userAgent || null,
         })

@@ -26,6 +26,7 @@ import {
   type AdminUserDetail,
   AuthAuditEventType,
   canChangeRoles,
+  PICTURE_AUDIT,
   pictureUrl,
   SIGN_IN_LINK_METHOD,
   TELEGRAM_METHOD,
@@ -764,13 +765,23 @@ export function auditDetail(
 }
 
 /**
- * The title key of a sign-in or sign-up row that a sign-in link wrote (#391), which names the
- * method itself: "Signed in with an e-mail link". `null` for every other row.
+ * The title key of a row whose `identifier` says what happened, so the title names it and the
+ * identifier is not repeated under it: a sign-in or sign-up by e-mail link (#391), "Signed in with
+ * an e-mail link", and the person's own change of profile picture (#453), "Profile picture
+ * changed". `null` for every other row.
  */
-export function linkAuditTitle(eventType: number | null, identifier: string | null): string | null {
-  if (identifier !== SIGN_IN_LINK_METHOD) return null
-  if (eventType === AuthAuditEventType.SIGNED_IN) return `AdminAuditEvent.signedInWithLink`
-  if (eventType === AuthAuditEventType.SIGNED_UP) return `AdminAuditEvent.signedUpWithLink`
+export function identifiedAuditTitle(
+  eventType: number | null,
+  identifier: string | null,
+): string | null {
+  if (identifier === SIGN_IN_LINK_METHOD) {
+    if (eventType === AuthAuditEventType.SIGNED_IN) return `AdminAuditEvent.signedInWithLink`
+    if (eventType === AuthAuditEventType.SIGNED_UP) return `AdminAuditEvent.signedUpWithLink`
+  }
+  if (eventType === AuthAuditEventType.PROFILE_UPDATED) {
+    if (identifier === PICTURE_AUDIT.changed) return `AdminAuditEvent.pictureChanged`
+    if (identifier === PICTURE_AUDIT.removed) return `AdminAuditEvent.pictureRemovedByPerson`
+  }
   return null
 }
 
@@ -784,7 +795,7 @@ export function auditEventTitle(
   eventType: number | null,
   identifier: string | null,
 ): string | null {
-  const key = linkAuditTitle(eventType, identifier) ??
+  const key = identifiedAuditTitle(eventType, identifier) ??
     AUDIT_EVENTS[eventType as AuthAuditEventType] ??
     BILLING_AUDIT_LABELS[eventType as BillingAuditEvent]
   return key ? t.t(key) : null
@@ -799,9 +810,9 @@ function Activity({ detail }: { detail: AdminUserDetail }): JSX.Element {
       empty={t.t(`AdminUser.nothingRecorded`)}
       dataE2E="admin-user-audits"
       items={detail.audits.map((audit) => {
-        const linkTitle = linkAuditTitle(audit.eventType, audit.identifier)
+        const ownTitle = identifiedAuditTitle(audit.eventType, audit.identifier)
         const parts = [
-          !linkTitle && audit.identifier && auditDetail(t, audit.eventType, audit.identifier),
+          !ownTitle && audit.identifier && auditDetail(t, audit.eventType, audit.identifier),
           audit.ip && t.t(`AdminUser.fromIp`, { ip: audit.ip }),
         ].filter(Boolean)
         return {

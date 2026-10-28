@@ -197,6 +197,8 @@
   "AdminAuditEvent.telegramLinked": "Привязан аккаунт Telegram",
   "AdminAuditEvent.telegramUnlinked": "Отвязан аккаунт Telegram",
   "AdminAuditEvent.pictureRemoved": "Оператор удалил фото профиля",
+  "AdminAuditEvent.pictureChanged": "Фото профиля изменено",
+  "AdminAuditEvent.pictureRemovedByPerson": "Фото профиля удалено",
   "AdminAuditEvent.signedInWithLink": "Вход по ссылке из письма",
   "AdminAuditEvent.signedUpWithLink": "Регистрация по ссылке из письма",
   "AdminAuditEvent.paymentRefunded": "Оператор вернул платёж",
