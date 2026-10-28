@@ -119,14 +119,35 @@ describe("parseGroupFile", () => {
   it("names the entry and the field of an invalid note, counting from one", () => {
     const { problems } = problemsOf(file({ notes: [note("Fine"), { ...note("x"), title: 5 }] }))
     expect(problems).toHaveLength(1)
-    expect(problems[0]).toMatchObject({ kind: "invalid", where: "Note 2" })
+    expect(problems[0]).toMatchObject({
+      kind: "invalid",
+      where: "Note 2",
+      place: { part: "notes", index: 2 },
+      issue: { code: "domain", field: "title" },
+    })
     expect((problems[0] as { problem: string }).problem).toContain("title")
   })
 
-  it("refuses a note over the create rules, such as an empty title", () => {
+  it("refuses a note over the create rules, such as an empty title, naming the rule by code", () => {
     expect(problemsOf(file({ notes: [note("   ")] })).problems[0]).toMatchObject({
       where: "Note 1",
+      place: { part: "notes", index: 1 },
+      issue: { code: "required", field: "title" },
     })
+  })
+
+  it("names an unknown part and an unknown setting by place and code, with the key", () => {
+    const { problems } = problemsOf(file({ invoices: [] }, { group: { name: "A", pink: true } }))
+    expect(problems).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        place: { part: "file" },
+        issue: { code: "unknownKey", values: { key: "invoices" } },
+      }),
+      expect.objectContaining({
+        place: { part: "settings" },
+        issue: { code: "unknownKey", values: { key: "pink" } },
+      }),
+    ]))
   })
 
   it("refuses an unknown part, an unknown field and bad settings", () => {
@@ -143,19 +164,32 @@ describe("parseGroupFile", () => {
 
   it("refuses two tags of the same name, without regard to case", () => {
     expect(problemsOf(file({ tags: [tag("Home"), tag("home")] })).problems).toEqual([
-      { kind: "invalid", where: "Tag 2", problem: "another tag in the file is called this" },
+      {
+        kind: "invalid",
+        where: "Tag 2",
+        problem: "another tag in the file is called this",
+        place: { part: "tags", index: 2 },
+        issue: { code: "duplicateTagName" },
+      },
     ])
   })
 
   it("refuses more tags than a group holds", () => {
     const tags = Array.from({ length: TAG_MAX_PER_GROUP + 1 }, (_, index) => tag(`Tag ${index}`))
-    expect(problemsOf(file({ tags })).problems[0]).toMatchObject({ where: "Tags" })
+    expect(problemsOf(file({ tags })).problems[0]).toMatchObject({
+      where: "Tags",
+      place: { part: "tags" },
+      issue: {
+        code: "tooManyTags",
+        values: { count: TAG_MAX_PER_GROUP + 1, max: TAG_MAX_PER_GROUP },
+      },
+    })
   })
 
   it("refuses two entries of one kind with the same id", () => {
     const id = uuidV7()
     expect(problemsOf(file({ notes: [note("A", [], id), note("B", [], id)] })).problems[0])
-      .toMatchObject({ where: "Note 2" })
+      .toMatchObject({ where: "Note 2", issue: { code: "duplicateId" } })
   })
 
   it("stops reading entries once it has found as many problems as it reports", () => {
@@ -200,6 +234,11 @@ describe("parseGroupFile", () => {
         problem: `the file holds ${
           GROUP_IMPORT_ENTRIES_MAX + 1
         } notes, and an import takes at most ${GROUP_IMPORT_ENTRIES_MAX}`,
+        place: { part: "notes" },
+        issue: {
+          code: "tooManyEntries",
+          values: { count: GROUP_IMPORT_ENTRIES_MAX + 1, max: GROUP_IMPORT_ENTRIES_MAX },
+        },
       }])
     }
     expect(read).toBe(0)

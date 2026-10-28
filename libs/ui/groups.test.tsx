@@ -51,6 +51,7 @@ import {
 import { GroupsScreen, type GroupsScreenProps, NEW_GROUP_PATH } from "./groups-screen.tsx"
 import { InvitationNewScreen } from "./invitation-new-screen.tsx"
 import appEn from "@i18n/app/en.json" with { type: "json" }
+import errorsEn from "@i18n/errors/en.json" with { type: "json" }
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { GROUP_PATHS, SCREEN_PATHS } from "./progressive.tsx"
 import {
@@ -1977,7 +1978,7 @@ describe("group editor, as the server draws it", () => {
 describe("the group screens in the en-XA pseudo-language", () => {
   const PSEUDO = createTranslator({
     language: `en-XA`,
-    catalogs: [uiEn, systemEn, appEn].map((source) => ({
+    catalogs: [uiEn, systemEn, appEn, errorsEn].map((source) => ({
       source: source as Catalog,
       translation: pseudoLocalize(source as Catalog),
     })),
@@ -2311,7 +2312,23 @@ describe("the group screens in the en-XA pseudo-language", () => {
           parts: [{ kind: `notes`, count: 3, one: `note`, other: `notes` }],
         },
       },
-      { step: `refused`, problems: [{ kind: `not_export` }, { kind: `newer_version` }], total: 4 },
+      {
+        step: `refused`,
+        problems: [{ kind: `not_export` }, { kind: `newer_version` }, {
+          kind: `invalid`,
+          where: `Note 3`,
+          problem: `the title is missing`,
+          place: { part: `notes`, index: 3 },
+          issue: { code: `required`, field: `title` },
+        }, {
+          kind: `invalid`,
+          where: `The file`,
+          problem: `it holds "invoices", which this app does not know`,
+          place: { part: `file` },
+          issue: { code: `unknownKey`, values: { key: `invoices` } },
+        }],
+        total: 6,
+      },
       {
         step: `plan`,
         refusal: { entitlement: `notes`, limit: 100 } as unknown as PlanRefusal,
@@ -2335,6 +2352,8 @@ describe("the group screens in the en-XA pseudo-language", () => {
         `GroupImport.title`,
         `GroupImport.checking`,
         [`GroupImport.more`, { count: 2 }],
+        [`ImportPlace.notesEntry`, { index: 3 }],
+        `ImportIssue.required`,
         `GroupImport.planTitle`,
       ],
     )
