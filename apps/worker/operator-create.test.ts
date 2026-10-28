@@ -146,7 +146,7 @@ describe(`readSecret`, () => {
     const typo = fakeInput([`pass\u007fs-word\n`], true)
     expect(await readSecret(typo.input, () => {}, ``)).toBe(`pass-word`)
 
-    const cancelled = fakeInput([`secret\u0003`], true)
+    const cancelled = fakeInput([`secret\u0003more\r`], true)
     expect(await readSecret(cancelled.input, () => {}, ``)).toBe(null)
     expect(cancelled.raw).toEqual([true, false])
   })
