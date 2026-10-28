@@ -12,7 +12,7 @@ Operators write posts in the admin app; the public website shows the published o
 | `libs/server/blog/public-blog.ts`          | The website's reads: live posts only.                                                 |
 | `libs/server/blog/blog-publish-job.ts`     | The `blog.publish` job (registered in `JOBS`), and `queueDueBlogJobs` for lost jobs. |
 | `libs/server/blog/render.ts`               | Markdown to safe HTML and the reading time. The only place a body is rendered.        |
-| `libs/server/blog/sample-posts.ts`         | Three sample posts for `deno task db:seed` in development.                             |
+| `libs/server/blog/sample-posts.ts`         | Sample posts for `deno task db:seed` in development: three in English, and the published one translated into every other language. |
 | `apps/api/routes/admin/blog.ts`            | `/api/admin/blog/*`, behind the operator gate.                                        |
 | `apps/admin/src/modules/blog/`             | The admin pages: the list (`/blog`) and the editor (`/blog/new`, `/blog/:id`).        |
 | `libs/ui/admin-blog-*.tsx`                 | Their screens: the list, the editor and its dialogs.                                  |
@@ -37,11 +37,23 @@ Operators write posts in the admin app; the public website shows the published o
 - Every operator action writes one `audit_events` row (`blog.post_*`) on the operator, shown in
   the audit log.
 
+## Languages and translations
+
+Every post has a `language`, one of the languages the apps ship (`LANGUAGES`), and may name the
+post it translates in `translation_of` (#527). A translation names the original, never another
+translation, and in another language; a post has at most one translation per language. The
+editor's Language and "Translation of" fields set both; anything else is refused with
+`TRANSLATION_INVALID`. Deleting the original keeps its translations as posts of their own.
+
+A post lives at its own language's address: `/blog/<slug>` in the main language, `/<language>/blog/<slug>`
+in any other (`blogPostPath`). Its address in another language answers 301 to that one. Slugs are
+unique across languages.
+
 ## The newsletter send
 
 Publishing with a list ("Also email this post") stores `newsletter_list`. When the post is live,
 the `blog.publish` job queues a newsletter issue: the title, the description, the key points and a
-"Read the post" button to `MPA_DOMAIN/blog/<slug>`. The issue id is the post's id.
+"Read the post" button to the post's own address on `MPA_DOMAIN`. The issue id is the post's id.
 
 A post is emailed **once ever**. The job sets `newsletter_sent_at` and `newsletter_recipients` (the
 confirmed subscribers at that moment) in the same transaction that queues the issue, and never
@@ -58,7 +70,7 @@ The website (`apps/mpa`) renders every blog page on its server, with no JavaScri
 
 | Address        | What                                                                                                   |
 | -------------- | ------------------------------------------------------------------------------------------------------ |
-| `/blog`        | Every live post, newest first; topics as `?topic=` links, whose canonical address stays `/blog`.        |
+| `/blog`        | Every live post in the page's language, newest first; topics as `?topic=` links, whose canonical address stays `/blog`. `/<language>/blog` is the same for that language. |
 | `/blog/<slug>` | One post: trail, dates, reading time, cover, "In short", the body, one call to action and "Read next". |
 | `/rss.xml`     | RSS 2.0 of the newest posts with their full HTML.                                                      |
 
@@ -67,7 +79,11 @@ answers 404 "This post is not here". With no live post, `/blog` says so and keep
 results, and the Blog link, the RSS link, the sitemap entries and the `llms.txt` section stay
 hidden; the website asks the API at most once a minute whether a post is live
 (`blogLinkMiddleware`). Each post page carries `BlogPosting` and `BreadcrumbList` JSON-LD and
-`og:type` `article`.
+`og:type` `article`. Its `inLanguage` is the post's language, and the page names its live
+translations as `hreflang` alternates; a post with none names no alternate. The blog index of a
+language names the indexes of the other languages that have a live post. The Blog link shows on a
+language's pages only while that language has one, and the sitemap lists each language's index
+and each post once, at its own address.
 
 The Lighthouse run (`deno task lighthouse`) measures `/blog` and the sample post `hello-world`.
 It needs no database: `apps/mpa/lighthouse/blog-api.ts` answers the public routes with the dev
