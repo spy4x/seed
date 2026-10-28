@@ -14,6 +14,21 @@ import { type Catalog, stampLocks } from "@spy4x/platform/universal/i18n"
 /** The namespaces: one folder each, `<namespace>/<language>.json`. */
 export const NAMESPACES = [`app`, `admin`, `site`, `mail`, `errors`] as const
 
+/**
+ * A catalog file's text as a catalog. Text that is not JSON fails with the file's name and the fix,
+ * like the other catalog checks, instead of a bare `SyntaxError`.
+ */
+export function parseCatalog(text: string, name: string): Catalog {
+  try {
+    return JSON.parse(text)
+  } catch (error) {
+    throw new Error(
+      `${name} is not valid JSON (${(error as Error).message}). Fix the file, usually a missing ` +
+        `comma or quote, then run \`deno task test\` again.`,
+    )
+  }
+}
+
 /** The English catalog of the namespace folder at `dir`, and every translation in it. */
 export async function readCatalogs(
   dir: URL,
@@ -22,10 +37,16 @@ export async function readCatalogs(
   for await (const entry of Deno.readDir(dir)) {
     const language = entry.name.match(/^(.+)\.json$/)?.[1]
     if (!entry.isFile || !language || language === `en`) continue
-    languages[language] = JSON.parse(await Deno.readTextFile(new URL(entry.name, dir)))
+    languages[language] = await readCatalog(dir, entry.name)
   }
-  const source = JSON.parse(await Deno.readTextFile(new URL(`en.json`, dir)))
+  const source = await readCatalog(dir, `en.json`)
   return { source, languages }
+}
+
+/** One catalog file of the folder at `dir`, named `i18n/<namespace>/<file>` when it is broken. */
+async function readCatalog(dir: URL, file: string): Promise<Catalog> {
+  const namespace = dir.pathname.split(`/`).filter(Boolean).at(-1)
+  return parseCatalog(await Deno.readTextFile(new URL(file, dir)), `i18n/${namespace}/${file}`)
 }
 
 if (import.meta.main) {

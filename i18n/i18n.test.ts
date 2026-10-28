@@ -8,7 +8,7 @@ import { expect } from "@std/expect"
 import { walk } from "@std/fs/walk"
 import { checkCatalogs, findUnusedKeys } from "@spy4x/platform/universal/i18n"
 import { LANGUAGES } from "@domain/identity"
-import { NAMESPACES, readCatalogs } from "./stamp.ts"
+import { NAMESPACES, parseCatalog, readCatalogs } from "./stamp.ts"
 
 const root = new URL(`../`, import.meta.url)
 
@@ -57,4 +57,12 @@ Deno.test(`i18n: every English key is named somewhere in the code`, async () => 
     unused.push(...findUnusedKeys(source, texts).map((key) => `${namespace}: ${key}`))
   }
   expect(unused).toEqual([])
+})
+
+Deno.test(`i18n: a catalog that is not JSON is named, with the fix`, () => {
+  expect(parseCatalog(`{ "Frame.notes": "Notizen" }`, `i18n/app/de.json`))
+    .toEqual({ "Frame.notes": `Notizen` })
+  expect(() => parseCatalog(`{ "Frame.notes": "Notizen", }`, `i18n/app/de.json`)).toThrow(
+    /^i18n\/app\/de\.json is not valid JSON \(.+\)\. Fix the file.+`deno task test` again\.$/,
+  )
 })
