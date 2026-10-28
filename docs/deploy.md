@@ -44,8 +44,8 @@ alone. Data is not touched: it lives in `.volumes`. The base image is now named
 (`docker image rm app/deno-base:<version>`).
 
 Every deploy starts the product first (the database, Valkey, the migration, the API, the worker,
-the SPA, and the website with the `mpa` profile), then everything else. When a monitoring
-container cannot start, the product already runs on the new version; the deploy still
+the SPA unless `SPA=false`, and the website with the `mpa` profile), then everything else. When a
+monitoring container cannot start, the product already runs on the new version; the deploy still
 fails, and its last lines name the services that are not up. A check that cannot be made (Compose
 answers in a form the script does not read, as `podman-compose` may) is skipped, and the deploy
 runs as one `compose up`, as it did before.
@@ -84,6 +84,50 @@ The template usually deploys behind a Traefik that several projects share. If th
 defines a resolver, do not start the proxy compose file: set `TRAEFIK_CERT_RESOLVER` to the name it
 defines. If that Traefik defines none, copy the three `--certificatesresolvers.*` flags from
 `compose.proxy.yml` into its command.
+
+## The first operator
+
+`deno task operator:create <address>` makes a person an administrator of the admin app. When
+nobody signs in with the address, it creates the account, its address proven, with a password it
+asks for. It needs no mail, so it is how a product without mail or without sign-up gets its first
+operator. Run it on the server, in `PATH_ON_SERVER`, in the worker container, which has the
+database and `AUTH_PEPPER`:
+
+```sh
+deno task compose exec worker deno task operator:create seller@example.com
+```
+
+It asks for the password twice and shows nothing typed. From a script, send the password as the
+first line of standard input and add `-T`, so Compose gives the command no terminal. Keep the
+password out of the command line, where the shell history and the process list would keep it:
+
+```sh
+ssh <SSH_TO_SERVER> 'cd <PATH_ON_SERVER> && deno task compose exec -T worker deno task operator:create seller@example.com' < password.txt
+```
+
+The password is 8 to 50 characters, as at sign-up. The person signs in to the admin app at
+`ADMIN_DOMAIN` with the address and that password. When somebody signs in with the address
+already, the command makes them an administrator and asks for nothing: their password stays as it
+is. Running it again changes nothing. Every role change writes an audit row on the person naming
+`cli:operator-create`. To give a lower role, use `deno task user:role` ([apps.md](apps.md)).
+
+## Without the SPA
+
+A product that is a website and its admin panel only, with no signed-in customers, sets
+`SPA=false` in the env file:
+
+- Compose runs no SPA container: every `deno task compose up`, and so every deploy, scales it to
+  none, and stops and removes one that runs. Traefik then has no router for the SPA. The API keeps
+  its router on `DOMAIN`, for the webhooks and the file store's links. The SPA's image is still
+  built on a deploy.
+- The API answers 404 to sign-up and every other route under `/api/auth` on every host but
+  `ADMIN_DOMAIN`: the password sign-up, sign-in links, Google and GitHub, guests and passkeys.
+  Nobody can make an account or sign in there.
+- The admin app's sign-in on `ADMIN_DOMAIN` works as before. Its first operator comes from
+  [`deno task operator:create`](#the-first-operator).
+
+Any other value, or none, runs the SPA. The website's links to sign-in and sign-up lead to the SPA,
+so a product without it removes them from its pages.
 
 ## Admin consoles
 

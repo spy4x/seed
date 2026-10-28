@@ -55,7 +55,9 @@ and above open the admin app. To give someone a role, run
 finds the person by the address they sign in with and exits with 1 when nobody does. A change
 writes an audit row on the person naming the script (`cli:user-role`). In the admin app, an
 administrator can give a role below their own; an administrator is made only with the script,
-the development seed, or, on the public demo, `DEMO_ADMIN_PASSWORD` ([demo.md](demo.md)).
+`deno task operator:create`, which also creates the account when nobody signs in with the address
+([deploy.md](deploy.md#the-first-operator)), the development seed, or, on the public demo,
+`DEMO_ADMIN_PASSWORD` ([demo.md](demo.md)).
 
 To deploy it, add `admin` to `COMPOSE_PROFILES` in the env file and set `ADMIN_DOMAIN` to the
 app's host, such as `admin.example.com`, then run `deno task deploy`. Compose builds the `admin`
