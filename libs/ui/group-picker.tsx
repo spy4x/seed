@@ -49,9 +49,7 @@ function SwitcherMark({ group }: { group: PickerGroup }): JSX.Element {
 
 /** The switcher's accessible name: `Group: Home`, or the visible `Choose a group` without one. */
 export function switcherLabel(t: Translator<string>, selected: PickerGroup | null): string {
-  return selected
-    ? t.t(`GroupPicker.label`, { name: selected.name })
-    : t.t(`GroupPicker.choose`)
+  return selected ? t.t(`GroupPicker.label`, { name: selected.name }) : t.t(`GroupPicker.choose`)
 }
 
 /** The switcher's tooltip: the group's name and the person's role there, `Home · Owner`. */

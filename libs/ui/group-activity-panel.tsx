@@ -191,7 +191,10 @@ export function activityMessage(event: Pick<ActivityEvent, "kind" | "details">):
         }
         : { ...one(`GroupActivity.roleChanged`), someone: `GroupActivity.roleChangedSomeone` }
     case "group.member_removed":
-      return { ...one(`GroupActivity.memberRemoved`), someone: `GroupActivity.memberRemovedSomeone` }
+      return {
+        ...one(`GroupActivity.memberRemoved`),
+        someone: `GroupActivity.memberRemovedSomeone`,
+      }
     case "group.member_left":
       return one(`GroupActivity.memberLeft`)
     case "group.ownership_transferred":
@@ -256,7 +259,9 @@ export function activityMessage(event: Pick<ActivityEvent, "kind" | "details">):
       if (title) return one(`GroupActivity.fileRemovedUnnamed`, { title })
       return one(`GroupActivity.fileRemovedUnnamedNoNote`)
     case "tag.created":
-      return name ? one(`GroupActivity.tagCreated`, { name }) : one(`GroupActivity.tagCreatedUnnamed`)
+      return name
+        ? one(`GroupActivity.tagCreated`, { name })
+        : one(`GroupActivity.tagCreatedUnnamed`)
     case "tag.updated": {
       const from = text(details.from)
       if (from && name) return one(`GroupActivity.tagRenamed`, { from, name })
@@ -269,7 +274,9 @@ export function activityMessage(event: Pick<ActivityEvent, "kind" | "details">):
       const notes = typeof details.notes === "number" && details.notes > 0 ? details.notes : null
       if (name && notes) return one(`GroupActivity.tagDeletedCarried`, { name, count: notes })
       if (notes) return one(`GroupActivity.tagDeletedUnnamedCarried`, { count: notes })
-      return name ? one(`GroupActivity.tagDeleted`, { name }) : one(`GroupActivity.tagDeletedUnnamed`)
+      return name
+        ? one(`GroupActivity.tagDeleted`, { name })
+        : one(`GroupActivity.tagDeletedUnnamed`)
     }
     default:
       return one(`GroupActivity.unknown`)

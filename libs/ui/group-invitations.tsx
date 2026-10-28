@@ -721,12 +721,17 @@ export function MyInvitationsSection(
                     <p class="text-sm text-muted">
                       <Rich
                         parts={t.parts(
-                          inviter ? `GroupInvitations.invitedYouAs` : `GroupInvitations.invitedYouAsSomeone`,
+                          inviter
+                            ? `GroupInvitations.invitedYouAs`
+                            : `GroupInvitations.invitedYouAsSomeone`,
                           { name: inviter, role: roleName(t, invitation.role) },
                         )}
                         tags={{
                           name: (name) => (
-                            <bdi translate={inviter ? false : undefined} data-e2e="invitation-inviter">
+                            <bdi
+                              translate={inviter ? false : undefined}
+                              data-e2e="invitation-inviter"
+                            >
                               {name}
                             </bdi>
                           ),

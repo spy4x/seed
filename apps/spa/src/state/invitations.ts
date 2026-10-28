@@ -38,7 +38,6 @@ type Outcome<T> =
 /** Which invitation an answer is for: the token of a link, or the id of one sent to an address. */
 export type InvitationRef = { token: string } | { invitationId: string }
 
-
 function groupPath(groupId: string, rest = ""): string {
   return `/api/groups/${encodeURIComponent(groupId)}/invitations${rest}`
 }

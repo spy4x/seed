@@ -192,7 +192,11 @@ export function GroupsScreen(
         )
         : (
           <Card>
-            <ul class="divide-y divide-subtle" data-e2e="group-list" aria-label={t.t(`Groups.listLabel`)}>
+            <ul
+              class="divide-y divide-subtle"
+              data-e2e="group-list"
+              aria-label={t.t(`Groups.listLabel`)}
+            >
               {groups.map((group) => (
                 <GroupItem
                   key={group.id}

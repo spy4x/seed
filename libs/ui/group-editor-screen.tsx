@@ -430,7 +430,11 @@ function ExistingGroup(props: GroupEditorScreenProps & { group: GroupRow }): JSX
           setDialog(Dialog.DELETE)
         }}
       >
-        <MenuText text={t.t(`GroupEditor.delete`)} hint={deleteBlocked} hintDataE2E="group-delete-why" />
+        <MenuText
+          text={t.t(`GroupEditor.delete`)}
+          hint={deleteBlocked}
+          hintDataE2E="group-delete-why"
+        />
       </DropdownItem>
     ),
   ].filter(Boolean)

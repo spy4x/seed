@@ -76,7 +76,10 @@ export function fileContents(
 ): string {
   const words = parts.map((part) => counted(t, part))
   if (settings) words.push(t.t(`GroupImport.settings`))
-  const format = new Intl.ListFormat(t.language, { style: `long`, type: type === `list` ? `conjunction` : `unit` })
+  const format = new Intl.ListFormat(t.language, {
+    style: `long`,
+    type: type === `list` ? `conjunction` : `unit`,
+  })
   return format.format(words)
 }
 
@@ -271,7 +274,9 @@ function Step(
                       </li>
                     ))}
                     {more > 0 && (
-                      <li data-e2e="group-import-more">{t.t(`GroupImport.more`, { count: more })}</li>
+                      <li data-e2e="group-import-more">
+                        {t.t(`GroupImport.more`, { count: more })}
+                      </li>
                     )}
                   </ul>
                 )

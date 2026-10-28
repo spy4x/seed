@@ -93,9 +93,7 @@ export function createActivityStore(
       nextCursor.value = page.nextCursor
     } catch (cause) {
       if (read !== reads) return
-      error.value = cause instanceof Error
-        ? cause.message
-        : appText(`GroupActivity.loadMoreFailed`)
+      error.value = cause instanceof Error ? cause.message : appText(`GroupActivity.loadMoreFailed`)
     } finally {
       if (read === reads) loadingMore.value = false
     }
