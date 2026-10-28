@@ -2,6 +2,7 @@ import type postgres from "postgres"
 import type { EmailSender } from "@spy4x/email/sender"
 import { ApiTokenAccess } from "@domain/api-tokens"
 import { apiTokenCreatedMail, type MailBrand } from "../mail/mail.ts"
+import { readMailReader } from "../mail/reader.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
 
 /** The job that tells a person an API token was created. Its aggregate id is the token's id. */
@@ -31,6 +32,7 @@ interface TokenRow extends postgres.Row {
   access: number
   expiresAt: Date | null
   email: string | null
+  userId: number
 }
 
 /**
@@ -46,7 +48,7 @@ export function apiTokenCreatedMailJob(deps: ApiTokenCreatedMailDeps): JobHandle
     if (!deps.sender) return
     const [token] = await sql<TokenRow[]>`
       SELECT api_tokens.name, groups.name AS "groupName", api_tokens.access,
-        api_tokens.expires_at AS "expiresAt", (
+        api_tokens.expires_at AS "expiresAt", api_tokens.user_id AS "userId", (
           SELECT auth_keys.proven_email FROM auth_keys
           WHERE auth_keys.user_id = api_tokens.user_id AND auth_keys.proven_email IS NOT NULL
           ORDER BY auth_keys.id
@@ -67,6 +69,7 @@ export function apiTokenCreatedMailJob(deps: ApiTokenCreatedMailDeps): JobHandle
       groupName: token.groupName,
       canWrite: token.access === ApiTokenAccess.WRITE,
       expiresAt: token.expiresAt,
+      reader: await readMailReader(sql, token.userId),
     }))
     if (!result.ok) {
       deps.log("error: an API token mail was not sent and will be retried")

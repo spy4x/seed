@@ -12,6 +12,7 @@ import { requireDbConnection } from "@spy4x/server/db/testing"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import {
   AuthAuditEventType,
+  DEFAULT_PREFERENCES,
   type GuestSwitchResponse,
   SIGN_IN_LINK_METHOD,
   UserMFAStatus,
@@ -29,6 +30,7 @@ import type { AuthRateLimits } from "../../apps/api/middlewares/auth-rate-limits
 import type { APIContext } from "../../apps/api/_types.ts"
 import { createOutboxProcessor } from "../../libs/server/jobs/wiring.ts"
 import { SIGN_IN_LINK_PATH } from "../../libs/server/auth/sign-in-links.ts"
+import { enqueueSignInLinkMail } from "../../libs/server/jobs/sign-in-link-mail.ts"
 import { readAdminUserParts } from "../../libs/server/auth/admin-users.ts"
 import { applyMigrations } from "./migrations.ts"
 
@@ -119,8 +121,11 @@ interface Fixture {
   sender: EmailSender & { sent: EmailMessage[] }
   /** A browser with its own cookie jar. */
   browser(): Browser
-  /** Asks for a link to `email` from `browser`, runs the worker, and answers the link's token. */
-  linkFor(browser: Browser, email: string, next?: string): Promise<string>
+  /**
+   * Asks for a link to `email` from `browser`, from a page in `language` when given, runs the
+   * worker, and answers the link's token.
+   */
+  linkFor(browser: Browser, email: string, next?: string, language?: string): Promise<string>
   /** A full account that signs in with `email` and {@link PASSWORD}, its address proven or not. */
   account(email: string, proven?: boolean): Promise<number>
   count(table: string): Promise<number>
@@ -155,8 +160,8 @@ async function withFixture(body: (fixture: Fixture) => Promise<void>): Promise<v
         totpFailures: openLockout,
         passwordFailures: openLockout,
         requestPasswordReset: () => Promise.resolve(),
-        requestSignInLink: (email, next, requestedBy) =>
-          new AppDbBase({ sql }).signInLink.queue(email, next, requestedBy),
+        requestSignInLink: (email, next, requestedBy, language) =>
+          enqueueSignInLinkMail(sql, email, next, requestedBy, language),
         emailCodeFailures: openLockout,
         requestEmailCode: () => Promise.resolve(),
       }),
@@ -208,8 +213,8 @@ async function withFixture(body: (fixture: Fixture) => Promise<void>): Promise<v
       sql,
       sender,
       browser,
-      async linkFor(browser, email, next) {
-        const asked = await browser.call("POST", "/auth/link", { email, next })
+      async linkFor(browser, email, next, language) {
+        const asked = await browser.call("POST", "/auth/link", { email, next, language })
         expect(asked.status).toBe(200)
         await processor.drainOnce()
         const mail = sender.sent.findLast((sent) => sent.to === email)
@@ -263,6 +268,28 @@ Deno.test("a link request writes the same rows and sends the same mail for a kno
     expect(await fixture.count("auth_users")).toBe(1)
     expect(await fixture.count("auth_sessions")).toBe(0)
     expect(await fixture.count("auth_audits")).toBe(0)
+  })
+})
+
+Deno.test("a link mail to an account is in the account's saved language, not the asking page's", async () => {
+  await withFixture(async (fixture) => {
+    const userId = await fixture.account("ann@example.com")
+    await fixture.sql`
+      INSERT INTO user_preferences (user_id, value, version)
+      VALUES (${userId}, ${fixture.sql.json({ ...DEFAULT_PREFERENCES, language: "de" })}, 1)
+    `
+    await fixture.linkFor(fixture.browser(), "ann@example.com", undefined, "es")
+
+    expect(fixture.sender.sent.at(-1)!.subject).toBe("Dein Anmeldelink für app.example.com")
+  })
+})
+
+Deno.test("a link mail to an address with no account is in the asking page's language", async () => {
+  await withFixture(async (fixture) => {
+    await fixture.linkFor(fixture.browser(), "new@example.com", undefined, "es")
+
+    expect(fixture.sender.sent.at(-1)!.subject)
+      .toBe("Tu enlace para iniciar sesión en app.example.com")
   })
 })
 

@@ -22,6 +22,7 @@ import {
   signalUnknownPasskey,
 } from "@spy4x/platform/browser/passkey"
 import type { KeyValueStore } from "@spy4x/platform/universal/key-value-store"
+import { languages } from "../i18n.ts"
 import { apiFetch } from "./api.ts"
 import { PendingSecondFactor, sessionState, SessionUser } from "./session.ts"
 
@@ -246,7 +247,8 @@ export async function signUp(email: string, password: string): Promise<SignUpSte
   try {
     const result = await apiFetch<ApiSuccessResponse>("/api/auth/password/sign-up", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      // The code mail is written in the language the page shows now (#277).
+      body: JSON.stringify({ email, password, language: languages.translator.peek().language }),
     })
     return result.ok ? { ok: true } : { ok: false, error: result.error.message }
   } catch (_unreachable) {
@@ -376,7 +378,12 @@ export async function requestSignInLink(
   try {
     const result = await apiFetch<ApiSuccessResponse>("/api/auth/link", {
       method: "POST",
-      body: JSON.stringify(next === null ? { email } : { email, next }),
+      // The link's mail is written in the language the page shows now (#277).
+      body: JSON.stringify({
+        email,
+        ...(next === null ? {} : { next }),
+        language: languages.translator.peek().language,
+      }),
     })
     if (result.ok) return { ok: true }
     return { ok: false, error: ownMessage(result), field: result.status === 400 }

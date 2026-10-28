@@ -72,8 +72,14 @@ export interface AuthRouteDependencies {
    * Queues a sign-in link for a normalised address, with the checked page to open after sign-in
    * (#391). The same work for every address: the link decides what happens once it is opened.
    * `requestedBy` is the guest account that asks, else `null`: a guest uses only a link it asked for.
+   * `language` is the asking page's, for the mail (#277); `null` when it sent none.
    */
-  requestSignInLink(email: string, next: string | null, requestedBy: number | null): Promise<void>
+  requestSignInLink(
+    email: string,
+    next: string | null,
+    requestedBy: number | null,
+    language: string | null,
+  ): Promise<void>
   /** Persistent count of wrong e-mail codes per user, with a growing lock. */
   emailCodeFailures: Lockout
   /** Queues a mail with a new code for `email`, the address the user's account must prove. */
@@ -353,7 +359,8 @@ export function createAuthRoute(
       // A guest's sign-up keeps the guest account instead of making a new one (#224).
       const state = c.get("auth")
       const guestUserId = state?.user.guestSince ? state.user.id : null
-      if (!(await signIn.requestSignUp(c, email, validationResult.data.password, guestUserId))) {
+      const { password, language = null } = validationResult.data
+      if (!(await signIn.requestSignUp(c, email, password, guestUserId, language))) {
         return errorResponse(c, `bad_request`, {
           message: "This password cannot be used. Try another one.",
         })
@@ -465,6 +472,7 @@ export function createAuthRoute(
         email,
         pageOrNull(validationResult.data.next),
         asker?.guestSince ? asker.id : null,
+        validationResult.data.language ?? null,
       )
       return c.json(SIGN_IN_LINK_REQUESTED)
     })

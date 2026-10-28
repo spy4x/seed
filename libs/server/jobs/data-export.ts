@@ -14,6 +14,7 @@ import { NotificationKind } from "@domain/notifications"
 import { DATA_EXPORT_PREFIX, dataExportKey } from "../auth/data-export.ts"
 import type { ServerFiles } from "../files/files.ts"
 import { dataExportReadyMail, type MailBrand } from "../mail/mail.ts"
+import { readMailReader } from "../mail/reader.ts"
 import { createNotification } from "../notifications/create-notification.ts"
 import { DATA_EXPORT_SECTIONS, type DataExportSection } from "./data-export-sections.ts"
 import { enqueueJob, type JobHandler } from "./jobs.ts"
@@ -206,8 +207,8 @@ export interface DataExportMailDeps {
 export function dataExportMailJob(deps: DataExportMailDeps): JobHandler {
   return async (event) => {
     if (!deps.sender) return
-    const [found] = await deps.sql<{ expiresAt: Date; email: string | null }[]>`
-      SELECT data_exports.expires_at, (
+    const [found] = await deps.sql<{ expiresAt: Date; email: string | null; userId: number }[]>`
+      SELECT data_exports.expires_at, data_exports.user_id AS "userId", (
         SELECT auth_keys.proven_email FROM auth_keys
         WHERE auth_keys.user_id = data_exports.user_id AND auth_keys.proven_email IS NOT NULL
         ORDER BY auth_keys.id
@@ -223,7 +224,11 @@ export function dataExportMailJob(deps: DataExportMailDeps): JobHandler {
       return
     }
     const result = await deps.sender.send(
-      dataExportReadyMail(deps.brand, { to: found.email, expiresAt: found.expiresAt }),
+      dataExportReadyMail(deps.brand, {
+        to: found.email,
+        expiresAt: found.expiresAt,
+        reader: await readMailReader(deps.sql, found.userId),
+      }),
     )
     if (!result.ok) {
       deps.log(`error: a data export mail was not sent and will be retried`)
