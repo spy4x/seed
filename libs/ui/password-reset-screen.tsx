@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { Button } from "@spy4x/preact-ui/button"
 import { Field } from "@spy4x/preact-ui/field"
@@ -6,13 +5,15 @@ import { Input } from "@spy4x/preact-ui/input"
 import { Stack } from "@spy4x/preact-ui/layout"
 import { useFocusOnError } from "@spy4x/preact-ui/use-focus-on-error"
 import { Link } from "@spy4x/preact-ui/link"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import { AuthCard } from "./auth-screen.tsx"
+import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 
-/** The messages shown when a step failed without a message of its own. */
+/** The messages shown when a step failed without one of its own, by their keys in `app`. */
 export const PASSWORD_RESET_FAILURES = {
-  forgot: "Could not send the link",
-  reset: "Could not change the password",
+  forgot: `PasswordResetScreen.forgotFailed`,
+  reset: `PasswordResetScreen.resetFailed`,
 } as const
 
 /** A card with a heading, a sentence and the one way onward. */
@@ -60,14 +61,14 @@ export function ForgotPasswordScreen(
     ForgotPasswordScreenProps,
 ): JSX.Element {
   const field = useFocusOnError(error)
+  const t = useAppText()
   if (sent) {
     return (
       <Message
-        title="Check your inbox"
-        text={sentMessage ??
-          "If an account uses this address, a link to reset its password is on its way."}
+        title={t.t(`SignUpCodeScreen.title`)}
+        text={sentMessage ?? t.t(`PasswordResetScreen.sent`)}
         href={SCREEN_PATHS.signIn}
-        link="Back to sign in"
+        link={t.t(`ConfirmSignUpScreen.backToSignIn`)}
         navigate={navigate}
         e2e="forgot-password-sent"
       />
@@ -75,13 +76,23 @@ export function ForgotPasswordScreen(
   }
   return (
     <AuthCard
-      title="Forgot your password?"
-      description="Enter the e-mail address you signed up with. We mail you a link to choose a new password; it works once, for 30 minutes."
-      after={<>Remembered it? {signInLink(navigate)}</>}
+      title={t.t(`AuthScreen.forgotPassword`)}
+      description={t.t(`PasswordResetScreen.forgotDescription`, { count: 30 })}
+      after={
+        <Rich
+          parts={t.parts(`PasswordResetScreen.remembered`)}
+          tags={{ link: (text) => signInLink(text, navigate) }}
+        />
+      }
     >
       <ScreenForm pending={pending} onSubmit={onSubmit}>
         <Stack>
-          <Field id="forgot-password-email" label="E-mail" error={error} required>
+          <Field
+            id="forgot-password-email"
+            label={t.t(`AuthScreen.email`)}
+            error={error}
+            required
+          >
             <Input
               ref={field}
               data-e2e="forgot-password-email"
@@ -97,9 +108,9 @@ export function ForgotPasswordScreen(
             type="submit"
             data-e2e="forgot-password-submit"
             busy={pending}
-            busyLabel="Sending…"
+            busyLabel={t.t(`AuthScreen.sending`)}
           >
-            Send the link
+            {t.t(`PasswordResetScreen.send`)}
           </Button>
         </Stack>
       </ScreenForm>
@@ -132,13 +143,14 @@ export function ResetPasswordScreen(
     ResetPasswordScreenProps,
 ): JSX.Element {
   const field = useFocusOnError(error)
+  const t = useAppText()
   if (done) {
     return (
       <Message
-        title="Password changed"
-        text="Every session of your account is signed out. Sign in with your new password."
+        title={t.t(`PasswordResetScreen.doneTitle`)}
+        text={t.t(`PasswordResetScreen.done`)}
         href={SCREEN_PATHS.signIn}
-        link="Sign in"
+        link={t.t(`PasswordResetScreen.signIn`)}
         navigate={navigate}
         e2e="reset-password-done"
       />
@@ -147,10 +159,10 @@ export function ResetPasswordScreen(
   if (!email || !code) {
     return (
       <Message
-        title="This link is incomplete"
-        text="Open the link from the mail again, or ask for a new one."
+        title={t.t(`SignInLinkScreen.incompleteTitle`)}
+        text={t.t(`SignInLinkScreen.incomplete`)}
         href={SCREEN_PATHS.forgotPassword}
-        link="Ask for a new link"
+        link={t.t(`PasswordResetScreen.askNew`)}
         navigate={navigate}
         e2e="reset-password-incomplete"
       />
@@ -158,29 +170,42 @@ export function ResetPasswordScreen(
   }
   return (
     <AuthCard
-      title="Choose a new password"
+      title={t.t(`PasswordResetScreen.chooseTitle`)}
       description={
-        <>
-          For{" "}
-          <strong class="wrap-anywhere">{email}</strong>. Saving it signs your account out
-          everywhere.
-        </>
+        <Rich
+          parts={t.parts(`PasswordResetScreen.choose`, { email })}
+          tags={{
+            email: (text) => (
+              <strong class="wrap-anywhere" translate={false}>
+                <bdi>{text}</bdi>
+              </strong>
+            ),
+          }}
+        />
       }
       after={
-        <>
-          Link expired?{" "}
-          <Link href={SCREEN_PATHS.forgotPassword} navigate={navigate} class="pc-link font-medium">
-            Ask for a new one
-          </Link>
-        </>
+        <Rich
+          parts={t.parts(`PasswordResetScreen.expired`)}
+          tags={{
+            link: (text) => (
+              <Link
+                href={SCREEN_PATHS.forgotPassword}
+                navigate={navigate}
+                class="pc-link font-medium"
+              >
+                {text}
+              </Link>
+            ),
+          }}
+        />
       }
     >
       <ScreenForm pending={pending} onSubmit={onSubmit}>
         <Stack>
           <Field
             id="reset-password-new"
-            label="New password"
-            hint="8 to 50 characters."
+            label={t.t(`PasswordResetScreen.newPassword`)}
+            hint={t.t(`PasswordResetScreen.newPasswordHint`, { min: 8, max: 50 })}
             error={error}
             required
           >
@@ -199,9 +224,9 @@ export function ResetPasswordScreen(
             type="submit"
             data-e2e="reset-password-submit"
             busy={pending}
-            busyLabel="Saving…"
+            busyLabel={t.t(`PasswordResetScreen.saving`)}
           >
-            Save the new password
+            {t.t(`PasswordResetScreen.save`)}
           </Button>
         </Stack>
       </ScreenForm>
@@ -209,10 +234,10 @@ export function ResetPasswordScreen(
   )
 }
 
-function signInLink(navigate?: Navigate): JSX.Element {
+function signInLink(text: string, navigate?: Navigate): JSX.Element {
   return (
     <Link href={SCREEN_PATHS.signIn} navigate={navigate} class="pc-link font-medium">
-      Back to sign in
+      {text}
     </Link>
   )
 }

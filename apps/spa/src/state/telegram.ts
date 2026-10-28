@@ -1,5 +1,6 @@
 import { signal } from "@preact/signals"
 import type { TelegramLinkCodeResponse, TelegramStatusResponse } from "@domain/identity"
+import type { Said } from "@ui/app-text.ts"
 import { TELEGRAM_FAILURES } from "@ui/profile-telegram.tsx"
 import { apiFetch } from "./api.ts"
 
@@ -49,7 +50,7 @@ export function createTelegramStore(
   /** `null` until the first read answers. */
   const status = signal<TelegramStatusResponse | null>(null)
   const code = signal<TelegramLinkCodeResponse | null>(null)
-  const error = signal<string | null>(null)
+  const error = signal<Said | null>(null)
   const pending = signal(false)
   /** Grows with every dialog opened or closed, so a wait for an older one stops. */
   let waiting = 0
@@ -60,7 +61,7 @@ export function createTelegramStore(
       status.value = answer.data
       error.value = null
     } else {
-      error.value = answer.error || TELEGRAM_FAILURES.status
+      error.value = answer.error || { key: TELEGRAM_FAILURES.status }
     }
   }
 
@@ -86,7 +87,7 @@ export function createTelegramStore(
     const answer = await http.code()
     pending.value = false
     if (!answer.ok) {
-      error.value = answer.error || TELEGRAM_FAILURES.code
+      error.value = answer.error || { key: TELEGRAM_FAILURES.code }
       return
     }
     code.value = answer.data
@@ -104,7 +105,7 @@ export function createTelegramStore(
     const answer = await http.unlink()
     pending.value = false
     if (!answer.ok) {
-      error.value = answer.error || TELEGRAM_FAILURES.unlink
+      error.value = answer.error || { key: TELEGRAM_FAILURES.unlink }
       return
     }
     if (status.value) status.value = { ...status.value, linkedAt: null }

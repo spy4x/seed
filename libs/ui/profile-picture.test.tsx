@@ -68,7 +68,7 @@ function row(overrides: Partial<PictureRowProps> = {}): PictureRowProps {
     hasPicture: false,
     status: "idle",
     error: null,
-    announcement: "",
+    announcement: null,
     onChoose: () => {},
     onReject: () => {},
     onRemove: () => {},
@@ -145,7 +145,7 @@ describe("profile picture row", () => {
   })
 
   it("reads out what happened through its status region", async () => {
-    await mount(<PictureRow {...row({ announcement: "Profile picture saved." })} />)
+    await mount(<PictureRow {...row({ announcement: { key: "ProfilePicture.saved" } })} />)
     const status = find("[data-e2e=profile-picture-status]")
     expect(status.getAttribute("role")).toBe("status")
     expect(status.textContent).toBe("Profile picture saved.")
@@ -153,7 +153,9 @@ describe("profile picture row", () => {
 
   it("moves focus to a refusal when it appears", async () => {
     await mount(<PictureErrorState error={null} />)
-    await mount(<PictureErrorState error="photo.gif is not a JPEG, PNG, WebP or HEIC image." />)
+    await mount(
+      <PictureErrorState error={{ key: "ProfilePicture.type", values: { name: "photo.gif" } }} />,
+    )
     const error = find("[data-e2e=profile-picture-error]")
     expect(error.textContent).toContain("photo.gif is not a JPEG, PNG, WebP or HEIC image.")
     expect(error.contains(document.activeElement)).toBe(true)

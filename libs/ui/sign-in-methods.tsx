@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Badge } from "@spy4x/preact-ui/badge"
@@ -16,27 +15,30 @@ import { SettingGroup, SettingList, SettingRow } from "@spy4x/preact-ui/setting-
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
 import { profilePath, ScreenForm } from "./progressive.tsx"
 import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { type Said, say } from "./app-text.ts"
+import { useAppText } from "./i18n.ts"
 
 /** The message shown when linking or unlinking failed without a message of its own. */
-export const SIGN_IN_METHODS_FAILURE = "Changing your sign-in methods failed"
+export const SIGN_IN_METHODS_FAILURE = `SignInMethods.failed`
 
 /** The message shown when the list could not be read without a reason of its own, as offline. */
-export const SIGN_IN_METHODS_LOAD_FAILURE =
-  "Your sign-in methods could not be loaded. Check your connection and try again."
+export const SIGN_IN_METHODS_LOAD_FAILURE = `SignInMethods.loadFailed`
 
 /** What the card says when a rename was refused or did not arrive. */
-export const PASSKEY_RENAME_FAILURE = "The name could not be saved. Try again."
+export const PASSKEY_RENAME_FAILURE = `SignInMethods.renameFailed`
 
 /** What a method is called in the list. */
-export function signInMethodName(kind: SignInMethod["kind"]): string {
-  if (kind === "password") return "Password"
-  if (kind === "passkey") return "Passkey"
+export function signInMethodName(t: Translator<string>, kind: SignInMethod["kind"]): string {
+  if (kind === "password") return t.t(`SignInMethods.password`)
+  if (kind === "passkey") return t.t(`SignInMethods.passkey`)
   return OAUTH_PROVIDER_NAMES[kind]
 }
 
 /** What a method is called in a sentence or a dialog: a passkey by the name it was given. */
-function shownName(method: SignInMethod): string {
-  return method.passkey?.name ?? signInMethodName(method.kind)
+function shownName(t: Translator<string>, method: SignInMethod): string {
+  return method.passkey?.name ?? signInMethodName(t, method.kind)
 }
 
 /** Where each kind stands in the list (#222): the password, the passkeys, then the providers. */
@@ -66,8 +68,8 @@ export interface SignInMethodsProps {
   available: readonly OAuthProviderId[]
   /** A link or an unlink is in flight: every button waits. */
   pending: boolean
-  /** Why a link or an unlink failed; shown above the list, and focused. */
-  error: string | null
+  /** Why a link or an unlink failed, as the server's words or a catalog key; shown and focused. */
+  error: Said | null
   /**
    * Why the list could not be read, or `null`; empty for a read that failed without a reason, as
    * offline, which shows {@link SIGN_IN_METHODS_LOAD_FAILURE}. Shown with "Try again".
@@ -144,6 +146,8 @@ export function SignInMethods(
 ): JSX.Element {
   /** The method whose unlink dialog is open. */
   const [confirming, setConfirming] = useState<SignInMethod | null>(null)
+  const t = useAppText()
+  const errorText = error && say(t, error)
   /** The provider whose link dialog is open, or `passkey` for the dialog before a new passkey. */
   const [linking, setLinking] = useState<OAuthProviderId | "passkey" | null>(null)
   const canAddPasskey = passkeysSupported && onAddPasskey !== undefined
@@ -225,39 +229,39 @@ export function SignInMethods(
   const hasPassword = methods?.some((method) => method.kind === "password") ?? false
   return (
     <SettingGroup
-      title="Ways to sign in"
+      title={t.t(`SignInMethods.title`)}
       dataE2E="sign-in-methods"
     >
       <div ref={message} tabIndex={-1} data-e2e="sign-in-methods-error">
-        <ErrorState message={error} />
+        <ErrorState message={errorText} />
       </div>
       {loadError !== null && (
         // A failed read is not a failed change: it says the list could not be read and offers a
         // retry. While the retry runs the message and the button stay, so focus stays on it.
         <div class="flex flex-col items-start gap-3" data-e2e="sign-in-methods-load-error">
-          <ErrorState message={loadError || SIGN_IN_METHODS_LOAD_FAILURE} />
+          <ErrorState message={loadError || t.t(SIGN_IN_METHODS_LOAD_FAILURE)} />
           <Button
             type="button"
             variant="secondary"
             class={TOUCH_TARGET}
             busy={loading}
-            busyLabel="Loading sign-in methods…"
+            busyLabel={t.t(`SignInMethods.reloading`)}
             onClick={onRetry}
             data-e2e="sign-in-methods-retry"
           >
-            Try again
+            {t.t(`EmailScreen.tryAgain`)}
           </Button>
         </div>
       )}
       {methods === null
-        ? loadError === null && <p class="text-sm text-muted">Loading your sign-in methods…</p>
+        ? loadError === null && <p class="text-sm text-muted">{t.t(`SignInMethods.loading`)}</p>
         : (
           <div ref={list} tabIndex={-1} data-e2e="sign-in-methods-list">
             <SettingList>
               {passwordRow && !hasPassword && (
                 <SettingRow
                   dataE2E="sign-in-method-password"
-                  label="Password"
+                  label={t.t(`SignInMethods.password`)}
                   value={passwordRow.none}
                   action={passwordRow.action}
                 />
@@ -266,7 +270,7 @@ export function SignInMethods(
                 <SettingRow
                   key={method.id}
                   dataE2E={`sign-in-method-${method.kind}`}
-                  label={signInMethodName(method.kind)}
+                  label={signInMethodName(t, method.kind)}
                   value={
                     <MethodDetails
                       method={method}
@@ -289,8 +293,15 @@ export function SignInMethods(
                         disabled={pending}
                         onClick={() => setConfirming(method)}
                       >
-                        {method.kind === "passkey" ? "Remove" : "Unlink"}{" "}
-                        <span class="sr-only">{shownName(method)}</span>
+                        <Rich
+                          parts={t.parts(
+                            method.kind === "passkey"
+                              ? `SignInMethods.removeNamed`
+                              : `SignInMethods.unlinkNamed`,
+                            { name: shownName(t, method) },
+                          )}
+                          tags={{ name: (text) => <span class="sr-only">{text}</span> }}
+                        />
                       </Button>
                     )}
                 />
@@ -309,10 +320,10 @@ export function SignInMethods(
                 data-e2e="sign-in-method-add-passkey"
                 disabled={pending || !online}
                 busy={passkeyStatus?.kind === "waiting"}
-                busyLabel="Waiting for your device…"
+                busyLabel={t.t(`AuthScreen.waitingDevice`)}
                 onClick={() => startLink("passkey")}
               >
-                Add a passkey
+                {t.t(`SignInMethods.addPasskey`)}
               </Button>
             )}
             {available.map((provider) => (
@@ -324,32 +335,36 @@ export function SignInMethods(
                 disabled={pending}
                 onClick={() => startLink(provider)}
               >
-                Link {OAUTH_PROVIDER_NAMES[provider]}
+                {t.t(`SignInMethods.link`, { provider: OAUTH_PROVIDER_NAMES[provider] })}
               </Button>
             ))}
           </div>
           {canAddPasskey && !online && (
             <p class="text-sm text-muted" data-e2e="passkey-offline">
-              Adding a passkey needs a connection.
+              {t.t(`SignInMethods.offline`)}
             </p>
           )}
         </div>
       )}
       <p ref={status} role="status" class="text-sm empty:hidden" data-e2e="passkey-status">
-        {passkeyStatus?.kind === "cancelled" && "No passkey was added."}
-        {passkeyStatus?.kind === "added" &&
-          `Passkey added as "${passkeyStatus.name}". Rename it if you like.`}
+        {passkeyStatus?.kind === "cancelled" && t.t(`SignInMethods.cancelled`)}
+        {passkeyStatus?.kind === "added" && (
+          <Rich
+            parts={t.parts(`SignInMethods.added`, { name: passkeyStatus.name })}
+            tags={{ name: (text) => <bdi translate={false}>{text}</bdi> }}
+          />
+        )}
       </p>
 
       <Modal
         open={linking !== null}
         onClose={closeLink}
         title={linking === "passkey"
-          ? "Add a passkey"
+          ? t.t(`SignInMethods.addPasskey`)
           : linking
-          ? `Link ${OAUTH_PROVIDER_NAMES[linking]}`
-          : "Link"}
-        cancelLabel="Close"
+          ? t.t(`SignInMethods.link`, { provider: OAUTH_PROVIDER_NAMES[linking] })
+          : t.t(`SignInMethods.linkTitle`)}
+        cancelLabel={t.t(`EmailScreen.close`)}
         dataE2E="sign-in-method-link-dialog"
       >
         {providerProof && !providerProof.fresh
@@ -357,7 +372,9 @@ export function SignInMethods(
             <Stack>
               <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
               <DialogActions>
-                <Button type="button" variant="ghost" onClick={closeLink}>Close</Button>
+                <Button type="button" variant="ghost" onClick={closeLink}>
+                  {t.t(`EmailScreen.close`)}
+                </Button>
               </DialogActions>
             </Stack>
           )
@@ -373,11 +390,17 @@ export function SignInMethods(
                   : (
                     <>
                       <p class="text-sm text-muted">
-                        {linking === "passkey"
-                          ? "A passkey is another way to sign in, so your password is asked first."
-                          : "A linked account is another way to sign in, so your password is asked first."}
+                        {t.t(
+                          linking === "passkey"
+                            ? `SignInMethods.passkeyAsks`
+                            : `SignInMethods.linkAsks`,
+                        )}
                       </p>
-                      <Field id="sign-in-method-link-password" label="Password" required>
+                      <Field
+                        id="sign-in-method-link-password"
+                        label={t.t(`SignInMethods.password`)}
+                        required
+                      >
                         <Input
                           ref={passwordInput}
                           data-e2e="sign-in-method-link-password"
@@ -391,19 +414,25 @@ export function SignInMethods(
                       </Field>
                     </>
                   )}
-                <ErrorState message={error} />
+                <ErrorState message={errorText} />
                 <DialogActions>
-                  <Button type="button" variant="ghost" onClick={closeLink}>Cancel</Button>
+                  <Button type="button" variant="ghost" onClick={closeLink}>
+                    {t.t(`EmailScreen.cancel`)}
+                  </Button>
                   <Button
                     ref={continueButton}
                     type="submit"
                     data-e2e="sign-in-method-link-submit"
                     busy={pending}
-                    busyLabel={linking === "passkey" ? "Waiting for your device…" : "Opening…"}
+                    busyLabel={t.t(
+                      linking === "passkey" ? `AuthScreen.waitingDevice` : `SignInMethods.opening`,
+                    )}
                   >
-                    Continue{linking && linking !== "passkey"
-                      ? ` to ${OAUTH_PROVIDER_NAMES[linking]}`
-                      : ""}
+                    {linking && linking !== "passkey"
+                      ? t.t(`SignInMethods.continueTo`, {
+                        provider: OAUTH_PROVIDER_NAMES[linking],
+                      })
+                      : t.t(`AuthScreen.continue`)}
                   </Button>
                 </DialogActions>
               </Stack>
@@ -416,34 +445,31 @@ export function SignInMethods(
           open
           onClose={closeUnlink}
           title={confirming.kind === "passkey"
-            ? `Remove "${shownName(confirming)}"?`
-            : `Unlink ${signInMethodName(confirming.kind)}?`}
-          cancelLabel="Close"
+            ? t.t(`SignInMethods.removeTitle`, { name: shownName(t, confirming) })
+            : t.t(`SignInMethods.unlinkTitle`, { name: signInMethodName(t, confirming.kind) })}
+          cancelLabel={t.t(`EmailScreen.close`)}
           tone="danger"
           dataE2E="sign-in-method-unlink-confirm"
         >
           <Stack>
             <p class="text-sm text-muted">
-              {confirming.kind === "passkey"
-                ? `You can no longer sign in with this passkey. Every device that signed in with it is signed out. Delete it from your password manager too.${
-                  confirming.current
-                    ? " This device signed in with it, so it will be signed out too."
-                    : ""
-                }`
-                : confirming.current
-                ? `You signed in on this device with ${
-                  signInMethodName(confirming.kind)
-                }, so it will be signed out, like every other device that did.`
-                : `Every device that signed in with ${
-                  signInMethodName(confirming.kind)
-                } will be signed out. This device stays signed in.`}
+              {t.t(
+                confirming.kind === "passkey"
+                  ? confirming.current ? `SignInMethods.removeCurrent` : `SignInMethods.remove`
+                  : confirming.current
+                  ? `SignInMethods.unlinkCurrent`
+                  : `SignInMethods.unlink`,
+                { name: signInMethodName(t, confirming.kind) },
+              )}
             </p>
             {providerProof && !providerProof.fresh
               ? (
                 <>
                   <ProviderProofNotice proof={providerProof} next={profilePath("security")} />
                   <DialogActions>
-                    <Button type="button" variant="ghost" onClick={closeUnlink}>Close</Button>
+                    <Button type="button" variant="ghost" onClick={closeUnlink}>
+                      {t.t(`EmailScreen.close`)}
+                    </Button>
                   </DialogActions>
                 </>
               )
@@ -454,7 +480,11 @@ export function SignInMethods(
                 >
                   <Stack>
                     {!providerProof && (
-                      <Field id="sign-in-method-unlink-password" label="Password" required>
+                      <Field
+                        id="sign-in-method-unlink-password"
+                        label={t.t(`SignInMethods.password`)}
+                        required
+                      >
                         <Input
                           ref={passwordInput}
                           data-e2e="sign-in-method-unlink-password"
@@ -462,23 +492,32 @@ export function SignInMethods(
                           type="password"
                           autocomplete="current-password"
                           value={password}
-                          onInput={(e) =>
-                            setPassword(e.currentTarget.value)}
+                          onInput={(e) => setPassword(e.currentTarget.value)}
                           required
                         />
                       </Field>
                     )}
-                    <ErrorState message={error} />
+                    <ErrorState message={errorText} />
                     <DialogActions>
-                      <Button type="button" variant="ghost" onClick={closeUnlink}>Cancel</Button>
+                      <Button type="button" variant="ghost" onClick={closeUnlink}>
+                        {t.t(`EmailScreen.cancel`)}
+                      </Button>
                       <Button
                         type="submit"
                         variant="danger"
                         data-e2e="sign-in-method-unlink-submit"
                         busy={pending}
-                        busyLabel={confirming.kind === "passkey" ? "Removing…" : "Unlinking…"}
+                        busyLabel={t.t(
+                          confirming.kind === "passkey"
+                            ? `SignInMethods.removing`
+                            : `SignInMethods.unlinking`,
+                        )}
                       >
-                        {confirming.kind === "passkey" ? "Remove passkey" : "Unlink"}
+                        {t.t(
+                          confirming.kind === "passkey"
+                            ? `SignInMethods.removePasskey`
+                            : `SignInMethods.unlinkButton`,
+                        )}
                       </Button>
                     </DialogActions>
                   </Stack>
@@ -504,6 +543,7 @@ function MethodDetails(
   },
 ): JSX.Element {
   const { passkey } = method
+  const t = useAppText()
   return (
     <span class="flex flex-col items-start gap-1">
       {passkey && (
@@ -515,9 +555,9 @@ function MethodDetails(
                 <InlineEdit
                   value={passkey.name}
                   onSave={(name) => onRename(method.id, name)}
-                  editLabel={(name) => `Rename ${name}`}
-                  inputLabel="Passkey name"
-                  errorMessage={() => PASSKEY_RENAME_FAILURE}
+                  editLabel={(name) => t.t(`SignInMethods.rename`, { name })}
+                  inputLabel={t.t(`SignInMethods.passkeyName`)}
+                  errorMessage={() => t.t(PASSKEY_RENAME_FAILURE)}
                   disabled={pending}
                   dataE2E={`passkey-name-${method.id}`}
                   // The button's own padding would push the name off the line under it.
@@ -525,26 +565,38 @@ function MethodDetails(
                 />
               </span>
             )
-            : <span class="font-medium break-words text-foreground">{passkey.name}</span>}
+            : (
+              <span class="font-medium break-words text-foreground" translate={false}>
+                {passkey.name}
+              </span>
+            )}
           <span data-e2e="passkey-dates">
-            Added <OnDay at={passkey.createdAt} />
-            {" · "}
-            {passkey.lastUsedAt
-              ? (
-                <>
-                  Last used <When at={passkey.lastUsedAt} />
-                </>
-              )
-              : "Not used yet"}
+            <Rich
+              parts={t.parts(
+                passkey.lastUsedAt ? `SignInMethods.addedUsed` : `SignInMethods.addedUnused`,
+              )}
+              tags={{
+                added: () => <OnDay at={passkey.createdAt} />,
+                used: () => passkey.lastUsedAt && <When at={passkey.lastUsedAt} />,
+              }}
+            />
           </span>
         </>
       )}
-      {method.email && <span data-e2e="sign-in-method-email">{method.email}</span>}
-      {method.current && <Badge text="Used on this device" color="green" type="outline" />}
+      {method.email && <span data-e2e="sign-in-method-email" translate={false}>{method.email}
+      </span>}
+      {method.current && (
+        <Badge
+          text={t.t(`SignInMethods.usedHere`)}
+          color="green"
+          type="outline"
+        />
+      )}
       {only && method.kind !== "password" && (
         <span>
-          Your only way to sign in, so it cannot be{" "}
-          {method.kind === "passkey" ? "removed" : "unlinked"}.
+          {t.t(
+            method.kind === "passkey" ? `SignInMethods.onlyPasskey` : `SignInMethods.onlyLinked`,
+          )}
         </span>
       )}
     </span>

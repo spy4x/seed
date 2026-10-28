@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -11,14 +10,16 @@ import {
   OAUTH_PROVIDER_NAMES,
   type WaitingPasswordSignUp,
 } from "@domain/identity"
+import { Rich } from "@spy4x/preact-ui/i18n"
 import { AuthCard, providerStartPath } from "./auth-screen.tsx"
+import { useAppText } from "./i18n.ts"
 import { type Navigate, SCREEN_PATHS, ScreenForm, withNext } from "./progressive.tsx"
 
-/** The message shown when checking the code failed without a message of its own. */
-export const SIGN_UP_CODE_FAILURE = "Checking the code failed"
+/** The message shown when checking the code failed without one of its own, by its key in `app`. */
+export const SIGN_UP_CODE_FAILURE = `SignUpCodeScreen.checkFailed`
 
-/** The message shown when the browser is offline and a request could not leave it. */
-export const SIGN_UP_OFFLINE = "You are offline. Connect and try again."
+/** The message shown when the browser is offline and a request could not leave it, by its key. */
+export const SIGN_UP_OFFLINE = `SignUpCodeScreen.offline`
 
 export interface SignUpCodeScreenProps {
   /** Signed in with every factor done: the page says so instead of asking for a code. */
@@ -63,12 +64,16 @@ export interface SignUpCodeScreenProps {
  */
 export function SignUpCodeScreen(props: SignUpCodeScreenProps): JSX.Element {
   const { isSignedIn, pending, exists, minutes, next = null, navigate } = props
+  const t = useAppText()
 
   if (isSignedIn && !exists) {
     return (
-      <AuthCard title="You are signed in" description="Nothing to do here.">
+      <AuthCard
+        title={t.t(`AuthScreen.signedInTitle`)}
+        description={t.t(`AuthScreen.signedInText`)}
+      >
         <Button href={SCREEN_PATHS.profile} navigate={navigate} class="w-full">
-          Open your profile
+          {t.t(`AuthScreen.openProfile`)}
         </Button>
       </AuthCard>
     )
@@ -76,8 +81,8 @@ export function SignUpCodeScreen(props: SignUpCodeScreenProps): JSX.Element {
   if (exists) return <AccountExists {...props} account={exists} />
   if (pending === undefined) {
     return (
-      <AuthCard title="Check your inbox" e2e="sign-up-code">
-        <p class="text-sm text-muted">Loading…</p>
+      <AuthCard title={t.t(`SignUpCodeScreen.title`)} e2e="sign-up-code">
+        <p class="text-sm text-muted">{t.t(`SignUpCodeScreen.loading`)}</p>
       </AuthCard>
     )
   }
@@ -101,6 +106,7 @@ function CheckInbox(
   }: SignUpCodeScreenProps & { pending: WaitingPasswordSignUp },
 ): JSX.Element {
   const field = useRef<HTMLInputElement>(null)
+  const t = useAppText()
   // On open, and after each refused code, with what was typed selected so the next try replaces it.
   useEffect(() => {
     field.current?.focus()
@@ -109,30 +115,38 @@ function CheckInbox(
 
   return (
     <AuthCard
-      title="Check your inbox"
+      title={t.t(`SignUpCodeScreen.title`)}
       description={
-        <>
-          We sent a code to{" "}
-          <strong class="wrap-anywhere font-medium">{pending.email}</strong>. It works for {minutes}
-          {" "}
-          minutes.
-        </>
+        <Rich
+          parts={t.parts(`SignUpCodeScreen.sent`, { email: pending.email, count: minutes })}
+          tags={{
+            email: (text) => (
+              <strong class="wrap-anywhere font-medium" translate={false}>
+                <bdi>{text}</bdi>
+              </strong>
+            ),
+          }}
+        />
       }
       e2e="sign-up-code"
       after={
-        <>
-          Wrong address?{" "}
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            class={TOUCH_TARGET}
-            data-e2e="sign-up-different-address"
-            onClick={onDifferentAddress}
-          >
-            Use a different address
-          </Button>
-        </>
+        <Rich
+          parts={t.parts(`SignUpCodeScreen.wrongAddress`)}
+          tags={{
+            button: (text) => (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                class={TOUCH_TARGET}
+                data-e2e="sign-up-different-address"
+                onClick={onDifferentAddress}
+              >
+                {text}
+              </Button>
+            ),
+          }}
+        />
       }
     >
       <ScreenForm
@@ -140,7 +154,7 @@ function CheckInbox(
         onSubmit={(data) => onSubmit(String(data.get("code") ?? ""))}
       >
         <div class="flex flex-col gap-4">
-          <Field id="sign-up-code" label="Code" error={error} required>
+          <Field id="sign-up-code" label={t.t(`SignUpCodeScreen.code`)} error={error} required>
             <Input
               ref={field}
               data-e2e="sign-up-code-input"
@@ -151,8 +165,13 @@ function CheckInbox(
               required
             />
           </Field>
-          <Button type="submit" busy={busy} busyLabel="Checking..." data-e2e="sign-up-code-submit">
-            Continue
+          <Button
+            type="submit"
+            busy={busy}
+            busyLabel={t.t(`SignUpCodeScreen.checking`)}
+            data-e2e="sign-up-code-submit"
+          >
+            {t.t(`AuthScreen.continue`)}
           </Button>
         </div>
       </ScreenForm>
@@ -162,12 +181,12 @@ function CheckInbox(
           variant="ghost"
           class={TOUCH_TARGET}
           busy={resending}
-          busyLabel="Sending..."
+          busyLabel={t.t(`AuthScreen.sending`)}
           disabled={busy}
           data-e2e="sign-up-code-resend"
           onClick={onResend}
         >
-          Send a new code
+          {t.t(`SignUpCodeScreen.resend`)}
         </Button>
         <ErrorState message={resendError} />
         {resendNotice && (
@@ -185,20 +204,31 @@ function AccountExists(
   },
 ): JSX.Element {
   const primary = useRef<HTMLDivElement>(null)
+  const t = useAppText()
   useEffect(() => {
     primary.current?.querySelector<HTMLElement>("a, button")?.focus()
   }, [])
   // An account with a password, or one with no other way in that this page knows of, signs in.
   const signIn = account.password || account.providers.length === 0
-  const providers = account.providers.map((id) => OAUTH_PROVIDER_NAMES[id]).join(" or ")
+  const providers = new Intl.ListFormat(t.language, { type: `disjunction` })
+    .format(account.providers.map((id) => OAUTH_PROVIDER_NAMES[id]))
   return (
     <AuthCard
-      title="You already have an account"
+      title={t.t(`SignUpCodeScreen.existsTitle`)}
       description={
-        <>
-          <strong class="wrap-anywhere font-medium">{account.email}</strong> already signs in here
-          {signIn ? "" : ` with ${providers}`}. Nothing new was created.
-        </>
+        <Rich
+          parts={t.parts(
+            signIn ? `SignUpCodeScreen.exists` : `SignUpCodeScreen.existsWith`,
+            { email: account.email, providers },
+          )}
+          tags={{
+            email: (text) => (
+              <strong class="wrap-anywhere font-medium" translate={false}>
+                <bdi>{text}</bdi>
+              </strong>
+            ),
+          }}
+        />
       }
       e2e="sign-up-exists"
     >
@@ -211,7 +241,7 @@ function AccountExists(
               data-e2e="sign-up-exists-sign-in"
               onClick={onSignInInstead}
             >
-              Sign in instead
+              {t.t(`SignUpCodeScreen.signInInstead`)}
             </Button>
           )
           : account.providers.map((provider, index) => (
@@ -223,7 +253,7 @@ function AccountExists(
               class="w-full"
               data-e2e={`sign-up-exists-${provider}`}
             >
-              Continue with {OAUTH_PROVIDER_NAMES[provider]}
+              {t.t(`AuthScreen.continueWith`, { provider: OAUTH_PROVIDER_NAMES[provider] })}
             </Button>
           ))}
       </div>
@@ -237,7 +267,7 @@ function AccountExists(
             data-e2e="sign-up-exists-forgot"
             onClick={onForgotPassword}
           >
-            Forgot your password?
+            {t.t(`AuthScreen.forgotPassword`)}
           </Button>
         </p>
       )}
@@ -250,18 +280,19 @@ function Expired(
   { minutes, next, navigate }: { minutes: number; next: string | null; navigate?: Navigate },
 ): JSX.Element {
   const start = useRef<HTMLDivElement>(null)
+  const t = useAppText()
   useEffect(() => {
     start.current?.querySelector<HTMLElement>("a")?.focus()
   }, [])
   return (
     <AuthCard
-      title="This sign-up expired"
-      description={`It took longer than ${minutes} minutes, or the code was tried too many times. Nothing was created.`}
+      title={t.t(`SignUpCodeScreen.expiredTitle`)}
+      description={t.t(`SignUpCodeScreen.expired`, { count: minutes })}
       e2e="sign-up-expired"
     >
       <div ref={start}>
         <Button href={withNext(SCREEN_PATHS.signUp, next)} navigate={navigate} class="w-full">
-          Start again
+          {t.t(`SignUpCodeScreen.startAgain`)}
         </Button>
       </div>
     </AuthCard>

@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { encodeBase64 } from "@std/encoding"
@@ -26,6 +25,8 @@ import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 import { SignedInDevices, type SignedInDevicesProps } from "./signed-in-devices.tsx"
 import { SignInMethods, type SignInMethodsProps } from "./sign-in-methods.tsx"
 import { TwoFactorProof, twoFactorProof, TwoFactorStep, twoFactorStep } from "./two-factor.ts"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 
 /** The fields of this section in the order it shows them: focus goes to the first with an error. */
 const FIELD_ORDER = [
@@ -95,6 +96,10 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
     devices,
   } = props
   const step = twoFactorStep(mfa, enrolment !== null)
+  const t = useAppText()
+  const hidden = (text: string) => <span class="sr-only">{text}</span>
+  const cancel = t.t(`EmailScreen.cancel`)
+  const close = t.t(`EmailScreen.close`)
   const proof = twoFactorProof(providerOnly !== null)
   const fieldRefs = {
     currentPassword: useRef<HTMLInputElement>(null),
@@ -163,10 +168,21 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
       data-e2e="password-open"
       onClick={() => setChangingPassword(true)}
     >
-      {providerProof ? "Set" : "Change"} <span class="sr-only">password</span>
+      <Rich
+        parts={t.parts(
+          providerProof
+            ? `ProfileSecurity.setPasswordHidden`
+            : `ProfileSecurity.changePasswordHidden`,
+        )}
+        tags={{ hidden }}
+      />
     </Button>
   )
-  const noPassword = <span data-e2e="password-none">None. You sign in with {providerOnly}.</span>
+  const noPassword = (
+    <span data-e2e="password-none">
+      {t.t(`ProfileSecurity.noPassword`, { names: providerOnly ?? `` })}
+    </span>
+  )
 
   return (
     <>
@@ -181,33 +197,31 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
         : (
           <SettingList>
             <SettingRow
-              label="Password"
+              label={t.t(`SignInMethods.password`)}
               dataE2E="sign-in-method-password"
-              value={providerOnly === null
-                ? "Asked for when you sign in on a new device."
-                : noPassword}
+              value={providerOnly === null ? t.t(`ProfileSecurity.passwordAsked`) : noPassword}
               action={passwordAction}
             />
           </SettingList>
         )}
 
       <SettingGroup
-        title="Two-factor sign-in"
-        description="Sign-in also asks for a code from an authenticator app, so a leaked password is not enough."
+        title={t.t(`ProfileSecurity.twoFactor`)}
+        description={t.t(`ProfileSecurity.twoFactorText`)}
         dataE2E="two-factor"
       >
         <SettingList>
           <SettingRow
-            label="Authenticator app"
+            label={t.t(`ProfileSecurity.app`)}
             dataE2E="totp-row"
             value={step === TwoFactorStep.Disable
               ? (
                 <span class="flex flex-wrap items-center gap-2">
-                  <Badge text="On" color="green" type="outline" />
-                  Sign-in asks for a code, unless you use a passkey.
+                  <Badge text={t.t(`ProfileSecurity.on`)} color="green" type="outline" />
+                  {t.t(`ProfileSecurity.onText`)}
                 </span>
               )
-              : "Off"}
+              : t.t(`ProfileSecurity.off`)}
             action={step === TwoFactorStep.Disable
               ? (
                 <Button
@@ -220,7 +234,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   disabled={pending.totp}
                   onClick={() => setConfirmingDisable(true)}
                 >
-                  Turn off <span class="sr-only">two-factor sign-in</span>
+                  <Rich parts={t.parts(`ProfileSecurity.turnOffHidden`)} tags={{ hidden }} />
                 </Button>
               )
               : (
@@ -234,7 +248,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   disabled={pending.totp}
                   onClick={() => setConfirmingEnable(true)}
                 >
-                  Turn on <span class="sr-only">two-factor sign-in</span>
+                  <Rich parts={t.parts(`ProfileSecurity.turnOnHidden`)} tags={{ hidden }} />
                 </Button>
               )}
           />
@@ -249,8 +263,8 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
       <Modal
         open={changingPassword}
         onClose={cancelPassword}
-        title={providerProof ? "Set a password" : "Change password"}
-        cancelLabel="Close"
+        title={t.t(providerProof ? `ProfileSecurity.setTitle` : `ProfileSecurity.changeTitle`)}
+        cancelLabel={close}
         dataE2E="password-dialog"
       >
         {providerProof && !providerProof.fresh
@@ -258,7 +272,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
             <Stack>
               <ProviderProofNotice proof={providerProof} next={HERE} />
               <DialogActions>
-                <Button type="button" variant="ghost" onClick={cancelPassword}>Close</Button>
+                <Button type="button" variant="ghost" onClick={cancelPassword}>{close}</Button>
               </DialogActions>
             </Stack>
           )
@@ -272,7 +286,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   ? (
                     <>
                       <p class="text-sm text-muted">
-                        With a password you can also sign in with your e-mail address.
+                        {t.t(`ProfileSecurity.setText`)}
                       </p>
                       <ProviderProofNotice proof={providerProof} next={HERE} />
                     </>
@@ -280,7 +294,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   : (
                     <Field
                       id="password-current"
-                      label="Current password"
+                      label={t.t(`EmailScreen.currentPassword`)}
                       error={errors.fields.currentPassword}
                       required
                     >
@@ -298,7 +312,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   )}
                 <Field
                   id="password-new"
-                  label="New password"
+                  label={t.t(`PasswordResetScreen.newPassword`)}
                   error={errors.fields.newPassword}
                   required
                 >
@@ -317,7 +331,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                   // The password could turn two-factor off, so it costs the code too.
                   <Field
                     id="password-otp"
-                    label="Code from your authenticator app"
+                    label={t.t(`ProfileSecurity.codeFromAuthenticator`)}
                     error={errors.fields.passwordOtp}
                     required
                   >
@@ -343,22 +357,24 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                       checked={signOutOthers}
                       onChange={(e) => onSignOutOthersChange(e.currentTarget.checked)}
                     >
-                      Sign out of all other devices
+                      {t.t(`SignedInDevices.signOutOthers`)}
                     </Checkbox>
                   </div>
                 )}
                 <ErrorState message={errors.password} />
                 <DialogActions>
                   <Button type="button" variant="ghost" onClick={cancelPassword}>
-                    Cancel
+                    {cancel}
                   </Button>
                   <Button
                     type="submit"
                     data-e2e="password-save"
                     busy={pending.password}
-                    busyLabel="Updating…"
+                    busyLabel={t.t(`ProfileSecurity.updating`)}
                   >
-                    {providerProof ? "Set password" : "Change password"}
+                    {t.t(
+                      providerProof ? `ProfileSecurity.setButton` : `ProfileSecurity.changeTitle`,
+                    )}
                   </Button>
                 </DialogActions>
               </Stack>
@@ -369,8 +385,8 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
       <Modal
         open={confirmingEnable && step === TwoFactorStep.Enable}
         onClose={cancelEnable}
-        title="Turn on two-factor sign-in"
-        cancelLabel="Close"
+        title={t.t(`ProfileSecurity.turnOnTitle`)}
+        cancelLabel={close}
         dataE2E="totp-start-confirm"
       >
         {providerProof && !providerProof.fresh
@@ -378,7 +394,7 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
             <Stack>
               <ProviderProofNotice proof={providerProof} next={HERE} />
               <DialogActions>
-                <Button type="button" variant="ghost" onClick={cancelEnable}>Close</Button>
+                <Button type="button" variant="ghost" onClick={cancelEnable}>{close}</Button>
               </DialogActions>
             </Stack>
           )
@@ -386,15 +402,14 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
             <ScreenForm pending={pending.totp} onSubmit={props.onStartTotp}>
               <Stack>
                 <p class="text-sm text-muted">
-                  Once it is on, sign-in also asks for a code from your authenticator app, and your
-                  other devices are signed out.{providerProof
-                    ? ""
-                    : " Enter your password to confirm it is you."}
+                  {t.t(
+                    providerProof ? `ProfileSecurity.turnOnText` : `ProfileSecurity.turnOnPassword`,
+                  )}
                 </p>
                 {providerProof ? <ProviderProofNotice proof={providerProof} next={HERE} /> : (
                   <Field
                     id="totp-start-password"
-                    label="Password"
+                    label={t.t(`SignInMethods.password`)}
                     error={errors.fields.totpPassword}
                     required
                   >
@@ -413,15 +428,15 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
                 <ErrorState message={errors.totp} />
                 <DialogActions>
                   <Button type="button" variant="ghost" onClick={cancelEnable}>
-                    Cancel
+                    {cancel}
                   </Button>
                   <Button
                     type="submit"
                     data-e2e="totp-start-submit"
                     busy={pending.totp}
-                    busyLabel="Preparing…"
+                    busyLabel={t.t(`ProfileSecurity.preparing`)}
                   >
-                    Continue
+                    {t.t(`AuthScreen.continue`)}
                   </Button>
                 </DialogActions>
               </Stack>
@@ -433,27 +448,35 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
         <Modal
           open
           onClose={() => props.onCancelTotp?.()}
-          title="Turn on two-factor sign-in"
-          cancelLabel="Close"
+          title={t.t(`ProfileSecurity.turnOnTitle`)}
+          cancelLabel={close}
           dataE2E="totp-dialog"
         >
           <ScreenForm pending={pending.totp} onSubmit={props.onFinishTotp}>
             <Stack>
               <p class="text-sm text-muted">
-                Scan the code with your authenticator app, then enter the six digits it shows.
+                {t.t(`ProfileSecurity.scan`)}
               </p>
               {qrSrc && (
                 <div class="self-center rounded-lg border border-subtle bg-white p-3">
-                  <img src={qrSrc} alt="QR code for your authenticator app" class="size-40" />
+                  <img src={qrSrc} alt={t.t(`ProfileSecurity.qr`)} class="size-40" />
                 </div>
               )}
               <p class="text-xs text-muted break-all">
-                Cannot scan it? Enter this key:{" "}
-                <code class="font-mono" data-e2e="totp-secret">{enrolment?.secret}</code>
+                <Rich
+                  parts={t.parts(`ProfileSecurity.key`, { key: enrolment?.secret ?? `` })}
+                  tags={{
+                    key: (text) => (
+                      <code class="font-mono" translate={false} data-e2e="totp-secret">
+                        <bdi>{text}</bdi>
+                      </code>
+                    ),
+                  }}
+                />
               </p>
               <Field
                 id="totp-connect-otp"
-                label="Code from your app"
+                label={t.t(`ProfileSecurity.codeFromApp`)}
                 error={errors.fields.otp}
                 required
               >
@@ -471,15 +494,15 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
               <ErrorState message={errors.totp} />
               <DialogActions>
                 <Button type="button" variant="ghost" onClick={() => props.onCancelTotp?.()}>
-                  Cancel
+                  {cancel}
                 </Button>
                 <Button
                   type="submit"
                   data-e2e="totp-connect-finish"
                   busy={pending.totp}
-                  busyLabel="Turning on…"
+                  busyLabel={t.t(`ProfileSecurity.turningOn`)}
                 >
-                  Turn on
+                  {t.t(`ProfileSecurity.turnOn`)}
                 </Button>
               </DialogActions>
             </Stack>
@@ -490,23 +513,27 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
       <Modal
         open={confirmingDisable && step === TwoFactorStep.Disable}
         onClose={cancelDisable}
-        title="Turn off two-factor sign-in?"
-        cancelLabel="Close"
+        title={t.t(`ProfileSecurity.turnOffTitle`)}
+        cancelLabel={close}
         tone="danger"
         dataE2E="totp-disable-confirm"
       >
         <ScreenForm pending={pending.totp} onSubmit={() => props.onDisableTotp?.(proof)}>
           <Stack>
             <p class="text-sm text-muted">
-              {proof === TwoFactorProof.Code
-                ? "Sign-in will no longer ask for a code. Enter a code from your authenticator app to confirm it is you."
-                : "Sign-in will ask only for your password. Enter your password to confirm it is you."}
-              {" "}
-              You can turn two-factor on again at any time.
+              {t.t(
+                proof === TwoFactorProof.Code
+                  ? `ProfileSecurity.turnOffCode`
+                  : `ProfileSecurity.turnOffPassword`,
+              )}
             </p>
             <Field
               id="totp-disable-proof"
-              label={proof === TwoFactorProof.Code ? "Code from your app" : "Password"}
+              label={t.t(
+                proof === TwoFactorProof.Code
+                  ? `ProfileSecurity.codeFromApp`
+                  : `SignInMethods.password`,
+              )}
               error={errors.fields.twoFactorProof}
               required
             >
@@ -539,16 +566,16 @@ export function SecuritySection(props: SecuritySectionProps): JSX.Element {
             <ErrorState message={errors.totp} />
             <DialogActions>
               <Button type="button" variant="ghost" onClick={cancelDisable}>
-                Cancel
+                {cancel}
               </Button>
               <Button
                 type="submit"
                 variant="danger"
                 data-e2e="totp-disable-submit"
                 busy={pending.totp}
-                busyLabel="Turning off…"
+                busyLabel={t.t(`ProfileSecurity.turningOff`)}
               >
-                Turn off
+                {t.t(`ProfileSecurity.turnOff`)}
               </Button>
             </DialogActions>
           </Stack>

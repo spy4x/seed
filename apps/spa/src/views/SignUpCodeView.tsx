@@ -22,11 +22,16 @@ import { handOffAddress } from "../state/address-handoff.ts"
 import { sessionState } from "../state/session.ts"
 import { isGuestSession } from "../state/guest.ts"
 import { GUEST_PATHS } from "@ui/guest-screens.tsx"
+import { useAppText } from "@ui/i18n.ts"
+import type { Translator } from "@spy4x/platform/universal/i18n"
 
-/** The message of a refused request, or the offline one when it never left the browser. */
-function failure(answer: SignUpStepAnswer, fallback: string): string {
-  if (answer.ok || answer.expired) return fallback
-  return answer.offline ? SIGN_UP_OFFLINE : answer.error || fallback
+/**
+ * The message of a refused request, or the offline one when it never left the browser. `fallback`
+ * is the key in `app` of the message for a refusal without words of its own.
+ */
+function failure(t: Translator<string>, answer: SignUpStepAnswer, fallback: string): string {
+  if (answer.ok || answer.expired) return t.t(fallback)
+  return answer.offline ? t.t(SIGN_UP_OFFLINE) : answer.error || t.t(fallback)
 }
 
 /**
@@ -38,6 +43,7 @@ function failure(answer: SignUpStepAnswer, fallback: string): string {
 export function SignUpCodeView() {
   const [, navigate] = useLocation()
   const next = readNext(new URLSearchParams(useSearch()))
+  const t = useAppText()
   const [pending, setPending] = useState<WaitingPasswordSignUp | null | undefined>(undefined)
   const [exists, setExists] = useState<ExistingAccountAnswer | null>(null)
   const [busy, setBusy] = useState(false)
@@ -80,7 +86,7 @@ export function SignUpCodeView() {
       setPending(null)
       return
     }
-    setError(failure(answer, SIGN_UP_CODE_FAILURE))
+    setError(failure(t, answer, SIGN_UP_CODE_FAILURE))
   }
 
   const resend = async () => {
@@ -89,9 +95,9 @@ export function SignUpCodeView() {
     setResending(true)
     const answer = await resendSignUpCode()
     setResending(false)
-    if (answer.ok) setResendNotice("A new code is on its way.")
+    if (answer.ok) setResendNotice(t.t(`SignUpCodeScreen.resent`))
     else if (answer.expired) setPending(null)
-    else setResendError(failure(answer, "Sending a new code failed"))
+    else setResendError(failure(t, answer, `SignUpCodeScreen.resendFailed`))
   }
 
   const differentAddress = async () => {

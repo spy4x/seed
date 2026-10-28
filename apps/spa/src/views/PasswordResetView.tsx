@@ -7,10 +7,12 @@ import {
 } from "@ui/password-reset-screen.tsx"
 import { bootstrapSession, requestPasswordReset, resetPassword } from "../state/auth.ts"
 import { takeHandedOffAddress } from "../state/address-handoff.ts"
+import { useAppText } from "@ui/i18n.ts"
 
 /** Wires `ForgotPasswordScreen` to `requestPasswordReset`. */
 export function ForgotPasswordView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   // The address "Forgot your password?" handed over after a sign-up found its account (#142).
   const [email, setEmail] = useState(() => takeHandedOffAddress() ?? "")
   const [error, setError] = useState<string | null>(null)
@@ -23,7 +25,7 @@ export function ForgotPasswordView() {
     const result = await requestPasswordReset(email)
     setPending(false)
     if (!result.ok) {
-      setError(result.error || PASSWORD_RESET_FAILURES.forgot)
+      setError(result.error || t.t(PASSWORD_RESET_FAILURES.forgot))
       return
     }
     setSentMessage(result.message)
@@ -46,6 +48,7 @@ export function ForgotPasswordView() {
 /** Wires `ResetPasswordScreen` to `resetPassword`, with the address and code from the link. */
 export function ResetPasswordView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const [link] = useState(() => new URLSearchParams(location.search))
   const [newPassword, setNewPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -70,7 +73,7 @@ export function ResetPasswordView() {
     const result = await resetPassword(email, code, newPassword)
     setPending(false)
     if (!result.ok) {
-      setError(result.error || PASSWORD_RESET_FAILURES.reset)
+      setError(result.error || t.t(PASSWORD_RESET_FAILURES.reset))
       return
     }
     setDone(true)

@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { type AuthCredentials, AuthForm, type AuthMode } from "@spy4x/preact-system/auth-form"
@@ -8,33 +7,15 @@ import { Link } from "@spy4x/preact-ui/link"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { OAUTH_PROVIDER_NAMES, type OAuthProviderId, type SignInMethod } from "@domain/identity"
 import { isInvitationPath, type Navigate, SCREEN_PATHS, withNext } from "./progressive.tsx"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 import { NoAccountYet, TryItNow, type TryLegalLinks, WordDivider } from "./guest-screens.tsx"
 
-/** The public demo's one line on sign-in and sign-up (docs/demo.md). */
-export const DEMO_NOTE =
-  `This is a public demo, wiped every night. A new account starts with sample data to explore.`
+/** The public demo's one line on sign-in and sign-up (docs/demo.md), by its key in `app`. */
+const DEMO_NOTE = `AuthScreen.demoNote`
 
 /** The same line while guest accounts are on (#224): it names both ways in. */
-export const DEMO_GUEST_NOTE =
-  `This is a public demo, wiped every night. Every new account, guest or not, starts with sample data to explore.`
-
-/** The sign-up card's sentence while "Try it now" is offered above the form. */
-const TRY_FIRST_DESCRIPTION = "Try the app first, or sign up with an e-mail address."
-
-/**
- * What sign-up and sign-in say while `next` is an invitation: the person followed an invitation
- * link signed out, most often without an account yet.
- */
-const INVITED_COPY: Record<AuthMode, { title: string; description: string }> = {
-  "sign-in": {
-    title: "You're invited to a group",
-    description: "Sign in to see the invitation and join.",
-  },
-  "sign-up": {
-    title: "You're invited to a group",
-    description: "Create an account to see the invitation and join, or sign in if you have one.",
-  },
-}
+const DEMO_GUEST_NOTE = `AuthScreen.demoGuestNote`
 
 /** The three screens `AuthScreen` draws: the two credential modes, and the second factor. */
 export type AuthScreenKind = AuthMode | "one-time-code"
@@ -56,33 +37,46 @@ const FIELD_NAMES: Record<AuthScreenKind, { login: string; code: string }> = {
   "one-time-code": { login: "login", code: "otp" },
 }
 
-/** What the login field is called on each credential screen. */
+/** What the login field is called on each credential screen, by its key in `app`. */
 const LOGIN_LABELS: Record<AuthScreenKind, string> = {
-  "sign-in": "E-mail or username",
-  "sign-up": "E-mail",
-  "one-time-code": "E-mail or username",
+  "sign-in": `AuthScreen.loginOrUsername`,
+  "sign-up": `AuthScreen.email`,
+  "one-time-code": `AuthScreen.loginOrUsername`,
 }
 
+/** Each screen's title, sentence and failure, by their keys in `app`. */
 const COPY: Record<AuthScreenKind, { title: string; description: string; failure: string }> = {
   "sign-in": {
-    title: "Welcome back",
-    description: "Sign in with your e-mail address or username.",
-    failure: "Sign in failed",
+    title: `AuthScreen.signInTitle`,
+    description: `AuthScreen.signInDescription`,
+    failure: `AuthScreen.signInFailed`,
   },
   "sign-up": {
-    title: "Create your account",
-    description: "An e-mail address and a password. We mail you a code to confirm the address.",
-    failure: "Sign up failed",
+    title: `AuthScreen.signUpTitle`,
+    description: `AuthScreen.signUpDescription`,
+    failure: `AuthScreen.signUpFailed`,
   },
   "one-time-code": {
-    title: "Enter your code",
-    description: "Open your authenticator app and enter the six digits it shows.",
-    failure: "Invalid token",
+    title: `AuthScreen.codeTitle`,
+    description: `AuthScreen.codeDescription`,
+    failure: `AuthScreen.codeFailed`,
   },
 }
 
-/** The message to show when an attempt on `screen` failed without a message of its own. */
-export function authFailureMessage(screen: AuthScreenKind): string {
+/**
+ * What sign-up and sign-in say while `next` is an invitation: the person followed an invitation
+ * link signed out, most often without an account yet.
+ */
+const INVITED_COPY: Record<AuthMode, { title: string; description: string }> = {
+  "sign-in": { title: `AuthScreen.invitedTitle`, description: `AuthScreen.invitedSignIn` },
+  "sign-up": { title: `AuthScreen.invitedTitle`, description: `AuthScreen.invitedSignUp` },
+}
+
+/**
+ * The key in `app` of the message to show when an attempt on `screen` failed without a message of
+ * its own; the view translates it.
+ */
+export function authFailureKey(screen: AuthScreenKind): string {
   return COPY[screen].failure
 }
 
@@ -170,12 +164,11 @@ export interface LastSignInHint {
   email: string | null
 }
 
-/** The name of a sign-in method in a sentence. */
-const METHOD_NAMES: Record<LastSignInHint["method"], string> = {
-  password: "your password",
-  passkey: "a passkey",
-  link: "an e-mail link",
-  ...OAUTH_PROVIDER_NAMES,
+/** "Last time you signed in with …" for each way in that is not a provider, by its key in `app`. */
+const LAST_KEYS: Record<Exclude<LastSignInHint["method"], OAuthProviderId>, string> = {
+  password: `AuthScreen.lastPassword`,
+  passkey: `AuthScreen.lastPasskey`,
+  link: `AuthScreen.lastLink`,
 }
 
 /**
@@ -187,6 +180,7 @@ function LastSignIn(
 ): JSX.Element | null {
   const [forgotten, setForgotten] = useState(false)
   const done = useRef<HTMLParagraphElement>(null)
+  const t = useAppText()
   useEffect(() => {
     if (forgotten) done.current?.focus()
   }, [forgotten])
@@ -194,16 +188,25 @@ function LastSignIn(
   if (forgotten) {
     return (
       <p ref={done} tabIndex={-1} role="status" class="text-sm" data-e2e="last-sign-in-forgotten">
-        Forgotten. This browser no longer remembers how you signed in.
+        {t.t(`AuthScreen.forgotten`)}
       </p>
     )
   }
   if (!last) return null
+  const values = {
+    email: last.email ?? ``,
+    provider: OAUTH_PROVIDER_NAMES[last.method as OAuthProviderId],
+  }
+  const key = last.method in LAST_KEYS
+    ? LAST_KEYS[last.method as keyof typeof LAST_KEYS]
+    : `AuthScreen.lastProvider`
   return (
     <p class="flex flex-wrap items-center gap-2 text-sm" data-e2e="last-sign-in">
       <span>
-        Last time you signed in with {METHOD_NAMES[last.method]}
-        {last.email && <>{" "}({last.email})</>}.
+        <Rich
+          parts={t.parts(key, values)}
+          tags={{ email: (text) => last.email && <bdi translate={false}>{text}</bdi> }}
+        />
       </span>
       <Button
         type="button"
@@ -215,7 +218,7 @@ function LastSignIn(
           onForget?.()
         }}
       >
-        Not you? Forget
+        {t.t(`AuthScreen.forget`)}
       </Button>
     </p>
   )
@@ -276,10 +279,11 @@ export function AuthCard(
 function Done(
   { title, text, navigate }: { title: string; text: string; navigate?: Navigate },
 ): JSX.Element {
+  const t = useAppText()
   return (
     <AuthCard title={title} description={text}>
       <Button href={SCREEN_PATHS.profile} navigate={navigate} class="w-full">
-        Open your profile
+        {t.t(`AuthScreen.openProfile`)}
       </Button>
     </AuthCard>
   )
@@ -316,6 +320,7 @@ export function AuthScreen(
     defaultLogin,
   }: AuthScreenProps,
 ): JSX.Element {
+  const t = useAppText()
   const invited = screen !== "one-time-code" && isInvitationPath(next)
   const copy = invited ? { ...COPY[screen], ...INVITED_COPY[screen as AuthMode] } : COPY[screen]
   // What the login field holds, as typed: the link button sends it.
@@ -326,27 +331,40 @@ export function AuthScreen(
   if (screen === "one-time-code" && !isMfaRequired) {
     return (
       <Done
-        title="No code needed"
-        text="This sign-in does not ask for a code."
+        title={t.t(`AuthScreen.noCodeTitle`)}
+        text={t.t(`AuthScreen.noCodeText`)}
         navigate={navigate}
       />
     )
   }
 
   if (screen !== "one-time-code" && isSignedIn) {
-    return <Done title="You are signed in" text="Nothing to do here." navigate={navigate} />
+    return (
+      <Done
+        title={t.t(`AuthScreen.signedInTitle`)}
+        text={t.t(`AuthScreen.signedInText`)}
+        navigate={navigate}
+      />
+    )
   }
 
-  const linkTo = (path: string, text: string) => (
-    <Link href={withNext(path, next)} navigate={navigate} class="pc-link font-medium">
-      {text}
-    </Link>
+  const linkTo = (path: string, key: string) => (
+    <Rich
+      parts={t.parts(key)}
+      tags={{
+        link: (text) => (
+          <Link href={withNext(path, next)} navigate={navigate} class="pc-link font-medium">
+            {text}
+          </Link>
+        ),
+      }}
+    />
   )
   const after = screen === "sign-in"
-    ? <>New here? {linkTo(SCREEN_PATHS.signUp, "Create an account")}</>
+    ? linkTo(SCREEN_PATHS.signUp, `AuthScreen.newHere`)
     : screen === "sign-up"
-    ? <>Already have an account? {linkTo(SCREEN_PATHS.signIn, "Sign in")}</>
-    : <>Lost your device? {linkTo(SCREEN_PATHS.signIn, "Back to sign in")}</>
+    ? linkTo(SCREEN_PATHS.signIn, `AuthScreen.haveAccount`)
+    : linkTo(SCREEN_PATHS.signIn, `AuthScreen.lostDevice`)
 
   // A passkey signs in to an account that exists: sign-up offers none.
   const passkeyButton = screen === "sign-in" && onPasskey !== undefined
@@ -357,19 +375,19 @@ export function AuthScreen(
         variant="secondary"
         class="w-full"
         busy={linkBusy}
-        busyLabel="Sending…"
+        busyLabel={t.t(`AuthScreen.sending`)}
         disabled={busy}
         onClick={() => onEmailLink(login.current.trim())}
         data-e2e={screen === "sign-in" ? "link-sign-in" : "link-sign-up"}
       >
-        {screen === "sign-in" ? "Email me a sign-in link" : "Email me a sign-up link"}
+        {t.t(screen === "sign-in" ? `AuthScreen.emailSignInLink` : `AuthScreen.emailSignUpLink`)}
       </Button>
     </li>
   )
   const card = (
     <AuthCard
-      title={copy.title}
-      description={tryFirst ? TRY_FIRST_DESCRIPTION : copy.description}
+      title={t.t(copy.title)}
+      description={t.t(tryFirst ? `AuthScreen.tryFirst` : copy.description)}
       below={guest && screen === "sign-in" && !invited && (
         <NoAccountYet demo={demo} navigate={navigate} next={next} />
       )}
@@ -379,7 +397,7 @@ export function AuthScreen(
       {tryFirst && (
         <>
           <TryItNow navigate={navigate} next={next} legal={legal} />
-          <WordDivider>or create an account</WordDivider>
+          <WordDivider>{t.t(`AuthScreen.orCreate`)}</WordDivider>
         </>
       )}
       <AuthForm
@@ -389,10 +407,10 @@ export function AuthScreen(
         busy={busy}
         error={error}
         labels={{
-          login: LOGIN_LABELS[screen],
-          signUp: "Create account",
-          submitCode: "Continue",
-          codeHint: "Six digits from your authenticator app.",
+          login: t.t(LOGIN_LABELS[screen]),
+          signUp: t.t(`AuthScreen.createAccount`),
+          submitCode: t.t(`AuthScreen.continue`),
+          codeHint: t.t(`AuthScreen.codeHint`),
         }}
         names={FIELD_NAMES[screen]}
         passkeyAutofill={passkeyAutofill}
@@ -405,14 +423,17 @@ export function AuthScreen(
           ? (
             <p class="text-center text-sm">
               <Link href={SCREEN_PATHS.forgotPassword} navigate={navigate} class="pc-link">
-                Forgot your password?
+                {t.t(`AuthScreen.forgotPassword`)}
               </Link>
             </p>
           )
           : undefined}
       />
       {screen !== "one-time-code" && (providers.length > 0 || passkeyButton || linkButton) && (
-        <ul class="flex flex-col gap-3 border-t border-subtle pt-6" aria-label="Other ways in">
+        <ul
+          class="flex flex-col gap-3 border-t border-subtle pt-6"
+          aria-label={t.t(`AuthScreen.otherWays`)}
+        >
           {screen === "sign-up" && linkButton}
           {passkeyButton && (
             <li>
@@ -421,12 +442,12 @@ export function AuthScreen(
                 variant="secondary"
                 class="w-full"
                 busy={passkeyBusy}
-                busyLabel="Waiting for your device…"
+                busyLabel={t.t(`AuthScreen.waitingDevice`)}
                 disabled={busy}
                 onClick={onPasskey}
                 data-e2e="passkey-sign-in"
               >
-                Sign in with a passkey
+                {t.t(`AuthScreen.passkey`)}
               </Button>
             </li>
           )}
@@ -440,7 +461,7 @@ export function AuthScreen(
                 class="w-full"
                 data-e2e={`provider-${provider}`}
               >
-                Continue with {OAUTH_PROVIDER_NAMES[provider]}
+                {t.t(`AuthScreen.continueWith`, { provider: OAUTH_PROVIDER_NAMES[provider] })}
               </Button>
             </li>
           ))}
@@ -452,7 +473,9 @@ export function AuthScreen(
     <div class="flex w-full flex-col gap-6">
       {demo && screen !== "one-time-code" && (
         // Standing information, read before the form: no live region announces it.
-        <Notice live={false} data-e2e="demo-notice">{guest ? DEMO_GUEST_NOTE : DEMO_NOTE}</Notice>
+        <Notice live={false} data-e2e="demo-notice">
+          {t.t(guest ? DEMO_GUEST_NOTE : DEMO_NOTE)}
+        </Notice>
       )}
       {card}
     </div>

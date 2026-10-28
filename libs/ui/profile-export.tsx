@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useRef } from "preact/hooks"
 import { IconSpinner } from "@spy4x/preact-icons"
@@ -10,6 +9,8 @@ import { SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { DataExportStatus, type DataExportView } from "@domain/identity"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 
 /** The id of the row's control, which a link or a command can focus: `#your-data`. */
 export const DATA_EXPORT_ANCHOR = "your-data"
@@ -36,9 +37,6 @@ export interface DataExportRowProps {
   now?: number
 }
 
-const NEVER_ASKED = "A ZIP of your profile, groups and notes, as JSON and CSV files. It takes a " +
-  "few minutes, and we e-mail you when it is ready."
-
 /**
  * The Account section's "Your data" row (#229): the newest export's state and the one action it
  * allows. The value is a live region from the first render, so "Preparing your file" and the file
@@ -49,6 +47,7 @@ const NEVER_ASKED = "A ZIP of your profile, groups and notes, as JSON and CSV fi
 export function DataExportRow(props: DataExportRowProps): JSX.Element {
   const { exportState, pending } = props
   const now = props.now ?? Date.now()
+  const t = useAppText()
   const status = useRef<HTMLDivElement>(null)
   const askButton = useRef<HTMLButtonElement>(null)
   // When a render removes the focused control (the row's button, or "Prepare a new file." inside
@@ -70,7 +69,7 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
       class={TOUCH_TARGET}
       data-e2e={dataE2E}
       busy={pending}
-      busyLabel="Asking…"
+      busyLabel={t.t(`ProfileExport.asking`)}
       onClick={onRequest}
     >
       {label}
@@ -80,17 +79,15 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
   let value: JSX.Element | string = "…"
   let action: JSX.Element | null = null
   if (exportState === null) {
-    value = NEVER_ASKED
-    action = ask("Download my data", "data-export-request")
+    value = t.t(`ProfileExport.never`)
+    action = ask(t.t(`ProfileExport.download`), "data-export-request")
   } else if (exportState) {
     switch (exportState.status) {
       case DataExportStatus.Preparing:
         value = (
           <span class="flex items-start gap-2">
             <IconSpinner class="mt-px size-4 shrink-0 text-selected" />
-            <span>
-              Preparing your file. We will e-mail you and send a notification when it is ready.
-            </span>
+            <span>{t.t(`ProfileExport.preparing`)}</span>
           </span>
         )
         break
@@ -98,21 +95,34 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
         value = (
           <span class="flex flex-col gap-1">
             <span>
-              <span class="sr-only">Your file is ready.</span> Ready:{" "}
-              {formatBytes(exportState.sizeBytes ?? 0)}, until <OnDay at={exportState.expiresAt} />.
+              <Rich
+                parts={t.parts(`ProfileExport.ready`, {
+                  size: formatBytes(exportState.sizeBytes ?? 0),
+                })}
+                tags={{
+                  hidden: (text) => <span class="sr-only">{text}</span>,
+                  day: () => <OnDay at={exportState.expiresAt} />,
+                }}
+              />
             </span>
             {now >= exportState.nextRequestAt.getTime() && (
               <span>
-                Your data changed since?{" "}
-                <button
-                  type="button"
-                  class="pc-link inline-flex min-h-11 items-center sm:min-h-0"
-                  data-e2e="data-export-again"
-                  onClick={onRequest}
-                  aria-disabled={pending || undefined}
-                >
-                  Prepare a new file.
-                </button>
+                <Rich
+                  parts={t.parts(`ProfileExport.changed`)}
+                  tags={{
+                    button: (text) => (
+                      <button
+                        type="button"
+                        class="pc-link inline-flex min-h-11 items-center sm:min-h-0"
+                        data-e2e="data-export-again"
+                        onClick={onRequest}
+                        aria-disabled={pending || undefined}
+                      >
+                        {text}
+                      </button>
+                    ),
+                  }}
+                />
               </span>
             )}
           </span>
@@ -126,28 +136,31 @@ export function DataExportRow(props: DataExportRowProps): JSX.Element {
             class={TOUCH_TARGET}
             data-e2e="data-export-download"
           >
-            Download ZIP
+            {t.t(`ProfileExport.downloadZip`)}
           </Button>
         )
         break
       case DataExportStatus.Expired:
         value = (
           <span>
-            Your last file expired on <OnDay at={exportState.expiresAt} />.
+            <Rich
+              parts={t.parts(`ProfileExport.expired`)}
+              tags={{ day: () => <OnDay at={exportState.expiresAt} /> }}
+            />
           </span>
         )
-        action = ask("Prepare a new file", "data-export-request")
+        action = ask(t.t(`ProfileExport.prepareNew`), "data-export-request")
         break
       case DataExportStatus.Failed:
-        value = <span class="text-danger">We could not prepare your file.</span>
-        action = ask("Try again", "data-export-request")
+        value = <span class="text-danger">{t.t(`ProfileExport.failed`)}</span>
+        action = ask(t.t(`EmailScreen.tryAgain`), "data-export-request")
         break
     }
   }
 
   return (
     <SettingRow
-      label="Your data"
+      label={t.t(`ProfileExport.label`)}
       dataE2E="data-export-row"
       value={
         <div
@@ -174,14 +187,15 @@ export function DataExportErrorState(
   { error }: { error: DataExportError | null },
 ): JSX.Element | null {
   const format = useFormat()
+  const t = useAppText()
   let message: string | null = null
   if (error?.kind === "network") {
-    message = "Could not ask for your file. Check your connection and try again."
+    message = t.t(`ProfileExport.network`)
   } else if (error?.kind === "too-soon") {
-    const day = format.date(error.retryAt) === format.date(new Date()) ? "today" : "tomorrow"
-    message = `You can ask for one file a day. Ask again after ${
-      format.time(error.retryAt)
-    } ${day}.`
+    const today = format.date(error.retryAt) === format.date(new Date())
+    message = t.t(today ? `ProfileExport.tooSoonToday` : `ProfileExport.tooSoonTomorrow`, {
+      time: format.time(error.retryAt),
+    })
   }
   return <ErrorState message={message} focusOnAppear dataE2E="data-export-error" />
 }

@@ -92,7 +92,7 @@ describe(`the profile's Telegram store`, () => {
     await store.link()
 
     expect(store.code.value).toBeNull()
-    expect(store.error.value).toBe(TELEGRAM_FAILURES.code)
+    expect(store.error.value).toEqual({ key: TELEGRAM_FAILURES.code })
     expect(store.pending.value).toBe(false)
   })
 

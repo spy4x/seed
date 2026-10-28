@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useRef, useState } from "preact/hooks"
 import { Avatar } from "@spy4x/preact-ui/avatar"
@@ -12,6 +11,9 @@ import { SettingRow } from "@spy4x/preact-ui/setting-row"
 import { useFocusFallback } from "@spy4x/preact-ui/use-focus-after-removal"
 import { formatBytes } from "@spy4x/platform/universal/format-number"
 import { PICTURE_MAX_BYTES, PICTURE_TYPES } from "@domain/identity"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { type AppText, say } from "./app-text.ts"
+import { useAppText } from "./i18n.ts"
 
 /** The id of "Upload" or "Change", which the palette's "Change profile picture" presses. */
 export const PICTURE_BUTTON_ID = "profile-picture-choose"
@@ -22,14 +24,11 @@ export const PICTURE_BUTTON_ID = "profile-picture-choose"
  */
 export const PICTURE_ACCEPT = [...PICTURE_TYPES, ".heic", ".heif"].join(",")
 
-/** The rule for the file, as the row and the search palette show it. */
+/**
+ * The rule for the file, in English, as the search palette shows it until its lane of #275
+ * translates it. The row says it in the person's language (`ProfilePicture.rule`).
+ */
 export const PICTURE_RULE = `JPEG, PNG, WebP or HEIC, up to ${formatBytes(PICTURE_MAX_BYTES)}`
-
-/** What the row says while the worker prepares the new picture (#464). */
-export const PICTURE_PREPARING = "Preparing your picture…"
-
-/** What the row says when the worker could not use the picture (#464). */
-export const PICTURE_REFUSED = "We could not use that picture. Choose another."
 
 /** What the "Profile picture" row takes. */
 export interface PictureRowProps {
@@ -44,9 +43,9 @@ export interface PictureRowProps {
   /** What is in flight: an upload, a removal, or nothing. */
   status: "idle" | "uploading" | "removing"
   /** The last refusal, under the list; `null` for none. */
-  error: string | null
+  error: AppText | null
   /** Read out by the row's status region: "Profile picture saved." and the like. */
-  announcement: string
+  announcement: AppText | null
   /** The person chose an image the browser accepts. */
   onChoose: (file: File) => void
   /** The person chose a file the browser refused: the wrong type or too large. */
@@ -63,10 +62,12 @@ export interface PictureRowProps {
  */
 export function PictureRow(props: PictureRowProps): JSX.Element {
   const { name, src, hasPicture, status, announcement, state = null } = props
+  const t = useAppText()
+  const hidden = (text: string) => <span class="sr-only">{text}</span>
   const note = state === "preparing"
-    ? PICTURE_PREPARING
+    ? t.t(`ProfilePicture.preparing`)
     : state === "refused"
-    ? PICTURE_REFUSED
+    ? t.t(`ProfilePicture.refused`)
     : null
   const [confirming, setConfirming] = useState(false)
   const removeButton = useRef<HTMLButtonElement>(null)
@@ -77,13 +78,15 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
   )
   return (
     <SettingRow
-      label="Profile picture"
+      label={t.t(`ProfilePicture.label`)}
       dataE2E="profile-picture-row"
       value={
         <span class="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:gap-3">
           <Avatar name={name} src={src} size="lg" alt="" class="shrink-0" />
           <span class="flex flex-col gap-1">
-            <span class="text-sm text-muted">{PICTURE_RULE}.</span>
+            <span class="text-sm text-muted">
+              {t.t(`ProfilePicture.rule`, { max: formatBytes(PICTURE_MAX_BYTES) })}
+            </span>
             {
               /* The state is visible and read out; the store's announcements are read out only. */
             }
@@ -96,7 +99,7 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
                 : "text-sm font-medium"}
               data-e2e="profile-picture-status"
             >
-              {note ?? announcement}
+              {note ?? (announcement && say(t, announcement))}
             </span>
           </span>
         </span>
@@ -110,12 +113,15 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
               accept={PICTURE_ACCEPT}
               maxSize={PICTURE_MAX_BYTES}
               label={
-                <>
-                  {hasPicture ? "Change" : "Upload"} <span class="sr-only">profile picture</span>
-                </>
+                <Rich
+                  parts={t.parts(
+                    hasPicture ? `ProfilePicture.changeHidden` : `ProfilePicture.uploadHidden`,
+                  )}
+                  tags={{ hidden }}
+                />
               }
               busy={status === "uploading"}
-              busyLabel="Uploading…"
+              busyLabel={t.t(`ProfilePicture.uploading`)}
               disabled={status === "removing"}
               onFiles={(files) => props.onChoose(files[0])}
               onReject={(rejections) => props.onReject(rejections[0])}
@@ -128,18 +134,18 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
                 class={TOUCH_TARGET}
                 data-e2e="profile-picture-remove"
                 busy={status === "removing"}
-                busyLabel="Removing…"
+                busyLabel={t.t(`SignInMethods.removing`)}
                 onClick={() => setConfirming(true)}
               >
-                Remove <span class="sr-only">profile picture</span>
+                <Rich parts={t.parts(`ProfilePicture.removeHidden`)} tags={{ hidden }} />
               </Button>
             )}
             {confirming && (
               <ConfirmDialog
-                title="Remove your profile picture?"
-                message="Your initials show instead, here and in every group."
-                confirmLabel="Remove picture"
-                cancelLabel="Cancel"
+                title={t.t(`ProfilePicture.removeTitle`)}
+                message={t.t(`ProfilePicture.removeText`)}
+                confirmLabel={t.t(`ProfilePicture.removeButton`)}
+                cancelLabel={t.t(`EmailScreen.cancel`)}
                 tone="danger"
                 dataE2E="profile-picture-remove-dialog"
                 onConfirm={() => {
@@ -157,6 +163,13 @@ export function PictureRow(props: PictureRowProps): JSX.Element {
 }
 
 /** The row's last refusal, under the list. It takes focus when it appears. */
-export function PictureErrorState({ error }: { error: string | null }): JSX.Element {
-  return <ErrorState message={error} focusOnAppear dataE2E="profile-picture-error" />
+export function PictureErrorState({ error }: { error: AppText | null }): JSX.Element {
+  const t = useAppText()
+  return (
+    <ErrorState
+      message={error && say(t, error)}
+      focusOnAppear
+      dataE2E="profile-picture-error"
+    />
+  )
 }

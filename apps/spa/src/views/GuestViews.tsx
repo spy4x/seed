@@ -4,7 +4,6 @@ import { supportsPasskeys } from "@spy4x/platform/browser/passkey"
 import {
   type GuestSwitchState,
   OAUTH_NOTICE_PARAM,
-  OAUTH_NOTICES,
   OAUTH_PROVIDER_NAMES,
   oauthNotice,
   type OAuthProviderId,
@@ -18,6 +17,8 @@ import {
   type TryState,
 } from "@ui/guest-screens.tsx"
 import { readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
+import { OAUTH_NOTICE_KEYS, say } from "@ui/app-text.ts"
+import { useAppText } from "@ui/i18n.ts"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"
 import { bootstrapSession, signUp } from "../state/auth.ts"
 import {
@@ -84,6 +85,7 @@ function keptMethod(method: string | undefined): KeepMethod | null {
  */
 export function KeepView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const query = new URLSearchParams(useSearch())
   const next = readNext(query)
   const [store] = useState(() => createSignInMethodsStore())
@@ -110,8 +112,8 @@ export function KeepView() {
           : null
         setError(
           notice === "failed" && name
-            ? `${name} did not finish. Your account was not changed. Try again, or choose another method.`
-            : OAUTH_NOTICES[notice],
+            ? t.t(`GuestScreens.providerFailed`, { provider: name })
+            : t.t(OAUTH_NOTICE_KEYS[notice]),
         )
       }
       navigate(GUEST_PATHS.keep, { replace: true })
@@ -129,13 +131,13 @@ export function KeepView() {
       setBusy(null)
     } else if (status?.kind === "cancelled") {
       setBusy(null)
-      setError("No passkey was added. Your account is still a guest account.")
+      setError(t.t(`GuestScreens.noPasskey`))
     }
   }, [store.passkeyStatus.value])
   useEffect(() => {
     if (store.error.value !== null) {
       setBusy(null)
-      setError(store.error.value || "That did not work. Try again.")
+      setError(say(t, store.error.value) || t.t(`GuestScreens.didNotWork`))
     }
   }, [store.error.value])
 
@@ -170,8 +172,8 @@ export function KeepView() {
         }
         setError(
           !answer.expired && answer.offline
-            ? SIGN_UP_OFFLINE
-            : (!answer.expired && answer.error) || "That did not work. Try again.",
+            ? t.t(SIGN_UP_OFFLINE)
+            : (!answer.expired && answer.error) || t.t(`GuestScreens.didNotWork`),
         )
       }}
       onDone={() => navigate(back ?? SCREEN_PATHS.profile)}
@@ -194,6 +196,7 @@ export function withKept(next: string | null): string {
  */
 export function GuestTakenView() {
   const [, navigate] = useLocation()
+  const t = useAppText()
   const [state, setState] = useState<GuestSwitchState | null | undefined>(undefined)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -221,7 +224,7 @@ export function GuestTakenView() {
         setBusy(true)
         const answer = await switchFromGuest(choice, password, otp)
         setBusy(false)
-        if (!answer.ok) return setError(answer.error)
+        if (!answer.ok) return setError(say(t, answer.error))
         // Another account now: a reload starts the app for it, as a sign-in does. The Profile says
         // how many groups came along (`?moved=`).
         location.replace(`${SCREEN_PATHS.profile}?moved=${answer.result.movedGroups}`)

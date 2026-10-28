@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -15,12 +14,15 @@ import {
   type TelegramLinkCodeResponse,
   type TelegramStatusResponse,
 } from "@domain/identity"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { type Said, say } from "./app-text.ts"
+import { useAppText } from "./i18n.ts"
 
-/** The messages shown when a Telegram call failed without a message of its own. */
+/** The catalog keys of what shows when a Telegram call failed without a message of its own. */
 export const TELEGRAM_FAILURES = {
-  status: "Could not read your Telegram link. Check your connection and try again.",
-  code: "Could not make a link code. Check your connection and try again.",
-  unlink: "Could not unlink Telegram. Check your connection and try again.",
+  status: `ProfileTelegram.statusFailed`,
+  code: `ProfileTelegram.codeFailed`,
+  unlink: `ProfileTelegram.unlinkFailed`,
 } as const
 
 /** What {@link TelegramLink} takes. */
@@ -29,8 +31,8 @@ export interface TelegramLinkProps {
   status: TelegramStatusResponse | null
   /** The code the open dialog shows, or `null` while no dialog is open. */
   code: TelegramLinkCodeResponse | null
-  /** Why the last call failed, above the row. */
-  error: string | null
+  /** Why the last call failed, above the row: the server's words or a catalog key. */
+  error: Said | null
   /** A code or an unlink is in flight. */
   pending: boolean
   /** "Link Telegram": the app makes a code and opens the dialog with it. */
@@ -55,6 +57,8 @@ export interface TelegramLinkProps {
 export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
   const { status, code, error, pending } = props
   const [confirming, setConfirming] = useState(false)
+  const t = useAppText()
+  const shown = error && say(t, error)
   const linkButton = useRef<HTMLButtonElement>(null)
   const unlinkButton = useRef<HTMLButtonElement>(null)
   const linkedAt = status?.linkedAt ?? null
@@ -72,27 +76,29 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
     }
   }, [status === null, linkedAt])
 
-  if (!status) return error ? <ErrorState message={error} /> : null
+  if (!status) return shown ? <ErrorState message={shown} /> : null
   if (!status.enabled && !linkedAt) return null
-  const bot = status.botUsername ? `@${status.botUsername}` : "the bot"
+  const bot = status.botUsername ? `@${status.botUsername}` : t.t(`ProfileTelegram.theBot`)
+  const strong = (text: string) => <strong class="text-foreground">{text}</strong>
   return (
     <SettingGroup
-      title="Telegram"
-      description={`Get your notifications in a chat with ${bot}, and use its commands there.`}
+      title={t.t(`ProfileTelegram.title`)}
+      description={t.t(`ProfileTelegram.description`, { bot })}
       dataE2E="telegram"
     >
-      {!(confirming && linkedAt) && <ErrorState message={error} />}
+      {!(confirming && linkedAt) && <ErrorState message={shown} />}
       <SettingList>
         <SettingRow
-          label="Chat"
+          label={t.t(`ProfileTelegram.chat`)}
           dataE2E="telegram-status"
           value={linkedAt
             ? (
-              <>
-                Linked <OnDay at={linkedAt} />
-              </>
+              <Rich
+                parts={t.parts(`ProfileTelegram.linked`)}
+                tags={{ day: () => <OnDay at={linkedAt} /> }}
+              />
             )
-            : "Not linked"}
+            : t.t(`ProfileTelegram.notLinked`)}
           action={linkedAt
             ? (
               <Button
@@ -105,7 +111,10 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
                 data-e2e="telegram-unlink"
                 onClick={() => setConfirming(true)}
               >
-                Unlink <span class="sr-only">Telegram</span>
+                <Rich
+                  parts={t.parts(`ProfileTelegram.unlinkHidden`)}
+                  tags={{ hidden: (text) => <span class="sr-only">{text}</span> }}
+                />
               </Button>
             )
             : (
@@ -117,20 +126,21 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
                 data-e2e="telegram-link"
                 onClick={props.onLink}
                 busy={pending}
-                busyLabel="Working…"
+                busyLabel={t.t(`ProfileNotifications.working`)}
               >
-                Link Telegram
+                {t.t(`ProfileTelegram.link`)}
               </Button>
             )}
         />
       </SettingList>
       {confirming && linkedAt && (
         <ConfirmDialog
-          title="Unlink Telegram?"
+          title={t.t(`ProfileTelegram.unlinkTitle`)}
           tone="danger"
-          confirmLabel="Unlink"
+          confirmLabel={t.t(`SignInMethods.unlinkButton`)}
+          cancelLabel={t.t(`EmailScreen.cancel`)}
           busy={pending}
-          busyLabel="Unlinking…"
+          busyLabel={t.t(`SignInMethods.unlinking`)}
           onConfirm={() => {
             props.onUnlink()
             return false
@@ -141,25 +151,23 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
         >
           <Stack>
             <p class="text-sm text-muted">
-              Your notifications stop reaching Telegram, and {bot}{" "}
-              can no longer act for you there. To link it again you need a new code.
+              {t.t(`ProfileTelegram.unlinkText`, { bot })}
             </p>
-            <ErrorState message={error} />
+            <ErrorState message={shown} />
           </Stack>
         </ConfirmDialog>
       )}
       <Modal
         open={code !== null}
         onClose={props.onCloseCode}
-        title="Link Telegram"
-        cancelLabel="Close"
+        title={t.t(`ProfileTelegram.link`)}
+        cancelLabel={t.t(`EmailScreen.close`)}
         dataE2E="telegram-code-dialog"
       >
         {code && (
           <Stack>
             <p class="text-sm text-muted">
-              Open the chat with <strong class="text-foreground">{bot}</strong>{" "}
-              and press Start, then Link. This window closes once your account is linked.
+              <Rich parts={t.parts(`ProfileTelegram.open`, { bot })} tags={{ strong }} />
             </p>
             <Button
               href={code.url}
@@ -168,19 +176,19 @@ export function TelegramLink(props: TelegramLinkProps): JSX.Element | null {
               class="min-h-11 w-full sm:min-h-9 sm:w-auto sm:self-start"
               data-e2e="telegram-open"
             >
-              Open Telegram
+              {t.t(`ProfileTelegram.openButton`)}
             </Button>
-            <p class="text-sm text-muted">Telegram on another device? Send {bot} this message:</p>
+            <p class="text-sm text-muted">{t.t(`ProfileTelegram.elsewhere`, { bot })}</p>
             <div data-e2e="telegram-code">
               <CopyBlock
                 text={`/link ${code.code}`}
-                textLabel="Message to send"
-                copyLabel="Copy message"
-                copiedLabel="Message copied"
+                textLabel={t.t(`ProfileTelegram.message`)}
+                copyLabel={t.t(`ProfileTelegram.copy`)}
+                copiedLabel={t.t(`ProfileTelegram.copied`)}
               />
             </div>
             <p class="text-sm text-muted" role="status">
-              Waiting for Telegram… The code works once, for {TELEGRAM_LINK_MINUTES} minutes.
+              {t.t(`ProfileTelegram.waiting`, { count: TELEGRAM_LINK_MINUTES })}
             </p>
           </Stack>
         )}

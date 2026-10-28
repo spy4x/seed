@@ -1,4 +1,3 @@
-// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { Button } from "@spy4x/preact-ui/button"
@@ -13,8 +12,10 @@ import {
   ACCOUNT_DELETION_GRACE_DAYS,
   type AccountDeletionBlocker,
   AccountDeletionBlockReason,
-  DELETED_USER_NAME,
 } from "@domain/identity"
+import type { Translator } from "@spy4x/platform/universal/i18n"
+import { Rich } from "@spy4x/preact-ui/i18n"
+import { useAppText } from "./i18n.ts"
 import { TOUCH_TARGET } from "@spy4x/preact-ui/page-header"
 import { GROUP_PATHS, type Navigate, profilePath, ScreenForm } from "./progressive.tsx"
 import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
@@ -41,18 +42,19 @@ export interface AccountDeleteErrors {
  * person's own format.
  */
 export function blockerHint(
+  t: Translator<string>,
   blocker: AccountDeletionBlocker,
   format: Pick<Formatters, "date">,
 ): string {
   switch (blocker.reason) {
     case AccountDeletionBlockReason.Members:
-      return "Other people still use it. Hand it over or remove them."
+      return t.t(`AccountDelete.members`)
     case AccountDeletionBlockReason.Subscription:
-      return "Its plan is still paid. Cancel the plan first."
-    case AccountDeletionBlockReason.PlanEnding: {
-      const day = blocker.endsAt ? format.date(blocker.endsAt, "long") : "the end of its period"
-      return `Its plan is cancelled and runs until ${day}. Wait until the plan ends.`
-    }
+      return t.t(`AccountDelete.subscription`)
+    case AccountDeletionBlockReason.PlanEnding:
+      return blocker.endsAt
+        ? t.t(`AccountDelete.planEnding`, { day: format.date(blocker.endsAt, "long") })
+        : t.t(`AccountDelete.planEndingPeriod`)
   }
 }
 
@@ -104,6 +106,7 @@ export function AccountDelete(
   }: AccountDeleteProps,
 ): JSX.Element {
   const [open, setOpen] = useState(false)
+  const t = useAppText()
   const password = useRef<HTMLInputElement>(null)
   const otp = useRef<HTMLInputElement>(null)
   const close = () => {
@@ -123,22 +126,26 @@ export function AccountDelete(
     <div data-e2e="danger-zone" class="pc-card border-danger">
       <dl>
         <SettingRow
-          label="Delete my account"
+          label={t.t(`AccountDelete.title`)}
           value={
             <span class="flex flex-col gap-1">
+              <span>{t.t(`AccountDelete.summary`, { count: ACCOUNT_DELETION_GRACE_DAYS })}</span>
               <span>
-                {`Your account and the groups only you use go for good ${ACCOUNT_DELETION_GRACE_DAYS} days after you ask. Signing in before then keeps them.`}
-              </span>
-              <span>
-                Want a copy first?{" "}
-                <Link
-                  href={`${profilePath("account")}#${DATA_EXPORT_ANCHOR}`}
-                  navigate={navigate}
-                  class="pc-link"
-                  data-e2e="account-delete-export-link"
-                >
-                  Download your data
-                </Link>.
+                <Rich
+                  parts={t.parts(`AccountDelete.copyFirst`)}
+                  tags={{
+                    link: (text) => (
+                      <Link
+                        href={`${profilePath("account")}#${DATA_EXPORT_ANCHOR}`}
+                        navigate={navigate}
+                        class="pc-link"
+                        data-e2e="account-delete-export-link"
+                      >
+                        {text}
+                      </Link>
+                    ),
+                  }}
+                />
               </span>
             </span>
           }
@@ -154,7 +161,10 @@ export function AccountDelete(
                 onOpen?.()
               }}
             >
-              Delete <span class="sr-only">my account</span>
+              <Rich
+                parts={t.parts(`AccountDelete.deleteHidden`)}
+                tags={{ hidden: (text) => <span class="sr-only">{text}</span> }}
+              />
             </Button>
           }
         />
@@ -163,13 +173,13 @@ export function AccountDelete(
       <Modal
         open={open}
         onClose={close}
-        title="Delete my account"
-        cancelLabel="Close"
+        title={t.t(`AccountDelete.title`)}
+        cancelLabel={t.t(`EmailScreen.close`)}
         tone="danger"
         dataE2E="account-delete-dialog"
       >
         {blockers === null
-          ? <p class="text-sm text-muted" role="status">Checking your groups…</p>
+          ? <p class="text-sm text-muted" role="status">{t.t(`AccountDelete.checking`)}</p>
           : blockers.length > 0
           ? <BlockerList blockers={blockers} navigate={navigate} onClose={close} />
           : providerProof && !providerProof.fresh
@@ -177,7 +187,9 @@ export function AccountDelete(
             <Stack>
               <ProviderProofNotice proof={providerProof} next={profilePath("danger-zone")} />
               <DialogActions>
-                <Button type="button" variant="ghost" onClick={close}>Close</Button>
+                <Button type="button" variant="ghost" onClick={close}>
+                  {t.t(`EmailScreen.close`)}
+                </Button>
               </DialogActions>
             </Stack>
           )
@@ -185,17 +197,14 @@ export function AccountDelete(
             <ScreenForm pending={pending} onSubmit={onDelete}>
               <Stack>
                 <p class="text-sm text-muted">
-                  You are signed out on every device at once. Your account and the groups only you
-                  use are deleted for good in {ACCOUNT_DELETION_GRACE_DAYS}{" "}
-                  days; sign in before then and your account is restored. Notes you wrote in other
-                  people's groups stay there, by "{DELETED_USER_NAME}".
+                  {t.t(`AccountDelete.explain`, { count: ACCOUNT_DELETION_GRACE_DAYS })}
                 </p>
                 {providerProof
                   ? <ProviderProofNotice proof={providerProof} next={profilePath("danger-zone")} />
                   : (
                     <Field
                       id="account-delete-password"
-                      label="Password"
+                      label={t.t(`SignInMethods.password`)}
                       error={errors.password}
                       required
                     >
@@ -214,7 +223,7 @@ export function AccountDelete(
                 {twoFactor && (
                   <Field
                     id="account-delete-otp"
-                    label="Code from your authenticator app"
+                    label={t.t(`ProfileSecurity.codeFromAuthenticator`)}
                     error={errors.otp}
                     required
                   >
@@ -232,15 +241,17 @@ export function AccountDelete(
                 )}
                 <ErrorState message={errors.form} />
                 <DialogActions>
-                  <Button type="button" variant="ghost" onClick={close}>Cancel</Button>
+                  <Button type="button" variant="ghost" onClick={close}>
+                    {t.t(`EmailScreen.cancel`)}
+                  </Button>
                   <Button
                     type="submit"
                     variant="danger"
                     data-e2e="account-delete-submit"
                     busy={pending}
-                    busyLabel="Deleting…"
+                    busyLabel={t.t(`AccountDelete.deleting`)}
                   >
-                    Delete my account
+                    {t.t(`AccountDelete.title`)}
                   </Button>
                 </DialogActions>
               </Stack>
@@ -260,11 +271,10 @@ function BlockerList(
   },
 ): JSX.Element {
   const format = useFormat()
+  const t = useAppText()
   return (
     <Stack>
-      <p class="text-sm text-muted">
-        You own groups other people still use or pay for. Deal with each one first, then come back.
-      </p>
+      <p class="text-sm text-muted">{t.t(`AccountDelete.blocked`)}</p>
       <ul class="flex flex-col gap-3" data-e2e="account-delete-blockers">
         {blockers.map((blocker) => (
           <li key={blocker.groupId} class="flex flex-col gap-1">
@@ -276,14 +286,16 @@ function BlockerList(
               class="pc-link inline-flex min-h-11 items-center self-start font-medium wrap-anywhere sm:min-h-9"
               data-e2e={`account-delete-blocker-${blocker.groupId}`}
             >
-              {blocker.name}
+              <bdi translate={false}>{blocker.name}</bdi>
             </Link>
-            <span class="text-sm text-muted">{blockerHint(blocker, format)}</span>
+            <span class="text-sm text-muted">{blockerHint(t, blocker, format)}</span>
           </li>
         ))}
       </ul>
       <DialogActions>
-        <Button type="button" variant="ghost" onClick={onClose}>Close</Button>
+        <Button type="button" variant="ghost" onClick={onClose}>
+          {t.t(`EmailScreen.close`)}
+        </Button>
       </DialogActions>
     </Stack>
   )

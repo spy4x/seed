@@ -3,6 +3,10 @@ import { afterEach, describe, it } from "@std/testing/bdd"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"
 import { SIGN_IN_LINK_MESSAGES } from "@ui/sign-in-link-screen.tsx"
 import { linkRequestFailure, tokenOf } from "./SignInLinkViews.tsx"
+import { createTranslator } from "@spy4x/platform/universal/i18n"
+
+/** A translator with no catalog: every message is its key, so the test sees which one was said. */
+const KEYS = createTranslator({ language: "en", catalogs: [] })
 import { forgetSentLink, readSentLink, rememberSentLink } from "../state/sign-in-link.ts"
 
 describe("the sign-in link pages (#391)", () => {
@@ -16,9 +20,9 @@ describe("the sign-in link pages (#391)", () => {
   })
 
   it("says offline, the API's message, or the general failure", () => {
-    expect(linkRequestFailure({ ok: false, offline: true })).toBe(SIGN_UP_OFFLINE)
-    expect(linkRequestFailure({ ok: false, error: "Too many links" })).toBe("Too many links")
-    expect(linkRequestFailure({ ok: false })).toBe(SIGN_IN_LINK_MESSAGES.sendFailed)
+    expect(linkRequestFailure(KEYS, { ok: false, offline: true })).toBe(SIGN_UP_OFFLINE)
+    expect(linkRequestFailure(KEYS, { ok: false, error: "Too many links" })).toBe("Too many links")
+    expect(linkRequestFailure(KEYS, { ok: false })).toBe(SIGN_IN_LINK_MESSAGES.sendFailed)
   })
 
   it("keeps the address and the time of the last link for the tab, until forgotten", () => {
