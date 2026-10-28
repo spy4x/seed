@@ -8,6 +8,8 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import {
   ADMIN_GROUP_NO_FILTER,
   type AdminGroupDetail,
@@ -55,12 +57,17 @@ afterEach(async () => {
 })
 
 /** Renders `node`, into the same root when one is mounted already, as a prop change would. */
+/** The operator's format, pinned, so dates read the same whatever the machine's locale. */
+const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC`, hourCycle: null })
+
 async function mount(node: VNode): Promise<HTMLElement> {
   if (!root) {
     root = document.createElement(`div`)
     document.body.append(root)
   }
-  await act(() => render(node, root!))
+  await act(() =>
+    render(<FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>, root!)
+  )
   return root
 }
 
