@@ -92,7 +92,7 @@
   "GroupBillingPanel.description": "Сколько <group>{group}</group> платит в месяц. Оплату обрабатывает Stripe.",
   "GroupBillingPanel.loading": "Загружаем тариф",
   "GroupBillingPanel.statusTrial": "Пробный период",
-  "GroupBillingPanel.statusRenews": "Продлится {date}",
+  "GroupBillingPanel.statusRenews": "Продление {date}",
   "GroupBillingPanel.statusEnds": "Закончится {date}",
   "GroupBillingPanel.statusPaymentFailed": "Платёж не прошёл",
   "GroupBillingPanel.off": "Все группы на бесплатном тарифе.",

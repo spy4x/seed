@@ -51,7 +51,7 @@
   "ApiTokens.loading": "Deine Tokens werden geladen…",
   "ApiTokens.emptyTitle": "Keine API-Tokens",
   "ApiTokens.emptyText": "Ein Token handelt in einer Gruppe in deinem Namen, nur lesend oder lesend und schreibend.",
-  "ApiTokens.revokeNamed": "Widerrufen <name>{name}</name>",
+  "ApiTokens.revokeNamed": "<name>{name}</name> widerrufen",
   "ApiTokens.passwordRevokes": "Wenn du dein Passwort änderst oder zurücksetzt, werden alle Tokens widerrufen.",
   "ApiTokens.revokeTitle": "„<name>{name}</name>“ widerrufen?",
   "ApiTokens.revokeMessage": "Alles, was diesen Token nutzt, funktioniert sofort nicht mehr. Das lässt sich nicht rückgängig machen.",
