@@ -193,5 +193,6 @@
   "Reason.not-recognised": "Este link não foi reconhecido.",
   "Reason.provider_refused": "O provedor de pagamento recusou isso. Nada mudou.",
   "Reason.result_unknown": "A resposta do provedor de pagamento se perdeu. Confira a página de cobrança antes de tentar de novo.",
-  "Reason.validation": "Alguns campos precisam de correção. Confira e tente de novo."
+  "Reason.validation": "Alguns campos precisam de correção. Confira e tente de novo.",
+  "Reason.TRANSLATION_INVALID": "Este post não pode traduzir aquele. Escolha um post próprio em outro idioma, ou nenhum."
 }

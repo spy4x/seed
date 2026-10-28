@@ -91,6 +91,8 @@ function fields(slug: string, extra: Partial<BlogPostFields> = {}): BlogPostFiel
     coverUrl: null,
     coverAlt: null,
     bodyMd: `Hello <b>there</b>.`,
+    language: `en`,
+    translationOf: null,
     ...extra,
   }
 }
@@ -327,6 +329,61 @@ Deno.test(`blog: read next puts the same topic first`, async () => {
   })
 })
 
+Deno.test(`blog: a post and its live translations name each other, and read next keeps to the language (#527)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, german, spanish, other] = [uuidV7(), uuidV7(), uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(german, fields(`hallo`, { language: `de`, translationOf: english }), maya)
+    await blog.create(spanish, fields(`hola`, { language: `es`, translationOf: english }), maya)
+    await blog.create(other, fields(`anderes`, { language: `de` }), maya)
+    for (const id of [english, german, other]) await blog.publish(id, 1, null, null, maya)
+
+    const original = await readPublicPost(sql, `hello`)
+    expect(original!.post.language).toBe(`en`)
+    // The Spanish one is a draft, so it is not named.
+    expect(original!.post.translations).toEqual([{ language: `de`, slug: `hallo` }])
+    expect(original!.readNext).toEqual([])
+    const translation = await readPublicPost(sql, `hallo`)
+    expect(translation!.post.translations).toEqual([{ language: `en`, slug: `hello` }])
+    expect(translation!.readNext.map((post) => post.slug)).toEqual([`anderes`])
+    expect((await readPublicPost(sql, `anderes`))!.post.translations).toEqual([])
+  })
+})
+
+Deno.test(`blog: refuses a translation that does not name a post in another language (#527)`, async (t) => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const [english, german] = [uuidV7(), uuidV7()]
+    await blog.create(english, fields(`hello`), maya)
+    await blog.create(german, fields(`hallo`, { language: `de`, translationOf: english }), maya)
+    const refused = async (id: string, extra: Partial<BlogPostFields>) => {
+      const error = await rejection(blog.create(id, fields(`p-${id}`, extra), maya))
+      return [error.code, error.field]
+    }
+    const refusal = [`TRANSLATION_INVALID`, `translationOf`]
+
+    await t.step(`a post that does not exist`, async () => {
+      expect(await refused(uuidV7(), { language: `es`, translationOf: uuidV7() })).toEqual(refusal)
+    })
+    await t.step(`a post in the same language`, async () => {
+      expect(await refused(uuidV7(), { translationOf: english })).toEqual(refusal)
+    })
+    await t.step(`a post that is itself a translation`, async () => {
+      expect(await refused(uuidV7(), { language: `es`, translationOf: german })).toEqual(refusal)
+    })
+    await t.step(`a second translation into a language the post has`, async () => {
+      expect(await refused(uuidV7(), { language: `de`, translationOf: english })).toEqual(refusal)
+    })
+    await t.step(`itself`, async () => {
+      const id = uuidV7()
+      expect(await refused(id, { language: `es`, translationOf: id })).toEqual(refusal)
+    })
+  })
+})
+
 Deno.test(`blog: a scheduled post goes live through its job, and is emailed once ever`, async (t) => {
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)
@@ -446,7 +503,15 @@ Deno.test(`blog: lost jobs come back once, and the sample posts seed once`, asyn
     expect(await seedSamplePosts(sql, maya.userId, now)).toBe(SAMPLE_POSTS.length)
     expect(await seedSamplePosts(sql, maya.userId, now)).toBe(0)
     const published = await listPublicPosts(sql, null)
-    expect(published.map((post) => post.slug)).toEqual([`hello-world`])
+    // The published one in English, and its translation into each other language.
+    expect(published.map((post) => `${post.language} ${post.slug}`).sort()).toEqual([
+      `ar marhaban-bialalam`,
+      `de hallo-welt`,
+      `en hello-world`,
+      `es hola-mundo`,
+      `pt-BR ola-mundo`,
+      `ru privet-mir`,
+    ])
 
     // The demo's wipe empties the job table but keeps the posts.
     await sql`DELETE FROM outbox_events`

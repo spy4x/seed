@@ -32,6 +32,8 @@ const post: BlogPost = {
   coverUrl: null,
   coverAlt: null,
   bodyMd: `Hi`,
+  language: `en`,
+  translationOf: null,
   status: `draft`,
   publishAt: null,
   publishedAt: null,
@@ -194,6 +196,8 @@ describe(`operator area: blog routes`, () => {
       topic: null,
       coverUrl: null,
       coverAlt: null,
+      language: `en`,
+      translationOf: null,
     }, ACTOR]])
   })
 

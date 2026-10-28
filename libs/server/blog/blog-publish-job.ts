@@ -1,6 +1,6 @@
 import type postgres from "postgres"
 import { isSubscriberList } from "@domain/subscribers"
-import { BLOG_PUBLISH_JOB } from "@domain/blog"
+import { BLOG_PUBLISH_JOB, blogPostPath } from "@domain/blog"
 import type { MailBrand } from "../mail/mail.ts"
 import type { SubscribersSetup } from "../subscribers/subscribers.ts"
 import {
@@ -28,11 +28,12 @@ const PREHEADER_MAX_LENGTH = 200
 
 /**
  * The newsletter issue of a post: its title as the subject and heading, its description, its key
- * points and a "Read the post" button to the post on the public website. The issue id is the
+ * points and a "Read the post" button to the post on the public website, at its language's
+ * address. The issue id is the
  * post's id, so the send log knows it as one issue whatever happens to the post.
  */
 export function blogTeaserIssue(
-  post: Pick<BlogPostRow, `id` | `slug` | `title` | `description` | `tldr`>,
+  post: Pick<BlogPostRow, `id` | `slug` | `title` | `description` | `tldr` | `language`>,
   siteUrl: string,
 ): SubscriberIssue {
   return subscriberIssueSchema.assert({
@@ -43,7 +44,12 @@ export function blogTeaserIssue(
       { heading: post.title },
       { paragraph: post.description },
       ...(post.tldr.length > 0 ? [{ list: [...post.tldr] }] : []),
-      { button: { href: `${siteUrl}/blog/${post.slug}`, label: `Read the post` } },
+      {
+        button: {
+          href: `${siteUrl}${blogPostPath(post)}`,
+          label: `Read the post`,
+        },
+      },
     ],
   })
 }
