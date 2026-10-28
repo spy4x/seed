@@ -13,6 +13,7 @@ function app(on: boolean) {
   const context = {
     limit: passThrough,
     catalog: { on, settings: CATALOG_DEFAULT_SETTINGS },
+    websiteStats: { setup: null, missing: [], itemPath: `/{slug}` },
   } as unknown as AdminModuleContext
   const app = new Hono<APIContext>()
   for (const routes of adminModuleRoutes(context)) app.route(`/`, routes)

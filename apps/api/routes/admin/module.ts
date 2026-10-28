@@ -1,5 +1,6 @@
 import type { FileStore, ServerFiles } from "@server/files/files.ts"
 import type { CatalogSetup } from "@server/catalog/setup.ts"
+import type { WebsiteStatsContext } from "./stats.ts"
 import type { Hono, MiddlewareHandler } from "hono"
 import type { RateLimitDecision } from "@spy4x/platform/rate-limit"
 import type postgres from "postgres"
@@ -57,6 +58,8 @@ export interface AdminModuleContext {
   catalog: CatalogSetup
   /** The file store's server-side writes, for files that pass through the API (#466). */
   files: Pick<ServerFiles, `put` | `read` | `delete`>
+  /** Stats' Umami settings, or which are missing, and the website's item address (#485). */
+  websiteStats: WebsiteStatsContext
 }
 
 /**

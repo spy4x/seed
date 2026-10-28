@@ -2,6 +2,7 @@ import { Hono } from "hono"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule, AdminModuleContext } from "./module.ts"
 import { dashboardAdminModule } from "./dashboard.ts"
+import { statsAdminModule } from "./stats.ts"
 import { usersAdminModule } from "./users.ts"
 import { groupsAdminModule } from "./groups.ts"
 import { billingAdminModule } from "./billing.ts"
@@ -20,6 +21,7 @@ import { apiTokensAdminModule } from "./api-tokens.ts"
  */
 export const ADMIN_API_MODULES: readonly AdminApiModule[] = [
   dashboardAdminModule,
+  statsAdminModule,
   usersAdminModule,
   groupsAdminModule,
   billingAdminModule,

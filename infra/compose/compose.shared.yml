@@ -824,6 +824,8 @@ services:
       - CATALOG_ITEM_PATH=${CATALOG_ITEM_PATH:-}
       - UMAMI_API_URL=${UMAMI_API_URL:-}
       - UMAMI_API_TOKEN=${UMAMI_API_TOKEN:-}
+      # The website's id in Umami: with the two above, the admin app's Stats page (docs/analytics.md).
+      - MPA_UMAMI_WEBSITE_ID=${MPA_UMAMI_WEBSITE_ID:-}
       # Mail subscriptions: the API checks the links the worker signs. Unset → off in production.
       - SUBSCRIBERS_SECRET=${SUBSCRIBERS_SECRET:-}
       - SUBSCRIBERS_PREVIOUS_SECRETS=${SUBSCRIBERS_PREVIOUS_SECRETS:-}
