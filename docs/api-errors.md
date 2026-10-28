@@ -1,8 +1,10 @@
 # API errors
 
 Every answer of the API that is not a success has one body, on every transport: REST, the calls
-route (`/api/call/<name>`) and the socket. A screen translates `reason ?? code`; until it does, it
-shows `message`, which stays English.
+route (`/api/call/<name>`) and the socket. The apps word it in the person's language from the
+`errors` catalog (`errorText` in `libs/ui/message.ts`): the first failed field, else the reason,
+else the code. In English, a refusal with no field and no known reason shows `message` instead,
+which often says more than its code.
 
 ```json
 {
@@ -21,7 +23,7 @@ shows `message`, which stays English.
 | `code`      | yes    | One of the eight codes below. The status follows from it unless a route says other. |
 | `message`   | yes    | One English sentence for API clients, logs and a screen not translated yet.         |
 | `reason`    | no     | The feature's finer name for the refusal, such as `GROUP_NOT_FOUND` or `TOO_SOON`.  |
-| `fields`    | no     | For a body a schema refused: each failed field's arktype code and rule, by path.    |
+| `fields`    | no     | Each failed field's code and rule, by path: from a schema or a feature's own check. |
 | `details`   | no     | JSON a client acts on, such as the plan a refusal names or a file's problems.       |
 | `requestId` | no     | The request log's id for this request, to find it in the logs.                      |
 
@@ -56,9 +58,13 @@ reason.
 
 ## Fields
 
-`fields` comes from arktype's errors (`fieldErrors` in `@spy4x/validation`), never from its
-`.summary`. Each code is arktype's own (`required`, `domain`, `maxLength`, `pattern`,
-`predicate`…), and `values` holds only the rule (`rule`, `exclusive`), never the value sent.
+`fields` has two sources. A body a schema refused gives arktype's errors (`fieldErrors` in
+`@spy4x/validation`), never its `.summary`, with arktype's own codes (`required`, `domain`,
+`maxLength`, `pattern`, `predicate`…). A feature's own check, carried by its domain error, adds
+codes of its own, such as `unsafeCharacters`, `hexColor`, `slug`, `httpsUrl` and `range`; the
+`errors` catalog (`i18n/errors/en.json`, `Field.*`) has a sentence for each. `values` holds the
+rule (`rule`, `exclusive`, or `min` and `max` for a range), and for `unknownLanguage` the language
+tag the request sent.
 
 ## Building one
 

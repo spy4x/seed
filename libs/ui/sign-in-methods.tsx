@@ -17,7 +17,7 @@ import { profilePath, ScreenForm } from "./progressive.tsx"
 import { type ProviderProof, ProviderProofNotice } from "./provider-proof.tsx"
 import { Rich } from "@spy4x/preact-ui/i18n"
 import type { Translator } from "@spy4x/platform/universal/i18n"
-import { type Said, say } from "./app-text.ts"
+import { type Message, say } from "./message.ts"
 import { useAppText } from "./i18n.ts"
 
 /** The message shown when linking or unlinking failed without a message of its own. */
@@ -69,7 +69,7 @@ export interface SignInMethodsProps {
   /** A link or an unlink is in flight: every button waits. */
   pending: boolean
   /** Why a link or an unlink failed, as the server's words or a catalog key; shown and focused. */
-  error: Said | null
+  error: Message | null
   /**
    * Why the list could not be read, or `null`; empty for a read that failed without a reason, as
    * offline, which shows {@link SIGN_IN_METHODS_LOAD_FAILURE}. Shown with "Try again".

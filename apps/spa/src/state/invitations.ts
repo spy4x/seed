@@ -15,7 +15,7 @@ import { guestRefusal, refusedAction } from "./guest-refusal.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
-import { appText } from "./app-text.ts"
+import { apiErrorText, appText } from "../i18n.ts"
 
 /** `fetch`, or a test's stand-in for it. */
 export type InvitationFetch = (url: string, init?: RequestInit) => Promise<Response>
@@ -76,7 +76,7 @@ export function createInvitationsStore(
     // A refusal without a reason comes from the shared guards or the catch-all, whose sentence
     // was not written for these screens.
     const message = code !== null && error
-      ? error.message
+      ? apiErrorText(error)
       : appText(`GroupInvitations.somethingWrong`)
     // A guest refused an invite (#224): the frame shows the refusal, as `apiFetch` does for others.
     if (code === GUEST_REFUSAL_CODE) guestRefusal.value = refusedAction(url) ?? "other"

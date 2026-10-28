@@ -19,7 +19,7 @@ import { FormatContext } from "@spy4x/preact-ui/format"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import { createFormatters } from "@spy4x/time/format"
 import { PlanRefusalNotice } from "./plan-refusal.tsx"
-import { PSEUDO, untranslated } from "./i18n-testing.ts"
+import { englishLeft, PSEUDO } from "./i18n-testing.ts"
 import {
   BILLING_MESSAGES,
   BillingState,
@@ -421,7 +421,7 @@ describe("GroupBillingPanel", () => {
     )
 
     // Data: the group's and the owner's names, money and dates.
-    expect(untranslated(document.body, ["Team", "Maya Chen", "October", "November"])).toEqual([])
+    expect(englishLeft(document.body, ["Team", "Maya Chen", "October", "November"])).toEqual([])
     // The render reached every state: each one's pseudo-text is on the page.
     const page = document.body.textContent ?? ""
     for (

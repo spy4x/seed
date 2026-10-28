@@ -27,7 +27,7 @@ import { OVERVIEW_VIEWS, OVERVIEW_WIDGETS } from "./overview-widgets.ts"
 import { AdminGroupOverview } from "./admin-group-overview.tsx"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 import type { WidgetView } from "./note-widgets.tsx"
-import { PSEUDO, untranslated } from "./i18n-testing.ts"
+import { englishLeft, PSEUDO } from "./i18n-testing.ts"
 import { countAxis } from "./note-widgets.tsx"
 
 const window = new Window({ url: "http://app.localhost/" })
@@ -502,7 +502,7 @@ describe("the group overview in another language", () => {
     root = document.createElement("div")
     document.body.append(root)
     await act(() => render(page({}), root!))
-    expect(untranslated(document.body, data)).toEqual([])
+    expect(englishLeft(document.body, data)).toEqual([])
     let text = document.body.textContent ?? ""
     for (
       const key of [
@@ -524,16 +524,16 @@ describe("the group overview in another language", () => {
     }
 
     await act(() => render(page({ widgets: [], customising: false, emptyGroup: null }), root!))
-    expect(untranslated(document.body, data)).toEqual([])
+    expect(englishLeft(document.body, data)).toEqual([])
     expect(document.body.textContent).toContain(PSEUDO.t("OverviewScreen.allHidden"))
 
     await act(() => render(page({ group: null, customising: false }), root!))
-    expect(untranslated(document.body, data)).toEqual([])
+    expect(englishLeft(document.body, data)).toEqual([])
     expect(document.body.textContent).toContain(PSEUDO.t("OverviewScreen.missing"))
 
     const tooLong = { preset: "custom" as const, range: { from: "2024-01-01", to: "2026-10-21" } }
     await act(() => render(page({ range: tooLong, customising: false }), root!))
-    expect(untranslated(document.body, data)).toEqual([])
+    expect(englishLeft(document.body, data)).toEqual([])
     text = document.body.textContent ?? ""
     expect(text).toContain(PSEUDO.t("OverviewScreen.rangeTooLong"))
     expect(text).toContain(PSEUDO.t("OverviewScreen.customRange"))

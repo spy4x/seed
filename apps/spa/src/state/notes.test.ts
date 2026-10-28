@@ -8,6 +8,7 @@ import {
   type NotePage,
   restoreWhileReachable,
 } from "./notes.ts"
+import { languages } from "../i18n.ts"
 
 const groupId = "g-1"
 
@@ -199,6 +200,30 @@ describe("notes store", () => {
       plan: refusal,
     })
     expect(store.draft.value.title).toBe("Eleventh")
+  })
+
+  it("shows a title the server refused under the title, in the page's language", async () => {
+    const refused = new RealtimeRequestError("bad_request", "Note title is too long", {
+      code: "INVALID_REQUEST",
+    }, {
+      reason: "INVALID_REQUEST",
+      fields: { title: { code: "maxLength", values: { rule: 200 } } },
+    })
+    const { store } = harness({ create: () => Promise.reject(refused) })
+    await store.open(groupId, null)
+    store.draft.value = { title: "Long", body: "", tagIds: [] }
+    expect(await languages.use("ru")).toBe(true)
+    try {
+      expect(await store.create()).toBe(null)
+    } finally {
+      await languages.use("en")
+    }
+
+    expect(store.createErrors.value).toEqual({
+      title: "Не больше 200 символов.",
+      form: null,
+      plan: null,
+    })
   })
 
   it("saves the edit with the version it started from", async () => {

@@ -32,7 +32,7 @@ import {
   type CatalogPhotosState,
   sameCatalogItemDraft,
 } from "@ui/admin-catalog-item.tsx"
-import { type AdminFetch, post } from "../../state.ts"
+import { type AdminFetch, post, refusalText } from "../../state.ts"
 import { adminText } from "../../i18n.ts"
 
 const API = `/api/admin/catalog`
@@ -144,6 +144,9 @@ export function createCatalogState(
     const field = (result.error.details as { field?: string } | undefined)?.field
     return { [field ?? `form`]: result.error.message }
   }
+  /** A check's refusal before any request, in the operator's language. */
+  const parseRefusal = (refusal: CatalogError) =>
+    refusalText({ message: refusal.message, fields: refusal.fields })
   /** Applies `patch` to the item editor when it still has `id` open. */
   const patchItem = (id: string | null, patch: Partial<CatalogItemEditorState>) => {
     if (itemEditor.value.id === id) itemEditor.value = { ...itemEditor.value, ...patch }
@@ -268,7 +271,12 @@ export function createCatalogState(
       if (open.saving) return null
       const checked = catalogItemFields(open.value, languages())
       if (!checked.ok) {
-        itemEditor.value = { ...open, errors: { [checked.field]: checked.message } }
+        itemEditor.value = {
+          ...open,
+          errors: {
+            [checked.field]: refusalText({ message: checked.message, fields: checked.failed }),
+          },
+        }
         return null
       }
       itemEditor.value = { ...open, errors: {}, saving: true }
@@ -494,7 +502,10 @@ export function createCatalogState(
         parseCatalogCategoryFields(body, languages())
       } catch (refusal) {
         if (!(refusal instanceof CatalogError)) throw refusal
-        categoryEditor.value = { ...open, errors: { [refusal.field ?? `form`]: refusal.message } }
+        categoryEditor.value = {
+          ...open,
+          errors: { [refusal.field ?? `form`]: parseRefusal(refusal) },
+        }
         return false
       }
       categoryEditor.value = { ...open, errors: {}, saving: true }
@@ -591,7 +602,10 @@ export function createCatalogState(
         parseCatalogSourceFields(body)
       } catch (refusal) {
         if (!(refusal instanceof CatalogError)) throw refusal
-        sourceEditor.value = { ...open, errors: { [refusal.field ?? `form`]: refusal.message } }
+        sourceEditor.value = {
+          ...open,
+          errors: { [refusal.field ?? `form`]: parseRefusal(refusal) },
+        }
         return false
       }
       sourceEditor.value = { ...open, errors: {}, saving: true }

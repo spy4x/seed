@@ -41,7 +41,7 @@ import {
   type AdminCatalogSourcesScreenProps,
   TRACKING_OFF_NOTICE,
 } from "./admin-catalog-sources.tsx"
-import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./admin-pseudo.ts"
+import { ADMIN_ENGLISH, ADMIN_PSEUDO, englishLeft } from "./i18n-testing.ts"
 import { I18nContext } from "@spy4x/preact-ui/i18n"
 
 const window = new Window({ url: "http://admin.localhost/catalog" })
@@ -701,6 +701,7 @@ describe("the item editor's checks", () => {
       ok: false,
       field: `size:${SMALL}`,
       message: "Enter both ends of the height, or neither.",
+      failed: { [`size:${SMALL}`]: { code: "heightBothEnds" } },
     })
     const whole = catalogItemFields(
       draft({ sizes: [{ ...size, heightMax: "162" }] }),

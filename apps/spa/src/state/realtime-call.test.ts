@@ -3,9 +3,11 @@ import { afterEach, describe, it } from "@std/testing/bdd"
 import { ConnectionLostError, RealtimeRequestError } from "@spy4x/realtime"
 import type { AvailableCallPort } from "@spy4x/realtime/calls"
 import type { User } from "@domain/identity"
+import type { apiFetch as sendApi } from "@spy4x/platform/api"
 import { apiFetch } from "./api.ts"
 import { apiAsUser, canCallAs, createAppCallPort } from "./realtime-call.ts"
 import { sessionState } from "./session.ts"
+import { languages } from "../i18n.ts"
 
 interface Sent {
   url: string
@@ -128,6 +130,75 @@ describe("the app's calls port", () => {
 
     expect(result).toEqual({ created: true })
     expect(http.sent[0].headers["idempotency-key"]).toBe("k-1")
+  })
+})
+
+describe("refusals in the page's language", () => {
+  afterEach(async () => {
+    await languages.use("en")
+  })
+
+  it("words a call's refusal by its failed field and keeps its code, reason and fields", async () => {
+    const fields = { name: { code: "maxLength", values: { rule: 100 } } }
+    const socket = socketPort(true, () =>
+      Promise.reject(
+        new RealtimeRequestError("not_found", "Group not found", { code: "GROUP_NOT_FOUND" }, {
+          reason: "GROUP_NOT_FOUND",
+          fields,
+        }),
+      ))
+    const port = createAppCallPort({ userId: 7, socket: socket.port, fetch: server([]).fetch })
+    expect(await languages.use("ru")).toBe(true)
+
+    const refused: RealtimeRequestError = await port.query("group.list").then(
+      () => {
+        throw new Error("The call went through")
+      },
+      (error) => error,
+    )
+
+    expect(refused).toBeInstanceOf(RealtimeRequestError)
+    expect(refused.message).toBe("Не больше 100 символов.")
+    expect([refused.code, refused.reason, refused.fields, refused.details]).toEqual([
+      "not_found",
+      "GROUP_NOT_FOUND",
+      fields,
+      { code: "GROUP_NOT_FOUND" },
+    ])
+  })
+
+  it("words a REST refusal by its reason, and a reasonless one by its code", async () => {
+    const answer = (error: { code: string; message: string; reason?: string }) =>
+      (() =>
+        Promise.resolve({
+          ok: false,
+          status: 409,
+          error: { status: 409, ...error },
+        })) as unknown as typeof sendApi
+    expect(await languages.use("ru")).toBe(true)
+
+    const named = await apiAsUser(
+      "/api/tags",
+      {},
+      answer({
+        code: "conflict",
+        reason: "TAG_NAME_TAKEN",
+        message: "A tag with this name exists",
+      }),
+    )
+    const plain = await apiAsUser(
+      "/api/tags",
+      {},
+      answer({
+        code: "conflict",
+        message: "Enter another name",
+      }),
+    )
+
+    expect(named.ok ? null : named.error.message).toBe("Тег с таким названием уже есть.")
+    expect(plain.ok ? null : plain.error.message).toBe(
+      "За это время здесь что-то изменилось. Обновите страницу и попробуйте ещё раз.",
+    )
   })
 })
 

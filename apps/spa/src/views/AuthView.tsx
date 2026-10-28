@@ -3,7 +3,7 @@ import { supportsPasskeyAutofill, supportsPasskeys } from "@spy4x/platform/brows
 import { useLocation, useSearch } from "wouter-preact"
 import type { AuthCredentials } from "@spy4x/preact-system/auth-form"
 import { AUTH_PATHS, authFailureKey, AuthScreen, type AuthScreenKind } from "@ui/auth-screen.tsx"
-import { OAUTH_NOTICE_KEYS } from "@ui/app-text.ts"
+import { OAUTH_NOTICE_KEYS } from "@ui/message.ts"
 import { useAppText } from "@ui/i18n.ts"
 import { afterSignIn, readNext, SCREEN_PATHS, withNext } from "@ui/progressive.tsx"
 import { SIGN_UP_OFFLINE } from "@ui/sign-up-code-screen.tsx"

@@ -189,19 +189,28 @@ export async function readCatalogItem(sql: postgres.Sql, id: string): Promise<Ca
 }
 
 /** The constraints a second item or category with the same slug breaks. */
-const SLUG_UNIQUE: Record<string, string> = {
-  catalog_items_slug_unique: `Another item has this address. Pick another.`,
-  catalog_categories_slug_unique: `Another category has this address. Pick another.`,
-  catalog_link_sources_slug_unique: `Another source has this utm_source. Pick another.`,
+const SLUG_UNIQUE: Record<string, { message: string; code: string }> = {
+  catalog_items_slug_unique: {
+    message: `Another item has this address. Pick another.`,
+    code: `itemSlugTaken`,
+  },
+  catalog_categories_slug_unique: {
+    message: `Another category has this address. Pick another.`,
+    code: `categorySlugTaken`,
+  },
+  catalog_link_sources_slug_unique: {
+    message: `Another source has this utm_source. Pick another.`,
+    code: `sourceSlugTaken`,
+  },
 }
 
 /** `error` as `SLUG_TAKEN` when it is a slug's unique violation, else as is. */
 function slugTaken(error: unknown): unknown {
   const pg = error as { code?: string; constraint_name?: string; constraint?: string }
-  const message = pg?.code === `23505`
+  const taken = pg?.code === `23505`
     ? SLUG_UNIQUE[pg.constraint_name ?? pg.constraint ?? ``]
-    : null
-  return message ? new CatalogError(`SLUG_TAKEN`, message, `slug`) : error
+    : undefined
+  return taken ? new CatalogError(`SLUG_TAKEN`, taken.message, `slug`, { code: taken.code }) : error
 }
 
 /**

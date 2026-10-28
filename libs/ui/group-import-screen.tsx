@@ -8,11 +8,18 @@ import { Stack } from "@spy4x/preact-ui/layout"
 import { Notice } from "@spy4x/preact-ui/notice"
 import { PageHeader } from "@spy4x/preact-ui/page-header"
 import type { PlanRefusal } from "@domain/billing"
-import type { GroupFilePart, GroupImportProblem, GroupImportSummary } from "@domain/groups"
+import type {
+  GroupFilePart,
+  GroupImportIssue,
+  GroupImportPlace,
+  GroupImportProblem,
+  GroupImportSummary,
+} from "@domain/groups"
 import { type Navigate, SCREEN_PATHS, ScreenForm } from "./progressive.tsx"
 import { FORM_WIDTH } from "./tag-editor-screen.tsx"
 import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "./i18n.ts"
+import { fieldText, known } from "./message.ts"
 
 /** Where the import page stands: nothing chosen, a file being checked, checked, or refused. */
 export type GroupImportState =
@@ -84,8 +91,9 @@ export function fileContents(
 }
 
 /**
- * One reason a file was refused, as a sentence. A part of the file that is wrong is named in the
- * server's words, as its other error messages are.
+ * One reason a file was refused, as a sentence. A wrong part of the file is named by its place and
+ * its issue's code through the `errors` catalog; a problem a server sends without them, or with a
+ * code the catalog lacks, keeps the server's English.
  */
 export function problemText(t: Translator<string>, problem: GroupImportProblem): string {
   switch (problem.kind) {
@@ -95,9 +103,29 @@ export function problemText(t: Translator<string>, problem: GroupImportProblem):
       return t.t(`GroupImport.notExport`)
     case "too_large":
       return t.t(`GroupImport.tooLarge`, { size: megabytes(problem.maxBytes) })
-    case "invalid":
-      return `${problem.where}: ${problem.problem}.`
+    case "invalid": {
+      const place = problem.place && placeText(t, problem.place)
+      const issue = problem.issue && issueText(t, problem.issue)
+      if (!place || !issue) return `${problem.where}: ${problem.problem}.`
+      const field = problem.issue?.field
+      return field === undefined
+        ? t.t(`ImportProblem.line`, { place, problem: issue })
+        : t.t(`ImportProblem.lineField`, { place, field, problem: issue })
+    }
   }
+}
+
+/** "Note 3", "Tags", "Group settings": where a problem is, or `null` for a part the app lacks. */
+function placeText(t: Translator<string>, place: GroupImportPlace): string | null {
+  const key = `ImportPlace.${place.part}${place.index === undefined ? `` : `Entry`}`
+  return known(key) ? t.t(key, place.index === undefined ? {} : { index: place.index }) : null
+}
+
+/** What is wrong, by code: the import's own words, else a failed field's; `null` for neither. */
+function issueText(t: Translator<string>, issue: GroupImportIssue): string | null {
+  const key = `ImportIssue.${issue.code}`
+  if (known(key)) return t.t(key, issue.values)
+  return known(`Field.${issue.code}`) ? fieldText(t, issue) : null
 }
 
 /** Whole megabytes as the hint says them: 5 MiB is "5". */

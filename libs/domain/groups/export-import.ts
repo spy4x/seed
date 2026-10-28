@@ -84,9 +84,37 @@ export type GroupImportProblem =
   | { kind: "too_large"; maxBytes: number }
   /**
    * One part of the file is wrong. `where` names it ("Note 3", "Group settings", "Tags") and
-   * `problem` says what is wrong with it.
+   * `problem` says what is wrong with it, both in English for API clients and logs. `place` and
+   * `issue` say the same by code, so a screen words them in the person's language (#275).
    */
-  | { kind: "invalid"; where: string; problem: string }
+  | {
+    kind: "invalid"
+    where: string
+    problem: string
+    place?: GroupImportPlace
+    issue?: GroupImportIssue
+  }
+
+/**
+ * Where in a file a problem is: the file itself, the group's settings, or one aggregate's list
+ * (`part` is its kind, such as `notes`), with `index` counting its entries from 1 when the problem
+ * is in one entry.
+ */
+export interface GroupImportPlace {
+  part: string
+  index?: number
+}
+
+/**
+ * What is wrong, by code: an import's own (`unknownKey`, `notList`, `duplicateId`…) or a failed
+ * field's (`required`, `maxLength`…), with the values its sentence names and, for a field, its
+ * path in the entry.
+ */
+export interface GroupImportIssue {
+  code: string
+  field?: string
+  values?: Record<string, string | number>
+}
 
 /**
  * A file the import refuses. Nothing is written. `problems` holds at most

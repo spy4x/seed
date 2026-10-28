@@ -16,7 +16,7 @@ import {
   type OnboardingCardProps,
   tourSteps,
 } from "./onboarding-card.tsx"
-import { ENGLISH, PSEUDO, untranslated } from "./i18n-testing.ts"
+import { ENGLISH, englishLeft, PSEUDO } from "./i18n-testing.ts"
 
 const TOUR_STEPS = tourSteps(ENGLISH)
 
@@ -434,7 +434,7 @@ describe("first-steps card in another language", () => {
   it("shows no English outside the catalogs: an en-XA render of the card and the tour is all pseudo-language", async () => {
     await mount({ tourOpen: true, error: ONBOARDING_FAILURE }, PSEUDO)
 
-    expect(untranslated(document.body)).toEqual([])
+    expect(englishLeft(document.body)).toEqual([])
     // The render reached the card, its error and the tour: each one's pseudo-text is on the page.
     const page = document.body.textContent ?? ""
     for (
@@ -447,7 +447,7 @@ describe("first-steps card in another language", () => {
   it("asks a guest to keep the account in the person's language", async () => {
     await mount({ guest: true }, PSEUDO)
 
-    expect(untranslated(document.body)).toEqual([])
+    expect(englishLeft(document.body)).toEqual([])
     const page = document.body.textContent ?? ""
     expect(page).toContain(PSEUDO.t("OnboardingCard.keep"))
     expect(page).toContain(PSEUDO.t("OnboardingCard.keepText"))
