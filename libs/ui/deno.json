@@ -4,5 +4,15 @@
     "preact-render-to-string": "npm:preact-render-to-string@6.7.0",
     // A browser DOM for the interaction tests: focus, form submission and FormData.
     "happy-dom": "npm:happy-dom@20.14.5"
+  },
+  // `ui-text/no-literal` (#216) flags English text written in a component's markup: its text and
+  // its DOM attributes. A file with such text not translated yet starts with
+  // `// deno-lint-ignore-file ui-text/no-literal`; #275 removes those comments group by group, and
+  // `deno lint` reports the comment as unused once its file is clean. The rule does not see English
+  // kept in constants or passed to a component's own props, which these files still have (#275's
+  // list): admin-frame.tsx (AdminSignInScreen, the coming-soon badge), note-widgets.tsx,
+  // notes-filter.ts, search-palette.tsx and shortcuts.tsx.
+  "lint": {
+    "plugins": ["jsr:@spy4x/preact-theme@10.12.0/lint"]
   }
 }

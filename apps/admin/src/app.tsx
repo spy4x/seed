@@ -21,6 +21,10 @@ import { type AdminStore, hasAdminAccess, operatorName, readOperatorEmail } from
 import { ADMIN_MODULES, adminPersonTabs } from "./modules/registry.ts"
 import type { AdminContext, AdminModule } from "./modules/types.ts"
 import { FormatContext } from "@spy4x/preact-ui/format"
+import { I18nContext, useT } from "@spy4x/preact-ui/i18n"
+import { isLanguage, LANGUAGES } from "@domain/identity"
+import { languageSetting, pickLanguage } from "@platform/i18n.ts"
+import { kept, languages as pageLanguages } from "./i18n.ts"
 import { createOperatorFormat, type OperatorFormat } from "./preferences.ts"
 import { adminShortcutRows, focusListFilter } from "./shortcuts.ts"
 import { guardNavigate } from "./leave.ts"
@@ -41,6 +45,11 @@ export interface AppProps {
   operatorFormat?: OperatorFormat
   /** The single-key shortcuts' switch; this device's by default. Tests pass their own. */
   singleKeys?: ReturnType<typeof createSingleKeysSetting>
+  /** The page's languages; the build's by default. Tests pass their own. */
+  languages?: Pick<
+    typeof pageLanguages,
+    "translator" | "use" | "setNumberLocale" | "loading" | "failed"
+  >
 }
 
 /**
@@ -48,9 +57,26 @@ export interface AppProps {
  * (and code) against the same API, and holds no code of the SPA. Signed in, it shows the shell with
  * one sidebar entry per module (`modules/registry.ts`) and the pages each module registers.
  */
-export function App(
-  { store, theme, toasts, modules = ADMIN_MODULES, operatorFormat, singleKeys = deviceSingleKeys }:
-    AppProps,
+export function App(props: AppProps): JSX.Element {
+  const languages = props.languages ?? pageLanguages
+  // Every word in the operator's language: the one they chose, else this device's (#216).
+  return (
+    <I18nContext.Provider value={languages.translator.value}>
+      <Operator {...props} languages={languages} />
+    </I18nContext.Provider>
+  )
+}
+
+function Operator(
+  {
+    store,
+    theme,
+    toasts,
+    modules = ADMIN_MODULES,
+    operatorFormat,
+    singleKeys = deviceSingleKeys,
+    languages = pageLanguages,
+  }: AppProps,
 ): JSX.Element {
   const own = useMemo(() => operatorFormat ?? createOperatorFormat(store.request), [store])
   const session = store.session.value
@@ -61,9 +87,10 @@ export function App(
   const leave = useMemo(() => guardNavigate(leaveGuard, navigate), [leaveGuard, navigate])
   const user = session.step === "signed-in" ? session.user : null
   // The tab says "Users · Admin · Seed", so an operator never mistakes it for the product's.
+  const tag = useT().t(`AdminFrame.tag`)
   const title = user && hasAdminAccess(user)
-    ? adminPageTitle(modules.map((module) => module.nav), path)
-    : `Admin · ${ADMIN_PRODUCT}`
+    ? adminPageTitle(modules.map((module) => module.nav), path, tag)
+    : `${tag} · ${ADMIN_PRODUCT}`
   useRouteAnnouncer({ path, title })
   // A new page starts at its top; the router keeps the old page's scroll, so a person opened from
   // far down the list would show with their header under the top bar. A tab change (`?tab=`) keeps
@@ -74,6 +101,32 @@ export function App(
     if (user) void own.load()
     else own.reset()
   }, [user?.id])
+  // The operator's language: one chosen in this admin app on this device, else their account's,
+  // else the browser's. The account's is set in the product's app; the admin app only reads it.
+  const chosen = own.language.value
+  const [deviceChoice, setDeviceChoice] = useState(() => {
+    const value = kept.read()
+    return isLanguage(value) ? value : null
+  })
+  const requested = globalThis.navigator?.languages
+  useEffect(() => {
+    void languages.use(pickLanguage(LANGUAGES, deviceChoice, chosen, requested))
+  }, [chosen, deviceChoice])
+  const language = languageSetting({
+    languages: LANGUAGES,
+    current: deviceChoice,
+    // "Automatic" is what the account and the browser give without a choice here.
+    automatic: pickLanguage(LANGUAGES, chosen, null, requested),
+    loading: languages.loading.value,
+    failed: languages.failed.value,
+    choose: (tag) => {
+      kept.write(tag)
+      setDeviceChoice(tag)
+    },
+  })
+  // Numbers inside messages follow the operator's region format.
+  const numberLocale = own.format.value.locale
+  useEffect(() => languages.setNumberLocale(numberLocale), [numberLocale])
   // The operator's address, the account cell's name when they have none (#172).
   const [email, setEmail] = useState<string | null>(null)
   useEffect(() => {
@@ -158,6 +211,7 @@ export function App(
         currentPath={path}
         operator={{ name: operatorName(user, email), email }}
         theme={theme}
+        language={language}
         onSignOut={store.signOut}
         navigate={leave}
         shortcuts={{

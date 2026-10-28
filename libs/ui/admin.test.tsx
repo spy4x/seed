@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The admin app's screens (#146), driven in a browser DOM (happy-dom): what the search sends, what
  * the list and the person's page offer, what the action dialog sends and where focus goes.
@@ -340,6 +341,7 @@ const detail: AdminUserDetail = {
   preferences: {
     value: {
       theme: "dark",
+      language: null,
       locale: "en-GB",
       timeZone: "Europe/Berlin",
       hourCycle: null,
@@ -348,6 +350,7 @@ const detail: AdminUserDetail = {
     version: 3,
     updatedAt: "2026-10-12T10:00:00.000Z",
     firstTimeZone: "Europe/Berlin",
+    firstLocale: "de-DE",
   },
 }
 

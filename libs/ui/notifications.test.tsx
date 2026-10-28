@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 /**
  * The inbox screen and the header's bell: what they render (server-rendered HTML) and what a click
  * on a notification does in a browser DOM (happy-dom).

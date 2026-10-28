@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { formatBytes } from "@spy4x/platform/universal/format-number"

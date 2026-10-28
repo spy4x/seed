@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { IconEllipsisVertical, IconPlus } from "@spy4x/preact-icons"

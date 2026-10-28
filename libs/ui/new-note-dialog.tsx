@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef } from "preact/hooks"
 import { isApplePlatform, matchesHotkey, parseHotkey } from "@spy4x/platform/browser/hotkeys"

@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import type { DateRangeChoice } from "@spy4x/preact-ui/date-range-search"
 import { OverviewGrid, OverviewRangeRow, type OverviewWidget } from "./overview-screen.tsx"

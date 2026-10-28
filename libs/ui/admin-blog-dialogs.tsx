@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { ComponentChildren, JSX } from "preact"
 import { useState } from "preact/hooks"
 import { Checkbox } from "@spy4x/preact-ui/checkbox"

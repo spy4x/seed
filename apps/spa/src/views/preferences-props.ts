@@ -1,8 +1,8 @@
 import { useState } from "preact/hooks"
-import type { PreferencesProps } from "@ui/preferences.tsx"
-import { PREFERENCES_FAILURES } from "@ui/preferences.tsx"
+import type { PreferencesFailure, PreferencesProps } from "@ui/preferences.tsx"
 import { preferencesState } from "../state/preferences.ts"
 import { themeStore } from "../state/theme.ts"
+import { languageChoice } from "./language-choice.ts"
 
 /**
  * The props of the profile's "Language and region" and "Appearance" sections, wired to the
@@ -12,7 +12,7 @@ import { themeStore } from "../state/theme.ts"
  */
 export function usePreferencesProps(): PreferencesProps {
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<PreferencesFailure | null>(null)
   const state = preferencesState
 
   return {
@@ -26,6 +26,7 @@ export function usePreferencesProps(): PreferencesProps {
     error,
     announcement: state.announcement.value,
     now: new Date(),
+    language: languageChoice(),
     onTheme: (theme) => themeStore.set(theme as Parameters<typeof themeStore.set>[0]),
     onSave: async (next, baseVersion) => {
       setError(null)
@@ -34,7 +35,7 @@ export function usePreferencesProps(): PreferencesProps {
       const outcome = await state.saveDraft(baseVersion, next)
       setPending(false)
       if (outcome.ok || outcome.reason === `conflict`) return
-      setError(PREFERENCES_FAILURES[outcome.reason === `failed` ? `network` : outcome.reason])
+      setError(outcome.reason === `failed` ? `network` : outcome.reason)
     },
     onUseDeviceZone: () => void state.useDeviceZone(),
     onKeepZone: state.keepZone,

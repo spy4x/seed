@@ -4,6 +4,8 @@
 # 2. Add files and directories that should be included
 !apps/**
 !libs/**
+# The catalogs of every language the apps ship (i18n/TRANSLATING.md).
+!i18n/**
 !infra/**
 !deno.jsonc
 # The MPA renders the API reference from this file.

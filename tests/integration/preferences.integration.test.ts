@@ -49,6 +49,7 @@ async function insertUser(sql: postgres.Sql): Promise<number> {
 
 const berlin: Preferences = {
   theme: `dark`,
+  language: null,
   locale: `de-DE`,
   timeZone: `Europe/Berlin`,
   hourCycle: `h23`,
@@ -149,6 +150,7 @@ Deno.test(`preferences: the first device is kept, a later one changes nothing`, 
       version: 0,
       updatedAt: null,
       firstTimeZone: `Asia/Bangkok`,
+      firstLocale: `th-TH`,
     })
     // The row the device made is still "never saved", so the first save on version 0 lands.
     const saved = await saveSettings(preferencesDefinition, preferencesStore(sql), String(userId), {
@@ -166,6 +168,7 @@ Deno.test(`preferences: an unknown zone from a device is kept as nothing`, async
     await recordFirstDevice(sql, userId, { timeZone: `Mars/Olympus_Mons`, locale: `xx-YY` })
 
     expect((await readAdminPreferences(sql, userId)).firstTimeZone).toBeNull()
+    expect((await readAdminPreferences(sql, userId)).firstLocale).toBeNull()
   })
 })
 

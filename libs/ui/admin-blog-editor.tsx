@@ -1,3 +1,4 @@
+// deno-lint-ignore-file ui-text/no-literal
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 import { slugify } from "@spy4x/platform/universal/text"

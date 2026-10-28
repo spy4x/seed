@@ -12,6 +12,9 @@ import { install } from "./install.ts"
 import { configureModules } from "./modules.ts"
 import { themeStore } from "./state/theme.ts"
 import { demoMode, guestMode, siteOrigin, siteOriginOf } from "./state/demo.ts"
+import { kept, languages } from "./i18n.ts"
+import { pickLanguage } from "@platform/i18n.ts"
+import { LANGUAGES } from "@domain/identity"
 
 // Follows the system light/dark setting until the person picks one in the account menu.
 // `index.html` paints the stored choice before this runs.
@@ -36,6 +39,11 @@ startErrorReporting(
   globalThis,
   () => location.href,
 )
+
+// The first frame is already in the person's language: the one this device keeps, else the
+// browser's. The stored preference takes over once the person's preferences are read
+// (`state/page-language.ts`). A language that cannot load (offline, not cached) leaves English.
+await languages.use(pickLanguage(LANGUAGES, null, kept.read(), navigator.languages))
 
 render(
   <ErrorBoundary onError={reportCaughtError} dataE2E="render-error">

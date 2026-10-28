@@ -1,5 +1,6 @@
 import type { CommandHandler, QueryHandler } from "@spy4x/platform/cqrs"
 import { saveSettings, type SettingsStore } from "@spy4x/platform/universal/settings"
+import { isRecord } from "@spy4x/platform/universal/is-record"
 import { preferencesDefinition, type PreferencesDevice } from "@domain/identity"
 import type { PreferencesDeviceCommand, PreferencesSaveCommand } from "../../cqrs/commands.ts"
 import { PreferencesUpdatedEvent } from "../../cqrs/events.ts"
@@ -38,15 +39,31 @@ export function createPreferencesSaveHandler(
   },
 ): CommandHandler<PreferencesSaveCommand> {
   return async ({ data: { actor, request } }) => {
+    const owner = String(actor.userId)
     const result = await saveSettings(
       preferencesDefinition,
       preferences.store,
-      String(actor.userId),
-      request,
+      owner,
+      await withStoredLanguage(preferences.store, owner, request),
     )
     if (result.ok) emit(new PreferencesUpdatedEvent({ userId: actor.userId }))
     return result
   }
+}
+
+/**
+ * A tab loaded before `language` existed (#216) saves a record without it. Its language is taken
+ * as unchanged, the stored one, so the save goes through instead of being refused as invalid. Any
+ * other request is passed on as it is, for the schema to check.
+ */
+async function withStoredLanguage(
+  store: SettingsStore,
+  owner: string,
+  request: unknown,
+): Promise<unknown> {
+  if (!isRecord(request) || !isRecord(request.value) || `language` in request.value) return request
+  const { language } = preferencesDefinition.resolve(await store.read(owner)).value
+  return { ...request, value: { ...request.value, language } }
 }
 
 /** Keeps the zone and region format the actor's device reports, once (the sign-up device). */
