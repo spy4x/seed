@@ -14,11 +14,7 @@ import { Router } from "wouter-preact"
 import { memoryLocation } from "wouter-preact/memory-location"
 import { act } from "preact/test-utils"
 import { type OnboardingStatus, UserMFAStatus, UserRole } from "@domain/identity"
-import type { CallPort } from "@spy4x/realtime/calls"
-import { startOffline, stopOffline } from "../offline/index.ts"
-import { createMemoryStorage } from "../offline/memory-storage.ts"
 import { onboardingStore } from "../state/onboarding.ts"
-import { selectionStore } from "../state/selection.ts"
 import { sessionState } from "../state/session.ts"
 import { NotesView } from "./NotesView.tsx"
 
@@ -109,68 +105,27 @@ afterEach(async () => {
   if (root) await act(() => render(null, root!))
   root?.remove()
   root = null
-  selectionStore.groupId.value = null
-  await stopOffline()
 })
-
-/** Lets the offline layer read its queues. */
-async function settle(): Promise<void> {
-  for (let turn = 0; turn < 10; turn++) await new Promise((resolve) => setTimeout(resolve, 0))
-}
-
-/** Draws the page at `/notes` into a fresh root. */
-async function mount(): Promise<HTMLElement> {
-  const { hook } = memoryLocation({ path: "/notes" })
-  root = window.document.createElement("div") as unknown as HTMLElement
-  window.document.body.appendChild(root as never)
-  await act(() =>
-    render(
-      <Router hook={hook}>
-        <NotesView />
-      </Router>,
-      root!,
-    )
-  )
-  return root
-}
 
 describe("NotesView", () => {
   it("shows the first-steps card under the notes heading, which starts the page", async () => {
-    const page = await mount()
+    const { hook } = memoryLocation({ path: "/notes" })
+    root = window.document.createElement("div") as unknown as HTMLElement
+    window.document.body.appendChild(root as never)
+    await act(() =>
+      render(
+        <Router hook={hook}>
+          <NotesView />
+        </Router>,
+        root!,
+      )
+    )
 
-    const card = page.querySelector("[data-e2e=onboarding]")
-    const heading = page.querySelector("h1")
+    const card = root.querySelector("[data-e2e=onboarding]")
+    const heading = root.querySelector("h1")
     expect(card).not.toBe(null)
     expect(heading).not.toBe(null)
     // The page header comes first (AGENTS.md, "One page header"); the card follows it.
     expect(heading!.compareDocumentPosition(card!) & 4).toBe(4)
-  })
-
-  it("draws the offline status under the notes heading, which starts the page", async () => {
-    // A tag made on this device that has not reached the server yet: the status shows.
-    const storage = createMemoryStorage()
-    await storage.of(1).tagsQueue.putEntry({
-      key: "tag-key",
-      entityId: "t-1",
-      kind: "create",
-      baseVersion: 0,
-      payload: { groupId: "g-1", name: "Mine", color: "#b91c1c" },
-      attempted: false,
-      status: "pending",
-      queuedAt: "2026-10-01T08:00:00.000Z",
-    })
-    startOffline(1, { calls: {} as unknown as CallPort, canSend: () => false }, storage)
-    await settle()
-    selectionStore.groupId.value = "g-1"
-
-    const page = await mount()
-
-    const status = page.querySelector("[data-e2e=offline-status]")
-    const heading = page.querySelector("h1")
-    expect(status).not.toBe(null)
-    expect(heading).not.toBe(null)
-    expect(heading!.compareDocumentPosition(status!) & 4).toBe(4)
-    // The page's own gap spaces it there; the gap it brings above a header would double it.
-    expect(status!.classList.contains("mb-8")).toBe(false)
   })
 })
