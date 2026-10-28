@@ -4,6 +4,7 @@ import { apiFetch } from "./api.ts"
 import { type LocalReads, localReads, noLocalReads } from "../modules.ts"
 import { READ_KEYS } from "./read-keys.ts"
 import { ReadRefused } from "@spy4x/realtime/read-cache"
+import { appText } from "./app-text.ts"
 
 /** One page of the log as the API answers: `nextCursor` is `null` on the last page. */
 export interface ActivityPageResult {
@@ -65,7 +66,7 @@ export function createActivityStore(
       show(page)
     } catch (cause) {
       if (read !== reads) return
-      error.value = cause instanceof Error ? cause.message : "Could not load the activity"
+      error.value = cause instanceof Error ? cause.message : appText(`GroupActivity.loadFailed`)
     } finally {
       if (read === reads) loading.value = false
     }
@@ -92,7 +93,7 @@ export function createActivityStore(
       nextCursor.value = page.nextCursor
     } catch (cause) {
       if (read !== reads) return
-      error.value = cause instanceof Error ? cause.message : "Could not load more activity"
+      error.value = cause instanceof Error ? cause.message : appText(`GroupActivity.loadMoreFailed`)
     } finally {
       if (read === reads) loadingMore.value = false
     }
