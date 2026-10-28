@@ -899,13 +899,13 @@
     "other": "آخر {count} يوم · حُدِّثت {ago}"
   },
   "AdminStats.period": "الفترة",
-  "AdminStats.lastDays": {
-    "zero": "آخر {count} يوم",
-    "one": "آخر {count} يوم",
-    "two": "آخر {count} يومين",
-    "few": "آخر {count} أيام",
-    "many": "آخر {count} يومًا",
-    "other": "آخر {count} يوم"
+  "AdminStats.periodDays": {
+    "zero": "{count} يوم",
+    "one": "{count} يوم",
+    "two": "{count} يومين",
+    "few": "{count} أيام",
+    "many": "{count} يومًا",
+    "other": "{count} يوم"
   },
   "AdminStats.refresh": "تحديث الأرقام",
   "AdminStats.openUmami": "الفتح في Umami",

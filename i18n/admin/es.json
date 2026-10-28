@@ -812,10 +812,10 @@
     "other": "Últimos {count} días · actualizado {ago}"
   },
   "AdminStats.period": "Periodo",
-  "AdminStats.lastDays": {
-    "one": "Último {count} día",
-    "many": "Últimos {count} días",
-    "other": "Últimos {count} días"
+  "AdminStats.periodDays": {
+    "one": "{count} día",
+    "many": "{count} días",
+    "other": "{count} días"
   },
   "AdminStats.refresh": "Actualizar cifras",
   "AdminStats.openUmami": "Abrir en Umami",

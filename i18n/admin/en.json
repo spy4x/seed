@@ -783,9 +783,9 @@
     "other": "Last {count} days · updated {ago}"
   },
   "AdminStats.period": "Period",
-  "AdminStats.lastDays": {
-    "one": "Last {count} day",
-    "other": "Last {count} days"
+  "AdminStats.periodDays": {
+    "one": "{count} day",
+    "other": "{count} days"
   },
   "AdminStats.refresh": "Refresh numbers",
   "AdminStats.openUmami": "Open in Umami",

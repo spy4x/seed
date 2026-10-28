@@ -841,11 +841,11 @@
     "other": "За последние {count} дня · обновлено {ago}"
   },
   "AdminStats.period": "Период",
-  "AdminStats.lastDays": {
-    "one": "Последний {count} день",
-    "few": "Последние {count} дня",
-    "many": "Последние {count} дней",
-    "other": "Последние {count} дня"
+  "AdminStats.periodDays": {
+    "one": "{count} день",
+    "few": "{count} дня",
+    "many": "{count} дней",
+    "other": "{count} дня"
   },
   "AdminStats.refresh": "Обновить цифры",
   "AdminStats.openUmami": "Открыть в Umami",

@@ -228,13 +228,21 @@ describe("stats screen", () => {
     expect(calls).toEqual([["source", "zalo-a"], ["source", "fb-market"], ["source", null]])
   })
 
+  it("draws the period picker beside the title from sm up, and under the header on a phone", async () => {
+    await mount(<AdminStatsScreen {...props([])} />)
+    const holders = [...document.querySelectorAll("[role=radiogroup]")].map((group) =>
+      group.parentElement!.className
+    )
+    expect(holders).toEqual(["max-sm:hidden", "sm:hidden"])
+  })
+
   it("asks for another period from the period picker", async () => {
     const calls: unknown[][] = []
     await mount(<AdminStatsScreen {...props(calls)} />)
     const picker = find("[role=radiogroup]")
     expect(picker.getAttribute("aria-label")).toBe("Period")
-    expect(find("[role=radio][aria-checked=true]").textContent).toContain("Last 7 days")
-    await clickOn(button("Last 90 days", picker))
+    expect(find("[role=radio][aria-checked=true]").textContent).toContain("7 days")
+    await clickOn(button("90 days", picker))
     expect(calls).toEqual([["period", 90]])
   })
 

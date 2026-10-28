@@ -1100,7 +1100,6 @@ AdminStats.item	652bcc3a47842889
 AdminStats.itemsIntro	c3cbde004a28e20a
 AdminStats.itemsTitle	fb8e7a1a3cb7b25d
 AdminStats.keyNumbers	b6fead36007e76b6
-AdminStats.lastDays	ffd072a51a16cecf
 AdminStats.limits	4110bded21b42e10
 AdminStats.loadError	5cb17699fc55ac3e
 AdminStats.loading	94a33e85bfa2d17a
@@ -1127,6 +1126,7 @@ AdminStats.orderClicks	78dd1d2e24bd5063
 AdminStats.orderRate	edc272846db5b48f
 AdminStats.orderRateHint	0ebb5c049c9ef421
 AdminStats.period	6e795d4d3cc21c5c
+AdminStats.periodDays	a59ba4572730cb88
 AdminStats.previousSeries	55ff3b0c94deabb0
 AdminStats.problemTitle	602f03ac9b3d0c94
 AdminStats.rateChange	a70e5fc2af7e5507

@@ -82,6 +82,18 @@ export function AdminStatsScreen(props: AdminStatsScreenProps): JSX.Element {
   const umamiUrl = response && response.state !== `off` ? response.umamiUrl : null
   const catalogOn = ready?.report.items != null
   const off = response?.state === `off`
+  // Beside the title from `sm` up; under the header on a phone, where it would squeeze the title.
+  const period = (
+    <SegmentedControl
+      ariaLabel={t.t(`AdminStats.period`)}
+      value={String(days)}
+      onChange={(value) => onPeriod(Number(value) as WebsiteStatsPeriod)}
+      options={WEBSITE_STATS_PERIODS.map((period) => ({
+        value: String(period),
+        label: t.t(`AdminStats.periodDays`, { count: period }),
+      }))}
+    />
+  )
 
   return (
     <Stack>
@@ -94,17 +106,7 @@ export function AdminStatsScreen(props: AdminStatsScreenProps): JSX.Element {
           })
           : t.t(`AdminStats.subtitle`, { count: days })}
         titleDataE2E="admin-stats-title"
-        action={off ? undefined : (
-          <SegmentedControl
-            ariaLabel={t.t(`AdminStats.period`)}
-            value={String(days)}
-            onChange={(value) => onPeriod(Number(value) as WebsiteStatsPeriod)}
-            options={WEBSITE_STATS_PERIODS.map((period) => ({
-              value: String(period),
-              label: t.t(`AdminStats.lastDays`, { count: period }),
-            }))}
-          />
-        )}
+        action={off ? undefined : <div class="max-sm:hidden">{period}</div>}
         menu={off ? undefined : (
           <>
             <DropdownItem onClick={() => onRefresh(true)} dataE2E="admin-stats-refresh">
@@ -127,6 +129,7 @@ export function AdminStatsScreen(props: AdminStatsScreenProps): JSX.Element {
           </>
         )}
       />
+      {!off && <div class="sm:hidden">{period}</div>}
       <StatsBody {...props} />
     </Stack>
   )
@@ -155,6 +158,7 @@ function StatsBody(props: AdminStatsScreenProps): JSX.Element {
       <Card data-e2e={`admin-stats-${response.state}`}>
         <EmptyState
           inset
+          headingLevel={2}
           title={t.t(`AdminStats.problemTitle`)}
           description={t.t(PROBLEM_TEXT[response.state])}
           action={
@@ -243,6 +247,7 @@ function StatsOff({ missing }: { missing: string[] }): JSX.Element {
     <Card data-e2e="admin-stats-off">
       <EmptyState
         inset
+        headingLevel={2}
         title={t.t(`AdminStats.offTitle`)}
         description={all ? t.t(`AdminStats.offText`) : t.t(`AdminStats.offSome`, {
           missing: listOf(t, missing, `conjunction`),
@@ -338,6 +343,7 @@ function Report(
       <Card data-e2e="admin-stats-empty">
         <EmptyState
           inset
+          headingLevel={2}
           title={t.t(`AdminStats.noVisitsTitle`)}
           description={t.t(`AdminStats.noVisitsText`)}
           action={report.items !== null && (
@@ -377,7 +383,7 @@ function Report(
         <Notice live={false} data-e2e="admin-stats-few">{t.t(`AdminStats.fewVisits`)}</Notice>
       )}
       <section aria-label={t.t(`AdminStats.keyNumbers`)} data-e2e="admin-stats-kpis">
-        <KpiGrid minWidth="11rem">
+        <KpiGrid minWidth="9.5rem">
           <Kpi
             label={t.t(`AdminStats.visits`)}
             value={NUMBER.format(report.visits.current)}
@@ -578,7 +584,7 @@ function Items(
         {t.t(`AdminStats.itemsTitle`)}
       </h2>
       <p class="mb-3 text-sm text-muted">{t.t(`AdminStats.itemsIntro`)}</p>
-      <div class="grid gap-4 lg:grid-cols-2">
+      <div class="flex flex-col gap-4">
         <Card data-e2e="admin-stats-most-ordered">
           <CardBody>
             <RankedBars

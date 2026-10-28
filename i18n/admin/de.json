@@ -783,9 +783,9 @@
     "other": "Letzte {count} Tage · aktualisiert {ago}"
   },
   "AdminStats.period": "Zeitraum",
-  "AdminStats.lastDays": {
-    "one": "Letzter {count} Tag",
-    "other": "Letzte {count} Tage"
+  "AdminStats.periodDays": {
+    "one": "{count} Tag",
+    "other": "{count} Tage"
   },
   "AdminStats.refresh": "Zahlen neu laden",
   "AdminStats.openUmami": "In Umami öffnen",
