@@ -9,6 +9,7 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { DEFAULT_TAG_COLOR } from "@domain/tags"
 import { NoteEditorScreen, type NoteEditorScreenProps } from "./note-editor-screen.tsx"
 import { type NoteDraft, NotesScreen, type NotesScreenProps } from "./notes-screen.tsx"
 import { NO_NOTE_FILTERS, type NoteFilters } from "./notes-filter.ts"
@@ -742,6 +743,14 @@ describe("NoteEditorScreen tags", () => {
     expect(chip("Urgent").getAttribute("style")).toContain(`background-color: ${urgent.color}`)
     expect(chip("Home").querySelector("span[aria-hidden=true]")?.getAttribute("style"))
       .toContain(`background-color: ${home.color}`)
+  })
+
+  it("draws a tag chip whose stored colour is no hex code in the default gray, as its label", async () => {
+    await mount(<NoteEditorScreen {...editorDefaults} tags={[{ ...urgent, color: "red" }, home]} />)
+    const chip = [...find("[data-e2e=note-tags-picker]").querySelectorAll("button")].find((b) =>
+      b.textContent === "Urgent"
+    )!
+    expect(chip.getAttribute("style")).toContain(`background-color: ${DEFAULT_TAG_COLOR}`)
   })
 
   it("takes a tag off when the person unticks it", async () => {
