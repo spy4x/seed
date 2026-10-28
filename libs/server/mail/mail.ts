@@ -253,9 +253,10 @@ function compose(
   const html = blocks.map((block) => {
     if (`key` in block) return `<p>${messageHtml(t, block.key, block.values)}</p>`
     if (`code` in block) {
-      return `<p style="font-size:24px;font-weight:600;letter-spacing:2px">${
+      // A code reads left to right in every language: a `-` at its edge stays where it is typed.
+      return `<p style="font-size:24px;font-weight:600;letter-spacing:2px"><span dir="ltr">${
         escapeHtml(block.code)
-      }</p>`
+      }</span></p>`
     }
     if (`link` in block) {
       return `<p><a href="${escapeHtml(block.link)}">${escapeHtml(block.label)}</a></p>`

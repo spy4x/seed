@@ -348,7 +348,7 @@ describe("emailCodeMail", () => {
     expect(mail.to).toBe("ann@example.com")
     expect(mail.text).toContain("\na<b-C9_z\n")
     expect(mail.text).toContain("10 minutes")
-    expect(mail.html).toContain("a&lt;b-C9_z")
+    expect(mail.html).toContain(`<span dir="ltr">a&lt;b-C9_z</span>`)
     expect(mail.html).not.toContain("a<b-C9_z")
     expect(mail.text).not.toMatch(/https?:\/\//)
   })
