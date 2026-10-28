@@ -551,6 +551,7 @@ NoteWidgets.addedError	f99bfd4fa5746d56
 NoteWidgets.addedLoading	bd1b2b7c255abd5c
 NoteWidgets.addedNone	54035f12315c5236
 NoteWidgets.addedSome	48cad6d745688286
+NoteWidgets.addedTitle	2ef51ee3a34247c8
 NoteWidgets.previousPeriod	ffb177de9b97a688
 NoteWidgets.seriesCurrent	8ed3e11f85f561ce
 NoteWidgets.seriesDay	8f2364e11b8be3ff
@@ -561,10 +562,12 @@ NoteWidgets.seriesFrom	24e64ba3845d4cef
 NoteWidgets.seriesLabel	0575b647ea67e43c
 NoteWidgets.seriesLoading	96a9df164055a7d4
 NoteWidgets.seriesPrevious	7193b6c2a53c1ecd
+NoteWidgets.seriesTitle	099daa80c4390361
 NoteWidgets.totalError	2b730c7997a3b629
 NoteWidgets.totalLoading	2420a9d72f1d0fec
 NoteWidgets.totalNow	56ce434d03c57441
 NoteWidgets.totalOn	ef7940b8e6776ea9
+NoteWidgets.totalTitle	8a7525b1492fb848
 Notes.actions	bc0d30cf9fce2f2c
 Notes.backToNotes	2687ec1d6b28c778
 Notes.cancelSelect	19766ed6ccb2f4a3
