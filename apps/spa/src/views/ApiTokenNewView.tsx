@@ -4,6 +4,8 @@ import { createOnlineStatus } from "@spy4x/preact-signals/online"
 import { UnsavedGuard } from "@spy4x/preact-ui/unsaved-guard"
 import { API_TOKEN_OFFLINE, ApiTokenNewScreen } from "@ui/api-token-new-screen.tsx"
 import { profilePath } from "@ui/progressive.tsx"
+import { siteOrigin } from "../state/demo.ts"
+import { apiDocsHref } from "./api-docs-href.ts"
 import { apiTokensHttp, type ApiTokensStore, createApiTokensStore } from "../state/api-tokens.ts"
 import { groupsStore } from "../state/groups.ts"
 import { isSpaPath } from "./spa-paths.ts"
@@ -80,6 +82,7 @@ export function ApiTokenNewView(
         }}
         onDone={done}
         navigate={navigate}
+        docsHref={apiDocsHref(siteOrigin.value)}
       />
       <UnsavedGuard
         when={created !== null || filledIn}

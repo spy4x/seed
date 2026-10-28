@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from "hono"
 import type { APIContext } from "../_types.ts"
+import { errorResponse } from "../services/error-response.ts"
 
 /** The operator area's routes, under the API's base path. */
 export const ADMIN_API_PREFIX = "/api/admin"
@@ -46,7 +47,7 @@ export function createAdminHostGate(adminHost: string | null): MiddlewareHandler
     const allowed = isAdminHost(c.req.url, adminHost)
       ? isAdminApiPath(path) || ADMIN_HOST_AUTH_PATHS.includes(path)
       : !isAdminApiPath(path)
-    if (!allowed) return c.json({ error: "Not found" }, 404)
+    if (!allowed) return errorResponse(c, `not_found`, { message: "Not found" })
     await next()
   }
 }

@@ -28,6 +28,7 @@ import { ADMIN_OUTRANKED, ADMIN_SELF, createAdminUsersRoutes } from "./users.ts"
 import { createAdminStatsRoutes } from "./dashboard.ts"
 import { ADMIN_API_MODULES } from "./registry.ts"
 import type { AdminModuleContext } from "./module.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const target: AdminUserRow = {
   id: 42,
@@ -108,7 +109,13 @@ function buildApp(
   const modules = ADMIN_API_MODULES.map((module) => {
     switch (module.id) {
       case `users`:
-        return createAdminUsersRoutes({ ...context, admin, dataExports: () => Promise.resolve([]) })
+        return createAdminUsersRoutes({
+          ...context,
+          admin,
+          dataExports: () => Promise.resolve([]),
+          picture: () => Promise.resolve(null),
+          readFile: () => Promise.resolve(null),
+        })
       case `dashboard`:
         return createAdminStatsRoutes({
           limit: passThrough,
@@ -157,12 +164,20 @@ const ROUTES = [
   { method: "GET", path: "/admin/blog/posts" },
   { method: "POST", path: "/admin/blog/posts/0199f0a0-0000-7000-8000-000000000001/publish" },
   { method: "POST", path: "/admin/blog/preview" },
+  { method: "GET", path: "/admin/contact-links" },
+  { method: "POST", path: "/admin/contact-links/order" },
+  { method: "POST", path: "/admin/contact-links/0199f0a0-0000-7000-8000-000000000001/delete" },
   { method: "GET", path: "/admin/groups/0199f0a0-0000-7000-8000-000000000001/files" },
   {
     method: "POST",
     path:
       "/admin/groups/0199f0a0-0000-7000-8000-000000000001/files/0199f0a0-0000-7000-8000-000000000002/remove",
   },
+  ...[`thumbnail`, `open`, `download`].map((access) => ({
+    method: "GET",
+    path:
+      `/admin/groups/0199f0a0-0000-7000-8000-000000000001/files/0199f0a0-0000-7000-8000-000000000002/${access}`,
+  })),
 ]
 
 function send(
@@ -265,6 +280,7 @@ describe("operator area routes", () => {
       "billing",
       "newsletter",
       "blog",
+      "contact-links",
       "audit",
       "jobs",
       "system",
@@ -326,7 +342,7 @@ describe("operator area routes", () => {
     const response = await send(app, ROUTES[3])
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error).toBe(ADMIN_SELF)
+    expect((await apiError(response)).message).toBe(ADMIN_SELF)
     expect(emitted).toEqual([])
   })
 
@@ -335,7 +351,7 @@ describe("operator area routes", () => {
     const response = await send(app, ROUTES[5])
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error).toBe(ADMIN_OUTRANKED)
+    expect((await apiError(response)).message).toBe(ADMIN_OUTRANKED)
     expect(emitted).toEqual([])
   })
 

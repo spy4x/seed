@@ -1,6 +1,7 @@
 import type { MiddlewareHandler } from "hono"
 import { isBoundToUser, REALTIME_USER_HEADER } from "@spy4x/realtime/operations"
 import type { APIContext } from "../_types.ts"
+import { errorResponse } from "../services/error-response.ts"
 
 /**
  * Refuses a request whose page names another user than the session's (ADR 003). A cookie can
@@ -21,10 +22,7 @@ export const requireBoundUser: MiddlewareHandler<APIContext> = async (c, next) =
   const claimed = c.req.header(REALTIME_USER_HEADER)
   const auth = c.get("auth")
   if (claimed !== undefined && auth && !isBoundToUser(claimed, auth.user.id)) {
-    return c.json(
-      { error: { code: "unauthorized", message: "The session belongs to another user" } },
-      401,
-    )
+    return errorResponse(c, `unauthorized`, { message: "The session belongs to another user" })
   }
   return await next()
 }

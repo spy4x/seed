@@ -3,6 +3,7 @@ import type { ComponentType, JSX } from "preact"
 import {
   IconArrowDown,
   IconArrowRight,
+  IconChatBubble,
   IconCheck,
   IconClock,
   IconCreditCard,
@@ -77,8 +78,8 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
   {
     name: `Groups`,
     Icon: IconFolder,
-    text: `Every group, its owner and its members. Manage members and ` +
-      `invitations, or hand a group to another member.`,
+    text: `Every group, its owner, its members and its files. Manage members and ` +
+      `invitations, find and remove a file, or hand a group to another member.`,
   },
   {
     name: `Billing`,
@@ -90,6 +91,12 @@ const MODULES: readonly { name: string; Icon: ComponentType<IconProps>; text: st
     name: `Newsletter`,
     Icon: IconMail,
     text: `Who gets the newsletter and what it sent. Export the list as CSV.`,
+  },
+  {
+    name: `Contact links`,
+    Icon: IconChatBubble,
+    text: `Where people reach you: Telegram, Zalo, WhatsApp, a phone, an email. The website's ` +
+      `footer shows them within a minute, with no deploy.`,
   },
   {
     name: `Audit log`,

@@ -1,3 +1,16 @@
+import {
+  PictureCancelCommand,
+  PictureConfirmCommand,
+  PictureRemoveCommand,
+  PictureSignCommand,
+} from "@domain/identity"
+import {
+  createPictureCancelHandler,
+  createPictureConfirmHandler,
+  createPictureRemoveHandler,
+  createPictureSignHandler,
+} from "../features/profile/picture.ts"
+import { pictureDependencies } from "./picture-dependencies.ts"
 import { commandBus } from "@api/services/commandBus.ts"
 import {
   AttachmentCancelCommand,
@@ -267,6 +280,10 @@ commandBus.register(
 )
 commandBus.register(AttachmentRemoveCommand, createAttachmentRemoveHandler(attachmentDependencies))
 commandBus.register(AttachmentCancelCommand, createAttachmentCancelHandler(attachmentDependencies))
+commandBus.register(PictureSignCommand, createPictureSignHandler(pictureDependencies))
+commandBus.register(PictureConfirmCommand, createPictureConfirmHandler(pictureDependencies))
+commandBus.register(PictureCancelCommand, createPictureCancelHandler(pictureDependencies))
+commandBus.register(PictureRemoveCommand, createPictureRemoveHandler(pictureDependencies))
 commandBus.register(TagUpdateCommand, tagUpdateHandler)
 commandBus.register(TagDeleteCommand, tagDeleteHandler)
 commandBus.register(BillingCheckoutCommand, billingCheckoutHandler)

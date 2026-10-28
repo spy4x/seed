@@ -3,7 +3,7 @@ import { AxeBuilder } from "@axe-core/playwright"
 
 const REPOSITORY = `https://github.com/spy4x/seed`
 /** What the page says about the video: its length, its sound, and one line per shot. */
-const SECONDS = 58
+const SECONDS = 59
 const SHOTS = 12
 const MP4_SIZE = `5 MB`
 
@@ -153,7 +153,7 @@ test.describe(`without JavaScript`, () => {
     }
   })
 
-  test(`the page lists the nine modules, the three roles and what is not built yet`, async ({ page }) => {
+  test(`the page lists the ten modules, the three roles and what is not built yet`, async ({ page }) => {
     await page.goto(`/admin`)
     await expect(page.locator(`[data-e2e=admin-modules] h3`)).toHaveText([
       `Dashboard`,
@@ -161,6 +161,7 @@ test.describe(`without JavaScript`, () => {
       `Groups`,
       `Billing`,
       `Newsletter`,
+      `Contact links`,
       `Audit log`,
       `Jobs`,
       `System`,

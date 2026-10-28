@@ -6,87 +6,54 @@ import type { TagColor } from "@domain/tags"
  * with, and the newsletter's sent issues. Data only; `fake-data.ts` picks from it.
  */
 
-/** First and last names that belong together, one pool per culture. */
+/** First and last names that belong together, one pool per Western culture. */
 export const NAME_POOLS: readonly { first: readonly string[]; last: readonly string[] }[] = [
   {
-    first: [`Aarav`, `Ananya`, `Rohan`, `Kavya`, `Vikram`, `Meera`, `Arjun`, `Diya`],
-    last: [`Sharma`, `Iyer`, `Patel`, `Reddy`, `Nair`, `Gupta`, `Mehta`, `Rao`],
+    first: [`James`, `Olivia`, `William`, `Emma`, `Benjamin`, `Charlotte`, `Henry`, `Amelia`],
+    last: [`Smith`, `Johnson`, `Taylor`, `Walker`, `Wright`, `Carter`, `Hughes`, `Bennett`],
   },
   {
-    first: [`Wei`, `Li Na`, `Jun`, `Mei`, `Hao`, `Xiu`],
-    last: [`Chen`, `Wang`, `Zhang`, `Liu`, `Huang`, `Zhou`],
+    first: [`Siobhan`, `Liam`, `Aoife`, `Conor`, `Niamh`, `Cian`, `Ciara`, `Seán`],
+    last: [`Murphy`, `Walsh`, `O'Brien`, `Byrne`, `Kelly`, `Ryan`, `Doyle`, `Gallagher`],
   },
   {
-    first: [`Haruto`, `Yui`, `Sota`, `Aiko`, `Ren`, `Hana`],
-    last: [`Sato`, `Tanaka`, `Watanabe`, `Ito`, `Yamamoto`, `Kobayashi`],
-  },
-  { first: [`Minjun`, `Seoyeon`, `Jiho`, `Hyejin`], last: [`Kim`, `Park`, `Choi`, `Jung`] },
-  {
-    first: [`Chinedu`, `Amara`, `Tunde`, `Ngozi`, `Emeka`, `Folake`],
-    last: [`Okafor`, `Adeyemi`, `Eze`, `Balogun`, `Nwosu`, `Okonkwo`],
+    first: [`Élodie`, `Julien`, `Camille`, `Hugo`, `Léa`, `Mathis`, `Chloé`, `Antoine`],
+    last: [`Dubois`, `Moreau`, `Laurent`, `Lefèvre`, `Girard`, `Bonnet`, `Fontaine`, `Rousseau`],
   },
   {
-    first: [`Wanjiru`, `Otieno`, `Achieng`, `Kamau`],
-    last: [`Mwangi`, `Odhiambo`, `Kariuki`, `Njoroge`],
-  },
-  { first: [`Kwame`, `Abena`, `Kofi`, `Esi`], last: [`Mensah`, `Asante`, `Boateng`, `Owusu`] },
-  {
-    first: [`João`, `Ana`, `Lucas`, `Beatriz`, `Rafael`, `Camila`],
-    last: [`Silva`, `Santos`, `Oliveira`, `Costa`, `Pereira`, `Almeida`],
+    first: [`Lukas`, `Hannah`, `Felix`, `Lena`, `Jonas`, `Mia`, `Paul`, `Clara`],
+    last: [`Müller`, `Schmidt`, `Becker`, `Wagner`, `Hoffmann`, `Schulz`, `Fischer`, `Weber`],
   },
   {
-    first: [`Mateo`, `Valentina`, `Diego`, `Lucía`, `Santiago`, `Ximena`],
-    last: [`García`, `Hernández`, `López`, `Martínez`, `Ramírez`, `Torres`],
+    first: [`Daan`, `Sanne`, `Bram`, `Fleur`, `Joris`, `Lotte`, `Thijs`, `Femke`],
+    last: [`de Vries`, `Jansen`, `Visser`, `Bakker`, `Smit`, `Meijer`, `de Boer`, `Mulder`],
   },
   {
-    first: [`Élodie`, `Julien`, `Camille`, `Hugo`, `Léa`, `Mathis`],
-    last: [`Dubois`, `Moreau`, `Laurent`, `Lefèvre`, `Girard`, `Bonnet`],
+    first: [`Astrid`, `Lars`, `Ingrid`, `Erik`, `Sigrid`, `Nils`, `Freya`, `Magnus`],
+    last: [`Lindqvist`, `Andersen`, `Johansson`, `Berg`, `Nilsen`, `Holm`, `Larsen`, `Eriksson`],
   },
   {
-    first: [`Lukas`, `Hannah`, `Felix`, `Lena`, `Jonas`, `Mia`],
-    last: [`Müller`, `Schmidt`, `Becker`, `Wagner`, `Hoffmann`, `Schulz`],
+    first: [`Giulia`, `Marco`, `Chiara`, `Luca`, `Francesca`, `Matteo`, `Alessia`, `Lorenzo`],
+    last: [`Rossi`, `Ricci`, `Esposito`, `Romano`, `Conti`, `Bruno`, `Gallo`, `Marino`],
   },
   {
-    first: [`Jakub`, `Zuzana`, `Tomasz`, `Katarzyna`, `Marek`, `Ivana`],
-    last: [`Novák`, `Kowalski`, `Horvat`, `Dvořák`, `Nowak`, `Wiśniewska`],
+    first: [`Mateo`, `Valentina`, `Diego`, `Lucía`, `Santiago`, `Carmen`, `Pablo`, `Elena`],
+    last: [`García`, `Hernández`, `López`, `Martínez`, `Ramírez`, `Torres`, `Navarro`, `Ruiz`],
   },
   {
-    first: [`Oksana`, `Taras`, `Iryna`, `Dmytro`],
-    last: [`Shevchenko`, `Bondarenko`, `Kovalenko`, `Tkachenko`],
+    first: [`João`, `Ana`, `Lucas`, `Beatriz`, `Rafael`, `Inês`, `Tiago`, `Marta`],
+    last: [`Silva`, `Santos`, `Oliveira`, `Costa`, `Pereira`, `Almeida`, `Ferreira`, `Carvalho`],
   },
-  {
-    first: [`Astrid`, `Lars`, `Ingrid`, `Erik`, `Sigrid`, `Nils`],
-    last: [`Lindqvist`, `Andersen`, `Johansson`, `Berg`, `Nilsen`, `Holm`],
-  },
-  { first: [`Elif`, `Emre`, `Zeynep`, `Burak`], last: [`Demir`, `Kaya`, `Çelik`, `Şahin`] },
-  {
-    first: [`Omar`, `Layla`, `Yusuf`, `Noor`, `Karim`, `Salma`],
-    last: [`Haddad`, `Mansour`, `Khalil`, `Nasser`, `Farouk`, `Saleh`],
-  },
-  {
-    first: [`Dariush`, `Shirin`, `Arash`, `Leila`],
-    last: [`Rahimi`, `Tehrani`, `Karimi`, `Moradi`],
-  },
-  { first: [`Linh`, `Minh`, `Thao`, `Quang`], last: [`Nguyen`, `Tran`, `Pham`, `Le`] },
-  { first: [`Putri`, `Bayu`, `Dewi`, `Agus`], last: [`Santoso`, `Wijaya`, `Hartono`, `Pratama`] },
-  {
-    first: [`Andrea`, `Paolo`, `Bea`, `Miguel`],
-    last: [`Reyes`, `Bautista`, `Mendoza`, `Villanueva`],
-  },
-  {
-    first: [`Siobhan`, `Liam`, `Grace`, `Owen`, `Chloe`, `Ethan`],
-    last: [`Murphy`, `Walsh`, `Bennett`, `Carter`, `Hughes`, `Brooks`],
-  },
-  { first: [`Giulia`, `Marco`, `Chiara`, `Luca`], last: [`Rossi`, `Ricci`, `Esposito`, `Romano`] },
-  {
-    first: [`Eleni`, `Nikos`, `Sofia`, `Giorgos`],
-    last: [`Papadopoulos`, `Georgiou`, `Nikolaidis`, `Dimitriou`],
-  },
-  { first: [`Selam`, `Dawit`, `Hiwot`, `Yonas`], last: [`Tesfaye`, `Bekele`, `Girma`, `Haile`] },
 ]
 
-/** The person the admin panel's video follows (`docs/screenshots/admin-video.ts`): always there. */
-export const VIDEO_PERSON = { firstName: `Priya`, lastName: `Novak` } as const
+/**
+ * The person the admin panel's video follows (`docs/screenshots/admin-video.ts`): always there.
+ * No pool has the surname, so the video's search for it finds her and her {@link VIDEO_NAMESAKES}.
+ */
+export const VIDEO_PERSON = { firstName: `Claire`, lastName: `Hartley` } as const
+
+/** The first names of the two other people who share {@link VIDEO_PERSON}'s surname. */
+export const VIDEO_NAMESAKES = [`Daniel`, `Rose`] as const
 
 /** A sample note: its title and a body that reads as its own. */
 export interface ThemeNote {
@@ -211,13 +178,13 @@ export const THEMES: readonly Theme[] = [
       },
       {
         title: `Podcast guest list`,
-        body: `Four founders who build in public made the shortlist. Elif knows two of them.`,
+        body: `Four founders who build in public made the shortlist. Hannah knows two of them.`,
       },
     ],
   },
   {
     name: `Engineering`,
-    members: [8, 12],
+    members: [6, 8],
     tags: [
       { name: `infra`, color: `#4b5563` },
       { name: `incident`, color: `#b91c1c` },
@@ -380,7 +347,7 @@ export const THEMES: readonly Theme[] = [
       {
         title: `Restaurants to try in Osaka`,
         body:
-          `Okonomiyaki near Dotonbori, the standing sushi bar Ren keeps talking about, and anything at Kuromon market.`,
+          `Okonomiyaki near Dotonbori, the standing sushi bar Tom keeps talking about, and anything at Kuromon market.`,
       },
       {
         title: `Packing list`,
@@ -439,7 +406,7 @@ export const THEMES: readonly Theme[] = [
   },
   {
     name: `Running club`,
-    members: [6, 10],
+    members: [6, 8],
     tags: [
       { name: `race`, color: `#b91c1c` },
       { name: `training`, color: `#1d4ed8` },
@@ -510,7 +477,7 @@ export const THEMES: readonly Theme[] = [
     notes: [
       {
         title: `Reading group, week 6`,
-        body: `Two papers on sparse attention. Haruto presents the first, discussion after lunch.`,
+        body: `Two papers on sparse attention. Lukas presents the first, discussion after lunch.`,
       },
       {
         title: `Experiment log, run 14`,
@@ -564,13 +531,13 @@ export const THEMES: readonly Theme[] = [
       {
         title: `Holiday cover`,
         body:
-          `Salma covers the first week, Felix the second. The auto-reply mentions slower answers.`,
+          `Sophie covers the first week, Felix the second. The auto-reply mentions slower answers.`,
       },
     ],
   },
   {
     name: `Community garden`,
-    members: [6, 9],
+    members: [6, 8],
     tags: [
       { name: `planting`, color: `#15803d` },
       { name: `tools`, color: `#4b5563` },
@@ -804,10 +771,10 @@ export const SMALL_THEMES: readonly Theme[] = [
     members: [2, 3],
     tags: [{ name: `menu`, color: `#c2410c` }],
     notes: [
-      { title: `Next host`, body: `Dawit, then Ingrid. Theme for March: one pot only.` },
+      { title: `Next host`, body: `Pieter, then Ingrid. Theme for March: one pot only.` },
       {
         title: `Allergies`,
-        body: `No nuts for Mei, no pork for Karim. Everything else is fair game.`,
+        body: `No nuts for Emma, no pork for Marco. Everything else is fair game.`,
       },
     ],
   },
@@ -826,7 +793,7 @@ export const SMALL_THEMES: readonly Theme[] = [
     tags: [{ name: `to-buy`, color: `#7e22ce` }],
     notes: [
       { title: `Games we own`, body: `Catan, Azul, Codenames, and the long one nobody finishes.` },
-      { title: `Next host`, body: `Second Friday at Jun's. Snacks rotate, the host makes tea.` },
+      { title: `Next host`, body: `Second Friday at Liam's. Snacks rotate, the host makes tea.` },
     ],
   },
   {
@@ -912,7 +879,7 @@ export const PERSONAL_NOTES: readonly ThemeNote[] = [
   { title: `Films to watch`, body: `"Perfect Days", "Past Lives", the new Miyazaki.` },
   { title: `Learning Spanish`, body: `Ten minutes a day. This week: the past tense, again.` },
   { title: `Things to fix at home`, body: `Dripping tap, the wobbly chair, the hallway light.` },
-  { title: `Birthday list`, body: `Noor on the 3rd, Tomasz on the 19th, Dad on the 28th.` },
+  { title: `Birthday list`, body: `Freya on the 3rd, Matteo on the 19th, Dad on the 28th.` },
   { title: `Work ideas`, body: `A checklist for new hires; a shorter weekly report.` },
   { title: `Bike route`, body: `Along the canal to the bridge, back through the park: 18 km.` },
   { title: `Reading notes`, body: `Chapter 4: habits stick when they are easy and obvious.` },

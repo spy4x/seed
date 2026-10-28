@@ -98,8 +98,9 @@ test.describe("notifications inbox", () => {
       })
       expect(theirs.status()).toBe(404)
       const refusal = async (response: typeof theirs) => {
-        const { code, message } = (await response.json()).error
-        return { code, message }
+        // Everything but the request's own id.
+        const { code, reason, message } = (await response.json()).error
+        return { code, reason, message }
       }
       expect(await refusal(theirs)).toEqual(await refusal(nowhere))
       await expect(bell(page)).toHaveAccessibleName("Notifications, 2 unread")

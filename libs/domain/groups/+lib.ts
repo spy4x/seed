@@ -144,6 +144,8 @@ export interface GroupMemberSummary {
   userId: number
   /** Their first and last name; empty when they set none. */
   name: string
+  /** Their profile picture (#228, `pictureUrl`); `null` or absent for none. */
+  pictureId?: string | null
   /**
    * The address they sign in with, or `null` for an account that has none. Present only for a
    * reader who may see addresses ({@link canSeeMemberEmails}).

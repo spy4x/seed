@@ -1,21 +1,33 @@
 import { matchEntry } from "@spy4x/platform/universal/text"
+import type { SortDirection } from "@spy4x/preact-ui/filter-bar"
 
-/** How the notes list is ordered: newest change first (the default), newest first, or by title. */
+/** What the notes list is ordered by: the last change (the default), creation, or the title. */
 export type NoteSort = "updated" | "created" | "title"
 
 /** Whether a note needs any of the chosen tags (the default) or all of them. */
 export type TagMatch = "any" | "all"
 
-/** The orders the list offers, with the words the sort menu shows. */
-export const NOTE_SORTS: readonly { value: NoteSort; label: string }[] = [
-  { value: "updated", label: "Last updated" },
-  { value: "created", label: "Date created" },
-  { value: "title", label: "Title (A–Z)" },
+const DATE_DIRECTIONS = { asc: "Oldest first", desc: "Newest first" }
+
+/** The orders the list offers, with the words the sort menu shows for them and their directions. */
+export const NOTE_SORTS: readonly {
+  value: NoteSort
+  label: string
+  directions: Record<SortDirection, string>
+}[] = [
+  { value: "updated", label: "Last updated", directions: DATE_DIRECTIONS },
+  { value: "created", label: "Date created", directions: DATE_DIRECTIONS },
+  { value: "title", label: "Title", directions: { asc: "A–Z", desc: "Z–A" } },
 ]
+
+/** The direction an order starts in: dates newest first, titles A to Z. */
+export function defaultDirection(sort: NoteSort): SortDirection {
+  return sort === "title" ? "asc" : "desc"
+}
 
 /**
  * What the notes list is narrowed to and how it is ordered. The app keeps every field in the
- * address (`?q=`, `?tag=` repeated, `?match=all`, `?author=`, `?mine=1`, `?sort=`).
+ * address (`?q=`, `?tag=` repeated, `?match=all`, `?author=`, `?mine=1`, `?sort=`, `?dir=`).
  */
 export interface NoteFilters {
   /** The search: words to find in a note's title or text. */
@@ -28,6 +40,8 @@ export interface NoteFilters {
   /** "Created by me": only the notes the person created. */
   mine: boolean
   sort: NoteSort
+  /** Which way `sort` runs; see {@link defaultDirection}. */
+  direction: SortDirection
 }
 
 /** The list with nothing narrowed, newest change first. */
@@ -38,6 +52,7 @@ export const NO_NOTE_FILTERS: NoteFilters = {
   author: null,
   mine: false,
   sort: "updated",
+  direction: "desc",
 }
 
 /** What a note needs for the list to filter and order it. */
@@ -51,10 +66,10 @@ export interface FilterableNote {
   updatedAt?: string
 }
 
-/** Milliseconds of an ISO timestamp, or 0 when there is none, so undated notes sort last. */
-function time(at: string | undefined): number {
+/** Milliseconds of an ISO timestamp, or `null` when there is none. */
+function time(at: string | undefined): number | null {
   const value = at ? Date.parse(at) : Number.NaN
-  return Number.isNaN(value) ? 0 : value
+  return Number.isNaN(value) ? null : value
 }
 
 const TITLE_ORDER = new Intl.Collator(undefined, { sensitivity: "base", numeric: true })
@@ -90,10 +105,18 @@ export function filterNotes<N extends FilterableNote>(
     return matchEntry(query, { label: note.title, aliases: [`${note.title} ${note.body}`] }) !==
       null
   })
+  const sign = filters.direction === "asc" ? 1 : -1
+  // Undated notes go last whichever way the dates run.
+  const byTime = (at: (note: N) => string | undefined) => (a: N, b: N) => {
+    const x = time(at(a))
+    const y = time(at(b))
+    if (x === null || y === null) return (x === null ? 1 : 0) - (y === null ? 1 : 0)
+    return sign * (x - y)
+  }
   const order = {
-    updated: (a: N, b: N) => time(b.updatedAt) - time(a.updatedAt),
-    created: (a: N, b: N) => time(b.createdAt ?? b.updatedAt) - time(a.createdAt ?? a.updatedAt),
-    title: (a: N, b: N) => TITLE_ORDER.compare(a.title, b.title),
+    updated: byTime((note) => note.updatedAt),
+    created: byTime((note) => note.createdAt ?? note.updatedAt),
+    title: (a: N, b: N) => sign * TITLE_ORDER.compare(a.title, b.title),
   }[filters.sort]
   return kept.sort(order)
 }

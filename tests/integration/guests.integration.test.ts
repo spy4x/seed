@@ -32,6 +32,7 @@ import type { APIContext } from "../../apps/api/_types.ts"
 import { createOutboxProcessor } from "../../libs/server/jobs/wiring.ts"
 import { cleanUpGuests, remindGuest, renewGuestSession } from "../../libs/server/auth/guests.ts"
 import { applyMigrations } from "./migrations.ts"
+import { checkedError } from "../../apps/api/_testing/api-error.ts"
 
 /**
  * Guest accounts (#224) through the real guest and auth routes, the real sign-in and the worker's
@@ -496,7 +497,9 @@ Deno.test("a guest is refused an API token with the typed reason, a kept account
     const refused = await browser.call("POST", "/tokens", {})
     expect(refused).toMatchObject({
       status: 403,
-      body: { error: { code: GUEST_REFUSAL_CODE, action: "api-token" } },
+      body: {
+        error: { code: "forbidden", reason: GUEST_REFUSAL_CODE, details: { action: "api-token" } },
+      },
     })
     await keepByEmail(fixture, browser, "grace@example.com")
     const allowedNow = await browser.call("POST", "/tokens", {})
@@ -509,7 +512,10 @@ Deno.test("an invite refusal sends the invite reminder once", async () => {
     const { browser, userId } = await startGuest(fixture)
     for (let attempt = 0; attempt < 2; attempt++) {
       const refused = await browser.call("POST", `/groups/${uuidV7()}/invitations`, {})
-      expect(refused).toMatchObject({ status: 403, body: { error: { action: "invite" } } })
+      expect(refused).toMatchObject({
+        status: 403,
+        body: { error: { reason: GUEST_REFUSAL_CODE, details: { action: "invite" } } },
+      })
     }
     const [{ reminders }] = await fixture.sql<{ reminders: number }[]>`
       SELECT count(*)::int AS reminders FROM notifications WHERE user_id = ${userId}
@@ -638,9 +644,10 @@ Deno.test("the hourly limit refuses a sixth guest from one network with the wait
     }
     expect(answers.map((answer) => answer.status)).toEqual([201, 201, 201, 201, 201, 429])
     expect(Number(answers[5].retryAfter)).toBeGreaterThan(60 * 59)
-    expect(answers[5].body.retryAfterSeconds).toBe(Number(answers[5].retryAfter))
+    const refused = checkedError(answers[5].body)
+    expect(refused.details).toEqual({ retryAfterSeconds: Number(answers[5].retryAfter) })
     // The sentence says the real wait in minutes, under a title that already says what happened.
-    expect(answers[5].body.error).toBe(
+    expect(refused.message).toBe(
       `Try again in ${
         Math.ceil(Number(answers[5].retryAfter) / 60)
       } minutes, or create an account with your e-mail address.`,

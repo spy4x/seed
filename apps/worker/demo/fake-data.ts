@@ -11,6 +11,7 @@ import {
   SMALL_THEMES,
   type Theme,
   THEMES,
+  VIDEO_NAMESAKES,
   VIDEO_PERSON,
   VIDEO_PERSON_DEVICES,
 } from "./fake-content.ts"
@@ -178,10 +179,13 @@ function randomTools(seed: number) {
     }
     return out
   }
-  /** A time between `from` and `to` minutes ago (`from >= to`), nearer `from` with `early`. */
+  /**
+   * A time between `from` and `to` minutes ago (`from >= to`), nearer `from` with `early`. Never
+   * in the future: with `from < 0` it is now, or the row would sort after rows written later.
+   */
   const between = (from: number, to: number, early = false) => {
     const share = early ? random() ** 2 : random()
-    return Math.round(from - Math.max(0, from - to) * share)
+    return Math.max(0, Math.round(from - Math.max(0, from - to) * share))
   }
   return { random, int, pick, chance, sample, between }
 }
@@ -301,23 +305,30 @@ function sessionsOf(tools: Tools, signIns: FakeUser["signIns"]): FakeUser["sessi
 }
 
 /** The video person's address. */
-const VIDEO_PERSON_EMAIL = `priya.novak@example.com`
+const VIDEO_PERSON_EMAIL = `claire.hartley@example.com`
+
+/** The indexes in `users` of the people who share the video person's surname. */
+const VIDEO_NAMESAKE_INDEXES: readonly number[] = [2, 3]
 
 /**
- * The fake people's names and addresses, from many cultures, drawn before anything else from
- * `tools`, so they depend on the seed alone: the sample groups find people by address at any time
- * of the day.
+ * The fake people's names and addresses, drawn before anything else from `tools`, so they depend
+ * on the seed alone: the sample groups find people by address at any time of the day. Exactly
+ * three carry the video person's surname, which no pool has, so the video's search finds three.
  */
 function drawPeople(tools: Tools): { firstName: string; lastName: string; email: string }[] {
   const names = new Set<string>([`${VIDEO_PERSON.firstName} ${VIDEO_PERSON.lastName}`])
   const addresses = new Set<string>([VIDEO_PERSON_EMAIL])
-  return Array.from(
-    { length: FAKE_COUNTS.users },
-    (_, i) =>
-      i === VIDEO_PERSON_INDEX
-        ? { ...VIDEO_PERSON, email: VIDEO_PERSON_EMAIL }
-        : uniquePerson(tools, names, addresses),
-  )
+  return Array.from({ length: FAKE_COUNTS.users }, (_, i) => {
+    if (i === VIDEO_PERSON_INDEX) return { ...VIDEO_PERSON, email: VIDEO_PERSON_EMAIL }
+    const namesake = VIDEO_NAMESAKE_INDEXES.indexOf(i)
+    if (namesake < 0) return uniquePerson(tools, names, addresses)
+    const firstName = VIDEO_NAMESAKES[namesake]
+    const lastName = VIDEO_PERSON.lastName
+    const email = addressOf(tools, firstName, lastName)
+    names.add(`${firstName} ${lastName}`)
+    addresses.add(email)
+    return { firstName, lastName, email }
+  })
 }
 
 /**
@@ -360,18 +371,18 @@ function fakeUsers(tools: Tools, now: Date): FakeUser[] {
       passkey: null,
     }
   })
-  const priya = users[VIDEO_PERSON_INDEX]
+  const claire = users[VIDEO_PERSON_INDEX]
   // The video ends her two sessions: one on each of her browsers, both used today.
-  priya.signIns = [
-    ...priya.signIns.filter((s) => s.ago > 3 * DAY),
+  claire.signIns = [
+    ...claire.signIns.filter((s) => s.ago > 3 * DAY),
     { ago: 2 * DAY + 4 * HOUR, device: 0 },
     { ago: 6 * HOUR, device: 1 },
   ]
-  priya.sessions = [
+  claire.sessions = [
     { device: 0, createdAgo: 2 * DAY + 4 * HOUR, lastUsedAgo: 3 * HOUR },
     { device: 1, createdAgo: 6 * HOUR, lastUsedAgo: 40 },
   ]
-  priya.profileUpdatedAgo = null
+  claire.profileUpdatedAgo = null
 
   const others = users.map((_, i) => i).filter((i) => i !== VIDEO_PERSON_INDEX)
   const recent = others.filter((i) => users[i].joinedAgo < 12 * DAY)

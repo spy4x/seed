@@ -4,7 +4,14 @@ import type postgres from "postgres"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
 import { BillingStatus } from "@domain/billing"
 import { ADMIN_GROUP_NO_FILTER, GroupRole } from "@domain/groups"
-import { UserRole } from "@domain/identity"
+import {
+  ADMIN_AUDIT_NO_FILTER,
+  ADMIN_FILE_DOWNLOADED_KIND,
+  ADMIN_FILE_OPENED_KIND,
+  UserRole,
+} from "@domain/identity"
+import { listAdminAudit } from "@server/auth/admin-audit.ts"
+import { PostgresGroupActivityRepository } from "@server/groups/postgres-activity-repository.ts"
 import { apiTokenRows } from "@server/api-tokens/api-tokens.ts"
 import {
   AdminGroupActOutcome,
@@ -387,7 +394,7 @@ Deno.test(`a supervisor transfers a group only to its own member; an operator, a
   })
 })
 
-Deno.test(`an operator sees a group's files without their names and removes one, from the trash too`, async () => {
+Deno.test(`an operator sees a group's files with their names and notes, searches and pages them, and removes one, from the trash too`, async () => {
   await withSchema(async (sql) => {
     const { groupId, owner, editor } = await team(sql)
     const operator = { id: await operatorUser(sql, UserRole.OPERATOR), role: UserRole.OPERATOR }
@@ -395,29 +402,43 @@ Deno.test(`an operator sees a group's files without their names and removes one,
     const trashed = uuidV7()
     await sql`
       INSERT INTO notes (id, group_id, title, body, change_sequence, deleted_at) VALUES
-        (${live}, ${groupId}, ${`${SECRET} title`}, '', 1, NULL),
-        (${trashed}, ${groupId}, ${`${SECRET} old`}, '', 2, now())
+        (${live}, ${groupId}, 'Trip receipts', ${`${SECRET} body`}, 1, NULL),
+        (${trashed}, ${groupId}, 'Taxes', ${`${SECRET} old`}, 2, now())
     `
     const [first, second] = [uuidV7(), uuidV7()]
     await sql`
       INSERT INTO note_attachments (
         id, note_id, object_key, name, content_type, size_bytes, created_by_user_id, created_at
       ) VALUES
-        (${first}, ${live}, ${`attachments/${first}`}, ${`${SECRET}.pdf`}, 'application/pdf', 700,
+        (${first}, ${live}, ${`attachments/${first}`}, 'Receipt-March.pdf', 'application/pdf', 700,
           ${editor}, now() - interval '1 hour'),
-        (${second}, ${trashed}, ${`attachments/${second}`}, ${`${SECRET}.png`}, 'image/png', 300,
+        (${second}, ${trashed}, ${`attachments/${second}`}, 'IMG_0001.png', 'image/png', 300,
           ${owner}, now())
     `
     const rows = adminGroupRows(sql)
+    const every = { query: ``, page: 1 }
 
-    const files = await rows.files(groupId)
+    const files = await rows.files(groupId, every, 25)
     expect(JSON.stringify(files)).not.toContain(SECRET)
-    expect(files?.files.map((file) => [file.id, file.noteDeleted, file.uploader?.id])).toEqual([
-      [second, true, owner],
-      [first, false, editor],
-    ])
-    expect([files?.total, files?.bytes]).toEqual([2, 1000])
+    expect(files?.files.map((file) => [file.id, file.name, file.noteTitle, file.noteDeleted]))
+      .toEqual([
+        [second, `IMG_0001.png`, `Taxes`, true],
+        [first, `Receipt-March.pdf`, `Trip receipts`, false],
+      ])
+    expect(files?.files.map((file) => file.uploader?.id)).toEqual([owner, editor])
+    expect([files?.total, files?.all, files?.bytes]).toEqual([2, 2, 1000])
     expect((await rows.find(groupId))?.counts).toMatchObject({ files: 2, fileBytes: 1000 })
+
+    // Any part of the name, any case; a pattern character matches only itself.
+    const found = await rows.files(groupId, { query: `receipt`, page: 1 }, 25)
+    expect(found?.files.map((file) => file.id)).toEqual([first])
+    expect([found?.total, found?.all, found?.bytes]).toEqual([1, 2, 1000])
+    expect((await rows.files(groupId, { query: `%`, page: 1 }, 25))?.total).toBe(0)
+    expect((await rows.files(groupId, { query: `_0001`, page: 1 }, 25))?.total).toBe(1)
+    // One file a page: the second page holds the older file.
+    const older = await rows.files(groupId, { query: ``, page: 2 }, 1)
+    expect(older?.files.map((file) => file.id)).toEqual([first])
+    expect(older?.total).toBe(2)
 
     expect(await rows.removeFile(operator, groupId, second)).toBe(AdminGroupActOutcome.Done)
     expect(await rows.removeFile(operator, groupId, second)).toBe(AdminGroupActOutcome.NotFound)
@@ -434,7 +455,70 @@ Deno.test(`an operator sees a group's files without their names and removes one,
 
     await sql`UPDATE groups SET deleted_at = now() WHERE id = ${groupId}`
     expect(await rows.removeFile(operator, groupId, first)).toBe(AdminGroupActOutcome.GroupDeleted)
-    expect((await rows.files(groupId))?.total).toBe(1)
-    expect(await rows.files(uuidV7())).toBe(null)
+    expect((await rows.files(groupId, every, 25))?.total).toBe(1)
+    expect(await rows.files(uuidV7(), every, 25)).toBe(null)
+  })
+})
+
+Deno.test(`a file is found only through its own group, and an operator's open or download is audited outside the group's activity`, async () => {
+  await withSchema(async (sql) => {
+    const { groupId, owner } = await team(sql)
+    const other = await team(sql)
+    const operator = { id: await operatorUser(sql, UserRole.OPERATOR), role: UserRole.OPERATOR }
+    const noteId = uuidV7()
+    const fileId = uuidV7()
+    await sql`
+      INSERT INTO notes (id, group_id, title, body, change_sequence)
+      VALUES (${noteId}, ${groupId}, 'Trip', '', 1)
+    `
+    await sql`
+      INSERT INTO note_attachments (
+        id, note_id, object_key, name, content_type, size_bytes, created_by_user_id
+      ) VALUES (${fileId}, ${noteId}, ${`attachments/${fileId}`}, 'IMG_0001.png', 'image/png', 300,
+        ${owner})
+    `
+    const rows = adminGroupRows(sql)
+
+    expect(await rows.file(other.groupId, fileId)).toBe(null)
+    expect(await rows.file(groupId, uuidV7())).toBe(null)
+    const file = await rows.file(groupId, fileId)
+    expect(file).toEqual({
+      id: fileId,
+      name: `IMG_0001.png`,
+      contentType: `image/png`,
+      objectKey: `attachments/${fileId}`,
+      noteId,
+    })
+
+    const before = (await rows.find(groupId))!
+    await rows.recordFileAccess(operator, groupId, file!, `open`)
+    await rows.recordFileAccess(operator, groupId, file!, `download`)
+
+    const audits = await sql<
+      { kind: string; actorUserId: number; details: Record<string, unknown> }[]
+    >`
+      SELECT event_kind AS kind, actor_user_id, details FROM audit_events
+      WHERE group_id = ${groupId} AND event_kind LIKE 'operator.%' ORDER BY id
+    `
+    expect(audits.map((row) => [row.kind, row.actorUserId, row.details.name])).toEqual([
+      [ADMIN_FILE_OPENED_KIND, operator.id, `IMG_0001.png`],
+      [ADMIN_FILE_DOWNLOADED_KIND, operator.id, `IMG_0001.png`],
+    ])
+    expect(audits.every((row) => row.details[OPERATOR_DETAIL] === 1)).toBe(true)
+
+    // The operator area's audit log names the file and the group.
+    const log = await listAdminAudit(sql, ADMIN_AUDIT_NO_FILTER, 10, null)
+    expect(log.entries.slice(0, 2).map((entry) => [entry.event, entry.fileName, entry.group?.id]))
+      .toEqual([
+        [`activity:${ADMIN_FILE_DOWNLOADED_KIND}`, `IMG_0001.png`, groupId],
+        [`activity:${ADMIN_FILE_OPENED_KIND}`, `IMG_0001.png`, groupId],
+      ])
+    // A read changes nothing in the group: not its activity, not its last activity.
+    const after = (await rows.find(groupId))!
+    expect(after.activity).toEqual(before.activity)
+    expect(after.group.lastActivityAt).toBe(before.group.lastActivityAt)
+    const members = await new PostgresGroupActivityRepository(sql).list(groupId, { limit: 50 })
+    expect(members.events.map((event) => event.kind)).not.toContain(ADMIN_FILE_OPENED_KIND)
+    expect(members.events.map((event) => event.kind)).not.toContain(ADMIN_FILE_DOWNLOADED_KIND)
   })
 })

@@ -116,6 +116,7 @@ const signedIn: AdminAuditEntry = {
   ip: "192.0.2.10",
   userAgent: "Firefox on Linux",
   jobKind: null,
+  fileName: null,
 }
 
 const blocked: AdminAuditEntry = {
@@ -142,6 +143,7 @@ const retried: AdminAuditEntry = {
   ip: null,
   userAgent: null,
   jobKind: "mail.password_reset",
+  fileName: null,
 }
 
 function props(

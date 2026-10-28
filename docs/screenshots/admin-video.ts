@@ -32,7 +32,7 @@
  *   deno task video:admin
  * ```
  *
- * First the seeded person the video follows, Priya Novak, gets a password the way a person
+ * First the seeded person the video follows, Claire Hartley, gets a password the way a person
  * does: the product app mails her a reset code (read back through the development-only
  * `/api/test/last-mail`), and the reset sets a new random password. She then signs in from a phone
  * and a desktop browser, so her page has sessions to end. Then `admin@example.com` signs in and the
@@ -90,7 +90,7 @@ const POSTER = { width: 1280, height: 800 }
 const FPS = 30
 const ADMIN_EMAIL = "admin@example.com"
 /** The seeded person the support case follows, and what the operator types to find her. */
-const PERSON = { name: "Priya Novak", email: "priya.novak@example.com", search: "novak" }
+const PERSON = { name: "Claire Hartley", email: "claire.hartley@example.com", search: "hartley" }
 
 /** One screencast frame on disk and when it was painted, in seconds. */
 interface Frame {
@@ -429,7 +429,7 @@ const SCREENS = [
 ] as const
 
 /** The seeded customer the Billing shot opens: the one whose history holds a refund. */
-const CUSTOMER = "Community garden"
+const CUSTOMER = "Design studio"
 
 const H = VIEWPORT.height
 /** The caption bar's height: a zoom centres its region in the frame above it. */
@@ -487,18 +487,20 @@ async function zoomOn(page: Page, region: Box, least = 1.6): Promise<void> {
 /**
  * Zooms so that `region` ends exactly where the caption starts, as large as the frame allows (at
  * most 2×), centred across. Nothing below `region` shows above the caption, so the caption never
- * cuts a card or a row in half. `region` is measured at 1×.
+ * cuts a card or a row in half. Never below 1×, which would shrink the page and leave the frame's
+ * edges empty: a `region` taller than the frame starts at its top and runs under the caption.
+ * `region` is measured at 1×.
  */
 async function fillAboveCaption(page: Page, region: Box): Promise<void> {
   const room = H - CAPTION
-  const s = Math.min(2, (VIEWPORT.width - 80) / region.width, room / region.height)
+  const s = Math.max(1, Math.min(2, (VIEWPORT.width - 80) / region.width, room / region.height))
   const tx = VIEWPORT.width / 2
   const x = Math.min(
     Math.max(region.x + region.width / 2, tx / s),
     VIEWPORT.width - (VIEWPORT.width - tx) / s,
   )
   const y = region.y + region.height / 2
-  const ty = room - s * region.height / 2
+  const ty = Math.max(room - s * region.height / 2, s * region.height / 2)
   await video(
     page,
     `__video.zoom(${s.toFixed(3)}, ${Math.round(x)}, ${Math.round(y)}, ${tx}, ${Math.round(ty)})`,
@@ -636,15 +638,15 @@ async function play(
   await page.getByRole("heading", { level: 1, name: "Users" }).waitFor()
   await moveLike(page, pointer, { x: 1100, y: 700 })
 
-  // 2. Users: the search narrows the list to the Novaks, zoomed in on the field and the results.
+  // 2. Users: the search narrows the list to the Hartleys, zoomed in on the field and the results.
   await shot("Find anyone by name or address", async () => {
     await pause(page, 500)
     const field = page.getByLabel("Name or address")
     await typeLike(page, pointer, field, PERSON.search, H)
     await pause(page, 300)
     await page.keyboard.press("Enter")
-    // The seed has three people named Novak; the list narrows to them.
-    await page.getByText(/^[2-5] people$/).waitFor()
+    // The seed has exactly three people named Hartley; the list narrows to them.
+    await page.getByText(/^3 people$/).waitFor()
     await pause(page, 500)
     const last = page.locator("table tbody tr").last().locator("td").first()
     await zoomOn(page, union(await box(field), await box(last)))
@@ -789,14 +791,19 @@ async function play(
   })
   await unzoom(page)
 
-  // 9. System: from its title to the last row of services, which ends where the caption starts.
+  // 9. System: from its title to the second row of services, which ends where the caption starts.
+  // The third row, the API build, runs under the caption: three rows would need a zoom below 1×.
   await clickLike(page, pointer, page.getByRole("link", { name: "System" }), H)
   await page.getByRole("heading", { level: 1, name: "System" }).waitFor()
   await page.locator("[data-e2e=admin-system-summary]").waitFor()
   await page.locator("[data-e2e=admin-system-build]").getByText(VERSION).waitFor()
   const systemTitle = await box(page.getByRole("heading", { level: 1, name: "System" }))
   const services = await box(page.locator("[data-e2e=admin-system-cards]"))
-  const system = union({ ...systemTitle, y: systemTitle.y - 16 }, services)
+  const secondRow = await box(page.locator("[data-e2e=admin-system-migrations]"))
+  const system = union({ ...systemTitle, y: systemTitle.y - 16 }, {
+    ...services,
+    height: secondRow.y + secondRow.height - services.y,
+  })
   await fillAboveCaption(page, system)
   await pause(page, 600)
   await moveLike(page, pointer, { x: 1100, y: 690 })

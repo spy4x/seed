@@ -5,9 +5,9 @@
  */
 
 /**
- * An administrator for the admin app, seeded in development only (`deno task db:seed`). The
- * public demo has none: the admin panel is not part of it. The address is on a domain reserved
- * for examples (RFC 2606).
+ * An administrator for the admin app, seeded in development (`deno task db:seed`). The public
+ * demo seeds it only when `DEMO_ADMIN_PASSWORD` is set, for the owner alone: visitors get no
+ * operator account. The address is on a domain reserved for examples (RFC 2606).
  */
 export const DEV_ADMIN_EMAIL = `admin@example.com`
 

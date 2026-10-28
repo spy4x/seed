@@ -1,0 +1,5 @@
+{
+  "tasks": {
+    "check": "deno check postgres-contact-links.ts sample-links.ts"
+  }
+}

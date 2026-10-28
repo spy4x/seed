@@ -4,6 +4,7 @@ import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
 import type { TelegramAccounts } from "@api/services/telegram.ts"
+import { errorResponse } from "../services/error-response.ts"
 
 /** What the person's Telegram routes call. `index.ts` passes the app's singletons. */
 export interface TelegramRouteDependencies {
@@ -37,7 +38,7 @@ export function createTelegramRoute(dependencies: TelegramRouteDependencies): Ho
     .get(`/`, async (c) => c.json(await telegram.status(c.get("auth")!.user.id)))
     .post(`/code`, dependencies.codeLimit, async (c) => {
       const code = await telegram.issueCode(c.get("auth")!.user.id)
-      if (!code) return c.json({ error: TELEGRAM_OFF }, 404)
+      if (!code) return errorResponse(c, `not_found`, { message: TELEGRAM_OFF })
       c.header(`Cache-Control`, `no-store`)
       return c.json(code)
     })
@@ -55,7 +56,7 @@ export function createTelegramWebhookRoute(
   handle: ((request: Request) => Promise<Response>) | null,
 ): Hono<APIContext> {
   return new Hono<APIContext>().all(`/`, (c) => {
-    if (!handle) return c.json({ error: TELEGRAM_OFF }, 404)
+    if (!handle) return errorResponse(c, `not_found`, { message: TELEGRAM_OFF })
     return handle(c.req.raw)
   })
 }

@@ -150,6 +150,7 @@ function fakeFiles(confirm: FileRefusal | null = null) {
       record(`delete`, key)
       return Promise.resolve()
     },
+    read: () => Promise.resolve(null),
     isReachable: () => Promise.resolve(true),
   }
   return { files, calls }

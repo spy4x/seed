@@ -87,7 +87,9 @@ describe("invitations store", () => {
     }
     const { store } = harness({
       "GET /api/groups/g-1/invitations": [200, { invitations: [] }],
-      "POST /api/groups/g-1/invitations": [402, { error: { message: "Full", ...plan } }],
+      "POST /api/groups/g-1/invitations": [402, {
+        error: { code: "forbidden", message: "Full", reason: plan.code, details: plan },
+      }],
     })
     await store.open("g-1")
 
@@ -103,7 +105,13 @@ describe("invitations store", () => {
       "GET /api/groups/g-1/invitations": [200, { invitations: [] }],
       "POST /api/groups/g-1/invitations": [
         403,
-        { error: { message: "Add a sign-in method first.", code: GUEST_REFUSAL_CODE } },
+        {
+          error: {
+            code: "forbidden",
+            message: "Add a sign-in method first.",
+            reason: GUEST_REFUSAL_CODE,
+          },
+        },
       ],
     })
     await store.open("g-1")
@@ -119,7 +127,11 @@ describe("invitations store", () => {
     const { store, calls } = harness({
       "GET /api/groups/g-1/invitations": [200, { invitations: [] }],
       "POST /api/groups/g-1/invitations": [400, {
-        error: { code: "SEAT_PRICE_NOT_ACCEPTED", message: "Confirm the price" },
+        error: {
+          code: "bad_request",
+          message: "Confirm the price",
+          reason: "SEAT_PRICE_NOT_ACCEPTED",
+        },
       }],
     })
     await store.open("g-1")
@@ -144,7 +156,9 @@ describe("invitations store", () => {
     const { store } = harness({
       "GET /api/groups/g-1/invitations": [200, { invitations: [row, { ...row, id: "i-2" }] }],
       "DELETE /api/groups/g-1/invitations/i-1": [200, { revoked: true }],
-      "DELETE /api/groups/g-1/invitations/i-2": [403, { error: { message: "Only the owner" } }],
+      "DELETE /api/groups/g-1/invitations/i-2": [403, {
+        error: { code: "forbidden", message: "Only the owner", reason: "ROLE_INSUFFICIENT" },
+      }],
     })
     await store.open("g-1")
 
@@ -155,10 +169,31 @@ describe("invitations store", () => {
     expect(store.revokeError.value).toEqual({ invitationId: "i-2", message: "Only the owner" })
   })
 
+  it("words a refusal of the shared guards in its own sentence, not in theirs", async () => {
+    const { store } = harness({
+      "GET /api/groups/g-1/invitations": [200, { invitations: [row] }],
+      "DELETE /api/groups/g-1/invitations/i-1": [429, {
+        error: { code: "rate_limited", message: "Too many requests" },
+      }],
+    })
+    await store.open("g-1")
+
+    expect(await store.revoke("i-1")).toBe(false)
+
+    expect(store.revokeError.value).toEqual({
+      invitationId: "i-1",
+      message: "Something went wrong. Try again.",
+    })
+  })
+
   it("previews a link and says why it no longer works in the API's words", async () => {
     const { store, calls } = harness({
       "POST /api/invitations/preview": [410, {
-        error: { code: "INVITATION_EXPIRED", message: "This invitation has expired" },
+        error: {
+          code: "not_found",
+          message: "This invitation has expired",
+          reason: "INVITATION_EXPIRED",
+        },
       }],
     })
 

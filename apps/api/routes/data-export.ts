@@ -5,6 +5,7 @@ import type { DataExportFile, DataExportRequestResult } from "@server/auth/data-
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { SignIn } from "@api/services/sign-in.ts"
+import { errorResponse } from "../services/error-response.ts"
 
 /** What the data export routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface DataExportRouteDependencies {
@@ -49,20 +50,21 @@ export function createDataExportRoute(dependencies: DataExportRouteDependencies)
       if (!result.success) {
         const waitMs = result.output.nextRequestAt.getTime() - Date.now()
         c.header(`Retry-After`, String(Math.max(1, Math.ceil(waitMs / 1000))))
-        return c.json(
-          { error: DATA_EXPORT_TOO_SOON, code: result.error, export: result.output },
-          429,
-        )
+        return errorResponse(c, `rate_limited`, {
+          message: DATA_EXPORT_TOO_SOON,
+          reason: result.error,
+          details: { export: result.output },
+        })
       }
       return c.json({ export: result.output }, 201)
     })
     .get(`/download`, async (c) => {
       // A GET the mutation guards let through: another site must not start the person's download.
       if (c.req.header(`sec-fetch-site`) !== `same-origin`) {
-        return c.json({ error: `Download must come from the app` }, 403)
+        return errorResponse(c, `forbidden`, { message: `Download must come from the app` })
       }
       const file = await dependencies.readyFile(c.get("auth")!.user.id)
-      if (!file) return c.json({ error: DATA_EXPORT_NOT_READY }, 404)
+      if (!file) return errorResponse(c, `not_found`, { message: DATA_EXPORT_NOT_READY })
       const url = await dependencies.signDownload(file.key, {
         contentType: `application/zip`,
         filename: file.filename,

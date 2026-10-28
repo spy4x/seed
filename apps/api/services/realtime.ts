@@ -11,7 +11,7 @@ import {
 } from "@spy4x/realtime"
 import { createOperationDispatcher, type Operations } from "@spy4x/realtime/operations"
 import { GROUP_AGGREGATE, GroupError } from "@domain/groups"
-import { AccessError, type Actor, userChangeGroupId } from "@domain/identity"
+import { AccessError, type Actor, PictureError, userChangeGroupId } from "@domain/identity"
 import { AttachmentError, NoteError, NoteVersionConflictError } from "@domain/notes"
 import { TagError, TagVersionConflictError } from "@domain/tags"
 import { PlanError, toPlanRefusal } from "@domain/billing"
@@ -54,50 +54,75 @@ interface LiveSocket {
  * Turns an error a handler threw into the typed error the client sees, or `null` for one the client
  * must not be told about (it is answered `internal` and logged instead).
  *
- * The domain code travels in `details.code`, so the client can tell "id already in use" from any
- * other conflict without parsing prose.
+ * The domain code travels as the error's `reason` (docs/api-errors.md), so the client can tell "id
+ * already in use" from any other conflict without parsing prose, and a screen translates it. It
+ * stays in `details.code` too, which the library's retry and `classifyByCode` read.
  */
 export function toRequestError(error: unknown): RealtimeRequestError | null {
   if (error instanceof RealtimeRequestError) return error
   if (error instanceof GroupError) {
     return new RealtimeRequestError(GROUP_ERROR_CODES[error.code], error.message, {
       code: error.code,
-    })
+    }, { reason: error.code })
   }
   if (error instanceof NoteError) {
     // A version conflict names the version the note is at now, so the client can reread it.
     const details = error instanceof NoteVersionConflictError
       ? { code: error.code, currentVersion: error.currentVersion }
       : { code: error.code }
-    return new RealtimeRequestError(NOTE_ERROR_CODES[error.code], error.message, details)
+    return new RealtimeRequestError(NOTE_ERROR_CODES[error.code], error.message, details, {
+      reason: error.code,
+      fields: error.fields,
+    })
   }
   if (error instanceof TagError) {
     const details = error instanceof TagVersionConflictError
       ? { code: error.code, currentVersion: error.currentVersion }
       : { code: error.code }
-    return new RealtimeRequestError(TAG_ERROR_CODES[error.code], error.message, details)
+    return new RealtimeRequestError(TAG_ERROR_CODES[error.code], error.message, details, {
+      reason: error.code,
+      fields: error.fields,
+    })
   }
   if (error instanceof AttachmentError) {
     return new RealtimeRequestError(ATTACHMENT_ERROR_CODES[error.code], error.message, {
       code: error.code,
       limit: error.limit,
-    })
+    }, { reason: error.code })
+  }
+  if (error instanceof PictureError) {
+    return new RealtimeRequestError(PICTURE_ERROR_CODES[error.code], error.message, {
+      code: error.code,
+    }, { reason: error.code, fields: error.fields })
   }
   if (error instanceof PlanError) {
     // The socket's codes are closed, so a plan refusal is `forbidden` and names itself in details.
-    return new RealtimeRequestError("forbidden", error.message, toPlanRefusal(error))
+    return new RealtimeRequestError("forbidden", error.message, toPlanRefusal(error), {
+      reason: error.code,
+    })
   }
   if (error instanceof AccessError) {
-    return new RealtimeRequestError("unauthorized", error.message, { code: error.code })
+    return new RealtimeRequestError("unauthorized", error.message, { code: error.code }, {
+      reason: error.code,
+    })
   }
   if (error instanceof IdempotencyError) {
     // A command class name over the limit is a server bug, so it is answered as an unexpected error.
     if (error.code === "INVALID_COMMAND") return null
     const code = error.code === "INVALID_KEY" ? "bad_request" : "conflict"
-    return new RealtimeRequestError(code, error.message, { code: error.code })
+    return new RealtimeRequestError(code, error.message, { code: error.code }, {
+      reason: IDEMPOTENCY_REASONS[error.code],
+    })
   }
   return null
 }
+
+/** The REST routes' names for the idempotency refusals, so both transports give one reason. */
+const IDEMPOTENCY_REASONS = {
+  INVALID_KEY: "IDEMPOTENCY_KEY_INVALID",
+  KEY_REUSED: "IDEMPOTENCY_KEY_REUSED",
+  IN_PROGRESS: "IDEMPOTENCY_IN_PROGRESS",
+} as const
 
 const GROUP_ERROR_CODES: Record<
   GroupError["code"],
@@ -146,6 +171,21 @@ const ATTACHMENT_ERROR_CODES: Record<
   FILE_TYPE: "bad_request",
   INVALID_REQUEST: "bad_request",
   NOTE_FULL: "conflict",
+  UPLOADS_PENDING: "conflict",
+  UPLOAD_BUDGET: "rate_limited",
+  UPLOAD_NOT_FOUND: "not_found",
+}
+
+const PICTURE_ERROR_CODES: Record<
+  PictureError["code"],
+  "bad_request" | "not_found" | "conflict" | "rate_limited"
+> = {
+  FILE_CONTENT: "bad_request",
+  FILE_MISSING: "bad_request",
+  FILE_TOO_LARGE: "bad_request",
+  FILE_TYPE: "bad_request",
+  INVALID_REQUEST: "bad_request",
+  PICTURE_NOT_FOUND: "not_found",
   UPLOADS_PENDING: "conflict",
   UPLOAD_BUDGET: "rate_limited",
   UPLOAD_NOT_FOUND: "not_found",

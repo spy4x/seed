@@ -123,10 +123,10 @@ function fieldsOf(draft: BlogDraft) {
 /** What a refused save or action means for the editor: a conflict, a field, or the whole form. */
 function refusal(result: AdminApiResult<unknown>): Partial<BlogEditorState> {
   if (result.ok) return {}
-  const { code, message } = result.error
-  if (code === `VERSION_CONFLICT`) return { conflict: true }
-  if (code === `SLUG_TAKEN`) return { errors: { slug: `Another post already uses this slug.` } }
-  if (code === `SLUG_LOCKED`) return { errors: { slug: message } }
+  const { reason, message } = result.error
+  if (reason === `VERSION_CONFLICT`) return { conflict: true }
+  if (reason === `SLUG_TAKEN`) return { errors: { slug: `Another post already uses this slug.` } }
+  if (reason === `SLUG_LOCKED`) return { errors: { slug: message } }
   return { errors: { form: message } }
 }
 

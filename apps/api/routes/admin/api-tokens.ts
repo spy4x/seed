@@ -20,6 +20,7 @@ import { type AppAuthState, auditRow } from "@api/services/sign-in.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
 import { ADMIN_OUTRANKED, ADMIN_SELF, ADMIN_USER_NOT_FOUND } from "./users.ts"
+import { codeForStatus, errorResponse } from "../../services/error-response.ts"
 
 /** How an operator's revoke or remove ended. */
 export enum AdminApiTokensOutcome {
@@ -179,13 +180,16 @@ export function createAdminApiTokensRoutes(
       case AdminApiTokensOutcome.Done:
         return null
       case AdminApiTokensOutcome.UserNotFound:
-        return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+        return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
       case AdminApiTokensOutcome.Self:
-        return c.json({ error: ADMIN_SELF }, 403)
+        return errorResponse(c, `forbidden`, { message: ADMIN_SELF })
       case AdminApiTokensOutcome.Outranked:
-        return c.json({ error: ADMIN_OUTRANKED }, 403)
+        return errorResponse(c, `forbidden`, { message: ADMIN_OUTRANKED })
       case AdminApiTokensOutcome.Unchanged:
-        return c.json({ error: unchanged[0] }, unchanged[1])
+        return errorResponse(c, codeForStatus(unchanged[1]), {
+          message: unchanged[0],
+          status: unchanged[1],
+        })
     }
   }
 
@@ -196,33 +200,41 @@ export function createAdminApiTokensRoutes(
     })
     .post(`/api-tokens/:id/revoke`, limit, async (c) => {
       const tokenId = c.req.param("id")
-      if (!isUuid(tokenId)) return c.json({ error: ADMIN_TOKEN_NOT_FOUND }, 404)
+      if (!isUuid(tokenId)) return errorResponse(c, `not_found`, { message: ADMIN_TOKEN_NOT_FOUND })
       const outcome = await service.revoke(c, c.get("auth")!, tokenId)
       if (outcome === AdminApiTokensOutcome.UserNotFound) {
-        return c.json({ error: ADMIN_TOKEN_NOT_FOUND }, 404)
+        return errorResponse(c, `not_found`, { message: ADMIN_TOKEN_NOT_FOUND })
       }
       return refusal(c, outcome, [ADMIN_TOKEN_ALREADY_REVOKED, 409]) ?? c.json({ ok: true })
     })
     .get(`/users/:id/api-tokens`, limit, async (c) => {
       const userId = intIdOf(c.req.param("id"))
       const answer = userId === null ? null : await service.userTokens(userId)
-      return answer ? c.json(answer) : c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      return answer
+        ? c.json(answer)
+        : errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
     })
     .get(`/users/:id/devices`, limit, async (c) => {
       const userId = intIdOf(c.req.param("id"))
       const answer = userId === null ? null : await service.devices(userId)
-      return answer ? c.json(answer) : c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      return answer
+        ? c.json(answer)
+        : errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
     })
     .get(`/users/:id/notifications`, limit, async (c) => {
       const userId = intIdOf(c.req.param("id"))
       const answer = userId === null ? null : await service.notifications(userId)
-      return answer ? c.json(answer) : c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      return answer
+        ? c.json(answer)
+        : errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
     })
     .post(`/users/:id/devices/:deviceId/remove`, limit, async (c) => {
       const userId = intIdOf(c.req.param("id"))
-      if (userId === null) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      if (userId === null) return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
       const deviceRowId = intIdOf(c.req.param("deviceId"))
-      if (deviceRowId === null) return c.json({ error: ADMIN_DEVICE_NOT_FOUND }, 404)
+      if (deviceRowId === null) {
+        return errorResponse(c, `not_found`, { message: ADMIN_DEVICE_NOT_FOUND })
+      }
       const { outcome, devices } = await service.removeDevice(
         c,
         c.get("auth")!,

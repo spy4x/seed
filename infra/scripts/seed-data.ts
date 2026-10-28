@@ -29,6 +29,7 @@ import { createSqlFromEnv } from "@spy4x/server/db"
 import { readSubscribersSetup } from "@server/subscribers/subscribers.ts"
 import { DEV_ADMIN_EMAIL } from "@server/auth/demo-accounts.ts"
 import { seedSamplePosts } from "@server/blog/sample-posts.ts"
+import { seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
 import { AppDbBase } from "../../apps/api/services/db-base.ts"
 import { readSeedOptions, type SeedOptions } from "../../apps/worker/demo/options.ts"
 import { seedDemo, SeedRefusedError } from "../../apps/worker/demo/seed.ts"
@@ -68,6 +69,7 @@ async function main(): Promise<void> {
         SELECT user_id FROM auth_keys WHERE method = 'password' AND subject = ${DEV_ADMIN_EMAIL}
       `
       if (key) await seedSamplePosts(sql, key.userId)
+      await seedSampleContactLinks(sql)
     }
     const admin = dev ? `"${DEV_ADMIN_EMAIL}" is ready. ` : ``
     console.log(`✅ ${admin}${created ? `Seeded the fake data.` : `The fake data exists already.`}`)

@@ -403,7 +403,7 @@ const TIERS: readonly Tier[] = [
         facts: [
           `Traefik in front, with automatic certificates`,
           `Postgres and Valkey beside the apps`,
-          `Garage, an S3 file store: notes keep images and PDFs in it, uploaded on signed links and checked by their bytes`,
+          `Garage, an S3 file store: notes keep images and PDFs in it, and people their profile pictures, uploaded on signed links and checked by their bytes. A photo, HEIC included, becomes small AVIF and WebP widths with its location and other metadata stripped`,
           `VictoriaMetrics, VictoriaLogs and Grafana, with alerts`,
           `An opt-in daily encrypted restic backup of the database, and a written restore`,
           `Release images published from CI when you push a version tag`,
@@ -423,6 +423,7 @@ const TIERS: readonly Tier[] = [
           `Pricing read from the app's plan catalog`,
           `A newsletter with double opt-in and one-click unsubscribe`,
           `A blog written in the admin panel, with topics, an RSS feed and article structured data`,
+          `Contact links set in the admin panel, shown in the footer and the structured data`,
           `sitemap.xml, robots.txt, canonical links and Open Graph images`,
           `Optional cookieless analytics in your own Umami, with an event on every call to action`,
         ],

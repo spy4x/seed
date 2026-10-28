@@ -263,6 +263,32 @@ describe("one person in the admin app, with the people actions", () => {
     expect(calls.at(-1)).toEqual(["action", "password-reset", undefined])
   })
 
+  it("offers to remove a profile picture only when there is one, and sends the removal", async () => {
+    await mount(<AdminUserScreen {...userProps([])} />)
+    expect(has("[data-e2e=admin-remove-picture-open]")).toBe(false)
+    expect(find("[data-e2e=admin-user-picture]").textContent).toContain("None")
+
+    const calls: unknown[][] = []
+    const pictured = {
+      ...detail,
+      user: { ...ada, pictureId: "0190a000-0000-7000-8000-0000000000a1" },
+    }
+    await mount(<AdminUserScreen {...userProps(calls, { detail: pictured })} />)
+    // happy-dom loads no image, so the Avatar falls back to initials: the row stops saying None.
+    expect(find("[data-e2e=admin-user-picture]").textContent).not.toContain("None")
+    await click("[data-e2e=admin-remove-picture-open]")
+    expect(calls).toEqual([["open", "remove-picture"]])
+
+    await mount(
+      <AdminUserScreen {...userProps(calls, { detail: pictured, dialog: "remove-picture" })} />,
+    )
+    const dialog = find("[data-e2e=admin-action-dialog]").textContent
+    expect(dialog).toContain("Remove their profile picture?")
+    expect(dialog).toContain("Their initials show instead, everywhere. They can upload a new one.")
+    await click("[data-e2e=admin-action-submit]")
+    expect(calls.at(-1)).toEqual(["action", "remove-picture", undefined])
+  })
+
   it("disables the reset link, saying why, for a person with no password address", async () => {
     const noPassword = {
       ...detail,
@@ -317,6 +343,7 @@ describe("one person in the admin app, with the people actions", () => {
       [AuthAuditEventType.USER_ROLE_CHANGED, "operator:7 from viewer to operator"],
       [AuthAuditEventType.PASSWORD_RESET_SENT, "operator:7"],
       [AuthAuditEventType.USERS_EXPORTED, "operator:7 q=ada"],
+      [AuthAuditEventType.PICTURE_REMOVED_BY_OPERATOR, "operator:7"],
     ] as const
     await mount(
       <AdminUserScreen
@@ -342,6 +369,7 @@ describe("one person in the admin app, with the people actions", () => {
         "operator:7 from viewer to operator",
         "Password-reset link sent by an operator",
         "Exported the user list",
+        "Profile picture removed by an operator",
         "operator:7 q=ada",
       ]
     ) {

@@ -1,5 +1,6 @@
 import { signal } from "@preact/signals"
 import { readPlanRefusal } from "@domain/billing"
+import { type ApiErrorAnswer, readApiError } from "@domain/errors"
 import {
   GROUP_IMPORT_MAX_BYTES,
   type GroupImportProblem,
@@ -94,13 +95,13 @@ export function createGroupImportStore(ports: GroupFilePorts = browserPorts) {
   /** One key per checked file, so a retried import that already landed creates no second group. */
   let idempotencyKey = ""
 
-  function refusal(body: Record<string, unknown> | null): GroupImportState | null {
-    const error = body?.error as Record<string, unknown> | undefined
-    if (error?.code === "IMPORT_REFUSED" && Array.isArray(error.problems)) {
-      const problems = error.problems as GroupImportProblem[]
-      return { step: "refused", problems, total: Number(error.total ?? problems.length) }
+  function refusal(error: ApiErrorAnswer | null): GroupImportState | null {
+    const details = error?.details as { problems?: unknown; total?: unknown } | undefined
+    if (error?.reason === "IMPORT_REFUSED" && Array.isArray(details?.problems)) {
+      const problems = details.problems as GroupImportProblem[]
+      return { step: "refused", problems, total: Number(details.total ?? problems.length) }
     }
-    const plan = readPlanRefusal(error)
+    const plan = readPlanRefusal(error?.details)
     if (plan) return { step: "plan", refusal: plan, notes: 0 }
     return null
   }
@@ -126,7 +127,7 @@ export function createGroupImportStore(ports: GroupFilePorts = browserPorts) {
         state.value = { step: "checked", summary }
         return
       }
-      const refused = refusal(body)
+      const refused = refusal(readApiError(body))
       if (refused?.step === "plan") {
         // The plan's refusal names the cap; the page says how many notes the file has too.
         refused.notes = countNotes(file.text)
@@ -175,12 +176,12 @@ export function createGroupImportStore(ports: GroupFilePorts = browserPorts) {
       }, ports.fetch)
       const body = await bodyOf(response)
       if (response.ok) return body as unknown as GroupImportResult
-      const error = body?.error as Record<string, unknown> | undefined
-      if (error?.code === "INVALID_REQUEST") {
+      const error = readApiError(body)
+      if (error?.reason === "INVALID_REQUEST") {
         nameError.value = "Give the group a name of 1 to 100 characters."
         return null
       }
-      const refused = refusal(body)
+      const refused = refusal(error)
       if (refused) state.value = refused
       else importFailed.value = true
       return null

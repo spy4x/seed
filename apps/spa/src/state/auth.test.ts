@@ -602,14 +602,20 @@ describe("redeemSignInLink", () => {
   }
 
   it("tells a link another browser asked for apart from a used link and any other refusal", async () => {
-    answers(403, { error: "Asked for elsewhere", code: SIGN_IN_LINK_ASKED_ELSEWHERE_CODE })
+    answers(403, {
+      error: {
+        code: "forbidden",
+        message: "Asked for elsewhere",
+        reason: SIGN_IN_LINK_ASKED_ELSEWHERE_CODE,
+      },
+    })
     expect(await redeemSignInLink("token")).toEqual({ ok: false, askedElsewhere: true })
 
-    answers(410, { error: "This link no longer works." })
+    answers(410, { error: { code: "not_found", message: "This link no longer works." } })
     expect(await redeemSignInLink("token")).toEqual({ ok: false, refused: true })
 
     // The origin guard's 403 carries no such code: it stays a failure with the API's words.
-    answers(403, { error: "Forbidden" })
+    answers(403, { error: { code: "forbidden", message: "Forbidden" } })
     expect(await redeemSignInLink("token")).toEqual({ ok: false, error: "Forbidden" })
   })
 

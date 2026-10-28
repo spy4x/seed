@@ -16,6 +16,7 @@ import { PasswordLockedError, passwordLockedMessage } from "@api/services/passwo
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { AuthRateLimits } from "../middlewares/auth-rate-limits.ts"
+import { errorResponse, validationResponse } from "../services/error-response.ts"
 
 /** What the guest routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface GuestRouteDependencies {
@@ -47,17 +48,19 @@ export function createGuestRoute(
     return c.json({ guest } satisfies GuestStartResponse, 200)
   }
   const off: MiddlewareHandler<APIContext> = async (c, next) => {
-    if (!guests.enabled) return c.json({ error: GUEST_ANSWERS.off }, 404)
+    if (!guests.enabled) return errorResponse(c, `not_found`, { message: GUEST_ANSWERS.off })
     await next()
   }
   /** A guest's session, fully signed in; anyone else is refused before the route runs. */
   const guestOnly: MiddlewareHandler<APIContext> = async (c, next) => {
-    if (!c.get("auth")?.user.guestSince) return c.json({ error: GUEST_ANSWERS.notGuest }, 403)
+    if (!c.get("auth")?.user.guestSince) {
+      return errorResponse(c, `forbidden`, { message: GUEST_ANSWERS.notGuest })
+    }
     await next()
   }
   const locked = (c: Context<APIContext>, error: PasswordLockedError) => {
     c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
-    return c.json({ error: passwordLockedMessage(error.retryAfterMs) }, 429)
+    return errorResponse(c, `rate_limited`, { message: passwordLockedMessage(error.retryAfterMs) })
   }
 
   return new Hono<APIContext>()
@@ -71,11 +74,14 @@ export function createGuestRoute(
         if (!decision.allowed) {
           const seconds = Math.ceil(decision.retryAfterMs / 1000)
           c.header("Retry-After", String(seconds))
-          return c.json({ error: guestTooManyMessage(seconds), retryAfterSeconds: seconds }, 429)
+          return errorResponse(c, `rate_limited`, {
+            message: guestTooManyMessage(seconds),
+            details: { retryAfterSeconds: seconds },
+          })
         }
         const started = await guests.start(c, c.get("auth"))
         if (started.outcome === GuestStartOutcome.Off) {
-          return c.json({ error: GUEST_ANSWERS.off }, 404)
+          return errorResponse(c, `not_found`, { message: GUEST_ANSWERS.off })
         }
         const guest = started.outcome === GuestStartOutcome.Started
           ? "started"
@@ -100,7 +106,7 @@ export function createGuestRoute(
       rateLimits.otpByUser,
       async (c) => {
         const body = validate(guestSwitchSchema, await readApiJson(c))
-        if (body.error) return c.json({ error: body.error.description }, 400)
+        if (body.error) return validationResponse(c, body.error.details)
         let answer
         try {
           answer = await guests.switchTo(c, c.get("auth")!, body.data)
@@ -112,15 +118,21 @@ export function createGuestRoute(
           case GuestSwitchOutcome.Switched:
             return c.json(answer.result)
           case GuestSwitchOutcome.WrongPassword:
-            return c.json({ error: GUEST_ANSWERS.wrongPassword }, 401)
+            return errorResponse(c, `unauthorized`, { message: GUEST_ANSWERS.wrongPassword })
           case GuestSwitchOutcome.WrongCode:
-            return c.json({ error: GUEST_ANSWERS.wrongCode }, 401)
+            return errorResponse(c, `unauthorized`, { message: GUEST_ANSWERS.wrongCode })
           case GuestSwitchOutcome.Unavailable:
-            return c.json({ error: GUEST_ANSWERS.unavailable }, 410)
+            return errorResponse(c, `not_found`, {
+              message: GUEST_ANSWERS.unavailable,
+              status: 410,
+            })
           case GuestSwitchOutcome.Blocked:
-            return c.json({ error: GUEST_ANSWERS.notMoved, blockers: answer.blockers }, 409)
+            return errorResponse(c, `conflict`, {
+              message: GUEST_ANSWERS.notMoved,
+              details: { blockers: answer.blockers },
+            })
           case GuestSwitchOutcome.Expired:
-            return c.json({ error: GUEST_ANSWERS.expired }, 410)
+            return errorResponse(c, `not_found`, { message: GUEST_ANSWERS.expired, status: 410 })
         }
       },
     )
@@ -145,14 +157,19 @@ export function createGuestRoute(
       rateLimits.strictByUser,
       async (c) => {
         const body = validate(guestDeleteSchema, await readApiJson(c))
-        if (body.error) return c.json({ error: GUEST_ANSWERS.wrongWord }, 400)
+        if (body.error) return errorResponse(c, `bad_request`, { message: GUEST_ANSWERS.wrongWord })
         const answer = await guests.deleteAccount(c, c.get("auth")!, body.data.confirm)
         if (answer.deleted) return c.json({ success: true })
         if (answer.reason === "blocked") {
-          return c.json({ error: GUEST_ANSWERS.notMoved, blockers: answer.blockers }, 409)
+          return errorResponse(c, `conflict`, {
+            message: GUEST_ANSWERS.notMoved,
+            details: { blockers: answer.blockers },
+          })
         }
-        if (answer.reason === "wrong-word") return c.json({ error: GUEST_ANSWERS.wrongWord }, 400)
-        return c.json({ error: GUEST_ANSWERS.notGuest }, 403)
+        if (answer.reason === "wrong-word") {
+          return errorResponse(c, `bad_request`, { message: GUEST_ANSWERS.wrongWord })
+        }
+        return errorResponse(c, `forbidden`, { message: GUEST_ANSWERS.notGuest })
       },
     )
 }

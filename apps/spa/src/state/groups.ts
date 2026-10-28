@@ -514,7 +514,7 @@ export const onlineGroups: GroupsDependencies = {
     const query = new URLSearchParams({ limit: String(PAGE_LIMIT) })
     if (cursor) query.set("cursor", cursor)
     const result = await apiAsUser<GroupPage>(`/api/groups?${query}`)
-    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.reason)
     return result.data
   },
   async fetchDeleted(via) {
@@ -522,7 +522,7 @@ export const onlineGroups: GroupsDependencies = {
       return await callQuery<{ groups: DeletedGroupItem[] }>("group.deleted")
     }
     const result = await apiAsUser<{ groups: DeletedGroupItem[] }>("/api/groups/deleted")
-    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.code)
+    if (!result.ok) throw new ReadRefused(result.error.message, result.status, result.error.reason)
     return result.data
   },
   create: (input) => callCommand("group.create", input),

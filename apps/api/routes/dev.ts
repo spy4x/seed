@@ -14,6 +14,7 @@ import type { AppDbBase } from "@api/services/db-base.ts"
 import { readApiJson } from "@api/services/json-body.ts"
 import { normalizeUsername } from "@api/services/sign-in.ts"
 import { signUpClient } from "../middlewares/auth-rate-limits.ts"
+import { errorResponse, validationResponse } from "../services/error-response.ts"
 
 /** What the development-only routes need. */
 export interface DevRouteDeps {
@@ -79,7 +80,7 @@ export function createDevRoute(deps: DevRouteDeps) {
       return c.json({ success: true })
     })
     .post("/add-member", async (c) => {
-      if (!deps.isDev) return c.json({ error: "Not allowed" }, 403)
+      if (!deps.isDev) return errorResponse(c, `forbidden`, { message: "Not allowed" })
       let body: unknown = null
       try {
         body = await readApiJson(c)
@@ -88,11 +89,11 @@ export function createDevRoute(deps: DevRouteDeps) {
       }
       const validation = validate(addMemberSchema, body)
       if (validation.error) {
-        return c.json({ error: validation.error.description }, 400)
+        return validationResponse(c, validation.error.details)
       }
       const { login, groupId, role } = validation.data
       const key = await findPasswordKey(deps, login)
-      if (!key) return c.json({ error: "No such user" }, 404)
+      if (!key) return errorResponse(c, `not_found`, { message: "No such user" })
       // Through `recordAccessChange`, as every member change goes: the group's revision rises
       // and its open pages hear of the change.
       const added = await deps.sql.begin(async (tx: Transaction) => {
@@ -118,13 +119,15 @@ export function createDevRoute(deps: DevRouteDeps) {
           SELECT 1 FROM group_members
           WHERE group_id = ${groupId} AND user_id = ${key.userId} AND role = ${GroupRole.OWNER}
         `
-        if (owner.length > 0) return c.json({ error: "The owner's role is not changed here" }, 409)
-        return c.json({ error: "No such group" }, 404)
+        if (owner.length > 0) {
+          return errorResponse(c, `conflict`, { message: "The owner's role is not changed here" })
+        }
+        return errorResponse(c, `not_found`, { message: "No such group" })
       }
       return c.json({ success: true })
     })
     .post("/set-role", async (c) => {
-      if (!deps.isDev) return c.json({ error: "Not allowed" }, 403)
+      if (!deps.isDev) return errorResponse(c, `forbidden`, { message: "Not allowed" })
       let body: unknown = null
       try {
         body = await readApiJson(c)
@@ -133,10 +136,10 @@ export function createDevRoute(deps: DevRouteDeps) {
       }
       const validation = validate(setRoleSchema, body)
       if (validation.error) {
-        return c.json({ error: validation.error.description }, 400)
+        return validationResponse(c, validation.error.details)
       }
       const key = await findPasswordKey(deps, validation.data.login)
-      if (!key) return c.json({ error: "No such user" }, 404)
+      if (!key) return errorResponse(c, `not_found`, { message: "No such user" })
       await deps.sql`
         UPDATE users SET role = ${validation.data.role}, updated_at = NOW() WHERE id = ${key.userId}
       `
@@ -149,7 +152,7 @@ export function createDevRoute(deps: DevRouteDeps) {
       return c.json({ success: true, closed })
     })
     .post("/last-mail", async (c) => {
-      if (!deps.isDev) return c.json({ error: "Not allowed" }, 403)
+      if (!deps.isDev) return errorResponse(c, `forbidden`, { message: "Not allowed" })
       let body: unknown = null
       try {
         body = await readApiJson(c)
@@ -158,14 +161,14 @@ export function createDevRoute(deps: DevRouteDeps) {
       }
       const validation = validate(authEmailSchema, body)
       if (validation.error) {
-        return c.json({ error: validation.error.description }, 400)
+        return validationResponse(c, validation.error.details)
       }
       const email = normalizeEmail(validation.data.email) ?? validation.data.email
       const [mail] = await deps.sql<{ subject: string; textBody: string }[]>`
         SELECT subject, text_body FROM dev_mail WHERE to_address = ${email}
         ORDER BY id DESC LIMIT 1
       `
-      if (!mail) return c.json({ error: "No mail for this address" }, 404)
+      if (!mail) return errorResponse(c, `not_found`, { message: "No mail for this address" })
       return c.json({ subject: mail.subject, text: mail.textBody })
     })
 }
@@ -196,7 +199,7 @@ async function readLogin(
   deps: DevRouteDeps,
 ): Promise<{ userId: number | null; email: string | null } | Response> {
   if (!deps.isDev) {
-    return c.json({ error: "Not allowed" }, 403)
+    return errorResponse(c, `forbidden`, { message: "Not allowed" })
   }
   let body: unknown = null
   try {
@@ -206,7 +209,7 @@ async function readLogin(
   }
   const validation = validate(authLoginSchema, body)
   if (validation.error) {
-    return c.json({ error: validation.error.description }, 400)
+    return validationResponse(c, validation.error.details)
   }
   const key = await findPasswordKey(deps, validation.data.login)
   const email = normalizeEmail(validation.data.login)

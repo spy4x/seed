@@ -16,6 +16,7 @@ import {
 import { createAdminRoute } from "./+routes.ts"
 import { ADMIN_API_MODULES } from "./registry.ts"
 import { type AdminBlogService, blogNewsletterEnabled, createAdminBlogRoutes } from "./blog.ts"
+import { apiError } from "../../_testing/api-error.ts"
 
 const ID = `01a1658a-5fe7-7ab6-8e4a-0ad1c6ed703d`
 const NOW = new Date(`2026-10-23T10:00:00.000Z`)
@@ -206,7 +207,10 @@ describe(`operator area: blog routes`, () => {
     })
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toMatchObject({ code: `INVALID_REQUEST`, field: `coverUrl` })
+    expect(await apiError(response)).toMatchObject({
+      reason: `INVALID_REQUEST`,
+      details: { field: `coverUrl` },
+    })
     expect(calls).toEqual([])
   })
 
@@ -227,7 +231,11 @@ describe(`operator area: blog routes`, () => {
     const response = await request(app, `POST`, `/posts/${ID}`, { ...FIELDS, version: 2 })
 
     expect(response.status).toBe(409)
-    expect(await response.json()).toMatchObject({ code: `VERSION_CONFLICT`, currentVersion: 4 })
+    expect(await apiError(response)).toMatchObject({
+      code: `conflict`,
+      reason: `VERSION_CONFLICT`,
+      details: { currentVersion: 4 },
+    })
   })
 
   it(`answers 404 for a post that is gone and for an id that is no UUID`, async () => {
@@ -274,7 +282,7 @@ describe(`operator area: blog routes`, () => {
     })
 
     expect(response.status).toBe(409)
-    expect((await response.json()).code).toBe(`NEWSLETTER_OFF`)
+    expect((await apiError(response)).reason).toBe(`NEWSLETTER_OFF`)
     expect(calls).toEqual([])
   })
 
@@ -297,7 +305,7 @@ describe(`operator area: blog routes`, () => {
     })
 
     expect(response.status).toBe(400)
-    expect((await response.json()).field).toBe(`slug`)
+    expect((await apiError(response)).details).toEqual({ field: `slug` })
     expect(calls).toEqual([])
   })
 

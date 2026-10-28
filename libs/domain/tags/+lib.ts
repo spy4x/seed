@@ -11,6 +11,7 @@ import {
 import { hasUnsafeTextCharacters } from "@spy4x/platform/universal/text"
 import { UUID_PATTERN } from "@spy4x/platform/universal/uuid"
 import { hexColor } from "@spy4x/platform/universal/color"
+import { type FieldErrors, fieldErrors } from "@spy4x/validation"
 
 /**
  * Tags: the second reference aggregate, and the parent of notes. A tag belongs to one group, has a
@@ -62,6 +63,8 @@ export class TagError extends Error {
   constructor(
     public readonly code: TagErrorCode,
     message: string,
+    /** Each failed field's code and rule, when a schema refused the request. */
+    public readonly fields?: FieldErrors,
   ) {
     super(message)
     this.name = "TagError"
@@ -165,7 +168,9 @@ export const tagListPayloadSchema = type({ ...groupIdField, "+": "reject" })
  */
 export function parseTagRequest<S extends Type<object>>(schema: S, value: unknown): S["infer"] {
   const result = schema(value)
-  if (result instanceof type.errors) throw new TagError("INVALID_REQUEST", result.summary)
+  if (result instanceof type.errors) {
+    throw new TagError("INVALID_REQUEST", result.summary, fieldErrors(result))
+  }
   const parsed = result as S["infer"] & { name?: string }
   if (parsed.name === undefined) return parsed
   const name = parsed.name.trim()

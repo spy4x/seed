@@ -8,6 +8,8 @@ import { afterAll, afterEach, beforeAll, describe, it } from "@std/testing/bdd"
 import { Window } from "happy-dom"
 import { render, type VNode } from "preact"
 import { act } from "preact/test-utils"
+import { FormatContext } from "@spy4x/preact-ui/format"
+import { createFormatters } from "@spy4x/time/format"
 import {
   ADMIN_GROUP_NO_FILTER,
   type AdminGroupDetail,
@@ -55,12 +57,17 @@ afterEach(async () => {
 })
 
 /** Renders `node`, into the same root when one is mounted already, as a prop change would. */
+/** The operator's format, pinned, so dates read the same whatever the machine's locale. */
+const FORMAT = createFormatters({ locale: `en-GB`, timeZone: `UTC`, hourCycle: null })
+
 async function mount(node: VNode): Promise<HTMLElement> {
   if (!root) {
     root = document.createElement(`div`)
     document.body.append(root)
   }
-  await act(() => render(node, root!))
+  await act(() =>
+    render(<FormatContext.Provider value={FORMAT}>{node}</FormatContext.Provider>, root!)
+  )
   return root
 }
 
@@ -341,25 +348,35 @@ const operator = { id: 7, role: UserRole.OPERATOR }
 const supervisor = { id: 7, role: UserRole.SUPERVISOR }
 
 const FILE_ID = `0199c3a0-0000-7000-8000-000000000005`
+const IMAGE_ID = `0199c3a0-0000-7000-8000-000000000006`
+const LONG_TITLE = `Receipts from the whole summer trip to Lisbon and Porto, scanned`
 const files: AdminGroupFiles = {
   files: [
     {
       id: FILE_ID,
+      name: `receipt.pdf`,
       contentType: `application/pdf`,
       size: 1_500_000,
       uploader: { id: 43, name: `Grace Hopper`, email: `grace@example.com` },
       createdAt: `2026-10-12T10:00:00.000Z`,
+      noteTitle: LONG_TITLE,
       noteDeleted: false,
     },
     {
-      id: `0199c3a0-0000-7000-8000-000000000006`,
+      id: IMAGE_ID,
+      name: `IMG_0001.png`,
       contentType: `image/png`,
       size: 1_000_000,
       uploader: null,
       createdAt: `2026-10-11T10:00:00.000Z`,
+      noteTitle: ``,
       noteDeleted: true,
     },
   ],
+  total: 2,
+  page: 1,
+  pageSize: 25,
+  query: ``,
   usage: { files: 2, bytes: 2_500_000, maxFiles: 100, maxBytes: 200 * 1024 * 1024 },
 }
 
@@ -369,6 +386,11 @@ function groupProps(calls: unknown[][], props: Partial<AdminGroupScreenProps> = 
     error: null,
     files,
     filesError: null,
+    fileFilter: { query: ``, page: 1 },
+    onFileFilter: (filter) => void calls.push([`filter`, filter]),
+    onRetryFiles: () => void calls.push([`retry`]),
+    onDownloadFile: (file) => void calls.push([`download`, file.id]),
+    fileNotice: null,
     operator,
     tab: `members`,
     onTab: (tab) => void calls.push([`tab`, tab]),
@@ -468,59 +490,194 @@ describe(`one group in the admin app`, () => {
     expect(activity.textContent).toContain(`By an operator`)
   })
 
-  it(`lists each file's kind, size, uploader and note state, with the group's room, and no name`, async () => {
+  it(`names each file with its kind, size, uploader, date and note, and a thumbnail for an image`, async () => {
     await mount(<AdminGroupScreen {...groupProps([], { tab: `files` })} />)
-    const list = find(`[role=tabpanel] [data-e2e=admin-group-files]`)
-    const first = list.querySelector(`[data-e2e=admin-group-file-${FILE_ID}]`)!
-    expect(first.textContent).toContain(`PDF · 1.4 MB`)
-    expect(first.querySelector(`a[href='/users/43']`)?.textContent).toBe(`Grace Hopper`)
-    expect(first.textContent).not.toContain(`Note in trash`)
-    expect(list.textContent).toContain(`A deleted account`)
-    expect(list.textContent).toContain(`Note in trash`)
+    const list = find(`[role=tabpanel] [data-e2e=admin-group-files] ul[aria-label=Files]`)
+    const [pdf, image] = [...list.querySelectorAll(`li`)]
+    const pdfButton = pdf.querySelector(`button`)!
+    expect(pdfButton.getAttribute(`aria-label`)).toBe(`Download receipt.pdf`)
+    expect(pdf.textContent).toContain(
+      `PDF · 1.4 MB · Grace Hopper · 12 Oct 2026 · ` +
+        `in “Receipts from the whole summer trip to Lisbon an…”`,
+    )
+    expect(pdf.querySelector(`img`)).toBe(null)
+    expect(image.querySelector(`button`)!.getAttribute(`aria-label`)).toBe(`Open IMG_0001.png`)
+    expect(image.textContent).toContain(`A deleted account`)
+    expect(image.textContent).toContain(`in an untitled note (in trash)`)
+    expect(image.querySelector(`img`)!.getAttribute(`src`)).toBe(
+      `/api/admin/groups/${GROUP_ID}/files/${IMAGE_ID}/thumbnail`,
+    )
+    expect(find(`[data-e2e=admin-group-files-count]`).textContent).toBe(`2 files`)
     expect(find(`[data-e2e=admin-group-files-usage]`).textContent).toBe(
       `2 of 100 files · 2.4 MB of 200 MB`,
     )
     expect(find(`[data-e2e=admin-group-counts]`).textContent).toContain(`Files2 · 2.4 MB`)
   })
 
-  it(`opens a file's removal from its row and confirms it, and offers none in the trash`, async () => {
+  it(`searches by the typed name, trimmed, on page 1`, async () => {
+    const calls: unknown[][] = []
+    const filter = { query: `old`, page: 3 }
+    await mount(<AdminGroupScreen {...groupProps(calls, { tab: `files`, fileFilter: filter })} />)
+    const field = find<HTMLInputElement>(`[role=search] input[type=search]`)
+    expect(find(`label[for=${field.id}]`).textContent).toBe(`File name`)
+    expect(field.value).toBe(`old`)
+    field.value = `  receipt `
+    await submit(`[data-e2e=admin-group-files-submit]`)
+    expect(calls).toEqual([[`filter`, { query: `receipt`, page: 1 }]])
+  })
+
+  it(`says how many files match a search, and that none do with a way out`, async () => {
+    const one = { ...files, files: [files.files[0]], total: 1, query: `receipt` }
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: one })} />)
+    expect(find(`[role=status][data-e2e=admin-group-files-count]`).textContent).toBe(
+      `1 file matches “receipt”`,
+    )
+    const none = { ...files, files: [], total: 0, query: `xyz` }
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: none })} />)
+    expect(find(`[data-e2e=admin-group-files-count]`).textContent).toBe(`No files match “xyz”`)
+    const empty = find(`[data-e2e=admin-group-files]`).textContent
+    expect(empty).toContain(`No files match`)
+    expect(empty).toContain(`Try part of the name, or clear the search.`)
+    expect(has(`[role=search]`)).toBe(true)
+  })
+
+  it(`pages the files, keeping the search, and moves focus to the count after a page change`, async () => {
+    const calls: unknown[][] = []
+    const many = { ...files, total: 60, query: `img` }
+    await mount(<AdminGroupScreen {...groupProps(calls, { tab: `files`, files: many })} />)
+    expect(focused()).not.toBe(`admin-group-files-count`)
+    find(`nav[aria-label='Pages of files']`)
+    await press(`nav[aria-label='Pages of files']`, `Next`)
+    expect(calls).toEqual([[`filter`, { query: `img`, page: 2 }]])
+    await mount(
+      <AdminGroupScreen {...groupProps(calls, { tab: `files`, files: { ...many, page: 2 } })} />,
+    )
+    expect(focused()).toBe(`admin-group-files-count`)
+  })
+
+  it(`draws no pages when one page holds every file`, async () => {
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files` })} />)
+    expect(has(`nav[aria-label='Pages of files']`)).toBe(false)
+  })
+
+  it(`shows only "No files yet." and the room in a group with no file: nothing to search`, async () => {
+    const empty = {
+      ...files,
+      files: [],
+      total: 0,
+      usage: { files: 0, bytes: 0, maxFiles: null, maxBytes: null },
+    }
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: empty })} />)
+    expect(find(`[data-e2e=admin-group-files]`).textContent).toContain(`No files yet.`)
+    expect(has(`[role=search]`)).toBe(false)
+    expect(has(`[data-e2e=admin-group-files-count]`)).toBe(false)
+    expect(find(`[data-e2e=admin-group-files-usage]`).textContent).toBe(`0 files · 0 B`)
+  })
+
+  it(`downloads a file from its row and from its menu`, async () => {
     const calls: unknown[][] = []
     await mount(<AdminGroupScreen {...groupProps(calls, { tab: `files` })} />)
-    await click(`[data-e2e=admin-group-file-${FILE_ID}] [data-e2e=admin-group-remove-file-open]`)
+    await click(`button[aria-label='Download receipt.pdf']`)
+    await click(`button[aria-label='Actions for IMG_0001.png']`)
+    await press(`[data-e2e=admin-group-files] li:nth-child(2)`, `Download`)
+    expect(calls).toEqual([[`download`, FILE_ID], [`download`, IMAGE_ID]])
+  })
+
+  it(`removes a file from its menu, names it in the dialog, and offers no removal in the trash`, async () => {
+    const calls: unknown[][] = []
+    await mount(<AdminGroupScreen {...groupProps(calls, { tab: `files` })} />)
+    await click(`button[aria-label='Actions for receipt.pdf']`)
+    await press(`[data-e2e=admin-group-files] li:nth-child(1)`, `Remove file`)
     await mount(
       <AdminGroupScreen
         {...groupProps(calls, { tab: `files`, dialog: { kind: `removeFile`, fileId: FILE_ID } })}
       />,
     )
-    expect(find(`[data-e2e=admin-group-dialog]`).textContent).toContain(
-      `The members of Family will no longer see it.`,
-    )
+    const dialog = find(`[data-e2e=admin-group-dialog]`).textContent
+    expect(dialog).toContain(`Remove “receipt.pdf”?`)
+    expect(dialog).toContain(`The members of Family will no longer see it.`)
     await submit(`[data-e2e=admin-group-action-submit]`)
     expect(calls).toEqual([
       [`open`, { kind: `removeFile`, fileId: FILE_ID }],
       [`action`, { kind: `removeFile`, fileId: FILE_ID }],
     ])
 
+    await act(() => render(null, root!))
     const trashed = { ...detail, group: { ...family, deletedAt: `2026-10-15T10:00:00.000Z` } }
     await mount(<AdminGroupScreen {...groupProps([], { detail: trashed, tab: `files` })} />)
-    expect(has(`[data-e2e=admin-group-remove-file-open]`)).toBe(false)
+    await click(`button[aria-label='Actions for receipt.pdf']`)
+    const menu = find(`[data-e2e=admin-group-files] li:nth-child(1)`).textContent
+    expect(menu).toContain(`Download`)
+    expect(menu).not.toContain(`Remove file`)
   })
 
-  it(`shows the files loading, the API's message when they fail, and an empty list`, async () => {
-    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: null })} />)
-    expect(has(`[role=status][aria-label='Loading the files']`)).toBe(true)
+  it(`moves focus to the next file's menu once a removed file leaves the list`, async () => {
+    const removing = { dialog: { kind: `removeFile`, fileId: FILE_ID } as const, pending: true }
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, ...removing })} />)
+    const rest = { ...files, files: [files.files[1]], total: 1 }
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: rest })} />)
+    expect(document.activeElement?.getAttribute(`aria-label`)).toBe(`Actions for IMG_0001.png`)
+  })
+
+  it(`moves focus to the search field when a removal leaves no file that matches`, async () => {
+    const removing = { dialog: { kind: `removeFile`, fileId: FILE_ID } as const, pending: true }
+    const filter = { query: `receipt`, page: 1 }
+    const found = { ...files, files: [files.files[0]], total: 1, query: `receipt` }
     await mount(
       <AdminGroupScreen
-        {...groupProps([], { tab: `files`, files: null, filesError: `The files did not load` })}
+        {...groupProps([], { tab: `files`, files: found, fileFilter: filter, ...removing })}
+      />,
+    )
+    const none = { ...found, files: [], total: 0 }
+    await mount(
+      <AdminGroupScreen {...groupProps([], { tab: `files`, files: none, fileFilter: filter })} />,
+    )
+    expect(document.activeElement?.id).toBe(`admin-group-files-q`)
+  })
+
+  it(`moves focus to the empty state when a removal takes the group's last file`, async () => {
+    const removing = { dialog: { kind: `removeFile`, fileId: FILE_ID } as const, pending: true }
+    const last = { ...files, files: [files.files[0]], total: 1 }
+    await mount(
+      <AdminGroupScreen {...groupProps([], { tab: `files`, files: last, ...removing })} />,
+    )
+    const gone = { ...last, files: [], total: 0, usage: { ...last.usage, files: 0 } }
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: gone })} />)
+    const focused = document.activeElement
+    expect(focused?.getAttribute(`tabindex`)).toBe(`-1`)
+    expect(focused?.querySelector(`[data-e2e=admin-group-files]`)?.textContent).toContain(
+      `No files yet.`,
+    )
+  })
+
+  it(`keeps the search while the files load, and offers a retry when they fail`, async () => {
+    const calls: unknown[][] = []
+    const filter = { query: `receipt`, page: 1 }
+    await mount(
+      <AdminGroupScreen
+        {...groupProps(calls, { tab: `files`, files: null, fileFilter: filter })}
+      />,
+    )
+    expect(has(`[role=status][aria-label='Loading the files']`)).toBe(true)
+    expect(find<HTMLInputElement>(`[role=search] input`).value).toBe(`receipt`)
+    expect(find(`[data-e2e=admin-group-files-submit]`).textContent).toContain(`Searching…`)
+    await mount(
+      <AdminGroupScreen
+        {...groupProps(calls, { tab: `files`, files: null, filesError: `Network down` })}
       />,
     )
     expect(find(`[data-e2e=admin-group-files-error]`).textContent).toContain(
-      `The files did not load`,
+      `Could not load the files. Check your connection, then try again.`,
     )
-    const empty = { files: [], usage: { files: 0, bytes: 0, maxFiles: null, maxBytes: null } }
-    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, files: empty })} />)
-    expect(find(`[data-e2e=admin-group-files]`).textContent).toContain(`No files.`)
-    expect(find(`[data-e2e=admin-group-files-usage]`).textContent).toBe(`0 files · 0 B`)
+    expect(has(`[role=search]`)).toBe(true)
+    await press(`[data-e2e=admin-group-files-error]`, `Try again`)
+    expect(calls).toEqual([[`retry`]])
+  })
+
+  it(`shows why a download failed above the list`, async () => {
+    const notice = `This file is gone. Someone may have removed it already.`
+    await mount(<AdminGroupScreen {...groupProps([], { tab: `files`, fileNotice: notice })} />)
+    expect(find(`[data-e2e=admin-group-file-notice]`).textContent).toContain(notice)
   })
 
   it(`colours what removes access as a warning and what adds it as good news`, () => {

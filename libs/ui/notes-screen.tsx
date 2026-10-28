@@ -22,6 +22,7 @@ import { PlanRefusalNotice } from "./plan-refusal.tsx"
 import { NoteTags, type TagRow } from "./tag-parts.tsx"
 import { type Navigate, NOTE_PATHS, SCREEN_PATHS, ScreenForm, TAG_PATHS } from "./progressive.tsx"
 import {
+  defaultDirection,
   filterNotes,
   NO_NOTE_FILTERS,
   NOTE_SORTS,
@@ -59,6 +60,8 @@ export interface NoteRow {
   authorName?: string
   /** The author's own name for the avatar's initials, when `authorName` is "You". */
   authorAvatarName?: string
+  /** The author's profile picture (#228), in place of the initials. */
+  authorPictureUrl?: string
 }
 
 /** A member the "Author" menu offers. */
@@ -638,7 +641,11 @@ function NotesFilterBar(
         sort={{
           options: [...NOTE_SORTS],
           value: filters.sort,
-          onChange: (sort) => onChange({ sort: sort as NoteSort }),
+          // A new order starts in its own direction, so Title after a date is not Z–A.
+          onChange: (sort) =>
+            onChange({ sort: sort as NoteSort, direction: defaultDirection(sort as NoteSort) }),
+          direction: filters.direction,
+          onDirectionChange: (direction) => onChange({ direction }),
         }}
         onClear={onClear}
         count={<span data-e2e="notes-count">{count}</span>}
@@ -834,6 +841,7 @@ function NoteItem(
               <span class="flex min-w-0 items-center gap-2">
                 <Avatar
                   name={note.authorAvatarName ?? note.authorName}
+                  src={note.authorPictureUrl}
                   alt=""
                   size="xs"
                   class="size-5 text-[10px]"

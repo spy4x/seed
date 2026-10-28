@@ -1,4 +1,5 @@
 import type { SubscriptionConfirmState, UnsubscribeState } from "@domain/subscribers"
+import { readApiError } from "@domain/errors"
 
 /** The `fetch` these calls use; tests pass a fake. */
 export type SubscribersFetch = (url: string, init?: RequestInit) => Promise<Response>
@@ -11,7 +12,8 @@ export interface TokenStep<S extends string> {
 
 /**
  * Reads `{ state, email? }` from a token route. These routes answer a refused token with a 4xx
- * status and its state in the body, so the body counts on every status. A state outside `known`,
+ * status and an error whose `reason` is the state, so the body counts on every status. A state
+ * outside `known`,
  * a body that is not JSON or a network failure reads as `error`.
  */
 async function tokenStep<S extends string>(
@@ -23,7 +25,9 @@ async function tokenStep<S extends string>(
   try {
     const response = await fetcher(url, { credentials: "include", ...init })
     const body = await response.json() as { state?: unknown; email?: unknown }
-    const state = known.find((candidate) => candidate === body.state)
+    // A link that no longer works is refused, and the refusal's reason names the state.
+    const said = response.ok ? body.state : readApiError(body)?.reason
+    const state = known.find((candidate) => candidate === said)
     if (!state) return { state: "error" }
     return typeof body.email === "string" ? { state, email: body.email } : { state }
   } catch {
@@ -53,8 +57,10 @@ export function createSubscribersApi(fetcher: SubscribersFetch = (url, init) => 
           body: JSON.stringify({ email, list }),
         })
         if (response.ok) return { ok: true }
-        const body = await response.json().catch(() => null) as { error?: unknown } | null
-        return { ok: false, error: typeof body?.error === "string" ? body.error : "" }
+        return {
+          ok: false,
+          error: readApiError(await response.json().catch(() => null))?.message ?? "",
+        }
       } catch {
         return { ok: false, error: "" }
       }

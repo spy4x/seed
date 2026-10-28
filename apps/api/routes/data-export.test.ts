@@ -14,6 +14,7 @@ import {
   testSessionGuards,
 } from "../_testing/mutation-requests.ts"
 import { createDataExportRoute, DATA_EXPORT_TOO_SOON } from "./data-export.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const passThrough: MiddlewareHandler<APIContext> = async (_c, next) => await next()
 
@@ -75,9 +76,13 @@ describe("data export route", () => {
     const response = await app.request(URL_, { method: "POST", headers: { ...sameOriginHeaders } })
     expect(response.status).toBe(429)
     expect(Number(response.headers.get("retry-after"))).toBeGreaterThan(3500)
-    const body = await response.json()
-    expect(body).toMatchObject({ error: DATA_EXPORT_TOO_SOON, code: "TOO_SOON" })
-    expect(body.export.id).toBe(preparing.id)
+    const error = await apiError(response)
+    expect(error).toMatchObject({
+      code: "rate_limited",
+      message: DATA_EXPORT_TOO_SOON,
+      reason: "TOO_SOON",
+    })
+    expect((error.details as { export: { id: string } }).export.id).toBe(preparing.id)
   })
 
   it("refuses a cross-site request for an export", async () => {

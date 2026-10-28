@@ -35,13 +35,18 @@ describe("where a visit goes before sign-in is finished", () => {
   it("sends every route that is not open to sign-in, and leaves every open one", () => {
     for (const pattern of SPA_ROUTE_PATHS) {
       const path = pattern.replace(/:\w+/g, "abc")
+      const page = path.startsWith("/invite/") ? "/sign-up" : "/sign-in"
       expect(signInRedirect(path, "", signedOut), pattern)
-        .toBe(SPA_ROUTES[pattern].open ? null : `/sign-in?next=${encodeURIComponent(path)}`)
+        .toBe(SPA_ROUTES[pattern].open ? null : `${page}?next=${encodeURIComponent(path)}`)
     }
   })
 
-  it("sends an invitation link to sign-in first, with the invitation as next", () => {
-    expect(signInRedirect("/invite/AbC_9", "", signedOut)).toBe("/sign-in?next=%2Finvite%2FAbC_9")
+  it("sends an invitation link to sign-up first, with the invitation as next", () => {
+    expect(signInRedirect("/invite/AbC_9", "", signedOut)).toBe("/sign-up?next=%2Finvite%2FAbC_9")
+  })
+
+  it("sends an invitation to the code page while the code is owed", () => {
+    expect(signInRedirect("/invite/AbC_9", "", codeOwed)).toBe("/totp?next=%2Finvite%2FAbC_9")
   })
 
   it("sends a session that owes its code to the code page, with the page as next", () => {

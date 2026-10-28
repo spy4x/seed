@@ -14,6 +14,7 @@ import {
   createInvitationsRoute,
   type InvitationsRouteDependencies,
 } from "./invitations.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const groupId = "7b6d8d6c-1af5-4f04-8ae4-b1ee5d111001"
 const token = "A".repeat(43)
@@ -84,7 +85,7 @@ describe("invitation routes", () => {
     })
 
     expect([accept.status, create.status, revoke.status]).toEqual([403, 403, 403])
-    expect((await accept.json()).error.code).toBe("REQUEST_ORIGIN_INVALID")
+    expect((await apiError(accept)).reason).toBe("REQUEST_ORIGIN_INVALID")
     expect(ran).toEqual([])
   })
 
@@ -97,8 +98,8 @@ describe("invitation routes", () => {
     const response = await post("/invitations/accept", { token })
 
     expect(response.status).toBe(410)
-    expect((await response.json()).error).toMatchObject({
-      code: "INVITATION_EXPIRED",
+    expect(await apiError(response)).toMatchObject({
+      reason: "INVITATION_EXPIRED",
       message: "This invitation has expired",
     })
   })
@@ -112,7 +113,7 @@ describe("invitation routes", () => {
     const response = await post(`/groups/${groupId}/invitations`, { role: GroupRole.ADMIN })
 
     expect(response.status).toBe(403)
-    expect((await response.json()).error).toMatchObject({ code: "ROLE_INSUFFICIENT", message })
+    expect(await apiError(response)).toMatchObject({ reason: "ROLE_INSUFFICIENT", message })
   })
 
   it("refuses accept attempts past the per-IP budget with 429", async () => {

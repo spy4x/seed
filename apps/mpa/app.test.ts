@@ -305,15 +305,15 @@ describe("the subscription pages", () => {
     expect(apiCalls()).toHaveLength(1)
   })
 
-  const refusals: { status: number; error: string; retryAfter: string | null }[] = [
-    { status: 400, error: "Enter a valid e-mail address", retryAfter: null },
-    { status: 429, error: "Too many requests", retryAfter: "30" },
-    { status: 503, error: "Mail subscriptions are off", retryAfter: null },
+  const refusals: { status: number; code: string; error: string; retryAfter: string | null }[] = [
+    { status: 400, code: "bad_request", error: "Enter a valid e-mail address", retryAfter: null },
+    { status: 429, code: "rate_limited", error: "Too many requests", retryAfter: "30" },
+    { status: 503, code: "internal", error: "Mail subscriptions are off", retryAfter: null },
   ]
   for (const refusal of refusals) {
     it(`shows a subscription the API refuses with ${refusal.status} as refused: its status, its message and the address still in the form`, async () => {
       const { fetch } = subscribersApi(() =>
-        Response.json({ error: refusal.error }, {
+        Response.json({ error: { code: refusal.code, message: refusal.error } }, {
           status: refusal.status,
           headers: refusal.retryAfter === null ? {} : { "retry-after": refusal.retryAfter },
         })
@@ -366,7 +366,12 @@ describe("the subscription pages", () => {
   })
 
   it("shows an expired confirm link with the API's status and offers a new one", async () => {
-    const { fetch } = subscribersApi(() => Response.json({ state: "expired" }, { status: 400 }))
+    const { fetch } = subscribersApi(() =>
+      Response.json(
+        { error: { code: "bad_request", message: "This link has expired.", reason: "expired" } },
+        { status: 400 },
+      )
+    )
 
     const response = await appWith(fetch)(formPost("/subscribe/confirm", token), info)
 
@@ -407,7 +412,10 @@ describe("the subscription pages", () => {
 
   it("passes the API's 429 and Retry-After on when unsubscribes come too fast", async () => {
     const { fetch } = subscribersApi(() =>
-      Response.json({ state: "limited" }, { status: 429, headers: { "retry-after": "30" } })
+      Response.json(
+        { error: { code: "rate_limited", message: "Too many tries.", reason: "limited" } },
+        { status: 429, headers: { "retry-after": "30" } },
+      )
     )
 
     const response = await appWith(fetch)(formPost("/unsubscribe", token), info)

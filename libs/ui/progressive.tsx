@@ -54,6 +54,9 @@ export const API_TOKEN_PATHS = {
   new: "/tokens/new",
 } as const
 
+/** The API reference, a page of the product's website (`apps/mpa/routes/docs/api.tsx`). */
+export const API_DOCS_PATH = "/docs/api"
+
 /** The pages these screens link to. */
 export const SCREEN_PATHS = {
   /** The app's home, which opens the notes. */
@@ -133,6 +136,11 @@ export function checkedNext(value: string): string {
 export function readNext(source: { get(name: string): unknown }): string | null {
   const value = source.get(NEXT_PARAM)
   return typeof value === "string" && value !== "" ? checkedNext(value) : null
+}
+
+/** Whether `path` (a checked `next`) is an invitation's page, `/invite/<token>`. */
+export function isInvitationPath(path: string | null): boolean {
+  return path?.startsWith(`/invite/`) ?? false
 }
 
 /** `path` with `next` as its query, or `path` alone without one. */

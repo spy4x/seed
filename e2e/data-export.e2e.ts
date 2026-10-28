@@ -15,7 +15,7 @@ async function cleanup(request: APIRequestContext, email: string, { soft = false
   ;(soft ? expect.soft : expect)(response.status(), await response.text()).toBe(200)
 }
 
-// The e2e stack has no file store, so the file never turns ready here: the ZIP itself is covered by
+// The e2e worker has no file store, so the file never turns ready here: the ZIP itself is covered by
 // tests/integration/data-export.integration.test.ts and tests/files/garage.test.ts.
 test("asking for my data shows it in preparation, keeps it after a reload, and refuses a second ask that day", async ({ page, request }) => {
   const email = `e2e-export-${uuidV7().slice(-8)}@example.com`
@@ -46,7 +46,7 @@ test("asking for my data shows it in preparation, keeps it after a reload, and r
 
     const again = await page.request.post(`${apiBase}/api/account/data-export`, { headers })
     expect(again.status()).toBe(429)
-    expect((await again.json()).code).toBe("TOO_SOON")
+    expect((await again.json()).error.reason).toBe("TOO_SOON")
     // Nothing is ready, so the download address answers 404 and signs nothing.
     const download = await page.request.get(`${apiBase}/api/account/data-export/download`, {
       headers,

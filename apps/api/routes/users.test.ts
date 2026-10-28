@@ -15,6 +15,7 @@ import { MALFORMED_JSON, oversizedJson } from "../_testing/json-bodies.ts"
 import { createUsersRoute } from "./users.ts"
 import { AccessError } from "@domain/identity"
 import { SECOND_FACTOR_REQUIRED } from "@spy4x/server/sign-in"
+import { apiError } from "../_testing/api-error.ts"
 
 function buildApp(
   auth: APIContext["Variables"]["auth"] = buildAuthData(),
@@ -75,7 +76,7 @@ describe("users routes", () => {
       })
 
       expect(response.status).toBe(400)
-      expect((await response.json()).error).toContain(
+      expect((await apiError(response)).message).toContain(
         `${field} must be free of NUL and broken characters`,
       )
       expect(calls).toEqual([])
@@ -98,7 +99,7 @@ describe("users routes", () => {
     const response = await app.request(`${API_URL}/users/me`)
 
     expect(response.status).toBe(401)
-    expect(await response.json()).toEqual({ error: SECOND_FACTOR_REQUIRED })
+    expect((await apiError(response)).message).toBe(SECOND_FACTOR_REQUIRED)
   })
 
   it("still answers GET /users/me with 500 for any other failure", async () => {

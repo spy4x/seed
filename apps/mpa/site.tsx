@@ -1,5 +1,6 @@
 import type { ComponentChildren, JSX } from "preact"
 import { Head } from "fresh/runtime"
+import type { PublicContactLink } from "@domain/contact-links"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import { IconGitHub, IconSprout } from "@spy4x/preact-icons"
 import { BrandMark } from "@spy4x/preact-ui/brand-mark"
@@ -15,7 +16,9 @@ import { createFormatters } from "@spy4x/time/format"
 import { FORM_ACTIONS, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { BLOG_NAME, BLOG_PATH, RSS_PATH } from "./blog.ts"
 import { AUTHOR_URL, REPOSITORY_URL, SITE_NAME, TRY_ENTRY } from "./brand.ts"
+import { API_DOCS_PATH } from "./api-docs.ts"
 import { OnThisPage } from "./components/on-this-page.tsx"
+import { contactFooterLinks } from "./contact-links.ts"
 import { HIRE_PAGE_URL } from "./hire.ts"
 import type { State } from "./utils.ts"
 
@@ -196,7 +199,7 @@ export interface SiteFrameProps {
    * The request's state: the website's own origin for canonical links, the SPA's for actions, and
    * whether the footer offers the newsletter.
    */
-  state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter" | "blog">
+  state: Pick<State, "webAppOrigin" | "spaOrigin" | "newsletter" | "blog" | "contactLinks">
   /** The page's path on this website, such as `/pricing`, for its canonical address. */
   path: string
   head: SitePageHead
@@ -303,7 +306,7 @@ export function SiteFrame(
             </p>
           </div>
         }
-        groups={footerGroups(spa, blog)}
+        groups={footerGroups(spa, blog, state.contactLinks ?? [])}
         aside={state.newsletter && footerNewsletter ? <FooterNewsletter /> : undefined}
         bottom={
           <p>
@@ -328,6 +331,8 @@ export interface LegalPageProps extends Omit<SiteFrameProps, "head"> {
   updated: string
   /** The page's `h2` anchors, for its table of contents. */
   sections: readonly { label: string; href: string }[]
+  /** Shown under the date in place of the legal notice, on a page that is not a legal one. */
+  lead?: ComponentChildren
 }
 
 /**
@@ -356,12 +361,12 @@ function legalPageJsonLd(
 }
 
 /**
- * A legal page of the demo: its title, a notice that it is a template a product must adapt, and
- * its text in one reading column. Headings, lists and links inside `children` get the page's prose
- * styles.
+ * A legal page of the demo: its title, a notice that it is a template a product must adapt (or
+ * `lead` in its place), and its text in one reading column. Headings, lists and links inside
+ * `children` get the page's prose styles.
  */
 export function LegalPage(
-  { state, path, title, headTitle, description, updated, sections, children }: LegalPageProps,
+  { state, path, title, headTitle, description, updated, sections, lead, children }: LegalPageProps,
 ): JSX.Element {
   return (
     <SiteFrame
@@ -377,10 +382,12 @@ export function LegalPage(
         <header class="flex max-w-3xl flex-col gap-4">
           <h1 class="text-3xl font-semibold tracking-tight lg:text-4xl">{title}</h1>
           <p class="font-mono text-sm text-muted">Last changed {updated}</p>
-          <Notice title="A starting point, not legal advice">
-            This page covers the live demo of {SITE_NAME}. A product built on {SITE_NAME}{" "}
-            must adapt it to what it really stores and does, and have it checked.
-          </Notice>
+          {lead ?? (
+            <Notice title="A starting point, not legal advice">
+              This page covers the live demo of {SITE_NAME}. A product built on {SITE_NAME}{" "}
+              must adapt it to what it really stores and does, and have it checked.
+            </Notice>
+          )}
         </header>
         <div class="grid gap-8 lg:grid-cols-4">
           <div class="lg:order-2">
@@ -396,10 +403,17 @@ export function LegalPage(
 }
 
 /**
- * The footer's link columns: the product, the source, and the person and rules behind it. The Blog
- * link is there once a post is live.
+ * The footer's link columns: the product, the source, the person and rules behind it, and, once the
+ * operator has added any, the contact links. The Blog link is there once a post is live.
  */
-function footerGroups(spa: { signIn: string; try: string }, blog: boolean): SiteFooterGroup[] {
+function footerGroups(
+  spa: { signIn: string; try: string },
+  blog: boolean,
+  contactLinks: readonly PublicContactLink[],
+): SiteFooterGroup[] {
+  const contact: SiteFooterGroup[] = contactLinks.length > 0
+    ? [{ title: `Contact`, links: contactFooterLinks(contactLinks) }]
+    : []
   return [
     {
       title: `Product`,
@@ -420,6 +434,7 @@ function footerGroups(spa: { signIn: string; try: string }, blog: boolean): Site
         { label: `Source on GitHub`, href: REPOSITORY_URL, external: true },
         { label: `Report an issue`, href: `${REPOSITORY_URL}/issues`, external: true },
         { label: `Quick start`, href: `/#quick-start` },
+        { label: `API docs`, href: API_DOCS_PATH },
         { label: `What works today`, href: `/#status` },
       ],
     },
@@ -433,6 +448,7 @@ function footerGroups(spa: { signIn: string; try: string }, blog: boolean): Site
         { label: `Terms`, href: `/terms` },
       ],
     },
+    ...contact,
   ]
 }
 

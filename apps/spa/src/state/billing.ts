@@ -59,7 +59,7 @@ export function createBillingStore(
         async () => {
           const result = await fetch<{ billing: unknown }>(billingPath(groupId))
           if (!result.ok) {
-            throw new ReadRefused(result.error.message, result.status, result.error.code)
+            throw new ReadRefused(result.error.message, result.status, result.error.reason)
           }
           const billing = readGroupBilling(result.data.billing)
           if (!billing) throw new ReadRefused(UNREADABLE, result.status)

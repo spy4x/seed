@@ -37,6 +37,7 @@ import { EMAIL_CODE_METHOD } from "@spy4x/server/auth/email-code"
 import { issuePasswordReset } from "../../libs/server/auth/password-reset.ts"
 import { createSignedPayloadCodec } from "@spy4x/platform/signed-payload"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { checkedError } from "../../apps/api/_testing/api-error.ts"
 
 /**
  * Sign-in with Google and GitHub (#141) and the question before a provider signs anyone up (#142),
@@ -1498,7 +1499,7 @@ Deno.test("two unlinks sent at once leave one way in", async () => {
     const [winner, loser, kept] = toGoogle.status === 200
       ? [toGoogle, toGitHub, "oauth:github"]
       : [toGitHub, toGoogle, "oauth:google"]
-    const refusal = [loser.status, (await loser.json()).error]
+    const refusal = [loser.status, checkedError(await loser.json()).message]
     expect(winner.status).toBe(200)
     expect([
       [409, METHOD_IS_LAST],
@@ -1613,7 +1614,7 @@ Deno.test("unlinking asks an account with a password for it, and a refusal leave
 
     for (const refused of [without, wrong]) {
       expect(refused.status).toBe(400)
-      expect((await refused.json()).error).toBe("Invalid password")
+      expect(checkedError(await refused.json()).message).toBe("Invalid password")
     }
     expect((await app.db.authStore.listKeys(ownerId)).map((key) => key.method))
       .toEqual(["password", "oauth:google"])
@@ -1643,7 +1644,7 @@ Deno.test("an account without a password unlinks only after a provider sign-in a
     const stale = await visitor.delete(`/auth/methods/${google.id}`)
 
     expect(stale.status).toBe(400)
-    expect((await stale.json()).error).toBe(PROVIDER_PROOF_REQUIRED)
+    expect(checkedError(await stale.json()).message).toBe(PROVIDER_PROOF_REQUIRED)
     expect(await app.db.authStore.listKeys(user.id)).toHaveLength(2)
 
     // Signing in with GitHub again is the proof.

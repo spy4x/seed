@@ -26,6 +26,7 @@ import { createNotesRoute } from "./routes/notes.ts"
 import { createTagsRoute } from "./routes/tags.ts"
 import { createApiTokensRoute } from "./routes/api-tokens.ts"
 import { createDataExportRoute } from "./routes/data-export.ts"
+import { createPictureRoute } from "./routes/pictures.ts"
 import {
   latestDataExport,
   readyDataExportFile,
@@ -64,6 +65,7 @@ import {
 import { commandBus } from "./services/commandBus.ts"
 import { queryBus } from "./services/queryBus.ts"
 import { listenForInboxNews } from "./services/inbox-news.ts"
+import { listenForPictureStates } from "@server/auth/picture-state.ts"
 import { listenForGroupNews } from "./services/group-news.ts"
 import { groupListCursor } from "./services/group-list-cursor.ts"
 import { noteListCursor } from "./services/note-list-cursor.ts"
@@ -81,6 +83,10 @@ import { enqueueEmailCodeMail } from "@server/jobs/email-code-mail.ts"
 import { mailOffWarning, readMailSetup } from "@server/mail/mail.ts"
 import { createSubscribersRoute } from "./routes/subscribers.ts"
 import { createPublicBlogReads, createPublicBlogRoute } from "./routes/blog.ts"
+import {
+  createPublicContactLinksRead,
+  createPublicContactLinksRoute,
+} from "./routes/contact-links.ts"
 import { createSubscriberRateLimits } from "./middlewares/subscriber-rate-limits.ts"
 import { DEFAULT_PROXY_HOSTS } from "./middlewares/proxy-peer.ts"
 import { createProxyPeers } from "@spy4x/server/http/trusted-proxy"
@@ -239,6 +245,15 @@ app.route(
     signDownload: files.signDownload,
   }),
 )
+app.route(
+  "/pictures",
+  createPictureRoute({
+    auth: signIn.auth,
+    limit: rateLimits.normal,
+    readable: (pictureId, viewerId) => db.pictures.readable(pictureId, viewerId),
+    signDownload: files.signDownload,
+  }),
+)
 // The mail subscriptions' keys, read once for the public routes and the operator area.
 const subscribersSetup = readSubscribersSetup(Deno.env, config.isDev ? "dev" : "prod")
 const subscribersWarning = subscribersOffWarning(subscribersSetup)
@@ -261,6 +276,7 @@ app.route(
       cursorSecret: config.authCookieSecret,
       cacheConnected: isCacheConnected,
       fileStoreReachable: files.isReachable,
+      readFile: files.read,
       build: config.build,
       billing: billingSetup,
     }).concat(
@@ -448,6 +464,8 @@ app.route(
 )
 // The public website reads the blog's live posts; drafts and scheduled posts are never answered.
 app.route("/blog", createPublicBlogRoute(createPublicBlogReads(sql)))
+// The public website names the contact links in its footer and its structured data.
+app.route("/contact-links", createPublicContactLinksRoute(createPublicContactLinksRead(sql)))
 // Visitors subscribe to mail. The worker signs and sends every mail; this checks the links.
 app.route(
   "/subscribers",
@@ -499,6 +517,8 @@ if (config.isDev) {
 await listenForGroupNews(listenSql, realtime, log)
 // A change to a person's inbox becomes a hint on their sockets; the page reads the count.
 await listenForInboxNews(listenSql, realtime)
+// A picture the worker made ready or refused (#464) becomes a hint; the page reads the profile.
+await listenForPictureStates(listenSql, (userId) => realtime.notifyUserChange(userId))
 // Sockets whose session was signed out, expired or lost its second factor while open are closed
 // within this interval; the per-request check already refuses their frames.
 realtime.startRevalidation(REALTIME_REVALIDATE_INTERVAL_MS)

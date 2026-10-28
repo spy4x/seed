@@ -25,6 +25,24 @@ Deno.test("fake demo data is the same for the same seed and moment, and differs 
   expect(fakeDemoData(42, NOW)).not.toEqual(fakeDemoData(43, NOW))
 })
 
+Deno.test("no fake time lies after now, on any day of the week", () => {
+  /** Every `…Ago` or `ago` number in `value` below 0 minutes, by its path. */
+  const future = (value: unknown, path = ``): string[] =>
+    Array.isArray(value)
+      ? value.flatMap((item, i) => future(item, `${path}[${i}]`))
+      : value && typeof value === `object`
+      ? Object.entries(value).flatMap(([key, item]) =>
+        /ago$/i.test(key) && typeof item === `number`
+          ? item < 0 ? [`${path}.${key}`] : []
+          : future(item, `${path}.${key}`)
+      )
+      : []
+  for (let day = 0; day < 7; day++) {
+    const now = new Date(NOW.getTime() + day * 24 * 60 * 60_000)
+    for (const seed of [7, 42]) expect(future(fakeDemoData(seed, now))).toEqual([])
+  }
+})
+
 Deno.test("the fake people's names and addresses depend on the seed alone", () => {
   const later = new Date(NOW.getTime() + 9 * 60 * 60_000)
   for (const now of [NOW, later]) {
@@ -96,16 +114,28 @@ Deno.test("someone signs in every day of the last 30, fewer at weekends", () => 
   )
 })
 
+Deno.test("the video's search for the person's surname finds exactly three people", () => {
+  for (const seed of [1, 7, 42, 20261020]) {
+    const search = fakeDemoData(seed, NOW).users[VIDEO_PERSON_INDEX].lastName.toLowerCase()
+    const found = fakePeople(seed).filter((person) =>
+      [person.firstName, person.lastName, person.email].some((text) =>
+        text.toLowerCase().includes(search)
+      )
+    )
+    expect(found).toHaveLength(3)
+  }
+})
+
 Deno.test("the video's person signs in on Firefox on Windows and Safari on iPhone", () => {
   for (const seed of [1, 20261020]) {
-    const priya = fakeDemoData(seed, NOW).users[VIDEO_PERSON_INDEX]
-    expect(`${priya.firstName} ${priya.lastName} ${priya.email}`)
-      .toBe(`Priya Novak priya.novak@example.com`)
-    const devices = priya.sessions.map((session) =>
-      deviceName(priya.devices[session.device].userAgent)
+    const claire = fakeDemoData(seed, NOW).users[VIDEO_PERSON_INDEX]
+    expect(`${claire.firstName} ${claire.lastName} ${claire.email}`)
+      .toBe(`Claire Hartley claire.hartley@example.com`)
+    const devices = claire.sessions.map((session) =>
+      deviceName(claire.devices[session.device].userAgent)
     )
     expect(devices).toEqual([`Firefox on Windows`, `Safari on iPhone`])
-    expect(priya.verified && priya.blockedAgo === null).toBe(true)
+    expect(claire.verified && claire.blockedAgo === null).toBe(true)
   }
 })
 
@@ -166,10 +196,20 @@ Deno.test("recent sign-ups share small groups, and the video's person edits in o
     expect(group.members.length).toBeGreaterThan(0)
     expect(users[group.owner as number].joinedAgo).toBeLessThan(12 * DAY)
   }
-  const priya = groups.filter((group) =>
+  const claire = groups.filter((group) =>
     group.members.some((m) => m.member === VIDEO_PERSON_INDEX && m.role === GroupRole.EDITOR)
   )
-  expect(priya).toHaveLength(1)
+  expect(claire).toHaveLength(1)
+})
+
+Deno.test("Product team, which the admin video opens from the top of Groups, is the largest group", () => {
+  for (const seed of [1, 7, 42, 20261020, 20261023]) {
+    const sizes = fakeDemoData(seed, NOW).groups.map((group) => [group.name, group.members.length])
+    const largest = Math.max(...sizes.map(([, size]) => size as number))
+    expect(sizes.filter(([, size]) => size === largest).map(([name]) => name)).toEqual([
+      `Product team`,
+    ])
+  }
 })
 
 Deno.test("subscriptions include paying, past-due, cancelled, ending and trial groups", () => {

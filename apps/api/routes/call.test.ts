@@ -14,6 +14,7 @@ import {
 } from "../_testing/mutation-requests.ts"
 import { toRequestError } from "../services/realtime.ts"
 import { createCallRoute } from "./call.ts"
+import { apiError } from "../_testing/api-error.ts"
 
 const USER = 7
 
@@ -108,7 +109,7 @@ describe("call route", () => {
 
     for (const response of responses) {
       expect(response.status).toBe(401)
-      expect((await response.json()).error.code).toBe("unauthorized")
+      expect((await apiError(response)).code).toBe("unauthorized")
     }
     expect(calls).toEqual([])
   })
@@ -121,7 +122,7 @@ describe("call route", () => {
     )
 
     expect(response.status).toBe(401)
-    expect((await response.json()).error.code).toBe("unauthorized")
+    expect((await apiError(response)).code).toBe("unauthorized")
     expect(calls).toEqual([])
   })
 
@@ -138,7 +139,7 @@ describe("call route", () => {
     )
 
     expect(response.status).toBe(401)
-    expect((await response.json()).error.code).toBe("unauthorized")
+    expect((await apiError(response)).code).toBe("unauthorized")
     expect(calls).toEqual([])
   })
 
@@ -148,7 +149,7 @@ describe("call route", () => {
     const response = await app.request(...call("group.create", { name: "Team" }))
 
     expect(response.status).toBe(400)
-    expect((await response.json()).error.code).toBe("bad_request")
+    expect((await apiError(response)).code).toBe("bad_request")
     expect(calls).toEqual([])
   })
 
@@ -164,7 +165,7 @@ describe("call route", () => {
 
     for (const response of responses) {
       expect(response.status).toBe(403)
-      expect((await response.json()).error.code).toBe("forbidden")
+      expect((await apiError(response)).code).toBe("forbidden")
     }
     expect(calls).toEqual([])
   })
@@ -188,6 +189,7 @@ describe("call route", () => {
       error: {
         code: "conflict",
         message: "Group id is already in use",
+        reason: "ID_ALREADY_EXISTS",
         details: { code: "ID_ALREADY_EXISTS" },
       },
     })

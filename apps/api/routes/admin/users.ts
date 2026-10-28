@@ -21,8 +21,13 @@ import {
 } from "@api/services/admin.ts"
 import { readApiJson } from "@api/services/json-body.ts"
 import { listDataExports } from "@server/auth/data-export.ts"
+import { isUuid } from "@spy4x/platform/universal/uuid"
+import type { ShownPicture } from "@server/auth/profile-pictures.ts"
+import type { FileStore } from "@server/files/files.ts"
+import { PICTURE_NOT_FOUND, pictureBody } from "../pictures.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
+import { codeForStatus, errorResponse, validationResponse } from "../../services/error-response.ts"
 
 /** What the people routes call. */
 export interface AdminUsersRouteDependencies {
@@ -34,6 +39,9 @@ export interface AdminUsersRouteDependencies {
   now?: () => Date
   /** The person's data exports (#229), newest first: what and when, never the file. */
   dataExports(userId: number): Promise<DataExportView[]>
+  /** Any live person's profile picture (#228), by its id. */
+  picture(pictureId: string): Promise<ShownPicture | null>
+  readFile: FileStore["read"]
 }
 
 export const ADMIN_USER_NOT_FOUND = "User not found"
@@ -43,6 +51,7 @@ export const ADMIN_ALREADY_BLOCKED = "This user is already blocked"
 export const ADMIN_NOT_BLOCKED = "This user is not blocked"
 export const ADMIN_SAME_ROLE = "This user already has that role"
 export const ADMIN_NO_TELEGRAM = "This user has no Telegram account linked"
+export const ADMIN_NO_PICTURE = "This user has no profile picture"
 export const ADMIN_NOT_ADMINISTRATOR = "Only an administrator can change a role"
 export const ADMIN_ROLE_TOO_HIGH = "You can only give a role below your own"
 export const ADMIN_SESSION_NOT_FOUND = "Session not found"
@@ -73,6 +82,7 @@ const UNCHANGED: Partial<Record<AdminActionKind, string>> = {
   [AdminActionKind.Unblock]: ADMIN_NOT_BLOCKED,
   [AdminActionKind.ChangeRole]: ADMIN_SAME_ROLE,
   [AdminActionKind.UnlinkTelegram]: ADMIN_NO_TELEGRAM,
+  [AdminActionKind.RemovePicture]: ADMIN_NO_PICTURE,
 }
 
 const ACTIONS = {
@@ -82,6 +92,7 @@ const ACTIONS = {
   "password-reset": AdminActionKind.SendPasswordReset,
   "guest/delete": AdminActionKind.DeleteGuest,
   "telegram/unlink": AdminActionKind.UnlinkTelegram,
+  "picture/remove": AdminActionKind.RemovePicture,
 } as const
 
 /** The actions after which the person's sockets close: their sessions changed or ended. */
@@ -127,6 +138,9 @@ function serialIdOf(raw: string): number | null {
  * - `GET /users?q=&role=&blocked=&sort=&page=` lists people: `{ users, total, page, pageSize }`.
  *   `sort` is `key:direction` rules, such as `name:asc,createdAt:desc` (#424).
  * - `GET /users/:id` is one person: `{ user, methods, sessions, groups, audits }`.
+ * - `GET /users/pictures/:pictureId` is any person's profile picture (#228), for the avatars of
+ *   the operator area. It answers the bytes, not a redirect: the store is on the product's host,
+ *   which this host's `img-src 'self'` does not allow.
  * - `GET /users/:id/data-exports` is the person's data exports (#229): `{ exports }`, their
  *   status, size and dates. The operator never gets the file: it holds the person's private notes.
  * - `GET /users/export.csv?q=&role=&blocked=&sort=` is every person the filter matches, on all its
@@ -135,7 +149,8 @@ function serialIdOf(raw: string): number | null {
  *   which another site's link or top-level navigation still carries.
  * - `POST /users/:id/block`, `/unblock`, `/sessions/end`, `/password-reset`, `/guest/delete`
  *   (#224: a guest account only, deleted at once; the audit row is the operator's) and
- *   `/telegram/unlink` (#269: 409 when none is linked) take no body and answer `{ user }`.
+ *   `/telegram/unlink` (#269: 409 when none is linked) and `/picture/remove` (#228: 409 when
+ *   there is none; the worker deletes the file) take no body and answer `{ user }`.
  *   `/sessions/:sessionId/end` ends one session. `/role` takes `{ role }`.
  *   They ask for no fresh password or code: the owner chose the audit trail over a confirmation
  *   password (2026-10-15). Each writes an audit row on the person naming the operator. Block
@@ -153,7 +168,7 @@ export function createAdminUsersRoutes(
   /** Runs `action` on the person in the path and answers what came of it. */
   async function act(c: Context<APIContext>, action: AdminActionKind, input?: AdminActInput) {
     const targetId = serialIdOf(c.req.param("id") ?? ``)
-    if (targetId === null) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+    if (targetId === null) return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
     const { outcome, user, retryAfterMs } = await admin.act(
       c,
       c.get("auth")!,
@@ -163,13 +178,18 @@ export function createAdminUsersRoutes(
     )
     if (outcome === AdminActOutcome.TooManyResets) {
       c.header("Retry-After", String(Math.ceil((retryAfterMs ?? 0) / 1000)))
-      return c.json({ error: ADMIN_TOO_MANY_RESETS }, 429)
+      return errorResponse(c, `rate_limited`, { message: ADMIN_TOO_MANY_RESETS })
     }
     if (outcome === AdminActOutcome.Unchanged) {
-      return c.json({ error: UNCHANGED[action] ?? ADMIN_USER_NOT_FOUND }, 409)
+      return errorResponse(c, `conflict`, { message: UNCHANGED[action] ?? ADMIN_USER_NOT_FOUND })
     }
     const refusal = REFUSALS[outcome]
-    if (refusal) return c.json({ error: refusal.error }, refusal.status)
+    if (refusal) {
+      return errorResponse(c, codeForStatus(refusal.status), {
+        message: refusal.error,
+        status: refusal.status,
+      })
+    }
     if (CLOSES_SOCKETS.has(action)) {
       // Closes the person's sockets: their sessions are gone, and a blocked person has no right.
       emit(
@@ -192,7 +212,7 @@ export function createAdminUsersRoutes(
       // A GET the mutation guards let through, yet it writes an audit row in the operator's name.
       // The admin app's download link is same-origin; a missing header is refused too.
       if (c.req.header(`sec-fetch-site`) !== `same-origin`) {
-        return c.json({ error: ADMIN_EXPORT_CROSS_SITE }, 403)
+        return errorResponse(c, `forbidden`, { message: ADMIN_EXPORT_CROSS_SITE })
       }
       const filter = parseAdminUserFilter(new URL(c.req.url).searchParams)
       const batches = await admin.export(c, c.get("auth")!, filter)
@@ -232,22 +252,33 @@ export function createAdminUsersRoutes(
     .get(`/users/:id`, dependencies.limit, async (c) => {
       const id = serialIdOf(c.req.param("id"))
       const detail = id === null ? null : await admin.detail(id)
-      if (!detail) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      if (!detail) return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
       return c.json(detail)
+    })
+    .get(`/users/pictures/:pictureId`, dependencies.limit, async (c) => {
+      const pictureId = c.req.param(`pictureId`)
+      const picture = isUuid(pictureId) ? await dependencies.picture(pictureId) : null
+      const bytes = picture && await dependencies.readFile(picture.objectKey)
+      if (!picture || !bytes) {
+        return errorResponse(c, `not_found`, { message: PICTURE_NOT_FOUND })
+      }
+      return pictureBody(picture, bytes)
     })
     .get(`/users/:id/data-exports`, dependencies.limit, async (c) => {
       const id = serialIdOf(c.req.param("id"))
-      if (id === null) return c.json({ error: ADMIN_USER_NOT_FOUND }, 404)
+      if (id === null) return errorResponse(c, `not_found`, { message: ADMIN_USER_NOT_FOUND })
       return c.json({ exports: await dependencies.dataExports(id) })
     })
     .post(`/users/:id/sessions/:sessionId/end`, dependencies.limit, async (c) => {
       const sessionId = serialIdOf(c.req.param("sessionId"))
-      if (sessionId === null) return c.json({ error: ADMIN_SESSION_NOT_FOUND }, 404)
+      if (sessionId === null) {
+        return errorResponse(c, `not_found`, { message: ADMIN_SESSION_NOT_FOUND })
+      }
       return await act(c, AdminActionKind.EndSession, { sessionId })
     })
     .post(`/users/:id/role`, dependencies.limit, async (c) => {
       const validation = validate(adminUserRoleSchema, await readApiJson(c))
-      if (validation.error) return c.json({ error: validation.error.description }, 400)
+      if (validation.error) return validationResponse(c, validation.error.details)
       return await act(c, AdminActionKind.ChangeRole, { role: validation.data.role })
     })
 
@@ -260,11 +291,13 @@ export function createAdminUsersRoutes(
 /** The people module: the list, one person and the actions on them. */
 export const usersAdminModule: AdminApiModule = {
   id: `users`,
-  routes: ({ db, sql, limit, resetByAddress, emit, now }) =>
+  routes: ({ db, sql, limit, resetByAddress, emit, now, readFile }) =>
     createAdminUsersRoutes({
       limit,
       emit,
       now,
+      readFile,
+      picture: (pictureId) => db.pictures.any(pictureId),
       dataExports: (userId) => listDataExports(sql, userId, now()),
       admin: createAdmin({ db, pageSize: ADMIN_USERS_PAGE_SIZE, resetByAddress, now }),
     }),

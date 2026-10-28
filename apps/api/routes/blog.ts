@@ -14,6 +14,7 @@ import {
   listPublicTopics,
   readPublicPost,
 } from "@server/blog/public-blog.ts"
+import { errorResponse } from "../services/error-response.ts"
 
 /** The answer for a post that is not live, or an address that is no slug. */
 export const BLOG_POST_NOT_FOUND = `This post is not here`
@@ -49,7 +50,7 @@ export function createPublicBlogRoute(reads: PublicBlogReads): Hono {
     .get(`/posts/:slug`, async (c) => {
       const slug = c.req.param(`slug`)
       const found = blogSlugProblem(slug) === null ? await reads.get(slug) : null
-      if (!found) return c.json({ error: BLOG_POST_NOT_FOUND }, 404)
+      if (!found) return errorResponse(c, `not_found`, { message: BLOG_POST_NOT_FOUND })
       return c.json(found)
     })
     .get(`/topics`, async (c) => c.json({ topics: await reads.topics() }))

@@ -11,6 +11,7 @@
  */
 
 import { BLOG_AUDIT_KINDS } from "@domain/blog"
+import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
 
 /** Which table an entry comes from: a person's trail, or group and system activity. */
 export type AdminAuditSource = "account" | "activity"
@@ -43,11 +44,31 @@ export const ADMIN_JOB_AUDIT_KINDS: readonly string[] = [
 /** The `audit_events.event_kind` of an operator downloading the log as a file (#429). */
 export const ADMIN_AUDIT_EXPORTED_KIND = "system.audit_exported"
 
+/**
+ * The `audit_events.event_kind` of an operator opening one of a group's files in the admin app
+ * (#478). The row belongs to the group and names the file in `details.name`.
+ */
+export const ADMIN_FILE_OPENED_KIND = "operator.file_opened"
+
+/** The `audit_events.event_kind` of an operator downloading one of a group's files (#478). */
+export const ADMIN_FILE_DOWNLOADED_KIND = "operator.file_downloaded"
+
+/**
+ * An operator's reads of a group's files. They are kept out of the group's own activity log and
+ * its "last activity": a read changes nothing in the group.
+ */
+export const ADMIN_FILE_AUDIT_KINDS: readonly string[] = [
+  ADMIN_FILE_OPENED_KIND,
+  ADMIN_FILE_DOWNLOADED_KIND,
+]
+
 /** The kinds of `audit_events` an operator writes, so the operator filter finds them. */
 export const ADMIN_OPERATOR_ACTIVITY_KINDS: readonly string[] = [
   ...ADMIN_JOB_AUDIT_KINDS,
+  ...ADMIN_FILE_AUDIT_KINDS,
   ADMIN_AUDIT_EXPORTED_KIND,
   ...Object.values(BLOG_AUDIT_KINDS),
+  ...Object.values(CONTACT_LINK_AUDIT_KINDS),
 ]
 
 /** The filter value of an `auth_audits` event type: `account:2`. */
@@ -190,6 +211,8 @@ export interface AdminAuditEntry {
   userAgent: string | null
   /** The job an operator acted on, for each of {@link ADMIN_JOB_AUDIT_KINDS}. */
   jobKind: string | null
+  /** The file an operator opened or downloaded, for each of {@link ADMIN_FILE_AUDIT_KINDS}. */
+  fileName: string | null
 }
 
 /** One page of the log, and the cursor of the next one, or `null` at the oldest entry. */

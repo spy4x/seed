@@ -13,6 +13,7 @@ import {
   testSessionGuards,
 } from "../_testing/mutation-requests.ts"
 import { MALFORMED_JSON, oversizedJson } from "../_testing/json-bodies.ts"
+import { apiError } from "../_testing/api-error.ts"
 import { createPushNotificationRoute } from "./pushNotification.ts"
 import { PUSH_SUBSCRIPTION_LIMITS } from "@spy4x/platform/model"
 
@@ -169,8 +170,10 @@ describe("push routes hold the push address to its limit", () => {
     )
 
     expect(response.status).toBe(400)
-    const { error } = await response.json()
-    expect(error).toContain(
+    const error = await apiError(response)
+    // The limit is a narrow on the schema, so arktype names its code `predicate`.
+    expect(error.fields).toEqual({ "subscription.endpoint": { code: "predicate" } })
+    expect(error.message).toContain(
       `subscription.endpoint must be at most ${PUSH_SUBSCRIPTION_LIMITS.endpoint} characters (was`,
     )
     expect(calls).toEqual([])

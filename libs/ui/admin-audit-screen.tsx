@@ -18,6 +18,7 @@ import { Timeline, type TimelineTone } from "@spy4x/preact-ui/timeline"
 import { ToggleChips } from "@spy4x/preact-ui/toggle-chips"
 import type { BillingAuditEvent } from "@domain/billing"
 import { BLOG_AUDIT_KINDS } from "@domain/blog"
+import { CONTACT_LINK_AUDIT_KINDS } from "@domain/contact-links"
 import { ACTIVITY_KINDS } from "@domain/groups"
 import {
   accountAuditEvent,
@@ -25,6 +26,8 @@ import {
   ADMIN_AUDIT_EXPORTED_KIND,
   ADMIN_AUDIT_NO_FILTER,
   ADMIN_AUDIT_SEARCH_MAX,
+  ADMIN_FILE_DOWNLOADED_KIND,
+  ADMIN_FILE_OPENED_KIND,
   ADMIN_JOB_CANCELLED_KIND,
   ADMIN_JOB_RETRIED_KIND,
   ADMIN_JOB_RUN_NOW_KIND,
@@ -85,6 +88,8 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [ADMIN_JOB_RUN_NOW_KIND]: "Job run now by an operator",
   [ADMIN_JOB_CANCELLED_KIND]: "Job cancelled by an operator",
   [ADMIN_AUDIT_EXPORTED_KIND]: "Audit log exported by an operator",
+  [ADMIN_FILE_OPENED_KIND]: "File opened by an operator",
+  [ADMIN_FILE_DOWNLOADED_KIND]: "File downloaded by an operator",
   [BLOG_AUDIT_KINDS.created]: "Blog post created",
   [BLOG_AUDIT_KINDS.updated]: "Blog post saved",
   [BLOG_AUDIT_KINDS.published]: "Blog post published",
@@ -93,6 +98,10 @@ const ACTIVITY_LABELS: Record<string, string> = {
   [BLOG_AUDIT_KINDS.unpublished]: "Blog post unpublished",
   [BLOG_AUDIT_KINDS.urlChanged]: "Blog post URL changed",
   [BLOG_AUDIT_KINDS.deleted]: "Blog post deleted",
+  [CONTACT_LINK_AUDIT_KINDS.created]: "Contact link added",
+  [CONTACT_LINK_AUDIT_KINDS.updated]: "Contact link changed",
+  [CONTACT_LINK_AUDIT_KINDS.deleted]: "Contact link removed",
+  [CONTACT_LINK_AUDIT_KINDS.reordered]: "Contact links reordered",
 }
 
 /**
@@ -418,6 +427,7 @@ function detailOf(entry: AdminAuditEntry): string | null {
     entry.identifier && !linkAuditTitle(eventType, entry.identifier) &&
     auditDetail(eventType, entry.identifier),
     entry.jobKind && `Job ${entry.jobKind}`,
+    entry.fileName && `File “${entry.fileName}”`,
   ].filter(Boolean)
   return parts.length > 0 ? parts.join(" · ") : null
 }

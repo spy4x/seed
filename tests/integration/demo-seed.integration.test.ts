@@ -23,6 +23,7 @@ import {
   VIDEO_PERSON_INDEX,
 } from "../../apps/worker/demo/fake-data.ts"
 import {
+  createAdmin,
   type DemoSeedOptions,
   seedDemo,
   SeedRefusedError,
@@ -30,6 +31,7 @@ import {
 } from "../../apps/worker/demo/seed.ts"
 import { KEPT_TABLES, wipeDatabase } from "../../apps/worker/demo/wipe.ts"
 import { SAMPLE_POSTS, seedSamplePosts } from "@server/blog/sample-posts.ts"
+import { SAMPLE_CONTACT_LINKS, seedSampleContactLinks } from "@server/contact-links/sample-links.ts"
 import { isDemoSeeded, resetDemo } from "../../apps/worker/demo/run.ts"
 import { buildPostgresOptions } from "@spy4x/server/db/postgres"
 import { requireDbConnection } from "@spy4x/server/db/testing"
@@ -462,18 +464,35 @@ Deno.test("the demo seed fails when sign-up refuses an account that does not exi
   })
 })
 
-Deno.test("the wipe empties every table but the kept ones, keeps the blog, queues every stored file for deletion, and never reuses an id", async () => {
+Deno.test("the wipe empties every table but the kept ones, keeps the blog and the contact links, queues every stored file for deletion, and never reuses an id", async () => {
   await withSchema(async (sql) => {
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     await sql`INSERT INTO backup_status (target, succeeded_at) VALUES ('database', now())`
     const [{ before }] = await sql<{ before: number }[]>`SELECT max(id) AS before FROM users`
     // The website's real posts, by an account the wipe removes.
     await seedSamplePosts(sql, before)
+    await seedSampleContactLinks(sql)
     // A visitor's sample groups, whose files' objects the wipe queues for deletion.
     await signUpVisitor(sql, "wiped@example.net")
     await drainJobs(sql)
     const keys = await sql<{ objectKey: string }[]>`SELECT object_key FROM note_attachments`
     expect(keys.length).toBeGreaterThan(0)
+    // A profile picture's object is queued too (#228); the seed gives nobody one.
+    const picture = uuidV7()
+    await sql`
+      UPDATE users SET picture_id = ${picture}, picture_type = 'image/webp', picture_state = 2
+      WHERE id = (SELECT min(id) FROM users)
+    `
+    keys.push({ objectKey: `pictures/${picture}` })
+    // And its processed width (#464).
+    await sql`
+      INSERT INTO images (id, object_key, processed_at) VALUES (${picture}, ${`pictures/${picture}`}, now())
+    `
+    await sql`
+      INSERT INTO image_variants (object_key, image_id, content_type, width, height)
+      VALUES (${`pictures/${picture}/480.webp`}, ${picture}, 'image/webp', 480, 480)
+    `
+    keys.push({ objectKey: `pictures/${picture}/480.webp` })
 
     const wiped = await wipeDatabase(sql)
     const queued = await sql<{ objectKey: string }[]>`SELECT object_key FROM file_deletions`
@@ -500,6 +519,10 @@ Deno.test("the wipe empties every table but the kept ones, keeps the blog, queue
       { posts: number }[]
     >`SELECT COUNT(*)::int AS posts FROM blog_posts`
     expect(posts).toBe(SAMPLE_POSTS.length)
+    const [{ links }] = await sql<
+      { links: number }[]
+    >`SELECT COUNT(*)::int AS links FROM contact_links`
+    expect(links).toBe(SAMPLE_CONTACT_LINKS.length)
 
     await seedDemo(new AppDbBase({ sql }), sql, OPTIONS)
     const [{ after }] = await sql<{ after: number }[]>`SELECT min(id) AS after FROM users`
@@ -513,7 +536,7 @@ Deno.test("an operator account left in the demo makes the worker seed it again",
     await seedDemo(new AppDbBase({ sql }), sql, { ...DEV_OPTIONS, dataSeed: 20261020 })
     expect(await isDemoSeeded(sql, DAY)).toBe(false)
 
-    await resetDemo(sql, { subscribers: SUBSCRIBERS }, DAY)
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
     expect(await isDemoSeeded(sql, DAY)).toBe(true)
     expect(await sql`SELECT 1 FROM auth_keys WHERE email = ${DEV_ADMIN_EMAIL}`).toHaveLength(0)
   })
@@ -522,7 +545,7 @@ Deno.test("an operator account left in the demo makes the worker seed it again",
 Deno.test("the reset wipes, seeds again and schedules the nightly cleanup", async () => {
   await withSchema(async (sql) => {
     expect(await isDemoSeeded(sql, DAY)).toBe(false)
-    await resetDemo(sql, { subscribers: SUBSCRIBERS }, DAY)
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
     const first = await count(sql)
     expect(await isDemoSeeded(sql, DAY)).toBe(true)
     // The next day's population is not there yet, so a start then seeds at once.
@@ -530,11 +553,71 @@ Deno.test("the reset wipes, seeds again and schedules the nightly cleanup", asyn
     expect(await sql`SELECT 1 FROM users WHERE role >= ${UserRole.OPERATOR}`).toHaveLength(0)
 
     await signUpVisitor(sql, "visitor@example.net")
-    await resetDemo(sql, { subscribers: SUBSCRIBERS }, DAY)
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
 
     expect(await count(sql)).toEqual(first)
     const cleanup = await sql`SELECT 1 FROM outbox_events WHERE event_kind = ${OUTBOX_CLEANUP_JOB}`
     expect(cleanup.length).toBe(1)
+  })
+})
+
+/** The owner's private administrator on the demo, as the worker reads it from the env. */
+const DEMO_ADMIN = { pepper: PEPPER, password: PASSWORD }
+
+Deno.test("the reset seeds the private administrator, who signs in with the API's pepper", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: DEMO_ADMIN }, DAY)
+
+    expect(await canSignIn(sql, DEV_ADMIN_EMAIL, PASSWORD)).toBe(true)
+    const account = await accountOf(sql, DEV_ADMIN_EMAIL)
+    expect(account.role).toBe(UserRole.ADMIN)
+    expect(account.provenAt).not.toBeNull()
+    // The only operator, so the worker keeps the demo; without the setting it is a leaked one.
+    expect(await sql`SELECT 1 FROM users WHERE role >= ${UserRole.OPERATOR}`).toHaveLength(1)
+    expect(await isDemoSeeded(sql, DAY, true)).toBe(true)
+    expect(await isDemoSeeded(sql, DAY, false)).toBe(false)
+    // No operator history or fake backup: the admin panel shows the demo as it is.
+    expect(
+      await sql`SELECT 1 FROM auth_audits WHERE event_type = ${AuthAuditEventType.USER_BLOCKED}`,
+    ).toHaveLength(0)
+    expect(await readLastBackup(sql)).toBeNull()
+
+    // The next reset wipes it and makes it again, with the same password.
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: DEMO_ADMIN }, DAY)
+    expect(await canSignIn(sql, DEV_ADMIN_EMAIL, PASSWORD)).toBe(true)
+  })
+})
+
+Deno.test("with the private administrator, any other operator still makes the worker seed again", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: DEMO_ADMIN }, DAY)
+    await signUpVisitor(sql, "visitor@example.net")
+    await new AppDbBase({ sql }).admin.setRoleByAddress(
+      "visitor@example.net",
+      UserRole.OPERATOR,
+      "test",
+    )
+
+    expect(await isDemoSeeded(sql, DAY, true)).toBe(false)
+  })
+})
+
+Deno.test("a demo without the private administrator is seeded again once it is configured", async () => {
+  await withSchema(async (sql) => {
+    await resetDemo(sql, { subscribers: SUBSCRIBERS, admin: null }, DAY)
+
+    expect(await isDemoSeeded(sql, DAY, false)).toBe(true)
+    expect(await isDemoSeeded(sql, DAY, true)).toBe(false)
+  })
+})
+
+Deno.test("the private administrator is never made from an account a visitor holds", async () => {
+  await withSchema(async (sql) => {
+    await signUpVisitor(sql, DEV_ADMIN_EMAIL)
+    const db = new AppDbBase({ sql })
+
+    await expect(createAdmin(db, sql, PEPPER, `${PASSWORD}x`)).rejects.toThrow(SeedRefusedError)
+    expect((await accountOf(sql, DEV_ADMIN_EMAIL)).role).toBe(UserRole.VIEWER)
   })
 })
 
@@ -606,15 +689,15 @@ Deno.test("the demo seed's history fills the admin panel's screens", async (t) =
     await t.step(
       "the video's person has two sessions: Firefox on Windows and Safari on iPhone",
       async () => {
-        const priya = fakeDemoData(OPTIONS.dataSeed, NOW).users[VIDEO_PERSON_INDEX]
+        const claire = fakeDemoData(OPTIONS.dataSeed, NOW).users[VIDEO_PERSON_INDEX]
 
         const sessions = await sql<{ deviceName: string }[]>`
         SELECT s.device_name FROM auth_sessions s
-        JOIN auth_keys k ON k.user_id = s.user_id AND k.subject = ${priya.email}
+        JOIN auth_keys k ON k.user_id = s.user_id AND k.subject = ${claire.email}
         WHERE s.status = ${SessionStatus.Active}
         ORDER BY s.device_name
       `
-        expect(priya.email).toBe("priya.novak@example.com")
+        expect(claire.email).toBe("claire.hartley@example.com")
         expect(sessions.map((s) => s.deviceName)).toEqual([
           "Firefox on Windows",
           "Safari on iPhone",
@@ -641,16 +724,25 @@ async function outOfOrder(
   return rows
 }
 
-Deno.test("the seeds' audit rows have ids in the order of their times", async () => {
-  await withSchema(async (sql) => {
-    await seedDemo(new AppDbBase({ sql }), sql, DEV_OPTIONS)
-    await signUpVisitor(sql, "visitor@example.net")
-    await drainJobs(sql)
+Deno.test("the seeds' audit rows are never after now and have ids in the order of their times", async () => {
+  // A Friday that passed, and the Tuesday that dated a GitHub link 50 minutes after now (#469).
+  for (const now of [new Date("2026-10-23T12:00:00Z"), new Date("2026-10-27T18:25:59Z")]) {
+    await withSchema(async (sql) => {
+      await seedDemo(new AppDbBase({ sql }), sql, { ...DEV_OPTIONS, now })
+      for (const table of ["audit_events", "auth_audits"]) {
+        const [{ latest }] = await sql<{ latest: Date }[]>`
+          SELECT max(created_at) AS latest FROM ${sql(table)}
+        `
+        expect(latest.getTime()).toBeLessThanOrEqual(now.getTime())
+      }
+      await signUpVisitor(sql, "visitor@example.net")
+      await drainJobs(sql)
 
-    // Feeds and billing histories sort by id: a row out of order would jump back in time.
-    expect(await outOfOrder(sql, "audit_events")).toBe(0)
-    expect(await outOfOrder(sql, "auth_audits")).toBe(0)
-  })
+      // Feeds and billing histories sort by id: a row out of order would jump back in time.
+      expect(await outOfOrder(sql, "audit_events")).toBe(0)
+      expect(await outOfOrder(sql, "auth_audits")).toBe(0)
+    })
+  }
 })
 
 Deno.test("the development billing provider tells the seeded customers' payments", async () => {
@@ -706,7 +798,7 @@ Deno.test("the development seed adds the operator's refund, blocks and a recent 
     const refund = record!.history.find((entry) =>
       entry.event === BILLING_AUDIT_EVENTS.paymentRefunded
     )
-    expect(refund?.operator).toBe("Maya Chen")
+    expect(refund?.operator).toBe("Emma Walsh")
     expect(refund?.amount?.amount).toBeGreaterThan(0)
     const blocks = await sql`
       SELECT 1 FROM auth_audits WHERE event_type = ${AuthAuditEventType.USER_BLOCKED}

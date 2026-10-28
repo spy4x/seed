@@ -19,6 +19,7 @@ each side holds them to that (`apps/admin/src/modules/registry.test.ts`,
 | `billing`    | Billing       | `/billing`, `/billing/:groupId` |                               | `/api/admin/billing/*`  |
 | `newsletter` | Newsletter    | `/newsletter`             |                                     | `/api/admin/newsletter/*` |
 | `blog`       | Blog          | `/blog`, `/blog/new`, `/blog/:id` |                                     | `/api/admin/blog/*`     |
+| `contact-links` | Contact links | `/contact-links`, `/contact-links/new`, `/contact-links/:id` | | `/api/admin/contact-links*` |
 | `audit`      | Audit log     | `/audit`                  |                                     | `/api/admin/audit*`     |
 | `jobs`       | Jobs          | `/jobs`, `/jobs/:id`      |                                     | `/api/admin/jobs*`      |
 | `system`     | System        | `/system`                 |                                     | `/api/admin/system*`    |
@@ -70,4 +71,11 @@ a signed-in session with its second factor, then the operator role or above (any
 are mounted after those checks. A path no module answers is 404 too.
 
 A module never answers the content of a person's notes or any other aggregate's text: the operator
-area reads counts and account facts only.
+area reads counts and account facts only. One exception: a group's Files tab shows each file's name
+and the title of the note it sits in, and lets the operator open or download the file, so they can
+find and remove abusive content (#478). Its bytes come through the admin API
+(`/api/admin/groups/:id/files/:fileId/thumbnail`, `/open` and `/download`), because the admin host's
+`img-src 'self'` cannot load the file store. Every open and every download writes an audit row
+naming the operator and the file, which the Audit log shows. The thumbnail route writes no row,
+yet it serves the whole original image (the 40 px tile scales it down), so an operator who opens
+the thumbnail's address sees the full image without an audit row.

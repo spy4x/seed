@@ -739,9 +739,9 @@ describe("NoteEditorScreen tags", () => {
       [...find("[data-e2e=note-tags-picker]").querySelectorAll("button")].find((b) =>
         b.textContent === name
       )!
-    expect(chip("Urgent").getAttribute("style")).toContain(`background-color:${urgent.color}`)
+    expect(chip("Urgent").getAttribute("style")).toContain(`background-color: ${urgent.color}`)
     expect(chip("Home").querySelector("span[aria-hidden=true]")?.getAttribute("style"))
-      .toContain(`background-color:${home.color}`)
+      .toContain(`background-color: ${home.color}`)
   })
 
   it("takes a tag off when the person unticks it", async () => {

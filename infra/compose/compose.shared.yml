@@ -889,7 +889,7 @@ services:
       args:
         - DENO_VERSION=${DENO_VERSION}
         - BASE_IMAGE=${PROJECT}/deno-base:${DENO_VERSION}
-    command: [ 'deno', 'run', '--allow-sys', '--allow-env', '--allow-net', 'apps/worker/+main.ts' ]
+    command: [ 'deno', 'run', '--allow-sys', '--allow-env', '--allow-net', '--allow-read=/tmp/images', '--allow-write=/tmp/images', '--allow-run=vips,vipsheader', 'apps/worker/+main.ts' ]
     volumes:
       - ../../apps:/app/apps:z
       - ../../libs:/app/libs:z
@@ -929,6 +929,10 @@ services:
       # The public demo (docs/demo.md): `true` wipes and seeds the database every night and gives
       # every new account sample groups. Unset → off.
       - DEMO_MODE=${DEMO_MODE:-}
+      # The demo's private administrator (docs/demo.md): the reset seeds admin@example.com with
+      # this password, hashed with the API's pepper so the API accepts it. Unset → none.
+      - DEMO_ADMIN_PASSWORD=${DEMO_ADMIN_PASSWORD:-}
+      - AUTH_PEPPER=${AUTH_PEPPER:-}
       # The file store (docs/files.md): the worker keeps a person's data export there
       # (docs/data-export.md) and deletes removed attachments and abandoned uploads. The same store
       # and key as the API's.

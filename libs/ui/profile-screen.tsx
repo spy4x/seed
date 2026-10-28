@@ -27,6 +27,7 @@ import {
   RegionSection,
   THEME_NAMES,
 } from "./preferences.tsx"
+import type { PictureRowProps } from "./profile-picture.tsx"
 import { AccountSection } from "./profile-account.tsx"
 import type { DataExportRowProps } from "./profile-export.tsx"
 import { PushDevicesSection } from "./profile-notifications.tsx"
@@ -230,6 +231,8 @@ export interface ProfileScreenProps {
   guest?: GuestAccountDeleteProps
   /** The Account section's "Your data" row (#229). Without it the row is left out. */
   dataExport?: DataExportRowProps
+  /** The Account section's "Profile picture" row (#228); its `src` is the intro's avatar too. */
+  picture?: PictureRowProps
   navigate?: Navigate
 }
 
@@ -310,7 +313,7 @@ export function ProfileScreen(props: ProfileScreenProps): JSX.Element {
       navigate={navigate}
       intro={
         <div class="flex min-w-0 items-center gap-3" data-e2e="profile-intro">
-          <Avatar name={name || email?.email} size="md" alt="" />
+          <Avatar name={name || email?.email} src={props.picture?.src} size="md" alt="" />
           <div class="flex min-w-0 flex-col">
             <span class="truncate text-sm font-medium text-foreground">{name || "No name"}</span>
             {email?.email && <span class="truncate text-sm text-muted">{email.email}</span>}
@@ -371,6 +374,7 @@ function ProfileSection(
           providerProof={providerProof}
           guestRow={props.guest && <GuestAccountRow navigate={props.navigate} />}
           dataExport={props.dataExport}
+          picture={props.picture}
         />
       )
     case "security":

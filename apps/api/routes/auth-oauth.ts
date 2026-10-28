@@ -21,6 +21,7 @@ import { PROVIDER_PROOF_REQUIRED } from "./auth.ts"
 import type { APIContext } from "../_types.ts"
 import type { MutationGuards } from "../middlewares/mutation-guards.ts"
 import type { AuthRateLimits } from "../middlewares/auth-rate-limits.ts"
+import { errorResponse, validationResponse } from "../services/error-response.ts"
 
 /** What the provider sign-in routes call. `index.ts` passes the app's singletons; tests pass fakes. */
 export interface OAuthRouteDependencies {
@@ -72,25 +73,29 @@ export async function refusalWithoutProof(
   state: AppAuthState,
 ): Promise<Response | null> {
   const body = validate(signInMethodProofSchema, await readApiJson(c))
-  if (body.error) return c.json({ error: body.error.description }, 400)
+  if (body.error) return validationResponse(c, body.error.details)
   const { password } = body.data
   // A guest has no sign-in method to prove: the session is the account's only way in, and adding
   // the first method is what keeping the account means (#224). A kept account is proven as before.
   if (state.user.guestSince) return null
   if (await signIn.hasPassword(state.user.id)) {
-    if (password === undefined) return c.json({ error: "Invalid password" }, 400)
+    if (password === undefined) {
+      return errorResponse(c, `bad_request`, { message: "Invalid password" })
+    }
     try {
       if (!(await signIn.checkPassword(state.user.id, password))) {
-        return c.json({ error: "Invalid password" }, 400)
+        return errorResponse(c, `bad_request`, { message: "Invalid password" })
       }
     } catch (error) {
       // Too many wrong passwords at the signed-in steps (#406): the lock they all share runs.
       if (!(error instanceof PasswordLockedError)) throw error
       c.header("Retry-After", String(Math.ceil(error.retryAfterMs / 1000)))
-      return c.json({ error: passwordLockedMessage(error.retryAfterMs) }, 429)
+      return errorResponse(c, `rate_limited`, {
+        message: passwordLockedMessage(error.retryAfterMs),
+      })
     }
   } else if (!(await signIn.confirmedByProvider(state))) {
-    return c.json({ error: PROVIDER_PROOF_REQUIRED }, 400)
+    return errorResponse(c, `bad_request`, { message: PROVIDER_PROOF_REQUIRED })
   }
   return null
 }
@@ -210,7 +215,7 @@ export function createOAuthRoute(
       rateLimits.strictByIp,
       async (c) => {
         const signedIn = await oauth.confirmSignUp(c, c.get("auth"))
-        if (!signedIn) return c.json({ error: SIGN_UP_EXPIRED }, 400)
+        if (!signedIn) return errorResponse(c, `bad_request`, { message: SIGN_UP_EXPIRED })
         // As a password sign-in answers: 202 while the authenticator code is owed.
         if (signedIn.session.secondFactor === SecondFactorStatus.Pending) {
           return c.json({ secondFactor: "Pending" }, 202)
@@ -237,12 +242,12 @@ export function createOAuthRoute(
       rateLimits.strictByUser,
       async (c) => {
         const id = providerOf(c)
-        if (!id) return c.json({ error: PROVIDER_OFF }, 404)
+        if (!id) return errorResponse(c, `not_found`, { message: PROVIDER_OFF })
         const state = c.get("auth")!
         const refusal = await refuseWithoutProof(c, state)
         if (refusal) return refusal
         const url = await oauth.start(c, id, { linking: state })
-        if (!url) return c.json({ error: PROVIDER_OFF }, 404)
+        if (!url) return errorResponse(c, `not_found`, { message: PROVIDER_OFF })
         return c.json({ url })
       },
     )
@@ -255,13 +260,17 @@ export function createOAuthRoute(
       rateLimits.strictByUser,
       async (c) => {
         const raw = c.req.param("id")
-        if (!KEY_ID.test(raw)) return c.json({ error: METHOD_NOT_FOUND }, 404)
+        if (!KEY_ID.test(raw)) return errorResponse(c, `not_found`, { message: METHOD_NOT_FOUND })
         const state = c.get("auth")!
         const refusal = await refuseWithoutProof(c, state)
         if (refusal) return refusal
         const outcome = await oauth.unlink(c, state, Number(raw))
-        if (outcome === UnlinkOutcome.NotFound) return c.json({ error: METHOD_NOT_FOUND }, 404)
-        if (outcome === UnlinkOutcome.LastMethod) return c.json({ error: METHOD_IS_LAST }, 409)
+        if (outcome === UnlinkOutcome.NotFound) {
+          return errorResponse(c, `not_found`, { message: METHOD_NOT_FOUND })
+        }
+        if (outcome === UnlinkOutcome.LastMethod) {
+          return errorResponse(c, `conflict`, { message: METHOD_IS_LAST })
+        }
         // The method's sessions ended with it: their sockets close. The sockets of the person's
         // other sessions reconnect by themselves.
         emit(

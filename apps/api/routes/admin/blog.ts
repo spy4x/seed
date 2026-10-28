@@ -32,6 +32,7 @@ import { renderBlogBody } from "@server/blog/render.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
 import type { APIContext } from "../../_types.ts"
 import type { AdminApiModule } from "./module.ts"
+import { codeForStatus, errorResponse } from "../../services/error-response.ts"
 
 /**
  * The largest body a blog route takes: a post's Markdown is up to 200,000 characters, and one
@@ -164,16 +165,20 @@ export function createAdminBlogRoutes(
   const route = new Hono<APIContext>()
   route.onError((error, c) => {
     if (error instanceof BlogVersionConflictError) {
-      return c.json(
-        { error: error.message, code: error.code, currentVersion: error.currentVersion },
-        409,
-      )
+      return errorResponse(c, `conflict`, {
+        message: error.message,
+        reason: error.code,
+        details: { currentVersion: error.currentVersion },
+      })
     }
     if (error instanceof BlogError) {
-      return c.json(
-        { error: error.message, code: error.code, ...(error.field && { field: error.field }) },
-        statusOf(error),
-      )
+      const status = statusOf(error)
+      return errorResponse(c, codeForStatus(status), {
+        message: error.message,
+        reason: error.code,
+        status,
+        ...(error.field && { details: { field: error.field } }),
+      })
     }
     throw error
   })

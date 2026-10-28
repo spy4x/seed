@@ -19,6 +19,11 @@ const REQUIRED_SELECTORS = [
 
 export default defineConfig({
   plugins: [
+    {
+      name: "markdown-text",
+      enforce: "pre",
+      transform: (code, id) => id.endsWith(".md") ? `export default ${JSON.stringify(code)}` : null,
+    },
     fresh(),
     preactThemeCss({ stylesheet: "/apps/mpa/styles.css" }),
     tailwindcss(),

@@ -4,6 +4,7 @@ import { BillingError, type BillingErrorCode } from "@domain/billing"
 import { AccessError } from "@domain/identity"
 import { IdempotencyError } from "@spy4x/server/idempotency"
 import type { APIContext } from "../../_types.ts"
+import { codeForStatus, errorResponse } from "../../services/error-response.ts"
 
 export type BillingFeatureErrorCode =
   | BillingErrorCode
@@ -72,7 +73,9 @@ export function billingErrorResponse(c: Context<APIContext>, error: unknown): Re
       ? IDEMPOTENCY_CODES[error.code]
       : "INTERNAL_ERROR"
   const definition = ERROR_DEFINITIONS[code]
-  return c.json({
-    error: { code, message: definition.message, requestId: c.get("requestId") || "unknown" },
-  }, definition.status)
+  return errorResponse(c, codeForStatus(definition.status), {
+    message: definition.message,
+    reason: code,
+    status: definition.status,
+  })
 }

@@ -23,6 +23,7 @@ const ACTION_PATHS: Record<AdminAction, (input: AdminActionInput) => string> = {
   "password-reset": () => "password-reset",
   "delete-guest": () => "guest/delete",
   "unlink-telegram": () => "telegram/unlink",
+  "remove-picture": () => "picture/remove",
 }
 
 /** What the toast says after each action went through. */
@@ -36,6 +37,7 @@ const ACTION_DONE: Record<AdminAction, (name: string, input: AdminActionInput) =
   "password-reset": (name) => `A password-reset link is on its way to ${name}.`,
   "delete-guest": (name) => `The guest account ${name} is deleted.`,
   "unlink-telegram": (name) => `The Telegram account of ${name} is unlinked.`,
+  "remove-picture": (name) => `The profile picture of ${name} is removed.`,
 }
 
 export interface UsersListState {

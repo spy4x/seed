@@ -26,6 +26,7 @@ import {
 import { createMutationGuards } from "../../apps/api/middlewares/mutation-guards.ts"
 import type { APIContext } from "../../apps/api/_types.ts"
 import { SoftPasskey } from "./soft-authenticator.ts"
+import { apiError } from "../../apps/api/_testing/api-error.ts"
 
 /**
  * Passkeys (#222) through the real routes and sign-in against a real Postgres: adding one, signing
@@ -273,7 +274,7 @@ Deno.test("a challenge answers once: a replayed sign-in or add is refused", asyn
     expect((await visitor.post("/auth/passkeys", registration)).status).toBe(201)
     const again = await visitor.post("/auth/passkeys", registration)
     expect(again.status).toBe(400)
-    expect(await again.json()).toEqual({ error: PASSKEY_NOT_SAVED })
+    expect(await apiError(again)).toMatchObject({ message: PASSKEY_NOT_SAVED })
 
     const laptop = browser(app)
     const signInOptions = await laptop.post("/auth/passkeys/sign-in/options")
@@ -282,7 +283,7 @@ Deno.test("a challenge answers once: a replayed sign-in or add is refused", asyn
     const thief = browser(app)
     const replayed = await thief.post("/auth/passkeys/sign-in", assertion)
     expect(replayed.status).toBe(400)
-    expect(await replayed.json()).toEqual({ error: PASSKEY_REFUSED })
+    expect(await apiError(replayed)).toMatchObject({ message: PASSKEY_REFUSED })
     expect((await thief.get("/auth/methods")).status).toBe(401)
   })
 })
@@ -297,10 +298,10 @@ Deno.test("the same passkey cannot be added twice, to the same or another accoun
 
     const twice = await addPasskey(ada.visitor, passkey)
     expect(twice.status).toBe(409)
-    expect(await twice.json()).toEqual({ error: PASSKEY_ALREADY_YOURS })
+    expect(await apiError(twice)).toMatchObject({ message: PASSKEY_ALREADY_YOURS })
     const taken = await addPasskey(bob.visitor, passkey)
     expect(taken.status).toBe(400)
-    expect(await taken.json()).toEqual({ error: PASSKEY_NOT_SAVED })
+    expect(await apiError(taken)).toMatchObject({ message: PASSKEY_NOT_SAVED })
     expect(await sql`SELECT user_id FROM auth_passkeys`).toEqual([{ userId: ada.id }])
   })
 })
@@ -318,11 +319,11 @@ Deno.test("a passkey is renamed by its owner only, to a name of 1 to 64 characte
     for (const name of ["", " ", "x".repeat(65), "line\nbreak", 7]) {
       const refused = await ada.visitor.patch(`/auth/passkeys/${keyId}`, { name })
       expect(refused.status).toBe(400)
-      expect(await refused.json()).toEqual({ error: PASSKEY_NAME_INVALID })
+      expect(await apiError(refused)).toMatchObject({ message: PASSKEY_NAME_INVALID })
     }
     const other = await bob.visitor.patch(`/auth/passkeys/${keyId}`, { name: "Mine now" })
     expect(other.status).toBe(404)
-    expect(await other.json()).toEqual({ error: PASSKEY_NOT_FOUND })
+    expect(await apiError(other)).toMatchObject({ message: PASSKEY_NOT_FOUND })
     expect(await sql`SELECT name FROM auth_passkeys`).toEqual([{ name: "Work laptop" }])
     // The same name again changes nothing, so the trail gets one row for the one rename.
     expect((await ada.visitor.patch(`/auth/passkeys/${keyId}`, { name: "Work laptop" })).status)
@@ -362,7 +363,10 @@ Deno.test("a removed passkey signs its devices out and no longer signs in", asyn
     // The device still offers it: the answer tells the page to have the device forget it.
     const stale = await passkeySignIn(browser(app), passkey)
     expect(stale.status).toBe(404)
-    expect(await stale.json()).toEqual({ error: PASSKEY_UNKNOWN, unknown: true })
+    expect(await apiError(stale)).toMatchObject({
+      message: PASSKEY_UNKNOWN,
+      details: { unknown: true },
+    })
   })
 })
 
@@ -384,7 +388,7 @@ Deno.test("the only passkey of an account without a password cannot be removed",
     expect(methods.providerProofUntil).not.toBeNull()
     const last = await phone.delete(`/auth/methods/${keyId}`)
     expect(last.status).toBe(409)
-    expect(await last.json()).toEqual({ error: METHOD_IS_LAST })
+    expect(await apiError(last)).toMatchObject({ message: METHOD_IS_LAST })
     expect(await sql`SELECT 1 FROM auth_passkeys`).toHaveLength(1)
   })
 })
@@ -406,11 +410,11 @@ Deno.test("another person's passkey is refused where the person is known", async
       await adas.get(await options.json()),
     )
     expect(confirm.status).toBe(400)
-    expect(await confirm.json()).toEqual({ error: PASSKEY_REFUSED })
+    expect(await apiError(confirm)).toMatchObject({ message: PASSKEY_REFUSED })
     expect(app.logged.join("\n")).toContain("wrong_credential")
     const removed = await bob.visitor.delete(`/auth/methods/${keyId}`, { password: PASSWORD })
     expect(removed.status).toBe(404)
-    expect(await removed.json()).toEqual({ error: METHOD_NOT_FOUND })
+    expect(await apiError(removed)).toMatchObject({ message: METHOD_NOT_FOUND })
     expect(await sql`SELECT user_id FROM auth_passkeys WHERE key_id = ${keyId}`)
       .toEqual([{ userId: ada.id }])
 
@@ -474,7 +478,7 @@ Deno.test("a blocked person cannot sign in with their passkey", async () => {
     const laptop = browser(app)
     const refused = await passkeySignIn(laptop, passkey)
     expect(refused.status).toBe(400)
-    expect(await refused.json()).toEqual({ error: PASSKEY_REFUSED })
+    expect(await apiError(refused)).toMatchObject({ message: PASSKEY_REFUSED })
     expect((await laptop.get("/auth/methods")).status).toBe(401)
   })
 })
@@ -493,7 +497,7 @@ Deno.test("only the session that asked to add a passkey can finish adding it", a
     const registration = await passkey.create(await options.json())
     const stolen = await elsewhere.post("/auth/passkeys", registration)
     expect(stolen.status).toBe(400)
-    expect(await stolen.json()).toEqual({ error: PASSKEY_NOT_SAVED })
+    expect(await apiError(stolen)).toMatchObject({ message: PASSKEY_NOT_SAVED })
     expect(await sql`SELECT 1 FROM auth_passkeys`).toHaveLength(0)
     // The session that asked still can.
     expect((await ada.visitor.post("/auth/passkeys", registration)).status).toBe(201)
@@ -522,7 +526,7 @@ Deno.test("each ceremony keeps its challenge under its own name, the add and con
     const assertion = await passkey.get(await confirmOptions.json())
     const crossed = await browser(app).post("/auth/passkeys/sign-in", assertion)
     expect(crossed.status).toBe(400)
-    expect(await crossed.json()).toEqual({ error: PASSKEY_REFUSED })
+    expect(await apiError(crossed)).toMatchObject({ message: PASSKEY_REFUSED })
   })
 })
 

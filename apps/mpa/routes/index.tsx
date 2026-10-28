@@ -1,4 +1,5 @@
 import type { JSX } from "preact"
+import type { PublicContactLink } from "@domain/contact-links"
 import { DEFAULT_SUBSCRIBER_LIST } from "@domain/subscribers"
 import {
   IconArrowRight,
@@ -30,6 +31,7 @@ import { ProofStrip } from "../components/proof-strip.tsx"
 import { SectionIntro } from "../components/section-intro.tsx"
 import { PairShot } from "../components/features-visuals.tsx"
 import { Shot } from "../components/shot.tsx"
+import { organizationJsonLd } from "../contact-links.ts"
 import { HIRE_PAGE_URL } from "../hire.ts"
 import {
   AUTHOR_URL,
@@ -86,7 +88,7 @@ const WORKS_TODAY = [
   `Exporting a group to a file, and importing one as a new group`,
   `Images and PDFs attached to notes, within each plan's room`,
   `Per-member billing with trials, through Stripe`,
-  `The list of signed-in devices, a download of your own data, and account deletion with a 7‑day undo`,
+  `A profile picture, the list of signed-in devices, a download of your own data, and account deletion with a 7‑day undo`,
   `Personal API tokens`,
   `Realtime, the offline app and web push`,
   `A Telegram bot: notifications in a chat, and your own commands in one file`,
@@ -138,8 +140,12 @@ const FAQ = [
   },
 ] as const
 
-/** The page's structured data: the site, the software and its author, and the questions. */
-function homeJsonLd(origin: string): unknown[] {
+/**
+ * The page's structured data: the site, the software and its author, the questions, and the
+ * organization with its contact links once there are any.
+ */
+function homeJsonLd(origin: string, contactLinks: readonly PublicContactLink[]): unknown[] {
+  const organization = organizationJsonLd(origin, contactLinks)
   return [
     {
       "@type": `WebSite`,
@@ -152,6 +158,7 @@ function homeJsonLd(origin: string): unknown[] {
     softwareJsonLd(origin),
     PERSON_JSON_LD,
     faqPageJsonLd(FAQ),
+    ...(organization ? [organization] : []),
   ]
 }
 
@@ -631,7 +638,7 @@ export default define.page(function Home({ state }) {
   const head: SitePageHead = {
     ...HOME_HEAD,
     og: `home`,
-    jsonLd: homeJsonLd(state.webAppOrigin),
+    jsonLd: homeJsonLd(state.webAppOrigin, state.contactLinks ?? []),
   }
   return (
     <SiteFrame state={state} path="/" head={head} footerNewsletter={false}>

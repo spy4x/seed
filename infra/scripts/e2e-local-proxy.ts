@@ -2,7 +2,9 @@
 /**
  * The one origin `deno task e2e:local` serves the app at, as Traefik does in the compose stack:
  * `/api` goes to the API, everything else to what serves the SPA at `SPA_PORT` (the Vite dev server
- * or the built SPA). Reads `FRONT_PORT`, `API_PORT` and `SPA_PORT` and listens on 127.0.0.1.
+ * or the built SPA). Reads `FRONT_PORT`, `API_PORT` and `SPA_PORT` and listens on 127.0.0.1. With
+ * `FILES_PORT` and `S3_BUCKET` set, `/<bucket>/…` goes to the file store, as the store's own route
+ * on the app's host does in the compose stack.
  *
  * It joins the two TCP connections instead of making a request of its own: it reads the head of
  * the first request to choose the upstream, rewrites that head (`forwardedHead`) and then copies
@@ -67,6 +69,22 @@ export function forwardedHead(head: string, clientAddress: string): string | nul
   ].join("\r\n")
 }
 
+/** The ports the proxy routes to. `files` is the file store's, when there is one. */
+export interface Upstreams {
+  api: number
+  spa: number
+  files?: { port: number; bucket: string }
+}
+
+/** The port that serves `path`: the API's, the file store's or the SPA's. */
+export function upstreamFor(path: string, upstreams: Upstreams): number {
+  const under = (prefix: string) =>
+    path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`)
+  if (under("/api")) return upstreams.api
+  if (upstreams.files && under(`/${upstreams.files.bucket}`)) return upstreams.files.port
+  return upstreams.spa
+}
+
 /** Where the headers end in `bytes` (after the blank line), or -1 when they are not complete. */
 function headEnd(bytes: Uint8Array): number {
   for (let i = 0; i + 3 < bytes.length; i++) {
@@ -111,18 +129,17 @@ async function copy(from: Deno.Conn, to: Deno.Conn): Promise<void> {
   }
 }
 
-async function handle(conn: Deno.TcpConn, apiPort: number, spaPort: number): Promise<void> {
+async function handle(conn: Deno.TcpConn, upstreams: Upstreams): Promise<void> {
   const read = await readThroughHead(conn)
   if (read === null) return conn.close()
   const end = headEnd(read)
   const head = decoder.decode(read.subarray(0, end))
   const { path } = parseHead(head)
-  const isApi = path === "/api" || path.startsWith("/api/") || path.startsWith("/api?")
   const forwarded = forwardedHead(head, conn.remoteAddr.hostname)
   if (forwarded === null) return conn.close()
   let upstream: Deno.Conn
   try {
-    upstream = await Deno.connect({ hostname: "127.0.0.1", port: isApi ? apiPort : spaPort })
+    upstream = await Deno.connect({ hostname: "127.0.0.1", port: upstreamFor(path, upstreams) })
   } catch {
     return conn.close()
   }
@@ -143,11 +160,17 @@ if (import.meta.main) {
     if (!Number.isInteger(value) || value <= 0) throw new Error(`${name} must be a port number`)
     return value
   }
-  const apiPort = port("API_PORT")
-  const spaPort = port("SPA_PORT")
+  const bucket = Deno.env.get("S3_BUCKET")
+  const upstreams: Upstreams = {
+    api: port("API_PORT"),
+    spa: port("SPA_PORT"),
+    ...(Deno.env.get("FILES_PORT") && bucket
+      ? { files: { port: port("FILES_PORT"), bucket } }
+      : {}),
+  }
   const listener = Deno.listen({ hostname: "127.0.0.1", port: port("FRONT_PORT") })
   for await (const conn of listener) {
-    handle(conn, apiPort, spaPort).catch(() => {
+    handle(conn, upstreams).catch(() => {
       try {
         conn.close()
       } catch {

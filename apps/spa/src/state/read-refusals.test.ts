@@ -187,9 +187,13 @@ describe("a saved copy and the answer of the server", () => {
         return Promise.resolve(new Response("<h1>Bad Gateway</h1>", { status: answer.proxy }))
       }
       return Promise.resolve(
-        answer === 200
-          ? Response.json(body)
-          : Response.json({ error: { code: "NO", message: "No" } }, { status: answer }),
+        answer === 200 ? Response.json(body) : Response.json(
+          // The API's own refusal names its reason; `code` is the one its status stands for.
+          {
+            error: { code: answer === 500 ? "internal" : "forbidden", message: "No", reason: "NO" },
+          },
+          { status: answer },
+        ),
       )
     }) as typeof fetch
   })

@@ -6,6 +6,7 @@ import {
   createMembersStore,
   type MemberItem,
   type MembersDependencies,
+  membersHttp,
   TransferRefused,
 } from "./members.ts"
 
@@ -248,5 +249,37 @@ describe("members store", () => {
     await store.open("b")
     expect(store.transferDraft.value).toEqual({ userId: null, name: "", password: "" })
     expect(store.transferError.value).toBe(null)
+  })
+})
+
+describe("handing a group over by REST", () => {
+  /** Runs one transfer against a `fetch` that answers `status` with `body`, and returns its refusal. */
+  async function refusalOf(status: number, body: unknown): Promise<TransferRefused> {
+    const realFetch = globalThis.fetch
+    globalThis.fetch = () => Promise.resolve(Response.json(body, { status }))
+    try {
+      await membersHttp.transfer({ groupId: "g-1", userId: 2, name: "Team", password: "pw" })
+      throw new Error("the transfer was not refused")
+    } catch (cause) {
+      if (!(cause instanceof TransferRefused)) throw cause
+      return cause
+    } finally {
+      globalThis.fetch = realFetch
+    }
+  }
+
+  it("keeps the API's sentence and reason, and words a guard's refusal in its own", async () => {
+    const named = await refusalOf(400, {
+      error: { code: "bad_request", message: "Type the name", reason: "NAME_MISMATCH" },
+    })
+    const limited = await refusalOf(429, {
+      error: { code: "rate_limited", message: "Too many requests" },
+    })
+
+    expect([named.message, named.code]).toEqual(["Type the name", "NAME_MISMATCH"])
+    expect([limited.message, limited.code]).toEqual([
+      "Too many attempts. Wait a few minutes, then try again.",
+      undefined,
+    ])
   })
 })

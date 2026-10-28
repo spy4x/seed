@@ -135,12 +135,18 @@ function breaks(rule: FileRule, file: FileFacts): FileRefusal | null {
 
 /**
  * The `Content-Disposition` a download is served with. An image is shown in place (`inline`); any
- * other file is saved (`attachment`), since text that passed the check can still be markup. The
- * name comes twice: an ASCII fallback with quotes, backslashes and control characters replaced,
- * and the full name in UTF-8 (RFC 6266).
+ * other file is saved (`attachment`), since text that passed the check can still be markup. A
+ * caller that must have the file saved, such as a "Download" button, passes `kind`. The name comes
+ * twice: an ASCII fallback with quotes, backslashes and control characters replaced, and the full
+ * name in UTF-8 (RFC 6266).
  */
-export function downloadDisposition(contentType: string, filename: string): string {
-  const kind = bareType(contentType).startsWith(`image/`) ? `inline` : `attachment`
+export function downloadDisposition(
+  contentType: string,
+  filename: string,
+  kind: `inline` | `attachment` = bareType(contentType).startsWith(`image/`)
+    ? `inline`
+    : `attachment`,
+): string {
   const fallback = filename.replace(/[^\x20-\x7e]|["\\]/g, `_`) || `file`
   return `${kind}; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`
 }
@@ -164,8 +170,25 @@ export interface FileStore {
   signDownload(key: string, file: { contentType: string; filename: string }): Promise<string>
   /** Deletes `key`; a missing one is not an error. */
   delete(key: string): Promise<void>
+  /**
+   * The bytes of a confirmed file, read whole into memory, or `null` when it is gone. Only for a
+   * small file, such as a profile picture's small width, that a page of another host shows.
+   */
+  read(key: string): Promise<Uint8Array | null>
   /** Whether the store answers, for the health route and the operator's System page. */
   isReachable(): Promise<boolean>
+}
+
+/** The whole object at `key`, or `null` when it is gone. */
+async function readWhole(
+  store: Pick<S3Storage, `head` | `getRange`>,
+  bucket: string,
+  key: string,
+): Promise<Uint8Array | null> {
+  const info = await store.head(bucket, key)
+  if (info === null) return null
+  if (info.size === 0) return new Uint8Array()
+  return await store.getRange(bucket, key, 0, info.size - 1)
 }
 
 /**
@@ -225,6 +248,7 @@ export function createFileStore(
     delete(key) {
       return internal.delete(bucket, key)
     },
+    read: (key) => readWhole(internal, bucket, key),
     async isReachable() {
       try {
         await internal.list(bucket, ``, { maxKeys: 1 })
@@ -263,17 +287,20 @@ export function s3FileStore(settings: FileStoreSettings): FileStore {
  */
 export interface ServerFiles {
   put(key: string, body: Uint8Array): Promise<void>
+  /** The bytes of `key`, read whole into memory, or `null` when it is gone. */
+  read(key: string): Promise<Uint8Array | null>
   delete(key: string): Promise<void>
   deleteOlderThan(prefix: string, before: Date): Promise<number>
 }
 
 /** {@link ServerFiles} over the store's internal client. */
 export function createServerFiles(
-  store: Pick<S3Storage, `upload` | `delete` | `list`>,
+  store: Pick<S3Storage, `upload` | `delete` | `list` | `head` | `getRange`>,
   bucket: string,
 ): ServerFiles {
   return {
     put: (key, body) => store.upload(bucket, key, body),
+    read: (key) => readWhole(store, bucket, key),
     delete: (key) => store.delete(bucket, key),
     async deleteOlderThan(prefix, before) {
       let removed = 0

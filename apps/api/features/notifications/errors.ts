@@ -3,6 +3,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status"
 import { NotificationError, type NotificationErrorCode } from "@domain/notifications"
 import { AccessError } from "@domain/identity"
 import type { APIContext } from "../../_types.ts"
+import { codeForStatus, errorResponse } from "../../services/error-response.ts"
 
 export type NotificationFeatureErrorCode =
   | NotificationErrorCode
@@ -43,7 +44,9 @@ export function notificationErrorResponse(c: Context<APIContext>, error: unknown
       ? error.code
       : "INTERNAL_ERROR"
   const definition = ERROR_DEFINITIONS[code]
-  return c.json({
-    error: { code, message: definition.message, requestId: c.get("requestId") || "unknown" },
-  }, definition.status)
+  return errorResponse(c, codeForStatus(definition.status), {
+    message: definition.message,
+    reason: code,
+    status: definition.status,
+  })
 }
