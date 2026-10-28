@@ -740,7 +740,7 @@
   "AdminContactLinks.labelHint": "يظهر بدل القيمة، مثل «اطلب عبر {kind}».",
   "AdminContactLinks.saving": "جارٍ الحفظ…",
   "AdminContactLinks.save": "حفظ الرابط",
-  "AdminDashboard.title": "لوحة المعلومات",
+  "AdminDashboard.title": "لوحة المتابعة",
   "AdminDashboard.subtitle": {
     "zero": "المنتج في لمحة، خلال آخر {count} يوم.",
     "one": "المنتج في لمحة، خلال آخر {count} يوم.",
@@ -1152,7 +1152,7 @@
   "AdminJobs.cancelText": "لن تُشغَّل <job>{job}</job>. تبدأ المهمة المتكررة من جديد عند تشغيل العامل في المرة القادمة. لا يمكن التراجع عن ذلك.",
   "AdminJobs.cancelling": "جارٍ الإلغاء…",
   "AdminJobs.keepIt": "إبقاؤها",
-  "AdminNav.dashboard": "لوحة المعلومات",
+  "AdminNav.dashboard": "لوحة المتابعة",
   "AdminNav.system": "النظام",
   "AdminNav.users": "المستخدمون",
   "AdminNav.groups": "المجموعات",
