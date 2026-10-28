@@ -144,6 +144,7 @@ import {
   listJobs,
   readJob,
   readJobGroup,
+  readJobPhotos,
   readJobUser,
   readRepeatingRuns,
   retryFailedJobs,
@@ -775,6 +776,8 @@ export class AppDbBase extends DbServiceBase {
       job: (id: string) => readJob(sql, id),
       user: (table: string, aggregateId: string) => readJobUser(sql, table, aggregateId),
       group: (groupId: string) => readJobGroup(sql, groupId),
+      photos: (imageIds: readonly string[], languages: readonly string[]) =>
+        readJobPhotos(sql, imageIds, languages),
       repeating: (kinds: readonly string[]) => readRepeatingRuns(sql, kinds),
       /** Inside `begin()` only, as every action below. */
       retry: (id: string, operatorId: number, requestId: string | null) =>

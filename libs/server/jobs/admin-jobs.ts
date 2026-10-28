@@ -27,17 +27,19 @@ import {
   ADMIN_JOBS_PAGE_SIZE,
   AdminJobActionOutcome,
   type AdminJobFilter,
+  type AdminJobPhoto,
   type AdminJobRow,
   AdminJobState,
   type AdminJobStateFilter,
 } from "@domain/identity"
 import { uuidV7 } from "@spy4x/platform/universal/uuid"
+import { type CatalogText, catalogText } from "@domain/catalog"
 import { JOB_RETRY } from "./job-failures.ts"
 import { JOB_AGGREGATE, JOB_AGGREGATE_ID, LEGACY_JOB_AGGREGATE_ID } from "./jobs.ts"
 import { type JobDefinition, jobDefinition, JOBS } from "./registry.ts"
 
 /** A row as the reads return it, before the API adds the registry's label. */
-export type AdminJobRecord = Omit<AdminJobRow, "label"> & { aggregateId: string }
+export type AdminJobRecord = Omit<AdminJobRow, "label" | "photo"> & { aggregateId: string }
 
 /** What a search matches: kinds whose name matched (from the registry), and text in the kind. */
 export interface AdminJobMatch {
@@ -196,6 +198,31 @@ export async function readJobUser(
   if (!row) return null
   const name = `${row.firstName ?? ``} ${row.lastName ?? ``}`.trim() || row.email || `No name`
   return { id: row.id, name }
+}
+
+/**
+ * The catalog photos among the images `imageIds`, by image id, each with its item and the item's
+ * name in the first of `languages` that has one (#514). An image that is no catalog photo, such as a
+ * profile picture, or one removed since, is left out.
+ */
+export async function readJobPhotos(
+  sql: postgres.Sql,
+  imageIds: readonly string[],
+  languages: readonly string[],
+): Promise<Map<string, AdminJobPhoto>> {
+  if (imageIds.length === 0) return new Map()
+  const rows = await sql<{ id: string; itemId: string; name: CatalogText; ready: boolean }[]>`
+    SELECT p.id, p.item_id, i.name,
+      EXISTS (SELECT 1 FROM image_variants v WHERE v.image_id = p.id) AS ready
+    FROM catalog_photos p JOIN catalog_items i ON i.id = p.item_id
+    WHERE p.id = ANY(${imageIds as string[]}::uuid[])
+  `
+  return new Map(rows.map((row) => [row.id, {
+    id: row.id,
+    ready: row.ready,
+    itemId: row.itemId,
+    itemName: catalogText(row.name, languages),
+  }]))
 }
 
 /** The group a job is about, by its id, or `null` once it is gone. */
