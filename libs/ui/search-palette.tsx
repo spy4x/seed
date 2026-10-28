@@ -21,7 +21,7 @@ import {
 import { DATA_EXPORT_ANCHOR } from "./profile-export.tsx"
 import { PICTURE_BUTTON_ID, PICTURE_RULE } from "./profile-picture.tsx"
 import { useAppText } from "./i18n.ts"
-import { englishText } from "./message.ts"
+import { englishText, type KeyedMessage, messageText } from "./message.ts"
 
 /** One note a search found, as the palette lists it. */
 export interface SearchNote {
@@ -271,22 +271,29 @@ function actionOptions(
   pageCommands: readonly PageCommand[],
   guest = false,
 ): SearchOption[] {
+  // An action is found by its label and its detail in English too, so a person who types the
+  // English word ("password", "ZIP") finds it in every language. A detail given as text (another
+  // screen's words) is matched as it is.
   const page = (
     id: string,
     key: string,
     href: string,
-    detail?: string,
+    detail?: KeyedMessage | string,
     aliases: readonly string[] = [],
   ): SearchOption => ({
     id: `action-${id}`,
     label: t.t(key),
-    detail,
-    aliases: [englishText(key), ...aliases],
+    detail: typeof detail === `string` ? detail : messageText(t, detail) ?? undefined,
+    aliases: [
+      englishText(key),
+      ...(detail && typeof detail !== `string` ? [englishText(detail.key, detail.values)] : []),
+      ...aliases,
+    ],
     group: t.t(`Search.actions`),
     choice: { kind: "page", href },
   })
-  const inGroup = currentGroup?.canWrite
-    ? t.t(`Search.inGroup`, { group: currentGroup.name })
+  const inGroup: KeyedMessage | null = currentGroup?.canWrite
+    ? { key: `Search.inGroup`, values: { group: currentGroup.name } }
     : null
   return [
     ...(guest
@@ -294,7 +301,7 @@ function actionOptions(
         "keep",
         `Search.keep`,
         "/keep",
-        t.t(`Search.keepDetail`),
+        { key: `Search.keepDetail` },
       )]
       : []),
     ...pageCommands.map((command): SearchOption => ({
@@ -309,8 +316,8 @@ function actionOptions(
       ? [{
         id: "action-new-note",
         label: t.t(`Search.newNote`),
-        aliases: [englishText(`Search.newNote`)],
-        detail: inGroup,
+        aliases: [englishText(`Search.newNote`), englishText(inGroup.key, inGroup.values)],
+        detail: messageText(t, inGroup) ?? undefined,
         group: t.t(`Search.actions`),
         choice: { kind: "new-note" } as const,
       }]
@@ -323,13 +330,13 @@ function actionOptions(
       "profile",
       `Search.openProfile`,
       SCREEN_PATHS.profile,
-      t.t(`Search.profileDetail`),
+      { key: `Search.profileDetail` },
     ),
     page(
       "download-data",
       `Search.downloadData`,
       `${profilePath("account")}#${DATA_EXPORT_ANCHOR}`,
-      t.t(`Search.downloadDetail`),
+      { key: `Search.downloadDetail` },
       [`export my data`, `GDPR`, `archive`, `takeout`, `скачать данные`, `экспорт данных`],
     ),
     page(

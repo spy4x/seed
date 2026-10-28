@@ -7,7 +7,7 @@ import { pictureUrl, shownPictureId } from "@domain/identity"
 import { GROUP_PATHS, NOTE_PATHS, profilePath, SCREEN_PATHS } from "@ui/progressive.tsx"
 import { AppFrame, type ConnectionStatus, PublicFrame as PublicFrameScreen } from "@ui/frame.tsx"
 import { EmailBanner, showsEmailBanner } from "@ui/email-screen.tsx"
-import { englishText } from "@ui/message.ts"
+import { pageCommands } from "./page-commands.ts"
 import { type SearchChoice, SearchPalette } from "@ui/search-palette.tsx"
 import { NewNoteDialog } from "@ui/new-note-dialog.tsx"
 import { emailStore } from "../state/email.ts"
@@ -43,33 +43,9 @@ import { guestRefusal } from "../state/guest-refusal.ts"
 import { GuestRefusalDialog } from "@ui/guest-profile.tsx"
 import { overviewPageActions } from "./OverviewView.tsx"
 import { noteEditorPageActions } from "./NoteEditorView.tsx"
-import type { Translator } from "@spy4x/platform/universal/i18n"
 import { useAppText } from "@ui/i18n.ts"
 
-/** The overview's commands in the palette, while the overview is open; labels are `app` keys. */
-const OVERVIEW_COMMANDS = [
-  { id: "overview-range", label: `Shortcuts.dateRange` },
-  { id: "overview-customise", label: `Shortcuts.customise` },
-] as const
-
-/** The note page's command in the palette, while a note an editor can change is open. */
-const NOTE_COMMANDS = [{ id: "note-attach", label: `AppShell.attachFiles` }] as const
-
-/** The open page's commands in the palette, if it has any, in the translator's language. */
-function pageCommands(t: Translator<string>) {
-  const commands = overviewPageActions.value
-    ? OVERVIEW_COMMANDS
-    : noteEditorPageActions.value
-    ? NOTE_COMMANDS
-    : undefined
-  return commands?.map((command) => ({
-    id: command.id,
-    label: t.t(command.label),
-    aliases: [englishText(command.label)],
-  }))
-}
-
-/** Runs the page command `id` of {@link pageCommands} on the open page. */
+/** Runs the page command `id` of `pageCommands` on the open page. */
 function runPageCommand(id: string): void {
   const actions = overviewPageActions.value
   if (id === "overview-range") actions?.openRange()
@@ -263,7 +239,10 @@ export function AppShell(
             ? { id: current.id, name: current.name, canWrite: canMutateNotes(current.role) }
             : null}
           online={wsStatus === "open"}
-          pageCommands={pageCommands(t)}
+          pageCommands={pageCommands(t, {
+            overview: Boolean(overviewPageActions.value),
+            noteEditor: Boolean(noteEditorPageActions.value),
+          })}
           onSelect={(choice) => void open(choice)}
           slashKey={singleKeys.on.value}
           guest={guest}

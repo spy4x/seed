@@ -224,7 +224,7 @@ describe("SearchPalette", () => {
     expect(picked).toEqual([{ kind: "command", id: "overview-customise" }])
   })
 
-  it("finds an action by its English words in another language, and by its own words", async () => {
+  it("finds an action by its English label or detail in another language, and by its own words", async () => {
     root = document.createElement("div")
     document.body.append(root)
     await act(() =>
@@ -254,6 +254,9 @@ describe("SearchPalette", () => {
     expect(listed()).toContain("Открыть уведомления")
     await type("date range")
     expect(listed()).toContain("Изменить период")
+    // The English detail finds its action too.
+    await type("password")
+    expect(listed().some((row) => row.startsWith("Открыть профиль"))).toBe(true)
   })
 
   it("offers Open overview only while there is a current group", async () => {
