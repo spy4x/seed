@@ -87,5 +87,7 @@
   "SubscriberWelcomeMail.subject": "You are subscribed to {host}",
   "SubscriberWelcomeMail.subscribed": "You are subscribed to news from {host}.",
   "SubscriberWelcomeMail.reason": "You get this mail because you subscribed at {host}.",
-  "SubscriberWelcomeMail.unsubscribe": "Unsubscribe"
+  "SubscriberWelcomeMail.unsubscribe": "Unsubscribe",
+  "SubscriberIssue.reason": "You get this mail because you subscribed at {host}.",
+  "SubscriberIssue.readPost": "Read the post"
 }

@@ -103,5 +103,7 @@
   "SubscriberWelcomeMail.subject": "اشتركت في {host}",
   "SubscriberWelcomeMail.subscribed": "اشتركت في أخبار {host}.",
   "SubscriberWelcomeMail.reason": "تصلك هذه الرسالة لأنك اشتركت في {host}.",
-  "SubscriberWelcomeMail.unsubscribe": "إلغاء الاشتراك"
+  "SubscriberWelcomeMail.unsubscribe": "إلغاء الاشتراك",
+  "SubscriberIssue.reason": "تصلك هذه الرسالة لأنك اشتركت في {host}.",
+  "SubscriberIssue.readPost": "اقرأ المقالة"
 }

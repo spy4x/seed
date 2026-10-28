@@ -639,7 +639,10 @@ CREATE TABLE subscriber_issue_content (
   html TEXT NOT NULL,
   text TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  CONSTRAINT subscriber_issue_content_list_issue_unique UNIQUE (list_id, issue_id)
+  -- #527: the issue's language, whose subscribers alone get it; NULL for the whole list.
+  language TEXT,
+  CONSTRAINT subscriber_issue_content_list_issue_unique UNIQUE (list_id, issue_id),
+  CONSTRAINT subscriber_issue_content_language_check CHECK (length(language) BETWEEN 2 AND 35)
 );
 
 -- A person's request to delete their account (#144). See migration 2026_10_20_0001.

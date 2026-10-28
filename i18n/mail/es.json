@@ -91,5 +91,7 @@
   "SubscriberWelcomeMail.subject": "Te has suscrito a {host}",
   "SubscriberWelcomeMail.subscribed": "Te has suscrito a las novedades de {host}.",
   "SubscriberWelcomeMail.reason": "Recibes este correo porque te suscribiste en {host}.",
-  "SubscriberWelcomeMail.unsubscribe": "Cancelar suscripción"
+  "SubscriberWelcomeMail.unsubscribe": "Cancelar suscripción",
+  "SubscriberIssue.reason": "Recibes este correo porque te suscribiste en {host}.",
+  "SubscriberIssue.readPost": "Leer la entrada"
 }

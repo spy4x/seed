@@ -406,6 +406,7 @@ AdminBlogDialogs.liveOnItsOwn	057aa42f4904c1cb
 AdminBlogDialogs.mailingList	13f40df7d6c966f0
 AdminBlogDialogs.newSlug	17fe8bbd217cf797
 AdminBlogDialogs.now	fe18013d93d22f4f
+AdminBlogDialogs.postLanguageOnly	61710cd9c990f13d
 AdminBlogDialogs.publish	859390eb495b2ead
 AdminBlogDialogs.publishAndEmail	6815308c5b803f7c
 AdminBlogDialogs.publishTitle	97bbbb855c13ec32
@@ -1110,6 +1111,7 @@ AdminNewsletter.issue	48dc76dfa23ae03f
 AdminNewsletter.issuesSent	90af23066962c9ab
 AdminNewsletter.joined	49d88728cdc627c9
 AdminNewsletter.keyNumbers	b6fead36007e76b6
+AdminNewsletter.language	a4fe65264ef7dbb3
 AdminNewsletter.loadingAddresses	cef187adfa6a167f
 AdminNewsletter.loadingNumbers	97cb5b4d552e5c22
 AdminNewsletter.loadingSends	38f9c63411b558f6

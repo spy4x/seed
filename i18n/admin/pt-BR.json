@@ -467,6 +467,7 @@
     "other": "Enviar também este post para {count} assinantes confirmados de <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "Enviado uma vez, quando o post vai ao ar. Não dá para desfazer o envio.",
+  "AdminBlogDialogs.postLanguageOnly": "O e-mail vai só para os inscritos que se inscreveram no idioma do post.",
   "AdminBlogEditor.leaveMessage": "Suas alterações neste post serão perdidas.",
   "AdminBlogEditor.doneScheduled": "Agendado para {at}.",
   "AdminBlogEditor.donePublished": "Publicado.",
@@ -1293,6 +1294,7 @@
   "AdminNewsletter.searching": "Buscando…",
   "AdminNewsletter.search": "Buscar",
   "AdminNewsletter.status": "Status",
+  "AdminNewsletter.language": "Idioma",
   "AdminNewsletter.clear": "Limpar filtros",
   "AdminNewsletter.count": {
     "one": "{count} endereço",

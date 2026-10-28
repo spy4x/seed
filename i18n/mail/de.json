@@ -87,5 +87,7 @@
   "SubscriberWelcomeMail.subject": "Du hast {host} abonniert",
   "SubscriberWelcomeMail.subscribed": "Du bekommst jetzt Neuigkeiten von {host}.",
   "SubscriberWelcomeMail.reason": "Du bekommst diese Mail, weil du dich bei {host} angemeldet hast.",
-  "SubscriberWelcomeMail.unsubscribe": "Abbestellen"
+  "SubscriberWelcomeMail.unsubscribe": "Abbestellen",
+  "SubscriberIssue.reason": "Du bekommst diese Mail, weil du dich bei {host} angemeldet hast.",
+  "SubscriberIssue.readPost": "Beitrag lesen"
 }

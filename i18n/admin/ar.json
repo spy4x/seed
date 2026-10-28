@@ -500,6 +500,7 @@
     "other": "إرسال هذه التدوينة أيضًا إلى {count} مشترك مؤكَّد في <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "تُرسل مرة واحدة عند نشر التدوينة. لا يمكن التراجع عن الإرسال.",
+  "AdminBlogDialogs.postLanguageOnly": "تصل فقط إلى المشتركين الذين اشتركوا بلغة التدوينة.",
   "AdminBlogEditor.leaveMessage": "ستضيع تغييراتك على هذا المنشور.",
   "AdminBlogEditor.doneScheduled": "مجدول في {at}.",
   "AdminBlogEditor.donePublished": "نُشر.",
@@ -1422,6 +1423,7 @@
   "AdminNewsletter.searching": "جارٍ البحث…",
   "AdminNewsletter.search": "بحث",
   "AdminNewsletter.status": "الحالة",
+  "AdminNewsletter.language": "اللغة",
   "AdminNewsletter.clear": "مسح عوامل التصفية",
   "AdminNewsletter.count": {
     "zero": "لا توجد عناوين",

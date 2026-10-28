@@ -26,7 +26,9 @@ import { createOutboxProcessor } from "@server/jobs/wiring.ts"
 import { cancelJob, runJobNow } from "@server/jobs/admin-jobs.ts"
 import { AdminJobActionOutcome } from "@domain/identity"
 import { createPostgresAuthStore } from "@spy4x/server/auth/postgres"
-import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
+import { createListCrypto, type SubscribersSetup } from "@server/subscribers/subscribers.ts"
+import type { EmailMessage } from "@spy4x/email/message"
+import type { EmailSender } from "@spy4x/email/sender"
 import { createAdminBlog } from "../../apps/api/routes/admin/blog.ts"
 import { applyMigrations } from "./migrations.ts"
 
@@ -464,6 +466,55 @@ Deno.test(`blog: a scheduled post goes live through its job, and is emailed once
   })
 })
 
+Deno.test(`blog: a post's issue goes only to the subscribers of its language, written in it (#527)`, async () => {
+  await withSchema(async (sql) => {
+    const blog = new PostgresBlogRepository(sql)
+    const maya = await operator(sql)
+    const crypto = await createListCrypto(SETUP, `news`)
+    // Ada signed up before #527 and has no language: she reads the main language, English.
+    for (
+      const [email, language] of [[`ada@example.com`, null], [`bob@example.com`, `de`], [
+        `cat@example.com`,
+        `es`,
+      ]]
+    ) {
+      await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at, language)
+        VALUES ('news', ${email}, ${await crypto.subscriberKey(email!)}, now(), ${language})`
+    }
+    const sent: EmailMessage[] = []
+    const sender = {
+      send: (message: EmailMessage) => {
+        sent.push(message)
+        return Promise.resolve({ ok: true as const, id: String(sent.length) })
+      },
+    } as unknown as EmailSender
+    const processor = createOutboxProcessor(
+      sql,
+      { store: createPostgresAuthStore(sql), sender, brand: BRAND, log: () => {} },
+      null,
+      SETUP,
+    )
+    const german = uuidV7()
+    const english = uuidV7()
+    await blog.create(german, fields(`hallo`, { language: `de`, title: `Hallo` }), maya)
+    await blog.create(english, fields(`hello`, { title: `Hello` }), maya)
+    await blog.publish(german, 1, null, `news`, maya)
+    await blog.publish(english, 1, null, `news`, maya)
+    for (let run = 0; run < 3; run++) await processor.drainOnce()
+
+    expect((await blog.get(german))!.newsletterRecipients).toBe(1)
+    expect((await blog.get(english))!.newsletterRecipients).toBe(1)
+    const byIssue = (subject: string) => sent.filter((mail) => mail.subject === subject)
+    expect(byIssue(`Hallo`).map((mail) => mail.to)).toEqual([`bob@example.com`])
+    expect(byIssue(`Hallo`)[0].text).toContain(`Beitrag lesen`)
+    expect(byIssue(`Hallo`)[0].text).not.toContain(`Read the post`)
+    expect(byIssue(`Hallo`)[0].text).toContain(`https://www.example.com/de/blog/hallo`)
+    expect(byIssue(`Hello`).map((mail) => mail.to)).toEqual([`ada@example.com`])
+    expect(byIssue(`Hello`)[0].text).toContain(`Read the post`)
+    expect(sent.map((mail) => mail.to)).not.toContain(`cat@example.com`)
+  })
+})
+
 Deno.test(`blog: a job left over from an earlier time does not publish early`, async () => {
   await withSchema(async (sql) => {
     const blog = new PostgresBlogRepository(sql)
@@ -532,13 +583,17 @@ Deno.test(`blog: lost jobs come back once, and the sample posts seed once`, asyn
   })
 })
 
-Deno.test(`blog: the admin reads the confirmed subscribers of every list`, async () => {
+Deno.test(`blog: the admin reads the confirmed subscribers of every list, in each language`, async () => {
   await withSchema(async (sql) => {
     await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at)
       VALUES ('news', 'ada@example.com', 'k1', now()), ('other', 'bob@example.com', 'k2', now())`
 
+    await sql`INSERT INTO subscribers (list_id, email, key, subscribed_at, language)
+      VALUES ('news', 'cat@example.com', 'k3', now(), 'de'), ('news', 'dan@example.com', 'k4', now(), 'en')`
+
+    // One with no language counts as the main language's, as the issue's send does (#527).
     expect(await createAdminBlog(sql).confirmedSubscribers()).toEqual([
-      { list: `news`, confirmed: 1 },
+      { list: `news`, byLanguage: { en: 2, de: 1 } },
     ])
   })
 })

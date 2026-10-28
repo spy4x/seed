@@ -9,6 +9,7 @@ import {
   BLOG_SEARCH_MAX_LENGTH,
   blogChangeUrlSchema,
   BlogError,
+  type BlogNewsletterList,
   type BlogNewsletterResponse,
   type BlogPost,
   blogPostCreateSchema,
@@ -27,6 +28,7 @@ import {
   type RenderedBlogBody,
 } from "@domain/blog"
 import { isSubscriberList, SUBSCRIBER_LISTS } from "@domain/subscribers"
+import { DEFAULT_LANGUAGE, type Language } from "@domain/identity"
 import { type BlogActor, PostgresBlogRepository } from "@server/blog/postgres-blog-repository.ts"
 import { renderBlogBody } from "@server/blog/render.ts"
 import type { SubscribersSetup } from "@server/subscribers/subscribers.ts"
@@ -64,8 +66,8 @@ export interface AdminBlogService {
   unpublish(id: string, version: number, actor: BlogActor): Promise<BlogPost>
   changeUrl(id: string, version: number, slug: string, actor: BlogActor): Promise<BlogPost>
   delete(id: string, version: number, actor: BlogActor): Promise<void>
-  /** Every mailing list with how many confirmed subscribers it has. */
-  confirmedSubscribers(): Promise<{ list: string; confirmed: number }[]>
+  /** Every mailing list with how many confirmed subscribers it has in each language. */
+  confirmedSubscribers(): Promise<BlogNewsletterList[]>
 }
 
 /** What the blog routes need. */
@@ -277,13 +279,20 @@ export function createAdminBlog(sql: postgres.Sql): AdminBlogService {
     changeUrl: (id, version, slug, actor) => repository.changeUrl(id, version, slug, actor),
     delete: (id, version, actor) => repository.delete(id, version, actor),
     async confirmedSubscribers() {
-      const rows = await sql<{ list: string; confirmed: number }[]>`
-        SELECT list_id AS list, COUNT(*)::int AS confirmed FROM subscribers
+      // A subscriber with no language counts as the main language's, as the issue's send does.
+      const rows = await sql<{ list: string; language: Language; confirmed: number }[]>`
+        SELECT list_id AS list, COALESCE(language, ${DEFAULT_LANGUAGE}) AS language,
+          COUNT(*)::int AS confirmed
+        FROM subscribers
         WHERE list_id IN ${sql([...SUBSCRIBER_LISTS])}
-        GROUP BY list_id
+        GROUP BY 1, 2
       `
-      const counts = new Map(rows.map((row) => [row.list, row.confirmed]))
-      return SUBSCRIBER_LISTS.map((list) => ({ list, confirmed: counts.get(list) ?? 0 }))
+      return SUBSCRIBER_LISTS.map((list) => ({
+        list,
+        byLanguage: Object.fromEntries(
+          rows.filter((row) => row.list === list).map((row) => [row.language, row.confirmed]),
+        ),
+      }))
     },
   }
 }

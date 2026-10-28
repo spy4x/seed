@@ -71,6 +71,8 @@ SubscriberConfirmMail.button	eebdd24a77d9ad32
 SubscriberConfirmMail.ignore	1c16062550cc8ad4
 SubscriberConfirmMail.subject	f2f7c8e87cb2adb4
 SubscriberConfirmMail.within	5e83f92a8d9e1df9
+SubscriberIssue.readPost	0846eef7573ef713
+SubscriberIssue.reason	c9b11e36efe37d2b
 SubscriberWelcomeMail.reason	c9b11e36efe37d2b
 SubscriberWelcomeMail.subject	6f2c21a2568400f8
 SubscriberWelcomeMail.subscribed	333b3323b07aeb9c

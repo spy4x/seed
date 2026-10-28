@@ -456,6 +456,7 @@
     "other": "Also email this post to {count} confirmed subscribers of <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "Sent once, when the post goes live. It cannot be unsent.",
+  "AdminBlogDialogs.postLanguageOnly": "It goes only to the subscribers who signed up in the post's language.",
   "AdminBlogEditor.leaveMessage": "Your changes to this post are lost.",
   "AdminBlogEditor.doneScheduled": "Scheduled for {at}.",
   "AdminBlogEditor.donePublished": "Published.",
@@ -1250,6 +1251,7 @@
   "AdminNewsletter.searching": "Searching…",
   "AdminNewsletter.search": "Search",
   "AdminNewsletter.status": "Status",
+  "AdminNewsletter.language": "Language",
   "AdminNewsletter.clear": "Clear filters",
   "AdminNewsletter.count": {
     "one": "{count} address",

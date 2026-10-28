@@ -467,6 +467,7 @@
     "other": "Enviar también esta entrada a {count} suscriptores confirmados de <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "Se envía una vez, cuando la entrada se publica. No se puede deshacer.",
+  "AdminBlogDialogs.postLanguageOnly": "Solo lo reciben los suscriptores que se suscribieron en el idioma de la entrada.",
   "AdminBlogEditor.leaveMessage": "Se pierden tus cambios en esta entrada.",
   "AdminBlogEditor.doneScheduled": "Programada para el {at}.",
   "AdminBlogEditor.donePublished": "Publicada.",
@@ -1293,6 +1294,7 @@
   "AdminNewsletter.searching": "Buscando…",
   "AdminNewsletter.search": "Buscar",
   "AdminNewsletter.status": "Estado",
+  "AdminNewsletter.language": "Idioma",
   "AdminNewsletter.clear": "Quitar filtros",
   "AdminNewsletter.count": {
     "one": "{count} dirección",

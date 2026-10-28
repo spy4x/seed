@@ -172,10 +172,13 @@ export interface RenderedBlogBody {
   readingMinutes: number
 }
 
-/** A mailing list the publish dialog offers, with how many confirmed subscribers it has. */
+/**
+ * A mailing list the publish dialog offers, with how many confirmed subscribers it has in each
+ * language: a post's issue goes only to its language's (#527). A language with none is left out.
+ */
 export interface BlogNewsletterList {
   list: string
-  confirmed: number
+  byLanguage: Partial<Record<Language, number>>
 }
 
 /** The answer of `GET /api/admin/blog/newsletter`. */

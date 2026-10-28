@@ -55,8 +55,16 @@ Publishing with a list ("Also email this post") stores `newsletter_list`. When t
 the `blog.publish` job queues a newsletter issue: the title, the description, the key points and a
 "Read the post" button to the post's own address on `MPA_DOMAIN`. The issue id is the post's id.
 
+**An issue goes only to the subscribers of the post's language** (#527). A subscriber's language is
+the one of the page they signed up on (`subscribers.language`); one with none, such as an address
+from before languages existed, counts as the main language's. The issue stores its language
+(`subscriber_issue_content.language`), the send job mails only those subscribers, and the button
+label and the footer come from the mail catalog in that language, so nobody gets a post in a
+language they did not sign up in. The publish dialog counts only those subscribers. An issue
+queued with `deno task subscribers:send` has no language and goes to the whole list.
+
 A post is emailed **once ever**. The job sets `newsletter_sent_at` and `newsletter_recipients` (the
-confirmed subscribers at that moment) in the same transaction that queues the issue, and never
+confirmed subscribers of its language at that moment) in the same transaction that queues the issue, and never
 queues one for a post where it is set: not on a retried job, not after unpublishing and publishing
 again, not when two runs race (the post is locked). The send itself is the newsletter's
 `subscribers.send-issue` job, whose send log mails each address at most once.

@@ -262,7 +262,11 @@ function editorProps(
     onSignificantUpdate: (value) => calls.push(["significant", value]),
     topics: ["Infra"],
     originals: [],
-    newsletter: { enabled: true, lists: [{ list: "news", confirmed: 12 }], siteUrl: null },
+    newsletter: {
+      enabled: true,
+      lists: [{ list: "news", byLanguage: { en: 12, de: 3 } }],
+      siteUrl: null,
+    },
     siteUrl: "https://www.example.com",
     preview: null,
     previewPending: false,
@@ -425,6 +429,26 @@ describe("the blog editor", () => {
     expect(document.body.textContent).toContain("It cannot be unsent.")
     await clickOn(button("Publish and email 12"))
     expect(calls.at(-1)).toEqual(["publish", { at: null, list: "news" }])
+  })
+
+  it("counts only the subscribers of the post's language as the issue's readers, and says so (#527)", async () => {
+    const value = { ...blogDraftOf(saved), language: "de" as const }
+    await mount(<AdminBlogEditorScreen {...editorProps([], { dialog: "publish", value })} />)
+    expect(document.body.textContent).toContain("Also email this post to 3 confirmed subscribers")
+    await clickOn(
+      find("[data-e2e=admin-blog-email] input, input[data-e2e=admin-blog-email]"),
+    )
+    expect(find("[data-e2e=admin-blog-email-hint]").textContent).toContain(
+      "It goes only to the subscribers who signed up in the post's language.",
+    )
+    expect(button("Publish and email 3")).toBeTruthy()
+
+    await mount(
+      <AdminBlogEditorScreen
+        {...editorProps([], { dialog: "publish", value: { ...value, language: "es" } })}
+      />,
+    )
+    expect(document.body.textContent).toContain("Also email this post to 0 confirmed subscribers")
   })
 
   it("keeps a scheduled post's list when it is published now or moved, unless unticked", async () => {

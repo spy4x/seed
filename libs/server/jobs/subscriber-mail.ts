@@ -182,11 +182,29 @@ interface IssueRow {
   subject: string
   html: string
   text: string
+  language: Language | null
 }
 
 /**
- * The send-issue job: mails the stored issue to everyone on its list through `sendIssue`, which
- * records each recipient in the Postgres send log. A rerun mails only the audience members the log
+ * The addresses on `list` whose language is `language`. A subscriber with no language (one from
+ * before #527, or one whose page named none) counts as the main language's.
+ */
+export async function subscribersInLanguage(
+  sql: postgres.Sql,
+  list: string,
+  language: Language,
+): Promise<Set<string>> {
+  const rows = await sql<{ email: string }[]>`
+    SELECT email FROM subscribers
+    WHERE list_id = ${list} AND COALESCE(language, ${DEFAULT_LANGUAGE}) = ${language}
+  `
+  return new Set(rows.map((row) => row.email))
+}
+
+/**
+ * The send-issue job: mails the stored issue to everyone on its list, or, for an issue with a
+ * language, to the subscribers of that language only (#527), through `sendIssue`, which records
+ * each recipient in the Postgres send log. A rerun mails only the audience members the log
  * does not list as reached. Throws when any mail failed or another run holds the send lock, so the
  * job is retried; the issue row stays for that rerun.
  */
@@ -194,7 +212,7 @@ export function subscriberSendIssueJob(deps: SubscriberMailDeps): JobHandler {
   const { sql } = deps
   return async (event) => {
     const [issue] = await sql<IssueRow[]>`
-      SELECT list_id, issue_id, subject, html, text
+      SELECT list_id, issue_id, subject, html, text, language
       FROM subscriber_issue_content WHERE id = ${event.aggregateId}
     `
     if (!issue) return
@@ -204,11 +222,17 @@ export function subscriberSendIssueJob(deps: SubscriberMailDeps): JobHandler {
     }
     const crypto = await createListCrypto(deps.setup, issue.listId)
     const store = createPostgresSubscriberStore(sql, { listId: issue.listId })
+    const everyone = await store.list()
+    const readers = issue.language === null
+      ? null
+      : await subscribersInLanguage(sql, issue.listId, issue.language)
     const result = await sendIssue({
       issue: issue.issueId,
       subject: issue.subject,
       letter: { html: issue.html, text: issue.text },
-      subscribers: await store.list(),
+      subscribers: readers === null
+        ? everyone
+        : everyone.filter((subscriber) => readers.has(subscriber.email)),
       crypto,
       unsubscribeLink: (token) =>
         subscriberUnsubscribeLink(deps.brand.webAppUrl, issue.listId, token),

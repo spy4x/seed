@@ -95,5 +95,7 @@
   "SubscriberWelcomeMail.subject": "Вы подписаны на {host}",
   "SubscriberWelcomeMail.subscribed": "Вы подписаны на новости {host}.",
   "SubscriberWelcomeMail.reason": "Вы получили это письмо, потому что подписались на {host}.",
-  "SubscriberWelcomeMail.unsubscribe": "Отписаться"
+  "SubscriberWelcomeMail.unsubscribe": "Отписаться",
+  "SubscriberIssue.reason": "Вы получили это письмо, потому что подписались на {host}.",
+  "SubscriberIssue.readPost": "Читать запись"
 }

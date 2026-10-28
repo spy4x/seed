@@ -31,3 +31,10 @@ ALTER TABLE subscription_requests
 ALTER TABLE subscribers
     ADD COLUMN language TEXT,
     ADD CONSTRAINT subscribers_language_check CHECK (length(language) BETWEEN 2 AND 35);
+
+-- The language an issue is written in: it goes only to the subscribers of that language (a
+-- subscriber with none counts as the main language's). NULL for an issue to the whole list, such as
+-- one `deno task subscribers:send` queues.
+ALTER TABLE subscriber_issue_content
+    ADD COLUMN language TEXT,
+    ADD CONSTRAINT subscriber_issue_content_language_check CHECK (length(language) BETWEEN 2 AND 35);

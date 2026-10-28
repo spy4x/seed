@@ -186,11 +186,13 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
   const late = at === null || new Date(at).getTime() <= now.getTime()
   const atError = scheduling && tried && late ? t.t(`AdminBlogDialogs.futureTime`) : null
   const target = list ?? chosen?.list ?? null
+  // The issue goes only to the subscribers of the post's language (#527).
+  const readers = chosen?.byLanguage[value.language] ?? 0
   const sending = canEmail && emailing && target !== null
   const confirmLabel = scheduling
     ? t.t(`AdminBlogDialogs.schedule`)
     : sending && chosen
-    ? t.t(`AdminBlogDialogs.publishAndEmail`, { count: chosen.confirmed })
+    ? t.t(`AdminBlogDialogs.publishAndEmail`, { count: readers })
     : t.t(`AdminBlogDialogs.publish`)
   const slug = post?.slug ?? value.slug.trim()
   return (
@@ -265,17 +267,17 @@ function PublishDialog(props: AdminBlogEditorScreenProps & { title: string }): J
                 ? (
                   <Rich
                     parts={t.parts(`AdminBlogDialogs.alsoEmailList`, {
-                      count: chosen.confirmed,
+                      count: readers,
                       list: chosen.list,
                     })}
                     tags={{ list: path }}
                   />
                 )
-                : t.t(`AdminBlogDialogs.alsoEmail`, { count: chosen.confirmed })}
+                : t.t(`AdminBlogDialogs.alsoEmail`, { count: readers })}
             </Checkbox>
             {emailing && (
               <p class="text-sm text-muted" data-e2e="admin-blog-email-hint">
-                {t.t(`AdminBlogDialogs.sentOnce`)}
+                {t.t(`AdminBlogDialogs.sentOnce`)} {t.t(`AdminBlogDialogs.postLanguageOnly`)}
               </p>
             )}
           </Stack>

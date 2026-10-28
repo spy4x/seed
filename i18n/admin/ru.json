@@ -478,6 +478,7 @@
     "other": "Также отправить запись {count} подтверждённым подписчикам списка <list>{list}</list>"
   },
   "AdminBlogDialogs.sentOnce": "Отправляется один раз, когда запись выходит. Отменить отправку нельзя.",
+  "AdminBlogDialogs.postLanguageOnly": "Письмо получат только подписчики, которые подписались на языке записи.",
   "AdminBlogEditor.leaveMessage": "Ваши правки в этой записи пропадут.",
   "AdminBlogEditor.doneScheduled": "Запланировано на {at}.",
   "AdminBlogEditor.donePublished": "Опубликовано.",
@@ -1336,6 +1337,7 @@
   "AdminNewsletter.searching": "Ищем…",
   "AdminNewsletter.search": "Найти",
   "AdminNewsletter.status": "Статус",
+  "AdminNewsletter.language": "Язык",
   "AdminNewsletter.clear": "Сбросить фильтры",
   "AdminNewsletter.count": {
     "one": "{count} адрес",
