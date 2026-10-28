@@ -17,7 +17,7 @@ export function ForgotPasswordView() {
   const [email, setEmail] = useState(() => takeHandedOffAddress() ?? "")
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
-  const [sentMessage, setSentMessage] = useState<string | null>(null)
+  const [sent, setSent] = useState(false)
 
   const submit = async () => {
     setError(null)
@@ -28,15 +28,15 @@ export function ForgotPasswordView() {
       setError(result.error || t.t(PASSWORD_RESET_FAILURES.forgot))
       return
     }
-    setSentMessage(result.message)
+    // The screen says it in its own words: the API's message is English only.
+    setSent(true)
   }
 
   return (
     <ForgotPasswordScreen
       email={email}
       onEmailChange={setEmail}
-      sent={sentMessage !== null}
-      sentMessage={sentMessage ?? undefined}
+      sent={sent}
       error={error}
       pending={pending}
       onSubmit={submit}

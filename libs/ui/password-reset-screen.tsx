@@ -18,17 +18,19 @@ export const PASSWORD_RESET_FAILURES = {
 
 /** A card with a heading, a sentence and the one way onward. */
 function Message(
-  { title, text, href, link, navigate, e2e }: {
+  { title, text, href, link, navigate, e2e, focusTitle = false }: {
     title: string
     text: string
     href: string
     link: string
     navigate?: Navigate
     e2e: string
+    /** The title takes focus as the message appears, so a keyboard user lands on it. */
+    focusTitle?: boolean
   },
 ): JSX.Element {
   return (
-    <AuthCard title={title} e2e={e2e}>
+    <AuthCard title={title} e2e={e2e} focusTitle={focusTitle}>
       <p class="text-sm text-muted" role="status">{text}</p>
       <Button href={href} navigate={navigate} variant="secondary" class="w-full">
         {link}
@@ -41,10 +43,11 @@ export interface ForgotPasswordScreenProps {
   /** The address typed so far. */
   email: string
   onEmailChange: (email: string) => void
-  /** The API's answer was accepted: the screen says to check the inbox instead of asking again. */
+  /**
+   * The API's answer was accepted: the screen says to check the inbox instead of asking again, in
+   * its own words, which never say whether an account uses the address.
+   */
   sent: boolean
-  /** What the API said, when it accepted the request. */
-  sentMessage?: string
   error: string | null
   pending: boolean
   onSubmit?: () => void
@@ -57,8 +60,7 @@ export interface ForgotPasswordScreenProps {
  * uses the address, so the screen never says which.
  */
 export function ForgotPasswordScreen(
-  { email, onEmailChange, sent, sentMessage, error, pending, onSubmit, navigate }:
-    ForgotPasswordScreenProps,
+  { email, onEmailChange, sent, error, pending, onSubmit, navigate }: ForgotPasswordScreenProps,
 ): JSX.Element {
   const field = useFocusOnError(error)
   const t = useAppText()
@@ -66,11 +68,12 @@ export function ForgotPasswordScreen(
     return (
       <Message
         title={t.t(`SignUpCodeScreen.title`)}
-        text={sentMessage ?? t.t(`PasswordResetScreen.sent`)}
+        text={t.t(`PasswordResetScreen.sent`)}
         href={SCREEN_PATHS.signIn}
         link={t.t(`ConfirmSignUpScreen.backToSignIn`)}
         navigate={navigate}
         e2e="forgot-password-sent"
+        focusTitle
       />
     )
   }
