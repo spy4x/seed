@@ -314,14 +314,22 @@ function percent(rate: number | null): string {
 }
 
 /**
- * The chart's points: one per day, or one per week (summed, named by its first day) when most days
- * have fewer than {@link WEEKLY_BELOW} visits, so a quiet shop sees a trend instead of a comb.
+ * Whether the chart sums weeks: when most days have fewer than {@link WEEKLY_BELOW} visits, so a
+ * quiet shop sees a trend instead of a comb. A week of seven days is never summed.
+ */
+export function chartIsWeekly(days: readonly WebsiteStatsDay[]): boolean {
+  const quiet = days.filter((day) => day.visits < WEEKLY_BELOW).length
+  return days.length > 7 && quiet > days.length / 2
+}
+
+/**
+ * The chart's points: one per day, or one per week (summed, named by its first day). Both lines of
+ * the chart take the current period's `weekly`, so they always have the same points.
  */
 export function chartPoints(
   days: readonly WebsiteStatsDay[],
+  weekly: boolean = chartIsWeekly(days),
 ): { x: string; y: number; weekly: boolean }[] {
-  const quiet = days.filter((day) => day.visits < WEEKLY_BELOW).length
-  const weekly = days.length > 7 && quiet > days.length / 2
   if (!weekly) return days.map((day) => ({ x: day.day, y: day.visits, weekly }))
   const points: { x: string; y: number; weekly: boolean }[] = []
   for (let index = 0; index < days.length; index += 7) {
@@ -500,10 +508,10 @@ function VisitsChart(
 ): JSX.Element {
   const t = useAdminText()
   const day = useFormat().utc()
-  const current = chartPoints(report.perDay)
-  const weekly = current[0]?.weekly ?? false
-  // The period before, drawn under the same days so the two lines can be compared.
-  const previous = chartPoints(report.previousPerDay).map((point, index) => ({
+  const weekly = chartIsWeekly(report.perDay)
+  const current = chartPoints(report.perDay, weekly)
+  // The period before, bucketed the same way and drawn under the same days, so the lines compare.
+  const previous = chartPoints(report.previousPerDay, weekly).map((point, index) => ({
     x: current[index]?.x ?? point.x,
     y: point.y,
   }))

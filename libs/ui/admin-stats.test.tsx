@@ -407,6 +407,33 @@ describe("stats screen states", () => {
   })
 })
 
+describe("the visits chart beside the period before", () => {
+  /** Each row of the chart's data table: its label, then this period's and the last's value. */
+  const chartRows = () =>
+    [...document.querySelectorAll("[data-e2e=admin-stats-chart] [data-chart-table] tbody tr")]
+      .map((row) => [...row.querySelectorAll("th, td")].map((cell) => cell.textContent))
+
+  for (
+    const [name, current, previous, slots] of [
+      ["draws a busy period by day over a quiet one", 10, 1, 30],
+      ["draws a quiet period by week over a busy one", 1, 10, 5],
+    ] as const
+  ) {
+    it(name, async () => {
+      const both = ready({
+        days: 30,
+        perDay: days("2026-09-29", Array(30).fill(current)),
+        previousPerDay: days("2026-08-30", Array(30).fill(previous)),
+      })
+      await mount(<AdminStatsScreen {...props([], { days: 30, response: both })} />)
+      const rows = chartRows()
+      expect(rows.length).toBe(slots)
+      // Every slot has a number in both lines: neither stops early nor bunches up at the start.
+      expect(rows.filter((row) => row.includes("–"))).toEqual([])
+    })
+  }
+})
+
 describe("the visits chart's points", () => {
   it("keeps one point per day while most days have a few visits", () => {
     const points = chartPoints(days("2026-10-01", [3, 3, 3, 0, 0, 3, 3, 3]))
