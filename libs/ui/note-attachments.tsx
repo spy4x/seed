@@ -60,13 +60,15 @@ export interface NoteAttachmentsProps {
 /**
  * The quota line: "Family uses 37 of 100 files and 41 MB of 200 MB.", as a message of the `app`
  * catalog whose `<group>` span is the group's name. A cap the plan does not set is left out.
- * `warn` is true from 90 % of either cap.
+ * `warn` is true from 90 % of either cap. Sizes are written for `language`, the interface
+ * language, as the file rows above write theirs.
  */
 export function quotaLine(
   groupName: string,
   usage: AttachmentUsage,
+  language: string,
 ): { message: KeyedMessage; warn: boolean } {
-  const bytes = formatBytes(usage.bytes)
+  const bytes = formatBytes(usage.bytes, language)
   const near = (used: number, cap: number | null) => cap !== null && cap > 0 && used >= cap * 0.9
   const warn = near(usage.files, usage.maxFiles) || near(usage.bytes, usage.maxBytes)
   const group = groupName
@@ -76,7 +78,12 @@ export function quotaLine(
         ? { key: `NoteAttachments.quotaNoCaps`, values: { group, count: usage.files, bytes } }
         : {
           key: `NoteAttachments.quotaNoFileCap`,
-          values: { group, count: usage.files, bytes, maxBytes: formatBytes(usage.maxBytes) },
+          values: {
+            group,
+            count: usage.files,
+            bytes,
+            maxBytes: formatBytes(usage.maxBytes, language),
+          },
         },
       warn,
     }
@@ -94,7 +101,7 @@ export function quotaLine(
           files: usage.files,
           count: usage.maxFiles,
           bytes,
-          maxBytes: formatBytes(usage.maxBytes),
+          maxBytes: formatBytes(usage.maxBytes, language),
         },
       },
     warn,
@@ -142,7 +149,7 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
   if (readOnly && items.length === 0) return null
   const perNote = usage?.maxPerNote ?? DEFAULT_PER_NOTE
   const placed = items.filter((item) => item.status !== "failed").length
-  const quota = usage && !readOnly ? quotaLine(props.groupName, usage) : null
+  const quota = usage && !readOnly ? quotaLine(props.groupName, usage, t.language) : null
   const attachButton = () => section.current?.querySelector<HTMLElement>(`#${ATTACH_BUTTON_ID}`)
 
   const download = async (item: AttachmentItem) => {
@@ -211,7 +218,7 @@ export function NoteAttachments(props: NoteAttachmentsProps): JSX.Element | null
             <p class="text-sm">{t.t(`NoteAttachments.empty`)}</p>
             <p class="mt-1 text-sm text-muted">
               {t.t(`NoteAttachments.types`, {
-                size: formatBytes(usage?.maxFileBytes ?? 2 * 1024 ** 2),
+                size: formatBytes(usage?.maxFileBytes ?? 2 * 1024 ** 2, t.language),
               })}
             </p>
           </div>
