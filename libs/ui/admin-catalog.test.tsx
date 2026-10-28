@@ -675,7 +675,7 @@ describe("the item editor", () => {
     expect(open.map((one) => one.className.includes("--color-selected"))).toEqual([true, false])
   })
 
-  it("opens a photo full size, moves with the arrow keys, and gives focus back on close", async () => {
+  it("opens a photo full size, moves with the arrow keys, and closes back to the photo", async () => {
     await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
     const second = document.querySelectorAll<HTMLElement>("[data-e2e=catalog-item-photo-open]")[1]
     second.focus()
@@ -701,6 +701,11 @@ describe("the item editor", () => {
     await settle()
     expect(document.querySelector("dialog[open]")).toBeNull()
     expect(document.activeElement).toBe(second)
+
+    // Closed for good: the next photo opens it again.
+    await clickOn(document.querySelectorAll("[data-e2e=catalog-item-photo-open]")[0])
+    expect(find("dialog[open] img").getAttribute("src"))
+      .toBe(`/api/admin/catalog/photos/${PHOTOS[0]}/full`)
   })
 
   it("opens no lightbox for a photo still being prepared", async () => {
