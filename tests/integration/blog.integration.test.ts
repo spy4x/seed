@@ -507,6 +507,7 @@ Deno.test(`blog: a post's issue goes only to the subscribers of its language, wr
     const byIssue = (subject: string) => sent.filter((mail) => mail.subject === subject)
     expect(byIssue(`Hallo`).map((mail) => mail.to)).toEqual([`bob@example.com`])
     expect(byIssue(`Hallo`)[0].text).toContain(`Beitrag lesen`)
+    expect(byIssue(`Hallo`)[0].text).toContain(`Du bekommst diese Mail`)
     expect(byIssue(`Hallo`)[0].text).not.toContain(`Read the post`)
     expect(byIssue(`Hallo`)[0].text).toContain(`https://www.example.com/de/blog/hallo`)
     expect(byIssue(`Hello`).map((mail) => mail.to)).toEqual([`ada@example.com`])
