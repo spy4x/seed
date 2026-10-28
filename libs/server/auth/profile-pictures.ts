@@ -40,18 +40,21 @@ const servable = (sql: postgres.Sql) => sql`(images.id IS NULL OR variant.object
  * Sets the live person's picture (#228), or clears it with `null`, and answers the person and the
  * id of the picture it replaced. A new picture is queued for processing (#464) and stays
  * `PictureState.Preparing` until the worker is done. The `users` trigger queues the replaced
- * picture's object and image for deletion. `null` when there is no live person. Inside a transaction: the row is locked first, so two changes at once each see the
- * picture the other left.
+ * picture's object and image for deletion. Clearing when there is no picture writes nothing. `null`
+ * when there is no live person. Inside a transaction: the row is locked first, so two changes at
+ * once each see the picture the other left.
  */
 export async function setUserPicture(
   sql: postgres.Sql,
   userId: number,
   picture: StoredPicture | null,
 ): Promise<{ user: User; previous: string | null } | null> {
-  const [before] = await sql<{ pictureId: string | null }[]>`
-    SELECT picture_id FROM users WHERE id = ${userId} AND deleted_at IS NULL FOR UPDATE
+  const [before] = await sql<User[]>`
+    SELECT * FROM users WHERE id = ${userId} AND deleted_at IS NULL FOR UPDATE
   `
   if (!before) return null
+  // Clearing a picture that is not there changes nothing, not even `updated_at`.
+  if (!picture && !before.pictureId) return { user: before, previous: null }
   const [user] = await sql<User[]>`
     UPDATE users SET
       picture_id = ${picture?.id ?? null},
@@ -62,7 +65,7 @@ export async function setUserPicture(
     RETURNING *
   `
   if (picture) await queueImage(sql, picture.id, pictureObjectKey(picture.id))
-  return { user, previous: before.pictureId }
+  return { user, previous: before.pictureId ?? null }
 }
 
 /**
