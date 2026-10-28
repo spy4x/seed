@@ -70,6 +70,7 @@
     "db:seed": "deno run -N=$DB_HOST:$DB_PORT -E ./infra/scripts/seed-data.ts", // the fake population, and the dev administrator; see the script
     "subscribers:send": "deno run -N -E -R ./apps/worker/subscribers-send.ts", // queues an issue for a mailing list; run in the worker container, see docs/development.md
     "user:role": "deno run -N -E -R ./apps/worker/user-role.ts", // gives a person a role by their address, such as operator for the admin app; see docs/apps.md
+    "operator:create": "deno run -N -E -R ./apps/worker/operator-create.ts", // creates an administrator with a password typed at a prompt, or makes an existing person one; see docs/deploy.md
     "deps:check": "deno outdated -r",
     "deps:update": "deno outdated -r -u -i",
     "update:ubuntu": "sudo apt update && sudo apt full-upgrade -y && sudo apt autoremove -y && sudo apt clean && sudo apt --fix-broken install && sudo do-release-upgrade",

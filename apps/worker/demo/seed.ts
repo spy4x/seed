@@ -407,7 +407,7 @@ async function writeAuditAt(sql: postgres.Sql, when: Date, event: AuditEventInpu
  * sets a cookie, so it runs inside a request; Hono would answer a throw with a 500, so the error is
  * kept and rethrown here.
  */
-async function signUp(
+export async function signUp(
   db: AppDbBase,
   pepper: string,
   email: string,
@@ -442,7 +442,7 @@ async function signUp(
 }
 
 /** Marks `email` proven, as a finished sign-up leaves it. Does nothing when it is proven. */
-async function prove(db: AppDbBase, email: string): Promise<void> {
+export async function prove(db: AppDbBase, email: string): Promise<void> {
   const key = await db.authStore.findKey(PASSWORD_METHOD, email)
   if (key && key.provenAt === null) await db.authStore.proveKey(key.id, new Date())
 }
