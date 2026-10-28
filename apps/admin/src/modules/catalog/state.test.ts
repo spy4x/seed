@@ -45,7 +45,11 @@ function build(answers: Record<string, () => AdminApiResult<unknown>> = {}) {
   const calls: string[] = []
   const request = ((path: string, init?: RequestInit) => {
     const key = `${init?.method ?? `GET`} ${path.split(`?`)[0]}`
-    calls.push(`${key}${typeof init?.body === `string` ? ` ${init.body}` : ``}`)
+    // A JSON body is recorded as is; a photo's bytes by the type they are sent as.
+    const body = typeof init?.body === `string`
+      ? init.body
+      : init?.body && new Headers(init.headers).get(`content-type`)
+    calls.push(`${key}${body ? ` ${body}` : ``}`)
     const answer = answers[key] ??
       (() =>
         key === `GET /api/admin/catalog`
@@ -119,7 +123,7 @@ it(`uploads each photo with its own type, and refuses a file it does not take in
 
   await state.upload([photo, text])
   expect(calls.filter((call) => call.startsWith(`POST`))).toEqual([
-    `POST /api/admin/catalog/items/${ID}/photos`,
+    `POST /api/admin/catalog/items/${ID}/photos image/heic`,
   ])
   expect(state.itemEditor.value.photos).toEqual({
     uploading: 0,
