@@ -535,15 +535,23 @@ export class PostgresCatalog {
     })
   }
 
-  /** The narrowest width of a catalog photo, WebP first, for the admin's thumbnails; or `null`. */
-  async photoThumbnail(
+  /**
+   * The narrowest width of a catalog photo, for the admin's thumbnails, or its widest, for its
+   * lightbox (#514); WebP first, or `null` until one is stored. `final` once every width is made,
+   * so the widest no longer changes.
+   */
+  async photoWidth(
     photoId: string,
-  ): Promise<{ objectKey: string; contentType: string } | null> {
-    const [row] = await this.sql<{ objectKey: string; contentType: string }[]>`
-      SELECT v.object_key, v.content_type
-      FROM image_variants v JOIN catalog_photos p ON p.id = v.image_id
+    which: `narrowest` | `widest`,
+  ): Promise<{ objectKey: string; contentType: string; final: boolean } | null> {
+    const [row] = await this.sql<{ objectKey: string; contentType: string; final: boolean }[]>`
+      SELECT v.object_key, v.content_type, im.processed_at IS NOT NULL AS final
+      FROM image_variants v
+      JOIN catalog_photos p ON p.id = v.image_id
+      JOIN images im ON im.id = v.image_id
       WHERE v.image_id = ${photoId}
-      ORDER BY (v.content_type = 'image/webp') DESC, v.width
+      ORDER BY (v.content_type = 'image/webp') DESC,
+        ${which === `widest` ? this.sql`v.width DESC` : this.sql`v.width`}
       LIMIT 1
     `
     return row ?? null

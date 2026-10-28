@@ -65,6 +65,9 @@ import { codeForStatus, errorResponse } from "../../services/error-response.ts"
 export const CATALOG_BODY_MAX_BYTES = 256 * 1024
 
 /** What the catalog routes call. Who may call it is the route's business. */
+/** Which width of a photo the admin asks for: the narrowest for a list, the widest for a lightbox. */
+export type CatalogPhotoSize = `thumbnail` | `full`
+
 export interface AdminCatalogService {
   settings: CatalogSettings
   /** Whether items get tracking links: the website's address is set (#483). */
@@ -116,8 +119,14 @@ export interface AdminCatalogService {
     actor: CatalogActor,
   ): Promise<CatalogPhoto[]>
   removePhoto(itemId: string, photoId: string, actor: CatalogActor): Promise<void>
-  /** The bytes and type of the photo's narrowest width, or `null` until there is one. */
-  thumbnail(photoId: string): Promise<{ bytes: Uint8Array; contentType: string } | null>
+  /**
+   * The bytes and type of the photo's narrowest width (`thumbnail`) or widest (`full`), or `null`
+   * until there is one. `final` once every width is made.
+   */
+  photoFile(
+    photoId: string,
+    size: CatalogPhotoSize,
+  ): Promise<{ bytes: Uint8Array; contentType: string; final: boolean } | null>
   createCategory(
     id: string,
     fields: CatalogCategoryFields,
@@ -235,7 +244,8 @@ const TOO_LARGE = `A photo can be up to ${CATALOG_PHOTO_MAX_BYTES / 1024 / 1024}
  * - `POST /catalog/items/:id/photos/order` takes `{ ids }`; `.../photos/:photoId` saves
  *   `{ alt, colourId }`; `.../photos/:photoId/delete` removes it.
  * - `GET /catalog/photos/:photoId/thumbnail` answers the photo's narrowest width, for the admin's
- *   lists: this host's `img-src 'self'` cannot load the file store.
+ *   lists, and `.../full` its widest, for the lightbox (#514): this host's `img-src 'self'` cannot
+ *   load the file store. While the wider widths are made, `full` is the narrowest and not cached.
  * - `POST /catalog/categories` adds one (201); `/categories/order` takes `{ ids }`;
  *   `/categories/:id` saves `{ version, slug, name }`; `/categories/:id/delete` takes `{ version }`.
  * - `POST /catalog/sources` adds a tracking link source (201); `/sources/order`, `/sources/:id` and
@@ -383,15 +393,19 @@ export function createAdminCatalogRoutes(
       await catalog.removePhoto(itemId(c), photoId(c), actorOf(c))
       return c.json({ deleted: true })
     })
-    .get(`/catalog/photos/:photoId/thumbnail`, limit, async (c) => {
-      const thumbnail = await catalog.thumbnail(photoId(c))
-      if (!thumbnail) throw new CatalogError(`PHOTO_NOT_FOUND`, `This photo is not ready yet.`)
-      return new Response(thumbnail.bytes as Uint8Array<ArrayBuffer>, {
+    .get(`/catalog/photos/:photoId/:size{thumbnail|full}`, limit, async (c) => {
+      const size = c.req.param(`size`) as CatalogPhotoSize
+      const file = await catalog.photoFile(photoId(c), size)
+      if (!file) throw new CatalogError(`PHOTO_NOT_FOUND`, `This photo is not ready yet.`)
+      return new Response(file.bytes as Uint8Array<ArrayBuffer>, {
         headers: {
-          "content-type": thumbnail.contentType,
+          "content-type": file.contentType,
           "x-content-type-options": `nosniff`,
           "content-security-policy": `sandbox; default-src 'none'`,
-          "cache-control": `private, max-age=86400`,
+          // The narrowest width never changes; the widest grows once the wider widths are made.
+          "cache-control": size === `thumbnail` || file.final
+            ? `private, max-age=86400`
+            : `no-store`,
         },
       })
     })
@@ -526,10 +540,15 @@ export function createAdminCatalog(
       repository.updatePhoto(itemId, photoId, change, actor),
     reorderPhotos: (itemId, ids, actor) => repository.reorderPhotos(itemId, ids, actor),
     removePhoto: (itemId, photoId, actor) => repository.removePhoto(itemId, photoId, actor),
-    async thumbnail(photoId) {
-      const variant = await repository.photoThumbnail(photoId)
+    async photoFile(photoId, size) {
+      const variant = await repository.photoWidth(
+        photoId,
+        size === `thumbnail` ? `narrowest` : `widest`,
+      )
       const bytes = variant && await files.read(variant.objectKey)
-      return variant && bytes ? { bytes, contentType: variant.contentType } : null
+      return variant && bytes
+        ? { bytes, contentType: variant.contentType, final: variant.final }
+        : null
     },
     createCategory: (id, fields, actor) => repository.createCategory(id, fields, actor),
     updateCategory: (id, version, fields, actor) =>

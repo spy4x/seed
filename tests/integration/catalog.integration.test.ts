@@ -262,9 +262,10 @@ Deno.test(`a photo queues its processing, keeps its order, and takes its image w
 
     await process(sql, c)
     expect((await catalog.listItems())[0]).toMatchObject({ coverId: c, photoCount: 3 })
-    expect(await catalog.photoThumbnail(c)).toEqual({
+    expect(await catalog.photoWidth(c, `narrowest`)).toEqual({
       objectKey: `${catalogPhotoObjectKey(c)}/480.webp`,
       contentType: `image/webp`,
+      final: true,
     })
 
     await catalog.removePhoto(item.id, c, actor)
@@ -313,6 +314,17 @@ Deno.test(`a photo is ready for the admin once its narrowest width is stored, be
     `
 
     expect((await catalog.getItem(item.id))!.photos[0].state).toBe(`ready`)
+    // The lightbox takes the widest WebP stored so far, which may still grow.
+    await sql`
+      INSERT INTO image_variants (object_key, image_id, content_type, width, height) VALUES
+        (${`${key}/960.webp`}, ${photo}, 'image/webp', 960, 1280),
+        (${`${key}/1600.avif`}, ${photo}, 'image/avif', 1600, 2133)
+    `
+    expect(await catalog.photoWidth(photo, `widest`)).toEqual({
+      objectKey: `${key}/960.webp`,
+      contentType: `image/webp`,
+      final: false,
+    })
     expect((await catalog.listItems())[0].coverId).toBe(photo)
     expect((await readPublicItem(sql, `zip-jacket`))!.photos).toEqual([])
   })
