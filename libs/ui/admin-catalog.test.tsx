@@ -491,13 +491,6 @@ describe("the item editor", () => {
     await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
     expect(document.body.textContent).toContain("Shown as ₫250,000")
   })
-
-  it("keeps Save in reach above the phone's tab bar", async () => {
-    await mount(<ItemEditor calls={[]} item={ITEM_SAVED} />)
-    const footer = find("[data-e2e=catalog-item-footer]")
-    expect(footer.className).toContain("max-md:sticky")
-    expect(footer.querySelector("[data-e2e=catalog-item-save]")).not.toBeNull()
-  })
 })
 
 describe("the item editor's checks", () => {

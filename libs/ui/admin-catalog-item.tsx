@@ -467,7 +467,7 @@ function Editor(props: AdminCatalogItemScreenProps): JSX.Element {
 
           <ErrorState message={errors.form ?? null} />
           <div
-            class={`flex gap-2 sm:justify-end ${FOOTER_PHONE_CLASS}`}
+            class="flex gap-2 sm:justify-end"
             data-e2e="catalog-item-footer"
           >
             <Button
@@ -723,13 +723,6 @@ function Colours({ props, edit }: { props: AdminCatalogItemScreenProps; edit: Ed
     </Card>
   )
 }
-
-/**
- * The editor's footer on a phone: it sticks above the rail's tab bar (its 64 px row, 1 px rule, the
- * 24 px fade band and the device's bottom inset), so Save stays in reach on a long item.
- */
-const FOOTER_PHONE_CLASS =
-  `max-md:sticky max-md:bottom-[calc(5.5rem+1px+env(safe-area-inset-bottom,0px))] max-md:z-[5] max-md:-mx-4 max-md:border-t max-md:border-subtle max-md:bg-canvas max-md:px-4 max-md:py-3`
 
 /** A checkbox's label as a 44px tap target on a phone, the box in its middle. */
 const TAP_CLASS = `size-11 justify-center sm:size-auto`
