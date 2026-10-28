@@ -19,9 +19,17 @@ export const ADMIN_HOST_AUTH_PATHS: readonly string[] = [
   "/api/auth/sign-out",
 ]
 
+/** Sign-up, sign-in and every other account route of the web app, under the API's base path. */
+export const AUTH_API_PREFIX = "/api/auth"
+
 /** Whether `path` is the operator area or a route under it. */
 export function isAdminApiPath(path: string): boolean {
   return path === ADMIN_API_PREFIX || path.startsWith(`${ADMIN_API_PREFIX}/`)
+}
+
+/** Whether `path` is one of the web app's account routes. */
+function isAuthApiPath(path: string): boolean {
+  return path === AUTH_API_PREFIX || path.startsWith(`${AUTH_API_PREFIX}/`)
 }
 
 /**
@@ -34,19 +42,25 @@ export function isAdminApiPath(path: string): boolean {
  * - On any other host, the operator area is 404: a session of the web app, or a script on its
  *   page, never reaches it.
  * - With no admin host configured, the operator area is 404 everywhere.
+ * - Without the SPA (`spa: false`, `SPA=false`), every account route under `/api/auth` is 404 on
+ *   every host but the admin host: sign-up, sign-in links, Google and GitHub, guests and passkeys.
+ *   Nobody can make or enter an account there, and the admin host keeps its own sign-in.
  *
  * The path is the one the router matches, with its percent-escapes decoded, so an escaped letter
  * (`/api/%61dmin`) cannot reach a route the gate did not check. The host is the request's own, as
  * the proxy passed it on. The role check in the operator area's
  * route still decides who may use it; this gate only decides from where.
  */
-export function createAdminHostGate(adminHost: string | null): MiddlewareHandler<APIContext> {
+export function createAdminHostGate(
+  adminHost: string | null,
+  { spa = true }: { spa?: boolean } = {},
+): MiddlewareHandler<APIContext> {
   return async (c, next) => {
     // The decoded path, the one the router matches: `/api/%61dmin` is the operator area too.
     const path = c.req.path
     const allowed = isAdminHost(c.req.url, adminHost)
       ? isAdminApiPath(path) || ADMIN_HOST_AUTH_PATHS.includes(path)
-      : !isAdminApiPath(path)
+      : !isAdminApiPath(path) && (spa || !isAuthApiPath(path))
     if (!allowed) return errorResponse(c, `not_found`, { message: "Not found" })
     await next()
   }

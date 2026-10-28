@@ -68,6 +68,7 @@ Current tasks come from [`deno.jsonc`](../deno.jsonc).
 | `deno task spa:build`        | Build the SPA                                          |
 | `deno task admin:build`      | Build the admin app                                    |
 | `deno task user:role`        | Give a person a role by their address                  |
+| `deno task operator:create`  | Create an administrator with a password, without mail  |
 | `deno task video:admin`      | Record the website's admin panel video                 |
 | `deno task subscribers:send` | Queue an issue for a mailing list (worker container)   |
 | `deno task deploy`           | Copy the production files to the server and start them |

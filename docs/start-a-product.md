@@ -92,6 +92,11 @@ These tests check the name and change with it: `libs/ui/admin-frame.test.tsx`,
   file (`infra/envs/.env.example` lists them), as [Analytics](analytics.md) says.
 - **Set** the domains and whether the public demo runs: `MPA_DOMAIN`, `DOMAIN` and `DEMO_MODE` in
   the env file ([The public demo](demo.md)).
+- **Set** whether the product has signed-in customers: a website and its admin panel only sets
+  `SPA=false` in the env file, which keeps the SPA off and closes sign-up ([Without the
+  SPA](deploy.md#without-the-spa)), and drops the website's sign-in and sign-up links.
+- **Create** the first operator on the server with `deno task operator:create <address>`, which
+  needs no mail ([The first operator](deploy.md#the-first-operator)).
 - **Set** where release images go, `IMAGE_PREFIX` in `.woodpecker/release.yml`.
 
 ## The repository's own files

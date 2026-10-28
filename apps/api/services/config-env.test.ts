@@ -1,7 +1,7 @@
 /// <reference lib="deno.ns" />
 import { expect } from "@std/expect"
 import { createEnvReader } from "@spy4x/server/config"
-import { readApiEnv } from "./config-env.ts"
+import { isSpaOn, readApiEnv } from "./config-env.ts"
 
 const REQUIRED_ENV: Record<string, string> = {
   ENV: "dev",
@@ -97,4 +97,14 @@ Deno.test("the API environment refuses a file store endpoint that is not a URL",
   expect(() => readApiEnv(createEnvReader({ ...withKv, S3_PUBLIC_ENDPOINT: `localhost` })))
     .toThrow(`S3_PUBLIC_ENDPOINT`)
   expect(readApiEnv(createEnvReader(withKv)).S3_BUCKET).toBe(`app-files`)
+})
+
+Deno.test("the SPA is off only when the environment sets SPA=false", () => {
+  const env = (extra: Record<string, string>) =>
+    readApiEnv(createEnvReader({ ...REQUIRED_ENV, KV_PASSWORD: "test-only", ...extra }))
+  expect(isSpaOn(env({ SPA: "false" }))).toBe(false)
+  for (const value of [undefined, "", "true", "False", "0"]) {
+    expect({ value, on: isSpaOn(env(value === undefined ? {} : { SPA: value })) })
+      .toEqual({ value, on: true })
+  }
 })

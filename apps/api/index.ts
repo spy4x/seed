@@ -132,6 +132,7 @@ const app = await createApiApp({
   parseAuth,
   reportError: (error, context) => void errorReporter.report(error, context),
   adminHost: config.adminDomain,
+  spa: config.spa,
   isProxyPeer: createProxyPeers({
     hosts: config.proxyHosts.length > 0 ? config.proxyHosts : DEFAULT_PROXY_HOSTS,
     onError: (host, error) => log(`error: could not look up the proxy ${host}`, error),

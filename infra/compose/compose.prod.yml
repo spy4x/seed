@@ -21,7 +21,7 @@ services:
       # These override compose.shared.yml's api-${PROJECT} router by name, so this stays one
       # router (rule from compose.shared.yml, transport from here) instead of a second router
       # that never matches. Overriding `entrypoints` from `web` to `websecure` drops the plain
-      # HTTP listener for this router; the `http-${PROJECT}` router on the spa service redirects
+      # HTTP listener for this router; the `http-${PROJECT}` router below redirects
       # plain HTTP for the whole host instead.
       - "traefik.docker.network=proxy"
       - 'traefik.http.routers.api-${PROJECT}.entrypoints=websecure'
@@ -30,9 +30,20 @@ services:
       # Keep the CF-Connecting-IP strip from compose.shared.yml's api-${PROJECT} router; see the
       # comment there for why it is required.
       - 'traefik.http.routers.api-${PROJECT}.middlewares=strip-cf-ip-${PROJECT}'
+      # Plain HTTP for DOMAIN answers a permanent redirect to HTTPS. A router of its own on the
+      # `web` entry point, because the proxy also serves development hosts over plain HTTP and so
+      # cannot redirect the whole entry point. Let's Encrypt's HTTP challenge still gets through:
+      # Traefik's own challenge router outranks every other. On the API, which always runs, not on
+      # the SPA: with `SPA=false` the website's and the admin host's redirects use this middleware.
+      - "traefik.http.middlewares.https-redirect-${PROJECT}.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect-${PROJECT}.redirectscheme.permanent=true"
+      - "traefik.http.routers.http-${PROJECT}.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.http-${PROJECT}.entrypoints=web"
+      - "traefik.http.routers.http-${PROJECT}.middlewares=https-redirect-${PROJECT}"
+      - "traefik.http.routers.http-${PROJECT}.service=noop@internal"
 
   # Only with COMPOSE_PROFILES=files. Overrides compose.shared.yml's files router by name; plain
-  # HTTP for DOMAIN already redirects through the spa service's http router.
+  # HTTP for DOMAIN already redirects through the api service's http router.
   garage:
     labels:
       - "traefik.docker.network=proxy"
@@ -52,16 +63,6 @@ services:
       - "traefik.http.routers.spa-${PROJECT}.entrypoints=websecure"
       - "traefik.http.routers.spa-${PROJECT}.tls=true"
       - "traefik.http.routers.spa-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
-      # Plain HTTP for DOMAIN answers a permanent redirect to HTTPS. A router of its own on the
-      # `web` entry point, because the proxy also serves development hosts over plain HTTP and so
-      # cannot redirect the whole entry point. Let's Encrypt's HTTP challenge still gets through:
-      # Traefik's own challenge router outranks every other.
-      - "traefik.http.middlewares.https-redirect-${PROJECT}.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.https-redirect-${PROJECT}.redirectscheme.permanent=true"
-      - "traefik.http.routers.http-${PROJECT}.rule=Host(`${DOMAIN}`)"
-      - "traefik.http.routers.http-${PROJECT}.entrypoints=web"
-      - "traefik.http.routers.http-${PROJECT}.middlewares=https-redirect-${PROJECT}"
-      - "traefik.http.routers.http-${PROJECT}.service=noop@internal"
 
   # Only with COMPOSE_PROFILES=mpa. Overrides compose.shared.yml's mpa-${PROJECT} router by name.
   mpa:
@@ -70,7 +71,7 @@ services:
       - "traefik.http.routers.mpa-${PROJECT}.entrypoints=websecure"
       - "traefik.http.routers.mpa-${PROJECT}.tls=true"
       - "traefik.http.routers.mpa-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
-      # The same redirect for the website's host; the middleware is the SPA's.
+      # The same redirect for the website's host; the middleware is the API's.
       - "traefik.http.routers.http-mpa-${PROJECT}.rule=Host(`${MPA_DOMAIN:-}`)"
       - "traefik.http.routers.http-mpa-${PROJECT}.entrypoints=web"
       - "traefik.http.routers.http-mpa-${PROJECT}.middlewares=https-redirect-${PROJECT}"
@@ -103,7 +104,7 @@ services:
       - "traefik.http.routers.admin-api-${PROJECT}.tls=true"
       - "traefik.http.routers.admin-api-${PROJECT}.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-myresolver}"
       - "traefik.http.routers.admin-api-${PROJECT}.middlewares=strip-cf-ip-${PROJECT}"
-      # Plain HTTP for the admin host redirects to HTTPS; the middleware is the SPA's.
+      # Plain HTTP for the admin host redirects to HTTPS; the middleware is the API's.
       - "traefik.http.routers.http-admin-${PROJECT}.rule=Host(`${ADMIN_DOMAIN:-}`)"
       - "traefik.http.routers.http-admin-${PROJECT}.entrypoints=web"
       - "traefik.http.routers.http-admin-${PROJECT}.middlewares=https-redirect-${PROJECT}"

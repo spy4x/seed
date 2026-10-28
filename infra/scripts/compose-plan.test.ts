@@ -57,3 +57,31 @@ Deno.test("any other compose command builds nothing and reads the files ENV name
     "api",
   ])
 })
+
+Deno.test("SPA=false scales the SPA to no container on every up, and leaves other commands alone", () => {
+  const off = { ENV: "dev", SPA: "false" }
+  expect(planCompose(off, ["up", "-d"], ENV_FILE).command).toEqual([
+    ...FILES,
+    "up",
+    "--scale",
+    "spa=0",
+    "-d",
+  ])
+  expect(planCompose(off, ["up", "-d"], ENV_FILE).off).toEqual(["spa"])
+  expect(planCompose(off, ["logs", "api"], ENV_FILE).command).toEqual([...FILES, "logs", "api"])
+  expect(planCompose(off, ["exec", "worker", "deno"], ENV_FILE).command).toEqual([
+    ...FILES,
+    "exec",
+    "worker",
+    "deno",
+  ])
+})
+
+Deno.test("the SPA runs unless SPA is exactly false", () => {
+  for (const value of [undefined, "", "true", "False", "0"]) {
+    const env: Record<string, string> = value === undefined ? { ENV: "dev" } : { ENV: "dev", SPA: value }
+    const plan = planCompose(env, ["up", "-d"], ENV_FILE)
+    expect({ value, command: plan.command, off: plan.off })
+      .toEqual({ value, command: [...FILES, "up", "-d"], off: [] })
+  }
+})

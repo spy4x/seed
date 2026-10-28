@@ -10,11 +10,17 @@ export interface ComposePlan {
   buildBase?: string[]
   /** The Compose command itself. */
   command: string[]
+  /** The services this run keeps at no container, such as the SPA with `SPA=false`. */
+  off: string[]
 }
 
 /**
  * Plans `deno task compose <args>`. The engine is the one `CONTAINER_PROVIDER` names and Docker
  * without it, as everywhere else ({@link containerProvider}); `ENV` picks the second Compose file.
+ *
+ * `SPA=false` keeps the SPA off: every `up` scales it to no container, which also stops and removes
+ * one that runs, so Traefik has no router for its host. Scaling, not a profile, so a hand-typed
+ * `docker compose up` and every product that never sets `SPA` start the SPA as before.
  */
 export function planCompose(
   envVars: Record<string, string>,
@@ -31,10 +37,14 @@ export function planCompose(
     envFilePath,
   ]
   const up = args.includes("up")
+  const off = envVars["SPA"] === "false" ? ["spa"] : []
+  const scale = up ? off.flatMap((service) => ["--scale", `${service}=0`]) : []
+  const at = args.indexOf("up") + 1
   return {
     engine: containerProvider(envVars),
     ensureProxyNetwork: up,
     ...(up || args.includes("build") ? { buildBase: [...compose, "build", "deno-base"] } : {}),
-    command: [...compose, ...args],
+    command: [...compose, ...args.slice(0, at), ...scale, ...args.slice(at)],
+    off,
   }
 }
